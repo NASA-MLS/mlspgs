@@ -126,7 +126,7 @@ contains ! =====     Public Procedures     =============================
     use MLSNUMERICS, only: COEFFICIENTS_R8, HUNT, INTERPOLATEARRAYSETUP, &
       & INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
+    use MOLECULES, only: IsExtinction
     use MOREMESSAGE, only: MLSMESSAGE
     use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: DISPLAY_STRING
@@ -348,9 +348,7 @@ contains ! =====     Public Procedures     =============================
           if (.not. associated(fmConf%molecules) ) cycle
           if ( .not. any (l2pcQ%template%molecule == &
             &   fmConf%molecules)) cycle
-          if ( ( l2pcQ%template%molecule == l_extinction .or. &
-            &    l2pcQ%template%molecule == l_extinctionv2 ) .and. &
-            & l2pcQ%template%radiometer /= signal%radiometer ) cycle
+          if ( isExtinction(l2pcQ%template%molecule) ) cycle
         end if
 
         ! Identify this quantity in x
@@ -791,6 +789,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.86  2011/08/20 02:31:47  vsnyder
+! Delete unused variable declaration
+!
 ! Revision 2.85  2011/08/20 02:10:06  vsnyder
 ! Simplify emitting an error message
 !

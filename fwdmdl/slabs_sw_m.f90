@@ -2621,7 +2621,7 @@ contains
     & Do_1D, LineCenter, LineCenter_ix, LineWidth, LineWidth_ix, &
     & LineWidth_TDep, LineWidth_TDep_ix, T_der_flags )
 
-    use Molecules, only: L_Extinction, L_ExtinctionV2
+    use Molecules, only: IsExtinction
     use SpectroscopyCatalog_m, only: Lines
 
     real(rp), intent(in) :: p_path(:) ! Pressure in hPa or mbar
@@ -2681,7 +2681,7 @@ contains
       nl = Size(catalog%Lines)
       if ( nl == 0 ) cycle
 
-      if ( catalog%molecule == l_extinction .or. catalog%molecule == l_extinctionv2 ) cycle
+      if ( isExtinction(catalog%molecule) ) cycle
 
       do j = 1, n
         temp_der = present(t_der_flags)
@@ -2753,6 +2753,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.61  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.60  2009/05/13 20:03:02  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !

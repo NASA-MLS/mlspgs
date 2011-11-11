@@ -773,7 +773,7 @@ contains ! =====  Public Procedures  ===================================
       & MLSMSG_ERROR
     use MLSSIGNALS_M, only: MAXSIGLEN
     use MLSSTRINGS, only: CAPITALIZE
-    use MOLECULES, only: L_EXTINCTION, L_EXTINCTIONV2
+    use MOLECULES, only: IsExtinction
     use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
     use STRING_TABLE, only: GET_STRING, STRING_LENGTH
@@ -834,7 +834,7 @@ contains ! =====  Public Procedures  ===================================
       & 'Unable to open HDF5 isotope ratios file ' // trim(fileName) // '.' )
     do i=first_molecule, last_molecule
       molecule = catalog(i)%molecule
-      if ( any( molecule == (/ l_none, l_extinction, l_extinctionv2 /) ) ) cycle
+      if ( molecule == l_none .or. isExtinction(molecule) ) cycle
       call get_string( lit_indices(catalog(i)%molecule), moleculeName )
       call loadFromHDF5DS ( fileID, &
         & 'ISOTOPERATIO' // Capitalize(trim(moleculeName)), &
@@ -1513,6 +1513,11 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.52  2011/11/09 00:20:42  vsnyder
+! Move Catalog and Lines types to Spectroscopy_Types module.
+! Make Read_Spectroscopy work even if Lines is not allocated.
+! Use Test_Allocate and Test_Deallocate.
+!
 ! Revision 2.50  2011/05/09 17:55:12  pwagner
 ! Converted to using switchDetail
 !
