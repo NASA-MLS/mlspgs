@@ -47,7 +47,7 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: GetRadiometerName, GetSignalName, Signals
-    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
+    use Molecules, only: IsExtinction
     use QuantityTemplates, only: QuantityTemplate_T
     use String_table, only: Get_String
     use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
@@ -170,7 +170,7 @@ contains
           ! We can be a little lenient here in the case of vmrs
           if ( quantityType == l_vmr ) then
             if ( radiometer /= qt%radiometer .and. &
-              & ( thisMolecule == l_extinction .or. thisMolecule == l_extinctionv2 ) ) cycle
+               & isExtinction(thisMolecule) ) cycle
           else
             if ( radiometer /= qt%radiometer ) cycle
           end if
@@ -324,6 +324,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.22  2011/11/11 00:42:06  vsnyder
+! Use IsExtinction array from Molecules module
+!
 ! Revision 2.21  2011/06/16 20:19:47  vsnyder
 ! Add Frq argument to GetQuantityForForwardModel
 !
