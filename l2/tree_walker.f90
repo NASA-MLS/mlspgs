@@ -246,7 +246,8 @@ contains ! ====     Public Procedures     ==============================
       case ( z_mergeGrids )
         if ( .not. &
           & ( stopBeforeChunkLoop .or. checkPaths .or. parallel%master ) &
-          & ) call mergeGrids ( son, griddedDataBase )
+          & ) call mergeGrids ( son, l2gpDatabase, l2auxDatabase, &
+          & griddedDataBase, fileDataBase )
 
         ! ------------------------------------------------------- Chunk divide
         ! Chunk divide can be a special one, in slave mode, we just listen out
@@ -617,6 +618,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.169  2010/02/04 19:10:58  pwagner
+! Allocate directwrite db with zero size
+!
 ! Revision 2.168  2009/10/01 19:58:00  vsnyder
 ! Pass file database to set_global_settings
 !
