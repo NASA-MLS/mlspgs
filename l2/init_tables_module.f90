@@ -40,11 +40,22 @@ module INIT_TABLES_MODULE
     ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
     ! T_STRING, S_TIME and Z are used here, but everything is included so
     ! that it can be gotten by USE INIT_TABLES_MODULE.
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
   use MOLECULES ! Everything.
-  use Units, only: Init_Units
+  use Units, only: INIT_UNITS
+  ! We're adding the following use statements to clue the makefiles'
+  ! dependency calculator for srclib's tree_checker
+  use DECLARATION_TABLE, only: DECLARATION
+  use LEXER_CORE, only: PRINT_SOURCE
+  use MORETREE, only: SCALAR
+  use OUTPUT_M, only: NEWLINE
+  use STRING_TABLE, only: DISPLAY_STRING
+  use TOGGLES, only: CON
+  use TRACE_M, only: DEPTH
+  use TREE, only: DECORATE
+  
 
-  implicit NONE
+  implicit none
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
   private :: ADD_IDENT, INIT_SPECTROSCOPY
@@ -1707,6 +1718,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.527  2011/11/18 23:41:44  pwagner
+! Workaround for faulty dependency calculation of srclib/tree_checker
+!
 ! Revision 2.526  2011/11/01 21:04:44  pwagner
 ! Added DirectRead as a Fill Section command to read from hdf5 files
 !
