@@ -148,7 +148,7 @@ export PREPRO=$(patsubst %.F90,%.f90,$(wildcard *.F90))
 
 cfm_f90 := $(shell ${REECHO} $(cfm_sources)/*.f $(cfm_sources)/*.[Ff]9? $(cfm_sources)/*.c)
 l1_f90 := $(shell ${REECHO} $(l1_sources)/*.f $(l1_sources)/*.[Ff]9? $(l1_sources)/*.c)
-l2_f90 := $(shell ${REECHO} $(l2_sources)/*.f $(l2_sources)/*.[Ff]9? $(l2_sources)/*.c)
+l2_f90 := $(shell ${REECHO} $(l2_sources)/*.f $(l2_sources)/*.[Ff]9? $(l2_sources)/*.c $(l2_sources)/*.txt)
 libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.[Ff]9? \
   $(srclib)/*.f9h $(libmls_sources)/*.c \
   $(libmls_sources)/lit_names.txt)
@@ -204,7 +204,7 @@ $(libcloud_objs)/libcloud.a: $(CLD_LIB_prereqs)
 	echo Makefile.h $(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources) $(UPTODATEMARKS)
 	$(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources) $(UPTODATEMARKS)
 
-$(l1_objs)/mlsl1: $(l1_LIB_prereqs)
+$(l1_objs)/mlsl1: $(L1_LIB_prereqs)
 	$(MAKE) -f $(MakeFName) mlsl1 -C $(l1_sources) $(UPTODATEMARKS)
 
 $(l2_objs)/mlsl2: $(L2_LIB_prereqs)
@@ -218,6 +218,9 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR) $(UPTODATEMARKS)
 
 # $Log$
+# Revision 1.3  2011/08/26 00:37:47  pwagner
+# Added tables/sps_cross_ref_table.txt to lib prereqs
+#
 # Revision 1.2  2011/03/25 00:58:18  pwagner
 # Fixed bug preventing proper rebuilding of .F90 sources
 #
