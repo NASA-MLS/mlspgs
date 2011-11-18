@@ -27,7 +27,7 @@ SRCLIB=../srclib
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
-depends_where:=$(libmls_sources) $(srclib) \
+depends_where:=$(libmls_sources) $(SRCLIB) \
    $(libfwdmdl_sources) $(libcloud_sources)
 PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libblas_objs)/libmlspack.a \
@@ -49,17 +49,18 @@ CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 
 #----------------------- Build instructions
 
-$(PROG): $(PROG_prereqs) mlsl2-delayed
-	$(MAKE) the_program
+#$(PROG): $(PROG_prereqs) mlsl2-delayed
+#	$(MAKE) the_program
 
 # For reasons not yet understood, executables built
 # directly by make did not always
 # run properly, sometimes generating errors during tree_checker
-mlsl2-delayed: $(PROG_prereqs)
-	$(MAKE) the_program
-	/bin/rm -f $(PLATFORMS)/$(MLSCONFG)/mlsl2
+#mlsl2-delayed: $(PROG_prereqs)
+#	$(MAKE) the_program
+#	/bin/rm -f $(PLATFORMS)/$(MLSCONFG)/mlsl2
 
-the_program: $(PROG_prereqs)
+#the_program: $(PROG_prereqs)
+$(PROG): $(PROG_prereqs)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE=no;\
         return_status=`expr $$?` ; \
@@ -100,7 +101,7 @@ depends:
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(OMIT_PREFXD) \
-       $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+       $(PLATFORMS)/$(MLSCONFG) ./ $(SRCLIB)
 
 update:
 	@cd .. ; \
@@ -156,6 +157,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.75  2011/11/18 23:39:31  pwagner
+# Removed double-link for mlsl2; corrected spelling error
+#
 # Revision 2.74  2011/09/02 18:35:36  pwagner
 # Double-make workaround for tree_checker issue moved here
 #
