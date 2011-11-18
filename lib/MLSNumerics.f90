@@ -73,6 +73,8 @@ module MLSNumerics              ! Some low level numerical stuff
 ! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
 ! InterpolateValues        Interpolate for new y value(s):
 !                            given old (x,y), new (x), method
+! Interpolate_2D_Composite 2D - to - 2D interpolation using composite 1D
+!                          interpolation
 ! PureHunt                 Like Hunt, but may be quicker due to optimization
 ! Setup                    Fill y values in UniDiscFunction
 ! Simpsons                 Apply Simpson's rule to integrate--function form
@@ -137,6 +139,7 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: FApproximate, FillLookUpTable, FindInRange, FInvApproximate
   public :: Hunt, HuntRange, IFApproximate
   public :: InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
+  public :: Interpolate_2d_Composite
   public :: PureHunt
   public :: SetUp, Simpsons, SimpsonsSub
   public :: UseLookUpTable
@@ -400,6 +403,10 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure InterpolateUsingSetup_r4, InterpolateUsingSetup_r8
     module procedure InterpolateScalarUsingSetup_r4, InterpolateScalarUsingSetup_r8
     module procedure Interp_Bilinear_2d_1d_r4, Interp_Bilinear_2d_1d_r8
+  end interface
+
+  interface Interpolate_2d_Composite
+    module procedure Interpolate_2d_Composite_r4, Interpolate_2d_Composite_r8
   end interface
 
   interface pcspl
@@ -1621,7 +1628,7 @@ contains
     real(rk), intent(in) :: OldX(:), NewX(:)
     character(len=*), intent(in) :: Method
     type(coefficients_R4), intent(out) :: Coeffs
-    character(len=*), intent(in), optional :: Extrapolate
+    character(len=*), intent(in), optional :: Extrapolate ! See comments above
     integer, intent(in), optional :: Width ! Second dimension for OldY when
                                            ! interpolations get done
     logical, optional, intent(in) :: DyByDx ! just a signal to
@@ -1646,7 +1653,7 @@ contains
     real(rk), intent(in) :: OldX(:), NewX(:)
     character(len=*), intent(in) :: Method
     type(coefficients_R8), intent(out) :: Coeffs
-    character(len=*), intent(in), optional :: Extrapolate
+    character(len=*), intent(in), optional :: Extrapolate ! See comments above
     integer, intent(in), optional :: Width ! Second dimension for OldY when
                                            ! interpolations get done
     logical, optional, intent(in) :: DyByDx ! just a signal to
@@ -1840,7 +1847,7 @@ contains
   end subroutine InterpolateUsingSetup_r8
 
   ! -----------------------------------  Interp_Bilinear_2d_1d_r4  -----
-  subroutine Interp_Bilinear_2d_1d_r4 ( XOld, Xnew, YOld, YNew, Zold, Znew, &
+  subroutine Interp_Bilinear_2d_1d_r4 ( XOld, XNew, YOld, YNew, Zold, Znew, &
     & Update )
 
     ! Given ZOld on coordinates (XOld x YOld), interpolate to (XNew,YNew)
@@ -1860,7 +1867,7 @@ contains
   end subroutine Interp_Bilinear_2d_1d_r4
 
   ! -----------------------------------  Interp_Bilinear_2d_1d_r8  -----
-  subroutine Interp_Bilinear_2d_1d_r8 ( XOld, Xnew, YOld, YNew, Zold, Znew, &
+  subroutine Interp_Bilinear_2d_1d_r8 ( XOld, XNew, YOld, YNew, Zold, Znew, &
     & Update )
 
     ! Given ZOld on coordinates (XOld x YOld), interpolate to (XNew,YNew)
@@ -1879,9 +1886,55 @@ contains
 
   end subroutine Interp_Bilinear_2d_1d_r8
 
-! -------------------------------------------------  PureHunt  -----
-! A binary search routine with a hunt procedure, to start from last known
-! location (if 0 < JLO < N) or from the begining otherwise.
+  ! --------------------------------  Interpolate_2d_Composite_r4  -----
+  subroutine Interpolate_2d_Composite_r4 ( XOld, YOld, ZOld, XNew, YNew, ZNew, &
+    & XMethod, YMethod, XExtrapolate, YExtrapolate )
+    ! Given XOld, YOld, ZOld, XNew and YNew, interpolate to ZNew.
+    ! The shape of ZOld must be (size(xOld),size(yOld)).
+    ! The shape of ZNew must be (size(xNew),size(yNew)).
+    ! Interpolation is first done in the X direction using XMethod to produce
+    ! a temporary variable with shape (size(xNew),size(yOld)).  Then
+    ! interpolation is done in the Y direction, from that temporary variable,
+    ! using YMethod, to produce ZNew.
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: XOld(:)
+    real(rk), intent(in) :: YOld(:)
+    real(rk), intent(in) :: ZOld(:,:)
+    real(rk), intent(in) :: XNew(:)
+    real(rk), intent(in) :: YNew(:)
+    real(rk), intent(out) :: ZNew(:,:)
+    character (len=*), intent(in) :: XMethod, YMethod ! See comments above
+    character (len=*), optional, intent(in) :: XExtrapolate, YExtrapolate ! See comments above
+    type(coefficients_r4) :: XCoeffs, YCoeffs
+    include 'Interpolate_2d_Composite.f9h'
+  end subroutine Interpolate_2d_Composite_r4
+
+  ! --------------------------------  Interpolate_2d_Composite_r8  -----
+  subroutine Interpolate_2d_Composite_r8 ( XOld, YOld, ZOld, XNew, YNew, ZNew, &
+    & XMethod, YMethod, XExtrapolate, YExtrapolate )
+    ! Given XOld, YOld, ZOld, XNew and YNew, interpolate to ZNew.
+    ! The shape of ZOld must be (size(xOld),size(yOld)).
+    ! The shape of ZNew must be (size(xNew),size(yNew)).
+    ! Interpolation is first done in the X direction using XMethod to produce
+    ! a temporary variable with shape (size(xNew),size(yOld)).  Then
+    ! interpolation is done in the Y direction, from that temporary variable,
+    ! using YMethod, to produce ZNew.
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), intent(in) :: XOld(:)
+    real(rk), intent(in) :: YOld(:)
+    real(rk), intent(in) :: ZOld(:,:)
+    real(rk), intent(in) :: XNew(:)
+    real(rk), intent(in) :: YNew(:)
+    real(rk), intent(out) :: ZNew(:,:)
+    character (len=*), intent(in) :: XMethod, YMethod ! See comments above
+    character (len=*), optional, intent(in) :: XExtrapolate, YExtrapolate ! See comments above
+    type(coefficients_r8) :: XCoeffs, YCoeffs
+    include 'Interpolate_2d_Composite.f9h'
+  end subroutine Interpolate_2d_Composite_r8
+
+  ! ---------------------------------------------------  PureHunt  -----
+  ! A binary search routine with a hunt procedure, to start from last known
+  ! location (if 0 < JLO < N) or from the begining otherwise.
   pure subroutine purehunt_r4 ( ELEMENT, ARRAY, N, JLO, JHI )
     integer, parameter :: RK = kind(0.0e0)
     include 'hunt.f9h'
@@ -2334,6 +2387,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.71  2011/11/18 02:42:35  vsnyder
+! Add Interpolate_2d_Composite
+!
 ! Revision 2.70  2011/08/26 17:52:49  pwagner
 ! purehunt recovers optimized functionality of fwdmdls own hunt
 !
