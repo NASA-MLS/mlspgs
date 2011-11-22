@@ -80,7 +80,7 @@ contains
 
 ! Outputs
 
-    real(rp), intent(out) :: beta_path(:,:) ! path beta for each specie
+    real(rp), intent(out) :: beta_path(:,:) ! path beta for each species, km^{-1}
 
 ! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
 ! caller doesn't need multiple branches.  These would be INTENT(OUT) if
@@ -259,7 +259,7 @@ contains
     real(rp), intent(in) :: Sps_Path(:,:) ! VMR's, for nonlinear species
 
 ! Output
-    real(rp), intent(out) :: beta_path(:,:) ! path beta for each specie
+    real(rp), intent(out) :: beta_path(:,:) ! path beta for each species, km^{-1}
 
 ! Optional input.
 
@@ -411,7 +411,7 @@ contains
 !  compute the weighted average over species, saving as many multiplies as
 !  there are species.
 
-    complex(rp), intent(out) :: Beta_path(-1:,:,:) ! path beta for each species
+    complex(rp), intent(out) :: Beta_path(-1:,:,:) ! path beta for each speciess, km^{-1}
     ! beta_path(-1,:,:) is Sigma_m, beta_path(0,:,:) is Pi,
     ! beta_path(+1,:,:) is Sigma_p
 
@@ -508,7 +508,7 @@ contains
 
 ! Outputs
 
-    real(rp), intent(out) :: beta_path_cloud(:) ! cloud extinction
+    real(rp), intent(out) :: beta_path_cloud(:) ! cloud extinction, km^{-1}
     real(rp), intent(out) :: w0_path(:)         ! single scattering albedo
     real(rp), intent(out) :: tt_path_c(:)       ! scattering source func coarse grids
 
@@ -599,7 +599,7 @@ contains
     ! -(h frq) / (2 k T^2) ( tanh( (2 h frq) / (k T) ) - 1/tanh( (h frq) / (2 k T) ) ):
     real(rp), intent(in), optional :: dTanh_dT ! 1/tanh d/dT tanh
 ! Outputs
-    real(rp), intent(out) :: beta_value
+    real(rp), intent(out) :: beta_value         ! km^{-1}
 ! Optional outputs
     real(rp), optional, intent(out) :: DBETA_DT ! Temperature derivative
     real(rp), optional, intent(out) :: DBETA_DW ! line width derivative
@@ -798,7 +798,7 @@ contains
     real(rp), intent(in) :: VelCor
 
 ! Outputs
-    real(rp), intent(inout) :: Beta_value(:)
+    real(rp), intent(inout) :: Beta_value(:) ! km^{-1}
 
 ! Optional inputs for temperature derivatives:
     real(rp), intent(in) :: dTanh_dT(:) ! -h nu / (2 k T^2) 1/tanh(...) dTanh(...)/dT
@@ -1050,7 +1050,7 @@ contains
     real(r8), intent(in) :: dBeta_dT_Tab(:,:,:)   ! T x IWC x F
 
 ! Outputs:
-    real(rp), intent(inout) :: Beta_Path(:)  ! Beta along the path
+    real(rp), intent(inout) :: Beta_Path(:)  ! Beta along the path, km^{-1}
 
 ! Optional outputs.  These are pointers instead of optional.  Null means
 ! "don't compute it."  We do this so the caller doesn't need four branches.
@@ -1124,7 +1124,7 @@ contains
     real(rp), intent(in) :: Ratio       ! Isotope ratio
     
 ! Outputs
-    real(rp), intent(inout) :: Beta_Path(:)
+    real(rp), intent(inout) :: Beta_Path(:)  ! km^{-1}
 
 ! Optional inputs for temperature derivatives:
     logical, intent(in) :: T_Der_Path(:)   ! To do on fine path -- default true
@@ -1305,7 +1305,7 @@ contains
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
     real(rp), intent(in) :: PRESSURE    ! in mbar
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
-    real(rp), intent(out) :: Beta, dBeta_dT
+    real(rp), intent(out) :: Beta, dBeta_dT ! km^{-1}, km^{-1}/K
 
     real(rp) :: Onedt ! 1/T
 
@@ -1335,7 +1335,7 @@ contains
     real(rp), intent(in) :: PRESSURE    ! in mbar
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
     real(rp), intent(in), optional :: SPS ! Mixing ratio
-    real(rp) :: Beta
+    real(rp) :: Beta                    ! km^{-1}
     real(rp) :: dBdf
     real(rp) :: Psq_Fsq                 ! pressure**2 * frequency**2
     real(rp) :: Temp_Ratio              ! log(300/T)
@@ -1370,7 +1370,7 @@ contains
     real(rp), intent(in) :: PRESSURE    ! in mbar
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
     real(rp), intent(in) :: SPS         ! Mixing ratio
-    real(rp), intent(out) :: Beta
+    real(rp), intent(out) :: Beta       ! km^{-1}
     real(rp), intent(out) :: dBeta_df
     real(rp) :: Psq_Fsq                 ! pressure**2 * frequency**2
     real(rp) :: Temp_Ratio              ! log(300/T)
@@ -1401,7 +1401,7 @@ contains
     real(rp), intent(in) :: PRESSURE    ! in mbar
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
     real(rp), intent(in), optional :: SPS ! Mixing ratio
-    real(rp), intent(out) :: Beta, dBeta_dT
+    real(rp), intent(out) :: Beta, dBeta_dT ! km^{-1}, km^{-1}/K
     real(rp), intent(out), optional :: dBeta_df ! Derivative w.r.t SPS
 
     real(rp) :: dBdf                    ! Derivative of beta w.r.t SPS
@@ -1485,7 +1485,7 @@ contains
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
     real(rp), intent(in) :: PRESSURE    ! in mbar
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
-    real(rp), intent(out) :: Beta, dBeta_dT
+    real(rp), intent(out) :: Beta, dBeta_dT ! km^{-1}, km^{-1}/K
 
     real(rp) :: E1, E2, F, FSQR, FSXT, OneDT, THETA
 
@@ -1554,7 +1554,7 @@ contains
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
     real(rp), intent(in) :: PRESSURE    ! in mbar
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
-    real(rp), intent(out) :: Beta, dBeta_dT
+    real(rp), intent(out) :: Beta, dBeta_dT ! km^{-1}, km^{-1}/K
 
     real(rp) :: D, F, FSQR, Onedt, THETA
 
@@ -1591,6 +1591,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.111  2011/11/11 00:40:41  vsnyder
+! Treat Extinction and MIFExtinction the same way
+!
 ! Revision 2.110  2011/11/09 00:15:40  vsnyder
 ! Consolidate USE statements for slabs_sw_m
 !
