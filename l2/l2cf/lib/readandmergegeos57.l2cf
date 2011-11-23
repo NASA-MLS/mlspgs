@@ -3,6 +3,66 @@
 
 ;; This l2cf fragment is for setting up a priori gridded quantities
 
+!ifdef(flagUsingPCF,
+  {!define(geos5TFile1,{})!define(geos5TFile2,{})!define(geos5TFile3,{})!define(geos5TFile4,{})
+   !define(geos5TFile5,{})!define(geos5TFile6,{})!define(geos5TFile7,{})!define(geos5TFile8,{})
+   !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
+   !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
+   !define(geos5TFileN,{})!define(geos5PFileN,{})
+   },{
+    !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
+    !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
+    !ifdef(flagUsingMERRA,
+    {!dnl
+      !define(geos5TFile1,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFile2,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFile3,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFile4,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFileN,{, file='!inpathmerradn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+      !define(geos5PFile1,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFile2,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFile3,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFile4,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFileN,{, file='!inpathmerrapn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+      !define(geos5TFile5,{})!define(geos5TFile6,{})!define(geos5TFile7,{})!define(geos5TFile8,{})
+      !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
+    },{!ifelse(!gmaovsn,{572},{!dnl
+      !ifdef(geos5Head,{},{!define(geos5Head,{D57I3NVASMMLS.ops.asm.inst3_3d_asm_Nv.GEOS572})})
+      !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0000.V01.nc4'})
+      !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0300.V01.nc4'})
+      !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0600.V01.nc4'})
+      !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0900.V01.nc4'})
+      !define(geos5TFile5,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1200.V01.nc4'})
+      !define(geos5TFile6,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1500.V01.nc4'})
+      !define(geos5TFile7,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1800.V01.nc4'})
+      !define(geos5TFile8,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_2100.V01.nc4'})
+      !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head.!gmaovsn.!geos5Day2_0000.V01.nc4'})
+      !define(geos5PFile1,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0000.V01.nc4'})
+      !define(geos5PFile2,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0300.V01.nc4'})
+      !define(geos5PFile3,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0600.V01.nc4'})
+      !define(geos5PFile4,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_0900.V01.nc4'})
+      !define(geos5PFile5,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1200.V01.nc4'})
+      !define(geos5PFile6,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1500.V01.nc4'})
+      !define(geos5PFile7,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_1800.V01.nc4'})
+      !define(geos5PFile8,{, file='!inpathgeos5dd/!geos5Head.!gmaovsn.!geos5Day1_2100.V01.nc4'})
+      !define(geos5PFileN,{, file='!inpathgeos5dn/!geos5Head.!gmaovsn.!geos5Day2_0000.V01.nc4'})
+    },{!dnl
+      !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
+      !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_0000.V01.hdf'})
+      !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_0600.V01.hdf'})
+      !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_1200.V01.hdf'})
+      !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_1800.V01.hdf'})
+      !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head_dyn_v.!gmaovsn.!geos5Day2_0000.V01.hdf'})
+      !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_0000.V01.hdf'})
+      !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_0600.V01.hdf'})
+      !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_1200.V01.hdf'})
+      !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_1800.V01.hdf'})
+      !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head_prs_v.!gmaovsn.!geos5Day2_0000.V01.hdf'})
+      !define(geos5TFile5,{})!define(geos5TFile6,{})!define(geos5TFile7,{})!define(geos5TFile8,{})
+      !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
+      })
+  })
+})
 !divert!dnl
 ; ----------------------------------------------- Read / merge geos5
 
@@ -65,25 +125,25 @@ end ReadApriori
 begin ReadApriori
   
   readGriddedData, grid=gmaoTemperatureInput1, origin=geos5, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFile1
   readGriddedData, grid=gmaoTemperatureInput2, origin=geos5, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='06:00:00'
+    dimList='XDim,YDim,Height,Time' , date='06:00:00' !geos5TFile2
   readGriddedData, grid=gmaoTemperatureInput3, origin=geos5, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='12:00:00'
+    dimList='XDim,YDim,Height,Time' , date='12:00:00' !geos5TFile3
   readGriddedData, grid=gmaoTemperatureInput4, origin=geos5, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='18:00:00'
+    dimList='XDim,YDim,Height,Time' , date='18:00:00' !geos5TFile4
   readGriddedData, grid=gmaoTemperatureInputNext, origin=geos5, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFileN
   readGriddedData, grid=gmaoPressureInput1, origin=geos5, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFile1
   readGriddedData, grid=gmaoPressureInput2, origin=geos5, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='06:00:00'
+    dimList='XDim,YDim,Height,Time' , date='06:00:00' !geos5PFile2
   readGriddedData, grid=gmaoPressureInput3, origin=geos5, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='12:00:00'
+    dimList='XDim,YDim,Height,Time' , date='12:00:00' !geos5PFile3
   readGriddedData, grid=gmaoPressureInput4, origin=geos5, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='18:00:00'
+    dimList='XDim,YDim,Height,Time' , date='18:00:00' !geos5PFile4
   readGriddedData, grid=gmaoPressureInputNext, origin=geos5, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFileN
   ;;dump, text='after attempt to read as geos5 formats'
   ;;dump, Details=0, grid=gmaoTemperatureInput1
 end ReadApriori
@@ -145,25 +205,25 @@ end MergeGrids
 begin ReadApriori
   
   readGriddedData, grid=gmaoTemperatureInput1, origin=merra, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFile1
   readGriddedData, grid=gmaoTemperatureInput2, origin=merra, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='06:00:00'
+    dimList='XDim,YDim,Height,Time' , date='06:00:00' !geos5TFile2
   readGriddedData, grid=gmaoTemperatureInput3, origin=merra, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='12:00:00'
+    dimList='XDim,YDim,Height,Time' , date='12:00:00' !geos5TFile3
   readGriddedData, grid=gmaoTemperatureInput4, origin=merra, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='18:00:00'
+    dimList='XDim,YDim,Height,Time' , date='18:00:00' !geos5TFile4
   readGriddedData, grid=gmaoTemperatureInputNext, origin=merra, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFileN
   readGriddedData, grid=gmaoPressureInput1, origin=merra, field='DELP', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum !geos5PFile1
   readGriddedData, grid=gmaoPressureInput2, origin=merra, field='DELP', $
-    dimList='XDim,YDim,Height,Time' , date='06:00:00', /sum
+    dimList='XDim,YDim,Height,Time' , date='06:00:00', /sum !geos5PFile2
   readGriddedData, grid=gmaoPressureInput3, origin=merra, field='DELP', $
-    dimList='XDim,YDim,Height,Time' , date='12:00:00', /sum
+    dimList='XDim,YDim,Height,Time' , date='12:00:00', /sum !geos5PFile3
   readGriddedData, grid=gmaoPressureInput4, origin=merra, field='DELP', $
-    dimList='XDim,YDim,Height,Time' , date='18:00:00', /sum
+    dimList='XDim,YDim,Height,Time' , date='18:00:00', /sum !geos5PFile4
   readGriddedData, grid=gmaoPressureInputNext, origin=merra, field='DELP', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum !geos5PFileN
   ;;dump, text='after attempt to read as merra formats'
   ;;dump, Details=0, grid=gmaoTemperatureInput1
 end ReadApriori
@@ -225,41 +285,41 @@ end MergeGrids
 begin ReadApriori
   
   readGriddedData, grid=gmaoTemperatureInput1, origin=geos5_7, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFile1
   readGriddedData, grid=gmaoTemperatureInput2, origin=geos5_7, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='03:00:00'
+    dimList='XDim,YDim,Height,Time' , date='03:00:00' !geos5TFile2
   readGriddedData, grid=gmaoTemperatureInput3, origin=geos5_7, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='06:00:00'
+    dimList='XDim,YDim,Height,Time' , date='06:00:00' !geos5TFile3
   readGriddedData, grid=gmaoTemperatureInput4, origin=geos5_7, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='09:00:00'
+    dimList='XDim,YDim,Height,Time' , date='09:00:00' !geos5TFile4
   readGriddedData, grid=gmaoTemperatureInput5, origin=geos5_7, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='12:00:00'
+    dimList='XDim,YDim,Height,Time' , date='12:00:00' !geos5TFile5
   readGriddedData, grid=gmaoTemperatureInput6, origin=geos5_7, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='15:00:00'
+    dimList='XDim,YDim,Height,Time' , date='15:00:00' !geos5TFile6
   readGriddedData, grid=gmaoTemperatureInput7, origin=geos5_7, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='18:00:00'
+    dimList='XDim,YDim,Height,Time' , date='18:00:00' !geos5TFile7
   readGriddedData, grid=gmaoTemperatureInput8, origin=geos5_7, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='21:00:00'
+    dimList='XDim,YDim,Height,Time' , date='21:00:00' !geos5TFile8
   readGriddedData, grid=gmaoTemperatureInputNext, origin=geos5_7, field='T', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFileN
   readGriddedData, grid=gmaoPressureInput1, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFile1
   readGriddedData, grid=gmaoPressureInput2, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='03:00:00'
+    dimList='XDim,YDim,Height,Time' , date='03:00:00' !geos5PFile2
   readGriddedData, grid=gmaoPressureInput3, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='06:00:00'
+    dimList='XDim,YDim,Height,Time' , date='06:00:00' !geos5PFile3
   readGriddedData, grid=gmaoPressureInput4, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='09:00:00'
+    dimList='XDim,YDim,Height,Time' , date='09:00:00' !geos5PFile4
   readGriddedData, grid=gmaoPressureInput5, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='12:00:00'
+    dimList='XDim,YDim,Height,Time' , date='12:00:00' !geos5PFile5
   readGriddedData, grid=gmaoPressureInput6, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='15:00:00'
+    dimList='XDim,YDim,Height,Time' , date='15:00:00' !geos5PFile6
   readGriddedData, grid=gmaoPressureInput7, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='18:00:00'
+    dimList='XDim,YDim,Height,Time' , date='18:00:00' !geos5PFile7
   readGriddedData, grid=gmaoPressureInput8, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='21:00:00'
+    dimList='XDim,YDim,Height,Time' , date='21:00:00' !geos5PFile8
   readGriddedData, grid=gmaoPressureInputNext, origin=geos5_7, field='PL', $
-    dimList='XDim,YDim,Height,Time' , date='00:00:00'
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFileN
   ;;dump, text='after attempt to read as geos5 formats'
   ;;dump, Details=0, grid=gmaoTemperatureInput1
 end ReadApriori
@@ -350,3 +410,6 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.1  2011/11/22 00:03:45  pwagner
+;First commit
+;
