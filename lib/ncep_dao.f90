@@ -36,7 +36,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use SDPTOOLKIT, only: PGS_S_SUCCESS, &
     & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
     & PGSD_GCT_INVERSE, &
-    & useSDPTOOLKIT
+    & USESDPTOOLKIT
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
@@ -142,8 +142,8 @@ contains
     logical, parameter :: DEEBUG = .false.
     logical            :: myVerbose
     ! Executable code
-    myVerbose = .false.
-    if ( present(verbose) ) myVerbose = .true.
+    myVerbose = deebug
+    if ( present(verbose) ) myVerbose = verbose .or. deebug
     
     LIT_DESCRIPTION = lowercase(description)
     if ( LIT_DESCRIPTION == 'geos5' ) &
@@ -153,6 +153,9 @@ contains
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     the_g_data%empty = .true.
+    the_g_data%QuantityName = '(none)'
+    the_g_data%description  = '(none)'
+    the_g_data%units        = '(none)'
     returnStatus = mls_hdf_version(GriddedFile%Name)
     if ( returnStatus == FILENOTFOUND ) then
       call SetupNewGriddedData ( the_g_data, empty=.true. )
@@ -174,42 +177,50 @@ contains
       endif
       call Read_geos5_7( GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, date, sumDelp )
-      if ( DEEBUG ) then
-        print *, '(Returned from read_geos5)'
-        print *, 'Quantity Name   ' // trim(the_g_data%QuantityName)
-        print *, 'Description     ' // trim(the_g_data%description)
-        print *, 'Units           ' // trim(the_g_data%units)
-        print *, 'Vertical Coord  ', the_g_data%verticalCoordinate, v_type, v_is_pressure
-        print *, 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
-        print *, 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
-        print *, 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
+      if ( myVerbose .and. associated(the_g_data%field) ) then
+        call output( '(Returned from read_geos5_7)', advance='yes' )
+        call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
+        call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
+        call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
+        call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
+          & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
+        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
         call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
         call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       endif
     case ('geos5')
       call Read_geos5_or_merra( GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, date )
-      if ( DEEBUG ) then
-        print *, '(Returned from read_geos5)'
-        print *, 'Quantity Name   ' // trim(the_g_data%QuantityName)
-        print *, 'Description     ' // trim(the_g_data%description)
-        print *, 'Units           ' // trim(the_g_data%units)
-        print *, 'Vertical Coord  ', the_g_data%verticalCoordinate, v_type, v_is_pressure
-        print *, 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
-        print *, 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
-        print *, 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue )
+      if ( myVerbose .and. associated(the_g_data%field) ) then
+        call output( '(Returned from read_geos5)', advance='yes' )
+        call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
+        call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
+        call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
+        call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
+          & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
+        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
         call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
         call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       endif
     case ('dao', 'gmao')
       call Read_dao(GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName)
-      if ( DEEBUG ) then
-        print *, '(Returned from read_dao)'
-        print *, 'Quantity Name   ' // trim(the_g_data%QuantityName)
-        print *, 'Description     ' // trim(the_g_data%description)
-        print *, 'Units           ' // trim(the_g_data%units)
-        print *, 'Vertical Coord  ', the_g_data%verticalCoordinate, v_type, v_is_pressure
+      if ( myVerbose .and. associated(the_g_data%field) ) then
+        call output( '(Returned from read_dao)', advance='yes' )
+        call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
+        call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
+        call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
+        call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
+          & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
+        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
+        call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       endif
     case ('merra')
       ! In case we were forced to acknowledge that out GMAO files
@@ -218,27 +229,54 @@ contains
         & call getStringElement(fieldNames, fieldName, 2, COUNTEMPTY)
       call Read_geos5_or_merra( GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, date, sumDelp )
+      if ( myVerbose .and. associated(the_g_data%field) ) then
+        call output( '(Returned from read merra)', advance='yes' )
+        call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
+        call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
+        call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
+        call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
+          & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
+        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
+        call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
+      endif
     case ('ncep')
       ! These are ncep global assimilation model data
       ! in hdfeos format
       call Read_ncep_gdas(GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, missingValue)
-      if ( DEEBUG ) then
-        print *, '(Returned from Read_ncep_gdas)'
-        print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
-        print *, 'Description   ' // trim(the_g_data%description)
-        print *, 'Units         ' // trim(the_g_data%units)
+      if ( myVerbose .and. associated(the_g_data%field) ) then
+        call output( '(Returned from read_ncep_gdas)', advance='yes' )
+        call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
+        call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
+        call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
+        call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
+          & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
+        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
+        call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       endif
     case ('strat')
       ! These are ncep stratospheric analysis combined data
       ! in hdfeos5 format
       call Read_ncep_strat(GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName)
-      if ( DEEBUG ) then
-        print *, '(Returned from read_ncep-strat)'
-        print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
-        print *, 'Description   ' // trim(the_g_data%description)
-        print *, 'Units         ' // trim(the_g_data%units)
+      if ( myVerbose .and. associated(the_g_data%field) ) then
+        call output( '(Returned from read_ncep_strat)', advance='yes' )
+        call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
+        call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
+        call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
+        call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
+          & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
+        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
+        call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       endif
     case default
       call announce_error(lcf_where, 'READGriddedData called with unknown' &
@@ -251,12 +289,14 @@ contains
   ! ----------------------------------------------- Read_geos5_7
   subroutine Read_geos5_7( GEOS5File, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
+    use DATES_MODULE, only: UTC2TAI93S
+    use HDF5, only: HSIZE_T
     use MLSHDF5, only: DUMPHDF5ATTRIBUTES, DUMPHDF5DS, &
       & GETALLHDF5ATTRNAMES, GETALLHDF5DSNAMES, &
       & GETHDF5DSRANK, GETHDF5DSDIMS, LOADFROMHDF5DS, &
       & READHDF5ATTRIBUTE
-    use HDF5, only: HSIZE_T
-    use DATES_MODULE, only: UTC2TAI93S
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use TOGGLES, only: SWITCHES
 
     ! This routine reads a gmao geos5_7 file, named something like
     ! DAS.ops.asm.avg3_3d_Nv.GEOS571.20110930_0300.V01.nc4 (pressure with
@@ -289,8 +329,10 @@ contains
     integer :: mydate, mytime, timeinc, year, month, day, hour, minute, second
     character(len=256) :: errormsg
     character(len=19) :: datestring ! will be in the form of yyyy-MM-ddTHH:MM:ss
+    logical :: verbose
 
     ! Executable
+    verbose = ( switchDetail(switches, 'geos5') > -1 ) .or. DEEBUG
     if(present(fieldName)) then
       actual_field_name=fieldName
     else
@@ -300,7 +342,7 @@ contains
     DEEBUG = ( index(lowercase(actual_field_name), 'inq') > 0 )
 
     call GetAllHDF5DSNames ( GEOS5File%Name, '/', mysdList )
-    if ( DEEBUG ) call dump(mysdList, 'DS names')
+    if ( verbose ) call dump(mysdList, 'DS names')
 
     ! Fill in value
     the_g_data%quantityName = actual_field_name
@@ -314,6 +356,7 @@ contains
     allocate(the_g_data%lsts(1), stat=error)
     if (error /= 0) call announce_error(lcf_where, "Out of memory")
     the_g_data%noszas = 1
+    the_g_data%lsts = the_g_data%missingValue ! Know how to read this yet?
     allocate(the_g_data%szas(1), stat=error)
     if (error /= 0) call announce_error(lcf_where, "Out of memory")
     the_g_data%szas = the_g_data%missingvalue
@@ -338,6 +381,7 @@ contains
     deallocate(temp1d)
 
     ! Fill dateStart and dateEnd
+    mytime = 0. ! In case it's not found
     if (.not. ReadHDF5Attribute(geos5file%fileid%f_id, 'time', &
         & 'begin_time', mytime, error=errormsg)) then
         call announce_error (lcf_where, errormsg // ' in file ' &
@@ -358,6 +402,7 @@ contains
     !    call announce_error (lcf_where, "Invalid 'time_increment' value in " // geos5file%name)
     !endif
 
+    mydate = 10000*2001 + 1*100 + 1 ! In case it's not found
     if (.not. ReadHDF5Attribute(geos5file%fileid%f_id, 'time', &
         & 'begin_date', mydate, error=errormsg)) then
         call announce_error (lcf_where, errormsg // ' in file ' &
@@ -481,6 +526,7 @@ contains
     the_g_data%empty = .false.
     call mls_closefile(geos5File, error)
     if (error .gt. 0) call announce_error(lcf_where, "Could not close "// GEOS5File%Name)
+    if ( verbose ) call dump( the_g_data, details = 1 )
   end subroutine Read_geos5_7
 
   ! ----------------------------------------------- Read_geos5_or_merra
@@ -2529,6 +2575,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.67  2011/11/30 21:28:23  pwagner
+! Converted most debugging prints to verbose ones; more robust
+!
 ! Revision 2.66  2011/08/30 22:23:46  pwagner
 ! Should not try to read as geos5_7 if not hdf5
 !
