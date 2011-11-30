@@ -150,6 +150,7 @@ module ChunkDivide_m
   logical, parameter :: CHECKFORSHAREDMAFS = .true.
   logical, parameter :: CHECKFORMAFSINRANGE = .true.
   logical, parameter :: CHECKFORNONNEGOVLPS = .true.
+  logical, parameter :: BOMBIFPHINOTMONO = .true.
   logical, parameter :: DONTPAD = .true.
   integer :: swLevel ! How much extra debugging info to print (-1 means none)
   integer, parameter :: VERBOSETHRESHOLD = 1 ! was 0; turn on extra debugging
@@ -1821,6 +1822,7 @@ contains ! ===================================== Public Procedures =====
     subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
       ! obstructions.
+      use MLSFillValues, only: ISMONOTONIC
       use MLSL2OPTIONS, only: SHAREDPCF
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -1946,6 +1948,14 @@ contains ! ===================================== Public Procedures =====
               & tpGeodAngle, noMAFsRead, flag, &
               & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
               & dontPad=DONTPAD )
+            if ( BOMBIFPHINOTMONO .and. &
+              & .not. ChunkDivideConfig%skipL1BCheck ) then
+              if ( .not. isMonotonic(tpGeodAngle%dpField(1,1,1:noMAFsRead) ) &
+                & ) then
+                call MLSMessage ( MLSMSG_Error, ModuleName, &
+                  & 'tpGeodAngle is not monotonic--must quit', MLSFile=L1BFile )
+              endif
+            endif
             call smoothOutDroppedMAFs(tpGeodAngle%dpField, angleWasSmoothed, &
               & monotonize=.true.)
             call smoothOutDroppedMAFs(tpGeodAlt%dpField, wasSmoothed)
@@ -1992,7 +2002,7 @@ contains ! ===================================== Public Procedures =====
       end if                              ! Consider scan issues
 
       ! Here we look at radiances and switch changes.
-      if ( .not. ChunkDivideConfig%skipL1BCheck) &
+      if ( .not. ChunkDivideConfig%skipL1BCheck ) &
         call NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
 
       ! Sort the obstructions into order; prune them of repeats, overlaps etc.
@@ -2644,6 +2654,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.97  2011/11/30 21:33:13  pwagner
+! Quits with message if GeodAngle not monotonic
+!
 ! Revision 2.96  2011/06/29 21:50:20  pwagner
 ! Some cases may safely omit l1b files
 !
