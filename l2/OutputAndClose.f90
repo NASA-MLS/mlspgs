@@ -431,6 +431,7 @@ contains ! =====     Public Procedures     =============================
               & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
             cycle
           endif
+          if ( DEBUG ) call dump( inputFile )
         case default
         end select
 
@@ -1391,12 +1392,13 @@ contains ! =====     Public Procedures     =============================
     integer :: returnStatus
     integer :: Version
     ! Executable
-    if ( TOOLKIT ) then
+    if ( TOOLKIT .and. pcf_end >= pcf_start ) then
       Version = 1
       FileHandle = GetPCFromRef(shortName, pcf_start, &
         & pcf_end, &
         & TOOLKIT, returnStatus, Version, DEBUG, &
         & exactName=FullName)
+      if ( returnStatus /= 0 ) FullName = shortName ! In cases omitted from PCF
     else
       FullName = shortName
     end if
@@ -1698,6 +1700,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.156  2011/11/30 21:34:23  pwagner
+! Fixed bug affecting files w/o pcfids when using pcf
+!
 ! Revision 2.155  2011/07/15 00:14:28  pwagner
 ! Wont crash on metadata errors now; was crashing goldbrick
 !
