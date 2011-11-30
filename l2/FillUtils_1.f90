@@ -1689,7 +1689,8 @@ contains ! =====     Public Procedures     =============================
         quantity%values(1,:) = scale * sourceQuantity%values(1,1)
       else
         qIndex = findLast( sourceQuantity%values(:,1) /= 0._rv )
-        quantity%values(1,:) = scale * sourceQuantity%values(qIndex,1)
+        if ( qIndex > 0 ) &
+          & quantity%values(1,:) = scale * sourceQuantity%values(qIndex,1)
       endif
     end subroutine ConvergenceFromChisq
 
@@ -7015,6 +7016,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.49  2011/11/30 21:30:00  pwagner
+! Fixed bug affecting skipped retrievals
+!
 ! Revision 2.48  2011/11/04 23:46:45  pwagner
 ! Fixed bug added with last commit
 !
