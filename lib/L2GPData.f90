@@ -149,6 +149,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! if the options is present and contains the following characters:
 !   character         meaning
 !      ---            -------
+!       d              treat differing geolcations as bad chunks
+!       g              skip diff or dump of geolcations
 !       i              ignore bad chunks
 !       m              silent (mute)
 !       r              rms (or repair where appropriate)
@@ -1527,12 +1529,13 @@ contains ! =====     Public Procedures     =============================
       endif
       call SetupNewL2GPRecord ( tl2gp1, proto=l2gp1, which=which1(1:how_many) )
       call SetupNewL2GPRecord ( tl2gp2, proto=l2gp2, which=which2(1:how_many) )
-      print *, 'About to enter ..atLast having matched times'
+      if ( DEEBUG ) print *, 'About to enter ..atLast having matched times'
       call DiffThis ( tL2gp1, tL2gp2, &
       & Details, options, fields, numDiffs )
       call DestroyL2GPContents( tL2gp1 )
       call DestroyL2GPContents( tL2gp2 )
     else
+      if ( DEEBUG ) print *, 'Diffing as we found them'
       call DiffThis ( L2gp1, L2gp2, &
       & Details, options, fields, numDiffs )
     endif
@@ -1570,6 +1573,8 @@ contains ! =====     Public Procedures     =============================
       & 'losAngle, geodAngle, time, chunkNumber, frequency,'  // &
       & 'l2gpvalue, l2gpPrecision, status, quality, convergence'
     ! logical, parameter :: DEEBUG = .true.
+    logical :: diffGeosMeanBadChunks
+    logical :: skipGeos
     integer :: instance
     type (l2gpData_T) ::          L2GP2Temp
     integer :: MYDETAILS
@@ -1601,7 +1606,9 @@ contains ! =====     Public Procedures     =============================
     ShapesDontMatch = .false.
     badChunks = .false.
     badInstances = 0
+    diffGeosMeanBadChunks = .false.
     myFields = DEFAULTFIELDS
+    skipGeos = .false.
     if ( present(fields) ) myFields = fields
     if ( DEEBUG ) then
       call output( 'myDetails: ', advance='no' )
@@ -1682,18 +1689,27 @@ contains ! =====     Public Procedures     =============================
       & )
     if ( present ( options ) ) then
       badChunks = (index(options, 'i' ) > 0) .and. badChunks
+      diffGeosMeanBadChunks = ( index(options, 'd') > 0 )
+      skipGeos = ( index(options, 'g') > 0 )
     else
       badChunks = .false.
     endif
     ! OK, we'll try what you suggest
     call SetupNewL2GPRecord ( l2gp2Temp, proto=l2gp2 )
-    if ( badChunks ) then
+    l2gp2Temp%status = l2gp2%status
+    if ( diffGeosMeanBadChunks ) then
       do instance=1, L2gp1%nTimes
         if ( l2gp1%geodAngle(instance) /= l2gp2%geodAngle(instance) &
           & .or. &
           & l2gp1%solarZenith(instance) /= l2gp2%solarZenith(instance) &
           & .or. &
-          & l2gp1%time(instance) /= l2gp2%time(instance) &
+          & l2gp1%time(instance) /= l2gp2%time(instance) ) &
+          & l2gp2Temp%status(instance) = -1
+      enddo
+    endif
+    if ( badChunks ) then
+      do instance=1, L2gp1%nTimes
+        if  ( l2gp2Temp%status(instance) < 0 &
           & .or. &
           & mod(l2gp1%status(instance), 2) == 1 &
           & .or. &
@@ -1724,7 +1740,7 @@ contains ! =====     Public Procedures     =============================
       call output(badInstances, advance='yes')
     endif
 
-    call diffGeoLocations( l2gp1, l2gp2Temp )
+    if ( .not. skipGeos ) call diffGeoLocations( l2gp1, l2gp2Temp )
     if ( myDetails < 1 )  then
       call doneHere
       return
@@ -2420,6 +2436,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MYDETAILS
     character(len=Len(DATA_FIELDS)+Len(GEO_FIELDS)) :: myFields
     integer :: nUnique
+    logical :: skipGeos
     integer, dimension(1000) :: uniqueVals
 
     ! Executable code
@@ -2438,7 +2455,8 @@ contains ! =====     Public Procedures     =============================
     endif
 
     if ( myColumnsOnly .and. l2gp%nLevels > 1 ) return
-    
+    skipGeos = .false.
+    if ( present(options) ) skipGeos = ( index(options, 'g') > 0 )
     FillValue = real(l2gp%MissingValue, r8)
     FillValueGP = l2gp%MissingValue
     ChunkFillValue = int(l2gp%MissingValue)
@@ -2483,48 +2501,50 @@ contains ! =====     Public Procedures     =============================
       call output ( l2gp%MissingStatus, advance='yes')
      endif
     
-     ! if ( myDetails < 0 ) return
-    if ( showMe(myDetails > -1, myFields, 'pressure') ) &
-      & call dump ( l2gp%pressures, trim(l2gp%verticalCoordinate) // 's:', &
-      & FillValue=FillValueGP, width=width, options=options )
-      
-    if ( showMe(myDetails > -1, myFields, 'latitude') ) &
-      & call dump ( l2gp%latitude, 'Latitude:', FillValue=FillValueGP, &
-      & width=width, options=options )
-      
-    if ( showMe(myDetails > -1, myFields, 'longitude') ) &
-      & call dump ( l2gp%longitude, 'Longitude:', FillValue=FillValueGP, &
-      & width=width, options=options )
-      
-    if ( showMe(myDetails > -1, myFields, 'solartime') ) &
-      & call dump ( l2gp%solarTime, 'SolarTime:', FillValue=FillValueGP, &
-      & width=width, options=options )
-      
-    if ( showMe(myDetails > -1, myFields, 'solarzenith') ) &
-      & call dump ( l2gp%solarZenith, 'SolarZenith:', FillValue=FillValueGP, &
-      & width=width, options=options )
-      
-    if ( showMe(myDetails > -1, myFields, 'LOSAngle') ) &
-      & call dump ( l2gp%losAngle, 'LOSAngle:', FillValue=FillValueGP, &
-      & width=width, options=options )
-      
-    if ( showMe(myDetails > -1, myFields, 'geodAngle') ) &
-      & call dump ( l2gp%geodAngle, 'geodAngle:', FillValue=FillValueGP, &
-      & width=width, options=options )
-      
-    if ( showMe(myDetails > -1, myFields, 'time') ) &
-      & call dump ( l2gp%time, 'Time:', FillValue=FillValue, &
-      & width=width, options=options )
-      
-    if ( showMe(myDetails > -1, myFields, 'chunkNumber') ) &
-      & call dump ( l2gp%chunkNumber, 'ChunkNumber:', &
-      & width=width, options=options )
-      
-    if ( showMe(myDetails > -1, myFields, 'pressure') .and. &
-      & associated(l2gp%frequency) ) &
-      & call dump ( l2gp%frequency, 'Frequencies:', FillValue=FillValueGP, &
-      & width=width, options=options )
-      
+    if ( .not. skipGeos ) then
+      if ( showMe(myDetails > -1, myFields, 'pressure') ) &
+        & call dump ( l2gp%pressures, trim(l2gp%verticalCoordinate) // 's:', &
+        & FillValue=FillValueGP, width=width, options=options )
+
+      if ( showMe(myDetails > -1, myFields, 'latitude') ) &
+        & call dump ( l2gp%latitude, 'Latitude:', FillValue=FillValueGP, &
+        & width=width, options=options )
+
+      if ( showMe(myDetails > -1, myFields, 'longitude') ) &
+        & call dump ( l2gp%longitude, 'Longitude:', FillValue=FillValueGP, &
+        & width=width, options=options )
+
+      if ( showMe(myDetails > -1, myFields, 'solartime') ) &
+        & call dump ( l2gp%solarTime, 'SolarTime:', FillValue=FillValueGP, &
+        & width=width, options=options )
+
+      if ( showMe(myDetails > -1, myFields, 'solarzenith') ) &
+        & call dump ( l2gp%solarZenith, 'SolarZenith:', FillValue=FillValueGP, &
+        & width=width, options=options )
+
+      if ( showMe(myDetails > -1, myFields, 'LOSAngle') ) &
+        & call dump ( l2gp%losAngle, 'LOSAngle:', FillValue=FillValueGP, &
+        & width=width, options=options )
+
+      if ( showMe(myDetails > -1, myFields, 'geodAngle') ) &
+        & call dump ( l2gp%geodAngle, 'geodAngle:', FillValue=FillValueGP, &
+        & width=width, options=options )
+
+      if ( showMe(myDetails > -1, myFields, 'time') ) &
+        & call dump ( l2gp%time, 'Time:', FillValue=FillValue, &
+        & width=width, options=options )
+
+      if ( showMe(myDetails > -1, myFields, 'chunkNumber') ) &
+        & call dump ( l2gp%chunkNumber, 'ChunkNumber:', &
+        & width=width, options=options )
+
+      if ( showMe(myDetails > -1, myFields, 'pressure') .and. &
+        & associated(l2gp%frequency) ) &
+        & call dump ( l2gp%frequency, 'Frequencies:', FillValue=FillValueGP, &
+        & width=width, options=options )
+
+    endif      
+
     if ( showMe(myDetails > 0, myFields, 'l2gpvalue') ) then
       if ( l2gp%nFreqs < 2 ) then
         call dump ( real(l2gp%l2gpValue(1,:,:), r8), 'L2GPValue:', &
@@ -5007,6 +5027,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.180  2011/07/07 00:31:03  pwagner
+! Treats diffs of geolocation fields with periods
+!
 ! Revision 2.179  2011/02/05 01:33:44  pwagner
 ! Automatically sheds rank when nFreqs=1; passes options to dump routines
 !
