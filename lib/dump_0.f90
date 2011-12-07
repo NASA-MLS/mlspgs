@@ -25,7 +25,7 @@ module DUMP_0
   use DATES_MODULE, only: MAXUTCSTRLENGTH, &
     & REFORMATDATE, REFORMATTIME, SPLITDATETIME, TAI93S2UTC
   use IEEE_ARITHMETIC, only: IEEE_IS_FINITE
-  use MLSFILLVALUES, only : COLLAPSE, FILTERVALUES, HALFWAVES, &
+  use MLSFILLVALUES, only : BANDWIDTH, COLLAPSE, FILTERVALUES, HALFWAVES, &
     & ISFINITE, ISINFINITE, ISNAN, &
     & INFFUNCTION, NANFUNCTION, REORDERFILLVALUES, REPLACEFILLVALUES, &
     & WHEREARETHEINFS, WHEREARETHENANS
@@ -154,6 +154,7 @@ module DUMP_0
 ! (for dump or diff)
 !   character         meaning
 !      ---            -------
+!       B              show Bandwidth, % of array that is non-zero
 !       H              show rank, TheShape of array
 !       L              laconic; skip printing name, size of array
 !       b              table of % vs. amount of differences (pdf)
@@ -296,6 +297,7 @@ module DUMP_0
   character, public, parameter :: AFTERSUB = '#'
   character(len=*), parameter :: DEFAULTPCTFORMAT = '(0pf6.1)'
   ! These are the possible options to dumps, diffs
+  character, public, parameter :: dopt_bandwidth   = 'B'
   character, public, parameter :: dopt_clean       = 'c'
   character, public, parameter :: dopt_collapse    = 'l'
   character, public, parameter :: dopt_cyclic      = 'y'
@@ -343,12 +345,13 @@ module DUMP_0
   logical, parameter ::   SHORTCUTDIFFS = .false.
   ! character(len=MAXLINELEN) :: LINEOFZEROS
   logical :: DUMPTHESEZEROS
-  logical :: myClean, myCollapse, myCyclic, myDirect, myGaps, myLaconic, &
-    & myRMS, myShape, myStats, &
+  logical :: myBandwidth, myClean, myCollapse, myCyclic, myDirect, myGaps, &
+    & myLaconic, myRMS, myShape, myStats, &
     & myTable, myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
   character(len=16) :: myPCTFormat
   logical, save :: nameHasBeenPrinted = .false.
-  integer :: myRank, numNonFill, numFill
+  integer :: bwidth, myRank, numNonFill, numFill
+  real :: pctnzero
   logical, save :: thisIsADiff = .false.
   integer :: how_many
   integer, dimension(1024) :: which
@@ -2972,6 +2975,7 @@ contains
     character(len=*), intent(in), optional :: options
     nameHasBeenPrinted = .false.
     stampOptions%neverStamp = .true. ! So we don't interrupt tables of numbers
+    myBandwidth  = theDefault('bandwidth') ! .false.
     myClean      = theDefault('clean') ! .false.
     myCollapse   = theDefault('collapse') ! .false.
     myCyclic     = theDefault('cyclic') ! .false.
@@ -2984,9 +2988,9 @@ contains
     myTranspose  = theDefault('transpose')  ! .false.
     myTrim       = theDefault('trim')  ! .false.
     myUnique     = theDefault('unique')
-    myWholeArray = theDefault('wholearray') .or. &
-        & .not. (myStats .or. myRMS .or. myTable .or. myShape )
+    myWholeArray = theDefault('wholearray')
     if ( present(options) ) then
+      myBandwidth   =   index( options, dopt_bandwidth  ) > 0
       myClean       =   index( options, dopt_clean      ) > 0
       myCollapse    =   index( options, dopt_collapse   ) > 0
       myCyclic      =   index( options, dopt_cyclic     ) > 0
@@ -2999,11 +3003,14 @@ contains
       myTranspose   =   index( options, dopt_transpose  ) > 0
       myTrim        =   index( options, dopt_trim       ) > 0
       myUnique      =   index( options, dopt_unique     ) > 0
-      myWholeArray  = ( index( options, dopt_wholearray ) > 0 ) .or. &
-        & .not. (myCollapse .or. myStats .or. myRMS.or. myTable .or. myShape )
+      myWholeArray  = ( index( options, dopt_wholearray ) > 0 )
     endif
+    myWholeArray = myWholeArray .or. &
+      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+      & .or. myTable)
     onlyWholeArray = myWholeArray .and. &
-      & .not. (myCollapse .or. myRMS .or. myStats .or. myTable .or. myShape)
+      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+      & .or. myTable)
     nameHasBeenPrinted = nameHasBeenPrinted .or. myLaconic
   end subroutine theDumpBegins
 
@@ -3242,6 +3249,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.118  2011/12/07 01:14:44  pwagner
+! Added option to show bandwidth of banded arrays
+!
 ! Revision 2.117  2011/11/11 00:30:22  vsnyder
 ! Simplify notice of rank reduction
 !
