@@ -444,8 +444,11 @@ contains
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
     type(HessianElement_T), intent(in) :: H
     character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: Details ! Print details, -3, just check for NaNs,
-                                             !  0 => minimal, 1 => values, default 1
+    integer, intent(in), optional :: Details ! Print details, 
+                                             !-3, just check for NaNs,
+                                             ! 0 => minimal (shape, bandwidth), 
+                                             ! 1 => values, 
+                                             ! default 1
     integer, intent(in), optional :: Indices(:) ! 3 indices of the block
     logical, intent(in), optional :: CLEAN   ! print \size
     character(len=*), intent(in), optional :: options ! Passed dumping arrays
@@ -499,15 +502,21 @@ contains
         if ( any(isNaN(h%tuples%h)) ) &
           & call MLSMessage( MLSMSG_Warning, ModuleName, &
           & 'NaNs found in sparse Hessian block' )
-      else if ( my_details > 0 ) then
-        if ( DUMPASUNSPARSIFIED ) then
+      else if ( my_details > -1 ) then
+        if ( DUMPASUNSPARSIFIED .or. my_details == 0 ) then
           ! temporarily convert sparse representation to full
           call output ( '(Dumping as if full)', advance='yes' )
           call allocate_test( harray, h%nRows, h%nCols1, h%nCols2, &
             & "harray in Dump_Hessian_Blocks", ModuleName, fill=0.0_rh )
           call Repopulate( harray, h%tuples%i, h%tuples%j, h%tuples%k, &
             & h%tuplesFilled, h%tuples%h )
-          call Dump ( harray, 'Hessian values', options=options )
+          if ( my_details == 0 ) then
+            call Dump ( Reshape(harray, (/h%nCols1, h%nCols2, h%nRows/), &
+              & order=(/3,2,1/) ), &
+              & 'Hessian values', options='-B' ) ! Just bandwidth
+          else
+            call Dump ( harray, 'Hessian values', options=options )
+          endif
           call deallocate_test ( harray, moduleName, "harray in Dump_Hessian_Blocks" )
         else
           do i = 1, size(h%tuples)
@@ -529,6 +538,10 @@ contains
       else if ( details > 0 ) then
         call dump ( h%values, &
           & options=trim(myOptions) // merge('c',' ',my_clean) )
+      else if ( details == 0 ) then
+        call Dump ( Reshape(h%values, (/h%nCols1, h%nCols2, h%nRows/), &
+          & order=(/3,2,1/) ), &
+          & 'Hessian values', options='-B' ) ! Just bandwidth
       end if
     case ( h_unknown )
       call output ( 'of unknown form, nothing to dump', advance='yes' )
@@ -1311,6 +1324,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.24  2011/12/07 01:19:56  pwagner
+! Details=0 now dumps Bandwidth, too
+!
 ! Revision 2.23  2011/11/10 16:20:00  pwagner
 ! Fixed bug in streamline
 !
