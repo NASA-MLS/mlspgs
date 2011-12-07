@@ -77,6 +77,7 @@
     nameHasBeenPrinted = .false.
     myPCTFormat  = DEFAULTPCTFORMAT
     if ( PCTFORMAT /= '*' ) myPCTFormat = PCTFORMAT
+    myBandwidth  = theDefault('bandwidth') ! .false.
     myClean      = theDefault('clean') ! .false.
     myCollapse   = theDefault('collapse') ! .false.
     myGaps       = theDefault('gaps')
@@ -88,11 +89,12 @@
     myTranspose  = theDefault('transpose')  ! .false.
     myTrim       = theDefault('trim')  ! .false.
     myUnique     = theDefault('unique')
-    myWholeArray = theDefault('wholearray') .or. &
-        & .not. (myStats .or. myRMS.or. myTable .or. myShape )
+    myWholeArray = theDefault('wholearray')
     if ( present(options) ) then
+      myBandwidth   =   index( options, dopt_bandwidth  ) > 0
       myClean       =   index( options, dopt_clean      ) > 0
       myCollapse    =   index( options, dopt_collapse   ) > 0
+      myCyclic      =   index( options, dopt_cyclic     ) > 0
       myGaps        =   index( options, dopt_gaps       ) > 0
       myLaconic     =   index( options, dopt_laconic    ) > 0
       myRMS         =   index( options, dopt_rms        ) > 0
@@ -102,11 +104,14 @@
       myTranspose   =   index( options, dopt_transpose  ) > 0
       myTrim        =   index( options, dopt_trim       ) > 0
       myUnique      =   index( options, dopt_unique     ) > 0
-      myWholeArray  = ( index( options, dopt_wholearray ) > 0 ) .or. &
-        & .not. (myCollapse .or. myStats .or. myRMS.or. myTable .or. myShape )
+      myWholeArray  = ( index( options, dopt_wholearray ) > 0 )
     endif
+    myWholeArray = myWholeArray .or. &
+      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+      & .or. myTable)
     onlyWholeArray = myWholeArray .and. &
-      & .not. (myRMS .or. myStats .or. myTable)
+      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+      & .or. myTable)
 
     if ( len_trim(name2) < 1 ) then
       DiffName = trim(name1) // ' (diff)'
@@ -246,6 +251,10 @@
           & op='-' )
       endif
       if ( myRMS ) then
+        if ( .not. nameHasBeenPrinted ) then
+          call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        endif
         call output( 'Maximum difference: ', advance='no' )
         call output( exvalues(1), advance='no' )
         call output( '  ( as ratio:  ', advance='no' )
@@ -259,6 +268,10 @@
         call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
       endif
       if ( myTABLE ) then
+        if ( .not. nameHasBeenPrinted ) then
+          call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        endif
         call output( '% of arrays nearer than', advance='yes' )
         table(:,1) = gaps
         table(:,2) = pcts
@@ -287,6 +300,10 @@
         endif
         formats(2:7) = rmsFormat
         formats(1) = myPCTFormat ! '(0pf6.1)'
+        if ( .not. nameHasBeenPrinted ) then
+          call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        endif
         call dumpTable ( table, &
           & (/ '%          ', &
           &    'max diffs  ', &
@@ -298,6 +315,10 @@
           & headside=dumpTableSide, formats=formats )
       endif
       if ( myStats ) then
+        if ( .not. nameHasBeenPrinted ) then
+          call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        endif
         ! Now to show how near the two arrays are
         call output( '% of arrays equal ', advance='no' )
         call output( pctEqual, format = myPCTFormat, advance='no' )
@@ -383,6 +404,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.12  2011/12/07 01:13:38  pwagner
+! Added option to show bandwidth of banded arrays
+!
 ! Revision 2.11  2011/07/26 20:52:19  pwagner
 ! Clearer, less redundant
 !
