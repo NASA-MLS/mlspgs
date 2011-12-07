@@ -13,6 +13,7 @@
 module MLSFillValues              ! Some FillValue-related stuff
 !=============================================================================
 
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use IEEE_ARITHMETIC, only: ISFINITE => IEEE_IS_FINITE, ISNAN => IEEE_IS_NAN, &
     & IEEE_IS_FINITE, IEEE_IS_NAN
   use MLSCOMMON, only: FILL_SIGNAL, INF_SIGNAL, NAN_SIGNAL, UNDEFINEDVALUE, &
@@ -22,13 +23,12 @@ module MLSFillValues              ! Some FillValue-related stuff
   use MLSSETS, only: FINDALL, FINDFIRST, FINDLAST
   use MLSSTRINGLISTS, only: EXTRACTSUBSTRING 
   use MLSSTRINGS, only: LOWERCASE
-  use OUTPUT_M, only: OUTPUTNAMEDVALUE
 
   implicit none
 
   private
 
-  public :: Collapse, Depopulate, Repopulate
+  public :: Bandwidth, Collapse, Depopulate, Repopulate
   public :: EmbedArray, EssentiallyEqual, ExtractArray
   public :: extremum
   public :: FillFunction, InfFunction, NaNFunction
@@ -54,11 +54,22 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! (3) monotonic increasing or decreasing arrays
 ! (4) Some miscellaneous procedures identifying Finite, Nan, or Inf, quantities
 ! (All but (1) should perhaps be relocated into other modules)
+
+! Fill values are values in an array which have been marked as to be ignored
+! Sometimes they are preassigned values, as with mls hdf[eos] datasets
+! where we use -999.99
+! Sometimes they values given explicitly to mark where an agorithm failed
+! or a an excursion outside its region of validity was detected
+! Sometimes we simply want to consider only non-zero values
+
+! Could w generalize this to mark as Fill values any values above or
+! below a threshold, or whose absolute value is above a threshold?
 ! === (start of toc) ===                                                 
 !     c o n t e n t s
 !     - - - - - - - -
 
 !         Functions, operations, routines
+! Bandwidth                    Calculate the Bandwidth of a banded array
 ! Collapse                     Collapse an array into a lower rank array
 !                               e.g., by summing over elements of dropped index
 ! Depopulate                   Finds locations of non-zero values in presumably
@@ -96,6 +107,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! === (end of toc) ===                                                   
 
 ! === (start of api) ===
+! Bandwidth ( array, int bwidth, [real pctnzero], [int indxColpse] )
 ! Collapse ( arrayIn, nums, logs, [testvalue], [char* options] )
 ! Depopulate ( array[:], int i[:], int n, &
 !   & [nprec testvalue], [nprec values[:], [char* options] )
@@ -164,6 +176,12 @@ module MLSFillValues              ! Some FillValue-related stuff
 !  4  1  4  1  2  4  4
 !
 ! === (end of api) ===                                                 
+  interface BandWidth
+    module procedure BandWidth_1dr4, BandWidth_1dr8, BandWidth_1dint
+    module procedure BandWidth_2dr4, BandWidth_2dr8, BandWidth_2dint
+    module procedure BandWidth_3dr4, BandWidth_3dr8, BandWidth_3dint
+  end interface
+
   interface BridgeMissingValues
     module procedure BridgeMissingValues_1dr4, BridgeMissingValues_1dr8, BridgeMissingValues_1dint
     module procedure BridgeMissingValues_2dr4, BridgeMissingValues_2dr8, BridgeMissingValues_2dint
@@ -254,7 +272,12 @@ module MLSFillValues              ! Some FillValue-related stuff
   end interface
   
   interface output
-    module procedure output_str, output_int
+    module procedure output_str, output_int, output_real
+  end interface
+  
+  interface outputNamedValue
+    module procedure outputNamedValue_real, outputNamedValue_int, &
+      & outputNamedValue_str
   end interface
   
   interface RemoveFillValues
@@ -347,6 +370,118 @@ module MLSFillValues              ! Some FillValue-related stuff
   logical, parameter ::   DEEBUG = .false.
 
 contains
+
+  ! ---------------------------------------------  Bandwidth  -----
+  ! This family of routines calculates the Bandwidth of a presumably
+  ! banded matrix
+  ! Optionally it also returns the %age of elements that are non-zero
+  ! Passed a higher-rank object, that object is first collapsed to a matrix
+  ! Passed a rank-one object, it complains
+  !
+  ! Is there any advantage to be gained from generalizing to the case of
+  ! a "banded" matrix where the elements outside the band are Fill values
+  ! instead of zero?
+  subroutine BandWidth_1dint( iarray, bwidth, pctnzero )
+    ! Args
+    integer, dimension(:), intent(in )    :: iarray
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    call output( 'Sorry, Bandwidth inappropriate for 1-d array', advance='yes' )
+    bwidth = 0
+    if ( present(pctnzero) ) pctnzero = 0.
+  end subroutine BandWidth_1dint
+
+  subroutine BandWidth_1dr4( array, bwidth, pctnzero )
+    ! Args
+    integer, parameter :: RK = R4
+    real(rk), dimension(:), intent(in )   :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    ! Internal variables
+    call output( 'Sorry, Bandwidth inappropriate for 1-d array', advance='yes' )
+    bwidth = 0
+    if ( present(pctnzero) ) pctnzero = 0.
+  end subroutine BandWidth_1dr4
+
+  subroutine BandWidth_1dr8( array, bwidth, pctnzero )
+    ! Args
+    integer, parameter :: RK = R8
+    real(rk), dimension(:), intent(in )   :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    ! Internal variables
+    call output( 'Sorry, Bandwidth inappropriate for 1-d array', advance='yes' )
+    bwidth = 0
+    if ( present(pctnzero) ) pctnzero = 0.
+  end subroutine BandWidth_1dr8
+
+  subroutine BandWidth_2dint( iarray, bwidth, pctnzero )
+    ! Args
+    integer, dimension(:,:), intent(in )  :: iarray
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    integer, parameter :: RK = R4
+    ! Internal variables
+    real(rk), dimension(size(iarray, 1), size(iarray, 2)) :: array
+    array = iarray
+    call BandWidth( array, bwidth, pctnzero )
+  end subroutine BandWidth_2dint
+
+  subroutine BandWidth_2dr4( array, bwidth, pctnzero )
+    ! Args
+    integer, parameter :: RK = R4
+    real(rk), dimension(:,:), intent(in ) :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    ! Internal variables
+    include 'BandWidth.f9h'
+  end subroutine BandWidth_2dr4
+
+  subroutine BandWidth_2dr8( array, bwidth, pctnzero )
+    ! Args
+    integer, parameter :: RK = R8
+    real(rk), dimension(:,:), intent(in ) :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    ! Internal variables
+    include 'BandWidth.f9h'
+  end subroutine BandWidth_2dr8
+
+  subroutine BandWidth_3dint( array, bwidth, pctnzero, indxColpse )
+    ! Args
+    integer, dimension(:,:,:), intent(in)    :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    integer, optional, intent(in)         :: indxColpse ! which index to collapse
+    integer, dimension(:,:), pointer      :: ColpsedArray => null()
+    include 'BandWidth3d.f9h'
+  end subroutine BandWidth_3dint
+
+  subroutine BandWidth_3dr4( array, bwidth, pctnzero, indxColpse )
+    ! Args
+    integer, parameter :: RK = R4
+    real(rk), dimension(:,:,:), intent(in)   :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    integer, optional, intent(in)         :: indxColpse ! which index to collapse
+    ! Internal variables
+    real(rk), dimension(:,:), pointer     :: ColpsedArray => null()
+    include 'BandWidth3d.f9h'
+    ! call output( 'Sorry, Bandwidth inappropriate for 3-d array', advance='yes' )
+  end subroutine BandWidth_3dr4
+
+  subroutine BandWidth_3dr8( array, bwidth, pctnzero, indxColpse )
+    ! Args
+    integer, parameter :: RK = R8
+    real(rk), dimension(:,:,:), intent(in)   :: array
+    integer, intent(out)                  :: bwidth
+    real, optional, intent(out)           :: pctnzero
+    integer, optional, intent(in)         :: indxColpse ! which index to collapse
+    real(rk), dimension(:,:), pointer     :: ColpsedArray => null()
+    ! Internal variables
+    include 'BandWidth3d.f9h'
+    ! call output( 'Sorry, Bandwidth inappropriate for 3-d array', advance='yes' )
+  end subroutine BandWidth_3dr8
 
   ! ---------------------------------------------  Collapse  -----
   ! This family of routines collapses an array[i1,i2,..in] to lower-rank
@@ -2265,6 +2400,43 @@ contains
     
   end subroutine output_int
 
+  subroutine output_real(val, advance)
+    real, intent(in) :: val
+    character(len=*), optional, intent(in) :: advance
+    character(len=16) :: str
+    write(str, '(f12.2)') val
+    write(*, '(a1)', advance=advance) trim(str)
+    
+  end subroutine output_real
+
+  subroutine outputNamedValue_int(name, int)
+    character(len=*), intent(in) :: name
+    integer, intent(in) :: int
+    character(len=16) :: str
+    write(*, '(a1)', advance='no') trim(name) // ': '
+    write(str, '(i12)') int
+    write(*, '(a1)', advance='yes') trim(str)
+    
+  end subroutine outputNamedValue_int
+
+  subroutine outputNamedValue_real(name, val)
+    character(len=*), intent(in) :: name
+    real, intent(in) :: val
+    character(len=16) :: str
+    write(*, '(a1)', advance='no') trim(name) // ': '
+    write(str, '(f12.2)') val
+    write(*, '(a1)', advance='yes') trim(str)
+    
+  end subroutine outputNamedValue_real
+
+  subroutine outputNamedValue_str(name, str)
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: str
+    write(*, '(a1)', advance='no') trim(name) // ': '
+    write(*, '(a1)', advance='yes') trim(str)
+    
+  end subroutine outputNamedValue_str
+
   ! ----------------------------------  DUMP_NAME_V_PAIRS  -----
   subroutine DUMP_NAME_V_PAIRS ( VALUES, WIDTH )
     integer, intent(in)                         :: values(:)
@@ -2864,6 +3036,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.29  2011/12/07 01:16:15  pwagner
+! Added Bandwidth calculation
+!
 ! Revision 2.28  2011/07/26 20:44:21  pwagner
 ! Added some 4d interfaces
 !
