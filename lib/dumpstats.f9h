@@ -26,6 +26,12 @@
       call output( '   shape  ', advance='no' )
       call output( shape(array), advance='yes' )
     endif
+    if ( myBandwidth ) then
+      call BandWidth( array, bwidth, pctnzero )
+      call outputNamedValue( 'Band width', bwidth, advance='no' )
+      call output( '   % /= 0  ', advance='no' )
+      call output( pctnzero, advance='yes' )
+    endif
     if ( any(shape(array) == 0) ) return
     if ( myRMS ) then
       if ( .not. any(isfinite(array)) ) then
@@ -140,6 +146,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.26  2011/12/07 01:14:24  pwagner
+! Added option to show bandwidth of banded arrays
+!
 ! Revision 2.25  2011/07/26 20:42:49  pwagner
 ! Clearer, less redundant
 !
