@@ -17,9 +17,10 @@ module MLSFillValues              ! Some FillValue-related stuff
   use IEEE_ARITHMETIC, only: ISFINITE => IEEE_IS_FINITE, ISNAN => IEEE_IS_NAN, &
     & IEEE_IS_FINITE, IEEE_IS_NAN
   use MLSCOMMON, only: FILL_SIGNAL, INF_SIGNAL, NAN_SIGNAL, UNDEFINEDVALUE, &
-    & IS_WHAT_IEEE
+    & IS_WHAT_IEEE, MLSFill_T, MLSFILLS
   use MLSKINDS ! EVERYTHING
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, &
+    & MLSMSG_ERROR, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSETS, only: FINDALL, FINDFIRST, FINDLAST
   use MLSSTRINGLISTS, only: EXTRACTSUBSTRING 
   use MLSSTRINGS, only: LOWERCASE
@@ -28,6 +29,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 
   private
 
+  public :: addMLSFillToDatabase, Dump
   public :: Bandwidth, Collapse, Depopulate, Repopulate
   public :: EmbedArray, EssentiallyEqual, ExtractArray
   public :: extremum
@@ -69,44 +71,51 @@ module MLSFillValues              ! Some FillValue-related stuff
 !     - - - - - - - -
 
 !         Functions, operations, routines
-! Bandwidth                    Calculate the Bandwidth of a banded array
-! Collapse                     Collapse an array into a lower rank array
-!                               e.g., by summing over elements of dropped index
-! Depopulate                   Finds locations of non-zero values in presumably
-!                                sparse array
-! EmbedArray                   Replace a bloc of elements in the larger array
-!                              with the smaller
-! EssentiallyEqual             Returns true if two real arguments 'close enough'
-!                               (See comments below for interpretation
-!                                of array versions)
-! ExtractArray                 Extract a bloc of elements from the larger array
-!                                (optionally allocates bloc first)
-! Extremum                     Returns the value farther from 0
-! FillFunction                 Returns the Fill value
-! GatherArray                  Gather a subset of elements from a larger array
-! InfFunction                  Returns the Infinite value
-! NaNFunction                  Returns the NaN value
-! FilterValues                 Filters entries in two arrays
-! HalfWaves                    Count consecutive values with same sign
-! IsFillValue                  Returns true if argument is FillValue
-! IsFinite                     Returns true if argument is finite
-! IsInfinite                   Returns true if argument is infinite
-! IsNaN                        Returns true if argument is NaN
-! IsMonotonic                  Returns true if array is monotonic
-! Monotonize                   Replace any non-monotonic elements
-! RemoveFillValues             Removes FillValues from an array
-!                                returning a new array smaller in size
-! ReorderFillValues            Reorders FillValue entries at the end of an array
-! ReplaceFillValues            Replaces FillValue entries in an array
-! Repopulate                   Restores non-zero values in presumably
-!                                sparse array to their proper locations
-! RoundUpOrDown                Rounds an arg up or down depending on fraction
-! WhereAreTheFills             Find which array elements are Fill values
-! WhereAreTheInfs              Find which array elements are Inf
-! WhereAreTheNans              Find which array elements are NaN
+! addMLSFillToDatabase
+!                   Create or add to a database of MLSFills, to be used in 
+!                   deciding whether an argument is a Fill, broadly defined
+! Bandwidth         Calculate the Bandwidth of a banded array
+! Collapse          Collapse an array into a lower rank array
+!                    e.g., by summing over elements of dropped index
+! Depopulate        Finds locations of non-zero values in presumably
+!                     sparse array
+! Dump              Dump the MLSFills database
+! EmbedArray        Replace a bloc of elements in the larger array
+!                   with the smaller
+! EssentiallyEqual  Returns true if two real arguments 'close enough'
+!                    (See comments below for interpretation
+!                     of array versions)
+! ExtractArray      Extract a bloc of elements from the larger array
+!                     (optionally allocates bloc first)
+! Extremum          Returns the value farther from 0
+! FillFunction      Returns the Fill value
+! GatherArray       Gather a subset of elements from a larger array
+! InfFunction       Returns the Infinite value
+! NaNFunction       Returns the NaN value
+! FilterValues      Filters entries in two arrays
+! HalfWaves         Count consecutive values with same sign
+! IsFillValue       Returns true if argument is FillValue
+! IsFinite          Returns true if argument is finite
+! IsInfinite        Returns true if argument is infinite
+! IsNaN             Returns true if argument is NaN
+! IsMonotonic       Returns true if array is monotonic
+! Monotonize        Replace any non-monotonic elements
+! RemoveFillValues  Removes FillValues from an array
+!                     returning a new array smaller in size
+! ReorderFillValues Reorders FillValue entries at the end of an array
+! ReplaceFillValues Replaces FillValue entries in an array
+! Repopulate        Restores non-zero values in presumably
+!                     sparse array to their proper locations
+! RoundUpOrDown     Rounds an arg up or down depending on fraction
+! WhereAreTheFills  Find which array elements are Fill values
+! WhereAreTheInfs   Find which array elements are Inf
+! WhereAreTheNans   Find which array elements are NaN
 ! === (end of toc) ===                                                   
 
 ! === (start of api) ===
+! int addMLSFillToDatabase( MLSFill_T arg, [MLSFill_T yourDatabase(:)] )
+! int addMLSFillToDatabase( r8 FillValue, &
+!   [r8 tol], [char* condition], [MLSFill_T yourDatabase(:)] )
 ! Bandwidth ( array, int bwidth, [real pctnzero], [int indxColpse] )
 ! Collapse ( arrayIn, nums, logs, [testvalue], [char* options] )
 ! Depopulate ( array[:], int i[:], int n, &
@@ -115,6 +124,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 !   & [nprec testvalue], [nprec values[:], [char* options] )
 ! Depopulate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
 !   & [nprec testvalue], [nprec values[:], [char* options] )
+! Dump ( [MLSFill_T Database(:)] )
 ! EmbedArray ( bloc, array, int range[2], [char* options] )
 ! log EssentiallyEqual ( nprec A, nprec B, &
 !   [nprec FillValue], [nprec Precision] )
@@ -176,6 +186,10 @@ module MLSFillValues              ! Some FillValue-related stuff
 !  4  1  4  1  2  4  4
 !
 ! === (end of api) ===                                                 
+  interface addMLSFillToDatabase
+    module procedure addFillValueToDatabase, addMLSFillTypeToDatabase
+  end interface
+
   interface BandWidth
     module procedure BandWidth_1dr4, BandWidth_1dr8, BandWidth_1dint
     module procedure BandWidth_2dr4, BandWidth_2dr8, BandWidth_2dint
@@ -198,6 +212,10 @@ module MLSFillValues              ! Some FillValue-related stuff
     module procedure Depopulate_2d_r4, Depopulate_2d_r8
     module procedure Depopulate_3d_r4, Depopulate_3d_r8
     module procedure Depopulate_1d_int
+  end interface
+  
+  interface Dump
+    module procedure DumpMLSFillsDatabase
   end interface
 
   interface EmbedArray
@@ -272,7 +290,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   end interface
   
   interface output
-    module procedure output_str, output_int, output_real
+    module procedure output_str, output_int, output_real, output_dble
   end interface
   
   interface outputNamedValue
@@ -370,6 +388,83 @@ module MLSFillValues              ! Some FillValue-related stuff
   logical, parameter ::   DEEBUG = .false.
 
 contains
+
+  !-------------------------------------------  `  -----
+  integer function AddFillValueToDatabase( FillValue, &
+    & tol, condition, YOURDATABASE )
+
+    ! This function adds an FillValue data type to a database of said types,
+    ! creating a new database if it doesn't exist.  The result value is
+    ! the size -- where FillValue is put.
+
+    ! Dummy arguments
+    type (MLSFill_T), dimension(:), optional, pointer :: YOURDATABASE
+    real(r8), optional, intent(in)                    :: tol
+    real(r8), intent(in)                              :: FillValue
+    character(len=*), optional, intent(in)            :: condition
+
+    ! Local variables
+    type (MLSFill_T)                        :: item
+    ! Executable
+    item%value = FillValue
+    if ( present(condition) ) then
+      item%condition = condition
+    else
+      item%condition = '='
+    endif
+    if ( present(tol) ) then
+      item%tol = tol
+    else
+      item%tol = max( real(FILLVALUETOLERANCE, r8), abs(FillValue*1.d-6) )
+    endif
+    AddFillValueToDatabase = addMLSFillTypeToDatabase( item, yourDatabase )
+  end function AddFillValueToDatabase
+
+  !-------------------------------------------  `  -----
+  integer function addMLSFillTypeToDatabase( ITEM, YOURDATABASE )
+
+    ! This function adds an MLSFill data type to a database of said types,
+    ! creating a new database if it doesn't exist.  The result value is
+    ! the size -- where MLSFill is put.
+
+    ! Dummy arguments
+    type (MLSFill_T), dimension(:), optional, pointer :: YOURDATABASE
+    type (MLSFill_T), intent(in) :: ITEM
+
+    ! Local variables
+    type (MLSFill_T), dimension(:), pointer :: database
+    type (MLSFill_T), dimension(:), pointer :: tempDatabase
+    ! Executable
+    if ( present(yourDatabase) ) then
+      database => yourDatabase
+      addMLSFillTypeToDatabase = AddMLSFillToDefinite( item, yourdatabase )
+      ! call dump( yourdatabase )
+    else
+      database => MLSFills
+      addMLSFillTypeToDatabase = AddMLSFillToDefinite( item, MLSFills )
+      ! call dump( MLSFills )
+    endif
+!     call dump ( database )
+  end function addMLSFillTypeToDatabase
+
+  !-------------------------------------------  AddMLSFillToDefinite  -----
+  integer function AddMLSFillToDefinite( ITEM, DATABASE )
+
+    ! This function adds an MLSFill data type to a database of said types,
+    ! creating a new database if it doesn't exist.  The result value is
+    ! the size -- where MLSFill is put.
+
+    ! Dummy arguments
+    type (MLSFill_T), dimension(:), pointer :: DATABASE
+    type (MLSFill_T), intent(in) :: ITEM
+
+    ! Local variables
+    type (MLSFill_T), dimension(:), pointer :: tempDatabase
+    ! Executable
+    include "addItemToDatabase.f9h" 
+
+    AddMLSFillToDefinite = newSize
+  end function AddMLSFillToDefinite
 
   ! ---------------------------------------------  Bandwidth  -----
   ! This family of routines calculates the Bandwidth of a presumably
@@ -626,6 +721,45 @@ contains
     integer, parameter :: RK = r8
     include 'Decimate_3d.f9h'
   end subroutine Depopulate_3d_r8
+
+  ! ---------------------------------------------  Dump  -----
+  ! This family of routines performs any Dumps appropriate
+  ! to the args--in our case the MLSFill types
+  subroutine DumpMLSFillsDatabase ( database )
+    ! Args
+    type(MLSFill_T), dimension(:), pointer, optional :: database
+    ! Internal variables
+    type(MLSFill_T), dimension(:), pointer :: dumpingdatabase
+    integer :: i
+    ! Executable
+    if ( present(database) ) then
+      dumpingdatabase => database
+    else
+      dumpingdatabase => MLSFills
+    endif
+    if ( .not. associated(dumpingdatabase) ) then
+      call output( 'MLSFill database is not associated', advance='yes' )
+      return
+    endif
+    call output( 'MLSFill database', advance='yes' )
+    call output( '         i' )
+    call blanks(12)
+    call output( 'value')
+    call blanks(4)
+    call output( 'tolerance')
+    call blanks(4)
+    call output( '          condition', advance='yes' )
+    do i=1, size(dumpingdatabase)
+      call output( i )
+      call blanks ( 4 )
+      call output( dumpingdatabase(i)%value )
+      call blanks ( 4 )
+      call output( dumpingdatabase(i)%tol )
+      call blanks ( 4 )
+      call output( dumpingdatabase(i)%condition, advance='yes' )
+    enddo
+  end subroutine DumpMLSFillsDatabase
+
 
   ! ---------------------------------------------  EmbedArray  -----
   ! This family of routines replace a bloc of elements in a larger
@@ -1157,8 +1291,7 @@ contains
   elemental logical function IsFillValue_int ( A, FILLVALUE, STRICT )
     integer, intent(in) :: A
     integer, intent(in), optional :: FILLVALUE
-    logical, optional, intent(in) :: STRICT
-    integer  :: MYFILLVALUE
+    logical, optional, intent(in) :: STRICT ! true-> check FILLVALUE against arg
     ! Executable
     ! The following somewhat confusing business short-circuits
     ! checking the arg if we are strict but FillValue is not present
@@ -1167,17 +1300,18 @@ contains
       & strict .and. present(FillValue) &
       & )
     if ( .not. IsFillValue_int ) return
-    myFillValue = int(undefinedValue)
-    if ( present(fillValue) ) myFillValue = fillValue
-    IsFillValue_int = &
-      & abs(a - myFillValue) < 1 ! FILLVALUETOLERANCE
+    if ( .not. present(FillValue) ) then
+      IsFillValue_int = is_what_ieee( fill_signal, a )
+    else
+      IsFillValue_int = &
+        & abs(a - FillValue) < 1 ! FILLVALUETOLERANCE
+    endif
   end function IsFillValue_int
 
   elemental logical function IsFillValue_r4 ( A, FILLVALUE, STRICT )
     real(r4), intent(in) :: A
     real(r4), intent(in), optional :: FILLVALUE
-    logical, optional, intent(in) :: STRICT
-    real(r4)  :: MYFILLVALUE
+    logical, optional, intent(in) :: STRICT ! true-> check FILLVALUE against arg
     ! Executable
     ! The following somewhat confusing business short-circuits
     ! checking the arg if we are strict but FillValue is not present
@@ -1186,17 +1320,18 @@ contains
       & strict .and. present(FillValue) &
       & )
     if ( .not. IsFillValue_r4 ) return
-    myFillValue = undefinedValue
-    if ( present(fillValue) ) myFillValue = fillValue
-    IsFillValue_r4 = &
-      & abs(a - myFillValue) < max( FILLVALUETOLERANCE, abs(myFillValue/100000) )
+    if ( .not. present(FillValue) ) then
+      IsFillValue_r4 = is_what_ieee( fill_signal, a )
+    else
+      IsFillValue_r4 = &
+        & abs(a - FillValue) < max( FILLVALUETOLERANCE, abs(FillValue/100000) )
+    endif
   end function IsFillValue_r4
 
   elemental logical function IsFillValue_r8 ( A, FILLVALUE, STRICT )
     real(r8), intent(in) :: A
     real(r8), intent(in), optional :: FILLVALUE
-    logical, optional, intent(in) :: STRICT
-    real(r8)  :: MYFILLVALUE
+    logical, optional, intent(in) :: STRICT ! true-> check FILLVALUE against arg
     ! Executable
     ! The following somewhat confusing business short-circuits
     ! checking the arg if we are strict but FillValue is not present
@@ -1205,11 +1340,13 @@ contains
       & strict .and. present(FillValue) &
       & )
     if ( .not. IsFillValue_r8 ) return
-    myFillValue = undefinedValue
-    if ( present(fillValue) ) myFillValue = fillValue
-    IsFillValue_r8 = &
-      & abs(a - myFillValue) < &
-      & max( Real(FILLVALUETOLERANCE, r8), abs(myFillValue/100000) )
+    if ( .not. present(FillValue) ) then
+      IsFillValue_r8 = is_what_ieee( fill_signal, a )
+    else
+      IsFillValue_r8 = &
+        & abs(a - FillValue) < &
+        & max( Real(FILLVALUETOLERANCE, r8), abs(FillValue/100000) )
+    endif
   end function IsFillValue_r8
 
 ! ------------------------------------------------- IsFinite ---
@@ -2384,10 +2521,21 @@ contains
     
   end subroutine blanks
 
+  subroutine output_one_char(str)
+    character(len=1), intent(in) :: str
+    write(*, '(a1)', advance='no') str
+    
+  end subroutine output_one_char
+
   subroutine output_str(str, advance)
     character(len=*), intent(in) :: str
     character(len=*), optional, intent(in) :: advance
-    write(*, '(a1)', advance=advance) trim(str)
+    integer :: i
+    do i=1, len(str)
+      call output_one_char(str(i:i))
+    enddo
+    if ( .not. present(advance) ) return
+    if ( advance=='yes' ) call blanks( 0, advance='yes' )
     
   end subroutine output_str
 
@@ -2396,7 +2544,8 @@ contains
     character(len=*), optional, intent(in) :: advance
     character(len=16) :: str
     write(str, '(i12)') int
-    write(*, '(a1)', advance=advance) trim(str)
+    ! write(*, '(a1)', advance=advance) trim(str)
+    call output( trim(str), advance )
     
   end subroutine output_int
 
@@ -2404,10 +2553,21 @@ contains
     real, intent(in) :: val
     character(len=*), optional, intent(in) :: advance
     character(len=16) :: str
-    write(str, '(f12.2)') val
-    write(*, '(a1)', advance=advance) trim(str)
+    write(str, '(1pg12.2)') val
+    ! write(*, '(a1)', advance=advance) trim(str)
+    call output( trim(str), advance )
     
   end subroutine output_real
+
+  subroutine output_dble(val, advance)
+    double precision, intent(in) :: val
+    character(len=*), optional, intent(in) :: advance
+    character(len=16) :: str
+    write(str, '(1pg12.2)') val
+    ! write(*, '(a1)', advance=advance) trim(str)
+    call output( trim(str), advance )
+    
+  end subroutine output_dble
 
   subroutine outputNamedValue_int(name, int)
     character(len=*), intent(in) :: name
@@ -3036,6 +3196,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.30  2011/12/13 01:07:36  pwagner
+! Now uses MLSFills if allocated; can add to or dump it
+!
 ! Revision 2.29  2011/12/07 01:16:15  pwagner
 ! Added Bandwidth calculation
 !
