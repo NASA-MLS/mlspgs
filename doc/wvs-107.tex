@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107}
-\newcommand{\docdate}{12 December 2011}
+\newcommand{\docname}{\bf wvs-107r1}
+\newcommand{\docdate}{13 December 2011}
 
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -140,10 +140,10 @@ quantities.
 
 The layout of the extinction blocks of the Jacobian used by the retriever
 and those of the Jacobian computed by the forward model are shown in the
-following table.
+following table, wherein $N_S$ is the number of signals being processed.
 
 \newpage
-\begin{longtable}{l|ccccc|p{0.25in}|ccccc|}
+\begin{longtable}{c|ccccc|p{0.25in}|ccccc|}
 \multicolumn{1}{r}{}
 & \multicolumn{5}{c}{Retriever Jacobian blocks} & \multicolumn{1}{c}{} &
   \multicolumn{5}{c}{Forward Model Jacobian blocks} \\[-10pt]
@@ -151,9 +151,17 @@ following table.
 & \multicolumn{5}{c}{$N_M$} & \multicolumn{1}{c}{} &
   \multicolumn{5}{c}{$N_\phi$} \\
   \cline{2-6}\cline{8-12}
+% Rotating package doesn't render properly in xdvi
+\ifnum\pdfoutput>0
+\multirow{5}{*}{
+\begin{rotate}{90}\hspace*{-0.35in}$N_M \times N_S$\end{rotate}}
+\fi
       & $K^R_{11}$ &0 &0 &  & 0     & & $K^F_{11}$    & $K^F_{12}$    & $K^F_{13}$    & $\cdots$ & $K^F_{1 N_\phi}$ \\ 
+\ifnum\pdfoutput<1 $N_M$ \fi
       &0 & $K^R_{22}$ &0 &  & 0     & & $K^F_{21}$    & $K^F_{22}$    & $K^F_{23}$    & $\cdots$ & $K^F_{2 N_\phi}$ \\ 
-$N_M$ &0 &0 & $K^R_{33}$ &  & 0     & & $K^F_{31}$    & $K^F_{32}$    & $K^F_{33}$    & $\cdots$ & $K^F_{3 N_\phi}$ \\ 
+\ifnum\pdfoutput<1 $\times$ \fi
+      &0 &0 & $K^R_{33}$ &  & 0     & & $K^F_{31}$    & $K^F_{32}$    & $K^F_{33}$    & $\cdots$ & $K^F_{3 N_\phi}$ \\ 
+\ifnum\pdfoutput<1 $N_S$ \fi
       &  &  &  & $\cdots$   &       & & $\cdots$      & $\cdots$      & $\cdots$      & $\cdots$ & $\cdots$ \\    
       &0 &0 &0 &0 & $K^R_{N_M N_M}$ & & $K^F_{N_M 1}$ & $K^F_{N_M 2}$ & $K^F_{N_M 3}$ & $\cdots$ & $K^F_{ N_M N_\phi}$ \\
   \cline{2-6}\cline{8-12}
@@ -203,3 +211,6 @@ j = 1, \dots, N_\phi$.
 % $Id$
 
 % $Log$
+% Revision 1.1  2011/12/13 01:42:21  vsnyder
+% Initial commit
+%
