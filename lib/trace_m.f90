@@ -10,7 +10,9 @@
 ! foreign countries or providing access to foreign persons.
 
 module TRACE_M
-
+  use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
+  use MLSSTRINGLISTS, only: SWITCHDETAIL
+  implicit none
   private
   public :: Trace_Begin, Trace_End
   integer, public, save :: DEPTH   ! Depth in tree.  Used for trace printing.
@@ -19,6 +21,8 @@ module TRACE_M
   real :: ClockStack(0:clockStackMax) = 0.0
   double precision :: Memory(0:clockStackMax) = 0.0d0
   character (len=8), save :: PreviousDate = ' '
+  logical, save           :: PreviousDebug
+  logical, save           :: PreviousVerbose
   logical, parameter      :: DEEBUG = .false.
 
 !---------------------------- RCS Module Info ------------------------------
@@ -75,6 +79,16 @@ contains ! ====     Public Procedures     ==============================
       & advance='yes' )
     depth = depth + 1
     call MLSMessageCalls( 'push', constantName=Name )
+    if ( switchDetail( MLSNamesAreDebug, Name, options='-fc' ) > -1 .and. &
+      & .not. MLSDebug ) then
+      PreviousDebug = MLSDebug
+      MLSDebug = .true.
+    endif
+    if ( switchDetail( MLSNamesAreVerbose, Name, options='-fc' ) > -1 .and. &
+      & .not. MLSVerbose ) then
+      PreviousVerbose = MLSVerbose
+      MLSVerbose = .true.
+    endif
   end subroutine TRACE_BEGIN
 ! --------------------------------------------------    TRACE_END  -----
   subroutine TRACE_END ( NAME, INDEX )
@@ -126,6 +140,12 @@ contains ! ====     Public Procedures     ==============================
     end if
     call newLine
     call MLSMessageCalls( 'pop' )
+    if ( switchDetail( MLSNamesAreDebug, Name, options='-fc' ) > -1 ) then
+      MLSDebug = PreviousDebug
+    endif
+    if ( switchDetail( MLSNamesAreVerbose, Name, options='-fc' ) > -1 ) then
+      MLSVerbose = PreviousVerbose
+    endif
   end subroutine TRACE_END
 
 !------------------------ private procedures ---------------------
@@ -171,6 +191,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.20  2011/12/13 01:09:00  pwagner
+! Automatically turns on MLSVerbose or MLSDebug according to MLSNamesAre..
+!
 ! Revision 2.19  2011/10/14 00:33:17  pwagner
 ! Prints notice if date boundary crossed
 !
