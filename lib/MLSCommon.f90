@@ -48,9 +48,13 @@ module MLSCommon                ! Common definitions for the MLS software
 !                (Should we replace these with FileIDs?)
 ! L2Metadata_T  Coords of (lon,lat) box to write as metadata
 ! MLSFile_T     File name, type, id, etc.
+! MLSFill_T     Fill value data type
+! MLSFills      database of MLSFill values
 ! Range_T       Bottom, Top of PCFID range
 ! Interval_T    Bottom, Top of a real interval (open)
 ! TAI93_Range_T start, end times in TAI93 formatted r8
+! MLSVerbose    Should we print extra stuff?
+! MLSDebug      Should we print even more stuff?
 
 !     (subroutines and functions)
 ! inRange       does an argument lie with a specified range or interval
@@ -59,7 +63,7 @@ module MLSCommon                ! Common definitions for the MLS software
 ! === (start of api) ===
 ! log inRange( int arg, Range_T range )
 ! log inRange( real arg, Interval_T range )
-! log is_what_ieee( int what, num arg )
+! log is_what_ieee( type_signal what, num arg )
 ! === (end of api) ===
 
 !---------------------------- RCS Module Info ------------------------------
@@ -76,6 +80,7 @@ module MLSCommon                ! Common definitions for the MLS software
 
   public :: FileIDs_T
   public :: MLSFile_T
+  public :: MLSFill_T
   public :: L1BInfo_T
   public :: Range_T
   public :: TAI93_Range_T
@@ -97,13 +102,26 @@ module MLSCommon                ! Common definitions for the MLS software
   
   ! The following are integer flags 'signalling' what kind of ieee number
   ! we would want to test for, e.g. in a multi-purpose procedure
+  ! Their principal use is as args to is_what_ieee
+  ! Note that the same test value can be finite and a Fill value
+  ! simultaneously
   integer, public, parameter :: FINITE_SIGNAL = 0
   integer, public, parameter :: INF_SIGNAL    = FINITE_SIGNAL + 1
   integer, public, parameter :: NAN_SIGNAL    = INF_SIGNAL + 1
   integer, public, parameter :: FILL_SIGNAL   = NAN_SIGNAL + 1
+  integer, public, parameter :: OLDFILL_SIGNAL= FILL_SIGNAL + 1
+
+  ! Not just "is" but "=", because "is" may accept under broader conditions
+  interface equalsFillValue
+    module procedure equalsFillValue_r4, equalsFillValue_r8, equalsFillValue_int
+  end interface
 
   interface inRange
     module procedure inRange_r4, inRange_r8, inRange_int
+  end interface
+
+  interface is_a_fill_value
+    module procedure is_a_fill_value_r4, is_a_fill_value_r8, is_a_fill_value_int
   end interface
 
   interface is_what_ieee
@@ -111,6 +129,14 @@ module MLSCommon                ! Common definitions for the MLS software
     module procedure is_what_ieee_character
   end interface
   
+  !-----------------------------------------------------------
+  !   P a r a m e t e r s   a n d    D a t a t y p e s
+  !-----------------------------------------------------------
+  logical, public :: MLSVerbose = .false. ! Should we print extra stuff?
+  logical, public :: MLSDebug =   .false. ! Should we print even more stuff?
+  integer, parameter :: DEBUGNAMESLEN = 256
+  character(len=DEBUGNAMESLEN), public, save :: MLSNamesAreDebug   = ' '
+  character(len=DEBUGNAMESLEN), public, save :: MLSNamesAreVerbose = ' '
   ! Because we'd like not to always drag the SDPToolkit with us
   ! everywhere we go
   integer, private, parameter :: PGSd_PC_FILE_PATH_MAX = 1024
@@ -122,10 +148,23 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: FileNameLen=max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
   integer, public, parameter :: BareFNLen=64      ! Bare file name length (w/o path)
 
-  real(r4), public, parameter ::    DEFAULTUNDEFINEDVALUE = -999.99 ! Try to use in lib, l2
-  real(r4), public, parameter ::    UNDEFINEDTOLERANCE = 0.2 ! Poss. could make it 1
-
+  !----------------------------------------------------------------------
+  !         Undefined value
   ! This can be set to a different value if that would be more convenient
+  ! Undefined value has two possible uses:
+  ! (1) on output, it may be pre-assigned to every numerically-valued
+  ! entry. If any persist after the algorithm completes, that would
+  ! be a sign the algorithm failed to calculate a valid result for that
+  ! entry; e.g., it may have encountered input data outside its range of validity
+
+  ! (2) on input, entries may be checked against it for a signal that the data
+  ! should be ignored or that it is a Fill value
+  
+  ! On the other hand, we may phase (2) out in favor of the MLSFills
+  ! mechanism; see below
+  real(r4), public, parameter :: DEFAULTUNDEFINEDVALUE = -999.99 ! Try to use in lib, l2
+  real(r4), public, parameter :: UNDEFINEDTOLERANCE = 0.2 ! Poss. could make it 1
+
   real(r4), public, save      ::    UNDEFINEDVALUE = DEFAULTUNDEFINEDVALUE
   ! --------------------------------------------------------------------------
   
@@ -204,6 +243,41 @@ module MLSCommon                ! Common definitions for the MLS software
     real :: maxLon = 180.0     ! max Longitude
   end type L2Metadata_T
 
+  ! --------------------------------------------------------------------------
+  ! Datatype for the Fill 
+  ! (its value(s), whether Fills
+  ! mean a value greater than or equal to, etc.)
+  ! We will be migrating older is-Fill tests to use this instead
+  ! to handle multiple Fill values and idea of range
+  
+  ! The idea is that a tested value is a fill value if it satisfies any
+  ! of a set of conditions with respect to reference values
+  ! This is an obvious generalization of the older test where we
+  ! tested only whether it equaled one specified reference value
+  
+  ! Why do this? We use -999.99, both in level 1 and level 2
+  ! Gloria uses 10^12
+  ! GMAO uses 10^15
+
+  type MLSFill_T
+    real(r8)             :: value
+    ! The condition for each value; possibilities are (testing a value "it")
+    ! id   condition(i)      meaning (i.e., it is a Fill value if ..
+    !  0    =              it = values(i)
+    !  1    >              it > values(i)
+    !  2    <              it < values(i)
+    !  3    >=             it > or = values(i)
+    
+    !  4    <=             it < or = values(i)
+    ! In addition, if '||' are found in the condition(i), we
+    ! take its absolute value before applying the test
+    ! (We also add 10 to its id--YACH "yet another crude hack")
+    real(r8)             :: tol ! its tolerance, if any
+    character(len=4) :: condition
+  end type MLSFill_T
+  
+  type(MLSFill_T), public, save, dimension(:), pointer :: MLSFills => null()
+
   contains
 
   elemental function inRange_int(arg, range) result(relation)
@@ -243,9 +317,11 @@ module MLSCommon                ! Common definitions for the MLS software
       itIs = .not. ( ieee_is_finite(arg) .or. ieee_is_nan(arg) )
     case (nan_signal)
       itIs = ieee_is_nan(arg)
-    case (fill_signal)
+    case (oldfill_signal)
       itIs = abs(arg - undefinedValue) < &
         & max( Real(undefinedTolerance, r8), abs(undefinedValue/100000._r8) )
+    case (fill_signal)
+      itIs = is_a_fill_value( arg )
     case default
       itIs = .false. ! what signal flag did you mean? not recognized
     end select
@@ -264,9 +340,11 @@ module MLSCommon                ! Common definitions for the MLS software
       itIs = .not. ( ieee_is_finite(arg) .or. ieee_is_nan(arg) )
     case (nan_signal)
       itIs = ieee_is_nan(arg)
-    case (fill_signal)
+    case (oldfill_signal)
       itIs = ( abs(arg-int(undefinedvalue)) < &
         & max(undefinedTolerance, abs(undefinedvalue/100000)) )
+    case (fill_signal)
+      itIs = is_a_fill_value( arg )
     case default
       itIs = .false. ! what signal flag did you mean? not recognized
     end select
@@ -285,8 +363,10 @@ module MLSCommon                ! Common definitions for the MLS software
       itIs = .false. ! .not. ( ieee_is_finite(arg) .or. ieee_is_nan(arg) )
     case (nan_signal)
       itIs = .false. ! ieee_is_nan(arg)
-    case (fill_signal)
+    case (oldfill_signal)
       itIs = ( abs(arg-int(undefinedvalue)) < 1 )
+    case (fill_signal)
+      itIs = is_a_fill_value( arg )
     case default
       itIs = .false. ! what signal flag did you mean? not recognized
     end select
@@ -312,6 +392,71 @@ module MLSCommon                ! Common definitions for the MLS software
     end select
   end function is_what_ieee_character
   
+  elemental function is_a_fill_value_int( arg ) result ( itIs )
+    integer, intent(in) :: arg
+    logical :: itIs
+    integer :: k
+    integer :: x
+    include 'isafillvalue.f9h'
+  end function is_a_fill_value_int
+  
+  elemental function is_a_fill_value_r4( arg ) result ( itIs )
+    real(r4), intent(in) :: arg
+    logical :: itIs
+    integer :: k
+    real(r4) :: x
+    include 'isafillvalue.f9h'
+  end function is_a_fill_value_r4
+  
+  elemental function is_a_fill_value_r8( arg ) result ( itIs )
+    real(r8), intent(in) :: arg
+    logical :: itIs
+    integer :: k
+    real(r8) :: x
+    include 'isafillvalue.f9h'
+  end function is_a_fill_value_r8
+  
+  elemental function whatCondition ( c ) result ( what )
+    ! Returns what condition id
+    character(len=*), intent(in) :: c
+    integer :: what
+    if ( index(c, '<=') > 0 ) then
+      what = 4
+    elseif ( index(c, '>=') > 0 ) then
+      what = 3
+    elseif ( index(c, '<') > 0 ) then
+      what = 2
+    elseif ( index(c, '>') > 0 ) then
+      what = 1
+    else
+      what = 0
+    endif
+    if ( index(c, '|') > 0 ) what = what + 10
+  end function whatCondition
+  
+  elemental function equalsFillValue_int( arg, theFillValue ) result( itsafill )
+    integer, intent(in) :: arg
+    real(r8), intent(in) :: theFillValue
+    logical :: itsafill
+    itsafill = ( abs(arg-int(theFillValue)) < 1 )
+  end function equalsFillValue_int
+
+  elemental function equalsFillValue_r4( arg, theFillValue ) result( itsafill )
+    real(r4), intent(in) :: arg
+    real(r8), intent(in) :: theFillValue
+    logical :: itsafill
+    itsafill = ( abs(arg-theFillValue) < &
+    & max(real(undefinedTolerance, r8), abs(theFillValue*1.d-6)) )
+  end function equalsFillValue_r4
+
+  elemental function equalsFillValue_r8( arg, theFillValue ) result( itsafill )
+    real(r8), intent(in) :: arg
+    real(r8), intent(in) :: theFillValue
+    logical :: itsafill
+    itsafill = ( abs(arg-theFillValue) < &
+    & max(real(undefinedTolerance, r8), abs(theFillValue*1.d-6)) )
+  end function equalsFillValue_r8
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -328,6 +473,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.37  2011/12/13 01:06:03  pwagner
+! Generalized Fill by MLSFill type; added MLSVerbose and MLSDebug
+!
 ! Revision 2.36  2011/08/26 00:27:48  pwagner
 ! Added Interval_T
 !
