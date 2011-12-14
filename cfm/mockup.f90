@@ -16,6 +16,7 @@
 program mockup
 
     use CFM
+    use CFM, only: ForwardModelConfig_T 
     use input
     use machine, only: getarg
 
@@ -455,6 +456,10 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.53  2011/11/10 17:07:07  honghanh
+! Add 'qname' optional argument to a few CreateMLSValue_*
+! subroutines.
+!
 ! Revision 1.52  2011/11/08 16:13:57  honghanh
 ! Add 'qname' parameter to CreateMLSValue_O2 subroutine.
 !

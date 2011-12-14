@@ -17,7 +17,8 @@ module cfm          ! callable forward model
                              CreateMLSValue_EarthReflectiviy, &
                              CreateMLSValue_LSF, CreateMLSValue_FromL1BOA, &
                              CreateMLSValue_SpaceRadiance, GetConstantQuantities, &
-                             CreateMLSValue_ElevationOffset
+                             CreateMLSValue_ElevationOffset, &
+                             timeRange2MafRange
    use Chunks_m, only: MLSChunk_T
    use CFM_IO_M, only: Read_Spectroscopy, ReadDACSFilterShapes, &
                      ReadAntennaPatterns, ReadFilterShapes, &
@@ -86,6 +87,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.22  2011/11/01 22:16:11  honghanh
+! Add API to destroy individual QuantityTemplate_T and VectorValue_T
+!
 ! Revision 1.21  2011/10/31 20:04:59  honghanh
 ! Change CreateMLSValue_FromL1B to CreateMLSValue_FromL1BOA.
 !

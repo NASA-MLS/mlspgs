@@ -46,6 +46,7 @@ module CFM_MLSSetup_m
     public :: CreateMLSValue_EarthReflectiviy, CreateMLSValue_LSF
     public :: CreateMLSValue_FromL1BOA, CreateMLSValue_SpaceRadiance
     public :: GetConstantQuantities, CreateMLSValue_ElevationOffset
+    public :: timeRange2MafRange
 
     interface CFM_MLSSetup
         module procedure CFM_MLSSetup_Obsolete, CFM_MLSSetup_Compact
@@ -1259,6 +1260,61 @@ module CFM_MLSSetup_m
         !call dump(quantity, details=3)
         call FillLimbSidebandFractions(stateVectorExtra)
         call FillElevationOffsets(stateVectorExtra)
+    end subroutine
+
+    subroutine timeRange2MafRange (startTime, endTime, leapsecfile, filedatabase, &
+    startL1Maf, endL1Maf)
+        use INIT_TABLES_MODULE, only: l_ghz, phyq_mafs, l_orbital
+        use SDPToolkit, only: mls_utctotai
+
+        ! The start time of the data to be read in the format
+        ! yyyy-doyThh:mm:ss.zzzz
+        character(len=CCSDSlen), intent(in) :: startTime
+        ! The stop time of the data to be read in the same format as startTime.
+        character(len=CCSDSlen), intent(in) :: endTime
+        character(len=*), intent(in) :: leapsecfile
+        type (MLSFile_T), dimension(:), pointer :: filedatabase
+        integer, intent(out) :: startL1Maf
+        integer, intent(out) :: endL1Maf
+
+        type (TAI93_Range_T) :: processingRange
+        integer :: error
+        type (MLSChunk_T) :: chunk
+
+        ! Get the start time and end time encoded
+        error = mls_utctotai (trim(leapsecFile), startTime, processingrange%starttime)
+        if (error /= 0) &
+            call MLSMessage (MLSMSG_Error, moduleName, &
+            "Could not convert UTC Start time to TAI")
+
+        error = mls_utctotai (trim(leapsecFile), endtime, processingrange%endtime)
+        if (error /= 0) &
+            call MLSMessage (MLSMSG_Error, moduleName, &
+            "Could not convert UTC End time to TAI")
+
+        ! Initialize ChunkDivideConfig
+        chunkDivideConfig%method = l_orbital
+        chunkDivideConfig%maxLength = 3500
+        chunkDivideConfig%maxLengthFamily = phyq_mafs
+        chunkDivideConfig%skipL1BCheck = .true.
+        chunkDivideConfig%homeModule = l_ghz
+        chunkDivideConfig%criticalModules = l_ghz
+        chunkDivideConfig%homeGeodAngle = 0.0_r8
+        chunkDivideConfig%maxGap = 2.0_r8
+        chunkDivideConfig%maxGapFamily = phyq_mafs
+        chunkDivideConfig%maxOrbY = 50000.0_r8 ! Unit is meter
+        chunkDivideConfig%scanLowerLimit = (/-20000.0_r8, 10000.0_r8 /) ! unit is meter
+        chunkDivideConfig%scanUpperLimit = (/ 40000.0_r8, 200000.0_r8 /) ! unit is meter
+        chunkDivideConfig%lowerOverlap = 0.0
+        chunkDivideConfig%upperOverlap = 0.0
+        chunkDivideConfig%lowerOverlapFamily = phyq_mafs
+        chunkDivideConfig%upperOverlapFamily = phyq_mafs
+        chunkDivideConfig%noChunks = 1
+        ! Create a fake chunk out of the start time, end time, and L1BOA
+        chunk = GetChunkFromTimeRange(processingRange, filedatabase, chunkDivideConfig)
+
+        startL1Maf = chunk%firstMafIndex
+        endL1Maf = chunk%lastMafIndex
     end subroutine
 
 !--------------------------- end bloc --------------------------------------

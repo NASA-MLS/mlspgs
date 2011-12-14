@@ -24,6 +24,9 @@ module Input
 !Ming: change the example day to 2009 day040
    character(len=100) :: l1boa = "/data/emls/l1b/v02.23/2009/040/MLS-Aura_L1BOA_v02-23-c01_2009d040.h5"
    character(len=100) :: l1brad = "/data/emls/l1b/v02.23/2009/040/MLS-Aura_L1BRADG_v02-23-c01_2009d040.h5"
+! this file is for ptan:
+   character(len=100) :: ptandgm = &
+   '/data/emls/l2aux/v03.10/2009/040/MLS-Aura_L2AUX-DGM_v03-10-c01_2009d040.h5                          '
 !Ming: I assume we keep these
    character(len=100) :: spectroscopy = '/data/emls/l2cal/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5i_0000d000.h5'
    character(len=100) :: leapsecFile = '/software/toolkit/LF6.1/toolkit/database/common/TD/leapsec.dat'
