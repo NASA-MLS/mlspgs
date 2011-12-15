@@ -18,7 +18,7 @@
 !   double precision, intent(in), optional :: FILLVALUE      
 !   integer, intent(in), optional :: WIDTH                   
 !   character(len=*), intent(in), optional :: FORMAT         
-!   integer, intent(in), optional :: LBOUND                  
+!   integer, intent(in), optional :: LBOUND  ! to print for first dimension              
 !   character(len=*), intent(in), optional :: options        
 !   integer :: I, J, K, L                                    
 !   integer :: NumZeroRows                                   
@@ -27,23 +27,61 @@
 !   integer :: nUnique                                       
 !   integer, dimension(MAXNUMELEMENTS) :: counts             
 !   double precision, dimension(MAXNUMELEMENTS) :: elements  
+    base = 2
+    if ( present(lbound) ) base = lbound + 1
+
     numZeroRows = 0
     if ( any(shape(array) == 0) ) then
       call empty ( name )
+    else if ( size(array) == 1 ) then
+      if ( present(theShape) ) then
+        call name_and_size ( name, myClean, 1, theShape )
+      else
+        call name_and_size ( name, myClean, 1, '(1,1,1)' )
+      end if
+      call output ( base-1, before='(', after=') ' )
+      call output ( array(1,1,1), format=myFormat, advance='yes' )
     else if ( size(array,1) == 1 ) then
-      if ( myWholeArray ) call output( '1st size is 1: reducing rank to 2', advance='yes' )
-      call dump ( array(1,:,:), name, &
-        & fillValue=fillValue, format=format, options=options )
+      if ( myWholeArray ) then
+        if ( present(theShape) ) then
+          call dump ( array(1,:,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape=theShape )
+        else
+          call dump ( array(1,:,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape='(1,:,:)' )
+        endif
+      else
+        call dump ( array(1,:,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
     else if ( size(array,2) == 1 ) then
-      if ( myWholeArray ) call output( '2nd size is 1: reducing rank to 2', advance='yes' )
-      call dump ( array(:,1,:), name, &
-        & fillValue=fillValue, format=format, options=options )
+      if ( myWholeArray ) then
+        if ( present(theShape) ) then
+          call dump ( array(:,1,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape=theShape )
+        else
+          call dump ( array(:,1,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape='(:,1,:)' )
+        endif
+      else
+        call dump ( array(:,1,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
     else if ( size(array,3) == 1 ) then
-      if ( myWholeArray ) call output( '3rd size is 1: reducing rank to 2', advance='yes' )
-      call dump ( array(:,:,1), name, &
-        & fillValue=fillValue, format=format, options=options )
+      if ( myWholeArray ) then
+        if ( present(theShape) ) then
+          call dump ( array(:,:,1), name, &
+            & fillValue=fillValue, format=format, options=options, theShape=theShape )
+        else
+          call dump ( array(:,:,1), name, &
+            & fillValue=fillValue, format=format, options=options, theShape='(:,:,1)' )
+        endif
+      else
+        call dump ( array(:,:,1), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
     else
-      call name_and_size ( name, myClean, size(array) )
+      call name_and_size ( name, myClean, size(array), theShape )
       if ( present(name) .and. .not. mylaconic ) call newLine
       do i = 1, size(array,1)
         do j = 1, size(array,2)
@@ -80,6 +118,9 @@
    call theDumpEnds
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.4  2011/12/15 01:44:33  pwagner
+! Tries to retain theShape if present
+!
 ! Revision 2.3  2011/07/26 20:45:21  pwagner
 ! Clearer, less redundant
 !
