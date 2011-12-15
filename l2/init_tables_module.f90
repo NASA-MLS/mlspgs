@@ -1187,6 +1187,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_sdname, t+t_string, n+n_field_type, &
+             begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_type, t+t_outputType, ndr+n_field_type, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
              np+n_spec_def /) )
@@ -1718,6 +1720,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.528  2011/12/15 01:50:49  pwagner
+! Added sdName and /spread fields to DirectRead
+!
 ! Revision 2.527  2011/11/18 23:41:44  pwagner
 ! Workaround for faulty dependency calculation of srclib/tree_checker
 !
