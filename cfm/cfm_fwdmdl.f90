@@ -57,6 +57,11 @@ module CFM_FWDMDL_M
       ! The matrix equivalent of the forward model with the specific
       ! setting in the config object.
       type(matrix_T), intent(inout), optional :: JACOBIAN
+      ! The 0-based index of the instance (maf or profile) stored in
+      ! fwdModelIn to run the forward model over.
+      ! If there is only 1 instance, then this field should be 0.
+      ! If there is N instance, then the appropriate values for this
+      ! field is 0 to N-1.
       integer, intent(in), optional :: REQUESTEDMAF
 
       type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
@@ -90,6 +95,7 @@ module CFM_FWDMDL_M
 
    end subroutine
 
+    ! This method is obsolete.
     ! Compute radiances based on atmospheric state information provided
     ! by fwdModelIn and fwdModelExtra.
     subroutine ForwardModelWChunk (chunk, Config, FwdModelIn, FwdModelExtra, &
@@ -149,6 +155,11 @@ module CFM_FWDMDL_M
         use ForwardModelWrappers, only: ForwardModelOrig => ForwardModel
         use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
 
+        ! The 0-based index of the instance (maf or profile) stored in
+        ! fwdModelIn to run the forward model over.
+        ! If there is only 1 instance, then this field should be 0.
+        ! If there is N instance, then the appropriate values for this
+        ! field is 0 to N-1.
         integer, intent(in) :: RequestedMAF
         ! Configuration information for the forward model
         type(ForwardModelConfig_T), dimension(:), intent(inout) :: CONFIG
@@ -200,6 +211,11 @@ module CFM_FWDMDL_M
 end module
 
 ! $Log$
+! Revision 1.8  2011/06/21 18:54:28  honghanh
+! Obsoleting the old ForwardModel subroutine.
+! Instead, adding 2 new subroutines without using requested maf as an optional parameter.
+! Introducing ForwardModel2
+!
 ! Revision 1.7  2010/11/19 17:16:08  honghanh
 ! Add example to use the requestedMAF feature in forward model
 !

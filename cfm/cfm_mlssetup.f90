@@ -66,6 +66,8 @@ module CFM_MLSSetup_m
 
     contains
 
+    ! Initializes CFM library and HDF5 library. Also parses the forward model
+    ! configuration file.
     subroutine CFM_MLSSetup_Compact (signalFileName, configFileName, ForwardModelConfigDatabase)
         use CFM_Tree_Walker_m, only : Walk_Tree
         use EmpiricalGeometry, only: CFM_InitEmpiricalGeometry
@@ -337,7 +339,8 @@ module CFM_MLSSetup_m
 
     end subroutine
 
-    ! Clean up allocated memory, close opened files
+    ! Clean up allocated memory, close opened files.
+    ! This subroutine will deallocate the forward model config database.
     subroutine CFM_MLSCleanup_Compact (forwardModelConfigDatabase)
         use ForwardModelConfig, only: DestroyFWMConfigDatabase
         use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
@@ -449,6 +452,8 @@ module CFM_MLSSetup_m
 
     end subroutine CFM_MLSCleanup_Obsolete
 
+    ! Creates a VectorValue_T object and fills it with constants values for O2.
+    ! The constants are declared in cfm_constants.f90.
     type(VectorValue_T) function CreateMLSValue_O2 (avgrid, ahgrid, qname) result(o2)
         type(VGrid_T), intent(in) :: avgrid
         type(HGrid_T), intent(in) :: ahgrid
@@ -462,6 +467,8 @@ module CFM_MLSSetup_m
         call FillVectorQtyFromProfile (o2, .false., o2_heights, o2_values, phyq_vmr)
     end function
 
+    ! Creates a VectorValue_T object and fills it with values for earth 
+    ! reflectivity. The values are declared in cfm_constants.f90.
     type(VectorValue_T) function CreateMLSValue_EarthReflectivity () result(earthRefl)
         type(QuantityTemplate_T) :: ertemplate
 
@@ -469,6 +476,8 @@ module CFM_MLSSetup_m
         earthRefl = CreateValue4AgileVector(ertemplate, value=earthRefl_values)
     end function
 
+    ! Creates a VectorValue_T object and fills it with values for space
+    ! radiance. The values are declared in cfm_constants.f90.
     type(VectorValue_T) function CreateMLSValue_SpaceRadiance () result(spaceRad)
         type(QuantityTemplate_T) :: srtemplate
 
@@ -1355,6 +1364,9 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.33  2011/12/15 16:53:24  honghanh
+! Correct the name of CreateMLSValue_EarthReflectivity
+!
 ! Revision 1.32  2011/12/14 22:54:18  honghanh
 ! Add timeRange2MafRange method in CFM.
 !

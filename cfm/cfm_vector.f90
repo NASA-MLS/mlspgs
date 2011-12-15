@@ -33,6 +33,7 @@ module CFM_Vector_m
 
     contains
 
+    ! This method is obsolete.
     type(Vector_T) function CreateVector (vectorTemplate, qtyDatabase, name) &
              result (vector)
         ! template listing the quantities to be stored in this vector
@@ -65,6 +66,7 @@ module CFM_Vector_m
         end if
     end function
 
+    ! Initializes a vector to which vector values can be dynamically added.
     type(Vector_T) function CreateAgileVector (name) result (vector)
         character(len=*), optional :: name
 
@@ -83,6 +85,7 @@ module CFM_Vector_m
         end if
     end function
 
+    ! Cleans up objects that are allocated inside an agile vector.
     subroutine DestroyAgileVectorContent (v)
         type(Vector_T), intent(inout) :: v
         integer :: i
@@ -104,8 +107,13 @@ module CFM_Vector_m
         call deallocate_test ( vv%mask, "vv%mask", ModuleName )
     end subroutine
 
-    ! vectorvalue doesn't have to be unique
-    ! value will be added to the end of vector
+    ! Add a VectorValue_T object to a Vector_T object.
+    ! The vector has to be an agile vector.
+    ! vectorvalue doesn't have to be unique.
+    ! Value will be added to the end of vector.
+    ! Note that memory allocated to vectorvalue will be
+    ! reused by this vector, so don't add the same
+    ! vectorvalue to 2 different vectors.
     subroutine AddValue2Vector (vector, vectorvalue)
         type(Vector_T), intent(inout) :: vector
         type(VectorValue_T), intent(in) :: vectorvalue
@@ -130,8 +138,14 @@ module CFM_Vector_m
                                         vectorvalue%template%instanceLen
     end subroutine
 
-    type(VectorValue_T) function CreateValue4AgileVector (template, value, spreadvalue, mask) &
-    result(vectorvalue)
+    ! Creates a VectorValue_T object to add to an agile vector.
+    ! The value can be empty, which means it only contains a QuantityTemplate_T.
+    ! Or it can be filled with explicit values given by the value array.
+    ! Or it can be filled with the same value given by a spreadvalue number.
+    ! Value can also be accompanied by a mask to distinguish good values 
+    ! and bad values.
+    type(VectorValue_T) function CreateValue4AgileVector (template, value, spreadvalue, &
+    mask) result(vectorvalue)
         use MLSStrings, only: writeIntsToChars
 
         type(QuantityTemplate_T), intent(in) :: template
@@ -212,6 +226,9 @@ module CFM_Vector_m
 end module
 
 ! $Log$
+! Revision 1.12  2011/11/02 03:50:33  honghanh
+! Add code to clean up values array in DestroyVectorValueContent
+!
 ! Revision 1.11  2011/11/01 22:16:11  honghanh
 ! Add API to destroy individual QuantityTemplate_T and VectorValue_T
 !

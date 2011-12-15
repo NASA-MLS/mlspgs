@@ -127,7 +127,8 @@ module CFM_Fill_m
         end do
     end subroutine
 
-    ! Fill the quantity with data from L1B files
+    ! Fill the quantity with data from L1B files with maf range
+    ! specified by firstL1Maf and lastL1Maf
     subroutine FillVectorQuantityFromL1B_maf (quantity, firstL1Maf, lastL1Maf, &
     filedatabase, isPrecision, suffix, precisionQuantity, BOMask)
         ! The quantity to be filled
@@ -359,6 +360,8 @@ module CFM_Fill_m
         h2o, orbitInclination, phitan, geocentricAltitude, 4, 0.0_r8, phyq_angle)
     end subroutine
 
+    ! Applies baseline quantity to a radiance quantity or applies noise
+    ! to a precision quantity of a radiance quantity.
     subroutine ApplyBaseline (quantity, baselineQuantity, quadrature, dontmask)
         use FillUtils_1, only: Orig_ApplyBaseline => ApplyBaseline
 
@@ -385,6 +388,9 @@ module CFM_Fill_m
 end module
 
 ! $Log$
+! Revision 1.12  2011/11/03 14:39:57  honghanh
+! Add fill subroutine that use maf instead of chunk
+!
 ! Revision 1.11  2010/07/08 21:39:16  honghanh
 ! Add ApplyBaseline to cfm_fill_m
 !

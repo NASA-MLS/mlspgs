@@ -75,43 +75,6 @@ module CFM_VGrid_m
       end if
    end function
 
-   ! not working right now
-   subroutine LinearFormula (vgrid, stepSign, formula, start)
-      real(r8), intent(in) :: stepSign
-      type(VGrid_T) :: vgrid
-      character(len=*), intent(in) :: formula
-      real(r8), intent(in) :: start
-
-      real(r8) :: step
-      character(len=10) :: pair(2)
-      character(len=20), dimension(:), pointer :: tokens => NULL()
-      integer :: temp, numTokens
-      integer :: i,j,k,n
-
-      vgrid%noSurfs = 0
-      numTokens = NumStringElements(formula, .false., ',')
-      call allocate_test(tokens, numTokens, "tokens", ModuleName)
-      call List2Array(formula, tokens, .false., ',', .true.)
-
-      ! get the number of surfaces
-      do i = 1, size(tokens)
-         call List2Array (tokens(i), pair, .false., ':', .true.)
-         call ReadIntsFromChars(pair(1), temp)
-         vgrid%nosurfs = vgrid%nosurfs + temp
-      end do
-      call allocate_test(vgrid%surfs, vgrid%nosurfs, 1, "vgrid%surfs", &
-            ModuleName)
-
-      n = 0
-      do i = 1, numTokens
-         call List2Array (tokens(i), pair, .false., ':', .true.)
-         call ReadIntsFromChars(pair(2), temp)
-         n = n + 1
-         vgrid%surfs(n,1) = temp
-
-      end do
-   end subroutine
-
    subroutine LogarithmicFormula (vgrid, stepSign, formula, start)
       real(r8), intent(in) :: stepSign
       type(VGrid_T) :: vgrid
@@ -190,6 +153,10 @@ module CFM_VGrid_m
 end module
 
 ! $Log$
+! Revision 1.10  2010/06/29 16:40:23  honghanh
+! Remove all function/subroutine and user type forwarding from
+! all CFM modules except for from cfm.f90
+!
 ! Revision 1.9  2010/06/29 15:53:45  honghanh
 ! Add copyright comments and support for CVS log in the file
 !
