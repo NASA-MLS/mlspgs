@@ -53,7 +53,9 @@ module CFM_HGrid_m
       ! Either "GHz" or "THz" but the string is case-insensitive.
       character(len=*), intent(in) :: instrumentModuleName
       logical, intent(in) :: insetOverlaps
+      ! Start of the maf range in the given L1BOA in the filedatabase
       integer, intent(in) :: firstL1Maf
+      ! End of the maf range in the given L1BOA in the filedatabase
       integer, intent(in) :: lastL1Maf
 
       ! Contains the time range of the data to be gotten out of L1BOA
@@ -229,6 +231,9 @@ module CFM_HGrid_m
 end module
 
 ! $Log$
+! Revision 1.10  2011/10/19 16:06:13  honghanh
+! Add function to create hgrid with start maf and end maf.
+!
 ! Revision 1.9  2010/06/29 17:02:47  honghanh
 ! Change the identifier 'fakeChunk' to 'chunk' because
 ! since it is created with ChunkDivide, it's as real as a chunk
