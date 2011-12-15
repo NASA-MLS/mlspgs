@@ -123,8 +123,8 @@ contains ! =====     Public Procedures     =============================
       & F_QUADRATURE, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
       & F_RHIPRECISIONQUANTITY, F_RHIQUANTITY, F_ROWS, F_SCALE, &
-      & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, &
-      & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
+      & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, F_SCECI, &
+      & F_SCVEL, F_SCVELECI, F_SCVELECR, F_SDNAME, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, F_SUFFIX, F_SUPERDIAGONAL, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
@@ -1115,12 +1115,16 @@ contains ! =====     Public Procedures     =============================
       integer :: gson
       integer :: hdfversion
       integer :: j
+      character(len=32) :: sdname
+      logical :: spread
       type (vector_T), pointer :: Vector
       ! Loop over the instructions to the directRead command
       got = .false.
       hdfVersion = DEFAULT_HDFVERSION_READ
       file = 0
       options = ' '
+      sdname = ' '
+      spread = .false.
       if ( DEEBUG ) call output ( 'In DirectReadCommand', advance='yes' )
       do j = 2, nsons(key)
         gson = subtree(j,key) ! The argument
@@ -1149,6 +1153,13 @@ contains ! =====     Public Procedures     =============================
           if ( DEEBUG ) call output ( 'Begin Processing options field', advance='yes' )
           call get_string ( sub_rosa(gson), options, strip=.true. )
           if ( DEEBUG ) call output ( 'Processing options field', advance='yes' )
+        case ( f_sdName )
+          if ( DEEBUG ) call output ( 'Begin Processing sdName field', advance='yes' )
+          call get_string ( sub_rosa(gson), sdName, strip=.true. )
+          if ( DEEBUG ) call output ( 'Processing sdName field', advance='yes' )
+        case ( f_spread )
+            spread = get_boolean ( gson )
+            call outputNamedValue( 'spread', spread )
         case ( f_type )
           if ( DEEBUG ) call output ( 'Begin Processing type field', advance='yes' )
           fileType = decoration(gson)
@@ -1171,11 +1182,11 @@ contains ! =====     Public Procedures     =============================
         quantity => GetVectorQtyByTemplateIndex( &
           & vectors(vectorIndex), quantityIndex )
         call QtyFromFile ( key, quantity, MLSFile, &
-          & filetypestr, hdfversion, options )
+          & filetypestr, hdfversion, options, sdName, spread )
       else
         vector => vectors(vectorIndex)
         call VectorFromFile ( key, vector, MLSFile, &
-          & filetypestr, hdfversion, options )
+          & filetypestr, hdfversion, options, spread )
       endif
     end subroutine directReadCommand
 
@@ -2792,6 +2803,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.396  2011/12/15 01:49:43  pwagner
+! Added sdName and /spread fields to DirectRead
+!
 ! Revision 2.395  2011/11/04 00:28:18  pwagner
 ! Added autoFill flag to Vector Spec to start it off with non-zero values in appropriated quantities
 !
