@@ -14,7 +14,7 @@ module cfm          ! callable forward model
   ! will be USEd by any fortran90 program that is compiled
   ! and with the callable forward model and links against libcfm.a or libcfm_all.a
    use CFM_MLSSetup_m, only: CFM_MLSCleanup, CFM_MLSSetup, CreateMLSValue_O2, &
-                             CreateMLSValue_EarthReflectiviy, &
+                             CreateMLSValue_EarthReflectivity, &
                              CreateMLSValue_LSF, CreateMLSValue_FromL1BOA, &
                              CreateMLSValue_SpaceRadiance, GetConstantQuantities, &
                              CreateMLSValue_ElevationOffset, &
@@ -87,6 +87,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.23  2011/12/14 22:54:18  honghanh
+! Add timeRange2MafRange method in CFM.
+!
 ! Revision 1.22  2011/11/01 22:16:11  honghanh
 ! Add API to destroy individual QuantityTemplate_T and VectorValue_T
 !

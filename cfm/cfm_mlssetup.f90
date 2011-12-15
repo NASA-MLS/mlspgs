@@ -43,7 +43,7 @@ module CFM_MLSSetup_m
 
     private
     public :: CFM_MLSSetup, CFM_MLSCleanup, CreateMLSValue_O2
-    public :: CreateMLSValue_EarthReflectiviy, CreateMLSValue_LSF
+    public :: CreateMLSValue_EarthReflectivity, CreateMLSValue_LSF
     public :: CreateMLSValue_FromL1BOA, CreateMLSValue_SpaceRadiance
     public :: GetConstantQuantities, CreateMLSValue_ElevationOffset
     public :: timeRange2MafRange
@@ -462,7 +462,7 @@ module CFM_MLSSetup_m
         call FillVectorQtyFromProfile (o2, .false., o2_heights, o2_values, phyq_vmr)
     end function
 
-    type(VectorValue_T) function CreateMLSValue_EarthReflectiviy () result(earthRefl)
+    type(VectorValue_T) function CreateMLSValue_EarthReflectivity () result(earthRefl)
         type(QuantityTemplate_T) :: ertemplate
 
         ertemplate = CreateQtyTemplate(l_earthRefl)
@@ -476,13 +476,22 @@ module CFM_MLSSetup_m
         spaceRad = CreateValue4AgileVector(srtemplate, value=spaceRad_values)
     end function
 
+    ! Creates a VectorValue_T object and fills it with values from an L1BOA file.
+    ! This is possible because every quantity in L1BOA is of a different type.
     type(VectorValue_T) function CreateMLSValue_FromL1BOA (qType, instrumentModule, filedatabase, &
     firstL1Maf, lastL1Maf, qname) result (vv)
+        ! The type of the quantity to be read. This type is used to 
+        ! identify the quantity in the L1BOA file.
         integer, intent(in) :: qType
+        ! One of "GHz", "THz" and "sc"
         character(len=*), intent(in) :: instrumentModule
+        ! The filedatabase with L1BOA already opened.
         type (MLSFile_T), dimension(:), pointer :: filedatabase
+        ! The start L1 Maf of the value range to be read.
         integer, intent(in) :: firstL1Maf
+        ! The end L1 Maf of the value range to be read.
         integer, intent(in) :: lastL1Maf
+        ! Optional name to give to the quantity. 
         character(len=*), intent(in), optional :: qname
 
         type(MLSChunk_T) :: chunk
@@ -497,6 +506,9 @@ module CFM_MLSSetup_m
         call FillVectorQuantityFromL1B (vv, chunk, filedatabase, .false.)
     end function
 
+    ! Creates a VectorValue_T object for elevation offset of a given upper/lower band
+    ! and gives it an optional name. This quantity's values are MLS-specified constants
+    ! which are declared in cfm_constants.f90.
     type(VectorValue_T) function CreateMLSValue_ElevationOffset (band, upper, qname) result (vv)
         integer, intent(in) :: band
         logical, intent(in) :: upper ! if upper is false, then it's lower
@@ -795,6 +807,10 @@ module CFM_MLSSetup_m
         endif
     end function
 
+    ! Create a vector value object that contains the value for limb sideband 
+    ! fraction of the specified upper or lower band, and give it an optional name.
+    ! The value for this quantity are MLS-specified constants, which are declared
+    ! in cfm_constants.f90.
     type(VectorValue_T) function CreateMLSValue_LSF (band, upper, qname) result (vv)
         integer, intent(in) :: band
         logical, intent(in) :: upper ! if upper is false, then it's lower
@@ -1126,14 +1142,17 @@ module CFM_MLSSetup_m
         endif
     end function
 
-    ! Add constants quantities to stateVectorExtra.
+    ! Add constant quantities to stateVectorExtra.
+    ! The constant quantities are: earth reflectivity,
+    ! space radiance, elevation offset for all bands, 
+    ! and limb sideband fraction for all bands.
     subroutine GetConstantQuantities (stateVectorExtra)
-        type (Vector_T), intent(out) :: stateVectorExtra
+        type (Vector_T), intent(inout) :: stateVectorExtra
 
         type(VectorValue_T) :: qty
         integer :: band
 
-        qty = CreateMLSValue_EarthReflectiviy()
+        qty = CreateMLSValue_EarthReflectivity()
         call AddValue2Vector(stateVectorExtra, qty)
 
         qty = CreateMLSValue_SpaceRadiance()
@@ -1262,6 +1281,8 @@ module CFM_MLSSetup_m
         call FillElevationOffsets(stateVectorExtra)
     end subroutine
 
+    ! This subroutine convert a time range to a pair of L1 mafs from 
+    ! a L1BOA file.
     subroutine timeRange2MafRange (startTime, endTime, leapsecfile, filedatabase, &
     startL1Maf, endL1Maf)
         use INIT_TABLES_MODULE, only: l_ghz, phyq_mafs, l_orbital
@@ -1272,9 +1293,13 @@ module CFM_MLSSetup_m
         character(len=CCSDSlen), intent(in) :: startTime
         ! The stop time of the data to be read in the same format as startTime.
         character(len=CCSDSlen), intent(in) :: endTime
+        ! The leap second file to correct time calculation.
         character(len=*), intent(in) :: leapsecfile
+        ! The file database that contains an already opened L1BOA.
         type (MLSFile_T), dimension(:), pointer :: filedatabase
+        ! The output L1 maf that correspond to startTime
         integer, intent(out) :: startL1Maf
+        ! The output L1 maf that correspond to stopTime
         integer, intent(out) :: endL1Maf
 
         type (TAI93_Range_T) :: processingRange
@@ -1330,6 +1355,9 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.32  2011/12/14 22:54:18  honghanh
+! Add timeRange2MafRange method in CFM.
+!
 ! Revision 1.30  2011/11/08 16:13:57  honghanh
 ! Add 'qname' parameter to CreateMLSValue_O2 subroutine.
 !

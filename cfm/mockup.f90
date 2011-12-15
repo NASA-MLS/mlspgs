@@ -264,7 +264,7 @@ program mockup
     elev9U = CreateMLSValue_ElevationOffset(9, .true.)
     call AddValue2Vector(stateExtra, elev9U)
 
-    earthReflectivity = CreateMLSValue_EarthReflectiviy()
+    earthReflectivity = CreateMLSValue_EarthReflectivity()
     call AddValue2Vector(stateExtra, earthReflectivity)
 
     orbitInclination = CreateMLSValue_FromL1BOA (l_orbitInclination, sc, &
@@ -456,6 +456,9 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.54  2011/12/14 22:54:18  honghanh
+! Add timeRange2MafRange method in CFM.
+!
 ! Revision 1.53  2011/11/10 17:07:07  honghanh
 ! Add 'qname' optional argument to a few CreateMLSValue_*
 ! subroutines.
