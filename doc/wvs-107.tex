@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107r1}
-\newcommand{\docdate}{13 December 2011}
+\newcommand{\docname}{\bf wvs-107r2}
+\newcommand{\docdate}{14 December 2011}
 
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -87,60 +87,67 @@ To solve for MIF extinction in MLSL2, several changes are made in the
 interface, {\tt ForwardModelWrap\-per}, between the {\tt Retrieve} and {\tt
 ForwardModel} modules.
 
-MIF extinction is a minor-frame quantity, one per L1 MAF, with a vertical
-grid the same as $P_\text{tan}$.  Extinction in the forward model is a
-geophysical quantity, one per solution profile, with a vertical grid
-specified by the {\tt L2CF}.
+MIF extinction is a minor-frame quantity with a vertical grid the same as
+$P_\text{tan}$.  Extinction in the forward model is a geophysical
+quantity with a vertical grid specified by the {\tt L2CF}.
 
 When the retriever calls the forward model, MIF extinction is mapped to
 forward-model extinction by interpolating vertically in MIF extinction
 from $\{\zeta_{\text{tan}_i} = - \log_{10} P_{\text{tan}_i}\,|\, i = 1,
-\dots, N_M\}$, where $N_M$ is the number of MIFs per MAF, to the
+\dots, N_m\}$, where $N_m$ is the number of MIFs per MAF, to the
 geophysical $\zeta_g$ grid specified for forward-model extinction, and
-then replicating the result for the $N_\phi$ solution profiles within the
-$\phi$ window for the invocation of the forward model.
+then replicating the result for the $N_\phi$ solution profiles specified
+in the {\tt L2CF}.
 
-Within a retriever state vector MIF extinction block, the element $E^R_i$
-has associated coordinates $(\phi_\text{tan}, \zeta_\text{tan})_i$.
+Within a retriever state vector MIF extinction block for a single band,
+the element $E^R_{ci,n}$ has associated channel $(c)$ and MAF $(n)$
+numbers, and coordinates $(\phi_\text{tan}, \zeta_\text{tan})_i$.  $E^R$
+is not a coherent quantity.  The first subscript of the {\tt VALUES}
+component of the vector quantity is $c + (i-1) N_C$, where $N_C$ is the
+number of channels, and the second is $n$.
 
 Within a forward-model state vector extinction block, the element
-$E^F_{jg}$ has associated geophysical $(\phi_j,\,\zeta_g)$ coordinates,
-the values and numbers of which are specified in the configuration.
+$E^F_{cg,j}$ has an associated channel $(c)$ number and geophysical
+$(\phi_j,\,\zeta_g)$ coordinates, the values and numbers of which are
+specified in the {\tt L2CF}.  $E^F$ is a coherent quantity.  The first
+subscript of the {\tt VALUES} component of the vector quantity is $c +
+(g-1) N_C$, where $N_C$ is the number of channels, and the second is $j$.
 
 In the interface between the retriever and forward model, blocks of the
 retriever state vector that are not MIF extinction blocks are moved to
 the forward model state vector.  Let $P_r$ denote the lowest retrieved
 pressure and $\zeta_r = -\log_{10} P_r$.  Blocks that are MIF extinction
 blocks are mapped to the forward model state vector using
-
+%
 \renewcommand{\arraystretch}{2}
 \begin{equation}\label{one}
-E^F_{jg} = \left\{
+E^F_{cg,j} = \left\{
 \begin{array}{llll}
- \overline{E}^R(\zeta_g)
+ \overline{E}^R_{c,n}(\zeta_g)
   & \zeta_g \geq \zeta_r & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
- \overline{E}^R(\zeta_r) \times 10^{-2(\zeta_g - \zeta_r)}
+ \overline{E}^R_{c,n}(\zeta_r) \times 10^{-2(\zeta_g - \zeta_r)}
   & \zeta_g < \zeta_r    & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
 \end{array} \right.
 \end{equation}
 %
-where $\overline{E}^R(\zeta)$ indicates interpolation from $\{E^R_i\}$ to
-$\zeta$, $N_\phi$ is the width of the forward model's $\phi$ window,
+where $\overline{E}^R_{c,n}(\zeta)$ indicates interpolation from
+$\{E^R_{ci,n}\}$, in $\{\zeta_i\}$ only, to $\zeta$, $N_\phi$ is the
+number of $\phi$ instances specified for $E^F$ in the {\tt L2CF},
 $N_\zeta$ is the number of $\zeta$ ($-\log_{10}$ pressure) levels
-specified in the configuration for the forward model's extinction state
+specified in the {\tt L2CF} for the forward model's extinction state
 vector block,  and
-
+%
 \begin{equation}
 10^{-2(\zeta_g - \zeta_r)} = \left( \frac{P_g}{P_r} \right)^2 \,.
 \end{equation}
 
-Notice that $E^F_{jg} = E^F_{1g},\, j= 1, \dots, N_\phi$.  This is done
-because the forward model wants to have the same $\phi$-basis for all
-quantities.
+Notice that $E^F_{cg,j} = E^F_{cg,1},\, j= 1, \dots, N_\phi$.
 
 The layout of the extinction blocks of the Jacobian used by the retriever
 and those of the Jacobian computed by the forward model are shown in the
-following table, wherein $N_S$ is the number of signals being processed.
+following table for a single band, wherein $N_M$ is the number of MAFs. 
+This layout is replicated vertically, i.e., another set of rows, for each
+band.
 
 \newpage
 \begin{longtable}{c|ccccc|p{0.25in}|ccccc|}
@@ -152,65 +159,68 @@ following table, wherein $N_S$ is the number of signals being processed.
   \multicolumn{5}{c}{$N_\phi$} \\
   \cline{2-6}\cline{8-12}
 % Rotating package doesn't render properly in xdvi
-\ifnum\pdfoutput>0
-\multirow{5}{*}{
-\begin{rotate}{90}\hspace*{-0.35in}$N_M \times N_S$\end{rotate}}
-\fi
       & $K^R_{11}$ &0 &0 &  & 0     & & $K^F_{11}$    & $K^F_{12}$    & $K^F_{13}$    & $\cdots$ & $K^F_{1 N_\phi}$ \\ 
-\ifnum\pdfoutput<1 $N_M$ \fi
       &0 & $K^R_{22}$ &0 &  & 0     & & $K^F_{21}$    & $K^F_{22}$    & $K^F_{23}$    & $\cdots$ & $K^F_{2 N_\phi}$ \\ 
-\ifnum\pdfoutput<1 $\times$ \fi
-      &0 &0 & $K^R_{33}$ &  & 0     & & $K^F_{31}$    & $K^F_{32}$    & $K^F_{33}$    & $\cdots$ & $K^F_{3 N_\phi}$ \\ 
-\ifnum\pdfoutput<1 $N_S$ \fi
+$N_M$ &0 &0 & $K^R_{33}$ &  & 0     & & $K^F_{31}$    & $K^F_{32}$    & $K^F_{33}$    & $\cdots$ & $K^F_{3 N_\phi}$ \\ 
       &  &  &  & $\cdots$   &       & & $\cdots$      & $\cdots$      & $\cdots$      & $\cdots$ & $\cdots$ \\    
       &0 &0 &0 &0 & $K^R_{N_M N_M}$ & & $K^F_{N_M 1}$ & $K^F_{N_M 2}$ & $K^F_{N_M 3}$ & $\cdots$ & $K^F_{ N_M N_\phi}$ \\
   \cline{2-6}\cline{8-12}
 \end{longtable}
 
-For retriever block $K^R_{ii}$, $i$ is the index of $(\phi_\text{tan},
-\zeta_\text{tan})_i$.  Each $K^R_{ii}$ block has shape $(N_C,1)$, where
-$N_C$ is the number of channels.  Within each $K^R_{ii}$ block a third
-subscript $(c)$ denotes the row (channel) number of an element.
+For retriever block $K^R_{nn}$, $n$ is the index of the MAF. Each
+$K^R_{nn}$ block has shape $(N_C \times N_m,1)$.  Within each $K^R_{nn}$
+block, third and fourth subscripts $(ci)$ conspire to denote the row
+number (first subscript of the {\tt VALUES} component).  The subscript
+$c$ is the channel number and $i$ is the MIF $(\phi_\text{tan},
+\zeta_\text{tan})_i$ number.  The row number of an element is $c +
+n_c(i-1)$.  The column number (second subscript) is always 1.
 
-For forward model block $K^F_{ij}$, $i$ is the index of
-$\zeta_{\text{tan}_i}$, while $j$ is the index of solution coordinate
-$\phi_j$.  Each $K^F_{ij}$ block has shape $(N_C,N_\zeta)$.  Within each
-$K^F_{ij}$ block, third and fourth subscripts $(cg)$ denote the row
-(channel) number and column ($\zeta_g$) number of an element.
+For forward model block $K^F_{nj}$, $n$ is the index of the MAF, while
+$j$ is the index of solution coordinate $\phi_j$.  Each $K^F_{nj}$ block
+has shape $(N_C \times N_m,N_\zeta)$.  Within each $K^F_{ij}$ block,
+there are three further subscripts $(cig)$.  The first two, $c$ and $i$
+conspire to denote the row number (first subscript) as above, while the
+third $(g)$ denotes the column number (second subscript, corresponding
+to $\zeta_g$) of an element of the {\tt VALUES} component.
 
 After the forward model returns, blocks of $K^F$ are mapped to blocks of
 $K^R$ using
 
 \begin{equation}
 \begin{array}{lll}
-K^R_{ii,c} = \sum_{g=1}^{N_\zeta}
- \left( \sum_{j=1}^{N_\phi} K^F_{ij,cg} \right)
- 10^{-2(\zeta_g - \zeta_i)} & i = 1, \dots, N_M & c = 1, \dots, N_C\,, \\
+K^R_{nn,ci} = \sum_{g=1}^{N_\zeta}
+ \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+ 10^{-2(\zeta_g - \zeta_i)} & i = 1, \dots, N_m & c = 1, \dots, N_C\,. \\
 \end{array}
 \end{equation}
-%
-and forward-model radiances $I^F$ are mapped to retriever radiances $I^R$
+
+Forward-model radiance blocks $I^F_{ci,n}$ and retriever radiance blocks
+$I^R_{ci,n}$ are organized as for $E^R_{ci,n}$.  Forward-model radiance
+blocks $I^F_{ci,n}$ are mapped to retriever radiance blocks $I^R_{ci,n}$
 using
 
 \begin{equation}
 \begin{array}{lll}
-I^R_{i,c} = I^F_{i,c} + \sum_{g=1}^{N_\zeta}
- \left( \sum_{j=1}^{N_\phi} K^F_{ij,cg} \right)
- \left( E^R_{\zeta_i} 10^{-2(\zeta_g - \zeta_i)} -
-  E^F_{1g} \right) & i = 1, \dots, N_M & c = 1, \dots, N_C \,, \\
+I^R_{ci,n} = I^F_{ci,n} + \sum_{g=1}^{N_\zeta}
+ \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+ \left( E^R_{ci,n} 10^{-2(\zeta_g - \zeta_i)} -
+  E^F_{cg,1} \right) & i = 1, \dots, N_m & c = 1, \dots, N_C \,, \\
 \end{array}
 \end{equation}
 
 where $E^R$ is MIF extinction from the previous iteration of the
 retriever, and $E^F$ is extinction input to the forward model, as
-calculated by Equation (\ref{one}).  Remember that $E^F_{jg} = E^F_{1g},\,
-j = 1, \dots, N_\phi$.
+calculated by Equation (\ref{one}).  Remember that $E^F_{cg,j} =
+E^F_{cg,1},\, j = 1, \dots, N_\phi$.
 
 \label{lastpage}
 \end{document}
 % $Id$
 
 % $Log$
+% Revision 1.2  2011/12/13 23:39:55  vsnyder
+% Include number of signals in row count for Jacobian layout
+%
 % Revision 1.1  2011/12/13 01:42:21  vsnyder
 % Initial commit
 %
