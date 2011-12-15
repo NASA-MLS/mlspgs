@@ -291,8 +291,10 @@ contains ! ======================= Public Procedures =========================
     ! so instead write them out chunk-by-chunk
     
     ! Despite the name the routine takes vector quantities, not l2aux ones
+    ! It dooes so an entrire vector's worth of vector quantities
     use CHUNKS_M, only: MLSCHUNK_T
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use MLSSTRINGS, only: WRITEINTSTOCHARS
     ! Args:
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     type (Vector_T), intent(in)   :: VECTOR
@@ -304,12 +306,16 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in), optional :: options
     ! Local parameters
     integer                       :: j
+    logical                       :: nameQtyByTemplate
     type (VectorValue_T), pointer :: QUANTITY
     type (VectorValue_T), pointer :: PRECISION
     character(len=32)             :: SDNAME       ! Name of sd in output file
     logical :: verbose
     ! Executable
     verbose = ( switchDetail(switches, 'direct') > -1 )
+    nameQtyByTemplate = .true.
+    if ( present(options) ) nameQtyByTemplate = &
+      & .not. ( index(options, 'num') > 0 )
     nullify(precision)
     if ( verbose ) then
       if ( vector%name > 0 ) then
@@ -321,7 +327,12 @@ contains ! ======================= Public Procedures =========================
     endif
     do j = 1, size(vector%quantities)
       quantity => vector%quantities(j)
-      call get_string( quantity%template%name, sdname )
+      if ( nameQtyByTemplate ) then
+        call get_string( quantity%template%name, sdname )
+      else
+        call writeIntsToChars ( j, sdName )
+        sdName = 'Quantity ' // trim(sdName)
+      endif
       call DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
         & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap, options )
     enddo
@@ -1194,6 +1205,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.50  2011/12/15 01:52:55  pwagner
+! 'num' option names quantity in entireVector DirectWrites numerically
+!
 ! Revision 2.49  2011/11/01 21:44:31  pwagner
 ! May optionally add quantity Attributes via options='A' field
 !
