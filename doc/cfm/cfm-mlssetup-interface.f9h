@@ -1,48 +1,13 @@
-! Read the signal file and populate the signal database
-! Read the config file for forward model configuration(s),
-! then put them in ForwardModelConfigDatabase.
-! Reads L1BOA file and put it into the filedatabase.
-! Uses the startTime, endTime and leapsec file to create a
-! MLSChunk_T object that uses by other subroutines that read
-! data from L1BOA.
-! Construct the quantity template databases, which will include
-! the quantities inside stateVectorExtra
-! Create stateVectorExtra that is the second input to the forward
-! model.
-! Note: the use of a filedatabase, instead of just one MLSFile_T
-! object to store L1BOA is for convenience when wrapping
-! existing code in MLSPGS.
-! CFM_MLSSetup is to be called only once before CFM_MLSCleanup is called.
-subroutine CFM_MLSSetup (startTime, endTime, l1boa, leapsecFile, signalFileName, &
-configFileName, filedatabase, qtyTemplates, chunk, ForwardModelConfigDatabase, &
-stateVectorExtra)
-   ! The start time of the data to be read in the format
-   ! yyyy-doyThh:mm:ss.zzzz
-   character(len=CCSDSlen), intent(in) :: startTime
-   ! The stop time of the data to be read in the same format as startTime.
-   character(len=CCSDSlen), intent(in) :: endTime
-   ! The file name of L1BOA file.
-   character(len=*), intent(in) :: l1boa
-   ! The name of leapsec file
-   character(len=*), intent(in) :: leapsecFile
-   ! The name of the signal database file
-   character(len=*), intent(in) :: signalFileName
-   ! The name of the forward model configuration file
-   character(len=*), intent(in) :: configFileName
-   ! Output: An array of MLSFile_T object, representing open file(s),
-   ! including L1BOA.
-   type (MLSFile_T), dimension(:), pointer :: filedatabase
-   ! The quantity template database, which is nullified by this
-   ! subroutine.
-   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-   ! Output: A data holder that holds the startTime and endTime
-   ! in a way that can be understood by other subroutines.
-   type (MLSChunk_T), intent(out) :: chunk
-   ! Output: to store all ForwardModelConfig_T objects declared in
-   ! the config file.
-   ! This argument will be nullified inside this subroutine.
-   type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
-   ! A vector filled with quantities that can be supplied by MLS
-   ! and needed for the forward model.
-   type (Vector_T), intent(out) :: stateVectorExtra
+! Initializes CFM library and HDF5 library. Also parses the forward model
+! configuration file.
+subroutine CFM_MLSSetup_Compact (signalFileName, configFileName, &
+ForwardModelConfigDatabase)
+    ! The name of the signal database file
+    character(len=*), intent(in) :: signalFileName
+    ! The name of the forward model configuration file
+    character(len=*), intent(in) :: configFileName
+    ! Output: to store all ForwardModelConfig_T objects declared in
+    ! the config file.
+    ! This argument will be nullified inside this subroutine.
+    type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
 end subroutine

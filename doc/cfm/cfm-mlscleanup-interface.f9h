@@ -1,12 +1,6 @@
-! Clean up allocated memory, close opened files
-subroutine CFM_MLSCleanup (filedatabase, qtyTemplates, forwardModelConfigDatabase, &
-stateVectorExtra)
-   ! The filedatabase created by CFM_MLSSetup
-   type (MLSFile_T), dimension(:), pointer :: filedatabase
-   ! The quantity template database created by CFM_MLSSetup
-   type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-   ! The forward model configurations created by CFM_MLSSetup
-   type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
-   ! The vector created by CFM_MLSSetup
-   type(Vector_T) :: stateVectorExtra
+! Clean up allocated memory, close opened files.
+! This subroutine will deallocate the forward model config database.
+subroutine CFM_MLSCleanup_Compact (forwardModelConfigDatabase)
+    ! The forward model configurations created by CFM_MLSSetup
+    type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
 end subroutine
