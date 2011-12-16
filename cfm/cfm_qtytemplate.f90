@@ -95,6 +95,15 @@ module CFM_QuantityTemplate_m
 
       ! an integer representing a quantity type, see CFM documentation appendix
       integer, intent(in) :: quantityType
+      ! firstL1Maf and last1Maf describe the maf range in
+      ! L1BOA file for major frame quantities and minor frame
+      ! quantities that need information from L1BOA file.
+      ! If this quantity is neither a major frame quantity
+      ! nor a minor frame quantity, then firstL1Maf
+      ! and lastL1Maf can be any number as long as its 
+      ! difference is equal to the number of instances
+      ! of this quantity (the VectorValue_T object that
+      ! owns this QuantityTemplate_T).
       integer, intent(in) :: firstL1Maf
       integer, intent(in) :: lastL1Maf
       ! is an array of open files (see CFM_MLSSetup)
@@ -121,6 +130,9 @@ module CFM_QuantityTemplate_m
       ! it is the threshold to which greater or equal coordinate values are recorded
       ! as their logarithmic equivalent. The default value is 1.0.
       real(r8), optional :: qMinValue
+      ! If the quantity only associates with a radiometer
+      ! and not a signal, then use qRadiometer instead of 
+      ! qSignal.
       character(len=*), optional :: qRadiometer
       ! a number to indicate that a data point shouldn't be used. Default
       ! is -huge(0.0_r8)
@@ -668,6 +680,9 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.21  2011/10/19 17:39:25  honghanh
+! New CreateQtyTemplate API to use L1 maf instead of chunk.
+!
 ! Revision 1.20  2011/03/24 21:13:20  honghanh
 ! Stop forcing caller of CreateQtyTemplate to give a filedatabase for quantities with signal
 !
