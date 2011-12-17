@@ -41,7 +41,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: InvertDenseCholesky, InvertDenseCholesky_0
   public :: M_Absent, M_Banded, M_Column_Sparse, M_Full, M_Unknown
   public :: MatrixInversion, MatrixInversion_0, MatrixElement_T
-  public :: MaxAbsVal, MaxAbsVal_0, MinDiag, MinDiag_0
+  public :: MaxAbsVal, MaxAbsVal_0, MinDiag, MinDiag_0, Move_Block
   public :: Multiply, MultiplyMatrix_XY, MultiplyMatrix_XY_0
   public :: MultiplyMatrix_XY_T, MultiplyMatrix_XY_T_0
   public :: MultiplyMatrix_XTY, MultiplyMatrix_XTY_0
@@ -1381,7 +1381,7 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyBlock_0
 
-  ! ----------------------------------------------  FrobeniusNorm_0 -------
+  ! ---------------------------------------------  FrobeniusNorm_0 -----
   real(rm) function FrobeniusNorm_0 ( B, lowerOff )
     ! Compute the Frobenius Norm of a matrix (sum of square of elements
     ! possibly only consider the elements below the diagonal )
@@ -1785,6 +1785,17 @@ contains ! =====     Public Procedures     =============================
       end do ! i
     end select
   end function MinDiag_0
+
+  ! -------------------------------------------------  Move_Block  -----
+  subroutine Move_Block ( From, To )
+    ! Move the block information From -> To.
+    ! First destroy To, to avoid a memory leak.
+    ! Then nullify the pointers in From, to avoid aliases.
+    type(matrixElement_T), intent(inout) :: From, To
+    call destroyBlock ( to )
+    to = from
+    call nullifyMatrix ( from )
+  end subroutine Move_Block
 
   ! ----------------------------------------  MultiplyMatrix_XY_0  -----
   subroutine MultiplyMatrix_XY_0 ( XB, YB, ZB, Update, Subtract )
@@ -3607,6 +3618,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.7  2011/12/17 00:33:51  vsnyder
+! Add Move_Block
+!
 ! Revision 2.6  2010/08/13 22:03:28  pwagner
 ! Added diff
 !
