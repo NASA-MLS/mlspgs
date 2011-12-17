@@ -41,14 +41,16 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   private
   public :: AddToMatrixDatabase, AddToMatrix, AssignMatrix
   public :: Assignment(=), CheckIntegrity, CholeskyFactor, CholeskyFactor_1
-  public :: ClearLower, ClearLower_1, ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
-  public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
-  public :: CyclicJacobi, DefineRCInfo, DestroyBlock, DestroyBlock_1, DestroyMatrix
-  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, DestroyRCInfo, Diff, Dump, Dump_Linf
-  public :: Dump_RC, Dump_Struct, FindBlock, FrobeniusNorm, GetActualMatrixFromDatabase
-  public :: GetDiagonal, GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
-  public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
-  public :: GetVectorFromColumn_1, GetVectorFromColumn_1_Q_I
+  public :: ClearLower, ClearLower_1, ClearMatrix, ClearRows, ClearRows_1
+  public :: ColumnScale, ColumnScale_1, CopyMatrix, CopyMatrixValue
+  public :: CreateBlock, CreateBlock_1, CreateEmptyMatrix, CyclicJacobi
+  public :: DefineRCInfo, DestroyBlock, DestroyBlock_1, DestroyMatrix
+  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, DestroyRCInfo
+  public :: Diff, Dump, Dump_Linf, Dump_RC, Dump_Struct, FindBlock
+  public :: FrobeniusNorm, GetActualMatrixFromDatabase, GetDiagonal
+  public :: GetDiagonal_1, GetFromMatrixDatabase, GetFullBlock
+  public :: GetKindFromMatrixDatabase, GetMatrixElement, GetMatrixElement_1
+  public :: GetVectorFromColumn, GetVectorFromColumn_1, GetVectorFromColumn_1_Q_I
   public :: InvertCholesky, InvertCholesky_1
   public :: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
 ! public :: LevenbergUpdateCholesky
@@ -1347,6 +1349,31 @@ contains ! =====     Public Procedures     =============================
         & x%quantities(a%row%quant(i))%values(:,a%row%inst(i)), squareRoot, invert, zeroOK )
     end do
   end subroutine GetDiagonal_1
+
+  subroutine GetFullBlock ( Jacobian, Row, Col, What )
+
+    type (Matrix_t), intent(inout) :: Jacobian
+    integer, intent(in) :: Row, Col
+    character(len=*), intent(in) :: What
+
+    character(len=63) :: ForWhom
+
+    select case ( Jacobian%block(row,col)%kind )
+      case ( m_absent )
+        if ( jacobian%name /= 0 ) then
+          call get_string ( jacobian%name, forWhom )
+          forWhom = trim(forWhom) // " in GetFullBlock"
+        else
+          forWhom = "GetFullBlock"
+        end if
+        call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm, forWhom=forWhom )
+      case ( m_full )
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Wrong matrix block type for ' // what // ' derivative matrix' )
+    end select
+
+  end subroutine GetFullBlock
 
   ! ----------------------------------  GetKindFromMatrixDatabase  -----
   integer function GetKindFromMatrixDatabase ( DatabaseElement )
@@ -2810,6 +2837,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.124  2011/12/17 00:34:40  vsnyder
+! Add GetFullBlock (moved from Convolve_All)
+!
 ! Revision 2.123  2011/06/16 20:17:32  vsnyder
 ! Add row, column arguments to dump
 !
