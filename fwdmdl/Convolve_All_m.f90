@@ -134,7 +134,7 @@ contains
     use Fov_Convolve_m, only: Convolve_Support_T, &
       & FOV_Convolve_Temp_Derivs
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
     use MLSKinds, only: R8, RP, RV
     use VectorsModule, only: VectorValue_T
 
@@ -224,7 +224,7 @@ contains
     use Fov_Convolve_m, only: Convolve_Support_T, &
       & FOV_Convolve_2d
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
     use MLSKinds, only: R8, RP, RV
     use VectorsModule, only: VectorValue_T
 
@@ -317,7 +317,7 @@ contains
     use Load_sps_data_m, only: Grids_T, Dump
     use MLSFillValues, only: isNaN
     use MLSKinds, only: R8, RP, RV
-    use MatrixModule_1, only: FINDBLOCK
+    use MatrixModule_1, only: FINDBLOCK, GetFullBlock
     use MLSStringLists, only: switchDetail
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use output_m, only: outputNamedValue, resumeOutput, suspendOutput
@@ -561,7 +561,7 @@ contains
            & MIF_Times, DeadTime, di_dT, Jacobian, RowFlags )
 
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
     use MLSKinds, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
     use ScanAverage_m, only: ScanAverage
@@ -641,7 +641,7 @@ contains
 
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
     use MLSKinds, only: R8, RP, RV
     use MLSNumerics, only: Coefficients => Coefficients_r8, InterpolateValues
     use ScanAverage_m, only: ScanAverage
@@ -739,7 +739,7 @@ contains
                                         & Grids_Tmp, di_dT, Jacobian )
 
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
     use MLSKinds, only: RP
     use VectorsModule, only: VectorValue_T
 
@@ -789,7 +789,7 @@ contains
                                         & Grids_Tmp, di_dT, Jacobian )
 
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
     use MLSKinds, only: RP
     use VectorsModule, only: VectorValue_T
 
@@ -840,7 +840,7 @@ contains
 
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
     use MLSKinds, only: RP
     use VectorsModule, only: VectorValue_T
 
@@ -899,7 +899,7 @@ contains
 
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
     use MLSKinds, only: RP
     use VectorsModule, only: VectorValue_T
 
@@ -981,34 +981,6 @@ contains
           & 'Wrong matrix block type for ptan derivative' )
     end select
   end subroutine GetBandedBlock
-
-
-  subroutine GetFullBlock ( Jacobian, Row, Col, What )
-    use MatrixModule_0, only: M_ABSENT, M_FULL
-    use MatrixModule_1, only: CREATEBLOCK, MATRIX_T
-    use MLSKinds, only: RM
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use String_Table, only: Get_String
-    type (Matrix_t), intent(inout) :: Jacobian
-    integer, intent(in) :: Row, Col
-    character(len=*), intent(in) :: What
-    character(len=63) :: ForWhom
-    select case ( Jacobian%block(row,col)%kind )
-      case ( m_absent )
-        if ( jacobian%name /= 0 ) then
-          call get_string ( jacobian%name, forWhom )
-          forWhom = trim(forWhom) // " in GetFullBlock"
-        else
-          forWhom = "GetFullBlock"
-        end if
-        call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm, forWhom=forWhom )
-      case ( m_full )
-      case default
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Wrong matrix block type for ' // what // ' derivative matrix' )
-    end select
-  end subroutine GetFullBlock
-
 
   subroutine GetFullBlock_Hessian ( Hessian, Row, Col1, Col2, What )
     use HessianModule_0, only: H_ABSENT, H_FULL, RH
@@ -1095,6 +1067,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.18  2011/12/17 00:35:29  vsnyder
+! Move GetFullBlock to MatrixModule_1
+!
 ! Revision 2.17  2011/08/20 00:44:32  vsnyder
 ! Remove unused USE statements
 !
