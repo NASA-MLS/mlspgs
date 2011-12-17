@@ -76,6 +76,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! InflateVectorTemplateDatabase
 ! IsVectorQtyMasked            Is the mask for VectorQty set for address
 ! MaskVectorQty                Set the mask for VectorQty for spec. address
+! MoveVectorQuantity           Move VALUES and MASK fields from one qty to another
 ! MultiplyVectors              Z = X # Y if Z present; else X = X # Y
 ! NullifyVectorTemplate
 ! NullifyVectorValue
@@ -134,7 +135,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
   public :: GetVectorQuantityIndexByType, InflateVectorDatabase
   public :: InflateVectorTemplateDatabase, IsVectorQtyMasked
-  public :: MaskVectorQty, MultiplyVectors
+  public :: MaskVectorQty, MoveVectorQuantity, MultiplyVectors
   public :: NullifyVectorTemplate, NullifyVectorValue, NullifyVector, PowVector
   public :: QuantityTemplate_T ! for full F95 compatibility
   public :: ReciprocateVector, ReverseMask, RmVectorFromDatabase
@@ -238,7 +239,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! what is not interesting.  Zero means something about VALUES(i,j) is
     ! interesting, and one means it is not.  The low-order bit is used for
     ! linear algebra.  Other bits can be used for other purposes.
-    ! Actually the mask bits are got at from the ichar(mask)
+    ! Actually the mask bits are gotten at from the ichar(mask)
     ! Inversely, given the integer representation of the bits, we get the mask
     ! by mask = char(int)
     integer :: label = 0        ! An optional label for this to be used as for
@@ -2163,6 +2164,20 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine MaskVectorQty
 
+  ! -----------------------------------------  MoveVectorQuantity  -----
+  subroutine MoveVectorQuantity ( From, To )
+    ! Deallocate the Values and Mask fields in To
+    ! Move the Values and Mask fields from From to To using pointer assignment.
+    ! Nullify the Values and Mask fields in From
+    use Allocate_Deallocate, only: Deallocate_Test
+    type(vectorValue_t), intent(inout) :: From, To
+    call deallocate_test ( to%values, moduleName, 'To%Values' )
+    call deallocate_test ( to%mask, moduleName, 'To%Mask' )
+    to%values => from%values
+    to%mask => from%mask
+    nullify ( from%values, from%mask )
+  end subroutine MoveVectorQuantity
+
   ! --------------------------------------------  MultiplyVectors  -----
   subroutine MultiplyVectors ( X, Y, Z, Quant, Inst )
   ! If Z is present, destroy Z and clone a new one from X, then
@@ -2708,6 +2723,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.156  2011/11/11 00:32:29  vsnyder
+! Use IsExtinction array from Molecules module
+!
 ! Revision 2.155  2011/11/01 22:55:48  honghanh
 ! Remove the nullify statement of vector%template%quantities
 ! from DestroyVectorInfo
