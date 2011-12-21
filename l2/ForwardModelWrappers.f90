@@ -24,12 +24,18 @@ module ForwardModelWrappers
     "$RCSfile$"
   private :: not_used_here 
   !---------------------------------------------------------------------------
-  
+
 contains ! ============= Public Procedures ==========================
 
   !----------------------------------------- ForwardModel -----------
   subroutine ForwardModel ( Config, FwdModelIn, FwdModelExtra, &
-    FwdModelOut, fmStat, Jacobian, Hessian, vectors )
+    & FwdModelOut, fmStat, Jacobian, Hessian, Vectors, FwmState, FwmJacobian )
+
+    ! Call the forward model selected by Config.
+
+    ! If FwmState and FwmJacobian are present (both or neither), transform
+    ! FwdModelIn to FwmState before calling the forward model, and transform
+    ! FwmJacobian to Jacobian after returning from the forward model.
 
     use BASELINEFORWARDMODEL_M, only: BASELINEFORWARDMODEL
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
@@ -38,13 +44,17 @@ contains ! ============= Public Procedures ==========================
     use FULLFORWARDMODEL_M, only: FULLFORWARDMODEL
     use HESSIANMODULE_1, only: HESSIAN_T
     use HYBRIDFORWARDMODEL_M, only: HYBRIDFORWARDMODEL
-    use INIT_TABLES_MODULE, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
-      & L_SWITCHINGMIRROR, L_HYBRID, L_POLARLINEAR, L_BASELINE
+    use INIT_TABLES_MODULE, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, &
+      & L_CLOUDFULL, L_SWITCHINGMIRROR, L_HYBRID, L_MIFExtinction, &
+      & L_MIFExtinctionV2, L_POLARLINEAR, L_BASELINE
+    use Intrinsic, only: L_LowestRetrievedPressure, L_VMR
     use LINEARIZEDFORWARDMODEL_M, only: LINEARIZEDFORWARDMODEL
-    use MATRIXMODULE_1, only: MATRIX_T, CHECKINTEGRITY
+    use MATRIXMODULE_1, only: CHECKINTEGRITY, FindBlock, MATRIX_T
     use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use Molecules, only: First_Molecule, Last_Molecule, &
+      & L_Extinction, L_ExtinctionV2
     use POLARLINEARMODEL_M, only: POLARLINEARMODEL
     use SCANMODELMODULE, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
@@ -52,22 +62,46 @@ contains ! ============= Public Procedures ==========================
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: EMIT, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use VECTORSMODULE, only: CHECKNAN, DUMP, VECTOR_T
+    use VECTORSMODULE, only: CHECKNAN, DUMP, GetVectorQuantityByType, &
+      & MoveVectorQuantity, VECTOR_T, VECTORVALUE_T
 
     ! Dummy arguments
-    type(ForwardModelConfig_T), intent(inout) :: CONFIG
-    type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
+    type(forwardModelConfig_T), intent(inout) :: CONFIG
+    type(vector_T), intent(inout), target :: FWDMODELIN ! The retriever state,
+      ! and the forward model state if no transformations are requested
+    type(vector_T), intent(in) :: FwdModelExtra
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
-    type(matrix_T),  intent(inout), optional :: JACOBIAN
-    type(hessian_T), intent(inout), optional :: HESSIAN
+    type(matrix_T), intent(inout), optional, target :: JACOBIAN ! The retriever
+      ! Jacobian, used for the Newton iteration.  The Jacobian produced
+      ! by the forward model if no transformations are requested, else
+      ! transformed from FwmJacobian
+    type(Hessian_T), intent(inout), optional :: HESSIAN ! No transformation
     type(Vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
+    type(Vector_t), intent(in), optional, target :: FwmState ! The forward
+      ! model state, transformed from FwdModelIn if transformations requested
+    type(matrix_T), intent(inout), optional, target :: FwmJacobian ! The
+      ! Jacobian produced by the forward model if transformations are requested.
 
     ! Local variables
-    integer :: K
-    real :: time_start, time_end, deltaTime  
+    real :: DeltaTime
+    integer :: DumpTransform            ! Dump transformed vector quantities
+    integer :: FRow, FCol               ! Row, Column of block in fwmJacobian
+    integer :: I, K
+    integer :: Inst                     ! Instance index
+    integer :: JRow, JCol               ! Row, Column of block in Jacobian
+    type(vectorValue_t), pointer :: LRP ! Lowest Retrieved Pressure
+    type(vectorValue_t), pointer :: Qty ! Transformed quantity in fwmState
+    logical :: RadianceModel
+    type(vector_t), pointer :: TheState
+    type(vectorValue_t), pointer :: T_Qty ! Quantity in State to be transformed
+    type(matrix_T), pointer :: TheJacobian
     character(len=132) :: THISNAME
-    logical :: radianceModel
+    real :: Time_start, Time_end 
+
+    interface MINLOC_S
+      module procedure MINLOC_S_S, MINLOC_S_D
+    end interface
 
     ! Executable code
     ! Report we're starting
@@ -85,59 +119,66 @@ contains ! ============= Public Procedures ==========================
     ! Setup the timing
     call time_now (time_start)
 
+    dumpTransform = switchDetail(switches,'dxfq')
+
     ! Do the actual forward models
-    radianceModel = any ( config%fwmType == &
-      & (/ l_full, l_linear, l_polarLinear, l_hybrid, l_cloudFull /) )
-    select case (config%fwmType)
-    case ( l_baseline )
-      call MLSMessageCalls( 'push', constantName='BaselineForwardModel' )
-      call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian )
-      call add_to_retrieval_timing( 'baseline' )
-    case ( l_full )
-      call MLSMessageCalls( 'push', constantName='FullForwardModel' )
-      call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian, Hessian )
-      call add_to_retrieval_timing( 'full_fwm' )
-    case ( l_linear )
-      call MLSMessageCalls( 'push', constantName='LinearizedForwardModel' )
-      call LinearizedForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian, vectors )
-      call add_to_retrieval_timing( 'linear_fwm' )
-    case ( l_hybrid )
-      call MLSMessageCalls( 'push', constantName='HybridForwardModel' )
-      call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian, vectors )
-      call add_to_retrieval_timing( 'hybrid' )
-    case ( l_polarLinear )
-      call MLSMessageCalls( 'push', constantName='PolarForwardModel' )
-      call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian, vectors )
-      call add_to_retrieval_timing( 'polar_linear' )
-    case ( l_scan )
-      call MLSMessageCalls( 'push', constantName='ScanForwardModel' )
-      call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian )
-      call add_to_retrieval_timing( 'scan_fwm' )
-    case ( l_scan2d )
-      call MLSMessageCalls( 'push', constantName='TwoDForwardModel' )
-      call TwoDScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian )
-      call add_to_retrieval_timing( 'twod_scan_fwm' )
-    case ( l_cloudFull )
-      call MLSMessageCalls( 'push', constantName='CloudForwardModel' )
-      call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian )
-      call add_to_retrieval_timing( 'fullcloud_fwm' )
-    case ( l_switchingMirror )
-      call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
-      call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian )
-      call add_to_retrieval_timing( 'switching_mirror' )
-    case default ! Shouldn't get here if parser etc. worked
-    end select
+    if ( present(fwmJacobian) ) then ! Need transformations
+      ! Lowest Returned Pressure is needed for extinction transformations
+      lrp => getVectorQuantityByType ( fwdModelExtra, &
+               & quantityType=l_lowestRetrievedPressure )
+      ! Move quantities in State for which no transformation is requested to
+      ! FwmState.  Transform those for which transformation is requested. We
+      ! move the quantities so as to provide a consistent view of the state
+      ! to the Forward model.  The un-transformed quantities in FwdModelIn
+      ! are moved instead of copied to avoid aliasing and memory leaks.
+      do k = 1, size(fwdModelIn%quantities)
+        t_qty => fwdModelIn%quantities(k)    ! Quantity to be transformed
+        select case ( t_qty%template%quantityType )
+        case ( l_MIFExtinction, l_MIFExtinctionV2 )
+          qty => getVectorQuantityByType ( & ! Transformed quantity
+            &    fwmState, quantityType=t_qty%template%quantityType, &
+            &    radiometer=t_qty%template%radiometer )
+          call transform_MIF_extinction &
+            & ( fmStat%MAF, T_Qty, lrp%values(1,1), dumpTransform, Qty )
+        case default ! Just move the quantity
+          qty => getVectorQuantityByType ( fwmState, &
+              &  quantityType=t_qty%template%quantityType )
+          call moveVectorQuantity ( t_qty, qty )
+        end select
+      end do
+
+      ! Run the forward model with the transformed quantities
+      call doForwardModels ( fwmState, fwmJacobian )
+
+      ! Move quantities in FwmState for which no transformation is requested
+      ! back to State.  Move columns in fwmJacobian for which no transformation
+      ! is requested back to Jacobian.  Transform fwmJacobian and radiances for
+      ! quantities for which transformation is requested.
+      do k = 1, size(fwdModelIn%quantities)
+        t_qty => fwdModelIn%quantities(k)
+        select case ( t_qty%template%quantityType )
+        case ( l_MIFExtinction, l_MIFExtinctionV2 )
+          qty => getVectorQuantityByType ( & ! Transformed quantity
+              &    fwmState, quantityType=t_qty%template%quantityType, &
+              &    radiometer=t_qty%template%radiometer )
+          call transform_FWM_extinction ( config, &
+            & fmStat%MAF, fwdModelOut, qty, t_qty, fwmJacobian, Jacobian )
+        case default ! Just move the quantity and column
+          qty => getVectorQuantityByType ( fwmState, &
+              &  quantityType=t_qty%template%quantityType )
+          call moveVectorQuantity ( qty, t_qty )
+          call move_Jacobian_Columns ( qty, fwmJacobian, Jacobian )
+        end select
+      end do
+
+    else ! Run the forward model without transformation
+      call doForwardModels ( fwdModelIn, Jacobian )
+    end if
+
     call MLSMessageCalls( 'pop' ) ! for all the cases
 
+    radianceModel = any ( config%fwmType == &
+      & (/ l_full, l_linear, l_polarLinear, l_hybrid, l_cloudFull /) )
     if ( radianceModel ) then
       call MLSMessageCalls( 'push', constantName='BaselinForwardModel' )
       call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
@@ -188,8 +229,6 @@ contains ! ============= Public Procedures ==========================
         end if
       
       ! Check Hessians if relevant
-
-
         if ( present( Hessian ) ) then
           if ( hessian%col%vec%template%name /= jacobian%col%vec%template%name &
             & .or. hessian%row%vec%template%name /= jacobian%row%vec%template%name &
@@ -220,7 +259,245 @@ contains ! ============= Public Procedures ==========================
       call MLSMessageCalls( 'pop' )
     end if
 
+  contains
+
+    subroutine DoForwardModels ( FwdModelIn, Jacobian )
+      type(vector_t), intent(in) :: FwdModelIn
+      type(matrix_t), intent(inout), optional :: Jacobian
+      select case (config%fwmType)
+      case ( l_baseline )
+        call MLSMessageCalls( 'push', constantName='BaselineForwardModel' )
+        call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'baseline' )
+      case ( l_full )
+        call MLSMessageCalls( 'push', constantName='FullForwardModel' )
+        call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, Hessian )
+        call add_to_retrieval_timing( 'full_fwm' )
+      case ( l_linear )
+        call MLSMessageCalls( 'push', constantName='LinearizedForwardModel' )
+        call LinearizedForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, vectors )
+        call add_to_retrieval_timing( 'linear_fwm' )
+      case ( l_hybrid )
+        call MLSMessageCalls( 'push', constantName='HybridForwardModel' )
+        call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, vectors )
+        call add_to_retrieval_timing( 'hybrid' )
+      case ( l_polarLinear )
+        call MLSMessageCalls( 'push', constantName='PolarForwardModel' )
+        call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, vectors )
+        call add_to_retrieval_timing( 'polar_linear' )
+      case ( l_scan )
+        call MLSMessageCalls( 'push', constantName='ScanForwardModel' )
+        call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'scan_fwm' )
+      case ( l_scan2d )
+        call MLSMessageCalls( 'push', constantName='TwoDForwardModel' )
+        call TwoDScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'twod_scan_fwm' )
+      case ( l_cloudFull )
+        call MLSMessageCalls( 'push', constantName='CloudForwardModel' )
+        call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'fullcloud_fwm' )
+      case ( l_switchingMirror )
+        call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
+        call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'switching_mirror' )
+      case default ! Shouldn't get here if parser etc. worked
+      end select
+    end subroutine DoForwardModels
+
   end subroutine ForwardModel
+
+  pure integer function MINLOC_S_S ( A ) result ( MS )
+    ! Return the subscript in A of the minimum absolute value, as a scalar
+    real, intent(in) :: A(:)
+    integer :: M(1)
+    m = minloc(abs(a))
+    ms = m(1)
+  end function MINLOC_S_S
+
+  pure integer function MINLOC_S_D ( A ) result ( MS )
+    ! Return the subscript in A of the minimum absolute value, as a scalar
+    double precision, intent(in) :: A(:)
+    integer :: M(1)
+    m = minloc(abs(a))
+    ms = m(1)
+  end function MINLOC_S_D
+
+  subroutine Move_Jacobian_Columns ( Qty, FwmJacobian, Jacobian )
+    ! Move the blocks in all rows in the columns of FwmJacobian corresponding
+    ! to Qty to Jacobian.
+
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use MatrixModule_0, only: Move_Block
+    use MatrixModule_1, only: FindBlock, Matrix_T
+    use VectorsModule, only: Vector_t, VectorValue_t
+
+    type(vectorValue_t), intent(in) :: Qty ! Quantity in fwmState
+    type(matrix_T), intent(inout) :: FwmJacobian
+    type(matrix_T), intent(inout) :: Jacobian
+
+    integer :: Chan, FCol, Inst, JCol, JRow
+
+    do jRow = 1, jacobian%row%nb
+      do inst = 1, qty%template%noInstances
+        jCol = findBlock ( Jacobian%col, qty%index, inst )
+        fCol = findBlock ( fwmJacobian%col, qty%index, inst )
+        call move_block ( fwmJacobian%block(jRow,fCol), Jacobian%block(jRow,jCol) )
+      end do
+    end do
+
+  end subroutine Move_Jacobian_Columns
+
+  subroutine Transform_FWM_extinction ( Config, MAF, FwdModelOut, Qty, T_Qty, &
+    &                                   FwmJacobian, Jacobian )
+    ! Transform the forward model FwmJacobian to the retriever Jacobian
+    ! for the case of qty%template%quantityType == l_extinction[v2].
+
+    ! See Equations (2) and (3) in wvs-107.
+
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use MatrixModule_0, only: DestroyBlock
+    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_T
+    use MLSKinds, only: RM, RV
+    use VectorsModule, only: Vector_t, VectorValue_t
+
+    type(forwardModelConfig_T), intent(in) :: Config
+    integer, intent(in) :: MAF               ! MAjor Frame number
+    type(vector_t), intent(inout) :: FwdModelOut
+    type(vectorValue_t), intent(in) :: Qty   ! Transformed quantity in fwmState
+    type(vectorValue_t), intent(in) :: T_Qty ! Quantity in State
+    type(matrix_T), intent(in) :: FwmJacobian
+    type(matrix_T), intent(inout) :: Jacobian
+
+    integer :: Chan    ! c in wvs-107
+    integer :: CZ      ! ci, channels X zetas, in wvs-107
+    integer :: FCols(qty%template%noInstances) ! of FwmJacobian, j in wvs-107
+    integer :: Inst    ! Loop inductor to compute fCols, j in wvs-107
+    integer :: JCol    ! of Jacobian
+    integer :: JCols(t_qty%template%noInstances) ! of Jacobian, n in wvs-107
+    integer :: JRow    ! of both Jacobians, n in wvs-107
+    integer :: NChans  ! Number of channels, N_C in wvs-107
+    integer :: NSurfs  ! Number of surfaces in MIF, N_m in wvs-107
+    real(rv) :: P      ! 10**(-2*(zeta(surf)-zeta(jRow)))
+    real(rm) :: RowSum ! sum(FwmJacobian%block(jRow,fCols)%values(cz,surf))
+    integer :: Surf    ! column of FwmJacobian%block(jRow,fCol)%values, 
+                       ! g in wvs-107
+    integer :: VSurf   ! Surface (zeta) index in a MIF, i in wvs-107
+
+    ! Get the block column subscripts for instances of qty.
+    do inst = 1, qty%template%noInstances
+      fCols(inst) = findBlock ( fwmJacobian%col, qty%index, inst )
+    end do
+
+    do inst = 1, t_qty%template%noInstances
+      jCols(inst) = findBlock ( Jacobian%col, t_qty%index, inst )
+    end do
+
+    nChans = size(config%channels)
+    do jRow = 1, jacobian%row%nb
+      nSurfs = fwdModelOut%quantities(jRow)%template%noSurfs
+      do jCol = 1, size(jCols)
+        if ( Jacobian%row%inst(jRow) /= Jacobian%col%inst(jCols(jCol)) ) then
+          call destroyBlock ( Jacobian%block(jRow,jCols(jCol)) )
+        else ! (jRow,jCol) = nn in wvs-107
+          call getFullBlock ( Jacobian, jrow, jCols(jCol), 'Transform_FWM_extinction' )
+          do chan = 1, nChans
+            do vSurf = 1, nSurfs ! Same for all fCols
+              cz = config%channels(chan)%used + 1 - & ! ci, Channel and Zeta
+                 & config%channels(chan)%origin + nChans*(vSurf-1)
+              do surf = 1, size(FwmJacobian%block(jRow,fCols(inst))%values,2) ! g
+                ! Compute the inner sum in Equations (3) and (4) in wvs-107. 
+                ! But we can't do
+                ! rowSum = sum(FwmJacobian%block(jRow,fCols)%values(cz,surf))
+                ! because "values" has the POINTER attribute.
+                rowSum = 0.0
+                do inst = 1, size(fCols)
+                  rowSum = rowSum + &
+                    & FwmJacobian%block(jRow,fCols(inst))%values(cz,surf)
+                end do
+
+                p = 10.0_rm ** ( -2.0_rm * ( qty%template%surfs(surf,1) - &
+                                             t_qty%template%surfs(jRow,maf) ) )
+
+                ! Equation (3) in wvs-107
+                Jacobian%block(jRow,jCols(jCol))%values(cz,1) = rowSum * p
+
+                ! Equation (4) in wvs-107
+                fwdModelOut%quantities(jRow)%values(cz,maf) = &
+                  & fwdModelOut%quantities(jRow)%values(cz,maf) + &
+                    & rowSum * ( t_qty%values(vSurf,maf) * p - &
+                               & qty%values(surf,maf) )
+              end do
+            end do
+          end do
+        end if
+      end do
+    end do
+
+  end subroutine Transform_FWM_extinction
+
+  subroutine Transform_MIF_Extinction ( MAF, T_Qty, Lrp, DumpTransform, Qty )
+
+    ! Interpolate from a MAF-indexed minor-frame quantity to the first
+    ! column of an L2GP quantity.  Then spread it out in orbit geodetic
+    ! angle as if it were a 2D quantity.
+
+    ! Equation (1) in wvs-107.
+
+    use MLSKinds, only: RV
+    use MLSNumerics, only: InterpolateValues
+    use Sort_m, only: Sortp
+    use VectorsModule, only: Dump, VectorValue_t
+
+    integer, intent(in) :: MAF                ! MAjor Frame number
+    type(vectorValue_t), intent(in) :: T_Qty  ! State quantity to be transformed
+    real(rv), intent(in) :: LRP               ! Lowest retrieved pressure
+    integer, intent(in) :: DumpTransform      ! Dump T_Qty and Qty at the end
+    type(vectorValue_t), intent(inout) :: Qty ! Forward model quantity
+
+    integer :: I       ! Subscript and loop inductor
+    integer :: P(t_qty%template%noSurfs)
+    integer :: Q_LRP   ! Index in Qty%Surfs of LRP
+    integer :: T_LRP   ! Index in T_Qty%Surfs of LRP
+
+    interface MINLOC_S
+      module procedure MINLOC_S_S, MINLOC_S_D
+    end interface
+
+    ! Interpolate in Zeta only, from t_qty to the first column of qty
+    ! PTan might be out of order, so sort t_qty%template%surfs
+    call sortp ( t_qty%template%surfs(:,maf), 1, t_qty%template%noSurfs, p )
+    call interpolateValues (                              &
+      & t_qty%template%surfs(p,maf), t_qty%values(p,maf), &
+      & qty%template%surfs(:,1),   qty%values(:,1), 'L', 'C' )
+    q_lrp = minloc_s(lrp - qty%template%surfs(:,1))
+    t_lrp = minloc_s(lrp - t_qty%template%surfs(:,1))
+    ! Apply a P**(-2) dependence, Equation (2) in wvs-107
+    do i = 1, q_lrp-1
+      ! hGrids of qty and t_qty have same extent and spacing.
+      ! Vertical coordinate is zeta, so 10**(-2*zeta) is P**(-2).
+      qty%values(i,:) = t_qty%values(t_lrp,maf) * &
+        & 10 ** ( - 2.0 * ( qty%template%surfs(i,1)) - &
+                          & t_qty%template%surfs(t_lrp,1) )              
+    end do
+    do i = q_lrp, qty%template%noSurfs
+      qty%values(i,2:) = qty%values(i,1)
+    end do
+    if ( dumpTransform > -1 ) then
+      call dump ( t_qty, details=dumpTransform, name='from fwdModelIn' )
+      call dump ( qty, details=dumpTransform, name='to fwmState' )
+    end if
+  end subroutine Transform_MIF_Extinction
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -235,6 +512,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.35  2011/12/21 01:42:22  vsnyder
+! Add MIFExtinction transformation
+!
 ! Revision 2.34  2011/05/09 18:10:02  pwagner
 ! Converted to using switchDetail
 !
