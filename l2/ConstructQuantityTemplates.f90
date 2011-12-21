@@ -21,7 +21,8 @@ module ConstructQuantityTemplates
 
   ! The various properties has/can have
   integer, parameter :: NEXT = -1
-  integer, parameter :: P_CHUNKED            = 1
+  integer, public, parameter :: FirstProperty        = 1
+  integer, public, parameter :: P_CHUNKED            = FirstProperty
   integer, public, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
   integer, public, parameter :: P_MINORFRAME         = P_MAJORFRAME + 1
   integer, public, parameter :: P_MUSTBEZETA         = P_MINORFRAME + 1
@@ -43,12 +44,12 @@ module ConstructQuantityTemplates
   integer, public, parameter :: P_XYZ                = P_SUPPRESSCHANNELS + 1
   integer, public, parameter :: P_MATRIX3X3          = P_XYZ + 1
 
-  integer, public, parameter :: NOPROPERTIES = P_MATRIX3X3
+  integer, public, parameter :: LastProperty         = P_MATRIX3X3
 
   ! Local, saved variables (constant tables really)
-  logical, public, save, dimension ( noProperties, first_lit : last_lit ) :: &
-    & PROPERTYTABLE
-  integer, public, save, dimension ( first_lit : last_lit ) :: UNITSTABLE
+  logical, public, save :: &
+    & PROPERTYTABLE ( firstProperty: LastProperty, first_lit : last_lit )
+  integer, public, save :: UNITSTABLE ( first_lit : last_lit )
 
   public :: AnyGoodSignalData, ConstructMinorFrameQuantity, ConstructMajorFrameQuantity
   public :: CreateQtyTemplateFromMLSCFInfo
@@ -113,8 +114,8 @@ contains ! ============= Public procedures ===================================
     logical :: KeepChannels             ! From /channels, means keep the channels
                                         ! information from the signal
     logical :: REGULAR                  ! Flag
-    logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
-    logical, dimension(field_first:field_last) :: GOT ! Fields
+    logical :: PROPERTIES(firstProperty: LastProperty) ! Properties for this quantity type
+    logical :: GOT(field_first:field_last) ! Fields
     character(len=127) :: SIGNALSTRING
 
     integer :: FGRIDINDEX               ! Index of frequency grid
@@ -1040,9 +1041,9 @@ contains ! ============= Public procedures ===================================
       L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
       L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, &
       L_LineCenter, L_LineWidth, L_LineWidth_TDep, &
-      L_LOSTRANSFUNC, L_LOSVEL, &
+      L_LOSTRANSFUNC, L_LOSVEL, L_LowestRetrievedPressure, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
-      L_MIFDEADTIME, &
+      L_MIFDEADTIME, l_MIFExtinction, l_MIFExtinctionV2, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
       L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_OPTICALDEPTH, L_ORBITINCLINATION, &
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
@@ -1065,7 +1066,7 @@ contains ! ============= Public procedures ===================================
 
     ! Local variables
     integer :: I                        ! Loop counter
-    integer, dimension(0), parameter :: NONE = (/ ( 0, i=1,0 ) /)
+    integer, dimension(1:0), parameter :: NONE = (/ ( 0, i=1,0 ) /)
     logical :: VALID                    ! Flag
     character(len=132) :: MESSAGE       ! An error message
 
@@ -1074,6 +1075,14 @@ contains ! ============= Public procedures ===================================
 
     propertyTable = .false.
     unitsTable = 0
+
+    ! DefineQtyTypes creates the arrays PropertyTable and UnitsTable. For
+    ! each quantity type, the first thing in the list is the quantity's lit
+    ! index.  The next is its physical dimension.  After that there is a
+    ! list of properties.  The list of properties for a quantity ends with
+    ! either "next,", after which information for another quantity may
+    ! begin, or the end of the array.  The property "none" is a zero-extent
+    ! array, provided for its documentaty value.
 
     call DefineQtyTypes ( (/ &
       l_adopted, phyq_dimensionless, none, next, &
@@ -1151,14 +1160,19 @@ contains ! ============= Public procedures ===================================
       l_lineWidth_TDep, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
+      l_lowestRetrievedPressure, phyq_zeta, none, next, &
       l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
       l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_mifDeadTime, phyq_time, next, &
+      l_MIFExtinction, phyq_extinction, p_flexibleVHGrid, &
+        & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
+      l_MIFExtinctionV2, phyq_extinction, p_flexibleVHGrid, &
+        & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
       l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
-                      p_signal, p_suppressChannels, p_mustBeZeta, next, &
+        & p_signal, p_suppressChannels, p_mustBeZeta, next, &
       l_noRadsPerMIF, phyq_dimensionless, p_minorFrame, p_signal, &
-                      p_suppressChannels, next, &
+        & p_suppressChannels, next, &
       l_noiseBandwidth, phyq_frequency, p_signal, next, &
       l_numGrad, phyq_dimensionless, p_vGrid, next, &
       l_numJ, phyq_dimensionless, p_vGrid, next, &
@@ -1320,6 +1334,10 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.165  2011/12/21 01:40:57  vsnyder
+! Add LowestRetrievedPressure, MIFExtinction[v2], and a description of the
+! DefineQtyTypes table.
+!
 ! Revision 2.164  2011/08/20 00:49:05  vsnyder
 ! Remove unused use names
 !
