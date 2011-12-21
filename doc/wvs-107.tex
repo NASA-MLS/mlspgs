@@ -1,12 +1,14 @@
 \documentclass[11pt]{article}
-\usepackage[fleqn]{amsmath}\textwidth 6.5in
-\oddsidemargin -0.25in
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.5in
+\oddsidemargin 0in
 %\evensidemargin -0.5in
-\topmargin -0.25in
+\topmargin 0in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107r2}
-\newcommand{\docdate}{14 December 2011}
+\newcommand{\docname}{\bf wvs-107r3}
+\newcommand{\docdate}{21 December 2011}
 
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -131,17 +133,17 @@ E^F_{cg,j} = \left\{
 \end{equation}
 %
 where $\overline{E}^R_{c,n}(\zeta)$ indicates interpolation from
-$\{E^R_{ci,n}\}$, in $\{\zeta_i\}$ only, to $\zeta$, $N_\phi$ is the
-number of $\phi$ instances specified for $E^F$ in the {\tt L2CF},
-$N_\zeta$ is the number of $\zeta$ ($-\log_{10}$ pressure) levels
-specified in the {\tt L2CF} for the forward model's extinction state
-vector block,  and
+$\{E^R_{ci,n}\}$, in $\{\zeta_i\}$ only, to $\zeta$, $N_\zeta$ is the
+number of $\zeta$ ($-\log_{10}$ pressure) levels specified in the {\tt
+L2CF} for the forward model's extinction state vector block,  and
 %
 \begin{equation}
 10^{-2(\zeta_g - \zeta_r)} = \left( \frac{P_g}{P_r} \right)^2 \,.
 \end{equation}
 
-Notice that $E^F_{cg,j} = E^F_{cg,1},\, j= 1, \dots, N_\phi$.
+Notice that $E^F_{cg,j} = E^F_{cg,1},\, j= 1, \dots, N_\phi$, where
+$N_\phi$ is the number of $\phi$ instances specified for $E^F$ in the
+{\tt L2CF}.
 
 The layout of the extinction blocks of the Jacobian used by the retriever
 and those of the Jacobian computed by the forward model are shown in the
@@ -173,7 +175,7 @@ block, third and fourth subscripts $(ci)$ conspire to denote the row
 number (first subscript of the {\tt VALUES} component).  The subscript
 $c$ is the channel number and $i$ is the MIF $(\phi_\text{tan},
 \zeta_\text{tan})_i$ number.  The row number of an element is $c +
-n_c(i-1)$.  The column number (second subscript) is always 1.
+N_c(i-1)$.  The column number (second subscript) is always 1.
 
 For forward model block $K^F_{nj}$, $n$ is the index of the MAF, while
 $j$ is the index of solution coordinate $\phi_j$.  Each $K^F_{nj}$ block
@@ -218,6 +220,9 @@ E^F_{cg,1},\, j = 1, \dots, N_\phi$.
 % $Id$
 
 % $Log$
+% Revision 1.3  2011/12/15 01:54:53  vsnyder
+% Revise indexing
+%
 % Revision 1.2  2011/12/13 23:39:55  vsnyder
 % Include number of signals in row count for Jacobian layout
 %
