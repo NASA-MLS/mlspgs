@@ -532,9 +532,9 @@ contains ! =====     Public procedures     =============================
              l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_l1bMAFBaseline, l+l_l1bMIF_TAI, l+l_limbSidebandFraction, &
              l+l_lineCenter, l+l_lineWidth, l+l_lineWidth_tDep, &
-             l+l_losTransFunc, l+l_losVel, &
+             l+l_losTransFunc, l+l_losVel, l+l_lowestRetrievedPressure, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
-             l+l_MIFDeadTime, &
+             l+l_MIFDeadTime, l+l_MIFExtinction,  l+l_MIFExtinctionv2, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
              l+l_numGrad, l+l_numJ, l+l_numNewt, &
              l+l_opticalDepth, l+l_orbitInclination, &
@@ -1492,6 +1492,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fuzz, t+t_numeric, n+n_field_type, & ! Secret
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
+             begin, f+f_fwmJacobian, s+s_matrix, n+n_field_spec, &
+             begin, f+f_fwmState, s+s_vector, n+n_field_spec, &
              begin, f+f_highBound, s+s_vector, n+n_field_spec, &
              begin, f+f_hRegOrders, t+t_numeric, n+n_field_type, &
              begin, f+f_hRegQuants, s+s_quantity, n+n_field_spec, &
@@ -1720,6 +1722,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.529  2011/12/21 01:38:41  vsnyder
+! Add LowestRetrievedPressure, MIFExtinction[v2], fwmJacobian, and fwmState
+!
 ! Revision 2.528  2011/12/15 01:50:49  pwagner
 ! Added sdName and /spread fields to DirectRead
 !
