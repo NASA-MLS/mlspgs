@@ -164,6 +164,8 @@ fuzz
 fwdModelExtra
 fwdModelIn
 fwdModelOut
+fwmJacobian
+fwmState
 
 geocAltitudeQuantity
 geodAngle
@@ -488,6 +490,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.211  2011/12/21 01:37:01  vsnyder
+# Add fwmJacobian and fwmState
+#
 # Revision 2.210  2011/06/16 23:15:25  pwagner
 # Added /downsample to reduce resolution of gridded data when read
 #
