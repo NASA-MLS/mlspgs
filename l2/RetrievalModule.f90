@@ -53,6 +53,7 @@ contains
       & F_AVERAGE, F_COLUMNSCALE, F_COMMENT, F_COVARIANCE, F_COVSANSREG, &
       & F_DIAGNOSTICS, F_DIAGONAL, F_EXTENDEDAVERAGE, &
       & F_FORWARDMODEL, F_FUZZ, F_FWDMODELEXTRA, F_FWDMODELOUT, &
+      & F_FWMJACOBIAN, F_FWMSTATE, &
       & F_HESSIAN, F_HIGHBOUND, F_HREGORDERS, F_HREGQUANTS, F_HREGWEIGHTS, &
       & F_HREGWEIGHTVEC, F_JACOBIAN, F_LAMBDA, F_LEVEL, F_LOWBOUND, &
       & F_MAXJ, F_MEASUREMENTS, F_MEASUREMENTSD, F_METHOD, F_MUMIN, &
@@ -61,7 +62,8 @@ contains
       & F_PHASENAME, F_PRECISIONFACTOR, &
       & F_REGAFTER, F_REGAPRIORI, F_SERIAL, F_SPARSEQUANTITIES, &
       & F_STATE, F_STATEMAX, F_STATEMIN, F_SWITCHES, &
-      & F_TOLERANCEA, F_TOLERANCEF, F_TOLERANCER, F_VREGORDERS, F_VREGQUANTS, &
+      & F_TOLERANCEA, F_TOLERANCEF, F_TOLERANCER, &
+      & F_VREGORDERS, F_VREGQUANTS, &
       & F_VREGWEIGHTS, F_VREGWEIGHTVEC, FIELD_FIRST, FIELD_LAST, &
       & L_APRIORI, L_COVARIANCE, &
       & L_DNWT_ABANDONED,  L_DNWT_AJN,  L_DNWT_AXMAX, &
@@ -70,14 +72,15 @@ contains
       & L_DNWT_FLAG, L_DNWT_FNMIN, L_DNWT_FNORM,  L_DNWT_GDX,  L_DNWT_GFAC, &
       & L_DNWT_GRADN,  L_DNWT_SQ, L_DNWT_SQ,  L_DNWT_SQT, &
       & L_HIGHCLOUD, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-      & L_LOWCLOUD, L_NEWTONIAN, L_NONE, L_NORM, &
-      & L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_SIMPLE, &
+      & L_LOWCLOUD, l_MIFExtinction, l_MIFExtinctionV2, &
+      & L_NEWTONIAN, L_NONE, L_NORM, L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_SIMPLE, &
       & S_ANYGOODVALUES, S_CATCHWARNING, S_COMPARE, &
       & S_DIFF, S_DUMP, S_DUMPBLOCKS, S_FLAGCLOUD, S_FLUSHPFA, S_LEAKCHECK, &
       & S_MATRIX, S_REEVALUATE, S_RESTRICTRANGE, S_RETRIEVE, &
       & S_SIDS, S_SKIP, S_SNOOP, S_SUBSET, S_TIME, S_UPDATEMASK
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS
+    use INTRINSIC, only: L_VMR, PHYQ_DIMENSIONLESS
     use L2PARINFO, only: PARALLEL
+    use ManipulateVectorQuantities, only: DoHGridsMatch
     use MATRIXMODULE_1, only: ADDTOMATRIXDATABASE, COPYMATRIX, CREATEEMPTYMATRIX, &
       & DESTROYMATRIX, GETFROMMATRIXDATABASE, MATRIX_T, MATRIX_DATABASE_T, &
       & MATRIX_SPD_T, MULTIPLYMATRIXVECTORNOT, REFLECTMATRIX, &
@@ -90,6 +93,8 @@ contains
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
       & MLSMESSAGE, MLSMESSAGECALLS, MLSMESSAGERESET
+    use Molecules, only: First_Molecule, Last_Molecule, &
+      & L_Extinction, L_ExtinctionV2
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
@@ -155,6 +160,8 @@ contains
                                         ! starting a retrieval.
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelOut
+    type(matrix_T), pointer :: FwmJacobian ! forward model's Jacobian matrix
+    type(vector_T), pointer :: FwmState    ! forward model's State vector
     logical :: Got(field_first:field_last)   ! "Got this field already"
     type(vector_T), pointer :: HighBound ! For state during retrieval
     integer :: HRegOrders               ! Regularization orders               
@@ -165,6 +172,7 @@ contains
     real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
     integer :: IxAverage                ! Index in tree of averagingKernel
     integer :: IxCovariance             ! Index in tree of outputCovariance
+    integer :: IxFwmJacobian            ! tree index of forward model's Jacobian
     integer :: IxJacobian               ! Index in tree of Jacobian matrix
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
     type(hessian_T), pointer :: Hessian ! The Hessian
@@ -183,7 +191,8 @@ contains
                                         ! only l_Newtonian.
     type(matrix_T), target :: MyAverage ! for OutputAverage to point to
     type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
-    type(hessian_T), target :: MyHessian          ! for Jacobian to point at
+    type(matrix_T), target :: MyFwmJacobian       ! for FwmJacobian to point at
+    type(hessian_T), target :: MyHessian          ! for Hessian to point at
     type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
     real(rv) :: MuMin                   ! Smallest shrinking of dx before change direction
     logical :: NegateSD                 ! Flip output error negative for poor information
@@ -193,6 +202,7 @@ contains
     logical :: ParallelMode             ! Run forward models in parallel
     character(len=127) :: PhaseName     ! To pass to snoopers
     real(rv) :: PrecisionFactor         ! Default 0.5, precisions 'worse than this' set negative
+    type(vectorValue_T), pointer :: Qty ! A temporary value used for checking
     integer :: Son                      ! Of Root or Key
     character(len=127) :: SnoopComment  ! From comment= field of S_Snoop spec.
     integer :: SnoopKey                 ! Tree point of S_Snoop spec.
@@ -263,9 +273,11 @@ contains
     integer, parameter :: IfAThenB = DiagNoCov + 1
     integer, parameter :: IfUnitsAThenB = IfAThenB + 1
     integer, parameter :: Inconsistent = IfUnitsAThenB + 1  ! Inconsistent fields
-    integer, parameter :: InconsistentUnits = Inconsistent + 1
+    integer, parameter :: InconsistentQuantities = Inconsistent + 1
+    integer, parameter :: InconsistentUnits = InconsistentQuantities + 1
     integer, parameter :: NeedBothDepthAndCutoff = InconsistentUnits + 1
-    integer, parameter :: NoFields = NeedBothDepthAndCutoff + 1  ! No fields are allowed
+    integer, parameter :: NeedFwmJacobian = NeedBothDepthAndCutoff + 1
+    integer, parameter :: NoFields = NeedFwmJacobian + 1  ! No fields are allowed
     integer, parameter :: NotGeneral = noFields + 1  ! Not a general matrix
     integer, parameter :: NotSPD = notGeneral + 1    ! Not symmetric pos. definite
     integer, parameter :: RangeNotAppropriate = NotSPD + 1
@@ -277,6 +289,7 @@ contains
 
     error = 0
     nullify ( apriori, aprioriFraction, configIndices, covariance, fwdModelOut )
+    nullify ( fwmJacobian, fwmState )
     nullify ( measurements, measurementSD, outputSD, sparseQuantities )
     nullify ( state, stateMax, stateMin )
     phaseName = ' '              ! Default in case there's no field
@@ -425,6 +438,10 @@ contains
             fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_fwdModelOut )
             fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_fwmJacobian )
+            ixFwmJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
+          case ( f_fwmState )
+            fwmState => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_highBound )
             highBound => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_hRegOrders )
@@ -527,14 +544,14 @@ contains
             call display_string ( state%name )
             call output ( ', template name: ' )
             call display_string ( state%template%name, advance='yes' )
-          endif
+          end if
           if ( got(f_outputSD) ) then
             call ClearVector( outputSD, real(statefilledbyskippedretrievals, rv) )
             call output ( 'Clearing retrieval precision vector name: ' )
             call display_string ( state%name )
             call output ( ', template name: ' )
             call display_string ( state%template%name, advance='yes' )
-          endif
+          end if
           call output ( ' (skipping retrieval) ', advance='yes' )
           if ( toggle(gen) )  call trace_end ( "Retrieve.retrieve" )
           cycle
@@ -564,6 +581,8 @@ contains
           & call announceError ( inconsistent, f_negateSD, f_regAfter )
         if ( negateSD .and. .not. got(f_outputSD) ) &
           & call AnnounceError ( ifAThenB, f_negateSD, f_outputSD )
+        if ( got(f_fwmJacobian) .neqv. got(f_fwmState) ) &
+            & call AnnounceError ( needFwmJacobian )
         
         if ( error == 0 ) then
 
@@ -602,6 +621,7 @@ contains
               & call announceError ( inconsistent, f_stateMin, f_state )
           end if
         end if
+
         if ( error == 0 ) then
 
           if ( switchDetail ( switches, 'rtv' ) > -1 ) call DumpRetrievalConfig
@@ -632,6 +652,49 @@ contains
           else
             jacobian => myJacobian
             call createEmptyMatrix ( jacobian, 0, measurements, state )
+          end if
+
+          if ( got(f_fwmJacobian) ) then
+            ! Get or create the forward model Jacobian
+            k = decoration(ixFwmJacobian)
+            if ( k == 0 ) then
+              call createEmptyMatrix ( myFwmJacobian, &
+                & sub_rosa(subtree(1,ixFwmJacobian)), measurements, fwmState )
+              k = addToMatrixDatabase( matrixDatabase, myFwmJacobian )
+              call decorate ( ixFwmJacobian, k )
+            end if
+            ! Check compatability of retriever Jacobian and forward model Jacobian
+            call getFromMatrixDatabase ( matrixDatabase(k), fwmJacobian )
+            if ( fwmJacobian%row%vec%template%name /= measurements%template%name ) &
+              & call announceError ( inconsistent, f_fwmJacobian, f_measurements )
+            if ( fwmJacobian%col%vec%template%name /= fwmState%template%name ) &
+              & call announceError ( inconsistent, f_fwmJacobian, f_fwmState )
+            ! Make sure it's possible to use the same row index for blocks
+            ! of Jacobian and fwmJacobian
+            if ( Jacobian%row%instFirst .neqv. fwmJacobian%row%instFirst ) &
+              & call announceError ( inconsistent, f_Jacobian, f_fwmJacobian )
+            ! Verify that for every quantity in State there is a corresponding
+            ! one in FwmState.  Verify that vmr quantities are equivalent.
+            do k = 1, size(state%quantities)
+              select case ( state%quantities(k)%template%quantityType )
+              case ( l_vmr )
+                qty => getVectorQuantityByType ( fwmState, quantityType=l_vmr, &
+                    &    molecule=state%quantities(k)%template%molecule )
+                if ( state%quantities(k)%template%name /= qty%template%name ) &
+                  & call announceError ( inconsistentQuantities, f_state, f_fwmState )
+              case ( l_MIFExtinction ) ! All we care is that a quantity exists
+                qty => getVectorQuantityByType ( fwmState, &
+                    &  quantityType=l_vmr, molecule=l_extinction )
+              case ( l_MIFExtinctionV2 ) ! All we care is that a quantity exists
+                qty => getVectorQuantityByType ( fwmState, &
+                    &  quantityType=l_vmr, molecule=l_extinctionV2 )
+              case default
+                qty => getVectorQuantityByType ( fwmState, &
+                    &  quantityType=state%quantities(k)%template%quantityType )
+                if ( state%quantities(k)%template%name /= qty%template%name ) &
+                  & call announceError ( inconsistentQuantities, f_state, f_fwmState )
+              end select
+            end do
           end if
 
           ! Create the output covariance matrix
@@ -783,15 +846,16 @@ contains
 
   contains
     ! --------------------------------------------  AnnounceError  -----
-    subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex, String )
+    subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex, String, Lit )
 
-      use INTRINSIC, only: FIELD_INDICES, SPEC_INDICES
+      use INTRINSIC, only: FIELD_INDICES, LIT_INDICES, SPEC_INDICES
       use LEXER_CORE, only: PRINT_SOURCE
       use STRING_TABLE, only: DISPLAY_STRING
 
       integer, intent(in) :: Code       ! Index of error message
       integer, intent(in), optional :: FieldIndex, AnotherFieldIndex ! f_...
       character(len=*), optional :: String
+      integer, intent(in), optional :: Lit ! A literal index
 
       error = max(error,1)
       call output ( '***** At ' )
@@ -833,6 +897,7 @@ contains
         call display_string ( field_indices(anotherFieldIndex) )
         call output ( ' field shall also appear.', advance='yes' )
       case ( inconsistent, notGeneral, notSPD )
+        if ( present(string) ) call output ( string )
         call output ( 'the field ' )
         call display_string ( field_indices(fieldIndex) )
         select case ( code )
@@ -846,12 +911,21 @@ contains
           call output ( ' is not a symmetric positive-definite matrix.', &
             & advance='yes' )
         end select
+      case ( inconsistentQuantities )
+        call output ( 'the quantities of the "' )
+        call display_string ( field_indices(fieldIndex) )
+        call output ( '" field are inconsistent with the quantities of the "' )
+        call display_string ( field_indices(anotherFieldIndex ) )
+        call output ( '" field.', advance='yes' )
       case ( inconsistentUnits )
         call output ( 'the elements of the "' )
         call display_string ( field_indices(fieldIndex) )
         call output ( '" field have inconsistent units.', advance='yes' )
       case ( needBothDepthAndCutoff )
         call output ( 'OpticalDepth specified but no cutoff, or visa versa', &
+          & advance='yes' )
+      case ( needFwmJacobian )
+        call output ( 'FwmJacobian or fwmState specified, but not both', &
           & advance='yes' )
       case ( noFields )
         call output ( 'No fields are allowed for a ' )
@@ -1863,8 +1937,14 @@ NEWT: do ! Newton iteration
             else
               ! Otherwise, we call the forward model as ususal
               do k = 1, size(configIndices)
+                ! This depends upon the Fortran 2008 feature that a null
+                ! pointer actual argument corresponding to a nonpointer
+                ! optional dummy argument is not present.  This feature,
+                ! although not standard until 2008, was provided (probably
+                ! by accident) by many pre-2008 compilers.
                 call forwardModel ( configDatabase(configIndices(k)), &
-                  & v(x), fwdModelExtra, v(f_rowScaled), fmStat, jacobian, hessian, vectorDatabase )
+                  & v(x), fwdModelExtra, v(f_rowScaled), fmStat, Jacobian, &
+                  & Hessian, vectorDatabase, fwmState, fwmJacobian )
               end do ! k
               ! Forward model calls add_to_retrieval_timing
             end if
@@ -2825,6 +2905,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.315  2011/12/21 01:42:22  vsnyder
+! Add MIFExtinction transformation
+!
 ! Revision 2.314  2011/08/29 22:13:42  pwagner
 ! Predefine Hessian object in parallel with Jacobian matrix
 !
