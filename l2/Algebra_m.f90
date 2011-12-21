@@ -1287,10 +1287,13 @@ contains
       use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
       use VECTORSMODULE, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
       ! Dummy arguments
+      ! RetrievalIn and TruthIn are intent(inout) but not actually changed
+      ! because there is no way to ask the ForwardModel wrapper to make
+      ! transformations.
       type (Matrix_T), intent(inout) :: MATRIX ! Normal equation matrix
-      type (Vector_T), intent(in), target :: TRUTHIN ! Truth forward model state vector
+      type (Vector_T), intent(inout), target :: TRUTHIN ! Truth forward model state vector
       type (Vector_T), pointer :: TRUTHEXTRA ! Truth extra forward model vector
-      type (Vector_T), intent(in), target :: RETRIEVALIN ! Retrieval forward model state vector
+      type (Vector_T), intent(inout), target :: RETRIEVALIN ! Retrieval forward model state vector
       type (Vector_T), pointer :: RETRIEVALEXTRA ! Retrieval extra forward model vector
       integer, intent(in) :: TRUTHFORWARDMODELNODE ! List of forward models.
       integer, intent(in) :: RETRIEVALFORWARDMODELNODE ! List of forward models.
@@ -1401,7 +1404,9 @@ contains
       type (Matrix_SPD_T), intent(inout) :: MATRIX ! Normal equation matrix
       type (Vector_T), intent(inout) :: RHSOUT ! Right hand side in state space
       integer, intent(in) :: FORWARDMODELNODE ! List of forward models.
-      type (Vector_T), intent(in), target :: FWDMODELIN ! Forward model state vector
+      type (Vector_T), intent(inout), target :: FWDMODELIN ! Forward model state vector
+        ! Although intent(inout), FWDMODELIN is not actually changed here bacause
+        ! there is no way to ask ForwardModel wrappers to make transformations.
       type (Vector_T), pointer :: FWDMODELEXTRA ! Extra forward model vector
       type (Vector_T), intent(inout) :: FWDMODELOUT ! Forward model results
       type (Vector_T), intent(in) :: MEASUREMENTS ! Measurement vector
@@ -1519,6 +1524,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.27  2011/12/21 01:44:32  vsnyder
+! Change some intents, and explain why
+!
 ! Revision 2.26  2011/05/09 18:04:51  pwagner
 ! Converted to using switchDetail
 !
