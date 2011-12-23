@@ -60,11 +60,12 @@ module CFM_QuantityTemplate_m
     use Chunks_m, only: MLSChunk_T
     use ConstructQuantityTemplates, only : AnyGoodSignalData, &
             ConstructMinorFrameQuantity, &
-            InitQuantityTemplates, unitstable, propertyTable, noProperties, &
+            InitQuantityTemplates, unitstable, propertyTable, &
             p_majorFrame, p_minorFrame, p_mustBeZeta, p_fGrid, p_hGrid, &
             p_vgrid, p_radiometer, p_radiometerOptional, p_scModule, &
             p_signal, p_signalOptional, p_xyz, p_matrix3x3, p_flexibleVHGrid, &
-            p_suppressChannels, p_module, p_molecule, p_fGridOptional
+            p_suppressChannels, p_module, p_molecule, p_fGridOptional, &
+            firstProperty, lastProperty
     use Construct, only: ConstructMIFGeolocation
     use Parse_Signal_m, only: PARSE_SIGNAL
     use MLSSignals_m, only: GetModuleFromSignal, GetRadiometerFromSignal, &
@@ -189,7 +190,7 @@ module CFM_QuantityTemplate_m
       ! name of the quantity as string
       character(len=*), optional :: qName
 
-      logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
+      logical :: PROPERTIES(firstProperty : lastProperty) ! Properties for this quantity type
       character(len=127) :: signalString
       integer, dimension(:), pointer :: SignalInds ! From parse signal
       logical, pointer :: Channels(:)     ! From Parse_Signal
@@ -680,6 +681,9 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.22  2011/12/16 00:25:31  honghanh
+! Improve documentation of CreateQtyTemplate
+!
 ! Revision 1.21  2011/10/19 17:39:25  honghanh
 ! New CreateQtyTemplate API to use L1 maf instead of chunk.
 !

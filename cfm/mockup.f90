@@ -201,53 +201,53 @@ program mockup
     h2o = CreateValue4AgileVector(qH2O, value=H2OInput)
     call AddValue2Vector(stateExtra, H2O)
 
-    qIsotoperatioO_18_O = CreateQtyTemplate(l_isotoperatio, &
-    qName='isotoperatioO_18_O', qmolecule=l_o_18_o)
-    isotoperatioO_18_O = CreateValue4AgileVector(qIsotoperatioO_18_O, &
-    spreadvalue=0.00409000_r8)
-    call AddValue2Vector(stateExtra, isotoperatioO_18_O)
+    !qIsotoperatioO_18_O = CreateQtyTemplate(l_isotoperatio, &
+    !qName='isotoperatioO_18_O', qmolecule=l_o_18_o)
+    !isotoperatioO_18_O = CreateValue4AgileVector(qIsotoperatioO_18_O)
+    !spreadvalue=0.00409000_r8)
+    !call AddValue2Vector(stateExtra, isotoperatioO_18_O)
 
-    qIsotoperatioO3 = CreateQtyTemplate(l_isotoperatio, qName='isotoperatioO3', &
-    qmolecule=l_o3)
-    isotoperatioO3 = CreateValue4AgileVector(qIsotoperatioO3, &
-    spreadvalue=0.99290103_r8)
-    call AddValue2Vector(stateExtra, isotoperatioO3)
+    !qIsotoperatioO3 = CreateQtyTemplate(l_isotoperatio, qName='isotoperatioO3', &
+    !qmolecule=l_o3)
+    !isotoperatioO3 = CreateValue4AgileVector(qIsotoperatioO3)
+    !spreadvalue=0.99290103_r8)
+    !call AddValue2Vector(stateExtra, isotoperatioO3)
 
-    qIsotoperatioO3_ASYM_O_18 = CreateQtyTemplate(l_isotoperatio, &
-    qmolecule=l_o3_asym_o_18, qName='isotoperatioO3_ASYM_O_18')
-    isotoperatioO3_ASYM_O_18 = CreateValue4AgileVector(qIsotoperatioO3_ASYM_O_18, &
-    spreadvalue=0.00398194_r8)
-    call AddValue2Vector(stateExtra, isotoperatioO3_ASYM_O_18)
+    !qIsotoperatioO3_ASYM_O_18 = CreateQtyTemplate(l_isotoperatio, &
+    !qmolecule=l_o3_asym_o_18, qName='isotoperatioO3_ASYM_O_18')
+    !isotoperatioO3_ASYM_O_18 = CreateValue4AgileVector(qIsotoperatioO3_ASYM_O_18)
+    !spreadvalue=0.00398194_r8)
+    !call AddValue2Vector(stateExtra, isotoperatioO3_ASYM_O_18)
 
-    qIsotoperatioO3_SYM_O_18 = CreateQtyTemplate(l_isotoperatio, &
-    qmolecule=l_o3_sym_o_18, qName='isotoperatioO3_SYM_O_18')
-    isotoperatioO3_SYM_O_18 = CreateValue4AgileVector(qIsotoperatioO3_SYM_O_18, &
-    spreadvalue=0.00199097_r8)
-    call AddValue2Vector(stateExtra, isotoperatioO3_SYM_O_18)
+    !qIsotoperatioO3_SYM_O_18 = CreateQtyTemplate(l_isotoperatio, &
+    !qmolecule=l_o3_sym_o_18, qName='isotoperatioO3_SYM_O_18')
+    !isotoperatioO3_SYM_O_18 = CreateValue4AgileVector(qIsotoperatioO3_SYM_O_18)
+    !spreadvalue=0.00199097_r8)
+    !call AddValue2Vector(stateExtra, isotoperatioO3_SYM_O_18)
 
-    qIsotoperatioO3_V2 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_o3_v2, &
-    qName='isotoperatioO3_V2')
-    isotoperatioO3_V2 = CreateValue4AgileVector(qIsotoperatioO3_V2, &
-    spreadvalue=0.99290103_r8)
-    call AddValue2Vector(stateExtra, isotoperatioO3_V2)
+    !qIsotoperatioO3_V2 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_o3_v2, &
+    !qName='isotoperatioO3_V2')
+    !isotoperatioO3_V2 = CreateValue4AgileVector(qIsotoperatioO3_V2)
+    !spreadvalue=0.99290103_r8)
+    !call AddValue2Vector(stateExtra, isotoperatioO3_V2)
 
-    qIsotoperatioS_32_O2 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_s_32_o2, &
-    qName='isotoperatioS_32_O2')
-    isotoperatioS_32_O2 = CreateValue4AgileVector(qIsotoperatioS_32_O2, &
-    spreadvalue=0.94568002_r8)
-    call AddValue2Vector(stateExtra, isotoperatioS_32_O2)
+    !qIsotoperatioS_32_O2 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_s_32_o2, &
+    !qName='isotoperatioS_32_O2')
+    !isotoperatioS_32_O2 = CreateValue4AgileVector(qIsotoperatioS_32_O2, &
+    !spreadvalue=0.94568002_r8)
+    !call AddValue2Vector(stateExtra, isotoperatioS_32_O2)
 
-    qIsotoperatioHNO3 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_hno3, &
-    qName='isotoperatioHNO3')
-    isotoperatioHNO3 = CreateValue4AgileVector(qIsotoperatioHNO3, &
-    spreadvalue=0.98910999_r8)
-    call AddValue2Vector(stateExtra, isotoperatioHNO3)
+    !qIsotoperatioHNO3 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_hno3, &
+    !qName='isotoperatioHNO3')
+    !isotoperatioHNO3 = CreateValue4AgileVector(qIsotoperatioHNO3, &
+    !spreadvalue=0.98910999_r8)
+    !call AddValue2Vector(stateExtra, isotoperatioHNO3)
 
-    qIsotoperatioCO = CreateQtyTemplate(l_isotoperatio, qmolecule=l_co, &
-    qName='isotoperatioCO')
-    isotoperatioCO = CreateValue4AgileVector(qIsotoperatioCO, &
-    spreadvalue=0.98654002_r8)
-    call AddValue2Vector(stateExtra, isotoperatioCO)
+    !qIsotoperatioCO = CreateQtyTemplate(l_isotoperatio, qmolecule=l_co, &
+    !qName='isotoperatioCO')
+    !isotoperatioCO = CreateValue4AgileVector(qIsotoperatioCO, &
+    !spreadvalue=0.98654002_r8)
+    !call AddValue2Vector(stateExtra, isotoperatioCO)
 
     ! Fill orbit inclination, tangent geocentric altitude with
     ! data from MLS L1B file, and use them, along with other
@@ -312,9 +312,9 @@ program mockup
     jacobian = CreatePlainMatrix(radiance, state)
 
     ! Call the forward model
-!    call ForwardModel2 (0, forwardModelConfigDatabase, state, &
-!                        stateExtra, radiance, jacobian)
-!    call dump(radiance, details=1)
+    call ForwardModel2 (0, forwardModelConfigDatabase, state, &
+                        stateExtra, radiance, jacobian)
+    call dump(radiance, details=1)
 
     !call dump(jacobian, details=3)
 
@@ -456,6 +456,9 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.55  2011/12/15 16:53:24  honghanh
+! Correct the name of CreateMLSValue_EarthReflectivity
+!
 ! Revision 1.54  2011/12/14 22:54:18  honghanh
 ! Add timeRange2MafRange method in CFM.
 !
