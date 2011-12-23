@@ -121,6 +121,7 @@ lineWidth_tDep   # n     offset from catalog
 logp
 LOSTransFunc
 LOSVel
+LowestRetrievedPressure
 LSBFrequency
 
 m
@@ -138,6 +139,8 @@ mgm3             # mg / meter^3
 MHz
 mif
 mifDeadTime      # How much of MIF is not collecting data
+mifExtinction    # Extinction as a minor-frame quantity
+mifExtinctionV2  # Extinction as a minor-frame quantity
 mifs
 minutes
 molcm2 # mol/cm^2
@@ -232,6 +235,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.60  2011/12/23 23:31:13  vsnyder
+# Add LowestRetrievePressure and MIFExtinction[v2]
+#
 # Revision 2.59  2011/08/25 22:41:27  vsnyder
 # Move RHi to tables/sps_cross_ref_table.txt
 #
