@@ -73,8 +73,7 @@ module Molecules
   ! IsExtinction(i) is true only for i = l_*extinction*
   logical, parameter :: IsExtinction(first_molecule:last_molecule) =     &
     & (/ ( .false., i= first_molecule, l_extinction-1 ), .true., .true., &
-    &    ( .false., i = l_extinctionV2+1, l_MIFextinction-1 ), .true.,   &
-    &    ( .false., i = l_MIFextinction+1, last_molecule ) /)
+    &    ( .false., i = l_extinctionV2+1, last_molecule ) /)
 
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_MOLECULES  -----
@@ -183,6 +182,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.33  2011/12/23 23:31:55  vsnyder
+! Remove MIFExtinction[v2] from molecule list, and therefore from IsExtinction
+!
 ! Revision 2.32  2011/11/11 00:29:50  vsnyder
 ! Add IsExtinction array
 !
