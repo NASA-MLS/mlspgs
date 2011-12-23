@@ -101,6 +101,7 @@ contains ! =====     Public procedures     =============================
 !    call declare_unit ( l_extinction, 1.0d0, phyq_extinction )
 !    call declare_unit ( l_extinctionV2, 1.0d0, phyq_extinction )
 !    call declare_unit ( l_MIFextinction, 1.0d0, phyq_extinction )
+!    call declare_unit ( l_MIFextinctionV2, 1.0d0, phyq_extinction )
 
 !   this is = 1Pa/1000*1sec^2/1meter^2 = 1gm/meter^3
     call declare_unit ( l_icedensity, 1.0d0, phyq_icedensity )
@@ -146,6 +147,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.37  2011/12/23 23:32:22  vsnyder
+! Add MIFExtinctionv2 (as a comment)
+!
 ! Revision 2.36  2011/11/11 00:30:59  vsnyder
 ! Add comments about L_ExtinctionV2 and L_MIFextinction
 !
