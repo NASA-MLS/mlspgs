@@ -18,7 +18,7 @@ module CFM_FWDMDL_M
     use VectorsModule, only: VectorValue_T, CloneVector, &
                              DestroyVectorInfo, Vector_T
     use CFM_Vector_m, only: CreateValue4AgileVector, &
-                            AddValue2Vector
+                            AddValue2Vector, DestroyAgileVectorContent
     use MatrixModule_1, only: MATRIX_T
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
 
@@ -193,7 +193,7 @@ module CFM_FWDMDL_M
             end do
         end do
 
-        call DestroyVectorInfo(adjustedExtraInput)
+        call DestroyAgileVectorContent(adjustedExtraInput)
         call postForwardModel(fmStat)
     end subroutine
 
@@ -232,7 +232,7 @@ module CFM_FWDMDL_M
             adjustedExtraInput, fwdModelOut, fmStat, Jacobian)
         end do
 
-        call DestroyVectorInfo(adjustedExtraInput)
+        call DestroyAgileVectorContent(adjustedExtraInput)
         call postForwardModel(fmStat)
         
     end subroutine
@@ -250,6 +250,11 @@ module CFM_FWDMDL_M
 end module
 
 ! $Log$
+! Revision 1.10  2011/12/23 22:56:12  honghanh
+! Add AutoFillVector call to ForwardModel2 subroutine,
+! to automatically add and fill isotope ratio in beta group
+! (according to L2CF configuration file)
+!
 ! Revision 1.9  2011/12/15 18:27:44  honghanh
 ! Documentation and code clean up, including removing unused and broken
 ! subroutines.

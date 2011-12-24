@@ -39,24 +39,21 @@ program mockup
     type(HGrid_T) :: hGridStandard
     type(FGrid_T) :: fGridExtinctionConstant
     type(QuantityTemplate_T) :: qtemp, qCO, qso2, qhno3, qo3, qextinctionv2r3
-    type(QuantityTemplate_T) :: qphitanGhz, qrefGPH, qgph, qh2o, qisotoperatioO_18_O
-    type(QuantityTemplate_T) :: qisotoperatioO3_ASYM_O_18, qisotoperatioO3_V2
-    type(QuantityTemplate_T) :: qisotoperatioHNO3, qisotoperatioCO, qband9
-    type(QuantityTemplate_T) :: qptanGHz, qisotoperatioO3, qisotoperatioS_32_O2
-    type(QuantityTemplate_T) :: qisotoperatioO3_SYM_O_18, qbaseline9
+    type(QuantityTemplate_T) :: qphitanGhz, qrefGPH, qgph, qh2o
+    type(QuantityTemplate_T) :: qband9
+    type(QuantityTemplate_T) :: qptanGHz
+    type(QuantityTemplate_T) :: qbaseline9
     type(Vector_T) :: state, stateExtra
     type(Vector_T) :: radiance, diffVector
     type(Vector_T) :: observed, obsPrecision
-    type(Vector_T) :: corrections, correctionNoise
     character(len=3) :: GHz = "GHz"
     character(len=2) :: sc = "sc"
     type(VectorValue_T) :: temperature, co, o2, so2, hno3, o3, extinctionv2r3, ptanGHz
-    type(VectorValue_T) :: phitanGhz, refGPH, gph, h2o, isotoperatioO_18_O, isotoperatioO3
-    type(VectorValue_T) :: isotoperatioO3_ASYM_O_18, isotoperatioO3_V2, isotoperatioS_32_O2
-    type(VectorValue_T) :: isotoperatioHNO3, isotoperatioCO, limbSidebandFraction9L
+    type(VectorValue_T) :: phitanGhz, refGPH, gph, h2o
+    type(VectorValue_T) :: limbSidebandFraction9L
     type(VectorValue_T) :: limbSidebandFraction9U, elev9L, elev9U, earthReflectivity
     type(VectorValue_T) :: orbitInclination, spaceRadiance, scGeocAlt, tngtGeocAltGHz
-    type(VectorValue_T) :: losVelGHz, band9, isotoperatioO3_SYM_O_18, precision9
+    type(VectorValue_T) :: losVelGHz, band9, precision9
     type(VectorValue_T) :: correction9, noise9
     character(len=256) :: signalFileName, configFileName
     type(Matrix_T) :: jacobian
@@ -201,54 +198,6 @@ program mockup
     h2o = CreateValue4AgileVector(qH2O, value=H2OInput)
     call AddValue2Vector(stateExtra, H2O)
 
-    !qIsotoperatioO_18_O = CreateQtyTemplate(l_isotoperatio, &
-    !qName='isotoperatioO_18_O', qmolecule=l_o_18_o)
-    !isotoperatioO_18_O = CreateValue4AgileVector(qIsotoperatioO_18_O)
-    !spreadvalue=0.00409000_r8)
-    !call AddValue2Vector(stateExtra, isotoperatioO_18_O)
-
-    !qIsotoperatioO3 = CreateQtyTemplate(l_isotoperatio, qName='isotoperatioO3', &
-    !qmolecule=l_o3)
-    !isotoperatioO3 = CreateValue4AgileVector(qIsotoperatioO3)
-    !spreadvalue=0.99290103_r8)
-    !call AddValue2Vector(stateExtra, isotoperatioO3)
-
-    !qIsotoperatioO3_ASYM_O_18 = CreateQtyTemplate(l_isotoperatio, &
-    !qmolecule=l_o3_asym_o_18, qName='isotoperatioO3_ASYM_O_18')
-    !isotoperatioO3_ASYM_O_18 = CreateValue4AgileVector(qIsotoperatioO3_ASYM_O_18)
-    !spreadvalue=0.00398194_r8)
-    !call AddValue2Vector(stateExtra, isotoperatioO3_ASYM_O_18)
-
-    !qIsotoperatioO3_SYM_O_18 = CreateQtyTemplate(l_isotoperatio, &
-    !qmolecule=l_o3_sym_o_18, qName='isotoperatioO3_SYM_O_18')
-    !isotoperatioO3_SYM_O_18 = CreateValue4AgileVector(qIsotoperatioO3_SYM_O_18)
-    !spreadvalue=0.00199097_r8)
-    !call AddValue2Vector(stateExtra, isotoperatioO3_SYM_O_18)
-
-    !qIsotoperatioO3_V2 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_o3_v2, &
-    !qName='isotoperatioO3_V2')
-    !isotoperatioO3_V2 = CreateValue4AgileVector(qIsotoperatioO3_V2)
-    !spreadvalue=0.99290103_r8)
-    !call AddValue2Vector(stateExtra, isotoperatioO3_V2)
-
-    !qIsotoperatioS_32_O2 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_s_32_o2, &
-    !qName='isotoperatioS_32_O2')
-    !isotoperatioS_32_O2 = CreateValue4AgileVector(qIsotoperatioS_32_O2, &
-    !spreadvalue=0.94568002_r8)
-    !call AddValue2Vector(stateExtra, isotoperatioS_32_O2)
-
-    !qIsotoperatioHNO3 = CreateQtyTemplate(l_isotoperatio, qmolecule=l_hno3, &
-    !qName='isotoperatioHNO3')
-    !isotoperatioHNO3 = CreateValue4AgileVector(qIsotoperatioHNO3, &
-    !spreadvalue=0.98910999_r8)
-    !call AddValue2Vector(stateExtra, isotoperatioHNO3)
-
-    !qIsotoperatioCO = CreateQtyTemplate(l_isotoperatio, qmolecule=l_co, &
-    !qName='isotoperatioCO')
-    !isotoperatioCO = CreateValue4AgileVector(qIsotoperatioCO, &
-    !spreadvalue=0.98654002_r8)
-    !call AddValue2Vector(stateExtra, isotoperatioCO)
-
     ! Fill orbit inclination, tangent geocentric altitude with
     ! data from MLS L1B file, and use them, along with other
     ! quantities to calculate ptan
@@ -345,14 +294,6 @@ program mockup
     call DestroyQuantityTemplateContents(qRefGPH)
     call DestroyQuantityTemplateContents(qGPH)
     call DestroyQuantityTemplateContents(qH2O)
-    call DestroyQuantityTemplateContents(qIsotoperatioO_18_O)
-    call DestroyQuantityTemplateContents(qIsotoperatioO3)
-    call DestroyQuantityTemplateContents(qIsotoperatioO3_ASYM_O_18)
-    call DestroyQuantityTemplateContents(qIsotoperatioO3_SYM_O_18)
-    call DestroyQuantityTemplateContents(qIsotoperatioO3_V2)
-    call DestroyQuantityTemplateContents(qIsotoperatioS_32_O2)
-    call DestroyQuantityTemplateContents(qIsotoperatioHNO3)
-    call DestroyQuantityTemplateContents(qIsotoperatioCO)
     ! even quantities created by CFM subroutines has templates
     call DestroyQuantityTemplateContents(o2%template)
     call DestroyQuantityTemplateContents(limbSidebandFraction9L%template)
@@ -456,6 +397,11 @@ program mockup
 end program
 
 ! $Log$
+! Revision 1.56  2011/12/23 22:56:12  honghanh
+! Add AutoFillVector call to ForwardModel2 subroutine,
+! to automatically add and fill isotope ratio in beta group
+! (according to L2CF configuration file)
+!
 ! Revision 1.55  2011/12/15 16:53:24  honghanh
 ! Correct the name of CreateMLSValue_EarthReflectivity
 !

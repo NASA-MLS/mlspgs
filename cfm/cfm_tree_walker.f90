@@ -29,17 +29,14 @@ contains ! ====     Public Procedures     ==============================
 
    subroutine Walk_Tree ( Root, First_Section, ForwardModelConfigDatabase )
 
-      use Allocate_Deallocate, only: TEST_DEALLOCATE
       use ForwardModelConfig, only: ForwardModelConfig_T
       use Global_Settings, only: Set_Global_Settings
-      use Init_Tables_Module, only: Z_GLOBALSETTINGS, Z_MLSSIGNALS, Z_SPECTROSCOPY
-      use Intrinsic, only: Section_Indices
+      use Init_Tables_Module, only: Z_GLOBALSETTINGS, Z_MLSSIGNALS
       use MLSCommon, only: MLSFile_T
-      use MLSPCF2, only: mlspcf_spectroscopy_end
       use SpectroscopyCatalog_m, only: Spectroscopy
       use Time_M, only: Time_Now
-      use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
-      use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
+      use Toggles, only: GEN, TOGGLE
+      use Trace_m, only: TRACE_BEGIN, TRACE_END
       use Tree, only: DECORATION, NSONS, SUBTREE
       use MLSSignals_M, only: MLSSignals
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -50,9 +47,8 @@ contains ! ====     Public Procedures     ==============================
 
       type (MLSFile_T), dimension(:), pointer :: File_Data_Base => NULL()
       integer :: I             ! Loop inductor, subtree index
-      integer :: Section_Index ! Z_MLSSignals, Z_GlobalSettings, Z_Spectroscopy
+      integer :: Section_Index ! Z_MLSSignals, Z_GlobalSettings
       integer :: Son           ! Tree index of son of a tree vertex
-      integer :: Stat          ! From deallocate
       real :: T1, T2           ! For timing
 
       logical, parameter :: TOOLKIT = .false.
@@ -76,9 +72,6 @@ contains ! ====     Public Procedures     ==============================
             end if
          case ( z_MLSSignals )
             call MLSSignals ( son )
-         ! Spectroscopy is read in a separate file
-!         case ( z_Spectroscopy )
-!            call spectroscopy ( son, TOOLKIT, mlspcf_spectroscopy_end, File_Data_Base )
          case default
             call print_unsupported_section_error (son, section_index)
          end select
@@ -124,6 +117,9 @@ contains ! ====     Public Procedures     ==============================
 end module
 
 ! $Log$
+! Revision 1.3  2011/08/27 13:56:33  honghanh
+! Removing Spectroscopy section from the allowed section
+!
 ! Revision 1.2  2010/05/23 02:12:38  honghanh
 ! Add print_unsupported_section_error
 !
