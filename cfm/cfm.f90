@@ -49,7 +49,8 @@ module cfm          ! callable forward model
                             operator(+), operator(-)
    use CFM_Vector_m, only: CreateVector, CreateValue4AgileVector, &
                            CreateAgileVector, AddValue2Vector, &
-                           DestroyAgileVectorContent, DestroyVectorValueContent
+                           DestroyAgileVectorContent, DestroyVectorValueContent, &
+                           CloneAgileVector
    use CFM_Fill_m, only: ExplicitFillVectorQuantity, ApplyBaseline, &
                          FillVectorQuantityFromL1B, FillPhitanQuantity, &
                          SpreadFillVectorQuantity, FillPtanQuantity
@@ -87,6 +88,9 @@ contains
 end module cfm
 
 ! $Log$
+! Revision 1.24  2011/12/15 16:53:24  honghanh
+! Correct the name of CreateMLSValue_EarthReflectivity
+!
 ! Revision 1.23  2011/12/14 22:54:18  honghanh
 ! Add timeRange2MafRange method in CFM.
 !

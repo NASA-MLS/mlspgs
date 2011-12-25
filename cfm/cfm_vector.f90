@@ -10,7 +10,8 @@
 ! foreign countries or providing access to foreign persons.
 module CFM_Vector_m
    use VectorsModule, only: Vector_T, VectorTemplate_T, VectorValue_T, &
-                            DestroyVectorTemplateInfo
+                            DestroyVectorTemplateInfo, CloneVector, &
+                            CloneVectorQuantity
    use QuantityTemplates, only: QuantityTemplate_T
    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
          MLSMSG_Error, MLSMSG_Warning, MLSMSG_Deallocate
@@ -22,6 +23,7 @@ module CFM_Vector_m
 
    public :: CreateVector, DestroyAgileVectorContent, DestroyVectorValueContent
    public :: CreateValue4AgileVector, CreateAgileVector, AddValue2Vector
+   public :: CloneAgileVector
 
 !---------------------------- RCS Ident Info -------------------------------
    character(len=*), private, parameter :: ModuleName= &
@@ -85,6 +87,20 @@ module CFM_Vector_m
         end if
     end function
 
+    ! Clone a vector content, including its values
+    ! but the values' templates are only cloned as references level.
+    subroutine CloneAgileVector (y, x)
+        type(Vector_T), intent(in) :: x
+        type(Vector_T), intent(out) :: y
+
+        integer :: i
+
+        call CloneVector(y, x)
+        do i = 1, size(y%quantities)
+            call CloneVectorQuantity(y%quantities(i), x%quantities(i))
+        end do
+    end subroutine
+
     ! Cleans up objects that are allocated inside an agile vector.
     subroutine DestroyAgileVectorContent (v)
         type(Vector_T), intent(inout) :: v
@@ -132,7 +148,8 @@ module CFM_Vector_m
         vector%quantities(vector%template%noquantities) = vectorvalue
         vector%quantities(vector%template%noquantities)%index = vector%template%noquantities
 
-        vector%template%totalInstances = vector%template%totalinstances + vectorvalue%template%noinstances
+        vector%template%totalInstances = vector%template%totalinstances + &
+        vectorvalue%template%noinstances
         vector%template%totalElements = vector%template%totalelements + &
                                         vectorvalue%template%noinstances * &
                                         vectorvalue%template%instanceLen
@@ -226,6 +243,10 @@ module CFM_Vector_m
 end module
 
 ! $Log$
+! Revision 1.13  2011/12/15 18:27:45  honghanh
+! Documentation and code clean up, including removing unused and broken
+! subroutines.
+!
 ! Revision 1.12  2011/11/02 03:50:33  honghanh
 ! Add code to clean up values array in DestroyVectorValueContent
 !

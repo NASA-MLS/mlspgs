@@ -14,13 +14,14 @@ module CFM_FWDMDL_M
     use FillUtils_1, only: AutoFillVector
     use Init_tables_module, only: l_isotoperatio
     use CFM_QuantityTemplate_m, only: CreateQtyTemplate
-    use QuantityTemplates, only: QuantityTemplate_T
-    use VectorsModule, only: VectorValue_T, CloneVector, &
-                             DestroyVectorInfo, Vector_T
-    use CFM_Vector_m, only: CreateValue4AgileVector, &
+    use QuantityTemplates, only: QuantityTemplate_T, &
+                                 DestroyQuantityTemplateContents
+    use VectorsModule, only: VectorValue_T, Vector_T
+    use CFM_Vector_m, only: CreateValue4AgileVector, CloneAgileVector, &
                             AddValue2Vector, DestroyAgileVectorContent
     use MatrixModule_1, only: MATRIX_T
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
     implicit none
 
@@ -34,13 +35,14 @@ module CFM_FWDMDL_M
         module procedure ForwardModelWChunk, ForwardModelWMaf
     end interface
 
+    private 
 !---------------------------- RCS Ident Info -------------------------------
-    character(len=*), private, parameter :: ModuleName= &
+    character(len=*), parameter :: ModuleName= &
         "$RCSfile$"
     private :: not_used_here
 !---------------------------------------------------------------------------
 
-    private
+    type(QuantityTemplate_T), dimension(:), pointer :: qtemplates => NULL()
 
     contains
 
@@ -111,7 +113,9 @@ module CFM_FWDMDL_M
         type(QuantityTemplate_T) :: qtemplate
         type(VectorValue_T) :: value
         integer :: i, b, m, sideband
+        integer :: counter
 
+        counter = 0
         ! Insert isotope quantities into extra vector
         sideband = 1
         do i = 1, size(config)
@@ -123,6 +127,7 @@ module CFM_FWDMDL_M
                         qmolecule=config(i)%beta_group(b)%lbl(sideband)%molecules(m))
                         value = CreateValue4AgileVector(qtemplate)
                         call AddValue2Vector(fwdModelExtra, value)
+                        counter = counter + 1
                     end do !m
                     if (associated(config(i)%beta_group(b)%pfa(sideband)%molecules)) then
                         ! Now PFA molecules' ratios
@@ -131,6 +136,7 @@ module CFM_FWDMDL_M
                             qmolecule=config(i)%beta_group(b)%pfa(sideband)%molecules(m))
                             value = CreateValue4AgileVector(qtemplate)
                             call AddValue2Vector(fwdModelExtra, value)
+                            counter = counter + 1
                         end do !m
                     end if
                 end if
@@ -138,6 +144,16 @@ module CFM_FWDMDL_M
         end do ! i
         ! Fill isotope in the fwdModelExtra vector
         call AutoFillVector(fwdModelExtra)
+        ! Record newly created template object
+        allocate(qtemplates(counter), stat=b)
+        if (b /= 0) &
+            call MLSMessage (MLSMSG_Error, moduleName, &
+            "Cannot allocate qtemplates")
+        m = size(fwdModelExtra%quantities) - counter + 1
+        do i = 1, counter
+            qtemplates(i) = fwdModelExtra%quantities(m)%template
+            m = m + 1
+        end do
  
         fmStat%newScanHydros = .true.
         if (present(jacobian)) then
@@ -149,7 +165,12 @@ module CFM_FWDMDL_M
 
     subroutine PostForwardModel (fmStat)
         type(forwardModelStatus_t), intent(inout) :: FMSTAT
+        integer :: i
 
+        do i = 1, size(qtemplates)
+            call DestroyQuantityTemplateContents(qtemplates(i))
+        end do
+        deallocate(qtemplates)
         call deallocate_test(fmStat%rows, "fmStat%rows", moduleName)
     end subroutine
 
@@ -178,7 +199,7 @@ module CFM_FWDMDL_M
         integer :: FinalMAF
         integer :: i
 
-        call clonevector(adjustedExtraInput, fwdModelExtra)
+        call cloneAgileVector(adjustedExtraInput, fwdModelExtra)
         call preForwardModel (config, adjustedExtraInput, fmStat, jacobian)
 
         do i=1, size(config)
@@ -202,6 +223,8 @@ module CFM_FWDMDL_M
     subroutine ForwardModelWMaf (RequestedMAF, Config, FwdModelIn, FwdModelExtra, &
                                     FwdModelOut, Jacobian )
         use ForwardModelWrappers, only: ForwardModelOrig => ForwardModel
+        use ForwardModelVectorTools
+        use init_tables_module, only: l_ptan
 
         ! The 0-based index of the instance (maf or profile) stored in
         ! fwdModelIn to run the forward model over.
@@ -222,8 +245,9 @@ module CFM_FWDMDL_M
         type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
         type(Vector_T) :: adjustedExtraInput
         integer :: i
+        type(VectorValue_T), pointer :: ptan
 
-        call clonevector(adjustedExtraInput, fwdModelExtra)
+        call cloneagilevector(adjustedExtraInput, fwdModelExtra)
         call preForwardModel (config, adjustedExtraInput, fmStat, jacobian)
 
         fmStat%maf = requestedMaf + 1
@@ -250,6 +274,9 @@ module CFM_FWDMDL_M
 end module
 
 ! $Log$
+! Revision 1.11  2011/12/24 18:39:13  honghanh
+! Clean up unused imports and variables
+!
 ! Revision 1.10  2011/12/23 22:56:12  honghanh
 ! Add AutoFillVector call to ForwardModel2 subroutine,
 ! to automatically add and fill isotope ratio in beta group
