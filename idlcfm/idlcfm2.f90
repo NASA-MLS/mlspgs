@@ -4,7 +4,7 @@ module IDLCFM2_m
     use PVM, only: PVMFRECV, PVMFINITSEND, PVMDATADEFAULT
     use MorePVM, only: PVMUnpackStringIndex, PVMUnpackLitIndex
     use MLSMessageModule, only: PVMERRORMESSAGE
-    use Allocate_Deallocate, only: ALLOCATE_TEST, Deallocate_test
+    use Allocate_Deallocate, only: Deallocate_test
 
     implicit none
     private
@@ -129,12 +129,10 @@ module IDLCFM2_m
     end subroutine
 
     subroutine ICFMReceiveQuantity ( QT, values, mask, tid, callrecv)
-        use Allocate_Deallocate, only: ALLOCATE_TEST
         use MLSCommon, only: R8
-        use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
-        use Intrinsic, only: l_none
-        use VectorsModule, only: CREATEMASKARRAY
-        use ConstructQuantityTemplates, only: noProperties, propertyTable, p_majorFrame, &
+        use QuantityTemplates, only: QUANTITYTEMPLATE_T
+        use ConstructQuantityTemplates, only: firstProperty, lastProperty, &
+                                              propertyTable, p_majorFrame, &
                                               p_minorFrame, unitstable
         use parse_signal_m, only: parse_signal
         use MLSSignals_m, only: GetRadiometerIndex, GetModuleFromRadiometer, &
@@ -185,7 +183,7 @@ module IDLCFM2_m
         integer :: BUFFERID                 ! From pvm
         integer :: INFO                     ! Flag
         logical :: l29(P_LAST - 1)
-        logical, dimension(noProperties) :: PROPERTIES ! Properties for this quantity type
+        logical :: PROPERTIES(firstProperty : lastProperty) ! Properties for this quantity type
         character(len=32) :: signalString
         integer, dimension(:), pointer :: SignalInds ! From parse signal
         logical, pointer :: channels(:)     ! From Parse_Signal
@@ -958,6 +956,9 @@ module IDLCFM2_m
 end module
 
 ! $Log$
+! Revision 1.6  2011/09/07 06:34:46  honghanh
+! Make modification to send matrix,and add more error handling
+!
 ! Revision 1.5  2011/06/27 21:28:52  honghanh
 ! Fixed bug in a few if statement since Fortran does not have
 ! lazy evaluation of boolean expressions

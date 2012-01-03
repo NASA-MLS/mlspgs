@@ -8,7 +8,7 @@ program server
     use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
     use MLSMessageModule, only: MLSMessageConfig, PVMERRORMESSAGE, &
                                 MLSMSG_Severity_to_quit
-    use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
+    use PVMIDL, only: PVMIDLUNPACK
     use PVM, only: PVMFRECV, PVMFBUFINFO
     use H5LIB, ONLY: h5open_f, h5close_f
     use EmpiricalGeometry, only: CFM_InitEmpiricalGeometry
@@ -378,7 +378,6 @@ program server
     end subroutine
 
     subroutine ICFM_ForwardModel (tid, info)
-        use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
 
         integer, intent(in) :: tid
         integer, intent(out) :: info
@@ -386,7 +385,7 @@ program server
         type(QuantityTemplate_T), dimension(:), pointer :: qtydb
         type(Vector_T) :: state, stateExtra, measurement
         type(Matrix_T) :: jacobian
-        integer :: mafNo, i
+        integer :: mafNo
         logical :: doDerivative
 
         if (.not. locked) then
@@ -491,14 +490,11 @@ program server
         use ChunkDivide_m, only: ChunkDivideConfig_T, &
                             GetChunkFromTimeRange => CFM_ChunkDivide
         use Chunks_m, only: MLSChunk_T
-        use INIT_TABLES_MODULE, only: l_ghz, &
-                                    l_none, phyq_mafs, phyq_time, phyq_angle, &
-                                    l_orbital, l_fixed, l_both, l_either
+        use INIT_TABLES_MODULE, only: l_ghz, phyq_mafs, l_orbital
 
         integer, intent(in) :: tid
 
-        type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, &
-                                    geodAltitude, orbincl, geocAlt, refGPH, phitanGHz
+        type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz
         type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
         type (MLSChunk_T) :: chunk
         type (MLSFile_T), dimension(:), pointer :: filedatabase
@@ -506,21 +502,17 @@ program server
         type (TAI93_Range_T) :: processingRange
         integer :: error
         type(ChunkDivideConfig_T) :: chunkDivideConfig
-        integer :: CCSDSLen = 27
         character(len=3) :: GHz = "GHz"
-        character(len=2) :: sc = "sc"
         integer :: temperature_index, h2o_index
-        integer :: o3_index, ptanGHz_index, phitanGHz_index
-        integer :: geodAlt_index, orbincl_index, gph_index
-        integer :: geocAlt_index, refGPH_index
+        integer :: o3_index, ptanGHz_index
+        integer :: gph_index
         type(VGrid_T) :: vGridStandard, vGridRefGPH
         type(HGrid_T) :: hGridStandard
         integer :: stateSelected(4)
         type(Vector_T) :: state
         type(VectorTemplate_T) :: stateTemplate
-        type(VectorValue_T), pointer :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
-                                        ptanG_vv, temperature_vv, refGPH_vv, &
-                                        phitan_vv
+        type(VectorValue_T), pointer :: quantity, h2o_vv, &
+                                        temperature_vv
 
         nullify(filedatabase)
         error = InitializeMLSFile(l1bfile, content='l1boa', &
@@ -601,6 +593,9 @@ program server
 end program
 
 ! $Log$
+! Revision 1.4  2011/09/07 06:34:46  honghanh
+! Make modification to send matrix,and add more error handling
+!
 ! Revision 1.3  2011/05/27 06:08:42  honghanh
 ! Add VectorHandler and type code of ICFMReceiveVector to receive vector independently of the call to ForwardModel
 !
