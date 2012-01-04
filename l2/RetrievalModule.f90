@@ -278,7 +278,8 @@ contains
     integer, parameter :: NeedBothDepthAndCutoff = InconsistentUnits + 1
     integer, parameter :: NeedFwmState = NeedBothDepthAndCutoff + 1
     integer, parameter :: NoFields = NeedFwmState + 1  ! No fields are allowed
-    integer, parameter :: NotGeneral = noFields + 1  ! Not a general matrix
+    integer, parameter :: NoMIFExtinction = noFields + 1 ! Not in fwmState
+    integer, parameter :: NotGeneral = noMIFExtinction + 1 ! Not a general matrix
     integer, parameter :: NotSPD = notGeneral + 1    ! Not symmetric pos. definite
     integer, parameter :: RangeNotAppropriate = NotSPD + 1
     integer, parameter :: WrongUnits = RangeNotAppropriate + 1
@@ -700,6 +701,20 @@ contains
                   & call announceError ( inconsistentQuantities, f_state, f_fwmState )
               end select
             end do
+            ! FWM sees FwmState, so ensure no MIFExtinction in it
+            do k = 1, size(fwmState%quantities)
+              select case ( fwmState%quantities(k)%template%quantityType )
+              case ( l_MIFExtinction, l_MIFExtinctionV2 )
+                call announceError ( noMIFExtinction, fwmState%name )
+              end select
+            end do
+          else ! FWM sees State, so ensure no MIFExtinction in it
+            do k = 1, size(state%quantities)
+              select case ( state%quantities(k)%template%quantityType )
+              case ( l_MIFExtinction, l_MIFExtinctionV2 )
+                call announceError ( noMIFExtinction, state%name )
+              end select
+            end do
           end if
 
           ! Create the output covariance matrix
@@ -938,6 +953,9 @@ contains
         call output ( 'No fields are allowed for a ' )
         call display_string ( spec_indices(fieldIndex) )
         call output ( ' specification.', advance='yes' )
+      case ( noMIFExtinction )
+        call display_string ( fieldIndex, & ! fieldIndex is a string index here
+          & before='MIFExtinction quantity type not allowed in ', advance='yes' )
       case ( rangeNotAppropriate )
         call output ( 'Ranges are not appropriate for a ' )
         call display_string ( spec_indices(fieldIndex) )
@@ -2913,6 +2931,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.317  2012/01/04 02:14:55  vsnyder
+! Ensure forward model does not see MIFExtinction
+!
 ! Revision 2.316  2012/01/04 01:51:26  vsnyder
 ! Create fwmJacobian if needed and one isn't supplied
 !
