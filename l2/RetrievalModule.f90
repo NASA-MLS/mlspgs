@@ -276,8 +276,8 @@ contains
     integer, parameter :: InconsistentQuantities = Inconsistent + 1
     integer, parameter :: InconsistentUnits = InconsistentQuantities + 1
     integer, parameter :: NeedBothDepthAndCutoff = InconsistentUnits + 1
-    integer, parameter :: NeedFwmJacobian = NeedBothDepthAndCutoff + 1
-    integer, parameter :: NoFields = NeedFwmJacobian + 1  ! No fields are allowed
+    integer, parameter :: NeedFwmState = NeedBothDepthAndCutoff + 1
+    integer, parameter :: NoFields = NeedFwmState + 1  ! No fields are allowed
     integer, parameter :: NotGeneral = noFields + 1  ! Not a general matrix
     integer, parameter :: NotSPD = notGeneral + 1    ! Not symmetric pos. definite
     integer, parameter :: RangeNotAppropriate = NotSPD + 1
@@ -581,8 +581,8 @@ contains
           & call announceError ( inconsistent, f_negateSD, f_regAfter )
         if ( negateSD .and. .not. got(f_outputSD) ) &
           & call AnnounceError ( ifAThenB, f_negateSD, f_outputSD )
-        if ( got(f_fwmJacobian) .neqv. got(f_fwmState) ) &
-            & call AnnounceError ( needFwmJacobian )
+        if ( got(f_fwmJacobian) .and. .not. got(f_fwmState) ) &
+            & call AnnounceError ( NeedFwmState )
         
         if ( error == 0 ) then
 
@@ -654,21 +654,26 @@ contains
             call createEmptyMatrix ( jacobian, 0, measurements, state )
           end if
 
-          if ( got(f_fwmJacobian) ) then
-            ! Get or create the forward model Jacobian
-            k = decoration(ixFwmJacobian)
-            if ( k == 0 ) then
-              call createEmptyMatrix ( myFwmJacobian, &
-                & sub_rosa(subtree(1,ixFwmJacobian)), measurements, fwmState )
-              k = addToMatrixDatabase( matrixDatabase, myFwmJacobian )
-              call decorate ( ixFwmJacobian, k )
+          if ( got(f_fwmState) ) then
+            if ( got(f_fwmJacobian) ) then
+              ! Get or create the forward model Jacobian
+              k = decoration(ixFwmJacobian)
+              if ( k == 0 ) then
+                call createEmptyMatrix ( myFwmJacobian, &
+                  & sub_rosa(subtree(1,ixFwmJacobian)), measurements, fwmState )
+                k = addToMatrixDatabase( matrixDatabase, myFwmJacobian )
+                call decorate ( ixFwmJacobian, k )
+              end if
+              ! Check compatability of retriever Jacobian and forward model Jacobian
+              call getFromMatrixDatabase ( matrixDatabase(k), fwmJacobian )
+              if ( fwmJacobian%row%vec%template%name /= measurements%template%name ) &
+                & call announceError ( inconsistent, f_fwmJacobian, f_measurements )
+              if ( fwmJacobian%col%vec%template%name /= fwmState%template%name ) &
+                & call announceError ( inconsistent, f_fwmJacobian, f_fwmState )
+            else
+              fwmJacobian => myFwmJacobian
+              call createEmptyMatrix ( fwmJacobian, 0, measurements, fwmState )
             end if
-            ! Check compatability of retriever Jacobian and forward model Jacobian
-            call getFromMatrixDatabase ( matrixDatabase(k), fwmJacobian )
-            if ( fwmJacobian%row%vec%template%name /= measurements%template%name ) &
-              & call announceError ( inconsistent, f_fwmJacobian, f_measurements )
-            if ( fwmJacobian%col%vec%template%name /= fwmState%template%name ) &
-              & call announceError ( inconsistent, f_fwmJacobian, f_fwmState )
             ! Make sure it's possible to use the same row index for blocks
             ! of Jacobian and fwmJacobian
             if ( Jacobian%row%instFirst .neqv. fwmJacobian%row%instFirst ) &
@@ -775,6 +780,8 @@ contains
           !??? after ?what? happens?  Can we destroy the entire matrix
           !??? database at the end of each chunk?
           if ( .not. got(f_jacobian) ) call destroyMatrix ( jacobian )
+          if ( associated(fwmJacobian) .and. .not. got(f_fwmJacobian) ) &
+            call destroyMatrix ( fwmJacobian )
           if ( .not. got(f_outputCovariance) ) &
             & call destroyMatrix ( outputCovariance%m )
         else
@@ -924,8 +931,8 @@ contains
       case ( needBothDepthAndCutoff )
         call output ( 'OpticalDepth specified but no cutoff, or visa versa', &
           & advance='yes' )
-      case ( needFwmJacobian )
-        call output ( 'FwmJacobian or fwmState specified, but not both', &
+      case ( NeedFwmState )
+        call output ( 'FwmJacobian specified, but fwmState not specified', &
           & advance='yes' )
       case ( noFields )
         call output ( 'No fields are allowed for a ' )
@@ -1937,14 +1944,15 @@ NEWT: do ! Newton iteration
             else
               ! Otherwise, we call the forward model as ususal
               do k = 1, size(configIndices)
-                ! This depends upon the Fortran 2008 feature that a null
-                ! pointer actual argument corresponding to a nonpointer
-                ! optional dummy argument is not present.  This feature,
-                ! although not standard until 2008, was provided (probably
-                ! by accident) by many pre-2008 compilers.
-                call forwardModel ( configDatabase(configIndices(k)), &
-                  & v(x), fwdModelExtra, v(f_rowScaled), fmStat, Jacobian, &
-                  & Hessian, vectorDatabase, fwmState, fwmJacobian )
+                if ( associated(fwmState) ) then
+                  call forwardModel ( configDatabase(configIndices(k)), &
+                    & v(x), fwdModelExtra, v(f_rowScaled), fmStat, Jacobian, &
+                    & Hessian, vectorDatabase, fwmState, fwmJacobian )
+                else
+                  call forwardModel ( configDatabase(configIndices(k)), &
+                    & v(x), fwdModelExtra, v(f_rowScaled), fmStat, Jacobian, &
+                    & Hessian, vectorDatabase )
+                end if
               end do ! k
               ! Forward model calls add_to_retrieval_timing
             end if
@@ -2905,6 +2913,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.316  2012/01/04 01:51:26  vsnyder
+! Create fwmJacobian if needed and one isn't supplied
+!
 ! Revision 2.315  2011/12/21 01:42:22  vsnyder
 ! Add MIFExtinction transformation
 !
