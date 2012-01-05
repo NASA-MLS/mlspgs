@@ -184,6 +184,10 @@ module QuantityTemplates         ! Quantities within vectors
     module procedure ModifyQuantityTemplate_array, ModifyQuantityTemplate_sca
   end interface
 
+  interface ReadAttributes
+    module procedure ReadAttributes_QuantityTemplate
+  end interface
+
   interface WriteAttributes
     module procedure WriteAttributes_QuantityTemplate
   end interface
@@ -838,6 +842,46 @@ contains
 
   end subroutine NullifyQuantityTemplate
 
+  ! -------------------------------------  ReadAttributes_QuantityTemplate  -----
+  subroutine ReadAttributes_QuantityTemplate ( dsID, QT )
+    ! Note:
+    ! Most or all of the character-valued attributes are to be stored in the 
+    ! quantity template as string table indexes or other indexes, e.g. signals
+    ! Therefore we must do a bit of table lookups
+    use INTRINSIC, only: GET_PHYQ
+    use MLSHDF5, only: GETHDF5ATTRIBUTE
+    use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERINDEX, GETMODULEINDEX, &
+      & GETSIGNALINDEX
+
+    ! Arguments
+    integer, intent(in) :: dsID
+    type(QuantityTemplate_T), intent(inout) :: qt
+    character (len=80) :: Str
+    ! Executable
+    call GetHDF5AttrAsStrID ( dsID, 'TemplateName', qt%name )
+    call GetHDF5AttrAsLitID ( dsID, 'tempQtyType', qt%quantityType )
+    call GetHDF5Attribute ( dsID, 'noInstances', qt%noInstances )
+    call GetHDF5Attribute ( dsID, 'noChans    ', qt%noChans     )
+    call GetHDF5Attribute ( dsID, 'noSurfs    ', qt%noSurfs     )
+    call GetHDF5Attribute ( dsID, 'coherent   ', qt%coherent     )
+    call GetHDF5Attribute ( dsID, 'stacked    ', qt%stacked     )
+    call GetHDF5Attribute ( dsID, 'regular    ', qt%regular     )
+    call GetHDF5Attribute ( dsID, 'logBasis    ', qt%logBasis     )
+    call GetHDF5Attribute ( dsID, 'minorFrame    ', qt%minorFrame     )
+    call GetHDF5Attribute ( dsID, 'badValue    ', qt%badValue     )
+    call GetHDF5Attribute ( dsID, 'tempQtyUnit', str )
+    qt%unit = get_phyq( str )
+    call GetHDF5Attribute ( dsID, 'instanceLen    ', qt%instanceLen     )
+    call GetHDF5AttrAsLitID ( dsID, 'verticalCoordinate', qt%verticalCoordinate )
+    call GetHDF5Attribute ( dsID, 'radiometer', str )
+    call GetRadiometerIndex ( str, qt%radiometer )
+    call GetHDF5AttrAsLitID ( dsID, 'molecule', qt%molecule )
+    call GetHDF5Attribute ( dsID, 'instrumentModule', str )
+    call GetModuleIndex ( str, qt%instrumentModule )
+    call GetHDF5Attribute ( dsID, 'signal', str )
+    call GetSignalIndex( str, qt%signal )
+  end subroutine ReadAttributes_QuantityTemplate
+
   ! -----------------------------------  SetupNewQuantityTemplate  -----
   subroutine SetupNewQuantityTemplate ( qty, noInstances, noSurfs, &
     & noChans, coherent, stacked, regular, instanceLen, minorFrame, majorFrame, &
@@ -1006,7 +1050,8 @@ contains
   end subroutine SetupNewQuantityTemplate
 
   ! -------------------------------------  WriteAttributes_QuantityTemplate  -----
-  subroutine WriteAttributes_QuantityTemplate ( L2FileHandle, NAME, QuantityTemplate, NOL2CF )
+  subroutine WriteAttributes_QuantityTemplate ( dsID, NAME, &
+    & QT, NOL2CF )
 
     use INTRINSIC, only: LIT_INDICES
     use MLSHDF5, only: MAKEHDF5ATTRIBUTE
@@ -1014,58 +1059,58 @@ contains
       & GETSIGNALNAME
 
     ! Arguments
-    integer, intent(in) :: L2FileHandle
+    integer, intent(in) :: dsID
     character(len=*), intent(in) :: name
-    type(QuantityTemplate_T), intent(in) :: QuantityTemplate
-    logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't WriteAttributes L2-specific
-                                             !  stuff
+    type(QuantityTemplate_T), intent(in) :: qt
+    logical, intent(in), optional :: NOL2CF  ! if TRUE => Skip l2cf-dependent
+                                             ! attributes
     character (len=80) :: Str
     logical :: myNoL2CF
     ! Executable
     myNoL2CF = switchDetail(switches, 'nl2cf') > -1 ! .false.
     if ( present(NoL2CF) ) myNoL2CF = NoL2CF
-    call myGetString ( QuantityTemplate%name, str, strip=.true. )
-    call MakeHDF5Attribute ( L2FileHandle, name, 'TemplateName', str )
+    call myGetString ( qt%name, str, strip=.true. )
+    call MakeHDF5Attribute ( dsID, name, 'TemplateName', str )
     if ( .not. myNoL2CF ) then
-      call myGetString ( lit_indices(QuantityTemplate%quantityType), str, strip=.true. )
-      call MakeHDF5Attribute ( L2FileHandle, name, 'tempQtyType', str )
+      call myGetString ( lit_indices(qt%quantityType), str, strip=.true. )
+      call MakeHDF5Attribute ( dsID, name, 'tempQtyType', str )
     end if
-    call MakeHDF5Attribute ( L2FileHandle, name, 'noInstances', QuantityTemplate%noInstances )
-    call MakeHDF5Attribute ( L2FileHandle, name, 'noChans    ', QuantityTemplate%noChans     )
-    call MakeHDF5Attribute ( L2FileHandle, name, 'noSurfs    ', QuantityTemplate%noSurfs     )
-    call MakeHDF5Attribute ( L2FileHandle, name, 'coherent   ', QuantityTemplate%coherent     )
-    call MakeHDF5Attribute ( L2FileHandle, name, 'stacked    ', QuantityTemplate%stacked     )
-    call MakeHDF5Attribute ( L2FileHandle, name, 'regular    ', QuantityTemplate%regular     )
-    call MakeHDF5Attribute ( L2FileHandle, name, 'logBasis    ', QuantityTemplate%logBasis     )
-    call MakeHDF5Attribute ( L2FileHandle, name, 'minorFrame    ', QuantityTemplate%minorFrame     )
-    call MakeHDF5Attribute ( L2FileHandle, name, 'badValue    ', QuantityTemplate%badValue     )
+    call MakeHDF5Attribute ( dsID, name, 'noInstances', qt%noInstances )
+    call MakeHDF5Attribute ( dsID, name, 'noChans    ', qt%noChans     )
+    call MakeHDF5Attribute ( dsID, name, 'noSurfs    ', qt%noSurfs     )
+    call MakeHDF5Attribute ( dsID, name, 'coherent   ', qt%coherent     )
+    call MakeHDF5Attribute ( dsID, name, 'stacked    ', qt%stacked     )
+    call MakeHDF5Attribute ( dsID, name, 'regular    ', qt%regular     )
+    call MakeHDF5Attribute ( dsID, name, 'logBasis    ', qt%logBasis     )
+    call MakeHDF5Attribute ( dsID, name, 'minorFrame    ', qt%minorFrame     )
+    call MakeHDF5Attribute ( dsID, name, 'badValue    ', qt%badValue     )
     if ( .not. myNoL2CF ) then
-      call myGetString ( phyq_indices(QuantityTemplate%unit), str, strip=.true. )
-      call MakeHDF5Attribute ( L2FileHandle, name, 'tempQtyUnit', str )
+      call myGetString ( phyq_indices(qt%unit), str, strip=.true. )
+      call MakeHDF5Attribute ( dsID, name, 'tempQtyUnit', str )
     end if
-    call MakeHDF5Attribute ( L2FileHandle, name, 'instanceLen    ', QuantityTemplate%instanceLen     )
+    call MakeHDF5Attribute ( dsID, name, 'instanceLen    ', qt%instanceLen     )
     if ( .not. myNoL2CF ) then
-      call myGetString ( lit_indices(QuantityTemplate%verticalCoordinate), str, strip=.true. )
-      call MakeHDF5Attribute ( L2FileHandle, name, 'verticalCoordinate', str )
+      call myGetString ( lit_indices(qt%verticalCoordinate), str, strip=.true. )
+      call MakeHDF5Attribute ( dsID, name, 'verticalCoordinate', str )
     end if
-    if ( QuantityTemplate%radiometer /= 0 .and. .not. myNoL2CF ) then
-      call GetRadiometerName ( QuantityTemplate%radiometer, str )
-      call MakeHDF5Attribute ( L2FileHandle, name, 'radiometer', str )
+    if ( qt%radiometer /= 0 .and. .not. myNoL2CF ) then
+      call GetRadiometerName ( qt%radiometer, str )
+      call MakeHDF5Attribute ( dsID, name, 'radiometer', str )
     end if
-    if ( QuantityTemplate%molecule + &
-      &  QuantityTemplate%instrumentModule /= 0 .and. .not. myNoL2CF ) then
-      if ( QuantityTemplate%molecule /= 0 ) then
-        call myGetString ( lit_indices(QuantityTemplate%molecule), str, strip=.true. )
-        call MakeHDF5Attribute ( L2FileHandle, name, 'molecule', str )
+    if ( qt%molecule + &
+      &  qt%instrumentModule /= 0 .and. .not. myNoL2CF ) then
+      if ( qt%molecule /= 0 ) then
+        call myGetString ( lit_indices(qt%molecule), str, strip=.true. )
+        call MakeHDF5Attribute ( dsID, name, 'molecule', str )
       end if
-      if ( QuantityTemplate%instrumentModule /= 0 ) then
-        call GetModuleName ( QuantityTemplate%instrumentModule, str )
-        call MakeHDF5Attribute ( L2FileHandle, name, 'tempQtyInstrumentModule', str )
+      if ( qt%instrumentModule /= 0 ) then
+        call GetModuleName ( qt%instrumentModule, str )
+        call MakeHDF5Attribute ( dsID, name, 'tempQtyInstrumentModule', str )
       end if
     end if
-    if ( QuantityTemplate%signal /= 0 ) then
-      call GetSignalName ( QuantityTemplate%signal, str )
-      call MakeHDF5Attribute ( L2FileHandle, name, 'signal', str )
+    if ( qt%signal /= 0 ) then
+      call GetSignalName ( qt%signal, str )
+      call MakeHDF5Attribute ( dsID, name, 'signal', str )
     end if
   end subroutine WriteAttributes_QuantityTemplate
 
@@ -1303,6 +1348,55 @@ contains
 
   end function CheckIntegrity_QuantityTemplate
 
+  ! ---------------------------------------- GetHDF5AttrAsLitID -----
+  subroutine GetHDF5AttrAsLitID ( dsID, attrName, LitID )
+    ! Given a DS, File or GroupID, find the character-valued attribute
+    ! for the attribute named attrName of the dataset name
+    ! Look up its id in the lit indices and return that id as LitID
+    use INTRINSIC, only: FIRST_LIT, LAST_AUTO_LIT, LIT_INDICES
+    use MLSHDF5, only: GETHDF5ATTRIBUTE
+    use STRING_TABLE, only: ADD_CHAR, LOOKUP
+    ! Args
+    integer, intent(in)           :: dsID      ! dataset, file or group ID
+    character(len=*), intent(in)  :: attrName  ! attribute name
+    integer, intent(out)          :: LitID     ! where to find attr's value
+    ! Internal variables
+    logical :: found
+    integer :: i
+    character(len=64) :: str
+    integer :: strID
+    ! litID = -1 ! meaning not found
+    call GetHDF5Attribute ( dsID, attrname, str )
+    call add_char( trim(str) )
+    call lookup ( strID, found, caseless=.true., debug=.false. )
+    do litID=first_lit, Last_auto_lit
+      if ( lit_indices(litID) == strID ) return
+    enddo
+    litID = -1 ! Still not found
+  end subroutine GetHDF5AttrAsLitID
+
+  ! ---------------------------------------- GetHDF5AttrAsStrID -----
+  subroutine GetHDF5AttrAsStrID ( dsID, attrName, strID )
+    ! Given a DS, File or GroupID, find the character-valued attribute
+    ! for the attribute named attrName of the dataset name
+    ! Look up its id in the string table and return that id as strID
+    use MLSHDF5, only: GETHDF5ATTRIBUTE
+    use STRING_TABLE, only: ADD_CHAR, LOOKUP
+    use TREE_TYPES, only: ADD_CHAR
+    ! Args
+    integer, intent(in)           :: dsID      ! dataset, file or group ID
+    character(len=*), intent(in)  :: attrName  ! attribute name
+    integer, intent(out)          :: strID     ! where to find attr's value
+    ! Internal variables
+    logical :: found
+    character(len=64) :: str
+    strID = -1 ! meaning not found
+    call GetHDF5Attribute ( dsID, attrname, str )
+    call add_char( trim(str) )
+    call lookup ( strID, found, caseless=.true., debug=.false. )
+    
+  end subroutine GetHDF5AttrAsStrID
+
   ! ---------------------------------------- myDisplayString -----
   subroutine myDisplayString ( index, advance )
     ! Given a string index, display the string or an error message
@@ -1487,6 +1581,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.65  2011/10/25 18:07:02  pwagner
+! Added WriteAttributes to attach qty template attributes when writing datasets
+!
 ! Revision 2.64  2011/05/09 17:26:03  pwagner
 ! Converted to using switchDetail
 !
