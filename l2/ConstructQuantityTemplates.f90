@@ -20,7 +20,7 @@ module ConstructQuantityTemplates
   private 
 
   ! The various properties has/can have
-  integer, parameter :: NEXT = -1
+  integer, parameter ::         NEXT                 = -1
   integer, public, parameter :: FirstProperty        = 1
   integer, public, parameter :: P_CHUNKED            = FirstProperty
   integer, public, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
@@ -1000,7 +1000,7 @@ contains ! ============= Public procedures ===================================
   ! ----------------------------------------------  GetQtyTypeIndex  -----
   subroutine GetQtyTypeIndex(string_text, QtyType)
     use Intrinsic, only: LIT_INDICES
-    use MLSStrings, only: LowerCase
+    use MLSStrings, only: LOWERCASE
     use STRING_TABLE, only: GET_STRING
     ! Returns the lit index,  given QtyType name in mixed case
     ! Returns 0 if QtyType name not found
@@ -1040,10 +1040,10 @@ contains ! ============= Public procedures ===================================
       L_GEOLOCATION, L_GPH, L_HEIGHTOFFSET, L_ISOTOPERATIO, L_IWC, &
       L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
       L_L1BMAFBASELINE, L_L1BMIF_TAI, L_LIMBSIDEBANDFRACTION, &
-      L_LineCenter, L_LineWidth, L_LineWidth_TDep, &
-      L_LOSTRANSFUNC, L_LOSVEL, L_LowestRetrievedPressure, &
+      L_LINECENTER, L_LINEWIDTH, L_LINEWIDTH_TDEP, &
+      L_LOSTRANSFUNC, L_LOSVEL, L_LOWESTRETRIEVEDPRESSURE, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
-      L_MIFDEADTIME, l_MIFExtinction, l_MIFExtinctionV2, &
+      L_MIFDEADTIME, L_MIFEXTINCTION, L_MIFEXTINCTIONV2, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
       L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_OPTICALDEPTH, L_ORBITINCLINATION, &
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
@@ -1051,7 +1051,7 @@ contains ! ============= Public procedures ===================================
       L_RHI, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
       L_SCANRESIDUAL, L_SCATTERINGANGLE, L_SCECI, L_SCVEL, L_SCVELECI, &
       L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, L_STATUS, &
-      L_STRAYRADIANCE, L_SurfaceHeight, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
+      L_STRAYRADIANCE, L_SURFACEHEIGHT, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
       L_TOTALPOWERWEIGHT, L_TSCAT, L_VMR
     use Init_Tables_Module, only: PHYQ_ANGLE, PHYQ_COLMABUNDANCE, &
@@ -1059,7 +1059,7 @@ contains ! ============= Public procedures ===================================
       & PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
       & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_TIME, PHYQ_VELOCITY, &
       & PHYQ_VMR, PHYQ_ZETA
-    use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
     use Intrinsic, only: LIT_INDICES
     use Output_M, only: OUTPUT
     use String_Table, only: DISPLAY_STRING
@@ -1334,6 +1334,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.166  2012/01/05 01:20:47  pwagner
+! Capitalized USEd stuff
+!
 ! Revision 2.165  2011/12/21 01:40:57  vsnyder
 ! Add LowestRetrievedPressure, MIFExtinction[v2], and a description of the
 ! DefineQtyTypes table.
