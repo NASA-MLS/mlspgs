@@ -24,6 +24,10 @@ module INTRINSIC
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  interface get_phyq
+    module procedure get_phyq_lit, get_phyq_str
+  end interface
+
 ! A "spec_def" vertex may be decorated with (sums of) the following flags:
   integer, parameter :: NO_DUP = 1        ! Duplicate fields prohibited
   integer, parameter :: ALL_FIELDS = 2    ! All fields required
@@ -78,6 +82,7 @@ module INTRINSIC
 
 ! Enumeration literals:
   integer, parameter :: FIRST_LIT       = 1
+  integer, save      :: LAST_AUTO_LIT   = 0 ! INIT_TABLES_MODULE should reset 
 ! Don't edit the following file directly -- it is generated automatically
 ! based on the file lit_names.txt (which is the file you ought to edit).
   include 'lit_parm.f9h'
@@ -230,7 +235,7 @@ contains ! =====     Public procedures     =============================
   contains
     ! ................................................  MAKE_TREE  .....
     include "make_tree.f9h"
-
+    
   end subroutine INIT_INTRINSIC
 
   ! --------------------------------------------------  Add_Ident  -----
@@ -252,6 +257,34 @@ contains ! =====     Public procedures     =============================
     call deallocate_test ( spec_indices,      'SPEC_INDICES',      moduleName )
   end subroutine
 
+  ! --------------------------------------------------  Get_Phyq  -----
+  ! Returns the phyq_index for a given string or its lit_index
+  function get_phyq_lit( lit_index ) result( phyq_index )
+    ! Args
+    integer, intent(in) :: lit_index
+    integer :: phyq_index
+    ! Executable
+    do phyq_index = first_phyq, last_phyq
+      if ( lit_indices(phyq_index) == lit_index ) return
+    enddo
+    phyq_index = -1 ! Not found
+  end function get_phyq_lit
+
+  function get_phyq_str( str ) result( phyq_index )
+    use STRING_TABLE, only: ADD_CHAR, LOOKUP
+    ! Args
+    character(len=*), intent(in) :: str
+    integer :: phyq_index
+    ! Internal variables
+    logical :: found
+    integer :: strID
+    ! Executable
+    phyq_index= -1 ! Not found
+    call add_char( trim(str) )
+    call lookup ( strID, found, caseless=.true., debug=.false. )
+    if ( found ) phyq_index = get_phyq_lit( strID )
+  end function get_phyq_str
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -265,6 +298,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.67  2012/01/05 01:14:11  pwagner
+! Added get_phyq function to phyq indices; also LAST_AUTO_LIT
+!
 ! Revision 2.66  2011/04/18 19:28:05  vsnyder
 ! Add NC for unchecked parameters in sections
 !
