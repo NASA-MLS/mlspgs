@@ -13,13 +13,13 @@
 module MLSStringLists               ! Module to treat string lists
 !=============================================================================
 
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
-    & MLSMSG_Allocate, MLSMSG_DeAllocate
-  use MLSCommon, only: BareFNLen
-  use MLSSets, only: FindFirst
-  use MLSStrings, only: Capitalize, lowerCase, ncopies, &
-    & ReadIntsFromChars, Replace, reverse, &
-    & SplitNest, streq, trim_safe, writeIntsToChars
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, &
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
+  use MLSCOMMON, only: BAREFNLEN
+  use MLSSETS, only: FINDFIRST
+  use MLSSTRINGS, only: CAPITALIZE, LOWERCASE, NCOPIES, &
+    & READINTSFROMCHARS, REPLACE, REVERSE, &
+    & SPLITNEST, STREQ, TRIM_SAFE, WRITEINTSTOCHARS
 
   implicit none
   private
@@ -3800,6 +3800,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.45  2012/01/05 01:18:33  pwagner
+! Capitalized USEd stuff
+!
 ! Revision 2.44  2011/04/20 16:35:15  pwagner
 ! Added SnipList
 !
