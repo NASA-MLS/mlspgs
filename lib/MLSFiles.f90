@@ -12,41 +12,41 @@
 !===============================================================================
 module MLSFiles               ! Utility file routines
   !=============================================================================
-  use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_READ, DFACC_RDWR, &
-    & sfstart, sfend
-  use HDFEOS, only: gdclose, gdopen, swclose, swopen, swinqswath
-  use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath, &
-    & he5_gdopen, he5_gdclose, &
-    & HE5F_ACC_TRUNC, HE5F_ACC_RDONLY, HE5F_ACC_RDWR
-  use intrinsic, only: l_ascii, l_binary, l_hdfeos, l_hdf, l_open, &
-    & l_swath, l_tkgen, l_zonalavg, lit_indices
-  use IO_STUFF, only: get_lun
-  use machine, only: io_error
-  use MLSCommon, only: BareFNLen, FileNameLen,  MLSFile_T, Range_T, &
-    & inRange
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-    & MLSMSG_DeAllocate, MLSMSG_Crash, MLSMSG_Error, MLSMSG_Warning
-  use MLSSets, only: findFirst
-  use MLSStrings, only: Capitalize, LowerCase
-  use MLSStringLists, only: ExtractSubString, &
-    & ReplaceSubString, SortArray
-  use output_m, only: blanks, output
-  use SDPToolkit, only: &
-    & Pgs_pc_getReference, PGS_S_SUCCESS, &
-    & PGSd_IO_Gen_RSeqFrm, PGSd_IO_Gen_RSeqUnf, & 
-    & PGSd_IO_Gen_RDirFrm, PGSd_IO_Gen_RDirUnf, & 
-    & PGSd_IO_Gen_WSeqFrm, PGSd_IO_Gen_WSeqUnf, & 
-    & PGSd_IO_Gen_WDirFrm, PGSd_IO_Gen_WDirUnf, & 
-    & PGSd_IO_Gen_USeqFrm, PGSd_IO_Gen_USeqUnf, & 
-    & PGSd_IO_Gen_UDirFrm, PGSd_IO_Gen_UDirUnf, & 
-    & PGSd_IO_Gen_ASeqFrm, PGSd_IO_Gen_ASeqUnf, &
-    & PGS_IO_GEN_CloseF, PGS_IO_GEN_OpenF, PGSd_PC_FILE_PATH_MAX, &
-    & UseSDPToolkit
+  use HDF, only: DFACC_CREATE, DFACC_RDONLY, DFACC_READ, DFACC_RDWR, &
+    & SFSTART, SFEND
+  use HDFEOS, only: GDCLOSE, GDOPEN, SWCLOSE, SWOPEN, SWINQSWATH
+  use HDFEOS5, only: HE5_SWCLOSE, HE5_SWOPEN, HE5_SWINQSWATH, &
+    & HE5_GDOPEN, HE5_GDCLOSE, &
+    & HE5F_ACC_TRUNC, HE5F_ACC_RDonly, HE5F_ACC_RDWR
+  use INTRINSIC, only: L_ASCII, L_BINARY, L_HDFEOS, L_HDF, L_OPEN, &
+    & L_SWATH, L_TKGEN, L_ZONALAVG, LIT_INDICES
+  use IO_STUFF, only: GET_LUN
+  use MACHINE, only: IO_ERROR
+  use MLSCOMMON, only: BAREFNLEN, FILENAMELEN,  MLSFILE_T, RANGE_T, &
+    & INRANGE
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+    & MLSMSG_DEALLOCATE, MLSMSG_CRASH, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSSETS, only: FINDFIRST
+  use MLSSTRINGS, only: CAPITALIZE, LOWERCASE
+  use MLSSTRINGLISTS, only: EXTRACTSUBSTRING, &
+    & REPLACESUBSTRING, SORTARRAY
+  use OUTPUT_M, only: BLANKS, OUTPUT
+  use SDPTOOLKIT, only: &
+    & PGS_PC_GETREFERENCE, PGS_S_SUCCESS, &
+    & PGSD_IO_GEN_RSEQFRM, PGSD_IO_GEN_RSEQUNF, & 
+    & PGSD_IO_GEN_RDIRFRM, PGSD_IO_GEN_RDIRUNF, & 
+    & PGSD_IO_GEN_WSEQFRM, PGSD_IO_GEN_WSEQUNF, & 
+    & PGSD_IO_GEN_WDIRFRM, PGSD_IO_GEN_WDIRUNF, & 
+    & PGSD_IO_GEN_USEQFRM, PGSD_IO_GEN_USEQUNF, & 
+    & PGSD_IO_GEN_UDIRFRM, PGSD_IO_GEN_UDIRUNF, & 
+    & PGSD_IO_GEN_ASEQFRM, PGSD_IO_GEN_ASEQUNF, &
+    & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_PC_FILE_PATH_MAX, &
+    & USESDPTOOLKIT
 !   In the long run, we'll try putting interfaces to these in SDPToolkit.f90
 !   Until then, just declare them as external
 !    & PGS_MET_SFstart, PGS_MET_SFend, &
-  use String_Table, only: display_string, get_string
-  use HDF5, only: size_t
+  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+  use HDF5, only: SIZE_T
   implicit none
 
   private 
@@ -741,7 +741,7 @@ contains
 
   subroutine open_MLSFile(MLSFile, PCBottom, PCTop, inp_rec_length, unknown)
 
-    use IO_Stuff, only: Get_Lun
+    use IO_Stuff, only: GET_LUN
 
     ! Dummy arguments
     type (MLSFile_T)          :: MLSFile
@@ -931,7 +931,7 @@ contains
   ! It must be supplied an MLSFile_t for its arg
   subroutine close_MLSFile(MLSFile)
 
-    use HDF5, only: h5fclose_f
+    use HDF5, only: H5FCLOSE_F
     ! Dummy arguments
     type (MLSFile_T) ::            MLSFile
 
@@ -1176,7 +1176,7 @@ contains
 
     ! Arguments
 
-    use Machine, only: Filsep ! / or :\
+    use Machine, only: FILSEP ! / or :\
 
     character (len=*), intent(in) :: full_file_name
     character (len=*), intent(out) :: path
@@ -1398,7 +1398,7 @@ contains
   ! by calling special toolkit function
   
   function mls_sfstart(FileName, FileAccess, hdfVersion, addingmetadata)
-    use HDF5, only: h5fopen_f, h5fcreate_f
+    use HDF5, only: H5FOPEN_F, H5FCREATE_F
     use HDF5, only: &
      & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F
     ! Arguments
@@ -1515,7 +1515,7 @@ contains
 
   function mls_sfend(sdid, hdfVersion, addingMetadata)
 
-    use HDF5, only: h5fclose_f
+    use HDF5, only: H5FCLOSE_F
     ! Arguments
 
     integer, intent(IN)       :: sdid  
@@ -1582,7 +1582,7 @@ contains
   function mls_hdf_version(FileName, preferred_version, AccessType) &
    & result (hdf_version)
 
-   use HDF5, only: h5fis_hdf5_f
+   use HDF5, only: H5FIS_HDF5_F
    ! Arguments
 
     character (len=*), intent(in)  :: FILENAME                                  
@@ -1661,7 +1661,7 @@ contains
 ! Returns file_id
 ! By default, hdfVersion is WILDCARDHDFVERSION meaning it autodetects
 ! which version to open the filename under
-   use HDF5, only: h5fopen_f, h5fcreate_f, h5fis_hdf5_f
+   use HDF5, only: H5FOPEN_F, H5FCREATE_F, H5FIS_HDF5_F
    use HDF5, only: &
      & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_EXCL_F
 !
@@ -1853,7 +1853,7 @@ contains
 ! By default, hdfVersion is WILDCARDHDFVERSION meaning it autodetects
 ! which version to close the filename under
 ! so unless you supply hdfVersion, you'd better supply filename
-    use HDF5, only: h5fclose_f
+    use HDF5, only: H5FCLOSE_F
 !
 ! External Variables
 !
@@ -2091,7 +2091,7 @@ contains
     & FileName, hdfVersion, debugOption ) &
     &  result (ErrType)
 
-    use HDF5, only: h5fclose_f
+    use HDF5, only: H5FCLOSE_F
     ! Dummy arguments
     integer  :: ErrType
     integer, intent(IN)  :: theFileHandle
@@ -2280,7 +2280,7 @@ contains
     & hdfVersion, debugOption, inp_rec_length) &
     &  result (theFileHandle)
 
-    use IO_Stuff, only: Get_Lun
+    use IO_Stuff, only: GET_LUN
 
     ! Dummy arguments
     integer,  intent(OUT)  :: ErrType
@@ -2715,6 +2715,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.90  2012/01/05 01:14:54  pwagner
+! Capitalized USEd stuff
+!
 ! Revision 2.89  2011/07/12 22:35:44  honghanh
 ! Change l_grid to l_hdfeos
 !
