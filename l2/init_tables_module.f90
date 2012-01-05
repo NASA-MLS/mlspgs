@@ -269,7 +269,8 @@ contains ! =====     Public procedures     =============================
                           N_NAME_DEF, N_OR, N_SECTION, N_SPEC_DEF, N_UNCHECKED
 
     integer, parameter :: E = d*empty_OK ! Decoration for empty_ok field specs
-
+  ! Reset anything to automatic parameters  
+    LAST_AUTO_LIT = LAST_LIT                
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_Spectroscopy ( t_last, field_last, last_lit, &
     & first_parm, last_parm, section_last, spec_last )
@@ -1722,6 +1723,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.530  2012/01/05 01:19:49  pwagner
+! Sets LAST_AUTO_LIT to last literal
+!
 ! Revision 2.529  2011/12/21 01:38:41  vsnyder
 ! Add LowestRetrievedPressure, MIFExtinction[v2], fwmJacobian, and fwmState
 !
