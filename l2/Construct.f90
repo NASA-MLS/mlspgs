@@ -36,13 +36,13 @@ contains ! =====     Public Procedures     =============================
     ! information for the GHz and THz modules.  The software can then
     ! point to these for geolocation information for all minor frame
     ! quantities saving file IO and memory.
-    use Chunks_m, only: MLSCHUNK_T
-    use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity
-    use QuantityTemplates, only: QUANTITYTEMPLATE_T
-    use MLSCommon, only: MLSFile_T
-    use MLSSignals_m, only: MODULES
-    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Allocate, &
-      & MLSMessage
+    use CHUNKS_M, only: MLSCHUNK_T
+    use CONSTRUCTQUANTITYTEMPLATES, only: CONSTRUCTMINORFRAMEQUANTITY
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSSIGNALS_M, only: MODULES
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+      & MLSMESSAGE
 
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -81,42 +81,42 @@ contains ! =====     Public Procedures     =============================
 
   ! This is the `main' subroutine for this module
 
-    use Chunks_m, only: MLSChunk_T
-    use ConstructQuantityTemplates, only: &
-      & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
-    use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
-    use DumpCommand_m, only: BooleanFromAnyGoodRadiances, &
-      & BooleanFromAnyGoodValues, &
-      & BooleanFromCatchWarning, BooleanFromComparingQtys, BooleanFromFormula, &
-      & DumpCommand
-    use FGrid, only: FGrid_T
-    use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
-      & ForwardModelConfig_T
-    use ForwardModelSupport, only: ConstructForwardModelConfig
-    use GriddedData, only: GriddedData_T
-    use HGridsDatabase, only: ADDHGRIDTODATABASE, HGRID_T
-    use HGrid, only: CREATEHGRIDFROMMLSCFINFO
+    use CHUNKS_M, only: MLSCHUNK_T
+    use CONSTRUCTQUANTITYTEMPLATES, only: &
+      & CREATEQTYTEMPLATEFROMMLSCFINFO, FORGEMINORFRAMES
+    use CONSTRUCTVECTORTEMPLATES, only: CREATEVECTEMPLATEFROMMLSCFINFO
+    use DUMPCOMMAND_M, only: BOOLEANFROMANYGOODRADIANCES, &
+      & BOOLEANFROMANYGOODVALUES, &
+      & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
+      & DUMPCOMMAND
+    use FGRID, only: FGRID_T
+    use FORWARDMODELCONFIG, only: ADDFORWARDMODELCONFIGTODATABASE, &
+      & FORWARDMODELCONFIG_T
+    use FORWARDMODELSUPPORT, only: CONSTRUCTFORWARDMODELCONFIG
+    use GRIDDEDDATA, only: GRIDDEDDATA_T
+    use HGRIDSDATABASE, only: ADDHGRIDTODATABASE, HGRID_T
+    use HGRID, only: CREATEHGRIDFROMMLSCFINFO
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
       & S_BOOLEAN, S_CATCHWARNING, S_COMPARE, S_DUMP, &
       & S_FORGE, S_FORWARDMODEL, S_HGRID, &
       & S_PHASE, S_QUANTITY, S_REEVALUATE, S_TIME, S_VECTORTEMPLATE
-    use L2GPData, only: L2GPDATA_T
-    use MLSCommon, only: MLSFile_T, TAI93_Range_T
-    use MLSL2Options, only: NEED_L1BFILES, SPECIALDUMPFILE
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, addPhaseToPhaseNames
-    use MLSMessageModule, only: MLSMessageReset
-    use MoreTree, only: Get_Spec_ID
+    use L2GPDATA, only: L2GPDATA_T
+    use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T
+    use MLSL2OPTIONS, only: NEED_L1BFILES, SPECIALDUMPFILE
+    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADDPHASETOPHASENAMES
+    use MLSMESSAGEMODULE, only: MLSMESSAGERESET
+    use MORETREE, only: GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT, &
-      & revertoutput, switchOutput
-    use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
-      & QuantityTemplate_T
-    use Time_M, only: Time_Now
+      & REVERTOUTPUT, SWITCHOUTPUT
+    use QUANTITYTEMPLATES, only: ADDQUANTITYTEMPLATETODATABASE, &
+      & QUANTITYTEMPLATE_T
+    use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED
-    use VectorsModule, only: AddVectorTemplateToDatabase, &
-      & Vector_T, VectorTemplate_T
+    use VECTORSMODULE, only: ADDVECTORTEMPLATETODATABASE, &
+      & VECTOR_T, VECTORTEMPLATE_T
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
@@ -247,13 +247,13 @@ contains ! =====     Public Procedures     =============================
 
   ! DeConstruct the Quantity and Vector template databases.
 
-    use HGridsDatabase, only: DestroyHGridDatabase, HGrid_T
-    use MLSStringLists, only: SwitchDetail
-    use output_m, only: output
-    use QuantityTemplates, only: DestroyQuantityTemplateDatabase, &
-      & QuantityTemplate_T
+    use HGRIDSDATABASE, only: DESTROYHGRIDDATABASE, HGRID_T
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: OUTPUT
+    use QUANTITYTEMPLATES, only: DESTROYQUANTITYTEMPLATEDATABASE, &
+      & QUANTITYTEMPLATE_T
     use TOGGLES, only: SWITCHES
-    use VectorsModule, only: DestroyVectorTemplateDatabase, VectorTemplate_T
+    use VECTORSMODULE, only: DESTROYVECTORTEMPLATEDATABASE, VECTORTEMPLATE_T
 
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplatesBase
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
@@ -290,6 +290,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.66  2012/01/05 01:20:17  pwagner
+! Capitalized USEd stuff
+!
 ! Revision 2.65  2011/06/29 21:54:51  pwagner
 ! Some cases may safely omit l1b files
 !
