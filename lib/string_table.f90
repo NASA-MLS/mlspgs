@@ -19,19 +19,19 @@ module STRING_TABLE
   use IO_STUFF, only: GET_LUN
   use MACHINE, only: CRASH_BURN, IO_ERROR
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use MLSMessageModule, only: MLSMSG_DeAllocate, MLSMSG_Allocate, &
-                              MLSMSG_Error, MLSMessage
+  use MLSMessageModule, only: MLSMSG_DEALLOCATE, MLSMSG_ALLOCATE, &
+                              MLSMSG_ERROR, MLSMESSAGE
   implicit NONE
   private
 
   ! Public procedures
-  public :: ADD_CHAR, ALLOCATE_CHAR_TABLE, ALLOCATE_HASH_TABLE
+  public :: ADD_CHAR, ADDINUNIT, ALLOCATE_CHAR_TABLE, ALLOCATE_HASH_TABLE
   public :: ALLOCATE_STRING_TABLE, CLEAR_STRING, COMPARE_STRINGS, CREATE_STRING
   public :: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, DESTROY_STRING_TABLE
   public :: DISPLAY_STRING, DISPLAY_STRING_LIST, ENTER_STRING, FLOAT_VALUE
   public :: GET_CHAR, GET_STRING, HOW_MANY_STRINGS, INDEX, INDEX_IN_STRING
-  public :: LEN, LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE, OPEN_INPUT
-  public :: STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR, ADDINUNIT
+  public :: LEN, LOOKUP, LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE
+  public :: OPEN_INPUT, STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR
   public :: INIT_STRING_TABLE
 
   interface DISPLAY_STRING
@@ -593,6 +593,20 @@ contains
       end do l
     end if
   end function INDEX_IN_STRING
+  ! ====================================     LOOKUP     =====
+  subroutine LOOKUP ( STRING, FOUND, CASELESS, DEBUG )
+  ! Look for the string built up by Add_Char.  If it is found return the
+  ! position at which it was found in STRING, and FOUND = .true.  If it is
+  ! not found, set FOUND = .false.  In any case, the next call to Add_Char
+  ! will add the first character of a new string. If CASELESS is present
+  ! and .true., compare caseless.
+    integer, intent(out) :: STRING
+    logical, intent(out) :: FOUND
+    logical, optional, intent(in) :: CASELESS
+    logical, optional, intent(in) :: DEBUG
+    call LOOKUP_AND_INSERT_MAYBE ( STRING, FOUND, CASELESS, DEBUG, &
+      & LOOKUPONLY=.true. )
+  end subroutine LOOKUP
   ! ====================================     LOOKUP_AND_INSERT     =====
   subroutine LOOKUP_AND_INSERT ( STRING, FOUND, CASELESS, DEBUG )
   ! Look for the string built up by Add_Char.  If it is found return the
@@ -605,163 +619,8 @@ contains
     logical, intent(out) :: FOUND
     logical, optional, intent(in) :: CASELESS
     logical, optional, intent(in) :: DEBUG
-
-    integer :: HASH_KEY  ! Integer derived from characters of STRING
-    integer :: I         ! Subscript, loop inductor
-    integer :: LOC       ! Where HASH_KEY was found in HASH_TABLE
-    logical :: myDEBUG    ! .false. or CASELESS
-    logical :: NOCASE    ! .false. or CASELESS
-    integer :: STATUS    ! Result, see HASH_LOOKUP
-
-    nocase = .false.
-    if ( present(caseless) ) nocase = caseless
-    myDEBUG = .false.
-    if ( present(DEBUG) ) myDEBUG = DEBUG
-
-    ! Construct a hash_key by adding up the numeric representations
-    ! of the characters in NSTRING+1, ignoring overflows
-    hash_key = 0
-    if ( nocase ) then
-      do i = strings(nstring)+1, strings(nstring+1)
-        hash_key = hash_key + iacap ( char_table(i) )
-      end do
-    else
-      do i = strings(nstring)+1, strings(nstring+1)
-        hash_key = hash_key + iachar ( char_table(i) )
-      end do
-    end if
-
-    ! Look for hash_key
-    loc = 0
-    do
-      call hash_lookup ( hash_key, hash_table, .true., loc, status )
-      if ( status == inserted ) then
-        found = .false.
-        nstring = nstring + 1
-        if ( nstring >= ubound(strings,1) ) then; call double_strings; end if
-        hash_table(2,loc) = nstring
-        string = nstring
-        strings(nstring+1) = strings(nstring)
-        if ( myDEBUG ) then
-!        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
-!                       'hash_key was not found in table'
-!      write (*, *) 'hash key: ', hash_key
-!      write (*, *) 'hash table keys: ', hash_table(2,:)
-!      write (*, *) 'Compare', hash_table(2,loc), ': ', &
-!      char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
-!      ' to ',1, ': ', char_table(1:strings(2))
-          call output('STRING_TABLE%LOOKUP_AND_INSERT-E- ', advance='no')
-          call blanks(3)
-          call output('hash_key was not found in table ', advance='yes')
-
-          call output('hash key: ', advance='no')
-          call output(hash_key, advance='yes')
-
-          call output('hash table keys: ', advance='no')
-          call output(hash_table(2,:), advance='yes')
-
-          call output('Compare ', advance='no')
-          call output(hash_table(2,loc), advance='no')
-          call blanks(1)
-          call output(':', advance='no')
-          call blanks(1)
-          call output(char_table(strings( &
-           & hash_table(2,loc)-1)+1:strings(hash_table(2,loc) &
-           & )), advance='yes')
-
-          call output('to', advance='yes')
-
-          call output('1 : ', advance='no')
-          call blanks(1)
-          call output(char_table(1:strings(2)), advance='yes')
-        end if
-        return
-      end if
-      if ( status /= hash_found ) then
-!        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
-!                       'Either the hash table is full'
-!        write ( *, * ) 'or the program is using the hash software ', &
-!                       'incorrectly.'
-!        write ( *, * ) 'Unfortunately, the program doesn''t know how ', &
-!                       'to increase the hash table size.'
-!      write (*, *) 'status: ', status
-          call output('STRING_TABLE%LOOKUP_AND_INSERT-E- ', advance='no')
-          call blanks(3)
-          call output('Either the hash table is full', advance='yes')
-          call output('or the program is using the hash software' // &
-          & 'incorrectly.', advance='yes')
-          call output('Unfortunately, the program doesn''t know how' // &
-          & 'to increase the hash table size.', advance='yes')
-
-          call output('status: ', advance='no')
-          call output(status, advance='yes')
-
-          if(status == HASH_FULL) then
-            call output( '(hash full)', advance='yes')
-          else if(status == HASH_NOT_KEY) then
-            call output( '(hash not key)', advance='yes')
-          else if(status == HASH_BAD_LOC) then
-            call output( '(hash bad loc)', advance='yes')
-          else if(status == HASH_EMPTY) then
-            call output( '(hash empty)', advance='yes')
-          else
-            call output( '(unrecognized hash error)', advance='yes')
-          end if
-!      write (*, *) 'hash key: ', hash_key
-!      write (*, *) 'hash table keys: ', hash_table(2,:)
-!      write (*, *) 'hash table size ', size(hash_table(2,:))
-          call output('hash key: ', advance='no')
-          call output(hash_key, advance='yes')
-          call output('hash table keys: ', advance='no')
-          call output(hash_table(2,:), advance='yes')
-          call output('hash table size: ', advance='no')
-          call output(size(hash_table(2,:)), advance='yes')
-          if(status == HASH_FULL) then
-             call output( 'You can probably fix this problem by ' // &
-              & 'increasing hash_table_size,', advance='yes')
-             call output( 'the last arg in the call to init_lexer ' // &
-              & 'in your main program', advance='yes')
-          end if
-        call crash_burn
-      end if
-      ! The hash key matches; check whether the string does
-      if ( myDEBUG ) then
-! write (*, *) 'Compare', hash_table(2,loc), ': ', &
-! char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
-! ' to ', nstring+1, ': ', char_table(strings(nstring)+1:strings(nstring+1))
-          call output('Compare ', advance='no')
-          call output(hash_table(2,loc), advance='no')
-          call blanks(1)
-          call output(':', advance='no')
-          call blanks(1)
-          call output(char_table(strings( &
-           & hash_table(2,loc)-1)+1:strings(hash_table(2,loc) &
-           & )), advance='yes')
-
-          call output('to', advance='yes')
-
-          call output(nstring+1, advance='no')
-          call blanks(1)
-          call output(':', advance='no')
-          call output(char_table(strings(nstring)+1:strings(nstring+1)), advance='yes')
-
-          call output ( 'Compare ', advance='no' )
-          call output ( hash_table(2,loc) ); call output ( ': ', advance='no')
-          call display_string ( hash_table(2,loc) )
-          call output ( ' to ' )
-          call output ( nstring+1 ); call output ( ': ')
-        !  call display_string ( nstring+1, advance='no' )
-          call output ( char_table(strings(nstring)+1:strings(nstring+1)), advance='no' )
-          if ( nocase ) call output ( ' caseless')
-          call output ( '', advance='yes' )
-      end if
-      string = hash_table(2,loc)
-      found = compare_strings ( string, nstring+1, caseless ) == 0
-      if ( found ) then
-        call clear_string
-        return
-      end if
-    end do
+    call LOOKUP_AND_INSERT_MAYBE ( STRING, FOUND, CASELESS, DEBUG, &
+      & LOOKUPONLY=.false. )
   end subroutine LOOKUP_AND_INSERT
  ! ==============================================     NEW_LINE     =====
   subroutine NEW_LINE
@@ -924,6 +783,186 @@ contains
       iacap = iacap + shift
     end if
   end function IACAP
+  ! ====================================     LOOKUP_AND_INSERT_MAYBE     =====
+  subroutine LOOKUP_AND_INSERT_MAYBE ( STRING, FOUND, CASELESS, DEBUG, LOOKUPONLY )
+  ! Look for the string built up by Add_Char.  If it is found return the
+  ! position at which it was found in STRING, and FOUND = .true.  If it is
+  ! not found, add it, return the position at which it was added in
+  ! STRING, and FOUND = .false.  In any case, the next call to Add_Char
+  ! will add the first character of a new string. If CASELESS is present
+  ! and .true., compare caseless.
+  ! LOOKUPONLY, if TRUE, modifies this a little--don't insert
+    integer, intent(out) :: STRING
+    logical, intent(out) :: FOUND
+    logical, optional, intent(in) :: CASELESS
+    logical, optional, intent(in) :: DEBUG
+    logical, optional, intent(in) :: LOOKUPONLY ! DONTINSERT
+
+    integer :: HASH_KEY  ! Integer derived from characters of STRING
+    integer :: I         ! Subscript, loop inductor
+    logical :: INSERT    ! Insert if not found
+    integer :: LOC       ! Where HASH_KEY was found in HASH_TABLE
+    logical :: myDEBUG    ! .false. or CASELESS
+    logical :: NOCASE    ! .false. or CASELESS
+    integer :: STATUS    ! Result, see HASH_LOOKUP
+
+    nocase = .false.
+    if ( present(caseless) ) nocase = caseless
+    myDEBUG = .false.
+    if ( present(DEBUG) ) myDEBUG = DEBUG
+    insert = .true.
+    if ( present(LookupOnly) ) insert = .not. lookUpOnly
+
+    ! Construct a hash_key by adding up the numeric representations
+    ! of the characters in NSTRING+1, ignoring overflows
+    hash_key = 0
+    if ( nocase ) then
+      do i = strings(nstring)+1, strings(nstring+1)
+        hash_key = hash_key + iacap ( char_table(i) )
+      end do
+    else
+      do i = strings(nstring)+1, strings(nstring+1)
+        hash_key = hash_key + iachar ( char_table(i) )
+      end do
+    end if
+
+    ! Look for hash_key
+    loc = 0
+    do
+      ! call hash_lookup ( hash_key, hash_table, .true., loc, status )
+      call hash_lookup ( hash_key, hash_table, insert, loc, status )
+      if ( status == inserted ) then
+        found = .false.
+        if ( .not. insert ) then
+          call clear_string
+          return
+        endif
+        nstring = nstring + 1
+        if ( nstring >= ubound(strings,1) ) then; call double_strings; end if
+        hash_table(2,loc) = nstring
+        string = nstring
+        strings(nstring+1) = strings(nstring)
+        if ( myDEBUG ) then
+!        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
+!                       'hash_key was not found in table'
+!      write (*, *) 'hash key: ', hash_key
+!      write (*, *) 'hash table keys: ', hash_table(2,:)
+!      write (*, *) 'Compare', hash_table(2,loc), ': ', &
+!      char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
+!      ' to ',1, ': ', char_table(1:strings(2))
+          call output('STRING_TABLE%LOOKUP_AND_INSERT-E- ', advance='no')
+          call blanks(3)
+          call output('hash_key was not found in table ', advance='yes')
+
+          call output('hash key: ', advance='no')
+          call output(hash_key, advance='yes')
+
+          call output('hash table keys: ', advance='no')
+          call output(hash_table(2,:), advance='yes')
+
+          call output('Compare ', advance='no')
+          call output(hash_table(2,loc), advance='no')
+          call blanks(1)
+          call output(':', advance='no')
+          call blanks(1)
+          call output(char_table(strings( &
+           & hash_table(2,loc)-1)+1:strings(hash_table(2,loc) &
+           & )), advance='yes')
+
+          call output('to', advance='yes')
+
+          call output('1 : ', advance='no')
+          call blanks(1)
+          call output(char_table(1:strings(2)), advance='yes')
+        end if
+        return
+      end if
+      if ( status /= hash_found ) then
+!        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
+!                       'Either the hash table is full'
+!        write ( *, * ) 'or the program is using the hash software ', &
+!                       'incorrectly.'
+!        write ( *, * ) 'Unfortunately, the program doesn''t know how ', &
+!                       'to increase the hash table size.'
+!      write (*, *) 'status: ', status
+          call output('STRING_TABLE%LOOKUP_AND_INSERT-E- ', advance='no')
+          call blanks(3)
+          call output('Either the hash table is full', advance='yes')
+          call output('or the program is using the hash software' // &
+          & 'incorrectly.', advance='yes')
+          call output('Unfortunately, the program doesn''t know how' // &
+          & 'to increase the hash table size.', advance='yes')
+
+          call output('status: ', advance='no')
+          call output(status, advance='yes')
+
+          if(status == HASH_FULL) then
+            call output( '(hash full)', advance='yes')
+          else if(status == HASH_NOT_KEY) then
+            call output( '(hash not key)', advance='yes')
+          else if(status == HASH_BAD_LOC) then
+            call output( '(hash bad loc)', advance='yes')
+          else if(status == HASH_EMPTY) then
+            call output( '(hash empty)', advance='yes')
+          else
+            call output( '(unrecognized hash error)', advance='yes')
+          end if
+!      write (*, *) 'hash key: ', hash_key
+!      write (*, *) 'hash table keys: ', hash_table(2,:)
+!      write (*, *) 'hash table size ', size(hash_table(2,:))
+          call output('hash key: ', advance='no')
+          call output(hash_key, advance='yes')
+          call output('hash table keys: ', advance='no')
+          call output(hash_table(2,:), advance='yes')
+          call output('hash table size: ', advance='no')
+          call output(size(hash_table(2,:)), advance='yes')
+          if(status == HASH_FULL) then
+             call output( 'You can probably fix this problem by ' // &
+              & 'increasing hash_table_size,', advance='yes')
+             call output( 'the last arg in the call to init_lexer ' // &
+              & 'in your main program', advance='yes')
+          end if
+        call crash_burn
+      end if
+      ! The hash key matches; check whether the string does
+      if ( myDEBUG ) then
+! write (*, *) 'Compare', hash_table(2,loc), ': ', &
+! char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
+! ' to ', nstring+1, ': ', char_table(strings(nstring)+1:strings(nstring+1))
+          call output('Compare ', advance='no')
+          call output(hash_table(2,loc), advance='no')
+          call blanks(1)
+          call output(':', advance='no')
+          call blanks(1)
+          call output(char_table(strings( &
+           & hash_table(2,loc)-1)+1:strings(hash_table(2,loc) &
+           & )), advance='yes')
+
+          call output('to', advance='yes')
+
+          call output(nstring+1, advance='no')
+          call blanks(1)
+          call output(':', advance='no')
+          call output(char_table(strings(nstring)+1:strings(nstring+1)), advance='yes')
+
+          call output ( 'Compare ', advance='no' )
+          call output ( hash_table(2,loc) ); call output ( ': ', advance='no')
+          call display_string ( hash_table(2,loc) )
+          call output ( ' to ' )
+          call output ( nstring+1 ); call output ( ': ')
+        !  call display_string ( nstring+1, advance='no' )
+          call output ( char_table(strings(nstring)+1:strings(nstring+1)), advance='no' )
+          if ( nocase ) call output ( ' caseless')
+          call output ( '', advance='yes' )
+      end if
+      string = hash_table(2,loc)
+      found = compare_strings ( string, nstring+1, caseless ) == 0
+      if ( found ) then
+        call clear_string
+        return
+      end if
+    end do
+  end subroutine LOOKUP_AND_INSERT_MAYBE
   ! ------------------------------------------     TEST_STRING     -----
   subroutine TEST_STRING ( STRING, ROUTINE, IERR )
   ! Test whether STRING is within bounds.  If not, use ROUTINE to emit
@@ -1021,6 +1060,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.34  2012/01/05 01:12:43  pwagner
+! Added Lookup sub routine; lookup_and_insert loses optional parameter lookuponly
+!
 ! Revision 2.33  2011/10/11 16:57:51  honghanh
 ! Fix a bug in get_string to return an error code when no_error is .true.
 !
