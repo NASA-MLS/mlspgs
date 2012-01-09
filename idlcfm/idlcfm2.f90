@@ -1,5 +1,6 @@
 module IDLCFM2_m
     use CFM
+    use CFM, only: QUANTITYTEMPLATE_T
     use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
     use PVM, only: PVMFRECV, PVMFINITSEND, PVMDATADEFAULT
     use MorePVM, only: PVMUnpackStringIndex, PVMUnpackLitIndex
@@ -956,6 +957,10 @@ module IDLCFM2_m
 end module
 
 ! $Log$
+! Revision 1.7  2012/01/03 17:21:25  honghanh
+! Remove unused variables, and incorporate changes from
+! lit_parm and Molecules_M
+!
 ! Revision 1.6  2011/09/07 06:34:46  honghanh
 ! Make modification to send matrix,and add more error handling
 !
