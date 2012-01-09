@@ -40,6 +40,11 @@
     real(kind(array1))                     :: maxratio
     real(kind(array1))                     :: medianratio
     real(kind(array1))                     :: meanratio
+    real(kind(array1))                     :: minvalue
+    real(kind(array1))                     :: maxvalue
+    real(kind(array1))                     :: medianvalue
+    real(kind(array1))                     :: meanvalue
+    real(kind(array1))                     :: rmsvalue
     integer                                :: numTot
     integer                                :: numEqual
     real(kind(array1))                     :: pctDiff
@@ -77,6 +82,7 @@
     myCyclic     = theDefault('cyclic') ! .false.
     myGaps       = theDefault('gaps')
     myLaconic    = theDefault('laconic')
+    myRatios     = theDefault('ratios')   ! .false.
     myRMS        = theDefault('rms')   ! .false.
     myShape      = theDefault('shape')  ! .false.
     myStats      = theDefault('stat')  ! .false.
@@ -92,6 +98,7 @@
       myCyclic      =   index( options, dopt_cyclic     ) > 0
       myGaps        =   index( options, dopt_gaps       ) > 0
       myLaconic     =   index( options, dopt_laconic    ) > 0
+      myRatios      =   index( options, dopt_ratios     ) > 0
       myRMS         =   index( options, dopt_rms        ) > 0
       myShape       =   index( options, dopt_shape      ) > 0
       myStats       =   index( options, dopt_stats      ) > 0
@@ -102,10 +109,10 @@
       myWholeArray  = ( index( options, dopt_wholearray ) > 0 )
     endif
     myWholeArray = myWholeArray .or. &
-      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+      & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
       & .or. myTable)
     onlyWholeArray = myWholeArray .and. &
-      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+      & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
       & .or. myTable)
 
     if ( len_trim(name2) < 1 ) then
@@ -117,7 +124,8 @@
     if ( DEBUG ) then
       call output( '(in diff)', advance='yes' )
       call outputNamedValue( 'myStats', myStats )
-      call outputNamedValue( 'myRMs', myRMS)
+      call outputNamedValue( 'myRatios', myRatios)
+      call outputNamedValue( 'myRMS', myRMS)
       call outputNamedValue( 'myTable', myTable )
       call outputNamedValue( 'myWholeArray', myWholeArray )
     endif
@@ -188,7 +196,7 @@
       call output( '(The two arrays are exactly equal)', advance='yes' )
       return
     endif
-    if ( myRMS ) then
+    if ( myRMS .or. myRatios ) then
       ! We want to make sure we remove values from both arrays where either is fill
       if ( DEBUG ) call outputNamedValue( 'filtering FillValue', FillValue )
       filtered1 = reshape( array1, (/ product(shape(array1)) /) )
@@ -248,9 +256,9 @@
       endif
       if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
       call doneWithDiff
-      return
       if ( PRINTREFERENCEVALUES ) &
         & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
+      return
     endif
     if ( .not. alreadySbtrcted ) then
       call fillPcts
@@ -293,8 +301,16 @@
       else
         call ratios( filtered1, filtered2, exvalues, exratios, &
           & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio )
+        ! Note that because alreadySbtrcted we don't need to subtract again
+        if ( .not. alreadySbtrcted ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'We should have subtracted already by this point' )
+        call allstats( filtered1, min=minvalue, max=maxvalue, mean=meanvalue, &
+          & rms=rmsvalue, median=medianvalue, fillValue=FillValue )
+        ! call outputNamedValue( 'min(filterddiff)', minval(array2-array1) )
+        ! call outputNamedValue( 'max(filterddiff)', maxval(array2-array1) )
       endif
-      if ( myRMS ) then
+      if ( myRatios ) then
         if ( .not. nameHasBeenPrinted ) then
           call output( trim(DiffName), advance='yes' )
           nameHasBeenPrinted = .true.
@@ -310,7 +326,16 @@
         call output( '  ( as difference:  ', advance='no' )
         call output( exvalues(2), advance='no' )
         call output( ' )', advance='yes' )
+        nameHasBeenPrinted = .false.
         call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
+      endif
+      if ( myRMS ) then
+        if ( .not. nameHasBeenPrinted ) then
+          call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        endif
+        nameHasBeenPrinted = .false.
+        call printRMSetc( 'value', minvalue, maxvalue, rmsvalue, meanvalue )
       endif
       if ( myTABLE ) then
         if ( .not. nameHasBeenPrinted ) then
@@ -436,6 +461,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.28  2012/01/09 22:25:12  pwagner
+! Distinguish 'r' option to print rms of ratios and 'R' option for rms of values
+!
 ! Revision 2.27  2011/12/07 01:13:58  pwagner
 ! Added option to show bandwidth of banded arrays
 !
