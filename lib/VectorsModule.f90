@@ -1811,6 +1811,10 @@ contains ! =====     Public Procedures     =============================
           call dump ( quantities(vector_template%quantities(i)), details )
         end do
       end if
+    elseif ( .not. associated(vector_template%quantities) ) then
+       call output ( 'vector quantities not associated', advance='yes' )
+    else
+       call outputNamedValue( 'size(vector_template%quantities)', size(vector_template%quantities) )
     end if
   end subroutine Dump_Vector_Template
 
@@ -2723,6 +2727,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.157  2011/12/17 00:37:32  vsnyder
+! Add MoveVectorQuantity
+!
 ! Revision 2.156  2011/11/11 00:32:29  vsnyder
 ! Use IsExtinction array from Molecules module
 !
