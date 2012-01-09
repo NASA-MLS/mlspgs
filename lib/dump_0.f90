@@ -32,7 +32,7 @@ module DUMP_0
     & ISFINITE, ISINFINITE, ISNAN, &
     & INFFUNCTION, NANFUNCTION, REORDERFILLVALUES, REPLACEFILLVALUES, &
     & WHEREARETHEINFS, WHEREARETHENANS
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSETS, only: FINDUNIQUE
   use MLSSTATS1, only: STAT_T, &
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
@@ -162,11 +162,12 @@ module DUMP_0
 !       B              show Bandwidth, % of array that is non-zero
 !       H              show rank, TheShape of array
 !       L              laconic; skip printing name, size of array
+!       R              rms       -- min, max, etc.
 !       b              table of % vs. amount of differences (pdf)
 !       c              clean
 !       g              gaps      
 !       l              collapse (last index)
-!       r              rms       -- min, max, etc. of differences
+!       r              ratios    -- min, max, etc. of differences' ratios
 !       s              stats     -- number of differences
 !       p              transpose 
 !       t              trim      
@@ -176,7 +177,7 @@ module DUMP_0
 !       1 or 2 or ..   ignored; calling routine is free to interpret
 
 ! An exception is the behavior of wholearray:
-! if all {Hlrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)
+! if all {HRblrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)
 ! if any is TRUE the whole array will be dumped only if
 ! w or wholearray is set to TRUE
 
@@ -309,7 +310,8 @@ module DUMP_0
   character, public, parameter :: dopt_cyclic      = 'y'
   character, public, parameter :: dopt_gaps        = 'g'
   character, public, parameter :: dopt_laconic     = 'L'
-  character, public, parameter :: dopt_rms         = 'r'
+  character, public, parameter :: dopt_ratios      = 'r'
+  character, public, parameter :: dopt_rms         = 'R'
   character, public, parameter :: dopt_shape       = 'H'
   character, public, parameter :: dopt_stats       = 's'
   character, public, parameter :: dopt_table       = 'b'
@@ -352,7 +354,7 @@ module DUMP_0
   ! character(len=MAXLINELEN) :: LINEOFZEROS
   logical :: DUMPTHESEZEROS
   logical :: myBandwidth, myClean, myCollapse, myCyclic, myDirect, myGaps, &
-    & myLaconic, myRMS, myShape, myStats, &
+    & myLaconic, myRatios, myRMS, myShape, myStats, &
     & myTable, myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
   character(len=16) :: myOptions
   character(len=16) :: myPCTFormat
@@ -1925,6 +1927,8 @@ contains
          & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
        call outputNamedValue ( 'myRMS?', myRMS, advance='yes', &
          & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
+       call outputNamedValue ( 'myRatios?', myRatios, advance='yes', &
+         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
        call outputNamedValue ( 'myWholeArray?', myWholeArray, advance='yes', &
          & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
      endif
@@ -3003,6 +3007,7 @@ contains
     myGaps       = theDefault('gaps')
     myLaconic    = theDefault('laconic')
     myRMS        = theDefault('rms')   ! .false.
+    MyRatios     = theDefault('ratios')   ! .false.
     myShape      = theDefault('shape')  ! .false.
     myStats      = theDefault('stat')  ! .false.
     myTable      = theDefault('table')  ! .false.
@@ -3017,6 +3022,7 @@ contains
       myCyclic      =   index( options, dopt_cyclic     ) > 0
       myGaps        =   index( options, dopt_gaps       ) > 0
       myLaconic     =   index( options, dopt_laconic    ) > 0
+      myRatios      =   index( options, dopt_ratios     ) > 0
       myRMS         =   index( options, dopt_rms        ) > 0
       myShape       =   index( options, dopt_shape      ) > 0
       myStats       =   index( options, dopt_stats      ) > 0
@@ -3027,10 +3033,10 @@ contains
       myWholeArray  = ( index( options, dopt_wholearray ) > 0 )
     endif
     myWholeArray = myWholeArray .or. &
-      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+      & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
       & .or. myTable)
     onlyWholeArray = myWholeArray .and. &
-      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+      & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
       & .or. myTable)
     nameHasBeenPrinted = nameHasBeenPrinted .or. myLaconic
   end subroutine theDumpBegins
@@ -3270,6 +3276,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.120  2012/01/09 22:25:55  pwagner
+! Distinguish 'r' option to print rms of ratios and 'R' option for rms of values
+!
 ! Revision 2.119  2011/12/15 01:47:45  pwagner
 ! Accepts W[i] option; deletes more prolix notices of rank reduction
 !
