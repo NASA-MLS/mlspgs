@@ -40,8 +40,13 @@
     real(rk)                       :: maxratio
     real(rk)                       :: medianratio
     real(rk)                       :: meanratio
-    integer                                  :: numTot
-    integer                                  :: numEqual
+    real(rk)                       :: minvalue
+    real(rk)                       :: maxvalue
+    real(rk)                       :: medianvalue
+    real(rk)                       :: meanvalue
+    real(rk)                       :: rmsvalue
+    integer                        :: numTot
+    integer                        :: numEqual
     real(rk)                       :: pctDiff
     real(rk)                       :: pctEqual
     real(rk), dimension(MAXPCTS)   :: pcts
@@ -82,6 +87,7 @@
     myCollapse   = theDefault('collapse') ! .false.
     myGaps       = theDefault('gaps')
     myLaconic    = theDefault('laconic')
+    myRatios     = theDefault('ratios')   ! .false.
     myRMS        = theDefault('rms')   ! .false.
     myShape      = theDefault('shape')  ! .false.
     myStats      = theDefault('stat')  ! .false.
@@ -97,6 +103,7 @@
       myCyclic      =   index( options, dopt_cyclic     ) > 0
       myGaps        =   index( options, dopt_gaps       ) > 0
       myLaconic     =   index( options, dopt_laconic    ) > 0
+      myRatios      =   index( options, dopt_ratios     ) > 0
       myRMS         =   index( options, dopt_rms        ) > 0
       myShape       =   index( options, dopt_shape      ) > 0
       myStats       =   index( options, dopt_stats      ) > 0
@@ -107,10 +114,10 @@
       myWholeArray  = ( index( options, dopt_wholearray ) > 0 )
     endif
     myWholeArray = myWholeArray .or. &
-      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+      & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
       & .or. myTable)
     onlyWholeArray = myWholeArray .and. &
-      & .not. (myBandwidth.or. myCollapse .or. myRMS .or. myShape .or. myStats &
+      & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
       & .or. myTable)
 
     if ( len_trim(name2) < 1 ) then
@@ -122,7 +129,8 @@
     if ( DEBUG ) then
       call output( '(in unfiltered diff)', advance='yes' )
       call outputNamedValue( 'myStats', myStats )
-      call outputNamedValue( 'myRMs', myRMS)
+      call outputNamedValue( 'myRatios', myRatios)
+      call outputNamedValue( 'myRMS', myRMS)
       call outputNamedValue( 'myTable', myTable )
       call outputNamedValue( 'myWholeArray', myWholeArray )
     endif
@@ -191,7 +199,7 @@
       call output( '(The two arrays are exactly equal)', advance='yes' )
       return
     endif
-    if ( myRMS ) then
+    if ( myRMS .or. myRatios ) then
       call allstats(array1, &
         & addedData=.false., min=refmin, max=refmax, rms=refrms)
       call allstats(array2, &
@@ -249,8 +257,12 @@
         call ratios( array1, array2, exvalues, exratios, &
           & minratio, maxratio, meanratio, stddevratio, rmsratio, medianratio, &
           & op='-' )
+        call allstats( array2-array1, min=minvalue, max=maxvalue, mean=meanvalue, &
+          & rms=rmsvalue, median=medianvalue )
+        ! call outputNamedValue( 'min(diff)', minval(array2-array1) )
+        ! call outputNamedValue( 'max(diff)', maxval(array2-array1) )
       endif
-      if ( myRMS ) then
+      if ( myRatios ) then
         if ( .not. nameHasBeenPrinted ) then
           call output( trim(DiffName), advance='yes' )
           nameHasBeenPrinted = .true.
@@ -265,7 +277,16 @@
         call output( '  ( as difference:  ', advance='no' )
         call output( exvalues(2), advance='no' )
         call output( ' )', advance='yes' )
+        nameHasBeenPrinted = .false.
         call printRMSetc( 'ratio', minratio, maxratio, rmsratio, meanratio )
+      endif
+      if ( myRMS ) then
+        if ( .not. nameHasBeenPrinted ) then
+          call output( trim(DiffName), advance='yes' )
+          nameHasBeenPrinted = .true.
+        endif
+        nameHasBeenPrinted = .false.
+        call printRMSetc( 'value', minvalue, maxvalue, rmsvalue, meanvalue )
       endif
       if ( myTABLE ) then
         if ( .not. nameHasBeenPrinted ) then
@@ -404,6 +425,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.13  2012/01/09 22:25:33  pwagner
+! Distinguish 'r' option to print rms of ratios and 'R' option for rms of values
+!
 ! Revision 2.12  2011/12/07 01:13:38  pwagner
 ! Added option to show bandwidth of banded arrays
 !
