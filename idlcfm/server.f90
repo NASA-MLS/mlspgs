@@ -1,6 +1,7 @@
 program server
     use QuantityPVM
     use CFM
+    use CFM, only: QUANTITYTEMPLATE_T
     use IDLCFM2_m
     use MLSCommon, only: r8
     use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL
@@ -435,7 +436,7 @@ program server
             endif
         end if
 
-        call DestroyVectorTemplateInfo(stateExtra%template)
+        ! call DestroyVectorTemplateInfo(stateExtra%template)
         call DestroyVectorInfo(stateExtra)
         call DestroyVectorTemplateInfo(state%template)
         call DestroyVectorInfo(state)
@@ -593,6 +594,10 @@ program server
 end program
 
 ! $Log$
+! Revision 1.5  2012/01/03 17:21:25  honghanh
+! Remove unused variables, and incorporate changes from
+! lit_parm and Molecules_M
+!
 ! Revision 1.4  2011/09/07 06:34:46  honghanh
 ! Make modification to send matrix,and add more error handling
 !
