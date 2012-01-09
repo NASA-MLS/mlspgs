@@ -27,14 +27,14 @@
       if ( DIFFRMSMEANSRMS ) then
         call output ( ' min : max, rms: ', advance='no' )
         if ( present(mean) ) call output ( ' mean: ', advance='no' )
-        call output(min, advance='no')
+        call output(min, format=rmsFormat, advance='no')
         call output(' : ', advance='no')
-        call output(max, advance='no')
+        call output(max, format=rmsFormat, advance='no')
         call output(', ', advance='no')
-        call output(rms, advance='no')
+        call output(rms, format=rmsFormat, advance='no')
         if ( present(mean) ) then
           call output ( ': ', advance='no' )
-          call output ( mean, advance='no' )
+          call output ( mean, format=rmsFormat, advance='no')
         end if
         call newline
       else
@@ -44,14 +44,14 @@
       if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name), advance='no' )
       call output ( ' min : max, rms: ', advance='no' )
       if ( present(mean) ) call output ( ' mean: ', advance='no' )
-      call output(min, advance='no')
+      call output(min, format=rmsFormat, advance='no')
       call output(' : ', advance='no')
-      call output(max, advance='no')
+      call output(max, format=rmsFormat, advance='no')
       call output(', ', advance='no')
-      call output(rms, advance='no')
+      call output(rms, format=rmsFormat, advance='no')
       if ( present(mean) ) then
         call output ( ': ', advance='no' )
-        call output ( mean, advance='no' )
+        call output ( mean, format=rmsFormat, advance='no')
       end if
       call newline
     else
@@ -59,14 +59,17 @@
       call output ( ' min      max        rms', advance='no' )
       if ( present(mean) ) call output ( '       mean ', advance='no' )
       call newline
-      call output(min, advance='no')
-      call output(max, advance='no')
-      call output(rms, advance='no')
+      call output(min, format=rmsFormat, advance='no')
+      call output(max, format=rmsFormat, advance='no')
+      call output(rms, format=rmsFormat, advance='no')
       if ( present(mean) ) call output ( mean, advance='no' )
       call newline
     end if
     nameHasBeenPrinted = .true.
 ! $Log$
+! Revision 2.4  2012/01/09 22:28:08  pwagner
+! Override default formats so min, max line up
+!
 ! Revision 2.3  2009/10/19 17:29:48  pwagner
 ! Trying to prevent double-printing of name
 !
