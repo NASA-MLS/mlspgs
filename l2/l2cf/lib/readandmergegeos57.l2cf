@@ -399,6 +399,16 @@ begin MergeGrids
   delete, grid=geos57Concatenate
 end MergeGrids
 
+; Don't ignore possibility that meteorology files are missing
+begin MergeGrids
+  Skip, Boolean=geos5Meteorology
+  Skip, Boolean=merraMeteorology
+  Skip, Boolean=geos57Meteorology
+  ; If we don't have meterology, the next effectively copies the climatology
+  MergeGrids, grid=mergedTemperature, operational=gmaoTemperatureInput1, $
+    climatology=gridTemperature, height=1mb, scale=5km
+end MergeGrids
+
 ; Did we succeed?
 begin MergeGrids
   Dump, text='Now check what kinds of apriori files we actually believe we had'
@@ -410,6 +420,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.2  2011/11/23 01:03:11  pwagner
+;Added stuff needed to build dynamic l2cf
+;
 ;Revision 1.1  2011/11/22 00:03:45  pwagner
 ;First commit
 ;
