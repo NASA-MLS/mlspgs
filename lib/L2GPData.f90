@@ -20,7 +20,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use INTRINSIC ! "UNITS" TYPE LITERALS, BEGINNING WITH L_
   use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE, MLSFILE_T, L2METADATA_T
   use MLSFILES, only: FILENOTFOUND, &
-    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
+    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & DUMP, INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_EXISTS, MLS_OPENFILE, &
     & MLS_HDF_VERSION, MLS_INQSWATH, OPEN_MLSFILE, CLOSE_MLSFILE
   use MLSKINDS, only: R4, R8
@@ -1041,7 +1041,7 @@ contains ! =====     Public Procedures     =============================
     ! Local
     logical :: allSwaths
     integer :: DayofYear
-    logical, parameter :: DEEBUG = .TRUE.
+    ! logical, parameter :: DEEBUG = .TRUE.
     integer :: File1Handle
     integer :: File2Handle
     logical :: file_exists
@@ -1172,21 +1172,8 @@ contains ! =====     Public Procedures     =============================
       & rFreqs=rFreqs, rLevels=rlevels, rTimes=rTimes, options=options )
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
     call close_MLSFile( MLSFile1 )
-    ! status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
-    !  & hdfVersion=the_hdfVersion1, debugOption=.false.)
-    !if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to close L2gp file: " // trim(File1) // ' after cping')
     if ( DEEBUG ) print *, 'About to close File2Handle: ', File2Handle
     call close_MLSFile( MLSFile2 )
-    !status = mls_io_gen_closeF(l_swath, File2Handle, &
-     ! & hdfVersion=the_hdfVersion2, debugOption=.false.)
-    !if ( status /= 0 ) then
-    !  print *, 'status returned from mls_io_gen_closeF: ', status
-    !  print *, 'WRONGHDFVERSION: ', WRONGHDFVERSION
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to close L2gp file: " // trim(File2) // ' after cping')
-    !endif
   end subroutine cpL2GPData_fileName
 
   ! ---------------------- cpL2GPData_MLSFile  ---------------------------
@@ -1312,21 +1299,14 @@ contains ! =====     Public Procedures     =============================
       irange(2) = Findlast( fullL2gp1%chunkNumber, chunk )
       ! HuntRange does not work correctly when any chunk Numbers are -999
       ! (Missing Value)
-      ! call output( 'First, Last == chunk number ', advance='no' )
-      ! call output( irange, advance='yes' )
-      ! call HuntRange( fullL2gp1%chunkNumber, (/ chunk, chunk /), irange )
       if ( any( irange == 0 ) ) cycle
       if ( .not. mySilent ) then
         call output ( ' - - - Chunk number:', advance='no')
         call output ( chunk, advance='no')
         call output ( ' - - -', advance='yes')
       endif
-      ! call output( 'irange: ', advance='no' )
-      ! call output( irange, advance='yes' )
       call ExtractL2GPRecord ( fullL2gp1, l2gp1, rTimes=irange )
       call ExtractL2GPRecord ( fullL2gp2, l2gp2, rTimes=irange )
-      ! call output( 'nTimes: ', advance='no' )
-      ! call output( l2gp1%nTimes, advance='yes' )
       call Diff ( L2gp1, L2gp2, &
          & Details, options, fields, &
          & numDiffs=numDiffs )
@@ -1385,12 +1365,8 @@ contains ! =====     Public Procedures     =============================
         call output ( fullL2gp1%pressures(irange(1)), advance='no')
         call output ( ' - - -', advance='yes')
       endif
-      ! call output( 'irange: ', advance='no' )
-      ! call output( irange, advance='yes' )
       call ExtractL2GPRecord ( fullL2gp1, l2gp1, rLevels=irange )
       call ExtractL2GPRecord ( fullL2gp2, l2gp2, rLevels=irange )
-      ! call output( 'nTimes: ', advance='no' )
-      ! call output( l2gp1%nTimes, advance='yes' )
       if ( present(chunks) ) then
         call DiffL2GPData_Chunks ( L2gp1, L2gp2, chunks, &
           & Details, options, fields, numDiffs=numDiffs )
@@ -1460,8 +1436,6 @@ contains ! =====     Public Procedures     =============================
       call ContractL2GPRecord ( fullL2gp2, l2gp2, pressures=pressures, &
         & latitudes=latitudes, longitudes=longitudes, times=times )
     endif
-    ! call output( 'nTimes: ', advance='no' )
-    ! call output( l2gp1%nTimes, advance='yes' )
     if ( present(chunks) ) then
       call DiffL2GPData_Chunks ( L2gp1, L2gp2, chunks, &
         & Details, options, fields, numDiffs=numDiffs )
@@ -1876,8 +1850,6 @@ contains ! =====     Public Procedures     =============================
         call diff ( l2gp1%chunkNumber, 'l2gp1%chunkNumber', &
           &         l2gp2%chunkNumber, 'l2gp2%chunkNumber', &
             & options=options )
-        ! call dump ( l2gp1%chunkNumber - l2gp2%chunkNumber, &
-        !  & 'l2gp%chunkNumber (diff)', stats=stats, rms=rms )
         myNumDiffs = myNumDiffs + count( l2gp1%chunkNumber /= l2gp2%chunkNumber )
       endif
       
@@ -1899,7 +1871,6 @@ contains ! =====     Public Procedures     =============================
       
       call resumeOutput
       if ( present(numDiffs) ) numDiffs = myNumDiffs
-      ! print *, 'myNumDiffs: ', myNumDiffs
     end subroutine doneHere
     
     function AddOntoOptions( addOn, options) result(newOptions)
@@ -2226,16 +2197,6 @@ contains ! =====     Public Procedures     =============================
     enddo
     call close_MLSFile( MLSFile1 )
     call close_MLSFile( MLSFile2 )
-    ! status = mls_io_gen_closeF(l_swath, File1Handle, FileName=File1, &
-    !  & hdfVersion=the_hdfVersion1, debugOption=.false.)
-    !if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to close L2gp file: " // trim(File1) // ' after diff')
-    !status = mls_io_gen_closeF(l_swath, File2Handle, FileName=File2, &
-    !  & hdfVersion=the_hdfVersion1, debugOption=.false.)
-    !if ( status /= 0 ) &
-    !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !   & "Unable to close L2gp file: " // trim(File2) // ' after diff')
     if ( present(numDiffs) ) numDiffs = myNumDiffs
   end subroutine DiffL2GPFiles_Name
     
@@ -2395,8 +2356,6 @@ contains ! =====     Public Procedures     =============================
       call ContractL2GPRecord ( fullL2gp, l2gp, pressures=pressures, &
         & latitudes=latitudes, longitudes=longitudes, times=times )
     endif
-    ! call output( 'nTimes: ', advance='no' )
-    ! call output( l2gp1%nTimes, advance='yes' )
     if ( present(chunks) ) then
       call DUMP_L2GP_Chunks ( L2gp, Chunks, &
         & ColumnsOnly, Details, Fields, width, options )
@@ -4865,7 +4824,7 @@ contains ! =====     Public Procedures     =============================
       call output('shape HGrid%phi(1,HGp1:HGpn): ')
       call output(shape(HGrid%phi(1,HGp1:HGpn)), advance='yes')
     endif
-    !    & ModuleName )
+
     select case (trim(myFields))
     case ('geolocation')
       myFields = lowercase(GEO_FIELDS) ! // ',pressure,time,frequency,chunknumber'
@@ -5027,6 +4986,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.181  2011/12/07 01:18:14  pwagner
+! Added new 'd' and 'g' options to diff
+!
 ! Revision 2.180  2011/07/07 00:31:03  pwagner
 ! Treats diffs of geolocation fields with periods
 !
