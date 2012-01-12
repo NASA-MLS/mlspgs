@@ -64,6 +64,7 @@
     real(kind(array1))                     :: stddev
     real(kind(array1))                     :: stddevratio
     logical, parameter               :: DEBUG = .false.
+    logical, parameter               :: REPLACEFILLVALUESWITH0 = .false.
     real(kind(array1)), dimension(MAXPCTS), parameter :: PCTAGES = &
       & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
     real, dimension(MAXPCTS), parameter :: PCTFACTORS = &
@@ -178,23 +179,44 @@
       endif
     endif
 
-    call filterValues(reshape( array1, (/ product(shape(array1)) /) ), &
-      & filtered1, &
-      & reshape( array2, (/ product(shape(array2)) /) ), &
-      & filtered2, &
-      & warn, FillValue)
-    if ( warn ) call output( &
-      & '*** non-matched NaNs diffing ' // trim(DiffName), &
-      & advance='yes')
+    if ( NaNsIn1 .or. NaNsIn2 ) then
+      call filterValues(reshape( array1, (/ product(shape(array1)) /) ), &
+        & filtered1, &
+        & reshape( array2, (/ product(shape(array2)) /) ), &
+        & filtered2, &
+        & warn, FillValue)
+      if ( warn ) call output( &
+        & '*** non-matched NaNs diffing ' // trim(DiffName), &
+        & advance='yes')
+    else
+      ! All of array11 and array2 are finite, so we need only reshape to 1d
+      filtered1 = reshape( array1, (/ product(shape(array1)) /) )
+      filtered2 = reshape( array2, (/ product(shape(array2)) /) )
+    endif
 
     ! call output( 'About to count array elements', advance='yes' )
-    numTot = count( (/filtered1 /= FillValue/) )
-    numEqual = count( (/filtered1 /= FillValue .and. filtered1 == filtered2/) )
-    call ReplaceFillValues( filtered1, FillValue, newFill=real(0., kind(FillValue)) )
-    call ReplaceFillValues( filtered2, FillValue, newFill=real(0., kind(FillValue)) )
     if ( all(filtered1 == filtered2) ) then
       call output( '(The two arrays are exactly equal)', advance='yes' )
       return
+    elseif ( all(filtered1 == FillValue) ) then
+      call outputNamedValue( trim(name1) // ' filled entirely with Fill values', &
+        & FillValue )
+      return
+    elseif ( all(filtered2 == FillValue) ) then
+      call outputNamedValue( '2nd array filled entirely with Fill values', &
+        & FillValue )
+      return
+    endif
+    numTot = count( (/filtered1 /= FillValue/) )
+    numEqual = count( (/filtered1 /= FillValue .and. filtered1 == filtered2/) )
+    ! I can't think of a good reason to replace FillValues with 0 here
+    if ( REPLACEFILLVALUESWITH0 ) then
+      call ReplaceFillValues( filtered1, FillValue, newFill=real(0., kind(FillValue)) )
+      call ReplaceFillValues( filtered2, FillValue, newFill=real(0., kind(FillValue)) )
+      if ( all(filtered1 == filtered2) ) then
+        call output( '(The two arrays are exactly equal)', advance='yes' )
+        return
+      endif
     endif
     if ( myRMS .or. myRatios ) then
       ! We want to make sure we remove values from both arrays where either is fill
@@ -244,7 +266,6 @@
       ! call dump ( filtered1, 'filtered1-filtered2', fillvalue=real(0.,kind(array1)) )
       ! call outputNamedValue( 'num /= fill value', numNonFill )
       alreadySbtrcted = .true.
-      if ( myStats ) call outputNamedValue( 'numNonFill', numNonFill )
       if ( myWholeArray ) then
         call dump( filtered1, trim(DiffName), &
           & real(0.,kind(array1)), WIDTH, FORMAT, &
@@ -390,6 +411,9 @@
           nameHasBeenPrinted = .true.
         endif
         ! Now to show how near the two arrays are
+        if ( numNonFill < size(array1) ) &
+          & call outputNamedValue( 'count(NonFill), count(Fill)', &
+          & (/ numNonFill, size(array1) - numNonFill/) )
         call output( '% of arrays equal ', advance='no' )
         call output( pctEqual, format = myPCTFormat, advance='no' )
         call output( '  (number of elements ', advance='no' )
@@ -409,7 +433,7 @@
       ! Executable
       ! numTot = max( 1, product(shape(filtered1)) )
       ! numEqual = count( filtered1 == filtered2 )
-      pctEqual = (100.*numEqual)/numTot
+      pctEqual = (100.*numEqual)/max(numTot, 1)
       pctDiff = 100. - pctEqual
       stddev = mlsstddev( filtered1-filtered2 )
       gaps = PCTFACTORS*stddev
@@ -461,6 +485,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.29  2012/01/12 00:22:25  pwagner
+! Dont automatically replace FillValues with 0
+!
 ! Revision 2.28  2012/01/09 22:25:12  pwagner
 ! Distinguish 'r' option to print rms of ratios and 'R' option for rms of values
 !
