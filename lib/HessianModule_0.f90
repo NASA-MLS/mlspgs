@@ -1160,8 +1160,11 @@ o:    do while ( i < n )
     ! Args
     type (HessianElement_T), intent(inout) :: H
     type (QuantityTemplate_T), intent(in) :: Q1, Q2 ! For 1st, 2nd cols of H
-    integer, intent(in) ::  Surface
-    real(r8), intent(in) :: ScaleHeight
+    integer, intent(in) ::  Surface     ! Diagonal horizon (set to 0 outside)
+    ! Eventually we'll use the surfaces field of the template to
+    ! establish a diagonal horizon if we supply scaleheight
+    ! For now, however, we treat it just like surface
+    real(r8), intent(in) :: ScaleHeight ! Diagonal horizon (set to 0 outside)
     real(r8), intent(in) :: Threshold
     ! Internal variables
     real(r8) :: Cutoff ! Threshold * maxval(abs(...)) if threshold > 0.
@@ -1207,21 +1210,29 @@ o:    do while ( i < n )
          ! &          (h%tuples%k-1 ) / q2%noChans + 1 ) > &
          ! &     surface  ) h%tuples%h = 0.0
         do i=1, nt
+          s1 = (h%tuples(i)%j-1 ) / q1%noChans + 1
+          s2 = (h%tuples(i)%k-1 ) / q2%noChans + 1
           if ( abs( h%tuples(i)%h ) < cutoff .or. &
-            &     abs( (h%tuples(i)%j-1 ) / q1%noChans + 1 -   &
-            &          (h%tuples(i)%k-1 ) / q2%noChans + 1 ) > &
-            &     surface ) h%tuples(i)%h = 0.
+            &     abs(s1-s2) > surface ) h%tuples(i)%h = 0.
+          ! if ( abs( h%tuples(i)%h ) < cutoff .or. &
+          !   &     abs( (h%tuples(i)%j-1 ) / q1%noChans + 1 -   &
+          !   &          (h%tuples(i)%k-1 ) / q2%noChans + 1 ) > &
+          !   &     surface ) h%tuples(i)%h = 0.
         enddo
       else if ( scaleheight > 0._r8 ) then
         ! where ( abs( h%tuples%h ) < cutoff .or. &
-         ! &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
-         ! &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
-         ! &     scaleHeight  ) h%tuples%h = 0.0
+        ! &     abs( q1%surfs( (h%tuples%j-1 ) / q1%noChans + 1, 1) -   &
+        ! &          q2%surfs( (h%tuples%k-1 ) / q2%noChans + 1, 1) ) > &
+        ! &     scaleHeight  ) h%tuples%h = 0.0
         do i=1, nt
+          s1 = (h%tuples(i)%j-1 ) / q1%noChans + 1
+          s2 = (h%tuples(i)%k-1 ) / q2%noChans + 1
           if ( abs( h%tuples(i)%h ) < cutoff .or. &
-            &     abs( (h%tuples(i)%j-1 ) / q1%noChans + 1 -   &
-            &          (h%tuples(i)%k-1 ) / q2%noChans + 1 ) > &
-            &     scaleHeight ) h%tuples(i)%h = 0.
+            &     abs(s1-s2) > scaleHeight ) h%tuples(i)%h = 0.
+          ! if ( abs( h%tuples(i)%h ) < cutoff .or. &
+          !   &     abs( (h%tuples(i)%j-1 ) / q1%noChans + 1 -   &
+          !   &          (h%tuples(i)%k-1 ) / q2%noChans + 1 ) > &
+          !   &     scaleHeight ) h%tuples(i)%h = 0.
         enddo
       end if
       if ( verbose ) call outputNamedValue( 'After streamlining sparse Hessian;' // &
@@ -1255,9 +1266,11 @@ o:    do while ( i < n )
             cutoff = 0._r8
           else if ( surface > 0 .and. abs(s1-s2) > surface ) then
             h%values ( :, j, k ) = 0
-          else if ( scaleHeight > 0._r8 .and. &
-            & abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+          else if ( scaleHeight > 0._r8 .and. abs(s1-s2) > scaleHeight ) then
             h%values ( :, j, k ) = 0
+          ! else if ( scaleHeight > 0._r8 .and. &
+          !   & abs ( q1%surfs(s1,1) - q2%surfs(s2,1) ) > scaleHeight ) then
+          !   h%values ( :, j, k ) = 0
           end if
         end do
       end do
@@ -1324,6 +1337,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.25  2012/01/13 01:08:18  pwagner
+! Fixed two bugs in StreamlineHessian
+!
 ! Revision 2.24  2011/12/07 01:19:56  pwagner
 ! Details=0 now dumps Bandwidth, too
 !
