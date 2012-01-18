@@ -85,7 +85,7 @@ contains ! =====     Public Procedures     =============================
       & BADESTNOISEFILL, BADGEOCALTITUDEQUANTITY, BADISOTOPEFILL, &
       & BADLOSGRIDFILL, BADLOSVELFILL, BADREFGPHQUANTITY, &
       & BADREFRACTFILL, BADTEMPERATUREQUANTITY, BOTHFRACTIONANDLENGTH, &
-      & MISSINGFIELD, &
+      & Inconsistent, MISSINGFIELD, &
       & NEEDGEOCALTITUDE, NEEDH2O, NEEDORBITINCLINATION, &
       & NEEDTEMPREFGPH, NOCODEFOR, NO_ERROR_CODE, NOEXPLICITVALUESGIVEN, &
       & NOSOURCEGRIDGIVEN, NOSOURCEL2AUXGIVEN, NOSOURCEL2GPGIVEN, &
@@ -867,6 +867,9 @@ contains ! =====     Public Procedures     =============================
         if ( SKIPRETRIEVAL ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Unable to fill covariance when skipping retrievals' )
+        else if ( covariance%m%row%vec%template%name /= &
+                & vectors(diagonal)%template%name ) then
+          call announce_error ( key, inconsistent )
         else
           call FillCovariance ( covariance, &
             & vectors, diagonal, lengthScale, fraction, invert )
@@ -2803,6 +2806,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.397  2012/01/18 20:38:59  vsnyder
+! Check consistency of covariance matrix and diagonal vector
+!
 ! Revision 2.396  2011/12/15 01:49:43  pwagner
 ! Added sdName and /spread fields to DirectRead
 !
