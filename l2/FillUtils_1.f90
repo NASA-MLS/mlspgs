@@ -147,13 +147,14 @@ module FillUtils_1                     ! Procedures used by Fill
   integer, parameter, public :: WrongUnits = CantInterpolate3d + 1
 
   ! Error codes resulting from Covariance
-  integer, parameter, public :: NotSPD = WrongUnits + 1
-  integer, parameter, public :: NotPlain = NotSPD + 1
-  integer, parameter, public :: NotImplemented = notPlain + 1
-  integer, parameter, public :: BothFractionAndLength = NotImplemented + 1
+  integer, parameter, public :: BothFractionAndLength = WrongUnits + 1
+  integer, parameter, public :: Inconsistent = BothFractionAndLength + 1
+  integer, parameter, public :: NotImplemented = Inconsistent + 1
+  integer, parameter, public :: NotPlain = NotImplemented  + 1
+  integer, parameter, public :: NotSPD = NotPlain + 1
 
   ! Miscellaneous
-  integer, parameter, public :: BadGeocAltitudeQuantity = bothFractionAndLength + 1
+  integer, parameter, public :: BadGeocAltitudeQuantity = NotSPD + 1
   integer, parameter, public :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
   integer, parameter, public :: BadREFGPHQuantity = badTemperatureQuantity + 1
   integer, parameter, public :: Miscellaneous_err = badREFGPHQuantity + 1
@@ -308,6 +309,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " config specifies an empty grid for the fill", advance='yes' )
       case ( errorReadingL1B )
         call output ( " L1B file could not be read.", advance='yes' )
+      case ( inconsistent )
+        call output ( " matrix and vector are inconsistent.", advance='yes' )
       case ( invalidExplicitFill )
         call output ( " value has inappropriate dimensionality for explicit fill.", advance='yes' )
         call output ( " Should have " )
@@ -326,11 +329,11 @@ contains ! =====     Public Procedures     =============================
           end if
         end do
         call output ( " are required.", advance='yes' )
-      case ( needGeocAltitude )
-        call output ( " fill needs geocAltitudeQuantity.", advance='yes' )
       case ( noCodeFor )
         call output ( " no code for " )
         call display_string ( field_indices(extraInfo(i)), advance='yes' )
+      case ( needGeocAltitude )
+        call output ( " fill needs geocAltitudeQuantity.", advance='yes' )
       case ( needH2O )
         call output ( " fill needs H2OQuantity.", advance='yes' )
       case ( needOrbitInclination )
@@ -7044,6 +7047,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.51  2012/01/18 20:38:36  vsnyder
+! Add 'matrix and vector inconsistent' error message
+!
 ! Revision 2.50  2011/12/15 01:50:26  pwagner
 ! Added sdName and /spread fields to DirectRead
 !
