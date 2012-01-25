@@ -77,7 +77,7 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   end interface
 
   logical, parameter :: DEEBUG = .false.
-  logical, parameter :: HIDEBSENTBLOCKS = .true.
+  logical, parameter :: HIDEABSENTBLOCKS = .true.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -306,7 +306,7 @@ contains
             cycle
           end if
           if ( my_details < 0 .or. &
-            & ( HIDEBSENTBLOCKS .and. h1%block(i,j,k)%kind == h_absent ) ) cycle
+            & ( HIDEABSENTBLOCKS .and. h1%block(i,j,k)%kind == h_absent ) ) cycle
           call output ( i, before='Block at row ' )
           call output ( j, before=' and columns ' )
           call output ( k, before=', ', after=' (' )
@@ -445,7 +445,7 @@ contains
     do k = 1, h%col%nb
       do j = 1, h%col%nb
         do i = 1, h%row%nb
-          if ( HIDEBSENTBLOCKS .and. h%block(i,j,k)%kind == h_absent ) cycle
+          if ( HIDEABSENTBLOCKS .and. h%block(i,j,k)%kind == h_absent ) cycle
           select case ( h%block(i,j,k)%kind )
           case ( h_sparse )
             layout(i, j, k) = 'S'
@@ -511,7 +511,7 @@ contains
       end do
     end do
     call outputNamedValue( 'Total size', TotalSize )
-    call dump( layout, 'Layout of blocks in hessian', width=h%col%nb )
+    call dump( layout, 'Layout of blocks in Hessian', width=h%col%nb )
     call deallocate_test ( layout, moduleName // '%Dump_Hessian', &
       & "layout of Hessian Blocks" )
     call outputNamedValue( 'optimized already?', h%optimizedAlready )
@@ -817,6 +817,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.27  2012/01/25 01:13:45  pwagner
+! Fixed typo in parameter name
+!
 ! Revision 2.26  2011/10/10 23:59:00  pwagner
 ! Added InsertHessianPlane to MLSCallStack
 !
