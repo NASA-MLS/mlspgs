@@ -6768,30 +6768,25 @@ contains ! =====     Public Procedures     =============================
         end do
       end do
 
-
     end subroutine UncompressRadiance
 
     ! ------------------------------------------- QtyFromFile ----------
     subroutine QtyFromFile ( key, quantity, MLSFile, &
-      & filetype, hdfversion, options, sdname, spread )
-      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-      use MLSHDF5, only: GETHDF5DSDIMS, GETALLHDF5DSNAMES, LOADFROMHDF5DS
+      & filetype, options, sdname, spread )
+      use MLSHDF5, only: MATCHHDF5ATTRIBUTES
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (MLSFile_T), pointer   :: MLSFile
       character(len=*), intent(in) :: FILETYPE
-      integer, intent(in) :: HDFVERSION
       character(len=*), intent(in) :: OPTIONS
       character(len=*), optional, intent(in) :: sdname
       logical, intent(in)                    :: spread
       ! Local variables
-      type( L2AUXData_T ) :: l2aux ! Result
-      type( l2GPData_T ) :: l2gp ! Result
+      integer, parameter                      :: MAXLISTLENGTH=256
+      character (LEN=10*MAXLISTLENGTH)        :: attrnames
+      character (LEN=10*MAXLISTLENGTH)        :: attrvalues
       character(len=80) :: name
-      integer, dimension(3) :: dimInts
-      integer(kind=hSize_t), dimension(3) :: dims
-      integer :: status
-      real, dimension(:,:,:), pointer :: values => null()
+      character (len=80) :: Str
       ! Executable code
       ! How do we access the dataset to read? By name or by attribute?
       if ( index(lowercase(options), 'a') < 1 ) then
@@ -6801,51 +6796,32 @@ contains ! =====     Public Procedures     =============================
         if ( len_trim(name) < 1 ) &
           & call get_string( lit_indices(quantity%template%name), Name )
         if ( addSlash ) Name = '/' // Name
-        call GetHDF5DSDims ( MLSFile, name, DIMS )
-        dimInts = max(dims, int(1,hsize_t))
-        select case (lowercase(fileType))
-        case ('l2aux')
-          if ( spread ) call Announce_Error ( key, no_Error_Code, &
-            &   'Unable to use spread when filling from l2aux file' )
-          call ReadL2AUXData ( MLSFile, name, quantity%template%quantityType, l2aux )
-          call FromL2Aux( quantity, l2aux, status )
-          call DestroyL2AUXContents ( l2aux )
-        case ('swath', 'l2gp')
-          if ( spread ) call Announce_Error ( key, no_Error_Code, &
-            &   'Unable to use spread when filling from l2gp file' )
-          call ReadL2GPData( MLSFile, name, l2gp )
-          call FromL2GP ( quantity, l2gp, .false., -1, status, .true., .false. )
-          call DestroyL2GPContents ( l2gp )
-        case default ! E.g., 'hdf'
-          call Allocate_test ( values, dimInts(1), dimInts(2), dimInts(3), 'values read from file', ModuleName )
-          call loadFromHDF5DS ( MLSFile, &
-            & trim(Name), values ) ! quantity%values )
-          if ( .not. spread ) then
-            quantity%values = reshape( values, (/ dimInts(1)*dimInts(2), dimInts(3) /) )
-          else
-            quantity%values = values(1,1,1)
-          endif
-          call DeAllocate_test ( values, 'values read from file', ModuleName )
-        end select
       else
         ! By attribute
-        call Announce_Error ( key, no_Error_Code, &
-        &   'Unable to read Quantity from File by attribute yet' )
+        attrnames  = 'TemplateName,tempQtyType'
+        call Get_String ( quantity%template%name, str, strip=.true. )
+        attrvalues = str
+        call Get_String ( lit_indices(quantity%template%quantityType), &
+          & str, strip=.true. )
+        attrvalues = trim(attrvalues) // ',' // str
+        call MatchHDF5Attributes ( MLSFile, attrNames, attrValues, name )
+        ! call Announce_Error ( key, no_Error_Code, &
+        ! &   'Unable to read Quantity from File by attribute yet' )
       endif
+      call NamedQtyFromFile ( key, quantity, MLSFile, &
+        & filetype, name, spread )
     end subroutine QtyFromFile
-
+    
     ! ------------------------------------------- VectorFromFile ----------
     subroutine VectorFromFile ( key, Vector, MLSFile, &
-      & filetype, hdfversion, options, spread )
-      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      & filetype, options, spread )
       use MLSFiles, only: DUMP
-      use MLSHDF5, only: GETHDF5DSDIMS, GETALLHDF5DSNAMES, LOADFROMHDF5DS
+      use MLSHDF5, only: GETALLHDF5DSNAMES, MATCHHDF5ATTRIBUTES
       use MLSSTRINGS, only: WRITEINTSTOCHARS
       integer, intent(in) :: KEY        ! Tree node
       type (Vector_T), intent(inout) :: Vector
       type (MLSFile_T), pointer   :: MLSFile
       character(len=*), intent(in) :: FILETYPE
-      integer, intent(in) :: HDFVERSION
       character(len=*), intent(in) :: OPTIONS
       logical, intent(in)                    :: spread
       ! Local variables
@@ -6853,14 +6829,11 @@ contains ! =====     Public Procedures     =============================
       character(len=MAXSDNAMESBUFSIZE) :: DSNames
       character(len=64) :: name
       type (VectorValue_T), pointer :: quantity 
-      ! Local variables
-      type( L2AUXData_T ) :: l2aux ! Result
-      type( l2GPData_T ) :: l2gp ! Result
+      integer, parameter                      :: MAXLISTLENGTH=256
+      character (LEN=10*MAXLISTLENGTH)        :: attrnames
+      character (LEN=10*MAXLISTLENGTH)        :: attrvalues
       integer :: SQI                      ! Quantity index in source
-      integer :: status
-      integer, dimension(3) :: dimInts
-      integer(kind=hSize_t), dimension(3) :: dims
-      real, dimension(:,:,:), pointer :: values => null()
+      character (len=80) :: Str
       ! Executable code
       call output( 'Now in VectorFromFile', advance='yes' )
       call GetAllHDF5DSNames( MLSFile, DSNames )
@@ -6884,41 +6857,24 @@ contains ! =====     Public Procedures     =============================
               & lowercase(StringElement( DSNames, dsi, countEmpty )) ) &
               & cycle
             if ( addSlash ) Name = '/' // Name
-            call outputNamedValue( 'shape(values)' // trim(name), shape(quantity%values) )
+            call outputNamedValue( 'shape(values)' // trim(name), &
+              & shape(quantity%values) )
             call dump( MLSFile )
-            call GetHDF5DSDims ( MLSFile, name, DIMS )
-            dimInts = max(dims, int(1,hsize_t))
-            call outputNamedValue ( 'dims', dimInts )
-            select case (lowercase(fileType))
-            case ('l2aux')
-              if ( spread ) call Announce_Error ( key, no_Error_Code, &
-                &   'Unable to use spread when filling from l2aux file' )
-              call ReadL2AUXData ( MLSFile, name, quantity%template%quantityType, l2aux )
-              call FromL2Aux( quantity, l2aux, status )
-              call DestroyL2AUXContents ( l2aux )
-            case ('swath', 'l2gp')
-              if ( spread ) call Announce_Error ( key, no_Error_Code, &
-                &   'Unable to use spread when filling from l2gp file' )
-              call ReadL2GPData( MLSFile, name, l2gp )
-              call FromL2GP ( quantity, l2gp, .false., -1, status, .true., .false. )
-              call DestroyL2GPContents ( l2gp )
-            case default ! E.g., 'hdf'
-              call Allocate_test ( values, dimInts(1), dimInts(2), dimInts(3), 'values read from file', ModuleName )
-              call loadFromHDF5DS ( MLSFile, &
-                & trim(Name), values ) ! quantity%values )
-              if ( .not. spread ) then
-                quantity%values = reshape( values, (/ dimInts(1)*dimInts(2), dimInts(3) /) )
-              else
-                quantity%values = values(1,1,1)
-              endif
-              call DeAllocate_test ( values, 'values read from file', ModuleName )
-              call dump( quantity%values, trim(name) // ' values' )
-            end select
           else
             ! By attribute
-            call Announce_Error ( key, no_Error_Code, &
-            &   'Unable to read Vector from File by attribute yet' )
+            attrnames  = 'TemplateName,tempQtyType'
+            call Get_String ( quantity%template%name, str, strip=.true. )
+            attrvalues = str
+            call Get_String ( lit_indices(quantity%template%quantityType), &
+              & str, strip=.true. )
+            attrvalues = trim(attrvalues) // ',' // str
+            call MatchHDF5Attributes ( MLSFile, attrNames, attrValues, name )
+            ! call Announce_Error ( key, no_Error_Code, &
+            ! &   'Unable to read Vector from File by attribute yet' )
           endif
+          if ( len_trim(name) > 0 ) &
+            & call NamedQtyFromFile ( key, quantity, MLSFile, &
+            & filetype, name, spread )
         enddo
       enddo
     end subroutine VectorFromFile
@@ -7032,6 +6988,53 @@ contains ! =====     Public Procedures     =============================
       return
     end function FillableChiSq
 
+    ! ------------------------------------------- NamedQtyFromFile ----------
+    subroutine NamedQtyFromFile ( key, quantity, MLSFile, &
+      & filetype, name, spread )
+      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use MLSHDF5, only: GETHDF5DSDIMS, LOADFROMHDF5DS
+      integer, intent(in) :: KEY        ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
+      type (MLSFile_T), pointer   :: MLSFile
+      character(len=*), intent(in) :: FILETYPE
+      character(len=*), intent(in) :: name
+      logical, intent(in)                    :: spread
+      ! Local variables
+      type( L2AUXData_T ) :: l2aux ! Result
+      type( l2GPData_T ) :: l2gp ! Result
+      integer, dimension(3) :: dimInts
+      integer(kind=hSize_t), dimension(3) :: dims
+      integer :: status
+      real, dimension(:,:,:), pointer :: values => null()
+      ! Executable code
+      call GetHDF5DSDims ( MLSFile, name, DIMS )
+      dimInts = max(dims, int(1,hsize_t))
+      select case (lowercase(fileType))
+      case ('l2aux')
+        if ( spread ) call Announce_Error ( key, no_Error_Code, &
+          &   'Unable to use spread when filling from l2aux file' )
+        call ReadL2AUXData ( MLSFile, name, quantity%template%quantityType, l2aux )
+        call FromL2Aux( quantity, l2aux, status )
+        call DestroyL2AUXContents ( l2aux )
+      case ('swath', 'l2gp')
+        if ( spread ) call Announce_Error ( key, no_Error_Code, &
+          &   'Unable to use spread when filling from l2gp file' )
+        call ReadL2GPData( MLSFile, name, l2gp )
+        call FromL2GP ( quantity, l2gp, .false., -1, status, .true., .false. )
+        call DestroyL2GPContents ( l2gp )
+      case default ! E.g., 'hdf'
+        call Allocate_test ( values, dimInts(1), dimInts(2), dimInts(3), 'values read from file', ModuleName )
+        call loadFromHDF5DS ( MLSFile, &
+          & trim(Name), values ) ! quantity%values )
+        if ( .not. spread ) then
+          quantity%values = reshape( values, (/ dimInts(1)*dimInts(2), dimInts(3) /) )
+        else
+          quantity%values = values(1,1,1)
+        endif
+        call DeAllocate_test ( values, 'values read from file', ModuleName )
+      end select
+    end subroutine NamedQtyFromFile
+    
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -7047,6 +7050,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.52  2012/01/25 01:18:05  pwagner
+! Fixed most bugs in QtyFromFile and VectorFromFile; now can select by attributes
+!
 ! Revision 2.51  2012/01/18 20:38:36  vsnyder
 ! Add 'matrix and vector inconsistent' error message
 !
