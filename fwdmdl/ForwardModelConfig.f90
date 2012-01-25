@@ -254,9 +254,7 @@ contains
   subroutine DeriveFromForwardModelConfig ( FwdModelConf )
 
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
-    use MLSMESSAGEMODULE, only: MLSMESSAGE,  MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-      & MLSMSG_WARNING
-    use MLSSETS, only: FINDFIRST
+    use MLSMESSAGEMODULE, only: MLSMESSAGE,  MLSMSG_ERROR, MLSMSG_WARNING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use PFADATABASE_M, only: DUMP
     use READ_MIE_M, only: F_S
@@ -319,7 +317,9 @@ contains
 
       ! Work out which channels are used.
 
+      use Allocate_Deallocate, only: Test_Allocate
       use FilterShapes_m, only: DACSFilterShapes, FilterShapes
+      use MLSSETS, only: FINDFIRST
       use MLSSignals_m, only: MatchSignal
 
       type(channels_T), pointer :: Channels(:)
@@ -332,8 +332,8 @@ contains
       integer :: SX, ThisSideband ! Sideband indices
 
       allocate ( channels(fwdModelConf%noUsedChannels), stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'fwdModelConf%channels' )
+      call test_allocate ( ier, ModuleName, 'info%channels', &
+        & ubounds=(/ fwdModelConf%noUsedChannels /) )
 
       ! Collect channel information from signals database.
       channel = 0
@@ -669,7 +669,7 @@ contains
   ! --------------------------  DestroyForwardModelConfigDatabase  -----
   subroutine DestroyFWMConfigDatabase ( Database, Deep )
 
-    use MLSMessageModule, only: MLSMessage,  MLSMSG_Deallocate, MLSMSG_Error
+    use Allocate_Deallocate, only: Test_Deallocate
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
@@ -685,8 +685,7 @@ contains
       end do
 
       deallocate ( database, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate // "Database" )
+      call test_deallocate ( status, ModuleName, 'Database' )
     end if
   end subroutine DestroyFWMConfigDatabase
 
@@ -694,8 +693,7 @@ contains
   subroutine DestroyForwardModelDerived ( FwdModelConf )
     ! Destroy stuff in FwdModelConf derived for one forward model run
 
-    use Allocate_Deallocate, only: Deallocate_Test
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
 
     type ( ForwardModelConfig_T ), intent(inout) :: FwdModelConf
 
@@ -703,8 +701,7 @@ contains
 
     if ( associated(fwdModelConf%channels) ) then
       deallocate ( fwdModelConf%channels, stat = ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//'fwdModelConf%channels' )
+      call test_deallocate ( ier, ModuleName, 'fwdModelConf%channels' )
   ! else
   !   It was already deallocated at the end of FullForwardModel
     end if
@@ -735,8 +732,7 @@ contains
       end do
 
       deallocate ( fwdModelConf%catalog, stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Deallocate // 'fwdModelConf%catalog' )
+      call test_deallocate ( ier, ModuleName, 'fwdModelConf%catalog' )
   ! else
   !   It was already deallocated at the end of FullForwardModel
     end if
@@ -854,11 +850,11 @@ contains
 
   ! ----------------------------------------- PVMUnpackFWMConfig ---------
   subroutine PVMUnpackFWMConfig ( CONFIG )
-    use PVMIDL, only: PVMIDLUnpack
-    use MorePVM, only: PVMUnpackLitIndex, PVMUnpackStringIndex
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
-    use Allocate_Deallocate, only: Allocate_test
+    use Allocate_Deallocate, only: Allocate_test, Test_Allocate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: PVMUnpackSignal
+    use MorePVM, only: PVMUnpackLitIndex, PVMUnpackStringIndex
+    use PVMIDL, only: PVMIDLUnpack
     use VGridsDatabase, only: PVMUnpackVGrid
     ! Dummy arguments
     type ( ForwardModelConfig_T ), intent(out) :: CONFIG
@@ -981,8 +977,7 @@ contains
     call PVMIDLUnpack ( n, msg = "Unpacking number of signals" )
     if ( n > 0 ) then
       allocate ( config%signals(n), STAT=info )
-      if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'config%signals' )
+      call test_allocate ( info, ModuleName, 'config%signals' )
       do i = 1, n
         call PVMUnpackSignal ( config%signals(i) )
       end do
@@ -992,14 +987,12 @@ contains
     call PVMIDLUnpack ( ls(1:2), msg = "Unpacking vGrid flags" )
     if ( ls(1) ) then
       allocate ( config%integrationGrid, STAT=info )
-      if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'config%integrationGrid' )
+      call test_allocate ( info, ModuleName, 'config%integrationGrid' )
       call PVMUnpackVGrid ( config%integrationGrid )
     end if
     if ( ls(2) ) then
       allocate ( config%tangentGrid, STAT=info )
-      if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'config%tangentGrid' )
+      call test_allocate ( info, ModuleName, 'config%tangentGrid' )
       call PVMUnpackVGrid ( config%tangentGrid )
     end if
 
@@ -1008,8 +1001,7 @@ contains
   ! --------------------------  StripForwardModelConfigDatabase --------
   subroutine StripForwardModelConfigDatabase ( database )
     ! This routine removes the non-global forward model configs from the database
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-      & MLSMSG_Deallocate, MLSMSG_Error
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: DATABASE
@@ -1029,14 +1021,13 @@ contains
 
     ! Create new database in tmp space, pack old one into
     allocate ( tmpDatabase ( count ( database%globalConfig ) ), STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // 'tmpDatabase' )
+    call test_allocate ( status, ModuleName, 'tmpDatabase' )
     tmpDatabase = pack ( database, database%globalConfig )
 
     ! Destroy old database, then point to new one
     deallocate ( database, STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate // 'database' )
+    call test_deallocate ( status, ModuleName, 'database' )
+
     database => tmpDatabase
   end subroutine StripForwardModelConfigDatabase
 
@@ -1439,6 +1430,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.114  2011/07/29 01:51:38  vsnyder
+! Remove TScatMolecules and TScatMoleculeDerivatives fields.  Make CloudIce
+! a molecule.  Look for CloudIce instead of Cloud_A and Cloud_S
+!
 ! Revision 2.113  2011/05/09 17:45:38  pwagner
 ! Converted to using switchDetail
 !
