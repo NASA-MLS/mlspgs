@@ -1185,11 +1185,11 @@ contains ! =====     Public Procedures     =============================
         quantity => GetVectorQtyByTemplateIndex( &
           & vectors(vectorIndex), quantityIndex )
         call QtyFromFile ( key, quantity, MLSFile, &
-          & filetypestr, hdfversion, options, sdName, spread )
+          & filetypestr, options, sdName, spread )
       else
         vector => vectors(vectorIndex)
         call VectorFromFile ( key, vector, MLSFile, &
-          & filetypestr, hdfversion, options, spread )
+          & filetypestr, options, spread )
       endif
     end subroutine directReadCommand
 
@@ -2806,6 +2806,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.398  2012/01/25 01:19:01  pwagner
+! Removed unused args to ..FromFile calls
+!
 ! Revision 2.397  2012/01/18 20:38:59  vsnyder
 ! Check consistency of covariance matrix and diagonal vector
 !
