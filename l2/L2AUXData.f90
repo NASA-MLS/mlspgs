@@ -172,6 +172,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     integer :: QUANTITYTYPE = 0         ! From source vector
     logical :: MINORFRAME               ! Is this a minor frame quantity
     logical :: MAJORFRAME               ! Is this a major frame quantity
+    ! type (QuantityTemplate_T) :: TEMPLATE = 0 ! Template for this l2aux quantity.
     ! The dimensions for the quantity
     type (L2AUX_Dimension_T), dimension(L2AUXRank) :: DIMENSIONS
     character(len=48)                              :: DIM_Names ! ','-separated
@@ -359,7 +360,6 @@ contains ! =====     Public Procedures     =============================
     end if
     allSDs = .not. present(sdList)
     if ( present(sdList) ) allSDs = (sdList == '*')
-    ! if ( present(sdList) ) then
     if ( .not. allSDs ) then
       mysdList = sdList
       if ( verbose ) call dump(mysdList, 'DS names')
@@ -491,7 +491,6 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(L2AUXRank), optional, intent(in) :: inputDimStarts
     integer, optional, intent(in) :: inputQuantityType
     ! Local variables
-    ! integer, dimension(L2AUXRank) :: dimensionFamilies
     integer, dimension(L2AUXRank) :: dimSizes
     integer, dimension(L2AUXRank) :: dimStarts
     integer             :: quantityType
@@ -517,8 +516,6 @@ contains ! =====     Public Procedures     =============================
       & 'args to SetupL2AUXData incompatible with options 1 or 2')
     end if
     ! Fill the dimensions data structure
-    ! l2aux%dimensions%dimensionFamily = dimensionFamilies
-    ! if ( present(quantityType) ) then
     call GetQuantityAttributes( quantityType, &
        & framing, l2aux%VALUE_Units, dim_names )
     l2aux%dimensions%dimensionFamily = dim_names
@@ -551,7 +548,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Allocate the values for each dimension
     do dimIndex = 1, L2AUXRank
-      ! if ( dimensionFamilies(dimIndex)/=L_None ) then
       if ( l2aux%dimensions(dimIndex)%dimensionFamily /= L_None ) then
         allocate (l2aux%dimensions(dimIndex)%values( &
           & dimStarts(dimIndex):dimEnds(dimIndex)), &
@@ -1078,7 +1074,6 @@ contains ! =====     Public Procedures     =============================
     data_dim_sizes = shape(L1BDATA1%DpField)          
     dim_families(2) = l_mif                          
     dim_families(3) = l_maf                          
-!   call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
     call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
      & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/), &
      & inputQuantityType=quantityType )
@@ -1259,6 +1254,8 @@ contains ! =====     Public Procedures     =============================
       else
         ! call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values)
         ! call SaveAsHDF5DS (l2FileHandle, trim(dataProduct%name), l2aux%values)
+        call MLSMessage ( MLSMSG_Error, ModuleName // '%WriteL2AUXData_MF_hdf5', &
+          & 'Unexpected execution path' , MLSFile=L2AUXFile )
       end if
       call h5_writeglobalattr(L2AUXFile%FileID%f_id, skip_if_already_there=.false.)
       ! Write phase and section names as file-level attributes?
@@ -1969,7 +1966,6 @@ contains ! =====     Public Procedures     =============================
 
     error = max(error,1)
     call output ( '***** At ' )
-!    call print_source ( source_ref(where) )
     if ( where > 0 ) then
       call print_source ( source_ref(where) )
     else
@@ -2005,6 +2001,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.86  2012/01/25 01:16:41  pwagner
+! Improved error msg; snipped commented-out lines
+!
 ! Revision 2.85  2011/07/07 00:39:15  pwagner
 ! Accepts options as arg for dumps
 !
