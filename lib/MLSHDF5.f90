@@ -146,7 +146,7 @@ module MLSHDF5
 !       lowBound only for rank-1 arrays
 ! MakeHDF5Attribute (int itemID, char name, value,
 !       [log skip_if_already_there])
-! MatchHDF5Attribute (MLSFile_T MLSFile, char attrnames(:), char attrvalues(:),
+! MatchHDF5Attributes (MLSFile_T MLSFile, char attrnames, char attrvalues,
 !       char name)
 ! SaveAsHDF5DS (int locID, char name, value)
 !     value can be one of:
@@ -190,6 +190,11 @@ module MLSHDF5
 !       u              Unique    
 !       w              WholeArray
 ! etc. (see dump_0 module)
+
+! Note that when an argument is of type "char" and holds multiple items,
+! e.g., DSnames in  GetAllHDF5DSNames or attrNames in MatchHDF5Attributes,
+! it will be a comma-separated string list, as described in the module
+! MLSStringLists
 !                      
 ! === (end of api) ===
   interface CpHDF5Attribute
@@ -2495,24 +2500,50 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(out) :: name ! DS name with matching attributes
 
     ! Local variables
+    integer, parameter :: MAXATTRNAMELEN = 128
+    logical, parameter :: DEEBUG = .false.
     integer :: attr
+    character(len=MAXATTRNAMELEN) :: AttrName
     integer :: ds
+    character(len=MAXATTRNAMELEN) :: DSName
     character(len=32*MAXNDSNAMES) :: DSNames
+    integer :: error
     integer :: numattrs
-    character(len=64) :: status
-    character(len=32) :: value
+    character(len=MAXATTRNAMELEN) :: status
+    character(len=MAXATTRNAMELEN) :: value
 
     ! Executable code
     name = ' '
     numAttrs = NumStringElements ( attrNames, countEmpty )
+    if ( DEEBUG ) call outputNamedValue( 'numAttrs', numAttrs )
+    ! Do we have any FileID fields?
+    If ( .not. MLSFile%stillOpen .or. all( &
+      & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
+      & == 0 ) ) then
+      call mls_OpenFile( MLSFile, error )
+      if ( error /= 0 ) then
+        if ( DEEBUG ) call outputNamedValue( 'error in MatchHDF5Attributes', error )
+      return
+      endif
+    endif
     call GetAllHDF5DSNames( MLSFile, DSNames )
     if ( NumStringElements( DSNames, countEmpty ) < 1 ) return
     allnames: do ds=1, NumStringElements( DSNames, countEmpty )
+      DSName = StringElement(DSNames, ds, countEmpty)
+      if ( DEEBUG ) call outputNamedValue( 'DS name', trim(DSName) )
       do attr=1, numAttrs
+        attrname = StringElement(attrNames, attr, countEmpty)
         if( .not. ReadHDF5Attribute( MLSFile%fileID%f_id, &
-          & StringElement(DSNames, ds, countEmpty), &
-          & StringElement(attrNames, attr, countEmpty), &
-          & value, status ) )  cycle allnames
+          & trim(DSName), trim(attrName), &
+          & value, status ) )  then
+          if ( DEEBUG ) call outputNamedValue( 'status', status )
+          cycle allnames
+        endif
+        if ( DEEBUG ) then
+          call outputNamedValue( 'attr name', StringElement(attrNames, attr, countEmpty) )
+          call outputNamedValue( 'its attr value', value )
+          call outputNamedValue( 'compared with', StringElement(attrValues, attr, countEmpty) )
+        endif
         if ( lowercase(value) /= &
           & lowercase(StringElement(attrValues, attr, countEmpty) ) &
           & ) cycle allnames
@@ -2605,6 +2636,7 @@ contains ! ======================= Public Procedures =========================
       character(len=256) :: myerror ! error message shouldn't exceed 256 characters
 
       myerror = ' '
+      value = ' '
       minlen = min(len(error), len(myerror))
       call h5dopen_f (fileid, dsName, setid, stat)
       if (stat /= 0) then
@@ -5505,6 +5537,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.117  2012/01/25 01:12:07  pwagner
+! Fixed most of the bugs in MatchHDF5Attributes
+!
 ! Revision 2.116  2012/01/13 01:10:14  pwagner
 ! Added MatchHDF5Attributes; untested yet
 !
