@@ -289,7 +289,6 @@ contains ! =====  Public procedures  ===================================
       call output ( 'Dump of ' )
       if ( diagonal ) call output ( 'diagonal of ' )
       call display_string ( matrix%name )
-      call output ( ' at ' )
       call print_source ( source_ref(key), before=' at ' )
       if ( matrix%row%vec%name /= 0 ) &
         & call display_string ( matrix%row%vec%name, before=', row vector ' )
@@ -956,6 +955,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.36  2011/10/04 20:25:33  honghanh
+! Fixed bug in PVM_Pack_RC
+!
 ! Revision 1.35  2011/09/01 20:37:08  honghanh
 ! Fix the bug in PVMSendMatrix for sending NB
 !
