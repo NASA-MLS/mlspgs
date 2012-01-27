@@ -108,7 +108,7 @@ contains
   ! ------------------------------------------- CreateEmptyHessian -----
 
   type (Hessian_T) function CreateEmptyHessian ( Name, Row, Col, &
-    & Row_Quan_First, Col_Quan_First, Text, where ) result ( H )
+    & Row_Quan_First, Col_Quan_First, Text, where, Potemkin ) result ( H )
     use Symbol_Types, only: T_IDENTIFIER
     use Symbol_Table, only: ENTER_TERMINAL
 
@@ -126,6 +126,7 @@ contains
     character(len=*), intent(in), optional :: Text     ! A name to use
       ! instead of "Name."
     integer, intent(in), optional :: Where             ! source_ref
+    logical, intent(in), optional :: Potemkin    ! Don't allocate if TRUE
 
     integer :: I, J, K                  ! Loop counters
     integer :: STATUS                   ! Flag
@@ -137,6 +138,9 @@ contains
     call defineRCInfo ( h%col, col, col_quan_first )
     if ( present(where) ) h%where = where
 
+    if ( present(Potemkin) ) then
+      if ( Potemkin ) return
+    endif
     allocate ( h%block ( h%row%nb, h%col%nb, h%col%nb ), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "H%Block in CreateEmptyHessian" )
@@ -817,6 +821,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.28  2012/01/27 01:03:05  pwagner
+! Potemkin optional arg can create empty Hessian w/o allocating anything
+!
 ! Revision 2.27  2012/01/25 01:13:45  pwagner
 ! Fixed typo in parameter name
 !
