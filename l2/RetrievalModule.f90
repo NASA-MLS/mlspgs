@@ -45,7 +45,7 @@ contains
       & BOOLEANFROMANYGOODVALUES, &
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, SKIP
-    use HESSIANMODULE_1, only: HESSIAN_T, CREATEEMPTYHESSIAN
+    use HESSIANMODULE_1, only: HESSIAN_T, CREATEEMPTYHESSIAN, DESTROYHESSIAN
     use IEEE_ARITHMETIC, only: IEEE_IS_NAN
     use EXPR_M, only: EXPR
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
@@ -80,7 +80,6 @@ contains
       & S_SIDS, S_SKIP, S_SNOOP, S_SUBSET, S_TIME, S_UPDATEMASK
     use INTRINSIC, only: L_VMR, PHYQ_DIMENSIONLESS
     use L2PARINFO, only: PARALLEL
-    use ManipulateVectorQuantities, only: DoHGridsMatch
     use MATRIXMODULE_1, only: ADDTOMATRIXDATABASE, COPYMATRIX, CREATEEMPTYMATRIX, &
       & DESTROYMATRIX, GETFROMMATRIXDATABASE, MATRIX_T, MATRIX_DATABASE_T, &
       & MATRIX_SPD_T, MULTIPLYMATRIXVECTORNOT, REFLECTMATRIX, &
@@ -93,8 +92,7 @@ contains
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
       & MLSMESSAGE, MLSMESSAGECALLS, MLSMESSAGERESET
-    use Molecules, only: First_Molecule, Last_Molecule, &
-      & L_Extinction, L_ExtinctionV2
+    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
@@ -201,6 +199,7 @@ contains
     type(vector_T), pointer :: OutputSD ! Vector containing SD of result
     logical :: ParallelMode             ! Run forward models in parallel
     character(len=127) :: PhaseName     ! To pass to snoopers
+    logical :: PotemkinHessian 
     real(rv) :: PrecisionFactor         ! Default 0.5, precisions 'worse than this' set negative
     type(vectorValue_T), pointer :: Qty ! A temporary value used for checking
     integer :: Son                      ! Of Root or Key
@@ -326,7 +325,7 @@ contains
 
       got = .false.
       spec = get_spec_id(key)
-
+      PotemkinHessian = .false.
       select case ( spec )
       case ( s_anygoodvalues )
         call decorate ( key, &
@@ -633,7 +632,8 @@ contains
               & 'Not ready to handle a Hessian field in Retrieve command yet' )
           else
             hessian => myHessian
-            hessian = createEmptyHessian ( 0, measurements, state )
+            hessian = createEmptyHessian ( 0, measurements, state, Potemkin=.true. )
+            PotemkinHessian = .true.
           end if
 
           ! Create the Jacobian matrix
@@ -859,6 +859,10 @@ contains
       end do
 
     end do ! i_sons = 2, nsons(root) - 1
+    
+    ! Housekeeping
+    ! if ( .not. got(f_jacobian) ) call DestroyMatrix( Jacobian )
+    if ( PotemkinHessian ) call DestroyHessian( Hessian )
 
     if ( specialDumpFile /= ' ' ) call revertOutput
 
@@ -870,14 +874,14 @@ contains
     ! --------------------------------------------  AnnounceError  -----
     subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex, String, Lit )
 
-      use INTRINSIC, only: FIELD_INDICES, LIT_INDICES, SPEC_INDICES
+      use INTRINSIC, only: FIELD_INDICES, SPEC_INDICES
       use LEXER_CORE, only: PRINT_SOURCE
       use STRING_TABLE, only: DISPLAY_STRING
 
       integer, intent(in) :: Code       ! Index of error message
       integer, intent(in), optional :: FieldIndex, AnotherFieldIndex ! f_...
       character(len=*), optional :: String
-      integer, intent(in), optional :: Lit ! A literal index
+      integer, optional, intent(in) :: LIT
 
       error = max(error,1)
       call output ( '***** At ' )
@@ -1960,7 +1964,7 @@ NEWT: do ! Newton iteration
               if ( fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1 ) &
                 & call RequestSlavesOutput ( fmStat%maf + 1 )
             else
-              ! Otherwise, we call the forward model as ususal
+              ! Otherwise, we call the forward model as usual
               do k = 1, size(configIndices)
                 if ( associated(fwmState) ) then
                   call forwardModel ( configDatabase(configIndices(k)), &
@@ -2931,6 +2935,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.318  2012/01/27 01:06:26  pwagner
+! Tried to fix memory leak created by Hessian
+!
 ! Revision 2.317  2012/01/04 02:14:55  vsnyder
 ! Ensure forward model does not see MIFExtinction
 !
