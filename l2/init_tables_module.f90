@@ -1192,6 +1192,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_type, t+t_outputType, ndr+n_field_type, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWrite, &
@@ -1385,7 +1386,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_crashBurn, t+t_boolean, n+n_field_type, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
              begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
-             begin, f+f_matrix, s+s_matrix, n+n_field_type, &
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -1433,7 +1434,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mark, t+t_boolean, n+n_field_type, &
              begin, f+f_mask, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
-             begin, f+f_matrix, s+s_matrix, n+n_field_type, &
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_MieTables, t+t_boolean, n+n_field_type, &
              begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
@@ -1723,6 +1724,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.531  2012/01/30 18:50:09  pwagner
+! Fixed bugs preventing us from Diffing or Dumping matrices
+!
 ! Revision 2.530  2012/01/05 01:19:49  pwagner
 ! Sets LAST_AUTO_LIT to last literal
 !
