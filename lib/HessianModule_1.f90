@@ -187,13 +187,15 @@ contains
     integer :: status
     hessian%name = 0
     hessian%where = 0
-    do i = 1, hessian%row%nb
-      do j = 1, hessian%col%nb
-        do k = 1, hessian%col%nb
-          call DestroyBlock ( hessian%block(i,j,k) )
+    if ( associated(hessian%block) ) then
+      do i = 1, hessian%row%nb
+        do j = 1, hessian%col%nb
+          do k = 1, hessian%col%nb
+            call DestroyBlock ( hessian%block(i,j,k) )
+          end do
         end do
       end do
-    end do
+    endif
     call destroyRCInfo ( hessian%row )
     call destroyRCInfo ( hessian%col )
     if ( associated(hessian%block) ) then
@@ -821,6 +823,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.29  2012/01/30 18:16:28  pwagner
+! Fixed bug that led to segment faults in goldbrick
+!
 ! Revision 2.28  2012/01/27 01:03:05  pwagner
 ! Potemkin optional arg can create empty Hessian w/o allocating anything
 !
