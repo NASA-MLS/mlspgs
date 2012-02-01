@@ -76,7 +76,7 @@ contains
       & L_NEWTONIAN, L_NONE, L_NORM, L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_SIMPLE, &
       & S_ANYGOODVALUES, S_CATCHWARNING, S_COMPARE, &
       & S_DIFF, S_DUMP, S_DUMPBLOCKS, S_FLAGCLOUD, S_FLUSHPFA, S_LEAKCHECK, &
-      & S_MATRIX, S_REEVALUATE, S_RESTRICTRANGE, S_RETRIEVE, &
+      & S_REEVALUATE, S_RESTRICTRANGE, S_RETRIEVE, &
       & S_SIDS, S_SKIP, S_SNOOP, S_SUBSET, S_TIME, S_UPDATEMASK
     use INTRINSIC, only: L_VMR, PHYQ_DIMENSIONLESS
     use L2PARINFO, only: PARALLEL
@@ -162,9 +162,9 @@ contains
     type(vector_T), pointer :: FwmState    ! forward model's State vector
     logical :: Got(field_first:field_last)   ! "Got this field already"
     type(vector_T), pointer :: HighBound ! For state during retrieval
-    integer :: HRegOrders               ! Regularization orders               
-    integer :: HRegQuants               ! Regularization quantities           
-    integer :: HRegWeights              ! Weight of regularization conditions 
+    integer :: HRegOrders               ! Regularization orders
+    integer :: HRegQuants               ! Regularization quantities
+    integer :: HRegWeights              ! Weight of regularization conditions
     type(vector_T), pointer :: HRegWeightVec  ! Weight vector for regularization
     integer :: I_Key, I_Sons, J         ! Subscripts and loop inductors
     real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
@@ -183,18 +183,18 @@ contains
     type(vector_T), pointer :: LowBound ! For state during retrieval
     integer :: MaxJacobians             ! Maximum number of Jacobian
                                         ! evaluations of Newton method
-    type(vector_T), pointer :: Measurements  ! The measurements vector
-    type(vector_T), pointer :: MeasurementSD ! The measurements vector's Std. Dev.
+    type(vector_T), pointer :: Measurements    ! The measurements vector
+    type(vector_T), pointer :: MeasurementSD   ! The measurements vector's Std. Dev.
     integer :: Method                   ! Method to use for inversion, currently
                                         ! only l_Newtonian.
     type(matrix_T), target :: MyAverage ! for OutputAverage to point to
-    type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
-    type(matrix_T), target :: MyFwmJacobian       ! for FwmJacobian to point at
-    type(hessian_T), target :: MyHessian          ! for Hessian to point at
-    type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
+    type(matrix_SPD_T), target :: MyCovariance ! for OutputCovariance to point at
+    type(matrix_T), target :: MyFwmJacobian    ! for FwmJacobian to point at
+    type(hessian_T), target :: MyHessian       ! for Hessian to point at
+    type(matrix_T), target :: MyJacobian       ! for Jacobian to point at
     real(rv) :: MuMin                   ! Smallest shrinking of dx before change direction
     logical :: NegateSD                 ! Flip output error negative for poor information
-    type(matrix_T), pointer :: OutputAverage      ! Averaging Kernel
+    type(matrix_T), pointer :: OutputAverage   ! Averaging Kernel
     type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
     type(vector_T), pointer :: OutputSD ! Vector containing SD of result
     logical :: ParallelMode             ! Run forward models in parallel
@@ -207,7 +207,7 @@ contains
     integer :: SnoopKey                 ! Tree point of S_Snoop spec.
     integer :: SnoopLevel               ! From level field of S_Snoop spec.
     integer, dimension(:), pointer :: SparseQuantities ! Which jacobian blocks to sparsify
-    integer :: Spec                     ! s_matrix, s_subset or s_retrieve ... 
+    integer :: Spec                     ! s_subset or s_retrieve ...
     type(vector_T), pointer :: State    ! The state vector
     type(vector_T), pointer :: StateMax ! Maximum state vector over all iterations
     type(vector_T), pointer :: StateMin ! Minimum state vector over all iterations
@@ -240,7 +240,7 @@ contains
     ! Indexes in the private vectors database
     integer, parameter :: FirstVec = 1
     integer, parameter :: AprioriMinusX = firstVec ! Apriori - X
-    integer, parameter :: ATb = aprioriMinusX + 1  ! A^T b -- the RHS of the normal eqns    integer, parameter :: 
+    integer, parameter :: ATb = aprioriMinusX + 1  ! A^T b -- the RHS of the normal eqns    integer, parameter ::
     integer, parameter :: BestGradient = aTb + 1   ! for NWT
     integer, parameter :: BestX = bestGradient + 1 ! for NWT
     integer, parameter :: CandidateDX = bestX + 1  ! for NWT
@@ -276,8 +276,7 @@ contains
     integer, parameter :: InconsistentUnits = InconsistentQuantities + 1
     integer, parameter :: NeedBothDepthAndCutoff = InconsistentUnits + 1
     integer, parameter :: NeedFwmState = NeedBothDepthAndCutoff + 1
-    integer, parameter :: NoFields = NeedFwmState + 1  ! No fields are allowed
-    integer, parameter :: NoMIFExtinction = noFields + 1 ! Not in fwmState
+    integer, parameter :: NoMIFExtinction = NeedFwmState + 1 ! Not in fwmState
     integer, parameter :: NotGeneral = noMIFExtinction + 1 ! Not a general matrix
     integer, parameter :: NotSPD = notGeneral + 1    ! Not symmetric pos. definite
     integer, parameter :: RangeNotAppropriate = NotSPD + 1
@@ -360,12 +359,6 @@ contains
           end if
           call reportLeaks ( whereLeakCheck )
         end if
-      case ( s_matrix )
-        if ( toggle(gen) ) call trace_begin ( "Retrieve.matrix/vector", root )
-        if ( nsons(key) /= 1 ) call announceError ( noFields, spec )
-        call destroyMatrix( matrixDatabase(decoration(key)) ) ! avoids a memory leak
-        call decorate ( key, 0 )
-        if ( toggle(gen) ) call trace_end ( "Retrieve.matrix/vector" )
       case ( s_restrictRange )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_begin ( "Retrieve.RestrictRange", root )
@@ -583,7 +576,7 @@ contains
           & call AnnounceError ( ifAThenB, f_negateSD, f_outputSD )
         if ( got(f_fwmJacobian) .and. .not. got(f_fwmState) ) &
             & call AnnounceError ( NeedFwmState )
-        
+
         if ( error == 0 ) then
 
           ! Verify the consistency of various matrices and vectors
@@ -774,9 +767,9 @@ contains
           jacobian_Rows = 0
           if ( got(f_lowBound) ) call getInBounds ( state, lowBound, 'low' )
           if ( got(f_highBound) ) call getInBounds ( state, highBound, 'high' )
-          
+
           select case (method)
-          case( l_lowcloud, l_highcloud) 
+          case( l_lowcloud, l_highcloud)
             ! use this for testing
             if(.not. got(f_maxJ)) maxJacobians = 5
             if(.not. got(f_lambda)) initlambda = 10.
@@ -784,7 +777,7 @@ contains
                & measurements,MeasurementSD, state, OutputSD, Covariance, &
                & jacobian, chunk,maxJacobians,initlambda)
             call add_to_retrieval_timing( 'low_cloud', t1 )
-          case ( l_newtonian, l_simple ) 
+          case ( l_newtonian, l_simple )
             call newtonSolver
           case default
             call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -953,10 +946,6 @@ contains
       case ( NeedFwmState )
         call output ( 'FwmJacobian specified, but fwmState not specified', &
           & advance='yes' )
-      case ( noFields )
-        call output ( 'No fields are allowed for a ' )
-        call display_string ( spec_indices(fieldIndex) )
-        call output ( ' specification.', advance='yes' )
       case ( noMIFExtinction )
         call display_string ( fieldIndex, & ! fieldIndex is a string index here
           & before='MIFExtinction quantity type not allowed in ', advance='yes' )
@@ -982,7 +971,7 @@ contains
       ! beyond Bound.  "Which" specifies either "low" or "high"
 
       !{ Let $D$ be $|\delta \mathbf{x}|$, where $\delta \mathbf{x}$ is
-      ! given by Dx, let $b_i$ and $x_i$ be components of Bound and X. 
+      ! given by Dx, let $b_i$ and $x_i$ be components of Bound and X.
       ! Let $d_i$ be such that $x_i + \frac{d_i}D \delta x_i$ is not beyond
       ! a bound.  That is, $d_i$ is such that $d_i \cos \theta_i = x_i -
       ! b_i$, where $\theta_i$ is the angle between $\delta \mathbf{x}$
@@ -992,10 +981,10 @@ contains
       ! {\delta x_i}$.  If we check the components one at a time, each one
       ! using the most recently computed $\mu$, we don't need a divide for
       ! each check, and we don't need a {\tt min} operation.
-      ! However, if we are already at the bounds, and the next step 
+      ! However, if we are already at the bounds, and the next step
       ! wants to keep going beyond the bounds, then $\mu$ will be
       ! really small.  In this case $\mu < \mu_{\text{min}}$ we revert
-      ! to a straight element-by-element modification of $\delta x_i$.      
+      ! to a straight element-by-element modification of $\delta x_i$.
 
       real(rv), intent(inout) :: Mu
       type(vector_T), intent(inout) :: Bound, X, Dx
@@ -1325,7 +1314,7 @@ contains
         & call fillDiagQty ( diagnostics,  l_jacobian_cols, real(jacobian_cols,rv) )
       call MLSMessageCalls( 'pop' )
     end subroutine FillDiagVec
-    
+
     ! ----------------------------------------------  GetInBounds  -----
     subroutine GetInBounds ( X, Bound, Which )
       ! Put X above/below Bound.  Which specifies low or high bound.
@@ -1812,7 +1801,7 @@ NEWT: do ! Newton iteration
             !{The contribution to the norm of the residual of the
             ! right-hand side of the part of the least-squares problem
             ! that is due to apriori is $\mathbf{
-            ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T \left [ 
+            ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T \left [
             ! C ( a - x_n ) \right ] }$
             aj%fnorm = v(aprioriMinusX) .mdot. v(covarianceXapriori)
               if ( d_fnorm ) call output ( aj%fnorm, &
@@ -1924,7 +1913,7 @@ NEWT: do ! Newton iteration
           ! Include the part of the normal equations due to the Jacobian matrix
           ! and the measurements
           call clearVector ( v(f_rowScaled) )
-          if ( got(f_average) .and. .not. extendedAverage ) then 
+          if ( got(f_average) .and. .not. extendedAverage ) then
             ! Need a separate matrix for K^T K
             kTk => kTkSep
             call clearMatrix ( kTkSep%m )
@@ -2180,7 +2169,7 @@ NEWT: do ! Newton iteration
           call copyVectorMask ( v(gradient), v(x) )
           call clearUnderMask ( v(gradient) )
             if ( d_gvec ) call dump ( v(gradient), name='gradient' )
-          
+
           !{Compute the Cholesky factor of the LHS of the normal equations:
           ! ${\bf U}^T {\bf U} {\bf \Sigma}^{-1} {\bf \delta \hat x} =
           ! ({\bf\Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf J \Sigma})
@@ -2813,7 +2802,7 @@ NEWT: do ! Newton iteration
             end where
           end do
           call UpdateDiagonal ( aPlusRegNEQ, v(diagFlagA) )
-            
+
           ! Now decompose it
           call createEmptyMatrix ( tempC%m, &
             & enter_terminal('_tempC', t_identifier), &
@@ -2859,7 +2848,7 @@ NEWT: do ! Newton iteration
           call ClearMatrix ( outputAverage )
           call MultiplyMatrix_XTY ( outputCovariance%m, kTkStar, outputAverage, update=.true. )
         else
-          ! Make sure kTk is symmetrical 
+          ! Make sure kTk is symmetrical
           !  (outputCovariance is by virtue of its creation method as U^T U)
           Call ReflectMatrix ( kTk%m )
           call ClearMatrix ( outputAverage )
@@ -2935,6 +2924,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.319  2012/02/01 00:17:07  vsnyder
+! init_tables_module.f90
+!
 ! Revision 2.318  2012/01/27 01:06:26  pwagner
 ! Tried to fix memory leak created by Hessian
 !
