@@ -160,7 +160,7 @@ contains
     type(vector_T), pointer :: FwdModelOut
     type(matrix_T), pointer :: FwmJacobian ! forward model's Jacobian matrix
     type(vector_T), pointer :: FwmState    ! forward model's State vector
-    logical :: Got(field_first:field_last)   ! "Got this field already"
+    logical :: Got(field_first:field_last) ! "Got this field already"
     type(vector_T), pointer :: HighBound ! For state during retrieval
     integer :: HRegOrders               ! Regularization orders
     integer :: HRegQuants               ! Regularization quantities
@@ -2924,6 +2924,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.320  2012/02/01 00:18:38  vsnyder
+! Remove Matrix from the Retrieve section; nobody used it, because it was broken.
+!
 ! Revision 2.319  2012/02/01 00:17:07  vsnyder
 ! init_tables_module.f90
 !
