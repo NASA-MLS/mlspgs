@@ -1692,7 +1692,7 @@ contains ! =====     Public procedures     =============================
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
       begin, z+z_retrieve, s+s_anyGoodValues, s+s_catchWarning, &
              s+s_checkpoint, s+s_compare, s+s_diff, s+s_dump, s+s_dumpBlocks, &
-             s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, s+s_matrix, &
+             s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, &
              s+s_reevaluate, s+s_restrictRange, s+s_retrieve, &
              s+s_sids, s+s_skip, s+s_snoop, s+s_subset, s+s_time, s+s_updateMask, &
              n+n_section, &
@@ -1724,6 +1724,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.532  2012/02/01 00:17:58  vsnyder
+! Remove Matrix from the Retrieve section; nobody used it, because it was broken.
+!
 ! Revision 2.531  2012/01/30 18:50:09  pwagner
 ! Fixed bugs preventing us from Diffing or Dumping matrices
 !
