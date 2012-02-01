@@ -96,9 +96,10 @@
             j = index(moduleName, ':') + 2
             k = j + scan(moduleName(j:),'., $') - 2
             if ( k == j-2 ) k = len(moduleName)
-            print *, adjustl(moduleName(j:k))//'%MAKE_TREE-E- Stack underflow!'
-            print *, 'You probably forgot a "begin" somewhere.  Detected while'
-            print *, 'processing element ', i, ' of the list for call ', callno
+            print '(a)', adjustl(moduleName(j:k))//'%MAKE_TREE-E- Stack underflow!'
+            print '(a)', 'You probably forgot a "begin" or "l+" somewhere.  Detected'
+            print '(2(a,i0))', 'while processing element ', i, &
+                             & ' of the list for call ', callno
             stop
           end if
           stack(m) = stack(m) + 1
@@ -120,6 +121,9 @@
   end subroutine MAKE_TREE
 
 ! $Log$
+! Revision 1.9  2005/06/22 20:03:56  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.8  2004/05/29 02:42:16  vsnyder
 ! Rearrange function definition stuff
 !
