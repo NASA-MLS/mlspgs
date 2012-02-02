@@ -17,9 +17,9 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
 ! type are used to compose the Hessians inside L2PC.
 
   use ALLOCATE_DEALLOCATE, only: TEST_DEALLOCATE
-  use HESSIANMODULE_0, only: CLEARBLOCK, CREATEBLOCK, &
-    & DESTROYBLOCK, HESSIANELEMENT_T, H_ABSENT, RH, &
-    & H_SPARSE, H_FULL, OPTIMIZEBLOCK
+  use HESSIANMODULE_0, only: CLEARBLOCK, COPYBLOCK, CREATEBLOCK, &
+    & DESTROYBLOCK, HESSIANELEMENT_T, RH, &
+    & H_ABSENT, H_SPARSE, H_FULL, OPTIMIZEBLOCK
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MATRIXMODULE_1, only: DEFINERCINFO, DESTROYRCINFO, NULLIFYRCINFO, RC_INFO
@@ -39,7 +39,8 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
     logical :: optimizedAlready = .false. ! Have we been through OptimizeHessian?
   end type Hessian_T
  
-  public :: AddHessianToDatabase, CreateBlock, CreateEmptyHessian
+  public :: AddHessianToDatabase
+  public :: CopyHessianValue, CreateBlock, CreateEmptyHessian
   public :: DestroyHessian, DestroyHessianDatabase, Diff, Dump, Hessian_T
   public :: InsertHessianPlane, Multiply, NullifyHessian
   public :: OptimizeHessian, StreamlineHessian
@@ -104,6 +105,32 @@ contains
 
     AddHessianToDatabase = newSize
   end function AddHessianToDatabase
+
+  ! --------------------------------------------  CopyHessianValue  -----
+  subroutine CopyHessianValue ( Z, X, ALLOWNAMEMISMATCH )   ! Copy the elements of X to Z.
+  ! Z and X must have the same template.
+    type(Hessian_T), intent(inout) :: Z
+    type(Hessian_T), intent(in) :: X
+    logical, intent(in), optional :: ALLOWNAMEMISMATCH
+    integer :: I, J, K ! Subscripts and loop inductors
+    logical :: MYALLOW
+    myAllow = .false.
+    if ( present ( allowNameMismatch ) ) myAllow = allowNameMismatch
+    if ( ( ( x%col%vec%template%name /= z%col%vec%template%name  &
+      & .or. x%row%vec%template%name /= z%row%vec%template%name ) &
+      &   .and. .not. myAllow ) &
+      & .or. (x%col%instFirst .neqv. z%col%instFirst) &
+      & .or. (x%row%instFirst .neqv. z%row%instFirst) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Incompatible arrays in CopyHessianValue" )
+    do i = 1, min(x%row%nb,z%row%nb)
+      do j = 1, min(x%col%nb,z%col%nb)
+        do k = 1, min(x%col%nb,z%col%nb)
+          call copyBlock ( z%block(i, j, k), x%block(i, j, k) )
+        end do ! k
+      end do ! j
+    end do ! i
+  end subroutine CopyHessianValue
 
   ! ------------------------------------------- CreateEmptyHessian -----
 
@@ -823,6 +850,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.30  2012/02/02 01:12:36  pwagner
+! Added CopyHessianValue like what we do with matrices
+!
 ! Revision 2.29  2012/01/30 18:16:28  pwagner
 ! Fixed bug that led to segment faults in goldbrick
 !
