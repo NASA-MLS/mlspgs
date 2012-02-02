@@ -1,18 +1,36 @@
 program server
     use QuantityPVM
     use CFM
+    use CFM, only: QUANTITYTEMPLATE_T
     use IDLCFM2_m
     use MLSCommon, only: r8
     use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL
     use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE
     use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
-    use MLSMessageModule, only: MLSMessageConfig, PVMERRORMESSAGE
-    use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
+    use MLSMessageModule, only: MLSMessageConfig, PVMERRORMESSAGE, &
+                                MLSMSG_Severity_to_quit
+    use PVMIDL, only: PVMIDLUNPACK
     use PVM, only: PVMFRECV, PVMFBUFINFO
     use H5LIB, ONLY: h5open_f, h5close_f
     use EmpiricalGeometry, only: CFM_InitEmpiricalGeometry
+    use MatrixTools, only: PVMSendMatrix
 
     implicit none
+
+    ! Constants
+    integer, parameter :: P_INITEG = 1  ! have to start at 1, b/c Fortran is 1-based
+    integer, parameter :: P_INITTREE = P_INITEG + 1
+    integer, parameter :: P_WALKTREE = P_INITTREE + 1
+    integer, parameter :: P_INITQT = P_WALKTREE + 1
+    integer, parameter :: P_INITHDF5 = P_INITQT + 1
+    integer, parameter :: P_SPECTROSCOPY = P_INITHDF5 + 1
+    integer, parameter :: P_READAP = P_SPECTROSCOPY + 1
+    integer, parameter :: P_READFS = P_READAP + 1
+    integer, parameter :: P_READDFS = P_READFS + 1
+    integer, parameter :: P_READPG = P_READDFS + 1
+    integer, parameter :: P_READPFA = P_READPG + 1
+    integer, parameter :: P_READL2PC = P_READPFA + 1
+    integer, parameter :: P_LAST = P_READL2PC + 1
 
 !---------------------------- RCS Ident Info ------------------------------
     character (len=*), parameter :: ModuleName= &
@@ -21,22 +39,26 @@ program server
        "$Id$"
     character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
-    integer, parameter :: SIG_SETUP = 0
-    integer, parameter :: SIG_CLEANUP = 1
-    integer, parameter :: SIG_FWDMDL = 2
 
     integer :: tid, info, bufid, bytes, msgtag, cid
     integer :: reqcode
     type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
     logical :: locked = .false.
+    logical :: initStages(P_LAST - 1) = .false.
 
+    ! executable
     MLSMessageConfig%logFileUnit = -1
     MLSMessageConfig%useToolkit = .false.
+    ! set this so the program will never quit unless receiving SIGINT
+    ! from the operating system
+    MLSMSG_Severity_to_quit = MLSMSG_Crash
 
     call PVMFMyTid(tid)
 
-    if (tid <= 0) &
+    if (tid <= 0) then
         call MLSMessage (MLSMSG_Error, moduleName, "Can't contact PVM daemon")
+        stop 
+    endif
 
     print *, "Server start with tid ", tid
 
@@ -62,6 +84,8 @@ program server
             call ICFM_Cleanup
         case (SIG_FWDMDL)
             call ICFM_ForwardModel (cid, info)
+        case (SIG_VECTOR)
+            call VectorHandler (info)
         end select
     enddo
 
@@ -100,13 +124,16 @@ program server
             call MLSMessage (MLSMSG_Warning, moduleName, "a session is already started")
             return
         endif
+        locked = .true.
 
         call CFM_InitEmpiricalGeometry (empiricalGeometry_noIterations, &
                                         empircalGeometry_terms)
+        initstages(P_INITEG) = .true.
 
         call PVMIDLUnpack (signalfile, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking signalfile." )
+            call ICFM_Cleanup
             return
         endif
         print *, "signalfile ", signalfile
@@ -114,6 +141,7 @@ program server
         call PVMIDLUnpack (configfile, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking configfilename." )
+            call ICFM_Cleanup
             return
         endif
         print *, "configfile ", configfile
@@ -121,19 +149,28 @@ program server
         ! Read signal database
         call get_lun(signalIn)
         open (unit=signalIn, file=trim(signalfile), status='OLD', iostat=error)
-        if (error /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
+        if (error /= 0) then
+            call MLSMessage (MLSMSG_Error, moduleName, &
             'Error opening ' // trim(signalfile))
+            call ICFM_Cleanup
+            return
+        endif
 
         call get_lun(configIn)
         open(unit=configIn, file=trim(configFile), status='OLD', iostat=error)
-        if (error /= 0) &
+        if (error /= 0) then
             call MLSMessage (MLSMSG_Error, moduleName, &
             'Error opening ' // trim(configFile))
+            call ICFM_Cleanup
+            return
+        endif
 
         call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957 )
         call allocate_decl ( ndecls=8000 )
         call allocate_tree ( n_tree=2000000 )
         call init_tables
+
+        initstages(P_INITTREE) = .true.
 
         call AddInUnit(signalIn)
         call AddInUnit(configIn)
@@ -142,74 +179,92 @@ program server
         if (Root <= 0) then
             call MLSMessage (MLSMSG_Error, moduleName, &
             'A syntax error occurred -- there is no abstract syntax tree')
+            call ICFM_Cleanup
+            return
         end if
 
         call check_tree ( root, error, first_section )
-        if (error /= 0) call MLSMessage (MLSMSG_Error, moduleName, "Error in tree")
+        if (error /= 0) then
+            call MLSMessage (MLSMSG_Error, moduleName, "Error in tree")
+            call ICFM_Cleanup
+            return
+        endif
 
         nullify(ForwardModelConfigDatabase)
         call Walk_Tree ( Root, First_Section, &
             ForwardModelConfigDatabase=ForwardModelConfigDatabase )
+        initstages(P_WALKTREE) = .true.
 
-        close (signalIn, iostat=error)
-        if (error /= 0) call MLSMessage (MLSMSG_Error, moduleName, &
-            "Error closing " // trim(signalfile))
-        close (configIn, iostat=error)
-        if (error /= 0) &
-            call MLSMessage (MLSMSG_Error, moduleName, &
-            'Error closing ' // trim(configFile))
+        close (signalIn)
+        close (configIn)
 
         ! init property table
         call InitQuantityTemplates
+        initstages(P_INITQT) = .true.
 
         ! We have to call this before opening any HDF5 file
         call h5open_f(error)
-        if (error /= 0) &
+        if (error /= 0) then
             call MLSMessage (MLSMSG_Error, moduleName, "Error in initialize hdf5 library")
+            call ICFM_Cleanup
+            return
+        endif
+        initstages(P_INITHDF5) = .true.
 
         call PVMIDLUnpack (spectroscopy, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking spectroscopy." )
+            call ICFM_Cleanup
             return
         endif
         print *, "spectroscopy ", spectroscopy
         call Read_Spectroscopy (spectroscopy, 'HDF5')
+        initstages(P_SPECTROSCOPY) = .true.
 
         call PVMIDLUnpack (antennaPatterns, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking antennaPatterns." )
+            call ICFM_Cleanup
             return
         endif
         print *, "antennaPatterns ", antennaPatterns
         call ReadAntennaPatterns (antennaPatterns)
+        initstages(P_READAP) = .true.
 
         call PVMIDLUnpack (filterShapes, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking filterShapes." )
+            call ICFM_Cleanup
             return
         endif
         print *, "filterShapes ", filterShapes
         call ReadFilterShapes(filterShapes)
+        initstages(P_READFS) = .true.
 
         call PVMIDLUnpack (dacsFilterShapes, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking dacsFilterShapes." )
+            call ICFM_Cleanup
             return
         endif
         print *, "dacsFilterShapes ", dacsFilterShapes
         call ReadDACSFilterShapes (DACSFilterShapes)
+        initstages(P_READDFS) = .true.
 
         call PVMIDLUnpack (pointinggrids, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking pointinggrids." )
+            call ICFM_Cleanup
             return
         endif
         print *, "pointinggrids ", pointinggrids
         call ReadPointingGrids (pointingGrids)
+        initstages(P_READPG) = .true.
 
         call PVMIDLUnpack (numFiles, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking numFiles." )
+            call ICFM_Cleanup
             return
         endif
         print *, "numFiles ", numFiles
@@ -218,15 +273,21 @@ program server
             call PVMIDLUnpack(pfa, info)
             if (info /= 0) then
                 call PVMErrorMessage ( info, "unpacking pfa." )
+                call ICFM_Cleanup
                 return
             endif
             print *, "pfa ", pfa
             call ReadPFAFile (pfa)
+            ! even though there are many PFAs, 
+            ! there's only 1 clean up subroutine
+            ! so this should be okay.
+            initstages(P_READPFA) = .true.
         enddo
 
         call PVMIDLUnpack (numFiles, info)
         if (info /= 0) then
             call PVMErrorMessage ( info, "unpacking numFiles." )
+            call ICFM_Cleanup
             return
         endif
         print *, "numFiles ", numFiles
@@ -235,13 +296,14 @@ program server
             call PVMIDLUnpack(l2pc, info)
             if (info /= 0) then
                 call PVMErrorMessage ( info, "unpacking l2pc." )
+                call ICFM_Cleanup
                 return
             endif
             print *, "l2pc ", l2pc
             call ReadHDF5L2PC (l2pc)
+            ! the following logic is similar to PFA
+            initstages(P_READL2PC) = .true.
         enddo
-
-        locked = .true.
 
     end subroutine
 
@@ -253,6 +315,7 @@ program server
                               DestroySpectrometerTypeDatabase, DestroyModuleDatabase, &
                               DestroyRadiometerDatabase
         use EmpiricalGeometry, only: CFM_ResetEmpiricalGeometry
+        use ConstructQuantityTemplates, only: propertyTable, unitsTable
 
         integer :: error
 
@@ -263,57 +326,68 @@ program server
             return
         endif
 
-        call Destroy_DACS_Filter_Database
-        call Destroy_Filter_Shapes_Database
-        call Destroy_Ant_Patterns_Database
-        call Destroy_SpectCat_Database
-        call Destroy_Line_Database
-        call Destroy_Pointing_Grid_Database
-        call DestroyL2PCDatabase
-        call Destroy_PFADataBase
+        if (initstages(P_READDFS)) call Destroy_DACS_Filter_Database
+        if (initstages(P_READFS)) call Destroy_Filter_Shapes_Database
+        if (initstages(P_READAP)) call Destroy_Ant_Patterns_Database
+        if (initstages(P_SPECTROSCOPY)) then
+            call Destroy_SpectCat_Database
+            call Destroy_Line_Database
+        endif
+        if (initstages(P_READPG)) call Destroy_Pointing_Grid_Database
+        if (initstages(P_READL2PC)) call DestroyL2PCDatabase
+        if (initstages(P_READPFA)) call Destroy_PFADataBase
 
-        call DestroyFWMConfigDatabase(forwardModelConfigDatabase)
+        if (initstages(P_WALKTREE)) then
+            call DestroyFWMConfigDatabase(forwardModelConfigDatabase)
+
+            ! Destroy signal and related database
+            call DestroyBandDatabase(bands)
+            call DestroySpectrometerTypeDatabase(spectrometerTypes)
+            call DestroySignalDatabase(signals)
+            call DestroyRadiometerDatabase(radiometers)
+            call DestroyModuleDatabase(modules)
+        endif
 
         ! Clean up for the tree
-        call destroy_char_table
-        call destroy_hash_table
-        call destroy_string_table
-        call destroy_symbol_table
-        call deallocate_decl
-        call deallocate_tree
+        if (initstages(P_INITTREE)) then
+            call destroy_char_table
+            call destroy_hash_table
+            call destroy_string_table
+            call destroy_symbol_table
+            call deallocate_decl
+            call deallocate_tree
+        endif
 
-        ! Destroy signal and related database
-        call DestroyBandDatabase(bands)
-        call DestroySpectrometerTypeDatabase(spectrometerTypes)
-        call DestroySignalDatabase(signals)
-        call DestroyRadiometerDatabase(radiometers)
-        call DestroyModuleDatabase(modules)
+        ! De-init quantity templates
+        if (initstages(P_INITQT)) then
+            propertyTable = .false.
+            unitsTable = 0
+        endif
 
         ! Reset EmpiricalGeometry because something is allocated
-        call CFM_ResetEmpiricalGeometry
+        if (initstages(P_INITEG)) call CFM_ResetEmpiricalGeometry
 
         ! Have to call this, after we stops using HDF5 library
-        call h5close_f (error)
-        if (error /= 0) then
-            print *, "Error in finishing up hdf5 library"
-            return
-        end if
+        if (initstages(P_INITHDF5)) then 
+            call h5close_f (error)
+            if (error /= 0) print *, "Error in finishing up hdf5 library"
+        endif
 
+        initstages = .false.
         locked = .false.
 
     end subroutine
 
     subroutine ICFM_ForwardModel (tid, info)
-        use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-        use ForwardModelWrappers, only: ForwardModel
 
         integer, intent(in) :: tid
         integer, intent(out) :: info
 
         type(QuantityTemplate_T), dimension(:), pointer :: qtydb
         type(Vector_T) :: state, stateExtra, measurement
-        integer :: mafNo, i
-        type(forwardModelStatus_t) :: FMSTAT ! Reverse comm. stuff
+        type(Matrix_T) :: jacobian
+        integer :: mafNo
+        logical :: doDerivative
 
         if (.not. locked) then
             call MLSMessage (MLSMSG_Warning, moduleName, "must run set up first")
@@ -325,33 +399,44 @@ program server
         call ICFMReceiveVector (state, qtydb)
         call ICFMReceiveVector (stateExtra, qtydb)
         call ICFMReceiveVector (measurement, qtydb)
-        !call dump (state, details=3)
-        !call dump(stateextra, details=3)
-        call PVMIDLUnpack(mafNo, info)
+        call PVMIDLUnpack(doDerivative, info)
         if (info /= 0) then
-            call PVMErrorMessage ( info, "unpacking mafNo." )
+            call PVMErrorMessage (info, "unpack doDerivative")
+        endif
+ 
+        print *, "doderiv ", doDerivative
+
+        if (info == 0) then
+            call PVMIDLUnpack(mafNo, info)
+            if (info /= 0) then
+                call PVMErrorMessage ( info, "unpacking mafNo." )
+            endif
         endif
 
         if (info == 0) then
-!           print *, "mafNo ", mafNo ! mafNo is 0-based
-
-            fmStat%newScanHydros = .true.
-            fmStat%maf = mafNo + 1 ! in fortran it 1-based
-
-            do i=1, size(ForwardModelConfigDatabase)
-                call ForwardModel (ForwardModelConfigDatabase(i), state, stateExtra, &
-                measurement, fmStat)
-            enddo
-
-            call dump(measurement)
+            if (doDerivative) then
+                jacobian = CreatePlainMatrix(measurement, state)
+                call ForwardModel2 (mafNo, ForwardModelConfigDatabase, state, stateExtra, &
+                                    measurement, jacobian=jacobian)
+            else 
+                call ForwardModel2 (mafNo, ForwardModelConfigDatabase, state, stateExtra, &
+                                    measurement)
+            endif
 
             call ICFMSendVector(measurement, tid, info)
             if (info /= 0) then
                 call PVMErrorMessage ( info, "send measurement" )
             endif
+            
+            if (doDerivative) then
+                call prepare_matrix_for_pvmsend(jacobian)
+                call PVMSendMatrix(jacobian, tid)
+                !call dump(jacobian, details=3)
+                call DestroyMatrix(jacobian)
+            endif
         end if
 
-        call DestroyVectorTemplateInfo(stateExtra%template)
+        ! call DestroyVectorTemplateInfo(stateExtra%template)
         call DestroyVectorInfo(stateExtra)
         call DestroyVectorTemplateInfo(state%template)
         call DestroyVectorInfo(state)
@@ -359,6 +444,42 @@ program server
         call DestroyVectorInfo(measurement)
         call DestroyQuantityTemplateDatabase (qtydb)
 
+    end subroutine
+
+    subroutine VectorHandler (info)
+        integer, intent(out) :: info
+        type(Vector_T) :: vec
+        type(QuantityTemplate_T), dimension(:), pointer :: qtydb
+
+        print *, "call VectorHandler"
+
+        if (.not. locked) then
+            call MLSMessage (MLSMSG_Warning, moduleName, "must run set up first")
+            info = 1
+            return
+        endif
+
+        call ICFMReceiveVector (vec, qtydb)
+        call dump(vec, details=3)
+
+        call DestroyVectorTemplateInfo(vec%template)
+        call DestroyVectorInfo(vec)
+        call DestroyQuantityTemplateDatabase(qtydb)
+
+        info = 0
+    end subroutine
+
+    subroutine prepare_matrix_for_pvmsend (matrix) 
+        use MatrixModule_0, only: Densify
+
+        type(Matrix_T), intent(inout) :: matrix
+        integer :: i, j
+
+        do j = 1, size(matrix%block,2)
+            do i = 1, size(matrix%block,1)
+                call Densify ( matrix%block(i,j) ) ! turn this info a full block
+            end do
+        end do
     end subroutine
 
     subroutine senddummyvector (tid)
@@ -370,14 +491,11 @@ program server
         use ChunkDivide_m, only: ChunkDivideConfig_T, &
                             GetChunkFromTimeRange => CFM_ChunkDivide
         use Chunks_m, only: MLSChunk_T
-        use INIT_TABLES_MODULE, only: l_ghz, &
-                                    l_none, phyq_mafs, phyq_time, phyq_angle, &
-                                    l_orbital, l_fixed, l_both, l_either
+        use INIT_TABLES_MODULE, only: l_ghz, phyq_mafs, l_orbital
 
         integer, intent(in) :: tid
 
-        type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz, &
-                                    geodAltitude, orbincl, geocAlt, refGPH, phitanGHz
+        type(QuantityTemplate_T) :: temperature, GPH, H2O, O3, ptanGHz
         type(QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
         type (MLSChunk_T) :: chunk
         type (MLSFile_T), dimension(:), pointer :: filedatabase
@@ -385,21 +503,17 @@ program server
         type (TAI93_Range_T) :: processingRange
         integer :: error
         type(ChunkDivideConfig_T) :: chunkDivideConfig
-        integer :: CCSDSLen = 27
         character(len=3) :: GHz = "GHz"
-        character(len=2) :: sc = "sc"
         integer :: temperature_index, h2o_index
-        integer :: o3_index, ptanGHz_index, phitanGHz_index
-        integer :: geodAlt_index, orbincl_index, gph_index
-        integer :: geocAlt_index, refGPH_index
+        integer :: o3_index, ptanGHz_index
+        integer :: gph_index
         type(VGrid_T) :: vGridStandard, vGridRefGPH
         type(HGrid_T) :: hGridStandard
         integer :: stateSelected(4)
         type(Vector_T) :: state
         type(VectorTemplate_T) :: stateTemplate
-        type(VectorValue_T), pointer :: quantity, h2o_vv, orbincl_vv, geocAlt_vv, &
-                                        ptanG_vv, temperature_vv, refGPH_vv, &
-                                        phitan_vv
+        type(VectorValue_T), pointer :: quantity, h2o_vv, &
+                                        temperature_vv
 
         nullify(filedatabase)
         error = InitializeMLSFile(l1bfile, content='l1boa', &
@@ -480,6 +594,13 @@ program server
 end program
 
 ! $Log$
-! Revision 1.1  2011/03/15 15:23:51  honghanh
-! Initial imports
+! Revision 1.5  2012/01/03 17:21:25  honghanh
+! Remove unused variables, and incorporate changes from
+! lit_parm and Molecules_M
+!
+! Revision 1.4  2011/09/07 06:34:46  honghanh
+! Make modification to send matrix,and add more error handling
+!
+! Revision 1.3  2011/05/27 06:08:42  honghanh
+! Add VectorHandler and type code of ICFMReceiveVector to receive vector independently of the call to ForwardModel
 !

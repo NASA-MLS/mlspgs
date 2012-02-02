@@ -230,33 +230,33 @@ module CFM_QuantityTemplate_m
       if (present(qMinValue)) qty%minValue = qMinValue
 
       if (present(qSignal)) then
+         if (.not. (present(filedatabase) .and. present(chunk))) &
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+            'Need filedatabase and chunk to check for good signal data')
          nullify ( channels, signalInds )
          signalString = qSignal
+         !??? Here we would do intelligent stuff to work out which bands
+         !??? are present, for the moment choose the first
          call parse_Signal ( signalString, signalInds, &
             & sideband=sideband, channels=channels )
-         if ( .not. associated(signalInds) .or. size(signalInds) == 0) then ! A parse error occurred
+         if ( .not. associated(signalInds) ) then ! A parse error occurred
             call MLSMessage ( MLSMSG_Error, ModuleName,&
               & 'Unable to parse signal string' )
          end if
-         if (present(filedatabase)) then
-             if (associated(filedatabase) .and. size(signalInds) .gt. 1) then
-                 ! Seek a signal with any precision values !< 0
-                 do s_index=1, size(signalInds)
-                     if ( AnyGoodSignalData ( signalInds(s_index), sideband, &
-                     filedatabase, chunk) ) exit
-                 end do
-                 if ( s_index > size(signalInds) ) then
-                     signal = signalInds(1)
-                 else
-                     signal = signalInds(s_index)
-                 end if
-             else
-                 signal = signalInds(1)
-             end if
+         if ( size(signalInds) == 1 .or. .not. associated(filedatabase) ) then
+            signal = signalInds(1)
          else
-             signal = signalInds(1)
+            ! Seek a signal with any precision values !< 0
+            do s_index=1, size(signalInds)
+              if ( AnyGoodSignalData ( signalInds(s_index), sideband, &
+                & filedatabase, chunk) ) exit
+            end do
+            if ( s_index > size(signalInds) ) then
+              signal = signalInds(1)
+            else
+              signal = signalInds(s_index)
+            end if
          end if
-
          call deallocate_test ( signalInds, 'signalInds', ModuleName )
          ! if the user has pass in the wrong instrumentModule or radiometer
          ! just silently correct it, for simplicity.
@@ -616,9 +616,6 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
-! Revision 1.19  2010/11/18 19:04:13  honghanh
-! New example to run forward model with a single maf
-!
 ! Revision 1.18  2010/11/03 18:34:46  honghanh
 ! Add qName as an optional argument to CreateQtyTemplate.
 ! This is to help debugging process.

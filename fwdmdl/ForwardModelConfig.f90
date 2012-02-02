@@ -1406,12 +1406,11 @@ contains
     else
       call output ( ' no tangentGrid', advance='yes' )
     end if
-    if ( associated(config%beta_Group) .and. .not. dumpPFA ) &
-      & call dump ( config%beta_Group, &
-        & sidebands=(/config%sidebandStart,config%sidebandStop/), &
-        & details=details, name='Beta group' )
-    if ( .not. associated(config%beta_Group) ) &
-      & call output ( ' no Beta group (surprised?)', advance='yes' )
+    if ( associated(config%beta_Group) ) then
+      call dump ( config%beta_Group, details=details, name='Beta group' )
+    else
+      call output ( ' no Beta group (surprised?)', advance='yes' )
+    end if
   end subroutine Dump_ForwardModelConfig
 
   ! ---------------------------------------------  Dump_Qty_Stuff  -----
@@ -1442,9 +1441,6 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
-! Revision 2.111  2010/12/06 19:15:42  pwagner
-! More detailed dump of config to aid debugging
-!
 ! Revision 2.110  2010/09/25 01:08:39  vsnyder
 ! Cannonball polishing
 !

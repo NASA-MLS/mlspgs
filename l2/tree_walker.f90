@@ -18,8 +18,6 @@ module TREE_WALKER
   private
 
   public :: WALK_TREE_TO_DO_MLS_L2
-  
-  logical, parameter :: COMPLAINIFSKIPPEDEVERYCHUNK = .true.
 
 !---------------------------- RCS Ident Info -------------------------------
   character(len=*), private, parameter :: ModuleName= &
@@ -75,7 +73,6 @@ contains ! ====     Public Procedures     ==============================
     use MLSMessageModule, only: MLSMSG_Allocate, MLSMessage, MLSMSG_Info, &
       & MLSMSG_Error, SummarizeWarnings
     use MLSPCF2, only: mlspcf_spectroscopy_end
-    use MLSSets, only: FindFirst
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
@@ -251,8 +248,7 @@ contains ! ====     Public Procedures     ==============================
       case ( z_mergeGrids )
         if ( .not. &
           & ( stopBeforeChunkLoop .or. checkPaths .or. parallel%master ) &
-          & ) call mergeGrids ( son, l2gpDatabase, l2auxDatabase, &
-          & griddedDataBase, fileDataBase )
+          & ) call mergeGrids ( son, griddedDataBase )
 
         ! ------------------------------------------------------- Chunk divide
         ! Chunk divide can be a special one, in slave mode, we just listen out
@@ -358,10 +354,6 @@ contains ! ====     Public Procedures     ==============================
             firstChunk = 1
             lastChunk = size(chunks)
           end if
-          j = FindFirst( .not. chunksSkipped(firstChunk:lastChunk) )
-          if ( j < 1 .and. COMPLAINIFSKIPPEDEVERYCHUNK ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'We have skipped every chunk' )
           j = i + 1 ! In case no chunks get processed
           do chunkNo = firstChunk, lastChunk ! --------------------- Chunk loop
             call resumeOutput ! In case the last phase was  silent
@@ -632,12 +624,6 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
-! Revision 2.173  2011/04/08 00:10:00  pwagner
-! Raise error if every chunk was skipped
-!
-! Revision 2.172  2010/04/13 01:43:09  vsnyder
-! Move FlushLockedBins from LinearizedForwardModel_m to L2PCBins_m
-!
 ! Revision 2.171  2010/03/17 20:57:35  pwagner
 ! Print about destroyed l2pc db only if -S'l2pc'
 !

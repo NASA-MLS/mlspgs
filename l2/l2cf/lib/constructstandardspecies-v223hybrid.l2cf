@@ -1,0 +1,628 @@
+; This l2cf segment is useful for constructing `standard' species.
+; It will make heavy use of m4 to (hopefully) simplify things.
+
+begin Construct
+
+  ;; ----------------------------------------- Macros
+
+  ;; Define all the molecules we'll consider.  Note that this is only
+  ;; non-isotopic species (at least for the moment).
+  !define(allLinearMolecules,{!tidyList( $
+    BrO, CH3Cl, CH3CN, CH3COCH3, CH3OH, CO, ClO, H2CO, H2O2, H2S, $
+    HCN, HCl, HNO3, HO2, HOCl, N2, N2O, NO, NO2, O2, O3, OCS, SO2)})
+  !define(allLogMolecules,{H2O})
+  !define(allLinearHRMolecules,{O3,CO})
+  !define(allLogHRMolecules,{H2O})
+  !define(OHMolecule,{OH})
+
+  ;; Most users can pretty much ignore the stuff below here.
+  ;; (And much of the stuff above really!)
+
+  ;; ----------------------------------------- Derived macros
+
+  ;; These are macros derived from above
+  !define(allMolecules,{!allLinearMolecules, !allLogMolecules, !OHMolecule})
+  !define(allHiResMolecules,
+    {!makelist({},{_HR},!allLinearHRMolecules),!makelist({},{_HR},!allLogHRMolecules)})
+
+  ;; ----------------------------------------- Tangent pressures and phis
+
+  ptanGHz: Quantity, type=ptan, module=GHz
+  ptanTHz: Quantity, type=ptan, module=THz
+
+  phitanGHz: Quantity, type=phitan, module=GHz
+  phitanTHz: Quantity, type=phitan, module=THz
+
+  ;; ----------------------------------------- Temperature / refgph
+
+  temperature: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
+  temperature_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, $
+    type=temperature
+  GPH: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=GPH
+  GPH_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=GPH
+  refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
+  refIWC: Quantity, vGrid=vGridRefIWC, hGrid=hGridStandard, type=CloudIce
+  
+  ;; ----------------------------------------- Volume mixing ratios
+
+  ;; We'll make extensive use of m4 macros here.
+  ;; First macros that define individual molecules.
+  !define(constructLinearVMR,{$1: Quantity, vGrid=vGridStandard, $
+    hGrid=hGridStandard, type=vmr, molecule=$1!nl})
+  !define(constructLinearVMROH,{$1: Quantity, vGrid=vGridOH, $
+    hGrid=hGridStandard, type=vmr, molecule=$1!nl})
+  !define(constructLogVMR,{$1: Quantity, vGrid=vGridStandard, $
+    hGrid=hGridStandard, type=vmr, molecule=$1, /logBasis, minValue=0.1 ppmv!nl})
+  !define(constructHiResLinearVMR,{$1{_HR}: Quantity, vGrid=vGridHiRes, $
+    hGrid=hGridStandard, type=vmr, molecule=$1!nl})
+  !define(constructHiResLogVMR,{$1{_HR}: Quantity, vGrid=vGridHiRes, $
+    hGrid=hGridStandard, type=vmr, molecule=$1, /logBasis, minValue=0.1 ppmv!nl})
+
+  ;; Define the 'standard' vmrs
+  !forall( {constructLinearVMR}, !allLinearMolecules )
+  !forall( {constructLinearVMROH}, !OHMolecule )
+  !forall( {constructLogVMR}, !allLogMolecules )
+
+  ;; Define the 'HiRes' vmrs
+  ;; Note! Do not put a space before the closing parentheses as it
+  ;; screws ends up between the molecule name and the _HR for the last
+  ;; molecule in the list!
+  !forall( {constructHiResLinearVMR}, !allLinearHRMolecules)
+  !forall( {constructHiResLogVMR}, !allLogHRMolecules)
+
+  ;; ----------------------------------------- RHI
+  rhi: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=rhi, $
+    molecule=h2o
+  rhi_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=rhi, $
+    molecule=h2o
+
+  ;; special quantity for RHi retrieval using saturated radiances
+  RHiVMRSNGL:Quantity, vGrid=vGridrhisngllyr, $
+    hGrid=hGridStandard, type=vmr, molecule=RHi
+  RHiVMR:Quantity, vGrid=vGridrhiprfl, $
+    hGrid=hGridStandard, type=vmr, molecule=RHi
+
+  ;; ----------------------------------------- Columns
+  tpPressure: Quantity, type=boundaryPressure, hGrid=hGridStandard
+  oneHundredHPa: Quantity, type=boundaryPressure, hGrid=hGridStandard
+  !define(constructColumn,{column_$1: Quantity, type=columnAbundance, $
+    molecule=$1, hGrid=hGridStandard!nl})
+
+  !forall( {constructColumn}, !allLinearMolecules )
+  !forall( {constructColumn}, !OHMolecule )
+  !forall( {constructColumn}, !allLogMolecules )
+  !define(allColumns,
+    {!makelist({column_},{},!allLinearMolecules),!makelist({column_},{},!allLogMolecules),!makelist({column_},{},!OHMolecule)})
+
+  ;; ----------------------------------------- Cloud Input/Output
+  hGridFine: hGrid, type=regular, spacing=0.5 degrees, origin=0 degrees, $
+  module=GHz, /forbidOverspill, /insetOverlaps
+  
+  PSD:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=sizeDistribution
+  earthradius: Quantity, hGrid=hGridStandard, type=earthradius
+  surfaceType: Quantity, hGrid=hGridStandard, type=surfaceType
+
+  IWP:  Quantity, vGrid=vGridRefIWP, hGrid=hGridStandard, type=CloudIce
+  IWPR1A:  Quantity, vGrid=vGridRefIWP, hGrid=hGridStandard, type=CloudIce
+  IWPR2:  Quantity, vGrid=vGridRefIWP, hGrid=hGridStandard, type=CloudIce
+  IWPR3:  Quantity, vGrid=vGridRefIWP, hGrid=hGridStandard, type=CloudIce
+  IWPR4:  Quantity, vGrid=vGridRefIWP, hGrid=hGridStandard, type=CloudIce
+
+  IWC:  Quantity, vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
+  LWC:  Quantity, vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudWater
+
+  iwcR1A: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
+  iwcR2: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
+  iwcR3: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
+  iwcR4: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
+
+  IwcFine:  Quantity, vGrid=vGridIWC, hGrid=hGridFine, type=CloudIce
+
+  trans:   Quantity, type=  losTransFunc,   Sgrid=sGridStandard, module=GHz
+  cext:    Quantity, vGrid= vGridBaseline, hGrid=hGridStandard, type=cloudExtinction
+  cextFine:    Quantity, vGrid= vGridBaseline, hGrid=hGridFine, type=cloudExtinction
+
+  ;; Folded radiance-like quantities for cloud models
+  !define(constructDT,{DTband$1: Quantity, $
+    type=cloudInducedRadiance, signal=!signal($1)!nl})
+  !forall(constructDT,!allBands)
+  !forall(constructDT,!allBandLSBs)
+  !forall(constructDT,!allBandUSBs)
+  
+  !define(constructSENS,{SENSband$1: Quantity, $
+    type=cloudRADSensitivity, signal=!signal($1)!nl})
+  !forall(constructSENS,!allBandLSBs)
+  !forall(constructSENS,!allBandUSBs)
+
+  !define(allDTs,{!makelist({DTBand},{},!allBands)})
+  !define(allDTLSBs,{!makelist({DTBand},{},!allBandLSBs)})
+  !define(allDTUSBs,{!makelist({DTBand},{},!allBandUSBs)})
+  !define(allSplitDTs,{!allDTLSBs,!allDTUSBs})
+  !define(allSens,{!makelist({sensBand},{},!allLSBands)})
+  !define(allSens,{!makelist({sensBand},{},!allUSBands)})
+  
+  !define(constructEOD,{EODband$1: Quantity, $
+    type=effectiveOpticalDepth, signal=!signal($1)!nl})
+  !forall(constructEOD,!allBands)
+  !define(allEODS,{!makelist({EODband},{},!allBands)})
+
+  massMeanDiameterIce: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+    type=massMeanDiameterIce
+  massMeanDiameterWater: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+    type=massMeanDiameterWater
+
+  ;; Here we define the key band/channels for cloud flagging for each
+  ;; radiometer.
+  !define(cloudBandForR1A,32) !define(cloudChannelForR1A,4)
+  !define(cloudBandForR1B,34) !define(cloudChannelForR1B,4)
+  !define(cloudBandForR2,5)   !define(cloudChannelForR2,1)
+  !define(cloudBandForR3,33)  !define(cloudChannelForR3,3)
+  !define(cloudBandForR4,11)  !define(cloudChannelForR4,23)
+  !define(cloudBandForR5H,15) !define(cloudChannelForR5H,25)
+  !define(cloudBandForR5V,18) !define(cloudChannelForR5V,25)
+  ;; Some macros to invoke them
+  !define(cloudBandForRad,{!cloudBandFor$1})
+  !define(cloudChannelForRad,{!cloudChannelFor$1})
+
+  !define(makeOneRadDT,{dt$1: Quantity, type=singleChannelRadiance, signal=!signal(!cloudBandFor$1)!nl})
+  !forall(makeOneRadDT,!allRadiometers)
+  !define(allRadDTs,{!makelist({dt},{},!allRadiometers)})
+
+  ;; cloudMax quantities in l2gp format for quality flag uses
+  !define(constructCloudMinMax,{!dnl
+  cloudRadMin$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandFor$1), $
+    vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax
+  cloudRadMax$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandFor$1), $
+    vGrid=vGridStandard, hGrid=hGridStandard, type=cloudMinMax!nl})
+  !forall(constructCloudMinMax,!allRadiometers)
+  !define(allCloudMinMax,{!dnl
+    !makelist({cloudRadMin},{},!allRadiometers), $
+    !makelist({cloudRadMax},{},!allRadiometers)})
+
+  ;; More quality flag precursors
+  !define(constructOneCloudSummary,{!dnl
+  lowCloudSummary$1:  Quantity, type=cloudMinMax, signal=!signal(!cloudBandFor$1), $
+    vGrid=vGridLowCloud$1, hGrid=hGridStandard
+  highCloudSummary$1: Quantity, type=cloudMinMax, signal=!signal(!cloudBandFor$1), $
+    vGrid=vGridHighCloud$1, hGrid=hGridStandard!nl})
+  !forall(constructOneCloudSummary,!allRadiometers)
+  !define(allCloudSummaries,{!dnl
+    !makelist({lowCloudSummary},{},!allRadiometers), $
+    !makelist({highCloudSummary},{},!allRadiometers)})
+
+  ;; ----------------------------------------- Baselines
+  !define(constructBaselineFine,{baselineFine$1: Quantity, type=baseline, $
+    radiometer=$1, hGrid=hGridfine, vGrid=vGridBaseline, $
+    fGrid=fGridBaseline$1!nl})
+
+  !forall(constructBaselineFine, !allRadiometers )
+  !define(allBaselinesFine, {!makelist({baselineFine},{},!allRadiometers)})
+
+  !define(constructBaseline,{baseline$1: Quantity, type=baseline, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridBaseline, $
+    fGrid=fGridBaseline$1!nl})
+
+  !forall(constructBaseline, !allRadiometers )
+  !define(allBaselines, {!makelist({baseline},{},!allRadiometers)})
+
+; these are the MAF baselines
+; radiometers
+
+  !define(constructMAFBaseline,{baselineMAF$1: Quantity, type=baseline, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridMAFBaseline, $
+    fGrid=fGridBaseline$1!nl})
+
+  !forall(constructMAFBaseline, !allRadiometers )
+  !define(allMAFBaselines, {!makelist({baselineMAF},{},!allRadiometers)})
+
+; DACS
+
+  baselineMAFDACS22: Quantity, type=baseline,radiometer=R1A, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineDACS22
+  baselineMAFDACS23: Quantity, type=baseline, radiometer=R2,  $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineDACS23
+  baselineMAFDACS24: Quantity, type=baseline, radiometer=R3, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineDACS24
+  baselineMAFDACS25: Quantity, type=baseline, radiometer=R3, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineDACS25
+  baselineMAFDACS26: Quantity, type=baseline, radiometer=R1B, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineDACS26
+
+  !define(allMAFDACSBaselines, {!makelist({baselineMAF},{},!allDACS)})
+
+; MB
+
+  baselineMAFMB27: Quantity, type=baseline,radiometer=R2, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineMB27
+  baselineMAFMB28: Quantity, type=baseline, radiometer=R4,  $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineMB28
+  baselineMAFMB29: Quantity, type=baseline, radiometer=R4, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineMB29
+  baselineMAFMB30: Quantity, type=baseline, radiometer=R4, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineMB30
+  baselineMAFMB31: Quantity, type=baseline, radiometer=R4, $
+                      hgrid = hGridStandard, vgrid = vGridMAFBaseline, $
+                      fGrid=fGridBaselineMB31
+
+  !define(allMAFMBBaselines, {!makelist({baselineMAF},{},!allMBs)})
+
+
+; MIF baselines
+
+  !define(constructMIFBaseline,{baselineMIF$1: Quantity, type=baseline, $
+    radiometer=$1, fGrid=fGridBaseline$1!nl})
+
+  !forall(constructMIFBaseline, !allRadiometers )
+  !define(allMIFBaselines, {!makelist({baselineMIF},{},!allRadiometers)})
+
+  ;; Need 'grouped' baselines for the R4 bands.
+  !define(constructR4GroupedBaseline,{baselineR4Group$1: Quantity, type=baseline, $
+    radiometer=R4, fGrid=fGridBaselineR4!nl})
+  !forall(constructR4GroupedBaseline,1,2,3)
+  !define(allGroupedBaselines,{!makelist({baselineR4Group},{},1,2,3)})
+; need to define separate dacs baselines
+; to use froall it needs to take two arguments I think which I do not
+; know how to do so I will hard wire this in for now
+
+; DACS
+
+  baselineMIFDACS22: Quantity, type=baseline,radiometer=R1A, $
+                      fGrid=fGridBaselineDACS22
+  baselineMIFDACS23: Quantity, type=baseline, radiometer=R2,  $
+                      fGrid=fGridBaselineDACS23
+  baselineMIFDACS24: Quantity, type=baseline, radiometer=R3, $
+                      fGrid=fGridBaselineDACS24
+  baselineMIFDACS25: Quantity, type=baseline, radiometer=R3, $
+                      fGrid=fGridBaselineDACS25
+  baselineMIFDACS26: Quantity, type=baseline, radiometer=R1B, $
+                      fGrid=fGridBaselineDACS26
+  !define(allMIFDACSBaselines, {!makelist({baselineMIF},{},!allDACS)})
+
+; MB
+
+  baselineMIFMB27: Quantity, type=baseline,radiometer=R2, $
+                      fGrid=fGridBaselineMB27
+  baselineMIFMB28: Quantity, type=baseline, radiometer=R4,  $
+                      fGrid=fGridBaselineMB28
+  baselineMIFMB29: Quantity, type=baseline, radiometer=R4, $
+                      fGrid=fGridBaselineMB29
+  baselineMIFMB30: Quantity, type=baseline, radiometer=R4, $
+                      fGrid=fGridBaselineMB30
+  baselineMIFMB31: Quantity, type=baseline, radiometer=R4, $
+                      fGrid=fGridBaselineMB31
+  !define(allMIFMBBaselines, {!makelist({baselineMIF},{},!allMBs)})
+
+  ;; ----------------------------------------- Extinctions
+
+  !define(constructExtinction,{!dnl
+  extinction$1: Quantity, type=vmr, molecule=extinction, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
+    fGrid=fGridExtinctionConstant!nl})
+
+  !forall(constructExtinction, !allRadiometers)
+  !define(allExtinctions,{!makelist({extinction},{},!allRadiometers)})
+
+  !define(constructTOTALExtinction,{!dnl
+    totalextinction$1: Quantity, type=vmr, molecule=extinction, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
+    fGrid=fGridExtinctionConstant!nl})
+  !forall(constructTOTALExtinction, !allRadiometers)
+  !define(alltotalExtinctions,{!makelist({totalextinction},{},!allRadiometers)})
+  
+  ;; ----------------------------------------- Isotope ratios
+  
+  !define(constructIsotopeRatio,{isotoperatio$1: Quantity, type=isotopeRatio, $
+    molecule=$1!nl})
+    
+  ;; Note! Do not put a space before the close parentheses here
+  ;; otherwise it will end up before the _ratio on the last molecule
+  !forall(constructIsotopeRatio,!isotopicMolecules)
+  !define(allIsotopeRatios,{!makelist({isotoperatio},{},!isotopicMolecules)})
+
+  ;; ----------------------------------------- Radiances
+
+  !define(constructRadiance,{band$1: Quantity, type=radiance, signal=!signal($1)!nl})
+
+  ;; Folded
+  !forall(constructRadiance,!allBands)
+
+  ;; Split
+  !forall(constructRadiance,!allBandLSBs)
+  !forall(constructRadiance,!allBandUSBs)
+
+  ;; All
+  !define(allFoldedRadiances, {!makelist({band},{},!allBands)})
+  !define(allLSBRadiances, {!makelist({band},{},!allBandLSBs)})
+  !define(allUSBRadiances, {!makelist({band},{},!allBandUSBs)})
+  !define(allUnfoldedRadiances,{!allLSBRadiances, !allUSBRadiances})
+
+  ;; ----------------------------------------- L1BMAFBaselines
+  ;; These are the baseline corrections supplied by level 1, and their
+  ;; precisions
+  !define(constructL1BMAFBaseline,{band$1L1BMAFBaseline: Quantity, $
+    type=l1bMAFBaseline, signal=!signal($1)!nl})
+
+  ;; Only worry about folded cases here.
+  !forall(constructL1BMAFBaseline,!allBands)
+
+  ;; Define macro
+  !define(allL1BMAFBaselines, {!makelist({band},{L1BMAFBaseline},!allBands)})
+
+  ;; ----------------------------------------- OpticalDepths
+
+  !define(constructDepth,{depth$1: Quantity, type=opticalDepth, signal=!signal($1)!nl})
+
+  ;; Folded
+  !forall(constructDepth,!allBands)
+
+  ;; Split
+  !forall(constructDepth,!allBandLSBs)
+  !forall(constructDepth,!allBandUSBs)
+
+  ;; All
+  !define(allFoldedDepths, {!makelist({depth},{},!allBands)})
+  !define(allLSBDepths, {!makelist({depth},{},!allBandLSBs)})
+  !define(allUSBDepths, {!makelist({depth},{},!allBandUSBs)})
+  !define(allUnfoldedDepths,{!allLSBDepths, !allUSBDepths})
+
+  ;; ----------------------------------------- Sideband fractions
+
+  !define(constructSidebandFractions, {!dnl
+  limbSidebandFraction$1: Quantity, type=limbSidebandFraction, signal=!signal($1)
+  calSidebandFraction$1: Quantity, type=calSidebandFraction, signal=!signal($1)!nl})
+  
+  ;; These are all split now
+  !forall(constructSidebandFractions,!allBandLSBs)
+  !forall(constructSidebandFractions,!allBandUSBs)
+
+  ;; All
+  !define(allSidebandFractions, {!dnl
+    !makelist({limbSidebandFraction},{},!allBandLSBs), !dnl
+    !makelist({calSidebandFraction},{},!allBandLSBs), !dnl
+    !makelist({limbSidebandFraction},{},!allBandUSBs), !dnl
+    !makelist({calSidebandFraction},{},!allBandUSBs)})
+
+  ;; ----------------------------------------- System temperatures
+
+  !ifdef(flagSIDS,{!dnl
+  !define(constructSystemTemperature, {systemTemperature$1: Quantity, $
+    type=systemTemperature, signal=!signal($1)!nl})
+  
+  !forall(constructSystemTemperature,!allBands)
+
+  !forall(constructSystemTemperature,!allBandLSBs)
+  !forall(constructSystemTemperature,!allBandUSBs)
+
+  ;; All
+  !define(allFoldedSystemTemperatures, {!makelist({systemTemperature},{},!allBands)})
+  !define(allLSBSystemTemperatures, {!makelist({systemTemperature},{},!allBandLSBs)})
+  !define(allUSBSystemTemperatures, {!makelist({systemTemperature},{},!allBandUSBs)})
+  !define(allUnfoldedSystemTemperatures, {!allLSBSystemTemperatures, $
+    !allUSBSystemTemperatures})
+  })
+
+  ;; ----------------------------------------- Noise bandwidths
+
+  !ifdef(flagSIDS,{!dnl
+  !define(constructNoiseBandwidth, {noiseBandwidth$1: Quantity, $
+    type=noiseBandwidth, signal=!signal($1)!nl})
+  
+  !forall(constructNoiseBandwidth,!allBands)
+
+  !forall(constructNoiseBandwidth,!allBandLSBs)
+  !forall(constructNoiseBandwidth,!allBandUSBs)
+
+  ;; All
+  !define(allFoldedNoiseBandwidths, {!makelist({noiseBandwidth},{},!allBands)})
+  !define(allLSBNoiseBandwidths, {!makelist({noiseBandwidth},{},!allBandLSBs)})
+  !define(allUSBNoiseBandwidths, {!makelist({noiseBandwidth},{},!allBandUSBs)})
+  !define(allUnfoldedNoiseBandwidths, {!allLSBNoiseBandwidths, !allUSBNoiseBandwidths})
+  })
+
+  ;; ----------------------------------------- ChiSquares
+
+  !define(ConstructChisqStuff, {!dnl
+    chisqMMAF$1: Quantity, type=chisqMMAF, signal=!signal($1)
+    chisqMMIF$1: Quantity, type=chisqMMIF, signal=!signal($1)
+    chisqChan$1: Quantity, type=chisqChan, signal=!signal($1)
+    noRadsPerMIF$1: Quantity, type=noRadsPerMIF, signal=!signal($1)
+    chisqBinned$1: Quantity, type=chisqBinned, signal=!signal($1), $
+      vGrid=vGridStandard, hGrid=hGridStandard
+    noRadsBinned$1: Quantity, type=noRadsBinned, signal=!signal($1), $
+      vGrid=vGridStandard, hGrid=hGridStandard
+    chisqProfile$1: Quantity, type=chisqBinned, signal=!signal($1), $
+      vGrid=vGridGlobal, hGrid=hGridStandard
+    noRadsProfile$1: Quantity, type=noRadsBinned, signal=!signal($1), $
+      vGrid=vGridGlobal, hGrid=hGridStandard!nl})
+  !forall(ConstructChisqStuff,!allBands)
+
+  !define(allChisqMMAFs,{!makelist({chisqMMAF},{},!allBands)})
+  !define(allChisqMMIFs,{!makelist({chisqMMIF},{},!allBands)})
+  !define(allChisqChans,{!makelist({chisqChan},{},!allBands)})
+  !define(allChisqBinned,{!makelist({chisqBinned},{},!allBands)})
+  !define(allChisqProfile,{!makelist({chisqProfile},{},!allBands)})
+  !define(allNoRadsPerMIF,{!makelist({noRadsPerMIF},{},!allBands)})
+  !define(allNoRadsBinned,{!makelist({noRadsBinned},{},!allBands)})
+  !define(allNoRadsProfile,{!makelist({noRadsProfile},{},!allBands)})
+  
+  ;; These special ones are for assembling composites when doing quality
+  ;; flags etc.
+  chisqTmp: Quantity, type=chisqBinned, signal=!signal(1), $
+    vGrid=vGridGlobal, hGrid=hGridStandard
+  noRadsTmp: Quantity, type=chisqBinned, signal=!signal(1), $
+    vGrid=vGridGlobal, hGrid=hGridStandard
+  temporaryDiagnosticsTemplate: VectorTemplate, quantities=[chisqTmp,noRadsTmp]
+
+  ;; ----------------------------------------- Statuses for products ---
+  !define(constructStatus,{status$1: Quantity, type=status, hGrid=hGridStandard!nl})
+  !define(constructQuality,{quality$1: Quantity, type=quality, hGrid=hGridStandard!nl})
+  !define(constructConvergence,{Convergence$1: Quantity, type=quality, hGrid=hGridStandard!nl})
+  !forall(constructStatus,!allStandardProducts,!allHiResProducts)
+  !forall(constructQuality,!allStandardProducts,!allHiResProducts)
+  !forall(constructConvergence,!allStandardProducts,!allHiResProducts)
+  !define(allStatuses,{!makelist({status},{},!allStandardProducts,!allHiResProducts)})
+  !define(allQualities,{!makelist({quality},{},!allStandardProducts,!allHiResProducts)})
+  !define(allConvergences,{!makelist({convergence},{},!allStandardProducts,!allHiResProducts)})
+
+  ;; ----------------------------------------- Scan residuals
+
+  scanResidualGHz: Quantity, type=scanResidual, module=GHz
+  scanResidualTHz: Quantity, type=scanResidual, module=THz
+
+  ;; ----------------------------------------- Elevation offsets
+
+  !define(constructElev,{elev$1: Quantity, type=elevOffset, signal=!signal($1)!nl})
+  !forall(constructElev,!allBandLSBs,!allBandUSBs)
+  !define(allElevs, {!makelist({elev},{},!allBandLSBs,!allBandUSBs)})
+
+  ;; ----------------------------------------- Retrieval diagnostics
+  !define(allRetrievalDiagnostics,{!tidyList( $
+    dnwt_abandoned, dnwt_ajn, dnwt_axmax, dnwt_cait, dnwt_chiSqMinNorm, dnwt_chiSqNorm, dnwt_chiSqRatio, $
+    dnwt_diag, dnwt_dxdx, dnwt_dxdxl, dnwt_dxn, dnwt_dxnl, dnwt_fnmin, dnwt_fnorm, $
+    dnwt_gdx, dnwt_gfac, dnwt_gradn, dnwt_sq, dnwt_sqt, numJ, dnwt_flag, $
+    jacobian_rows, jacobian_cols)})
+  hGridDiag: hGrid, type=explicit, module=GHz, geodAngle= 0 degrees
+  !define(constructRetrievalDiagnostic, !dnl
+  {!ifdef(flagOutputDiagnosticsDGG,!dnl
+  {$1: Quantity, type=$1, $
+    vGrid=vGridDiag, hGrid=hGridDiag!nl}, !dnl
+  {$1: Quantity, type=$1, $
+    vGrid=vGridIterations!nl})})
+  !forall(constructRetrievalDiagnostic,!allRetrievalDiagnostics)
+  !define(outputRetrievalDiagnostics,{!tidyList( $
+    dnwt_chiSqNorm, dnwt_chiSqMinNorm, dnwt_chiSqRatio, $
+    jacobian_rows, jacobian_cols, dnwt_flag, dnwt_sq, dnwt_sqt)})
+
+  ;; ----------------------------------------- Other minor stuff
+
+  magneticField: quantity, type=magneticField, vGrid=vGridStandard, hGrid=hGridStandard
+  fieldAzimuth: quantity, type=fieldAzimuth, vGrid=vGridStandard, hGrid=hGridStandard
+  fieldElevation: quantity, type=fieldElevation, vGrid=vGridStandard, hGrid=hGridStandard
+  fieldStrength: quantity, type=fieldStrength, vGrid=vGridStandard, hGrid=hGridStandard
+
+  earthReflectivity: quantity, type=earthRefl
+  orbitInclination: Quantity, type=orbitInclination, module=SC
+  spaceRadiance: quantity, type=spaceRadiance
+
+  scGeocAlt: Quantity, type=scGeocAlt, module=SC
+  tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz
+  tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=THz
+
+  scECI: quantity, type=scECI, module=SC
+  tngtECIGHz: quantity, type=tngtECI, module=GHz
+  tngtECITHz: quantity, type=tngtECI, module=THz
+
+  scVelECI: quantity, type=scVelECI, module=SC
+  scVelECR: quantity, type=scVelECR, module=SC
+  losVelGHz: quantity, type=losVel, module=GHz
+  losVelTHz: quantity, type=losVel, module=THz
+  ECRtoFOV: quantity, type=ECRtoFOV, module=GHz
+
+  !define(lesserState, {magneticField, fieldAzimuth, fieldElevation, fieldStrength, $
+    earthReflectivity, orbitInclination, spaceRadiance, $
+    scGeocAlt, tngtGeocAltGHz, tngtGeocAltTHz, scECI, tngtECIGHz, tngtECITHz, $
+    scVelECR, scVelECI, losVelGHz, losVelTHz, ECRtoFOV})
+
+  ;; ------------------------------------------- Now define vector templates
+
+  ;; Put extra line breaks here to get round a problem I'm having
+  ;; running this with NAG.
+  stateTemplate: VectorTemplate, quantities = [ $
+    ptanGHZ, ptanTHz, phitanGHz, phitanTHz, $
+    temperature, temperature_HR, $
+    refGPH, GPH, GPH_HR, $
+    tpPressure, oneHundredHPa, $
+    iwc, iwcFine, iwcR1A, iwcR2, iwcR3, iwcR4, lwc, $
+    iwp, iwpR1A, iwpR2, iwpR3, iwpR4, $
+    surfaceType, psd, earthRadius, $
+    trans, cext, cextFine, $
+    massMeanDiameterIce, massMeanDiameterWater, $
+    !allMolecules, $
+    !allHiResMolecules, $
+    RHiVMR, RHiVMRSNGL, rhi, rhi_HR, $
+    !allColumns, $
+    !allBaselines, $
+    !allBaselinesFine, $
+    !allMAFBaselines, $
+    !allMAFDACSBaselines, $
+    !allMAFMBBaselines, $
+    !allMIFBaselines, $
+    !allMIFDACSBaselines, $
+    !allMIFMBBaselines, $
+    !allGroupedBaselines, $
+    !allExtinctions, $
+    !alltotalExtinctions, $
+    !allIsotopeRatios, $
+    !allSidebandFractions, $
+    !ifdef(flagSIDS,{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
+    !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths,}) !allElevs, $
+    !lesserState ]
+
+  !ifdef(flagUnfolded,{
+  measurementTemplate: VectorTemplate, quantities = [ $
+    !allFoldedRadiances, !allUnfoldedRadiances, scanResidualGHz, scanResidualTHz ]
+  },{
+  measurementTemplate: VectorTemplate, quantities = [ $
+    !allFoldedRadiances, scanResidualGHz, scanResidualTHz ]
+  })
+  correctionsTemplate: VectorTemplate, quantities = [ !allL1BMAFBaselines ]
+
+  depthTemplate: VectorTemplate, quantities = [ !allFoldedDepths ]
+
+  retrievalDiagnosticsTemplate: VectorTemplate, quantities = [ !allRetrievalDiagnostics ]
+
+  minorFrameDiagnosticsTemplate: VectorTemplate, quantities = [ $
+    !allChisqMMAFs, !allChisqMMIFs, !allChisqChans, $
+    !allNoRadsPerMIF ]
+
+  mappedChisqTemplate: VectorTemplate, quantities = [ !allChisqBinned ]
+
+  otherDiagnosticsTemplate: VectorTemplate, quantities = [ !allNoRadsBinned, $
+    !allChisqProfile, !allNoRadsProfile, $
+    !allStatuses, !allQualities, !allConvergences, $
+    !allCloudSummaries ]
+
+  !ifdef(flagUnfolded,{
+  cloudOutputTemplate: VectorTemplate, quantities = [ $
+    !allFoldedRadiances, !allUnfoldedRadiances, !allDTs, !allSplitDTs, !allCloudMinMax, !allRadDTs ]
+  },{
+  cloudOutputTemplate: VectorTemplate, quantities = [ $
+    !allFoldedRadiances, !allDTs, !allCloudMinMax, !allRadDTs ]
+  })
+    
+end Construct
+ ; These will be used after all the chunks have been processed.              
+ ; Still we are trying to get all the standard species constructed early.    
+
+begin Construct                                                             
+  phaseTiming: quantity, type=phaseTiming,  $                               
+    vGrid=vGridPhases                                                       
+  sectionTiming: quantity, type=phaseTiming,  $                             
+    vGrid=vGridPhases                                                       
+  chunkNumMMAF: quantity, type=geolocation, module= GHz                     
+  geodLatMMAF: quantity, type=geolocation, module= GHz                      
+  solarZenithMMAF: quantity, type=geolocation, module= GHz                  
+  timingTemplate: VectorTemplate, quantities = [ $                          
+    phaseTiming, sectionTiming, chunkNumMMAF, geodLatMMAF, solarZenithMMAF $
+    ]                                                                       
+
+end Construct                                                               
+
+  ; These temporary vectors, which must be declared
+  ; in a Fill section, will be used in every storeStandardProduct
+  ; invocation (rather trhan risk clobbering something more valuable)
+
+begin Fill
+  tempVectorState: Vector, template=stateTemplate
+  tempVectorPrecision: Vector, template=stateTemplate
+  tempVectorDiagnostics: Vector, template=otherDiagnosticsTemplate
+end Fill

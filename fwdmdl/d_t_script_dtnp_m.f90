@@ -193,7 +193,7 @@ contains
   end subroutine DT_SCRIPT_DF_W0
 
   ! --------------------------------------------------  DT_SCRIPT  -----
-  subroutine DT_SCRIPT ( dBdx, ETA_ZXP, NZ_ZXP, NNZ_ZXP, DT_SCR, W0, dTScat )
+  subroutine DT_SCRIPT ( dBdx, ETA_ZXP, NZ_ZXP, NNZ_ZXP, DT_SCR )
 
 !{ From {\tt dBdx} = $\frac{\partial B}{\partial x}$ compute
 !  $\frac{\partial B}{\partial x_{np}} =
@@ -214,9 +214,6 @@ contains
     real(rp), intent(in) :: eta_zxp(:,:)  ! path eta functions
     integer, intent(in) :: nz_zxp(:,:)    ! Where eta_zxp is not zero
     integer, intent(in) :: nnz_zxp(:)     ! Numbers of rows in nz_zxp
-    real(rp), intent(in), optional :: W0(:)       ! On the path
-    real(rp), intent(in), optional :: dTScat(:,:) ! Path X SV.  On the path,
-                                          ! w.r.t. molecules in the grid.
 
 ! output
 
@@ -240,14 +237,6 @@ contains
         & 0.5 * dbdx(nz_zxp(:nnz_zxp(sv_i),sv_i)) * &
         & eta_zxp(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
     end do
-
-    if ( present(w0) .and. present(dTScat) ) then
-      do sv_i = 1, n_sv
-        dT_x_eta(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i) = &
-          & dT_x_eta(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i) + &
-          & 0.5 * w0 * dTScat(nz_zxp(:nnz_zxp(sv_i),sv_i),sv_i)
-      end do
-    end if
 
     do sv_i = 1 , n_sv
       dt_scr(1,sv_i) = dT_x_eta(1,sv_i) + dT_x_eta(2,sv_i)
@@ -285,13 +274,6 @@ contains
 
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
-! Revision 2.12  2011/03/23 23:45:32  vsnyder
-! This log entry is bogus.  Check in again to get the right one.
-! FOV_Convolve_m.f90
-!
-! Revision 2.11  2010/09/25 01:12:37  vsnyder
-! Add dT_script_dT and dT_script_df, some cannonball polishing
-!
 ! Revision 2.10  2010/06/23 02:38:19  vsnyder
 ! Improve TeXnicalities
 !

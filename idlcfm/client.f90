@@ -1,6 +1,7 @@
 program client
    use PVM
    use CFM
+   use CFM, only: QUANTITYTEMPLATE_T
    use machine, only: getarg
    use MLSStrings, only: ReadIntsFromChars
 
@@ -58,3 +59,6 @@ program client
 end program client
 
 ! $Log$
+! Revision 1.1  2011/03/15 15:23:50  honghanh
+! Initial imports
+!

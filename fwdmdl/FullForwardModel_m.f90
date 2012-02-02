@@ -330,8 +330,8 @@ contains
       & Radiometers, Signal_t
     use MLSStringLists, only: switchDetail
     use Molecules, only: First_Molecule, Last_Molecule, &
-      & L_H2O, L_N2O, L_O3
-    use Output_m, only: OUTPUT
+      & L_CLOUD_A, L_H2O, L_N2O, L_O3
+    use Output_m, only: OUTPUT, OUTPUTNAMEDVALUE
     use Path_Contrib_M, only: Get_GL_Inds
     use Physics, only: SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS, PointingGrid_T
@@ -413,6 +413,7 @@ contains
     integer :: IER                ! Status flag from allocates
     integer :: I                  ! Loop index and other uses.
     integer :: INST               ! Instance of temperature nearest to MAF
+    integer :: IWC_Ind            ! S_Ind(L_IWC) = index of IWC in Grids_f
     integer :: J                  ! Loop index and other uses.
     integer :: K                  ! Loop index and other uses.
     integer :: MAF                ! MAF under consideration
@@ -502,6 +503,7 @@ contains
     real(rp) :: ALPHA_PATH_C(max_c)   ! coarse grid absorption coefficient
     real(rp) :: ALPHA_PATH_F(max_f)   ! fine grid absorption coefficient
     real(rp) :: B(max_c)              ! Planck radiation function
+    real(rp) :: B_TScat(s_ts*max_c)   ! (TT_PATH_C - B) * W0_PATH_C
     real(rp) :: BETA_PATH_cloud_C(s_i*max_c) ! Beta on path coarse
     real(rp) :: Beta_c_a_path_c(s_ts*max_c)  ! Beta_c_a on coarse path
     real(rp) :: Beta_c_e_path_c(s_ts*max_c)  ! Beta_c_e on coarse path
@@ -514,8 +516,10 @@ contains
     real(rp) :: DEL_ZETA(max_c)       ! Integration lengths in Zeta coords
                                       !  along coarse path, (2:npc-1)
     real(rp) :: dBeta_c_a_dIWC_path_C(s_ts*max_c)  ! on coarse path
+    real(rp) :: dBeta_c_e_dIWC_path_C(s_ts*max_c)  ! on coarse path
     real(rp) :: dBeta_c_s_dIWC_path_C(s_ts*max_c)  ! on coarse path
     real(rp) :: dBeta_c_a_dT_path_C(s_ts*max_c)    ! on coarse path
+    real(rp) :: dBeta_c_e_dT_path_C(s_ts*max_c)    ! on coarse path
     real(rp) :: dBeta_c_s_dT_path_C(s_ts*max_c)    ! on coarse path
     real(rp) :: DHDZ_PATH(max_f)      ! dH/dZ on fine path (1:npf)
     real(rp) :: DHDZ_GW_PATH(max_f)   ! dH/dZ * GW on fine path (1:npf)
@@ -524,8 +528,8 @@ contains
     real(rp) :: DSDZ_GW_PATH(max_f)   ! ds/dH * dH/dZ * GW on path
     real(rp) :: DTanh_DT_C(max_c)     ! 1/tanh1_c d/dT tanh1_c
     real(rp) :: DTanh_DT_F(max_f)     ! 1/tanh1_f d/dT tanh1_f
-    real(rp) :: dTScat_df(s_ts*max_c,size(grids_f%values))   ! on path w.r.t. SVE
-    real(rp) :: dTScat_dT(s_ts*max_c,size(grids_tmp%values)) ! on path w.r.t. SVE
+    real(rp) :: dTScat_df(s_ts*max_c,size(grids_f%values))
+    real(rp) :: dTScat_dT(s_ts*max_c,size(grids_tmp%values))
     real(rp) :: H_PATH(max_f)         ! Heights on path
     real(rp) :: H_PATH_C(max_c)       ! H_PATH on coarse grid
     real(rp) :: H_PATH_F(max_f)       ! H_PATH on fine grid
@@ -551,16 +555,14 @@ contains
                                       ! species grids, sans duplicates.
     ! BETA_PATH_C has a frequency dimension.  It is d_Alpha/dVMR, which is
     ! needed to compute d_W0/dVMR.
-!   real(rp) :: BETA_PATH_C(max_c,no_mol)          ! on path coarse
-    real(rp) :: BETA_PATH_F(max_f,no_mol)          ! on path fine
+!   real(rp) :: BETA_PATH_C(max_c,no_mol)  ! Beta on path coarse
+    real(rp) :: BETA_PATH_F(max_f,no_mol)  ! Beta on path fine
     real(rp) :: D_DELTA_DF(s_a*max_c,size(grids_f%values)) ! Incremental 
                                       ! opacity derivative schlep from drad_tran_dt
                                       ! to get_d_deltau_pol_df.  Path x SVE.
-    real(rp) :: D_T_SCR_dT(max_c,s_t*sv_t_len)     ! D Delta_B in some notes
+    real(rp) :: D_T_SCR_dT(max_c,s_t*sv_t_len)  ! D Delta_B in some notes
                                       ! path x state-vector-components
     real(rp) :: D2X_DXDT(no_tan_hts,s_t*sv_t_len)  ! (No_tan_hts, nz*np)
-    real(rp) :: DALPHA_DF_PATH_C(max_c,no_mol)     ! on coarse path
-    real(rp) :: DALPHA_DF_PATH_F(max_f,no_mol)     ! on GL path
     real(rp) :: DB_DF(s_ts*max(s_a,s_t)*max_c)     ! dB / d one f on the path, for TScat
     real(rp) :: DBETA_DF_PATH_C(merge(max_c,0,any(grids_f%where_dBeta_df /= 0)),&
                                 count(grids_f%where_dBeta_df /= 0))
@@ -601,8 +603,6 @@ contains
     real(rp) :: SPECT_N_PATH(max_f,size(fwdModelConf%lineWidth_TDep)) ! Line Width Temperature Dependence
     real(rp) :: SPECT_V_PATH(max_f,size(fwdModelConf%lineCenter)) ! Line Center
     real(rp) :: SPECT_W_PATH(max_f,size(fwdModelConf%lineWidth)) ! Line Width
-    real(rp) :: SPS_PATH_C(max_c,no_mol)           ! species on coarse path
-    real(rp) :: SPS_PATH_F(max_f,no_mol)           ! species on GL path
     real(rp) :: SPS_PATH(max_f,no_mol)             ! species on path
     real(rp) :: TT_PATH(max_f,s_i)                 ! TScat on path along the LOS
     real(rp) :: T_GLGRID(maxVert,no_sv_p_t)        ! Temp on glGrid surfs
@@ -1320,7 +1320,7 @@ contains
       use Dump_0, only: DUMP
       use FOV_Convolve_m, only: Convolve_Support_T, FOV_Convolve_Setup, &
         & FOV_Convolve_Teardown, No_FFT
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
       use MLSNumerics, only: Coefficients => Coefficients_r8, &
         & InterpolateArraySetup, InterpolateArrayTeardown
 
@@ -1892,6 +1892,8 @@ contains
       real(rp) :: H_AVG      ! Frequency-averaged value
       integer :: SV_Q, SV_R  ! State-vector indexes
 
+      integer :: status
+
       if ( combine ) then
         ! Simply add newly-computed PFA derivatives in K_frq to
         ! previously-averaged LBL derivatives in K.  Remember that
@@ -1971,6 +1973,7 @@ contains
 
       integer :: K, KK  ! Loop inductor
       integer :: UB     ! Upper bound for first dimension of h_..._frq
+      integer :: status
 
       ub = noFreqs
       if ( combine ) ub = max(ub,noUsedChannels)
@@ -2000,6 +2003,7 @@ contains
 
   ! ..........................................  Frequency_Setup_1  .....
     subroutine Frequency_Setup_1 ( Tan_Press, Grids )
+      use output_m, only: outputNamedValue
 
       ! Work out which pointing frequency grid we're going to need
 
@@ -2759,9 +2763,8 @@ contains
       use Dump_Path_m, only: Dump_Path
       use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
         & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
-      use Get_dAlpha_df_m, only: Get_dAlpha_df
       use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_df, Get_d_Deltau_pol_dT
-      use Get_Eta_Matrix_m, only: Select_NZ_List
+      use Get_Eta_Matrix_m, only: Interpolate_Stru, Select_NZ_List
       use Interpolate_Mie_m, only: Interpolate_Mie
       use Load_Sps_Data_m, only:  Load_One_Item_Grid
       use Mcrt_m, only: Mcrt_der
@@ -2770,6 +2773,7 @@ contains
       use Physics, only: H_OVER_K
       use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
         & D2RAD_TRAN_DF2, DRAD_TRAN_DT, DRAD_TRAN_DX
+      use Read_Mie_m, only: F_s
       use ScatSourceFunc, only: T_SCAT, Interp_Tscat, Convert_Grid
       use Tau_M, only: Get_Tau
       use TScat_Support_m, only: Get_dB_dT, Mie_Freq_Index
@@ -2831,17 +2835,16 @@ contains
 
       ! Compute the sps_path for this Frequency
       call comp_sps_path_frq ( Grids_f, Frq, eta_zp(:npf,:), &
-        & do_calc_zp, sps_path(:npf,:),                      &
+        & do_calc_zp, sps_path,                              &
         & do_calc_fzp, eta_fzp(:npf,:),                      &
         & firstSignal%lo, thisSideband )
 !         ! Send all of eta_zp so comp_sps_path_frq_nz doesn't get an array
 !         ! bounds error when it's clearing parts indexed by nz_zp.
 ! I don't know why this doesn't work
 !         call comp_sps_path_frq_nz ( Grids_f, Frq, eta_zp, nz_zp, nnz_zp, &
-!           & do_calc_zp, sps_path(:npf,:),                                &
+!           & do_calc_zp, sps_path,                                        &
 !           & do_calc_fzp, eta_fzp(:npf,:), nz_fzp, nnz_fzp,               &
 !           & firstSignal%lo, thisSideband )
-      sps_path_c(:npc,:) = sps_path(c_inds,:)
 
       if ( pfa ) then
         call get_beta_path_PFA ( frq, frq_i, z_path, c_inds, t_path_c, &
@@ -2957,7 +2960,7 @@ contains
         end if
 
         do j = 1, npc ! Don't trust compilers to fuse loops
-          alpha_path_c(j) = dot_product( sps_path_c(j,:), &
+          alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
                                 &        beta_path_c(j,:) )     &
                                 & + beta_path_cloud_c(j)
           incoptdepth(j) = alpha_path_c(j) * del_s(j)
@@ -2977,7 +2980,7 @@ contains
         !  $\Delta \delta_{i\rightarrow i-1} \approx G(\zeta_i) \delta s_i$.
 
         do j = i_start, i_end ! Don't trust compilers to fuse loops
-          alpha_path_c(j) = dot_product( sps_path_c(j,:), &
+          alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
                                        & beta_path_c(j,:) )
           incoptdepth(j) = alpha_path_c(j) * del_s(j)
         end do
@@ -3047,8 +3050,9 @@ contains
 
         do j = 1, npc
           alpha_path_polarized(-1:1,j) = &
-            & matmul( beta_path_polarized(-1:1,j,:), sps_path_c(j,:) ) *  &
-            & tanh1_c(j) + 0.25 * alpha_path_c(j)
+            & matmul( beta_path_polarized(-1:1,j,:),       &
+            &         sps_path(c_inds(j),:) ) * tanh1_c(j) &
+            & + 0.25 * alpha_path_c(j)
           alpha_path_polarized(0,j) = alpha_path_polarized(0,j) + &
             & 0.25 * alpha_path_c(j)
         end do
@@ -3111,7 +3115,6 @@ contains
       gl_inds => gl_inds_b(:ngl)
       ! ngl is ng * count(do_gl)
       t_path_f(:ngl) = t_path(gl_inds)
-      sps_path_f(:ngl,:) = sps_path(gl_inds,:)
 
       if ( pfa ) then
 
@@ -3138,19 +3141,20 @@ contains
           & gl_inds, beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,       &
           & vel_rel, dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f,       &
           & dbeta_dv_path_f, dbeta_df_path_f, grids_f%where_dBeta_df,         &
-          & sps_path )
+          &  sps_path )
 
       end if ! .not. pfa
 
       do j = 1, ngl ! loop around dot_product instead of doing sum(a*b,2)
                     ! to avoid path-length array temps
-        alpha_path_f(j) = dot_product( sps_path_f(j,:), beta_path_f(j,:) )
+        alpha_path_f(j) = dot_product( sps_path(gl_inds(j),:),  &
+                                     & beta_path_f(j,:) )
       end do
 
       if ( print_incopt ) then
-        call dump ( beta_path_c(i_start:i_end,:), name="Beta_Path_C" )
-        call dump ( sps_path_c(i_start:i_end,:), name="SPS_Path" )
-        call dump ( alpha_path_c(i_start:i_end), name="Alpha_Path_C" )
+        call dump ( beta_path_c(i_start+1:i_end-1,:), name="Beta_Path" )
+        call dump ( sps_path(c_inds(i_start+1:i_end-1),:), name="SPS_Path" )
+        call dump ( alpha_path_c(i_start+1:i_end-1), name="Alpha_Path_C" )
         call dump ( incoptdepth(i_start+1:i_end-1), name="Incoptdepth" )
         call dump ( del_s(i_start+1:i_end-1), name="Del_s" )
       end if
@@ -3200,7 +3204,7 @@ contains
         end if
 
         if ( print_path ) call dump_path ( fwdModelConf, i_start, i_end, &
-          & phi_path(c_inds), z_path(c_inds), sps_path_c(:npc,:), beta_path_c, &
+          & phi_path(c_inds), z_path(c_inds), sps_path(c_inds,:), beta_path_c, &
           & alpha_path_c, incoptdepth, frq_i, tau, inc_rad_path )
 
       else ! Polarized model; can't combine with PFA or TScat
@@ -3222,7 +3226,7 @@ contains
         do j = 1, ngl
           alpha_path_polarized_f(-1:1,j) = &
             & matmul( beta_path_polarized_f(-1:1,j,:), &
-            &         sps_path_f(j,:) ) * tanh1_f(j) &
+            &         sps_path(gl_inds(j),:) ) * tanh1_f(j) &
             & + 0.25 * alpha_path_f(j)
           alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) +               &
             & 0.25 * alpha_path_f(j)
@@ -3261,42 +3265,27 @@ contains
 
       if ( atmos_der ) then
 
-        call get_dAlpha_df ( sps_path_c(:npc,:), beta_path_c(:npc,:), &
-          &                  dBeta_df_path_c(:npc,:), Grids_f,      &
-          &                  dAlpha_df_path_c(:npc,:) )
-
-        call get_dAlpha_df ( sps_path_f(:ngl,:), beta_path_f(:ngl,:), &
-          &                  dBeta_df_path_f(:ngl,:), Grids_f,      &
-          &                  dAlpha_df_path_f(:ngl,:) )
-
         if ( fwdModelConf%useTScat ) then
 
-          ! It is important NOT to put :nfp and :ngl bounds on the first
-          ! dimensions of eta_fzp and dAlpha_df_path_f because these
-          ! correspond to explicit-shape dummy arguments.  Doing so would
-          ! cause the compiler to take a copy!
           call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f,      &
-            &  eta_fzp, do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,    &
-            &  inc_rad_path, dAlpha_df_path_c(:npc,:), dAlpha_df_path_f,      &
-            &  i_start, tan_pt_c, i_stop,                                     &
-            &  size(d_delta_df,1), d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
-            &  k_atmos_frq, dB_df, tau%tau(:,frq_i), nz_zp, nnz_zp,           &
-            &  alpha_path_c, beta_c_a_path_c(:npc),                           &
-            &  dBeta_c_a_dIWC_path_c(:npc), dBeta_c_s_dIWC_path_c(:npc),      &
-            &  dTScat_df, w0_path_c(:npc) )
+            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,                   &
+            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,             &
+            &  inc_rad_path, dBeta_df_path_c, dBeta_df_path_f,                &
+            &  i_start, tan_pt_c, i_stop, size(d_delta_df,1),                 &
+            &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq, dB_df, &
+            &  tau%tau(:,frq_i), nz_zp, nnz_zp,  alpha_path_c, B(:npc),       &
+            &  beta_c_e_path_c(:npc), dBeta_c_e_dIWC_path_c(:npc),            &
+            &  dBeta_c_s_dIWC_path_c(:npc), tt_path_c(:npc), dTScat_df,       &
+            &  w0_path_c(:npc) )
 
         else
 
-          ! It is important NOT to put :nfp and :ngl bounds on the first
-          ! dimensions of eta_fzp and dAlpha_df_path_f because these
-          ! correspond to explicit-shape dummy arguments.  Doing so would
-          ! cause the compiler to take a copy!
           call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f,      &
-            &  eta_fzp, do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,    &
-            &  inc_rad_path, dAlpha_df_path_c(:npc,:), dAlpha_df_path_f,      &
-            &  i_start, tan_pt_c, i_stop,                                     &
-            &  size(d_delta_df,1), d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
-            &  k_atmos_frq, dB_df )
+            &  beta_path_c, eta_fzp, sps_path, do_calc_fzp,                   &
+            &  beta_path_f, do_gl, del_s, ref_corr, dsdz_gw_path,             &
+            &  inc_rad_path, dBeta_df_path_c, dBeta_df_path_f,                &
+            &  i_start, tan_pt_c, i_stop,  size(d_delta_df,1),                &
+            &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, k_atmos_frq, dB_df )
 
         end if
 
@@ -3318,8 +3307,7 @@ contains
             &  Grids_f, beta_path_polarized(:,1:p_stop,:), tanh1_c(:npc), &
             &  eta_fzp, do_calc_fzp, sps_path, del_s,                     &
             &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),         &
-            &  d_delta_df(1:npc,:), nz_d_delta_df, nnz_d_delta_df,        &
-            &  de_df(:,:,1:p_stop,:) )
+            &  d_delta_df(1:npc,:), de_df(:,:,1:p_stop,:) )
 
           ! Compute D radiance / Df from Tau, Prod, T_Script
           ! and DE / Df.
@@ -3348,8 +3336,7 @@ contains
         if ( fwdModelConf%useTScat ) then
 
           call get_dB_dT ( alpha_path_c, B(:npc), t_path_c(:npc), frq,       &
-                         & beta_c_e_path_c(:npc), dAlpha_dT_Path_c(:npc),    &
-                         & dBeta_c_a_dT_path_c(:npc), &
+                         & beta_c_e_path_c(:npc), dBeta_c_e_dT_path_c(:npc), &
                          & dBeta_c_s_dT_path_c(:npc), tt_path_c(:npc),       &
                          & dTScat_dT(:npc,:), w0_path_c(:npc),               &
                          & eta_zxp_t_c(1:npc,:), nz_zxp_t_c, nnz_zxp_t_c,    &
@@ -3365,9 +3352,9 @@ contains
         dh_dt_path_f(:ngl,:) = dh_dt_path(gl_inds,:)
         do_calc_t_f(:ngl,:) = do_calc_t(gl_inds,:)
         h_path_f(:ngl) = h_path(gl_inds)
-        dAlpha_dT_path_c(:npc) = sum( sps_path_c(:npc,:) *  &
+        dAlpha_dT_path_c(:npc) = sum( sps_path(c_inds,:) *  &
                                       dBeta_dT_path_c(1:npc,:),dim=2 )
-        dAlpha_dT_path_f(:ngl) = sum( sps_path_f(:ngl,:) * &
+        dAlpha_dT_path_f(:ngl) = sum( sps_path(gl_inds,:) * &
                                       dBeta_dT_path_f(1:ngl,:),dim=2 )
 
         if ( pfa_or_not_pol ) then
@@ -3400,10 +3387,10 @@ contains
             do l = -1, 1
               dAlpha_dT_polarized_path_c(l,1:npc) = &
             & dAlpha_dT_polarized_path_c(l,1:npc) + &
-                & sps_path_c(:npc,j) * dBeta_dT_polarized_path_c(l,1:npc,j)
+                & sps_path(c_inds,j) * dBeta_dT_polarized_path_c(l,1:npc,j)
               dAlpha_dT_polarized_path_f(l,1:ngl) = &
             & dAlpha_dT_polarized_path_f(l,1:ngl) + &
-                & sps_path_f(:ngl,j) * dBeta_dT_polarized_path_f(l,1:ngl,j)
+                & sps_path(gl_inds,j) * dBeta_dT_polarized_path_f(l,1:ngl,j)
             end do ! l
           end do ! j
           do l = -1, 1
@@ -3420,7 +3407,7 @@ contains
             & alpha_path_polarized_f(:,1:ngl),                            &
             & dAlpha_dT_path_c(:npc), dAlpha_dT_path_f(:ngl),             &
             & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f,     &
-            & eta_zxp_t_c(1:p_stop,:), eta_zxp_t(:npf,:), del_s,          &
+            & eta_zxp_t_c(1:p_stop,:), eta_zxp_t(:ngl,:), del_s,          &
             & gl_inds, del_zeta, do_calc_t_c(1:p_stop,:),                 &
             & do_calc_t_f(:ngl,:), do_gl(1:p_stop), dsdh_path,            &
             & dhdz_gw_path, dsdz_gw_path, incoptdepth_pol(:,:,1:p_stop),  &
@@ -3538,12 +3525,14 @@ contains
 
       integer :: I_start, I_end ! Boundaries of coarse path to use
       character(100) :: Line    ! Of output
+      integer :: Mol            ! Loop index for frequency averaging
       logical :: MyRev          ! "Reverse the integration path"
       real(rp) :: R_EQ          ! Equivalent Earth Radius at true surface
       real(rp) :: REQ_S  ! Equivalent Earth Radius at height reference surface
       real(rp) :: Scat_D1, Scat_D2   ! To compute scat_index
       integer :: Scat_Temp           ! To compute scat_index
       real(rp), parameter :: Scat_Tol = 1.0 ! max miss of scattering pt, (km/h)**2
+      integer :: status
       real(rp) :: Tan_Ht ! Geometric tangent height, km, from equivalent Earth center
       real(rp) :: Tan_Ht_S ! Tangent height above 1 bar reference surface, km
 
@@ -3677,9 +3666,8 @@ contains
             call dump ( z_coarse(:size(c_inds)), name="Z_Coarse" )
             call dump ( rad2deg*phi_path(c_inds), name="Phi_Path", format="(f14.8)" )
             call dump ( h_path(c_inds), name="H_Path", format="(f14.6)" )
-            call MLSMessage ( merge(MLSMSG_Warning,MLSMSG_Error,index(switches,'igsc')>0), &
-              & moduleName, 'Scattering point appears not to be in path' )
-            scat_index = -1
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+              & 'Scattering point appears not to be in path' )
           else
             call output ( trim(line) // " <", advance="yes" ) ! Close enough
           end if
@@ -4402,25 +4390,6 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
-! Revision 2.319  2011/03/25 20:46:59  vsnyder
-! Delete declarations of unused objects
-!
-! Revision 2.318  2011/03/23 23:50:42  vsnyder
-! Finishing -- hopefully -- TScat derivatives
-!
-! Revision 2.317  2011/03/23 23:45:32  vsnyder
-! This log entry is bogus.  Check in again to get the right one.
-! FOV_Convolve_m.f90
-!
-! Revision 2.316  2011/03/11 03:09:08  vsnyder
-! Use Get_dAlpha_df
-!
-! Revision 2.315  2011/03/04 03:44:40  vsnyder
-! Remove declarations for unused stuff
-!
-! Revision 2.314  2011/02/12 03:57:40  vsnyder
-! Add mixing-ratio dependence for H2O derivatives
-!
 ! Revision 2.313  2011/01/29 00:52:32  vsnyder
 ! Allow PFA without frequency averaging
 !

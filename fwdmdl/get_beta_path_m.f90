@@ -144,7 +144,7 @@ contains
 
       if ( size(dBeta_df_path) > 0 ) then
         if ( where_dBeta_df(i) > 0 ) then
-          dBdf => dBeta_df_path(:np,where_dBeta_df(i))
+          dBdf => dBeta_dt_path(:np,where_dBeta_df(i))
           dBdf = 0.0
         end if
       end if
@@ -318,11 +318,11 @@ contains
 
       select case ( beta_group(i)%molecule )
       case ( l_cloud_a )
-        call create_beta_path_Mie ( frq, t_path, sps_path(:,i), path_inds, &
+        call create_beta_path_Mie ( frq, t_path, sps_path(:np,i), path_inds, &
           & beta_c_a, dBeta_dIWC_c_a, dBeta_dT_c_a, beta_path(:,i), &
           & dBdT, dBdIWC )
       case ( l_cloud_s )
-        call create_beta_path_Mie ( frq, t_path, sps_path(:,i), path_inds, &
+        call create_beta_path_Mie ( frq, t_path, sps_path(:np,i), path_inds, &
           & beta_c_s, dBeta_dIWC_c_s, dBeta_dT_c_s, beta_path(:,i), &
           & dBdT, dBdIWC )
       case default
@@ -1271,8 +1271,7 @@ contains
   ! ------------------------------------------------  Abs_CS_Cont  -----
 
   ! Compute the general continuum contribution
-  pure &
-  function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency ) &
+  pure function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_Cont_r)
   ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
     use MLSKinds, only: RP
@@ -1291,8 +1290,7 @@ contains
   ! ---------------------------------------------  Abs_CS_Cont_dT  -----
 
   ! Compute the general continuum contribution and its temperature derivative
-  pure &
-  subroutine Abs_CS_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
+  pure subroutine Abs_CS_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & Beta, dBeta_dT )
     use MLSKinds, only: RP
 
@@ -1320,9 +1318,9 @@ contains
   ! --------------------------------------------  Abs_CS_H2O_Cont  -----
 
   ! Compute the general continuum contribution
-  pure &
-  function Abs_CS_H2O_Cont ( Cont, Temperature, Pressure, Frequency, Sps ) &
-    & result(Beta)
+  pure function Abs_CS_H2O_Cont ( Cont, Temperature, Pressure, Frequency, &
+    & Sps ) result(Beta)
+  ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
     use MLSKinds, only: RP
 
     real(rp), intent(in) :: CONT(:)     ! continuum parameters
@@ -1338,7 +1336,7 @@ contains
     !{ Ignoring vmr dependence,
     !  $\beta = c_1 p^2 \nu^2 \left( \frac{300}T \right)^{c_2}$.
     !
-    !  With vmr dependence,
+    !  With vmr depencence,
     !  $\beta = c_1 p^2 \nu^2 \left( \frac{300}T \right)^{c_2}
     !   + c_3 f p^2 \nu^2 \left( \frac{300}T \right)^{c_4}$.
 
@@ -1355,8 +1353,7 @@ contains
   ! -----------------------------------------  Abs_CS_H2O_Cont_df  -----
 
   ! Compute the general continuum contribution
-  pure &
-  subroutine Abs_CS_H2O_Cont_df ( Cont, Temperature, Pressure, Frequency, &
+  pure subroutine Abs_CS_H2O_Cont_df ( Cont, Temperature, Pressure, Frequency, &
     & Sps, Beta, dBeta_df )
     use MLSKinds, only: RP
 
@@ -1367,10 +1364,12 @@ contains
     real(rp), intent(in), optional :: SPS ! Mixing ratio
     real(rp), intent(out) :: Beta
     real(rp), intent(out) :: dBeta_df
+    real(rp) :: Abs_CS_H2O_Cont_r
+    real(rp) :: dBdf
     real(rp) :: Psq_Fsq                 ! pressure**2 * frequency**2
     real(rp) :: Temp_Ratio              ! log(300/T)
 
-    !{ With vmr dependence,
+    !{ With vmr depencence,
     !  $\beta = c_1 p^2 \nu^2 \left( \frac{300}T \right)^{c_2}
     !   + c_3 f p^2 \nu^2 \left( \frac{300}T \right)^{c_4}$.
     !  $\frac{\partial \beta}{\partial f} =
@@ -1386,8 +1385,7 @@ contains
   ! -----------------------------------------  Abs_CS_H2O_Cont_dT  -----
 
   ! Compute the general continuum contribution and its temperature derivative
-  pure &
-  subroutine Abs_CS_H2O_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
+  pure subroutine Abs_CS_H2O_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & SPS, Beta, dBeta_dT, dBeta_df )
     use MLSKinds, only: RP
 
@@ -1438,8 +1436,7 @@ contains
   ! ---------------------------------------------  Abs_CS_N2_Cont  -----
 
   ! Compute the N2 continuum contribution
-  pure &
-  function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency ) &
+  pure function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_N2_Cont_r)
   ! real(rp) Function Abs_CS_N2_cont ( Cont, Temperature, Pressure, Frequency )
     use MLSKinds, only: RP
@@ -1470,8 +1467,7 @@ contains
   ! ------------------------------------------  Abs_CS_N2_Cont_dT  -----
 
   ! Compute the N2 continuum contribution and its temperature derivative
-  pure &
-  subroutine Abs_CS_N2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
+  pure subroutine Abs_CS_N2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & Beta, dBeta_dT )
 
     use MLSKinds, only: RP
@@ -1510,8 +1506,7 @@ contains
   ! ---------------------------------------------  Abs_CS_O2_Cont  -----
 
   ! Compute the O2 continuum contribution
-  pure &
-  function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency ) &
+  pure function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency ) &
     & result(Abs_CS_O2_Cont_r)
   ! real(rp) Function ABS_CS_O2_CONT ( Cont, Temperature, Pressure, Frequency )
     use MLSKinds, only: RP
@@ -1586,15 +1581,6 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
-! Revision 2.104  2011/03/04 03:42:48  vsnyder
-! Associate dBdf with dBeta_df_path, not dBeta_dT_path!
-!
-! Revision 2.103  2011/03/02 02:06:59  vsnyder
-! Cannonball polishing
-!
-! Revision 2.102  2011/02/12 03:57:40  vsnyder
-! Add mixing-ratio dependence for H2O derivatives
-!
 ! Revision 2.101  2010/02/09 21:04:18  vsnyder
 ! Specify extents for derivative section pointers
 !

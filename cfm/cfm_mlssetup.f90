@@ -396,7 +396,6 @@ module CFM_MLSSetup_m
       call DestroyHGridContents(hGridStandard)
 
       ! Everything in the the quantity template database is selected
-      nullify(selected)
       call allocate_test (selected, size(qtyTemplates), "selected", moduleName)
       do i = 1, size(selected)
          selected(i) = i
@@ -446,9 +445,6 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
-! Revision 1.22  2010/11/03 20:17:01  honghanh
-! Add name as an optional argument to CreateVector.
-!
 ! Revision 1.21  2010/09/17 16:47:45  honghanh
 ! Fix memory leak bug by calling CFM_ResetEmpiricalGeometry
 !

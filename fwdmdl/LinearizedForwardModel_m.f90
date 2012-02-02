@@ -126,7 +126,7 @@ contains ! =====     Public Procedures     =============================
     use MLSNumerics, only: Coefficients_R8, HUNT, InterpolateArraySetup, &
       & InterpolateArrayTeardown, INTERPOLATEVALUES
     use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
-    use Output_m, only: Output, OUTPUTNAMEDVALUE
+    use Output_m, only: Output
     use String_Table, only: Display_String, Get_String
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_m, only: Trace_begin, Trace_end
@@ -564,18 +564,8 @@ contains ! =====     Public Procedures     =============================
         & extrapolate='Constant', &     ! no extrapolation
         & dyByDx=.true. )               ! need more coefficients for this
 
-      ! call outputNamedValue( 'shape(xp)', shape(xStarPtan%values) )
-      ! call outputNamedValue( 'shape(yp)', shape(yp%quantities(1)%values) )
-      ! call outputNamedValue( 'noChans', noChans )
-      ! call outputNamedValue( 'noPointings', noPointings )
       do chan = 1, noChans
-        top = noChans*noPointings + chan  - noChans
-        ! call outputNamedValue( 'chan', chan )
-        ! call outputNamedValue( 'top', top )
-        ! call outputNamedValue( 'shape(OldX)', shape(xStarPtan%values(:,1)) )
-        ! call outputNamedValue( 'shape(OldY)', shape(yp%quantities(1)%values(chan:top:noChans,1)) )
-        ! call outputNamedValue( 'shape(NewX)', shape(ptan%values(:,maf)) )
-        ! call outputNamedValue( 'shape(NewY)', shape(resultMapped(:,chan)) )
+        top = chan + noPointings - 1
         call InterpolateValues ( coeffs, &
           & xStarPtan%values(:,1), &                       ! OldX
           & yp%quantities(1)%values(chan:top:noChans,1), & ! OldY
@@ -791,9 +781,6 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
-! Revision 2.82  2010/09/25 01:08:39  vsnyder
-! Cannonball polishing
-!
 ! Revision 2.81  2010/06/29 19:57:58  vsnyder
 ! Add 0.5 factor to Hessian-Vector-Vector multiply
 !
