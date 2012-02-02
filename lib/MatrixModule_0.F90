@@ -18,15 +18,15 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 ! This module provides the elementary matrix type.  Blocks of this
 ! type are used to compose block matrices.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DOT_M, only: DOT
   use DUMP_0, only: DIFF, DUMP
-  use Gemm_M, only: GEMM
-  use Gemv_M, only: GEMV
-  use MLSKinds, only: RM, R4, R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use GEMM_M, only: GEMM
+  use GEMV_M, only: GEMV
+  use MLSKINDS, only: RM, R4, R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use OUTPUT_M, only: OUTPUT
-  use VectorsModule, only: M_LinAlg
+  use VECTORSMODULE, only: M_LINALG
 
   implicit NONE
   private
@@ -35,7 +35,8 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: CholeskyFactor_0, ClearLower, ClearLower_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
   public :: Col_L1, CopyBlock, CreateBlock, CreateBlock_0, CyclicJacobi
   public :: DenseCholesky, DenseCyclicJacobi, Densify, DestroyBlock, DestroyBlock_0, Diff, Dump
-  public :: FrobeniusNorm, GetDiagonal, GetMatrixElement, GetMatrixElement_0
+  public :: FrobeniusNorm
+  public :: GetMatrixKindString, GetDiagonal, GetMatrixElement, GetMatrixElement_0
   public :: GetVectorFromColumn
   public :: InvertCholesky, InvertCholesky_0
   public :: InvertDenseCholesky, InvertDenseCholesky_0
@@ -1457,6 +1458,27 @@ contains ! =====     Public Procedures     =============================
 
     include "getdiagonal_0.f9h"
   end subroutine GetDiagonal_0_r8
+
+  ! -----------------------------------------  GetMatrixKindString  -----
+  function GetMatrixKindString ( KIND ) result( STRING )
+    ! Get the character string corresponding to Kind; 
+    ! e.g., M_Absent returns "Absent"
+    integer, intent(in) :: kind
+    character(len=16)   :: string
+    select case ( kind )
+    case ( M_Absent           )
+      string = 'absent        '
+    case ( M_Banded           )
+      string = 'Banded        '
+    case ( M_Column_sparse           )
+      string = 'Column_sparse        '
+    case ( M_Full           )
+      string = 'Full        '
+    ! case ( M_Unknown           )
+    case default
+      string = 'Unknown        '
+    end select
+  end function GetMatrixKindString
 
   ! -----------------------------------------  GetMatrixElement_0  -----
   real(rm) function GetMatrixElement_0 ( Matrix, Row, Col )
@@ -3618,6 +3640,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.8  2012/02/02 01:13:31  pwagner
+! Added GetMatrixKindString
+!
 ! Revision 2.7  2011/12/17 00:33:51  vsnyder
 ! Add Move_Block
 !
