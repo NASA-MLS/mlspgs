@@ -16,6 +16,8 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 ! This module provides the elementary Hessian type.  Blocks of this
 ! type are used to compose block Hessians.
 
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+    & TEST_ALLOCATE, TEST_DEALLOCATE
   use DUMP_0, only: DIFF, DUMP
   use MLSKinds, only: RH=>RM ! Renamed here to make it easier to change later
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
@@ -25,7 +27,8 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 
   public :: H_Absent, H_Sparse, H_Full, H_Unknown
   public :: HessianElement_T, Tuple_T
-  public :: ClearBlock, CreateBlock, Densify, DestroyBlock, Diff, Dump
+  public :: ClearBlock, CloneBlock, CopyBlock, CreateBlock
+  public :: Densify, DestroyBlock, Diff, Dump
   public :: InsertHessianPlane, Multiply, OptimizeBlock, RH
   public :: Sparsify, StreamlineHessian, Unsparsify
 
@@ -140,7 +143,6 @@ contains
     ! than h%tuples, and subsequent elemental procedures passed
     ! h%tuples w/o an array subsection will be operating
     ! with undefined values (paw)
-    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, TEST_DEALLOCATE
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
     
     type(HessianElement_T), intent(inout) :: H
@@ -196,10 +198,57 @@ contains
     call MLSMessageCalls( 'pop' )
   end subroutine AugmentHessian
 
+  ! -------------------------------------------------  CloneBlock  -----
+  subroutine CloneBlock ( Z, X, ForWhom ) ! Z = X, except the values
+  ! Duplicate a Hessian block, including copying all of its structural
+  ! descriptive information, but not its values.
+    type(HessianElement_T), intent(inout) :: Z ! intent(inout) so that
+      !                            destroyBlock gets a chance to clean up surds
+    type(HessianElement_T), intent(in) :: X
+    character(len=*), intent(in) :: ForWhom
+    ! Local variables
+    integer :: stat
+    ! Executable
+    call destroyBlock ( z )
+    z%nRows  = x%nRows
+    z%nCols1 = x%nCols1
+    z%nCols2 = x%nCols2
+    z%kind   = x%kind
+    z%tuplesFilled = 0
+    select case ( x%kind )
+    case ( h_absent )
+      call CreateEmptyBlock ( z )
+    case ( h_sparse )
+      z%tuplesFilled = x%tuplesFilled
+      allocate ( z%tuples ( x%tuplesFilled ), stat=stat )
+    case ( h_full )
+      call Allocate_test ( z%values, x%nRows, x%nCols1, x%nCols2, &
+        & 'values in loneBlock_0' // ForWhom, &
+        & moduleName )
+    ! case default ! Nothing more to be done
+    end select
+  end subroutine CloneBlock
+
+  ! --------------------------------------------------  CopyBlock  -----
+  subroutine CopyBlock ( Z, X ) ! Destroy Z, deep Z = X, including the values
+    type(HessianElement_T), intent(inout) :: Z ! intent(inout) so that the
+      !                            destroyBlock in cloneBlock gets a chance
+      !                            to clean up surds
+    type(HessianElement_T), intent(in) :: X
+    call CloneBlock ( Z, X, "CopyBlock" )
+    select case ( x%kind )
+    case ( h_absent ) ! Nothing more to be done
+    case ( h_sparse )
+      z%tuples = x%tuples
+    case ( h_full )
+      z%values = x%values
+    ! case default ! Nothing more to be done
+    end select
+  end subroutine CopyBlock
+
   ! ------------------------------------------ ClearHessianBlock_0 -----
   subroutine ClearHessianBlock_0 ( H )
     ! Clear a HessianElement_T structure
-    use Allocate_Deallocate, only: DEALLOCATE_TEST, TEST_DEALLOCATE
     type(HessianElement_T), intent(inout) :: H
     integer :: Stat
 
@@ -219,7 +268,6 @@ contains
   subroutine CreateHessianBlock_0 ( H, nRows, nCols1, nCols2, H_kind, initTuples, &
                                   & Fill )
   ! Create an empty HessianElement_T structure
-    use Allocate_Deallocate, only: ALLOCATE_TEST, TEST_ALLOCATE
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
 
     type(HessianElement_T), intent(inout) :: H ! inout so we can destroy it before
@@ -274,8 +322,6 @@ contains
   subroutine Densify_Hessian ( H )
   ! Convert a Hessian represented by tuples to an explicit representation
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST
-
     type(HessianElement_T), intent(inout) :: H
 
     integer :: n
@@ -302,7 +348,6 @@ contains
 
   ! ------------------------------------------- Diff_Hessian_Blocks -----
   subroutine Diff_Hessian_Blocks ( H1, H2, Details, Indices, options, Clean )
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, ALLOCATE_TEST
     use MLSFILLVALUES, only: REPOPULATE
     use MLSSTRINGLISTS, only: OPTIONDETAIL, UNQUOTE
     type(HessianElement_T), intent(inout) :: H1, H2
@@ -439,7 +484,6 @@ contains
 
   ! ------------------------------------------- Dump_Hessian_Block -----
   subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean, Options )
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, ALLOCATE_TEST
     use MLSFILLVALUES, only: ISNAN, REPOPULATE
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
     type(HessianElement_T), intent(in) :: H
@@ -790,8 +834,6 @@ contains
   ! ------------------------------------------------ OptimizeBlock -----
   ! Rewrite this from scratch before use
   subroutine OptimizeBlock ( H )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
-      & TEST_ALLOCATE, TEST_DEALLOCATE
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_WARNING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
@@ -1001,8 +1043,6 @@ o:    do while ( i < n )
   subroutine Sparsify_Full_Hessian ( H )
     ! Sparsify the representation of a full H
 
-    use Allocate_Deallocate, only: DEALLOCATE_TEST, &
-      & TEST_ALLOCATE, TEST_DEALLOCATE
     use MLSMessageModule, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
@@ -1112,8 +1152,6 @@ o:    do while ( i < n )
   subroutine Sparsify_Hessian_Array_D ( H_Array, H )
   ! Create a sparse representation of H_Array in H.
 
-    use Allocate_Deallocate, only: DEALLOCATE_TEST, &
-      & TEST_ALLOCATE, TEST_DEALLOCATE
     integer, parameter :: RK = kind(0.0d0)
     real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
     type(HessianElement_T), intent(inout) :: H    ! inout so we can deallocate tuple
@@ -1128,8 +1166,6 @@ o:    do while ( i < n )
   subroutine Sparsify_Hessian_Array_S ( H_Array, H )
   ! Create a sparse representation of H_Array in H.
 
-    use Allocate_Deallocate, only: DEALLOCATE_TEST, &
-      & TEST_ALLOCATE, TEST_DEALLOCATE
     integer, parameter :: RK = kind(0.0e0)
     real(rk), intent(in) :: H_Array(:,:,:) ! H(i,j,k)
     type(HessianElement_T), intent(inout) :: H    ! inout so we can deallocate tuple
@@ -1294,11 +1330,22 @@ o:    do while ( i < n )
 
   end subroutine StreamlineHessian_0
 
+! =====     Private Procedures     =====================================
+
+  ! -------------------------------------------  CreateEmptyBlock  -----
+  subroutine CreateEmptyBlock ( EmptyBlock )
+    type(HessianElement_T), intent(inout) :: EmptyBlock
+    ! EmptyBlock is intent(inout) so that destroyBlock will have a chance
+    ! to clean up surds.  Default initialization for intent(out) would
+    ! nullify the pointers before destroyBlock had a chance to deallocate
+    ! them.
+    call destroyBlock ( emptyBlock )
+  end subroutine CreateEmptyBlock
+
   !  ----------------------------------------- Unsparsify -----
   ! Fill out h%values based on its sparse nTuples (or else zeros)
   ! Should you combine this with Repopulate from MLSFillValues module?
   subroutine Unsparsify ( H )
-    use Allocate_Deallocate, only: DEALLOCATE_TEST, ALLOCATE_TEST
     ! Argument
     type(HessianElement_T), intent(inout) :: H
     ! Internal variables
@@ -1337,6 +1384,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.26  2012/02/02 01:11:04  pwagner
+! Added Procedures to Clone, Copy blocks just like with matrices
+!
 ! Revision 2.25  2012/01/13 01:08:18  pwagner
 ! Fixed two bugs in StreamlineHessian
 !
