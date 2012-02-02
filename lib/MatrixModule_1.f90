@@ -16,28 +16,29 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 ! This module provides a block matrix type including operations for matrix
 ! quantities in MLS Level 2 software, and related programs.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
-  use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, &
-    & CholeskyFactor, ClearLower, ClearRows, ColumnScale, Col_L1, CopyBlock, &
-    & CreateBlock, CyclicJacobi, DenseCyclicJacobi, Densify, &
-    & DestroyBlock, Diff, Dump, FrobeniusNorm, GetDiagonal, GetMatrixElement, GetVectorFromColumn, &
-    & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, M_Unknown, &
-    & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XTY, MultiplyMatrix_XY, &
-    & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, NullifyMatrix, operator(+), &
-    & ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &
-    & Sparsify, Spill, TransposeMatrix, UpdateDiagonal
-  use MLSKinds, only: RM, RV, R8, R4
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-    & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use OUTPUT_M, only: BLANKS, OUTPUT, DUMPSIZE
-  use String_Table, only: Display_String, Get_String
-  use Symbol_Table, only: Enter_Terminal
-  use Symbol_Types, only: T_identifier
-  use VectorsModule, only: ClearUnderMask, CloneVector, CopyVector, Vector_T, &
-    & CheckIntegrity, NullifyVector
+  use MATRIXMODULE_0, only: ADD_MATRIX_BLOCKS, ASSIGNMENT(=), CHECKINTEGRITY, &
+    & CHOLESKYFACTOR, CLEARLOWER, CLEARROWS, COLUMNSCALE, COL_L1, COPYBLOCK, &
+    & CREATEBLOCK, CYCLICJACOBI, DENSECYCLICJACOBI, DENSIFY, &
+    & DESTROYBLOCK, DIFF, DUMP, FROBENIUSNORM, &
+    & GETDIAGONAL, GETMATRIXELEMENT, GETMATRIXKINDSTRING, GETVECTORFROMCOLUMN, &
+    & INVERTCHOLESKY, M_ABSENT, M_COLUMN_SPARSE, M_BANDED, M_FULL, M_UNKNOWN, &
+    & MATRIXELEMENT_T, MAXABSVAL, MINDIAG, MULTIPLY, MULTIPLYMATRIX_XTY, MULTIPLYMATRIX_XY, &
+    & MULTIPLYMATRIX_XY_T, MULTIPLYMATRIXVECTORNOT, NULLIFYMATRIX, OPERATOR(+), &
+    & REFLECTMATRIX, ROWSCALE, SCALEBLOCK, SOLVECHOLESKY, &
+    & SPARSIFY, SPILL, TRANSPOSEMATRIX, UPDATEDIAGONAL
+  use MLSKINDS, only: RM, RV, R8, R4
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+    & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, DUMPSIZE
+  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+  use SYMBOL_TABLE, only: ENTER_TERMINAL
+  use SYMBOL_TYPES, only: T_IDENTIFIER
+  use VECTORSMODULE, only: CLEARUNDERMASK, CLONEVECTOR, COPYVECTOR, VECTOR_T, &
+    & CHECKINTEGRITY, NULLIFYVECTOR
 
-  implicit NONE
+  implicit none
   private
   public :: AddToMatrixDatabase, AddToMatrix, AssignMatrix
   public :: Assignment(=), CheckIntegrity, CholeskyFactor, CholeskyFactor_1
@@ -2470,7 +2471,9 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J                ! Subscripts, loop inductors
     integer :: MY_DETAILS          ! True if DETAILS is absent, else DETAILS
-
+    logical :: SKIPPEDSOMEBLOCKS
+    character(len=16) :: string
+    ! Executable
     my_details = 1
     if ( present(details) ) my_details = details
     if ( my_details <= -3 ) return
@@ -2496,15 +2499,28 @@ contains ! =====     Public Procedures     =============================
       call output ( 'the matrices have different shapes', advance='yes' )
       return
     endif
+    skippedsomeblocks = .false.
     do j = 1, matrix1%col%nb
       do i = 1, matrix1%row%nb
         if ( matrix1%block(i,j)%kind /= matrix2%block(i,j)%kind ) then
           call output ( 'the matrices at (i,j) ')
           call output( (/ i,j /) )
           call output( 'are of different kinds', advance='yes' )
+          if ( my_details < 1 ) cycle
+          call outputNamedValue( 'kind(matrix1)', &
+            & GetMatrixKindString(matrix1%block(i,j)%kind) )
+          call outputNamedValue( 'kind(matrix2)', &
+            & GetMatrixKindString(matrix2%block(i,j)%kind) )
           cycle
         endif
         if ( my_details < 1 ) cycle
+        if ( matrix1%block(i,j)%kind == m_absent ) then
+          skippedSomeBlocks = .true.
+          cycle
+        endif
+        if ( skippedSomeBlocks ) &
+          & call output ( 'Other blocks absent in both matrices', advance='yes' )
+        skippedSomeBlocks = .false.
         call output ( i, before='Block at row ' )
         call output ( j, before=' and column ' )
         call output ( ' ( ' )
@@ -2837,6 +2853,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.125  2012/02/02 01:14:49  pwagner
+! Diffing matrices skips absent blocks
+!
 ! Revision 2.124  2011/12/17 00:34:40  vsnyder
 ! Add GetFullBlock (moved from Convolve_All)
 !
