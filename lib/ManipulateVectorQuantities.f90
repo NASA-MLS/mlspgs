@@ -14,9 +14,10 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   ! This modules contains routines needed for manipulating vectors.
 
   use MLSMessageModule, only: MLSMSG_Error, &
-    & MLSMessage, MLSMessageCalls
+    & MLSMESSAGE, MLSMESSAGECALLS
   use MLSCommon, only: R8, RV
   use MLSNumerics, only: HUNT
+  use output_m, only: OUTPUTNAMEDVALUE
   use VectorsModule, only: VECTORVALUE_T, VECTOR_T
   use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE, PHYQ_ANGLE, PHYQ_PROFILES
 
@@ -32,12 +33,14 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   public :: AnyGoodDataInQty, FindClosestInstances, FindOneClosestInstance, &
     & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoVGridsMatch_Vec, &
-    & DoFGridsMatch, DoQuantitiesMatch, DoQtysDescribeSameThing, &
+    & DoFGridsMatch, DoQtysDescribeSameThing, &
     & DoVectorsMatch, FillWithCombinedChannels
 
   interface DoVGridsMatch
     module procedure DoVGridsMatch_Vec
   end interface
+
+  logical, parameter               :: DEEBUG = .false.
 
 contains
 
@@ -378,7 +381,7 @@ contains
 
   end function DoHGridsMatch
 
-  ! ------------------------------------- DoQuantitiesEssentiallyMatch --
+  ! ------------------------------------- DoQuantitiesMatch --
   logical function DoQuantitiesMatch ( a, b )
     ! Returns true if quantities share all important template information.
     type (VectorValue_T), intent(in) :: A ! First quantity
@@ -393,21 +396,39 @@ contains
   end function DoQuantitiesMatch
 
   ! -------------------------------------- DoVectorsMatch --------------
-  logical function DoVectorsMatch ( a, b )
+  logical function DoVectorsMatch ( a, b, verbose )
     ! Returns true if vectors are essentially the same in nature, even
     ! if names of quantities differ.
     type(Vector_T), intent(in) :: A ! First vector
     type(Vector_T), intent(in) :: B ! Second vector
+    logical, optional, intent(in) :: verbose ! Say why not if they don't
 
     ! Local variables
+    logical :: myVerbose
     integer :: Q                        ! Loop counter
 
     ! Exectuable code
+    myVerbose = .false.
+    if ( present(verbose) ) myVerbose = verbose
     DoVectorsMatch = .false.
-    if ( a%template%noQuantities /= b%template%noQuantities ) return
+    if ( a%template%noQuantities /= b%template%noQuantities ) then
+      if ( myVerbose ) call outputnamedValue( 'noQuantities', &
+        & (/ a%template%noQuantities, b%template%noQuantities /) )
+      return
+    endif
     do q = 1, a%template%noQuantities
       if ( .not. DoQuantitiesMatch ( &
-        & a%quantities(q), b%quantities(q) ) ) return
+        & a%quantities(q), b%quantities(q) ) ) then
+        if ( myVerbose ) call outputnamedValue( 'doQuantitiesDesc', &
+          & DoQtysDescribeSameThing  ( a%quantities(q), b%quantities(q) ) )
+        if ( myVerbose ) call outputnamedValue( 'doHGridsMatch', &
+          & DoHGridsMatch ( a%quantities(q), b%quantities(q) ) )
+        if ( myVerbose ) call outputnamedValue( 'doVGridsMatch', &
+          & DoVGridsMatch ( a%quantities(q), b%quantities(q) ) )
+        if ( myVerbose ) call outputnamedValue( 'doFGridsMatch', &
+          & DoFGridsMatch ( a%quantities(q), b%quantities(q) ) )
+        return
+      endif
     end do
     DoVectorsMatch = .true.
   end function DoVectorsMatch
@@ -416,14 +437,25 @@ contains
   logical function DoVGridsMatch_Vec ( A, B, RelativeError, Precision )
     ! Returns true if quantities have same vGrid information
     use MLSFillValues, only: ESSENTIALLYEQUAL
+    use dump_0, only: DUMP
     type (vectorValue_T), intent(in) :: A ! First quantity
     type (vectorValue_T), intent(in) :: B ! Second quantity
     real(rv), optional, intent(in)   :: RelativeError ! May differ by this rel amount
     real(rv), optional, intent(in)   :: Precision ! May differ by this abs amount
     real, parameter                  :: defaultRelativeError = 1.e-9
     logical                          :: TestForSurfs
+    ! logical, parameter               :: DEEBUG = .true.
     ! Executable code
     doVGridsMatch_Vec = .false.
+    if ( DEEBUG ) then
+      call outputNamedValue ( 'noSurfs', (/ a%template%noSurfs, b%template%noSurfs /) )
+      call outputNamedValue ( 'verticalCoordinate', (/ a%template%verticalCoordinate, b%template%verticalCoordinate /) )
+      call outputNamedValue ( 'coherent', (/ a%template%coherent, b%template%coherent /) )
+      call outputNamedValue ( 'regular', (/ a%template%regular, b%template%regular /) )
+      call outputNamedValue ( 'noInstances', (/ a%template%noInstances, b%template%noInstances /) )
+      call dump ( a%template%surfs, 'a%template%surfs' )
+      call dump ( b%template%surfs, 'b%template%surfs' )
+    endif
     if ( a%template%noSurfs /= b%template%noSurfs ) return
     if ( a%template%verticalCoordinate /= &
       &  b%template%verticalCoordinate ) return
@@ -433,15 +465,15 @@ contains
       &  ( a%template%noInstances /= b%template%noInstances ) ) return
     ! Do we allow the corresponding surfaces any leeway? Relative or absolute?
     if ( present(RelativeError) ) then
-      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) < &
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) <= &
         & RelativeError*max(&
         & maxval( abs(a%template%surfs) ), maxval( abs(b%template%surfs ) ) &
         & ) &
         & )
     elseif ( present(Precision) ) then
-      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) < Precision )
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) <= Precision )
     elseif ( defaultRelativeError > 0. ) then
-      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) < &
+      TestForSurfs = all ( abs(a%template%surfs - b%template%surfs) <= &
         & defaultRelativeError*max(&
         & maxval( abs(a%template%surfs) ), maxval( abs(b%template%surfs ) ) &
         & ) &
@@ -497,22 +529,47 @@ contains
   end function DoFGridsMatch
 
   ! ---------------------------------- DoQtysDescribeSameThing ----
-  logical function DoQtysDescribeSameThing ( a, b )
+  logical function DoQtysDescribeSameThing ( a, b, strict )
     ! Returns true if the quantities describe the same geophysical
     ! parameter, albeit at a different resolution perhaps
     type ( VectorValue_T ), intent(in) :: A ! First quantity
     type ( VectorValue_T ), intent(in) :: B ! Second quantity
+    logical, optional, intent(in)      :: Strict ! Must every attribute match?
+    !                                   Or just the ones we actually write out
+    ! Local variables
+    logical :: myStrict
+    ! logical, parameter :: DEEBUG = .true.
+    ! Executable
+    myStrict = .false.
+    if ( present(strict) ) myStrict = strict
 
     DoQtysDescribeSameThing = .false.
+    if ( DEEBUG ) then
+      call outputNamedValue( 'myStrict', myStrict )
+      call outputNamedValue( 'quantityType', (/ a%template%quantityType, b%template%quantityType /) )
+      call outputNamedValue( 'logBasis', (/ a%template%logBasis, b%template%logBasis /) )
+      call outputNamedValue( 'verticalCoordinate', (/ a%template%verticalCoordinate, b%template%verticalCoordinate /) )
+      call outputNamedValue( 'unit', (/ a%template%unit, b%template%unit /) )
+      call outputNamedValue( 'signal', (/ a%template%signal, b%template%signal /) )
+      call outputNamedValue( 'molecule', (/ a%template%molecule, b%template%molecule /) )
+      call outputNamedValue( 'sideband', (/ a%template%sideband, b%template%sideband /) )
+      call outputNamedValue( 'instrumentModule', (/ a%template%instrumentModule, b%template%instrumentModule /) )
+      call outputNamedValue( 'radiometer', (/ a%template%radiometer, b%template%radiometer /) )
+    endif
     if ( a%template%quantityType /= b%template%quantityType ) return
     if ( a%template%logBasis .neqv. b%template%logBasis ) return
     if ( a%template%verticalCoordinate /= b%template%verticalCoordinate ) return
-    if ( a%template%unit /= b%template%unit ) return
     if ( a%template%signal /= b%template%signal ) return
-    if ( a%template%sideband /= b%template%sideband ) return
-    if ( a%template%instrumentModule /= b%template%instrumentModule ) return
-    if ( a%template%radiometer /= b%template%radiometer ) return
     if ( a%template%molecule /= b%template%molecule ) return
+    if ( myStrict ) then
+      ! Because we chose not to write these as attributes
+      ! E.g., in WriteVectorAsHDF5L2PC, or we neglected to
+      ! read them in ReadOneVectorFromHDF5 we dare not automatically check
+      if ( a%template%unit /= b%template%unit ) return
+      if ( a%template%sideband /= b%template%sideband ) return
+      if ( a%template%instrumentModule /= b%template%instrumentModule ) return
+      if ( a%template%radiometer /= b%template%radiometer ) return
+    endif
     DoQtysDescribeSameThing = .true.
 
   end function DoQtysDescribeSameThing
@@ -530,6 +587,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.38  2012/02/02 01:09:11  pwagner
+! DoQuantitiesMatch now works properly when tested
+!
 ! Revision 2.37  2011/08/29 21:29:41  pwagner
 ! Granted some leeway in matching vgrids
 !
