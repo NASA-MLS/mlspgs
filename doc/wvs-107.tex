@@ -7,8 +7,8 @@
 \topmargin 0in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107r4}
-\newcommand{\docdate}{19 January 2012}
+\newcommand{\docname}{\bf wvs-107r5}
+\newcommand{\docdate}{1 February 2012}
 
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -166,13 +166,14 @@ $N_M$ &0 &0 & $K^R_{33}$ &  & 0     & & $K^F_{31}$    & $K^F_{32}$    & $K^F_{33
 \end{longtable}
 
 For retriever block $K^R_{nn}$, $n$ is the index of the MAF. Each
-$K^R_{nn}$ block has shape $(N_C \times N_m,1)$, where $N_C$ is the
+$K^R_{nn}$ block has shape $(N_C \times N_m,N_m)$, where $N_C$ is the
 number of channels.  Within each $K^R_{nn}$ block, third and fourth
 subscripts $(ci)$ conspire to denote the row number (first subscript of
 the {\tt VALUES} component).  The subscript $c$ is the channel number and
 $i$ is the MIF $(\phi_\text{tan}, \zeta_\text{tan})_i$ number.  The row
-number of an element is $c + N_c(i-1)$.  The column number (second
-subscript) is always 1.
+number of an element is $c + N_c(i-1)$.  The column number within the
+block (second subscript of the {\tt VALUES} component) is given by a fifth
+subscript here, always $i$.
 
 For forward model block $K^F_{nj}$, $n$ is the index of the MAF, while
 $j$ is the index of solution coordinate $\phi_j$.  Each $K^F_{nj}$ block
@@ -187,7 +188,7 @@ $K^R$ using
 
 \begin{equation}
 \begin{array}{lll}
-K^R_{nn,ci} = \sum_{g=1}^{N_\zeta}
+K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
  \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
  10^{-2(\zeta_g - \zeta_i)} & i = 1, \dots, N_m & c = 1, \dots, N_C\,. \\
 \end{array}
@@ -218,6 +219,9 @@ E^F_{g,1},\, j = 1, \dots, N_\phi$.
 % $Id$
 
 % $Log$
+% Revision 1.5  2012/01/25 00:02:52  vsnyder
+% Revise indexing
+%
 % Revision 1.4  2011/12/21 21:07:35  vsnyder
 % Correct some typos
 %
