@@ -108,7 +108,8 @@ contains ! =====     Public Procedures     =============================
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXPR, F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, F_SHAPE, &
       & F_FRACTION, F_FROMPRECISION, &
-      & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HEIGHT, F_HDFVERSION, F_HEIGHTRANGE, &
+      & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
+      & F_HEIGHT, F_HDFVERSION, F_HEIGHTRANGE, F_HESSIAN, &
       & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IFMISSINGGMAO, F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, &
       & F_INSTANCES, F_INTEGRATIONTIME, F_INTERNALVGRID, &
@@ -175,7 +176,7 @@ contains ! =====     Public Procedures     =============================
       & PHYQ_TIME, PHYQ_LENGTH, PHYQ_ANGLE, PHYQ_PROFILES
     use L2GPDATA, only: L2GPDATA_T, COL_SPECIES_HASH, COL_SPECIES_KEYS
     use L2AUXDATA, only: L2AUXDATA_T
-    use L2PC_M, only: POPULATEL2PCBINBYNAME, LOADMATRIX, LOADVECTOR
+    use L2PC_M, only: POPULATEL2PCBINBYNAME, LOADHESSIAN, LOADMATRIX, LOADVECTOR
     use L2PCBINS_M, only: FLUSHLOCKEDBINS
     use MANIPULATEVECTORQUANTITIES, only: DOHGRIDSMATCH, &
       & FILLWITHCOMBINEDCHANNELS
@@ -357,7 +358,9 @@ contains ! =====     Public Procedures     =============================
     integer :: GRIDINDEX                ! Index of requested grid
     integer :: GSON                     ! Descendant of Son
     integer :: HEIGHTNODE               ! Descendant of son
+    type(hessian_T), pointer :: hessian
     integer :: HESSIANINDEX             ! An index into the hessians
+    integer :: HESSIANTOFILL             ! Index in database
     logical :: HIGHBOUND                ! Flag
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
@@ -780,6 +783,8 @@ contains ! =====     Public Procedures     =============================
             matrixToFill = decoration(decoration( subtree(2, gson) ))
             if ( getKindFromMatrixDatabase(matrices(matrixToFill)) /= k_plain ) &
               call announce_error ( key, notPlain )
+          case ( f_hessian )
+            hessianToFill = decoration(decoration( subtree(2, gson) ))
           case ( f_vector )
             vectorIndex = decoration(decoration( subtree(2, gson) ))
           case ( f_bin )
@@ -788,11 +793,22 @@ contains ! =====     Public Procedures     =============================
             source = decoration ( subtree(2,gson) )
           end select
         end do
-        if ( got ( f_matrix ) ) then
+        if ( got ( f_hessian ) ) then
           if ( got ( f_vector ) ) call Announce_Error ( key, no_Error_Code, &
-            & 'Cannot load both vector and matrix' )
+            & 'Cannot load both vector and hessian (Why not?)' )
+          Hessian => hessians(hessianToFill)
+          call LoadHessian ( Hessian, binName, message )
+          if ( len_trim(message) > 0 ) call output( '* * *' // message, advance='yes' )
+          if ( got ( f_matrix ) ) then
+            call GetFromMatrixDatabase ( matrices(matrixToFill), matrix )
+            call LoadMatrix ( matrix, binName, message )
+          endif
+        elseif ( got ( f_matrix ) ) then
+          if ( got ( f_vector ) ) call Announce_Error ( key, no_Error_Code, &
+            & 'Cannot load both vector and matrix (Why not?)' )
           call GetFromMatrixDatabase ( matrices(matrixToFill), matrix )
           call LoadMatrix ( matrix, binName, message )
+          if ( len_trim(message) > 0 ) call output( '* * *' // message, advance='yes' )
         else if ( got ( f_vector ) ) then
           if ( .not. got ( f_source ) ) call Announce_Error ( key, no_Error_Code, &
             & 'Must supply source=rows/columns for vector adoption' )
@@ -1107,6 +1123,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------------ directReadCommand -----
     subroutine directReadCommand
+    use L2PC_M, only: READCOMPLETEHDF5L2PCFILE
     ! Now we're on actual directRead instructions.
     logical, parameter :: DEEBUG = .true.
       integer :: EXPRUNITS(2)             ! From expr
@@ -1126,6 +1143,7 @@ contains ! =====     Public Procedures     =============================
       hdfVersion = DEFAULT_HDFVERSION_READ
       file = 0
       options = ' '
+      binname = 0
       sdname = ' '
       spread = .false.
       if ( DEEBUG ) call output ( 'In DirectReadCommand', advance='yes' )
@@ -1141,6 +1159,12 @@ contains ! =====     Public Procedures     =============================
         case ( f_vector )
           vectorIndex = decoration(decoration(gson))
           if ( DEEBUG ) call output ( 'Processing vector field', advance='yes' )
+        case ( f_matrix )
+          matrixToFill = decoration(decoration(gson))
+          if ( DEEBUG ) call output ( 'Processing matrix field', advance='yes' )
+        case ( f_hessian )
+          hessianToFill = decoration(decoration(gson))
+          if ( DEEBUG ) call output ( 'Processing hessian field', advance='yes' )
         case ( f_hdfVersion )
           if ( DEEBUG ) call output ( 'Begin Processing hdfversion field', advance='yes' )
           call expr ( gson, exprUnits, exprValue )
@@ -1149,6 +1173,8 @@ contains ! =====     Public Procedures     =============================
             & call Announce_error ( son, NO_ERROR_CODE, &
             & 'No units allowed for hdfVersion: just integer 4 or 5')
           hdfVersion = exprValue(1)
+        case ( f_bin )
+          binName = sub_rosa ( gson )
         case ( f_file )
           file = sub_rosa(gson)
           if ( DEEBUG ) call outputNamedValue ( 'Processing file field', file )
@@ -1174,8 +1200,9 @@ contains ! =====     Public Procedures     =============================
       if ( .not. got(f_file) ) call Announce_error ( key, 0, 'No file supplied' )
       if ( .not. got(f_type) ) call Announce_error ( key, 0, 'No type supplied' )
       if ( .not. any( (/ &
-        & got(f_quantity), got(f_vector) /) ) )&
-        & call Announce_error ( key, 0, 'Must supply either quantity or vector' )
+        & got(f_quantity), got(f_vector), got(f_matrix), got(f_hessian) /) ) )&
+        & call Announce_error ( key, 0, &
+        & 'Must supply one of matrix, quantity or vector' )
       if ( DEEBUG ) call output ( 'About to  get_file_name', advance='yes' )
       call get_file_name ( file, mlspcf_l2apriori_start, &
             & fileType, filedatabase, MLSFile, &
@@ -1186,6 +1213,21 @@ contains ! =====     Public Procedures     =============================
           & vectors(vectorIndex), quantityIndex )
         call QtyFromFile ( key, quantity, MLSFile, &
           & filetypestr, options, sdName, spread )
+      elseif ( got ( f_hessian ) ) then
+        Hessian => hessians(hessianToFill)
+        call ReadCompleteHDF5L2PCFile ( MLSFile, key, shallow=.false. )
+        call LoadHessian ( Hessian, binName, message )
+        if ( len_trim(message) > 0 ) call output( '* * *' // message, advance='yes' )
+        if ( got ( f_matrix ) ) then
+          call GetFromMatrixDatabase ( matrices(matrixToFill), matrix )
+          call LoadMatrix ( matrix, binName, message )
+        endif
+      elseif ( got(f_matrix) ) then
+        if ( .not. got(f_bin) ) call Announce_error ( key, 0, 'No bin supplied' )
+        call GetFromMatrixDatabase ( matrices(matrixToFill), matrix )
+        call ReadCompleteHDF5L2PCFile ( MLSFile, key, shallow=.false. )
+        call LoadMatrix ( matrix, binName, message )
+        if ( len_trim(message) > 0 ) call output( '* * *' // message, advance='yes' )
       else
         vector => vectors(vectorIndex)
         call VectorFromFile ( key, vector, MLSFile, &
@@ -2806,6 +2848,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.399  2012/02/02 01:19:05  pwagner
+! Can DirectRead matrix or hessian
+!
 ! Revision 2.398  2012/01/25 01:19:01  pwagner
 ! Removed unused args to ..FromFile calls
 !
