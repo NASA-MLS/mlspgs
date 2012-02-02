@@ -23,7 +23,7 @@ module L2PC_m
     & H_ABSENT, H_SPARSE, H_FULL, H_UNKNOWN, &
     & CREATEBLOCK, DESTROYBLOCK
   use HESSIANMODULE_1, only: HESSIAN_T, &
-    & CREATEBLOCK, CREATEEMPTYHESSIAN, DESTROYHESSIAN
+    & COPYHESSIANVALUE, CREATEBLOCK, CREATEEMPTYHESSIAN, DESTROYHESSIAN
   use INTRINSIC, only: L_CHANNEL, L_GEODALTITUDE, L_NONE, L_VMR, &
     & L_RADIANCE, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
     & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, L_TSCAT, LIT_INDICES, &
@@ -67,7 +67,7 @@ module L2PC_m
     & DefaultSelector_FieldAzimuth, DefaultSelector_Latitude, &
     & DestroyL2PC, DestroyL2PCDatabase, DestroyBinSelectorDatabase, &
     & Diff, Dump, FlushL2PCBins, L2PC_T, &
-    & LoadMatrix, LoadVector, OutputHDF5L2PC, &
+    & LoadHessian, LoadMatrix, LoadVector, OutputHDF5L2PC, &
     & PopulateL2PCBin, PopulateL2PCBinByName, &
     & ReadCompleteHDF5L2PCFile
 
@@ -371,8 +371,14 @@ contains ! ============= Public Procedures ==========================
     ! Local variables
     integer :: I, Status
 
-    if (associated(l2pcDatabase)) then
+    verbose = switchDetail( switches, 'l2pc') > -1
+    if ( .not. associated(l2pcDatabase) ) then
+      if ( verbose ) &
+        & call output( 'l2pc database empty' )
+    else
       do i = 1, size(l2pcDatabase)
+        if ( verbose ) &
+          & call outputNamedValue( 'Destroying l2pc db entry number ', i )
         call DestroyL2PC ( l2pcDatabase(i) )
       end do
       deallocate ( l2pcDatabase, stat=status )
@@ -705,6 +711,52 @@ contains ! ============= Public Procedures ==========================
     endif
   end subroutine FlushL2PCBins
 
+  ! ---------------------------------- LoadHessian ----------
+  subroutine LoadHessian ( Hessian, name, message )
+    ! This function copies the Hessian from the l2pc database into the
+    ! given Hessian (presumably from the main dabase)
+
+    ! Dummy arguments
+    type(Hessian_T), intent(inout) :: Hessian
+    integer, intent(in) :: NAME
+    character (len=*), intent(out) :: MESSAGE
+
+    ! Local variables
+    integer :: I                        ! Index
+    type(Hessian_T), pointer :: SOURCE
+
+    ! Executable code
+    message = ''
+    i = FindFirst ( l2pcDatabase%name, name )
+    call outputNamedValue( 'l2pcdatabase names', l2pcDatabase%name )
+    call outputNamedValue( 'bin name', name )
+    call outputNamedValue( 'i', i )
+    if ( i == 0 ) then
+      message = 'No such l2pc Hessian with your name'
+      call display_string( name, advance='yes' )
+      return
+    end if
+    if ( .not. l2pcDatabase(i)%goth ) then
+      message = 'This bin has no Hessian to copy'
+      return
+    endif
+    call PopulateL2PCBin ( i, ignoreHessian=.false. )
+    source => l2pcDatabase(i)%h
+    if ( .not. DoVectorsMatch ( Hessian%row%vec, source%row%vec, verbose=.true. ) ) then
+      message = 'Rows do not match for loading'
+      call output( 'Hessian row vector', advance='yes' )
+      call dump( Hessian%row%vec, details=0 )
+      call output( 'source row vector', advance='yes' )
+      call dump( source%row%vec, details=0 )
+      return
+    endif
+    if ( .not. DoVectorsMatch ( Hessian%col%vec, source%col%vec ) ) then
+      message = 'Columns do not match for loading'
+      return
+    endif
+    call CopyHessianValue ( Hessian, source, allowNameMismatch=.true. )
+  end subroutine LoadHessian
+
   ! ---------------------------------- LoadMatrix ----------
   subroutine LoadMatrix ( matrix, name, message, IgnoreHessian )
     ! This function copies the matrix from the l2pc database into the
@@ -723,14 +775,21 @@ contains ! ============= Public Procedures ==========================
     ! Executable code
     message = ''
     i = FindFirst ( l2pcDatabase%name, name )
+    call outputNamedValue( 'l2pcdatabase names', l2pcDatabase%name )
+    call outputNamedValue( 'bin name', name )
+    call outputNamedValue( 'i', i )
     if ( i == 0 ) then
       message = 'No such l2pc matrix'
       return
     end if
     call PopulateL2PCBin ( i, ignoreHessian )
     source => l2pcDatabase(i)%j
-    if ( .not. DoVectorsMatch ( matrix%row%vec, source%row%vec ) ) then
+    if ( .not. DoVectorsMatch ( matrix%row%vec, source%row%vec, verbose=.true. ) ) then
       message = 'Rows do not match for loading'
+      call output( 'matrix row vector', advance='yes' )
+      call dump( matrix%row%vec, details=0 )
+      call output( 'source row vector', advance='yes' )
+      call dump( source%row%vec, details=0 )
       return
     endif
     if ( .not. DoVectorsMatch ( matrix%col%vec, source%col%vec ) ) then
@@ -1124,11 +1183,15 @@ contains ! ============= Public Procedures ==========================
 
     ! Executable code
     verbose = switchDetail( switches, 'l2pc') > -1
-    if ( .not. associated(l2pcInfo) ) return
+    if ( .not. associated(l2pcInfo) ) then
+      if ( verbose ) &
+        & call output( 'l2pcinfo database empty' )
+      return
+    endif
     call h5eSet_auto_f ( 0, status )
     do i = 1, size ( l2pcInfo )
       if ( verbose ) &
-        & call outputNamedValue( 'Destroying l2pc db entry number ', i )
+        & call outputNamedValue( 'Destroying l2pcinfo db entry number ', i )
       call h5gClose_f ( l2pcInfo(i)%blocksID, status )
       if ( status /= 0 .and. DIEIFDESTROYFAILS ) then
         call dump_private( l2pcInfo(i) )
@@ -1799,10 +1862,12 @@ contains ! ============= Public Procedures ==========================
 
     ! finish up, though if in shallow mode, then keep the groups open
     if ( .not. myShallow ) then
-      call h5gClose_f ( hblocksID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close Blocks group for input l2pc' , &
-        & MLSFile=MLSFile )
+      if ( l2pc%goth ) then
+        call h5gClose_f ( hblocksID, status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to close Blocks group for input l2pc' , &
+          & MLSFile=MLSFile )
+      endif
       call h5gClose_f ( matrixID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close matrix group for input l2pc' , &
@@ -2008,6 +2073,7 @@ contains ! ============= Public Procedures ==========================
         & coherent=coherent, stacked=stacked )
 
       qt%quantityType = quantityType
+      qt%logBasis = logBasis
       qt%molecule = molecule
       qt%radiometer = radiometer
       qt%signal = signal
@@ -2157,6 +2223,8 @@ contains ! ============= Public Procedures ==========================
         call MakeHDF5Attribute ( qID, 'verticalCoordinate', trim(line) )
         call get_string ( lit_indices(qt%frequencyCoordinate), line )
         call MakeHDF5Attribute ( qID, 'frequencyCoordinate', trim(line) )
+        call get_string ( lit_indices(qt%unit), line )
+        call MakeHDF5Attribute ( qID, 'unit', trim(line) )
         call MakeHDF5Attribute ( qID, 'logBasis', qt%logBasis )
         call MakeHDF5Attribute ( qID, 'coherent', qt%coherent )
         call MakeHDF5Attribute ( qID, 'stacked', qt%stacked )
@@ -2230,6 +2298,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.119  2012/02/02 01:17:03  pwagner
+! Added LoadHessian; fixed errors that cause crashes
+!
 ! Revision 2.118  2011/11/11 00:32:29  vsnyder
 ! Use IsExtinction array from Molecules module
 !
