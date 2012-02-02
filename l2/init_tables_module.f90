@@ -1183,6 +1183,7 @@ contains ! =====     Public procedures     =============================
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directRead, &
+             begin, f+f_bin, t+t_string, n+n_field_type, &
              begin, f+f_file, t+t_string, nd+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
              begin, f+f_options, t+t_string, n+n_field_type, &
@@ -1193,6 +1194,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, t+t_outputType, ndr+n_field_type, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
+             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
              np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWrite, &
@@ -1724,6 +1726,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.533  2012/02/02 00:55:10  pwagner
+! Added bin and hessian fields to DirectRead command
+!
 ! Revision 2.532  2012/02/01 00:17:58  vsnyder
 ! Remove Matrix from the Retrieve section; nobody used it, because it was broken.
 !
