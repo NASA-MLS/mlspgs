@@ -1208,21 +1208,22 @@ contains
             else
               matrixIndex = decoration(decoration(gson))
             endif
-            if ( DiffOrDump == s_diff ) then
+            if ( DiffOrDump /= s_diff ) then
+              call getFromMatrixDatabase ( &
+                & matrixDatabase(matrixIndex), matrix )
+              call dump ( Matrix, details=details )
+            elseif ( GotFirst ) then
               call getFromMatrixDatabase ( &
                 & matrixDatabase(matrixIndex), matrix )
               call getFromMatrixDatabase ( &
                 & matrixDatabase(matrixIndex2), matrix2 )
               call diff ( Matrix, Matrix2, details=details )
-            else
-              call getFromMatrixDatabase ( &
-                & matrixDatabase(matrixIndex), matrix )
-              call dump ( Matrix, details=details )
             endif
           end do
         else
           call announceError ( gson, 0, 'Unable to dump matrix here; db empty or absent' )
         end if
+        GotFirst = .true.
       case ( f_options )
         call get_string ( sub_rosa(gson), optionsString, strip=.true. )
         optionsString = lowerCase(optionsString)
@@ -1527,6 +1528,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.65  2012/02/02 00:56:00  pwagner
+! Fix bug in Diffing matrices
+!
 ! Revision 2.64  2011/11/04 00:29:28  pwagner
 ! :Fixed something only NAg complained about when Matrices not associated yet
 !
