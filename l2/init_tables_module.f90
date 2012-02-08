@@ -1061,6 +1061,7 @@ contains ! =====     Public procedures     =============================
     call make_tree( (/ &
       begin, s+s_load, &
              begin, f+f_bin, t+t_string, nr+n_field_type, &
+             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
              begin, f+f_source, t+t_rowsOrColumns, n+n_field_type, &
@@ -1726,6 +1727,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.534  2012/02/08 23:18:57  pwagner
+! May Load Hessian from l2pc database
+!
 ! Revision 2.533  2012/02/02 00:55:10  pwagner
 ! Added bin and hessian fields to DirectRead command
 !
