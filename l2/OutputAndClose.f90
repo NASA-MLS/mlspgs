@@ -1406,7 +1406,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  unsplitFiles  -----
   subroutine unsplitFiles ( DirectDatabase, FileDatabase, usingSubmit, debug )
-    ! Catenate any split Direct Writes
+    ! Catenate any split Direct Writes of dgg/dgm files
+    ! Also write various types of metadata
     ! We assume hdfVersion is 5
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, ALLOCATE_TEST
     use CHUNKDIVIDE_M, only: OBSTRUCTIONS
@@ -1516,15 +1517,24 @@ contains ! =====     Public Procedures     =============================
           & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes )
         create2 = .false.
       end do
+      ! Now write various kinds of metadata
+      ! (1) Catalog metadata: only if file is just created, and TOOLKIT is available
+      ! (2) File level attributes: only if file is just created
+      ! (3) leapsec and utcpole contents: only if file is just created, and TOOLKIT is available
       if ( TOOLKIT .and. madeFile ) then
+        ! (1) Catalog metadata
         call add_metadata ( 0, trim(l2gpPhysicalFilename), l2metaData, &
           & HDFVERSION_5, l_l2dgg, returnStatus, 1, (/'dgg'/) )
         if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
       end if
       if ( madeFile ) then
+        ! (2) File level attributes
         call he5_writeMLSFileAttr( outputFile )
         call writeAPrioriAttributes( outputFile )
+      end if
+      if ( TOOLKIT .and. madeFile ) then
+        ! (3) leapsec and utcpole contents
         if (switchDetail( switches, 'pro') > 0 ) &
           call output ( 'About to open ' // trim(l2gpPhysicalFilename) , advance='yes' )
         call open_MLSFile( outputFile )
@@ -1629,7 +1639,7 @@ contains ! =====     Public Procedures     =============================
         endif
         create2= .false.
       end do
-      ! Is metadata really needed for l2aux files?
+      ! Is metadata really needed for l2aux files? Yes.
       if ( TOOLKIT .and. madeFile ) then
         call add_metadata ( 0, trim(l2auxPhysicalFilename), l2metaData, &
           & HDFVERSION_5, l_hdf, returnStatus, 1, (/'dgm'/) )
@@ -1645,8 +1655,10 @@ contains ! =====     Public Procedures     =============================
         & madeFile .and. l2auxPhysicalFilename /= ' ' ) then
         sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_RDWR, &
             & hdfVersion=HDFVERSION_5)
-        call WriteLeapSecHDF5DS (sdfId)
-        call WriteutcPoleHDF5DS (sdfId)
+        if ( TOOLKIT ) then
+          call WriteLeapSecHDF5DS (sdfId)
+          call WriteutcPoleHDF5DS (sdfId)
+        endif
         call h5gopen_f(sdfId, '/', grp_id, returnStatus)
         if ( .not. parallel%master .and. FAKEPARALLELMASTER ) then
           parallel%numCompletedChunks = 347
@@ -1700,6 +1712,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.157  2012/02/08 23:16:30  pwagner
+! Cant write utcpole, leapsec files w/o toolkit
+!
 ! Revision 2.156  2011/11/30 21:34:23  pwagner
 ! Fixed bug affecting files w/o pcfids when using pcf
 !
