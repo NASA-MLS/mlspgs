@@ -39,8 +39,10 @@ PROG_prereqs:=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 OMIT_SRCS := $(OMIT) 
 LIBRARY=libcfm.a
 FULLLIBRARY=libcfm_all.a
-SHAREDLIB=libcfm.so 
-SHAREDFULLLIB=libcfm_all.so
+ifdef BUILDSHAREDLIB
+  SHAREDLIB=libcfm.so 
+  SHAREDFULLLIB=libcfm_all.so
+endif
 PROG=mockup
 PROG2=mockup2
 
@@ -74,6 +76,7 @@ $(FULLLIBRARY): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(FULLLIBRARY) \
         UNPREFXDPTHS="$(ADD2PATHS)" \
 
+ifdef BUILDSHAREDLIB
 $(SHAREDLIB): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(SHAREDLIB) \
         UNPREFXDPTHS="$(ADD2PATHS)" \
@@ -81,6 +84,8 @@ $(SHAREDLIB): $(PROG_prereqs)
 $(SHAREDFULLLIB): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(SHAREDFULLLIB) \
         UNPREFXDPTHS="$(ADD2PATHS)" \
+
+endif
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
@@ -151,6 +156,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mockup
 
 # $Log$
+# Revision 1.7  2010/10/12 22:25:02  pwagner
+# Uses Makefile.h from srclib
+#
 # Revision 1.6  2010/10/02 00:08:30  pwagner
 # Tries to automatically created shared libraries, too
 #
