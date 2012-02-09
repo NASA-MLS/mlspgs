@@ -7,7 +7,6 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
 ========================= mlsl2 =========================
   -A: Dump the un-decorated abstract syntax tree.
   -a: Dump the decorated type-checked abstract syntax tree.
-  -C: Crash on any error.
   -c: Trace expression evaluation and tree decoration.
   -d: Dump the declaration table after type checking
   -f[digit]: Trace Forward model.  Bigger digit means 
@@ -145,6 +144,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.51  2012/02/09 01:48:20  vsnyder
+ Add -C option to crash on any error, to get traceback for debugging
+
  Revision 1.50  2011/06/29 21:55:52  pwagner
  Some cases may safely omit l1b files
 
