@@ -16,13 +16,14 @@ program F90TEX
 ! works if it's the first line of the !\{ block, and there's nothing else on
 ! the line.
 
+!>> 2012-02-09 F90TEX WV Snyder Stuff to make \cleardoublepage work
 !>> 2010-08-21 F90TEX WV Snyder Added -u option for usepackage
 !>> 2003-10-28 F90TEX WV Snyder Stuff to make \newpage work
 !>> 2000-04-07 F90TEX WV Snyder Original code
 
 ! =====     Declarations     ===========================================
 
-  use MACHINE, only: FILSEP, HP, IO_ERROR
+  use MACHINE, only: FILSEP, IO_ERROR
 
   implicit NONE
 
@@ -68,11 +69,11 @@ program F90TEX
 
   i = 1
   do
-    call getarg ( i+hp, in_file )
+    call get_command_argument ( i, in_file )
     if ( in_file(1:1) /= '-' ) exit
     if ( in_file(1:2) == '- ' ) then
       i = i + 1
-      call getarg ( i+hp, in_file )
+      call get_command_argument ( i, in_file )
       exit
     end if
     if ( in_file(1:3) == '-l ' ) then
@@ -85,7 +86,7 @@ program F90TEX
       box = .false.
     else if ( in_file(1:3) == '-n ' ) then
       i = i + 1
-      call getarg ( i+hp, number_step )
+      call get_command_argument ( i, number_step )
     else if ( in_file(1:3) == '-p ' ) then
       running = .false.
     else if ( in_file(1:3) == '-u ' ) then
@@ -94,10 +95,10 @@ program F90TEX
       else
         number_packages = number_packages + 1
         i = i + 1
-        call getarg ( i+hp, packages(number_packages) )
+        call get_command_argument ( i, packages(number_packages) )
       end if
     else
-      call getarg ( 0+hp, in_file )
+      call get_command_argument ( 0, in_file )
       write (*,*) &
       & 'Usage: ', trim(in_file), ' [options] [ in_file [out_file ]]'
       write (*,*) &
@@ -125,7 +126,7 @@ program F90TEX
     end if
     i = i + 1
   end do
-  call getarg ( i+1+hp, out_file )
+  call get_command_argument ( i+1, out_file )
 
   if ( in_file /= ' ' ) then
     open(in_unit, file=in_file, status='old', iostat=iostat)
@@ -226,9 +227,11 @@ program F90TEX
         call output ( start_code(sx), tex=.true. )
         call output ( trim(line) )
       else
-        if ( adjustl(line(i+2:)) == '\newpage' ) then
+        if ( adjustl(line(i+2:)) == '\newpage' .or. &
+           & adjustl(line(i+2:)) == '\cleardoublepage' ) then
           state = 3
-        else if ( box .and. adjustl(line(i+2:)) /= '\newpage' ) then
+        else if ( box .and. adjustl(line(i+2:)) /= '\newpage' .or. &
+                & box .and. adjustl(line(i+2:)) /= '\cleardoublepage' ) then
           call output ( 'framebox[' // width // '][l]{\parbox{' // &
                         widthp // '}{', tex=.true. )
           state = 2
@@ -240,7 +243,8 @@ program F90TEX
         call output ( trim(line) )
       else
         call output ( stop_code(sx), tex=.true. )
-        if ( adjustl(line(i+2:)) == '\newpage' ) then
+        if ( adjustl(line(i+2:)) == '\newpage' .or. &
+           & adjustl(line(i+2:)) == '\cleardoublepage' ) then
           state = 3
         else if ( box ) then
           call output ( 'framebox[' // width // '][l]{\parbox{' // &
