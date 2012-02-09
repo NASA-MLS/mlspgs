@@ -44,8 +44,8 @@ program MLSL2
   use MLSL2TIMINGS, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, MLSMSG_DEBUG, &
-    & MLSMSG_ERROR, MLSMessageSetup, MLSMSG_SEVERITY_TO_QUIT, &
-    & MLSMSG_SEVERITY_TO_WALKBACK, MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT
+    & MLSMSG_ERROR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK, &
+    & MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT
   use MLSPCF2 ! EVERYTHING
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, TRIM_SAFE
   use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, &
@@ -600,7 +600,6 @@ program MLSL2
           exit
         case ( 'A' ); dump_tree = .true.
         case ( 'a' ); toggle(syn) = .true.
-        case ( 'C' ); call MLSMessageSetup ( crashOnAnyError=.true. )
         case ( 'c' ); toggle(con) = .true.
         case ( 'd' ); do_dump = .true.
         case ( 'f' )
@@ -1179,6 +1178,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.179  2012/02/09 02:45:26  vsnyder
+! Remove -C option -- I didn't notice --crash was already there
+!
 ! Revision 2.178  2012/02/09 01:48:11  vsnyder
 ! Add -C option to crash on any error, to get traceback for debugging
 !
