@@ -23,7 +23,7 @@ program F90TEX
 
 ! =====     Declarations     ===========================================
 
-  use MACHINE, only: FILSEP, IO_ERROR
+  use MACHINE, only: FILSEP, GETARG, IO_ERROR
 
   implicit NONE
 
@@ -69,11 +69,11 @@ program F90TEX
 
   i = 1
   do
-    call get_command_argument ( i, in_file )
+    call getarg ( i, in_file )
     if ( in_file(1:1) /= '-' ) exit
     if ( in_file(1:2) == '- ' ) then
       i = i + 1
-      call get_command_argument ( i, in_file )
+      call getarg ( i, in_file )
       exit
     end if
     if ( in_file(1:3) == '-l ' ) then
@@ -86,7 +86,7 @@ program F90TEX
       box = .false.
     else if ( in_file(1:3) == '-n ' ) then
       i = i + 1
-      call get_command_argument ( i, number_step )
+      call getarg ( i, number_step )
     else if ( in_file(1:3) == '-p ' ) then
       running = .false.
     else if ( in_file(1:3) == '-u ' ) then
@@ -95,10 +95,10 @@ program F90TEX
       else
         number_packages = number_packages + 1
         i = i + 1
-        call get_command_argument ( i, packages(number_packages) )
+        call getarg ( i, packages(number_packages) )
       end if
     else
-      call get_command_argument ( 0, in_file )
+      call getarg ( 0, in_file )
       write (*,*) &
       & 'Usage: ', trim(in_file), ' [options] [ in_file [out_file ]]'
       write (*,*) &
@@ -126,7 +126,7 @@ program F90TEX
     end if
     i = i + 1
   end do
-  call get_command_argument ( i+1, out_file )
+  call getarg ( i+1, out_file )
 
   if ( in_file /= ' ' ) then
     open(in_unit, file=in_file, status='old', iostat=iostat)
