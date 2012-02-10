@@ -1063,12 +1063,12 @@ contains ! =====     Public Procedures     =============================
   ! Create a matrix block, but don't fill any elements or structural
   ! information, except if the Values field is created and Init is present,
   ! Values is filled from Init.  The "NumberNonzero" is required if and only
-  ! if the "Kind" argument has the value M_Banded or M_Column_Sparse. The
-  ! block is first destroyed, so as not to have a memory leak. If NoValues is
-  ! present and true, the values component is not allocated.  If Kind ==
-  ! M_Banded and BandHeight is present, the band height is assumed to be
-  ! uniform, and the R1 and R2 components are filled to reflect that
-  ! assumption.
+  ! if the "Kind" argument has the value M_Banded or M_Column_Sparse, and
+  ! NoValues is absent, or present and true. The block is first destroyed, so
+  ! as not to have a memory leak. If NoValues is present and true, the values
+  ! component is not allocated.  If Kind == M_Banded and BandHeight is
+  ! present, the band height is assumed to be uniform, and the R1 and R2
+  ! components are filled to reflect that assumption.
 
   ! Filling the block after it's created depends on the kind.
   !  M_Absent: Do nothing
@@ -1091,18 +1091,23 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(inout) :: Z
     integer, intent(in) :: nRows, nCols, Kind
     integer, intent(in), optional :: NumberNonzero ! Only for M_Banded and
-                                                   ! M_Column_Sparse
+             ! M_Column_Sparse.  Needed only if noValues is absent, or is
+             ! present and false, except for M_Banded if bandHeight is
+             ! present, in which case (number of columns) * bandHeight is
+             ! used.
     logical, intent(in), optional :: NoValues
     integer, intent(in), optional :: BandHeight
     real(rm), intent(in), optional :: Init         ! Initial value for z%values
     character(len=*), intent(in), optional :: ForWhom ! for allocation
 
-    integer :: I
+    integer :: I, nNonZero
     logical :: Values
     character(len=63) :: What
 
     values = .true.
     if ( present(noValues) ) values = .not. noValues
+    nNonZero = 0
+    if ( present(numberNonzero) ) nNonZero = numberNonzero
     what = "z%values"
     if ( present(forWhom) ) what = "z%values for " // forWhom
     call destroyBlock ( z )
@@ -1118,6 +1123,7 @@ contains ! =====     Public Procedures     =============================
           z%r2(i) = i * bandHeight
           z%r1(i) = 1 + z%r2(i) - bandHeight
         end do
+        if ( .not. present(numberNonzero) ) nNonZero = bandHeight * nCols
       end if
       if ( values ) &
         & call allocate_test ( z%values, numberNonzero, 1, what, ModuleName )
@@ -3514,7 +3520,7 @@ contains ! =====     Public Procedures     =============================
     call output ( matrix_block%nCols ); call output ( " Columns, " )
     select case ( matrix_block%kind )
     case ( m_banded )
-      call output ( 'Banded' )
+      call output ( 'Banded,' )
       if ( my_details > 0 ) then
         call output ( ' First-nonzero-rows =', advance='yes' )
         call dump ( matrix_block%r1(1:) )
@@ -3522,7 +3528,7 @@ contains ! =====     Public Procedures     =============================
         call dump ( matrix_block%r2(1:) )
       end if
     case ( m_column_sparse )
-      call output ( 'Column-sparse' )
+      call output ( 'Column-sparse,' )
       if ( my_details > 0 ) then
         call output ( ' Last-in-column =', advance='yes' )
         call dump ( matrix_block%r1(1:) )
@@ -3530,7 +3536,7 @@ contains ! =====     Public Procedures     =============================
         call dump ( matrix_block%r2(1:) )
       end if
     case ( m_full )
-      call output ( 'Full' )
+      call output ( 'Full,' )
     end select
     if ( matrix_block%kind == M_Absent ) then
       call output ( 'Absent', advance='yes' )
@@ -3640,6 +3646,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.9  2012/02/10 23:49:37  vsnyder
+! Use BandHeight for NumberNonzero if the latter is not present in CreateBlock
+! for a banded block.  Spiff some dumps.
+!
 ! Revision 2.8  2012/02/02 01:13:31  pwagner
 ! Added GetMatrixKindString
 !
