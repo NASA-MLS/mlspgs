@@ -528,6 +528,8 @@ contains ! =====     Public Procedures     =============================
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       son = subtree(i,root)
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Fill.spec", son )
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
         vectorName = sub_rosa(subtree(1,son))
@@ -752,17 +754,17 @@ contains ! =====     Public Procedures     =============================
         end if
 
       case ( s_subset )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
           & call trace_begin ( "Fill.subset", root )
         call SetupSubset ( key, vectors )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
           & call trace_end ( "Fill.subset" )
 
       case ( s_restrictRange )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
           & call trace_begin ( "Fill.RestrictRange", root )
         call RestrictRange ( key, vectors )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
           & call trace_end ( "Fill.RestrictRange" )
 
       case ( s_flushL2PCBins )
@@ -833,17 +835,17 @@ contains ! =====     Public Procedures     =============================
         end do
 
       case ( s_updateMask )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
           & call trace_begin ( "Fill.UpdateMask", root )
         call UpdateMask ( key, vectors )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
           & call trace_end ( "Fill.UpdateMask" )
 
       case ( s_flagCloud )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
           & call trace_begin ( "Fill.flagCloud", root )
         call SetupflagCloud ( key, vectors )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
           & call trace_end ( "Fill.flagCloud" )
 
       case ( s_directRead ) ! =============================  direectRead  =====
@@ -1058,6 +1060,8 @@ contains ! =====     Public Procedures     =============================
 
       case default ! Can't get here if tree_checker worked correctly
       end select
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Fill.spec" )
     end do ! End of loop of specs
 
     if ( fillError /= 0 ) then
@@ -2848,6 +2852,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.400  2012/02/10 23:45:43  vsnyder
+! Add more tracing, change some tracing levels
+!
 ! Revision 2.399  2012/02/02 01:19:05  pwagner
 ! Can DirectRead matrix or hessian
 !
