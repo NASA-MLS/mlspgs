@@ -446,6 +446,10 @@ contains
     logical                          :: TestForSurfs
     ! logical, parameter               :: DEEBUG = .true.
     ! Executable code
+    ! Can we do this?
+    ! doVGridsMatch_Vec = a%template%VGridIndex /= 0 .and. &
+    !                   & a%template%VGridIndex == b%template%VGridIndex
+    ! if ( doVGridsMatch_Vec ) return
     doVGridsMatch_Vec = .false.
     if ( DEEBUG ) then
       call outputNamedValue ( 'noSurfs', (/ a%template%noSurfs, b%template%noSurfs /) )
@@ -587,6 +591,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.39  2012/02/10 23:52:35  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.38  2012/02/02 01:09:11  pwagner
 ! DoQuantitiesMatch now works properly when tested
 !
