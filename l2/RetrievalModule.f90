@@ -1441,6 +1441,7 @@ contains
       logical :: D_Gvec   ! 'gvec' Gradient vector
       logical :: D_Jac_F  ! 'JAC' Full Jacobian (if you dare)
       logical :: D_Jac_N  ! 'jac' L_Infty norms of Jacobian blocks
+      integer :: D_KTK    ! 'kTk' kTk, which might be normalEquations
       logical :: D_Mas    ! 'mas' Announce master triggering slaves
       logical :: D_Mst    ! 'mst' Block causing factoring abnormal status
       logical :: D_Ndb_0  ! 'ndb' Minimum Newton method debugging output
@@ -1520,6 +1521,7 @@ contains
       d_gvec = switchDetail(switches,'gvec') > -1
       d_jac_f = switchDetail(switches,'JAC') > -1
       d_jac_n = switchDetail(switches,'jac') > -1
+      d_kTk = switchDetail ( switches, 'kTk' )
       d_mas = switchDetail ( switches, 'mas' ) > -1
       d_mst = switchDetail(switches,'mst') > -1
       d_ndb_0 = switchDetail(switches,'ndb') > -1
@@ -2008,6 +2010,7 @@ NEWT: do ! Newton iteration
               call add_to_retrieval_timing( 'newton_solver', t1 )
             call formNormalEquations ( jacobian, kTk, rhs_in=v(f_rowScaled), &
               & rhs_out=v(aTb), update=update, useMask=.true. )
+              if ( d_kTk>-1 ) call dump ( kTk%m, name='kTk', details=d_kTk )
               if ( d_atb ) call dump ( v(aTb) )
               call add_to_retrieval_timing( 'form_normeq', t1 )
             if ( got(f_average) .and. extendedAverage ) then
@@ -2924,6 +2927,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.321  2012/02/10 23:46:24  vsnyder
+! Add dump for kTk
+!
 ! Revision 2.320  2012/02/01 00:18:38  vsnyder
 ! Remove Matrix from the Retrieve section; nobody used it, because it was broken.
 !
