@@ -1351,6 +1351,7 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine GetDiagonal_1
 
+  ! -----------------------------------------------  GetFullBlock  -----
   subroutine GetFullBlock ( Jacobian, Row, Col, What )
 
     type (Matrix_t), intent(inout) :: Jacobian
@@ -2606,12 +2607,12 @@ contains ! =====     Public Procedures     =============================
     type(Matrix_T), intent(in) :: Matrix
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: Details   ! Print details, default 1
-    integer, intent(in), optional :: Row, Column ! Only do these
     !  <= -3 => no details,
     !  -2..0 => Just the name, size and where created
     !  == -1 => Structure of blocks but not their values
     !  == One => Details of matrix but not its blocks,
     !  >One => Details of the blocks, too.
+    integer, intent(in), optional :: Row, Column ! Only do these
     logical, intent(in), optional :: Clean     ! Print zeroes, count
 
     integer :: Col1, ColN
@@ -2853,6 +2854,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.126  2012/02/10 23:50:12  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.125  2012/02/02 01:14:49  pwagner
 ! Diffing matrices skips absent blocks
 !
