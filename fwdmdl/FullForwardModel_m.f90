@@ -40,8 +40,7 @@ contains
 
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     use COMPUTE_Z_PSIG_M, only: COMPUTE_Z_PSIG
-    use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
-      & DESTROYFORWARDMODELDERIVED, DUMP, FORWARDMODELCONFIG_T
+    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
     use GET_SPECIES_DATA_M, only:  GET_SPECIES_DATA
@@ -122,8 +121,6 @@ contains
       & call trace_begin ( 'FullForwardModel, MAF=', index=fmstat%maf )
 
     nullify ( z_psig, tan_press )
-
-    call deriveFromForwardModelConfig ( fwdModelConf )
 
     ! Create the data structures for the species.  Get the
     ! spectroscopy parameters from the state vector.
@@ -288,8 +285,6 @@ contains
     ! Allocated in Compute_Z_PSIG:
     call deallocate_test ( tan_press,    'tan_press',    moduleName )
     call deallocate_test ( z_psig,       'z_psig',       moduleName )
-
-    call destroyForwardModelDerived ( fwdModelConf )
 
     if ( toggle(emit) ) call trace_end ( 'FullForwardModel MAF=', fmStat%maf )
 
@@ -1382,7 +1377,7 @@ contains
           & 'Had to patch some out-of-order ptg_angles' )
         fmStat%flags = ior(fmStat%flags,b_ptg_angles)
         if ( print_Ptg ) &
-          & call Dump ( ptg_angles, 'ptg_angles (after patching)', format='(1PG22.17)' )
+          & call dump ( ptg_angles, 'ptg_angles (after patching)', format='(1PG22.17)' )
       end if
 
       ! Work out which antenna patterns we're going to need ------------------
@@ -4550,6 +4545,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.330  2011/11/10 23:23:32  vsnyder
+! Correct computation of 'combine' argument in frequency averaging
+!
 ! Revision 2.329  2011/11/09 00:29:48  vsnyder
 ! Monochromatic PFA, more debugging
 !
