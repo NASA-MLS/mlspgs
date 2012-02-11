@@ -38,15 +38,18 @@ contains ! ============= Public Procedures ==========================
     ! FwmJacobian to Jacobian after returning from the forward model.
 
     use BASELINEFORWARDMODEL_M, only: BASELINEFORWARDMODEL
+    use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
+      & DESTROYFORWARDMODELDERIVED, FORWARDMODELCONFIG_T
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
     use FULLCLOUDFORWARDMODEL, only: FULLCLOUDFORWARDMODELWRAPPER
     use FULLFORWARDMODEL_M, only: FULLFORWARDMODEL
     use HESSIANMODULE_1, only: HESSIAN_T
     use HYBRIDFORWARDMODEL_M, only: HYBRIDFORWARDMODEL
-    use INIT_TABLES_MODULE, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, &
-      & L_CLOUDFULL, L_SWITCHINGMIRROR, L_HYBRID, L_MIFExtinction, &
-      & L_MIFExtinctionV2, L_POLARLINEAR, L_BASELINE
+    use INIT_TABLES_MODULE, only: L_BASELINE, L_CLOUDFULL, &
+      & L_Extinction, L_ExtinctionV2, L_FULL, L_HYBRID, L_LINEAR, &
+      & L_MIFExtinction, L_MIFExtinctionV2, L_POLARLINEAR, L_Ptan, L_SCAN, &
+      & L_SCAN2D, L_SWITCHINGMIRROR
     use Intrinsic, only: L_LowestRetrievedPressure, L_VMR
     use LINEARIZEDFORWARDMODEL_M, only: LINEARIZEDFORWARDMODEL
     use MATRIXMODULE_1, only: CHECKINTEGRITY, FindBlock, MATRIX_T
@@ -85,16 +88,17 @@ contains ! ============= Public Procedures ==========================
 
     ! Local variables
     real :: DeltaTime
-    integer :: DumpTransform            ! Dump transformed vector quantities
-    integer :: FRow, FCol               ! Row, Column of block in fwmJacobian
+    integer :: DumpTransform              ! Dump transformed vector quantities
+    integer :: FCol, FRow                 ! Column, Row of block in fwmJacobian
+    type(vectorValue_t), pointer :: F_Qty ! Transformed FWM quantity in fwmState
     integer :: I, K
-    integer :: Inst                     ! Instance index
-    integer :: JRow, JCol               ! Row, Column of block in Jacobian
-    type(vectorValue_t), pointer :: LRP ! Lowest Retrieved Pressure
-    type(vectorValue_t), pointer :: Qty ! Transformed quantity in fwmState
+    integer :: Inst                       ! Instance index
+    integer :: JRow, JCol                 ! Row, Column of block in Jacobian
+    type(vectorValue_t), pointer :: LRP   ! Lowest Retrieved Pressure
+    type(vectorValue_t), pointer :: Ptan  ! Tangent pressure
     logical :: RadianceModel
+    type(vectorValue_t), pointer :: S_Qty ! MIF-basis Quantity in State
     type(vector_t), pointer :: TheState
-    type(vectorValue_t), pointer :: T_Qty ! Quantity in State to be transformed
     type(matrix_T), pointer :: TheJacobian
     character(len=132) :: THISNAME
     real :: Time_start, Time_end 
@@ -122,28 +126,40 @@ contains ! ============= Public Procedures ==========================
     dumpTransform = switchDetail(switches,'dxfq')
 
     ! Do the actual forward models
+
+    call deriveFromForwardModelConfig ( config )
+
     if ( present(fwmJacobian) ) then ! Need transformations
       ! Lowest Returned Pressure is needed for extinction transformations
       lrp => getVectorQuantityByType ( fwdModelExtra, &
                & quantityType=l_lowestRetrievedPressure )
-      ! Move quantities in State for which no transformation is requested to
-      ! FwmState.  Transform those for which transformation is requested. We
-      ! move the quantities so as to provide a consistent view of the state
-      ! to the Forward model.  The un-transformed quantities in FwdModelIn
-      ! are moved instead of copied to avoid aliasing and memory leaks.
+      ptan => getVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+               & quantityType=l_ptan )
+      ! Move quantities in the retriever's state vector (FwdModelIn) for which
+      ! no transformation is requested to FwmState.  Transform those for which
+      ! transformation is requested. We move the quantities so as to provide a
+      ! consistent view of the state to the Forward model.  The un-transformed
+      ! quantities in FwdModelIn are moved instead of copied to avoid aliasing
+      ! and memory leaks.
       do k = 1, size(fwdModelIn%quantities)
-        t_qty => fwdModelIn%quantities(k)    ! Quantity to be transformed
-        select case ( t_qty%template%quantityType )
-        case ( l_MIFExtinction, l_MIFExtinctionV2 )
-          qty => getVectorQuantityByType ( & ! Transformed quantity
-            &    fwmState, quantityType=t_qty%template%quantityType, &
-            &    radiometer=t_qty%template%radiometer )
+        s_qty => fwdModelIn%quantities(k)    ! State quantity to be transformed
+        select case ( s_qty%template%quantityType )
+        case ( l_MIFExtinction )
+          f_qty => getVectorQuantityByType ( & ! Transformed quantity
+            &    fwmState, quantityType=l_vmr, molecule=l_extinction, &
+            &    radiometer=s_qty%template%radiometer )
           call transform_MIF_extinction &
-            & ( fmStat%MAF, T_Qty, lrp%values(1,1), dumpTransform, Qty )
+            & ( fmStat%MAF, s_qty, ptan, lrp%values(1,1), dumpTransform, f_qty )
+        case ( l_MIFExtinctionV2 )
+          f_qty => getVectorQuantityByType ( & ! Transformed quantity
+            &    fwmState, quantityType=l_vmr, molecule=l_extinctionV2, &
+            &    radiometer=s_qty%template%radiometer )
+          call transform_MIF_extinction &
+            & ( fmStat%MAF, s_qty, ptan, lrp%values(1,1), dumpTransform, f_qty )
         case default ! Just move the quantity
-          qty => getVectorQuantityByType ( fwmState, &
-              &  quantityType=t_qty%template%quantityType )
-          call moveVectorQuantity ( t_qty, qty )
+          f_qty => getVectorQuantityByType ( fwmState, &
+              &  quantityType=s_qty%template%quantityType )
+          call moveVectorQuantity ( s_qty, f_qty )
         end select
       end do
 
@@ -155,25 +171,35 @@ contains ! ============= Public Procedures ==========================
       ! is requested back to Jacobian.  Transform fwmJacobian and radiances for
       ! quantities for which transformation is requested.
       do k = 1, size(fwdModelIn%quantities)
-        t_qty => fwdModelIn%quantities(k)
-        select case ( t_qty%template%quantityType )
-        case ( l_MIFExtinction, l_MIFExtinctionV2 )
-          qty => getVectorQuantityByType ( & ! Transformed quantity
-              &    fwmState, quantityType=t_qty%template%quantityType, &
-              &    radiometer=t_qty%template%radiometer )
+        s_qty => fwdModelIn%quantities(k)
+        select case ( s_qty%template%quantityType )
+        case ( l_MIFExtinction )
+          f_qty => getVectorQuantityByType ( & ! Transformed quantity
+              &    fwmState, quantityType=l_vmr, molecule=l_extinction, &
+              &    radiometer=s_qty%template%radiometer )
           call transform_FWM_extinction ( config, &
-            & fmStat%MAF, fwdModelOut, qty, t_qty, fwmJacobian, Jacobian )
+            & fmStat%MAF, fwdModelOut, f_qty, s_qty, ptan, &
+            & fwmJacobian, Jacobian, dumpTransform )
+        case ( l_MIFExtinctionV2 )
+          f_qty => getVectorQuantityByType ( & ! Transformed quantity
+              &    fwmState, quantityType=l_vmr, molecule=l_extinctionV2, &
+              &    radiometer=s_qty%template%radiometer )
+          call transform_FWM_extinction ( config, &
+            & fmStat%MAF, fwdModelOut, f_qty, s_qty, ptan, &
+            & fwmJacobian, Jacobian, dumpTransform )
         case default ! Just move the quantity and column
-          qty => getVectorQuantityByType ( fwmState, &
-              &  quantityType=t_qty%template%quantityType )
-          call moveVectorQuantity ( qty, t_qty )
-          call move_Jacobian_Columns ( qty, fwmJacobian, Jacobian )
+          f_qty => getVectorQuantityByType ( fwmState, &
+              &  quantityType=s_qty%template%quantityType )
+          call moveVectorQuantity ( f_qty, s_qty )
+          call move_Jacobian_Columns ( f_qty, fwmJacobian, Jacobian )
         end select
       end do
 
     else ! Run the forward model without transformation
       call doForwardModels ( fwdModelIn, Jacobian )
     end if
+
+    call destroyForwardModelDerived ( config )
 
     call MLSMessageCalls( 'pop' ) ! for all the cases
 
@@ -332,127 +358,197 @@ contains ! ============= Public Procedures ==========================
     ms = m(1)
   end function MINLOC_S_D
 
-  subroutine Move_Jacobian_Columns ( Qty, FwmJacobian, Jacobian )
+  subroutine Move_Jacobian_Columns ( F_Qty, FwmJacobian, Jacobian )
     ! Move the blocks in all rows in the columns of FwmJacobian corresponding
-    ! to Qty to Jacobian.
+    ! to F_Qty to Jacobian.
 
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use MatrixModule_0, only: Move_Block
     use MatrixModule_1, only: FindBlock, Matrix_T
     use VectorsModule, only: Vector_t, VectorValue_t
 
-    type(vectorValue_t), intent(in) :: Qty ! Quantity in fwmState
+    type(vectorValue_t), intent(in) :: F_Qty ! FWM Quantity in fwmState
     type(matrix_T), intent(inout) :: FwmJacobian
     type(matrix_T), intent(inout) :: Jacobian
 
     integer :: Chan, FCol, Inst, JCol, JRow
 
     do jRow = 1, jacobian%row%nb
-      do inst = 1, qty%template%noInstances
-        jCol = findBlock ( Jacobian%col, qty%index, inst )
-        fCol = findBlock ( fwmJacobian%col, qty%index, inst )
+      do inst = 1, f_qty%template%noInstances
+        jCol = findBlock ( Jacobian%col, f_qty%index, inst )
+        fCol = findBlock ( fwmJacobian%col, f_qty%index, inst )
         call move_block ( fwmJacobian%block(jRow,fCol), Jacobian%block(jRow,jCol) )
       end do
     end do
 
   end subroutine Move_Jacobian_Columns
 
-  subroutine Transform_FWM_extinction ( Config, MAF, FwdModelOut, Qty, T_Qty, &
-    &                                   FwmJacobian, Jacobian )
+  subroutine Transform_FWM_extinction ( Config, MAF, FwdModelOut, F_Qty, S_Qty, &
+    &                                   PTan, FwmJacobian, Jacobian, DumpTransform )
     ! Transform the forward model FwmJacobian to the retriever Jacobian
-    ! for the case of qty%template%quantityType == l_extinction[v2].
+    ! for the case of f_qty%template%quantityType == l_extinction[v2].
+    ! Transform the forward model radiances to retriever radiances.
 
-    ! See Equations (2) and (3) in wvs-107.
+    ! See Equations (3) and (4) in wvs-107.
 
+    use Dump_0, only: Dump
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use MatrixModule_0, only: DestroyBlock
-    use MatrixModule_1, only: FindBlock, GetFullBlock, Matrix_T
-    use MLSKinds, only: RM, RV
-    use VectorsModule, only: Vector_t, VectorValue_t
+    use MatrixModule_0, only: DestroyBlock, Dump, M_Banded
+    use MatrixModule_1, only: FindBlock, CreateBlock, Dump, Matrix_T
+    use MLSKinds, only: RM, RP, RV
+    use VectorsModule, only: Dump, Vector_t, VectorValue_t
 
     type(forwardModelConfig_T), intent(in) :: Config
     integer, intent(in) :: MAF               ! MAjor Frame number
     type(vector_t), intent(inout) :: FwdModelOut
-    type(vectorValue_t), intent(in) :: Qty   ! Transformed quantity in fwmState
-    type(vectorValue_t), intent(in) :: T_Qty ! Quantity in State
+    type(vectorValue_t), intent(in) :: F_Qty ! Transformed FWM quantity in fwmState
+    type(vectorValue_t), intent(in) :: S_Qty ! Quantity in State
+    type(vectorValue_t), intent(in) :: PTan  ! Tangent pressure, for S_Qty
     type(matrix_T), intent(in) :: FwmJacobian
     type(matrix_T), intent(inout) :: Jacobian
+    integer, intent(in) :: DumpTransform
 
     integer :: Chan    ! c in wvs-107
+    integer :: CG      ! cg, channels X zetas, in wvs-107
+    integer :: CV      ! Subscript corresponding to Chan
     integer :: CZ      ! ci, channels X zetas, in wvs-107
-    integer :: FCols(qty%template%noInstances) ! of FwmJacobian, j in wvs-107
+    integer :: FCols(f_qty%template%noInstances) ! of FwmJacobian, j in wvs-107
     integer :: Inst    ! Loop inductor to compute fCols, j in wvs-107
     integer :: JCol    ! of Jacobian
-    integer :: JCols(t_qty%template%noInstances) ! of Jacobian, n in wvs-107
+    integer :: JCols(s_qty%template%noInstances) ! of Jacobian, n in wvs-107
     integer :: JRow    ! of both Jacobians, n in wvs-107
-    integer :: NChans  ! Number of channels, N_C in wvs-107
+    integer :: NConfigChans  ! Number of channels in configuration, N_C in wvs-107
+    integer :: NVecChans ! Number of channels in radiance
     integer :: NSurfs  ! Number of surfaces in MIF, N_m in wvs-107
-    real(rv) :: P      ! 10**(-2*(zeta(surf)-zeta(jRow)))
+    real(rv) :: P      ! 10**(-2*(zeta(surf)-zeta(vSurf)))
     real(rm) :: RowSum ! sum(FwmJacobian%block(jRow,fCols)%values(cz,surf))
     integer :: Surf    ! column of FwmJacobian%block(jRow,fCol)%values, 
                        ! g in wvs-107
     integer :: VSurf   ! Surface (zeta) index in a MIF, i in wvs-107
 
-    ! Get the block column subscripts for instances of qty.
-    do inst = 1, qty%template%noInstances
-      fCols(inst) = findBlock ( fwmJacobian%col, qty%index, inst )
+    ! Get the block column subscripts for instances of f_qty.
+    do inst = 1, f_qty%template%noInstances
+      fCols(inst) = findBlock ( fwmJacobian%col, f_qty%index, inst )
     end do
 
-    do inst = 1, t_qty%template%noInstances
-      jCols(inst) = findBlock ( Jacobian%col, t_qty%index, inst )
+    do inst = 1, s_qty%template%noInstances
+      jCols(inst) = findBlock ( Jacobian%col, s_qty%index, inst )
     end do
 
-    nChans = size(config%channels)
-    do jRow = 1, jacobian%row%nb
+    if ( dumpTransform > -1 ) then
+      call dump ( fwdModelOut, 1, 'fwdModelOut before transformation' )
+      call dump ( pTan%values, name='PTan zetas' )
+    end if
+    nConfigChans = size(config%channels)
+    do jRow = 1, Jacobian%row%nb
       nSurfs = fwdModelOut%quantities(jRow)%template%noSurfs
+      nVecChans = fwdModelOut%quantities(jRow)%template%noChans
       do jCol = 1, size(jCols)
         if ( Jacobian%row%inst(jRow) /= Jacobian%col%inst(jCols(jCol)) ) then
+          ! Zero off-diagonal extinction blocks of retriever Jacobian
           call destroyBlock ( Jacobian%block(jRow,jCols(jCol)) )
-        else ! (jRow,jCol) = nn in wvs-107
-          call getFullBlock ( Jacobian, jrow, jCols(jCol), 'Transform_FWM_extinction' )
-          do chan = 1, nChans
-            do vSurf = 1, nSurfs ! Same for all fCols
-              cz = config%channels(chan)%used + 1 - & ! ci, Channel and Zeta
-                 & config%channels(chan)%origin + nChans*(vSurf-1)
-              do surf = 1, size(FwmJacobian%block(jRow,fCols(inst))%values,2) ! g
-                ! Compute the inner sum in Equations (3) and (4) in wvs-107. 
-                ! But we can't do
-                ! rowSum = sum(FwmJacobian%block(jRow,fCols)%values(cz,surf))
-                ! because "values" has the POINTER attribute.
+        else ! (inst(jRow),inst(jCol)) = nn in wvs-107
+          call createBlock ( Jacobian, jrow, jCols(jCol), m_banded, &
+            & FwmJacobian%row%nelts(jRow), bandHeight=nVecChans, &
+            & forWhom='Transform_FWM_extinction' )
+          Jacobian%block(jRow,jCols(jCol))%values = 0
+          do vSurf = 1, nSurfs ! i in wvs-107, Same for all fCols
+            fwdModelOut%quantities(jRow)%values(vSurf,maf) = 0
+            ! Jacobian is banded.  The only nonzeros in a column are in
+            ! rows for the same MIF as the column, and the maximum number of
+            ! nonzeros is the number of channels in the band.  This could be
+            ! sharpened to the range from the smallest to largest channel
+            ! numbers, but the computations would be messier.
+            do chan = 1, nConfigChans
+              cv = config%channels(chan)%used + 1 - config%channels(chan)%origin
+              cz = cv + nVecChans*(vSurf-1) ! ci in wvs-107
+              ! The surf loop runs in reverse order to sum small-to-large
+              do surf = f_qty%template%noSurfs, 1, -1 ! g in wvs-107
                 rowSum = 0.0
                 do inst = 1, size(fCols)
+    !{ Compute the inner sum in Equations (3) and (4) in wvs-107.
+    ! \begin{equation*}
+    !  \sum_{j=1}^{N_\zeta} K^F_{nj,cig}
+    ! \end{equation*}
+    ! where $n$ is the Jacobian block row number,
+    ! $j$ is the Jacobian block column number,
+    ! $c$ is the channel number,
+    ! $i$ is the MIF number, and
+    ! $g$ is the surface ($\zeta$) number.
+
+    ! But we can't do
+    ! rowSum = sum(FwmJacobian%block(jRow,fCols)%values(cz,surf))
+    ! because "values" has the POINTER attribute.
                   rowSum = rowSum + &
                     & FwmJacobian%block(jRow,fCols(inst))%values(cz,surf)
-                end do
+print '(4(a,i0),1p,2(a,g14.6))', &
+'FwmJacobian%block(',jrow,',',fcols(inst),')%values(',cz,',',surf,') =', &
+FwmJacobian%block(jRow,fCols(inst))%values(cz,surf),', rowSum =', rowSum
+                end do ! inst
 
-                p = 10.0_rm ** ( -2.0_rm * ( qty%template%surfs(surf,1) - &
-                                             t_qty%template%surfs(jRow,maf) ) )
+                cg = cv + nVecChans*(surf-1) ! cg in wvs-107
+                p = 10.0_rm ** ( -2.0_rm * ( f_qty%template%surfs(surf,1) - &
+                                             ptan%values(vSurf,maf) ) )
+print '(a,i0,1p,a,g14.6,2(a,i0),2(a,g14.6))',&
+'f_qty%template%surfs(',surf,',1) =', f_qty%template%surfs(surf,1),&
+'ptan%values(',vSurf,',',maf,') =', ptan%values(vSurf,maf), ', p =', p
+    !{Compute the retriever's Jacobian using Equation (3) in wvs-107
+    ! \begin{equation*}
+    ! \begin{array}{lll}
+    !  K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
+    !   \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+    !   10^{-2(\zeta_g - \zeta_i)} & i = 1, \dots, N_m & c = 1, \dots, N_C\,, \\
+    ! \end{array}
+    ! \end{equation*}
+    ! where the subscripts are as above.
 
-                ! Equation (3) in wvs-107
-                Jacobian%block(jRow,jCols(jCol))%values(cz,1) = rowSum * p
+                Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
+                  & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + rowSum * p
+print '(1p,a,g14.6,3(a,i0),a,g14.6)', &
+'rowSum*p =', rowSum*p, &
+', Jacobian%block(',jrow,',',jCols(jCol),')%values(',cz,',1) =', &
+Jacobian%block(jRow,jCols(jCol))%values(cz,1)
+    !{Compute radiance using Equation (4) in wvs-107
+    ! \begin{equation*}
+    ! \begin{array}{lll}
+    ! I^R_{ci,n} = I^F_{ci,n} + \sum_{g=1}^{N_\zeta}
+    !  \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+    !  \left( E^R_{i,n} 10^{-2(\zeta_g - \zeta_i)} -
+    !   E^F_{g,1} \right) & i = 1, \dots, N_m & c = 1, \dots, N_C \,, \\
+    ! \end{array}
+    ! \end{equation*}
+    ! where the subscripts are as above.
 
-                ! Equation (4) in wvs-107
-                fwdModelOut%quantities(jRow)%values(cz,maf) = &
-                  & fwdModelOut%quantities(jRow)%values(cz,maf) + &
-                    & rowSum * ( t_qty%values(vSurf,maf) * p - &
-                               & qty%values(surf,maf) )
-              end do
+                fwdModelOut%quantities(jRow)%values(vSurf,maf) = &
+                  & fwdModelOut%quantities(jRow)%values(vSurf,maf) + &
+                    & rowSum * ( s_qty%values(vSurf,maf) * p - &
+                               & f_qty%values(surf,1) )
+              end do ! surf
+            end do ! chan
+          end do ! vSurf
+          if ( dumpTransform > -1 ) then
+            do inst = 1, size(fCols)
+              call dump ( fwmJacobian, details=9, name='Forward model Jacobian', &
+                        & row=jrow, column=fCols(inst) )
             end do
-          end do
+            call dump ( Jacobian, details=9, name='Transformed Jacobian', &
+                      & row=jrow, column=jCols(jCol) )
+          end if
         end if
-      end do
-    end do
+      end do ! jCol
+    end do ! jRow
+    if ( dumpTransform > -1 ) &
+      & call dump ( fwdModelOut, 1, 'fwdModelOut after transformation' )
 
   end subroutine Transform_FWM_extinction
 
-  subroutine Transform_MIF_Extinction ( MAF, T_Qty, Lrp, DumpTransform, Qty )
+  subroutine Transform_MIF_Extinction ( MAF, S_Qty, PTan, Lrp, DumpTransform, &
+    &                                   F_Qty )
 
     ! Interpolate from a MAF-indexed minor-frame quantity to the first
     ! column of an L2GP quantity.  Then spread it out in orbit geodetic
     ! angle as if it were a 2D quantity.
 
-    ! Equation (1) in wvs-107.
+    ! Equations (1) and (2) in wvs-107.
 
     use MLSKinds, only: RV
     use MLSNumerics, only: InterpolateValues
@@ -460,42 +556,57 @@ contains ! ============= Public Procedures ==========================
     use VectorsModule, only: Dump, VectorValue_t
 
     integer, intent(in) :: MAF                ! MAjor Frame number
-    type(vectorValue_t), intent(in) :: T_Qty  ! State quantity to be transformed
+    type(vectorValue_t), intent(in) :: S_Qty  ! State quantity to be transformed
+    type(vectorValue_t), intent(in) :: PTan   ! Zetas, for S_Qty, which has
+                                              ! altitudes in meters
     real(rv), intent(in) :: LRP               ! Lowest retrieved pressure
-    integer, intent(in) :: DumpTransform      ! Dump T_Qty and Qty at the end
-    type(vectorValue_t), intent(inout) :: Qty ! Forward model quantity
+    integer, intent(in) :: DumpTransform      ! Dump S_Qty and F_Qty at the end
+    type(vectorValue_t), intent(inout) :: F_Qty ! Forward model quantity
 
+    integer :: F_LRP   ! Index in F_Qty%Surfs of LRP
     integer :: I       ! Subscript and loop inductor
-    integer :: P(t_qty%template%noSurfs)
-    integer :: Q_LRP   ! Index in Qty%Surfs of LRP
-    integer :: T_LRP   ! Index in T_Qty%Surfs of LRP
+    integer :: P(s_qty%template%noSurfs)
+    integer :: S_LRP   ! Index in S_Qty%Surfs of LRP
 
     interface MINLOC_S
       module procedure MINLOC_S_S, MINLOC_S_D
     end interface
 
-    ! Interpolate in Zeta only, from t_qty to the first column of qty
-    ! PTan might be out of order, so sort t_qty%template%surfs
-    call sortp ( t_qty%template%surfs(:,maf), 1, t_qty%template%noSurfs, p )
+    ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty
+    ! PTan might be out of order, so sort ptan%values
+    call sortp ( ptan%values(:,maf), 1, ptan%template%noSurfs, p )
     call interpolateValues (                              &
-      & t_qty%template%surfs(p,maf), t_qty%values(p,maf), &
-      & qty%template%surfs(:,1),   qty%values(:,1), 'L', 'C' )
-    q_lrp = minloc_s(lrp - qty%template%surfs(:,1))
-    t_lrp = minloc_s(lrp - t_qty%template%surfs(:,1))
-    ! Apply a P**(-2) dependence, Equation (2) in wvs-107
-    do i = 1, q_lrp-1
-      ! hGrids of qty and t_qty have same extent and spacing.
-      ! Vertical coordinate is zeta, so 10**(-2*zeta) is P**(-2).
-      qty%values(i,:) = t_qty%values(t_lrp,maf) * &
-        & 10 ** ( - 2.0 * ( qty%template%surfs(i,1)) - &
-                          & t_qty%template%surfs(t_lrp,1) )              
+      & ptan%values(p,maf), s_qty%values(p,maf), &
+      & f_qty%template%surfs(:,1), f_qty%values(:,1), 'L', 'C' )
+    f_lrp = minloc_s(lrp - f_qty%template%surfs(:,1))
+    s_lrp = minloc_s(lrp - ptan%values(:,1))
+     !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107,
+     !  to compute extinction for the forward model
+     ! \renewcommand{\arraystretch}{2}
+     ! \begin{equation*}
+     ! E^F_{g,j} = \left\{
+     ! \begin{array}{llll}
+     !  \overline{E}^R_{n}(\zeta_g)
+     !   & \zeta_g \geq \zeta_r & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+     !  \overline{E}^R_{n}(\zeta_r) \times 10^{-2(\zeta_g - \zeta_r)}
+     !   & \zeta_g < \zeta_r    & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+     ! \end{array} \right.
+     ! \end{equation*}
+     ! {\tt hGrids} of {\tt F_Qty} and {\tt S_Qty} have same extent and spacing.
+     ! Vertical coordinate is $\zeta = \log_{10}P$,
+     ! so $10^{-2\zeta}$ is $P^{-2}$).
+
+    do i = 1, f_lrp-1
+      f_qty%values(i,:) = s_qty%values(s_lrp,maf) * &
+        & 10 ** ( - 2.0 * ( f_qty%template%surfs(i,1)) - &
+                          & ptan%values(s_lrp,1) )              
     end do
-    do i = q_lrp, qty%template%noSurfs
-      qty%values(i,2:) = qty%values(i,1)
+    do i = f_lrp, f_qty%template%noSurfs
+      f_qty%values(i,2:) = f_qty%values(i,1)
     end do
     if ( dumpTransform > -1 ) then
-      call dump ( t_qty, details=dumpTransform, name='from fwdModelIn' )
-      call dump ( qty, details=dumpTransform, name='to fwmState' )
+      call dump ( s_qty, details=dumpTransform, name='from fwdModelIn' )
+      call dump ( f_qty, details=dumpTransform, name='to fwmState' )
     end if
   end subroutine Transform_MIF_Extinction
 
@@ -512,6 +623,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.36  2012/02/11 21:28:31  vsnyder
+! Interim MIF extinction commit
+!
 ! Revision 2.35  2011/12/21 01:42:22  vsnyder
 ! Add MIFExtinction transformation
 !
