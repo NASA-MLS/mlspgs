@@ -73,9 +73,11 @@ program l1bdiff ! diffs two l1b or L2AUX files
     integer     :: maf2 = 0
     integer     :: moff = 0
     integer     :: numDiffs = 0
-    character(len=255) :: sdList= '*'  ! what SDs to diff
+    character(len=255) :: group= ''     ! if SDs are within a group, group path
+    character(len=255) :: sdList= '*'   ! what SDs to diff
     character(len=255) :: skipList= ''  ! what SDs to skip
     character(len=255) :: referenceFileName= 'default.h5'  ! reference filename
+    character(len=80) :: options%dumpOptions       = ' '
   end type options_T
   
   type ( options_T ) ::          options
@@ -83,7 +85,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
   integer, parameter ::          MAXFILES = 100
   logical ::                     columnsOnly
-  character(len=8)   ::          dumpOptions
+  ! character(len=8)   ::          options%dumpOptions
   character(len=255) ::          filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
   integer     ::                 i, status, error ! Counting indices & Error flags
@@ -128,13 +130,13 @@ program l1bdiff ! diffs two l1b or L2AUX files
   endif
   if ( options%rms ) rmsFormat = '(1pe9.2)'
   if ( options%silent ) call suspendOutput
-  dumpOptions = '-'
-  if ( options%rms ) dumpOptions = trim(dumpOptions) // 'r'
-  if ( options%stats ) dumpOptions = trim(dumpOptions) // 's'
-  if ( options%unique ) dumpOptions = trim(dumpOptions) // 'u'
-  if ( options%silent ) dumpOptions = trim(dumpOptions) // 'h'
-  if ( options%direct ) dumpOptions = trim(dumpOptions) // 'd'
-  if ( options%table ) dumpOptions = trim(dumpOptions) // 'b'
+  options%dumpOptions = '-'
+  if ( options%rms ) options%dumpOptions = trim(options%dumpOptions) // 'r'
+  if ( options%stats ) options%dumpOptions = trim(options%dumpOptions) // 's'
+  if ( options%unique ) options%dumpOptions = trim(options%dumpOptions) // 'u'
+  if ( options%silent ) options%dumpOptions = trim(options%dumpOptions) // 'h'
+  if ( options%direct ) options%dumpOptions = trim(options%dumpOptions) // 'd'
+  if ( options%table ) options%dumpOptions = trim(options%dumpOptions) // 'b'
   call time_now ( t1 )
   if ( options%verbose .and. .not. options%list ) &
     & print *, 'Compare l1b data to: ', trim(options%referenceFileName)
@@ -142,7 +144,11 @@ program l1bdiff ! diffs two l1b or L2AUX files
     call time_now ( tFile )
     if ( options%list ) then
       print *, 'DS Names in: ', trim(filenames(i))
-      call GetAllHDF5DSNames (trim(filenames(i)), '/', mysdList)
+      if ( len_trim(options%group) < 1 ) then
+        call GetAllHDF5DSNames (trim(filenames(i)), '/', mysdList)
+      else
+        call GetAllHDF5DSNames (trim(filenames(i)), trim(options%group), mysdList)
+      endif
       call dump(mysdList, 'DS names')
     elseif ( options%self )then
       if ( options%verbose ) then
@@ -214,6 +220,10 @@ contains
         read(number, *) options%hdfVersion
         i = i + 1
         exit
+      elseif ( filename(1:5) == '-opt ' ) then
+        call getarg ( i+1+hp, options%dumpOptions )
+        i = i + 1
+        exit
       elseif ( filename(1:6) == '-self ' ) then
         options%self = .true.
         exit
@@ -252,6 +262,10 @@ contains
         call getarg ( i+1+hp, filename )
         i = i + 1
         exit
+      else if ( filename(1:3) == '-g ' ) then
+        call getarg ( i+1+hp, options%group )
+        i = i + 1
+        exit
       else
         call print_help
       end if
@@ -277,29 +291,31 @@ contains
       write (*,*) &
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options: -f filename => add filename to list of filenames'
-      write (*,*) '                         (can do the same w/o the -f)'
-      write (*,*) '          -d list     => just diff the SDs in list'
-      write (*,*) '          -ascii      => diff even character-valued fields'
-      write (*,*) '          -l2aux      => the files are l2aux, not l1b'
-      write (*,*) '          -v          => switch on verbose mode'
-      write (*,*) '          -self       => dump successive differences'
-      write (*,*) '                         between values in same file'
-      write (*,*) '          -half       => (1) (if with -self) '
-      write (*,*) '                         show no. of 1/2 waves'
-      write (*,*) '                         (2) (otherwise)'
-      write (*,*) '                         diff 1/2 of channels (so DACS wont crash)'
-      write (*,*) '          -hdf version=> hdf version (default is 5)'
-      write (*,*) '          -silent     => switch on silent mode'
-      write (*,*) '                        (printing only if diffs found)'
-      write (*,*) '          -unique     => dump only unique elements'
-      write (*,*) '          -l          => just list sd names in files'
-      write (*,*) '          -maf m1,m2  => just diff in the range [m1,m2]'
-      write (*,*) '          -moff offset=> 2nd data set starts after 1st'
-      write (*,*) '          -rms        => just print mean, rms'
-      write (*,*) '          -s          => just show number of differences'
-      write (*,*) '          -skip list  => skip diffing the SDs in list'
-      write (*,*) '          -t[able]    => table of % vs. amount of differences (pdf)'
-      write (*,*) '          -h          => print brief help'
+      write (*,*) '                  (can do the same w/o the -f)'
+      write (*,*) '   -d list     => just diff the SDs in list'
+      write (*,*) '   -g group    => find SDs under group path'
+      write (*,*) '   -ascii      => diff even character-valued fields'
+      write (*,*) '   -l2aux      => the files are l2aux, not l1b'
+      write (*,*) '   -v          => switch on verbose mode'
+      write (*,*) '   -self       => dump successive differences'
+      write (*,*) '                  between values in same file'
+      write (*,*) '   -half       => (1) (if with -self) '
+      write (*,*) '                  show no. of 1/2 waves'
+      write (*,*) '                  (2) (otherwise)'
+      write (*,*) '                  diff 1/2 of channels (so DACS wont crash)'
+      write (*,*) '   -hdf version=> hdf version (default is 5)'
+      write (*,*) '   -opt opts   => pass opts to dump routines'
+      write (*,*) '   -silent     => switch on silent mode'
+      write (*,*) '                 (printing only if diffs found)'
+      write (*,*) '   -unique     => dump only unique elements'
+      write (*,*) '   -l          => just list sd names in files'
+      write (*,*) '   -maf m1,m2  => just diff in the range [m1,m2]'
+      write (*,*) '   -moff offset=> 2nd data set starts after 1st'
+      write (*,*) '   -rms        => just print mean, rms'
+      write (*,*) '   -s          => just show number of differences'
+      write (*,*) '   -skip list  => skip diffing the SDs in list'
+      write (*,*) '   -t[able]    => table of % vs. amount of differences (pdf)'
+      write (*,*) '   -h          => print brief help'
       stop
   end subroutine print_help
 !------------------------- SayTime ---------------------
@@ -390,7 +406,11 @@ contains
     endif
     if ( options%verbose ) print *, 'the hdf version: ', the_hdfVersion
     if ( the_hdfVersion == HDFVERSION_5 ) then
-      call GetAllHDF5DSNames (trim(File1), '/', mysdList)
+      if ( len_trim(options%group) < 1 ) then
+        call GetAllHDF5DSNames (trim(File1), '/', mysdList)
+      else
+        call GetAllHDF5DSNames (trim(File1), trim(options%group), mysdList)
+      endif
       if ( options%verbose ) then
         call output ( '============ DS names in ', advance='no' )
         call output ( trim(file1) //' ============', advance='yes' )
@@ -470,6 +490,7 @@ contains
     do i = 1, noSds
       if ( the_hdfversion == HDFVERSION_5 ) then
         call GetStringElement (trim(mysdList), sdName, i, countEmpty )
+        if ( len_trim(options%group) > 1 ) sdName = trim(options%group) // sdName
       else
         sds_id = sfselect( sdfid1, i-1 ) ! "c" arrays begin with index 0
         status = sfginfo( sds_id, sdName, rank, dimsizes, data_type, num_attrs ) 
@@ -571,9 +592,9 @@ contains
         elseif ( options%oneD .and. associated(L1bData%dpField) ) then
           ! We will store L1BData%dpField in a values array
           nsize = product(shape(L1bData%dpField))
-          if ( options%verbose ) print *, 'About to do it 1-d ' // dumpOptions, nsize
+          if ( options%verbose ) print *, 'About to do it 1-d ' // options%dumpOptions, nsize
           call dump( L1bData%dpField-L1bData2%dpField, 'L1bData%dpField diff', &
-            & options=dumpOptions )
+            & options=options%dumpOptions )
           ! stop
           call allocate_test(l1bValues1, nsize, 'l1bValues1', ModuleName )
           l1bValues1 = reshape( L1bData%dpField, (/nsize/) )
@@ -583,18 +604,18 @@ contains
           call deallocate_test( L1bData2%dpField, 'l1bData%Values2', ModuleName )
           if ( options%timing ) call SayTime( 'Copying values to 1-d arrays', stime )
           stime = t2
-          if ( options%verbose ) print *, 'About to do it 1-d ' // dumpOptions, nsize
-          call diff(L1bData, L1bData2, numDiffs=numDiffs, options=dumpOptions, &
+          if ( options%verbose ) print *, 'About to do it 1-d ' // options%dumpOptions, nsize
+          call diff(L1bData, L1bData2, numDiffs=numDiffs, options=options%dumpOptions, &
             & l1bValues1=l1bValues1, l1bValues2=l1bValues2 )
           call deallocate_test( L1bValues1, 'l1bValues1', ModuleName )
           call deallocate_test( L1bValues2, 'l1bValues2', ModuleName )
         elseif ( options%direct .or. .not. associated(L1bData%dpField) ) then
-          if ( options%verbose ) print *, 'About to do it direct ' // dumpOptions
-          call diff(L1bData, L1bData2, numDiffs=numDiffs, options=dumpOptions )
+          if ( options%verbose ) print *, 'About to do it direct ' // options%dumpOptions
+          call diff(L1bData, L1bData2, numDiffs=numDiffs, options=options%dumpOptions )
         else
           ! print *, 'details=0'
           call diff(L1bData, L1bData2, details=0, &
-            & numDiffs=numDiffs, options=dumpOptions )
+            & numDiffs=numDiffs, options=options%dumpOptions )
           ! print *, 'done diffing'
 
           numDiffs = numDiffs + count( L1bData%dpField /= L1bData2%dpField )
@@ -610,13 +631,13 @@ contains
                 & '(1)', &
                 & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff), &
                 & '(2)', &
-                & options=dumpOptions )
+                & options=options%dumpOptions )
             else
               call diff( L1bData%dpField, &
                 & '(1)', &
                 & L1bData2%dpField, &
                 & '(2)', &
-                & options=dumpOptions )
+                & options=options%dumpOptions )
             endif
           else
             ! print *, 'About to form dpField = dpField1 - dpField2'
@@ -627,11 +648,11 @@ contains
             elseif ( options%maf1 /= 0 .and. options%maf2 /= 0 ) then
               ! print *, shape( L1bData%dpField(:,:,options%maf1:options%maf2) )
               call dump( L1bData%dpField(:,:,options%maf1:options%maf2), &
-                & 'l1bData%dpField', options=dumpOptions )
+                & 'l1bData%dpField', options=options%dumpOptions )
             else
               ! print *, shape( L1bData%dpField )
               call dump( L1bData%dpField, &
-                & 'l1bData%dpField', options=dumpOptions )
+                & 'l1bData%dpField', options=options%dumpOptions )
             endif
           endif
         endif
@@ -773,7 +794,7 @@ contains
             & 'Skipping diff of char-valued ' // trim(sdName) )
         else
           call selfdiff( L1bData%intField(1, 1, :), trim(sdName), &
-            & waves=options%halfWaves, options=dumpOptions )
+            & waves=options%halfWaves, options=options%dumpOptions )
         endif
       elseif ( associated(L1bData%dpField) ) then
         if ( size(L1bData%dpField, 1) > 1 .or. &
@@ -782,7 +803,7 @@ contains
             & 'Skipping diff of char-valued ' // trim(sdName) )
         else
           call selfdiff( L1bData%dpField(1, 1, :), trim(sdName), &
-            & waves=options%halfWaves, options=dumpOptions )
+            & waves=options%halfWaves, options=options%dumpOptions )
         endif
       endif
       call DeallocateL1BData ( l1bData )
@@ -810,6 +831,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.20  2011/05/10 18:28:12  pwagner
+! Avoid annoying messages unless verbose
+!
 ! Revision 1.19  2010/07/23 17:51:26  pwagner
 ! Now able to diff hdf4-formatted files
 !
