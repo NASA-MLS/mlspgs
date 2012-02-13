@@ -113,9 +113,6 @@ program Spartacus
 !---------------------------- RCS Ident Info ------------------------------
   character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
-  character (len=*), parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
 
 ! To use this, copy it into
@@ -170,7 +167,7 @@ program Spartacus
   end type options_T
   
   integer, parameter :: FIXDELAYFORSLAVETOFINISH   = 1500000 ! 15000000 ! 15 sec
-  integer, parameter :: MAXCMDLEN                  = 4096 ! was 512
+  integer, parameter :: MAXCMDLEN                  = 51200 ! was 4096
   integer, parameter :: MAXLINELEN                 = 512
   integer, parameter :: MAXNUMCMDS                 = 600
   integer, parameter :: MAXNUMLINES                = 2000
@@ -1239,7 +1236,27 @@ contains
 
 end program Spartacus
 
+module BOGUS_MODULE
+  implicit none
+  private
+  character (len=*), parameter :: ModuleName= &
+       "BOGUS"
+contains
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+end module BOGUS_MODULE
+
 ! $Log$
+! Revision 1.6  2011/06/24 00:40:31  pwagner
+! Add -dryrun option; repair some cosmetic errors
+!
 ! Revision 1.5  2011/06/18 00:35:34  pwagner
 ! Added new --pre and --suf options
 !
