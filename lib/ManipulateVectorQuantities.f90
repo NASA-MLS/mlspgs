@@ -17,9 +17,12 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
     & MLSMESSAGE, MLSMESSAGECALLS
   use MLSCommon, only: R8, RV
   use MLSNumerics, only: HUNT
+  use MOLECULES, only: L_RHI
   use output_m, only: OUTPUTNAMEDVALUE
-  use VectorsModule, only: VECTORVALUE_T, VECTOR_T
-  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE, PHYQ_ANGLE, PHYQ_PROFILES
+  use VectorsModule, only: VECTORVALUE_T, VECTOR_T, DUMP
+  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE, &
+    & L_VMR, L_COLUMNABUNDANCE, L_ISOTOPERATIO, L_RADIANCE, L_CALSIDEBANDFRACTION, L_LIMBSIDEBANDFRACTION, L_TSCAT, &
+    & PHYQ_ANGLE, PHYQ_PROFILES
 
   implicit none
 
@@ -382,13 +385,32 @@ contains
   end function DoHGridsMatch
 
   ! ------------------------------------- DoQuantitiesMatch --
-  logical function DoQuantitiesMatch ( a, b )
+  logical function DoQuantitiesMatch ( a, b, options )
     ! Returns true if quantities share all important template information.
     type (VectorValue_T), intent(in) :: A ! First quantity
     type (VectorValue_T), intent(in) :: B ! Second quantity
+    character(len=*), optional, intent(in)      :: options ! e.g. 's'[trict]
+    ! logical, optional, intent(in)      :: Strict ! Must every attribute match?
+    !                                   Or just the ones we actually write out
+    logical :: myStrict
+    integer, parameter :: NSCREENEDTYPES = 8
+    integer, dimension(NSCREENEDTYPES) :: SCREENEDTYPES
     ! Executable code
+    screenedtypes = (/ &
+      & l_vmr, l_columnabundance, l_rhi, l_isotoperatio, l_radiance, l_calsidebandfraction, l_limbsidebandfraction, l_Tscat &
+      & /)
+    myStrict = .false.
+    if ( present(options) ) myStrict = index(options, 's') > 0
     DoQuantitiesMatch = .false.
-    if ( .not. DoQtysDescribeSameThing  ( a, b ) ) return
+    if ( .not. DoQtysDescribeSameThing  ( a, b, options ) ) return
+    ! Must we screen further?
+    if ( .not. myStrict &
+      & .and. &
+      &.not. any( a%template%quantityType == screenedtypes ) &
+      & ) then
+      DoQuantitiesMatch = .true.
+      return
+    endif
     if ( .not. DoHGridsMatch ( a, b ) ) return
     if ( .not. DoVGridsMatch ( a, b ) ) return
     if ( .not. DoFGridsMatch ( a, b ) ) return
@@ -419,15 +441,21 @@ contains
     do q = 1, a%template%noQuantities
       if ( .not. DoQuantitiesMatch ( &
         & a%quantities(q), b%quantities(q) ) ) then
-        if ( myVerbose ) call outputnamedValue( 'doQuantitiesDesc', &
-          & DoQtysDescribeSameThing  ( a%quantities(q), b%quantities(q) ) )
-        if ( myVerbose ) call outputnamedValue( 'doHGridsMatch', &
-          & DoHGridsMatch ( a%quantities(q), b%quantities(q) ) )
-        if ( myVerbose ) call outputnamedValue( 'doVGridsMatch', &
-          & DoVGridsMatch ( a%quantities(q), b%quantities(q) ) )
-        if ( myVerbose ) call outputnamedValue( 'doFGridsMatch', &
-          & DoFGridsMatch ( a%quantities(q), b%quantities(q) ) )
+        if ( myVerbose ) then
+          call outputnamedValue( 'q', q )
+          call outputnamedValue( 'doQuantitiesDesc', &
+            & DoQtysDescribeSameThing  ( a%quantities(q), b%quantities(q), &
+            & options='-d' ) )
+          call outputnamedValue( 'doHGridsMatch', &
+            & DoHGridsMatch ( a%quantities(q), b%quantities(q) ) )
+          call outputnamedValue( 'doVGridsMatch', &
+            & DoVGridsMatch ( a%quantities(q), b%quantities(q) ) )
+          call outputnamedValue( 'doFGridsMatch', &
+            & DoFGridsMatch ( a%quantities(q), b%quantities(q) ) )
+          call dump( a%quantities(q) )
+          call dump( b%quantities(q) )
         return
+        endif
       endif
     end do
     DoVectorsMatch = .true.
@@ -495,14 +523,14 @@ contains
     doVGridsMatch_Vec = .true.
   end function DoVGridsMatch_Vec
 
-  ! --------------------------------------- DoVGridsMatch --------------
+  ! --------------------------------------- DoFGridsMatch --------------
   logical function DoFGridsMatch ( a, b, sizeOnly )
     ! Returns true if the quantities have the same fGrid information
     type ( VectorValue_T ), intent(in) :: A ! First quantity
     type ( VectorValue_T ), intent(in) :: B ! Second quantity
     logical, intent(in), optional :: SIZEONLY
 
-    ! Local paramterts
+    ! Local parameters
     real (r8), parameter :: FTOL = 1.0e-3 ! 1 kHz
     logical :: MYSIZEONLY
 
@@ -533,22 +561,40 @@ contains
   end function DoFGridsMatch
 
   ! ---------------------------------- DoQtysDescribeSameThing ----
-  logical function DoQtysDescribeSameThing ( a, b, strict )
+  logical function DoQtysDescribeSameThing ( a, b, options )
     ! Returns true if the quantities describe the same geophysical
     ! parameter, albeit at a different resolution perhaps
+    
+    ! Note:
+    ! We have made this a lot more lenient than it was originally
+    ! Unless you set options to include 's'[trict], it only checks 
+    ! [type, logbasis, verticalcoord, signal, molecule)
+    ! and then only if quantitype is one of eight types:
+    ! [vmr, columnbundance, rhi, isotoperatio, radiance, 
+    ! calsidebandfraction, limbsidebandfraction, or Tscat]
+    ! Any other quantityTypes will be assumed to match if they
+    ! are the same type, no further checks being required
     type ( VectorValue_T ), intent(in) :: A ! First quantity
     type ( VectorValue_T ), intent(in) :: B ! Second quantity
-    logical, optional, intent(in)      :: Strict ! Must every attribute match?
+    character(len=*), optional, intent(in)      :: options ! e.g. 's'[trict]
+    ! logical, optional, intent(in)      :: Strict ! Must every attribute match?
     !                                   Or just the ones we actually write out
     ! Local variables
-    logical :: myStrict
+    logical :: myStrict, debug
     ! logical, parameter :: DEEBUG = .true.
+    integer, parameter :: NSCREENEDTYPES = 8
+    integer, dimension(NSCREENEDTYPES) :: SCREENEDTYPES
     ! Executable
+    screenedtypes = (/ &
+      & l_vmr, l_columnabundance, l_rhi, l_isotoperatio, l_radiance, l_calsidebandfraction, l_limbsidebandfraction, l_Tscat &
+      & /)
     myStrict = .false.
-    if ( present(strict) ) myStrict = strict
+    if ( present(options) ) myStrict = index(options, 's') > 0
+    debug = DEEBUG
+    if ( present(options) ) debug = index(options, 'd') > 0
 
     DoQtysDescribeSameThing = .false.
-    if ( DEEBUG ) then
+    if ( debug ) then
       call outputNamedValue( 'myStrict', myStrict )
       call outputNamedValue( 'quantityType', (/ a%template%quantityType, b%template%quantityType /) )
       call outputNamedValue( 'logBasis', (/ a%template%logBasis, b%template%logBasis /) )
@@ -561,6 +607,14 @@ contains
       call outputNamedValue( 'radiometer', (/ a%template%radiometer, b%template%radiometer /) )
     endif
     if ( a%template%quantityType /= b%template%quantityType ) return
+    ! Must we screen further?
+    if ( .not. myStrict &
+      & .and. &
+      &.not. any( a%template%quantityType == screenedtypes ) &
+      & ) then
+      DoQtysDescribeSameThing = .true.
+      return
+    endif
     if ( a%template%logBasis .neqv. b%template%logBasis ) return
     if ( a%template%verticalCoordinate /= b%template%verticalCoordinate ) return
     if ( a%template%signal /= b%template%signal ) return
@@ -591,6 +645,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.40  2012/02/13 23:24:35  pwagner
+! DoQuantitiesMatch takes options string; DoQtysDescribeSameThing more lenient
+!
 ! Revision 2.39  2012/02/10 23:52:35  vsnyder
 ! Cannonball polishing
 !
