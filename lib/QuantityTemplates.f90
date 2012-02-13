@@ -473,13 +473,10 @@ contains
       call GetRadiometerName ( quantity_template%radiometer, str )
       call output ( trim(str), advance='yes' )
     end if
-    if ( quantity_template%molecule + &
-      &  quantity_template%instrumentModule /= 0 .and. .not. myNoL2CF ) then
+    if ( .not. myNoL2CF ) then
       call output ( '     ' )
-      if ( quantity_template%molecule /= 0 ) then
-        call output ( ' Molecule = ' )
-        call myDisplayString ( lit_indices(quantity_template%molecule) )
-      end if
+      call output ( ' Molecule = ' )
+      call myDisplayString ( lit_indices(quantity_template%molecule) )
       if ( quantity_template%instrumentModule /= 0 ) then
         call output ( ' Instrument Module = ' )
         call GetModuleName ( quantity_template%instrumentModule, str )
@@ -1581,6 +1578,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.66  2012/01/05 01:17:50  pwagner
+! Added ReadAttributes; improved WriteAttributes
+!
 ! Revision 2.65  2011/10/25 18:07:02  pwagner
 ! Added WriteAttributes to attach qty template attributes when writing datasets
 !
