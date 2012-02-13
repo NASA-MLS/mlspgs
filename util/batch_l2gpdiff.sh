@@ -205,6 +205,10 @@ while [ "$more_strs" = "yes" ] ; do
             shift
             envfile="$1"
             shift
+            if [ -f "$envfile" ]
+            then
+              . $envfile
+            fi
        ;;
     -prof* )
 	    profile1="$2"
@@ -266,10 +270,6 @@ then
   sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
       | sed -n 's/^.//p' | sed '1 d; $ d'
   exit
-fi
-if [ -f "$envfile" ]
-then
-  . $envfile
 fi
 dir1="$1"
 dir2="$2"
@@ -408,6 +408,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.14  2011/06/16 23:19:09  pwagner
+# Fixed bug when finding L2GPDIFF
+#
 # Revision 1.13  2011/05/26 20:46:31  pwagner
 # May use file of environment settings
 #
