@@ -24,10 +24,14 @@ module L2PC_m
     & CREATEBLOCK, DESTROYBLOCK
   use HESSIANMODULE_1, only: HESSIAN_T, &
     & COPYHESSIANVALUE, CREATEBLOCK, CREATEEMPTYHESSIAN, DESTROYHESSIAN
-  use INTRINSIC, only: L_CHANNEL, L_GEODALTITUDE, L_NONE, L_VMR, &
+  use INTRINSIC, only: L_ADOPTED, L_CHANNEL, L_GEODALTITUDE, L_NONE, L_VMR, &
     & L_RADIANCE, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
-    & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, L_TSCAT, LIT_INDICES, &
-    & PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
+    & L_ROWS, L_COLUMNS, L_COLUMNABUNDANCE, L_TEMPERATURE, L_TSCAT, &
+    & L_ISOTOPERATIO, L_CALSIDEBANDFRACTION, L_LIMBSIDEBANDFRACTION, &
+    & L_OPTICALDEPTH, L_ELEVOFFSET, &
+    & LIT_INDICES, &
+    & PHYQ_COLMABUNDANCE, PHYQ_DIMENSIONLESS, PHYQ_PCTRHI, &
+    & PHYQ_TEMPERATURE, PHYQ_VMR
   use MANIPULATEVECTORQUANTITIES, only: DOVECTORSMATCH
   use MATRIXMODULE_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
@@ -43,7 +47,7 @@ module L2PC_m
   use MLSSIGNALS_M, only: GETSIGNALNAME
   use MLSSTRINGLISTS, only: OPTIONDETAIL, SWITCHDETAIL
   use MLSSTRINGS, only: WRITEINTSTOCHARS
-  use MOLECULES, only: IsExtinction
+  use MOLECULES, only: ISEXTINCTION, L_RHI
   use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
   use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -759,8 +763,9 @@ contains ! ============= Public Procedures ==========================
 
   ! ---------------------------------- LoadMatrix ----------
   subroutine LoadMatrix ( matrix, name, message, IgnoreHessian )
-    ! This function copies the matrix from the l2pc database into the
-    ! given matrix (presumably from the main dabase)
+    ! This function copies from source in the l2pc database into a
+    ! specified matrix
+    ! It checks that they are compatible according to many criteria (too many?)
 
     ! Dummy arguments
     type(Matrix_T), intent(inout) :: MATRIX
@@ -773,6 +778,7 @@ contains ! ============= Public Procedures ==========================
     type(Matrix_T), pointer :: SOURCE
 
     ! Executable code
+    verbose = switchDetail( switches, 'l2pc') > -1
     message = ''
     i = FindFirst ( l2pcDatabase%name, name )
     call outputNamedValue( 'l2pcdatabase names', l2pcDatabase%name )
@@ -784,7 +790,7 @@ contains ! ============= Public Procedures ==========================
     end if
     call PopulateL2PCBin ( i, ignoreHessian )
     source => l2pcDatabase(i)%j
-    if ( .not. DoVectorsMatch ( matrix%row%vec, source%row%vec, verbose=.true. ) ) then
+    if ( .not. DoVectorsMatch ( matrix%row%vec, source%row%vec, verbose ) ) then
       message = 'Rows do not match for loading'
       call output( 'matrix row vector', advance='yes' )
       call dump( matrix%row%vec, details=0 )
@@ -792,8 +798,12 @@ contains ! ============= Public Procedures ==========================
       call dump( source%row%vec, details=0 )
       return
     endif
-    if ( .not. DoVectorsMatch ( matrix%col%vec, source%col%vec ) ) then
+    if ( .not. DoVectorsMatch ( matrix%col%vec, source%col%vec, verbose ) ) then
       message = 'Columns do not match for loading'
+      call output( 'matrix col vector', advance='yes' )
+      call dump( matrix%col%vec, details=0 )
+      call output( 'source col vector', advance='yes' )
+      call dump( source%col%vec, details=0 )
       return
     endif
     call CopyMatrixValue ( matrix, source, allowNameMismatch=.true. )
@@ -1670,6 +1680,12 @@ contains ! ============= Public Procedures ==========================
     MLSFile%fileID%grp_id = matrixId
     call ReadOneVectorFromHDF5 ( MLSFile, 'Columns', xStar )
     call ReadOneVectorFromHDF5 ( MLSFile, 'Rows', yStar )
+    if ( verbose ) then
+      call output( 'x* vector', advance='yes' )
+      call dump( L2PCVS(xStar) )
+      call output( 'y* vector', advance='yes' )
+      call dump( L2PCVS(yStar) )
+    endif
 
     ! Get the instance first information
     call h5gOpen_f ( matrixID, 'Blocks', blocksID, status )
@@ -1923,6 +1939,7 @@ contains ! ============= Public Procedures ==========================
     character (len=64) :: WORD          ! General string
 
     logical :: COHERENT                 ! Flag
+    logical :: DEBUG                    ! Flag
     logical :: STACKED                  ! Flag
     logical :: LOGBASIS                 ! Flag
 
@@ -1936,6 +1953,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Executable code
     verbose = switchDetail( switches, 'l2pc') > -1
+    debug = switchDetail( switches, 'debug') > -1
     nullify ( sigInds, qtInds )
 
     if ( verbose ) then
@@ -1978,6 +1996,10 @@ contains ! ============= Public Procedures ==========================
     end do
 
     qtIndexOffset = InflateQuantityTemplateDatabase ( l2pcQTs, noQuantities )
+    if ( debug ) then
+      call outputNamedValue( 'noQuantities', noQuantities )
+      call outputNamedValue( 'qt0', qt0 )
+    endif
     qt0 = size ( l2pcQTs ) - noQuantities
 
     ! Now go through quantities in order
@@ -2013,6 +2035,17 @@ contains ! ============= Public Procedures ==========================
       frequencyCoordinate = l_none
       unit = phyq_dimensionless
       select case ( quantityType )
+      case ( l_rhi )
+        word = 'H2O'
+        molecule = GetLitIndexFromString ( word )
+        unit = phyq_pctrhi
+      case ( l_columnAbundance )
+        call GetHDF5Attribute ( MLSFile, 'molecule', word )
+        molecule = GetLitIndexFromString ( word )
+        unit = phyq_colmabundance
+      case ( l_isotopeRatio )
+        call GetHDF5Attribute ( MLSFile, 'molecule', word )
+        molecule = GetLitIndexFromString ( word )
       case ( l_vmr )
         call GetHDF5Attribute ( MLSFile, 'molecule', word )
         molecule = GetLitIndexFromString ( word )
@@ -2029,9 +2062,10 @@ contains ! ============= Public Procedures ==========================
           frequencyCoordinate = l_none
         end if
         unit = phyq_vmr
-      case ( l_radiance, l_TScat )
+      case ( l_radiance, l_TScat, l_calsidebandfraction, l_limbsidebandfraction, &
+        & l_opticalDepth, l_elevOffset)
         call GetHDF5Attribute ( MLSFile, 'signal', word )
-        if ( quantityType == l_radiance ) then
+        if ( quantityType /= l_TScat ) then
           call Parse_Signal ( word, sigInds, sideband=sideband )
         else ! TScat
           call Parse_Signal ( word, sigInds, sideband=sideband, channels=qt%channels )
@@ -2081,6 +2115,15 @@ contains ! ============= Public Procedures ==========================
       qt%verticalCoordinate = verticalCoordinate
       qt%frequencyCoordinate = frequencyCoordinate
       qt%unit = unit
+      if ( debug ) then
+        call outputNamedValue( 'quantity', quantity )
+        call outputNamedValue( 'quantityType', quantityType )
+        call outputNamedValue( 'logBasis', logBasis )
+        call outputNamedValue( 'molecule', molecule )
+        call outputNamedValue( 'radiometer', radiometer )
+        call outputNamedValue( 'qtIndexOffset', qtIndexOffset )
+        call outputNamedValue( 'index', qtIndexOffset + quantity - 1 )
+      endif
 
       if (qt%coherent) then
         noInstancesOr1 = 1
@@ -2200,14 +2243,15 @@ contains ! ============= Public Procedures ==========================
         call MakeHDF5Attribute ( qID, 'type', trim(line) )
         ! Write other info as appropriate
         select case ( qt%quantityType )
-        case (l_vmr)
+        case (l_vmr, l_columnAbundance, l_rhi, l_isotopeRatio)
           call get_string ( lit_indices(qt%molecule), line )
           call MakeHDF5Attribute ( qID, 'molecule', trim(line) )
           if ( isExtinction(qt%molecule) ) then
             call get_string ( radiometers(qt%radiometer)%prefix, line )
             call MakeHDF5Attribute ( qID, 'radiometer', trim(line) )
           end if
-        case (l_radiance)
+        case (l_radiance, l_calsidebandfraction, l_limbsidebandfraction, &
+          & l_opticalDepth, l_elevOffset)
           call GetSignalName ( qt%signal, line, sideband=qt%sideband )
           call MakeHDF5Attribute ( qID, 'signal', trim(line) )
         case (l_TScat)
@@ -2298,6 +2342,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.120  2012/02/13 23:27:27  pwagner
+! Fixed more bugs in read/write of quantities in xstar,ystar
+!
 ! Revision 2.119  2012/02/02 01:17:03  pwagner
 ! Added LoadHessian; fixed errors that cause crashes
 !
