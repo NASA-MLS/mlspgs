@@ -817,7 +817,7 @@ contains ! =====     Public Procedures     =============================
           call LoadVector ( vectors(vectorIndex), binName, source, message )
         else
           call Announce_Error ( key, no_Error_Code, &
-            & 'Must supply either matrix or vector to adopt' )
+            & 'Must supply hessian, matrix or vector to adopt' )
         end if
         if ( len_trim(message) /= 0 ) &
           & call Announce_Error ( key, no_Error_Code, trim(message) )
@@ -2852,6 +2852,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.401  2012/02/13 23:28:45  pwagner
+! Corrected error message
+!
 ! Revision 2.400  2012/02/10 23:45:43  vsnyder
 ! Add more tracing, change some tracing levels
 !
