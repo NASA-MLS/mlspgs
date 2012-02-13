@@ -1739,6 +1739,12 @@ contains ! =====     Public Procedures     =============================
     else
       call display_string ( signals(qty%template%signal)%name, advance='yes' )
     end if
+    call output ( '    molecule: ')
+    if ( qty%template%molecule < 1 ) then
+      call output ( '    (no database entry for this quantity) ' )
+    else
+      call display_string ( lit_indices(qty%template%molecule) )
+    end if
     call output ( '    instrumentmodule: ')
     if ( qty%template%instrumentModule < 1 ) then
       call output ( '    (no database entry for this quantity) ' )
@@ -2727,6 +2733,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.158  2012/01/09 22:30:42  pwagner
+! More info about dumped vector template
+!
 ! Revision 2.157  2011/12/17 00:37:32  vsnyder
 ! Add MoveVectorQuantity
 !
