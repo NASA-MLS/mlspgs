@@ -40,7 +40,8 @@ contains
 
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     use COMPUTE_Z_PSIG_M, only: COMPUTE_Z_PSIG
-    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
+    use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
+      & DESTROYFORWARDMODELDERIVED, DUMP, FORWARDMODELCONFIG_T
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
     use GET_SPECIES_DATA_M, only:  GET_SPECIES_DATA
@@ -51,12 +52,12 @@ contains
       & LOAD_ONE_ITEM_GRID, LOAD_SPS_DATA
     use MATRIXMODULE_1, only: MATRIX_T
     use MLSKINDS, only: RP
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MOLECULES, only: L_CLOUDICE
-    use MOREMESSAGE, ONLY: MLSMESSAGE
-    use TOGGLES, only: Emit, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
+    use MOREMESSAGE, only: MLSMESSAGE
+    use TOGGLES, only: EMIT, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
 
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
@@ -116,6 +117,8 @@ contains
     logical :: atmos_der, atmos_second_der, ptan_der, spect_der
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
     logical :: sps_in_first, temp_der, temp_in_first
+    ! What severity is not having derivative in "first" state vector?
+    integer, parameter :: DerivativeMissingFromState = MLSMSG_Error
 
     if ( toggle(emit) ) & ! set by -f command-line switch
       & call trace_begin ( 'FullForwardModel, MAF=', index=fmstat%maf )
@@ -156,7 +159,7 @@ contains
 
     temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
     if ( temp_der .and. .not. temp_in_first) &
-      & call MLSMessage ( MLSMSG_Error, moduleName, &
+      & call MLSMessage ( DerivativeMissingFromState, moduleName, &
         & 'With config(%S): Temperature derivative requested but temperature is not in "first" state vector', &
         & datum=fwdModelConf%name )
 
@@ -177,8 +180,10 @@ contains
           sps => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_vmr, molecule=mol, &
             & foundInFirst=sps_in_first, config=fwdModelConf )
-          if ( .not. sps_in_first ) call MLSMessage ( MLSMSG_Error, moduleName, &
-            & 'With config(%S): %S derivative requested but %S is not in "first" state vector', &
+          if ( .not. sps_in_first ) &
+            & call MLSMessage ( DerivativeMissingFromState, moduleName, &
+            & 'With config(%S): ' // &
+            & '%S derivative requested but %S is not in "first" state vector', &
             & datum=(/ fwdModelConf%name, lit_indices(mol), lit_indices(mol) /) )
         else
           ! Turn off deriv_flags where we don't want molecule derivatives,
@@ -4545,6 +4550,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.331  2012/02/10 23:51:33  vsnyder
+! Move DeriveFromForwardModelConfig to Retrieval module
+!
 ! Revision 2.330  2011/11/10 23:23:32  vsnyder
 ! Correct computation of 'combine' argument in frequency averaging
 !
