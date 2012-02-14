@@ -127,7 +127,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Do the actual forward models
 
-    call deriveFromForwardModelConfig ( config )
+    if ( config%fwmType == l_full) call deriveFromForwardModelConfig ( config )
 
     if ( present(fwmJacobian) ) then ! Need transformations
       ! Lowest Returned Pressure is needed for extinction transformations
@@ -623,6 +623,9 @@ Jacobian%block(jRow,jCols(jCol))%values(cz,1)
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.37  2012/02/14 19:01:29  pwagner
+! Fixed bug that broke nrt
+!
 ! Revision 2.36  2012/02/11 21:28:31  vsnyder
 ! Interim MIF extinction commit
 !
