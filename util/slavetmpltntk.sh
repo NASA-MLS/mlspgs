@@ -323,6 +323,7 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     esac
 done
+l2cf=$1
 
 otheropts="$otheropts $switches"
 
@@ -331,6 +332,7 @@ echo "masterTid: $masterTid" 2>&1 | tee -a "$LOGFILE"
 echo "masterIdent file: $masterIdent" 2>&1 | tee -a "$LOGFILE"
 echo "executable: $PGE_BINARY" 2>&1 | tee -a "$LOGFILE"
 echo "otheropts $otheropts" 2>&1 | tee -a "$LOGFILE"
+echo "l2cf $l2cf" 2>&1 | tee -a "$LOGFILE"
 
 if [ "$masterTid" = "" ]
 then
@@ -359,8 +361,8 @@ fi
 ulimit -s unlimited
 #ulimit -a >> "$ENVSETTINGS"
 
-echo $PGE_BINARY --ntk -m --slave $masterTid $otheropts $@ 2>&1 | tee -a "$LOGFILE"
-$PGE_BINARY --ntk -m --slave $masterTid $otheropts $@ 2>&1 | tee -a "$LOGFILE"
+echo $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 | tee -a "$LOGFILE"
+$PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 | tee -a "$LOGFILE"
 
 }
       
@@ -381,6 +383,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.5  2010/04/23 23:19:42  pwagner
+# Removed argumentless 'export' which was killing pvmd
+#
 # Revision 1.4  2009/05/26 20:04:21  pwagner
 # Can pass 3 more options from master
 #
