@@ -162,6 +162,12 @@ else
    return_status_2=0
 fi
 
+# Last chance to find h5repack
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
+
 # repack level 1 files to speed things up
 if [ -x "$H5REPACK" ]
 then
@@ -248,6 +254,9 @@ else
 fi
 
 # $Log$
+# Revision 1.3  2010/01/28 01:12:10  pwagner
+# May augment level 2 product files to be netcdf-compatible
+#
 # Revision 1.2  2009/02/13 17:37:05  pwagner
 # Running mlspgs automatically prints license text
 #

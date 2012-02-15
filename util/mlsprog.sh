@@ -136,6 +136,12 @@ else
    H5REPACK=$MLSBIN/h5repack
 fi
 
+# Last chance to find h5repack
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
+
 # repack level 2 product files to speed things up
 if [ -x "$H5REPACK" ]
 then
@@ -176,6 +182,9 @@ else
 fi
 
 # $Log$
+# Revision 1.9  2009/04/18 00:51:24  pwagner
+# May use environment variable OTHEROPTS in command line options
+#
 # Revision 1.8  2009/02/13 17:37:05  pwagner
 # Running mlspgs automatically prints license text
 #

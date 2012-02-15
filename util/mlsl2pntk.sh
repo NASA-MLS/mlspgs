@@ -263,6 +263,12 @@ then
   cat "$LOGFILE" "$JOBSTATSFILE" > "$LOGFILE".1
   mv "$LOGFILE".1 "$LOGFILE"
 fi
+# Last chance to find h5repack
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
+
 # repack level 2 product files to speed things up
 if [ -x "$H5REPACK" ]
 then
@@ -303,6 +309,9 @@ else
 fi
 
 # $Log$
+# Revision 1.5  2009/02/13 17:37:05  pwagner
+# Running mlspgs automatically prints license text
+#
 # Revision 1.4  2008/07/11 20:20:18  pwagner
 # Fixed bugs regarding products in outputs subdirectory
 #

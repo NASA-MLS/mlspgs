@@ -155,6 +155,10 @@ if [ ! -x "$NETCDFAUGMENT" ]
 then
   NETCDFAUGMENT=$MLSTOOLS/aug_hdfeos5
 fi
+if [ ! -x "$NETCDFAUGMENT" ]
+then
+  NETCDFAUGMENT=$MLSTOOLS/aug_eos5
+fi
 masterlog="${JOBDIR}/exec_log/process.stdout"
 if [ "$MASTERLOG" != "" ]
 then
@@ -248,7 +252,8 @@ then
   # This sleep is to give slave tasks extra time to complete stdout
   sleep 20
   JOBSTATSFILE="$JOBDIR/phases.stats"
-  l2cf=`grep -i l2cf $masterlog | head -1 | awk '{print $9}'`
+  #l2cf=`grep -i l2cf $masterlog | head -1 | awk '{print $9}'`
+  l2cf=`grep -i 'Level 2 configuration file name' $masterlog | head -1 | awk '{print $9}'`
   $PGE_SCRIPT_DIR/jobstat-sips.sh -S $PGE_BINARY_DIR/mlsqlog-scan-sips.py \
     -t $PGE_SCRIPT_DIR/split_path.sh ${JOBDIR}/pvmlog "$l2cf" "$masterlog" \
     > "$JOBSTATSFILE"
@@ -273,6 +278,12 @@ if [ -f "$LOGFILE" -a -f "$JOBSTATSFILE" ]
 then
   cat "$LOGFILE" "$JOBSTATSFILE" > "$LOGFILE".1
   mv "$LOGFILE".1 "$LOGFILE"
+fi
+
+# Last chance to find h5repack
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
 fi
 
 # repack level 2 product files to speed things up
@@ -338,6 +349,9 @@ else
 fi
 
 # $Log$
+# Revision 1.23  2009/12/10 18:54:21  pwagner
+# Must repack before augmenting, not after
+#
 # Revision 1.22  2009/10/27 21:09:12  pwagner
 # Added NETCDFAUGMENTing hdfeos std products
 #
