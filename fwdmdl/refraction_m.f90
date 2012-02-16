@@ -453,8 +453,7 @@ contains
       ! Things are unphysical somewhere.  Replace ref_corr by 1.0
       ! wherever it's less than 1.0.  Alternatively, the average
       ! of neighbors, or a value interpolated from neighbors could be used.
-      call MLSMessage ( MLSMSG_Warning, moduleName, &
-        & 'Ref_Corr fixup needed.  Re-run with -Srcfx to see details.' )
+      if ( rcfx /= 0 ) call output( 'Ref_Corr fixup needed.', advance='yes' )
       call dumpArrays
       if ( rcfx /= 0 ) call output ( 'Ref_Corr fixed at' )
       do j = 2, no_ele-1
@@ -491,7 +490,7 @@ contains
       !      = 4 => Could not bracket root (no solution),
       !      = 5 => Discontinuity (no solution),
       !      = 6 => improper usage (ought to stop).
-      use Zero_m, only: Zero
+      use Zero_m, only: ZERO
 
       integer :: iter
       real(rp) :: E ! N1 * exp(eps * (h-h1))
@@ -631,6 +630,9 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.41  2011/05/09 18:03:33  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.40  2011/01/05 00:22:08  vsnyder
 ! TeXnicalities
 !
