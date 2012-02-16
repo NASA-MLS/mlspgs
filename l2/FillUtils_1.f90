@@ -468,7 +468,7 @@ contains ! =====     Public Procedures     =============================
       integer :: MOL                      ! Molecule index 
       integer :: SQI                      ! Quantity index 
       character(len=32) :: str
-
+      ! DEEBUG = .true.
       ! Executable code
 
       ! Loop over its qtys
@@ -480,8 +480,10 @@ contains ! =====     Public Procedures     =============================
           if ( mol > 0 ) then
             call Get_String ( lit_indices(mol), str, strip=.true. )
             sq%values = Catalog(mol)%DefaultIsotopeRatio
-            call outputNamedValue( 'molecule', str )
-            call outputNamedValue( 'isotoperatio', Catalog(mol)%DefaultIsotopeRatio )
+            if ( DEEBUG ) then
+              call outputNamedValue( 'molecule', str )
+              call outputNamedValue( 'isotoperatio', Catalog(mol)%DefaultIsotopeRatio )
+            endif
           endif
         case default
         end select
@@ -7050,6 +7052,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.53  2012/02/16 22:39:02  pwagner
+! Dont automatically in AutoFillVector
+!
 ! Revision 2.52  2012/01/25 01:18:05  pwagner
 ! Fixed most bugs in QtyFromFile and VectorFromFile; now can select by attributes
 !
