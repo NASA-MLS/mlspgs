@@ -31,7 +31,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use MLSKINDS, only: RM, RV, R8, R4
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
-  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, DUMPSIZE
+  use OUTPUT_M, only: BLANKS, BLANKSTOCOLUMN, DUMPSIZE, NEWLINE, &
+    & OUTPUT, OUTPUTNAMEDVALUE
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use SYMBOL_TABLE, only: ENTER_TERMINAL
   use SYMBOL_TYPES, only: T_IDENTIFIER
@@ -47,7 +48,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: CreateBlock, CreateBlock_1, CreateEmptyMatrix, CyclicJacobi
   public :: DefineRCInfo, DestroyBlock, DestroyBlock_1, DestroyMatrix
   public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, DestroyRCInfo
-  public :: Diff, Dump, Dump_Linf, Dump_RC, Dump_Struct, FindBlock
+  public :: Diff, Dump, Dump_Linf, Dump_Layout, Dump_RC, Dump_Struct, FindBlock
   public :: FrobeniusNorm, GetActualMatrixFromDatabase, GetDiagonal
   public :: GetDiagonal_1, GetFromMatrixDatabase, GetFullBlock
   public :: GetKindFromMatrixDatabase, GetMatrixElement, GetMatrixElement_1
@@ -126,6 +127,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   interface Dump
     module procedure Dump_RC
     module procedure Dump_Matrix, Dump_Matrix_Database, Dump_Matrix_in_Database
+  end interface
+
+  interface Dump_Layout
+    module procedure Dump_Matrix_Layout
   end interface
 
   interface FrobeniusNorm
@@ -2459,8 +2464,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------  Diff_Matrices  -----
   subroutine Diff_Matrices ( Matrix1, Matrix2, Details, clean )
-    use Lexer_core, only: Print_Source
-    use Output_m, only: newLine
+    use Lexer_core, only: PRINT_SOURCE
     type(Matrix_T), intent(in) :: Matrix1, Matrix2
     integer, intent(in), optional :: Details   ! Print details, default 1
     !  <= -3 => no details,
@@ -2473,7 +2477,6 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J                ! Subscripts, loop inductors
     integer :: MY_DETAILS          ! True if DETAILS is absent, else DETAILS
     logical :: SKIPPEDSOMEBLOCKS
-    character(len=16) :: string
     ! Executable
     my_details = 1
     if ( present(details) ) my_details = details
@@ -2600,17 +2603,81 @@ contains ! =====     Public Procedures     =============================
     end do ! k
   end subroutine Dump_Linf
 
+  ! ------------------------------------------------  Dump_Matrix_Layout  -----
+  subroutine Dump_Matrix_Layout ( Matrix, Name )
+    type(Matrix_T), intent(in) :: Matrix
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I, J                ! Subscripts, loop inductors
+    integer :: TotalSize           ! of all blocks
+    character(len=1), dimension(:,:), pointer :: layout => null() ! ., s, or f
+
+    if ( present(name) ) call output ( name )
+    if ( matrix%name > 0 ) then
+      if ( present(name) ) call output ( ', ' )
+      call output ( 'Name = ' )
+      call display_string ( matrix%name )
+    end if
+    call allocate_Test( layout, matrix%row%nb, matrix%col%nb, &
+      & 'Layout of blocks', moduleName // '%Dump_Matrix_Layout', Fill='.' )
+    totalSize = 0
+    do j = 1, matrix%col%nb
+      do i = 1, matrix%row%nb
+        if ( matrix%block(i,j)%kind == m_absent ) cycle
+        select case ( matrix%block(i,j)%kind )
+        case ( m_banded )
+          layout(i, j) = 'B'
+          if ( associated(matrix%block(i,j)%values) ) &
+            & totalSize = totalSize + size(matrix%block(i,j)%values)
+        case ( m_column_sparse )
+          layout(i, j) = 'S'
+          if ( associated(matrix%block(i,j)%values) ) &
+            & totalSize = totalSize + size(matrix%block(i,j)%values)
+        case ( m_full )
+          layout(i, j) = 'F'
+          if ( associated(matrix%block(i,j)%values) ) &
+            & totalSize = totalSize + size(matrix%block(i,j)%values)
+        end select
+      end do
+    end do
+    call outputNamedValue( 'Total size', TotalSize )
+    call dump( layout, 'Layout of blocks in Matrix', width=matrix%col%nb )
+    call output( 'Total blocks' )
+    call blanksToColumn( 21 )
+    call output( 'Absent' )
+    call blanksToColumn( 36 )
+    call output( 'Banded' )
+    call blanksToColumn( 51 )
+    call output( 'ColumnSparse' )
+    call blanksToColumn( 66 )
+    call output( 'Full' )
+    call newLine
+    call blanks( 6 )
+    call output( matrix%col%nb * matrix%row%nb )
+    call blanksToColumn( 22 )
+    call output( count(layout == '.') )
+    call blanksToColumn( 39 )
+    call output( count(layout == 'B') )
+    call blanksToColumn( 54 )
+    call output( count(layout == 'S') )
+    call blanksToColumn( 68 )
+    call output( count(layout == 'F') )
+    call newLine
+    call deallocate_test ( layout, moduleName // '%Dump_Hessian', &
+      & "layout of Matrix Blocks" )
+  end subroutine Dump_Matrix_Layout
+
   ! ------------------------------------------------  Dump_Matrix  -----
   subroutine Dump_Matrix ( Matrix, Name, Details, Clean, Row, Column )
-    use Lexer_core, only: Print_Source
-    use Output_m, only: newLine
+    use Lexer_core, only: PRINT_SOURCE
     type(Matrix_T), intent(in) :: Matrix
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: Details   ! Print details, default 1
     !  <= -3 => no details,
     !  -2..0 => Just the name, size and where created
     !  == -1 => Structure of blocks but not their values
-    !  == One => Details of matrix but not its blocks,
+    !  == 0  => Layout of blocks but not their values
+    !  == One => Add details of matrix but not its blocks,
     !  >One => Details of the blocks, too.
     integer, intent(in), optional :: Row, Column ! Only do these
     logical, intent(in), optional :: Clean     ! Print zeroes, count
@@ -2645,6 +2712,7 @@ contains ! =====     Public Procedures     =============================
       return
     end if
     if ( my_details == -1 ) call dump_struct ( matrix )
+    if ( my_details == 0  ) call dump_matrix_layout ( matrix )
     if ( present(row) ) then
       row1 = row; rowN = row
     else
@@ -2854,6 +2922,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.127  2012/02/16 22:47:51  pwagner
+! Separated Dump_Matrix_Layout from Dump_Matrix
+!
 ! Revision 2.126  2012/02/10 23:50:12  vsnyder
 ! Cannonball polishing
 !
