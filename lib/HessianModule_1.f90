@@ -17,6 +17,7 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
 ! type are used to compose the Hessians inside L2PC.
 
   use ALLOCATE_DEALLOCATE, only: TEST_DEALLOCATE
+  use DUMP_0, only: DUMP
   use HESSIANMODULE_0, only: CLEARBLOCK, COPYBLOCK, CREATEBLOCK, &
     & DESTROYBLOCK, HESSIANELEMENT_T, RH, &
     & H_ABSENT, H_SPARSE, H_FULL, OPTIMIZEBLOCK
@@ -24,11 +25,12 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
     & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MATRIXMODULE_1, only: DEFINERCINFO, DESTROYRCINFO, NULLIFYRCINFO, RC_INFO
   use MLSSTRINGLISTS, only: SWITCHDETAIL
-  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BLANKSTOCOLUMN, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use STRING_TABLE, only: DISPLAY_STRING
   use TOGGLES, only: SWITCHES
   use VECTORSMODULE, only: VECTOR_T
 
-  implicit NONE
+  implicit none
   private
 
   type :: Hessian_T
@@ -39,9 +41,10 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
     logical :: optimizedAlready = .false. ! Have we been through OptimizeHessian?
   end type Hessian_T
  
+  public :: Hessian_T
   public :: AddHessianToDatabase
   public :: CopyHessianValue, CreateBlock, CreateEmptyHessian
-  public :: DestroyHessian, DestroyHessianDatabase, Diff, Dump, Hessian_T
+  public :: DestroyHessian, DestroyHessianDatabase, Diff, Dump, Dump_Layout
   public :: InsertHessianPlane, Multiply, NullifyHessian
   public :: OptimizeHessian, StreamlineHessian
 
@@ -55,6 +58,10 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
 
   interface Dump
     module procedure Dump_Hessian, Dump_Hessian_Database
+  end interface
+
+  interface Dump_Layout
+    module procedure Dump_Hessian_Layout
   end interface
 
   interface InsertHessianPlane
@@ -259,7 +266,6 @@ contains
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSSTRINGS, only: LOWERCASE
     use MLSSTRINGLISTS, only: ISINLIST, OPTIONDETAIL
-    use OUTPUT_M, only: OUTPUT, NEWLINE
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
 
     type (Hessian_T), intent(inout) :: H1, H2
@@ -393,17 +399,74 @@ contains
     end function skipThisBlock
   end subroutine Diff_Hessians
 
+  ! ------------------------------------------------  Dump_Hessian_Layout  -----
+  subroutine Dump_Hessian_Layout ( H, Name )
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    type(Hessian_T), intent(in) :: H
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I, J, K             ! Subscripts, loop inductors
+    integer :: TotalSize           ! of all blocks
+    character(len=1), dimension(:,:,:), pointer :: layout => null() ! ., s, or f
+
+    if ( present(name) ) call output ( name )
+    if ( H%name > 0 ) then
+      if ( present(name) ) call output ( ', ' )
+      call output ( 'Name = ' )
+      call display_string ( H%name )
+    end if
+    call allocate_Test( layout, h%row%nb, h%col%nb, h%col%nb, &
+      & 'Layout of blocks in Hessian', moduleName // '%Dump_Hessian', Fill='.' )
+    totalSize = 0
+    do k = 1, h%col%nb
+      do j = 1, h%col%nb
+        do i = 1, h%row%nb
+          if ( h%block(i,j,k)%kind == h_absent ) cycle
+          select case ( h%block(i,j,k)%kind )
+          case ( h_sparse )
+            layout(i, j, k) = 'S'
+            if ( associated(h%block(i,j,k)%tuples) ) &
+              & totalSize = totalSize + h%block(i,j,k)%TuplesFilled
+          case ( h_full )
+            layout(i, j, k) = 'F'
+            if ( associated(h%block(i,j,k)%values) ) &
+              & totalSize = totalSize + size(h%block(i,j,k)%values)
+          end select
+        end do
+      end do
+    end do
+    call outputNamedValue( 'Total size', TotalSize )
+    call dump( layout, 'Layout of blocks in Hessian', width=h%col%nb )
+    call output( 'Total blocks' )
+    call blanksToColumn( 21 )
+    call output( 'Absent' )
+    call blanksToColumn( 36 )
+    call output( 'Sparse' )
+    call blanksToColumn( 51 )
+    call output( 'Full' )
+    call newLine
+    call blanksToColumn( 3 )
+    call output( h%col%nb * h%col%nb * h%row%nb )
+    call blanksToColumn( 21 )
+    call output( count(layout == '.') )
+    call blanksToColumn( 38 )
+    call output( count(layout == 'S') )
+    call blanksToColumn( 52 )
+    call output( count(layout == 'F') )
+    call newLine
+    call deallocate_test ( layout, moduleName // '%Dump_Hessian', &
+      & "layout of Hessian Blocks" )
+  end subroutine Dump_Hessian_Layout
+
   ! ------------------------------------------------- Dump_Hessian -----
   subroutine Dump_Hessian ( H, Name, Details, &
     & onlyTheseBlocks, options, Clean )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use HESSIANMODULE_0, only: DUMP
     use LEXER_CORE, only: PRINT_SOURCE
     use MATRIXMODULE_1, only: DUMP_RC
     use MLSSTRINGS, only: LOWERCASE
-    use MLSSTRINGLISTS, only: ISINLIST, OPTIONDETAIL, SWITCHDETAIL
-    use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE, &
-      & RESUMEOUTPUT, SUSPENDOUTPUT
+    use MLSSTRINGLISTS, only: ISINLIST, OPTIONDETAIL
+    use OUTPUT_M, only: RESUMEOUTPUT, SUSPENDOUTPUT
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
 
     type (Hessian_T), intent(in) :: H
@@ -411,9 +474,10 @@ contains
     integer, intent(in), optional :: Details ! Print details, default 1
       ! <= -3 => no output, exceept warning, error messages
       ! -2 => Just name, size, and where created
-      ! -1 => Just row and col info for each block
-      ! 0 => Dimensions of each block,
-      ! 1 => Values in each block
+      ! -1 => Just row and col info for each block, but not their values
+      ! 0 => Layout of blocks, but not their values
+      ! 1 => Add dimensions of each block,
+      ! 2 => Values in each block
     character(len=*), dimension(3), intent(in), optional :: onlyTheseBlocks
     character(len=*), intent(in), optional :: options
     logical, intent(in), optional :: CLEAN   ! print \size
@@ -421,7 +485,6 @@ contains
     logical, parameter :: DEEBUG = .false.
     character(len=32) :: dumpOptions
     integer :: I, J, K    ! Subscripts, loop inductors
-    character(len=1), dimension(:,:,:), pointer :: layout => null() ! ., s, or f
     character(len=128) :: molecules
     integer :: My_Details
     character(len=32), dimension(3) :: myBlocks
@@ -429,6 +492,7 @@ contains
     ! Executable
     my_details = 1
     if ( present(details) ) my_details = details
+    if ( my_details == 0 ) call Dump_Hessian_Layout( H, name )
     if ( my_details <= -3 ) call suspendOutput !  return
     if ( present(name) ) call output ( name )
     myBlocks = '*'
@@ -472,8 +536,7 @@ contains
         call newLine
       end if
     end do
-    call allocate_Test( layout, h%row%nb, h%col%nb, h%col%nb, &
-      & 'Layout of blocks in Hessian', moduleName // '%Dump_Hessian', Fill='.' )
+    if ( my_details < 1 ) return
     totalSize = 0
     do k = 1, h%col%nb
       do j = 1, h%col%nb
@@ -481,11 +544,9 @@ contains
           if ( HIDEABSENTBLOCKS .and. h%block(i,j,k)%kind == h_absent ) cycle
           select case ( h%block(i,j,k)%kind )
           case ( h_sparse )
-            layout(i, j, k) = 'S'
             if ( associated(h%block(i,j,k)%tuples) ) &
               & totalSize = totalSize + h%block(i,j,k)%TuplesFilled
           case ( h_full )
-            layout(i, j, k) = 'F'
             if ( associated(h%block(i,j,k)%values) ) &
               & totalSize = totalSize + size(h%block(i,j,k)%values)
           end select
@@ -544,9 +605,6 @@ contains
       end do
     end do
     call outputNamedValue( 'Total size', TotalSize )
-    call dump( layout, 'Layout of blocks in Hessian', width=h%col%nb )
-    call deallocate_test ( layout, moduleName // '%Dump_Hessian', &
-      & "layout of Hessian Blocks" )
     call outputNamedValue( 'optimized already?', h%optimizedAlready )
     if ( my_details <= -3 ) call resumeOutput
     contains
@@ -850,6 +908,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.31  2012/02/16 22:46:45  pwagner
+! Separated Dump_Hessian_Layout from Dump_Hessian
+!
 ! Revision 2.30  2012/02/02 01:12:36  pwagner
 ! Added CopyHessianValue like what we do with matrices
 !
