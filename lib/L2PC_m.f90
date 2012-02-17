@@ -37,7 +37,8 @@ module L2PC_m
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
   use MATRIXMODULE_1, only: MATRIX_T, MATRIX_DATABASE_T, &
     & COPYMATRIXVALUE, CREATEBLOCK, CREATEEMPTYMATRIX, &
-    & DESTROYMATRIX, DUMP, DUMP_STRUCT, FINDBLOCK, GETACTUALMATRIXFROMDATABASE
+    & DESTROYMATRIX, DUMP, DUMP_LAYOUT, DUMP_STRUCT, &
+    & FINDBLOCK, GETACTUALMATRIXFROMDATABASE
   use MLSCOMMON, only: MLSFILE_T
   use MLSFILES, only: DUMPMLSFILE => DUMP
   use MLSKINDS, only: R8, R4
@@ -593,13 +594,14 @@ contains ! ============= Public Procedures ==========================
   subroutine DumpOneL2PC ( L2pc, details, ONLYTHESEBLOCKS, options )
     ! This subroutine dumps an l2pc to stdout
 
-    use HESSIANMODULE_1, only: DUMP
+    use HESSIANMODULE_1, only: DUMP, DUMP_LAYOUT
 
     ! Dummy arguments
     type (l2pc_t), intent(in), target :: L2pc
     integer, intent(in), optional :: DETAILS ! passed to Vector and Matrix dumps
     character(len=*), dimension(3), intent(in), optional :: ONLYTHESEBLOCKS ! passed to Vector and Matrix dumps
-    character(len=*), intent(in), optional :: options ! any of {mh*b[]d[]}
+    character(len=*), intent(in), optional :: options ! any of {Lmh*b[]d[]}
+                                             ! L: Just show the top level layouts
                                              ! m: dump only matrices
                                              ! h: dump only hessians
                                              ! v: dump only x*, y* vectors
@@ -611,6 +613,8 @@ contains ! ============= Public Procedures ==========================
     logical :: dumpHessians
     logical :: dumpJacobians
     logical :: dumpVectors
+    integer :: i
+    logical :: LayoutOnly
     integer :: myDetails
     ! character(len=128) :: myMolecules
 
@@ -624,30 +628,52 @@ contains ! ============= Public Procedures ==========================
       dumpHessians = optionDetail( options, 'h' ) == 'yes'
       dumpJacobians = optionDetail( options, 'm' ) == 'yes'
       dumpVectors = optionDetail( options, 'v' ) == 'yes'
+      LayoutOnly = optionDetail( options, 'L' ) == 'yes'
     endif
-    call outputNamedValue( 'myDetails', myDetails )
+    ! call outputNamedValue( 'myDetails', myDetails )
     call output( '- Dump of L2PC -', advance='yes' )
     if ( l2pc%name > 0 ) then
       call display_string ( l2pc%name, before='name: ' )
       call output ( l2pc%name, before=' (', after=')', advance='yes' )
     else
-      call output( '*** Uh-oh, name not found in string table', advance='yes' )
+      call output( "(name not found in string table)", advance='yes' )
     endif
     ! First dump the xStar and yStar
     if ( dumpVectors ) then
-      call dump ( l2pc%j%col%vec, details=details, name='xStar' )
-      call dump ( l2pc%j%row%vec, details=details, name='yStar' )
+      if ( LayoutOnly ) then
+        call output ('Layout(xStar)', advance='yes' )
+        do i=1, size(l2pc%j%col%vec%quantities)
+          call display_string ( l2pc%j%col%vec%quantities(i)%template%name, &
+          & strip=.true., advance='yes' )
+        enddo
+        call output ('Layout(yStar)', advance='yes' )
+        do i=1, size(l2pc%j%row%vec%quantities)
+          call display_string ( l2pc%j%row%vec%quantities(i)%template%name, &
+          & strip=.true., advance='yes' )
+        enddo
+      else
+        call dump ( l2pc%j%col%vec, details=details, name='xStar' )
+        call dump ( l2pc%j%row%vec, details=details, name='yStar' )
+      endif
     endif
 
     if ( dumpJacobians ) then
       ! Now dump kStar
-      call dump ( l2pc%j, 'kStar', details )
+      if ( LayoutOnly ) then
+        call dump_layout( l2pc%j, 'kStar' )
+      else
+        call dump ( l2pc%j, 'kStar', details )
+      endif
     endif
 
     ! Now dump the Hessian
-    if ( l2pc%goth .and. dumpHessians ) &
-      & call dump ( l2pc%h, 'hStar', details, onlyTheseBlocks, options )
-
+    if ( l2pc%goth .and. dumpHessians ) then
+      if ( layoutOnly ) then
+        call dump_layout( l2pc%h, 'hStar' )
+      else
+        call dump ( l2pc%h, 'hStar', details, onlyTheseBlocks, options )
+      endif
+    endif
   end subroutine DumpOneL2PC
 
   ! --------------------------------------- DumpL2PCInfo ---------------
@@ -2342,6 +2368,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.121  2012/02/17 00:21:05  pwagner
+! May dump layout of l2pc only with 'L' option
+!
 ! Revision 2.120  2012/02/13 23:27:27  pwagner
 ! Fixed more bugs in read/write of quantities in xstar,ystar
 !
