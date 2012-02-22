@@ -435,6 +435,10 @@ Fill, quantity=apriori.refGPH,$
         explicitValues=1.0e-7, /spread
   Fill, quantity=highBound.extinctionR2, method=explicit, $
         explicitValues=0.01, /spread
+  Fill, quantity=lowBound.extinctionv2R2, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.extinctionv2R2, method=explicit, $
+        explicitValues=0.01, /spread
   Fill, quantity=lowBound.extinctionR3, method=explicit, $
         explicitValues=1.0e-7, /spread
   Fill, quantity=highBound.extinctionR3, method=explicit, $
@@ -447,10 +451,18 @@ Fill, quantity=apriori.refGPH,$
         explicitValues=1.0e-7, /spread
   Fill, quantity=highBound.extinctionR4, method=explicit, $
         explicitValues=0.01, /spread
+  Fill, quantity=lowBound.extinctionv2R4, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.extinctionv2R4, method=explicit, $
+        explicitValues=0.01, /spread
 
   Fill, quantity=lowBound.totalextinctionR2, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionR2, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalextinctionv2R2, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalextinctionv2R2, method=explicit, $
         explicitValues=0.1, /spread
   Fill, quantity=lowBound.totalextinctionR3, method=explicit, $
         explicitValues= -4.0e-4, /spread
@@ -464,6 +476,63 @@ Fill, quantity=apriori.refGPH,$
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionR4, method=explicit, $
         explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalextinctionv2R4, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalextinctionv2R4, method=explicit, $
+        explicitValues=0.1, /spread
+
+; do the same for mif extinctions
+
+  Fill, quantity=lowBound.mifextinctionR2, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.mifextinctionR2, method=explicit, $
+        explicitValues=0.01, /spread
+  Fill, quantity=lowBound.mifextinctionv2R2, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.mifextinctionv2R2, method=explicit, $
+        explicitValues=0.01, /spread
+  Fill, quantity=lowBound.mifextinctionR3, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.mifextinctionR3, method=explicit, $
+        explicitValues=0.01, /spread
+  Fill, quantity=lowBound.mifextinctionv2R3, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.mifextinctionv2R3, method=explicit, $
+        explicitValues=0.01, /spread
+  Fill, quantity=lowBound.mifextinctionR4, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.mifextinctionR4, method=explicit, $
+        explicitValues=0.01, /spread
+  Fill, quantity=lowBound.mifextinctionv2R4, method=explicit, $
+        explicitValues=1.0e-7, /spread
+  Fill, quantity=highBound.mifextinctionv2R4, method=explicit, $
+        explicitValues=0.01, /spread
+
+  Fill, quantity=lowBound.totalmifextinctionR2, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalmifextinctionR2, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalmifextinctionv2R2, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalmifextinctionv2R2, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalmifextinctionR3, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalmifextinctionR3, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalmifextinctionv2R3, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalmifextinctionv2R3, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalmifextinctionR4, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalmifextinctionR4, method=explicit, $
+        explicitValues=0.1, /spread
+  Fill, quantity=lowBound.totalmifextinctionv2R4, method=explicit, $
+        explicitValues= -4.0e-4, /spread
+  Fill, quantity=highBound.totalmifextinctionv2R4, method=explicit, $
+        explicitValues=0.1, /spread
+
 
   !interpolateToHiRes(lowBound.temperature_HR)
   !interpolateToHiRes(highBound.temperature_HR)
@@ -783,6 +852,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.144  2012/02/22 00:08:49  wgread
+;wgr--added mif extinction
+;
 ;Revision 1.143  2010/03/31 18:18:52  pwagner
 ;Continued horizontal smoothing of Co down to 100mb
 ;
