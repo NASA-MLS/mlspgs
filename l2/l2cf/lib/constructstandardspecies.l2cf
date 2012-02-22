@@ -104,6 +104,10 @@ begin Construct
   UTRHi:Quantity, vGrid=vGridUTRHi, $
     hGrid=hGridStandard, type=vmr, molecule=RHi
 
+  ;; special quantity for RHi: retrieval Measures proposal
+  RHiVMRMEaSURES:Quantity, vGrid=vGridrhimeasures, $
+    hGrid=hGridStandard, type=vmr, molecule=RHi
+
   ;; ----------------------------------------- Columns
   tpPressure: Quantity, type=boundaryPressure, hGrid=hGridStandard
   oneHundredHPa: Quantity, type=boundaryPressure, hGrid=hGridStandard
@@ -349,6 +353,35 @@ begin Construct
   !forall(constructTOTALExtinction, !allRadiometers)
   !define(alltotalExtinctions,{!makelist({totalextinction},{},!allRadiometers),!makelist({totalextinctionv2},{},!allRadiometers)})
   
+; let's see if I can brute force this
+    totalextinctionR4B1011: Quantity, type=vmr, molecule=extinction, $
+    radiometer=r4, hGrid=hGridStandard, vGrid=vGridExtinction, $
+    fGrid=fGridExtinctionConstant
+
+    totalextinctionR4B12: Quantity, type=vmr, molecule=extinction, $
+    radiometer=r4, hGrid=hGridStandard, vGrid=vGridExtinction, $
+    fGrid=fGridExtinctionConstant
+
+    totalextinctionR4B1314: Quantity, type=vmr, molecule=extinction, $
+    radiometer=r4, hGrid=hGridStandard, vGrid=vGridExtinction, $
+    fGrid=fGridExtinctionConstant
+
+  ;; ------------------------------------add mif extinctions--------------
+
+  !define(constructMIFExtinction,{!dnl
+    MIFextinction$1: Quantity, type=MIFExtinction, radiometer=$1!nl
+    MIFextinctionv2$1: Quantity, type=MIFExtinctionv2, radiometer=$1!nl})
+  !forall(constructMIFExtinction, !allRadiometers)
+  !define(allMIFExtinctions,{!makelist({mifextinction},{},!allRadiometers),!makelist({mifextinctionv2},{},!allRadiometers)})
+
+  !define(constructtotalMIFExtinction,{!dnl
+    totalMIFextinction$1: Quantity, type=MIFExtinction, radiometer=$1!nl
+    totalMIFextinctionv2$1: Quantity, type=MIFExtinctionv2, radiometer=$1!nl})
+  !forall(constructtotalMIFExtinction, !allRadiometers)
+  !define(alltotalMIFExtinctions,{!makelist({totalmifextinction},{},!allRadiometers),!makelist({totalmifextinctionv2},{},!allRadiometers)})
+
+  lowestRetrievedPressure: Quantity, type=lowestRetrievedPressure
+
   ;; ----------------------------------------- Isotope ratios
   
   !define(constructIsotopeRatio,{isotoperatio$1: Quantity, type=isotopeRatio, $
@@ -581,7 +614,7 @@ begin Construct
     massMeanDiameterIce, massMeanDiameterWater, $
     !allMolecules, $
     !allHiResMolecules, $
-    RHiVMR, RHiVMRSNGL, UTRHi, rhi, rhi_HR, $
+    RHiVMR, RHiVMRSNGL, RHiVMRMEaSURES, UTRHi, rhi, rhi_HR, $
     !allColumns, $
     !allBaselines, $
     !allBaselinesFine, $
@@ -594,11 +627,47 @@ begin Construct
     !allGroupedBaselines, $
     !allExtinctions, $
     !alltotalExtinctions, $
+    totalextinctionr4b1011, totalextinctionr4b12, totalextinctionr4b1314, $
+    lowestRetrievedPressure, $
     !allIsotopeRatios, $
     !allSidebandFractions, $
     !ifdef(flagSIDS,{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
     !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths,}) !allElevs, $
     !lesserState ]
+
+  RetrieverStateTemplate: VectorTemplate, quantities = [ $
+    ptanGHZ, ptanTHz, phitanGHz, phitanTHz, $
+    temperature, temperature_HR, $
+    refGPH, GPH, GPH_HR, $
+    tpPressure, oneHundredHPa, $
+    iwc, iwcFine, iwcR1A, iwcR2, iwcR3, iwcR4, lwc, $
+    iwp, iwpR1A, iwpR2, iwpR3, iwpR4, $
+    surfaceType, psd, earthRadius, $
+    trans, cext, cextFine, $
+    massMeanDiameterIce, massMeanDiameterWater, $
+    !allMolecules, $
+    !allHiResMolecules, $
+    RHiVMR, RHiVMRSNGL, RHiVMRMEaSURES, UTRHi, rhi, rhi_HR, $
+    !allColumns, $
+    !allBaselines, $
+    !allBaselinesFine, $
+    !allMAFBaselines, $
+    !allMAFDACSBaselines, $
+    !allMAFMBBaselines, $
+    !allMIFBaselines, $
+    !allMIFDACSBaselines, $
+    !allMIFMBBaselines, $
+    !allGroupedBaselines, $
+    !allMIFExtinctions, $
+    !alltotalMIFExtinctions, $
+    lowestRetrievedPressure, $
+    !allIsotopeRatios, $
+    !allSidebandFractions, $
+    !ifdef(flagSIDS,{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
+    !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths,}) !allElevs, $
+    !lesserState ]
+
+
 
   !ifdef(flagUnfolded,{
   measurementTemplate: VectorTemplate, quantities = [ $
