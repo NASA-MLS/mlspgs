@@ -104,10 +104,6 @@ begin Construct
   UTRHi:Quantity, vGrid=vGridUTRHi, $
     hGrid=hGridStandard, type=vmr, molecule=RHi
 
-  ;; special quantity for RHi: retrieval Measures proposal
-  RHiVMRMEaSURES:Quantity, vGrid=vGridrhimeasures, $
-    hGrid=hGridStandard, type=vmr, molecule=RHi
-
   ;; ----------------------------------------- Columns
   tpPressure: Quantity, type=boundaryPressure, hGrid=hGridStandard
   oneHundredHPa: Quantity, type=boundaryPressure, hGrid=hGridStandard
