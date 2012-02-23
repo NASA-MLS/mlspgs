@@ -133,6 +133,8 @@ contains ! ============= Public Procedures ==========================
       ! Lowest Returned Pressure is needed for extinction transformations
       lrp => getVectorQuantityByType ( fwdModelExtra, &
                & quantityType=l_lowestRetrievedPressure )
+      !??? Future upgrade ???:  Use the mask field on MIFExtinction
+      !??? to determine the lowest pressure.
       ptan => getVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
                & quantityType=l_ptan )
       ! Move quantities in the retriever's state vector (FwdModelIn) for which
@@ -390,7 +392,6 @@ contains ! ============= Public Procedures ==========================
 
     ! See Equations (3) and (4) in wvs-107.
 
-    use Dump_0, only: Dump
     use ForwardModelConfig, only: ForwardModelConfig_T
     use MatrixModule_0, only: DestroyBlock, Dump, M_Banded
     use MatrixModule_1, only: FindBlock, CreateBlock, Dump, Matrix_T
@@ -408,7 +409,6 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in) :: DumpTransform
 
     integer :: Chan    ! c in wvs-107
-    integer :: CG      ! cg, channels X zetas, in wvs-107
     integer :: CV      ! Subscript corresponding to Chan
     integer :: CZ      ! ci, channels X zetas, in wvs-107
     integer :: FCols(f_qty%template%noInstances) ! of FwmJacobian, j in wvs-107
@@ -434,10 +434,8 @@ contains ! ============= Public Procedures ==========================
       jCols(inst) = findBlock ( Jacobian%col, s_qty%index, inst )
     end do
 
-    if ( dumpTransform > -1 ) then
-      call dump ( fwdModelOut, 1, 'fwdModelOut before transformation' )
-      call dump ( pTan%values, name='PTan zetas' )
-    end if
+    if ( dumpTransform > -1 ) &
+      & call dump ( fwdModelOut, 1, 'fwdModelOut before transformation' )
     nConfigChans = size(config%channels)
     do jRow = 1, Jacobian%row%nb
       nSurfs = fwdModelOut%quantities(jRow)%template%noSurfs
@@ -452,7 +450,6 @@ contains ! ============= Public Procedures ==========================
             & forWhom='Transform_FWM_extinction' )
           Jacobian%block(jRow,jCols(jCol))%values = 0
           do vSurf = 1, nSurfs ! i in wvs-107, Same for all fCols
-            fwdModelOut%quantities(jRow)%values(vSurf,maf) = 0
             ! Jacobian is banded.  The only nonzeros in a column are in
             ! rows for the same MIF as the column, and the maximum number of
             ! nonzeros is the number of channels in the band.  This could be
@@ -480,17 +477,11 @@ contains ! ============= Public Procedures ==========================
     ! because "values" has the POINTER attribute.
                   rowSum = rowSum + &
                     & FwmJacobian%block(jRow,fCols(inst))%values(cz,surf)
-print '(4(a,i0),1p,2(a,g14.6))', &
-'FwmJacobian%block(',jrow,',',fcols(inst),')%values(',cz,',',surf,') =', &
-FwmJacobian%block(jRow,fCols(inst))%values(cz,surf),', rowSum =', rowSum
                 end do ! inst
 
-                cg = cv + nVecChans*(surf-1) ! cg in wvs-107
                 p = 10.0_rm ** ( -2.0_rm * ( f_qty%template%surfs(surf,1) - &
                                              ptan%values(vSurf,maf) ) )
-print '(a,i0,1p,a,g14.6,2(a,i0),2(a,g14.6))',&
-'f_qty%template%surfs(',surf,',1) =', f_qty%template%surfs(surf,1),&
-'ptan%values(',vSurf,',',maf,') =', ptan%values(vSurf,maf), ', p =', p
+
     !{Compute the retriever's Jacobian using Equation (3) in wvs-107
     ! \begin{equation*}
     ! \begin{array}{lll}
@@ -503,10 +494,7 @@ print '(a,i0,1p,a,g14.6,2(a,i0),2(a,g14.6))',&
 
                 Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
                   & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + rowSum * p
-print '(1p,a,g14.6,3(a,i0),a,g14.6)', &
-'rowSum*p =', rowSum*p, &
-', Jacobian%block(',jrow,',',jCols(jCol),')%values(',cz,',1) =', &
-Jacobian%block(jRow,jCols(jCol))%values(cz,1)
+
     !{Compute radiance using Equation (4) in wvs-107
     ! \begin{equation*}
     ! \begin{array}{lll}
@@ -518,8 +506,8 @@ Jacobian%block(jRow,jCols(jCol))%values(cz,1)
     ! \end{equation*}
     ! where the subscripts are as above.
 
-                fwdModelOut%quantities(jRow)%values(vSurf,maf) = &
-                  & fwdModelOut%quantities(jRow)%values(vSurf,maf) + &
+                fwdModelOut%quantities(jRow)%values(cz,maf) = &
+                  & fwdModelOut%quantities(jRow)%values(cz,maf) + &
                     & rowSum * ( s_qty%values(vSurf,maf) * p - &
                                & f_qty%values(surf,1) )
               end do ! surf
@@ -550,6 +538,7 @@ Jacobian%block(jRow,jCols(jCol))%values(cz,1)
 
     ! Equations (1) and (2) in wvs-107.
 
+    use Dump_0, only: Dump
     use MLSKinds, only: RV
     use MLSNumerics, only: InterpolateValues
     use Sort_m, only: Sortp
@@ -579,7 +568,7 @@ Jacobian%block(jRow,jCols(jCol))%values(cz,1)
       & ptan%values(p,maf), s_qty%values(p,maf), &
       & f_qty%template%surfs(:,1), f_qty%values(:,1), 'L', 'C' )
     f_lrp = minloc_s(lrp - f_qty%template%surfs(:,1))
-    s_lrp = minloc_s(lrp - ptan%values(:,1))
+    s_lrp = minloc_s(lrp - ptan%values(p,1))
      !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107,
      !  to compute extinction for the forward model
      ! \renewcommand{\arraystretch}{2}
@@ -597,14 +586,15 @@ Jacobian%block(jRow,jCols(jCol))%values(cz,1)
      ! so $10^{-2\zeta}$ is $P^{-2}$).
 
     do i = 1, f_lrp-1
-      f_qty%values(i,:) = s_qty%values(s_lrp,maf) * &
-        & 10 ** ( - 2.0 * ( f_qty%template%surfs(i,1)) - &
-                          & ptan%values(s_lrp,1) )              
+      f_qty%values(i,:) = s_qty%values(p(s_lrp),maf) * &
+        & 10.0_rm ** ( - 2.0 * ( f_qty%template%surfs(i,1) - &
+                          & ptan%values(p(s_lrp),1) ) )
     end do
     do i = f_lrp, f_qty%template%noSurfs
       f_qty%values(i,2:) = f_qty%values(i,1)
     end do
     if ( dumpTransform > -1 ) then
+      call dump ( ptan%values(p,maf), name='PTan zetas' )
       call dump ( s_qty, details=dumpTransform, name='from fwdModelIn' )
       call dump ( f_qty, details=dumpTransform, name='to fwmState' )
     end if
@@ -623,6 +613,9 @@ Jacobian%block(jRow,jCols(jCol))%values(cz,1)
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.38  2012/02/23 00:08:08  vsnyder
+! Maybe MIF extinction transformations work now
+!
 ! Revision 2.37  2012/02/14 19:01:29  pwagner
 ! Fixed bug that broke nrt
 !
