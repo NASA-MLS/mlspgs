@@ -539,7 +539,7 @@ contains ! ============= Public Procedures ==========================
     ! Equations (1) and (2) in wvs-107.
 
     use Dump_0, only: Dump
-    use MLSKinds, only: RV
+    use MLSKinds, only: RM, RV
     use MLSNumerics, only: InterpolateValues
     use Sort_m, only: Sortp
     use VectorsModule, only: Dump, VectorValue_t
@@ -613,6 +613,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.39  2012/02/23 00:59:43  vsnyder
+! Forgot to add RM in use for MLSKinds
+!
 ! Revision 2.38  2012/02/23 00:08:08  vsnyder
 ! Maybe MIF extinction transformations work now
 !
