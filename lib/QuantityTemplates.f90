@@ -25,7 +25,7 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSKINDS, only: R8, RV
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
-  use INTRINSIC, only: L_NONE, LIT_INDICES, PHYQ_INDICES
+  use INTRINSIC, only: L_NONE, L_VMR, LIT_INDICES, PHYQ_INDICES
   use MLSSETS, only: FINDFIRST
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
@@ -475,8 +475,10 @@ contains
     end if
     if ( .not. myNoL2CF ) then
       call output ( '     ' )
-      call output ( ' Molecule = ' )
-      call myDisplayString ( lit_indices(quantity_template%molecule) )
+      if ( quantity_template%quantityType == l_vmr ) then
+        call output ( ' Molecule = ' )
+        call myDisplayString ( lit_indices(quantity_template%molecule) )
+      end if
       if ( quantity_template%instrumentModule /= 0 ) then
         call output ( ' Instrument Module = ' )
         call GetModuleName ( quantity_template%instrumentModule, str )
@@ -1578,6 +1580,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.67  2012/02/13 23:22:31  pwagner
+! Print moleccule when dumping template
+!
 ! Revision 2.66  2012/01/05 01:17:50  pwagner
 ! Added ReadAttributes; improved WriteAttributes
 !
