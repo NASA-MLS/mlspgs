@@ -7,8 +7,8 @@
 \topmargin 0in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107r5}
-\newcommand{\docdate}{1 February 2012}
+\newcommand{\docname}{\bf wvs-107r6}
+\newcommand{\docdate}{23 February 2012}
 
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -84,6 +84,8 @@ From: \>Van Snyder\\
 
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
+
+\section{The problem}
 
 To solve for MIF extinction in MLSL2, several changes are made in the
 interface, {\tt ForwardModelWrap\-per}, between the {\tt Retrieve} and {\tt
@@ -186,7 +188,7 @@ to $\zeta_g$) of an element of the {\tt VALUES} component.
 After the forward model returns, blocks of $K^F$ are mapped to blocks of
 $K^R$ using
 
-\begin{equation}
+\begin{equation}\label{three}
 \begin{array}{lll}
 K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
  \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
@@ -200,7 +202,7 @@ form the first subscript of the {\tt VALUES} component.  Forward-model
 radiance blocks $I^F_{ci,n}$ are mapped to retriever radiance blocks
 $I^R_{ci,n}$ using
 
-\begin{equation}
+\begin{equation}\label{four}
 \begin{array}{lll}
 I^R_{ci,n} = I^F_{ci,n} + \sum_{g=1}^{N_\zeta}
  \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
@@ -214,11 +216,62 @@ retriever, and $E^F$ is extinction input to the forward model, as
 calculated by Equation (\ref{one}).  Remember that $E^F_{g,j} =
 E^F_{g,1},\, j = 1, \dots, N_\phi$.
 
+\section{Changes in mlsl2 and l2cf}
+
+Two new quantity types, MIFExtinction and MIFExtinctionv2, are introduced.
+These are not molecules, so it is impossible to tell the forward model to
+use them.
+
+Quantities of type vmr, and molecule either extinction or extinctionv2,
+and quantities of type either MIFExtinction or MIFExtinctionv2, are
+specified by the l2cf as quantities in the state vector template.
+
+A switch is provided in the {\tt retrieve} statement in the l2cf to
+request transformations between extinction and MIF extinction.
+
+If the switch is set, before calling the forward model, the forward model
+wrapper destroys any extinction molecules it finds in the state vector
+that correspond to MIF extinction quantities, then re-creates them by
+transformation from corresponding MIF extinction quantities using
+Equation (\ref{one}).  If it finds MIF extinction quantities without
+corresponding extinction molecules, it announces an error.
+
+If the switch isn't set, the forward model wrapper does not destroy
+extinction molecules, acting on the assumption that the retriever is
+retrieving extinction, not MIF extinction.
+
+Upon return from the forward model, the forward model wrapper destroys
+MIF extinction quantities in the state vector, and associated rows of the
+Jacobian.  If the switch is set it re-creates MIF extinction quantities
+by transforming from corresponding extinction molecules using Equations
+(\ref{four}) and (\ref{three}), and destroys extinction molecules, and
+associated rows of the Jacobian, that correspond to MIF extinction
+quantities.  It does not destroy extinction molecules and associated rows
+of the Jacobian if they do not correspond to MIF extinction quantities. 
+This allows to retrieve extinction and MIF extinction simultaneously,
+provided they do not correspond.
+
+If the switch isn't set, the forward model wrapper does not re-create MIF
+extinction quantities, and associated rows of the Jacobian.  This
+prevents the retriever from retrieving MIF extinction.
+
+The correspondence between an extinction molecule and a MIF extinction
+quantity is established if they are both $\nu^2$ quantities, or neither
+one is, and they are for the same radiometer.
+
+An alternative to having the switch is to determine whether the state
+vector has any MIF extinction quantities.  This requires one to make more
+substantial changes in the l2cf to select whether to retrieve extinction
+or MIF extinction, i.e., one must change the state vector template.
+
 \label{lastpage}
 \end{document}
 % $Id$
 
 % $Log$
+% Revision 1.6  2012/02/02 02:01:56  vsnyder
+% Correct K^R_{nn} indexing description
+%
 % Revision 1.5  2012/01/25 00:02:52  vsnyder
 % Revise indexing
 %
