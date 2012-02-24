@@ -7,7 +7,7 @@
 \topmargin 0in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107r6}
+\newcommand{\docname}{\bf wvs-107r7}
 \newcommand{\docdate}{23 February 2012}
 
 \usepackage{graphicx}
@@ -241,18 +241,18 @@ extinction molecules, acting on the assumption that the retriever is
 retrieving extinction, not MIF extinction.
 
 Upon return from the forward model, the forward model wrapper destroys
-MIF extinction quantities in the state vector, and associated rows of the
-Jacobian.  If the switch is set it re-creates MIF extinction quantities
-by transforming from corresponding extinction molecules using Equations
-(\ref{four}) and (\ref{three}), and destroys extinction molecules, and
-associated rows of the Jacobian, that correspond to MIF extinction
-quantities.  It does not destroy extinction molecules and associated rows
-of the Jacobian if they do not correspond to MIF extinction quantities. 
-This allows to retrieve extinction and MIF extinction simultaneously,
-provided they do not correspond.
+MIF extinction quantities in the state vector, and associated columns of
+the Jacobian.  If the switch is set it re-creates MIF extinction
+quantities by transforming from corresponding extinction molecules using
+Equations (\ref{four}) and (\ref{three}), and destroys extinction
+molecules, and associated columns of the Jacobian, that correspond to MIF
+extinction quantities.  It does not destroy extinction molecules and
+associated columns of the Jacobian if they do not correspond to MIF
+extinction quantities.  This allows to retrieve extinction and MIF
+extinction simultaneously, provided they do not correspond.
 
 If the switch isn't set, the forward model wrapper does not re-create MIF
-extinction quantities, and associated rows of the Jacobian.  This
+extinction quantities, and associated columns of the Jacobian.  This
 prevents the retriever from retrieving MIF extinction.
 
 The correspondence between an extinction molecule and a MIF extinction
@@ -269,6 +269,9 @@ or MIF extinction, i.e., one must change the state vector template.
 % $Id$
 
 % $Log$
+% Revision 1.7  2012/02/24 00:45:59  vsnyder
+% Explain strategy in mlsl2 and l2cf
+%
 % Revision 1.6  2012/02/02 02:01:56  vsnyder
 % Correct K^R_{nn} indexing description
 %
