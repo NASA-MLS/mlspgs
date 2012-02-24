@@ -283,7 +283,8 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------- DirectWriteVector_L2Aux_MF --------
   subroutine DirectWriteVector_L2Aux_MF ( L2AUXFile, Vector, &
-    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap, options )
+    & chunkNo, chunks, FWModelConfig, &
+    & lowerOverlap, upperOverlap, single, options )
 
     ! Purpose:
     ! Write plain hdf-formatted files ala l2aux for datasets that
@@ -303,6 +304,7 @@ contains ! ======================= Public Procedures =========================
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
+    logical, intent(in), optional :: single       ! Write only the 1st instance
     character(len=*), intent(in), optional :: options
     ! Local parameters
     integer                       :: j
@@ -334,14 +336,16 @@ contains ! ======================= Public Procedures =========================
         sdName = 'Quantity ' // trim(sdName)
       endif
       call DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
-        & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap, options )
+        & chunkNo, chunks, FWModelConfig, &
+        & lowerOverlap, upperOverlap, single, options )
     enddo
   end subroutine DirectWriteVector_L2Aux_MF
 
 
   ! ------------------------------------------- DirectWrite_L2Aux_MF --------
   subroutine DirectWrite_L2Aux_MF ( L2AUXFile, quantity, precision, sdName, &
-    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap, options )
+    & chunkNo, chunks, FWModelConfig, &
+    & lowerOverlap, upperOverlap, single, options )
 
     ! Purpose:
     ! Write plain hdf-formatted files ala l2aux for datasets that
@@ -366,6 +370,7 @@ contains ! ======================= Public Procedures =========================
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
+    logical, intent(in), optional :: single       ! Write only the 1st instance
     character(len=*), intent(in), optional :: options
     ! Local parameters
     logical :: alreadyOpen
@@ -453,13 +458,14 @@ contains ! ======================= Public Procedures =========================
         & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
     case (HDFVERSION_5)
       call DirectWrite_L2Aux_MF_hdf5 ( quantity, sdName, L2AUXFile, &
-        & chunkNo, chunks, FWModelConfig, &
-        & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, options=options )
+        & chunkNo, chunks, &
+        & FWModelConfig, lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+        & single=single, options=options )
       if ( associated(precision) ) & 
         & call DirectWrite_L2Aux_MF_hdf5 ( precision, &
         & trim(sdName) // 'precision', L2AUXFile, chunkNo, chunks, &
         & FWModelConfig, lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-        & options=options )
+        & single=single, options=options )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unsupported hdfVersion for DirectWrite_L2Aux (currently only 4 or 5)' )
@@ -586,7 +592,8 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------------ DirectWrite_L2Aux_MF_hdf5 --------
   subroutine DirectWrite_L2Aux_MF_hdf5 ( quantity, sdName, L2AUXFile, &
-    & chunkNo, chunks, FWModelConfig, lowerOverlap, upperOverlap, options )
+    & chunkNo, chunks, FWModelConfig, &
+    & lowerOverlap, upperOverlap, single, options )
 
     use CHUNKS_M, only: MLSCHUNK_T
     use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
@@ -613,6 +620,7 @@ contains ! ======================= Public Procedures =========================
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
+    logical, intent(in), optional :: single       ! Write 1st instance only
     character(len=*), intent(in), optional :: options
 
     ! Local parameters
@@ -628,9 +636,10 @@ contains ! ======================= Public Procedures =========================
     type (L2AUXData_T) :: l2aux
     integer :: last_maf
     type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
-    character(len=8) :: overlaps        ! 'lower', 'upper', or 'none'
+    logical :: mySingle
     integer :: NODIMS                   ! Also index of maf dimension
     integer :: Num_qty_values
+    character(len=8) :: overlaps        ! 'lower', 'upper', or 'none'
     integer :: returnStatus
     integer :: SIZES(3)                 ! HDF array sizes
     integer :: START(3)                 ! HDF array starting position
@@ -657,6 +666,9 @@ contains ! ======================= Public Procedures =========================
     if ( present(upperOverlap) ) then
       if ( upperOverlap ) overlaps = 'upper'
     endif
+    
+    mySingle = .false.
+    if ( present(single) ) mySingle = single
 
     ! Create or access the SD
     already_there = IsHDF5DSPresent(L2AUXFile%fileID%f_id, trim(sdName))
@@ -701,6 +713,12 @@ contains ! ======================= Public Procedures =========================
         & chunkNo == size(chunks) ) &
         & last_maf = quantity%template%noInstances
     end select
+    
+    if ( mySingle ) then
+      ! In case we write only the 1st instance
+      last_maf = first_maf
+      sizes(noDims) = 1
+    endif
 
     if ( DEEBUG ) then
       print *, 'sdname ', trim(sdName)
@@ -1205,6 +1223,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.51  2012/02/24 21:19:15  pwagner
+! May DirectWrite a /single instance only
+!
 ! Revision 2.50  2011/12/15 01:52:55  pwagner
 ! 'num' option names quantity in entireVector DirectWrites numerically
 !
