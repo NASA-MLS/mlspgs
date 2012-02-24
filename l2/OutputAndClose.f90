@@ -1436,7 +1436,7 @@ contains ! =====     Public Procedures     =============================
     use PCFHDR, only: H5_WRITEMLSFILEATTR, HE5_WRITEMLSFILEATTR, &
       & WRITELEAPSECHDFEOSATTR, WRITELEAPSECHDF5DS, &
       & WRITEUTCPOLEHDFEOSATTR, WRITEUTCPOLEHDF5DS
-    use READAPRIORI, only: WRITEAPRIORIATTRIBUTES
+    use READAPRIORI, only: READAPRIORIATTRIBUTES, WRITEAPRIORIATTRIBUTES
     use TOGGLES, only: SWITCHES
     ! Arguments
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
@@ -1531,6 +1531,7 @@ contains ! =====     Public Procedures     =============================
       if ( madeFile ) then
         ! (2) File level attributes
         call he5_writeMLSFileAttr( outputFile )
+        call readAPrioriAttributes( inputFile )
         call writeAPrioriAttributes( outputFile )
       end if
       if ( TOOLKIT .and. madeFile ) then
@@ -1712,6 +1713,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.158  2012/02/24 21:18:01  pwagner
+! Correctly copy a priori attributes when unplitting files
+!
 ! Revision 2.157  2012/02/08 23:16:30  pwagner
 ! Cant write utcpole, leapsec files w/o toolkit
 !
