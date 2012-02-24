@@ -1138,6 +1138,7 @@ contains ! =====     Public Procedures     =============================
       character(len=8) :: fileTypeStr
       integer :: gson
       integer :: hdfversion
+      logical :: interpolate
       integer :: j
       character(len=32) :: sdname
       logical :: spread
@@ -1150,6 +1151,7 @@ contains ! =====     Public Procedures     =============================
       binname = 0
       sdname = ' '
       spread = .false.
+      interpolate = .false.
       if ( DEEBUG ) call output ( 'In DirectReadCommand', advance='yes' )
       do j = 2, nsons(key)
         gson = subtree(j,key) ! The argument
@@ -1190,9 +1192,10 @@ contains ! =====     Public Procedures     =============================
           if ( DEEBUG ) call output ( 'Begin Processing sdName field', advance='yes' )
           call get_string ( sub_rosa(gson), sdName, strip=.true. )
           if ( DEEBUG ) call output ( 'Processing sdName field', advance='yes' )
+        case ( f_interpolate )
+            interpolate = get_boolean ( gson )
         case ( f_spread )
             spread = get_boolean ( gson )
-            call outputNamedValue( 'spread', spread )
         case ( f_type )
           if ( DEEBUG ) call output ( 'Begin Processing type field', advance='yes' )
           fileType = decoration(gson)
@@ -1216,7 +1219,7 @@ contains ! =====     Public Procedures     =============================
         quantity => GetVectorQtyByTemplateIndex( &
           & vectors(vectorIndex), quantityIndex )
         call QtyFromFile ( key, quantity, MLSFile, &
-          & filetypestr, options, sdName, spread )
+          & filetypestr, options, sdName, spread, interpolate )
       elseif ( got ( f_hessian ) ) then
         Hessian => hessians(hessianToFill)
         call ReadCompleteHDF5L2PCFile ( MLSFile, key, shallow=.false. )
@@ -1235,7 +1238,7 @@ contains ! =====     Public Procedures     =============================
       else
         vector => vectors(vectorIndex)
         call VectorFromFile ( key, vector, MLSFile, &
-          & filetypestr, options, spread )
+          & filetypestr, options, spread, interpolate )
       endif
     end subroutine directReadCommand
 
@@ -2852,6 +2855,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.402  2012/02/24 21:20:44  pwagner
+! DirectRead may /interpolate vertically
+!
 ! Revision 2.401  2012/02/13 23:28:45  pwagner
 ! Corrected error message
 !
