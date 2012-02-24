@@ -1187,6 +1187,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_bin, t+t_string, n+n_field_type, &
              begin, f+f_file, t+t_string, nd+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
+             begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
              begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -1209,6 +1210,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_quality, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_single, t+t_boolean, n+n_field_type, &
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_status, s+s_vector, f+f_template, f+f_quantities, &
@@ -1727,6 +1729,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.535  2012/02/24 21:13:54  pwagner
+! Add /interpolate to DirectRead, /single to DirectWrite
+!
 ! Revision 2.534  2012/02/08 23:18:57  pwagner
 ! May Load Hessian from l2pc database
 !
