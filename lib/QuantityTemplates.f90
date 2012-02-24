@@ -1111,6 +1111,9 @@ contains
       call GetSignalName ( qt%signal, str )
       call MakeHDF5Attribute ( dsID, name, 'signal', str )
     end if
+    ! Should we always write these, or only when specifically requested?
+    if ( associated(qt%surfs) ) &
+      & call MakeHDF5Attribute ( dsID, name, 'surfs', qt%surfs(:,1) )
   end subroutine WriteAttributes_QuantityTemplate
 
   ! --------- Private procedures ---
@@ -1580,6 +1583,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.68  2012/02/23 00:08:35  vsnyder
+! Don't dump molecule names if quantity type is not vmr
+!
 ! Revision 2.67  2012/02/13 23:22:31  pwagner
 ! Print moleccule when dumping template
 !
