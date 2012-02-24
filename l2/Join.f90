@@ -13,7 +13,7 @@
 module Join                     ! Join together chunk based data.
 !=============================================================================
 
-  use MLSStringLists, only: SwitchDetail
+  use MLSStringLists, only: SWITCHDETAIL
   ! This module performs the 'join' task in the MLS level 2 software.
 
   implicit none
@@ -373,7 +373,7 @@ contains ! =====     Public Procedures     =============================
     use HGRIDSDATABASE, only: HGRID_T
     use INIT_TABLES_MODULE, only: F_CONVERGENCE, F_FILE, &
       & F_HDFVERSION, F_LOWEROVERLAP, F_OPTIONS, F_PRECISION, F_QUALITY, &
-      & F_SOURCE, F_STATUS, F_TYPE, F_UPPEROVERLAP, F_VECTOR
+      & F_SINGLE, F_SOURCE, F_STATUS, F_TYPE, F_UPPEROVERLAP, F_VECTOR
     use INIT_TABLES_MODULE, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
       & L_PRESSURE, L_ZETA
     use INTRINSIC, only: L_NONE, L_HDF, L_SWATH, LIT_INDICES, PHYQ_DIMENSIONLESS
@@ -473,6 +473,7 @@ contains ! =====     Public Procedures     =============================
     integer :: PCBottom
     integer :: PCTop
     integer :: RETURNSTATUS
+    logical :: SINGLE
     logical :: SKIPDGG
     logical :: SKIPDGM
     integer :: SON                      ! A tree node
@@ -529,6 +530,7 @@ contains ! =====     Public Procedures     =============================
     outputType=0
     outputtypestr = 'unknown'
     if ( present(namedFile) ) namedFile = .false.
+    single = .false.
     upperOverlap = .false.
     gotsource = .false.
     do keyNo = 2, nsons(node)           ! Skip DirectWrite command
@@ -569,6 +571,8 @@ contains ! =====     Public Procedures     =============================
         lowerOverlap = get_boolean ( son )
       case ( f_upperOverlap )
         upperOverlap = get_boolean ( son )
+      case ( f_single )
+        single = get_boolean ( son )
       end select
     end do
 
@@ -1063,6 +1067,7 @@ contains ! =====     Public Procedures     =============================
         end if
         NumPermitted = NumPermitted + 1
         if ( sourceQuantities(source) < 1 ) then
+          ! This is the case where we write an entire vector
           vector => vectors(sourceVectors(source))
           select case ( outputType )
           case ( l_l2gp, l_l2dgg )
@@ -1075,7 +1080,7 @@ contains ! =====     Public Procedures     =============================
             call DirectWrite ( directFile, vector, &
               & chunkNo, chunks, FWModelConfig, &
               & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-              & options=options )
+              & single=single, options=options )
           case default
           end select
           cycle
@@ -1210,7 +1215,7 @@ contains ! =====     Public Procedures     =============================
           call DirectWrite ( directFile, qty, precQty, hdfName, &
             & chunkNo, chunks, FWModelConfig, &
             & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
-            & options=options )
+            & single=single, options=options )
           NumOutput = NumOutput + 1
           filetype=l_hdf
         case default
@@ -2204,6 +2209,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.145  2012/02/24 21:19:44  pwagner
+! May DirectWrite a /single instance only
+!
 ! Revision 2.144  2011/11/04 00:09:53  pwagner
 ! Fixed bug that prevented writing matched output types
 !
