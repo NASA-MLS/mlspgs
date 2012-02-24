@@ -1064,27 +1064,33 @@ contains ! =====     Public Procedures     =============================
      & 'A Priori l2gp', APrioriFiles%l2gp)
     if ( status /= 0 ) &
       &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & 'Problem writing APrioriFiles%l2gp' // trim(APrioriFiles%l2gp) )
+      & 'Problem reading APrioriFiles%l2gp' // trim(APrioriFiles%l2gp) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori l2aux', APrioriFiles%l2aux)
     if ( status /= 0 ) &
       &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & 'Problem writing APrioriFiles%l2aux' // trim(APrioriFiles%l2aux) )
+      & 'Problem reading APrioriFiles%l2aux' // trim(APrioriFiles%l2aux) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori ncep', APrioriFiles%ncep)
     if ( status /= 0 ) &
       &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & 'Problem writing APrioriFiles%ncep' // trim(APrioriFiles%ncep) )
+      & 'Problem reading APrioriFiles%ncep' // trim(APrioriFiles%ncep) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori gmao', APrioriFiles%dao)
     if ( status /= 0 ) &
       &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & 'Problem writing APrioriFiles%dao' // trim(APrioriFiles%dao) )
+      & 'Problem reading APrioriFiles%dao' // trim(APrioriFiles%dao) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori geos5', APrioriFiles%geos5)
     if ( status /= 0 ) &
       &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & 'Problem writing APrioriFiles%geos5' // trim(APrioriFiles%geos5) )
+      & 'Problem reading APrioriFiles%geos5' // trim(APrioriFiles%geos5) )
+    status = HE5_EHRDGLATT(fileID, &
+     &  'geos5 type', APrioriFiles%geos5description)
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem reading APrioriFiles%geos5description' // &
+      &  trim(APrioriFiles%geos5description) )
   end subroutine readAPrioriAttributes_ID
 
   ! ------------------------------------------  writeAPrioriAttributes_MF  -----
@@ -1153,6 +1159,13 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) &
       &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'Problem writing APrioriFiles%geos5' // trim(APrioriFiles%geos5) )
+    status = mls_EHwrglatt(fileID, &
+     & 'geos5 type', MLS_CHARTYPE, 1, &
+     &  trim(APrioriFiles%geos5description))
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Problem writing APrioriFiles%geos5description' // &
+      & trim(APrioriFiles%geos5description) )
   end subroutine writeAPrioriAttributes_ID
 
 ! =====     Private Procedures     =====================================
@@ -1270,6 +1283,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.92  2012/02/24 21:16:06  pwagner
+! Read/Write geos5description attributes, too
+!
 ! Revision 2.91  2011/08/03 21:59:39  pwagner
 ! Reduced default verbosity by making debug switchable
 !
