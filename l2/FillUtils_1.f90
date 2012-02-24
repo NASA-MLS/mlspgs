@@ -197,6 +197,12 @@ module FillUtils_1                     ! Procedures used by Fill
       & ScaleOverlaps, SpreadChannelFill, TransferVectors, UncompressRadiance, &
       & ANNOUNCE_ERROR, QtyFromFile, VectorFromFile
 
+  interface FromProfile
+    module procedure FromProfile_node, FromProfile_values
+  end interface
+
+  
+
 contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- addGaussianNoise ---
@@ -5962,13 +5968,13 @@ contains ! =====     Public Procedures     =============================
     end subroutine FromL2GP
 
     ! -------------------------------------- FromProfile --
-    subroutine FromProfile ( quantity, valuesNode, &
+    subroutine FromProfile_values ( quantity, inheights, invalues, &
       & instancesNode, globalUnit, dontMask, ptan, logSpace )
-      ! This fill is slightly complicated.  Given a values array along
-      ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
+      ! Given two arrays,  (heights, invalues) vs. the quantity's own heights,
       ! does the linear interpolation appropriate to perform the fill.
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-      integer, intent(in) :: VALUESNODE   ! Tree node for values
+      real(r8), dimension(:), intent(in) :: inheights
+      real(r8), dimension(:), intent(in) :: invalues
       integer, intent(in) :: INSTANCESNODE ! Tree node for instances
       integer, intent(in) :: GLOBALUNIT   ! Possible global unit
       logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
@@ -5977,82 +5983,44 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       integer :: C                      ! Channel loop counter
-      integer :: HEIGHTUNIT             ! Unit for height
-      integer :: NOPOINTS               ! Number of points supplied
-      integer :: NOUNIQUE               ! Number of unique heights supplied
-      integer :: I,J                    ! Loop counters / indices
-      integer :: S                      ! Surface loop counter
-      integer :: STATUS                 ! Flag
-      integer :: TESTUNIT               ! Unit for value
+      logical, dimension(:), pointer :: DUPLICATED ! Flags
       logical :: Fail                   ! Status from Hunt
+      real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
+      integer :: I,J                    ! Loop counters / indices
+      integer, dimension(:), pointer :: ININDS ! Indices
+      logical, dimension(:), pointer :: INSTANCES ! Flags
       logical :: LOCALOUTHEIGHTS ! Set if out heights is our own variable
       logical :: MYLOGSPACE             ! Interpolate in log space?
-      real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
-      real (r8), dimension(:), pointer :: VALUES ! Values for the points
+      integer :: NOPOINTS               ! Number of points supplied
+      integer :: NOUNIQUE               ! Number of unique heights supplied
       real (r8), dimension(:), pointer :: OUTHEIGHTS ! Heights for output
       real (r8), dimension(:), pointer :: OUTVALUES ! Single profile for output
-      logical, dimension(:), pointer :: INSTANCES ! Flags
-      logical, dimension(:), pointer :: DUPLICATED ! Flags
-      real (r8), dimension(2) :: EXPRVALUE ! Value of expression
-      integer, dimension(2) :: EXPRUNIT   ! Unit for expression
-      integer, dimension(:), pointer :: ININDS ! Indices
+      integer :: S                      ! Surface loop counter
+      integer :: STATUS                 ! Flag
+      real (r8), dimension(:), pointer :: VALUES ! Values for the points
 
       ! Executable code
-      call MLSMessageCalls( 'push', constantName='FromProfile' )
-
-      ! Check the quantity is amenable to this type of fill
-      if ( .not. ValidateVectorQuantity ( quantity, &
-        & coherent=.true. ) .and. .not. associated(ptan) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'The quantity is not amenable to a profile fill unless you supply ptan' )
-
-      ! Check the units
-      testUnit = quantity%template%unit
-      if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
-
+      call MLSMessageCalls( 'push', constantName='FromProfile_values' )
       ! Set some stuff up
       myLogSpace = quantity%template%logBasis
       if ( present ( logSpace ) ) myLogSpace = logSpace
-      noPoints = nsons ( valuesNode ) - 1
+      if ( myLogSpace .and. any ( invalues <= 0.0 ) ) then
+        call Announce_Error ( 0, no_error_code, &
+          & 'Non-positive input data in log profile fill (reset logSpace=false?)' )
+        return
+      end if
       nullify ( heights, values, duplicated, outHeights, outValues, instances )
-      call Allocate_test ( heights, noPoints, 'heights', ModuleName )
+      noPoints = size(invalues)
+      call Allocate_test ( heights, noPoints, 'values', ModuleName )
       call Allocate_test ( values, noPoints, 'values', ModuleName )
       call Allocate_test ( duplicated, noPoints, 'duplicated', ModuleName )
       call Allocate_test ( outValues, quantity%template%noSurfs, &
         & 'outValues', ModuleName )
       call Allocate_test ( instances, quantity%template%noInstances, &
         & 'instances', ModuleName )
-
-      ! Loop over the values
-      do i = 1, noPoints
-        ! Get value from tree
-        call expr ( subtree ( i+1, valuesNode ), exprUnit, exprValue )
-        ! Check height unit OK
-        heightUnit = GetUnitForVerticalCoordinate ( quantity%template%verticalCoordinate )
-        if ( associated(ptan) ) heightUnit = PHYQ_Zeta
-        if ( exprUnit(1) /= heightUnit .and. exprUnit(1) /= PHYQ_Dimensionless &
-          & .and. .not. ( exprUnit(1) == PHYQ_Pressure .and. heightUnit == PHYQ_Zeta ) ) &
-          & call Announce_error ( valuesNode, no_Error_Code, 'Bad height units for profile fill' )
-        ! Store height
-        if ( heightUnit == PHYQ_Zeta ) then
-          ! Assume zeta coordinates are expressed in mb
-          heights(i) = -log10 ( exprValue(1) )
-        else
-          heights(i) = exprValue(1)
-        end if
-        ! Check value unit OK
-        if ( all ( exprUnit(2) /= (/ testUnit, PHYQ_Dimensionless /) ) ) &
-          & call Announce_error ( valuesNode, no_error_code, 'Bad units for profile fill' )
-        ! Store value
-        values ( i ) = exprValue(2)
-      end do
-
-      if ( myLogSpace .and. any ( values <= 0.0 ) ) then
-        call Announce_Error ( valuesNode, no_error_code, &
-          & 'Non-positive input data in log profile fill (reset logSpace=false?)' )
-        return
-      end if
-      if ( myLogSpace ) values = log ( values )
+      heights = inHeights
+      values = invalues
+      if ( myLogSpace ) values = log ( invalues )
 
       ! Get the appropriate height coordinate for output, for pressure take log.
       if ( associated(ptan) ) then
@@ -6076,7 +6044,7 @@ contains ! =====     Public Procedures     =============================
         call hunt ( outHeights, heights, inInds, &
           & nearest=.true., allowTopValue=.true., fail=fail )
         if ( fail ) then
-          call Announce_Error ( valuesNode, no_error_code, &
+          call Announce_Error ( 0, no_error_code, &
           & 'Problem in Hunt' )
           return
         end if
@@ -6134,11 +6102,87 @@ contains ! =====     Public Procedures     =============================
         & 'outHeights', ModuleName )
       call Deallocate_test ( heights, 'heights', ModuleName )
       call Deallocate_test ( values, 'values', ModuleName )
+      call Deallocate_test ( outvalues, 'outvalues', ModuleName )
       call Deallocate_test ( duplicated, 'duplicated', ModuleName )
-      call Deallocate_test ( outValues, 'outValues', ModuleName )
       call Deallocate_test ( instances, 'instances', ModuleName )
       call MLSMessageCalls( 'pop' )
-    end subroutine FromProfile
+    end subroutine FromProfile_values
+
+    subroutine FromProfile_node ( quantity, valuesNode, &
+      & instancesNode, globalUnit, dontMask, ptan, logSpace )
+      ! This fill is slightly complicated.  Given a values array along
+      ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
+      ! does the linear interpolation appropriate to perform the fill.
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      integer, intent(in) :: VALUESNODE   ! Tree node for values
+      integer, intent(in) :: INSTANCESNODE ! Tree node for instances
+      integer, intent(in) :: GLOBALUNIT   ! Possible global unit
+      logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
+      type (VectorValue_T), pointer :: PTAN ! press. values
+      logical, intent(in), optional :: LOGSPACE ! Interpolate in logspace
+
+      ! Local variables
+      integer :: HEIGHTUNIT             ! Unit for height
+      integer :: NOPOINTS               ! Number of points supplied
+      integer :: I                      ! Loop counters / indices
+      integer :: TESTUNIT               ! Unit for value
+      logical :: MYLOGSPACE             ! Interpolate in log space?
+      real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
+      real (r8), dimension(:), pointer :: VALUES ! Values for the points
+      real (r8), dimension(2) :: EXPRVALUE ! Value of expression
+      integer, dimension(2) :: EXPRUNIT   ! Unit for expression
+
+      ! Executable code
+      call MLSMessageCalls( 'push', constantName='FromProfile_node' )
+
+      ! Check the quantity is amenable to this type of fill
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & coherent=.true. ) .and. .not. associated(ptan) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The quantity is not amenable to a profile fill unless you supply ptan' )
+
+      ! Check the units
+      testUnit = quantity%template%unit
+      if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
+
+      ! Set some stuff up
+      myLogSpace = quantity%template%logBasis
+      if ( present ( logSpace ) ) myLogSpace = logSpace
+      noPoints = nsons ( valuesNode ) - 1
+      nullify ( heights, values )
+      call Allocate_test ( heights, noPoints, 'heights', ModuleName )
+      call Allocate_test ( values, noPoints, 'values', ModuleName )
+
+      ! Loop over the values
+      do i = 1, noPoints
+        ! Get value from tree
+        call expr ( subtree ( i+1, valuesNode ), exprUnit, exprValue )
+        ! Check height unit OK
+        heightUnit = GetUnitForVerticalCoordinate ( quantity%template%verticalCoordinate )
+        if ( associated(ptan) ) heightUnit = PHYQ_Zeta
+        if ( exprUnit(1) /= heightUnit .and. exprUnit(1) /= PHYQ_Dimensionless &
+          & .and. .not. ( exprUnit(1) == PHYQ_Pressure .and. heightUnit == PHYQ_Zeta ) ) &
+          & call Announce_error ( valuesNode, no_Error_Code, 'Bad height units for profile fill' )
+        ! Store height
+        if ( heightUnit == PHYQ_Zeta ) then
+          ! Assume zeta coordinates are expressed in mb
+          heights(i) = -log10 ( exprValue(1) )
+        else
+          heights(i) = exprValue(1)
+        end if
+        ! Check value unit OK
+        if ( all ( exprUnit(2) /= (/ testUnit, PHYQ_Dimensionless /) ) ) &
+          & call Announce_error ( valuesNode, no_error_code, 'Bad units for profile fill' )
+        ! Store value
+        values ( i ) = exprValue(2)
+      end do
+
+      call FromProfile( quantity, heights, values, &
+      & instancesNode, globalUnit, dontMask, ptan, logSpace )
+      call Deallocate_test ( heights, 'heights', ModuleName )
+      call Deallocate_test ( values, 'values', ModuleName )
+      call MLSMessageCalls( 'pop' )
+    end subroutine FromProfile_node
 
     ! ---------------------------------------------- ManipulateVectors -----
     subroutine ManipulateVectors ( manipulation, dest, a, b, c )
@@ -6774,7 +6818,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- QtyFromFile ----------
     subroutine QtyFromFile ( key, quantity, MLSFile, &
-      & filetype, options, sdname, spread )
+      & filetype, options, sdname, spread, interpolate )
       use MLSHDF5, only: MATCHHDF5ATTRIBUTES
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
@@ -6783,13 +6827,16 @@ contains ! =====     Public Procedures     =============================
       character(len=*), intent(in) :: OPTIONS
       character(len=*), optional, intent(in) :: sdname
       logical, intent(in)                    :: spread
+      logical, intent(in)                    :: interpolate
       ! Local variables
       integer, parameter                      :: MAXLISTLENGTH=256
       character (LEN=10*MAXLISTLENGTH)        :: attrnames
       character (LEN=10*MAXLISTLENGTH)        :: attrvalues
+      logical homogeneous
       character(len=80) :: name
       character (len=80) :: Str
       ! Executable code
+      homogeneous = index(lowercase(options), 'h') > 0
       ! How do we access the dataset to read? By name or by attribute?
       if ( index(lowercase(options), 'a') < 1 ) then
         ! By name
@@ -6811,12 +6858,12 @@ contains ! =====     Public Procedures     =============================
         ! &   'Unable to read Quantity from File by attribute yet' )
       endif
       call NamedQtyFromFile ( key, quantity, MLSFile, &
-        & filetype, name, spread )
+        & filetype, name, spread, interpolate, homogeneous )
     end subroutine QtyFromFile
     
     ! ------------------------------------------- VectorFromFile ----------
     subroutine VectorFromFile ( key, Vector, MLSFile, &
-      & filetype, options, spread )
+      & filetype, options, spread, interpolate )
       use MLSFiles, only: DUMP
       use MLSHDF5, only: GETALLHDF5DSNAMES, MATCHHDF5ATTRIBUTES
       use MLSSTRINGS, only: WRITEINTSTOCHARS
@@ -6826,9 +6873,11 @@ contains ! =====     Public Procedures     =============================
       character(len=*), intent(in) :: FILETYPE
       character(len=*), intent(in) :: OPTIONS
       logical, intent(in)                    :: spread
+      logical, intent(in)                    :: interpolate
       ! Local variables
       integer :: DSI                      ! Dataset index in file
       character(len=MAXSDNAMESBUFSIZE) :: DSNames
+      logical :: homogeneous
       character(len=64) :: name
       type (VectorValue_T), pointer :: quantity 
       integer, parameter                      :: MAXLISTLENGTH=256
@@ -6837,6 +6886,7 @@ contains ! =====     Public Procedures     =============================
       integer :: SQI                      ! Quantity index in source
       character (len=80) :: Str
       ! Executable code
+      homogeneous = index(lowercase(options), 'h') > 0
       call output( 'Now in VectorFromFile', advance='yes' )
       call GetAllHDF5DSNames( MLSFile, DSNames )
       call dump( DSNames )
@@ -6859,9 +6909,11 @@ contains ! =====     Public Procedures     =============================
               & lowercase(StringElement( DSNames, dsi, countEmpty )) ) &
               & cycle
             if ( addSlash ) Name = '/' // Name
-            call outputNamedValue( 'shape(values)' // trim(name), &
-              & shape(quantity%values) )
-            call dump( MLSFile )
+            if ( DEEBUG ) then
+              call outputNamedValue( 'shape(values)' // trim(name), &
+                & shape(quantity%values) )
+              call dump( MLSFile )
+            endif
           else
             ! By attribute
             attrnames  = 'TemplateName,tempQtyType'
@@ -6876,7 +6928,7 @@ contains ! =====     Public Procedures     =============================
           endif
           if ( len_trim(name) > 0 ) &
             & call NamedQtyFromFile ( key, quantity, MLSFile, &
-            & filetype, name, spread )
+            & filetype, name, spread, interpolate, homogeneous )
         enddo
       enddo
     end subroutine VectorFromFile
@@ -6992,23 +7044,35 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- NamedQtyFromFile ----------
     subroutine NamedQtyFromFile ( key, quantity, MLSFile, &
-      & filetype, name, spread )
+      & filetype, name, spread, interpolate, homogeneous )
       use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-      use MLSHDF5, only: GETHDF5DSDIMS, LOADFROMHDF5DS
+      use HDF5, only: H5DOPEN_F, H5DCLOSE_F
+      use MLSHDF5, only: GETHDF5ATTRIBUTE, GETHDF5DSDIMS, LOADFROMHDF5DS
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (MLSFile_T), pointer   :: MLSFile
       character(len=*), intent(in) :: FILETYPE
       character(len=*), intent(in) :: name
       logical, intent(in)                    :: spread
+      logical, intent(in)                    :: interpolate
+      logical, intent(in)                    :: homogeneous
       ! Local variables
-      type( L2AUXData_T ) :: l2aux ! Result
-      type( l2GPData_T ) :: l2gp ! Result
       integer, dimension(3) :: dimInts
       integer(kind=hSize_t), dimension(3) :: dims
+      logical, parameter :: dontMask = .false.
+      integer, parameter :: globalUnit = 0
+      integer, parameter :: instancesNode = 0
+      integer :: instance
+      type( L2AUXData_T ) :: l2aux ! Result
+      type( l2GPData_T ) :: l2gp ! Result
+      integer :: noSurfs
+      type (VectorValue_T), pointer :: PTAN => null()
       integer :: status
-      real, dimension(:,:,:), pointer :: values => null()
+      real(r8), dimension(:), pointer :: surfs  => null()
+      real(rv), dimension(:,:,:), pointer :: values => null()
+      logical :: Verbose
       ! Executable code
+      verbose = ( switchDetail(switches, 'fill') > -1 )
       call GetHDF5DSDims ( MLSFile, name, DIMS )
       dimInts = max(dims, int(1,hsize_t))
       select case (lowercase(fileType))
@@ -7028,13 +7092,96 @@ contains ! =====     Public Procedures     =============================
         call Allocate_test ( values, dimInts(1), dimInts(2), dimInts(3), 'values read from file', ModuleName )
         call loadFromHDF5DS ( MLSFile, &
           & trim(Name), values ) ! quantity%values )
-        if ( .not. spread ) then
-          quantity%values = reshape( values, (/ dimInts(1)*dimInts(2), dimInts(3) /) )
-        else
+        if ( verbose ) then
+          call outputNamedValue( 'name', trim(name) )
+          call outputNamedValue( 'spread', spread )
+          call outputNamedvalue( 'shape(quantity%values)', shape(quantity%values) )
+          call outputNamedvalue( 'shape(values)', shape(values) )
+        endif
+        if ( spread ) then
           quantity%values = values(1,1,1)
+        elseif ( interpolate .and. associated(quantity%template%surfs) ) then
+          ! Must we interpolate according to surface heights?
+          call h5dOpen_f ( MLSFile%fileID%f_id, trim(name), &
+            & MLSFile%fileID%sd_id, status)
+          if ( status /= 0 ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                  & 'Unable to open sd to read heights attribute in hdf file', &
+                  & MLSFile=MLSFile )
+          end if
+          call GetHDF5Attribute( MLSFile, 'noSurfs', noSurfs )
+          call Allocate_test ( surfs, noSurfs, 'surfs read from file', ModuleName )
+          call GetHDF5Attribute( MLSFile, 'surfs', surfs )
+          if ( all(surfs == quantity%template%surfs(:,1)) ) then
+            ! No need, the heights are all the same
+            call fillMyInstances( quantity%values, values )
+          elseif ( noSurfs == dimInts(1)*dimInts(2) ) then
+            call FromProfile( quantity, surfs, &
+              & real( &
+              & reshape( values(:,:,1), (/ dimInts(1)*dimInts(2) /) ), &
+              & rv), &
+              & instancesNode, globalUnit, dontMask, ptan )
+          else
+            call Announce_Error ( key, no_Error_Code, &
+          &   'Unable to interpolate using this file data set ; noSurfs ' // &
+          &   'does not match dims(1)*dims(2)' )
+          endif
+          call DeAllocate_test ( surfs, 'surfs read from file', ModuleName )
+          call h5dClose_f ( MLSFile%fileID%sd_id, status)
+          if ( status /= 0 ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                  & 'Unable to close sd to read heights attribute in hdf file', &
+                  & MLSFile=MLSFile )
+          end if
+          MLSFile%fileID%sd_id = 0
+        elseif ( size(quantity%values(:,1)) == size(values(:,:,1) ) ) then
+          do instance = 1, size(quantity%values(1,:))
+            quantity%values(:,instance) = &
+              & reshape( values(:,:,1), (/ dimInts(1)*dimInts(2) /) )
+          enddo
+        elseif ( size(quantity%values) /= size(values ) ) then
+          call Announce_Error ( 0, no_Error_Code, &
+            'sizes of read and filled datasets dont match' )
+        else
+          quantity%values = reshape( values, (/ dimInts(1)*dimInts(2), dimInts(3) /) )
         endif
         call DeAllocate_test ( values, 'values read from file', ModuleName )
       end select
+    contains
+      subroutine FillMyInstances( values1, values2 )
+        ! Handle the following cases:
+        ! (1) values2 has only 1 instance
+        ! (2) values2 has the same number of instances as values1
+        ! (3) values2 has a different number of instances from values1
+        ! Args:
+        real(rv), dimension(:,:), pointer :: VALUES1
+        real(rv), dimension(:,:,:), pointer :: values2
+        ! Local variables
+        integer :: instance
+        integer :: noInst1  ! Number of instances in values1
+        integer :: noInst2  ! Number of instances in values2
+        integer, dimension(3) :: shp2
+        ! Executable code
+        noInst1 = size(values1, 2)
+        noInst2 = size(values2, 3)
+        shp2 = shape(values2)
+        if ( noInst2 == 1 .or. homogeneous ) then
+          do instance = 1, noInst1
+            values1(:,instance) = &
+              & reshape( values2(:,:,1), (/ shp2(1)*shp2(2) /) )
+          enddo
+        elseif( noInst1 == noInst2 ) then
+          do instance = 1, noInst1
+            values1(:,instance) = &
+              & reshape( values2(:,:,instance), (/ shp2(1)*shp2(2) /) )
+          enddo
+        else
+          do instance = 1, noInst1
+            values1(:,instance) = &
+              & reshape( values2(:,:,1), (/ shp2(1)*shp2(2) /) )
+          enddo
+        endif
+      end subroutine FillMyInstances
     end subroutine NamedQtyFromFile
     
 !--------------------------- end bloc --------------------------------------
@@ -7052,6 +7199,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.54  2012/02/24 21:22:02  pwagner
+! DirectRead may /interpolate vertically
+!
 ! Revision 2.53  2012/02/16 22:39:02  pwagner
 ! Dont automatically in AutoFillVector
 !
