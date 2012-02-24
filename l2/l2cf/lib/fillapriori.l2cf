@@ -18,9 +18,6 @@ begin Fill
   lowBound: Vector, template=stateTemplate, /lowBound
   highBound: Vector, template=stateTemplate, /highBound
 
-  aprioriMIFExtinction: Vector, template=retrieverStateTemplate
-  aprioriMIFExtinctionPrecision: Vector, template=retrieverStateTemplate
-
 end Fill
 
 ;; ----------------------------------- Fill species with climatology
@@ -721,102 +718,6 @@ Fill, quantity=apriori.refGPH,$
 
 end Fill
 
-begin Fill
-; do this more clever with a MACRO at a later time
-
-  transfer, source=apriori, destination=aprioriMIFExtinction
-  transfer, source=aprioriPrecision, destination=aprioriMIFExtinctionPrecision
-
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionR1A, $
-    sourceQuantity=apriori.extinctionR1A, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionV2R1A, $
-    sourceQuantity=apriori.extinctionV2R1A, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionR1B, $
-    sourceQuantity=apriori.extinctionR1B, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionV2R1B, $
-    sourceQuantity=apriori.extinctionV2R1B, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionR2, $
-    sourceQuantity=apriori.extinctionR2, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionV2R2, $
-    sourceQuantity=apriori.extinctionV2R2, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionR3, $
-    sourceQuantity=apriori.extinctionR3, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionV2R3, $
-    sourceQuantity=apriori.extinctionV2R3, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionR4, $
-    sourceQuantity=apriori.extinctionR4, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionV2R4, $
-    sourceQuantity=apriori.extinctionV2R4, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionR5V, $
-    sourceQuantity=apriori.extinctionR5V, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionV2R5V, $
-    sourceQuantity=apriori.extinctionV2R5V, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionR5H, $
-    sourceQuantity=apriori.extinctionR5H, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.MIFExtinctionV2R5H, $
-    sourceQuantity=apriori.extinctionV2R5H, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionR1A, $
-    sourceQuantity=apriori.extinctionR1A, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionV2R1A, $
-    sourceQuantity=apriori.extinctionV2R1A, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionR1B, $
-    sourceQuantity=apriori.extinctionR1B, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionV2R1B, $
-    sourceQuantity=apriori.extinctionV2R1B, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionR2, $
-    sourceQuantity=apriori.extinctionR2, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionV2R2, $
-    sourceQuantity=apriori.extinctionV2R2, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionR3, $
-    sourceQuantity=apriori.extinctionR3, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionV2R3, $
-    sourceQuantity=apriori.extinctionV2R3, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionR4, $
-    sourceQuantity=apriori.extinctionR4, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionV2R4, $
-    sourceQuantity=apriori.extinctionV2R4, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionR5V, $
-    sourceQuantity=apriori.extinctionR5V, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionV2R5V, $
-    sourceQuantity=apriori.extinctionV2R5V, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionR5H, $
-    sourceQuantity=apriori.extinctionR5H, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-  fill, quantity=aprioriMIFExtinction.totalMIFExtinctionV2R5H, $
-    sourceQuantity=apriori.extinctionV2R5H, $
-    method=vector, ptanQuantity=apriori.ptanGHz, /interpolate, /force
-
-end Fill
-
-
-
   ;; This is for the case where we wish to store the a priori quantities
   ;; in the dgg files
   !define(LabelOneAPQuantity,{!dnl
@@ -852,6 +753,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.145  2012/02/22 23:54:51  wgread
+;wgr--added low and high bounds for mif extincitons
+;
 ;Revision 1.144  2012/02/22 00:08:49  wgread
 ;wgr--added mif extinction
 ;

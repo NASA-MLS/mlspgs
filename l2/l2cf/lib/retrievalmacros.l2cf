@@ -159,72 +159,6 @@ begin Fill
   Transfer, source=measurementNoise, destination=yNoise$1
 end Fill})
 
-!define(setupPhaseMIF,{!dnl
-begin Fill
-  ;; Define state related vectors
-  x$1: Vector, template=x$1Template
-  a$1: Vector, template=x$1Template
-  vr$1: Vector, template=x$1Template
-  hr$1: Vector, template=x$1Template
-  sdIn$1: Vector, template=x$1Template
-  sdOut$1: Vector, template=x$1Template
-  lb$1: Vector, template=x$1Template
-  hb$1: Vector, template=x$1template
-  !ifdef(flagGotTruth,{t$1: Vector, template=x$1template})
-  ;; add mifextinction quantities
-  amif$1: Vector, template=x$1MIFTemplate
-  xmif$1: Vector, template=x$1MIFTemplate
-  sdOutmif$1: Vector, template=x$1MIFTemplate
-  lbmif$1: Vector, template=x$1MIFTemplate
-  hbmif$1: Vector, template=x$1MIFTemplate
-  sdInmif$1: Vector, template=x$1MIFTemplate
-  vrmif$1: Vector, template=x$1MIFTemplate
-  hrmif$1: Vector, template=x$1MIFTemplate
-
-  ;; Define measurement related vectors
-  y$1: Vector, template=y$1Template
-  yNoise$1: Vector, template=y$1Template
-  f$1: Vector, template=y$1Template
-  od$1: Vector, template=od$1Template
-  ;; Define retrieval diagnostics vector
-  diag$1: Vector, template=retrievalDiagnosticsTemplate
-  ;; Fill state related vectors
-  Transfer, source=state, destination=x$1
-  Transfer, source=apriori, destination=a$1
-  Transfer, source=aprioriPrecision, destination=sdIn$1
-  Transfer, source=vReg, destination=vr$1
-  Transfer, source=hReg, destination=hr$1
-  Transfer, source=lowBound, destination=lb$1
-  Transfer, source=highBound, destination=hb$1
-  !ifdef(flagGotTruth,{Transfer, source=truth, destination=t$1})
-
-  ;; Fill MIFExtinction apriori, etc
-  Transfer, source=apriori, destination=amif$1
-  Transfer, source=lowBound, destination=lbmif$1
-  Transfer, source=highBound, destination=hbmif$1
-  Transfer, source=aprioriPrecision, destination=sdInmif$1
-  Transfer, source=vReg, destination=vrmif$1
-  Transfer, source=hReg, destination=hrmif$1
-
-  Transfer, source=retrieverState, destination=xmif$1
-
-  ;; Construct and fill state covariance
-  Sa$1: matrix, columns=a$1, type=spd
-  FillCovariance, matrix=Sa$1, diagonal=sdIn$1, /invert
-
-  ;; Construct and fill MIFExtinction state covariance
-  Samif$1: matrix, columns=amif$1, type=spd
-  FillCovariance, matrix=Samif$1, diagonal=sdInmif$1, /invert
-
-  ;; Other matrices
-  !ifdef(flagComputeAvks,{avk$1: matrix, rows=a$1, $
-    !ifdef(flagGotTruth,{columns=t$1},{columns=a$1})})
-  !ifdef(flagComputeSout,{Sout$1: matrix, columns=x$1, type=spd})
-
-  ;; Fill radiance related vectors
-  Transfer, source=measurement, destination=y$1
-  Transfer, source=measurementNoise, destination=yNoise$1
-end Fill})
 
 ;; This form depends on whether the output diagnostics are to
 ;; written to the dgg or dgm file
@@ -259,66 +193,6 @@ begin Fill
   Destroy, vector=yNoise$1
   Destroy, vector=f$1
   !ifdef(flagGotTruth,{Destroy, vector=t$1})
-  Destroy, vector=od$1})
-  ;; Compute new full GPH profile
-  Fill, quantity=state.gph, method=hydrostatic, $
-    refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
-  ;; And GPH precision
-  Fill, quantity=outputPrecision.gph, method=gphPrecision, $
-    refGPHPrecisionquantity=outputPrecision.refGPH, $
-    tempPrecisionQuantity=outputPrecision.temperature
-  ;; Set precision -ve when wose than 50% apriori precision
-  NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
-  ;; Compute chi^2 ratio as measure of convergence
-  Fill, quantity=diag$1.dnwt_chisqratio, method=chiSqRatio, $
-    normQty= diag$1.dnwt_chisqnorm, minNormQty=diag$1.dnwt_chisqminNorm, $
-    flags=diag$1.dnwt_flag
-end Fill
-
-!ifdef(flagSuppressRegularOutput,{},{
-!ifdef(flagPrecisionEstimates,{},{
-  begin Join !dnl
-    !nl!ifdef(flagAvoidDirectWrite,
-    {!forall(joinOneDiagnostic,!outputRetrievalDiagnostics)},
-    {!forall(directWriteOneDiagnostic,!outputRetrievalDiagnostics)})
-  end Join
-})})
-})
-
-!define(completePhaseMIF,{!dnl
-;; Set default values for some parameters
-begin Fill
-  ;; Put state etc. back
-  Transfer, source=xmif$1, destination=retrieverstate
-  Transfer, source=sdOutmif$1, destination=outputPrecision
-
-  ;; FM output will be turned on again, sometime, for the PEs
-  !ifdef(flagPrecisionEstimates,{},{Transfer, source=f$1, destination=fwm})
-  ;; Clean up dead vectors and matrices
-  Destroy, matrix=Sa$1
-  Destroy, matrix=Samif$1
-  !ifdef(flagDontDestroyVectors,{},{
-  Destroy, vector=x$1
-  Destroy, vector=a$1
-  Destroy, vector=vr$1
-  Destroy, vector=hr$1
-  Destroy, vector=sdIn$1
-  Destroy, vector=sdOut$1
-  Destroy, vector=lb$1
-  Destroy, vector=hb$1
-  Destroy, vector=y$1
-  Destroy, vector=yNoise$1
-  Destroy, vector=f$1
-  !ifdef(flagGotTruth,{Destroy, vector=t$1})
-; do the same for mif quantities
-  Destroy, vector=xmif$1
-  Destroy, vector=amif$1
-  Destroy, vector=vrmif$1
-  Destroy, vector=hrmif$1
-  Destroy, vector=sdInmif$1
-  Destroy, vector=sdOutmif$1
-  Destroy, vector=lbmif$1
-  Destroy, vector=hbmif$1
   Destroy, vector=od$1})
   ;; Compute new full GPH profile
   Fill, quantity=state.gph, method=hydrostatic, $
@@ -623,24 +497,6 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; This macro puts all the boring stuff in the Retrieve command line
 ;; that we're used to seeing
 ;;  will add FM output to PEs later
-
-!ifdef(flagPrecisionEstimates,{!dnl
-  !define(retrievalArgumentsMIF,{$
-    state=xmif$1, fwmState=x$1, fwdModelExtra=state, $
-    measurements=y$1, measurementSD=yNoise$1, $
-    apriori=amif$1, covariance=Samif$1, $
-    outputSD=sdOutmif$1, $
-    !ifdef(flagComputeAvks,{average=Avk$1,!noteMatrix(Avk$1)}) $
-    vRegWeightVec=vrmif$1!ifelse(!dimension,1D,{},{, hRegWeightVec=hrmif$1})})},!dnl
-{ !define(retrievalArgumentsMIF,{$
-  state=xmif$1, fwmState=x$1, fwdModelExtra=state, $
-  measurements=y$1, measurementSD=yNoise$1, $
-  apriori=amif$1, covariance=Samif$1, $
-  outputSD=sdOutmif$1, fwdModelOut=f$1, $
-  vRegWeightVec=vrmif$1, hRegWeightVec=hrmif$1, $
-  !ifdef(flagComputeAvks,{average=Avk$1,!noteMatrix(Avk$1)})!dnl
-  !ifdef(flagComputeSout,{outputCovariance=Soutmif$1,!noteMatrix(Soutmif$1)})!dnl
-  lowBound=lbmif$1, highBound=hbmif$1, diagnostics=diag$1})})
 
 !ifdef(flagPrecisionEstimates,{!dnl
   !define(retrievalArguments,{$
@@ -1311,6 +1167,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.146  2012/02/22 00:08:15  wgread
+; wgr--added mif extinction
+;
 ; Revision 1.145  2011/10/20 20:20:54  pwagner
 ; DirectWrite diagnostic fields for IWC, IWP
 ;

@@ -624,36 +624,6 @@ begin Construct
     !allExtinctions, $
     !alltotalExtinctions, $
     totalextinctionr4b1011, totalextinctionr4b12, totalextinctionr4b1314, $
-    lowestRetrievedPressure, $
-    !allIsotopeRatios, $
-    !allSidebandFractions, $
-    !ifdef(flagSIDS,{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
-    !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths,}) !allElevs, $
-    !lesserState ]
-
-  RetrieverStateTemplate: VectorTemplate, quantities = [ $
-    ptanGHZ, ptanTHz, phitanGHz, phitanTHz, $
-    temperature, temperature_HR, $
-    refGPH, GPH, GPH_HR, $
-    tpPressure, oneHundredHPa, $
-    iwc, iwcFine, iwcR1A, iwcR2, iwcR3, iwcR4, lwc, $
-    iwp, iwpR1A, iwpR2, iwpR3, iwpR4, $
-    surfaceType, psd, earthRadius, $
-    trans, cext, cextFine, $
-    massMeanDiameterIce, massMeanDiameterWater, $
-    !allMolecules, $
-    !allHiResMolecules, $
-    RHiVMR, RHiVMRSNGL, UTRHi, rhi, rhi_HR, $
-    !allColumns, $
-    !allBaselines, $
-    !allBaselinesFine, $
-    !allMAFBaselines, $
-    !allMAFDACSBaselines, $
-    !allMAFMBBaselines, $
-    !allMIFBaselines, $
-    !allMIFDACSBaselines, $
-    !allMIFMBBaselines, $
-    !allGroupedBaselines, $
     !allMIFExtinctions, $
     !alltotalMIFExtinctions, $
     lowestRetrievedPressure, $
@@ -662,8 +632,6 @@ begin Construct
     !ifdef(flagSIDS,{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
     !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths,}) !allElevs, $
     !lesserState ]
-
-
 
   !ifdef(flagUnfolded,{
   measurementTemplate: VectorTemplate, quantities = [ $
