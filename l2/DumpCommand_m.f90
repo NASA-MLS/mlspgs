@@ -288,7 +288,7 @@ contains
     call outputNamedValue( 'LastWarningMsg', LastWarningMsg )
     if ( len_trim(LastWarningMsg) < 1 ) then
       tvalue = .false.
-    elseif ( len_trim(message) < 1 ) then
+    else if ( len_trim(message) < 1 ) then
       tvalue = .true.
     else
       ! tvalue = streq( message, LastWarningMsg, '-wcf' )
@@ -429,7 +429,7 @@ contains
     if ( arg(1) /= 'a' ) then
       call mlsmessage (MLSMSG_Error, moduleName, &
         & 'Formula in compare must be "flattening a op [b][c]".' )
-    elseif( index('<>=', trim(op)) < 1 ) then
+    else if( index('<>=', trim(op)) < 1 ) then
       call mlsmessage (MLSMSG_Error, moduleName, &
         & 'Formula in compare found unrecognized relation: ' // trim(op) )
     end if
@@ -997,7 +997,7 @@ contains
             if ( NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave ) then
               call MLSMessageExit( NORMAL_EXIT_STATUS, &
                 & farewell="Program stopped with normal status by /stop field on DUMP statement.")
-            elseif( parallel%slave ) then
+            else if( parallel%slave ) then
               call closeParallel(0)
               call MLSMessageExit( &
                 & farewell="slave stopped by /stop field on DUMP statement.")
@@ -1153,7 +1153,7 @@ contains
             quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
             qty1 => GetVectorQtyByTemplateIndex( &
                   & vectors(vectorIndex), quantityIndex )
-          endif
+          end if
           if ( DiffOrDump == s_diff ) then
             rmsFormat = '(1pe8.1)'
             if ( gotFirst ) then
@@ -1161,7 +1161,7 @@ contains
                 call diff ( qty1%values, 'qty1 values', &
                   & qty2%values, 'qty2 values', &
                   & options=optionsString )
-              elseif ( index(optionsString, '2') > 0 ) then
+              else if ( index(optionsString, '2') > 0 ) then
                 call diff ( ichar(qty1%mask), 'qty1 mask', &
                   & ichar(qty2%mask), 'qty2 mask', &
                   & options=optionsString )
@@ -1173,7 +1173,7 @@ contains
               endif
             endif
             rmsFormat = '*'
-          elseif ( fieldIndex == f_mask ) then
+          else if ( fieldIndex == f_mask ) then
             call dumpQuantityMask ( GetVectorQtyByTemplateIndex( &
               & vectors(vectorIndex), quantityIndex), details=details )
           else
@@ -1182,15 +1182,15 @@ contains
             ! '0' means dump template
             ! '1' means dump values
             ! '2' means dump mask
-            
+
             if ( clean ) optionsString = trim(optionsString) // 'c'
             if ( .not. any(indexes(optionsString, (/'0','1','2'/)) > 0 ) ) then
               call dump ( qty1, details=details, &
                 & vector=vectors(vectorIndex), options=optionsString )
-            elseif ( index(optionsString, '1') > 0 ) then
+            else if ( index(optionsString, '1') > 0 ) then
               call dump ( qty1%values, 'quantity values', &
                 & options=optionsString )
-            elseif ( index(optionsString, '0') > 0 ) then
+            else if ( index(optionsString, '0') > 0 ) then
               call dump ( qty1%template, details=details )
             else
               call dumpQuantityMask( qty1, details=0 )
@@ -1207,18 +1207,18 @@ contains
               matrixIndex2 = decoration(decoration(gson))
             else
               matrixIndex = decoration(decoration(gson))
-            endif
+            end if
             if ( DiffOrDump /= s_diff ) then
               call getFromMatrixDatabase ( &
                 & matrixDatabase(matrixIndex), matrix )
               call dump ( Matrix, details=details )
-            elseif ( GotFirst ) then
+            else if ( GotFirst ) then
               call getFromMatrixDatabase ( &
                 & matrixDatabase(matrixIndex), matrix )
               call getFromMatrixDatabase ( &
                 & matrixDatabase(matrixIndex2), matrix2 )
               call diff ( Matrix, Matrix2, details=details )
-            endif
+            end if
           end do
         else
           call announceError ( gson, 0, 'Unable to dump matrix here; db empty or absent' )
@@ -1288,11 +1288,11 @@ contains
           !                       %[Tt] => time of day
           gotOne = .false.
           do
+            call cpu_time ( cpuTime ) ! In case %[CcSs] appears
             i = max(index(text,'%c'), index(text,'%C'))
             if ( i /= 0 ) then
               tempText = ''
               l = 1 ! Position in TempText
-              call cpu_time ( cpuTime )
               time = duration_formatted ( cpuTime - cpuTimeBase )
               if ( time%year /= 0 ) then
                 gotOne = .true.
@@ -1347,7 +1347,7 @@ contains
             end if
             i = max(index(text,'%s'), index(text,'%S'))
             if ( i /= 0 ) then
-              write ( tempText, * ) cpuTime - cpuTimeBase
+              write ( tempText, '(1p,g15.6)' ) cpuTime - cpuTimeBase
               text = text(:i-1) // trim(adjustl(tempText)) // text(i+2:)
               cycle
             end if
@@ -1528,6 +1528,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.66  2012/02/28 00:16:42  vsnyder
+! Repair %S, which was referencing cpu_time without it being assigned a value
+!
 ! Revision 2.65  2012/02/02 00:56:00  pwagner
 ! Fix bug in Diffing matrices
 !
