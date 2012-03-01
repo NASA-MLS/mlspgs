@@ -900,6 +900,9 @@ contains
 
     call dumpDates( GriddedData%dateStarts, 'starting dates' )
     call dumpDates( GriddedData%dateEnds, 'ending dates' )
+    
+    call output( 'no year in date? ' )
+    call output( GriddedData%NoYear, advance='yes' )
 
     if ( .not. all(ieee_is_finite(GriddedData%field)) ) &
       & call output ( '*** Gridded Data contains non-finite values', advance='yes' )
@@ -1714,6 +1717,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.67  2012/03/01 20:01:40  pwagner
+! When dumped, say whether grid is for no year
+!
 ! Revision 2.66  2011/08/30 22:22:29  pwagner
 ! Destroying a Griddeddata now sets empty to TRUE so we can dump it later w/o error
 !
