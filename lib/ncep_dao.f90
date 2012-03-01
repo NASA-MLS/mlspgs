@@ -177,7 +177,11 @@ contains
       endif
       call Read_geos5_7( GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, date, sumDelp )
-      if ( myVerbose .and. associated(the_g_data%field) ) then
+      if ( .not. myVerbose ) then
+        ! Do nothing -- but some compilers may complain
+      elseif ( the_g_data%empty .or. .not. associated(the_g_data%field) ) then
+          call output( 'File appears not to be ' // trim(LIT_DESCRIPTION), advance='yes' )
+      else
         call output( '(Returned from read_geos5_7)', advance='yes' )
         call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
         call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
@@ -193,7 +197,11 @@ contains
     case ('geos5')
       call Read_geos5_or_merra( GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, date )
-      if ( myVerbose .and. associated(the_g_data%field) ) then
+      if ( .not. myVerbose ) then
+        ! Do nothing -- but some compilers may complain
+      elseif ( the_g_data%empty .or. .not. associated(the_g_data%field) ) then
+          call output( 'File appears not to be ' // trim(LIT_DESCRIPTION), advance='yes' )
+      else
         call output( '(Returned from read_geos5)', advance='yes' )
         call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
         call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
@@ -209,7 +217,11 @@ contains
     case ('dao', 'gmao')
       call Read_dao(GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName)
-      if ( myVerbose .and. associated(the_g_data%field) ) then
+      if ( .not. myVerbose ) then
+        ! Do nothing -- but some compilers may complain
+      elseif ( the_g_data%empty .or. .not. associated(the_g_data%field) ) then
+          call output( 'File appears not to be ' // trim(LIT_DESCRIPTION), advance='yes' )
+      else
         call output( '(Returned from read_dao)', advance='yes' )
         call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
         call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
@@ -229,7 +241,11 @@ contains
         & call getStringElement(fieldNames, fieldName, 2, COUNTEMPTY)
       call Read_geos5_or_merra( GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, date, sumDelp )
-      if ( myVerbose .and. associated(the_g_data%field) ) then
+      if ( .not. myVerbose ) then
+        ! Do nothing -- but some compilers may complain
+      elseif ( the_g_data%empty .or. .not. associated(the_g_data%field) ) then
+          call output( 'File appears not to be ' // trim(LIT_DESCRIPTION), advance='yes' )
+      else
         call output( '(Returned from read merra)', advance='yes' )
         call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
         call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
@@ -247,7 +263,11 @@ contains
       ! in hdfeos format
       call Read_ncep_gdas(GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, missingValue)
-      if ( myVerbose .and. associated(the_g_data%field) ) then
+      if ( .not. myVerbose ) then
+        ! Do nothing -- but some compilers may complain
+      elseif ( the_g_data%empty .or. .not. associated(the_g_data%field) ) then
+          call output( 'File appears not to be ' // trim(LIT_DESCRIPTION), advance='yes' )
+      else
         call output( '(Returned from read_ncep_gdas)', advance='yes' )
         call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
         call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
@@ -265,7 +285,11 @@ contains
       ! in hdfeos5 format
       call Read_ncep_strat(GriddedFile, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName)
-      if ( myVerbose .and. associated(the_g_data%field) ) then
+      if ( .not. myVerbose ) then
+        ! Do nothing -- but some compilers may complain
+      elseif ( the_g_data%empty .or. .not. associated(the_g_data%field) ) then
+          call output( 'File appears not to be ' // trim(LIT_DESCRIPTION), advance='yes' )
+      else
         call output( '(Returned from read_ncep_strat)', advance='yes' )
         call output( 'Quantity Name   ' // trim(the_g_data%QuantityName), advance='yes' )
         call output( 'Description     ' // trim(the_g_data%description), advance='yes' )
@@ -2575,6 +2599,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.68  2012/03/01 20:00:35  pwagner
+! When verbose, note when file does not fit description
+!
 ! Revision 2.67  2011/11/30 21:28:23  pwagner
 ! Converted most debugging prints to verbose ones; more robust
 !
