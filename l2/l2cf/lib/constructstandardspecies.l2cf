@@ -349,19 +349,6 @@ begin Construct
   !forall(constructTOTALExtinction, !allRadiometers)
   !define(alltotalExtinctions,{!makelist({totalextinction},{},!allRadiometers),!makelist({totalextinctionv2},{},!allRadiometers)})
   
-; let's see if I can brute force this
-    totalextinctionR4B1011: Quantity, type=vmr, molecule=extinction, $
-    radiometer=r4, hGrid=hGridStandard, vGrid=vGridExtinction, $
-    fGrid=fGridExtinctionConstant
-
-    totalextinctionR4B12: Quantity, type=vmr, molecule=extinction, $
-    radiometer=r4, hGrid=hGridStandard, vGrid=vGridExtinction, $
-    fGrid=fGridExtinctionConstant
-
-    totalextinctionR4B1314: Quantity, type=vmr, molecule=extinction, $
-    radiometer=r4, hGrid=hGridStandard, vGrid=vGridExtinction, $
-    fGrid=fGridExtinctionConstant
-
   ;; ------------------------------------add mif extinctions--------------
 
   !define(constructMIFExtinction,{!dnl
@@ -623,7 +610,6 @@ begin Construct
     !allGroupedBaselines, $
     !allExtinctions, $
     !alltotalExtinctions, $
-    totalextinctionr4b1011, totalextinctionr4b12, totalextinctionr4b1314, $
     !allMIFExtinctions, $
     !alltotalMIFExtinctions, $
     lowestRetrievedPressure, $
