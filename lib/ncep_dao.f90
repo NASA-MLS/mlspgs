@@ -315,8 +315,7 @@ contains
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
     use DATES_MODULE, only: UTC2TAI93S
     use HDF5, only: HSIZE_T
-    use MLSHDF5, only: DUMPHDF5ATTRIBUTES, DUMPHDF5DS, &
-      & GETALLHDF5ATTRNAMES, GETALLHDF5DSNAMES, &
+    use MLSHDF5, only: GETALLHDF5DSNAMES, &
       & GETHDF5DSRANK, GETHDF5DSDIMS, LOADFROMHDF5DS, &
       & READHDF5ATTRIBUTE
     use MLSSTRINGLISTS, only: SWITCHDETAIL
@@ -350,7 +349,7 @@ contains
     real(r8), dimension(:,:,:,:), pointer :: temp4d
     character(len=16) :: the_units
     real(r4), parameter :: FILLVALUE = 1.e15 !this value maybe wrong 
-    integer :: mydate, mytime, timeinc, year, month, day, hour, minute, second
+    integer :: mydate, mytime, year, month, day, hour, minute, second
     character(len=256) :: errormsg
     character(len=19) :: datestring ! will be in the form of yyyy-MM-ddTHH:MM:ss
     logical :: verbose
@@ -2599,6 +2598,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.69  2012/03/06 19:33:11  pwagner
+! Remove more unused things
+!
 ! Revision 2.68  2012/03/01 20:00:35  pwagner
 ! When verbose, note when file does not fit description
 !

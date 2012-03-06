@@ -647,12 +647,6 @@ contains
     integer, intent(in)                   :: firstszas
     integer, intent(in)                   :: firstdates
     ! Internal variables
-    integer                   :: iheights
-    integer                   :: ilats
-    integer                   :: ilons
-    integer                   :: ilsts
-    integer                   :: iszas
-    integer                   :: idates
     integer                   :: noheights
     integer                   :: nolats
     integer                   :: nolons
@@ -1722,6 +1716,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.69  2012/03/06 19:32:39  pwagner
+! Remove more unused local variables
+!
 ! Revision 2.68  2012/03/06 19:12:32  pwagner
 ! Say whether dumped grid has seasonal cyclic symmetry
 !
