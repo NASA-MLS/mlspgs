@@ -901,11 +901,16 @@ contains
     call dumpDates( GriddedData%dateStarts, 'starting dates' )
     call dumpDates( GriddedData%dateEnds, 'ending dates' )
     
-    call output( 'no year in date? ' )
+    call output( 'No year in date? ' )
     call output( GriddedData%NoYear, advance='yes' )
 
+    call output( 'Seasonal cyclic symmetry? ' )
+    call output( GriddedData%NoYear .and. Griddeddata%noDates > 1, &
+      & advance='yes' )
+
     if ( .not. all(ieee_is_finite(GriddedData%field)) ) &
-      & call output ( '*** Gridded Data contains non-finite values', advance='yes' )
+      & call output ( '*** Gridded Data contains non-finite values', &
+        & advance='yes' )
     if ( any(ieee_is_nan(GriddedData%field)) ) &
       & call output ( '*** Gridded Data contains nans', advance='yes' )
     if ( .not. associated(GriddedData%field) ) then
@@ -1717,6 +1722,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.68  2012/03/06 19:12:32  pwagner
+! Say whether dumped grid has seasonal cyclic symmetry
+!
 ! Revision 2.67  2012/03/01 20:01:40  pwagner
 ! When dumped, say whether grid is for no year
 !
