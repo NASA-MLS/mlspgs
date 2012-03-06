@@ -13,15 +13,17 @@
 module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
 !=============================================================================
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use GriddedData, only: DestroyGriddedData, GriddedData_T, V_is_pressure, &
-    & V_is_altitude, V_is_GPH, V_is_theta, RGR
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only: DUMP
+  use GRIDDEDDATA, only: DESTROYGRIDDEDDATA, GRIDDEDDATA_T, V_IS_PRESSURE, &
+    & V_IS_ALTITUDE, V_IS_GPH, V_IS_THETA, RGR
   use LEXER_CORE, only: PRINT_SOURCE
-  USE MLSCommon, only: R4, R8, LineLen, NameLen, undefinedValue
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-  USE MLSStrings, only: Capitalize, &
-    & Count_words, ReadCompleteLineWithoutComments
-  USE output_m, only: output, outputNamedValue
+  use MLSCOMMON, only: LINELEN, NAMELEN, UNDEFINEDVALUE
+  use MLSKINDS, only: R4, R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+  use MLSSTRINGS, only: CAPITALIZE, &
+    & COUNT_WORDS, READCOMPLETELINEWITHOUTCOMMENTS
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit NONE
@@ -389,7 +391,7 @@ contains
   end subroutine L3ascii_read_field
 
   subroutine L3ascii_interp_field_r4 ( field, outval, pressure, lat, lon, lst, &
-    & sza, date )
+    & sza, date, debug )
     ! Returns a value in outval containing the value of the 
     ! gridded data set "field" at the pressure, lat, etc specified by 
     ! the other args. Co-ordinates are 
@@ -405,6 +407,7 @@ contains
     real(kind=r4),intent(in),optional::lst
     real(kind=r4),intent(in),optional::sza
     real(kind=r8),intent(in),optional::date
+    logical, optional, intent(in)    :: debug
     real(kind=r4),intent(out)::outval
     !---- local vars: optional arg values ------!
     real(kind=r8):: inlat,inlon,inlst,insza,indate,inpressure,inalt
@@ -420,7 +423,7 @@ contains
   end subroutine L3ascii_interp_field_r4
 
   subroutine L3ascii_interp_field_r8 ( field, outval, pressure, lat, lon, lst, &
-    & sza, date )
+    & sza, date, debug )
     ! Returns a value in outval containing the value of the 
     ! gridded data set "field" at the pressure, lat, etc specified by 
     ! the other args. Co-ordinates are 
@@ -436,6 +439,7 @@ contains
     real(kind=r8),intent(in),optional::lst
     real(kind=r8),intent(in),optional::sza
     real(kind=r8),intent(in),optional::date
+    logical, optional, intent(in)    :: debug
     real(kind=r8),intent(out)::outval
     !---- local vars: optional arg values ------!
     real(kind=r8):: inlat,inlon,inlst,insza,indate,inpressure,inalt
@@ -454,7 +458,6 @@ contains
     ! This finds which two elements of x lie on either side of xval
     ! x is assumed to be 1-based. 
     !     *** arguments *** 
-    ! real(kind=r8),pointer,dimension(:):: x
     real(kind=r8), dimension(:):: x
     real(kind=r8),intent(in)::xval
     integer, intent(out)::ix1,ix2
@@ -862,6 +865,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.36  2012/03/06 19:30:07  pwagner
+! Capitalize USEd stuff; R4 and R8 got from MLSKinds
+!
 ! Revision 2.35  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
