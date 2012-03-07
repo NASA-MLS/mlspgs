@@ -181,6 +181,7 @@ module ForwardModelConfig
     logical :: Spect_Der              ! Do spectroscopy derivatives
     logical :: SwitchingMirror        ! Model radiance at the switching mirror
     logical :: Temp_Der               ! Do temperature derivatives
+    logical :: TransformMIFExtinction ! Transform MIF extinction, see wvs-107
     logical :: UseTScat               ! Use TScat tables + linear model in full model
     ! Now the reals
     real (r8) :: FrqTol               ! MHz, how close to desired frequency must
@@ -1430,6 +1431,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.115  2012/01/25 00:07:07  vsnyder
+! Use Test_Allocate, Test_Deallocate
+!
 ! Revision 2.114  2011/07/29 01:51:38  vsnyder
 ! Remove TScatMolecules and TScatMoleculeDerivatives fields.  Make CloudIce
 ! a molecule.  Look for CloudIce instead of Cloud_A and Cloud_S
