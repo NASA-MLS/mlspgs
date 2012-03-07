@@ -53,7 +53,6 @@ contains
       & F_AVERAGE, F_COLUMNSCALE, F_COMMENT, F_COVARIANCE, F_COVSANSREG, &
       & F_DIAGNOSTICS, F_DIAGONAL, F_EXTENDEDAVERAGE, &
       & F_FORWARDMODEL, F_FUZZ, F_FWDMODELEXTRA, F_FWDMODELOUT, &
-      & F_FWMJACOBIAN, F_FWMSTATE, &
       & F_HESSIAN, F_HIGHBOUND, F_HREGORDERS, F_HREGQUANTS, F_HREGWEIGHTS, &
       & F_HREGWEIGHTVEC, F_JACOBIAN, F_LAMBDA, F_LEVEL, F_LOWBOUND, &
       & F_MAXJ, F_MEASUREMENTS, F_MEASUREMENTSD, F_METHOD, F_MUMIN, &
@@ -71,8 +70,7 @@ contains
       & L_DNWT_DIAG,  L_DNWT_DXDX, L_DNWT_DXDXL, L_DNWT_DXN,  L_DNWT_DXNL, &
       & L_DNWT_FLAG, L_DNWT_FNMIN, L_DNWT_FNORM,  L_DNWT_GDX,  L_DNWT_GFAC, &
       & L_DNWT_GRADN,  L_DNWT_SQ, L_DNWT_SQ,  L_DNWT_SQT, &
-      & L_HIGHCLOUD, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-      & L_LOWCLOUD, l_MIFExtinction, l_MIFExtinctionV2, &
+      & L_HIGHCLOUD, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, L_LOWCLOUD, &
       & L_NEWTONIAN, L_NONE, L_NORM, L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_SIMPLE, &
       & S_ANYGOODVALUES, S_CATCHWARNING, S_COMPARE, &
       & S_DIFF, S_DUMP, S_DUMPBLOCKS, S_FLAGCLOUD, S_FLUSHPFA, S_LEAKCHECK, &
@@ -158,8 +156,6 @@ contains
                                         ! starting a retrieval.
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelOut
-    type(matrix_T), pointer :: FwmJacobian ! forward model's Jacobian matrix
-    type(vector_T), pointer :: FwmState    ! forward model's State vector
     logical :: Got(field_first:field_last) ! "Got this field already"
     type(vector_T), pointer :: HighBound ! For state during retrieval
     integer :: HRegOrders               ! Regularization orders
@@ -170,7 +166,6 @@ contains
     real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
     integer :: IxAverage                ! Index in tree of averagingKernel
     integer :: IxCovariance             ! Index in tree of outputCovariance
-    integer :: IxFwmJacobian            ! tree index of forward model's Jacobian
     integer :: IxJacobian               ! Index in tree of Jacobian matrix
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
     type(hessian_T), pointer :: Hessian ! The Hessian
@@ -189,7 +184,6 @@ contains
                                         ! only l_Newtonian.
     type(matrix_T), target :: MyAverage ! for OutputAverage to point to
     type(matrix_SPD_T), target :: MyCovariance ! for OutputCovariance to point at
-    type(matrix_T), target :: MyFwmJacobian    ! for FwmJacobian to point at
     type(hessian_T), target :: MyHessian       ! for Hessian to point at
     type(matrix_T), target :: MyJacobian       ! for Jacobian to point at
     real(rv) :: MuMin                   ! Smallest shrinking of dx before change direction
@@ -275,9 +269,7 @@ contains
     integer, parameter :: InconsistentQuantities = Inconsistent + 1
     integer, parameter :: InconsistentUnits = InconsistentQuantities + 1
     integer, parameter :: NeedBothDepthAndCutoff = InconsistentUnits + 1
-    integer, parameter :: NeedFwmState = NeedBothDepthAndCutoff + 1
-    integer, parameter :: NoMIFExtinction = NeedFwmState + 1 ! Not in fwmState
-    integer, parameter :: NotGeneral = noMIFExtinction + 1 ! Not a general matrix
+    integer, parameter :: NotGeneral = NeedBothDepthAndCutoff + 1 ! Not a general matrix
     integer, parameter :: NotSPD = notGeneral + 1    ! Not symmetric pos. definite
     integer, parameter :: RangeNotAppropriate = NotSPD + 1
     integer, parameter :: WrongUnits = RangeNotAppropriate + 1
@@ -288,7 +280,6 @@ contains
 
     error = 0
     nullify ( apriori, aprioriFraction, configIndices, covariance, fwdModelOut )
-    nullify ( fwmJacobian, fwmState )
     nullify ( measurements, measurementSD, outputSD, sparseQuantities )
     nullify ( state, stateMax, stateMin )
     phaseName = ' '              ! Default in case there's no field
@@ -431,10 +422,6 @@ contains
             fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_fwdModelOut )
             fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_fwmJacobian )
-            ixFwmJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
-          case ( f_fwmState )
-            fwmState => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_highBound )
             highBound => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_hRegOrders )
@@ -574,8 +561,6 @@ contains
           & call announceError ( inconsistent, f_negateSD, f_regAfter )
         if ( negateSD .and. .not. got(f_outputSD) ) &
           & call AnnounceError ( ifAThenB, f_negateSD, f_outputSD )
-        if ( got(f_fwmJacobian) .and. .not. got(f_fwmState) ) &
-            & call AnnounceError ( NeedFwmState )
 
         if ( error == 0 ) then
 
@@ -648,67 +633,6 @@ contains
             call createEmptyMatrix ( jacobian, 0, measurements, state )
           end if
 
-          if ( got(f_fwmState) ) then
-            if ( got(f_fwmJacobian) ) then
-              ! Get or create the forward model Jacobian
-              k = decoration(ixFwmJacobian)
-              if ( k == 0 ) then
-                call createEmptyMatrix ( myFwmJacobian, &
-                  & sub_rosa(subtree(1,ixFwmJacobian)), measurements, fwmState )
-                k = addToMatrixDatabase( matrixDatabase, myFwmJacobian )
-                call decorate ( ixFwmJacobian, k )
-              end if
-              ! Check compatability of retriever Jacobian and forward model Jacobian
-              call getFromMatrixDatabase ( matrixDatabase(k), fwmJacobian )
-              if ( fwmJacobian%row%vec%template%name /= measurements%template%name ) &
-                & call announceError ( inconsistent, f_fwmJacobian, f_measurements )
-              if ( fwmJacobian%col%vec%template%name /= fwmState%template%name ) &
-                & call announceError ( inconsistent, f_fwmJacobian, f_fwmState )
-            else
-              fwmJacobian => myFwmJacobian
-              call createEmptyMatrix ( fwmJacobian, 0, measurements, fwmState )
-            end if
-            ! Make sure it's possible to use the same row index for blocks
-            ! of Jacobian and fwmJacobian
-            if ( Jacobian%row%instFirst .neqv. fwmJacobian%row%instFirst ) &
-              & call announceError ( inconsistent, f_Jacobian, f_fwmJacobian )
-            ! Verify that for every quantity in State there is a corresponding
-            ! one in FwmState.  Verify that vmr quantities are equivalent.
-            do k = 1, size(state%quantities)
-              select case ( state%quantities(k)%template%quantityType )
-              case ( l_vmr )
-                qty => getVectorQuantityByType ( fwmState, quantityType=l_vmr, &
-                    &    molecule=state%quantities(k)%template%molecule )
-                if ( state%quantities(k)%template%name /= qty%template%name ) &
-                  & call announceError ( inconsistentQuantities, f_state, f_fwmState )
-              case ( l_MIFExtinction ) ! All we care is that a quantity exists
-                qty => getVectorQuantityByType ( fwmState, &
-                    &  quantityType=l_vmr, molecule=l_extinction )
-              case ( l_MIFExtinctionV2 ) ! All we care is that a quantity exists
-                qty => getVectorQuantityByType ( fwmState, &
-                    &  quantityType=l_vmr, molecule=l_extinctionV2 )
-              case default
-                qty => getVectorQuantityByType ( fwmState, &
-                    &  quantityType=state%quantities(k)%template%quantityType )
-                if ( state%quantities(k)%template%name /= qty%template%name ) &
-                  & call announceError ( inconsistentQuantities, f_state, f_fwmState )
-              end select
-            end do
-            ! FWM sees FwmState, so ensure no MIFExtinction in it
-            do k = 1, size(fwmState%quantities)
-              select case ( fwmState%quantities(k)%template%quantityType )
-              case ( l_MIFExtinction, l_MIFExtinctionV2 )
-                call announceError ( noMIFExtinction, fwmState%name )
-              end select
-            end do
-          else ! FWM sees State, so ensure no MIFExtinction in it
-            do k = 1, size(state%quantities)
-              select case ( state%quantities(k)%template%quantityType )
-              case ( l_MIFExtinction, l_MIFExtinctionV2 )
-                call announceError ( noMIFExtinction, state%name )
-              end select
-            end do
-          end if
 
           ! Create the output covariance matrix
           if ( got(f_outputCovariance) ) then
@@ -788,8 +712,6 @@ contains
           !??? after ?what? happens?  Can we destroy the entire matrix
           !??? database at the end of each chunk?
           if ( .not. got(f_jacobian) ) call destroyMatrix ( jacobian )
-          if ( associated(fwmJacobian) .and. .not. got(f_fwmJacobian) ) &
-            call destroyMatrix ( fwmJacobian )
           if ( .not. got(f_outputCovariance) ) &
             & call destroyMatrix ( outputCovariance%m )
         else
@@ -943,12 +865,6 @@ contains
       case ( needBothDepthAndCutoff )
         call output ( 'OpticalDepth specified but no cutoff, or visa versa', &
           & advance='yes' )
-      case ( NeedFwmState )
-        call output ( 'FwmJacobian specified, but fwmState not specified', &
-          & advance='yes' )
-      case ( noMIFExtinction )
-        call display_string ( fieldIndex, & ! fieldIndex is a string index here
-          & before='MIFExtinction quantity type not allowed in ', advance='yes' )
       case ( rangeNotAppropriate )
         call output ( 'Ranges are not appropriate for a ' )
         call display_string ( spec_indices(fieldIndex) )
@@ -1437,7 +1353,8 @@ contains
       logical :: D_Dvec   ! 'dvec' DX vector
       logical :: D_Fac_F  ! 'FAC' Full normal equations factor (if you dare)
       logical :: D_Fac_N  ! 'fac' L_Infty norms of blocks of normal equations factor
-      logical :: D_Fnorm  ! 'fnorm' Contributions to | F |
+      integer :: D_Fnmin  ! 'fnmin' terms
+      integer :: D_Fnorm  ! 'fnorm' Contributions to | F |
       logical :: D_Gvec   ! 'gvec' Gradient vector
       logical :: D_Jac_F  ! 'JAC' Full Jacobian (if you dare)
       logical :: D_Jac_N  ! 'jac' L_Infty norms of Jacobian blocks
@@ -1517,7 +1434,8 @@ contains
       d_dvec = switchDetail(switches,'dvec') > -1
       d_fac_f = switchDetail(switches,'FAC') > -1
       d_fac_n = switchDetail(switches,'fac') > -1
-      d_fnorm = switchDetail ( switches, 'fnorm' ) > -1
+      d_fnmin = switchDetail ( switches, 'fnmin' )
+      d_fnorm = switchDetail ( switches, 'fnorm' )
       d_gvec = switchDetail(switches,'gvec') > -1
       d_jac_f = switchDetail(switches,'JAC') > -1
       d_jac_n = switchDetail(switches,'jac') > -1
@@ -1806,8 +1724,14 @@ NEWT: do ! Newton iteration
             ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T \left [
             ! C ( a - x_n ) \right ] }$
             aj%fnorm = v(aprioriMinusX) .mdot. v(covarianceXapriori)
-              if ( d_fnorm ) call output ( aj%fnorm, &
+              if ( d_fnorm > -1 ) then             
+                call output ( aj%fnorm, &
                   & before='A priori contribution to | F | = ', advance='yes' )
+                if ( d_fnorm > 1 ) then
+                  call dump ( v(aprioriMinusX), details=d_fnorm )
+                  call dump ( v(covarianceXapriori), details=d_fnorm )
+                end if
+              end if
             !{ Using Apriori requires adding equations of the form ${\bf F
             !  x}_{n+1} \simeq {\bf F a}$ where ${\bf F}$ is the Cholesky
             !  factor of $\bf C$, the inverse of the apriori covariance ${\bf
@@ -1833,8 +1757,8 @@ NEWT: do ! Newton iteration
             end if
           else
             aj%fnorm = 0.0_r8
-            if ( d_fnorm ) &
-              & call output ( 'No a priori so setting | F | to zero.', advance='yes' )
+              if ( d_fnorm > -1 ) call output ( &
+                & 'No a priori so setting | F | to zero.', advance='yes' )
             call clearMatrix ( normalEquations%m ) ! start with zero
             call clearVector ( v(aTb) ) ! Clear the RHS vector
           end if
@@ -1884,7 +1808,7 @@ NEWT: do ! Newton iteration
               call clearMatrix ( tikhonov )           ! free the space
               ! aj%fnorm is still the square of the norm of f
               aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-              if ( d_fnorm ) then
+              if ( d_fnorm > -1 ) then
                 if ( t == 1 ) then
                   call output ( 'Vertical Regularization contribution to | F | = ' )
                 else
@@ -1957,15 +1881,9 @@ NEWT: do ! Newton iteration
             else
               ! Otherwise, we call the forward model as usual
               do k = 1, size(configIndices)
-                if ( associated(fwmState) ) then
-                  call forwardModel ( configDatabase(configIndices(k)), &
-                    & v(x), fwdModelExtra, v(f_rowScaled), fmStat, Jacobian, &
-                    & Hessian, vectorDatabase, fwmState, fwmJacobian )
-                else
-                  call forwardModel ( configDatabase(configIndices(k)), &
-                    & v(x), fwdModelExtra, v(f_rowScaled), fmStat, Jacobian, &
-                    & Hessian, vectorDatabase )
-                end if
+                call forwardModel ( configDatabase(configIndices(k)), &
+                  & v(x), fwdModelExtra, v(f_rowScaled), fmStat, Jacobian, &
+                  & Hessian, vectorDatabase )
               end do ! k
               ! Forward model calls add_to_retrieval_timing
             end if
@@ -2037,7 +1955,7 @@ NEWT: do ! Newton iteration
 
           ! aj%fnorm is still the square of the function norm
           aj%fnorm = aj%fnorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) )
-            if ( d_fnorm ) &
+            if ( d_fnorm > -1 ) &
               & call output ( v(f_rowScaled) .mdot. v(f_rowScaled), &
                 & before='Measurement contribution to | F | = ', advance='yes' )
 
@@ -2109,7 +2027,7 @@ NEWT: do ! Newton iteration
               call clearMatrix ( tikhonov )           ! free the space
               ! aj%fnorm is still the square of the norm of f
               aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-              if ( d_fnorm ) then
+              if ( d_fnorm > -1 ) then
                 if ( t == 1 ) then
                   call output ( 'Vertical Regularization contribution to | F | = ' )
                 else
@@ -2294,15 +2212,18 @@ NEWT: do ! Newton iteration
           ! used. This can be gotten without saving $\bf J$ as $\sqrt{{\bf f}^T
           ! {\bf f} - {\bf v}^T {\bf v}}$ where ${\bf v} = {\bf U}^{-T}
           ! {\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$. The variable
-          ! {\tt v(candidateDX)} is a temp here = $\bf v$.  See {\bf wvs-011}
-          ! for derivation.
-          aj%fnmin = aj%fnorm - (v(candidateDX) .dot. v(candidateDX))
+          ! {\tt v(candidateDX)} is a temp here = $\bf v$ in {\tt wvs-011}
+          ! or $\bf y$ in {\tt wvs-014}.
+          call copyVectorMask ( v(candidateDX), v(x) )
+          aj%fnmin = aj%fnorm - (v(candidateDX) .mdot. v(candidateDX))
           if ( aj%fnmin < 0.0 ) then
             call output ( aj%fnmin, before='How can aj%fnmin be negative?  aj%fnmin = ', &
               & advance='yes' )
             call output ( aj%fnorm, before='aj%fnorm**2 = ', advance='yes' )
-            call output ( v(candidateDX) .dot. v(candidateDX), &
+            call output ( v(candidateDX) .mdot. v(candidateDX), &
               & before='norm(candidateDX)**2 = ', advance='yes' )
+            if ( d_fnmin > 1 ) &
+              & call dump ( v(candidateDX), name='v(candidateDX)', details=d_fnmin )
             if ( aj%fnmin < -10.0 * aj%fnorm * sqrt(epsilon(aj%fnorm)) ) &
               & call MLSMessage ( MLSMSG_Warning, ModuleName, &
                 & "Norm of residual not in Jacobian's column space is imaginary!" )
@@ -2313,7 +2234,8 @@ NEWT: do ! Newton iteration
           aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
           aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
-          aj%gradn = sqrt(v(gradient) .dot. v(gradient)) ! L2Norm(gradient)
+          call copyVectorMask ( v(gradient), v(x) )
+          aj%gradn = sqrt(v(gradient) .mdot. v(gradient)) ! L2Norm(gradient)
             if ( d_sca ) then
               call dump ( (/ aj%fnorm, aj%fnmin, aj%diag, aj%ajn, aj%gradn /), &
                 & '     | F |      aj%fnmin       aj%diag      L1| FAC |        | G |', &
@@ -2334,7 +2256,8 @@ NEWT: do ! Newton iteration
 !             exit NEWT
             cycle NEWT
           end if
-          aj%qnsq = q .dot. q
+          call copyVectorMask ( q, v(x) )
+          aj%qnsq = q .mdot. q
             if ( d_sca ) &
               & call output ( aj%qnsq, before='QN^2 = ' , advance='yes')
         case ( nf_solve ) ! ..............................  SOLVE  .....
@@ -2423,7 +2346,8 @@ NEWT: do ! Newton iteration
           ! The following calculation of fnmin was commented out, but on
           ! 11 September 2002 FTK told me it's the right thing to do
           ! after all.
-          aj%fnmin = aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX))
+          call copyVectorMask ( v(candidateDX), v(x) )
+          aj%fnmin = aj%fnorm**2 - (v(candidateDX) .mdot. v(candidateDX))
 
           if ( ieee_is_nan ( aj%fnmin ) ) then
             if ( d_strb ) call dump ( v(x), name='Current state', details=9 )
@@ -2437,8 +2361,10 @@ NEWT: do ! Newton iteration
             call output ( aj%fnmin, before='How can aj%fnmin be negative?  aj%fnmin = ', &
               & advance='yes' )
             call output ( aj%fnorm**2, before='aj%fnorm**2 = ', advance='yes' )
-            call output ( v(candidateDX) .dot. v(candidateDX), &
+            call output ( v(candidateDX) .mdot. v(candidateDX), &
               & before='norm(candidateDX)**2 = ', advance='yes' )
+            if ( d_fnmin > 1 ) &
+              & call dump ( v(candidateDX), name='v(candidateDX)', details=d_fnmin )
             if ( aj%fnmin < -10.0 * aj%fnorm * sqrt(epsilon(aj%fnorm)) ) &
               & call MLSMessage ( MLSMSG_Warning, ModuleName, &
                 & "Norm of residual not in Jacobian's column space is imaginary!" )
@@ -2473,9 +2399,14 @@ NEWT: do ! Newton iteration
           ! dxUnScaled = mu * dxUnScaled -- may shorten vector in problem space
           call scaleVector ( v(dxUnScaled), mu )
           call scaleVector ( v(candidateDX), mu )
-          aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
-          aj%gdx = v(gradient) .dot. v(candidateDX)
-          if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
+          call copyVectorMask ( v(candidateDX), v(x) )
+          aj%dxn = sqrt(v(candidateDX) .mdot. v(candidateDX)) ! L2Norm(dx)
+          call copyVectorMask ( v(gradient), v(x) )
+          aj%gdx = v(gradient) .mdot. v(candidateDX)
+          if ( .not. aj%starting ) then
+            call copyVectorMask ( v(dx), v(x) )
+            aj%dxdxl = v(dx) .mdot. v(candidateDX)
+          end if
             if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX' )
             if ( d_sca ) then
               cosine = -2.0_r8
@@ -2567,9 +2498,13 @@ NEWT: do ! Newton iteration
           if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
             & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
             & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
+          call copyVectorMask ( v(bestX), v(x) ) ! Don't lose x's mask
           call copyVector ( v(x), v(bestX) ) ! x = bestX
-          if ( .not. aj%starting ) aj%dxdxl = &
-            & aj%gfac * ( v(dx) .dot. v(bestGradient) )
+          if ( .not. aj%starting ) then
+            call copyVectorMask ( v(dx), v(x) )
+            call copyVectorMask ( v(bestGradient), v(x) )
+            aj%dxdxl = aj%gfac * ( v(dx) .mdot. v(bestGradient) )
+          end if
           call copyVector ( v(dxUnscaled), v(bestGradient) ) ! dxUnscaled := bestGradient
           if ( columnScaling /= l_none ) & ! dxUnscaled = bestGradient / scale
             ! The saved gradient is in scaled coordinates.
@@ -2596,8 +2531,12 @@ NEWT: do ! Newton iteration
         ! IF ( AJ%DXDX /= 0.0 ) &
         !   Set AJ%DXDXL = dot_product( DX, "Candidate DX" )
           call subtractFromVector ( v(dx), v(candidateDX) ) ! dx = dx - candidateDX
-          aj%dxdx = v(dx) .dot. v(dx)
-          if ( aj%dxdx > 0.0 ) aj%dxdxl = v(dx) .dot. v(candidateDX)
+          call copyVectorMask ( v(dx), v(x) )
+          aj%dxdx = v(dx) .mdot. v(dx)
+          if ( aj%dxdx > 0.0 ) then
+            call copyVectorMask ( v(candidateDX), v(x) )
+            aj%dxdxl = v(dx) .mdot. v(candidateDX)
+          end if
             if ( d_dvec ) call dump ( v(dx), name='dx after Aitken' )
             if ( d_sca ) then
               call output ( ' aj%dxdx = ' )
@@ -2613,7 +2552,11 @@ NEWT: do ! Newton iteration
           if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
             & numGrad=numGrad, numJ=numJ, numNewt=numNewt, nwt_flag=nwt_flag, &
             & jacobian_rows=jacobian_rows, jacobian_cols=jacobian_cols )
-          if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
+          if ( .not. aj%starting ) then
+            call copyVectorMask ( v(dx), v(x) )
+            call copyVectorMask ( v(candidateDX), v(x) )
+            aj%dxdxl = v(dx) .mdot. v(candidateDX)
+          end if
           call copyVector ( v(dx), v(candidateDX) ) ! dx = candidateDX
           ! v(dxUnscaled) was computed during nf_solve
         case ( nf_dx_aitken ) ! ......................  DX_AITKEN  .....
@@ -2927,6 +2870,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.322  2012/03/07 01:58:40  vsnyder
+! Respect mask in some dot products where it should have done all along
+!
 ! Revision 2.321  2012/02/10 23:46:24  vsnyder
 ! Add dump for kTk
 !
