@@ -1360,6 +1360,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
+             begin, f+f_transformMIFextinction, t+t_boolean, n+n_field_type, &
              begin, f+f_TScatMIF, t+t_numeric, n+n_field_type, &
              begin, f+f_TScatMoleculeDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_TScatMolecules, t+t_molecule, n+n_field_type, &
@@ -1499,8 +1500,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fuzz, t+t_numeric, n+n_field_type, & ! Secret
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
-             begin, f+f_fwmJacobian, s+s_matrix, n+n_field_spec, &
-             begin, f+f_fwmState, s+s_vector, n+n_field_spec, &
              begin, f+f_highBound, s+s_vector, n+n_field_spec, &
              begin, f+f_hRegOrders, t+t_numeric, n+n_field_type, &
              begin, f+f_hRegQuants, s+s_quantity, n+n_field_spec, &
@@ -1729,6 +1728,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.536  2012/03/07 02:01:07  vsnyder
+! Remove fwmState and fwmJacobian, add transformMIFextinction
+!
 ! Revision 2.535  2012/02/24 21:13:54  pwagner
 ! Add /interpolate to DirectRead, /single to DirectWrite
 !
