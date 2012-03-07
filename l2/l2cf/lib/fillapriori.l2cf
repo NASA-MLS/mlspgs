@@ -418,7 +418,7 @@ Fill, quantity=apriori.refGPH,$
    Fill, quantity=apriori.RHiVmrsngl, method=manipulate,a=apriori.RHiVmrsngl,b=highBound.RHiVmrsngl,$
         manipulation='a<b'
 
-   Fill, quantity=lowBound.RHiVmr,  method=profile, profileValues=[316mb:2.0,215mb: 0.0001]
+   Fill, quantity=lowBound.RHiVmr, method=explicit, explicitValues=0.00001, /spread
    Fill, quantity=highBound.RHiVmr, method=explicit, explicitValues=2000, /spread
 
 ;; ensure that apriori between lowbound and highbound
@@ -753,6 +753,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.146  2012/02/24 18:36:20  wgread
+;wgr--removed retrieverstate etc.
+;
 ;Revision 1.145  2012/02/22 23:54:51  wgread
 ;wgr--added low and high bounds for mif extincitons
 ;
