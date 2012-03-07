@@ -164,8 +164,6 @@ fuzz
 fwdModelExtra
 fwdModelIn
 fwdModelOut
-fwmJacobian
-fwmState
 
 geocAltitudeQuantity
 geodAngle
@@ -450,6 +448,7 @@ toleranceF Ftolerance
 toleranceR Rtolerance
 totalPowerVector
 totalPowerQuantity
+transformMIFextinction
 truthExtra
 truthForwardModel
 truthIn
@@ -490,6 +489,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.212  2012/03/07 02:01:08  vsnyder
+# Remove fwmState and fwmJacobian, add transformMIFextinction
+#
 # Revision 2.211  2011/12/21 01:37:01  vsnyder
 # Add fwmJacobian and fwmState
 #
