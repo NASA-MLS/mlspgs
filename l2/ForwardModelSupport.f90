@@ -402,7 +402,7 @@ contains ! =====     Public Procedures     =============================
       & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, &
       & F_REFRACT, F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, &
-      & F_TEMP_DER, F_TOLERANCE, F_TSCATMIF, F_TYPE, &
+      & F_TEMP_DER, F_TOLERANCE, F_TransformMIFextinction, F_TSCATMIF, F_TYPE, &
       & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, F_YSTAR
     use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_FREQUENCY, PHYQ_PROFILES, PHYQ_TEMPERATURE
@@ -516,6 +516,7 @@ contains ! =====     Public Procedures     =============================
     info%spect_der = .false.
     info%switchingMirror= .false.
     info%temp_der = .false.
+    info%transformMIFextinction = .false.
     info%TScatMIF = 1
     info%useTScat = .false.
     info%where = root
@@ -701,6 +702,8 @@ contains ! =====     Public Procedures     =============================
         info%tolerance = value(1)
         if ( expr_units(1) /= phyq_temperature ) &
           & call AnnounceError ( toleranceNotK, root )
+      case ( f_transformMIFextinction )
+        info%transformMIFextinction = get_Boolean(son)
       case ( f_TScatMIF )
         call expr ( subtree(2,son), expr_units, value, type )
         info%TScatMIF = nint(value(1))
@@ -1458,6 +1461,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.160  2012/03/07 02:13:18  vsnyder
+! Add transformMIFextinction switch
+!
 ! Revision 2.159  2011/08/20 02:03:34  vsnyder
 ! Remove unused use name
 !
