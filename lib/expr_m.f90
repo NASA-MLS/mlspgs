@@ -32,7 +32,7 @@ contains ! ====     Public Procedures     ==============================
                                  EXPRN, FUNCTION, GET_DECL, LOG_VALUE, &
                                  NAMED_VALUE, NUM_VALUE, RANGE, STR_RANGE, &
                                  STR_VALUE, UNDECLARED, UNITS_NAME
-    use Functions, only: F_Exp, F_Log, F_Sqrt
+    use Functions, only: F_Exp, F_Ln, F_Log, F_Log10, F_Sqrt
     use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
     use STRING_TABLE, only: FLOAT_VALUE
     use TOGGLES, only: CON, TOGGLE
@@ -120,11 +120,17 @@ contains ! ====     Public Procedures     ==============================
               else
                 value(1) = exp(value(1))
               end if
-            case ( f_log )
+            case ( f_ln, f_log )
               if ( value(1) <= 0.0 ) then
                 call announceError ( subtree(2,root), outOfRange )
               else
                 value(1) = log(value(1))
+              end if
+            case ( f_log10 )
+              if ( value(1) <= 0.0 ) then
+                call announceError ( subtree(2,root), outOfRange )
+              else
+                value(1) = log10(value(1))
               end if
             case ( f_sqrt )
               if ( value(1) < 0.0 ) then
@@ -377,6 +383,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.17  2012/03/12 18:36:11  vsnyder
+! Add ln as synonym for log, add log10
+!
 ! Revision 2.16  2011/04/19 01:59:43  vsnyder
 ! Support == and /= relational operators too
 !
