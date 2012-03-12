@@ -4262,7 +4262,7 @@ contains ! =====     Public Procedures     =============================
                 end where
             case ('exp')
                 newone%values = exp( part%values )
-            case ('log')
+            case ('log', 'ln')
                 where ( part%values > 0._rv )
                   newone%values = log(part%values)
                 elsewhere
@@ -5730,6 +5730,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(out) :: ERRORCODE   ! Error code (one of constants defined above)
 
       ! Local variables
+      logical :: check
       logical :: DEEBUG
       integer :: instance,surf            ! Loop counter
       integer :: instIndex,surfIndex      ! Indices
@@ -5740,6 +5741,8 @@ contains ! =====     Public Procedures     =============================
       DEEBUG = .false.
       ! DEEBUG = ( grid%quantityName == 'TEMPERATURE' .or. &
       !   & grid%description == 'Temperature' )
+      check = (switchDetail(switches, 'cgrid') > -1)
+      if ( check ) call outputNamedValue( 'check', check )
       noGrid = .not. associated(grid%field)
       if ( .not. noGrid ) noGrid = grid%empty
       if ( noGrid ) then
@@ -5787,13 +5790,27 @@ contains ! =====     Public Procedures     =============================
             & lon=quantity%template%lon(surfIndex,instance), &
             & lst=quantity%template%solarTime(surfIndex,instance), &
             & sza=quantity%template%solarZenith(surfIndex,instance), &
-            & date=quantity%template%time(surfIndex,instance))
+            & date=quantity%template%time(surfIndex,instance), &
+            & debug=.false. )
+            ! & debug=(instance==1 .and. surf==1 .and. grid%quantityName == 'CO') )
           if ( newValue >= nearest ( grid%missingValue, -1.0 ) .and. &
             &  newValue <= nearest ( grid%missingValue,  1.0 ) .and. &
             & .not. allowMissing ) errorCode = MissingDataInGrid
           quantity%values(surf,instance) = newValue
         end do                            ! End surface loop
       end do                              ! End instance loop
+      
+      if ( check ) then
+          call l3ascii_interp_field(grid, newValue, &
+            & pressure=100.0_rv, &
+            & lat=0.0_rv, &
+            & lon=0.0_rv, &
+            & lst=0.0_rv, &
+            & sza=0.0_rv, &
+            & date=quantity%template%time(1,1), &
+            & debug=.false. )
+          call outputNamedValue( 'interpolated value', newValue )
+      endif
     end subroutine FromGrid
 
     !=============================== FromL2GP ==========
@@ -7199,6 +7216,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.55  2012/03/12 17:11:46  pwagner
+! 'ln' same as 'log' in manipulate fills; new 'cgrid' switch
+!
 ! Revision 2.54  2012/02/24 21:22:02  pwagner
 ! DirectRead may /interpolate vertically
 !
