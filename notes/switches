@@ -27,18 +27,19 @@ Switches (set by -S option in mlsl2's command line):
   diag =>   Dump diagonal of factored normal equations
   direct => Show automatic assignments to split directwrite files
   dozm =>   Do minimum zeta only if requested
+  drmc =>   Dump Retriever Matrices Clean
   dvec =>   Dump 'DX' vector during Newton iteration
   dwreq[n] => Dump directwrite requests processed by master
                *Warning--may use more memory
   dwtime => Show how long each directwrite takes
+  dxfq =>   Dump extinction transformation in ForwardModelWrappers
   erh =>    Stop with error if dump,/stop
   fac =>    L_infty norms of blocks of factors of normal equations during Newton iterations
   FAC =>    Factors of normal equations during Newton iterations
   fgrid =>  Dump frequency grids after creating them
   filt =>   Dump filter shapes after reading them
-  fmnan =>  Check forward model output for NaN
-  fmNaN =>  Check forward model output for NaN and print if so
-  FMNAN =>  Check forward model output for NaN and print and stop if so
+  fmnan =>  Check forward model output for NaN and print if level > 0,
+              print values if level > 1, stop if level > 2
   fmt2 =>   mean & standard deviation for timing FullForwardModel at each chunk
   fmt1 =>   mean & standard deviation for timing FullForwardModel at last chunk
   fnorm =>  Dump the individual contributions to fnorm
@@ -198,6 +199,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.72  2010/08/06 23:14:28  pwagner
+ Added 'hess' switch
+
  Revision 1.71  2010/05/05 18:08:46  pwagner
  Brought up-to-date with TScat and other stuff
 
