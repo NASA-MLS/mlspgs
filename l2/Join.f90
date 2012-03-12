@@ -1171,32 +1171,21 @@ contains ! =====     Public Procedures     =============================
             call outputNamedValue ( 'source number of DW', source )
           endif
           createthisswath = (.not. createThisSource(source))
-          ! We have a bug somewhere in hdfeos
-          ! When we create the first swath in an hdfeos file
-          ! mls_swath_in_file can't find it
+          ! We had a bug somewhere in hdfeos
+          ! When we created the first swath in an hdfeos file
+          ! mls_swath_in_file didn't find it
+          ! What we'll try is to create the swath, then close the file
+          ! and reset its access to read/write--could be that it was confused 
+          ! by the DFACC_CREATE
+          call DirectWrite ( directFile, &
+            & qty, precQty, qualityQty, statusQty, convergQty, &
+            & hdfName, chunkNo, HGrids, &
+            & createSwath=createthisswath, &
+            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
           if ( createthisswath ) then
-            do while ( createthisswath )
-              call DirectWrite ( directFile, &
-                & qty, precQty, qualityQty, statusQty, convergQty, &
-                & hdfName, chunkNo, HGrids, &
-                & createSwath=.true., &
-                & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
-              createthisswath = .not. &
-                & mls_swath_in_file( directFile%name, hdfName, hdfVersion, returnStatus )
-              if(DEEBUG)print *, 'file name ', trim(directFile%name)
-              if(DEEBUG)print *, 'hdfName ', trim(hdfName)
-              if(DEEBUG)print *, 'still need to createthisswath ', createthisswath
-              if ( createthisswath ) &
-                & call MLSMessage ( MLSMSG_Warning, ModuleName, &
-                  & 'Needed to recreate swath ' // trim(hdfName) // ' in ' // &
-                  & trim(directFile%name) )
-            enddo
-          else
-            call DirectWrite ( directFile, &
-              & qty, precQty, qualityQty, statusQty, convergQty, &
-              & hdfName, chunkNo, HGrids, &
-              & createSwath=.false., &
-              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+            if ( directFile%stillOpen ) &
+              & call mls_closeFile(directFile, errorType)
+            directFile%access = DFACC_RDWR
           endif
           NumOutput= NumOutput + 1
           if ( outputType == l_l2dgg ) then
@@ -2209,6 +2198,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.146  2012/03/12 17:22:20  pwagner
+! Believe we can drop odious workaround for hdfeos 'bug'--may have been our mistake
+!
 ! Revision 2.145  2012/02/24 21:19:44  pwagner
 ! May DirectWrite a /single instance only
 !
