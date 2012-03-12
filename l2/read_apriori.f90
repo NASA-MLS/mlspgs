@@ -1029,16 +1029,24 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------  readAPrioriAttributes_MF  -----
   subroutine readAPrioriAttributes_MF ( MLSFile )
     type(MLSFile_T) :: MLSFile
+    logical             :: verbose
     ! Executable
+    verbose = ( switchDetail(switches, 'apr') > -1 )
+    if ( verbose ) call dump( MLSFile )
     if ( MLSFile%hdfVersion /= HDFVERSION_5 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Wrong hdfVersion--can read apriori attributes for hdf5 only', &
         & MLSFile=MLSFile )
       return ! Can only do this for hdf5 files
     elseif ( MLSFile%StillOpen ) then
+      if ( verbose ) call output( 'About to read file attributes for a priori', advance='yes' )
       call readAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
     else
       call open_MLSFile( MLSFile )
+      if ( verbose ) then
+        call dump( MLSFile )
+        call output( 'About to read file attributes for a priori', advance='yes' )
+      endif
       call readAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
       call close_MLSFile( MLSFile )
     endif
@@ -1048,54 +1056,64 @@ contains ! =====     Public Procedures     =============================
   subroutine readAPrioriAttributes_ID ( fileID, hdfVersion )
     ! read info about what apriori files were used
     ! Storing them as hdfeos5 attributes
-    use MLSHDFEOS, only: HE5_EHRDGLATT
+    use MLSHDFEOS, only: HE5_EHRDGLATT, MLS_ISGLATT
     ! Args
     integer, intent(in) :: fileID
     integer, intent(in) :: hdfVersion  ! Must be 5 to work properly
     ! Internal variables
     integer             :: status
+    logical             :: verbose
+    character(len=*), parameter  :: whereami = 'readAPrioriAttributes_ID'
     ! Executable
+    verbose = ( switchDetail(switches, 'apr') > -1 )
+    if ( verbose ) call output( 'Reading apriori attributes', advance='yes' )
     if ( hdfVersion /= HDFVERSION_5 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSMessage ( MLSMSG_Warning, whereami, &
         & 'Wrong hdfVersion--can read apriori attributes for hdf5 only' )
       return ! Can only do this for hdf5 files
+    endif
+    if ( verbose ) then
+      call outputNamedValue( 'FileID', FileID )
+      call outputNamedValue( 'l2gp there?', mls_isglatt ( fileID, 'A Priori l2gp' ) )
+      call outputNamedValue( 'geos5desc there?', mls_isglatt ( fileID, 'geos5 type' ) )
     endif
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori l2gp', APrioriFiles%l2gp)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%l2gp' // trim(APrioriFiles%l2gp) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori l2aux', APrioriFiles%l2aux)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%l2aux' // trim(APrioriFiles%l2aux) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori ncep', APrioriFiles%ncep)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%ncep' // trim(APrioriFiles%ncep) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori gmao', APrioriFiles%dao)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%dao' // trim(APrioriFiles%dao) )
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori geos5', APrioriFiles%geos5)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%geos5' // trim(APrioriFiles%geos5) )
     status = HE5_EHRDGLATT(fileID, &
      &  'geos5 type', APrioriFiles%geos5description)
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%geos5description' // &
       &  trim(APrioriFiles%geos5description) )
   end subroutine readAPrioriAttributes_ID
 
   ! ------------------------------------------  writeAPrioriAttributes_MF  -----
-  subroutine writeAPrioriAttributes_MF ( MLSFile )
+  subroutine writeAPrioriAttributes_MF ( MLSFile, DontReplace )
     type(MLSFile_T) :: MLSFile
+    logical, optional, intent(in) :: DontReplace
     ! Executable
     if ( MLSFile%hdfVersion /= HDFVERSION_5 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -1113,57 +1131,71 @@ contains ! =====     Public Procedures     =============================
   end subroutine writeAPrioriAttributes_MF
 
   ! ------------------------------------------  writeAPrioriAttributes_ID  -----
-  subroutine writeAPrioriAttributes_ID ( fileID, hdfVersion )
+  subroutine writeAPrioriAttributes_ID ( fileID, hdfVersion , DontReplace )
     ! Write info about what apriori files were used
     ! Storing them as hdfeos5 attributes
-    use HDFEOS5, only: MLS_charType
-    use MLSHDFEOS, only: mls_EHwrglatt
+    use HDFEOS5, only: MLS_CHARTYPE
+    use MLSHDFEOS, only: MLS_EHWRGLATT, MLS_ISGLATT
     ! Args
     integer, intent(in) :: fileID
     integer, intent(in) :: hdfVersion  ! Must be 5 to work properly
+    logical, optional, intent(in) :: DontReplace
+    character(len=*), parameter  :: whereami = 'readAPrioriAttributes_ID'
     ! Internal variables
     integer             :: status
+    logical             :: verbose
     ! Executable
+    verbose = ( switchDetail(switches, 'apr') > -1 )
+    if ( verbose ) call output( 'Writing apriori attributes', advance='yes' )
     if ( hdfVersion /= HDFVERSION_5 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      call MLSMessage ( MLSMSG_Warning, whereami, &
         & 'Wrong hdfVersion--can write apriori attributes for hdf5 only' )
       return ! Can only do this for hdf5 files
+    endif
+    if ( verbose ) call outputNamedValue( 'attributes already written', &
+      & mls_isglatt ( fileID, 'A Priori l2gp' ) )
+    ! Have the attributes been written before? Must we avoid replacing them?
+    if ( present( dontReplace ) ) then
+      if ( verbose ) call outputNamedValue( 'dontReplace?', dontReplace )
+      if ( dontReplace ) then
+        if ( mls_isglatt ( fileID, 'A Priori l2gp' ) ) return
+      endif
     endif
     status = mls_EHwrglatt(fileID, &
      & 'A Priori l2gp', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%l2gp))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%l2gp' // trim(APrioriFiles%l2gp) )
     status = mls_EHwrglatt(fileID, &
      & 'A Priori l2aux', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%l2aux))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%l2aux' // trim(APrioriFiles%l2aux) )
     status = mls_EHwrglatt(fileID, &
      & 'A Priori ncep', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%ncep))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%ncep' // trim(APrioriFiles%ncep) )
     status = mls_EHwrglatt(fileID, &
      & 'A Priori gmao', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%dao))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%dao' // trim(APrioriFiles%dao) )
     status = mls_EHwrglatt(fileID, &
      & 'A Priori geos5', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%geos5))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%geos5' // trim(APrioriFiles%geos5) )
     status = mls_EHwrglatt(fileID, &
      & 'geos5 type', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%geos5description))
     if ( status /= 0 ) &
-      &  call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%geos5description' // &
       & trim(APrioriFiles%geos5description) )
   end subroutine writeAPrioriAttributes_ID
@@ -1283,6 +1315,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.93  2012/03/12 17:31:59  pwagner
+! New api for writeAPrioriAttributes; can avoid replacing if already written
+!
 ! Revision 2.92  2012/02/24 21:16:06  pwagner
 ! Read/Write geos5description attributes, too
 !
