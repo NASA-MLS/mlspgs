@@ -207,6 +207,13 @@ contains ! ======================= Public Procedures =========================
     logical :: verbose
     ! Executable
     verbose = ( switchDetail(switches, 'direct') > -1 )
+    if ( present(createSwath) ) then
+      if ( createSwath ) then
+        call outputNamedValue( '  creating swath', trim(sdname) )
+      elseif ( verbose ) then
+        call outputNamedValue( '  adding to swath', trim(sdname) )
+      endif
+    endif
     ! Size the problem
     overlaps = 'none'
     if ( present(lowerOverlap) ) then
@@ -265,17 +272,13 @@ contains ! ======================= Public Procedures =========================
       call output(lastInstance, advance='no')
       call output('  TotalProfs: ', advance='no')
       call output(TotalProfs, advance='yes')
-      if ( present(createSwath) ) then
-        call output('  createSwath: ', advance='no')
-        call output(createSwath, advance='yes')
-      endif
       call dump(l2gp, Details=-1)
     endif
     if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, createSwath=createSwath )
-    if ( l2gpFile%access == DFACC_CREATE ) call writeAPrioriAttributes(l2gpFile)
+    call writeAPrioriAttributes( l2gpFile, dontreplace=.true. )
     if ( switchDetail(switches, 'l2gp') > -1 ) call dump(l2gp)
     ! Clear up our temporary l2gp
     call DestroyL2GPContents(l2gp)
@@ -1223,6 +1226,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.52  2012/03/12 17:09:44  pwagner
+! Use new writeAPrioriAttributes api
+!
 ! Revision 2.51  2012/02/24 21:19:15  pwagner
 ! May DirectWrite a /single instance only
 !
