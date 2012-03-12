@@ -28,8 +28,10 @@ module Functions
   integer, parameter :: F_Exp             = F_ClearLower + 1
   integer, parameter :: F_GetDiagonal     = F_Exp + 1
   integer, parameter :: F_Invert          = F_GetDiagonal + 1
-  integer, parameter :: F_Log             = F_Invert + 1
-  integer, parameter :: F_Mod             = F_Log + 1
+  integer, parameter :: F_Ln              = F_Invert + 1
+  integer, parameter :: F_Log             = F_ln + 1
+  integer, parameter :: F_Log10           = F_Log + 1
+  integer, parameter :: F_Mod             = F_Log10 + 1
   integer, parameter :: F_SQRT            = F_Mod + 1
   integer, parameter :: F_Transpose       = F_SQRT + 1
   integer, parameter :: F_XTX             = F_Transpose + 1
@@ -71,7 +73,9 @@ contains
     func_indices(f_exp) =             add_ident ( 'exp' )
     func_indices(f_getDiagonal) =     add_ident ( 'getDiagonal' )
     func_indices(f_invert) =          add_ident ( 'invert' )
+    func_indices(f_ln) =              add_ident ( 'ln' )
     func_indices(f_log) =             add_ident ( 'log' )
+    func_indices(f_log10) =           add_ident ( 'log10' )
     func_indices(f_mod) =             add_ident ( 'mod' )
     func_indices(f_sqrt) =            add_ident ( 'sqrt' )
     func_indices(f_transpose) =       add_ident ( 'transpose' )
@@ -91,7 +95,11 @@ contains
              begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
       begin, g+f_getDiagonal, n+n_func_def, &
       begin, g+f_invert, n+n_func_def, &
+      begin, g+f_ln, &
+             begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
       begin, g+f_log, &
+             begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
+      begin, g+f_log10, &
              begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
       begin, g+f_mod, &
              begin, t+t_numeric, t+t_numeric, n+n_arg_def, n+n_func_def, &
@@ -123,6 +131,9 @@ contains
 end module Functions
 
 ! $Log$
+! Revision 2.11  2012/03/12 18:35:34  vsnyder
+! Add ln and log10
+!
 ! Revision 2.10  2011/04/26 20:32:53  vsnyder
 ! Repair definition of 'mod'
 !
