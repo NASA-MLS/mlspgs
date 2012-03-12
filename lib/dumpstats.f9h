@@ -97,7 +97,7 @@
     endif
 
     ! Avoid dumping the entire array if all its elements are equal
-    if ( DONTDUMPIFALLEQUAL .and. size(array) > 5 ) then
+    if ( .not. myClean .and. DONTDUMPIFALLEQUAL .and. size(array) > 5 ) then
       if ( all(isInfinite(array)) ) then
         if ( myLaconic .or. nameHasBeenPrinted ) then
           call blanks(3)
@@ -146,6 +146,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.28  2012/03/12 20:03:49  vsnyder
+! Don't summarize 'all ... values are' if clean is set
+!
 ! Revision 2.27  2012/01/09 22:29:16  pwagner
 ! 'R' and 'r' act the same except for diffs
 !
