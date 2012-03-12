@@ -1512,6 +1512,7 @@ contains ! =====     Public Procedures     =============================
         endif
         if ( CHECKPATHS ) cycle
         madeFile = .true.
+        inputFile%access = DFACC_RDONLY
         call cpL2GPData( l2metaData, inputFile, &
           & outputFile, create2=create2, &
           & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes )
@@ -1531,6 +1532,12 @@ contains ! =====     Public Procedures     =============================
       if ( madeFile ) then
         ! (2) File level attributes
         call he5_writeMLSFileAttr( outputFile )
+        ! Is the next line necessary?
+        if ( inputFile%stillOpen ) then
+          call output( 'Closing input file before reading apriori attributes', &
+            & advance='yes' )
+          call close_MLSFile ( inputFile )
+        endif
         call readAPrioriAttributes( inputFile )
         call writeAPrioriAttributes( outputFile )
       end if
@@ -1713,6 +1720,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.159  2012/03/12 17:28:22  pwagner
+! Fixed bug preventing us from copying apriori attributes successfully
+!
 ! Revision 2.158  2012/02/24 21:18:01  pwagner
 ! Correctly copy a priori attributes when unplitting files
 !
