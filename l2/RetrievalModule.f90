@@ -1350,6 +1350,7 @@ contains
       logical :: D_Col    ! 'col' Column scale vector
       logical :: D_Cov    ! 'cov' Solution covariance
       logical :: D_Diag   ! 'diag' Diagonal of normal equations factor
+      logical :: D_Drmc   ! 'drmc' Dump Retriever Matrices Clean
       logical :: D_Dvec   ! 'dvec' DX vector
       logical :: D_Fac_F  ! 'FAC' Full normal equations factor (if you dare)
       logical :: D_Fac_N  ! 'fac' L_Infty norms of blocks of normal equations factor
@@ -1431,6 +1432,7 @@ contains
       d_col = switchDetail(switches,'col') > -1
       d_cov = switchDetail(switches,'cov') > -1
       d_diag = switchDetail(switches,'diag') > -1
+      d_drmc = switchDetail(switches,'drmc') > -1
       d_dvec = switchDetail(switches,'dvec') > -1
       d_fac_f = switchDetail(switches,'FAC') > -1
       d_fac_n = switchDetail(switches,'fac') > -1
@@ -1726,7 +1728,7 @@ NEWT: do ! Newton iteration
             aj%fnorm = v(aprioriMinusX) .mdot. v(covarianceXapriori)
               if ( d_fnorm > -1 ) then             
                 call output ( aj%fnorm, &
-                  & before='A priori contribution to | F | = ', advance='yes' )
+                  & before='A priori contribution to | F |^2 = ', advance='yes' )
                 if ( d_fnorm > 1 ) then
                   call dump ( v(aprioriMinusX), details=d_fnorm )
                   call dump ( v(covarianceXapriori), details=d_fnorm )
@@ -1810,9 +1812,9 @@ NEWT: do ! Newton iteration
               aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
               if ( d_fnorm > -1 ) then
                 if ( t == 1 ) then
-                  call output ( 'Vertical Regularization contribution to | F | = ' )
+                  call output ( 'Vertical Regularization contribution to | F |^2 = ' )
                 else
-                  call output ( 'Horizontal Regularization contribution to | F | = ' )
+                  call output ( 'Horizontal Regularization contribution to | F |^2 = ' )
                 end if
                 call output ( v(reg_X_x) .dot. v(reg_X_x), advance='yes' )
               end if
@@ -1889,7 +1891,7 @@ NEWT: do ! Newton iteration
             end if
             call time_now ( t1 )
               if ( d_jac_f ) &
-                & call dump ( jacobian, name='Jacobian', details=9, clean=.true. )
+                & call dump ( jacobian, name='Jacobian', details=9, clean=d_drmc )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
                  ! Store what we've just got in v(f) ie fwdModelOut
@@ -1957,7 +1959,7 @@ NEWT: do ! Newton iteration
           aj%fnorm = aj%fnorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) )
             if ( d_fnorm > -1 ) &
               & call output ( v(f_rowScaled) .mdot. v(f_rowScaled), &
-                & before='Measurement contribution to | F | = ', advance='yes' )
+                & before='Measurement contribution to | F |^2 = ', advance='yes' )
 
           ! Add Tikhonov regularization if requested.  We do it here instead
           ! of before adding the Jacobian so that we can scale it up by the
@@ -2029,9 +2031,9 @@ NEWT: do ! Newton iteration
               aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
               if ( d_fnorm > -1 ) then
                 if ( t == 1 ) then
-                  call output ( 'Vertical Regularization contribution to | F | = ' )
+                  call output ( 'Vertical Regularization contribution to | F |^2 = ' )
                 else
-                  call output ( 'Horizontal Regularization contribution to | F | = ' )
+                  call output ( 'Horizontal Regularization contribution to | F |^2 = ' )
                 end if
                 call output ( v(reg_X_x) .dot. v(reg_X_x), advance='yes' )
               end if
@@ -2138,7 +2140,7 @@ NEWT: do ! Newton iteration
             cycle NEWT
           end if
             if ( d_neq_f ) &
-              & call dump ( normalEquations%m, 'Normal Equations', 2, clean=.true. )
+              & call dump ( normalEquations%m, 'Normal Equations', 2, clean=d_drmc )
             if ( d_diag ) then
               call getDiagonal ( factored%m, v(dxUnscaled) )
               call dump ( v(dxUnscaled), &
@@ -2148,7 +2150,7 @@ NEWT: do ! Newton iteration
               & 'L_infty norms of blocks of factor:', upper=.true. )
             if ( d_spa ) call dump_struct ( factored%m, &
               & 'Sparseness structure of blocks of factor:', upper=.true. )
-            if ( d_fac_f ) call dump ( factored%m, 'Factor', 2, clean=.true. )
+            if ( d_fac_f ) call dump ( factored%m, 'Factor', 2, clean=d_drmc )
 
           ! Compute number of rows of Jacobian actually used.  Don't count
           ! rows due to Levenberg-Marquardt stabilization.  Do count rows
@@ -2279,7 +2281,7 @@ NEWT: do ! Newton iteration
           ! around, in order to subtract Levenberg-Marquardt and apriori
           ! covariance, in order to compute a posteriori covariance
             if ( d_neq_f ) &
-              & call dump ( normalEquations%m, 'Normal Equations', 2, clean=.true. )
+              & call dump ( normalEquations%m, 'Normal Equations', 2, clean=d_drmc )
             if ( d_neq_n ) call dump_Linf ( normalEquations%m, &
                 & 'L1 norms of Normal Equations blocks after Marquardt:', &
                 & upper=.true. )
@@ -2310,7 +2312,7 @@ NEWT: do ! Newton iteration
             if ( d_spa ) call dump_struct ( factored%m, &
                 & 'Sparseness structure of blocks of factor:', upper=.true. )
             if ( d_fac_f ) call dump ( factored%m, &
-                & name='Factored, after Marquardt', details=2, clean=.true. )
+                & name='Factored, after Marquardt', details=2, clean=d_drmc )
 
           !{Solve ${\bf U}^T {\bf U} {\bf \Sigma}^{-1} {\bf \delta \hat x} =
           ! ({\bf\Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf J \Sigma}) {\bf
@@ -2870,6 +2872,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.323  2012/03/13 01:48:25  vsnyder
+! Add drmc flag to control clean matrix printing
+!
 ! Revision 2.322  2012/03/07 01:58:40  vsnyder
 ! Respect mask in some dot products where it should have done all along
 !
