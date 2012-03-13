@@ -2,36 +2,33 @@ program REMAKE_GH
 
   implicit NONE
 
-  real, parameter :: DTEMOD(13) = (/ 1945., 1950., 1955., 1960., 1965., &
-    &                                1970., 1975., 1980., 1985., 1990., &
-    &                                1995., 2000., 2005. /)
-
+  real :: DTEMOD(20)
   real :: ERAD
-
-  character*12, parameter :: FILMOD(13) = (/ 'dgrf45.dat  ', 'dgrf50.dat  ', &
-    &                        'dgrf55.dat  ', 'dgrf60.dat  ', 'dgrf65.dat  ', &
-    &                        'dgrf70.dat  ', 'dgrf75.dat  ', 'dgrf80.dat  ', &
-    &                        'dgrf85.dat  ', 'dgrf90.dat  ', 'dgrf95.dat  ', &
-    &                        'igrf00.dat  ', 'igrf00s.dat ' /)
-
+  character(12) :: FILMOD(20) = '************'
   real :: GH(144)
-
   integer :: I, IER, J, K
-  integer, parameter :: IU = 10
-  integer :: NGH, NGHMAX = 0, NMAX, NMAXMAX = 0
+  integer :: NFILE, NGH, NGHMAX = 0, NMAX, NMAXMAX = 0
   character(len=127) :: PREFIX
 
-  call getarg ( 1, prefix )
-  if ( prefix == '' ) then
-    print *, 'Enter prefix of file names: '
-    read ( *, '(a)' ) prefix
-  end if
+  namelist /in/ prefix, filmod
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: ModuleName= &
+    "$RCSfile$"
+  !---------------------------------------------------------------------------
+
+  read ( *, in )
+
+  ! Determine how many files were input
+  do nfile = 0, size(filmod)-1
+    if ( filmod(nfile+1)(1:1) == '*' ) exit
+  end do
 
   open ( 99, status='scratch', form='unformatted' )
 
-  do i = 1, size(filmod)
+  do i = 1, nfile
 
-    call getshc ( iu, trim(prefix) // filmod(i), nmax, gh, ier, erad, ngh )
+    call getshc ( trim(prefix) // '/' // trim(filmod(i)), nmax, dtemod(i), gh, ier, erad, ngh )
 
     write ( 99 ) nmax, ngh, erad, gh(:ngh)
 
@@ -50,9 +47,9 @@ program REMAKE_GH
     &                '    real ::    GH(', nghmax, ')', &
     &                '  end type GH_T'
   write ( *, '(a,i2,a)' ) &
-    &                '  type(gh_t), save :: GHS(', size(filmod), ')'
+    &                '  type(gh_t), save :: GHS(', nfile, ')'
 
-  do i = 1, size(filmod)
+  do i = 1, nfile
     read ( 99 ) nmax, ngh, erad, gh(:ngh)
     write ( *, '(a,i3,a)' ) '  data GHS(', i, ') / gh_t ( &'
     write ( *, '(a,f7.1,3a,2(i3,a),g14.7,a)' ) &
@@ -74,7 +71,7 @@ program REMAKE_GH
 contains
 
   ! -----------------------------------------------------  GETSHC  -----
-  subroutine GETSHC ( IU, FSPEC, NMAX, GH, IER, ERAD, NGH )
+  subroutine GETSHC ( FSPEC, NMAX, YEAR, GH, IER, ERAD, NGH )
 
 ! ===============================================================
 !
@@ -104,13 +101,15 @@ contains
 !
 ! ===============================================================
 
-    integer, intent(in) :: IU
     character(len=*), intent(in) :: FSPEC
     integer, intent(out) :: NMAX
+    real, intent(out) :: YEAR
     real, intent(out) :: GH(:)
     integer, intent(out) :: IER
     real, intent(out) :: ERAD
     integer, intent(out), optional :: NGH
+
+    integer, parameter :: IU = 10
 
     real :: G, H
     integer :: I, N, NN, M, MM
@@ -119,10 +118,12 @@ contains
 !       Open coefficient file. Read past first header record.
 !       Read degree and order of model and Earth's radius.
 ! ---------------------------------------------------------------
-    open ( iu, file=fspec, status='old', iostat=ier, err=999 )
 
-    read ( iu, *, iostat=ier, err=999 ) ! Skip the file name in the file
-    read ( iu, *, iostat=ier, err=999 ) nmax, erad
+    open ( iu, file=fspec, status='old', iostat=ier, err=666 )
+
+    read ( iu, *, iostat=ier, err=666 ) ! Skip the file name in the file
+    read ( iu, *, iostat=ier, err=666 ) nmax, erad, year
+
 ! ---------------------------------------------------------------
 !       Read the coefficient file, arranged as follows:
 !
@@ -146,7 +147,7 @@ contains
     i = 0                                                   
 o:  do nn = 1, nmax                                         
       do mm = 0, nn                                       
-        read (iu, *, iostat=ier, err=999, end=999) n, m, g, h
+        read (iu, *, iostat=ier, err=666, end=999) n, m, g, h
         if ( nn /= n .or. mm /= m ) then                
           ier = -2                                    
           exit o
@@ -163,6 +164,21 @@ o:  do nn = 1, nmax
 999 close (iu)
     if ( present(ngh) ) ngh = i
 
+    return
+
+666 print *, 'I/O Error, iostat =', ier
   end subroutine GETSHC
 
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
 end program REMAKE_GH
+
+! $Log$
