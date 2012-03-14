@@ -30,7 +30,7 @@ module MLSFiles               ! Utility file routines
   use MLSSTRINGS, only: CAPITALIZE, LOWERCASE
   use MLSSTRINGLISTS, only: EXTRACTSUBSTRING, &
     & REPLACESUBSTRING, SORTARRAY
-  use OUTPUT_M, only: BLANKS, OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
   use SDPTOOLKIT, only: &
     & PGS_PC_GETREFERENCE, PGS_S_SUCCESS, &
     & PGSD_IO_GEN_RSEQFRM, PGSD_IO_GEN_RSEQUNF, & 
@@ -1357,8 +1357,14 @@ contains
     ! Local
     integer :: myhdfVersion
     integer(kind=size_t) :: HSTRBUFSIZE
+    ! logical, parameter :: DEEBUG = .true.
+    logical, parameter :: IGNOREHSTRBUFSIZE = .true.
 
     ! Executable code
+    ! These next unnecessary assignments aid in running a debug
+    ! version compiled with NAG
+    strbufsize = 0
+    SWATHLIST = ' '
     if ( mls_exists(trim(FileName)) /= 0 ) then
       mls_inqswath = FILENOTFOUND
       strbufsize = FILENOTFOUND
@@ -1376,14 +1382,23 @@ contains
     endif
     if(myhdfVersion == HDFVERSION_5) then
       mls_inqswath = he5_swinqswath(trim(FileName), swathList, hstrBufSize)
+      if ( DEEBUG ) then
+        print *, 'hstrBufSize: ', hstrBufSize
+        print *, 'swathList: ', trim(swathList)
+      endif
       strbufsize = hstrbufsize
+      if ( IGNOREHSTRBUFSIZE ) strbufsize = len_trim(swathList)
     elseif(myhdfVersion == HDFVERSION_4) then
       mls_inqswath = swinqswath(FileName, swathList, strBufSize)
     else                          
       mls_inqswath = NOSUCHHDFVERSION  
     endif
-    if ( strBufSize > len(swathList) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( strBufSize > len(swathList) ) then
+    call outputNamedValue( 'strBufSize, len(swathList)', &
+      & (/ strBufSize, len(swathList) /) )
+    call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'HDF trod on my memory' )
+    endif
     swathList = swathList ( 1:strBufSize )
 
   end function mls_inqswath
@@ -1773,7 +1788,7 @@ contains
     neededPCF = .true.
 
     ! If the file has already been created by this run, we don't want to
-    ! clobber it or fail on open becuase it already exists
+    ! clobber it or fail on open because it already exists
     ! Therefore, if lastoperation != "", reset access to 'rdwr'
     if ( MLSFile%access == DFACC_CREATE .and. MLSFile%lastOperation /= "" ) &
       & MLSFile%access = DFACC_RDWR
@@ -2715,6 +2730,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.91  2012/03/14 16:55:11  pwagner
+! Fixed most recent goldbrick-busting bug
+!
 ! Revision 2.90  2012/01/05 01:14:54  pwagner
 ! Capitalized USEd stuff
 !
