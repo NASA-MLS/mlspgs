@@ -1423,7 +1423,8 @@ contains ! =====     Public Procedures     =============================
     use MLSFILES, only: HDFVERSION_5, &
       & ADDINITIALIZEMLSFILE, CLOSE_MLSFILE, DUMP, &
       & GETMLSFILEBYNAME, GETPCFROMREF, &
-      & MLS_EXISTS, MLS_SFSTART, MLS_SFEND, OPEN_MLSFILE, UNSPLITNAME
+      & MLS_EXISTS, MLS_INQSWATH, MLS_SFSTART, MLS_SFEND, &
+      & OPEN_MLSFILE, UNSPLITNAME
     use MLSHDF5, only: CPHDF5GLATTRIBUTE, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
     use MLSL2OPTIONS, only: CHECKPATHS, &
       & SKIPDIRECTWRITES, TOOLKIT
@@ -1453,7 +1454,9 @@ contains ! =====     Public Procedures     =============================
     character (len=FileNameLen) :: L2auxPhysicalFilename
     integer :: L2gpFileHandle, L2gp_Version
     character (len=FileNameLen) :: L2gpPhysicalFilename
+    integer :: listSize
     logical :: madeFile
+    integer :: numswaths
     integer :: obst
     integer, dimension(:,:), pointer :: obstruction_mafs => null()
     type(MLSFile_T), pointer :: outputFile
@@ -1495,6 +1498,10 @@ contains ! =====     Public Procedures     =============================
       create2 = .true.
       do DB_index = 1, size(DirectDatabase)
         if ( DirectDatabase(DB_index)%autoType /= l_l2dgg ) cycle
+        numswaths = mls_InqSwath ( &
+          & trim(DirectDatabase(DB_index)%fileName), sdList, listSize, &
+          & hdfVersion=HDFVERSION_5 )
+        if ( numSwaths < 1 ) cycle
         if ( DEBUG ) then
           call output ( 'preparing to cp split dgg', advance='yes' )
           call output ( 'from: ', advance='no' )
@@ -1720,6 +1727,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.160  2012/03/14 16:57:03  pwagner
+! Fixed most recent goldbrick-busting bug
+!
 ! Revision 2.159  2012/03/12 17:28:22  pwagner
 ! Fixed bug preventing us from copying apriori attributes successfully
 !
