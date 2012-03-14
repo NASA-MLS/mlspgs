@@ -74,11 +74,6 @@ program REMAKE_GH
   write ( ou, '(a,i4.4,2("-",i2.2),"T",i2.2,2(":",i2.2),".",i0,2a)' ) &
     & '! Created at ', dt(1:3), dt(5:8), ' from files in ', trim(prefix)
 
-  ! Determine how many files were input
-  do nfile = 0, size(filmod)-1
-    if ( filmod(nfile+1)(1:1) == '*' ) exit
-  end do
-
   open ( 99, status='scratch', form='unformatted' )
 
   ! Read the files
@@ -240,6 +235,9 @@ o:  do nn = 1, nmax
 end program REMAKE_GH
 
 ! $Log$
+! Revision 1.4  2012/03/14 00:57:08  vsnyder
+! Add copyright statement
+!
 ! Revision 1.3  2012/03/14 00:54:01  vsnyder
 ! Revised to get file names from command line
 !
