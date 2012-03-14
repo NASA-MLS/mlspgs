@@ -14,6 +14,7 @@ Switches (set by -S option in mlsl2's command line):
   binsel => L2PC bin selection motivation
   bool[n]=> Dump runtime Boolean flags
   cab =>    Column Abundance-containing l2gp swaths dumped
+  cgrid  => Check Fills done by grid method
   chi =>    chi-related diagnostic quantities dumped; chi1 for 1st chunk only
   cho =>    How good was the Cholesky decomposition?
   chu =>    Enslaved chunk processing
@@ -23,6 +24,7 @@ Switches (set by -S option in mlsl2's command line):
   cov =>    Report details of a posteriori covariance calculation
   dacsfil => Dump DACS filter shapes after reading them
   dbz =>    Dump Zeta in get_beta_path
+  debug  => Turn on debugging in certain modules (so far only l2PC_m)
   destroy => Warn before each destroy
   diag =>   Dump diagonal of factored normal equations
   direct => Show automatic assignments to split directwrite files
@@ -83,6 +85,7 @@ Switches (set by -S option in mlsl2's command line):
   neq =>    L_infty norms of blocks of normal equations during Newton iterations
   NEQ =>    Normal equations during Newton iterations
   nin =>    Turn on Newton Method's internal output
+  nl2cf  => Don't assume there was an l2cf; e.g.  when dumping quantity templates
   nodb =>   Subvert the DumpBlocks command
   norf =>   Default for Phi refractive correction in forward model is .false.
   nwt =>    Action flag at each return from Newton solver
@@ -199,6 +202,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.73  2012/03/12 20:04:49  vsnyder
+ add drmc, dxfq, change fmnan
+
  Revision 1.72  2010/08/06 23:14:28  pwagner
  Added 'hess' switch
 
