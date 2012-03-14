@@ -2462,7 +2462,8 @@ contains ! ===================================== Public Procedures =====
 
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! Now think about the obstructions
-      call DealWithObstructions ( chunks, obstructions )
+      if ( associated(obstructions) ) &
+        & call DealWithObstructions ( chunks, obstructions )
 
       ! Delete any zero length or all overlapped chunks
       call PruneChunks ( chunks )
@@ -2654,6 +2655,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.98  2012/03/14 16:56:26  pwagner
+! NAG-debug required this change
+!
 ! Revision 2.97  2011/11/30 21:33:13  pwagner
 ! Quits with message if GeodAngle not monotonic
 !
