@@ -1,23 +1,67 @@
 program REMAKE_GH
 
+! Read spherical harmonic coefficients for Earth's magnetic field models
+! and write a type definition, a variable declaration, and data statements
+! for them in a Fortran include file.
+
+! Command line arguments:
+!   -p prefix  => a prefix for input file names, default "."
+!   -o output  => output file, default stdout
+!   files...   => up to 20 input file names
+
+  use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
+
   implicit NONE
 
+  character(127) :: ARG
+  integer :: DT(8)  ! Output from date_and_time intrinsic subroutine
   real :: DTEMOD(20)
   real :: ERAD
   character(12) :: FILMOD(20) = '************'
   real :: GH(144)
   integer :: I, IER, J, K
-  integer :: NFILE, NGH, NGHMAX = 0, NMAX, NMAXMAX = 0
-  character(len=127) :: PREFIX
-
-  namelist /in/ prefix, filmod
+  integer :: NFILE, NGH, NGHMAX = 0, NMAX, NMAXMAX = 0, OU = 42
+  character(len=127) :: OFILE = '', PREFIX = ''
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: ModuleName= &
     "$RCSfile$"
   !---------------------------------------------------------------------------
 
-  read ( *, in )
+  i = 0
+  do
+    i = i + 1
+    call get_command_argument ( i, arg )
+    select case ( arg(1:3) )
+    case ( '-o ' )
+      i = i + 1
+      call get_command_argument ( i, ofile )
+    case ( '-p ' )
+      i = i + 1
+      call get_command_argument ( i, prefix )
+    case default
+      exit
+    end select
+  end do
+
+  nfile = 0
+  do while ( i <= command_argument_count() )
+    nfile = nfile + 1
+    call get_command_argument ( i, filmod(nfile) )
+    i = i + 1
+  end do
+
+  if ( ofile /= '' ) then
+    open ( ou, file=trim(ofile), form='formatted' )
+  else
+    ou = output_unit
+  end if
+
+  if ( prefix == '' ) prefix = '.'
+
+  call date_and_time ( values=dt )
+  write ( ou, '(a,i4.4,2("-",i2.2),"T",i2.2,2(":",i2.2),".",i0,2a)' ) &
+    & '! Created at ', dt(1:3), dt(5:8), ' from files in ', trim(prefix)
 
   ! Determine how many files were input
   do nfile = 0, size(filmod)-1
@@ -26,6 +70,7 @@ program REMAKE_GH
 
   open ( 99, status='scratch', form='unformatted' )
 
+  ! Read the files
   do i = 1, nfile
 
     call getshc ( trim(prefix) // '/' // trim(filmod(i)), nmax, dtemod(i), gh, ier, erad, ngh )
@@ -37,32 +82,35 @@ program REMAKE_GH
   end do
   rewind ( 99 )
 
-  write ( *, '(a)' ) '  type :: GH_T', &
+  ! Write a type definition for the data
+  write ( ou, '(a)' ) '  type :: GH_T', &
     &                '    real    :: YEAR', &
     &                '    character(len=12) :: FILE', &
     &                '    integer :: NMAX', &
     &                '    integer :: NGH', &
     &                '    real ::    ERAD'
-  write ( *, '(a:,i3,a)' ) &
+  write ( ou, '(a:,i0,a)' ) &
     &                '    real ::    GH(', nghmax, ')', &
     &                '  end type GH_T'
-  write ( *, '(a,i2,a)' ) &
+  ! Write a declaration for the variable
+  write ( ou, '(a,i0,a)' ) &
     &                '  type(gh_t), save :: GHS(', nfile, ')'
 
+  ! Write the data statements
   do i = 1, nfile
     read ( 99 ) nmax, ngh, erad, gh(:ngh)
-    write ( *, '(a,i3,a)' ) '  data GHS(', i, ') / gh_t ( &'
-    write ( *, '(a,f7.1,3a,2(i3,a),g14.7,a)' ) &
+    write ( ou, '(a,i0,a)' ) '  data GHS(', i, ') / gh_t ( &'
+    write ( ou, '(a,f7.1,3a,2(i3,a),g14.7,a)' ) &
       & '    & ', dtemod(i), ', "', filmod(i), '", ', &
       &           nmax, ', ', ngh, ', ', erad, ', (/ &'
     gh(ngh+1:) = 0.0
     do j = 1, nghmax, 5
       k = min(j+4,nghmax)
-      write ( *, '("    & ",5(g14.7:,", "))', advance='no' ) gh(j:k)
+      write ( ou, '("    & ",5(g14.7:,", "))', advance='no' ) gh(j:k)
       if ( k /= nghmax ) then
-        write ( *, '(", &")' )
+        write ( ou, '(", &")' )
       else
-        write ( *, '("/) ) /")' )
+        write ( ou, '("/) ) /")' )
       end if
     end do
   end do
@@ -175,10 +223,15 @@ o:  do nn = 1, nmax
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
-    print *, Id ! .mod files sometimes change if PRINT is added
   end function not_used_here
 !---------------------------------------------------------------------------
 
 end program REMAKE_GH
 
 ! $Log$
+! Revision 1.2  2012/03/13 23:46:57  vsnyder
+! Revise to get file names from input instead of internal data
+!
+! Revision 1.1  2012/03/13 23:15:55  vsnyder
+! Initial commit
+!
