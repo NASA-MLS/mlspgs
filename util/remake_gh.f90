@@ -1,8 +1,19 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
 program REMAKE_GH
 
 ! Read spherical harmonic coefficients for Earth's magnetic field models
 ! and write a type definition, a variable declaration, and data statements
-! for them in a Fortran include file.
+! for them, as a Fortran include file.
 
 ! Command line arguments:
 !   -p prefix  => a prefix for input file names, default "."
@@ -229,6 +240,9 @@ o:  do nn = 1, nmax
 end program REMAKE_GH
 
 ! $Log$
+! Revision 1.3  2012/03/14 00:54:01  vsnyder
+! Revised to get file names from command line
+!
 ! Revision 1.2  2012/03/13 23:46:57  vsnyder
 ! Revise to get file names from input instead of internal data
 !
