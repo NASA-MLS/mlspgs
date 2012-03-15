@@ -196,6 +196,7 @@ ignoreGeolocation
 ignoreHessian # in quasi-linear forward model
 ignoreNegative
 ignoreZero
+igrf          # Earth magnetic field model
 incl_cld
 inclination
 inputFile
@@ -489,6 +490,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.213  2012/03/15 22:48:42  vsnyder
+# Add IGRF field name for dump command
+#
 # Revision 2.212  2012/03/07 02:01:08  vsnyder
 # Remove fwmState and fwmJacobian, add transformMIFextinction
 #
