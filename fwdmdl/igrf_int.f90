@@ -26,13 +26,24 @@ module IGRF_INT
 
   implicit NONE
   private
-  public :: FELDCOF, FELDC, FELDG, FINDB0, IGRF_SUB, SHELLC, SHELLG, TO_CART
+  public :: DUMP_GH, FELDCOF, FELDC, FELDG, FINDB0, IGRF_SUB, READ_GH
+  public :: SHELLC, SHELLG, TO_CART
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
+
+! *****     Private Type     *******************************************
+
+  type :: GH_T
+    real :: YEAR
+    integer :: FILE  ! Index in string table
+    integer :: NMAX  ! Maximum Degree
+    real :: ERAD     ! Earth radius used to compute coefficients
+    real, allocatable :: GH(:)
+  end type GH_T
 
 ! *****     Private Variables     **************************************
 
@@ -42,11 +53,15 @@ module IGRF_INT
   real, parameter :: AQUAD = (EarthRadA/1000.0)**2 ! Km**2
   real, parameter :: BQUAD = (EarthRadB/1000.0)**2 ! Km**2
 
-! ERAD    Earth radius for normalization of cartesian
+! ERAD    Earth radius for normalization of Cartesian
 !         coordinates (6371.2 Km) as recommended by the International
 !         Astronomical Union
 
   real, save ::              ERAD = 6371.2
+
+! Coefficients read from IGRF files
+
+  type(gh_t), save, pointer :: GHS(:) => NULL()
 
 ! G(M)    Normalized field coefficients (see FELDCOF)
 !         Size = NMAX*(NMAX+2)+1
@@ -183,6 +198,142 @@ contains
     bdel = bdelta
     if ( present(rr0) ) rr0 = rold
   end subroutine FINDB0
+
+  ! ----------------------------------------------------  DUMP_GH  -----
+  subroutine DUMP_GH ( Details )
+    ! Dump the GH database
+    use Dump_0, only: Dump
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    integer, intent(in), optional :: Details ! <= 0 don't dump the GH field
+                                             ! default 0
+    integer :: I, MyDetails
+
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+
+    if ( .not. associated(ghs) ) then
+      call output ( 'No IGRF coefficients database', advance='yes' )
+      return
+    end if
+    call output ( 'IGRF coefficients database', advance='yes' )
+    do i = 1, size(ghs)
+      call output ( i, format='(i2)' )
+      call output ( ghs(i)%year, before=' Year = ' )
+      call output ( ghs(i)%erad, before=' Erad = ', after=' File: ' )
+      call display_string ( ghs(i)%file, strip=.true., advance='yes' )
+      if ( myDetails > 0 ) call dump ( ghs(i)%gh )
+    end do
+
+  end subroutine DUMP_GH
+
+  ! ----------------------------------------------------  READ_GH  -----
+  subroutine READ_GH ( ROOT )
+    ! Read IGRF files of GH coefficients
+
+    use Allocate_Deallocate, only: E_def, Test_Allocate, Test_Deallocate
+    use IO_Stuff, only: Get_Lun
+    use Machine, only: IO_Error
+    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
+    use String_Table, only: Get_String
+    use Tree, only: NSons, Subtree, Sub_Rosa
+
+    integer, intent(in) :: Root ! of l2cf tree for P_IGRFFile
+
+    real :: G, H
+    integer :: I, J
+    integer :: M, MM, N, NN
+    character(255) :: Name  ! IGRF file name
+    type(gh_t) :: NewGH(2:nsons(root))
+    integer :: STAT         ! from I/O or allocate
+    integer :: U            ! File unit number
+
+    call get_lun ( u )
+
+    do i = 2, nsons(root)
+      newGH(i)%file = sub_rosa(subtree(i,root))
+      call get_string ( newGH(i)%file, name, strip=.true. )
+      ! ----------------------------------------------------------
+      !  Read the coefficient file, arranged as follows:
+      !
+      !                                  N     M     G     H
+      !                                  ----------------------
+      !                              /   1     0    GH(1)  -
+      !                             /    1     1    GH(2) GH(3)
+      !                            /     2     0    GH(4)  -
+      !                           /      2     1    GH(5) GH(6)
+      !      NMAX*(NMAX+3)/2     /       2     2    GH(7) GH(8)
+      !         records          \       3     0    GH(9)  -
+      !                           \      .     .     .     .
+      !                            \     .     .     .     .
+      !      NMAX*(NMAX+2)          \    .     .     .     .
+      !      elements in GH          \  NMAX  NMAX   .     .
+      !
+      !  N and M are, respectively, the degree and order of the
+      !  coefficient.
+      ! ----------------------------------------------------------
+      open ( u, file=trim(name), form='formatted', status='old', iostat=stat )
+      if ( stat /= 0 ) then
+        call io_error ( 'Unable to open IGRF file', stat, trim(name) )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Unable to open IGRF file' )
+      end if
+      read ( u, *, end=999 ) ! Skip file name in file
+      read ( u, *, err=666, end=999, iostat=stat ) &
+        & newGH(i)%nmax, newGH(i)%erad, newGH(i)%year
+      allocate ( newGH(i)%gh(newGH(i)%nmax*(newGH(i)%nmax+2)), stat=stat )
+      call test_allocate ( stat, moduleName, 'newGH%gh', &
+        & (/1/), (/newGH(i)%nmax*(newGH(i)%nmax+2) /), e_def )
+      j = 0
+      do nn = 1, newGH(i)%nmax
+        do mm = 0, nn
+          read ( u, *, err=666, end=999, iostat=stat ) n, m, g, h
+          if ( n /= nn .or. m /= mm ) call MLSMessage ( MLSMSG_Error, &
+            & moduleName, 'Structure error in IGRF file ' // trim(name) )
+          j = j + 1
+          newGH(i)%gh(j) = g
+          if ( m /= 0 ) then
+            j = j + 1
+            newGH(i)%gh(j) = h
+          end if
+        end do ! mm
+      end do ! nn
+      newGH(i)%gh(j+1:) = 0.0
+999   continue
+      close ( u )
+    end do ! i
+
+    n = 0
+    if ( associated(GHs) ) n = size(GHs)
+
+    ! Make space for the new items, but don't add them yet
+    call addGHToDatabase ( GHs, newGH, copy=.false. )
+
+    ! Use insertion sort to add the new items in year order
+    do j = 2, ubound(newGH,1)
+      do i = j+n-2, 1, -1
+        if ( newGH(j)%year >= GHs(i)%year ) exit
+        GHs(i+1) = GHs(i)
+      end do
+      GHs(i+1) = newGH(j)
+    end do
+
+    return
+
+666 continue
+    call io_error ( 'Error reading IGRF file', stat, trim(name) )
+    call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Error reading IGRF file' // trim(name) )
+
+  contains
+    subroutine AddGHToDatabase ( Database, Items, copy )
+      type(gh_t), pointer :: Database(:)
+      type(gh_t), intent(in) :: Items(:)
+      logical, intent(in), optional :: Copy
+      type(gh_t), pointer :: tempDatabase(:)
+      include 'addItemsToDatabase.f9h'
+    end subroutine AddGHToDatabase
+  end subroutine READ_GH
 
   ! -----------------------------------------------------  SHELLG  -----
   subroutine SHELLG ( WHERE, DIMO, FL, ICODE, B0 )
@@ -486,6 +637,7 @@ o:  do n = 3, size(p,2)-1
     double precision :: F, F0, X
 
     numye = size(ghs) - 1
+    ! Assume the years of the coefficient records are five years apart
     iyea  =  int(year/5.)*5
     l  =  max(1.0,min(real(numye),(iyea - ghs(1)%year)/5.0 + 1.0))
     m = max(ghs(l)%ngh, ghs(l+1)%ngh)
@@ -839,6 +991,9 @@ o:  do n = 3, size(p,2)-1
 end module IGRF_INT
 
 ! $Log$
+! Revision 2.5  2012/03/15 22:48:05  vsnyder
+! Add Dump_GH and Read_GH
+!
 ! Revision 2.4  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
