@@ -182,7 +182,6 @@ contains
                                    internal, left_son )
     tree_sp = tree_sp - 1     ! Stack push
     n_tree_stack = n_tree_stack + 1 - nsons
-    return
   end subroutine BUILD_TREE
 
   subroutine COPY_TO_STACK ( T, K, M )
@@ -198,12 +197,10 @@ contains
       tree_sp = tree_sp - 1             ! Push stack
       n_tree_stack = n_tree_stack + 1
     end do
-    return
   end  subroutine COPY_TO_STACK
 
   subroutine DEALLOCATE_TREE
     deallocate( the_tree )
-    return
   end subroutine DEALLOCATE_TREE
 
   subroutine DECORATE ( WHERE, DECORATION )
@@ -276,7 +273,6 @@ contains
       call output ( mod(the_tree(where)%source,256), before=' column ' )
     end if
     call output ( '', advance=advance )
-    return
   end subroutine DUMP_TREE_NODE
 
   subroutine DUMP_TREE_NODE_NAME ( WHERE )
@@ -301,7 +297,6 @@ contains
     the_tree(tree_point) = tree_node( n_null, null_tree, 0, 0, internal, &
                                       ! left_son
                                       null_tree )
-    return
   end subroutine INIT_TREE
 
   subroutine INSERT_NODE ( NEW_NODE, T, K, M )
@@ -324,28 +319,24 @@ contains
     call build_tree ( new_node, n )
     call replace_sons ( t, m, k, tree_sp + 1 )
     call pop ( 1 )
-    return
   end subroutine INSERT_NODE
 
   integer function NODE_ID ( WHERE )
   ! Return the node id of the tree node at WHERE
     integer, intent(in) :: WHERE
     node_id = the_tree(where) % node
-    return
   end function NODE_ID
 
   integer function NODE_KIND ( WHERE )
   ! Return the kind of tree(where).
     integer, intent(in) :: WHERE
     node_kind = the_tree(where) % kind
-    return
   end function NODE_KIND
 
-  integer function NSONS ( WHERE )
+  pure integer function NSONS ( WHERE )
   ! Return the node id of the tree node at WHERE
     integer, intent(in) :: WHERE
     nsons = the_tree(where) % nsons
-    return
   end function NSONS
 
   subroutine POP ( N )
@@ -353,7 +344,6 @@ contains
     integer, intent(in) :: N
     tree_sp = tree_sp + n
     n_tree_stack = n_tree_stack - n
-    return
   end subroutine POP
 
   recursive subroutine PRINT_SUBTREE ( SUBROOT, DEPTH, DUMP_DECOR )
@@ -384,7 +374,6 @@ contains
         call print_subtree ( subtree(i,myRoot), depth+1, dump_decor )
       end do
     end if
-    return
   end subroutine PRINT_SUBTREE
 
   subroutine PUSH_PSEUDO_TERMINAL ( SUB_ROSA, SOURCE, DECOR )
@@ -407,7 +396,6 @@ contains
                                    0, source, pseudo, sub_rosa )
     tree_sp = tree_sp - 1     ! push tree stack
     n_tree_stack = n_tree_stack + 1
-    return
   end subroutine PUSH_PSEUDO_TERMINAL
 
   subroutine REPLACE_SONS ( T, K, M, U )
@@ -456,21 +444,18 @@ contains
         tree_sp = tree_sp - 1
       end do
     end if
-    return
   end subroutine REPLACE_SONS
 
   integer function SOURCE_REF ( WHERE )
   ! Return the SOURCE field of the tree node at WHERE
     integer, intent(in) :: WHERE
     source_ref = the_tree(where) % source
-    return
   end function SOURCE_REF
 
   integer function STACK_SUBTREE ( WHICH )
   ! Return the root of the WHICH'th subtree of the node atop the stack
     integer, intent(in) :: WHICH
     stack_subtree = subtree(which, tree_sp+1)
-    return
   end function STACK_SUBTREE
 
   integer function SUB_ROSA ( WHERE )
@@ -480,7 +465,6 @@ contains
       call tree_error ( not_pseudo, where )
     end if
     sub_rosa = the_tree(where) % link
-    return
   end function SUB_ROSA
 
   integer function SUBTREE ( WHICH, WHERE )
@@ -499,7 +483,6 @@ contains
       call tree_error ( no_more_sons, where )
     end if
     subtree = the_tree(where) % link + which - 1
-    return
   end function SUBTREE
 
   integer function TREE_TEXT ( TREE_NODE )
@@ -567,7 +550,6 @@ contains
     end do
     tree_sp = tree_sp + nsons ! Stack pop
     tree_point = tree_point + nsons
-    return
   end subroutine POP_TO_TREE
 
   subroutine SET_NSONS ( T, NSONS )
@@ -593,7 +575,6 @@ contains
       tt = s
       ns = ns - ( n-1 )
     end do
-    return
   end subroutine SET_NSONS
 
   subroutine TREE_ERROR ( WHY, WHERE )
@@ -641,6 +622,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.16  2012/03/15 22:46:37  vsnyder
+! Make nsons pure, some cannonball polishing
+!
 ! Revision 2.15  2011/04/18 19:26:11  vsnyder
 ! Add Dump_Tree_Node_Name
 !
