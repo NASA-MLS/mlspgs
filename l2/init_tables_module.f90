@@ -212,16 +212,17 @@ module INIT_TABLES_MODULE
 ! Parameter names:
   ! In GlobalSettings section:
   integer, parameter :: FIRST_PARM = spec_last + 1
-  integer, parameter :: P_OUTPUT_VERSION_STRING       = first_parm
-  integer, parameter :: P_CYCLE                       = p_output_version_string + 1
-  integer, parameter :: P_STARTTIME                   = p_cycle + 1
-  integer, parameter :: P_ENDTIME                     = p_starttime + 1
-  integer, parameter :: P_LEAPSECFILE                 = p_endtime + 1
-  integer, parameter :: P_INSTRUMENT                  = p_leapsecfile + 1
-  integer, parameter :: P_PFAFILE                     = p_instrument + 1
-  integer, parameter :: P_BRIGHTOBJECTS               = p_pfafile + 1
+  integer, parameter :: P_BRIGHTOBJECTS               = first_parm
+  integer, parameter :: P_CYCLE                       = p_brightobjects + 1
+  integer, parameter :: P_ENDTIME                     = p_cycle + 1
+  integer, parameter :: P_IGRF_FILE                   = p_endtime + 1
+  integer, parameter :: P_INSTRUMENT                  = p_igrf_file + 1
+  integer, parameter :: P_LEAPSECFILE                 = p_instrument + 1
+  integer, parameter :: P_OUTPUT_VERSION_STRING       = p_leapsecfile + 1
+  integer, parameter :: P_PFAFILE                     = p_output_version_string + 1
+  integer, parameter :: P_STARTTIME                   = p_pfafile + 1
   ! In ChunkDivide section:
-  integer, parameter :: P_CRITICAL_BANDS              = p_brightobjects  + 1
+  integer, parameter :: P_CRITICAL_BANDS              = p_starttime  + 1
   integer, parameter :: P_CRITICAL_SCANNING_MODULES   = p_critical_bands + 1
   integer, parameter :: P_HOME_GEOD_ANGLE             = p_critical_scanning_modules + 1
   integer, parameter :: P_HOME_MODULE                 = p_home_geod_angle + 1
@@ -315,15 +316,16 @@ contains ! =====     Public procedures     =============================
     ! based on the file lit_names.txt
     include 'lit_add.f9h'    
     ! Put parameter names into the symbol table:
-    parm_indices(p_ignoreL1B) =            add_ident ( 'IgnoreL1B' )
-    parm_indices(p_output_version_string) =add_ident ( 'OutputVersionString' )
+    parm_indices(p_brightObjects) =        add_ident ( 'BrightObjects' )
     parm_indices(p_cycle) =                add_ident ( 'Cycle' )
-    parm_indices(p_starttime) =            add_ident ( 'StartTime' )
     parm_indices(p_endtime) =              add_ident ( 'EndTime' )
+    parm_indices(p_igrf_file) =            add_ident ( 'IGRF_file' )
+    parm_indices(p_ignoreL1B) =            add_ident ( 'IgnoreL1B' )
     parm_indices(p_instrument) =           add_ident ( 'Instrument' )
     parm_indices(p_leapsecfile) =          add_ident ( 'LeapSecFile' )
+    parm_indices(p_output_version_string) =add_ident ( 'OutputVersionString' )
     parm_indices(p_PFAfile) =              add_ident ( 'PFAFile' )
-    parm_indices(p_brightObjects) =        add_ident ( 'BrightObjects' )
+    parm_indices(p_starttime) =            add_ident ( 'StartTime' )
 
     parm_indices(p_critical_bands) =       add_ident ( 'CriticalBands' )
     parm_indices(p_critical_scanning_modules) = &
@@ -1435,6 +1437,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec/) )
     call make_tree ( (/ & ! Continuing for s_dump...
              begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
+             begin, f+f_igrf, t+t_boolean, n+n_field_type, &
              begin, f+f_l2pc, t+t_string, n+n_field_type, &
              begin, f+f_lines, s+s_line, n+n_field_spec, &
              begin, f+f_mark, t+t_boolean, n+n_field_type, &
@@ -1645,14 +1648,15 @@ contains ! =====     Public procedures     =============================
       begin, z+z_spectroscopy, s+s_line, s+s_readSpectroscopy, s+s_spectra, &
              s+s_readIsotopeRatios, s+s_time, s+s_writeSpectroscopy, n+n_section, &
       begin, z+z_globalsettings, &
-             begin, p+p_output_version_string, t+t_string, n+n_name_def, &
+             begin, p+p_brightObjects, t+t_string, n+n_name_def,&
+             begin, p+p_cycle, t+t_string, n+n_name_def, &
+             begin, p+p_endtime, t+t_string, n+n_name_def, &
+             begin, p+p_IGRF_file, t+t_string, n+n_name_def, &
              begin, p+p_instrument, t+t_instrument, n+n_name_def,&
              begin, p+p_leapsecfile, t+t_string, n+n_name_def,&
-             begin, p+p_brightObjects, t+t_string, n+n_name_def,&
+             begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_PFAfile, t+t_string, n+n_name_def,&
-             begin, p+p_cycle, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
-             begin, p+p_endtime, t+t_string, n+n_name_def, &
              s+s_binSelector, s+s_dump, s+s_directWriteFile, s+s_dump, &
              s+s_empiricalGeometry, s+s_fGrid, s+s_flushPFA, s+s_forwardModel, &
              s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, &
@@ -1728,6 +1732,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.537  2012/03/15 22:49:45  vsnyder
+! Add IGRF_file parameter, igrf field in dump command, some cannonball polishing
+!
 ! Revision 2.536  2012/03/07 02:01:07  vsnyder
 ! Remove fwmState and fwmJacobian, add transformMIFextinction
 !
