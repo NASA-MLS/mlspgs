@@ -187,11 +187,12 @@ contains
     use FORWARDMODELSUPPORT, only: CONSTRUCTFORWARDMODELCONFIG, &
       & FORWARDMODELGLOBALSETUP, CREATEBINSELECTORFROMMLSCFINFO
     use HDF, only: DFACC_CREATE
+    use IGRF_INT, only: Read_GH
     use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
       & L_L2GP, L_L2DGG, L_L2FWM, &
       & PARM_INDICES, &
       & P_BRIGHTOBJECTS, &
-      & P_CYCLE, P_ENDTIME, P_INSTRUMENT, &
+      & P_CYCLE, P_ENDTIME, P_IGRF_FILE, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_PFAFILE, P_STARTTIME, &
       & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, &
       & S_FGRID, S_FLUSHPFA, S_FORWARDMODEL, S_FORWARDMODELGLOBAL, &
@@ -353,27 +354,8 @@ contains
         case ( p_brightObjects )
           call get_string ( sub_rosa_index, brightObjects, strip=.true. )
           got(3) = .true.
-        case ( p_output_version_string )
-          output_version_string = sub_rosa_index
-          call get_string ( output_version_string, l2pcf%PGEVersion, strip=.true. )
-        case ( p_instrument )
-          instrument = decoration(subtree(2,son))
         case ( p_cycle )
           call get_string ( sub_rosa_index, l2pcf%cycle, strip=.true. )
-        case ( p_starttime )
-          if ( restricted ) call NotAllowed ( son, param_restricted )
-          got(1) = .true.
-          call get_string ( sub_rosa_index, name_string, strip=.true. )
-          start_time_string = name_string
-          if ( index(name_string, ':') > 0 ) then
-            start_time_from_1stMAF = hhmmss_value(name_string, returnStatus)
-            error = max(error,returnStatus)
-            startTimeIsAbsolute = .false.
-            l2pcf%startutc = start_time_string
-          else
-            read ( name_string, * ) start_time_from_1stMAF
-            startTimeIsAbsolute = .true.
-          end if
         case ( p_endtime )
           if ( restricted ) call NotAllowed ( son, param_restricted )
           got(2) = .true.
@@ -388,6 +370,11 @@ contains
             read ( name_string, * ) end_time_from_1stMAF
             stopTimeIsAbsolute = .true.
           end if
+        case ( p_IGRF_file )
+          if ( restricted ) call NotAllowed ( son, param_restricted )
+          call read_gh ( son )
+        case ( p_instrument )
+          instrument = decoration(subtree(2,son))
         case ( p_leapsecfile )
           if ( restricted ) call NotAllowed ( son, param_restricted )
           call get_string ( sub_rosa_index, LeapSecFileName, strip=.true. )
@@ -400,12 +387,29 @@ contains
             call MLSMessage ( MLSMSG_Error, ModuleName, &                      
             & '(Please check file name and path)' )    
           end if
+        case ( p_output_version_string )
+          output_version_string = sub_rosa_index
+          call get_string ( output_version_string, l2pcf%PGEVersion, strip=.true. )
         case ( p_PFAFile )
           if ( restricted ) call NotAllowed ( son, param_restricted )
           do j = 2, nsons(son)
             if ( process_PFA_File ( sub_rosa(subtree(j,son)), &
               & source_ref(subtree(j,son)) ) /= 0 ) continue
           end do
+        case ( p_starttime )
+          if ( restricted ) call NotAllowed ( son, param_restricted )
+          got(1) = .true.
+          call get_string ( sub_rosa_index, name_string, strip=.true. )
+          start_time_string = name_string
+          if ( index(name_string, ':') > 0 ) then
+            start_time_from_1stMAF = hhmmss_value(name_string, returnStatus)
+            error = max(error,returnStatus)
+            startTimeIsAbsolute = .false.
+            l2pcf%startutc = start_time_string
+          else
+            read ( name_string, * ) start_time_from_1stMAF
+            startTimeIsAbsolute = .true.
+          end if
         case default
           call announce_error(son, 'unrecognized global settings parameter')
         end select
@@ -1205,6 +1209,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.141  2011/11/04 00:08:01  pwagner
+! Made USEd entities all caps
+!
 ! Revision 2.140  2011/10/05 00:14:45  pwagner
 ! Added functions to convert between MAFs, profile numbers
 !
