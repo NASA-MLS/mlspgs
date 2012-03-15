@@ -686,6 +686,7 @@ contains
     use GRIDDEDDATA, only: DIFF, DUMP, GRIDDEDDATA_T
     use HESSIANMODULE_1, only: HESSIAN_T, DIFF, DUMP
     use HGRIDSDATABASE, only: DUMP, HGRID_T
+    use IGRF_INT, only: Dump_GH
     use INIT_TABLES_MODULE, only: F_ALLBOOLEANS, F_ALLFILES, F_ALLFORWARDMODELS, &
       & F_ALLGRIDDEDDATA, F_ALLHESSIANS, F_ALLHGRIDS, &
       & F_ALLL2PCS, F_ALLLINES, F_ALLMATRICES, F_ALLPFA, &
@@ -693,10 +694,10 @@ contains
       & F_ALLVECTORS, F_ALLVECTORTEMPLATES, F_ALLVGRIDS, F_ANTENNAPATTERNS, &
       & F_BOOLEAN, F_CLEAN, F_CRASHBURN, F_DETAILS, F_DACSFILTERSHAPES, &
       & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HEIGHT, F_HESSIAN, &
-      & F_HGRID, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, F_MIETABLES, &
-      & F_OPTIONS, F_PFADATA, F_PFAFILES, F_PFANUM, F_PFASTRU, F_POINTINGGRIDS, &
-      & F_QUANTITY, F_SIGNALS,  F_SPECTROSCOPY, F_STOP, F_STOPWITHERROR, &
-      & F_SURFACE, F_TEMPLATE, F_TEXT, F_TGRID, &
+      & F_HGRID, F_IGRF, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, &
+      & F_MIETABLES, F_OPTIONS, F_PFADATA, F_PFAFILES, F_PFANUM, F_PFASTRU, &
+      & F_POINTINGGRIDS, F_QUANTITY, F_SIGNALS,  F_SPECTROSCOPY, F_STOP, &
+      & F_STOPWITHERROR, F_SURFACE, F_TEMPLATE, F_TEXT, F_TGRID, &
       & F_VECTOR, F_VECTORMASK, F_VGRID, &
       & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE
     use L2PARINFO, only: PARALLEL, CLOSEPARALLEL
@@ -862,7 +863,7 @@ contains
         & f_allPFA, f_allQuantityTemplates, &
         & f_allRadiometers, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_crashBurn, f_DACSfilterShapes, f_filterShapes, f_MieTables, &
+        & f_crashBurn, f_DACSfilterShapes, f_filterShapes, f_igrf, f_MieTables, &
         & f_pfaFiles, f_pfaStru, f_pointingGrids, f_stop, f_stopWithError )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
@@ -985,6 +986,8 @@ contains
             call dump_dacs_filter_database ( son )
           case ( f_filterShapes )
             call dump_filter_shapes_database ( son )
+          case ( f_igrf )
+            call dump_gh ( details )
           case ( f_MieTables )
             call dump_Mie ( details )
           case ( f_pfaFiles )
@@ -1528,6 +1531,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.67  2012/03/15 22:50:39  vsnyder
+! Add IGRF dump
+!
 ! Revision 2.66  2012/02/28 00:16:42  vsnyder
 ! Repair %S, which was referencing cpu_time without it being assigned a value
 !
