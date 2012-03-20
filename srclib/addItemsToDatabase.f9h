@@ -31,8 +31,6 @@
 
     allocate ( tempDatabase(newSize), stat=status )
     call test_allocate ( status, moduleName, 'tempDatabase' )
-
-    if ( newSize>1 ) tempDatabase(1:newSize-1) = database
     if ( associated(database) ) then
       tempDatabase(:size(database)) = database
       deallocate ( database, stat=status )
@@ -46,3 +44,6 @@
     end if
 
 ! $Log$
+! Revision 1.1  2012/03/15 02:51:30  vsnyder
+! Initial commit
+!
