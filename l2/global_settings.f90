@@ -534,13 +534,8 @@ contains
             & just_a_warning = .true.)
           end if
         case ( s_l2parsf )
-          if ( restricted ) call notAllowed ( son, spec_restricted )
-          sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
-          call get_string ( sub_rosa_index, FilenameString, strip=.true. )
-          parallel%stagingFile = FilenameString
-          if( switchDetail(switches, 'pro') > -1 ) then                            
-            call proclaim(FilenameString, 'l2 parallel staging file') 
-          end if
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'This version does not use staging file for slave Join commands' )
         case ( s_makePFA )
           call Make_PFAData ( son, returnStatus )
           error = max(error, returnStatus)
@@ -1209,6 +1204,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.142  2012/03/15 22:51:15  vsnyder
+! Add IGRF_file parameter, some cannonball polishing
+!
 ! Revision 2.141  2011/11/04 00:08:01  pwagner
 ! Made USEd entities all caps
 !
