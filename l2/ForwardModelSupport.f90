@@ -50,7 +50,8 @@ module ForwardModelSupport
   integer, parameter :: LinearSidebandHasUnits = LBLandPFA + 1
   integer, parameter :: LineNotMolecule        = LinearSidebandHasUnits + 1
   integer, parameter :: LineParamTwice         = LineNotMolecule + 1
-  integer, parameter :: NeedBothXYStar         = LineParamTwice + 1
+  integer, parameter :: MIFextinction_signals  = LineParamTwice + 1
+  integer, parameter :: NeedBothXYStar         = MIFextinction_signals + 1
   integer, parameter :: Nested                 = NeedBothXYStar + 1
   integer, parameter :: NoArray                = Nested + 1
   integer, parameter :: NoBetaGroup            = NoArray + 1
@@ -1007,6 +1008,10 @@ op:     do j = 2, nsons(theTree)
     end if
 
     ! Now some more error checking
+    ! MIFExtinction transformation needs signals
+    if ( info%transformMIFextinction .and. .not. associated(info%signals) ) &
+      & call announceError ( MIFextinction_signals, root )
+
     ! If any PFA, can't do polarized
     if ( any(info%anyPFA(s1:s2)) .and. info%polarized ) &
       & call announceError ( noPolarizedAndPFA, root )
@@ -1385,6 +1390,8 @@ op:     do j = 2, nsons(theTree)
     case ( LineParamTwice )
       call display_string ( lit_indices(decoration(where)), before='Molecule '  )
       call output ( ' listed twice for spectral parameter', advance='yes' )
+    case ( MIFextinction_signals )
+      call output ( 'MIF extinction transformation needs signals', advance='yes' )
     case ( NeedBothXYStar )
       call output ( 'X/YStar must either be both present or both absent', &
         & advance='yes' )
@@ -1461,6 +1468,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.161  2012/03/28 00:56:49  vsnyder
+! Move check for signals with MIF extinction from Wrappers to Support
+!
 ! Revision 2.160  2012/03/07 02:13:18  vsnyder
 ! Add transformMIFextinction switch
 !
