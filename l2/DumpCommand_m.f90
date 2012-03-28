@@ -987,7 +987,7 @@ contains
           case ( f_filterShapes )
             call dump_filter_shapes_database ( son )
           case ( f_igrf )
-            call dump_gh ( details )
+            call dump_gh ( details, optionsString )
           case ( f_MieTables )
             call dump_Mie ( details )
           case ( f_pfaFiles )
@@ -1022,6 +1022,7 @@ contains
         call output( tvalue, advance='yes' )
       case ( f_clean )
         clean = get_boolean(son)
+        if ( clean ) optionsString = trim(optionsString) // 'c'
       case ( f_details )
         call expr ( gson, units, values, type )
         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
@@ -1531,6 +1532,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.68  2012/03/28 23:14:14  vsnyder
+! Pass options to Dump_GH, add 'c' to options if /clean appears
+!
 ! Revision 2.67  2012/03/15 22:50:39  vsnyder
 ! Add IGRF dump
 !
