@@ -87,8 +87,6 @@ module L2ParInfo
 
   ! Name of fwm slave group
   character (len=*), parameter :: FWMSLAVEGROUP = "MLSL2FWMSlaves"
-  character (len=*), parameter :: DEFAULTSTAGINGFILE = &
-    & "MLS-Aura_L2Staging-Full_v0-0-0_0000d000.h5"
 
   ! This datatype defines configuration for the parallel code
   type L2ParallelInfo_T
@@ -105,7 +103,6 @@ module L2ParInfo
     character(len=132) :: slaveFilename ! Filename with list of slaves
     character(len=132) :: executable    ! Executable filename
     character(len=132) :: submit=""     ! Submit comand for batch queue system
-    character(len=132) :: stagingFile=DefaultStagingFile ! Filename for possible
     ! run range in comma-separated list with possible ranges
     ! e.g. '1,2-6+2,9-11,15' expands to '1,2,4,6,9,10,11,15'
     character(len=4096) :: chunkRange='' ! if blank, runs all chunks
@@ -832,6 +829,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.56  2012/03/28 20:05:10  pwagner
+! Removed staging file--slave tasks lost ability to join quantities
+!
 ! Revision 2.55  2011/05/09 18:20:55  pwagner
 ! Converted to using switchDetail
 !
