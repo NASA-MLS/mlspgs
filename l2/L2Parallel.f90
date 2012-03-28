@@ -23,8 +23,6 @@ module L2Parallel
   use CHUNKS_M, only: DUMP, MLSCHUNK_T
   use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
   use DUMP_0, only: DUMP
-  use INIT_TABLES_MODULE, only: S_L2GP, S_L2AUX
-  use JOIN, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
   use L2AUXDATA, only: L2AUXDATA_T
   use L2GPDATA, only: L2GPDATA_T
   use L2PARINFO, only: MACHINE_T, PARALLEL, &
@@ -48,7 +46,6 @@ module L2Parallel
   use MLSSTRINGS, only: LOWERCASE
   use MOREPVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MLSSTRINGS, only: NAPPEARANCES
-  use MORETREE, only: GET_SPEC_ID
   use OUTPUT_M, only: BLANKS, OUTPUT, TIMESTAMP
   use PVM, only: INFOTAG, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, &
@@ -59,14 +56,12 @@ module L2Parallel
   use QUANTITYPVM, only: PVMRECEIVEQUANTITY
   use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
     & DESTROYQUANTITYTEMPLATECONTENTS, INFLATEQUANTITYTEMPLATEDATABASE, &
-    & NULLIFYQUANTITYTEMPLATE, DESTROYQUANTITYTEMPLATEDATABASE
+    & NULLIFYQUANTITYTEMPLATE
   use STRING_TABLE, only: DISPLAY_STRING
-  use SYMBOL_TABLE, only: ENTER_TERMINAL
-  use SYMBOL_TYPES, only: T_STRING
   use TIME_M, only: TIME_NOW
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
+  use VECTORSMODULE, only: VECTOR_T, VECTORTEMPLATE_T, &
     & CONSTRUCTVECTORTEMPLATE, &
     & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO, &
     & INFLATEVECTORTEMPLATEDATABASE, INFLATEVECTORDATABASE
@@ -198,8 +193,6 @@ contains
 
   ! --------------------------------------------- L2MasterTask ----------
   subroutine L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
-    use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5FOPEN_F, H5F_ACC_RDONLY_F, H5F_ACC_TRUNC_F
-    use VectorHDF5, only: READVECTORFROMHDF5
     ! This is a `master' task for the l2 software
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
@@ -235,7 +228,6 @@ contains
     integer :: DUMMY                    ! From inflate database
     logical :: DUMPFULLDWREQS
     integer :: FILEINDEX                ! Index for a direct write
-    integer :: HDFNAMEINDEX             ! String index
     integer :: INDX                     ! Where "T" occurs in utc string
     integer :: INFO                     ! From PVM
     integer :: L2QTID                   ! TID of queue manager
@@ -249,20 +241,17 @@ contains
     integer :: NODIRECTWRITEREQUESTS    ! Number of (relevantish) directWrite requests
     integer :: NOMACHINES               ! Number of slaves
     integer :: NOQUANTITIESACCUMULATED  ! Running counter / index
-    integer :: PRECIND                  ! Array index
     integer :: REQUESTEDFILE            ! String index from slave
     integer :: REQUESTINDEX             ! Index of direct write request
     integer :: REQUESTINDEXA(1)         ! Result of minloc
-    integer :: RESIND                   ! Loop counter
     integer :: RETURNEDTICKET           ! Ticket for completed direct write
     character ( len=256 ) :: sbmtdSlaveArg1, sbmtdSlaveArg2
     character ( len=2048 ) :: sbmtdSlaveArguments ! To remove --chunks if present
     integer :: SIGNAL                   ! From slave
     integer :: SLAVETID                 ! One slave
-    integer :: STAGEFILEID              ! From HDF5
+    ! integer :: STAGEFILEID              ! From HDF5
     integer :: STATUS                   ! From deallocate etc.
     integer :: TIDARR(1)                ! One tid
-    integer :: VALIND                   ! Array index
 
     integer, dimension(size(chunks)) :: CHUNKMACHINES ! Machine indices for chunks
     integer, dimension(size(chunks)) :: CHUNKTIDS ! Tids for chunks
@@ -293,10 +282,6 @@ contains
     ! Local vector database
     type (StoredResult_T), dimension(:), pointer :: storedResults
     ! Map into the above arrays
-    type (VectorValue_T), pointer :: QTY
-    type (VectorValue_T), pointer :: PRECQTY
-    type (Vector_T), target :: MYVALUES
-    type (Vector_T), target :: MYPRECISIONS
     type (DirectWriteRequest_T), dimension(:), pointer :: DIRECTWRITEREQUESTS
     type (DirectWriteRequest_T), pointer :: REQUEST
 
@@ -353,9 +338,11 @@ contains
 
     ! Setup the staging file if we're using one
     if ( .not. parallel%stageInMemory ) then
-      call H5FCreate_F ( trim(parallel%stagingFile), H5F_ACC_TRUNC_F, stageFileID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to open staging file: '//trim(parallel%stagingFile) )
+      ! call H5FCreate_F ( trim(parallel%stagingFile), H5F_ACC_TRUNC_F, stageFileID, status )
+      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      !   & 'Unable to open staging file: '//trim(parallel%stagingFile) )
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'This version does not use staging file for slave Join commands' )
     end if
 
     ! Loop until all chunks are done
@@ -619,10 +606,12 @@ contains
           endif
 
         case ( sig_tojoin ) ! --------------- Got a join request ---------
-          call StoreSlaveQuantity( joinedQuantities, &
-            & joinedVectorTemplates, joinedVectors, &
-            & storedResults, chunk, noChunks, noQuantitiesAccumulated, &
-            & stageFileID )
+         !  call StoreSlaveQuantity( joinedQuantities, &
+         !    & joinedVectorTemplates, joinedVectors, &
+         !    & storedResults, chunk, noChunks, noQuantitiesAccumulated, &
+         !    & stageFileID )
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'This version does not support slave Join commands' )
 
         case ( sig_RequestDirectWrite ) ! ------- Direct write permission --
           ! What file did they ask for?
@@ -1169,91 +1158,21 @@ contains
 
     ! If we're staging to a file, close the file and reopen it.
     if ( .not. parallel%stageInMemory ) then
-      call H5FClose_F ( stageFileID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
-        & 'Unable to close staging file:'//parallel%stagingFile )
-      call H5FOpen_F ( trim(parallel%stagingFile), H5F_ACC_RDONLY_F, stageFileID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
-        & 'Unable to reopen staging file:'//parallel%stagingFile )
+      ! call H5FClose_F ( stageFileID, status )
+      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+      !   & 'Unable to close staging file:'//parallel%stagingFile )
+      ! call H5FOpen_F ( trim(parallel%stagingFile), H5F_ACC_RDONLY_F, stageFileID, status )
+      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+      !   & 'Unable to reopen staging file:'//parallel%stagingFile )
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'This version does not use staging file for slave Join commands' )
     end if
-
-    if ( associated ( storedResults ) ) then
-      do resInd = 1, size ( storedResults )
-        hdfNameIndex = enter_terminal ( trim(storedResults(resInd)%hdfName), t_string )
-        if ( switchDetail(switches,'mas') > -1 ) then
-          call TimeStamp ( 'Joining ' // trim ( storedResults(resInd)%hdfName ), &
-            & advance='yes' )
-        endif
-        
-        do chunk = 1, noChunks
-          if (.not. chunksAbandoned(chunk) ) then
-            ! Setup for this quantity
-            if ( parallel%stageInMemory ) then
-              valInd = storedResults(resInd)%valInds(chunk)
-              qty => joinedVectors(valInd)%quantities(1)
-              
-              if ( storedResults(resInd)%gotPrecision ) then
-                precInd = storedResults(resInd)%precInds(chunk)
-                precQty => joinedVectors(precInd)%quantities(1)
-              else
-                nullify ( precQty )
-              endif
-            else
-              write ( thisName, '(i0)' ) storedResults(resInd)%valInds(chunk)
-              call ReadVectorFromHDF5 ( stageFileID, trim(thisName), &
-              & myValues, joinedQuantities )
-            qty => myValues%quantities(1)
-            if ( storedResults(resInd)%gotPrecision ) then
-              write ( thisName, '(i0)' ) storedResults(resInd)%precInds(chunk)
-              call ReadVectorFromHDF5 ( stageFileID, trim(thisName), &
-                & myPrecisions, joinedQuantities )
-              precQty => myPrecisions%quantities(1)
-            else
-              nullify ( precQty )
-            end if
-          end if
-
-          select case ( get_spec_id ( storedResults(resInd)%key ) )
-          case ( s_l2gp )
-            call JoinL2GPQuantities ( storedResults(resInd)%key, hdfNameIndex, &
-              & qty, precQty, l2gpDatabase, chunk, &
-              & nameString=trim(storedResults(resInd)%hdfName))
-          case ( s_l2aux )
-            call JoinL2AuxQuantities ( storedResults(resInd)%key, hdfNameIndex, &
-              & qty, l2auxDatabase, chunks )
-            ! Ignore timing and direct writes
-          end select
-
-          ! Now destroy this vector.  We'll do this as we go along to make
-          ! life easier for the computer.
-          if ( parallel%stageInMemory ) then
-            call DestroyVectorInfo ( joinedVectors(valInd) )
-            call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
-            call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
-            if ( storedResults(resInd)%gotPrecision ) then
-              call DestroyVectorInfo ( joinedVectors(precInd) )
-              call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
-              call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
-            end if
-          else
-            call DestroyQuantityTemplateDatabase ( joinedQuantities )
-            call DestroyVectorTemplateInfo ( myValues%template )
-            call DestroyVectorInfo ( myValues )
-            if ( storedResults(resInd)%gotPrecision ) then
-              call DestroyVectorTemplateInfo ( myPrecisions%template )
-              call DestroyVectorInfo ( myPrecisions )
-            end if
-          end if
-        end if                          ! Didn't give up on this chunk
-      end do
-    end do
-  end if
 
     ! Now clean up and quit
     if ( .not. parallel%stageInMemory ) then
-      call H5FClose_F ( stageFileID, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
-        & 'Unable to close staging file:'//parallel%stagingFile )
+      ! call H5FClose_F ( stageFileID, status )
+      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+      !   & 'Unable to close staging file:'//parallel%stagingFile )
     end if
 
     call DestroyStoredResultsDatabase ( storedResults )
@@ -2009,6 +1928,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.100  2012/03/28 20:05:54  pwagner
+! slave tasks lost ability to join quantities
+!
 ! Revision 2.99  2011/08/03 21:57:23  pwagner
 ! Improved routine printing and dumps by master task
 !
