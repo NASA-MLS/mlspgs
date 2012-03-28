@@ -3,7 +3,7 @@ Command line options:
 where slon are single-letter options and mlon are multiletter options
 E.g., mlsl2 -m -p --nmeta -S"glo,jac"
 Note: use "-T2" and not "--T2" because -T2 has one 'letter'
-( and yet, oddly, so do -S"mas,slv,.." and -T1h have only one 'letter')
+(and yet, oddly, so do -S"mas,slv,.." and -T1h have only one 'letter')
 ========================= mlsl2 =========================
   -A: Dump the un-decorated abstract syntax tree.
   -a: Dump the decorated type-checked abstract syntax tree.
@@ -109,7 +109,6 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --stdout <filename>: Send unbuffered stdout to filename
   --stopAfter <section>: Stop run after <section>; e.g., 'chunk_divide'
      (see also 'Dump, /stop' in l2cf)
-  --stgmem: Tell parallel master task to stage in memory, as opposed to a file.
   --subblock <number>: Set the number of reals to consider when subblocking
     the matrix multiply
   --submit "command": In conjunction with --master, use the command
@@ -144,6 +143,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.52  2012/02/09 02:45:28  vsnyder
+ Remove -C option -- I didn't notice --crash was already there
+
  Revision 1.51  2012/02/09 01:48:20  vsnyder
  Add -C option to crash on any error, to get traceback for debugging
 
