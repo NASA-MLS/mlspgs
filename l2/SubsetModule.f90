@@ -123,12 +123,12 @@ contains ! ========= Public Procedures ============================
         ptan => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
       case ( f_minChannels )
         call expr ( gson, exprUnit, exprValue )
-        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( key, &
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( gson, &
           WrongUnits, f_minChannels )
         minChannels = nint ( exprValue(1) )
       case ( f_basisFraction )
         call expr ( gson, exprUnit, exprValue )
-        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( key, &
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( gson, &
           WrongUnits, f_basisFraction )
         basisFraction = exprValue(1)
       case ( f_measurements )
@@ -262,7 +262,8 @@ contains ! ========= Public Procedures ============================
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR, GETINDEXFLAGSFROMLIST
     use MLSKINDS, only: R8
-    use INTRINSIC, only: PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_INVALID, PHYQ_DIMENSIONLESS
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_LENGTH, &
+      & PHYQ_MIFS, PHYQ_PRESSURE
     use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
     use INIT_TABLES_MODULE, only: F_ADDITIONAL, F_CHANNELS, F_HEIGHT, &
       & F_IGNORE, F_INSTANCES, &
@@ -377,7 +378,7 @@ contains ! ========= Public Procedures ============================
       case ( f_opticalDepthCutoff )
         call expr ( subtree (2, son), units, value, type )
         if ( units(1) /= phyq_dimensionless ) &
-          & call announceError ( key, WrongUnits, &
+          & call announceError ( subtree (2, son), WrongUnits, &
           & f_opticalDepthCutoff )
         opticalDepthCutoff = value(1)
       case ( f_maxValue )
@@ -500,7 +501,7 @@ contains ! ========= Public Procedures ============================
         ! check each range separately, because the units determine the
         ! scaling of the values.
         if ( all(units == phyq_dimensionless) ) call announceError ( &
-          & key, WrongUnits, f_height )
+          & subtree(j,heightNode), WrongUnits, f_height )
         ! Check consistency of units -- all the same, or dimensionless. The
         ! type checker verifies the consistency of units of ranges, but not
         ! of array elements.
@@ -509,16 +510,16 @@ contains ! ========= Public Procedures ============================
             heightUnit = units(i)
           else if ( units(i) /= phyq_dimensionless .and. &
             &       units(i) /= heightUnit ) then
-            call announceError ( key, WrongUnits, f_height )
+            call announceError ( heightNode, WrongUnits, f_height )
           end if
         end do
       end do
       ! Check for correct units
       if ( heightUnit == phyq_pressure ) then
         if ( qty%template%minorFrame .and. .not. got(f_ptanQuantity) ) &
-          & call announceError ( key, WrongUnits, f_height, f_ptanQuantity )
+          & call announceError ( heightNode, WrongUnits, f_height, f_ptanQuantity )
       else if ( heightUnit /= phyq_length ) then
-        call announceError ( key, WrongUnits, f_height )
+        call announceError ( heightNode, WrongUnits, f_height )
       end if
     end if
 
@@ -625,7 +626,7 @@ contains ! ========= Public Procedures ============================
               value = -log10(value)
             else
               if ( coordinate /= qty%template%verticalCoordinate ) &
-                & call AnnounceError ( key, WrongUnits, f_height )
+                & call AnnounceError ( son, WrongUnits, f_height )
             end if
 
             ! Do special things for coherent quantities
@@ -641,8 +642,8 @@ contains ! ========= Public Procedures ============================
           else
             ! Subset by surface (i.e. MIF) instead, much easier
             call expr ( son, units, value, type )
-            if ( any ( units /= phyq_dimensionless ) ) &
-              & call AnnounceError ( key, WrongUnits, f_surface )
+            if ( .not. all ( units == phyq_dimensionless .or. units == phyq_mifs ) ) &
+              & call AnnounceError ( son, WrongUnits, f_surface )
             s1(1) = max ( min ( value(1), real(qty%template%noSurfs, r8) ), 1._r8 )
             s2(1) = max ( min ( value(2), real(qty%template%noSurfs, r8) ), 1._r8 )
           end if
@@ -882,7 +883,7 @@ contains ! ========= Public Procedures ============================
       case ( f_cloudRadianceCutoff )
         call expr ( subtree (2, son), units, Value )
         if ( units(1) /= PHYQ_temperature ) &
-          & call announceError ( key, WrongUnits, f_cloudRadianceCutoff )
+          & call announceError ( subtree (2, son), WrongUnits, f_cloudRadianceCutoff )
         cloudRadianceCutoff = value(1)
       case ( f_mask )
         maskBit = GetMaskBit ( son )
@@ -917,7 +918,7 @@ contains ! ========= Public Procedures ============================
       ! check each range separately, because the units determine the
       ! scaling of the values.
       if ( all(units == phyq_dimensionless) ) call announceError ( &
-        & key, WrongUnits, f_height )
+        & subtree(2,heightNode), WrongUnits, f_height )
       ! Check consistency of units -- all the same, or dimensionless. The
       ! type checker verifies the consistency of units of ranges, but not
       ! of array elements.
@@ -926,7 +927,7 @@ contains ! ========= Public Procedures ============================
           heightUnit = units(i)
         else if ( units(i) /= phyq_dimensionless .and. &
           &       units(i) /= heightUnit ) then
-          call announceError ( key, WrongUnits, f_height )
+          call announceError ( heightNode, WrongUnits, f_height )
         end if
       end do
 
@@ -943,7 +944,7 @@ contains ! ========= Public Procedures ============================
 
       call expr ( subtree(2,cloudheightNode), units, value, type )
       if ( all(units == phyq_dimensionless) ) call announceError ( &
-        & key, WrongUnits, f_cloudheight )
+        & subtree(2,cloudheightNode), WrongUnits, f_cloudheight )
       do i = 1, 2
         if ( cloudheightUnit == phyq_dimensionless ) then
           cloudheightUnit = units(i)
@@ -1157,7 +1158,7 @@ contains ! ========= Public Procedures ============================
   ! ===================================== Private procedures ============
 
   ! --------------------------------------- AnnounceError -----------
-  
+
   subroutine AnnounceError ( NODE, STRING, FIELDINDEX, ANOTHERFIELDINDEX )
     
     use INTRINSIC, only: FIELD_INDICES
@@ -1165,6 +1166,7 @@ contains ! ========= Public Procedures ============================
     use TREE, only: SOURCE_REF
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use OUTPUT_M, only: OUTPUT
+    use String_Table, only: Display_String
     
     integer, intent(in) :: NODE
     character(len=*), intent(in) :: STRING
@@ -1176,7 +1178,7 @@ contains ! ========= Public Procedures ============================
     call output ( trim(string), advance='yes' )
     if ( present ( fieldIndex ) ) then
       call output ( 'Offending field(s): ' )
-      call output ( field_indices(fieldIndex) )
+      call display_string ( field_indices(fieldIndex) )
       if ( present ( anotherFieldIndex ) ) then
         call output ( ', ' )
         call output ( field_indices(anotherFieldIndex) )
@@ -1242,6 +1244,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.23  2012/03/28 00:54:41  vsnyder
+! Better error message for wrong units
+!
 ! Revision 2.22  2011/05/09 18:26:45  pwagner
 ! Converted to using switchDetail
 !
