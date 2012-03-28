@@ -339,7 +339,7 @@ contains
     ! Executable
     myOneLine = .false.
     if ( present(oneLine) ) myOneLine = oneLine
-    write( iTag, *) i
+    write( iTag, "('0x',z2.2)") i
     if ( myOneLine) then
       myName = 'Bit names set by ' // adjustl(iTag)
     else
@@ -367,8 +367,7 @@ contains
       do bitSet=0, howMany-1
         bitNumber = which(bitSet)
         bitValue = 2**bitNumber
-        write( iTag, *) bitValue
-        call output( trim(adjustl(iTag)), advance='no' )
+        call output( bitValue, format='("0x",z2.2)', advance='no' )
         call blanks( 12 )
         write( iTag, *) bitNumber
         iTag = 'bit(' // adjustl(iTag) // ')'
@@ -649,6 +648,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.17  2012/03/28 00:55:39  vsnyder
+! Dump bit values in hex
+!
 ! Revision 2.16  2010/04/28 00:11:26  pwagner
 ! Added biteq to generalize bitwise '=='
 !
