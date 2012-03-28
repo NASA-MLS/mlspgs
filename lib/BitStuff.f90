@@ -368,7 +368,7 @@ contains
         bitNumber = which(bitSet)
         bitValue = 2**bitNumber
         call output( bitValue, format='("0x",z2.2)', advance='no' )
-        call blanks( 12 )
+        call blanks( 9 )
         write( iTag, *) bitNumber
         iTag = 'bit(' // adjustl(iTag) // ')'
         if ( size(names) > bitNumber ) iTag = names(bitNumber)
@@ -648,6 +648,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.18  2012/03/28 02:36:38  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.17  2012/03/28 00:55:39  vsnyder
 ! Dump bit values in hex
 !
