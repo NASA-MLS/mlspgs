@@ -14,7 +14,7 @@ program MLSL2
     & CLEARONALLOCATE
   use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
-  use HDF, only: DFACC_RDonly
+  use HDF, only: DFACC_RDONLY
   use INIT_TABLES_MODULE, only: INIT_TABLES
   use INTRINSIC, only: L_ASCII, L_HOURS, L_MINUTES, L_SECONDS, L_TKGEN, &
     & LIT_INDICES
@@ -547,8 +547,8 @@ program MLSL2
         call get_lun ( OutputOptions%prUnit, msg=.false. )
         close( unit=l2cf_unit )
         inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
-      else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
-        parallel%stageInMemory = .true.
+      ! else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
+      ! parallel%stageInMemory = .true.
       else if ( lowercase(line(3+n:12+n)) ==  'stopafter ' ) then
         call AccumulateSlaveArguments ( line )
         i = i + 1
@@ -1104,8 +1104,8 @@ contains
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Unretrieved states fill', STATEFILLEDBYSKIPPEDRETRIEVALS, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-      call outputNamedValue ( 'Stage in memory instead of a file?', parallel%stageInMemory, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+!     call outputNamedValue ( 'Stage in memory instead of a file?', parallel%stageInMemory, advance='yes', &
+!        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Using wall clock instead of cpu time?', time_config%use_wall_clock, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call get_string ( lit_indices(sectionTimingUnits), string, strip=.true. )
@@ -1178,6 +1178,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.180  2012/03/28 20:06:44  pwagner
+! Removed stgmem option--slave tasks lost ability to join quantities
+!
 ! Revision 2.179  2012/02/09 02:45:26  vsnyder
 ! Remove -C option -- I didn't notice --crash was already there
 !
