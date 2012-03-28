@@ -123,7 +123,7 @@ contains ! ============= Public Procedures ==========================
 
     if ( config%fwmType == l_full) call deriveFromForwardModelConfig ( config )
 
-    if ( config%transformMIFextinction .and. associated(config%signals) ) then
+    if ( config%transformMIFextinction ) then
       ! Transform MIFextinction quantities to extinction molecules before
       ! calling the forward model, and transform extinction molecules and
       ! associated rows of the Jacobian to MIF extinction quantities after
@@ -595,6 +595,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.41  2012/03/28 00:56:49  vsnyder
+! Move check for signals with MIF extinction from Wrappers to Support
+!
 ! Revision 2.40  2012/03/14 21:37:30  wgread
 ! added mif extinction transform capability vws&wgr
 !
