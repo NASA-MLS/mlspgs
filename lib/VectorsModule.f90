@@ -1764,7 +1764,7 @@ contains ! =====     Public Procedures     =============================
       call newLine
       call dump ( qty%values, '  Elements = ', options=options )
       if ( associated(qty%mask) ) then
-        call dump ( ichar(qty%mask), name='  Mask =', &
+        call dump ( ichar(qty%mask), name='  Mask(hex) =', &
           & format='(z3.2)', width = 20 )
 !           call dumpQuantityMask ( qty )
         call FindUnique( &
@@ -2735,6 +2735,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.160  2012/02/23 00:08:55  vsnyder
+! Don't dump molecule names if quantity type is not vmr
+!
 ! Revision 2.159  2012/02/13 23:21:47  pwagner
 ! Print moleccule when dumping quantity
 !
