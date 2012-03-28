@@ -16,11 +16,11 @@ module Open_Init
   ! Creates and destroys the L1BInfo database
 
   use DATES_MODULE, only: UTC_TO_YYYYMMDD
-  use HDF, only: DFACC_RDonly
+  use HDF, only: DFACC_RDONLY
   use INTRINSIC, only: L_HDF
   use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, TAI93_RANGE_T
   use MLSKinds, only: R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -360,15 +360,17 @@ contains ! =====     Public Procedures     =============================
       & GlobalAttributes%GranuleDay) 
     call FillTAI93Attribute
     
-    ! Get name of Parallel Staging file
-    version = 1
+    ! Get name of Parallel Staging file (not any more)
+    call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'This version does not use staging file for slave Join commands' )
+    ! version = 1
 
-    returnStatus = Pgs_pc_getReference(mlspcf_l2parsf_start, version, &
-      & parallel%stagingFile)
-    if ( returnStatus /= PGS_S_SUCCESS .and. parallel%master ) then
-      call announce_error ( 0, &
-        & "Error retrieving parallel staging file name from PCF" )
-    endif
+    ! returnStatus = Pgs_pc_getReference(mlspcf_l2parsf_start, version, &
+    !   & parallel%stagingFile)
+    ! if ( returnStatus /= PGS_S_SUCCESS .and. parallel%master ) then
+    !  call announce_error ( 0, &
+    !    & "Error retrieving parallel staging file name from PCF" )
+    ! endif
         
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
@@ -662,6 +664,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.99  2012/03/28 20:09:38  pwagner
+! Issue warning--slave tasks lost ability to join quantities
+!
 ! Revision 2.98  2011/06/29 21:49:43  pwagner
 ! Some cases may safely omit l1b files
 !
