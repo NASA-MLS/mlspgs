@@ -28,7 +28,7 @@ program REMAKE_GH
   integer :: DT(8)  ! Output from date_and_time intrinsic subroutine
   real :: DTEMOD(20)
   real :: ERAD
-  character(12) :: FILMOD(20) = '************'
+  character(13) :: FILMOD(20) = '*************'
   real :: GH(1023)
   integer :: I, IER, J, K
   integer :: NFILE, NGH, NGHMAX = 0, NMAX, NMAXMAX = 0, OU = 42
@@ -50,6 +50,12 @@ program REMAKE_GH
     case ( '-p ' )
       i = i + 1
       call get_command_argument ( i, prefix )
+    case ( '-h ' )
+      call get_command_argument ( 0, arg )
+      print '(3a)', 'Usage: ', trim(arg), ' [options] input-file-names'
+      print '(a)' , ' Options: -o file => output file name'
+      print '(a)' , '          -p prefix => prefix for input file names'
+      stop
     case default
       exit
     end select
@@ -220,7 +226,7 @@ o:  do nn = 1, nmax
 
     return
 
-666 print *, 'I/O Error, iostat =', ier
+666 print '(a,i0/2a)', 'I/O Error, iostat = ', ier, 'File = ', trim(fspec)
   end subroutine GETSHC
 
 !--------------------------- end bloc --------------------------------------
@@ -235,6 +241,9 @@ o:  do nn = 1, nmax
 end program REMAKE_GH
 
 ! $Log$
+! Revision 1.6  2012/03/29 00:43:08  vsnyder
+! Add time stamp, make GH array bigger
+!
 ! Revision 1.5  2012/03/14 00:58:03  vsnyder
 ! Remove goofy method to determine number of files
 !
