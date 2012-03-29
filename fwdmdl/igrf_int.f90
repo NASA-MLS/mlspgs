@@ -200,17 +200,26 @@ contains
   end subroutine FINDB0
 
   ! ----------------------------------------------------  DUMP_GH  -----
-  subroutine DUMP_GH ( Details )
+  subroutine DUMP_GH ( Details, Options )
     ! Dump the GH database
     use Dump_0, only: Dump
-    use Output_m, only: Output
+    use Output_m, only: Newline, Output
     use String_Table, only: Display_String
     integer, intent(in), optional :: Details ! <= 0 don't dump the GH field
                                              ! default 0
+    character(len=*), optional, intent(in) :: Options                         
+
+    ! This subterfuge is used to subvert compilers that use \ for escape
+    character(len=*), parameter :: BS2 = '\\'
+    character(len=2), parameter :: BS = ' ' // BS2(1:1)
+
+    logical :: Clean ! "c" or "C" appears in Options
     integer :: I, MyDetails
 
     myDetails = 0
     if ( present(details) ) myDetails = details
+    clean = .false.
+    if ( present(options) ) clean = scan(options,'cC') /= 0
 
     if ( .not. associated(ghs) ) then
       call output ( 'No IGRF coefficients database', advance='yes' )
@@ -220,9 +229,12 @@ contains
     do i = 1, size(ghs)
       call output ( i, format='(i2)' )
       call output ( ghs(i)%year, before=' Year = ' )
-      call output ( ghs(i)%erad, before=' Erad = ', after=' File: ' )
-      call display_string ( ghs(i)%file, strip=.true., advance='yes' )
-      if ( myDetails > 0 ) call dump ( ghs(i)%gh )
+      call output ( ghs(i)%erad, before=' Erad = ' )
+      call output ( ghs(i)%nmax, before=' Nmax = ', format='(i2)', after=' File: ' )
+      call display_string ( ghs(i)%file, strip=.true. )
+      if ( clean ) call output ( size(ghs(i)%gh), before=bs )
+      call newLine
+      if ( myDetails > 0 ) call dump ( ghs(i)%gh, options=options )
     end do
 
   end subroutine DUMP_GH
@@ -620,13 +632,14 @@ o:  do n = 3, size(p,2)-1
   !  Output:      DIMO  Geomagnetic dipole moment in GAUSS (normalized  
   !                     to earth's radius) at the time (year)           
   !-----------------------------------------------------------------------
+    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
     real, intent(in) :: YEAR
     real, intent(out), optional :: DIMO
 
     ! GHS     From coefficients file.  Created by Remake_GH program using
     !         the original GETSHC subroutine.
 
-    include 'gh.f9h'
+   include 'gh.f9h'
 
     real, allocatable ::         GHA(:)
     integer ::      I
@@ -636,11 +649,14 @@ o:  do n = 3, size(p,2)-1
     real ::         SQRT2
     double precision :: F, F0, X
 
+!     if ( .not. associated(ghs) ) call MLSMessage ( MLSMSG_Error, moduleName, &
+!       & 'No magnetic field model coefficient database' )
+
     numye = size(ghs) - 1
     ! Assume the years of the coefficient records are five years apart
     iyea  =  int(year/5.)*5
     l  =  max(1.0,min(real(numye),(iyea - ghs(1)%year)/5.0 + 1.0))
-    m = max(ghs(l)%ngh, ghs(l+1)%ngh)
+    m = max(size(ghs(l)%gh), size(ghs(l+1)%gh))
     if ( allocated(g) ) then
       if ( size(g) < m+1 ) deallocate ( g )
     end if
@@ -653,7 +669,8 @@ o:  do n = 3, size(p,2)-1
 !-- Determine IGRF coefficients for year
     if ( l < numye ) then
       call intershc ( year, ghs(l), ghs(l+1), nmax, gha )
-    else
+    else ! l == numye
+      ! Assume ghs(numye) is time derivatives, not coefficients.
       call extrashc ( year, ghs(l), ghs(l+1), nmax, gha )
     end if
 !-- Determine magnetic dipole moment and coeffiecients G
@@ -991,6 +1008,9 @@ o:  do n = 3, size(p,2)-1
 end module IGRF_INT
 
 ! $Log$
+! Revision 2.6  2012/03/29 20:15:15  vsnyder
+! Interim commit to make Dump_GH consistent with DumpCommand
+!
 ! Revision 2.5  2012/03/15 22:48:05  vsnyder
 ! Add Dump_GH and Read_GH
 !
