@@ -29,7 +29,7 @@ program REMAKE_GH
   real :: DTEMOD(20)
   real :: ERAD
   character(12) :: FILMOD(20) = '************'
-  real :: GH(144)
+  real :: GH(1023)
   integer :: I, IER, J, K
   integer :: NFILE, NGH, NGHMAX = 0, NMAX, NMAXMAX = 0, OU = 42
   character(len=127) :: OFILE = '', PREFIX = ''
@@ -235,6 +235,9 @@ o:  do nn = 1, nmax
 end program REMAKE_GH
 
 ! $Log$
+! Revision 1.5  2012/03/14 00:58:03  vsnyder
+! Remove goofy method to determine number of files
+!
 ! Revision 1.4  2012/03/14 00:57:08  vsnyder
 ! Add copyright statement
 !
