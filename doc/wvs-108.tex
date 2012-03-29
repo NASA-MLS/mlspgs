@@ -1,0 +1,237 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-108}
+\newcommand{\docdate}{29 March 2012}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Michael, Paul\\
+Subject: \>IGRF magnetic field coefficients\\
+From: \>Van Snyder\\
+%Reference: \> \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+From
+\href{http://nssdcftp.gsfc.nasa.gov/models/geomagnetic/igrf/fortran_code/00_readme.txt}%
+{http://nssdcftp.gsfc.nasa.gov/models/geomagnetic/igrf/fortran_code/00_readme.txt}
+
+\vspace*{-10pt}
+\begin{quote}
+IGRF -- Version 11 ----- March 14, 2010 (updated April 30, 2010)
+
+The International Geomagnetic Reference Field (IGRF) model is the
+empirical  representation of the Earth's magnetic field recommended for
+scientific use  by a special Working Group of the International
+Association of Geomagnetism  and Aeronomy (IAGA). The IGRF model
+represents the main (core) field without  external sources. The model
+employs the usual spherical harmonics expansion  of the scalar potential
+in geocentric coordinates. The IGRF model coefficients  are based on all
+available data sources including geomagnetic measurements  from
+observatories, ships, aircrafts and satellites.
+
+The IGRF model consists of sets of coefficients for a global
+representation  of the Earth magnetic field for the years 1945, 1950,
+1955, etc. There are  definitive coefficient sets (DGRF\#\#\#\#.DAT;
+\#\#\#\# = year) for which no further  revisions are anticipated and
+IGRF\#\#\#\#.DAT and IGRF\#\#\#\#S.DAT for which future  updates are
+expected. IGRF\#\#\#\#S.DAT provides the first time derivatives of  the
+coefficients for extrapolation into the future. The 11th generation of
+the  IGRF model (IGRF-11) consists of definitive coefficients sets for
+1900 thru  2005 (DGRF1945 thru DGRF2005) and prelimenary sets for 1900 to
+1940 and for  2010 (IGRF2010) and for extrapolating from 2005 to 2010
+(IGRF2010s.DAT).
+
+In combination with the IGRF coefficient sets different subroutines have
+been  used to determine the components of the magnetic field vector and
+the L-value  at a given location. This sofware package uses the
+subroutines FELDG (magnetic  field vector) and SHELLG (L shell) developed
+by G. Kluge at the European Space  Operations Center (ESOC). His use of
+inverse cartesian co- ordinates simplifies  the computation. The IGRF
+subroutines were developed by A. Zunde of the U.S.  Geological Survey
+(USGS). FELDG and SHELLG are included togehter with other  funbctions and
+subroutines in the file SHELLIG.FOR. The program BILCAL.FOR  produces
+tables of the geomagnetic field strength, vector components (B-abs., 
+B-north, B-east, B-down, declination, inclination), equatorial/minimum
+field  strength (B0), dipole moment, and L-value in latitude, longitude
+(geodetic),  altitude, or year (decimal). In addition to the main driver
+program BILCAL.FOR this distribution also includes a subroutine for
+computation of IGRF parameters in the file IGRF_SUB.FOR. 
+
+The IGRF homepage is at \href{http://www.ngdc.noaa.gov/IAGA/vmod/igrf.html}%
+{http://www.ngdc.noaa.gov/IAGA/vmod/igrf.html}.
+\end{quote}
+\vspace*{-10pt}
+
+The full paper that describes the 11$^\text{th}$ IGRF model is available at\\
+\href{http://onlinelibrary.wiley.com/doi/10.1111/j.1365-246X.2010.04804.x/pdf}%
+{http://onlinelibrary.wiley.com/doi/10.1111/j.1365-246X.2010.04804.x/pdf}
+
+From the abstract:
+
+\vspace*{-10pt}
+\begin{quote}
+The eleventh generation of the International Geomagnetic Reference Field
+(IGRF) was adopted in December 2009 by the International Association of
+Geomagnetism and Aeronomy Working Group V-MOD. It updates the previous
+IGRF generation with a definitive main field model for epoch 2005.0, a
+main field model for epoch 2010.0, and a linear predictive secular
+variation model for 2010.0--2015.0. In this note the equations
+defining the IGRF model are provided along with the spherical harmonic
+coefficients for the eleventh generation. Maps of the magnetic
+declination, inclination and total intensity for epoch 2010.0 and their
+predicted rates of change for 2010.0--2015.0 are presented. The recent
+evolution of the South Atlantic Anomaly and magnetic pole positions are
+also examined.
+\end{quote}
+\vspace*{-10pt}
+
+The files available from {\tt nssdcftp} are in a different format from
+files previously downloaded, which is the format that {\tt mlsl2} is able
+to read.  The old format allows a bit more robust error checking, since
+each line includes the degree and order of the coefficients on the line. 
+A program, {\tt \dots/mlspgs/util/Reform_IGRF}, is used to transform from
+the new format to the one that {\tt mlsl2} is able to read. Its usage is
+
+\vspace*{-10pt}
+{\tt
+\begin{verbatim}
+  Reform_IGRF [options] [input-file]
+   Options: -f from => Where the file was gotten
+            -o output => output file name, else stdout
+   if input-file is not specified, input is from stdin
+\end{verbatim}}
+\vspace*{-10pt}
+
+The {\tt from} string, if any, and {\tt cvs Id} and {\tt Log} lines, are
+written at the end of the output file.  If the file is structurally
+correct, the reader in {\tt mlsl2} stops before getting to these lines.
+
+Here's a {\tt tcsh} example, which assumes the input files are in {\tt
+./input} and the output files are to be placed in the current directory,
+with the same names:
+
+\vspace*{-10pt}
+{\tt
+\begin{verbatim}
+  foreach f ( ./input/?grf*dat )
+  Reform_IGRF -o `basename $f` \
+    -f http://nssdcftp.gsfc.nasa.gov/models/geomagnetic/igrf/fortran_code $f
+  end
+\end{verbatim}}
+\vspace*{-10pt}
+
+
+If {\tt \dots/mlspgs/fwdmdl/igrf_int.f90} is compiled to use coefficient
+tables that are data statements in the include file {\tt gh.f9h}, instead
+of being read from files specified in the {\tt GlobalSettings} section of
+the {\tt l2cf}, the data statements can be made from the files using the
+program {\tt util/remake_gh}. Its usage is
+
+\vspace*{-10pt}
+{\tt
+\begin{verbatim}
+  remake_gh [options] input-file-names
+   Options: -o file => output file name, else stdout
+            -p prefix => prefix for input file names
+\end{verbatim}}
+\vspace*{-10pt}
+
+This program does not sort the tables into year order before producing
+data statements, so the {\tt input-file-names} must be supplied in year
+order.
+
+Here's an example:
+
+\vspace*{-10pt}
+{\tt
+\begin{verbatim}
+cd mlspgs/fwdmdl
+../util/remake_gh -p ../tables -o gh.f9h \
+dgrf1945.dat   dgrf1950.dat   dgrf1955.dat   dgrf1960.dat   dgrf1965.dat \
+dgrf1970.dat   dgrf1975.dat   dgrf1980.dat   dgrf1985.dat   dgrf1990.dat \
+dgrf1995.dat   dgrf2000.dat   dgrf2005.dat   igrf2010.dat   igrf2010s.dat
+\end{verbatim}}
+\vspace*{-10pt}
+
+The input files must be in the format produced by {\tt Reform_IGRF}.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
