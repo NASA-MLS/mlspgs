@@ -1,16 +1,53 @@
 \documentclass[11pt]{article}
-\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
 \oddsidemargin -0.25in
 %\evensidemargin -0.5in
-\topmargin -0.25in
-\textheight 9.0in
+\topmargin -0.5in
+\textheight 9in
 
 \newcommand{\docname}{\bf wvs-048r10}
 \newcommand{\docdate}{12 May 2009}
 
-\usepackage{graphicx}
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
 
-\usepackage{floatflt}
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
 
 \begin{document}
 
@@ -190,6 +227,9 @@ are necessary.  Remember, $\tan\delta\phi = \text{signum}(\delta\phi)
 % $Id$
 
 % $Log$
+% Revision 1.9  2009/05/12 23:41:09  vsnyder
+% Remark about different tangent angles for incident and reflected rays, more cleanup
+%
 % Revision 1.8  2009/04/30 23:34:53  vsnyder
 % Need abs around 'delta phi'
 %

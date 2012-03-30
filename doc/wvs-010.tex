@@ -1,20 +1,68 @@
-\documentclass[11pt,dvips]{article}
-\usepackage{epsfig}
-\textwidth 6.25in
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
 \oddsidemargin -0.25in
 %\evensidemargin -0.5in
 \topmargin -0.5in
-\textheight 9.00in
+\textheight 9in
+
+\newcommand{\docname}{wvs-010r3}
+\newcommand{\docdate}{30 March 2012}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
 
 \begin{document}
 
 %\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
 \makeatletter
 \def\@biblabel#1{#1.}
 \newcommand{\ps@twolines}{%
   \renewcommand{\@oddhead}{%
-    4 January 2001\hfill Page \thepage\ of \pageref{lastpage}\hfill{\bf
-    wvs-010r2}}%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
 \renewcommand{\@evenhead}{}%
 \renewcommand{\@oddfoot}{}%
 \renewcommand{\@evenfoot}{}%
@@ -118,7 +166,7 @@ A database of matrices may be destroyed by
   call destroyMatrixDatabase ( database )
 \end{verbatim}}
 which destroys every matrix in the database using the {\tt
-DestroyMatrix} subroutine from {\tt MatrixModule\_1} (see subsection
+DestroyMatrix} subroutine from {\tt MatrixMod\-ule\_1} (see subsection
 \ref{DestroyMatrix}), and then deallocates the database.
 
 \subsection{Creating and solving the normal equations}
@@ -727,7 +775,8 @@ three representations:  Column sparse, Banded, and Full.
 Here are pictures that show how the Column sparse and Banded
 representations are implemented:
 
-\epsfig{file=sparse.eps}
+\includegraphics[width=6in,height=5.9in,keepaspectratio=true,clip=true,
+viewport=34 353 481 757]{sparse}
 
 \subsection{Public type provided by MatrixModule\_0}\label{typeMatrix0}
 The type MatrixElement\_T represents a matrix.  It is called an
@@ -1543,6 +1592,9 @@ This procedure is also available by using the UpdateDiagonal interface.
 \end{document}
 
 % $Log$
+% Revision 1.1  2008/06/11 20:14:50  vsnyder
+% Initial commit
+%
 % Revision 1.1  2000/12/01 21:36:42  vsnyder
 % Initial entry
 %
