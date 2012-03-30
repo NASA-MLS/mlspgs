@@ -31,7 +31,7 @@ program REMAKE_GH
   character(13) :: FILMOD(20) = '*************'
   real :: GH(1023)
   integer :: I, IER, J, K
-  integer :: NFILE, NGH, NGHMAX = 0, NMAX, NMAXMAX = 0, OU = 42
+  integer :: NFILE, NGH, NGHMAX = 0, NMAX, NMAXMAX = 0, OU = output_unit
   character(len=127) :: OFILE = '', PREFIX = ''
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -47,14 +47,17 @@ program REMAKE_GH
     case ( '-o ' )
       i = i + 1
       call get_command_argument ( i, ofile )
+      ou = 42
+      open ( ou, file=trim(ofile), form='formatted' )
     case ( '-p ' )
       i = i + 1
       call get_command_argument ( i, prefix )
     case ( '-h ' )
       call get_command_argument ( 0, arg )
       print '(3a)', 'Usage: ', trim(arg), ' [options] input-file-names'
-      print '(a)' , ' Options: -o file => output file name'
+      print '(a)' , ' Options: -o file => output file name, else stdout'
       print '(a)' , '          -p prefix => prefix for input file names'
+      print '(a)' , '                       / is appended to prefix'
       stop
     case default
       exit
@@ -67,12 +70,6 @@ program REMAKE_GH
     call get_command_argument ( i, filmod(nfile) )
     i = i + 1
   end do
-
-  if ( ofile /= '' ) then
-    open ( ou, file=trim(ofile), form='formatted' )
-  else
-    ou = output_unit
-  end if
 
   if ( prefix == '' ) prefix = '.'
 
@@ -96,17 +93,17 @@ program REMAKE_GH
 
   ! Write a type definition for the data
   write ( ou, '(a)' ) '  type :: GH_T', &
-    &                '    real    :: YEAR', &
-    &                '    character(len=12) :: FILE', &
-    &                '    integer :: NMAX', &
-    &                '    integer :: NGH', &
-    &                '    real ::    ERAD'
+    &                 '    real    :: YEAR', &
+    &                 '    character(len=12) :: FILE', &
+    &                 '    integer :: NMAX', &
+    &                 '    integer :: NGH', &
+    &                 '    real ::    ERAD'
   write ( ou, '(a:,i0,a)' ) &
-    &                '    real ::    GH(', nghmax, ')', &
-    &                '  end type GH_T'
+    &                 '    real ::    GH(', nghmax, ')', &
+    &                 '  end type GH_T'
   ! Write a declaration for the variable
   write ( ou, '(a,i0,a)' ) &
-    &                '  type(gh_t), save :: GHS(', nfile, ')'
+    &                 '  type(gh_t), save :: GHS(', nfile, ')'
 
   ! Write the data statements
   do i = 1, nfile
@@ -241,6 +238,9 @@ o:  do nn = 1, nmax
 end program REMAKE_GH
 
 ! $Log$
+! Revision 1.7  2012/03/29 20:21:24  vsnyder
+! Add -h option for usage summary
+!
 ! Revision 1.6  2012/03/29 00:43:08  vsnyder
 ! Add time stamp, make GH array bigger
 !
