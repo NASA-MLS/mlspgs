@@ -23,22 +23,38 @@ MakeFName = MakeFC
 #        say: make -f MakeFC
 # then (re)name the Makefiles in /l2 /lib etc. also MakeFC
 
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
 # where to store .configure; 
 CONFDIR=..
 
 UTILDIR=$(CONFDIR)/util
+
+# Where non-standard build commands are kept
+CUSTOM = $(CONFDIR)/customblds
 
 # reecho.sh can filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
 # However we will be using it just to prefix any unprefixed preset paths
 REECHO=$(UTILDIR)/reecho.sh
 
+# Get any settings from our .configure
+include $(CONFDIR)/$(MLSCFILE)
+
+short_name=doc
+
 # l2 won't build yet (it lacks certain files, e.g. l2cf_Fill_BinMax.tex)
 #SUBDIRS := $(shell ${REECHO} -d cfm)
 
 # Errors in the .tex sources require us to omit the following
-OMIT_SRCS := wvs-010.tex wvs-074.tex wvs-051-neural_body.tex wvs-083.tex \
-     wvs-089.tex wvs-095.tex iy-002.tex iy-003.tex iy-008.tex iy-009.tex \
+OMIT_SRCS := wvs-051-neural_body.tex \
+     iy-002.tex iy-003.tex iy-008.tex iy-009.tex \
      iy-010.tex texmacros.tex
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
@@ -61,11 +77,12 @@ vpath %.dvi $(DVIDIR)
 vpath %.l2cf $(CONFDIR)/l2/l2cf/lib
 vpath %.log $(LOGDIR)
 vpath %.pdf $(PDFDIR)
+vpath %.eps $(DOCDIR)
 
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .tex .dvi .pdf
+.SUFFIXES: .tex .dvi .pdf .eps
 .tex.dvi:
 	echo "\def\dvidir{$(DVIDIR)}" | cat - $< > $*.temp
 	echo "\def\pdfdir{$(PDFDIR)}" | cat - $*.temp > $(TEXDIR)/$<
@@ -95,6 +112,9 @@ all: doc cfm icfm
 
 doc: ${NEAROBJS} ${OBJS} MakeFC
 	date > doc; echo $(OBJS) >> doc
+
+include $(CUSTOM)/$(MLSF95).$(MLSPLAT)
+include $(CUSTOM)/doc.h
 
 # ========================================================================
 
@@ -155,6 +175,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.14  2011/05/31 22:11:25  pwagner
+# Added commands to build icfm
+#
 # Revision 1.13  2011/05/25 20:34:11  pwagner
 # CONFDIR reverted to point to parent directory
 #
