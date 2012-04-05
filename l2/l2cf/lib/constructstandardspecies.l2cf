@@ -583,8 +583,21 @@ begin Construct
 
   ;; ------------------------------------------- Now define vector templates
 
-  ;; Put extra line breaks here to get round a problem I'm having
-  ;; running this with NAG.
+  ;; The first set are for use with special lesser state fills.
+  ElevOffsetTemplate: VectorTemplate, quantities= [$
+    !allElevs ]
+  IsotopeRatioTemplate: VectorTemplate, quantities= [$
+    !allIsotopeRatios ]
+  MiscTemplate: VectorTemplate, quantities= [$
+    earthReflectivity, spaceRadiance, earthRadius, n2, o2 ]
+  NoiseBandwidthTemplate: VectorTemplate, quantities= [$
+    !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths ]
+  SBFTemplate: VectorTemplate, quantities= [$
+    !allSidebandFractions ]
+  SystemTemperatureTemplate: VectorTemplate, quantities= [$
+    !allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures ]
+
+  ;; Now the big enchilada
   stateTemplate: VectorTemplate, quantities = [ $
     ptanGHZ, ptanTHz, phitanGHz, phitanTHz, $
     temperature, temperature_HR, $
