@@ -24,22 +24,25 @@ begin Fill
   !define(flaggingRadiometers,{R2})!dnl
   !makeQualityForOneProduct(product=H2O,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
   !makeStatusForOneProduct(product=H2O,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
-  !define(phaseH2O,{QuickR2NRT})
+  !define(phaseH2O,{StdProd})
 
   ;; ------------------------------------ HNO3-QuickR2NRT
   !define(flaggingBands,{2,3,4})
   !define(flaggingRadiometers,{R2})!dnl
   !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
   !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
-  !define(phaseHNO3,{QuickR2NRT})
+  !define(phaseHNO3,{StdProd})
 
   ;; ------------------------------------ N2O-QuickR2NRT
   !define(flaggingBands,{2,3,4})
   !define(flaggingRadiometers,{R2})!dnl
   !makeQualityForOneProduct(product=N2O,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
   !makeStatusForOneProduct(product=N2O,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
-  !define(phaseN2O,{QuickR2NRT})
+  !define(phaseN2O,{StdProd})
 
 end Fill
 
 ; $Log$
+; Revision 1.1  2012/03/12 17:54:22  pwagner
+; First commit
+;

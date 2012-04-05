@@ -18,14 +18,14 @@ begin Fill
   !define(flaggingRadiometers,{R3})!dnl
   !makeQualityForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
   !makeStatusForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=500,cloudMax=30K,cloudMin= -999K)
-  !define(phaseO3,{QuickR3NRT})
+  !define(phaseO3,{StdProd})
 
   ;; ------------------------------------ CO-QuickR3NRT
   !define(flaggingBands,{9})
   !define(flaggingRadiometers,{R3})!dnl
   !makeQualityForOneProduct(product=CO,chisqScale=1.0,minRads=200,cloudMax=30K,cloudMin= -999K)
   !makeStatusForOneProduct(product=CO,chisqScale=1.0,minRads=200,cloudMax=30K,cloudMin= -999K)
-  !define(phaseCO,{QuickR3NRT})
+  !define(phaseCO,{StdProd})
 
   ;; ------------------------------------- HNO3-QuickR3NRT
   !define(flaggingBands,{7,9})
@@ -38,10 +38,14 @@ begin Fill
   !define(flaggingRadiometers,{R3})!dnl
   !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=30K,cloudMin= -999K)
   !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=30K,cloudMin= -999K)
+  !define(phaseSO2,{StdProd})
 
 end Fill
 
 ; $Log$
+; Revision 1.2  2012/03/14 17:44:25  pwagner
+; Added CO, HNO3, SO2
+;
 ; Revision 1.1  2012/03/12 17:53:59  pwagner
 ; First commit
 ;
