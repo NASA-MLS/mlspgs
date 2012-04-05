@@ -2,6 +2,12 @@
 
 begin Fill
 
+!ifdef(flagElevOffsetFromFile, {
+  elevOffset: vector, template=ElevOffsetTemplate
+  DirectRead, Vector=elevOffset, hdfVersion=5, type=hdf, $
+    file='!ElevOffsetHDF'
+  Transfer, source=elevOffset, destination=apriori
+},{
   ;; -------------------------------------------------- Elev offsets
  
   ;; This macro below fills <x>Elev for radiometer <x> with the value
@@ -11,7 +17,14 @@ begin Fill
 
   ;; Call that macro for all radiometers
   !ifdef(flagPreV14Configuration,{},{!forall(fillElevOffset,!allBandLSBs,!allBandUSBs)})
+})
 
+!ifdef(flagIsotopeRatioFromFile, {
+  isotopeRatio: vector, template=IsotopeRatioTemplate
+  DirectRead, Vector=isotopeRatio, hdfVersion=5, type=hdf, $
+    file='!IsotopeRatioHDF'
+  Transfer, source=isotopeRatio, destination=apriori
+},{
   ;; --------------------------------------------------- Isotope ratios
 
   ;; This macro below fills the isotope ratio quanity for molecule <x>
@@ -24,6 +37,14 @@ begin Fill
   ;; Call this macro for all molecules
   !forall(fillIsotopeRatio,!isotopicMolecules)
 
+})
+
+!ifdef(flagSBFractionFromFile, {
+  SBFraction: vector, template=SBFTemplate
+  DirectRead, Vector=SBFraction, hdfVersion=5, type=hdf, $
+    file='!SBFractionHDF'
+  Transfer, source=SBFraction, destination=apriori
+},{
   ;; ------------------------------------- Sideband fractions
 
   ;; This macro fills one set of sideband fraction for one band.
@@ -47,6 +68,14 @@ begin Fill
   
   !ifdef(flagPreV14Configuration,{!forall(resetSidebandFractions,1L,22L,32L,21l,26l,34L)})
 
+})
+
+!ifdef(flagSystemTemperatureFromFile, {
+  SystemTemperature: vector, template=SystemTemperatureTemplate
+  DirectRead, Vector=SystemTemperature, hdfVersion=5, type=hdf, $
+    file='!SystemTemperatureHDF'
+  Transfer, source=SystemTemperature, destination=apriori
+},{
   ;; ----------------------------------------- System temperatures
 
   !ifdef(flagSIDS,{
@@ -60,6 +89,14 @@ begin Fill
   !forall(fillSystemTemperature,!allBandUSBs)
   })
 
+})
+
+!ifdef(flagNoiseBandwidthFromFile, {
+  NoiseBandwidth: vector, template=NoiseBandwidthTemplate
+  DirectRead, Vector=NoiseBandwidth, hdfVersion=5, type=hdf, $
+    file='!NoiseBandwidthHDF'
+  Transfer, source=NoiseBandwidth, destination=apriori
+},{
   ;; ----------------------------------------- Noise bandwidths
 
   ;; This macro fills one noise bandwidth for one band
@@ -73,6 +110,14 @@ begin Fill
   !forall(fillNoiseBandwidth,!allBandUSBs)
   })
 
+})
+
+!ifdef(flagMiscFromFile, {
+  Misc: vector, template=MiscTemplate
+  DirectRead, Vector=Misc, hdfVersion=5, type=hdf, $
+    file='!MiscHDF'
+  Transfer, source=Misc, destination=apriori
+},{
   ;; --------------------------------------------------- Minor terms
 
   Fill, quantity=apriori.earthReflectivity, $
@@ -114,6 +159,8 @@ begin Fill
       8.8552e-05 mb : 0.1564 vmr, $
       6.6696e-05 mb : 0.1447 vmr ]
 ;   })
+
+})
 
   ;; --------------------------------------------------- Stuff from L1BOA
 
