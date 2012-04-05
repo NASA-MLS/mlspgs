@@ -87,7 +87,7 @@ contains ! =====     Public Procedures     =============================
       &                MLSPCF_L2_PARAM_SPEC_KEYS, &
       &                MLSPCF_L2_PARAM_SPEC_HASH, &
       &                MLSPCF_L2_PARAM_SWITCHES, &
-      &                MLSPCF_PCF_START, MLSPCF_L2PARSF_START
+      &                MLSPCF_PCF_START
     use MLSSTRINGS, only: LOWERCASE
     use SDPTOOLKIT, only: PGS_PC_GETFILESIZE, PGS_TD_UTCTOTAI,&
       &    PGS_PC_GETCONFIGDATA, PGS_PC_GETREFERENCE, PGS_S_SUCCESS, &
@@ -365,13 +365,6 @@ contains ! =====     Public Procedures     =============================
       & 'This version does not use staging file for slave Join commands' )
     ! version = 1
 
-    ! returnStatus = Pgs_pc_getReference(mlspcf_l2parsf_start, version, &
-    !   & parallel%stagingFile)
-    ! if ( returnStatus /= PGS_S_SUCCESS .and. parallel%master ) then
-    !  call announce_error ( 0, &
-    !    & "Error retrieving parallel staging file name from PCF" )
-    ! endif
-        
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with open_init section')
@@ -664,6 +657,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.100  2012/04/05 20:14:39  pwagner
+! Erased all traces of parallel staging file
+!
 ! Revision 2.99  2012/03/28 20:09:38  pwagner
 ! Issue warning--slave tasks lost ability to join quantities
 !
