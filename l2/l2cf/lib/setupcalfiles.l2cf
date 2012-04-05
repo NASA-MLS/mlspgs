@@ -121,6 +121,12 @@
   'R5H',$
   'R5V',$
   'DACS']})
+  !define(ElevOffsetHDF,{ElevOffset})
+  !define(IsotopeRatioHDF,{IsotopeRatio})
+  !define(SBFractionHDF,{SBFraction})
+  !define(SystemTemperatureHDF,{SystemTemperature})
+  !define(NoiseBandwidthHDF,{NoiseBandwidth})
+  !define(MiscHDF,{Misc})
   !define(spectroscopyHDF,{Spectroscopy})
   !define(spectroscopyFullHDF,{Spectroscopy})
   !define(spectroscopyRtvlHDF,{Spectroscopy})
@@ -154,6 +160,12 @@
     '!pfaPath/PFA_R1A_!pfaVersion.h5',$
     '!pfaPath/PFA_DACS_!pfaVersion.h5']})
   })
+  !define(ElevOffsetHDF,{!calpath/MLS-Aura_L2Cal-ElevOffsets_v3-0-5_0000d000.h5})
+  !define(IsotopeRatioHDF,{!calpath/MLS-Aura_L2Cal-IsotopeRatios_v3-0-5_0000d000.h5})
+  !define(SBFractionHDF,{!calpath/MLS-Aura_L2Cal-SBFractions_v3-0-5_0000d000.h5})
+  !define(SystemTemperatureHDF,{!calpath/MLS-Aura_L2Cal-SystemTemperatures_v3-0-5_0000d000.h5})
+  !define(NoiseBandwidthHDF,{!calpath/MLS-Aura_L2Cal-NoiseBandwidths_v3-0-5_0000d000.h5})
+  !define(MiscHDF,{!calpath/MLS-Aura_L2Cal-Miscs_v3-0-5_0000d000.h5})
   !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.h5})
   !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.h5})
   !define(spectroscopyRtvlHDF,{!spectroscopyHDF})
@@ -165,6 +177,9 @@
 !ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
 !ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
 ;$Log$
+;Revision 1.45  2012/03/12 17:01:11  pwagner
+;Use latest Climatology that adds extinctionv2R3
+;
 ;Revision 1.44  2010/04/12 17:43:43  pwagner
 ;Uses new v1.7.7 Climatology file
 ;
