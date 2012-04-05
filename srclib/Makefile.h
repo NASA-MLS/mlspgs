@@ -110,7 +110,7 @@ endif
 .SUFFIXES: .f90 .F90
 
 .F90.f90:
-	cpp -D$(MLSF95) $< $@
+	cpp -D$(MLSF95) -w $< $@
 
 ifeq ($(MLSF95),Abs)
   UP_OR_LOW := -mod UPPER
@@ -218,6 +218,9 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR) $(UPTODATEMARKS)
 
 # $Log$
+# Revision 1.4  2011/11/18 23:37:22  pwagner
+# Added missing l2 dependencies; fixed spelling error
+#
 # Revision 1.3  2011/08/26 00:37:47  pwagner
 # Added tables/sps_cross_ref_table.txt to lib prereqs
 #
