@@ -9,10 +9,13 @@
 #       * Special value expanded into all standard species *
 # Special notes on species names:
 # (1) If str1 is StdProd it is expanded into the current standard products
-# (2) If str1 is L2FWM-.. it is expanded into the appropriate l2fwm files
-# (3) If str1 is L2AUX-.. it is expanded into the appropriate l2aux files
-# i.e.,  
-# BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature
+#   BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature
+# (2) If str1 is nrt2 it is expanded into the current nrt standard products
+#   CO H2O HNO3 N2O O3 SO2 Temperature
+# (3) If str1 is nrt it is expanded into the former nrt standard products
+#   O3 Temperature
+# (4) If str1 is L2FWM-.. it is expanded into the appropriate l2fwm files
+# (5) If str1 is L2AUX-.. it is expanded into the appropriate l2aux files
 
 #     O p t i o n s
 #    -dryrun              Merely echo the commands that would be executed
@@ -82,6 +85,7 @@ GZIPLEVEL="1"
 #          ^^^---- compression level ("" means none)
 
 
+nrt2prods='CO H2O HNO3 N2O O3 SO2 Temperature'
 nrtdprods='O3 Temperature'
 stdprods='BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
 debug=1
@@ -145,9 +149,13 @@ while [ "$more_strs" = "yes" ] ; do
        ;;
     * )
        more_opts="no"
+       nrt2test=`echo $1 | grep -i nrt2`
        nrttest=`echo $1 | grep -i nrt`
        sptest=`echo $1 | grep -i st`
-       if [ "$nrttest" != "" ]
+       if [ "$nrt2test" != "" ]
+       then
+         list="nrt2prods"
+       elif [ "$nrttest" != "" ]
        then
          list="$nrtdprods"
        elif [ "$sptest" != "" ]
@@ -250,6 +258,9 @@ do
 done
 
 # $Log$
+# Revision 1.4  2009/12/10 18:52:58  pwagner
+# Attempts to find command first in PATH, then inder MLSTOOLS
+#
 # Revision 1.3  2009/04/18 00:50:18  pwagner
 # Reverted last buggy commit
 #
