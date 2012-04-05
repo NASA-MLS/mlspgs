@@ -120,7 +120,21 @@ ptggrids: grid_file_mdb.dat   1
 ; -----------------------------------------------------------------------------
 ; forward model input (l2pc, etc.)
 ;
-pfa: PFAData_R1A_v2-0-5.h5   27
+pfa: PFAData_R1A_v2-0-5.h5   20
+;
+IGRF: igrf2010.dat   1
+;
+ElevOffset: ElevOffsets_v3-0-5_0000d000.h5   1
+;
+IsoTopeRatio: IsotopeRatios_v3-0-5i.h5   1
+;
+SBFraction: SBFraction_v3-0-2.h5   1
+;
+SysTemperature: SystemTemperatures_v3-0-5_0000d000.h5   1
+;
+NoiseBW: NoiseBandwidths_v3-0-5_0000d000.h5   1
+;
+Misc: Misc_v3-0-2.h5   1
 ;
 MieTables: Mie_v3-0-5.h5   1
 ;
@@ -209,8 +223,8 @@ mobile_l2dgm: MLS-Aura_L2AUX_Diagnostics_V${VERSION}-C${CYCLE}_${DATE}.dat   30
 mobile_l2fwm_full: MLS-Aura_L2AUX_Fwd-Model_V${VERSION}-C${CYCLE}_${DATE}.dat   30
 ;
 ; staging file for parallel runs
-;
-mobile_l2parsf: MLS-Aura_L2PARSF_V${VERSION}-C${CYCLE}_${DATE}.dat   1
+; (We've removed this--slave tasks must DirectWrite, unable to Join quantities)
+; mobile_l2parsf: MLS-Aura_L2PARSF_V${VERSION}-C${CYCLE}_${DATE}.dat   1
 ;
 ; ----------------------------------------------------------------------------
 ;
@@ -253,3 +267,6 @@ mobile_mcf_l2dgm: ML2DGM.001.MCF   1
 l3: eof   1
 ;
 ; $Log$
+; Revision 1.1  2008/05/09 00:38:24  pwagner
+; First commit
+;
