@@ -52,7 +52,28 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_ptggrids_end = 20004
    !
    INTEGER, PARAMETER :: mlspcf_pfa_start = 20005
-   INTEGER, PARAMETER :: mlspcf_pfa_end = 20031
+   INTEGER, PARAMETER :: mlspcf_pfa_end = 20024
+   !
+   INTEGER, PARAMETER :: mlspcf_IGRF_start = 20025
+   INTEGER, PARAMETER :: mlspcf_IGRF_end = 20025
+   !
+   INTEGER, PARAMETER :: mlspcf_ElevOffset_start = 20026
+   INTEGER, PARAMETER :: mlspcf_ElevOffset_end = 20026
+   !
+   INTEGER, PARAMETER :: mlspcf_IsoTopeRatio_start = 20027
+   INTEGER, PARAMETER :: mlspcf_IsoTopeRatio_end = 20027
+   !
+   INTEGER, PARAMETER :: mlspcf_SBFraction_start = 20028
+   INTEGER, PARAMETER :: mlspcf_SBFraction_end = 20028
+   !
+   INTEGER, PARAMETER :: mlspcf_SysTemperature_start = 20029
+   INTEGER, PARAMETER :: mlspcf_SysTemperature_end = 20029
+   !
+   INTEGER, PARAMETER :: mlspcf_NoiseBW_start = 20030
+   INTEGER, PARAMETER :: mlspcf_NoiseBW_end = 20030
+   !
+   INTEGER, PARAMETER :: mlspcf_Misc_start = 20031
+   INTEGER, PARAMETER :: mlspcf_Misc_end = 20031
    !
    INTEGER, PARAMETER :: mlspcf_MieTables_start = 20032
    INTEGER, PARAMETER :: mlspcf_MieTables_end = 20032
@@ -99,9 +120,6 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_mobile_l2fwm_full_start = 30630
    INTEGER, PARAMETER :: mlspcf_mobile_l2fwm_full_end = 30659
    !
-   INTEGER, PARAMETER :: mlspcf_mobile_l2parsf_start = 30660
-   INTEGER, PARAMETER :: mlspcf_mobile_l2parsf_end = 30660
-   !
    INTEGER, PARAMETER :: mlspcf_mobile_mcf_l2log_start = 4000
    INTEGER, PARAMETER :: mlspcf_mobile_mcf_l2log_end = 4000
    !
@@ -129,6 +147,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.25  2012/04/05 20:13:01  pwagner
+! Added ids for igrf and other parameter files
+!
 ! Revision 2.24  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
