@@ -554,7 +554,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 !define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
 ;;  !define(ColumnStdProds,{O3,CO,SO2,HNO3,H2O,HCN,CH3CN,BrO,ClO,HCl,HO2,HOCl,N2O,OH})!dnl
 ;; We're planning on only O3 accompanying its column
-!define(ColumnStdProds,{O3})!dnl
+!ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
 
 !define(storeStandardProduct,{!dnl
 !ifelse(!index(!defn(ColumnStdProds),$1),{-1}, {!dnl
@@ -1167,6 +1167,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.147  2012/02/24 18:36:44  wgread
+; wgr--removed retrieverstate etc.
+;
 ; Revision 1.146  2012/02/22 00:08:15  wgread
 ; wgr--added mif extinction
 ;
