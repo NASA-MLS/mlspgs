@@ -424,7 +424,8 @@ begin Construct
 
   ;; ----------------------------------------- System temperatures
 
-  !ifdef(flagSIDS,{!dnl
+  !ifdef(flagSkipSysTemp,{},
+  {!dnl
   !define(constructSystemTemperature, {systemTemperature$1: Quantity, $
     type=systemTemperature, signal=!signal($1)!nl})
   
@@ -443,7 +444,8 @@ begin Construct
 
   ;; ----------------------------------------- Noise bandwidths
 
-  !ifdef(flagSIDS,{!dnl
+  !ifdef(flagSkipSysTemp,{},
+  {!dnl
   !define(constructNoiseBandwidth, {noiseBandwidth$1: Quantity, $
     type=noiseBandwidth, signal=!signal($1)!nl})
   
@@ -596,7 +598,7 @@ begin Construct
     !alltotalExtinctions, $
     !allIsotopeRatios, $
     !allSidebandFractions, $
-    !ifdef(flagSIDS,{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
+    !ifdef(flagSkipSysTemp,{},{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
     !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths,}) !allElevs, $
     !lesserState ]
 

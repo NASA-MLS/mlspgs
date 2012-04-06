@@ -440,7 +440,8 @@ begin Construct
 
   ;; ----------------------------------------- System temperatures
 
-  !ifdef(flagSIDS,{!dnl
+  !ifdef(flagSkipSysTemp,{},
+  {!dnl
   !define(constructSystemTemperature, {systemTemperature$1: Quantity, $
     type=systemTemperature, signal=!signal($1)!nl})
   
@@ -459,7 +460,8 @@ begin Construct
 
   ;; ----------------------------------------- Noise bandwidths
 
-  !ifdef(flagSIDS,{!dnl
+  !ifdef(flagSkipSysTemp,{},
+  {!dnl
   !define(constructNoiseBandwidth, {noiseBandwidth$1: Quantity, $
     type=noiseBandwidth, signal=!signal($1)!nl})
   
@@ -590,12 +592,15 @@ begin Construct
     !allIsotopeRatios ]
   MiscTemplate: VectorTemplate, quantities= [$
     earthReflectivity, spaceRadiance, earthRadius, n2, o2 ]
-  NoiseBandwidthTemplate: VectorTemplate, quantities= [$
-    !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths ]
   SBFTemplate: VectorTemplate, quantities= [$
     !allSidebandFractions ]
+  !ifdef(flagSkipSysTemp,{},
+  {!dnl
+  NoiseBandwidthTemplate: VectorTemplate, quantities= [$
+    !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths ]
   SystemTemperatureTemplate: VectorTemplate, quantities= [$
     !allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures ]
+  })
 
   ;; Now the big enchilada
   stateTemplate: VectorTemplate, quantities = [ $
@@ -628,7 +633,7 @@ begin Construct
     lowestRetrievedPressure, $
     !allIsotopeRatios, $
     !allSidebandFractions, $
-    !ifdef(flagSIDS,{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
+    !ifdef(flagSkipSysTemp,{},{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
     !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths,}) !allElevs, $
     !lesserState ]
 

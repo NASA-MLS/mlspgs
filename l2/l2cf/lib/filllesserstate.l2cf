@@ -78,7 +78,8 @@ begin Fill
 },{
   ;; ----------------------------------------- System temperatures
 
-  !ifdef(flagSIDS,{
+  !ifdef(flagSkipSysTemp,{},
+  {
   ;; This macro fills one system temperature for one band
   !define(fillSystemTemperature,{Fill, quantity=apriori.systemTemperature$1, $
     method=explicit, explicitValues=!systemp(!getBandNumber($1))!nl})
@@ -100,7 +101,8 @@ begin Fill
   ;; ----------------------------------------- Noise bandwidths
 
   ;; This macro fills one noise bandwidth for one band
-  !ifdef(flagSIDS,{
+  !ifdef(flagSkipSysTemp,{},
+  {
   !define(fillNoiseBandwidth,{Fill, quantity=apriori.noiseBandwidth$1, $
     method=explicit, explicitValues=!nbw(!getBandNumber($1))!nl})
 
