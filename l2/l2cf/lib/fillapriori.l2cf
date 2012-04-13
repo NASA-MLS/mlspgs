@@ -76,11 +76,18 @@ begin Fill
       46mb: 4.7e-5, 32mb:2.7e-5,22mb:1.2e-5,15mb:5.1e-6, $
       10mb:5.8e-7,0.00001mb:1.0e-7]
 ; r3 extinction
+;   Fill, quantity=apriori.totalextinctionr3,method=profile, profileValues = $
+;      [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
+;      215mb : 0.001, 147mb : 0.0005, 100mb : 0.0003, 68mb:0.0002, $
+;      46mb: 0.0001, 32mb:7.0e-5,22mb:4.0e-5,15mb:9.3e-6, $
+;      10mb:2.7e-6,0.00001mb:1.0e-7]
+; these values are better suited for mif extinction
    Fill, quantity=apriori.totalextinctionr3,method=profile, profileValues = $
       [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
       215mb : 0.001, 147mb : 0.0005, 100mb : 0.0003, 68mb:0.0002, $
       46mb: 0.0001, 32mb:7.0e-5,22mb:4.0e-5,15mb:9.3e-6, $
-      10mb:2.7e-6,0.00001mb:1.0e-7]
+      10mb:2.7e-6,1mb:1.0e-8,0.1mb:1.5e-10,0.01mb:2.0e-12,0.001mb:3.3e-14, $
+      0.0001mb:3.0e-16,0.00001mb:3.0e-18]
 ; r4 extinction
    Fill, quantity=apriori.totalextinctionr4,method=profile, profileValues = $
       [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.01, 316mb : 0.009, $
@@ -429,106 +436,106 @@ Fill, quantity=apriori.refGPH,$
 
 
   Fill, quantity=lowBound.extinctionR2, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.extinctionR2, method=explicit, $
         explicitValues=0.01, /spread
   Fill, quantity=lowBound.extinctionv2R2, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.extinctionv2R2, method=explicit, $
         explicitValues=0.01, /spread
   Fill, quantity=lowBound.extinctionR3, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.extinctionR3, method=explicit, $
         explicitValues=0.01, /spread
   Fill, quantity=lowBound.extinctionv2R3, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.extinctionv2R3, method=explicit, $
         explicitValues=0.01, /spread
   Fill, quantity=lowBound.extinctionR4, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.extinctionR4, method=explicit, $
         explicitValues=0.01, /spread
   Fill, quantity=lowBound.extinctionv2R4, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.extinctionv2R4, method=explicit, $
         explicitValues=0.01, /spread
 
   Fill, quantity=lowBound.totalextinctionR2, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionR2, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalextinctionv2R2, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionv2R2, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalextinctionR3, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionR3, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalextinctionv2R3, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionv2R3, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalextinctionR4, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionR4, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalextinctionv2R4, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionv2R4, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
 
 ; do the same for mif extinctions
 
   Fill, quantity=lowBound.mifextinctionR2, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.mifextinctionR2, method=explicit, $
         explicitValues=0.01, /spread
   Fill, quantity=lowBound.mifextinctionv2R2, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.mifextinctionv2R2, method=explicit, $
         explicitValues=0.01, /spread
   Fill, quantity=lowBound.mifextinctionR3, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.mifextinctionR3, method=explicit, $
         explicitValues=0.01, /spread
   Fill, quantity=lowBound.mifextinctionv2R3, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.mifextinctionv2R3, method=explicit, $
         explicitValues=0.01, /spread
   Fill, quantity=lowBound.mifextinctionR4, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.mifextinctionR4, method=explicit, $
         explicitValues=0.01, /spread
   Fill, quantity=lowBound.mifextinctionv2R4, method=explicit, $
-        explicitValues=1.0e-7, /spread
+        explicitValues= -0.01, /spread
   Fill, quantity=highBound.mifextinctionv2R4, method=explicit, $
         explicitValues=0.01, /spread
 
   Fill, quantity=lowBound.totalmifextinctionR2, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalmifextinctionR2, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalmifextinctionv2R2, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalmifextinctionv2R2, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalmifextinctionR3, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalmifextinctionR3, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalmifextinctionv2R3, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalmifextinctionv2R3, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalmifextinctionR4, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalmifextinctionR4, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalmifextinctionv2R4, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalmifextinctionv2R4, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
 
 
   !interpolateToHiRes(lowBound.temperature_HR)
@@ -579,7 +586,7 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=vReg.ch3cl, method=profile, $
     profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.ch3oh, method=profile, $
-    profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
+    profileValues= [ 1mb:10ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.ch3coch3, method=profile, $
     profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
   Fill, quantity=vReg.co, method=profile, profileValues= $
@@ -666,7 +673,7 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=hReg.ch3cl, method=profile, $
     profileValues= [  1mb:0.1ppbv, 0.68:0pptv ]
   Fill, quantity=hReg.ch3oh, method=profile, $
-    profileValues= [  1mb:0.05ppbv, 0.68:0pptv ]
+    profileValues= [  1mb:5ppbv, 0.68:0pptv ]
   Fill, quantity=hReg.ch3coch3, method=profile, $
     profileValues= [  1mb:0.05ppbv, 0.68:0pptv ]
   Fill, quantity=hReg.co, method=profile, profileValues= $
@@ -753,6 +760,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.147  2012/03/07 18:24:50  pwagner
+;Restore lower bound on RHiVmr from r1.143
+;
 ;Revision 1.146  2012/02/24 18:36:20  wgread
 ;wgr--removed retrieverstate etc.
 ;
