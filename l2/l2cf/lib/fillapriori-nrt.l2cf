@@ -68,8 +68,8 @@ begin Fill
 
 ; These radiometers use nu^2 extinctions instead of flat extinctions
 !define(v2ExtinctionRadiometers,{R3})!dnl
-; r3 extinction
-   Fill, quantity=apriori.totalextinctionr3,method=profile, profileValues = $
+; v2 r3 extinction
+   Fill, quantity=apriori.totalextinctionv2r3,method=profile, profileValues = $
       [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
       215mb : 0.001, 147mb : 0.0005, 100mb : 0.0003, 68mb:0.0002, $
       46mb: 0.0001, 32mb:7.0e-5,22mb:4.0e-5,15mb:9.3e-6, $
@@ -393,19 +393,19 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=lowBound.extinctionR3, method=explicit, $
         explicitValues=1.0e-7, /spread
   Fill, quantity=highBound.extinctionR3, method=explicit, $
-        explicitValues=0.01, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.extinctionv2R3, method=explicit, $
         explicitValues=1.0e-7, /spread
   Fill, quantity=highBound.extinctionv2R3, method=explicit, $
-        explicitValues=0.01, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalextinctionR3, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionR3, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
   Fill, quantity=lowBound.totalextinctionv2R3, method=explicit, $
         explicitValues= -4.0e-4, /spread
   Fill, quantity=highBound.totalextinctionv2R3, method=explicit, $
-        explicitValues=0.1, /spread
+        explicitValues=100.0, /spread
 
   !interpolateToHiRes(lowBound.temperature_HR)
   !interpolateToHiRes(highBound.temperature_HR)
@@ -608,4 +608,7 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.1  2010/08/09 22:41:33  pwagner
+;First commit
+;
 !divert!dnl
