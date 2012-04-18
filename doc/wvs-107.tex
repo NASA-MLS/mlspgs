@@ -1,5 +1,6 @@
 \documentclass[11pt]{article}
 \usepackage[fleqn]{amsmath}
+\usepackage{longtable}
 
 \textwidth 6.5in
 \oddsidemargin 0in
@@ -7,8 +8,8 @@
 \topmargin 0in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107r7}
-\newcommand{\docdate}{23 February 2012}
+\newcommand{\docname}{\bf wvs-107r8}
+\newcommand{\docdate}{18 April 2012}
 
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -88,8 +89,8 @@ From: \>Van Snyder\\
 \section{The problem}
 
 To solve for MIF extinction in MLSL2, several changes are made in the
-interface, {\tt ForwardModelWrap\-per}, between the {\tt Retrieve} and {\tt
-ForwardModel} modules.
+interface, {\tt ForwardModel\-Wrap\-per}, between the {\tt Retrieve} and
+{\tt ForwardModel} modules.
 
 MIF extinction is a minor-frame quantity with a vertical grid the same as
 $P_\text{tan}$.  Extinction in the forward model is a geophysical
@@ -177,13 +178,13 @@ number of an element is $c + N_c(i-1)$.  The column number within the
 block (second subscript of the {\tt VALUES} component) is given by a fifth
 subscript here, always $i$.
 
-For forward model block $K^F_{nj}$, $n$ is the index of the MAF, while
-$j$ is the index of solution coordinate $\phi_j$.  Each $K^F_{nj}$ block
-has shape $(N_C \times N_m,N_\zeta)$.  Within each $K^F_{ij}$ block,
+For forward model block $K^F_{nj}$, $n$ is the index of the MAF, while $j$
+is the index of profile solution coordinate $\phi_j$.  Each $K^F_{nj}$
+block has shape $(N_C \times N_m,N_\zeta)$.  Within each $K^F_{ij}$ block,
 there are three further subscripts $(cig)$.  The first two, $c$ and $i$
 conspire to denote the row number (first subscript) as above, while the
-third $(g)$ denotes the column number (second subscript, corresponding
-to $\zeta_g$) of an element of the {\tt VALUES} component.
+third $(g)$ denotes the column number (second subscript, corresponding to
+$\zeta_g$) of an element of the {\tt VALUES} component.
 
 After the forward model returns, blocks of $K^F$ are mapped to blocks of
 $K^R$ using
@@ -264,11 +265,32 @@ vector has any MIF extinction quantities.  This requires one to make more
 substantial changes in the l2cf to select whether to retrieve extinction
 or MIF extinction, i.e., one must change the state vector template.
 
+\section{Notation}
+
+\vskip -10pt
+\renewcommand{\arraystretch}{1}
+\begin{longtable}{c|l||c|l}
+Symbol   & Usage              & Symbol    & Usage \\
+\hline
+         &                    &           & \\[-11pt]
+$E^F$    & FWM Extinction     & $E^R$     & Retriever (MIF) extinction\\
+$I^F$    & FWM radiance       & $I^R$     & Retriever radiance \\
+$K^F$    & FWM Jacobian block & $K^R$     & Retriever Jacobian block \\
+$N_c$    & Number of channels & $N_m$     & Number of MIFs per MAF\\
+$N_\phi$ & Number of profiles & $N_\zeta$ & Pressure levels per profile \\
+$c$      & Channel index      & $g$       & FWM vertical index \\
+$i$      & MIF index          & $j$       & Profile index       \\
+$n$      & MAF number         & $r$       & Lowest retrieved pressure index \\
+\end{longtable}
+
 \label{lastpage}
 \end{document}
 % $Id$
 
 % $Log$
+% Revision 1.8  2012/02/24 02:22:01  vsnyder
+% Correct rows -> columns
+%
 % Revision 1.7  2012/02/24 00:45:59  vsnyder
 % Explain strategy in mlsl2 and l2cf
 %
