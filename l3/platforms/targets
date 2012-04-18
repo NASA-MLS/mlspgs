@@ -152,8 +152,8 @@ mlsl3d: $(ALLOBJS) $(CONFDIR)/$(MLSCFILE) $(MODULES) $(libdir)/libmls.a
 		@echo "$(mlspack_message)"
 		@cat fftw_link_message
 	$(FC) $(LDOPTS) -o mlsl3d $(l3_driver) \
-   -L./ -lmlsl3 \                        
-   -L${libdir} -lmls \                   
+   -L./ -lmlsl3 \
+   -L${libdir} -lmls \
         $(utctotai_linker_line) \
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -188,6 +188,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.38  2010/08/27 20:57:16  pwagner
+# Uses optional HDF*INC Makefile variables
+#
 # Revision 1.37  2009/07/17 20:27:32  pwagner
 # Added COPTS as cc options
 #
