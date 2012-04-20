@@ -34,7 +34,9 @@ Switches (set by -S option in mlsl2's command line):
   dwreq[n] => Dump directwrite requests processed by master
                *Warning--may use more memory
   dwtime => Show how long each directwrite takes
+  dxfc =>   Do dxfq dump clean
   dxfq =>   Dump extinction transformation in ForwardModelWrappers
+  dxn =>    Residual norm if 0, separately for quantities if > 0
   erh =>    Stop with error if dump,/stop
   fac =>    L_infty norms of blocks of factors of normal equations during Newton iterations
   FAC =>    Factors of normal equations during Newton iterations
@@ -202,6 +204,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.74  2012/03/14 22:15:57  pwagner
+ grid method, debug, and no l2cf added
+
  Revision 1.73  2012/03/12 20:04:49  vsnyder
  add drmc, dxfq, change fmnan
 
