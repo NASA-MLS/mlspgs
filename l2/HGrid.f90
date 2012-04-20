@@ -802,7 +802,8 @@ contains ! =====     Public Procedures     =============================
     real(rk) :: MINANGLE                ! Smallest angle in chunk
     real(rk) :: MINANGLELASTMAF         ! Gives 'range' of last maf
     integer :: N                        ! Guess at number of profiles
-    integer :: NOMAFS                   ! From ReadL1B
+    integer :: NOMAFS                   ! How many in chunk
+    integer :: NOMAFSINFILE             ! From ReadL1B
     integer :: NOMIFS
     real(rk) :: NEXTANGLE               ! First non ovl. MAF for next chunk
     real(rk), dimension(:,:), pointer :: OldMethodValues=> null() ! For comparing with
@@ -862,7 +863,7 @@ contains ! =====     Public Procedures     =============================
     l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpGeodAngle", &
       & hdfVersion, .false. )
     call ReadL1BData ( L1BFile, l1bItemName, &
-      & l1bField, noMAFs, flag, &
+      & l1bField, noMAFsInFile, flag, &
       & firstMAF=chunk%firstMAFIndex, &
       & lastMAF=chunk%lastMAFIndex+1, dontPad=.true. )
     if ( .not. associated(L1BFile) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -905,7 +906,7 @@ contains ! =====     Public Procedures     =============================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Obviously impossible guess where to start next chunk' )
       
-    elseif ( i < noMAFs + 1 ) then
+    elseif ( i < noMAFsInFile + 1 ) then
       nextAngle = l1bField%dpField(1,1,i)
     else
       nextAngle = maxAngle + spacing
@@ -924,9 +925,9 @@ contains ! =====     Public Procedures     =============================
       end if
     
       ! Now work out the last point in a similar manner
-      last = origin + spacing * int ( (maxAngle-origin)/spacing )
+      last = origin + spacing * (1 + int ( (maxAngle-origin)/spacing ) )
       delta = last - maxAngle            ! So +ve means last could be smaller
-      if ( delta > spacing/2 ) then
+      if ( delta > 3*spacing/2 ) then
         last = last - spacing
       else if ( delta < -spacing/2 ) then
         last = last + spacing
@@ -973,7 +974,7 @@ contains ! =====     Public Procedures     =============================
       if ( chunk%noMAFsUpperOverlap > 0 ) then
         setLastLoop: do
           if ( last <= first ) exit setLastLoop
-          if ( last < minAngleLastMAF ) exit setLastLoop
+          if ( last < max( nextAngle, minAngleLastMAF ) ) exit setLastLoop
           last = last - spacing
         end do setLastLoop
       else
@@ -2087,7 +2088,7 @@ contains ! =====     Public Procedures     =============================
               if ( get_spec_id(key) == s_hGrid ) then
                 ! This is an hGrid definition
                 if ( chunk == 0 ) then
-                  ! For the 'zeroth' pass just count up the chunks
+                  ! For the 'zeroth' pass just count up the hgrids
                   noHGrids = noHGrids + 1
                 else
                   dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, filedatabase, l2gpDatabase, &
@@ -2373,6 +2374,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.100  2012/04/20 01:09:22  pwagner
+! Regular HGrids no longer drop profiles between chunks
+!
 ! Revision 2.99  2011/06/29 21:54:26  pwagner
 ! Some cases may safely omit l1b files
 !
