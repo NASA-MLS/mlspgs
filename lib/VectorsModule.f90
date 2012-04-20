@@ -59,10 +59,12 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! DivideVectors                Y = A / X if Y is present, else X = A / X
 ! DotVectors                   z = x . y
 ! DotVectorsMasked             z = x . y, but only where mask is "off"
+! DotVectorsMaybeMasked        z = x . y, maybe masked if optional arg is true
 ! DumpMask                     Display only the mask information for a vector
 ! Dump                         Generic for several dump_...; see the interface
 ! DumpQuantityMask
 ! DumpVectorMask
+! DumpVectorNorms              Dump the vector norm, or its quantity norms
 ! Dump_vector                  Display how a single vector is made up
 ! Dump_vectors                 Display how vector database is made up
 ! Dump_Vector_Quantity         Display a vector quantity
@@ -75,6 +77,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! InflateVectorDatabase
 ! InflateVectorTemplateDatabase
 ! IsVectorQtyMasked            Is the mask for VectorQty set for address
+! L2Norm                       L2 norm of the vector
+! L2Norms                      L2 norms of the vector's quantities
 ! MaskVectorQty                Set the mask for VectorQty for spec. address
 ! MoveVectorQuantity           Move VALUES and MASK fields from one qty to another
 ! MultiplyVectors              Z = X # Y if Z present; else X = X # Y
@@ -127,14 +131,18 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: DestroyVectorTemplateInfo, DestroyVectorValue
   public :: DiffVectorQuantities
   public :: DivideVectors
-  public :: DotVectors, DotVectorsMasked, DumpNiceMaskSummary
-  public :: DumpMask, DumpQuantityMask, DumpVectorMask, Dump_Vector
-  public :: Dump_Vectors, Dump_Vector_Template, Dump_Vector_Templates
-  public :: Dump_Vector_Quantity
+  public :: DotVectors, DotVectorsMasked, DotVectorsMaybeMasked
+  public :: DotVectorQuantities, DotVectorQuantitiesMasked
+  public :: DotVectorQuantitiesMaybeMasked
+  public :: DumpNiceMaskSummary, DumpMask, DumpQuantityMask, DumpVectorMask
+  public :: DumpVectorNorms
+  public :: Dump_Vector, Dump_Vectors, Dump_Vector_Quantity
+  public :: Dump_Vector_Template, Dump_Vector_Templates
   public :: GetVectorQuantity, GetVectorQuantityByType
   public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
   public :: GetVectorQuantityIndexByType, InflateVectorDatabase
   public :: InflateVectorTemplateDatabase, IsVectorQtyMasked
+  public :: L2Norm, L2NormQ, L2NormV
   public :: MaskVectorQty, MoveVectorQuantity, MultiplyVectors
   public :: NullifyVectorTemplate, NullifyVectorValue, NullifyVector, PowVector
   public :: QuantityTemplate_T ! for full F95 compatibility
@@ -174,6 +182,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     module procedure DumpQuantityMask, DumpVectorMask
   end interface
 
+  interface L2Norm
+    module procedure L2NormQ, L2NormV
+  end interface
+
   interface Multiply
     module procedure MultiplyVectors
   end interface
@@ -191,11 +203,11 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   end interface
 
   interface operator ( .DOT. )
-    module procedure DotVectors
+    module procedure DotVectors, DotVectorQuantities
   end interface
 
   interface operator ( .MDOT. )
-    module procedure DotVectorsMasked
+    module procedure DotVectorsMasked, DotVectorQuantitiesMasked
   end interface
 
 !---------------------------- RCS Module Info ------------------------------
@@ -1181,10 +1193,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot .DOT. vectors having different templates" )
-    z = 0.0_rv
-    do i = 1, size(x%quantities)
-      z = z + sum( x%quantities(i)%values * y%quantities(i)%values )
-    end do
+    z = sum( x%quantities .dot. y%quantities )
   end function DotVectors
 
   ! -------------------------------------------  DotVectorsMasked  -----
@@ -1194,47 +1203,72 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments:
     type(Vector_T), intent(in) :: X, Y
-    ! Local variables:
-    integer :: I, J, K        ! Subscripts and loop inductors
     ! Executable statements:
     if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "Cannot .DOT. vectors having different templates" )
-    z = 0.0_rv
-    do i = 1, size(x%quantities)
-      if ( associated(x%quantities(i)%mask) ) then
-        if ( associated(y%quantities(i)%mask) ) then
-          do j = 1, size(x%quantities(i)%values,1)
-            do k = 1, size(x%quantities(i)%values,2)
-              if ( iand(ior(ichar(x%quantities(i)%mask(j,k)), &
-                &           ichar(y%quantities(i)%mask(j,k))), m_linAlg) == 0 ) &
-                & z = z + x%quantities(i)%values(j,k) * &
-                  &       y%quantities(i)%values(j,k)
-            end do ! k
-          end do ! j
-        else
-          do j = 1, size(x%quantities(i)%values,1)
-            do k = 1, size(x%quantities(i)%values,2)
-              if ( iand(ichar(x%quantities(i)%mask(j,k)), m_linAlg) == 0 ) &
-                & z = z + x%quantities(i)%values(j,k) * &
-                  &       y%quantities(i)%values(j,k)
-            end do ! k
-          end do ! j
-        end if
-      else if ( associated(y%quantities(i)%mask) ) then
-          do j = 1, size(x%quantities(i)%values,1)
-            do k = 1, size(x%quantities(i)%values,2)
-              if ( iand(ichar(y%quantities(i)%mask(j,k)), m_linAlg) == 0 ) &
-                & z = z + x%quantities(i)%values(j,k) * &
-                  &       y%quantities(i)%values(j,k)
-            end do ! k
-          end do ! j
-      else
-        z = z + sum( x%quantities(i)%values * y%quantities(i)%values )
-      end if
-    end do
+        & ModuleName, "Cannot .MDOT. vectors having different templates" )
+    z = sum( x%quantities .mdot. y%quantities )
   end function DotVectorsMasked
 
-  ! -----------------------------------------  DumpNiceMaskSummary ---
+  ! --------------------------------------  DotVectorsMaybeMasked  -----
+  real(rv) function DotVectorsMaybeMasked ( X, Y, UseMask ) result (Z)
+  ! Compute the inner product of two vectors.  If UseMask is present and
+  ! true, the masks are respected.
+    type(vector_t), intent(in) :: X, Y
+    logical, intent(in), optional :: UseMask
+    logical MyMask
+    myMask = .false.
+    if ( present(useMask) ) myMask = useMask
+    if ( myMask ) then
+      z = x .mdot. y
+    else
+      z = x .dot. y
+    end if
+  end function DotVectorsMaybeMasked
+
+  ! ----------------------------------------  DotVectorQuantities  -----
+  elemental real(rv) function DotVectorQuantities ( X, Y ) result ( Z )
+  ! Compute the inner product of two vector quantities
+    type(VectorValue_T), intent(in) :: X, Y
+    z = sum( x%values * y%values )
+  end function DotVectorQuantities
+
+  ! ----------------------------------  DotVectorQuantitiesMasked  -----
+  elemental real(rv) function DotVectorQuantitiesMasked ( X, Y ) result ( Z )
+  ! Compute the inner product of two vector quantities, respecting their
+  ! masks, if any
+    type(VectorValue_T), intent(in) :: X, Y
+    if ( associated(x%mask) ) then
+      if ( associated(y%mask) ) then
+        z = sum( x%values * y%values, &
+               & iand(iand(ichar(x%mask), ichar(y%mask)), m_linAlg) == 0 )
+      else
+        z = sum( x%values * y%values, iand(ichar(x%mask), m_linAlg) == 0 )
+      end if
+    else if ( associated(y%mask) ) then
+      z = sum( x%values * y%values, iand(ichar(y%mask), m_linAlg) == 0 )
+    else
+      z = sum( x%values * y%values )
+    end if
+  end function DotVectorQuantitiesMasked
+
+  ! -----------------------------  DotVectorQuantitiesMaybeMasked  -----
+  elemental real(rv) function DotVectorQuantitiesMaybeMasked ( X, Y, UseMask ) &
+    & result ( Z )
+  ! Compute the inner product of two vector quantities, respecting their
+  ! masks, if any, if UseMask is present and true
+    type(VectorValue_T), intent(in) :: X, Y
+    logical, intent(in), optional :: UseMask
+    logical :: MyMask
+    myMask = .false.
+    if ( present(useMask) ) myMask = useMask
+    if ( myMask ) then
+      z = x .mdot. y
+    else
+      z = x .dot. y
+    end if
+  end function DotVectorQuantitiesMaybeMasked
+
+  ! ----------------------------------------  DumpNiceMaskSummary  -----
   ! This routine tries to produce a useful human readable dump of a vector
   ! mask.
   subroutine DumpNiceMaskSummary ( qty, prefix, masksToDump )
@@ -1462,6 +1496,31 @@ contains ! =====     Public Procedures     =============================
       call dumpMask ( vector%quantities(q), details )
     end do                              ! Loop over quantities
   end subroutine DumpVectorMask
+  ! --------------------------------------------  DumpVectorNorms  -----
+  subroutine DumpVectorNorms ( Vector, Level, Name, UseMask )
+    type (Vector_T), intent(in) :: Vector
+    integer, intent(in) :: Level ! <=0 => Whole vector norm, 
+                                 ! 1 => quantity norms,
+                                 ! >= 2 => quantity norms with quantity names
+    character(*), intent(in), optional :: Name
+    logical, intent(in), optional :: UseMask
+    integer :: Q
+    select case ( level )
+    case ( :0 )
+      if ( present(name) ) call output ( name )
+      call output ( l2norm ( vector, useMask ) )
+    case ( 1 )
+      call dump ( l2norm ( vector%quantities, useMask ), name )
+    case ( 2 )
+      if ( present(name) ) call output ( name, advance='yes' )
+      do q = 1, size(vector%quantities)
+        call output ( q, format='(i4)', after='# ' )
+        call display_string ( vector%quantities(q)%template%name )
+        call output ( l2norm(vector%quantities(q),useMask), before=': ', &
+          & advance='yes' )
+      end do
+    end select
+  end subroutine DumpVectorNorms
 
   ! ------------------------------------------------  Dump_Vector  -----
   subroutine Dump_Vector ( VECTOR, DETAILS, NAME, &
@@ -2151,6 +2210,28 @@ contains ! =====     Public Procedures     =============================
 
   end function IsVectorQtyMasked
 
+  ! ----------------------------------------------------  L2NormQ  -----
+  elemental real(rv) function L2NormQ ( Qty, UseMask )
+    ! Compute the L2Norm of a vector quantity, respecting its mask if
+    ! useMask is present and true.
+    type(vectorValue_t), intent(in), optional :: Qty
+    logical, intent(in), optional :: UseMask
+    l2NormQ = 0.0
+    if ( present(qty) ) &
+      & l2NormQ = sqrt( dotVectorQuantitiesMaybeMasked ( qty, qty, useMask ) )
+  end function L2Normq
+
+  ! ----------------------------------------------------  L2NormV  -----
+  real(rv) function L2NormV ( Vector, UseMask )
+    ! Compute the L2Norm of a vector, respecting its mask if useMask is
+    ! present and true.
+    type(vector_t), intent(in) :: Vector
+    logical, intent(in), optional :: UseMask
+    l2NormV = 0.0
+    if ( associated(vector%quantities) ) &
+      & l2normV = sqrt( dotVectorsMaybeMasked ( vector, vector, useMask ) )
+  end function L2NormV
+
   ! ----------------------------------------------  MaskVectorQty  -----
   subroutine MaskVectorQty ( vectorQty, Row, Column, What )
 
@@ -2735,6 +2816,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.161  2012/03/28 00:55:22  vsnyder
+! Indicate mask is dumped in hex
+!
 ! Revision 2.160  2012/02/23 00:08:55  vsnyder
 ! Don't dump molecule names if quantity type is not vmr
 !
