@@ -75,6 +75,7 @@ contains ! ============= Public Procedures ==========================
     type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
 
     ! Local variables
+    logical :: Clean                      ! Dumps are clean, from switch dxfc
     real :: DeltaTime
     integer :: DumpTransform              ! Dump transformed vector quantities
     integer :: FCol, FRow                 ! Column, Row of block in fwmJacobian
@@ -118,6 +119,7 @@ contains ! ============= Public Procedures ==========================
     call time_now (time_start)
 
     dumpTransform = switchDetail(switches,'dxfq')
+    clean = switchDetail(switches,'dxfc') > -1
 
     ! Do the actual forward models
 
@@ -163,8 +165,8 @@ contains ! ============= Public Procedures ==========================
       ! Transform MIF extinction quantities to extinction molecules
       do k = 1, nQty
         call transform_MIF_extinction &
-          & ( fmStat%MAF, qtys(k,1)%qty, ptan, lrp%values(1,1), dumpTransform, &
-            & qtys(k,2)%qty )
+          & ( fmStat%MAF, qtys(k,1)%qty, ptan, lrp%values(1,1), qtys(k,2)%qty, &
+            & dumpTransform )
       end do
 
       ! Run the forward model with the transformed quantities
@@ -174,7 +176,7 @@ contains ! ============= Public Procedures ==========================
       ! transformation is requested.
       do k = 1, nQty
         call transform_FWM_extinction ( fmStat%MAF, fwdModelOut, &
-          & qtys(k,2)%qty, qtys(k,1)%qty, ptan, Jacobian, dumpTransform )
+          & qtys(k,2)%qty, qtys(k,1)%qty, ptan, Jacobian, dumpTransform, clean )
       end do
 
     else ! Run the forward model without transformation
@@ -329,7 +331,7 @@ contains ! ============= Public Procedures ==========================
 
 !{\cleardoublepage
   subroutine Transform_FWM_extinction ( MAF, FwdModelOut, F_Qty, S_Qty, PTan, &
-    &                                   Jacobian, DumpTransform )
+    &                                   Jacobian, DumpTransform, Clean )
     ! Transform blocks of the Jacobian associated with f_qty to blocks
     ! associated with s_qty.
     ! Transform the forward model radiances to retriever radiances.
@@ -341,15 +343,17 @@ contains ! ============= Public Procedures ==========================
     use MatrixModule_1, only: FindBlock, CreateBlock, Dump, Matrix_T
     use MLSKinds, only: RM, RV
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use Output_m, only: Output
     use VectorsModule, only: Dump, Vector_t, VectorValue_t
 
     integer, intent(in) :: MAF               ! MAjor Frame number
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
-    type(vectorValue_t), intent(in) :: F_Qty ! Transformed FWM quantity in fwmState
-    type(vectorValue_t), intent(in) :: S_Qty ! Quantity in State
+    type(vectorValue_t), intent(in) :: F_Qty ! Extinction quantity in fwmState
+    type(vectorValue_t), intent(in) :: S_Qty ! MIF Extinction quantity in State
     type(vectorValue_t), intent(in) :: PTan  ! Tangent pressure, for S_Qty
     type(matrix_T), intent(inout) :: Jacobian
     integer, intent(in) :: DumpTransform
+    logical, intent(in) :: Clean              ! for the dumps
 
     integer :: CV      ! c in wvs-107
     integer :: CZ      ! ci, channels X zetas, in wvs-107
@@ -366,8 +370,13 @@ contains ! ============= Public Procedures ==========================
                        ! g in wvs-107
     integer :: VSurf   ! Surface (zeta) index in a MIF, i in wvs-107
 
-    if ( dumpTransform > -1 ) &
-      & call dump ( fwdModelOut, 1, 'fwdModelOut before transformation' )
+    if ( dumpTransform > -1 ) then
+      call output ( MAF, before='MAF ' )
+      call dump ( fwdModelOut, dumpTransform+1, &
+        & ' fwdModelOut before transformation', clean=clean )
+      if ( dumpTransform > 0 ) &
+        & call dump ( Jacobian, 'Jacobian from forward model', dumpTransform )
+    end if
 
     ! Get the block column subscripts for instances of f_qty.
     do inst = 1, f_qty%template%noInstances
@@ -389,11 +398,12 @@ contains ! ============= Public Procedures ==========================
                                    ptan%values(vSurf,maf) ) )
 
     do jRow = 1, Jacobian%row%nb
+      if ( jacobian%row%inst(jRow) /= MAF ) cycle
       o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
       if ( o_qty%template%quantityType /= l_radiance ) cycle
       nVecChans = o_qty%template%noChans
       do jCol = 1, size(jCols)
-        if ( Jacobian%row%inst(jRow) /= Jacobian%col%inst(jCols(jCol)) ) then
+        if ( Jacobian%col%inst(jCols(jCol)) /= MAF ) then
           ! Zero off-diagonal MIF extinction blocks of Jacobian
           call destroyBlock ( Jacobian%block(jRow,jCols(jCol)) )
         else ! (inst(jRow),inst(jCol)) = nn in wvs-107
@@ -402,7 +412,6 @@ contains ! ============= Public Procedures ==========================
             call createBlock ( Jacobian, jrow, jCols(jCol), m_banded, &
               & Jacobian%row%nelts(jRow), bandHeight=nVecChans, &
               & forWhom='Transform_FWM_extinction' )
-            Jacobian%block(jRow,jCols(jCol))%values = 0
           case ( m_banded )
             if ( ubound(Jacobian%block(jRow,jCols(jCol))%values,1) /= &
                & Jacobian%row%nelts(jRow) ) &
@@ -410,8 +419,9 @@ contains ! ============= Public Procedures ==========================
                    & 'Band structure wrong for Transformed MIF extinction block' )
           case default
             call MLSMessage ( MLSMSG_Error, moduleName, &
-              & 'Transformed MIF extinction block not banded' )
+              & 'Transformed MIF extinction block not absent or banded' )
           end select
+          Jacobian%block(jRow,jCols(jCol))%values = 0
           do vSurf = 1, size(ptan%values,1) ! i in wvs-107, Same for all fCols
             ! Jacobian is banded.  The only nonzeros in a column are in
             ! rows for the same MIF as the column, and the maximum number of
@@ -503,18 +513,21 @@ contains ! ============= Public Procedures ==========================
       end do ! jRow
     end do ! jCol
 
-    ! Make values of f_Qty zero so as not to confuse the function norm
-    ! calculation in the retriever
+    ! Make values of f_Qty zero so as not to confuse the calculation of
+    ! aj%axmax in the retriever
     f_qty%values = 0.0
 
-    if ( dumpTransform > -1 ) &
-      & call dump ( fwdModelOut, 1, 'fwdModelOut after transformation' )
+    if ( dumpTransform > -1 ) then
+      call output ( MAF, before='MAF ' )
+      call dump ( fwdModelOut, dumpTransform+1, &
+        & ' fwdModelOut after transformation', clean=clean )
+    end if
 
   end subroutine Transform_FWM_extinction
 
 !{\cleardoublepage
-  subroutine Transform_MIF_Extinction ( MAF, S_Qty, PTan, Lrp, DumpTransform, &
-    &                                   F_Qty )
+  subroutine Transform_MIF_Extinction ( MAF, S_Qty, PTan, Lrp, F_Qty, &
+    &                                   DumpTransform )
 
     ! Interpolate from a MAF-indexed minor-frame quantity to the first
     ! column of an L2GP quantity.  Then spread it out in orbit geodetic
@@ -533,8 +546,8 @@ contains ! ============= Public Procedures ==========================
     type(vectorValue_t), intent(in) :: PTan   ! Zetas, for S_Qty, which has
                                               ! altitudes in meters
     real(rv), intent(in) :: LRP               ! Lowest retrieved pressure
-    integer, intent(in) :: DumpTransform      ! Dump S_Qty and F_Qty at the end
     type(vectorValue_t), intent(inout) :: F_Qty ! Forward model quantity
+    integer, intent(in) :: DumpTransform      ! Dump S_Qty and F_Qty
 
     integer :: F_LRP   ! Index in F_Qty%Surfs of LRP
     integer :: I       ! Subscript and loop inductor
@@ -570,9 +583,9 @@ contains ! ============= Public Procedures ==========================
      ! so $10^{-2\zeta}$ is $P^{-2}$).
 
     do i = 1, f_lrp-1
-      f_qty%values(i,:) = s_qty%values(p(s_lrp),maf) * &
+      f_qty%values(i,:) = f_qty%values(f_lrp,1) * &
         & 10.0_rm ** ( - 2.0 * ( f_qty%template%surfs(i,1) - &
-                          & ptan%values(p(s_lrp),1) ) )
+                               & ptan%values(p(s_lrp),1) ) )
     end do
 
     if ( dumpTransform > -1 ) then
@@ -595,6 +608,10 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.42  2012/04/20 01:57:15  vsnyder
+! Add some dumps, add clean switch.  Handle MAF selection properly. Some
+! cannonball polishing.
+!
 ! Revision 2.41  2012/03/28 00:56:49  vsnyder
 ! Move check for signals with MIF extinction from Wrappers to Support
 !
