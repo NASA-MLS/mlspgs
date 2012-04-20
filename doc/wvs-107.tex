@@ -8,8 +8,8 @@
 \topmargin 0in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107r8}
-\newcommand{\docdate}{18 April 2012}
+\newcommand{\docname}{\bf wvs-107r9}
+\newcommand{\docdate}{20 April 2012}
 
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -283,11 +283,85 @@ $i$      & MIF index          & $j$       & Profile index       \\
 $n$      & MAF number         & $r$       & Lowest retrieved pressure index \\
 \end{longtable}
 
+\section{L2CF changes}
+
+\vspace*{-8pt}
+One must be careful when constructing the l2cf to retrieve MIF extinction.
+
+\vspace*{-5pt}
+
+\begin{itemize}\parskip 3pt
+
+\item There must be both extinction and MIF extinction quantities in the
+  retrieval state vector for bands in which MIF extinction is being
+  retrieved, because otherwise the forward model and MIF extinction
+  transformation have nowhere to record the Jacobians of radiance with
+  respect to extinction and MIF extinction, respectively.  This is because
+  the Jacobian column space is defined by reference to the retrieval state
+  vector.  This might eventually be handled automatically.
+
+\item Profile extinction for the band in which MIF extinction is being
+  retrieved needs to be a one-profile quantity, even (especially) in 2-D
+  retrievals.  Use an {\tt hGrid} something like \\
+  {\tt hGridSingle: hGrid, type=explicit, geodAngle=[0 degrees]}\\
+  for extinction quantities.
+
+\item It's important to use a rapidly-decaying profile for MIF extinction
+  apriori, e.g.,
+
+{\tt\small\begin{verbatim}
+    Fill, quantity=apriori.totalMIFExtinctionr3,method=profile, $
+      profileValues = [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
+      215mb : 0.001, 147mb : 0.0005, 100mb : 0.0003, 68mb:0.0002,46mb: 0.0001,  $
+      32mb:7.0e-5,22mb:4.0e-5,15mb:9.3e-6, 10mb:2.7e-6, 1mb:1.0e-8, $
+      0.1mb:1.5e-10,0.01mb:2.0e-12,0.001mb:3.3e-14, 0.0001mb:3.0e-16, $
+      0.00001mb:3.0e-18], ptanQuantity=state.ptanGHz
+\end{verbatim}}
+
+\item Apriori precision for extinction needs to be huge, e.g.,\\[3pt]
+  {\tt Fill,
+  quantity=aprioriPrecision.totalextinctionv2r3,method=explicit, \$ \\
+     /spread, explicitValues=1.0e6}\\[3pt]
+  to prevent the Newton method from moving in the extinction direction. 
+  The Jacobian of radiance with respect to extinction is deleted by the
+  MIF extinction transformation, but the extinction apriori needs to be
+  present to prevent the overall Jacobian from being singular. Apriori
+  precision for MIF extinction should be what apriori precision for
+  extinction would be if MIF extinction were not being retrieved, e.g.,
+
+{\tt\small\begin{verbatim}
+    Fill, quantity=aprioriprecision.totalMIFExtinctionV2R3,method=profile, $
+      profileValues = [ 1000mb: 1.0E-7, 681mb:0.0005, 464mb : 0.001, 316mb : 0.001, $
+      215mb : 0.0006, 147mb : 0.0002, 100mb : 0.0001, 68mb:0.0001, 46mb: 7.0e-5, $
+      32mb:4.0e-5, 22mb:2.0e-5, 15mb:5.0e-6, 10mb:2.0e-6, 0.00001mb:1.0e-6], $
+      ptanQuantity=state.ptanGHz
+\end{verbatim}}
+
+\item There must be a lowest retrieved pressure quantity in the ``extra''
+  vector, e.g.,\\
+  {\tt lowestRetrievedPressure: Quantity, type=lowestRetrievedPressure \\
+     Fill, quantity=state.lowestRetrievedPressure, method=explicit, \$\\
+       explicitValues= -2.6 zeta }\\
+  It isn't needed in the retrieval state vector, or apriori vector.
+
+\item Tikhonov regularization needs to be turned off for MIF extinction,
+  and for extinction in bands where MIF extinction is being retrieved.
+
+\item Mask bits need to be set in MIF extinction (and indeed in any
+  retrieved minor-frame quantity) so as not to try to retrieve where there
+  are no radiances.  Ultimately, there will be a subset-like command to do
+  this, since one cannot predict where L1 will mark bad radiances.
+
+\end{itemize}
+
 \label{lastpage}
 \end{document}
 % $Id$
 
 % $Log$
+% Revision 1.9  2012/04/18 22:52:45  vsnyder
+% Add table of notations
+%
 % Revision 1.8  2012/02/24 02:22:01  vsnyder
 % Correct rows -> columns
 %
