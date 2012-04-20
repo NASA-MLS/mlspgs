@@ -662,7 +662,7 @@ contains
         if ( options%timing ) call SayTime( 'Doing the diff', stime )
         stime = t2
       enddo ! Loop of halves
-      print *, 'After ' // trim(sdName) // ' ', options%numDiffs
+      if ( .not. options%silent ) print *, 'After ' // trim(sdName) // ' ', options%numDiffs
     enddo ! Loop of datasets
 	 if ( the_hdfVersion == HDFVERSION_5) call h5gClose_f (grpID, status)
     if ( status /= 0 ) then
@@ -831,6 +831,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.22  2012/04/20 17:57:51  pwagner
+! Fixed syntax error of dumpOptions
+!
 ! Revision 1.21  2012/02/13 23:41:31  pwagner
 ! -opt opts passes opts to underlying dump routines
 !
