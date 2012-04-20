@@ -454,42 +454,45 @@ contains ! =============== Subroutines and functions ==========================
     integer, parameter :: NoQtys = 8
 
     ! Local variables
-    type (QuantityTemplate_T) :: scanResidual ! Scan residual
-    type (QuantityTemplate_T) :: myQTs(NoQtys) ! All our quantities
-    type (Vector_T) :: state            ! Gets ptan
-    type (Vector_T) :: extra            ! Gets temp,refGPH,h2o and geocAlt
-    type (Vector_T) :: residual         ! Gets the scan residual
-    type (VectorTemplate_T) :: stateTemplate ! Gets ptan
-    type (VectorTemplate_T) :: extraTemplate ! Gets temp,refGPH,h2o and geocAlt
-    type (VectorTemplate_T) :: residualTemplate ! Gets the scan residual
-    type (Matrix_T) :: jacobian         ! dScanresidual/dPtan
+    type (QuantityTemplate_T) :: ScanResidual ! Scan residual
+    type (QuantityTemplate_T) :: MyQTs(NoQtys) ! All our quantities
+    type (Vector_T) :: State            ! Gets ptan
+    type (Vector_T) :: Extra            ! Gets temp,refGPH,h2o and geocAlt
+    type (Vector_T) :: Residual         ! Gets the scan residual
+    type (VectorTemplate_T) :: StateTemplate ! Gets ptan
+    type (VectorTemplate_T) :: ExtraTemplate ! Gets temp,refGPH,h2o and geocAlt
+    type (VectorTemplate_T) :: ResidualTemplate ! Gets the scan residual
+    type (Matrix_T) :: Jacobian         ! dScanresidual/dPtan
 
     type (ForwardModelConfig_T) :: FMCONF
     type (ForwardModelStatus_T) :: FMSTAT
 
-    integer :: i                        ! Iteration counter
+    integer :: I                        ! Iteration counter
     integer :: MAF                      ! MAF counter
-    real (r8), dimension(:,:), pointer :: GEOCLAT ! Geocentric latitude (minor frame)
-    real (r8), dimension(:,:), pointer :: EARTHRADIUS ! Earth radius (minor frame)
+    real (r8), dimension(ptan%template%noSurfs, ptan%template%noInstances) :: &
+      EARTHRADIUS ! Earth radius (minor frame)
 
     ! Executable code
     ! Get a really simple first guess, assuming a uniform log scale height of
     ! 16km
-    nullify ( geocLat, earthRadius )
-    call Allocate_test ( geocLat, &
-      & ptan%template%noSurfs, ptan%template%noInstances, &
-      & 'geocLat', ModuleName )
-    call Allocate_test ( earthRadius, &
-      & ptan%template%noSurfs, ptan%template%noInstances, &
-      & 'geocLat', ModuleName )
-    geocLat = GeodToGeocLat(ptan%template%geodLat)
+
+    if ( toggle(emit) ) call trace_begin ('Get2DHydrostaticTangentPressure' )
+
     earthRadius = earthRadA*earthRadB/sqrt( &
-      & (earthRadA**2-earthRadB**2)*sin(geocLat)**2 + earthRadB**2)
-    ptan%values = -3.0+(geocAlt%values - earthRadius)/16e3
-    if ( switchDetail ( switches, 'pguess' ) > -1 ) &
-      & call dump ( ptan%values, 'Initial ptan guess' )
-    call Deallocate_test ( earthRadius, 'geocLat', ModuleName )
-    call Deallocate_test ( geocLat, 'geocLat', ModuleName )
+      & (earthRadA**2-earthRadB**2)*sin(GeodToGeocLat(ptan%template%geodLat))**2 + earthRadB**2)
+    ptan%values = -3.0+(geocAlt%values - earthRadius)/16.0e3
+    if ( any(ptan%values < -4.0 .or. ptan%values > 10.0) ) then
+      call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & 'Why is PTan weird?  Module turned off?  PTan guess set to -3.0' )
+      ptan%values = -3.0
+    end if
+    if ( switchDetail ( switches, 'pguess' ) > -1 ) then
+      call dump ( ptan%values, 'Initial ptan guess' )
+      if ( switchDetail ( switches, 'pguess' ) > 1 ) then
+        call dump ( geocAlt%values, name='GeocAlt' )
+        call dump ( earthRadius, name='EarthRadius' )
+      end if
+    end if
 
     fmConf%phiWindow = phiWindow
     fmConf%windowUnits = phiWindowUnits
@@ -539,24 +542,21 @@ contains ! =============== Subroutines and functions ==========================
       ! Get residual for all mafs
       do maf = 1, ptan%template%noInstances
         fmStat%maf = maf
-       call TwoDScanForwardModel ( fmConf, state, extra, residual, &
-         & fmStat, jacobian, chunkNo )
-       state%quantities(1)%values(:,maf) = state%quantities(1)%values(:,maf) - &
-         & residual%quantities(1)%values(:,maf) / &
-         &   jacobian%block(maf,maf)%values(:,1)
+        call TwoDScanForwardModel ( fmConf, state, extra, residual, &
+          & fmStat, jacobian, chunkNo )
+        state%quantities(1)%values(:,maf) = state%quantities(1)%values(:,maf) - &
+          & residual%quantities(1)%values(:,maf) / &
+          &   jacobian%block(maf,maf)%values(:,1)
         call ClearMatrix ( jacobian )
       end do
       if ( switchDetail ( switches, 'pguess' ) > -1 ) then
         call output ( 'Pressure guesser iteration ' )
         call output ( i )
-        call output ( ' mean, min abs, max abs residual:', advance='yes' )
-        call output ( '  ' )
+        call output ( ' mean, min abs, max abs residual:  ', advance='yes' )
         call output ( sum(residual%quantities(1)%values) / &
           & (ptan%template%noInstances*ptan%template%noSurfs) )
-        call output ( ', ' )
-        call output ( minval(abs(residual%quantities(1)%values)) )
-        call output ( ', ' )
-        call output ( maxval(abs(residual%quantities(1)%values)), &
+        call output ( minval(abs(residual%quantities(1)%values)), before=', ' )
+        call output ( maxval(abs(residual%quantities(1)%values)), before=', ', &
           & advance='yes' )
       end if
     end do
@@ -574,6 +574,9 @@ contains ! =============== Subroutines and functions ==========================
     call DestroyVectorInfo ( residual )
     
     call Deallocate_test ( fmStat%rows, 'fmStat%rows', ModuleName )
+
+    if ( toggle(emit) ) call trace_end ('Get2DHydrostaticTangentPressure' )
+
   end subroutine Get2DHydrostaticTangentPressure
 
   ! ---------------------------------- GetHydroStaticTangentPressure ----------
@@ -874,95 +877,27 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Local variables
 
-    integer :: COL                      ! Block col in jacobian
-    integer :: I                        ! Loop index
-    integer :: J                        ! Loop index
-    integer :: LOWER                    ! Index into T profile
-    integer :: MAF                      ! Major frame to consider
     integer :: NOMAFS                   ! Dimension
     integer :: NOMIFS                   ! Dimension
     integer :: NOTEMPS                  ! Dimension
-    integer :: ROW                      ! Block row in jacobian
 
-    integer, dimension(:), pointer :: POINTTEMPLAYER ! Pointing layer
-    integer, dimension(:), pointer :: POINTH2OLAYER ! Pointing layer
-    integer, dimension(:), pointer :: CLOSESTTEMPPROFILES
-    integer, dimension(:), pointer :: CLOSESTH2OPROFILES
-
-    real (r8), target :: ZERO=0.0_r8    ! Need this if no heightOffset
-    real (r8), pointer :: HTOFF         ! HeightOffset%values or zero
-    real (r8) :: USEPTAN                ! A tangent pressure
-    real (r8) :: BASIS                    ! Index
-    real (r8) :: BASISMINUS               ! Index
-    real (r8) :: BASISPLUS                ! Index
-
-    ! All these will be dimensioned noMIFs.
-    real (r8), dimension(:), pointer :: BASISGPH ! From ifm
-    real (r8), dimension(:), pointer :: DH2OBYDPTAN ! Derivative
-    real (r8), dimension(:), pointer :: DHYDROSGPHBYDPTAN ! Derivative
-    real (r8), dimension(:), pointer :: DL1GPHBYDHEIGHTOFFSET ! Derivative
-    real (r8), dimension(:), pointer :: DL1GPHBYDL1REFRGEOCALT ! Derivative
-    real (r8), dimension(:), pointer :: DL1GPHBYDPTAN ! Derivative
-    real (r8), dimension(:), pointer :: DL1GPHBYDTEMPLOWER ! Derivative
-    real (r8), dimension(:), pointer :: DL1GPHBYDTEMPUPPER ! Derivative
-    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDHEIGHTOFFSET ! Derivative
-    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDN ! Derivative
-    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDPTAN ! Derivative
-    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDTEMPLOWER ! Derivative
-    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDTEMPUPPER ! Derivative
-    real (r8), dimension(:), pointer :: DNBYDPTAN ! Derivative
-    real (r8), dimension(:), pointer :: DNBYDTEMPLOWER ! Derivative
-    real (r8), dimension(:), pointer :: DNBYDTEMPUPPER ! Derivative
-    real (r8), dimension(:), pointer :: DTEMPBYDPTAN ! Derivative
-    real (r8), dimension(:), pointer :: GEOCLAT ! TP GeocLat
-    real (r8), dimension(:), pointer :: H2OBASIS ! => h2o%template%surfs
-    real (r8), dimension(:), pointer :: H2OBASISGAP ! Basis spacing
-    real (r8), dimension(:), pointer :: H2OLOWERWEIGHT ! Weight
-    real (r8), dimension(:), pointer :: H2OUPPERWEIGHT ! Weight    
-    real (r8), dimension(:), pointer :: H2OVALS ! => h2o%values
-    real (r8), dimension(:), pointer :: HYDROSGPH ! GPH from hydrostatic calc.
-    real (r8), dimension(:), pointer :: L1GPH ! Geometric geopotential
-    real (r8), dimension(:), pointer :: L1REFRGEOCALT ! Refracted geocentric alt
-    real (r8), dimension(:), pointer :: N ! Refractive index - 1
-    real (r8), dimension(:), pointer :: P2 ! Polynomial term
-    real (r8), dimension(:), pointer :: P4 ! Polynomial term
-    real (r8), dimension(:), pointer :: POINTINGH2O ! tangent h2o.
-    real (r8), dimension(:), pointer :: POINTINGPRES ! tangent pressure.
-    real (r8), dimension(:), pointer :: POINTINGTEMP ! tangent temp.
-    real (r8), dimension(:), pointer :: POVERTSQUARED ! As name implies
-    real (r8), dimension(:), pointer :: PTANVALS ! => ptan%values
-    real (r8), dimension(:), pointer :: RATIO2 ! For geopotential calculation
-    real (r8), dimension(:), pointer :: RATIO4 ! For geopotential calculation
-    real (r8), dimension(:), pointer :: RT ! Gas constant*T
-    real (r8), dimension(:), pointer :: S2 ! sin^2 geocLat
-    real (r8), dimension(:), pointer :: TEMPBASIS ! => temp%template%surfs
-    real (r8), dimension(:), pointer :: TEMPBASISGAP ! Basis spacing
-    real (r8), dimension(:), pointer :: TEMPLOWERWEIGHT ! Weight
-    real (r8), dimension(:), pointer :: TEMPUPPERWEIGHT ! Weight
-    real (r8), dimension(:), pointer :: TEMPVALS ! => temp%values
-
-    real (r8), dimension(:,:), pointer :: A ! Derivative array
-    real (r8), dimension(:,:), pointer :: DHYDROSGPHBYDTEMP ! Derivative array
-
-    logical :: TEMPINSTATE              ! Set if temp in state not extra
-    logical :: REFGPHINSTATE            ! Set if refGPH in state not extra
     logical :: H2OINSTATE               ! Set if H2O in state, not extra
-    logical :: PTANINSTATE              ! Set if ptan in state, not extra
     logical :: HEIGHTOFFSETINSTATE      ! Set if heightOffset in state, not extra
+    logical :: PTANINSTATE              ! Set if ptan in state, not extra
+    logical :: REFGPHINSTATE            ! Set if refGPH in state not extra
+    logical :: TEMPINSTATE              ! Set if temp in state not extra
 
-    type (VectorValue_T), pointer :: TEMP ! Temperature component of state
-    type (VectorValue_T), pointer :: PTAN ! Ptan component of state
     type (VectorValue_T), pointer :: H2O ! H2O component of state
-    type (VectorValue_T), pointer :: REFGPH ! Ref gph component of state
-    type (VectorValue_T), pointer :: L1ALT ! Tangent point altitude
-    type (VectorValue_T), pointer :: RESIDUAL ! Resulting component of fwmOut
     type (VectorValue_T), pointer :: HEIGHTOFFSET ! Height offset component of state
-
-    type (MatrixElement_T), pointer :: BLOCK ! A matrix block
-
-    ! Executable code -----------------------
+    type (VectorValue_T), pointer :: L1ALT ! Tangent point altitude
+    type (VectorValue_T), pointer :: PTAN ! Ptan component of state
+    type (VectorValue_T), pointer :: REFGPH ! Ref gph component of state
+    type (VectorValue_T), pointer :: RESIDUAL ! Resulting component of fwmOut
+    type (VectorValue_T), pointer :: TEMP ! Temperature component of state
 
     if ( toggle ( emit ) ) call trace_begin ( 'ScanForwardModel' )
+
+    ! Executable code -----------------------
 
     ! Identify the vector quantities from state/extra
     temp => getQuantityForForwardModel ( state, extra, &
@@ -1011,1101 +946,1029 @@ contains ! =============== Subroutines and functions ==========================
     end if
 
     ! Now setup some standard dimensions etc.
-    maf = fmStat%maf
     noMIFs = ptan%template%noSurfs
     noMAFs = ptan%template%noInstances
     noTemps = temp%template%noSurfs
+    call scanForwardModelAuto
+    if ( toggle ( emit ) ) call trace_end ( 'ScanForwardModel' )
 
-    nullify ( pointTempLayer, pointH2OLayer )
-    nullify ( closestTempProfiles, closestH2OProfiles )
+  contains
 
-    nullify ( dh2obydptan, dhydrosgphbydptan, dl1gphbydheightoffset )
-    nullify ( dl1gphbydl1refrgeocalt, dl1gphbydptan, dl1gphbydtemplower )
-    nullify ( dl1gphbydtempupper,  dl1refrgeocaltbydheightoffset )
-    nullify ( dl1refrgeocaltbydn, dl1refrgeocaltbydptan )
-    nullify ( dl1refrgeocaltbydtemplower, dl1refrgeocaltbydtempupper )
-    nullify ( dnbydptan, dnbydtemplower, dnbydtempupper, dtempbydptan )
-    nullify ( geoclat, h2obasisgap, h2olowerweight )
-    nullify ( h2oupperweight, hydrosgph, l1gph, l1refrgeocalt )
-    nullify ( n, p2, p4, pointingh2o, pointingpres, pointingtemp )
-    nullify ( povertsquared, ratio2, ratio4 )
-    nullify ( rt, s2, tempbasisgap )
-    nullify ( templowerweight, tempupperweight )
+    subroutine ScanForwardModelAuto
 
-    nullify ( A, dHydrosGPHByDTemp )
+      ! Local variables
 
-    ! Now set up pointer arrays (there are a lot of these)
-    call allocate_test ( pointTempLayer, noMIFs,&
-      & 'pointTempLayer', ModuleName )
-    call allocate_test ( pointH2OLayer, noMIFs, &
-      & 'pointH2OLayer', ModuleName )
-    call allocate_test ( closestTempProfiles, noMAFs,&
-      & 'closestTempProfiles', ModuleName )
-    call allocate_test ( closestH2OProfiles, noMAFs,&
-      & 'closestH2OProfiles', ModuleName )
+      integer :: COL                      ! Block col in jacobian
+      integer :: I                        ! Loop index
+      integer :: J                        ! Loop index
+      integer :: LOWER                    ! Index into T profile
+      integer :: MAF                      ! Major frame to consider
+      integer :: ROW                      ! Block row in jacobian
+      real (r8), target :: ZERO=0.0_r8    ! Need this if no heightOffset
+      real (r8), pointer :: HTOFF         ! HeightOffset%values or zero
+      real (r8) :: USEPTAN                ! A tangent pressure
+      real (r8) :: BASIS                  ! Index
+      real (r8) :: BASISMINUS             ! Index
+      real (r8) :: BASISPLUS              ! Index
 
-    call allocate_test ( dH2OByDPtan, noMIFs, &
-      & 'dH2OByDPtan', ModuleName )
-    call allocate_test ( dHydrosGPHByDPtan, noMIFs, &
-      & 'dHydrosGPHByDPtan', ModuleName )
-    call allocate_test ( dL1GPHByDHeightOffset, noMIFs, &
-      & 'dL1GPHByDHeightOffset', ModuleName )
-    call allocate_test ( dL1GPHByDL1RefrGeocAlt, noMIFs, &
-      & 'dL1GPHByDL1RefrGeocAlt', ModuleName )
-    call allocate_test ( dL1GPHByDPtan, noMIFs, &
-      & 'dL1GPHByDPtan', ModuleName )
-    call allocate_test ( dL1GPHByDTempLower, noMIFs, &
-      & 'dL1GPHByDTempLower', ModuleName )
-    call allocate_test ( dL1GPHByDTempUpper, noMIFs, &
-      & 'dL1GPHByDTempLower', ModuleName )
-    call allocate_test ( dL1RefrGeocAltByDHeightOffset, noMIFs, &
-      & 'dL1RefrGeocAltByDHeightOffset', ModuleName )
-    call allocate_test ( dL1RefrGeocAltByDN, noMIFs, &
-      & 'dL1RefrGeocAltByDN', ModuleName )
-    call allocate_test ( dL1RefrGeocAltByDPtan, noMIFs, &
-      & 'dL1RefrGeocAltByDPtan', ModuleName )
-    call allocate_test ( dL1RefrGeocAltByDTempLower, noMIFs, &
-      & 'dL1RefrGeocAltByDTempLower', ModuleName )
-    call allocate_test ( dL1RefrGeocAltByDTempUpper, noMIFs, &
-      & 'dL1RefrGeocAltByDTempUpper', ModuleName )
-    call allocate_test ( dNByDPtan, noMIFs, &
-      & 'dNByDPtan', ModuleName )
-    call allocate_test ( dNByDTempLower, noMIFs, &
-      & 'dNByDTempLower', ModuleName )
-    call allocate_test ( dNByDTempUpper, noMIFs, &
-      & 'dNByDTempUpper', ModuleName )
-    call allocate_test ( dTempByDPtan, noMIFs, &
-      & 'dTempByDPtan', ModuleName )
-    call allocate_test ( geocLat, noMIFs, &
-      & 'geocLat', ModuleName )
-    call allocate_test ( h2oBasisGap, noMIFs, &
-      & 'h2oBasisGap', ModuleName )
-    call allocate_test ( h2oLowerWeight, noMIFs, &
-      & 'h2oLowerWeight', ModuleName )
-    call allocate_test ( h2oUpperWeight, noMIFs, &
-      & 'h2oUpperWeight', ModuleName )
-    call allocate_test ( hydrosGPH, noMIFs, &
-      & 'hydrosGPH', ModuleName )
-    call allocate_test ( l1GPH, noMIFs, &
-      & 'l1GPH', ModuleName )
-    call allocate_test ( l1RefrGeocAlt, noMIFs, &
-      & 'l1RefrGeocAlt', ModuleName )
-    call allocate_test ( n, noMIFs, &
-      & 'n', ModuleName )
-    call allocate_test ( p2, noMIFs, &
-      & 'p2', ModuleName )
-    call allocate_test ( p4, noMIFs, &
-      & 'p4', ModuleName )
-    call allocate_test ( pointingH2O, noMIFs, &
-      & 'pointingH2O', ModuleName )
-    call allocate_test ( pointingPres, noMIFs, &
-      & 'pointingPres', ModuleName )
-    call allocate_test ( pointingTemp, noMIFs, &
-      & 'pointingTemp', ModuleName )
-    call allocate_test ( pOverTSquared, noMIFs, &
-      & 'pOverTSquared', ModuleName )
-    call allocate_test ( ratio2, noMIFs, &
-      & 'ratio2', ModuleName )
-    call allocate_test ( ratio4, noMIFs, &
-      & 'ratio4', ModuleName )
-    call allocate_test ( s2, noMIFs, &
-      & 's2', ModuleName )
-    call allocate_test ( tempBasisGap, noMIFs, &
-      & 'tempBasisGap', ModuleName )
-    call allocate_test ( tempLowerWeight, noMIFs, &
-      & 'tempLowerWeight', ModuleName )
-    call allocate_test ( tempUpperWeight, noMIFs, &
-      & 'tempUpperWeight', ModuleName )
+      integer, dimension(noMifs) :: POINTTEMPLAYER ! Pointing layer
+      integer, dimension(noMifs) :: POINTH2OLAYER ! Pointing layer
+      integer, dimension(noMafs) :: CLOSESTTEMPPROFILES
+      integer, dimension(noMafs) :: CLOSESTH2OPROFILES
 
-    call allocate_test ( A, noMIFs+1, noTemps, & ! Extra for refGPH
-      & 'A', ModuleName )
-    call allocate_test ( dHydrosGPHByDTemp, noMIFs, noTemps, &
-      & 'dHydrosGPHByDTemp', ModuleName )
+      real (r8), dimension(noMifs) :: DH2OBYDPTAN ! Derivative
+      real (r8), dimension(noMifs) :: DHYDROSGPHBYDPTAN ! Derivative
+      real (r8), dimension(noMifs) :: DL1GPHBYDHEIGHTOFFSET ! Derivative
+      real (r8), dimension(noMifs) :: DL1GPHBYDL1REFRGEOCALT ! Derivative
+      real (r8), dimension(noMifs) :: DL1GPHBYDPTAN ! Derivative
+      real (r8), dimension(noMifs) :: DL1GPHBYDTEMPLOWER ! Derivative
+      real (r8), dimension(noMifs) :: DL1GPHBYDTEMPUPPER ! Derivative
+      real (r8), dimension(noMifs) :: DL1REFRGEOCALTBYDHEIGHTOFFSET ! Derivative
+      real (r8), dimension(noMifs) :: DL1REFRGEOCALTBYDN ! Derivative
+      real (r8), dimension(noMifs) :: DL1REFRGEOCALTBYDPTAN ! Derivative
+      real (r8), dimension(noMifs) :: DL1REFRGEOCALTBYDTEMPLOWER ! Derivative
+      real (r8), dimension(noMifs) :: DL1REFRGEOCALTBYDTEMPUPPER ! Derivative
+      real (r8), dimension(noMifs) :: DNBYDPTAN ! Derivative
+      real (r8), dimension(noMifs) :: DNBYDTEMPLOWER ! Derivative
+      real (r8), dimension(noMifs) :: DNBYDTEMPUPPER ! Derivative
+      real (r8), dimension(noMifs) :: DTEMPBYDPTAN ! Derivative
+      real (r8), dimension(noMifs) :: GEOCLAT ! TP GeocLat
+      real (r8), dimension(noMifs) :: H2OBASISGAP ! Basis spacing
+      real (r8), dimension(noMifs) :: H2OLOWERWEIGHT ! Weight
+      real (r8), dimension(noMifs) :: H2OUPPERWEIGHT ! Weight    
+      real (r8), dimension(noMifs) :: HYDROSGPH ! GPH from hydrostatic calc.
+      real (r8), dimension(noMifs) :: L1GPH ! Geometric geopotential
+      real (r8), dimension(noMifs) :: L1REFRGEOCALT ! Refracted geocentric alt
+      real (r8), dimension(noMifs) :: N ! Refractive index - 1
+      real (r8), dimension(noMifs) :: P2 ! Polynomial term
+      real (r8), dimension(noMifs) :: P4 ! Polynomial term
+      real (r8), dimension(noMifs) :: POINTINGH2O ! tangent h2o.
+      real (r8), dimension(noMifs) :: POINTINGPRES ! tangent pressure.
+      real (r8), dimension(noMifs) :: POINTINGTEMP ! tangent temp.
+      real (r8), dimension(noMifs) :: POVERTSQUARED ! As name implies
+      real (r8), dimension(noMifs) :: RATIO2 ! For geopotential calculation
+      real (r8), dimension(noMifs) :: RATIO4 ! For geopotential calculation
+      real (r8), dimension(noMifs) :: S2 ! sin^2 geocLat
+      real (r8), dimension(noMifs) :: TEMPBASISGAP ! Basis spacing
+      real (r8), dimension(noMifs) :: TEMPLOWERWEIGHT ! Weight
+      real (r8), dimension(noMifs) :: TEMPUPPERWEIGHT ! Weight
 
-    ! This could maybe be store in ifm, but for the moment, we'll do it each
-    ! time
-    call FindClosestInstances ( temp, ptan, closestTempProfiles )
-    call FindClosestInstances ( h2o, ptan, closestH2OProfiles )
+      ! These are all dimensioned noMIFs
+      real (r8), dimension(:), pointer :: BASISGPH ! From ifm
+      real (r8), dimension(:), pointer :: H2OBASIS ! => h2o%template%surfs
+      real (r8), dimension(:), pointer :: H2OVALS ! => h2o%values
+      real (r8), dimension(:), pointer :: PTANVALS ! => ptan%values
+      real (r8), dimension(:), pointer :: RT ! Gas constant*T
+      real (r8), dimension(:), pointer :: TEMPBASIS ! => temp%template%surfs
+      real (r8), dimension(:), pointer :: TEMPVALS ! => temp%values
 
-    ! Make some pointers to save time
-    tempVals => temp%values (:,closestTempProfiles(maf) )
-    h2oVals => h2o%values(:,closestH2OProfiles(maf) )
+      real (r8), dimension(noMifs+1, noTemps) :: A ! Derivative array,
+                                          ! extra row for refGPH
+      real (r8), dimension(noMifs, noTemps) :: DHYDROSGPHBYDTEMP ! Derivative array
 
-    tempBasis => temp%template%surfs(:,1)
-    h2oBasis => h2o%template%surfs(:,1)
-    ptanVals => ptan%values(:,maf)
-    if ( associated( heightOffset ) ) then
-      htOff => heightOffset%values(1,1)
-    else
-      htOff => zero
-    end if
+      type (MatrixElement_T), pointer :: BLOCK ! A matrix block
 
-    ! Do some preamble calcaulations
-    geocLat = GeodToGeocLat( ptan%template%geodLat(:,maf) )
-    ! Get terms for geopotential expression
-    s2 = (sin(geocLat))**2
-    p2 = 0.5 * (3*s2-1) ! Polynomial terms
-    p4 = 0.125 * (35*(s2**2) - 30*s2 + 3)
+      maf = fmStat%maf
 
-    ! The first part of the calculation is the geometric calculation. This is in
-    ! three stages.
-    
-    ! First we convert the level 1 geodetic heights to geocentric ones.
-    ! Then we refract these heights given our knowledge of temperature and pressure
-    ! Lastly we convert these heights to geopotentials.
-    ! For each of these stages we need to calculate derivatives
-    
+      ! This could maybe be store in ifm, but for the moment, we'll do it each
+      ! time
+      call FindClosestInstances ( temp, ptan, closestTempProfiles )
+      call FindClosestInstances ( h2o, ptan, closestH2OProfiles )
 
-    ! We have to refract the L1altitudes. In order to do that we need the
-    ! refractive index, for which we need pressure and the temperature corresponding
-    ! to that pressure.
+      ! Make some pointers to save time
+      tempVals => temp%values (:,closestTempProfiles(maf) )
+      h2oVals => h2o%values(:,closestH2OProfiles(maf) )
 
-    ! First find the layer each pointing is in, both for T and H2O, and
-    ! thence calculate the refractive indicies
-
-
-    ! Find temp and h2o layers
-    call Hunt ( tempBasis, ptanVals, pointTempLayer )
-    call Hunt ( h2oBasis,  ptanVals, pointH2OLayer )
-    
-    ! Calculate lower and upper weights
-    tempBasisGap = tempBasis(pointTempLayer+1) - tempBasis(pointTempLayer)
-    h2oBasisGap = h2oBasis(pointH2OLayer+1) - h2oBasis(pointH2OLayer)
-
-    ! Compute weights
-    tempUpperWeight = (ptanVals-tempBasis(pointTempLayer))/tempBasisGap
-    tempLowerWeight = 1.0 - tempUpperWeight
-    h2oUpperWeight = (ptanVals-h2oBasis(pointH2oLayer))/h2oBasisGap
-    h2oLowerWeight = 1.0 - h2oUpperWeight
-
-    ! Constrain to constant so we get no extrapolation
-    tempUpperWeight = max ( 0.0_r8, min( 1.0_r8, tempUpperWeight ) )
-    tempLowerWeight = max ( 0.0_r8, min( 1.0_r8, tempLowerWeight ) )
-    h2oUpperWeight = max ( 0.0_r8, min( 1.0_r8, h2oUpperWeight ) )
-    h2oLowerWeight = max ( 0.0_r8, min( 1.0_r8, h2oLowerWeight ) )
-
-    ! Now compute derivatives wrt ptan for later chain rule use.
-    where (ptanVals>=tempBasis(1) .and. ptanVals<tempBasis(noTemps))
-      dTempByDPTan = ( tempVals(pointTempLayer+1) - tempVals(pointTempLayer) ) / &
-        & tempBasisGap
-    elsewhere
-      dTempByDPTan = 0.0_r8
-    endwhere
-
-    where (ptanVals>=h2oBasis(1) .and. ptanVals<h2oBasis(h2o%template%noSurfs))
-      dH2oByDPTan = ( h2oVals(pointH2oLayer+1) - h2oVals(pointH2oLayer) ) / &
-        & h2oBasisGap
-    elsewhere
-      dH2oByDPTan = 0.0_r8
-    endwhere
-  
-    ! Now get interpolated temperature and H2O
-    pointingTemp = tempVals(pointTempLayer) * tempLowerWeight + &
-      &            tempVals(pointTempLayer+1) * tempUpperWeight 
-    pointingH2O = h2oVals(pointH2OLayer) * h2oLowerWeight + &
-      &           h2oVals(pointH2OLayer+1) * h2oUpperWeight
-
-    ! Get pointing pressure in mb
-    pointingPres = min(10.0_r8**(-ptanVals), maxPressure)
-
-    ! Now get the refractive index n
-    n=refrATerm/(pointingTemp/pointingPres) * &
-      & (1.0+refrBterm*pointingH2O/pointingTemp)
-
-    ! Get its derivatives wrt temp, and ptan (ignore h2o)
-    pOverTSquared=pointingPres/(pointingTemp**2)
-
-    dNByDPtan=n*(-LN10-dTempByDPtan/pointingTemp)+ &
-      & (refrBTerm*refrATerm*pOverTSquared) * &
-      & (dH2OByDPtan-(pointingH2O/pointingTemp)*dTempByDPtan)
-
-    dNByDTempLower=-(tempLowerWeight*refrATerm) * &
-      & pOverTSquared*(1+2*refrBTerm*pointingH2O/pointingTemp)
-    dNByDTempUpper=-(tempUpperWeight*refrATerm) * &
-      & pOverTSquared*(1+2*refrBTerm*pointingH2O/pointingTemp)
-
-    ! Now if n is too big limit it and set derivatives to zero
-    where ( n > maxRefraction )
-      n=maxRefraction
-      dNByDTempLower = 0.0
-      dNByDTempUpper = 0.0
-      dNByDPtan = 0.0
-    end where
-
-    ! Do similar things for high pressure cases
-    where ( 10.0_r8**(-ptanVals) > maxPressure )
-      dNByDPtan=0.0
-    end where
-
-    ! Now from this calculate the refracted geocentric altitudes
-    l1RefrGeocAlt= ( l1Alt%values(:,maf) + htOff ) / (1.0+n)
-
-    ! And calculate their derivatives, again ignore H2O
-    dl1RefrGeocAltByDHeightOffset = 1.0 / (1.0+n)
-    dl1RefrGeocAltByDn = -l1RefrGeocAlt / (1.0+n)
-    
-    dl1RefrGeocAltByDPtan = dL1RefrGeocAltByDn * dNByDPtan
-    
-    dl1RefrGeocAltByDTempLower = dl1RefrGeocAltByDn * dNByDTempLower
-    dl1RefrGeocAltByDTempUpper = dl1RefrGeocAltByDn * dNByDTempUpper
-
-    ! Now we want to convert these to geopotentials
-    ratio2=(earthRadA/l1RefrGeocAlt)**2
-    ratio4=ratio2**2
-
-    l1GPH = -(GM/(l1RefrGeocAlt*g0)) * &
-      & (1-J2*P2*ratio2-J4*P4*ratio4) - &
-      & ((omega*l1RefrGeocAlt*cos(geocLat))**2)/(2*g0) + earthSurfaceGPH
-
-    dL1GPHByDL1RefrGeocAlt= ( (GM/(l1RefrGeocAlt**2)) * &
-      & (1-3*J2*P2*ratio2-5*J4*P4*ratio4) - &
-      & omega**2*l1RefrGeocAlt*(cos(geocLat))**2 ) / g0
-
-    ! Now get the combined derivatives for the l1Geopt's
-    dL1GPHByDHeightOffset = dL1GPHByDL1RefrGeocAlt * &
-      & dL1RefrGeocAltByDHeightOffset
-    dL1GPHByDPtan = dL1GPHByDL1RefrGeocAlt * &
-      & dL1RefrGeocAltByDPtan
-    dL1GPHByDTempLower = dL1GPHByDL1RefrGeocAlt * &
-      & dL1RefrGeocAltByDTempLower
-    dL1GPHByDTempUpper = dL1GPHByDL1RefrGeocAlt * &
-      & dL1RefrGeocAltByDTempUpper
-
-    ! --------------------------------------------------------
-    ! That's the end of the geometric geopotential calculation
-    ! Now we're onto the hydrostatic calculation
-    ! --------------------------------------------------------
-
-    ! If this is the very first call, setup the hydrostatic temperature
-    ! grid.
-    if ( fmStat%newScanHydros ) then
-      call allocate_test ( ifm%basisGPH, noTemps, &
-        & temp%template%noInstances, 'ifm%gph', ModuleName )
-      call allocate_test ( ifm%RT,  noTemps, &
-        & temp%template%noInstances, 'ifm%gph', ModuleName )
-      call allocate_test ( ifm%R, noTemps, &
-        & 'ifm%gph', ModuleName )
-      call GetBasisGPH ( temp, refGPH, ifm%basisGPH, &
-        & ifm%R, ifm%RT, belowRef=ifm%belowRef )
-      fmStat%newScanHydros = .false.
-    end if
-
-    rt => ifm%rt(:, closestTempProfiles(maf) )
-    basisGPH => ifm%basisGPH (:, closestTempProfiles(maf) )
-
-    ! Compute the basisGPH for each minor frame
-    where (ptanVals>=tempBasis(1) .and. ptanVals<tempBasis(noTemps))
-      hydrosGPH = basisGPH ( pointTempLayer ) + &
-        & (rt(pointTempLayer)*tempUpperWeight*(2-tempUpperWeight) + &
-        &  rt(pointTempLayer+1)*(tempUpperWeight**2))*(ln10*tempBasisGap/(2*g0))
-    end where
-
-    where ( ptanVals < tempBasis(1) )
-      hydrosGPH = basisGPH ( pointTempLayer ) + &
-        & rt(pointTempLayer) * ln10 * &
-        & (ptanVals-tempBasis(pointTempLayer))/g0
-    end where
-
-    where ( ptanVals > tempBasis(noTemps) )
-      hydrosGPH = basisGPH (pointTempLayer+1) + &
-        & rt(pointTempLayer+1) * ln10 * &
-        & (ptanVals-tempBasis(pointTempLayer+1))/g0
-    end where
-
-    ! Now we need dHydrosGPHByDT. To do this we calculate a matrix A containing
-    ! the integrated basis functions.  There is an extra dimension in this
-    ! to account for the reference surface which is then globally subtracted at
-    ! the end.
-
-    ! Unlike the code above, I think I'll do this in a loop to make life easier
-
-    do i = 1, noMIFs + 1
-      if ( i == noMIFs+1 ) then
-        usePtan = refGPH%template%surfs(1,1)
-        lower = ifm%belowRef
+      tempBasis => temp%template%surfs(:,1)
+      h2oBasis => h2o%template%surfs(:,1)
+      ptanVals => ptan%values(:,maf)
+      if ( associated( heightOffset ) ) then
+        htOff => heightOffset%values(1,1)
       else
-        usePtan = ptanVals(i)
-        lower = pointTempLayer(i)
+        htOff => zero
       end if
 
-      ! Now do the main bulk of the temperature bases
-      do j = 1, noTemps
+      ! Do some preamble calcaulations
+      geocLat = GeodToGeocLat( ptan%template%geodLat(:,maf) )
+      ! Get terms for geopotential expression
+      s2 = (sin(geocLat))**2
+      p2 = 0.5 * (3*s2-1) ! Polynomial terms
+      p4 = 0.125 * (35*(s2**2) - 30*s2 + 3)
 
-        ! Loop over temperature basis surfaces
-        A(i,j) = 0.0_r8          ! Set to zero to start
+      ! The first part of the calculation is the geometric calculation. This is in
+      ! three stages.
 
-        ! Now do nothing for bad ptans
-        if ( usePtan /= ptan%template%badValue ) then
-          basis = tempBasis(j)
-          basisPlus =  tempBasis( min(j+1,noTemps))
-          basisMinus = tempBasis( max(j-1,1) )
-          
-          ! Consider the extremes (j==1, j==noTemps) cases first
-          
-          ! Below bottom of basis
-          if ( (j==1) .and. (usePtan < tempBasis(j)) ) then
-            A(i,j) = 2*(usePtan-tempBasis(j))
+      ! First we convert the level 1 geodetic heights to geocentric ones.
+      ! Then we refract these heights given our knowledge of temperature and pressure
+      ! Lastly we convert these heights to geopotentials.
+      ! For each of these stages we need to calculate derivatives
 
-            ! Above top
-          else if ( (j==noTemps) .and. (usePtan > tempBasis(j)) ) then
-            A(i,j) = 2*(usePtan-tempBasis(j))
 
-            ! Basis triangles completely below ptan
-          else if ( j < lower ) then
-            A(i,j) = basisPlus - basisMinus
+      ! We have to refract the L1altitudes. In order to do that we need the
+      ! refractive index, for which we need pressure and the temperature corresponding
+      ! to that pressure.
 
-            ! Basis triangles with ptan in the top half (not when ptan above top)
-          else if ( j == lower .and. usePtan < tempBasis(noTemps) ) then
-            A(i,j) = ( basis - basisMinus ) + &
-              & ( usePtan - basis ) * &
-              & ( 2 * basisPlus - basis - usePtan ) / &
-              & (basisPlus - basis)
+      ! First find the layer each pointing is in, both for T and H2O, and
+      ! thence calculate the refractive indicies
 
-            ! Basis triangles with ptan in the bottom half (not when ptan below bottom)
-          else if ( j == lower+1 .and. usePtan >= tempBasis(1) ) then
-            A(i,j) = ( ( usePtan - basisMinus )**2 ) / &
-              & (basis - basisMinus)
 
-          end if                         ! Basis triangles completely above ptan, no impact
-        end if                           ! Good ptan
-      end do                             ! Loop over temp basis
-    end do                               ! Loop over ptans
-    
-    ! Now use this to get temperature derivatives
-    do i = 1, noMIFs
-      if ( ptanVals(i) /= ptan%template%badValue ) then
+      ! Find temp and h2o layers
+      call Hunt ( tempBasis, ptanVals, pointTempLayer )
+      call Hunt ( h2oBasis,  ptanVals, pointH2OLayer )
+
+      ! Calculate lower and upper weights
+      tempBasisGap = tempBasis(pointTempLayer+1) - tempBasis(pointTempLayer)
+      h2oBasisGap = h2oBasis(pointH2OLayer+1) - h2oBasis(pointH2OLayer)
+
+      ! Compute weights
+      tempUpperWeight = (ptanVals-tempBasis(pointTempLayer))/tempBasisGap
+      tempLowerWeight = 1.0 - tempUpperWeight
+      h2oUpperWeight = (ptanVals-h2oBasis(pointH2oLayer))/h2oBasisGap
+      h2oLowerWeight = 1.0 - h2oUpperWeight
+
+      ! Constrain to constant so we get no extrapolation
+      tempUpperWeight = max ( 0.0_r8, min( 1.0_r8, tempUpperWeight ) )
+      tempLowerWeight = max ( 0.0_r8, min( 1.0_r8, tempLowerWeight ) )
+      h2oUpperWeight = max ( 0.0_r8, min( 1.0_r8, h2oUpperWeight ) )
+      h2oLowerWeight = max ( 0.0_r8, min( 1.0_r8, h2oLowerWeight ) )
+
+      ! Now compute derivatives wrt ptan for later chain rule use.
+      where (ptanVals>=tempBasis(1) .and. ptanVals<tempBasis(noTemps))
+        dTempByDPTan = ( tempVals(pointTempLayer+1) - tempVals(pointTempLayer) ) / &
+          & tempBasisGap
+      elsewhere
+        dTempByDPTan = 0.0_r8
+      endwhere
+
+      where (ptanVals>=h2oBasis(1) .and. ptanVals<h2oBasis(h2o%template%noSurfs))
+        dH2oByDPTan = ( h2oVals(pointH2oLayer+1) - h2oVals(pointH2oLayer) ) / &
+          & h2oBasisGap
+      elsewhere
+        dH2oByDPTan = 0.0_r8
+      endwhere
+
+      ! Now get interpolated temperature and H2O
+      pointingTemp = tempVals(pointTempLayer) * tempLowerWeight + &
+        &            tempVals(pointTempLayer+1) * tempUpperWeight 
+      pointingH2O = h2oVals(pointH2OLayer) * h2oLowerWeight + &
+        &           h2oVals(pointH2OLayer+1) * h2oUpperWeight
+
+      ! Get pointing pressure in mb
+      pointingPres = min(10.0_r8**(-ptanVals), maxPressure)
+
+      ! Now get the refractive index n
+      n=refrATerm/(pointingTemp/pointingPres) * &
+        & (1.0+refrBterm*pointingH2O/pointingTemp)
+
+      ! Get its derivatives wrt temp, and ptan (ignore h2o)
+      pOverTSquared=pointingPres/(pointingTemp**2)
+
+      dNByDPtan=n*(-LN10-dTempByDPtan/pointingTemp)+ &
+        & (refrBTerm*refrATerm*pOverTSquared) * &
+        & (dH2OByDPtan-(pointingH2O/pointingTemp)*dTempByDPtan)
+
+      dNByDTempLower=-(tempLowerWeight*refrATerm) * &
+        & pOverTSquared*(1+2*refrBTerm*pointingH2O/pointingTemp)
+      dNByDTempUpper=-(tempUpperWeight*refrATerm) * &
+        & pOverTSquared*(1+2*refrBTerm*pointingH2O/pointingTemp)
+
+      ! Now if n is too big limit it and set derivatives to zero
+      where ( n > maxRefraction )
+        n=maxRefraction
+        dNByDTempLower = 0.0
+        dNByDTempUpper = 0.0
+        dNByDPtan = 0.0
+      end where
+
+      ! Do similar things for high pressure cases
+      where ( 10.0_r8**(-ptanVals) > maxPressure )
+        dNByDPtan=0.0
+      end where
+
+      ! Now from this calculate the refracted geocentric altitudes
+      l1RefrGeocAlt= ( l1Alt%values(:,maf) + htOff ) / (1.0+n)
+
+      ! And calculate their derivatives, again ignore H2O
+      dl1RefrGeocAltByDHeightOffset = 1.0 / (1.0+n)
+      dl1RefrGeocAltByDn = -l1RefrGeocAlt / (1.0+n)
+
+      dl1RefrGeocAltByDPtan = dL1RefrGeocAltByDn * dNByDPtan
+
+      dl1RefrGeocAltByDTempLower = dl1RefrGeocAltByDn * dNByDTempLower
+      dl1RefrGeocAltByDTempUpper = dl1RefrGeocAltByDn * dNByDTempUpper
+
+      ! Now we want to convert these to geopotentials
+      ratio2=(earthRadA/l1RefrGeocAlt)**2
+      ratio4=ratio2**2
+
+      l1GPH = -(GM/(l1RefrGeocAlt*g0)) * &
+        & (1-J2*P2*ratio2-J4*P4*ratio4) - &
+        & ((omega*l1RefrGeocAlt*cos(geocLat))**2)/(2*g0) + earthSurfaceGPH
+
+      dL1GPHByDL1RefrGeocAlt= ( (GM/(l1RefrGeocAlt**2)) * &
+        & (1-3*J2*P2*ratio2-5*J4*P4*ratio4) - &
+        & omega**2*l1RefrGeocAlt*(cos(geocLat))**2 ) / g0
+
+      ! Now get the combined derivatives for the l1Geopt's
+      dL1GPHByDHeightOffset = dL1GPHByDL1RefrGeocAlt * &
+        & dL1RefrGeocAltByDHeightOffset
+      dL1GPHByDPtan = dL1GPHByDL1RefrGeocAlt * &
+        & dL1RefrGeocAltByDPtan
+      dL1GPHByDTempLower = dL1GPHByDL1RefrGeocAlt * &
+        & dL1RefrGeocAltByDTempLower
+      dL1GPHByDTempUpper = dL1GPHByDL1RefrGeocAlt * &
+        & dL1RefrGeocAltByDTempUpper
+
+      ! --------------------------------------------------------
+      ! That's the end of the geometric geopotential calculation
+      ! Now we're onto the hydrostatic calculation
+      ! --------------------------------------------------------
+
+      ! If this is the very first call, setup the hydrostatic temperature
+      ! grid.
+      if ( fmStat%newScanHydros ) then
+        call allocate_test ( ifm%basisGPH, noTemps, &
+          & temp%template%noInstances, 'ifm%gph', ModuleName )
+        call allocate_test ( ifm%RT,  noTemps, &
+          & temp%template%noInstances, 'ifm%gph', ModuleName )
+        call allocate_test ( ifm%R, noTemps, &
+          & 'ifm%gph', ModuleName )
+        call GetBasisGPH ( temp, refGPH, ifm%basisGPH, &
+          & ifm%R, ifm%RT, belowRef=ifm%belowRef )
+        fmStat%newScanHydros = .false.
+      end if
+
+      rt => ifm%rt(:, closestTempProfiles(maf) )
+      basisGPH => ifm%basisGPH (:, closestTempProfiles(maf) )
+
+      ! Compute the basisGPH for each minor frame
+      where (ptanVals>=tempBasis(1) .and. ptanVals<tempBasis(noTemps))
+        hydrosGPH = basisGPH ( pointTempLayer ) + &
+          & (rt(pointTempLayer)*tempUpperWeight*(2-tempUpperWeight) + &
+          &  rt(pointTempLayer+1)*(tempUpperWeight**2))*(ln10*tempBasisGap/(2*g0))
+      end where
+
+      where ( ptanVals < tempBasis(1) )
+        hydrosGPH = basisGPH ( pointTempLayer ) + &
+          & rt(pointTempLayer) * ln10 * &
+          & (ptanVals-tempBasis(pointTempLayer))/g0
+      end where
+
+      where ( ptanVals > tempBasis(noTemps) )
+        hydrosGPH = basisGPH (pointTempLayer+1) + &
+          & rt(pointTempLayer+1) * ln10 * &
+          & (ptanVals-tempBasis(pointTempLayer+1))/g0
+      end where
+
+      ! Now we need dHydrosGPHByDT. To do this we calculate a matrix A containing
+      ! the integrated basis functions.  There is an extra dimension in this
+      ! to account for the reference surface which is then globally subtracted at
+      ! the end.
+
+      ! Unlike the code above, I think I'll do this in a loop to make life easier
+
+      do i = 1, noMIFs + 1
+        if ( i == noMIFs+1 ) then
+          usePtan = refGPH%template%surfs(1,1)
+          lower = ifm%belowRef
+        else
+          usePtan = ptanVals(i)
+          lower = pointTempLayer(i)
+        end if
+
+        ! Now do the main bulk of the temperature bases
         do j = 1, noTemps
-          dHydrosGPHByDTemp(i,j) = ( A(i,j) - A(noMIFs+1,j) ) * &
-            & (ifm%R(j)*ln10) / (2*g0)
-        end do
-      end if
-    end do
-    
-    ! Now get dHydrosGPHByDPtan
-    do i= 1, noMIFs
-      if ( ptanVals(i) /= ptan%template%badValue ) then
-        dHydrosGPHByDPtan(i)= (ln10/g0) * ( &
-          & rt(pointTempLayer(i)) * tempLowerWeight(i)+ &
-          & rt(pointTempLayer(i)+1) * tempUpperWeight(i) )
+
+          ! Loop over temperature basis surfaces
+          A(i,j) = 0.0_r8          ! Set to zero to start
+
+          ! Now do nothing for bad ptans
+          if ( usePtan /= ptan%template%badValue ) then
+            basis = tempBasis(j)
+            basisPlus =  tempBasis( min(j+1,noTemps))
+            basisMinus = tempBasis( max(j-1,1) )
+
+            ! Consider the extremes (j==1, j==noTemps) cases first
+
+            ! Below bottom of basis
+            if ( (j==1) .and. (usePtan < tempBasis(j)) ) then
+              A(i,j) = 2*(usePtan-tempBasis(j))
+
+              ! Above top
+            else if ( (j==noTemps) .and. (usePtan > tempBasis(j)) ) then
+              A(i,j) = 2*(usePtan-tempBasis(j))
+
+              ! Basis triangles completely below ptan
+            else if ( j < lower ) then
+              A(i,j) = basisPlus - basisMinus
+
+              ! Basis triangles with ptan in the top half (not when ptan above top)
+            else if ( j == lower .and. usePtan < tempBasis(noTemps) ) then
+              A(i,j) = ( basis - basisMinus ) + &
+                & ( usePtan - basis ) * &
+                & ( 2 * basisPlus - basis - usePtan ) / &
+                & (basisPlus - basis)
+
+              ! Basis triangles with ptan in the bottom half (not when ptan below bottom)
+            else if ( j == lower+1 .and. usePtan >= tempBasis(1) ) then
+              A(i,j) = ( ( usePtan - basisMinus )**2 ) / &
+                & (basis - basisMinus)
+
+            end if                         ! Basis triangles completely above ptan, no impact
+          end if                           ! Good ptan
+        end do                             ! Loop over temp basis
+      end do                               ! Loop over ptans
+
+      ! Now use this to get temperature derivatives
+      do i = 1, noMIFs
+        if ( ptanVals(i) /= ptan%template%badValue ) then
+          do j = 1, noTemps
+            dHydrosGPHByDTemp(i,j) = ( A(i,j) - A(noMIFs+1,j) ) * &
+              & (ifm%R(j)*ln10) / (2*g0)
+          end do
+        end if
+      end do
+
+      ! Now get dHydrosGPHByDPtan
+      do i= 1, noMIFs
+        if ( ptanVals(i) /= ptan%template%badValue ) then
+          dHydrosGPHByDPtan(i)= (ln10/g0) * ( &
+            & rt(pointTempLayer(i)) * tempLowerWeight(i)+ &
+            & rt(pointTempLayer(i)+1) * tempUpperWeight(i) )
+        else
+          dHydrosGPHByDPtan(i)=0.0
+        end if
+      end do
+
+      ! -----------------------------------------------------------------------
+      ! Now we calculate the residual, which is defined as the difference of the
+      ! l1GPH and hydrosGPH. We also need it's derivatives wrt temp and ptan.
+      ! First calculate residual. Also calculate the derivatives.
+      ! -----------------------------------------------------------------------
+
+      ! Compute residual (or differential residual)
+      if ( fmConf%differentialScan ) then
+        residual%values ( 1 : noMIFs-1, maf ) = &
+          & ( l1GPH(2:noMIFs) - l1GPH(1:noMIFs-1) ) -&
+          & ( hydrosGPH(2:noMIFs) - hydrosGPH(1:noMIFs-1) )
+        residual%values( noMIFs, maf ) = 0.0
       else
-        dHydrosGPHByDPtan(i)=0.0
-      end if
-    end do
-
-    ! -----------------------------------------------------------------------
-    ! Now we calculate the residual, which is defined as the difference of the
-    ! l1GPH and hydrosGPH. We also need it's derivatives wrt temp and ptan.
-    ! First calculate residual. Also calculate the derivatives.
-    ! -----------------------------------------------------------------------
-
-    ! Compute residual (or differential residual)
-    if ( fmConf%differentialScan ) then
-      residual%values ( 1 : noMIFs-1, maf ) = &
-        & ( l1GPH(2:noMIFs) - l1GPH(1:noMIFs-1) ) -&
-        & ( hydrosGPH(2:noMIFs) - hydrosGPH(1:noMIFs-1) )
-      residual%values( noMIFs, maf ) = 0.0
-    else
-      residual%values(:,maf) = l1GPH - hydrosGPH
-    end if
-
-    ! Find row in jacobian
-    if ( present ( jacobian ) ) then
-      row = FindBlock ( jacobian%row, residual%index, maf )
-      fmStat%rows(row) = .true.
-      
-      ! Store the ptan derivatives
-      if ( ptanInState ) then
-        col = FindBlock ( jacobian%col, ptan%index, maf )
-        block => jacobian%block(row,col)
-        if ( block%kind /= M_Absent ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Found a prexisting d(residual)/d(ptan), removing' )
-          call DestroyBlock ( block )
-        end if
-        if ( fmConf%differentialScan ) then
-          call updateDiagonal ( block, (/ &
-            & ( dL1GPHByDPtan(2:noMIFs) - dL1GPHByDPtan(1:noMIFs-1) ) - &
-            & ( dHydrosGPHByDPtan(2:noMIFs) - dHydrosGPHByDPtan(1:noMIFs-1) ) - &
-            & 0.0 /) )
-        else
-          call updateDiagonal ( block, dL1GPHByDPtan-dHydrosGPHByDPtan )
-        end if
+        residual%values(:,maf) = l1GPH - hydrosGPH
       end if
 
-      ! Store refGPH derivatives
-      if ( refGPHInState ) then
-        col = FindBlock ( jacobian%col, refGPH%index, maf )
-        block => jacobian%block(row,col)
-        if ( fmConf%differentialScan ) then
-          call DestroyBlock ( block )
-        else
+      ! Find row in jacobian
+      if ( present ( jacobian ) ) then
+        row = FindBlock ( jacobian%row, residual%index, maf )
+        fmStat%rows(row) = .true.
+
+        ! Store the ptan derivatives
+        if ( ptanInState ) then
+          col = FindBlock ( jacobian%col, ptan%index, maf )
+          block => jacobian%block(row,col)
           if ( block%kind /= M_Absent ) then
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Found a prexisting d(residual)/d(refGPH), removing' )
+              & 'Found a prexisting d(residual)/d(ptan), removing' )
+            call DestroyBlock ( block )
+          end if
+          if ( fmConf%differentialScan ) then
+            call updateDiagonal ( block, (/ &
+              & ( dL1GPHByDPtan(2:noMIFs) - dL1GPHByDPtan(1:noMIFs-1) ) - &
+              & ( dHydrosGPHByDPtan(2:noMIFs) - dHydrosGPHByDPtan(1:noMIFs-1) ) - &
+              & 0.0 /) )
+          else
+            call updateDiagonal ( block, dL1GPHByDPtan-dHydrosGPHByDPtan )
+          end if
+        end if
+
+        ! Store refGPH derivatives
+        if ( refGPHInState ) then
+          col = FindBlock ( jacobian%col, refGPH%index, maf )
+          block => jacobian%block(row,col)
+          if ( fmConf%differentialScan ) then
+            call DestroyBlock ( block )
+          else
+            if ( block%kind /= M_Absent ) then
+              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & 'Found a prexisting d(residual)/d(refGPH), removing' )
+              call DestroyBlock ( block )
+            end if
+            call CreateBlock ( jacobian, row, col, M_Full )
+            block%values = -1.0
+          end if
+        end if
+
+        ! Store heightOffset derivatives if any
+        if ( associated (heightOffset) .and. heightOffsetInState ) then
+          col = FindBlock ( jacobian%col, heightOffset%index, maf )
+          block => jacobian%block(row,col)
+          if ( block%kind /= M_Absent ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Found a prexisting d(residual)/d(heightOffset), removing' )
             call DestroyBlock ( block )
           end if
           call CreateBlock ( jacobian, row, col, M_Full )
-          block%values = -1.0
+          if  ( fmConf%differentialScan ) then
+            block%values(:,1) = (/ &
+              & dL1GPHByDHeightOffset(2:noMIFs) - dL1GPHByDHeightOffset(1:noMIFs-1), &
+              & 0.0_r8 /)
+          else
+            block%values(:,1) = dL1GPHByDHeightOffset
+          end if
         end if
+
+        ! Now the temperature derivatives
+        if ( tempInState ) then
+          col = FindBlock ( jacobian%col, temp%index, maf )
+          block => jacobian%block(row,col)
+          if ( block%kind /= M_Absent ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Found a prexisting d(residual)/d(temp), removing' )
+            call DestroyBlock ( block )
+          end if
+          call CreateBlock ( jacobian, row, col, M_Full )
+          if ( fmConf%differentialScan ) then
+            ! ------------- Diffential model
+            block%values(noMIFs,:) = 0.0
+            block%values(1:noMIFs-1,:) = - ( dHydrosGPHByDTemp(2:noMIFs,:) - &
+              & dHydrosGPHByDTemp(1:noMIFs-1,:) )
+            do i = 2, noMIFs
+              block%values(i-1,pointTempLayer(i)) = &
+                & block%values(i-1,pointTempLayer(i)) + dL1GPHByDTempLower(i)
+              block%values(i-1,pointTempLayer(i)+1) = &
+                & block%values(i-1,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
+            end do
+            do i = 1, noMIFs-1
+              block%values(i,pointTempLayer(i)) = &
+                & block%values(i,pointTempLayer(i)) - dL1GPHByDTempLower(i)
+              block%values(i,pointTempLayer(i)+1) = &
+                & block%values(i,pointTempLayer(i)+1) - dL1GPHByDTempUpper(i)
+            end do
+          else
+            ! ------------- Non differential model
+            block%values = - dHydrosGPHByDTemp
+            do i = 1, noMIFs
+              block%values(i,pointTempLayer(i)) = &
+                & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
+              block%values(i,pointTempLayer(i)+1) = &
+                & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
+            end do
+          end if
+        end if
+
       end if
-        
-      ! Store heightOffset derivatives if any
-      if ( associated (heightOffset) .and. heightOffsetInState ) then
-        col = FindBlock ( jacobian%col, heightOffset%index, maf )
-        block => jacobian%block(row,col)
-        if ( block%kind /= M_Absent ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Found a prexisting d(residual)/d(heightOffset), removing' )
-          call DestroyBlock ( block )
-        end if
-        call CreateBlock ( jacobian, row, col, M_Full )
-        if  ( fmConf%differentialScan ) then
-          block%values(:,1) = (/ &
-            & dL1GPHByDHeightOffset(2:noMIFs) - dL1GPHByDHeightOffset(1:noMIFs-1), &
-            & 0.0_r8 /)
-        else
-          block%values(:,1) = dL1GPHByDHeightOffset
-        end if
-      end if
 
-      ! Now the temperature derivatives
-      if ( tempInState ) then
-        col = FindBlock ( jacobian%col, temp%index, maf )
-        block => jacobian%block(row,col)
-        if ( block%kind /= M_Absent ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Found a prexisting d(residual)/d(temp), removing' )
-          call DestroyBlock ( block )
-        end if
-        call CreateBlock ( jacobian, row, col, M_Full )
-        if ( fmConf%differentialScan ) then
-          ! ------------- Diffential model
-          block%values(noMIFs,:) = 0.0
-          block%values(1:noMIFs-1,:) = - ( dHydrosGPHByDTemp(2:noMIFs,:) - &
-            & dHydrosGPHByDTemp(1:noMIFs-1,:) )
-          do i = 2, noMIFs
-            block%values(i-1,pointTempLayer(i)) = &
-              & block%values(i-1,pointTempLayer(i)) + dL1GPHByDTempLower(i)
-            block%values(i-1,pointTempLayer(i)+1) = &
-              & block%values(i-1,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
-          end do
-          do i = 1, noMIFs-1
-            block%values(i,pointTempLayer(i)) = &
-              & block%values(i,pointTempLayer(i)) - dL1GPHByDTempLower(i)
-            block%values(i,pointTempLayer(i)+1) = &
-              & block%values(i,pointTempLayer(i)+1) - dL1GPHByDTempUpper(i)
-          end do
-        else
-          ! ------------- Non differential model
-          block%values = - dHydrosGPHByDTemp
-          do i = 1, noMIFs
-            block%values(i,pointTempLayer(i)) = &
-              & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
-            block%values(i,pointTempLayer(i)+1) = &
-              & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
-          end do
-        end if
-      end if
-      
-    end if
-
-    ! Now deallocate pointers
-    call deallocate_test ( pointTempLayer, 'pointTempLayer', ModuleName )
-    call deallocate_test ( pointH2OLayer, 'pointH2OLayer', ModuleName )
-    call deallocate_test ( closestTempProfiles, 'closestTempProfiles', ModuleName )
-    call deallocate_test ( closestH2OProfiles, 'closestH2OProfiles', ModuleName )
-
-    call deallocate_test ( dH2OByDPtan, 'dH2OByDPtan', ModuleName )
-    call deallocate_test ( dHydrosGPHByDPtan, 'dHydrosGPHByDPtan', ModuleName )
-    call deallocate_test ( dL1GPHByDHeightOffset, 'dL1GPHByDHeightOffset', ModuleName )
-    call deallocate_test ( dL1GPHByDL1RefrGeocAlt, 'dL1GPHByDL1RefrGeocAlt', ModuleName )
-    call deallocate_test ( dL1GPHByDPtan, 'dL1GPHByDPtan', ModuleName )
-    call deallocate_test ( dL1GPHByDTempLower, 'dL1GPHByDTempLower', ModuleName )
-    call deallocate_test ( dL1GPHByDTempUpper, 'dL1GPHByDTempLower', ModuleName )
-    call deallocate_test ( dL1RefrGeocAltByDHeightOffset,&
-      & 'dL1RefrGeocAltByDHeightOffset', ModuleName )
-    call deallocate_test ( dL1RefrGeocAltByDN,&
-      & 'dL1RefrGeocAltByDN', ModuleName )
-    call deallocate_test ( dL1RefrGeocAltByDPtan,&
-      & 'dL1RefrGeocAltByDPtan', ModuleName )
-    call deallocate_test ( dL1RefrGeocAltByDTempLower,&
-      & 'dL1RefrGeocAltByDTempLower', ModuleName )
-    call deallocate_test ( dL1RefrGeocAltByDTempUpper, &
-      & 'dL1RefrGeocAltByDTempUpper', ModuleName )
-    call deallocate_test ( dNByDPtan, 'dNByDPtan', ModuleName )
-    call deallocate_test ( dNByDTempLower, 'dNByDTempLower', ModuleName )
-    call deallocate_test ( dNByDTempUpper, 'dNByDTempUpper', ModuleName )
-    call deallocate_test ( dTempByDPtan, 'dTempByDPtan', ModuleName )
-    call deallocate_test ( geocLat, 'geocLat', ModuleName )
-    call deallocate_test ( h2oBasisGap, 'h2oBasisGap', ModuleName )
-    call deallocate_test ( h2oLowerWeight, 'h2oLowerWeight', ModuleName )
-    call deallocate_test ( h2oUpperWeight, 'h2oUpperWeight', ModuleName )
-    call deallocate_test ( hydrosGPH, 'hydrosGPH', ModuleName )
-    call deallocate_test ( l1GPH, 'l1GPH', ModuleName )
-    call deallocate_test ( l1RefrGeocAlt, 'l1RefrGeocAlt', ModuleName )
-    call deallocate_test ( n, 'n', ModuleName )
-    call deallocate_test ( p2, 'p2', ModuleName )
-    call deallocate_test ( p4, 'p4', ModuleName )
-    call deallocate_test ( pointingH2O, 'pointingH2O', ModuleName )
-    call deallocate_test ( pointingPres, 'pointingPres', ModuleName )
-    call deallocate_test ( pointingTemp, 'pointingTemp', ModuleName )
-    call deallocate_test ( pOverTSquared, 'pOverTSquared', ModuleName )
-    call deallocate_test ( ratio2, 'ratio2', ModuleName )
-    call deallocate_test ( ratio4, 'ratio4', ModuleName )
-    call deallocate_test ( s2, 's2', ModuleName )
-    call deallocate_test ( tempBasisGap, 'tempBasisGap', ModuleName )
-    call deallocate_test ( tempLowerWeight, 'tempLowerWeight', ModuleName )
-    call deallocate_test ( tempUpperWeight, 'tempUpperWeight', ModuleName )
-
-    call deallocate_test ( A, 'A', ModuleName )
-    call deallocate_test ( dHydrosGPHByDTemp, 'dHydrosGPHByDTemp', ModuleName )
-
-    if ( toggle ( emit ) ) call trace_end ( 'ScanForwardModel' )
+    end subroutine ScanForwardModelAuto
 
   end subroutine ScanForwardModel
   ! ---------------------------------------- twodScanForwardModel -----------
   subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, &
   & fmStat, jacobian, chunkNo )
 
+use dump_0, only: dump
     use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE
     use OUTPUT_M, only: BLANKS, OUTPUT
+    use PHYSICS, only: BOLTZ
     use PIQ_INT_M, only: PIQ_INT
     use TIME_M, only: TIME_NOW
-    use PHYSICS, only: BOLTZ
 
-! This is a two D version of ScanForwardModel
-! inputs
-  type (ForwardModelConfig_T), intent(in) :: FMCONF ! Configuration options
-  type (Vector_T), intent(in) :: STATE ! The state vector
-  type (Vector_T), intent(in) :: EXTRA ! Other stuff in the state vector
-! outputs
-  type (Vector_T), intent(inout) :: FWMOUT ! Output vector, residual filled
-  type (ForwardModelStatus_T), intent(inout) :: FMSTAT ! Which maf etc.
-  type (Matrix_T), intent(inout), optional :: JACOBIAN ! The derivative matrix
-  integer, intent(in), optional :: chunkNo
-! local variables
-  type (VectorValue_T), pointer :: ORBINCLINE ! Orbital inclination
-  type (VectorValue_T), pointer :: TEMP ! Temperature component of state
-  type (VectorValue_T), pointer :: PTAN ! Ptan component of state
-  type (VectorValue_T), pointer :: PHITAN ! Phitan component of state
-  type (VectorValue_T), pointer :: H2O ! H2O component of state
-  type (VectorValue_T), pointer :: REFGPH ! Ref gph component of state
-  type (VectorValue_T), pointer :: L1ALT ! Tangent point altitude
-  type (VectorValue_T), pointer :: RESIDUAL ! Resulting component of fwmOut
-  type (MatrixElement_T), pointer :: BLOCK ! A matrix block
-!
-  logical :: TEMPINSTATE           ! Set if temp in state not extra
-  logical :: REFGPHINSTATE         ! Set if refGPH in state not extra
-  logical :: H2OINSTATE            ! Set if H2O in state, not extra
-  logical :: PTANINSTATE           ! Set if ptan in state, not extra
-!
-  integer :: First, Last           ! Nonzeros in Eta_at_one*
-  INTEGER :: windowstart_t         ! first instance for temperature
-  INTEGER :: windowfinish_t        ! last instance for temperature
-  INTEGER :: windowstart_h2o       ! first instance for water vapor
-  INTEGER :: windowfinish_h2o      ! last instance for water vapor
-  INTEGER :: sv_z                  ! height basis index
-  INTEGER :: sv_p                  ! horizontal basis index
-  INTEGER :: row                   ! Block row in jacobian
-  INTEGER :: col                   ! Block col in jacobian
-!
-  REAL(rp) :: z_surf
-  REAL(rp) :: surf_temp
-  REAL(rp) :: surf_refr_indx(1)
-!
-  REAL(rp), POINTER :: earthradc(:)  ! square of minor axis of earth ellipsoid
-!                              in orbit plane projected system
-  REAL(rp), POINTER :: red_phi_t(:)
-  REAL(rp), POINTER :: sinbeta(:)
-  REAL(rp), POINTER :: sinphi2(:)
-  REAL(rp), POINTER :: cosphi2(:)
-  REAL(rp), POINTER :: geoclats(:)
-  REAL(rp), POINTER :: sinlat2(:)
-  REAL(rp), POINTER :: coslat2(:)
-  REAL(rp), POINTER :: g_ref(:)
-  REAL(rp), POINTER :: earth_radius(:)
-  REAL(rp), POINTER :: eff_earth_radius(:)
-  REAL(rp), POINTER :: p2(:)
-  REAL(rp), POINTER :: p4(:)
-  REAL(rp), POINTER :: ratio2(:)
-  REAL(rp), POINTER :: ratio4(:)
-  REAL(rp), POINTER :: ratio2_gph(:)
-  REAL(rp), POINTER :: ratio4_gph(:)
-  REAL(rp), POINTER :: tan_temp(:)
-  REAL(rp), POINTER :: tan_h2o(:)
-  REAL(rp), POINTER :: tan_refr_indx(:)
-  REAL(rp), POINTER :: l1altrefr(:)
-  REAL(rp), POINTER :: refgeomalt_denom(:)
-  REAL(rp), POINTER :: l1refalt(:)
-  REAL(rp), POINTER :: mass_corr(:)
-  REAL(rp), POINTER :: dgphdr(:)
-  REAL(rp), POINTER :: dscandz(:)
-  REAL(rp), POINTER :: temp_at_surf_phi(:)
-  REAL(rp), POINTER :: eta_z(:,:)
-  REAL(rp), POINTER :: eta_p_t(:,:)
-  REAL(rp), POINTER :: eta_p_h2o(:,:)
-  REAL(rp), POINTER :: piq(:,:)
-  REAL(rp), POINTER :: eta_piqxp(:,:)
-  REAL(rp), POINTER :: eta_zxp_t(:,:)
-  REAL(rp), POINTER :: eta_zxp_h2o(:,:)
-  REAL(rp), POINTER :: eta_at_one_phi(:)
-  REAL(rp), POINTER :: eta_at_one_zeta(:)
-!
-  LOGICAL, POINTER :: not_zero_z(:,:)
-  LOGICAL, POINTER :: not_zero_p_t(:,:)
-  LOGICAL, POINTER :: not_zero_p_h2o(:,:)
-  LOGICAL, POINTER :: not_zero_t(:,:)
-  LOGICAL, POINTER :: not_zero_h2o(:,:)
-  real :: T0, T1, T2                     ! For timing
-  logical, parameter :: always_timing = .false.  ! if worried about NAG taking so long
-  logical :: Timing  ! if worried about NAG taking so long
-  logical, parameter :: total_times = .true.
-  integer :: isurf
-! Time this
-  call time_now ( t0 )
-  call time_now ( t1 )
-  Timing = always_timing
-!  if ( present(chunkNo) ) &
-!    & Timing = always_timing .or. &
-!    & chunkNo == 4 .or. chunkNo == 12 .or. chunkNo == 25 .or.  &
-!    & chunkNo == 50 .or. chunkNo == 167
-  if ( timing ) &
-    & call output('beginning timing for 2d scan forward model', advance='yes')
-! nullify all pointers
-  NULLIFY ( coslat2, cosphi2, dgphdr, dscandz, earthradc, earth_radius,      &
-    & eff_earth_radius, eta_at_one_phi, eta_at_one_zeta, eta_p_h2o,          &
-    & eta_piqxp, eta_p_t, eta_z, eta_zxp_h2o, eta_zxp_t, geoclats,           &
-    & g_ref, l1altrefr, l1refalt, mass_corr, not_zero_h2o, not_zero_p_h2o,   &
-    & not_zero_p_t, not_zero_t, not_zero_z, p2, p4, piq, ratio2, ratio2_gph, &
-    & ratio4, ratio4_gph, red_phi_t, refgeomalt_denom, sinbeta, sinlat2,     &
-    & sinphi2, tan_h2o, tan_refr_indx, tan_temp, temp_at_surf_phi ) 
-! Identify the vector quantities from state/extra
-  orbIncline => getQuantityForForwardModel ( state, extra, &
-    & quantityType=l_orbitInclination, config=fmConf )
-  temp => getQuantityForForwardModel ( state, extra, &
-    & quantityType=l_temperature, config=fmConf, foundInFirst=tempInState )
-  ptan => getQuantityForForwardModel ( state, extra, &
-    & quantityType=l_ptan, instrumentModule=fmConf%instrumentModule, &
-    & config=fmConf, foundInFirst=ptanInState )
-  phitan => getQuantityForForwardModel ( state, extra, &
-    & quantityType=l_phitan, instrumentModule=fmConf%instrumentModule, &
-    & config=fmConf)
-  h2o => getQuantityForForwardModel ( state, extra, &
-    & quantityType=l_vmr, molecule=l_h2o, &
-    & config=fmConf, foundInFirst=h2oInState, noError=.true.)
-  refgph => getQuantityForForwardModel ( state, extra, &
-    & quantityType=l_refGPH, config=fmConf, foundInFirst=refGPHInState )
-  l1Alt => getQuantityForForwardModel ( state, extra, &
-    & quantityType=l_tngtGeocAlt, instrumentModule=fmConf%instrumentModule, &
-    & config=fmConf)
-! Identify the vector quantities from fwmOut
-  residual => getQuantityForForwardModel ( fwmOut, &
+  ! This is a two D version of ScanForwardModel
+  ! inputs
+    type (ForwardModelConfig_T), intent(in) :: FMCONF ! Configuration options
+    type (Vector_T), intent(in) :: STATE ! The state vector
+    type (Vector_T), intent(in) :: EXTRA ! Other stuff in the state vector
+  ! outputs
+    type (Vector_T), intent(inout) :: FWMOUT ! Output vector, residual filled
+    type (ForwardModelStatus_T), intent(inout) :: FMSTAT ! Which maf etc.
+    type (Matrix_T), intent(inout), optional :: JACOBIAN ! The derivative matrix
+    integer, intent(in), optional :: chunkNo
+  ! local variables
+    type (VectorValue_T), pointer :: ORBINCLINE ! Orbital inclination
+    type (VectorValue_T), pointer :: TEMP ! Temperature component of state
+    type (VectorValue_T), pointer :: PTAN ! Ptan component of state
+    type (VectorValue_T), pointer :: PHITAN ! Phitan component of state
+    type (VectorValue_T), pointer :: H2O ! H2O component of state
+    type (VectorValue_T), pointer :: REFGPH ! Ref gph component of state
+    type (VectorValue_T), pointer :: L1ALT ! Tangent point altitude
+    type (VectorValue_T), pointer :: RESIDUAL ! Resulting component of fwmOut
+    type (MatrixElement_T), pointer :: BLOCK ! A matrix block
+  !
+    logical :: TEMPINSTATE           ! Set if temp in state not extra
+    logical :: REFGPHINSTATE         ! Set if refGPH in state not extra
+    logical :: H2OINSTATE            ! Set if H2O in state, not extra
+    logical :: PTANINSTATE           ! Set if ptan in state, not extra
+  !
+    integer :: First, Last           ! Nonzeros in Eta_at_one*
+    INTEGER :: windowstart_t         ! first instance for temperature
+    INTEGER :: windowfinish_t        ! last instance for temperature
+    INTEGER :: windowstart_h2o       ! first instance for water vapor
+    INTEGER :: windowfinish_h2o      ! last instance for water vapor
+    INTEGER :: sv_z                  ! height basis index
+    INTEGER :: sv_p                  ! horizontal basis index
+    INTEGER :: row                   ! Block row in jacobian
+    INTEGER :: col                   ! Block col in jacobian
+  !
+    REAL(rp) :: z_surf
+    REAL(rp) :: surf_temp
+    REAL(rp) :: surf_refr_indx(1)
+  !
+    REAL(rp), POINTER :: earthradc(:)  ! square of minor axis of earth ellipsoid
+  !                              in orbit plane projected system
+    REAL(rp), POINTER :: red_phi_t(:)
+    REAL(rp), POINTER :: sinbeta(:)
+    REAL(rp), POINTER :: sinphi2(:)
+    REAL(rp), POINTER :: cosphi2(:)
+    REAL(rp), POINTER :: geoclats(:)
+    REAL(rp), POINTER :: sinlat2(:)
+    REAL(rp), POINTER :: coslat2(:)
+    REAL(rp), POINTER :: g_ref(:)
+    REAL(rp), POINTER :: earth_radius(:)
+    REAL(rp), POINTER :: eff_earth_radius(:)
+    REAL(rp), POINTER :: p2(:)
+    REAL(rp), POINTER :: p4(:)
+    REAL(rp), POINTER :: ratio2(:)
+    REAL(rp), POINTER :: ratio4(:)
+    REAL(rp), POINTER :: ratio2_gph(:)
+    REAL(rp), POINTER :: ratio4_gph(:)
+    REAL(rp), POINTER :: tan_temp(:)
+    REAL(rp), POINTER :: tan_h2o(:)
+    REAL(rp), POINTER :: tan_refr_indx(:)
+    REAL(rp), POINTER :: l1altrefr(:)
+    REAL(rp), POINTER :: refgeomalt_denom(:)
+    REAL(rp), POINTER :: l1refalt(:)
+    REAL(rp), POINTER :: mass_corr(:)
+    REAL(rp), POINTER :: dgphdr(:)
+    REAL(rp), POINTER :: dscandz(:)
+    REAL(rp), POINTER :: temp_at_surf_phi(:)
+    REAL(rp), POINTER :: eta_z(:,:)
+    REAL(rp), POINTER :: eta_p_t(:,:)
+    REAL(rp), POINTER :: eta_p_h2o(:,:)
+    REAL(rp), POINTER :: piq(:,:)
+    REAL(rp), POINTER :: eta_piqxp(:,:)
+    REAL(rp), POINTER :: eta_zxp_t(:,:)
+    REAL(rp), POINTER :: eta_zxp_h2o(:,:)
+    REAL(rp), POINTER :: eta_at_one_phi(:)
+    REAL(rp), POINTER :: eta_at_one_zeta(:)
+  !
+    LOGICAL, POINTER :: not_zero_z(:,:)
+    LOGICAL, POINTER :: not_zero_p_t(:,:)
+    LOGICAL, POINTER :: not_zero_p_h2o(:,:)
+    LOGICAL, POINTER :: not_zero_t(:,:)
+    LOGICAL, POINTER :: not_zero_h2o(:,:)
+    real :: T0, T1, T2                     ! For timing
+    logical, parameter :: always_timing = .false.  ! if worried about NAG taking so long
+    logical :: Timing  ! if worried about NAG taking so long
+    logical, parameter :: total_times = .true.
+    integer :: isurf
+
+    if ( toggle(emit) ) & ! set by -f command-line switch
+      & call trace_begin ( 'TwoDScanForwardModel, MAF=', index=fmstat%maf )
+  ! Time this
+    call time_now ( t0 )
+    call time_now ( t1 )
+    Timing = always_timing
+  !  if ( present(chunkNo) ) &
+  !    & Timing = always_timing .or. &
+  !    & chunkNo == 4 .or. chunkNo == 12 .or. chunkNo == 25 .or.  &
+  !    & chunkNo == 50 .or. chunkNo == 167
+    if ( timing ) &
+      & call output('beginning timing for 2d scan forward model', advance='yes')
+  ! nullify all pointers
+    NULLIFY ( coslat2, cosphi2, dgphdr, dscandz, earthradc, earth_radius,      &
+      & eff_earth_radius, eta_at_one_phi, eta_at_one_zeta, eta_p_h2o,          &
+      & eta_piqxp, eta_p_t, eta_z, eta_zxp_h2o, eta_zxp_t, geoclats,           &
+      & g_ref, l1altrefr, l1refalt, mass_corr, not_zero_h2o, not_zero_p_h2o,   &
+      & not_zero_p_t, not_zero_t, not_zero_z, p2, p4, piq, ratio2, ratio2_gph, &
+      & ratio4, ratio4_gph, red_phi_t, refgeomalt_denom, sinbeta, sinlat2,     &
+      & sinphi2, tan_h2o, tan_refr_indx, tan_temp, temp_at_surf_phi ) 
+  ! Identify the vector quantities from state/extra
+    orbIncline => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_orbitInclination, config=fmConf )
+    temp => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_temperature, config=fmConf, foundInFirst=tempInState )
+    ptan => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_ptan, instrumentModule=fmConf%instrumentModule, &
+      & config=fmConf, foundInFirst=ptanInState )
+    phitan => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_phitan, instrumentModule=fmConf%instrumentModule, &
+      & config=fmConf)
+    h2o => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_vmr, molecule=l_h2o, &
+      & config=fmConf, foundInFirst=h2oInState, noError=.true.)
+    refgph => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_refGPH, config=fmConf, foundInFirst=refGPHInState )
+    l1Alt => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_tngtGeocAlt, instrumentModule=fmConf%instrumentModule, &
+      & config=fmConf)
+  ! Identify the vector quantities from fwmOut
+    residual => getQuantityForForwardModel ( fwmOut, &
       & quantityType=l_scanResidual, instrumentModule=fmConf%instrumentModule, &
-    & config=fmConf)
-  if ( timing ) call sayTime ( 'Getting vector quantities' )
-  call time_now ( t1 )
-! get window
-  CALL FindInstanceWindow(temp,phitan,fmStat%maf,FMConf%phiWindow, &
-    & FMConf%windowUnits, windowstart_t, windowfinish_t)
-  CALL FindInstanceWindow(h2o,phitan,fmStat%maf,FMConf%phiWindow, &
-    & FMConf%windowUnits, windowstart_h2o, windowfinish_h2o)
-   ! if( timing ) print *, 'T window  : ', windowstart_t, windowfinish_t
-   ! if( timing ) print *, 'H2O window: ', windowstart_h2o, windowfinish_h2o
-  if ( timing ) call sayTime ( 'Finding instance windows' )
-  call time_now ( t1 )
-! convert phitan into geocentric latitude
-  CALL ALLOCATE_TEST(earthradc,ptan%template%nosurfs,'earthradc',modulename)
-  CALL ALLOCATE_TEST(earth_radius,ptan%template%nosurfs,'earth_radius', &
-  & modulename)
-  CALL ALLOCATE_TEST(eff_earth_radius,ptan%template%nosurfs, &
-  & 'eff_earth_radius', modulename)
-  CALL ALLOCATE_TEST(g_ref,ptan%template%nosurfs,'g_ref',modulename)
-  CALL ALLOCATE_TEST(red_phi_t,ptan%template%nosurfs,'red_phi_t',modulename)
-  CALL ALLOCATE_TEST(sinphi2,ptan%template%nosurfs,'sinphi2',modulename)
-  CALL ALLOCATE_TEST(cosphi2,ptan%template%nosurfs,'cosphi2',modulename)
-  CALL ALLOCATE_TEST(sinlat2,ptan%template%nosurfs,'sinlat2',modulename)
-  CALL ALLOCATE_TEST(coslat2,ptan%template%nosurfs,'coslat2',modulename)
-  CALL ALLOCATE_TEST(sinbeta,ptan%template%nosurfs,'sinbeta',modulename)
-  CALL ALLOCATE_TEST(geoclats,ptan%template%nosurfs,'geoclats',modulename)
-  CALL ALLOCATE_TEST(p2,ptan%template%nosurfs,'p2',modulename)
-  CALL ALLOCATE_TEST(p4,ptan%template%nosurfs,'p4',modulename)
-  CALL ALLOCATE_TEST(ratio2,ptan%template%nosurfs,'ratio2',modulename)
-  CALL ALLOCATE_TEST(ratio4,ptan%template%nosurfs,'ratio4',modulename)
-  CALL ALLOCATE_TEST(l1refalt,ptan%template%nosurfs,'l1refalt',modulename)
-  CALL ALLOCATE_TEST(refgeomalt_denom,ptan%template%nosurfs, &
-  & 'refgeomalt_denom',modulename)
-  sinbeta = sin(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf))
-  earthradc = (earthrada*earthradb)**2 / &
-  & ( (earthRada**2 - earthRadb**2) * sinbeta**2 + earthRadb**2) ! in meters
-! rephase the phi
-  red_phi_t = MODULO(deg2rad*phitan%values(:,fmStat%maf),2.0_rp*Pi)
-  WHERE(0.5_rp*Pi < red_phi_t .AND. red_phi_t <= 1.5_rp*Pi)
-    red_phi_t = Pi - red_phi_t
-  ELSEWHERE(red_phi_t > 1.5_rp*Pi)
-    red_phi_t = red_phi_t - 2.0_rp*Pi
-  ENDWHERE
-  if ( timing ) call sayTime ( 'rephasing phi' )
-  call time_now ( t1 )
-! compute sin^2(phi) and cos^2(phi)
-  sinphi2 = sin(red_phi_t)**2
-  cosphi2 = 1.0_rp - sinphi2
-  geoclats = asin(earthradc * sin(red_phi_t) * sinbeta / &
-  & sqrt(earthrada**4*cosphi2 + earthradc**2*sinphi2))
-  sinlat2 = SIN(geoclats)**2
-  coslat2 = 1.0_rp - sinlat2
-  p2=0.5_rp * (3.0_rp*sinlat2 - 1.0_rp)
-  p4=0.125_rp * (35.0_rp*sinlat2**2 - 30.0_rp*sinlat2 + 3.0_rp)
-! compute the local gravitational acceleration at the surface
-  earth_radius = SQRT((earthrada**4*cosphi2 + earthradc**2*sinphi2) &
-               / (earthrada**2*cosphi2 + earthradc*sinphi2))
-  ratio2=(earthRadA/earth_radius)**2
-  ratio4=ratio2**2
-  g_ref =  GM * (1.0_rp - 3.0_rp*j2*p2*ratio2 - 5.0_rp*j4*p4*ratio4) &
-  & / earth_radius**2 - omega**2*earth_radius*coslat2
-! get the effective earth radius
-  eff_earth_radius = 2.0_rp * g_ref / (2.0_rp * gm * (1.0_rp-6.0_rp*j2*p2 &
-  & * ratio2 - 15.0_rp*j4*p4*ratio4) / earth_radius**3 &
-  & + omega**2*coslat2)
-! deallocate things we don't need
-  CALL DEALLOCATE_TEST(earthradc,'earthradc',modulename)
-  CALL DEALLOCATE_TEST(red_phi_t,'red_phi_t',modulename)
-  CALL DEALLOCATE_TEST(sinphi2,'sinphi2',modulename)
-  CALL DEALLOCATE_TEST(cosphi2,'cosphi2',modulename)
-  CALL DEALLOCATE_TEST(sinlat2,'sinlat2',modulename)
-  CALL DEALLOCATE_TEST(geoclats,'geoclats',modulename)
-  CALL DEALLOCATE_TEST(sinbeta,'sinbeta',modulename)
-! compute temperature function
-  CALL allocate_test(eta_z,ptan%template%nosurfs,temp%template%nosurfs, &
-                  & 'eta_z',ModuleName)
-  CALL allocate_test(not_zero_z,ptan%template%nosurfs,temp%template%nosurfs,&
-                  & 'not_zero_z',ModuleName)
-  CALL allocate_test(eta_p_t,phitan%template%nosurfs, &
-                  & windowfinish_t - windowstart_t + 1, 'eta_p_t',ModuleName)
-  CALL allocate_test(not_zero_p_t,phitan%template%nosurfs, &
-             & windowfinish_t - windowstart_t + 1, 'not_zero_p_t',ModuleName)
-  CALL allocate_test(eta_zxp_t,ptan%template%nosurfs,temp%template%nosurfs &
-      & * (windowfinish_t - windowstart_t + 1), 'eta_zxp_t',ModuleName)
-  CALL allocate_test(not_zero_t,ptan%template%nosurfs,temp%template%nosurfs &
-      & * (windowfinish_t - windowstart_t + 1), 'not_zero_t',ModuleName)
-  CALL allocate_test(eta_piqxp,ptan%template%nosurfs,temp%template%nosurfs &
-      & * (windowfinish_t - windowstart_t + 1), 'eta_piqxp',ModuleName)
-  CALL allocate_test(tan_temp,ptan%template%nosurfs , 'tan_temp', &
-    & ModuleName)
-! get eta functions
-  CALL get_eta_sparse(temp%template%phi(1,windowstart_t:windowfinish_t), &
-    & phitan%values(:,fmStat%maf), eta_p_t, not_zero_p_t)
-  CALL get_eta_sparse(temp%template%surfs(:,1),ptan%values(:,fmStat%maf), &
-    & eta_z, not_zero_z)
-  if ( timing ) call sayTime ( 'getting etas functions' )
-  call time_now ( t1 )
-! construct piq integral
-  CALL ALLOCATE_TEST(piq,ptan%template%nosurfs,temp%template%nosurfs, &
-  & 'tan_refr_indx', modulename)
-  CALL piq_int(ptan%values(:,fmStat%maf),temp%template%surfs(:,1), &
-  & refGPH%template%surfs(1,1), piq, Z_MASS = 2.5_rp, C_MASS = 0.02_rp)
-  if ( timing ) call sayTime ( 'constructing piq integral' )
-  call time_now ( t1 )
-! convert level 1 reference geopotential height into geometric altitude
-! This assumes that the reference ellipsoid is equivalent to a reference
-! geopotential height of 0 meters.
-  refgeomalt_denom = g_ref*eff_earth_radius &
-  & - g0*SUM(SPREAD(RESHAPE(refgph%values(1,windowstart_t:windowfinish_t), &
-  & (/windowfinish_t-windowstart_t+1/)),1,ptan%template%nosurfs) &
-  & * eta_p_t,dim=2)
-  l1refalt = g_ref*eff_earth_radius**2 / refgeomalt_denom - eff_earth_radius &
-  & + earth_radius
-  tan_temp = 0.0_rp
-  eta_zxp_t = 0.0_rp
-  eta_piqxp = 0.0_rp
-  not_zero_t = .false.
-  DO sv_z = 1, temp%template%nosurfs
-    DO sv_p = 1, windowfinish_t - windowstart_t + 1
-!      WHERE(not_zero_p_t(:,sv_p) .AND. not_zero_z(:,sv_z))
-!        eta_zxp_t(:,sv_z + temp%template%nosurfs*(sv_p-1)) = &
-!        & eta_z(:,sv_z) * eta_p_t(:,sv_p)
-!        not_zero_t(:,sv_z + temp%template%nosurfs*(sv_p-1)) = .TRUE.
-!        tan_temp = tan_temp + eta_zxp_t(:,sv_z+temp%template%nosurfs*(sv_p-1)) &
-!        & * temp%values(sv_z,windowstart_t+sv_p-1)
-!      END WHERE
-!      WHERE(not_zero_p_t(:,sv_p)) &
-!        & eta_piqxp(:,sv_z + temp%template%nosurfs*(sv_p-1)) &
-!        & = piq(:,sv_z) * eta_p_t(:,sv_p)
-      do isurf=1, ptan%template%nosurfs
-        if ( not_zero_p_t(isurf,sv_p) .AND. not_zero_z(isurf,sv_z) ) then
-          eta_zxp_t(isurf,sv_z + temp%template%nosurfs*(sv_p-1)) = &
-            & eta_z(isurf,sv_z) * eta_p_t(isurf,sv_p)
-          not_zero_t(isurf,sv_z + temp%template%nosurfs*(sv_p-1)) = .TRUE.
-          tan_temp(isurf) = tan_temp(isurf) + &
-            & eta_zxp_t(isurf,sv_z+temp%template%nosurfs*(sv_p-1)) &
-            & * temp%values(sv_z,windowstart_t+sv_p-1)
-        endif
-        if ( not_zero_p_t(isurf,sv_p) ) then
-          eta_piqxp(isurf,sv_z + temp%template%nosurfs*(sv_p-1)) &
-            & = piq(isurf,sv_z) * eta_p_t(isurf,sv_p)
-        endif
-      enddo
+      & config=fmConf)
+    if ( timing ) call sayTime ( 'Getting vector quantities' )
+    call time_now ( t1 )
+  ! get window
+    CALL FindInstanceWindow(temp,phitan,fmStat%maf,FMConf%phiWindow, &
+      & FMConf%windowUnits, windowstart_t, windowfinish_t)
+    CALL FindInstanceWindow(h2o,phitan,fmStat%maf,FMConf%phiWindow, &
+      & FMConf%windowUnits, windowstart_h2o, windowfinish_h2o)
+     ! if( timing ) print *, 'T window  : ', windowstart_t, windowfinish_t
+     ! if( timing ) print *, 'H2O window: ', windowstart_h2o, windowfinish_h2o
+    if ( timing ) call sayTime ( 'Finding instance windows' )
+    call time_now ( t1 )
+  ! convert phitan into geocentric latitude
+    CALL ALLOCATE_TEST(earthradc,ptan%template%nosurfs,'earthradc',modulename)
+    CALL ALLOCATE_TEST(earth_radius,ptan%template%nosurfs,'earth_radius', &
+    & modulename)
+    CALL ALLOCATE_TEST(eff_earth_radius,ptan%template%nosurfs, &
+    & 'eff_earth_radius', modulename)
+    CALL ALLOCATE_TEST(g_ref,ptan%template%nosurfs,'g_ref',modulename)
+    CALL ALLOCATE_TEST(red_phi_t,ptan%template%nosurfs,'red_phi_t',modulename)
+    CALL ALLOCATE_TEST(sinphi2,ptan%template%nosurfs,'sinphi2',modulename)
+    CALL ALLOCATE_TEST(cosphi2,ptan%template%nosurfs,'cosphi2',modulename)
+    CALL ALLOCATE_TEST(sinlat2,ptan%template%nosurfs,'sinlat2',modulename)
+    CALL ALLOCATE_TEST(coslat2,ptan%template%nosurfs,'coslat2',modulename)
+    CALL ALLOCATE_TEST(sinbeta,ptan%template%nosurfs,'sinbeta',modulename)
+    CALL ALLOCATE_TEST(geoclats,ptan%template%nosurfs,'geoclats',modulename)
+    CALL ALLOCATE_TEST(p2,ptan%template%nosurfs,'p2',modulename)
+    CALL ALLOCATE_TEST(p4,ptan%template%nosurfs,'p4',modulename)
+    CALL ALLOCATE_TEST(ratio2,ptan%template%nosurfs,'ratio2',modulename)
+    CALL ALLOCATE_TEST(ratio4,ptan%template%nosurfs,'ratio4',modulename)
+    CALL ALLOCATE_TEST(l1refalt,ptan%template%nosurfs,'l1refalt',modulename)
+    CALL ALLOCATE_TEST(refgeomalt_denom,ptan%template%nosurfs, &
+      & 'refgeomalt_denom',modulename)
+    sinbeta = sin(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf))
+    earthradc = (earthrada*earthradb)**2 / &
+      & ( (earthRada**2 - earthRadb**2) * sinbeta**2 + earthRadb**2) ! in meters
+  ! rephase the phi
+    red_phi_t = MODULO(deg2rad*phitan%values(:,fmStat%maf),2.0_rp*Pi)
+    WHERE(0.5_rp*Pi < red_phi_t .AND. red_phi_t <= 1.5_rp*Pi)
+      red_phi_t = Pi - red_phi_t
+    ELSEWHERE(red_phi_t > 1.5_rp*Pi)
+      red_phi_t = red_phi_t - 2.0_rp*Pi
+    ENDWHERE
+    if ( timing ) call sayTime ( 'rephasing phi' )
+    call time_now ( t1 )
+  ! compute sin^2(phi) and cos^2(phi)
+    sinphi2 = sin(red_phi_t)**2
+    cosphi2 = 1.0_rp - sinphi2
+    geoclats = asin(earthradc * sin(red_phi_t) * sinbeta / &
+      & sqrt(earthrada**4*cosphi2 + earthradc**2*sinphi2))
+    sinlat2 = SIN(geoclats)**2
+    coslat2 = 1.0_rp - sinlat2
+    p2=0.5_rp * (3.0_rp*sinlat2 - 1.0_rp)
+    p4=0.125_rp * (35.0_rp*sinlat2**2 - 30.0_rp*sinlat2 + 3.0_rp)
+  ! compute the local gravitational acceleration at the surface
+    earth_radius = SQRT((earthrada**4*cosphi2 + earthradc**2*sinphi2) &
+                 &    / (earthrada**2*cosphi2 + earthradc*sinphi2))
+    ratio2=(earthRadA/earth_radius)**2
+    ratio4=ratio2**2
+    g_ref =  GM * (1.0_rp - 3.0_rp*j2*p2*ratio2 - 5.0_rp*j4*p4*ratio4) &
+      & / earth_radius**2 - omega**2*earth_radius*coslat2
+  ! get the effective earth radius
+    eff_earth_radius = 2.0_rp * g_ref / (2.0_rp * gm * (1.0_rp-6.0_rp*j2*p2 &
+      & * ratio2 - 15.0_rp*j4*p4*ratio4) / earth_radius**3 &
+      & + omega**2*coslat2)
+  ! deallocate things we don't need
+    CALL DEALLOCATE_TEST(earthradc,'earthradc',modulename)
+    CALL DEALLOCATE_TEST(red_phi_t,'red_phi_t',modulename)
+    CALL DEALLOCATE_TEST(sinphi2,'sinphi2',modulename)
+    CALL DEALLOCATE_TEST(cosphi2,'cosphi2',modulename)
+    CALL DEALLOCATE_TEST(sinlat2,'sinlat2',modulename)
+    CALL DEALLOCATE_TEST(geoclats,'geoclats',modulename)
+    CALL DEALLOCATE_TEST(sinbeta,'sinbeta',modulename)
+  ! compute temperature function
+    CALL allocate_test(eta_z,ptan%template%nosurfs,temp%template%nosurfs, &
+                    & 'eta_z',ModuleName)
+    CALL allocate_test(not_zero_z,ptan%template%nosurfs,temp%template%nosurfs,&
+                    & 'not_zero_z',ModuleName)
+    CALL allocate_test(eta_p_t,phitan%template%nosurfs, &
+                    & windowfinish_t - windowstart_t + 1, 'eta_p_t',ModuleName)
+    CALL allocate_test(not_zero_p_t,phitan%template%nosurfs, &
+               & windowfinish_t - windowstart_t + 1, 'not_zero_p_t',ModuleName)
+    CALL allocate_test(eta_zxp_t,ptan%template%nosurfs,temp%template%nosurfs &
+        & * (windowfinish_t - windowstart_t + 1), 'eta_zxp_t',ModuleName)
+    CALL allocate_test(not_zero_t,ptan%template%nosurfs,temp%template%nosurfs &
+        & * (windowfinish_t - windowstart_t + 1), 'not_zero_t',ModuleName)
+    CALL allocate_test(eta_piqxp,ptan%template%nosurfs,temp%template%nosurfs &
+        & * (windowfinish_t - windowstart_t + 1), 'eta_piqxp',ModuleName)
+    CALL allocate_test(tan_temp,ptan%template%nosurfs , 'tan_temp', &
+      & ModuleName)
+  ! get eta functions
+    CALL get_eta_sparse(temp%template%phi(1,windowstart_t:windowfinish_t), &
+      & phitan%values(:,fmStat%maf), eta_p_t, not_zero_p_t)
+    CALL get_eta_sparse(temp%template%surfs(:,1),ptan%values(:,fmStat%maf), &
+      & eta_z, not_zero_z)
+    if ( timing ) call sayTime ( 'getting etas functions' )
+    call time_now ( t1 )
+  ! construct piq integral
+    CALL ALLOCATE_TEST(piq,ptan%template%nosurfs,temp%template%nosurfs, &
+      & 'tan_refr_indx', modulename)
+    CALL piq_int(ptan%values(:,fmStat%maf),temp%template%surfs(:,1), &
+      & refGPH%template%surfs(1,1), piq, Z_MASS = 2.5_rp, C_MASS = 0.02_rp)
+    if ( timing ) call sayTime ( 'constructing piq integral' )
+    call time_now ( t1 )
+  ! convert level 1 reference geopotential height into geometric altitude
+  ! This assumes that the reference ellipsoid is equivalent to a reference
+  ! geopotential height of 0 meters.
+    refgeomalt_denom = g_ref*eff_earth_radius &
+      & - g0*SUM(SPREAD(RESHAPE(refgph%values(1,windowstart_t:windowfinish_t), &
+      & (/windowfinish_t-windowstart_t+1/)),1,ptan%template%nosurfs) &
+      & * eta_p_t,dim=2)
+    l1refalt = g_ref*eff_earth_radius**2 / refgeomalt_denom - eff_earth_radius &
+      & + earth_radius
+    tan_temp = 0.0_rp
+    eta_zxp_t = 0.0_rp
+    eta_piqxp = 0.0_rp
+    not_zero_t = .false.
+    DO sv_z = 1, temp%template%nosurfs
+      DO sv_p = 1, windowfinish_t - windowstart_t + 1
+  !      WHERE(not_zero_p_t(:,sv_p) .AND. not_zero_z(:,sv_z))
+  !        eta_zxp_t(:,sv_z + temp%template%nosurfs*(sv_p-1)) = &
+  !        & eta_z(:,sv_z) * eta_p_t(:,sv_p)
+  !        not_zero_t(:,sv_z + temp%template%nosurfs*(sv_p-1)) = .TRUE.
+  !        tan_temp = tan_temp + eta_zxp_t(:,sv_z+temp%template%nosurfs*(sv_p-1)) &
+  !        & * temp%values(sv_z,windowstart_t+sv_p-1)
+  !      END WHERE
+  !      WHERE(not_zero_p_t(:,sv_p)) &
+  !        & eta_piqxp(:,sv_z + temp%template%nosurfs*(sv_p-1)) &
+  !        & = piq(:,sv_z) * eta_p_t(:,sv_p)
+        do isurf=1, ptan%template%nosurfs
+          if ( not_zero_p_t(isurf,sv_p) .AND. not_zero_z(isurf,sv_z) ) then
+            eta_zxp_t(isurf,sv_z + temp%template%nosurfs*(sv_p-1)) = &
+              & eta_z(isurf,sv_z) * eta_p_t(isurf,sv_p)
+            not_zero_t(isurf,sv_z + temp%template%nosurfs*(sv_p-1)) = .TRUE.
+            tan_temp(isurf) = tan_temp(isurf) + &
+              & eta_zxp_t(isurf,sv_z+temp%template%nosurfs*(sv_p-1)) &
+              & * temp%values(sv_z,windowstart_t+sv_p-1)
+          endif
+          if ( not_zero_p_t(isurf,sv_p) ) then
+            eta_piqxp(isurf,sv_z + temp%template%nosurfs*(sv_p-1)) &
+              & = piq(isurf,sv_z) * eta_p_t(isurf,sv_p)
+          endif
+        enddo
+      ENDDO
     ENDDO
-  ENDDO
-  if ( timing ) call sayTime ( 'constructing geometric altitude' )
-  call time_now ( t1 )
-  CALL deallocate_test(piq, 'piq',ModuleName)
-  CALL deallocate_test(eta_z, 'eta_z',ModuleName)
-  CALL deallocate_test(not_zero_z,'not_zero_z',ModuleName)
-! compute water vapor function
-  CALL allocate_test(eta_p_h2o,phitan%template%nosurfs, &
-            & windowfinish_h2o - windowstart_h2o + 1, 'eta_p_h2o',ModuleName)
-  CALL allocate_test(not_zero_p_h2o,phitan%template%nosurfs, &
-       & windowfinish_h2o - windowstart_h2o + 1, 'not_zero_p_h2o',ModuleName)
-  CALL allocate_test(eta_z,ptan%template%nosurfs,h2o%template%nosurfs, &
-                  & 'eta_z',ModuleName)
-  CALL allocate_test(not_zero_z, ptan%template%nosurfs, &
-  & h2o%template%nosurfs, 'not_zero_z',ModuleName)
-  CALL allocate_test(eta_zxp_h2o,ptan%template%nosurfs,h2o%template%nosurfs &
-      & * (windowfinish_h2o - windowstart_h2o + 1), 'eta_zxp_h2o',ModuleName)
-  CALL allocate_test(not_zero_h2o,ptan%template%nosurfs,h2o%template%nosurfs &
-      & * (windowfinish_h2o - windowstart_h2o + 1), 'not_zero_h2o',ModuleName)
-  CALL allocate_test(tan_h2o,ptan%template%nosurfs , 'tan_h2o', &
-    & ModuleName)
-  CALL get_eta_sparse(h2o%template%phi(1,windowstart_h2o:windowfinish_h2o), &
-    & phitan%values(:,fmStat%maf), eta_p_h2o, not_zero_p_h2o)
-  CALL get_eta_sparse(h2o%template%surfs(:,1),ptan%values(:,fmStat%maf), &
-    & eta_z, not_zero_z)
-! we will assume the logarithmic interpolation here
-  tan_h2o = 0.0_rp
-  eta_zxp_h2o = 0.0_rp
-  not_zero_h2o = .false.
-  DO sv_p = 1, windowfinish_h2o - windowstart_h2o + 1
-    DO sv_z = 1, h2o%template%nosurfs
-!      WHERE(not_zero_p_h2o(:,sv_p) .AND. not_zero_z(:,sv_z))
-!        eta_zxp_h2o(:,sv_z + h2o%template%nosurfs*(sv_p-1)) = &
-!        & eta_z(:,sv_z) * eta_p_h2o(:,sv_p)
-!        not_zero_h2o(:,sv_z + h2o%template%nosurfs*(sv_p-1)) = .TRUE.
-!        tan_h2o = tan_h2o + eta_zxp_h2o(:,sv_z+h2o%template%nosurfs*(sv_p-1)) &
-!        & * LOG(max(h2o%values(sv_z,windowstart_h2o+sv_p-1),1e-9_rp))
-!      END WHERE
-      do isurf=1, ptan%template%nosurfs
-        if ( not_zero_p_h2o(isurf,sv_p) .AND. not_zero_z(isurf,sv_z) ) then
-          eta_zxp_h2o(isurf,sv_z + h2o%template%nosurfs*(sv_p-1)) = &
-            & eta_z(isurf,sv_z) * eta_p_h2o(isurf,sv_p)
-          not_zero_h2o(isurf,sv_z + h2o%template%nosurfs*(sv_p-1)) = .TRUE.
-          tan_h2o(isurf) = tan_h2o(isurf) + &
-            & eta_zxp_h2o(isurf,sv_z+h2o%template%nosurfs*(sv_p-1)) &
-            & * LOG(max(h2o%values(sv_z,windowstart_h2o+sv_p-1),1e-9_rp))
-        endif
-      enddo
+    if ( timing ) call sayTime ( 'constructing geometric altitude' )
+    call time_now ( t1 )
+    CALL deallocate_test(piq, 'piq',ModuleName)
+    CALL deallocate_test(eta_z, 'eta_z',ModuleName)
+    CALL deallocate_test(not_zero_z,'not_zero_z',ModuleName)
+  ! compute water vapor function
+    CALL allocate_test(eta_p_h2o,phitan%template%nosurfs, &
+              & windowfinish_h2o - windowstart_h2o + 1, 'eta_p_h2o',ModuleName)
+    CALL allocate_test(not_zero_p_h2o,phitan%template%nosurfs, &
+         & windowfinish_h2o - windowstart_h2o + 1, 'not_zero_p_h2o',ModuleName)
+    CALL allocate_test(eta_z,ptan%template%nosurfs,h2o%template%nosurfs, &
+                    & 'eta_z',ModuleName)
+    CALL allocate_test(not_zero_z, ptan%template%nosurfs, &
+    & h2o%template%nosurfs, 'not_zero_z',ModuleName)
+    CALL allocate_test(eta_zxp_h2o,ptan%template%nosurfs,h2o%template%nosurfs &
+        & * (windowfinish_h2o - windowstart_h2o + 1), 'eta_zxp_h2o',ModuleName)
+    CALL allocate_test(not_zero_h2o,ptan%template%nosurfs,h2o%template%nosurfs &
+        & * (windowfinish_h2o - windowstart_h2o + 1), 'not_zero_h2o',ModuleName)
+    CALL allocate_test(tan_h2o,ptan%template%nosurfs , 'tan_h2o', &
+      & ModuleName)
+    CALL get_eta_sparse(h2o%template%phi(1,windowstart_h2o:windowfinish_h2o), &
+      & phitan%values(:,fmStat%maf), eta_p_h2o, not_zero_p_h2o)
+    CALL get_eta_sparse(h2o%template%surfs(:,1),ptan%values(:,fmStat%maf), &
+      & eta_z, not_zero_z)
+  ! we will assume the logarithmic interpolation here
+    tan_h2o = 0.0_rp
+    eta_zxp_h2o = 0.0_rp
+    not_zero_h2o = .false.
+    DO sv_p = 1, windowfinish_h2o - windowstart_h2o + 1
+      DO sv_z = 1, h2o%template%nosurfs
+  !      WHERE(not_zero_p_h2o(:,sv_p) .AND. not_zero_z(:,sv_z))
+  !        eta_zxp_h2o(:,sv_z + h2o%template%nosurfs*(sv_p-1)) = &
+  !        & eta_z(:,sv_z) * eta_p_h2o(:,sv_p)
+  !        not_zero_h2o(:,sv_z + h2o%template%nosurfs*(sv_p-1)) = .TRUE.
+  !        tan_h2o = tan_h2o + eta_zxp_h2o(:,sv_z+h2o%template%nosurfs*(sv_p-1)) &
+  !        & * LOG(max(h2o%values(sv_z,windowstart_h2o+sv_p-1),1e-9_rp))
+  !      END WHERE
+        do isurf=1, ptan%template%nosurfs
+          if ( not_zero_p_h2o(isurf,sv_p) .AND. not_zero_z(isurf,sv_z) ) then
+            eta_zxp_h2o(isurf,sv_z + h2o%template%nosurfs*(sv_p-1)) = &
+              & eta_z(isurf,sv_z) * eta_p_h2o(isurf,sv_p)
+            not_zero_h2o(isurf,sv_z + h2o%template%nosurfs*(sv_p-1)) = .TRUE.
+            tan_h2o(isurf) = tan_h2o(isurf) + &
+              & eta_zxp_h2o(isurf,sv_z+h2o%template%nosurfs*(sv_p-1)) &
+              & * LOG(max(h2o%values(sv_z,windowstart_h2o+sv_p-1),1e-9_rp))
+          endif
+        enddo
+      ENDDO
     ENDDO
-  ENDDO
-  tan_h2o = EXP(tan_h2o)
-  CALL deallocate_test(eta_p_h2o, 'eta_p_h2o',ModuleName)
-  CALL deallocate_test(eta_z, 'eta_z',ModuleName)
-  CALL deallocate_test(not_zero_p_h2o,'not_zero_p_h2o',ModuleName)
-  CALL deallocate_test(not_zero_z,'not_zero_z',ModuleName)
-  if ( timing ) call sayTime ( 'computing water vapor functions' )
-  call time_now ( t1 )
-! compute refractive index
-  CALL ALLOCATE_TEST(tan_refr_indx,ptan%template%nosurfs,'tan_refr_indx', &
-  & modulename)
-  CALL refractive_index(10.0_rp**(-ptan%values(:,fmStat%maf)), tan_temp, &
-  & tan_refr_indx,h2o_path = tan_h2o)
-! compute surface pressure
-  CALL ALLOCATE_TEST(eta_at_one_phi,windowfinish_t-windowstart_t+1, &
-  & 'eta_at_one_phi',modulename)
-  CALL ALLOCATE_TEST(temp_at_surf_phi,temp%template%nosurfs, &
-  & 'temp_at_surf_phi',modulename)
-  CALL get_eta_sparse(temp%template%phi(1,windowstart_t:windowfinish_t), &
-  & phitan%values(1,fmStat%maf),eta_at_one_phi,first,last)
-  temp_at_surf_phi = SUM(temp%values(:,windowstart_t:windowfinish_t)* &
-  & SPREAD(eta_at_one_phi,1,temp%template%nosurfs),dim=2)
-  z_surf = z_surface(temp%template%surfs(:,1),temp_at_surf_phi,g_ref(1), &
-  & SUM(refgph%values(1,windowstart_t:windowfinish_t) * eta_p_t(1,:)), &
-  & refGPH%template%surfs(1,1),boltz)
-  CALL DEALLOCATE_TEST(eta_at_one_phi,'eta_at_one_phi',modulename)
-! compute refractive index at the surface
-  CALL ALLOCATE_TEST(eta_at_one_zeta,temp%template%nosurfs, &
-  & 'eta_at_one_zeta',modulename)
-  CALL get_eta_sparse(temp%template%surfs(:,1),z_surf,eta_at_one_zeta,first,last)
-  surf_temp = dot_product(eta_at_one_zeta(first:last), temp_at_surf_phi(first:last))
-  CALL DEALLOCATE_TEST(eta_at_one_zeta,'eta_at_one_zeta',modulename)
-  CALL DEALLOCATE_TEST(temp_at_surf_phi,'temp_at_surf_phi',modulename)
-  CALL ALLOCATE_TEST(eta_at_one_phi,windowfinish_h2o-windowstart_h2o+1, &
-  & 'eta_at_one_phi',modulename)
-  CALL ALLOCATE_TEST(eta_at_one_zeta,h2o%template%nosurfs, &
-  & 'eta_at_one_zeta',modulename)
-  CALL get_eta_sparse(h2o%template%phi(1,windowstart_h2o:windowfinish_h2o), &
-  & phitan%values(1,fmStat%maf),eta_at_one_phi)
-  CALL get_eta_sparse(h2o%template%surfs(:,1),z_surf,eta_at_one_zeta,first,last)
-  CALL refractive_index(10.0_rp**(-(/z_surf/)),(/surf_temp/),surf_refr_indx, &
-  & h2o_path = (/EXP(dot_product(eta_at_one_zeta(first:last), &
-  &   SUM(LOG(max(h2o%values(first:last,windowstart_h2o:windowfinish_h2o),1e-9_rp)) &
-  & * SPREAD(eta_at_one_phi,1,last-first+1),dim=2)))/))
-  CALL DEALLOCATE_TEST(eta_at_one_zeta,'eta_at_one_zeta',modulename)
-  CALL DEALLOCATE_TEST(eta_at_one_phi,'eta_at_one_phi',modulename)
-! set all refr indicies below the surface to the surface value
-  WHERE(ptan%values(:,fmStat%maf) < z_surf) 
-    tan_refr_indx = surf_refr_indx(1)
-    tan_temp = surf_temp
-  END WHERE
-! compute l1 geopotential
-  CALL ALLOCATE_TEST(l1altrefr,ptan%template%nosurfs,'l1altrefr', &
-  & modulename)
-  l1altrefr = l1alt%values(:,fmStat%maf) / (1.0_rp + tan_refr_indx)
-  CALL ALLOCATE_TEST(ratio2_gph,ptan%template%nosurfs,'ratio2',modulename)
-  CALL ALLOCATE_TEST(ratio4_gph,ptan%template%nosurfs,'ratio4',modulename)
-  ratio2=(earthRadA/l1altrefr)**2
-  ratio4=ratio2**2
-  ratio2_gph=(earthRadA/l1refalt)**2
-  ratio4_gph=ratio2**2
-! do a simple mass correction
-  CALL ALLOCATE_TEST(mass_corr,ptan%template%nosurfs,'mass_corr',modulename)
-  mass_corr = 1.0_rp
-!  WHERE(ptan%values(:,fmStat%maf) > 2.5) mass_corr = 1.0_rp &
-!    & / (0.875_rp + 0.1_rp*ptan%values(:,fmStat%maf) &
-!    & - 0.02_rp*ptan%values(:,fmStat%maf)**2)
-! This is a reasonable approximation to the above.
-  WHERE(ptan%values(:,fmStat%maf) > 2.5) mass_corr = 1.0_rp &
-     & + 0.02_rp*(ptan%values(:,fmStat%maf) - 2.5)**2
-  if ( timing ) call sayTime ( 'refractive index, l1 geopotential' )
-  call time_now ( t1 )
-! forward model calculation
-  residual%values(:,fmStat%maf) = (GM*((1.0_rp - j2*p2*ratio2 - j4*p4*ratio4) &
-  & / l1altrefr - (1.0_rp - j2*p2*ratio2_gph - j4*p4*ratio4_gph) / l1refalt) &
-  & + 0.5_rp*omega**2*coslat2*(l1altrefr - l1refalt)*(l1altrefr + l1refalt) &
-  & + boltz*SUM(RESHAPE(SPREAD(temp%values(:,windowstart_t: &
-  & windowfinish_t),1,ptan%template%nosurfs), (/ptan%template%nosurfs, &
-  & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
-  & * eta_piqxp,dim=2)) / g0
-  if ( timing ) call sayTime ( 'forward model calculation' )
-  call time_now ( t1 )
-  IF ( fmConf%differentialScan ) residual%values(:,fmStat%maf) = &
-    & EOSHIFT(residual%values(:,fmStat%maf),1, &
-    & residual%values(ptan%template%nosurfs,fmStat%maf)) &
-    & - residual%values(:,fmStat%maf)
-! derivatives--for simplicity we are ignoring h2o contributions
-    ! Find row in jacobian
-  if ( present ( jacobian ) ) then
-    row = FindBlock ( jacobian%row, residual%index,fmStat%maf )
-    fmStat%rows(row) = .true.
-! compute dudr
-    CALL ALLOCATE_TEST(dgphdr,ptan%template%nosurfs,'dgphdr',modulename)
-    dgphdr =  -(GM / (l1altrefr**2*g0)) * (1.0_rp - 3.0_rp*j2*p2*ratio2 &
-    & - 5.0_rp*j4*p4*ratio4) + (omega**2*l1altrefr*coslat2) / g0
-! Store the ptan derivatives
-    if ( ptanInState ) then
-      col = FindBlock ( jacobian%col, ptan%index, fmStat%maf )
-      block => jacobian%block(row,col)
-      if ( block%kind /= M_Absent ) then
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Found a prexisting d(residual)/d(ptan), removing' )
-        call DestroyBlock ( block )
-      end if
-      CALL ALLOCATE_TEST(dscandz,ptan%template%nosurfs, &
-      & 'dscandz', modulename)
-      dscandz = boltz*mass_corr*SUM(RESHAPE( &
-        & SPREAD(temp%values(:,windowstart_t:windowfinish_t),1, &
-        & ptan%template%nosurfs), (/ptan%template%nosurfs, &
-        & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
-        & * eta_zxp_t,dim=2) / g0
-      WHERE(ptan%values(:,fmStat%maf) > z_surf) dscandz = dscandz &
-        & + dgphdr*l1altrefr*tan_refr_indx*ln10 / (1.0_rp + tan_refr_indx)
-      if ( fmConf%differentialScan ) then
-        CALL updateDiagonal ( BLOCK, EOSHIFT(dscandz,1, &
-        & dscandz(ptan%template%nosurfs)) - dscandz)
-      else
-        CALL updateDiagonal ( BLOCK,dscandz)
-      end if
-      CALL DEALLOCATE_TEST(dscandz,'dscandz', modulename)
-    end if
-! Store refGPH derivatives
-    if ( refGPHInState ) then
-      DO sv_p = windowstart_t, windowfinish_t
-        col = FindBlock ( jacobian%col, refGPH%index, sv_p )
+    tan_h2o = EXP(tan_h2o)
+    CALL deallocate_test(eta_p_h2o, 'eta_p_h2o',ModuleName)
+    CALL deallocate_test(eta_z, 'eta_z',ModuleName)
+    CALL deallocate_test(not_zero_p_h2o,'not_zero_p_h2o',ModuleName)
+    CALL deallocate_test(not_zero_z,'not_zero_z',ModuleName)
+    if ( timing ) call sayTime ( 'computing water vapor functions' )
+    call time_now ( t1 )
+  ! compute refractive index
+    CALL ALLOCATE_TEST(tan_refr_indx,ptan%template%nosurfs,'tan_refr_indx', &
+    & modulename)
+    CALL refractive_index(10.0_rp**(-ptan%values(:,fmStat%maf)), tan_temp, &
+    & tan_refr_indx,h2o_path = tan_h2o)
+  ! compute surface pressure
+    CALL ALLOCATE_TEST(eta_at_one_phi,windowfinish_t-windowstart_t+1, &
+    & 'eta_at_one_phi',modulename)
+    CALL ALLOCATE_TEST(temp_at_surf_phi,temp%template%nosurfs, &
+    & 'temp_at_surf_phi',modulename)
+    CALL get_eta_sparse(temp%template%phi(1,windowstart_t:windowfinish_t), &
+    & phitan%values(1,fmStat%maf),eta_at_one_phi,first,last)
+    temp_at_surf_phi = SUM(temp%values(:,windowstart_t:windowfinish_t)* &
+    & SPREAD(eta_at_one_phi,1,temp%template%nosurfs),dim=2)
+    z_surf = z_surface(temp%template%surfs(:,1),temp_at_surf_phi,g_ref(1), &
+    & SUM(refgph%values(1,windowstart_t:windowfinish_t) * eta_p_t(1,:)), &
+    & refGPH%template%surfs(1,1),boltz)
+    CALL DEALLOCATE_TEST(eta_at_one_phi,'eta_at_one_phi',modulename)
+  ! compute refractive index at the surface
+    CALL ALLOCATE_TEST(eta_at_one_zeta,temp%template%nosurfs, &
+    & 'eta_at_one_zeta',modulename)
+    CALL get_eta_sparse(temp%template%surfs(:,1),z_surf,eta_at_one_zeta,first,last)
+    surf_temp = dot_product(eta_at_one_zeta(first:last), temp_at_surf_phi(first:last))
+    CALL DEALLOCATE_TEST(eta_at_one_zeta,'eta_at_one_zeta',modulename)
+    CALL DEALLOCATE_TEST(temp_at_surf_phi,'temp_at_surf_phi',modulename)
+    CALL ALLOCATE_TEST(eta_at_one_phi,windowfinish_h2o-windowstart_h2o+1, &
+    & 'eta_at_one_phi',modulename)
+    CALL ALLOCATE_TEST(eta_at_one_zeta,h2o%template%nosurfs, &
+    & 'eta_at_one_zeta',modulename)
+    CALL get_eta_sparse(h2o%template%phi(1,windowstart_h2o:windowfinish_h2o), &
+    & phitan%values(1,fmStat%maf),eta_at_one_phi)
+    CALL get_eta_sparse(h2o%template%surfs(:,1),z_surf,eta_at_one_zeta,first,last)
+    CALL refractive_index(10.0_rp**(-(/z_surf/)),(/surf_temp/),surf_refr_indx, &
+    & h2o_path = (/EXP(dot_product(eta_at_one_zeta(first:last), &
+    &   SUM(LOG(max(h2o%values(first:last,windowstart_h2o:windowfinish_h2o),1e-9_rp)) &
+    & * SPREAD(eta_at_one_phi,1,last-first+1),dim=2)))/))
+    CALL DEALLOCATE_TEST(eta_at_one_zeta,'eta_at_one_zeta',modulename)
+    CALL DEALLOCATE_TEST(eta_at_one_phi,'eta_at_one_phi',modulename)
+  ! set all refr indicies below the surface to the surface value
+    WHERE(ptan%values(:,fmStat%maf) < z_surf) 
+      tan_refr_indx = surf_refr_indx(1)
+      tan_temp = surf_temp
+    END WHERE
+  ! compute l1 geopotential
+    CALL ALLOCATE_TEST(l1altrefr,ptan%template%nosurfs,'l1altrefr', &
+    & modulename)
+    l1altrefr = l1alt%values(:,fmStat%maf) / (1.0_rp + tan_refr_indx)
+    CALL ALLOCATE_TEST(ratio2_gph,ptan%template%nosurfs,'ratio2',modulename)
+    CALL ALLOCATE_TEST(ratio4_gph,ptan%template%nosurfs,'ratio4',modulename)
+    ratio2=(earthRadA/l1altrefr)**2
+    ratio4=ratio2**2
+    ratio2_gph=(earthRadA/l1refalt)**2
+    ratio4_gph=ratio2**2
+  ! do a simple mass correction
+    CALL ALLOCATE_TEST(mass_corr,ptan%template%nosurfs,'mass_corr',modulename)
+    mass_corr = 1.0_rp
+  !  WHERE(ptan%values(:,fmStat%maf) > 2.5) mass_corr = 1.0_rp &
+  !    & / (0.875_rp + 0.1_rp*ptan%values(:,fmStat%maf) &
+  !    & - 0.02_rp*ptan%values(:,fmStat%maf)**2)
+  ! This is a reasonable approximation to the above.
+    WHERE(ptan%values(:,fmStat%maf) > 2.5) mass_corr = 1.0_rp &
+       & + 0.02_rp*(ptan%values(:,fmStat%maf) - 2.5)**2
+    if ( timing ) call sayTime ( 'refractive index, l1 geopotential' )
+    call time_now ( t1 )
+  ! forward model calculation
+    residual%values(:,fmStat%maf) = (GM*((1.0_rp - j2*p2*ratio2 - j4*p4*ratio4) &
+    & / l1altrefr - (1.0_rp - j2*p2*ratio2_gph - j4*p4*ratio4_gph) / l1refalt) &
+    & + 0.5_rp*omega**2*coslat2*(l1altrefr - l1refalt)*(l1altrefr + l1refalt) &
+    & + boltz*SUM(RESHAPE(SPREAD(temp%values(:,windowstart_t: &
+    & windowfinish_t),1,ptan%template%nosurfs), (/ptan%template%nosurfs, &
+    & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
+    & * eta_piqxp,dim=2)) / g0
+    if ( timing ) call sayTime ( 'forward model calculation' )
+    call time_now ( t1 )
+    IF ( fmConf%differentialScan ) residual%values(:,fmStat%maf) = &
+      & EOSHIFT(residual%values(:,fmStat%maf),1, &
+      & residual%values(ptan%template%nosurfs,fmStat%maf)) &
+      & - residual%values(:,fmStat%maf)
+  ! derivatives--for simplicity we are ignoring h2o contributions
+      ! Find row in jacobian
+    if ( present ( jacobian ) ) then
+      row = FindBlock ( jacobian%row, residual%index,fmStat%maf )
+      fmStat%rows(row) = .true.
+  ! compute dudr
+      CALL ALLOCATE_TEST(dgphdr,ptan%template%nosurfs,'dgphdr',modulename)
+      dgphdr =  -(GM / (l1altrefr**2*g0)) * (1.0_rp - 3.0_rp*j2*p2*ratio2 &
+      & - 5.0_rp*j4*p4*ratio4) + (omega**2*l1altrefr*coslat2) / g0
+  ! Store the ptan derivatives
+      if ( ptanInState ) then
+        col = FindBlock ( jacobian%col, ptan%index, fmStat%maf )
         block => jacobian%block(row,col)
         if ( block%kind /= M_Absent ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Found a prexisting d(residual)/d(refGPH), removing' )
+            & 'Found a prexisting d(residual)/d(ptan), removing' )
           call DestroyBlock ( block )
         end if
-        IF(ANY(not_zero_p_t(:,sv_p-windowstart_t+1))) THEN
-          call CreateBlock ( jacobian, row, col, M_Full )
-          block%values(:,1) = (GM * (1.0_rp - 3.0_rp*j2*p2*ratio2_gph &
-          & - 5.0_rp*j4*p4*ratio4_gph) / l1refalt**2 &
-          & + omega**2*l1refalt*coslat2) * (l1refalt+eff_earth_radius &
-          & - earth_radius) * eta_p_t(:,sv_p - windowstart_t + 1) &
-          & / refgeomalt_denom
-          if ( fmConf%differentialScan ) then
-! ------------- Differential model
-            block%values = EOSHIFT(block%values, &
-            & SPREAD(1,1,ptan%template%nosurfs), &
-            & RESHAPE(block%values(ptan%template%nosurfs,:), &
-            & (/temp%template%nosurfs/)),dim=2) - block%values
-          end if
-        ENDIF
-      ENDDO
-      if ( timing ) call sayTime ( 'differential model' )
-      call time_now ( t1 )
-    end if
-! Now the temperature derivatives
-    if ( tempInState ) then
-      DO sv_p = windowstart_t, windowfinish_t
-        col = FindBlock ( jacobian%col, temp%index, sv_p )
-        block => jacobian%block(row,col)
-        if ( block%kind /= M_Absent ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Found a prexisting d(residual)/d(temp), removing' )
-          call DestroyBlock ( block )
+        CALL ALLOCATE_TEST(dscandz,ptan%template%nosurfs, &
+        & 'dscandz', modulename)
+        dscandz = boltz*mass_corr*SUM(RESHAPE( &
+          & SPREAD(temp%values(:,windowstart_t:windowfinish_t),1, &
+          & ptan%template%nosurfs), (/ptan%template%nosurfs, &
+          & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
+          & * eta_zxp_t,dim=2) / g0
+        WHERE(ptan%values(:,fmStat%maf) > z_surf) dscandz = dscandz &
+          & + dgphdr*l1altrefr*tan_refr_indx*ln10 / (1.0_rp + tan_refr_indx)
+        if ( fmConf%differentialScan ) then
+          CALL updateDiagonal ( BLOCK, EOSHIFT(dscandz,1, &
+          & dscandz(ptan%template%nosurfs)) - dscandz)
+        else
+          CALL updateDiagonal ( BLOCK,dscandz)
         end if
-        IF(ANY(not_zero_p_t(:,sv_p-windowstart_t+1))) THEN
-          call CreateBlock ( jacobian, row, col, M_Full )
-          block%values = SPREAD(dgphdr*l1altrefr*tan_refr_indx &
-          & / ((1.0_rp + tan_refr_indx)*tan_temp),2,temp%template%nosurfs) &
-          & * eta_zxp_t(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
-          & (sv_p-windowstart_t+1)*temp%template%nosurfs) &
-          & + boltz*eta_piqxp(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
-          & (sv_p-windowstart_t+1)*temp%template%nosurfs) / g0
-          if ( fmConf%differentialScan ) then
-! ------------- Differential model
-            block%values = EOSHIFT(block%values, &
-            & SPREAD(1,1,ptan%template%nosurfs), &
-            & RESHAPE(block%values(ptan%template%nosurfs,:), &
-            & (/temp%template%nosurfs/)),dim=2) - block%values
+        CALL DEALLOCATE_TEST(dscandz,'dscandz', modulename)
+      end if
+  ! Store refGPH derivatives
+      if ( refGPHInState ) then
+        DO sv_p = windowstart_t, windowfinish_t
+          col = FindBlock ( jacobian%col, refGPH%index, sv_p )
+          block => jacobian%block(row,col)
+          if ( block%kind /= M_Absent ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Found a prexisting d(residual)/d(refGPH), removing' )
+            call DestroyBlock ( block )
           end if
-        ENDIF
-      ENDDO
-      if ( timing ) call sayTime ( 'temperature derivatives' )
-      call time_now ( t1 )
-    end if
-    CALL DEALLOCATE_TEST(dgphdr,'dgphdr',modulename)
-  ENDIF
-! deallocate all remaining pointers
-  CALL DEALLOCATE_TEST(coslat2,'coslat2',modulename)
-  CALL DEALLOCATE_TEST(p2,'p2',modulename)
-  CALL DEALLOCATE_TEST(p4,'p4',modulename)
-  CALL DEALLOCATE_TEST(earth_radius,'earth_radius', modulename)
-  CALL DEALLOCATE_TEST(eff_earth_radius,'eff_earth_radius', modulename)
-  CALL DEALLOCATE_TEST(g_ref,'g_ref',modulename)
-  CALL DEALLOCATE_TEST(l1refalt,'l1refalt',modulename)
-  CALL DEALLOCATE_TEST(refgeomalt_denom,'refgeomalt_denom',modulename)
-  CALL DEALLOCATE_TEST(ratio2,'ratio2',modulename)
-  CALL DEALLOCATE_TEST(ratio4,'ratio4',modulename)
-  CALL DEALLOCATE_TEST(ratio2_gph,'ratio2_gph',modulename)
-  CALL DEALLOCATE_TEST(ratio4_gph,'ratio4_gph',modulename)
-  CALL DEALLOCATE_TEST(l1altrefr,'l1altrefr', modulename)
-  CALL deallocate_test(eta_p_t,'eta_p_t',ModuleName)
-  CALL deallocate_test(not_zero_p_t, 'not_zero_p_t',ModuleName)
-  CALL DEALLOCATE_TEST(mass_corr,'mass_corr',modulename)
-  CALL deallocate_test(eta_zxp_t,'eta_zxp_t',ModuleName)
-  CALL deallocate_test(not_zero_t,'not_zero_t',ModuleName)
-  CALL deallocate_test(eta_piqxp,'eta_piqxp',ModuleName)
-  CALL deallocate_test(tan_temp,'tan_temp',ModuleName)
-  CALL deallocate_test(eta_zxp_h2o,'eta_zxp_h2o',ModuleName)
-  CALL deallocate_test(not_zero_h2o,'not_zero_h2o',ModuleName)
-  CALL deallocate_test(tan_h2o,'tan_h2o',ModuleName)
-  CALL DEALLOCATE_TEST(tan_refr_indx,'tan_refr_indx', modulename)
-  if ( timing ) call sayTime ( 'deallocating the rest' )
-  if ( timing ) then
-    t1 = t0
-    call sayTime ( 'all of 2d scan forward model' )
-  endif
+          IF(ANY(not_zero_p_t(:,sv_p-windowstart_t+1))) THEN
+            call CreateBlock ( jacobian, row, col, M_Full )
+            block%values(:,1) = (GM * (1.0_rp - 3.0_rp*j2*p2*ratio2_gph &
+            & - 5.0_rp*j4*p4*ratio4_gph) / l1refalt**2 &
+            & + omega**2*l1refalt*coslat2) * (l1refalt+eff_earth_radius &
+            & - earth_radius) * eta_p_t(:,sv_p - windowstart_t + 1) &
+            & / refgeomalt_denom
+            if ( fmConf%differentialScan ) then
+  ! ------------- Differential model
+              block%values = EOSHIFT(block%values, &
+              & SPREAD(1,1,ptan%template%nosurfs), &
+              & RESHAPE(block%values(ptan%template%nosurfs,:), &
+              & (/temp%template%nosurfs/)),dim=2) - block%values
+            end if
+          ENDIF
+        ENDDO
+        if ( timing ) call sayTime ( 'differential model' )
+        call time_now ( t1 )
+      end if
+  ! Now the temperature derivatives
+      if ( tempInState ) then
+        DO sv_p = windowstart_t, windowfinish_t
+          col = FindBlock ( jacobian%col, temp%index, sv_p )
+          block => jacobian%block(row,col)
+          if ( block%kind /= M_Absent ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Found a prexisting d(residual)/d(temp), removing' )
+            call DestroyBlock ( block )
+          end if
+          IF(ANY(not_zero_p_t(:,sv_p-windowstart_t+1))) THEN
+            call CreateBlock ( jacobian, row, col, M_Full )
+            block%values = SPREAD(dgphdr*l1altrefr*tan_refr_indx &
+            & / ((1.0_rp + tan_refr_indx)*tan_temp),2,temp%template%nosurfs) &
+            & * eta_zxp_t(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
+            & (sv_p-windowstart_t+1)*temp%template%nosurfs) &
+            & + boltz*eta_piqxp(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
+            & (sv_p-windowstart_t+1)*temp%template%nosurfs) / g0
+            if ( fmConf%differentialScan ) then
+  ! ------------- Differential model
+              block%values = EOSHIFT(block%values, &
+              & SPREAD(1,1,ptan%template%nosurfs), &
+              & RESHAPE(block%values(ptan%template%nosurfs,:), &
+              & (/temp%template%nosurfs/)),dim=2) - block%values
+            end if
+          ENDIF
+        ENDDO
+        if ( timing ) call sayTime ( 'temperature derivatives' )
+        call time_now ( t1 )
+      end if
+      CALL DEALLOCATE_TEST(dgphdr,'dgphdr',modulename)
+    ENDIF
+  ! deallocate all remaining pointers
+    CALL DEALLOCATE_TEST(coslat2,'coslat2',modulename)
+    CALL DEALLOCATE_TEST(p2,'p2',modulename)
+    CALL DEALLOCATE_TEST(p4,'p4',modulename)
+    CALL DEALLOCATE_TEST(earth_radius,'earth_radius', modulename)
+    CALL DEALLOCATE_TEST(eff_earth_radius,'eff_earth_radius', modulename)
+    CALL DEALLOCATE_TEST(g_ref,'g_ref',modulename)
+    CALL DEALLOCATE_TEST(l1refalt,'l1refalt',modulename)
+    CALL DEALLOCATE_TEST(refgeomalt_denom,'refgeomalt_denom',modulename)
+    CALL DEALLOCATE_TEST(ratio2,'ratio2',modulename)
+    CALL DEALLOCATE_TEST(ratio4,'ratio4',modulename)
+    CALL DEALLOCATE_TEST(ratio2_gph,'ratio2_gph',modulename)
+    CALL DEALLOCATE_TEST(ratio4_gph,'ratio4_gph',modulename)
+    CALL DEALLOCATE_TEST(l1altrefr,'l1altrefr', modulename)
+    CALL deallocate_test(eta_p_t,'eta_p_t',ModuleName)
+    CALL deallocate_test(not_zero_p_t, 'not_zero_p_t',ModuleName)
+    CALL DEALLOCATE_TEST(mass_corr,'mass_corr',modulename)
+    CALL deallocate_test(eta_zxp_t,'eta_zxp_t',ModuleName)
+    CALL deallocate_test(not_zero_t,'not_zero_t',ModuleName)
+    CALL deallocate_test(eta_piqxp,'eta_piqxp',ModuleName)
+    CALL deallocate_test(tan_temp,'tan_temp',ModuleName)
+    CALL deallocate_test(eta_zxp_h2o,'eta_zxp_h2o',ModuleName)
+    CALL deallocate_test(not_zero_h2o,'not_zero_h2o',ModuleName)
+    CALL deallocate_test(tan_h2o,'tan_h2o',ModuleName)
+    CALL DEALLOCATE_TEST(tan_refr_indx,'tan_refr_indx', modulename)
+    if ( timing ) call sayTime ( 'deallocating the rest' )
+    if ( timing ) then
+      t1 = t0
+      call sayTime ( 'all of 2d scan forward model' )
+    endif
+
+    if ( toggle(emit) ) call trace_end ( 'TwoDScanForwardModel MAF=', fmStat%maf )
 
   contains
     ! ..................................................  SayTime  .....
@@ -2123,7 +1986,7 @@ contains ! =============== Subroutines and functions ==========================
 
     ! ................................................  Z_surface  .....
     real(rp) function Z_surface ( z_basis, t_values, g_ref, h_ref, z_ref, boltz, &
-    & threshold, maxiterations )
+      & threshold, maxiterations )
 ! finds the surface pressure
 ! inputs:
       real(rp), intent(in) :: z_basis(:) ! zeta basis for temperature
@@ -2173,7 +2036,9 @@ contains ! =============== Subroutines and functions ==========================
       if (Timing) call output( 'Num iterations in z_surface: ', advance='no')
       if (Timing) call output( iter, advance='yes')
     end function Z_surface
+
   end subroutine TwoDScanForwardModel
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -2187,6 +2052,12 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.74  2012/04/20 01:54:20  vsnyder
+! Remove GeocLat from Get2DHydrostaticTangentPressure, make EarthRadius
+! automatic.  Add some dumps.  Print a warning if the initial pressure
+! guess is <-4 or >10.  Probably still gets overflows if the module is turned
+! off.  More tracing.
+!
 ! Revision 2.73  2011/05/09 18:25:12  pwagner
 ! Converted to using switchDetail
 !
