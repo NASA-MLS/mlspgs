@@ -30,8 +30,8 @@ module RetrievalModule
 contains
 
   ! ---------------------------------------------------  Retrieve  -----
-  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, ConfigDatabase, &
-    & chunk, FileDataBase )
+  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, &
+    & ConfigDatabase, chunk, FileDataBase )
 
   !{Process the ``Retrieve'' section of the L2 Configuration File.
   ! The ``Retrieve'' section can have ForwardModel, Matrix, Sids, Subset or
@@ -108,7 +108,7 @@ contains
     use TREE_TYPES, only: N_NAMED
     use VECTORSMODULE, only: CLEARMASK, CLEARUNDERMASK, &
       & CLEARVECTOR, CLONEVECTOR, COPYVECTOR, COPYVECTORMASK, CREATEMASK, &
-      & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, M_LINALG, &
+      & DESTROYVECTORINFO, DumpVectorNorms, GETVECTORQUANTITYBYTYPE, M_LINALG, &
       & VECTOR_T, VECTORVALUE_T
 
     ! Dummy arguments:
@@ -1352,6 +1352,7 @@ contains
       logical :: D_Diag   ! 'diag' Diagonal of normal equations factor
       logical :: D_Drmc   ! 'drmc' Dump Retriever Matrices Clean
       logical :: D_Dvec   ! 'dvec' DX vector
+      integer :: D_DXn    ! 'dxn' DX vector norm if 0, quantity norms if > 0
       logical :: D_Fac_F  ! 'FAC' Full normal equations factor (if you dare)
       logical :: D_Fac_N  ! 'fac' L_Infty norms of blocks of normal equations factor
       integer :: D_Fnmin  ! 'fnmin' terms
@@ -1377,6 +1378,7 @@ contains
       logical :: D_Vir    ! 'vir' Virgin matrix, before KTK
       logical :: D_Xvec   ! 'xvec' Current state vector
 
+      real(rk) :: DOF                   ! Degrees of freedom, rows - columns
       type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
       logical :: FoundBetterState       ! Set if we ever got an nf_best
@@ -1434,6 +1436,7 @@ contains
       d_diag = switchDetail(switches,'diag') > -1
       d_drmc = switchDetail(switches,'drmc') > -1
       d_dvec = switchDetail(switches,'dvec') > -1
+      d_dxn = switchDetail(switches,'dxn')
       d_fac_f = switchDetail(switches,'FAC') > -1
       d_fac_n = switchDetail(switches,'fac') > -1
       d_fnmin = switchDetail ( switches, 'fnmin' )
@@ -2170,11 +2173,12 @@ NEWT: do ! Newton iteration
           ! Correct for Tikhonov information.
           if ( tikhonovNeeded ) jacobian_rows = jacobian_rows + tikhonovRows
           if ( nwt_flag == nf_getJ ) then ! taking a special iteration to get J
-            aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
+            dof = max ( jacobian_rows - jacobian_cols, 1 )
+            aj%chiSqNorm = aj%fnorm / dof
             aj%fnorm = sqrt(aj%fnorm)
               if ( d_sca ) &
-                & call dump ( (/ aj%fnorm, aj%chiSqNorm /) , &
-                & '     | F |    chi^2/DOF ', options='c' )
+                & call dump ( (/ aj%fnorm, aj%chiSqNorm, dof /) , &
+                & '     | F |    chi^2/DOF           DOF ', options='c' )
             exit NEWT
           end if
           aj%diag = minDiag ( factored ) ! element on diagonal with
@@ -2189,8 +2193,8 @@ NEWT: do ! Newton iteration
 
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true., status=matrixStatus )
+          call copyVectorMask ( v(candidateDX), v(x) )
             call add_to_retrieval_timing ( 'cholesky_solver', t1 )
-            if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX' )
           if ( any ( matrixStatus /= 0 ) ) then
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             if ( d_mst ) then
@@ -2206,6 +2210,10 @@ NEWT: do ! Newton iteration
 !             exit NEWT
             cycle NEWT
           end if
+            if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX 1' )
+            if ( d_dxn > -1 ) &
+              & call dumpVectorNorms ( v(candidateDX), d_dxn, &
+                & name='|CandidateDX| 1', useMask=.true. )
 
           !{AJ\%FNMIN = $L_2$ norm of residual, $||{\bf\Sigma}^T {\bf J}^T
           ! {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1} {\bf \delta \hat x} +
@@ -2216,7 +2224,6 @@ NEWT: do ! Newton iteration
           ! {\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$. The variable
           ! {\tt v(candidateDX)} is a temp here = $\bf v$ in {\tt wvs-011}
           ! or $\bf y$ in {\tt wvs-014}.
-          call copyVectorMask ( v(candidateDX), v(x) )
           aj%fnmin = aj%fnorm - (v(candidateDX) .mdot. v(candidateDX))
           if ( aj%fnmin < 0.0 ) then
             call output ( aj%fnmin, before='How can aj%fnmin be negative?  aj%fnmin = ', &
@@ -2232,8 +2239,9 @@ NEWT: do ! Newton iteration
             aj%fnmin = tiny ( aj%fnmin )
           end if
           ! Compute the normalised chiSquared statistics etc.
-          aj%chiSqMinNorm = aj%fnmin / max ( jacobian_rows - jacobian_cols, 1 )
-          aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
+          dof = max ( jacobian_rows - jacobian_cols, 1 )
+          aj%chiSqMinNorm = aj%fnmin / dof
+          aj%chiSqNorm = aj%fnorm / dof
           aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
           call copyVectorMask ( v(gradient), v(x) )
@@ -2242,8 +2250,8 @@ NEWT: do ! Newton iteration
               call dump ( (/ aj%fnorm, aj%fnmin, aj%diag, aj%ajn, aj%gradn /), &
                 & '     | F |      aj%fnmin       aj%diag      L1| FAC |        | G |', &
                 & options='c' )
-              call dump ( (/ aj%chiSqNorm, aj%chiSqMinNorm /), &
-                & ' chi^2/DOF  chimin^2/DOF ', options='c' )
+              call dump ( (/ aj%chiSqNorm, aj%chiSqMinNorm, dof /), &
+                & ' chi^2/DOF  chimin^2/DOF           DOF ', options='c' )
             end if
         case ( nf_lev ) ! ..................................  LEV  .....
         !{Solve ${\bf U}^T {\bf q} = {\bf \delta \hat x}$, then compute
@@ -2260,8 +2268,6 @@ NEWT: do ! Newton iteration
           end if
           call copyVectorMask ( q, v(x) )
           aj%qnsq = q .mdot. q
-            if ( d_sca ) &
-              & call output ( aj%qnsq, before='QN^2 = ' , advance='yes')
         case ( nf_solve ) ! ..............................  SOLVE  .....
         !{Apply Levenberg-Marquardt stabilization with parameter
         ! $\lambda =$ {\bf AJ\%SQ}.  I.e., form $({\bf \Sigma}^T {\bf J}^T
@@ -2327,6 +2333,7 @@ NEWT: do ! Newton iteration
             call add_to_retrieval_timing( 'newton_solver', t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true., status=matrixStatus ) ! v(candidateDX) := factored^{-T} v(aTb)
+          call copyVectorMask ( v(candidateDX), v(x) )
             call add_to_retrieval_timing( 'cholesky_solver', t1 )
           if ( any ( matrixStatus /= 0 ) ) then
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
@@ -2335,6 +2342,10 @@ NEWT: do ! Newton iteration
 !             exit NEWT
             cycle NEWT
           end if
+            if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX 2' )
+            if ( d_dxn > -1 ) &
+              & call dumpVectorNorms ( v(candidateDX), d_dxn, &
+                & name='|CandidateDX| 2', useMask=.true. )
 
           if ( ieee_is_nan ( aj%fnorm ) ) then
             if ( d_strb ) call dump ( v(x), name='Current state', details=9 )
@@ -2348,7 +2359,6 @@ NEWT: do ! Newton iteration
           ! The following calculation of fnmin was commented out, but on
           ! 11 September 2002 FTK told me it's the right thing to do
           ! after all.
-          call copyVectorMask ( v(candidateDX), v(x) )
           aj%fnmin = aj%fnorm**2 - (v(candidateDX) .mdot. v(candidateDX))
 
           if ( ieee_is_nan ( aj%fnmin ) ) then
@@ -2375,6 +2385,7 @@ NEWT: do ! Newton iteration
           aj%fnmin = sqrt(aj%fnmin)
           ! v(candidateDX) := factored^{-1} v(candidateDX)
           call solveCholesky ( factored, v(candidateDX), status=matrixStatus )
+          call copyVectorMask ( v(candidateDX), v(x) )
           if ( any ( matrixStatus /= 0 ) ) then
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             call newtonSolverFailed ( 'problem solving normal equations in solve', &
@@ -2382,6 +2393,10 @@ NEWT: do ! Newton iteration
 !             exit NEWT
             cycle NEWT
           end if
+            if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX 3' )
+            if ( d_dxn > -1 ) &
+              & call dumpVectorNorms ( v(candidateDX), d_dxn, &
+                & name='|CandidateDX| 3', useMask=.true. )
 
           !{Shorten $\delta {\bf \hat x} =$ {\tt dxUnScaled} to stay within
           ! the bounds. We aren't ready to take the move, but NWTA needs an
@@ -2401,7 +2416,6 @@ NEWT: do ! Newton iteration
           ! dxUnScaled = mu * dxUnScaled -- may shorten vector in problem space
           call scaleVector ( v(dxUnScaled), mu )
           call scaleVector ( v(candidateDX), mu )
-          call copyVectorMask ( v(candidateDX), v(x) )
           aj%dxn = sqrt(v(candidateDX) .mdot. v(candidateDX)) ! L2Norm(dx)
           call copyVectorMask ( v(gradient), v(x) )
           aj%gdx = v(gradient) .mdot. v(candidateDX)
@@ -2409,7 +2423,10 @@ NEWT: do ! Newton iteration
             call copyVectorMask ( v(dx), v(x) )
             aj%dxdxl = v(dx) .mdot. v(candidateDX)
           end if
-            if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX' )
+            if ( d_dvec ) call dump ( v(candidateDX), name='CandidateDX 4' )
+            if ( d_dxn > -1 ) &
+              & call dumpVectorNorms ( v(candidateDX), d_dxn, &
+                & name='|CandidateDX| 4', useMask=.true. )
             if ( d_sca ) then
               cosine = -2.0_r8
               if ( aj%dxn > 0.0_r8 .and. aj%gradn > 0.0_r8 ) &
@@ -2458,6 +2475,9 @@ NEWT: do ! Newton iteration
           if ( mu < 1.0_rv ) call scaleVector ( v(dxUnscaled), mu )
           call addToVector ( v(x), v(dxUnScaled) ) ! x = x + dxUnScaled
             if ( d_dvec ) call dump ( v(dxUnScaled), name='dX Unscaled' )
+            if ( d_dxn > -1 ) &
+              & call dumpVectorNorms ( v(dxUnScaled), d_dxn, &
+                & name='|dxUnScaled|', useMask=.true. )
           if ( got(f_stateMax) ) then
             do j = 1, size(v(x)%quantities)
               stateMax%quantities(j)%values = max(stateMax%quantities(j)%values, &
@@ -2872,6 +2892,10 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.324  2012/04/20 01:37:47  vsnyder
+! Dump vector norms using dxn, copy mask from x to candidateDx, print DOF
+! dump QNSQ if sca, some cannonball polishing
+!
 ! Revision 2.323  2012/03/13 01:48:25  vsnyder
 ! Add drmc flag to control clean matrix printing
 !
