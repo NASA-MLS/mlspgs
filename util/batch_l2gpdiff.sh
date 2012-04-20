@@ -172,7 +172,7 @@ more_opts="yes"
 more_strs="yes"
 while [ "$more_strs" = "yes" ] ; do
 
-    if [ "$debug" ]
+    if [ "$debug" = "1" ]
     then
       echo "arg $1"
     fi
@@ -240,7 +240,10 @@ while [ "$more_strs" = "yes" ] ; do
        fi
        opt_takes_args=`echo "-d,-f,-chunks,-fields,-pressures,-s1,-s2" | grep -e "$1"`
        # if [ "$1" = "-d" -o "$1" = "-f" ]
-       echo opt_takes_args: $opt_takes_args
+       if [ "$debug" = 1 ]
+       then
+         echo opt_takes_args: $opt_takes_args
+       fi
        if [ "$opt_takes_args" != "" -a "$1" != "-s" ]
        then
 	       l2gpdiff_opts="$l2gpdiff_opts $2"
@@ -408,6 +411,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.16  2012/04/20 20:18:30  pwagner
+# Turn off extra debugging
+#
 # Revision 1.15  2012/02/13 23:43:59  pwagner
 # Moved where envfile gets sourced to better location
 #
