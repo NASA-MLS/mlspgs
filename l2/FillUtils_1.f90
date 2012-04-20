@@ -1414,7 +1414,8 @@ contains ! =====     Public Procedures     =============================
           enddo
         endif
         ! Now find the iteration number
-        qIndex = findLast( flagQty%values(:,i) /= 0._rv )
+        qIndex = findLast( flagQty%values(:,i)            /= 0._rv  .and. &
+          &                minNormQty%values(:, i) /= 0._rv )
         if ( qIndex == 0 .or. qIndex >= qty%template%noSurfs ) cycle
         skipMe = &
           & .not. dontMask .and. ( &
@@ -3213,6 +3214,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(:), pointer :: oldSurfs, newSurfs
       real (r8), dimension(:,:), pointer :: newValues
       logical :: mySurfs, myNewValues
+      integer :: instance
       integer :: status
 
       ! Executable code
@@ -3225,6 +3227,11 @@ contains ! =====     Public Procedures     =============================
       if ( .not. doHGridsMatch ( qty, source ) .and. .not. present(ptan) ) then
         call Announce_error ( key, no_error_code, &
           & 'Mismatch in horizontal grid' )
+        return
+      end if
+      if ( qty%template%noInstances /= source%template%noInstances .and. .not. force ) then
+        call Announce_error ( key, no_error_code, &
+          & 'Mismatch in num of instances' )
         return
       end if
       if ( .not. doFGridsMatch ( qty, source )  .and. .not. present(ptan) ) then
@@ -3298,6 +3305,17 @@ contains ! =====     Public Procedures     =============================
             & newSurfs, newValues, &
             & method='Linear', extrapolate='Constant' )
           newValues = exp ( newValues )
+        elseif( qty%template%noInstances /= qty%template%noInstances ) then
+          ! You have elected to interpolate 1-d instead of 2-d
+          ! when you have different numbers of horizontal instances
+          ! The only reasonable thing is to assume homogeneity
+          call InterpolateValues ( &
+            & oldSurfs, source%values(:,1), &
+            & newSurfs, newValues(:,1), &
+            & method='Linear', extrapolate='Constant' )
+          do instance=2, qty%template%noInstances
+            newValues(:,instance) = newValues(:,1)
+          enddo
         else
           call InterpolateValues ( &
             & oldSurfs, source%values, &
@@ -5492,7 +5510,7 @@ contains ! =====     Public Procedures     =============================
       call MLSMessageCalls( 'push', constantName='StatusQuantity' )
       ! Do some sanity checking
       if ( quantity%template%quantityType /= l_status ) call Announce_error ( key, no_error_code, &
-        & 'Quality quantity must be quality' )
+        & 'status quantity must be status' )
       if ( .not. ( force .or. DoHGridsMatch ( quantity, sourceQuantity ) ) ) &
         & call Announce_error ( &
         & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
@@ -6261,6 +6279,9 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(:,:), pointer :: INSTS ! Instance mapping source->quantity
       integer :: QS, QI, SS, SI                   ! Loop counters
       integer :: MYCHANNEL              ! Channel or 1
+      integer :: NumQtyInstances        ! E.g., num MAFs
+      integer :: NumSourceInstances     ! E.g., num MAFs
+      logical :: ExtraProfile           ! True when profile stands outside chunk
 
       ! Executable code
       call MLSMessageCalls( 'push', constantName='WithBinResults' )
@@ -6274,6 +6295,14 @@ contains ! =====     Public Procedures     =============================
       ! Also should have the condition:
       !  quantityType = (/ sourceQuantity%template%quantityType /)
       ! However, the code does not yet really support the ability to do that.
+      ! We are alert for the case when HGrid inserted an otherwise
+      ! "dropped" profile
+      ! This profile will have a phi greater than the chunk-bounding last MAF's phi
+      NumSourceInstances = size(sourceQuantity%template%phi, 2)
+      NumQtyInstances = size(Quantity%template%phi, 2)
+      ExtraProfile = ( quantity%template%noInstances > 1 ) .and. &
+        & ( sourceQuantity%template%phi(1,NumSourceInstances) < &
+        & quantity%template%phi(1, NumQtyInstances) )
 
       ! Work out source vertical coordinate
       if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) then
@@ -6313,8 +6342,6 @@ contains ! =====     Public Procedures     =============================
 
 !      call dump ( surfs, 'surfs' )
 
-      ! Work out the horizontal mapping, a function of height for unstacked quantities.
-      ! Bin to the center of the profiles rather than the edges.
       if ( quantity%template%noInstances > 1 ) then
         ! Setup and work out the phiBoundaries
         nullify ( phiBoundaries )
@@ -6334,6 +6361,10 @@ contains ! =====     Public Procedures     =============================
           end do
           insts = insts + 1
         end if
+        if ( method==l_binTotal ) then
+          call outputNamedValue( 'phiBoundaries', phiBoundaries )
+          call outputNamedValue( 'phi(source)', sourceQuantity%template%phi(1,:) )
+        endif
         call Deallocate_test ( phiBoundaries, 'phiBoundaries', ModuleName )
       else
         insts = 1
@@ -6353,62 +6384,117 @@ contains ! =====     Public Procedures     =============================
       if ( channel == 0 ) myChannel = 1
 
       ! Now loop over the output quantity points and work out the information
-      do qi = 1, quantity%template%noInstances
+      if ( ExtraProfile ) then
         do qs = 1, quantity%template%noSurfs
-          if ( count ( surfs == qs .and. insts == qi ) > 0 ) then
+          if ( count ( surfs == qs ) > 0 ) then
             select case ( method )
             case  ( l_binMax )
               ! Compute the maximum value in the bin
               v = maxval ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
-                &   sourceQuantity%template%noChans, : ), &
-                & surfs == qs .and. insts == qi ) )
+                &   sourceQuantity%template%noChans, 1 ), &
+                & surfs(:,1) == qs ) )
               if ( additional ) then
-                quantity%values(qs,qi) = max ( quantity%values(qs,qi), v )
+                quantity%values(qs,:) = max ( quantity%values(qs,:), v )
               else
-                quantity%values(qs,qi) = v
+                quantity%values(qs,:) = v
               end if
             case ( l_binMean )
               ! Compute the average in the bin, be careful about dividing by zero
               v = sum ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
-                &   sourceQuantity%template%noChans, : ), &
-                & surfs == qs .and. insts == qi ) ) / &
-                & max ( count ( surfs == qs .and. insts == qi ), 1 )
+                &   sourceQuantity%template%noChans, 1 ), &
+                & surfs(:,1) == qs ) ) / &
+                & max ( count ( surfs(:,1) == qs ), 1 )
               if ( additional ) then
-                quantity%values(qs,qi) = 0.5 * ( quantity%values(qs,qi) + v )
+                quantity%values(qs,:) = 0.5 * ( quantity%values(qs,:) + v )
               else
-                quantity%values(qs,qi) = v
+                quantity%values(qs,:) = v
               end if
             case ( l_binMin )
               ! Compute the minimum value in the bin
               v = minval ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
-                &   sourceQuantity%template%noChans, : ), &
-                & surfs == qs .and. insts == qi ) )
+                &   sourceQuantity%template%noChans, 1 ), &
+                & surfs(:,1) == qs ) )
               if ( additional ) then
-                quantity%values(qs,qi) = min ( quantity%values(qs,qi), v )
+                quantity%values(qs,:) = min ( quantity%values(qs,:), v )
               else
-                quantity%values(qs,qi) = v
+                quantity%values(qs,:) = v
               end if
             case ( l_binTotal )
               ! Compute the total in the bin
               v = sum ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
-                &   sourceQuantity%template%noChans, : ), &
-                & surfs == qs .and. insts == qi ) )
+                &   sourceQuantity%template%noChans, 1 ), &
+                & surfs(:,1) == qs ) )
               if ( additional ) then
-                quantity%values(qs,qi) = quantity%values(qs,qi) + v
+                quantity%values(qs,:) = quantity%values(qs,:) + v
               else
-                quantity%values(qs,qi) = v
+                quantity%values(qs,:) = v
               end if
             end select
           else
-            quantity%values(qs,qi) = 0.0
+            quantity%values(qs,:) = 0.0
           end if
         end do
-      end do
-
+      else
+        do qi = 1, quantity%template%noInstances
+          do qs = 1, quantity%template%noSurfs
+            if ( count ( surfs == qs .and. insts == qi ) > 0 ) then
+              select case ( method )
+              case  ( l_binMax )
+                ! Compute the maximum value in the bin
+                v = maxval ( pack ( sourceQuantity%values ( &
+                  & myChannel : sourceQuantity%template%instanceLen : &
+                  &   sourceQuantity%template%noChans, : ), &
+                  & surfs == qs .and. insts == qi ) )
+                if ( additional ) then
+                  quantity%values(qs,qi) = max ( quantity%values(qs,qi), v )
+                else
+                  quantity%values(qs,qi) = v
+                end if
+              case ( l_binMean )
+                ! Compute the average in the bin, be careful about dividing by zero
+                v = sum ( pack ( sourceQuantity%values ( &
+                  & myChannel : sourceQuantity%template%instanceLen : &
+                  &   sourceQuantity%template%noChans, : ), &
+                  & surfs == qs .and. insts == qi ) ) / &
+                  & max ( count ( surfs == qs .and. insts == qi ), 1 )
+                if ( additional ) then
+                  quantity%values(qs,qi) = 0.5 * ( quantity%values(qs,qi) + v )
+                else
+                  quantity%values(qs,qi) = v
+                end if
+              case ( l_binMin )
+                ! Compute the minimum value in the bin
+                v = minval ( pack ( sourceQuantity%values ( &
+                  & myChannel : sourceQuantity%template%instanceLen : &
+                  &   sourceQuantity%template%noChans, : ), &
+                  & surfs == qs .and. insts == qi ) )
+                if ( additional ) then
+                  quantity%values(qs,qi) = min ( quantity%values(qs,qi), v )
+                else
+                  quantity%values(qs,qi) = v
+                end if
+              case ( l_binTotal )
+                ! Compute the total in the bin
+                v = sum ( pack ( sourceQuantity%values ( &
+                  & myChannel : sourceQuantity%template%instanceLen : &
+                  &   sourceQuantity%template%noChans, : ), &
+                  & surfs == qs .and. insts == qi ) )
+                if ( additional ) then
+                  quantity%values(qs,qi) = quantity%values(qs,qi) + v
+                else
+                  quantity%values(qs,qi) = v
+                end if
+              end select
+            else
+              quantity%values(qs,qi) = 0.0
+            end if
+          end do
+        end do
+      endif
       ! Now tidy up
       call Deallocate_test ( surfs, 'surfs', ModuleName )
       call Deallocate_test ( insts, 'insts', ModuleName )
@@ -7216,6 +7302,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.56  2012/04/20 01:06:03  pwagner
+! Changes to bin, ChiSqRatio, and Interpolating to remove bugs, hopefully adding none
+!
 ! Revision 2.55  2012/03/12 17:11:46  pwagner
 ! 'ln' same as 'log' in manipulate fills; new 'cgrid' switch
 !
