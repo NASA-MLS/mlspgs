@@ -1425,6 +1425,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allVGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_antennaPatterns, t+t_boolean, n+n_field_type, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             begin, f+f_callStack, t+t_boolean, n+n_field_type, &
              begin, f+f_Clean, t+t_boolean, n+n_field_type, &
              begin, f+f_crashBurn, t+t_boolean, n+n_field_type, &
              begin, f+f_DACSfilterShapes, t+t_boolean, n+n_field_type, &
@@ -1732,6 +1733,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.538  2012/04/20 00:44:50  pwagner
+! May dump callStack from within l2cf
+!
 ! Revision 2.537  2012/03/15 22:49:45  vsnyder
 ! Add IGRF_file parameter, igrf field in dump command, some cannonball polishing
 !
