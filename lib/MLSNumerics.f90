@@ -299,8 +299,8 @@ module MLSNumerics              ! Some low level numerical stuff
     character(len=1) :: method = ' '               ! which of closest xi to use
     real(r4) :: x1                                 ! x1 <= xi <= x2
     real(r4) :: x2
-    real(r4) :: yLeft  = 0.                        ! Assume all y < x1 are this
-    real(r4) :: yRight= 0.                         ! Assume all y > x2 are this
+    real(r4) :: yLeft  = 0.                        ! Assume all x < x1 are this
+    real(r4) :: yRight = 0.                        ! Assume all x > x2 are this
     real(r4), dimension(:), pointer :: y => null() ! y(xi)
     ! type(Coefficients_R4) :: Coeffs                ! in case we'll use splines
   end type UnifDiscreteFn_r4
@@ -312,7 +312,7 @@ module MLSNumerics              ! Some low level numerical stuff
     real(r8) :: x1                                 ! x1 <= xi <= x2
     real(r8) :: x2
     real(r8) :: yLeft  = 0.                        ! Assume all y < x1 are this
-    real(r8) :: yRight= 0.                         ! Assume all y > x2 are this
+    real(r8) :: yRight = 0.                        ! Assume all y > x2 are this
     real(r8), dimension(:), pointer :: y => null() ! y(xi)
     ! type(Coefficients_R8) :: Coeffs                ! in case we'll use splines
   end type UnifDiscreteFn_r8
@@ -2281,72 +2281,6 @@ contains
     call SimpsonsSub( y, h, n, sum )
   end function simpsons_r8
 
-  function simpsons_r4_old( n, h, y ) result (sum)
-    integer, parameter :: RK = R4
-    ! Args
-    integer, intent(in)                :: n
-    real(rk), intent(in)               :: h
-    real(rk), dimension(:), intent(in) :: y
-    real(rk)                           :: sum
-    ! Internal variables
-    integer :: i
-    integer :: n1
-    ! Executable
-    sum = 0.
-    if ( n < 2 .or. size(y) < 2 ) return ! Sorry, too few points
-    if ( n == 2 ) then
-      ! Still too few for anything better than trapezoid
-      sum = (h/2)*( y(1) + y(2) )
-      return
-    end if
-    ! Do we have an even number of intervals, or odd?
-    if ( mod(n-1, 2) == 1 ) then
-      ! Odd--therefore start with Simpson's 3/8 rule
-      ! (See Abramowitz and Stegun 25.4.13)
-      sum = (3*h/8) * ( y(1) + 3*y(2) + 3*y(3) + y(4) )
-      n1 = 4
-    else
-      ! Even--therefore stick with Simpson's
-      n1 = 1
-    end if
-    do i=n1, n-2, 2
-      sum = sum + (h/3)*( y(i) + 4*y(i+1) + y(i+2) )
-    enddo
-  end function simpsons_r4_old
-
-  function simpsons_r8_old( n, h, y ) result (sum)
-    integer, parameter :: RK = R8
-    ! Args
-    integer, intent(in)                :: n
-    real(rk), intent(in)               :: h
-    real(rk), dimension(:), intent(in) :: y
-    real(rk)                           :: sum
-    ! Internal variables
-    integer :: i
-    integer :: n1
-    ! Executable
-    sum = 0.
-    if ( n < 2 .or. size(y) < 2 ) return ! Sorry, too few points
-    if ( n == 2 ) then
-      ! Still too few for anything better than trapezoid
-      sum = (h/2)*( y(1) + y(2) )
-      return
-    end if
-    ! Do we have an even number of intervals, or odd?
-    if ( mod(n-1, 2) == 1 ) then
-      ! Odd--therefore start with Simpson's 3/8 rule
-      ! (See Abramowitz and Stegun 25.4.13)
-      sum = (3*h/8) * ( y(1) + 3*y(2) + 3*y(3) + y(4) )
-      n1 = 4
-    else
-      ! Even--therefore stick with Simpson's
-      n1 = 1
-    end if
-    do i=n1, n-2, 2
-      sum = sum + (h/3)*( y(i) + 4*y(i+1) + y(i+2) )
-    enddo
-  end function simpsons_r8_old
-
   ! This family was moved here from fwdmdl
   subroutine D_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
     ! use D_HUNT_M, only: HUNT
@@ -2387,6 +2321,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.72  2012/04/20 23:55:22  pwagner
+! Remove unused code, misleading comments
+!
 ! Revision 2.71  2011/11/18 02:42:35  vsnyder
 ! Add Interpolate_2d_Composite
 !
