@@ -726,6 +726,7 @@ contains
     use READ_MIE_M, only: DUMP_MIE
     use SPECTROSCOPYCATALOG_M, only: CATALOG, DUMP, DUMP_LINES_DATABASE, LINES
     use STRING_TABLE, only: GET_STRING
+    use Time_m, only: Finish
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
@@ -983,9 +984,10 @@ contains
           case ( f_callStack )
             call MLSMessageCalls ( 'dump' )
           case ( f_crashBurn )
-              NEVERCRASH = .false.
-              call MLSMessage( MLSMSG_CRASH, moduleName, &
-                & "Program stopped by /crashBurn field on DUMP statement.")
+            call finish ( 'ending mlsl2' )
+            NEVERCRASH = .false.
+            call MLSMessage( MLSMSG_CRASH, moduleName, &
+              & "Program stopped by /crashBurn field on DUMP statement.")
           case ( f_DACSfilterShapes )
             call dump_dacs_filter_database ( son )
           case ( f_filterShapes )
@@ -1001,6 +1003,7 @@ contains
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
           case ( f_stop )
+            call finish ( 'ending mlsl2' )
             if ( NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave ) then
               call MLSMessageExit( NORMAL_EXIT_STATUS, &
                 & farewell="Program stopped with normal status by /stop field on DUMP statement.")
@@ -1536,6 +1539,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.70  2012/04/20 01:29:56  vsnyder
+! Add call to Finish before stopping
+!
 ! Revision 2.69  2012/04/20 01:03:30  pwagner
 ! May dump callStack from within l2cf
 !
