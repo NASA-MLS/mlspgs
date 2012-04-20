@@ -25,6 +25,9 @@ module TIME_M
 !     c o n t e n t s
 !     - - - - - - - -
 
+! begin                   announce the time of day of starting
+! finish                  announce the time of day and CPU time of finishing
+
 ! retry_config_t          retry configuration type
 ! time_config_t           time configuration type
 
@@ -57,6 +60,8 @@ module TIME_M
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! begin ( char* string )
+! finish ( char* string )
 ! init_retry ( [int successful_result], [int failed_result] )
 ! int retry ( int trial_value, [real delay], [int max_retries], &
 !   [real max_retrying_time] )
@@ -67,10 +72,11 @@ module TIME_M
 ! Note:
 ! float means either real or double precision types
 ! === (end of api) ===
-  public :: TIME_NOW, TIME_NOW_D, TIME_NOW_S, &
-   & WAIT, RETRY, INIT_RETRY, &
-   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES, &
-   & SET_STARTTIME
+  public :: BEGIN, FINISH, &
+   & INIT_RETRY, RETRY, RETRY_SUCCESS, SET_STARTTIME, &
+   & TIME_NOW, TIME_NOW_D, TIME_NOW_S, &
+   & TOO_MANY_RETRIES, TRY_AGAIN, &
+   & WAIT
 
   interface TIME_NOW
     module procedure TIME_NOW_D
@@ -113,8 +119,10 @@ module TIME_M
   !                                              so first value is 0.0
   ! logical, parameter :: WALLCLOCKISELAPSEDFROMSTART = .true.
 
-  type(time_config_t), public, save :: time_config
   type(retry_config_t), public, save :: retry_config
+  type(time_config_t), public, save :: time_config
+
+  double precision, private :: Start_CPU_time
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -124,48 +132,23 @@ module TIME_M
 
 contains
 
-  subroutine TIME_NOW_D ( T, INVALUES )
-    integer, parameter :: RK = kind(0.0d0)
-    integer, dimension(8), intent(in), optional :: INVALUES
-    include "time_now.f9h"
-  end subroutine TIME_NOW_D
+  subroutine BEGIN ( SHOW )
+    ! Announce the time of day of starting
+    use Output_m, only: Output_Date_and_Time
+    character(len=*), intent(in) :: SHOW
+    call cpu_time ( start_CPU_time )
+    call output_date_and_time ( msg=show )
+  end subroutine BEGIN
 
-  subroutine TIME_NOW_S ( T, INVALUES )
-    integer, parameter :: RK = kind(0.0e0)
-    integer, dimension(8), intent(in), optional :: INVALUES
-    include "time_now.f9h"
-  end subroutine TIME_NOW_S
-
-  subroutine WAIT_D ( T, ERR )
-    integer, parameter :: RK = kind(0.0d0)
-    real(rk), intent(in) :: T
-    include "wait.f9h"
-  end subroutine WAIT_D
-
-  subroutine WAIT_S ( T, ERR )
-    integer, parameter :: RK = kind(0.0e0)
-    real(rk), intent(in) :: T
-    include "wait.f9h"
-  end subroutine WAIT_S
-
-  subroutine SET_STARTTIME ( VALUES )
-    integer, dimension(8), intent(in) :: VALUES
-    character (len=8) :: date   ! in yyyymmdd format
-    character (len=4) :: yyyy
-    character ( len=2) :: mm, dd
-    time_config%starttime = values
-    write(yyyy, '(i4)') values(1)
-    write(mm, '(i2)') values(2)
-    write(dd, '(i2)') values(3)
-    date = yyyy // mm // dd
-    call yyyymmdd_to_dai(date, time_config%startdaysoff)
-    ! print *, 'values: ', values
-    ! print *, 'yyyy: ', yyyy
-    ! print *, 'mm: ', mm
-    ! print *, 'dd: ', dd
-    ! print *, 'date: ', date
-    ! print *, 'startdaysoff: ', startdaysoff
-  end subroutine SET_STARTTIME
+  subroutine FINISH ( SHOW )
+    ! Announce the time of day and CPU time of finishing
+    use Output_m, only: Output, Output_Date_and_Time
+    character(len=*), intent(in) :: SHOW
+    double precision :: Finish_CPU_time
+    call cpu_time ( finish_CPU_time )
+    call output_date_and_time ( msg=show, &
+      & CPU_seconds = finish_CPU_time - start_CPU_time )
+  end subroutine FINISH
 
   subroutine INIT_RETRY ( SUCCESSFUL_RESULT, FAILED_RESULT )
     integer, intent(in), optional :: SUCCESSFUL_RESULT
@@ -256,6 +239,49 @@ contains
     retry = TRY_AGAIN
   end function RETRY
 
+  subroutine SET_STARTTIME ( VALUES )
+    integer, dimension(8), intent(in) :: VALUES
+    character (len=8) :: date   ! in yyyymmdd format
+    character (len=4) :: yyyy
+    character ( len=2) :: mm, dd
+    time_config%starttime = values
+    write(yyyy, '(i4)') values(1)
+    write(mm, '(i2)') values(2)
+    write(dd, '(i2)') values(3)
+    date = yyyy // mm // dd
+    call yyyymmdd_to_dai(date, time_config%startdaysoff)
+    ! print *, 'values: ', values
+    ! print *, 'yyyy: ', yyyy
+    ! print *, 'mm: ', mm
+    ! print *, 'dd: ', dd
+    ! print *, 'date: ', date
+    ! print *, 'startdaysoff: ', startdaysoff
+  end subroutine SET_STARTTIME
+
+  subroutine TIME_NOW_D ( T, INVALUES )
+    integer, parameter :: RK = kind(0.0d0)
+    integer, dimension(8), intent(in), optional :: INVALUES
+    include "time_now.f9h"
+  end subroutine TIME_NOW_D
+
+  subroutine TIME_NOW_S ( T, INVALUES )
+    integer, parameter :: RK = kind(0.0e0)
+    integer, dimension(8), intent(in), optional :: INVALUES
+    include "time_now.f9h"
+  end subroutine TIME_NOW_S
+
+  subroutine WAIT_D ( T, ERR )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: T
+    include "wait.f9h"
+  end subroutine WAIT_D
+
+  subroutine WAIT_S ( T, ERR )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: T
+    include "wait.f9h"
+  end subroutine WAIT_S
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -269,6 +295,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.11  2012/04/20 01:27:53  vsnyder
+!Add Begin, Finish, some cannonball polishing
+!
 !Revision 2.10  2009/06/23 18:25:44  pwagner
 !Prevent Intel from optimizing ident string away
 !
