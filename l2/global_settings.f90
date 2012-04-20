@@ -12,6 +12,7 @@
 module GLOBAL_SETTINGS
 
   use MLSCommon, only: FILENAMELEN
+  use output_m, only: OUTPUTNAMEDVALUE
 
   implicit none
 
@@ -57,10 +58,13 @@ module GLOBAL_SETTINGS
 !---------------------------------------------------------------------------
 
   integer, private :: ERROR, WARNING
+  logical, parameter :: DEEBUG = .false.
 
 contains
 
   ! Given a MAF, returns the closest profile
+  ! Return -1 if something goes wrong
+  ! Remember--MAFs start at 0, not 1
   function L1MAFToL2Profile ( MAF, fileDatabase ) result( profile )
     use L1BDATA, only: L1BDATA_T, NAME_LEN, &
       & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, &
@@ -92,6 +96,7 @@ contains
     character (len=L2GPNameLen) :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     ! Executable
+    profile = -1
     ! 1st--read the MAF times
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
@@ -109,15 +114,23 @@ contains
            & hdfVersion=HDFVERSION_5 )
     call GetStringElement (trim(swathList), swath, 1, countEmpty )
     call ReadL2GPData ( L2GPFile, trim(swath), l2gp )
-    ! call Hunt( l2gp%time, l1bField%dpField(1,1,MAF)*1._r8, profile )
-    call ClosestElement( l1bField%dpField(1,1,MAF)*1._r8, l2gp%time, indices )
+    call ClosestElement( l1bField%dpField(1,1,MAF+1)*1._r8, l2gp%time, indices )
+    if ( DEEBUG ) call outputNamedValue( 'shape(l2gp%time)', shape(l2gp%time) )
+    if ( DEEBUG ) call outputNamedValue( 'shape(l1bField%dpField)', shape(l1bField%dpField) )
+    if ( DEEBUG ) call outputNamedValue( 'lbound(l1bField%dpField(1,1,:))', lbound(l1bField%dpField(1,1,:)) )
     profile = indices(1)
+    if ( DEEBUG ) call outputNamedValue( 'l2gpvalue', l2gp%time(profile) )
+    if ( DEEBUG ) call outputNamedValue( 'l1bvalue', l1bField%dpField(1,1,MAF) )
+    if ( DEEBUG ) call outputNamedValue( 'l1bvalue[+1]', l1bField%dpField(1,1,MAF+1) )
     call deallocatel1bdata( l1bfield )
     call destroyl2gpcontents( l2gp )
   end function L1MAFToL2Profile
 
   ! Given a profile, returns the closest MAF
+  ! Return -1 if something goes wrong
+  ! Remember--MAFs start at 0, not 1
   function L2ProfileToL1MAF ( profile, fileDatabase ) result( MAF )
+    use DUMP_0, only: DUMP
     use L1BDATA, only: L1BDATA_T, NAME_LEN, &
       & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, &
       & READL1BDATA 
@@ -148,6 +161,7 @@ contains
     character (len=L2GPNameLen) :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     ! Executable
+    MAF = -1
     ! 1st--read the MAF times
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) then
@@ -163,11 +177,25 @@ contains
     L2GPFile => GetMLSFileByType(filedatabase, content='l2gp')
     noSwaths = mls_InqSwath ( L2GPFile%name, SwathList, listSize, &
            & hdfVersion=HDFVERSION_5 )
+    if ( DEEBUG ) call outputNamedValue( 'profile', profile )
+    if ( DEEBUG ) call outputNamedValue( 'noSwaths', noSwaths )
     call GetStringElement (trim(swathList), swath, 1, countEmpty )
+    if ( DEEBUG ) call outputNamedValue( 'swath', swath )
     call ReadL2GPData ( L2GPFile, trim(swath), l2gp )
-    ! call Hunt( l1bField%dpField(1,1,:)*1._r8, l2gp%time(profile), MAF )
+    if ( DEEBUG ) call dump( l2gp%time, 'l2gp%time' )
+    if ( l2gp%time(profile) < 0.d0 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName // 'L2ProfileToL1MAF', &                      
+      & 'time for this profile < 0; did the chunk crash?' )
+      call deallocatel1bdata( l1bfield )
+      call destroyl2gpcontents( l2gp )
+      return
+    endif
     call ClosestElement( l2gp%time(profile), l1bField%dpField(1,1,:)*1._r8, indices )
-    MAF = indices(1)
+    MAF = indices(1) - 1
+    if ( DEEBUG ) call outputNamedValue( 'size(time)', size(l2gp%time) )
+    if ( DEEBUG ) call outputNamedValue( 'time(l2gp)', l2gp%time(profile) )
+    if ( DEEBUG .and. MAF > 0 ) call outputNamedValue( 'l1bvalue', l1bField%dpField(1,1,MAF) )
+    if ( DEEBUG ) call outputNamedValue( 'l1bvalue[+1]', l1bField%dpField(1,1,MAF+1) )
     call deallocatel1bdata( l1bfield )
     call destroyl2gpcontents( l2gp )
   end function L2ProfileToL1MAF
@@ -1204,6 +1232,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.143  2012/03/28 20:08:24  pwagner
+! l2parsf spec generates warning--slave tasks lost ability to join quantities
+!
 ! Revision 2.142  2012/03/15 22:51:15  vsnyder
 ! Add IGRF_file parameter, some cannonball polishing
 !
