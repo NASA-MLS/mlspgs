@@ -77,7 +77,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     character(len=255) :: sdList= '*'   ! what SDs to diff
     character(len=255) :: skipList= ''  ! what SDs to skip
     character(len=255) :: referenceFileName= 'default.h5'  ! reference filename
-    character(len=80) :: options%dumpOptions       = ' '
+    character(len=80)  :: dumpOptions       = ' '
   end type options_T
   
   type ( options_T ) ::          options
@@ -831,6 +831,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.21  2012/02/13 23:41:31  pwagner
+! -opt opts passes opts to underlying dump routines
+!
 ! Revision 1.20  2011/05/10 18:28:12  pwagner
 ! Avoid annoying messages unless verbose
 !
