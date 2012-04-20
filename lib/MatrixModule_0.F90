@@ -818,10 +818,10 @@ contains ! =====     Public Procedures     =============================
             & "Matrix in CholeskyFactor is not positive-definite." )
         end if
         zt(i,1:i-1) = 0.0_rm  ! Clear left from the diagonal (helps Sparsify!)
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
         g = x%values(ii+x%r2(i-1)+1,1) - &
             & dot( i-r1(i), zt(r1(i),i), 1, zt(r1(i),i), 1 )
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
         g = x%values(ii+x%r2(i-1)+1,1) - &
             & dot_product( zt(r1(i):i-1,i), zt(r1(i):i-1,i) )
 #else
@@ -845,9 +845,9 @@ contains ! =====     Public Procedures     =============================
           if ( i <= rz ) then
             g = 0.0
           else
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
             g = - dot( i-rz, zt(rz,i), 1, zt(rz,j), 1 )
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
             g = - dot_product( zt(rz:i-1,i), zt(rz:i-1,j) )
 #else
             g = - dot( i-rz, zt(rz,i), 1, zt(rz,j), 1 )
@@ -1213,9 +1213,9 @@ contains ! =====     Public Procedures     =============================
     if ( tol < 0.0_rm ) tol = sqrt(tiny(0.0_rm))
     do i = 1, nc
       zt(i+1:nc,i) = 0.0_rm ! Clear below the diagonal (helps Sparsify!)
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
       d = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
       d = xin(i,i) - dot_product( zt(1:i-1,i), zt(1:i-1,i) )
 #else
       d = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
@@ -1232,9 +1232,9 @@ contains ! =====     Public Procedures     =============================
       zt(i,i) = d
 !$OMP PARALLEL DO
       do j = i+1, nc
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
         zt(i,j) = ( xin(i,j) - dot( i-1, zt(1,i), 1, zt(1,j), 1 ) ) / d
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
         zt(i,j) = ( xin(i,j) - dot_product( zt(1:i-1,i), zt(1:i-1,j) ) ) / d
 #else
         zt(i,j) = ( xin(i,j) - dot( i-1, zt(1,i), 1, zt(1,j), 1 ) ) / d
@@ -1666,9 +1666,9 @@ contains ! =====     Public Procedures     =============================
     ! Finish inverting the rest of the matrix.
     do i = 1, n-1
       do j = i+1, n
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
         UI(i,j) = -dot(j-i, UI(i,i), n, U(i,j), 1) * UI(j,j)
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
         UI(i,j) = -dot_product(UI(i,i:j-1),U(i:j-1,j)) * UI(j,j)
 #else
         UI(i,j) = -dot(j-i, UI(i,i), n, U(i,j), 1) * UI(j,j)
@@ -1690,9 +1690,9 @@ contains ! =====     Public Procedures     =============================
       ! Replace the upper triangle of UI with the upper triangle of UI * UI**T
       do i = 1, n
         do j = i, n
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
           UI(i,j) = dot(n-j+1, UI(i,j), n, UI(j,j), n)
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
           UI(i,j) = dot_product(UI(i,j:n),UI(j,j:n))
 #else
           UI(i,j) = dot(n-j+1, UI(i,j), n, UI(j,j), n)
@@ -1703,9 +1703,9 @@ contains ! =====     Public Procedures     =============================
       ! Replace the diagonal of UI with diag(UI * UI**T) and clear the
       ! rest of it.
       do i = 1, n
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
         ui(i,i) = dot(n-i+1, UI(i,i), n, UI(i,i), n)
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
         ui(i,i) = dot_product(UI(i,i:n),ui(i,i:n))
 #else
         ui(i,i) = dot(n-i+1, UI(i,i), n, UI(i,i), n)
@@ -2130,10 +2130,10 @@ contains ! =====     Public Procedures     =============================
             xd = xi_1 + cr_1 - xr_1
             yd = yi_1 + cr_1 - yr_1
 
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
             xy = dot( c_n, xb%values(xd,1), 1, &
               &            yb%values(yd,1), 1 )
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
             xy = dot_product( xb%values(xd:xd+c_n-1,1), &
               &               yb%values(yd:yd+c_n-1,1) )
 #else
@@ -2222,9 +2222,9 @@ contains ! =====     Public Procedures     =============================
             end if
             if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
             xy = dot( l-k+1, xb%values(k,1), 1, yb%values(m,j), 1 )
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
             xy = dot_product( xb%values(k:l,1), yb%values(m:m+l-k,j) )
 #else
             xy = dot( l-k+1, xb%values(k,1), 1, yb%values(m,j), 1 )
@@ -2398,9 +2398,9 @@ contains ! =====     Public Procedures     =============================
             end if
             if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
             xy = dot( l-k+1, xb%values(m,i), 1, yb%values(k,1), 1 )
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
             xy = dot_product( xb%values(m:m+l-k,i), yb%values(k:l,1) )
 #else
             xy = dot( l-k+1, xb%values(m,i), 1, yb%values(k,1), 1 )
@@ -2451,10 +2451,10 @@ contains ! =====     Public Procedures     =============================
                     cycle
                   end if
                 end if
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
                 xy = dot( rn, xb%values(r0,i), 1, &
                   &           yb%values(r0,j), 1 )
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
                 xy = dot_product( xb%values(r0:r1,i), &
                   &               yb%values(r0:r1,j) )
 #else
@@ -2474,10 +2474,10 @@ contains ! =====     Public Procedures     =============================
             do j = 1, zb%nCols  ! Columns of ZB
 !$OMP PARALLEL DO private ( xy )
               do i = 1, j       ! Rows of Z = columns of XB
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
                 xy = dot( rn, xb%values(r0,i), 1, &
                   &           yb%values(r0,j), 1 )
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
                 xy = dot_product( xb%values(r0:r1,i), &
                   &               yb%values(r0:r1,j) )
 #else
@@ -2867,11 +2867,11 @@ contains ! =====     Public Procedures     =============================
           end if
 !$OMP PARALLEL DO
           do j = 1, nc
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
             xs(i,j) = ( xs(i,j) - &
                     &   dot( u%r2(i)-u%r2(i-1)-1, u%values(u%r2(i-1)+1,1), 1, &
                     &                             xs(u%r1(i),j), 1 ) ) / d
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
             xs(i,j) = ( xs(i,j) - &
                     &   dot_product( u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
                     &                xs(u%r1(i):i-1,j) ) ) / d
@@ -2933,10 +2933,10 @@ contains ! =====     Public Procedures     =============================
           end if
 !$OMP PARALLEL DO
           do j = 1, nc
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
             xs(i,j) = ( xs(i,j) - &
                     &   dot( i-1, u%values(1,i), 1, xs(1,j), 1) ) / d
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
             xs(i,j) = ( xs(i,j) - &
                     &   dot_product( u%values(1:i-1,i), xs(1:i-1,j)) ) / d
 #else
@@ -2981,9 +2981,9 @@ contains ! =====     Public Procedures     =============================
 !$OMP PARALLEL DO
         do j = 1, nc
           xs(i,j) = ( xs(i,j) - &
-#if (defined LF95) || (defined IFC)
+#if (defined LF95)
                   &   dot( n-i, ud(i,i+1), size(ud,1), xs(i+1,j), 1 ) ) / d
-#elif (defined NAG)
+#elif (defined NAG) || (defined IFC)
                   &   dot_product(ud(i,i+1:n), xs(i+1:n,j)) ) / d
 #else
                   &   dot( n-i, ud(i,i+1), size(ud,1), xs(i+1,j), 1 ) ) / d
@@ -3646,6 +3646,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.10  2012/04/20 01:25:27  vsnyder
+! Use intrinsic dot_product with Intel
+!
 ! Revision 2.9  2012/02/10 23:49:37  vsnyder
 ! Use BandHeight for NumberNonzero if the latter is not present in CreateBlock
 ! for a banded block.  Spiff some dumps.
