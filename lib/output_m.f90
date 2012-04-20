@@ -99,7 +99,8 @@ module OUTPUT_M
 !          [char* Before], [char* After] )
 !       where value can be any numerical type, either scalar or 1-d array
 ! output_date_and_time ( [log date], [log time], [char* from_where], 
-!          [char* msg], [char* dateFormat], [char* timeFormat], [char* advance] )
+!          [char* msg], [char* dateFormat], [char* timeFormat], 
+!          [double CPU_seconds], [char* advance] )
 ! outputCalendar ( [char* date], [char* datenote], [char* notes(:)], 
 !          [dontwrap] )
 ! outputList ( values(:), [char* sep], [char* delims] )
@@ -1494,7 +1495,7 @@ contains
 
   ! ---------------------------------------  OUTPUT_DATE_AND_TIME  -----
   subroutine OUTPUT_DATE_AND_TIME ( date, time, &
-    & from_where, msg, dateFormat, timeFormat, advance )
+    & from_where, msg, dateFormat, timeFormat, CPU_Seconds, advance )
     ! Output nicely-formatted date, time, and extra message
     ! We'll assume we won't want this line stamped with date and time
     ! (for fear of being redundant, which we fear)
@@ -1504,15 +1505,18 @@ contains
     character(len=*), intent(in), optional :: MSG
     character(len=*), intent(in), optional :: DATEFORMAT
     character(len=*), intent(in), optional :: TIMEFORMAT
+    double precision, intent(in), optional :: CPU_Seconds
     character(len=*), intent(in), optional :: ADVANCE
-    !
+
     character(len=16) :: dateString
     logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
-    character(len=16) :: timeString
+    integer :: HH, MM, MS, SS
     logical :: myDate
     logical :: myTime
     character(len=3) :: MY_ADV
-    !
+    real :: My_CPU, Seconds
+    character(len=16) :: timeString
+
     myDate = .true.
     if ( present(date) ) myDate = date
     myTime = .true.
@@ -1545,8 +1549,20 @@ contains
     my_adv = 'yes'
     if ( present(advance) ) my_adv = advance
     call blanks ( 3 )
-    call output_ ( trim(msg), from_where=from_where, advance=my_adv, &
+    call output_ ( trim(msg), from_where=from_where, &
+      & advance=merge ( 'no ', my_adv, present(CPU_seconds) ), &
       & DONT_STAMP=DONT_STAMP )
+    if ( present(CPU_seconds) ) then
+      hh = CPU_seconds / 3600
+      my_cpu = CPU_seconds - hh * 3600
+      mm = my_cpu / 60
+      seconds = my_cpu - mm * 60
+      ss = seconds
+      ms = nint(1000 * (seconds-ss))
+      write ( timeString, '(2(i2.2,":"),i2.2,".",i3.3)' ) hh, mm, ss, ms
+      call output_ ( '   CPU time ' // trim(timeString), from_where=from_where, &
+        & advance=my_adv, DONT_STAMP=DONT_STAMP )
+    end if
   end subroutine OUTPUT_DATE_AND_TIME
 
   ! --------------------------------------------  OUTPUT_DCOMPLEX  -----
@@ -2533,6 +2549,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.89  2012/04/20 01:27:14  vsnyder
+! Add CPU_Seconds to Output_Date_and_Time
+!
 ! Revision 2.88  2011/08/11 22:24:59  pwagner
 ! Added banner to set off message with stars and stripes
 !
