@@ -692,7 +692,8 @@ contains
       & F_ALLL2PCS, F_ALLLINES, F_ALLMATRICES, F_ALLPFA, &
       & F_ALLQUANTITYTEMPLATES, F_ALLRADIOMETERS, F_ALLSIGNALS, F_ALLSPECTRA, &
       & F_ALLVECTORS, F_ALLVECTORTEMPLATES, F_ALLVGRIDS, F_ANTENNAPATTERNS, &
-      & F_BOOLEAN, F_CLEAN, F_CRASHBURN, F_DETAILS, F_DACSFILTERSHAPES, &
+      & F_BOOLEAN, F_CALLSTACK, F_CLEAN, F_CRASHBURN, &
+      & F_DETAILS, F_DACSFILTERSHAPES, &
       & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HEIGHT, F_HESSIAN, &
       & F_HGRID, F_IGRF, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, &
       & F_MIETABLES, F_OPTIONS, F_PFADATA, F_PFAFILES, F_PFANUM, F_PFASTRU, &
@@ -863,8 +864,9 @@ contains
         & f_allPFA, f_allQuantityTemplates, &
         & f_allRadiometers, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_crashBurn, f_DACSfilterShapes, f_filterShapes, f_igrf, f_MieTables, &
-        & f_pfaFiles, f_pfaStru, f_pointingGrids, f_stop, f_stopWithError )
+        & f_callStack, f_crashBurn, f_DACSfilterShapes, f_filterShapes, f_igrf, &
+        & f_MieTables, f_pfaFiles, f_pfaStru, f_pointingGrids, &
+        & f_stop, f_stopWithError )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allBooleans )
@@ -978,6 +980,8 @@ contains
             call dump ( vGrids )
           case ( f_antennaPatterns )
             call dump_antenna_patterns_database ( son )
+          case ( f_callStack )
+            call MLSMessageCalls ( 'dump' )
           case ( f_crashBurn )
               NEVERCRASH = .false.
               call MLSMessage( MLSMSG_CRASH, moduleName, &
@@ -1532,6 +1536,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.69  2012/04/20 01:03:30  pwagner
+! May dump callStack from within l2cf
+!
 ! Revision 2.68  2012/03/28 23:14:14  vsnyder
 ! Pass options to Dump_GH, add 'c' to options if /clean appears
 !
