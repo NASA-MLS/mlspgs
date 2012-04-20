@@ -785,7 +785,10 @@ contains
              cait = cbig
              go to 755   ! Go use DX
           end if
-          dxinc = dxi * dxn * (c1 - cdxdxl)**2
+!! WVS: was          dxinc = dxi * dxn * (c1 - cdxdxl)**2
+!! This was clearly wrong, since it says "If consecutive Newton moves are in
+!! the same direction, take shorter steps"
+          dxinc = dxi * dxn / (1.025 - cdxdxl)**2
         end if
       end if
 
@@ -1208,6 +1211,7 @@ contains
       call add_to_line ( aj%gdx,    'GDX' )
       call add_to_line ( aj%gfac,   'GFAC' )
       call add_to_line ( aj%gradn,  'GRADN' )
+      call add_to_line ( aj%qnsq,   'QNSQ' )
       call add_to_line ( aj%sq,     'SQ' )
       call add_to_line ( aj%sqt,    'SQT' )
       call add_to_line_I ( aj%kfail,    'KFAIL' )
@@ -1374,6 +1378,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.50  2012/04/20 01:29:21  vsnyder
+! Change dxinc calculation, add QNSQ output
+!
 ! Revision 2.49  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
