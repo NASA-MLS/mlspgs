@@ -141,7 +141,7 @@ extant_files()
 #****************************************************************
 #
 stdprods='BrO CH3Cl CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature'
-debug=1
+debug=0
 #     ^  -- set this to 1 if worried
 keep=0
 #    ^  -- set this to 1 to keep temp files (else delete)
@@ -408,6 +408,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.15  2012/02/13 23:43:59  pwagner
+# Moved where envfile gets sourced to better location
+#
 # Revision 1.14  2011/06/16 23:19:09  pwagner
 # Fixed bug when finding L2GPDIFF
 #
