@@ -188,7 +188,7 @@ intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 endif
 
-NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+NOUNASS := $(shell echo ${DUSTY} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
 SLOWASMOLASSES := -g --ap --pca --f95 --chk a,e,s
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
@@ -452,3 +452,6 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.1  2012/04/04 00:45:40  pwagner
+# First commit
+#
