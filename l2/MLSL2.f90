@@ -51,7 +51,7 @@ program MLSL2
   use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, &
     & GETSTRINGELEMENT, GETUNIQUELIST, &
     & NUMSTRINGELEMENTS, REMOVEELEMFROMLIST, SWITCHDETAIL, UNQUOTE
-  use OUTPUT_M, only: BLANKS, DUMP, OUTPUT, OUTPUT_DATE_AND_TIME, &
+  use OUTPUT_M, only: BLANKS, DUMP, OUTPUT, &
     & OUTPUTNAMEDVALUE, OUTPUTOPTIONS, STAMPOPTIONS
   use PARSER, only: CONFIGURATION
   use PCFHDR, only: GLOBALATTRIBUTES
@@ -61,7 +61,7 @@ program MLSL2
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DO_LISTING, GET_STRING, ADDINUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
-  use TIME_M, only: TIME_NOW, TIME_CONFIG
+  use TIME_M, only: BEGIN, FINISH, TIME_NOW, TIME_CONFIG
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
     & TOGGLE
   use TRACK_M, only: REPORTLEAKS
@@ -836,7 +836,7 @@ program MLSL2
     call dump_settings
   end if
   if ( showDefaults ) stop
-  call output_date_and_time(msg='starting mlsl2')
+  call begin('starting mlsl2')
   !---------------- Task (5) ------------------
   if (error == 0) then
     ! Parse the L2CF, producing an abstract syntax tree
@@ -966,7 +966,7 @@ program MLSL2
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
   if ( trackAllocates > 0 ) call ReportLeaks ( "At end of program execution..." )
-  call output_date_and_time(msg='ending mlsl2')
+  call finish ( 'ending mlsl2' )
   if( error /= 0 .or. STOPWITHERROR ) then
      call MLSMessageExit(1)
   else if(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
@@ -1178,6 +1178,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.181  2012/04/20 01:30:38  vsnyder
+! Use Begin, Finish instead of Output_Date_and_Time
+!
 ! Revision 2.180  2012/03/28 20:06:44  pwagner
 ! Removed stgmem option--slave tasks lost ability to join quantities
 !
