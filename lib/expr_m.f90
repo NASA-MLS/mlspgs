@@ -312,7 +312,7 @@ contains ! ====     Public Procedures     ==============================
     ! Set the flags array appropriately
     use Declaration_table, only: NUM_VALUE
     use Intrinsic, only: PHYQ_DIMENSIONLESS
-    use MLSCommon, only: R8
+    use MLSKinds, only: R8
     use Tree, only: Node_ID, Subtree, nsons
     use Tree_Types, only: N_colon_less, N_less_colon, N_less_colon_less
     integer, intent(in) :: ROOT         ! Tree node
@@ -383,6 +383,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.18  2012/04/24 20:38:47  vsnyder
+! Get kinds from MLSKinds instead of MLSCommon
+!
 ! Revision 2.17  2012/03/12 18:36:11  vsnyder
 ! Add ln as synonym for log, add log10
 !
