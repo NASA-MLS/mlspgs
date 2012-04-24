@@ -11,7 +11,39 @@
 
 module PARSER
 
-! Parser for L2CF.  The grammar is described in wvs-004.
+! Parser for L2CF.
+
+! cf -> one_cf+ 'EOF'
+! one_cf -> ('begin' 'name' 'EOS' spec+ 'end' 'name' )? 'EOS'
+! spec -> 'name' spec_rest 'EOS'
+! spec -> 'EOS'
+! spec_rest -> \lambda
+! spec_rest -> '=' expr +
+! spec_rest -> ( ',' spec_list )
+! spec_rest -> : name ( ',' spec_list )
+! spec_list -> ( ',', field_list ) *
+! field_list -> expr ( '=' expr + )?
+! field_list -> '/' 'name'
+! expr -> array
+! expr -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
+! array -> '[' ( , expr )* ']'
+! limit -> lterm ( 'or' lterm ) *
+! lterm -> lfactor ( 'and' lfactor ) *
+! lfactor -> bterm ( '<' | '<=' | '>' | '>=' | '==' | '/=' bterm ) *
+! bterm -> term ( '+' | '-' term ) *
+! term -> factor ( '*' | '/' factor )*
+! factor -> expon ( '^' expon )*
+! expon -> unitless 'unit' ? => n_unit
+! expon -> string
+! unitless -> primary
+! unitless -> '+' primary => n_plus
+! unitless -> '-' primary => n_minus
+! primary -> 'name' ( '.' 'name' ) ?
+! primary -> 'name' '(' expr list ',' ')'
+! primary -> 'number'
+! primary -> '(' expr ')'
+
+! The notation and method are described in wvs-004.
 
   use LEXER_CORE, only: PRINT_SOURCE, TOKEN
   use LEXER_M, only: LEXER
@@ -39,7 +71,7 @@ module PARSER
 
 contains ! ====     Public Procedures     ==============================
 ! ------------------------------------------------  CONFIGURATION  -----
-  subroutine CONFIGURATION ( ROOT )
+  subroutine CONFIGURATION ( ROOT ) ! cf -> one_cf+ 'EOF'
     integer, intent(out) :: ROOT   ! Root of the abstract syntax tree
     error = 0
     call get_token
@@ -178,6 +210,8 @@ contains ! ====     Public Procedures     ==============================
 
 ! ---------------------------------------------------------  EXPR  -----
   recursive subroutine EXPR
+    ! expr -> array
+    ! expr -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
     integer :: NSONS
     if ( toggle(par) ) call where ( 'Enter EXPR', advance='yes' )
     if ( next%class == t_left_bracket ) then
@@ -319,6 +353,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine LTERM
 ! -------------------------------------------------------  ONE_CF  -----
   subroutine ONE_CF
+    ! one_cf -> ('begin' 'name' 'EOS' spec+ 'end' 'name' )? 'EOS'
     integer :: HOW_MANY       ! How many sons of the generated tree node
     if ( toggle(par) ) call where ( 'Enter ONE_CF', advance='yes' )
 o:  do
@@ -544,6 +579,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.22  2012/04/24 20:37:24  vsnyder
+! Include the complete grammar at the top
+!
 ! Revision 2.21  2011/04/19 01:59:43  vsnyder
 ! Support == and /= relational operators too
 !
