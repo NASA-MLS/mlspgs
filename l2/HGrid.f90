@@ -58,7 +58,7 @@ contains ! =====     Public Procedures     =============================
     use EXPR_M, only: EXPR
     use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
     use INIT_TABLES_MODULE, only: F_DATE, &
-      & F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
+      & F_EXTENDIBLE, F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
       & F_HEIGHT, F_INCLINATION, F_INSETOVERLAPS, F_INTERPOLATIONFACTOR, &
       & F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
       & F_MODULE, F_ORIGIN, &
@@ -116,6 +116,7 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(2) :: PROFRANGE  ! Profile range
     integer :: A,B                      ! Elements of profile range
 
+    logical :: EXTENDIBLE               ! If set don't lose profiles between chunks
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
     logical :: FORBIDOVERSPILL          ! If set don't allow overlaps beyond L1B
@@ -159,6 +160,7 @@ contains ! =====     Public Procedures     =============================
 
     got_field = .false.
     interpolationFactor = 1.0
+    extendible = .false.
     forbidOverspill = .false.
     maxLowerOverlap = -1
     maxUpperOverlap = -1
@@ -188,6 +190,8 @@ contains ! =====     Public Procedures     =============================
       case ( f_module )
         instrumentModule = sub_rosa(subtree(2,son))
         call get_string ( instrumentModule , instrumentModuleName )
+      case  ( f_extendible )
+        extendible = get_boolean ( fieldValue )
       case  ( f_forbidOverspill )
         forbidOverspill = get_boolean ( fieldValue )
       case ( f_height )
@@ -279,7 +283,8 @@ contains ! =====     Public Procedures     =============================
         call announce_error ( root, NoL1BFILES )
       else
         call CreateRegularHGrid ( filedatabase, processingRange, chunk, &
-          & spacing, origin, trim(instrumentModuleName), forbidOverspill, &
+          & spacing, origin, trim(instrumentModuleName), extendible, &
+          & forbidOverspill, &
           & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid, &
           & onlyComputingOffsets )
       end if
@@ -725,7 +730,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------  CreateRegularHGrid  -----
   subroutine CreateRegularHGrid ( filedatabase, processingRange, chunk, &
-    & spacing, origin, instrumentModuleName, forbidOverspill, &
+    & spacing, origin, instrumentModuleName, extendible, forbidOverspill, &
     & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid, &
     & onlyComputingOffsets )
 
@@ -766,6 +771,7 @@ contains ! =====     Public Procedures     =============================
     real(rk), intent(in) :: SPACING
     real(rk), intent(in) :: ORIGIN
     character (len=*), intent(in) :: INSTRUMENTMODULENAME
+    logical, intent(in) :: EXTENDIBLE
     logical, intent(in) :: FORBIDOVERSPILL
     integer, intent(in) :: MAXLOWEROVERLAP
     integer, intent(in) :: MAXUPPEROVERLAP
@@ -925,12 +931,22 @@ contains ! =====     Public Procedures     =============================
       end if
     
       ! Now work out the last point in a similar manner
-      last = origin + spacing * (1 + int ( (maxAngle-origin)/spacing ) )
-      delta = last - maxAngle            ! So +ve means last could be smaller
-      if ( delta > 3*spacing/2 ) then
-        last = last - spacing
-      else if ( delta < -spacing/2 ) then
-        last = last + spacing
+      if ( extendible ) then
+        last = origin + spacing * (1 + int ( (maxAngle-origin)/spacing ) )
+        delta = last - maxAngle            ! So +ve means last could be smaller
+        if ( delta > 3*spacing/2 ) then
+          last = last - spacing
+        else if ( delta < -spacing/2 ) then
+          last = last + spacing
+        end if
+      else
+        last = origin + spacing * int ( (maxAngle-origin)/spacing )
+        delta = last - maxAngle            ! So +ve means last could be smaller
+        if ( delta > spacing/2 ) then
+          last = last - spacing
+        else if ( delta < -spacing/2 ) then
+          last = last + spacing
+        end if
       end if
     else
       ! The 'single' option is typically used for running single profile retrievals
@@ -974,7 +990,11 @@ contains ! =====     Public Procedures     =============================
       if ( chunk%noMAFsUpperOverlap > 0 ) then
         setLastLoop: do
           if ( last <= first ) exit setLastLoop
-          if ( last < max( nextAngle, minAngleLastMAF ) ) exit setLastLoop
+          if ( extendible ) then
+            if ( last < max( nextAngle, minAngleLastMAF ) ) exit setLastLoop
+          else
+            if ( last < minAngleLastMAF ) exit setLastLoop
+          endif
           last = last - spacing
         end do setLastLoop
       else
@@ -1011,6 +1031,8 @@ contains ! =====     Public Procedures     =============================
       call output ( chunk%firstMAFIndex )
       call output ( ' lastMAFIndex: ' )
       call output ( chunk%lastMAFIndex )
+      call output ( ' extendible: ' )
+      call output ( extendible, advance='yes' )
       call output ( ' forbidoverspill: ' )
       call output ( forbidoverspill, advance='yes' )
       call output ( ' allowPriorOverlaps: ' )
@@ -2374,6 +2396,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.101  2012/04/25 20:32:24  pwagner
+! Inserting missing profiles after chunk end now an option controlled by 'extendible' field
+!
 ! Revision 2.100  2012/04/20 01:09:22  pwagner
 ! Regular HGrids no longer drop profiles between chunks
 !
