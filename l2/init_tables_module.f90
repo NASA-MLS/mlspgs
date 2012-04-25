@@ -612,6 +612,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_hGrid, &
              begin, f+f_type, t+t_hGridType, nr+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
+             begin, f+f_extendible, t+t_boolean, n+n_field_type, &
              begin, f+f_fraction, t+t_numeric, n+n_field_type, &
              begin, f+f_forbidOverspill, t+t_boolean, n+n_field_type, &
              begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
@@ -1733,6 +1734,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.539  2012/04/25 20:32:24  pwagner
+! Inserting missing profiles after chunk end now an option controlled by 'extendible' field
+!
 ! Revision 2.538  2012/04/20 00:44:50  pwagner
 ! May dump callStack from within l2cf
 !
