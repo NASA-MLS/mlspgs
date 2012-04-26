@@ -79,6 +79,7 @@ c
 callStack
 centerVertically
 checkpoint
+chunkNumber
 clean
 climatology
 cloud_der
@@ -492,6 +493,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.216  2012/04/26 23:18:11  pwagner
+# Added chunkNumber
+#
 # Revision 2.215  2012/04/25 20:32:24  pwagner
 # Inserting missing profiles after chunk end now an option controlled by 'extendible' field
 #
