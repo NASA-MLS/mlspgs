@@ -24,7 +24,7 @@ program MLSL2
   use LEAKCHECK_M, only: LEAKCHECK
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CAPIDENTIFIERS
-  use MACHINE, only: GETARG, HP, IO_ERROR
+  use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
   use MLSCOMMON, only: MLSFILE_T
   use MLSFILES, only: FILESTRINGTABLE, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
@@ -282,6 +282,7 @@ program MLSL2
         countChunks = switch
       else if ( lowercase(line(3+n:7+n)) == 'crash' ) then
         MLSMessageConfig%crashOnAnyError = switch
+        neverCrash = .not. switch
       else if ( lowercase(line(3+n:8+n)) == 'defaul' ) then
         showDefaults = switch
       else if ( line(3+n:7+n) == 'delay' ) then
@@ -1178,6 +1179,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.182  2012/04/26 23:12:45  pwagner
+! --crash turns off neverCrash; maybe we should change default for neverCrash to .false.
+!
 ! Revision 2.181  2012/04/20 01:30:38  vsnyder
 ! Use Begin, Finish instead of Output_Date_and_Time
 !
