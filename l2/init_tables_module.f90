@@ -1427,6 +1427,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_antennaPatterns, t+t_boolean, n+n_field_type, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
              begin, f+f_callStack, t+t_boolean, n+n_field_type, &
+             begin, f+f_chunkNumber, t+t_boolean, n+n_field_type, &
              begin, f+f_Clean, t+t_boolean, n+n_field_type, &
              begin, f+f_crashBurn, t+t_boolean, n+n_field_type, &
              begin, f+f_DACSfilterShapes, t+t_boolean, n+n_field_type, &
@@ -1453,6 +1454,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_pfaFiles, t+t_boolean, n+n_field_type, &
              begin, f+f_pfaNum, t+t_numeric, n+n_field_type, &
              begin, f+f_pfaStru, t+t_boolean, n+n_field_type, &
+             begin, f+f_phaseName, t+t_boolean, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -1734,6 +1736,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.540  2012/04/26 23:30:40  pwagner
+! May Dump chunk number, phase name
+!
 ! Revision 2.539  2012/04/25 20:32:24  pwagner
 ! Inserting missing profiles after chunk end now an option controlled by 'extendible' field
 !
