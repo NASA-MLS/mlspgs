@@ -605,10 +605,12 @@ contains
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
     use MLSCOMMON, only: R8
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: BOOLEANVALUE, NUMSTRINGELEMENTS, PUTHASHELEMENT, &
-      & SWITCHDETAIL
-    use MLSSTRINGS, only: LOWERCASE
+    use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, RUNTIMEVALUES, &
+      & SIPS_VERSION
+    use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
+    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT, &
+      & NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -652,7 +654,7 @@ contains
         nameString = lowerCase(nameString)
       case ( f_formula )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
-        tvalue = BooleanValue (formula, runTimeValues%lkeys, runTimeValues%lvalues)
+        tvalue = myBooleanValue (formula)
       case ( f_values )
         call expr ( son , unitAsArray, valueAsArray )
         tvalue = ( valueAsArray(1) /= 0 )
@@ -666,6 +668,63 @@ contains
     if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
+  contains
+    function myBooleanValue ( formula ) result ( bvalue )
+      ! Calculate the boolean value according to
+      ! (1) The logical value of its formula, if the formula
+      !     does not contain the special operators "==" or "/="
+      ! (2) if the formula is "variable == value" and variable is
+      !     is recognized and takes the value "value", return "true", else "false"
+      ! (3) if the formula is "variable /= value" return not (2)
+      character(len=*), intent(in) :: formula
+      logical :: bvalue
+      ! Internal variables
+      character(len=16) :: lhs, rhs
+      logical, parameter :: countEmpty = .false.
+      logical :: reverse  ! Do we mean NOT equal?
+      ! Executable
+      bvalue = .false.
+      reverse = .false.
+      if ( index(formula, "==") > 1 ) then
+        call GetStringElement ( formula, lhs, &
+          & 1, countEmpty, inseparator='=' )
+        call GetStringElement ( formula, rhs, &
+          & 2, countEmpty, inseparator='=' )
+      elseif ( index(formula, "/=") > 1 ) then
+        call GetStringElement ( formula, lhs, &
+          & 1, countEmpty, inseparator='/' )
+        call GetStringElement ( formula, rhs, &
+          & 2, countEmpty, inseparator='=' )
+        reverse = .true.
+      else
+        bvalue = BooleanValue ( formula, &
+          & runTimeValues%lkeys, runTimeValues%lvalues )
+        return
+      endif
+      rhs = lowercase(adjustl(rhs))
+      lhs = lowercase(adjustl(lhs))
+      ! OK, so now let's try to make sense of the lhs
+      ! Note the necessary type conversions for some variables
+      ! that aren't chracter-valued
+      select case (lhs)
+      case ('checkpaths')
+        lhs = merge( 'true ', 'false', checkpaths )
+      case ('chunknumber')
+        call writeIntsToChars ( currentChunkNumber, lhs )
+      case ('phasename')
+        lhs = currentPhaseName
+      case ('sips_version')
+        lhs = merge( 'true ', 'false', sips_version )
+      case ('need_l1bfiles')
+        lhs = merge( 'true ', 'false', need_l1bfiles )
+      case default
+        ! What the devil did you mean?
+        ! Maybe just whether two character strings are the same
+        ! that were assembled using m4 trickery
+      end select
+      bvalue = (lhs == rhs)
+      if ( reverse ) bvalue = .not. bvalue  ! If we meant not equal
+    end function myBooleanValue
   end function BooleanFromFormula
 
   ! ------------------------- DumpCommand ------------------------
@@ -687,17 +746,18 @@ contains
     use HESSIANMODULE_1, only: HESSIAN_T, DIFF, DUMP
     use HGRIDSDATABASE, only: DUMP, HGRID_T
     use IGRF_INT, only: Dump_GH
-    use INIT_TABLES_MODULE, only: F_ALLBOOLEANS, F_ALLFILES, F_ALLFORWARDMODELS, &
-      & F_ALLGRIDDEDDATA, F_ALLHESSIANS, F_ALLHGRIDS, &
+    use INIT_TABLES_MODULE, only: F_ALLBOOLEANS, F_ALLFILES, &
+      & F_ALLFORWARDMODELS, F_ALLGRIDDEDDATA, F_ALLHESSIANS, F_ALLHGRIDS, &
       & F_ALLL2PCS, F_ALLLINES, F_ALLMATRICES, F_ALLPFA, &
       & F_ALLQUANTITYTEMPLATES, F_ALLRADIOMETERS, F_ALLSIGNALS, F_ALLSPECTRA, &
       & F_ALLVECTORS, F_ALLVECTORTEMPLATES, F_ALLVGRIDS, F_ANTENNAPATTERNS, &
-      & F_BOOLEAN, F_CALLSTACK, F_CLEAN, F_CRASHBURN, &
+      & F_BOOLEAN, F_CALLSTACK, F_CHUNKNUMBER, F_CLEAN, F_CRASHBURN, &
       & F_DETAILS, F_DACSFILTERSHAPES, &
       & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HEIGHT, F_HESSIAN, &
       & F_HGRID, F_IGRF, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, &
       & F_MIETABLES, F_OPTIONS, F_PFADATA, F_PFAFILES, F_PFANUM, F_PFASTRU, &
-      & F_POINTINGGRIDS, F_QUANTITY, F_SIGNALS,  F_SPECTROSCOPY, F_STOP, &
+      & F_PHASENAME, F_POINTINGGRIDS, F_QUANTITY, &
+      & F_SIGNALS,  F_SPECTROSCOPY, F_STOP, &
       & F_STOPWITHERROR, F_SURFACE, F_TEMPLATE, F_TEXT, F_TGRID, &
       & F_VECTOR, F_VECTORMASK, F_VGRID, &
       & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE
@@ -711,6 +771,7 @@ contains
     use MLSFILES, only: DUMPMLSFILE => DUMP, GETMLSFILEBYNAME
     use MLSKINDS, only: RV
     use MLSL2OPTIONS, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
+    use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMESSAGEEXIT, &
       & MLSMSG_CRASH, MLSMSG_ERROR
     use MLSSETS, only: FINDFIRST
@@ -860,13 +921,15 @@ contains
       gson = son
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
+      ! This first heaped set of fields need no "right-hand side"
       case ( f_allBooleans, f_allFiles, f_allForwardModels, f_allGriddedData, &
         & f_allHessians, f_allHGrids, f_allL2PCs, f_allLines, f_allMatrices, &
         & f_allPFA, f_allQuantityTemplates, &
         & f_allRadiometers, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_callStack, f_crashBurn, f_DACSfilterShapes, f_filterShapes, f_igrf, &
-        & f_MieTables, f_pfaFiles, f_pfaStru, f_pointingGrids, &
+        & f_callStack, f_chunkNumber, f_crashBurn, &
+        & f_DACSfilterShapes, f_filterShapes, f_igrf, &
+        & f_MieTables, f_pfaFiles, f_pfaStru, f_phaseName, f_pointingGrids, &
         & f_stop, f_stopWithError )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
@@ -983,6 +1046,8 @@ contains
             call dump_antenna_patterns_database ( son )
           case ( f_callStack )
             call MLSMessageCalls ( 'dump' )
+          case ( f_chunkNumber )
+            call outputNamedValue ( 'chunk number', currentChunkNumber )
           case ( f_crashBurn )
             call finish ( 'ending mlsl2' )
             NEVERCRASH = .false.
@@ -1000,6 +1065,8 @@ contains
             call dump_PFAFileDatabase ( details )
           case ( f_pfaStru )
             call dump_PFAStructure ( details )
+          case ( f_phaseName )
+            call outputNamedValue ( 'phase name', currentphaseName )
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
           case ( f_stop )
@@ -1539,6 +1606,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.71  2012/04/26 23:28:33  pwagner
+! May Dump chunk number, phase name; BooleanFromFormula can compare strings, variables
+!
 ! Revision 2.70  2012/04/20 01:29:56  vsnyder
 ! Add call to Finish before stopping
 !
