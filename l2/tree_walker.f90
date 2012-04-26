@@ -83,7 +83,8 @@ contains ! ====     Public Procedures     ==============================
     use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, ISINLIST, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
     use MLSL2OPTIONS, only: SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, TOOLKIT
-    use MLSL2TIMINGS, only: ADD_TO_SECTION_TIMING, TOTAL_TIMES
+    use MLSL2TIMINGS, only: ADD_TO_SECTION_TIMING, TOTAL_TIMES, &
+      & CURRENTCHUNKNUMBER, CURRENTPHASENAME
     use OPEN_INIT, only: OPENANDINITIALIZE
     use OUTPUTANDCLOSE, only: OUTPUT_CLOSE
     use OUTPUT_M, only: BLANKS, GETSTAMP, OUTPUT, &
@@ -268,6 +269,7 @@ contains ! ====     Public Procedures     ==============================
           firstChunk = chunkNo
           lastChunk = chunkNo
           parallel%ChunkNo = chunkNo
+          currentChunkNumber = chunkNo
         else
           if ( (.not. checkPaths .or. parallel%chunkRange /= '') .and. &
             & NEED_L1BFILES ) then
@@ -378,8 +380,11 @@ contains ! ====     Public Procedures     ==============================
               call output ( chunkNo )
               call output ( " ================ ", advance='yes' )
             end if
-            if ( parallel%master .and. parallel%fwmParallel ) &
-              & call LaunchFWMSlaves ( chunks ( chunkNo ) )
+            if ( parallel%master .and. parallel%fwmParallel ) then
+              call LaunchFWMSlaves ( chunks ( chunkNo ) )
+            elseif( .not. parallel%slave ) then
+              currentChunkNumber = chunkNo  ! Stored for dumping
+            endif
             j = i
 subtrees:   do while ( j <= howmany )
               son = subtree(j,root)
@@ -642,6 +647,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.178  2011/10/07 00:06:02  pwagner
+! May dump Matrices, Hessians from Fill, Join
+!
 ! Revision 2.177  2011/06/29 21:51:17  pwagner
 ! Some cases may safely omit l1b files
 !
