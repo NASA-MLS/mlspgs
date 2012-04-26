@@ -64,6 +64,7 @@ module FillUtils_1                     ! Procedures used by Fill
   ! CAREFULLY CHECK OUT THE CODE AROUND THE CALL TO SNOOP.
   use MLSCOMMON, only: MLSFILE_T, DEFAULTUNDEFINEDVALUE
   use MLSFILES, only: GETMLSFILEBYTYPE
+  use MLSFILLVALUES, only: ISMONOTONIC, MONOTONIZE
   use MLSKINDS, only: R4, R8, RM, RV
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMESSAGECALLS
@@ -6033,6 +6034,7 @@ contains ! =====     Public Procedures     =============================
       integer :: S                      ! Surface loop counter
       integer :: STATUS                 ! Flag
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
+      integer, dimension(1)            :: indices
 
       ! Executable code
       call MLSMessageCalls( 'push', constantName='FromProfile_values' )
@@ -6076,8 +6078,13 @@ contains ! =====     Public Procedures     =============================
       if ( quantity%template%coherent .or. associated(ptan) ) then
         nullify ( inInds )
         call allocate_test ( inInds, noPoints, 'inInds', ModuleName )
+        ! Hunt fails with non-monotonic outHeights
+        if ( .not. isMonotonic(outHeights) ) then
+          call monotonize( outHeights )
+          call dump( outHeights, 'outHeights' )
+        endif
         call hunt ( outHeights, heights, inInds, &
-          & nearest=.true., allowTopValue=.true., fail=fail )
+         & nearest=.true., allowTopValue=.true., fail=fail )
         if ( fail ) then
           call Announce_Error ( 0, no_error_code, &
           & 'Problem in Hunt' )
@@ -7302,6 +7309,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.57  2012/04/26 23:30:04  pwagner
+! Monotonize ptan heights when needed; (should we sort instead?)
+!
 ! Revision 2.56  2012/04/20 01:06:03  pwagner
 ! Changes to bin, ChiSqRatio, and Interpolating to remove bugs, hopefully adding none
 !
