@@ -13,39 +13,39 @@
 MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Dump_0, only: Dump
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only: DUMP
   use INIT_TABLES_MODULE, only: F_SILENT, &
     & F_SKIPDIRECTWRITES, F_SKIPDIRECTWRITESIF, &
     & F_SKIPRETRIEVAL, F_SKIPRETRIEVALIF, F_STAMP
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
-  USE MLSL2Options, only: RESTARTWARNINGS, RUNTIMEVALUES, &
+  use MLSL2OPTIONS, only: RESTARTWARNINGS, RUNTIMEVALUES, &
     & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & STOPAFTERSECTION
-  USE MLSMessageModule, only: MLSMessageConfig, &
-    & MLSMessage, MLSMessageReset, MLSMSG_Error
-  USE MLSStrings, only: LowerCase 
-  USE MLSStringLists, only: BooleanValue, catLists, GetStringElement, &
-    & NumStringElements, StringElementNum, SwitchDetail
-  use MoreTree, only: Get_Boolean
+  use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, &
+    & MLSMESSAGE, MLSMESSAGERESET, MLSMSG_ERROR
+  use MLSSTRINGS, only: LOWERCASE 
+  use MLSSTRINGLISTS, only: BOOLEANVALUE, CATLISTS, GETSTRINGELEMENT, &
+    & NUMSTRINGELEMENTS, STRINGELEMENTNUM, SWITCHDETAIL
+  use MORETREE, only: GET_BOOLEAN
   use OUTPUT_M, only: BLANKS, OUTPUT, &
     & RESUMEOUTPUT, SETSTAMP, SUSPENDOUTPUT
-  use String_Table, only: get_string
-  use Time_M, only: Time_Now
+  use STRING_TABLE, only: GET_STRING
+  use TIME_M, only: TIME_NOW
   use TOGGLES, only: SWITCHES
   use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
 
-  IMPLICIT NONE
+  implicit none
 
   public :: SECTION_TIMES, TOTAL_TIMES, &
-    & add_to_directwrite_timing, &
-    & add_to_retrieval_timing, add_to_section_timing, &
-    & addPhaseToPhaseNames, &
-    & dump_section_timings, run_start_time
-  public :: finishTimings, fillTimings, restartTimings
-  public :: showTimingNames
+    &       ADD_TO_DIRECTWRITE_TIMING, &
+    &       ADD_TO_RETRIEVAL_TIMING, ADD_TO_SECTION_TIMING, &
+    &       ADDPHASETOPHASENAMES, &
+    &       DUMP_SECTION_TIMINGS, RUN_START_TIME
+  public :: FINISHTIMINGS, FILLTIMINGS, RESTARTTIMINGS
+  public :: SHOWTIMINGNAMES, CURRENTCHUNKNUMBER, CURRENTPHASENAME
   private
 
 !---------------------------- RCS Module Info ------------------------------
@@ -96,6 +96,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   integer, parameter                 :: num_directwrite_times = 2  ! <--|
   real, dimension(MAXNUMSECTIONTIMES), &
     & save                           :: section_timings = 0.
+  character(len=SECTIONNAMELEN), save :: currentPhaseName = ' '
+  integer, save                       :: currentChunkNumber = 0
   character(len=PHASENAMESLEN), save :: phaseNames = ' '
   integer, save :: num_phases = 0
   real, dimension(MAXNUMPHASES), save :: phase_timings = 0.
@@ -272,7 +274,7 @@ contains ! =====     Public Procedures     =============================
   subroutine addPhaseToPhaseNames ( name, root )
     ! Dummy arguments
     integer, intent(in) :: NAME               ! String index of name
-    integer, intent(in) :: ROOT               ! Root of hGrid subtree
+    integer, intent(in) :: ROOT               ! Root of phase subtree
     ! Local variables
     integer :: detail
     integer :: field
@@ -343,6 +345,7 @@ contains ! =====     Public Procedures     =============================
     end do
     call get_string(name, phaseString)
     call add_to_phase_timing( trim(phaseString) )
+    currentPhaseName = phaseString
     if ( RESTARTWARNINGS ) call MLSMessageReset( Warnings=.true. )
     ! This will cause Warnings and Errors to print the phase name
     ! where they occurred
@@ -888,6 +891,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.42  2012/04/26 23:14:30  pwagner
+! Now tracks currentPhaseName and currentChunkNumber (is there a better place?)
+!
 ! Revision 2.41  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
