@@ -47,21 +47,50 @@ module PARSER
 
   use LEXER_CORE, only: PRINT_SOURCE, TOKEN
   use LEXER_M, only: LEXER
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: NEWLINE, OUTPUT
   use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
-  use SYMBOL_TYPES ! Everything, except tree_init; remainder begin with T_
+  use SYMBOL_TYPES ! Everything, especially everything beginning with T_
   use TOGGLES, only: PAR, TOGGLE
   use TREE, only: TREE_BUILDER => BUILD_TREE, N_TREE_STACK, POP, &
                   PUSH_PSEUDO_TERMINAL, STACK_SUBTREE
   use TREE_TYPES   ! Everything, especially everything beginning with N_
+
   implicit NONE
   private
+
   public :: CONFIGURATION
+
+  integer, private :: Depth             ! of calls, for tracing
 
   integer, private :: ERROR             ! 0 => no errors yet
                                         ! 1 => errors but not yet EOF
                                         ! 2 => errors and EOF seen
   type(token), private :: NEXT          ! The next token
+
+  ! Tree node to generate depending upon which operator token appears.
+  ! If terminal token indices change, change this table.
+  ! We only need values for the ones that generate tree nodes.
+  integer, private :: GEN(t_null: t_last_terminal)
+  data gen(t_plus)            / n_plus            / ! +
+  data gen(t_minus)           / n_minus           / ! -
+  data gen(t_star)            / n_mult            / ! *
+  data gen(t_slash)           / n_div             / ! /
+  data gen(t_backslash)       / n_into            / ! \
+  data gen(t_dot)             / n_dot             / ! .
+  data gen(t_colon)           / n_colon           / ! :
+  data gen(t_colon_less)      / n_colon_less      / ! :<
+  data gen(t_less_colon)      / n_less_colon      / ! <:
+  data gen(t_less_colon_less) / n_less_colon_less / ! <:<
+  data gen(t_equal)           / n_equal           / ! =
+  data gen(t_equal_equal)     / n_equal_equal     / ! ==
+  data gen(t_not_equal)       / n_not_equal       / ! /=
+  data gen(t_less)            / n_less            / ! <
+  data gen(t_less_eq)         / n_less_eq         / ! <=
+  data gen(t_greater)         / n_greater         / ! >
+  data gen(t_greater_eq)      / n_greater_eq      / ! >=
+  data gen(t_hat)             / n_pow             / ! >
+  data gen(t_and)             / n_and             / ! and
+  data gen(t_or)              / n_or              / ! or
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -73,6 +102,7 @@ contains ! ====     Public Procedures     ==============================
 ! ------------------------------------------------  CONFIGURATION  -----
   subroutine CONFIGURATION ( ROOT ) ! cf -> one_cf+ 'EOF'
     integer, intent(out) :: ROOT   ! Root of the abstract syntax tree
+    depth = 0 ! in case toggle(par) is set
     error = 0
     call get_token
     do while ( next%class /= t_end_of_input )
@@ -125,45 +155,46 @@ contains ! ====     Public Procedures     ==============================
 ! --------------------------------------------------------  ARRAY  -----
   recursive subroutine ARRAY ( HOW_MANY ) ! [ <expr> ( , <expr> )* ]
     integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
+    if ( toggle(par) ) call where ( 'ARRAY' )
     call get_token     ! Consume the left bracket
     if ( next%class == t_right_bracket ) then
       call get_token ! Consume the right bracket
-  return
+    else
+      do
+        call expr
+        how_many = how_many + 1
+        if ( next%class == t_right_bracket ) then
+          call get_token ! Consume the right bracket
+      exit
+        end if
+        if ( next%class /= t_comma ) then
+          call announce_error ( (/ t_right_bracket, t_comma /) )
+          if ( next%class == t_end_of_input .or. &
+               next%class == t_end_of_stmt ) &
+      exit
+        end if
+        call get_token   ! Consume the comma
+      end do
     end if
-    do
-      call expr
-      how_many = how_many + 1
-      if ( next%class == t_right_bracket ) then
-        call get_token ! Consume the right bracket
-  return
-      end if
-      if ( next%class /= t_comma ) then
-        call announce_error ( (/ t_right_bracket, t_comma /) )
-        if ( next%class == t_end_of_input .or. &
-             next%class == t_end_of_stmt ) exit
-      end if
-      call get_token   ! Consume the comma
-    end do
+    if ( toggle(par) ) call finish ( 'ARRAY' )
   end subroutine ARRAY
 
 ! --------------------------------------------------------  BTERM  -----
   recursive subroutine BTERM ! BTERM -> term ( +|- term ) *
-    if ( toggle(par) ) call where ( 'Enter BTERM', advance='yes' )
+    integer :: N
+    if ( toggle(par) ) call where ( 'BTERM' )
     call term
     do
-      if ( next%class == t_plus ) then
+      n = next%class
+      if ( n == t_plus .or. n == t_minus ) then
         call get_token
         call term
-        call build_tree ( n_plus, 2 )
-      else if ( next%class == t_minus ) then
-        call get_token
-        call term
-        call build_tree ( n_minus, 2 )
+        call build_tree ( gen(n), 2 )
       else
     exit
       end if
     end do
-    if ( toggle(par) ) call output ( 'Exit  BTERM', advance='yes' )
+    if ( toggle(par) ) call finish ( 'BTERM' )
   end subroutine BTERM
 
 ! ---------------------------------------------------  BUILD_TREE  -----
@@ -172,9 +203,9 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: NSONS
     integer, intent(in), optional :: DECORATION
 
-    if ( toggle(par) ) call where ( 'Enter BUILD_TREE', advance='yes' )
+    if ( toggle(par) ) call where ( 'BUILD_TREE' )
     call tree_builder ( new_node, nsons, decoration )
-    if ( toggle(par) ) call output ( nsons, before='Exit  BUILD_TREE ', advance='yes' )
+    if ( toggle(par) ) call finish ( 'BUILD_TREE', nsons )
   end subroutine BUILD_TREE
 
 ! --------------------------------------------------------  EXPON  -----
@@ -183,18 +214,16 @@ contains ! ====     Public Procedures     ==============================
                               ! unitless -> primary
                               !          -> '+' primary => n_plus
                               !          -> '-' primary => n_minus
-    if ( toggle(par) ) call where ( 'Enter EXPON', advance='yes' )
-    if ( next%class == t_string ) then
+    integer :: N
+    if ( toggle(par) ) call where ( 'EXPON' )
+    n = next%class
+    if ( n == t_string ) then
       call get_token
     else
-      if ( next%class == t_plus ) then
+      if ( n == t_plus .or. n == t_minus ) then
         call get_token
         call primary
-        call build_tree ( n_plus, 1 )
-      else if ( next%class == t_minus ) then
-        call get_token
-        call primary
-        call build_tree ( n_minus, 1 )
+        call build_tree ( gen(n), 1 )
       else
         call primary
       end if
@@ -205,46 +234,36 @@ contains ! ====     Public Procedures     ==============================
         call get_token  ! the identifier is used up
       end if
     end if
-    if ( toggle(par) ) call output ( 'Exit  EXPON', advance='yes' )
+    if ( toggle(par) ) call finish ( 'EXPON' )
   end subroutine EXPON 
 
 ! ---------------------------------------------------------  EXPR  -----
   recursive subroutine EXPR
     ! expr -> array
     ! expr -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
-    integer :: NSONS
-    if ( toggle(par) ) call where ( 'Enter EXPR', advance='yes' )
+    integer :: N, NSONS
+    if ( toggle(par) ) call where ( 'EXPR' )
     if ( next%class == t_left_bracket ) then
       nsons = 0
       call array ( nsons )
       call build_tree ( n_array, nsons )
     else
       call limit
-      select case ( next%class )
-      case ( t_colon )
+      n = next%class
+      select case ( n )
+      case ( t_colon, t_colon_less, t_less_colon, t_less_colon_less )
         call get_token
         call limit
-        call build_tree ( n_colon, 2 )
-      case ( t_colon_less )
-        call get_token
-        call limit
-        call build_tree ( n_colon_less, 2 )
-      case ( t_less_colon )
-        call get_token
-        call limit
-        call build_tree ( n_less_colon, 2 )
-      case ( t_less_colon_less )
-        call get_token
-        call limit
-        call build_tree ( n_less_colon_less, 2 )
+        call build_tree ( gen(n), 2 )
       end select
     end if
-    if ( toggle(par) ) call output ( 'Exit  EXPR', advance='yes' )
+    if ( toggle(par) ) call finish ( 'EXPR' )
   end subroutine EXPR
+
 ! -------------------------------------------------------  FACTOR  -----
   recursive subroutine FACTOR  ! factor -> expon ( ^ expon )*
     integer :: HOW_MANY       ! sons of the n_pow node
-    if ( toggle(par) ) call where ( 'Enter FACTOR', advance='yes' )
+    if ( toggle(par) ) call where ( 'FACTOR' )
     call expon
     if ( next%class == t_hat ) then
       how_many = 1
@@ -255,12 +274,13 @@ contains ! ====     Public Procedures     ==============================
       end do
       call build_tree ( n_pow, how_many )
     end if
-    if ( toggle(par) ) call output ( 'Exit  FACTOR', advance='yes' )
+    if ( toggle(par) ) call finish ( 'FACTOR' )
   end subroutine FACTOR 
+
 ! ---------------------------------------------------  FIELD_LIST  -----
   subroutine FIELD_LIST
     integer :: HOW_MANY       ! sons of the n_asg node
-    if ( toggle(par) ) call where ( 'Enter FIELD_LIST', advance='yes' )
+    if ( toggle(par) ) call where ( 'FIELD_LIST' )
     do
       select case ( next%class )
       case ( t_identifier, t_string, & ! field_list -> expr ( '=' expr + )?
@@ -283,8 +303,20 @@ contains ! ====     Public Procedures     ==============================
         call announce_error ( (/ t_identifier, t_string, t_slash /) )
       end select
     end do
-    if ( toggle(par) ) call output ( 'Exit  FIELD_LIST', advance='yes' )
+    if ( toggle(par) ) call finish ( 'FIELD_LIST' )
   end subroutine FIELD_LIST
+
+! -------------------------------------------------------  FINISH  -----
+  subroutine FINISH ( WHAT, NSONS )
+  ! for tracing
+    character(len=*), intent(in) :: WHAT
+    integer, intent(in), optional :: NSONS
+    depth = depth - 1
+    call output ( repeat('.',depth) // 'Exit  ' // trim(what) )
+    if ( present(nsons) ) call output ( nsons, before=' ' )
+    call newLine
+  end subroutine FINISH
+
 ! ----------------------------------------------------  GET_TOKEN  -----
   subroutine GET_TOKEN
   ! Call the lexer to get a token.
@@ -293,69 +325,56 @@ contains ! ====     Public Procedures     ==============================
     if ( next%pseudo ) call &
       push_pseudo_terminal ( next%string_index, next%source )
   end subroutine GET_TOKEN
+
 ! ------------------------------------------------------  LFACTOR  -----
   recursive subroutine LFACTOR ! lfactor -> bterm ( <|<=|>|>=|==|/= bterm ) *
-    if ( toggle(par) ) call where ( 'Enter LFACTOR', advance='yes' )
+    integer :: N
+    if ( toggle(par) ) call where ( 'LFACTOR' )
     call bterm
     do
-      select case ( next%class )
-      case ( t_less )
+      n = next%class
+      select case ( n )
+      case ( t_less, t_less_eq, t_greater, t_greater_eq, t_equal_equal, &
+           & t_not_equal )
         call get_token
         call bterm
-        call build_tree ( n_less, 2 )
-      case ( t_less_eq )
-        call get_token
-        call bterm
-        call build_tree ( n_less_eq, 2 )
-      case ( t_greater )
-        call get_token
-        call bterm
-        call build_tree ( n_greater, 2 )
-      case ( t_greater_eq )
-        call get_token
-        call bterm
-        call build_tree ( n_greater_eq, 2 )
-      case ( t_equal_equal )
-        call get_token
-        call bterm
-        call build_tree ( n_equal_equal, 2 )
-      case ( t_not_equal )
-        call get_token
-        call bterm
-        call build_tree ( n_not_equal, 2 )
+        call build_tree ( gen(n), 2 )
       case default
     exit
       end select
     end do
-    if ( toggle(par) ) call output ( 'Exit  LFACTOR', advance='yes' )
+    if ( toggle(par) ) call finish ( 'LFACTOR' )
   end subroutine LFACTOR
+
 ! --------------------------------------------------------  LIMIT  -----
   recursive subroutine LIMIT  ! limit -> lterm ( or lterm ) *
-    if ( toggle(par) ) call where ( 'Enter LIMIT', advance='yes' )
+    if ( toggle(par) ) call where ( 'LIMIT' )
     call lterm
     do while ( next%class == t_or )
       call get_token
       call lterm
       call build_tree ( n_or, 2 )
     end do
-    if ( toggle(par) ) call output ( 'Exit  LIMIT', advance='yes' )
+    if ( toggle(par) ) call finish ( 'LIMIT' )
   end subroutine LIMIT
+
 ! --------------------------------------------------------  LTERM  -----
   recursive subroutine LTERM  ! lterm -> lfactor ( and lfactor ) *
-    if ( toggle(par) ) call where ( 'Enter LTERM', advance='yes' )
+    if ( toggle(par) ) call where ( 'LTERM' )
     call lfactor
     do while ( next%class == t_and )
       call get_token
       call lfactor
       call build_tree ( n_and, 2 )
     end do
-    if ( toggle(par) ) call output ( 'Exit  LTERM', advance='yes' )
+    if ( toggle(par) ) call finish ( 'LTERM' )
   end subroutine LTERM
+
 ! -------------------------------------------------------  ONE_CF  -----
   subroutine ONE_CF
     ! one_cf -> ('begin' 'name' 'EOS' spec+ 'end' 'name' )? 'EOS'
     integer :: HOW_MANY       ! How many sons of the generated tree node
-    if ( toggle(par) ) call where ( 'Enter ONE_CF', advance='yes' )
+    if ( toggle(par) ) call where ( 'ONE_CF' )
 o:  do
       select case ( next%class )
       case ( t_end_of_stmt )  ! one_cf -> 'eos'
@@ -383,12 +402,13 @@ o:  do
         if ( next%class == t_end_of_input ) exit
       end select
     end do o
-    if ( toggle(par) ) call output ( 'Exit  ONE_CF', advance='yes' )
+    if ( toggle(par) ) call finish ( 'ONE_CF' )
   end subroutine ONE_CF
+
 ! ------------------------------------------------------  PRIMARY  -----
   recursive subroutine PRIMARY
     integer :: N
-    if ( toggle(par) ) call where ( 'Enter PRIMARY', advance='yes' )
+    if ( toggle(par) ) call where ( 'PRIMARY' )
     do
       select case ( next%class )
       case ( t_identifier )   ! primary -> 'name' ( '.' 'name' ) ?
@@ -436,13 +456,14 @@ o:  do
       end select
     end do
     if ( next%class == t_identifier ) call pop ( 1 ) ! delete unit name
-    if ( toggle(par) ) call output ( 'Exit  PRIMARY', advance='yes' )
+    if ( toggle(par) ) call finish ( 'PRIMARY' )
   end subroutine PRIMARY
+
 ! ---------------------------------------------------------  SPEC  -----
   integer function SPEC ()
   ! Analyze specifications in a section.
   ! Return how many specifications got generated -- 0 or 1
-    if ( toggle(par) ) call where ( 'Enter SPEC', advance='yes' )
+    if ( toggle(par) ) call where ( 'SPEC' )
     do
       select case ( next%class )
       case ( t_end_of_stmt )  ! spec -> 'EOS'
@@ -461,12 +482,13 @@ o:  do
         if ( next%class == t_end_of_input ) exit
       end select
     end do
-    if ( toggle(par) ) call output ( 'Exit  SPEC', advance='yes' )
+    if ( toggle(par) ) call finish ( 'SPEC' )
   end function SPEC
+
 ! ----------------------------------------------------  SPEC_LIST  -----
   subroutine SPEC_LIST
     integer :: HOW_MANY       ! sons of the n_asg node
-    if ( toggle(par) ) call where ( 'Enter SPEC_LIST', advance='yes' )
+    if ( toggle(par) ) call where ( 'SPEC_LIST' )
     how_many = 1
     do while ( next%class == t_comma )  ! spec_list -> ( ',', field_list ) *
       call get_token
@@ -474,12 +496,13 @@ o:  do
       how_many = how_many + 1
     end do
     call build_tree ( n_spec_args, how_many )
-    if ( toggle(par) ) call output ( 'Exit  SPEC_LIST', advance='yes' )
+    if ( toggle(par) ) call finish ( 'SPEC_LIST' )
   end subroutine SPEC_LIST
+
 ! ----------------------------------------------------  SPEC_REST  -----
   subroutine SPEC_REST
     integer :: HOW_MANY       ! sons of the n_equal node
-    if ( toggle(par) ) call where ( 'Enter SPEC_REST', advance='yes' )
+    if ( toggle(par) ) call where ( 'SPEC_REST' )
     do
       select case ( next%class )
       case ( t_end_of_stmt )  ! spec_rest -> \lambda
@@ -502,39 +525,37 @@ o:  do
         call build_tree ( n_named, 2 )
     exit
       case default
-        if ( error > 1 ) exit
+        if ( error > 1 ) &
+    exit
         call announce_error ( (/ t_end_of_stmt, t_equal, t_comma /) )
         if ( next%class == t_end_of_input .or. &
              next%class == t_right_bracket.or. &
              next%class == t_comma ) &
-          & exit
+    exit
       end select
     end do
-    if ( toggle(par) ) call output ( 'Exit  SPEC_REST', advance='yes' )
+    if ( toggle(par) ) call finish ( 'SPEC_REST' )
   end subroutine SPEC_REST
+
 ! ---------------------------------------------------------  TERM  -----
   recursive subroutine TERM   ! term -> factor ( *|/ factor )*
-    if ( toggle(par) ) call where ( 'Enter TERM', advance='yes' )
+    integer :: N
+    if ( toggle(par) ) call where ( 'TERM' )
     call factor
     do
-      if ( next%class == t_star ) then
+      n = next%class
+      select case ( n )
+      case ( t_star, t_slash, t_backslash )
         call get_token
         call factor
-        call build_tree ( n_mult, 2 )
-      else if ( next%class == t_slash ) then
-        call get_token
-        call factor
-        call build_tree ( n_div, 2 )
-      else if ( next%class == t_backslash ) then
-        call get_token
-        call factor
-        call build_tree ( n_into, 2 )
-      else
+        call build_tree ( gen(n), 2 )
+      case default
     exit
-      end if
+      end select
     end do
-    if ( toggle(par) ) call output ( 'Exit  TERM', advance='yes' )
+    if ( toggle(par) ) call finish ( 'TERM' )
   end subroutine TERM
+
 ! ---------------------------------------------------  TEST_TOKEN  -----
   subroutine TEST_TOKEN ( THE_TERMINAL )
     integer, intent(in) :: THE_TERMINAL
@@ -546,6 +567,7 @@ o:  do
     error = max(error,1)
     call announce_error ( (/ the_terminal /) )
   end subroutine TEST_TOKEN
+
 ! --------------------------------------------------------  VALUE  -----
   subroutine VALUE ( HOW_MANY )
     integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
@@ -558,12 +580,14 @@ o:  do
       how_many = how_many + 1
     end select
   end subroutine VALUE
+
 ! --------------------------------------------------------  WHERE  -----
-  subroutine WHERE ( WHAT, ADVANCE )
-    character(len=*), intent(in) :: WHAT, ADVANCE
-    call output ( what )
+  subroutine WHERE ( WHAT )
+    character(len=*), intent(in) :: WHAT
+    call output ( repeat('.',depth) // 'Enter ' // trim(what) )
     call output ( ' at ' )
-    call print_source ( next%source, advance=advance )
+    call print_source ( next%source, advance='yes' )
+    depth = depth + 1
   end subroutine WHERE
 
 !--------------------------- end bloc --------------------------------------
@@ -579,6 +603,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.23  2012/05/01 22:10:26  vsnyder
+! Add TrueList subroutine
+!
 ! Revision 2.22  2012/04/24 20:37:24  vsnyder
 ! Include the complete grammar at the top
 !
