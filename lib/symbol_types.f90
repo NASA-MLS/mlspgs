@@ -22,6 +22,7 @@ module SYMBOL_TYPES
   public
 
   ! Terminal symbol class numbers.  These depend on the language.
+  ! If this list changes, change the table indexed by them in parser.
   integer, parameter :: T_NULL = 0                ! MUST be present and first
   integer, parameter :: T_LEFT_PARENTHESIS = T_NULL + 1
   integer, parameter :: T_RIGHT_PARENTHESIS = T_LEFT_PARENTHESIS + 1
@@ -104,7 +105,7 @@ module SYMBOL_TYPES
   integer, parameter :: TERM_TYPES(t_null: t_last_terminal) = &
   !  t_null    (         )         [         ]         +         -
   (/ object,   def_pun,  def_pun,  def_pun,  def_pun,  def_op,   def_op,   &
-  !  *         /         \         .         :         <:        :<      
+  !  *         /         \         .         :         :<        <:      
      def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
   !  <:<       =         ==        /=        <         <=        >
      def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
@@ -216,6 +217,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.13  2012/05/01 22:10:26  vsnyder
+! Add TrueList subroutine
+!
 ! Revision 2.12  2011/04/19 01:59:43  vsnyder
 ! Support == and /= relational operators too
 !

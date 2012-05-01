@@ -52,9 +52,9 @@ module TREE_TYPES
   integer, parameter :: N_NAMED =      n_name_def + 1  ! labelled spec
   integer, parameter :: N_NOT_EQUAL =  n_named + 1
   integer, parameter :: N_OR =         n_not_equal + 1
-  integer, parameter :: N_POW =        n_or + 1
-  integer, parameter :: N_PLUS =       n_pow + 1
-  integer, parameter :: N_SECTION =    n_plus + 1      ! what specs in section?
+  integer, parameter :: N_PLUS =       n_or + 1
+  integer, parameter :: N_POW =        n_plus + 1
+  integer, parameter :: N_SECTION =    n_pow + 1       ! what specs in section?
   integer, parameter :: N_SET_ONE =    n_section + 1   ! /foo
   integer, parameter :: N_SPEC_ARGS =  n_set_one + 1   ! x,y=z,...
   integer, parameter :: N_SPEC_DEF =   n_spec_args + 1 ! what fields in spec?
@@ -143,6 +143,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 2.13  2012/05/01 22:10:26  vsnyder
+! Add TrueList subroutine
+!
 ! Revision 2.12  2011/04/19 01:59:43  vsnyder
 ! Support == and /= relational operators too
 !
