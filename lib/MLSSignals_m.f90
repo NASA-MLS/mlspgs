@@ -501,7 +501,6 @@ contains
           & f_width /)) ) ) call announceError ( allOrNone, f_start, &
           & (/ f_last, f_step, f_width /) )
           if ( error == 0 ) then
-            k = last - first 
             call allocate_Test ( spectrometerType%frequencies, last, &
               & 'spectrometerType%frequencies', moduleName, lowBound = first )
             call allocate_Test ( spectrometerType%widths, last, &
@@ -1891,6 +1890,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.94  2012/05/01 20:52:09  vsnyder
+! Remove unused assignment
+!
 ! Revision 2.93  2011/06/02 19:22:35  pwagner
 ! Fixed bug in getRadiometerIndex
 !
