@@ -1260,15 +1260,17 @@ contains ! =====     Public procedures     =============================
                     nr+n_dot, &
              begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_radiancequantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_additional, t+t_boolean, n+n_field_type, &
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_surface, t+t_numeric_range, n+n_field_type, &
              begin, f+f_ignore, t+t_boolean, n+n_field_type, &
+             begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_mask, t+t_masks, n+n_field_type, &
              begin, f+f_maxValue, t+t_numeric, n+n_field_type, &
              begin, f+f_minValue, t+t_numeric, n+n_field_type, &
+             begin, f+f_surface, t+t_numeric_range, n+n_field_type, &
              begin, f+f_opticalDepth, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_opticalDepthCutoff, t+t_numeric, n+n_field_type, &
@@ -1736,6 +1738,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.541  2012/05/01 22:20:27  vsnyder
+! Add radianceQuantity field to subset
+!
 ! Revision 2.540  2012/04/26 23:30:40  pwagner
 ! May Dump chunk number, phase name
 !
