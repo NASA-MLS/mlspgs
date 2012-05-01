@@ -1021,6 +1021,7 @@ op:     do j = 2, nsons(theTree)
 
     select case ( info%fwmType )
     case ( l_full, l_hybrid )
+      info%isRadianceModel = .true.
       if ( .not. ( got(f_molecules) .and. &
         & all(got( (/ f_signals, f_integrationGrid, f_tangentGrid /) )) ) ) &
         & call AnnounceError ( IncompleteFullFwm, root )
@@ -1056,9 +1057,11 @@ op:     do j = 2, nsons(theTree)
 
     case ( l_cloudfull ) ! full cloud forward model
 
+      info%isRadianceModel = .true.
       if ( .not. info%default_spectroscopy ) call checkCloud
 
     case ( l_scan )
+      info%isRadianceModel = .false.
       ! Add 1d/2d method later probably !??? NJL
       if ( any(got( (/ f_channels, f_frequency, f_lineCenter, f_lineWidth, &
         &              f_lineWidth_TDep, f_molecules, f_moleculeDerivatives, &
@@ -1071,12 +1074,15 @@ op:     do j = 2, nsons(theTree)
           & "molecules, moleculeDerivatives, signals" )
 
     case ( l_linear, l_polarLinear )
+      info%isRadianceModel = .true.
       if ( .not. all(got( (/f_signals/) )) ) & ! Maybe others later
         & call AnnounceError ( IncompleteLinearFwm, root )
       if ( any(got( (/f_do_conv,f_do_freq_avg,f_do_1d,f_incl_cld,f_frequency /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root, &
         & "do_conv, do_freq_avg, do_1d, incl_cld, frequency" )
 
+    case default
+      info%isRadianceModel = .false.
     end select
 
     if ( any ( info%fwmType == (/ l_linear, l_polarLinear, l_hybrid /) ) ) then
@@ -1468,6 +1474,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.162  2012/05/01 22:22:58  vsnyder
+! Set IsRadianceModel component
+!
 ! Revision 2.161  2012/03/28 00:56:49  vsnyder
 ! Move check for signals with MIF extinction from Wrappers to Support
 !
