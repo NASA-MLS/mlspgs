@@ -91,7 +91,6 @@ contains ! ============= Public Procedures ==========================
           &   fwdModelIn%quantities%template%quantityType == L_MIFExtinction .or. &
         &     fwdModelIn%quantities%template%quantityType == L_MIFExtinctionV2 &
         & ) ,2)
-    logical :: RadianceModel
     type(vector_t), pointer :: TheState
     type(matrix_T), pointer :: TheJacobian
     character(len=132) :: THISNAME
@@ -128,7 +127,7 @@ contains ! ============= Public Procedures ==========================
     if ( config%transformMIFextinction ) then
       ! Transform MIFextinction quantities to extinction molecules before
       ! calling the forward model, and transform extinction molecules and
-      ! associated rows of the Jacobian to MIF extinction quantities after
+      ! associated columns of the Jacobian to MIF extinction quantities after
       ! return.  See wvs-107.
       if ( size(qtys) == 0 ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -184,23 +183,6 @@ contains ! ============= Public Procedures ==========================
     end if
 
     call destroyForwardModelDerived ( config )
-
-    call MLSMessageCalls( 'pop' ) ! for all the cases
-
-    radianceModel = any ( config%fwmType == &
-      & (/ l_full, l_linear, l_polarLinear, l_hybrid, l_cloudFull /) )
-    if ( radianceModel ) then
-      call MLSMessageCalls( 'push', constantName='BaselinForwardModel' )
-      call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian )
-      call MLSMessageCalls( 'pop' )
-      call add_to_retrieval_timing( 'baseline' )
-      call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
-      call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, fmStat, Jacobian )
-      call MLSMessageCalls( 'pop' )
-      call add_to_retrieval_timing( 'switching_mirror' )
-    end if
 
     fmnan = switchDetail(switches,'fmnan')
     if ( fmnan > 0 ) then
@@ -261,12 +243,18 @@ contains ! ============= Public Procedures ==========================
   contains
 
     subroutine DoForwardModels
+
       select case (config%fwmType)
       case ( l_baseline )
         call MLSMessageCalls( 'push', constantName='BaselineForwardModel' )
         call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian )
         call add_to_retrieval_timing( 'baseline' )
+      case ( l_cloudFull )
+        call MLSMessageCalls( 'push', constantName='CloudForwardModel' )
+        call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call add_to_retrieval_timing( 'fullcloud_fwm' )
       case ( l_full )
         call MLSMessageCalls( 'push', constantName='FullForwardModel' )
         call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
@@ -297,11 +285,6 @@ contains ! ============= Public Procedures ==========================
         call TwoDScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian )
         call add_to_retrieval_timing( 'twod_scan_fwm' )
-      case ( l_cloudFull )
-        call MLSMessageCalls( 'push', constantName='CloudForwardModel' )
-        call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
-          FwdModelOut, fmStat, Jacobian )
-        call add_to_retrieval_timing( 'fullcloud_fwm' )
       case ( l_switchingMirror )
         call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
         call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
@@ -309,7 +292,24 @@ contains ! ============= Public Procedures ==========================
         call add_to_retrieval_timing( 'switching_mirror' )
       case default ! Shouldn't get here if parser etc. worked
       end select
+
+      if ( config%isRadianceModel ) then
+        call MLSMessageCalls( 'push', constantName='BaselinForwardModel' )
+        call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call MLSMessageCalls( 'pop' )
+        call add_to_retrieval_timing( 'baseline' )
+        call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
+        call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian )
+        call MLSMessageCalls( 'pop' )
+        call add_to_retrieval_timing( 'switching_mirror' )
+      end if
+
+      call MLSMessageCalls( 'pop' ) ! for all the cases
+
     end subroutine DoForwardModels
+
 
   end subroutine ForwardModel
 
@@ -608,6 +608,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.43  2012/05/01 22:24:06  vsnyder
+! Use IsRadianceModel component, some cannonball polishing
+!
 ! Revision 2.42  2012/04/20 01:57:15  vsnyder
 ! Add some dumps, add clean switch.  Handle MAF selection properly. Some
 ! cannonball polishing.
