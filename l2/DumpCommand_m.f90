@@ -604,13 +604,10 @@ contains
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
-    use MLSCOMMON, only: R8
-    use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, RUNTIMEVALUES, &
-      & SIPS_VERSION
-    use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
-    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT, &
-      & NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
-    use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
+    use MLSKINDS, only: R8
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -668,63 +665,6 @@ contains
     if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
-  contains
-    function myBooleanValue ( formula ) result ( bvalue )
-      ! Calculate the boolean value according to
-      ! (1) The logical value of its formula, if the formula
-      !     does not contain the special operators "==" or "/="
-      ! (2) if the formula is "variable == value" and variable is
-      !     is recognized and takes the value "value", return "true", else "false"
-      ! (3) if the formula is "variable /= value" return not (2)
-      character(len=*), intent(in) :: formula
-      logical :: bvalue
-      ! Internal variables
-      character(len=16) :: lhs, rhs
-      logical, parameter :: countEmpty = .false.
-      logical :: reverse  ! Do we mean NOT equal?
-      ! Executable
-      bvalue = .false.
-      reverse = .false.
-      if ( index(formula, "==") > 1 ) then
-        call GetStringElement ( formula, lhs, &
-          & 1, countEmpty, inseparator='=' )
-        call GetStringElement ( formula, rhs, &
-          & 2, countEmpty, inseparator='=' )
-      elseif ( index(formula, "/=") > 1 ) then
-        call GetStringElement ( formula, lhs, &
-          & 1, countEmpty, inseparator='/' )
-        call GetStringElement ( formula, rhs, &
-          & 2, countEmpty, inseparator='=' )
-        reverse = .true.
-      else
-        bvalue = BooleanValue ( formula, &
-          & runTimeValues%lkeys, runTimeValues%lvalues )
-        return
-      endif
-      rhs = lowercase(adjustl(rhs))
-      lhs = lowercase(adjustl(lhs))
-      ! OK, so now let's try to make sense of the lhs
-      ! Note the necessary type conversions for some variables
-      ! that aren't chracter-valued
-      select case (lhs)
-      case ('checkpaths')
-        lhs = merge( 'true ', 'false', checkpaths )
-      case ('chunknumber')
-        call writeIntsToChars ( currentChunkNumber, lhs )
-      case ('phasename')
-        lhs = currentPhaseName
-      case ('sips_version')
-        lhs = merge( 'true ', 'false', sips_version )
-      case ('need_l1bfiles')
-        lhs = merge( 'true ', 'false', need_l1bfiles )
-      case default
-        ! What the devil did you mean?
-        ! Maybe just whether two character strings are the same
-        ! that were assembled using m4 trickery
-      end select
-      bvalue = (lhs == rhs)
-      if ( reverse ) bvalue = .not. bvalue  ! If we meant not equal
-    end function myBooleanValue
   end function BooleanFromFormula
 
   ! ------------------------- DumpCommand ------------------------
@@ -1536,7 +1476,7 @@ contains
     ! If Boolean field absent, returns TRUE 
     ! (otherwise it would do nothing--
     ! this way it forces us to skip unconditionally)
-    use INIT_TABLES_MODULE, only: F_BOOLEAN
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: BOOLEANVALUE, SWITCHDETAIL
@@ -1574,13 +1514,16 @@ contains
         booleanString = lowerCase(booleanString)
         skip = BooleanValue ( booleanString, &
           & runTimeValues%lkeys, runTimeValues%lvalues)
-        if ( verbose ) then
-          call output( trim(booleanString) // ' = ', advance='no' )
-          call output( skip, advance='yes' )
-        endif
+      case ( f_formula )
+        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
+        skip = myBooleanValue ( booleanString )
       case default
         ! Should not have got here if parser worked correctly
       end select
+      if ( verbose ) then
+        call output( trim(booleanString) // ' = ', advance='no' )
+        call output( skip, advance='yes' )
+      endif
       if ( skip ) &
         & call output( '(Skipping rest of this section)', advance='yes' )
       if ( toggle(gen) ) then
@@ -1592,6 +1535,71 @@ contains
   end function Skip
 
 ! =====     Private Procedures     =====================================
+
+  function myBooleanValue ( formula ) result ( bvalue )
+    use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, RUNTIMEVALUES, &
+      & SIPS_VERSION
+    use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
+    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT
+    use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
+    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    ! Calculate the boolean value according to
+    ! (1) The logical value of its formula, if the formula
+    !     does not contain the special operators "==" or "/="
+    ! (2) if the formula is "variable == value" and variable is
+    !     is recognized and takes the value "value", return "true", else "false"
+    ! (3) if the formula is "variable /= value" return not (2)
+    character(len=*), intent(in) :: formula
+    logical :: bvalue
+    ! Internal variables
+    character(len=16) :: lhs, rhs
+    logical, parameter :: countEmpty = .false.
+    logical :: reverse  ! Do we mean NOT equal?
+    ! Executable
+    bvalue = .false.
+    reverse = .false.
+    if ( index(formula, "==") > 1 ) then
+      call GetStringElement ( formula, lhs, &
+        & 1, countEmpty, inseparator='=' )
+      call GetStringElement ( formula, rhs, &
+        & 2, countEmpty, inseparator='=' )
+    elseif ( index(formula, "/=") > 1 ) then
+      call GetStringElement ( formula, lhs, &
+        & 1, countEmpty, inseparator='/' )
+      call GetStringElement ( formula, rhs, &
+        & 2, countEmpty, inseparator='=' )
+      reverse = .true.
+    else
+      bvalue = BooleanValue ( formula, &
+        & runTimeValues%lkeys, runTimeValues%lvalues )
+      return
+    endif
+    rhs = lowercase(adjustl(rhs))
+    lhs = lowercase(adjustl(lhs))
+    ! OK, so now let's try to make sense of the lhs
+    ! Note the necessary type conversions for some variables
+    ! that aren't chracter-valued
+    select case (lhs)
+    case ('checkpaths')
+      lhs = merge( 'true ', 'false', checkpaths )
+    case ('chunknumber')
+      call writeIntsToChars ( currentChunkNumber, lhs )
+    case ('phasename')
+      lhs = lowercase(currentPhaseName)
+    case ('sips_version')
+      lhs = merge( 'true ', 'false', sips_version )
+    case ('need_l1bfiles')
+      lhs = merge( 'true ', 'false', need_l1bfiles )
+    case default
+      ! What the devil did you mean?
+      ! Maybe just whether two character strings are the same
+      ! that were assembled using m4 trickery
+    end select
+    bvalue = (lhs == rhs)
+    call outputnamedvalue('lhs', trim(lhs) )
+    call outputnamedvalue('rhs', trim(rhs) )
+    if ( reverse ) bvalue = .not. bvalue  ! If we meant not equal
+  end function myBooleanValue
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1606,6 +1614,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.72  2012/05/01 23:18:13  pwagner
+! More capable Boolean formula; adds relations
+!
 ! Revision 2.71  2012/04/26 23:28:33  pwagner
 ! May Dump chunk number, phase name; BooleanFromFormula can compare strings, variables
 !
