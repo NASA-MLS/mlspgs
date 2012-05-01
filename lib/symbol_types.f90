@@ -21,8 +21,8 @@ module SYMBOL_TYPES
   implicit NONE
   public
 
-  ! Terminal symbol class numbers.  These depend on the language.
-  ! If this list changes, change the table indexed by them in parser.
+  ! Terminal symbol class numbers.  These depend on the language. If this
+  ! list changes, you might need to change the table indexed by them in parser.
   integer, parameter :: T_NULL = 0                ! MUST be present and first
   integer, parameter :: T_LEFT_PARENTHESIS = T_NULL + 1
   integer, parameter :: T_RIGHT_PARENTHESIS = T_LEFT_PARENTHESIS + 1
@@ -217,6 +217,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.14  2012/05/01 22:12:43  vsnyder
+! Add comment about token names being used in parser
+!
 ! Revision 2.13  2012/05/01 22:10:26  vsnyder
 ! Add TrueList subroutine
 !
