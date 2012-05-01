@@ -1187,6 +1187,14 @@ contains ! =====     Public Procedures     =============================
               & call mls_closeFile(directFile, errorType)
             directFile%access = DFACC_RDWR
           endif
+          if ( fileaccess == DFACC_CREATE ) then
+            ! OK, because the bug is still there (!), we'll repeat
+            call DirectWrite ( directFile, &
+              & qty, precQty, qualityQty, statusQty, convergQty, &
+              & hdfName, chunkNo, HGrids, &
+              & createSwath=createthisswath, &
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+          endif
           NumOutput= NumOutput + 1
           if ( outputType == l_l2dgg ) then
             filetype=l_l2dgg
@@ -2198,6 +2206,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.147  2012/05/01 23:16:35  pwagner
+! Partly retreated from last optimistic commit
+!
 ! Revision 2.146  2012/03/12 17:22:20  pwagner
 ! Believe we can drop odious workaround for hdfeos 'bug'--may have been our mistake
 !
