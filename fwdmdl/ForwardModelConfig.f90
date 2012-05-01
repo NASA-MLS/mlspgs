@@ -125,7 +125,7 @@ module ForwardModelConfig
     integer :: Cloud_der              ! Compute cloud sensitivity in cloud models.
                                       ! l_iwc_low_height, l_iwc_high_height, l_iwp
                                       ! l_none
-    integer :: FwmType                ! l_linear, l_full or l_scan
+    integer :: FwmType                ! l_linear, l_full, l_scan, ....
     integer :: I_saturation           ! Flag to determine saturation status
                                       ! l_clear, l_clear_110rh_below_top
                                       ! l_clear_0rh, l_clear_lowest_0_110rh
@@ -173,6 +173,7 @@ module ForwardModelConfig
                                       ! in quasi-linear model even if L2PC has
                                       ! a Hessian
     logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
+    logical :: IsRadianceModel        ! The forward model is a radiance model
     logical :: LockBins               ! Use same l2pc bin for whole chunk
     logical :: Polarized              ! Use polarized model for Zeeman-split lines
     logical :: Refract                ! Compute refractive correction for PhiTan
@@ -781,14 +782,14 @@ contains
     ! Now the logical scalars
     call PVMIDLPack ( (/ &
       & config%allLinesForRadiometer, config%allLinesInCatalog, config%anyLBL, &
-      & config%anyPFA,  config%atmos_der, config%atmos_second_der, config%default_spectroscopy, &
+      & config%anyPFA, config%atmos_der, config%atmos_second_der, config%default_spectroscopy, &
       & config%differentialScan, config%do_1d, config%do_baseline, &
-      & config%do_conv, config%do_freq_avg,  config%forceFoldedOutput, &
-      & config%forceSidebandFraction,  config%globalConfig, &
-      & config%ignoreHessian, config%incl_cld, config%lockBins, &
-      & config%polarized, config%refract, config%skipOverlaps, &
-      & config%spect_Der, config%switchingMirror, config%temp_Der, &
-      & config%useTScat /), &
+      & config%do_conv, config%do_freq_avg, config%forceFoldedOutput, &
+      & config%forceSidebandFraction, config%generateTScat, config%globalConfig, &
+      & config%ignoreHessian, config%incl_cld, config%isRadianceModel, &
+      & config%lockBins, config%polarized, config%refract, config%scanAverage, &
+      & config%skipOverlaps, config%spect_Der, config%switchingMirror, &
+      & config%temp_Der, config%transformMIFExtinction, config%useTScat /), &
       & msg ="Packing fwmConfig logicals" )
 
     ! Now pack the reals
@@ -861,7 +862,7 @@ contains
     type ( ForwardModelConfig_T ), intent(out) :: CONFIG
     ! Local variables
     integer, parameter     :: ISMAX = 10
-    integer, parameter     :: LSMAX = 27
+    integer, parameter     :: LSMAX = 31
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
     logical, dimension(LSMAX) :: LS     ! Temporary array, for logical scalars
@@ -904,31 +905,35 @@ contains
     ! of the program unit.
     call PVMIDLUnpack ( ls, msg = "Unpacking fwmConfig logicals" )
     i = 1
-    config%allLinesForRadiometer = ls(i) ; i = i + 1
-    config%allLinesInCatalog     = ls(i) ; i = i + 1
-    config%anyLBL                = ls(i:i+1) ; i = i + 2
-    config%anyPFA                = ls(i:i+1) ; i = i + 2
-    config%atmos_der             = ls(i) ; i = i + 1
-    config%atmos_second_der      = ls(i) ; i = i + 1
-    config%default_spectroscopy  = ls(i) ; i = i + 1
-    config%differentialScan      = ls(i) ; i = i + 1
-    config%do_1d                 = ls(i) ; i = i + 1
-    config%do_baseline           = ls(i) ; i = i + 1
-    config%do_conv               = ls(i) ; i = i + 1
-    config%do_freq_avg           = ls(i) ; i = i + 1
-    config%forceFoldedOutput     = ls(i) ; i = i + 1
-    config%forceSidebandFraction = ls(i) ; i = i + 1
-    config%globalConfig          = ls(i) ; i = i + 1
-    config%ignoreHessian         = ls(i) ; i = i + 1
-    config%incl_cld              = ls(i) ; i = i + 1
-    config%lockBins              = ls(i) ; i = i + 1
-    config%polarized             = ls(i) ; i = i + 1
-    config%refract               = ls(i) ; i = i + 1
-    config%skipOverlaps          = ls(i) ; i = i + 1
-    config%spect_der             = ls(i) ; i = i + 1
-    config%switchingMirror       = ls(i) ; i = i + 1
-    config%temp_der              = ls(i) ; i = i + 1
-    config%useTScat              = ls(i) !  ; i = i + 1
+    config%allLinesForRadiometer  = ls(i) ; i = i + 1
+    config%allLinesInCatalog      = ls(i) ; i = i + 1
+    config%anyLBL                 = ls(i:i+1) ; i = i + 2
+    config%anyPFA                 = ls(i:i+1) ; i = i + 2
+    config%atmos_der              = ls(i) ; i = i + 1
+    config%atmos_second_der       = ls(i) ; i = i + 1
+    config%default_spectroscopy   = ls(i) ; i = i + 1
+    config%differentialScan       = ls(i) ; i = i + 1
+    config%do_1d                  = ls(i) ; i = i + 1
+    config%do_baseline            = ls(i) ; i = i + 1
+    config%do_conv                = ls(i) ; i = i + 1
+    config%do_freq_avg            = ls(i) ; i = i + 1
+    config%forceFoldedOutput      = ls(i) ; i = i + 1
+    config%forceSidebandFraction  = ls(i) ; i = i + 1
+    config%globalConfig           = ls(i) ; i = i + 1
+    config%generateTScat          = ls(i) ; i = i + 1
+    config%ignoreHessian          = ls(i) ; i = i + 1
+    config%incl_cld               = ls(i) ; i = i + 1
+    config%isRadianceModel        = ls(i) ; i = i + 1
+    config%lockBins               = ls(i) ; i = i + 1
+    config%polarized              = ls(i) ; i = i + 1
+    config%refract                = ls(i) ; i = i + 1
+    config%scanAverage            = ls(i) ; i = i + 1
+    config%skipOverlaps           = ls(i) ; i = i + 1
+    config%spect_der              = ls(i) ; i = i + 1
+    config%switchingMirror        = ls(i) ; i = i + 1
+    config%temp_der               = ls(i) ; i = i + 1
+    config%transformMIFExtinction = ls(i) !  ; i = i + 1
+    config%useTScat               = ls(i) !  ; i = i + 1
     if ( i > LSMAX ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName // 'PVMUnpackFWMConfig', &
       & 'programming error--LSMAX too small' )
@@ -1431,6 +1436,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.116  2012/03/07 00:45:28  vsnyder
+! Add TransformMIFExtinction component
+!
 ! Revision 2.115  2012/01/25 00:07:07  vsnyder
 ! Use Test_Allocate, Test_Deallocate
 !
