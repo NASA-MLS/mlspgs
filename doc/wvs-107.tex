@@ -8,8 +8,8 @@
 \topmargin 0in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107r9}
-\newcommand{\docdate}{20 April 2012}
+\newcommand{\docname}{\bf wvs-107r10}
+\newcommand{\docdate}{1 May 2012}
 
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -349,8 +349,14 @@ One must be careful when constructing the l2cf to retrieve MIF extinction.
 
 \item Mask bits need to be set in MIF extinction (and indeed in any
   retrieved minor-frame quantity) so as not to try to retrieve where there
-  are no radiances.  Ultimately, there will be a subset-like command to do
-  this, since one cannot predict where L1 will mark bad radiances.
+  are no radiances.  There is a {\tt radianceQuantity} field of the subset
+  command from which to get masks, since one cannot predict where L1 will
+  mark bad radiances.  The quantity to be masked must be a minor-frame
+  quantity.  The only other fields allowed are {\tt additional}, {\tt
+  channel}, {\tt ignore} (which reverses the sense of {\tt channel}, and
+  {\tt instances}.  If no channel field appears, all are selected (or
+  ignored).  The selected channels should be consistent with the signal
+  used for retrieval.
 
 \end{itemize}
 
@@ -359,6 +365,9 @@ One must be careful when constructing the l2cf to retrieve MIF extinction.
 % $Id$
 
 % $Log$
+% Revision 1.10  2012/04/20 23:46:00  vsnyder
+% Add l2cf considerations
+%
 % Revision 1.9  2012/04/18 22:52:45  vsnyder
 % Add table of notations
 %
