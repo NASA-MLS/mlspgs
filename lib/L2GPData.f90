@@ -530,7 +530,7 @@ contains ! =====     Public Procedures     =============================
     myswathName = l2gp%name
     if ( present(swathName) ) myswathName = swathName
     
-    if ( present(createSwath) ) then
+    if ( present(createSwath) .and. .false. ) then
       swath_exists = .not. createSwath
     else
       swathid = mls_swattach(L2GPFile, trim(myswathName), &
@@ -4986,6 +4986,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.182  2012/01/11 17:35:20  pwagner
+! Turn off extra debugging; snip commented-out lines
+!
 ! Revision 2.181  2011/12/07 01:18:14  pwagner
 ! Added new 'd' and 'g' options to diff
 !
