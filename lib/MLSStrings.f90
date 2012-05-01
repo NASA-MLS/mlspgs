@@ -76,6 +76,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! stretch            Insert spaces between words; optionally between letters
 ! Strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! trim_safe          trims string down, but never to length 0
+! TrueList           describe where elements of an array are true
 ! unWrapLines        undo the splitting of commands across multiple lines
 ! WriteIntsToChars   Converts an array of ints to strings using Fortran write
 ! WriteRomanNumerals Converts an integer to Roman numeral (e.g. 9 to 'ix')
@@ -124,6 +125,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! char* stretch (char* str, [char* options])
 ! strings2Ints (char* strs(:), int ints(:,:))
 ! char* trim_safe (char* str)
+! TrueList ( logical* list, char* str )
 ! unWrapLines (char* inLines(:), char* outLines(:), &
 !              [int nout], [char escape], [char comment])
 ! writeIntsToChars (int ints(:), char* strs(:))
@@ -185,7 +187,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
     & Rot13, &
     & shiftLRC, size_trim, SplitNest, SplitWords, squeeze, StartCase, streq, &
     & stretch, strings2Ints, &
-    & trim_safe, unWrapLines, &
+    & trim_safe, TrueList, unWrapLines, &
     & writeIntsToChars, writeRomanNumerals
 
   interface asciify
@@ -2151,6 +2153,37 @@ contains
 
   END SUBROUTINE strings2Ints
 
+  ! --------------------------------------------------  TrueList  -----
+  subroutine TrueList ( Array, Str )
+    ! Return Str with integers describing where Array has true values.
+    ! Sequences of more than two consecutive true values are represented
+    ! by n1:n2.
+    logical, intent(in) :: Array(:)
+    character(len=*), intent(out) :: Str
+    integer :: L, N1, N2
+    character :: Before
+    before = ''
+    l = 1
+    n1 = 0
+    str = ''
+    do while ( n1 < size(array) )
+      n1 = n1 + 1
+      if ( .not. array(n1) ) cycle
+      do n2 = n1, size(array)-1
+        if ( .not. array(n2+1) ) exit
+      end do
+      ! n1 .. n2 are true
+      if ( n1 == n2 ) then
+        write ( str(l:), '(a,i0,:,":",i0)' ) trim(before), n1
+      else
+        write ( str(l:), '(a,i0,:,":",i0)' ) trim(before), n1, n2
+      end if
+      before = ','
+      l = len_trim(str) + 1
+      n1 = n2 + 1
+    end do
+  end subroutine TrueList
+    
   ! -------------------------------------------------  TRIM_SAFE  -----
   function trim_safe (STR) result (OUTSTR)
     ! trims str returning a string of length no less than 1
@@ -2602,6 +2635,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.84  2012/05/01 22:10:26  vsnyder
+! Add TrueList subroutine
+!
 ! Revision 2.83  2011/06/23 17:25:50  pwagner
 ! Added ability to read, write Roman numerals
 !
