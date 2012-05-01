@@ -1390,6 +1390,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ & ! Must be AFTER s_Boolean
       begin, s+s_skip, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             begin, f+f_formula, t+t_string, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_vector, s_vectorTemplate, etc.
       begin, s+s_diff, &
@@ -1738,6 +1739,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.542  2012/05/01 23:15:39  pwagner
+! May use formula to decide whether to skip
+!
 ! Revision 2.541  2012/05/01 22:20:27  vsnyder
 ! Add radianceQuantity field to subset
 !
