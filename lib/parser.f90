@@ -68,7 +68,6 @@ module PARSER
   type(token), private :: NEXT          ! The next token
 
   ! Tree node to generate depending upon which operator token appears.
-  ! If terminal token indices change, change this table.
   ! We only need values for the ones that generate tree nodes.
   integer, private :: GEN(t_null: t_last_terminal)
   data gen(t_plus)            / n_plus            / ! +
@@ -603,6 +602,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.24  2012/05/01 22:11:27  vsnyder
+! Simplify node generation
+!
 ! Revision 2.23  2012/05/01 22:10:26  vsnyder
 ! Add TrueList subroutine
 !
