@@ -266,11 +266,11 @@ contains ! ========= Public Procedures ============================
       & PHYQ_MIFS, PHYQ_PRESSURE
     use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
     use INIT_TABLES_MODULE, only: F_ADDITIONAL, F_CHANNELS, F_HEIGHT, &
-      & F_IGNORE, F_INSTANCES, &
-      & F_MASK, F_MAXVALUE, F_MINVALUE, F_OPTICALDEPTH, F_OPTICALDEPTHCUTOFF, &
-      & F_PTANQUANTITY,  F_QUANTITY, F_RESET, F_REVERSE, F_SURFACE
-    use INIT_TABLES_MODULE, only: L_OPTICALDEPTH, L_NONE, &
-      & L_PRESSURE, L_RADIANCE, L_ZETA
+      & F_IGNORE, F_INSTANCES, F_MASK, F_MAXVALUE, F_MINVALUE, F_OPTICALDEPTH, &
+      & F_OPTICALDEPTHCUTOFF, F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, &
+      & F_RESET, F_REVERSE, F_SURFACE
+    use INIT_TABLES_MODULE, only: L_OPTICALDEPTH, L_NONE, L_PRESSURE, &
+      & L_RADIANCE, L_ZETA
     use TREE_TYPES, only: N_COLON_LESS, N_LESS_COLON, &
       & N_LESS_COLON_LESS
     use VECTORSMODULE, only: M_LINALG, VECTOR_T, VECTORVALUE_T, &
@@ -278,6 +278,7 @@ contains ! ========= Public Procedures ============================
       & GETVECTORQTYBYTEMPLATEINDEX, REVERSEMASK, SETMASK
     use TREE, only: NSONS, SUBTREE, DECORATION, NODE_ID
     use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, SWITCHDETAIL
+    use MLSStrings, only: TrueList
     use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
     use STRING_TABLE, only: DISPLAY_STRING
     use TOGGLES, only: SWITCHES
@@ -305,6 +306,7 @@ contains ! ========= Public Procedures ============================
     integer :: MAXUNIT                ! Units for maxValue
     integer :: MINUNIT                ! Units for minValue
     integer :: NODE                   ! Either heightNode or surfaceNode
+    character(len=128) :: NumbersList ! for a dump
     integer :: ODCUTOFFHEIGHT         ! `First' index optically thick
     integer :: QUANTITYINDEX          ! Index
     integer :: RANGEID                ! nodeID of a range
@@ -319,14 +321,14 @@ contains ! ========= Public Procedures ============================
     integer :: UNITS(2)               ! Units returned by expr
     integer :: VECTORINDEX            ! Index
     logical :: VERBOSE
-    character(len=128) :: whichInstances
 
     real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
     real(r8) :: VALUE(2)              ! Value returned by expr
     real(r8) :: OPTICALDEPTHCUTOFF    ! Maximum value of optical depth to allow
     real(r8) :: MAXVALUE, MINVALUE    ! Cutoff ranges
-    type (VectorValue_T), pointer :: QTY ! The quantity to mask
+    type (VectorValue_T), pointer :: QTY  ! The quantity to mask
     type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
+    type (VectorValue_T), pointer :: RAD  ! The radiance quantity if needed
     type (VectorValue_T), pointer :: OPTICALDEPTH ! The opticalDepth quantity if needed
     logical :: Got(field_first:field_last)   ! "Got this field already"
     logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
@@ -362,6 +364,10 @@ contains ! ========= Public Procedures ============================
         vectorIndex = decoration(decoration(subtree(1,gson)))
         quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         ptan => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_radiancequantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        rad => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
       case ( f_channels )
         channelsNode = son
       case ( f_height )
@@ -405,20 +411,35 @@ contains ! ========= Public Procedures ============================
       got(field) = .true.
     end do ! j = 2, nsons(key)
 
-    ! Do some error checking for the optical depth issues
-    if ( any(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) then
-      if ( .not. all(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) &
-        & call AnnounceError ( key, &
-        & 'Must supply both opticalDepth and opicalDepthCutoff' )
-      if ( qty%template%quantityType /= l_radiance .or. &
-        &  opticalDepth%template%quantityType /= l_opticalDepth ) &
-        & call AnnounceError ( key, 'Supplied quantity is not optical depth' )
-      if ( qty%template%signal /= opticalDepth%template%signal .or. &
-        &  qty%template%sideband /= opticalDepth%template%sideband ) &
-        & call AnnounceError ( key, 'Optical depth does not match subsetted quantity' )
-    end if
-    if ( all ( got ( (/ f_height, f_surface /) ) ) ) then
-      call AnnounceError ( key, 'Height and Surface are mutually exclusive in Subset' )
+    if ( got(f_radianceQuantity) ) then
+      if ( rad%template%quantityType /= l_radiance ) &
+        & call AnnounceError ( key, 'RadianceQuantity field is not a radiance quantity' )
+      if ( any(got((/ f_height, f_mask, f_maxvalue, &
+        & f_minvalue, f_opticaldepth, f_opticaldepthcutoff, f_ptanquantity, &
+        & f_reset, f_reverse, f_surface /)))) call AnnounceError ( key, &
+          & 'Subset from radiance allows only additional, channel, ignore, and instances fields' )
+      if ( .not. qty%template%minorFrame ) call AnnounceError ( key, &
+        & 'Can only mask minor frame quantities from radiance' )
+      if ( qty%template%noChans > 1 ) call AnnounceError ( key, &
+        & 'Can only mask channel-independent quantities from radiance' )
+    else
+      ! Do some error checking for the optical depth issues
+      if ( any(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) then
+        if ( .not. all(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) &
+          & call AnnounceError ( key, &
+          & 'Must supply both opticalDepth and opicalDepthCutoff' )
+        if ( qty%template%quantityType /= l_radiance .or. &
+          &  opticalDepth%template%quantityType /= l_opticalDepth ) &
+          & call AnnounceError ( key, 'Supplied quantity is not optical depth' )
+        if ( qty%template%signal /= opticalDepth%template%signal .or. &
+          &  qty%template%sideband /= opticalDepth%template%sideband ) &
+          & call AnnounceError ( key, 'Optical depth does not match subsetted quantity' )
+      end if
+      ! Check for exactly one of height, ignore, instances, reset, surface
+      if ( count ( got ( &
+        & (/ f_height, f_ignore, f_instances, f_reset, f_surface /) ) ) /= 1 ) &
+          & call announceError ( key, &
+            & 'Subset must be exactly one of height, ignore, instances, surface or reset' )
     end if
 
     if ( vectors(mainVectorIndex)%globalUnit /= phyq_invalid ) then
@@ -434,62 +455,45 @@ contains ! ========= Public Procedures ============================
     ! Process the instances field.
     call Allocate_test ( doThisInstance, qty%template%noInstances, &
       & 'doThisInstance', ModuleName )
-    doThisInstance = .true.
-    whichInstances = ' '
+    doThisInstance = .not. got(f_instances)
     if ( got(f_instances) ) then
-      do j = 2, nsons(InstancesNode)
-        son = subtree ( j, InstancesNode )
-        rangeId = node_id ( son )
-        ! 
-        call expr ( son, units, value, type )
-        if ( any ( units /= phyq_dimensionless ) ) &
-          & call AnnounceError ( InstancesNode, &
-          & 'No units allowed in instances field during subset' )
-        s1 = max ( min ( value(1), &
-          & real(qty%template%noInstances, r8) ), 1._r8 )
-        s2 = max ( min ( value(2), &
-          & real(qty%template%noInstances, r8) ), 1._r8 )
-        ! Now consider the open range issue
-        select case ( rangeId )
-        case ( n_colon_less )
-          s1 = min ( s1 + 1, qty%template%noInstances )
-        case ( n_less_colon )
-          s2 = max ( s2 - 1, 1 )
-        case ( n_less_colon_less )
-          s1 = min ( s1 + 1, qty%template%noInstances )
-          s2 = max ( s2 - 1, 1 )
-        end select
-        if ( s1(1) == s2(1) ) then
-          write( str, '(i5)' ) s1(1)
-        else
-          write( str, '(i5, a1, i5)' ) s1(1), '-', s2(1)
-        endif
-        whichInstances = catLists( whichInstances, str )
-      enddo
-      call ExpandStringRange( trim(whichInstances), doThisInstance )
+      call GetIndexFlagsFromList ( InstancesNode, doThisInstance, status )
+      if ( status /= 0 ) call announceError ( key, &
+        & 'There was a problem with the instances field' )
       if ( verbose ) then
-        call outputNamedValue( 'whichInstances', trim(whichInstances) )
-        call dump( doThisInstance )
-      endif
-    endif
+        call trueList ( doThisInstance, numbersList )
+        call outputNamedValue( 'Instances', trim(numbersList) )
+        call dump( doThisInstance, name='Instances' )
+      end if
+    end if
+
     ! Process the channels field.
-    if ( qty%template%frequencyCoordinate /= l_none ) then
-      call Allocate_test ( channels, qty%template%noChans, &
-        & 'channels', ModuleName )
+    if ( qty%template%frequencyCoordinate /= l_none .or. &
+         got(f_radianceQuantity) ) then
+      !??? Someday think about the low bound for channels using ???
+      !??? lbound(spectrometerTypes(signals(...%template%signal)%spectrometerType)%Frequencies,1) ???
+      if ( got(f_radianceQuantity) ) then
+        call Allocate_test ( channels, rad%template%noChans, 'channels', &
+        & ModuleName )
+      else
+        call Allocate_test ( channels, qty%template%noChans, 'channels', &
+          & ModuleName )
+      end if
       if ( got(f_channels) ) then     ! This subset is only for some channels
         call GetIndexFlagsFromList ( channelsNode, channels, status, &
+          !??? lbound(channels,1) is always 1
           & lower=lbound(channels,1) )
-        if ( status /= 0 ) call announceError ( key, &
+        if ( status /= 0 ) call announceError ( channelsNode, &
           & 'There was a problem with the channels field' )
+        if ( verbose ) then
+          call trueList ( channels, numbersList )
+          call outputNamedValue( 'Channels', trim(numbersList) )
+          call dump( channels, name='Channels' )
+        end if
       else
         channels = .true.             ! Apply this to all channels
       end if
     end if
-
-    ! Check that got one of ignore, height, reset, instances
-    if ( count ( got ( &
-      & (/ f_height, f_ignore, f_instances, f_reset, f_surface /) ) ) /= 1 ) &
-      & call announceError ( key, 'Subset must be one of ignore, height, surface or reset' )
 
     ! Preprocess the height stuff.  
     heightUnit = phyq_dimensionless
@@ -550,10 +554,30 @@ contains ! ========= Public Procedures ============================
         if ( additional ) &
           & qty%mask(:,instance) = char ( ior ( &
           & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
-        cycle
-      endif
+        cycle ! instance
+      end if
+
+      if ( got(f_radianceQuantity) ) then
+        do height = 1, qty%template%noSurfs
+          ! Unmask qty where any specified channel in rad is unmasked
+          qty%mask(height,instance) = char(255)
+          do channel = 1, rad%template%noChans
+            if ( ignore .neqv. channels(channel) ) &
+              & qty%mask(height,instance) = char( &
+                & iand( ichar(qty%mask(height,instance)), &
+                      & ichar(rad%mask(channel+rad%template%noChans*(height-1),instance)) ) )
+          end do
+        end do
+        ! If this is supposed to be an 'additional' mask, merge in the
+        ! original value
+        if ( additional ) &
+          & qty%mask(:,instance) = char ( ior ( &
+          & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+        cycle ! instance
+      end if
 
       instanceOr1 = instance
+
       if ( qty%template%coherent ) then
         theseHeights => qty%template%surfs(:,1)
         coordinate = qty%template%verticalCoordinate
@@ -1244,6 +1268,10 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.24  2012/05/01 22:22:26  vsnyder
+! Mask minor-frame quantity by reference to radiance quantity.  Move some
+! dump generation to TrueList in MLSStrings.
+!
 ! Revision 2.23  2012/03/28 00:54:41  vsnyder
 ! Better error message for wrong units
 !
