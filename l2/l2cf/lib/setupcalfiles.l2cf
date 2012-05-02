@@ -165,7 +165,7 @@
   !define(SBFractionHDF,{!calpath/MLS-Aura_L2Cal-SBFractions_v3-0-5_0000d000.h5})
   !define(SystemTemperatureHDF,{!calpath/MLS-Aura_L2Cal-SystemTemperatures_v3-0-5_0000d000.h5})
   !define(NoiseBandwidthHDF,{!calpath/MLS-Aura_L2Cal-NoiseBandwidths_v3-0-5_0000d000.h5})
-  !define(MiscHDF,{!calpath/MLS-Aura_L2Cal-Miscs_v3-0-5_0000d000.h5})
+  !define(MiscHDF,{!calpath/MLS-Aura_L2Cal-Misc_v3-0-5_0000d000.h5})
   !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.h5})
   !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.h5})
   !define(spectroscopyRtvlHDF,{!spectroscopyHDF})
@@ -177,6 +177,9 @@
 !ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
 !ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
 ;$Log$
+;Revision 1.46  2012/04/05 19:14:56  pwagner
+;6 new cal files for filling lesser state qties
+;
 ;Revision 1.45  2012/03/12 17:01:11  pwagner
 ;Use latest Climatology that adds extinctionv2R3
 ;
