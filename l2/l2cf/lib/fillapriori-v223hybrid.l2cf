@@ -21,11 +21,10 @@ end Fill
 
 begin Fill
   
-  ;; Now we're only going to do this if we have climatological data to
-  ;; fill with.
+  ;; Do this unless we lack climatological data.
 
   !define(allV2ClimatologicalSpecies,{TEMPERATURE,H2O,O3,N2O,HNO3,HCL,CLO,CO,HCN,CH3CN,OH})
-  !ifdef(flagGotClimatology,{
+  !ifdef(flagIgnoreClimatology,{},{
   ;; This macro fills one apriori quantity with climatlogical data
   !define(fillWithClimatology,{Fill, quantity=apriori.$1, method=gridded, $
     sourceGrid=grid$1!nl})
@@ -611,6 +610,9 @@ begin Join
 end Join
   })
 ;$Log$
+;Revision 1.1  2012/01/18 22:58:04  pwagner
+;First commit
+;
 ;Revision 1.129  2006/10/26 19:30:02  lambert
 ;vReg.HCl set to 1ppbv
 ;

@@ -24,10 +24,9 @@ end Fill
 
 begin Fill
   
-  ;; Now we're only going to do this if we have climatological data to
-  ;; fill with.
+  ;; Do this unless we lack climatological data.
 
-  !ifdef(flagGotClimatology,{
+  !ifdef(flagIgnoreClimatology,{},{
   ;; This macro fills one apriori quantity with climatlogical data
   !define(fillWithClimatology,{Fill, quantity=apriori.$1, method=gridded, $
     sourceGrid=grid$1!nl})
@@ -49,7 +48,7 @@ begin Fill
   Dump, details=2, quantity=apriori.hcl
 })
   ;; Possibly overwrite temperature with the merged product
-  !ifdef(flagUseOperationalTemperature,{Fill, quantity=apriori.temperature, $
+  !ifdef(flagIgnoreMeteorology,{},{Fill, quantity=apriori.temperature, $
     method=gridded, sourceGrid=mergedTemperature})
 
   ;; Now for H2O make the bottom value extra large
@@ -760,6 +759,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.148  2012/04/13 21:56:14  wgread
+;increased high bound for extinction and better apriori for mifextinction-wgr
+;
 ;Revision 1.147  2012/03/07 18:24:50  pwagner
 ;Restore lower bound on RHiVmr from r1.143
 ;
