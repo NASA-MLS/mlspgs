@@ -422,6 +422,8 @@ contains ! ========= Public Procedures ============================
         & 'Can only mask minor frame quantities from radiance' )
       if ( qty%template%noChans > 1 ) call AnnounceError ( key, &
         & 'Can only mask channel-independent quantities from radiance' )
+      if ( ignore .and. .not. got(f_channels) ) call AnnounceError ( key, &
+        & 'Specifying "ignore" without "channels" turns everything off!' )
     else
       ! Do some error checking for the optical depth issues
       if ( any(got((/ f_opticalDepth, f_opticalDepthCutoff /))) ) then
@@ -1268,6 +1270,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.25  2012/05/03 19:50:11  vsnyder
+! More error checking for mask from radiance
+!
 ! Revision 2.24  2012/05/01 22:22:26  vsnyder
 ! Mask minor-frame quantity by reference to radiance quantity.  Move some
 ! dump generation to TrueList in MLSStrings.
