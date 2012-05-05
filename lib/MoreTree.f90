@@ -133,14 +133,23 @@ contains ! ====     Public Procedures     ==============================
   ! Get the value of a field that is required to have type t_boolean.
   ! Return true if node_id(root) is n_set_one.  Otherwise return decoration of
   ! root, or of child of root if children
+    use Expr_m, only: Expr
     use Intrinsic, only: L_true
-    use Tree_Types, only: N_Set_one
+    use Tree_Types, only: N_identifier, N_Set_one
     integer, intent(in) :: Root
+    integer :: Son, Units(2)
+    double precision :: Value(2)
     if ( node_id(root) == n_set_one ) then
       get_boolean = .true.
     else
       if ( nsons ( root ) /= 0 ) then
-        get_boolean = decoration(subtree(2,root)) == l_true
+        son = subtree(2,root)
+        if ( node_id(son) == n_identifier ) then
+          get_boolean = decoration(son) == l_true
+        else
+          call expr ( son, units, value )
+          get_boolean = nint(value(1)) /= 0
+        end if
       else
         get_boolean = decoration(root) == l_true
       end if
@@ -246,6 +255,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.17  2012/05/05 00:12:15  vsnyder
+! Process logical expressions in get_boolean
+!
 ! Revision 2.16  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
