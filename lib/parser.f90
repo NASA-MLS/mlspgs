@@ -28,7 +28,8 @@ module PARSER
 ! expr -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
 ! array -> '[' ( , expr )* ']'
 ! limit -> lterm ( 'or' lterm ) *
-! lterm -> lfactor ( 'and' lfactor ) *
+! lterm -> lneg ( 'and' lneg ) *
+! lneg -> 'not'? lfactor
 ! lfactor -> bterm ( '<' | '<=' | '>' | '>=' | '==' | '/=' bterm ) *
 ! bterm -> term ( '+' | '-' term ) *
 ! term -> factor ( '*' | '/' factor )*
@@ -82,6 +83,7 @@ module PARSER
   data gen(t_less_colon_less) / n_less_colon_less / ! <:<
   data gen(t_equal)           / n_equal           / ! =
   data gen(t_equal_equal)     / n_equal_equal     / ! ==
+  data gen(t_not)             / n_not             / ! not
   data gen(t_not_equal)       / n_not_equal       / ! /=
   data gen(t_less)            / n_less            / ! <
   data gen(t_less_eq)         / n_less_eq         / ! <=
@@ -357,13 +359,26 @@ contains ! ====     Public Procedures     ==============================
     if ( toggle(par) ) call finish ( 'LIMIT' )
   end subroutine LIMIT
 
-! --------------------------------------------------------  LTERM  -----
-  recursive subroutine LTERM  ! lterm -> lfactor ( and lfactor ) *
-    if ( toggle(par) ) call where ( 'LTERM' )
-    call lfactor
-    do while ( next%class == t_and )
+! ---------------------------------------------------------  LNEG  -----
+  recursive subroutine LNEG  ! lneg -> not? lfactor
+    if ( toggle(par) ) call where ( 'LNEG' )
+    if ( next%class == t_not ) then
       call get_token
       call lfactor
+      call build_tree ( n_not, 1 )
+    else
+      call lfactor
+    end if
+    if ( toggle(par) ) call finish ( 'LNEG' )
+  end subroutine LNEG
+
+! --------------------------------------------------------  LTERM  -----
+  recursive subroutine LTERM  ! lterm -> lneg ( and lneg ) *
+    if ( toggle(par) ) call where ( 'LTERM' )
+    call lneg
+    do while ( next%class == t_and )
+      call get_token
+      call lneg
       call build_tree ( n_and, 2 )
     end do
     if ( toggle(par) ) call finish ( 'LTERM' )
@@ -602,6 +617,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.25  2012/05/05 00:11:51  vsnyder
+! Add support for 'not' operator
+!
 ! Revision 2.24  2012/05/01 22:11:27  vsnyder
 ! Simplify node generation
 !
