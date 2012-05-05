@@ -634,8 +634,10 @@ m:      do j = start+1, nsons(field)
 
     integer :: SON       ! Son of Root
 
+    if ( toggle(con) ) call trace_begin ( 'DEF_FUNC', root )
     son = subtree(1,root)
     call declare ( sub_rosa(son), 0.0d0, function, decoration(son), root )
+    if ( toggle(con) ) call trace_end ( 'DEF_FUNC', root )
   end subroutine DEF_FUNC
 ! --------------------------------------------------  DEF_SECTION  -----
   subroutine DEF_SECTION ( ROOT )
@@ -652,6 +654,7 @@ m:      do j = start+1, nsons(field)
     integer :: I         ! Loop inductor
     integer :: SON       ! Son of Root
 
+    if ( toggle(con) ) call trace_begin ( 'DEF_SECTION', root )
     son = subtree(1,root)
     call declare ( sub_rosa(son), 0.0d0, section, decoration(son), root )
     do i = 2, nsons(root)
@@ -665,6 +668,7 @@ m:      do j = start+1, nsons(field)
         call decorate ( gson, decl%tree )    ! the dt_def
       end if
     end do
+    if ( toggle(con) ) call trace_end ( 'DEF_SECTION', root )
   end subroutine DEF_SECTION
 ! -----------------------------------------------------  DEF_SPEC  -----
   recursive subroutine DEF_SPEC ( ROOT )
@@ -716,6 +720,7 @@ m:      do j = start+1, nsons(field)
       integer, intent(in) :: SON   ! of spec_def or n_or
       integer, intent(in) :: START ! of sons of SON
       integer :: J               ! Loop inductor
+      if ( toggle(con) ) call trace_begin ( 'DEF_ONE_SPEC', root )
       select case ( node_id(son) )
       case ( n_field_type )
         do j = start, nsons(son)
@@ -736,6 +741,7 @@ m:      do j = start+1, nsons(field)
         ! The rest of the sons are field names, for which new decorations
         ! Won't help -- in fact, the f_field_name's index is best.
       end select
+      if ( toggle(con) ) call trace_end ( 'DEF_ONE_SPEC', root )
     end subroutine DEF_ONE_SPEC
 
   end subroutine DEF_SPEC
@@ -750,7 +756,7 @@ m:      do j = start+1, nsons(field)
     integer :: I              ! Loop inductor
     integer :: SON            ! I'th son of "root"
 
-    if ( toggle(con) ) call trace_begin ( 'DEF', root )
+    if ( toggle(con) ) call trace_begin ( 'DEF_TYPE', root )
     son = subtree(1,root)
     call declare ( sub_rosa(son), 0.0d0, type_name, decoration(son), root )
 !   call decorate ( son, root )
@@ -760,7 +766,7 @@ m:      do j = start+1, nsons(field)
                      decoration(son), root )
 !     call decorate ( son, root )
     end do
-    if ( toggle(con) ) call trace_end ( 'DEF' )
+    if ( toggle(con) ) call trace_end ( 'DEF_TYPE' )
   end subroutine DEF_TYPE
 
 ! --------------------------------------------------------  EQUAL  -----
@@ -945,6 +951,17 @@ m:      do j = start+1, nsons(field)
         else ! node_id(root) == n_or
           value = max(value, value2)
         end if
+      end if
+      type = log_value
+    case ( n_not )
+      son1 = subtree(1,root)
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  return
+      if ( type /= str_value .and. type /= log_value ) then
+        call local_error ( son1, not_string )
+      else
+        value = 1 - value
       end if
       type = log_value
     case ( n_plus, n_minus ) ! ---------------------------------------------
@@ -1253,6 +1270,9 @@ m:      do j = start+1, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.33  2011/08/20 00:48:34  vsnyder
+! Remove unused use names and variable declarations
+!
 ! Revision 1.32  2011/04/20 17:32:28  vsnyder
 ! Undo ill-advised units check, correct some error messages
 !
