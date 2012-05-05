@@ -50,7 +50,8 @@ module TREE_TYPES
   integer, parameter :: N_MULT =       n_minus + 1
   integer, parameter :: N_NAME_DEF =   n_mult + 1      ! Names OK in section
   integer, parameter :: N_NAMED =      n_name_def + 1  ! labelled spec
-  integer, parameter :: N_NOT_EQUAL =  n_named + 1
+  integer, parameter :: N_NOT =        n_named + 1
+  integer, parameter :: N_NOT_EQUAL =  n_not + 1
   integer, parameter :: N_OR =         n_not_equal + 1
   integer, parameter :: N_PLUS =       n_or + 1
   integer, parameter :: N_POW =        n_plus + 1
@@ -114,6 +115,7 @@ contains
     case ( n_Mult );       call add_char ( 'mult' )
     case ( n_Name_def );   call add_char ( 'name_def' )
     case ( n_Named );      call add_char ( 'named' )
+    case ( n_Not );        call add_char ( 'not' )
     case ( n_Not_Equal );  call add_char ( 'not_equal' )
     case ( n_Or );         call add_char ( 'or' )
     case ( n_Plus );       call add_char ( 'plus' )
@@ -143,6 +145,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 2.14  2012/05/05 00:11:51  vsnyder
+! Add support for 'not' operator
+!
 ! Revision 2.13  2012/05/01 22:10:26  vsnyder
 ! Add TrueList subroutine
 !
