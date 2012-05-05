@@ -29,7 +29,7 @@ contains ! ====     Public Procedures     ==============================
   ! Analyze an expression, return its type, units and value.
 
     use DECLARATION_TABLE, only: DECLARED, DECLS, EMPTY, ENUM_VALUE, &
-                                 EXPRN, FUNCTION, GET_DECL, LOG_VALUE, &
+                                 FUNCTION, GET_DECL, LOG_VALUE, &
                                  NAMED_VALUE, NUM_VALUE, RANGE, STR_RANGE, &
                                  STR_VALUE, UNDECLARED, UNITS_NAME
     use Functions, only: F_Exp, F_Ln, F_Log, F_Log10, F_Sqrt
@@ -63,7 +63,8 @@ contains ! ====     Public Procedures     ==============================
     integer, parameter :: BadNode = 1 ! Unsupported tree node in expr
     integer, parameter :: NonNumeric = badNode + 1 ! Non numeric arg for func
     integer, parameter :: NotFunc = nonNumeric + 1 ! Not a function
-    integer, parameter :: NotUnitless = notFunc + 1 ! Not a function
+    integer, parameter :: NotLogical = notFunc + 1 ! Not logical
+    integer, parameter :: NotUnitless = notLogical + 1 ! Not unitless
     integer, parameter :: OutOfRange = notUnitless + 1
     integer, parameter :: UnsupportedFunc = outOfRange + 1
     integer, parameter :: WrongNumArgs = unsupportedFunc + 1
@@ -94,8 +95,6 @@ contains ! ====     Public Procedures     ==============================
       if ( present(type) ) type = str_value
       units = phyq_dimensionless
       value = sub_rosa(root)
-    case ( n_and, n_or )
-      if ( present(type) ) type = exprn
     case ( n_func_ref )
       son1 = subtree(1,root)
       ! Look up the function name
@@ -220,6 +219,26 @@ contains ! ====     Public Procedures     ==============================
               value(1) = merge(1.0,0.0,value(1) /= value2(1) )
             end select
           end if
+        case ( n_and, n_or )
+          if ( present(type) ) type = log_value
+          if ( type1 /= log_value ) then
+            call announceError ( subtree(1,root), notLogical )
+            if ( type2 /= log_value ) &
+              call announceError ( subtree(2,root), notLogical )
+          else if ( type2 /= log_value ) then
+            call announceError ( subtree(2,root), notLogical )
+          else if ( me == n_and ) then
+            value(1) = value(1) * value2(1)
+          else if ( me == n_or ) then
+            value(1) = max(value(1), value2(1))
+          end if
+        case ( n_not )
+          if ( present(type) ) type = log_value
+          if ( type1 /= log_value ) then
+            call announceError ( subtree(1,root), notLogical )
+          else
+            value(1) = 1 - nint(value(1))
+          end if
         case default
           call announceError ( root, badNode )
         end select
@@ -240,19 +259,19 @@ contains ! ====     Public Procedures     ==============================
         call dump_tree_node ( where, 0 )
         call output ( ' is not supported.', advance='yes' )
       case ( nonNumeric )
-        call output ( 'Argument of ' )
-        call display_string ( string )
+        call display_string ( string, before='Argument of ' )
         call output ( ' is not numeric.', advance='yes' )
       case ( notFunc )
         call display_string ( string )
         call output ( ' is not a valid function.', advance='yes' )
+      case ( notLogical )
+        call display_string ( string, before='Argument of ' )
+        call output ( ' is not logical.', advance='yes' )
       case ( notUnitless )
-        call output ( 'Argument of ' )
-        call display_string ( string )
+        call display_string ( string, before='Argument of ' )
         call output ( ' is not unitless.', advance='yes' )
       case ( outOfRange )
-        call output ( 'Argument of ' )
-        call display_string ( string )
+        call display_string ( string, before='Argument of ' )
         call output ( ' is out of range.', advance='yes' )
       case ( unsupportedFunc )
         call output ( 'Function ' )
@@ -383,6 +402,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.19  2012/05/05 00:11:51  vsnyder
+! Add support for 'not' operator
+!
 ! Revision 2.18  2012/04/24 20:38:47  vsnyder
 ! Get kinds from MLSKinds instead of MLSCommon
 !
