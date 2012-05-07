@@ -247,7 +247,6 @@ contains ! ====     Public Procedures     ==============================
     if ( toggle(con) ) call trace_end ( 'EXPR' )
   contains
     subroutine AnnounceError ( where, what )
-      use MORETREE, only: StartErrorMessage
       use OUTPUT_M, only: OUTPUT
       use String_Table, only: Display_String
       use TREE, only: DUMP_TREE_NODE
@@ -286,6 +285,9 @@ contains ! ====     Public Procedures     ==============================
       units = PHYQ_INVALID
       value = 0.0
     end subroutine AnnounceError
+
+    include "StartErrorMessage.f9h"
+
   end subroutine EXPR
 
   ! -------------------------------------------------  EXPR_CHECK  -----
@@ -402,6 +404,10 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.20  2012/05/07 23:00:57  vsnyder
+! StartErrorMessage moved to include to avoid a circular dependence
+! between expr_m and MoreTree
+!
 ! Revision 2.19  2012/05/05 00:11:51  vsnyder
 ! Add support for 'not' operator
 !
