@@ -1,0 +1,34 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! This is an include file to avoid a circular dependence between
+! expr_m and MoreTree.
+
+! $Id$
+
+  subroutine StartErrorMessage ( where )
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: OUTPUT
+    use TREE, only: SOURCE_REF
+    integer, intent(in) :: Where             ! Tree node index
+    call output ( '***** At ' )
+    if ( where > 0 ) then
+      call print_source ( source_ref(where) )
+    else
+      call output ( '(no tree available)' )
+    end if
+    call output ( ': ' )
+  end subroutine StartErrorMessage
+
+! $Log$
+! Revision 2.1  2012/05/07 22:59:59  vsnyder
+! Moved to include to avoid circular dependence between expr_m and MoreTree
+!
