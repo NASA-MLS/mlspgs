@@ -228,19 +228,7 @@ contains ! ====     Public Procedures     ==============================
   end function Scalar
 
   ! ------------------------------------------  StartErrorMessage  -----
-  subroutine StartErrorMessage ( where )
-    use LEXER_CORE, only: PRINT_SOURCE
-    use OUTPUT_M, only: OUTPUT
-    use TREE, only: SOURCE_REF
-    integer, intent(in) :: Where             ! Tree node index
-    call output ( '***** At ' )
-    if ( where > 0 ) then
-      call print_source ( source_ref(where) )
-    else
-      call output ( '(no tree available)' )
-    end if
-    call output ( ': ' )
-  end subroutine StartErrorMessage
+  include "StartErrorMessage.f9h"
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -255,6 +243,10 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.18  2012/05/07 23:00:57  vsnyder
+! StartErrorMessage moved to include to avoid a circular dependence
+! between expr_m and MoreTree
+!
 ! Revision 2.17  2012/05/05 00:12:15  vsnyder
 ! Process logical expressions in get_boolean
 !
