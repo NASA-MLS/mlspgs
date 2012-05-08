@@ -1308,6 +1308,7 @@ contains ! =====  Public Procedures  ===================================
       ! CatNames: 1-d array of len=maxSigLen for catalog%species_name
       ! MoleculeNames: 1-d array of len=63 characters
       ! Continuum: 2-d array (molecules X MaxContinuum) of real(r8)
+      ! IsotopeRatio: 1-d array of default real
       ! LineIndices: 1-d array of integer, index in LineList for last Line in
       !   catalog(i)
       ! LineList: 1-d array of integer, concatenated from all Catalog
@@ -1513,6 +1514,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.53  2011/11/11 00:42:06  vsnyder
+! Use IsExtinction array from Molecules module
+!
 ! Revision 2.52  2011/11/09 00:20:42  vsnyder
 ! Move Catalog and Lines types to Spectroscopy_Types module.
 ! Make Read_Spectroscopy work even if Lines is not allocated.
