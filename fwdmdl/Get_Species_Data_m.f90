@@ -36,7 +36,7 @@ contains
     use INTRINSIC, only: L_ISOTOPERATIO, L_LINECENTER, L_LINEWIDTH, &
       & L_LINEWIDTH_TDEP, L_VMR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use SPECTROSCOPYCATALOG_M, only: DUMP
+    use SPECTROSCOPYCATALOG_M, only: Catalog, DUMP
     use TOGGLES, only: SWITCHES
     use VECTORSMODULE, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
 
@@ -48,6 +48,7 @@ contains
     type (VectorValue_T), pointer :: F  ! An arbitrary species
     integer :: L         ! Index in spectral parameter data structure
     integer :: M         ! Index for molecules in beta groups, or size thereof
+    integer :: Mol       ! Molecule in a beta group
     integer :: S         ! Sideband index, 1 = LSB, 2 = USB
     integer :: S1, S2    ! Bounds for sideband index S
 
@@ -64,22 +65,24 @@ contains
         ! First LBL molecules' ratios
         do s = s1, s2
           do m = 1, size(fwdModelConf%beta_group(b)%lbl(s)%molecules)
+            mol = fwdModelConf%beta_group(b)%lbl(s)%molecules(m)
             f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
               & quantityType=l_isotopeRatio,                             &
-              & molecule=fwdModelConf%beta_group(b)%lbl(s)%molecules(m), &
-              & noError=.TRUE., config=fwdModelConf )
-            fwdModelConf%beta_group(b)%lbl(s)%ratio(m)     = 1.0
+              & molecule=mol, noError=.TRUE., config=fwdModelConf )
+            fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = &
+              & catalog(mol)%defaultIsotopeRatio
             if ( associated ( f ) ) & ! Have an isotope ratio
               & fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = f%values(1,1)
           end do ! m
           if ( associated(fwdModelConf%beta_group(b)%pfa(s)%molecules) ) then
             ! Now PFA molecules' ratios
             do m = 1, size(fwdModelConf%beta_group(b)%pfa(s)%molecules)
+              mol = fwdModelConf%beta_group(b)%pfa(s)%molecules(m)
               f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
                 & quantityType=l_isotopeRatio,                             &
-                & molecule=fwdModelConf%beta_group(b)%pfa(s)%molecules(m), &
-                & noError=.TRUE., config=fwdModelConf )
-              fwdModelConf%beta_group(b)%pfa(s)%ratio(m)     = 1.0
+                & molecule=mol, noError=.TRUE., config=fwdModelConf )
+              fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = &
+                & catalog(mol)%defaultIsotopeRatio
               if ( associated ( f ) ) & ! Have an isotope ratio
                 & fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = f%values(1,1)
             end do ! m
@@ -164,6 +167,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.34  2011/05/09 17:48:06  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.33  2011/03/31 19:52:49  vsnyder
 ! Only get isotope ratios in the specified sidebands
 !
