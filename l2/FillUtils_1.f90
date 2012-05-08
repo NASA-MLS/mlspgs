@@ -6034,7 +6034,6 @@ contains ! =====     Public Procedures     =============================
       integer :: S                      ! Surface loop counter
       integer :: STATUS                 ! Flag
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
-      integer, dimension(1)            :: indices
 
       ! Executable code
       call MLSMessageCalls( 'push', constantName='FromProfile_values' )
@@ -6368,7 +6367,7 @@ contains ! =====     Public Procedures     =============================
           end do
           insts = insts + 1
         end if
-        if ( method==l_binTotal ) then
+        if ( method==l_binTotal .and. .false. ) then
           call outputNamedValue( 'phiBoundaries', phiBoundaries )
           call outputNamedValue( 'phi(source)', sourceQuantity%template%phi(1,:) )
         endif
@@ -7309,6 +7308,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.58  2012/05/08 17:51:58  pwagner
+! Disabled another debugging bloc
+!
 ! Revision 2.57  2012/04/26 23:30:04  pwagner
 ! Monotonize ptan heights when needed; (should we sort instead?)
 !
