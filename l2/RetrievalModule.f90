@@ -44,7 +44,8 @@ contains
     use DUMPCOMMAND_M, only: &
       & BOOLEANFROMANYGOODVALUES, &
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
-      & DUMPCOMMAND, SKIP
+      & DUMPCOMMAND, &
+      & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
     use HESSIANMODULE_1, only: HESSIAN_T, CREATEEMPTYHESSIAN, DESTROYHESSIAN
     use IEEE_ARITHMETIC, only: IEEE_IS_NAN
     use EXPR_M, only: EXPR
@@ -72,10 +73,10 @@ contains
       & L_DNWT_GRADN,  L_DNWT_SQ, L_DNWT_SQ,  L_DNWT_SQT, &
       & L_HIGHCLOUD, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, L_LOWCLOUD, &
       & L_NEWTONIAN, L_NONE, L_NORM, L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_SIMPLE, &
-      & S_ANYGOODVALUES, S_CATCHWARNING, S_COMPARE, &
+      & S_ANYGOODVALUES, S_CATCHWARNING, S_CASE, S_COMPARE, &
       & S_DIFF, S_DUMP, S_DUMPBLOCKS, S_FLAGCLOUD, S_FLUSHPFA, S_LEAKCHECK, &
-      & S_REEVALUATE, S_RESTRICTRANGE, S_RETRIEVE, &
-      & S_SIDS, S_SKIP, S_SNOOP, S_SUBSET, S_TIME, S_UPDATEMASK
+      & S_ENDSELECT, S_REEVALUATE, S_RESTRICTRANGE, S_RETRIEVE, &
+      & S_SELECT, S_SIDS, S_SKIP, S_SNOOP, S_SUBSET, S_TIME, S_UPDATEMASK
     use INTRINSIC, only: L_VMR, PHYQ_DIMENSIONLESS
     use L2PARINFO, only: PARALLEL
     use MATRIXMODULE_1, only: ADDTOMATRIXDATABASE, COPYMATRIX, CREATEEMPTYMATRIX, &
@@ -310,6 +311,8 @@ contains
       ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
       ! parser users' guide" for pictures of the trees being analyzed.
 
+      if ( MLSSelecting .and. &
+        & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
       if ( get_spec_id(key) /= s_catchWarning ) &
         & call MLSMessageReset( clearLastWarning=.true. )
 
@@ -728,6 +731,15 @@ contains
         if ( SKIPRETRIEVAL ) cycle
         call time_now ( t1 )
         call sids ( key, VectorDatabase, MatrixDatabase, HessianDatabase, configDatabase, chunk)
+      case ( s_select ) ! ============ Start of select .. case ==========
+        ! We'll start seeking a matching case
+        call MLSSelect (key)
+      case ( s_case ) ! ============ seeking matching case ==========
+        ! We'll continue seeking a match unless the case is TRUE
+        call MLSCase (key)
+      case ( s_endSelect ) ! ============ End of select .. case ==========
+        ! We'done with seeking a match
+        call MLSEndSelect (key)
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
         if ( Skip(key) ) exit
@@ -2892,6 +2904,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.325  2012/05/08 17:50:52  pwagner
+! Added Select .. Case .. EndSelect control structure
+!
 ! Revision 2.324  2012/04/20 01:37:47  vsnyder
 ! Dump vector norms using dxn, copy mask from x to candidateDx, print DOF
 ! dump QNSQ if sca, some cannonball polishing
