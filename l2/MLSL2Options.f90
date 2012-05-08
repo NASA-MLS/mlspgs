@@ -133,12 +133,41 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   type :: runTimeValues_T
     ! Two arrays bound as a logical-valued hash
     character(len=RTVSTRINGLENGTH)     :: lkeys       = 'true,false' 
-    logical, dimension(RTVARRAYLENGTH) :: lvalues     = &            
-      & (/ .TRUE., (.FALSE., i=2, RTVARRAYLENGTH) /)
+    character(len=RTVSTRINGLENGTH)     :: lvalues     = 'true,false'
+    ! logical, dimension(RTVARRAYLENGTH) :: lvalues     = &            
+    !  & (/ .TRUE., (.FALSE., i=2, RTVARRAYLENGTH) /)
     ! Add two more arrays bound for each kind of hash: integer, string, real, ..
   end type runTimeValues_T
   
   type(runTimeValues_T), save :: runTimeValues
+  ! --------------------------------------------------------------------------
+  !   For the various databases/data types
+  !   We do not support mixing data types
+  !   but for certain abstract operations, e.g. adding an item to
+  !   a database, the use of an include file is a workaround
+  !   For other cases, e.g. in an error message, we may wish to 
+  !   communicate a database entry as an index, datatype pair 
+  !   and have the calling procedure decide what to do about it
+  !   (Here's how we created the list of types that are pasted in
+  !    the table below:
+  !    grep 'type (' tree_walker.f90 | \
+  !     sed -n 's/type (//; s/_T),.*//p' tree_walker.f90
+
+  integer, parameter :: DB_Direct             = 0
+  integer, parameter :: DB_File               = DB_Direct             + 1
+  integer, parameter :: DB_Chunk              = DB_File               + 1
+  integer, parameter :: DB_DirectData         = DB_Chunk              + 1
+  integer, parameter :: DB_FGrid              = DB_DirectData         + 1
+  integer, parameter :: DB_ForwardModelConfig = DB_FGrid              + 1
+  integer, parameter :: DB_GriddedData        = DB_ForwardModelConfig + 1
+  integer, parameter :: DB_Hessian            = DB_GriddedData        + 1
+  integer, parameter :: DB_HGrid              = DB_Hessian            + 1
+  integer, parameter :: DB_L2AUXData          = DB_HGrid              + 1
+  integer, parameter :: DB_L2GPData           = DB_L2AUXData          + 1
+  integer, parameter :: DB_Matrix             = DB_L2GPData           + 1
+  integer, parameter :: DB_Vector             = DB_Matrix             + 1
+  integer, parameter :: DB_QuantityTemplate   = DB_Vector             + 1
+  integer, parameter :: DB_VectorTemplate     = DB_QuantityTemplate   + 1
 !=============================================================================
 contains 
 !--------------------------- end bloc --------------------------------------
@@ -156,6 +185,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.50  2012/05/08 17:53:51  pwagner
+! Converted runtimes to character-valued; added DB types
+!
 ! Revision 2.49  2011/06/29 21:43:23  pwagner
 ! Some cases may safely omit l1b files
 !
