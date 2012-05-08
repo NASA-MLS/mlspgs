@@ -130,7 +130,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_APRIORI            = s_anygoodvalues + 1
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_BOOLEAN            = s_binSelector + 1
-  integer, parameter :: S_CATCHWARNING       = s_boolean + 1
+  integer, parameter :: S_CASE               = s_boolean + 1
+  integer, parameter :: S_CATCHWARNING       = s_case + 1
   integer, parameter :: S_CHECKPOINT         = s_catchwarning + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_checkpoint + 1
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
@@ -151,7 +152,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_DUMP               = s_disjointEquations + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
   integer, parameter :: S_EMPIRICALGEOMETRY  = s_dumpblocks + 1
-  integer, parameter :: S_FGRID              = s_empiricalGeometry + 1
+  integer, parameter :: S_ENDSELECT          = s_empiricalGeometry + 1
+  integer, parameter :: S_FGRID              = s_endSelect + 1
   integer, parameter :: S_FILL               = s_fGrid + 1
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
   integer, parameter :: S_FILLDIAGONAL       = s_fillcovariance + 1
@@ -193,7 +195,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_RESTRICTRANGE      = s_regularization + 1
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
   integer, parameter :: S_ROWSCALE           = s_retrieve + 1
-  integer, parameter :: S_SIDS               = s_rowscale + 1
+  integer, parameter :: S_SELECT             = s_rowscale + 1
+  integer, parameter :: S_SIDS               = s_select + 1
   integer, parameter :: S_SKIP               = s_sids + 1
   integer, parameter :: S_SNOOP              = s_skip + 1
   integer, parameter :: S_STREAMLINEHESSIAN  = s_snoop + 1
@@ -358,6 +361,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
     spec_indices(s_Boolean) =              add_ident ( 'boolean' )
+    spec_indices(s_case) =                 add_ident ( 'case' )
     spec_indices(s_catchwarning) =         add_ident ( 'catchwarning' )
     spec_indices(s_checkpoint) =           add_ident ( 'checkpoint' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
@@ -379,6 +383,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_disjointEquations) =    add_ident ( 'disjointEquations' )
     spec_indices(s_dump) =                 add_ident ( 'dump' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
+    spec_indices(s_endSelect) =            add_ident ( 'endSelect' )
     spec_indices(s_fGrid) =                add_ident ( 'fGrid' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_fillCovariance) =       add_ident ( 'fillCovariance' )
@@ -421,6 +426,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_rowScale) =             add_ident ( 'rowScale' )
+    spec_indices(s_select) =               add_ident ( 'select' )
     spec_indices(s_sids) =                 add_ident ( 'sids' )
     spec_indices(s_skip) =                 add_ident ( 'skip' )
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
@@ -712,6 +718,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_Boolean, &
              begin, f+f_formula, t+t_string, n+n_field_type, &
              begin, f+f_values, t+t_boolean, n+n_field_type, &
+             begin, f+f_label, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_fGrid, &
              begin, f+f_coordinate, t+t_fGridCoord, n+n_field_type, &
@@ -1072,8 +1079,9 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_reevaluate, &
-             begin, f+f_formula, t+t_string, nr+n_field_type, &
+             begin, f+f_formula, t+t_string, n+n_field_type, &
              begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             begin, f+f_label, t+t_string, n+n_field_type, &
              np+n_spec_def /) )
 
     call make_tree( (/ &
@@ -1387,6 +1395,20 @@ contains ! =====     Public procedures     =============================
              begin, f+f_weightsVector, s+s_vector, nr+n_field_spec, &
              begin, f+f_totalPowerVector, s+s_vector, nr+n_field_spec, &
              nadp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_endSelect, &
+             begin, f+f_label, t+t_string, n+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_select, &
+             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             begin, f+f_label, t+t_string, n+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_case, &
+             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             begin, f+f_label, t+t_string, n+n_field_type, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_Boolean
       begin, s+s_skip, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
@@ -1670,10 +1692,12 @@ contains ! =====     Public procedures     =============================
              s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
              s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_diff, s+s_dump, s+s_gridded, &
-             s+s_l2aux, s+s_l2gp, s+s_readGriddedData, s+s_snoop, n+n_section, &
-      begin, z+z_mergegrids, s+s_Boolean, s+s_concatenate, s+s_ConvertEtaToP, &
-             s+s_delete, s+s_diff, s+s_dump, s+s_isGridEmpty, s+s_Gridded, &
-             s+s_merge, s+s_mergeGrids, s+s_reevaluate, s+s_skip, s+s_time, &
+             s+s_l2aux, s+s_l2gp, s+s_readGriddedData, s+s_snoop, &
+             s+s_Boolean, s+s_case, s+s_endSelect, s+s_select, n+n_section, &
+      begin, z+z_mergegrids, s+s_Boolean, s+s_case, s+s_concatenate, &
+             s+s_ConvertEtaToP, s+s_delete, s+s_diff, s+s_dump, s+s_isGridEmpty, &
+             s+s_endSelect, s+s_Gridded, s+s_merge, s+s_mergeGrids, &
+             s+s_reevaluate, s+s_select, s+s_skip, s+s_time, &
              s+s_vgrid, s+s_wmoTrop, s+s_wmoTropFromGrids, &
              n+n_section /) )
     call make_tree ( (/ &
@@ -1697,22 +1721,24 @@ contains ! =====     Public procedures     =============================
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_fill, &
-             s+s_anyGoodRadiances, s+s_anyGoodValues, s+s_catchWarning, &
+             s+s_anyGoodRadiances, s+s_anyGoodValues, s+s_case, s+s_catchWarning, &
              s+s_compare, s+s_computeTotalPower, s+s_destroy, &
-             s+s_diff, s+s_directRead, s+s_dump, s+s_fill, s+s_fillCovariance, &
+             s+s_diff, s+s_directRead, s+s_dump, s+s_endSelect, &
+             s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
              s+s_hessian, s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
-             s+s_populateL2PCBin, s+s_reevaluate, s+s_restrictRange, &
+             s+s_populateL2PCBin, s+s_reevaluate, s+s_restrictRange, s+s_select, &
              s+s_skip, s+s_snoop, s+s_streamlineHessian, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
-      begin, z+z_retrieve, s+s_anyGoodValues, s+s_catchWarning, &
+      begin, z+z_retrieve, s+s_anyGoodValues, s+s_case, s+s_catchWarning, &
              s+s_checkpoint, s+s_compare, s+s_diff, s+s_dump, s+s_dumpBlocks, &
-             s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, &
-             s+s_reevaluate, s+s_restrictRange, s+s_retrieve, &
+             s+s_endSelect, s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, &
+             s+s_reevaluate, s+s_restrictRange, s+s_retrieve, s+s_select, &
              s+s_sids, s+s_skip, s+s_snoop, s+s_subset, s+s_time, s+s_updateMask, &
              n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
-             s+s_directWrite, s+s_diff, s+s_dump, s+s_skip, n+n_section, &
+             s+s_case, s+s_directWrite, s+s_diff, s+s_dump, s+s_endSelect, &
+             s+s_select, s+s_skip, n+n_section, &
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
              s+s_disjointEquations, s+s_normalEquations, s+s_reflect, &
              s+s_regularization, s+s_rowScale, nc+n_section, &
@@ -1739,6 +1765,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.543  2012/05/08 17:47:34  pwagner
+! Added Select .. Case .. EndSelect control structure
+!
 ! Revision 2.542  2012/05/01 23:15:39  pwagner
 ! May use formula to decide whether to skip
 !
