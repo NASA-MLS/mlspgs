@@ -145,10 +145,14 @@ contains ! =====     Public Procedures     =============================
 
   subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
     & fileDataBase )
+    use DUMPCOMMAND_M, only: BOOLEANFROMFORMULA, MLSCASE, MLSENDSELECT, &
+      & MLSSELECT, MLSSELECTING, SKIP
     use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP
+    use INIT_TABLES_MODULE, only: S_BOOLEAN, S_CASE, S_ENDSELECT, S_SELECT, S_SKIP
     use L2AUXDATA, only: L2AUXDATA_T, DUMP
     use L2GPDATA, only: L2GPDATA_T, DUMP
-    use TREE, only: NSONS, SUBTREE
+    use TREE, only: DECORATE, NSONS, SUBTREE
+    use TREE_TYPES, only: N_NAMED
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -158,12 +162,14 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: Details             ! How much info about the files to dump
     integer :: I
+    integer :: KEY
     integer :: LastAprioriPCF      ! l2gp or l2aux  apriori
     integer :: LastClimPCF         ! l3ascii or gloria format
     integer :: LastDAOPCF
     integer :: LastGEOS5PCF
     integer :: LastHeightPCF
     integer :: LastNCEPPCF
+    integer :: NAME                     ! Index into string table
     integer :: SON              ! Of root, an n_spec_args or a n_named
     real :: T1, T2                      ! for timing
     logical :: TIMING
@@ -194,29 +200,54 @@ contains ! =====     Public Procedures     =============================
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       son = subtree(i,root)
-      call processOneAprioriFile ( son, L2GPDatabase, L2auxDatabase, &
-        & GriddedDatabase, fileDataBase, &
-        & LastAprioriPCF , &
-        & LastClimPCF    , &
-        & LastDAOPCF     , &
-        & LastGEOS5PCF   , &
-        & LastHeightPCF  , &
-        & LastNCEPPCF     &
-          )
-
+      if ( node_id(son) == n_named ) then ! Is spec labed?
+        key = subtree ( 2, son )
+        name = sub_rosa ( subtree(1,son) )
+      else
+        key = son
+      end if
+      if ( MLSSelecting .and. &
+        & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
+      select case( get_spec_id(key) )
+      case ( s_Boolean )
+        call decorate ( key,  BooleanFromFormula ( name, key ) )
+      case ( s_select ) ! ============ Start of select .. case ==========
+        ! We'll start seeking a matching case
+        call MLSSelect (key)
+      case ( s_case ) ! ============ seeking matching case ==========
+        ! We'll continue seeking a match unless the case is TRUE
+        call MLSCase (key)
+      case ( s_endSelect ) ! ============ End of select .. case ==========
+        ! We'done with seeking a match
+        call MLSEndSelect (key)
+      case ( s_skip ) ! ============================== Skip ==========
+        ! We'll skip the rest of the section if the Boolean cond'n is TRUE
+        if ( Skip(key) ) exit
+      case default
+        call processOneAprioriFile ( son, L2GPDatabase, L2auxDatabase, &
+          & GriddedDatabase, fileDataBase, &
+          & LastAprioriPCF , &
+          & LastClimPCF    , &
+          & LastDAOPCF     , &
+          & LastGEOS5PCF   , &
+          & LastHeightPCF  , &
+          & LastNCEPPCF     &
+            )
+      end select
     end do                              ! Lines in l2cf loop
-    
-    call output( '------------------- apriori datatypes --------------', advance='yes' )
-    call output ( 'l2gp', advance='yes' )
-    call dump( trim(APrioriFiles%l2gp), 'l2gp files' )
-    call output ( 'l2aux', advance='yes' )
-    call dump( trim(APrioriFiles%l2aux), 'l2aux files' )
-    call output ( 'ncep', advance='yes' )
-    call dump( trim(APrioriFiles%ncep), 'ncep files' )
-    call output ( 'dao', advance='yes' )
-    call dump( trim(APrioriFiles%dao), 'dao files' )
-    call output ( 'geos5', advance='yes' )
-    call dump( trim(APrioriFiles%geos5), 'geos5 files' )
+    if( Details > -3 ) then
+      call output( '------------------- apriori datatypes --------------', advance='yes' )
+      call output ( 'l2gp', advance='yes' )
+      call dump( trim(APrioriFiles%l2gp), 'l2gp files' )
+      call output ( 'l2aux', advance='yes' )
+      call dump( trim(APrioriFiles%l2aux), 'l2aux files' )
+      call output ( 'ncep', advance='yes' )
+      call dump( trim(APrioriFiles%ncep), 'ncep files' )
+      call output ( 'dao', advance='yes' )
+      call dump( trim(APrioriFiles%dao), 'dao files' )
+      call output ( 'geos5', advance='yes' )
+      call dump( trim(APrioriFiles%geos5), 'geos5 files' )
+    endif
     if ( ERROR/=0 ) then
       call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with read_apriori section')
@@ -377,6 +408,7 @@ contains ! =====     Public Procedures     =============================
     sumDelp = .false.
     fileName = 0
     gridIndex = 0
+    griddedOrigin = l_none
     son = root
     swathName = 0
     do j = 2, nsons(key)
@@ -967,7 +999,8 @@ contains ! =====     Public Procedures     =============================
       if( Details > -3 .and. gridIndex <= size(griddedDatabase) ) then
         if ( specialDumpFile /= ' ' ) &
           & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-        call dump( GriddedDatabase(gridIndex), details )
+        if ( griddedOrigin /= l_none ) &
+          & call dump( GriddedDatabase(gridIndex), details )
         if ( specialDumpFile /= ' ' ) &
           & call revertOutput
       endif
@@ -1315,6 +1348,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.94  2012/05/08 17:50:31  pwagner
+! Added Select .. Case .. EndSelect control structure
+!
 ! Revision 2.93  2012/03/12 17:31:59  pwagner
 ! New api for writeAPrioriAttributes; can avoid replacing if already written
 !
