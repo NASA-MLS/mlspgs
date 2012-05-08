@@ -59,7 +59,7 @@ contains ! =====     Public Procedures     =============================
     use DUMPCOMMAND_M, only: BOOLEANFROMANYGOODRADIANCES, &
       & BOOLEANFROMANYGOODVALUES, &
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
-      & DUMPCOMMAND, SKIP
+      & DUMPCOMMAND, SKIP, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING
     use EXPR_M, only: EXPR, EXPR_CHECK
     use FILLUTILS_1, only: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
       & COMPUTETOTALPOWER, &
@@ -164,11 +164,12 @@ contains ! =====     Public Procedures     =============================
       & L_ZETA
     ! NOW THE SPECIFICATIONS:
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
-      & S_CATCHWARNING, S_COMPARE, S_COMPUTETOTALPOWER, S_DESTROY, &
-      & S_DIFF, S_DIRECTREAD, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
+      & S_CASE, S_CATCHWARNING, S_COMPARE, S_COMPUTETOTALPOWER, S_DESTROY, &
+      & S_DIFF, S_DIRECTREAD, S_DUMP, S_ENDSELECT, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_FLAGCLOUD, S_FLUSHL2PCBINS, S_FLUSHPFA, &
       & S_HESSIAN, S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
-      & S_REEVALUATE, S_RESTRICTRANGE, S_SKIP, S_SNOOP, S_STREAMLINEHESSIAN, &
+      & S_REEVALUATE, S_RESTRICTRANGE, &
+      & S_SELECT, S_SKIP, S_SNOOP, S_STREAMLINEHESSIAN, &
       & S_SUBSET, S_TIME, S_TRANSFER, S_UPDATEMASK, S_VECTOR
     ! NOW SOME ARRAYS
     use INTRINSIC, only: LIT_INDICES, &
@@ -537,6 +538,8 @@ contains ! =====     Public Procedures     =============================
         key = son
         vectorName = 0
       end if
+      if ( MLSSelecting .and. &
+        & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
       additional = .false.
       allowMissing = .false.
       asPercentage = .false.
@@ -647,6 +650,15 @@ contains ! =====     Public Procedures     =============================
       case ( s_anygoodradiances )
         call decorate ( key, &
           & BooleanFromAnyGoodRadiances ( key, chunks(chunkNo), filedatabase ) )
+      case ( s_select ) ! ============ Start of select .. case ==========
+        ! We'll start seeking a matching case
+        call MLSSelect (key)
+      case ( s_case ) ! ============ seeking matching case ==========
+        ! We'll continue seeking a match unless the case is TRUE
+        call MLSCase (key)
+      case ( s_endSelect ) ! ============ End of select .. case ==========
+        ! We'done with seeking a match
+        call MLSEndSelect (key)
       case ( s_catchWarning )
         call decorate ( key,  BooleanFromCatchWarning ( key ) )
       case ( s_compare )
@@ -2855,6 +2867,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.403  2012/05/08 17:49:04  pwagner
+! Added Select .. Case .. EndSelect control structure
+!
 ! Revision 2.402  2012/02/24 21:20:44  pwagner
 ! DirectRead may /interpolate vertically
 !
