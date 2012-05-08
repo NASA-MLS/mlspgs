@@ -24,7 +24,7 @@ module DumpCommand_M
   public :: BooleanFromComparingQtys
   public :: BooleanFromEmptyGrid
   public :: BooleanFromFormula
-  public :: DumpCommand, Skip
+  public :: MLSCase, DumpCommand, MLSEndSelect, MLSSelect, Skip
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -32,6 +32,11 @@ module DumpCommand_M
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  logical, parameter :: countEmpty = .true. ! Except where overriden locally
+  integer, parameter :: MAXRESULTLEN = 64
+  logical, public, save             :: MLSSelecting = .false.
+  logical, save               :: MLSSelectedAlready = .false.
+  character(LEN=MAXRESULTLEN), save :: selectLabel  = ' '
 contains
 
   ! ------------------------------------- BooleanFromAnyGoodRadiances --
@@ -61,7 +66,6 @@ contains
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     integer             :: hashsize
     ! Internal variables
-    logical, parameter :: countEmpty = .true.
     integer :: field
     integer :: field_index
     integer :: fieldValue
@@ -130,7 +134,8 @@ contains
       tvalue = .false.
     end if
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+      & lowercase(trim(nameString)), BooleanToString(tvalue), &
+      & countEmpty=countEmpty )
     hashsize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
     if ( switchDetail(switches, 'bool') > 0 ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
@@ -159,7 +164,6 @@ contains
     type (vector_T), dimension(:) :: Vectors
     integer             :: thesize
     ! Internal variables
-    logical, parameter :: countEmpty = .true.
     integer :: field
     integer :: field_index
     integer :: fieldValue
@@ -222,7 +226,8 @@ contains
       & precision=precisionQuantity, quality=qualityQuantity, &
       & status=statusQuantity, quality_min=quality_min )
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+      & lowercase(trim(nameString)), BooleanToString(tvalue), &
+      & countEmpty=countEmpty )
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
     if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
@@ -251,7 +256,6 @@ contains
     integer, intent(in) :: root
     integer             :: size
     ! Internal variables
-    logical, parameter :: countEmpty = .true.
     integer :: field
     integer :: field_index
     integer :: fieldValue
@@ -297,7 +301,8 @@ contains
         & index( lowerCase(LastWarningMsg), lowerCase(trim(adjustl(message))) ) > 0
     end if
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+      & lowercase(trim(nameString)), BooleanToString(tvalue), &
+      & countEmpty=countEmpty )
     size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
     if ( switchDetail(switches, 'bool') > -1 ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
@@ -343,7 +348,6 @@ contains
     type (vectorValue_T), pointer :: AQUANTITY
     type (vectorValue_T), pointer :: BQUANTITY
     real(rv) :: A, B, C                       ! constant "c" in formula
-    logical, parameter :: countEmpty = .true.
     integer :: field
     integer :: field_index
     integer :: fieldValue
@@ -427,10 +431,10 @@ contains
     arg(1) = lowerCase(arg(1))
     arg(2) = lowerCase(arg(2))
     if ( arg(1) /= 'a' ) then
-      call mlsmessage (MLSMSG_Error, moduleName, &
+      call MLSMessage (MLSMSG_Error, moduleName, &
         & 'Formula in compare must be "flattening a op [b][c]".' )
     else if( index('<>=', trim(op)) < 1 ) then
-      call mlsmessage (MLSMSG_Error, moduleName, &
+      call MLSMessage (MLSMSG_Error, moduleName, &
         & 'Formula in compare found unrecognized relation: ' // trim(op) )
     end if
     ! What kind of flattening?
@@ -466,11 +470,12 @@ contains
         & b = statFun( trim(flattening), bQuantity%values, aQuantity%mask )
       tvalue = isRelation( trim(op), a, b )
     case default
-      call mlsmessage (MLSMSG_Error, moduleName, &
+      call MLSMessage (MLSMSG_Error, moduleName, &
         & 'Formula in compare found unrecognized op: ' // trim(op) )
     end select
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+      & lowercase(trim(nameString)), BooleanToString(tvalue), &
+      & countEmpty=countEmpty )
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
     if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
@@ -551,7 +556,6 @@ contains
     type (GRIDDEDDATA_T), dimension(:), pointer :: Grids
     integer             :: thesize
     ! Internal variables
-    logical, parameter :: countEmpty = .true.
     integer :: field
     integer :: field_index
     integer :: fieldValue
@@ -585,7 +589,8 @@ contains
     tvalue = .true.
     if ( associated(grid) ) tvalue = grid%empty
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+      & lowercase(trim(nameString)), BooleanToString(tvalue), &
+      & countEmpty=countEmpty )
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
     if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
@@ -603,7 +608,7 @@ contains
     ! Reevaluate, formula="formula", Boolean="name"
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_LABEL, F_VALUES
     use MLSKINDS, only: R8
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
@@ -616,12 +621,12 @@ contains
     integer, intent(in) :: root
     integer             :: size
     ! Internal variables
-    logical, parameter :: countEmpty = .true.
     integer :: field
     integer :: field_index
     integer :: fieldValue
     character(len=255) :: formula
     integer :: keyNo
+    logical :: literal
     character(len=32) :: nameString
     integer :: son
     logical :: tvalue
@@ -630,6 +635,7 @@ contains
     logical :: verbose
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
+    literal= .false.
     tvalue= .false.
     if ( name > 0 ) then
       call get_string(name, nameString)
@@ -652,6 +658,9 @@ contains
       case ( f_formula )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         tvalue = myBooleanValue (formula)
+      case ( f_label )
+        call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
+        literal = .true.
       case ( f_values )
         call expr ( son , unitAsArray, valueAsArray )
         tvalue = ( valueAsArray(1) /= 0 )
@@ -659,8 +668,15 @@ contains
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
-    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & lowercase(trim(nameString)), tvalue, countEmpty=countEmpty )
+    if ( literal ) then
+      ! print *, 'Oops-you dummy! code this missing piece'
+      call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+        & lowercase(trim(nameString)), lowercase(trim(formula)), countEmpty=countEmpty )
+    else
+      call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), BooleanToString(tvalue), &
+      & countEmpty=countEmpty )
+    endif
     size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
     if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
@@ -717,7 +733,7 @@ contains
     use MLSSETS, only: FINDFIRST
     use MLSSIGNALS_M, only: DUMP, GETRADIOMETERINDEX, RADIOMETERS, SIGNALS
     use MLSSTRINGS, only: INDEXES, LOWERCASE
-    use MLSSTRINGLISTS, only: BOOLEANVALUE, SWITCHDETAIL
+    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETHASHELEMENT, SWITCHDETAIL
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use PFADATABASE_M, only: DUMP, DUMP_PFADATABASE, DUMP_PFAFILEDATABASE, &
@@ -751,7 +767,6 @@ contains
 
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     logical :: Clean
-    logical, parameter :: countEmpty = .true.
     real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
     character(8) :: Date
     integer :: DetailReduction
@@ -768,6 +783,7 @@ contains
     real(rv) :: height  ! We will use this to dump just one surface
     integer :: hessianIndex
     integer :: hessianIndex2
+    character(len=80) :: Label  ! E.g., 'BAND8'
     type (Matrix_T), pointer :: matrix
     type (Matrix_T), pointer :: matrix2
     integer :: MatrixIndex
@@ -1031,9 +1047,11 @@ contains
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         booleanString = lowerCase(booleanString)
         call output( trim(booleanString) // ' = ', advance='no' )
-        tvalue = BooleanValue ( booleanString, &
-          & runTimeValues%lkeys, runTimeValues%lvalues)
-        call output( tvalue, advance='yes' )
+        call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & booleanString, label, countEmpty )
+        ! tvalue = BooleanValue ( booleanString, &
+        !  & runTimeValues%lkeys, runTimeValues%lvalues )
+        call output( label, advance='yes' )
       case ( f_clean )
         clean = get_boolean(son)
         if ( clean ) optionsString = trim(optionsString) // 'c'
@@ -1470,6 +1488,171 @@ contains
 
   end subroutine DumpCommand
   
+  subroutine  MLSCase ( Root )
+  ! Returns TRUE if the label or Boolean field of the last Select command
+  ! matches the label or Boolean field of the current Case command
+  ! or if the current Case command is given the special label 'default',
+  ! a wildcard matching anything
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use MLSSTRINGLISTS, only: GETHASHELEMENT
+    use MLSSTRINGS, only: LOWERCASE
+    use MORETREE, only: GET_FIELD_ID
+    use STRING_TABLE, only: GET_STRING
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: NSONS, SUB_ROSA, SUBTREE
+    ! Args
+    integer, intent(in) :: root
+    ! Internal variables
+    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND8'
+    integer :: GSON, J
+    integer :: FieldIndex
+    character(len=80) :: Label  ! E.g., 'BAND8'
+    integer :: Son
+    logical :: verbose
+    ! Executable
+    MLSSelecting = .true. ! Defaults to skipping rest of case
+    if ( MLSSelectedAlready ) return
+    if ( toggle(gen) ) then
+      call trace_begin ( 'MLSCase', root )
+    else
+      call MLSMessageCalls( 'push', constantName='MLSCase' )
+    end if
+    do j = 2, nsons(root)
+      son = subtree(j,root) ! The argument
+      fieldIndex = get_field_id(son)
+      gson = son
+      if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
+      select case ( fieldIndex )
+      case (f_Boolean)
+        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
+        booleanString = lowerCase(booleanString)
+        call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & booleanString, label, countEmpty )
+      case (f_label)
+        call get_string ( sub_rosa(gson), label, strip=.true. )
+      case default
+        ! Should not have got here if parser worked correctly
+      end select
+    enddo
+    label = lowerCase(label)
+    MLSSelecting = ( label /= selectLabel ) .and. ( label /= 'default' )
+    ! We must store whether we have ever had a match
+    MLSSelectedAlready = MLSSelectedAlready .or. .not. MLSSelecting
+    if ( toggle(gen) ) then
+      call trace_end ( 'MLSCase' )
+    else
+      call MLSMessageCalls( 'pop' )
+    end if
+  end subroutine  MLSCase
+  
+  subroutine  MLSSelect ( Root )
+  ! Fills the global variable selectLabel with
+  ! the Label field or value of the Boolean field
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use MLSSTRINGLISTS, only: GETHASHELEMENT
+    use MLSSTRINGS, only: LOWERCASE
+    use MORETREE, only: GET_FIELD_ID
+    use STRING_TABLE, only: GET_STRING
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: NSONS, SUB_ROSA, SUBTREE
+    ! Args
+    integer, intent(in) :: root
+    ! Internal variables
+    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND8'
+    integer :: GSON, J
+    integer :: FieldIndex
+    character(len=80) :: Label          ! E.g., 'BAND8'
+    integer :: Son
+    logical :: verbose
+    ! Executable
+    if ( toggle(gen) ) then
+      call trace_begin ( 'MLSSelect', root )
+    else
+      call MLSMessageCalls( 'push', constantName='MLSSelect' )
+    end if
+    label = ' '
+    do j = 2, nsons(root)
+      son = subtree(j,root) ! The argument
+      fieldIndex = get_field_id(son)
+      gson = son
+      if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
+      select case ( fieldIndex )
+      case (f_Boolean)
+        call get_string ( sub_rosa(gson), booleanString, strip=.true. )
+        booleanString = lowerCase(booleanString)
+        call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & booleanString, label, countEmpty )
+      case (f_label)
+        call get_string ( sub_rosa(gson), label, strip=.true. )
+      case default
+        ! Should not have got here if parser worked correctly
+      end select
+    enddo
+    selectLabel = lowerCase(label)
+    MLSSelecting = .true.
+    if ( toggle(gen) ) then
+      call trace_end ( 'MLSSelect' )
+    else
+      call MLSMessageCalls( 'pop' )
+    end if
+  end subroutine MLSSelect
+  
+  subroutine  MLSEndSelect ( Root )
+  ! Resets the global variable MLSSelecting
+  ! Optionally puts note about end of selecting in log file
+    use INIT_TABLES_MODULE, only: F_LABEL
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_Info
+    use MLSSTRINGS, only: LOWERCASE
+    use MORETREE, only: GET_FIELD_ID
+    use STRING_TABLE, only: GET_STRING
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: NSONS, SUB_ROSA, SUBTREE
+    ! Args
+    integer, intent(in) :: root
+    ! Internal variables
+    character(len=80) :: Label  ! E.g., 'BAND8'
+    integer :: GSON, J
+    integer :: FieldIndex
+    integer :: Son
+    logical :: verbose
+    ! Executable
+    MLSSelectedAlready = .false.
+    if ( toggle(gen) ) then
+      call trace_begin ( 'MLSEndSelect', root )
+    else
+      call MLSMessageCalls( 'push', constantName='MLSEndSelect' )
+    end if
+    label = ' '
+    do j = 2, nsons(root)
+      son = subtree(j,root) ! The argument
+      fieldIndex = get_field_id(son)
+      gson = son
+      if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
+      select case ( fieldIndex )
+      case (f_label)
+        call get_string ( sub_rosa(gson), label, strip=.true. )
+        label = lowerCase(label)
+      case default
+        ! Should not have got here if parser worked correctly
+      end select
+    enddo
+    MLSSelecting = .false.
+    if ( len_trim(label) > 0 ) call MLSMessage (MLSMSG_Info, moduleName, &
+        & 'End selecting for ' // trim(label) // '::' // trim(SelectLabel) )
+    if ( toggle(gen) ) then
+      call trace_end ( 'MLSEndSelect' )
+    else
+      call MLSMessageCalls( 'pop' )
+    end if
+  end subroutine MLSEndSelect
+  
   logical function Skip ( Root )
     ! Returns value of Boolean field (if present);
     ! If TRUE should skip rest of section in which SKIP command appears
@@ -1498,9 +1681,9 @@ contains
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
     if ( toggle(gen) ) then
-      call trace_begin ( 'DumpCommand', root )
+      call trace_begin ( 'Skip', root )
     else
-      call MLSMessageCalls( 'push', constantName=ModuleName )
+      call MLSMessageCalls( 'push', constantName='Skip' )
     end if
     skip = .true. ! Defaults to skipping rest of section
     do j = 2, nsons(root)
@@ -1526,22 +1709,20 @@ contains
       endif
       if ( skip ) &
         & call output( '(Skipping rest of this section)', advance='yes' )
-      if ( toggle(gen) ) then
-        call trace_end ( 'DumpCommand' )
-      else
-        call MLSMessageCalls( 'pop' )
-      end if
     enddo
+    if ( toggle(gen) ) then
+      call trace_end ( 'Skip' )
+    else
+      call MLSMessageCalls( 'pop' )
+    end if
   end function Skip
 
 ! =====     Private Procedures     =====================================
 
   function myBooleanValue ( formula ) result ( bvalue )
-    use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, RUNTIMEVALUES, &
-      & SIPS_VERSION
-    use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT
-    use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
+    use MLSSTRINGS, only: LOWERCASE
     use OUTPUT_M, only: OUTPUTNAMEDVALUE
     ! Calculate the boolean value according to
     ! (1) The logical value of its formula, if the formula
@@ -1575,31 +1756,56 @@ contains
       return
     endif
     rhs = lowercase(adjustl(rhs))
-    lhs = lowercase(adjustl(lhs))
     ! OK, so now let's try to make sense of the lhs
     ! Note the necessary type conversions for some variables
     ! that aren't chracter-valued
-    select case (lhs)
-    case ('checkpaths')
-      lhs = merge( 'true ', 'false', checkpaths )
-    case ('chunknumber')
-      call writeIntsToChars ( currentChunkNumber, lhs )
-    case ('phasename')
-      lhs = lowercase(currentPhaseName)
-    case ('sips_version')
-      lhs = merge( 'true ', 'false', sips_version )
-    case ('need_l1bfiles')
-      lhs = merge( 'true ', 'false', need_l1bfiles )
-    case default
-      ! What the devil did you mean?
-      ! Maybe just whether two character strings are the same
-      ! that were assembled using m4 trickery
-    end select
+    ! (Should we have done this for rhs, too?)
+    lhs = Evaluator(lowercase(adjustl(lhs)))
     bvalue = (lhs == rhs)
     call outputnamedvalue('lhs', trim(lhs) )
     call outputnamedvalue('rhs', trim(rhs) )
     if ( reverse ) bvalue = .not. bvalue  ! If we meant not equal
   end function myBooleanValue
+
+  ! This evaluates a character-valued arg, being alert for special values
+  ! that name global variables, e.g. 'phasename'
+  function Evaluator ( arg ) result( itsValue )
+    use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, &
+      & SIPS_VERSION
+    use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
+    use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
+    ! Args
+    character(len=*), intent(in) :: arg
+    character(len=MAXRESULTLEN)  :: itsValue
+    ! Executable
+    select case (arg)
+    case ('checkpaths')
+      itsValue = merge( 'true ', 'false', checkpaths )
+    case ('chunknumber')
+      call writeIntsToChars ( currentChunkNumber, itsValue )
+    case ('phasename')
+      itsValue = lowercase(currentPhaseName)
+    case ('sips_version')
+      itsValue = merge( 'true ', 'false', sips_version )
+    case ('need_l1bfiles')
+      itsValue = merge( 'true ', 'false', need_l1bfiles )
+    case default
+      ! What the devil did you mean?
+      ! Maybe just whether two character strings are the same
+      ! that were assembled using m4 trickery
+      itsValue = arg
+    end select
+  end function Evaluator
+  
+  function BooleanToString ( Bool ) result ( str )
+    ! Convert a Boolean argument to a character-valued string
+    ! I.e., .true. -> 'true'
+    !       .false. -> 'false'
+    ! Args
+    logical, intent(in) :: Bool
+    character(len=6)    :: str
+    str = merge( 'true ', 'false', Bool )
+  end function BooleanToString
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1614,6 +1820,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.73  2012/05/08 17:48:37  pwagner
+! Added Select .. Case .. EndSelect control structure
+!
 ! Revision 2.72  2012/05/01 23:18:13  pwagner
 ! More capable Boolean formula; adds relations
 !
