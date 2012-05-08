@@ -50,10 +50,11 @@ contains ! =====     Public Procedures     =============================
     use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE
     use CHUNKS_M, only: MLSCHUNK_T
     use DIRECTWRITE_M, only: DIRECTDATA_T
-    use DUMPCOMMAND_M, only: DUMPCOMMAND, SKIP
+    use DUMPCOMMAND_M, only: DUMPCOMMAND, &
+      & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
     use HGRIDSDATABASE, only: HGRID_T
     use INIT_TABLES_MODULE, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, &
-      & S_DIFF, S_DUMP, S_LABEL, S_SKIP
+      & S_ENDSELECT, S_CASE, S_DIFF, S_DUMP, S_LABEL, S_SELECT, S_SKIP
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use HESSIANMODULE_1, only: HESSIAN_T
     use L2GPDATA, only: L2GPDATA_T
@@ -177,6 +178,8 @@ contains ! =====     Public Procedures     =============================
         else
           key = son
         end if
+        if ( MLSSelecting .and. &
+          & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
         specId = get_spec_id ( key )
         select case ( specId )
         case ( s_diff, s_dump ) ! ======================= Diff, Dump ==========
@@ -191,6 +194,15 @@ contains ! =====     Public Procedures     =============================
         case ( s_skip ) ! ============================== Skip ==========
           ! We'll skip the rest of the section if the Boolean cond'n is TRUE
           if ( Skip(key) ) exit
+        case ( s_select ) ! ============ Start of select .. case ==========
+          ! We'll start seeking a matching case
+          call MLSSelect (key)
+        case ( s_case ) ! ============ seeking matching case ==========
+          ! We'll continue seeking a match unless the case is TRUE
+          call MLSCase (key)
+        case ( s_endSelect ) ! ============ End of select .. case ==========
+          ! We'done with seeking a match
+          call MLSEndSelect (key)
         case ( s_time )
           ! Only say the time the first time round
           if ( pass == 1 ) then
@@ -2206,6 +2218,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.148  2012/05/08 17:51:11  pwagner
+! Added Select .. Case .. EndSelect control structure
+!
 ! Revision 2.147  2012/05/01 23:16:35  pwagner
 ! Partly retreated from last optimistic commit
 !
