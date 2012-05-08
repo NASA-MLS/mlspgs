@@ -4142,7 +4142,7 @@ contains ! ======================= Public Procedures =========================
 
   ! -------------------------------------  LoadFromHDF5DS_intarr1  -----
   subroutine LoadFromHDF5DS_intarr1 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4156,6 +4156,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'intarr1' ! Type and rank in subr name
 
@@ -4165,7 +4166,7 @@ contains ! ======================= Public Procedures =========================
 
   ! -------------------------------------  LoadFromHDF5DS_intarr2  -----
   subroutine LoadFromHDF5DS_intarr2 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4179,6 +4180,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'intarr2' ! Type and rank in subr name
 
@@ -4188,7 +4190,7 @@ contains ! ======================= Public Procedures =========================
 
   ! -------------------------------------  LoadFromHDF5DS_intarr3  -----
   subroutine LoadFromHDF5DS_intarr3 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4202,6 +4204,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'intarr3' ! Type and rank in subr name
 
@@ -4211,7 +4214,7 @@ contains ! ======================= Public Procedures =========================
 
   ! -------------------------------------  LoadFromHDF5DS_intarr4  -----
   subroutine LoadFromHDF5DS_intarr4 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_INTEGER ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4225,6 +4228,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'intarr4' ! Type and rank in subr name
 
@@ -4259,7 +4263,7 @@ contains ! ======================= Public Procedures =========================
 
   ! -------------------------------------  LoadFromHDF5DS_dblarr1  -----
   subroutine LoadFromHDF5DS_dblarr1 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4273,6 +4277,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'dblarr1' ! Type and rank in subr name
 
@@ -4282,7 +4287,7 @@ contains ! ======================= Public Procedures =========================
 
   ! -------------------------------------  LoadFromHDF5DS_dblarr2  -----
   subroutine LoadFromHDF5DS_dblarr2 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4296,6 +4301,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'dblarr2' ! Type and rank in subr name
 
@@ -4305,7 +4311,7 @@ contains ! ======================= Public Procedures =========================
 
   ! -------------------------------------  LoadFromHDF5DS_dblarr3  -----
   subroutine LoadFromHDF5DS_dblarr3 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4319,6 +4325,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'dblarr3' ! Type and rank in subr name
 
@@ -4328,7 +4335,7 @@ contains ! ======================= Public Procedures =========================
 
   ! -------------------------------------  LoadFromHDF5DS_dblarr4  -----
   subroutine LoadFromHDF5DS_dblarr4 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_DOUBLE ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4342,6 +4349,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'dblarr4' ! Type and rank in subr name
 
@@ -4351,7 +4359,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr1  -----
   subroutine LoadFromHDF5DS_snglarr1 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4365,7 +4373,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
-                                 ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'snglarr1' ! Type and rank in subr name
 
@@ -4375,7 +4383,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr2  -----
   subroutine LoadFromHDF5DS_snglarr2 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4389,6 +4397,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'snglarr2' ! Type and rank in subr name
 
@@ -4398,7 +4407,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr3  -----
   subroutine LoadFromHDF5DS_snglarr3 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4412,6 +4421,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'snglarr3' ! Type and rank in subr name
 
@@ -4421,7 +4431,7 @@ contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------  LoadFromHDF5DS_snglarr4  -----
   subroutine LoadFromHDF5DS_snglarr4 ( MLSFile, name, value, &
-    & start, count, stride, block )
+    & start, count, stride, block, MissingOK )
     ! This routine loads a predefined array with values from a DS
     use H5GLOBAL, only: H5T =>  H5T_NATIVE_REAL ! HDF type
     type (MLSFile_T)   :: MLSFile
@@ -4435,6 +4445,7 @@ contains ! ======================= Public Procedures =========================
                                  ! How many elements to move in each direction
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
+    logical, intent(in), optional :: MissingOK
 
     character(len=*), parameter :: Sfx = 'snglarr4' ! Type and rank in subr name
 
@@ -5537,6 +5548,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.118  2012/05/08 01:15:42  vsnyder
+! Option allows numeric DS silently to be absent
+!
 ! Revision 2.117  2012/01/25 01:12:07  pwagner
 ! Fixed most of the bugs in MatchHDF5Attributes
 !
