@@ -87,6 +87,8 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   character (len=*), parameter :: GEO_FIELD3 = 'Height'
   character (len=*), parameter :: GEO_FIELD4 = 'Time'
 
+  logical, parameter :: GEOS5MAYBEMERRATOO = .false. ! Causes confusion if true
+
   character (len=*), parameter :: lit_dao = 'dao'
   character (len=*), parameter :: lit_ncep = 'ncep'
   character (len=*), parameter :: lit_strat = 'strat'
@@ -146,7 +148,11 @@ contains
     if ( present(verbose) ) myVerbose = verbose .or. deebug
     
     LIT_DESCRIPTION = lowercase(description)
-    if ( LIT_DESCRIPTION == 'geos5' ) &
+    ! The following once allowed us to describe both geos5-classic and merra
+    ! reanalysis with the same griddedorigin field='geos5'
+    ! However, we have since seen the light: that trick was a later
+    ! source of confusion--we will eventually simply remove litDescription
+    if ( LIT_DESCRIPTION == 'geos5' .and. GEOS5MAYBEMERRATOO ) &
       & LIT_DESCRIPTION = GEOS5orMERRA( GriddedFile )
     if ( myVerbose ) &
       & call output( 'Reading ' // trim(LIT_DESCRIPTION) // ' data', advance='yes' )
@@ -173,6 +179,7 @@ contains
         returnStatus = FILENOTFOUND
         call MLSMessage( MLSMSG_Warning, ModuleName, &
           & 'Not an hdf5 file so could not be geos 5.7.x' )
+        if ( present(litDescription) ) litDescription = LIT_DESCRIPTION
         return
       endif
       call Read_geos5_7( GriddedFile, lcf_where, v_type, &
@@ -2598,6 +2605,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.70  2012/05/08 17:46:05  pwagner
+! Fixed bug that caused confusion when geos5 not ffound
+!
 ! Revision 2.69  2012/03/06 19:33:11  pwagner
 ! Remove more unused things
 !
