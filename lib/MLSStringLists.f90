@@ -18,7 +18,7 @@ module MLSStringLists               ! Module to treat string lists
   use MLSCOMMON, only: BAREFNLEN
   use MLSSETS, only: FINDFIRST
   use MLSSTRINGS, only: CAPITALIZE, LOWERCASE, NCOPIES, &
-    & READINTSFROMCHARS, REPLACE, REVERSE, &
+    & READINTSFROMCHARS, REVERSE, &
     & SPLITNEST, STREQ, TRIM_SAFE, WRITEINTSTOCHARS
 
   implicit none
@@ -215,6 +215,10 @@ module MLSStringLists               ! Module to treat string lists
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
    & unquote, wrap
 
+  interface BooleanValue
+    module procedure BooleanValue_log, BooleanValue_str
+  end interface
+
   interface catLists
     module procedure catLists_str, catLists_int, catLists_intarray
   end interface
@@ -337,11 +341,18 @@ contains
   end subroutine Array2List
 
   ! ----------------------------------------  BooleanValue  -----
-  function BooleanValue (str, lkeys, lvalues)
-    ! Takes a well-formed formula and returns its value
-    ! given a hash of variables and their values
-    ! E.g., given 'p and not (q or r)' 
-    ! and p=q=TRUE, r=FALSE, returns FALSE
+  ! Takes a well-formed formula and returns its value
+  ! given a hash of variables and their values
+  ! E.g., given 'p and not (q or r)' 
+  ! and p=q=TRUE, r=FALSE, returns FALSE
+  ! The str and lkeys are all of type character
+  ! lvalues may be either an array of logicals or else
+  ! a stringlist like lkeys
+  ! If a stringlist, it will be converted into an array of logicals
+  ! in a natural way
+  ! '[tT]*'       -> .true.
+  ! anything else -> .false.
+  function BooleanValue_log (str, lkeys, lvalues) result(BooleanValue)
 
     ! Method:
     ! Progressively collapse all the '(..)' pairs into their values
@@ -491,7 +502,38 @@ contains
         if ( done ) exit
       enddo
     end function evaluatePrimitive
-  end function BooleanValue
+  end function BooleanValue_log
+
+  function BooleanValue_str (str, lkeys, strvalues) result(BooleanValue)
+    !--------Argument--------!
+    character (len=*), intent(in)     :: str
+    character (len=*), intent(in)     :: lkeys
+    character (len=*), intent(in)     :: strvalues
+    logical                           :: BooleanValue
+    ! Internal variables
+    logical, parameter                :: countEmpty = .true.
+    logical, dimension(:), pointer    :: lvalues
+    integer :: key
+    integer :: nkeys
+    integer :: status
+    ! Executable
+    BooleanValue = .false.
+    if ( len_trim(str) < 1 ) return
+    nkeys = NumStringElements( lkeys, countEmpty )
+    if ( nkeys < 1 ) return
+    nullify( lvalues )
+    allocate( lvalues(nkeys), stat=status )
+    if ( status /= 0 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+      & 'Unable to allocate lvalues in BooleanValue_str' )
+    do key = 1, nkeys
+      lvalues(key) = index( &
+        & adjustl(lowercase(StringElement ( strvalues, key, countEmpty ))), 't') == 1
+    enddo
+    BooleanValue = BooleanValue_log ( str, lkeys, lvalues )
+    deallocate( lvalues, stat=status )
+    if ( status /= 0 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+      & 'Unable to deallocate lvalues in BooleanValue_str' )
+  end function BooleanValue_str
 
   ! -------------------------------------------------  BuildHash  -----
   ! Build a hash from a constructor
@@ -1840,14 +1882,12 @@ contains
     integer :: bloc
     logical, parameter :: COUNTEMPTY = .true.
     character :: cquotes, quotes
-    integer :: elem, k
+    integer :: k
     character (len=len(inList)+2)           :: element
     character (len=len(inList))             :: listBloc ! space-separated
     integer, parameter :: MAXELEMENTLENGTH = 80
     logical :: multi
     integer :: myPattern
-    integer :: nElements
-    character (len=len(inList)+2)           :: optionsList ! comma-separated
     character(len=16) :: test_multi
     character :: test_option
     logical, parameter :: USEEXTRACT = .true.
@@ -3800,6 +3840,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.46  2012/05/08 17:44:30  pwagner
+! BooleanValue now a generic: values may be a string list
+!
 ! Revision 2.45  2012/01/05 01:18:33  pwagner
 ! Capitalized USEd stuff
 !
