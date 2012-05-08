@@ -10,7 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 !   subroutine LoadFromHDF5DS_* ( MLSFile, name, value, &
-!     & start, count, stride, block )
+!     & start, count, stride, block, MissingOK )
 !     ! This routine loads a predefined array with values from a DS
 !     use HDF5, only: H5T => H5T_NATIVE_* ! HDF type
 !     type (MLSFile_T)   :: MLSFile
@@ -24,6 +24,7 @@
 !                                  ! How many elements to move in each direction
 !     integer, dimension(:), optional, intent(in) :: block
 !                                  ! Size of element block
+!     logical, intent(in), optional :: MissingOK
 
 !     character(len=*), parameter :: Sfx = '*' ! Type and rank in subr name
 
@@ -56,6 +57,12 @@
     endif
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) then
+      if ( present(missingOK) ) then
+        if ( missingOK ) then
+          call MLSMessageCalls( 'pop' )
+          return
+        end if
+      end if
       call outputNamedValue( 'locID', locID )
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open dataset ' // trim(name), &
@@ -81,6 +88,9 @@
 !   end subroutine LoadFromHDF5DS_*
 
 ! $Log$
+! Revision 2.4  2012/05/08 01:15:42  vsnyder
+! Option allows numeric DS silently to be absent
+!
 ! Revision 2.3  2011/11/04 23:40:22  pwagner
 ! Should handle inelegant (i.e. hackish) may of subgrouping ids
 !
