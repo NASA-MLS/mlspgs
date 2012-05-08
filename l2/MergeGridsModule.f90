@@ -35,17 +35,17 @@ contains ! =================================== Public procedures
     & GRIDDEDDATABASE, FILEDATABASE )
 
     use DumpCommand_m, only: BOOLEANFROMEMPTYGRID, BOOLEANFROMFORMULA, &
-      & DUMPCOMMAND, SKIP
+      & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
     use GriddedData, only: GRIDDEDDATA_T, &
       & ADDGRIDDEDDATATODATABASE, DESTROYGRIDDEDDATA
     use Init_tables_module, only: F_GRID, &
-      & S_BOOLEAN, S_CONCATENATE, S_CONVERTETATOP, &
-      & S_DELETE, S_DIFF, S_DUMP, S_GRIDDED, S_ISGRIDEMPTY, &
-      & S_MERGE, S_MERGEGRIDS, S_REEVALUATE, S_SKIP, &
+      & S_BOOLEAN, S_CASE, S_CONCATENATE, S_CONVERTETATOP, &
+      & S_DELETE, S_DIFF, S_DUMP, S_ENDSELECT, S_GRIDDED, S_ISGRIDEMPTY, &
+      & S_MERGE, S_MERGEGRIDS, S_REEVALUATE, S_SELECT, S_SKIP, &
       & S_WMOTROP, S_WMOTROPFROMGRIDS
-    use L2AUXData, only: L2AUXData_T
-    use L2GPData, only: L2GPData_T
-    use MLSCommon, only: MLSFile_T
+    use L2AUXData, only: L2AUXDATA_T
+    use L2GPData, only: L2GPDATA_T
+    use MLSCommon, only: MLSFILE_T
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMESSAGECALLS
     use MoreTree, only: GET_SPEC_ID
     use output_m, only: OUTPUT, OUTPUTNAMEDVALUE
@@ -92,10 +92,21 @@ contains ! =================================== Public procedures
       else
         key = son
       end if
+      if ( MLSSelecting .and. &
+        & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
 
       select case ( get_spec_id(key) )
       case ( s_Boolean )
         call decorate ( key,  BooleanFromFormula ( name, key ) )
+      case ( s_select ) ! ============ Start of select .. case ==========
+        ! We'll start seeking a matching case
+        call MLSSelect (key)
+      case ( s_case ) ! ============ seeking matching case ==========
+        ! We'll continue seeking a match unless the case is TRUE
+        call MLSCase (key)
+      case ( s_endSelect ) ! ============ End of select .. case ==========
+        ! We'done with seeking a match
+        call MLSEndSelect (key)
       case ( s_concatenate )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & Concatenate ( key, griddedDataBase ) ) )
@@ -1066,6 +1077,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.45  2012/05/08 17:49:54  pwagner
+! Added Select .. Case .. EndSelect control structure
+!
 ! Revision 2.44  2011/05/09 18:23:23  pwagner
 ! description field now marks result of convert, concatenate
 !
