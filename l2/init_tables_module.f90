@@ -1408,6 +1408,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_case, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
              begin, f+f_label, t+t_string, n+n_field_type, &
+             begin, f+f_options, t+t_string, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_Boolean
       begin, s+s_skip, &
@@ -1742,8 +1743,9 @@ contains ! =====     Public procedures     =============================
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
              s+s_disjointEquations, s+s_normalEquations, s+s_reflect, &
              s+s_regularization, s+s_rowScale, nc+n_section, &
-      begin, z+z_output, s+s_copy, s+s_destroy, s+s_dumpblocks, s+s_hgrid, &
-             s+s_output, s+s_time, n+n_section /) )
+      begin, z+z_output, s+s_Boolean, s+s_case, s+s_copy, s+s_destroy, &
+             s+s_diff, s+s_dump, s+s_dumpblocks, s+s_endSelect, s+s_hgrid, &
+             s+s_output, s+s_Reevaluate, s+s_select, s+s_Skip, s+s_time, n+n_section /) )
 
   contains
 
@@ -1765,6 +1767,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.544  2012/05/10 00:46:35  pwagner
+! Output section can have l2cf-control stuctures
+!
 ! Revision 2.543  2012/05/08 17:47:34  pwagner
 ! Added Select .. Case .. EndSelect control structure
 !
