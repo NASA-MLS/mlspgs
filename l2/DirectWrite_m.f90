@@ -175,7 +175,7 @@ contains ! ======================= Public Procedures =========================
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
     ! are too big to keep all chunks stored in memory
     ! so instead write them out profile-by-profile
-    use HDF, only: DFACC_CREATE, DFACC_RDonly
+    use HDF, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
     use HGRIDSDATABASE, only: HGRID_T
     use L2GPDATA, only: L2GPDATA_T, &
       & APPENDL2GPDATA, DESTROYL2GPCONTENTS, DUMP
@@ -278,6 +278,7 @@ contains ! ======================= Public Procedures =========================
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, createSwath=createSwath )
+    if ( L2GPFile%access == DFACC_CREATE ) L2GPFile%access = DFACC_RDWR
     call writeAPrioriAttributes( l2gpFile, dontreplace=.true. )
     if ( switchDetail(switches, 'l2gp') > -1 ) call dump(l2gp)
     ! Clear up our temporary l2gp
@@ -1226,6 +1227,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.53  2012/05/10 00:48:19  pwagner
+! A little less clumsy at creating files, swaths
+!
 ! Revision 2.52  2012/03/12 17:09:44  pwagner
 ! Use new writeAPrioriAttributes api
 !
