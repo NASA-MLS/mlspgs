@@ -8,8 +8,8 @@
 \topmargin 0in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107r10}
-\newcommand{\docdate}{1 May 2012}
+\newcommand{\docname}{\bf wvs-107r12}
+\newcommand{\docdate}{10 May 2012}
 
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -344,9 +344,6 @@ One must be careful when constructing the l2cf to retrieve MIF extinction.
        explicitValues= -2.6 zeta }\\
   It isn't needed in the retrieval state vector, or apriori vector.
 
-\item Tikhonov regularization needs to be turned off for MIF extinction,
-  and for extinction in bands where MIF extinction is being retrieved.
-
 \item Mask bits need to be set in MIF extinction (and indeed in any
   retrieved minor-frame quantity) so as not to try to retrieve where there
   are no radiances.  There is a {\tt radianceQuantity} field of the subset
@@ -354,9 +351,16 @@ One must be careful when constructing the l2cf to retrieve MIF extinction.
   mark bad radiances.  The quantity to be masked must be a minor-frame
   quantity.  The only other fields allowed are {\tt additional}, {\tt
   channel}, {\tt ignore} (which reverses the sense of {\tt channel}, and
-  {\tt instances}.  If no channel field appears, all are selected (or
-  ignored).  The selected channels should be consistent with the signal
-  used for retrieval.
+  {\tt instances}.  If the radiance quantity channels are masked first,
+  the {\tt channels} field isn't necessary.  If no channel field appears,
+  all are selected (or ignored).  The selected channels should be
+  consistent with the signal used for retrieval.
+
+\item Tikhonov regularization needs to be turned off for MIF extinction,
+  and for extinction in bands where MIF extinction is being retrieved.
+
+\item The {\tt TransformMIFExtinction} switch needs to be set in the
+forward model configuration.
 
 \end{itemize}
 
@@ -365,6 +369,9 @@ One must be careful when constructing the l2cf to retrieve MIF extinction.
 % $Id$
 
 % $Log$
+% Revision 1.11  2012/05/01 22:34:35  vsnyder
+% Describe subset-using-radiances command
+%
 % Revision 1.10  2012/04/20 23:46:00  vsnyder
 % Add l2cf considerations
 %
