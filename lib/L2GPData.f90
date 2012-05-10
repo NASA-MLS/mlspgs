@@ -468,7 +468,7 @@ contains ! =====     Public Procedures     =============================
     ! This call has been altered recently, so that it can be used to create
     ! a swath as well as adding to one. 
 
-  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH
+  use MLSHDFEOS, only: MLS_SWATH_IN_FILE
     ! Arguments
 
     type(MLSFile_T)                :: L2GPFile
@@ -501,7 +501,6 @@ contains ! =====     Public Procedures     =============================
     integer :: numProfs
     integer :: status
     logical :: swath_exists
-    integer :: swathid
     type (L2GPData_T) :: totall2gp
     ! logical, parameter :: DEEBUG = .false.
 
@@ -530,19 +529,8 @@ contains ! =====     Public Procedures     =============================
     myswathName = l2gp%name
     if ( present(swathName) ) myswathName = swathName
     
-    if ( present(createSwath) .and. .false. ) then
-      swath_exists = .not. createSwath
-    else
-      swathid = mls_swattach(L2GPFile, trim(myswathName), &
-        & DONTFAIL=.true.)
-      swath_exists = ( swathid > 0 )
-      if ( swath_exists ) then
-        status = mls_swdetach(swathid, hdfVersion=l2gpfile%hdfVersion)
-        if ( status /= 0 ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, & 
-          & 'Failed to detach from swath in AppendL2GPData_fileID', MLSFile=L2GPFile)
-      endif
-    endif
+    swath_exists = mls_swath_in_file( L2GPFile%name, myswathName, &
+      & L2GPFile%HdfVersion )
 
     if ( swath_exists .and. MUSTGUARDAGIANSTHDFEOSBUG ) then
       if(DEEBUG) print *, 'OK, swath already exists'
@@ -4986,6 +4974,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.183  2012/05/01 23:12:34  pwagner
+! Maneuver around an unnecessary and sometimes unfortunate if
+!
 ! Revision 2.182  2012/01/11 17:35:20  pwagner
 ! Turn off extra debugging; snip commented-out lines
 !
