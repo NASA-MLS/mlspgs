@@ -66,6 +66,8 @@ contains ! =====     Public Procedures     =============================
     use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG, OBSTRUCTIONS
     use DESTROYCOMMAND_M, only: DESTROYCOMMAND
     use DIRECTWRITE_M, only: DIRECTDATA_T, DUMP
+    use DumpCommand_m, only: BOOLEANFROMEMPTYGRID, BOOLEANFROMFORMULA, &
+      & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
     use EXPR_M, only: EXPR
     use GRIDDEDDATA, only: GRIDDEDDATA_T
     use HESSIANMODULE_1, only: HESSIAN_T
@@ -81,7 +83,9 @@ contains ! =====     Public Procedures     =============================
       & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, &
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP, L_L2PC, &
-      & S_COPY, S_DESTROY, S_DUMPBLOCKS, S_HGRID, S_OUTPUT, S_TIME
+      & S_BOOLEAN, S_CASE, S_COPY, S_DESTROY, S_DIFF, S_DUMP, S_DUMPBLOCKS, &
+      & S_ENDSELECT, &
+      & S_HGRID, S_OUTPUT, S_REEVALUATE, S_SELECT, S_SKIP, S_TIME
     use INTRINSIC, only: L_ASCII, L_SWATH, L_HDF, LIT_INDICES, PHYQ_DIMENSIONLESS
     use L2AUXDATA, only: L2AUXDATA_T, CPL2AUXDATA
     use L2GPDATA, only: AVOIDUNLIMITEDDIMS, L2GPDATA_T, &
@@ -267,7 +271,30 @@ contains ! =====     Public Procedures     =============================
         name = 0
       end if
 
+      if ( MLSSelecting .and. &
+        & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
+
       select case ( get_spec_id(key) )
+      case ( s_Boolean )
+        call decorate ( key,  BooleanFromFormula ( name, key ) )
+      case ( s_select ) ! ============ Start of select .. case ==========
+        ! We'll start seeking a matching case
+        call MLSSelect (key)
+      case ( s_case ) ! ============ seeking matching case ==========
+        ! We'll continue seeking a match unless the case is TRUE
+        call MLSCase (key)
+      case ( s_endSelect ) ! ============ End of select .. case ==========
+        ! We'done with seeking a match
+        call MLSEndSelect (key)
+      case ( s_reevaluate )
+        call decorate ( key,  BooleanFromFormula ( 0, key ) )
+      case ( s_skip ) ! ============================== Skip ==========
+        ! We'll skip the rest of the section if the Boolean cond'n is TRUE
+        if ( Skip(key) ) exit
+      case ( s_diff, s_dump )
+        call dumpCommand ( key, griddedDataBase=griddedDataBase, &
+          & FiledataBase=FileDataBase, MatrixdataBase=matrices, &
+          & Hessiandatabase=Hessians )
       case ( s_copy )
         do field_no = 2, nsons(key)       ! Skip the command name
           gson = subtree(field_no, key)   ! An assign node
@@ -1727,6 +1754,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.161  2012/05/10 00:47:02  pwagner
+! Output section can have l2cf-control stuctures
+!
 ! Revision 2.160  2012/03/14 16:57:03  pwagner
 ! Fixed most recent goldbrick-busting bug
 !
