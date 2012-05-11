@@ -66,7 +66,7 @@ contains ! =====     Public Procedures     =============================
     use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG, OBSTRUCTIONS
     use DESTROYCOMMAND_M, only: DESTROYCOMMAND
     use DIRECTWRITE_M, only: DIRECTDATA_T, DUMP
-    use DumpCommand_m, only: BOOLEANFROMEMPTYGRID, BOOLEANFROMFORMULA, &
+    use DUMPCOMMAND_M, only: BOOLEANFROMEMPTYSWATH, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
     use EXPR_M, only: EXPR
     use GRIDDEDDATA, only: GRIDDEDDATA_T
@@ -84,8 +84,8 @@ contains ! =====     Public Procedures     =============================
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP, L_L2PC, &
       & S_BOOLEAN, S_CASE, S_COPY, S_DESTROY, S_DIFF, S_DUMP, S_DUMPBLOCKS, &
-      & S_ENDSELECT, &
-      & S_HGRID, S_OUTPUT, S_REEVALUATE, S_SELECT, S_SKIP, S_TIME
+      & S_ENDSELECT, S_HGRID, S_ISSWATHEMPTY, &
+      & S_OUTPUT, S_REEVALUATE, S_SELECT, S_SKIP, S_TIME
     use INTRINSIC, only: L_ASCII, L_SWATH, L_HDF, LIT_INDICES, PHYQ_DIMENSIONLESS
     use L2AUXDATA, only: L2AUXDATA_T, CPL2AUXDATA
     use L2GPDATA, only: AVOIDUNLIMITEDDIMS, L2GPDATA_T, &
@@ -295,6 +295,8 @@ contains ! =====     Public Procedures     =============================
         call dumpCommand ( key, griddedDataBase=griddedDataBase, &
           & FiledataBase=FileDataBase, MatrixdataBase=matrices, &
           & Hessiandatabase=Hessians )
+      case ( s_isSwathEmpty )
+        call decorate ( key, BooleanFromEmptySwath ( key ) )
       case ( s_copy )
         do field_no = 2, nsons(key)       ! Skip the command name
           gson = subtree(field_no, key)   ! An assign node
@@ -1754,6 +1756,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.162  2012/05/11 00:18:37  pwagner
+! Added isSwathEmpty to set Boolean in Output; we can Skip Copy of OH when THz is off
+!
 ! Revision 2.161  2012/05/10 00:47:02  pwagner
 ! Output section can have l2cf-control stuctures
 !
