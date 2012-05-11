@@ -18,13 +18,13 @@ module DumpCommand_M
   implicit none
   private
 
-  public :: BooleanFromAnyGoodRadiances
-  public :: BooleanFromAnyGoodValues
-  public :: BooleanFromCatchWarning
-  public :: BooleanFromComparingQtys
-  public :: BooleanFromEmptyGrid
-  public :: BooleanFromFormula
-  public :: MLSCase, DumpCommand, MLSEndSelect, MLSSelect, Skip
+  public :: BOOLEANFROMANYGOODRADIANCES
+  public :: BOOLEANFROMANYGOODVALUES
+  public :: BOOLEANFROMCATCHWARNING
+  public :: BOOLEANFROMCOMPARINGQTYS
+  public :: BOOLEANFROMEMPTYGRID, BOOLEANFROMEMPTYSWATH
+  public :: BOOLEANFROMFORMULA
+  public :: MLSCASE, DUMPCOMMAND, MLSENDSELECT, MLSSELECT, SKIP
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -34,7 +34,7 @@ module DumpCommand_M
 
   logical, parameter :: countEmpty = .true. ! Except where overriden locally
   integer, parameter :: MAXRESULTLEN = 64
-  logical, public, save             :: MLSSelecting = .false.
+  logical, public, save             :: MLSSELECTING = .false.
   logical, save               :: MLSSelectedAlready = .false.
   character(LEN=MAXRESULTLEN), save :: selectLabel  = ' '
 contains
@@ -551,7 +551,6 @@ contains
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
-    ! integer, intent(in) :: name
     integer, intent(in) :: root
     type (GRIDDEDDATA_T), dimension(:), pointer :: Grids
     integer             :: thesize
@@ -596,6 +595,121 @@ contains
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromEmptyGrid
+
+  ! ------------------------------------- BooleanFromEmptySwath --
+  ! Returns TRUE if there are no useable data points in the swath
+  ! The useablility criterion is
+  ! (1) Precision non-negative; and
+  ! (2) Status even
+  ! If even one point is useable (a very low bar, admittedly) then
+  ! return FALSE
+  function BooleanFromEmptySwath ( root ) result(theSize)
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use DUMP_0, only: DUMP
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FILE, F_SWATH, F_TYPE, &
+      & L_L2DGG, L_L2GP
+    use L2GPDATA, only: L2GPDATA_T, RGP, L2GPNAMELEN, &
+      & READL2GPDATA, DESTROYL2GPCONTENTS
+    use MLSCOMMON, only: FILENAMELEN
+    use MLSFILES, only: HDFVERSION_5
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSPCF2, only: MLSPCF_L2GP_END, &
+      & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
+      & SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
+    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    use STRING_TABLE, only: GET_STRING
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    ! Dummy args
+    integer, intent(in) :: root
+    integer             :: thesize
+    ! Internal variables
+    integer :: field
+    integer :: field_index
+    integer :: fieldValue
+    integer :: fileType
+    character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
+    character(len=FileNameLen) :: filename          ! filename
+    character(len=L2GPNAMELEN) :: swathname         ! swathname
+    integer :: i
+    integer :: keyNo
+    character(len=32) :: nameString
+    integer :: son
+    logical :: tvalue
+    integer :: value
+    type (L2GPData_T) :: l2gp
+    integer :: numGood
+    logical, dimension(:), pointer  :: negativePrec => null() ! true if all prec < 0
+    logical, dimension(:), pointer  :: oddStatus => null() ! true if all status odd
+    logical :: verbose
+    ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
+    do keyNo = 2, nsons(root)
+      son = subtree(keyNo,root)
+      field = subtree(1,son)
+      value = subtree(2,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
+      field_index = decoration(field)
+
+      select case ( field_index )
+      case ( f_Boolean )
+        call get_string( sub_rosa(subtree(2,son)), nameString )
+      case ( f_file )
+        call get_string ( sub_rosa(subtree(2,son)), file_base, strip=.true. )
+      case ( f_swath )
+        call get_string ( sub_rosa(subtree(2,son)), swathname, strip=.true. )
+      case ( f_type )
+        filetype = decoration(subtree(2, son))
+      end select
+    end do
+    select case (fileType)
+    case ( l_l2dgg )
+      call returnFullFileName( file_base, Filename, &
+        & mlspcf_l2dgg_start, mlspcf_l2dgg_end )
+    case ( l_l2gp )
+      call returnFullFileName( file_base, Filename, &
+        & mlspcf_l2gp_start, mlspcf_l2gp_end )
+    case default
+      call MLSMessage( MLSMSG_Warning, ModuleName, &
+      & "type should have been either l2gp or dgg; assume you meant dgg" )
+    end select
+    call ReadL2GPData ( trim(filename), trim(swathname), l2gp, &
+      & hdfVersion=HDFVERSION_5 )
+    tvalue = .true.
+    call allocate_test( negativePrec, l2gp%nTimes, 'negativePrec', ModuleName )
+    call allocate_test( oddStatus, l2gp%nTimes, 'oddStatus', ModuleName )
+    do i=1, l2gp%nTimes
+      negativePrec(i) = all( l2gp%l2GPPrecision(:,:,i) < 0._rgp )
+    enddo
+    do i=1, l2gp%nTimes
+      oddStatus(i) = mod(l2gp%status(i), 2) > 0
+    enddo
+    numGood = count( .not. ( negativePrec .or. &
+      & (mod(l2gp%status, 2) > 0) ) )
+    tvalue = ( numGood < 1 )
+    if ( verbose ) then
+      call dump( negativePrec, 'num surfs with prec < 0' )
+      call dump( oddStatus, 'num surfs with odd status' )
+      call outputNamedValue ( 'empty swath?', tvalue )
+    endif
+    call deallocate_test( negativePrec, 'negativePrec', ModuleName )
+    call deallocate_test( oddStatus, 'oddStatus', ModuleName )
+    call DestroyL2GPContents ( l2gp )
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & lowercase(trim(nameString)), BooleanToString(tvalue), &
+      & countEmpty=countEmpty )
+    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    if ( verbose ) &
+      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time Boolean flags' )
+  end function BooleanFromEmptySwath
 
   ! ------------------------------------- BooleanFromFormula --
   function BooleanFromFormula ( name, root ) result(size)
@@ -733,7 +847,7 @@ contains
     use MLSSETS, only: FINDFIRST
     use MLSSIGNALS_M, only: DUMP, GETRADIOMETERINDEX, RADIOMETERS, SIGNALS
     use MLSSTRINGS, only: INDEXES, LOWERCASE
-    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETHASHELEMENT, SWITCHDETAIL
+    use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use PFADATABASE_M, only: DUMP, DUMP_PFADATABASE, DUMP_PFAFILEDATABASE, &
@@ -800,7 +914,6 @@ contains
     type(time_t) :: Time
     character(10) :: TimeOfDay
     integer :: Type     ! of the Details expr -- has to be num_value
-    logical :: tvalue
     integer :: VectorIndex
     integer :: VectorIndex2
     integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
@@ -1049,8 +1162,6 @@ contains
         call output( trim(booleanString) // ' = ', advance='no' )
         call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
           & booleanString, label, countEmpty )
-        ! tvalue = BooleanValue ( booleanString, &
-        !  & runTimeValues%lkeys, runTimeValues%lvalues )
         call output( label, advance='yes' )
       case ( f_clean )
         clean = get_boolean(son)
@@ -1493,14 +1604,14 @@ contains
   ! matches the label or Boolean field of the current Case command
   ! or if the current Case command is given the special label 'default',
   ! a wildcard matching anything
-    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL, F_OPTIONS
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: GETHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE
+    use MLSSTRINGS, only: LOWERCASE, STREQ
     use MORETREE, only: GET_FIELD_ID
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: NSONS, SUB_ROSA, SUBTREE
     ! Args
@@ -1510,11 +1621,12 @@ contains
     integer :: GSON, J
     integer :: FieldIndex
     character(len=80) :: Label  ! E.g., 'BAND8'
+    character(len=8)  :: optionsString
     integer :: Son
-    logical :: verbose
     ! Executable
     MLSSelecting = .true. ! Defaults to skipping rest of case
     if ( MLSSelectedAlready ) return
+    optionsString = ' '
     if ( toggle(gen) ) then
       call trace_begin ( 'MLSCase', root )
     else
@@ -1533,12 +1645,21 @@ contains
           & booleanString, label, countEmpty )
       case (f_label)
         call get_string ( sub_rosa(gson), label, strip=.true. )
+      case (f_options)
+        call get_string ( sub_rosa(gson), optionsString, strip=.true. )
       case default
         ! Should not have got here if parser worked correctly
       end select
     enddo
     label = lowerCase(label)
-    MLSSelecting = ( label /= selectLabel ) .and. ( label /= 'default' )
+    if ( label == 'default' ) then
+      MLSSelecting = .false. ! Matches any pattern
+    elseif ( len_trim(optionsString) < 1 ) then
+      MLSSelecting = ( label /= selectLabel )
+    else
+      ! The streq function is a generalized string '=='
+      MLSSelecting = .not. streq( label, selectLabel, optionsString )
+    endif
     ! We must store whether we have ever had a match
     MLSSelectedAlready = MLSSelectedAlready .or. .not. MLSSelecting
     if ( toggle(gen) ) then
@@ -1558,7 +1679,7 @@ contains
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_FIELD_ID
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: NSONS, SUB_ROSA, SUBTREE
     ! Args
@@ -1569,7 +1690,6 @@ contains
     integer :: FieldIndex
     character(len=80) :: Label          ! E.g., 'BAND8'
     integer :: Son
-    logical :: verbose
     ! Executable
     if ( toggle(gen) ) then
       call trace_begin ( 'MLSSelect', root )
@@ -1611,7 +1731,7 @@ contains
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_FIELD_ID
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: NSONS, SUB_ROSA, SUBTREE
     ! Args
@@ -1621,7 +1741,6 @@ contains
     integer :: GSON, J
     integer :: FieldIndex
     integer :: Son
-    logical :: verbose
     ! Executable
     MLSSelectedAlready = .false.
     if ( toggle(gen) ) then
@@ -1807,6 +1926,37 @@ contains
     str = merge( 'true ', 'false', Bool )
   end function BooleanToString
 
+  ! ---------------------------------------------  returnFullFileName  -----
+  subroutine returnFullFileName ( shortName, FullName, &
+    & pcf_start, pcf_end )
+    use MLSFILES, only: GETPCFROMREF
+    use MLSL2OPTIONS, only: TOOLKIT
+    ! Given a possibly-abbreviated shortName, return the full name
+    ! as found in the PCF
+    ! (w/o toolkit panoply, simply return shortName)
+    ! Args
+    character(len=*), intent(in)  :: shortName
+    character(len=*), intent(out) :: FullName
+    integer, intent(in)           :: pcf_start
+    integer, intent(in)           :: pcf_end
+    ! Internal variables
+    logical, parameter :: DEBUG = .false.
+    integer :: FileHandle
+    integer :: returnStatus
+    integer :: Version
+    ! Executable
+    if ( TOOLKIT .and. pcf_end >= pcf_start ) then
+      Version = 1
+      FileHandle = GetPCFromRef(shortName, pcf_start, &
+        & pcf_end, &
+        & TOOLKIT, returnStatus, Version, DEBUG, &
+        & exactName=FullName)
+      if ( returnStatus /= 0 ) FullName = shortName ! In cases omitted from PCF
+    else
+      FullName = shortName
+    end if
+  end subroutine returnFullFileName
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -1820,6 +1970,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.74  2012/05/11 00:16:42  pwagner
+! Added BooleanFromEmptySwath
+!
 ! Revision 2.73  2012/05/08 17:48:37  pwagner
 ! Added Select .. Case .. EndSelect control structure
 !
