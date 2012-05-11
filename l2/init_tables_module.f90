@@ -168,7 +168,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_HESSIAN            = s_gridded + 1
   integer, parameter :: S_HGRID              = s_hessian + 1
   integer, parameter :: S_ISGRIDEMPTY        = s_hgrid + 1
-  integer, parameter :: S_L1BRAD             = s_isGridEmpty + 1
+  integer, parameter :: S_ISSWATHEMPTY       = s_isGridEmpty + 1
+  integer, parameter :: S_L1BRAD             = s_isSwathEmpty + 1
   integer, parameter :: S_L1BOA              = s_l1brad + 1
   integer, parameter :: S_L2AUX              = s_l1boa + 1
   integer, parameter :: S_L2GP               = s_l2aux + 1
@@ -399,6 +400,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_hessian) =              add_ident ( 'hessian' )
     spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
     spec_indices(s_isGridEmpty) =          add_ident ( 'isGridEmpty' )
+    spec_indices(s_isSwathEmpty) =         add_ident ( 'isSwathEmpty' )
     spec_indices(s_l1brad) =               add_ident ( 'l1brad' )
     spec_indices(s_l1boa) =                add_ident ( 'l1boa' )
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
@@ -1125,6 +1127,14 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def /) )
 
     call make_tree( (/ &
+      begin, s+s_isSwathEmpty, &
+             begin, f+f_file, t+t_string, n+n_field_type, &
+             begin, f+f_swath, t+t_string, n+n_field_type, &
+             begin, f+f_type, t+t_outputType, nr+n_field_type, &
+             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             np+n_spec_def /) )
+
+    call make_tree( (/ &
       begin, s+s_label, &
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
@@ -1745,7 +1755,8 @@ contains ! =====     Public procedures     =============================
              s+s_regularization, s+s_rowScale, nc+n_section, &
       begin, z+z_output, s+s_Boolean, s+s_case, s+s_copy, s+s_destroy, &
              s+s_diff, s+s_dump, s+s_dumpblocks, s+s_endSelect, s+s_hgrid, &
-             s+s_output, s+s_Reevaluate, s+s_select, s+s_Skip, s+s_time, n+n_section /) )
+             s+s_isSwathEmpty, s+s_output, s+s_Reevaluate, &
+             s+s_select, s+s_Skip, s+s_time, n+n_section /) )
 
   contains
 
@@ -1767,6 +1778,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.545  2012/05/11 00:18:38  pwagner
+! Added isSwathEmpty to set Boolean in Output; we can Skip Copy of OH when THz is off
+!
 ! Revision 2.544  2012/05/10 00:46:35  pwagner
 ! Output section can have l2cf-control stuctures
 !
