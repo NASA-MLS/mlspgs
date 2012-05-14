@@ -46,8 +46,8 @@ Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
 !define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
 ;; We're planning on only O3 accompanying its column
 !ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
-;; (IWC and RHI will be treated separately below)
-!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,CH3Cl,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,OH,SO2,Temperature,GPH})})!dnl
+;; (OH, IWC and RHI will be treated separately below)
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,CH3Cl,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,SO2,Temperature,GPH})})!dnl
 
 !ifdef(flagCopyStandardProducts,{
 
@@ -184,10 +184,20 @@ Copy, inputFile='master.ident', inputtype=ascii, type=l2aux, $
 Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
   file='!outpathl2mtx/MLS-Aura_L2MTX-!matrixFilenameWord_!l2version_!day.h5'})
 
-
+!ifdef(flagCopyStandardProducts,{
+  ;; Copy OH swath out to l2gp file unless empty
+  Band15OFFALLDAY: Boolean, formula="false"
+  isSwathEmpty, type=l2dgg, swath='OH-StdProd', file='!DGGFileName', Boolean=Band15OFFALLDAY
+  Dump, Boolean=Band15OFFALLDAY
+  Skip, Boolean=Band15OFFALLDAY  ;; No need to create OH if THz is off
+  !copyStandardProductWithoutColumn({OH})
+})
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.46  2011/11/30 22:12:37  pwagner
+; Can write l2cf template to DGM file
+;
 ; Revision 1.45  2009/07/28 20:09:15  pwagner
 ; Copies CH3Cl std prod to own l2gp file
 ;
