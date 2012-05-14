@@ -32,6 +32,46 @@ module DumpCommand_M
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+!
+!     (Data)
+! MLSSelecting  true if in a Select .. Case .. EndSelect control structure
+!               and the present Case doesn't match
+!     (subroutines and functions)
+! The following functions do much the same thing: They add to the
+! runtime Boolean datase a pair (key => named_Boolean, value => its_value)
+! where the value is determined by whether condition is true or false
+!    function                 condition   
+! booleanFromAnyGoodRadiances  
+!               Any of the radiances have non-negative precisions
+! booleanFromAnyGoodValues  
+!               The quantity has any useable values (based on precision, status)
+! booleanFromCatchWarning 
+!               The last command resulted in a (optionally specific) warning
+! booleanFromComparingQuantities 
+!               The first quantity stands in specified relation to the second
+!               E.g., formula="all a > b"
+! booleanFromEmptyGrid
+!               The specified GriddedData is empty
+! booleanFromEmptySwath
+!               The specified swath in the specified file has no useable data
+! booleanFromFormula
+!               (a) Evaluate the formula; it may be one of two forms
+!               (1) Contains only "or", "and", "not" => logical result
+!               (2) Contains "lhs == rhs" or "lhs /= rhs" => Does it?
+!               (b) Just sture the text of the label field
+!
+! The following subroutines depart from the sbove pattern
+! DumpCommand    Process the Dump command, dumping any of the allowed datatypes
+! MLSCase        Process the Case control statement
+! MLSSelect      Process the Select control statement
+! MLSEndSelect   Process the EndSelect control statement
+! Skip           Process the Skip control statement
+! === (end of toc) ===
+
+
   logical, parameter :: countEmpty = .true. ! Except where overriden locally
   integer, parameter :: MAXRESULTLEN = 64
   logical, public, save             :: MLSSELECTING = .false.
@@ -598,6 +638,7 @@ contains
 
   ! ------------------------------------- BooleanFromEmptySwath --
   ! Returns TRUE if there are no useable data points in the swath
+  ! (or if the swath is not in the file at all)
   ! The useablility criterion is
   ! (1) Precision non-negative; and
   ! (2) Status even
@@ -612,6 +653,7 @@ contains
       & READL2GPDATA, DESTROYL2GPCONTENTS
     use MLSCOMMON, only: FILENAMELEN
     use MLSFILES, only: HDFVERSION_5
+    use MLSHDFEOS, only: MLS_SWATH_IN_FILE
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSPCF2, only: MLSPCF_L2GP_END, &
@@ -680,28 +722,30 @@ contains
       call MLSMessage( MLSMSG_Warning, ModuleName, &
       & "type should have been either l2gp or dgg; assume you meant dgg" )
     end select
-    call ReadL2GPData ( trim(filename), trim(swathname), l2gp, &
-      & hdfVersion=HDFVERSION_5 )
     tvalue = .true.
-    call allocate_test( negativePrec, l2gp%nTimes, 'negativePrec', ModuleName )
-    call allocate_test( oddStatus, l2gp%nTimes, 'oddStatus', ModuleName )
-    do i=1, l2gp%nTimes
-      negativePrec(i) = all( l2gp%l2GPPrecision(:,:,i) < 0._rgp )
-    enddo
-    do i=1, l2gp%nTimes
-      oddStatus(i) = mod(l2gp%status(i), 2) > 0
-    enddo
-    numGood = count( .not. ( negativePrec .or. &
-      & (mod(l2gp%status, 2) > 0) ) )
-    tvalue = ( numGood < 1 )
-    if ( verbose ) then
-      call dump( negativePrec, 'num surfs with prec < 0' )
-      call dump( oddStatus, 'num surfs with odd status' )
-      call outputNamedValue ( 'empty swath?', tvalue )
+    if ( mls_swath_in_file( filename, swathname, HDFVERSION_5 ) ) then
+      call ReadL2GPData ( trim(filename), trim(swathname), l2gp, &
+        & hdfVersion=HDFVERSION_5 )
+      call allocate_test( negativePrec, l2gp%nTimes, 'negativePrec', ModuleName )
+      call allocate_test( oddStatus, l2gp%nTimes, 'oddStatus', ModuleName )
+      do i=1, l2gp%nTimes
+        negativePrec(i) = all( l2gp%l2GPPrecision(:,:,i) < 0._rgp )
+      enddo
+      do i=1, l2gp%nTimes
+        oddStatus(i) = mod(l2gp%status(i), 2) > 0
+      enddo
+      numGood = count( .not. ( negativePrec .or. &
+        & (mod(l2gp%status, 2) > 0) ) )
+      tvalue = ( numGood < 1 )
+      if ( verbose ) then
+        call dump( negativePrec, 'num surfs with prec < 0' )
+        call dump( oddStatus, 'num surfs with odd status' )
+        call outputNamedValue ( 'empty swath?', tvalue )
+      endif
+      call deallocate_test( negativePrec, 'negativePrec', ModuleName )
+      call deallocate_test( oddStatus, 'oddStatus', ModuleName )
+      call DestroyL2GPContents ( l2gp )
     endif
-    call deallocate_test( negativePrec, 'negativePrec', ModuleName )
-    call deallocate_test( oddStatus, 'oddStatus', ModuleName )
-    call DestroyL2GPContents ( l2gp )
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty )
@@ -1970,6 +2014,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.75  2012/05/14 22:26:31  pwagner
+! Guard against missing swath--counts as empty
+!
 ! Revision 2.74  2012/05/11 00:16:42  pwagner
 ! Added BooleanFromEmptySwath
 !
