@@ -97,7 +97,7 @@ begin ReadApriori
 end ReadApriori
 
 begin MergeGrids
-  skipToEnd: Boolean, formula="true"
+  meteorologyType: Boolean, label="none"     ;; The kind of meteorology used
 end MergeGrids
 
 begin ReadApriori
@@ -123,7 +123,58 @@ end ReadApriori
 
 ; (1) Try to read them as geos5 classic; will return "empty" if unsuccessful
 begin ReadApriori
-  
+  readGriddedData, grid=gmaoPressureInput1, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFile1
+end ReadApriori
+
+; test
+begin MergeGrids
+  geos5Meteorology: Boolean, formula="false"
+  isGridEmpty, grid=gmaoPressureInput1, Boolean=geos5Meteorology
+  Reevaluate, Boolean=geos5Meteorology, formula="not geos5Meteorology"
+  Skip, formula="not geos5Meteorology"
+  Reevaluate, Boolean=meteorologyType, label="geos5-classic"
+  Delete, grid=gmaoPressureInput1
+end MergeGrids
+
+; (2) Try to read them as merra reanalysis; will return "empty" if unsuccessful
+begin ReadApriori
+  readGriddedData, grid=gmaoPressureInput1, origin=merra, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum !geos5PFile1
+end ReadApriori
+
+; test
+begin MergeGrids
+  merraMeteorology: Boolean, formula="false"
+  isGridEmpty, grid=gmaoPressureInput1, Boolean=merraMeteorology
+  Reevaluate, Boolean=merraMeteorology, formula="not merraMeteorology"
+  Skip, formula="not merraMeteorology"
+  Reevaluate, Boolean=meteorologyType, label="merra"
+  Delete, grid=gmaoPressureInput1
+end MergeGrids
+
+; (3) Try to read them as geos5_7 netcdf4/hdf5; will return "empty" if unsuccessful
+begin ReadApriori
+  readGriddedData, grid=gmaoPressureInput1, origin=geos5_7, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFile1
+end ReadApriori
+
+; test
+begin MergeGrids
+  geos57Meteorology: Boolean, formula="false"
+  isGridEmpty, grid=gmaoTemperatureInput1, Boolean=geos57Meteorology
+  Reevaluate, Boolean=geos57Meteorology, formula="not geos57Meteorology"
+  Skip, formula="not geos57Meteorology"
+  Reevaluate, Boolean=meteorologyType, label="geos5_7-nc4"
+  Delete, grid=gmaoTemperatureInput1
+end MergeGrids
+
+begin ReadApriori
+  Select, Boolean=meteorologyType ;;; ------------ start of Select ----------
+end ReadApriori
+
+begin ReadApriori
+  Case, label="geos5-classic" ;;; ------------- "geos5-classic" -----------
   readGriddedData, grid=gmaoTemperatureInput1, origin=geos5, field='T', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFile1
   readGriddedData, grid=gmaoTemperatureInput2, origin=geos5, field='T', $
@@ -148,20 +199,8 @@ begin ReadApriori
   ;;dump, Details=0, grid=gmaoTemperatureInput1
 end ReadApriori
 
-; test
-begin MergeGrids
-  geos5Meteorology: Boolean, formula="false"
-  isGridEmpty, grid=gmaoPressureInput1, Boolean=geos5Meteorology
-  Reevaluate, Boolean=geos5Meteorology, formula="not geos5Meteorology"
-  Skip, Boolean=geos5Meteorology
-  ;;Dump, text='Should not see this if we supply geos 5.x classic meteorology'
-end MergeGrids
-
 ; Try to use these
 begin MergeGrids
-  Reevaluate, Boolean=SkipToEnd, formula="not geos5Meteorology"
-  Skip, Boolean=SkipToEnd
-  ;;Dump, text='Should see this if we supply geos5 classic meteorology'
   wmoTropFromGrids, grid=geos5EtaWMOPTrop, $
     a=gmaoTemperatureInput3, b=gmaoPressureInput3
   
@@ -201,9 +240,8 @@ begin MergeGrids
   delete, grid=geos5Concatenate
 end MergeGrids
 
-; (2) Try to read them as merra reanalysis; will return "empty" if unsuccessful
 begin ReadApriori
-  
+  Case, label="merra" ;;; ------------------- "merra" -----------------
   readGriddedData, grid=gmaoTemperatureInput1, origin=merra, field='T', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFile1
   readGriddedData, grid=gmaoTemperatureInput2, origin=merra, field='T', $
@@ -228,20 +266,8 @@ begin ReadApriori
   ;;dump, Details=0, grid=gmaoTemperatureInput1
 end ReadApriori
 
-; test
-begin MergeGrids
-  merraMeteorology: Boolean, formula="false"
-  isGridEmpty, grid=gmaoPressureInput1, Boolean=merraMeteorology
-  Reevaluate, Boolean=merraMeteorology, formula="not merraMeteorology"
-  Skip, Boolean=merraMeteorology
-  ;;Dump, text='Should not see this if we supply merra meteorology'
-end MergeGrids
-
 ; Try to use these
 begin MergeGrids
-  Reevaluate, Boolean=SkipToEnd, formula="not merraMeteorology"
-  Skip, Boolean=SkipToEnd
-  ;;Dump, text='Should see this if we supply merra classic meteorology'
   wmoTropFromGrids, grid=geos5EtaWMOPTrop, $
     a=gmaoTemperatureInput3, b=gmaoPressureInput3
   
@@ -281,9 +307,8 @@ begin MergeGrids
   delete, grid=merraConcatenate
 end MergeGrids
 
-; (3) Try to read them as geos5_7 netcdf4/hdf5; will return "empty" if unsuccessful
 begin ReadApriori
-  
+  Case, label="geos5_7-nc4" ;;; --------------- "geos5_7-nc4" -----------------
   readGriddedData, grid=gmaoTemperatureInput1, origin=geos5_7, field='T', $
     dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFile1
   readGriddedData, grid=gmaoTemperatureInput2, origin=geos5_7, field='T', $
@@ -324,20 +349,8 @@ begin ReadApriori
   ;;dump, Details=0, grid=gmaoTemperatureInput1
 end ReadApriori
 
-; test
-begin MergeGrids
-  geos57Meteorology: Boolean, formula="false"
-  isGridEmpty, grid=gmaoPressureInput5, Boolean=geos57Meteorology
-  Reevaluate, Boolean=geos57Meteorology, formula="not geos57Meteorology"
-  Skip, Boolean=geos57Meteorology
-  ;;Dump, text='Should not see this if we supply geos5_7 meteorology'
-end MergeGrids
-
 ; Try to use these
 begin MergeGrids
-  Reevaluate, Boolean=SkipToEnd, formula="not geos57Meteorology"
-  Skip, Boolean=SkipToEnd
-  ;;Dump, text='Should see this if we supply geos57 meteorology'
   wmoTropFromGrids, grid=geos5EtaWMOPTrop, $
     a=gmaoTemperatureInput5, b=gmaoPressureInput5
   
@@ -401,13 +414,15 @@ end MergeGrids
 
 ; Don't ignore possibility that meteorology files are missing
 begin MergeGrids
-  Skip, Boolean=geos5Meteorology
-  Skip, Boolean=merraMeteorology
-  Skip, Boolean=geos57Meteorology
+  Case, label="none" ;;; ------------------- "none" -----------------
   ; If we don't have meterology, the next effectively copies the climatology
   MergeGrids, grid=mergedTemperature, operational=gmaoTemperatureInput1, $
     climatology=gridTemperature, height=1mb, scale=5km
 end MergeGrids
+
+begin ReadApriori
+  EndSelect, label="meteorologyType" ;;; ---- "end of select -- case" -------
+end ReadApriori
 
 ; Did we succeed?
 begin MergeGrids
@@ -415,11 +430,15 @@ begin MergeGrids
   Dump, Boolean=geos5Meteorology
   Dump, Boolean=merraMeteorology
   Dump, Boolean=geos57Meteorology
+  Dump, Boolean=meteorologyType
   ;;Dump, Details=0, grid=geos5EtaWMOPTrop
   ;;Dump, Details=0, grid=mergedTemperature
 end MergeGrids
 
 ;$Log$
+;Revision 1.3  2012/01/10 22:15:09  pwagner
+;Fixed bug that ignored missing meteorology files
+;
 ;Revision 1.2  2011/11/23 01:03:11  pwagner
 ;Added stuff needed to build dynamic l2cf
 ;
