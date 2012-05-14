@@ -296,6 +296,7 @@ contains ! =====     Public Procedures     =============================
           & FiledataBase=FileDataBase, MatrixdataBase=matrices, &
           & Hessiandatabase=Hessians )
       case ( s_isSwathEmpty )
+        if ( checkPaths ) cycle
         call decorate ( key, BooleanFromEmptySwath ( key ) )
       case ( s_copy )
         do field_no = 2, nsons(key)       ! Skip the command name
@@ -1756,6 +1757,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.163  2012/05/14 18:33:34  pwagner
+! Fixed bug that dooms checkPaths test flights
+!
 ! Revision 2.162  2012/05/11 00:18:37  pwagner
 ! Added isSwathEmpty to set Boolean in Output; we can Skip Copy of OH when THz is off
 !
