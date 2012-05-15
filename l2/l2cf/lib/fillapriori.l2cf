@@ -127,7 +127,7 @@ begin Fill
   }) ;; End if flagGotClimatology
 
   ;; Possibly overwrite temperature with the merged product
-  !ifdef(flagUseOperationalTemperature,{Fill, quantity=apriori.temperature_hr,$
+  !ifdef(flagIgnoreMeteorology,{},{Fill, quantity=apriori.temperature_hr,$
     method=gridded, sourceGrid=mergedTemperature})
 end Fill
 
@@ -759,6 +759,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.149  2012/05/02 16:48:18  pwagner
+;Use flags to Ignore instead of Use CClimatology, Meteorology
+;
 ;Revision 1.148  2012/04/13 21:56:14  wgread
 ;increased high bound for extinction and better apriori for mifextinction-wgr
 ;
