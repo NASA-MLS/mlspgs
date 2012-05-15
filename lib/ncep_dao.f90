@@ -381,10 +381,10 @@ contains
     the_g_data%nodates = 1
     the_g_data%empty = .true.
     the_g_data%missingvalue = FILLVALUE ! this value maybe wrong
-    the_g_data%lsts = the_g_data%missingvalue
-    the_g_data%nolsts = 1
     allocate(the_g_data%lsts(1), stat=error)
     if (error /= 0) call announce_error(lcf_where, "Out of memory")
+    the_g_data%lsts = the_g_data%missingvalue
+    the_g_data%nolsts = 1
     the_g_data%noszas = 1
     the_g_data%lsts = the_g_data%missingValue ! Know how to read this yet?
     allocate(the_g_data%szas(1), stat=error)
@@ -2605,6 +2605,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.71  2012/05/15 16:53:06  pwagner
+! Allocate first, then give values
+!
 ! Revision 2.70  2012/05/08 17:46:05  pwagner
 ! Fixed bug that caused confusion when geos5 not ffound
 !
