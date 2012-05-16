@@ -258,7 +258,7 @@ contains
     endif
     call dump ( 'dumping ', charValue='MLS Message Config' )
     call dump ( ':', charValue=': : : : : : : : : : : : :' )
-    call dump ( 'logFileUnit             ', intValue= myConfig%logFileUnit       )
+    call dump ( 'logFileUnit             ', intValue= myConfig%logFileUnit            )
     call dump ( 'limitWarnings           ', intValue= myConfig%limitWarnings          )
     call dump ( 'masterTID               ', intValue= myConfig%masterTID              )
     call dump ( 'extra prefix            ', charValue=myConfig%prefix                 )
@@ -268,7 +268,6 @@ contains
     call dump ( 'CrashOnAnyError         ', logValue= myConfig%CrashOnAnyError        )
     call dump ( 'SendErrMsgToMaster      ', logValue= myConfig%SendErrMsgToMaster     )
     call dump ( 'ShowCumulativeSeverity  ', logValue= myConfig%ShowCumulativeSeverity )
-    call dump ( 'SendErrMsgToMaster      ', logValue= myConfig%SendErrMsgToMaster     )
     call dump ( 'Trace calls             ', logValue= myConfig%StackTrace             )
     
     call dump ( 'Status values           ', charValue=' '                             )
@@ -282,10 +281,10 @@ contains
     call dump ( 'Severity to crash       ', intValue=MLSMSG_Severity_to_walkback      )
     call dump ( 'Severity so far         ', intValue=MLSMSG_Severity_so_far           )
     
-    call dump ( 'Skip ModNames thr       ', intValue=myConfig%skipModuleNamesThr           )
-    call dump ( 'Skip Severity thr       ', intValue=myConfig%skipSeverityThr           )
-    call dump ( 'Skip Messages thr       ', intValue=myConfig%skipMessageThr           )
-    call dump ( 'Suppress Debugs         ', logValue=myConfig%suppressDebugs           )
+    call dump ( 'Skip ModNames thr       ', intValue=myConfig%skipModuleNamesThr      )
+    call dump ( 'Skip Severity thr       ', intValue=myConfig%skipSeverityThr         )
+    call dump ( 'Skip Messages thr       ', intValue=myConfig%skipMessageThr          )
+    call dump ( 'Suppress Debugs         ', logValue=myConfig%suppressDebugs          )
   end subroutine dumpConfig
 
   ! ------------------------------------------------  MLSMessage_  -----
@@ -1082,6 +1081,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.17  2012/05/16 19:23:26  vsnyder
+! Remove duplicate SendErrMsgToMaster dump, some cannonball polishing
+!
 ! Revision 2.16  2011/10/10 23:56:02  pwagner
 ! Prevent writing non-ascii chars to stdout
 !
