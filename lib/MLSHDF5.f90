@@ -566,6 +566,7 @@ contains ! ======================= Public Procedures =========================
     character(len=80), dimension(:), pointer :: chLongArray => null()
     integer :: classID
     ! logical, parameter :: DEEBUG = .false.
+    integer, parameter :: LONGCHARARRAYTHRSHLD = 10 ! was 999
     integer, dimension(7) :: dims
     logical :: dontPrintName
     double precision, dimension(:,:,:,:), pointer :: d4Value => null()
@@ -766,12 +767,14 @@ contains ! ======================= Public Procedures =========================
             ! call dump ( trim(chValue(1)), trim(namePrinted) )
             if ( len_trim(namePrinted) > 0 ) call output( 'name: ' // trim(name), advance='yes' )
             call output( trim(chValue(1)), advance='yes' )
-          elseif ( dims(1) > 999 ) then
+          elseif ( dims(1) > LONGCHARARRAYTHRSHLD ) then
             ! In case we have a very long array, e.g. dates
             if ( DEEBUG ) call outputNamedValue( 'dims', dims )
             call allocate_test( charsArray, 80*dims(1), 'charsArray', ModuleName )
             call allocate_test( chLongArray, dims(1), 'chLongArray', ModuleName )
+            chLongArray = repeat( ACHAR(0), 80 )
             call LoadFromHDF5DS ( groupID, name, chLongArray )
+            charsArray = ACHAR(0)
             m = 80
             do k=1, dims(1)
               do ch=1, m
@@ -5548,6 +5551,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.119  2012/05/17 20:19:07  pwagner
+! Fixed bug preventing cleanly dumping MAFStartTimeUTC
+!
 ! Revision 2.118  2012/05/08 01:15:42  vsnyder
 ! Option allows numeric DS silently to be absent
 !
