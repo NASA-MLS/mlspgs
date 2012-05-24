@@ -839,16 +839,17 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
              begin, f+f_adopt, t+t_string, n+n_field_type, &
-             begin, f+f_source, t+t_rowsOrColumns, n+n_field_type, &
              begin, f+f_quantities, s+s_quantity, n+n_field_spec, &
+             begin, f+f_source, t+t_rowsOrColumns, n+n_field_type, &
+             begin, f+f_template, s+s_vectorTemplate, n+n_field_spec, &
              ndp+n_spec_def, &
       begin, s+s_vector, & ! Must be AFTER s_vectorTemplate
              begin, f+f_template, s+s_vectorTemplate, nr+n_field_spec, &
              begin, f+f_autoFill, t+t_boolean, n+n_field_type, &
-             begin, f+f_highBound, t+t_boolean, n+n_field_type, &
-             begin, f+f_lowBound, t+t_boolean, n+n_field_type, &
-             begin, f+f_lengthScale, t+t_boolean, n+n_field_type, &
              begin, f+f_fraction, t+t_boolean, n+n_field_type, &
+             begin, f+f_highBound, t+t_boolean, n+n_field_type, &
+             begin, f+f_lengthScale, t+t_boolean, n+n_field_type, &
+             begin, f+f_lowBound, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_hessian, &   ! Must be AFTER s_vector
@@ -1778,6 +1779,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.546  2012/05/24 21:06:22  vsnyder
+! Add template field to VectorTemplate spec
+!
 ! Revision 2.545  2012/05/11 00:18:38  pwagner
 ! Added isSwathEmpty to set Boolean in Output; we can Skip Copy of OH when THz is off
 !
