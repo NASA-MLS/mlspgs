@@ -204,7 +204,7 @@ contains ! ====     Public Procedures     ==============================
     case ( no_positional_fields )
       call output ( 'positional fields are not allowed.', advance='yes' )
     case ( no_such_field )
-      call display_string ( field_indices(sons(1)), before='a required field "' )
+      call display_string ( field_indices(fields(1)), before='a required field "' )
       call output ( '" is absent in the chain of specifications.', &
         advance='yes' )
     case ( no_such_reference )
@@ -228,7 +228,11 @@ contains ! ====     Public Procedures     ==============================
       call display_string ( sub_rosa(where) )
       call output ( ' is not a section name.', advance = 'yes' )
     case ( not_spec )
-      call display_string ( sub_rosa(where) )
+      if ( present(expect) ) then
+        call display_string ( expect )
+      else
+        call display_string ( sub_rosa(where) )
+      end if
       call output ( ' is not a spec name.', advance = 'yes' )
     case ( not_string )
       call output ( 'is not a string or of logical type.', &
@@ -400,12 +404,16 @@ contains ! ====     Public Procedures     ==============================
             select case ( stat )
             case ( 0 )
             case ( 1 )
-              call announce_error ( son, wrong_type, fields=(/son1/), expect=field )
+              call announce_error ( son, wrong_type, fields=(/son1/), &
+                & expect=field )
             case ( 2 )
-              call announce_error ( subtree(2,son), no_such_field, (/ field_look /) )
+              call announce_error ( subtree(2,son), no_such_field, &
+                & fields=(/ field_look /) )
             case ( 3 )
               call announce_error ( subtree(2,son), no_such_reference, &
                 & (/ subtree(1,field_test) /) )
+            case ( 4 )
+              call announce_error ( subtree(2,son), not_spec, expect=field_last )
             case default
               call announce_error ( son1, wrong_units, fields = (/ son1 /), &
                 & expect=stat-10 )
@@ -430,10 +438,13 @@ contains ! ====     Public Procedures     ==============================
       integer :: TEST_TYPE ! Used to test the tree-node for a type reference
       integer :: TYPE_DECL ! Tree node of declaration of name of field's type
 
+      if ( toggle(con) ) call trace_begin ( 'AssignBody', root )
+
       ! Stat = 0 => Type and units OK
       !      = 1 => wrong type
       !      = 2 => no such field
       !      = 3 => no such reference
+      !      = 4 => no such label
       !      > 10 => Expecting units stat-10
 
       stat = 0 ! Assume normal return status
@@ -461,6 +472,7 @@ contains ! ====     Public Procedures     ==============================
                 else
                   call decorate ( root, decl%tree )  ! decorate root with tree
                 end if
+                if ( toggle(con) ) call trace_end ( 'AssignBody' )
     return
               end if
               decl = prior_decl(decl,look_for)
@@ -482,6 +494,7 @@ contains ! ====     Public Procedures     ==============================
           stat = 1
         end if
       end select
+      if ( toggle(con) ) call trace_end ( 'AssignBody' )
     end function AssignBody
 
   end subroutine ASSIGN
@@ -493,64 +506,97 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: Root  ! n_dot node of tree to check
     integer, intent(in) :: Field ! Declaration of the field types
     integer, intent(in) :: Start ! of sons of Field
-    integer, intent(out) :: Field_Look ! Subrosa of last name of x.y, for error message
-    integer, intent(out) :: Field_Test ! Allowed field name, for error message
-    type(decls) :: DECL  ! Declaration of a name
-    integer :: FIELD_REF ! The value of a field -- a ref to a n_spec_arg
-    integer :: J         ! Index of son of "field"
-    integer :: K         ! Index of a son of a n_spec_args
-    integer :: Son       ! of root
-    integer :: TEST_TYPE ! Used to test the tree-node for a type reference
-    integer :: TYPE_DECL ! Tree node of declaration of name of field's type
+    integer, intent(out) :: Field_Look ! expected f_field index, for error message
+    integer, intent(out) :: Field_Test ! parent of checked field, for error message
+    type(decls) :: Decl   ! Declaration of a name
+    integer :: Field_Got  ! The field that was the desired one
+    integer :: Field_Last ! Sub_rosa of Last
+    integer :: Field_Ref  ! The value of a field -- a ref to a n_spec_arg
+    integer :: First      ! label in <dot label field> son of root
+    integer :: Last       ! field in <dot label field> son of root
+    integer :: Test_Type  ! Used to test the tree-node for a type reference
+    integer :: Type_Decl  ! Tree node of declaration of name of field's type
 
-    stat = 0 ! Assume normal return status
+    if ( toggle(con) ) call trace_begin ( 'Check_Dot', root )
+
+    stat = 3 ! Assume no label referenced in <dot label field>
     type_decl = decoration(subtree(start,field)) ! Required spec
-    son = subtree(1,root) ! label
-    decl = get_decl(sub_rosa(son),label)
+    first = subtree(1,root) ! label in <dot label field>
+    last = subtree(2,root)  ! field in <dot label field>
+    field_last = sub_rosa(last)
+    decl = get_decl(sub_rosa(first),label)
     do while ( decl%tree /= null_tree )
       test_type = decoration(subtree(1,decl%tree)) ! spec's index
       if ( test_type == type_decl ) then  ! right kind of spec
         field_ref = decl%tree
-        call decorate ( son, field_ref ) ! decorate label_ref with tree
-m:      do j = start+1, nsons(field)
-        ! This loop assumes there is only one field of the required
-        ! name.  If it is desired to search through several fields,
-        ! it will be necessary to have a stack to keep track of the
-        ! subtree indices.  It goes through the field names that are
-        ! given by sons 3-n of the n_dot vertex of the definition,
-        ! looking for fields of the same name, starting at the first
-        ! son of the n_dot vertex in the input, and thence from the
-        ! decoration of the brother of the found field name.
-          field_look = decoration(subtree(j,field))
-          do k = 2, nsons(field_ref)
-            field_test = subtree(k,field_ref)
-            if ( node_id(field_test) == n_asg ) then
-              if ( decoration(subtree(1,field_test)) == field_look ) then
-                ! Get the next n_spec_arg tree in the chain
-                field_ref = decoration(subtree(2,field_test))
-        cycle m
-              end if
-            end if
-          end do ! k
-          stat = 2 ! No such field
-  return
-        end do m ! j
-        ! The final field_test is the parent n_asg of the field
-        ! that should have the same name as the second son of the
-        ! n_dot vertex in the input.
-        son = subtree(2,root) ! field
-        field_look = sub_rosa(son)
-        do k = 2, nsons(field_test)
-          if ( sub_rosa(subtree(k,field_test)) == field_look ) then
-            call decorate ( son, subtree(k,field_test) )
-  return
-          end if
-        end do ! k
-        stat = 3 ! No such reference
-  return
+        call decorate ( first, field_ref ) ! decorate label_ref with tree
+        stat = check_deep ( start+1, nsons(field), field_ref )
+        if ( stat == 0 ) exit
       end if
       decl = prior_decl(decl,label)
     end do
+    if ( toggle(con) ) call trace_end ( 'Check_Dot', stat )
+
+  contains
+
+    recursive integer function Check_Deep ( Start, End, Field_Ref ) &
+      & result ( Stat )
+      integer, intent(in) :: Start      ! of sons of Field
+      integer, intent(in) :: End        ! of sons of Field
+      integer, intent(in) :: Field_Ref  ! spec_arg tree to check against son
+                                        ! Start of Field
+      integer :: Field_Chk  ! index of n_asg vertex
+      integer :: K     ! Index of sons of Field_Ref, to find N_Asg vertex
+      integer :: L     ! Index of sons of Field_Test, to find next spec_arg
+      integer :: Name_Look  ! sub_rosa of Start son of Field
+
+      if ( toggle(con) ) &
+        & call trace_begin ( 'Check_Deep', subtree(start,field), field_ref )
+
+      stat = 0 ! Assume success
+      field_look = decoration(subtree(start,field))
+      name_look = sub_rosa(subtree(start,field))
+      do k = 2, nsons(field_ref)
+        field_chk = subtree(k,field_ref)
+        field_test = field_chk
+        ! Check for n_asg son of field_ref
+        if ( node_id(field_chk) == n_asg ) then
+          if ( sub_rosa(subtree(1,field_chk)) == name_look ) then
+            ! The field in the spec_arg is the same as the Start son of Field
+            field_got = field_chk
+            if ( start == end ) then
+              ! Check whether a son of the n_asg at field_chk is the field in
+              ! <dot label field> to be checked
+              do l = 2, nsons(field_chk)
+                if ( sub_rosa(subtree(l,field_got)) == field_last ) then
+                  call decorate ( last, subtree(l,field_got) )
+                  go to 9
+                end if
+              end do
+              field_test = field_last
+              stat = 4 ! No such referenced spec
+              go to 9
+            else
+              ! Check whether a son of the n_asg at field_chk is another field
+              ! of the same name as the Start son of Field
+              do l = 2, nsons(field_chk)
+                stat = check_deep ( start, end, decoration(subtree(l,field_chk)) )
+                if ( stat == 0 ) go to 9
+              end do
+              ! Check whether a son of the n_asg at field_chk is
+              ! the same name as the Start+1 son of Field
+              do l = 2, nsons(field_chk)
+                stat = check_deep ( start+1, end, decoration(subtree(l,field_chk)) )
+                if ( stat == 0 ) go to 9
+              end do
+            end if
+          end if
+        end if
+      end do ! k
+      stat = 2 ! no such field
+    9 if ( toggle(con) ) call trace_end ( 'Check_Deep', stat )
+    end function Check_Deep
+
   end function Check_Dot
 
 ! --------------------------------------------------  CHECK_FIELD  -----
@@ -672,9 +718,9 @@ m:      do j = start+1, nsons(field)
   end subroutine DEF_SECTION
 ! -----------------------------------------------------  DEF_SPEC  -----
   recursive subroutine DEF_SPEC ( ROOT )
-  ! Process a definition of a structure:  Enter the structure and field
-  ! names in the declaration table.  Decorate the structure name with
-  ! the root. Decorate each field_type node with the structure name.
+  ! Process a definition of a specification:  Enter the specification and field
+  ! names in the declaration table.  Decorate the specification name with
+  ! the root. Decorate each field_type node with the specification name.
   ! Decorate each field name with its parent field_type node.  Decorate
   ! each field type name with the dt_def node for the type.
     integer, intent(in) :: ROOT      ! Root of tree being worked ( n_spec_def )
@@ -1270,6 +1316,9 @@ m:      do j = start+1, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.34  2012/05/05 00:12:36  vsnyder
+! Add support for 'not' operator
+!
 ! Revision 1.33  2011/08/20 00:48:34  vsnyder
 ! Remove unused use names and variable declarations
 !
