@@ -1948,11 +1948,7 @@ contains
   ! Internal variables
   logical :: exist
   inquire(file=filename, exist=exist)
-  if (exist) then
-    mls_exists = 0
-  else
-    mls_exists = FILENOTFOUND
-  endif
+  mls_exists = merge(0, FILENOTFOUND, exist)
   end function mls_exists
 
   !-----------------------------------------  transfer_MLSFile  -----
@@ -2730,6 +2726,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.92  2012/05/24 20:32:11  vsnyder
+! Simplify mls_exists
+!
 ! Revision 2.91  2012/03/14 16:55:11  pwagner
 ! Fixed most recent goldbrick-busting bug
 !
