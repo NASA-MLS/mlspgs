@@ -61,7 +61,7 @@ contains ! ====     Public Procedures     ==============================
       call output ( '.' )
     end do
     call output ( 'Enter ' ); call output ( name )
-    if ( present(index) ) call output( index )
+    if ( present(index) ) call output( index, before=' ' )
     call date_and_time ( time=now )
     call output ( ' at ' // now(1:2) // ':' // now(3:4) // ':' // now(5:) )
     if ( present(root) ) then
@@ -117,7 +117,7 @@ contains ! ====     Public Procedures     ==============================
       call output ( '.' )
     end do
     call output ( 'Exit ' ); call output ( name )
-    if ( present(index) ) call output( index )
+    if ( present(index) ) call output( index, before=' ' )
     call date_and_time ( time=now, values=values )
     call output ( ' at ' // now(1:2) // ':' // now(3:4) // ':' // now(5:) )
     if ( depth >= 0 .and. depth < clockStackMax ) then
@@ -191,6 +191,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.21  2012/05/24 01:35:59  vsnyder
+! Clean up output
+!
 ! Revision 2.20  2011/12/13 01:09:00  pwagner
 ! Automatically turns on MLSVerbose or MLSDebug according to MLSNamesAre..
 !
