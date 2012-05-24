@@ -14,8 +14,8 @@ module ConstructVectorTemplates ! Construct a template for a vector
 !=============================================================================
 
   use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-  use INIT_TABLES_MODULE, only: F_QUANTITIES, FIELD_FIRST, FIELD_LAST, &
-    & F_ADOPT, L_ROWS, L_COLUMNS, F_SOURCE
+  use INIT_TABLES_MODULE, only: F_ADOPT, F_QUANTITIES, F_SOURCE, F_Template, &
+    & FIELD_FIRST, FIELD_LAST, L_ROWS, L_COLUMNS
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use Output_M, only: Output
   use QuantityTemplates, only: QuantityTemplate_T
@@ -84,17 +84,11 @@ contains ! =====     Public Procedures     =============================
       case ( f_source )
         source = decoration ( subtree(2,son) )
       case ( f_quantities )
-        noQuantities = nsons(son) - 1
-        call allocate_test ( quantities, noQuantities, "quantities", ModuleName )
-        do j = 2, nsons(son)  ! Skip the "quantities" name
-          ! Get the quantity index that was put into the AST by Construct:
-          quantities(j-1) = decoration(decoration(subtree(j,son)))
-          ! Check for duplicate quantities
-          do k = 1, j-2
-            if ( quantities(k) == quantities(j-1) ) &
-              & call Announce_Error  ( key, 'Duplicate quantities' )
-          end do ! k = 1, noQuantities - 1
-        end do ! j = 2, nsons(son)
+        noQuantities = noQuantities + nsons(son) - 1
+      case ( f_template )
+        do j = 2, nsons(son)  ! Skip the "template" name
+          call count_quantities ( decoration(subtree(j,son)) )
+        end do
       end select
     end do
 
@@ -112,7 +106,10 @@ contains ! =====     Public Procedures     =============================
           end if
         end do
       end if
-    else if ( got ( f_quantities ) ) then
+    else if ( got ( f_quantities ) .or. got ( f_template ) ) then
+      call allocate_test ( quantities, noQuantities, "quantities", ModuleName )
+      noQuantities = 0
+      call fill_quantities ( root )
       ! Not an adoption, just a regular template construction
       call ConstructVectorTemplate ( name, quantityTemplates, quantities, &
         & vectorTemplate, where=source_ref(root), forWhom=moduleName )
@@ -124,6 +121,49 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(gen) .and. levels(gen) > 0 ) call &
       & trace_end ( "ConstructVectorTemplateFromMLSCfInfo" )
+
+  contains
+
+    recursive subroutine Count_Quantities ( Root )
+      integer, intent(in) :: Root ! of a spec_args in a vectorTemplate
+      integer :: I, Son
+      do i = 2, nsons(root)
+        son = subtree(i,root)
+        select case ( decoration(subtree(1,son)) )
+        case ( f_quantities )
+          noQuantities = noQuantities + nsons(son) - 1
+        case ( f_template )
+          do j = 2, nsons(son)  ! Skip the "template" name
+            call count_quantities ( decoration(subtree(j,son)) )
+          end do
+        end select
+      end do
+    end subroutine Count_Quantities
+
+    recursive subroutine Fill_Quantities ( Root )
+      integer, intent(in) :: Root ! of a spec_args in a vectorTemplate
+      integer :: I, J, K, Son
+      do i = 2, nsons(root)
+        son = subtree(i,root)
+        select case ( decoration(subtree(1,son)) )
+        case ( f_quantities )
+          do j = 2, nsons(son)
+            noQuantities = noQuantities + 1
+            ! Get the quantity index that was put into the AST by Construct:
+            quantities(noQuantities) = decoration(decoration(subtree(j,son)))
+            ! Check for duplicate quantities
+            do k = 1, noQuantities - 1
+              if ( quantities(k) == quantities(noQuantities) ) &
+                & call Announce_Error  ( key, 'Duplicate quantities' )
+            end do ! k = 1, noQuantities - 1
+          end do ! j = 2, nsons(son)
+        case ( f_template )
+          do j = 2, nsons(son)  ! Skip the "template" name
+            call fill_quantities ( decoration(subtree(j,son)) )
+          end do
+        end select
+      end do
+    end subroutine Fill_Quantities
 
   end function CreateVecTemplateFromMLSCfInfo
 
@@ -164,6 +204,12 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.16  2012/05/24 21:07:38  vsnyder
+! Allow any number of template and quantities fields.  Trace out template
+! fields recursively until arriving at template fields.  The quantities of
+! the created template are the totality of the quantities in quantities fields,
+! and in quantities fields of referenced vector templates.
+!
 ! Revision 2.15  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
