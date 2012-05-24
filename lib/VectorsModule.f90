@@ -1855,7 +1855,8 @@ contains ! =====     Public Procedures     =============================
                                              ! Default 1
     type(quantityTemplate_T), intent(in), optional :: QUANTITIES(:)
                                              ! If DETAILS > 0 and QUANTITIES
-                                             ! is present, dump them.
+                                             ! is present, dump them with level
+                                             ! details-1.
     integer :: I, MyDetails
     myDetails = 1
     if ( present(details) ) myDetails = details
@@ -1875,7 +1876,7 @@ contains ! =====     Public Procedures     =============================
         do i = 1, size(vector_template%quantities)
           call output ( vector_template%quantities(i), 4 )
           call output ( ':' )
-          call dump ( quantities(vector_template%quantities(i)), details )
+          call dump ( quantities(vector_template%quantities(i)), details-1 )
         end do
       end if
     elseif ( .not. associated(vector_template%quantities) ) then
@@ -2816,6 +2817,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.162  2012/04/20 01:26:38  vsnyder
+! Add DotVectorsMaybeMasked, norms, dump quantity norms
+!
 ! Revision 2.161  2012/03/28 00:55:22  vsnyder
 ! Indicate mask is dumped in hex
 !
