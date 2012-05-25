@@ -25,6 +25,8 @@
       call outputNamedValue( 'rank', myRank, advance='no' )
       call output( '   shape  ', advance='no' )
       call output( shape(array), advance='yes' )
+      if ( any(isInfinite(array)) ) call output( '(infinite values found)', advance='no' )
+      if ( any(isNaN(array)) ) call output( '(NaNs found)', advance='no' )
     endif
     if ( myBandwidth ) then
       call BandWidth( array, bwidth, pctnzero )
@@ -146,6 +148,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.29  2012/05/25 20:38:00  pwagner
+! Warn if Infinities or NaNs found
+!
 ! Revision 2.28  2012/03/12 20:03:49  vsnyder
 ! Don't summarize 'all ... values are' if clean is set
 !
