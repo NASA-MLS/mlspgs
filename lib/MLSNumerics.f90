@@ -61,11 +61,12 @@ module MLSNumerics              ! Some low level numerical stuff
 ! FillLookUpTable          Fill table with evaluations at regularly-spaced args
 !                            to be used in place of later, frequent evaluations;
 !                            reversing role of (table, xtable) => function^(-1)
-! FindInRange                Finds indices of array elements for which values
+! FindInRange              Finds indices of array elements for which values
 !                            lie within a range
 !                            (list need not be monotonic)
 ! Hunt                     Finds index of item(s) in list closest to prey
 !                           (list must be monotonic)
+! HuntBox                  Finds indices of n-dimensional box enclosing coords
 ! HuntRange                Finds index range between which
 !                           all item(s) in list lie within range of values
 ! IFApproximate            Compute integral using UnifDiscreteFn
@@ -75,6 +76,7 @@ module MLSNumerics              ! Some low level numerical stuff
 !                            given old (x,y), new (x), method
 ! Interpolate_2D_Composite 2D - to - 2D interpolation using composite 1D
 !                          interpolation
+! LinearInterpolate        Do a single linear interpolation in n dimensions
 ! PureHunt                 Like Hunt, but may be quicker due to optimization
 ! Setup                    Fill y values in UniDiscFunction
 ! Simpsons                 Apply Simpson's rule to integrate--function form
@@ -105,6 +107,8 @@ module MLSNumerics              ! Some low level numerical stuff
 ! Hunt ( nprec list, nprec values, int indices(:), &
 !   [int start], [log allowTopValue], [log allowBelowValue], &
 !   [log nearest], [log logSpace], [log fail] )
+! HuntBox ( nprec gridPoints, int MGridPoints(:), nprec coords, int indices(:), &
+!   [nprec vertices] )
 ! HuntRange ( num list(:), num vrange(2), int irange(2), options )
 ! nprec  IFApproximate ( UnifDiscreteFn_nprec UDF, &
 !     [nprec xS], [nprec xE] )
@@ -120,6 +124,8 @@ module MLSNumerics              ! Some low level numerical stuff
 !   coefficients_nprec Coeffs, &[log Extrapolate], [int Width], [log DyByDx], 
 !   [matrixElement_T dNewByDOld], [log IntYdX] )
 ! InterpolateArrayTeardown ( Coefficients_nprec Coeffs )
+! nprec LinearInterpolate ( nprec values(:,:,..,:), nprec coords(:), &
+!    nprec verts(:,:,..,:) )
 ! PureHunt ( nprec element, nprec array, int n, int jlo, int jhi )
 ! Setup ( UnifDiscreteFn_nprec UDF, int N, nprec x1, nprec x2, [ nprec y(:)], &
 !    [char* BC], [nprec yLeft], [nprec yRight], [extern nprec fun] )
@@ -133,16 +139,16 @@ module MLSNumerics              ! Some low level numerical stuff
 ! multidimensional arrays up to rank 3. In a scalar context A and B may be scalars
 ! === (end of api) ===
 
-  public :: Battleship, BivariateLinearInterpolation
-  public :: ClosestElement
-  public :: Destroy, dFdxApproximate, d2Fdx2Approximate, Dump
-  public :: FApproximate, FillLookUpTable, FindInRange, FInvApproximate
-  public :: Hunt, HuntRange, IFApproximate
-  public :: InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
-  public :: Interpolate_2d_Composite
-  public :: PureHunt
-  public :: SetUp, Simpsons, SimpsonsSub
-  public :: UseLookUpTable
+  public :: BATTLESHIP, BIVARIATELINEARINTERPOLATION
+  public :: CLOSESTELEMENT
+  public :: DESTROY, DFDXAPPROXIMATE, D2FDX2APPROXIMATE, DUMP
+  public :: FAPPROXIMATE, FILLLOOKUPTABLE, FINDINRANGE, FINVAPPROXIMATE
+  public :: HUNT, HUNTBOX, HUNTRANGE, IFAPPROXIMATE
+  public :: INTERPOLATEARRAYSETUP, INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES
+  public :: INTERPOLATE_2D_COMPOSITE, LINEARINTERPOLATE
+  public :: PUREHUNT
+  public :: SETUP, SIMPSONS, SIMPSONSSUB
+  public :: USELOOKUPTABLE
 
   type, public :: Coefficients_R4
     private
@@ -381,6 +387,10 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure HuntScalar_r8, HuntScalar_r4
   end interface
 
+  interface HuntBox
+    module procedure HuntBox_r4, HuntBox_r8
+  end interface
+
   interface HuntRange
     module procedure HuntRange_int, HuntRange_r4, HuntRange_r8
   end interface
@@ -407,6 +417,13 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface Interpolate_2d_Composite
     module procedure Interpolate_2d_Composite_r4, Interpolate_2d_Composite_r8
+  end interface
+
+  interface LinearInterpolate
+    module procedure LinearInterpolate_1d_r4, LinearInterpolate_1d_r8
+    module procedure LinearInterpolate_2d_r4, LinearInterpolate_2d_r8
+    module procedure LinearInterpolate_3d_r4, LinearInterpolate_3d_r8
+    module procedure LinearInterpolate_4d_r4, LinearInterpolate_4d_r8
   end interface
 
   interface pcspl
@@ -1433,6 +1450,19 @@ contains
     index = indices(1)
   end subroutine HuntScalar_r8
 
+  ! ---------------------------------------------------  HuntBox  -----
+  ! A binary search routine with a hunt procedure, to start from last known
+  ! location (if 0 < JLO < N) or from the begining otherwise.
+  subroutine HuntBox_r4 ( GRIDPOINTS, MGRIDPOINTS, COORDS, INDICES, VERTICES )
+    integer, parameter :: RK = kind(0.0e0)
+    include 'HuntBox.f9h'
+  end subroutine HuntBox_r4
+
+  subroutine HuntBox_r8 ( GRIDPOINTS, MGRIDPOINTS, COORDS, INDICES, VERTICES )
+    integer, parameter :: RK = kind(0.0d0)
+    include 'HuntBox.f9h'
+  end subroutine HuntBox_r8
+
 ! ------------------------------------------------  HuntRange  -----
 ! This family of subroutines search not for a single index
 ! but for a range within which all list elements
@@ -1932,6 +1962,55 @@ contains
     include 'Interpolate_2d_Composite.f9h'
   end subroutine Interpolate_2d_Composite_r8
 
+! -------------------------------------------------  LinearInterpolate  -----
+
+  ! This family of functions return a value interpolated across
+  ! multiple dimensions
+  
+  ! Args: (* means optional)
+  ! values   the 2^n values at the hypercube's vertices
+  ! coords   2*n vertices coordinates
+  
+  function LinearInterpolate_1d_r4 ( values, coords, vertices ) result(value)
+    integer, parameter :: RK = R4
+    include "LinearInterpolate_1d.f9h"
+  end function LinearInterpolate_1d_r4
+
+  function LinearInterpolate_1d_r8 ( values, coords, vertices ) result(value)
+    integer, parameter :: RK = R8
+    include "LinearInterpolate_1d.f9h"
+  end function LinearInterpolate_1d_r8
+
+  function LinearInterpolate_2d_r4 ( values, coords, vertices ) result(value)
+    integer, parameter :: RK = R4
+    include "LinearInterpolate_2d.f9h"
+  end function LinearInterpolate_2d_r4
+
+  function LinearInterpolate_2d_r8 ( values, coords, vertices ) result(value)
+    integer, parameter :: RK = R8
+    include "LinearInterpolate_2d.f9h"
+  end function LinearInterpolate_2d_r8
+
+  function LinearInterpolate_3d_r4 ( values, coords, vertices ) result(value)
+    integer, parameter :: RK = R4
+    include "LinearInterpolate_3d.f9h"
+  end function LinearInterpolate_3d_r4
+
+  function LinearInterpolate_3d_r8 ( values, coords, vertices ) result(value)
+    integer, parameter :: RK = R8
+    include "LinearInterpolate_3d.f9h"
+  end function LinearInterpolate_3d_r8
+
+  function LinearInterpolate_4d_r4 ( values, coords, vertices ) result(value)
+    integer, parameter :: RK = R4
+    include "LinearInterpolate_4d.f9h"
+  end function LinearInterpolate_4d_r4
+
+  function LinearInterpolate_4d_r8 ( values, coords, vertices ) result(value)
+    integer, parameter :: RK = R8
+    include "LinearInterpolate_4d.f9h"
+  end function LinearInterpolate_4d_r8
+
   ! ---------------------------------------------------  PureHunt  -----
   ! A binary search routine with a hunt procedure, to start from last known
   ! location (if 0 < JLO < N) or from the begining otherwise.
@@ -2321,6 +2400,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.73  2012/05/25 20:53:21  pwagner
+! Added multidimensional LinearInterpolate and HuntBox
+!
 ! Revision 2.72  2012/04/20 23:55:22  pwagner
 ! Remove unused code, misleading comments
 !
