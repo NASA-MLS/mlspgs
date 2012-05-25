@@ -332,6 +332,8 @@ contains
     integer :: bitSet
     integer :: bitValue
     integer :: howMany
+    character(len=*), parameter :: hexFormat = '("0x",z4.4)'
+    character(len=8)  :: hexTag
     character(len=64) :: iTag
     character(len=32) :: myName
     logical :: myOneLine
@@ -339,11 +341,14 @@ contains
     ! Executable
     myOneLine = .false.
     if ( present(oneLine) ) myOneLine = oneLine
-    write( iTag, "('0x',z2.2)") i
+    write( hexTag, hexFormat ) i
+    write( iTag, *) i
     if ( myOneLine) then
-      myName = 'Bit names set by ' // adjustl(iTag)
+      myName = 'Bit names set by ' // trim(adjustl(hexTag)) // &
+        &  '(' // trim(adjustl(iTag)) // ')'
     else
-      myName = adjustl(iTag)
+      myName = trim(adjustl(hexTag)) // &
+        &  '(' // trim(adjustl(iTag)) // ')'
     endif
     if( present(itemName) ) myName = itemName
     call WhichBitsAreSet ( i, which, howMany )
@@ -361,14 +366,17 @@ contains
       enddo
       call newline
     else
-      call output( 'bit value    name', advance='no' )
-      call output( '   set by         ', advance='no' )
+      call output( 'bit value      names', advance='no' )
+      call output( '      all set by ', advance='no' )
       call output( trim(myName), advance='yes' )
+      call output( '(hex)   (dec)', advance='yes' )
       do bitSet=0, howMany-1
         bitNumber = which(bitSet)
         bitValue = 2**bitNumber
-        call output( bitValue, format='("0x",z2.2)', advance='no' )
-        call blanks( 9 )
+        call output( bitValue, format=hexFormat, advance='no' )
+        call blanks( 2 )
+        call output( bitValue, format='(i4)', advance='no' )
+        call blanks( 3 )
         write( iTag, *) bitNumber
         iTag = 'bit(' // adjustl(iTag) // ')'
         if ( size(names) > bitNumber ) iTag = names(bitNumber)
@@ -648,6 +656,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.19  2012/05/25 20:36:52  pwagner
+! Prints both hex and decimal dumped bit values (not everyone can read hex)
+!
 ! Revision 2.18  2012/03/28 02:36:38  vsnyder
 ! Cannonball polishing
 !
