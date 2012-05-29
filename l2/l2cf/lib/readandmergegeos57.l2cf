@@ -162,7 +162,7 @@ end ReadApriori
 ; test
 begin MergeGrids
   geos57Meteorology: Boolean, formula="false"
-  isGridEmpty, grid=gmaoTemperatureInput1, Boolean=geos57Meteorology
+  isGridEmpty, grid=gmaoPressureInput1, Boolean=geos57Meteorology
   Reevaluate, Boolean=geos57Meteorology, formula="not geos57Meteorology"
   Skip, formula="not geos57Meteorology"
   Reevaluate, Boolean=meteorologyType, label="geos5_7-nc4"
@@ -436,6 +436,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.4  2012/05/14 22:54:34  pwagner
+;Uses new Select .. Case .. EndSelect
+;
 ;Revision 1.3  2012/01/10 22:15:09  pwagner
 ;Fixed bug that ignored missing meteorology files
 ;
