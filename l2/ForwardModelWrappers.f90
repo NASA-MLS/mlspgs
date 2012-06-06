@@ -77,7 +77,11 @@ contains ! ============= Public Procedures ==========================
     ! Local variables
     logical :: Clean                      ! Dumps are clean, from switch dxfc
     real :: DeltaTime
-    integer :: DumpTransform              ! Dump transformed vector quantities
+    integer :: DumpTransform              ! Dump transformed stuff
+                                          ! 1 => Input
+                                          ! 2 => FWM Jacobian
+                                          ! 4 => Transformed Jacobian
+                                          ! Dump level is DumpTransform/10
     integer :: FCol, FRow                 ! Column, Row of block in fwmJacobian
     integer :: FMNaN                      ! Level of fmnan switch
     integer :: I, K
@@ -353,7 +357,7 @@ contains ! ============= Public Procedures ==========================
     type(vectorValue_t), intent(in) :: PTan  ! Tangent pressure, for S_Qty
     type(matrix_T), intent(inout) :: Jacobian
     integer, intent(in) :: DumpTransform
-    logical, intent(in) :: Clean              ! for the dumps
+    logical, intent(in) :: Clean             ! for the dumps
 
     integer :: CV      ! c in wvs-107
     integer :: CZ      ! ci, channels X zetas, in wvs-107
@@ -370,14 +374,6 @@ contains ! ============= Public Procedures ==========================
                        ! g in wvs-107
     integer :: VSurf   ! Surface (zeta) index in a MIF, i in wvs-107
 
-    if ( dumpTransform > -1 ) then
-      call output ( MAF, before='MAF ' )
-      call dump ( fwdModelOut, dumpTransform+1, &
-        & ' fwdModelOut before transformation', clean=clean )
-      if ( dumpTransform > 0 ) &
-        & call dump ( Jacobian, 'Jacobian from forward model', dumpTransform )
-    end if
-
     ! Get the block column subscripts for instances of f_qty.
     do inst = 1, f_qty%template%noInstances
       fCols(inst) = findBlock ( Jacobian%col, f_qty%index, inst )
@@ -386,6 +382,23 @@ contains ! ============= Public Procedures ==========================
     do inst = 1, s_qty%template%noInstances
       jCols(inst) = findBlock ( Jacobian%col, s_qty%index, inst )
     end do
+
+    if ( iand(mod(dumpTransform,10),2) /= 0 ) then
+      ! Dump the radiance and Jacobian columns to be transformed
+      do jRow = 1, Jacobian%row%nb
+        o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
+        if ( o_qty%template%quantityType /= l_radiance ) cycle
+        call output ( MAF, before='MAF ' )
+        call dump ( o_qty, dumpTransform/10 + 1, &
+          & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
+        if ( dumpTransform/10 > 0 ) then
+          do inst = 1, size(fCols)
+            call dump ( Jacobian, 'Jacobian from forward model', dumpTransform, &
+              & row=jRow, column=fCols(inst) )
+          end do
+        end if
+      end do
+    end if
 
     !{ Evaluate Equation (2) from wvs-107, \emph{viz.}
     ! \begin{equation*}
@@ -403,8 +416,11 @@ contains ! ============= Public Procedures ==========================
       if ( o_qty%template%quantityType /= l_radiance ) cycle
       nVecChans = o_qty%template%noChans
       do jCol = 1, size(jCols)
-        if ( Jacobian%col%inst(jCols(jCol)) /= MAF ) then
-          ! Zero off-diagonal MIF extinction blocks of Jacobian
+        if ( Jacobian%col%inst(jCols(jCol)) /= MAF .or. &
+           & all(Jacobian%block(jRow,fCols)%kind == m_absent) ) then
+          ! Zero MIF extinction blocks of Jacobian that are off-diagonal
+          ! or would not be filled because all corresponding extinction
+          ! blocks are absent.
           call destroyBlock ( Jacobian%block(jRow,jCols(jCol)) )
         else ! (inst(jRow),inst(jCol)) = nn in wvs-107
           select case ( Jacobian%block(jRow,jCols(jCol))%kind )
@@ -412,6 +428,7 @@ contains ! ============= Public Procedures ==========================
             call createBlock ( Jacobian, jrow, jCols(jCol), m_banded, &
               & Jacobian%row%nelts(jRow), bandHeight=nVecChans, &
               & forWhom='Transform_FWM_extinction' )
+              Jacobian%block(jRow,jCols(jCol))%values = 0
           case ( m_banded )
             if ( ubound(Jacobian%block(jRow,jCols(jCol))%values,1) /= &
                & Jacobian%row%nelts(jRow) ) &
@@ -419,9 +436,8 @@ contains ! ============= Public Procedures ==========================
                    & 'Band structure wrong for Transformed MIF extinction block' )
           case default
             call MLSMessage ( MLSMSG_Error, moduleName, &
-              & 'Transformed MIF extinction block not absent or banded' )
+              & 'Transformed MIF extinction block neither absent or banded' )
           end select
-          Jacobian%block(jRow,jCols(jCol))%values = 0
           do vSurf = 1, size(ptan%values,1) ! i in wvs-107, Same for all fCols
             ! Jacobian is banded.  The only nonzeros in a column are in
             ! rows for the same MIF as the column, and the maximum number of
@@ -492,16 +508,6 @@ contains ! ============= Public Procedures ==========================
               end do ! surf
             end do ! cv
           end do ! vSurf
-          if ( dumpTransform > 1 ) then
-            do inst = 1, size(fCols)
-              call dump ( Jacobian, details=dumpTransform, &
-                        & name='Forward model Jacobian', &
-                        & row=jrow, column=fCols(inst) )
-            end do
-            call dump ( Jacobian, details=dumpTransform, &
-                      & name='Transformed Jacobian', &
-                      & row=jrow, column=jCols(jCol) )
-          end if
         end if
       end do ! jCol
     end do ! jRow
@@ -517,10 +523,21 @@ contains ! ============= Public Procedures ==========================
     ! aj%axmax in the retriever
     f_qty%values = 0.0
 
-    if ( dumpTransform > -1 ) then
-      call output ( MAF, before='MAF ' )
-      call dump ( fwdModelOut, dumpTransform+1, &
-        & ' fwdModelOut after transformation', clean=clean )
+    if ( iand(mod(dumpTransform,10),4) /= 0 ) then
+      ! Dump the transformed parts of the radiance and Jacobian
+      do jRow = 1, Jacobian%row%nb
+        o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
+        if ( o_qty%template%quantityType /= l_radiance ) cycle
+        call output ( MAF, before='MAF ' )
+        call dump ( o_qty, dumpTransform/10+1, &
+          & ' fwdModelOut after transformation', options=merge('-c','  ',clean) )
+        if ( dumpTransform/10 > 0 ) then
+          do inst = 1, size(jCols)
+            call dump ( Jacobian, 'Transformed Jacobian', dumpTransform, &
+              & row=jRow, column=jCols(inst) )
+          end do
+        end if
+      end do
     end if
 
   end subroutine Transform_FWM_extinction
@@ -588,10 +605,10 @@ contains ! ============= Public Procedures ==========================
                                & ptan%values(p(s_lrp),1) ) )
     end do
 
-    if ( dumpTransform > -1 ) then
+    if ( iand(mod(dumpTransform,10),1) /= 0 ) then
       call dump ( ptan%values(p,maf), name='PTan zetas' )
-      call dump ( s_qty, details=dumpTransform, name='from fwdModelIn' )
-      call dump ( f_qty, details=dumpTransform, name='to forward model' )
+      call dump ( s_qty, details=dumpTransform/10, name='from fwdModelIn' )
+      call dump ( f_qty, details=dumpTransform/10, name='to forward model' )
     end if
   end subroutine Transform_MIF_Extinction
 
@@ -608,6 +625,10 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.44  2012/06/06 20:41:59  vsnyder
+! More and better dumps and messages
+! don't clobber Jacobian from prior FWM for same MAF
+!
 ! Revision 2.43  2012/05/01 22:24:06  vsnyder
 ! Use IsRadianceModel component, some cannonball polishing
 !
