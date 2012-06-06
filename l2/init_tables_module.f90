@@ -1570,6 +1570,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_stateMax, s+s_vector, n+n_field_spec, &
              begin, f+f_stateMin, s+s_vector, n+n_field_spec, &
              begin, f+f_switches, t+t_string, n+n_field_type, &
+             begin, f+f_toggles, t+t_string, n+n_field_type, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
@@ -1779,6 +1780,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.547  2012/06/06 20:37:42  vsnyder
+! Add toggles field to retrieve spec
+!
 ! Revision 2.546  2012/05/24 21:06:22  vsnyder
 ! Add template field to VectorTemplate spec
 !
