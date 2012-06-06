@@ -57,13 +57,13 @@ program MLSL2
   use PCFHDR, only: GLOBALATTRIBUTES
   use PVM, only: CLEARPVMARGS, FREEPVMARGS
   use SDPTOOLKIT, only: useSDPTOOLKIT
+  use Set_Toggles_m, only: Set_Toggles
   use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DO_LISTING, GET_STRING, ADDINUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
   use TIME_M, only: BEGIN, FINISH, TIME_NOW, TIME_CONFIG
-  use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
-    & TOGGLE
+  use TOGGLES, only: SYN, SWITCHES, TOGGLE
   use TRACK_M, only: REPORTLEAKS
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
@@ -600,35 +600,20 @@ program MLSL2
         case ( ' ' )
           exit
         case ( 'A' ); dump_tree = .true.
-        case ( 'a' ); toggle(syn) = .true.
-        case ( 'c' ); toggle(con) = .true.
+        case ( 'a', 'c', 'f', 'g', 'l', 'p', 't' )
+          if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+            call set_toggles ( line(j:j+1) )
+            j = j + 1
+          else
+            call set_toggles ( line(j:j) )
+          end if
         case ( 'd' ); do_dump = .true.
-        case ( 'f' )
-          toggle(emit) = .true.
-          levels(emit) = 0
-          if ( j < len_trim(line) ) then
-            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
-              j = j + 1
-              levels(emit) = ichar(line(j:j)) - ichar('0')
-            end if
-          end if
-        case ( 'g' )
-          toggle(gen) = .true.
-          levels(gen) = 0
-          if ( j < len_trim(line) ) then
-            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
-              j = j + 1
-              levels(gen) = ichar(line(j:j)) - ichar('0')
-            end if
-          end if
         case ( 'h', 'H', '?' )     ! Describe command line usage
           call option_usage
         case ( 'K' ); capIdentifiers = .true.
         case ( 'k' ); capIdentifiers = .false.
-        case ( 'l' ); toggle(lex) = .true.
         case ( 'M' ); outputOptions%prunit = -2
         case ( 'm' ); outputOptions%prunit = -1
-        case ( 'p' ); toggle(par) = .true.
         case ( 'R' ) ! This does the opposite of what S does
           removeSwitches = catLists(trim(removeSwitches), line(j+1:))
           exit ! Took the rest of the string, so there can't be more options
@@ -656,7 +641,6 @@ program MLSL2
             end if
             j = j + 1
           end do
-        case ( 't' ); toggle(tab) = .true.
         case ( 'v' ); do_listing = .true.
         case ( 'w' )
           MLSMessageConfig%limitWarnings = 1
@@ -1179,6 +1163,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.183  2012/06/06 20:36:37  vsnyder
+! Use Set_Toggles for -aefglpt options
+!
 ! Revision 2.182  2012/04/26 23:12:45  pwagner
 ! --crash turns off neverCrash; maybe we should change default for neverCrash to .false.
 !
