@@ -1766,8 +1766,8 @@ use dump_0, only: dump
   ! compute refractive index
     CALL ALLOCATE_TEST(tan_refr_indx,ptan%template%nosurfs,'tan_refr_indx', &
     & modulename)
-    CALL refractive_index(10.0_rp**(-ptan%values(:,fmStat%maf)), tan_temp, &
-    & tan_refr_indx,h2o_path = tan_h2o)
+    CALL refractive_index ( 10.0_rp**(-max(-10.0_rp,ptan%values(:,fmStat%maf))), &
+      & tan_temp, tan_refr_indx,h2o_path = tan_h2o )
   ! compute surface pressure
     CALL ALLOCATE_TEST(eta_at_one_phi,windowfinish_t-windowstart_t+1, &
     & 'eta_at_one_phi',modulename)
@@ -2052,6 +2052,9 @@ use dump_0, only: dump
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.75  2012/06/06 20:13:37  vsnyder
+! Avoid overflow if ptan is bogus because module is turned off
+!
 ! Revision 2.74  2012/04/20 01:54:20  vsnyder
 ! Remove GeocLat from Get2DHydrostaticTangentPressure, make EarthRadius
 ! automatic.  Add some dumps.  Print a warning if the initial pressure
