@@ -930,6 +930,7 @@ contains
     integer :: DetailReduction
     integer :: Details
     integer :: DiffOrDump
+    character(len=128) :: Farewell
     integer :: FieldIndex
     integer :: FileIndex
     logical :: GotFirst ! of something -- needed if diffing 2 of them
@@ -1033,6 +1034,7 @@ contains
       fieldIndex = get_field_id(son)
       gson = son
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
+      source = source_ref(gson) ! column + 256*line in l2cf
       select case ( fieldIndex )
       ! This first heaped set of fields need no "right-hand side"
       case ( f_allBooleans, f_allFiles, f_allForwardModels, f_allGriddedData, &
@@ -1185,19 +1187,27 @@ contains
           case ( f_stop )
             call finish ( 'ending mlsl2' )
             if ( NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave ) then
-              call MLSMessageExit( NORMAL_EXIT_STATUS, &
-                & farewell="Program stopped with normal status by /stop field on DUMP statement.")
+              write ( farewell, '(a,2(i0,a))' ) &
+                & "Program stopped with normal status by /stop field on DUMP statement at line ", &
+                & source/256, ", column ", mod(source,256), "."
+              call MLSMessageExit( NORMAL_EXIT_STATUS, farewell=farewell )
             else if( parallel%slave ) then
               call closeParallel(0)
-              call MLSMessageExit( &
-                & farewell="slave stopped by /stop field on DUMP statement.")
+              write ( farewell, '(a,2(i0,a))' ) &
+                & "Slave stopped by /stop field on DUMP statement at line ", &
+                & source/256, ", column ", mod(source,256), "."
+              call MLSMessageExit( farewell=farewell )
             else
-              call MLSMessageExit( &
-                & farewell="Program stopped by /stop field on DUMP statement.")
+              write ( farewell, '(a,2(i0,a))' ) &
+                & "Program stopped by /stop field on DUMP statement at line ", &
+                & source/256, ", column ", mod(source,256), "."
+              call MLSMessageExit( farewell=farewell )
             endif
           case ( f_stopWithError )
-              call MLSMessageExit( 1, &
-                & farewell="Program stopped by /stopWithError field on DUMP statement.")
+            write ( farewell, '(a,2(i0,a))' ) &
+                & "Program stopped by /stopWithError field on DUMP statement at line ", &
+                & source/256, ", column ", mod(source,256), "."
+            call MLSMessageExit( 1, farewell=farewell )
           end select
         end if
       case ( f_Boolean )
@@ -2014,6 +2024,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.76  2012/06/06 20:20:46  vsnyder
+! Add line number to farewell for /stop
+!
 ! Revision 2.75  2012/05/14 22:26:31  pwagner
 ! Guard against missing swath--counts as empty
 !
