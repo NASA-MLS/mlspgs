@@ -61,7 +61,7 @@ contains
       & F_OUTPUTCOVARIANCE, F_OUTPUTSD, &
       & F_PHASENAME, F_PRECISIONFACTOR, &
       & F_REGAFTER, F_REGAPRIORI, F_SERIAL, F_SPARSEQUANTITIES, &
-      & F_STATE, F_STATEMAX, F_STATEMIN, F_SWITCHES, &
+      & F_STATE, F_STATEMAX, F_STATEMIN, F_SWITCHES, F_TOGGLES, &
       & F_TOLERANCEA, F_TOLERANCEF, F_TOLERANCER, &
       & F_VREGORDERS, F_VREGQUANTS, &
       & F_VREGWEIGHTS, F_VREGWEIGHTVEC, FIELD_FIRST, FIELD_LAST, &
@@ -96,12 +96,13 @@ contains
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: FLUSH_PFADATA
+    use Set_Toggles_m, only: Set_Toggles
     use SIDSMODULE, only: SIDS
     use SNOOPMLSL2, only: SNOOP
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
     use SUBSETMODULE, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE, UPDATEMASK
     use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE, LEVELS
+    use TOGGLES, only: EMIT, GEN, SWITCHES, TOGGLE, LEVELS
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TRACK_M, only: REPORTLEAKS
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
@@ -197,6 +198,8 @@ contains
     logical :: PotemkinHessian 
     real(rv) :: PrecisionFactor         ! Default 0.5, precisions 'worse than this' set negative
     type(vectorValue_T), pointer :: Qty ! A temporary value used for checking
+    integer :: SaveLevels(size(levels))
+    logical :: SaveToggle(size(toggle))
     integer :: Son                      ! Of Root or Key
     character(len=127) :: SnoopComment  ! From comment= field of S_Snoop spec.
     integer :: SnoopKey                 ! Tree point of S_Snoop spec.
@@ -364,6 +367,8 @@ contains
       case ( s_retrieve )
         if ( SKIPRETRIEVAL .and. STATEFILLEDBYSKIPPEDRETRIEVALS == 0. ) cycle
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
+        saveLevels = levels
+        saveToggle = toggle
         aprioriScale = 1.0
         columnScaling = l_none
         covSansReg = .false.
@@ -483,6 +488,10 @@ contains
             call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
             switchLenCur = len_trim(switches) + 1
             switches(switchLenCur:switchLenCur) = ','
+          case ( f_toggles )
+            call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
+            call set_toggles ( switches(switchLenCur+1:) )
+            switches(switchLenCur+1:) = ''
           case ( f_aprioriScale, f_fuzz, f_lambda, f_maxJ, f_muMin, &
             &    f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
@@ -536,6 +545,8 @@ contains
             call display_string ( state%template%name, advance='yes' )
           end if
           call output ( ' (skipping retrieval) ', advance='yes' )
+          levels = saveLevels
+          toggle = saveToggle
           if ( toggle(gen) )  call trace_end ( "Retrieve.retrieve" )
           cycle
         endif
@@ -726,6 +737,8 @@ contains
           call copyVectorMask ( fwdModelOut, measurements )
         end if
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
+        levels = saveLevels
+        toggle = saveToggle
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
         if ( SKIPRETRIEVAL ) cycle
@@ -2904,6 +2917,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.326  2012/06/06 20:37:56  vsnyder
+! Add toggles field to retrieve spec
+!
 ! Revision 2.325  2012/05/08 17:50:52  pwagner
 ! Added Select .. Case .. EndSelect control structure
 !
