@@ -47,13 +47,14 @@ contains ! =================================== Public procedures
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFILE_T
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMESSAGECALLS
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MoreTree, only: GET_SPEC_ID
     use output_m, only: OUTPUT, OUTPUTNAMEDVALUE
     use ReadAPriori, only: PROCESSONEAPRIORIFILE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
     use Tree_Types, only: N_NAMED
-    use Toggles, only: GEN, TOGGLE
+    use Toggles, only: GEN, SWITCHES, TOGGLE
 
     integer, intent(in) :: ROOT         ! Tree root
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -76,6 +77,7 @@ contains ! =================================== Public procedures
     integer :: NAME                     ! Index into string table
     integer :: SON                      ! Tree node
     integer :: VALUE
+    logical :: verbose
 
     ! excutable code
     if ( toggle(gen) ) then
@@ -83,6 +85,8 @@ contains ! =================================== Public procedures
     else
       call MLSMessageCalls( 'push', constantName=ModuleName )
     endif
+    ! Executable code
+    verbose = ( switchDetail(switches, 'grid' ) > -1 )
     
     do i = 2, nsons(root) - 1           ! Skip the begin and end stuff
       son = subtree ( i, root )
@@ -146,10 +150,12 @@ contains ! =================================== Public procedures
         grid => griddedDataBase(value)
         call DestroyGriddedData( grid )
         grid = MergeOneGrid ( key, griddedDataBase )
-        call output( 'The GriddedDatabase, ' )
-        call outputNamedValue( 'size(db)', size(griddedDataBase) )
-        call outputNamedValue( 'our index', value )
-        call outputNamedValue( 'is it empty?', grid%empty )
+        if ( verbose ) then
+          call output( 'The GriddedDatabase, ' )
+          call outputNamedValue( 'size(db)', size(griddedDataBase) )
+          call outputNamedValue( 'our index', value )
+          call outputNamedValue( 'is it empty?', grid%empty )
+        endif
       case ( s_reevaluate )
         call decorate ( key,  BooleanFromFormula ( 0, key ) )
       case ( s_skip ) ! ============================== Skip ==========
@@ -1077,6 +1083,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.46  2012/06/07 22:48:43  pwagner
+! Printing during mergeGrids now requires 'grid' switch
+!
 ! Revision 2.45  2012/05/08 17:49:54  pwagner
 ! Added Select .. Case .. EndSelect control structure
 !
