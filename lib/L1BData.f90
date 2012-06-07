@@ -185,6 +185,7 @@ module L1BData
   end type L1BData_T
   
   integer :: Error            ! Error level -- 0 = OK
+  logical, parameter           :: DEEBUG = .FALSE.
   
   ! Error flags returned from ReadL1BData when NeverFail=TRUE
   integer, public, parameter :: NOERROR =            0
@@ -1303,9 +1304,11 @@ contains ! ============================ MODULE PROCEDURES ======================
         Flag = -1
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Failed to find attribute in l1boa file'//AttrName, MLSFile=L1bFile)
-      else 
-        call output ('get attribute', advance='no')
-        call output (AttrName, advance='yes')
+      else
+        if ( DEEBUG ) then
+          call output ('get attribute', advance='no')
+          call output (AttrName, advance='yes')
+        endif
         call GetHDF5Attribute(aID, AttrName, value)
       end if
       call h5gClose_f (aID, status)
@@ -2670,6 +2673,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.92  2012/06/07 23:57:17  pwagner
+! Limit printing while reading attributes to DEEBUGging
+!
 ! Revision 2.91  2011/07/15 23:31:06  pwagner
 ! Can now read 4d l1b data types; removed redundant code
 !
