@@ -8,8 +8,8 @@
 #
 # Assumes that:
 
-# (0) It has been called from PGS_PC_Shell.sh as the (pge) in
-#  PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v
+# (0) It has been called as
+#  (pge) 0111 (PCF_file) 25 -v
 # (1) $LEVEL1_BINARY_DIR contains mlsl0sn, mlsl1log, and mlsl1g
 # (2) $LEVEL2_BINARY_DIR contains mlsl2
 # (3) JOBDIR is defined as an environment variable
@@ -32,6 +32,8 @@
 #     It should be the path and name of the host file,
 #     a text file containing the hosts available
 #     for running the slave tasks, one host per line
+# (4) The toolkit environment is correctly set and that PGS_PC_Shell.sh
+#     is in your PATH and can be used to run each binary executable correctly
 #
 # Copyright 2012, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
@@ -63,6 +65,8 @@ GZIPLEVEL="1"
 # log      copy any log file messages to stdout
 # pro      announce input files at opening, output files at creation
 # time     summarize time consumed by each code  section, phase, etc.
+#EXTRA_OPTIONS="$@"
+PCF=$2
 otheropts="$OTHEROPTS --sharedPCF -g --wall --cat --submit l2q --delay 20000 -S'l2q,glob,mas,chu,opt1,log,pro,time'"
 
 # Define the tools we will need
@@ -188,17 +192,16 @@ MLSPROG_3=mlsl1t
 
 JOBENV=job.env
 echo "#!/bin/sh" > $JOBENV
-echo "export PGS_PC_INFO_FILE=$PGS_PC_INFO_FILE" >> $JOBENV
+echo ". $PGE_ROOT/pgs-env.ksh" >> $JOBENV
+echo "export PGS_PC_INFO_FILE=$PCF" >> $JOBENV
 echo "export JOBDIR=$JOBDIR" >> $JOBENV
 echo "export MLSTOOLS=$MLSTOOLS" >> $JOBENV
-echo "export PGSHOME=$PGSHOME" >> $JOBENV
-echo "export PGSBIN=$PGSBIN" >> $JOBENV
 echo "export PGSMEM_USESHM=$PGSMEM_USESHM" >> $JOBENV
 echo "export FLIB_DVT_BUFFER=$FLIB_DVT_BUFFER" >> $JOBENV
 echo "export PGE_BINARY_DIR=$PGE_BINARY_DIR" >> $JOBENV
 echo "export PGE_ROOT=$PGE_ROOT" >> $JOBENV
 echo "export PVM_HOSTS_INFO=$PVM_HOSTS_INFO" >> $JOBENV
-echo "export OTHEROPTS=$otheropts" >> $JOBENV
+#echo "export OTHEROPTS=$otheropts" >> $JOBENV
 
 # For each of the level 1 jobs, we'll have Spartacus request a host
 # from l2q
@@ -207,7 +210,8 @@ echo "export OTHEROPTS=$otheropts" >> $JOBENV
 # (1) Create 3 level 1 jobs and run them
 JOB1SCRIPT="job1script.sh"
 echo "#!/bin/sh" > $JOB1SCRIPT
-echo "$RONIN `pwd` . $JOBENV; env; $LEVEL1_BINARY_DIR/$MLSPROG_0 $EXTRA_OPTIONS $@" >> $JOB1SCRIPT
+echo "$RONIN `pwd` . $JOBENV; env; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_0 $EXTRA_OPTIONS $@" >> $JOB1SCRIPT
+chmod a+x $JOB1SCRIPT
 echo $SPARTACUS $JOB1SCRIPT
 $SPARTACUS $JOB1SCRIPT
 
@@ -222,7 +226,8 @@ fi
 
 JOB2SCRIPT="job2script.sh"
 echo "#!/bin/sh" > $JOB2SCRIPT
-echo "$RONIN `pwd` . $JOBENV; $LEVEL1_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS $@" >> $JOB2SCRIPT
+echo "$RONIN `pwd` . $JOBENV; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS $@" >> $JOB2SCRIPT
+chmod a+x $JOB2SCRIPT
 echo $SPARTACUS $JOB2SCRIPT
 $SPARTACUS $JOB2SCRIPT
 
@@ -237,7 +242,8 @@ fi
 
 JOB3SCRIPT="job3script.sh"
 echo "#!/bin/sh" > $JOB3SCRIPT
-echo "$RONIN `pwd` . $JOBENV; $LEVEL1_BINARY_DIR/$MLSPROG_2 $EXTRA_OPTIONS $@" >> $JOB3SCRIPT
+echo "$RONIN `pwd` . $JOBENV; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_2 $EXTRA_OPTIONS $@" >> $JOB3SCRIPT
+chmod a+x $JOB3SCRIPT
 echo $SPARTACUS $JOB3SCRIPT
 $SPARTACUS $JOB3SCRIPT
 
@@ -277,12 +283,23 @@ fi
 # (3) Create the level 2 job and run it
 # We try to reuse the already existing mlsl2p.sh script, presumably in 
 #    $LEVEL2_BINARY_DIR
+. $PGE_ROOT/pgs-env.ksh
 export OTHEROPTS="$otheropts"
+MASTERSCRIPT="masterscript.sh"
+echo "#!/bin/sh" > $MASTERSCRIPT
+echo ". $JOBENV" >> $MASTERSCRIPT
+echo "export PGS_PC_INFO_FILE=$PCF" >> $MASTERSCRIPT
+echo "env" >> $MASTERSCRIPT
+echo "$LEVEL2_BINARY" >> $MASTERSCRIPT
 export JOBDIR="`pwd`"
 /bin/rm -fr job1logs
 mv pvmlog job1logs
 # Now we launch the master task itself to set everything in motion
-echo $LEVEL2_BINARY $otheropts
-$LEVEL2_BINARY $otheropts
+chmod a+x $MASTERSCRIPT
+echo PGS_PC_Shell.sh $MASTERSCRIPT
+PGS_PC_Shell.sh $MASTERSCRIPT $EXTRA_OPTIONS $@
 
 # $Log$
+# Revision 1.1  2012/03/23 00:55:20  pwagner
+# Firsst commit
+#
