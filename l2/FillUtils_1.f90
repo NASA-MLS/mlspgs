@@ -110,6 +110,7 @@ module FillUtils_1                     ! Procedures used by Fill
 
   logical, parameter :: COUNTEMPTY = .true.
   logical, parameter :: DONTPAD = .false.
+  logical, parameter :: WARNWHENPTANNONMONOTONIC = .false.
 
   type arrayTemp_T
      real(rv), dimension(:,:), pointer :: VALUES => NULL() ! shaped like a
@@ -6206,7 +6207,11 @@ contains ! =====     Public Procedures     =============================
         ! Hunt fails with non-monotonic outHeights
         if ( .not. isMonotonic(outHeights) ) then
           call monotonize( outHeights )
-          call dump( outHeights, 'outHeights' )
+          if ( WARNWHENPTANNONMONOTONIC ) then                               
+            call MLSMessage ( MLSMSG_Warning, ModuleName // '/FromProfile', &
+              & 'Ptan non-monotonic' )                                       
+            call dump( outHeights, 'outHeights' )
+          endif
         endif
         call hunt ( outHeights, heights, inInds, &
          & nearest=.true., allowTopValue=.true., fail=fail )
@@ -7496,6 +7501,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.60  2012/06/07 22:46:03  pwagner
+! Turn off warnings about non-monotonic Ptan in FromProfile
+!
 ! Revision 2.59  2012/06/07 00:53:25  vsnyder
 ! More, and more consistent, -g tracing
 !
