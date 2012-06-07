@@ -226,12 +226,14 @@ contains ! =====     Public Procedures     =============================
       real                             ::    a, b
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.addGaussianNoise', key )
       ! First check that things are OK.
       if ( .not. FillableChiSq ( quantity, &
         & sourceQuantity, noiseQty ) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Incompatibility among vector quantities adding noise'  )
-        return
+        go to 9
       end if
 
      ! Either multiplier = [a, b] or multiplier = b are possible
@@ -260,6 +262,8 @@ contains ! =====     Public Procedures     =============================
         end do
       end do
 
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.addGaussianNoise' )
     end subroutine addGaussianNoise
 
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -410,8 +414,11 @@ contains ! =====     Public Procedures     =============================
       integer :: i
       integer :: numProfs
       logical :: skipMe
+
       ! Executable code
-      ! call output( 'Now in applyBaseline', advance='yes' )
+
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ApplyBaseline', key )
       if ( quantity%template%quantityType /= l_radiance ) &
         & call Announce_Error ( key, no_Error_Code, &
         &   'Quantity to fill must be a radiance' )
@@ -463,6 +470,8 @@ contains ! =====     Public Procedures     =============================
           end do
         end do
       end if
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ApplyBaseline' )
     end subroutine ApplyBaseline
 
     ! ---------------------------------------------- AutoFillVector -----
@@ -478,6 +487,8 @@ contains ! =====     Public Procedures     =============================
       ! DEEBUG = .true.
       ! Executable code
 
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_begin ( 'FillUtils_1.AutoFillVector' )
       ! Loop over its qtys
       do sqi = 1, size ( vector%quantities )
         sq => vector%quantities(sqi)
@@ -495,6 +506,8 @@ contains ! =====     Public Procedures     =============================
         case default
         end select
       enddo
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_end ( 'FillUtils_1.AutoFillVector' )
     end subroutine AutoFillVector
 
     ! ------------------------------------- deallocateStuff ---
@@ -592,6 +605,8 @@ contains ! =====     Public Procedures     =============================
       character(len=2) :: whichToReplace ! '/=' (.ne. fillValue), '==', or ' ' (always)
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.Explicit', valuesNode )
       myAzEl = .false.
       if ( present(azEl) ) myAzEl = azEl
       myOptions = ' '
@@ -800,6 +815,8 @@ contains ! =====     Public Procedures     =============================
       end if
       ! Tidy up
       if ( .not. present(extraQuantity) ) call Deallocate_test ( values, 'values', ModuleName )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.Explicit' )
 
     end subroutine Explicit
 
@@ -832,6 +849,8 @@ contains ! =====     Public Procedures     =============================
       real(rv) :: TOTALWEIGHT
       
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ComputeTotalPower', key )
       do i = 2, nsons(key)
         son = subtree(i,key)
         field = get_field_id(son)
@@ -882,6 +901,8 @@ contains ! =====     Public Procedures     =============================
           thisResult%values = thisResult%values / totalWeight
         end if
       end do                            ! End loop over (effectively) radiometers
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ComputeTotalPower' )
     end subroutine ComputeTotalPower
 
     ! ------------------------------------------- ExtractSingleChannel ---
@@ -894,6 +915,8 @@ contains ! =====     Public Procedures     =============================
       integer :: CHANIND                ! Channel index
       integer :: MIF                    ! Minor frame index
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ExtractSingleChannel', key )
       if ( quantity%template%quantityType /= l_singleChannelRadiance ) &
         & call announce_error ( key, no_Error_Code, 'Quantity to fill must be of type singleChannelRadiance' )
       if ( all ( sourceQuantity%template%quantityType /= (/ l_cloudInducedRadiance, l_radiance /) ) ) &
@@ -908,6 +931,8 @@ contains ! =====     Public Procedures     =============================
         quantity%values ( mif, : ) = &
           & sourceQuantity%values ( chanInd + ( mif - 1 ) * sourceQuantity%template%noChans, : )
       end do
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ExtractSingleChannel' )
     end subroutine ExtractSingleChannel
 
     ! ------------------------------------------- ChiSqChan ---
@@ -945,8 +970,10 @@ contains ! =====     Public Procedures     =============================
       real                             ::    a, b
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ChiSqChan', key )
 
-     ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
+      ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
       if ( .not. present(multiplier) ) then
         a = 1.
         b = 1.
@@ -977,16 +1004,16 @@ contains ! =====     Public Procedures     =============================
           call output('   compared with ', advance = 'no')
           call output(l_chiSqChan, advance = 'yes')
         end if
-        return
+        go to 9
       else if ( .not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Incompatibility among vector quantities filling chi^2 channelwise'  )
-        return
+        go to 9
       else if ( any ( noiseQty%values == 0.0) .and. &
         & .not. (ignoreZero .or. .not. dontMask) ) then
         call Announce_error ( key, No_Error_code, &
         & 'A vanishing error filling chi^2 channelwise'  )
-        return
+        go to 9
       end if
 
       ! Work out what to do with the first and last Instance information
@@ -1004,7 +1031,7 @@ contains ! =====     Public Procedures     =============================
       end if
       noOutputInstances = useLastInstance-useFirstInstance+1
       ! If we've not been asked to output anything then don't carry on
-      if ( noOutputInstances < 1 ) return
+      if ( noOutputInstances < 1 ) go to 9
 
       call allocate_test(values, measQty%template%noSurfs, &
         & 'chi^2 unsummed', ModuleName)
@@ -1040,6 +1067,8 @@ contains ! =====     Public Procedures     =============================
       end do
       call deallocate_test(values, &
         & 'chi^2 unsummed', ModuleName)
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ChiSqChan' )
     end subroutine ChiSqChan
 
     ! ------------------------------------------- ChiSqMMaf ---
@@ -1073,12 +1102,13 @@ contains ! =====     Public Procedures     =============================
       integer ::                             N           ! Num. of summed values
       logical ::                             skipMe
 
-      ! Executable code
       real                             ::    a, b
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ChiSqMMaf', key )
 
-     ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
+      ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
       if ( .not. present(multiplier) ) then
         a = 1.
         b = 1.
@@ -1109,16 +1139,16 @@ contains ! =====     Public Procedures     =============================
           call output('   compared with ', advance = 'no')
           call output(l_chiSqMMaf, advance = 'yes')
         end if
-        return
+        go to 9
       else if ( .not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Incompatibility among vector quantities filling chi^2 MMAFwise'  )
-        return
+        go to 9
       else if ( any ( noiseQty%values == 0.0) .and. &
         & .not. (ignoreZero .or. .not. dontMask) ) then
         call Announce_error ( key, No_Error_code, &
         & 'A vanishing noise filling chi^2 MMAFwise'  )
-        return
+        go to 9
       end if
 
       ! Work out what to do with the first and last Instance information
@@ -1136,7 +1166,7 @@ contains ! =====     Public Procedures     =============================
       end if
       noOutputInstances = useLastInstance-useFirstInstance+1
       ! If we've not been asked to output anything then don't carry on
-      if ( noOutputInstances < 1 ) return
+      if ( noOutputInstances < 1 ) go to 9
 
       instanceLen = measQty%template%noChans * measQty%template%noSurfs
       call allocate_test(values, instanceLen, &
@@ -1178,6 +1208,8 @@ contains ! =====     Public Procedures     =============================
       end do
       call deallocate_test(values, &
         & 'chi^2 unsummed', ModuleName)
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ChiSqMMaf', key )
     end subroutine ChiSqMMaf
 
     ! ------------------------------------------- ChiSqMMif ---
@@ -1213,12 +1245,13 @@ contains ! =====     Public Procedures     =============================
       integer ::                             N           ! Num. of summed values
       logical ::                             skipMe
 
-      ! Executable code
       real                             ::    a, b
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ChiSqMMif', key )
 
-     ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
+      ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
       if ( .not. present(multiplier) ) then
         a = 1.
         b = 1.
@@ -1249,16 +1282,16 @@ contains ! =====     Public Procedures     =============================
           call output('   compared with ', advance = 'no')
           call output(l_chiSqMMif, advance = 'yes')
         end if
-        return
+        go to 9
       else if ( .not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Incompatibility among vector quantities filling chi^2 MMIFwise'  )
-        return
+        go to 9
       else if ( any ( noiseQty%values == 0.0) .and. &
         & .not. (ignoreZero .or. .not. dontMask) ) then
         call Announce_error ( key, No_Error_code, &
         & 'A vanishing noise filling chi^2 MMIFwise'  )
-        return
+        go to 9
       end if
 
       ! Work out what to do with the first and last Instance information
@@ -1276,7 +1309,7 @@ contains ! =====     Public Procedures     =============================
       end if
       noOutputInstances = useLastInstance-useFirstInstance+1
       ! If we've not been asked to output anything then don't carry on
-      if ( noOutputInstances < 1 ) return
+      if ( noOutputInstances < 1 ) go to 9
 
       call allocate_test(values, measQty%template%noChans, &
         & 'chi^2 unsummed', ModuleName)
@@ -1312,6 +1345,8 @@ contains ! =====     Public Procedures     =============================
       end do
       call deallocate_test(values, &
         & 'chi^2 unsummed', ModuleName)
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ChiSqMMif' )
     end subroutine ChiSqMMif
 
     ! ------------------------------------------- ChiSqRatio ---
@@ -1357,28 +1392,30 @@ contains ! =====     Public Procedures     =============================
       logical, parameter ::                  FakeData = .false.
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ChiSqRatio', key )
 
       ! First check that things are OK.
       if ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_dnwt_chiSqRatio/) ) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Attempting to fill wrong quantity with chi^2 ratio'  )
-        return
+        go to 9
       elseif ( .not. ValidateVectorQuantity ( normqty, &
         & quantityType=(/l_dnwt_chiSqNorm/) ) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Attempting to fill using wrong norm quantity with chi^2 ratio'  )
-        return
+        go to 9
       elseif ( .not. ValidateVectorQuantity ( minnormqty, &
         & quantityType=(/l_dnwt_chiSqMinNorm/) ) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Attempting to fill using wrong min norm quantity with chi^2 ratio'  )
-        return
+        go to 9
       elseif ( .not. ValidateVectorQuantity ( flagqty, &
         & quantityType=(/l_dnwt_flag/) ) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Attempting to fill using wrong flag quantity with chi^2 ratio'  )
-        return
+        go to 9
       end if
 
       ! Work out what to do with the first and last Instance information
@@ -1396,7 +1433,7 @@ contains ! =====     Public Procedures     =============================
       end if
       noOutputInstances = useLastInstance-useFirstInstance+1
       ! If we've not been asked to output anything then don't carry on
-      if ( noOutputInstances < 1 ) return
+      if ( noOutputInstances < 1 ) go to 9
 
       noChans = qty%template%noChans
       do i=useFirstInstance, useLastInstance
@@ -1435,6 +1472,8 @@ contains ! =====     Public Procedures     =============================
             & normQty%values(1:qIndex, i) / minNormQty%values(1:qIndex, i)
         endif
       end do
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ChiSqRatio' )
     end subroutine ChiSqRatio
 
     ! ------------------------------------------- ColAbundance ---
@@ -1445,6 +1484,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Assumptions:
       ! (See above)
+      use Constants, only: Ln10
       integer, intent(in) :: KEY
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: BNDPRESSQTY
@@ -1456,7 +1496,6 @@ contains ! =====     Public Procedures     =============================
       ! is to be stored in the column data.
 
       ! Local parameters
-      real(r8) :: LN10         ! = LOG(10.d0)
       real(r8), parameter :: INVERMGPPMV = 0.789 ! in DU / (ppmv hPa)
       real(r8), parameter :: INVERMGDU = INVERMGPPMV*1.d6 ! in DU / (vmr hPa)
       real(r8), parameter :: INVERMGMOLCM2 = INVERMGDU*2.687d16 ! in mol / cm^2
@@ -1490,32 +1529,33 @@ contains ! =====     Public Procedures     =============================
       real (r8), pointer, dimension(:) :: Pi         ! p[i] in hPa
 
       ! Executable code
-      LN10 = LOG(10.d0)  ! Compiler won't let this be a parameter
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ColAbundance', key )
       ! First check that things are OK.
       if ( (qty%template%quantityType /= l_columnAbundance) .or. &
         &  (bndPressQty%template%quantityType /= l_boundaryPressure) .or. &
         &  (vmrQty%template%quantityType /= l_vmr) ) then
         call Announce_error ( key, No_Error_code, &
           & 'Wrong quantity type found while filling column abundance'  )
-        return
+        go to 9
       else if ( qty%template%molecule /= vmrQty%template%molecule ) then
         call Announce_error ( key, No_Error_code, &
           & 'Attempt to fill column abundance with different molecule'  )
-        return
+        go to 9
       else if ( .not. ( DoHgridsMatch( qty, vmrQty ) .and. &
         & DoHgridsMatch( qty, bndPressQty ) ) ) then
         call Announce_error ( key, No_Error_code, &
           & 'Attempt to fill column abundance with different HGrids'  )
-        return
+        go to 9
       else if ( .not. any(vmrQty%template%verticalCoordinate == &
         & (/l_zeta/)) ) then
         call Announce_error ( key, No_Error_code, &
           & 'Fill column abundance, but vmr not on zeta surfs.'  )
-        return
+        go to 9
       else if ( vmrQty%template%noSurfs < 2 ) then
         call Announce_error ( key, No_Error_code, &
           & 'Fill column abundance, but too few vmr surfaces'  )
-        return
+        go to 9
       end if
       select case (colmAbUnits)
       case (l_DobsonUnits)
@@ -1536,7 +1576,7 @@ contains ! =====     Public Procedures     =============================
       noOutputInstances = useLastInstance-useFirstInstance+1
 
       ! If we've not been asked to output anything then don't carry on
-      if ( noOutputInstances < 1 ) return
+      if ( noOutputInstances < 1 ) go to 9
 
       nullify ( Zetab, Zetac, Zetai, pb, pc, pi )
       call allocate_test ( Zetab, vmrQty%template%noSurfs, 'Zetab', ModuleName )
@@ -1561,7 +1601,7 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Cant fill column--instance outside b.pres. range' )
           call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
-          return
+          go to 9
         end if
         thisBndPress = bndPressQty%values(1,instance)
         ! In case where WMO algorithm failed, use bottom of basis
@@ -1623,7 +1663,7 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Cant column, tropopause above top surface' )
           call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
-          return
+          go to 9
         else  ! Nothing special
           firstSurfaceBelow = firstSurfaceAbove - 1
         end if
@@ -1682,6 +1722,8 @@ contains ! =====     Public Procedures     =============================
         qty%values ( 1, instance ) = InverMg * columnSum
       end do
       call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ColAbundance' )
     end subroutine ColAbundance
 
     ! -------------------------------------------- ConvergenceFromChisq --------
@@ -1693,6 +1735,8 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer ::                             QINDEX
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ConvergenceFromChisq', key )
       ! Do some sanity checking
       if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
         & 'Convergence quantity must be quality' )
@@ -1705,6 +1749,8 @@ contains ! =====     Public Procedures     =============================
         if ( qIndex > 0 ) &
           & quantity%values(1,:) = scale * sourceQuantity%values(qIndex,1)
       endif
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ConvergenceFromChisq' )
     end subroutine ConvergenceFromChisq
 
     !------------------------------------- FillCovariance ------------
@@ -1745,6 +1791,8 @@ contains ! =====     Public Procedures     =============================
       logical :: ANYOFFDIAG             ! Flag to indicate presence of off diagonal elements
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FillCovariance' )
 
       ! Apply mask to diagonal
       nullify ( m, condition )
@@ -1874,6 +1922,8 @@ contains ! =====     Public Procedures     =============================
 
       call DestroyVectorInfo ( DMasked )
       call DestroyVectorInfo ( LMasked )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FillCovariance' )
 
     end subroutine FillCovariance
 
@@ -1893,6 +1943,8 @@ contains ! =====     Public Procedures     =============================
       integer :: MIF                      ! Minor frame loop inductor
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FoldedRadiance', key )
       ! First some sanity checks
       if ( .not. ValidateVectorQuantity ( radiance, quantityType=(/l_radiance/), &
         & sideband=(/0/), minorFrame=.true. )) &
@@ -1900,7 +1952,7 @@ contains ! =====     Public Procedures     =============================
       if ( ( associated ( lsb ) .neqv. associated ( lsbFraction ) ) .or. &
         &  ( associated ( usb ) .neqv. associated ( usbFraction ) ) ) then
         call Announce_Error ( key, no_error_code, 'Must supply sidebands and fractions together' )
-        return
+        go to 9
       end if
       if ( associated ( lsb ) ) then
         if ( .not. ValidateVectorQuantity ( lsb, quantityType=(/l_radiance/), &
@@ -1938,6 +1990,8 @@ contains ! =====     Public Procedures     =============================
           i = i + 1
         end do
       end do
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FoldedRadiance' )
 
     end subroutine FoldedRadiance
 
@@ -1964,6 +2018,8 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: scaledRad   ! scaled radiance according to the f^4 law
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromSplitSideband', key )
       nullify(freq, freqL, freqU, freq1, freqL1, freqU1, freq2, freqL2, freqU2)
 
       ! check for qualified quantity
@@ -2130,6 +2186,8 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( freq2, 'frequencies', ModuleName )
       call deallocate_test ( freqL2,'LSBfrequencies', ModuleName )
       call deallocate_test ( freqU2,'USBfrequencies', ModuleName )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromSplitSideband' )
     end subroutine FromSplitSideband
 
     ! ------------------------------------- GPHPrecision ----
@@ -2146,9 +2204,8 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
 
       ! Executable code
-
-      if ( toggle(gen) .and. levels(gen) > 0 ) &
-        & call trace_begin ( "GPHPrecision", key )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.GPHPrecision', key )
 
       select case ( quantity%template%quantityType )
       case ( l_gph )
@@ -2160,26 +2217,20 @@ contains ! =====     Public Procedures     =============================
           &   quantity%template%noInstances) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_gph failed first test" )
-          if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "GPHPrecision")
-          return
-        end if
-        if ( (any(quantity%template%surfs /= tempPrecisionQuantity%template%surfs)) .or. &
+        else if ( (any(quantity%template%surfs /= tempPrecisionQuantity%template%surfs)) .or. &
           & (any(quantity%template%phi /= tempPrecisionQuantity%template%phi)) .or. &
           & (any(quantity%template%phi /= refGPHPrecisionQuantity%template%phi)) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             &  "case l_gph failed second test" )
-          if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "GPHPrecision")
-          return
+        else
+          call GetGPHPrecision ( tempPrecisionQuantity, refGPHPrecisionQuantity, quantity%values )
         end if
-        call GetGPHPrecision ( tempPrecisionQuantity, refGPHPrecisionQuantity, quantity%values )
       case default
         call Announce_error ( 0, no_error_code, 'GPH precision needed for result of GPHPrecision' )
       end select
 
-      if ( toggle(gen) .and. levels(gen) > 0 ) &
-        & call trace_end ( "GPHPrecision" )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end( 'FillUtils_1.GPHPrecision' )
 
     end subroutine GPHPrecision
 
@@ -2200,6 +2251,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(Temperaturequantity%template%noInstances) :: x1, y1
       integer :: i
 
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_begin ( 'FillUtils_1.IWCFromExtinction' )
       call MLSMessageCalls( 'push', constantName='IWCFromExtinction' )
       if ( .not. (quantity%template%coherent .and. sourceQuantity%template%coherent &
          .and. Temperaturequantity%template%coherent)) &
@@ -2254,6 +2307,8 @@ contains ! =====     Public Procedures     =============================
         quantity%values(:,i) = iwc0*Ez
       end do
       call MLSMessageCalls( 'pop' )
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_end ( 'FillUtils_1.IWCFromExtinction' )
 
     end subroutine IWCFromExtinction
 
@@ -2279,6 +2334,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(3) :: los       ! Normalised line of sight vector
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.LOSVelocity', key )
       ! First check that things are OK.
       if ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_losVel/), &
@@ -2336,6 +2393,8 @@ contains ! =====     Public Procedures     =============================
           ! minor frame quantity, they're OK with this sc one too.
         end do
       end do
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.LOSVelocity' )
     end subroutine LOSVelocity
 
     ! ------------------------------------- NoRadsPerMIF -----
@@ -2364,6 +2423,8 @@ contains ! =====     Public Procedures     =============================
       logical  :: pct
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.NoRadsPerMif', key )
       pct = .false.
       if ( present(asPercentage) ) pct = asPercentage
       possible = measQty%template%noChans
@@ -2390,6 +2451,8 @@ contains ! =====     Public Procedures     =============================
         quantity%values = measQty%template%noChans
         if ( pct ) quantity%values = 100*quantity%values/possible
       end if
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.NoRadsPerMif' )
     end subroutine NoRadsPerMIF
 
     ! ------------------------------------ PhiTanWithRefraction --
@@ -2418,6 +2481,8 @@ contains ! =====     Public Procedures     =============================
       integer :: I, J ! Subscripts, loop inductors
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.PhiTanWithRefraction', key )
       call MLSMessageCalls( 'push', constantName='PhiTanWithRefraction' )
       ! More sanity checks
       if ( quantity%template%instrumentModule /= ptan%template%instrumentModule ) &
@@ -2493,6 +2558,8 @@ contains ! =====     Public Procedures     =============================
       end do ! j
 
       call MLSMessageCalls( 'pop' )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.PhiTanWithRefraction' )
     end subroutine PhiTanWithRefraction
 
       ! ------------------------------------- RHIFromOrToH2O ----
@@ -2568,6 +2635,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs, quantity%template%noInstances) :: &
        &                                  values
       ! Executable statements
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.RHIFromOrToH2O', key )
       call MLSMessageCalls( 'push', constantName='RHIFromOrToH2O' )
       values = 0.
       ! Let any undefined values be so marked (but not necessarily masked)
@@ -2591,7 +2660,7 @@ contains ! =====     Public Procedures     =============================
       if ( invert .and. interpolate ) then
        call Announce_Error ( key, No_Error_code, &
         & ' RHIFromOrToH2O unable to invert and interpolate simultaneously' )
-       return
+       go to 9
       end if
       matched_sizes = .true.
       do dim=1, 2
@@ -2605,7 +2674,7 @@ contains ! =====     Public Procedures     =============================
        call Announce_Error ( key, No_Error_code, &
         & 'Incompatible quantities in RHIFromOrToH2O--' //&
         & '(unless interpolating, all must have same shape)' )
-       return
+       go to 9
       end if
       matched_surfs = .true.
       matched_surfs = matched_surfs .and. &
@@ -2617,7 +2686,7 @@ contains ! =====     Public Procedures     =============================
        call Announce_Error ( key, No_Error_code, &
         & 'Different vertical coords in RHIFromOrToH2O--' //&
         & '(unless interpolating, all must be on the same VGrid)' )
-       return
+       go to 9
       end if
       matched_h2o_channels = &
        &   (sourceQuantity%template%noChans == Quantity%template%noChans)
@@ -2777,6 +2846,8 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
       call MLSMessageCalls( 'pop' )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.RHIFromOrToH2O' )
     end subroutine RHIFromOrToH2O
 !MJF
     ! ------------------------------------- RHIPrecisionFromOrToH2O ----
@@ -2871,6 +2942,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs, quantity%template%noInstances) :: &
        &                                  values
       ! Executable statements
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.RHIPrecisionFromOrToH2O', key )
       call MLSMessageCalls( 'push', constantName='RHIPrecisionFromOrToH2O' )
       values = 0.
       ! Let any undefined values be so marked (but not necessarily masked)
@@ -2880,7 +2953,7 @@ contains ! =====     Public Procedures     =============================
       ! if ( invert ) then
       ! call Announce_Error ( key, No_Error_code, &
       !  & ' RHIPrecisionFromOrToH2O unable to invert' )
-      ! return
+      ! go to 9
       ! end if
       ! Do we need to internally convert the vmr units?
       if ( VMR_UNITS == 'ppmv' ) then
@@ -2894,7 +2967,7 @@ contains ! =====     Public Procedures     =============================
       if ( invert .and. interpolate ) then
        call Announce_Error ( key, No_Error_code, &
         & ' RHIPrecisionFromOrToH2O unable to invert and interpolate simultaneously' )
-       return
+       go to 9
       end if
       matched_sizes = .true.
       do dim=1, 2
@@ -2910,7 +2983,7 @@ contains ! =====     Public Procedures     =============================
        call Announce_Error ( key, No_Error_code, &
         & 'Incompatible quantities in RHIPrecisionFromOrToH2O--' //&
         & '(unless interpolating, all must have same shape)' )
-       return
+       go to 9
       end if
       matched_surfs = .true.
       matched_surfs = matched_surfs .and. &
@@ -2924,7 +2997,7 @@ contains ! =====     Public Procedures     =============================
        call Announce_Error ( key, No_Error_code, &
         & 'Different vertical coords in RHIPrecisionFromOrToH2O--' //&
         & '(unless interpolating, all must be on the same VGrid)' )
-       return
+       go to 9
       end if
       matched_h2oPrecision_channels = &
        &   (sourcePrecisionQuantity%template%noChans == Quantity%template%noChans)
@@ -3153,6 +3226,8 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
       call MLSMessageCalls( 'pop' )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.RHIPrecisionFromOrToH2O' )
     end subroutine RHIPrecisionFromOrToH2O
 !MJF
     ! ----------------------------------- FromASCIIFile --------
@@ -3169,6 +3244,8 @@ contains ! =====     Public Procedures     =============================
       integer :: STATUS                 ! Flag from open/close/read etc.
       character(len=1024) :: FILENAMESTR
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromAsciiFile', key )
       call get_lun ( lun, msg=.false. )
       if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "No logical unit numbers available" )
@@ -3199,6 +3276,8 @@ contains ! =====     Public Procedures     =============================
           quantity%mask = char(ior(ichar(quantity%mask),M_LinAlg))
         end where
       end if
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromAsciiFile' )
     end subroutine FromAsciiFile
 
     ! ------------------------------------------- FromInterpolatedQty
@@ -3219,26 +3298,28 @@ contains ! =====     Public Procedures     =============================
       integer :: status
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromInterpolatedQty', key )
       call MLSMessageCalls( 'push', constantName='FromInterpolatedQty' )
       if ( .not. DoQtysDescribeSameThing ( qty, source ) .and. .not. force ) then
         call Announce_error ( key, no_error_code, &
           & 'Mismatch in quantities' )
-        return
+        go to 9
       end if
       if ( .not. doHGridsMatch ( qty, source ) .and. .not. present(ptan) ) then
         call Announce_error ( key, no_error_code, &
           & 'Mismatch in horizontal grid' )
-        return
+        go to 9
       end if
       if ( qty%template%noInstances /= source%template%noInstances .and. .not. force ) then
         call Announce_error ( key, no_error_code, &
           & 'Mismatch in num of instances' )
-        return
+        go to 9
       end if
       if ( .not. doFGridsMatch ( qty, source )  .and. .not. present(ptan) ) then
         call Announce_error ( key, no_error_code, &
           & 'Mismatch in frequency grid' )
-        return
+        go to 9
       end if
 
       ! Two cases here, one where we have to interpolate vertically (has to be
@@ -3254,11 +3335,11 @@ contains ! =====     Public Procedures     =============================
         elseif ( qty%template%noChans /= 1) then
           call Announce_error ( key, no_error_code, &
             & 'Code cannot (yet?) interpolate multi channel quantities' )
-          return
+          go to 9
         elseif ( .not. all ( (/ qty%template%coherent, source%template%coherent /) ) ) then
           call Announce_error ( key, no_error_code, &
             & 'Code cannot (yet?) interpolate incoherent quantities' )
-          return
+          go to 9
         end if
 
         ! Work out vertical coordinate issues
@@ -3355,6 +3436,8 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
       call MLSMessageCalls( 'pop' )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromInterpolatedQty' )
 
     end subroutine FromInterpolatedQty
 
@@ -3393,7 +3476,8 @@ contains ! =====     Public Procedures     =============================
         & los%template%noSurfs,los%template%noInstances) :: beta
       real (r8) :: ds, ColTrans
 
-      if ( toggle(gen) ) call trace_begin ( "FromLosGrid", key )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromLosGrid', key )
 
       errorCode=0
 
@@ -3523,6 +3607,8 @@ contains ! =====     Public Procedures     =============================
       end do                              ! End instance loop
       ! average all non-zero bins
       where (cnt > 0) qty%values = out/cnt
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromLosGrid' )
 
     end subroutine FromLosGrid
 
@@ -3579,6 +3665,8 @@ contains ! =====     Public Procedures     =============================
       logical :: StatisticalFunction
       logical :: USESC
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ByManipulation', key )
       call MLSMessageCalls( 'push', constantName='ByManipulation' )
       ! Currently we have a rather brain dead approach to this, so
       ! check that what the user has asked for, we can supply.
@@ -3636,7 +3724,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. okSoFar ) then
           call Announce_Error ( key, no_error_code, &
             & abName // ' is not of the same (or close enough) type as quantity' )
-          return
+          go to 9
         end if
       end do
 
@@ -3659,7 +3747,7 @@ contains ! =====     Public Procedures     =============================
             ! How did we get here?
             call Announce_Error ( key, no_error_code, &
               & 'trim(mstr) manipulation but no c supplied' )
-            return
+            go to 9
           endif
         else
           cc = c
@@ -3667,6 +3755,8 @@ contains ! =====     Public Procedures     =============================
         call SimpleExprWithC( quantity, a, b, cc, mstr )
       end select
       call MLSMessageCalls( 'pop' )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ByManipulation' )
 
   contains
       subroutine doStatFun( qvalue, name, avalues )
@@ -4575,10 +4665,10 @@ contains ! =====     Public Procedures     =============================
       integer                               :: myBOMask
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromL1B', root )
       myBOMask = 0
       if ( present(BOMask) ) myBOMask = BOMask
-      if ( toggle(gen) .and. levels(gen) > 0 ) &
-        & call trace_begin ("FromL1B",root)
       ! print *, 'Filling vector quantity from l1b'
       ! L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
       L1BOAFile => GetMLSFileByType(filedatabase, content='l1boa')
@@ -4691,9 +4781,7 @@ contains ! =====     Public Procedures     =============================
         else
           call Announce_Error ( root, errorReadingL1B )
         endif
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "FromL1B")
-        return
+        go to 9
       end if
       if ( quantity%template%noInstances /= size ( l1bData%dpField, 3 ) .or. &
         &  quantity%template%instanceLen /= &
@@ -4713,9 +4801,7 @@ contains ! =====     Public Procedures     =============================
         call output ( ', ' )
         call output ( size ( l1bData%dpField, 3 ), advance='yes' )
         call Announce_Error ( root, no_error_code, 'L1B data is wrong shape' )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "FromL1B")
-        return
+        go to 9
       end if
 
       if ( isPrecision .and. myBOMask /= 0 .and. BO_error == 0 ) then
@@ -4781,10 +4867,10 @@ contains ! =====     Public Procedures     =============================
         end do
       end if
 
-      if ( switchDetail(switches, 'l1b') > -1 ) &
-        & call Dump( l1bData )
+      if ( switchDetail(switches, 'l1b') > -1 ) call Dump( l1bData )
       call DeallocateL1BData(l1bData)
-      if ( toggle(gen) .and. levels(gen) > 0 ) call trace_end( "FromL1B" )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromL1B' )
     end subroutine FromL1B
 
     ! ------------------------------------------- FromL2AUX --
@@ -4796,6 +4882,8 @@ contains ! =====     Public Procedures     =============================
       integer :: FIRSTPROFILE
       integer :: LASTPROFILE
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromL2AUX' )
       errorCode = 0
       ! Work out which profile in the l2aux this belongs to
       firstProfile = qty%template%instanceOffset - qty%template%noInstancesLowerOverlap
@@ -4809,21 +4897,23 @@ contains ! =====     Public Procedures     =============================
       ! Check that the dimensions are appropriate
       if ( firstProfile < lbound ( l2aux%values, 3 ) ) then
         errorCode = CantFromL2AUX
-        return
+        go to 9
       end if
       if ( lastProfile > ubound ( l2aux%values, 3 ) ) then
         errorCode = CantFromL2AUX
-        return
+        go to 9
       end if
       if ( size ( l2aux%values, 1 ) /= qty%template%noChans .or. &
         &  size ( l2aux%values, 2 ) /= qty%template%noSurfs ) then
         errorCode = CantFromL2AUX
-        return
+        go to 9
       end if
       ! Do the fill
       qty%values = reshape ( l2aux%values ( :, :,  &
         & firstProfile : lastProfile ), &
         & (/ qty%template%instanceLen, qty%template%noInstances /) )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromL2AUX' )
     end subroutine FromL2AUX
 
     ! --------------------------------------- UsingMagneticModel --
@@ -4842,29 +4932,31 @@ contains ! =====     Public Procedures     =============================
       real    :: XYZ(3)                 ! lat, lon, height for to_cart
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.UsingMagneticModel', key )
       options = ' '
       if ( switchDetail(switches,'clean') > -1 ) options = '-c'
       if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_magneticField/), &
         & frequencyCoordinate=(/ l_xyz /) ) ) then
         call Announce_Error ( key, no_error_code, &
           & 'Quantity does not describe magnetic field' )
-        return
+        go to 9
       end if
       if ( .not. ValidateVectorQuantity ( gphQty, quantityType=(/l_gph/), &
         & frequencyCoordinate=(/ l_none /), verticalCoordinate=(/l_zeta/) ) ) then
         call Announce_Error ( key, no_error_code, &
           & 'GPH quantity does not describe gph field' )
-        return
+        go to 9
       end if
       if ( .not. DoHGridsMatch ( qty, gphQty ) ) then
         call Announce_Error ( key, no_error_code, &
           & 'Quantity and GPHQuanity do not share the same horizontal basis' )
-        return
+        go to 9
       end if
       if ( .not. DoVGridsMatch ( qty, gphQty ) ) then
         call Announce_Error ( key, no_error_code, &
           & 'Quantity and GPHQuantity do not share the same vertical basis' )
-        return
+        go to 9
       end if
 
       ! Assume the time is close enough to constant that one call to
@@ -4891,6 +4983,8 @@ contains ! =====     Public Procedures     =============================
 
       if ( switchDetail(switches,'mag') > -1 ) &
         & call dump ( qty, options=options )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.UsingMagneticModel' )
 
     end subroutine UsingMagneticModel
 
@@ -4919,8 +5013,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Executable code
 
-      if ( toggle(gen) .and. levels(gen) > 0 ) &
-        & call trace_begin ( "Hydrostatically", key )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.Hydrostatically', key )
 
       select case ( quantity%template%quantityType )
       case ( l_gph )
@@ -4932,18 +5026,14 @@ contains ! =====     Public Procedures     =============================
           &   quantity%template%noInstances) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_gph failed first test" )
-          if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "Hydrostatically")
-          return
+          go to 9
         end if
         if ( (any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
           & (any(quantity%template%phi /= temperatureQuantity%template%phi)) .or. &
           & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             &  "case l_gph failed second test" )
-          if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "Hydrostatically")
-          return
+          go to 9
         end if
         call GetBasisGPH ( temperatureQuantity, refGPHQuantity, quantity%values )
       case ( l_ptan )
@@ -4953,17 +5043,13 @@ contains ! =====     Public Procedures     =============================
           &   h2oQuantity%template%noInstances) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed first test" )
-          if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "Hydrostatically")
-          return
+          go to 9
         end if
         if ( (any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
           & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed second test" )
-          if ( toggle(gen) .and. levels(gen) > 0 )&
-            &  call trace_end ( "Hydrostatically")
-          return
+          go to 9
         end if
         if ( (.not. ValidateVectorQuantity(quantity, minorFrame=.true.) ) .or. &
           &  (.not. ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ) .or. &
@@ -4994,9 +5080,7 @@ contains ! =====     Public Procedures     =============================
            call output( &
            & geocAltitudeQuantity%template%instrumentModule, &
            & advance='yes')
-           if ( toggle(gen) .and. levels(gen) > 0 ) &
-            & call trace_end ( "Hydrostatically")
-          return
+           go to 9
         end if
         call Get2DHydrostaticTangentPressure ( quantity, temperatureQuantity,&
           & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
@@ -5006,8 +5090,8 @@ contains ! =====     Public Procedures     =============================
         call Announce_error ( 0, 0, 'No such fill yet' )
       end select
 
-      if ( toggle(gen) .and. levels(gen) > 0 ) &
-        & call trace_end ( "Hydrostatically" )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.Hydrostatically' )
 
     end subroutine Hydrostatically
 
@@ -5026,6 +5110,8 @@ contains ! =====     Public Procedures     =============================
       real (r8) :: FACTOR                 ! Multiplier to apply to sourceQuantity
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromIsotope' )
 
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/ l_vmr /), frequencyCoordinate=(/ l_none /) ) ) &
@@ -5065,6 +5151,8 @@ contains ! =====     Public Procedures     =============================
       end if
 
       quantity%values = sourceQuantity%values * factor
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromIsotope' )
 
     end subroutine FromIsotope
 
@@ -5089,6 +5177,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(:), pointer :: WIDTH ! Channel widths in MHz
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.WithEstNoise' )
 
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/l_radiance/), minorFrame=.true.) ) &
@@ -5143,6 +5233,8 @@ contains ! =====     Public Procedures     =============================
           i = i + 1
         end do
       end do
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.WithEstNoise' )
 
     end subroutine WithEstNoise
 
@@ -5160,6 +5252,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), DIMENSION(2) :: VALUEASARRAY ! Value give
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.WithReflectorTemperature', key )
       if ( quantity%template%quantityType /= l_reflTemp ) &
         & call Announce_Error ( key, no_error_code, &
         & 'Inappropriate quantity for reflector temperature fill' )
@@ -5183,6 +5277,8 @@ contains ! =====     Public Procedures     =============================
             & sin ( Deg2Rad * ((i+1)/2) * ( quantity%template%phi(1,:) - phiZero ) )
         end if
       end do
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.WithReflectorTemperature' )
 
     end subroutine WithReflectorTemperature
 
@@ -5216,6 +5312,8 @@ contains ! =====     Public Procedures     =============================
       logical :: alreadyDumped
       ! logical, parameter :: DEEBUG = .false.
       ! Executable
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.WithReichlerWMOTP' )
       nullify( xyTemp, xyPress )
       nlev = size(temperature%values, 1)
       MISSINGVALUE = REAL( DEFAULTUNDEFINEDVALUE )
@@ -5299,6 +5397,8 @@ contains ! =====     Public Procedures     =============================
         call Deallocate_test ( xyPress, 'xyPress', ModuleName )
       end do instanceLoop
       if ( DEEBUG ) call dump( tpPres%values, 'tpPres%values' )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.WithReichlerWMOTP' )
     end subroutine WithReichlerWMOTP
 
     ! ----------------------------------------- WithWMOTropopause ------
@@ -5360,6 +5460,8 @@ contains ! =====     Public Procedures     =============================
       ! (ie describe the right quantities, and all on the same horizontal
       ! grid).
 
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.WithWMOTropopause' )
       call MLSMessageCalls( 'push', constantName='WithWMOTropopause' )
       ! Loop over the instances
       tpPres%values = 0.0
@@ -5445,6 +5547,8 @@ contains ! =====     Public Procedures     =============================
         end if
       end do instanceLoop
       call MLSMessageCalls( 'pop' )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.WithWMOTropopause' )
     end subroutine WithWMOTropopause
 
     ! -------------------------------------------- QualityFromChisq --------
@@ -5460,6 +5564,8 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: HEIGHT                ! The height to consider
       integer :: SURFACE                ! Surface index
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.QualityFromChisq', key )
       call MLSMessageCalls( 'push', constantName='QualityFromChisq' )
       ! Do some sanity checking
       if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
@@ -5487,6 +5593,8 @@ contains ! =====     Public Procedures     =============================
         quantity%values(1,:) = scale / sourceQuantity%values(surface,:)
       end where
       call MLSMessageCalls( 'pop' )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.QualityFromChisq' )
     end subroutine QualityFromChisq
 
     ! -------------------------------------------- StatusQuantity --------
@@ -5508,6 +5616,8 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(2) :: UNITASARRAY ! From expr
       real(r8), dimension(2) :: VALUEASARRAY ! From expr
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.StatusQuantity', key )
       call MLSMessageCalls( 'push', constantName='StatusQuantity' )
       ! Do some sanity checking
       if ( quantity%template%quantityType /= l_status ) call Announce_error ( key, no_error_code, &
@@ -5556,6 +5666,8 @@ contains ! =====     Public Procedures     =============================
         endif
       endif
       call MLSMessageCalls( 'pop' )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.StatusQuantity' )
     end subroutine StatusQuantity
 
     ! ------------------------------------------ UsingLeastSquares -----
@@ -5590,6 +5702,8 @@ contains ! =====     Public Procedures     =============================
       integer :: NSourceQuant  ! Number of values in SourceQuantity
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.UsingLeastSquares', key )
 
       ! Check the output quantity
       if ( .not. ValidateVectorQuantity ( quantity, &
@@ -5622,7 +5736,7 @@ contains ! =====     Public Procedures     =============================
         & channel == 0 ) then
         call Announce_Error ( key, no_error_code, &
           & 'Must supply channel for this least-squares fill' )
-        return
+        go to 9
       end if
       myChannel = max(channel,1)
 
@@ -5734,6 +5848,8 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( RHS,      'RHS',      moduleName )
       if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.UsingLeastSquares' )
 
     end subroutine UsingLeastSquares
 
@@ -5756,6 +5872,8 @@ contains ! =====     Public Procedures     =============================
       real(rv) :: newValue
       logical :: noGrid
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromGrid' )
       errorCode = 0
       DEEBUG = .false.
       ! DEEBUG = ( grid%quantityName == 'TEMPERATURE' .or. &
@@ -5770,13 +5888,13 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage ( MLSMSG_Warning, moduleName, &
           & 'No tropopause or whatever values in grid--filling with missing values' )
         quantity%values = REAL( DEFAULTUNDEFINEDVALUE ) ! grid%missingValue
-        return
+        go to 9
       end if
 
       if ( quantity%template%verticalCoordinate /= l_zeta .and. &
         & quantity%template%noInstances > 1 .and. grid%noHeights > 1 ) then
         errorCode=NotZetaForGrid
-        return
+        go to 9
       end if
 
       instIndex=1
@@ -5830,6 +5948,8 @@ contains ! =====     Public Procedures     =============================
             & debug=.false. )
           call outputNamedValue( 'interpolated value', newValue )
       endif
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromGrid' )
     end subroutine FromGrid
 
     !=============================== FromL2GP ==========
@@ -5865,6 +5985,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs) :: outZeta
       real (r4), dimension(:,:,:), pointer :: SOURCE
 
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromL2GP' )
       call MLSMessageCalls( 'push', constantName='FromL2GP' )
       errorCode=0
       ! Make sure this quantity is appropriate
@@ -5943,7 +6065,7 @@ contains ! =====     Public Procedures     =============================
         ! be hard to code up, but no need as yet.
         if ( interpolate .and. quantity%template%noChans /= 1 ) then
           errorCode=cantInterpolate3D
-          return
+          go to 9
         end if
       else
         ! Given a specific profile, check it's legal
@@ -6000,6 +6122,8 @@ contains ! =====     Public Procedures     =============================
         call InterpolateArrayTeardown ( coeffs )
       end if
       call MLSMessageCalls( 'pop' )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromL2GP' )
 
     end subroutine FromL2GP
 
@@ -6036,6 +6160,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromProfile_values', instancesNode )
       call MLSMessageCalls( 'push', constantName='FromProfile_values' )
       ! Set some stuff up
       myLogSpace = quantity%template%logBasis
@@ -6043,7 +6169,7 @@ contains ! =====     Public Procedures     =============================
       if ( myLogSpace .and. any ( invalues <= 0.0 ) ) then
         call Announce_Error ( 0, no_error_code, &
           & 'Non-positive input data in log profile fill (reset logSpace=false?)' )
-        return
+        go to 9
       end if
       nullify ( heights, values, duplicated, outHeights, outValues, instances )
       noPoints = size(invalues)
@@ -6087,7 +6213,7 @@ contains ! =====     Public Procedures     =============================
         if ( fail ) then
           call Announce_Error ( 0, no_error_code, &
           & 'Problem in Hunt' )
-          return
+          go to 9
         end if
         duplicated = .false.
         do i = 1, noPoints - 1
@@ -6147,6 +6273,8 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( duplicated, 'duplicated', ModuleName )
       call Deallocate_test ( instances, 'instances', ModuleName )
       call MLSMessageCalls( 'pop' )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromProfile_values' )
     end subroutine FromProfile_values
 
     subroutine FromProfile_node ( quantity, valuesNode, &
@@ -6174,6 +6302,8 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(2) :: EXPRUNIT   ! Unit for expression
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.FromProfile_node', instancesNode )
       call MLSMessageCalls( 'push', constantName='FromProfile_node' )
 
       ! Check the quantity is amenable to this type of fill
@@ -6223,6 +6353,8 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( heights, 'heights', ModuleName )
       call Deallocate_test ( values, 'values', ModuleName )
       call MLSMessageCalls( 'pop' )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.FromProfile_node' )
     end subroutine FromProfile_node
 
     ! ---------------------------------------------- ManipulateVectors -----
@@ -6239,6 +6371,8 @@ contains ! =====     Public Procedures     =============================
       integer :: SQI                      ! Quantity index in source
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ManipulateVectors' )
 
       ! First copy those things in source, loop over them
       dest%globalUnit = a%globalUnit
@@ -6258,6 +6392,8 @@ contains ! =====     Public Procedures     =============================
           & 'dq not associated' )
         end if
       end do
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ManipulateVectors' )
     end subroutine ManipulateVectors
 
     ! -------------------------------------------- WithBinResults -----
@@ -6290,6 +6426,8 @@ contains ! =====     Public Procedures     =============================
       logical :: ExtraProfile           ! True when profile stands outside chunk
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.WithBinResults', key )
       call MLSMessageCalls( 'push', constantName='WithBinResults' )
 
       ! Check the output quantity
@@ -6384,7 +6522,7 @@ contains ! =====     Public Procedures     =============================
         & channel == 0 ) then
         call Announce_Error ( key, no_error_code, &
           & 'Must supply channel for this bin max/min fill' )
-        return
+        go to 9
       end if
       myChannel = channel
       if ( channel == 0 ) myChannel = 1
@@ -6507,6 +6645,8 @@ contains ! =====     Public Procedures     =============================
       if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
       call MLSMessageCalls( 'pop' )
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.WithBinResults' )
     end subroutine WithBinResults
 
     ! --------------------------------------------- WithBoxcarFunction  ----
@@ -6522,13 +6662,15 @@ contains ! =====     Public Procedures     =============================
       real(r8), dimension(:,:), pointer :: OLDVALUES
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.WithBoxcarFunction', key )
       if ( quantity%template%name /= sourceQuantity%template%name ) then
         call Announce_Error ( key, no_error_code, 'Quantity and source quantity do not match' )
-        return
+        go to 9
       end if
       if ( width <= 1 .or. mod ( width, 2 ) == 0 ) then
         call Announce_Error ( key, no_error_code, 'width must be greater than 1 and odd' )
-        return
+        go to 9
       end if
 
       if ( associated ( quantity%values, sourceQuantity%values ) ) then
@@ -6565,6 +6707,8 @@ contains ! =====     Public Procedures     =============================
       if ( associated ( quantity%values, sourceQuantity%values ) ) then
         call Deallocate_test ( oldValues, 'oldValues', ModuleName )
       end if
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.WithBoxcarFunction' )
 
     end subroutine WithBoxcarFunction
 
@@ -6575,6 +6719,8 @@ contains ! =====     Public Procedures     =============================
       real (rv), intent(in) :: AMOUNT
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_begin ( 'FillUtils_1.OffsetRadianceQuantity' )
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/l_radiance/) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -6587,10 +6733,13 @@ contains ! =====     Public Procedures     =============================
         & quantity%template%sideband /= radianceQuantity%template%sideband ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity and rad. qty. in offsetRadiance fill different signal/sideband' )
-      if ( .not. associated ( radianceQuantity%mask ) ) return
-      where ( iand ( ichar(radianceQuantity%mask), M_LinAlg ) /= 0 )
-        quantity%values = quantity%values + amount
-      end where
+      if ( associated ( radianceQuantity%mask ) ) then
+        where ( iand ( ichar(radianceQuantity%mask), M_LinAlg ) /= 0 )
+          quantity%values = quantity%values + amount
+        end where
+      end if
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_end ( 'FillUtils_1.OffsetRadianceQuantity' )
     end subroutine OffsetRadianceQuantity
 
     ! ---------------------------------------------- ResetUnusedRadiances --
@@ -6598,6 +6747,8 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(inout) :: QUANTITY
       real (rv), intent(in) :: AMOUNT
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_begin ( 'FillUtils_1.ResetUnusedRadiances' )
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/l_radiance/) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -6605,6 +6756,8 @@ contains ! =====     Public Procedures     =============================
       where ( quantity%values > amount*0.9 )
         quantity%values = quantity%values - amount
       end where
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_end ( 'FillUtils_1.ResetUnusedRadiances' )
     end subroutine ResetUnusedRadiances
 
     ! --------------------------------------------- RotateMagneticField ----
@@ -6624,21 +6777,23 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: STRENGTH              ! The field strength
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.RotateMagneticField', key )
       ! Do some sanity checks
       if ( .not. any ( qty%template%quantityType == &
         & (/ l_fieldStrength, l_fieldAzimuth, l_fieldElevation /) ) ) then
         call Announce_Error ( key, no_error_code, 'Inappropriate quantity for this fill' )
-        return
+        go to 9
       end if
       if ( .not. DoHGridsMatch ( qty, fieldECR ) ) then
         call Announce_Error ( key, no_error_code, &
           & 'Field and result quantity must have matching hGrids' )
-        return
+        go to 9
       end if
       if ( .not. DoVGridsMatch ( qty, fieldECR ) ) then
         call Announce_Error ( key, no_error_code, &
           & 'Field and result quantity must have matching hGrids' )
-        return
+        go to 9
       end if
 
       do instance = 1, qty%template%noInstances
@@ -6677,6 +6832,8 @@ contains ! =====     Public Procedures     =============================
           end select
         end do
       end do
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.RotateMagneticField' )
 
     end subroutine RotateMagneticField
 
@@ -6691,6 +6848,8 @@ contains ! =====     Public Procedures     =============================
       integer :: i,j                    ! Loop counters / indices
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.ScaleOverlaps', multiplierNode )
       scaleLowerLoop: do i = 1, quantity%template%noInstancesLowerOverlap
         if ( i+1 > nsons ( multiplierNode ) ) exit scaleLowerLoop
         call expr_check ( subtree( i+1, multiplierNode ), exprUnit, exprValue, &
@@ -6699,7 +6858,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_error ( multiplierNode, wrongUnits, &
             & extraMessage="for scaleOverlaps fill", &
             & extraInfo=(/exprUnit(1), PHYQ_Dimensionless/) )
-          return
+          go to 9
         end if
         if ( associated ( quantity%mask ) .and. .not. dontMask ) then
           where ( iand ( ichar(quantity%mask(:,i)), m_Fill ) == 0 )
@@ -6721,7 +6880,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_error ( multiplierNode, wrongUnits, &
             & extraMessage="for scaleOverlaps fill", &
             & extraInfo=(/exprUnit(1), PHYQ_Dimensionless/) )
-          return
+          go to 9
         end if
         if ( associated ( quantity%mask ) .and. .not. dontMask ) then
           where ( iand ( ichar(quantity%mask(:,i)), m_Fill ) == 0 )
@@ -6731,6 +6890,8 @@ contains ! =====     Public Procedures     =============================
           quantity%values ( :, i ) = quantity%values ( :, i ) * exprValue(1)
         end if
       end do scaleUpperLoop
+    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.ScaleOverlaps' )
     end subroutine ScaleOverlaps
 
     ! ----------------------------------------- SpreadChannelFill --------
@@ -6750,6 +6911,8 @@ contains ! =====     Public Procedures     =============================
       type (Signal_T) ::  signal        ! Signal for this quantity
 
       ! Exectuable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.SpreadChannelFill', key )
       if ( present(sourceQuantity) ) then
         do i = 1, quantity%template%noInstances
           do s = 1, quantity%template%noSurfs
@@ -6763,27 +6926,29 @@ contains ! =====     Public Procedures     =============================
             end do
           end do
         end do
-        return
-      endif
-      ! Deal with any channel numbering issues.
-      signal = GetSignal ( quantity%template%signal )
-      myChannel = channel - lbound ( signal%frequencies, 1 ) + 1
-      if ( myChannel < 1 .or. myChannel > quantity%template%noChans ) &
-        & call Announce_Error ( key, no_error_code, &
-        & 'Invalid channel for spread channel' )
-      do i = 1, quantity%template%noInstances
-        do s = 1, quantity%template%noSurfs
-          do c = 1, quantity%template%noChans
-            if ( c == myChannel ) cycle
-            j = (s-1)*quantity%template%noChans + c
-            if ( associated ( quantity%mask ) .and. .not. dontMask ) then
-              if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) == 1 ) cycle
-            end if
-            quantity%values ( j, i ) = &
-              & quantity%values ( (s-1)*quantity%template%noChans + myChannel, i )
+      else
+        ! Deal with any channel numbering issues.
+        signal = GetSignal ( quantity%template%signal )
+        myChannel = channel - lbound ( signal%frequencies, 1 ) + 1
+        if ( myChannel < 1 .or. myChannel > quantity%template%noChans ) &
+          & call Announce_Error ( key, no_error_code, &
+          & 'Invalid channel for spread channel' )
+        do i = 1, quantity%template%noInstances
+          do s = 1, quantity%template%noSurfs
+            do c = 1, quantity%template%noChans
+              if ( c == myChannel ) cycle
+              j = (s-1)*quantity%template%noChans + c
+              if ( associated ( quantity%mask ) .and. .not. dontMask ) then
+                if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) == 1 ) cycle
+              end if
+              quantity%values ( j, i ) = &
+                & quantity%values ( (s-1)*quantity%template%noChans + myChannel, i )
+            end do
           end do
         end do
-      end do
+      end if
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.SpreadChannelFill' )
     end subroutine SpreadChannelFill
 
     ! ---------------------------------------------- TransferVectors -----
@@ -6800,6 +6965,8 @@ contains ! =====     Public Procedures     =============================
       integer :: SQI                      ! Quantity index in source
 
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_begin ( 'FillUtils_1.TransferVectors' )
 
       ! First copy those things in source, loop over them
       dest%globalUnit = source%globalUnit
@@ -6828,6 +6995,8 @@ contains ! =====     Public Procedures     =============================
           end if
         end if
       end do
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_end ( 'FillUtils_1.TransferVectors' )
     end subroutine TransferVectors
 
     ! ---------------------------------------------- UncompressRadiance -----
@@ -6857,6 +7026,8 @@ contains ! =====     Public Procedures     =============================
       real(rv) :: bprodCal
 
       ! Exectuable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.UncompressRadiance', key )
       if ( quantity%template%quantityType /= l_radiance ) &
         & call Announce_Error ( key, no_error_code, &
         & 'Inappropriate quantity for uncompressRadiance fill' )
@@ -6922,6 +7093,8 @@ contains ! =====     Public Procedures     =============================
           end if
         end do
       end do
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.UncompressRadiance' )
 
     end subroutine UncompressRadiance
 
@@ -6945,6 +7118,8 @@ contains ! =====     Public Procedures     =============================
       character(len=80) :: name
       character (len=80) :: Str
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.QtyFromFile', key )
       homogeneous = index(lowercase(options), 'h') > 0
       ! How do we access the dataset to read? By name or by attribute?
       if ( index(lowercase(options), 'a') < 1 ) then
@@ -6968,6 +7143,8 @@ contains ! =====     Public Procedures     =============================
       endif
       call NamedQtyFromFile ( key, quantity, MLSFile, &
         & filetype, name, spread, interpolate, homogeneous )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.QtyFromFile' )
     end subroutine QtyFromFile
     
     ! ------------------------------------------- VectorFromFile ----------
@@ -6995,6 +7172,8 @@ contains ! =====     Public Procedures     =============================
       integer :: SQI                      ! Quantity index in source
       character (len=80) :: Str
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_begin ( 'FillUtils_1.VectorFromFile', key )
       homogeneous = index(lowercase(options), 'h') > 0
       call output( 'Now in VectorFromFile', advance='yes' )
       call GetAllHDF5DSNames( MLSFile, DSNames )
@@ -7040,6 +7219,8 @@ contains ! =====     Public Procedures     =============================
             & filetype, name, spread, interpolate, homogeneous )
         enddo
       enddo
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
+        & call trace_end ( 'FillUtils_1.VectorFromFile' )
     end subroutine VectorFromFile
 
   ! -- Private procedures ----------
@@ -7073,6 +7254,8 @@ contains ! =====     Public Procedures     =============================
      ! Local variables
       LOGICAL ::       minorFrame   ! TRUE if radiances, FALSE if vmr
 
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_begin ( 'FillUtils_1.FillableChiSq' )
       aok = .true.
 
       ! (0)
@@ -7099,7 +7282,7 @@ contains ! =====     Public Procedures     =============================
           & 'Model values unassociated in FillableChiSq')
       end if
 
-      if ( .not. aok ) return
+      if ( .not. aok ) go to 9
 
       minorFrame = qty%template%minorFrame .or. qty%template%majorFrame
       ! (1)
@@ -7148,7 +7331,8 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
 
-      return
+    9 if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_end ( 'FillUtils_1.FillableChiSq' )
     end function FillableChiSq
 
     ! ------------------------------------------- NamedQtyFromFile ----------
@@ -7181,6 +7365,8 @@ contains ! =====     Public Procedures     =============================
       real(rv), dimension(:,:,:), pointer :: values => null()
       logical :: Verbose
       ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_begin ( 'FillUtils_1.NamedQtyFromFile', key )
       verbose = ( switchDetail(switches, 'fill') > -1 )
       call GetHDF5DSDims ( MLSFile, name, DIMS )
       dimInts = max(dims, int(1,hsize_t))
@@ -7256,6 +7442,8 @@ contains ! =====     Public Procedures     =============================
         endif
         call DeAllocate_test ( values, 'values read from file', ModuleName )
       end select
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_end ( 'FillUtils_1.NamedQtyFromFile' )
     contains
       subroutine FillMyInstances( values1, values2 )
         ! Handle the following cases:
@@ -7308,6 +7496,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.59  2012/06/07 00:53:25  vsnyder
+! More, and more consistent, -g tracing
+!
 ! Revision 2.58  2012/05/08 17:51:58  pwagner
 ! Disabled another debugging bloc
 !
