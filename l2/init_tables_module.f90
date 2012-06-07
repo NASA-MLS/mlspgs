@@ -840,6 +840,8 @@ contains ! =====     Public procedures     =============================
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
              begin, f+f_adopt, t+t_string, n+n_field_type, &
              begin, f+f_quantities, s+s_quantity, n+n_field_spec, &
+             begin, f+f_removeQuantities, s+s_quantity, n+n_field_spec, &
+             begin, f+f_removeTemplate, s+s_vectorTemplate, n+n_field_spec, &
              begin, f+f_source, t+t_rowsOrColumns, n+n_field_type, &
              begin, f+f_template, s+s_vectorTemplate, n+n_field_spec, &
              ndp+n_spec_def, &
@@ -1780,6 +1782,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.548  2012/06/07 22:44:21  pwagner
+! May remove Quantities, vectorTemplates
+!
 ! Revision 2.547  2012/06/06 20:37:42  vsnyder
 ! Add toggles field to retrieve spec
 !
