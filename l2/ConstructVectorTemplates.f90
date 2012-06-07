@@ -13,29 +13,35 @@
 module ConstructVectorTemplates ! Construct a template for a vector
 !=============================================================================
 
-  use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-  use INIT_TABLES_MODULE, only: F_ADOPT, F_QUANTITIES, F_SOURCE, F_Template, &
-    & FIELD_FIRST, FIELD_LAST, L_ROWS, L_COLUMNS
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use Output_M, only: Output
-  use QuantityTemplates, only: QuantityTemplate_T
-  use String_Table, only: Display_String, Get_String
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use dump_0, only: DUMP
+  use INIT_TABLES_MODULE, only: F_ADOPT, F_QUANTITIES, &
+    & F_REMOVEQUANTITIES, F_REMOVETEMPLATE, F_SOURCE, F_TEMPLATE, &
+    & FIELD_FIRST, FIELD_LAST
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSSETS, only: RELATIVECOMPLEMENT
+  use Output_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use QuantityTemplates, only: QUANTITYTEMPLATE_T
+  use String_Table, only: GET_STRING
   use TOGGLES, only: GEN, TOGGLE, LEVELS
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
+  use TREE, only: DECORATION, NSONS, SOURCE_REF, SUB_ROSA, &
     & SUBTREE
-  use VectorsModule, only: ConstructVectorTemplate, VectorTemplate_T, &
-    & NullifyVectorTemplate
+  use VectorsModule, only: CONSTRUCTVECTORTEMPLATE, VECTORTEMPLATE_T, &
+    & NULLIFYVECTORTEMPLATE
   use L2PC_m, only: ADOPTVECTORTEMPLATE
 
   implicit none
-  public
+  private
+  public :: CreateVecTemplateFromMLSCfInfo
   
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
+
+  logical, parameter :: DEEBUG = .false.
 
   ! This module performs the vector template aspects of the construct task
 
@@ -55,13 +61,18 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: I, J, K                  ! Loop inductors
     integer :: NOQUANTITIES             ! How many selections?
+    integer :: NOREMOVEDQUANTITIES      ! How many selections?
+    integer :: NOUNIQUEQUANTITIES       ! How many selections are unique?
     integer, dimension(:), pointer :: QUANTITIES
+    integer, dimension(:), pointer :: RELATIVEQUANTITIES
+    integer, dimension(:), pointer :: REMOVEDQUANTITIES
     integer :: SON                      ! Son of Root
     integer :: KEY                      ! Son of son
     integer :: ADOPTBIN                 ! Name of l2pc bin to adopt
     integer :: SOURCE                   ! l_rows or l_columns
     logical, dimension(field_first:field_last) :: GOT ! Fields
     character(len=80) :: MESSAGE        ! Possible error message
+    logical, parameter :: DIEIFDUP = .false.
         
     ! Executable code
 
@@ -69,11 +80,13 @@ contains ! =====     Public Procedures     =============================
       & trace_begin ( "ConstructVectorTemplateFromMLSCfInfo", root )
 
     call nullifyVectorTemplate ( vectorTemplate ) ! for Sun's still useless compiler
-    nullify ( quantities )
+    nullify ( quantities, removedQuantities )
     got = .false.
     noQuantities = 0
+    noRemovedQuantities = 0
 
     ! Loop over the arguments
+    ! call outputNamedValue( 'Nsons(root) Construct', nsons(root) )
     do i = 2, nsons(root)     ! Skip the "vectorTemplate" name
       son = subtree(i,root)
       key = subtree(1,son)
@@ -85,10 +98,20 @@ contains ! =====     Public Procedures     =============================
         source = decoration ( subtree(2,son) )
       case ( f_quantities )
         noQuantities = noQuantities + nsons(son) - 1
-      case ( f_template )
+      case ( f_removeQuantities )
+        noRemovedQuantities = noRemovedQuantities + nsons(son) - 1
+      case ( f_removeTemplate )
         do j = 2, nsons(son)  ! Skip the "template" name
-          call count_quantities ( decoration(subtree(j,son)) )
+          call count_quantities ( decoration(subtree(j,son)), noRemovedQuantities )
         end do
+      case ( f_template )
+        ! call outputNamedValue( 'NoQuantities on entering Construct', noQuantities )
+        ! call outputNamedValue( 'Nsons(son) template', nsons(son) )
+        do j = 2, nsons(son)  ! Skip the "template" name
+          ! call output( 'Entering count_quantities', advance='yes' )
+          call count_quantities ( decoration(subtree(j,son)), noQuantities )
+        end do
+        ! call outputNamedValue( 'NoQuantities on leaving Construct', noQuantities )
       end select
     end do
 
@@ -106,61 +129,122 @@ contains ! =====     Public Procedures     =============================
           end if
         end do
       end if
+      if ( toggle(gen) .and. levels(gen) > 0 ) call &
+        & trace_end ( "ConstructVectorTemplateFromMLSCfInfo" )
+      return
     else if ( got ( f_quantities ) .or. got ( f_template ) ) then
+      ! Not an adoption, just a regular template construction
       call allocate_test ( quantities, noQuantities, "quantities", ModuleName )
       noQuantities = 0
-      call fill_quantities ( root )
-      ! Not an adoption, just a regular template construction
-      call ConstructVectorTemplate ( name, quantityTemplates, quantities, &
-        & vectorTemplate, where=source_ref(root), forWhom=moduleName )
-      call deallocate_test ( quantities, "quantities", ModuleName )
+      noUniqueQuantities = 0
+      call fill_quantities ( root, quantities )
     else
       ! User didn't give appropriate command
-      call Announce_Error ( key, 'Must supplier either quantity list or adoption' )
+      call Announce_Error ( key, 'Must supply adopt, quantites, source, or template' )
     end if
+    ! Do we wish to remove any quantities?
+    if ( got ( f_removeQuantities ) .or. got ( f_removeTemplate ) ) then
+      if ( DEEBUG ) call outputNamedValue( 'Num of values to be removed', noRemovedQuantities )
+      call allocate_test ( removedQuantities, noRemovedQuantities, &
+        & "removedQuantities", ModuleName )
+      noQuantities = 0
+      noUniqueQuantities = 0
+      call fill_quantities ( root, removedQuantities, remove=.true. )
+      ! Now let's try to remove them
+      if ( DEEBUG ) then
+        call dump( Quantities, 'Quantities ' )
+        call dump( removedQuantities, 'removedQuantities ' )
+      endif
+      relativeQuantities => RelativeComplement( removedQuantities, Quantities )
+      if ( DEEBUG ) call dump( relativeQuantities, 'relativeQuantities ' )
+      call ConstructVectorTemplate ( name, &
+        & quantityTemplates, relativeQuantities, &
+        & vectorTemplate, where=source_ref(root), forWhom=moduleName )
+      call deallocate_test ( removedQuantities, "removedQuantities", ModuleName )
+      call deallocate_test ( quantities, "quantities", ModuleName )
+      call deallocate_test ( relativeQuantities, "relativeQuantities", ModuleName )
+    else
+      call ConstructVectorTemplate ( name, &
+        & quantityTemplates, quantities(1:noUniqueQuantities), &
+        & vectorTemplate, where=source_ref(root), forWhom=moduleName )
+      call deallocate_test ( quantities, "quantities", ModuleName )
+    endif
 
     if ( toggle(gen) .and. levels(gen) > 0 ) call &
       & trace_end ( "ConstructVectorTemplateFromMLSCfInfo" )
 
   contains
 
-    recursive subroutine Count_Quantities ( Root )
-      integer, intent(in) :: Root ! of a spec_args in a vectorTemplate
-      integer :: I, Son
+    recursive subroutine Count_Quantities ( Root, noQuantities )
+      integer, intent(in)    :: Root ! of a spec_args in a vectorTemplate
+      integer, intent(inout) :: noQuantities ! How many?
+      integer :: I, J, Son
       do i = 2, nsons(root)
         son = subtree(i,root)
         select case ( decoration(subtree(1,son)) )
         case ( f_quantities )
           noQuantities = noQuantities + nsons(son) - 1
         case ( f_template )
+          ! call outputNamedValue( 'NoQuantities on entering Count', noQuantities )
           do j = 2, nsons(son)  ! Skip the "template" name
-            call count_quantities ( decoration(subtree(j,son)) )
+            call count_quantities ( decoration(subtree(j,son)), noQuantities )
           end do
+          ! call outputNamedValue( 'NoQuantities on leaving Count', noQuantities )
         end select
       end do
     end subroutine Count_Quantities
 
-    recursive subroutine Fill_Quantities ( Root )
-      integer, intent(in) :: Root ! of a spec_args in a vectorTemplate
-      integer :: I, J, K, Son
+    recursive subroutine Fill_Quantities ( Root, quantities, remove )
+      integer, intent(in)            :: Root ! of a spec_args in a vectorTemplate
+      integer, dimension(:), pointer :: quantities
+      logical, optional, intent(in)  :: remove
+      integer :: I, J, Son
+      integer :: qIndex
+      logical :: myRemove
+      myRemove = .false.
+      if ( present(remove) ) myRemove = remove
+      if ( myRemove .and. DEEBUG ) call output ( 'Removing quantities', advance='yes' )
       do i = 2, nsons(root)
         son = subtree(i,root)
+        if ( myRemove ) then
+          if ( any( decoration(subtree(1,son)) == &
+            & (/ f_quantities, f_template /) ) ) cycle
+        else
+          if ( any( decoration(subtree(1,son)) == &
+            & (/ f_removequantities, f_removetemplate /) ) ) cycle
+        endif
         select case ( decoration(subtree(1,son)) )
-        case ( f_quantities )
+        case ( f_quantities, f_removeQuantities )
           do j = 2, nsons(son)
             noQuantities = noQuantities + 1
             ! Get the quantity index that was put into the AST by Construct:
-            quantities(noQuantities) = decoration(decoration(subtree(j,son)))
-            ! Check for duplicate quantities
-            do k = 1, noQuantities - 1
-              if ( quantities(k) == quantities(noQuantities) ) &
-                & call Announce_Error  ( key, 'Duplicate quantities' )
-            end do ! k = 1, noQuantities - 1
+            ! quantities(noQuantities) = decoration(decoration(subtree(j,son)))
+            qIndex =  decoration(decoration(subtree(j,son)))
+            if ( noUniqueQuantities < 1 ) then
+              noUniqueQuantities = noUniqueQuantities + 1
+              quantities(noUniqueQuantities) = qIndex
+            elseif ( any( qindex == quantities(1:noUniqueQuantities) ) ) then
+              if ( DIEIFDUP ) call Announce_Error  ( key, 'Duplicate quantities' )
+            else
+              noUniqueQuantities = noUniqueQuantities + 1
+              quantities(noUniqueQuantities) = qIndex
+            endif
           end do ! j = 2, nsons(son)
-        case ( f_template )
+        case ( f_template, f_removetemplate )
+          if ( myRemove .and. DEEBUG ) &
+            & call outputnamedValue( 'noQuantities before removeTemplate', &
+            & (/ noQuantities, noUniqueQuantities /) )
           do j = 2, nsons(son)  ! Skip the "template" name
-            call fill_quantities ( decoration(subtree(j,son)) )
+          ! The following is a tricky point:
+            ! We want to remove the quantities that are part of the template
+            ! Note however that when the template was defined, they were
+            ! part of a 'quantities" field, not part of a "removeQuantities" field
+            call fill_quantities ( decoration(subtree(j,son)), quantities, &
+              & remove=.false. )
           end do
+          if ( myRemove .and. DEEBUG ) &
+            & call outputnamedValue( 'noQuantities after removeTemplate', &
+            & (/ noQuantities, noUniqueQuantities /) )
         end select
       end do
     end subroutine Fill_Quantities
@@ -173,9 +257,7 @@ contains ! =====     Public Procedures     =============================
   subroutine Announce_Error ( where, message, extra )
 
     use Intrinsic, only: LIT_INDICES
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
-    use MoreTree, only: StartErrorMessage
-    use OUTPUT_M, only: OUTPUT
+    use MoreTree, only: STARTERRORMESSAGE
     use String_Table, only: DISPLAY_STRING
 
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
@@ -204,6 +286,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.17  2012/06/07 22:43:54  pwagner
+! May remove Quantities, vectorTemplates
+!
 ! Revision 2.16  2012/05/24 21:07:38  vsnyder
 ! Allow any number of template and quantities fields.  Trace out template
 ! fields recursively until arriving at template fields.  The quantities of
