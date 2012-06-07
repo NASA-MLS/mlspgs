@@ -121,7 +121,7 @@ contains ! ============= Public Procedures ==========================
     ! Setup the timing
     call time_now (time_start)
 
-    dumpTransform = switchDetail(switches,'dxfq')
+    dumpTransform = max(switchDetail(switches,'dxfq'),0)
     clean = switchDetail(switches,'dxfc') > -1
 
     ! Do the actual forward models
@@ -313,7 +313,6 @@ contains ! ============= Public Procedures ==========================
       call MLSMessageCalls( 'pop' ) ! for all the cases
 
     end subroutine DoForwardModels
-
 
   end subroutine ForwardModel
 
@@ -625,6 +624,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.45  2012/06/07 00:47:16  vsnyder
+! Handle switchDetail properly
+!
 ! Revision 2.44  2012/06/06 20:41:59  vsnyder
 ! More and better dumps and messages
 ! don't clobber Jacobian from prior FWM for same MAF
