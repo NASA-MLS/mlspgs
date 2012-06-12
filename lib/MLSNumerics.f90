@@ -49,6 +49,7 @@ module MLSNumerics              ! Some low level numerical stuff
 
 !         Functions, operations, routines
 ! Battleship               By wise-ranging evaluations find integer root
+!                             or floating root to within a given tolerance
 ! ClosestElement           Find index(es) in array closest to test value
 !                           (array may be multidimensional, non-monotonic)
 ! Destroy                  Deallocate y values in UnifDiscreteFn
@@ -90,6 +91,8 @@ module MLSNumerics              ! Some low level numerical stuff
 !    [int b], [char* options] )
 ! Battleship( log extern fun, int root, [int n1], [int maxPhase1], [int ns(:)], &
 !    [log b], [char* options] )
+! Battleship( nprec extern fun, nprec root, nprec arg1, nprec delta, &
+!    [int maxPhase1], [int ns(:)] )
 ! BivariateLinearInterpolation ( real X_Basis(:), real Y_Basis(:),
 !    real Table_2d(:,:), real X_Grid(:), real Y_Grid(:), real Out(:) )
 ! ClosestElement ( nprec test, nprec array, int indices, [char* options] )
@@ -327,7 +330,7 @@ module MLSNumerics              ! Some low level numerical stuff
   ! type(UnifDiscreteFn_r8), save :: MLSUDF
   
   interface Battleship
-    module procedure Battleship_int, Battleship_log
+    module procedure Battleship_int, Battleship_log, Battleship_r4, Battleship_r8
   end interface
 
   interface BivariateLinearInterpolation
@@ -468,7 +471,13 @@ contains
 ! -------------------------------------------------  Battleship  -----
 
   ! This family of routines finds an integer root of a function
-  ! by evaluating it. Each evaluation is a "shot". A returned value
+  ! by evaluating it. Each evaluation is a "shot". What we consider
+  ! a "hit" depends on the options parameter (see below).
+  ! Warning--the default behavior is not the usual root-finder's
+  ! (+ve on one side, -ve on the other)
+  ! Instead what we do is this:
+  !
+  ! A returned value
   ! of "0" (or the optional parameter b) is short. Any other value is long.
   ! The root is the longest argument that is still short.
   ! (If you instead wish the shortest argument still long just add 1
@@ -480,6 +489,9 @@ contains
   ! as its sole argument and that returns the iostat as its value
   ! Battleship will then calculate the exact number characters in the file
   ! (which NAG cares about; Lahey doesn't care)
+  
+  ! If you wish to do the usual root-finder where the returned values change
+  ! sign, set the options appropriately to "-x"
   
   ! We take shots during 2 phases:
   ! (1) outbound: ever-widening circles of radius 1 2 4 8 .. (n) (2n) ..
@@ -503,6 +515,10 @@ contains
   ! 0 -> FALSE
   ! 1 -> TRUE
   ! -r option or b can be used to reverse the sense
+
+  ! A version for use with real-valued functions can be
+  ! operated as a root-finder where the root is
+  ! desired to be found within a tolerance of delta
 
   subroutine Battleship_int( fun, root, n1, maxPhase1, ns, b, options )
     ! Args
@@ -747,6 +763,16 @@ contains
       end if
     enddo
   end subroutine Battleship_log
+
+  subroutine Battleship_r4( fun, root, arg1, delta, maxPhase1, ns )
+    integer, parameter :: RK = r4
+      include "Battleship.f9h"
+  end subroutine Battleship_r4
+
+  subroutine Battleship_r8( fun, root, arg1, delta, maxPhase1, ns )
+    integer, parameter :: RK = r8
+      include "Battleship.f9h"
+  end subroutine Battleship_r8
 
 ! ------------------------------------  BivariateLinearInterp_D_D  -----
   subroutine BivariateLinearInterp_D_D ( X_Basis, Y_Basis, Table_2d, &
@@ -2155,6 +2181,49 @@ contains
   end function UseLookUpTable_r8 
 
 !-------------------- Private Procedures -----------------------------------
+  ! This is a utility function to convert a real-valued function into the 
+  ! integer-valued function Battleship expects
+  function BattleRealToInt_r4 ( arg, arg1, delta, setUp ) result( iarg )
+    integer, parameter :: RK = R4
+    ! Args
+    real(rk), intent(in)           :: arg
+    real(rk), optional, intent(in) :: arg1, delta
+    logical, optional, intent(in)  :: setUp
+    integer                        :: iarg
+    ! Internal variables
+    logical                        :: mySetup
+    real(rk), save                 :: x1, eps
+    ! Executable
+    mySetup = .false.
+    if ( present(setUp) ) mySetup = setUp
+    if ( mySetUp ) then
+      x1 = arg1
+      eps = delta
+    else
+      iarg = int( (arg - x1) / eps ) + 1
+    endif
+  end function BattleRealToInt_r4
+
+  function BattleRealToInt_r8 ( arg, arg1, delta, setUp ) result( iarg )
+    integer, parameter :: RK = r8
+    ! Args
+    real(rk), intent(in)           :: arg
+    real(rk), optional, intent(in) :: arg1, delta
+    logical, optional, intent(in)  :: setUp
+    integer                        :: iarg
+    ! Internal variables
+    logical                        :: mySetup
+    real(rk), save                 :: x1, eps
+    ! Executable
+    mySetup = .false.
+    if ( present(setUp) ) mySetup = setUp
+    if ( mySetUp ) then
+      x1 = arg1
+      eps = delta
+    else
+      iarg = int( (arg - x1) / eps ) + 1
+    endif
+  end function BattleRealToInt_r8
 
   ! This family creates an array of x values appropriate
   ! for the UDF
@@ -2400,6 +2469,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.74  2012/06/12 18:10:00  pwagner
+! Battleship can now find non-integer roots
+!
 ! Revision 2.73  2012/05/25 20:53:21  pwagner
 ! Added multidimensional LinearInterpolate and HuntBox
 !
