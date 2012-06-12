@@ -24,9 +24,10 @@
     if ( myShape ) then
       call outputNamedValue( 'rank', myRank, advance='no' )
       call output( '   shape  ', advance='no' )
-      call output( shape(array), advance='yes' )
+      call output( shape(array), advance='no' )
       if ( any(isInfinite(array)) ) call output( '(infinite values found)', advance='no' )
       if ( any(isNaN(array)) ) call output( '(NaNs found)', advance='no' )
+      call newLine
     endif
     if ( myBandwidth ) then
       call BandWidth( array, bwidth, pctnzero )
@@ -148,6 +149,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.30  2012/06/12 18:05:15  pwagner
+! Info about NaNs and Infs on same line as shape
+!
 ! Revision 2.29  2012/05/25 20:38:00  pwagner
 ! Warn if Infinities or NaNs found
 !
