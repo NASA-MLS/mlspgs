@@ -103,7 +103,7 @@ module DUMP_0
 ! dump ( log countEmpty, strlist keys, strlist values, char* name, 
 !       [char* separator], [char* options] )
 ! dumpDates ( dble dates(:), [int width], [char* dateFormat], [char* timeFormat] )
-! dumpDumpOptions
+! dumpDumpOptions ( [char* options] )
 ! dumpLists ( array, char* name,
 !      [int width], [char* sep],
 !      [char* delims] ) 
@@ -120,7 +120,7 @@ module DUMP_0
 !      [char* format, [char* formats(:)] ) 
 !       where values can be a 2d array of ints or reals, and
 !       headers is an array the same size as the 2nd index of values
-!       format optioanally overrides the default format for the numeric type
+!       format optionally overrides the default format for the numeric type
 !       formats allows you to specify a format separately column-by-column
 ! selfdiff ( array, char* name,
 !      [fillvalue], [int width], [char* format],
@@ -1884,7 +1884,10 @@ contains
   
   ! ---------------------------------------------- DumpDumpOptions -----
   subroutine DumpDumpOptions( options )
-    ! Show dump, diff options
+    ! Show 
+    ! (if current options supplied) actual dump, diff options
+    ! (if arg is "?") available options and their meanings
+    ! (if no arg) default options
     character(len=*), optional, intent(in) :: options
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
      if ( .not. present(options) ) then
@@ -1914,6 +1917,34 @@ contains
        call outputNamedValue ( 'complex output format', trim_safe(sdFormatDefaultCmplx), advance='yes', &
          & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
        call blanks(90, fillChar='-', advance='yes')
+     elseif ( index( options, "?" ) > 0 ) then
+       call output( 'The meaning of options is determined by the presence or absence', advance='yes' )
+       call output( 'of specific characters in the options string', advance='yes' )
+       call output( 'If options is present and contains the following characters:', advance='yes' )
+       call output( '(for dump or diff)', advance='yes' )
+       call output( '  character         meaning', advance='yes' )
+       call output( '     ---            -------', advance='yes' )
+       call output( '      B              show Bandwidth, % of array that is non-zero', advance='yes' )
+       call output( '      H              show rank, TheShape of array', advance='yes' )
+       call output( '      L              laconic; skip printing name, size of array', advance='yes' )
+       call output( '      R              rms       -- min, max, etc.', advance='yes' )
+       call output( '      b              table of % vs. amount of differences (pdf)', advance='yes' )
+       call output( '      c              clean', advance='yes' )
+       call output( '      g              gaps      ', advance='yes' )
+       call output( '      l              collapse (last index)', advance='yes' )
+       call output( '      r              ratios    -- min, max, etc. of difference ratios', advance='yes' )
+       call output( '      s              stats     -- number of differences', advance='yes' )
+       call output( '      p              transpose ', advance='yes' )
+       call output( '      t              trim      ', advance='yes' )
+       call output( '      u              unique    ', advance='yes' )
+       call output( '      w              wholearray', advance='yes' )
+       call output( '      W[i]           wholearray, looping over ith index', advance='yes' )
+       call output( '      1 or 2 or ..   ignored; calling routine is free to interpret', advance='yes' )
+       call output( ' ', advance='yes' )
+       call output( 'An exception is the behavior of w (wholearray):', advance='yes' )
+       call output( 'if all {HRblrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)', advance='yes' )
+       call output( 'if any are TRUE the whole array will be dumped only if', advance='yes' )
+       call output( 'w is present or wholearray is set to TRUE', advance='yes' )
      else
        call outputNamedValue ( 'options', trim_safe(options), advance='yes', &
          & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=90 )
@@ -3276,6 +3307,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.121  2012/06/13 23:59:37  pwagner
+! dumpDumpOptions optionally dumps available diff/dump options
+!
 ! Revision 2.120  2012/01/09 22:25:55  pwagner
 ! Distinguish 'r' option to print rms of ratios and 'R' option for rms of values
 !
