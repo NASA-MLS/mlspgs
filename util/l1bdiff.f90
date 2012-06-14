@@ -714,6 +714,7 @@ contains
     character (len=80) :: sdName
     integer :: status
     integer :: the_hdfVersion
+    logical, parameter :: SKIPIFRANKTOOHIGH = .false.
     
     ! Executable code
     ! the_hdfVersion = HDFVERSION_5
@@ -788,19 +789,19 @@ contains
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Skipping diff of char-valued ' // trim(sdName) )
       elseif ( associated(L1bData%intField) ) then
-        if ( size(L1bData%intField, 1) > 1 .or. &
-          &  size(L1bData%intField, 2) > 1 ) then
+        if ( ( size(L1bData%intField, 1) > 1 .or. &
+          &  size(L1bData%intField, 2) > 1 ) .and. SKIPIFRANKTOOHIGH ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Skipping diff of char-valued ' // trim(sdName) )
+            & 'Skipping diff high-rank ' // trim(sdName) )
         else
           call selfdiff( L1bData%intField(1, 1, :), trim(sdName), &
             & waves=options%halfWaves, options=options%dumpOptions )
         endif
       elseif ( associated(L1bData%dpField) ) then
-        if ( size(L1bData%dpField, 1) > 1 .or. &
-          &  size(L1bData%dpField, 2) > 1 ) then
+        if ( ( size(L1bData%dpField, 1) > 1 .or. &
+          &  size(L1bData%dpField, 2) > 1 ) .and. SKIPIFRANKTOOHIGH ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Skipping diff of char-valued ' // trim(sdName) )
+            & 'Skipping diff high-rank ' // trim(sdName) )
         else
           call selfdiff( L1bData%dpField(1, 1, :), trim(sdName), &
             & waves=options%halfWaves, options=options%dumpOptions )
@@ -831,6 +832,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.23  2012/04/20 20:55:48  pwagner
+! Restored silence to silent option
+!
 ! Revision 1.22  2012/04/20 17:57:51  pwagner
 ! Fixed syntax error of dumpOptions
 !
