@@ -473,8 +473,8 @@ contains
     logical :: Print_TauL         ! For debugging, from -Staul
     logical :: Print_TauP         ! For debugging, from -Staup
     logical :: Print_TScat        ! For debugging, from -STScat
-    logical :: Print_TScat_Deriv  ! For debugging, Temp deriv, from -Sdtsct
-    integer :: Print_TScat_Detail ! For debugging, from -S[pP]sct
+    integer :: Print_TScat_Deriv  ! For debugging, Temp deriv, from -Sdtsct
+    integer :: Print_TScat_Detail ! For debugging, from -Spsct
 
     character(len=*), parameter :: TScat_Detail_Heading = &
       & "Scat_Phi   Scat_Ht   Scat_Zeta     Xi       D2     Tan_Phi    Tan_Ht  Begin Phi   End Phi Which Rev Fwd"
@@ -842,10 +842,8 @@ contains
     print_TauL = switchDetail(switches, 'taul') > -1
     print_TauP = switchDetail(switches, 'taup') > -1
     print_TScat = switchDetail(switches, 'TScat' ) > -1
-    Print_TScat_Deriv = switchDetail(switches, 'dtsct' ) > -1
-    print_TScat_detail = 0
-    if ( switchDetail(switches, 'psct' ) > -1 ) print_TScat_detail = 1
-    if ( switchDetail(switches, 'Psct' ) > -1 ) print_TScat_detail = 2
+    Print_TScat_Deriv = switchDetail(switches, 'dtsct' )
+    print_TScat_detail = switchDetail(switches, 'psct' )
     print_more_points = switchDetail(switches, 'ZMOR' ) > -1
     do_more_points = switchDetail(switches, 'zmor') > -1
 
@@ -2289,7 +2287,7 @@ contains
         &  fwdModelConf%anyPFA(sx) ) &
           & call get_channel_centers ( thisSideband, channelCenters )
 
-      if ( print_TScat .or. print_TScat_detail > 0 ) &
+      if ( print_TScat .or. print_TScat_detail > -1 ) &
         & call output ( "Signals used for TScat computation:", advance="yes" )
       do f_i = 1, noUsedChannels
         ! Vector quantities for results, one for each channel
@@ -2298,7 +2296,7 @@ contains
           & signal=fwdModelConf%signals(channels(f_i)%signal)%index, &
           & sideband=sideband )
         TScats(f_i)%qty%values = 0.0 ! Is this needed?
-        if ( print_TScat .or. print_TScat_detail > 0 ) then
+        if ( print_TScat .or. print_TScat_detail > -1 ) then
           call GetNameOfSignal ( fwdModelConf%signals(channels(f_i)%signal), sig, &
             & channel=channels(f_i)%used, sideband=thisSideband )
           call output ( trim(sig), advance="yes" )
@@ -2329,7 +2327,7 @@ contains
       phi_ref = mod(phitan%values(FwdModelConf%TScatMIF,MAF),360.0_r8) * deg2rad
       r_eq = get_R_eq ( phi_ref, earthradc_sq )
 
-      if ( print_TScat_detail > 1 .and. .not. print_TScat_Deriv .and. .not. &
+      if ( print_TScat_detail > 0 .and. .not. print_TScat_deriv > -1 .and. .not. &
         & print_incopt .and. .not. print_incrad .and. print_path <= 0 ) then
         call output ( rad2deg*phi_ref, before="Phi_Ref = " )
         call output ( r_eq, before=", R_eq = ", advance="yes" )
@@ -2446,13 +2444,13 @@ contains
               TScat%values(surf_i,phi_i) = 0.0
               if ( atmos_der ) then
                 k_atmos_p = 0.0
-                call store_other_deriv ( phi_i, surf_i, TScats(f_i)%qty, &
+                call store_other_deriv ( phi_i, surf_i, TScat, &
                                        & beta_group%qty, Grids_f, k_atmos_p, &
                                        & jacobian )
               end if
               if ( temp_der ) then
                 k_temp_p = 0.0
-                call store_temperature_deriv ( phi_i, surf_i, TScats(f_i)%qty, &
+                call store_temperature_deriv ( phi_i, surf_i, TScat, &
                                        & temp, grids_tmp, k_temp_p, &
                                        & jacobian )
               end if
@@ -2592,7 +2590,7 @@ contains
               scat_tan_phi = scat_tan_phi - pix2
             end if
 
-            if ( print_TScat_detail > 1 ) then
+            if ( print_TScat_detail > 0 ) then
               ! "sig" is a handy otherwise-unused character variable.
               write ( sig, "('scat_tan_ht = ', f10.4,', scat_tan_phi = ', f7.2, &
               & ', xi_sub =', f7.2, ', theta = ', f7.2)" ) &
@@ -2688,18 +2686,30 @@ contains
               & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
               & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
               & P_on_Xi(:i_r) )
+              P_on_Xi(:i_r) = P_on_Xi(:i_r) * sin(Xis(sort_xi(:i_r)))
             if ( atmos_der ) &
               & call interpolate_P_to_theta_e ( &
-               & dP_dIWC(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
-               & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
-               & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
-               & dP_dIWC_on_Xi(:i_r) )
-            if ( temp_der ) &
-              & call interpolate_P_to_theta_e ( &
-               & dP_dT(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
-               & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
-               & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
-               & dP_dT_on_Xi(:i_r) )
+                & dP_dIWC(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
+                & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
+                & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
+                & dP_dIWC_on_Xi(:i_r) )
+                dP_dIWC_on_Xi(:i_r) = dP_dIWC_on_Xi(:i_r) * sin(Xis(sort_xi(:i_r)))
+            if ( temp_der ) then
+              call interpolate_P_to_theta_e ( &
+                & dP_dT(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
+                & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
+                & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
+                & dP_dT_on_Xi(:i_r) )
+                dP_dT_on_Xi(:i_r) = dP_dT_on_Xi(:i_r) * sin(Xis(sort_xi(:i_r)))
+              if ( print_TScat_deriv > 1 ) then
+                call output ( f_i, before='K_temp_TScat(' )
+                call output ( i_r, before=',sort_xi(:' )
+                call dump ( k_temp_TScat(f_i,sort_xi(:i_r),:), name='),:)' )
+                call dump ( rad2deg*Xis(sort_xi(:i_r)), name='Xis' )
+                call dump ( P_on_Xi(:i_r), name='P_on_Xi' )
+                call dump ( dP_dT_on_Xi(:i_r), name='dP_dT_on_Xi' )
+              end if
+            end if
 
             !{ Compute $\int_{-\pi}^\pi \, f(\xi) P(\xi)\, \text{d}\xi$ using
             ! trapezoidal quadrature, without assuming equal abscissa spacing,
@@ -2768,13 +2778,21 @@ contains
             ! because that normalization was done when the $P$ tables were
             ! constructed.
             if ( atmos_der ) &
-              & call store_other_deriv ( phi_i, surf_i, TScats(f_i)%qty, &
+              & call store_other_deriv ( phi_i, surf_i, TScat, &
                                        & beta_group%qty, Grids_f, k_atmos_p, &
                                        & jacobian )
-            if ( temp_der ) &
-              & call store_temperature_deriv ( phi_i, surf_i, TScats(f_i)%qty, &
+            if ( temp_der ) then
+              call store_temperature_deriv ( phi_i, surf_i, TScat, &
                                        & temp, grids_tmp, k_temp_p, &
                                        & jacobian )
+              if ( print_TScat_deriv > 1 ) then
+                call dump ( k_temp_p, name='k_temp_p' )
+                call output ( surf_i, before='TScat%values(' )
+                call output ( phi_i, before=',' )
+                call output ( TScat%values(surf_i,phi_i), before=') = ', advance='yes' )
+                if ( print_TScat_deriv > 2 ) stop
+              end if
+            end if
           end do ! f_i = 1, noUsedChannels
           call interpolateArrayTeardown ( coeffs_Theta_e_Xi )
 
@@ -3786,8 +3804,8 @@ contains
         if ( abs(z_coarse(scat_index)-scat_zeta) > 0.05 .or. &
           &  scat_d2 > scat_tol .or. &
           ! or print details if requested
-          &  print_TScat_detail > 0 ) then
-          if ( print_TScat_detail /= 1 .or. print_TScat_Deriv .or. &
+          &  print_TScat_detail > -1 ) then
+          if ( print_TScat_detail /= 0 .or. print_TScat_Deriv > -1 .or. &
             & print_incopt .or. print_incrad .or. print_path > -1 ) &
             & call output ( TScat_Detail_Heading, advance="yes" )
           write ( line, "(f7.2,f12.4,f9.3,f11.2,f10.6,f9.2,f11.4,f8.2,i4,f8.2,i4,4x,L1)" ) &
@@ -3804,7 +3822,7 @@ contains
             ! it's not one?
             line(len(TScat_detail_heading)+1:) = "> abandoned"
             call output ( trim(line), advance="yes" ) ! Too far away from scattering point
-            if ( scat_ht <= tan_ht .or. which > 0 .or. print_TScat_detail > 0 ) then
+            if ( scat_ht <= tan_ht .or. which > 0 .or. print_TScat_detail > -1 ) then
               call output ( req_s, before="Req_s = " )
               call output ( mod(phitan%values(FwdModelConf%TScatMIF,MAF),360.0_r8), &
                 & before=", Phi_ref = ", advance="yes" )
@@ -3818,7 +3836,7 @@ contains
             scat_index = -1
           else
             call output ( trim(line) // " <", advance="yes" ) ! Close enough
-            if ( print_TScat_detail > 1 ) then
+            if ( print_TScat_detail > 0 ) then
               call output ( tan_pt_c, before='Tan_Pt_C = ' )
               call dump ( rad2deg*phi_path(c_inds(:scat_index)), name=', Phi_Path_C' )
               call dump ( h_path(c_inds(:scat_index)), name='H_Path_C' )
@@ -4431,11 +4449,12 @@ contains
       if ( atmos_der ) k_atmos_TScat(:,i_r,:) = k_atmos(:,ptg_i,:)
       if ( temp_der ) then
         k_temp_TScat(:,i_r,:) = k_temp(:,ptg_i,:)
-        if ( print_tscat_deriv ) then
+        if ( print_TScat_deriv > -1 ) then
           call output ( i_r, before='For TScat ray ' )
           call output ( rad2deg*xi, before=' at angle ', format='(f7.2)' )
-          call output ( i_r, before=' k_temp_TScat(:,', after=',:) ' )
+          call output ( i_r, before=' k_temp_TScat(:,', after=',:) ', advance='yes' )
           call dump ( k_temp_TScat(:,i_r,:) )
+          call dump ( rads(:,i_r), name='Rads' )
         end if
       end if
 
@@ -4550,6 +4569,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.332  2012/02/13 23:20:12  pwagner
+! DerivativeMissingFromState eases switch from strict to lenient
+!
 ! Revision 2.331  2012/02/10 23:51:33  vsnyder
 ! Move DeriveFromForwardModelConfig to Retrieval module
 !
