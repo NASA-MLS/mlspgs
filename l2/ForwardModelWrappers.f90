@@ -77,11 +77,10 @@ contains ! ============= Public Procedures ==========================
     ! Local variables
     logical :: Clean                      ! Dumps are clean, from switch dxfc
     real :: DeltaTime
-    integer :: DumpTransform              ! Dump transformed stuff
-                                          ! 1 => Input
-                                          ! 2 => FWM Jacobian
-                                          ! 4 => Transformed Jacobian
-                                          ! Dump level is DumpTransform/10
+    integer :: DumpTransform(3)           ! Dump levels for transformed stuff
+                                          ! 1 = 1's digit => Input and output
+                                          ! 2 = 10's digit => FWM Jacobian
+                                          ! 3 = 100's digit => Transformed Jacobian
     integer :: FCol, FRow                 ! Column, Row of block in fwmJacobian
     integer :: FMNaN                      ! Level of fmnan switch
     integer :: I, K
@@ -121,7 +120,12 @@ contains ! ============= Public Procedures ==========================
     ! Setup the timing
     call time_now (time_start)
 
-    dumpTransform = max(switchDetail(switches,'dxfq'),0)
+    dumpTransform = switchDetail(switches,'dxfq')
+    if ( dumpTransform(1) >= 0 ) then
+      dumpTransform(3) = dumpTransform(3)/100
+      dumpTransform(2) = mod(dumpTransform(2)/10,10)
+      dumpTransform(1) = mod(dumpTransform(1),10)
+    end if
     clean = switchDetail(switches,'dxfc') > -1
 
     ! Do the actual forward models
@@ -355,7 +359,7 @@ contains ! ============= Public Procedures ==========================
     type(vectorValue_t), intent(in) :: S_Qty ! MIF Extinction quantity in State
     type(vectorValue_t), intent(in) :: PTan  ! Tangent pressure, for S_Qty
     type(matrix_T), intent(inout) :: Jacobian
-    integer, intent(in) :: DumpTransform
+    integer, intent(in) :: DumpTransform(3)
     logical, intent(in) :: Clean             ! for the dumps
 
     integer :: CV      ! c in wvs-107
@@ -382,17 +386,19 @@ contains ! ============= Public Procedures ==========================
       jCols(inst) = findBlock ( Jacobian%col, s_qty%index, inst )
     end do
 
-    if ( iand(mod(dumpTransform,10),2) /= 0 ) then
+    if ( any(dumpTransform(1:2) >= 0) ) then
       ! Dump the radiance and Jacobian columns to be transformed
       do jRow = 1, Jacobian%row%nb
         o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
         if ( o_qty%template%quantityType /= l_radiance ) cycle
-        call output ( MAF, before='MAF ' )
-        call dump ( o_qty, dumpTransform/10 + 1, &
-          & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
-        if ( dumpTransform/10 > 0 ) then
+        if ( dumpTransform(1) >= 0 ) then
+          call output ( MAF, before='MAF ' )
+          call dump ( o_qty, dumpTransform(1), &
+            & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
+        end if
+        if ( dumpTransform(2) >= 0 ) then
           do inst = 1, size(fCols)
-            call dump ( Jacobian, 'Jacobian from forward model', dumpTransform, &
+            call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2), &
               & row=jRow, column=fCols(inst) )
           end do
         end if
@@ -522,17 +528,19 @@ contains ! ============= Public Procedures ==========================
     ! aj%axmax in the retriever
     f_qty%values = 0.0
 
-    if ( iand(mod(dumpTransform,10),4) /= 0 ) then
+    if ( any(dumpTransform(1:3:2) >= 0) ) then
       ! Dump the transformed parts of the radiance and Jacobian
       do jRow = 1, Jacobian%row%nb
         o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
         if ( o_qty%template%quantityType /= l_radiance ) cycle
-        call output ( MAF, before='MAF ' )
-        call dump ( o_qty, dumpTransform/10+1, &
-          & ' fwdModelOut after transformation', options=merge('-c','  ',clean) )
-        if ( dumpTransform/10 > 0 ) then
+        if ( dumpTransform(1) >= 0 ) then
+          call output ( MAF, before='MAF ' )
+          call dump ( o_qty, dumpTransform(1), &
+            & ' fwdModelOut after transformation', options=merge('-c','  ',clean) )
+        end if
+        if ( dumpTransform(3) >= 0 ) then
           do inst = 1, size(jCols)
-            call dump ( Jacobian, 'Transformed Jacobian', dumpTransform, &
+            call dump ( Jacobian, 'Transformed Jacobian', dumpTransform(3), &
               & row=jRow, column=jCols(inst) )
           end do
         end if
@@ -563,7 +571,7 @@ contains ! ============= Public Procedures ==========================
                                               ! altitudes in meters
     real(rv), intent(in) :: LRP               ! Lowest retrieved pressure
     type(vectorValue_t), intent(inout) :: F_Qty ! Forward model quantity
-    integer, intent(in) :: DumpTransform      ! Dump S_Qty and F_Qty
+    integer, intent(in) :: DumpTransform(3)   ! Dump S_Qty and F_Qty
 
     integer :: F_LRP   ! Index in F_Qty%Surfs of LRP
     integer :: I       ! Subscript and loop inductor
@@ -604,10 +612,14 @@ contains ! ============= Public Procedures ==========================
                                & ptan%values(p(s_lrp),1) ) )
     end do
 
-    if ( iand(mod(dumpTransform,10),1) /= 0 ) then
+    do i = f_lrp, ubound(f_qty%values,1)
+      f_qty%values(i,2:) = f_qty%values(i,1)
+    end do
+
+    if ( dumpTransform(1) /= 0 ) then
       call dump ( ptan%values(p,maf), name='PTan zetas' )
-      call dump ( s_qty, details=dumpTransform/10, name='from fwdModelIn' )
-      call dump ( f_qty, details=dumpTransform/10, name='to forward model' )
+      call dump ( s_qty, details=dumpTransform(1), name='from fwdModelIn' )
+      call dump ( f_qty, details=dumpTransform(1), name='to forward model' )
     end if
   end subroutine Transform_MIF_Extinction
 
@@ -624,6 +636,10 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.46  2012/06/15 23:29:39  vsnyder
+! Spread extinction interpolated from MIF extinction, below the lowest
+! retrieved pressure, to every profile.  Change dump switch interpretation.
+!
 ! Revision 2.45  2012/06/07 00:47:16  vsnyder
 ! Handle switchDetail properly
 !
