@@ -2758,8 +2758,9 @@ contains ! =====     Public Procedures     =============================
       end do
     end do
     call output ( matrix%row%nb, before='      having ' )
-    call output ( matrix%col%nb, before=' rows and ' )
-    call output ( totalSize, before=' columns with ', after=' elements.', advance='yes' )
+    call output ( matrix%col%nb, before=' row blocks and ' )
+    call output ( totalSize, before=' column blocks with ', &
+      & after=' represented elements.', advance='yes' )
   end subroutine Dump_Matrix
 
   ! ---------------------------------------  Dump_Matrix_Database  -----
@@ -2922,6 +2923,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.128  2012/06/15 23:30:58  vsnyder
+! Explain summary of dump better
+!
 ! Revision 2.127  2012/02/16 22:47:51  pwagner
 ! Separated Dump_Matrix_Layout from Dump_Matrix
 !
