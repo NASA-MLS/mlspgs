@@ -29,6 +29,9 @@ SRCLIB=../srclib
 
 #Any sources to explicitly exclude from dependency list?
 OMIT_SRCS := $(OMIT) errmsg.f90
+ifdef NOF2003
+  OMIT_SRCS := $(OMIT) errmsg.f90 Read_Spectroscopy_TeX_m.f90
+endif
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
@@ -132,6 +135,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.27  2010/10/12 22:25:03  pwagner
+# Uses Makefile.h from srclib
+#
 # Revision 2.26  2010/08/27 20:56:39  pwagner
 # Uses optional HDF*INC Makefile variables
 #
