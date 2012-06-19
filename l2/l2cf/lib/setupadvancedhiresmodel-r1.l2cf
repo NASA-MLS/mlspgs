@@ -3,12 +3,13 @@
 ;; This L2CF fragment is for use when we wish to setup an 'advanced'
 ;; linear forward model (one that is linearised about a different state
 ;; from the one in the l2pc files).
-
+!ifdef(flagStrict1D,{!define(phiWindowSetup,{0 profiles})},
+{!define(phiWindowSetup,{4 degrees})})
 begin Construct
   r1LSetupModel_HR: ForwardModel, type=full, $
     signals=['R1A:118.B1F:PT.C1:11', 'R1A:118.B32W:PT.C3:4', $
              'R1B:118.B34W:PT.C3:4'], $ 
-    phiWindow=4.0 degrees, $
+    phiWindow=!phiWindowSetup, $
     molecules=[[ H2O, H2O, H2O_R1A, H2O_V2 ],$
     [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], $
     [ O3, O3, O3_R1A, O3_V1_3, O3_V2, O3_2V2]], $ 
@@ -21,7 +22,7 @@ begin Construct
   r1RSetupModel_HR: ForwardModel, type=full, $
     signals=['R1A:118.B1F:PT.C15:25', 'R1A:118.B32W:PT.C1:2', $
              'R1B:118.B34W:PT.C1:2'], $ 
-    phiWindow=4.0 degrees, $
+    phiWindow=!phiWindowSetup, $
     molecules=[[ H2O, H2O, H2O_R1A, H2O_V2 ],$
     [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], $
     [ O3, O3, O3_R1A, O3_V1_3, O3_V2, O3_2V2]], $ 
@@ -33,7 +34,7 @@ begin Construct
 
   r1PSetupModel_HR: ForwardModel, type=full, $
     signals=['R1A:118.B1F:PT.C12:14', 'R1A:118.B22D:PT'], $ 
-    phiWindow=4.0 degrees, $
+    phiWindow=!phiWindowSetup, $
     molecules=[[ H2O, H2O, H2O_R1A, H2O_V2 ],$
     [ N2, N2 ], [ O2, O2, O2_V1, O_17_O, O_18_O ], $
     [ O3, O3, O3_R1A, O3_V1_3, O3_V2, O3_2V2]], $ 
@@ -44,7 +45,8 @@ begin Construct
     /do_conv, /do_freq_avg, /polarized ;; We skip the baseline deliberately
 
 end Construct
-
+!ifdef(flagStrict1D,{!define(phiWindowAdvanced,{0 profiles})},
+{!define(phiWindowSetup,{100 profiles})})
 begin Construct
   r1YTemplate_HR: VectorTemplate, quantities=[band1, band22, band32, band34]
 end Construct
@@ -63,7 +65,7 @@ begin Construct
     molecules=[ H2O, HNO3, N2, O2, O3], $
     specificQuantities=[temperature_HR, h2o_HR], $
     /temp_der, $
-    phiWindow=100 profiles, /lockBins, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
     binSelectors=[latBin,scalarbin, hrBin, latCost], $
     xStar=r1X_HR, yStar=r1Y_HR
 
@@ -72,7 +74,7 @@ begin Construct
     molecules=[ H2O, HNO3, N2, O2, O3], $
     specificQuantities=[temperature_HR, h2o_HR], $
     /temp_der, $
-    phiWindow=100 profiles, /lockBins, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
     binSelectors=[latBin,polarBin,hrBin, strengthCost,elevationCost,latCost], $
     xStar=r1X_HR, yStar=r1Y_HR
 
@@ -81,7 +83,7 @@ begin Construct
     molecules=[ H2O, HNO3, N2, O2, O3], $
     specificQuantities=[temperature_HR, h2o_HR], $
     /temp_der, $
-    phiWindow=100 profiles, /lockBins, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
     binSelectors=[latBin,scalarbin, hrBin, latCost], $
     xStar=r1X_HR, yStar=r1Y_HR
 
@@ -90,7 +92,7 @@ begin Construct
     molecules=[ H2O, HNO3, N2, O2, O3], $
    specificQuantities=[temperature_HR, h2o_HR], $
    /temp_der, $
-    phiWindow=100 profiles, /lockBins, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
     binSelectors=[latBin, scalarbin, hrBin, latCost], $
     xStar=r1X_HR, yStar=r1Y_HR
 
@@ -101,7 +103,7 @@ begin Construct
     molecules=[ H2O, HNO3, N2, O2, O3], $
     specificQuantities=[temperature_HR, h2o_HR, O3_HR], $
     /temp_der, $
-    phiWindow=100 profiles, /lockBins, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
     binSelectors=[latBin,scalarbin, hrBin, o3hrBin, latCost], $
     xStar=r1X_HR, yStar=r1Y_HR
 
@@ -110,7 +112,7 @@ begin Construct
     molecules=[ H2O, HNO3, N2, O2, O3], $
     specificQuantities=[temperature_HR, h2o_HR, O3_HR], $
     /temp_der, $
-    phiWindow=100 profiles, /lockBins, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
     binSelectors=[latBin,polarBin,hrBin, o3hrBin, strengthCost,elevationCost,latCost], $
     xStar=r1X_HR, yStar=r1Y_HR
 
@@ -119,7 +121,7 @@ begin Construct
     molecules=[ H2O, HNO3, N2, O2, O3], $
     specificQuantities=[temperature_HR, h2o_HR, O3_HR], $
     /temp_der, $
-    phiWindow=100 profiles, /lockBins, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
     binSelectors=[latBin,scalarbin, hrBin, o3hrBin, latCost], $
     xStar=r1X_HR, yStar=r1Y_HR
 
@@ -128,13 +130,16 @@ begin Construct
     molecules=[ H2O, HNO3, N2, O2, O3], $
    specificQuantities=[temperature_HR, h2o_HR, O3_HR], $
    /temp_der, $
-    phiWindow=100 profiles, /lockBins, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
     binSelectors=[latBin, scalarbin, hrBin, o3hrBin, latCost], $
     xStar=r1X_HR, yStar=r1Y_HR
 
 end Construct
 
 ;$Log$
+;Revision 1.5  2009/01/28 01:19:45  pwagner
+;Added hires ozone fwms
+;
 ;Revision 1.4  2006/08/05 01:57:54  lambert
 ;removed atmos_der
 ;

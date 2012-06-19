@@ -43,7 +43,7 @@ begin Construct
     molecules=!moleculeFamilies(!radiometerForBand($1)), $
     moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
     /atmos_der, /temp_der, /do_baseline, $
-    phiWindow=100 profiles, /lockBins, $
+    phiWindow=100 profiles, !ifdef(flagDontLockBins,{},{/lockBins, })$
     binSelectors=[latBin,scalarBin,lrBin, latCost], $
     xStar=r1aX, yStar=r1aY
   advancedL2PCPLFwm$1: ForwardModel, type=polarLinear, signals=!signal($1), $
@@ -60,6 +60,9 @@ begin Construct
 end Construct
 
 ; $Log$
+; Revision 1.11  2006/06/15 00:38:51  lambert
+; changed bin selectors compatible with l2pc037 and later
+;
 ; Revision 1.10  2004/04/13 23:28:03  livesey
 ; Bug fix.
 ;

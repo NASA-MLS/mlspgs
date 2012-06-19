@@ -41,7 +41,7 @@ begin Construct
     molecules=!moleculeFamilies(!radiometerForBand($1)), $
     moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
     /atmos_der, /temp_der, /do_baseline, $
-    phiWindow=100 profiles, /lockBins, $
+    phiWindow=100 profiles, !ifdef(flagDontLockBins,{},{/lockBins, }) $
     specificQuantities=[ temperature_hr, h2o_hr ], $
     binSelectors=[hiResBin, latBin], $
     xStar=r1aX, yStar=r1aYHR})
@@ -52,6 +52,9 @@ begin Construct
 end Construct
 
 ; $Log$
+; Revision 1.2  2004/04/14 16:34:18  livesey
+; Added some ifs
+;
 ; Revision 1.1  2004/04/13 22:39:31  livesey
 ; First version
 ;
