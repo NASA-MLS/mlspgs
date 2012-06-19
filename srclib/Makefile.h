@@ -72,6 +72,12 @@ libcloud_sources=../cloudfwdm
 # where cloud forward model objects and libfwdmdl.a are stored
 libcloud_objs=$(libcloud_sources)/$(MLSCONFG)
 
+# where sources for the cloud forward model are stored
+libmlsl3_sources=../l3
+
+# where cloud forward model objects and libfwdmdl.a are stored
+libmlsl3_objs=$(libmlsl3_sources)/$(MLSCONFG)
+
 # where certain databses are stored relating to species, molecules, etc.
 # currently used only by make to build mol_parm.f9h and mol_add.f9h
 # for which see special rules in customblds
@@ -218,6 +224,9 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR) $(UPTODATEMARKS)
 
 # $Log$
+# Revision 1.5  2012/04/05 18:37:03  pwagner
+# Stopped cpp warnings about everything
+#
 # Revision 1.4  2011/11/18 23:37:22  pwagner
 # Added missing l2 dependencies; fixed spelling error
 #
