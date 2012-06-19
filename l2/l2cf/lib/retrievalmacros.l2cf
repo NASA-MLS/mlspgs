@@ -791,7 +791,11 @@ Begin Fill
 End Fill
 
 begin Join
-  Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'
+!ifelse($1,{O3_HR}, {!dnl
+  Label, quantity=tempVectorState.O3_HR, label='O3-StdProd'
+},{!dnl
+  Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'!dnl
+})
 !ifelse($1,{Temperature}, {!dnl
   DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
@@ -1167,6 +1171,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.148  2012/04/05 19:09:43  pwagner
+; ColumnSrdProds macro default can be overriden
+;
 ; Revision 1.147  2012/02/24 18:36:44  wgread
 ; wgr--removed retrieverstate etc.
 ;
