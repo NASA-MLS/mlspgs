@@ -51,6 +51,8 @@ contains
       j = scan(good,string(i:i))
       if ( j /= 0 ) then
         toggle(j) = .true.
+        levels(j) = 0
+        if ( i+1 >= len_trim(string) ) exit
         if ( string(i+1:i+1) >= '0' .and. string(i+1:i+1) <= '9' ) then
           i = i + 1
           levels(j) = ichar(string(i:i)) - ichar('0')
@@ -73,6 +75,9 @@ contains
 end module Set_Toggles_m
 
 ! $Log$
+! Revision 2.2  2012/06/21 00:31:29  pwagner
+! Protect against exceeding substring end
+!
 ! Revision 2.1  2012/06/06 20:36:02  vsnyder
 ! Initial commit
 !
