@@ -13,7 +13,8 @@
 module Chunks_m
 !=============================================================================
 
-  implicit NONE
+  use MLSKINDS, only: RP
+  implicit none
   private
   public :: Dump, Initialize, MLSChunk_T
 
@@ -38,6 +39,8 @@ module Chunks_m
     integer, dimension(:), pointer :: HGridTotals => NULL()
     ! This is somewhat repetetive.  It's the total number of profiles in
     ! the output hGrid.  It's only really used in parallel runs.
+    real(rp) :: phiStart = 0. ! for use by regular HGrid
+    real(rp) :: phiEnd   = 0.
   end type MLSChunk_T
 
   interface DUMP
@@ -68,11 +71,12 @@ contains ! =====     Private Procedures     ============================
     use OUTPUT_M, only: OUTPUT
 
     type(MLSChunk_t), intent(in) :: CHUNK
-    call output ( chunk%chunkNumber, before='  chunkNumber: ' )
+    if ( chunk%chunkNumber > -1 ) call output ( chunk%chunkNumber, before='  chunkNumber: ' )
     call output ( chunk%firstMAFIndex, before='  firstMAFIndex: ' )
     call output ( chunk%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
     call output ( chunk%noMAFsLowerOverlap, before='  noMAFsLowerOverlap: ' )
-    call output ( chunk%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', advance='yes' )
+    call output ( chunk%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', &
+      & advance='yes' )
     call output ( chunk%firstMAFIndex + chunk%noMAFsLowerOverlap, &
       & before='  1st non-overlapped MAF: ' )
     call output ( chunk%lastMAFIndex - chunk%noMAFsUpperOverlap, &
@@ -82,6 +86,9 @@ contains ! =====     Private Procedures     ============================
     call output ( chunk%lastMAFIndex - chunk%firstMAFIndex &
       & - chunk%noMAFsUpperOverlap - chunk%noMAFsLowerOverlap + 1, &
       & before='  non-overlapped chunk size: ', advance='yes' )
+    call output ( '  phi start, end: ' )
+    call output ( (/chunk%phiStart, chunk%phiEnd /), format='(F10.2)', &
+      & advance='yes' )
     if ( associated(chunk%HGridOffsets) ) &
       & call dump( chunk%HGridOffsets, 'HGrid offsets' )
     if ( associated(chunk%HGridTotals) ) &
@@ -100,6 +107,8 @@ contains ! =====     Private Procedures     ============================
     chunk%noMAFsLowerOverlap   = precursor%noMAFsLowerOverlap
     chunk%noMAFsUpperOverlap   = precursor%noMAFsUpperOverlap
     chunk%chunkNumber          = precursor%chunkNumber       
+    chunk%phiStart             = precursor%phiEnd      
+    chunk%phiEnd               = 2*precursor%phiEnd - precursor%phiStart
   end subroutine INITIALIZE
 
 !=======================================================================
@@ -116,6 +125,9 @@ contains ! =====     Private Procedures     ============================
 end module Chunks_m
 
 ! $Log$
+! Revision 2.8  2012/06/21 00:40:28  pwagner
+! Added phi start and end to be used someday by HGrid
+!
 ! Revision 2.7  2011/06/29 21:53:55  pwagner
 ! Added initialize, improved dump
 !
