@@ -2365,6 +2365,14 @@ contains ! ===================================== Public Procedures =====
         endif
         boundaries = min ( boundaries, maxV )
         boundaries = max ( boundaries, minV )
+        if ( ChunkDivideConfig%maxLengthFamily == PHYQ_Angle ) then
+          chunks(1)%phiStart = homeV
+          chunks%phiEnd = boundaries
+          chunks(2:noChunks)%phiStart = chunks(1:noChunks-1)%phiEnd
+        else
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Regular HGrids will be unable to exploit chunk Geodetic Range' )
+        endif
 
         ! Do some dumping
         if ( swLevel > -1 ) then
@@ -2383,6 +2391,8 @@ contains ! ===================================== Public Procedures =====
           call output ( ' noChunksBelowHome: ' )
           call output ( noChunksBelowHome , advance='yes' )
           call dump ( boundaries , 'boundaries' )
+          call dump ( chunks%phiStart , 'phiStarts' )
+          call dump ( chunks%phiEnd ,   'phiEnds' )
           call dump ( field, 'field' )
         end if
 
@@ -2485,12 +2495,20 @@ contains ! ===================================== Public Procedures =====
         chunks(noChunks)%noMAFsUpperOverlap = mexp2 - m2
       endif
 
+      ! Now we assign phiStarts and phiEnds to each chunk
+      do chunk = 1, noChunks
+        m1 = max( chunks(chunk)%firstMAFIndex + 1, mafRange%L2Cover(1) + 1 )
+        m2 = min( chunks(chunk)%lastMAFIndex + 1,  mafRange%L2Cover(2) + 1 )
+        chunks(chunk)%phiStart = tpGeodAngle%dpField(1,1,m1)
+        chunks(chunk)%phiEnd = tpGeodAngle%dpField(1,1,m2)
+      enddo
       if ( swLevel > -1 ) then
         call output ( 'After dealing with obstructions', advance='no' )
         call output ( ', poss. overlaps outside proc. range', advance='yes' )
         call Dump ( chunks )
-      end if
-
+        call dump ( chunks%phiStart , 'phiStarts' )
+        call dump ( chunks%phiEnd ,   'phiEnds' )
+      endif
       ! Tidy up
       call DeallocateL1BData ( tpGeodAngle )
       call DeallocateL1BData ( taiTime )
@@ -2655,6 +2673,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.99  2012/06/21 00:41:08  pwagner
+! Added phi start and end to be used someday by HGrid
+!
 ! Revision 2.98  2012/03/14 16:56:26  pwagner
 ! NAG-debug required this change
 !
