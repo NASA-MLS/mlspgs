@@ -43,9 +43,9 @@
       else
         call output( '    value             counts', advance='yes' )
         do j=1, nUnique
-          call output( j )
+          call output( j , advance='no' )
           call blanks( 3 )
-          call output( elements(j) )
+          call output( elements(j) , advance='no' )
           call blanks( 3 )
           call output( counts(j), advance='yes' )
         enddo
@@ -61,6 +61,9 @@
 !    include 'dump3db.f9h'
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.8  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.7  2011/07/12 00:11:29  pwagner
 ! whoarray dump moved to dump[123]db.f9h
 !
