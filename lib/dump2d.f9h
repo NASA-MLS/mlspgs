@@ -49,9 +49,9 @@
       else
         call output( '    value             counts', advance='yes' )
         do j=1, nUnique
-          call output( j )
+          call output( j , advance='no' )
           call blanks( 3 )
-          call output( elements(j) )
+          call output( elements(j) , advance='no' )
           call blanks( 3 )
           call output( counts(j), advance='yes' )
         enddo
@@ -66,6 +66,9 @@
 !    include 'dump2db.f9h'
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.10  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.9  2011/11/11 00:30:22  vsnyder
 ! Simplify notice of rank reduction
 !
