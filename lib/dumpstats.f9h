@@ -18,7 +18,7 @@
     ! call output('Entering dumpstats', advance='no')
     if ( present(name) .and. .not. nameHasBeenPrinted .and. &
       & .not. onlyWholeArray ) then
-      call output ( trim(name) //'   ' )
+      call output ( trim(name) //'   ' , advance='no' )
       nameHasBeenPrinted = .true.
     endif
     if ( myShape ) then
@@ -40,7 +40,7 @@
       if ( .not. any(isfinite(array)) ) then
         call output ('(no finite values found in array--skipped) ', advance='yes')
       elseif ( .not. all(isfinite(array)) ) then
-        if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name) //'   ' )
+        if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name) //'   ' , advance='no' )
         call output ('(non-finite values found in array--skipped) ', advance='yes')
         call WhereAreTheInfs ( array, which, how_many )
         if ( how_many > 0 ) then
@@ -53,14 +53,14 @@
           if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
         endif
       else if ( present(fillValue) ) then
-        ! call output( 'dumpstats with FillValue ' // trim(name) )
+        ! call output( 'dumpstats with FillValue ' // trim(name) , advance='no' )
         call printRMSetc ( Name, mlsmin(array, fillValue), &
           & mlsmax(array, fillValue), &
           & mlsstddev(array, fillValue), &
           & mlsmean(array, fillValue)  )
         ! call output( 'done with PrintRMSetc.', advance='yes')
       else
-        ! call output( 'dumpstats w/o FillValue ' // trim(name) )
+        ! call output( 'dumpstats w/o FillValue ' // trim(name) , advance='no' )
         call printRMSetc ( Name, minval(array), maxval(array), &
           & sqrt(sum(array*array)/(size(array)+0.)), &
           & mean=sum(array)/(size(array)+0.)  )
@@ -149,6 +149,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.31  2012/06/22 20:26:49  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.30  2012/06/12 18:05:15  pwagner
 ! Info about NaNs and Infs on same line as shape
 !
