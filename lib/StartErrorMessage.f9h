@@ -19,16 +19,19 @@
     use OUTPUT_M, only: OUTPUT
     use TREE, only: SOURCE_REF
     integer, intent(in) :: Where             ! Tree node index
-    call output ( '***** At ' )
+    call output ( '***** At ' , advance='no' )
     if ( where > 0 ) then
       call print_source ( source_ref(where) )
     else
-      call output ( '(no tree available)' )
+      call output ( '(no tree available)' , advance='no' )
     end if
-    call output ( ': ' )
+    call output ( ': ' , advance='no' )
   end subroutine StartErrorMessage
 
 ! $Log$
+! Revision 2.2  2012/06/22 20:24:11  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.1  2012/05/07 22:59:59  vsnyder
 ! Moved to include to avoid circular dependence between expr_m and MoreTree
 !
