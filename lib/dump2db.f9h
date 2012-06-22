@@ -36,7 +36,7 @@
       else
         call name_and_size ( name, myClean, 1, '(1,1)' )
       end if
-      call output ( base, before='(', after=') ' )
+      call output ( base, before='(', after=') ' , advance='no' )
       call output ( array(1,1), format=myFormat, advance='yes' )
     else if ( size(array, 1) == 1 ) then
       if ( myWholeArray ) then
@@ -88,7 +88,7 @@
           end if
           if ( DumpTheseZeros ) then
             do k = j, min(j+myWidth-1, size(array,2))
-              call output ( array(i,k), format=myFormat )
+              call output ( array(i,k), format=myFormat , advance='no' )
             end do
             call newLine
             numZeroRows = 0
@@ -101,6 +101,9 @@
     call theDumpEnds
 !   end subroutine DUMP_2D_INTEGER
 ! $Log$
+! Revision 2.6  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.5  2011/12/15 01:44:14  pwagner
 ! Tries to retain theShape if present
 !
