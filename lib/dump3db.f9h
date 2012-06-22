@@ -39,7 +39,7 @@
       else
         call name_and_size ( name, myClean, 1, '(1,1,1)' )
       end if
-      call output ( base-1, before='(', after=') ' )
+      call output ( base-1, before='(', after=') ' , advance='no' )
       call output ( array(1,1,1), format=myFormat, advance='yes' )
     else if ( size(array,1) == 1 ) then
       if ( myWholeArray ) then
@@ -104,7 +104,7 @@
             end if
             if ( DumpTheseZeros ) then
               do l = k, min(k+myWidth-1, size(array,3))
-                call output ( array(i,j,l), format=myFormat )
+                call output ( array(i,j,l), format=myFormat , advance='no' )
               end do
               call newLine
               numZeroRows = 0
@@ -118,6 +118,9 @@
    call theDumpEnds
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.5  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.4  2011/12/15 01:44:33  pwagner
 ! Tries to retain theShape if present
 !
