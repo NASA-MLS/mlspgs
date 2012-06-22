@@ -419,12 +419,15 @@
       myt1 = t1
     endif
     call time_now ( t2 )
-    call output ( "Timing for " // what // " = " )
+    call output ( "Timing for " // what // " = " , advance='no' )
     call output ( dble(t2 - myt1), advance = 'yes' )
   end subroutine SayTime
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.14  2012/06/22 20:26:49  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.13  2012/01/09 22:25:33  pwagner
 ! Distinguish 'r' option to print rms of ratios and 'R' option for rms of values
 !
