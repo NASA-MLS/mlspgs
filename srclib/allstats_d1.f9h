@@ -156,15 +156,15 @@
         if ( present(indexing) ) indexing = MLSStat%indexing
         ! Have we been asked to dump the calculated stats?
         if ( .not. myDump ) return
-        call output('Combined statistics')
+        call output('Combined statistics', advance='no' )
         if ( present(fillValue) ) then
-          call output(' (ignoring any fill values ')
-          call output(fillvaluerelation // ' ')
-          call output(fillValue)
-          call output(')')
+          call output(' (ignoring any fill values ', advance='no' )
+          call output(fillvaluerelation // ' ', advance='no' )
+          call output(fillValue, advance='no' )
+          call output(')', advance='no' )
         endif
         if ( present(precision) ) then
-          call output(' (ignoring any values where supplied precision < 0')
+          call output(' (ignoring any values where supplied precision < 0', advance='no' )
         endif
         call newline
         fields = ' '
@@ -210,6 +210,9 @@ contains
 ! end subroutine sllstats*
 
 ! $Log$
+! Revision 1.11  2011/07/27 00:04:11  pwagner
+! Removed obsolete code; use FN_names to enumerate stats array
+!
 ! Revision 1.10  2007/10/24 23:56:11  pwagner
 ! Changed name of component to 'indexing'
 !
