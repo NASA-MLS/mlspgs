@@ -70,7 +70,7 @@
         call statistics( diffs(p(:nkeep)), gaps(i) )
         if ( DEEBUG ) then
           call newline
-          call output( 'max, min, median using sorted indexing: ' )
+          call output( 'max, min, median using sorted indexing: ' , advance='no' )
           ! call output( (/ sdiffs(gaps(i)%indexing(1)), &
           !   & sdiffs(gaps(i)%indexing(2)), &
           !   & sdiffs(gaps(i)%indexing(3)) /), advance='yes' )
@@ -88,7 +88,7 @@
         if ( DEEBUG ) then
           call dump( gaps(i), which='indexing' )
           call newline
-          call output( 'max, min, median using presorted indexing: ' )
+          call output( 'max, min, median using presorted indexing: ' , advance='no' )
           call output( (/ diffs(gaps(i)%indexing(1)), &
             & diffs(gaps(i)%indexing(2)), &
             & diffs(gaps(i)%indexing(3)) /), advance='yes' )
@@ -97,6 +97,9 @@
         if ( present(array2Atn) ) array2Atn(:,i) = array2(gaps(i)%indexing)
       enddo
 ! $Log$
+! Revision 2.4  2012/06/22 20:26:49  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.3  2008/11/24 19:34:11  pwagner
 ! Less wasteful of memory; should not segment dault so often
 !

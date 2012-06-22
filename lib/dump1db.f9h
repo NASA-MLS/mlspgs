@@ -36,7 +36,7 @@
       else
         call name_and_size ( name, myClean, 1, '(1)' )
       end if
-      call output ( base+1, before='(', after=') ' )
+      call output ( base+1, before='(', after=') ' , advance='no' )
       call output ( array(1), format=myFormat, advance='yes' )
     else
       call name_and_size ( name, myClean, size(array), theShape )
@@ -54,7 +54,7 @@
         end if
         if ( DumpTheseZeros ) then
           do k = j, min(j+myWidth-1, size(array))
-            call output ( array(k), format=myformat )
+            call output ( array(k), format=myformat , advance='no' )
           end do
           call newLine
           numZeroRows = 0
@@ -66,6 +66,9 @@
     call theDumpEnds
 !   end subroutine DUMP_1D_COMPLEX
 ! $Log$
+! Revision 2.4  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.3  2011/11/11 00:30:22  vsnyder
 ! Simplify notice of rank reduction
 !

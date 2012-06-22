@@ -80,33 +80,33 @@
         select case ( indx2BSliced )
         case ( 1 )
           do iSlice=1, size(array, 1)
-            call output( '(' )
-            call output( iSlice )
-            call output( ',:,:,:)' )
+            call output( '(' , advance='no' )
+            call output( iSlice , advance='no' )
+            call output( ',:,:,:)' , advance='no' )
             call dump ( array(iSlice,:,:,:), name, &
               & fillValue=fillValue, format=format, options=options )
           enddo
         case ( 2 )
           do iSlice=1, size(array, 2)
-            call output( '(:,' )
-            call output( iSlice )
-            call output( ',:,:)' )
+            call output( '(:,' , advance='no' )
+            call output( iSlice , advance='no' )
+            call output( ',:,:)' , advance='no' )
             call dump ( array(:,iSlice,:,:), name, &
               & fillValue=fillValue, format=format, options=options )
           enddo
         case ( 3 )
           do iSlice=1, size(array, 3)
-            call output( '(:,:,' )
-            call output( iSlice )
-            call output( ',:)' )
+            call output( '(:,:,' , advance='no' )
+            call output( iSlice , advance='no' )
+            call output( ',:)' , advance='no' )
             call dump ( array(:,:,iSlice,:), name, &
               & fillValue=fillValue, format=format, options=options )
           enddo
         case default ! meaning 4
           do iSlice=1, size(array, 4)
-            call output( '(:,:,:,' )
-            call output( iSlice )
-            call output( ')' )
+            call output( '(:,:,:,' , advance='no' )
+            call output( iSlice , advance='no' )
+            call output( ')' , advance='no' )
             call dump ( array(:,:,:,iSlice), name, &
               & fillValue=fillValue, format=format, options=options )
           enddo
@@ -116,6 +116,9 @@
    call theDumpEnds
 ! end subroutine DUMP_4D_DOUBLE
 ! $Log$
+! Revision 2.4  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.3  2011/12/15 01:47:01  pwagner
 ! Accepts W[i] option; deletes prolix notice of rank reduction
 !
