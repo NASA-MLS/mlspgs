@@ -248,6 +248,7 @@ module OUTPUT_M
       &  '(- .. )         ' /)
       !   12345678901234567890
     character(len=FileNameLen) :: name = 'stdout'
+    character(len=3)  :: advanceDefault = 'no' ! what to assume if advance=.. missing
     character(len=12) :: sdFormatDefault = '*' ! * means default format spec
     character(len=1)  :: arrayElmntSeparator = ' '
   end type
@@ -2299,7 +2300,7 @@ contains
     character (len=*), parameter :: nose = 'NnFf'
 
     if ( .not. present(str)  ) then
-      outstr = 'no'
+      outstr = outputoptions%advanceDefault ! 'no'
       return
     end if
 
@@ -2549,6 +2550,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.90  2012/06/22 00:04:02  pwagner
+! May now change default advance option to 'yes'
+!
 ! Revision 2.89  2012/04/20 01:27:14  vsnyder
 ! Add CPU_Seconds to Output_Date_and_Time
 !
