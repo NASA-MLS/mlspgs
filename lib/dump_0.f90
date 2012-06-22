@@ -757,10 +757,10 @@ contains
             ints( 1 + set(k) ) = 1
           enddo
           if ( numZeroRows > 0 ) then
-            call output ( ' ' )
-            call output ( numZeroRows )
+            call output ( ' ' , advance='no' )
+            call output ( numZeroRows , advance='no' )
             call output ( ' lines of ', advance='no' )
-            call output ( myFillValue )
+            call output ( myFillValue , advance='no' )
             call output ( ' not printed', advance='yes' )
           endif
           call output( ints(1:numBitNames), format='(i3)', advance='yes' )
@@ -824,7 +824,7 @@ contains
         end if
         if ( DumpTheseZeros ) then
           do k = j, min(j+MyWidth-1, size(array))
-              call output ( array(k)(1:lon) // ' ' )
+              call output ( array(k)(1:lon) // ' ' , advance='no' )
           end do
           call newLine
           numZeroRows = 0
@@ -1000,8 +1000,8 @@ contains
       if ( size(array)/100 > 100 )  call showColumnNums( 100 )
       do j=1, size(array), 100
         N = min(k+100, size(array)) - k
-        call output( k+1 )
-        call output ( ' through ')
+        call output( k+1 , advance='no' )
+        call output ( ' through ', advance='no' )
         call output( k+N, advance='yes' )
         ntrue = count( array(k+1 : min(k+100, size(array))) )
         nfalse = n - ntrue
@@ -1018,11 +1018,11 @@ contains
       if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array), 34
         if (.not. myClean) then
-          call output ( j+base, max(4,ilog10(size(array))+1) )
-          call output ( afterSub )
+          call output ( j+base, max(4,ilog10(size(array))+1) , advance='no' )
+          call output ( afterSub , advance='no' )
         end if
         do k = j, min(j+33, size(array))
-          call output ( array(k) )
+          call output ( array(k) , advance='no' )
         end do
         call newLine
       end do
@@ -1117,7 +1117,7 @@ contains
           end if
           if ( DumpTheseZeros ) then
             do k = j, min(j+myWidth-1, size(array,2))
-                call output ( array(i,k)(1:lon) // ' ' )
+                call output ( array(i,k)(1:lon) // ' ' , advance='no' )
             end do
             call newLine
             numZeroRows = 0
@@ -1311,12 +1311,12 @@ contains
       do i = 1, size(array,1)
         do j = 1, size(array,2), myWidth
           if (.not. myClean) then
-            call output ( i, places=max(4,ilog10(size(array,1))+1) )
-            call output ( j, places=max(4,ilog10(size(array,2))+1) )
-            call output ( afterSub )
+            call output ( i, places=max(4,ilog10(size(array,1))+1) , advance='no' )
+            call output ( j, places=max(4,ilog10(size(array,2))+1) , advance='no' )
+            call output ( afterSub , advance='no' )
           end if
           do k = j, min(j+myWidth-1, size(array,2))
-            call output ( array(i,k) )
+            call output ( array(i,k) , advance='no' )
           end do
           call newLine
         end do ! j
@@ -1380,13 +1380,13 @@ contains
       if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array,3)
         if (.not. myClean) then
-          call output ( j, max(3,ilog10(size(array))+1) )
-          call output ( afterSub )
+          call output ( j, max(3,ilog10(size(array))+1) , advance='no' )
+          call output ( afterSub , advance='no' )
         end if
-        call output ( array(1,1,j), myFormat )
+        call output ( array(1,1,j), myFormat , advance='no' )
         call output ( array(1,2,j), myFormat, advance='yes' )
         call blanks ( max(3,ilog10(size(array))+1) + len(afterSub) )
-        call output ( array(2,1,j), myFormat )
+        call output ( array(2,1,j), myFormat , advance='no' )
         call output ( array(2,2,j), myFormat, advance='yes' )
       end do
     end if
@@ -1418,13 +1418,13 @@ contains
       if ( present(name) .and. .not. mylaconic ) call newLine
       do j = 1, size(array,3)
         if (.not. myClean) then
-          call output ( j, max(3,ilog10(size(array))+1) )
-          call output ( afterSub )
+          call output ( j, max(3,ilog10(size(array))+1) , advance='no' )
+          call output ( afterSub , advance='no' )
         end if
-        call output ( array(1,1,j), myFormat )
+        call output ( array(1,1,j), myFormat , advance='no' )
         call output ( array(1,2,j), myFormat, advance='yes' )
         call blanks ( max(3,ilog10(size(array))+1) + len(afterSub) )
-        call output ( array(2,1,j), myFormat )
+        call output ( array(2,1,j), myFormat , advance='no' )
         call output ( array(2,2,j), myFormat, advance='yes' )
       end do
     end if
@@ -1493,7 +1493,7 @@ contains
             end if
           if ( DumpTheseZeros ) then
               do l = k, min(k+MyWidth-1, size(array,3))
-                  call output ( array(i,j,l)(1:lon) // ' ' )
+                  call output ( array(i,j,l)(1:lon) // ' ' , advance='no' )
               end do
               call newLine
               numZeroRows = 0
@@ -2011,8 +2011,8 @@ contains
       n1 = n2 + 1
       n2 = min( n2 + nElemsPerLine, size(array,2) )
       call newLine
-      call output ( n1, places=max(4,ilog10(size(array,2)+1)) )
-      call output ( afterSub )
+      call output ( n1, places=max(4,ilog10(size(array,2)+1)) , advance='no' )
+      call output ( afterSub , advance='no' )
       do n=n1, n2
         call blanksToTab
         call outputList( array(:,n), sep, delims)
@@ -2066,8 +2066,8 @@ contains
       n1 = n2 + 1
       n2 = min( n2 + nElemsPerLine, size(array,2) )
       call newLine
-      call output ( n1, places=max(4,ilog10(size(array,2)+1)) )
-      call output ( afterSub )
+      call output ( n1, places=max(4,ilog10(size(array,2)+1)) , advance='no' )
+      call output ( afterSub , advance='no' )
       do n=n1, n2
         call blanksToTab
         call outputList( array(:,n), sep, delims)
@@ -2769,8 +2769,8 @@ contains
     character(len=*), intent(in), optional :: Name
 
     if ( present(name) ) then
-      call output ( name )
-      call output ( ' is ' )
+      call output ( name , advance='no' )
+      call output ( ' is ' , advance='no' )
       nameHasBeenPrinted = .true.
     end if
     call output ( 'empty', advance='yes' )
@@ -2793,15 +2793,15 @@ contains
     if ( present(name) .and. .not. myLaconic ) then
       if ( len_trim(name) < 1 ) return
       if ( .not. nameHasBeenPrinted ) then
-        call output ( name )
-        if ( present(theShape) ) call output ( theShape )
+        call output ( name , advance='no' )
+        if ( present(theShape) ) call output ( theShape , advance='no' )
       end if
       if ( clean ) then 
         call output ( trim(" \ ") ) ! This goofiness is to outwit an incorrect
                                     ! Intel compiler.
-        call output ( size )
+        call output ( size , advance='no' )
       end if
-      if ( size == 1 ) call output ( ' ' )
+      if ( size == 1 ) call output ( ' ' , advance='no' )
       nameHasBeenPrinted = .true.
     end if
 
@@ -2966,8 +2966,8 @@ contains
     integer, intent(in) :: Subs(:)
     integer, intent(in) :: NumZeroRows
     call say_subs_only ( subs )
-    call output ( ' ' )
-    call output ( numZeroRows )
+    call output ( ' ' , advance='no' )
+    call output ( numZeroRows , advance='no' )
     call output ( ' lines of ', advance='no' )
   end subroutine Say_Subs
 
@@ -2976,9 +2976,9 @@ contains
     integer, intent(in) :: Subs(:)
     integer :: I
     do i = 1, size(subs), 2
-      call output ( subs(i), places=max(4,ilog10(subs(i+1))+1) )
+      call output ( subs(i), places=max(4,ilog10(subs(i+1))+1) , advance='no' )
     end do
-    call output ( afterSub )
+    call output ( afterSub , advance='no' )
   end subroutine Say_Subs_Only
   
   subroutine showColumnNums( lineLength, skip )
@@ -3307,6 +3307,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.122  2012/06/22 20:25:52  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
 ! Revision 2.121  2012/06/13 23:59:37  pwagner
 ! dumpDumpOptions optionally dumps available diff/dump options
 !
