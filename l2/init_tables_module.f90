@@ -808,9 +808,7 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_phase, & ! Ignores rest of stuff
-             begin, f+f_comment, t+t_string, n+n_field_type, &
-             begin, f+f_phaseName, t+t_string, n+n_field_type, &
-             begin, f+f_level, t+t_numeric, n+n_field_type, &
+             begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_silent, t+t_boolean, n+n_field_type, &
              begin, f+f_skipDirectWrites, t+t_boolean, n+n_field_type, &
              begin, f+f_skipDirectWritesif, s+s_Boolean, n+n_field_spec, &
@@ -1466,6 +1464,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_antennaPatterns, t+t_boolean, n+n_field_type, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
              begin, f+f_callStack, t+t_boolean, n+n_field_type, &
+             begin, f+f_commandLine, t+t_boolean, n+n_field_type, &
              begin, f+f_chunkNumber, t+t_boolean, n+n_field_type, &
              begin, f+f_Clean, t+t_boolean, n+n_field_type, &
              begin, f+f_crashBurn, t+t_boolean, n+n_field_type, &
@@ -1782,6 +1781,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.549  2012/06/27 18:00:07  pwagner
+! May overwrite command line options with options field to phase spec
+!
 ! Revision 2.548  2012/06/07 22:44:21  pwagner
 ! May remove Quantities, vectorTemplates
 !
