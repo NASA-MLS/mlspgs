@@ -15,7 +15,8 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
-  use MLSMessageModule, only: MLSMSG_Error
+  use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_SEVERITY_TO_WALKBACK, &
+    & MLSMSG_WARNING
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
 
   implicit none
@@ -128,6 +129,25 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   integer, parameter :: RTVSTRINGLENGTH               = 1024
   integer, parameter :: RTVARRAYLENGTH                = 128
   
+  character(len=2048) :: command_line ! All the opts
+  character(len=2048) :: ORIGINALCMDS ! As set when executed
+  ! The following will be used only by MLSL2
+  logical :: CHECKL2CF = .false.   ! Just check the l2cf and quit
+  logical :: CHECKLEAK = .false.   ! Check parse tree for potential memory leaks
+  logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
+  logical :: DO_DUMP = .false.     ! Dump declaration table
+  logical :: DUMP_TREE = .false.   ! Dump tree after parsing
+  ! Wouldn't it be better to use get_lun at the moment we open the l2cf?
+  integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
+  integer :: NUMSWITCHES
+  logical :: OUTSIDEOVERLAPS = .false. ! Allow overlaps outside proc. range
+  integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
+  character(len=128) :: SECTIONSTOSKIP = ''
+  logical          :: SECTIONTIMES = .false.  ! Show times in each section
+  logical          :: TOTALTIMES = .false.    ! Show total times from start
+  logical :: SHOWDEFAULTS = .false. ! Just print default opts and quit
+  integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
+  logical :: TIMING = .false.      ! -T option is set
   integer, private :: i ! For loop constructor below
 
   type :: runTimeValues_T
@@ -170,6 +190,563 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   integer, parameter :: DB_VectorTemplate     = DB_QuantityTemplate   + 1
 !=============================================================================
 contains 
+  ! -------------- processOptions ----------------
+  ! Process the command line options; either from
+  ! (1) the command line directly, by calls to getNextArg; or
+  ! (2) parsing cmdline, if supplied as an arg
+  ! The return value will be the filename (if any)
+  function processOptions ( cmdline ) result ( filename )
+  use ALLOCATE_DEALLOCATE, only: TRACKALLOCATES, &
+    & CLEARONALLOCATE
+  use IO_STUFF, only: GET_LUN
+  use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
+    & SNIPLASTSLAVEARGUMENT
+  use LEXER_M, only: CAPIDENTIFIERS
+  use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
+  use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
+  use MLSCOMMON, only: FILENAMELEN
+  use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, MLSMSG_SEVERITY_TO_WALKBACK, &
+    & MLSMSG_WARNING
+  use MLSSTRINGLISTS, only: CATLISTS, &
+    & GETSTRINGELEMENT, GETUNIQUELIST, &
+    & NUMSTRINGELEMENTS, REMOVEELEMFROMLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
+  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
+  use OUTPUT_M, only: OUTPUTOPTIONS
+  use PCFHDR, only: GLOBALATTRIBUTES
+  use SET_TOGGLES_M, only: SET_TOGGLES
+  use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
+  use STRING_TABLE, only: DO_LISTING
+  use TIME_M, only: TIME_CONFIG
+  use TOGGLES, only: SWITCHES
+    ! Args
+    character(len=*), intent(in), optional :: cmdline
+    character(len=FiLENAMELEN)             :: filename
+    ! Internal variables
+    character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
+    character(len=16) :: aSwitch
+    logical :: COPYARG               ! Copy this argument to parallel command line
+    integer :: DEGREE                ! index affecting degree of option
+    logical, parameter :: DEEBUG = .false.
+    logical :: EXIST
+    integer :: J
+    character(len=2048) :: LINE      ! Into which is read the command args
+    integer :: N
+    logical :: OPENED
+    character(len=2) :: quotes
+    integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
+    character(len=len(switches)) :: removeSwitches = ''
+    integer :: STATUS
+    logical :: SWITCH                ! "First letter after -- was not n"
+    character(len=len(switches)) :: tempSwitches
+    integer :: V
+    character(len=2048) :: WORD      ! Some text
+    ! Executable
+    quotes = char(34) // char(39)   ! {'"}
+    filename = 'help' ! This means abnormal options--should dump help mesg
+    if ( present( cmdline ) .and. DEEBUG ) then
+      print *, 'cmdline: ', trim(cmdline)
+    endif
+    i = 1+hp
+    do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
+      call getNextArg ( i, line )
+      if ( line(1:4) /= '-Wl,' ) then
+        call SnipLastSlaveArgument ! Don't want slaves to see this
+        exit
+      endif
+      call AccumulateSlaveArguments(line) ! pass them to slave processes
+      i = i + 1
+    end do
+    ! Now process the other options
+    command_line = ' '
+    cmds:    do
+      copyArg = .true.
+      call getNextArg ( i, line )
+      if ( DEEBUG ) print *, i, trim(line)
+      if ( len_trim( line ) < 1 ) then
+        exit
+      endif
+        if ( line(1:2) == '--' ) then       ! "word" options
+        n = 0
+        switch = .true.
+        if ( line(3:3) == 'n' .or. line(3:3) == 'N' ) then
+          switch = .false.
+          n = 1
+        end if
+        if ( lowercase(line(3+n:5+n)) == 'cat' ) then
+          catenateSplits = switch
+        else if ( line(3+n:8+n) == 'check ' ) then
+          checkl2cf = switch
+        ! Using lowercase so either --checkPaths or --checkpaths work
+        ! Perhaps we should do this for all multiletter options
+        ! (single-letter options are case-sensitive)
+        else if ( lowercase(line(3+n:8+n)) == 'checkp' ) then
+          checkPaths = switch
+        else if ( lowercase(line(3+n:7)) == 'chunk' ) then
+          i = i + 1
+          call getNextArg ( i, line )
+          parallel%chunkRange = line
+          ! command_line = trim(command_line) // ' ' // trim(parallel%chunkRange)
+        else if ( lowercase(line(3+n:18+n)) == 'clearonallocate ' ) then
+          clearonallocate = switch
+        else if ( lowercase(line(3+n:7+n)) == 'ckbk ' ) then
+          checkBlocks = switch
+        else if ( lowercase(line(3+n:14+n)) == 'countchunks ' ) then
+          countChunks = switch
+        else if ( lowercase(line(3+n:7+n)) == 'crash' ) then
+          MLSMessageConfig%crashOnAnyError = switch
+          neverCrash = .not. switch
+        else if ( lowercase(line(3+n:8+n)) == 'defaul' ) then
+          showDefaults = switch
+        else if ( line(3+n:7+n) == 'delay' ) then
+          if ( line(8+n:) /= ' ' ) then
+            copyArg = .false.
+            line(:7+n) = ' '
+          else
+            i = i + 1
+            call getNextArg ( i, line )
+            ! command_line = trim(command_line) // ' ' // trim(line)
+          end if
+          read ( line, *, iostat=status ) parallel%Delay
+          if ( status /= 0 ) then
+            call io_error ( "After --delay option", status, line )
+            stop
+          end if
+        else if ( line(3+n:7+n) == 'dump ' ) then
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+          specialDumpFile = trim(line)
+        else if ( lowercase(line(3+n:14+n)) == 'fwmparallel ' ) then
+          parallel%fwmParallel = .true.
+        else if ( lowercase(line(3+n:7+n)) == 'host ' ) then
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+          GlobalAttributes%hostName = trim(line)
+        else if ( line(3+n:9+n) == 'idents ' ) then
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+        else if ( line(3+n:6+n) == 'kit ' ) then
+          MLSMessageConfig%useToolkit = switch
+        else if ( lowercase(line(3+n:6+n)) == 'l1b=' ) then
+          arg_rhs = line(7+n:7+n)
+          select case(arg_rhs)
+          case('4')
+            LEVEL1_HDFVERSION = HDFVERSION_4
+          case('5')
+            LEVEL1_HDFVERSION = HDFVERSION_5
+          case default
+            LEVEL1_HDFVERSION = WILDCARDHDFVERSION
+          end select
+        else if ( lowercase(line(3+n:8+n)) == 'l2gpr=' ) then
+          arg_rhs = line(9+n:9+n)
+          select case(arg_rhs)
+          case('4')
+            DEFAULT_HDFVERSION_READ = HDFVERSION_4
+          case('5')
+            DEFAULT_HDFVERSION_READ = HDFVERSION_5
+          case default
+            DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
+          end select
+        else if ( lowercase(line(3+n:8+n)) == 'l2gpw=' ) then
+          arg_rhs = line(9+n:9+n)
+          select case(arg_rhs)
+          case('4')
+            DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
+          case('5')
+            DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
+          case default
+            DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
+          end select
+        else if ( line(3+n:5+n) == 'lac' ) then
+          ! print *, 'Got the laconic option'
+          ! The laconic command-line option trims logged output
+          ! resulting from calls to MLSMessageModule which normally prefix
+          ! each line with severity and module name; e.g.,
+          ! Info (output_m):         ..Exit ReadCompleteHDF5L2PC at 11:37:19.932 
+          ! Usage: laconic n where if n is
+          ! 0  abbreviate module names 
+          ! 1  omit module names and severity unless Warning or worse
+          ! 2  omit module names and severity unless Error
+          ! 11 skip printing anything unless Warning or worse
+          ! 12 skip printing anything unless Error
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+          read ( line, *, iostat=status ) degree
+          if ( status /= 0 ) then
+            call io_error ( "After --lac[onic] option", status, line )
+            stop
+          end if
+          MLSMessageConfig%suppressDebugs = (degree > 0)
+          MLSMessageConfig%AbbreviateModSevNames = (degree == 0)
+          MLSMessageConfig%skipModuleNamesThr = mod(degree, 10) + 2
+          MLSMessageConfig%skipSeverityThr = mod(degree, 10) + 2
+          MLSMessageConfig%skipMessageThr = degree - 10 + 2
+        else if ( line(3+n:7+n) == 'leak' ) then
+          checkLeak = .true.
+        else if ( line(3+n:9+n) == 'master ' ) then
+          copyArg = .false.
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          parallel%master = .true.
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          parallel%slaveFilename = trim ( line )
+          call InitParallel ( 0, 0 )
+          word = '--slave'
+          write ( word(len_trim(word)+1:), * ) parallel%myTid
+          call AccumulateSlaveArguments(word)
+        else if ( lowercase(line(3+n:21+n)) == 'maxfailuresperchunk' ) then
+          if ( line(22+n:) /= ' ' ) then
+            copyArg = .false.
+            line(:21+n) = ' '
+          else
+            i = i + 1
+            call getNextArg ( i, line )
+            ! command_line = trim(command_line) // ' ' // trim(line)
+          end if
+          read ( line, *, iostat=status ) parallel%maxFailuresPerChunk
+          if ( status /= 0 ) then
+            call io_error ( "After --maxFailuresPerChunk option", status, line )
+            stop
+          end if
+        else if ( lowercase(line(3+n:23+n)) == 'maxfailurespermachine' ) then
+          if ( line(24+n:) /= ' ' ) then
+            copyArg = .false.
+            line(:23+n) = ' '
+          else
+            i = i + 1
+            call getNextArg ( i, line )
+            ! command_line = trim(command_line) // ' ' // trim(line)
+          end if
+          read ( line, *, iostat=status ) parallel%maxFailuresPerMachine
+          if ( status /= 0 ) then
+            call io_error ( "After --maxFailuresPerMachine option", status, line )
+            stop
+          end if
+        else if ( lowercase(line(3+n:10+n)) == 'memtrack' ) then
+          v = 1
+          if ( line(11+n:) /= ' ' ) then
+            copyArg = .false.
+            read ( line(11+n:), *, iostat=status ) v
+            if ( status /= 0 ) then
+              call io_error ( "After --memtrack option", status, line )
+              stop
+            end if
+          else
+            call getNextArg ( i+1, line )
+            read ( line, *, iostat=status ) j
+            if ( status == 0 ) then
+              i = i + 1
+              ! command_line = trim(command_line) // ' ' // trim(line)
+              v = j
+            end if
+          end if
+          if ( switch ) then
+            trackAllocates = v
+          else
+            trackAllocates = 0
+          end if
+        else if ( line(3+n:4+n) == 'oa' ) then
+          NEED_L1BFILES = switch
+        else if ( line(3+n:7+n) == 'overl' ) then
+          OUTSIDEOVERLAPS = switch
+        else if ( line(3+n:8+n) == 'patch ' ) then
+          patch = switch
+        else if ( lowercase(line(3+n:5+n)) == 'pge ' ) then
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          i = i + 1
+          call getNextArg ( i, line )
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          parallel%pgeName = trim(line)
+          ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
+        else if ( lowercase(line(3+n:6+n)) == 'recl' ) then
+          if ( line(7+n:) /= ' ' ) then
+            line(:6+n) = ' '
+          else
+            i = i + 1
+            call getNextArg ( i, line )
+            ! command_line = trim(command_line) // ' ' // trim(line)
+          end if
+          read ( line, *, iostat=status ) recl
+          if ( status /= 0 ) then
+            call io_error ( "After --recl option", status, line )
+            stop
+          end if
+        else if ( line(3+n:6+n) == 'shar' ) then
+          SHAREDPCF = switch
+        else if ( lowercase(line(3+n:9+n))  == 'skipdir' ) then
+          SKIPDIRECTWRITES = switch
+        else if ( lowercase(line(3+n:10+n)) == 'skipretr' ) then
+          SKIPRETRIEVAL = switch
+        else if ( lowercase(line(3+n:9+n)) == 'skipsec' ) then
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
+          sectionsToSkip = lowercase(line)
+        else if ( lowercase(line(3+n:10+n)) == 'slavemaf' ) then
+          copyArg=.false.
+          if ( line(11+n:) /= ' ' ) then
+            line(:10+n) = ' '
+          else
+            i = i + 1
+            call getNextArg ( i, line )
+            ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
+          end if
+          read ( line, *, iostat=status ) slaveMAF
+          if ( status /= 0 ) then
+            call io_error ( "After --slaveMAF option", status, line )
+            stop
+          end if
+        else if ( line(3+n:7+n) == 'slave' ) then
+          copyArg=.false.
+          parallel%slave = .true.
+          if ( line(8+n:) /= ' ' .and. .false.) then
+            line(:7+n) = ' '
+          else
+            i = i + 1
+            call getNextArg ( i, line )
+            ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
+          end if
+          read ( line, *, iostat=status ) parallel%masterTid
+          if ( status /= 0 ) then
+            call io_error ( "After --slave option", status, line )
+            stop
+          end if
+          MLSMessageConfig%SendErrMsgToMaster = .true.
+          MLSMessageConfig%masterTID = parallel%masterTid
+          if ( DEEBUG ) print *, 'masterTid: ', parallel%masterTid
+        else if ( line(3+n:8+n) == 'snoop ' ) then
+          snoopingActive = .true.
+        else if ( lowercase(line(3+n:12+n)) == 'snoopname' ) then
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+          snoopName = line
+        else if ( line(3+n:7+n) == 'state' ) then
+          if ( line(8+n:) /= ' ' ) then
+            line(:7+n) = ' '
+          else
+            i = i + 1
+            call getNextArg ( i, line )
+            ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
+          end if
+          read ( line, *, iostat=status ) stateFilledBySkippedRetrievals
+          if ( status /= 0 ) then
+            call io_error ( "After --state option", status, line )
+            stop
+          end if
+        else if ( line(3+n:9+n) == 'stdout ' ) then
+          ! copyArg = .false. ! else all the the slaves would try to write to the same file
+          copyArg = .true.
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+          OutputOptions%name = trim(line)
+          OutputOptions%buffered = .false.
+          ! outputOptions%debugUnit = 32
+          ! Make certain prUnit won't be l2cf_unit
+          open( unit=l2cf_unit, status='unknown' )
+          call get_lun ( OutputOptions%prUnit, msg=.false. )
+          close( unit=l2cf_unit )
+          inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
+        ! else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
+        ! parallel%stageInMemory = .true.
+        else if ( lowercase(line(3+n:12+n)) ==  'stopafter ' ) then
+          i = i + 1
+          call getNextArg ( i, stopAfterSection )
+          ! command_line = trim(command_line) // ' ' // trim(adjustl(stopAfterSection))
+        else if ( lowercase(line(3+n:12+n)) ==  'stopwither' ) then
+          stopWithError = switch
+        else if ( lowercase(line(3+n:11+n)) == 'subblock ' ) then
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+          read ( line, *, iostat=status ) subBlockLength
+          if ( status /= 0 ) then
+            call io_error ( "After --subblock option", status, line )
+            stop
+          end if
+        else if ( line(3+n:9+n) == 'submit ' ) then
+          copyArg = .false.
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+          parallel%submit = trim ( line )
+        else if ( lowercase(line(3+n:5+n)) == 'tk ' ) then
+          toolkit = switch
+        else if ( line(3+n:10+n) == 'version ' ) then
+          do j=1, size(current_version_id)
+            print *, current_version_id(j)
+          end do
+          stop
+        else if ( line(3+n:7+n) == 'wall ' ) then
+          time_config%use_wall_clock = switch
+        else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
+          i = i + 1
+          call getNextArg ( i, line )
+          ! command_line = trim(command_line) // ' ' // trim(line)
+          exit
+        else
+          print *, 'unrecognized option ', trim(line), ' ignored.'
+          ! call option_usage
+          filename = 'help'
+          return ! will dump help mesg
+        end if
+      else if ( line(1:1) == '-' ) then   ! "letter" options
+        j = 1
+jloop:do while ( j < len_trim(line) )
+          j = j + 1
+          select case ( line(j:j) )
+          case ( ' ' )
+            exit
+          case ( 'A' ); dump_tree = .true.
+          case ( 'a', 'c', 'f', 'g', 'l', 'p', 't' )
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+              call set_toggles ( line(j:j+1) )
+              j = j + 1
+            else
+              call set_toggles ( line(j:j) )
+            end if
+          case ( 'd' ); do_dump = .true.
+          case ( 'h', 'H', '?' )     ! Describe command line usage
+            ! call option_usage
+            filename = 'help'
+            return ! will dump help mesg
+          case ( 'K' ); capIdentifiers = .true.
+          case ( 'k' ); capIdentifiers = .false.
+          case ( 'M' ); outputOptions%prunit = -2
+          case ( 'm' ); outputOptions%prunit = -1
+          case ( 'R' ) ! This does the opposite of what S does
+            removeSwitches = catLists(trim(removeSwitches), line(j+1:))
+            exit ! Took the rest of the string, so there can't be more options
+          case ( 'S' )
+            switches = catLists(trim(switches), line(j+1:))
+            exit ! Took the rest of the string, so there can't be more options
+          case ( 'T' )
+            timing = .true.
+            do
+              if ( j >= len(line) ) exit
+              if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+                if( line(j+1:j+1) /= '0' ) &
+                  & switches = catLists(trim(switches), 'time')
+                sectiontimes = &
+                  & switchDetail(switches, 'time') > -1 &
+                  & .and. &
+                  & switchDetail(switches, 'time') /= 1
+                totaltimes = sectiontimes .and. switchDetail(switches, 'time') /= 2
+              else if ( lowercase(line(j+1:j+1)) == 's' ) then
+                sectionTimingUnits = l_seconds
+              else if ( lowercase(line(j+1:j+1)) == 'm' ) then
+                sectionTimingUnits = l_minutes
+              else if ( lowercase(line(j+1:j+1)) == 'h' ) then
+                sectionTimingUnits = l_hours
+              end if
+              j = j + 1
+            end do
+          case ( 'v' ); do_listing = .true.
+          case ( 'w' )
+            MLSMessageConfig%limitWarnings = 1
+            if ( line(j+1:j+1) == 'p' ) then
+              RESTARTWARNINGS = .false.
+              j = j + 1
+            end if
+            if ( j < len_trim(line) ) then
+              call readIntsFromChars(line(j+1:), MLSMessageConfig%limitWarnings)
+              j = j + len_trim(line(j+1:))
+            end if
+          case default
+            print *, 'Unrecognized option -', line(j:j), ' ignored.'
+            ! call option_usage
+            filename = 'help'
+            return ! will dump help mesg
+          end select
+          ! i = i + 1
+        end do jLoop
+      else
+        filename = line
+        exit ! This must be the l2cf filename
+      end if
+      i = i + 1
+    enddo cmds
+    ! Did we somehow miss the filename among the args?
+    if ( filename == 'help' ) then
+      i = i + 1
+      call getNextArg ( i, line )
+      filename = line
+    endif
+  ! Are any switches inappropriate for master or for slave?
+    if ( parallel%master ) &
+      & removeSwitches = catLists( trim(removeSwitches), 'bool,walk' )
+    if ( parallel%slave ) &
+      & removeSwitches = catLists( trim(removeSwitches), 'chu,chu1,l2q,mas,slv' )
+    ! Remove any quote marks from RemoveSwitches array
+    tempSwitches = unquote(removeSwitches, quotes=quotes, options='-p')
+    call GetUniqueList(tempSwitches, removeSwitches, numSwitches, countEmpty=.true., &
+          & ignoreLeadingSpaces=.true.)
+    ! Remove any quote marks from switches array
+    tempSwitches = unquote(switches, quotes=quotes, options='-p')
+    call GetUniqueList(tempSwitches, Switches, numSwitches, countEmpty=.true., &
+          & ignoreLeadingSpaces=.true.)
+    ! Remove any switches embedded in the removeSwitches option 'R'
+    do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
+      call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
+      call RemoveElemFromList(switches, tempSwitches, trim(aSwitch))
+      switches = tempSwitches
+    end do
+
+    if ( switchDetail(switches, 'walk') > -1 ) &
+      & MLSMSG_Severity_to_walkback = MLSMSG_Warning
+    contains
+    subroutine getNextArg( i, line )
+      ! Args
+      integer, intent(in)           :: i
+      character(len=*), intent(out) :: line
+      logical, parameter :: countEmpty = .false.
+      ! Executable
+      if ( present( cmdline ) ) then
+        line = StringElement ( cmdline, i, countEmpty, inseparator=' ' )
+      else
+        call getArg ( i, line )
+      endif
+      command_line = trim(command_line) // ' ' // trim(line)
+      call AccumulateSlaveArguments(line) ! pass them to slave processes
+    end subroutine getNextArg
+  end function processOptions
+  
+  ! -------------- RestoreDefaults ----------------
+  ! Restore the options to their default values
+  ! Now some things it makes no sense to overwrite, so it makes
+  ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
+  subroutine restoreDefaults
+  use TOGGLES, only: SWITCHES
+    OUTPUT_PRINT_UNIT             = -2
+    DEFAULT_HDFVERSION_WRITE      = HDFVERSION_5
+    DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION
+    LEVEL1_HDFVERSION             = WILDCARDHDFVERSION
+    NEED_L1BFILES                 = .true.
+    PATCH                         = .false. 
+    RESTARTWARNINGS               = .true.
+    SECTIONTIMINGUNITS            = L_SECONDS
+    SKIPDIRECTWRITES              = .false.    
+    SKIPDIRECTWRITESORIGINAL      = .false.    
+    SKIPRETRIEVAL                 = .false.        
+    SKIPRETRIEVALORIGINAL         = .false. 
+    SLAVESDOOWNCLEANUP            = .false.
+    SPECIALDUMPFILE               = ' '
+    STATEFILLEDBYSKIPPEDRETRIEVALS = 0.
+    STOPAFTERSECTION              = ' ' ! Blank means 
+    STOPWITHERROR                 = .false.         
+    CHECKPATHS                    = .false.         
+    CATENATESPLITS                = .true.
+    TOOLKIT                       =  SIPS_VERSION
+    SWITCHES                      = ' '
+    MLSMSG_Severity_to_walkback   = MLSMSG_Error
+  end subroutine restoreDefaults
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -185,6 +762,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.51  2012/06/27 18:02:09  pwagner
+! May overwrite command line options with options field to phase spec
+!
 ! Revision 2.50  2012/05/08 17:53:51  pwagner
 ! Converted runtimes to character-valued; added DB types
 !
