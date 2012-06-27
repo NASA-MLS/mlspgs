@@ -21,9 +21,10 @@ module L2ParInfo
   use MLSSETS, only: FINDFIRST
   use MLSSTATS1, only: ALLSTATS
   use MLSSTRINGS, only: LOWERCASE
-  use MLSSTRINGLISTS, only: GETUNIQUEINTS, GETUNIQUESTRINGS, SWITCHDETAIL
+  use MLSSTRINGLISTS, only: GETUNIQUEINTS, GETUNIQUESTRINGS, NUMSTRINGELEMENTS, &
+    & REMOVENUMFROMLIST, STRINGELEMENT, SWITCHDETAIL
   use MOREPVM, only: PVMPACKSTRINGINDEX, PVMUNPACKSTRINGINDEX
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
   use PVM, only: INFOTAG, &
     & PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
     & PVMDATADEFAULT, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT, SIG_ABOUTTODIE
@@ -41,6 +42,7 @@ module L2ParInfo
   public :: SlaveJoin
   public :: GetNiceTidString, SlaveArguments
   public :: AccumulateSlaveArguments, LogDirectWriteRequest
+  public :: SnipLastSlaveArgument, TransmitSlaveArguments
   public :: FinishedDirectWrite, MachineNameLen, GetMachineNames, GetMachines
   public :: FWMSlaveGroup, DirectWriteRequest_T
   public :: InflateDirectWriteRequestDB, WaitForDirectWritePermission
@@ -163,6 +165,9 @@ module L2ParInfo
   interface LogDirectWriteRequest
     module procedure LogDirectWriteRequest_int, LogDirectWriteRequest_str
   end interface
+  
+  logical, parameter :: countEmpty = .false.
+  logical, parameter :: DEEBUG = .false.
 
 contains ! ==================================================================
 
@@ -171,7 +176,7 @@ contains ! ==================================================================
     ! This routine accumulates the command line arguments for the slaves
     character (len=*), intent(in) :: arg
     ! Executable code
-    call NextPVMArg ( trim(arg) )
+    ! call NextPVMArg ( trim(arg) )
     if ( len_trim(slaveArguments) + len_trim(arg) +1 > len(slaveArguments) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Argument list for slave too long.' )
     slaveArguments = trim(slaveArguments)//' '//trim(arg)
@@ -789,6 +794,40 @@ contains ! ==================================================================
 
   end subroutine SlaveJoin
 
+  ! --------------------------------------------- SnipLastSlaveArgument ------
+  subroutine SnipLastSlaveArgument
+    ! This routine snips the last command line arguments for the slaves
+    integer :: n
+    character ( len=len(slaveArguments) ), save :: tempArguments = ""
+    character(len=1), parameter :: SPACE = ' '
+    ! Executable code
+    if ( DEEBUG ) call output( 'Planning to SnipLastSlaveArgument from ' // trim(slaveArguments), &
+      & advance='yes' )
+    ! How many elements?
+    n = NumStringElements( slaveArguments, countEmpty, inseparator=space )
+    if ( DEEBUG ) call outputNamedValue ( 'n', n )
+    if ( n < 1 ) return
+    tempArguments = slaveArguments
+    if ( DEEBUG ) call output( 'Before snip: ' // trim(slaveArguments), advance='yes' )
+    call RemoveNumFromList( tempArguments, slaveArguments, n, &
+      & inseparator=space, countEmpty=countEmpty )
+    if ( DEEBUG ) call output( 'After snip: ' // trim(slaveArguments), advance='yes' )
+  end subroutine SnipLastSlaveArgument
+    
+  ! --------------------------------------------- TransmitSlaveArguments ------
+  subroutine TransmitSlaveArguments
+    ! This routine transmits command line arguments to the slaves via pvm
+    integer :: i, n
+    character(len=1), parameter :: SPACE = ' '
+    ! Executable code
+    ! How many elements?
+    n = NumStringElements( slaveArguments, countEmpty, inseparator=space )
+    do i=1, n
+      call NextPVMArg ( trim(StringElement ( slaveArguments, &
+        & i, countEmpty, inseparator=space ) ) )
+    enddo
+  end subroutine TransmitSlaveArguments
+    
   ! ----------------------------------------- GetNiceTidString -----
   character(len=16) function GetNiceTidString ( tid )
     integer, intent(in) :: tid
@@ -799,7 +838,7 @@ contains ! ==================================================================
   end function GetNiceTidString
 
   function what_options( clean, transpose, trim ) result( options )
-    use MLSStrings, only: trim_safe
+    use MLSSTRINGS, only: TRIM_SAFE
     logical, optional, intent(in) :: clean
     logical, optional, intent(in) :: transpose
     logical, optional, intent(in) :: trim
@@ -829,6 +868,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.57  2012/06/27 18:10:41  pwagner
+! Added TransmitSlaveArguments, SnipLastSlaveArgument
+!
 ! Revision 2.56  2012/03/28 20:05:10  pwagner
 ! Removed staging file--slave tasks lost ability to join quantities
 !
