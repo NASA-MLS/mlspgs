@@ -10,57 +10,54 @@
 ! foreign countries or providing access to foreign persons.
 
 program MLSL2
-  use ALLOCATE_DEALLOCATE, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES, &
-    & CLEARONALLOCATE
+  use ALLOCATE_DEALLOCATE, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES
   use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use HDF, only: DFACC_RDONLY
   use INIT_TABLES_MODULE, only: INIT_TABLES
-  use INTRINSIC, only: L_ASCII, L_HOURS, L_MINUTES, L_SECONDS, L_TKGEN, &
+  use INTRINSIC, only: L_ASCII, L_TKGEN, &
     & LIT_INDICES
-  use IO_STUFF, only: GET_LUN
   use L2GPDATA, only: AVOIDUNLIMITEDDIMS
-  use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
+  use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
+    & TRANSMITSLAVEARGUMENTS
   use LEAKCHECK_M, only: LEAKCHECK
   use LEXER_CORE, only: INIT_LEXER
-  use LEXER_M, only: CAPIDENTIFIERS
-  use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
+  use MACHINE, only: GETARG, HP, IO_ERROR
   use MLSCOMMON, only: MLSFILE_T
   use MLSFILES, only: FILESTRINGTABLE, &
-    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
+    & HDFVERSION_5, &
     & ADDFILETODATABASE, DEALLOCATE_FILEDATABASE, DUMP, &
     & INITIALIZEMLSFILE, MLS_OPENFILE, MLS_CLOSEFILE
   use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
   use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
-    & LEVEL1_HDFVERSION, NEED_L1BFILES, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
+    & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
-    & SECTIONTIMINGUNITS, SHAREDPCF, SIPS_VERSION, &
+    & SECTIONTIMES, SECTIONTIMINGUNITS, SHAREDPCF, SIPS_VERSION, &
     & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, SLAVESDOOWNCLEANUP, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & SPECIALDUMPFILE, STATEFILLEDBYSKIPPEDRETRIEVALS, &
     & STOPAFTERSECTION, STOPWITHERROR, &
-    & TOOLKIT
+    & TOOLKIT, TOTALTIMES, PROCESSOPTIONS, &
+    & CHECKL2CF, CHECKLEAK, COUNTCHUNKS, DO_DUMP, DUMP_TREE, L2CF_UNIT, &
+    & NUMSWITCHES, ORIGINALCMDS, OUTSIDEOVERLAPS, RECL, &
+    & SECTIONSTOSKIP, SHOWDEFAULTS, SLAVEMAF, TIMING
   use MLSL2TIMINGS, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, MLSMSG_DEBUG, &
-    & MLSMSG_ERROR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK, &
+    & MLSMSG_ERROR, MLSMSG_SEVERITY_TO_QUIT, &
     & MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT
   use MLSPCF2 ! EVERYTHING
-  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, TRIM_SAFE
-  use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, &
-    & GETSTRINGELEMENT, GETUNIQUELIST, &
-    & NUMSTRINGELEMENTS, REMOVEELEMFROMLIST, SWITCHDETAIL, UNQUOTE
+  use MLSSTRINGS, only: TRIM_SAFE
+  use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, &
+    & SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, DUMP, OUTPUT, &
     & OUTPUTNAMEDVALUE, OUTPUTOPTIONS, STAMPOPTIONS
   use PARSER, only: CONFIGURATION
-  use PCFHDR, only: GLOBALATTRIBUTES
   use PVM, only: CLEARPVMARGS, FREEPVMARGS
-  use SDPTOOLKIT, only: useSDPTOOLKIT
-  use Set_Toggles_m, only: Set_Toggles
-  use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
+  use SDPTOOLKIT, only: USESDPTOOLKIT
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
-    & DESTROY_STRING_TABLE, DO_LISTING, GET_STRING, ADDINUNIT
+    & DESTROY_STRING_TABLE, GET_STRING, ADDINUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
   use TIME_M, only: BEGIN, FINISH, TIME_NOW, TIME_CONFIG
   use TOGGLES, only: SYN, SWITCHES, TOGGLE
@@ -68,7 +65,6 @@ program MLSL2
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
-  use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
 
   ! === (start of toc) ===
   !     c o n t e n t s
@@ -141,47 +137,23 @@ program MLSL2
   !     see the master's stdin)
   implicit none
 
-  ! Wouldn't it be better to use get_lun at the moment we open the l2cf?
-  integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
   character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
 
-  character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
-  character(len=16) :: aSwitch
-  character(len=2048) :: command_line ! All the opts
-  logical :: COPYARG               ! Copy this argument to parallel command line
-  logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
-  logical :: CHECKL2CF = .false.   ! Just check the l2cf and quit
-  logical :: CheckLeak = .false.   ! Check parse tree for potential memory leaks
-  logical :: DO_DUMP = .false.     ! Dump declaration table
-  logical :: DUMP_TREE = .false.   ! Dump tree after parsing
   integer :: ERROR                 ! Error flag from check_tree
-  logical :: EXIST
   integer :: FIRST_SECTION         ! Index of son of root of first n_cf node
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
   integer, dimension(1) :: ICHUNKS
   integer :: J                     ! index within option
-  integer :: DEGREE                ! index affecting degree of option
   ! integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
-  integer :: N                     ! Offset for start of --'s text
   integer :: NUMFILES
-  integer :: NUMSWITCHES
-  logical :: OPENED
-  integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
+  ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
 ! integer :: RECORD_LENGTH
   character(len=len(switches)) :: removeSwitches = ''
   integer :: ROOT                  ! of the abstract syntax tree
-  character(len=128) :: sectionsToSkip = ''
-  logical :: showDefaults = .false. ! Just print default opts and quit
-  integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
   integer :: STATUS                ! From OPEN
-  logical :: SWITCH                ! "First letter after -- was not n"
   real :: T0, T1, T2               ! For timing
-  character(len=len(switches)) :: tempSwitches
-  logical :: Timing = .false.      ! -T option is set
-  integer :: V                     ! Numeric value after an option
-  character(len=2048) :: WORD      ! Some text
   integer :: inunit = -1
 
 !---------------------------- RCS Ident Info ------------------------------
@@ -191,9 +163,7 @@ program MLSL2
 
   type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
   type (MLSFile_T)                        ::     MLSL2CF
-  character(len=2) :: quotes
   ! Executable
-  quotes = char(34) // char(39)   ! {'"}
   nullify (filedatabase)
   !---------------- Task (1) ------------------
 
@@ -240,7 +210,7 @@ program MLSL2
 
   !---------------- Task (3) ------------------
   i = 1+hp
-  command_line = ' '
+  ORIGINALCMDS = ' '
   do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
     call getarg ( i, line )
     if ( line(1:4) /= '-Wl,' ) exit
@@ -248,451 +218,23 @@ program MLSL2
     i = i + 1
   end do
   do ! Process the command line options to set toggles
-    copyArg = .true.
     call getarg ( i, line )
     ! print *, trim(line)
-    command_line = trim(command_line) // ' ' // trim(line)
-    if ( line(1:2) == '--' ) then       ! "word" options
-      n = 0
-      switch = .true.
-      if ( line(3:3) == 'n' .or. line(3:3) == 'N' ) then
-        switch = .false.
-        n = 1
-      end if
-      if ( lowercase(line(3+n:5+n)) == 'cat' ) then
-        catenateSplits = switch
-      else if ( line(3+n:8+n) == 'check ' ) then
-        checkl2cf = switch
-      ! Using lowercase so either --checkPaths or --checkpaths work
-      ! Perhaps we should do this for all multiletter options
-      ! (single-letter options are case-sensitive)
-      else if ( lowercase(line(3+n:8+n)) == 'checkp' ) then
-        checkPaths = switch
-      else if ( lowercase(line(3+n:7)) == 'chunk' ) then
-        call AccumulateSlaveArguments ( line )
-        i = i + 1
-        call getarg ( i, line )
-        parallel%chunkRange = line
-        command_line = trim(command_line) // ' ' // trim(parallel%chunkRange)
-      else if ( lowercase(line(3+n:18+n)) == 'clearonallocate ' ) then
-        clearonallocate = switch
-      else if ( lowercase(line(3+n:7+n)) == 'ckbk ' ) then
-        checkBlocks = switch
-      else if ( lowercase(line(3+n:14+n)) == 'countchunks ' ) then
-        countChunks = switch
-      else if ( lowercase(line(3+n:7+n)) == 'crash' ) then
-        MLSMessageConfig%crashOnAnyError = switch
-        neverCrash = .not. switch
-      else if ( lowercase(line(3+n:8+n)) == 'defaul' ) then
-        showDefaults = switch
-      else if ( line(3+n:7+n) == 'delay' ) then
-        call AccumulateSlaveArguments ( line )
-        if ( line(8+n:) /= ' ' ) then
-          copyArg = .false.
-          line(:7+n) = ' '
-        else
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-        end if
-        read ( line, *, iostat=status ) parallel%Delay
-        if ( status /= 0 ) then
-          call io_error ( "After --delay option", status, line )
-          stop
-        end if
-      else if ( line(3+n:7+n) == 'dump ' ) then
-        call AccumulateSlaveArguments ( line )
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-        specialDumpFile = trim(line)
-      else if ( lowercase(line(3+n:14+n)) == 'fwmparallel ' ) then
-        parallel%fwmParallel = .true.
-      else if ( lowercase(line(3+n:7+n)) == 'host ' ) then
-        call AccumulateSlaveArguments ( line )
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-        GlobalAttributes%hostName = trim(line)
-      else if ( line(3+n:9+n) == 'idents ' ) then
-        call AccumulateSlaveArguments ( line )
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-      else if ( line(3+n:6+n) == 'kit ' ) then
-        MLSMessageConfig%useToolkit = switch
-      else if ( lowercase(line(3+n:6+n)) == 'l1b=' ) then
-        arg_rhs = line(7+n:7+n)
-        select case(arg_rhs)
-        case('4')
-          LEVEL1_HDFVERSION = HDFVERSION_4
-        case('5')
-          LEVEL1_HDFVERSION = HDFVERSION_5
-        case default
-          LEVEL1_HDFVERSION = WILDCARDHDFVERSION
-        end select
-      else if ( lowercase(line(3+n:8+n)) == 'l2gpr=' ) then
-        arg_rhs = line(9+n:9+n)
-        select case(arg_rhs)
-        case('4')
-          DEFAULT_HDFVERSION_READ = HDFVERSION_4
-        case('5')
-          DEFAULT_HDFVERSION_READ = HDFVERSION_5
-        case default
-          DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
-        end select
-      else if ( lowercase(line(3+n:8+n)) == 'l2gpw=' ) then
-        arg_rhs = line(9+n:9+n)
-        select case(arg_rhs)
-        case('4')
-          DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
-        case('5')
-          DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
-        case default
-          DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
-        end select
-      else if ( line(3+n:5+n) == 'lac' ) then
-        ! print *, 'Got the laconic option'
-        ! The laconic command-line option trims logged output
-        ! resulting from calls to MLSMessageModule which normally prefix
-        ! each line with severity and module name; e.g.,
-        ! Info (output_m):         ..Exit ReadCompleteHDF5L2PC at 11:37:19.932 
-        ! Usage: laconic n where if n is
-        ! 0  abbreviate module names 
-        ! 1  omit module names and severity unless Warning or worse
-        ! 2  omit module names and severity unless Error
-        ! 11 skip printing anything unless Warning or worse
-        ! 12 skip printing anything unless Error
-        call AccumulateSlaveArguments ( line )
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-        read ( line, *, iostat=status ) degree
-        if ( status /= 0 ) then
-          call io_error ( "After --lac[onic] option", status, line )
-          stop
-        end if
-        MLSMessageConfig%suppressDebugs = (degree > 0)
-        MLSMessageConfig%AbbreviateModSevNames = (degree == 0)
-        MLSMessageConfig%skipModuleNamesThr = mod(degree, 10) + 2
-        MLSMessageConfig%skipSeverityThr = mod(degree, 10) + 2
-        MLSMessageConfig%skipMessageThr = degree - 10 + 2
-      else if ( line(3+n:7+n) == 'leak' ) then
-        checkLeak = .true.
-      else if ( line(3+n:9+n) == 'master ' ) then
-        copyArg = .false.
-        parallel%master = .true.
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-        parallel%slaveFilename = trim ( line )
-        call InitParallel ( 0, 0 )
-        word = '--slave'
-        write ( word(len_trim(word)+1:), * ) parallel%myTid
-        call AccumulateSlaveArguments(word)
-      else if ( lowercase(line(3+n:21+n)) == 'maxfailuresperchunk' ) then
-        call AccumulateSlaveArguments ( line )
-        if ( line(22+n:) /= ' ' ) then
-          copyArg = .false.
-          line(:21+n) = ' '
-        else
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-        end if
-        read ( line, *, iostat=status ) parallel%maxFailuresPerChunk
-        if ( status /= 0 ) then
-          call io_error ( "After --maxFailuresPerChunk option", status, line )
-          stop
-        end if
-      else if ( lowercase(line(3+n:23+n)) == 'maxfailurespermachine' ) then
-        call AccumulateSlaveArguments ( line )
-        if ( line(24+n:) /= ' ' ) then
-          copyArg = .false.
-          line(:23+n) = ' '
-        else
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-        end if
-        read ( line, *, iostat=status ) parallel%maxFailuresPerMachine
-        if ( status /= 0 ) then
-          call io_error ( "After --maxFailuresPerMachine option", status, line )
-          stop
-        end if
-      else if ( lowercase(line(3+n:10+n)) == 'memtrack' ) then
-        v = 1
-        if ( line(11+n:) /= ' ' ) then
-          copyArg = .false.
-          read ( line(11+n:), *, iostat=status ) v
-          if ( status /= 0 ) then
-            call io_error ( "After --memtrack option", status, line )
-            stop
-          end if
-        else
-          call getarg ( i+1, line )
-          read ( line, *, iostat=status ) j
-          if ( status == 0 ) then
-            i = i + 1
-            command_line = trim(command_line) // ' ' // trim(line)
-            v = j
-          end if
-        end if
-        if ( switch ) then
-          trackAllocates = v
-        else
-          trackAllocates = 0
-        end if
-      else if ( line(3+n:4+n) == 'oa' ) then
-        NEED_L1BFILES = switch
-      else if ( line(3+n:7+n) == 'overl' ) then
-        ChunkDivideConfig%allowPriorOverlaps = switch
-        ChunkDivideConfig%allowPostOverlaps = switch
-      else if ( line(3+n:8+n) == 'patch ' ) then
-        patch = switch
-      else if ( lowercase(line(3+n:5+n)) == 'pge ' ) then
-        i = i + 1
-        call getarg ( i, line )
-        parallel%pgeName = trim(line)
-        command_line = trim(command_line) // ' ' // trim(adjustl(line))
-      else if ( lowercase(line(3+n:6+n)) == 'recl' ) then
-        if ( line(7+n:) /= ' ' ) then
-          line(:6+n) = ' '
-        else
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-        end if
-        read ( line, *, iostat=status ) recl
-        if ( status /= 0 ) then
-          call io_error ( "After --recl option", status, line )
-          stop
-        end if
-      else if ( line(3+n:6+n) == 'shar' ) then
-        SHAREDPCF = switch
-      else if ( lowercase(line(3+n:9+n))  == 'skipdir' ) then
-        SKIPDIRECTWRITES = switch
-      else if ( lowercase(line(3+n:10+n)) == 'skipretr' ) then
-        SKIPRETRIEVAL = switch
-      else if ( lowercase(line(3+n:9+n)) == 'skipsec' ) then
-        call AccumulateSlaveArguments ( line )
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(adjustl(line))
-        sectionsToSkip = lowercase(line)
-      else if ( lowercase(line(3+n:10+n)) == 'slavemaf' ) then
-        copyArg=.false.
-        if ( line(11+n:) /= ' ' ) then
-          line(:10+n) = ' '
-        else
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(adjustl(line))
-        end if
-        read ( line, *, iostat=status ) slaveMAF
-        if ( status /= 0 ) then
-          call io_error ( "After --slaveMAF option", status, line )
-          stop
-        end if
-      else if ( line(3+n:7+n) == 'slave' ) then
-        copyArg=.false.
-        parallel%slave = .true.
-        if ( line(8+n:) /= ' ' ) then
-          line(:7+n) = ' '
-        else
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(adjustl(line))
-        end if
-        read ( line, *, iostat=status ) parallel%masterTid
-        if ( status /= 0 ) then
-          call io_error ( "After --slave option", status, line )
-          stop
-        end if
-        MLSMessageConfig%SendErrMsgToMaster = .true.
-        MLSMessageConfig%masterTID = parallel%masterTid
-      else if ( line(3+n:8+n) == 'snoop ' ) then
-        snoopingActive = .true.
-      else if ( lowercase(line(3+n:12+n)) == 'snoopname' ) then
-        call AccumulateSlaveArguments ( line )
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-        snoopName = line
-      else if ( line(3+n:7+n) == 'state' ) then
-        if ( line(8+n:) /= ' ' ) then
-          line(:7+n) = ' '
-        else
-          i = i + 1
-          call AccumulateSlaveArguments ( line )
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(adjustl(line))
-        end if
-        read ( line, *, iostat=status ) stateFilledBySkippedRetrievals
-        if ( status /= 0 ) then
-          call io_error ( "After --state option", status, line )
-          stop
-        end if
-      else if ( line(3+n:9+n) == 'stdout ' ) then
-        ! copyArg = .false. ! else all the the slaves would try to write to the same file
-        copyArg = .true.
-        call AccumulateSlaveArguments ( line )
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-        OutputOptions%name = trim(line)
-        OutputOptions%buffered = .false.
-        ! outputOptions%debugUnit = 32
-        ! Make certain prUnit won't be l2cf_unit
-        open( unit=l2cf_unit, status='unknown' )
-        call get_lun ( OutputOptions%prUnit, msg=.false. )
-        close( unit=l2cf_unit )
-        inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
-      ! else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
-      ! parallel%stageInMemory = .true.
-      else if ( lowercase(line(3+n:12+n)) ==  'stopafter ' ) then
-        call AccumulateSlaveArguments ( line )
-        i = i + 1
-        call getarg ( i, stopAfterSection )
-        command_line = trim(command_line) // ' ' // trim(adjustl(stopAfterSection))
-      else if ( lowercase(line(3+n:12+n)) ==  'stopwither' ) then
-        stopWithError = switch
-      else if ( lowercase(line(3+n:11+n)) == 'subblock ' ) then
-        call AccumulateSlaveArguments ( line )
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-        read ( line, *, iostat=status ) subBlockLength
-        if ( status /= 0 ) then
-          call io_error ( "After --subblock option", status, line )
-          stop
-        end if
-      else if ( line(3+n:9+n) == 'submit ' ) then
-        copyArg = .false.
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-        parallel%submit = trim ( line )
-      else if ( lowercase(line(3+n:5+n)) == 'tk ' ) then
-        toolkit = switch
-      else if ( line(3+n:10+n) == 'version ' ) then
-        do j=1, size(current_version_id)
-          print *, current_version_id(j)
-        end do
-        stop
-      else if ( line(3+n:7+n) == 'wall ' ) then
-        time_config%use_wall_clock = switch
-      else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
-        i = i + 1
-        call getarg ( i, line )
-        command_line = trim(command_line) // ' ' // trim(line)
-        call AccumulateSlaveArguments(line)
-        exit
-      else
-        print *, 'unrecognized option ', trim(line), ' ignored.'
-        call option_usage
-      end if
-    else if ( line(1:1) == '-' ) then   ! "letter" options
-      j = 1
-      do while ( j < len_trim(line) )
-        j = j + 1
-        select case ( line(j:j) )
-        case ( ' ' )
-          exit
-        case ( 'A' ); dump_tree = .true.
-        case ( 'a', 'c', 'f', 'g', 'l', 'p', 't' )
-          if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
-            call set_toggles ( line(j:j+1) )
-            j = j + 1
-          else
-            call set_toggles ( line(j:j) )
-          end if
-        case ( 'd' ); do_dump = .true.
-        case ( 'h', 'H', '?' )     ! Describe command line usage
-          call option_usage
-        case ( 'K' ); capIdentifiers = .true.
-        case ( 'k' ); capIdentifiers = .false.
-        case ( 'M' ); outputOptions%prunit = -2
-        case ( 'm' ); outputOptions%prunit = -1
-        case ( 'R' ) ! This does the opposite of what S does
-          removeSwitches = catLists(trim(removeSwitches), line(j+1:))
-          exit ! Took the rest of the string, so there can't be more options
-        case ( 'S' )
-          switches = catLists(trim(switches), line(j+1:))
-          exit ! Took the rest of the string, so there can't be more options
-        case ( 'T' )
-          timing = .true.
-          do
-            if ( j >= len(line) ) exit
-            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
-              if( line(j+1:j+1) /= '0' ) &
-                & switches = catLists(trim(switches), 'time')
-              section_times = &
-                & switchDetail(switches, 'time') > -1 &
-                & .and. &
-                & switchDetail(switches, 'time') /= 1
-              total_times = section_times .and. switchDetail(switches, 'time') /= 2
-            else if ( lowercase(line(j+1:j+1)) == 's' ) then
-              sectionTimingUnits = l_seconds
-            else if ( lowercase(line(j+1:j+1)) == 'm' ) then
-              sectionTimingUnits = l_minutes
-            else if ( lowercase(line(j+1:j+1)) == 'h' ) then
-              sectionTimingUnits = l_hours
-            end if
-            j = j + 1
-          end do
-        case ( 'v' ); do_listing = .true.
-        case ( 'w' )
-          MLSMessageConfig%limitWarnings = 1
-          if ( line(j+1:j+1) == 'p' ) then
-            RESTARTWARNINGS = .false.
-            j = j + 1
-          end if
-          if ( j < len_trim(line) ) then
-            call readIntsFromChars(line(j+1:), MLSMessageConfig%limitWarnings)
-            j = j + len_trim(line(j+1:))
-          end if
-        case default
-          print *, 'Unrecognized option -', line(j:j), ' ignored.'
-          call option_usage
-        end select
-      end do
-    else
-      call AccumulateSlaveArguments(line)
-      exit ! This must be the l2cf filename
-    end if
+    if ( len_trim(line) < 1 ) exit
     i = i + 1
-    if ( copyArg ) call AccumulateSlaveArguments(line)
-  end do
-
+    ORIGINALCMDS = trim(ORIGINALCMDS) // ' ' // trim(line)
+  enddo
+  print *, 'original CMDS: ', trim(ORIGINALCMDS)
+  line = processOptions( trim(ORIGINALCMDS ) )
+  print *, 'Return from processing CMDS: ', trim(line)
   ! stop
-  if( switchDetail(switches, '?') > -1 .or. &
+  if ( line == 'help' ) then
+    call option_usage
+  elseif( switchDetail(switches, '?') > -1 .or. &
     & switchDetail(switches, 'help') > -1 ) then
-   call switch_usage
+    call switch_usage
   end if
 
-  ! Are any switches inappropriate for master or for slave?
-    if ( parallel%master ) &
-      & removeSwitches = catLists( trim(removeSwitches), 'bool,walk' )
-    if ( parallel%slave ) &
-      & removeSwitches = catLists( trim(removeSwitches), 'chu,chu1,l2q,mas,slv' )
-  ! Remove any quote marks from RemoveSwitches array
-  tempSwitches = unquote(removeSwitches, quotes=quotes, options='-p')
-  call GetUniqueList(tempSwitches, removeSwitches, numSwitches, countEmpty=.true., &
-        & ignoreLeadingSpaces=.true.)
-  ! Remove any quote marks from switches array
-  tempSwitches = unquote(switches, quotes=quotes, options='-p')
-  call GetUniqueList(tempSwitches, Switches, numSwitches, countEmpty=.true., &
-        & ignoreLeadingSpaces=.true.)
-  ! Remove any switches embedded in the removeSwitches option 'R'
-  do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
-    call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
-    call RemoveElemFromList(switches, tempSwitches, trim(aSwitch))
-    switches = tempSwitches
-  end do
-
-  if ( switchDetail(switches, 'walk') > -1 ) &
-    & MLSMSG_Severity_to_walkback = MLSMSG_Warning
   ! The following no longer does anything
   call Set_garbage_collection(garbage_collection_by_dt)
 
@@ -712,6 +254,10 @@ program MLSL2
   else
      MLSMessageConfig%LogFileUnit = -2   ! the default in MLSMessageModule
   end if
+  chunkdivideconfig%allowPriorOverlaps = OUTSIDEOVERLAPS
+  chunkdivideconfig%allowPostOverlaps = OUTSIDEOVERLAPS
+  section_times = sectiontimes
+  total_times = totaltimes
 
   UseSDPToolkit = toolkit    ! Redundant, but may be needed in lib
 
@@ -740,6 +286,7 @@ program MLSL2
   if ( sharedPCF ) call MovePCFIDs
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
+  if ( parallel%master ) call TransmitSlaveArguments
   if ( parallel%master .and. parallel%myTid <= 0 ) &
     & call MLSMessage ( MLSMSG_Error, ModuleName, &
     & 'master Tid <= 0; probably pvm trouble' )
@@ -1019,7 +566,7 @@ contains
       call output ( trim(command), advance='yes' )
     end if
     call output ( ' mlsl2 called with command line options: ', advance='no' )
-    call output ( trim(command_line), advance='yes' )
+    call output ( trim(ORIGINALCMDS), advance='yes' )
     call output ( ' l2cf file:', advance='no' )
     call blanks ( 4, advance='no' )
     call output ( trim(MLSL2CF%name), advance='yes' )
@@ -1163,6 +710,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.184  2012/06/27 18:02:59  pwagner
+! May overwrite command line options with options field to phase spec
+!
 ! Revision 2.183  2012/06/06 20:36:37  vsnyder
 ! Use Set_Toggles for -aefglpt options
 !
