@@ -121,11 +121,11 @@ module MLSStringLists               ! Module to treat string lists
 ! ReadIntsFromList(strlist inList, int ints(:), &
 !    & [char inseparator])
 ! RemoveElemFromList(strlist inList, strlist outList, char* elem, &
-!    & [char inseparator])
+!    & [char inseparator], [log countEmpty])
 ! RemoveListFromList(strlist inList, strlist outList, strlist exclude, &
-!    & [char inseparator])
+!    & [char inseparator], [log countEmpty])
 ! RemoveNumFromList(strlist inList, strlist outList, int nElement, &
-!    & [char inseparator])
+!    & [char inseparator], [log countEmpty])
 ! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* which], [log no_trim])
 ! strlist ReverseList (strlist str, [char inseparator])
@@ -2325,7 +2325,8 @@ contains
   end subroutine ReadIntsFromList
 
   ! --------------------------------------------------  RemoveElemFromList  -----
-  subroutine RemoveElemFromList (inList, outList, elem, inseparator)
+  subroutine RemoveElemFromList ( inList, outList, elem, inseparator, &
+    & countEmpty )
     ! Takes a list and removes all occurrence(s) of elem
     ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c' returns 'a,b,d,..z'
     !--------Argument--------!
@@ -2333,12 +2334,14 @@ contains
     CHARACTER (LEN=*), INTENT(IN) :: elem
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
     character (len=*), optional, intent(in)       :: inseparator
+    logical, optional, intent(in)                 :: countEmpty
     ! Method:
     ! Prepend elem onto start of list, make it unique,
     ! Then snip it back off
     !----------Local vars----------!
+    logical :: myCountEmpty
     character(len=len(inList)+len(elem)+1) :: temp_list, unique_list
-    CHARACTER (LEN=1)               :: separator
+    character (len=1)               :: separator
     integer :: numUnique
     !----------Executable part----------!
     IF(PRESENT(inseparator)) THEN
@@ -2346,16 +2349,19 @@ contains
     ELSE
       separator = COMMA
     END IF
+    myCountEmpty = .true.
+    if ( present(countEmpty) ) myCountEmpty = countEmpty
 
     outList = inList
     IF (LEN_trim(elem) < 1 .or. len_trim(inList) < 1 &
-      & .or. StringElementNum(inList, elem, countEmpty=.true., &
+      & .or. StringElementNum(inList, elem, myCountEmpty, &
     & inseparator=inseparator) < 1 ) RETURN
     temp_list = trim(elem) // separator // trim(inList)
-    call GetUniqueList(temp_list, unique_list, numUnique, countEmpty=.true., &
+    call GetUniqueList(temp_list, unique_list, numUnique, myCountEmpty, &
     & inseparator=inseparator, ignoreLeadingSpaces=.true.)
     ! outList = unique_list(len(elem)+1:)
     ! The following is evidence of poor programming habits
+    ! (As if any more evidence was needed)
     if ( unique_list(len(elem)+1:len(elem)+1) == separator ) then
       outList = unique_list(len(elem)+2:)
     else
@@ -2364,7 +2370,7 @@ contains
   end subroutine RemoveElemFromList
 
   ! --------------------------------------------------  RemoveListFromList  -----
-  subroutine RemoveListFromList (inList, outList, exclude, inseparator)
+  subroutine RemoveListFromList ( inList, outList, exclude, inseparator, countEmpty )
     ! Takes one list and removes from it all occurrence(s) 
     ! of each elem in another list called "exclude"
     ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c,a' returns 'b,d,..z'
@@ -2373,31 +2379,35 @@ contains
     CHARACTER (LEN=*), INTENT(IN) :: exclude ! What to exclude
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
     character (len=*), optional, intent(in)       :: inseparator
+    logical, optional, intent(in)                 :: countEmpty
     ! Method:
     ! Repeatedly call RemoveElemFromList for each elem of exclude
     !----------Local vars----------!
-    logical, parameter :: countEmpty = .true.
     integer :: i
     character(len=max(len(inList), len(exclude)) + 1) :: elem
+    logical :: myCountEmpty
     integer :: numElems
     character(len=len(inList)+1) :: temp_list
     character(len=len(inList)+1) :: temp_list2
     !----------Executable part----------!
+    myCountEmpty = .true.
+    if ( present(countEmpty) ) myCountEmpty = countEmpty
     outList = inList
     if ( len_trim(exclude) < 1 .or. len_trim(inList) < 1 ) return
-    numElems = NumStringElements(exclude, countEmpty, inseparator)
+    numElems = NumStringElements( exclude, myCountEmpty, inseparator )
     if ( numElems < 1 ) return
     temp_list = inList
     do i=1, numElems
-      call GetStringElement(exclude, elem, i, countEmpty, inseparator)
-      call RemoveElemFromList(temp_list, temp_list2, elem, inseparator)
+      call GetStringElement( exclude, elem, i, myCountEmpty, inseparator )
+      call RemoveElemFromList( temp_list, temp_list2, elem, inseparator, countEmpty )
       temp_list = temp_list2
     enddo
     outList = temp_list
   end subroutine RemoveListFromList
 
   ! --------------------------------------------------  RemoveNumFromList  -----
-  subroutine RemoveNumFromList (inList, outList, nElement, inseparator)
+  subroutine RemoveNumFromList ( inList, outList, nElement, inseparator, &
+    & countEmpty )
     ! Removes a numbered element from a list
     ! E.g., given 'a,b,c,d,..,z' and asked to remove number 3 returns 'a,b,d,..z'
     !--------Argument--------!
@@ -2405,30 +2415,34 @@ contains
     integer          , intent(in) :: nElement
     character (len=*), intent(out)                :: outList
     character (len=*), optional, intent(in)       :: inseparator
+    logical, optional, intent(in)                 :: countEmpty
     ! Method:
     ! Loop through list, forming new one
     !----------Local vars----------!
     character(len=len(inList)+1) :: elem
-    character(len=len(inList)+1) :: temp_list
-    character (len=1)               :: separator
     integer :: i
+    logical :: myCountEmpty
     integer :: num
+    character (len=1)               :: separator
+    character(len=len(inList)+1) :: temp_list
     !----------Executable part----------!
     IF(PRESENT(inseparator)) THEN
       separator = inseparator
     ELSE
       separator = COMMA
     END IF
+    myCountEmpty = .true.
+    if ( present(countEmpty) ) myCountEmpty = countEmpty
 
     outList = inList
     if ( len_trim(inList) < 1 .or. nElement < 1 ) return
-    num = NumStringElements( inList, countEmpty=.true., inSeparator=inSeparator )
+    num = NumStringElements( inList, myCountEmpty, inSeparator=inSeparator )
     if ( nElement < 1 .or. nElement > num ) return
     outList = ' '
     do i=1, num
       if ( i == nElement ) cycle
       call GetStringElement(inList, elem, i, &
-        & countEmpty=.true., inSeparator=inSeparator )
+        & myCountEmpty, inSeparator=inSeparator )
       temp_list = outList
       outList = catLists( outList, trim(elem), inseparator )
     enddo
@@ -3840,6 +3854,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.47  2012/06/27 17:51:57  pwagner
+! countEmpty now optional arg to remove..FromList
+!
 ! Revision 2.46  2012/05/08 17:44:30  pwagner
 ! BooleanValue now a generic: values may be a string list
 !
