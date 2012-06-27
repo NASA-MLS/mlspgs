@@ -865,7 +865,8 @@ contains
       & F_ALLL2PCS, F_ALLLINES, F_ALLMATRICES, F_ALLPFA, &
       & F_ALLQUANTITYTEMPLATES, F_ALLRADIOMETERS, F_ALLSIGNALS, F_ALLSPECTRA, &
       & F_ALLVECTORS, F_ALLVECTORTEMPLATES, F_ALLVGRIDS, F_ANTENNAPATTERNS, &
-      & F_BOOLEAN, F_CALLSTACK, F_CHUNKNUMBER, F_CLEAN, F_CRASHBURN, &
+      & F_BOOLEAN, &
+      & F_CALLSTACK, F_CHUNKNUMBER, F_CLEAN, F_COMMANDLINE, F_CRASHBURN, &
       & F_DETAILS, F_DACSFILTERSHAPES, &
       & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HEIGHT, F_HESSIAN, &
       & F_HGRID, F_IGRF, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, &
@@ -884,7 +885,7 @@ contains
     use MLSCOMMON, only: MLSFILE_T
     use MLSFILES, only: DUMPMLSFILE => DUMP, GETMLSFILEBYNAME
     use MLSKINDS, only: RV
-    use MLSL2OPTIONS, only: NORMAL_EXIT_STATUS, RUNTIMEVALUES
+    use MLSL2OPTIONS, only: COMMAND_LINE, NORMAL_EXIT_STATUS, RUNTIMEVALUES
     use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMESSAGEEXIT, &
       & MLSMSG_CRASH, MLSMSG_ERROR
@@ -1042,7 +1043,7 @@ contains
         & f_allPFA, f_allQuantityTemplates, &
         & f_allRadiometers, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_callStack, f_chunkNumber, f_crashBurn, &
+        & f_callStack, f_chunkNumber, f_commandLine, f_crashBurn, &
         & f_DACSfilterShapes, f_filterShapes, f_igrf, &
         & f_MieTables, f_pfaFiles, f_pfaStru, f_phaseName, f_pointingGrids, &
         & f_stop, f_stopWithError )
@@ -1163,6 +1164,8 @@ contains
             call MLSMessageCalls ( 'dump' )
           case ( f_chunkNumber )
             call outputNamedValue ( 'chunk number', currentChunkNumber )
+          case ( f_commandLine )
+            call outputNamedValue ( 'command line', command_line )
           case ( f_crashBurn )
             call finish ( 'ending mlsl2' )
             NEVERCRASH = .false.
@@ -2024,6 +2027,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.77  2012/06/27 17:53:04  pwagner
+! May now Dump command line
+!
 ! Revision 2.76  2012/06/06 20:20:46  vsnyder
 ! Add line number to farewell for /stop
 !
