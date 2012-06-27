@@ -94,6 +94,7 @@ colSurfaces
 columnAbundance
 columns
 columnScale
+commandLine
 comment
 compareOverlaps
 convergence
@@ -496,6 +497,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.219  2012/06/27 17:53:04  pwagner
+# May now Dump command line
+#
 # Revision 2.218  2012/06/07 22:42:59  pwagner
 # May remove Quantities, vectorTemplates
 #
