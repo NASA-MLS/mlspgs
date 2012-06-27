@@ -15,12 +15,13 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
-  use INIT_TABLES_MODULE, only: F_SILENT, &
+  use INIT_TABLES_MODULE, only: F_OPTIONS, F_SILENT, &
     & F_SKIPDIRECTWRITES, F_SKIPDIRECTWRITESIF, &
     & F_SKIPRETRIEVAL, F_SKIPRETRIEVALIF, F_STAMP
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
-  use MLSL2OPTIONS, only: RESTARTWARNINGS, RUNTIMEVALUES, &
+  use MLSL2OPTIONS, only: ORIGINALCMDS, COMMAND_LINE, PROCESSOPTIONS, &
+    & RESTARTWARNINGS, RESTOREDEFAULTS, RUNTIMEVALUES, &
     & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & STOPAFTERSECTION
@@ -30,7 +31,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   use MLSSTRINGLISTS, only: BOOLEANVALUE, CATLISTS, GETSTRINGELEMENT, &
     & NUMSTRINGELEMENTS, STRINGELEMENTNUM, SWITCHDETAIL
   use MORETREE, only: GET_BOOLEAN
-  use OUTPUT_M, only: BLANKS, OUTPUT, &
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
     & RESUMEOUTPUT, SETSTAMP, SUSPENDOUTPUT
   use STRING_TABLE, only: GET_STRING
   use TIME_M, only: TIME_NOW
@@ -282,6 +283,8 @@ contains ! =====     Public Procedures     =============================
     integer :: fieldValue
     integer :: interval
     integer :: keyNo
+    logical, save :: LASTPHASEOVERWROTEOPTS = .false.
+    character(len=128) :: OPTIONS
     character(len=80) :: PHASESTRING    ! E.g., 'Core'
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     character(len=8)  :: CHUNKSTRING  ! E.g., '257'
@@ -295,6 +298,7 @@ contains ! =====     Public Procedures     =============================
     stamp = detail > 0 ! E.g., -Sphase1; was .false.
     skipDirectwrites = skipDirectWritesoriginal
     skipRetrieval = skipRetrievalOriginal
+    options = ' '
     ! toldToSkip = .false.
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
@@ -306,6 +310,8 @@ contains ! =====     Public Procedures     =============================
       end if
       field_index = decoration(field)
       select case ( field_index )
+      case ( f_options )
+        call get_string ( sub_rosa(subtree(2,son)), options, strip=.true. )
       case ( f_silent )
         silent = get_boolean ( fieldValue )
       case ( f_skipDirectwrites )
@@ -346,6 +352,23 @@ contains ! =====     Public Procedures     =============================
     call get_string(name, phaseString)
     call add_to_phase_timing( trim(phaseString) )
     currentPhaseName = phaseString
+    if ( LASTPHASEOVERWROTEOPTS ) then
+      call restoredefaults
+      booleanstring = processOptions( trim( ORIGINALCMDS ) )
+      call output( 'Restoring default command-line args', advance='yes' )
+      call outputNamedValue( 'command_line', trim(command_line) )
+      call outputNamedValue( 'Switches', trim(Switches) )
+    endif
+    if ( options /= ' ' ) then
+      booleanstring = processOptions( trim(options ) )
+      LASTPHASEOVERWROTEOPTS = .true.
+      call output( 'Overwriting default command-line args', advance='yes' )
+      call outputNamedValue( 'command_line', trim(command_line) )
+      call outputNamedValue( 'Switches', trim(Switches) )
+    else
+      LASTPHASEOVERWROTEOPTS = .false.
+    endif
+    
     if ( RESTARTWARNINGS ) call MLSMessageReset( Warnings=.true. )
     ! This will cause Warnings and Errors to print the phase name
     ! where they occurred
@@ -891,6 +914,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.43  2012/06/27 18:00:34  pwagner
+! May overwrite command line options with options field to phase spec
+!
 ! Revision 2.42  2012/04/26 23:14:30  pwagner
 ! Now tracks currentPhaseName and currentChunkNumber (is there a better place?)
 !
