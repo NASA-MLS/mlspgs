@@ -365,7 +365,8 @@ program MLSL2
     else
       call output('S C F', advance='yes')
     end if
-    call dump_settings
+    ! Don't dump_settings more than once
+    if ( .not. parallel%slave ) call dump_settings
   end if
   if ( showDefaults ) stop
   call begin('starting mlsl2')
@@ -636,8 +637,6 @@ contains
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Unretrieved states fill', STATEFILLEDBYSKIPPEDRETRIEVALS, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-!     call outputNamedValue ( 'Stage in memory instead of a file?', parallel%stageInMemory, advance='yes', &
-!        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call outputNamedValue ( 'Using wall clock instead of cpu time?', time_config%use_wall_clock, advance='yes', &
         & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
       call get_string ( lit_indices(sectionTimingUnits), string, strip=.true. )
@@ -710,6 +709,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.185  2012/07/02 20:34:41  pwagner
+! Avoid dumping settings more than one time
+!
 ! Revision 2.184  2012/06/27 18:02:59  pwagner
 ! May overwrite command line options with options field to phase spec
 !
