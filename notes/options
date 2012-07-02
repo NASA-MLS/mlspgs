@@ -25,7 +25,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   -Sstring: Set "switches" = "string".  Characters in
             "string" may control individual outputs.  If -S is
             specified several times, the strings are combined.
-     (For specific strings and their effects, use -S"?")
+     (For help on specific strings and their effects, use -S"?")
   -T[digit][letter]: Time some processes depending on digit
      0: Time parsing, type checking and processing separately.
      1: like 0, and summarize times within Fill, Retrieve, etc. at end of run
@@ -91,7 +91,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --recl[ ]<number>: set the max record length size for l2cf to <number>
       (In case the default value, 20000, is too small for some l2cfs).
       This has effect only if the l2cf is not coming from standard input.
-  --[n]shar[edPCF]: Do [not] move PCFids so levels 1 and 2 can shared same PCF
+  --[n]shar[edPCF]: Do [not] adjust PCFids so levels 1 and 2 can share same PCF
   --[n]skipDir[ectWrites]: Do [not] skip all the directWrites; speedy snooping
   --[n]skipRetr[ieval]: Do [not] skip all the Retrievals; a pre-flight checkout
   --skipSec[tions] 'list': Skip all the sections in list (e.g, 'Join,Output')
@@ -143,6 +143,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.53  2012/03/28 20:17:34  pwagner
+ Removed stgmem option--slave tasks lost ability to join quantities
+
  Revision 1.52  2012/02/09 02:45:28  vsnyder
  Remove -C option -- I didn't notice --crash was already there
 
