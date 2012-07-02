@@ -37,6 +37,7 @@
 
 !     (subroutines and functions)
 ! dumpConfig               dump configuration
+! restoreConfig            restore configuration to its default state
 ! MLSMessage               main messaging routine
 ! MLSMessageSetup          routine interface to change some parts of MLSMessageConfig
 ! MLSMessageCalls          manage calling stack 
@@ -55,6 +56,7 @@
 
 ! === (start of api) ===
 ! dumpConfig ( [MLSMessageConfig_T config] )
+! restoreConfig
 ! MLSMessage ( int Severity, char* ModuleNameIn, char* Message, 
 !      [char* Advance], [MLSFile_T MLSFile], [status] )
 ! MLSMessageCalls ( char* command, [char* name] )
@@ -179,9 +181,9 @@
     ! Instead of showing both module names and severity for every message
     ! you can control thresholds
     ! (1) the severity below which to skip showing module names
-    integer :: skipModuleNamesThr       = MLSMSG_Success ! Always show module
+    integer :: skipModuleNamesThr      = MLSMSG_Success ! Always show module
     ! (2) the severity below which to skip showing severity
-    integer :: skipSeverityThr          = MLSMSG_Success ! Always show severity
+    integer :: skipSeverityThr         = MLSMSG_Success ! Always show severity
     ! (3) the severity below which to skip messages entirely
     integer :: skipMessageThr          = MLSMSG_Success ! Always show messages
     ! (4) simply skip every debug
@@ -228,7 +230,7 @@
   type(MLSCallStack_t), public, save :: MLSCallStack
   
   ! Public procedures
-  public :: dumpConfig
+  public :: dumpConfig, restoreConfig
   public :: MLSMessage, MLSMessage_, MLSMessageSetup, MLSMessageClose
   public :: MLSMessageExit, MLSMessageInquire, MLSMessageInternalFile
   public :: MLSMessageReset, PVMErrorMessage
@@ -748,6 +750,29 @@ contains
     & ' Info='//trim(adjustl(line)) // ' ' // place, MLSMSG_Error )
   end subroutine PVMErrorMessage
 
+  ! ------------------------------------------------  restoreConfig  -----
+
+  ! restore the configuration to its default settings
+  ! where it makes sense
+  ! i.e., we wouldn't mess with masterTID or logFileUnit
+
+  subroutine restoreConfig
+    MLSMessageConfig%limitWarnings           = 1000 
+    MLSMessageConfig%prefix                  = ' '  
+    MLSMessageConfig%skipModuleNamesThr      = MLSMSG_Success ! Always show module   
+    MLSMessageConfig%skipSeverityThr         = MLSMSG_Success ! Always show severit  
+    MLSMessageConfig%skipMessageThr          = MLSMSG_Success ! Always show messages  
+    MLSMessageConfig%suppressDebugs          = .false.                                
+    MLSMessageConfig%AsciifyMessages         = .true.                                                                            
+    MLSMessageConfig%AbbreviateModSevNames   = .false. ! Abbreviate module and severity names                                    
+    MLSMessageConfig%CrashOnAnyError         = .false. ! See crash warning                                                       
+    MLSMessageConfig%SendErrMsgToMaster      = .false. ! send last gasp to master?                                               
+    MLSMessageConfig%ShowCumulativeSeverity  = .false. ! print severity_so_far?                
+    MLSMessageConfig%StackTrace              = .false. ! Trace via MLSMessageCalls?            
+    MLSMSG_Severity_to_quit                  = MLSMSG_Error
+    MLSMSG_Severity_to_walkback              = MLSMSG_Error
+  end subroutine restoreConfig
+
   ! ------------ StopWithErrorMsg ------------
   subroutine StopWithErrorMsg ( Message, MLSFile, Advance )
     ! Print Message, dump calling stack (if any) and stop
@@ -829,8 +854,7 @@ contains
     character (len=5*len(str))              :: OUTSTR
 
     !----------Local vars----------!
-    integer :: I, K
-    character(len=5) :: insert
+    integer :: I
     character(len=1), dimension(len(str)) :: mold
     !----------Executable part----------!
     outstr=str
@@ -1081,6 +1105,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.18  2012/07/02 20:18:39  pwagner
+! Added restoreConfig
+!
 ! Revision 2.17  2012/05/16 19:23:26  vsnyder
 ! Remove duplicate SendErrMsgToMaster dump, some cannonball polishing
 !
