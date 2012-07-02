@@ -95,7 +95,8 @@ module L2ParInfo
     logical :: fwmParallel = .false.    ! Set if we are in forward model parallel mode
     logical :: master = .false.         ! Set if this is a master task
     logical :: slave = .false.          ! Set if this is a slave task
-    logical :: stageInMemory = .false.  ! Set if master stages to memory rather
+    ! logical :: stageInMemory = .false.  ! Set if master stages to memory rather
+    integer :: verbosity = 0            ! Set > 0 for extra output 
     integer :: myTid                    ! My task ID in pvm       | than a file
     integer :: masterTid                ! task ID in pvm
     integer :: noFWMSlaves              ! No. slaves in pvm system for fwm cases
@@ -474,11 +475,14 @@ contains ! ==================================================================
   ! --------------------------------------- FinishedDirectWrite ------------
   subroutine FinishedDirectWrite ( ticket )
     integer, intent(in) :: TICKET       ! Ticket number
+    ! Local variables
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
-    ! Local variables
-    call output ( "Sending finished on ticket " )
-    call output ( ticket, advance='yes' )
+    ! Executable code
+    if ( parallel%verbosity > 0 ) then
+      call output ( "Sending finished on ticket " )
+      call output ( ticket, advance='yes' )
+    endif
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( SIG_DirectWriteFinished, info )
     if ( info /= 0 ) &
@@ -491,7 +495,6 @@ contains ! ==================================================================
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, "sending direct write finished packet" )
     
-    ! Executable code
   end subroutine FinishedDirectWrite
 
   ! ---------------------------------------- GetMachineNames ------------
@@ -820,6 +823,8 @@ contains ! ==================================================================
     integer :: i, n
     character(len=1), parameter :: SPACE = ' '
     ! Executable code
+    if ( parallel%verbosity > 0 ) call output( 'slave arguments: ' // &
+      & trim(slaveArguments), advance='yes' )
     ! How many elements?
     n = NumStringElements( slaveArguments, countEmpty, inseparator=space )
     do i=1, n
@@ -868,6 +873,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.58  2012/07/02 20:39:59  pwagner
+! Once-routine output now requires verbosity > 0
+!
 ! Revision 2.57  2012/06/27 18:10:41  pwagner
 ! Added TransmitSlaveArguments, SnipLastSlaveArgument
 !
