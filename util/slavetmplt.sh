@@ -254,6 +254,12 @@ while [ "$more_opts" = "yes" ] ; do
        otheropts=`add_option "$otheropts" --sharedPCF`
        shift
        ;;
+    --submit )
+       echo "Skipping argument to submit to a special l2 queue manager: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
     --tk )
        otheropts=`add_option "$otheropts" --tk`
        shift
@@ -386,6 +392,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.21  2010/04/23 23:18:42  pwagner
+# Removed argumentless 'export' which was killing pvmd
+#
 # Revision 1.20  2009/05/26 20:04:21  pwagner
 # Can pass 3 more options from master
 #
