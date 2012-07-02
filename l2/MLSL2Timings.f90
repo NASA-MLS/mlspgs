@@ -31,7 +31,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   use MLSSTRINGLISTS, only: BOOLEANVALUE, CATLISTS, GETSTRINGELEMENT, &
     & NUMSTRINGELEMENTS, STRINGELEMENTNUM, SWITCHDETAIL
   use MORETREE, only: GET_BOOLEAN
-  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
+  use OUTPUT_M, only: BANNER, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
     & RESUMEOUTPUT, SETSTAMP, SUSPENDOUTPUT
   use STRING_TABLE, only: GET_STRING
   use TIME_M, only: TIME_NOW
@@ -190,8 +190,13 @@ contains ! =====     Public Procedures     =============================
       myLastTime = t2
       myLastElem = elem
       if ( present(t1) ) call time_now ( t1 )
-      if ( switchDetail(switches, 'phase') > -1 ) &
-        & call announce_phase(trim(phase_name))
+      if ( len_trim(phase_name) < 1 ) return
+      select case ( switchDetail(switches, 'phase') )
+      case ( 0 )
+        call announce_phase(trim(phase_name))
+      case ( 1: )
+        call banner( 'Beginning phase ' // trim(phase_name) ) 
+      end select
   end subroutine add_to_phase_timing
 
   ! -----------------------------------------  add_to_retrieval_timing  -----
@@ -295,7 +300,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable
     detail = switchDetail( switches, 'phase' )
     silent = .false.
-    stamp = detail > 0 ! E.g., -Sphase1; was .false.
+    stamp = detail > 1 ! E.g., -Sphase2; was .false.
     skipDirectwrites = skipDirectWritesoriginal
     skipRetrieval = skipRetrievalOriginal
     options = ' '
@@ -350,7 +355,6 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
     call get_string(name, phaseString)
-    call add_to_phase_timing( trim(phaseString) )
     currentPhaseName = phaseString
     if ( LASTPHASEOVERWROTEOPTS ) then
       call restoredefaults
@@ -403,6 +407,7 @@ contains ! =====     Public Procedures     =============================
       ! Possibly undo stamp added by prior phase
       call setStamp( textcode=' ', showTime=.false. )
     endif
+    call add_to_phase_timing( trim(phaseString) )
     if ( switchDetail(switches, 'bool') > -1 ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
@@ -914,6 +919,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.44  2012/07/02 20:33:41  pwagner
+! -Sphasen: n > 0 to bannerize phasename; n > 1 to stamp stdout with time,phase
+!
 ! Revision 2.43  2012/06/27 18:00:34  pwagner
 ! May overwrite command line options with options field to phase spec
 !
