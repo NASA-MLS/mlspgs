@@ -23,12 +23,14 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     & DFNT_FLOAT32, DFNT_FLOAT64
   use L3ASCII, only: L3ASCII_READ_FIELD
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCOMMON, only: LINELEN, NAMELEN, FILENAMELEN, R8, R4, &
+  use MLSCOMMON, only: LINELEN, NAMELEN, FILENAMELEN, &
     & UNDEFINEDVALUE, MLSFILE_T
   use MLSFILES, only: FILENOTFOUND, HDFVERSION_5, &
     & DUMP, GETPCFROMREF, MLS_HDF_VERSION, OPEN_MLSFILE, CLOSE_MLSFILE, &
     & SPLIT_PATH_NAME, MLS_OPENFILE, MLS_CLOSEFILE
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSKINDS, only: R4, R8
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_WARNING, &
+    & MLSMESSAGE
   use MLSSTRINGS, only: CAPITALIZE, HHMMSS_VALUE, LOWERCASE
   use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & LIST2ARRAY, REPLACESUBSTRING, STRINGELEMENTNUM
@@ -786,6 +788,12 @@ contains
     ! the_g_data%noLsts = ntime
     if ( LIT_DESCRIPTION == lit_geos5 ) then
       the_g_data%noDates = ntime
+      if ( ntime > 1 ) then
+        the_g_data%empty = .true.
+        CALL MLSMessage ( MLSMSG_Info, moduleName,  &
+          & 'Was apparently not geos5 ' // trim(GEOS5File%Name) )
+        return
+      endif
     else
       the_g_data%noDates = 1
     endif
@@ -2605,6 +2613,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.72  2012/07/02 20:17:42  pwagner
+! Protect against bounds error when debugging with NAG
+!
 ! Revision 2.71  2012/05/15 16:53:06  pwagner
 ! Allocate first, then give values
 !
