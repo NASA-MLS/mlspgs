@@ -265,37 +265,37 @@ contains
       if ( len_trim( line ) < 1 ) then
         exit
       endif
-        if ( line(1:2) == '--' ) then       ! "word" options
+      if ( line(1:2) == '--' ) then       ! "word" options
+        line = lowercase(line)
         n = 0
         switch = .true.
-        if ( line(3:3) == 'n' .or. line(3:3) == 'N' ) then
+        if ( line(3:3) == 'n' ) then
           switch = .false.
           n = 1
         end if
-        if ( lowercase(line(3+n:5+n)) == 'cat' ) then
+        if ( line(3+n:5+n) == 'cat' ) then
           catenateSplits = switch
         else if ( line(3+n:8+n) == 'check ' ) then
           checkl2cf = switch
         ! Using lowercase so either --checkPaths or --checkpaths work
         ! Perhaps we should do this for all multiletter options
         ! (single-letter options are case-sensitive)
-        else if ( lowercase(line(3+n:8+n)) == 'checkp' ) then
+        else if ( line(3+n:8+n) == 'checkp' ) then
           checkPaths = switch
-        else if ( lowercase(line(3+n:7)) == 'chunk' ) then
+        else if ( line(3+n:7) == 'chunk' ) then
           i = i + 1
           call getNextArg ( i, line )
           parallel%chunkRange = line
-          ! command_line = trim(command_line) // ' ' // trim(parallel%chunkRange)
-        else if ( lowercase(line(3+n:18+n)) == 'clearonallocate ' ) then
+        else if ( line(3+n:18+n) == 'clearonallocate ' ) then
           clearonallocate = switch
-        else if ( lowercase(line(3+n:7+n)) == 'ckbk ' ) then
+        else if ( line(3+n:7+n) == 'ckbk ' ) then
           checkBlocks = switch
-        else if ( lowercase(line(3+n:14+n)) == 'countchunks ' ) then
+        else if ( line(3+n:14+n) == 'countchunks ' ) then
           countChunks = switch
-        else if ( lowercase(line(3+n:7+n)) == 'crash' ) then
+        else if ( line(3+n:7+n) == 'crash' ) then
           MLSMessageConfig%crashOnAnyError = switch
           neverCrash = .not. switch
-        else if ( lowercase(line(3+n:8+n)) == 'defaul' ) then
+        else if ( line(3+n:8+n) == 'defaul' ) then
           showDefaults = switch
         else if ( line(3+n:7+n) == 'delay' ) then
           if ( line(8+n:) /= ' ' ) then
@@ -304,7 +304,6 @@ contains
           else
             i = i + 1
             call getNextArg ( i, line )
-            ! command_line = trim(command_line) // ' ' // trim(line)
           end if
           read ( line, *, iostat=status ) parallel%Delay
           if ( status /= 0 ) then
@@ -314,22 +313,19 @@ contains
         else if ( line(3+n:7+n) == 'dump ' ) then
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
           specialDumpFile = trim(line)
-        else if ( lowercase(line(3+n:14+n)) == 'fwmparallel ' ) then
+        else if ( line(3+n:14+n) == 'fwmparallel ' ) then
           parallel%fwmParallel = .true.
-        else if ( lowercase(line(3+n:7+n)) == 'host ' ) then
+        else if ( line(3+n:7+n) == 'host ' ) then
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
           GlobalAttributes%hostName = trim(line)
         else if ( line(3+n:9+n) == 'idents ' ) then
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
         else if ( line(3+n:6+n) == 'kit ' ) then
           MLSMessageConfig%useToolkit = switch
-        else if ( lowercase(line(3+n:6+n)) == 'l1b=' ) then
+        else if ( line(3+n:6+n) == 'l1b=' ) then
           arg_rhs = line(7+n:7+n)
           select case(arg_rhs)
           case('4')
@@ -339,7 +335,7 @@ contains
           case default
             LEVEL1_HDFVERSION = WILDCARDHDFVERSION
           end select
-        else if ( lowercase(line(3+n:8+n)) == 'l2gpr=' ) then
+        else if ( line(3+n:8+n) == 'l2gpr=' ) then
           arg_rhs = line(9+n:9+n)
           select case(arg_rhs)
           case('4')
@@ -349,7 +345,7 @@ contains
           case default
             DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
           end select
-        else if ( lowercase(line(3+n:8+n)) == 'l2gpw=' ) then
+        else if ( line(3+n:8+n) == 'l2gpw=' ) then
           arg_rhs = line(9+n:9+n)
           select case(arg_rhs)
           case('4')
@@ -373,7 +369,6 @@ contains
           ! 12 skip printing anything unless Error
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
           read ( line, *, iostat=status ) degree
           if ( status /= 0 ) then
             call io_error ( "After --lac[onic] option", status, line )
@@ -392,42 +387,39 @@ contains
           parallel%master = .true.
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%slaveFilename = trim ( line )
           call InitParallel ( 0, 0 )
           word = '--slave'
           write ( word(len_trim(word)+1:), * ) parallel%myTid
           call AccumulateSlaveArguments(word)
-        else if ( lowercase(line(3+n:21+n)) == 'maxfailuresperchunk' ) then
+        else if ( line(3+n:21+n) == 'maxfailuresperchunk' ) then
           if ( line(22+n:) /= ' ' ) then
             copyArg = .false.
             line(:21+n) = ' '
           else
             i = i + 1
             call getNextArg ( i, line )
-            ! command_line = trim(command_line) // ' ' // trim(line)
           end if
           read ( line, *, iostat=status ) parallel%maxFailuresPerChunk
           if ( status /= 0 ) then
             call io_error ( "After --maxFailuresPerChunk option", status, line )
             stop
           end if
-        else if ( lowercase(line(3+n:23+n)) == 'maxfailurespermachine' ) then
+        else if ( line(3+n:23+n) == 'maxfailurespermachine' ) then
           if ( line(24+n:) /= ' ' ) then
             copyArg = .false.
             line(:23+n) = ' '
           else
             i = i + 1
             call getNextArg ( i, line )
-            ! command_line = trim(command_line) // ' ' // trim(line)
           end if
           read ( line, *, iostat=status ) parallel%maxFailuresPerMachine
           if ( status /= 0 ) then
             call io_error ( "After --maxFailuresPerMachine option", status, line )
             stop
           end if
-        else if ( lowercase(line(3+n:10+n)) == 'memtrack' ) then
+        else if ( line(3+n:10+n) == 'memtrack' ) then
           v = 1
           if ( line(11+n:) /= ' ' ) then
             copyArg = .false.
@@ -441,7 +433,6 @@ contains
             read ( line, *, iostat=status ) j
             if ( status == 0 ) then
               i = i + 1
-              ! command_line = trim(command_line) // ' ' // trim(line)
               v = j
             end if
           end if
@@ -456,20 +447,18 @@ contains
           OUTSIDEOVERLAPS = switch
         else if ( line(3+n:8+n) == 'patch ' ) then
           patch = switch
-        else if ( lowercase(line(3+n:5+n)) == 'pge ' ) then
+        else if ( line(3+n:5+n) == 'pge ' ) then
           call SnipLastSlaveArgument ! Don't want slaves to see this
           i = i + 1
           call getNextArg ( i, line )
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%pgeName = trim(line)
-          ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
-        else if ( lowercase(line(3+n:6+n)) == 'recl' ) then
+        else if ( line(3+n:6+n) == 'recl' ) then
           if ( line(7+n:) /= ' ' ) then
             line(:6+n) = ' '
           else
             i = i + 1
             call getNextArg ( i, line )
-            ! command_line = trim(command_line) // ' ' // trim(line)
           end if
           read ( line, *, iostat=status ) recl
           if ( status /= 0 ) then
@@ -478,23 +467,21 @@ contains
           end if
         else if ( line(3+n:6+n) == 'shar' ) then
           SHAREDPCF = switch
-        else if ( lowercase(line(3+n:9+n))  == 'skipdir' ) then
+        else if ( line(3+n:9+n)  == 'skipdir' ) then
           SKIPDIRECTWRITES = switch
-        else if ( lowercase(line(3+n:10+n)) == 'skipretr' ) then
+        else if ( line(3+n:10+n) == 'skipretr' ) then
           SKIPRETRIEVAL = switch
-        else if ( lowercase(line(3+n:9+n)) == 'skipsec' ) then
+        else if ( line(3+n:9+n) == 'skipsec' ) then
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
           sectionsToSkip = lowercase(line)
-        else if ( lowercase(line(3+n:10+n)) == 'slavemaf' ) then
+        else if ( line(3+n:10+n) == 'slavemaf' ) then
           copyArg=.false.
           if ( line(11+n:) /= ' ' ) then
             line(:10+n) = ' '
           else
             i = i + 1
             call getNextArg ( i, line )
-            ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
           end if
           read ( line, *, iostat=status ) slaveMAF
           if ( status /= 0 ) then
@@ -509,7 +496,6 @@ contains
           else
             i = i + 1
             call getNextArg ( i, line )
-            ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
           end if
           read ( line, *, iostat=status ) parallel%masterTid
           if ( status /= 0 ) then
@@ -521,10 +507,9 @@ contains
           if ( DEEBUG ) print *, 'masterTid: ', parallel%masterTid
         else if ( line(3+n:8+n) == 'snoop ' ) then
           snoopingActive = .true.
-        else if ( lowercase(line(3+n:12+n)) == 'snoopname' ) then
+        else if ( line(3+n:12+n) == 'snoopname' ) then
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
           snoopName = line
         else if ( line(3+n:7+n) == 'state' ) then
           if ( line(8+n:) /= ' ' ) then
@@ -532,7 +517,6 @@ contains
           else
             i = i + 1
             call getNextArg ( i, line )
-            ! command_line = trim(command_line) // ' ' // trim(adjustl(line))
           end if
           read ( line, *, iostat=status ) stateFilledBySkippedRetrievals
           if ( status /= 0 ) then
@@ -544,7 +528,6 @@ contains
           copyArg = .true.
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
           OutputOptions%name = trim(line)
           OutputOptions%buffered = .false.
           ! outputOptions%debugUnit = 32
@@ -553,18 +536,14 @@ contains
           call get_lun ( OutputOptions%prUnit, msg=.false. )
           close( unit=l2cf_unit )
           inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
-        ! else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
-        ! parallel%stageInMemory = .true.
-        else if ( lowercase(line(3+n:12+n)) ==  'stopafter ' ) then
+        else if ( line(3+n:12+n) ==  'stopafter ' ) then
           i = i + 1
           call getNextArg ( i, stopAfterSection )
-          ! command_line = trim(command_line) // ' ' // trim(adjustl(stopAfterSection))
-        else if ( lowercase(line(3+n:12+n)) ==  'stopwither' ) then
+        else if ( line(3+n:12+n) ==  'stopwither' ) then
           stopWithError = switch
-        else if ( lowercase(line(3+n:11+n)) == 'subblock ' ) then
+        else if ( line(3+n:11+n) == 'subblock ' ) then
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
           read ( line, *, iostat=status ) subBlockLength
           if ( status /= 0 ) then
             call io_error ( "After --subblock option", status, line )
@@ -574,9 +553,8 @@ contains
           copyArg = .false.
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
           parallel%submit = trim ( line )
-        else if ( lowercase(line(3+n:5+n)) == 'tk ' ) then
+        else if ( line(3+n:5+n) == 'tk ' ) then
           toolkit = switch
         else if ( line(3+n:10+n) == 'version ' ) then
           do j=1, size(current_version_id)
@@ -588,7 +566,6 @@ contains
         else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
           i = i + 1
           call getNextArg ( i, line )
-          ! command_line = trim(command_line) // ' ' // trim(line)
           exit
         else
           print *, 'unrecognized option ', trim(line), ' ignored.'
@@ -698,6 +675,9 @@ jloop:do while ( j < len_trim(line) )
       switches = tempSwitches
     end do
 
+    ! If we like, we could move these next few statements to a standalone
+    ! subroutine named something like processSwitches
+    parallel%verbosity = switchDetail(switches, 'mas') + 1
     if ( switchDetail(switches, 'walk') > -1 ) &
       & MLSMSG_Severity_to_walkback = MLSMSG_Warning
     contains
@@ -722,7 +702,8 @@ jloop:do while ( j < len_trim(line) )
   ! Now some things it makes no sense to overwrite, so it makes
   ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
   subroutine restoreDefaults
-  use TOGGLES, only: SWITCHES
+  use MLSMESSAGEMODULE, only: RESTORECONFIG
+  use TOGGLES, only: INIT_TOGGLE
     OUTPUT_PRINT_UNIT             = -2
     DEFAULT_HDFVERSION_WRITE      = HDFVERSION_5
     DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION
@@ -743,8 +724,8 @@ jloop:do while ( j < len_trim(line) )
     CHECKPATHS                    = .false.         
     CATENATESPLITS                = .true.
     TOOLKIT                       =  SIPS_VERSION
-    SWITCHES                      = ' '
-    MLSMSG_Severity_to_walkback   = MLSMSG_Error
+    call init_toggle
+    call restoreConfig
   end subroutine restoreDefaults
 
 !--------------------------- end bloc --------------------------------------
@@ -762,6 +743,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.52  2012/07/02 20:29:32  pwagner
+! Improve RestoreDefaults, some housekeeping
+!
 ! Revision 2.51  2012/06/27 18:02:09  pwagner
 ! May overwrite command line options with options field to phase spec
 !
