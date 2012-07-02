@@ -160,12 +160,14 @@ contains ! =====     Public Procedures     =============================
         if ( dwt22-dwt2 > timeReasonable ) then
           call output('Unreasonable time waiting for permission', advance='yes')
         endif
-        call output ( "Got permission for ticket " )
-        call output ( ticket )
-        call output ( " node " )
-        call output ( directWriteNodeGranted, advance='no' )
-        call output ( " file " )
-        call output ( trim(theFile), advance='yes' )
+        if ( parallel%verbosity > 0 ) then
+          call output ( "Got permission for ticket " )
+          call output ( ticket )
+          call output ( " node " )
+          call output ( directWriteNodeGranted, advance='no' )
+          call output ( " file " )
+          call output ( trim(theFile), advance='yes' )
+        endif
         call add_to_directwrite_timing ( 'waiting', dwt2)
         didthewrite = .false.
       end if
@@ -2218,6 +2220,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.149  2012/07/02 20:40:43  pwagner
+! Once-routine output now requires verbosity > 0
+!
 ! Revision 2.148  2012/05/08 17:51:11  pwagner
 ! Added Select .. Case .. EndSelect control structure
 !
