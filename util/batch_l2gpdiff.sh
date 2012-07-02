@@ -12,6 +12,8 @@
 # If str1 is StdProd it is expanded into the current standard products
 # i.e.,  
 # BrO CH3CN ClO CO GPH H2O HCl HCN HNO3 HO2 HOCl IWC N2O O3 OH RHI Temperature
+# If the -Ef file mechanism is used, and the variable PRODUCTS is defined
+# its value will override the other species
 #
 #     O p t i o n s
 #    -Ef file             set environment according to definitions found in file
@@ -160,6 +162,7 @@ the_splitter="`echo $0 | sed 's/'$I'/split_path/'`"
 envfile="default-env.txt"
 l2gpdiff_opts=""
 list=""
+PRODUCTS=""
 append="no"
 cycle1=""
 cycle2=""
@@ -268,7 +271,10 @@ while [ "$more_strs" = "yes" ] ; do
     esac
 done
 
-if [ "$list" = "" ]
+if [ "$PRODUCTS" != "" ]
+then
+  list="$PRODUCTS"
+elif [ "$list" = "" ]
 then
   sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
       | sed -n 's/^.//p' | sed '1 d; $ d'
@@ -411,6 +417,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.17  2012/04/20 23:16:19  pwagner
+# Disabled more debugging messages
+#
 # Revision 1.16  2012/04/20 20:18:30  pwagner
 # Turn off extra debugging
 #
