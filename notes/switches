@@ -76,7 +76,7 @@ Switches (set by -S option in mlsl2's command line):
   LBLB =>   lblB and then stop
   log =>    Log file messages
   mach =>   Machine names (that can be enslaved by master task)
-  mas =>    Activities of the PVM master task
+  mas =>    Activities between the PVM master task and slave task
   metd =>   Dump nonoptional outputs from metrics
   metD =>   Dump nonoptional outputs from metrics, then stop
   msk =>    Mask set up by subset command in Retrieve
@@ -98,7 +98,8 @@ Switches (set by -S option in mlsl2's command line):
   PFAB =>   pfaB and then stop
   pfag =>   Show PFA table generation progress
   pguess => Iterations of the pressure guesser
-  phase[n]=> Announce phases (e.g., Core) as they begin, with n also progress
+  phase[n]=> Announce phases (e.g., Core) as they begin
+            n > 1 => add time stamps
   point =>  Pointing grids
   pro[n] => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
               and each file l2gp, l1brad, ncep, dao input; dump filedatabase
@@ -204,6 +205,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.75  2012/04/20 01:44:07  vsnyder
+ Add dxfc, dxn
+
  Revision 1.74  2012/03/14 22:15:57  pwagner
  grid method, debug, and no l2cf added
 
