@@ -105,6 +105,8 @@ then
 fi
 
 mkdir $tempdir
+#echo "args: $@"
+#echo sed -n '2,$ p' $1 | grep 'mlsl2.log' | awk '{print $1}'
 p=`sed -n '2,$ p' $1 | grep 'mlsl2.log' | awk '{print $1}'`
 lastq=`sed -n '2,$ p' $1 | grep 'mlsl2.log' | tail -1 | awk '{print $1}'`
 prevq=""
@@ -199,7 +201,7 @@ done
 # echo $1/* | wc -w
 nlogs=`echo $1/* | wc -w`
 
-if [ "$nlogs" = 1 ]
+if [ "$nlogs" = 1 -a "$1/*" = "$1/mlsl2.log" ]
 then
   echo "Splitting already-catenated logfiles $1/*"
   ls $1
@@ -219,3 +221,6 @@ else
 fi
 exit 0
 # $Log$
+# Revision 1.1  2006/10/19 18:32:03  pwagner
+# First commit
+#
