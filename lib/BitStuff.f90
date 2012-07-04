@@ -120,6 +120,25 @@ module BitStuff
     & (/ (ibitindx, ibitindx = 0, MAXBITNUMBER) /)
   integer, parameter, dimension(0:MAXBITNUMBER) :: BITVALUES = &
     & (/ (2**ibitindx, ibitindx = 0, MAXBITNUMBER) /)
+    ! Count the number of nonzero bits in Word.
+  integer, parameter :: Counts(0:255) = & ! Number of nonzero bits in a byte
+    !    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
+    & (/ 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,  & ! 0 
+    &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 1 
+    &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 2 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 3 
+    &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 4 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 5 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 6 
+    &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! 7 
+    &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 8 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 9 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! A 
+    &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! B 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! C 
+    &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! D 
+    &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! E 
+    &    4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8 /)  ! F 
 
 contains
 
@@ -216,26 +235,9 @@ contains
 
   ! ------------------------------------------------  CountBits_0  -----
   integer function CountBits_0 ( Word )
+    ! Count the number of nonzero bits in all the bytes of an integer.
+    ! Replace by POPCNT when Fortran 2008 is sufficiently widely available.
     integer, intent(in) :: Word
-    ! Count the number of nonzero bits in Word.
-    integer :: Counts(0:255) = & ! Number of nonzero bits in each byte
-      !    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
-      & (/ 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,  & ! 0 
-      &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 1 
-      &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 2 
-      &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 3 
-      &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 4 
-      &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 5 
-      &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 6 
-      &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! 7 
-      &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 8 
-      &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 9 
-      &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! A 
-      &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! B 
-      &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! C 
-      &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! D 
-      &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! E 
-      &    4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8 /)  ! F 
     integer :: I
 
     countBits_0 = counts(iand(word,255))
@@ -247,7 +249,7 @@ contains
   ! ------------------------------------------------  CountBits_1  -----
   integer function CountBits_1 ( Array )
     integer, intent(in) :: Array(:)
-    ! Count the number of nonzero bits in all of the elements of Word.
+    ! Count the number of nonzero bits in all of the elements of Array.
     integer :: I
     countBits_1 = countBits(array(1))
     do i = 2, size(array)
@@ -258,7 +260,7 @@ contains
   ! ------------------------------------------------  CountBits_2  -----
   integer function CountBits_2 ( Array )
     integer, intent(in) :: Array(:,:)
-    ! Count the number of nonzero bits in all of the elements of Word.
+    ! Count the number of nonzero bits in all of the elements of Array.
     integer :: I
     countBits_2 = countBits(array(:,1))
     do i = 2, size(array,2)
@@ -268,13 +270,12 @@ contains
 
   ! --------------------------------------------  CountCharBits_0  -----
   integer function CountCharBits_0 ( Char, What )
-    ! Count the number of nonzero bits.
+    ! Count the number of nonzero bits in iand(ichar(char),what).
+    ! Replace by POPCNT when Fortran 2008 is sufficiently widely available.
     character(len=1), intent(in) :: Char
     integer, intent(in), optional :: What ! mask of which bits to count
-    integer :: myWhat
-    myWhat = not(0)
-    if ( present(what) ) myWhat = what
-    countCharBits_0 = countBits(iand(ichar(char),myWhat))
+    countCharBits_0 = counts(ichar(char))
+    if ( present(what) ) countCharBits_0 = counts(iand(ichar(char),what))
   end function CountCharBits_0
 
   ! --------------------------------------------  CountCharBits_1  -----
@@ -656,6 +657,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.20  2012/07/04 02:11:28  vsnyder
+! Simplify bit counting
+!
 ! Revision 2.19  2012/05/25 20:36:52  pwagner
 ! Prints both hex and decimal dumped bit values (not everyone can read hex)
 !
