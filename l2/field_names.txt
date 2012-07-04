@@ -133,6 +133,7 @@ dontSumHeights
 dontSumInstances
 dontMask
 downsample
+dumpQuantities # of X during Newton iteration
 
 earthRadius
 ECRtoFOV
@@ -497,6 +498,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.220  2012/07/04 01:53:46  vsnyder
+# Add dumpQuantities field of retrieve spec
+#
 # Revision 2.219  2012/06/27 17:53:04  pwagner
 # May now Dump command line
 #
