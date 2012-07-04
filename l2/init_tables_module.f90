@@ -1540,6 +1540,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_covSansReg, t+t_boolean, n+n_field_type, &
              begin, f+f_diagnostics, s+s_vector, n+n_field_spec, &
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
+             begin, f+f_dumpQuantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_extendedAverage, t+t_boolean, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
              begin, f+f_fuzz, t+t_numeric, n+n_field_type, & ! Secret
@@ -1781,6 +1782,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.550  2012/07/04 01:53:46  vsnyder
+! Add dumpQuantities field of retrieve spec
+!
 ! Revision 2.549  2012/06/27 18:00:07  pwagner
 ! May overwrite command line options with options field to phase spec
 !
