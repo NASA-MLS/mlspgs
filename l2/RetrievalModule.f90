@@ -52,7 +52,7 @@ contains
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use INIT_TABLES_MODULE, only: F_APRIORI, F_APRIORIFRACTION, F_APRIORISCALE, &
       & F_AVERAGE, F_COLUMNSCALE, F_COMMENT, F_COVARIANCE, F_COVSANSREG, &
-      & F_DIAGNOSTICS, F_DIAGONAL, F_EXTENDEDAVERAGE, &
+      & F_DIAGNOSTICS, F_DIAGONAL, F_DumpQuantities, F_EXTENDEDAVERAGE, &
       & F_FORWARDMODEL, F_FUZZ, F_FWDMODELEXTRA, F_FWDMODELOUT, &
       & F_HESSIAN, F_HIGHBOUND, F_HREGORDERS, F_HREGQUANTS, F_HREGWEIGHTS, &
       & F_HREGWEIGHTVEC, F_JACOBIAN, F_LAMBDA, F_LEVEL, F_LOWBOUND, &
@@ -149,6 +149,7 @@ contains
                                         ! convergence, then put in the whole
                                         ! thing and iterate until it converges
                                         ! again (hopefully only once).
+    integer :: DumpQuantitiesNode       ! in the l2cf tree
     integer :: Error
     logical :: ExtendedAverage          ! Averaging kernels based on full
                                         ! Jacobian (last term) not masked
@@ -282,6 +283,7 @@ contains
     integer, parameter :: BadQuantities = CannotFlagCloud + 1
     integer, parameter :: BadChannel = BadQuantities + 1
 
+    dumpQuantitiesNode = 0
     error = 0
     nullify ( apriori, aprioriFraction, configIndices, covariance, fwdModelOut )
     nullify ( measurements, measurementSD, outputSD, sparseQuantities )
@@ -418,6 +420,8 @@ contains
             diagnostics => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_diagonal )
             diagonal = get_Boolean(son)
+          case ( f_dumpQuantities )
+            dumpQuantitiesNode = son
           case ( f_extendedAverage )
             extendedAverage = get_boolean(son)
           case ( f_forwardModel )
@@ -1087,6 +1091,29 @@ contains
       end if
     end subroutine BoundMove
 
+    ! ---------------------------------------------   DumpStateQuantities --
+    subroutine DumpStateQuantities ( State, DumpQuantitiesNode, Title )
+      use VectorsModule, only: Dump, GetVectorQtyByTemplateIndex, &
+        & Vector_t, VectorValue_t
+      use Tree, only: Decoration, NSons, Subtree
+
+      type(vector_t), intent(in) :: State
+      integer, intent(in) :: DumpQuantitiesNode ! in L2CF tree
+      character(len=*), intent(in) :: Title
+
+      integer :: I
+      type(vectorValue_t), pointer :: Qty
+      integer :: QuantityIndex
+
+      do i = 2, nsons(dumpQuantitiesNode)
+call output ( decoration(decoration(subtree(i,dumpQuantitiesNode))), before='Quantity index = ', advance='yes' )
+        qty => getVectorQtyByTemplateIndex ( state, &
+          & decoration(decoration(subtree(i,dumpQuantitiesNode))) )
+        call dump ( qty, name=title )
+      end do
+
+    end subroutine DumpStateQuantities
+
     ! ---------------------------------------------   DumpRetrievalConfig --
     subroutine DumpRetrievalConfig
       use lexer_core, only: PRINT_SOURCE
@@ -1383,7 +1410,7 @@ contains
       integer :: D_Fnmin  ! 'fnmin' terms
       integer :: D_Fnorm  ! 'fnorm' Contributions to | F |
       logical :: D_Gvec   ! 'gvec' Gradient vector
-      logical :: D_Jac_F  ! 'JAC' Full Jacobian (if you dare)
+      integer :: D_Jac_F  ! 'JAC' Full Jacobian (if you dare)
       logical :: D_Jac_N  ! 'jac' L_Infty norms of Jacobian blocks
       integer :: D_KTK    ! 'kTk' kTk, which might be normalEquations
       logical :: D_Mas    ! 'mas' Announce master triggering slaves
@@ -1396,6 +1423,7 @@ contains
       logical :: D_Nin    ! 'nin' Newton method's internal output
       logical :: D_Nwt    ! 'nwt' Commands from Newton method
       logical :: D_Reg    ! 'reg' Tikhonov regularization
+      integer :: D_Resid  ! 'dres' Dump residuals with details = d_resid
       logical :: D_Sca    ! 'sca' Newton method's scalars
       logical :: D_Spa    ! 'spa' Sparsity structure of matrices
       logical :: D_Strb   ! 'strb' State vector iff we get into trouble
@@ -1467,7 +1495,7 @@ contains
       d_fnmin = switchDetail ( switches, 'fnmin' )
       d_fnorm = switchDetail ( switches, 'fnorm' )
       d_gvec = switchDetail(switches,'gvec') > -1
-      d_jac_f = switchDetail(switches,'JAC') > -1
+      d_jac_f = switchDetail(switches,'JAC')
       d_jac_n = switchDetail(switches,'jac') > -1
       d_kTk = switchDetail ( switches, 'kTk' )
       d_mas = switchDetail ( switches, 'mas' ) > -1
@@ -1480,6 +1508,7 @@ contains
       d_nin = switchDetail(switches,'nin') > -1
       d_nwt = switchDetail(switches,'nwt') > -1
       d_reg = switchDetail(switches,'reg') > -1
+      d_resid = switchDetail(switches,'dres')
       d_sca = switchDetail(switches,'sca') > -1
       d_spa = switchDetail(switches,'spa') > -1
       d_strb = switchDetail(switches,'strb') > -1
@@ -1555,6 +1584,8 @@ contains
         end do
       end if
         if ( d_xvec ) call dump ( v(x), name='Original X' )
+        if ( got(f_dumpQuantities) ) &
+          & call DumpStateQuantities ( v(x), dumpQuantitiesNode, 'Original X' )
       numGrad = 0
       numJ = 0
       numNewt = 0
@@ -1688,6 +1719,8 @@ NEWT: do ! Newton iteration
         !   \end{description}
           numJ = numJ + 1
             if ( d_xvec ) call dump ( v(x), details=2, name='State' )
+            if ( got(f_dumpQuantities) ) &
+              & call DumpStateQuantities ( v(x), dumpQuantitiesNode, 'State' )
           if ( numJ > maxJacobians .and. nwt_flag /= nf_getJ ) then
               if ( d_nwt ) then
                 call output ( numJ, before= &
@@ -1918,8 +1951,8 @@ NEWT: do ! Newton iteration
               ! Forward model calls add_to_retrieval_timing
             end if
             call time_now ( t1 )
-              if ( d_jac_f ) &
-                & call dump ( jacobian, name='Jacobian', details=9, clean=d_drmc )
+              if ( d_jac_f > -1 ) &
+                & call dump ( jacobian, name='Jacobian', details=d_jac_f, clean=d_drmc )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
                  ! Store what we've just got in v(f) ie fwdModelOut
@@ -1929,6 +1962,8 @@ NEWT: do ! Newton iteration
                 call subtractFromVector ( v(f_rowScaled), measurements, &
                   & quant=jacobian%row%quant(rowBlock), &
                   & inst=jacobian%row%inst(rowBlock) ) ! f - y
+                  if ( d_resid > -1 ) call dump ( v(f_rowScaled), &
+                    & name='Residuals', details=d_resid )
                 !{Let $\bf W$ be the Cholesky factor of the inverse of the
                 ! measurement covariance ${\bf S}_m$ (which in our case is
                 ! diagonal), i.e. ${\bf W}^T {\bf W} = {\bf S}_m^{-1}$. Row
@@ -2180,16 +2215,25 @@ NEWT: do ! Newton iteration
               & 'Sparseness structure of blocks of factor:', upper=.true. )
             if ( d_fac_f ) call dump ( factored%m, 'Factor', 2, clean=d_drmc )
 
-          ! Compute number of rows of Jacobian actually used.  Don't count
-          ! rows due to Levenberg-Marquardt stabilization.  Do count rows
-          ! due to a priori or regularization.
+          ! Compute numbers of rows and columns of Jacobian actually used. 
+          ! Don't count rows due to Levenberg-Marquardt stabilization.  Do
+          ! count rows due to a priori or regularization.  Don't count
+          ! masked-off measurement or state rows or columns.
           jacobian_cols = sum(jacobian%col%nelts)
+          do j = 1, state%template%noQuantities
+            if ( associated(state%quantities(j)%mask) ) &
+              ! Subtract masked-off columns
+              & jacobian_cols = jacobian_cols - &
+              &   countBits(state%quantities(j)%mask, what=m_linAlg )
+          end do
           jacobian_rows = sum(jacobian%row%nelts)
           do j = 1, measurements%template%noQuantities
             if ( associated(measurements%quantities(j)%mask) ) &
+              ! subtract masked-off rows
               & jacobian_rows = jacobian_rows - &
               &   countBits(measurements%quantities(j)%mask, what=m_linAlg )
           end do
+
           ! Correct for apriori information.  Note that there is an
           ! approximation here: We don't take any account of whether the a
           ! priori is used on an element by element basis.
@@ -2917,6 +2961,11 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.327  2012/07/04 02:13:03  vsnyder
+! Add dump of residuals.  Add dumpQuantities node to select quantities of
+! the state vector to dump during the Newton iteration.  Remove masked rows
+! and columns from the counts, to compute DOF correctly.
+!
 ! Revision 2.326  2012/06/06 20:37:56  vsnyder
 ! Add toggles field to retrieve spec
 !
