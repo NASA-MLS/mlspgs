@@ -351,7 +351,7 @@ contains ! ============= Public Procedures ==========================
     use MLSKinds, only: RM, RV
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use Output_m, only: Output
-    use VectorsModule, only: Dump, Vector_t, VectorValue_t
+    use VectorsModule, only: Dump, M_Ignore, M_LinAlg, Vector_t, VectorValue_t
 
     integer, intent(in) :: MAF               ! MAjor Frame number
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
@@ -369,6 +369,7 @@ contains ! ============= Public Procedures ==========================
     integer :: JCol    ! of Jacobian
     integer :: JCols(s_qty%template%noInstances) ! of Jacobian, n in wvs-107
     integer :: JRow    ! of Jacobian, n in wvs-107
+    integer :: Mask    ! LinAlg bit from S_Qty
     integer :: NVecChans ! Number of channels in radiance
     type(vectorValue_t), pointer :: O_Qty        ! Qty of output vector
     real(rv) :: P(size(ptan%values,1),f_qty%template%noSurfs) ! 10**(-2*(zeta(surf)-zeta(vSurf)))
@@ -492,9 +493,13 @@ contains ! ============= Public Procedures ==========================
     ! \end{equation*}
     ! where the subscripts are as above.
 
-                Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
-                  & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
-                    & rowSum * p(vSurf,surf)
+                mask = 0
+                if ( associated(s_qty%mask) ) &
+                  & mask = iand(ichar(s_qty%mask(vsurf,1)), m_ignore+m_linAlg)
+                if ( mask == 0 ) &
+                  & Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
+                    & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
+                      & rowSum * p(vSurf,surf)
 
     !{Compute radiance using Equation (4) in wvs-107
     ! \begin{equation*}
@@ -582,14 +587,16 @@ contains ! ============= Public Procedures ==========================
       module procedure MINLOC_S_S, MINLOC_S_D
     end interface
 
-    ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty
     ! PTan might be out of order, so sort ptan%values
     call sortp ( ptan%values(:,maf), 1, ptan%template%noSurfs, p )
+
+    f_lrp = minloc_s(lrp - f_qty%template%surfs(:,1))
+    s_lrp = minloc_s(lrp - ptan%values(p,1))
+
+    ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty
     call interpolateValues (                              &
       & ptan%values(p,maf), s_qty%values(p,maf), &
       & f_qty%template%surfs(:,1), f_qty%values(:,1), 'L', 'C' )
-    f_lrp = minloc_s(lrp - f_qty%template%surfs(:,1))
-    s_lrp = minloc_s(lrp - ptan%values(p,1))
      !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107,
      !  to compute extinction for the forward model
      ! \renewcommand{\arraystretch}{2}
@@ -636,6 +643,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.47  2012/07/04 02:15:01  vsnyder
+! Don't compute masked rows of Jacobian.
+!
 ! Revision 2.46  2012/06/15 23:29:39  vsnyder
 ! Spread extinction interpolated from MIF extinction, below the lowest
 ! retrieved pressure, to every profile.  Change dump switch interpretation.
