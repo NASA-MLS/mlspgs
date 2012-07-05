@@ -82,6 +82,7 @@ module DUMP_0
 ! DUMPSUMS                 dump after summing successive array values
 !                            ("inverse" of selfDiff)
 ! DUMPTABLE                dump a 2-d table of values with headers
+! RESTOREDUMPCONFIG        restore default values to dump configuration
 ! SELFDIFF                 dump increments between successive array values
 ! === (end of toc) ===
 
@@ -122,6 +123,7 @@ module DUMP_0
 !       headers is an array the same size as the 2nd index of values
 !       format optionally overrides the default format for the numeric type
 !       formats allows you to specify a format separately column-by-column
+! restoreDumpConfig
 ! selfdiff ( array, char* name,
 !      [fillvalue], [int width], [char* format],
 !      [log waves], [int lbound], [char* options] )
@@ -196,7 +198,7 @@ module DUMP_0
 
   public :: DIFF, DIFF_FUN, &
     & DUMP, DUMP_2x2xN, DUMPDATES, DUMPDUMPOPTIONS, DUMPLISTS, DUMPNAMEDVALUES, &
-    & DUMPSUMS, DUMPTABLE, SELFDIFF
+    & DUMPSUMS, DUMPTABLE, RESTOREDUMPCONFIG, SELFDIFF
 
   interface DIFF        ! dump diffs between pair of n-d arrays of numeric type
     module procedure DIFF_1D_DOUBLE, DIFF_1D_INTEGER, DIFF_1D_REAL
@@ -2747,8 +2749,27 @@ contains
     include "diff.f9h"
   end subroutine FILTEREDDIFF_4D_REAL
 
-  
-  ! ------------------------------------------------------  Empty  -----
+  ! ---------------------------------------------  restoreDumpConfig  -----
+  ! Restore default values for dump settings
+  subroutine RESTOREDUMPCONFIG
+    DEFAULTDIFFOPTIONS        = ' '
+    DEFAULTDUMPOPTIONS        = ' '
+    DEFAULTMAXLON             = 128
+    DUMPTABLESIDE             = 'top'
+    DIFFRMSMEANSRMS           = .false.
+    DONTDUMPIFALLEQUAL        = .true.
+    FILTERFILLSFROMRMS        = .false.
+    PRINTFILLVALUE            = .true.
+    PRINTNAMEIFDIFF           = .true.
+    STATSONONELINE            = .true.
+    COLLAPSEOPTIONS           = 'num[+]all[+]'
+    INTPLACES                 = '6' ! how many places
+    PCTFORMAT                 = '*' ! * means default format
+    RMSFORMAT                 = '*' ! * means default format
+    SDFORMATDEFAULT           = '(1pg14.6)'
+  end subroutine RESTOREDUMPCONFIG
+
+  ! ---------------------------------------------  arrayShapeToString  -----
   function arrayShapeToString ( arrayShape ) result ( string )
     ! Given an array of integers return the shape as a string
     ! E.g., given (/4,2,6/) return '4*2*6'
@@ -3307,6 +3328,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.123  2012/07/05 23:47:31  pwagner
+! Added restoreDumpConfig
+!
 ! Revision 2.122  2012/06/22 20:25:52  pwagner
 ! Specify advance arg because we may now set default to 'yes'
 !
