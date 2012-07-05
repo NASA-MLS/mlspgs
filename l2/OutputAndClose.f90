@@ -77,8 +77,8 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_CREATE, F_DESTROY, F_DONTPACK, &
       & F_EXCLUDE, F_FILE, F_HDFVERSION, F_HGRID, &
       & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
-      & F_METADATAonly, F_METANAME, F_MOLECULESECONDDERIVATIVES, &
-      & F_OVERLAPS, F_PACKED, &
+      & F_METADATAONLY, F_METANAME, F_MOLECULESECONDDERIVATIVES, &
+      & F_OPTIONS, F_OVERLAPS, F_PACKED, &
       & F_QUANTITIES, F_RENAME, F_REPAIRGEOLOCATIONS, &
       & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, &
       & FIELD_FIRST, FIELD_LAST, &
@@ -106,9 +106,9 @@ contains ! =====     Public Procedures     =============================
       & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END, &
       & MLSPCF_L2CLIM_START, MLSPCF_L2CLIM_END
     use MLSSTRINGLISTS, only: INTERSECTION, SWITCHDETAIL
-    use MLSSTRINGS, only: TRIM_SAFE
+    use MLSSTRINGS, only: LOWERCASE, TRIM_SAFE
     use MORETREE, only: GET_SPEC_ID, GET_BOOLEAN
-    use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
+    use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, REVERTOUTPUT, SWITCHOUTPUT
     use PCFHDR, only: HE5_WRITEMLSFILEATTR
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
@@ -168,6 +168,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NODE
     integer :: noGapsHGIndex = 0
     integer :: noSwaths
+    character(len=8) :: optionsString   ! e.g. '-f'
     integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
     type(MLSFile_T), pointer :: outputFile
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
@@ -254,6 +255,7 @@ contains ! =====     Public Procedures     =============================
       meta_name = ''
       sdList = '*' ! This is wildcard meaning 'every sd or swath'
       rename = ' ' ! This is a blank meaning 'Dont rename the swaths'
+      optionsString = ' ' ! This is a blank meaning 'Dont rename the swaths'
       writeCounterMAF = .false.
       writeMetaDataOnly = .false.
       got = .false.
@@ -332,6 +334,11 @@ contains ! =====     Public Procedures     =============================
             call get_string ( sub_rosa(subtree(2, gson)), inputfile_base, strip=.true. )
           case ( f_inputtype )
             input_type = decoration(subtree(2, gson))
+          case ( f_options )
+            call get_string ( sub_rosa(subtree(2, gson)), optionsString, strip=.true. )
+            optionsString = lowerCase(optionsString)
+            if (switchDetail( switches, 'pro') > 0 ) &
+              & call outputNamedValue( 'options', trim(optionsString) )
           case ( f_rename )
             call get_string ( sub_rosa(subtree(2,gson)), rename, strip=.true. )
           case ( f_repairGeoLocations )
@@ -477,6 +484,7 @@ contains ! =====     Public Procedures     =============================
         if ( CHECKPATHS ) cycle
 
         if ( DEBUG ) call dump( inputFile, details=2 )
+        if ( repairGeoLocations ) optionsString = trim(optionsString) // 'r'
         select case ( output_type )
         case ( l_l2aux ) ! --------------------- Copying to l2aux files -----
           formattype = l_hdf
@@ -507,28 +515,30 @@ contains ! =====     Public Procedures     =============================
             call cpL2GPData( l2metaData, inputfile, &
               & outputfile, create2=create, &
               & exclude=trim(exclude), &
-              & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes )
+              & notUnlimited=avoidUnlimitedDims, &
+              & andGlAttributes=copyFileAttributes, options=optionsString )
           elseif ( .not. got(f_exclude) .and. repairGeoLocations ) then
             if ( DEBUG ) print *,' size(filedatabse) ', size(filedatabase)
             if ( DEBUG ) print *, 'input file: ', trim(inputPhysicalFilename)
             if ( DEBUG ) print *, 'output file: ', trim(PhysicalFilename)
-            call cpL2GPData(l2metaData, inputfile, &
+            call cpL2GPData( l2metaData, inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes, &
-              & HGrid=HGrids(HGridIndex), options="-r")
+              & HGrid=HGrids(HGridIndex), options=optionsString )
           elseif ( got(f_exclude) .and. repairGeoLocations ) then
-            call cpL2GPData(l2metaData, inputfile, &
+            call cpL2GPData( l2metaData, inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
               & exclude=trim(exclude), &
               & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes, &
-              & HGrid=HGrids(HGridIndex), options="-r")
+              & HGrid=HGrids(HGridIndex), options=optionsString )
           else
             call cpL2GPData( l2metaData, inputfile, &
               & outputfile, create2=create, &
               & swathList=trim(sdList), rename=rename, &
-              & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes )
+              & notUnlimited=avoidUnlimitedDims, &
+              & andGlAttributes=copyFileAttributes, options=optionsString )
           endif
           call he5_writeMLSFileAttr( outputFile )
           if ( noGapsHGIndex > 0 ) &
@@ -1757,6 +1767,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.164  2012/07/05 23:54:21  pwagner
+! Copy command in Output may contain options field
+!
 ! Revision 2.163  2012/05/14 18:33:34  pwagner
 ! Fixed bug that dooms checkPaths test flights
 !
