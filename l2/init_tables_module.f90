@@ -1251,6 +1251,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_ifAnyCrashedChunks, t+t_boolean, n+n_field_type, &
              begin, f+f_inputFile, t+t_string, nr+n_field_type, &
              begin, f+f_inputtype, t+t_outputType, n+n_field_type, &
+             begin, f+f_options, t+t_string, n+n_field_type, &
              begin, f+f_rename, t+t_string, n+n_field_type, &
              begin, f+f_repairGeolocations, t+t_boolean, n+n_field_type, &
              begin, f+f_swath, t+t_string, n+n_field_type, &
@@ -1782,6 +1783,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.551  2012/07/05 23:50:09  pwagner
+! Copy command in Output may contain options field
+!
 ! Revision 2.550  2012/07/04 01:53:46  vsnyder
 ! Add dumpQuantities field of retrieve spec
 !
