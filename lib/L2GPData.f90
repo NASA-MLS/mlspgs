@@ -150,6 +150,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !   character         meaning
 !      ---            -------
 !       d              treat differing geolcations as bad chunks
+!       f              filter profiles with FillValues by marking as crashed
 !       g              skip diff or dump of geolcations
 !       i              ignore bad chunks
 !       m              silent (mute)
@@ -159,6 +160,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! Assume L2GP files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
   integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_5
+  integer, parameter :: DANGERWILLROBINSON = 513 ! status for a crashed profile
 
   ! r4 corresponds to sing. prec. :: same as stored in files
   integer, public, parameter :: rgp = r4
@@ -204,6 +206,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: GEO_FIELDS = &
      & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
      & ',OrbitGeodeticAngle,Pressure,Time,Frequency,ChunkNumber'
+   character (len=*), parameter :: HGEO_FIELDS = &
+     & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
+     & ',OrbitGeodeticAngle,Time'
 
    ! The following are the dimension names according to the mls spec
    character (len=*), parameter :: DIM_NAME1 = 'nTimes'
@@ -857,14 +862,16 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
-  subroutine cpL2GPData_fileID(l2metaData, file1, file2, swathList, &
+  subroutine cpL2GPData_fileID( l2metaData, file1, file2, swathList, &
     & hdfVersion1, hdfVersion2, notUnlimited, rename, ReadData, &
-    & HGrid, rFreqs, rLevels, rTimes, options)
+    & HGrid, rFreqs, rLevels, rTimes, options )
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
     ! This routine copies swathList from 1 to 2
-    ! and, depending on options, makes some repairs
+    ! and, depending on options, makes some repairs or applies a sanity filter
+    ! which guarantees that any profiles with Fill values among the
+    ! geolocations are marked with DANGERWILLROBINSON status
 
     use HGridsDatabase, only: HGRID_T
     ! Arguments
@@ -886,6 +893,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     logical, parameter            :: countEmpty = .true.
+    logical :: filter
     integer :: i
     type (L2GPData_T) :: l2gp
     type (L2GPData_T) :: reducedl2gp
@@ -905,6 +913,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(options) ) myOptions = options
     verbose = ( index(myOptions, 'v') > 0 )
     repair  = ( index(myOptions, 'r') > 0 )
+    filter  = ( index(myOptions, 'f') > 0 )
     renameSwaths  = present(rename)
     if ( renameSwaths ) renameSwaths = ( rename /= ' ' )
     if ( repair .and. .not. present(HGrid) ) &
@@ -946,8 +955,9 @@ contains ! =====     Public Procedures     =============================
         print *, 'l2gp%nTimes:  ', l2gp%nTimes
         print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
       endif
-      ! Possibly repair l2gp
-      if ( repair ) call RepairL2GP(l2gp, HGrid, options=options)
+      ! Possibly repair or filter l2gp
+      if ( repair ) call RepairL2GP( l2gp, HGrid, options=options )
+      if ( filter ) call FilterL2GP( l2gp )
       ! Possibly extract a reduced l2pg
       if ( present(rFreqs) .or. present(rLevels) .or. present(rTimes) ) then
         if ( present(rFreqs) ) then
@@ -4643,6 +4653,94 @@ contains ! =====     Public Procedures     =============================
   end subroutine OutputL2GP_attributes_MF
   !-------------------------------------
 
+  !-----------------------------------------  FilterL2GP  -----
+  subroutine FilterL2GP ( L2GP, fields, options )
+
+    ! This routine filters an  l2gp by setting its status to crashed
+    ! wherever the gelolocations contain fillvalues
+    
+    ! Thew optional arg fields will dtermine which fields this applies to:
+    ! value                  fields
+    ! -----                  ------
+    ! '*' (or missing)    all
+    ! 'latitude,time'     latitude, time
+    ! 'l2gpvalue'         l2gpvalue
+    ! 'value'             l2gpvalue, l2gpPrecision, status, quality
+    ! 'geolocation'       geolocations (all except 'value')
+
+    ! Dummy arguments
+    type (L2GPData_T), intent(inout) :: L2GP
+    character(len=*), optional, intent(in) :: fields
+    character(len=*), optional, intent(in) :: options ! E.g., '-v'
+    
+    ! Internal variables
+    character(len=128) :: myFields
+    character (len=8) :: myOptions
+    logical :: verbose
+
+    ! Executable code
+    myFields = GEO_FIELDS ! '*' ! would mean values or geolocations
+    if ( present(fields) ) myFields = lowercase(fields)
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    verbose = ( index(myOptions, 'v') > 0 )
+    select case (trim(myFields))
+    case ('value')
+      myFields = lowercase(DATA_FIELDS) ! 'l2gpvalue, l2gpPrecision, status, quality'
+    case ('geolocation')
+      myFields = lowercase(GEO_FIELDS) ! // ',pressure,time,frequency,chunknumber'
+    case default
+      ! Not a special case
+    end select
+
+    if ( SwitchDetail(myFields, 'latitude', '-wfc') > -1 ) then
+      where ( isFillValue(l2gp%latitude) )
+         l2gp%status = DANGERWILLROBINSON
+      endwhere
+    endif
+    if ( SwitchDetail(myFields, 'longitude', '-wfc') > -1 ) then
+      where ( isFillValue(l2gp%longitude) )
+         l2gp%status = DANGERWILLROBINSON
+      endwhere
+    endif
+    if ( SwitchDetail(myFields, 'solartime', '-wfc') > -1 ) then
+      where ( isFillValue(l2gp%solartime) )
+         l2gp%status = DANGERWILLROBINSON
+      endwhere
+    endif
+    if ( SwitchDetail(myFields, 'solarzenith', '-wfc') > -1 ) then
+      where ( isFillValue(l2gp%solarzenith) )
+         l2gp%status = DANGERWILLROBINSON
+      endwhere
+    endif
+    if ( SwitchDetail(myFields, 'losangle', '-wfc') > -1 ) then
+      where ( isFillValue(l2gp%losangle) )
+         l2gp%status = DANGERWILLROBINSON
+      endwhere
+    endif
+    if ( SwitchDetail(myFields, 'geodangle', '-wfc') > -1 ) then
+      where ( isFillValue(l2gp%geodangle) )
+         l2gp%status = DANGERWILLROBINSON
+      endwhere
+    endif
+    if ( SwitchDetail(myFields, 'time', '-wfc') > -1 ) then
+      where ( isFillValue(l2gp%time) )
+         l2gp%status = DANGERWILLROBINSON
+      endwhere
+    endif
+    if ( SwitchDetail(myFields, 'l2gpvalue', '-wfc') > -1 ) then
+      where ( isFillValue(l2gp%l2gpvalue(1,1,:)) )
+         l2gp%status = DANGERWILLROBINSON
+      endwhere
+    endif
+    if ( SwitchDetail(myFields, 'l2gpprecision', '-wfc') > -1 ) then
+      where ( isFillValue(l2gp%l2gpprecision(1,1,:)) )
+         l2gp%status = DANGERWILLROBINSON
+      endwhere
+    endif
+
+  end subroutine FilterL2GP
+    
   !-----------------------------------------  RepairL2GP_L2GP  -----
   subroutine RepairL2GP_L2GP ( L2GP1, L2GP2, fields, options )
 
@@ -4974,6 +5072,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.184  2012/05/10 00:45:24  pwagner
+! Better way for AppendL2GPData to know it must create swath
+!
 ! Revision 2.183  2012/05/01 23:12:34  pwagner
 ! Maneuver around an unnecessary and sometimes unfortunate if
 !
