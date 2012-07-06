@@ -21,6 +21,7 @@ module FOV_Convolve_m
   private
   public :: FOV_Convolve_Setup, FOV_Convolve_1D, FOV_Convolve_2d, FOV_Convolve_3d
   public :: FOV_Convolve_Temp_Derivs, FOV_Convolve_Teardown
+  public :: FOV_Convolve_Temp_Derivs_Normalization
   public :: Dump, Dump_Convolve_Support
   public :: AntennaPattern_T, Coefficients ! for full f95 compatibility
 
@@ -166,13 +167,13 @@ contains
     use ScanAverage_m, only: ScanAverage
 
     type(convolve_support_t), intent(in) :: Convolve_Support
-    real(rp), intent(in) :: Rad_In(:)   ! input radiances
+    real(rp), intent(in) :: Rad_In(:)   ! input radiances, I
     real(rv), pointer :: MIF_Times(:)   ! Disassociated if no scan average, q.v.
     real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
-    real(rp), intent(out) :: rad_out(:) ! output radiances
+    real(rp), intent(out) :: rad_out(:) ! output radiances, IA = I*G
     real(rp), optional, intent(out) :: drad_dx_out(:) ! output derivative
 !                                         of radiance wrt to Chi_out
-    real(r8), optional, intent(out), target :: Rad_FFT_out(:) ! Temp derivs need it
+    real(r8), optional, intent(out), target :: Rad_FFT_out(:) ! FFT(I).  Temp derivs need it
 
     integer :: I, J
     real(r8), dimension(ffth+1), target :: My_rad_FFT
@@ -197,10 +198,14 @@ contains
     ! For DTCST the coefficients come out in order, and they're
     ! twice the coefficients from DRFT1
 
+    ! rad_fft = FFT(I)
     call dtcst_t ( rad_fft, 'a' )
     rad_fft = 0.5 * rad_fft
 
     ! apply convolution theorem
+
+    ! p = FFT(G), where G is the convolution kernel.
+    ! rad_fft1 = FFT(I) FFT(G)
 
     ! Handle first and last coefficients first
     rad_fft1(1) = rad_fft(1) * convolve_support%p(1)
@@ -523,6 +528,272 @@ contains
 
   end subroutine FOV_Convolve_Temp_Derivs
 
+  ! -----------------------------------  FOV_Convolve_Temp_Derivs_Normalization  -----
+  ! FOV Convolution of Temperature derivatives (with normalization)
+  subroutine FOV_Convolve_Temp_Derivs_Normalization ( Convolve_Support, Rad_Diff, &
+    & Rad_Diff_FFT, Surf_Angle, MIF_Times, DeadTime, dI_dT, dx_dT, ddx_dxdT, &
+    & dx_dT_out, di_dT_flag, dRad_dT_out )
+
+    use MLSKinds, only: Rp, Rv, R8
+    use output_m, only: outputNamedValue                       ! IGOR
+    use MLSNumerics, only: Coefficients=>Coefficients_r8, Hunt, &
+      & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
+    use ScanAverage_m, only: ScanAverage
+
+    ! inputs
+
+    type(convolve_support_t), intent(in) :: Convolve_Support
+
+    real(rp), intent(in) :: Rad_Diff(:)  ! input radiances differences I-IA
+    real(r8), intent(in) :: Rad_Diff_FFT(:) ! FFT(I-IA)
+    real(rp), intent(in) :: Surf_Angle ! An angle (radians) that defines the
+    !                       Earth surface.
+    real(rv), pointer :: MIF_Times(:)  ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:) ! Disassociated if no scan average, q.v.
+    real(rp), intent(in) :: dI_dT(:,:) ! derivative of radiance wrt
+    !                       temperature on chi_in
+    real(rp), intent(in) :: dx_dT(:,:) ! derivative of angle wrt
+    !                       temperature on chi_in
+    real(rp), intent(in) :: ddx_dxdT(:,:) ! 2nd derivative wrt angle and
+    !                       temperature on chi_in
+    real(rp), intent(in) :: dx_dT_out(:,:) ! derivative of angle wrt
+    !                       temperature on chi_out
+    logical, optional, intent(in) :: dI_dT_flag(:) ! Indicates whether to
+    !                       accumulate di_dT.  Assumed true if absent.
+
+    ! outputs
+
+    real(rp), optional, intent(out) :: dRad_dT_out(:,:) ! output radiance
+    !                       derivatives wrt temperature.
+
+    type(coefficients) :: Coeffs_t ! for chi_in-init_angle -> angles(ffth+zero_out_s+1:no_fft)
+    integer :: AAAPN, I, J, K, N_Coeffs, Zero_out_s, Zero_out_t
+    real(r8), dimension(no_fft) :: dp, rad_fft1, rad_fft2, rad_fft3
+    real(r8) :: drad_dT_temp(size(convolve_support%del_chi_out))
+
+
+    ! Set up for interpolations.  First find the surface dimension
+    call hunt ( convolve_support%angles(ffth:no_fft), &
+      & surf_angle-convolve_support%init_angle, zero_out_s )
+    call hunt ( convolve_support%angles(ffth:no_fft), &
+      & convolve_support%del_chi_in(SIZE(convolve_support%del_chi_in)), &
+      & zero_out_t )
+    call interpolateArraySetup ( convolve_support%del_chi_in, &
+      & convolve_support%angles(ffth+zero_out_s+1:no_fft), &
+      & METHOD='S', coeffs=coeffs_t, EXTRAPOLATE='C' )
+
+    ! temperature derivatives calculation
+    ! compute the antenna derivative function
+
+    n_coeffs = size(di_dT,dim=2)
+
+    ! third term first (its fft is coefficient independent)
+    ! apply convolution theorem
+
+    aaapn = min(no_fft,size(convolve_support%antennaPattern%aaap))
+    ! Derivative of antenna pattern
+    dp(1:aaapn) = convolve_support%antennaPattern%d1aap(1:aaapn)
+    dp(aaapn+1:) = 0.0_r8
+    ! dp are really complex numbers masquerading as real ones
+
+    
+    !{  dx$\_$dT $= \displaystyle \frac{d\epsilon}{dT} = \frac{\tan \epsilon}{H} \frac{dH}{dT}$, \\
+    ! dx$\_$dT$\_$out $= \displaystyle \frac{d\epsilon_t}{dT} = \frac{\tan \epsilon_t}{H_t} \frac{dH_t}{dT}$, \\
+    ! ddx$\_$dxdT $= \displaystyle \frac{d^2 \epsilon}{d\epsilon dT} = \frac{2 + \tan^2 \epsilon}{H} \frac{dH}{dT} + \frac{\eta}{T}$.
+
+    !{ Only consider rad$\_$diff$\_$fft $(= I-I^A)$, instead of rad$\_$in $(=I)$, throughout. \\
+    !  p $= FT(G(\epsilon))$, \ \ dp $= FT \left( \displaystyle \frac{dG(\epsilon)}{d\epsilon} \right)$, \\
+    !  rad$\_$fft1 $= FT(I-I^A) \cdot FT \left( \displaystyle \frac{dG(\epsilon)}{d\epsilon} \right)$.
+
+    rad_fft1(1:2) = 0.0_rp
+    j = 1
+    do i = 3, no_fft-1, 2
+      j = j + 1
+      rad_fft1(i)   = rad_diff_fft(j) * dp(i)
+      rad_fft1(i+1) = rad_diff_fft(j) * dp(i+1)
+    end do
+
+    !{ rad$\_$fft1 = $IFT \left( FT(I-I^A) \cdot FT \left( \displaystyle \frac{dG(\epsilon)}{d\epsilon} \right) \right)$ 
+    ! $= (I-I^A) \displaystyle \frac{dG(\epsilon)}{d\epsilon}$  \\
+    !  Mode = 's' - Systhesis (i.e. ifft) \\
+    !  drad_dT_temp $= (I-I^A) \displaystyle \frac{dG(\epsilon)}{d\epsilon}$   (interpolated)
+   
+    call drft1_t ( rad_fft1, 's' )
+
+    ! interpolate to output grid: drad_dT_temp = interpolate(rad_fft1)
+
+    call interpolateValues ( convolve_support%coeffs_2, &
+      & convolve_support%angles(ffth-1:no_fft-1), &
+      & rad_fft1(ffth:no_fft), convolve_support%del_chi_out, drad_dT_temp, &
+      & METHOD='S', EXTRAPOLATE='C' )
+
+    do i = 1, n_coeffs
+
+      if ( present(di_dT_flag) ) then
+        if ( .not. di_dT_flag(i) ) cycle
+      end if
+
+    ! estimate the error compensation
+
+      k = maxloc(ddx_dxdT(:,i),1)
+
+    !{ rad$\_$fft2 = $(I-I^A) \displaystyle \frac{d^2\epsilon}{d\epsilon dT}$   (interpolated)
+
+     ! call interpolateValues ( coeffs_t, convolve_support%del_chi_in, &
+     !   &  (rad_in-rad_in(k)) * ddx_dxdT(:,i), &
+     !   &  convolve_support%angles(ffth+zero_out_s+1:no_fft), &
+     !   &  rad_fft2(ffth+zero_out_s+1:no_fft), METHOD='S',  &
+     !   &  EXTRAPOLATE='C' )			                  ! IGOR
+
+      call interpolateValues ( coeffs_t, convolve_support%del_chi_in, &
+        &  rad_diff * ddx_dxdT(:,i), &
+        &  convolve_support%angles(ffth+zero_out_s+1:no_fft), &
+        &  rad_fft2(ffth+zero_out_s+1:no_fft), METHOD='S',  &
+        &  EXTRAPOLATE='C' )                                      ! IGOR
+
+    ! zero out the subsurface stuff
+
+      rad_fft2(ffth:ffth+zero_out_s) = 0.0_rp
+
+    !{ rad$\_$fft1 = $\displaystyle \frac{\partial I}{\partial T}$   (interpolated)\\
+    !  rad$\_$fft2 = $(I-I^A) \displaystyle \frac{d^2\epsilon}{d\epsilon dT}$ 
+    ! $+ \displaystyle \frac{\partial I}{\partial T}$
+
+      call interpolateValues ( convolve_support%coeffs_1, &
+        & convolve_support%del_chi_in, di_dT(:, i), &
+        & convolve_support%angles(ffth:no_fft), rad_fft1(ffth:no_fft), &
+        & METHOD='S', EXTRAPOLATE='C' )
+
+      rad_fft2(ffth:no_fft) = rad_fft2(ffth:no_fft) + rad_fft1(ffth:no_fft)
+
+    ! zero out this array above toa
+
+      rad_fft2(ffth+zero_out_t + 1:no_fft) = 0.0_rp
+
+      if ( any(rad_fft2(ffth+zero_out_s+1:ffth+zero_out_t) /= 0.0) ) then
+
+    ! resymetrize
+
+        rad_fft2(1:ffth-1) = rad_fft2(no_fft-1:no_fft-ffth+1:-1)
+
+    ! I don't know if this step is truly necessary but it rephases the radiances
+    ! identically to the prototype code
+
+        rad_fft2 = cshift(rad_fft2,-1)
+
+    !{ rad$\_$fft2 $= FT \bigg( (I-I^A) \displaystyle \frac{d^2\epsilon}{d\epsilon dT}$
+    ! $+ \displaystyle \frac{\partial I}{\partial T} \bigg)$
+
+    ! take cosine transform of rad_diff * ddx_dxdT + di_dT array        ! IGOR
+    ! Coefficients from DTCST come out in order, and are twice the
+    ! coefficients from DRFT1
+
+        call dtcst_t ( rad_fft2(1:ffth+1), 'a' )
+
+      else
+
+        rad_fft2(1:ffth+1) = 0.0
+
+      end if
+
+    !{ rad$\_$fft1 = $(I-I^A) \displaystyle \frac{d\epsilon}{dT}$   (interpolated)
+
+!      call interpolateValues ( coeffs_t, convolve_support%del_chi_in, &
+!        &   (rad_in-rad_in(k))*dx_dT(:,i), &
+!        &   convolve_support%angles(ffth+zero_out_s+1:no_fft), &
+!        &   rad_fft1(ffth+zero_out_s+1:no_fft), METHOD='S', EXTRAPOLATE='C' )    ! IGOR
+
+                                                                      ! IGOR
+      call interpolateValues ( coeffs_t, convolve_support%del_chi_in, &
+        &   rad_diff*dx_dT(:,i), &
+        &   convolve_support%angles(ffth+zero_out_s+1:no_fft), &
+        &   rad_fft1(ffth+zero_out_s+1:no_fft), METHOD='S', EXTRAPOLATE='C' )
+
+    ! zero out array below surf_angle
+
+      rad_fft1(ffth:ffth+zero_out_s) = 0.0_rp
+
+    ! resymetrize
+
+      rad_fft1(1:ffth-1) = rad_fft1(no_fft-1:no_fft-ffth+1:-1)
+
+    ! I don't know if this step is truly necessary but it rephases the radiances
+    ! identically to the prototype code
+
+      rad_fft1 = cshift(rad_fft1,-1)
+
+    ! take fft of rad_diff * ddx_dxdT + di_dT + rad_diff * dx_dT array     ! IGOR
+
+    !{ rad$\_$fft1 $= FT\left( (I-I^A) \displaystyle \frac{d\epsilon}{dT} \right)$
+ 
+      call dtcst_t ( rad_fft1(1:ffth+1), 'a' )
+
+    ! Rearrange rad_fft2 from dtcst order to drft1 order
+
+
+    ! apply convolution theorem
+
+    !{ rad$\_$fft3 $= FT \bigg( (I-I^A) \displaystyle \frac{d^2\epsilon}{d\epsilon dT}$
+    ! $+ \displaystyle \frac{\partial I}{\partial T} \bigg) \cdot FT\big(G(\epsilon)\big)$
+    ! $- FT \left( (I-I^A) \displaystyle \frac{d\epsilon}{dT} \right) $
+    ! $\cdot FT \left( \displaystyle \frac{dG(\epsilon)}{d\epsilon} \right)$
+
+      rad_fft3(1) = 0.5 * rad_fft2(1) * convolve_support%p(1)
+      rad_fft3(2) = 0.5 * rad_fft2(ffth+1) * convolve_support%p(2)
+      k = 1
+      do j = 3, no_fft-1, 2
+        k = k + 1
+        rad_fft3(j+1) = 0.5 * ( rad_fft2(k) * convolve_support%p(j+1) - rad_fft1(k) * dp(j+1) )
+        rad_fft3(j)   = 0.5 * ( rad_fft2(k) * convolve_support%p(j)   - rad_fft1(k) * dp(j)   )
+      end do
+
+    ! interplolate to chi_out
+
+    !{ rad$\_$fft3 $= \bigg( (I-I^A) \displaystyle \frac{d^2\epsilon}{d\epsilon dT}$
+    ! $+ \displaystyle \frac{\partial I}{\partial T} \bigg) \cdot G(\epsilon)$
+    ! $- (I-I^A) \displaystyle \frac{d\epsilon}{dT} $
+    ! $\cdot \displaystyle \frac{dG(\epsilon)}{d\epsilon}$
+
+      call drft1_t ( rad_fft3, 's' )
+
+    !{ drad$\_$dT$\_$out $= \bigg( (I-I^A) \displaystyle \frac{d^2\epsilon}{d\epsilon dT}$
+    ! $+ \displaystyle \frac{\partial I}{\partial T} \bigg) \cdot G(\epsilon)$
+    ! $- (I-I^A) \displaystyle \frac{d\epsilon}{dT} $
+    ! $\cdot \displaystyle \frac{dG(\epsilon)}{d\epsilon}$   (interpolated)
+
+      if ( associated(MIF_Times) ) then
+        call scanAverage ( MIF_Times, deadTime(1,1), &
+          & real(convolve_support%angles(ffth-1:no_fft-1),rp), &
+          & convolve_support%del_chi_out, real(rad_fft3(ffth:no_fft),rp), &
+          & drad_dT_out(:, i) )
+      else
+        call interpolateValues ( convolve_support%coeffs_2, &
+          & convolve_support%angles(ffth-1:no_fft-1), &
+          & rad_fft3(ffth:no_fft), convolve_support%del_chi_out, drad_dT_out(:, i), &
+          & METHOD='S', EXTRAPOLATE='C' )
+      end if
+
+    ! compute final result
+
+    !{ drad$\_$dT$\_$out $= \bigg( (I-I^A) \displaystyle \frac{d^2\epsilon}{d\epsilon dT}$
+    ! $+ \displaystyle \frac{\partial I}{\partial T} \bigg) \cdot G(\epsilon)$
+    ! $- (I-I^A) \displaystyle \frac{d\epsilon}{dT} $
+    ! $\cdot \displaystyle \frac{dG(\epsilon)}{d\epsilon}$
+    ! $+ \displaystyle \frac{d\epsilon_t}{dT} \cdot (I-I^A) \displaystyle \frac{dG(\epsilon)}{d\epsilon}$
+
+      drad_dT_out(:,i) = drad_dT_out(:,i) + dx_dT_out(:,i)*drad_dT_temp
+
+      ! IGOR
+      !sum_p = sum(convolve_support%p)
+      !call outputNamedValue( 'sum_p = sum(convolve_support%p)', sum_p )
+      !call outputNamedValue( 'size(convolve_support%p)', size(convolve_support%p) )
+
+    end do               ! On i = 1, n_coeffs
+
+    call interpolateArrayTeardown ( coeffs_t )
+
+  end subroutine FOV_Convolve_Temp_Derivs_Normalization
+
   ! --------------------------------------  FOV_Convolve_Teardown  -----
   subroutine FOV_Convolve_Teardown ( Convolve_Support )
   ! Destroy the stuff in Convolve_Support
@@ -588,6 +859,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.15  2012/07/06 21:30:00  yanovsky
+! Added FOV_Convolve_Temp_Derivs_Normalization subroutine that computes normalized Temperature derivatives
+!
 ! Revision 2.14  2011/03/23 23:49:20  vsnyder
 ! Make some array bounds explicit, to avoid a bounds violation if the
 ! actual argument is bigger than needed for the FFT.
