@@ -610,6 +610,7 @@ contains
     real(rp), target :: RAD_AVG_PATH(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
                                                    ! LBL radiance along the path
     real(rp) :: RADIANCES(noUsedChannels,no_tan_hts) ! (noChans,Nptg)
+    real(rp) :: RADIANCES_DIFF(noUsedChannels,no_tan_hts) ! (noChans,Nptg)     ! IGOR
     real(rp) :: SPECT_N_PATH(max_f,size(fwdModelConf%lineWidth_TDep)) ! Line Width Temperature Dependence
     real(rp) :: SPECT_V_PATH(max_f,size(fwdModelConf%lineCenter)) ! Line Center
     real(rp) :: SPECT_W_PATH(max_f,size(fwdModelConf%lineWidth)) ! Line Width
@@ -1310,6 +1311,7 @@ contains
       use ANTENNAPATTERNS_M, only: ANTENNAPATTERNS
       use INTRINSIC, only: L_ELEVOFFSET, L_LIMBSIDEBANDFRACTION
       use CONVOLVE_ALL_M, only: CONVOLVE_RADIANCE, CONVOLVE_TEMPERATURE_DERIV, &
+        & CONVOLVE_RADIANCE_NORMALIZATION, CONVOLVE_TEMPERATURE_DERIV_NORMALIZATION, &
         & CONVOLVE_OTHER_DERIV, CONVOLVE_OTHER_SECOND_DERIV, INTERPOLATE_RADIANCE, &
         & INTERPOLATE_TEMPERATURE_DERIV, INTERPOLATE_OTHER_DERIV
       use DUMP_0, only: DUMP
@@ -1324,7 +1326,8 @@ contains
       integer :: MINSUPERSET       ! Min. value of superset > 0
       logical :: PATCHEDAPTG       ! Used in patching the pointings
       integer :: PTG_J             ! Loop counters for patching the pointings
-      real(r8) :: RAD_FFT(s_t*no_fft) ! Convolved radiance on FFT grid
+      real(r8) :: RAD_FFT(s_t*no_fft) ! FFT(I)                                 ! IGOR
+      real(r8) :: RAD_DIFF_FFT(s_t*no_fft) ! FFT(I-IA)                         ! IGOR
       integer :: SUPERSET          ! Output from AreSignalsSuperset
       real(rp) :: THISELEV         ! An elevation offset
       real(rp) :: THISFRACTION     ! A sideband fraction
@@ -1434,15 +1437,33 @@ contains
             & do_dRad_dx=ptan_der, do_Scan_Avg=fwdModelConf%scanAverage )
 
           if ( temp_der ) then
+
+            ! To turn on/off Temperature Derivatives Normalization:
+            ! comment/uncomment two function calls:
+
             call convolve_radiance ( convolve_support, maf, chanInd, &
               & radiances(i,:), thisFraction, update, ptan, thisRadiance, &
               & L1BMIF_TAI, MIFDeadTime, &
-              & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der, rad_FFT )
+              & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der, rad_FFT )    ! IGOR
+
+            !call convolve_radiance_normalization ( convolve_support, maf, chanInd, &
+            !  & radiances(i,:), thisFraction, update, ptan, thisRadiance, &
+            !  & L1BMIF_TAI, MIFDeadTime, &
+            !  & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der, rad_FFT, &
+            !  & radiances_diff(i,:), rad_diff_FFT )                                  ! IGOR
+
             call convolve_temperature_deriv ( convolve_support, maf, chanInd, &
               & radiances(i,:), rad_fft, thisFraction, update, thisRadiance, &
               & temp, grids_tmp, surf_angle(1), L1BMIF_TAI, MIFDeadTime, &
               & real(k_temp(i,:,:),kind=rp), &
-              & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, Jacobian, fmStat%rows )
+              & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, Jacobian, fmStat%rows )    ! IGOR
+
+            !call convolve_temperature_deriv_normalization ( convolve_support, maf, chanInd, &
+            !  & radiances_diff(i,:), rad_diff_FFT, thisFraction, update, thisRadiance, &
+            !  & temp, grids_tmp, surf_angle(1), L1BMIF_TAI, MIFDeadTime, &
+            !  & real(k_temp(i,:,:),kind=rp), &
+            !  & dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, Jacobian, fmStat%rows )     ! IGOR
+
           else ! No temperature derivative
             call convolve_radiance ( convolve_support, maf, chanInd, &
               & radiances(i,:), thisFraction, update, ptan, thisRadiance, &
@@ -4569,6 +4590,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.333  2012/06/15 23:33:13  vsnyder
+! Include sin(theta) factor in TScat phase convolution.  Improve dumps.
+!
 ! Revision 2.332  2012/02/13 23:20:12  pwagner
 ! DerivativeMissingFromState eases switch from strict to lenient
 !
