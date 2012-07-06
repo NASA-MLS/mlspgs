@@ -35,8 +35,7 @@ contains ! ============= Public Procedures ==========================
 
     use BASELINEFORWARDMODEL_M, only: BASELINEFORWARDMODEL
     use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
-      & DESTROYFORWARDMODELDERIVED, FORWARDMODELCONFIG_T
-    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, QtyStuff_t
+      & DESTROYFORWARDMODELDERIVED, FORWARDMODELCONFIG_T, QtyStuff_t
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use FULLCLOUDFORWARDMODEL, only: FULLCLOUDFORWARDMODELWRAPPER
@@ -182,7 +181,7 @@ contains ! ============= Public Procedures ==========================
       ! Transform fwmJacobian and radiances for quantities for which
       ! transformation is requested.
       do k = 1, nQty
-        call transform_FWM_extinction ( fmStat%MAF, fwdModelOut, &
+        call transform_FWM_extinction ( config, fmStat%MAF, fwdModelOut, &
           & qtys(k,2)%qty, qtys(k,1)%qty, ptan, Jacobian, dumpTransform, clean )
       end do
 
@@ -337,14 +336,16 @@ contains ! ============= Public Procedures ==========================
   end function MINLOC_S_D
 
 !{\cleardoublepage
-  subroutine Transform_FWM_extinction ( MAF, FwdModelOut, F_Qty, S_Qty, PTan, &
-    &                                   Jacobian, DumpTransform, Clean )
+  subroutine Transform_FWM_extinction ( Config, MAF, FwdModelOut, F_Qty, S_Qty, &
+    &                                   PTan, Jacobian, DumpTransform, Clean )
     ! Transform blocks of the Jacobian associated with f_qty to blocks
     ! associated with s_qty.
     ! Transform the forward model radiances to retriever radiances.
 
     ! See Equations (3) and (4) in wvs-107.
 
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: L_Radiance
     use MatrixModule_0, only: DestroyBlock, M_Absent, M_Banded, M_Full
     use MatrixModule_1, only: FindBlock, CreateBlock, Dump, Matrix_T
@@ -353,6 +354,7 @@ contains ! ============= Public Procedures ==========================
     use Output_m, only: Output
     use VectorsModule, only: Dump, M_Ignore, M_LinAlg, Vector_t, VectorValue_t
 
+    type(forwardModelConfig_T), intent(in) :: CONFIG
     integer, intent(in) :: MAF               ! MAjor Frame number
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
     type(vectorValue_t), intent(in) :: F_Qty ! Extinction quantity in fwmState
@@ -362,6 +364,7 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in) :: DumpTransform(3)
     logical, intent(in) :: Clean             ! for the dumps
 
+    integer :: Chan    ! Index of channel in Config
     integer :: CV      ! c in wvs-107
     integer :: CZ      ! ci, channels X zetas, in wvs-107
     integer :: FCols(f_qty%template%noInstances) ! of Jacobian, j in wvs-107
@@ -374,37 +377,22 @@ contains ! ============= Public Procedures ==========================
     type(vectorValue_t), pointer :: O_Qty        ! Qty of output vector
     real(rv) :: P(size(ptan%values,1),f_qty%template%noSurfs) ! 10**(-2*(zeta(surf)-zeta(vSurf)))
     real(rm) :: RowSum ! sum(Jacobian%block(jRow,fCols)%values(cz,:))
+    integer :: SB      ! Sideband, zero or from the first signal in config
     integer :: Surf    ! column of Jacobian%block(jRow,fCol)%values, 
                        ! g in wvs-107
     integer :: VSurf   ! Surface (zeta) index in a MIF, i in wvs-107
+
+    sb = merge( 0, config%signals(1)%sideband, config%forceFoldedOutput )
 
     ! Get the block column subscripts for instances of f_qty.
     do inst = 1, f_qty%template%noInstances
       fCols(inst) = findBlock ( Jacobian%col, f_qty%index, inst )
     end do
 
+    ! Get the block column subscripts for instances of s_qty.
     do inst = 1, s_qty%template%noInstances
       jCols(inst) = findBlock ( Jacobian%col, s_qty%index, inst )
     end do
-
-    if ( any(dumpTransform(1:2) >= 0) ) then
-      ! Dump the radiance and Jacobian columns to be transformed
-      do jRow = 1, Jacobian%row%nb
-        o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
-        if ( o_qty%template%quantityType /= l_radiance ) cycle
-        if ( dumpTransform(1) >= 0 ) then
-          call output ( MAF, before='MAF ' )
-          call dump ( o_qty, dumpTransform(1), &
-            & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
-        end if
-        if ( dumpTransform(2) >= 0 ) then
-          do inst = 1, size(fCols)
-            call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2), &
-              & row=jRow, column=fCols(inst) )
-          end do
-        end if
-      end do
-    end if
 
     !{ Evaluate Equation (2) from wvs-107, \emph{viz.}
     ! \begin{equation*}
@@ -416,10 +404,27 @@ contains ! ============= Public Procedures ==========================
         & 10.0_rm ** ( -2.0_rm * ( f_qty%template%surfs(surf,1) - &
                                    ptan%values(vSurf,maf) ) )
 
-    do jRow = 1, Jacobian%row%nb
-      if ( jacobian%row%inst(jRow) /= MAF ) cycle
-      o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
-      if ( o_qty%template%quantityType /= l_radiance ) cycle
+    do chan = 1, size(config%channels)
+      cv = config%channels(chan)%used + 1 - config%channels(chan)%origin
+      o_qty => getQuantityForForwardModel ( fwdModelOut, &
+        & quantityType=l_radiance, &
+        & signal=config%signals(config%channels(chan)%signal)%index, &
+        & sideband=sb )
+      jRow = findBlock ( Jacobian%row, o_qty%index, MAF )
+      if ( any(dumpTransform(1:2) >= 0) ) then
+        ! Dump the radiance and Jacobian columns to be transformed
+        if ( dumpTransform(1) >= 0 ) then
+          call output ( MAF, before='MAF ' )
+          call dump ( o_qty, dumpTransform(1), &
+            & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
+        end if
+        if ( dumpTransform(2) >= 0 ) then
+          do inst = 1, size(fCols)
+            call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2), &
+              & row=jRow, column=fCols(inst) )
+          end do
+        end if
+      end if
       nVecChans = o_qty%template%noChans
       do jCol = 1, size(jCols)
         if ( Jacobian%col%inst(jCols(jCol)) /= MAF .or. &
@@ -450,11 +455,10 @@ contains ! ============= Public Procedures ==========================
             ! nonzeros is the number of channels in the band.  This could be
             ! sharpened to the range from the smallest to largest channel
             ! numbers, but the computations would be messier.
-            do cv = 1, nVecChans
-              cz = cv + nVecChans*(vSurf-1) ! ci in wvs-107
-              ! The surf loop runs in reverse order to sum rowSum*p in
-              ! small-to-large order
-              do surf = f_qty%template%noSurfs, 1, -1 ! g in wvs-107
+            cz = cv + nVecChans*(vSurf-1) ! ci in wvs-107
+            ! The surf loop runs in reverse order to sum rowSum*p in
+            ! small-to-large order
+            do surf = f_qty%template%noSurfs, 1, -1 ! g in wvs-107
 
     !{ Compute the inner sum in Equations (3) and (4) in wvs-107.
     ! \begin{equation*}
@@ -470,18 +474,18 @@ contains ! ============= Public Procedures ==========================
     ! rowSum = sum(Jacobian%block(jRow,fCols)%values(cz,:))
     ! because "values" has the POINTER attribute.
 
-                rowSum = 0.0
-                do inst = 1, size(fCols)
-                  select case ( Jacobian%block(jRow,fCols(inst))%kind )
-                  case ( m_full )
-                    rowSum = rowSum + &
-                      & Jacobian%block(jRow,fCols(inst))%values(cz,surf)
-                  case ( m_absent )
-                  case default
-                    call MLSMessage ( MLSMSG_Error, moduleName, &
-                      & "Transform_FWM_extinction cannot handle sparse or banded blocks" )
-                  end select
-                end do ! inst
+              rowSum = 0.0
+              do inst = 1, size(fCols)
+                select case ( Jacobian%block(jRow,fCols(inst))%kind )
+                case ( m_full )
+                  rowSum = rowSum + &
+                    & Jacobian%block(jRow,fCols(inst))%values(cz,surf)
+                case ( m_absent )
+                case default
+                  call MLSMessage ( MLSMSG_Error, moduleName, &
+                    & "Transform_FWM_extinction cannot handle sparse or banded blocks" )
+                end select
+              end do ! inst
 
     !{Compute the retriever's Jacobian using Equation (3) in wvs-107
     ! \begin{equation*}
@@ -493,13 +497,13 @@ contains ! ============= Public Procedures ==========================
     ! \end{equation*}
     ! where the subscripts are as above.
 
-                mask = 0
-                if ( associated(s_qty%mask) ) &
-                  & mask = iand(ichar(s_qty%mask(vsurf,1)), m_ignore+m_linAlg)
-                if ( mask == 0 ) &
-                  & Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
-                    & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
-                      & rowSum * p(vSurf,surf)
+              mask = 0
+              if ( associated(s_qty%mask) ) &
+                & mask = iand(ichar(s_qty%mask(vsurf,1)), m_ignore+m_linAlg)
+              if ( mask == 0 ) &
+                & Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
+                  & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
+                    & rowSum * p(vSurf,surf)
 
     !{Compute radiance using Equation (4) in wvs-107
     ! \begin{equation*}
@@ -512,11 +516,10 @@ contains ! ============= Public Procedures ==========================
     ! \end{equation*}
     ! where the subscripts are as above.
 
-                o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
-                    & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
-                               & f_qty%values(surf,1) )
-              end do ! surf
-            end do ! cv
+              o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
+                  & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+                             & f_qty%values(surf,1) )
+            end do ! surf
           end do ! vSurf
         end if
       end do ! jCol
@@ -643,6 +646,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.48  2012/07/06 00:57:20  vsnyder
+! ForwardModelWrappers.f90
+!
 ! Revision 2.47  2012/07/04 02:15:01  vsnyder
 ! Don't compute masked rows of Jacobian.
 !
