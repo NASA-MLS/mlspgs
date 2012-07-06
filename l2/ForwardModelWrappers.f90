@@ -411,21 +411,19 @@ contains ! ============= Public Procedures ==========================
         & signal=config%signals(config%channels(chan)%signal)%index, &
         & sideband=sb )
       jRow = findBlock ( Jacobian%row, o_qty%index, MAF )
-      if ( any(dumpTransform(1:2) >= 0) ) then
-        ! Dump the radiance and Jacobian columns to be transformed
-        if ( dumpTransform(1) >= 0 ) then
-          call output ( MAF, before='MAF ' )
-          call dump ( o_qty, dumpTransform(1), &
-            & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
-        end if
-        if ( dumpTransform(2) >= 0 ) then
-          do inst = 1, size(fCols)
-            call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2), &
-              & row=jRow, column=fCols(inst) )
-          end do
-        end if
-      end if
       nVecChans = o_qty%template%noChans
+      ! Dump the radiance, and Jacobian columns, to be transformed
+      if ( dumpTransform(1) >= 0 ) then
+        call output ( MAF, before='MAF ' )
+        call dump ( o_qty, dumpTransform(1), &
+          & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
+      end if
+      if ( dumpTransform(2) >= 0 ) then
+        do inst = 1, size(fCols)
+          call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2), &
+            & row=jRow, column=fCols(inst) )
+        end do
+      end if
       do jCol = 1, size(jCols)
         if ( Jacobian%col%inst(jCols(jCol)) /= MAF .or. &
            & all(Jacobian%block(jRow,fCols)%kind == m_absent) ) then
@@ -523,7 +521,18 @@ contains ! ============= Public Procedures ==========================
           end do ! vSurf
         end if
       end do ! jCol
-    end do ! jRow
+      if ( dumpTransform(1) >= 0 ) then
+        call output ( MAF, before='MAF ' )
+        call dump ( o_qty, dumpTransform(1), &
+          & ' fwdModelOut after transformation', options=merge('-c','  ',clean) )
+      end if
+      if ( dumpTransform(3) >= 0 ) then
+        do inst = 1, size(jCols)
+          call dump ( Jacobian, 'Transformed Jacobian', dumpTransform(3), &
+            & row=jRow, column=jCols(inst) )
+        end do
+      end if
+    end do ! chan
 
     ! Destroy columns of Jacobian corresponding to f_qty
     do jCol = 1, size(fCols)
@@ -535,25 +544,6 @@ contains ! ============= Public Procedures ==========================
     ! Make values of f_Qty zero so as not to confuse the calculation of
     ! aj%axmax in the retriever
     f_qty%values = 0.0
-
-    if ( any(dumpTransform(1:3:2) >= 0) ) then
-      ! Dump the transformed parts of the radiance and Jacobian
-      do jRow = 1, Jacobian%row%nb
-        o_qty => fwdModelOut%quantities(Jacobian%row%quant(jRow))
-        if ( o_qty%template%quantityType /= l_radiance ) cycle
-        if ( dumpTransform(1) >= 0 ) then
-          call output ( MAF, before='MAF ' )
-          call dump ( o_qty, dumpTransform(1), &
-            & ' fwdModelOut after transformation', options=merge('-c','  ',clean) )
-        end if
-        if ( dumpTransform(3) >= 0 ) then
-          do inst = 1, size(jCols)
-            call dump ( Jacobian, 'Transformed Jacobian', dumpTransform(3), &
-              & row=jRow, column=jCols(inst) )
-          end do
-        end if
-      end do
-    end if
 
   end subroutine Transform_FWM_extinction
 
@@ -646,8 +636,12 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.49  2012/07/06 01:54:33  vsnyder
+! Transform only rows of Jacobian and radiance that are produced by current
+! forward model config.  Revise some dumps.
+!
 ! Revision 2.48  2012/07/06 00:57:20  vsnyder
-! ForwardModelWrappers.f90
+! Bogus comment: ForwardModelWrappers.f90
 !
 ! Revision 2.47  2012/07/04 02:15:01  vsnyder
 ! Don't compute masked rows of Jacobian.
