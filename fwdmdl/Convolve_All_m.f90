@@ -22,6 +22,7 @@ module Convolve_All_m
   implicit NONE
   private
   public :: CONVOLVE_OTHER_DERIV, CONVOLVE_RADIANCE, CONVOLVE_TEMPERATURE_DERIV
+  public :: CONVOLVE_RADIANCE_NORMALIZATION, CONVOLVE_TEMPERATURE_DERIV_NORMALIZATION
   public :: CONVOLVE_OTHER_SECOND_DERIV
   public :: INTERPOLATE_RADIANCE, INTERPOLATE_OTHER_DERIV
   public :: INTERPOLATE_TEMPERATURE_DERIV
@@ -43,6 +44,7 @@ module Convolve_All_m
 
 contains
 
+  ! ---------------------------------  Convolve_Radiance  -----
   subroutine Convolve_Radiance ( Convolve_Support, MAF, Channel, Rad_In, &
            & SbRatio, Update, Ptan, Radiance, MIF_Times, DeadTime, &
            & Jacobian, RowFlags, dh_dz_out, dx_dh_out, ptan_Der, Rad_FFT )
@@ -214,6 +216,216 @@ contains
     end do
 
   end subroutine Convolve_Temperature_Deriv
+
+  ! ---------------------------------  Convolve_Radiance_Normalization  -----
+  ! Convolves Radiance, similar to Convolve_Radiance subroutine.
+  ! This implemenation also computes Rad_Diff and Rad_Diff_FFT that 
+  ! are required for Convolve_Temperature_Deriv_Normalization subroutine.
+
+  subroutine Convolve_Radiance_Normalization ( Convolve_Support, MAF, Channel, Rad_In, &
+           & SbRatio, Update, Ptan, Radiance, MIF_Times, DeadTime, &
+           & Jacobian, RowFlags, dh_dz_out, dx_dh_out, ptan_Der, Rad_FFT, Rad_Diff, Rad_Diff_FFT )
+
+  ! Convolve the radiance, and maybe dRadiance/dPtan, with the antenna pattern
+
+    use FOV_Convolve_m, only: Convolve_Support_t, FOV_Convolve_1d
+    use MatrixModule_1, only: FINDBLOCK, MATRIX_T
+    use MLSKinds, only: R8, RP, RV
+    use MLSNumerics, only: InterpolateValues    ! IGOR
+    use VectorsModule, only: VectorValue_T
+
+    ! Required inputs
+    type(convolve_support_t), intent(in) :: Convolve_Support
+    integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
+    real(rp), intent(in) :: Rad_In(:)   ! input radiances, I
+    real(r8), intent(in) :: SbRatio
+    logical, intent(in) :: Update       ! "add to radiance, don't overwrite"
+    type(vectorvalue_t), intent(in) :: PTAN ! Only for some indices
+    real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
+
+    ! Output
+    type (VectorValue_T), intent(inout) :: RADIANCE   ! Output radiances, IA = I*G
+
+    ! Optional if PTan derivative processed.  All or none.
+    type (Matrix_t), optional, intent(inout) :: Jacobian
+    logical, optional, intent(inout) :: rowFlags(:) ! Flag to calling code
+    real(rp), optional, intent(in) :: dh_dz_out(:) ! dh/dz on the output pointing grid
+    real(rp), optional, intent(in) :: dx_dh_out(:) ! dx/dh on the output pointing grid
+    logical, optional, intent(in) :: Ptan_der ! "Process PTAN derivatives"
+
+    ! Temperature derivatives need this    IGOR - in new version, rad_fft will not be needed,
+    !        but rad_diff (= I-IA) and rad_diff_FFT (= FFT(I-IA)) will be 
+    real(r8),             intent(out)  , optional :: Rad_FFT(:)      ! FFT(I), on FFT grid
+    real(rp),             intent(out)  , optional :: Rad_Diff(:)     ! Output radiance differences, I-IA    ! IGOR
+    real(r8),             intent(out)  , optional :: Rad_Diff_FFT(:) ! FFT(Rad_Diff) = FFT(I-IA)            ! IGOR
+
+    logical :: my_ptan_der
+    integer :: Col, NoChans, NoPtan, Row
+    real(rv), pointer :: MIF_Times_for_MAF(:)
+    real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
+    real(r8) :: SRad_out(size(rad_in))                             ! IGOR
+    real(r8) :: SRad_temp(ptan%template%noSurfs)                   ! IGOR
+
+    my_ptan_der = .false.
+    if ( present ( ptan_der ) ) my_ptan_der = ptan_der
+
+    nullify ( MIF_Times_for_MAF )
+    if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
+    noChans = Radiance%template%noChans
+    noPtan = ptan%template%nosurfs
+
+    ! Convolve the radiances (and maybe the derivative w.r.t. PTan):
+
+    if ( my_ptan_der ) then ! Convolve radiance and get di_dx
+      call fov_convolve_1d ( convolve_support, rad_in, MIF_Times_for_MAF, DeadTime, &
+        & SRad, dRad_dx_out=di_dx, rad_fft_out=rad_fft )
+    else
+      call fov_convolve_1d ( convolve_support, rad_in, MIF_Times_for_MAF, DeadTime, &
+        & SRad, rad_fft_out=rad_fft )
+    end if
+
+    ! Load the Radiance values into the Radiance structure:
+
+    call loadVectorValue ( sRad, Radiance%values(channel::noChans,maf), &
+      & sbRatio, update )
+
+    ! IGOR
+    call InterpolateValues ( convolve_support%del_chi_out, sRad, convolve_support%del_chi_in, sRad_out, &
+                                 & METHOD='S', extrapolate='C' )
+
+    ! I_diff = I - IA            ! IGOR:
+    
+    rad_diff = rad_in - sRad_out      ! IGOR
+
+    ! IGOR:
+    if ( my_ptan_der ) then ! Get FFT(I-IA)
+      call fov_convolve_1d ( convolve_support, rad_diff, MIF_Times_for_MAF, DeadTime, &
+        & sRad_temp, rad_fft_out=Rad_Diff_FFT )
+    end if
+
+    ! Load the I-IA values into the Radiance_Diff structure:
+
+    !call loadVectorValue ( rad_diff, Radiance_diff%values(channel::noChans,maf), &
+    !  & sbRatio, update )          ! IGOR
+
+
+    if ( my_ptan_der ) then ! Jacobian better be present!
+
+      ! First, find index location in Jacobian and set the derivative flags
+
+      row = FindBlock( Jacobian%row, radiance%index, maf )
+      rowFlags(row) = .TRUE.
+
+      ! Compute dI/dPtan using the chain rule:
+      SRad = di_dx * dx_dh_out * dh_dz_out
+
+      col = FindBlock ( Jacobian%col, ptan%index, maf )
+      call getBandedBlock ( jacobian, row, col, noChans, noPtan )
+      call loadMatrixValue ( sRad, Jacobian%block(row,col)%values(channel::noChans,1), &
+        & sbRatio, update )
+
+    end if ! present(jacobian) .and. my_ptan_der
+
+  end subroutine Convolve_Radiance_Normalization
+
+  ! ---------------------------------  Convolve_Temperature_Deriv_Normalization  -----
+  ! Performs convolution of Temperature derivatives (with normalization)
+  subroutine Convolve_Temperature_Deriv_Normalization ( Convolve_Support, MAF, Channel, &
+           & Rad_Diff, Rad_Diff_FFT, SbRatio, Update, Radiance, Temp, Grids_Tmp, &
+           & surf_angle, MIF_Times, DeadTime, di_dT, dx_dT, d2x_dxdT, &
+           & dxdt_tan, dxdt_surface, Jacobian, RowFlags )
+
+    use Fov_Convolve_m, only: Convolve_Support_T, &
+      & FOV_Convolve_Temp_Derivs, FOV_Convolve_Temp_Derivs_Normalization
+    use Load_sps_data_m, only: Grids_T
+    use MatrixModule_1, only: FINDBLOCK, GetFullBlock, MATRIX_T
+    use MLSKinds, only: R8, RP, RV
+    use VectorsModule, only: VectorValue_T
+
+    ! Inputs
+    type(convolve_support_t), intent(in) :: Convolve_Support
+    integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
+    real(rp), intent(in) :: Rad_Diff(:)  ! Input radiance differences, I-IA        ! IGOR
+    real(r8), intent(in) :: Rad_Diff_FFT(:) ! FFT(Rad_Diff) = FFT(I-IA)            ! IGOR
+    real(r8), intent(in) :: SbRatio
+    logical, intent(in) :: Update      ! "add to Jacobian, don't overwrite"
+    type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
+    type (vectorvalue_t), intent(in) :: TEMP     ! Only for some indices
+    type (Grids_T), intent(in) :: Grids_Tmp      ! Temperature's grids, etc.
+    real(rp), intent(in) :: Surf_angle ! An angle that defines the
+    !                      Earth surface.
+    real(rv), pointer :: MIF_Times(:,:) ! Disassociated if no scan average, q.v.
+    real(rv), pointer :: DeadTime(:,:)  ! Disassociated if no scan average, q.v.
+    real(rp), intent(in) :: dI_dT(:,:) ! derivative of radiance wrt
+    !                      temperature on chi_in
+    real(rp), intent(in) :: dx_dT(:,:) ! derivative of angle wrt
+    !                      temperature on chi_in
+    real(rp), intent(in) :: d2x_dxdT(:,:) ! 2nd derivative wrt angle and
+    !                      temperature on chi_in
+    real(rp), intent(in) :: dxdT_tan(:,:) ! derivative of angle wrt
+    !                      temperature on chi_in
+    real(rp), intent(in) :: dxdT_surface(:,:) ! derivative of angle
+    !                      wrt temperature at the surface
+
+    ! Outputs
+    type (Matrix_t), intent(inout) :: Jacobian
+    logical, intent(inout) :: rowFlags(:) ! Flag to calling code
+
+    ! Local variables
+    integer :: Col, JF, K, NoChans, NoPtan, N_T_Zeta, Row, SV_I
+    real(r8) :: dRad_dT_out(size(convolve_support%del_chi_out), &
+                & temp%template%noSurfs*( &
+                  & grids_tmp%windowFinish(1) - grids_tmp%windowStart(1) + 1))
+    real(rv), pointer :: MIF_Times_for_MAF(:)
+
+    ! Start here
+
+    nullify ( MIF_Times_for_MAF )
+    if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
+    noChans = Radiance%template%noChans
+    noPtan = size(convolve_support%del_chi_out)
+    n_t_zeta = temp%template%noSurfs
+
+    !call fov_convolve_temp_derivs ( convolve_support, rad_in, &
+    !  & rad_fft, surf_angle, MIF_Times_for_MAF, DeadTime, dI_dT, dx_dT, &
+    !  & d2x_dxdT, dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan), &
+    !  & grids_tmp%deriv_flags, dRad_dT_out )                          ! IGOR
+
+    call fov_convolve_temp_derivs_normalization ( convolve_support, rad_diff, &
+      & rad_diff_fft, surf_angle, MIF_Times_for_MAF, DeadTime, dI_dT, dx_dT, &
+      & d2x_dxdT, dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan), &
+      & grids_tmp%deriv_flags, dRad_dT_out )   ! IGOR
+
+
+    ! Load the Temp. derivative values into the Jacobian
+    ! First, find index location in Jacobian and set the derivative flags
+
+    row = FindBlock( Jacobian%row, radiance%index, maf )
+    rowFlags(row) = .TRUE.
+
+    sv_i = 0
+    do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
+
+      col = FindBlock ( Jacobian%col, temp%index, jf )
+      call getFullBlock ( jacobian, row, col, 'temperature' )
+
+      do k = 1, n_t_zeta
+
+        ! Load derivatives for this (zeta & phi) if needed :
+
+        sv_i = sv_i + 1
+        if ( grids_tmp%deriv_flags(sv_i) ) &
+          & call loadMatrixValue ( dRad_dT_out(:,sv_i), &
+            & jacobian%block(row,col)%values(channel::noChans,k), sbRatio, &
+            & update )
+      end do
+
+    end do
+
+  end subroutine Convolve_Temperature_Deriv_Normalization
 
   ! ----------------------------------------  Convolve_OtherDeriv  -----
   subroutine Convolve_Other_Deriv ( Convolve_Support, MAF, Channel, &
@@ -1067,6 +1279,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.19  2012/07/06 21:30:31  yanovsky
+! Added Convolve_Radiance_Normalization and Convolve_Temperature_Deriv_Normalization subroutines that compute normalized Temperature derivatives
+!
 ! Revision 2.18  2011/12/17 00:35:29  vsnyder
 ! Move GetFullBlock to MatrixModule_1
 !
