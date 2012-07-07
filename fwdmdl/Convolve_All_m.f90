@@ -1279,8 +1279,13 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.20  2012/07/07 00:14:33  vsnyder
+! Shorten some comments to avoid gripes about long lines
+!
 ! Revision 2.19  2012/07/06 21:30:31  yanovsky
-! Added Convolve_Radiance_Normalization and Convolve_Temperature_Deriv_Normalization subroutines that compute normalized Temperature derivatives
+! Added Convolve_Radiance_Normalization and
+! Convolve_Temperature_Deriv_Normalization subroutines that compute
+! normalized Temperature derivatives
 !
 ! Revision 2.18  2011/12/17 00:35:29  vsnyder
 ! Move GetFullBlock to MatrixModule_1
