@@ -599,7 +599,8 @@ contains
     
     !{  dx$\_$dT $= \displaystyle \frac{d\epsilon}{dT} = \frac{\tan \epsilon}{H} \frac{dH}{dT}$, \\
     ! dx$\_$dT$\_$out $= \displaystyle \frac{d\epsilon_t}{dT} = \frac{\tan \epsilon_t}{H_t} \frac{dH_t}{dT}$, \\
-    ! ddx$\_$dxdT $= \displaystyle \frac{d^2 \epsilon}{d\epsilon dT} = \frac{2 + \tan^2 \epsilon}{H} \frac{dH}{dT} + \frac{\eta}{T}$.
+    ! ddx$\_$dxdT $= \displaystyle \frac{d^2 \epsilon}{d\epsilon dT} = \frac{2 +
+    ! \tan^2 \epsilon}{H} \frac{dH}{dT} + \frac{\eta}{T}$.
 
     !{ Only consider rad$\_$diff$\_$fft $(= I-I^A)$, instead of rad$\_$in $(=I)$, throughout. \\
     !  p $= FT(G(\epsilon))$, \ \ dp $= FT \left( \displaystyle \frac{dG(\epsilon)}{d\epsilon} \right)$, \\
@@ -859,8 +860,12 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.16  2012/07/07 00:14:33  vsnyder
+! Shorten some comments to avoid gripes about long lines
+!
 ! Revision 2.15  2012/07/06 21:30:00  yanovsky
-! Added FOV_Convolve_Temp_Derivs_Normalization subroutine that computes normalized Temperature derivatives
+! Added FOV_Convolve_Temp_Derivs_Normalization subroutine that computes
+! normalized Temperature derivatives
 !
 ! Revision 2.14  2011/03/23 23:49:20  vsnyder
 ! Make some array bounds explicit, to avoid a bounds violation if the
