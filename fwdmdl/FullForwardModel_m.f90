@@ -82,6 +82,7 @@ contains
     type (VectorValue_T), pointer :: PTAN   ! Tangent pressure component of state vector
     type (VectorValue_T), pointer :: SPS    ! A species component of state vector
     type (VectorValue_T), pointer :: TEMP   ! Temperature component of state vector
+    integer :: Dump_Conf        ! for debugging, from -Sfmconf
     integer :: K                ! Loop inductor and subscript
     integer :: Mol              ! A molecule's lit index
     integer :: No_Mol           ! Number of molecules
@@ -262,9 +263,9 @@ contains
     s_tg = merge(1,0,FwdModelConf%GenerateTScat)
     s_ts = merge(1,0,FwdModelConf%useTScat)
 
-    if ( switchDetail(switches,'fmconf') > -1 ) then
-      call dump( FwdModelConf, details=1 )
-    end if
+    dump_conf = switchDetail(switches,'fmconf')
+    if ( dump_conf > -1 ) call dump( FwdModelConf, details=dump_conf  )
+
     call FullForwardModelAuto ( FwdModelConf, FwdModelIn, FwdModelExtra,       &
                               & FwdModelOut, FmStat, z_psig, tan_press,        &
                               & grids_tmp, grids_f, grids_mag, grids_iwc,      &
@@ -462,6 +463,7 @@ contains
     logical :: Dump_Tscat         ! For debugging, from -Sdsct
     logical, parameter :: PFAFalse = .false.
     logical, parameter :: PFATrue = .true.
+    logical :: Print_Frq          ! For debugging, from -Sffrq
     logical :: Print_Incopt       ! For debugging, from -Sincp
     logical :: Print_IncRad       ! For debugging, from -Sincr
     logical :: Print_Mag          ! For debugging, from -Smag
@@ -833,6 +835,7 @@ contains
     if ( switchDetail(switches, 'DPRI') > -1 ) dump_rad_pol = 3 ! Dump first and stop
     dump_rad_pol = switchDetail(switches, 'dpri') + 1
     dump_TScat = switchDetail(switches, 'dsct' ) > -1
+    print_Frq = switchDetail(switches, 'ffrq' ) > -1
     print_Incopt = switchDetail(switches, 'incp' ) > -1
     print_IncRad = switchDetail(switches, 'incr' ) > -1
     print_Mag = switchDetail(switches, 'mag') > -1
@@ -2197,6 +2200,8 @@ contains
       call allocate_test ( frequencies, noFreqs, "frequencies", moduleName )
 
       frequencies = GridFrequencies(j:m)
+
+      if ( print_frq ) call dump ( frequencies, 'Frequencies' )
 
     end subroutine Frequency_Setup_2
 
@@ -4590,6 +4595,11 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.334  2012/07/06 21:30:41  yanovsky
+! Make the module ready for making calls to Convolve_Radiance_Normalization
+! and Convolve_Temperature_Deriv_Normalization that compute normalized
+! Temperature derivatives.  These calls are currently commented.
+!
 ! Revision 2.333  2012/06/15 23:33:13  vsnyder
 ! Include sin(theta) factor in TScat phase convolution.  Improve dumps.
 !
