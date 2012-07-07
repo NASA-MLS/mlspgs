@@ -1097,14 +1097,18 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyVectorQuantityMask
 
   ! ---------------------------------  DestroyVectorQuantityValue  -----
-  subroutine DestroyVectorQuantityValue ( Value )
+  subroutine DestroyVectorQuantityValue ( Value, DestroyMask )
 
     ! This routine destroys the VALUES stored in one vector quantity.
 
     ! Dummy arguments
     type (vectorValue_t) :: Value
+    logical, intent(in), optional :: DestroyMask
     call deallocate_test ( value%values, 'VALUE', moduleName )
     nullify ( value%value1, value%value3 )
+    if ( present(destroyMask) ) then
+      if ( destroyMask ) call destroyVectorQuantityMask ( value )
+    end if
   end subroutine DestroyVectorQuantityValue
 
   ! ------------------------------  DestroyVectorTemplateDatabase  -----
@@ -2309,15 +2313,13 @@ contains ! =====     Public Procedures     =============================
     type(vectorValue_t), intent(inout) :: From, To
     if ( from%template%name /= to%template%name ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, 'From and To vectors have different templates' )
-    call destroyVectorQuantityValue ( to )
-    call destroyVectorQuantityMask ( to )
+    call destroyVectorQuantityValue ( to, destroyMask=.true. )
     to%value1 => from%value1
     to%mask1 => from%mask1
     call remapVectorValue ( to )
     call remapVectorMask ( to )
     nullify ( from%value1, from%mask1 ) ! Don't deallocate during destroy!
-    call destroyVectorQuantityValue ( from )
-    call destroyVectorQuantityMask ( from )
+    call destroyVectorQuantityValue ( from, destroyMask=.true. )
   end subroutine MoveVectorQuantity
 
   ! --------------------------------------------  MultiplyVectors  -----
@@ -2890,6 +2892,12 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.164  2012/07/07 02:02:34  vsnyder
+! Add MASK1 and MASK3.  Make MASK and MASK3 rank remappings of MASK1.
+! Add VALUE1 and VALUE3.  Make VALUES and VALUE3 rank remappings of VALUE1.
+! Add low-level abstractions for creating and destroying masks and values
+! for a single vector quantity.
+!
 ! Revision 2.163  2012/05/24 20:32:56  vsnyder
 ! Change details level for dumping vector quantity templates
 !
