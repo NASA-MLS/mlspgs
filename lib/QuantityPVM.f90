@@ -173,7 +173,7 @@ contains ! ================================== Module procedures ============
 
     ! Now pack the noValues, noMask flag
     myNoMask = myNoMask .or. ( .not. associated(q%mask) )
-    call PVMIDLPAck ( (/ myNoValues, myNoMask /), info )
+    call PVMIDLPack ( (/ myNoValues, myNoMask /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing values/mask flags" )    
 
     ! Now we're going to send this to the snooper.
@@ -208,18 +208,17 @@ contains ! ================================== Module procedures ============
   end subroutine PVMSendQuantity
 
   ! ---------------------------------- PVMReceiveQuantity ---------------------
-  subroutine PVMReceiveQuantity ( QT, values, tid, mask, justUnpack, mifGeolocation )
+  subroutine PVMReceiveQuantity ( QT, values, tid, justUnpack, mifGeolocation )
     use Allocate_Deallocate, only: ALLOCATE_TEST
     use MLSCommon, only: R8
     use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
-    use VectorsModule, only: CREATEMASKARRAY
+    use VectorsModule, only: CREATEMASK, CreateVectorValue, VectorValue_T
     type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
     ! It's not inout, because then setupNewQuantityTemplate would deallocate
     ! the pointer components.  But the actual argument is put into a database
     ! using a shallow copy, so cleaning it up would clobber a database item.
-    real (r8), dimension(:,:), optional, pointer :: VALUES ! Values for quantity
+    type (VectorValue_T), optional :: VALUES ! Quantity to receive
     integer, intent(in), optional :: TID ! Task to get it from
-    character, dimension(:,:), optional, pointer :: MASK ! Mask
     logical, intent(in), optional :: JUSTUNPACK ! Just unpack from existing buffer
     type (QuantityTemplate_T), dimension(:), intent(in), optional :: MIFGEOLOCATION
 
@@ -388,34 +387,27 @@ contains ! ================================== Module procedures ============
       & 'Values sent but no place to put them' )
 
     if ( present ( values ) ) then
-      nullify ( values )
-      call Allocate_Test ( values, qt%instanceLen, qt%noInstances, &
-        & 'values', ModuleName )
-    endif
 
-    if ( .not. myJustUnpack .and. .not. all ((/noValues,noMask/)) ) then
-      ! Now we're going to receive the values in a separate message
-      call PVMFrecv ( tid, QtyMsgTag, bufferID )
-    end if
+     call createVectorValue ( values, 'Values' )
 
-    ! Unpack the values
-    if ( .not. noValues ) then
-      call PVMIDLUnpack ( values, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking values" )
-    endif
+      if ( .not. myJustUnpack .and. .not. all ((/noValues,noMask/)) ) then
+        ! Now we're going to receive the values in a separate message
+        call PVMFrecv ( tid, QtyMsgTag, bufferID )
+      end if
 
-    ! Skip the mask for the moment.
-    if ( present(mask) ) then
-      nullify ( mask )
-      if ( .not. noMask ) then
-        call CreateMaskArray ( mask, values )
-        call PVMIDLUnpack ( mask, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mask" )
+      ! Unpack the values
+      if ( .not. noValues ) then
+        call PVMIDLUnpack ( values%values, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking values" )
       endif
-    else
-      if ( .not. noMask ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Mask sent but no place to put it' )
+
+      ! Skip the mask for the moment.
+      if ( .not. noMask ) then
+        call CreateMask ( values )
+        call PVMIDLUnpack ( values%mask, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mask" )
+      end if
+
     end if
 
   end subroutine PVMReceiveQuantity
@@ -433,6 +425,11 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.24  2012/07/07 02:03:57  vsnyder
+! Change type of VALUES argument to PVMReceiveQuantity from REAL to
+! VectorValue_t.  Delete MASK argument, which nobody used.  Receive the
+! mask into the MASK component of VALUES if it's sent.
+!
 ! Revision 2.23  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
