@@ -46,12 +46,14 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! ConstructVectorTemplate      Creates a vectorTemplate from a list of quantities
 ! CopyVector                   z = x, including copying values and mask
 ! CopyVectorMask               Copy mask for x to z, assuming compatible vectors
-! CreateMaskArray              Allocate a MASK array
 ! CreateMask                   Allocate the MASK array for a vector quantity
 ! CreateVector                 Creates an empty vector according to a given template
+! CreateVectorValue            Creates an empty vector value according to a given template
 ! DestroyVectorDatabase        Destroys a vector database
 ! DestroyVectorInfo            Destroy a vector
-! DestroyVectorMask            Destroys the masks stored in the vector
+! DestroyVectorMask            Destroy the masks stored in the vector
+! DestroyVectorQuantityMask    Destroy the MASK stored in one vector quantity
+! DestroyVectorQuantityValue   Destroy the VALUES stored in one vector quantity
 ! DestroyVectorTemplateDatabase Destroys a vector template database
 ! DestroyVectorTemplateInfo    Destroys a vector template
 ! DestroyVectorValue           Destroy the "values" field in all of the quantities in a vector
@@ -87,6 +89,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! NullifyVector
 ! PowVector                    X = X ** Power element-by-element
 ! ReciprocateVector            Y = A / X if Y is present, else X = A / X -- scalar A
+! RemapVectorMask              Remap MASK1 to MASK and MASK3
+! RemapVectorValue             Remap VALUE1 to VALUES and VALUE3
 ! ReverseMask                  Reverse bits of MASK according to TO_CLEAR
 ! RmVectorFromDatabase         Removes a vector from a database of such vectors
 ! ScaleVector                  Y = A*X if Y is present, else X = A*X.
@@ -125,9 +129,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: CheckNaN, CheckVectorForNaN, CheckVectorQuantityForNaN
   public :: ClearMask, ClearUnderMask, ClearVector
   public :: CloneVector, CloneVectorQuantity, ConstantXVector
-  public :: ConstructVectorTemplate, CopyVector, CopyVectorMask, CreateMaskArray
-  public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
-  public :: DestroyVectorMask, DestroyVectorTemplateDatabase
+  public :: ConstructVectorTemplate, CopyVector, CopyVectorMask
+  public :: CreateMask, CreateVector, CreateVectorValue, DestroyVectorDatabase
+  public :: DestroyVectorInfo, DestroyVectorMask, DestroyVectorQuantityMask
+  public :: DestroyVectorQuantityValue, DestroyVectorTemplateDatabase
   public :: DestroyVectorTemplateInfo, DestroyVectorValue
   public :: DiffVectorQuantities
   public :: DivideVectors
@@ -146,7 +151,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: MaskVectorQty, MoveVectorQuantity, MultiplyVectors
   public :: NullifyVectorTemplate, NullifyVectorValue, NullifyVector, PowVector
   public :: QuantityTemplate_T ! for full F95 compatibility
-  public :: ReciprocateVector, ReverseMask, RmVectorFromDatabase
+  public :: ReciprocateVector, RemapVectorMask, RemapVectorValue, ReverseMask
+  public :: RmVectorFromDatabase
   public :: ScaleVector, SetMask, SubtractFromVector
   public :: SubtractVectors, ValidateVectorQuantity
   ! Types
@@ -238,12 +244,25 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   type VectorValue_T
     type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
-    integer :: index            ! Index of this quantity into vector database
+    integer :: index            ! Index of this quantity in the vector database
+    real(rv), dimension(:), pointer :: VALUE1 => NULL() ! The dimension of
+    ! VALUE1 is Frequencies (or 1) * Vertical Coordinates (or 1) * Horizontal
+    ! Instances (scan or profile or 1).  These are taken from 
+    ! (template%noChans * template%noSurfs * template%noInstances).  This is
+    ! the one that's allocated and deallocated.
     real(rv), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
-    ! VALUES are Auxiliary coordinates (or 1) * Frequencies (or 1) * Vertical
-    ! Coordinates (or 1), and Horizontal Instances (scan or profile or 1). 
-    ! These are taken from (template%noAux * template%noChans *
-    ! template%noSurfs, template%noInstances).
+    ! VALUES are Frequencies (or 1) * Vertical Coordinates (or 1), and
+    ! Horizontal Instances (scan or profile or 1).  These are taken from
+    ! (template%noChans * template%noSurfs, template%noInstances).  This is a
+    ! rank remapping of VALUE1.
+    real(rv), dimension(:,:,:), pointer :: VALUE3 => NULL() ! The dimensions
+    ! of VALUE3 are Frequencies, Vertical Coordinates and Horizontal
+    ! Instances (scan or profile or 1).  These are taken from
+    ! template%noChans, template%noSurfs, and template%noInstances.  This is
+    ! a rank remapping of VALUE1.
+    character, dimension(:), pointer :: MASK1 => NULL() ! MASK1 is the
+    ! array that is allocated and deallocated.  MASK and MASK3 are rank
+    ! remappings of MASK1.
     character, dimension(:,:), pointer :: MASK => NULL() ! MASK is used to
     ! control whether elements of vectors are of interest. If MASK is not
     ! associated, every element is of interest.  Otherwise,the dimensions of
@@ -253,7 +272,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! linear algebra.  Other bits can be used for other purposes.
     ! Actually the mask bits are gotten at from the ichar(mask)
     ! Inversely, given the integer representation of the bits, we get the mask
-    ! by mask = char(int)
+    ! by mask = char(int).  This is a rank remapping of MASK1.
+    character, dimension(:,:,:), pointer :: MASK3 => NULL() ! This is used
+    ! for masking VALUE3, and has the same dimensions.  This is a rank
+    ! remapping of MASK1.
     integer :: label = 0        ! An optional label for this to be used as for
     ! example a swath name.  Often used in conjunction with the 'batch'
     ! approach to direct writes.
@@ -264,7 +286,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   integer, parameter :: M_Fill = 2**2
   integer, parameter :: M_FullDerivatives = 2**1
   integer, parameter :: M_Ignore = 2**5
-  integer, parameter :: M_LinAlg = 2**0
+  integer, parameter :: M_LinAlg = 2**0      ! Don't use in linear algebra
   integer, parameter :: M_Spare = 2**6
   integer, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 
@@ -767,21 +789,17 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments:
     type(vectorValue_T), intent(inout) :: Z
     type(vectorValue_T), intent(in) :: X
-    ! Local variables:
-    integer, dimension(2) :: shp
     ! Executable statements:
-    call NullifyVectorValue( z )
+    call NullifyVectorValue ( z )
     z%template = x%template
     if ( associated(x%values) ) then
-      shp = shape(x%values)
-      call allocate_test( z%values, shp(1), shp(2), 'z%values', moduleName )
+      call createVectorValue ( z, 'z%values' )
       z%values = x%values
-    endif
+    end if
     if ( associated(x%mask) ) then
-      shp = shape(x%mask)
-      call allocate_test( z%mask, shp(1), shp(2), 'z%mask', moduleName )
+      call createMask ( z )
       z%mask = x%mask
-    endif
+    end if
   end subroutine CloneVectorQuantity
 
   ! --------------------------------------------  ConstantXVector  -----
@@ -930,28 +948,18 @@ contains ! =====     Public Procedures     =============================
         call CreateMask ( z%quantities(q) )
         z%quantities(q)%mask = x%quantities(q)%mask
       else
-        if ( associated ( z%quantities(q)%mask ) ) &
-          & call Deallocate_test ( z%quantities(q)%mask, &
-          & 'z%quantities(?)%mask', ModuleName )
+        call destroyVectorQuantityMask ( z%quantities(q) )
       end if
     end do
   end subroutine CopyVectorMask
 
-  ! ---------------------------------------------  CreateMaskArray  -----
-  subroutine CreateMaskArray ( mask, values )
-    ! Allocate the MASK array for a vector quantity.
-    character, dimension(:,:), pointer :: MASK ! To create
-    real(rv), dimension(:,:), pointer :: VALUES ! Template values
-    call allocate_test ( mask, (size(values,1)), &
-      & size(values,2), "MASK in CreateMaskArray", ModuleName )
-    mask = char(0) ! All vector elements are interesting
-  end subroutine CreateMaskArray
-
   ! -------------------------------------------------  CreateMask  -----
-  subroutine CreateMask ( VectorValue )
+  subroutine CreateMask ( Value )
   ! Allocate the MASK array for a vector quantity.
-    type(VectorValue_T), intent(inout) :: VectorValue
-    call createMaskArray ( vectorValue%mask, vectorValue%values )
+    type(VectorValue_T), intent(inout) :: Value
+    call allocate_test ( value%mask1, size(value%values), "MASK1", &
+      & ModuleName, fill=char(0) )
+    call remapVectorMask ( value )
   end subroutine CreateMask
 
   ! -----------------------------------------------  CreateVector  -----
@@ -1000,6 +1008,21 @@ contains ! =====     Public Procedures     =============================
       & call createValues ( vector, highBound, lowBound )
     if ( present(where) ) vector%where = where
   end function CreateVector
+
+  ! ------------------------------------------  CreateVectorValue  -----
+  subroutine CreateVectorValue ( Value, What )
+  ! Allocate the Value1 component of Value and remap it.
+  ! The Mask* components are destroyed.  Use CreateMask if you need to.
+    type(vectorValue_t) :: Value
+    character(len=*), intent(in) :: What
+    call destroyVectorQuantityMask ( value )
+    call allocate_test ( value%value1, &
+      & value%template%noChans * &
+      & value%template%noSurfs * &
+      & value%template%noInstances, &
+      & trim(what) // "%values", ModuleName )
+    call remapVectorValue ( value )
+  end subroutine CreateVectorValue
 
   ! --------------------------------------  DestroyVectorDatabase  -----
   subroutine DestroyVectorDatabase ( database )
@@ -1058,10 +1081,31 @@ contains ! =====     Public Procedures     =============================
     ! Local Variables:
     integer :: I
     do i = 1, size(vector%quantities)
-      call deallocate_test ( vector%quantities(i)%mask, &
-        & "vector%quantities(i)%mask", ModuleName )
+      call destroyVectorQuantityMask ( vector%quantities(i) )
     end do
   end subroutine DestroyVectorMask
+
+  ! ----------------------------------  DestroyVectorQuantityMask  -----
+  subroutine DestroyVectorQuantityMask ( Value )
+
+    ! This routine destroys the MASK stored in one vector quantity.
+
+    ! Dummy arguments
+    type (vectorValue_t) :: Value
+    call deallocate_test ( value%mask, 'MASK', moduleName )
+    nullify ( value%mask1, value%mask3 )
+  end subroutine DestroyVectorQuantityMask
+
+  ! ---------------------------------  DestroyVectorQuantityValue  -----
+  subroutine DestroyVectorQuantityValue ( Value )
+
+    ! This routine destroys the VALUES stored in one vector quantity.
+
+    ! Dummy arguments
+    type (vectorValue_t) :: Value
+    call deallocate_test ( value%values, 'VALUE', moduleName )
+    nullify ( value%value1, value%value3 )
+  end subroutine DestroyVectorQuantityValue
 
   ! ------------------------------  DestroyVectorTemplateDatabase  -----
   subroutine DestroyVectorTemplateDatabase ( database )
@@ -1113,8 +1157,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( .not. associated(vector%quantities) ) return
     do i = 1, size(vector%quantities)
-      call deallocate_test ( vector%quantities(i)%values, &
-        & "vector%quantities(i)%values", ModuleName )
+      call destroyVectorQuantityValue ( vector%quantities(i) )
     end do
   end subroutine DestroyVectorValue
 
@@ -2263,13 +2306,18 @@ contains ! =====     Public Procedures     =============================
     ! Deallocate the Values and Mask fields in To
     ! Move the Values and Mask fields from From to To using pointer assignment.
     ! Nullify the Values and Mask fields in From
-    use Allocate_Deallocate, only: Deallocate_Test
     type(vectorValue_t), intent(inout) :: From, To
-    call deallocate_test ( to%values, moduleName, 'To%Values' )
-    call deallocate_test ( to%mask, moduleName, 'To%Mask' )
-    to%values => from%values
-    to%mask => from%mask
-    nullify ( from%values, from%mask )
+    if ( from%template%name /= to%template%name ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, 'From and To vectors have different templates' )
+    call destroyVectorQuantityValue ( to )
+    call destroyVectorQuantityMask ( to )
+    to%value1 => from%value1
+    to%mask1 => from%mask1
+    call remapVectorValue ( to )
+    call remapVectorMask ( to )
+    nullify ( from%value1, from%mask1 ) ! Don't deallocate during destroy!
+    call destroyVectorQuantityValue ( from )
+    call destroyVectorQuantityMask ( from )
   end subroutine MoveVectorQuantity
 
   ! --------------------------------------------  MultiplyVectors  -----
@@ -2331,8 +2379,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     call nullifyQuantityTemplate ( v%template )
-    nullify ( v%values )
-    nullify ( v%mask )
+    nullify ( v%values, v%value1, v%value3 )
+    nullify ( v%mask, v%mask1, v%mask3 )
   end subroutine NullifyVectorValue
 
   ! ---------------------------------------------- NullifyVector -----
@@ -2384,7 +2432,35 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine ReciprocateVector
 
-  ! --------------------------------------------------  ReverseMask  -----
+  ! --------------------------------------------  RemapVectorMask  -----
+  subroutine RemapVectorMask ( Value )
+    use Pointer_Rank_Remapping, only: Remap
+    type ( vectorValue_t ) :: Value
+    call remap ( value%mask1, value%mask, &
+      & (/ value%template%noChans * &
+      &    value%template%noSurfs,  &
+      &    value%template%noInstances /) )
+    call remap ( value%mask1, value%mask3, &
+      & (/ value%template%noChans,  &
+      &    value%template%noSurfs,  &
+      &    value%template%noInstances /) )
+  end subroutine RemapVectorMask
+
+  ! -------------------------------------------  RemapVectorValue  -----
+  subroutine RemapVectorValue ( Value )
+    use Pointer_Rank_Remapping, only: Remap
+    type ( vectorValue_t ) :: Value
+    call remap ( value%value1, value%values, &
+      & (/ value%template%noChans * &
+      &    value%template%noSurfs,  &
+      &    value%template%noInstances /) )
+    call remap ( value%value1, value%value3, &
+      & (/ value%template%noChans,  &
+      &    value%template%noSurfs,  &
+      &    value%template%noInstances /) )
+  end subroutine RemapVectorValue
+
+  ! ------------------------------------------------  ReverseMask  -----
   subroutine ReverseMask ( MASK, TO_Reverse, WHAT )
   ! Reverse bits of MASK indexed by elements of TO_Reverse.  Numbering of mask
   ! elements starts at one, not zero!  If TO_Reverse is absent, Reverse all of
@@ -2787,11 +2863,7 @@ contains ! =====     Public Procedures     =============================
       else
         call get_string ( vector%quantities(qty)%template%name, what2 )
       end if
-      call allocate_test ( vector%quantities(qty)%values, &
-        & vector%quantities(qty)%template%noChans * &
-        & vector%quantities(qty)%template%noSurfs, &
-        & vector%quantities(qty)%template%noInstances, &
-        & trim(what1) // trim(what2) // "%values", ModuleName )
+      call createVectorValue ( vector%quantities(qty), trim(what1) // trim(what2) )
       if ( myHighBound ) then
         vector%quantities(qty)%values = myHuge
       else if ( myLowBound ) then
@@ -2801,6 +2873,7 @@ contains ! =====     Public Procedures     =============================
       end if
     end do
   end subroutine
+
 !=======================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -2817,6 +2890,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.163  2012/05/24 20:32:56  vsnyder
+! Change details level for dumping vector quantity templates
+!
 ! Revision 2.162  2012/04/20 01:26:38  vsnyder
 ! Add DotVectorsMaybeMasked, norms, dump quantity norms
 !
