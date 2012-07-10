@@ -17,6 +17,7 @@ module Pointer_Rank_Remapping
 #ifdef CMAP
   use, intrinsic :: ISO_C_Binding, only: C_F_Pointer, C_LOC, C_PTR
 #endif
+  use MLSMessageModule, only: MLSMSG_Crash, MLSMessage
   implicit NONE
   private
 
@@ -47,7 +48,13 @@ contains
     type(c_ptr) :: C
     c = c_loc(a(1))
     call c_f_pointer ( c, b, shape )
+#ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
 #else
     if ( present(lbounds) ) then
       b(lbounds(1):shape(1),lbounds(2):shape(2)) => a
@@ -67,7 +74,13 @@ contains
     type(c_ptr) :: C
     c = c_loc(a(1))
     call c_f_pointer ( c, b, shape )
+#ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
 #else
     if ( present(lbounds) ) then
       b(lbounds(1):shape(1),lbounds(2):shape(2)) => a
@@ -87,7 +100,13 @@ contains
     type(c_ptr) :: C
     c = c_loc(a(1))
     call c_f_pointer ( c, b, shape )
+#ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
 #else
     if ( present(lbounds) ) then
       b(lbounds(1):shape(1),lbounds(2):shape(2)) => a
@@ -106,7 +125,13 @@ contains
     type(c_ptr) :: C
     c = c_loc(a(1))
     call c_f_pointer ( c, b, shape )
+#ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
 #else
     if ( present(lbounds) ) then
       b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3)) => a
@@ -126,7 +151,13 @@ contains
     type(c_ptr) :: C
     c = c_loc(a(1))
     call c_f_pointer ( c, b, shape )
+#ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
 #else
     if ( present(lbounds) ) then
       b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3)) => a
@@ -146,7 +177,13 @@ contains
     type(c_ptr) :: C
     c = c_loc(a(1))
     call c_f_pointer ( c, b, shape )
+#ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
 #else
     if ( present(lbounds) ) then
       b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3)) => a
@@ -165,7 +202,13 @@ contains
     type(c_ptr) :: C
     c = c_loc(a(1))
     call c_f_pointer ( c, b, shape )
+#ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
 #else
     if ( present(lbounds) ) then
       b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3),lbounds(4):shape(4)) => a
@@ -185,7 +228,13 @@ contains
     type(c_ptr) :: C
     c = c_loc(a(1))
     call c_f_pointer ( c, b, shape )
+#ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
 #else
     if ( present(lbounds) ) then
       b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3),lbounds(4):shape(4)) => a
@@ -205,7 +254,13 @@ contains
     type(c_ptr) :: C
     c = c_loc(a(1))
     call c_f_pointer ( c, b, shape )
+#ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => b
+#else
+    if ( present(lbounds) ) call MLSMessage ( MLSMSG_Crash, &
+      & "Pointer low bounds setting not supported by compiler version", &
+      & moduleName )
+#endif
 #else
     if ( present(lbounds) ) then
       b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3),lbounds(4):shape(4)) => a
@@ -229,6 +284,11 @@ contains
 end module Pointer_Rank_Remapping
 
 ! $Log$
+! Revision 2.2  2012/07/10 00:05:21  vsnyder
+! More #ifdef stuff to handle rank remapping using C instead of Fortran
+! 2003.  Add LBOUND to turn on setting lower bounds in the C case.  Assume
+! setting lower bounds works if Fortran remapping works.
+!
 ! Revision 2.1  2012/07/07 01:59:41  vsnyder
 ! Initial commit
 !
