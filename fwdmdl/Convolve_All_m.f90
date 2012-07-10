@@ -959,7 +959,7 @@ contains
     integer, intent(in) :: MAF
     integer, intent(in) :: Row_0 ! within the block, (channel-1)*noChans+zeta
     type (VectorValue_T), intent(in) :: RADIANCE ! Only for some indices
-    type (vectorvalue_t), intent(in) :: TEMP     ! Only for some indices
+    type (Vectorvalue_t), intent(in) :: TEMP     ! Only for some indices
     type (Grids_T), intent(in) :: Grids_Tmp      ! Temperature's grids, etc.
     real(rp), intent(in) :: dI_dT(:) ! derivative of radiance in Row_0 wrt
     !                                  temperature state vector coordinates
@@ -968,12 +968,11 @@ contains
     type (Matrix_t), intent(inout) :: Jacobian
 
     ! Local variables
-    integer :: Col, JF, JZ, NoChans, Row_1, SV_I
+    integer :: Col, JF, JZ, Row_1, SV_I
 
     ! Start here
 
     sv_i = 0
-    noChans = radiance%template%noChans
 
     row_1 = FindBlock ( Jacobian%row, radiance%index, maf )
 
@@ -1070,9 +1069,7 @@ contains
     type (Matrix_t), intent(inout) :: Jacobian
 
     ! Local variables
-    integer :: Col, IS, JF, K, NFZ, NoChans, Row_1, SV_F
-
-    noChans = Radiance%template%noChans
+    integer :: Col, IS, JF, K, NFZ, Row_1, SV_F
 
     row_1 = FindBlock ( Jacobian%row, radiance%index, maf )
 
@@ -1279,6 +1276,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.21  2012/07/10 04:10:59  vsnyder
+! Remove noChans from Store_*_Deriv_1D because it's not used
+!
 ! Revision 2.20  2012/07/07 00:14:33  vsnyder
 ! Shorten some comments to avoid gripes about long lines
 !
