@@ -174,21 +174,6 @@ program MLSL2
         & "Unable to mls_h5open" )
       if ( not_used_here() ) print *, "This never gets executed"
   end if
-  ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
-  ! So here's a good place to put any SIPS-specific settings overriding defaults
-  if ( SIPS_VERSION ) then
-    ! SIPS_VERSION
-    parallel%maxFailuresPerMachine = 2
-    parallel%maxFailuresPerChunk = 1
-    removeSwitches='slv' ! Since slave output already saved to separate files
-    switches='red'  ! Usually won't want to dump things looked for in testing
-    DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
-    MLSMessageConfig%limitWarnings = 4 ! 50 ! Why print all that stuff?
-  else
-    ! SCF_VERSION
-    switches='0sl'
-  end if
-  time_config%use_wall_clock = SIPS_VERSION
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
   call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957 )
@@ -709,6 +694,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.186  2012/07/10 15:22:25  pwagner
+! Moved stuff to MLSL2Options module so it works right
+!
 ! Revision 2.185  2012/07/02 20:34:41  pwagner
 ! Avoid dumping settings more than one time
 !
