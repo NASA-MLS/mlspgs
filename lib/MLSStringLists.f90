@@ -19,7 +19,7 @@ module MLSStringLists               ! Module to treat string lists
   use MLSSETS, only: FINDFIRST
   use MLSSTRINGS, only: CAPITALIZE, LOWERCASE, NCOPIES, &
     & READINTSFROMCHARS, REVERSE, &
-    & SPLITNEST, STREQ, TRIM_SAFE, WRITEINTSTOCHARS
+    & SPLITDETAILS, SPLITNEST, STREQ, TRIM_SAFE, WRITEINTSTOCHARS
 
   implicit none
   private
@@ -99,10 +99,11 @@ module MLSStringLists               ! Module to treat string lists
 !   char* outElement, log countEmpty, [char inseparator], [log part_match])
 ! GetUniqueInts (int ints(:), int outs(:), int noUnique, 
 !    [int extra(:)], [int fillValue], [int minValue]) 
-! GetUniqueList (char* str, char* outstr(:), int noUnique, log countEmpty, &
-!   & [char inseparator], [log IgnoreLeadingSpaces], [char* fillValue]) 
+! GetUniqueList (char* str, char* outstr(:), int noUnique, &
+!   & [char inseparator], [log IgnoreLeadingSpaces], [char* fillValue], &
+!   & [char* options])
 ! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique, 
-!   [char* extra(:)], [char* fillValue])
+!   [char* extra(:)], [char* fillValue], [char* options])
 ! char* intersection (char* str1, char* str2)
 ! log IsInList(strlist stringList, char* string, [char* options])
 ! List2Array (strlist inList, char* outArray(:), log countEmpty,
@@ -121,15 +122,16 @@ module MLSStringLists               ! Module to treat string lists
 ! ReadIntsFromList(strlist inList, int ints(:), &
 !    & [char inseparator])
 ! RemoveElemFromList(strlist inList, strlist outList, char* elem, &
-!    & [char inseparator], [log countEmpty])
+!    & [char inseparator], [char* options])
 ! RemoveListFromList(strlist inList, strlist outList, strlist exclude, &
-!    & [char inseparator], [log countEmpty])
+!    & [char inseparator], [char* options])
 ! RemoveNumFromList(strlist inList, strlist outList, int nElement, &
-!    & [char inseparator], [log countEmpty])
+!    & [char inseparator], [char* options])
 ! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* which], [log no_trim])
 ! strlist ReverseList (strlist str, [char inseparator])
-! strlist SnupList (strlist str, char* elem, [char inseparator])
+! ReverseStrings (char* str[*], char* reverse[*])
+! strlist SnipList (strlist str, char* elem, [char inseparator])
 ! SortArray (char* inStrArray(:), int outIntArray(:), log CaseSensitive, &
 !   & [char* sortedArray(:)], [log shorterFirst], [char leftRight])
 ! SortList (strlist inStrArray, int outIntArray(:), log CaseSensitive, &
@@ -175,6 +177,8 @@ module MLSStringLists               ! Module to treat string lists
 ! p    stripany; remove any quotes
 ! r    remove any quoted sub-strings
 ! x    extract any quoted substrings
+! S    match strings as if Switches; e.g. 'pro' matches 'pro1'
+! L    keep Last match in GetUnique instead of first match
 
 ! We hope eventually that options will replace the countEmpty, caseSensitive, 
 ! etc. separate optional args to many of the current module procedures
@@ -211,7 +215,7 @@ module MLSStringLists               ! Module to treat string lists
    & List2Array, listMatches, NumStringElements, optionDetail, &
    & ParseOptions, PutHashElement, ReadIntsFromList, &
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
-   & ReplaceSubString, ReverseList, SnipList, &
+   & ReplaceSubString, ReverseList, ReverseStrings, SnipList, &
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
    & unquote, wrap
 
@@ -1389,21 +1393,24 @@ contains
   ! returns list from str that are not also in str2
   ! If optional FillValue supplied, ignores any entries = fillvalue
 
-  subroutine GetUniqueList(str, outStr, noUnique, countEmpty, &
-    & inseparator, IgnoreLeadingSpaces, str2, fillValue)
+  subroutine GetUniqueList( str, outStr, noUnique, &
+    & inseparator, IgnoreLeadingSpaces, str2, fillValue, options )
     ! Dummy arguments
-    CHARACTER (LEN=*), intent(in) :: str
-    CHARACTER (LEN=*), intent(out) :: outstr
-    INTEGER :: noUnique ! Number of unique entries
-    LOGICAL, INTENT(IN)                           :: countEmpty
+    character (len=*), intent(in) :: str
+    character (len=*), intent(out) :: outstr
+    integer :: nounique ! number of unique entries
+    ! logical, intent(in)                           :: countEmpty
     character (len=*), optional, intent(in)       :: inseparator
-    LOGICAL, OPTIONAL, INTENT(IN)       :: IgnoreLeadingSpaces
-    CHARACTER (LEN=*), OPTIONAL, INTENT(IN)       :: str2
-    CHARACTER (LEN=*), OPTIONAL, INTENT(IN)       :: fillValue
+    logical, optional, intent(in)       :: IgnoreLeadingSpaces
+    character (len=*), optional, intent(in)       :: str2
+    character (len=*), optional, intent(in)       :: fillValue
+    character (len=*), optional, intent(in)       :: options
 
     ! Local variables
-    CHARACTER (LEN=1)               :: separator
-    CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
+    logical :: countEmpty
+    character(len=8) :: myOptions
+    character (len=1)               :: separator
+    character (len=MAXSTRELEMENTLENGTH), dimension(:), allocatable    &
       &                             :: inStringArray, outStringArray, inStrAr2
     integer :: nElems
     integer :: nElems2
@@ -1416,6 +1423,9 @@ contains
     ELSE
       separator = COMMA
     ENDIF
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    countEmpty = ( index(myOptions, 'e') > 0 ) 
     if ( len(str) <= 0 .or. len(outstr) <= 0 ) return
     nElems = NumStringElements(str, countEmpty, inseparator, LongestLen)
     noUnique = nElems
@@ -1447,8 +1457,8 @@ contains
            & MLSMSG_Allocate//"stringArray2 in GetUniqueList")
       call list2Array(str2, inStrAr2, countEmpty, inseparator, &
        & IgnoreLeadingSpaces)
-      call GetUniqueStrings(inStringArray, outStringArray, noUnique, &
-       & inStrAr2, fillValue)
+      call GetUniqueStrings( inStringArray, outStringArray, noUnique, &
+       & inStrAr2, fillValue, options )
       if ( noUnique > 0 ) then
         call Array2List(outStringArray(1:noUnique), outStr, &
          & inseparator)
@@ -1457,8 +1467,8 @@ contains
       endif
       DEALLOCATE(inStringArray, outStringArray, inStrAr2)
     else
-      call GetUniqueStrings(inStringArray, outStringArray, noUnique, &
-      & fillValue=fillValue)
+      call GetUniqueStrings( inStringArray, outStringArray, noUnique, &
+      & fillValue=fillValue, options=options )
       if ( noUnique > 0 ) then
         call Array2List(outStringArray(1:noUnique), outStr, &
          & inseparator)
@@ -1478,24 +1488,34 @@ contains
   ! If optional FillValue supplied, ignores any entries = fillvalue
   ! Some checking is done to make sure it's appropriate
 
-  subroutine GetUniqueStrings(inList, outList, noUnique, extra, fillValue)
+  subroutine GetUniqueStrings( inList, outList, noUnique, &
+    & extra, fillValue, options )
     ! Dummy arguments
-    CHARACTER (LEN=*), DIMENSION(:) :: inList
-    CHARACTER (LEN=*), DIMENSION(:) :: outList
-    INTEGER :: noUnique ! Number of unique entries
-    CHARACTER (LEN=*), optional, DIMENSION(:) :: extra
-    CHARACTER (LEN=*), OPTIONAL, INTENT(IN)       :: fillValue
+    character (len=*), dimension(:) :: inList
+    character (len=*), dimension(:) :: outList
+    integer :: noUnique ! Number of unique entries
+    character (len=*), optional, dimension(:) :: extra
+    character (len=*), optional, intent(in)       :: fillValue
+    character (len=*), optional, intent(in)       :: options
 
     ! Local variables
-    INTEGER :: i,j,k           ! Loop counters
-    LOGICAL, DIMENSION(:), ALLOCATABLE :: duplicate ! Set if already found
-    INTEGER :: status        ! Status from allocate
+    logical, dimension(:), allocatable :: duplicate ! Set if already found
 
-    INTEGER :: extraSize
+    integer :: extraSize
     integer :: howManyMax
-    INTEGER :: inSize
+    integer :: i,j,k           ! Loop counters
+    integer :: inSize
+    logical :: keepLast
+    character(len=len(inList)), dimension(size(inList)) :: list
+    character(len=8) :: myOptions
+    INTEGER :: status        ! Status from allocate
+    logical :: Switchable
 
     ! Executable code, setup arrays
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    Switchable = ( index(myOptions, 'S') > 0 )
+    keepLast = ( index(myOptions, 'L') > 0 )
     inSize=SIZE(inList)
     ALLOCATE (duplicate(inSize), STAT=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
@@ -1511,17 +1531,26 @@ contains
     endif
     duplicate = .FALSE.
 
+    ! If we are keeping the last instance of a duplicated string, we'll
+    ! simply reverse the order of the list, keep the first instance of that
+    ! reversed list, then reverse again at the end
+    if ( keepLast ) then
+      call reverseStrings( inList, list )
+    else
+      list = inList
+    endif
     ! Go through and find duplicates
-
     DO i = 1, howManyMax
        IF (.NOT. duplicate(i)) THEN
          if ( extraSize < 1 ) then
           DO j = i+1, inSize
-             IF (inList(j)==inList(i)) duplicate(j)=.TRUE.
+             ! IF (List(j)==List(i)) duplicate(j)=.TRUE.
+             duplicate(j) = duplicate(j) .or. matchem( List(j), List(i) )
           END DO
          else
           DO j = 1, extraSize
-             IF (extra(j)==inList(i)) duplicate(i)=.TRUE.
+             ! IF (extra(j)==List(i)) duplicate(i)=.TRUE.
+             duplicate(j) = duplicate(j) .or. matchem( extra(j), List(i) )
           END DO
          endif
        END IF
@@ -1529,7 +1558,10 @@ contains
 
     ! Ignore any values = fillValue
     if ( present(fillValue) ) then
-      duplicate = duplicate .or. (inList == fillValue)
+      ! duplicate = duplicate .or. (List == fillValue)
+    do i = 1, size(duplicate)
+      duplicate(i) = duplicate(i) .or. matchem( List(i), fillValue )
+    enddo
     endif
     ! Count how many unique ones there are
 
@@ -1537,7 +1569,7 @@ contains
 
     IF (noUnique>SIZE(outList)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & "outList too small")
-    IF (LEN(outList)<LEN(inList)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (LEN(outList)<LEN(List)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & "outList strings to small")
     outList=""
 
@@ -1557,10 +1589,10 @@ contains
          if ( k+j-1 > inSize ) then
            call MLSMessage(MLSMSG_Error, ModuleName, &
              & "k goes past array end in GetUniqueStrings")
-           outList(i)=inList(inSize)
+           outList(i)=List(inSize)
            return
          elseif ( k > 0 ) then
-           outList(i)=inList(k+j-1)  ! was inList(j)
+           outList(i)=List(k+j-1)  ! was List(j)
            j = j + k
          else
            exit UniqueLoop
@@ -1569,8 +1601,33 @@ contains
          if ( j > inSize ) exit UniqueLoop
       END DO UniqueLoop
     endif
+    ! If we reversed the order, recover the original order
+    if ( keepLast ) then
+      list = outList
+      call reverseStrings( list(1:noUnique), outList )
+    endif
 
     deallocate ( duplicate )
+    contains
+    function matchem( str1, str2 ) result ( match )
+      ! Test for match between str1 and str2 according to options
+      ! Args
+      character(len=*), intent(in) :: str1
+      character(len=*), intent(in) :: str2
+      logical                      :: match
+      ! Internal variables
+      character(len=len(str1)) :: switch1, switch2
+      integer :: details1, details2
+      ! Executable
+      match = .false.
+      if ( .not. Switchable ) then
+        match = (str1 == str2)
+      else
+        call SplitDetails( str1, switch1, details1 )
+        call SplitDetails( str2, switch2, details2 )
+        match = (switch1 == switch2)
+      endif
+    end function matchem
   end subroutine GetUniqueStrings
 
   ! -------------------------------------------------  Intersection  -----
@@ -1599,9 +1656,9 @@ contains
     endif
     
     call GetUniqueList( str1, uniq1, n1, &
-      & countEmpty=countEmpty, ignoreLeadingSpaces=ignoreLeadingSpaces )
+      & ignoreLeadingSpaces=ignoreLeadingSpaces, options='-e' )
     call GetUniqueList( str2, uniq2, n2, &
-      & countEmpty=countEmpty, ignoreLeadingSpaces=ignoreLeadingSpaces )
+      & ignoreLeadingSpaces=ignoreLeadingSpaces, options='-e' )
     outstr = ' '
     do i=1, n1
       call GetStringElement( uniq1, elem, i, countEmpty )
@@ -1666,16 +1723,16 @@ contains
   subroutine List2Array(inList, outArray, countEmpty, inseparator, &
    & IgnoreLeadingSpaces)
     ! Dummy arguments
-    CHARACTER (LEN=*), INTENT(IN)                 :: inList
-    CHARACTER (LEN=*), DIMENSION(:), INTENT(OUT)  :: outArray
-    LOGICAL, INTENT(IN)                           :: countEmpty
+    character (len=*), intent(in)                 :: inList
+    character (len=*), dimension(:), intent(out)  :: outArray
+    logical, intent(in)                           :: countEmpty
     character (len=*), optional, intent(in)       :: inseparator
-    LOGICAL, OPTIONAL, INTENT(IN)                 :: IgnoreLeadingSpaces
+    logical, optional, intent(in)                 :: IgnoreLeadingSpaces
 
     ! Local variables
     integer :: elem, nElems
 
-    CHARACTER (LEN=1)               :: separator
+    character (len=1)               :: separator
     logical                         :: myIgnoreLeadingSpaces
     ! Executable code
 
@@ -2326,7 +2383,7 @@ contains
 
   ! --------------------------------------------------  RemoveElemFromList  -----
   subroutine RemoveElemFromList ( inList, outList, elem, inseparator, &
-    & countEmpty )
+    & options )
     ! Takes a list and removes all occurrence(s) of elem
     ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c' returns 'a,b,d,..z'
     !--------Argument--------!
@@ -2334,31 +2391,36 @@ contains
     CHARACTER (LEN=*), INTENT(IN) :: elem
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
     character (len=*), optional, intent(in)       :: inseparator
-    logical, optional, intent(in)                 :: countEmpty
+    character (len=*), optional, intent(in)       :: options
     ! Method:
     ! Prepend elem onto start of list, make it unique,
     ! Then snip it back off
     !----------Local vars----------!
     logical :: myCountEmpty
+    character(len=8) :: myOptions
+    integer :: numUnique
     character(len=len(inList)+len(elem)+1) :: temp_list, unique_list
     character (len=1)               :: separator
-    integer :: numUnique
+    logical :: Switchable
     !----------Executable part----------!
     IF(PRESENT(inseparator)) THEN
       separator = inseparator
     ELSE
       separator = COMMA
     END IF
-    myCountEmpty = .true.
-    if ( present(countEmpty) ) myCountEmpty = countEmpty
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    myCountEmpty = index( myOptions, 'e' ) > 0  ! .true.
+    Switchable = index( myOptions, 'S' ) > 0 ! .true.
+    ! if ( present(countEmpty) ) myCountEmpty = countEmpty
 
     outList = inList
     IF (LEN_trim(elem) < 1 .or. len_trim(inList) < 1 &
       & .or. StringElementNum(inList, elem, myCountEmpty, &
     & inseparator=inseparator) < 1 ) RETURN
     temp_list = trim(elem) // separator // trim(inList)
-    call GetUniqueList(temp_list, unique_list, numUnique, myCountEmpty, &
-    & inseparator=inseparator, ignoreLeadingSpaces=.true.)
+    call GetUniqueList( temp_list, unique_list, numUnique, &
+    & inseparator=inseparator, ignoreLeadingSpaces=.true., options=options )
     ! outList = unique_list(len(elem)+1:)
     ! The following is evidence of poor programming habits
     ! (As if any more evidence was needed)
@@ -2369,8 +2431,9 @@ contains
     endif
   end subroutine RemoveElemFromList
 
-  ! --------------------------------------------------  RemoveListFromList  -----
-  subroutine RemoveListFromList ( inList, outList, exclude, inseparator, countEmpty )
+  ! ------------------------------------------------  RemoveListFromList  -----
+  subroutine RemoveListFromList ( inList, outList, exclude, &
+    & inseparator, options )
     ! Takes one list and removes from it all occurrence(s) 
     ! of each elem in another list called "exclude"
     ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c,a' returns 'b,d,..z'
@@ -2379,19 +2442,24 @@ contains
     CHARACTER (LEN=*), INTENT(IN) :: exclude ! What to exclude
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
     character (len=*), optional, intent(in)       :: inseparator
-    logical, optional, intent(in)                 :: countEmpty
+    character (len=*), optional, intent(in)       :: options
     ! Method:
     ! Repeatedly call RemoveElemFromList for each elem of exclude
     !----------Local vars----------!
     integer :: i
     character(len=max(len(inList), len(exclude)) + 1) :: elem
     logical :: myCountEmpty
+    character(len=8) :: myOptions
     integer :: numElems
+    logical :: Switchable
     character(len=len(inList)+1) :: temp_list
     character(len=len(inList)+1) :: temp_list2
     !----------Executable part----------!
-    myCountEmpty = .true.
-    if ( present(countEmpty) ) myCountEmpty = countEmpty
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    myCountEmpty = index( myOptions, 'e' ) > 0  ! .true.
+    Switchable = index( myOptions, 'S' ) > 0  ! .true.
+    ! if ( present(countEmpty) ) myCountEmpty = countEmpty
     outList = inList
     if ( len_trim(exclude) < 1 .or. len_trim(inList) < 1 ) return
     numElems = NumStringElements( exclude, myCountEmpty, inseparator )
@@ -2399,7 +2467,8 @@ contains
     temp_list = inList
     do i=1, numElems
       call GetStringElement( exclude, elem, i, myCountEmpty, inseparator )
-      call RemoveElemFromList( temp_list, temp_list2, elem, inseparator, countEmpty )
+      call RemoveElemFromList( temp_list, temp_list2, elem, &
+        & inseparator, options )
       temp_list = temp_list2
     enddo
     outList = temp_list
@@ -2407,7 +2476,7 @@ contains
 
   ! --------------------------------------------------  RemoveNumFromList  -----
   subroutine RemoveNumFromList ( inList, outList, nElement, inseparator, &
-    & countEmpty )
+    & options )
     ! Removes a numbered element from a list
     ! E.g., given 'a,b,c,d,..,z' and asked to remove number 3 returns 'a,b,d,..z'
     !--------Argument--------!
@@ -2415,15 +2484,17 @@ contains
     integer          , intent(in) :: nElement
     character (len=*), intent(out)                :: outList
     character (len=*), optional, intent(in)       :: inseparator
-    logical, optional, intent(in)                 :: countEmpty
+    character (len=*), optional, intent(in)       :: options
     ! Method:
     ! Loop through list, forming new one
     !----------Local vars----------!
     character(len=len(inList)+1) :: elem
     integer :: i
     logical :: myCountEmpty
+    character(len=8) :: myOptions
     integer :: num
     character (len=1)               :: separator
+    logical :: Switchable
     character(len=len(inList)+1) :: temp_list
     !----------Executable part----------!
     IF(PRESENT(inseparator)) THEN
@@ -2431,8 +2502,11 @@ contains
     ELSE
       separator = COMMA
     END IF
-    myCountEmpty = .true.
-    if ( present(countEmpty) ) myCountEmpty = countEmpty
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    myCountEmpty = index( myOptions, 'e' ) > 0  ! .true.
+    Switchable = index( myOptions, 'S' ) > 0  ! .true.
+    ! if ( present(countEmpty) ) myCountEmpty = countEmpty
 
     outList = inList
     if ( len_trim(inList) < 1 .or. nElement < 1 ) return
@@ -2723,6 +2797,28 @@ contains
     DEALLOCATE(charBuf)
 
   end function ReverseList
+
+  ! --------------------------------------------------  ReverseStrings  -----
+  subroutine ReverseStrings (str, reverse)
+    ! takes an arrays of strings
+    ! and returns one with elements in reversed order
+
+    ! E.g., given (/"alpha", "beta", "gamma"/) => (/"gamma", "beta", "alpha"/)
+
+    !--------Argument--------!
+    character (len=*), dimension(:), intent(in)  :: str
+    character (len=*), dimension(:), intent(out) :: reverse
+
+    !----------Local vars----------!
+    integer :: i, n
+    ! Executable
+    reverse = str
+    n = min( size(str), size(reverse) )
+    if ( n < 2 ) return
+    do i=1, n
+      reverse( n - i + 1 ) = str(i)
+    enddo
+  end subroutine ReverseStrings
 
   ! --------------------------------------------------  SnipList  -----
   function SnipList (str, elem, inseparator) RESULT (outstr)
@@ -3854,6 +3950,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.48  2012/07/10 15:17:15  pwagner
+! Changes to GetUnique.. to work with Switches better
+!
 ! Revision 2.47  2012/06/27 17:51:57  pwagner
 ! countEmpty now optional arg to remove..FromList
 !
