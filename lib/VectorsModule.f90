@@ -246,18 +246,18 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
     integer :: index            ! Index of this quantity in the vector database
     real(rv), dimension(:), pointer :: VALUE1 => NULL() ! The dimension of
-    ! VALUE1 is Frequencies (or 1) * Vertical Coordinates (or 1) * Horizontal
-    ! Instances (scan or profile or 1).  These are taken from 
+    ! VALUE1 is Frequencies (or 1) * Vertical Coordinates or MIF (or 1) *
+    ! Horizontal Instances (scan or profile or 1).  These are taken from 
     ! (template%noChans * template%noSurfs * template%noInstances).  This is
     ! the one that's allocated and deallocated.
     real(rv), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
-    ! VALUES are Frequencies (or 1) * Vertical Coordinates (or 1), and
+    ! VALUES are Frequencies (or 1) * Vertical Coordinates or MIF (or 1), and
     ! Horizontal Instances (scan or profile or 1).  These are taken from
     ! (template%noChans * template%noSurfs, template%noInstances).  This is a
     ! rank remapping of VALUE1.
     real(rv), dimension(:,:,:), pointer :: VALUE3 => NULL() ! The dimensions
-    ! of VALUE3 are Frequencies, Vertical Coordinates and Horizontal
-    ! Instances (scan or profile or 1).  These are taken from
+    ! of VALUE3 are Frequencies, Vertical Coordinates or MIF, and Horizontal
+    ! Instances (MAF or profile or 1).  These are taken from
     ! template%noChans, template%noSurfs, and template%noInstances.  This is
     ! a rank remapping of VALUE1.
     character, dimension(:), pointer :: MASK1 => NULL() ! MASK1 is the
@@ -2892,6 +2892,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.165  2012/07/07 02:40:47  vsnyder
+! Add DestroyMask argument to DestroyVectorQuantityValue
+!
 ! Revision 2.164  2012/07/07 02:02:34  vsnyder
 ! Add MASK1 and MASK3.  Make MASK and MASK3 rank remappings of MASK1.
 ! Add VALUE1 and VALUE3.  Make VALUES and VALUE3 rank remappings of VALUE1.
