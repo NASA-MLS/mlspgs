@@ -67,6 +67,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Reverse_trim       (Reverses after trimming its argument)
 ! Rot13              Like ROT13 but for general integer nn
 ! size_trim          Returns len_trim of equivalent character scalar for array
+! SplitDetails       Splits 'pro1' into 'pro' and 1
 ! SplitNest          Splits 'part 1 (part 2) part 3' -> 'part 1', 'part 2', 'part 3'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
 ! squeeze            Snip excess spaces from between words; optionally snip all
@@ -114,6 +115,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! char* Rot13 ( char* str, [int nn], [char* otp], [log inverse] )
 ! char* shiftLRC (char* str, [char* position], [char fillChar])
 ! int size_trim ( char* str(:) )
+! SplitDetails ( char *str, char* switch, int details )
 ! SplitNest ( char *str, char* part1, char* part2, char* part3, [char* parens] )
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
@@ -185,8 +187,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
     & ReadCompleteLineWithoutComments, readNumsFromChars, readIntsFromChars, &
     & ReadRomanNumerals, Replace, ReplaceNonAscii, Reverse, Reverse_trim, &
     & Rot13, &
-    & shiftLRC, size_trim, SplitNest, SplitWords, squeeze, StartCase, streq, &
-    & stretch, strings2Ints, &
+    & shiftLRC, size_trim, SplitDetails, SplitNest, SplitWords, squeeze, &
+    & StartCase, streq, stretch, strings2Ints, &
     & trim_safe, TrueList, unWrapLines, &
     & writeIntsToChars, writeRomanNumerals
 
@@ -1591,6 +1593,45 @@ contains
     if ( safe ) length = max( length, 1 )
   end function size_trim
 
+  ! ---------------------------------------------  SplitDetails  -----
+
+  ! This subroutine splits an input string into 2 parts:
+  ! a string which is the switch
+  ! and an integer which is the details
+  ! It assumes that they are catenated as in the example
+  !     'pro1' => 
+  !         {string = 'pro', 
+  !          details = 1}
+  ! This corresponds directly to how the Switches data is
+  ! encoded and used by level 2
+  ! Any other usefulness would be purest serendipity
+  ! (a tempting name for this subroutine, but for once
+  ! we succeeded in resisting temptation)
+
+  subroutine SplitDetails( str, switch, details )
+    character(len=*), intent(in)           :: str
+    character(len=*), intent(out)          :: switch
+    integer, intent(out)                   :: details
+    ! Local variables
+    character(len=*), parameter :: digits='1234567890'
+    integer                     :: firstDigitPosition
+    ! Executable
+    switch = ' '
+    details = 0   ! If details is absent, this is its default
+    if ( len_trim(str) < 1 ) return
+    firstDigitPosition = scan( str, digits )
+    if ( firstDigitPosition < 1 ) then
+      ! No details present
+      switch = str
+    elseif ( firstDigitPosition == 1 ) then
+      ! No switch present
+      call readAnIntFromChars ( str, details )
+    else
+      switch = str(:firstDigitPosition-1)
+      call readAnIntFromChars ( str(firstDigitPosition:), details )
+    endif
+  end subroutine SplitDetails
+
   ! ---------------------------------------------  SplitNest  -----
 
   ! This subroutine splits an input string into 3 parts; it is most
@@ -2504,7 +2545,7 @@ contains
   end function isAscii
 
   ! ---------------------------------------------------  isDigit  -----
-  function isDigit(arg) result(itIs)
+  elemental function isDigit(arg) result(itIs)
     ! Returns TRUE if arg is one of {'1', '2', ..}
     ! Args
     character(len=1), intent(in) :: arg
@@ -2635,6 +2676,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.85  2012/07/10 15:15:33  pwagner
+! Added SplitDetails
+!
 ! Revision 2.84  2012/05/01 22:10:26  vsnyder
 ! Add TrueList subroutine
 !
