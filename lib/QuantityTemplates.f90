@@ -251,6 +251,7 @@ contains
     ! We don't need to do if often as typically only a shallow copy
     ! is required.  Note that this also follows any 'links' to h/vGrids and expands
     ! them too.
+    use DeepCopy_m, only: DeepCopy
     type (QuantityTemplate_T), intent(inout) :: Z
     type (QuantityTemplate_T), intent(in) :: A
 
@@ -283,10 +284,7 @@ contains
     z%solarZenith = a%solarZenith
     z%losAngle = a%losAngle
     z%frequencyCoordinate = a%frequencyCoordinate
-    if ( associated ( a%frequencies ) ) then
-      call Allocate_test ( z%frequencies, size(a%frequencies), 'z%frequencies', ModuleName )
-      z%frequencies = a%frequencies
-    end if
+    call deepCopy ( z%frequencies, a%frequencies )
     z%lo = a%lo
     z%signal = a%signal
     z%sideband = a%sideband
@@ -1583,6 +1581,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.69  2012/02/24 21:11:50  pwagner
+! Include surfs when writing quantity attributes
+!
 ! Revision 2.68  2012/02/23 00:08:35  vsnyder
 ! Don't dump molecule names if quantity type is not vmr
 !
