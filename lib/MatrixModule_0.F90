@@ -31,10 +31,12 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   implicit NONE
   private
   public :: Add_Matrix_Blocks, CheckBlocks, CheckIntegrity, CheckForSimpleBandedLayout
-  public :: Assignment(=), CholeskyFactor
-  public :: CholeskyFactor_0, ClearLower, ClearLower_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
-  public :: Col_L1, CopyBlock, CreateBlock, CreateBlock_0, CyclicJacobi
-  public :: DenseCholesky, DenseCyclicJacobi, Densify, DestroyBlock, DestroyBlock_0, Diff, Dump
+  public :: Assignment(=), CholeskyFactor, CholeskyFactor_0, ClearLower
+  public :: ClearLower_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
+  public :: Col_L1, CopyBlock, CreateBlock, CreateBlock_0, CreateValues
+  public :: CyclicJacobi
+  public :: DenseCholesky, DenseCyclicJacobi, Densify
+  public :: DestroyBlock, DestroyBlock_0, DestroyValues, Diff, Dump
   public :: FrobeniusNorm
   public :: GetMatrixKindString, GetDiagonal, GetMatrixElement, GetMatrixElement_0
   public :: GetVectorFromColumn
@@ -49,7 +51,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: MultiplyMatrixVector
   public :: MultiplyMatrixVectorNoT
   public :: NullifyMatrix, NullifyMatrix_0
-  public :: operator(+), ReflectMatrix, RowScale
+  public :: operator(+), ReflectMatrix, RemapValue3, RowScale
   public :: ScaleBlock, SolveCholesky, SolveCholeskyM_0
   public :: Sparsify, Spill, Spill_0, SubBlockLength
   public :: TransposeMatrix, UpdateDiagonal
@@ -230,6 +232,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     integer :: KIND = M_Absent               ! Kind of block -- one of the
       !                                        M_... parameters above
     integer :: nRows = 0, nCols = 0          ! Numbers of rows and columns
+    integer :: nChan = 0, nMIF = 0           ! nRows = nChan * nMIF
     integer, pointer, dimension(:) :: R1 => NULL()     ! Indexed by the column
       ! number. Used for the first column number if KIND = M_Banded, as
       ! described above for M_Column_sparse if KIND = M_Column_sparse, and not
@@ -238,10 +241,20 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
       ! column number if KIND = M_Banded, by elements of R1 if KIND =
       ! M_Column_sparse, and not used otherwise.  See M_Banded and
       ! M_Column_sparse above.
+    real(rm), pointer, dimension(:) :: VALUE1 => NULL()     ! Values of the
+      ! matrix elements.  Size is channels * MIFs * state vector elements. 
+      ! This is the one that is allocated.
     real(rm), pointer, dimension(:,:) :: VALUES => NULL()   ! Values of the
-      ! matrix elements.  Indexed by row and column indices if KIND == M_Full,
-      ! by elements in the range of values of R1 if KIND == M_Banded, and by
-      ! elements of R2 if KIND == M_Column_sparse.
+      ! matrix elements.  This is a remapping of VALUE1.  If KIND = M_Full,
+      ! the row index is channel+(MIF-1)*channels and the column index is
+      ! state vector element.  Otherwise, the first dimension is indexed by
+      ! elements in the range of values of R1 if KIND == M_Banded, and by
+      ! elements of R2 if KIND == M_Column_sparse; the second subscript is 1
+      ! in these cases.  This is a rank remapping of VALUE1.
+    real(rm), pointer, dimension(:,:,:) :: VALUE3 => NULL() ! Values of the
+      ! matrix elements.  This is a remapping of VALUE1.  If KIND = M_Full,
+      ! the first dimension is indexed by channel, the second by MIF, and
+      ! the third by state vector element.  This is a rank remapping of VALUE1.
   end type MatrixElement_T
 
   ! - - -  Private data     - - - - - - - - - - - - - - - - - - - - - -
@@ -972,25 +985,27 @@ contains ! =====     Public Procedures     =============================
   subroutine CloneBlock ( Z, X, ForWhom ) ! Z = X, except the values
   ! Duplicate a matrix block, including copying all of its structural
   ! descriptive information, but not its values.
+    use DeepCopy_m, only: DeepCopy
     type(MatrixElement_T), intent(inout) :: Z ! intent(inout) so that
       !                            destroyBlock gets a chance to clean up surds
     type(MatrixElement_T), intent(in) :: X
     character(len=*), intent(in) :: ForWhom
     call destroyBlock ( z )
+    z%nRows = x%nRows; z%nCols = x%nCols
+    z%nChan = x%nChan; z%nMIF = x%nMIF
     if ( x%kind == M_absent ) then
       call CreateEmptyBlock ( z )
     else
       z%kind = x%kind
-      call allocate_test ( z%r1, ubound(x%r1,1), "z%r1", ModuleName, &
-        & lowBound=lbound(x%r1,1) )
-      z%r1 = x%r1
-      call allocate_test ( z%r2, ubound(x%r2,1), "z%r2", ModuleName, &
-        lowBound=lbound(x%r2,1) )
-      z%r2 = x%r2
-      call allocate_test ( z%values, size(x%values,1), size(x%values,2), &
-        & "z%values for " // trim(forWhom), ModuleName )
+      call deepCopy ( z%r1, x%r1 )
+      call deepCopy ( z%r2, x%r2 )
+      if ( z%kind == m_full ) then
+        call createValues ( z, "z%values for " // trim(forWhom) )
+      else
+        call createValues ( z, "z%values for " // trim(forWhom), &
+          & size(x%value1) )
+      end if
     end if
-    z%nRows = x%nRows; z%nCols = x%nCols
   end subroutine CloneBlock
 
   ! -------------------------------------------------  ColumnScale_0_r4  -----
@@ -1059,7 +1074,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------------  CreateBlock_0  -----
   subroutine CreateBlock_0 ( Z, nRows, nCols, Kind, NumberNonzero, NoValues, &
-    & BandHeight, Init, ForWhom )
+    & BandHeight, Init, ForWhom, nChan )
   ! Create a matrix block, but don't fill any elements or structural
   ! information, except if the Values field is created and Init is present,
   ! Values is filled from Init.  The "NumberNonzero" is required if and only
@@ -1075,7 +1090,7 @@ contains ! =====     Public Procedures     =============================
   !  M_Banded: The arrays R1 and R2 are indexed by the column number (c).
   !   R1(c) gives the index of the first nonzero row.  R2(c) gives the
   !   subscript in the first dimension of VALUES for the last nonzero element
-  !   in the column.  The second dimension of VALUES has shape (1:1).  The
+  !   in the column.  The second dimension of VALUES has extent (1:1).  The
   !   subscript for the first nonzero element is R2(c-1)+1 (R2(0)==0 is set
   !   here).  The number of nonzero elements is R2(c) - R2(c-1).  The index
   !   of the last nonzero row is R1(c) + R2(c) - R2(c-1) - 1.
@@ -1084,7 +1099,8 @@ contains ! =====     Public Procedures     =============================
   !   the last entry in the column.  The first one is in R2(R1(c-1)+1)
   !   (R1(0)==0). The number of nonzero entries in a column is R1(c) -
   !   R1(c-1).  The row number of the k'th nonzero in column c is
-  !   R2(R1(c-1)+k), and its value is VALUES(R1(c-1)+k),1).
+  !   R2(R1(c-1)+k), and its value is VALUES(R1(c-1)+k),1).  The second
+  !   dimension of VALUES has extent (1:1).
   !  M_Full: R1 and R2 are not used (they are allocated with zero extent).
   !   The value of the (i,j) element of the block is VALUES(i,j).
 
@@ -1099,8 +1115,9 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: BandHeight
     real(rm), intent(in), optional :: Init         ! Initial value for z%values
     character(len=*), intent(in), optional :: ForWhom ! for allocation
+    integer, intent(in), optional :: nChan ! Number of channels, default 1
 
-    integer :: I, nNonZero
+    integer :: I, myChan, nNonZero
     logical :: Values
     character(len=63) :: What
 
@@ -1110,7 +1127,14 @@ contains ! =====     Public Procedures     =============================
     if ( present(numberNonzero) ) nNonZero = numberNonzero
     what = "z%values"
     if ( present(forWhom) ) what = "z%values for " // forWhom
+    myChan = 1
+    if ( present(nChan) ) myChan = nChan
     call destroyBlock ( z )
+    z%nRows = nRows
+    z%nCols = nCols
+    z%nChan = myChan
+    z%nMIF = nRows / myChan
+    z%kind = kind
     select case ( kind )
     case ( M_Absent, M_Unknown )
       call CreateEmptyBlock ( z )
@@ -1125,28 +1149,44 @@ contains ! =====     Public Procedures     =============================
         end do
         if ( .not. present(numberNonzero) ) nNonZero = bandHeight * nCols
       end if
-      if ( values ) &
-        & call allocate_test ( z%values, numberNonzero, 1, what, ModuleName )
+      if ( values ) call createValues ( z, what, nNonZero )
     case ( M_Column_sparse )
       call allocate_test ( z%r1, nCols, "z%r1", ModuleName, lowBound=0 )
       z%r1(0) = 0
       call allocate_test ( z%r2, numberNonzero, "z%r2", ModuleName )
-      if ( values ) &
-        & call allocate_test ( z%values, NumberNonzero, 1, what, ModuleName )
+      if ( values ) call createValues ( z, what, nNonZero )
     case ( M_Full )
       call allocate_test ( z%r1, 0, "z%r1", ModuleName )
       call allocate_test ( z%r2, 0, "z%r2", ModuleName )
-      if ( values ) &
-        & call allocate_test ( z%values, nRows, nCols, what, ModuleName )
+      if ( values ) call createValues ( z, what )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Invalid matrix block kind in CreateBlock" )
     end select
-    z%nRows = nRows
-    z%nCols = nCols
-    z%kind = kind
     if ( present(init) .and. values ) z%values = init
   end subroutine CreateBlock_0
+
+  ! -----------------------------------------------  CreateValues  -----
+  subroutine CreateValues ( Z, What, NumberNonzero )
+  ! Create the VALUE1, VALUES and VALUE3 components of Z.  The number of
+  ! elements of VALUE1 is z%nChan * z%nMIF * z%nCols.  VALUES is a rank
+  ! remapping of VALUE1 with the first extent 1:z%nChan*z%nMIF = 1:z%nRows
+  ! and the second z%nCols. VALUE3 is a rank remapping of VALUE1 with the
+  ! first extent 1:z%nChan, the second 1:z%nMIF, and the third 1:z%nCols.
+    use Pointer_Rank_Remapping, only: Remap
+    type(MatrixElement_T), intent(inout) :: Z
+    character(len=*), intent(in) :: What
+    integer, intent(in), optional :: NumberNonzero
+    if ( present(numberNonzero) ) then
+      call allocate_test ( z%value1, numberNonzero, what, moduleName )
+      call remap ( z%value1, z%values, (/ numberNonzero, 1 /) )
+      nullify ( z%value3 )
+    else
+      call allocate_test ( z%value1, z%nChan * z%nMif * z%nCols, what, moduleName )
+      call remap ( z%value1, z%values, (/ z%nChan*z%nMif, z%nCols /) )
+      call remap ( z%value1, z%value3, (/ z%nChan, z%nMif, z%nCols /) )
+    end if
+  end subroutine CreateValues
 
   ! ----------------------------------------------  CyclicJacobi_0 -----
   subroutine CyclicJacobi_0 ( MPP, MQP, MPQ, MQQ, VPP, VQP, VPQ, VQQ, V, EPS, TOL )
@@ -1358,18 +1398,24 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  DensifyB ------------
   subroutine DensifyB ( B )
     ! Densify a block 'in place'
+    use Pointer_Rank_Remapping, only: Remap
     type ( MatrixElement_T ), intent(inout) :: B
     ! Local variables
-    real(rm), dimension(:,:), pointer :: Z
+    real(rm), pointer :: Z1(:), Z(:,:)
     ! Executable code
     if ( b%kind == m_banded .or. b%kind == m_column_sparse ) then
-      nullify ( z )
-      call Allocate_test ( z, b%nRows, b%nCols, 'Z', ModuleName )
-      call Densify ( z, b )
-      call Deallocate_test ( b%values, 'b%values', ModuleName )
-      call Deallocate_test ( b%r1, 'b%r1', ModuleName )
-      call Deallocate_test ( b%r2, 'b%r2', ModuleName )
+      nullify ( z1 )
+      call allocate_test ( z1, b%nRows * b%nCols, 'Z1', ModuleName )
+      call remap ( z1, z, (/ b%nRows, b%nCols /) )
+      call densify ( z, b )
+      call destroyValues ( b, 'B' )
+      call deallocate_test ( b%r1, 'b%r1', ModuleName )
+      call deallocate_test ( b%r2, 'b%r2', ModuleName )
+      call allocate_test ( b%r1, 0, "b%r1", ModuleName )
+      call allocate_test ( b%r2, 0, "b%r2", ModuleName )
+      b%value1 => z1
       b%values => z
+      call remap ( z1, b%value3, (/ b%nChan, b%nMIF, b%nCols /) )
       b%kind = m_full
     end if
   end subroutine DensifyB
@@ -1383,10 +1429,20 @@ contains ! =====     Public Procedures     =============================
     if (b%kind /= M_Absent) then
       call deallocate_test ( b%r1, "b%r1", ModuleName )
       call deallocate_test ( b%r2, "b%r2", ModuleName )
-      call deallocate_test ( b%values, "b%values", ModuleName )
+      call destroyValues ( b, 'B' )
       b%kind = m_absent
     end if
   end subroutine DestroyBlock_0
+
+  ! ----------------------------------------------  DestroyValues  -----
+  subroutine DestroyValues ( B, What )
+    ! Destroy the VALUE1, VALUES and VALUE3 components of B
+    type(MatrixElement_T), intent(inout) :: B
+    character(len=*), intent(in) :: What
+    if ( associated(b%values) ) &
+      & call deallocate_test ( b%value1, trim(what) // 'VALUE1', ModuleName )
+    nullify ( b%values, b%value3 )
+  end subroutine DestroyValues
 
   ! ---------------------------------------------  FrobeniusNorm_0 -----
   real(rm) function FrobeniusNorm_0 ( B, lowerOff )
@@ -2716,7 +2772,17 @@ contains ! =====     Public Procedures     =============================
     if ( m%kind ==  m_banded .or. m%kind == m_column_sparse ) &
       & call Sparsify ( V, M, 'V in Reflect_0', ModuleName )
   end subroutine ReflectMatrix_0
-      
+
+  ! ---------------------------------------------------  RemapValue3  -----
+  subroutine RemapValue3 ( X, NChan, NMIF )
+  ! Remap the Value3 component of X.  Set the nChan and nMIF components of X.
+    use Pointer_Rank_Remapping, only: Remap
+    type(MatrixElement_T), intent(inout) :: X
+    integer, intent(in) :: NChan, NMif
+    x%nChan = nChan; x%nMIF = nMIF
+    call remap ( x%value1, x%value3, (/ x%nChan, x%nMif, x%nCols /) )
+  end subroutine RemapValue3
+
   ! -------------------------------------------------  RowScale_0_r4  -----
   subroutine RowScale_0_r4 ( V, X, NEWX ) ! Z = V X where V is a diagonal
   !                                     matrix represented by a vector and
@@ -3646,6 +3712,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.11  2012/07/10 03:56:29  vsnyder
+! Add VALUE1, VALUE3 components
+!
 ! Revision 2.10  2012/04/20 01:25:27  vsnyder
 ! Use intrinsic dot_product with Intel
 !
