@@ -13,27 +13,27 @@
 program chunktimes ! Reads chunk times from l2aux file(s)
 !=================================
 
-   use dump_0, only: dump
-   use Hdf, only: DFACC_RDONLY
-   use HDF5, only: HSIZE_T, h5fis_hdf5_f, h5gclose_f, h5gopen_f
-   use L1BData, only: NAME_LEN
+   use DUMP_0, only: DUMP
+   use HDF, only: DFACC_RDONLY
+   use HDF5, only: HSIZE_T, H5FIS_HDF5_F, H5GCLOSE_F, H5GOPEN_F
+   use L1BDATA, only: NAME_LEN
    use MACHINE, only: HP, GETARG
-   use MLSCommon, only: R4, R8
-   use MLSFiles, only: mls_exists, MLS_SFSTART, MLS_SFEND, &
+   use MLSKINDS, only: R4, R8
+   use MLSFILES, only: MLS_EXISTS, MLS_SFSTART, MLS_SFEND, &
      & HDFVERSION_4, HDFVERSION_5
    use MLSHDF5, only: &
-     & GetAllHDF5DSNames, GetHDF5Attribute, GetHDF5DSDims, &
-     & IsHDF5AttributePresent, LoadFromHDF5DS, mls_h5open, mls_h5close
-   use MLSMessageModule, only: MLSMessageConfig
-   use MLSSets, only: FindAll, FindFirst, FindLast, FindNext
-   use MLSStats1, only: STAT_T, statsOnOneLine, &
+     & GETALLHDF5DSNAMES, GETHDF5ATTRIBUTE, GETHDF5DSDIMS, &
+     & ISHDF5ATTRIBUTEPRESENT, LOADFROMHDF5DS, MLS_H5OPEN, MLS_H5CLOSE
+   use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG
+   use MLSSETS, only: FINDALL, FINDFIRST, FINDLAST, FINDNEXT
+   use MLSSTATS1, only: STAT_T, STATSONONELINE, &
      & DUMPSTAT=>DUMP, STATISTICS
-   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
-     & NumStringElements, StringElement, StringElementNum
-   use MLSStrings, only: lowercase
-   use output_m, only: outputOptions, &
-     & blanks, newline, output, output_date_and_time
-   use Time_M, only: Time_Now, time_config
+   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, GETUNIQUELIST, &
+     & NUMSTRINGELEMENTS, STRINGELEMENT, STRINGELEMENTNUM
+   use MLSSTRINGS, only: LOWERCASE
+   use OUTPUT_M, only: OUTPUTOPTIONS, &
+     & BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME
+   use TIME_M, only: TIME_NOW, TIME_CONFIG
    
    implicit none
 
@@ -111,7 +111,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   time_config%use_wall_clock = .true.
-  CALL mls_h5open(error)
+  call mls_h5open(error)
   if ( error /= 0 ) then
     print *, 'Sorry--unable to start hdf5'
   endif
@@ -252,7 +252,8 @@ program chunktimes ! Reads chunk times from l2aux file(s)
           call FindAll((timings > options%longChunks), which, how_many=how_many)
           if ( how_many > 0 ) then
             tempChunkList = catLists(longChunkList, which(1:how_many))
-            call GetUniqueList(tempChunkList, longChunkList, how_many, COUNTEMPTY)
+            call GetUniqueList( tempChunkList, longChunkList, how_many, &
+              & options='-e' )
           endif
         endif
         if ( showTimings .and. .not. options%merge ) then
@@ -817,6 +818,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.23  2009/07/08 00:39:34  pwagner
+! Should not crash when num chunks is 3500 (as with 1 profile/chunk)
+!
 ! Revision 1.22  2008/08/19 00:39:25  pwagner
 ! Fixed bug overstepping array bounds
 !
