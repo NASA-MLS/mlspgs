@@ -813,7 +813,7 @@ contains ! ==================================================================
     tempArguments = slaveArguments
     if ( DEEBUG ) call output( 'Before snip: ' // trim(slaveArguments), advance='yes' )
     call RemoveNumFromList( tempArguments, slaveArguments, n, &
-      & inseparator=space, countEmpty=countEmpty )
+      & inseparator=space )
     if ( DEEBUG ) call output( 'After snip: ' // trim(slaveArguments), advance='yes' )
   end subroutine SnipLastSlaveArgument
     
@@ -873,6 +873,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.59  2012/07/10 15:19:45  pwagner
+! Adapted to new api for RemoveNumFromList
+!
 ! Revision 2.58  2012/07/02 20:39:59  pwagner
 ! Once-routine output now requires verbosity > 0
 !
