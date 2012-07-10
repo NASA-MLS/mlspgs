@@ -246,6 +246,21 @@ contains
     if ( present( cmdline ) .and. DEEBUG ) then
       print *, 'cmdline: ', trim(cmdline)
     endif
+  ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
+  ! So here's a good place to put any SIPS-specific settings overriding defaults
+  if ( SIPS_VERSION ) then
+    ! SIPS_VERSION
+    parallel%maxFailuresPerMachine = 2
+    parallel%maxFailuresPerChunk = 1
+    removeSwitches='slv' ! Since slave output already saved to separate files
+    switches='red'  ! Usually won't want to dump things looked for in testing
+    DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
+    MLSMessageConfig%limitWarnings = 4 ! 50 ! Why print all that stuff?
+  else
+    ! SCF_VERSION
+    switches='0sl'
+  end if
+  time_config%use_wall_clock = SIPS_VERSION
     i = 1+hp
     do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
       call getNextArg ( i, line )
@@ -662,12 +677,12 @@ jloop:do while ( j < len_trim(line) )
       & removeSwitches = catLists( trim(removeSwitches), 'chu,chu1,l2q,mas,slv' )
     ! Remove any quote marks from RemoveSwitches array
     tempSwitches = unquote(removeSwitches, quotes=quotes, options='-p')
-    call GetUniqueList(tempSwitches, removeSwitches, numSwitches, countEmpty=.true., &
-          & ignoreLeadingSpaces=.true.)
+    call GetUniqueList( tempSwitches, removeSwitches, numSwitches, &
+          & ignoreLeadingSpaces=.true., options='-eSL' )
     ! Remove any quote marks from switches array
     tempSwitches = unquote(switches, quotes=quotes, options='-p')
-    call GetUniqueList(tempSwitches, Switches, numSwitches, countEmpty=.true., &
-          & ignoreLeadingSpaces=.true.)
+    call GetUniqueList( tempSwitches, Switches, numSwitches, &
+          & ignoreLeadingSpaces=.true., options='-eSL' )
     ! Remove any switches embedded in the removeSwitches option 'R'
     do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
       call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
@@ -743,6 +758,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.53  2012/07/10 15:23:42  pwagner
+! Works properly now; api adjusted for GetUniqueList
+!
 ! Revision 2.52  2012/07/02 20:29:32  pwagner
 ! Improve RestoreDefaults, some housekeeping
 !
