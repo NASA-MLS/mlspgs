@@ -1485,7 +1485,8 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in) :: debug
     logical, intent(in) :: USINGSUBMIT              ! Set if using the submit mechanism
     ! Local variables
-    logical :: create2
+    logical, parameter :: ALWAYSFILTERSWATHS = .true. ! Set Status to 'crashed'
+    logical :: create2                                ! If geolocs contain Fills
     integer :: DB_index
     character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
     integer :: FILEID
@@ -1499,6 +1500,7 @@ contains ! =====     Public Procedures     =============================
     integer :: numswaths
     integer :: obst
     integer, dimension(:,:), pointer :: obstruction_mafs => null()
+    character(len=8) :: options
     type(MLSFile_T), pointer :: outputFile
     integer :: ReturnStatus
     integer :: SDFID                ! File handle
@@ -1506,6 +1508,8 @@ contains ! =====     Public Procedures     =============================
     type(L2Metadata_T) :: l2metaData
 
     ! Executable
+    options = ' '
+    if ( ALWAYSFILTERSWATHS ) options = '-f'
     if ( debug ) call dump(DirectDatabase)
     ! Any dgg eligible for being catenated
     DB_index = findFirst( DirectDatabase%autoType, l_l2dgg )
@@ -1562,7 +1566,9 @@ contains ! =====     Public Procedures     =============================
         inputFile%access = DFACC_RDONLY
         call cpL2GPData( l2metaData, inputFile, &
           & outputFile, create2=create2, &
-          & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes )
+          & notUnlimited=avoidUnlimitedDims, &
+          & andGlAttributes=copyFileAttributes, &
+          & options=options )
         create2 = .false.
       end do
       ! Now write various kinds of metadata
@@ -1767,6 +1773,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.165  2012/07/10 15:21:15  pwagner
+! Sets Status to 'crashed' for swaths with Fills in geolocations
+!
 ! Revision 2.164  2012/07/05 23:54:21  pwagner
 ! Copy command in Output may contain options field
 !
