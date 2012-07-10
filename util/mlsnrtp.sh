@@ -15,7 +15,7 @@
 # (3) JOBDIR is defined as an environment variable
 #     It should be the path where the job is run
 # (4) PGE_ROOT is defined as an environment variable
-#     It should be the path where the science_env.sh script is kept
+#     It should be the path where the pgs-env.ksh script is kept
 # (5) OTHEROPTS is defined as an environment variable
 #     It would contain other meaningful runtimeoptions, 
 #       e.g. OTHEROPTS="--skipRetrieval"
@@ -75,7 +75,6 @@ RONIN=$MLSTOOLS/ronin.sh
 SETREADENV=$MLSTOOLS/set_read_env.sh
 H5REPACK=$LEVEL1_BINARY_DIR/h5repack
 NETCDFAUGMENT=$LEVEL1_BINARY_DIR/aug_hdfeos5
-PGSSCRIPT=/users/pwagner/apps/test/ifc12/toolkit5.2.17/bin/linux64/pgs-env.ksh
 if [ ! -x "$H5REPACK" ]
 then
   H5REPACK=$MLSTOOLS/H5REPACK
@@ -110,7 +109,7 @@ then
 elif [ "$PGE_ROOT" = "" ]
 then
   echo 'PGE_ROOT undefined'
-  echo 'It should be the path where the science_env.sh script is kept'
+  echo 'It should be the path where the pgs-env.ksh script is kept'
   exit 1
 elif [ "$MLSTOOLS" = "" ]
 then
@@ -210,7 +209,7 @@ echo "export PVM_HOSTS_INFO=$PVM_HOSTS_INFO" >> $JOBENV
 # (1) Create 3 level 1 jobs and run them
 JOB1SCRIPT="job1script.sh"
 echo "#!/bin/sh" > $JOB1SCRIPT
-echo "$RONIN `pwd` . $JOBENV; env; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_0 $EXTRA_OPTIONS $@" >> $JOB1SCRIPT
+echo "$RONIN `pwd` . $JOBDIR/$JOBENV; env; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_0 $EXTRA_OPTIONS $@" >> $JOB1SCRIPT
 chmod a+x $JOB1SCRIPT
 echo $SPARTACUS $JOB1SCRIPT
 $SPARTACUS $JOB1SCRIPT
@@ -226,7 +225,7 @@ fi
 
 JOB2SCRIPT="job2script.sh"
 echo "#!/bin/sh" > $JOB2SCRIPT
-echo "$RONIN `pwd` . $JOBENV; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS $@" >> $JOB2SCRIPT
+echo "$RONIN `pwd` . $JOBDIR/$JOBENV; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS $@" >> $JOB2SCRIPT
 chmod a+x $JOB2SCRIPT
 echo $SPARTACUS $JOB2SCRIPT
 $SPARTACUS $JOB2SCRIPT
@@ -242,7 +241,7 @@ fi
 
 JOB3SCRIPT="job3script.sh"
 echo "#!/bin/sh" > $JOB3SCRIPT
-echo "$RONIN `pwd` . $JOBENV; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_2 $EXTRA_OPTIONS $@" >> $JOB3SCRIPT
+echo "$RONIN `pwd` . $JOBDIR/$JOBENV; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/$MLSPROG_2 $EXTRA_OPTIONS $@" >> $JOB3SCRIPT
 chmod a+x $JOB3SCRIPT
 echo $SPARTACUS $JOB3SCRIPT
 $SPARTACUS $JOB3SCRIPT
@@ -287,7 +286,7 @@ fi
 export OTHEROPTS="$otheropts"
 MASTERSCRIPT="masterscript.sh"
 echo "#!/bin/sh" > $MASTERSCRIPT
-echo ". $JOBENV" >> $MASTERSCRIPT
+echo ". $JOBDIR/$JOBENV" >> $MASTERSCRIPT
 echo "export PGS_PC_INFO_FILE=$PCF" >> $MASTERSCRIPT
 echo "env" >> $MASTERSCRIPT
 echo "$LEVEL2_BINARY" >> $MASTERSCRIPT
@@ -300,6 +299,9 @@ echo PGS_PC_Shell.sh $MASTERSCRIPT
 PGS_PC_Shell.sh $MASTERSCRIPT $EXTRA_OPTIONS $@
 
 # $Log$
+# Revision 1.2  2012/06/07 21:16:00  pwagner
+# Many changes; appears to work now
+#
 # Revision 1.1  2012/03/23 00:55:20  pwagner
 # Firsst commit
 #
