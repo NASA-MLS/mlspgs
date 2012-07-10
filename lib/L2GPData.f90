@@ -2086,16 +2086,16 @@ contains ! =====     Public Procedures     =============================
     ! Are we merely to point out which swaths are missing from the other file?
     if ( myShowMissing ) then
       if ( present(swList) ) then
-        call GetUniqueList(swList, swathUnique, noUnique, countEmpty, &
-          & str2=trim(swathList1))
+        call GetUniqueList( swList, swathUnique, noUnique, &
+          & str2=trim(swathList1), options='-e' )
         if ( noUnique > 0 ) then
           call output('swaths missing from ' // trim(File1), advance='yes')
           call output(trim(swathUnique), advance='yes')
         else
           call output('All swaths in ' // trim(File1), advance='yes')
         endif
-        call GetUniqueList(swList, swathUnique, noUnique, countEmpty, &
-          & str2=trim(swathList2))
+        call GetUniqueList( swList, swathUnique, noUnique, &
+          & str2=trim(swathList2), options='-e' )
         if ( noUnique > 0 ) then
           call output('swaths missing from ' // trim(File2), advance='yes')
           call output(trim(swathUnique), advance='yes')
@@ -2105,14 +2105,14 @@ contains ! =====     Public Procedures     =============================
       else
         call output('Comparing swaths in ' // trim(File1), advance='no')
         call output(' with ' // trim(File2), advance='yes')
-        call GetUniqueList(trim(swathList1), swathUnique, noUnique, countEmpty, &
-          & str2=trim(swathList2))
+        call GetUniqueList( trim(swathList1), swathUnique, noUnique, &
+          & str2=trim(swathList2), options='-e' )
         if ( noUnique > 0 ) then
           call output('swaths only in ' // trim(File1), advance='yes')
           call output(trim(swathUnique), advance='yes')
         endif
-        call GetUniqueList(trim(swathList2), swathUnique, noUnique, countEmpty, &
-          & str2=trim(swathList1))
+        call GetUniqueList(trim(swathList2), swathUnique, noUnique, &
+          & str2=trim(swathList1), options='-e' )
         if ( noUnique > 0 ) then
           call output('swaths only in ' // trim(File2), advance='yes')
           call output(trim(swathUnique), advance='yes')
@@ -5072,6 +5072,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.185  2012/07/05 23:49:04  pwagner
+! Sets swath Status field to "crashed" if cpl2gpdata options contains "f" and geolocations contain Fills
+!
 ! Revision 2.184  2012/05/10 00:45:24  pwagner
 ! Better way for AppendL2GPData to know it must create swath
 !
