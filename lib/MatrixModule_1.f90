@@ -848,7 +848,8 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in), optional :: ForWhom ! for allocation
     call createBlock ( z%block(rowNum,colNum), &
       & z%row%nelts(rowNum), z%col%nelts(colNum), kind, numNonzeros, &
-      & bandHeight=bandHeight, init=init, forWhom=forWhom )
+      & bandHeight=bandHeight, init=init, forWhom=forWhom, &
+      & nChan=z%row%vec%quantities(z%row%quant(rowNum))%template%noChans )
   end subroutine CreateBlock_1
 
   ! ------------------------------------------  CreateEmptyMatrix  -----
@@ -2923,6 +2924,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.129  2012/07/10 03:58:13  vsnyder
+! Send the number of channels for a row block into CreateBlock_0 so that
+! the dimensions of VALUE3 can be set correctly.
+!
 ! Revision 2.128  2012/06/15 23:30:58  vsnyder
 ! Explain summary of dump better
 !
