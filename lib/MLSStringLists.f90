@@ -31,11 +31,12 @@ module MLSStringLists               ! Module to treat string lists
 !---------------------------------------------------------------------------
 
 !
-! This module contains some low level string handling stuff for mls
-! (Perhaps the date and time conversions should be moved out of here
-! and MLSStrings and put into time_m? Or into a stand-alone module?)
 
 ! === (start of toc) ===
+! This module contains some higher-level string handling stuff for mls
+! See below for what we mean by a stringList
+! Applications include hdf, the Switches string, and command line arguments
+
 !     c o n t e n t s
 !     - - - - - - - -
 
@@ -72,6 +73,7 @@ module MLSStringLists               ! Module to treat string lists
 ! RemoveNumFromList  removes a numbered elem from a string list
 ! ReplaceSubString   replaces occurrence(s) of sub1 with sub2 in a string
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
+! ReverseStrings     Turns (/'abc','def','ghi'/) -> (/'ghi','def','abc'/)
 ! SnipList           Like RemoveElemFromList, but a function
 ! SortArray          Turns (/'def','ghi','abc'/) -> (/'abc','def','ghi'/)
 ! SortList           Turns 'def,ghi,abc' -> 'abc,def,ghi'
@@ -1446,6 +1448,8 @@ contains
       return
     end if
     ALLOCATE (inStringArray(nElems), outStringArray(nElems), STAT=status)
+    ! print *, 'shapes: ', &
+    !   & (/ size(inStringArray), size(outStringArray) /)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"stringArray in GetUniqueList")
     call list2Array(str, inStringArray, countEmpty, inseparator, &
@@ -1467,8 +1471,10 @@ contains
       endif
       DEALLOCATE(inStringArray, outStringArray, inStrAr2)
     else
+      ! print *, 'About to getUniqueStrings'
       call GetUniqueStrings( inStringArray, outStringArray, noUnique, &
       & fillValue=fillValue, options=options )
+      ! print *, 'noUnique: ', noUnique
       if ( noUnique > 0 ) then
         call Array2List(outStringArray(1:noUnique), outStr, &
          & inseparator)
@@ -1477,6 +1483,7 @@ contains
       endif
       DEALLOCATE(inStringArray, outStringArray)
     endif
+      ! print *, 'Done with getUniqueList'
   end subroutine GetUniqueList
 
   ! ---------------------------------------------  GetUniqueStrings  -----
@@ -1512,6 +1519,7 @@ contains
     logical :: Switchable
 
     ! Executable code, setup arrays
+    ! print *, 'Now ino getUniqueStrings'
     myOptions = ' '
     if ( present(options) ) myOptions = options
     Switchable = ( index(myOptions, 'S') > 0 )
@@ -1573,6 +1581,7 @@ contains
          & "outList strings to small")
     outList=""
 
+    ! print *, 'NoUnique: ', noUnique
     if ( noUnique > 0 ) then
       ! do j=1, inSize, 20
       !   print *, (duplicate(j+i), i=0, min(19, inSize-j))
@@ -1601,13 +1610,16 @@ contains
          if ( j > inSize ) exit UniqueLoop
       END DO UniqueLoop
     endif
+    ! print *, 'Done with UniqueLoop'
     ! If we reversed the order, recover the original order
     if ( keepLast ) then
       list = outList
-      call reverseStrings( list(1:noUnique), outList )
+      ! print *, 'reversing strings'
+      call reverseStrings( list(1:noUnique), outList(1:noUnique) )
     endif
 
     deallocate ( duplicate )
+    ! print *, 'Leaving getUniqueStrings'
     contains
     function matchem( str1, str2 ) result ( match )
       ! Test for match between str1 and str2 according to options
@@ -3950,6 +3962,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.49  2012/07/11 20:01:43  pwagner
+! Fixed something only NAG complained about
+!
 ! Revision 2.48  2012/07/10 15:17:15  pwagner
 ! Changes to GetUnique.. to work with Switches better
 !
