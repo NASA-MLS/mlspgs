@@ -364,7 +364,6 @@ contains
     logical :: verbose
 
     ! Executable
-    verbose = ( switchDetail(switches, 'geos5') > -1 ) .or. DEEBUG
     if(present(fieldName)) then
       actual_field_name=fieldName
     else
@@ -372,7 +371,7 @@ contains
     endif
     
     DEEBUG = ( index(lowercase(actual_field_name), 'inq') > 0 )
-
+    verbose = ( switchDetail(switches, 'geos5') > -1 ) .or. DEEBUG
     call GetAllHDF5DSNames ( GEOS5File%Name, '/', mysdList )
     if ( verbose ) call dump(mysdList, 'DS names')
 
@@ -2613,6 +2612,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.73  2012/07/11 20:01:06  pwagner
+! Dont use DEEBUG until after its defined
+!
 ! Revision 2.72  2012/07/02 20:17:42  pwagner
 ! Protect against bounds error when debugging with NAG
 !
