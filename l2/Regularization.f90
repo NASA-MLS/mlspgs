@@ -26,6 +26,25 @@ module Regularization
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  integer, public :: MaxNumAnnouncements = 10
+  ! Error message codes
+  ! We do not always halt after these errors, so they are more like
+  ! warnings, or at least some of them are
+  ! We used to print every time, but that was tedious, so we max out
+  ! each condition after MaxNumAnnouncements of them
+  ! If you want to 
+  !   resume printing every time   set MaxNumAnnouncements to -1
+  !   reset the counters           set RegAnnouncements    to 0
+  integer, parameter :: FieldSizes = 1   ! size(regOrders) /= size(regQuants)
+  integer, parameter :: NotRegularized = FieldSizes + 1
+  integer, parameter :: OrderTooBig = NotRegularized + 1
+  integer, parameter :: RegQuantsReq = OrderTooBig + 1 ! RegQuants required
+  integer, parameter :: RegTemplate = RegQuantsReq + 1 ! Weight /= column of J
+  integer, parameter :: Unitless = RegTemplate + 1     ! Orders must be unitless
+
+  integer :: Error               ! non-zero if an error occurs
+  integer, public, dimension(FieldSizes:Unitless), save :: RegAnnouncements = 0
+
 contains
 
   ! -------------------------------------------------  Regularize  -----
@@ -77,16 +96,16 @@ contains
   ! row-scaling matrix $\mathbf{W}$.  If {\tt WeightVec} is absent, one is
   ! used.
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Expr_M, only: EXPR
-    use MatrixModule_0, only: CreateBlock, M_Banded, M_Full, &
-      & MatrixElement_T, Sparsify
-    use MatrixModule_1, only: Matrix_T
-    use MLSCommon, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Output_M, only: Output
-    use Tree, only: DECORATION, NSONS, SUBTREE
-    use VectorsModule, only: M_Tikhonov, Vector_T
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use EXPR_M, only: EXPR
+    use MATRIXMODULE_0, only: CREATEBLOCK, M_BANDED, M_FULL, &
+      & MATRIXELEMENT_T, SPARSIFY
+    use MATRIXMODULE_1, only: MATRIX_T
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+    use TREE, only: DECORATION, NSONS, SUBTREE
+    use VECTORSMODULE, only: M_TIKHONOV, VECTOR_T
 
     type(matrix_T), intent(inout) :: A
     integer, intent(in) :: Orders
@@ -99,16 +118,6 @@ contains
     integer, parameter :: MaxRegOrd = 56 ! Maximum regularization
     ! order.  26!/(13!)**2 < 1/EPSILON(0.0E0) < 27!/(13!)**2 for 24-bit fraction.
     !         56!/(28!)**2 < 1/EPSILON(0.0D0) < 57!/(28!**2) for 53-bit fraction.
-
-    ! Error message codes
-    integer, parameter :: FieldSizes = 1   ! size(regOrders) /= size(regQuants)
-    integer, parameter :: NotRegularized = FieldSizes + 1
-    integer, parameter :: OrderTooBig = NotRegularized + 1
-    integer, parameter :: RegQuantsReq = OrderTooBig + 1 ! RegQuants required
-    integer, parameter :: RegTemplate = RegQuantsReq + 1 ! Weight /= column of J
-    integer, parameter :: Unitless = RegTemplate + 1     ! Orders must be unitless
-
-    integer :: Error               ! non-zero if an error occurs
 
     logical :: MyHoriz             ! Copy of Horiz if present, else .false.
 
@@ -155,36 +164,46 @@ contains
 
     ! --------------------------------------------  AnnounceError  -----
     subroutine AnnounceError ( code, where )
-      use Lexer_Core, only: Print_Source
+      use Lexer_Core, only: PRINT_SOURCE
       use Tree, only: SOURCE_REF
 
       integer, intent(in) :: Code    ! The message number
       integer, intent(in) :: Where   ! Where in the tree
+      logical :: LASTTIME
 
       error = max(error,1)
+      LASTTIME = .false.
+      if ( code > 0 )then
+        RegAnnouncements(code) = &
+          & min(RegAnnouncements(code), MaxNumAnnouncements) + 1
+        LASTTIME = ( RegAnnouncements(code) + 1 > MaxNumAnnouncements )
+        if ( RegAnnouncements(code) > MaxNumAnnouncements ) return ! Suppressed
+      endif
       call output ( '***** At or near ' )
       call print_source ( source_ref(where) )
       call output ( ', Regularization complained: ' )
       select case ( code )
       case ( fieldSizes )       ! size(regOrders) /= size(regQuants)
         call output ( "Number of values of regOrders or regWeights shall be 1 " )
-        call output ( "or the same as for regQuants.", advance="yes" )
+        call output ( "or the same as for regQuants.", advance="no" )
       case ( notRegularized )
         call output ( "Some blocks or quantities not regularized, or " )
-        call output ( "regularized at lower order than requested", advance="yes" )
+        call output ( "regularized at lower order than requested", advance="no" )
       case ( orderTooBig )
         call output ( "Regularization order exceeds " )
-        call output ( maxRegOrd, advance="yes" )
+        call output ( maxRegOrd, advance="no" )
       case ( regQuantsReq )     ! RegQuants required if size(regOrders) /= 1
         call output ( "The regQuants field is required if more than one order " )
-        call output ( "is specified.", advance="yes" )
+        call output ( "is specified.", advance="no" )
       case ( regTemplate )
         call output ( "The template for the regularization weights vector is " )
         call output ( "not the same as for the columns of the Jacobian matrix.", &
           & advance='yes' )
       case ( unitless )         ! regOrders must be unitless
-        call output ( "The orders shall be unitless.", advance="yes" )
+        call output ( "The orders shall be unitless.", advance="no" )
       end select
+      if ( LASTTIME ) call output( '(Suppressing further notice of this)' )
+      call newLine
 
     end subroutine AnnounceError
 
@@ -699,6 +718,9 @@ o:          do while ( c2 <= ni )
 end module Regularization
 
 ! $Log$
+! Revision 2.41  2012/07/11 20:02:54  pwagner
+! Suppress annoying messages after 10
+!
 ! Revision 2.40  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
