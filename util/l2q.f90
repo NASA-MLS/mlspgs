@@ -165,6 +165,7 @@ program L2Q
     logical            :: deferToElders = .true.  ! New masters defer to old
     logical            :: dumpEachNewMaster = .false.
     logical            :: verbose = .false.
+    logical            :: freeHosts = .false.     ! Regularly check for abandoned
     logical            :: reviveHosts = .false.   ! Regularly check for revivals
     character(len=16)  :: command = 'run'         ! {run, kill, dumphdb, dumpmdb
     logical            :: debug = DEEBUG          !   dump, checkh, clean}
@@ -693,6 +694,9 @@ contains
     call output(' Regularly check for revived hosts:              ', advance='no')
     call blanks(4, advance='no')
     call output(options%reviveHosts, advance='yes')
+    call output(' Regularly check and free abandoned hosts:       ', advance='no')
+    call blanks(4, advance='no')
+    call output(options%freeHosts, advance='yes')
     call output(' Regularly clean db of finished masters:         ', advance='no')
     call blanks(4, advance='no')
     call output(options%cleanMasterDB, advance='yes')
@@ -755,6 +759,7 @@ contains
     logical :: CLEANMASTERDB
     logical :: DUMPHOSTS
     logical :: DUMPMASTERS
+    logical :: FREEABANDONEDHOSTS
     integer :: grandMastersID           ! index into database of an older master
     integer :: host
     integer :: hostsID                  ! index into database of a host
@@ -792,6 +797,7 @@ contains
       checkrevivedhosts = .false.
       dumpHosts = .false.
       dumpMasters = .false.
+      freeabandonedhosts = .false.
       mayAssignAHost = .true.
       significantEvent = .false.
       skipDelay = .false.               ! Assume we're going to delay
@@ -1106,7 +1112,8 @@ contains
         call clean_master_database(Masters)
       endif
 
-      checkrevivedhosts = significantEvent .and. options%reviveHosts
+      checkrevivedhosts  = significantEvent .and. options%reviveHosts
+      freeabandonedhosts = significantEvent .and. options%freeHosts
       ! Listen out for any message telling us to dump databases
       call PVMFNRecv ( -1, DumpDBTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
@@ -1181,6 +1188,8 @@ contains
       if ( bufferIDRcv > 0 ) then
         call timestamp ( 'Received an external message to free hosts' &
         &  // ' belonging to finished masters', advance='yes' )
+      endif
+      if ( bufferIDRcv > 0 .or. freeabandonedhosts ) then
         call free_hosts( hosts, machineNames, masters=masters )
         dumpHosts = .true.
       endif
@@ -1428,6 +1437,8 @@ contains
             print*, current_version_id(j)
           enddo
           stop
+        else if ( line(3+n:6+n) == 'free' ) then
+          options%freeHosts = switch
         else if ( line(3+n:7+n) == 'reviv' ) then
           options%reviveHosts = switch
         else if ( line(3+n:7+n) == 'wall ' ) then
@@ -1778,6 +1789,7 @@ contains
     print *, ' --dumpnewm:  dump each new master'
     print *, ' --help:      show help; stop'
     print *, ' --inquire:   show whether an instance of l2q already running'
+    print *, ' --[n]free:   do [not] regularly check, free abandoned hosts'
     print *, ' --[n]revive: do [not] regularly check for revived hosts'
     print *, ' --version:   print version string; stop'
     print *, ' --wall:      show times according to wall clock (if T[0] set)'
@@ -2370,6 +2382,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.30  2010/06/03 23:36:07  pwagner
+! Tried again to fix problem of freezing
+!
 ! Revision 1.29  2009/09/02 22:05:36  pwagner
 ! Tried to fix bug preventing some hosts from being revived
 !
