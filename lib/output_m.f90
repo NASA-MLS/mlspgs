@@ -31,13 +31,15 @@ module OUTPUT_M
 !     c o n t e n t s
 !     - - - - - - - -
 !     (data types and parameters)
+! outputLines              If PrUnit = OUTPUTLINESPRUNIT, holds output until flushed
 ! outputOptions            where to send output and how to format it
 ! (some components)
 ! MLSMSG_Level             MLSMessage level if so logged
 ! PrUnit                   How to direct output:
-!                          -2 :: logged via MLSMessage
-!                          -1 :: print stdout
-!                          < -2 :: both
+!                          OUTPUTLINESPRUNIT :: held in outputLines
+!                          MSGLOGPRUNIT      :: logged via MLSMessage
+!                          STDOUTPRUNIT      :: print stdout
+!                          BOTHPRUNIT        :: both stdout and logged
 !                          > 0 :: print to Fortran unit number PrUnit
 ! skipMLSMSGLogging        whether to skip MLSMessage by default
 ! stampOptions             whether and how to stamp each output automatically
@@ -52,7 +54,9 @@ module OUTPUT_M
 ! dump                     dump output or stamp options
 ! dumpsize                 print a nicely-formatted memory size 
 ! dumptabs                 print the current tab stop positions
+! flushOutputLines         print the current outputLines; then reset to ''
 ! getStamp                 get stamp being added to every output
+! headLine                 print a line with extra formatting features
 ! newline                  print a newline
 ! numNeedsFormat           return what format is need to output num
 ! numToChars               return what would be printed by output
@@ -85,8 +89,12 @@ module OUTPUT_M
 !       where n can be an int or a real, and 
 !       units is a scalar of the same type, if present
 ! DumpTabs ( [int tabs(:)] )
+! flushOutputLines ( [int prUnit] )
 ! getStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
+! headLine ( char* chars, 
+!          [char fillChar], [char* Before], [char* After], 
+!          [int columnRange(2)], [char alignment], [int skips] )
 ! NewLine
 ! char* numNeedsFormat ( value )
 ! char* numToChars ( value, [char* format] )
@@ -138,14 +146,21 @@ module OUTPUT_M
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
   integer, save, public :: LINE_WIDTH = 120 ! Not used here, but a convenient
-                                         ! place to store it
+                                            ! place to store it
   ! Where to output?
+  ! These apply if we don't output to a fortran unit number (which is > 0)
+  integer, parameter, public :: INVALIDPRUNIT      = 0
+  integer, parameter, public :: STDOUTPRUNIT       = INVALIDPRUNIT - 1
+  integer, parameter, public :: MSGLOGPRUNIT       = STDOUTPRUNIT - 1
+  integer, parameter, public :: BOTHPRUNIT         = MSGLOGPRUNIT - 1
+  integer, parameter, public :: OUTPUTLINESPRUNIT  = BOTHPRUNIT - 1
+
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
   public :: ALIGNTOFIT, BANNER, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, &
-    & DUMP, DUMPSIZE, DUMPTABS, &
-    & GETSTAMP, NEXTCOLUMN, NEXTTAB, NEWLINE, NUMNEEDSFORMAT, NUMTOCHARS, &
+    & DUMP, DUMPSIZE, DUMPTABS, FLUSHOUTPUTLINES, GETSTAMP, HEADLINE, &
+    & NEXTCOLUMN, NEXTTAB, NEWLINE, NUMNEEDSFORMAT, NUMTOCHARS, &
     & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTLIST, &
     & OUTPUTNAMEDVALUE, &
     & RESETTABS, RESUMEOUTPUT, REVERTOUTPUT, &
@@ -174,6 +189,10 @@ module OUTPUT_M
     module procedure DUMPSIZE_DOUBLE, DUMPSIZE_INTEGER, DUMPSIZE_REAL
   end interface
 
+  interface getOption
+    module procedure getOption_char, getOption_log
+  end interface
+
   interface NUMNEEDSFORMAT
     module procedure numNeedsFormat_double, numNeedsFormat_integer, numNeedsFormat_single
     module procedure numNeedsFormat_complex, numNeedsFormat_dcomplx
@@ -183,6 +202,7 @@ module OUTPUT_M
     module procedure numtochars_double, numtochars_integer, numtochars_single
   end interface
 
+  ! Embeddded <cr> print multiple lines
   interface OUTPUT
     module procedure output_char, output_char_array, output_complex
     module procedure output_dcomplex, output_double
@@ -218,14 +238,15 @@ module OUTPUT_M
     module procedure timestamp_char, timestamp_integer, timestamp_logical
   end interface
   
+  ! We can use the OutputLines mechanism for user-controlled
+  ! buffering, filtering, grep-ing, or whatever
+  integer, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
+  character(len=MAXOUTPUTLINESLEN), public, save     :: outputLines = ' '
+
   ! This is the type for configuring how to automatically format
   ! lines and whether they should be sent to stdout or elsewhere
   type outputOptions_T
-    integer :: PRUNIT = -1               ! Unit for output.  
-                                         ! -1 means "printer" unit, *
-                                         ! -2 means MLSMessage if 
-                                         ! < -2, both printer and MLSMSG
-                                         ! > 0, actual unit number
+    integer :: PRUNIT = -1               ! Unit for output (see comments above).  
     integer :: MLSMSG_Level        = MLSMSG_Info ! What level if logging
     integer :: newLineVal          = 10 ! 13 means <cr> becomes new line; -999 means ignore
     integer :: nArrayElmntsPerLine = 7
@@ -248,7 +269,7 @@ module OUTPUT_M
       &  '(- .. )         ' /)
       !   12345678901234567890
     character(len=FileNameLen) :: name = 'stdout'
-    character(len=3)  :: advanceDefault = 'no' ! what to assume if advance=.. missing
+    character(len=3)  :: advanceDefault = 'no' ! if advance=.. missing
     character(len=12) :: sdFormatDefault = '*' ! * means default format spec
     character(len=1)  :: arrayElmntSeparator = ' '
   end type
@@ -673,27 +694,32 @@ contains
     character(len=1), parameter :: fillChar = '.' ! fill blanks with '. .'
     integer :: i
     ! Executable
-    call blanks(70, fillChar='-', advance='yes')
-    call output_(' -------------- Summary of output options'      , advance='no')
-    call output_(' -------------- ', advance='yes')
+    call blanks(80, fillChar='-', advance='yes')
+    call headline( 'Summary of output options', &
+      & fillChar='-', before='*', after='*' )
     call outputNamedValue ( 'unit number', options%prUnit, advance='yes', &
-      & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    if ( options%prUnit < 0 ) then
+      call outputNamedValue ( 'meaning', prunitname(options%prUnit), &
+        & advance='yes', &
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    endif
     call outputNamedValue ( 'file name', trim(options%name), advance='yes', &
-      & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'logging level', options%MLSMSG_Level, advance='yes', &
-      & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'buffered?', options%buffered, advance='yes', &
-      & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'skip MLSMsg logging?', options%SKIPMLSMSGLOGGING, advance='yes', &
-      & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'use patterned blanks?', options%usePatternedBlanks, advance='yes', &
-      & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'special fills', trim(options%specialFillChars), advance='yes', &
-      & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'lineup fills', trim(options%lineupFillChars), advance='yes', &
-      & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'tab stops', tabstops, advance='yes', &
-      & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     do i=1, MAXNUMTABSTOPS
       call tab( fillChar=fillChar )
       call output_( '^', advance='no' )
@@ -711,7 +737,29 @@ contains
       if ( atColumnNumber > 132 ) exit
     enddo
     call newline
-    call blanks(70, fillChar='-', advance='yes')
+    call blanks(80, fillChar='-', advance='yes')
+  contains
+    function PRUnitName( prUnit ) result( name )
+      ! Return an appropriate name for the prUnit number
+      ! Args
+      integer, intent(in) :: prUnit
+      character(len=12) :: name
+      ! Executable
+      select case ( prUnit )
+      case ( STDOUTPRUNIT )
+        name = 'stdout'
+      case ( MSGLOGPRUNIT )
+        name = 'mls logfile'
+      case ( BOTHPRUNIT )
+        name = 'stdout+log'
+      case ( OUTPUTLINESPRUNIT )
+        name = 'outputLines'
+      case ( INVALIDPRUNIT )
+        name = 'invalid'
+      case default ! > 0
+        name = 'Fortran unit'
+      end select
+    end function PRUnitName
   end subroutine DumpOutputOptions
 
   ! ---------------------------------------------- DumpStampOptions -----
@@ -719,24 +767,24 @@ contains
     ! Show output options
     type(StampOptions_T), intent(in) :: options
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
-     call blanks(70, fillChar='-', advance='yes')
-     call output_(' -------------- Summary of automatic stamp options'      , advance='no')
-     call output_(' -------------- ', advance='yes')
+     call blanks(80, fillChar='-', advance='yes')
+    call headline( 'Summary of automatic stamp options', &
+      & fillChar='-', before='*', after='*' )
      call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
      call outputNamedValue ( 'show time', options%showTime, advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'extra text', trim(options%textCode), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'date format', trim(options%dateFormat), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'time format', trim(options%timeFormat), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+     call outputNamedValue ( 'extra text', trim_safe(options%textCode), advance='yes', &
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+     call outputNamedValue ( 'date format', trim_safe(options%dateFormat), advance='yes', &
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+     call outputNamedValue ( 'time format', trim_safe(options%timeFormat), advance='yes', &
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
      call outputNamedValue ( 'interval', options%interval, advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'style of timeStamps', trim(options%timestampstyle), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call blanks(70, fillChar='-', advance='yes')
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+     call outputNamedValue ( 'style of timeStamps', trim_safe(options%timestampstyle), advance='yes', &
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    call blanks(80, fillChar='-', advance='yes')
   end subroutine DumpStampOptions
 
   ! ---------------------------------------------- DUMPTIMESTAMPOPTIONS -----
@@ -744,22 +792,22 @@ contains
     ! Show output options
     type(TimeStampOptions_T), intent(in) :: options
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
-     call blanks(70, fillChar='-', advance='yes')
-     call output_(' -------------- Summary of time stamp options'      , advance='no')
-     call output_(' -------------- ', advance='yes')
+     call blanks(80, fillChar='-', advance='yes')
+    call headline( 'Summary of time stamp options', &
+      & fillChar='-', before='*', after='*' )
      call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
      call outputNamedValue ( 'show date', options%showDate, advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'extra text', trim(options%textCode), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'date format', trim(options%dateFormat), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'time format', trim(options%timeFormat), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call outputNamedValue ( 'style of timeStamps', trim(options%timestampstyle), advance='yes', &
-       & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=70 )
-     call blanks(70, fillChar='-', advance='yes')
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+     call outputNamedValue ( 'extra text', trim_safe(options%textCode), advance='yes', &
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+     call outputNamedValue ( 'date format', trim_safe(options%dateFormat), advance='yes', &
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+     call outputNamedValue ( 'time format', trim_safe(options%timeFormat), advance='yes', &
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+     call outputNamedValue ( 'style of timeStamps', trim_safe(options%timestampstyle), advance='yes', &
+       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    call blanks(80, fillChar='-', advance='yes')
   end subroutine DUMPTIMESTAMPOPTIONS
 
   ! ---------------------------------------------- DumpSize_double -----
@@ -860,6 +908,35 @@ contains
     endif
   end subroutine dumpTabs
 
+  ! ----------------------------------------------  flushOutputLines  -----
+  ! print or log OutputLines
+  ! then reset to ''
+  subroutine flushOutputLines ( prUnit )
+    ! Args
+    integer, optional, intent(in) :: prUnit ! How do you want 'em?
+    ! Local arguments
+    integer :: kNull  ! 1 past where the end of str occurs
+    integer :: myPrUnit
+    integer :: oldPrUnit
+    ! Executable
+    myPrUnit = -1 ! By default, just print to stdout
+    if ( present(prUnit) ) myprUnit = prUnit
+    oldprUnit = outputOptions%prUnit
+    outputOptions%prUnit = myprUnit
+    kNull = index( OutputLines, achar(0), back=.true. )
+    if ( kNull < 2 ) then
+      ! OutputLines hasn't been defined yet
+      return
+    elseif ( kNull > len(OutputLines) ) then
+      ! Something very wrong
+      return
+    else
+      call output( OutputLines(1:kNull-1) )
+    endif
+    outputOptions%prUnit = oldPrUnit
+    OutputLines = ' '
+  end subroutine flushOutputLines
+
   ! ----------------------------------------------  getStamp  -----
   subroutine getStamp ( textCode, showTime, dateFormat, timeFormat, &
     & post, interval )
@@ -877,6 +954,72 @@ contains
     if ( present(post) )       post       = stampOptions%post
     if ( present(interval) )   interval   = stampOptions%interval
   end subroutine getStamp
+
+  ! -----------------------------------------------------  HEADLINE  -----
+  ! Print your message with extra formatting features; e.g.,
+  ! *----------------  Your message here   ----------------*
+  ! See also banner
+  subroutine HEADLINE ( CHARS, fillChar, Before, After, &
+    & COLUMNRANGE, ALIGNMENT, SKIPS )
+    character(len=*), intent(in)                :: CHARS
+    character(len=1), intent(in), optional :: fillChar      ! For padding
+    character(len=*), intent(in), optional :: Before, After ! text to print
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
+    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
+    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    !
+    ! Internal variables
+    integer :: addedLines
+    character(len=1)      :: myAlignment
+    integer, dimension(2) :: myColumnRange      ! To fit chars
+    integer, dimension(2) :: myFullColumnRange  ! Must fit before and after, too
+    integer :: lineLen, mySkips,  rightpadding
+    character(len=1) :: myFillChar
+    ! Executable
+    if ( present(columnRange) ) then
+      myFullColumnRange = columnRange
+    else
+      myFullColumnRange(1) = 1
+      myFullColumnRange(2) = 80
+    endif
+    myColumnRange = myFullColumnRange
+    mySkips = 0
+    if ( present(skips) ) mySkips = skips
+    myFillChar = ' '
+    if ( present(fillChar) ) myFillChar = fillChar
+    myAlignment = 'C'
+    if ( present(alignment) ) myAlignment = alignment
+    ! call outputNamedValue ( 'myFullColumnRange', myFullColumnRange )
+    ! call outputNamedValue ( 'myColumnRange', myColumnRange )
+    ! call outputNamedValue ( 'mySkips', mySkips )
+    ! call outputNamedValue ( 'myFillChar', myFillChar )
+    ! Adjust for lengths of before, after
+    if ( present(before) ) myColumnRange(1) = myFullColumnRange(1) + len(before)
+    if ( present(after) ) then
+      myColumnRange(2) = myFullColumnRange(2) - len(after)
+      rightpadding = len(after) - 1
+    endif
+    call blanksToColumn( myFullColumnRange(1), advance='no' )
+    if ( present(before) ) call output(before, advance='no' )
+    if ( mySkips == 0 .and. myAlignment == 'C' .and. myFillChar /= ' ' ) then
+      ! OK, final adjustments of myColumnRange
+      myColumnRange(1) = &
+        & ( myColumnRange(1) + myColumnRange(2) + 1 - len(chars) )/2
+      myColumnRange(2) =  myColumnRange(1) - 1 + len(chars)
+      ! call outputNamedValue ( 'myColumnRange', myColumnRange )
+      call blanksToColumn( myColumnRange(1), fillChar=fillChar, advance='no' )
+      call aligntofit( chars, myColumnRange, myAlignment, skips )
+      call blanksToColumn( myFullColumnRange(2)-rightpadding, &
+        & fillChar=fillChar, advance='no' )
+      if ( present(after) ) call output(after, advance='no' )
+    else
+      call aligntofit( chars, myColumnRange, myAlignment, skips )
+      call blanksToColumn(myFullColumnRange(2)-rightpadding, advance='no' )
+      if ( present(after) ) call output(after, advance='no' )
+    endif
+    call newLine
+  end subroutine HEADLINE
 
   ! ----------------------------------------------------  NewLine  -----
   subroutine NewLine
@@ -1361,7 +1504,7 @@ contains
     ! Special case: if chars is blank (chars are blank?)
     ! we'll want to print anyway
     if ( len_trim(chars) < 1 ) n_stamp = max(n_stamp, 1)
-    if ( (outputOptions%prunit == -1 .or. outputOptions%prunit < -2) .and. &
+    if ( any(outputOptions%prunit == (/STDOUTPRUNIT, MSGLOGPRUNIT/)) .and. &
       &  n_stamp > RECLMAX ) then
       nIOBlocs = 1 + (n_stamp-1)/RECLMAX
       i2 = 0
@@ -1371,14 +1514,15 @@ contains
         write ( *, '(a)', advance='no' ) stamped_chars(i1:i2)
       enddo
       if ( my_adv == 'yes' ) write ( *, '(a)', advance=my_adv ) ' '
-    elseif ( (outputOptions%prunit == -1 .or. outputOptions%prunit < -2) .and. &
+    elseif ( any(outputOptions%prunit == (/STDOUTPRUNIT, MSGLOGPRUNIT/)) .and. &
       &  len(chars) < 1 .and. my_adv == 'yes' ) then
       write ( *, '(a)', advance=my_adv )
-    elseif ( (outputOptions%prunit == -1 .or. outputOptions%prunit < -2) .and. &
+    elseif ( any(outputOptions%prunit == (/STDOUTPRUNIT, MSGLOGPRUNIT/)) .and. &
       &  n_stamp > 0 ) then
       write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     endif
-    if ( outputOptions%prunit < -1 .and. .not. my_dont_log  ) then
+    if ( any(outputOptions%prunit == (/MSGLOGPRUNIT, BOTHPRUNIT/)) .and. .not. my_dont_log  ) then
+      ! We must use MLSMessage to log the chars
       the_chars = chars // ' '
       if (LOGEXTRABLANKS) n_chars = max(len(chars), 1)
       if ( present(log_chars) ) then
@@ -1404,6 +1548,19 @@ contains
         call MLSMessage ( outputOptions%MLSMSG_Level, ModuleName, my_chars(1:n_chars), &
           & advance=my_adv )
       end if
+    elseif ( outputOptions%prunit ==  OUTPUTLINESPRUNIT ) then
+      ! Append to outputLines; maybe print later on
+      !   if ( len_trim(chars) > 0 ) then
+      !     if ( len_trim(outputLines) > 0 ) then
+      !       outputLines = trim(outputLines) // trim(chars)
+      !     else
+      !       outputLines = chars
+      !     endif
+      call append_chars( outputLines, chars )
+        if ( my_adv == 'yes' ) &
+          call append_chars( outputLines, achar(outputOptions%NewLineVal) )
+      !    & outputLines = trim(outputLines) // achar(outputOptions%NewLineVal) ! add <cr>
+      ! endif
     end if
     
     if ( outputOptions%prunit < 0  ) then
@@ -1434,7 +1591,7 @@ contains
         ! Time to add stamp as a page header on its own line
         stamped_chars = stamp(' ')
         stamped = .true.
-        if ( outputOptions%prunit == -1 .or. outputOptions%prunit < -2 ) then
+        if ( any(outputOptions%prunit == (/STDOUTPRUNIT, BOTHPRUNIT/)) ) then
           write ( *, '(a)', advance='yes' ) trim(stamped_chars)
         elseif( outputOptions%prunit > 0 ) then
           write ( outputOptions%prunit, '(a)', advance='yes' ) trim(stamped_chars)
@@ -1448,6 +1605,27 @@ contains
     end if
     atColumnNumber = atColumnNumber + n_chars
     if ( atLineStart ) atColumnNumber = 1
+  contains
+    subroutine append_chars ( str, chars )
+      ! Append chars to end of str
+      ! where end is marked by the last null character (achar(0))
+      ! Args
+      character(len=*), intent(inout) :: str
+      character(len=*), intent(in)    :: chars
+      ! Local variables
+      integer :: kNull  ! 1 past where the end of str occurs
+      ! Executable
+      kNull = index( str, achar(0), back=.true. ) + 1
+      if ( kNull < 2 ) then
+        ! str hasn't been defined yet
+        str = chars // achar(0)
+      elseif ( kNull > len(str) + 1) then
+        ! Something very wrong
+        str = achar(0)
+      else
+        str(kNull-1:) = chars // achar(0)
+      endif
+    end subroutine append_chars
   end subroutine OUTPUT_CHAR_NOCR
 
   ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
@@ -2291,6 +2469,14 @@ contains
     ! also does the same with '[Tt]..' and '[Ff]..'
     ! leaves all other patterns unchanged, but truncated to three
     ! characters.  Returns 'no' if the argument is absent.
+    
+    ! We are allowing its argument str to do multiple duties by being
+    ! composed of multiple space-separated arguments, e.g. 
+    ! 'arg1 [arg2] .. [argn]'
+    ! (1) the first arg1 is treated as before, basically 'yes' or 'no'
+    ! (2) arg2 and beyond will introduce extra options to the
+    ! output command, eventually simplifying it to just
+    !   call output( something, [advance='arg1 [arg2] .. [argn]' )
     !--------Argument--------!
     character (len=*), intent(in), optional :: Str
     character (len=3) :: Outstr
@@ -2298,6 +2484,7 @@ contains
     !----------Local vars----------!
     character (len=*), parameter :: yeses = 'YyTt'
     character (len=*), parameter :: nose = 'NnFf'
+    integer :: kSpace
 
     if ( .not. present(str)  ) then
       outstr = outputoptions%advanceDefault ! 'no'
@@ -2305,6 +2492,8 @@ contains
     end if
 
     outstr = adjustl(str)
+    kSpace = index( outstr, ' ' )
+    if ( kSpace > 1 ) outstr = outstr(:kSpace) ! To snip off arg2 ..
     if ( index( yeses, outstr(:1)) > 0  ) then
       outstr = 'yes'
     else if ( index( nose, outstr(:1)) > 0  ) then
@@ -2313,6 +2502,46 @@ contains
       outstr = str
     end if
   end function Advance_is_yes_or_no
+
+  ! .............................................  getOption  .....
+  ! This family of subroutines parses a multipart advance arg into
+  ! its components, returning an appropriate value
+  ! Example, say the component is marked by the '-S' flag
+  ! value type     component   returned value
+  !  logical          -S         true
+  ! character       -Sxyz        xyz
+  subroutine getOption_char ( arg, flag, val )
+    ! Args
+    character(len=*), intent(in)  :: arg
+    character(len=*), intent(in)  :: flag
+    character(len=*), intent(out) :: val
+    ! Local variables
+    integer :: kFlag, kNext, flagLen
+    ! Executable
+    val = ' '
+    kFlag = index( arg, trim(flag) )
+    if ( kFlag < 1 ) return
+    flagLen = len(flag)
+    ! Find start of next component
+    kNext = index( arg(kFlag+flagLen:), ' ' )
+    if ( kNext < 1 ) then
+      val = arg(kFlag+flagLen:)
+    else
+      val = arg(kFlag+flagLen:kFlag+flagLen+kNext)
+    endif
+  end subroutine getOption_char
+
+  subroutine getOption_log ( arg, flag, val )
+    ! Args
+    character(len=*), intent(in) :: arg
+    character(len=*), intent(in) :: flag
+    logical, intent(out)         :: val
+    ! Local variables
+    integer :: kFlag
+    ! Executable
+    kFlag = index( arg, trim(flag) )
+    val = ( kFlag > 0 )
+  end subroutine getOption_log
 
   ! .............................................  nCharsinFormat  .....
   function nCharsinFormat ( Format ) result(nplusm)
@@ -2550,6 +2779,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.91  2012/07/17 16:38:01  pwagner
+! OutputLines mechanism introduced to defer printing; new HeadLine subroutine
+!
 ! Revision 2.90  2012/06/22 00:04:02  pwagner
 ! May now change default advance option to 'yes'
 !
