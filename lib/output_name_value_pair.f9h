@@ -24,14 +24,10 @@
     logical, intent(in), optional :: DONT_STAMP
     character(len=*), intent(in), optional :: Before, After ! text to print
     ! Local variables
-    integer :: leftPadding
-    integer :: lostBeforeBefore ! E.g., space for ' Info (output_m): '
-    integer :: lostToBefore
+
     character(len=3) :: my_advance
     character(len=1) :: myColon
     character(len=len(name)+1) :: myName
-    integer :: myTabn
-    integer :: rightPadding
     ! Executable
     my_advance = 'yes'
     if ( present(advance) ) my_advance = advance
@@ -39,48 +35,23 @@
     if ( present(colon) ) myColon = colon
     myName = name
     if ( myName // myColon /= ' ' ) myName = trim(name) // myColon
-    leftPadding = 0
-    lostToBefore = 0
-    lostBeforeBefore = len_trim( &
-        & MLSMessageInternalFile( outputOptions%MLSMSG_Level, ModuleName, '') &
-        & )
     if ( present(Before) ) then
       call output ( before, advance='no' )
-      lostToBefore = len(before)
     endif
     if ( present(tabn) ) then
-      myTabn = tabn + lostBeforeBefore
-      leftPadding = tabn - 1 - lostToBefore
-      if ( leftPadding > 0 ) &
-        & call blanks ( leftPadding, advance='no' )
+      call blanksToColumn( tabn , advance='no' )
     endif
     call output ( trim(myName), advance='no' )
     
-    rightPadding = 0
     if ( present(tabc) ) then
-      ! leftpadding + len_trim(name) + rightpadding + 1 = tabc
-      rightpadding = tabc - leftpadding - len_trim(myName) - 1
-      if ( rightpadding > 0 ) &
-        & call blanks ( rightpadding, fillChar=fillChar, advance='no' )
+      call blanksToColumn( tabc, fillChar=fillChar, advance='no' )
     endif
     if ( present(after) ) then
       call output ( value, advance='no' )
       if ( present(taba) ) then
-        if ( taba > atColumnNumber ) then
-          call blanks( taba-atColumnNumber, advance='no')
-        endif
-        ! Don't print After string if we're at too great a column
-        if ( taba >= atColumnNumber) then
-          ! call output ( '(', advance='no' )
-          ! call output ( atColumnNumber, advance='no' )
-          ! call output ( ')', advance='no' )
-          call output ( after, advance=my_advance, dont_stamp=dont_stamp )
-        else
-          ! call output ( '(', advance='no' )
-          ! call output ( atColumnNumber, advance='no' )
-          ! call output ( ')', advance='no' )
-          call blanks ( 0, advance=my_advance, dont_stamp=dont_stamp )
-        endif
+        call blanksToColumn( taba, advance='no' )
+        if ( taba >= atColumnNumber) &
+          & call output ( after, advance=my_advance, dont_stamp=dont_stamp )
       else
         call output ( after, advance=my_advance, dont_stamp=dont_stamp )
       endif
@@ -88,6 +59,9 @@
       call output ( value, advance=my_advance, dont_stamp=dont_stamp )
     endif
 ! $Log$
+! Revision 2.5  2012/07/17 16:38:55  pwagner
+! Simplified by using blanksToColumn
+!
 ! Revision 2.4  2007/09/20 17:35:41  pwagner
 ! Removed some unused declarations
 !
