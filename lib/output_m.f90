@@ -1504,7 +1504,7 @@ contains
     ! Special case: if chars is blank (chars are blank?)
     ! we'll want to print anyway
     if ( len_trim(chars) < 1 ) n_stamp = max(n_stamp, 1)
-    if ( any(outputOptions%prunit == (/STDOUTPRUNIT, MSGLOGPRUNIT/)) .and. &
+    if ( any(outputOptions%prunit == (/STDOUTPRUNIT, BOTHPRUNIT/)) .and. &
       &  n_stamp > RECLMAX ) then
       nIOBlocs = 1 + (n_stamp-1)/RECLMAX
       i2 = 0
@@ -1514,10 +1514,10 @@ contains
         write ( *, '(a)', advance='no' ) stamped_chars(i1:i2)
       enddo
       if ( my_adv == 'yes' ) write ( *, '(a)', advance=my_adv ) ' '
-    elseif ( any(outputOptions%prunit == (/STDOUTPRUNIT, MSGLOGPRUNIT/)) .and. &
+    elseif ( any(outputOptions%prunit == (/STDOUTPRUNIT, BOTHPRUNIT/)) .and. &
       &  len(chars) < 1 .and. my_adv == 'yes' ) then
       write ( *, '(a)', advance=my_adv )
-    elseif ( any(outputOptions%prunit == (/STDOUTPRUNIT, MSGLOGPRUNIT/)) .and. &
+    elseif ( any(outputOptions%prunit == (/STDOUTPRUNIT, BOTHPRUNIT/)) .and. &
       &  n_stamp > 0 ) then
       write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     endif
@@ -2779,6 +2779,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.92  2012/07/18 00:33:45  pwagner
+! Fixed bug causing double printing
+!
 ! Revision 2.91  2012/07/17 16:38:01  pwagner
 ! OutputLines mechanism introduced to defer printing; new HeadLine subroutine
 !
