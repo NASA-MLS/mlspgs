@@ -155,6 +155,11 @@
   character (len=*), public, parameter :: MLSMSG_PVM = &
      & "PVM Error: "
 
+  ! These apply if we don't log messages to a fortran unit number (which is > 0)
+  integer, parameter, public :: INVALIDLOGUNIT      = 0
+  integer, parameter, public :: STDOUTLOGUNIT       = INVALIDLOGUNIT - 1
+  integer, parameter, public :: DEFAULTLOGUNIT      = STDOUTLOGUNIT - 1
+
   ! We add the following because the Intel compiler wraps stdout at 80 columns
   ! when 'FMT=*' but lets it "all hang out" if FMT='(a)'
   logical, private, parameter :: USEDEFAULTFORMATSTDOUT = .false. ! Use FMT=*
@@ -162,14 +167,14 @@
 
   integer, private, parameter :: MLSMSG_PrefixLen = 32
 
-   ! May get some of these from MLSLibOptions? 
+  ! May get some of these from MLSCommon? 
   type, public :: MLSMessageConfig_T
     ! We log messages by toolkit (if useToolkit and UseSDPToolkit are TRUE )
     ! In the following, values would have the effect of adding logged messages:
-    ! -2: none added
-    ! -1: to stdout
-    !  n: to ftn unit n
-    integer :: logFileUnit             = -2
+    ! DEFAULTLOGUNIT: none added
+    ! STDOUTLOGUNIT:  to stdout
+    !  n > 0:         to ftn unit n
+    integer :: logFileUnit             = DEFAULTLOGUNIT ! -2
     ! In the following, values would have the effect on identical warnings of:
     ! -1: Print every one without suppression
     !  0: Suppress every one
@@ -261,6 +266,7 @@ contains
     call dump ( 'dumping ', charValue='MLS Message Config' )
     call dump ( ':', charValue=': : : : : : : : : : : : :' )
     call dump ( 'logFileUnit             ', intValue= myConfig%logFileUnit            )
+    call dump ( 'meaning                 ', charValue= LogUnitName(myConfig%logFileUnit))
     call dump ( 'limitWarnings           ', intValue= myConfig%limitWarnings          )
     call dump ( 'masterTID               ', intValue= myConfig%masterTID              )
     call dump ( 'extra prefix            ', charValue=myConfig%prefix                 )
@@ -287,6 +293,24 @@ contains
     call dump ( 'Skip Severity thr       ', intValue=myConfig%skipSeverityThr         )
     call dump ( 'Skip Messages thr       ', intValue=myConfig%skipMessageThr          )
     call dump ( 'Suppress Debugs         ', logValue=myConfig%suppressDebugs          )
+  contains
+    function LogUnitName( LogUnit ) result( name )
+      ! Return an appropriate name for the LogUnit number
+      ! Args
+      integer, intent(in) :: LogUnit
+      character(len=12) :: name
+      ! Executable
+      select case ( LogUnit )
+      case ( STDOUTLogUnit )
+        name = 'stdout'
+      case ( DEFAULTLOGUNIT )
+        name = 'mls LogUnit'
+      case ( INVALIDLogUnit )
+        name = 'invalid'
+      case default ! > 0
+        name = 'Fortran unit'
+      end select
+    end function LogUnitName
   end subroutine dumpConfig
 
   ! ------------------------------------------------  MLSMessage_  -----
@@ -623,7 +647,7 @@ contains
       & MLSMessageConfig%prefix=prefix
 
     if ( present(logFileUnit) ) then
-      if ( MLSMessageConfig%logFileUnit /= -1 ) call MLSMessage ( &
+      if ( MLSMessageConfig%logFileUnit /= STDOUTLOGUNIT ) call MLSMessage ( &
         & MLSMSG_Warning, ModuleName,"Already writing to a log file" )
       MLSMessageConfig%logFileUnit = logFileUnit
     end if
@@ -638,10 +662,10 @@ contains
   ! --------------------------------------------  MLSMessageClose  -----
 
   ! This routine simply closes the MLSMessage log file if there is one.
-
+  ! It does so by pointing further logged messages at stdout
   subroutine MLSMessageClose
     ! Executable code
-    MLSMessageConfig%logFileUnit=-1
+    MLSMessageConfig%logFileUnit = STDOUTLOGUNIT ! -1
   end subroutine MLSMessageClose
 
   ! --------------------------------------------  MLSMessageExit  -----
@@ -1105,6 +1129,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.19  2012/07/18 00:36:03  pwagner
+! Replaced -1 and -2 for LogFileUnit with module parameters
+!
 ! Revision 2.18  2012/07/02 20:18:39  pwagner
 ! Added restoreConfig
 !
