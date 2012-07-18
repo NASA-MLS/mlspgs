@@ -18,6 +18,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_SEVERITY_TO_WALKBACK, &
     & MLSMSG_WARNING
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
+  use OUTPUT_M, only: OUTPUTOPTIONS, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT
 
   implicit none
   public
@@ -56,13 +57,13 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
     & 'v4.00 swdev team               ' , & 
     & 'See license terms for copyright'/)
      
-  ! Set the following to -2 before delivering to sips;
+  ! Set the following to MSGLOGPRUNIT before delivering to sips;
   ! (its possible values and their effects on normal output:
-  ! -1          sent to stdout (via print *, '...')
-  ! -2          sent to Log file (via MLSMessage)
-  ! < -2        both stdout and Log file
-  ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')
-  integer            :: OUTPUT_PRINT_UNIT             = -2
+  ! STDOUTPRUNIT   sent to stdout (via print *, '...')
+  ! MSGLOGPRUNIT   sent to Log file (via MLSMessage)
+  ! BOTHPRUNIT     both stdout and Log file
+  ! > 0            Fortran 'unit=OUTPUT_PRINT_UNIT')
+  integer            :: OUTPUT_PRINT_UNIT             = MSGLOGPRUNIT ! -2
 
   ! Set the following to MLSMSG_Error before delivering to sips;
   ! when set higher, it allows program keep going despite errors
@@ -211,7 +212,6 @@ contains
     & GETSTRINGELEMENT, GETUNIQUELIST, &
     & NUMSTRINGELEMENTS, REMOVEELEMFROMLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
-  use OUTPUT_M, only: OUTPUTOPTIONS
   use PCFHDR, only: GLOBALATTRIBUTES
   use SET_TOGGLES_M, only: SET_TOGGLES
   use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
@@ -610,8 +610,8 @@ jloop:do while ( j < len_trim(line) )
             return ! will dump help mesg
           case ( 'K' ); capIdentifiers = .true.
           case ( 'k' ); capIdentifiers = .false.
-          case ( 'M' ); outputOptions%prunit = -2
-          case ( 'm' ); outputOptions%prunit = -1
+          case ( 'M' ); outputOptions%prunit = MSGLOGPRUNIT ! -2
+          case ( 'm' ); outputOptions%prunit = STDOUTPRUNIT ! -1
           case ( 'R' ) ! This does the opposite of what S does
             removeSwitches = catLists(trim(removeSwitches), line(j+1:))
             exit ! Took the rest of the string, so there can't be more options
@@ -695,6 +695,7 @@ jloop:do while ( j < len_trim(line) )
     parallel%verbosity = switchDetail(switches, 'mas') + 1
     if ( switchDetail(switches, 'walk') > -1 ) &
       & MLSMSG_Severity_to_walkback = MLSMSG_Warning
+    outputOptions%prunit = OUTPUT_PRINT_UNIT
     contains
     subroutine getNextArg( i, line )
       ! Args
@@ -758,6 +759,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.54  2012/07/18 00:38:00  pwagner
+! Consistent with module parameters for prUnit
+!
 ! Revision 2.53  2012/07/10 15:23:42  pwagner
 ! Works properly now; api adjusted for GetUniqueList
 !
