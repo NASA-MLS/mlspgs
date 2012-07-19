@@ -232,7 +232,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     integer :: KIND = M_Absent               ! Kind of block -- one of the
       !                                        M_... parameters above
     integer :: nRows = 0, nCols = 0          ! Numbers of rows and columns
-    integer :: nChan = 0, nMIF = 0           ! nRows = nChan * nMIF
+    integer :: nChan = 0, nVert = 0          ! nRows = nChan * nVert
     integer, pointer, dimension(:) :: R1 => NULL()     ! Indexed by the column
       ! number. Used for the first column number if KIND = M_Banded, as
       ! described above for M_Column_sparse if KIND = M_Column_sparse, and not
@@ -992,19 +992,19 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in) :: ForWhom
     call destroyBlock ( z )
     z%nRows = x%nRows; z%nCols = x%nCols
-    z%nChan = x%nChan; z%nMIF = x%nMIF
+    z%nChan = x%nChan; z%nVert = x%nVert
     if ( x%kind == M_absent ) then
       call CreateEmptyBlock ( z )
     else
       z%kind = x%kind
       call deepCopy ( z%r1, x%r1 )
       call deepCopy ( z%r2, x%r2 )
-      if ( z%kind == m_full ) then
-        call createValues ( z, "z%values for " // trim(forWhom) )
-      else
-        call createValues ( z, "z%values for " // trim(forWhom), &
-          & size(x%value1) )
-      end if
+      if ( z%kind == m_full ) then                                  
+        call createValues ( z, "z%values for " // trim(forWhom) )   
+      else                                                          
+        call createValues ( z, "z%values for " // trim(forWhom), &  
+          & size(x%values) )                                        
+      end if                                                        
     end if
   end subroutine CloneBlock
 
@@ -1133,11 +1133,12 @@ contains ! =====     Public Procedures     =============================
     z%nRows = nRows
     z%nCols = nCols
     z%nChan = myChan
-    z%nMIF = nRows / myChan
+    z%nVert = nRows / myChan
     z%kind = kind
     select case ( kind )
     case ( M_Absent, M_Unknown )
       call CreateEmptyBlock ( z )
+      z%kind = kind ! In case kind == M_Unknown
     case ( M_Banded )
       call allocate_test ( z%r1, nCols, "z%r1", ModuleName )
       call allocate_test ( z%r2, nCols, "z%r2", ModuleName, lowBound=0 )
@@ -1169,22 +1170,24 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------------  CreateValues  -----
   subroutine CreateValues ( Z, What, NumberNonzero )
   ! Create the VALUE1, VALUES and VALUE3 components of Z.  The number of
-  ! elements of VALUE1 is z%nChan * z%nMIF * z%nCols.  VALUES is a rank
-  ! remapping of VALUE1 with the first extent 1:z%nChan*z%nMIF = 1:z%nRows
+  ! elements of VALUE1 is z%nChan * z%nVert * z%nCols.  VALUES is a rank
+  ! remapping of VALUE1 with the first extent 1:z%nChan*z%nVert = 1:z%nRows
   ! and the second z%nCols. VALUE3 is a rank remapping of VALUE1 with the
-  ! first extent 1:z%nChan, the second 1:z%nMIF, and the third 1:z%nCols.
+  ! first extent 1:z%nChan, the second 1:z%nVert, and the third 1:z%nCols.
+
     use Pointer_Rank_Remapping, only: Remap
     type(MatrixElement_T), intent(inout) :: Z
     character(len=*), intent(in) :: What
     integer, intent(in), optional :: NumberNonzero
+
     if ( present(numberNonzero) ) then
       call allocate_test ( z%value1, numberNonzero, what, moduleName )
       call remap ( z%value1, z%values, (/ numberNonzero, 1 /) )
       nullify ( z%value3 )
     else
-      call allocate_test ( z%value1, z%nChan * z%nMif * z%nCols, what, moduleName )
-      call remap ( z%value1, z%values, (/ z%nChan*z%nMif, z%nCols /) )
-      call remap ( z%value1, z%value3, (/ z%nChan, z%nMif, z%nCols /) )
+      call allocate_test ( z%value1, z%nChan * z%nVert * z%nCols, what, moduleName )
+      call remap ( z%value1, z%values, (/ z%nChan*z%nVert, z%nCols /) )
+      call remap ( z%value1, z%value3, (/ z%nChan, z%nVert, z%nCols /) )
     end if
   end subroutine CreateValues
 
@@ -1401,21 +1404,19 @@ contains ! =====     Public Procedures     =============================
     use Pointer_Rank_Remapping, only: Remap
     type ( MatrixElement_T ), intent(inout) :: B
     ! Local variables
-    real(rm), pointer :: Z1(:), Z(:,:)
+    real(rm), pointer :: Z1(:), Z(:,:)  
     ! Executable code
     if ( b%kind == m_banded .or. b%kind == m_column_sparse ) then
       nullify ( z1 )
       call allocate_test ( z1, b%nRows * b%nCols, 'Z1', ModuleName )
       call remap ( z1, z, (/ b%nRows, b%nCols /) )
       call densify ( z, b )
-      call destroyValues ( b, 'B' )
-      call deallocate_test ( b%r1, 'b%r1', ModuleName )
-      call deallocate_test ( b%r2, 'b%r2', ModuleName )
+      call destroyBlock ( b )
       call allocate_test ( b%r1, 0, "b%r1", ModuleName )
       call allocate_test ( b%r2, 0, "b%r2", ModuleName )
       b%value1 => z1
       b%values => z
-      call remap ( z1, b%value3, (/ b%nChan, b%nMIF, b%nCols /) )
+      call remap ( z1, b%value3, (/ b%nChan, b%nVert, b%nCols /) )
       b%kind = m_full
     end if
   end subroutine DensifyB
@@ -2774,13 +2775,13 @@ contains ! =====     Public Procedures     =============================
   end subroutine ReflectMatrix_0
 
   ! ---------------------------------------------------  RemapValue3  -----
-  subroutine RemapValue3 ( X, NChan, NMIF )
-  ! Remap the Value3 component of X.  Set the nChan and nMIF components of X.
+  subroutine RemapValue3 ( X, NChan, nVert )
+  ! Remap the Value3 component of X.  Set the nChan and nVert components of X.
     use Pointer_Rank_Remapping, only: Remap
     type(MatrixElement_T), intent(inout) :: X
-    integer, intent(in) :: NChan, NMif
-    x%nChan = nChan; x%nMIF = nMIF
-    call remap ( x%value1, x%value3, (/ x%nChan, x%nMif, x%nCols /) )
+    integer, intent(in) :: NChan, nVert
+    x%nChan = nChan; x%nVert = nVert
+    call remap ( x%value1, x%value3, (/ x%nChan, x%nVert, x%nCols /) )
   end subroutine RemapValue3
 
   ! -------------------------------------------------  RowScale_0_r4  -----
@@ -3358,7 +3359,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J                          ! Subscripts and loop inductors
     integer :: N                             ! min(a%nCols,a%nRows)
-    integer :: nCols, nRows                  ! Copies of a%...
+    integer :: nChan, nCols, nRows           ! Copies of a%...
     real(rm), dimension(:,:), pointer :: T   ! A temporary dense matrix
 
     include "updatediagonal_0.f9h"
@@ -3384,7 +3385,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J                          ! Subscripts and loop inductors
     integer :: N                             ! min(a%nCols,a%nRows)
-    integer :: nCols, nRows                  ! Copies of a%...
+    integer :: nChan, nCols, nRows           ! Copies of a%...
     real(rm), dimension(:,:), pointer :: T   ! A temporary dense matrix
 
     include "updatediagonal_0.f9h"
@@ -3418,7 +3419,7 @@ contains ! =====     Public Procedures     =============================
     logical :: MyForgive
     integer :: N                             ! min(a%nCols,a%nRows)
     integer :: M                             ! max(a%nCols,a%nRows) / n
-    integer :: nCols, nRows                  ! Copies of a%...
+    integer :: nChan, nCols, nRows           ! Copies of a%...
     real(rm) :: S                            ! Sign to use for X, +1 or -1
     real(rm), dimension(:,:), pointer :: T   ! A temporary dense matrix
     real(rm) :: V                            ! The value to update.  Either
@@ -3470,7 +3471,7 @@ contains ! =====     Public Procedures     =============================
     logical :: MyForgive
     integer :: N                             ! min(a%nCols,a%nRows)
     integer :: M                             ! max(a%nCols,a%nRows) / n
-    integer :: nCols, nRows                  ! Copies of a%...
+    integer :: nChan, nCols, nRows           ! Copies of a%...
     real(rm) :: S                            ! Sign to use for X, +1 or -1
     real(rm), dimension(:,:), pointer :: T   ! A temporary dense matrix
     real(rm) :: V                            ! The value to update.  Either
@@ -3712,6 +3713,11 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.12  2012/07/19 03:43:49  vsnyder
+! Replace nMIF by nVert, preserve z%kind in CreateBlock_0 in the case
+! that it is M_Unknown (CreateEmptyBlock changes it to M_Absent), use
+! DestroyBlock in DensifyB.
+!
 ! Revision 2.11  2012/07/10 03:56:29  vsnyder
 ! Add VALUE1, VALUE3 components
 !
