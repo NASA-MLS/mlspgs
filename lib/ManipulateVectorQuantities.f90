@@ -287,7 +287,7 @@ contains
     if ( present ( mapping ) ) then
       call CreateBlock ( mapping, &
         & quantity%template%instanceLen, sourceQuantity%template%instanceLen, &
-        & kind=m_full )
+        & kind=m_full, nChan=quantity%template%noChans )
     end if
 
     ! Do a quick first pass to get the numbers in each output channel
@@ -645,6 +645,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.41  2012/07/19 03:33:18  vsnyder
+! Pass nChan=quantity%template%noChans to CreateBlock
+!
 ! Revision 2.40  2012/02/13 23:24:35  pwagner
 ! DoQuantitiesMatch takes options string; DoQtysDescribeSameThing more lenient
 !
