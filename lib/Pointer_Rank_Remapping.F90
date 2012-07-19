@@ -40,14 +40,15 @@ contains
 ! include lines aren't used here because Intel ifort 12.0-1230 didn't want
 ! to process the #ifdef directives that would be in them.
 
-  subroutine Remap_2d_Char ( A, B, Shape, Lbounds )
+  subroutine Remap_2d_Char ( A, B, TheShape, Lbounds )
     character, pointer :: A(:), B(:,:)
-    integer, intent(in) :: Shape(2)
+    integer, intent(in) :: TheShape(2)
     integer, intent(in), optional :: Lbounds(2)
+integer :: One, Two ! A kludge to get around a NAG runtime-check bug
 #ifdef CMAP
     type(c_ptr) :: C
     c = c_loc(a(1))
-    call c_f_pointer ( c, b, shape )
+    call c_f_pointer ( c, b, theShape )
 #ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):) => b
 #else
@@ -57,23 +58,28 @@ contains
 #endif
 #else
     if ( present(lbounds) ) then
-      b(lbounds(1):shape(1),lbounds(2):shape(2)) => a
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2)) => a
     else
-      b(1:shape(1),1:shape(2)) => a
+!      b(1:theShape(1),1:theShape(2)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+b(1:one,1:two) => a
     end if
 #endif
 
   end subroutine Remap_2d_Char
 
-  subroutine Remap_2d_Double ( A, B, Shape, Lbounds )
+  subroutine Remap_2d_Double ( A, B, TheShape, Lbounds )
     integer, parameter :: RK = kind(1.0d0)
     real(rk), pointer :: A(:), B(:,:)
-    integer, intent(in) :: Shape(2)
+    integer, intent(in) :: TheShape(2)
     integer, intent(in), optional :: Lbounds(2)
+integer :: One, Two ! A kludge to get around a NAG runtime-check bug
 #ifdef CMAP
     type(c_ptr) :: C
     c = c_loc(a(1))
-    call c_f_pointer ( c, b, shape )
+    call c_f_pointer ( c, b, theShape )
 #ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):) => b
 #else
@@ -83,23 +89,28 @@ contains
 #endif
 #else
     if ( present(lbounds) ) then
-      b(lbounds(1):shape(1),lbounds(2):shape(2)) => a
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2)) => a
     else
-      b(1:shape(1),1:shape(2)) => a
+!      b(1:theShape(1),1:theShape(2)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+b(1:one,1:two) => a
     end if
 #endif
 
   end subroutine Remap_2d_Double
 
-  subroutine Remap_2d_Real ( A, B, Shape, Lbounds )
+  subroutine Remap_2d_Real ( A, B, TheShape, Lbounds )
     integer, parameter :: RK = kind(1.0e0)
     real(rk), pointer :: A(:), B(:,:)
-    integer, intent(in) :: Shape(2)
+    integer, intent(in) :: TheShape(2)
     integer, intent(in), optional :: Lbounds(2)
+integer :: One, Two ! A kludge to get around a NAG runtime-check bug
 #ifdef CMAP
     type(c_ptr) :: C
     c = c_loc(a(1))
-    call c_f_pointer ( c, b, shape )
+    call c_f_pointer ( c, b, theShape )
 #ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):) => b
 #else
@@ -109,22 +120,27 @@ contains
 #endif
 #else
     if ( present(lbounds) ) then
-      b(lbounds(1):shape(1),lbounds(2):shape(2)) => a
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2)) => a
     else
-      b(1:shape(1),1:shape(2)) => a
+!      b(1:theShape(1),1:theShape(2)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+b(1:one,1:two) => a
     end if
 #endif
 
   end subroutine Remap_2d_Real
 
-  subroutine Remap_3d_Char ( A, B, Shape, Lbounds )
+  subroutine Remap_3d_Char ( A, B, TheShape, Lbounds )
     character, pointer :: A(:), B(:,:,:)
-    integer, intent(in) :: Shape(3)
+    integer, intent(in) :: TheShape(3)
     integer, intent(in), optional :: Lbounds(3)
+integer :: One, Two, Three ! A kludge to get around a NAG runtime-check bug
 #ifdef CMAP
     type(c_ptr) :: C
     c = c_loc(a(1))
-    call c_f_pointer ( c, b, shape )
+    call c_f_pointer ( c, b, theShape )
 #ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):) => b
 #else
@@ -134,23 +150,29 @@ contains
 #endif
 #else
     if ( present(lbounds) ) then
-      b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3)) => a
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3)) => a
     else
-      b(1:shape(1),1:shape(2),1:shape(3)) => a
+!      b(1:theShape(1),1:theShape(2),1:theShape(3)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+three = theShape(3)
+b(1:one,1:two,1:three) => a
     end if
 #endif
 
   end subroutine Remap_3d_Char
 
-  subroutine Remap_3d_Double ( A, B, Shape, Lbounds )
+  subroutine Remap_3d_Double ( A, B, TheShape, Lbounds )
     integer, parameter :: RK = kind(1.0d0)
     real(rk), pointer :: A(:), B(:,:,:)
-    integer, intent(in) :: Shape(3)
+    integer, intent(in) :: TheShape(3)
     integer, intent(in), optional :: Lbounds(3)
+integer :: One, Two, Three ! A kludge to get around a NAG runtime-check bug
 #ifdef CMAP
     type(c_ptr) :: C
     c = c_loc(a(1))
-    call c_f_pointer ( c, b, shape )
+    call c_f_pointer ( c, b, theShape )
 #ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):) => b
 #else
@@ -160,23 +182,29 @@ contains
 #endif
 #else
     if ( present(lbounds) ) then
-      b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3)) => a
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3)) => a
     else
-      b(1:shape(1),1:shape(2),1:shape(3)) => a
+!      b(1:theShape(1),1:theShape(2),1:theShape(3)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+three = theShape(3)
+b(1:one,1:two,1:three) => a
     end if
 #endif
 
   end subroutine Remap_3d_Double
 
-  subroutine Remap_3d_Real ( A, B, Shape, Lbounds )
+  subroutine Remap_3d_Real ( A, B, TheShape, Lbounds )
     integer, parameter :: RK = kind(1.0e0)
     real(rk), pointer :: A(:), B(:,:,:)
-    integer, intent(in) :: Shape(3)
+    integer, intent(in) :: TheShape(3)
     integer, intent(in), optional :: Lbounds(3)
+integer :: One, Two, Three ! A kludge to get around a NAG runtime-check bug
 #ifdef CMAP
     type(c_ptr) :: C
     c = c_loc(a(1))
-    call c_f_pointer ( c, b, shape )
+    call c_f_pointer ( c, b, theShape )
 #ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):) => b
 #else
@@ -186,22 +214,27 @@ contains
 #endif
 #else
     if ( present(lbounds) ) then
-      b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3)) => a
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3)) => a
     else
-      b(1:shape(1),1:shape(2),1:shape(3)) => a
+!      b(1:theShape(1),1:theShape(2),1:theShape(3)) => a
+! This is a replacement to get around a bug in NAG 5.2(723)
+one = theShape(1)
+two = theShape(2)
+three = theShape(3)
+b(1:one,1:two,1:three) => a
     end if
 #endif
 
   end subroutine Remap_3d_Real
 
-  subroutine Remap_4d_Char ( A, B, Shape, Lbounds )
+  subroutine Remap_4d_Char ( A, B, TheShape, Lbounds )
     character, pointer :: A(:), B(:,:,:,:)
-    integer, intent(in) :: Shape(4)
+    integer, intent(in) :: TheShape(4)
     integer, intent(in), optional :: Lbounds(4)
 #ifdef CMAP
     type(c_ptr) :: C
     c = c_loc(a(1))
-    call c_f_pointer ( c, b, shape )
+    call c_f_pointer ( c, b, theShape )
 #ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => b
 #else
@@ -211,23 +244,23 @@ contains
 #endif
 #else
     if ( present(lbounds) ) then
-      b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3),lbounds(4):shape(4)) => a
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3),lbounds(4):theShape(4)) => a
     else
-      b(1:shape(1),1:shape(2),1:shape(3),1:shape(4)) => a
+      b(1:theShape(1),1:theShape(2),1:theShape(3),1:theShape(4)) => a
     end if
 #endif
 
   end subroutine Remap_4d_Char
 
-  subroutine Remap_4d_Double ( A, B, Shape, Lbounds )
+  subroutine Remap_4d_Double ( A, B, TheShape, Lbounds )
     integer, parameter :: RK = kind(1.0d0)
     real(rk), pointer :: A(:), B(:,:,:,:)
-    integer, intent(in) :: Shape(4)
+    integer, intent(in) :: TheShape(4)
     integer, intent(in), optional :: Lbounds(4)
 #ifdef CMAP
     type(c_ptr) :: C
     c = c_loc(a(1))
-    call c_f_pointer ( c, b, shape )
+    call c_f_pointer ( c, b, theShape )
 #ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => b
 #else
@@ -237,23 +270,23 @@ contains
 #endif
 #else
     if ( present(lbounds) ) then
-      b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3),lbounds(4):shape(4)) => a
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3),lbounds(4):theShape(4)) => a
     else
-      b(1:shape(1),1:shape(2),1:shape(3),1:shape(4)) => a
+      b(1:theShape(1),1:theShape(2),1:theShape(3),1:theShape(4)) => a
     end if
 #endif
 
   end subroutine Remap_4d_Double
 
-  subroutine Remap_4d_Real ( A, B, Shape, Lbounds )
+  subroutine Remap_4d_Real ( A, B, TheShape, Lbounds )
     integer, parameter :: RK = kind(1.0e0)
     real(rk), pointer :: A(:), B(:,:,:,:)
-    integer, intent(in) :: Shape(4)
+    integer, intent(in) :: TheShape(4)
     integer, intent(in), optional :: Lbounds(4)
 #ifdef CMAP
     type(c_ptr) :: C
     c = c_loc(a(1))
-    call c_f_pointer ( c, b, shape )
+    call c_f_pointer ( c, b, theShape )
 #ifdef LBOUND
     if ( present(lbounds) ) b(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => b
 #else
@@ -263,9 +296,9 @@ contains
 #endif
 #else
     if ( present(lbounds) ) then
-      b(lbounds(1):shape(1),lbounds(2):shape(2),lbounds(3):shape(3),lbounds(4):shape(4)) => a
+      b(lbounds(1):theShape(1),lbounds(2):theShape(2),lbounds(3):theShape(3),lbounds(4):theShape(4)) => a
     else
-      b(1:shape(1),1:shape(2),1:shape(3),1:shape(4)) => a
+      b(1:theShape(1),1:theShape(2),1:theShape(3),1:theShape(4)) => a
     end if
 #endif
 
@@ -284,6 +317,9 @@ contains
 end module Pointer_Rank_Remapping
 
 ! $Log$
+! Revision 2.3  2012/07/19 03:39:20  vsnyder
+! Replace 'shape' by 'theShape', work around a bug in NAG 5.2(723)
+!
 ! Revision 2.2  2012/07/10 00:05:21  vsnyder
 ! More #ifdef stuff to handle rank remapping using C instead of Fortran
 ! 2003.  Add LBOUND to turn on setting lower bounds in the C case.  Assume
