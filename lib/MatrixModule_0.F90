@@ -1128,7 +1128,7 @@ contains ! =====     Public Procedures     =============================
     what = "z%values"
     if ( present(forWhom) ) what = "z%values for " // forWhom
     myChan = 1
-    if ( present(nChan) ) myChan = nChan
+    if ( present(nChan) ) myChan = max(nChan,1)
     call destroyBlock ( z )
     z%nRows = nRows
     z%nCols = nCols
@@ -3713,6 +3713,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.13  2012/07/19 19:40:19  vsnyder
+! myChan needs to me max(nChan,1) in CreateBlock_0
+!
 ! Revision 2.12  2012/07/19 03:43:49  vsnyder
 ! Replace nMIF by nVert, preserve z%kind in CreateBlock_0 in the case
 ! that it is M_Unknown (CreateEmptyBlock changes it to M_Absent), use
