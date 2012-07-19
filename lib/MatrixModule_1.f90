@@ -849,7 +849,7 @@ contains ! =====     Public Procedures     =============================
     call createBlock ( z%block(rowNum,colNum), &
       & z%row%nelts(rowNum), z%col%nelts(colNum), kind, numNonzeros, &
       & bandHeight=bandHeight, init=init, forWhom=forWhom, &
-      & nChan=z%row%vec%quantities(z%row%inst(rowNum))%template%noChans )
+      & nChan=z%row%vec%quantities(z%row%quant(rowNum))%template%noChans )
   end subroutine CreateBlock_1
 
   ! ------------------------------------------  CreateEmptyMatrix  -----
@@ -2924,6 +2924,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.131  2012/07/19 19:39:48  vsnyder
+! No, "inst" should be "quant" in CreateBlock_1.
+!
 ! Revision 2.130  2012/07/18 22:14:29  vsnyder
 ! 'quant' should be 'inst' in CreateBlock_1
 !
