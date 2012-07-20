@@ -52,6 +52,8 @@ module MLSStringLists               ! Module to treat string lists
 ! BuildHash          Builds a hash out of a hash constructor like
 !                     [ 100mb : 0.5ppmv, 50mb : 0.1ppmv, 31mb : 0.12ppmv ]
 ! catLists           cats 2 string lists, taking care if either one is blank
+! EvaluateFormula    Evaluates a string formula, substituting character values
+!                      for occurrences like ${3} with 3rd arg
 ! ExpandStringRange  Turns '1,2-5,7' into '1,2,3,4,5,7' or ints or logicals
 ! ExtractSubString   Extracts portion of string sandwiched between sub1 and sub2
 ! GetStringElement   Returns n'th element of string list
@@ -63,6 +65,8 @@ module MLSStringLists               ! Module to treat string lists
 ! IsInList           Is string in list? options may expand criteria
 ! List2Array         Converts a single string list to an array of strings
 ! listMatches        Return list of matches for string in a list
+! LoopOverFormula    Looping while it evaluates a string formula, substituting
+!                      for occurrences like ${arg} with value of arg
 ! NumStringElements  Returns number of elements in string list
 ! OptionDetail       Returns detail or arg of option in list of options
 ! ParseOptions       Parse options from commandline
@@ -95,6 +99,7 @@ module MLSStringLists               ! Module to treat string lists
 ! ExpandStringRange (char* str, char* outst)
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* how], [log no_trim])
+! char* EvaluateFormula (char* formula, char* values(:))
 ! GetStringElement (strlist inList, char* outElement,
 !   nElement, log countEmpty, [char inseparator])
 ! GetHashElement (hash {keys = values}, char* key, 
@@ -111,6 +116,7 @@ module MLSStringLists               ! Module to treat string lists
 ! List2Array (strlist inList, char* outArray(:), log countEmpty,
 !   [char inseparator], [log IgnoreLeadingSpaces])
 ! char* listMatches (strlist stringList, char* string, [char* options] )
+! LoopOverFormula (char* formula, char* arg, char* values(:), char* results(:))
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int LongestLen])
 ! char* optionDetail(strlist inList, &
@@ -190,6 +196,34 @@ module MLSStringLists               ! Module to treat string lists
 ! One example is which FALSE seems best is the slash in file paths
 ! where we want /data/a.dat and /data//a.dat to be synonyms
 
+! The two procedures EvaluateFormula and LoopOverFormula deserve some
+! careful explanation
+! We intend them to help pry mlsl2's l2cf away from its chemical dependence
+! on m4. Two hurdles to the intervention are m4's statement functions
+! and the idea of a loop. Our replacements: EvaluateFormula and LoopOverFormula.
+! A typical formula in m4 might look something like
+!     T h e   m 4   w a y
+!   !define(writeStandardProductWithColumn,{
+!   Label, quantity=state.$1, label='$1'
+!   Label, quantity=state.column_$1, label='$1 column'
+!   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+!     file='!l2gpFileName($1)', $
+!     source=state.$1, precision=outputPrecision.$1, $
+!     status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
+!     source=state.column_$1, precision=outputPrecision.column_$1!nl})
+! The equivalent using MLSStringLists would be
+!     T h e   M L S S t r i n g L i s t s   w a y
+!   character(len=80), dimension(:), parameter :: (/                              &
+! "Label, quantity=state.${1}, label='${1}'                                    ", &
+! "source=state.${1}, precision=outputPrecision.${1}, $                        ", &
+! "status=otherDiagnostics.status${1}, quality=otherDiagnostics.quality${1}, $ ", &
+! "source=state.column_${1}, precision=outputPrecision.column_${1}!nl})        "  &
+! /)
+! You will note that instead of "$1" the argument to be substituted must be
+! represented using the "${1}" idiom. In case we were preparing to loop over
+! the formula with multiple qtys of the state vector, we would use
+! the "${qty}" idiom instead of "${1}".
+
 ! Warnings: 
 ! (1) in the routines Array2List, and SortArray
 ! the input arguments include an array of strings;
@@ -211,11 +245,11 @@ module MLSStringLists               ! Module to treat string lists
 ! === (end of api) ===
 
   public :: Array2List, BooleanValue, BuildHash, catLists, &
-   & ExpandStringRange, ExtractSubString, &
+   & EvaluateFormula, ExpandStringRange, ExtractSubString, &
    & GetHashElement, GetStringElement, &
    & GetUniqueInts, GetUniqueStrings, GetUniqueList, Intersection, IsInList, &
-   & List2Array, listMatches, NumStringElements, optionDetail, &
-   & ParseOptions, PutHashElement, ReadIntsFromList, &
+   & List2Array, LoopOverFormula, listMatches, NumStringElements, &
+   & optionDetail, ParseOptions, PutHashElement, ReadIntsFromList, &
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
    & ReplaceSubString, ReverseList, ReverseStrings, SnipList, &
    & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
@@ -675,6 +709,39 @@ contains
       outstr = trim(str1) // separator // trim(str2)
     endif
   end function catLists_str
+
+  ! -------------------------------------------------  EvaluateFormula  -----
+  function EvaluateFormula ( formula, values ) result (OUTSTR)
+    ! Evaluates a string function, plugging in the nth value for
+    ! each occurrence of the nth arg appearing as '${n}'
+    ! E.g., if strFun is 
+    ! "x${1}: vector, template=state"
+    ! and the first arg is "InitPtan" then outStr will be
+    ! "xInitPtan: vector, template=state"
+    !--------Argument--------!
+    character (len=*), intent(in)               :: formula
+    character (len=*), dimension(:), intent(in) :: values
+    character (len=len(formula)+size(values)*len(values)) :: OUTSTR
+
+    !----------Local vars----------!
+    integer :: i, n
+    character (len=len(formula)+size(values)*len(values)) :: tmpstr
+    character (len=len(values))                           :: value       
+    character(len=8)                                      :: variable    
+    !----------executable part----------!
+    n = size(values)
+    outstr = formula
+    ! Check whether we have any work to do
+    if ( n < 1 .or. index( formula, '${' ) < 1 ) return
+    do i=1, n
+      value = values(i)
+      call WriteIntsToChars( i, variable )
+      variable = '${' // trim(adjustl(variable)) // '}'
+      tmpstr = outstr
+      call ReplaceSubString( tmpStr, outstr, trim(variable), trim(value), &
+        & which='all', no_trim=.true. )
+    enddo
+  end function EvaluateFormula
 
   ! ----------------------------------------  ExpandStringRange_ints  -----
   subroutine ExpandStringRange_ints (instr, ints, length)
@@ -1814,6 +1881,43 @@ contains
       endif
     enddo
   end function listMatches
+
+  ! -------------------------------------------------  LoopOverFormula  -----
+  subroutine LoopOverFormula ( formula, arg, values, results )
+    ! Looping while it evaluates a formula, plugging in the nth value for
+    ! each occurrence of the arg appearing as '${arg}'
+    ! E.g., if arg is "phase", formula is 
+    ! "x${phase}: vector, template=state"
+    ! and the values of arg are (/"InitPtan ", "FinalPtan"/) 
+    ! then the results array will be
+    ! (/
+    ! "xInitPtan: vector, template=state", 
+    ! "xFinalPtan: vector, template=state"
+    ! /)
+    !--------Argument--------!
+    character (len=*), intent(in)                :: formula
+    character (len=*), intent(in)                :: arg
+    character (len=*), dimension(:), intent(in)  :: values
+    character (len=*), dimension(:), intent(out) :: results
+
+    !----------Local vars----------!
+    integer :: i, n
+    character (len=len(formula)+len(values)) :: tmpstr
+    character (len=len(values))              :: value
+    character(len=len_trim(arg)+8)           :: variable
+    !----------executable part----------!
+    n = min( size(values), size(results) )
+    results = formula
+    ! Check whether we have any work to do
+    if ( n < 1 .or. index( formula, '${' ) < 1 ) return
+    variable = '${' // trim(adjustl(arg)) // '}'
+    do i=1, n
+      value = values(i)
+      tmpstr = results(i)
+      call ReplaceSubString( tmpStr, results(i), trim(variable), trim(value), &
+        & which='all', no_trim=.true. )
+    enddo
+  end subroutine LoopOverFormula
 
   ! ---------------------------------------------  NumStringElements  -----
 
@@ -3962,6 +4066,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.50  2012/07/20 17:01:06  pwagner
+! Added EvaluateFormula and LoopOverFormula
+!
 ! Revision 2.49  2012/07/11 20:01:43  pwagner
 ! Fixed something only NAG complained about
 !
