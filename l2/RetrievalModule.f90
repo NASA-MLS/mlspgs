@@ -77,7 +77,7 @@ contains
       & S_DIFF, S_DUMP, S_DUMPBLOCKS, S_FLAGCLOUD, S_FLUSHPFA, S_LEAKCHECK, &
       & S_ENDSELECT, S_REEVALUATE, S_RESTRICTRANGE, S_RETRIEVE, &
       & S_SELECT, S_SIDS, S_SKIP, S_SNOOP, S_SUBSET, S_TIME, S_UPDATEMASK
-    use INTRINSIC, only: L_VMR, PHYQ_DIMENSIONLESS
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use L2PARINFO, only: PARALLEL
     use MATRIXMODULE_1, only: ADDTOMATRIXDATABASE, COPYMATRIX, CREATEEMPTYMATRIX, &
       & DESTROYMATRIX, GETFROMMATRIXDATABASE, MATRIX_T, MATRIX_DATABASE_T, &
@@ -91,7 +91,6 @@ contains
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
       & MLSMESSAGE, MLSMESSAGECALLS, MLSMESSAGERESET
-    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
@@ -102,7 +101,7 @@ contains
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
     use SUBSETMODULE, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE, UPDATEMASK
     use TIME_M, only: TIME_NOW
-    use TOGGLES, only: EMIT, GEN, SWITCHES, TOGGLE, LEVELS
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE, LEVELS
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TRACK_M, only: REPORTLEAKS
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
@@ -198,7 +197,6 @@ contains
     character(len=127) :: PhaseName     ! To pass to snoopers
     logical :: PotemkinHessian 
     real(rv) :: PrecisionFactor         ! Default 0.5, precisions 'worse than this' set negative
-    type(vectorValue_T), pointer :: Qty ! A temporary value used for checking
     integer :: SaveLevels(size(levels))
     logical :: SaveToggle(size(toggle))
     integer :: Son                      ! Of Root or Key
@@ -1103,10 +1101,8 @@ contains
 
       integer :: I
       type(vectorValue_t), pointer :: Qty
-      integer :: QuantityIndex
 
       do i = 2, nsons(dumpQuantitiesNode)
-call output ( decoration(decoration(subtree(i,dumpQuantitiesNode))), before='Quantity index = ', advance='yes' )
         qty => getVectorQtyByTemplateIndex ( state, &
           & decoration(decoration(subtree(i,dumpQuantitiesNode))) )
         call dump ( qty, name=title )
@@ -2961,6 +2957,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.328  2012/07/26 02:07:11  vsnyder
+! Remove unused cruft
+!
 ! Revision 2.327  2012/07/04 02:13:03  vsnyder
 ! Add dump of residuals.  Add dumpQuantities node to select quantities of
 ! the state vector to dump during the Newton iteration.  Remove masked rows
