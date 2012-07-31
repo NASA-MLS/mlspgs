@@ -128,7 +128,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MOLECULES, only: IsExtinction
     use MOREMESSAGE, only: MLSMESSAGE
-    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: OUTPUT !, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: DISPLAY_STRING
     use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -789,6 +789,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.87  2011/11/11 00:42:06  vsnyder
+! Use IsExtinction array from Molecules module
+!
 ! Revision 2.86  2011/08/20 02:31:47  vsnyder
 ! Delete unused variable declaration
 !
