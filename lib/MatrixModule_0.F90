@@ -91,7 +91,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface Densify
-    module procedure DensifyA, DensifyB
+    module procedure DensifyA, DensifyB, DensifyBlock
   end interface
 
   interface DestroyBlock
@@ -332,10 +332,11 @@ contains ! =====     Public Procedures     =============================
             & ModuleName )
           call allocate_test ( w, y%nRows, y%nCols, 'W in Add_Matrix_Blocks', &
             & ModuleName )
-          call densify ( z, x )
-          call densify ( w, y )
+          call densify ( z, x ) ! z := x
+          call densify ( w, y ) ! w := y
           z = z + s * w
-          call sparsify ( z, zb, 'Z in Add_matrix_block', ModuleName )
+          call sparsify ( z, zb, & ! zb := z
+            & 'Z in Add_matrix_block', ModuleName )
           call Deallocate_test ( w, 'W in Add_Matrix_Blocks', ModuleName )
         end if
         
@@ -493,10 +494,12 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(in) :: X
     call destroyBlock ( z )
     z%kind = x%kind
-    z%nRows = x%nRows; z%nCols = x%nCols
+    z%nRows = x%nRows; z%nCols = x%nCols; z%nChan = x%nChan; z%nVert = x%nVert
     z%r1 => x%r1
     z%r2 => x%r2
     z%values => x%values
+    z%value1 => x%value1
+    z%value3 => x%value3
   end subroutine AssignBlock
 
   ! ------------------------------------------- CheckForSimpleBandedLayout --
@@ -1175,20 +1178,31 @@ contains ! =====     Public Procedures     =============================
   ! and the second z%nCols. VALUE3 is a rank remapping of VALUE1 with the
   ! first extent 1:z%nChan, the second 1:z%nVert, and the third 1:z%nCols.
 
+#ifndef SANSREMAP
     use Pointer_Rank_Remapping, only: Remap
+#endif
     type(MatrixElement_T), intent(inout) :: Z
     character(len=*), intent(in) :: What
     integer, intent(in), optional :: NumberNonzero
 
+#if defined SANSREMAP
+    if ( present(numberNonzero) ) then
+      call allocate_test ( z%values, numberNonzero, 1, what, moduleName )
+    else
+      call allocate_test ( z%values, z%nRows, z%nCols, what, moduleName )
+    end if
+    nullify ( z%value1, z%value3 )
+#else
     if ( present(numberNonzero) ) then
       call allocate_test ( z%value1, numberNonzero, what, moduleName )
       call remap ( z%value1, z%values, (/ numberNonzero, 1 /) )
       nullify ( z%value3 )
     else
-      call allocate_test ( z%value1, z%nChan * z%nVert * z%nCols, what, moduleName )
-      call remap ( z%value1, z%values, (/ z%nChan*z%nVert, z%nCols /) )
+      call allocate_test ( z%value1, z%nRows * z%nCols, what, moduleName )
+      call remap ( z%value1, z%values, (/ z%nRows, z%nCols /) )
       call remap ( z%value1, z%value3, (/ z%nChan, z%nVert, z%nCols /) )
     end if
+#endif
   end subroutine CreateValues
 
   ! ----------------------------------------------  CyclicJacobi_0 -----
@@ -1200,7 +1214,7 @@ contains ! =====     Public Procedures     =============================
     ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
     ! This does rather underhand things with pointers, so be very careful when
     ! using it.  The key is that the Vxx's return pointing to parts of V
-    ! it is V that should be deallocated not the Vxxs
+    ! it is V that should be deallocated, rather than destroying the Vxx's
     ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
     type(MatrixElement_T), intent(in) :: MPP, MQP, MPQ, MQQ ! Input matrices
     type(MatrixElement_T), intent(out) :: VPP, VQP, VPQ, VQQ ! Eigen vector matrices
@@ -1341,7 +1355,7 @@ contains ! =====     Public Procedures     =============================
           ! which is the identity except that it has
           !   c s
           !  -s c
-          ! embedded in it a rows/cols p and q
+          ! embedded in it at rows/cols p and q
           ! We then rotate A to A = J^T A J, also change V to VJ
           ! Note that this only affects rows and columns p and q of A and V
           ! So code specially to take advantage of that.
@@ -1369,8 +1383,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------------------  DensifyA  -----
   subroutine DensifyA ( Z, B )
-  ! Given a matrix block B, produce a full matrix Z, even if the matrix
-  ! block had a sparse representation.
+  ! Given a matrix block B, produce a full matrix Z, even if B
+  ! had a sparse representation.
     real(rm), intent(out) :: Z(:,:)          ! Full matrix to produce
     type(MatrixElement_T), intent(in) :: B   ! Input matrix block
     integer :: I                             ! Column index
@@ -1401,25 +1415,31 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  DensifyB ------------
   subroutine DensifyB ( B )
     ! Densify a block 'in place'
-    use Pointer_Rank_Remapping, only: Remap
     type ( MatrixElement_T ), intent(inout) :: B
     ! Local variables
-    real(rm), pointer :: Z1(:), Z(:,:)  
+    type ( MatrixElement_T ) :: Z
     ! Executable code
     if ( b%kind == m_banded .or. b%kind == m_column_sparse ) then
-      nullify ( z1 )
-      call allocate_test ( z1, b%nRows * b%nCols, 'Z1', ModuleName )
-      call remap ( z1, z, (/ b%nRows, b%nCols /) )
-      call densify ( z, b )
-      call destroyBlock ( b )
-      call allocate_test ( b%r1, 0, "b%r1", ModuleName )
-      call allocate_test ( b%r2, 0, "b%r2", ModuleName )
-      b%value1 => z1
-      b%values => z
-      call remap ( z1, b%value3, (/ b%nChan, b%nVert, b%nCols /) )
-      b%kind = m_full
+      call createBlock ( z, b%nRows, b%nCols, m_full, forWhom='Z', nChan=b%nChan )
+      call densify ( z%values, b )
+      b = z ! destroy b, then shallow copy
     end if
   end subroutine DensifyB
+
+  ! -------------------------------------------  DensifyBlock ------------
+  subroutine DensifyBlock ( Z, B )
+  ! Given a matrix block B, produce a full matrix block Z, even if B
+  ! had a sparse representation.
+    type(MatrixElement_T), intent(inout) :: Z ! Full matrix to produce
+    type(MatrixElement_T), intent(in) :: B   ! Input matrix block
+    if ( z%nRows /= b%nRows .or. z%nCols /= b%nCols ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Incompatible shapes in DensifyBlock" )
+    end if
+    if ( z%kind /= m_full ) call createBlock ( z, z%nRows, z%nCols, m_full, &
+      & forWhom='Z in DensifyBlock', nChan=z%nChan )
+    call densify ( z%values, b )
+  end subroutine DensifyBlock
 
   ! ---------------------------------------------  DestroyBlock_0  -----
   subroutine DestroyBlock_0 ( B )
@@ -1440,9 +1460,14 @@ contains ! =====     Public Procedures     =============================
     ! Destroy the VALUE1, VALUES and VALUE3 components of B
     type(MatrixElement_T), intent(inout) :: B
     character(len=*), intent(in) :: What
+#if defined SANSREMAP
+    call deallocate_test ( b%values, trim(what) // 'VALUEs', ModuleName )
+    nullify ( b%value1, b%value3 )
+#else
     if ( associated(b%values) ) &
       & call deallocate_test ( b%value1, trim(what) // 'VALUE1', ModuleName )
     nullify ( b%values, b%value3 )
+#endif
   end subroutine DestroyValues
 
   ! ---------------------------------------------  FrobeniusNorm_0 -----
@@ -1648,6 +1673,7 @@ contains ! =====     Public Procedures     =============================
       if ( myStatus == 0 .and. mySquare < 0 ) then ! just computing the diagonal
         myUI => UI%values
         nullify ( UI%values )
+        nullify ( UI%value1, UI%value3 )
         call storeDiag
       end if
     end select
@@ -1895,7 +1921,8 @@ contains ! =====     Public Procedures     =============================
     real(rm) :: Alpha                   ! -1 or 1 depending on subtract
     real(rm) :: Beta                    ! 0 or 1, depending on Update
     logical :: MyX, MyY                 ! Did X or Y result from densify?
-    real(rm), pointer, dimension(:,:) :: X, Y, Z  ! Dense matrices
+    real(rm), pointer, dimension(:,:) :: X, Y ! Dense matrices
+    type(MatrixElement_T) :: Z          ! Dense matrix
 
     alpha = 1.0_rm
     if ( present(subtract) ) then
@@ -1917,13 +1944,12 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "XB and YB Matrix sizes incompatible in MultiplyMatrix_XY_0" )
 
-    nullify ( z )
-    call allocate_test ( z, xb%nRows, yb%nCols, 'Z in MultiplyMatrix_XY_0', &
-      & moduleName )
+    call createBlock ( z, xb%nRows, yb%nCols, m_full, &
+      & forWhom='Z in MultiplyMatrix_XY_0', nChan=xb%nChan )
     if ( abs(beta) < 0.5_rm ) then
-      z = 0.0_rm
+      z%values = 0.0_rm
     else
-      call densify ( z, zb )
+      call densify ( z, zb ) ! z := zb
     end if
 
     myX = xb%kind /= M_Full
@@ -1948,14 +1974,12 @@ contains ! =====     Public Procedures     =============================
 
     ! zb%noRows/zb%noCols undefined here, so avoid using them.
     call gemm ( 'N', 'N', xb%nRows, yb%nCols, xb%nCols, alpha, &
-      & x, xb%nRows, y, yb%nRows, beta, z, xb%nRows )
+      & x, xb%nRows, y, yb%nRows, beta, z%values, xb%nRows )
 
     if ( myX .and. myY ) then
-      call sparsify ( z, zb, 'Z in MultiplyMatrix_XY_0', moduleName ) ! Zb := Z
+      call sparsify ( z%values, zb, 'Z in MultiplyMatrix_XY_0', moduleName ) ! Zb := Z
     else
-      call createBlock ( zb, xb%nRows, yb%nCols, m_full, noValues=.true., &
-        & forWhom="MultiplyMatrix_XY_0" )
-      zb%values => z
+      zb = z ! destroy zb, then shallow copy
     end if
     if ( myX ) call deallocate_test ( x, 'X in MultiplyMatrix_XY_0', moduleName )
     if ( myY ) call deallocate_test ( y, 'Y in MultiplyMatrix_XY_0', moduleName )
@@ -1975,8 +1999,8 @@ contains ! =====     Public Procedures     =============================
     real(rm) :: Alpha                   ! -1 or 1 depending on subtract
     real(rm) :: Beta                    ! 0 or 1, depending on Update
     logical :: MyX, MyY                 ! Did X or Y result from densify?
-    real(rm), pointer, dimension(:,:) :: X, Y, Z  ! Dense matrices
-
+    real(rm), pointer, dimension(:,:) :: X, Y ! Dense matrices
+    type(MatrixElement_T) :: Z          ! Dense matrix
 
     alpha = 1.0_rm
     if ( present(subtract) ) then
@@ -1998,13 +2022,12 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "XB and YB Matrix sizes incompatible in MultiplyMatrix_XY_T_0" )
 
-    nullify ( z )
-    call allocate_test ( z, xb%nRows, yb%nRows, 'Z in MultiplyMatrix_XY_T_0', &
-      & moduleName )
+    call createBlock ( z, xb%nRows, yb%nRows, m_full, &
+      & forWhom='Z in MultiplyMatrix_XY_T_0', nChan=xb%nChan )
     if ( abs(beta) < 0.5_rm ) then
-      z = 0.0_rm
+      z%values = 0.0_rm
     else
-      call densify ( z, zb )
+      call densify ( z, zb ) ! z := zb
     end if
 
     myX = xb%kind /= M_Full
@@ -2029,15 +2052,13 @@ contains ! =====     Public Procedures     =============================
 
     ! zb%nRows/zb%nCols undefined here, so don't use them.
     call gemm ( 'N', 'T', xb%nRows, yb%nRows, xb%nCols, alpha, &
-      & x, xb%nRows, y, yb%nRows, beta, z, xb%nRows )
+      & x, xb%nRows, y, yb%nRows, beta, z%values, xb%nRows )
 
     if ( myX .and. myY ) then
-      call sparsify ( z, zb, 'Z in MultiplyMatrix_XY_T_0', moduleName ) ! Zb := Z
+      call sparsify ( z%values, zb, 'Z in MultiplyMatrix_XY_T_0', moduleName ) ! Zb := Z
     else
-      call createBlock ( zb, xb%nRows, yb%nRows, M_Full, noValues=.true., &
-        & forWhom="MultiplyMatrix_XY_T_0" )
-      zb%values => z
-    endif
+      zb = z ! destroy zb, then shallow copy
+    end if
     if ( myX ) call deallocate_test ( x, 'X in MultiplyMatrix_XY_T_0', moduleName )
     if ( myY ) call deallocate_test ( y, 'Y in MultiplyMatrix_XY_T_0', moduleName )
 
@@ -2078,14 +2099,14 @@ contains ! =====     Public Procedures     =============================
     integer :: XD, YD
     character, pointer, dimension(:) :: XM, YM
     real(rm) :: XY                           ! Product of columns of X and Y
-    real(rm), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
+    type(MatrixElement_T) :: Z               ! Temp for sparse * sparse
 
     real(rm), pointer, dimension(:,:) :: XDNS, YDNS, ZDNS, ZDNS2 ! For checking
 
     character(len=132) :: LINE          ! A message
     logical :: OK                       ! For testing
 
-    nullify ( xm, ym, z )
+    nullify ( xm, ym )
     my_upd = .false.
     if ( present(update) ) my_upd = update
 
@@ -2149,12 +2170,12 @@ contains ! =====     Public Procedures     =============================
       case ( M_Banded )       ! XB banded, YB banded
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
-        call allocate_test ( z, zb%nRows, zb%nCols, &
-          & "Z for banded X banded in MultiplyMatrix_XTY_0", ModuleName )
+        call createBlock ( z, zb%nRows, zb%nCols, m_full, nChan=zb%nChan, &
+          & forWhom='Z for banded X banded in MultiplyMatrix_XTY_0' )
         if ( my_upd .and. zb%kind /= m_absent ) then
-          call densify ( z, zb )
+          call densify ( z, zb ) ! z := zb
         else
-          z = 0.0_rm
+          z%values = 0.0_rm
         end if
         do j = 1, zb%nCols    ! Columns of Z = columns of YB
           if ( associated(ym) ) then
@@ -2197,21 +2218,21 @@ contains ! =====     Public Procedures     =============================
             xy = dot( c_n, xb%values(xd,1), 1, &
               &            yb%values(yd,1), 1 )
 #endif
-            z(i,j) = z(i,j) + s * xy
+            z%values(i,j) = z%values(i,j) + s * xy
           end do ! i
 !$OMP END PARALLEL DO
         end do ! j
-        call sparsify ( z, zb, & ! Zb := Z
+        call sparsify ( z%values, zb, & ! Zb := Z
           & "Z for banded X banded in MultiplyMatrix_XTY_0", ModuleName )
       case ( M_Column_sparse ) ! XB banded, YB column-sparse
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
-        call allocate_test ( z, xb%nCols, yb%nCols, &
-          & "Z for banded X sparse in MultiplyMatrix_XTY_0", ModuleName )
+        call createBlock ( z, xb%nCols, yb%nCols, m_full, nChan=1, &
+          & forWhom='Z for banded X sparse in MultiplyMatrix_XTY_0' )
         if ( my_upd .and. zb%kind /= m_absent ) then
-          call densify ( z, zb )
+          call densify ( z, zb ) ! z := zb
         else
-          z = 0.0_rm
+          z%values = 0.0_rm
         end if
         do j = 1, zb%nCols    ! Columns of Z
           if ( associated(ym) ) then
@@ -2239,7 +2260,7 @@ contains ! =====     Public Procedures     =============================
                 m = yb%r2(n)
               else
                 ! Multiplying by S is faster than testing my_sub
-                z(i,j) = z(i,j) + s * xb%values(l,1) * yb%values(n,1)
+                z%values(i,j) = z%values(i,j) + s * xb%values(l,1) * yb%values(n,1)
                 l = l + 1
                 k = k + 1
                 n = n + 1
@@ -2250,16 +2271,14 @@ contains ! =====     Public Procedures     =============================
           end do ! i
 !$OMP END PARALLEL DO
         end do ! j
-        call sparsify ( z, zb, & ! Zb := Z
+        call sparsify ( z%values, zb, & ! Zb := Z
           & "Z for banded X banded in MultiplyMatrix_XTY_0", ModuleName )
       case ( M_Full )         ! XB banded, YB full
         if ( zb%kind /= m_full ) then
-          call allocate_test ( z, xb%nCols, yb%nCols, &
-            & "Z for banded X full in MultiplyMatrix_XTY_0", ModuleName )
-          if ( my_upd ) call densify ( z, zb )
-          call createBlock ( zb, xb%nCols, yb%nCols, M_Full, novalues=.true., &
-            & forWhom="MultiplyMatrix_XTY_0" )
-          zb%values => z
+          call createBlock ( z, xb%nCols, yb%nCols, m_full, nChan=1, &
+            & forWhom='Z for banded X full in MultiplyMatrix_XTY_0' )
+          if ( my_upd ) call densify ( z, zb ) ! z := zb
+          zb = z ! Destroy zb, then shallow copy
         end if
         if ( .not. my_upd ) zb%values = 0.0_rm
         do i = 1, xb%nCols    ! Rows of ZB
@@ -2296,12 +2315,12 @@ contains ! =====     Public Procedures     =============================
       case ( M_Banded )       ! XB column-sparse, YB banded
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
-        call allocate_test ( z, xb%nCols, yb%nCols, &
-          & "Z for sparse X banded in MultiplyMatrix_XTY_0", ModuleName )
+        call createBlock ( z, xb%nCols, yb%nCols, m_full, nChan=1, &
+          & forWhom='Z for sparse X banded in MultiplyMatrix_XTY_0' )
         if ( my_upd .and. zb%kind /= m_absent ) then
-          call densify ( z, zb )
+          call densify ( z, zb ) ! z := zb
         else
-          z = 0.0_rm
+          z%values = 0.0_rm
         end if
         do j = 1, zb%nCols    ! Columns of Z
           if ( associated(ym) ) then
@@ -2329,7 +2348,7 @@ contains ! =====     Public Procedures     =============================
                 m = m + 1
               else
                 ! Multiplying by S is faster than testing my_sub
-                z(i,j) = z(i,j) + s * xb%values(l,1) * yb%values(n,1)
+                z%values(i,j) = z%values(i,j) + s * xb%values(l,1) * yb%values(n,1)
                 l = l + 1
                 if ( l > xb%r1(i) ) exit
                 k = xb%r2(l)
@@ -2340,17 +2359,17 @@ contains ! =====     Public Procedures     =============================
           end do ! i
 !$OMP END PARALLEL DO
         end do ! j
-        call sparsify ( z, zb, & ! Zb := Z
+        call sparsify ( z%values, zb, & ! Zb := Z
           & "Z for banded X banded in MultiplyMatrix_XTY_0", ModuleName )
       case ( M_Column_sparse ) ! XB column-sparse, YB column-sparse
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
-        call allocate_test ( z, xb%nCols, yb%nCols, &
-          & "Z for sparse X sparse in MultiplyMatrix_XTY_0", ModuleName )
+        call createBlock ( z, xb%nCols, yb%nCols, m_full, nChan=1, &
+          & forWhom='Z for sparse X sparse in MultiplyMatrix_XTY_0' )
         if ( my_upd .and. zb%kind /= m_absent ) then
-          call densify ( z, zb )
+          call densify ( z, zb ) ! z := zb
         else
-          z = 0.0_rm
+          z%values = 0.0_rm
         end if
         do j = 1, zb%nCols    ! Columns of Z
           if ( associated(ym) ) then
@@ -2369,7 +2388,7 @@ contains ! =====     Public Procedures     =============================
             n = yb%r1(j-1)+1  ! Position in YB%R2 of row subscript in YB
             if ( n > ubound(yb%r2,1) ) cycle
             m = yb%r2(n)      ! Row subscript of nonzero in YB's column J
-            ! z(i,j) = 0.0_rm
+            ! z%values(i,j) = 0.0_rm
             do while ( l <= xb%r1(i) .and. n <= yb%r1(j) )
               if ( k < m ) then
                 l = l + 1
@@ -2381,7 +2400,7 @@ contains ! =====     Public Procedures     =============================
                 m = yb%r2(n)
               else
                 ! Multiplying by S is faster than testing my_sub
-                z(i,j) = z(i,j) + s * xb%values(l,1) * yb%values(n,1)
+                z%values(i,j) = z%values(i,j) + s * xb%values(l,1) * yb%values(n,1)
                 l = l + 1
                 if ( l > xb%r1(i) ) exit
                 k = xb%r2(l)
@@ -2393,16 +2412,14 @@ contains ! =====     Public Procedures     =============================
           end do ! i
 !$OMP END PARALLEL DO
         end do ! j
-        call sparsify ( z, zb, & ! Zb := Z
+        call sparsify ( z%values, zb, & ! Zb := Z
           & "Z for banded X banded in MultiplyMatrix_XTY_0", ModuleName )
       case ( M_Full )         ! XB column-sparse, YB full
         if ( zb%kind /= m_full ) then
-          call allocate_test ( z, xb%nCols, yb%nCols, &
-            & "Z for sparse X full in MultiplyMatrix_XTY_0", ModuleName )
-          if ( my_upd ) call densify ( z, zb )
-          call createBlock ( zb, xb%nCols, yb%nCols, M_Full, novalues=.true., &
-            & forWhom="MultiplyMatrix_XTY_0" )
-          zb%values => z
+          call createBlock ( z, xb%nCols, yb%nCols, m_full, nChan=1, &
+            & forWhom='Z for sparse X full in MultiplyMatrix_XTY_0' )
+          if ( my_upd ) call densify ( z, zb ) ! z := zb
+          zb = z ! Destroy zb, then shallow copy
         end if
         if ( .not. my_upd ) zb%values = 0.0_rm
         do j = 1, zb%nCols    ! Columns of ZB
@@ -2429,12 +2446,10 @@ contains ! =====     Public Procedures     =============================
       end select
     case ( M_Full )
       if ( zb%kind /= m_full ) then
-        call allocate_test ( z, xb%nCols, yb%nCols, &
-          & "Z for full X <anything> in MultiplyMatrix_XTY_0", ModuleName )
-        if ( my_upd ) call densify ( z, zb )
-        call createBlock ( zb, xb%nCols, yb%nCols, M_Full, novalues=.true., &
-          & forWhom="MultiplyMatrix_XTY_0" )
-        zb%values => z
+        call createBlock ( z, xb%nCols, yb%nCols, m_full, nChan=1, &
+          & forWhom='Z for full X <anything> in MultiplyMatrix_XTY_0' )
+        if ( my_upd ) call densify ( z, zb ) ! z := zb
+        zb = z ! Destroy zb, then shallow copy
       end if
       if ( .not. my_upd ) zb%values = 0.0_rm
       select case ( yb%kind )
@@ -2741,6 +2756,7 @@ contains ! =====     Public Procedures     =============================
     nullify ( m%r1 )
     nullify ( m%r2 )
     nullify ( m%values )
+    nullify ( m%value1, m%value3 )
   end subroutine NullifyMatrix_0
 
   ! -------------------------------------------------  ReflectMatrix_0 --
@@ -3243,6 +3259,7 @@ contains ! =====     Public Procedures     =============================
     if ( b%kind /= M_Full ) return
     z => b%values
     nullify ( b%values )
+    nullify ( b%value1, b%value3 )
     call Sparsify ( z, b, 'z', ModuleName )
   end subroutine SparsifyB
 
@@ -3529,7 +3546,6 @@ contains ! =====     Public Procedures     =============================
                                                !        X  Bounds(3):Bounds(4)
     logical, intent(in), optional :: CLEAN   ! print \size
 
-    integer :: I
     integer :: My_Details
     logical :: My_Clean
 
@@ -3713,6 +3729,14 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.14  2012/07/31 00:44:05  vsnyder
+! Copy nChan and nVert components in AssignBlock.  Add SANSREMAP prepro
+! switch in CreateValues and DestroyValues.  Use CreateBlock abstraction in
+! DensifyB and MultiplyMatrix_XY_0 instead of creating the block explicitly.
+! Use a matrix block instead of a real array in MultiplyMatrix_XY_0,
+! MultiplyMatrix_XY_T_0 and MultiplyMatrix_XTY_0.  Add DensifyBlock.  Some
+! decruftification.
+!
 ! Revision 2.13  2012/07/19 19:40:19  vsnyder
 ! myChan needs to me max(nChan,1) in CreateBlock_0
 !
