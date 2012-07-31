@@ -767,59 +767,22 @@ contains ! =====  Public Procedures  ===================================
   ! calling this subroutine
   subroutine ReadIsotopeRatios ( Where, FileName, FileType )
     use INTRINSIC, only: LIT_INDICES
-    use MACHINE, only: IO_ERROR
-    use MLSHDF5, only: GETHDF5DSDIMS, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-      & MLSMSG_ERROR
-    use MLSSIGNALS_M, only: MAXSIGLEN
+    use MLSHDF5, only: LOADFROMHDF5DS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSTRINGS, only: CAPITALIZE
     use MOLECULES, only: IsExtinction
-    use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use STRING_TABLE, only: GET_STRING, STRING_LENGTH
-    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
+    use STRING_TABLE, only: GET_STRING
+    use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5FCLOSE_F
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
 
-    type(catalog_t) :: CatalogItem
-    character(len=maxSigLen), pointer :: CatNames(:)
-    real(r8), pointer :: Continuum(:,:)
-!   type(decls) :: Decl
     logical :: Error
     integer :: FileID            ! HDF5
-    integer :: I, IOSTAT, J, L, Line1, LineN, LUN, L2
-    type(line_t) :: Line
-    integer, pointer :: LineIndices(:)
-    integer, pointer :: LineList(:)
+    integer :: I, IOSTAT
     integer :: molecule
     character(len=63) :: MoleculeName
-    character(len=63), pointer :: MoleculeNames(:)
-    integer :: NCat              ! Number of catalog items
-    integer :: NLines            ! Number of lines for a species
-    integer :: NPol              ! Number of polarized flags for a line
-                                 ! (zero or nSig )
-    integer :: NQN, NSig         ! Numbers of quantum numbers, signals for a line
-    integer, pointer :: PolarizedIndices(:) ! PolarizedIndices(i) is index in
-                                 ! PolarizedList of last Polarized for line I.
-    logical, pointer :: PolarizedList(:) ! Concatenation from all lines
-    real(r8), pointer :: Qlog(:,:)
-    integer, pointer :: QNIndices(:) ! QNIndices(i) is index in
-                                 ! QNList of last QN for line I.
-    integer, pointer :: QNList(:) ! Concatenation from all lines
-    integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HDF
-    integer, pointer :: SidebandList(:) ! Concatenation from all lines
-    integer, dimension(:), pointer :: SigInds ! From Parse_signal
-    logical :: SignalError
-    integer , pointer:: SignalIndices(:) ! signalIndices(i) is index in
-                                 ! SidebandList and SignalList of last signal
-                                 ! for line I.
-    integer, pointer :: SignalList(:) ! Concatenation from all lines
-    character(len=MaxSigLen) :: SignalName
-    character(len=MaxSigLen), pointer :: SignalNames(:)
-    character(len=63) :: SpeciesName
     real, dimension(1,1,1) :: values
-    character(len=5) :: What
 
     if (.not. associated(lines)) &
        call MLSMessage( MLSMSG_Error, moduleName // '%ReadIsotopeRatios', &
@@ -1514,6 +1477,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.54  2012/05/08 01:34:29  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.53  2011/11/11 00:42:06  vsnyder
 ! Use IsExtinction array from Molecules module
 !
