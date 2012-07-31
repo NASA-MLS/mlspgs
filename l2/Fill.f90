@@ -1257,6 +1257,7 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------------ fillCommand -----
     subroutine fillCommand
     ! Now we're on actual Fill instructions.
+      use VectorsModule, only: DestroyVectorQuantityValue
       integer :: jj
       ! Loop over the instructions to the Fill command
       BOMask = 0
@@ -2245,10 +2246,8 @@ contains ! =====     Public Procedures     =============================
             call Explicit ( quantity, valuesNode, spreadFlag, &
               & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
               & instancesNode, options=options(1:1), extraQuantity=tempswapquantity )
-            call deallocate_test( tempswapquantity%values, 'tempswapquantity%values', &
-              & moduleName )
-            call deallocate_test( tempswapquantity%mask, 'tempswapquantity%mask', &
-              & moduleName )
+            call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
+              forWhom = 'tempswapquantity' )
           else
             call ByManipulation ( quantity, aQuantity, bQuantity, &
               & manipulation, key, &
@@ -2266,10 +2265,8 @@ contains ! =====     Public Procedures     =============================
             call Explicit ( quantity, valuesNode, spreadFlag, &
               & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
               & instancesNode, options=options(1:1), extraQuantity=tempswapquantity )
-            call deallocate_test( tempswapquantity%values, 'tempswapquantity%values', &
-              & moduleName )
-            call deallocate_test( tempswapquantity%mask, 'tempswapquantity%mask', &
-              & moduleName )
+            call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
+              forWhom = 'tempswapquantity' )
           else
             call ByManipulation ( quantity, aQuantity, bQuantity, &
               & manipulation, key, &
@@ -2645,10 +2642,8 @@ contains ! =====     Public Procedures     =============================
             quantity%values = tempswapquantity%values
           end if
         end if
-        call deallocate_test( tempswapquantity%values, 'tempswapquantity%values', &
-          & moduleName )
-        call deallocate_test( tempswapquantity%mask, 'tempswapquantity%mask', &
-          & moduleName )
+        call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
+          forWhom = 'tempswapquantity' )
       case ( l_vector ) ! ---------------- Fill from another qty.
         ! This is VERY PRELIMINARY, A more fancy one needs to be written
         ! before too long.
@@ -2867,6 +2862,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.404  2012/07/31 00:48:16  vsnyder
+! Use DestroyVectorQuantityValue abstraction
+!
 ! Revision 2.403  2012/05/08 17:49:04  pwagner
 ! Added Select .. Case .. EndSelect control structure
 !
