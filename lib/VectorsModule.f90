@@ -101,13 +101,14 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   ! --------------------------------------------------------------------------
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, TEST_DEALLOCATE
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, TEST_ALLOCATE, &
+    & TEST_DEALLOCATE
   use BITSTUFF, only: DUMPBITNAMES, ISBITSET
   use DUMP_0, only: DIFF, DUMP
   use INTRINSIC, only: LIT_INDICES, PHYQ_INVALID, L_VMR
   use MLSKINDS, only: R8, RV
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
-    & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+    & MLSMSG_DEALLOCATE, MLSMSG_WARNING
   use MLSSETS, only: FINDFIRST, FINDUNIQUE
   use MLSSIGNALS_M, only: MODULES, SIGNALS, GETSIGNALNAME
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
@@ -760,8 +761,7 @@ contains ! =====     Public Procedures     =============================
     z%globalUnit = x%globalUnit
     z%template = x%template
     allocate ( z%quantities(size(x%quantities)), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "z%quantities" )
+    call test_allocate ( status, moduleName, "z%quantities" )
     z%quantities%index = x%quantities%index
     do i = 1, size(x%quantities)
       z%quantities(i)%template = x%quantities(i)%template
@@ -954,11 +954,17 @@ contains ! =====     Public Procedures     =============================
   end subroutine CopyVectorMask
 
   ! -------------------------------------------------  CreateMask  -----
-  subroutine CreateMask ( Value )
+  subroutine CreateMask ( Value, ForWhom )
   ! Allocate the MASK array for a vector quantity.
     type(VectorValue_T), intent(inout) :: Value
-    call allocate_test ( value%mask1, size(value%values), "MASK1", &
-      & ModuleName, fill=char(0) )
+    character(len=*), intent(in), optional :: ForWhom
+    if ( present(forWhom) ) then
+      call allocate_test ( value%mask1, size(value%values), &
+        & trim(forWhom) // "%MASK1", ModuleName, fill=char(0) )
+    else
+      call allocate_test ( value%mask1, size(value%values), "MASK1", &
+        & ModuleName, fill=char(0) )
+    end if
     call remapVectorMask ( value )
   end subroutine CreateMask
 
@@ -995,8 +1001,7 @@ contains ! =====     Public Procedures     =============================
       & vector%name = enter_terminal ( vectorNameText, t_identifier )
     vector%template = vectorTemplate
     allocate ( vector%quantities(vectorTemplate%noQuantities), STAT=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "Vector quantities"  )
+    call test_allocate ( status, moduleName, "Vector quantities" )
     do quantity = 1, vectorTemplate%noQuantities
       vector%quantities(quantity)%index = quantity
       vector%quantities(quantity)%template = &
@@ -1043,8 +1048,7 @@ contains ! =====     Public Procedures     =============================
       call test_deallocate ( status, moduleName, 'database', 0 )
     end if
     allocate ( database(0), stat=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // 'database' )
+    call test_allocate ( status, moduleName, "database" )
   end subroutine DestroyVectorDatabase
 
   ! ------------------------------------------  DestroyVectorInfo  -----
@@ -1086,28 +1090,38 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyVectorMask
 
   ! ----------------------------------  DestroyVectorQuantityMask  -----
-  subroutine DestroyVectorQuantityMask ( Value )
+  subroutine DestroyVectorQuantityMask ( Value, ForWhom )
 
     ! This routine destroys the MASK stored in one vector quantity.
 
     ! Dummy arguments
-    type (vectorValue_t) :: Value
-    call deallocate_test ( value%mask, 'MASK', moduleName )
-    nullify ( value%mask1, value%mask3 )
+    type (vectorValue_t), intent(inout) :: Value
+    character(len=*), intent(in), optional :: ForWhom
+    if ( present(forWhom) ) then
+      call deallocate_test ( value%mask1, trim(forWhom) // "%MASK1", moduleName )
+    else
+      call deallocate_test ( value%mask1, "MASK1", moduleName )
+    end if
+    nullify ( value%mask, value%mask3 )
   end subroutine DestroyVectorQuantityMask
 
   ! ---------------------------------  DestroyVectorQuantityValue  -----
-  subroutine DestroyVectorQuantityValue ( Value, DestroyMask )
+  subroutine DestroyVectorQuantityValue ( Value, DestroyMask, ForWhom )
 
     ! This routine destroys the VALUES stored in one vector quantity.
 
     ! Dummy arguments
-    type (vectorValue_t) :: Value
+    type (vectorValue_t), intent(inout) :: Value
     logical, intent(in), optional :: DestroyMask
-    call deallocate_test ( value%values, 'VALUE', moduleName )
+    character(len=*), intent(in), optional :: ForWhom
+    if ( present(forWhom) ) then
+      call deallocate_test ( value%value1, trim(forWhom) // "%VALUE1", moduleName )
+    else
+      call deallocate_test ( value%value1, 'VALUE1', moduleName )
+    end if
     nullify ( value%value1, value%value3 )
     if ( present(destroyMask) ) then
-      if ( destroyMask ) call destroyVectorQuantityMask ( value )
+      if ( destroyMask ) call destroyVectorQuantityMask ( value, forWhom )
     end if
   end subroutine DestroyVectorQuantityValue
 
@@ -1142,7 +1156,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     call deallocate_test ( vectorTemplate%quantities, &
-      & MLSMSG_deallocate // "vectorTemplate%quantities", ModuleName )
+      & "vectorTemplate%quantities", ModuleName )
 
     vectorTemplate%noQuantities = 0
     vectorTemplate%totalInstances = 0
@@ -2319,6 +2333,8 @@ contains ! =====     Public Procedures     =============================
     call remapVectorValue ( to )
     call remapVectorMask ( to )
     nullify ( from%value1, from%mask1 ) ! Don't deallocate during destroy!
+    nullify ( from%values, from%mask )  ! Don't deallocate during destroy!
+    nullify ( from%value3, from%mask3 ) ! Don't deallocate during destroy!
     call destroyVectorQuantityValue ( from, destroyMask=.true. )
   end subroutine MoveVectorQuantity
 
@@ -2892,6 +2908,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.166  2012/07/10 03:55:49  vsnyder
+! Improve comments about VALUE
+!
 ! Revision 2.165  2012/07/07 02:40:47  vsnyder
 ! Add DestroyMask argument to DestroyVectorQuantityValue
 !
