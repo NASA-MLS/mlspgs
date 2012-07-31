@@ -6959,6 +6959,7 @@ contains ! =====     Public Procedures     =============================
     ! ---------------------------------------------- TransferVectors -----
     subroutine TransferVectors ( source, dest, skipMask, interpolate )
       ! Copy common items in source to those in dest
+      use VectorsModule, only: DestroyVectorQuantityMask
       type (Vector_T), intent(in) :: SOURCE
       type (Vector_T), intent(inout) :: DEST
       logical, intent(in) :: SKIPMASK
@@ -6986,8 +6987,7 @@ contains ! =====     Public Procedures     =============================
               if ( .not. associated(dq%mask)) call CreateMask ( dq )
               dq%mask = sq%mask
             else
-              if ( associated(dq%mask) ) &
-                & call Deallocate_test ( dq%mask, 'dq%mask', ModuleName )
+              call destroyVectorQuantityMask ( dq )
             end if
           end if
         elseif ( interpolate ) then
@@ -7501,6 +7501,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.61  2012/07/31 00:49:02  vsnyder
+! Use DestroyVectoryQuantityMask abstraction
+!
 ! Revision 2.60  2012/06/07 22:46:03  pwagner
 ! Turn off warnings about non-monotonic Ptan in FromProfile
 !
