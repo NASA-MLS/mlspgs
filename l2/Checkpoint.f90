@@ -392,7 +392,7 @@ contains
     ! Read a vector from Unit, while verifying its properties are the same
     ! as the one on Unit
     use Allocate_Deallocate, only: Allocate_Test
-    use VectorsModule, only: Vector_T
+    use VectorsModule, only: CreateMask, CreateVectorValue, Vector_T
     integer, intent(in) :: Unit    ! Fortran I/O unit, already open
     type (vector_t), intent(inout) :: Vector
     integer, intent(out) :: Status ! 0 = OK
@@ -410,13 +410,11 @@ contains
       if ( .not. checkQuantityTemplate(unit,vector%quantities(i)%template) ) return
       read ( unit, err=9, end=9 ) vectorValueStuff
       if ( vectorValueStuff%associatedValues ) then
-        call allocate_test ( vector%quantities(i)%values, vectorValueStuff%bounds(1,2), vectorValueStuff%bounds(2,2), &
-          & 'Vector%Quantities(i)%Values', moduleName, vectorValueStuff%bounds(1,1), vectorValueStuff%bounds(2,1) )
+        call createVectorValue ( vector%quantities(i), what="ReadVector's vector%quantities(i)" )
         read ( unit, err=9, end=9 ) vector%quantities(i)%values
       end if
       if ( vectorValueStuff%associatedMask ) then
-        call allocate_test ( vector%quantities(i)%mask, vectorValueStuff%bounds(1,2), vectorValueStuff%bounds(2,2), &
-          & 'Vector%Quantities(i)%Mask', moduleName, vectorValueStuff%bounds(1,1), vectorValueStuff%bounds(2,1) )
+        call createMask ( vector%quantities(i), forWhom="ReadVector's vector%quantities(i)" )
         read ( unit, err=9, end=9 ) vector%quantities(i)%mask
       end if
     end do
@@ -654,6 +652,9 @@ contains
 end module Checkpoint
 
 ! $Log$
+! Revision 2.4  2012/07/31 00:47:00  vsnyder
+! Use CreateVectorValue and CreateMask abstractions in ReadVector
+!
 ! Revision 2.3  2010/02/04 23:12:44  vsnyder
 ! Remove USE or declaration for unreferenced names
 !
