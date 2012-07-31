@@ -616,7 +616,7 @@ contains ! ============= Public Procedures ==========================
       f_qty%values(i,2:) = f_qty%values(i,1)
     end do
 
-    if ( dumpTransform(1) /= 0 ) then
+    if ( dumpTransform(1) >= 0 ) then
       call dump ( ptan%values(p,maf), name='PTan zetas' )
       call dump ( s_qty, details=dumpTransform(1), name='from fwdModelIn' )
       call dump ( f_qty, details=dumpTransform(1), name='to forward model' )
@@ -636,6 +636,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.50  2012/07/31 00:49:33  vsnyder
+! Correct testing a dump switch
+!
 ! Revision 2.49  2012/07/06 01:54:33  vsnyder
 ! Transform only rows of Jacobian and radiance that are produced by current
 ! forward model config.  Revise some dumps.
