@@ -830,6 +830,7 @@ contains ! =====     Public Procedures     =============================
     end do
 
     ! Now the LBLMolecules or PFAMolecules lists
+    info%cat_size = 0
     do s = s1, s2
       theTree = merge(lblTrees(s),pfaTrees(s),lblTrees(s)/=null_tree)
       if ( theTree /= null_tree ) then
@@ -1474,6 +1475,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.163  2012/08/01 00:10:02  pwagner
+! Prevent references to undefined cat_sizes
+!
 ! Revision 2.162  2012/05/01 22:22:58  vsnyder
 ! Set IsRadianceModel component
 !
