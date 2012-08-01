@@ -691,7 +691,7 @@ contains
     ! Internal variables
     logical, parameter :: checkingTabbing = .false.
     character(len=10), parameter :: decade = '1234567890'
-    character(len=1), parameter :: fillChar = '.' ! fill blanks with '. .'
+    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
     integer :: i
     ! Executable
     call blanks(80, fillChar='-', advance='yes')
@@ -2779,6 +2779,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.93  2012/08/01 00:08:21  pwagner
+! Uses same . . pattern in option dumps
+!
 ! Revision 2.92  2012/07/18 00:33:45  pwagner
 ! Fixed bug causing double printing
 !
