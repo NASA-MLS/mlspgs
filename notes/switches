@@ -5,7 +5,7 @@ Switches (set by -S option in mlsl2's command line):
 ========================= mlsl2 =========================
   (where [n] appears, you may optionally suffix an integer specifying how
    detailed you want the extra printing to be: higher the n, more the info)
-  0sl =>    Warn about no lines or continuua, else it's an error
+  0sl =>    Warn about no lines or continuua, else silently ignored
   42 =>     Print to unit 42 when doing TScat
   alg =>    Show work in Algebra module (hoping for partial credit)
   ant =>    Dump antenna patterns
@@ -147,45 +147,28 @@ and lower-case letters for strings. Switches are case-sensitive.
 
 The -S option sets the "switches" array in toggles_core.f90.
 `
-                T e s t   1
-In places, it's still tested by the older construct 
+In only a few places, it's still tested by the older construct 
 "if ( index(switches,'foo') /= 0 ) then ..." 
-which allowed you to put longer strings on the command line (so long as
-the rest of it didn't contain something you DIDN'T want to test for!).
 
-Let us clarify the requirement for adding new switches according to this
-restriction:
-if an existing switch is 'abc' don't add a new switch that contains 'abc' as a
-substring, e.g. 'gabcs'. Why? Because turning on your switch will automatically
-turn on the existing 'abc' switch, too.
+You can separate them either by preceding each with its own "-S" prefix or
+else by commas in a single string. Thus to turn on both 'abc' and 'def',
+either use -Sabc -Sdef or -S"abc,def". Among other good things, this
+prevents accidentally turning on an unwanted 'cde' switch.
 
-We recommend separating switches rather than catenating them. You can separate
-them either by preceding each with its own "-S" prefix or else by commas in a
-single string. Thus to turn on both 'abc' and 'def', either use -Sabc -Sdef or
--S"abc,def". Among other good things, this prevents accidentally turning on an
-unwanted 'cde' switch.
-
-                T e s t   2
-As an alternative to the "if ( index(switches,'foo') /= 0 ) then ..." test shown
-above, the MLSStringLists module contains a function SwitchDetail which as a
-substitute has its advantages; assuming it was called as
-SwitchDetail(switches, 'foo') it returns 
+The MLSStringLists module contains a function SwitchDetail; assuming it
+was called as SwitchDetail(switches, 'foo') it returns 
 -1  means foo was not among switches
 0   means foo or foo0 was one of the comma-separated switches
 1   means foo1
 2   means foo2
     .   .   .
-Note that use of SwitchDetail requires separating the switches. It also requires
-that you match the switch name precisely; e.g. if the switch is "ab" but you
-forget, and so try to set "abc", you won't set "ab" after all. The advantage is
-that by using SwitchDetail each switch is now unique: you can have "foo", "bar",
-and "foobar" as three distinct switches, confident that setting "foobar" won't
-inadvertently set the other two.
-
-I have been substituting SwitchDetail for the "if ( index .." test in the
-modules that have come under my gaze from time to time, and this process will
-continue until they take my keyboard away. When I'm done, we will be able to
-delete the T e s t   1 section above.
+Note that use of SwitchDetail requires separating the switches. It also
+requires that you match the switch name precisely; e.g. if the switch is
+"ab" but you forget, and so try to set "abc", you won't set "ab" after
+all. The advantage is that by using SwitchDetail each switch is now
+unique: you can have "foo", "bar", and "foobar" as three distinct
+switches, confident that setting "foobar" won't inadvertently set the
+other two.
 
 Here's a trick for finding all the switches referred to by switchdetail in
 our code so far:
@@ -194,7 +177,7 @@ grep -i switchdetail */*.[fF]9* | grep -i 'switches' | sed 's/.*switches,//' \
  | awk '{print $1}' | sed 's/)//' | sort | uniq
 
 The same command, but replacing "switchdetail" with "index" will show all the 
-switches referred to by the Test 1 method.
+switches referred to by the "index(switches, .." method.
 
 (Add any more that are relevant to mlsl2,
 or separate sections for mlsl1 or mlsl3)
@@ -205,6 +188,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.76  2012/07/02 20:59:30  pwagner
+ Attempt to claridy what -Sphase[n] does
+
  Revision 1.75  2012/04/20 01:44:07  vsnyder
  Add dxfc, dxn
 
