@@ -19,7 +19,7 @@ MODULE MLSMacros              !  Macros, e..g. for the l2cf
     & MLSMSG_WARNING, MLSMESSAGE
   use MLSSTRINGLISTS, only: ARRAY2LIST, EVALUATEFORMULA, EXTRACTSUBSTRING, &
     & GETHASHELEMENT, GETSTRINGELEMENT, LIST2ARRAY, LOOPOVERFORMULA, &
-    & NUMSTRINGELEMENTS, REMOVENUMFROMLIST, STRINGELEMENTNUM, SWITCHDETAIL
+    & NUMSTRINGELEMENTS, REMOVENUMFROMLIST, SWITCHDETAIL
   use OUTPUT_M, only: BLANKSTOCOLUMN, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use TOGGLES, only: SWITCHES
 
@@ -211,11 +211,13 @@ contains
   end subroutine expand_line
 
   ! ---------------------------------------- read_macros ------------
-  subroutine read_macros ( filename )
+  subroutine read_macros ( FILENAME, STATUS, MESSAGE )
     ! This reads the file of macros, filling the macros datatype
 
     ! Args
-    character(len=*), intent(in) :: FILENAME
+    character(len=*), intent(in)            :: FILENAME
+    integer, intent(out), optional          :: STATUS   ! Don't use MLSMessage
+    character(len=*), intent(out), optional :: MESSAGE
     ! Local variables
     integer :: I                        ! Loop inductor
     integer :: K                        ! substring position
@@ -232,13 +234,29 @@ contains
     ! Find a free logical unit number
     ! lun = get_lun ()
     call get_lun( lun, msg=.false. )
-    if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "No logical unit numbers available" )
+    if ( lun < 0 ) then
+      if ( present(status) ) then
+        status = -1
+        if ( present(message) ) message = "No logical unit numbers available"
+        return
+      else
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & "No logical unit numbers available" )
+      endif
+    endif
     open ( unit=lun, file=filename,&
       & status='old', form='formatted', &
       & access='sequential', iostat=stat )
-    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "Unable to open slave file " // Filename )
+    if ( stat /= 0 ) then
+      if ( present(status) ) then
+        status = -1
+        if ( present(message) ) message = "Unable to open slave file " // Filename
+        return
+      else
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & "Unable to open slave file " // Filename )
+      endif
+    endif
 
     ! Now read the file and count the lines
     NumMacros = 0
@@ -413,16 +431,19 @@ contains
       if ( kf > 0 ) then
         macroType = 'b'
         if ( index( longername, '()' ) > 0 ) macroType = 'c'
+        longername = longername(:kf-1)
       endif
       ! Prefix with the "!"
       longername = "!" // longername
+      ! call outputNamedValue( 'longername', trim(longername) )
       ! Now is there a match?
       if ( index( tline(k:), trim(longername) ) > 0 ) exit ! A match!
     enddo
     if ( i > macros%n ) then
       ! Uh-oh, we didn't find a match
-        call MLSMessage ( MLSMSG_Warning, moduleName, &
-          & "Could not match macros in line" // trim(line) )
+        ! call MLSMessage ( MLSMSG_Warning, moduleName, &
+        !   & "Could not match macros in line" // trim(line) )
+        call output( "Could not match macros in line" // trim(line), advance='yes' )
         macroIndex = -1
         return
     endif
@@ -567,6 +588,9 @@ END MODULE MLSMacros
 
 !
 ! $Log$
+! Revision 2.2  2012/08/02 23:54:21  pwagner
+! Fixed bug; added optional args to bypass MLSMessage
+!
 ! Revision 2.1  2012/08/02 17:29:23  pwagner
 ! First commit
 !
