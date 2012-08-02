@@ -66,6 +66,7 @@ module OUTPUT_M
 ! outputList               output array as comma-separated list; e.g. '(1,2,..)'
 ! outputNamedValue         print nicely formatted name and value
 ! resettabs                restore tab stops to what was in effect at start
+! restoreSettings          restore default settings for output, stamps, tabs
 ! revertOutput             revert output to file used before switchOutput
 !                           if you will revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
@@ -118,6 +119,7 @@ module OUTPUT_M
 ! resetTabs ( [int tabs(:)] )
 ! resumeOutput
 ! revertOutput
+! restoreSettings
 ! setStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! setTabs ( [char* Range], [int tabs(:)] )
@@ -163,7 +165,7 @@ module OUTPUT_M
     & NEXTCOLUMN, NEXTTAB, NEWLINE, NUMNEEDSFORMAT, NUMTOCHARS, &
     & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTLIST, &
     & OUTPUTNAMEDVALUE, &
-    & RESETTABS, RESUMEOUTPUT, REVERTOUTPUT, &
+    & RESETTABS, RESTORESETTINGS, RESUMEOUTPUT, REVERTOUTPUT, &
     & SETSTAMP, SETTABS, SUSPENDOUTPUT, SWITCHOUTPUT, TAB, TIMESTAMP
 
   ! These types made public because the class instances are public
@@ -246,7 +248,7 @@ module OUTPUT_M
   ! This is the type for configuring how to automatically format
   ! lines and whether they should be sent to stdout or elsewhere
   type outputOptions_T
-    integer :: PRUNIT = -1               ! Unit for output (see comments above).  
+    integer :: PRUNIT = STDOUTPRUNIT    ! Unit for output (see comments above).  
     integer :: MLSMSG_Level        = MLSMSG_Info ! What level if logging
     integer :: newLineVal          = 10 ! 13 means <cr> becomes new line; -999 means ignore
     integer :: nArrayElmntsPerLine = 7
@@ -284,8 +286,8 @@ module OUTPUT_M
   ! (As an alternative, use timeStamp to stamp only individual lines)
   type stampOptions_T
     logical :: neverStamp = .false.  ! if true, forget about automatic stamping
-    logical :: post = .true.      ! Put stamp at end of line?
-    logical :: showTime = .false. ! Don't show date or time unless TRUE
+    logical :: post       = .true.      ! Put stamp at end of line?
+    logical :: showTime   = .false. ! Don't show date or time unless TRUE
     character(len=24) :: textCode = ' '
     ! Don't show date unless dateFormat is non-blank
     character(len=16) :: dateFormat = ' '
@@ -2214,6 +2216,52 @@ contains
     endif
   end subroutine resetTabs
 
+  ! ----------------------------------------------  restoreSettings  -----
+  subroutine restoreSettings 
+  ! resume outputting to PRUNIT.
+    outputOptions%PRUNIT               = STDOUTPRUNIT
+    outputOptions%MLSMSG_Level         = MLSMSG_Info
+    outputOptions%newLineVal           = 10 ! 13
+    outputOptions%nArrayElmntsPerLine  = 7
+    outputOptions%nBlanksBtwnElmnts    = 3
+    outputOptions%BUFFERED             = .true.
+    outputOptions%OPENED               = .false.
+    outputOptions%SKIPMLSMSGLOGGING    = .false.
+    outputOptions%usePatternedBlanks   = .true. 
+    outputOptions%specialFillChars     = '123456789'
+    outputOptions%patterns             = (/ & ! on consecutive lines
+                                            &  '(. )            ' , &
+                                            &  '(. .)           ' , &
+                                            &  '(.  .)          ' , &
+                                            &  '(.   .)         ' , &
+                                            &  '(.. ..)         ' , &
+                                            &  '(- )            ' , &
+                                            &  '(- -)           ' , &
+                                            &  '(-  -)          ' , &
+                                            &  '(- .. )         ' /)
+                                            !   12345678901234567890
+    outputOptions%name                 = 'stdout'
+    outputOptions%advanceDefault       = 'no'
+    outputOptions%sdFormatDefault      = '*'
+    outputOptions%arrayElmntSeparator  = ' '
+
+    stampOptions%neverStamp            = .false.
+    stampOptions%post                  = .true.
+    stampOptions%showTime              = .false.
+    stampOptions%textCode              = ' '
+    stampOptions%dateFormat            = ' '
+    stampOptions%timeFormat            = 'hh:mm'
+    stampOptions%interval              = 1
+    stampOptions%TIMESTAMPSTYLE        = 'post'
+
+    timeStampOptions%post              = .true.
+    timeStampOptions%showDate          = .false.
+    timeStampOptions%textCode          = ' '
+    timeStampOptions%dateFormat        = 'yyyy-mm-dd'
+    timeStampOptions%timeFormat        = 'hh:mm:ss'
+    timeStampOptions%TIMESTAMPSTYLE    = 'post'
+  end subroutine restoreSettings
+
   ! ----------------------------------------------  resumeOutput  -----
   subroutine resumeOutput 
   ! resume outputting to PRUNIT.
@@ -2779,6 +2827,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.94  2012/08/02 21:09:53  pwagner
+! Added RestoreSettings
+!
 ! Revision 2.93  2012/08/01 00:08:21  pwagner
 ! Uses same . . pattern in option dumps
 !
