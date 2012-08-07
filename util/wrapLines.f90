@@ -10,6 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 program wrapLines
+   use IO_STUFF, only: GET_LUN
    use MACHINE, only: HP, GETARG
    use MLSMACROS, only: DUMP_MACROS, READ_MACROS, EXPAND_LINE
    use MLSSTRINGLISTS, only: WRAP
@@ -73,6 +74,7 @@ program wrapLines
     character(len=1)    :: MODE               = 's'
     character(len=3)    :: eol                = ', $'
     character(len=3)    :: quotes             = '''"'
+    character(len=255)  :: inputFile          = ' '     ! input filename       
     character(len=255)  :: macrosFile         = 'none'  ! output filename       
   end type options_T
   
@@ -86,6 +88,7 @@ program wrapLines
   character(len=1), dimension(MAXLINELEN) :: cArray
   logical :: containsQuotes
   integer :: i
+  integer :: iounit
   character(len=MAXLINELEN) :: lineIn
   character(len=MAXLINELEN) :: lineOut
   integer :: LineLengthRead ! Max encountered
@@ -116,6 +119,14 @@ program wrapLines
     call read_macros ( options%macrosFile, status )
     call dump_macros
   endif
+  ! Do we wrap a file or stdin?
+  if ( len_trim(options%inputFile) < 1 ) then
+    iounit = 5
+  else
+    call get_lun ( iounit )
+    open( iounit, status='OLD', form='FORMATTED', &
+      & recl=MAXLINELEN, file=options%inputFile )
+  endif
   if ( options%verbose ) call dumpSettings( options )
   LineLengthRead         = 0  
   nCommentsRead          = 0  
@@ -128,7 +139,7 @@ program wrapLines
   ! write (*,*) 'options%keepTrailingSpaces ', options%keepTrailingSpaces
   do
     if ( .not. options%keepTrailingSpaces ) then
-      read( *, '(a)', iostat=status ) lineIn
+      read( iounit, '(a)', iostat=status ) lineIn
       ! write (*,*) trim(lineIn)
       if ( options%macrosFile /= 'none' ) then
         call expand_line( LineIn, LineOut )
@@ -140,7 +151,7 @@ program wrapLines
       lineIn = ' '
       status = 0
       call null_fill_1d( carray )
-      read( *, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
+      read( iounit, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) cArray
 500   status = -1
 50    if ( status /= 0 ) exit
       ! write (*,*) 'Read a line starting with: ', cArray(1:1), ichar(cArray(1:1))
@@ -261,6 +272,11 @@ contains
      print *, c // 'quotes                   ', options%quotes
      print *, c // 'xfmt                     ', xfmt
      print *, c // 'advance                  ', advance
+     if ( len_trim(options%inputFile) < 1 ) then
+     print *, c // 'input  file              ', '<STDIN>'
+     else
+     print *, c // 'input  file              ', options%inputFile
+     endif
      print *, c // 'macros file              ', options%macrosFile
     end subroutine dumpSettings
 
@@ -282,6 +298,9 @@ contains
       if ( filename(1:1) /= '-' ) exit
       if ( filename(1:3) == '-h ' ) then
         call print_help
+      elseif ( filename(1:3) == '-i ' ) then
+        call getarg ( i+1+hp, options%inputFile )
+        i = i + 1
       elseif ( filename(1:3) == '-Df' ) then
         call getarg ( i+1+hp, options%macrosFile )
         i = i + 1
@@ -340,9 +359,7 @@ contains
   subroutine print_help
   ! Print brief but helpful message
       write (*,*) &
-      & 'Usage:wrapLines [options] [filenames]'
-      write (*,*) &
-      & ' If no filenames supplied, you will be prompted to supply one'
+      & 'Usage:wrapLines [options]'
       write (*,*) ' Options: -v            => switch on verbose mode'  
       write (*,*) '          -s            => print num of lines, longest'     
       write (*,*) '                            at end of stdout'
@@ -352,6 +369,8 @@ contains
       write (*,*) '                          blank lines (default is infinite)'         
       write (*,*) '          -c char       => treat char as comment'     
       write (*,*) '                          (default is ";")'         
+      write (*,*) '          -i file       => wrap file'     
+      write (*,*) '                          (default is to wrap stdin)'         
       write (*,*) '          -Df file      => get macros definitions from file'     
       write (*,*) '                          (default is to do no macros expansion)'         
       write (*,*) '          -eol chars    => glue chars to end of broken lines'
@@ -371,6 +390,9 @@ contains
   end subroutine print_help
 end program wrapLines
 ! $Log$
+! Revision 1.3  2012/08/03 16:54:04  pwagner
+! Can now expand some macros using definitions from separate macros file
+!
 ! Revision 1.2  2008/06/17 00:05:15  pwagner
 ! Can skip consecutive blanks
 !
