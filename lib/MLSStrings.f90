@@ -34,7 +34,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 
 !     (subroutines and functions)
 ! asciify            purify chars to be within printing range [32,126]
-!                      (no binary)
+!                      (no binary) (see also ReplaceNonAscii)
 ! Capitalize         tr[a-z] -> [A-Z]
 ! CatStrings         Concatenate strings with a specified separator
 ! ShiftLRC           Shift string to left, center, or right
@@ -62,7 +62,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! ReadNumsFromChars  Converts an [array of] strings to num[s] using Fortran read
 ! ReadRomanNumerals  Converts a Roman numeral (e.g. 'ix') to its integer value
 ! Replace            Replaces every instance of oldChar with newChar
-! ReplaceNonAscii    Replaces every non-ascii char with newChar
+! ReplaceNonAscii    Replaces every non-ascii char with newChar (see also asciify)
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! Reverse_trim       (Reverses after trimming its argument)
 ! Rot13              Like ROT13 but for general integer nn
@@ -84,7 +84,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! char* asciify (char* str)
+! char* asciify ( char* str, [char* how] )
 ! char* Capitalize (char* str)
 ! CatStrings ( char* strings(:), char* sep, char* stringsCat, int L )
 ! char* CompressString (char* str)
@@ -109,7 +109,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! readNumsFromChars (char* strs[(:)], num num[(:)], char* forbiddens)
 ! readRomanNumerals (char* strs, int int)
 ! char* Replace (char* str, char oldChar, char newChar, [int max])
-! char* ReplaceNonAscii (char* str, char newChar)
+! char* ReplaceNonAscii ( char* str, char newChar, [char* exceptions] )
 ! char* Reverse (char* str)
 ! char* Reverse_trim (char* str)
 ! char* Rot13 ( char* str, [int nn], [char* otp], [log inverse] )
@@ -816,8 +816,6 @@ contains
   ! ------------------------------------------------  lenTrimToAscii  -----
   function lenTrimToAscii (str) result (trimmedLength)
     ! Return the len_trim of a string treating all non-Ascii as blanks
-    ! for our purposes, words consist of any non-space characters
-    ! and are separated by one or more spaces
     ! -----added by hcp-------- 
     !--------argument--------!
     character (len=*), intent(in) :: str
@@ -1355,17 +1353,20 @@ contains
   end function Replace
 
    ! --------------------------------------------------  ReplaceNonAscii  -----
-  function ReplaceNonAscii (str, newchar) RESULT (outstr)
+  function ReplaceNonAscii (str, newchar, exceptions) RESULT (outstr)
     ! takes a string and returns one with non-ascii chars replaced by newChar
     ! E.g., to replace every char(0), which is the NUL character, 
     ! and a trailing char(13), which is a line feed,
     ! with blanks, which is char(32)
     ! arg = ReplaceNonAscii( arg, char(32) )
     
+    ! If exceptions are present, don't replace them
+    
     ! (see also asciify)
-    character(len=*), intent(in) :: str
-    character(len=1), intent(in) :: newChar
-    character(len=len(str))      :: outstr
+    character(len=*), intent(in)           :: str
+    character(len=1), intent(in)           :: newChar
+    character(len=*), intent(in), optional :: exceptions
+    character(len=len(str))                :: outstr
     ! Internal variables
     integer :: i, n
     ! Executable
@@ -1373,6 +1374,9 @@ contains
     if ( len(str) < 1 ) return
     n = len(str)
     do i=1, n
+      if ( present(exceptions) ) then
+        if ( index(exceptions, str(i:i)) > 0 ) cycle
+      endif
       if ( .not. isAscii(str(i:i)) ) outstr(i:i) = newChar
     enddo
   end function ReplaceNonAscii
@@ -2676,6 +2680,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.86  2012/08/07 18:02:37  pwagner
+! ReplaceNonAscii now takes optional arg exceptions which dont get replaced
+!
 ! Revision 2.85  2012/07/10 15:15:33  pwagner
 ! Added SplitDetails
 !
