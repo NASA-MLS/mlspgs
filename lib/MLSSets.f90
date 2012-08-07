@@ -124,7 +124,8 @@ module MLSSets
 !               Find the longest stretch of consecutive matches
 ! FindNext      Find the next instead
 ! FindUnique    Return only the unique elements of a set;
-!                 formally, a set contains only unique elements
+!                 formally, a set contains only unique elements, so this
+!                 will in fact reduce any improper set to a proper set
 ! Intersect     Return true if two sets represented by arrays of integers have
 !               a common element
 ! Intersection  Compute intersection of two sets
@@ -154,10 +155,10 @@ module MLSSets
 ! int FindFirstSubString (char* set, char* probe, [log reverse])      
 ! FindIntersection ( set1(:), set2(:), int which1(:), int which2(:),
 !      [int how_many] )
-! int FindLastCharacter (char* set(:), char* probe)
-! int FindLastInteger (int set(:), int probe)      
-! int FindLastLogical (log condition(:))      
-! int FindLastSubString (char* set, char* probe, [log reverse])      
+! int FindLastCharacter (char* set(:), char* probe, [log reverse])
+! int FindLastInteger (int set(:), int probe, [log reverse])
+! int FindLastLogical (log condition(:), [log reverse])    
+! int FindLastSubString (char* set, char* probe, [log reverse])
 ! FindLongestCharacter (char* set(:), char* probe, int range(2))
 ! FindLongestInteger (int set(:), int probe, int range(2))
 ! FindLongestLogical (log condition(:), int range(2))
@@ -661,42 +662,72 @@ contains ! =====     Public Procedures     =============================
   ! These next could be done by reversing the list order and
   ! calling findFirst
   ! -------------------------------------------  FindLastCharacter  -----
-  integer function FindLastCharacter ( Set, Probe )
+  function FindLastCharacter ( Set, Probe, Reverse ) result(LAST)
     ! Find the last element in the array Set that is equal to Probe
     ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
     character(len=*), dimension(:), intent(in) :: Set
-    character(len=*), intent(in) :: Probe
-
+    character(len=*), intent(in)               :: Probe
+    logical, optional, intent(in)              :: REVERSE
+    integer                                    :: LAST
+    logical                                    :: myReverse
     ! Executable code
-    do FindLastCharacter = size(set), 1, -1
-      if ( trim(set(FindLastCharacter)) == trim(probe) ) return
-    end do
-    FindLastCharacter = 0
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    if ( myReverse ) then
+      do Last = size(set), 1, -1
+        if ( trim(set(Last)) /= trim(probe) ) return
+      end do
+    else
+      do Last = size(set), 1, -1
+        if ( trim(set(Last)) == trim(probe) ) return
+      end do
+    endif
+    Last = 0
   end function FindLastCharacter
 
   ! -------------------------------------------  FindLastInteger  -----
-  integer function FindLastInteger ( Set, Probe )
+  function FindLastInteger ( Set, Probe, Reverse ) result(LAST)
     ! Find the last element in the array Set that is equal to Probe
     integer, dimension(:), intent(in) :: Set
     integer, intent(in) :: Probe
-
+    logical, optional, intent(in)              :: REVERSE
+    integer                                    :: LAST
+    logical                                    :: myReverse
     ! Executable code
-    do FindLastInteger = size(set), 1, -1
-      if ( set(FindLastInteger) == probe ) return
-    end do
-    FindLastInteger = 0
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    if ( myReverse ) then
+      do Last = size(set), 1, -1
+        if ( set(Last) /= probe ) return
+      end do
+    else
+      do Last = size(set), 1, -1
+        if ( set(Last) == probe ) return
+      end do
+    endif
+    Last = 0
   end function FindLastInteger
 
   ! -------------------------------------------  FindLastLogical  -----
-  integer function FindLastLogical ( condition )
+  function FindLastLogical ( condition, Reverse ) result(LAST)
     ! Find the last logical in the array that is true
     logical, dimension(:), intent(in) :: CONDITION
-
+    logical, optional, intent(in)              :: REVERSE
+    integer                                    :: LAST
+    logical                                    :: myReverse
     ! Executable code
-    do FindLastLogical = size(condition), 1, -1
-      if ( condition(FindLastLogical) ) return
-    end do
-    FindLastLogical = 0
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    if ( myReverse ) then
+      do Last = size(condition), 1, -1
+        if ( .not. condition(Last) ) return
+      end do
+    else
+      do Last = size(condition), 1, -1
+        if ( condition(Last) ) return
+      end do
+    endif
+    Last = 0
   end function FindLastLogical
 
   ! -------------------------------------------  FindLastLogical2D  -----
@@ -1636,6 +1667,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.24  2012/08/07 17:59:47  pwagner
+! FindLast.. now takes optional arg Reverse
+!
 ! Revision 2.23  2011/04/28 22:43:29  vsnyder
 ! Regularize declarations in FindFirst... routines
 !
