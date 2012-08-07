@@ -1398,7 +1398,7 @@ contains
     i = index( chars, achar(myNewLineVal) )
     if ( i < 1 ) then
       if ( myAsciify) then
-        call OUTPUT_CHAR_NOCR ( ReplaceNonAscii(CHARS, '@'), &
+        call OUTPUT_CHAR_NOCR ( ReplaceNonAscii(CHARS, '@', exceptions=achar(9)), &
           & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
       else
         call OUTPUT_CHAR_NOCR ( CHARS, &
@@ -1408,7 +1408,7 @@ contains
       do i=1, len(chars)
         if ( chars(i:i) /= achar(myNewLineVal) ) then
           if ( myAsciify ) then
-            call OUTPUT_CHAR_NOCR ( ReplaceNonAscii(CHARS(i:i), '@'), &
+            call OUTPUT_CHAR_NOCR ( ReplaceNonAscii(CHARS(i:i), '@', exceptions=achar(9)), &
               & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
               & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, &
               & DONT_STAMP=DONT_STAMP )
@@ -2827,6 +2827,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.95  2012/08/07 18:01:22  pwagner
+! output simply prints tab character as is instead of as '@'
+!
 ! Revision 2.94  2012/08/02 21:09:53  pwagner
 ! Added RestoreSettings
 !
