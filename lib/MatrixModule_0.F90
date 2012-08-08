@@ -3139,13 +3139,13 @@ contains ! =====     Public Procedures     =============================
   subroutine SparsifyA ( Z, B, Why, CallingModule )
   ! Given an array Z, compute its sparse representation and store it
   ! in the matrix block B.
+  ! If either Why or CallingModule is present, Z is deallocated using
+  ! Deallocate_Test
     real(rm), pointer :: Z(:,:)              ! Full array of values
     type(MatrixElement_T), intent(inout) :: B     ! Z as a block, maybe sparse
     ! B is intent(inout) so that createBlock gets a chance to clean up surds
     character(len=*), intent(in), optional :: Why
     character(len=*), intent(in), optional :: CallingModule
-    ! If either Why or CallingModule is present, Z is deallocated using
-    ! Deallocate_Test
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyBlock using the B argument of this
@@ -3154,6 +3154,8 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I1, I2              ! Row indices in Z
+    logical :: InPlace             ! The matrix is being sparsified in place
+                                   ! because the argument A was absent
     integer :: J                   ! Column index in Z
     integer :: KIND                ! Representation to use for B
     integer :: NNZ                 ! Number of nonzeroes in Z
@@ -3163,6 +3165,8 @@ contains ! =====     Public Procedures     =============================
     real(r4) :: ZT(size(z,2))      ! Maximum value in a column of Z, then
       ! max(sqrt(sq_eps*zt),tiny(1.0_rm)).  Elements less than this threshold
       ! in magnitude are considered to be zero.
+
+    inPlace = associated(z,b%values)
 
     if ( sq_eps < 0.0_rm ) sq_eps = sqrt(epsilon(1.0_rm))
     do j = 1, size(z,2)
@@ -3181,6 +3185,8 @@ contains ! =====     Public Procedures     =============================
     end do ! j
     nnz = sum(nnzc)
     if ( nnz == 0 ) then ! Empty
+      if ( inplace ) nullify ( z ) ! Don't try to deallocate it later;
+                                   ! CreateBlock will deallocate it now:
       call createBlock ( b, size(z,1), size(z,2), M_Absent, forWhom="SparsifyA" )
     else if ( nnz <= int(sparsity * size(z)) ) then ! sparse
       kind = M_Banded
@@ -3201,6 +3207,8 @@ contains ! =====     Public Procedures     =============================
         end if
         nnzc(j) = max(i2 - i1 + 1,0)
       end do ! j
+      ! Don't deallocate Z by way of B%Values during CreateBlock:
+      if ( inplace ) nullify ( b%value1, b%values, b%value3 )
       if ( kind == M_Banded ) then
         call createBlock ( b, size(z,1), size(z,2), M_Banded, sum(nnzc), &
           & forWhom="SparsifyA" )
@@ -3227,16 +3235,9 @@ contains ! =====     Public Procedures     =============================
         end do ! j
       end if
     else ! full
-      if ( present(why) .or. present(callingModule) ) then
-        ! Don't worry, create block still deallocates b%values even with noValues set
-        call createBlock ( b, size(z,1), size(z,2), M_Full, noValues=.true., &
-          & forWhom="SparsifyA" )
-        b%values => z
-        nullify ( z )
-      else
-        call createBlock ( b, size(z,1), size(z,2), M_Full, forWhom="SparsifyA" )
-        b%values = z
-      end if
+      if ( inPlace ) return ! Don't deallocate B%Values by way of Z
+      call createBlock ( b, size(z,1), size(z,2), M_Full, forWhom="SparsifyA" )
+      b%values = z
     end if
     if ( present(why) ) then
       if ( present(callingModule) ) then
@@ -3729,6 +3730,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.15  2012/08/08 20:02:07  vsnyder
+! Try to handle aliasing better in SparsifyA
+!
 ! Revision 2.14  2012/07/31 00:44:05  vsnyder
 ! Copy nChan and nVert components in AssignBlock.  Add SANSREMAP prepro
 ! switch in CreateValues and DestroyValues.  Use CreateBlock abstraction in
