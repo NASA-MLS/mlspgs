@@ -50,7 +50,7 @@ module LOAD_SPS_DATA_M
 !                                                 molecules
     real(rp), pointer :: phi_basis(:) => null() ! phi  grid entries for all
 !                                                 molecules
-    real(rp), pointer :: values(:) => null()    ! species values (eg vmr). 
+    real(rp), pointer :: values(:) => null()    ! species values (eg vmr).
 !     This is really a three-dimensional quantity dimensioned frequency
 !     (or 1) X zeta (or 1) X phi (or 1), taken in Fortran's column-major
 !     array-element order.
@@ -66,7 +66,7 @@ module LOAD_SPS_DATA_M
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------------
@@ -193,40 +193,45 @@ contains
     integer, intent(in), optional :: Maf
     type(forwardModelConfig_t), intent(in), optional :: FwdModelConf
     logical, intent(in), optional :: SetDerivFlags
-    logical, intent(in), optional :: SetTscatFlag 
+    logical, intent(in), optional :: SetTscatFlag
 
     type(vectorValue_t) :: QtyStuff
     logical :: MyFlag
-    integer :: ii, no_ang, max_ele
- 
+    integer :: ii, no_ang
+
     myFlag = .false.
     if ( present(SetTscatFlag) ) myFlag = SetTscatFlag
 
     if ( myFlag ) then
-  
-       max_ele = size (Qty%values,1)
-       no_ang=FwdModelConf%num_scattering_angles
+
+       no_ang = FwdModelConf%num_scattering_angles
 
        qtyStuff%template = qty%template     ! having same template as temp
 
        call create_grids_1 ( grids_x, no_ang )
        grids_x%min_val = -huge(0.0_r8)
        grids_x%p_len = 0
-       
-       do ii=1, no_ang
-          qtyStuff%values => qty%values(1:max_ele,ii:ii)
-          call fill_grids_1 ( grids_x, ii, qtyStuff, phitan, maf, fwdModelConf )
+
+       do ii = 1, no_ang
+         call fill_grids_1 ( grids_x, ii, qtyStuff, phitan, maf, fwdModelConf )
        end do
 
        call create_grids_2 ( grids_x )
 
-       do ii=1, no_ang
-         qtyStuff%values => qty%values(1:max_ele,ii:ii)
+       do ii = 1, no_ang
+         ! ??? Can this work?  In Fill_Grids_2, the second subscript   ???
+         ! ??? range for qtyStuff%values is grids_x%windowStart:       ???
+         ! ??? grids_x%windowFinish, but qtyStuff%values will have a   ???
+         ! ??? shape of [ size(qty%values,1), 1 ].  Perhaps in the     ???
+         ! ??? call to Fill_Grids_1 above, WS and WF should have been  ???
+         ! ??? specified with the value II, and then all of qty%values ???
+         ! ??? should be passed to Fill_Grids_2 here.                  ???
+         qtyStuff%values => qty%values(:,ii:ii)
          call fill_grids_2 ( grids_x, ii, qtyStuff, setDerivFlags )
        end do
 
     else
-       
+
        call create_grids_1 ( grids_x, 1 )
 
        if ( present(phitan) ) then
@@ -264,7 +269,7 @@ contains
     type (VectorValue_T), intent(in) :: BOUNDARYPRESSURE
 
     integer :: KF, KZ, KP
-    real(r8) :: RHI 
+    real(r8) :: RHI
     integer :: Supersat_Index
     integer :: WF1, WF2
     integer :: V0               ! One before starting point in Values array
@@ -284,7 +289,7 @@ contains
 
     ! Here, we have to assert that temperature, h2o and boundarypressure share
     ! the same horizontal and vertical (except boundary pressure) grids.
-    failed =  kf /= 1 
+    failed =  kf /= 1
     failed = failed .or. kf /= grids_tmp%l_f(1) - grids_tmp%l_f(0)
     failed = failed .or. kz /= grids_tmp%l_z(1) - grids_tmp%l_z(0)
     failed = failed .or. &
@@ -309,7 +314,7 @@ contains
     end if
     if ( failed ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'When overwriting H2O, boundary pressure must share coordinates with temperature' )
-      
+
     ! To get height index h, profile index p the values are in:
     ! h2o: grids_f%values ( v0 + h + kz*p )
     ! temperature: grids_tmp%values ( h + kz*p )
@@ -330,8 +335,8 @@ contains
       ! find the index for the top of saturation levels
       call Hunt (Grids_f%zet_basis(z0+1:z0+kz), -log10(boundaryPressure%values(1,p)), &
         & supersat_Index, 1, nearest=.true.)
-      
-      if (supersat_Index < 1 .or. supersat_Index > kz) then        
+
+      if (supersat_Index < 1 .or. supersat_Index > kz) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'the top for supersaturation is out of range' )
       else
@@ -777,6 +782,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.87  2011/11/11 00:40:17  vsnyder
+! Update a comment about extinction
+!
 ! Revision 2.86  2011/08/25 22:37:36  vsnyder
 ! Delete s_ind dummy argument, since it is never used.  The s_ind component
 ! of grids_x is used instead.  Move filling grids_x%s_ind to fill_grids_1,
