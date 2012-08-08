@@ -66,7 +66,6 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: noInstances     ! Number of horizontal instances in this quantity
     integer :: noSurfs         ! Number of surfaces per instance
     integer :: noChans         ! Number of channels
-    ! So far, the next two are used only for TScat quantities
 
     ! Flags describing the quantity
 
@@ -117,14 +116,14 @@ module QuantityTemplates         ! Quantities within vectors
     ! surfs(i,j) for an incoherent one.
 
     ! Horizontal coordinates
-    logical :: sharedHGrid              ! Set if horiz coords a pointer not a copy
+    logical :: sharedHGrid              ! Set if horiz coord is a pointer not a copy
     integer :: hGridIndex               ! Index of any hGrid used
     integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
     integer :: grandTotalInstances      ! Total number of instances in destination output file
     ! for example MAF index, or profile index.
     real(r8), dimension(:,:), pointer :: phi => NULL()
 
-    ! This is dimensioned (1, noInstances) for stacked quantities and
+    ! Phi is dimensioned (1, noInstances) for stacked quantities and
     ! (noSurfs, noInstances) for unstacked ones.  The PHI coordinate for the
     ! (i,j) value is phi(1,j) for a stacked quantity and phi(i,j) for an
     ! unstacked one.
@@ -150,7 +149,7 @@ module QuantityTemplates         ! Quantities within vectors
     real(r8), dimension(:), pointer :: frequencies => NULL() ! List of frequencies
                                         ! for Channels(ChanInds)
     integer :: frequencyCoordinate      ! An enumerated type, e.g. FG_USBFreq
-    real(r8) :: lo                      ! Local oscillator
+    real(r8) :: lo                      ! Local oscillator frequency, MHz
     logical :: sharedFGrid              ! Set of frequencies are a pointer not a copy
     integer :: sideband                 ! Associated sideband -1, 0, +1
     integer :: signal                   ! Index into signals database
@@ -167,7 +166,7 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    ! For irregular quantities, instead of using the we have these arrays to
+    ! For irregular quantities, we have these arrays to
     ! help us navigate around the quantity.
 
     integer, dimension(:,:), pointer :: surfIndex => NULL()
@@ -222,7 +221,9 @@ module QuantityTemplates         ! Quantities within vectors
     & 'losangle   ', &
     & 'frequencies' &
     & /)
+
 contains
+
  ! =====     Public Procedures     =============================
 
   ! Subroutines to deal with these quantitites
@@ -551,7 +552,7 @@ contains
 
   end subroutine DUMP_QUANTITY_TEMPLATES
 
-  ! ---------------------------------- InflateQuantityTemplateDatabase --
+  ! ------------------------------ InflateQuantityTemplateDatabase -----
   integer function InflateQuantityTemplateDatabase ( database, extra )
     ! Make a quantity template database bigger by extra
     ! Return index of first new element
@@ -567,7 +568,7 @@ contains
     InflateQuantityTemplateDatabase = firstNewItem
   end function InflateQuantityTemplateDatabase
 
-  ! ----------------------------  ModifyQuantityTemplate   -----
+  ! ------------------------------------  ModifyQuantityTemplate   -----
   ! This family modifies a quantity template's fields according to
   ! specified input
   ! This is something of a hack: normally we create a quantity template
@@ -824,7 +825,7 @@ contains
     end select
   end subroutine ModifyQuantityTemplate_sca
 
-  ! ----------------------------------------NullifyQuantityTemplate -----
+  ! ------------------------------------  NullifyQuantityTemplate  -----
   subroutine NullifyQuantityTemplate ( IntentionallyNotUsed )
     ! Given a quantity template, nullify all the pointers within it
     type ( QuantityTemplate_T ), intent(out) :: IntentionallyNotUsed
@@ -839,7 +840,7 @@ contains
 
   end subroutine NullifyQuantityTemplate
 
-  ! -------------------------------------  ReadAttributes_QuantityTemplate  -----
+  ! ----------------------------  ReadAttributes_QuantityTemplate  -----
   subroutine ReadAttributes_QuantityTemplate ( dsID, QT )
     ! Note:
     ! Most or all of the character-valued attributes are to be stored in the 
@@ -1046,7 +1047,7 @@ contains
     ! if ( switchDetail(switches, 'qtmp') > -1 ) call dump(qty, details=0, noL2CF=.true.)
   end subroutine SetupNewQuantityTemplate
 
-  ! -------------------------------------  WriteAttributes_QuantityTemplate  -----
+  ! ---------------------------  WriteAttributes_QuantityTemplate  -----
   subroutine WriteAttributes_QuantityTemplate ( dsID, NAME, &
     & QT, NOL2CF )
 
@@ -1115,7 +1116,7 @@ contains
   end subroutine WriteAttributes_QuantityTemplate
 
   ! --------- Private procedures ---
-  ! ---------------------------- CheckIntegrity_QuantityTemplate -------
+  ! ----------------------------  CheckIntegrity_QuantityTemplate  -----
   logical function CheckIntegrity_QuantityTemplate ( qty, noError )
     type (QuantityTemplate_T), intent(in) :: QTY
     logical, intent(in), optional :: NOERROR
@@ -1348,7 +1349,7 @@ contains
 
   end function CheckIntegrity_QuantityTemplate
 
-  ! ---------------------------------------- GetHDF5AttrAsLitID -----
+  ! -----------------------------------------  GetHDF5AttrAsLitID  -----
   subroutine GetHDF5AttrAsLitID ( dsID, attrName, LitID )
     ! Given a DS, File or GroupID, find the character-valued attribute
     ! for the attribute named attrName of the dataset name
@@ -1375,7 +1376,7 @@ contains
     litID = -1 ! Still not found
   end subroutine GetHDF5AttrAsLitID
 
-  ! ---------------------------------------- GetHDF5AttrAsStrID -----
+  ! -----------------------------------------  GetHDF5AttrAsStrID  -----
   subroutine GetHDF5AttrAsStrID ( dsID, attrName, strID )
     ! Given a DS, File or GroupID, find the character-valued attribute
     ! for the attribute named attrName of the dataset name
@@ -1397,7 +1398,7 @@ contains
     
   end subroutine GetHDF5AttrAsStrID
 
-  ! ---------------------------------------- myDisplayString -----
+  ! --------------------------------------------  myDisplayString  -----
   subroutine myDisplayString ( index, advance )
     ! Given a string index, display the string or an error message
     use String_Table, only: HOW_MANY_STRINGS
@@ -1414,7 +1415,7 @@ contains
     end if
   end subroutine myDisplayString
 
-  ! ---------------------------------------- myGetString -----
+  ! ------------------------------------------------  myGetString  -----
   subroutine myGetString ( index, what, strip )
     ! Given a string index, Get the string or an error message
     use String_Table, only: HOW_MANY_STRINGS
@@ -1433,7 +1434,7 @@ contains
     end if
   end subroutine myGetString
 
-  ! ---------------------------------------- myValuesToField -----
+  ! --------------------------------------------  myValuesToField  -----
   ! This family of subroutines assigns from the values field
   ! explicitly to the template's own field
   ! Unless spread is TRUE, we assume there are exactly enough values
@@ -1581,6 +1582,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.70  2012/07/10 03:53:49  vsnyder
+! Use DeepCopy
+!
 ! Revision 2.69  2012/02/24 21:11:50  pwagner
 ! Include surfs when writing quantity attributes
 !
