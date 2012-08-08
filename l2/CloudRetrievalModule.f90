@@ -504,12 +504,7 @@ contains
               end if
 
               ! determine MAF flag (i.e., whether to call Forward Model for the MAF)
-              do maf=1,nMAFs
-              do mif=1,nMifs
-              if(any(iand(ichar(Tcir%mask(:, maf)), m_cloud) == 16) &
-               & ) doMaf(maf) = .true.
-              end do
-              end do
+              doMaf = any(iand(ichar(Tcir%mask), m_cloud) /= 0,1)
 
         end do ! band signals
         end do ! configIndices or models
@@ -562,8 +557,8 @@ contains
               itop = 0
               if(maf > 1) then
               do mif = 1, nMifs
-               if(iand(ichar(ConstrainTcir%mask(ich0+(mif-1)*nFreqs0, maf-1)), m_cloud) == 16) &
-                & itop = mif
+                if(iand(ichar(ConstrainTcir%mask(ich0+(mif-1)*nFreqs0, maf-1)), m_cloud) /= 0) &
+                  & itop = mif
               end do
               end if
               
@@ -953,6 +948,9 @@ contains
 !---------------------------------------------------------------------------
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.14  2012/08/08 19:58:23  vsnyder
+! Simplify doMAF calculation, check mask more robustly
+!
 ! Revision 2.13  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
