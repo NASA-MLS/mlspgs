@@ -1759,6 +1759,7 @@ contains ! =====     Public Procedures     =============================
     subroutine FillCovariance ( covariance, vectors, diagonal, &
       & lengthScale, fraction, invert )
       ! This routine fills a covariance matrix from a given set of vectors
+      use MatrixModule_0, only: CreateBlock, MatrixElement_t, M_Full
       type (Matrix_SPD_T), intent(inout) :: COVARIANCE ! The matrix to fill
       type (Vector_T), dimension(:), intent(in), target :: VECTORS ! The vector database
       integer, intent(in) :: DIAGONAL     ! Index of vector describing diagonal
@@ -1782,7 +1783,7 @@ contains ! =====     Public Procedures     =============================
       integer :: K                        ! Loop index
       integer :: N                        ! Size of matrix block
       integer :: Q                        ! Quantity index
-      real (rm), dimension(:,:), pointer :: M ! The matrix being filled
+      type (MatrixElement_t), pointer :: M ! The matrix being filled
       real (r8), dimension(:), pointer :: SURFS ! The vertical coordinate
       real (r8) :: distance               ! Distance between two points
       real (r8) :: thisLength             ! Geometric mean length scale
@@ -1796,7 +1797,7 @@ contains ! =====     Public Procedures     =============================
         & call trace_begin ( 'FillUtils_1.FillCovariance' )
 
       ! Apply mask to diagonal
-      nullify ( m, condition )
+      nullify ( condition )
       call CopyVector ( Dmasked, vectors(diagonal), clone=.true., &
         & vectorNameText='_Dmasked' )
       call ClearUnderMask ( Dmasked )
@@ -1853,17 +1854,19 @@ contains ! =====     Public Procedures     =============================
           if ( .not. qt%regular ) &
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Unable to handle irregular quantity in Covariance" )
-          call Allocate_test ( m, n, n, 'M', ModuleName )
 
           ! Loop over the instances
           do i = 1, qt%noInstances
+            b = FindBlock ( covariance%m%col, q, i )
+            m => covariance%m%block(b,b)
+            call createBlock ( m, n, n, m_full, forWhom=moduleName )
             anyOffDiag = .false.
             if ( .not. qt%coherent ) surfs => qt%surfs(:,i)
 
             ! Clear the working matrix and load the diagonal
-            m = 0.0_rm
+            m%values = 0.0_rm
             do j = 1, n
-              m(j,j) = d%values(j,i) ** 2.0
+              m%values(j,j) = d%values(j,i) ** 2.0
             end do
 
             ! Now if appropriate add off diagonal terms.
@@ -1871,7 +1874,7 @@ contains ! =====     Public Procedures     =============================
               ! Loop over off diagonal terms
               do j = 1, n
                 do k = 1, j-1
-                  meanDiag = sqrt ( m(j,j) * m(k,k) )
+                  meanDiag = sqrt ( m%values(j,j) * m%values(k,k) )
                   if ( lengthScale /= 0 ) &
                     & thisLength = sqrt ( l%values(j,i) * l%values(k,i) )
                   if ( fraction /= 0 ) thisFraction = f%values(j,i)
@@ -1887,7 +1890,7 @@ contains ! =====     Public Procedures     =============================
                       &               log10 ( surfs( (k-1)/qt%noChans + 1) ) ) / decade
                   end select
                   if ( thisLength > 0.0 .and. thisFraction > 0.0 ) then
-                    m(j,k) = meanDiag*thisFraction*exp(-distance/thisLength)
+                    m%values(j,k) = meanDiag*thisFraction*exp(-distance/thisLength)
                     anyOffDiag = .true.
                   end if
                 end do                    ! Loop over k (in M)
@@ -1899,25 +1902,23 @@ contains ! =====     Public Procedures     =============================
               call Allocate_test ( condition, n, 'condition', ModuleName )
               condition = d%values(:,i) <= 0.0_rv
               do j = 1, n
-                if ( condition(j) ) M(j,j) = 1.0_rm
+                if ( condition(j) ) m%values(j,j) = 1.0_rm
               end do
               if ( anyOffDiag ) then
-                call MatrixInversion(M, upper=.true.)
+                call MatrixInversion(M%values, upper=.true.)
               else
                 do j = 1, n
-                  m(j,j) = 1.0 / m(j,j)
+                  m%values(j,j) = 1.0 / m%values(j,j)
                 end do
               end if
               do j = 1, n
-                if ( condition(j) ) M(j,j) = 0.0_rm
+                if ( condition(j) ) m%values(j,j) = 0.0_rm
               end do
               call Deallocate_test ( condition, 'condition', ModuleName )
             end if
 
-            b = FindBlock ( covariance%m%col, q, i )
-            call Sparsify ( M, covariance%m%block(b,b) )
+            call Sparsify ( M )
           end do                          ! Loop over instances
-          call Deallocate_test ( m, 'M', ModuleName )
         end do                            ! Loop over quantities
       end if                              ! A non diagonal fill
 
@@ -7501,6 +7502,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.62  2012/08/08 19:57:06  vsnyder
+! Use a matrix block instead of a real array in FillCovariance
+!
 ! Revision 2.61  2012/07/31 00:49:02  vsnyder
 ! Use DestroyVectoryQuantityMask abstraction
 !
