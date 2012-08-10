@@ -38,6 +38,8 @@
 GZIPLEVEL="1"
 #          ^^^---- compression level ("" means none)
 
+
+REECHO="`echo $0 | sed 's/mlsnrt/reecho/'`"
 # In addition to whatever options and switches may be set by the environment
 # variable OTHEROPTS, the following are set:
 # -g       trace path of execution through code sections
@@ -227,13 +229,13 @@ fi
 # (must not reverse order of repack, augment)
 if [ -x "$NETCDFAUGMENT" ]
 then
-  files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
+  files=`$REECHO *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
   if [ "$files" = "" ]
   then
     if [ -d "outputs" ]
     then
       cd "outputs"
-      files=`extant_files *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
+      files=`$REECHO *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
     fi
   fi
   for file in $files
@@ -254,6 +256,9 @@ else
 fi
 
 # $Log$
+# Revision 1.4  2012/02/15 18:12:06  pwagner
+# Offer last chance to find h5repack in HDFTOOLS directory
+#
 # Revision 1.3  2010/01/28 01:12:10  pwagner
 # May augment level 2 product files to be netcdf-compatible
 #

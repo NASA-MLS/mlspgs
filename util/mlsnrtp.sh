@@ -66,6 +66,7 @@ GZIPLEVEL="1"
 # pro      announce input files at opening, output files at creation
 # time     summarize time consumed by each code  section, phase, etc.
 #EXTRA_OPTIONS="$@"
+echo "Launching mlsnrtp with args $@"
 PCF=$2
 otheropts="$OTHEROPTS --sharedPCF -g --wall --cat --submit l2q --delay 20000 -S'l2q,glob,mas,chu,opt1,log,pro,time'"
 
@@ -171,7 +172,7 @@ then
   cat $LEVEL2_BINARY_DIR/license.txt
 fi
 
-env
+#env
 ulimit -s unlimited
 ulimit -a
 
@@ -180,6 +181,7 @@ GZIPLEVEL="1"
 #          ^^^---- compression level ("" means none)
 
 MLSPROG_0=mlsl0sn
+#MLSPROG_0=showme.sh
 MLSPROG_1=mlsl1log
 MLSPROG_2=mlsl1g
 MLSPROG_3=mlsl1t
@@ -191,8 +193,12 @@ MLSPROG_3=mlsl1t
 
 JOBENV=job.env
 echo "#!/bin/sh" > $JOBENV
+# echo "export PGS_PC_INFO_FILE=$PCF" >> $JOBENV
+if [ -f "$MLSTOOLS/tkreset.sh" ]
+then
+  echo ". $MLSTOOLS/tkreset.sh" >> $JOBENV
+fi
 echo ". $PGE_ROOT/pgs-env.ksh" >> $JOBENV
-echo "export PGS_PC_INFO_FILE=$PCF" >> $JOBENV
 echo "export JOBDIR=$JOBDIR" >> $JOBENV
 echo "export MLSTOOLS=$MLSTOOLS" >> $JOBENV
 echo "export PGSMEM_USESHM=$PGSMEM_USESHM" >> $JOBENV
@@ -282,12 +288,13 @@ fi
 # (3) Create the level 2 job and run it
 # We try to reuse the already existing mlsl2p.sh script, presumably in 
 #    $LEVEL2_BINARY_DIR
-. $PGE_ROOT/pgs-env.ksh
+#. $PGE_ROOT/pgs-env.ksh
+#. $JOBDIR/$JOBENV
 export OTHEROPTS="$otheropts"
 MASTERSCRIPT="masterscript.sh"
 echo "#!/bin/sh" > $MASTERSCRIPT
 echo ". $JOBDIR/$JOBENV" >> $MASTERSCRIPT
-echo "export PGS_PC_INFO_FILE=$PCF" >> $MASTERSCRIPT
+#echo "export PGS_PC_INFO_FILE=$PCF" >> $MASTERSCRIPT
 echo "env" >> $MASTERSCRIPT
 echo "$LEVEL2_BINARY" >> $MASTERSCRIPT
 export JOBDIR="`pwd`"
@@ -295,10 +302,15 @@ export JOBDIR="`pwd`"
 mv pvmlog job1logs
 # Now we launch the master task itself to set everything in motion
 chmod a+x $MASTERSCRIPT
-echo PGS_PC_Shell.sh $MASTERSCRIPT
-PGS_PC_Shell.sh $MASTERSCRIPT $EXTRA_OPTIONS $@
+MASTERSCRIPT="$LEVEL2_BINARY"
+echo PGS_PC_Shell.sh $MASTERSCRIPT $@
+which PGS_PC_Shell.sh
+PGS_PC_Shell.sh $MASTERSCRIPT $@
 
 # $Log$
+# Revision 1.3  2012/07/10 22:31:48  pwagner
+# Changes needed to work at the sips
+#
 # Revision 1.2  2012/06/07 21:16:00  pwagner
 # Many changes; appears to work now
 #

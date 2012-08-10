@@ -128,26 +128,29 @@ then
 . $HOME/.bashrc
 fi
 
+JOBDIR=jjoobbddiirr
+PGSMEM_USESHM=ppggssmmeemmuusseesshhmm
 #LOGFILE=${HOME}/slave.log
 PGE_ROOT=ppggeerroott
 #echo $PGE_ROOT > $LOGFILE
 #env >> $LOGFILE
 PGSBIN=ppggssbbiinn
 #echo $PGSBIN >> $LOGFILE
-if [ -r "$PGE_ROOT/science_env.sh"  ]
+if [ -r "$JOBDIR/job.env"  ]
 then
-. ${PGE_ROOT}/science_env.sh
+  . $JOBDIR/job.env
+elif [ -r "$PGE_ROOT/science_env.sh"  ]
+then
+  . ${PGE_ROOT}/science_env.sh
 elif [ -r "$PGSBIN/pgs-env.ksh" ]
 then
-. $PGSBIN/pgs-env.ksh
+  . $PGSBIN/pgs-env.ksh
 fi
-
 PGS_PC_INFO_FILE=ppccff
-PGSMEM_USESHM=ppggssmmeemmuusseesshhmm
 SLVPROG=ssllaavveessccrriipptt
 OTHEROPTS=ootthheerrooppttss
 PGE_BINARY=ppggeebbiinnaarryy
-JOBDIR=jjoobbddiirr
+
 export PGS_PC_INFO_FILE PGSMEM_USESHM
 export FLIB_DVT_BUFFER=0
 
@@ -392,6 +395,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.22  2012/07/02 23:07:15  pwagner
+# Fixed long-standing bug
+#
 # Revision 1.21  2010/04/23 23:18:42  pwagner
 # Removed argumentless 'export' which was killing pvmd
 #
