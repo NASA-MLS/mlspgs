@@ -372,7 +372,6 @@ contains ! ============= Public Procedures ==========================
     integer :: JCol    ! of Jacobian
     integer :: JCols(s_qty%template%noInstances) ! of Jacobian, n in wvs-107
     integer :: JRow    ! of Jacobian, n in wvs-107
-    integer :: Mask    ! LinAlg bit from S_Qty
     integer :: NVecChans ! Number of channels in radiance
     type(vectorValue_t), pointer :: O_Qty        ! Qty of output vector
     real(rv) :: P(size(ptan%values,1),f_qty%template%noSurfs) ! 10**(-2*(zeta(surf)-zeta(vSurf)))
@@ -448,6 +447,12 @@ contains ! ============= Public Procedures ==========================
               & 'Transformed MIF extinction block neither absent or banded' )
           end select
           do vSurf = 1, size(ptan%values,1) ! i in wvs-107, Same for all fCols
+            ! For what rows of the Jacobian and elements of the state vector
+            ! do we evaluate Equations (3) and (4)?
+            ! ??? Why doesn't this work ???
+!             if ( associated(s_qty%mask) ) then
+!               if ( iand(ichar(s_qty%mask(vsurf,1)), m_linAlg) /= 0 ) cycle
+!             end if
             ! Jacobian is banded.  The only nonzeros in a column are in
             ! rows for the same MIF as the column, and the maximum number of
             ! nonzeros is the number of channels in the band.  This could be
@@ -469,7 +474,7 @@ contains ! ============= Public Procedures ==========================
     ! $g$ is the surface ($\zeta$) number.
 
     ! But we can't do
-    ! rowSum = sum(Jacobian%block(jRow,fCols)%values(cz,:))
+    ! rowSum = sum(Jacobian%block(jRow,fCols)%values(cz,surf))
     ! because "values" has the POINTER attribute.
 
               rowSum = 0.0
@@ -495,13 +500,9 @@ contains ! ============= Public Procedures ==========================
     ! \end{equation*}
     ! where the subscripts are as above.
 
-              mask = 0
-              if ( associated(s_qty%mask) ) &
-                & mask = iand(ichar(s_qty%mask(vsurf,1)), m_ignore+m_linAlg)
-              if ( mask == 0 ) &
-                & Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
-                  & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
-                    & rowSum * p(vSurf,surf)
+              Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
+                & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
+                  & rowSum * p(vSurf,surf)
 
     !{Compute radiance using Equation (4) in wvs-107
     ! \begin{equation*}
@@ -515,9 +516,9 @@ contains ! ============= Public Procedures ==========================
     ! where the subscripts are as above.
 
               o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
-                  & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
-                             & f_qty%values(surf,1) )
-            end do ! surf
+                & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+                           & f_qty%values(surf,1) )
+            end do ! Surf
           end do ! vSurf
         end if
       end do ! jCol
@@ -636,6 +637,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.51  2012/08/10 22:49:26  vsnyder
+! Don't test linalg flag
+!
 ! Revision 2.50  2012/07/31 00:49:33  vsnyder
 ! Correct testing a dump switch
 !
