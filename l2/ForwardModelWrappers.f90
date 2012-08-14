@@ -167,7 +167,8 @@ contains ! ============= Public Procedures ==========================
       !??? Future upgrade ???:  Use the mask field on MIFExtinction
       !??? to determine the lowest pressure.
       ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-               & quantityType=l_ptan )
+               & quantityType=l_ptan, &
+               & instrumentModule=config%signals(1)%instrumentModule )
       ! Transform MIF extinction quantities to extinction molecules
       do k = 1, nQty
         call transform_MIF_extinction &
@@ -449,7 +450,9 @@ contains ! ============= Public Procedures ==========================
           do vSurf = 1, size(ptan%values,1) ! i in wvs-107, Same for all fCols
             ! For what rows of the Jacobian and elements of the state vector
             ! do we evaluate Equations (3) and (4)?
-            ! ??? Why doesn't this work ???
+            ! ??? Why doesn't this work?  Perhaps because it's  ???
+            ! ??? fiddling row (radiance) masks when it should  ???
+            ! ??? be fiddling column (MIFExtinction) masks?     ???
 !             if ( associated(s_qty%mask) ) then
 !               if ( iand(ichar(s_qty%mask(vsurf,1)), m_linAlg) /= 0 ) cycle
 !             end if
@@ -535,7 +538,8 @@ contains ! ============= Public Procedures ==========================
       end if
     end do ! chan
 
-    ! Destroy columns of Jacobian corresponding to f_qty
+    ! Destroy columns of Jacobian corresponding to f_qty so retriever has
+    ! no hope of trying to retrieve extinction.
     do jCol = 1, size(fCols)
       do jRow = 1, Jacobian%row%nb
         call destroyBlock ( Jacobian%block(jRow,fCols(jCol)) )
@@ -637,6 +641,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.52  2012/08/14 00:38:14  vsnyder
+! Specify instrument module for PTAN instead of hoping for the best
+!
 ! Revision 2.51  2012/08/10 22:49:26  vsnyder
 ! Don't test linalg flag
 !
