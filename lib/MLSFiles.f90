@@ -51,19 +51,19 @@ module MLSFiles               ! Utility file routines
 
   private 
 
-  public :: accessType, AddFileToDataBase, &
-  & AddInitializeMLSFile, AreTheSameFile, &
-  & close_MLSFile, &
-  & Deallocate_filedatabase, Dump, &
-  & GetMLSFileByName, GetMLSFileByType, GetPCFromRef, &
-  & InitializeMLSFile, &
-  & maskName, &
-  & mls_closeFile, mls_exists, mls_hdf_version, mls_inqswath, &
-  & mls_openFile, mls_sfstart, mls_sfend, &
-  & open_MLSFile, &
-  & readnchars, release_MLSFile, reserve_MLSFile, &
-  & RmFileFromDataBase, split_path_name, &
-  & transfer_MLSFile, unMaskName, unSplitName
+  public :: ACCESSTYPE, ADDFILETODATABASE, &
+  & ADDINITIALIZEMLSFILE, ARETHESAMEFILE, &
+  & CLOSE_MLSFILE, &
+  & DEALLOCATE_FILEDATABASE, DUMP, &
+  & GETMLSFILEBYNAME, GETMLSFILEBYTYPE, GETPCFROMREF, &
+  & INITIALIZEMLSFILE, &
+  & MASKNAME, &
+  & MLS_CLOSEFILE, MLS_EXISTS, MLS_HDF_VERSION, MLS_INQSWATH, &
+  & MLS_OPENFILE, MLS_SFSTART, MLS_SFEND, &
+  & OPEN_MLSFILE, &
+  & READNCHARS, RELEASE_MLSFILE, RESERVE_MLSFILE, &
+  & RMFILEFROMDATABASE, SPLIT_PATH_NAME, &
+  & TRANSFER_MLSFILE, UNMASKNAME, UNSPLITNAME
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -252,11 +252,6 @@ module MLSFiles               ! Utility file routines
   logical, parameter :: HDF5_ACC_TYPES_TO_MET = .true.
   integer, parameter :: HDF5_ACC_DEFAULT = HE5F_ACC_RDWR ! HDF5_ACC_RDWR
   
-  ! The only legal unit numbers that files may be assigned
-  ! for use by Fortran opens, closes, reads and writes
-  integer, parameter :: bottom_unit_num=1
-  integer, parameter :: top_unit_num=99
-
   ! Character(s) added to file name so parser won't recognize it
   ! (Parser might change its case if it thinks it has seen the name before)
   character (len=*), parameter :: MASKINGTAPE = ')('
@@ -2726,6 +2721,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.93  2012/08/14 00:20:13  pwagner
+! Removed unused stuff
+!
 ! Revision 2.92  2012/05/24 20:32:11  vsnyder
 ! Simplify mls_exists
 !
