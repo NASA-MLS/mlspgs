@@ -275,9 +275,9 @@ contains
      if ( len_trim(options%inputFile) < 1 ) then
      print *, c // 'input  file              ', '<STDIN>'
      else
-     print *, c // 'input  file              ', options%inputFile
+     print *, c // 'input  file              ', trim(options%inputFile)
      endif
-     print *, c // 'macros file              ', options%macrosFile
+     print *, c // 'macros file              ', trim(options%macrosFile)
     end subroutine dumpSettings
 
 !------------------------- get_options  ---------------------
@@ -390,6 +390,9 @@ contains
   end subroutine print_help
 end program wrapLines
 ! $Log$
+! Revision 1.4  2012/08/07 18:04:46  pwagner
+! Can wrap a supplied filename instead of stdin
+!
 ! Revision 1.3  2012/08/03 16:54:04  pwagner
 ! Can now expand some macros using definitions from separate macros file
 !
