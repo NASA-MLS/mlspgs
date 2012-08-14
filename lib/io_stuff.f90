@@ -13,7 +13,7 @@ module IO_STUFF
 
 ! Useful stuff for I/O
 
-  implicit NONE
+  implicit none
 
   private
   public :: GET_LUN
@@ -54,16 +54,33 @@ module IO_STUFF
     module procedure read_textfile_arr, read_textfile_arr2d, read_textfile_sca
   end interface
 
+  ! The only legal unit numbers that files may be assigned
+  ! for use by Fortran opens, closes, reads and writes
+  integer, parameter :: bottom_unit_num=1
+  integer, parameter :: top_unit_num=99
+
+
 contains
 
 ! ================================================     GET_LUN     =====
 
-  subroutine GET_LUN ( LUN, MSG )
-  ! Find a Fortran logical unit number that's not in use.
-    integer, intent(out) :: LUN          ! The logical unit number
-    logical, intent(in), optional :: MSG ! Print failure message if absent or .true.
+  subroutine GET_LUN ( LUN, MSG, BOTTOM, TOP )
+    ! Find a Fortran logical unit number that's not in use.
+    ! Args
+    integer, intent(out)          :: LUN    ! The logical unit number
+    logical, intent(in), optional :: MSG ! Print failure message? (default: T)
+    integer, intent(in), optional :: BOTTOM ! Where to begin
+    integer, intent(in), optional :: TOP    ! Where to end
+    ! Internal variables
     logical :: EXIST, OPENED             ! Used to inquire about the unit
-    do lun = 20, 100
+    integer :: myBottom
+    integer :: myTop
+    ! Executable
+    myBottom = bottom_unit_num
+    myTop    = top_unit_num
+    if ( present(Bottom) ) myBottom = Bottom
+    if ( present(Top) ) myTop = Top
+    do lun = myBottom, myTop
       inquire ( unit=lun, exist=exist, opened=opened )
       if ( exist .and. .not. opened ) return
     end do
@@ -82,6 +99,8 @@ contains
   ! formatted io
   ! No line should be longer than len(string)
   ! (To get around that limitation supply optional arg maxLineLen)
+  ! Even then certain compilers impose limitations
+  ! E.g., NAG can't read a line longer than 1024 from stdin
   subroutine READ_stdin_arr ( string, maxLineLen, nLines )
   ! read stdin into string array, one line per element
     character(len=*), dimension(:), intent(inout) :: string    ! its contents
@@ -446,6 +465,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.14  2012/08/14 00:22:09  pwagner
+! get_lun can take optional Bottom, Top args
+!
 ! Revision 2.13  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
