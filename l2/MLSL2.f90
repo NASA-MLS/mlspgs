@@ -25,7 +25,6 @@ program MLSL2
   use MACHINE, only: GETARG, HP, IO_ERROR
   use MLSCOMMON, only: MLSFILE_T
   use MLSFILES, only: FILESTRINGTABLE, &
-    & HDFVERSION_5, &
     & ADDFILETODATABASE, DEALLOCATE_FILEDATABASE, DUMP, &
     & INITIALIZEMLSFILE, MLS_OPENFILE, MLS_CLOSEFILE
   use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
@@ -46,7 +45,7 @@ program MLSL2
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, MLSMSG_DEBUG, &
     & MLSMSG_ERROR, MLSMSG_SEVERITY_TO_QUIT, &
-    & MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT, STDOUTLOGUNIT, DEFAULTLOGUNIT
+    & MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT, STDOUTLOGUNIT
   use MLSPCF2 ! EVERYTHING
   use MLSSTRINGS, only: TRIM_SAFE
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, &
@@ -150,7 +149,6 @@ program MLSL2
   integer :: NUMFILES
   ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
 ! integer :: RECORD_LENGTH
-  character(len=len(switches)) :: removeSwitches = ''
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: STATUS                ! From OPEN
   real :: T0, T1, T2               ! For timing
@@ -209,9 +207,7 @@ program MLSL2
     i = i + 1
     ORIGINALCMDS = trim(ORIGINALCMDS) // ' ' // trim(line)
   enddo
-  print *, 'original CMDS: ', trim(ORIGINALCMDS)
   line = processOptions( trim(ORIGINALCMDS ) )
-  print *, 'Return from processing CMDS: ', trim(line)
   ! stop
   if ( line == 'help' ) then
     call option_usage
@@ -235,11 +231,17 @@ program MLSL2
      outputOptions%prunit = STDOUTPRUNIT   ! output sent only to stdout, not logged
   end if
 
-  if( SwitchDetail(switches, 'log') >= 0 .or. .not. toolkit ) then
+  i = SwitchDetail(switches, 'log')
+  if( i == 0 .or. i > 5 .or. .not. toolkit ) then
      MLSMessageConfig%LogFileUnit = STDOUTLOGUNIT  ! -1
-  else
-     MLSMessageConfig%LogFileUnit = DEFAULTLOGUNIT ! -2
+  ! else
+    !  MLSMessageConfig%LogFileUnit = DEFAULTLOGUNIT ! -2
   end if
+  if ( i > 9 ) then
+    MLSMessageConfig%MaxModuleNameLength   = i - 10
+    MLSMessageConfig%MaxSeverityNameLength = i - 10
+  endif
+  
   chunkdivideconfig%allowPriorOverlaps = OUTSIDEOVERLAPS
   chunkdivideconfig%allowPostOverlaps = OUTSIDEOVERLAPS
   section_times = sectiontimes
@@ -694,6 +696,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.188  2012/08/16 17:48:47  pwagner
+! Exploit new features to fleexibly change how and when to log output
+!
 ! Revision 2.187  2012/07/18 00:39:34  pwagner
 ! Consistent with module parameters for prUnit, LogFileUnit
 !
