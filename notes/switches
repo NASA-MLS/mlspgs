@@ -74,7 +74,7 @@ Switches (set by -S option in mlsl2's command line):
   lblb =>   Dump line-by-line Betas
   lblB =>   lblb + temperature and pressure grids
   LBLB =>   lblB and then stop
-  log =>    Log file messages
+  log[n] => Print most Log file messages only to stdout, not toolkit log
   mach =>   Machine names (that can be enslaved by master task)
   mas =>    Activities between the PVM master task and slave task
   metd =>   Dump nonoptional outputs from metrics
@@ -188,6 +188,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.77  2012/08/01 00:18:58  pwagner
+ Updated; removed outdated stuff
+
  Revision 1.76  2012/07/02 20:59:30  pwagner
  Attempt to claridy what -Sphase[n] does
 
