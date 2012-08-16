@@ -17,8 +17,10 @@ module OutputAndClose ! outputs all data from the Join module to the
 !=======================================================================================
 
   use HDF, only: DFACC_RDONLY, DFACC_RDWR
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, &
-    & MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_WARNING
+  use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, &
+    & DEFAULT_HDFVERSION_WRITE, L2CFNODE, &
+    & SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT, MLSMESSAGE
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_WARNING
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
 
   implicit none
@@ -98,9 +100,6 @@ contains ! =====     Public Procedures     =============================
     use MLSFILES, only: &
       & ADDINITIALIZEMLSFILE, DUMP, GETMLSFILEBYNAME, &
       & MLS_INQSWATH
-    use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, &
-      & DEFAULT_HDFVERSION_WRITE, &
-      & SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END, &
@@ -272,6 +271,7 @@ contains ! =====     Public Procedures     =============================
         key = son
         name = 0
       end if
+      L2CFNODE = key
 
       if ( MLSSelecting .and. &
         & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
@@ -1041,7 +1041,6 @@ contains ! =====     Public Procedures     =============================
     use L2AUXDATA, only: L2AUXDATA_T, WRITEL2AUXDATA
     use L2GPDATA, only: L2GPNAMELEN
     use MLSCOMMON, only: MLSFILE_T, FILENAMELEN, L2METADATA_T
-    use MLSL2OPTIONS, only: CHECKPATHS, TOOLKIT
     use MLSFILES, only: ADDINITIALIZEMLSFILE, GETMLSFILEBYNAME, &
       & GETPCFROMREF, SPLIT_PATH_NAME
     use MLSPCF2, only: MLSPCF_L2DGM_START, MLSPCF_L2DGM_END
@@ -1164,7 +1163,6 @@ contains ! =====     Public Procedures     =============================
     ! If inputFile omitted, copy the l2cf
     use INTRINSIC, only: L_HDF
     use MLSCOMMON, only: MLSFILE_T, FILENAMELEN
-    use MLSL2OPTIONS, only: CHECKPATHS, TOOLKIT
     use MLSFILES, only: ADDINITIALIZEMLSFILE, DUMP, &
       & GETMLSFILEBYNAME, GETMLSFILEBYTYPE, GETPCFROMREF, &
       & MLS_CLOSEFILE, MLS_OPENFILE, &
@@ -1260,7 +1258,6 @@ contains ! =====     Public Procedures     =============================
     use MLSCOMMON, only: MLSFILE_T, FILENAMELEN, L2METADATA_T
     use MLSFILES, only: ADDINITIALIZEMLSFILE, GETMLSFILEBYNAME, &
       & GETPCFROMREF, SPLIT_PATH_NAME
-    use MLSL2OPTIONS, only: CHECKPATHS, TOOLKIT
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use SDPTOOLKIT, only: PGS_S_SUCCESS
     use TOGGLES, only: SWITCHES
@@ -1417,7 +1414,6 @@ contains ! =====     Public Procedures     =============================
   subroutine returnFullFileName ( shortName, FullName, &
     & pcf_start, pcf_end )
     use MLSFILES, only: GETPCFROMREF
-    use MLSL2OPTIONS, only: TOOLKIT
     ! Given a possibly-abbreviated shortName, return the full name
     ! as found in the PCF
     ! (w/o toolkit panoply, simply return shortName)
@@ -1466,8 +1462,6 @@ contains ! =====     Public Procedures     =============================
       & MLS_EXISTS, MLS_INQSWATH, MLS_SFSTART, MLS_SFEND, &
       & OPEN_MLSFILE, UNSPLITNAME
     use MLSHDF5, only: CPHDF5GLATTRIBUTE, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
-    use MLSL2OPTIONS, only: CHECKPATHS, &
-      & SKIPDIRECTWRITES, TOOLKIT
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, &
       & MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
     use MLSSETS, only: FINDFIRST, FINDNEXT
@@ -1773,6 +1767,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.166  2012/08/16 17:51:43  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.165  2012/07/10 15:21:15  pwagner
 ! Sets Status to 'crashed' for swaths with Fills in geolocations
 !
