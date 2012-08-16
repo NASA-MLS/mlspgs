@@ -18,7 +18,7 @@ module RetrievalModule
 !
 ! This module and ones it calls consume most of the cycles.
 
-  implicit NONE
+  implicit none
   private
   public :: RETRIEVE
 
@@ -52,7 +52,7 @@ contains
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use INIT_TABLES_MODULE, only: F_APRIORI, F_APRIORIFRACTION, F_APRIORISCALE, &
       & F_AVERAGE, F_COLUMNSCALE, F_COMMENT, F_COVARIANCE, F_COVSANSREG, &
-      & F_DIAGNOSTICS, F_DIAGONAL, F_DumpQuantities, F_EXTENDEDAVERAGE, &
+      & F_DIAGNOSTICS, F_DIAGONAL, F_DUMPQUANTITIES, F_EXTENDEDAVERAGE, &
       & F_FORWARDMODEL, F_FUZZ, F_FWDMODELEXTRA, F_FWDMODELOUT, &
       & F_HESSIAN, F_HIGHBOUND, F_HREGORDERS, F_HREGQUANTS, F_HREGWEIGHTS, &
       & F_HREGWEIGHTVEC, F_JACOBIAN, F_LAMBDA, F_LEVEL, F_LOWBOUND, &
@@ -86,11 +86,12 @@ contains
     use MATRIXTOOLS, only: DUMPBLOCKS
     use MLSKINDS, only: R8, RV
     use MLSCOMMON, only: MLSFILE_T
-    use MLSL2OPTIONS, only: SKIPRETRIEVAL, SPECIALDUMPFILE, &
-      & STATEFILLEDBYSKIPPEDRETRIEVALS
+    use MLSL2OPTIONS, only: L2CFNODE, SKIPRETRIEVAL, SPECIALDUMPFILE, &
+      & STATEFILLEDBYSKIPPEDRETRIEVALS, &
+      & MLSMESSAGE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-      & MLSMESSAGE, MLSMESSAGECALLS, MLSMESSAGERESET
+      & MLSMESSAGECALLS, MLSMESSAGERESET
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
@@ -109,7 +110,7 @@ contains
     use TREE_TYPES, only: N_NAMED
     use VECTORSMODULE, only: CLEARMASK, CLEARUNDERMASK, &
       & CLEARVECTOR, CLONEVECTOR, COPYVECTOR, COPYVECTORMASK, CREATEMASK, &
-      & DESTROYVECTORINFO, DumpVectorNorms, GETVECTORQUANTITYBYTYPE, M_LINALG, &
+      & DESTROYVECTORINFO, DUMPVECTORNORMS, GETVECTORQUANTITYBYTYPE, M_LINALG, &
       & VECTOR_T, VECTORVALUE_T
 
     ! Dummy arguments:
@@ -310,6 +311,7 @@ contains
       else
         key = son
       end if
+      L2CFNODE = key
 
       ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
       ! parser users' guide" for pictures of the trees being analyzed.
@@ -395,6 +397,7 @@ contains
         nullify ( vRegWeightVec )
         do i_key = 2, nsons(key) ! fields of the "retrieve" specification
           son = subtree(i_key, key)
+          L2CFNODE = son
           field = get_field_id(son)  ! tree_checker prevents duplicates
           got(field) = .true.
           select case ( field )
@@ -1091,9 +1094,9 @@ contains
 
     ! ---------------------------------------------   DumpStateQuantities --
     subroutine DumpStateQuantities ( State, DumpQuantitiesNode, Title )
-      use VectorsModule, only: Dump, GetVectorQtyByTemplateIndex, &
-        & Vector_t, VectorValue_t
-      use Tree, only: Decoration, NSons, Subtree
+      use VectorsModule, only: DUMP, GETVECTORQTYBYTEMPLATEINDEX, &
+        & VECTOR_T, VECTORVALUE_T
+      use Tree, only: DECORATION, NSONS, SUBTREE
 
       type(vector_t), intent(in) :: State
       integer, intent(in) :: DumpQuantitiesNode ! in L2CF tree
@@ -1113,7 +1116,7 @@ contains
     ! ---------------------------------------------   DumpRetrievalConfig --
     subroutine DumpRetrievalConfig
       use lexer_core, only: PRINT_SOURCE
-      use VectorsModule, only: DUMPNICEMASKSUMMARY, m_tikhonov, m_fullderivatives
+      use VectorsModule, only: DUMPNICEMASKSUMMARY, M_TIKHONOV, M_FULLDERIVATIVES
       ! Local variables
       integer :: Q                ! Loop counter
       ! Executable code
@@ -2957,6 +2960,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.329  2012/08/16 18:07:23  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.328  2012/07/26 02:07:11  vsnyder
 ! Remove unused cruft
 !
