@@ -31,10 +31,11 @@ module ReadAPriori
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & ADDFILETODATABASE, CLOSE_MLSFILE, DUMP, GETPCFROMREF, INITIALIZEMLSFILE, &
     & MLS_HDF_VERSION, MLS_INQSWATH, OPEN_MLSFILE, SPLIT_PATH_NAME
-  use MLSL2OPTIONS, only: CHECKPATHS, DEFAULT_HDFVERSION_READ, SPECIALDUMPFILE, &
-    & TOOLKIT
+  use MLSL2OPTIONS, only: CHECKPATHS, DEFAULT_HDFVERSION_READ, L2CFNODE, &
+    & SPECIALDUMPFILE, TOOLKIT, &
+    & MLSMESSAGE
   use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, &
+  use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSPCF2, only: &
     & MLSPCF_L2APRIORI_START, MLSPCF_L2APRIORI_END, &
@@ -206,6 +207,7 @@ contains ! =====     Public Procedures     =============================
       else
         key = son
       end if
+      L2CFNODE= key
       if ( MLSSelecting .and. &
         & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
       select case( get_spec_id(key) )
@@ -413,6 +415,7 @@ contains ! =====     Public Procedures     =============================
     swathName = 0
     do j = 2, nsons(key)
       field = subtree(j,key)
+      L2CFNODE = field
       fieldIndex = decoration(subtree(1,field))
       got(fieldIndex) = .true.
       select case ( fieldIndex )
@@ -1010,9 +1013,9 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine Get_PCF_Id ( FileNameString, Path, SubString, L2Apriori_Version, &
       & FirstPCF, LastPCF, Description, GotFile, PCF_Id, ReturnStatus )
-      use MLSFiles, only: GetPCFromRef, SPLIT_PATH_NAME
+      use MLSFiles, only: GETPCFROMREF, SPLIT_PATH_NAME
       use MLSL2Options, only: TOOLKIT
-      use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
+      use SDPToolkit, only: PGS_PC_GETREFERENCE, PGS_S_SUCCESS
 
       ! Args
       character(len=*), intent(inout) :: FileNameString
@@ -1348,6 +1351,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.95  2012/08/16 17:50:42  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.94  2012/05/08 17:50:31  pwagner
 ! Added Select .. Case .. EndSelect control structure
 !
