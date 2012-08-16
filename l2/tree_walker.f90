@@ -71,8 +71,9 @@ contains ! ====     Public Procedures     ==============================
     use MERGEGRIDSMODULE, only: MERGEGRIDS
     use MLSCOMMON, only: TAI93_RANGE_T, MLSFILE_T
     use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, &
-      & SKIPRETRIEVAL, SLAVESDOOWNCLEANUP, SPECIALDUMPFILE, STOPAFTERSECTION
-    use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMESSAGE, MLSMSG_INFO, &
+      & SKIPRETRIEVAL, SLAVESDOOWNCLEANUP, SPECIALDUMPFILE, STOPAFTERSECTION, &
+      & MLSMESSAGE
+    use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_INFO, &
       & MLSMSG_ERROR, SUMMARIZEWARNINGS
     use MLSPCF2, only: MLSPCF_SPECTROSCOPY_END
     use MLSSETS, only: FINDFIRST
@@ -82,9 +83,10 @@ contains ! ====     Public Procedures     ==============================
       & SIGNALS, SPECTROMETERTYPES
     use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, ISINLIST, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
-    use MLSL2OPTIONS, only: SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, TOOLKIT
+    use MLSL2OPTIONS, only: L2CFNODE, &
+      & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, TOOLKIT
     use MLSL2TIMINGS, only: ADD_TO_SECTION_TIMING, TOTAL_TIMES, &
-      & CURRENTCHUNKNUMBER, CURRENTPHASENAME
+      & CURRENTCHUNKNUMBER
     use OPEN_INIT, only: OPENANDINITIALIZE
     use OUTPUTANDCLOSE, only: OUTPUT_CLOSE
     use OUTPUT_M, only: BLANKS, GETSTAMP, OUTPUT, &
@@ -200,6 +202,7 @@ contains ! ====     Public Procedures     ==============================
     ! Now loop over the sections in the tree
     do while ( i <= howmany )
       son = subtree(i,root)
+      L2CFNODE = son
       section_index = decoration(subtree(1,son))
       call get_string ( section_indices(section_index), section_name, &
         & strip=.true. )
@@ -388,6 +391,7 @@ contains ! ====     Public Procedures     ==============================
             j = i
 subtrees:   do while ( j <= howmany )
               son = subtree(j,root)
+              L2CFNODE = son
               section_index = decoration(subtree(1,son))
               call get_string ( section_indices(section_index), section_name, &
                 & strip=.true. )
@@ -647,6 +651,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.179  2012/04/26 23:15:28  pwagner
+! Now tracks currentPhaseName and currentChunkNumber
+!
 ! Revision 2.178  2011/10/07 00:06:02  pwagner
 ! May dump Matrices, Hessians from Fill, Join
 !
