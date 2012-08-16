@@ -67,7 +67,9 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --l1b=n:   Assume hdfn when reading l1b files
   --l2gpr=n: Assume hdfeosn when reading l2gp files
   --l2gpw=n: Assume hdfeosn when writing l2gp files
-  --lac[onic] n: Reduce output by degree n; higher n means less output
+  --lac degree: Do [not] reduce output by degree; higher degree means less output
+     if degree is absent or 0, abbreviate module names and severity
+  --nlac restore printing full module names and severity
   --leak:    Check parse tree for potential leaks
   --master <filename>[:a:b]: This is the master task in a PVM setup
     filename contains simply ascii list of slave host names
@@ -106,6 +108,10 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --snoopname <name>: Distinguishing name to send to snooper (for use when
     using the stand alone logger)
   --state <value>: Fill state vectors with <value> if retrievals skipped
+  --nstdout: Avoid generating output
+  --stdout log: Use Toolkit log file to handle output
+  --stdout out: Use stdout to handle output
+  --stdout both: Send output into both log and stdout
   --stdout <filename>: Send unbuffered stdout to filename
   --stopAfter <section>: Stop run after <section>; e.g., 'chunk_divide'
      (see also 'Dump, /stop' in l2cf)
@@ -143,6 +149,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.54  2012/07/02 20:58:20  pwagner
+ Improve messages
+
  Revision 1.53  2012/03/28 20:17:34  pwagner
  Removed stgmem option--slave tasks lost ability to join quantities
 
