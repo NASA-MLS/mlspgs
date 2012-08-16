@@ -66,7 +66,8 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSFILES, only: GETMLSFILEBYTYPE
   use MLSFILLVALUES, only: ISMONOTONIC, MONOTONIZE
   use MLSKINDS, only: R4, R8, RM, RV
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
+  use MLSL2OPTIONS, only: MLSMESSAGE
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMESSAGECALLS
   use MLSNUMERICS, only: INTERPOLATEVALUES, HUNT
   use MLSSETS, only: FINDFIRST, FINDLAST
@@ -3236,7 +3237,7 @@ contains ! =====     Public Procedures     =============================
     subroutine FromAsciiFile ( key, quantity, filename, badRange )
       use IO_STUFF, only: GET_LUN
       use MACHINE, only: IO_ERROR
-      use MOREMESSAGE, only: MLSMESSAGE
+      use MOREMESSAGE, only: ONEMOREMESSAGE => MLSMESSAGE
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       integer, intent(in) :: FILENAME   ! ASCII filename to read from
@@ -3256,19 +3257,19 @@ contains ! =====     Public Procedures     =============================
         & access='sequential', iostat=status )
       if ( status /= 0 ) then
         call io_Error ( "Unable to open ASCII input file ", status, filenameStr )
-        call MLSMessage( MLSMSG_Error, ModuleName, 'Error opening ASCII file at %l', &
+        call ONEMOREMESSAGE( MLSMSG_Error, ModuleName, 'Error opening ASCII file at %l', &
           & (/ source_ref(key) /) )
       end if
       read ( unit=lun, fmt=*, iostat=status ) quantity%values
       if ( status /= 0 ) then
         call io_Error ( "Unable to read ASCII input file ", status, filenameStr )
-        call MLSMessage( MLSMSG_Error, ModuleName, 'Error reading ASCII file %l', &
+        call ONEMOREMESSAGE( MLSMSG_Error, ModuleName, 'Error reading ASCII file %l', &
           & (/ source_ref(key) /) )
       end if
       close ( unit=lun, iostat=status )
       if ( status /= 0 ) then
         call io_Error ( "Unable to close ASCII input file ", status, filenameStr )
-        call MLSMessage( MLSMSG_Error, ModuleName, 'Error closing ASCII file at %l', &
+        call ONEMOREMESSAGE( MLSMSG_Error, ModuleName, 'Error closing ASCII file at %l', &
           & (/ source_ref(key) /) )
       end if
       if ( present ( badRange ) ) then
@@ -7502,6 +7503,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.63  2012/08/16 17:58:00  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.62  2012/08/08 19:57:06  vsnyder
 ! Use a matrix block instead of a real array in FillCovariance
 !
