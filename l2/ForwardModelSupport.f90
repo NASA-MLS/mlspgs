@@ -409,7 +409,8 @@ contains ! =====     Public Procedures     =============================
       & PHYQ_FREQUENCY, PHYQ_PROFILES, PHYQ_TEMPERATURE
     use L2PC_M, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
     use MLSKINDS, only: R8
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSL2OPTIONS, only: L2CFNODE, MLSMESSAGE
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
     use MLSNUMERICS, only: HUNT
     use MLSSIGNALS_M, only: SIGNALS
     use MOLECULES, only: L_CLOUDICE
@@ -533,6 +534,7 @@ contains ! =====     Public Procedures     =============================
     pfaTrees = null_tree
     do i = 2, nsons(root)
       son = subtree(i,root)
+      L2CFNODE = son
       field = get_field_id(son)
       got(field) = .true.
       select case ( field )
@@ -1475,6 +1477,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.164  2012/08/16 18:07:43  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.163  2012/08/01 00:10:02  pwagner
 ! Prevent references to undefined cat_sizes
 !
