@@ -102,7 +102,7 @@ contains ! =====     Public Procedures     =============================
       & S_PHASE, S_QUANTITY, S_REEVALUATE, S_TIME, S_VECTORTEMPLATE
     use L2GPDATA, only: L2GPDATA_T
     use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T
-    use MLSL2OPTIONS, only: NEED_L1BFILES, SPECIALDUMPFILE
+    use MLSL2OPTIONS, only: L2CFNODE, NEED_L1BFILES, SPECIALDUMPFILE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADDPHASETOPHASENAMES
     use MLSMESSAGEMODULE, only: MLSMESSAGERESET
     use MORETREE, only: GET_SPEC_ID
@@ -166,6 +166,7 @@ contains ! =====     Public Procedures     =============================
         key = son
         name = 0
       end if
+      L2CFNODE = key
 
       ! Node_id(key) is now n_spec_args.
 
@@ -290,6 +291,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.67  2012/08/16 17:55:00  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.66  2012/01/05 01:20:17  pwagner
 ! Capitalized USEd stuff
 !
