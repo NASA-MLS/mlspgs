@@ -859,7 +859,7 @@ contains
     use GRIDDEDDATA, only: DIFF, DUMP, GRIDDEDDATA_T
     use HESSIANMODULE_1, only: HESSIAN_T, DIFF, DUMP
     use HGRIDSDATABASE, only: DUMP, HGRID_T
-    use IGRF_INT, only: Dump_GH
+    use IGRF_INT, only: DUMP_GH
     use INIT_TABLES_MODULE, only: F_ALLBOOLEANS, F_ALLFILES, &
       & F_ALLFORWARDMODELS, F_ALLGRIDDEDDATA, F_ALLHESSIANS, F_ALLHGRIDS, &
       & F_ALLL2PCS, F_ALLLINES, F_ALLMATRICES, F_ALLPFA, &
@@ -885,9 +885,11 @@ contains
     use MLSCOMMON, only: MLSFILE_T
     use MLSFILES, only: DUMPMLSFILE => DUMP, GETMLSFILEBYNAME
     use MLSKINDS, only: RV
-    use MLSL2OPTIONS, only: COMMAND_LINE, NORMAL_EXIT_STATUS, RUNTIMEVALUES
+    use MLSL2OPTIONS, only: COMMAND_LINE, L2CFNODE, &
+      & NORMAL_EXIT_STATUS, RUNTIMEVALUES, &
+      & MLSMESSAGE
     use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMESSAGEEXIT, &
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, MLSMESSAGEEXIT, &
       & MLSMSG_CRASH, MLSMSG_ERROR
     use MLSSETS, only: FINDFIRST
     use MLSSIGNALS_M, only: DUMP, GETRADIOMETERINDEX, RADIOMETERS, SIGNALS
@@ -902,7 +904,7 @@ contains
     use READ_MIE_M, only: DUMP_MIE
     use SPECTROSCOPYCATALOG_M, only: CATALOG, DUMP, DUMP_LINES_DATABASE, LINES
     use STRING_TABLE, only: GET_STRING
-    use Time_m, only: Finish
+    use Time_m, only: FINISH
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
@@ -1034,6 +1036,7 @@ contains
       son = subtree(j,root) ! The argument
       fieldIndex = get_field_id(son)
       gson = son
+      L2CFNODE = son
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       source = source_ref(gson) ! column + 256*line in l2cf
       select case ( fieldIndex )
@@ -1228,6 +1231,7 @@ contains
         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
         if ( type /= num_value ) call announceError ( gson, numeric )
         details = nint(values(1)) - DetailReduction
+        ! call outputnamedValue( 'Details', details )
       case ( f_file )
         if ( present(fileDataBase) ) then
           do i = 2, nsons(son)
@@ -2027,6 +2031,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.78  2012/08/16 18:03:44  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.77  2012/06/27 17:53:04  pwagner
 ! May now Dump command line
 !
