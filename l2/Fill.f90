@@ -53,7 +53,7 @@ contains ! =====     Public Procedures     =============================
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
 
-    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, DEALLOCATE_TEST
+    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE
     use CHUNKS_M, only: MLSCHUNK_T
     use DESTROYCOMMAND_M, only: DESTROYCOMMAND
     use DUMPCOMMAND_M, only: BOOLEANFROMANYGOODRADIANCES, &
@@ -188,11 +188,12 @@ contains ! =====     Public Procedures     =============================
       & MATRIX_T, NULLIFYMATRIX
     ! NOTE: IF YOU EVER WANT TO INCLUDE DEFINED ASSIGNMENT FOR MATRICES, PLEASE
     ! CAREFULLY CHECK OUT THE CODE AROUND THE CALL TO SNOOP.
-    use MLSL2OPTIONS, only: DEFAULT_HDFVERSION_READ, SKIPRETRIEVAL, SPECIALDUMPFILE
+    use MLSL2OPTIONS, only: DEFAULT_HDFVERSION_READ, L2CFNODE, &
+      & SKIPRETRIEVAL, SPECIALDUMPFILE, MLSMESSAGE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
       & ADDPHASETOPHASENAMES, FILLTIMINGS, FINISHTIMINGS
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-      & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMESSAGE, MLSMESSAGERESET
+      & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMESSAGERESET
     use MLSPCF2, only: MLSPCF_L2APRIORI_START, MLSPCF_L2APRIORI_END
     use MLSRANDOMNUMBER, only: MLS_RANDOM_SEED, MATH77_RAN_PACK
     use MLSSTRINGLISTS, only: CATLISTS, GETHASHELEMENT, &
@@ -538,6 +539,7 @@ contains ! =====     Public Procedures     =============================
         key = son
         vectorName = 0
       end if
+      L2CFNODE = key
       if ( MLSSelecting .and. &
         & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
       additional = .false.
@@ -2862,6 +2864,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.405  2012/08/16 17:57:16  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.404  2012/07/31 00:48:16  vsnyder
 ! Use DestroyVectorQuantityValue abstraction
 !
