@@ -37,22 +37,23 @@ contains ! ============= Public Procedures ==========================
     use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
       & DESTROYFORWARDMODELDERIVED, FORWARDMODELCONFIG_T, QtyStuff_t
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
     use FULLCLOUDFORWARDMODEL, only: FULLCLOUDFORWARDMODELWRAPPER
     use FULLFORWARDMODEL_M, only: FULLFORWARDMODEL
     use HESSIANMODULE_1, only: HESSIAN_T
     use HYBRIDFORWARDMODEL_M, only: HYBRIDFORWARDMODEL
     use INIT_TABLES_MODULE, only: L_BASELINE, L_CLOUDFULL, &
-      & L_Extinction, L_ExtinctionV2, L_FULL, L_HYBRID, L_LINEAR, &
-      & L_MIFExtinction, L_MIFExtinctionV2, L_POLARLINEAR, L_Ptan, L_SCAN, &
+      & L_EXTINCTION, L_EXTINCTIONV2, L_FULL, L_HYBRID, L_LINEAR, &
+      & L_MIFEXTINCTION, L_MIFEXTINCTIONV2, L_POLARLINEAR, L_PTAN, L_SCAN, &
       & L_SCAN2D, L_SWITCHINGMIRROR
-    use Intrinsic, only: L_LowestRetrievedPressure, L_VMR
+    use Intrinsic, only: L_LOWESTRETRIEVEDPRESSURE, L_VMR
     use LINEARIZEDFORWARDMODEL_M, only: LINEARIZEDFORWARDMODEL
-    use MATRIXMODULE_1, only: CHECKINTEGRITY, FindBlock, MATRIX_T
+    use MATRIXMODULE_1, only: CHECKINTEGRITY, MATRIX_T
+    use MLSL2OPTIONS, only: MLSMESSAGE
     use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use Molecules, only: L_Extinction, L_ExtinctionV2
+    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
     use POLARLINEARMODEL_M, only: POLARLINEARMODEL
     use SCANMODELMODULE, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
@@ -80,11 +81,8 @@ contains ! ============= Public Procedures ==========================
                                           ! 1 = 1's digit => Input and output
                                           ! 2 = 10's digit => FWM Jacobian
                                           ! 3 = 100's digit => Transformed Jacobian
-    integer :: FCol, FRow                 ! Column, Row of block in fwmJacobian
     integer :: FMNaN                      ! Level of fmnan switch
     integer :: I, K
-    integer :: Inst                       ! Instance index
-    integer :: JRow, JCol                 ! Row, Column of block in Jacobian
     type(vectorValue_t), pointer :: LRP   ! Lowest Retrieved Pressure
     integer :: NQty                       ! Number of quantities to transform
     type(vectorValue_t), pointer :: Ptan  ! Tangent pressure
@@ -93,11 +91,8 @@ contains ! ============= Public Procedures ==========================
           &   fwdModelIn%quantities%template%quantityType == L_MIFExtinction .or. &
         &     fwdModelIn%quantities%template%quantityType == L_MIFExtinctionV2 &
         & ) ,2)
-    type(vector_t), pointer :: TheState
-    type(matrix_T), pointer :: TheJacobian
     character(len=132) :: THISNAME
     real :: Time_start, Time_end 
-    logical :: Transform
 
     interface MINLOC_S
       module procedure MINLOC_S_S, MINLOC_S_D
@@ -345,15 +340,16 @@ contains ! ============= Public Procedures ==========================
 
     ! See Equations (3) and (4) in wvs-107.
 
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Intrinsic, only: L_Radiance
-    use MatrixModule_0, only: DestroyBlock, M_Absent, M_Banded, M_Full
-    use MatrixModule_1, only: FindBlock, CreateBlock, Dump, Matrix_T
-    use MLSKinds, only: RM, RV
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use Output_m, only: Output
-    use VectorsModule, only: Dump, M_Ignore, M_LinAlg, Vector_t, VectorValue_t
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+    use INTRINSIC, only: L_RADIANCE
+    use MATRIXMODULE_0, only: DESTROYBLOCK, M_ABSENT, M_BANDED, M_FULL
+    use MATRIXMODULE_1, only: FINDBLOCK, CREATEBLOCK, DUMP, MATRIX_T
+    use MLSKINDS, only: RM, RV
+    use MLSL2OPTIONS, only: MLSMESSAGE
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR
+    use OUTPUT_M, only: OUTPUT
+    use VECTORSMODULE, only: DUMP, M_IGNORE, M_LINALG, VECTOR_T, VECTORVALUE_T
 
     type(forwardModelConfig_T), intent(in) :: CONFIG
     integer, intent(in) :: MAF               ! MAjor Frame number
@@ -641,6 +637,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.53  2012/08/16 18:19:54  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.52  2012/08/14 00:38:14  vsnyder
 ! Specify instrument module for PTAN instead of hoping for the best
 !
