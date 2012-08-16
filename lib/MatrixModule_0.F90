@@ -1178,21 +1178,11 @@ contains ! =====     Public Procedures     =============================
   ! and the second z%nCols. VALUE3 is a rank remapping of VALUE1 with the
   ! first extent 1:z%nChan, the second 1:z%nVert, and the third 1:z%nCols.
 
-#ifndef SANSREMAP
     use Pointer_Rank_Remapping, only: Remap
-#endif
     type(MatrixElement_T), intent(inout) :: Z
     character(len=*), intent(in) :: What
     integer, intent(in), optional :: NumberNonzero
 
-#if defined SANSREMAP
-    if ( present(numberNonzero) ) then
-      call allocate_test ( z%values, numberNonzero, 1, what, moduleName )
-    else
-      call allocate_test ( z%values, z%nRows, z%nCols, what, moduleName )
-    end if
-    nullify ( z%value1, z%value3 )
-#else
     if ( present(numberNonzero) ) then
       call allocate_test ( z%value1, numberNonzero, what, moduleName )
       call remap ( z%value1, z%values, (/ numberNonzero, 1 /) )
@@ -1202,7 +1192,6 @@ contains ! =====     Public Procedures     =============================
       call remap ( z%value1, z%values, (/ z%nRows, z%nCols /) )
       call remap ( z%value1, z%value3, (/ z%nChan, z%nVert, z%nCols /) )
     end if
-#endif
   end subroutine CreateValues
 
   ! ----------------------------------------------  CyclicJacobi_0 -----
@@ -1460,14 +1449,8 @@ contains ! =====     Public Procedures     =============================
     ! Destroy the VALUE1, VALUES and VALUE3 components of B
     type(MatrixElement_T), intent(inout) :: B
     character(len=*), intent(in) :: What
-#if defined SANSREMAP
-    call deallocate_test ( b%values, trim(what) // 'VALUEs', ModuleName )
-    nullify ( b%value1, b%value3 )
-#else
-    if ( associated(b%values) ) &
-      & call deallocate_test ( b%value1, trim(what) // 'VALUE1', ModuleName )
+    call deallocate_test ( b%value1, trim(what) // 'VALUE1', ModuleName )
     nullify ( b%values, b%value3 )
-#endif
   end subroutine DestroyValues
 
   ! ---------------------------------------------  FrobeniusNorm_0 -----
@@ -3730,6 +3713,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.16  2012/08/16 23:21:14  vsnyder
+! Remove SANSREMAP since remapping wasn't a problem
+!
 ! Revision 2.15  2012/08/08 20:02:07  vsnyder
 ! Try to handle aliasing better in SparsifyA
 !
