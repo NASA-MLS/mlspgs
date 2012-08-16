@@ -14,11 +14,16 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
+  use MLSCOMMON, only: MLSFILE_T
   use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
-  use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_SEVERITY_TO_WALKBACK, &
-    & MLSMSG_WARNING
+  use MLSMessageModule, only: DEFAULTLOGUNIT, MLSMESSAGECONFIG, &
+    & MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_TESTWARNING, &
+    & MLSMSG_SEVERITY_TO_WALKBACK, MLSMSG_WARNING, &
+    & SAYMESSAGE => MLSMESSAGE, STDOUTLOGUNIT
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
-  use OUTPUT_M, only: OUTPUTOPTIONS, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT
+  use OUTPUT_M, only: OUTPUTOPTIONS, &
+    & INVALIDPRUNIT, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT, &
+    & OUTPUT, OUTPUTNAMEDVALUE
 
   implicit none
   public
@@ -59,6 +64,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
      
   ! Set the following to MSGLOGPRUNIT before delivering to sips;
   ! (its possible values and their effects on normal output:
+  ! INVALIDPRUNIT  on MUTE, no output
   ! STDOUTPRUNIT   sent to stdout (via print *, '...')
   ! MSGLOGPRUNIT   sent to Log file (via MLSMessage)
   ! BOTHPRUNIT     both stdout and Log file
@@ -140,15 +146,16 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical :: DUMP_TREE = .false.   ! Dump tree after parsing
   ! Wouldn't it be better to use get_lun at the moment we open the l2cf?
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
+  integer :: L2CFNODE        = 0        ! Line #, Col # of L2CF being executed
   integer :: NUMSWITCHES
-  logical :: OUTSIDEOVERLAPS = .false. ! Allow overlaps outside proc. range
-  integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
+  logical :: OUTSIDEOVERLAPS = .false.  ! Allow overlaps outside proc. range
+  integer :: RECL            = 20000    ! Record length for l2cf (but see --recl opt)
   character(len=128) :: SECTIONSTOSKIP = ''
-  logical          :: SECTIONTIMES = .false.  ! Show times in each section
-  logical          :: TOTALTIMES = .false.    ! Show total times from start
-  logical :: SHOWDEFAULTS = .false. ! Just print default opts and quit
-  integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
-  logical :: TIMING = .false.      ! -T option is set
+  logical :: SECTIONTIMES    = .false.  ! Show times in each section
+  logical :: TOTALTIMES      = .false.  ! Show total times from start
+  logical :: SHOWDEFAULTS    = .false.  ! Just print default opts and quit
+  integer :: SLAVEMAF        = 0        ! Slave MAF for fwmParallel mode
+  logical :: TIMING          = .false.  ! -T option is set
   integer, private :: i ! For loop constructor below
 
   type :: runTimeValues_T
@@ -159,8 +166,15 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
     !  & (/ .TRUE., (.FALSE., i=2, RTVARRAYLENGTH) /)
     ! Add two more arrays bound for each kind of hash: integer, string, real, ..
   end type runTimeValues_T
-  
+    
   type(runTimeValues_T), save :: runTimeValues
+
+  type :: dbItem_T
+    ! This stores a generic level 2 datatype indexed by the database indx
+    ! and with the type specified by dbType
+    integer                            :: indx
+    integer                            :: dbType  ! One of DB_* types below
+  end type dbitem_T
   ! --------------------------------------------------------------------------
   !   For the various databases/data types
   !   We do not support mixing data types
@@ -191,6 +205,107 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   integer, parameter :: DB_VectorTemplate     = DB_QuantityTemplate   + 1
 !=============================================================================
 contains 
+  ! -------------- MLSMessage ----------------
+  ! Process the level 2-savvy MLSMessage call
+  ! Optionally give l2cf line #, dump an item, and so on before summoning
+  ! regular MLSMessage
+  !
+  ! For some cases we skip calling MLSMessage, either calling output instead
+  ! or remaining mute
+  !
+  ! In certain other cases we must repeat printing the message via the
+  ! output module's commands
+  subroutine MLSMessage ( severity, ModuleNameIn, Message, &
+    & Advance, MLSFile, status, item )
+    use LEXER_CORE, only: PRINT_SOURCE
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MLSSTRINGS, only: WRITEINTSTOCHARS
+    use TOGGLES, only: SWITCHES
+    use TREE, only: SOURCE_REF
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    type(MLSFile_T), intent(in), optional :: MLSFile
+    integer, intent(out), optional :: status ! 0 if msg printed, 1 if suppressed
+    type(dbItem_T), intent(in), optional  :: item
+    ! Internal variables
+    integer :: LogThreshold ! Severity at which we will log
+    logical :: mustRepeat   ! if we will repeat via output
+    logical :: outputInstead   ! if we will call output instead
+    character(len=16) :: myChars
+    character(len=256) :: myMessage
+    integer :: myStatus
+    character(len=64) :: WarningPreamble
+    ! Executable
+    myMessage = Message
+    mustRepeat = ( MLSMessageConfig%logFileUnit == DEFAULTLOGUNIT .and. &
+      & OutputOptions%PrUnit == STDOUTPRUNIT )
+    LogThreshold = SwitchDetail( switches, 'log' )
+    ! Treat log as if it were 'log6'; i.e. output instead every severity
+    if ( LogThreshold == 0 ) LogThreshold = 6
+    ! Should we call output instead?
+    outputInstead = .false.
+    if ( LogThreshold > -1 .and. LogThreshold < 6 ) then
+      outputInstead = ( severity < LogThreshold .and. &
+        & mustRepeat )
+    endif
+    ! For severity "info" just do the call and return
+    ! For severity "warn" do the call and 
+    ! check status to see if we need to skip printing
+    if ( severity == MLSMSG_INFO ) then
+      call SayIt ( Message )
+      return
+    elseif ( severity == MLSMSG_Warning ) then
+      ! This trickery is to determine whether this warning would be suppressed
+      call SAYMESSAGE ( MLSMSG_TestWarning, ModuleNameIn, MyMessage, &
+        & Advance, MLSFile, myStatus )
+      if ( present(status) ) status = myStatus
+      if ( myStatus /= 0 ) return
+    endif
+    ! Do we have an l2cf node we were processing?
+    if ( L2CFNode /= 0 ) then
+      call writeIntsToChars ( source_ref(L2CFNode)/256, myChars )
+      WarningPreamble = '***** At '  // trim(myChars) // ', column'
+      call writeIntsToChars ( mod(source_ref(L2CFNode), 256), myChars )
+      WarningPreamble = trim(WarningPreamble)  // ' ' // trim(myChars) 
+      myMessage = trim(WarningPreamble) // ': ' // Message
+    endif
+    if ( present(item) ) then
+      call output ( '(Not ready to dump arbitrary datatypes yet) ', advance='yes' )
+      select case ( item%dbType )
+      case ( DB_Direct             )
+      case ( DB_File               )
+      case ( DB_Chunk              )
+      case ( DB_DirectData         )
+      case ( DB_FGrid              )
+      case ( DB_ForwardModelConfig )
+      case ( DB_GriddedData        )
+      case ( DB_Hessian            )
+      case ( DB_HGrid              )
+      case ( DB_L2AUXData          )
+      case ( DB_L2GPData           )
+      case ( DB_Matrix             )
+      case ( DB_Vector             )
+      case ( DB_QuantityTemplate   )
+      case ( DB_VectorTemplate     )
+      case default
+      end select
+    endif
+    call SayIt ( myMessage )
+  contains
+    subroutine SayIt ( It )
+      ! Say it with MLSMessage
+      ! and possibly rpeat it with output
+      character (len=*), intent(in) :: It
+      if ( .not. outputInstead ) call SAYMESSAGE ( severity, ModuleNameIn, It, &
+        & Advance, MLSFile, status )
+      if ( mustRepeat ) call output( trim(It), advance='yes' )
+    end subroutine SayIt
+  end subroutine MLSMessage
+
   ! -------------- processOptions ----------------
   ! Process the command line options; either from
   ! (1) the command line directly, by calls to getNextArg; or
@@ -206,8 +321,6 @@ contains
   use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
   use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
   use MLSCOMMON, only: FILENAMELEN
-  use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, MLSMSG_SEVERITY_TO_WALKBACK, &
-    & MLSMSG_WARNING
   use MLSSTRINGLISTS, only: CATLISTS, &
     & GETSTRINGELEMENT, GETUNIQUELIST, &
     & NUMSTRINGELEMENTS, REMOVEELEMFROMLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
@@ -377,12 +490,18 @@ contains
           ! each line with severity and module name; e.g.,
           ! Info (output_m):         ..Exit ReadCompleteHDF5L2PC at 11:37:19.932 
           ! Usage: laconic n where if n is
-          ! 0  abbreviate module names 
+          ! 0  just abbreviate module names and severities
           ! 1  omit module names and severity unless Warning or worse
           ! 2  omit module names and severity unless Error
+          ! 3  omit module names and severity completely
           ! 11 skip printing anything unless Warning or worse
           ! 12 skip printing anything unless Error
           i = i + 1
+          if ( .not. switch ) then
+            MLSMessageConfig%MaxModuleNameLength     = 10
+            MLSMessageConfig%MaxSeverityNameLength   = 8
+            cycle
+          endif
           call getNextArg ( i, line )
           read ( line, *, iostat=status ) degree
           if ( status /= 0 ) then
@@ -390,7 +509,14 @@ contains
             stop
           end if
           MLSMessageConfig%suppressDebugs = (degree > 0)
-          MLSMessageConfig%AbbreviateModSevNames = (degree == 0)
+          ! MLSMessageConfig%AbbreviateModSevNames = (degree == 0)
+          if ( degree == 0 ) then
+            MLSMessageConfig%MaxModuleNameLength     = 3
+            MLSMessageConfig%MaxSeverityNameLength   = 1
+          elseif ( degree == 3 ) then
+            MLSMessageConfig%MaxModuleNameLength     = 0
+            MLSMessageConfig%MaxSeverityNameLength   = 0
+          endif
           MLSMessageConfig%skipModuleNamesThr = mod(degree, 10) + 2
           MLSMessageConfig%skipSeverityThr = mod(degree, 10) + 2
           MLSMessageConfig%skipMessageThr = degree - 10 + 2
@@ -539,18 +665,32 @@ contains
             stop
           end if
         else if ( line(3+n:9+n) == 'stdout ' ) then
-          ! copyArg = .false. ! else all the the slaves would try to write to the same file
           copyArg = .true.
+          if ( .not. switch ) then
+            OUTPUT_PRINT_UNIT = INVALIDPRUNIT
+            return
+          endif
           i = i + 1
           call getNextArg ( i, line )
-          OutputOptions%name = trim(line)
-          OutputOptions%buffered = .false.
-          ! outputOptions%debugUnit = 32
-          ! Make certain prUnit won't be l2cf_unit
-          open( unit=l2cf_unit, status='unknown' )
-          call get_lun ( OutputOptions%prUnit, msg=.false. )
-          close( unit=l2cf_unit )
-          inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
+          select case ( lowercase(line) )
+          case ( 'log' )
+            OUTPUT_PRINT_UNIT = MSGLOGPRUNIT
+          case ( 'out' )
+            OUTPUT_PRINT_UNIT = STDOUTPRUNIT
+          case ( 'both' )
+            OUTPUT_PRINT_UNIT = BOTHPRUNIT
+            ! MLSMessageConfig%logFileUnit = STDOUTLOGUNIT
+          case default
+            OutputOptions%name = trim(line)
+            OutputOptions%buffered = .false.
+            ! outputOptions%debugUnit = 32
+            ! Make certain prUnit won't be l2cf_unit
+            open( unit=l2cf_unit, status='unknown' )
+            call get_lun ( OutputOptions%prUnit, msg=.false. )
+            close( unit=l2cf_unit )
+            inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
+            OUTPUT_PRINT_UNIT = OutputOptions%prUnit
+          end select
         else if ( line(3+n:12+n) ==  'stopafter ' ) then
           i = i + 1
           call getNextArg ( i, stopAfterSection )
@@ -759,6 +899,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.55  2012/08/16 17:46:17  pwagner
+! Added a level 2-savvy MLSMessage to interpose between level 2 procedures and lib version
+!
 ! Revision 2.54  2012/07/18 00:38:00  pwagner
 ! Consistent with module parameters for prUnit
 !
