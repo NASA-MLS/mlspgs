@@ -63,10 +63,11 @@ contains ! =====     Public Procedures     =============================
     use LEXER_CORE, only: PRINT_SOURCE
     use MatrixModule_1, only: MATRIX_DATABASE_T
     use MLSCOMMON, only: MLSFILE_T
-    use MLSL2OPTIONS, only: CHECKPATHS, SKIPDIRECTWRITES, SPECIALDUMPFILE
+    use MLSL2OPTIONS, only: CHECKPATHS, L2CFNODE, &
+      & SKIPDIRECTWRITES, SPECIALDUMPFILE, MLSMESSAGE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
       & ADD_TO_DIRECTWRITE_TIMING, ADD_TO_SECTION_TIMING
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR
     use MORETREE, only: GET_SPEC_ID
     use OUTPUT_M, only: OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
@@ -180,6 +181,7 @@ contains ! =====     Public Procedures     =============================
         else
           key = son
         end if
+        L2CFNODE = key
         if ( MLSSelecting .and. &
           & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
         specId = get_spec_id ( key )
@@ -2220,6 +2222,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.150  2012/08/16 17:58:24  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.149  2012/07/02 20:40:43  pwagner
 ! Once-routine output now requires verbosity > 0
 !
