@@ -19,8 +19,9 @@ module Open_Init
   use HDF, only: DFACC_RDONLY
   use INTRINSIC, only: L_HDF
   use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, TAI93_RANGE_T
-  use MLSKinds, only: R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSKINDS, only: R8
+  use MLSL2OPTIONS, only: SPECIALDUMPFILE, TOOLKIT
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGE
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -71,10 +72,8 @@ contains ! =====     Public Procedures     =============================
 
     use L1BDATA, only: FINDMAXMAF, READL1BATTRIBUTE
     use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
-    use L2PARINFO, only: PARALLEL
     use MLSFILES, only: WILDCARDHDFVERSION, &
       & ADDFILETODATABASE, INITIALIZEMLSFILE, MLS_OPENFILE
-    use MLSL2OPTIONS, only: TOOLKIT
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
       &                MLSPCF_L1B_RAD_START, &
@@ -151,7 +150,7 @@ contains ! =====     Public Procedures     =============================
       call createPCFAnnotation(mlspcf_pcf_start, l2pcf%anText)
     else
       if ( TOOLKIT ) then
-        call announce_error ( 0, DEFAULTANTEXT )
+        call announce_error ( DEFAULTANTEXT )
         error = 1
       endif
       size = LEN(DEFAULTANTEXT) + 1
@@ -205,7 +204,7 @@ contains ! =====     Public Procedures     =============================
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
 
     if ( ifl1 == 0 .AND. TOOLKIT ) &
-      &  call announce_error ( 0, "Could not find any L1BRAD files" )
+      &  call announce_error ( "Could not find any L1BRAD files" )
 
     ! Open L1OA File
     
@@ -241,7 +240,7 @@ contains ! =====     Public Procedures     =============================
         end if
 
     else if ( TOOLKIT ) then
-      call announce_error ( 0, "Could not find L1BOA file" )
+      call announce_error ( "Could not find L1BOA file" )
     end if
 
     ! We'll possibly need the first and last MAF counter numbers, especially
@@ -255,28 +254,28 @@ contains ! =====     Public Procedures     =============================
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSStartId, &
                                            CCSDSStartTime)
     if ( returnstatus /= PGS_S_SUCCESS .and. TOOLKIT ) then
-      call announce_error ( 0, "Missing pcf param: CCSDSStartTime" )
+      call announce_error ( "Missing pcf param: CCSDSStartTime" )
     end if
 
     returnStatus = pgs_td_utctotai (CCSDSStartTime, processingrange%starttime)
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) &
-        & call announce_error ( 0, "Could not convert UTC Start time to TAI" )
+        & call announce_error ( "Could not convert UTC Start time to TAI" )
     if ( returnstatus == PGSTD_E_NO_LEAP_SECS ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'No leap second information' )
 
    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSEndId, &
                                           CCSDSEndTime)
     if ( returnstatus /= PGS_S_SUCCESS .and. TOOLKIT ) then
-      call announce_error ( 0, "Missing pcf param: CCSDSEndTime" )
+      call announce_error ( "Missing pcf param: CCSDSEndTime" )
     end if
 
     returnStatus = pgs_td_utctotai (CCSDSEndTime, processingrange%endtime)
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       & returnstatus /= PGSTD_E_NO_LEAP_SECS) &
-        & call announce_error ( 0, "Could not convert UTC End time to TAI" )
+        & call announce_error ( "Could not convert UTC End time to TAI" )
 
     l2pcf%startutc = CCSDSStartTime
     l2pcf%endutc = CCSDSEndTime
@@ -286,39 +285,39 @@ contains ! =====     Public Procedures     =============================
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_PGEVersion, &
                                           l2pcf%PGEVersion)
     if ( returnstatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, "Missing pcf param: output version" )
+      call announce_error ( "Missing pcf param: output version" )
     end if
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_Cycle, l2pcf%cycle)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, "Missing pcf param: cycle" )
+      call announce_error ( "Missing pcf param: cycle" )
     end if
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_col_spec_keys, col_species_keys)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, "Missing pcf param: col_spec_keys", &
+      call announce_error ( "Missing pcf param: col_spec_keys", &
         & forgiveable=.true. )
     end if
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_col_spec_hash, col_species_hash)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, "Missing pcf param: col_spec_hash", &
+      call announce_error ( "Missing pcf param: col_spec_hash", &
         & forgiveable=.true. )
     end if
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_keys, l2pcf%spec_keys)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, "Missing pcf param: spec_keys" )
+      call announce_error ( "Missing pcf param: spec_keys" )
     end if
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_hash, l2pcf%spec_hash)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, "Missing pcf param: spec_hash" )
+      call announce_error ( "Missing pcf param: spec_hash" )
     end if
 
     if ( .NOT. MCFCASESENSITIVE ) then
@@ -343,7 +342,7 @@ contains ! =====     Public Procedures     =============================
 
     returnStatus = Pgs_pc_getReference(MLSPCF_LOG, version, name)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, "Error retrieving log file name from PCF" )
+      call announce_error ( "Error retrieving log file name from PCF" )
     elseif ( returnStatus == PGS_S_SUCCESS) then
       indx = INDEX(name, '/', .TRUE.)
       l2pcf%logGranID = name(indx+1:)
@@ -432,7 +431,6 @@ contains ! =====     Public Procedures     =============================
       & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, READL1BDATA
     use L2AUXDATA, only: MAXSDNAMESBUFSIZE
     use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
-    use MLSL2OPTIONS, only: SPECIALDUMPFILE
     use MLSFILES, only: HDFVERSION_4       
     use MLSHDF5, only: GETALLHDF5DSNAMES
     use OUTPUT_M, only: REVERTOUTPUT, SWITCHOUTPUT
@@ -575,15 +573,11 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_open_init
 
   ! ---------------------------------------------  Announce_Error  -----
-  subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
+  subroutine Announce_Error ( Full_message, Use_toolkit, &
     & Error_number, forgiveable )
-
-    use LEXER_CORE, only: PRINT_SOURCE
-    use TREE, only: DUMP_TREE_NODE, SOURCE_REF
-  
     ! Arguments
 
-    integer, intent(in) :: Lcf_where
+    ! integer, intent(in) :: Lcf_where
     character(LEN=*), intent(in) :: Full_message
     logical, intent(in), optional :: Use_toolkit
     integer, intent(in), optional :: Error_number
@@ -599,22 +593,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( .not. just_print_it ) then
       error = max(error,1)
-      call output ( '***** At ' )
-
-      if ( lcf_where > 0 ) then
-        call print_source ( source_ref(lcf_where) )
-      else
-        call output ( '(no lcf node available)' )
-      end if
-
-      call output ( ": The " );
-      if ( lcf_where > 0 ) then
-        call dump_tree_node ( lcf_where, 0 )
-      else
-        call output ( '(no lcf tree available)' )
-      end if
-
-      call output ( " Caused the following error:", advance='yes', &
+      call output ( " The following error occurred:", advance='yes', &
        & from_where=ModuleName)
       call output ( trim(full_message), advance='yes', &
         & from_where=ModuleName)
@@ -657,6 +636,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.101  2012/08/16 17:49:40  pwagner
+! Simplify; remove unused stuff
+!
 ! Revision 2.100  2012/04/05 20:14:39  pwagner
 ! Erased all traces of parallel staging file
 !
