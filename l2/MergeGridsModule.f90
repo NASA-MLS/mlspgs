@@ -15,6 +15,9 @@ module MergeGridsModule
   ! information.
   ! Secondary operations may be performed directly on the gridded data--
   ! e.g., calculating wmo tropopause pressures from eta-level temperatures
+  use MLSL2OPTIONS, only: MLSMESSAGE, L2CFNODE
+  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING, &
+    & MLSMESSAGECALLS
 
   implicit none
   private
@@ -46,7 +49,6 @@ contains ! =================================== Public procedures
     use L2AUXData, only: L2AUXDATA_T
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFILE_T
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MoreTree, only: GET_SPEC_ID
     use output_m, only: OUTPUT, OUTPUTNAMEDVALUE
@@ -96,6 +98,7 @@ contains ! =================================== Public procedures
       else
         key = son
       end if
+      L2CFNODE = key
       if ( MLSSelecting .and. &
         & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
 
@@ -237,6 +240,7 @@ contains ! =================================== Public procedures
     ! arguments so we don't need a 'got' type arrangement
     do i = 2, nsons(root)
       son = subtree(i,root)
+      L2CFNODE = son
       field = subtree(1,son)
       value = subtree(2,son)
       field_index = decoration(field)
@@ -289,7 +293,7 @@ contains ! =================================== Public procedures
   function Concatenate ( root, griddedDataBase ) &
     & result ( newGrid )
     use GriddedData, only: GRIDDEDDATA_T, DUMP, &
-      & CONCATENATEGRIDDEDDATA, COPYGRID, DestroyGriddedData, NULLIFYGRIDDEDDATA
+      & CONCATENATEGRIDDEDDATA, COPYGRID, DESTROYGRIDDEDDATA, NULLIFYGRIDDEDDATA
     use Init_tables_module, only: F_A, F_B, F_GRID
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
@@ -325,6 +329,7 @@ contains ! =================================== Public procedures
     grids_node = 0
     do i = 2, nsons(root)
       son = subtree(i,root)
+      L2CFNODE = son
       field = subtree(1,son)
       value = subtree(2,son)
       field_index = decoration(field)
@@ -431,6 +436,7 @@ contains ! =================================== Public procedures
     ! In this case there is only one argument anyway
     do i = 2, nsons(root)
       son = subtree(i,root)
+      L2CFNODE = son
       field = subtree(1,son)
       value = subtree(2,son)
       field_index = decoration(field)
@@ -446,17 +452,15 @@ contains ! =================================== Public procedures
   type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
     & result ( newGrid )
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Dump_0, only: dump
+    use Dump_0, only: DUMP
     use Expr_m, only: EXPR
     use GriddedData, only: GRIDDEDDATA_T, RGR, V_IS_PRESSURE, &
       & COPYGRID, NULLIFYGRIDDEDDATA, &
       & SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, WRAPGRIDDEDDATA
     use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, &
       & F_OPERATIONAL, F_SCALE
-    use Intrinsic, only: PHYQ_Length, PHYQ_Pressure
-    use MLSCommon, only: R8
-    use MLSMessageModule, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING, &
-      & MLSMESSAGE
+    use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE
+    use MLSKINDS, only: R8
     use MLSFillValues, only: ESSENTIALLYEQUAL
     use output_m, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
     use Toggles, only: GEN, TOGGLE
@@ -528,6 +532,7 @@ contains ! =================================== Public procedures
     ! arguments so we don't need a 'got' type arrangement
     do i = 2, nsons(root)
       son = subtree(i,root)
+      L2CFNODE = son
       field = subtree(1,son)
       value = subtree(2,son)
       field_index = decoration(field)
@@ -745,23 +750,22 @@ contains ! =================================== Public procedures
   ! ----------------------------------------- wmoTropFromGrid
   type (griddedData_T) function wmoTropFromGrid ( root, griddedDataBase ) &
     & result ( newGrid )
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use dump_0, only: dump
-    use GriddedData, only: GRIDDEDDATA_T, DUMP, V_IS_PRESSURE, V_IS_ETA, &
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use DUMP_0, only: DUMP
+    use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP, V_IS_PRESSURE, V_IS_ETA, &
       & NULLIFYGRIDDEDDATA, &
       & DOGRIDDEDDATAMATCH, &
       & SETUPNEWGRIDDEDDATA
-    use Init_tables_module, only: F_A, F_B, F_GRID
-    use MLSCommon, only: DEFAULTUNDEFINEDVALUE
-    use MLSFillValues, only: IsFillValue, RemoveFillValues
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
-    use MLSStrings, only: LOWERCASE
-    use output_m, only: output
-    use Toggles, only: GEN, TOGGLE
-    use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: NSONS, SUBTREE, DECORATION
-    use wmoTropopause, only: ExtraTropics, twmo
+    use INIT_TABLES_MODULE, only: F_A, F_B, F_GRID
+    use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE
+    use MLSFILLVALUES, only: ISFILLVALUE, REMOVEFILLVALUES
+    use MLSSTATS1, only: MLSMIN, MLSMAX, MLSMEAN
+    use MLSSTRINGS, only: LOWERCASE
+    use OUTPUT_M, only: OUTPUT
+    use TOGGLES, only: GEN, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: NSONS, SUBTREE, DECORATION
+    use WMOTROPOPAuse, only: EXTRATROPICS, TWMO
     ! Implements the algorithm published in GRL
 
     integer, intent(in) :: ROOT         ! Tree node
@@ -823,6 +827,7 @@ contains ! =================================== Public procedures
     ! arguments so we don't need a 'got' type arrangement
     do i = 2, nsons(root)
       son = subtree(i,root)
+      L2CFNODE = son
       field = subtree(1,son)
       value = subtree(2,son)
       field_index = decoration(field)
@@ -1083,6 +1088,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.47  2012/08/16 18:01:04  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.46  2012/06/07 22:48:43  pwagner
 ! Printing during mergeGrids now requires 'grid' switch
 !
