@@ -22,6 +22,7 @@
 ! MLSMSG_WARNING           not fatal, but deserving of attention
 ! MLSMSG_ERROR             quits after printing
 ! MLSMSG_CRASH             should give traceback before quitting
+! MLSMSG_TESTWARNING       test to see if we would print this warning
 ! MLSMSG_Severity_so_far   worst severity level noted so far in this run
 ! MLSMSG_Severity_to_quit  severity level needed to quit
 ! MLSMSG_Severity_to_walkback
@@ -87,12 +88,13 @@
   ! Use it only for specific debugging where you need a walkback.
   ! See also MLSMessageConfig%crashOnAnyError
 
-  integer, public, parameter :: MLSMSG_Success = PGS_S_SUCCESS ! == 0
-  integer, public, parameter :: MLSMSG_Debug   = MLSMSG_Success + 1
-  integer, public, parameter :: MLSMSG_Info    = MLSMSG_Debug + 1
-  integer, public, parameter :: MLSMSG_Warning = MLSMSG_Info + 1
-  integer, public, parameter :: MLSMSG_Error   = MLSMSG_Warning + 1
-  integer, public, parameter :: MLSMSG_Crash   = MLSMSG_Error + 1
+  integer, public, parameter :: MLSMSG_Success     = PGS_S_SUCCESS ! == 0
+  integer, public, parameter :: MLSMSG_Debug       = MLSMSG_Success + 1
+  integer, public, parameter :: MLSMSG_Info        = MLSMSG_Debug + 1
+  integer, public, parameter :: MLSMSG_Warning     = MLSMSG_Info + 1
+  integer, public, parameter :: MLSMSG_Error       = MLSMSG_Warning + 1
+  integer, public, parameter :: MLSMSG_Crash       = MLSMSG_Error + 1
+  integer, public, parameter :: MLSMSG_TestWarning = MLSMSG_Crash + 1
 
   ! MLSMSG_Severity_to_* can be reset in a main program to cause us
   ! to become more lenient (set it higher) or strict (set it lower )
@@ -200,7 +202,8 @@
       &                                = ''      ! What (else) to call Info
     logical :: useToolkit              = .true.
     logical :: AsciifyMessages         = .true.
-    logical :: AbbreviateModSevNames   = .false. ! Abbreviate module and severity names
+    integer :: MaxModuleNameLength     = 10      ! Abbreviate longer name
+    integer :: MaxSeverityNameLength   = 8       ! Abbreviate longer severity
     logical :: CrashOnAnyError         = .false. ! See crash warning
     logical :: SendErrMsgToMaster      = .false. ! send last gasp to master?
     logical :: ShowCumulativeSeverity  = .false. ! print severity_so_far?
@@ -272,7 +275,8 @@ contains
     call dump ( 'extra prefix            ', charValue=myConfig%prefix                 )
     call dump ( 'extra Info              ', charValue=myConfig%Info                   )
     call dump ( 'useToolkit              ', logValue= myConfig%useToolkit             )
-    call dump ( 'AbbreviateModSevNames   ', logValue= myConfig%AbbreviateModSevNames  )
+    call dump ( 'Max Module name length  ', intValue= myConfig%MaxModuleNameLength  )
+    call dump ( 'Max Severity length     ', intValue= myConfig%MaxSeverityNameLength  )
     call dump ( 'CrashOnAnyError         ', logValue= myConfig%CrashOnAnyError        )
     call dump ( 'SendErrMsgToMaster      ', logValue= myConfig%SendErrMsgToMaster     )
     call dump ( 'ShowCumulativeSeverity  ', logValue= myConfig%ShowCumulativeSeverity )
@@ -355,7 +359,8 @@ contains
     if ( severity == MLSMSG_Warning ) &
       & MLSMSGWarnings%totalnumwarnings = &
       & min( TOTALNUMWARNINGSMAX, MLSMSGWarnings%totalnumwarnings + 1 )
-    if ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) then
+    if ( any( severity == (/MLSMSG_Warning, MLSMSG_TestWarning/) ) .and. &
+      & ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) ) then
       if ( present(status) ) status = myStatus
       return
     elseif ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
@@ -364,8 +369,10 @@ contains
     endif
     if ( severity == MLSMSG_Warning ) MLSMSGWarnings%lastWarningMsg = message
     nosubsequentwarnings = .false.
-    if ( severity == MLSMSG_Warning .and. MLSMessageConfig%limitWarnings > -1 &
-      & .and. MLSMSGWarnings%numwarnings <= MAXNUMWARNINGS .and. message /= ' ' ) then
+    if ( any( severity == (/MLSMSG_Warning, MLSMSG_TestWarning/) ) &
+      & .and. MLSMessageConfig%limitWarnings > -1 &
+      & .and. MLSMSGWarnings%numwarnings <= MAXNUMWARNINGS &
+      & .and. message /= ' ' ) then
       ! See if we have seen this message before
       newwarning = .true.
       do warning_index = 1, MLSMSGWarnings%numwarnings
@@ -374,8 +381,17 @@ contains
           &   trim(message(1:warningLength)) )
       enddo
       if ( newwarning .and. MLSMSGWarnings%numwarnings >= MAXNUMWARNINGS ) then
+        if ( severity == MLSMSG_TestWarning ) then
+          if ( present(status) ) status = myStatus
+          return
+        endif
       else if ( newwarning .or. &
         & MLSMSGWarnings%numwarnings < 1 ) then
+        if ( severity == MLSMSG_TestWarning ) then
+          if ( MLSMessageConfig%limitWarnings > 0 ) myStatus = 0
+          if ( present(status) ) status = myStatus
+          return
+        endif
         MLSMSGWarnings%numwarnings = MLSMSGWarnings%numwarnings + 1
         MLSMSGWarnings%warningmessages(MLSMSGWarnings%numwarnings) = message
         MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) = &
@@ -397,6 +413,11 @@ contains
             & message(1:warningLength) ) exit
         end do
         if ( warning_index > MLSMSGWarnings%numwarnings ) then
+          if ( present(status) ) status = myStatus
+          return
+        elseif ( severity == MLSMSG_TestWarning ) then
+          if ( MLSMSGWarnings%timeswarned(warning_index) < &
+            & MLSMessageConfig%limitWarnings  ) myStatus = 0
           if ( present(status) ) status = myStatus
           return
         endif
@@ -788,7 +809,8 @@ contains
     MLSMessageConfig%skipMessageThr          = MLSMSG_Success ! Always show messages  
     MLSMessageConfig%suppressDebugs          = .false.                                
     MLSMessageConfig%AsciifyMessages         = .true.                                                                            
-    MLSMessageConfig%AbbreviateModSevNames   = .false. ! Abbreviate module and severity names                                    
+    MLSMessageConfig%MaxModuleNameLength     = 10
+    MLSMessageConfig%MaxSeverityNameLength   = 8 
     MLSMessageConfig%CrashOnAnyError         = .false. ! See crash warning                                                       
     MLSMessageConfig%SendErrMsgToMaster      = .false. ! send last gasp to master?                                               
     MLSMessageConfig%ShowCumulativeSeverity  = .false. ! print severity_so_far?                
@@ -892,6 +914,10 @@ contains
   end function ASCIIFY
 
   !-----------------------------------------  assembleFullLine  -----
+  ! Assemble the full line out of 
+  ! (1) A severity level
+  ! (2) The module name
+  ! (3) Whatever message we're asked to repeat
   subroutine assembleFullLine( Severity, ModuleNameIn, Message, &
     & line, line_len )
     integer, intent(in)           :: Severity ! e.g. MLSMSG_Error
@@ -908,7 +934,7 @@ contains
         line = ' '
       elseif ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
         line = trim(SeverityNamesFun(severity))
-        if ( MLSMessageConfig%ShowCumulativeSeverity ) then
+        if ( MLSMessageConfig%ShowCumulativeSeverity .and. len_trim(line) > 0 ) then
           line = trim(line) // ':' // &
             & trim(SeverityNamesFun(MLSMSG_Severity_so_far))
         endif
@@ -919,7 +945,8 @@ contains
         line = 'Unknown'
       end if
       line_len = len_trim(line)
-      if ( severity >= MLSMessageConfig%skipModuleNamesThr ) then
+      if ( severity >= MLSMessageConfig%skipModuleNamesThr .and. &
+        & len_trim(snipRCSFrom ( moduleNameIn )) > 0 ) then
         line(line_len+1:line_len+2) = ' ('
         line(line_len+3:) = snipRCSFrom ( moduleNameIn )
         line_len = len_trim(line) + 3
@@ -1086,7 +1113,11 @@ contains
     character(len=len(ModuleName))  :: name
     name = moduleName
     if ( len_trim(moduleName) < 1 ) name = 'Unknown'
-    if ( MLSMessageConfig%AbbreviateModSevNames ) name = name(1:2) // ' '
+    if ( MLSMessageConfig%MaxModuleNameLength < 1 ) then
+      name = ' '
+    elseif ( MLSMessageConfig%MaxModuleNameLength < len(ModuleName) ) then
+      name = name(1:MLSMessageConfig%MaxModuleNameLength) // ' '
+    endif
   end function ModuleNameFun
 
   function SeverityNamesFun ( severity ) result (name)
@@ -1097,10 +1128,13 @@ contains
     character(len=len(SeverityNames(1)))  :: name
     if ( severity < MLSMSG_Success .or. severity > MLSMSG_Crash ) then
       name = 'Unknown'
-      if ( MLSMessageConfig%AbbreviateModSevNames ) name = name(1:1) // ' '
     else
       name = SeverityNames( severity )
-      if ( MLSMessageConfig%AbbreviateModSevNames ) name = name(1:1) // ' '
+    endif
+    if ( MLSMessageConfig%MaxSeverityNameLength < 1 ) then
+      name = ' '
+    elseif ( MLSMessageConfig%MaxSeverityNameLength < len(SeverityNames(1)) ) then
+      name = name(1:MLSMessageConfig%MaxSeverityNameLength) // ' '
     endif
   end function SeverityNamesFun
 
@@ -1129,6 +1163,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.20  2012/08/16 17:35:30  pwagner
+! Changed how and when message lines are printed
+!
 ! Revision 2.19  2012/07/18 00:36:03  pwagner
 ! Replaced -1 and -2 for LogFileUnit with module parameters
 !
