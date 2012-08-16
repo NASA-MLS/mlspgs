@@ -231,7 +231,6 @@ contains
       & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, FINDMAXMAF, &
       & L1BRADSETUP, L1BOASETUP, READL1BATTRIBUTE, READL1BDATA 
     use L2GPDATA, only: L2GPDATA_T
-    use L2PARINFO, only: PARALLEL
     use L2PC_M, only: ADDBINSELECTORTODATABASE, BINSELECTORS
     use MLSCOMMON, only: MLSFILE_T, NAMELEN, &
       & TAI93_RANGE_T
@@ -239,10 +238,11 @@ contains
       & ADDFILETODATABASE, GETPCFROMREF, GETMLSFILEBYNAME, GETMLSFILEBYTYPE, &
       & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, SPLIT_PATH_NAME
     use MLSKINDS, only: R8
-    use MLSL2OPTIONS, only: CHECKPATHS, LEVEL1_HDFVERSION, NEED_L1BFILES, &
-      & SPECIALDUMPFILE, STOPAFTERSECTION, TOOLKIT
+    use MLSL2OPTIONS, only: CHECKPATHS, L2CFNODE, LEVEL1_HDFVERSION, &
+      & NEED_L1BFILES, SPECIALDUMPFILE, STOPAFTERSECTION, TOOLKIT, &
+      & MLSMESSAGE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, &
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, &
       & MLSMSG_ERROR, MLSMSG_WARNING
     use MLSPCF2, only: MLSPCF_L2GP_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2DGM_START, MLSPCF_L2DGM_END, MLSPCF_L2FWM_FULL_START, &
@@ -363,6 +363,7 @@ contains
 
     do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
       son = subtree(i,root)
+      L2CFNODE = son
       if ( node_id(son) == n_equal ) then
         sub_rosa_index = sub_rosa(subtree(2,son))
         param_id = decoration(subtree(1,son))
@@ -448,6 +449,7 @@ contains
         else
           name = 0
         end if
+      L2CFNODE = son
         spec_id = get_spec_id(son)
         if ( TOOLKIT .and. &
           & any( spec_id == &
@@ -1232,6 +1234,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.144  2012/04/20 00:46:13  pwagner
+! Treats MAF as 0-based; more robustly handles crashed chunks
+!
 ! Revision 2.143  2012/03/28 20:08:24  pwagner
 ! l2parsf spec generates warning--slave tasks lost ability to join quantities
 !
