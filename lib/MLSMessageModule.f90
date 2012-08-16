@@ -211,13 +211,13 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     select case ( MLSMessageConfig%logFileUnit  )
     case ( 0 :  )
       write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
-    case ( -1  )
+    case ( STDOUTLOGUNIT  )
       if ( USEDEFAULTFORMATSTDOUT ) then
         write ( UNIT=*, FMT=* ) TRIM(line)
       else
         write ( UNIT=*, FMT='(a)' ) TRIM(line)
       endif
-    case default
+    case default ! DEFAULTLOGUNIT
     end select
 
   end subroutine PRINTITOUT
@@ -238,6 +238,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.42  2012/08/16 17:38:07  pwagner
+! Refers to module variable constant instead of '-1'
+!
 ! Revision 2.41  2011/10/10 23:56:02  pwagner
 ! Prevent writing non-ascii chars to stdout
 !
