@@ -17,7 +17,7 @@ module OUTPUT_M
   use DATES_MODULE, only:  BUILDCALENDAR, DAYSINMONTH, &
     & REFORMATDATE, REFORMATTIME, UTC_TO_YYYYMMDD
   use MLSCOMMON, only: FILENAMELEN, FINITE_SIGNAL, IS_WHAT_IEEE
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGEINTERNALFILE, &
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, &
     & MLSMSG_INFO, MLSMSG_ERROR
   use MLSSETS, only: FINDFIRST
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
@@ -972,11 +972,10 @@ contains
     integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
     !
     ! Internal variables
-    integer :: addedLines
     character(len=1)      :: myAlignment
     integer, dimension(2) :: myColumnRange      ! To fit chars
     integer, dimension(2) :: myFullColumnRange  ! Must fit before and after, too
-    integer :: lineLen, mySkips,  rightpadding
+    integer :: mySkips,  rightpadding
     character(len=1) :: myFillChar
     ! Executable
     if ( present(columnRange) ) then
@@ -2827,6 +2826,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.96  2012/08/16 17:36:30  pwagner
+! Removed more unused stuff
+!
 ! Revision 2.95  2012/08/07 18:01:22  pwagner
 ! output simply prints tab character as is instead of as '@'
 !
