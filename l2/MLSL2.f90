@@ -343,7 +343,7 @@ program MLSL2
 
   call time_now ( t1 )
 
-  if( switchDetail(switches, 'opt') > 0 .or. showDefaults ) then
+  if( switchDetail(switches, 'opt') > -1 .or. showDefaults ) then
     do j=1, size(current_version_id)
       call output(trim(current_version_id(j)), advance='yes')
     end do
@@ -563,93 +563,93 @@ contains
       call blanks(80, fillChar='-', advance='yes')
       call headline( 'Summary of run time options', fillChar='-', before='*', after='*' )
       call outputNamedValue ( 'Use toolkit panoply', toolkit, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Error threshold before halting', quit_error_threshold, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Status on normal exit', normal_exit_status, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Default hdf version for l1b files', level1_hdfversion, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Default hdfeos version on reads', default_hdfversion_read, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Default hdfeos version on writes', default_hdfversion_write, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'PCF shared with level 1?', SHAREDPCF, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Range of chunks', trim_safe(parallel%chunkRange), advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Avoiding unlimited dimensions in directwrites?', &
         & avoidUnlimitedDims, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Allow overlaps outside proc. range?', &
         & (/ChunkDivideConfig%allowPriorOverlaps, ChunkDivideConfig%allowPostOverlaps/), advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Catenate split dgg/dgm after run completes?', catenateSplits, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Is this run in forward model parallel?', parallel%fwmParallel, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Avoid creating file on first directWrite?', patch, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Is this the master task in pvm?', parallel%master, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       if ( parallel%master .or. showDefaults ) then
       call outputNamedValue ( 'Master task number', parallel%myTid, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Command line sent to slaves', trim_safe(parallel%pgeName), advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Command to queue slave tasks', trim_safe(parallel%submit), advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Maximum failures per chunk', parallel%maxFailuresPerChunk, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Maximum failures per machine', parallel%maxFailuresPerMachine, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Sleep time in masterLoop (mus)', parallel%delay, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
       call outputNamedValue ( 'Is this a slave task in pvm?', parallel%slave, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       if ( parallel%slave ) then
       call outputNamedValue ( 'Master task number', parallel%masterTid, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
       call outputNamedValue ( 'Preflight check paths?', checkPaths, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Need L1B files?', checkPaths, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Skip all direct writes?', SKIPDIRECTWRITES, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Skip all retrievals?', SKIPRETRIEVAL, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Skip these sections?', trim_safe(sectionsToSkip), advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Unretrieved states fill', STATEFILLEDBYSKIPPEDRETRIEVALS, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Using wall clock instead of cpu time?', time_config%use_wall_clock, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call get_string ( lit_indices(sectionTimingUnits), string, strip=.true. )
       call outputNamedValue ( 'Summarize time in what units', trim_safe(string), advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Number of switches set', numSwitches, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       if ( switches /= ' ' ) then
         call outputNamedValue ( '(All switches)', trim(switches), advance='yes', &
-          & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
       call outputNamedValue ( 'Standard output unit', outputOptions%prunit, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Log file unit', MLSMessageConfig%LogFileUnit, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Crash on any error?', MLSMessageConfig%crashOnAnyError, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Suppress identical warnings after', MLSMessageConfig%limitWarnings, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Restart counting warnings at each phase?', restartWarnings, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Set error before stopping?', StopWithError, advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       if ( specialDumpFile /= ' ' ) then
       call outputNamedValue ( 'Save special dumps to', trim(specialDumpFile), advance='yes', &
-        & fillChar=fillChar, before='* ', after=' *', tabn=4, tabc=62, taba=80 )
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
       call blanks(80, fillChar='-', advance='yes')
       call dump(outputOptions)
@@ -696,6 +696,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.189  2012/08/21 23:54:01  pwagner
+! Fixed certain problems when showing settings
+!
 ! Revision 2.188  2012/08/16 17:48:47  pwagner
 ! Exploit new features to fleexibly change how and when to log output
 !
