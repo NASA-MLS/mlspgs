@@ -51,7 +51,6 @@
 ! ReportTKStatus           converts SDP status to severity, prints if needed
 ! StopWithErrorMsg         report error msg, dump calling stack, stop
 ! SummarizeWarnings        show summary of how many warnings received
-! WasLastWarning           Returns TRUE if last warning matches string
 
 ! === (end of toc) ===
 
@@ -75,7 +74,6 @@
 !      [int Threshold] )
 ! StopWithErrorMsg ( char* Message, [MLSFile_T MLSFile] )
 ! SummarizeWarnings
-! log WasLastWarning ( char* str, char* opts )
 ! === (end of api) ===
   ! ---------------------------------------------------------------------------
 
@@ -202,7 +200,7 @@
       &                                = ''      ! What (else) to call Info
     logical :: useToolkit              = .true.
     logical :: AsciifyMessages         = .true.
-    integer :: MaxModuleNameLength     = 10      ! Abbreviate longer name
+    integer :: MaxModuleNameLength     = 32      ! Abbreviate longer name
     integer :: MaxSeverityNameLength   = 8       ! Abbreviate longer severity
     logical :: CrashOnAnyError         = .false. ! See crash warning
     logical :: SendErrMsgToMaster      = .false. ! send last gasp to master?
@@ -601,7 +599,7 @@ contains
 
   ! --------------------------------------------  MLSMessageInquire  -----
 
-  ! This routine returns requested info about MLSMessages
+  ! This routine returns requested info about Warnings
 
   subroutine MLSMessageInquire( Warning_msg, timesWarned, &
     &  totalnumwarnings, LastWarningMsg  )
@@ -646,7 +644,7 @@ contains
 
   ! This routine sets up the MLSMessage suite.  The defaults are of course
   ! sensible, but the user may wish to change things.
-
+  ! (Since we made MLSMessageConfig public, is there any reason to keep this?)
   subroutine MLSMessageSetup ( SuppressDebugs, LogFileUnit, Prefix, useToolkit, &
     & CrashOnAnyError  )
 
@@ -732,7 +730,7 @@ contains
   ! --------------------------------------------  MLSMessageReset  -----
 
   ! This routine allows you to reset flags, counters, etc. during runtime
-
+  ! (See also restoreConfig)
   subroutine MLSMessageReset ( logFileUnit, CrashOnAnyError, Warnings, &
     & clearLastWarning )
     ! Various uses:
@@ -809,7 +807,7 @@ contains
     MLSMessageConfig%skipMessageThr          = MLSMSG_Success ! Always show messages  
     MLSMessageConfig%suppressDebugs          = .false.                                
     MLSMessageConfig%AsciifyMessages         = .true.                                                                            
-    MLSMessageConfig%MaxModuleNameLength     = 10
+    MLSMessageConfig%MaxModuleNameLength     = 32
     MLSMessageConfig%MaxSeverityNameLength   = 8 
     MLSMessageConfig%CrashOnAnyError         = .false. ! See crash warning                                                       
     MLSMessageConfig%SendErrMsgToMaster      = .false. ! send last gasp to master?                                               
@@ -1163,6 +1161,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.21  2012/08/21 23:52:32  pwagner
+! Removed comments about non-existent function; MaxModuleNameLength made adequate
+!
 ! Revision 2.20  2012/08/16 17:35:30  pwagner
 ! Changed how and when message lines are printed
 !
