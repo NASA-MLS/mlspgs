@@ -11,8 +11,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-098r1}
-\newcommand{\docdate}{3 December 2010}
+\newcommand{\docname}{wvs-098r2}
+\newcommand{\docdate}{20 August 2012}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -45,8 +45,9 @@
 \fi
 
 \hyperbaseurl{}
-\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\hr[1]{\href{#1.dvi}{\textnormal{dvi}}, \href{#1.pdf}{\textnormal{pdf}}}
 \newcommand\h[1]{#1 (\hr{#1})}
+\newcommand\hb[1]{{\bf #1} (\hr{#1})}
 
 \begin{document}
 
@@ -75,13 +76,13 @@
 To: \>Bill, Igor, Nathaniel\\
 Subject: \>Mixing-ratio derivative of radiance\\
 From: \>Van Snyder\\
-Reference: \>iy-007, wvs-093\\
+Reference: \>\h{iy-007}, \h{wvs-093}, \h{wvs-099}\\
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
 
-{\bf This is oversimplified.  See wvs-093 and wvs-099.}
+{\bf This is oversimplified.  See \h{wvs-093} and \h{wvs-099}.}
 
 Using notation similar to iy-007, the solution of the radiative transfer
 equation in the form used in the full forward model is
@@ -147,6 +148,9 @@ derivatives of radiance with respect to mixing ratio.
 %$Id$
 
 %$Log$
+%Revision 1.2  2010/12/04 02:52:50  vsnyder
+%Add 'oversimplified' caveat
+%
 %Revision 1.1  2010/11/13 01:34:11  vsnyder
 %Initial commit
 %
