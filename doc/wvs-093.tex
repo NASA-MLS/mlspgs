@@ -5,10 +5,10 @@
 \oddsidemargin -0.25in
 %\evensidemargin -0.5in
 \topmargin -0.25in
-\textheight 9.0in
+\textheight 9.1in
 
-\newcommand{\docname}{\bf wvs-093r9}
-\newcommand{\docdate}{2 January 2011}
+\newcommand{\docname}{\bf wvs-093r10}
+\newcommand{\docdate}{24 August 2012}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -90,7 +90,7 @@ This note shows that the MLS Full Forward Model could compute the Jacobian
 matrix necessary for retrieval more efficiently than it presently does.
 
 Thanks are due to the seminar \emph{Sensitivity Analysis of Mathematical Models}
-on 29 March -- 1 April by Eugene Ustinov.
+on 29 March -- 1 April 2010 by Eugene Ustinov.
 
 \section{Mathematical generalities}
 
@@ -174,14 +174,14 @@ function $\frac{h \nu}k \left( \exp\left(\frac{h \nu}{k T(s)}\right)
 
 $\alpha(\sigma) = \sum_k \beta^k(\sigma) f^k(\sigma) = \sum_k
 \beta^k(\sigma) f^k_{lm} \mu^k_{lm}(\sigma)$ is the volume absorption
-coefficient, $f^k(\sigma)$ is the volume mixing ratio of the
-$k^\text{th}$ species at $\sigma$, $f^k_{lm}$ is the volume mixing ratio
-of the $k^\text{th}$ species at the $(l,m)$ representation basis point,
-$\mu^k_{lm}(\sigma)$ is the interpolation coefficient from the $(l,m)$
-representation basis point for the $k^\text{th}$ species to the point
-$\sigma$ on the integration path (see \h{wvs-101}), and $\beta^k(\sigma)$
-is the absorption cross section for the $k^\text{th}$ species at
-$\sigma$. 
+coefficient, $f^k(\sigma)$ is the volume mixing ratio of the $k^\text{th}$
+species at $\sigma$, $f^k_{lm}$ is the volume mixing ratio of the
+$k^\text{th}$ species at the $(\phi_l,\zeta_m)$ representation basis
+point, $\mu^k_{lm}(\sigma)$ is the interpolation coefficient from the
+$(\phi_l,\zeta_m)$ representation basis point for the $k^\text{th}$
+species to the point $\sigma$ on the integration path (see \h{wvs-101}),
+and $\beta^k(\sigma)$ is the absorption cross section for the
+$k^\text{th}$ species at $\sigma$. 
 
 From Equation (\ref{two})
 
@@ -388,7 +388,7 @@ Remember that Equation (\ref{var I}) is the variation of the
 the \emph{function} $\alpha(sigma)$.
 
 
-Using bilinear interpolation of mixing ratios from a
+Using bilinear interpolation of mixing ratios $f^k_{lm}$ from a
 $(\phi^k_l,\phi^k_{l+1}) \times (\zeta^k_m,\zeta^k_{m+1})$ grid cell for
 the $k^\text{th}$ species to path points within the cell,
 %
@@ -436,12 +436,13 @@ and where by shifting indices in Equation (\ref{three})
 (1-\xi_{i,\ell-1}(s))  (1-\eta_{i,m-1}(s))
   & \phi_{l-1} \leq \phi(s) \leq \phi_l
   & \zeta_{m-1} \leq \zeta(s) \leq \zeta_m \\
+0 & \text{elsewhere} \\
 \end{array}
 \right.
 \end{split}\end{equation}
 
-Thus the sensitivity of $I(s_m)$ to variation of $f^k_{lm}$, that is, a
-\emph{partial derivative}, is
+Thus the sensitivity of $I(s_m)$ to variation of the discrete parameter
+$f^k_{lm}$, that is, a \emph{partial derivative}, is
 %
 \begin{equation}
 \boxed{
@@ -506,23 +507,29 @@ I(s_m) \approx\,& S_{N_p} \text{ and}\\
 \end{split}}}
 \end{equation}
 
-Since we use linear interpolation, $\mu^k_{lm}(\sigma_j)$ is nonzero only
-for two values of $j$. Therefore, we can evaluate both $I(s_m)$ and its
-sensitivity to variation in the discrete parameters $f^k_{lm}$ by
+where $h$ is height, $\zeta = -\log_{10}(p)$, and $p$ is pressure.  The
+second formulation allows for the path to depend upon temperature, since
+height and pressure are related by hydrostatic equilibrium, which depends
+upon temperature.
+
+Since we use bilinear interpolation, $\mu^k_{lm}(\sigma_j)$ is nonzero
+only for two values of $j$. Therefore, we can evaluate both $I(s_m)$ and
+its sensitivity to variation in the discrete parameters $f^k_{lm}$ by
 evaluating one indefinite sum, and multiplying each of the $N_p$ elements
 by $2 N_s$ molecular absorption cross sections, $2 N_r$ interpolation
 coefficients, and two values of $\Delta \sigma$ , where $N_r$ is the
 number of points in the representation basis.  The additional cost to
-compute the sensitivities is $6 N_p \times N_s \times N_r$ additional
-multiplies and two additional adds.
+compute the sensitivities is $6 N_p \times N_s \times N_r$ multiplies and
+two adds.
 
 In the present scheme, we compute the sensitivities by evaluating $N_p
 \times N_s \times N_r$ additional quadrature steps, each requiring $2 N_p
 + 11 G + N_s N_p^2$ FLOPS, where $0 \leq G \leq N_p$ is the number of
-panels requiring Gauss-Legendre quadrature, because we compute the
-derivative of Equation (\ref{first}) with respect to $f^k(\sigma)$, and
-leave $\frac{\partial\alpha(\sigma)}{\partial f^k_{lm}} =
-\beta^k(\sigma)$ inside the integral:
+panels requiring three-point Gauss-Legendre quadrature instead of
+trapezoidal quadrature, because we compute the derivative of Equation
+(\ref{first}) with respect to $f^k(\sigma)$, and leave
+$\frac{\partial\alpha(\sigma)}{\partial f^k_{lm}} = \beta^k(\sigma)$
+inside the integral:
 
 \begin{equation}\begin{split}
 \frac{\partial I(s_m)}{\partial f^k_{lm}}
@@ -582,7 +589,7 @@ $\frac{\partial I(s_0)}{\partial f^k_{lm}}=0$ to get
 \begin{equation}\boxed{
 \frac{\partial I(s_m)}{\partial f^k_{lm}} =
  \int_{s_0}^{s_m} \T(s,s_m) \beta^k(s) \mu^k_{lm}(s)
-  ( B(s) - I(s) ) \d s
+  ( B(s) - I(s) )\, \d s
 }
 \end{equation}
 
@@ -809,7 +816,7 @@ Replacing $\frac{\partial \alpha(s)}{\partial T_{lm}} = \frac{\partial
 $\frac{\partial B(s)}{\partial T_{lm}} = \frac{\partial
 B(s)}{\partial T(s)} \frac{\partial T(s)}{\partial T_{lm}} =
 \frac{\partial B(s)}{\partial T(s)} \mu^T_{lm}(s)$, where $\mu^T_{lm}(s)$
-is the interpolation coefficient from $(\phi_l,\zeta_m)$ to $s$, gives
+is the interpolation coefficient from $(\phi_l^T,\zeta_m^T)$ to $s$, gives
 
 \begin{equation}
 \frac{\d}{\d s}\frac{\partial I(s)}{\partial T_{lm}} +
@@ -857,7 +864,8 @@ work) by substituting Equation (\ref{I}) into Equation (\ref{T10}).
 
 Equations (\ref{T10}) and (\ref{Teq}) are both complicated by the fact
 that the path depends upon temperature everywhere below the path.  When
-integrated in log pressure coordinates, Equation (\ref{T10}) becomes
+integrated in $\zeta = -\log_{10}(p)$ coordinates, Equation (\ref{T10})
+becomes
 
 \begin{equation}\label{T half}
 \frac{\partial I(s)}{\partial T_{lm}} =
@@ -936,6 +944,9 @@ $T_{lm}$ where $(\phi_l,\zeta_m)$ is below the path.
 % $Id$
 
 % $Log$
+% Revision 1.10  2011/02/05 01:29:11  vsnyder
+% More temperature derivatives on the grid
+%
 % Revision 1.9  2010/12/30 00:51:43  vsnyder
 % Temperature derivative on the grid
 %
