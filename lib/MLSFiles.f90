@@ -501,6 +501,7 @@ contains
     character (LEN=BareFNLen), dimension(:), allocatable &
      &                                :: nameArray
     integer                       ::     numberPCs
+    character(len=8)                  :: options
     character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
     character (LEN=*), parameter      :: UNASSIGNEDFILENAME = '*'
     character (LEN=BareFNLen), dimension(:), allocatable &
@@ -585,13 +586,15 @@ contains
     enddo
     ! Sort the file names from short to long
     ! to prevent unwanted matches between "O3" and "HNO3"
+    options="-sr"
+    if ( caseSensitive ) options=trim(options) // 'c'
     unsortedArray = nameArray
-    call SortArray(unsortedArray, intArray, caseSensitive, &
-     & sortedArray=nameArray, shorterFirst=.true., leftRight='r')
+    call SortArray( unsortedArray, intArray, &
+     & sortedArray=nameArray, options=options )
     do notThePC = 1, numberPCs
       thePC = intArray(notThePC) + PCBottom - 1         
       NameOnly = nameArray(notThePC)            
-      if ( index(NameOnly, trim(MatchName)) /= 0 )then  
+      if ( index(NameOnly, trim(MatchName)) /= 0 ) then  
         ErrType = 0                                     
         exit                                            
       endif                                             
@@ -1933,8 +1936,6 @@ contains
     if ( present(error) ) error = ioerror
   end subroutine mls_CloseFileType
 
-
-
 !----------------------- mls_exists
   integer function mls_exists(filename)
   ! returns 0 if file exists, FILENOTFOUND if not
@@ -2721,6 +2722,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.94  2012/08/27 23:01:29  pwagner
+! Consistent with new api for SortArray
+!
 ! Revision 2.93  2012/08/14 00:20:13  pwagner
 ! Removed unused stuff
 !
