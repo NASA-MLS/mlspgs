@@ -211,11 +211,13 @@ CONTAINS
 
 ! Check if Band Switch 5 changes:
 
+       CalBuf%BankGood(1) = .TRUE.
        IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(5) /= Switch5)) &
             CalBuf%BankGood(1) = .FALSE.  ! Filter Bank 15 not all good
 
 ! Check if Band 20 is connected:
 
+       CalBuf%BankGood(6) = .TRUE.
        IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(4) /= 20)) THEN
           CalBuf%BankGood(6) = .FALSE. ! Filter Bank 12 (Band 20) not all good
           DO MIFno = 0, last_MIF
@@ -1090,6 +1092,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2012/08/29 17:11:37  perun
+! Put in good case tests for Bands 15 and 20.
+!
 ! Revision 2.14  2009/09/03 19:07:33  perun
 ! Use correct number of MAFs in THzBound routine
 !
