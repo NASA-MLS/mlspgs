@@ -1554,6 +1554,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_hRegWeightVec, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              begin, f+f_lambda, t+t_numeric, n+n_field_type, &
+             begin, f+f_lambdaMin, t+t_numeric, n+n_field_type, &
              begin, f+f_lowBound, s+s_vector, n+n_field_spec, &
              begin, f+f_maxJ, t+t_numeric, n+n_field_type, &
              begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
@@ -1783,6 +1784,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.552  2012/08/30 23:03:07  vsnyder
+! Add lambdaMin
+!
 ! Revision 2.551  2012/07/05 23:50:09  pwagner
 ! Copy command in Output may contain options field
 !
