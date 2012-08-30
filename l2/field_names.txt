@@ -226,6 +226,7 @@ keepChannels
 l2pc
 label
 lambda
+lambdamin
 length
 lengthScale
 level
@@ -498,6 +499,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.221  2012/08/30 23:01:59  vsnyder
+# Add lambdaMin
+#
 # Revision 2.220  2012/07/04 01:53:46  vsnyder
 # Add dumpQuantities field of retrieve spec
 #
