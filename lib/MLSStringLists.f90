@@ -75,6 +75,8 @@ module MLSStringLists               ! Module to treat string lists
 ! RemoveElemFromList removes occurrence(s) of elem from a string list
 ! RemoveListFromList removes occurrence(s) of elems in a string list from another
 ! RemoveNumFromList  removes a numbered elem from a string list
+! RemoveSwitchFromList  
+!                    removes a switch from a list of switches
 ! ReplaceSubString   replaces occurrence(s) of sub1 with sub2 in a string
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
 ! ReverseStrings     Turns (/'abc','def','ghi'/) -> (/'ghi','def','abc'/)
@@ -134,6 +136,8 @@ module MLSStringLists               ! Module to treat string lists
 ! RemoveListFromList(strlist inList, strlist outList, strlist exclude, &
 !    & [char inseparator], [char* options])
 ! RemoveNumFromList(strlist inList, strlist outList, int nElement, &
+!    & [char inseparator], [char* options])
+! RemoveSwitchFromList(strlist inList, strlist outList, char* switch, &
 !    & [char inseparator], [char* options])
 ! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* which], [log no_trim])
@@ -250,8 +254,9 @@ module MLSStringLists               ! Module to treat string lists
    & List2Array, LoopOverFormula, listMatches, NumStringElements, &
    & optionDetail, ParseOptions, PutHashElement, ReadIntsFromList, &
    & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
-   & ReplaceSubString, ReverseList, ReverseStrings, SnipList, &
-   & SortArray, SortList, StringElement, StringElementNum, SwitchDetail, &
+   & RemoveSwitchFromList, ReplaceSubString, ReverseList, ReverseStrings, &
+   & SnipList, SortArray, SortList, StringElement, StringElementNum, &
+   & SwitchDetail, &
    & unquote, wrap
 
   interface BooleanValue
@@ -2637,6 +2642,41 @@ contains
     enddo
   end subroutine RemoveNumFromList
 
+  ! --------------------------------------------------  RemoveSwitchFromList  -----
+  subroutine RemoveSwitchFromList( inSwitches, outSwitches, switch, &
+    & inseparator, options )
+    ! Args
+    character(len=*), intent(in)              :: inSwitches
+    character(len=*), intent(in)              :: switch
+    character(len=*), intent(out)             :: outSwitches
+    character (len=*), optional, intent(in)   :: inseparator
+    character (len=*), optional, intent(in)   :: options
+    ! Internal variables
+    integer :: i, n, details
+    logical :: countEmpty
+    character(len=len(inSwitches)) :: aSwitch, bareSwitch
+    character(len=8) :: myOptions
+    character (len=1)               :: separator
+    ! Executable
+    if(present(inseparator)) then
+      separator = inseparator
+    else
+      separator = COMMA
+    endif
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    CountEmpty = index( myOptions, 'e' ) > 0  ! .true.
+    outSwitches = ' '
+    n = NumStringElements( inSwitches, countEmpty )
+    if ( n < 1 ) return
+    do i=1, n
+      call GetStringElement( trim(inSwitches), aSwitch, i, countEmpty )
+      call SplitDetails( aSwitch, bareSwitch, details )
+      if ( .not. streq( Switch, bareSwitch, '-f' ) ) &
+        & outSwitches = catLists( outSwitches, aSwitch )
+    enddo
+  end subroutine RemoveSwitchFromList
+
   ! --------------------------------------------------  ReplaceSubString  -----
   subroutine ReplaceSubString (str, outstr, sub1, sub2, which, no_trim)
     ! Takes a string and replaces occurrence(s) of sub1 with sub2
@@ -4070,6 +4110,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.52  2012/08/30 20:51:45  pwagner
+! Added RemoveSwitchFromList
+!
 ! Revision 2.51  2012/08/27 22:54:58  pwagner
 ! Changed api for sorts, more useful for sorting switches
 !
