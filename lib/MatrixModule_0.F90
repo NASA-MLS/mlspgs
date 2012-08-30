@@ -800,7 +800,7 @@ contains ! =====     Public Procedures     =============================
     real(rm), pointer, dimension(:,:) :: TST1, TST2 ! When using checkblock
     logical :: OK                       ! For testing
 
-    if ( tol < 0.0_rm ) tol = sqrt(tiny(0.0_rm))
+    if ( tol < 0.0_rm ) tol = sqrt(epsilon(0.0_rm))
     nullify ( r1, xin, zt )
     x => z
     if ( present(xopt) ) x => xopt
@@ -824,33 +824,32 @@ contains ! =====     Public Procedures     =============================
         r1(i) = i             ! We know the diagonal will get a value
       end do
       do i = 1, nc
+        zt(i,1:i-1) = 0.0_rm  ! Clear left from the diagonal (helps Sparsify!)
         ii = i - x%r1(i)      ! Offset in VALUES of (I,I) element
         if ( ii < 0 .or. ii > x%r2(i) - x%r2(i-1) ) then
-          if ( present(status) ) then
-            status = i
-            return
-          end if
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "Matrix in CholeskyFactor is not positive-definite." )
-        end if
-        zt(i,1:i-1) = 0.0_rm  ! Clear left from the diagonal (helps Sparsify!)
+          g = tol
+        else
 #if (defined LF95)
-        g = x%values(ii+x%r2(i-1)+1,1) - &
-            & dot( i-r1(i), zt(r1(i),i), 1, zt(r1(i),i), 1 )
+          g = x%values(ii+x%r2(i-1)+1,1) - &
+              & dot( i-r1(i), zt(r1(i),i), 1, zt(r1(i),i), 1 )
 #elif (defined NAG) || (defined IFC)
-        g = x%values(ii+x%r2(i-1)+1,1) - &
-            & dot_product( zt(r1(i):i-1,i), zt(r1(i):i-1,i) )
+          g = x%values(ii+x%r2(i-1)+1,1) - &
+              & dot_product( zt(r1(i):i-1,i), zt(r1(i):i-1,i) )
 #else
-        g = x%values(ii+x%r2(i-1)+1,1) - &
-            & dot( i-r1(i), zt(r1(i),i), 1, zt(r1(i),i), 1 )
+          g = x%values(ii+x%r2(i-1)+1,1) - &
+              & dot( i-r1(i), zt(r1(i),i), 1, zt(r1(i),i), 1 )
 #endif
-        if ( g <= tol .and. i < nc ) then
-          if ( present(status) ) then
-            status = i
-            return
-          end if
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "Matrix in CholeskyFactor is not positive-definite." )
+          ! WVS added this 2012-08-23.  It's equivalent to some very local
+          ! Levenberg-Marquardt stabilization.
+          g = max(g,tol)
+!           if ( g < tol .and. i < nc ) then
+!             if ( present(status) ) then
+!               status = i
+!               return
+!             end if
+!             call MLSMessage ( MLSMSG_Error, ModuleName, &
+!               & "Matrix in CholeskyFactor is not positive-definite." )
+!           end if
         end if
         d = sqrt(g)
         zt(i,i) = d
@@ -1256,7 +1255,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J, NC
 
     nc = size(xin,2)
-    if ( tol < 0.0_rm ) tol = sqrt(tiny(0.0_rm))
+    if ( tol < 0.0_rm ) tol = sqrt(epsilon(0.0_rm))
     do i = 1, nc
       zt(i+1:nc,i) = 0.0_rm ! Clear below the diagonal (helps Sparsify!)
 #if (defined LF95)
@@ -1266,14 +1265,17 @@ contains ! =====     Public Procedures     =============================
 #else
       d = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
 #endif
-      if ( (d <= tol .and. i < nc) .or. (d < 0.0) ) then
-        if ( present(status ) ) then
-          status = i
-          return
-        end if
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Matrix in DenseCholesky is not positive-definite." )
-      end if
+      ! WVS added this 2012-08-23.  It's equivalent to some very local
+      ! Levenberg-Marquardt stabilization.
+      d = max(d,tol)
+!       if ( (d < tol .and. i < nc) .or. (d < 0.0) ) then
+!         if ( present(status ) ) then
+!           status = i
+!           return
+!         end if
+!         call MLSMessage ( MLSMSG_Error, ModuleName, &
+!           & "Matrix in DenseCholesky is not positive-definite." )
+!       end if
       d = sqrt(d)
       zt(i,i) = d
 !$OMP PARALLEL DO
@@ -3713,6 +3715,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.17  2012/08/30 23:06:09  vsnyder
+! Constrain diagonal above sqrt(epsilon) in Cholesky
+!
 ! Revision 2.16  2012/08/16 23:21:14  vsnyder
 ! Remove SANSREMAP since remapping wasn't a problem
 !
