@@ -221,7 +221,7 @@ module DNWT_MODULE
 
   real(rk) :: AJN, AJSCAL, AXMAX, AXMAXB, CAIT, CDXDXL, CGDX, CONDAI
   real(rk) :: DIAG, DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
-  real(rk) :: FN, FNB, FNL, FNMIN, FNXE, FRZ, FRZB
+  real(rk) :: FN, FNB, FNL, FNMIN, FNMINB, FNXE, FRZ, FRZB
   real(rk) :: FRZL, GFAC, GRADN, GRADNB, GRADNL
   integer :: IFL, INC, ITER, ITKEN
   integer :: K1IT, KB
@@ -233,7 +233,7 @@ module DNWT_MODULE
   type NWT_GUTS    ! Public type returned by DNWT_GUTS
     real(rk) :: AJN, AJSCAL, AXMAX, AXMAXB, CAIT, CDXDXL, CGDX, CONDAI
     real(rk) :: DIAG, DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
-    real(rk) :: FN, FNB, FNL, FNMIN, FNXE, FRZ, FRZB
+    real(rk) :: FN, FNB, FNL, FNMIN, FNMINB, FNXE, FRZ, FRZB
     real(rk) :: FRZL, GFAC, GRADN, GRADNB, GRADNL
     integer :: IFL, INC, ITER, ITKEN
     integer :: K1IT, KB
@@ -405,6 +405,7 @@ contains
 ! FNL      Last value of FN
 ! FNMIN    Norm of component of F orthogonal to the column space of
 !          the Jacobian after stabilization
+! FNMINB   FNMIN at best X, not best FNMIN
 ! FNXE     Used to test if F is behaving with near linearity. If
 !          FNORM on the next iteration satisfies FNORM**2 <= FNXE
 !          then linear behavior is assumed.
@@ -574,7 +575,9 @@ contains
             end if
             if ( dxnl <= dxnois ) go to 219 ! Last Newton move tiny?
             if ( kb < 0 ) go to 224 ! Gradient move last time?
-            if ( (tp >= min(sql,sqb+sqb)) .or. (inc >= incbig) ) go to 222
+! WVS revised this 2012-08-27 based upon advice from FTK
+!           if ( (tp >= min(sql,sqb+sqb)) .or. (inc >= incbig) ) go to 222
+            if ( fnmin > (c1+0.5*relsf)*fnminb .or. inc >= incbig ) go to 222
           end if
           sqmin = min(sqb, max(spl, spact)*ajn*c4)
           dxinc = max(dxnl*cp5, dxnois)
@@ -897,7 +900,7 @@ contains
       spg = spl + cp01
       fnb = fn
       frzb = frz
-!     fnminb = fnmin
+      fnminb = fnmin
       gradnb = gradn
       aj%gradnb = gradnb
       if ( abs(cdxdxl) < cp9 .or. sq /= c0 .or. dxn >= dxnl ) go to 755
@@ -1164,6 +1167,7 @@ contains
     if ( myLevel > 0 ) call add_to_line ( fnb,    'FNB' )
     if ( myLevel > 0 ) call add_to_line ( fnl,    'FNL' )
     call add_to_line ( fnmin,  'FNMIN' )
+    if ( myLevel > 0 ) call add_to_line ( fnminb,  'FNMINB' )
     call add_to_line ( sqrt(fnxe),   'FNXE**.5' )
     call add_to_line ( frz,    'FRZ' )
     if ( myLevel > 0 ) call add_to_line ( frzb,   'FRZB' )
@@ -1288,6 +1292,7 @@ contains
     guts%fnb = fnb
     guts%fnl = fnl
     guts%fnmin = fnmin
+    guts%fnminb = fnminb
     guts%fnxe = fnxe
     guts%frz = frz
     guts%frzb = frzb
@@ -1378,6 +1383,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.51  2012/08/30 23:04:02  vsnyder
+! Use FNMIN at best X to decide on gradient move
+!
 ! Revision 2.50  2012/04/20 01:29:21  vsnyder
 ! Change dxinc calculation, add QNSQ output
 !
