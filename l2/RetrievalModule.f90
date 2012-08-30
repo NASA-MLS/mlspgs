@@ -55,7 +55,8 @@ contains
       & F_DIAGNOSTICS, F_DIAGONAL, F_DUMPQUANTITIES, F_EXTENDEDAVERAGE, &
       & F_FORWARDMODEL, F_FUZZ, F_FWDMODELEXTRA, F_FWDMODELOUT, &
       & F_HESSIAN, F_HIGHBOUND, F_HREGORDERS, F_HREGQUANTS, F_HREGWEIGHTS, &
-      & F_HREGWEIGHTVEC, F_JACOBIAN, F_LAMBDA, F_LEVEL, F_LOWBOUND, &
+      & F_HREGWEIGHTVEC, F_JACOBIAN, F_LAMBDA, F_LAMBDAMIN, F_LEVEL, &
+      & F_LOWBOUND, &
       & F_MAXJ, F_MEASUREMENTS, F_MEASUREMENTSD, F_METHOD, F_MUMIN, &
       & F_NEGATESD, &
       & F_OUTPUTCOVARIANCE, F_OUTPUTSD, &
@@ -126,6 +127,7 @@ contains
 
     ! Default values:
     real(r8), parameter :: DefaultInitLambda = 0.0_r8
+    real(r8), parameter :: DefaultLambdaMin = 0.0_r8
     integer, parameter :: DefaultMaxJ = 5
     integer, parameter :: DefaultMethod = l_newtonian
     real(r8), parameter :: DefaultMuMin = 0.1_rv
@@ -178,6 +180,7 @@ contains
     integer :: K                        ! Subscript, loop inductor, local temp
     integer :: Key                      ! Index of an n_spec_args.  Either
                                         ! a son or grandson of root.
+    real(r8) :: LambdaMin               ! Minimum Levenberg-Marquardt parameter
     type(vector_T), pointer :: LowBound ! For state during retrieval
     integer :: MaxJacobians             ! Maximum number of Jacobian
                                         ! evaluations of Newton method
@@ -380,6 +383,7 @@ contains
         hRegWeights = 0
         nullify ( hRegWeightVec )
         initLambda = defaultInitLambda
+        lambdaMin = defaultLambdaMin
         maxJacobians = defaultMaxJ
         method = defaultMethod
         muMin = defaultMuMin
@@ -497,8 +501,8 @@ contains
             call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
             call set_toggles ( switches(switchLenCur+1:) )
             switches(switchLenCur+1:) = ''
-          case ( f_aprioriScale, f_fuzz, f_lambda, f_maxJ, f_muMin, &
-            &    f_toleranceA, f_toleranceF, f_toleranceR )
+          case ( f_aprioriScale, f_fuzz, f_lambda, f_lambdamin, f_maxJ, &
+            &    f_muMin, f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
             if ( units(1) /= phyq_dimensionless ) &
               & call announceError ( wrongUnits, field, string='no' )
@@ -509,6 +513,8 @@ contains
               fuzz = value(1)
             case ( f_lambda )
               initLambda = value(1)
+            case ( f_lambdamin )
+              lambdaMin = value(1)
             case ( f_maxJ )
               maxJacobians = nint(value(1))
             case ( f_muMin )
@@ -910,6 +916,123 @@ contains
           & advance='yes' )
       end select
     end subroutine AnnounceError
+
+    ! --------------------------------------------  ApplyTikhonov  -----
+    subroutine ApplyTikhonov ( After, NormalEquations, AJ, TikhonovRows, &
+                             & D_Reg, D_Fnorm )
+      !{ Apply Tikhonov regularization.
+      !  Tikhonov regularization is of the form ${\bf R x}_{n+1} \simeq
+      !  {\bf 0}$ or ${\bf R x}_{n+1} \simeq {\bf a}$, where {\bf a} is
+      !  the apriori. So that all of the parts of the problem are solving
+      !  for ${\bf\delta x}$, we subtract ${\bf R x}_n$ from both sides
+      !  to get ${\bf R \delta x} \simeq -{\bf R x}_n$ or ${\bf R \delta
+      !  x} \simeq {\bf R} ( {\bf a - x}_n)$.
+      !
+      !  If {\tt After} is true, apply column scaling.
+
+      use DNWT_Module, only: NWT_T
+      use MatrixModule_1, only: ClearMatrix, ColumnScale, Dump, Dump_Struct, &
+        & FormNormalEquations => NormalEquations, GetDiagonal
+      use Regularization, only: Regularize
+      use VectorsModule, only: OPERATOR(.DOT.), SCALEVECTOR
+
+      logical, intent(in) :: After     ! Allow column scaling
+      type(matrix_SPD_T), intent(inout) :: NormalEquations  ! Jacobian**T * Jacobian
+      type(Nwt_T), intent(inout) :: AJ ! Stuff for communicating with DNWT
+      integer, intent(inout) :: TikhonovRows ! Number of rows added
+      logical, intent(in) :: D_Reg     ! Dump regularization
+      integer, intent(in) :: D_Fnorm   ! Dump the revised norm of F
+
+      integer :: T
+      character(*), parameter :: Which(2) = (/ 'Vertical  ', 'Horizontal' /)
+
+        call add_to_retrieval_timing( 'newton_solver', t1 )
+
+      !{ Tikhonov regularization is of the form ${\bf R x}_{n+1} \simeq
+      !  {\bf 0}$ or ${\bf R x}_{n+1} \simeq {\bf a}$, where {\bf a} is
+      !  the apriori. So that all of the parts of the problem are solving
+      !  for ${\bf\delta x}$, we subtract ${\bf R x}_n$ from both sides
+      !  to get ${\bf R \delta x} \simeq -{\bf R x}_n$ or ${\bf R \delta
+      !  x} \simeq {\bf R} ( {\bf a - x}_n)$.
+
+      do t = 1, 2 ! Vertical, then Horizontal regularization
+        if ( t == 1 ) then
+          if ( .not. got(f_vRegOrders) ) cycle
+          call regularize ( tikhonov, vRegOrders, vRegQuants, vRegWeights, &
+            & vRegWeightVec, tikhonovRows, horiz=.false. )
+        else
+          if ( .not. got(f_hRegOrders) ) cycle
+          call regularize ( tikhonov, hRegOrders, hRegQuants, hRegWeights, &
+            & hRegWeightVec, tikhonovRows, horiz=.true. )
+        end if
+
+        !{ If Tiknonov regularization is ``the second derivative of the
+        !  state ought to be like the second derivative of the apriori,''
+        !  the RHS is ${\bf W R} ( {\bf x}_a - {\bf x}_n )$, where ${\bf
+        !  W}$ is the Tikhonov weight, ${\bf R}$ is the regularization
+        !  operator, ${\bf x}_a$ is apriori, and ${\bf x}_n$ is the
+        !  current state.  If Tiknonov regularization is ``the second
+        !  derivative of the state ought to be zero, the RHS is $-{\bf W
+        !  R x}_n$.
+        if ( tikhonovApriori ) then
+          call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
+        else
+          call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
+          call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
+        end if
+
+        if ( after .and. columnScaling /= l_none ) then ! Compute $\Sigma$
+          ! Get the column scale vector.
+          select case ( columnScaling )
+          case ( l_apriori ) ! v(columnScaleVector) := apriori
+            call copyVector ( v(columnScaleVector), apriori )
+          case ( l_covariance )
+            !??? Can't get here until allowed by init_tables
+          case ( l_norm ) ! v(columnScaleVector) := diagonal of normal
+                          !                         equations = column norms^2
+            call getDiagonal ( normalEquations%m, v(columnScaleVector) )
+          end select
+          do j = 1, v(columnScaleVector)%template%noQuantities
+            where ( v(columnScaleVector)%quantities(j)%values <= 0.0 )
+              v(columnScaleVector)%quantities(j)%values = 0.0
+            elsewhere
+              v(columnScaleVector)%quantities(j)%values = &
+                & sqrt( v(columnScaleVector)%quantities(j)%values )
+            end where
+          end do
+          call columnScale ( tikhonov, v(columnScaleVector) )
+        end if
+
+          if ( d_reg ) then
+            if ( t == 1 ) then
+              call output ( 'Dumping Tikhonov for vertical regularization', &
+                & advance='yes' )
+            else
+              call output ( 'Dumping Tikhonov for horizontal regularization', &
+                & advance='yes' )
+            end if
+            call dump_struct ( tikhonov, 'Tikhonov' )
+            call dump ( tikhonov, name='Tikhonov', details=2 )
+          end if
+
+        call formNormalEquations ( tikhonov, normalEquations, &
+          & v(reg_X_x), v(aTb), update=update, useMask=.false. )
+        update = .true.
+        call clearMatrix ( tikhonov )           ! free the space
+        ! aj%fnorm is still the square of the norm of f
+        aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
+        if ( d_fnorm > -1 ) then
+          call output ( trim(which(t)) // &
+            & ' Regularization contribution to | F |^2 = ' )
+          call output ( v(reg_X_x) .dot. v(reg_X_x), advance='yes' )
+        end if
+        ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
+        ! Don't destroy reg_X_x unless we move the 'clone' for it
+        ! inside the loop.  Also, if we destroy it, we can't snoop it.
+          call add_to_retrieval_timing( 'tikh_reg', t1 )
+      end do ! t
+
+    end subroutine ApplyTikhonov
 
     ! ------------------------------------------------  BoundMove  -----
     subroutine BoundMove ( Mu, Bound, X, Dx, Which, muMin )
@@ -1830,60 +1953,9 @@ NEWT: do ! Newton iteration
             & ( ( nwt_flag /= nf_getj ) .or. .not. covSansReg ) ) then
               call add_to_retrieval_timing( 'newton_solver', t1 )
 
-            !{ Tikhonov regularization is of the form ${\bf R x}_{n+1} \simeq
-            !  {\bf 0}$ or ${\bf R x}_{n+1} \simeq {\bf a}$, where {\bf a} is
-            !  the apriori. So that all of the parts of the problem are solving
-            !  for ${\bf\delta x}$, we subtract ${\bf R x}_n$ from both sides
-            !  to get ${\bf R \delta x} \simeq -{\bf R x}_n$ or ${\bf R \delta
-            !  x} \simeq {\bf R} ( {\bf a - x}_n)$.
+              call applyTikhonov ( .false., normalEquations, AJ, &
+                & tikhonovRows, d_reg, d_fnorm )
 
-            do t = 1, 2 ! Vertical, then Horizontal regularization
-              if ( t == 1 ) then
-                if ( .not. got(f_vRegOrders) ) cycle
-                call regularize ( tikhonov, vRegOrders, vRegQuants, vRegWeights, &
-                  & vRegWeightVec, tikhonovRows, horiz=.false. )
-              else
-                if ( .not. got(f_hRegOrders) ) cycle
-                call regularize ( tikhonov, hRegOrders, hRegQuants, hRegWeights, &
-                  & hRegWeightVec, tikhonovRows, horiz=.true. )
-              end if
-              if ( tikhonovApriori ) then ! reg_*_x := R * (apriori - x)
-                call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
-              else                          ! reg_*_x := -R * x
-                call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
-                call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
-              end if
-                if ( d_reg ) then
-                  if ( t == 1 ) then
-                    call output ( 'Dumping Tikhonov for vertical regularization', &
-                      & advance='yes' )
-                  else
-                    call output ( 'Dumping Tikhonov for horizontal regularization', &
-                      & advance='yes' )
-                  end if
-                  call dump_struct ( tikhonov, 'Tikhonov' )
-                  call dump ( tikhonov, name='Tikhonov', details=2 )
-                end if
-              call formNormalEquations ( tikhonov, normalEquations, &
-                & v(reg_X_x), v(aTb), update=update, useMask=.false. )
-              update = .true.
-              call clearMatrix ( tikhonov )           ! free the space
-              ! aj%fnorm is still the square of the norm of f
-              aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-              if ( d_fnorm > -1 ) then
-                if ( t == 1 ) then
-                  call output ( 'Vertical Regularization contribution to | F |^2 = ' )
-                else
-                  call output ( 'Horizontal Regularization contribution to | F |^2 = ' )
-                end if
-                call output ( v(reg_X_x) .dot. v(reg_X_x), advance='yes' )
-              end if
-
-              ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
-              ! Don't destroy reg_X_x unless we move the 'clone' for it
-              ! inside the loop.  Also, if we destroy it, we can't snoop it.
-                call add_to_retrieval_timing( 'tikh_reg', t1 )
-            end do ! t
           else
             tikhonovRows = 0
           end if
@@ -2034,76 +2106,9 @@ NEWT: do ! Newton iteration
             & ( ( nwt_flag /= nf_getj ) .or. .not. covSansReg ) ) then
               call add_to_retrieval_timing( 'newton_solver', t1 )
 
-            !{ Tikhonov regularization is of the form ${\bf R x}_{n+1} \simeq
-            !  {\bf 0}$. So that all of the parts of the problem are solving
-            !  for ${\bf\delta x}$, we subtract ${\bf R x}_n$ from both sides
-            !  to get ${\bf R \delta x} \simeq -{\bf R x}_n$.
+              call applyTikhonov ( .true., normalEquations, AJ, &
+                & tikhonovRows, d_reg, d_fnorm )
 
-            do t = 1, 2 ! Vertical, then Horizontal regularization
-              if ( t == 1 ) then
-                if ( .not. got(f_vRegOrders) ) cycle
-                call regularize ( tikhonov, vRegOrders, vRegQuants, vRegWeights, &
-                  & vRegWeightVec, tikhonovRows, horiz=.false. )
-              else
-                if ( .not. got(f_hRegOrders) ) cycle
-                call regularize ( tikhonov, hRegOrders, hRegQuants, hRegWeights, &
-                  & hRegWeightVec, tikhonovRows, horiz=.true. )
-              end if
-
-              ! Get the column scale vector.
-              select case ( columnScaling )
-              case ( l_apriori ) ! v(columnScaleVector) := apriori
-                call copyVector ( v(columnScaleVector), apriori )
-              case ( l_covariance )
-                !??? Can't get here until allowed by init_tables
-              case ( l_norm ) ! v(columnScaleVector) := diagonal of normal
-                              !                         equations = column norms^2
-                call getDiagonal ( normalEquations%m, v(columnScaleVector) )
-              end select
-
-              if ( tikhonovApriori ) then
-                call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
-              else
-                call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
-                call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
-              end if
-              call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
-
-              if ( columnScaling /= l_none ) then ! Compute $\Sigma$
-                do j = 1, v(columnScaleVector)%template%noQuantities
-                  where ( v(columnScaleVector)%quantities(j)%values <= 0.0 )
-                    v(columnScaleVector)%quantities(j)%values = 0.0
-                  elsewhere
-                    v(columnScaleVector)%quantities(j)%values = &
-                      & sqrt( v(columnScaleVector)%quantities(j)%values )
-                  end where
-                end do
-                call columnScale ( tikhonov, v(columnScaleVector) )
-              end if
-
-                if ( d_reg ) then
-                  call dump_struct ( tikhonov, 'Tikhonov' )
-                  call dump ( tikhonov, name='Tikhonov', details=2 )
-                end if
-              call formNormalEquations ( tikhonov, normalEquations, &
-                & v(reg_X_x), v(aTb), update=update, useMask=.false. )
-              update = .true.
-              call clearMatrix ( tikhonov )           ! free the space
-              ! aj%fnorm is still the square of the norm of f
-              aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-              if ( d_fnorm > -1 ) then
-                if ( t == 1 ) then
-                  call output ( 'Vertical Regularization contribution to | F |^2 = ' )
-                else
-                  call output ( 'Horizontal Regularization contribution to | F |^2 = ' )
-                end if
-                call output ( v(reg_X_x) .dot. v(reg_X_x), advance='yes' )
-              end if
-              ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
-              ! Don't destroy reg_X_x unless we move the 'clone' for it
-              ! inside the loop.  Also, if we destroy it, we can't snoop it.
-                call add_to_retrieval_timing( 'tikh_reg', t1 )
-            end do ! t
           else
             tikhonovRows = 0
           end if
@@ -2348,6 +2353,7 @@ NEWT: do ! Newton iteration
         !   \item[AJ\%DXN] = L2 norm of ``candidate DX'';
         !   \item[AJ\%GDX] = (Gradient) .dot. (``candidate DX'')
         ! \end{description}
+          aj%sq = max(aj%sq, lambdaMin)
           call updateDiagonal ( normalEquations, aj%sq**2 - lambda**2 )
           lambda = aj%sq
           ! factored%m%block => normalEquations%m%block ! to save space
@@ -2960,6 +2966,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.330  2012/08/30 23:01:18  vsnyder
+! Procedurize Tikhonov, add lambdaMin
+!
 ! Revision 2.329  2012/08/16 18:07:23  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
