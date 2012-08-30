@@ -234,10 +234,10 @@ contains
     ! Internal variables
     integer :: LogThreshold ! Severity at which we will log
     logical :: mustRepeat   ! if we will repeat via output
-    logical :: outputInstead   ! if we will call output instead
     character(len=16) :: myChars
     character(len=256) :: myMessage
     integer :: myStatus
+    logical :: outputInstead   ! if we will call output instead
     character(len=64) :: WarningPreamble
     ! Executable
     myMessage = Message
@@ -323,7 +323,8 @@ contains
   use MLSCOMMON, only: FILENAMELEN
   use MLSSTRINGLISTS, only: CATLISTS, &
     & GETSTRINGELEMENT, GETUNIQUELIST, &
-    & NUMSTRINGELEMENTS, REMOVEELEMFROMLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
+    & NUMSTRINGELEMENTS, REMOVESWITCHFROMLIST, &
+    & SORTLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
   use PCFHDR, only: GLOBALATTRIBUTES
   use SET_TOGGLES_M, only: SET_TOGGLES
@@ -341,6 +342,7 @@ contains
     integer :: DEGREE                ! index affecting degree of option
     logical, parameter :: DEEBUG = .false.
     logical :: EXIST
+    integer, dimension(100)           :: iarray
     integer :: J
     character(len=2048) :: LINE      ! Into which is read the command args
     integer :: N
@@ -821,12 +823,18 @@ jloop:do while ( j < len_trim(line) )
           & ignoreLeadingSpaces=.true., options='-eSL' )
     ! Remove any quote marks from switches array
     tempSwitches = unquote(switches, quotes=quotes, options='-p')
+    ! print *,  'Before sort', trim(tempSwitches) 
+    ! Now we want to keep only the swich with the highest details level
+    call sortList( tempSwitches, iarray, ',', switches )
+    tempSwitches = switches
+    ! print *,   'After sort', trim(tempSwitches)
     call GetUniqueList( tempSwitches, Switches, numSwitches, &
           & ignoreLeadingSpaces=.true., options='-eSL' )
+    ! print *,   'Uniquified', trim(Switches) 
     ! Remove any switches embedded in the removeSwitches option 'R'
     do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
       call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
-      call RemoveElemFromList(switches, tempSwitches, trim(aSwitch))
+      call RemoveSwitchFromList(switches, tempSwitches, trim(aSwitch))
       switches = tempSwitches
     end do
 
@@ -836,6 +844,7 @@ jloop:do while ( j < len_trim(line) )
     if ( switchDetail(switches, 'walk') > -1 ) &
       & MLSMSG_Severity_to_walkback = MLSMSG_Warning
     outputOptions%prunit = OUTPUT_PRINT_UNIT
+    ! print *, 'Ended processing options'
     contains
     subroutine getNextArg( i, line )
       ! Args
@@ -899,6 +908,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.56  2012/08/30 20:54:08  pwagner
+! Improved adding, removing switches
+!
 ! Revision 2.55  2012/08/16 17:46:17  pwagner
 ! Added a level 2-savvy MLSMessage to interpose between level 2 procedures and lib version
 !
