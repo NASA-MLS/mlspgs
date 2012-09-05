@@ -1879,7 +1879,8 @@ contains
     ! Array version of streq
     ! May return multiple TRUEs (except see 's', 'l' options)
     ! Extra options
-    ! 'p' is partial match (STR2 is replaced by '*' // STR2 // '*'
+    ! 'P' is partial match (each STR1(i) is replaced by '*' // STR1(i) // '*')
+    ! 'p' is partial match (STR2 is replaced by '*' // STR2 // '*')
     ! 's' returns TRUE only in element corresponding to shortest STR1
     ! 'l' returns TRUE only in element corresponding to longest STR1
     character (len=*), dimension(:), intent(in) :: STR1
@@ -1892,14 +1893,20 @@ contains
     integer :: i
     integer, dimension(size(STR1))              :: lengths
     character(len=8) :: myOptions
+    character(len=len(str1)+2) :: mystr1
     character(len=len(str2)+2) :: mystr2
     ! Executable
     myOptions = ''
-    if ( present(options) ) myOptions = lowercase(options)
+    if ( present(options) ) myOptions = options
     mystr2 = str2
     if ( index(myOptions, 'p') > 0 ) mystr2 = '*' // trim_safe(str2) // '*'
     do i=1, size(str1)
-      relation(i) = streq(str1(i), mystr2, OPTIONS)
+      mystr1 = str1(i)
+      if ( index(myOptions, 'P') > 0 ) mystr1 = '*' // trim_safe(str1(i)) // '*'
+      relation(i) = streq( mystr1, mystr2, OPTIONS )
+      ! print *, trim(mystr1)
+      ! print *, trim(mystr2)
+      ! print *, relation(i)
     enddo
     if ( .not. present(options) .or. count(relation) < 2 ) return
     lengths = len_trim(str1)
@@ -2680,6 +2687,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.87  2012/09/05 21:43:55  pwagner
+! streq options now case sensitive; 'P'artial match means str1(i) is the part
+!
 ! Revision 2.86  2012/08/07 18:02:37  pwagner
 ! ReplaceNonAscii now takes optional arg exceptions which dont get replaced
 !
