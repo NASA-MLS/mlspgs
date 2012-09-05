@@ -582,10 +582,11 @@ contains ! ============================ MODULE PROCEDURES ======================
     myPeriodic = .false.
     if ( present(options) ) myPeriodic = ( index( options, 'p' ) > 0 )
     if ( DEBUG ) then
+      call outputNamedValue( 'options', options )
       call outputNamedValue( 'myDetails', myDetails )
       call outputNamedValue( 'mySilent', mysilent )
     endif
-    if ( mySilent ) call suspendOutput
+    ! if ( mySilent ) call suspendOutput
     
     myNumDiffs = 0
     if ( trim(L1bData1%NameInst) /= trim(L1bData2%NameInst) ) then
@@ -797,11 +798,12 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( prntAssocStatus ) &
         & call output('(dpField arrays not associated)', advance='yes')
     end if
+    call doneHere
 
   contains
     subroutine doneHere
       ! Housekeeping
-      call resumeOutput
+      ! call resumeOutput
       if ( present(numDiffs) ) numDiffs = myNumDiffs
     end subroutine doneHere
   end subroutine DiffL1BData
@@ -2673,6 +2675,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.93  2012/09/05 21:41:20  pwagner
+! Removed calls to suspend, resumeOutput when Silent
+!
 ! Revision 2.92  2012/06/07 23:57:17  pwagner
 ! Limit printing while reading attributes to DEEBUGging
 !
