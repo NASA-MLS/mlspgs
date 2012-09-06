@@ -29,7 +29,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
    use MLSMessageModule, only: MLSMESSAGECONFIG, MLSMSG_ERROR, MLSMSG_WARNING, &
      & MLSMESSAGE
    use MLSStringLists, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
-   use MLSStrings, only: WRITEINTSTOCHARS
+   use MLSStrings, only: REPLACE, STREQ, WRITEINTSTOCHARS
    use output_m, only: RESUMEOUTPUT, SUSPENDOUTPUT, OUTPUT, OUTPUTNAMEDVALUE
    use Time_M, only: TIME_NOW, TIME_CONFIG
    
@@ -168,6 +168,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
   enddo
   if ( options%timing ) call sayTime('diffing all files')
   call resumeOutput
+  ! call outputnamedValue( 'num diffs', options%numDiffs )
   if ( options%silent .and. options%numDiffs > 0 ) then
     ! write(string, '(i)') options%numDiffs
     call WriteIntsToChars ( options%numDiffs, string )
@@ -366,6 +367,7 @@ contains
     real(r8), dimension(:), pointer :: l1bValues2 => null()
     integer :: lastChannel
     logical :: mustDiff
+    character(len=8) :: myOptions
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
     integer :: nHalves
     integer :: NoMAFs
@@ -415,7 +417,7 @@ contains
         call output ( '============ DS names in ', advance='no' )
         call output ( trim(file1) //' ============', advance='yes' )
       endif
-      if ( mysdList == ' ' ) then
+      if ( mysdList == ' ' .and. .not. options%silent ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'No way yet to find sdList in ' // trim(File1) )
         return
@@ -436,7 +438,7 @@ contains
         &  'Failed to open l1b file ' // trim(File1) )
       end if
 	   call h5gOpen_f (sdfid1,'/', grpID, status)
-      if ( status /= 0 ) then
+      if ( status /= 0 .and. .not. options%silent ) then
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	  & 'Unable to open group to read attribute in l2aux file' )
       endif
@@ -447,7 +449,7 @@ contains
           & 'Failed to open l1b ' // trim(File2) )
       end if
       noSds = NumStringElements(trim(mysdList), countEmpty)
-      if ( noSds < 1 ) then
+      if ( noSds < 1 .and. .not. options%silent ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
       endif
@@ -496,10 +498,18 @@ contains
         status = sfginfo( sds_id, sdName, rank, dimsizes, data_type, num_attrs ) 
         ! print *, 'sdName: ', sdName
       endif
-      if ( sdName == 'PCF' .or. &
-        &  sdName == 'HDFEOS INFORMATION/coremetadata.0' .or. &
-        &  sdName == 'l2cf' .or. &
+!      if ( sdName == 'PCF' .or. &
+!        &  sdName == 'HDFEOS INFORMATION/coremetadata.0' .or. &
+!        &  sdName == 'l2cf' .or. &
+      if ( any( &
+        & streq( &
+        & (/ 'PCF ', 'meta', 'l2cf', 'utcp', 'leap', 'LCF ' /), &
+        & sdname, options='-Pw' ) ) .or. &
         &  index(options%skipList, trim(sdName)) > 0 ) cycle
+   !    print *, trim(sdName)
+   !    print *, streq( '*PCF*', sdname, '-w' )
+   !    print *, streq( '*meta*', sdname, '-w' )
+   !    print *, streq( '*l2cf*', sdname, '-w' )
       do ihalf=1, nHalves
         ! Allocate and fill l2aux
         if ( options%debug ) print *, 'About to read ', trim(sdName)
@@ -509,7 +519,7 @@ contains
           ! call outputNamedValue( 'NoMAFs', noMAFs )
           ! call outputNamedValue( 'status', status )
           if ( noMAFs < 1 ) cycle
-          if ( status /= 0 ) then
+          if ( status /= 0 .and. .not. options%silent ) then
 	         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	  & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
             call DeallocateL1BData ( l1bData )
@@ -529,7 +539,7 @@ contains
         else
           call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
             & hdfVersion=the_hdfVersion, NEVERFAIL=.true., l2aux=options%l2aux )
-          if ( status /= 0 ) then
+          if ( status /= 0 .and. .not. options%silent ) then
 	         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	  & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
             call DeallocateL1BData ( l1bData )
@@ -550,7 +560,7 @@ contains
         else
           call ReadL1BData ( sdfid2, trim(sdName), L1bData2, NoMAFs, status, &
             & hdfVersion=the_hdfVersion, NEVERFAIL=.true., l2aux=options%l2aux )
-          if ( status /= 0 ) then
+          if ( status /= 0 .and. .not. options%silent ) then
 	         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	  & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
             call DeallocateL1BData ( l1bData )
@@ -562,7 +572,8 @@ contains
         stime = t2
         ! if (associated(L1BData2%dpField) ) &
         !   & call outputnamedValue('shape(l1bdata2)', shape(L1BData2%dpField) )
-        if ( associated(L1bData%charField) .and. .not. options%ascii ) then
+        if ( associated(L1bData%charField) .and. .not. options%ascii .and. &
+          & .not. options%silent ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Skipping diff of char-valued ' // trim(sdName) )
           call DeallocateL1BData ( l1bData )
@@ -582,6 +593,10 @@ contains
         if ( associated(L1bData%dpField) .and. associated(L1bData2%dpField) ) then
           if ( all(L1bData%dpField == L1bData2%dpField) ) mustDiff = .false.
         endif
+        myOptions = options%dumpOptions
+        if ( mustDiff ) myOptions = Replace ( myOptions, 'h', ' ' )
+        ! print *, mustDiff
+        ! print *, trim(myOptions)
         if ( associated(L1bData%dpField) .and. mustDiff .and. .not. options%silent ) &
           & call outputNamedValue( 'num diffs', &
           & count(L1bData%dpField /= L1bData2%dpField), &
@@ -592,9 +607,10 @@ contains
         elseif ( options%oneD .and. associated(L1bData%dpField) ) then
           ! We will store L1BData%dpField in a values array
           nsize = product(shape(L1bData%dpField))
-          if ( options%verbose ) print *, 'About to do it 1-d ' // options%dumpOptions, nsize
+          ! if ( options%verbose ) print *, 'About to do it 1-d ' // options%dumpOptions, nsize
+          ! print *, 'Calling dump', maxval(L1bData%dpField-L1bData2%dpField)
           call dump( L1bData%dpField-L1bData2%dpField, 'L1bData%dpField diff', &
-            & options=options%dumpOptions )
+            & options=myOptions )
           ! stop
           call allocate_test(l1bValues1, nsize, 'l1bValues1', ModuleName )
           l1bValues1 = reshape( L1bData%dpField, (/nsize/) )
@@ -604,40 +620,44 @@ contains
           call deallocate_test( L1bData2%dpField, 'l1bData%Values2', ModuleName )
           if ( options%timing ) call SayTime( 'Copying values to 1-d arrays', stime )
           stime = t2
-          if ( options%verbose ) print *, 'About to do it 1-d ' // options%dumpOptions, nsize
-          call diff(L1bData, L1bData2, numDiffs=numDiffs, options=options%dumpOptions, &
+          ! if ( options%verbose ) print *, 'About to do it 1-d ' // options%dumpOptions, nsize
+          ! print *, 'Calling diff', maxval(l1bValues2-l1bValues1)
+          call diff(L1bData, L1bData2, numDiffs=numDiffs, options=myOptions, &
             & l1bValues1=l1bValues1, l1bValues2=l1bValues2 )
           call deallocate_test( L1bValues1, 'l1bValues1', ModuleName )
           call deallocate_test( L1bValues2, 'l1bValues2', ModuleName )
         elseif ( options%direct .or. .not. associated(L1bData%dpField) ) then
-          if ( options%verbose ) print *, 'About to do it direct ' // options%dumpOptions
-          call diff(L1bData, L1bData2, numDiffs=numDiffs, options=options%dumpOptions )
+          if ( options%verbose ) print *, 'About to do it direct ' // myOptions
+          ! print *, 'Calling direct diff'
+          call diff(L1bData, L1bData2, numDiffs=numDiffs, options=myOptions )
         else
           ! print *, 'details=0'
+          ! print *, 'Calling 3rd diff'
           call diff(L1bData, L1bData2, details=0, &
-            & numDiffs=numDiffs, options=options%dumpOptions )
+            & numDiffs=numDiffs, options=myOptions )
           ! print *, 'done diffing'
 
           numDiffs = numDiffs + count( L1bData%dpField /= L1bData2%dpField )
           if ( .true. .and. associated(L1bData%dpField) .and. &
             & associated(L1bData2%dpField)) then
-            if ( options%silent ) then
+            if ( options%silent .and. numDiffs < 1 ) then
             elseif ( .false. .and. all(L1bData%dpField(:,:,maf1:maf2) == &
               & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff)) ) then
               print *, '(The two fields are exactly equal)'
             elseif( options%moff /= 0 .or. options%maf1 > 0 ) then
               ! print *, 'About to diff dpFields'
+              ! print *, 'Calling 4th diff'
               call diff( L1bData%dpField(:,:,maf1:maf2), &
                 & '(1)', &
                 & L1bData2%dpField(:,:,maf1+options%moff:maf2+options%moff), &
                 & '(2)', &
-                & options=options%dumpOptions )
+                & options=myOptions )
             else
               call diff( L1bData%dpField, &
                 & '(1)', &
                 & L1bData2%dpField, &
                 & '(2)', &
-                & options=options%dumpOptions )
+                & options=myOptions )
             endif
           else
             ! print *, 'About to form dpField = dpField1 - dpField2'
@@ -647,12 +667,14 @@ contains
               print *, '(The two fields are exactly equal)'
             elseif ( options%maf1 /= 0 .and. options%maf2 /= 0 ) then
               ! print *, shape( L1bData%dpField(:,:,options%maf1:options%maf2) )
+              ! print *, 'Calling 2nd dump'
               call dump( L1bData%dpField(:,:,options%maf1:options%maf2), &
-                & 'l1bData%dpField', options=options%dumpOptions )
+                & 'l1bData%dpField', options=myOptions )
             else
               ! print *, shape( L1bData%dpField )
+              ! print *, 'Calling 3rd dump'
               call dump( L1bData%dpField, &
-                & 'l1bData%dpField', options=options%dumpOptions )
+                & 'l1bData%dpField', options=myOptions )
             endif
           endif
         endif
@@ -664,8 +686,8 @@ contains
       enddo ! Loop of halves
       if ( .not. options%silent ) print *, 'After ' // trim(sdName) // ' ', options%numDiffs
     enddo ! Loop of datasets
-	 if ( the_hdfVersion == HDFVERSION_5) call h5gClose_f (grpID, status)
-    if ( status /= 0 ) then
+    if ( the_hdfVersion == HDFVERSION_5) call h5gClose_f (grpID, status)
+    if ( status /= 0 .and. .not. options%silent ) then
 	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
        & 'Unable to close group in l2aux file: ' // trim(File1) // ' after diffing' )
     endif
@@ -737,7 +759,7 @@ contains
       call output ( '============ DS names in ', advance='no' )
       call output ( trim(file1) //' ============', advance='yes' )
     endif
-    if ( mysdList == ' ' ) then
+    if ( mysdList == ' ' .and. .not. options%silent ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'No way yet to find sdList in ' // trim(File1) )
       return
@@ -758,12 +780,12 @@ contains
       &  'Failed to open l1b file ' // trim(File1) )
     end if
 	 call h5gOpen_f (sdfid1,'/', grpID, status)
-    if ( status /= 0 ) then
+    if ( status /= 0 .and. .not. options%silent ) then
 	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
           	& 'Unable to open group to read attribute in l2aux file' )
     endif
     noSds = NumStringElements(trim(mysdList), countEmpty)
-    if ( noSds < 1 ) then
+    if ( noSds < 1 .and. .not. options%silent ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
     endif
@@ -779,16 +801,16 @@ contains
       ! if ( options%verbose ) print *, 'About to read ', trim(sdName)
       call ReadL1BData ( sdfid1, trim(sdName), L1bData, NoMAFs, status, &
         & hdfVersion=the_hdfVersion, NEVERFAIL=.true., l2aux=options%l2aux )
-      if ( status /= 0 ) then
+      if ( status /= 0 .and. .not. options%silent ) then
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to find ' // trim(sdName) // ' in ' // trim(File1) )
         call DeallocateL1BData ( l1bData )
         cycle
       endif
-      if ( associated(L1bData%charField) ) then
+      if ( associated(L1bData%charField) .and. .not. options%silent ) then
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Skipping diff of char-valued ' // trim(sdName) )
-      elseif ( associated(L1bData%intField) ) then
+      elseif ( associated(L1bData%intField) .and. .not. options%silent ) then
         if ( ( size(L1bData%intField, 1) > 1 .or. &
           &  size(L1bData%intField, 2) > 1 ) .and. SKIPIFRANKTOOHIGH ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -799,7 +821,8 @@ contains
         endif
       elseif ( associated(L1bData%dpField) ) then
         if ( ( size(L1bData%dpField, 1) > 1 .or. &
-          &  size(L1bData%dpField, 2) > 1 ) .and. SKIPIFRANKTOOHIGH ) then
+          &  size(L1bData%dpField, 2) > 1 ) .and. SKIPIFRANKTOOHIGH &
+          & .and. .not. options%silent ) then
 	       call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Skipping diff high-rank ' // trim(sdName) )
         else
@@ -811,7 +834,7 @@ contains
       cycle
     enddo
 	 call h5gClose_f (grpID, status)
-    if ( status /= 0 ) then
+    if ( status /= 0 .and. .not. options%silent ) then
 	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
        & 'Unable to close group in l2aux file: ' // trim(File1) // ' after diffing' )
     endif
@@ -832,6 +855,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.24  2012/06/14 00:01:16  pwagner
+! Willing to selfdiff higher-rank fields instance-wise
+!
 ! Revision 1.23  2012/04/20 20:55:48  pwagner
 ! Restored silence to silent option
 !
