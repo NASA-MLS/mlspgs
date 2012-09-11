@@ -42,15 +42,17 @@
       elseif ( .not. all(isfinite(array)) ) then
         if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name) //'   ' , advance='no' )
         call output ('(non-finite values found in array--skipped) ', advance='yes')
-        call WhereAreTheInfs ( array, which, how_many )
-        if ( how_many > 0 ) then
-          call outputNamedValue( 'num(Infs)', how_many )
-          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
-        endif
-        call WhereAreTheNaNs ( array, which, how_many )
-        if ( how_many > 0 ) then
-          call outputNamedValue( 'num(NaNs)', how_many )
-          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        if ( myNaNs ) then
+          call WhereAreTheInfs ( array, which, how_many )
+          if ( how_many > 0 ) then
+            call outputNamedValue( 'num(Infs)', how_many )
+            if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+          endif
+          call WhereAreTheNaNs ( array, which, how_many )
+          if ( how_many > 0 ) then
+            call outputNamedValue( 'num(NaNs)', how_many )
+            if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+          endif
         endif
       else if ( present(fillValue) ) then
         ! call output( 'dumpstats with FillValue ' // trim(name) , advance='no' )
@@ -149,6 +151,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.32  2012/09/11 21:12:11  pwagner
+! Requires 'N' option to show where NaNs, Infs are located
+!
 ! Revision 2.31  2012/06/22 20:26:49  pwagner
 ! Specify advance arg because we may now set default to 'yes'
 !
