@@ -87,6 +87,7 @@
     myCollapse   = theDefault('collapse') ! .false.
     myGaps       = theDefault('gaps')
     myLaconic    = theDefault('laconic')
+    myNaNs       = theDefault('nans')   ! .false.
     myRatios     = theDefault('ratios')   ! .false.
     myRMS        = theDefault('rms')   ! .false.
     myShape      = theDefault('shape')  ! .false.
@@ -103,6 +104,7 @@
       myCyclic      =   index( options, dopt_cyclic     ) > 0
       myGaps        =   index( options, dopt_gaps       ) > 0
       myLaconic     =   index( options, dopt_laconic    ) > 0
+      myNaNs        =   index( options, dopt_NaNs       ) > 0
       myRatios      =   index( options, dopt_ratios     ) > 0
       myRMS         =   index( options, dopt_rms        ) > 0
       myShape       =   index( options, dopt_shape      ) > 0
@@ -120,7 +122,9 @@
       & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
       & .or. myTable)
 
-    if ( len_trim(name2) < 1 ) then
+    if ( len_trim(name1) < 1 ) then
+      DiffName = ' '
+    elseif ( len_trim(name2) < 1 ) then
       DiffName = trim(name1) // ' (diff)'
     else
       DiffName = trim(name1) // ' - ' // trim(name2)
@@ -143,53 +147,77 @@
     
     NaNsIn1 = any(.not. ieee_is_finite(array1))
     if ( NaNsIn1 .and. myDirect ) then
-      call output( &
-        & '*** skipping: non finite values found in ' // trim(name1), advance='yes')
+      call output( '*** skipping: non-finite values found', advance='no' )
+      if ( len_trim(name1) > 0 ) then
+        call output( ' in ' // trim(name1), advance='yes')
+      else
+        call output( ' in first array', advance='yes')
+      endif
       return
     endif
     if ( NaNsIn1 ) then
       if ( .not. any(ieee_is_finite(array1)) ) then
-        call output( &
-          & '*** skipping: no finite values found in ' // trim(name1), advance='yes')
+        call output( '*** skipping: no finite values found', advance='no' )
+        if ( len_trim(name1) > 0 ) then
+          call output( ' in ' // trim(name1), advance='yes')
+        else
+          call output( ' in first array', advance='yes')
+        endif
         return
       endif
-      call output( &
-        & '*** non-finite values found in ' // trim(name1), advance='yes')
-      call WhereAreTheInfs ( array1, which, how_many )
-      if ( how_many > 0 ) then
-        call outputNamedValue( 'num(Infs)', how_many )
-        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+      call output( '*** non-finite values found', advance='no' )
+      if ( len_trim(name1) > 0 ) then
+        call output( ' in ' // trim(name1), advance='yes')
+      else
+        call output( ' in first array', advance='yes')
       endif
-      call WhereAreTheNaNs ( array1, which, how_many )
-      if ( how_many > 0 ) then
-        call outputNamedValue( 'num(NaNs)', how_many )
-        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+      if ( myNaNs ) then
+        call WhereAreTheInfs ( array1, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(Infs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        endif
+        call WhereAreTheNaNs ( array1, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(NaNs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        endif
       endif
     endif
 
     NaNsIn2 = any(.not. ieee_is_finite(array2))
     if ( NaNsIn1 .and. myDirect ) then
       call output( &
-        & '*** skipping: non finite values found in ' // trim(name2), advance='yes')
+        & '*** skipping: non-finite values found in ' // trim(name2), advance='yes')
       return
     endif
     if ( NaNsIn2 ) then
       if ( .not. any(ieee_is_finite(array2)) ) then
-        call output( &
-          & '*** skipping: no finite values found in ' // trim(name2), advance='yes')
+        call output( '*** skipping: no finite values found', advance='no' )
+        if ( len_trim(name2) > 0 ) then
+          call output( ' in ' // trim(name2), advance='yes')
+        else
+          call output( ' in second array', advance='yes')
+        endif
         return
       endif
-      call output( &
-        & '*** non-finite values found in ' // trim(name2), advance='yes')
-      call WhereAreTheInfs ( array2, which, how_many )
-      if ( how_many > 0 ) then
-        call outputNamedValue( 'num(Infs)', how_many )
-        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+      call output( '*** non-finite values found', advance='no' )
+      if ( len_trim(name2) > 0 ) then
+        call output( ' in ' // trim(name2), advance='yes')
+      else
+        call output( ' in second array', advance='yes')
       endif
-      call WhereAreTheNaNs ( array2, which, how_many )
-      if ( how_many > 0 ) then
-        call outputNamedValue( 'num(NaNs)', how_many )
-        if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+      if ( myNaNs ) then
+        call WhereAreTheInfs ( array2, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(Infs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        endif
+        call WhereAreTheNaNs ( array2, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(NaNs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        endif
       endif
     endif
 
@@ -264,7 +292,7 @@
       endif
       if ( myRatios ) then
         if ( .not. nameHasBeenPrinted ) then
-          call output( trim(DiffName), advance='yes' )
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
           nameHasBeenPrinted = .true.
         endif
         call output( 'Maximum difference: ', advance='no' )
@@ -282,7 +310,7 @@
       endif
       if ( myRMS ) then
         if ( .not. nameHasBeenPrinted ) then
-          call output( trim(DiffName), advance='yes' )
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
           nameHasBeenPrinted = .true.
         endif
         nameHasBeenPrinted = .false.
@@ -290,7 +318,7 @@
       endif
       if ( myTABLE ) then
         if ( .not. nameHasBeenPrinted ) then
-          call output( trim(DiffName), advance='yes' )
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
           nameHasBeenPrinted = .true.
         endif
         call output( '% of arrays nearer than', advance='yes' )
@@ -322,7 +350,7 @@
         formats(2:7) = rmsFormat
         formats(1) = myPCTFormat ! '(0pf6.1)'
         if ( .not. nameHasBeenPrinted ) then
-          call output( trim(DiffName), advance='yes' )
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
           nameHasBeenPrinted = .true.
         endif
         call dumpTable ( table, &
@@ -337,7 +365,7 @@
       endif
       if ( myStats ) then
         if ( .not. nameHasBeenPrinted ) then
-          call output( trim(DiffName), advance='yes' )
+          if ( len_trim(DiffName) > 0 ) call output( trim(DiffName), advance='yes' )
           nameHasBeenPrinted = .true.
         endif
         ! Now to show how near the two arrays are
@@ -425,6 +453,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.15  2012/09/11 21:11:25  pwagner
+! Requires 'N' option to show where NaNs, Infs are located
+!
 ! Revision 2.14  2012/06/22 20:26:49  pwagner
 ! Specify advance arg because we may now set default to 'yes'
 !
