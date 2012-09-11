@@ -164,6 +164,7 @@ module DUMP_0
 !       B              show Bandwidth, % of array that is non-zero
 !       H              show rank, TheShape of array
 !       L              laconic; skip printing name, size of array
+!       N              Show where NaNs and Infs are located
 !       R              rms       -- min, max, etc.
 !       b              table of % vs. amount of differences (pdf)
 !       c              clean
@@ -274,18 +275,18 @@ module DUMP_0
     module procedure DUMPSUMS_DOUBLE
   end interface
 
-  interface printIt
-    module procedure printIt_char, printIt_DOUBLE, printIt_INT, printIt_REAL
-    module procedure printIt_complex, printIt_dcomplex
+  interface PRINTIT
+    module procedure PRINTIT_CHAR, PRINTIT_DOUBLE, PRINTIT_INT, PRINTIT_REAL
+    module procedure PRINTIT_COMPLEX, PRINTIT_DCOMPLEX
   end interface
 
-  interface printRMSetc
-    module procedure printRMSetc_DOUBLE, printRMSetc_INT, printRMSetc_REAL
+  interface PRINTRMSETC
+    module procedure PRINTRMSETC_DOUBLE, PRINTRMSETC_INT, PRINTRMSETC_REAL
   end interface
 
-  interface say_fill
-    module procedure say_fill_char, say_fill_double, say_fill_int
-    module procedure say_fill_real, say_fill_complex, say_fill_dcomplex
+  interface SAY_FILL
+    module procedure SAY_FILL_CHAR, SAY_FILL_DOUBLE, SAY_FILL_INT
+    module procedure SAY_FILL_REAL, SAY_FILL_COMPLEX, SAY_FILL_DCOMPLEX
   end interface
 
   interface UNFILTEREDDIFF        ! dump UNFILTEREDDIFFs between pair of n-d arrays of numeric type
@@ -312,6 +313,7 @@ module DUMP_0
   character, public, parameter :: dopt_cyclic      = 'y'
   character, public, parameter :: dopt_gaps        = 'g'
   character, public, parameter :: dopt_laconic     = 'L'
+  character, public, parameter :: dopt_NaNs        = 'N'
   character, public, parameter :: dopt_ratios      = 'r'
   character, public, parameter :: dopt_rms         = 'R'
   character, public, parameter :: dopt_shape       = 'H'
@@ -356,7 +358,7 @@ module DUMP_0
   ! character(len=MAXLINELEN) :: LINEOFZEROS
   logical :: DUMPTHESEZEROS
   logical :: myBandwidth, myClean, myCollapse, myCyclic, myDirect, myGaps, &
-    & myLaconic, myRatios, myRMS, myShape, myStats, &
+    & myLaconic, myNaNs, myRatios, myRMS, myShape, myStats, &
     & myTable, myTranspose, myTrim, myUnique, myWholeArray, onlyWholeArray
   character(len=16) :: myOptions
   character(len=16) :: myPCTFormat
@@ -1929,6 +1931,7 @@ contains
        call output( '      B              show Bandwidth, % of array that is non-zero', advance='yes' )
        call output( '      H              show rank, TheShape of array', advance='yes' )
        call output( '      L              laconic; skip printing name, size of array', advance='yes' )
+       call output( '      N              show where NaNs and Infs are located', advance='yes' )
        call output( '      R              rms       -- min, max, etc.', advance='yes' )
        call output( '      b              table of % vs. amount of differences (pdf)', advance='yes' )
        call output( '      c              clean', advance='yes' )
@@ -3058,6 +3061,7 @@ contains
     myCyclic     = theDefault('cyclic') ! .false.
     myGaps       = theDefault('gaps')
     myLaconic    = theDefault('laconic')
+    myNaNs       = theDefault('nans')
     myRMS        = theDefault('rms')   ! .false.
     MyRatios     = theDefault('ratios')   ! .false.
     myShape      = theDefault('shape')  ! .false.
@@ -3074,6 +3078,7 @@ contains
       myCyclic      =   index( options, dopt_cyclic     ) > 0
       myGaps        =   index( options, dopt_gaps       ) > 0
       myLaconic     =   index( options, dopt_laconic    ) > 0
+      myNaNs        =   index( options, dopt_NaNs       ) > 0
       myRatios      =   index( options, dopt_ratios     ) > 0
       myRMS         =   index( options, dopt_rms        ) > 0
       myShape       =   index( options, dopt_shape      ) > 0
@@ -3121,6 +3126,8 @@ contains
       isit = index( defaultstring, dopt_gaps       ) > 0
     case ('laconic')
       isit = index( defaultstring, dopt_laconic    ) > 0
+    case ('nans')
+      isit = index( defaultstring, dopt_NaNs       ) > 0
     case ('rms')
       isit = index( defaultstring, dopt_rms        ) > 0
     case ('shape')
@@ -3328,6 +3335,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.124  2012/09/11 21:10:24  pwagner
+! Requires 'N' option to show where NaNs, Infs are located
+!
 ! Revision 2.123  2012/07/05 23:47:31  pwagner
 ! Added restoreDumpConfig
 !
