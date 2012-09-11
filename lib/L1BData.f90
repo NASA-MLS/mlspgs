@@ -740,8 +740,8 @@ contains ! ============================ MODULE PROCEDURES ======================
         myNumDiffs = myNumDiffs + count(l1bValues1 /= l1bValues2)
         if ( .not. myPeriodic ) then
           call DIFF ( &
-            & l1bValues1, '(1)', &
-            & l1bValues2, '(2)', &
+            & l1bValues1, ' ', &
+            & l1bValues2, ' ', &
             & options=options )
         else
           call dump ( &
@@ -781,15 +781,15 @@ contains ! ============================ MODULE PROCEDURES ======================
         !  & l1bData1%dpField, '(1)-(2)', &
         !  & options=options )
         call DIFF ( &
-          & l1bData1%dpField, '(1)', &
-          & l1bData2%dpField, '(2)', &
+          & l1bData1%dpField, ' ', &
+          & l1bData2%dpField, ' ', &
           & options=options )
       elseif ( .not. EssentiallyEqual(l1bData1%dpField, l1bData2%dpField, &
         & FillValue=REAL(undefinedValue, R8)) ) then
         if ( DEBUG ) call output( 'Calling diff', advance='yes' )
         call diff ( &
-        & l1bData1%dpField(:,:,mafStart1:mafEnd1), '(1)', &
-        & l1bData2%dpField(:,:,mafStart2:mafEnd2), '(2)', &
+        & l1bData1%dpField(:,:,mafStart1:mafEnd1), ' ', &
+        & l1bData2%dpField(:,:,mafStart2:mafEnd2), ' ', &
         & FillValue=REAL(undefinedValue, R8), &
         & options=options )
         myNumDiffs = myNumDiffs + count(l1bData1%dpField /= l1bData2%dpField)
@@ -2675,6 +2675,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.94  2012/09/11 18:53:40  pwagner
+! Anonymized diffed arrays
+!
 ! Revision 2.93  2012/09/05 21:41:20  pwagner
 ! Removed calls to suspend, resumeOutput when Silent
 !
