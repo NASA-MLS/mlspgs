@@ -57,6 +57,7 @@ module OUTPUT_M
 ! flushOutputLines         print the current outputLines; then reset to ''
 ! getStamp                 get stamp being added to every output
 ! headLine                 print a line with extra formatting features
+! isOutputSuspended         returns TRUE if output is suspended
 ! newline                  print a newline
 ! numNeedsFormat           return what format is need to output num
 ! numToChars               return what would be printed by output
@@ -96,6 +97,7 @@ module OUTPUT_M
 ! headLine ( char* chars, 
 !          [char fillChar], [char* Before], [char* After], 
 !          [int columnRange(2)], [char alignment], [int skips] )
+! log isOutputSuspended ()
 ! NewLine
 ! char* numNeedsFormat ( value )
 ! char* numToChars ( value, [char* format] )
@@ -312,7 +314,7 @@ module OUTPUT_M
   type(timeStampOptions_T), public, save :: timeStampOptions ! Could leave this private
 
   ! Private parameters
-  logical, save, private:: SILENTRUNNING = .false. ! Suspend all further output
+  logical, save, private :: SILENTRUNNING = .false. ! Suspend all further output
   integer, save, private :: ATCOLUMNNUMBER = 1  ! Where we'll print next
   logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
   integer, save, private :: LINESSINCELASTSTAMP = 0
@@ -1021,6 +1023,12 @@ contains
     endif
     call newLine
   end subroutine HEADLINE
+
+  ! ----------------------------------------------  isOutputSuspended  -----
+  logical function isOutputSuspended ()
+  ! Have we suspended outputting to PRUNIT?
+    isOutputSuspended = silentRunning
+  end function isOutputSuspended
 
   ! ----------------------------------------------------  NewLine  -----
   subroutine NewLine
@@ -2826,6 +2834,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.97  2012/09/11 18:52:26  pwagner
+! Added isOutputSuspended
+!
 ! Revision 2.96  2012/08/16 17:36:30  pwagner
 ! Removed more unused stuff
 !
