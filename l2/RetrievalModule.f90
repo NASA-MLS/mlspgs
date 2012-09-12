@@ -1734,6 +1734,7 @@ contains
       call copyVector ( v(bestX), v(x) ) ! bestX = x to start things off
       prev_nwt_flag = huge(0)
       loopCounter = 0
+      aj%sqmin = lambdaMin
 NEWT: do ! Newton iteration
         loopCounter = loopCounter + 1
         if ( loopCounter > max(50, 50 * maxJacobians) ) then
@@ -2966,6 +2967,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.331  2012/09/12 22:51:40  vsnyder
+! Tell DNWT what lambdaMin is
+!
 ! Revision 2.330  2012/08/30 23:01:18  vsnyder
 ! Procedurize Tikhonov, add lambdaMin
 !
