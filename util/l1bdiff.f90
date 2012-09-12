@@ -389,7 +389,6 @@ contains
     external :: sfstart, sffinfo, sfselect, sfginfo, sfend
     
     ! Executable code
-    numDiffs = 0
     stime = t2
     ! the_hdfVersion = HDFVERSION_5
     the_hdfVersion = hdfVersion
@@ -490,6 +489,7 @@ contains
     ! Loop over sdNames in file 1
     ! (But skip PCF and HDFEOS INFORMATION/coremetadata.0)
     do i = 1, noSds
+      numDiffs = 0
       if ( the_hdfversion == HDFVERSION_5 ) then
         call GetStringElement (trim(mysdList), sdName, i, countEmpty )
         if ( len_trim(options%group) > 1 ) sdName = trim(options%group) // sdName
@@ -587,7 +587,7 @@ contains
         if ( options%verbose ) then
           print *, 'About to diff'
         elseif ( .not. options%silent ) then
-          print *, trim(sdName)
+          print *, ':: ' // trim(sdName) // ' ::'
         endif
         mustDiff = .true.
         if ( associated(L1bData%dpField) .and. associated(L1bData2%dpField) ) then
@@ -597,7 +597,7 @@ contains
         if ( mustDiff ) myOptions = Replace ( myOptions, 'h', ' ' )
         ! print *, mustDiff
         ! print *, trim(myOptions)
-        if ( associated(L1bData%dpField) .and. mustDiff .and. .not. options%silent ) &
+        if ( associated(L1bData%dpField) .and. mustDiff .and. options%debug ) &
           & call outputNamedValue( 'num diffs', &
           & count(L1bData%dpField /= L1bData2%dpField), &
           & advance='yes' )
@@ -637,7 +637,7 @@ contains
             & numDiffs=numDiffs, options=myOptions )
           ! print *, 'done diffing'
 
-          numDiffs = numDiffs + count( L1bData%dpField /= L1bData2%dpField )
+          ! numDiffs = numDiffs + count( L1bData%dpField /= L1bData2%dpField )
           if ( .true. .and. associated(L1bData%dpField) .and. &
             & associated(L1bData2%dpField)) then
             if ( options%silent .and. numDiffs < 1 ) then
@@ -684,7 +684,7 @@ contains
         if ( options%timing ) call SayTime( 'Doing the diff', stime )
         stime = t2
       enddo ! Loop of halves
-      if ( .not. options%silent ) print *, 'After ' // trim(sdName) // ' ', options%numDiffs
+      if ( options%debug ) print *, 'After ' // trim(sdName) // ' ', options%numDiffs
     enddo ! Loop of datasets
     if ( the_hdfVersion == HDFVERSION_5) call h5gClose_f (grpID, status)
     if ( status /= 0 .and. .not. options%silent ) then
@@ -855,6 +855,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.25  2012/09/06 00:37:02  pwagner
+! Works better with goldbrick
+!
 ! Revision 1.24  2012/06/14 00:01:16  pwagner
 ! Willing to selfdiff higher-rank fields instance-wise
 !
