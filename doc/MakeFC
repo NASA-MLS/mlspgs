@@ -1,6 +1,8 @@
 # "$Id$"
 #	Makefile
 #
+#  Lost? Type 'make help -f MakeFC' from the directory where you see this file
+#
 # Copyright 2009, by the California Institute of Technology. ALL
 # RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 # commercial use must be negotiated with the Office of Technology Transfer
@@ -12,6 +14,33 @@
 # export authority as may be required before exporting such information to
 # foreign countries or providing access to foreign persons.
 
+# Help screens
+# --------------- main help
+# To see help on specific topics:
+# Topic                               Command
+# tex files in this directory         'make help--doc'
+# tex files in cfm                    'make help--cfm'
+# tex files in icfm                   'make help--icfm'
+# --------------- End main help
+# --------------- doc help
+# To build all the tex files in this directory type
+# 'make' or 'make doc'
+# to build just one, say wvs-022.pdf, type
+# make wvs-022.pdf
+# Look for the dvi and pdf products in the subdirectories named 'dvi' and 'pdf'
+# --------------- End doc help
+# --------------- ocfm help
+# To build the documentation for the callable forward model, type
+# 'make cfm'
+# or else cd to the cfm subdirectory and just type 'make'
+# From there look in the subdirectories named 'dvi' and 'pdf'
+# --------------- End ocfm help
+# --------------- icfm help
+# To build the documentation for the idl-callable forward model, type
+# 'make icfm'
+# or else cd to the icfm subdirectory and just type 'make'
+# From there look in the subdirectories named 'dvi' and 'pdf'
+# --------------- End icfm help
 # ---------------------- The name of this file (is the right-hand-side below)
 MakeFName = MakeFC
 # If the right-hand-side is not Makefile
@@ -53,7 +82,7 @@ short_name=doc
 #SUBDIRS := $(shell ${REECHO} -d cfm)
 
 # Errors in the .tex sources require us to omit the following
-OMIT_SRCS := wvs-051-neural_body.tex \
+OMIT_SRCS := wvs-051-neural_body.tex wvs-111.tex \
      iy-002.tex iy-003.tex iy-008.tex iy-009.tex \
      iy-010.tex texmacros.tex
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
@@ -145,15 +174,25 @@ depends:
 	  $(MAKE) -f $(MakeFName) -C $$dir DOCDIR=$(DOCDIR)/$$dir depends; \
 	done
 
+help:
+	@TOPIC=main; sed -n '/'$$TOPIC' help/,/End '$$TOPIC' help/ p' $(DOCDIR)/MakeFC \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
+help--cfm:
+	@TOPIC=ocfm; sed -n '/'$$TOPIC' help/,/End '$$TOPIC' help/ p' $(DOCDIR)/MakeFC \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
+help--doc:
+	@TOPIC=doc; sed -n '/'$$TOPIC' help/,/End '$$TOPIC' help/ p' $(DOCDIR)/MakeFC \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
+help--icfm:
+	@TOPIC=icfm; sed -n '/'$$TOPIC' help/,/End '$$TOPIC' help/ p' $(DOCDIR)/MakeFC \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
 internalupdate:
 	@echo "Copying or linking MakeFC to Makefile in $(shell ${REECHO} -d cfm icfm)" ; \
 	cp MakeFC Makefile
-	 for dir in $(shell ${REECHO} -d cfm icfm); do \
-	  if [ ! -f $$dir/MakeFC ]; then \
-	  cp MakeFC $$dir; \
-	  cp MakeFC $$dir/Makefile; \
-	  fi; \
-	done
 
 cfm: $(DOCDIR)/cfm $(DOCDIR)/cfm/MakeFC
 	$(MAKE) -f $(MakeFName) -C $@ DOCDIR=$(DOCDIR)/cfm
@@ -175,6 +214,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.17  2012/04/20 22:39:18  pwagner
+# Works around bugs in pdflatex href implementaion
+#
 # Revision 1.16  2012/04/04 16:31:52  pwagner
 # Removed include of doc.h
 #
