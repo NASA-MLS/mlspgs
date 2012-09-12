@@ -253,6 +253,12 @@ while [ "$more_opts" = "yes" ] ; do
        otheropts=`add_option "$otheropts" --sharedPCF`
        shift
        ;;
+    --submit )
+       echo "Skipping argument to submit to a special l2 queue manager: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
     --ntk )
        otheropts=`add_option "$otheropts" --ntk`
        shift
@@ -383,6 +389,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.6  2012/02/15 18:13:47  pwagner
+# echo name of l2cf to log file
+#
 # Revision 1.5  2010/04/23 23:19:42  pwagner
 # Removed argumentless 'export' which was killing pvmd
 #
