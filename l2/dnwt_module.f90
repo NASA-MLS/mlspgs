@@ -158,6 +158,10 @@ module DNWT_MODULE
     real(rk) :: GRADNB     ! L2 norm of Gradient at best F
     real(rk) :: QNSQ       ! Square of norm of solution of U^T q = x
     real(rk) :: SQ = 0.0   ! Levenberg-Marquardt parameter -- intent(out)
+    real(rk) :: SQMIN = 0.0 ! Value of SQ above which function tolerance is
+                           ! not allowed -- intent(in); recommen to use this
+                           ! as a floor for Levenberg-Marquardt stabilization
+                           ! in the caller
     real(rk) :: SQT        ! Total Levenberg-Marquardt stabilization -- intent(out)
     integer :: KFAIL       ! Failure count: 0 nofailures; k > 0 we have successfully
                            ! taken k - 1 steps of size DXBAD. (Temporary)
@@ -546,7 +550,7 @@ contains
 ! getting close to smaller than fnb, and we are not making a move
 ! in a quite different direction we give up and go back to previous best.
 
-          if ( (max(tp, sql) <= sqmin) .and. &
+          if ( (max(tp, sql) <= aj%sqmin) .and. &
                ((fn*(fn/fnl)**2) > fnb) .and. (cdxdxl >= cp25) ) go to 222
         end if
       else ! ( fn >= fnl )
@@ -712,9 +716,12 @@ contains
 
   460 if ( inc == 0 ) then
         tp = fn - (c1+relsf)*fnmin
-        if ( (tp < c0 ) .and. &
-           & ( (sq == c0) .or. (spl <= spmini) .or. &
-           &   (tp <= -(c1+relsf)*spl*fn) ) ) go to 465
+        if ( (tp < c0 ) ) then
+          go to 465 ! WVS changed this 2012-09-10 to allow convergence
+                    ! with nonzero Levenberg-Marquardt parameter
+!           if ( (sq <= aj%sqmin) .or. (spl <= spmini) .or. &
+!            &   (tp <= -(c1+relsf)*spl*fn) ) go to 465
+        end if
       end if
       go to 470
 
@@ -1189,7 +1196,6 @@ contains
     call add_to_line ( sq,     'SQ ')
     if ( myLevel > 0 ) call add_to_line ( sqb,    'SQB' )
     if ( myLevel > 0 ) call add_to_line ( sql,    'SQL' )
-    if ( myLevel > 0 ) call add_to_line ( sqmin,  'SQMIN' )
     if ( myLevel > 0 ) call add_to_line ( tolxa,  'TOLXA' )
     if ( myLevel > 0 ) call add_to_line ( tolxr,  'TOLXR' )
     if ( i /= 1 ) call print_lines
@@ -1217,6 +1223,7 @@ contains
       call add_to_line ( aj%gradn,  'GRADN' )
       call add_to_line ( aj%qnsq,   'QNSQ' )
       call add_to_line ( aj%sq,     'SQ' )
+      call add_to_line ( aj%sqmin,  'SQMIN' )
       call add_to_line ( aj%sqt,    'SQT' )
       call add_to_line_I ( aj%kfail,    'KFAIL' )
       call add_to_line_L ( aj%big,      'BIG' )
@@ -1321,7 +1328,6 @@ contains
     guts%sq = sq
     guts%sqb = sqb
     guts%sql = sql
-    guts%sqmin = sqmin
     guts%tolxa = tolxa
     guts%tolxr = tolxr
   end subroutine DNWT_GUTS
@@ -1383,6 +1389,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.52  2012/09/13 18:06:56  vsnyder
+! Add SQMIN to AJ structure, allow convergence with nonzero lambda
+!
 ! Revision 2.51  2012/08/30 23:04:02  vsnyder
 ! Use FNMIN at best X to decide on gradient move
 !
