@@ -1215,7 +1215,7 @@ contains
       end if
     end subroutine BoundMove
 
-    ! ---------------------------------------------   DumpStateQuantities --
+    ! --------------------------------------  DumpStateQuantities  -----
     subroutine DumpStateQuantities ( State, DumpQuantitiesNode, Title )
       use VectorsModule, only: DUMP, GETVECTORQTYBYTEMPLATEINDEX, &
         & VECTOR_T, VECTORVALUE_T
@@ -1236,7 +1236,7 @@ contains
 
     end subroutine DumpStateQuantities
 
-    ! ---------------------------------------------   DumpRetrievalConfig --
+    ! --------------------------------------  DumpRetrievalConfig  -----
     subroutine DumpRetrievalConfig
       use lexer_core, only: PRINT_SOURCE
       use VectorsModule, only: DUMPNICEMASKSUMMARY, M_TIKHONOV, M_FULLDERIVATIVES
@@ -1359,7 +1359,7 @@ contains
       call MLSMessageCalls( 'pop' )
     end subroutine FillDiagQty
 
-    ! ----------------------------------------------  FillDiagVec ------
+    ! ----------------------------------------------  FillDiagVec  -----
     subroutine FillDiagVec ( diagnostics, aj, numGrad, numJ, numNewt, nwt_flag, &
       & jacobian_rows, jacobian_cols )
       use DNWT_Module, only: NWT_T
@@ -1477,7 +1477,7 @@ contains
       end if
     end subroutine My_NWTDB
 
-    ! ------------------------------------------  NewtonSolver  -----
+    ! ---------------------------------------------  NewtonSolver  -----
     subroutine NewtonSolver
 
       use DNWT_MODULE, only: FLAGNAME, NF_AITKEN, NF_BEST, NF_BIGGEST_FLAG, &
@@ -1863,9 +1863,11 @@ NEWT: do ! Newton iteration
             ! regularization and Levenberg-Marquardt stabilization, in order
             ! to compute a posteriori covariance or standard deviation, or
             ! an averaging kernel?
-            if ( .not. (got(f_outputCovariance) .or. got(f_outputSD) .or. &
-              &         got(f_average)) ) exit NEWT ! no
             nwt_flag = nf_getJ
+            if ( ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
+              &    got(f_average) ) .and. &
+              &  tikhonovNeeded .and. covSansReg ) cycle NEWT ! yes
+            exit NEWT ! no
           end if
 
           lambda = 0.0
@@ -2245,7 +2247,6 @@ NEWT: do ! Newton iteration
           if ( got(f_apriori) ) &
             & jacobian_rows = jacobian_rows + jacobian_cols
           ! Correct for Tikhonov information.
-          if ( tikhonovNeeded ) jacobian_rows = jacobian_rows + tikhonovRows
           if ( nwt_flag == nf_getJ ) then ! taking a special iteration to get J
             dof = max ( jacobian_rows - jacobian_cols, 1 )
             aj%chiSqNorm = aj%fnorm / dof
@@ -2255,6 +2256,7 @@ NEWT: do ! Newton iteration
                 & '     | F |    chi^2/DOF           DOF ', options='c' )
             exit NEWT
           end if
+          if ( tikhonovNeeded ) jacobian_rows = jacobian_rows + tikhonovRows
           aj%diag = minDiag ( factored ) ! element on diagonal with
             !       smallest absolute value, after triangularization
           aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
@@ -2967,6 +2969,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.332  2012/09/13 18:08:34  vsnyder
+! Don't include tikhonov row count if covSansReg is set
+!
 ! Revision 2.331  2012/09/12 22:51:40  vsnyder
 ! Tell DNWT what lambdaMin is
 !
