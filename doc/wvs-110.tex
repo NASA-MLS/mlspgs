@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-110}
-\newcommand{\docdate}{21 August 2012}
+\newcommand{\docname}{wvs-110r1}
+\newcommand{\docdate}{12 September 2012}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -131,13 +131,12 @@ derivative $\mathbf{g}^\prime$ is given by
 \begin{equation}
 g_{j,k} =
  \frac{\partial}{\partial x^k} \left( \mathbf{J}^i_j f_i \right) =
+ \frac{\partial}{\partial x^k} \left( f^i_{,j} f_i \right) =
  \mathbf{J}^i_{j,k} f_i +
  \mathbf{J}^i_j f_{i,k} =
  \mathbf{H}^i_{jk}\, f_i + \mathbf{J}^i_j \mathbf{J}_{ik} =
-\sum_i \frac{\partial^{\,2}\! f_i}
-            {\partial x^j \partial x^k}\, f_i +
-\sum_i \frac{\partial f_i}{\partial x^j}
-       \frac{\partial f_i}{\partial x^k}\,,
+ f^i_{,jk} f_i + f^i_{,j} f_{i,k}
+       \,,
 \end{equation}
 
 where $\mathbf{H}^i_{jk}$ is the Hessian tensor
@@ -156,10 +155,7 @@ The Newton iteration is therefore
                \mathbf{J}^i_j
                \mathbf{J}_{ik} \right)
  \delta x^k \right]_n =
- \left[ \sum_k \sum_i \left( \frac{\partial^{\,2}\! f_i}
-                                  {\partial x^j \partial x^k} f_i +
-                             \frac{\partial f_i}{\partial x^j}
-                             \frac{\partial f_i}{\partial x^k} \right)
+ \left[ \left( f^i_{,jk} f_i + f^i_{,j} f_{i,k} \right)
  \delta x^k \right]_n =
  -[g_j]_n \,.
 \end{equation}
@@ -180,14 +176,15 @@ $\mathbf{J}^T \mathbf{f}$, giving the more familiar Gauss-Newton iteration
 There is no counterpart in matrix-vector notation to the term
 $\mathbf{H}^i_{jk}f_i$.
 
-If $\mathbf{H}^i_{jk}f_i$ is not small compared to the diagonal of
-$\mathbf{J}^i_j \mathbf{J}_{ik}$, or $\mathbf{J}^i_j \mathbf{J}_{ik}$ is a
-poorly-conditioned matrix, omitting $\mathbf{H}^i_{jk} f_i$ can cause slow
-(or no) convergence of the Newton iteration.  Several methods have been
-proposed to incorporate an approximation of $\mathbf{H}^i_{jk} f_i$.  One
-that is commonly used is the Broydon-Fletcher-Goldfarb-Shanno (BFGS)
-method, or variations on it such as described by Philip Gill and Michael
-Leonard in \emph{Reduced-Hessian quasi-Newton methods for unconstrained
+If the diagonal of $\mathbf{H}^i_{jk}f_i$ is not small compared to the
+diagonal of $\mathbf{J}^i_j \mathbf{J}_{ik}$, or $\mathbf{J}^i_j
+\mathbf{J}_{ik}$ is a poorly-conditioned matrix, omitting
+$\mathbf{H}^i_{jk} f_i$ can cause slow (or no) convergence of the Newton
+iteration.  Several methods have been proposed to incorporate an
+approximation of $\mathbf{H}^i_{jk} f_i$.  One that is commonly used is
+the Broydon-Fletcher-Goldfarb-Shanno (BFGS) method, or variations on it
+such as described by Philip Gill and Michael Leonard in
+\emph{Reduced-Hessian quasi-Newton methods for unconstrained
 optimization}, which appeared in {\bf SIAM Journal of Optimization 12}, 1
 (2001) pp 209-237.  These methods use differences between successive
 gradients, i.e., $[\mathbf{g}]_n - [\mathbf{g}]_{n-1}$, as approximations
@@ -202,8 +199,8 @@ i.e., $\mathbf{H}^i_{jk}=0$ if $j \neq k$.
 If we were to compute only the $\mathbf{H}^i_{kk}$ elements of
 $\mathbf{H}$, the space to store it would be comparable to
 $\mathbf{J}^i_k$, the corresponding block of the Jacobian.  The work to
-compute it would be less if $\mathbf{J}^i_k$ is also computed, because of
-reuse of common expressions, as will become clear in the sequel. 
+compute it would be reduced if $\mathbf{J}^i_k$ is also computed, because
+of reuse of common expressions, as will become clear in the sequel. 
 $\mathbf{H}^i_{kk}$ is dense, and therefore ought to be stored as a {\tt
 MatrixElement_t} instead of using the {\tt [H, i, j, k]} tuple currently
 used to represent Hessians, as the latter would require four times as much
@@ -327,3 +324,6 @@ i.e., Equation (\ref{fourteen}), and represent $\mathbf{H}^i_{kk}$ as a
 % $Id$
 
 % $Log$
+% Revision 1.1  2012/08/22 02:04:28  vsnyder
+% Initial commit
+%
