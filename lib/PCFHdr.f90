@@ -5,12 +5,12 @@
 
 ! This software may be subject to U.S. export control laws. By accepting this
 ! software, the user agrees to comply with all applicable U.S. export laws and
-! regulations. User has the responsibility to obtain export licenses, or other
+! regulations. user has the responsibility to obtain export licenses, or other
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
 !===============================================================================
-MODULE PCFHdr
+module PCFHdr
 !===============================================================================
 ! Dsepite an unfortunate choice of name, which fails to clearly 
 ! indicate it, this module contains ways to annotate, write
@@ -18,32 +18,32 @@ MODULE PCFHdr
 ! It might have been better named PCFHdrAndGlobalAttributes
 ! or split off global attribute stuff into a separate module
 
-   use dates_module, only: utc_to_date, utc_to_yyyymmdd, utcForm
-   use Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
+   use DATES_MODULE, only: UTC_TO_DATE, UTC_TO_YYYYMMDD, UTCFORM
+   use HDF, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
    use INTRINSIC, only: L_HDFEOS, L_HDF, L_SWATH
-   use MLSCommon, only: FileNameLen, MLSFile_T, NameLen
-   use MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
-     & InitializeMLSFile, open_MLSFile, close_MLSFile
-   use MLSKinds, only: R8
-   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
-     & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
-   use MLSStrings, only: lowerCase
-   use output_m, only: output, outputNamedValue
-   use SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
+   use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, NAMELEN
+   use MLSFILES, only: GETPCFROMREF, HDFVERSION_4, HDFVERSION_5, &
+     & INITIALIZEMLSFILE, OPEN_MLSFILE, CLOSE_MLSFILE
+   use MLSKINDS, only: R8
+   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
+     & MLSMSG_WARNING, MLSMSG_DEALLOCATE, MLSMSG_FILEOPEN
+   use MLSSTRINGS, only: LOWERCASE
+   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+   use SDPTOOLKIT, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
-     & PGSD_IO_GEN_RDIRUNF, Pgs_pc_getReference, &
+     & PGSD_IO_GEN_RDIRUNF, PGS_PC_GETREFERENCE, &
      & PGS_TD_ASCIITIME_ATOB, PGS_TD_ASCIITIME_BTOA, &
-     & UseSDPToolkit, max_orbits
+     & useSDPTOOLKIT, MAX_ORBITS
    implicit none
-   public :: GlobalAttributes_T, &
-     & CreatePCFAnnotation, dumpGlobalAttributes,  &
-     & FillTAI93Attribute, &
-     & h5_readMLSFileAttr, he5_readMLSFileAttr, &
-     & h5_writeglobalattr, he5_writeglobalattr, he5_readglobalattr, &
-     & h5_writeMLSFileAttr, he5_writeMLSFileAttr, &
-     & InputInputPointer, WriteInputPointer, &
-     & WriteLeapSecHDFEOSAttr, WriteLeapSecHDF5DS, WritePCF2Hdr, &
-     & WriteutcPoleHDFEOSAttr, WriteutcPoleHDF5DS
+   public :: GLOBALATTRIBUTES_T, &
+     & CREATEPCFANNOTATION, DUMPGLOBALATTRIBUTES,  &
+     & FILLTAI93ATTRIBUTE, &
+     & H5_READMLSFILEATTR, HE5_READMLSFILEATTR, &
+     & H5_WRITEGLOBALATTR, HE5_WRITEGLOBALATTR, HE5_READGLOBALATTR, &
+     & H5_WRITEMLSFILEATTR, HE5_WRITEMLSFILEATTR, &
+     & INPUTINPUTPOINTER, WRITEINPUTPOINTER, &
+     & WRITELEAPSECHDFEOSATTR, WRITELEAPSECHDF5DS, WRITEPCF2HDR, &
+     & WRITEUTCPOLEHDFEOSATTR, WRITEUTCPOLEHDF5DS
    private
 
 ! === (start of toc) ===                                                 
@@ -51,7 +51,7 @@ MODULE PCFHdr
 !     - - - - - - - -                                                    
 
 !     (data types and parameters)
-! inputptr_string_length   string length used by InputPointer procedures
+! inputptr_string_length   string length used by Inputpointer procedures
 ! ga_value_length          string length used by GlobalAttributes_T
 ! MiscNotesLength          string length used by MiscNotes field
 ! utc_a_value_length       string length used to encode utc version 'a'
@@ -66,9 +66,9 @@ MODULE PCFHdr
 ! h5_writeglobalattr       writes the global attributes to an hdf5-formatted file
 ! he5_writeglobalattr      writes the global attributes to an hdfeos5-formatted file
 ! he5_readglobalattr       reads the global attributes from an hdfeos5-formatted file
-! InputInputPointer        Prepare Input for WriteInputPointer
+! InputInputpointer        Prepare Input for WriteInputpointer
 ! sw_writeglobalattr       writes the global attributes for an hdfeos5 swath
-! WriteInputPointer        Write InputPointer metadata
+! WriteInputpointer        Write Inputpointer metadata
 ! WriteLeapSecHDFEOSAttr   Write contents of leapsec file as hdfeos5 attribute
 ! WriteLeapSecHDF5DS       Write contents of leapsec file as hdf5 dataset
 ! WritePCF2Hdr             Write the PCF into an HDF or HDF-EOS file
@@ -132,7 +132,7 @@ MODULE PCFHdr
 
   ! This variable describes the global attributes
   type (GlobalAttributes_T), public, save :: GlobalAttributes
-  ! Use this in case hdfVersion omitted from call to WritePCF2Hdr
+  ! use this in case hdfVersion omitted from call to WritePCF2Hdr
   ! E.g., in level 3 prior to conversion
   integer, public, save            :: PCFHDR_DEFAULT_HDFVERSION = HDFVERSION_5
   logical, parameter :: DEBUG = .false.
@@ -148,22 +148,22 @@ CONTAINS
 
 ! Arguments
 
-      INTEGER, INTENT(IN) :: mlspcfN_pcf_start
+      integer, intent(in) :: mlspcfN_pcf_start
 
-      CHARACTER (LEN=1), POINTER :: anText(:)
+      character (len=1), pointer :: anText(:)
 
 ! Parameters
 
 ! Functions
 
-      INTEGER, EXTERNAL :: Pgs_pc_getFileSize
+      integer, external :: Pgs_pc_getFileSize
 
 ! Variables
 
-      CHARACTER (LEN=10) :: mnemonic
-      CHARACTER (LEN=480) :: msg, msr
+      character (len=10) :: mnemonic
+      character (len=480) :: msg, msr
 
-      INTEGER :: err, ios, pcfHandle, returnStatus, size, version
+      integer :: err, ios, pcfHandle, returnStatus, size, version
 
 ! Get the size of the PCF
 
@@ -229,12 +229,12 @@ CONTAINS
    SUBROUTINE FillTAI93Attribute (LeapSecFileName)
 !----------------------------------------
 
-    use SDPTOOLKIT, only: mls_utctotai, pgs_td_utctotai
+    use SDPTOOLKIT, only: MLS_UTCTOTAI, PGS_TD_UTCTOTAI
 !  Fill the TAI93 component of the global attribute based on the
 !  StartUTC component
 
 !  Arguments
-    character(LEN=*), optional :: LeapSecFileName
+    character(len=*), optional :: LeapSecFileName
     character(len=NameLen)     :: start_time_string
 !  Local variables
     integer             :: returnStatus
@@ -275,8 +275,8 @@ CONTAINS
    SUBROUTINE h5_readMLSFileAttr (MLSFile)
 !------------------------------------------------------------
 
-      use HDF5, only: h5gclose_f, h5gopen_f
-      USE MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent
+      use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+      use MLSHDF5, only: GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEPRESENT
 ! Brief description of subroutine
 ! This subroutine reads the components of an MLSFile_t 
 ! as attributes from an hdf5-formatted file
@@ -394,15 +394,15 @@ CONTAINS
    SUBROUTINE h5_writeglobalattr (fileID, skip_if_already_there)
 !------------------------------------------------------------
 
-      use HDF5, only: h5gclose_f, h5gopen_f
-      USE MLSHDF5, only: IsHDF5AttributePresent, MakeHDF5Attribute
+      use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
+      use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf5-formatted file
 ! It does so at the root '/' group level
 
 ! Arguments
 
-      INTEGER, INTENT(IN) :: fileID
+      integer, intent(in) :: fileID
       logical, intent(in), optional :: skip_if_already_there
 ! Local variables
       integer :: grp_id
@@ -467,8 +467,8 @@ CONTAINS
    SUBROUTINE h5_writeMLSFileAttr (MLSFile, skip_if_already_there)
 !------------------------------------------------------------
 
-      use HDF5, only: h5gclose_f, h5gopen_f
-      USE MLSHDF5, only: IsHDF5AttributePresent, MakeHDF5Attribute
+      use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
+      use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
 ! Brief description of subroutine
 ! This subroutine writes the components of an MLSFile_t 
 ! as attributes for an hdf5-formatted file
@@ -532,23 +532,27 @@ CONTAINS
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE he5_writeglobalattr (fileID,dayNum)
+   SUBROUTINE he5_writeglobalattr ( fileID, dayNum )
 !------------------------------------------------------------
 
     use HDFEOS5, only: HE5T_NATIVE_INT, &
-      & HE5T_NATIVE_DOUBLE, MLS_charType
-    use MLSHDFEOS, only: he5_EHwrglatt, hsize, mls_EHwrglatt
+      & HE5T_NATIVE_DOUBLE, MLS_CHARTYPE
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdfeos5 file
 
 ! Arguments
 
-      INTEGER, INTENT(IN) :: fileID
-      INTEGER, INTENT(IN), optional :: dayNum
+      integer, intent(in) :: fileID
+      integer, intent(in), optional :: dayNum
 ! Internal variables
       integer :: status
       character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 ! Executable
+      if ( DEBUG ) then
+        call output( 'Writing global attributes', advance='yes' )
+        call dumpGlobalAttributes
+      endif
       if (present(dayNum)) then
          status = he5_EHwrglatt(fileID, &
             & 'OrbitNumber', HE5T_NATIVE_INT, hsize(max_orbits), &
@@ -622,15 +626,15 @@ CONTAINS
 !------------------------------------------------------------
 
     use HDFEOS5, only: HE5T_NATIVE_INT, &
-      & MLS_charType
-    use MLSHDFEOS, only: he5_EHwrglatt, hsize, mls_EHwrglatt
+      & MLS_CHARTYPE
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT
 ! Brief description of subroutine
 ! This subroutine writes the components of an MLSFile_t 
 ! as attributes for an hdfeos5-formatted file
 
 ! Arguments
 
-      ! INTEGER, INTENT(IN) :: fileID
+      ! integer, intent(in) :: fileID
       type(MLSFile_T)       :: MLSFile
 ! Local variables
       integer :: fileID
@@ -691,14 +695,14 @@ CONTAINS
      & ProcessLevel, DayofYear, TAI93At0zOfGranule, returnStatus)
 !------------------------------------------------------------
 
-    use HDFEOS5, only: he5_EHinqglatts
-    use MLSHDFEOS, only: MAXDLISTLENGTH, he5_EHrdglatt
+    use HDFEOS5, only: HE5_EHINQGLATTS
+    use MLSHDFEOS, only: MAXDLISTLENGTH, HE5_EHRDGLATT
 ! Brief description of subroutine
 ! This subroutine reads the global attributes from an hdf-eos5 file
 
 ! Arguments
 
-      INTEGER, INTENT(IN)                      :: fileID
+      integer, intent(in)                      :: fileID
       type (GlobalAttributes_T), intent(inout) :: gAttributes
       character(len=*), intent(out), optional  :: ProcessLevel
       integer, intent(out), optional           :: DayofYear
@@ -711,6 +715,7 @@ CONTAINS
       character(len=MAXDLISTLENGTH) :: attrList
       integer :: listSize
 ! Executable
+      if ( DEBUG ) call output( 'Reading global attributes', advance='yes' )
       status = he5_EHinqglatts(fileID, attrList, listSize)
       status = 0
       if ( status /= 0 ) then
@@ -783,25 +788,26 @@ CONTAINS
         gAttributes%LastMAFCtr = ibuf(1)
       endif
       if ( present(returnStatus) ) returnStatus = status
+      if ( DEBUG ) call dumpGlobalAttributes
 !------------------------------------------------------------
    END SUBROUTINE he5_readglobalattr
 !------------------------------------------------------------
 
 !----------------------------------------
-   SUBROUTINE InputInputPointer (urefs, fileIDArray, fileNameArray, &
+   SUBROUTINE InputInputpointer (urefs, fileIDArray, fileNameArray, &
      & PCBottom, PCTop )
 !----------------------------------------
-!  Prepare Input for WriteInputPointer consisting of universal refs
+!  Prepare Input for WriteInputpointer consisting of universal refs
 !  This can be done for an array of fileids or of file names or both
 !  that were input during the run; e.g., l1brads for level 2
 !  If no universal refs are found, as always happens with my test cases,
 !  then put the file names as returned by pgs_pc_getReference in their place
 !  for the fileIDArray, or else the fileNameArray itself if appropriate
 !  Arguments
-    CHARACTER (LEN=INPUTPTR_STRING_LENGTH), intent(out)    :: urefs(:)
-    CHARACTER (LEN=*), dimension(:), intent(in), optional  :: fileNameArray
+    character (len=INPUTPTR_STRING_LENGTH), intent(out)    :: urefs(:)
+    character (len=*), dimension(:), intent(in), optional  :: fileNameArray
     integer, dimension(:), intent(in), optional            :: fileIDArray
-    integer,  intent(IN), optional                 :: PCBottom, PCTop
+    integer,  intent(in), optional                 :: PCBottom, PCTop
 !  Local variables
    integer  :: i
    integer  :: ref
@@ -809,7 +815,7 @@ CONTAINS
    integer  :: thePC
    integer  :: version
    character(len=INPUTPTR_STRING_LENGTH) :: sval
-   INTEGER, EXTERNAL :: pgs_pc_getUniversalRef, pgs_pc_getReference
+   integer, external :: pgs_pc_getUniversalRef, pgs_pc_getReference
 
  ! Executable
    if (size(urefs) < 1) return
@@ -872,7 +878,7 @@ CONTAINS
    endif
 
 !------------------------------------
-   END SUBROUTINE InputInputPointer
+   END SUBROUTINE InputInputpointer
 !------------------------------------
 
 !------------------------------------------------------------
@@ -880,14 +886,14 @@ CONTAINS
 !------------------------------------------------------------
 
       use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, MLS_charType
-      use HE5_SWAPI, only: he5_SWwrattr
-      use MLSHDFEOS, only: hsize, mls_SWwrattr
+      use HE5_SWAPI, only: HE5_SWWRATTR
+      use MLSHDFEOS, only: HSIZE, MLS_SWWRATTR
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdfeos5 swath
 
 ! Arguments
 
-      INTEGER, INTENT(IN) :: swathID
+      integer, intent(in) :: swathID
 !     integer, external ::   he5_SWwrattr
 ! Internal variables
       integer :: status
@@ -953,46 +959,46 @@ CONTAINS
 !------------------------------------------------------------
 
 !----------------------------------------
-   FUNCTION WriteInputPointer (groups, attrName, inpt, fileType)
+   FUNCTION WriteInputpointer (groups, attrName, inpt, fileType)
 !----------------------------------------
 
-!  Write InputPointer metadata
+!  Write Inputpointer metadata
 
 !  Arguments
     character (len = PGSd_MET_GROUP_NAME_L) :: Groups
     character (len=*), intent(in) :: Attrname
-    CHARACTER (LEN=INPUTPTR_STRING_LENGTH), intent(in), optional  :: inpt(:)
+    character (len=INPUTPTR_STRING_LENGTH), intent(in), optional  :: inpt(:)
     ! character(len=*), intent(in), optional :: fileType   ! 'hdfeos', 'hdf', 'sw' or ..
     integer, intent(in), optional :: fileType   ! l_swath, l_hdf, ...
 
-    integer             :: WriteInputPointer
+    integer             :: WriteInputpointer
     integer, external   :: pgs_met_setAttr_s
     ! character (len=6) :: the_type
     integer :: the_type
 
 !   Executable statements
     if ( present(inpt) ) then
-       WriteInputPointer = pgs_met_setAttr_s(groups, attrName, inpt)
+       WriteInputpointer = pgs_met_setAttr_s(groups, attrName, inpt)
        return
     endif
     the_type = l_hdf
     if ( present(fileType) ) the_type = fileType
     select case(the_type)
     case (l_hdf)
-      WriteInputPointer = pgs_met_setAttr_s (groups, attrName, &
+      WriteInputpointer = pgs_met_setAttr_s (groups, attrName, &
         &  (/HDFINPTPTRVALUE/) )
     case default
-      WriteInputPointer = pgs_met_setAttr_s (groups, attrName, &
+      WriteInputpointer = pgs_met_setAttr_s (groups, attrName, &
         &  (/HDFEOSINPTPTRVALUE/) )
     end select      
     
 !------------------------------------
-   END FUNCTION WriteInputPointer
+   END FUNCTION WriteInputpointer
 !------------------------------------
 
    subroutine WriteLeapSecHDFEOSAttr (fileID)
      ! Write contents of leapsec file as hdfeos5 attribute to file
-    use MLSHDFEOS, only: mls_EHwrglatt
+    use MLSHDFEOS, only: MLS_EHWRGLATT
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -1016,7 +1022,7 @@ CONTAINS
 
    subroutine WriteLeapSecHDF5DS (fileID)
      ! Write contents of leapsec file as hdf5 dataset to file
-    use MLSHDF5, only: SaveAsHDF5DS
+    use MLSHDF5, only: SAVEASHDF5DS
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -1043,16 +1049,16 @@ CONTAINS
    SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, fileType, name)
 !----------------------------------------
       use HDF5, only: H5F_ACC_RDWR_F, &
-        & h5fopen_f, h5fclose_f
+        & H5FOPEN_F, H5FCLOSE_F
 
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF-EOS file as an annotation.
 
 ! Arguments
 
-      CHARACTER (LEN=FileNameLen), INTENT(IN) :: file 
+      character (len=FileNameLen), intent(in) :: file 
 
-      CHARACTER (LEN=1), POINTER              :: anText(:)
+      character (len=1), pointer              :: anText(:)
       integer, intent(in), optional           :: hdfVersion
       ! character(len=*), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
       integer, intent(in), optional  :: fileType ! l_swath, l_hdf, ..
@@ -1139,22 +1145,22 @@ CONTAINS
 
 ! Arguments
 
-      CHARACTER (LEN=FileNameLen), INTENT(IN) :: file 
+      character (len=FileNameLen), intent(in) :: file 
 
-      CHARACTER (LEN=1), POINTER              :: anText(:)
+      character (len=1), pointer              :: anText(:)
 
 ! Parameters
 
 ! Functions
 
-      INTEGER, EXTERNAL :: afEnd, afEndAccess, afFCreate, afStart, afWriteAnn
-      INTEGER, EXTERNAL :: hClose, hOpen
+      integer, external :: afEnd, afEndAccess, afFCreate, afStart, afWriteAnn
+      integer, external :: hClose, hOpen
 
 ! Variables
 
-      CHARACTER (LEN=480) :: msr
+      character (len=480) :: msr
 
-      INTEGER :: anID, annID, fileID, status
+      integer :: anID, annID, fileID, status
 
 ! Open the HDF-EOS file for writing
 
@@ -1206,8 +1212,8 @@ CONTAINS
    SUBROUTINE WritePCF2Hdr_hdf5 (fileID, anText, name)
 !----------------------------------------
 
-      use HDF5, only: h5gclose_f, h5gopen_f
-      USE MLSHDF5, only: IsHDF5DSPresent, MakeHDF5Attribute, SaveAsHDF5DS
+      use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+      use MLSHDF5, only: ISHDF5DSPRESENT, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF5 file as 
 ! (1) a datset if MAKEDATASET is TRUE
@@ -1221,15 +1227,15 @@ CONTAINS
 ! Arguments
 
       integer :: fileID
-      CHARACTER (LEN=1), POINTER              :: anText(:)
+      character (len=1), pointer              :: anText(:)
       character(len=*), intent(in), optional :: name
 
 ! Local variables
       integer :: grp_id
       integer :: status
-      CHARACTER (LEN=1), dimension(:), POINTER              :: an40
+      character (len=1), dimension(:), pointer              :: an40
       integer :: how_big
-      logical, parameter :: USELENGTHONECHARS = .true.
+      logical, parameter :: useLENGTHONECHARS = .true.
       logical, parameter :: MAKEDATASET = .true.
       logical, parameter :: MAKEATTRIBUTE = .not. MAKEDATASET
       character(len=size(anText)) :: anScalar
@@ -1249,7 +1255,7 @@ CONTAINS
       if ( status /= PGS_S_SUCCESS) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Error opening hdf5 file root group for annotating with PCF' )
-      if ( USELENGTHONECHARS ) then
+      if ( useLENGTHONECHARS ) then
         call MakeHDF5Attribute(grp_id, &
          & trim(myPCFPATHNAME), anText, .true.)
          ! & 'PCF file text', anText, .true.)
@@ -1281,28 +1287,28 @@ CONTAINS
    SUBROUTINE WritePCF2Hdr_hdfeos5 (fileID, anText)
 !----------------------------------------
 
-      use HDFEOS5, only: MLS_charType
-      use MLSHDFEOS, only: hsize, he5_EHwrglatt
+      use HDFEOS5, only: MLS_CHARTYPE
+      use MLSHDFEOS, only: HSIZE, HE5_EHWRGLATT
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
 ! It does so as file level attributes
 ! It does not do so as a dataset because that would create a hybrid file
 ! For unclear reasons the attributes are stored as an array of 40-length chars
-! Unless the parameter USELENGTHONECHARS is true
+! Unless the parameter useLENGTHONECHARS is true
 ! Arguments
 
 ! If the PCF file if bigger than 40,000 characters, need to break it down into 
 ! multiple attribute names such as PCF1, PCF2, etc... up to PCF9
 ! Do this to solve the probem of L3 PCF files 
 
-      CHARACTER (LEN=1), POINTER              :: anText(:)
+      character (len=1), pointer              :: anText(:)
       integer, intent(in)                     :: fileID
 
 ! Local variables
       integer :: firstChar, lastChar, blockNumber
       integer :: status
       integer, parameter :: maxheadersize = 40000
-      CHARACTER (LEN=3) :: blockChar 
+      character (len=3) :: blockChar 
 
 ! Executable
 
@@ -1334,7 +1340,7 @@ CONTAINS
 
    subroutine WriteutcPoleHDFEOSAttr (fileID)
      ! Write contents of utcPole file as hdfeos5 attribute to file
-    use MLSHDFEOS, only: mls_EHwrglatt
+    use MLSHDFEOS, only: MLS_EHWRGLATT
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -1359,7 +1365,7 @@ CONTAINS
 
    subroutine WriteutcPoleHDF5DS (fileID)
      ! Write contents of leapsec file as hdf5 dataset to file
-    use MLSHDF5, only: SaveAsHDF5DS
+    use MLSHDF5, only: SAVEASHDF5DS
      ! Args
      integer, intent(in) :: fileID
      ! Internal variables
@@ -1394,11 +1400,15 @@ CONTAINS
     character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
     character(len=1) :: whatUTCForm
     ! Executable
-    if ( GlobalAttributes%GranuleMonth <= 0 .or. .not. UseSDPToolkit ) then
+    dayofYear = -999
+    if ( GlobalAttributes%GranuleMonth <= 0 .or. .not. useSDPToolkit ) then
       dayOfYear = GlobalAttributes%GranuleDay
     else
       whatUTCForm = utcForm(GlobalAttributes%StartUTC)
-      ! call outputNamedValue( 'utc form', whatUTCForm )
+      if ( DEBUG ) then
+        call outputNamedValue( 'utc form', whatUTCForm )
+        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
+      endif
       select case (whatUTCForm)
       case ('a')
         asciiutc_a = GlobalAttributes%StartUTC
@@ -1415,8 +1425,9 @@ CONTAINS
       end select
       call utc_to_yyyymmdd(asciiutc_b, status, &
         & year, month, dayOfYear) 
+      if ( DEBUG ) call outputNamedValue( 'asciiutc_b', trim(asciiutc_b) )
       if ( status /= 0 ) &
-        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to extract year, day of year from utc B format')
     endif
   end function GranuleDayOfYear_fun
@@ -1431,7 +1442,8 @@ CONTAINS
     character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
     character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
     ! Executable
-    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. UseSDPToolkit ) then
+    day = 0
+    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. useSDPToolkit ) then
       day = GlobalAttributes%GranuleDay
     else
       asciiutc_b = GlobalAttributes%StartUTC
@@ -1442,7 +1454,7 @@ CONTAINS
       call utc_to_yyyymmdd(asciiutc_a, status, &
         & year, month, day) 
       if ( status /= 0 ) &
-        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to extract year, month, day from utc A format')
     endif
   end function GranuleDay_fun
@@ -1457,7 +1469,8 @@ CONTAINS
     character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
     character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
     ! Executable
-    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. UseSDPToolkit ) then
+    month = 0
+    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. useSDPToolkit ) then
       month = GlobalAttributes%GranuleMonth
     else
       asciiutc_b = GlobalAttributes%StartUTC
@@ -1468,7 +1481,7 @@ CONTAINS
       call utc_to_yyyymmdd(asciiutc_a, status, &
         & year, month, day) 
       if ( status /= 0 ) &
-        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & CALL MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to extract year, month, day from utc A format')
     endif
   end function GranuleMonth_fun
@@ -1512,6 +1525,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.57  2012/09/18 18:49:27  pwagner
+!# Reduced severity when unable to convert utc; capitalize names in use statements
+!#
 !# Revision 2.56  2011/07/12 22:35:44  honghanh
 !# Change l_grid to l_hdfeos
 !#
@@ -1519,7 +1535,7 @@ end module PCFHdr
 !# Extra output if DEBUG
 !#
 !# Revision 2.54  2010/02/04 23:08:00  vsnyder
-!# Remove USE or declaration for unused names
+!# Remove use or declaration for unused names
 !#
 !# Revision 2.53  2010/01/15 01:12:37  pwagner
 !# Added routines to read MLSFile_T components
@@ -1621,7 +1637,7 @@ end module PCFHdr
 !# No longer tries to write hdf5 pcf as both ds and attr
 !#
 !# Revision 2.20  2003/05/30 23:47:00  pwagner
-!# Now standardized to write PCF, InputPointer for all levels
+!# Now standardized to write PCF, Inputpointer for all levels
 !#
 !# Revision 2.19  2003/04/11 23:33:13  pwagner
 !# Gets he5_EHwrglatt from new MLSHDFEOS module
@@ -1663,13 +1679,13 @@ end module PCFHdr
 !# Fixed RCS Ident Block
 !#
 !# Revision 2.6  2002/08/29 16:54:44  pwagner
-!# Added WriteInputPointer
+!# Added WriteInputpointer
 !#
 !# Revision 2.5  2001/04/06 16:54:57  pwagner
 !# Reverting to version 2.2
 !#
 !# Revision 2.2  2001/03/09 21:32:45  nakamura
-!# Added INTENT(IN) for pcf number arg.
+!# Added intent(in) for pcf number arg.
 !#
 !# Revision 2.1  2001/03/09 21:10:32  nakamura
 !# Routines for writing the PCF to an HDF file as an annotation.
