@@ -1134,6 +1134,10 @@ contains ! =====     Public Procedures     =============================
     endif
     ! Maybe copy global attributes, too
     if ( myandGlAttributes ) then
+      if ( DEEBUG ) then
+        call output( 'Before reading global attributes', advance='yes' )
+        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
+      endif
       call he5_readglobalattr (File1Handle, gAttributes, &
         & ProcessLevel, DayofYear, TAI93At0zOfGranule, status)
       if ( status == 0 ) then
@@ -1141,6 +1145,10 @@ contains ! =====     Public Procedures     =============================
           call output ( '(Global Attributes read) ', advance='yes')
           call dumpGlobalAttributes
         endif
+      if ( DEEBUG ) then
+        call output( 'After reading global attributes', advance='yes' )
+        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
+      endif
         ! Unfortunately, he5_writeglobalattr writes class-level data
         ! so must save original version so can copy new data into it 
         gAttributesOriginal = GlobalAttributes
@@ -4380,7 +4388,8 @@ contains ! =====     Public Procedures     =============================
   use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, &
     & MLS_CHARTYPE
   use HE5_SWAPI, only: HE5_SWWRATTR, HE5_SWWRLATTR
-  use MLSHDFEOS, only: MLS_SWATTACH, MLS_SWDETACH, MLS_SWWRATTR, MLS_SWWRLATTR
+  use MLSHDFEOS, only: MLS_ISGLATT, &
+    & MLS_SWATTACH, MLS_SWDETACH, MLS_SWWRATTR, MLS_SWWRLATTR
   use PCFHDR, only:  HE5_WRITEGLOBALATTR
     ! Brief description of subroutine
     ! This subroutine writes the attributes for an l2gp
@@ -4460,7 +4469,8 @@ contains ! =====     Public Procedures     =============================
     call List2Array(GeolocationUnits, theUnits, .true.)
 
     ! - -   G l o b a l   A t t r i b u t e s   - -
-    if ( WRITEMASTERSFILEATTRIBUTES ) &
+    if ( WRITEMASTERSFILEATTRIBUTES .and. &
+      & .not. MLS_ISGLATT(L2GPFile%fileID%f_id, 'StartUTC') ) &
       & call he5_writeglobalattr(L2GPFile%fileID%f_id)
 
     swid = mls_SWattach (L2GPFile, name)
@@ -5072,6 +5082,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.186  2012/07/10 15:18:05  pwagner
+! Adapted to new api for GetUniqueList
+!
 ! Revision 2.185  2012/07/05 23:49:04  pwagner
 ! Sets swath Status field to "crashed" if cpl2gpdata options contains "f" and geolocations contain Fills
 !
