@@ -62,7 +62,7 @@ The solution of Equation (\ref{one}) is usually written
 
 \begin{equation}
 I(s) = I(s_0) \exp\left(-\int_{s_0}^s \beta(s^\prime) \,\text{d}s^\prime \right) +
-       \int_{s_0}^s B(s)
+       \int_{s_0}^s B(s) \beta(s)
         \,\exp\left(- \int_{s_0}^s \beta(s^\prime) \,\text{d}s^\prime \right)
        \text{d}s\,.
 \end{equation}
@@ -73,10 +73,11 @@ ratio of the $k^\text{th}$ chemical specie.  The exponential factor is denoted
 by $\MT(s)$, giving
 
 \begin{equation}
-I(s) = I(s_0) \MT(s_0) + \int_{s_0}^s B(s)\, \MT(s) \,\text{d}s\,.
+I(s) = I(s_0) \MT(s_0) + \int_{s_0}^s B(s)\, \beta(s)\, \MT(s) \,\text{d}s\,.
 \end{equation}
 
-This is further transformed by making $B(s)$ the variable of integration, giving
+This is further transformed by integrating by parts, making $B(s)$ the variable
+of integration, giving
 
 \begin{equation}
 I(s) = I(s_0) \MT(s_0) + \int_{B(s_0)}^{B(s)} \MT(B) \,\text{d} B\,.
@@ -152,5 +153,8 @@ and
 % $Id$
 
 % $Log$
+% Revision 1.2  2012/03/30 20:41:42  vsnyder
+% Repair graphics stuff
+%
 % Revision 1.1  2010/04/09 02:27:01  vsnyder
 % Initial commit
