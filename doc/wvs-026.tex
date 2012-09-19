@@ -1,13 +1,52 @@
 \documentclass[11pt]{article}
-\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
 
+\textwidth 6.5in
 \oddsidemargin -0.25in
 %\evensidemargin -0.5in
 \topmargin -0.5in
-\textheight 9.00in
+\textheight 9in
 
-\newcommand{\docname}{\bf wvs-026r4}
-\newcommand{\docdate}{26 August 2011}
+\newcommand{\docname}{\bf wvs-026r5}
+\newcommand{\docdate}{19 September 2012}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
 
 \begin{document}
 
@@ -36,7 +75,7 @@
 To: \>Bill, Nathaniel, Mike\\
 Subject: \>Simplifying assumption to combine line-by-line and PFA\\
 From: \>Van Snyder\\
-Reference: \>wvs-024r2, wvs-025\\
+Reference: \>\h{wvs-024}, \h{wvs-025}\\
 \end{tabbing}
 
 \parindent 0pt \parskip 3pt
@@ -44,8 +83,8 @@ Reference: \>wvs-024r2, wvs-025\\
 
 \section{Introduction}
 
-Recall from wvs-024r2 the equations to combine PFA and line-by-line radiances
-for a particular channel $c$
+Recall from \h{wvs-024} the equations to combine PFA and line-by-line
+radiances for a particular channel $c$
 
 \begin{equation}\label{combined}
 I_c = \int \text{d}\nu\, \phi_c(\nu)
