@@ -13,7 +13,7 @@
 module Fill                     ! Create vectors and fill them.
   !=============================================================================
 
-  use MLSCommon, only: MLSFile_T, DEFAULTUNDEFINEDVALUE
+  use MLSCommon, only: MLSFILE_T, DEFAULTUNDEFINEDVALUE
   use MLSKINDS, only: R8, RV
   ! This module performs the Fill operation in the Level 2 software.
   ! This takes a vector template, and creates and fills an appropriate vector
@@ -62,8 +62,8 @@ contains ! =====     Public Procedures     =============================
       & DUMPCOMMAND, SKIP, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING
     use EXPR_M, only: EXPR, EXPR_CHECK
     use FILLUTILS_1, only: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
-      & COMPUTETOTALPOWER, &
-      & EXTRACTSINGLECHANNEL, FILLCOVARIANCE, FILLERROR, FROMGRID, &
+      & COMPUTETOTALPOWER, FILLCOVARIANCE, &
+      & EXTRACTSINGLECHANNEL, FILLERROR, FROMANOTHER, FROMGRID, &
       & FROML2GP, FROMPROFILE, LOSVELOCITY, &
       & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
       & COLABUNDANCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
@@ -85,7 +85,7 @@ contains ! =====     Public Procedures     =============================
       & BADESTNOISEFILL, BADGEOCALTITUDEQUANTITY, BADISOTOPEFILL, &
       & BADLOSGRIDFILL, BADLOSVELFILL, BADREFGPHQUANTITY, &
       & BADREFRACTFILL, BADTEMPERATUREQUANTITY, BOTHFRACTIONANDLENGTH, &
-      & Inconsistent, MISSINGFIELD, &
+      & MISSINGFIELD, &
       & NEEDGEOCALTITUDE, NEEDH2O, NEEDORBITINCLINATION, &
       & NEEDTEMPREFGPH, NOCODEFOR, NO_ERROR_CODE, NOEXPLICITVALUESGIVEN, &
       & NOSOURCEGRIDGIVEN, NOSOURCEL2AUXGIVEN, NOSOURCEL2GPGIVEN, &
@@ -105,13 +105,15 @@ contains ! =====     Public Procedures     =============================
       & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, &
       & F_DESTINATION, F_DIAGONAL, &
       & F_DONTMASK, F_DONTSUMHEIGHTS, F_DONTSUMINSTANCES, &
-      & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
-      & F_EXPR, F_EXTINCTION, F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, F_SHAPE, &
+      & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, &
+      & F_EXPLICITVALUES, F_EXPR, F_EXTINCTION, &
+      & F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, F_SHAPE, &
       & F_FRACTION, F_FROMPRECISION, &
       & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
       & F_HEIGHT, F_HDFVERSION, F_HEIGHTRANGE, F_HESSIAN, &
       & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
-      & F_IFMISSINGGMAO, F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, &
+      & F_IFMISSINGGMAO, &
+      & F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNORETEMPLATE, F_IGNOREZERO, &
       & F_INSTANCES, F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
       & F_LENGTHSCALE, F_LOGSPACE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
@@ -126,8 +128,9 @@ contains ! =====     Public Procedures     =============================
       & F_RHIPRECISIONQUANTITY, F_RHIQUANTITY, F_ROWS, F_SCALE, &
       & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, F_SCECI, &
       & F_SCVEL, F_SCVELECI, F_SCVELECR, F_SDNAME, F_SEED, F_SKIPMASK, &
-      & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
-      & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, F_SUFFIX, F_SUPERDIAGONAL, &
+      & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, &
+      & F_SOURCEVGRID, F_SPREAD, F_STATUS, &
+      & F_SUFFIX, F_SUPERDIAGONAL, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, F_TOTALPOWERQUANTITY, &
       & F_TYPE, F_UNIT, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
@@ -346,14 +349,14 @@ contains ! =====     Public Procedures     =============================
     integer :: FILENAME                 ! String index for ascii fill
     integer :: FLAGQTYINDEX
     integer :: FLAGVECTORINDEX
-    logical :: FORCE                    ! Bypass checks on some operations
-    integer :: shapeNode              ! For the parser
+    logical :: FORCE                    ! Fill in as many (instances) as will fit
+    integer :: SHAPENODE              ! For the parser
     integer :: FRACTION                 ! Index of fraction vector in database
     logical :: FROMPRECISION            ! Fill from l2gpPrecision not l2gpValue
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
     integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
     integer :: GLOBALUNIT               ! To go into the vector
-    character(len=16) :: GLStr          ! geo. loc. in manipulation='..'
+    character(len=16) :: GLSTR          ! geo. loc. in manipulation='..'
     integer :: GPHQUANTITYINDEX         ! In the source vector
     integer :: GPHVECTORINDEX           ! In the vector database
     logical, dimension(field_first:field_last) :: GOT
@@ -370,9 +373,10 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
     integer :: I, J                     ! Loop indices for section, spec, expr
     integer :: IBO
-    logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
-    logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
     logical :: IGNOREGEOLOCATION        ! Don't copy geolocation to vector qua
+    logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
+    logical :: IGNORETEMPLATE           ! Don't check compatible--just fill values
+    logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     integer :: INTERNALVGRIDINDEX       ! Index for internal vgrid (wmoTrop)
     real(r8) :: INTEGRATIONTIME         ! For estimated noise
     logical :: INTERPOLATE              ! Flag for l2gp etc. fill
@@ -391,10 +395,10 @@ contains ! =====     Public Procedures     =============================
     integer :: LSBQUANTITYINDEX         ! Index in vector database
     integer :: LSBFRACTIONVECTORINDEX   ! Index in vector database
     integer :: LSBFRACTIONQUANTITYINDEX ! Index in vector database
-    type(matrix_Cholesky_T) :: MatrixCholesky
-    type(matrix_Kronecker_T) :: MatrixKronecker
-    type(matrix_SPD_T) :: MatrixSPD
-    type(matrix_T) :: MatrixPlain
+    type(matrix_Cholesky_T) :: MATRIXCHOLESKY
+    type(matrix_Kronecker_T) :: MATRIXKRONECKER
+    type(matrix_SPD_T) :: MATRIXSPD
+    type(matrix_T) ::     MATRIXPLAIN
     real(r8) :: MAXVALUE                 ! Value of f_maxValue field
     integer :: MAXVALUEUNIT              ! Unit for f_maxValue field
     integer :: MANIPULATION             ! String index
@@ -414,7 +418,7 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: MINVALUE                 ! Value of f_minValue field
     integer :: MINVALUEUNIT              ! Unit for f_minValue field
     logical :: MISSINGGMAO              ! Only if missing GMAO
-    type (MLSFile_T), pointer   :: MLSFile
+    type (MLSFile_T), pointer   :: MLSFILE
     integer :: MULTIPLIERNODE           ! For the parser
     integer :: NBO
     integer :: NBWVECTORINDEX           ! In vector database
@@ -477,8 +481,9 @@ contains ! =====     Public Procedures     =============================
     logical :: SPREADFLAG               ! Do we spread values accross instances in explict
     integer :: STATUS                   ! Flag from allocate etc.
     integer :: STATUSVALUE              ! Vaue of f_status
+    logical :: STRICT                   ! Maximize checking
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
-    logical :: Switch2intrinsic         ! Have mls_random_seed call intrinsic
+    logical :: SWITCH2INTRINSIC         ! Have mls_random_seed call intrinsic
     !                                     -- for Covariance
     real :: T1, T2                      ! for timing
     integer :: SYSTEMPQUANTITYINDEX     ! in the quantities database
@@ -565,6 +570,7 @@ contains ! =====     Public Procedures     =============================
       ignoreZero = .false.
       ignoreNegative = .false.
       ignoreGeolocation = .false.
+      ignoreTEMPLATE = .false.
       instancesNode = 0
       interpolate = .false.
       invert = .false.
@@ -583,6 +589,7 @@ contains ! =====     Public Procedures     =============================
       scaleRatio = 1.0
       scaleSurfs = -1.0
       spreadFlag = .false.
+      strict = .false.
       switch2intrinsic = .false.
       suffix = 0
       seed = 0
@@ -882,6 +889,8 @@ contains ! =====     Public Procedures     =============================
               call announce_error ( key, notSPD )
           case ( f_diagonal )
             diagonal = gson
+          case ( f_ignoreTemplate )
+            ignoreTemplate = get_boolean ( gson )
           case ( f_lengthScale )
             lengthScale = gson
           case ( f_fraction )
@@ -899,12 +908,9 @@ contains ! =====     Public Procedures     =============================
         if ( SKIPRETRIEVAL ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Unable to fill covariance when skipping retrievals' )
-        else if ( covariance%m%row%vec%template%name /= &
-                & vectors(diagonal)%template%name ) then
-          call announce_error ( key, inconsistent )
         else
           call FillCovariance ( covariance, &
-            & vectors, diagonal, lengthScale, fraction, invert )
+            & vectors, diagonal, lengthScale, fraction, invert, ignoreTemplate )
         endif
 
       case ( S_FILLDIAGONAL ) ! ===============  Diagonal  =====
@@ -1028,7 +1034,7 @@ contains ! =====     Public Procedures     =============================
             & vectors(destinationVectorIndex), skipMask, interpolate )
         else
           call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Transfer command requires either source or a field' )
+            & 'Transfer command requires either source or a to be present' )
         endif
 
       case ( s_time ) ! ===================================  Time  =====
@@ -1378,6 +1384,8 @@ contains ! =====     Public Procedures     =============================
           ignoreGeolocation =get_boolean ( gson )
         case ( f_ignoreNegative )
           ignoreNegative = get_boolean ( gson )
+        case ( f_ignoreTemplate )
+          ignoreTemplate = get_boolean ( gson )
         case ( f_ifMissingGMAO )
           MissingGMAO = get_boolean ( gson ) .and. &
             & ( APrioriFiles%dao // AprioriFiles%ncep  // AprioriFiles%geos5 &
@@ -1588,6 +1596,8 @@ contains ! =====     Public Procedures     =============================
           if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
             & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
           statusValue = nint ( valueAsArray(1) )
+        ! case ( f_strict )
+        !   strict = get_boolean ( gson )
         case ( f_suffix )
           suffix = sub_rosa ( gson )
         case ( f_systemTemperature )
@@ -1708,7 +1718,7 @@ contains ! =====     Public Procedures     =============================
           call output(multiplier, advance='yes')
         end if
         call addGaussianNoise ( key, quantity, sourceQuantity, &
-          & noiseQty, multiplier )
+          & noiseQty, multiplier, spreadFlag, ignoreTemplate )
 
       case ( l_applyBaseline )
         if ( .not. got ( f_baselineQuantity ) ) &
@@ -1717,7 +1727,7 @@ contains ! =====     Public Procedures     =============================
         baselineQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(baselineVctrIndex), baselineQtyIndex )
         call ApplyBaseline ( key, quantity, baselineQuantity, &
-          & quadrature, dontmask )
+          & quadrature, dontmask, ignoreTemplate )
 
       case ( l_asciiFile )
         if ( .not. got ( f_file ) ) &
@@ -1778,7 +1788,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got ( f_width ) ) call Announce_Error ( key, no_Error_Code, &
           & 'Must supply width for boxcar fill' )
         call WithBoxcarFunction ( key, quantity, sourceQuantity, width, &
-          & boxCarMethod )
+          & boxCarMethod, ignoreTemplate )
 
       case ( l_chiSQChan )
         if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
@@ -1793,7 +1803,7 @@ contains ! =====     Public Procedures     =============================
             & vectors(noiseVectorIndex), noiseQtyIndex)
           call ChiSqChan ( key, quantity, &
             & measQty, modelQty, noiseQty, &
-            & dontMask, ignoreZero, ignoreNegative, multiplier )
+            & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier )
         end if
       case ( l_chiSQMMaf )
         if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
@@ -1808,7 +1818,7 @@ contains ! =====     Public Procedures     =============================
             & vectors(noiseVectorIndex), noiseQtyIndex)
           call ChiSqMMaf ( key, quantity, &
             & measQty, modelQty, noiseQty, &
-            & dontMask, ignoreZero, ignoreNegative, multiplier )
+            & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier )
         end if
       case ( l_chiSQMMif )
         if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
@@ -1823,7 +1833,7 @@ contains ! =====     Public Procedures     =============================
             & vectors(noiseVectorIndex), noiseQtyIndex)
           call ChiSqMMif ( key, quantity, &
             & measQty, modelQty, noiseQty, &
-            & dontMask, ignoreZero, ignoreNegative, multiplier )
+            & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier )
         end if
       case ( l_chiSqRatio ) ! ----------- Fill with convergence ratio ---
         if ( .not. all(got( (/ f_normQty, &
@@ -1837,7 +1847,7 @@ contains ! =====     Public Procedures     =============================
         flagQty => GetVectorQtyByTemplateIndex( &
           & vectors(flagVectorIndex), flagQtyIndex )
         call ChiSqRatio ( key, &
-          & quantity, normQty, minNormQty, flagQty, dontMask )
+          & quantity, normQty, minNormQty, flagQty, dontMask, ignoreTemplate )
 
       case ( l_columnAbundance )
         if ( .not. any(got( (/f_vmrQuantity, f_boundaryPressure/) )) ) then
@@ -1869,7 +1879,7 @@ contains ! =====     Public Procedures     =============================
             if ( index(lowerCase(ExplicitUnit), 'd') > 0 ) colmabunits = l_DU
           end if
           call ColAbundance ( key, quantity, &
-            & bndPressQty, vmrQty, colmAbUnits )
+            & bndPressQty, vmrQty, colmAbUnits, ignoreTemplate )
         end if
 
       case ( l_combineChannels )
@@ -1887,7 +1897,8 @@ contains ! =====     Public Procedures     =============================
           & 'Need sourceQuanitity and scale for quality fill' )
         sourceQuantity => GetVectorQtyByTemplateIndex ( vectors(sourceVectorIndex), &
           & sourceQuantityIndex )
-        call ConvergenceFromChisq ( key, quantity, sourceQuantity, scale )
+        call ConvergenceFromChisq ( key, quantity, sourceQuantity, scale, &
+          & ignoreTemplate )
 
       case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
         if ( .not. all(got( (/ f_radianceQuantity, &
@@ -1910,7 +1921,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_explicit ) ! ---------  Explicitly fill from l2cf  -----
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
-        call Explicit ( quantity, valuesNode, spreadFlag, &
+        call Explicit ( quantity, valuesNode, spreadFlag, force, &
           & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
           & instancesNode, options=options(1:1) )
 
@@ -1920,7 +1931,8 @@ contains ! =====     Public Procedures     =============================
             & 'Need sourceQuantity and channel for this fill' )
         sourceQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(sourceVectorIndex), sourceQuantityIndex )
-        call ExtractSingleChannel ( key, quantity, sourceQuantity, channel )
+        call ExtractSingleChannel ( key, quantity, sourceQuantity, channel, &
+          & ignoreTemplate )
 
       case ( l_fold ) ! --------------- Fill by sideband folding -----
         nullify ( lsb, lsbFraction, usb, usbFraction )
@@ -2242,18 +2254,18 @@ contains ! =====     Public Procedures     =============================
             & ) ) ) then
             call CloneVectorQuantity( tempswapquantity, quantity )
             call ByManipulation ( tempswapquantity, aQuantity, bQuantity, &
-              & manipulation, key, &
-              & force, spreadflag, dontSumHeights, dontSumInstances, &
+              & manipulation, key, ignoreTemplate, &
+              & spreadflag, dontSumHeights, dontSumInstances, &
               & c )
-            call Explicit ( quantity, valuesNode, spreadFlag, &
+            call Explicit ( quantity, valuesNode, spreadFlag, force, &
               & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
               & instancesNode, options=options(1:1), extraQuantity=tempswapquantity )
             call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
               forWhom = 'tempswapquantity' )
           else
             call ByManipulation ( quantity, aQuantity, bQuantity, &
-              & manipulation, key, &
-              & force, spreadflag, dontSumHeights, dontSumInstances, &
+              & manipulation, key, ignoreTemplate, &
+              & spreadflag, dontSumHeights, dontSumInstances, &
               & c )
           endif
         else
@@ -2262,24 +2274,24 @@ contains ! =====     Public Procedures     =============================
             & ) ) ) then
             call CloneVectorQuantity( tempswapquantity, quantity )
             call ByManipulation ( tempswapquantity, aQuantity, bQuantity, &
-              & manipulation, key, &
-              & force, spreadflag, dontSumHeights, dontSumInstances )
-            call Explicit ( quantity, valuesNode, spreadFlag, &
+              & manipulation, key, ignoreTemplate, &
+              & spreadflag, dontSumHeights, dontSumInstances )
+            call Explicit ( quantity, valuesNode, spreadFlag, force, &
               & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
               & instancesNode, options=options(1:1), extraQuantity=tempswapquantity )
             call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
               forWhom = 'tempswapquantity' )
           else
             call ByManipulation ( quantity, aQuantity, bQuantity, &
-              & manipulation, key, &
-              & force, spreadflag, dontSumHeights, dontSumInstances )
+              & manipulation, key, ignoreTemplate, &
+              & spreadflag, dontSumHeights, dontSumInstances )
           endif
         endif
 
       case ( l_magAzEl ) ! -- Magnetic Explicit from stren, azim, elev --
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
-        call Explicit ( quantity, valuesNode, spreadFlag, &
+        call Explicit ( quantity, valuesNode, spreadFlag, force, &
           & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
           & instancesNode, azEl=.true. )
 
@@ -2379,8 +2391,8 @@ contains ! =====     Public Procedures     =============================
           nullify ( ptanQuantity )
         end if
         ! The next bit may seem odd - why not just pass logSpace on and let it default to false?
-        ! The problem is, it should default to quantity%template%logSpace so absent means I don't
-        ! care not logSpace=.false.
+        ! The problem is, it should default to quantity%template%logSpace so absent means
+        ! "don't care", not "logSpace=.false."
         if ( got ( f_logSpace ) ) then
           call FromProfile ( quantity, valuesNode, &
             & instancesNode, vectors(vectorIndex)%globalUnit, dontMask, &
@@ -2417,7 +2429,9 @@ contains ! =====     Public Procedures     =============================
           temperatureQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(temperatureVectorIndex), temperatureQuantityIndex)
           call PhiTanWithRefraction ( key, quantity, h2oQuantity, &
-            & orbitInclinationQuantity, ptanQuantity, refGPHquantity, temperatureQuantity )
+            & orbitInclinationQuantity, &
+            & ptanQuantity, refGPHquantity, temperatureQuantity, &
+            & ignoreTemplate )
         end if
 
       case ( l_reflectorTempModel ) ! --------------- Reflector temperature model
@@ -2473,7 +2487,8 @@ contains ! =====     Public Procedures     =============================
           & 'Need sourceQuanitity and scale for quality fill' )
         sourceQuantity => GetVectorQtyByTemplateIndex ( vectors(sourceVectorIndex), &
           & sourceQuantityIndex )
-        call QualityFromChisq ( key, quantity, sourceQuantity, scale, heightNode )
+        call QualityFromChisq ( key, quantity, sourceQuantity, &
+          & scale, heightNode, ignoreTemplate )
 
       case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
         if ( .not. any(got( &
@@ -2579,7 +2594,8 @@ contains ! =====     Public Procedures     =============================
       case ( l_status )
         if ( got(f_ifMissingGMAO) ) then
           if ( MissingGMAO ) call Explicit ( quantity, &
-            & valuesNode, .true., phyq_Invalid, .true., channel, heightNode, &
+            & valuesNode, .true., .false., phyq_Invalid, .true., &
+            & channel, heightNode, &
             & instancesNode, options=options(1:1) )
         elseif ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) then
           call Announce_Error ( key, no_error_code, &
@@ -2606,7 +2622,8 @@ contains ! =====     Public Procedures     =============================
             & 'Bad combination of max/min values' )
           call StatusQuantity ( key, quantity, &
             & sourceQuantity, statusValue, &
-            & minValue, maxValue, heightNode, additional, force, exact )
+            & minValue, maxValue, heightNode, &
+            & additional, exact, ignoreTemplate )
         end if
 
       case ( l_swapvalues )
@@ -2618,16 +2635,16 @@ contains ! =====     Public Procedures     =============================
         ! nullify( tempswapquantity )
         call CloneVectorQuantity( tempswapquantity, quantity )
         if ( quantity%template%name /= sourceQuantity%template%name ) then
-          if ( .not. interpolate .and. .not. force ) then
+          if ( .not. interpolate .and. .not. ignoreTemplate ) then
             call Announce_Error ( key, No_Error_Code, &
               & 'Quantity and sourceQuantity do not have the same template' )
           else
             call FromInterpolatedQty ( tempswapquantity, sourceQuantity, &
-              & force, key, dontMask )
+              & key, dontMask, ignoreTemplate )
             call FromInterpolatedQty ( sourceQuantity, quantity, &
-              & force, key, dontMask )
+              & key, dontMask, ignoreTemplate )
             call FromInterpolatedQty ( quantity, tempswapquantity, &
-              & force, key, dontMask )
+              & key, dontMask, ignoreTemplate )
           end if
         else
           ! Just a straight copy
@@ -2647,11 +2664,6 @@ contains ! =====     Public Procedures     =============================
         call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
           forWhom = 'tempswapquantity' )
       case ( l_vector ) ! ---------------- Fill from another qty.
-        ! This is VERY PRELIMINARY, A more fancy one needs to be written
-        ! before too long.
-        ! Note that this does *NOT* copy the mask (at least for the moment)
-        ! It is assumed that the original one (e.g. inherited from transfer)
-        ! is still relevant.
         if ( .not. got(f_sourceQuantity) ) &
           & call Announce_Error ( key, No_Error_Code, &
           & 'Missing a source field for vector fill' )
@@ -2659,31 +2671,14 @@ contains ! =====     Public Procedures     =============================
           & vectors(VectorIndex), QuantityIndex )
         sourceQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(sourceVectorIndex), sourceQuantityIndex )
-        if ( got ( f_ptanQuantity ) ) then
+        if ( got ( f_ptanQuantity )  ) then
           ptanQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(ptanVectorIndex), ptanQuantityIndex)
-          call FromInterpolatedQty ( quantity, sourceQuantity, &
-            & force, key, dontMask, ptanQuantity )
-        elseif ( quantity%template%name /= sourceQuantity%template%name ) then
-          if ( .not. interpolate .and. .not. force ) then
-            call Announce_Error ( key, No_Error_Code, &
-              & 'Quantity and sourceQuantity do not have the same template' )
-          else
-            call FromInterpolatedQty ( quantity, sourceQuantity, &
-              & force, key, dontMask )
-          end if
         else
-          ! Just a straight copy
-          ! If we have a mask and we're going to obey it then do so
-          if ( associated(quantity%mask) .and. .not. dontMask ) then
-            where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
-              quantity%values(:,:) = sourceQuantity%values(:,:)
-            end where
-          else ! Otherwise, just blindly copy
-            quantity%values = sourceQuantity%values
-          end if
-        end if
-
+          nullify ( ptanQuantity )
+        endif
+        call FromAnother ( quantity, sourceQuantity, ptanQuantity, &
+          & key, ignoreTemplate, spreadflag, dontMask, interpolate, force )
       case ( l_uncompressRadiance )
         if ( .not. got(f_systemTemperature) ) &
           & call Announce_Error ( key, No_Error_Code, &
@@ -2864,6 +2859,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.406  2012/10/09 00:48:30  pwagner
+! New ignoreTemplate, changed force meaning in Fill
+!
 ! Revision 2.405  2012/08/16 17:57:16  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
