@@ -96,7 +96,6 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   end interface
 
   interface AppendL2GPData
-    module procedure AppendL2GPData_fileID
     module procedure AppendL2GPData_fileName
     module procedure AppendL2GPData_MLSFile
   end interface
@@ -350,25 +349,24 @@ contains ! =====     Public Procedures     =============================
 
     ! Arguments
 
-    character (len=*), intent(in) :: fileName ! Name of swath
-    type( l2GPData_T ), intent(inout) :: l2gp ! Result
+    character (len=*), intent(in) :: fileName ! Name of file to append to
+    type( l2GPData_T ), intent(inout) :: l2gp ! What to append
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
-    integer,intent(IN),optional :: offset
-    integer, intent(IN), optional::lastProfile
-    integer,intent(IN),optional :: TotNumProfs
+    integer,intent(IN),optional   :: offset
+    integer, intent(IN), optional ::lastProfile
+    integer,intent(IN),optional   :: TotNumProfs
     integer, optional, intent(in) :: hdfVersion
     logical, intent(in), optional :: createSwath
     integer, optional, intent(in) :: maxchunksize
     ! logical, optional, intent(in) :: clean   ! Not implemented yet
 
     ! Local
-    logical :: file_exists
-    integer :: file_access
-    integer :: L2FileHandle
-    type(MLSFile_T)                :: MLSFile
-    logical :: myClean
-    integer :: status
-    integer :: the_hdfVersion
+    integer                       :: file_access    
+    logical                       :: file_exists    
+    type(MLSFile_T)               :: MLSFile        
+    logical                       :: myClean        
+    integer                       :: status         
+    integer                       :: the_hdfVersion 
     
     ! Executable code
     myClean = .false.
@@ -398,69 +396,14 @@ contains ! =====     Public Procedures     =============================
     endif
     status = InitializeMLSFile ( MLSFile, type=l_swath, access=file_access, &
      & name=trim(fileName), HDFVersion=the_hdfVersion )
-    call open_MLSFile( MLSFile )
-    L2FileHandle = MLSFile%FileID%f_id
-    call AppendL2GPData_fileID( l2gp, L2FileHandle, swathname, &
-      & FileName, offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
-      & hdfVersion=the_hdfVersion, createSwath=createSwath, &
+    ! call open_MLSFile( MLSFile )
+    ! L2FileHandle = MLSFile%FileID%f_id
+    call AppendL2GPData_MLSfile( l2gp, MLSFile, swathname, &
+      & offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
+      & createSwath=createSwath, &
       & maxchunksize=maxchunksize )
-    call close_MLSFile( MLSFile )
+    ! call close_MLSFile( MLSFile )
   end subroutine AppendL2GPData_fileName
-
-  subroutine AppendL2GPData_fileID( l2gp, l2FileHandle, &
-    & swathName, filename, offset, lastProfile, TotNumProfs, hdfVersion, &
-    & createSwath, maxchunksize )
-    ! sticks l2gp into the swath swathName in the file pointed at by
-    ! l2FileHandle,starting at the profile number "offset" (First profile
-    ! in the file has offset==0). If this runs off the end of the swath, 
-    ! it is lengthened automagically. 
-    ! This call has been altered recently, so that it can be used to create
-    ! a swath as well as adding to one. 
-
-    ! Arguments
-
-    integer, intent(IN) :: l2FileHandle ! From swopen
-
-    ! This is a L2GPData_T structure containing all the data to be written
-    type (L2GPData_T), intent(INOUT) :: l2gp
-    ! This is the name the swath is given in the file. By default it is
-    ! the name contained in l2gp
-    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
-    character (LEN=*), optional, intent(IN) ::fileName
-    ! This (offset) is the point in the swath at which the data is written. 
-    ! First profile in the file has offset==0. If the swath in the file is 
-    ! shorter than offset + ( num of profiles in l2gp) then it grows by magic
-    integer, intent(IN), optional::offset
-    ! TotNumProfs is a new argument. It seems only to be used if we are 
-    ! creating a swath, rather than adding to one. In that case I guess
-    ! it is the total number of profiles in the swath created. I also 
-    ! guess that this is done so that we can avoid growing and re-growing 
-    ! the swath.
-    integer, intent(IN), optional::TotNumProfs
-    integer, intent(IN), optional::lastProfile
-    integer, optional, intent(in) :: hdfVersion ! better be 4 or 5!
-    logical, intent(in), optional :: createSwath
-    integer, optional, intent(in) :: maxchunksize
-    ! Local
-    integer :: myhdfVersion
-    integer :: status
-    type( MLSFile_T ) :: l2gpFile
-
-    ! Executable code
-    if (present(hdfVersion)) then
-      myhdfVersion = hdfVersion
-    else
-      myhdfVersion = L2GPDEFAULT_HDFVERSION
-    endif
-    status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_RDWR, &
-      & content='l2gp', name='unknown', hdfVersion=myhdfVersion )
-    l2gpFile%FileID%f_id = l2FileHandle
-    l2gpFile%stillOpen = .true.
-    
-    call AppendL2GPData( l2gp, l2gpFile, &
-    & swathName, offset, lastProfile, TotNumProfs, createSwath, maxchunksize )
-  end subroutine AppendL2GPData_fileID
-
   ! ---------------------- AppendL2GPData_MLSFile  ---------------------------
 
   subroutine AppendL2GPData_MLSfile( l2gp, l2gpFile, &
@@ -492,8 +435,8 @@ contains ! =====     Public Procedures     =============================
     ! it is the total number of profiles in the swath created. I also 
     ! guess that this is done so that we can avoid growing and re-growing 
     ! the swath.
-    integer, intent(IN), optional::TotNumProfs
-    integer, intent(IN), optional::lastProfile
+    integer, intent(IN), optional ::TotNumProfs
+    integer, intent(IN), optional ::lastProfile
     logical, intent(in), optional :: createSwath
     integer, optional, intent(in) :: maxchunksize
     ! Local
@@ -4561,8 +4504,13 @@ contains ! =====     Public Procedures     =============================
       call GetStringElement( temp_name, species_name, &
         & 1, countEmpty=.true., inseparator='-' )
       if ( species_name == ' ' ) species_name=temp_name
-      ! Hopefully by now we've turned species_name into one of the species
+    else
+      temp_name = species_name
+      call GetStringElement( temp_name, species_name, &
+        & 1, countEmpty=.true., inseparator='-' )
+      if ( species_name == ' ' ) species_name=temp_name
     endif
+    ! Hopefully by now we've turned species_name into one of the species
     if ( DEEBUG ) &
       & print *, 'full name: ', trim(name), ' Species: ', trim(species_name)
     call GetHashElement (lowercase(Species), &
@@ -5082,6 +5030,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.187  2012/09/18 18:50:25  pwagner
+! Dont write over already-there global attributes
+!
 ! Revision 2.186  2012/07/10 15:18:05  pwagner
 ! Adapted to new api for GetUniqueList
 !
