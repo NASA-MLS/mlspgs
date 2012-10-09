@@ -15,12 +15,13 @@ module FillUtils_1                     ! Procedures used by Fill
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use CHUNKS_M, only: MLSCHUNK_T
-  use CONSTANTS, only: DEG2RAD, RAD2DEG
+  use CONSTANTS, only: DEG2RAD, LN10, RAD2DEG
+  use DUMP_0, only: DUMP
   use EXPR_M, only: EXPR, EXPR_CHECK, GETINDEXFLAGSFROMLIST
-  use GRIDDEDDATA, only: GRIDDEDDATA_T, WRAPGRIDDEDDATA
-  use HDF5, only: HSIZE_T
-  ! NOW THE LITERALS:
-  use INIT_TABLES_MODULE, only: &
+  use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP, WRAPGRIDDEDDATA
+  use HDF5, only: HSIZE_T, H5DOPEN_F, H5DCLOSE_F
+  use INIT_TABLES_MODULE, only: F_MEASUREMENTS, F_TOTALPOWERVECTOR, &
+    & F_WEIGHTSVECTOR, &
     & L_BASELINE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
     & L_BOUNDARYPRESSURE, L_CHISQBINNED, L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, &
@@ -29,6 +30,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_DNWT_FLAG, L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_CHISQRATIO, &
     & L_DOBSONUNITS, L_DU, &
     & L_ECRTOFOV, &
+    & L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
     & L_GPH, &
     & L_HEIGHT, L_ISOTOPERATIO, &
     & L_L1BMAFBASELINE, L_L1BMIF_TAI, &
@@ -47,8 +49,8 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TOTALPOWERWEIGHT, L_VMR, &
     & L_XYZ, L_ZETA
-  use INTRINSIC, only: LIT_INDICES, &
-    & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_TEMPERATURE, &
+  use INTRINSIC, only: FIELD_INDICES, LIT_INDICES, &
+    & PHYQ_DIMENSIONLESS, PHYQ_INDICES, PHYQ_INVALID, PHYQ_TEMPERATURE, &
     & PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_ZETA, PHYQ_ANGLE
   use L1BDATA, only: DEALLOCATEL1BDATA, DUMP, GETL1BFILE, L1BDATA_T, &
     & PRECISIONSUFFIX, READL1BDATA, ASSEMBLEL1BQTYNAME
@@ -58,27 +60,27 @@ module FillUtils_1                     ! Procedures used by Fill
   use L3ASCII, only: L3ASCII_INTERP_FIELD
   use MANIPULATEVECTORQUANTITIES, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
     & DOVGRIDSMATCH, DOQTYSDESCRIBESAMETHING
-  use MATRIXMODULE_0, only: SPARSIFY, MATRIXINVERSION
+  use MATRIXMODULE_0, only: MATRIXELEMENT_T, M_FULL, &
+    & CREATEBLOCK, SPARSIFY, MATRIXINVERSION
   use MATRIXMODULE_1, only: DUMP, FINDBLOCK, MATRIX_SPD_T, UPDATEDIAGONAL
   ! NOTE: IF YOU EVER WANT TO INCLUDE DEFINED ASSIGNMENT FOR MATRICES, PLEASE
   ! CAREFULLY CHECK OUT THE CODE AROUND THE CALL TO SNOOP.
   use MLSCOMMON, only: MLSFILE_T, DEFAULTUNDEFINEDVALUE
-  use MLSFILES, only: GETMLSFILEBYTYPE
-  use MLSFILLVALUES, only: ISMONOTONIC, MONOTONIZE
-  use MLSKINDS, only: R4, R8, RM, RV
+  use MLSFILES, only: HDFVERSION_5, DUMP, GETMLSFILEBYTYPE
+  use MLSFILLVALUES, only: ISFILLVALUE, ISMONOTONIC, MONOTONIZE, REMOVEFILLVALUES
+  use MLSKINDS, only: R4, R8, RM, RP, RV
   use MLSL2OPTIONS, only: MLSMESSAGE
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMESSAGECALLS
-  use MLSNUMERICS, only: INTERPOLATEVALUES, HUNT
+    & MLSMESSAGECALLS
+  use MLSNUMERICS, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
+    & INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES, HUNT
   use MLSSETS, only: FINDFIRST, FINDLAST
   use MLSSIGNALS_M, only: GETFIRSTCHANNEL, GETSIGNALNAME, GETMODULENAME, &
-    & GETSIGNAL, SIGNAL_T, &
-    & ISMODULESPACECRAFT
-  use MLSSTATS1, only: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSRMS, MLSSTDDEV
-  use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
+    & GETSIGNAL, ISMODULESPACECRAFT, SIGNAL_T, SIGNALS
+  use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, &
     & NUMSTRINGELEMENTS, &
-    & REPLACESUBSTRING, STRINGELEMENT, SWITCHDETAIL
-  use MLSSTRINGS, only: INDEXES, LOWERCASE, SPLITNEST
+    & STRINGELEMENT, SWITCHDETAIL
+  use MLSSTRINGS, only: INDEXES, LOWERCASE, WRITEINTSTOCHARS
   use MOLECULES, only: L_H2O
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use QUANTITYTEMPLATES, only: EPOCH, QUANTITYTEMPLATE_T
@@ -89,18 +91,18 @@ module FillUtils_1                     ! Procedures used by Fill
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: NODE_ID, NSONS, &
+  use TREE, only: NODE_ID, DECORATION, SUBTREE, NSONS, &
     & SOURCE_REF, SUBTREE
   use TREE_TYPES, only: N_COLON_LESS, N_LESS_COLON, &
     & N_LESS_COLON_LESS
   use VECTORSMODULE, only: &
     & CLEARUNDERMASK, COPYVECTOR, CREATEMASK, &
-    & DESTROYVECTORINFO, DUMP, &
+    & DESTROYVECTORINFO, DESTROYVECTORQUANTITYMASK, DUMP, &
     & GETVECTORQTYBYTEMPLATEINDEX, GETVECTORQUANTITYBYTYPE, &
     & ISVECTORQTYMASKED, MASKVECTORQTY, &
     & VALIDATEVECTORQUANTITY, VECTOR_T, &
     & VECTORVALUE_T, M_CLOUD, M_FILL, M_IGNORE, M_LINALG
-  use VGRIDSDATABASE, only: GETUNITFORVERTICALCOORDINATE
+  use VGRIDSDATABASE, only: VGRID_T, GETUNITFORVERTICALCOORDINATE
 
   implicit none
   private
@@ -112,12 +114,6 @@ module FillUtils_1                     ! Procedures used by Fill
   logical, parameter :: COUNTEMPTY = .true.
   logical, parameter :: DONTPAD = .false.
   logical, parameter :: WARNWHENPTANNONMONOTONIC = .false.
-
-  type arrayTemp_T
-     real(rv), dimension(:,:), pointer :: VALUES => NULL() ! shaped like a
-  end type arrayTemp_T
-  
-  type(arrayTemp_T), dimension(:), save, pointer :: primitives => null()
 
   ! -----     Declarations for Fill and internal subroutines     -------
 
@@ -179,26 +175,26 @@ module FillUtils_1                     ! Procedures used by Fill
 
   logical :: UNITSERROR               ! From expr
 
-  public :: addGaussianNoise, ApplyBaseline, AutoFillVector, &
-      & ComputeTotalPower, DeallocateStuff, &
-      & ExtractSingleChannel, FillCovariance, FromGrid, &
-      & FromL2GP, FromProfile, LOSVelocity, &
-      & ChiSqChan, ChiSqMMaf, ChiSqMMif, ChiSqRatio, &
-      & ColAbundance, FoldedRadiance, PhiTanWithRefraction, &
-      & IWCFromExtinction, RHIFromOrToH2O, NoRadsPerMIF, &
-      & RHIPrecisionFromOrToH2O, WithEstNoise, &
-      & Hydrostatically, FromSplitSideband, GPHPrecision, &
-      & FromIsotope, FromAsciiFile, RotateMagneticField, &
-      & Explicit, FromL1B, &
-      & FromL2AUX, UsingMagneticModel, &
-      & FromInterpolatedQty, FromLosGrid, &
-      & ByManipulation, ManipulateVectors, WithReflectorTemperature, &
-      & WithReichlerWMOTP, &
-      & WithWMOTropopause, WithBinResults, WithBoxcarFunction, &
-      & StatusQuantity, QualityFromChisq, ConvergenceFromChisq, &
-      & UsingLeastSquares, OffsetRadianceQuantity, ResetUnusedRadiances, &
-      & ScaleOverlaps, SpreadChannelFill, TransferVectors, UncompressRadiance, &
-      & ANNOUNCE_ERROR, QtyFromFile, VectorFromFile
+  public :: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
+      & COMPUTETOTALPOWER, DEALLOCATESTUFF, &
+      & EXTRACTSINGLECHANNEL, FILLCOVARIANCE, FROMANOTHER, FROMGRID, &
+      & FROML2GP, FROMPROFILE, LOSVELOCITY, &
+      & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
+      & COLABUNDANCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
+      & IWCFROMEXTINCTION, RHIFROMORTOH2O, NORADSPERMIF, &
+      & RHIPRECISIONFROMORTOH2O, WITHESTNOISE, &
+      & HYDROSTATICALLY, FROMSPLITSIDEBAND, GPHPRECISION, &
+      & FROMISOTOPE, FROMASCIIFILE, ROTATEMAGNETICFIELD, &
+      & EXPLICIT, FROML1B, &
+      & FROML2AUX, USINGMAGNETICMODEL, &
+      & FROMINTERPOLATEDQTY, FROMLOSGRID, &
+      & BYMANIPULATION, MANIPULATEVECTORS, WITHREFLECTORTEMPERATURE, &
+      & WITHREICHLERWMOTP, &
+      & WITHWMOTROPOPAUSE, WITHBINRESULTS, WITHBOXCARFUNCTION, &
+      & STATUSQUANTITY, QUALITYFROMCHISQ, CONVERGENCEFROMCHISQ, &
+      & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNUSEDRADIANCES, &
+      & SCALEOVERLAPS, SPREADCHANNELFILL, TRANSFERVECTORS, UNCOMPRESSRADIANCE, &
+      & ANNOUNCE_ERROR, QTYFROMFILE, VECTORFROMFILE
 
   interface FromProfile
     module procedure FromProfile_node, FromProfile_values
@@ -210,7 +206,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- addGaussianNoise ---
     subroutine addGaussianNoise ( key, quantity, sourceQuantity, &
-              & noiseQty, multiplier )
+              & noiseQty, multiplier, spread, ignoreTemplate )
       use MLSRandomNumber, only: DRANG
       ! A special fill: quantity = sourceQuantity + g() noiseQty
       ! where g() is a random number generator with mean 0 and std. dev. 1
@@ -221,7 +217,9 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(inout) ::      quantity
       type (VectorValue_T), intent(in) ::         sourceQuantity
       type (VectorValue_T), intent(in) ::         noiseQty
-      real, dimension(:), intent(in), optional :: multiplier
+      real, dimension(:), intent(in) ::           multiplier
+      logical, intent(in)              ::         ignoreTemplate
+      logical, intent(in)              ::         spread
 
       ! Local variables
       integer                          ::    ROW, COLUMN
@@ -231,7 +229,7 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.addGaussianNoise', key )
       ! First check that things are OK.
-      if ( .not. FillableChiSq ( quantity, &
+      if ( .not. ignoreTemplate .and. .not. FillableChiSq ( quantity, &
         & sourceQuantity, noiseQty ) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Incompatibility among vector quantities adding noise'  )
@@ -239,10 +237,7 @@ contains ! =====     Public Procedures     =============================
       end if
 
      ! Either multiplier = [a, b] or multiplier = b are possible
-      if ( .not. present(multiplier) ) then
-        a = 1.
-        b = 1.
-      else if ( &
+      if ( &
       & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
       & ) then
         a = 1.
@@ -255,14 +250,32 @@ contains ! =====     Public Procedures     =============================
         b = multiplier(2)
       end if
 
-      do column=1, size(quantity%values(1, :))
-        do row=1, size(quantity%values(:, 1))
-          quantity%values(row, column) = &
-            & sourceQuantity%values(row, column) * a &
+      if ( spread .and. &
+        & size(quantity%values, 1) /= size(sourceQuantity%values, 1) ) then
+        do column=1, size(quantity%values(1, :))
+          quantity%values(:, column) = &
+            & sourceQuantity%values(1, column) * a &
             & + &
-            & drang() * noiseQty%values(row, column) * b
+            & drang() * noiseQty%values(1, column) * b
         end do
-      end do
+      elseif ( spread .and. &
+        & size(quantity%values, 2) /= size(sourceQuantity%values, 2) ) then
+        do row=1, size(quantity%values(:, 1))
+          quantity%values(row, :) = &
+            & sourceQuantity%values(row, :) * a &
+            & + &
+            & drang() * noiseQty%values(row, :) * b
+        end do
+      else
+        do column=1, size(quantity%values(1, :))
+          do row=1, size(quantity%values(:, 1))
+            quantity%values(row, column) = &
+              & sourceQuantity%values(row, column) * a &
+              & + &
+              & drang() * noiseQty%values(row, column) * b
+          end do
+        end do
+      endif
 
     9 if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_end ( 'FillUtils_1.addGaussianNoise' )
@@ -271,8 +284,6 @@ contains ! =====     Public Procedures     =============================
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
     subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, ExtraInfo )
 
-      use DUMP_0, only: DUMP
-      use INTRINSIC, only: FIELD_INDICES, PHYQ_INDICES
       use MORETREE, only: GET_FIELD_ID, STARTERRORMESSAGE
 
       integer, intent(in) :: where   ! Tree node where error was noticed
@@ -403,12 +414,13 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- ApplyBaseline ----------
     subroutine ApplyBaseline ( key, quantity, baselineQuantity, &
-      & quadrature, dontmask )
+      & quadrature, dontmask, ignoreTemplate )
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
       type (VectorValue_T), intent(in) :: BASELINEQUANTITY ! L1B MAF baseline to use
       logical, intent(in) :: QUADRATURE ! If set add in quadrature (for noise)
       logical, intent(in) :: DONTMASK ! If set ignore baselinequantity mask
+      logical, intent(in) :: IGNORETEMPLATE
       ! Local variables
       integer :: MIF
       integer :: CHAN
@@ -421,16 +433,18 @@ contains ! =====     Public Procedures     =============================
 
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.ApplyBaseline', key )
-      if ( quantity%template%quantityType /= l_radiance ) &
-        & call Announce_Error ( key, no_Error_Code, &
-        &   'Quantity to fill must be a radiance' )
-      if ( baselineQuantity%template%quantityType /= l_l1bMAFBaseline ) &
-        & call Announce_Error ( key, no_Error_Code, &
-        &   'Quantity to fill must be a L1BMAFBaseline' )
-      if ( baselineQuantity%template%signal /= quantity%template%signal .or. &
-        &  baselineQuantity%template%sideband /= quantity%template%sideband ) &
-        & call Announce_Error ( key, no_Error_Code, &
-        &   'Quantity and baselineQuantity must have matching signal/sideband' )
+      if ( .not. ignoreTemplate ) then
+        if ( quantity%template%quantityType /= l_radiance ) &
+          & call Announce_Error ( key, no_Error_Code, &
+          &   'Quantity to fill must be a radiance' )
+        if ( baselineQuantity%template%quantityType /= l_l1bMAFBaseline ) &
+          & call Announce_Error ( key, no_Error_Code, &
+          &   'Quantity to fill must be a L1BMAFBaseline' )
+        if ( baselineQuantity%template%signal /= quantity%template%signal .or. &
+          &  baselineQuantity%template%sideband /= quantity%template%sideband ) &
+          & call Announce_Error ( key, no_Error_Code, &
+          &   'Quantity and baselineQuantity must have matching signal/sideband' )
+      endif
       ind = 1
       numProfs = size( quantity%values ( ind, : ) )
       if ( quadrature ) then
@@ -533,7 +547,7 @@ contains ! =====     Public Procedures     =============================
     end subroutine DeallocateStuff
 
     !=============================================== Explicit ==
-    subroutine Explicit ( quantity, valuesNode, spreadFlag, &
+    subroutine Explicit ( quantity, valuesNode, spreadFlag, force, &
       & globalUnit, dontmask, channel, heightNode, instancesNode, &
       & AzEl, options, FillValue, extraQuantity )
 
@@ -553,6 +567,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
       integer, intent(in) :: VALUESNODE   ! Tree node
       logical, intent(in) :: SPREADFLAG   ! One instance given, spread to all
+      logical, intent(in) :: FORCE        ! Fill in as many instances as will fit
       integer, intent(in) :: GLOBALUNIT   ! From parent vector
       logical, intent(in) :: DONTMASK     ! Don't bother with the mask
       integer, intent(in) :: CHANNEL      ! Fill specified channel?
@@ -620,6 +635,8 @@ contains ! =====     Public Procedures     =============================
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
       noValues = -1 ! if we will ignore valuesNode
       if ( .not. present(ExtraQuantity) ) noValues = nsons(valuesNode) - 1
+      if ( Force ) noValues = min( noValues, &
+        & quantity%template%instanceLen * quantity%template%noInstances )
 
       myValue = 0.
       if ( present(FillValue) ) myValue = FillValue
@@ -647,7 +664,7 @@ contains ! =====     Public Procedures     =============================
             & noValues /= quantity%template%noChans .and. &
             & noValues /= 1 ) &
             & call Announce_Error ( valuesNode, invalidExplicitFill )
-        else
+        elseif ( .not. Force ) then
           if ( noValues /= &
             & quantity%template%instanceLen * quantity%template%noInstances ) &
             & call Announce_Error ( valuesNode, invalidExplicitFill, &
@@ -825,8 +842,6 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- ComputeTotalPower
     subroutine ComputeTotalPower ( key, vectors )
       use MoreTree, only: GET_FIELD_ID
-      use Init_tables_module, only: F_MEASUREMENTS, F_TOTALPOWERVECTOR, F_WEIGHTSVECTOR
-      use Tree, only: DECORATION, SUBTREE
 
       ! Arguments
       integer, intent(in) :: KEY        ! Tree node
@@ -908,26 +923,30 @@ contains ! =====     Public Procedures     =============================
     end subroutine ComputeTotalPower
 
     ! ------------------------------------------- ExtractSingleChannel ---
-    subroutine ExtractSingleChannel ( key, quantity, sourceQuantity, channel )
+    subroutine ExtractSingleChannel ( key, quantity, sourceQuantity, &
+      & channel, ignoreTemplate )
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type (VectorValue_T), intent(in) :: SOURCEQUANTITY ! Source quantity for radiances
       integer, intent(in) :: CHANNEL    ! Channel number
+      logical, intent(in)              :: ignoreTemplate
       ! Local variables
       integer :: CHANIND                ! Channel index
       integer :: MIF                    ! Minor frame index
       ! Executable code
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.ExtractSingleChannel', key )
-      if ( quantity%template%quantityType /= l_singleChannelRadiance ) &
-        & call announce_error ( key, no_Error_Code, 'Quantity to fill must be of type singleChannelRadiance' )
-      if ( all ( sourceQuantity%template%quantityType /= (/ l_cloudInducedRadiance, l_radiance /) ) ) &
-        & call announce_error ( key, no_Error_Code, 'source quantity for fill must be of type [cloudInduced]radiance' )
-      if ( quantity%template%signal /= sourceQuantity%template%signal .or. &
-        & quantity%template%sideband /= sourceQuantity%template%sideband ) &
-        & call announce_error ( key, no_Error_Code, 'quantity/sourceQuantity must be same signal/sideband' )
-      if ( .not. sourceQuantity%template%regular ) &
-        & call Announce_Error ( key, no_Error_Code, 'source quantity must be regular' )
+      if ( .not. ignoreTemplate ) then
+        if ( quantity%template%quantityType /= l_singleChannelRadiance ) &
+          & call announce_error ( key, no_Error_Code, 'Quantity to fill must be of type singleChannelRadiance' )
+        if ( all ( sourceQuantity%template%quantityType /= (/ l_cloudInducedRadiance, l_radiance /) ) ) &
+          & call announce_error ( key, no_Error_Code, 'source quantity for fill must be of type [cloudInduced]radiance' )
+        if ( quantity%template%signal /= sourceQuantity%template%signal .or. &
+          & quantity%template%sideband /= sourceQuantity%template%sideband ) &
+          & call announce_error ( key, no_Error_Code, 'quantity/sourceQuantity must be same signal/sideband' )
+        if ( .not. sourceQuantity%template%regular ) &
+          & call Announce_Error ( key, no_Error_Code, 'source quantity must be regular' )
+      endif
       chanInd = channel - GetFirstChannel ( quantity%template%signal ) + 1
       do mif = 1, quantity%template%noSurfs
         quantity%values ( mif, : ) = &
@@ -939,7 +958,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- ChiSqChan ---
     subroutine ChiSqChan ( key, qty, measQty, modelQty, noiseQty, &
-    & dontMask, ignoreZero, ignoreNegative, multiplier, &
+    & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier, &
     & firstInstance, lastInstance )
       ! A special fill of chi squared
       ! broken out according to channels
@@ -952,7 +971,8 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in)           ::       dontMask    ! Use even masked values
       logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
       logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
-      real, dimension(:), intent(in), optional :: multiplier
+      real, dimension(:), intent(in) ::      multiplier
+      logical, intent(in)           ::       IGNORETEMPLATE
 
       integer, intent(in), optional ::       firstInstance, lastInstance
       ! The last two are set if only part (e.g. overlap regions) of the quantity
@@ -976,10 +996,7 @@ contains ! =====     Public Procedures     =============================
         & call trace_begin ( 'FillUtils_1.ChiSqChan', key )
 
       ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
-      if ( .not. present(multiplier) ) then
-        a = 1.
-        b = 1.
-      else if ( &
+      if ( &
       & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
       & ) then
         a = 1.
@@ -994,7 +1011,9 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! First check that things are OK.
-      if ( .not. ValidateVectorQuantity ( qty, &
+      if ( ignoreTemplate ) then
+        ! Anything goes
+      elseif ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_chiSqChan/), majorFrame=.true.) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Attempting to fill wrong quantity with chi^2 channelwise'  )
@@ -1075,7 +1094,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- ChiSqMMaf ---
     subroutine ChiSqMMaf ( key, qty, measQty, modelQty, noiseQty, &
-    & dontMask, ignoreZero, ignoreNegative, multiplier, &
+    & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier, &
     & firstInstance, lastInstance )
       ! A special fill of chi squared
       ! broken out according to major frames
@@ -1088,7 +1107,8 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in)           ::       dontMask    ! Use even masked values
       logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
       logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
-      real, dimension(:), intent(in), optional :: multiplier
+      real, dimension(:), intent(in) ::      multiplier
+      logical, intent(in)           ::       IGNORETEMPLATE
 
       integer, intent(in), optional ::       firstInstance, lastInstance
       ! The last two are set if only part (e.g. overlap regions) of the quantity
@@ -1111,12 +1131,12 @@ contains ! =====     Public Procedures     =============================
         & call trace_begin ( 'FillUtils_1.ChiSqMMaf', key )
 
       ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
-      if ( .not. present(multiplier) ) then
-        a = 1.
-        b = 1.
-      else if ( &
+      ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
+      if ( &
       & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
       & ) then
+        a = 1.
+        b = 1.
         a = 1.
         b = 1.
       else if ( multiplier(2) == UNDEFINED_VALUE ) then
@@ -1129,7 +1149,9 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! First check that things are OK.
-      if ( .not. ValidateVectorQuantity ( qty, &
+      if ( ignoreTemplate ) then
+        ! Anything goes
+      elseif ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_chiSqMMaf/), majorFrame=.true.) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Attempting to fill wrong quantity with chi^2 MMAFwise'  )
@@ -1216,7 +1238,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- ChiSqMMif ---
     subroutine ChiSqMMif ( key, qty, measQty, modelQty, noiseQty, &
-    & dontMask, ignoreZero, ignoreNegative, multiplier, &
+    & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier, &
     & firstInstance, lastInstance )
       ! A special fill of chi squared
       ! broken out according to Mifs
@@ -1229,7 +1251,8 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in)           ::       dontMask    ! Use even masked values
       logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
       logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
-      real, dimension(:), intent(in), optional :: multiplier
+      real, dimension(:), intent(in) ::      multiplier
+      logical, intent(in)           ::       IGNORETEMPLATE
 
       integer, intent(in), optional ::       firstInstance, lastInstance
       ! The last two are set if only part (e.g. overlap regions) of the quantity
@@ -1254,10 +1277,7 @@ contains ! =====     Public Procedures     =============================
         & call trace_begin ( 'FillUtils_1.ChiSqMMif', key )
 
       ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
-      if ( .not. present(multiplier) ) then
-        a = 1.
-        b = 1.
-      else if ( &
+      if ( &
       & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
       & ) then
         a = 1.
@@ -1272,7 +1292,9 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! First check that things are OK.
-      if ( .not. ValidateVectorQuantity ( qty, &
+      if ( ignoreTemplate ) then
+        ! Anything goes
+      elseif ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_chiSqMMif/), minorFrame=.true.) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Attempting to fill wrong quantity with chi^2 MMIFwise'  )
@@ -1353,7 +1375,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- ChiSqRatio ---
     subroutine ChiSqRatio ( key, qty, normQty, minNormQty, flagQty, &
-    & dontMask, firstInstance, lastInstance )
+    & dontMask, ignoreTemplate, firstInstance, lastInstance )
       ! A special fill of the ratio
       !  chi squared Norm
       ! ----------------     [iter_n, *]
@@ -1374,10 +1396,11 @@ contains ! =====     Public Procedures     =============================
       ! (yes, an unfortunate fact)
       integer, intent(in) :: KEY
       type (VectorValue_T), intent(inout) :: QTY
-      type (VectorValue_T), intent(inout) ::    normQty
-      type (VectorValue_T), intent(inout) ::    minNormQty
-      type (VectorValue_T), intent(inout) ::    flagQty
+      type (VectorValue_T), intent(inout) :: normQty
+      type (VectorValue_T), intent(inout) :: minNormQty
+      type (VectorValue_T), intent(inout) :: flagQty
       logical, intent(in)           ::       dontMask    ! Use even masked values
+      logical, intent(in)           ::       IGNORETEMPLATE
 
       integer, intent(in), optional ::       firstInstance, lastInstance
       ! The last two are set if only part (e.g. overlap regions) of the quantity
@@ -1398,7 +1421,9 @@ contains ! =====     Public Procedures     =============================
         & call trace_begin ( 'FillUtils_1.ChiSqRatio', key )
 
       ! First check that things are OK.
-      if ( .not. ValidateVectorQuantity ( qty, &
+      if ( ignoreTemplate ) then
+        ! Anything goes
+      elseif ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_dnwt_chiSqRatio/) ) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Attempting to fill wrong quantity with chi^2 ratio'  )
@@ -1479,19 +1504,20 @@ contains ! =====     Public Procedures     =============================
     end subroutine ChiSqRatio
 
     ! ------------------------------------------- ColAbundance ---
-    subroutine ColAbundance ( key, qty, bndPressQty, vmrQty, colmAbUnits, &
+    subroutine ColAbundance ( key, qty, bndPressQty, vmrQty, &
+      & colmAbUnits, ignoreTemplate, &
       & firstInstance, lastInstance )
       ! A special fill according to W.R.Read's idl code
       ! Similar to his hand-written notes, but with a small correction
 
       ! Assumptions:
       ! (See above)
-      use Constants, only: Ln10
       integer, intent(in) :: KEY
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: BNDPRESSQTY
       type (VectorValue_T), intent(in) :: VMRQTY
       integer, intent(in) :: colmAbUnits
+      logical, intent(in)           :: IGNORETEMPLATE
       integer, intent(in), optional :: FIRSTINSTANCE
       integer, intent(in), optional :: LASTINSTANCE
       ! The last two are set if only part (e.g. overlap regions) of the quantity
@@ -1534,7 +1560,9 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.ColAbundance', key )
       ! First check that things are OK.
-      if ( (qty%template%quantityType /= l_columnAbundance) .or. &
+      if ( ignoreTemplate ) then
+        ! Anything goes
+      elseif ( (qty%template%quantityType /= l_columnAbundance) .or. &
         &  (bndPressQty%template%quantityType /= l_boundaryPressure) .or. &
         &  (vmrQty%template%quantityType /= l_vmr) ) then
         call Announce_error ( key, No_Error_code, &
@@ -1729,21 +1757,25 @@ contains ! =====     Public Procedures     =============================
     end subroutine ColAbundance
 
     ! -------------------------------------------- ConvergenceFromChisq --------
-    subroutine ConvergenceFromChisq ( key, quantity, sourceQuantity, scale )
+    subroutine ConvergenceFromChisq ( key, quantity, sourceQuantity, &
+      & scale, ignoreTemplate )
       integer, intent(in) :: KEY        ! Tree node
       type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! dnwt_ChisqRatio quantity on which it's based
       real(r8), intent(in) :: SCALE     ! A scale factor
+      logical, intent(in)           ::       IGNORETEMPLATE
       ! Local variables
       integer ::                             QINDEX
       ! Executable code
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.ConvergenceFromChisq', key )
       ! Do some sanity checking
-      if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
-        & 'Convergence quantity must be quality' )
-      if ( sourceQuantity%template%quantityType /= l_dnwt_chisqRatio ) call Announce_error ( &
-        & key, no_error_code, 'sourceQuantity must be of type chisqRatio' )
+      if ( .not. ignoreTemplate ) then
+        if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
+          & 'Convergence quantity must be quality' )
+        if ( sourceQuantity%template%quantityType /= l_dnwt_chisqRatio ) call Announce_error ( &
+          & key, no_error_code, 'sourceQuantity must be of type chisqRatio' )
+      endif
       if ( UNIFORMCHISQRATIO ) then
         quantity%values(1,:) = scale * sourceQuantity%values(1,1)
       else
@@ -1758,15 +1790,15 @@ contains ! =====     Public Procedures     =============================
     !------------------------------------- FillCovariance ------------
 
     subroutine FillCovariance ( covariance, vectors, diagonal, &
-      & lengthScale, fraction, invert )
+      & lengthScale, fraction, invert, ignoreTemplate )
       ! This routine fills a covariance matrix from a given set of vectors
-      use MatrixModule_0, only: CreateBlock, MatrixElement_t, M_Full
       type (Matrix_SPD_T), intent(inout) :: COVARIANCE ! The matrix to fill
       type (Vector_T), dimension(:), intent(in), target :: VECTORS ! The vector database
       integer, intent(in) :: DIAGONAL     ! Index of vector describing diagonal
       integer, intent(in) :: LENGTHSCALE  ! Index of vector describing length scale
       integer, intent(in) :: FRACTION     ! Index of vector describing fraction
       logical, intent(in) :: INVERT       ! We actually want the inverse
+      logical, intent(in) :: IGNORETEMPLATE
 
       ! Local parameters
       real(r8), parameter :: DECADE = 16000.0 ! Number of meters per decade.
@@ -1818,28 +1850,33 @@ contains ! =====     Public Procedures     =============================
         end if
 
         ! Check the validity of the supplied vectors
-        if ( covariance%m%row%vec%template%name /= &
-          & dMasked%template%name ) call MLSMessage ( MLSMSG_Error, &
-          & ModuleName, "diagonal and covariance not compatible in fillCovariance" )
-        if ( lengthScale /= 0 ) then    ! Check length if supplied
+        if ( .not. ignoretemplate ) then
           if ( covariance%m%row%vec%template%name /= &
-            & lMasked%template%name ) call MLSMessage ( MLSMSG_Error, &
-            & ModuleName, "lengthScale and covariance not compatible in fillCovariance" )
-          if ( lMasked%globalUnit /= phyq_length ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "length vector does not have dimensions of length" )
-        else
-          thisLength = 0.0
-        end if
-        if ( fraction /= 0 ) then       ! Check fraction if supplied
+            & vectors(diagonal)%template%name ) call MLSMessage ( MLSMSG_Error, &
+            & ModuleName, "Diagonal and covariance not compatible in fillCovariance" )
           if ( covariance%m%row%vec%template%name /= &
-            & vectors(fraction)%template%name ) call MLSMessage ( MLSMSG_Error, &
-            & ModuleName, "fraction and covariance not compatible in fillCovariance" )
-          if ( vectors(fraction)%globalUnit /= phyq_dimensionless ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "fraction vector is not dimensionless" )
-        else
-          thisFraction = 1.0
+            & dMasked%template%name ) call MLSMessage ( MLSMSG_Error, &
+            & ModuleName, "Copied diagonal and covariance not compatible in fillCovariance" )
+          if ( lengthScale /= 0 ) then    ! Check length if supplied
+            if ( covariance%m%row%vec%template%name /= &
+              & lMasked%template%name ) call MLSMessage ( MLSMSG_Error, &
+              & ModuleName, "lengthScale and covariance not compatible in fillCovariance" )
+            if ( lMasked%globalUnit /= phyq_length ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "length vector does not have dimensions of length" )
+          else
+            thisLength = 0.0
+          end if
+          if ( fraction /= 0 ) then       ! Check fraction if supplied
+            if ( covariance%m%row%vec%template%name /= &
+              & vectors(fraction)%template%name ) call MLSMessage ( MLSMSG_Error, &
+              & ModuleName, "fraction and covariance not compatible in fillCovariance" )
+            if ( vectors(fraction)%globalUnit /= phyq_dimensionless ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "fraction vector is not dimensionless" )
+          else
+            thisFraction = 1.0
+          end if
         end if
 
         ! Now loop over the quantities
@@ -1997,6 +2034,98 @@ contains ! =====     Public Procedures     =============================
         & call trace_end ( 'FillUtils_1.FoldedRadiance' )
 
     end subroutine FoldedRadiance
+
+    ! --------------------------------------------- FromAnother ---
+    ! The most basic of Fill methods:
+    ! At some point we must try to modify most of the other Fill methods so 
+    ! that they do their unique stuff and then call this method
+    ! That makes maximum reuse, a best practice, and confines future changes to
+    ! just this subroutine
+    ! Note that this does *NOT* copy the mask (at least for the moment)
+    ! It is assumed that the original one (e.g. inherited from transfer)
+    ! is still relevant.
+    subroutine FromAnother ( quantity, sourceQuantity, ptan, &
+      & key, ignoreTemplate, spreadflag, dontMask, interpolate, force )
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), pointer :: SOURCEQUANTITY
+      type (VectorValue_T), pointer :: PTAN
+      integer, intent(in) :: KEY        ! Tree node
+      logical, intent(in) :: IGNORETEMPLATE ! If set throw caution to the wind
+      logical, intent(in) :: SPREADFLAG ! If set spread across instances
+      logical, intent(in) :: DONTMASK ! If set throw caution to the wind
+      logical, intent(in) :: INTERPOLATE ! If set spread across summed dimension
+      logical, intent(in) :: FORCE ! Copy as much as will fit
+      ! Local parameters
+      integer :: inst
+      integer :: instanceLen
+      integer :: noInstances
+      integer :: surf
+      ! Executable
+      if ( associated ( ptan ) .and. interpolate ) then
+        call FromInterpolatedQty ( quantity, sourceQuantity, &
+          & key, dontMask, ignoreTemplate, ptan )
+      elseif ( quantity%template%name /= sourceQuantity%template%name ) then
+        if ( .not. interpolate .and. .not. ignoreTemplate ) then
+          call Announce_Error ( key, No_Error_Code, &
+            & 'Quantity and sourceQuantity do not have the same template' )
+        else
+          call FromInterpolatedQty ( quantity, sourceQuantity, &
+            & key, dontMask, ignoreTemplate )
+        end if
+      elseif ( spreadFlag ) then
+        ! Copy first instance into all (assuming instance lengths are the same)
+        noInstances = Quantity%template%noInstances
+        do inst = 1, noInstances
+          ! If we have a mask and we're going to obey it then do so
+          if ( associated(quantity%mask) .and. .not. dontMask ) then
+            where ( iand ( ichar(quantity%mask(:,inst)), m_Fill ) == 0 )
+              quantity%values(:,inst) = sourceQuantity%values(:,1)
+            end where
+          else ! Otherwise, just blindly copy
+            quantity%values(:,inst) = sourceQuantity%values(:,1)
+          end if
+        enddo
+      elseif ( force .and. &
+        & sourceQuantity%template%instanceLen == Quantity%template%instanceLen ) then
+        ! Copy as many instances as we can
+        noInstances = min( sourceQuantity%template%noInstances, Quantity%template%noInstances )
+        do inst = 1, noInstances
+          ! If we have a mask and we're going to obey it then do so
+          if ( associated(quantity%mask) .and. .not. dontMask ) then
+            where ( iand ( ichar(quantity%mask(:,inst)), m_Fill ) == 0 )
+              quantity%values(:,inst) = sourceQuantity%values(:,inst)
+            end where
+          else ! Otherwise, just blindly copy
+            quantity%values(:,inst) = sourceQuantity%values(:,inst)
+          end if
+        enddo
+      elseif ( force .and. &
+        & sourceQuantity%template%noInstances == Quantity%template%noInstances ) then
+        ! Copy as many instances as we can
+        instanceLen = min( sourceQuantity%template%instanceLen, Quantity%template%instanceLen )
+        do surf = 1, instanceLen
+          ! If we have a mask and we're going to obey it then do so
+          if ( associated(quantity%mask) .and. .not. dontMask ) then
+            where ( iand ( ichar(quantity%mask(surf,:)), m_Fill ) == 0 )
+              quantity%values(surf,:) = sourceQuantity%values(surf,:)
+            end where
+          else ! Otherwise, just blindly copy
+            quantity%values(surf,:) = sourceQuantity%values(surf,:)
+          end if
+        enddo
+      else
+        ! Just a straight copy
+        ! If we have a mask and we're going to obey it then do so
+        if ( associated(quantity%mask) .and. .not. dontMask ) then
+          where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
+            quantity%values(:,:) = sourceQuantity%values(:,:)
+          end where
+        else ! Otherwise, just blindly copy
+          quantity%values = sourceQuantity%values
+        end if
+      end if
+
+    end subroutine FromAnother
 
     ! ------------------------------------- FromSplitSideband ----
     subroutine FromSplitSideband ( quantity, sourceQuantity, &
@@ -2460,12 +2589,10 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------ PhiTanWithRefraction --
     subroutine PhiTanWithRefraction ( key, quantity, &
-      & h2o, orbIncline, ptan, refGPH, temperature )
+      & h2o, orbIncline, ptan, refGPH, temperature, ignoreTemplate )
 
-      use Constants, only: DEG2RAD, RAD2DEG
       use Geometry, only: EARTHRADA, EARTHRADB, GEODTOGEOCLAT
       use Hydrostatic_M, only: HYDROSTATIC
-      use MLSKinds, only: RP
       use Phi_Refractive_Correction_m, only: PHI_REFRACTIVE_CORRECTION_UP
       use Refraction_m, only: REFRACTIVE_INDEX
 
@@ -2476,6 +2603,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: PTan        ! Tangent pressure
       type (VectorValue_T), intent(in) :: RefGPH      ! Reference GPH
       type (VectorValue_T), intent(in) :: TEMPERATURE ! Temperature
+      logical, intent(in)              :: IGNORETEMPLATE
 
       real(rp), dimension(quantity%template%noInstances) :: CP2, CSQ, REQ, SP2
       real(rp) :: PhiCorrs(temperature%template%noInstances,temperature%template%noSurfs)
@@ -2488,25 +2616,26 @@ contains ! =====     Public Procedures     =============================
         & call trace_begin ( 'FillUtils_1.PhiTanWithRefraction', key )
       call MLSMessageCalls( 'push', constantName='PhiTanWithRefraction' )
       ! More sanity checks
-      if ( quantity%template%instrumentModule /= ptan%template%instrumentModule ) &
-        & call Announce_Error ( key, No_Error_Code, &
-        & 'PHITan and PTan quantities are not for the same module' )
-      if ( any(shape(quantity%values)/=shape(ptan%values)) ) &
-        & call Announce_Error ( key, No_Error_Code, &
-        & 'PHITan and PTan quantities are not the same size' )
-      if ( .not. ValidateVectorQuantity ( temperature, &
-        & quantityType=(/l_temperature/), coherent=.true., stacked=.true., &
-        & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-        & call Announce_error ( key, no_error_code, 'Problem with temperature quantity for phiTan fill' )
-      if ( .not. ValidateVectorQuantity ( h2o, &
-        & quantityType=(/l_vmr/), molecule=(/l_h2o/), coherent=.true., stacked=.true., &
-        & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-        & call Announce_error ( key, no_error_code, 'Problem with h2o quantity for phiTan fill' )
-      if ( .not. ValidateVectorQuantity ( refGPH, &
-        & quantityType = (/l_refGPH/), coherent=.true., stacked=.true., &
-        & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/), noSurfs=(/1/) ) ) &
-        & call Announce_Error ( key, badrefGPHQuantity )
-
+      if ( .not. ignoreTemplate ) then
+        if ( quantity%template%instrumentModule /= ptan%template%instrumentModule ) &
+          & call Announce_Error ( key, No_Error_Code, &
+          & 'PHITan and PTan quantities are not for the same module' )
+        if ( any(shape(quantity%values)/=shape(ptan%values)) ) &
+          & call Announce_Error ( key, No_Error_Code, &
+          & 'PHITan and PTan quantities are not the same size' )
+        if ( .not. ValidateVectorQuantity ( temperature, &
+          & quantityType=(/l_temperature/), coherent=.true., stacked=.true., &
+          & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
+          & call Announce_error ( key, no_error_code, 'Problem with temperature quantity for phiTan fill' )
+        if ( .not. ValidateVectorQuantity ( h2o, &
+          & quantityType=(/l_vmr/), molecule=(/l_h2o/), coherent=.true., stacked=.true., &
+          & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
+          & call Announce_error ( key, no_error_code, 'Problem with h2o quantity for phiTan fill' )
+        if ( .not. ValidateVectorQuantity ( refGPH, &
+          & quantityType = (/l_refGPH/), coherent=.true., stacked=.true., &
+          & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/), noSurfs=(/1/) ) ) &
+          & call Announce_Error ( key, badrefGPHQuantity )
+      endif
       i = 0
       if ( .not. DoHGridsMatch ( temperature, refGPH ) ) i = i + 1
       if ( .not. DoHGridsMatch ( temperature, h2o ) ) i = i + 2
@@ -3284,13 +3413,13 @@ contains ! =====     Public Procedures     =============================
     end subroutine FromAsciiFile
 
     ! ------------------------------------------- FromInterpolatedQty
-    subroutine FromInterpolatedQty ( qty, source, force, key, DONTMASK, &
-      & ptan )
+    subroutine FromInterpolatedQty ( qty, source, key, &
+      & DONTMASK, ignoreTemplate, ptan )
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: SOURCE
-      logical, intent(in) :: FORCE
       integer, intent(in) :: KEY
-      logical, intent(in) :: dontMask
+      logical, intent(in) :: DONTMASK
+      logical, intent(in) :: IGNORETEMPLATE
       type (VectorValue_T), optional :: PTAN ! press. values
 
       ! Local variables
@@ -3304,25 +3433,27 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.FromInterpolatedQty', key )
       call MLSMessageCalls( 'push', constantName='FromInterpolatedQty' )
-      if ( .not. DoQtysDescribeSameThing ( qty, source ) .and. .not. force ) then
-        call Announce_error ( key, no_error_code, &
-          & 'Mismatch in quantities' )
-        go to 9
-      end if
-      if ( .not. doHGridsMatch ( qty, source ) .and. .not. present(ptan) ) then
-        call Announce_error ( key, no_error_code, &
-          & 'Mismatch in horizontal grid' )
-        go to 9
-      end if
-      if ( qty%template%noInstances /= source%template%noInstances .and. .not. force ) then
-        call Announce_error ( key, no_error_code, &
-          & 'Mismatch in num of instances' )
-        go to 9
-      end if
-      if ( .not. doFGridsMatch ( qty, source )  .and. .not. present(ptan) ) then
-        call Announce_error ( key, no_error_code, &
-          & 'Mismatch in frequency grid' )
-        go to 9
+      if ( .not. ignoreTemplate ) then
+        if ( .not. DoQtysDescribeSameThing ( qty, source ) ) then
+          call Announce_error ( key, no_error_code, &
+            & 'Mismatch in quantities' )
+          go to 9
+        end if
+        if ( .not. doHGridsMatch ( qty, source ) .and. .not. present(ptan) ) then
+          call Announce_error ( key, no_error_code, &
+            & 'Mismatch in horizontal grid' )
+          go to 9
+        end if
+        if ( qty%template%noInstances /= source%template%noInstances ) then
+          call Announce_error ( key, no_error_code, &
+            & 'Mismatch in num of instances' )
+          go to 9
+        end if
+        if ( .not. doFGridsMatch ( qty, source )  .and. .not. present(ptan) ) then
+          call Announce_error ( key, no_error_code, &
+            & 'Mismatch in frequency grid' )
+          go to 9
+        end if
       end if
 
       ! Two cases here, one where we have to interpolate vertically (has to be
@@ -3617,16 +3748,17 @@ contains ! =====     Public Procedures     =============================
 
     ! --------------------------------------------- ByManipulation ---
     subroutine ByManipulation ( quantity, a, b, &
-      & manipulation, key, &
-      & force, spreadflag, dontSumHeights, dontSumInstances, &
+      & manipulation, key, ignoreTemplate, &
+      & spreadflag, dontSumHeights, dontSumInstances, &
       & c )
+      use MANIPULATIONUTILS, only: MANIPULATE
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: A
       type (VectorValue_T), pointer :: B
       real(rv), optional            :: C  ! constant "c" in manipulation
       integer, intent(in) :: MANIPULATION
       integer, intent(in) :: KEY        ! Tree node
-      logical, intent(in) :: FORCE      ! If set throw caution to the wind
+      logical, intent(in) :: ignoreTemplate ! If set throw caution to the wind
       ! The following args are important only for statistical functions
       logical, intent(in) :: SPREADFLAG ! If set spread across summed dimension
       logical, intent(in) :: DONTSUMHEIGHTS
@@ -3704,7 +3836,7 @@ contains ! =====     Public Procedures     =============================
           ! We don't check for anything
         elseif ( MapFunction ) then
           ! We don't check for anything
-        elseif ( .not. force ) then
+        elseif ( .not. ignoreTemplate ) then
           if ( quantity%template%minorFrame ) then
             okSoFar = okSoFar .and. aorb%template%minorFrame .and. &
               & quantity%template%signal == aorb%template%signal .and. &
@@ -3755,876 +3887,13 @@ contains ! =====     Public Procedures     =============================
         else
           cc = c
         endif
-        call SimpleExprWithC( quantity, a, b, cc, mstr )
+        call Manipulate( quantity, a, b, cc, mstr, &
+          & spreadflag, dontsumheights, dontsuminstances )
       end select
       call MLSMessageCalls( 'pop' )
     9 if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_end ( 'FillUtils_1.ByManipulation' )
 
-  contains
-      subroutine doStatFun( qvalue, name, avalues )
-        real(rv), intent(out) :: qvalue
-        character(len=*), intent(in) :: name ! of the statistical function
-        real(rv), dimension(:), intent(in) :: avalues
-          select case ( name )
-          case ( 'min(a)' )
-            qvalue = mlsmin( avalues )
-          case ( 'max(a)' )
-            qvalue = mlsmax( avalues )
-          case ( 'mean(a)' )
-            qvalue = mlsmean( avalues )
-          case ( 'median(a)' )
-            qvalue = mlsmedian( avalues )
-          case ( 'rms(a)' )
-            qvalue = mlsrms( avalues )
-          case ( 'stddev(a)' )
-            qvalue = mlsstddev( avalues )
-          case default
-            ! Should not have come here
-          end select
-      end subroutine doStatFun
-
-      subroutine SimpleExprWithC( quantity, a, b, c, mstr )
-      type (VectorValue_T), intent(inout) :: QUANTITY
-      type (VectorValue_T), pointer :: A
-      type (VectorValue_T), pointer :: B
-      real(rv) :: C                     ! constant "c" in manipulation
-      character (len=128) :: MSTR
-        ! Evaluate mstr assuming it's of the form
-        ! expr1 [op1 expr2]
-        ! where each expr is either a primitive 'x' (one of {a, b, or c})
-        ! or else ['('] 'x op y' [')']
-        ! where 'op' is one of {+, -, *, /,<,>}
-
-        ! Method:
-        ! Progressively collapse all the '(..)' pairs into their values
-        ! (stored in primitives database)
-        ! until only primitives remain
-        ! Then evaluate the primitives
-        !
-        ! Limitations:
-        ! Does not check for unmatched parens or other illegal syntax
-        
-        ! Improvements to be made:
-        ! (1) Check for illegal syntax 
-        ! (2) Make ops into array, and loop over them where convenient
-        integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
-        character(len=MAXSTRLISTLENGTH) :: collapsedstr
-        integer :: level
-        logical :: MAPFUNCTION
-        integer :: np ! number of primitives
-        character(len=MAXSTRLISTLENGTH) :: part1
-        character(len=MAXSTRLISTLENGTH) :: part2
-        character(len=MAXSTRLISTLENGTH) :: part3
-        character(len=4) :: vchar
-        ! logical, parameter :: DEEBUG = .true.
-        ! Executable
-        if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
-        MapFunction = ( index(mstr, 'map' ) > 0 )
-        nullify(primitives)
-        np = 0
-        
-        
-        ! Find any terms composed of digits (i.e., literal numbers) ddd and
-        ! mark each as val(ddd)
-        call markDigits( lowerCase(mstr), collapsedstr )
-        if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
-
-        mstr = collapsedstr
-        ! Replace 'e-' with 'e_' to avoid splitting fortran numeric notation
-        call ReplaceSubString( mstr, collapsedstr, 'e-', 'e_', &
-          & which='all', no_trim=.true. )
-        mstr = collapsedstr
-
-        ! We're unable to ensure operator precedence
-        ! so we'll attempt to identify multiplications and divisions
-        ! and surround such subexpressions with extra parentheses
-        
-        call reorderPrecedence(mstr, collapsedstr)
-        if ( DeeBUG ) then
-          print *, 'incoming ', mstr
-          print *, 'after reordering precedence ', collapsedstr
-        endif
-        mstr = collapsedstr
-        
-        ! 1st--make sure spaces surround each operator
-        ! (It takes two steps for each to avoid threat of infinite loop)
-        call ReplaceSubString( mstr, collapsedstr, '+', ' & ', &
-          & which='all', no_trim=.true. )
-        call ReplaceSubString( collapsedstr, mstr, '&', '+', &
-          & which='all', no_trim=.true. )
-
-        call ReplaceSubString( mstr, collapsedstr, '*', ' & ', &
-          & which='all', no_trim=.true. )
-        call ReplaceSubString( collapsedstr, mstr, '&', '*', &
-          & which='all', no_trim=.true. )
-
-        call ReplaceSubString( mstr, collapsedstr, '-', ' & ', &
-          & which='all', no_trim=.true. )
-        call ReplaceSubString( collapsedstr, mstr, '&', '-', &
-          & which='all', no_trim=.true. )
-
-        call ReplaceSubString( mstr, collapsedstr, '/', ' & ', &
-          & which='all', no_trim=.true. )
-        call ReplaceSubString( collapsedstr, mstr, '&', '/', &
-          & which='all', no_trim=.true. )
-
-        call ReplaceSubString( mstr, collapsedstr, '<', ' & ', &
-          & which='all', no_trim=.true. )
-        call ReplaceSubString( collapsedstr, mstr, '&', '<', &
-          & which='all', no_trim=.true. )
-
-        call ReplaceSubString( mstr, collapsedstr, '>', ' & ', &
-          & which='all', no_trim=.true. )
-        call ReplaceSubString( collapsedstr, mstr, '&', '>', &
-          & which='all', no_trim=.true. )
-
-        call ReplaceSubString( mstr, collapsedstr, '^', ' & ', &
-          & which='all', no_trim=.true. )
-        call ReplaceSubString( collapsedstr, mstr, '&', '^', &
-          & which='all', no_trim=.true. )
-
-        collapsedstr = lowerCase(mstr)
-        if ( DEEBUG ) call outputNamedValue( 'collapsedstr', collapsedstr )
-
-        ! Restore 'e-'
-        mstr = collapsedstr
-        call ReplaceSubString( mstr, collapsedstr, 'e_', 'e-', &
-          & which='all', no_trim=.true. )
-
-        ! Collapse every sub-formula nested within parentheses
-        do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
-          if ( index( collapsedstr, '(' ) < 1 ) exit
-          call SplitNest ( collapsedstr, part1, part2, part3 )
-          ! Now evaluate the part2
-          if ( DeeBUG ) then
-            print *, 'part1 ', part1
-            print *, 'part2 ', part2
-            print *, 'part3 ', part3
-          endif
-          if ( part2 == ' ' ) then
-            ! This should never happen with well-formed formulas
-            collapsedstr = part1
-            cycle
-          else
-            np = evaluatePrimitive( trim(part2), &
-              & a, b, c )
-            write(vChar, '(i4)') np
-          endif
-          ! And substitute its value for the spaces it occupied
-          if (  part1 // part3 == ' ' ) then
-            collapsedstr = vChar
-          elseif (  part1 == ' ' ) then
-            ! collapsedstr = trim(vChar) // ' ' // part3
-            collapsedstr = catTwoOperands( trim(vChar), part3 )
-          elseif ( part3 == ' ' ) then
-            ! collapsedstr = trim(part1) // ' ' // vChar
-            collapsedstr = catTwoOperands( trim(part1),  vChar )
-          else
-            ! collapsedstr = trim(part1) // ' ' // trim(vChar) // &
-            !   & ' ' // part3
-            collapsedstr = catTwoOperands( &
-              & trim( catTwoOperands( trim(part1),  trim(vChar) ) ), &
-              & part3 )
-          endif
-          if ( DeeBUG ) then
-            print *, 'collapsedstr ', collapsedstr
-          endif
-        enddo
-        ! Presumably we have collapsed all the nested '(..)' pairs by now
-        np = evaluatePrimitive( trim(collapsedstr), &
-              & a, b, c )
-        if ( DeeBUG ) then
-          print *, 'np ', np
-          print *, 'size(database) ', size(primitives)
-        endif
-        if ( .not. associated ( quantity%mask ) ) then
-          quantity%values = 0.
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
-            quantity%values = 0.
-          end where
-        endif
-        if ( np < 1 .or. np > size(primitives) ) then
-          print *, 'np ', np
-          print *, 'size(database) ', size(primitives)
-          call Announce_Error ( key, no_error_code, &
-            & 'Illegal index for primitives array' )
-          return
-        endif
-        if ( spreadFlag ) then
-          ! Ignores mask, shape, etc. if we set the "spread" field
-          do level=1, min( size(quantity%values, 1), size(a%values, 1) )
-            quantity%values(level, :) = primitives(np)%values(level, 1)
-          enddo
-          if ( level <=  size(quantity%values, 1) ) &
-            quantity%values(level:, :) = primitives(np)%values(level-1, 1)
-        elseif ( MapFunction ) then
-          ! Ignores mask, shape, etc. if we used the "map" function
-            quantity%values = reshape( &
-              & primitives(np)%values, shape(quantity%values) &
-              & )
-        elseif ( .not. associated ( quantity%mask ) ) then
-          quantity%values = primitives(np)%values
-        else
-          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
-            quantity%values = primitives(np)%values
-          end where
-        end if
-        if ( DeeBUG ) call dumpPrimitives(primitives)
-        call destroyPrimitives(primitives)
-      end subroutine SimpleExprWithC
-      
-      subroutine markDigits( instr, outstr )
-        ! Find each instance of a number, composed of consecultive digits
-        ! and mark it
-        ! E.g., if
-        ! instr =  '0.5 * height(a)'
-        ! outstr = ' val($0.5) * height(a)'
-        ! Args
-        character(len=*), intent(in)  :: instr
-        character(len=*), intent(out) :: outstr
-        ! Internal variables
-        ! logical, parameter            :: DEEBUG = .true.
-        character(len=1)              :: c
-        integer                       :: i          ! char num of instr
-        integer                       :: e          ! char num of outstr
-        logical                       :: gotDigit
-        character(len=*), parameter :: dlist='1234567890.' ! These are digits
-        character(len=*), parameter :: flist='-+e'         ! Fortran adds these
-        ! Executable
-        if ( DEEBug ) print *, 'instr ', instr
-        outstr = instr
-        e = 0
-        gotDigit = .false.
-        do i = 1, len_trim(instr)
-          c = instr(i:i)
-          if ( index(dlist, c ) > 0 ) then
-            ! This was a digit: was it the first?
-            if ( gotDigit ) then
-              ! Nope, we are just lengthening our number
-              e = e + 1
-              outstr(e:e) = c
-            else
-              ! This is the first digit of a number
-              ! Distinguish it from index into primitives db
-              ! by use of 'val' function and '$' marker
-              outstr(e+1:e+5) = 'val($'
-              e = e + 6
-              outstr(e:e) = c
-            endif
-            gotDigit = .true.
-          elseif ( gotDigit ) then
-            ! Check that we're not using fortran's '4.9e-6' notation
-            if ( index(flist, c ) > 0 ) then
-              ! With Fortran notation, we are just lengthening our number
-              e = e + 1
-              outstr(e:e) = c
-            else
-              ! We have come to the end of our digits
-              outstr(e+1:e+1) = ')'
-              e = e + 2
-              outstr(e:e) = c
-              gotDigit = .false.
-            endif
-          else
-            e = e + 1
-            outstr(e:e) = c
-          endif
-        enddo
-        if ( DeeBug ) print *, 'outstr ', outstr
-      end subroutine markDigits
-
-      subroutine reorderPrecedence(mstr, collapsedstr)
-        ! Identify all the terms where each term are separated by
-        ! the lower-precedence operators {+, -,<,>}
-        ! If any terms contain higher-precedence operators {*, /}
-        ! then surround them by parentheses
-        character(len=*), intent(in)  :: mstr
-        character(len=*), intent(out) :: collapsedstr
-        ! Internal variables
-        integer :: i
-        integer :: n
-        character(len=(len(mstr)+3)) :: element
-        character(len=(len(mstr)+3)) :: temp
-        ! Executable
-        ! 1st -- replace each '-' with '+-'
-        ! (Don't worry--we'll undo this before returning)
-        ! (It takes two steps for each to avoid threat of infinite loop)
-        call ReplaceSubString( mstr, collapsedstr, '-', '&', &
-          & which='all', no_trim=.true. )
-        call ReplaceSubString( collapsedstr, temp, '&', '+-', &
-          & which='all', no_trim=.true. )
-
-        call ReplaceSubString( temp, collapsedstr, '<', '&', &
-          & which='all', no_trim=.true. )
-        call ReplaceSubString( collapsedstr, temp, '&', '+<', &
-          & which='all', no_trim=.true. )
-
-        call ReplaceSubString( temp, collapsedstr, '>', '&', &
-          & which='all', no_trim=.true. )
-        call ReplaceSubString( collapsedstr, temp, '&', '+>', &
-          & which='all', no_trim=.true. )
-        ! Now loop over terms
-        n = NumStringElements( temp, COUNTEMPTY, inseparator='+' )
-        if ( n < 1 ) then
-          call ReplaceSubString( temp, collapsedstr, '+-', '-', &
-            & which='all', no_trim=.false. )
-          call ReplaceSubString( collapsedstr, temp, '+<', '<', &
-            & which='all', no_trim=.false. )
-          call ReplaceSubString( temp, collapsedstr, '+>', '>', &
-            & which='all', no_trim=.false. )
-          return
-        endif
-        collapsedstr = ' '
-        do i=1, n
-          call GetStringElement ( temp, element, i, countEmpty, inseparator='+' )
-          ! Surround term with parentheses if it's a product or quotient
-          ! but not if it's (already) parenthetical
-          if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 .or. &
-            & index(element, '^') > 0 ) .and. &
-            & .not. isParenthetical(element) ) then
-            element = '(' // trim(element) // ')'
-          endif
-          collapsedstr = catLists( collapsedstr, element, inseparator='+' )
-        enddo
-        
-        ! Now undo change by reverting all '+-'
-        ! (including any that may have been split by parentheses
-        call ReplaceSubString( collapsedstr, temp, '+-', '-', &
-          & which='all', no_trim=.false. )
-        call ReplaceSubString( temp, collapsedstr, '+(-', '-(', &
-          & which='all', no_trim=.false. )
-
-        call ReplaceSubString( collapsedstr, temp, '+<', '<', &
-          & which='all', no_trim=.false. )
-        call ReplaceSubString( temp, collapsedstr, '+(<', '<(', &
-          & which='all', no_trim=.false. )
-
-        call ReplaceSubString( collapsedstr, temp, '+>', '>', &
-          & which='all', no_trim=.false. )
-        call ReplaceSubString( temp, collapsedstr, '+(>', '>(', &
-          & which='all', no_trim=.false. )
-      end subroutine reorderPrecedence
-
-      subroutine destroyPrimitives(primitives)
-        ! deallocate all the arrays we created
-        type(arrayTemp_T), dimension(:), pointer :: primitives
-        integer :: i
-        if ( .not. associated(primitives) ) return
-        if ( size(primitives) < 1 ) return
-        do i=1, size(primitives)
-          call deallocate_test( primitives(i)%values, &
-            & 'values', ModuleName // '/destroyPrimitives' )
-        enddo
-      end subroutine destroyPrimitives
-
-      subroutine dumpAPrimitive(primitive)
-        ! dump all the values in the array
-        type(arrayTemp_T), intent(in) :: primitive
-        if ( .not. associated(primitive%values) ) then
-          call output( 'values not associated ', advance='yes' )
-          return
-        endif
-        if ( size(primitive%values) < 1 ) then
-          call output( 'values array is of 0 size ', advance='yes' )
-          return
-        endif
-        call dump( primitive%values, 'values' )
-      end subroutine dumpAPrimitive
-
-      subroutine dumpPrimitives(primitives)
-        ! dump all the arrays we created
-        type(arrayTemp_T), dimension(:), pointer :: primitives
-        integer :: i
-        if ( .not. associated(primitives) ) then
-          call output( 'database not associated ', advance='yes' )
-          return
-        endif
-        if ( size(primitives) < 1 ) then
-          call output( 'empty database ', advance='yes' )
-          return
-        endif
-        call output( 'size of primitives database: ', advance='no' )
-        call output( size(primitives), advance='yes' )
-        do i=1, size(primitives)
-          call output ( ' index of primitive: ', advance='no' )
-          call output ( i, advance='yes' )
-          call dumpAPrimitive( primitives(i) )
-        enddo
-      end subroutine dumpPrimitives
-
-      integer function AddPrimitiveToDatabase( DATABASE, ITEM )
-
-        ! This function adds a primitive data type to a database of said types,
-        ! creating a new database if it doesn't exist.  The result value is
-        ! the size -- where it was put.
-
-        ! Dummy arguments
-        type (arrayTemp_T), dimension(:), pointer :: DATABASE
-        type (arrayTemp_T), intent(in) :: ITEM
-
-        ! Local variables
-        type (arrayTemp_T), dimension(:), pointer :: tempDatabase
-        !This include causes real trouble if you are compiling in a different
-        !directory.
-        include "addItemToDatabase.f9h" 
-
-        AddPrimitiveToDatabase = newSize
-      end function AddPrimitiveToDatabase
-
-      function evaluatePrimitive( str, a, b, c ) result(value)
-        ! Evaluate an expression composed entirely of
-        ! (0) constants ('c')
-        ! (1) primitives (e.g., '2')
-        ! (2) unary operators ('-')
-        ! (3) binary operators {'+', '-', '*', '/','<','>'}
-        ! (4) recognized functions {'map:', 'exp:', ..}
-        ! Dummy args
-        character(len=*)                :: str
-        integer                         :: value
-        type (VectorValue_T), pointer   :: A
-        type (VectorValue_T), pointer   :: B
-        real(rv) :: C                     ! constant "c" in manipulation
-        ! Internal variables
-        ! logical, parameter              :: DEEBUG = .true.
-        logical                         :: done
-        ! fun is blank unless a prior one left us "hungry" for an arg
-        character(len=8)                :: fun ! {'exp', 'log', etc.}
-        integer                         :: elem
-        logical                         :: hit
-        integer                         :: iChannel
-        integer                         :: ind
-        integer                         :: instance
-        integer                         :: isurf
-        character(len=3)                :: lastOp ! {'+', '-', '*', '/'}
-        integer                         :: n
-        logical                         :: negating
-        type (arrayTemp_T)              :: newone
-        integer                         :: NoChans
-        integer                         :: NoInstances
-        integer                         :: NoSurfs
-        character(len=8)                :: op
-        type (arrayTemp_T)              :: part
-        integer                         :: partID
-        real(rv)                        :: qvalue
-        integer, dimension(2)           :: shp
-        integer                         :: surf
-        character(len=32)               :: variable
-        ! Executable
-        shp = shape(a%values)
-        call allocate_test( newone%values, shp(1), shp(2), &
-          & 'newone', ModuleName // '/evaluatePrimitive' )
-        call allocate_test( part%values, shp(1), shp(2), &
-          & 'part', ModuleName // '/evaluatePrimitive' )
-
-        if ( deeBug ) then
-          print *, 'Complete dump of database'
-          call dumpPrimitives(primitives)
-        endif
-
-        done = .false.
-        negating = .false.
-        elem = 0
-        lastOp = 'nul' ! 'or'
-        newone%values = 0.
-        n = NumStringElements( trim(str), countEmpty=.false., &
-          & inseparator=' ' )
-        if ( DeeBUG ) then
-          print *, n, ' str: ', trim(str)
-        endif
-        partID = -1
-        fun = ' '
-        hit = .false.
-        do
-          ! go through the elements, re-evaluating every time we "hit" a primitive
-          ! Otherwise revising our lastOp or negating status
-          elem = elem + 1
-          call GetStringElement ( trim(str), variable, elem, &
-            & countEmpty=.false., inseparator=' ' )
-          if ( DeeBUG ) then
-            print *, elem, ' variable: ', trim(variable)
-          endif
-          select case( trim(variable) )
-          case ('a')
-            partID = -1
-            part%values = a%values
-            hit = .true.
-          case ('b')
-            partID = -2
-            part%values = b%values
-            hit = .true.
-          case ('c')
-            partID = -3
-            part%values = c
-            hit = .true.
-          case ('+')
-            lastOp = '+'
-            hit = .false.
-          case ('*')
-            lastOp = '*'
-            hit = .false.
-          case ('/')
-            lastOp = '/'
-            hit = .false.
-          case ('^')
-            lastOp = '^'
-            hit = .false.
-          case ('-') ! could be unary or binary; how do we tell?
-            if ( hit ) then ! already have a primitive; looking for an op
-              lastOp = '-'
-              hit = .false.
-            else
-              ! case ('not', '~')
-              negating = .true.
-              hit = .false.
-            endif
-          case ('<')
-            lastOp = '<'
-            hit = .false.
-          case ('>')
-            lastOp = '>'
-            hit = .false.
-          case (' ')
-            call Announce_Error ( key, no_error_code, 'parse error of:' // trim(str) )
-          case default
-            ind = index(variable, ':')
-            if ( deeBug ) print *, 'ind of ":" ', ind
-            if ( ind > 1 ) then
-              ! A function name
-              fun = variable(1:ind-1)
-              hit = .false.
-            elseif ( index(variable, '$') > 0 ) then
-              ! A literal number
-              if ( deeBug ) print *, 'Trying to read number from ' // variable
-              variable = adjustl(variable)
-              read( variable(2:), * ) qvalue
-              part%values = qvalue
-              hit = .true.
-              if ( deeBug ) then
-                print *, 'part"s values after ' // trim(lastOp) // trim(variable)
-                call dumpAPrimitive(part)
-              endif
-            else
-              ! An index into the primitives db
-              if ( deeBug ) print *, 'Trying to read partID from ' // variable
-              read( variable, * ) partID
-              if ( partID < 1 ) then
-                print *, 'partID: ', partID
-                call Announce_Error ( key, no_error_code, 'partID too small' )
-                return
-              elseif( partID > size(primitives) ) then
-                print *, 'partID: ', partID
-                call Announce_Error ( key, no_error_code, 'partID too big' )
-                return
-              endif
-              part%values = primitives(partID)%values
-              hit = .true.
-              if ( deeBug ) then
-                print *, 'part"s values after ' // trim(lastOp) // trim(variable)
-                call dumpAPrimitive(part)
-                print *, 'based on'
-                call dumpAPrimitive(primitives(partID))
-              endif
-            endif
-          end select
-          if ( hit ) then
-            if ( negating ) part%values = -part%values
-            op = lastOp
-            if ( fun /= ' ' ) op = fun
-            select case(op)
-            case ('nul')
-                newone%values = part%values
-            case ('+')
-                newone%values = newone%values + part%values
-            case ('-')
-                newone%values = newone%values - part%values
-            case ('*')
-                newone%values = newone%values * part%values
-            case ('/')
-              where ( part%values /= 0._rv )
-                newone%values = newone%values / part%values
-              end where
-            case ('^')
-              where ( newone%values > 0._rv )
-                newone%values = newone%values ** part%values
-              elsewhere
-                newone%values = 0.
-              end where
-            case ('<')
-                newone%values = min( newone%values, part%values )
-            case ('>')
-                newone%values = max( newone%values, part%values )
-            ! Now the functions
-            case ('val')
-                newone%values = part%values
-            case ('abs')
-                newone%values = abs( part%values )
-            case ('sign')
-                where ( part%values /= 0._rv )
-                  newone%values = sign(1._rv, part%values)
-                end where
-            case ('ifpos')
-                where ( part%values > 0._rv )
-                  newone%values = 1._rv
-                end where
-            case ('ifneg')
-                where ( part%values < 0._rv )
-                  newone%values = 1._rv
-                end where
-            case ('exp')
-                newone%values = exp( part%values )
-            case ('log', 'ln')
-                where ( part%values > 0._rv )
-                  newone%values = log(part%values)
-                elsewhere
-                  newone%values = 0.
-                end where
-            case ('log10')
-                where ( part%values > 0._rv )
-                  newone%values = log10(part%values)
-                elsewhere
-                  newone%values = 0.
-                end where
-            ! map is a no-op currently
-            ! You can use this to map quantities with equal total
-            ! size, but distributed differently among channels, sirfs, instances
-            case ('map')
-                newone%values = part%values
-                ! call output( 'Calling function map', advance='yes' )
-            case ('channel', 'surface', 'instance', 'height', 'lon', 'lat', 'sza')
-              ! These might be useful for filling arrays with indexes
-              NoChans     = a%template%NoChans
-              NoInstances = a%template%NoInstances
-              NoSurfs     = a%template%NoSurfs
-              newone%values = 1
-              if ( NoChans*NoSurfs*NoInstances < 2 ) cycle
-              do instance=1, NoInstances
-                do iSurf=1, NoSurfs
-                  surf = 1
-                  if ( .not. a%template%stacked ) surf = iSurf
-                  do iChannel=1, NoChans
-                    select case(op)
-                    case ('channel')
-                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
-                        & iChannel
-                    case ('surface')
-                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
-                        & iSurf
-                    case ('height')
-                      if ( a%template%coherent ) then
-                        newone%values(iChannel + (isurf-1)*NoChans, instance) = &
-                          & a%template%surfs(iSurf, 1)
-                      else
-                        newone%values(iChannel + (isurf-1)*NoChans, instance) = &
-                          & a%template%surfs(iSurf, instance)
-                      endif
-                    case ('instance')
-                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
-                        & instance
-                    case ('lat')
-                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
-                        & a%template%GeodLat(surf, instance)
-                    case ('lon')
-                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
-                        & a%template%lon(surf, instance)
-                    case ('sza')
-                      newone%values(iChannel + (isurf-1)*NoChans, instance) = &
-                        & a%template%solarZenith(surf, instance)
-                    end select                
-                  enddo
-                enddo
-              enddo
-            case ('shift', 'slip')
-              ! These are useful for recurrence relations, frequency shifts,
-              ! and applying any filter that spans multiple heights or
-              ! multiple instances
-              ! At present, they apply only to the fastest changing index
-              ! in this order: channel, surface, instance
-              ! shift(a[n]) = a[n+1]
-              ! slip(a[n])  = a[n-1]
-              NoChans     = a%template%NoChans
-              NoInstances = a%template%NoInstances
-              NoSurfs     = a%template%NoSurfs
-              if ( NoChans*NoSurfs*NoInstances < 2 ) cycle
-              select case(op)
-              case ('shift')
-                if ( NoChans > 1 ) then
-                  do iSurf = 1, NoSurfs
-                    newone%values(1 + (isurf-1)*NoChans:isurf*NoChans-1, :) = &
-                      & part%values(2 + (isurf-1)*NoChans:isurf*NoChans, :)
-                  enddo
-                elseif ( NoSurfs > 1 ) then
-                  newone%values(1 :NoSurfs-1, :) = &
-                    & part%values(2 :NoSurfs, :)
-                else
-                  newone%values(:, 1:NoInstances-1) = &
-                    & part%values(: , 2:NoInstances)
-                endif
-                ! call output( 'Calling function shift', advance='yes' )
-              case ('slip')
-                if ( NoChans > 1 ) then
-                  do iSurf = 1, NoSurfs
-                    newone%values(2 + (isurf-1)*NoChans:isurf*NoChans, :) = &
-                      & part%values(1 + (isurf-1)*NoChans:isurf*NoChans-1, :)
-                  enddo
-                elseif ( NoSurfs > 1 ) then
-                  newone%values(2 :NoSurfs, :) = &
-                    & part%values(1 :NoSurfs-1, :)
-                else
-                  newone%values(:, 2:NoInstances) = &
-                    & part%values(: , 1:NoInstances-1)
-                endif
-                ! call output( 'Calling function slip', advance='yes' )
-              end select                
-            ! statistical function cases
-            case ( 'min', 'max', 'mean', 'median', 'rms', 'stddev' )
-              ! These are harder--we must interpret how to gather
-              ! or "sum" the data
-              ! By default we sum over heights, channels and instances
-              ! but optional flags may cuase us to pick out
-              ! a statistic at each height (dontSumHeights)
-              ! or at each instance (dontSumInstances)
-              NoChans     = a%template%NoChans
-              NoInstances = a%template%NoInstances
-              NoSurfs     = a%template%NoSurfs
-              if ( dontSumHeights .and. dontSumInstances ) then
-                do instance = 1, NoInstances
-                  do iSurf = 1, NoSurfs
-                    call doStatFun( newone%values(iSurf, instance), &
-                      & trim(op) // '(a)', &
-                      & part%values(1+(iSurf-1)*NoChans:iSurf*NoChans, instance) )
-                  enddo
-                enddo
-              elseif ( dontSumInstances ) then
-                do instance = 1, NoInstances
-                  call doStatFun( qvalue, trim(op) // '(a)', &
-                    & part%values(:, instance) )
-                  if ( spreadFlag ) then
-                    newone%values(:, instance) = qvalue
-                  else
-                    newone%values(1, instance) = qvalue
-                  endif
-                enddo
-              elseif ( dontSumHeights ) then
-                do iSurf = 1, NoSurfs
-                  call doStatFun( qvalue, trim(op) // '(a)', &
-                    & part%values(iSurf, :) )
-                  if ( spreadFlag ) then
-                    newone%values(iSurf, :) = qvalue
-                  else
-                    newone%values(iSurf, 1) = qvalue
-                  endif
-                enddo
-              else
-                ! Sum over both heights and instances
-                select case ( op )
-                case ( 'min' )
-                  qvalue = mlsmin( part%values )
-                case ( 'max' )
-                  qvalue = mlsmax( part%values )
-                case ( 'mean' )
-                  qvalue = mlsmean( part%values )
-                case ( 'median' )
-                  qvalue = mlsmedian( part%values )
-                case ( 'rms' )
-                  qvalue = mlsrms( part%values )
-                case ( 'stddev' )
-                  qvalue = mlsstddev( part%values )
-                case default
-                  ! Should not have come here
-                end select
-                if ( spreadFlag ) then
-                  newone%values = qvalue
-                else
-                  newone%values(1, 1) = qvalue
-                endif
-              endif
-            case default
-              ! How could this happen?
-                call MLSMessage( MLSMSG_Error, ModuleName, &
-                  & op // ' not a legal binary op in evaluatePrimitive' )
-            end select
-            fun = ' '
-            negating = .false.
-            if ( deeBug ) then
-              print *, 'newone"s values after ' // trim(lastOp) // trim(variable)
-              call dumpAPrimitive(newone)
-            endif
-          endif
-          if ( DeeBUG ) then
-            print *, 'variable ', variable
-            print *, 'partID ', partID
-            print *, 'hit ', hit
-            print *, 'negating ', negating
-            print *, 'lastOp ', lastOp
-          endif
-          done = ( elem >= n )
-          if ( done ) exit
-        enddo
-        value = AddPrimitiveToDatabase( primitives, newone )
-!         call deallocate_test( newone%values, &
-!           & 'newone', ModuleName // '/evaluatePrimitive' )
-        call deallocate_test( part%values, &
-          & 'part', ModuleName // '/evaluatePrimitive' )
-        if ( .not. DEEBUG ) return
-        print *, 'value ', value
-        print *, 'newone"s values ' // trim(str)
-        call dumpAPrimitive(newone)
-        
-        print *, 'values stored in db '
-        call dumpAPrimitive(primitives(value))
-      end function evaluatePrimitive
-      
-      function catTwoOperands( part1, part2 ) result ( str )
-        ! cat together part1 and part2 with a space between them
-        ! unless the last non-blank character of part1
-        ! and the 1st non-blank character of part2 aren't operators
-        ! in which case put a colon ':' between them
-        ! E.g., if 
-        ! part1 = 'a + b'
-        ! and part2 = '/ c' then str = 'a + b / c'
-        ! but if part1 = 'map'
-        ! and part2 = 'c - a' then str = 'map: c - a'
-        ! args
-        character(len=*), intent(in)           :: part1
-        character(len=*), intent(in)           :: part2
-        character(len=MAXSTRLISTLENGTH)        :: str
-        ! internal variables
-        character(len=1), dimension(9), parameter :: ops = &
-          &          (/ '+', '-', '*', '/' , '(', ')', '^', '<', '>' /)
-        character(len=1) :: part1Tail, part2Head
-        integer :: maxind
-        integer :: n
-        integer, dimension(4) :: inds
-        ! Executable
-        n = max(1, len_trim(part1))
-        part1Tail = part1(n:n)
-        part2Head = adjustl(part2)
-        if ( all( indexes(part1Tail // part2Head, ops) == 0 ) ) then
-          ! Mark function name "hungry" for an arg by adding a ':' to
-          ! str = trim(part1) // ': ' // adjustl(part2)
-          ! Must also check if part 1 contains an embedded operator
-          inds = indexes( part1, (/ '+', '-', '*', '/' /), mode='last' )
-          maxind = maxval(inds)
-          if ( maxind < 1 ) then
-            str = '(' // trim(part1) // ': ' // trim(adjustl(part2) ) // ')'
-          else
-            str = part1(:maxind) // '(' // trim(part1(maxind+1:)) &
-              & // ': ' // trim(adjustl(part2) ) // ')'
-          endif
-        else
-          str = trim(part1) // ' ' // adjustl(part2)
-        endif
-      end function catTwoOperands
-      
-      function isParenthetical ( str ) result ( itIs )
-        ! TRUE if 1st non-blank is '(' and last non-blank is ')'
-        character(len=*), intent(in) :: str
-        logical                      :: itIs
-        itIs = index( adjustl(str), '(' ) == 1 .and. &
-          &    index( trim(str), ')'    ) == len_trim(str)
-      end function isParenthetical
     end subroutine ByManipulation
 
     ! ----------------------------------------- FromL1B ----
@@ -4644,7 +3913,6 @@ contains ! =====     Public Procedures     =============================
     subroutine FromL1B ( root, quantity, chunk, filedatabase, &
       & isPrecision, suffix, PrecisionQuantity, BOMask )
       use BitStuff, only: NEGATIVEIFBITPATTERNSET
-      use MLSFiles, only: HDFVERSION_5
       integer, intent(in) :: root
       type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
       type (MLSChunk_T), INTENT(IN) ::              CHUNK
@@ -5163,8 +4431,6 @@ contains ! =====     Public Procedures     =============================
     subroutine WithEstNoise ( quantity, radiance, &
       & sysTemp, nbw, integrationTime )
 
-      use MLSSignals_m, only: SIGNALS
-
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type (VectorValue_T), intent(in) :: RADIANCE ! Radiances to use in calculation
@@ -5243,7 +4509,6 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------- WithReflectorTemperature ---
     subroutine WithReflectorTemperature ( key, quantity, phiZero, termsNode )
-      use Constants, only: DEG2RAD
       integer, intent(in) :: KEY         ! Tree node for messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
       real(r8), intent(in) :: PHIZERO   ! Offset term
@@ -5287,11 +4552,8 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------- WithReichlerWMOTP -------------
     subroutine WithReichlerWMOTP ( tpPres, temperature )
-      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-      use DUMP_0, only: DUMP
-      use MLSFILLVALUES, only: ISFILLVALUE, REMOVEFILLVALUES
       
-      use wmoTropopause, only: ExtraTropics, twmo
+      use wmoTropopause, only: EXTRATROPICS, TWMO
       ! Implements the algorithm published in GRL
       ! Loosely called the "Reichler" algorithm
       ! Ideas the same as in WithWMOTropopause
@@ -5408,7 +4670,6 @@ contains ! =====     Public Procedures     =============================
     subroutine WithWMOTropopause ( tpPres, temperature, refGPH, grid )
       use Geometry, only: GEODTOGEOCLAT
       use Hydrostatic_M, only: HYDROSTATIC
-      use VGridsDatabase, only: VGRID_T
 
       type (VectorValue_T), intent(inout) :: TPPRES ! Result
       type (VectorValue_T), intent(in) :: TEMPERATURE
@@ -5555,12 +4816,14 @@ contains ! =====     Public Procedures     =============================
     end subroutine WithWMOTropopause
 
     ! -------------------------------------------- QualityFromChisq --------
-    subroutine QualityFromChisq ( key, quantity, sourceQuantity, scale, heightNode )
+    subroutine QualityFromChisq ( key, quantity, sourceQuantity, &
+      & scale, heightNode, ignoreTemplate )
       integer, intent(in) :: KEY        ! Tree node
       type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-      type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! Chisq like quantity on which it's based
-      real(r8), intent(in) :: SCALE     ! A scale factor
-      integer, intent(in) :: HEIGHTNODE ! What heights
+      type ( VectorValue_T), intent(in)    :: SOURCEQUANTITY ! Chisq like quantity on which it's based
+      real(r8), intent(in)                 :: SCALE     ! A scale factor
+      integer, intent(in)                  :: HEIGHTNODE ! What heights
+      logical, intent(in)                  :: IGNORETEMPLATE
       ! Local variables
       integer, dimension(2) :: UNITASARRAY ! From expr
       real(r8), dimension(2) :: VALUEASARRAY ! From expr
@@ -5571,13 +4834,14 @@ contains ! =====     Public Procedures     =============================
         & call trace_begin ( 'FillUtils_1.QualityFromChisq', key )
       call MLSMessageCalls( 'push', constantName='QualityFromChisq' )
       ! Do some sanity checking
-      if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
-        & 'Quality quantity must be quality' )
-      if ( sourceQuantity%template%quantityType /= l_chisqBinned ) call Announce_error ( &
-        & key, no_error_code, 'sourceQuantity must be of type chisqBinned' )
-      if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) call Announce_error ( &
-        & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
-
+      if ( .not. ignoreTemplate ) then
+        if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
+          & 'Quality quantity must be quality' )
+        if ( sourceQuantity%template%quantityType /= l_chisqBinned ) call Announce_error ( &
+          & key, no_error_code, 'sourceQuantity must be of type chisqBinned' )
+        if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) call Announce_error ( &
+          & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
+      endif
       ! Work out the height
       if ( heightNode /= 0 ) then
         if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( key, no_error_code, &
@@ -5602,7 +4866,8 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------------- StatusQuantity --------
     subroutine StatusQuantity ( key, quantity, sourceQuantity, statusValue, &
-      & minValue, maxValue, heightNode, additional, force, exact )
+      & minValue, maxValue, heightNode, &
+      & additional, exact, ignoreTemplate )
       integer, intent(in) :: KEY        ! Tree node
       type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantity on which it's based
@@ -5611,8 +4876,8 @@ contains ! =====     Public Procedures     =============================
       real(r8), intent(in) :: MAXVALUE     ! A scale factor
       integer, intent(in) :: HEIGHTNODE ! What heights
       logical, intent(in) :: ADDITIONAL ! Is this an additional flag or a fresh start?
-      logical, intent(in) :: FORCE ! May pound round pegs into square holes?
       logical, intent(in) :: EXACT ! Set status to exact statusValue , don't OR values
+      logical, intent(in) :: IGNORETEMPLATE
       ! Local variables
       real(r8) :: HEIGHT                ! The height to consider
       integer :: SURFACE                ! Surface index
@@ -5623,12 +4888,13 @@ contains ! =====     Public Procedures     =============================
         & call trace_begin ( 'FillUtils_1.StatusQuantity', key )
       call MLSMessageCalls( 'push', constantName='StatusQuantity' )
       ! Do some sanity checking
-      if ( quantity%template%quantityType /= l_status ) call Announce_error ( key, no_error_code, &
-        & 'status quantity must be status' )
-      if ( .not. ( force .or. DoHGridsMatch ( quantity, sourceQuantity ) ) ) &
-        & call Announce_error ( &
-        & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
-
+      if ( .not. ignoreTemplate ) then
+        if ( quantity%template%quantityType /= l_status ) call Announce_error ( key, no_error_code, &
+          & 'status quantity must be status' )
+        if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) &
+          & call Announce_error ( &
+          & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
+      endif
       ! Work out the height
       if ( heightNode /= 0 ) then
         if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( key, no_error_code, &
@@ -5680,7 +4946,6 @@ contains ! =====     Public Procedures     =============================
       ! SourceQuantity using a least-squares approximation to a first-order
       ! Taylor series.
 
-      use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
       use HFTI_M, only: HFTI
 
       integer, intent(in) :: KEY        ! Tree node
@@ -5858,8 +5123,6 @@ contains ! =====     Public Procedures     =============================
 
     !=============================== FromGrid ============
     subroutine FromGrid(quantity, grid, allowMissing, errorCode)
-      use DUMP_0, only: DUMP
-      use GRIDDEDDATA, only: DUMP
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type (GriddedData_T), intent(inout) :: GRID ! Grid to fill it from
@@ -5958,8 +5221,6 @@ contains ! =====     Public Procedures     =============================
     !=============================== FromL2GP ==========
     subroutine FromL2GP ( quantity,l2gp, interpolate, profile, &
       & errorCode, ignoreGeolocation, fromPrecision )
-      use MLSNumerics, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
-        & INTERPOLATEARRAYTEARDOWN
 
       ! If the times, pressures, and geolocations match, fill the quantity with
       ! the appropriate subset of profiles from the l2gp
@@ -6391,7 +5652,7 @@ contains ! =====     Public Procedures     =============================
         if ( all( (/ associated(aq), associated(bq), associated(dq) /) ) ) then
           call ByManipulation ( dq, aq, bq, &
             & manipulation, key=0, &
-            & force=.true., spreadflag=.false., dontSumHeights=.true., &
+            & ignoreTemplate=.true., spreadflag=.false., dontSumHeights=.true., &
             & dontSumInstances=.true., &
             & c=c )
         else
@@ -6657,12 +5918,14 @@ contains ! =====     Public Procedures     =============================
     end subroutine WithBinResults
 
     ! --------------------------------------------- WithBoxcarFunction  ----
-    subroutine WithBoxcarFunction ( key, quantity, sourceQuantity, width, method )
+    subroutine WithBoxcarFunction ( key, quantity, sourceQuantity, &
+    & width, method, ignoreTemplate )
       integer, intent(in) :: KEY        ! Key for tree node
-      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), intent(inout)      :: QUANTITY
       type (VectorValue_T), intent(in), target :: SOURCEQUANTITY
-      integer, intent(in) :: WIDTH
-      integer, intent(in) :: METHOD     ! L_MEAN, L_MAX, L_MIN
+      integer, intent(in)                      :: WIDTH
+      integer, intent(in)                      :: METHOD  ! L_MEAN, L_MAX, L_MIN
+      logical, intent(in)              ::         IGNORETEMPLATE
       ! Local variables
       integer :: I, I1, I2              ! Instance indices
       integer :: HALFWIDTH
@@ -6671,7 +5934,8 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.WithBoxcarFunction', key )
-      if ( quantity%template%name /= sourceQuantity%template%name ) then
+      if ( .not. ignoreTemplate .and. &
+        & quantity%template%name /= sourceQuantity%template%name ) then
         call Announce_Error ( key, no_error_code, 'Quantity and source quantity do not match' )
         go to 9
       end if
@@ -6769,8 +6033,6 @@ contains ! =====     Public Procedures     =============================
 
     ! --------------------------------------------- RotateMagneticField ----
     subroutine RotateMagneticField ( key, qty, fieldECR, ecrToFOV )
-      use Constants, only: RAD2DEG
-      use Intrinsic, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH
       integer, intent(in) :: KEY        ! Where are we in the l2cf?
       type (VectorValue_T), intent(inout) :: QTY ! The quantity to fill
       type (VectorValue_T), intent(in) :: FIELDECR ! The input field
@@ -6961,7 +6223,6 @@ contains ! =====     Public Procedures     =============================
     ! ---------------------------------------------- TransferVectors -----
     subroutine TransferVectors ( source, dest, skipMask, interpolate )
       ! Copy common items in source to those in dest
-      use VectorsModule, only: DestroyVectorQuantityMask
       type (Vector_T), intent(in) :: SOURCE
       type (Vector_T), intent(inout) :: DEST
       logical, intent(in) :: SKIPMASK
@@ -6997,8 +6258,8 @@ contains ! =====     Public Procedures     =============================
             & quantityType=sq%template%quantityType, &
             & molecule=sq%template%molecule )
           if ( associated ( dq ) ) then
-            call FromInterpolatedQty( dq, sq, force=.false., key=0, &
-              & dontmask=.false. )
+            call FromInterpolatedQty( dq, sq, key=0, &
+              & dontmask=.false., ignoreTemplate=.false. )
           end if
         end if
       end do
@@ -7157,9 +6418,7 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- VectorFromFile ----------
     subroutine VectorFromFile ( key, Vector, MLSFile, &
       & filetype, options, spread, interpolate )
-      use MLSFiles, only: DUMP
       use MLSHDF5, only: GETALLHDF5DSNAMES, MATCHHDF5ATTRIBUTES
-      use MLSSTRINGS, only: WRITEINTSTOCHARS
       integer, intent(in) :: KEY        ! Tree node
       type (Vector_T), intent(inout) :: Vector
       type (MLSFile_T), pointer   :: MLSFile
@@ -7345,8 +6604,6 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- NamedQtyFromFile ----------
     subroutine NamedQtyFromFile ( key, quantity, MLSFile, &
       & filetype, name, spread, interpolate, homogeneous )
-      use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-      use HDF5, only: H5DOPEN_F, H5DCLOSE_F
       use MLSHDF5, only: GETHDF5ATTRIBUTE, GETHDF5DSDIMS, LOADFROMHDF5DS
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
@@ -7503,6 +6760,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.64  2012/10/09 00:48:31  pwagner
+! New ignoreTemplate, changed force meaning in Fill
+!
 ! Revision 2.63  2012/08/16 17:58:00  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
