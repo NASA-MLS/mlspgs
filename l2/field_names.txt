@@ -200,6 +200,7 @@ ignore
 ignoreGeolocation
 ignoreHessian # in quasi-linear forward model
 ignoreNegative
+ignoreTemplate
 ignoreZero
 igrf          # Earth magnetic field model
 incl_cld
@@ -499,6 +500,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.222  2012/10/09 00:48:30  pwagner
+# New ignoreTemplate, changed force meaning in Fill
+#
 # Revision 2.221  2012/08/30 23:01:59  vsnyder
 # Add lambdaMin
 #
