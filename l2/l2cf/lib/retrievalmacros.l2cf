@@ -746,9 +746,9 @@ Begin Fill
     refGPHQuantity=standardProducts.refGPH, temperatureQuantity=tempVectorState.temperature_hr
   ;; Copy the flags over from temperature to GPH
   Fill, quantity=standardDiagnostics.status!theQuantity, method=vector, $
-    sourceQuantity=standardDiagnostics.statusTemperature_hr, /force
+    sourceQuantity=standardDiagnostics.statusTemperature_hr, /ignoreTemplate
   Fill, quantity=standardDiagnostics.quality!theQuantity, method=vector, $
-    sourceQuantity=standardDiagnostics.qualityTemperature_hr, /force
+    sourceQuantity=standardDiagnostics.qualityTemperature_hr, /ignoreTemplate
 End Fill
 
 ;; Because we clobbered our outputPrecision.gph, let's fill it again
@@ -774,7 +774,7 @@ Begin Fill
   ;; we want to overwrite RHi precision at pressures > 464mb with RHiVmr values
   Subset, quantity=tempVectorPrecision.!theQuantity, mask=fill, height=[ 1000mb : 383mb ]
   Fill, quantity=tempVectorPrecision.!theQuantity, sourceQuantity=tempVectorPrecision.RHiVmr, $
-    method=vector,/force,/interpolate
+    method=vector,/ignoreTemplate ,/interpolate
   Subset, quantity=tempVectorPrecision.!theQuantity, mask=fill, /reset
 
 })
@@ -1026,10 +1026,10 @@ Fill, quantity=cloudOutput.DTband$1, method=manipulate, $
 ;; ( HRQuantity same as MFproduct except for 3 _hr )
 !define(addInOneChisq,{!dnl
 Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='a+b', $
-  a=temporaryDiagnostics.chisqTmp, b=otherDiagnostics.chisqProfile$1, /force!nl})
+  a=temporaryDiagnostics.chisqTmp, b=otherDiagnostics.chisqProfile$1, /ignoreTemplate !nl})
 !define(addInOneNoRads,{!dnl
 Fill, quantity=temporaryDiagnostics.noRadsTmp, method=manipulate, manipulation='a+b', $
-  a=temporaryDiagnostics.noRadsTmp, b=otherDiagnostics.noRadsProfile$1, /force!nl})
+  a=temporaryDiagnostics.noRadsTmp, b=otherDiagnostics.noRadsProfile$1, /ignoreTemplate !nl})
 !define(addInOneHighCloudContam,{!dnl
 Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, status=!statusHighCloud+!statusBeWary, $
   sourceQuantity=otherDiagnostics.highCloudSummary$1, maxValue=!MFcloudmax, /additional!nl})
@@ -1135,7 +1135,7 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 ;; Set status bit for abandoned retrieval
 Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
   status=!statusAbandonedRtrvl+!statusDoNotUse, $
-  sourceQuantity=diag!retrophase.dnwt_abandoned, maxValue=0, /additional, /exact, /force
+  sourceQuantity=diag!retrophase.dnwt_abandoned, maxValue=0, /additional, /exact, /ignoreTemplate
 
 })
 
@@ -1171,6 +1171,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.149  2012/06/19 20:12:51  pwagner
+; storeStandardProduct(O3_HR) names swath simply 'O3-StdProd'
+;
 ; Revision 1.148  2012/04/05 19:09:43  pwagner
 ; ColumnSrdProds macro default can be overriden
 ;
