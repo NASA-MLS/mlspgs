@@ -942,6 +942,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_ifMissingGMAO, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreGeolocation, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
+             begin, f+f_ignoreTemplate, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreZero, t+t_boolean, n+n_field_type, &
              begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_internalVGrid, s+s_vGrid, n+n_field_spec, &
@@ -1175,6 +1176,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
+             begin, f+f_ignoreTemplate, t+t_boolean, n+n_field_type, &
              begin, f+f_lengthScale, s+s_vector, n+n_field_spec, &
              begin, f+f_fraction, s+s_vector, n+n_field_spec, &
              begin, f+f_invert, t+t_boolean, n+n_field_type, &
@@ -1784,6 +1786,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.553  2012/10/09 00:48:30  pwagner
+! New ignoreTemplate, changed force meaning in Fill
+!
 ! Revision 2.552  2012/08/30 23:03:07  vsnyder
 ! Add lambdaMin
 !
