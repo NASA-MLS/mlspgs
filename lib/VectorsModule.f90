@@ -107,8 +107,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use DUMP_0, only: DIFF, DUMP
   use INTRINSIC, only: LIT_INDICES, PHYQ_INVALID, L_VMR
   use MLSKINDS, only: R8, RV
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
-    & MLSMSG_DEALLOCATE, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, MLSMESSAGECONFIG, &
+    & MLSMSG_DEALLOCATE, MLSMSG_WARNING, MLSMESSAGE
   use MLSSETS, only: FINDFIRST, FINDUNIQUE
   use MLSSIGNALS_M, only: MODULES, SIGNALS, GETSIGNALNAME
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
@@ -123,43 +123,44 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! Generics
   public :: Assignment (=), Multiply, operator (+), operator (-)
   public :: operator (*), operator ( .DOT. ), operator ( .MDOT. )
-  public :: diff, dump
+  public :: DIFF, DUMP
   ! Specifics
-  public :: AddToVector, AddVectors, AddVectorTemplateToDatabase
-  public :: AddVectorToDatabase, AssignVector, AXPY, CheckIntegrity
-  public :: CheckNaN, CheckVectorForNaN, CheckVectorQuantityForNaN
-  public :: ClearMask, ClearUnderMask, ClearVector
-  public :: CloneVector, CloneVectorQuantity, ConstantXVector
-  public :: ConstructVectorTemplate, CopyVector, CopyVectorMask
-  public :: CreateMask, CreateVector, CreateVectorValue, DestroyVectorDatabase
-  public :: DestroyVectorInfo, DestroyVectorMask, DestroyVectorQuantityMask
-  public :: DestroyVectorQuantityValue, DestroyVectorTemplateDatabase
-  public :: DestroyVectorTemplateInfo, DestroyVectorValue
-  public :: DiffVectorQuantities
-  public :: DivideVectors
-  public :: DotVectors, DotVectorsMasked, DotVectorsMaybeMasked
-  public :: DotVectorQuantities, DotVectorQuantitiesMasked
-  public :: DotVectorQuantitiesMaybeMasked
-  public :: DumpNiceMaskSummary, DumpMask, DumpQuantityMask, DumpVectorMask
-  public :: DumpVectorNorms
-  public :: Dump_Vector, Dump_Vectors, Dump_Vector_Quantity
-  public :: Dump_Vector_Template, Dump_Vector_Templates
-  public :: GetVectorQuantity, GetVectorQuantityByType
-  public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
-  public :: GetVectorQuantityIndexByType, InflateVectorDatabase
-  public :: InflateVectorTemplateDatabase, IsVectorQtyMasked
-  public :: L2Norm, L2NormQ, L2NormV
-  public :: MaskVectorQty, MoveVectorQuantity, MultiplyVectors
-  public :: NullifyVectorTemplate, NullifyVectorValue, NullifyVector, PowVector
-  public :: QuantityTemplate_T ! for full F95 compatibility
-  public :: ReciprocateVector, RemapVectorMask, RemapVectorValue, ReverseMask
-  public :: RmVectorFromDatabase
-  public :: ScaleVector, SetMask, SubtractFromVector
-  public :: SubtractVectors, ValidateVectorQuantity
+  public :: ADDTOVECTOR, ADDVECTORS, ADDVECTORTEMPLATETODATABASE
+  public :: ADDVECTORTODATABASE, ASSIGNVECTOR, AXPY, CHECKINTEGRITY
+  public :: CHECKNAN, CHECKVECTORFORNAN, CHECKVECTORQUANTITYFORNAN
+  public :: CLEARMASK, CLEARUNDERMASK, CLEARVECTOR
+  public :: CLONEVECTOR, CLONEVECTORQUANTITY, CONSTANTXVECTOR
+  public :: CONSTRUCTVECTORTEMPLATE, COPYVECTOR, COPYVECTORMASK
+  public :: CREATEMASK, CREATEVECTOR, CREATEVECTORVALUE, DESTROYVECTORDATABASE
+  public :: DESTROYVECTORINFO, DESTROYVECTORMASK, DESTROYVECTORQUANTITYMASK
+  public :: DESTROYVECTORQUANTITYVALUE, DESTROYVECTORTEMPLATEDATABASE
+  public :: DESTROYVECTORTEMPLATEINFO, DESTROYVECTORVALUE
+  public :: DIFFVECTORQUANTITIES
+  public :: DIVIDEVECTORS
+  public :: DOTVECTORS, DOTVECTORSMASKED, DOTVECTORSMAYBEMASKED
+  public :: DOTVECTORQUANTITIES, DOTVECTORQUANTITIESMASKED
+  public :: DOTVECTORQUANTITIESMAYBEMASKED
+  public :: DUMPNICEMASKSUMMARY, DUMPMASK, DUMPQUANTITYMASK, DUMPVECTORMASK
+  public :: DUMPVECTORNORMS
+  public :: DUMP_VECTOR, DUMP_VECTORS, DUMP_VECTOR_QUANTITY
+  public :: DUMP_VECTOR_TEMPLATE, DUMP_VECTOR_TEMPLATES
+  public :: GETVECTORQUANTITY, GETVECTORQUANTITYBYTYPE
+  public :: GETVECTORQTYBYTEMPLATEINDEX, GETVECTORQUANTITYINDEXBYNAME
+  public :: GETVECTORQUANTITYINDEXBYTYPE, INFLATEVECTORDATABASE
+  public :: INFLATEVECTORTEMPLATEDATABASE, ISVECTORQTYMASKED
+  public :: L2NORM, L2NORMQ, L2NORMV
+  public :: MASKVECTORQTY, MOVEVECTORQUANTITY, MULTIPLYVECTORS
+  public :: NULLIFYVECTORTEMPLATE, NULLIFYVECTORVALUE, NULLIFYVECTOR, POWVECTOR
+  public :: QUANTITYTEMPLATE_T ! FOR FULL F95 COMPATIBILITY
+  public :: RECIPROCATEVECTOR, REMAPVECTORMASK, REMAPVECTORVALUE, REVERSEMASK
+  public :: RMVECTORFROMDATABASE
+  public :: SCALEVECTOR, SETMASK, SUBTRACTFROMVECTOR
+  public :: SUBTRACTVECTORS, VALIDATEVECTORQUANTITY
   ! Types
-  public :: VectorTemplate_T, VectorValue_T, Vector_T
+  public :: VECTORTEMPLATE_T, VECTORVALUE_T, VECTOR_T
   ! Parameters
-  public :: M_Ignore, M_Cloud, M_Fill, M_FullDerivatives, M_LinAlg, M_Spare, M_Tikhonov
+  public :: M_IGNORE, M_CLOUD, M_FILL, M_FULLDERIVATIVES, M_LINALG, &
+    & M_SPARE, M_TIKHONOV
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -223,6 +224,26 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  ! Some introductory remarks:
+  ! There is a hierarchy of user-defined types
+  ! * At the bottom are the VectorValue_T which correspond to specific
+  !   instances of quantities like H2O or Temperature
+  ! * One level up are Vector_T, built of as many VectorValue_T
+  !   as you please
+  ! * In parallel with these are the templates, used for holding
+  !   everything each specific instance shares with the others;
+  !   e.g., type, signal, geolocations
+  ! * At the bottom are the QuantityTemplate_T, holding shared data
+  ! * One level up are VectorTemplate_T
+  ! The following diagram summarizes these relations
+
+  !   Templates             Specific Instances
+  !   ---------             ------------------
+  !  VectorTemplate_T          Vector_T
+  !        ^                      ^
+  !        |                      |
+  !  QuantityTemplate_T      VectorValue_T
+  
   ! This type describes a vector template
 
   type :: VectorTemplate_T
@@ -241,7 +262,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   end type VectorTemplate_T
 
   ! This type describes the subset of the values of a vector that
-  ! correspond to a single quantity. Should have called this QuantityValue_T.
+  ! correspond to a single quantity. 
+  
+  ! ---- Should have called this QuantityValue_T. ----
 
   type VectorValue_T
     type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
@@ -1803,18 +1826,23 @@ contains ! =====     Public Procedures     =============================
     ! logical, intent(in), optional :: CLEAN   ! Passed through to dump_0%dump
     type (Vector_T), intent(in), optional :: Vector ! Only to get its name
     character(len=*), intent(in), optional :: Options ! E.g., '-sb'
-
+    ! Internal variables
+    logical :: Dot ! Use vector.quantity notation
     integer :: i
+    character(len=32) :: oldInfo
     integer :: myDetails
     integer :: nUnique
-    logical :: Dot ! Use vector.quantity notation
     integer, dimension(1000) :: uniqueVals
 
     myDetails = 1
     if ( present(details) ) myDetails = details
 
+    oldInfo = MLSMessageConfig%Info
     if ( present(name) ) then
+      MLSMessageConfig%Info = name
       call output ( name ); call output ( ', ' )
+    elseif ( qty%template%name /= 0 ) then
+      call get_string ( qty%template%name, MLSMessageConfig%Info )
     end if
     dot = .false.
     if ( present(vector) ) dot = vector%name /= 0
@@ -1844,9 +1872,15 @@ contains ! =====     Public Procedures     =============================
     else
       call output ( ' unlabeled ', advance='yes' )
     end if
-    if ( myDetails < -1 ) return
+    if ( myDetails < -1 ) then
+      MLSMessageConfig%Info = oldInfo
+      return
+    endif
     call newLine
-    if ( myDetails < 0 ) return
+    if ( myDetails < 0 ) then
+      MLSMessageConfig%Info = oldInfo
+      return
+    endif
     call output ( qty%template%noChans, before='    noChans = ' )
     call output ( qty%template%noSurfs, before=' noSurfs = ' )
     call output ( qty%template%noInstances, before=' noInstances = ')
@@ -1905,6 +1939,7 @@ contains ! =====     Public Procedures     =============================
       call output ( ' mask', advance='yes' )
     end if
     if ( myDetails > 1 ) call dump ( qty%template, details=myDetails-1 )
+    MLSMessageConfig%Info = oldInfo
   end subroutine Dump_Vector_Quantity
 
   ! ---------------------------------------  Dump_Vector_Template  -----
@@ -2117,7 +2152,7 @@ contains ! =====     Public Procedures     =============================
   ! index, is returned.
 
     use MLSSignals_m, only: GETRADIOMETERNAME
-    use MOLECULES, only: IsExtinction
+    use MOLECULES, only: ISEXTINCTION
 
     ! Dummy arguments
     type (Vector_T), intent(in) :: VECTOR
@@ -2452,7 +2487,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------  RemapVectorMask  -----
   subroutine RemapVectorMask ( Value )
-    use Pointer_Rank_Remapping, only: Remap
+    use Pointer_Rank_Remapping, only: REMAP
     type ( vectorValue_t ) :: Value
     call remap ( value%mask1, value%mask, &
       & (/ value%template%noChans * &
@@ -2466,7 +2501,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------  RemapVectorValue  -----
   subroutine RemapVectorValue ( Value )
-    use Pointer_Rank_Remapping, only: Remap
+    use Pointer_Rank_Remapping, only: REMAP
     type ( vectorValue_t ) :: Value
     call remap ( value%value1, value%values, &
       & (/ value%template%noChans * &
@@ -2908,6 +2943,11 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.167  2012/07/31 00:33:40  vsnyder
+! Use Test_Allocate instead of explicit testing followed by MLSMessage.
+! Add ForWhom argument to DestroyVectorQuantityMask and
+! DestroyVectorQuantityValue.
+!
 ! Revision 2.166  2012/07/10 03:55:49  vsnyder
 ! Improve comments about VALUE
 !
