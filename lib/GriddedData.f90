@@ -21,7 +21,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   ! (EXCEPT FOR DAO DIMENSIONS)
   use MLSKINDS, only: RGR=>R4, R8
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, &
-    & MLSMSG_WARNING, MLSMESSAGE, MLSMESSAGECALLS
+    & MLSMSG_WARNING, MLSMESSAGECONFIG, MLSMESSAGE, MLSMESSAGECALLS
   use MLSSTRINGLISTS, only: SNIPLIST
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
   use OUTPUT_M, only: OUTPUTOPTIONS, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, NEWLINE
@@ -66,16 +66,16 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 
 ! === (start of api) ===
 ! === (end of api) ===
-  public :: GriddedData_T, AddGriddedDataToDatabase, &
-    & ConcatenateGriddedData, ConvertFromEtaLevelGrids, CopyGrid, &
-    & DestroyGriddedData, DestroyGriddedDataDatabase, &
-    & Diff, DoGriddeddataMatch, DownSampleGriddedData, Dump, &
-    & NullifyGriddedData, RGR, SetupNewGriddedData, SliceGriddedData, &
-    & WrapGriddedData
+  public :: GRIDDEDDATA_T, ADDGRIDDEDDATATODATABASE, &
+    & CONCATENATEGRIDDEDDATA, CONVERTFROMETALEVELGRIDS, COPYGRID, &
+    & DESTROYGRIDDEDDATA, DESTROYGRIDDEDDATADATABASE, &
+    & DIFF, DOGRIDDEDDATAMATCH, DOWNSAMPLEGRIDDEDDATA, DUMP, &
+    & NULLIFYGRIDDEDDATA, RGR, SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, &
+    & WRAPGRIDDEDDATA
 
   logical, private, parameter :: MAYDUMPFIELDVALUES = .true.
 
-  interface ConcatenateGriddedData
+  interface CONCATENATEGRIDDEDDATA
     module procedure ConcatenateGriddedData_2
     module procedure ConcatenateGriddedData_array
   end interface
@@ -91,7 +91,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 
   ! These are 'enumerated types' consistent with hph's
   ! work in l3ascii_read_field
-  public :: V_is_pressure, V_is_altitude, V_is_GPH, V_is_theta, V_is_eta
+  public :: V_IS_PRESSURE, V_IS_ALTITUDE, V_IS_GPH, V_IS_THETA, V_IS_ETA
 
   integer, parameter :: V_is_pressure = L_PRESSURE ! 1
   integer, parameter :: V_is_altitude = L_GEODALTITUDE ! v_is_pressure+1
@@ -755,6 +755,7 @@ contains
     integer :: MYDETAILS
     character(len=16) :: myOptions
     integer :: numElmnts
+    character(len=32) :: oldInfo
 
     ! Executable code
     myDetails = 0
@@ -842,6 +843,8 @@ contains
     endif
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
     if ( myDetails < -1 ) return
+    oldInfo = MLSMessageConfig%Info
+    MLSMessageConfig%Info = GriddedData%quantityName
     call output( 'fileType: ')
     if ( GriddedData%fileType < 1 ) then
       call output( '(unknown)', advance='yes' )
@@ -1028,7 +1031,7 @@ contains
           & advance='yes')
       endif
     endif
-
+    MLSMessageConfig%Info = oldInfo
   end subroutine DumpGriddedData
 
   ! ----------------------------------------  SetupNewGriddedData  -----
@@ -1716,6 +1719,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.70  2012/10/11 21:00:28  pwagner
+! Print quantityName instead of moduleName during Dump
+!
 ! Revision 2.69  2012/03/06 19:32:39  pwagner
 ! Remove more unused local variables
 !
