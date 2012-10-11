@@ -21,7 +21,7 @@ MATH77LIB= math77
 # Set NO=No when building Mie_Tables_NoHDF
 NO=
 
-PLAT= $(MLSF95).$(MLSPLAT)
+PLAT= $(MLSCONFG)
 
 DVIS= Ice_Size_Distribution.dvi Mie_Efficiencies_m.dvi Mie_Tables.dvi \
       Phase_m.dvi RefractiveIndex.dvi sphbes.dvi
@@ -92,7 +92,8 @@ sphbess.mod sphbes.o: sphbes.f90 mlskinds.mod
 	$(FC) -c $(FOPTS) sphbes.f90
 
 WriteHDF_m.o: WriteHDF_m.f90 mlskinds.mod
-	$(FC) -c $(FOPTS) WriteHDF_m.f90 -I $(HOME)/mlspgs/lib/$(PLAT) -I $(HDF5)
+	$(FC) -c $(FOPTS) WriteHDF_m.f90 -I $(HOME)/mlspgs/lib/$(PLAT) \
+              -I $(HDF5)/../include
 
 WriteNoHDF_m.o: WriteNoHDF_m.f90 mlskinds.mod
 	$(FC) -c $(FOPTS) WriteNoHDF_m.f90
@@ -103,7 +104,7 @@ Mie_Tables:   $(OBJS) $(MATH77)/lib$(MATH77LIB).a
               -L$(PGSTK) -lPGSTK \
               -L$(HDFEOS) -lhdfeos \
               -L$(HDFEOS5) -lhe5_hdfeos \
-              -L$(HDF5) -lhdf5_fortran -lhdf5 \
+              -L$(HDF5) -lhdf5_fortran -lhdf5 -lhdf5_hl \
               -L$(HDFLIB) -lmfhdf \
               -ldf -lz -ljpeg -lsz \
               -lGctp \
@@ -132,6 +133,9 @@ tar:
 AllDVI: $(DVIS)
 
 # $Log$
+# Revision 1.1  2010/05/07 00:52:13  vsnyder
+# Changed name from just plain Makefile
+#
 # Revision 1.4  2008/05/22 01:56:53  vsnyder
 # MLS libraries, for HDF output
 #
