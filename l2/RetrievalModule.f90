@@ -90,14 +90,16 @@ contains
     use MLSL2OPTIONS, only: L2CFNODE, SKIPRETRIEVAL, SPECIALDUMPFILE, &
       & STATEFILLEDBYSKIPPEDRETRIEVALS, &
       & MLSMESSAGE
-    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING
+    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING, &
+      & CURRENTCHUNKNUMBER, CURRENTPHASENAME
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
       & MLSMESSAGECALLS, MLSMESSAGERESET
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MLSSTRINGS, only: WRITEINTSTOCHARS
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: FLUSH_PFADATA
-    use Set_Toggles_m, only: Set_Toggles
+    use SET_TOGGLES_M, only: SET_TOGGLES
     use SIDSMODULE, only: SIDS
     use SNOOPMLSL2, only: SNOOP
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
@@ -186,6 +188,8 @@ contains
                                         ! evaluations of Newton method
     type(vector_T), pointer :: Measurements    ! The measurements vector
     type(vector_T), pointer :: MeasurementSD   ! The measurements vector's Std. Dev.
+    character(len=32) :: mesg
+    character(len=32) :: mesgChunkNo
     integer :: Method                   ! Method to use for inversion, currently
                                         ! only l_Newtonian.
     type(matrix_T), target :: MyAverage ! for OutputAverage to point to
@@ -302,7 +306,7 @@ contains
       nullify ( v(j)%quantities, v(j)%template%quantities )
       v(j)%name = 0 ! so Snoop won't use it
     end do
-    if ( timing ) call time_now ( t1 )
+    call time_now ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
     if ( specialDumpFile /= ' ' ) &
@@ -931,9 +935,9 @@ contains
       !  If {\tt After} is true, apply column scaling.
 
       use DNWT_Module, only: NWT_T
-      use MatrixModule_1, only: ClearMatrix, ColumnScale, Dump, Dump_Struct, &
-        & FormNormalEquations => NormalEquations, GetDiagonal
-      use Regularization, only: Regularize
+      use MatrixModule_1, only: CLEARMATRIX, COLUMNSCALE, DUMP, DUMP_STRUCT, &
+        & FORMNORMALEQUATIONS => NORMALEQUATIONS, GETDIAGONAL
+      use Regularization, only: REGULARIZE
       use VectorsModule, only: OPERATOR(.DOT.), SCALEVECTOR
 
       logical, intent(in) :: After     ! Allow column scaling
@@ -946,7 +950,8 @@ contains
       integer :: T
       character(*), parameter :: Which(2) = (/ 'Vertical  ', 'Horizontal' /)
 
-        call add_to_retrieval_timing( 'newton_solver', t1 )
+      ! call add_to_retrieval_timing( 'newton_solver', t1 )
+      call time_now ( t1 )
 
       !{ Tikhonov regularization is of the form ${\bf R x}_{n+1} \simeq
       !  {\bf 0}$ or ${\bf R x}_{n+1} \simeq {\bf a}$, where {\bf a} is
@@ -1015,6 +1020,7 @@ contains
             call dump ( tikhonov, name='Tikhonov', details=2 )
           end if
 
+          call add_to_retrieval_timing( 'tikh_reg', t1 )
         call formNormalEquations ( tikhonov, normalEquations, &
           & v(reg_X_x), v(aTb), update=update, useMask=.false. )
         update = .true.
@@ -1029,7 +1035,6 @@ contains
         ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
         ! Don't destroy reg_X_x unless we move the 'clone' for it
         ! inside the loop.  Also, if we destroy it, we can't snoop it.
-          call add_to_retrieval_timing( 'tikh_reg', t1 )
       end do ! t
 
     end subroutine ApplyTikhonov
@@ -1596,7 +1601,7 @@ contains
       ! start tolx tolx_best tolf too_small fandj
         &  9,   2,        2,   2,        3,    9  /)
       integer :: T                      ! Which Tikhonov: 1 -> V, 2 -> H
-      real :: T1
+      ! real :: T1
       type(matrix_T) :: Temp            ! Because we can't do X := X * Y
       type(matrix_T) :: TempU           ! U**(-1)
       type(matrix_cholesky_T) :: TempC  ! For negateSD caseXoXo
@@ -1739,8 +1744,12 @@ NEWT: do ! Newton iteration
         loopCounter = loopCounter + 1
         if ( loopCounter > max(50, 50 * maxJacobians) ) then
           chunk%abandoned = .true.
+          call writeIntsToChars( currentChunkNumber, mesgChunkNo )
+          mesg = '(' // trim(CurrentPhaseName) // ')' // &
+            & ' (' // trim(mesgChunkNo) // ') ' // &
+            & 'Retrieval abandoned because DNWT appears to be looping.'
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Retrieval abandoned because DNWT appears to be looping.' )
+            &  trim(mesg) )
           exit NEWT
         end if
         if ( nwt_flag == nf_getJ ) then
@@ -2022,6 +2031,7 @@ NEWT: do ! Newton iteration
                   & v(x), fwdModelExtra, v(f_rowScaled), fmStat, Jacobian, &
                   & Hessian, vectorDatabase )
               end do ! k
+              call time_now ( t1 )
               ! Forward model calls add_to_retrieval_timing
             end if
             call time_now ( t1 )
@@ -2918,13 +2928,13 @@ NEWT: do ! Newton iteration
     end subroutine NewtonSolver
 
     ! ------------------------------------  NewtonSolverFailed  -----
-    subroutine NewtonSolverFailed ( Why, Nwt_Flag, Prev_Nwt_Flag, &
-      & D_ndb_2, AJ )
+    subroutine NewtonSolverFailed ( WHY, NWT_FLAG, PREV_NWT_FLAG, &
+      & D_NDB_2, AJ )
       use DNWT_Module, only: NF_START, NWT_T
-      character(len=*), intent(in) :: Why      ! What failed
-      integer, intent(inout) :: Nwt_Flag       ! Solver's state flag
-      integer, intent(inout) :: Prev_Nwt_Flag  ! Solver's previous state
-      logical, intent(in) :: D_ndb_2           ! "dump AJ"
+      character(len=*), intent(in) :: WHY      ! What failed
+      integer, intent(inout) :: NWT_FLAG       ! Solver's state flag
+      integer, intent(inout) :: PREV_NWT_FLAG  ! Solver's previous state
+      logical, intent(in) :: D_NDB_2           ! "dump AJ"
       type (NWT_T), intent(in) :: AJ           ! Solver's database
 
 !       block ! for abandoned chunk version, followed by EXIT NEWT
@@ -2969,6 +2979,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.333  2012/10/11 22:03:46  pwagner
+! Fix timing error; print chunkNumber, phaseName instead of module when warning of abandoning
+!
 ! Revision 2.332  2012/09/13 18:08:34  vsnyder
 ! Don't include tikhonov row count if covSansReg is set
 !
