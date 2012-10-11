@@ -9,6 +9,8 @@
 
 # "$Id$"
 
+.PHONY: Mie_Tables Mie_Tables_NoHDF clean tar AllDVI
+
 Mie_Tables:
 	rm -f Write*HDF_m.o writehdf_m.mod
 	make -f Makefile.second $@
@@ -21,3 +23,6 @@ clean tar AllDVI:
 	make -f Makefile.second $@
 
 # $Log$
+# Revision 1.5  2010/05/07 00:52:32  vsnyder
+# New top-level makefile
+#
