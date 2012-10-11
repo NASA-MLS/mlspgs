@@ -29,37 +29,37 @@ contains
   subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, &
     & configDatabase, chunk)
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST, TEST_ALLOCATE
-    use Chunks_m, only: MLSChunk_T
-    use Expr_M, only: EXPR
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelWrappers, only: ForwardModel
-    use ForwardModelIntermediate, only: ForwardModelStatus_T
-    use HessianModule_1, only: Hessian_T, InsertHessianPlane
-    use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, &
-      & f_fwdModelExtra, f_fwdModelIn, f_fwdModelOut, &
-      & f_hessian, f_jacobian, f_mirrorHessian, &
-      & f_perturbation, f_singleMAF, f_TScat
-    use Intrinsic, only: PHYQ_DIMENSIONLESS
-    use Lexer_Core, only: Print_Source
-    use MLSCommon, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MatrixModule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
-      & MatrixElement_T
-    use MatrixModule_1, only: AddToMatrix, CopyMatrix, CreateBlock, &
-      & DestroyBlock, DestroyMatrix, Dump, FindBlock, &
-      & GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, ScaleMatrix
-    use MLSL2Timings, only: add_to_retrieval_timing
-    use MLSStringLists, only: switchDetail
-    use MoreTree, only: Get_Field_Id, Get_Boolean
-    use Output_M, only: Output, outputNamedValue
-    use ScanModelModule, only: DestroyForwardModelIntermediate
-    use Time_M, only: Time_Now
-    use Toggles, only: Gen, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
-    use Tree, only: Decoration, Nsons, Source_Ref, Subtree
-    use VectorsModule, only: Vector_T, &
-      & CopyVector, DestroyVectorInfo, Dump, operator(-)
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, TEST_ALLOCATE
+    use CHUNKS_M, only: MLSCHUNK_T
+    use EXPR_M, only: EXPR
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELWRAPPERS, only: FORWARDMODEL
+    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
+    use HESSIANMODULE_1, only: HESSIAN_T, INSERTHESSIANPLANE
+    use INIT_TABLES_MODULE, only: F_DESTROYJACOBIAN, F_FORWARDMODEL, &
+      & F_FWDMODELEXTRA, F_FWDMODELIN, F_FWDMODELOUT, &
+      & F_HESSIAN, F_JACOBIAN, F_MIRRORHESSIAN, &
+      & F_PERTURBATION, F_SINGLEMAF, F_TSCAT
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS
+    use LEXER_CORE, only: PRINT_SOURCE
+    use MLSCOMMON, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MATRIXMODULE_0, only: M_ABSENT, M_FULL, M_BANDED, M_COLUMN_SPARSE, &
+      & MATRIXELEMENT_T
+    use MATRIXMODULE_1, only: ADDTOMATRIX, COPYMATRIX, CREATEBLOCK, &
+      & DESTROYBLOCK, DESTROYMATRIX, DUMP, FINDBLOCK, &
+      & GETFROMMATRIXDATABASE, MATRIX_DATABASE_T, MATRIX_T, SCALEMATRIX
+    use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
+    use TIME_M, only: TIME_NOW
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
+    use VECTORSMODULE, only: VECTOR_T, &
+      & COPYVECTOR, DESTROYVECTORINFO, DUMP, OPERATOR(-)
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
@@ -319,6 +319,7 @@ contains
                 & FwdModelIn, FwdModelExtra, &
                 & FwdModelOut, fmStat, vectors=vectorDatabase )
             end if
+            call time_now ( t1 )
           end do                        ! MAF loop
 
           ! Destroy jacobian if asked to
@@ -484,6 +485,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.66  2012/10/11 21:02:16  pwagner
+! Fix timing error--dont include ForwardModel times
+!
 ! Revision 2.65  2011/05/17 00:44:14  vsnyder
 ! Remove ill-advised handling of perturbation for logBasis molecules.  The
 ! logBasis flag only affects copying to the forward model's grid structures,
