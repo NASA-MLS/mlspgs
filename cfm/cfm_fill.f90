@@ -10,32 +10,33 @@
 ! foreign countries or providing access to foreign persons.
 module CFM_Fill_m
 
-    use Init_Tables_Module, only: L_LOSVEL, &
+    use INIT_TABLES_MODULE, only: L_LOSVEL, &
         L_L1BMIF_TAI, L_L1BMAFBASELINE, &
         L_ECRTOFOV, L_PTAN, L_ORBITINCLINATION, &
         L_RADIANCE, L_SCGEOCALT, L_SCVEL, &
         L_TNGTGEODALT, L_TNGTGEOCALT, L_SCVELECR, &
         L_TNGTECI, L_SCVELECI, L_SCECI
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSFiles, only: GetMLSFileByType, HDFVERSION_5
-    use VectorsModule, only: VectorValue_T, M_LINALG, M_fill, MaskVectorQty, Dump
-    use L1BData, only: GetL1BFile, ASSEMBLEL1BQTYNAME, L1BData_T, &
-              DeallocateL1BData, ReadL1BData
-    use MLSCommon, only: MLSFile_T, DEFAULTUNDEFINEDVALUE, r8
-    use MLSSignals_m, only: GetSignalName, GetModuleName
-    use BitStuff, only: NegativeIfBitPatternSet
-    use Chunks_m, only: MLSChunk_T
-    use MLSStrings, only: writeIntsToChars
-    use FillUtils_1, only: fillerror, FromL1B, &
-                           PhiTanWithRefraction
-    use string_table, only: create_string
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSFILES, only: GETMLSFILEBYTYPE, HDFVERSION_5
+    use VECTORSMODULE, only: VECTORVALUE_T, M_LINALG, M_FILL, MASKVECTORQTY, DUMP
+    use L1BDATA, only: GETL1BFILE, ASSEMBLEL1BQTYNAME, L1BDATA_T, &
+              DEALLOCATEL1BDATA, READL1BDATA
+    use MLSCOMMON, only: MLSFILE_T, DEFAULTUNDEFINEDVALUE
+    use MLSKINDS, only: R8
+    use MLSSIGNALS_M, only: GETSIGNALNAME, GETMODULENAME
+    use BITSTUFF, only: NEGATIVEIFBITPATTERNSET
+    use CHUNKS_M, only: MLSCHUNK_T
+    use MLSSTRINGS, only: WRITEINTSTOCHARS
+    use FILLUTILS_1, only: FILLERROR, FROML1B, &
+                           PHITANWITHREFRACTION
+    use STRING_TABLE, only: CREATE_STRING
 
     implicit none
 
-    public :: ExplicitFillVectorQuantity, FillVectorQuantityFromL1B
-    public :: SpreadFillVectorQuantity, FillPtanQuantity
-    public :: FillVectorQtyFromProfile, FillPhitanQuantity
-    public :: ApplyBaseline
+    public :: EXPLICITFILLVECTORQUANTITY, FILLVECTORQUANTITYFROML1B
+    public :: SPREADFILLVECTORQUANTITY, FILLPTANQUANTITY
+    public :: FILLVECTORQTYFROMPROFILE, FILLPHITANQUANTITY
+    public :: APPLYBASELINE
 
     private
 
@@ -195,8 +196,8 @@ module CFM_Fill_m
         type(VectorValue_T), intent(in) :: refGPH
         type(VectorValue_T), intent(in) :: temperature
 
-        call PhiTanWithRefraction(0, quantity, h2o, orbIncl, &
-                                  ptan, refGPH, temperature)
+        call PhiTanWithRefraction( 0, quantity, h2o, orbIncl, &
+                                  ptan, refGPH, temperature, .false. )
     end subroutine
 
     ! Don't know how to describe this
@@ -372,7 +373,8 @@ module CFM_Fill_m
         logical, intent(in) :: quadrature
         logical, intent(in) :: dontmask
 
-        call Orig_ApplyBaseline (0, quantity, baselineQuantity, quadrature, dontmask)
+        call Orig_ApplyBaseline ( 0, quantity, baselineQuantity, quadrature, &
+          & dontmask, .false. )
     end subroutine
 
 !--------------------------- end bloc --------------------------------------
@@ -388,6 +390,10 @@ module CFM_Fill_m
 end module
 
 ! $Log$
+! Revision 1.13  2011/12/15 18:27:44  honghanh
+! Documentation and code clean up, including removing unused and broken
+! subroutines.
+!
 ! Revision 1.12  2011/11/03 14:39:57  honghanh
 ! Add fill subroutine that use maf instead of chunk
 !
