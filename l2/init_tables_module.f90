@@ -1029,7 +1029,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
              begin, f+f_sourceGrid, s+s_gridded, s+s_merge, s+s_concatenate, &
                     s+s_ConvertEtaToP, s+s_WMOTrop, n+n_field_spec, &
-             begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_status, t+t_numeric, n+n_field_type, &
@@ -1283,6 +1282,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_radiancequantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_sourcequantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_additional, t+t_boolean, n+n_field_type, &
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
@@ -1786,6 +1787,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.554  2012/10/17 00:42:55  pwagner
+! removed unused sourcesGrid
+!
 ! Revision 2.553  2012/10/09 00:48:30  pwagner
 ! New ignoreTemplate, changed force meaning in Fill
 !
