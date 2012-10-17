@@ -412,7 +412,6 @@ sourceL2GP
 sourceMask
 sourceMatrix
 sourceQuantity
-sourcesGrid
 sourcevGrid
 spacing
 sparseQuantities
@@ -500,6 +499,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.223  2012/10/17 00:42:37  pwagner
+# removed unused sourcesGrid
+#
 # Revision 2.222  2012/10/09 00:48:30  pwagner
 # New ignoreTemplate, changed force meaning in Fill
 #
