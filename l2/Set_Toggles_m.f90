@@ -11,8 +11,8 @@
 
 module Set_Toggles_m
 
-  implicit NONE
-  public
+  implicit none
+  private
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -20,11 +20,13 @@ module Set_Toggles_m
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  public :: SET_TOGGLES
+
 contains
 
   subroutine Set_Toggles ( String )
 
-    ! Set toggles from String
+    ! Set toggles and toggle levels from String
     ! a => syn -- dump abstract syntax tree
     ! c => con -- trace type checker
     ! f => emit -- forward model
@@ -35,7 +37,7 @@ contains
     ! Invalid toggles are ignored
     ! Any toggle can be followed by a single digit, which sets Levels
 
-    use Toggles, only: Con, Emit, Gen, Lex, Par, Syn, Tab, Toggle, Levels
+    use TOGGLES, only: CON, EMIT, GEN, LEX, PAR, SYN, TAB, TOGGLE, LEVELS
     character(*), intent(in) :: String
 
     character(*), parameter :: Good = 'cfglpat'
@@ -52,14 +54,13 @@ contains
       if ( j /= 0 ) then
         toggle(j) = .true.
         levels(j) = 0
-        if ( i+1 >= len_trim(string) ) exit
+        if ( i+1 > len_trim(string) ) exit
         if ( string(i+1:i+1) >= '0' .and. string(i+1:i+1) <= '9' ) then
           i = i + 1
           levels(j) = ichar(string(i:i)) - ichar('0')
         end if
       end if
     end do
-
   end subroutine Set_Toggles
 
 !--------------------------- end bloc --------------------------------------
@@ -75,6 +76,9 @@ contains
 end module Set_Toggles_m
 
 ! $Log$
+! Revision 2.3  2012/10/20 00:00:58  pwagner
+! Fixed bug added with last bugfix
+!
 ! Revision 2.2  2012/06/21 00:31:29  pwagner
 ! Protect against exceeding substring end
 !
