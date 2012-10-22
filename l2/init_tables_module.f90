@@ -904,6 +904,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_boxCarMethod, t+t_boxCarMethod, n+n_field_type, &
              begin, f+f_c, t+t_numeric, n+n_field_type, &
              begin, f+f_channel, t+t_numeric, n+n_field_type, &
+             begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_centerVertically, t+t_boolean, n+n_field_type/) )
     call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
@@ -935,7 +936,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_h2oPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_height, t+t_numeric, n+n_field_type , &
+             begin, f+f_height, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_heightRange, t+t_string, n+n_field_type/),  &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
@@ -1033,6 +1034,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_status, t+t_numeric, n+n_field_type, &
              begin, f+f_suffix, t+t_string, n+n_field_type , &
+             begin, f+f_surface, t+t_numeric_range, n+n_field_type, &
              begin, f+f_systemTemperature, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot /), &
              continue = .true. )
@@ -1287,7 +1289,8 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_additional, t+t_boolean, n+n_field_type, &
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_height, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_height, t+t_numeric_range, t+t_numeric, n+n_field_type, &
+             begin, f+f_heightRange, t+t_string, n+n_field_type, &
              begin, f+f_ignore, t+t_boolean, n+n_field_type, &
              begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_mask, t+t_masks, n+n_field_type, &
@@ -1787,6 +1790,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.555  2012/10/22 18:13:28  pwagner
+! Many Subset operations now available in Fill
+!
 ! Revision 2.554  2012/10/17 00:42:55  pwagner
 ! removed unused sourcesGrid
 !
