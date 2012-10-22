@@ -77,8 +77,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSSETS, only: FINDFIRST, FINDLAST
   use MLSSIGNALS_M, only: GETFIRSTCHANNEL, GETSIGNALNAME, GETMODULENAME, &
     & GETSIGNAL, ISMODULESPACECRAFT, SIGNAL_T, SIGNALS
-  use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, &
-    & NUMSTRINGELEMENTS, &
+  use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, &
     & STRINGELEMENT, SWITCHDETAIL
   use MLSSTRINGS, only: INDEXES, LOWERCASE, WRITEINTSTOCHARS
   use MOLECULES, only: L_H2O
@@ -91,10 +90,8 @@ module FillUtils_1                     ! Procedures used by Fill
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: NODE_ID, DECORATION, SUBTREE, NSONS, &
+  use TREE, only: DECORATION, SUBTREE, NSONS, &
     & SOURCE_REF, SUBTREE
-  use TREE_TYPES, only: N_COLON_LESS, N_LESS_COLON, &
-    & N_LESS_COLON_LESS
   use VECTORSMODULE, only: &
     & CLEARUNDERMASK, COPYVECTOR, CREATEMASK, &
     & DESTROYVECTORINFO, DESTROYVECTORQUANTITYMASK, DUMP, &
@@ -200,7 +197,7 @@ module FillUtils_1                     ! Procedures used by Fill
     module procedure FromProfile_node, FromProfile_values
   end interface
 
-  
+  logical, parameter :: WARNIFVERTCOORDNOTZETA = .false.
 
 contains ! =====     Public Procedures     =============================
 
@@ -548,8 +545,7 @@ contains ! =====     Public Procedures     =============================
 
     !=============================================== Explicit ==
     subroutine Explicit ( quantity, valuesNode, spreadFlag, force, &
-      & globalUnit, dontmask, channel, heightNode, instancesNode, &
-      & AzEl, options, FillValue, extraQuantity )
+      & globalUnit, dontmask, channel, AzEl, options, FillValue, extraQuantity )
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
       ! fill command line or as part of a compound Fill,
@@ -570,9 +566,7 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: FORCE        ! Fill in as many instances as will fit
       integer, intent(in) :: GLOBALUNIT   ! From parent vector
       logical, intent(in) :: DONTMASK     ! Don't bother with the mask
-      integer, intent(in) :: CHANNEL      ! Fill specified channel?
-      integer, intent(in) :: HEIGHTNODE   ! Fill (at) specified height?
-      integer, intent(in) :: INSTANCESNODE   ! Fill (at) specified instances?
+      integer, intent(in) :: CHANNEL
       logical, intent(in), optional :: AzEl ! Values are in [Mag, Az, El]; the
         ! desired quantity is components of Mag in the coordinate system to
         ! which Az and El are referenced.  So the number of values has to be
@@ -593,9 +587,6 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       integer :: chan
-      logical, dimension(QUANTITY%template%noInstances) :: doThisInstance
-      real(r8) :: HEIGHT                ! The height to consider
-      character(len=8) :: heightRange   ! 'above', 'below', 'at'
       integer :: K                        ! Loop counter
       integer :: I,J                      ! Other indices
       logical :: MyAzEl
@@ -603,18 +594,9 @@ contains ! =====     Public Procedures     =============================
       character (len=8) :: myOptions
       integer :: NoValues
       integer :: numChans
-      integer :: rangeID
-      integer :: s1
-      integer :: s2
-      integer :: son
-      character(len=16) :: str
       integer :: surf
-      integer :: surface
       integer :: TestUnit                 ! Unit to use
-      integer :: TYPE                   ! Type of value returned by expr
-      integer :: UNITS(2)               ! Units returned by expr
       integer, dimension(2) :: unitAsArray ! Unit for value given
-      real(r8) :: VALUE(2)              ! Value returned by expr
       real (r8), pointer, dimension(:) :: VALUES
       real (r8), dimension(2) :: valueAsArray ! Value given
       logical :: Verbose
@@ -628,7 +610,6 @@ contains ! =====     Public Procedures     =============================
       if ( present(azEl) ) myAzEl = azEl
       myOptions = ' '
       if ( present(options) ) myOptions = options
-      doThisInstance = .true.
       whichInstances = ' '
 
       testUnit = quantity%template%unit
@@ -648,12 +629,6 @@ contains ! =====     Public Procedures     =============================
         whichToReplace = '/='
       end if
       verbose = ( index(myOptions, 'v') > 0 )
-      heightRange = 'at'
-      if ( index(myOptions, 'a') > 0 ) then
-        heightRange = 'above'
-      elseif ( index(myOptions, 'b') > 0 ) then
-        heightRange = 'below'
-      end if
       
       if ( .not. present(extraQuantity) ) then
         ! Check the dimensions work out OK
@@ -716,96 +691,25 @@ contains ! =====     Public Procedures     =============================
           call newline
         end if
       end if
-      ! Work out the height
-      if ( heightNode /= 0 ) then
-        if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( heightNode, no_error_code, &
-          & 'Only one height can be supplied for status fill' )
-        if ( Quantity%template%verticalCoordinate /= l_zeta ) &
-          & call Announce_Error ( heightNode, no_error_code, 'Bad vertical coordinate for sourceQuantity' )
-        call expr_check ( subtree(2,heightNode) , unitAsArray, valueAsArray, &
-          & (/PHYQ_Pressure/), unitsError )
-        if ( unitsError ) call Announce_error ( heightNode, wrongUnits, &
-          & extraInfo=(/unitAsArray(1), PHYQ_Pressure/) )
-        height = - log10 ( valueAsArray(1) )
-        call Hunt ( Quantity%template%surfs(:,1), height, surface, &
-          & nearest=.true. )
-        if ( verbose ) then
-          call outputNamedValue( 'height', height )
-          call dump( Quantity%template%surfs(:,1), 'surfs' )
-          call outputNamedValue( 'surface', surface )
-          call outputNamedValue( 'surfs(surface)', &
-            & Quantity%template%surfs(surface, 1) )
-        endif
-      endif
+
       numChans = quantity%template%instanceLen / quantity%template%noSurfs
       if ( numChans /= quantity%template%noChans ) then
         call outputNamedValue( 'noSurfs', quantity%template%noSurfs )
         call outputNamedValue( 'noChans', quantity%template%noChans )
         call outputNamedValue( 'numChans', numChans )
         call outputNamedValue( 'instanceLen', quantity%template%instanceLen )
-        call announce_error ( heightNode, no_Error_Code, &
+        call announce_error ( valuesNode, no_Error_Code, &
           & 'Inconsistent template instance length' )
-      endif
-      ! Do we plan doing some instances or all?
-      if ( instancesNode /= 0 ) then
-        do j = 2, nsons(InstancesNode)
-          son = subtree ( j, InstancesNode )
-          rangeId = node_id ( son )
-          ! 
-          call expr ( son, units, value, type )
-          if ( any ( units /= phyq_dimensionless ) ) &
-            & call Announce_Error ( InstancesNode, no_error_code, &
-            & 'No units allowed in instances field during explicit fill' )
-          s1 = max ( min ( value(1), &
-            & real(quantity%template%noInstances, r8) ), 1._r8 )
-          s2 = max ( min ( value(2), &
-            & real(quantity%template%noInstances, r8) ), 1._r8 )
-          ! Now consider the open range issue
-          select case ( rangeId )
-          case ( n_colon_less )
-            s1 = min ( s1 + 1, quantity%template%noInstances )
-          case ( n_less_colon )
-            s2 = max ( s2 - 1, 1 )
-          case ( n_less_colon_less )
-            s1 = min ( s1 + 1, quantity%template%noInstances )
-            s2 = max ( s2 - 1, 1 )
-          end select
-          if ( s1 == s2 ) then
-            write( str, '(i5)' ) s1
-          else
-            write( str, '(i5, a1, i5)' ) s1, '-', s2
-          endif
-          whichInstances = catLists( whichInstances, str )
-        enddo
-        call ExpandStringRange( trim(whichInstances), doThisInstance )
-        if ( verbose ) then
-          call outputNamedValue( 'whichInstances', trim(whichInstances) )
-          call dump( doThisInstance )
-        endif
       endif
       ! Now loop through the quantity
       k = 0
       do i = 1, quantity%template%noInstances
-        if ( .not. doThisInstance(i) ) cycle
         j = 0
         do surf = 1, quantity%template%noSurfs
           ! Have we specified which height to fill?
           do chan = 1, numChans
             j = j + 1
             k = k + 1
-            if ( heightNode /= 0 ) then
-              select case (heightRange)
-              case('above')
-              ! Fill only surfs above supplied height
-                if ( surf < surface ) cycle
-              case('below')
-              ! Fill only surfs below supplied height
-                if ( surf > surface ) cycle
-              case('at')
-              ! Fill only surfs at supplied height
-                if ( surface /= surf ) cycle
-              end select
-            endif
             if ( .not. dontMask .and. associated ( quantity%mask ) ) then
               if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) /= 0 ) cycle
             end if
@@ -832,8 +736,11 @@ contains ! =====     Public Procedures     =============================
         call output(quantity%values(1,:))
         call newline
       end if
-      ! Tidy up
-      if ( .not. present(extraQuantity) ) call Deallocate_test ( values, 'values', ModuleName )
+      ! Housekeeping
+      if ( .not. present(extraQuantity) ) &
+        & call Deallocate_test ( values, 'values', ModuleName )
+      ! No, don't do this, because sourceHeights might be our vgrid
+      ! call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_end ( 'FillUtils_1.Explicit' )
 
@@ -2044,6 +1951,12 @@ contains ! =====     Public Procedures     =============================
     ! Note that this does *NOT* copy the mask (at least for the moment)
     ! It is assumed that the original one (e.g. inherited from transfer)
     ! is still relevant.
+    ! See Subset command
+    
+    ! Next:
+    ! Check that vGrids match
+    ! If they don't, and /interpolate not set, then raise an exception
+    ! (no more silent inerpolations)
     subroutine FromAnother ( quantity, sourceQuantity, ptan, &
       & key, ignoreTemplate, spreadflag, dontMask, interpolate, force )
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -4816,13 +4729,17 @@ contains ! =====     Public Procedures     =============================
     end subroutine WithWMOTropopause
 
     ! -------------------------------------------- QualityFromChisq --------
+    ! Compute Quality as a function of chi^2
+    ! namely, Q = scale / chi^2
+    ! The computation is done at the first vertical surface
+    ! unless heightNode is supplied
     subroutine QualityFromChisq ( key, quantity, sourceQuantity, &
       & scale, heightNode, ignoreTemplate )
       integer, intent(in) :: KEY        ! Tree node
       type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type ( VectorValue_T), intent(in)    :: SOURCEQUANTITY ! Chisq like quantity on which it's based
       real(r8), intent(in)                 :: SCALE     ! A scale factor
-      integer, intent(in)                  :: HEIGHTNODE ! What heights
+      integer, intent(in)                  :: HEIGHTNODE ! What height to use
       logical, intent(in)                  :: IGNORETEMPLATE
       ! Local variables
       integer, dimension(2) :: UNITASARRAY ! From expr
@@ -4874,7 +4791,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: STATUSVALUE
       real(r8), intent(in) :: MINVALUE     ! A scale factor
       real(r8), intent(in) :: MAXVALUE     ! A scale factor
-      integer, intent(in) :: HEIGHTNODE ! What heights
+      integer, intent(in) :: HEIGHTNODE ! What height to compare at
       logical, intent(in) :: ADDITIONAL ! Is this an additional flag or a fresh start?
       logical, intent(in) :: EXACT ! Set status to exact statusValue , don't OR values
       logical, intent(in) :: IGNORETEMPLATE
@@ -4989,7 +4906,7 @@ contains ! =====     Public Procedures     =============================
         call Allocate_test ( sourceHeights, sourceQuantity%template%nosurfs, &
           & sourceQuantity%template%noinstances, 'sourceHeights', ModuleName )
         sourceHeights = ptanQuantity%values
-        if ( quantity%template%verticalCoordinate /= l_zeta ) &
+        if ( quantity%template%verticalCoordinate /= l_zeta .and. WARNIFVERTCOORDNOTZETA ) &
           & call Announce_Error ( key, no_error_code, &
           & 'Vertical coordinate in quantity to fill is not zeta' )
       else
@@ -5722,7 +5639,7 @@ contains ! =====     Public Procedures     =============================
         call Allocate_test ( sourceHeights, sourceQuantity%template%nosurfs, &
           & sourceQuantity%template%noinstances, 'sourceHeights', ModuleName )
         sourceHeights = ptanQuantity%values
-        if ( quantity%template%verticalCoordinate /= l_zeta ) &
+        if ( quantity%template%verticalCoordinate /= l_zeta .and. WARNIFVERTCOORDNOTZETA ) &
           & call Announce_Error ( key, no_error_code, &
           & 'Vertical coordinate in quantity to fill is not zeta' )
       else
@@ -6503,7 +6420,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) ::              modelQty
       type (VectorValue_T), intent(in) ::              measQty
       type (VectorValue_T), optional, intent(in) ::    noiseQty
-      LOGICAL ::                                       AOK
+      logical ::                                       AOK
 
       ! What we will check is that (for the args we have been given):
       ! (0) all quantities have associated values
@@ -6518,7 +6435,7 @@ contains ! =====     Public Procedures     =============================
       ! if vmr, check on others
 
      ! Local variables
-      LOGICAL ::       minorFrame   ! TRUE if radiances, FALSE if vmr
+      logical ::       minorFrame   ! TRUE if radiances, FALSE if vmr
 
       if ( toggle(gen) .and. levels(gen) > 2 ) &
         & call trace_begin ( 'FillUtils_1.FillableChiSq' )
@@ -6745,6 +6662,32 @@ contains ! =====     Public Procedures     =============================
       end subroutine FillMyInstances
     end subroutine NamedQtyFromFile
     
+  ! --------- WhichSurfaceIsHeight ------
+  function WhichSurfaceIsHeight ( node, Heights ) result ( surface )
+    ! Args
+    integer, intent(in)                  :: node  ! Tree node
+    real(r8), dimension(:), intent(in)   :: heights ! array of heights
+    integer                              :: surface
+    ! Internal variables
+    real(r8) :: HEIGHT                ! The height to consider
+    integer, dimension(2) :: unitAsArray ! Unit for value given
+    logical :: unitsError
+    real (r8), dimension(2) :: valueAsArray ! Value given
+    ! Executable
+    if ( node > 0 ) then
+      if ( nsons ( node ) /= 2 ) call Announce_Error ( node, no_error_code, &
+        & 'Only one height can be supplied for explicit fill' )
+      call expr_check ( subtree(2,node) , unitAsArray, valueAsArray, &
+        & (/PHYQ_Pressure/), unitsError )
+      if ( unitsError ) call Announce_error ( node, wrongUnits, &
+        & extraInfo=(/unitAsArray(1), PHYQ_Pressure/) )
+      height = - log10 ( valueAsArray(1) )
+      call Hunt ( heights, height, surface, nearest=.true. )
+    else
+      surface = 0
+    endif
+  end function WhichSurfaceIsHeight
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -6760,6 +6703,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.65  2012/10/22 18:15:47  pwagner
+! Many Subset operations now available in Fill
+!
 ! Revision 2.64  2012/10/09 00:48:31  pwagner
 ! New ignoreTemplate, changed force meaning in Fill
 !
