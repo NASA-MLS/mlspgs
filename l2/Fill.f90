@@ -102,7 +102,7 @@ contains ! =====     Public Procedures     =============================
       & F_APRIORIPRECISION, F_ASPERCENTAGE, F_AUTOFILL, F_AVOIDBRIGHTOBJECTS, &
       & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, &
       & F_BOXCARMETHOD, &
-      & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, &
+      & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_CHANNELS, F_COLUMNS, &
       & F_DESTINATION, F_DIAGONAL, &
       & F_DONTMASK, F_DONTSUMHEIGHTS, F_DONTSUMINSTANCES, &
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, &
@@ -130,7 +130,7 @@ contains ! =====     Public Procedures     =============================
       & F_SCVEL, F_SCVELECI, F_SCVELECR, F_SDNAME, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, &
       & F_SOURCEVGRID, F_SPREAD, F_STATUS, &
-      & F_SUFFIX, F_SUPERDIAGONAL, &
+      & F_SUFFIX, F_SUPERDIAGONAL, F_SURFACE, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, F_TOTALPOWERQUANTITY, &
       & F_TYPE, F_UNIT, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
@@ -212,7 +212,8 @@ contains ! =====     Public Procedures     =============================
     use READAPRIORI, only: APRIORIFILES
     use SNOOPMLSL2, only: SNOOP
     use STRING_TABLE, only: GET_STRING
-    use SUBSETMODULE, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE, UPDATEMASK
+    use SUBSETMODULE, only: APPLYMASKTOQUANTITY, RESTRICTRANGE, &
+      & SETUPFLAGCLOUD, SETUPSUBSET, UPDATEMASK
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -221,6 +222,7 @@ contains ! =====     Public Procedures     =============================
     use TREE_TYPES, only: N_NAMED
     use VECTORSMODULE, only: ADDVECTORTODATABASE, &
       & CLONEVECTORQUANTITY, CREATEVECTOR, &
+      & DESTROYVECTORQUANTITYMASK, DUMPQUANTITYMASK, &
       & GETVECTORQTYBYTEMPLATEINDEX, &
       & VALIDATEVECTORQUANTITY, VECTOR_T, &
       & VECTORTEMPLATE_T, VECTORVALUE_T, M_FILL
@@ -289,8 +291,10 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T)          :: TEMPSWAPQUANTITY
     type (vectorValue_T), pointer :: TOTALPOWERQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
+    type (vectorValue_T), pointer :: ODQUANTITY              ! optical depth
     type (vectorValue_T), pointer :: PHITANQUANTITY
     type (vectorValue_T), pointer :: PTANQUANTITY
+    type (vectorValue_T), pointer :: RADQUANTITY
     type (vectorValue_T), pointer :: USB
     type (vectorValue_T), pointer :: USBFRACTION
     type (vectorValue_T), pointer :: VMRQTY
@@ -321,6 +325,7 @@ contains ! =====     Public Procedures     =============================
     real(rv) :: C                       ! constant "c" in manipulation
     logical :: CENTERVERTICALLY         ! For bin based fills
     integer :: CHANNEL                  ! For spreadChannels fill
+    integer :: CHANNELSNODE
     integer :: COLMABUNITS              ! l_DOBSONUNITS, or l_MOLCM2
     integer :: COLVECTOR                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
@@ -363,6 +368,7 @@ contains ! =====     Public Procedures     =============================
     integer :: GRIDINDEX                ! Index of requested grid
     integer :: GSON                     ! Descendant of Son
     integer :: HEIGHTNODE               ! Descendant of son
+    character(len=8) :: HEIGHTRANGE     ! 'above', 'below', or ' '
     type(hessian_T), pointer :: hessian
     integer :: HESSIANINDEX             ! An index into the hessians
     integer :: HESSIANTOFILL             ! Index in database
@@ -483,6 +489,7 @@ contains ! =====     Public Procedures     =============================
     integer :: STATUSVALUE              ! Vaue of f_status
     logical :: STRICT                   ! Maximize checking
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
+    integer :: SURFNODE                 ! Descendant of son
     logical :: SWITCH2INTRINSIC         ! Have mls_random_seed call intrinsic
     !                                     -- for Covariance
     real :: T1, T2                      ! for timing
@@ -555,6 +562,7 @@ contains ! =====     Public Procedures     =============================
       c = 0.
       centerVertically = .false.
       channel = 0
+      channelsNode = 0
       colmabunits = l_molcm2 ! default units for column abundances
       dontMask = .false.
       dontSumHeights = .false.
@@ -567,6 +575,7 @@ contains ! =====     Public Procedures     =============================
       GLStr = ' '
       got= .false.
       heightNode = 0
+      heightRange = ' '
       ignoreZero = .false.
       ignoreNegative = .false.
       ignoreGeolocation = .false.
@@ -590,6 +599,7 @@ contains ! =====     Public Procedures     =============================
       scaleSurfs = -1.0
       spreadFlag = .false.
       strict = .false.
+      surfNode = 0
       switch2intrinsic = .false.
       suffix = 0
       seed = 0
@@ -605,6 +615,7 @@ contains ! =====     Public Procedures     =============================
       statusValue = 0
       whereFill = .false.
       whereNotFill = .false.
+      nullify ( ptanQuantity, radQuantity, odQuantity )
 
       ! Node_id(key) is now n_spec_args.
 
@@ -872,7 +883,11 @@ contains ! =====     Public Procedures     =============================
       case ( s_directRead ) ! =============================  direectRead  =====
         call directReadCommand
       case ( s_fill ) ! ===================================  Fill  =====
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
+          & call trace_begin ( "Fill.fillCommand", root )
         call fillCommand
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
+          & call trace_end ( "Fill.fillCommand" )
       case ( s_fillcovariance ) ! ===============  Covariance  =====
         invert = .false. ! Default if the field isn't present
         lengthScale = 0
@@ -1265,8 +1280,10 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------------ fillCommand -----
     subroutine fillCommand
     ! Now we're on actual Fill instructions.
-      use VectorsModule, only: DestroyVectorQuantityValue
-      integer :: jj
+      use VECTORSMODULE, only: DESTROYVECTORQUANTITYVALUE
+      integer :: JJ
+      type(vectorValue_T) :: TEMPQUANTITY  ! For storing original qty's mask
+      ! Executable
       ! Loop over the instructions to the Fill command
       BOMask = 0
       AvoidObjects = ' '
@@ -1316,6 +1333,8 @@ contains ! =====     Public Procedures     =============================
           if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
             & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
           channel = valueAsArray(1)
+        case ( f_channels )
+          channelsNode = son
         case ( f_centerVertically )
           centerVertically = get_boolean ( gson )
         case ( f_earthRadius ) ! For losGrid fill
@@ -1370,14 +1389,22 @@ contains ! =====     Public Procedures     =============================
           dontSumInstances = get_boolean ( gson )
         case ( f_heightRange )
           manipulation = sub_rosa ( gson )
-          options = ' '
+          heightRange = ' '
           ! If heightRange field was present, it should have been one of
           ! 'a[bove]' meaning fill heights above supplied value
           ! 'b[elow]' meaning fill heights below supplied value
-          call get_string ( manipulation, options, strip=.true. )
-          if ( index(' ab', options(1:1)) < 1 ) &
-            & call Announce_Error ( key, no_Error_Code, &
-              & 'invalid heightRange: ' // trim(options) )
+          call get_string ( manipulation, heightRange, strip=.true. )
+          select case ( heightRange(1:1) )
+          case ( 'a' )
+            heightRange = 'above'
+          case ( 'b' )
+            heightRange = 'below'
+          case ( ' ' )
+            heightRange = ' '
+          case default
+            call Announce_Error ( key, no_Error_Code, &
+            & 'invalid heightRange: ' // trim(heightRange) )
+          end select
         case ( f_ignoreZero )
           ignoreZero = get_boolean ( gson )
         case ( f_ignoreGeolocation ) ! For l2gp etc. fill
@@ -1600,6 +1627,8 @@ contains ! =====     Public Procedures     =============================
         !   strict = get_boolean ( gson )
         case ( f_suffix )
           suffix = sub_rosa ( gson )
+        case ( f_surface )
+          surfNode = subtree(j,key)
         case ( f_systemTemperature )
           sysTempVectorIndex = decoration(decoration(subtree(1,gson)))
           sysTempQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1646,9 +1675,25 @@ contains ! =====     Public Procedures     =============================
       if ( skipFill ) fillMethod = -1 ! We'll assume no l_value can be this
 
       ! Now call various routines to do the filling
+      ! This is the actual quantity we shall Fill
       quantity => GetVectorQtyByTemplateIndex( &
         & vectors(vectorIndex), quantityIndex )
+      if ( got ( f_ptanQuantity )  ) then
+        ptanQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(ptanVectorIndex), ptanQuantityIndex)
+      endif
 
+      ! However, we will first mask the quantity to account for
+      ! any height, instances, etc. restrictions you may have set
+      call CloneVectorQuantity ( tempQuantity, quantity )
+      call ApplyMaskToQuantity( quantity, &
+        & radQuantity, ptanQuantity, odQuantity, 0._r8, &
+        & maxvalue, minValue, heightRange, &
+        & .false., .false., additional, .false., &
+        & M_Fill, heightNode, surfNode, instancesNode, 0 )
+
+      if ( heightNode /= 0 .and. DEEBUG ) call dumpQuantityMask ( quantity )
+      ! Then we Fill the newly masked quantity
       select case ( fillMethod )
       case ( l_addNoise ) ! ----- Add random noise to source Quantity -------
         if ( DEEBUG) call output('add noise method', advance='yes')
@@ -1746,12 +1791,6 @@ contains ! =====     Public Procedures     =============================
           & 'Need source quantity for bin fill or least-squares fill' )
         sourceQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(sourceVectorIndex), sourceQuantityIndex )
-        if ( got ( f_ptanQuantity ) ) then
-          ptanQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(ptanVectorIndex), ptanQuantityIndex)
-        else
-          nullify ( ptanQuantity )
-        end if
 
         if ( sourceQuantity%template%verticalCoordinate /= &
           & quantity%template%verticalCoordinate ) then
@@ -1922,8 +1961,8 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
         call Explicit ( quantity, valuesNode, spreadFlag, force, &
-          & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
-          & instancesNode, options=options(1:1) )
+          & vectors(vectorIndex)%globalUnit, dontmask, channel, &
+          & options=options(1:1) )
 
       case ( l_extractChannel )
         if ( .not. all(got ( (/f_sourceQuantity,f_channel/)))) &
@@ -2258,8 +2297,8 @@ contains ! =====     Public Procedures     =============================
               & spreadflag, dontSumHeights, dontSumInstances, &
               & c )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
-              & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
-              & instancesNode, options=options(1:1), extraQuantity=tempswapquantity )
+              & vectors(vectorIndex)%globalUnit, dontmask, channel, &
+              & options=options(1:1), extraQuantity=tempswapquantity )
             call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
               forWhom = 'tempswapquantity' )
           else
@@ -2277,8 +2316,8 @@ contains ! =====     Public Procedures     =============================
               & manipulation, key, ignoreTemplate, &
               & spreadflag, dontSumHeights, dontSumInstances )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
-              & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
-              & instancesNode, options=options(1:1), extraQuantity=tempswapquantity )
+              & vectors(vectorIndex)%globalUnit, dontmask, channel, &
+              & options=options(1:1), extraQuantity=tempswapquantity )
             call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
               forWhom = 'tempswapquantity' )
           else
@@ -2292,8 +2331,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
         call Explicit ( quantity, valuesNode, spreadFlag, force, &
-          & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, &
-          & instancesNode, azEl=.true. )
+          & vectors(vectorIndex)%globalUnit, dontmask, channel, azEl=.true. )
 
       case ( l_magneticModel ) ! --------------------- Magnetic Model --
         if ( .not. got ( f_gphQuantity ) ) then
@@ -2384,12 +2422,6 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got ( f_profileValues ) ) &
           call Announce_error ( key, no_Error_Code, 'profileValues not supplied' )
         if ( .not. got ( f_instances ) ) instancesNode = 0
-        if ( got ( f_ptanQuantity ) ) then
-          ptanQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(ptanVectorIndex), ptanQuantityIndex)
-        else
-          nullify ( ptanQuantity )
-        end if
         ! The next bit may seem odd - why not just pass logSpace on and let it default to false?
         ! The problem is, it should default to quantity%template%logSpace so absent means
         ! "don't care", not "logSpace=.false."
@@ -2595,8 +2627,7 @@ contains ! =====     Public Procedures     =============================
         if ( got(f_ifMissingGMAO) ) then
           if ( MissingGMAO ) call Explicit ( quantity, &
             & valuesNode, .true., .false., phyq_Invalid, .true., &
-            & channel, heightNode, &
-            & instancesNode, options=options(1:1) )
+            & channel, options=options(1:1) )
         elseif ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) then
           call Announce_Error ( key, no_error_code, &
           & 'Need sourceQuantity and status fields for status fill' )
@@ -2671,12 +2702,6 @@ contains ! =====     Public Procedures     =============================
           & vectors(VectorIndex), QuantityIndex )
         sourceQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(sourceVectorIndex), sourceQuantityIndex )
-        if ( got ( f_ptanQuantity )  ) then
-          ptanQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(ptanVectorIndex), ptanQuantityIndex)
-        else
-          nullify ( ptanQuantity )
-        endif
         call FromAnother ( quantity, sourceQuantity, ptanQuantity, &
           & key, ignoreTemplate, spreadflag, dontMask, interpolate, force )
       case ( l_uncompressRadiance )
@@ -2756,6 +2781,15 @@ contains ! =====     Public Procedures     =============================
       case default
         call Announce_error ( key, no_Error_Code, 'This fill method not yet implemented' )
       end select      ! s_method
+      
+      ! Before leaving, we must restore the original mask (or lack of one)
+      if ( associated(tempQuantity%mask) ) then
+        quantity%mask = tempQuantity%mask
+      else
+        call DestroyVectorQuantityMask ( quantity )
+      endif
+      ! Housekeeping
+      call destroyVectorQuantityValue ( tempQuantity, destroyMask=.true. )
     end subroutine fillCommand
 
     ! ............................................  Get_File_Name  .....
@@ -2859,6 +2893,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.407  2012/10/22 18:14:50  pwagner
+! Many Subset operations now available in Fill
+!
 ! Revision 2.406  2012/10/09 00:48:30  pwagner
 ! New ignoreTemplate, changed force meaning in Fill
 !
