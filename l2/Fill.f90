@@ -208,7 +208,8 @@ contains ! =====     Public Procedures     =============================
     use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
       & REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: FLUSH_PFADATA
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, MODIFYQUANTITYTEMPLATE
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
+      & DUMP, MODIFYQUANTITYTEMPLATE
     use READAPRIORI, only: APRIORIFILES
     use SNOOPMLSL2, only: SNOOP
     use STRING_TABLE, only: GET_STRING
@@ -1282,6 +1283,7 @@ contains ! =====     Public Procedures     =============================
     ! Now we're on actual Fill instructions.
       use VECTORSMODULE, only: DESTROYVECTORQUANTITYVALUE
       integer :: JJ
+      logical :: QTYWASMASKED
       type(vectorValue_T) :: TEMPQUANTITY  ! For storing original qty's mask
       ! Executable
       ! Loop over the instructions to the Fill command
@@ -1685,13 +1687,23 @@ contains ! =====     Public Procedures     =============================
 
       ! However, we will first mask the quantity to account for
       ! any height, instances, etc. restrictions you may have set
+      qtyWasMasked = associated( quantity%mask )
+      if ( .true. ) then
       call CloneVectorQuantity ( tempQuantity, quantity )
-      call ApplyMaskToQuantity( quantity, &
+      if ( qtyWasMasked ) then
+        if ( any(tempQuantity%mask /= quantity%mask) ) then
+          call Announce_error ( key, no_Error_Code, &
+            & 'Mask not cloned successfully' )
+        endif
+      endif
+      ! call dump( tempQuantity%template )
+      ! call dump( Quantity%template )
+      if ( .true. ) call ApplyMaskToQuantity( quantity, &
         & radQuantity, ptanQuantity, odQuantity, 0._r8, &
-        & maxvalue, minValue, heightRange, &
+        & maxValue, minValue, heightRange, &
         & .false., .false., additional, .false., &
         & M_Fill, heightNode, surfNode, instancesNode, 0 )
-
+      endif
       if ( heightNode /= 0 .and. DEEBUG ) call dumpQuantityMask ( quantity )
       ! Then we Fill the newly masked quantity
       select case ( fillMethod )
@@ -1962,7 +1974,8 @@ contains ! =====     Public Procedures     =============================
           & call Announce_Error ( key, noExplicitValuesGiven )
         call Explicit ( quantity, valuesNode, spreadFlag, force, &
           & vectors(vectorIndex)%globalUnit, dontmask, channel, &
-          & options=options(1:1) )
+          & heightNode, instancesNode, &
+      & .false., options=heightRange(1:1) )
 
       case ( l_extractChannel )
         if ( .not. all(got ( (/f_sourceQuantity,f_channel/)))) &
@@ -2298,7 +2311,8 @@ contains ! =====     Public Procedures     =============================
               & c )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
               & vectors(vectorIndex)%globalUnit, dontmask, channel, &
-              & options=options(1:1), extraQuantity=tempswapquantity )
+              & heightNode, instancesNode, &
+              & .false., options=heightRange(1:1), extraQuantity=tempswapquantity )
             call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
               forWhom = 'tempswapquantity' )
           else
@@ -2317,7 +2331,8 @@ contains ! =====     Public Procedures     =============================
               & spreadflag, dontSumHeights, dontSumInstances )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
               & vectors(vectorIndex)%globalUnit, dontmask, channel, &
-              & options=options(1:1), extraQuantity=tempswapquantity )
+              & heightNode, instancesNode, &
+              & .false., options=heightRange(1:1), extraQuantity=tempswapquantity )
             call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
               forWhom = 'tempswapquantity' )
           else
@@ -2331,7 +2346,8 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
         call Explicit ( quantity, valuesNode, spreadFlag, force, &
-          & vectors(vectorIndex)%globalUnit, dontmask, channel, azEl=.true. )
+          & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, instancesNode, &
+      & azEl=.true. )
 
       case ( l_magneticModel ) ! --------------------- Magnetic Model --
         if ( .not. got ( f_gphQuantity ) ) then
@@ -2627,7 +2643,8 @@ contains ! =====     Public Procedures     =============================
         if ( got(f_ifMissingGMAO) ) then
           if ( MissingGMAO ) call Explicit ( quantity, &
             & valuesNode, .true., .false., phyq_Invalid, .true., &
-            & channel, options=options(1:1) )
+            & channel, 0, instancesNode, &
+            & .false., options=heightRange(1:1) )
         elseif ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) then
           call Announce_Error ( key, no_error_code, &
           & 'Need sourceQuantity and status fields for status fill' )
@@ -2783,13 +2800,20 @@ contains ! =====     Public Procedures     =============================
       end select      ! s_method
       
       ! Before leaving, we must restore the original mask (or lack of one)
-      if ( associated(tempQuantity%mask) ) then
+      if ( qtyWasMasked ) then
+        if ( any(tempQuantity%mask /= quantity%mask) ) &
+          & call output( 'Masks changed', advance='yes' )
+      endif
+      if ( .true. ) then
+      if ( qtyWasMasked ) then
         quantity%mask = tempQuantity%mask
-      else
-        call DestroyVectorQuantityMask ( quantity )
+      !else
+        !call DestroyVectorQuantityMask( quantity )
+      endif
       endif
       ! Housekeeping
-      call destroyVectorQuantityValue ( tempQuantity, destroyMask=.true. )
+      call destroyVectorQuantityValue ( tempQuantity, &
+        & destroyMask=.true., destroyTemplate=.false. )
     end subroutine fillCommand
 
     ! ............................................  Get_File_Name  .....
@@ -2893,6 +2917,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.408  2012/10/27 00:27:29  pwagner
+! Temporary fixes; cause of error not yet understood
+!
 ! Revision 2.407  2012/10/22 18:14:50  pwagner
 ! Many Subset operations now available in Fill
 !
