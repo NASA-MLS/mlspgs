@@ -1974,8 +1974,7 @@ contains ! =====     Public Procedures     =============================
           & call Announce_Error ( key, noExplicitValuesGiven )
         call Explicit ( quantity, valuesNode, spreadFlag, force, &
           & vectors(vectorIndex)%globalUnit, dontmask, channel, &
-          & heightNode, instancesNode, &
-      & .false., options=heightRange(1:1) )
+          & .false., options=heightRange(1:1) )
 
       case ( l_extractChannel )
         if ( .not. all(got ( (/f_sourceQuantity,f_channel/)))) &
@@ -2311,7 +2310,6 @@ contains ! =====     Public Procedures     =============================
               & c )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
               & vectors(vectorIndex)%globalUnit, dontmask, channel, &
-              & heightNode, instancesNode, &
               & .false., options=heightRange(1:1), extraQuantity=tempswapquantity )
             call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
               forWhom = 'tempswapquantity' )
@@ -2331,8 +2329,8 @@ contains ! =====     Public Procedures     =============================
               & spreadflag, dontSumHeights, dontSumInstances )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
               & vectors(vectorIndex)%globalUnit, dontmask, channel, &
-              & heightNode, instancesNode, &
-              & .false., options=heightRange(1:1), extraQuantity=tempswapquantity )
+              & .false., options=heightRange(1:1), &
+              & extraQuantity=tempswapquantity )
             call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
               forWhom = 'tempswapquantity' )
           else
@@ -2346,8 +2344,8 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
         call Explicit ( quantity, valuesNode, spreadFlag, force, &
-          & vectors(vectorIndex)%globalUnit, dontmask, channel, heightNode, instancesNode, &
-      & azEl=.true. )
+          & vectors(vectorIndex)%globalUnit, dontmask, channel, &
+          & azEl=.true. )
 
       case ( l_magneticModel ) ! --------------------- Magnetic Model --
         if ( .not. got ( f_gphQuantity ) ) then
@@ -2643,8 +2641,7 @@ contains ! =====     Public Procedures     =============================
         if ( got(f_ifMissingGMAO) ) then
           if ( MissingGMAO ) call Explicit ( quantity, &
             & valuesNode, .true., .false., phyq_Invalid, .true., &
-            & channel, 0, instancesNode, &
-            & .false., options=heightRange(1:1) )
+            & channel, .false., options=heightRange(1:1) )
         elseif ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) then
           call Announce_Error ( key, no_error_code, &
           & 'Need sourceQuantity and status fields for status fill' )
@@ -2917,6 +2914,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.409  2012/10/29 17:18:24  pwagner
+! Made consistent with FillUtils_1 api
+!
 ! Revision 2.408  2012/10/27 00:27:29  pwagner
 ! Temporary fixes; cause of error not yet understood
 !
