@@ -112,7 +112,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use MLSSETS, only: FINDFIRST, FINDUNIQUE
   use MLSSIGNALS_M, only: MODULES, SIGNALS, GETSIGNALNAME
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
-  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, CHECKINTEGRITY, DUMP, &
+  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, CHECKINTEGRITY, &
+    & COPYQUANTITYTEMPLATE, DESTROYQUANTITYTEMPLATECONTENTS, DUMP, &
     & NULLIFYQUANTITYTEMPLATE
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
   use SYMBOL_TABLE, only: ENTER_TERMINAL
@@ -799,10 +800,13 @@ contains ! =====     Public Procedures     =============================
   end subroutine  CloneVector
 
   ! ------------------------------------------------  CloneVectorQuantity  -----
-  subroutine CloneVectorQuantity ( Z, X )
+  subroutine CloneVectorQuantity ( Z, X, OPTIONS )
   ! Create a vector quantity to be the same template as a
   ! given one.  If the original's values are allocated, allocate the clone's
   ! and fill with the original's. Same with mask.
+  
+  ! If options is present and contains the string 'd', do a deep copy
+  ! of the template. Otherwise, content yourself with a shallow one
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to deallocate Z's values and mask after they are no
@@ -812,9 +816,19 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments:
     type(vectorValue_T), intent(inout) :: Z
     type(vectorValue_T), intent(in) :: X
+    character(len=*), optional, intent(in) :: OPTIONS
+    ! Internal variables
+    character(len=8) :: MYOPTIONS
     ! Executable statements:
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
     call NullifyVectorValue ( z )
-    z%template = x%template
+    if ( index( myOptions, 'd' ) > 0 ) then
+      call CopyQuantityTemplate ( z%template, x%template )
+    else
+      z%template = x%template
+    endif
+    z%index = x%index
     if ( associated(x%values) ) then
       call createVectorValue ( z, 'z%values' )
       z%values = x%values
@@ -823,6 +837,7 @@ contains ! =====     Public Procedures     =============================
       call createMask ( z )
       z%mask = x%mask
     end if
+    z%label = x%label
   end subroutine CloneVectorQuantity
 
   ! --------------------------------------------  ConstantXVector  -----
@@ -1129,14 +1144,16 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyVectorQuantityMask
 
   ! ---------------------------------  DestroyVectorQuantityValue  -----
-  subroutine DestroyVectorQuantityValue ( Value, DestroyMask, ForWhom )
+  subroutine DestroyVectorQuantityValue ( VALUE, &
+    & DESTROYMASK, DESTROYTEMPLATE, FORWHOM )
 
     ! This routine destroys the VALUES stored in one vector quantity.
 
     ! Dummy arguments
-    type (vectorValue_t), intent(inout) :: Value
-    logical, intent(in), optional :: DestroyMask
-    character(len=*), intent(in), optional :: ForWhom
+    type (vectorValue_t), intent(inout)    :: VALUE
+    logical, intent(in), optional          :: DESTROYMASK
+    logical, intent(in), optional          :: DESTROYTEMPLATE
+    character(len=*), intent(in), optional :: FORWHOM
     if ( present(forWhom) ) then
       call deallocate_test ( value%value1, trim(forWhom) // "%VALUE1", moduleName )
     else
@@ -1145,6 +1162,9 @@ contains ! =====     Public Procedures     =============================
     nullify ( value%value1, value%value3 )
     if ( present(destroyMask) ) then
       if ( destroyMask ) call destroyVectorQuantityMask ( value, forWhom )
+    end if
+    if ( present(destroyTemplate) ) then
+      if ( destroyTemplate ) call DestroyQuantityTemplateContents ( value%template )
     end if
   end subroutine DestroyVectorQuantityValue
 
@@ -2943,6 +2963,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.168  2012/10/11 21:01:02  pwagner
+! Print quantityName instead of moduleName during Dump
+!
 ! Revision 2.167  2012/07/31 00:33:40  vsnyder
 ! Use Test_Allocate instead of explicit testing followed by MLSMessage.
 ! Add ForWhom argument to DestroyVectorQuantityMask and
