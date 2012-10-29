@@ -266,33 +266,54 @@ contains
       & a%majorFrame )
     ! Copy each other component -- tedious, but a shallow copy
     ! would lose newly allocated arrays
-    z%quantityType = a%quantityType
-    z%logBasis = a%logBasis
-    z%minValue = a%minValue
-    z%noInstancesLowerOverlap = a%noInstancesLowerOverlap
-    z%noInstancesUpperOverlap = a%noInstancesUpperOverlap
-    z%badValue = a%badValue
-    z%unit = a%unit
-    z%verticalCoordinate = a%verticalCoordinate
-    z%surfs = a%surfs
-    z%instanceOffset = a%instanceOffset
-    z%grandTotalInstances = a%grandTotalInstances
-    z%phi = a%phi
-    z%geodLat = a%geodLat
-    z%lon = a%lon
-    z%time = a%time
-    z%solarTime = a%solarTime
+    ! 1st, scalars
+    z%name                         = a%name
+    z%quantityType                 = a%quantityType
+    z%noInstances                  = a%noInstances            
+    z%noSurfs                      = a%noSurfs                
+    z%noChans                      = a%noChans                
+    z%coherent                     = a%coherent               
+    z%stacked                      = a%stacked                
+    z%regular                      = a%regular                
+    z%minorFrame                   = a%minorFrame             
+    z%majorFrame                   = a%majorFrame             
+    z%logBasis                     = a%logBasis               
+    z%minValue                     = a%minValue               
+    z%noInstancesLowerOverlap      = a%noInstancesLowerOverlap
+    z%noInstancesUpperOverlap      = a%noInstancesUpperOverlap
+    z%badValue                     = a%badValue               
+    z%unit                         = a%unit                   
+    z%instanceLen                  = a%instanceLen
+    z%verticalCoordinate           = a%verticalCoordinate     
+    z%sharedVGrid                  = a%sharedVGrid            
+    z%vGridIndex                   = a%vGridIndex             
+    z%sharedHGrid                  = a%sharedHGrid             
+    z%hGridIndex                   = a%hGridIndex              
+    z%instanceOffset               = a%instanceOffset                    
+    z%grandTotalInstances          = a%grandTotalInstances               
+    z%fGridIndex                   = a%fGridIndex                
+    z%frequencyCoordinate          = a%frequencyCoordinate             
+    z%lo                           = a%lo                              
+    z%sharedFGrid                  = a%sharedFGrid                     
+    z%sideband                     = a%sideband                        
+    z%signal                       = a%signal                          
+    z%instrumentModule             = a%instrumentModule
+    z%radiometer                   = a%radiometer      
+    z%reflector                    = a%reflector       
+    z%molecule                     = a%molecule        
+
+    ! Next, arrays
+    z%surfs       = a%surfs
+    z%phi         = a%phi
+    z%geodLat     = a%geodLat
+    z%lon         = a%lon
+    z%time        = a%time
+    z%solarTime   = a%solarTime
     z%solarZenith = a%solarZenith
-    z%losAngle = a%losAngle
-    z%frequencyCoordinate = a%frequencyCoordinate
+    z%losAngle    = a%losAngle
+    z%ChanInds    = a%ChanInds
+    z%Channels    = a%Channels
     call deepCopy ( z%frequencies, a%frequencies )
-    z%lo = a%lo
-    z%signal = a%signal
-    z%sideband = a%sideband
-    z%instrumentModule = a%instrumentModule
-    z%radiometer = a%radiometer
-    z%reflector = a%reflector
-    z%molecule = a%molecule
     if ( .not. z%regular ) then
       z%surfIndex = a%surfIndex
       z%chanIndex = a%chanIndex
@@ -1582,6 +1603,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.71  2012/08/08 20:00:21  vsnyder
+! Honest! I only changed some comments!
+!
 ! Revision 2.70  2012/07/10 03:53:49  vsnyder
 ! Use DeepCopy
 !
