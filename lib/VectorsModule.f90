@@ -178,6 +178,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     module procedure CheckVectorForNaN, CheckVectorQuantityForNaN
   end interface
 
+  interface CLEARMASK
+    module procedure CLEARMASK_1D, CLEARMASK_2D
+  end interface
+
   interface DIFF
     module procedure DIFFVECTORQUANTITIES
   end interface
@@ -680,7 +684,7 @@ contains ! =====     Public Procedures     =============================
   end function CheckVectorQuantityForNaN
 
   ! --------------------------------------------------  ClearMask  -----
-  subroutine ClearMask ( MASK, TO_CLEAR, WHAT )
+  subroutine ClearMask_1d ( MASK, TO_CLEAR, WHAT )
   ! Clear bits of MASK indexed by elements of TO_CLEAR.  Numbering of mask
   ! elements starts at one, not zero!  If TO_CLEAR is absent, clear all of
   ! the bits of MASK.  If WHAT is absent, clear all bits.  If WHAT is
@@ -696,7 +700,21 @@ contains ! =====     Public Procedures     =============================
     else
       mask = char(iand(ichar(mask),myWhat))
     end if
-  end subroutine ClearMask
+  end subroutine ClearMask_1d
+
+  subroutine ClearMask_2d ( MASK, TO_CLEAR, WHAT )
+  ! Clear bits of MASK indexed by elements of TO_CLEAR.  Numbering of mask
+  ! elements starts at one, not zero!  If TO_CLEAR is absent, clear all of
+  ! the bits of MASK.  If WHAT is absent, clear all bits.  If WHAT is
+  ! present, clear only bits of MASK that correspond to "one" bits of WHAT.
+    character, intent(inout), dimension(:,:) :: MASK
+    integer, intent(in), dimension(:), optional :: TO_CLEAR
+    integer, intent(in), optional :: WHAT
+    integer :: instance
+    do instance=1, size(mask, 2)
+      call ClearMask ( mask(:, instance), to_clear, what )
+    enddo
+  end subroutine ClearMask_2d
 
   ! ----------------------------------------------  ClearUnderMask -----
   subroutine ClearUnderMask ( Z, Inst, Quant, What )
@@ -2963,6 +2981,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.169  2012/10/29 17:42:31  pwagner
+! Added optional args to CloneVectorQuantity, DestroyVectorQuantityValue
+!
 ! Revision 2.168  2012/10/11 21:01:02  pwagner
 ! Print quantityName instead of moduleName during Dump
 !
