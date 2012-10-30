@@ -19,8 +19,8 @@ module QuantityTemplates         ! Quantities within vectors
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
   use EXPR_M, only: EXPR_CHECK
-  use INTRINSIC, only: PHYQ_DIMENSIONLESS
-  use MLSCOMMON, only: NAMELEN
+  use INTRINSIC, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
+    & PHYQ_TIME
   use MLSFILLVALUES, only: RERANK
   use MLSKINDS, only: R8, RV
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
@@ -29,10 +29,10 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSSETS, only: FINDFIRST
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
-  use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: SWITCHES
-  use TREE, only: NSONS,SUBTREE
+  use TREE, only: NSONS, SUBTREE
 
   implicit none
   private
@@ -406,7 +406,6 @@ contains
   ! -------------------------------------  DUMP_QUANTITY_TEMPLATE  -----
   subroutine DUMP_QUANTITY_TEMPLATE ( QUANTITY_TEMPLATE, DETAILS, NOL2CF )
 
-    use INTRINSIC, only: LIT_INDICES
     use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERNAME, GETMODULENAME
     use OUTPUT_M, only: NEWLINE
     use STRING_TABLE, only: DISPLAY_STRING
@@ -612,9 +611,6 @@ contains
     integer, dimension(:), intent(in)        :: SHP
     integer, intent(in)                      :: VALUESNODE   ! Tree node for values
     logical, intent(in)                      :: spread
-    ! Local variables
-    integer :: n1
-    integer :: n2
     ! Executable
     if ( findFirst(MODIFIABLEFIELDS, lowercase(field)) < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName // &
@@ -630,7 +626,7 @@ contains
           & "template surfs", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
       endif
-      call myValuesToField( z%surfs, SHP, VALUESNODE, spread )
+      call myValuesToField( z%surfs, SHP, VALUESNODE, spread, PHYQ_Dimensionless )
     case ( 'phi' )
       if ( any(shape(z%phi) /= shp) ) then
         call deallocate_test( z%phi, 'template phi', &
@@ -639,7 +635,7 @@ contains
           & "template phi", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
       endif
-      call myValuesToField( z%phi, SHP, VALUESNODE, spread )
+      call myValuesToField( z%phi, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'geodlat' )
       if ( any(shape(z%geodlat) /= shp) ) then
         call deallocate_test( z%geodLat, 'template geodLat', &
@@ -648,7 +644,7 @@ contains
           & "template geodLat", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
       endif
-      call myValuesToField( z%geodLat, SHP, VALUESNODE, spread )
+      call myValuesToField( z%geodLat, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'lon' )
       if ( any(shape(z%lon) /= shp) ) then
         call deallocate_test( z%lon, 'template lon', &
@@ -657,7 +653,7 @@ contains
           & "template lon", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
       endif
-      call myValuesToField( z%lon, SHP, VALUESNODE, spread )
+      call myValuesToField( z%lon, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'time' )
       if ( any(shape(z%time) /= shp) ) then
         call deallocate_test( z%time, 'template time', &
@@ -666,7 +662,7 @@ contains
           & "template time", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
       endif
-      call myValuesToField( z%time, SHP, VALUESNODE, spread )
+      call myValuesToField( z%time, SHP, VALUESNODE, spread, phyq_time )
     case ( 'solartime' )
       if ( any(shape(z%solartime) /= shp) ) then
         call deallocate_test( z%solartime, 'template solartime', &
@@ -675,7 +671,7 @@ contains
           & "template solartime", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
       endif
-      call myValuesToField( z%solartime, SHP, VALUESNODE, spread )
+      call myValuesToField( z%solartime, SHP, VALUESNODE, spread, phyq_time )
     case ( 'solarzenith' )
       if ( any(shape(z%solarzenith) /= shp) ) then
         call deallocate_test( z%solarzenith, 'template solarzenith', &
@@ -684,7 +680,7 @@ contains
           & "template solarzenith", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
       endif
-      call myValuesToField( z%solarzenith, SHP, VALUESNODE, spread )
+      call myValuesToField( z%solarzenith, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'losangle' )
       if ( any(shape(z%losangle) /= shp) ) then
         call deallocate_test( z%losangle, 'template losangle', &
@@ -693,7 +689,7 @@ contains
           & "template losangle", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
       endif
-      call myValuesToField( z%losangle, SHP, VALUESNODE, spread )
+      call myValuesToField( z%losangle, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'frequencies' )
       if ( .not. associated(z%frequencies) ) then
         call allocate_test ( z%frequencies, shp(1), &
@@ -706,7 +702,7 @@ contains
           & "template frequencies", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
       endif
-      call myValuesToField( z%frequencies, VALUESNODE, spread )
+      call myValuesToField( z%frequencies, VALUESNODE, spread, phyq_frequency )
     case default
     end select
     if ( lowercase(field) == 'surfs' ) then
@@ -869,7 +865,7 @@ contains
     ! Therefore we must do a bit of table lookups
     use INTRINSIC, only: GET_PHYQ
     use MLSHDF5, only: GETHDF5ATTRIBUTE
-    use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERINDEX, GETMODULEINDEX, &
+    use MLSSIGNALS_M, only: GETRADIOMETERINDEX, GETMODULEINDEX, &
       & GETSIGNALINDEX
 
     ! Arguments
@@ -1072,9 +1068,8 @@ contains
   subroutine WriteAttributes_QuantityTemplate ( dsID, NAME, &
     & QT, NOL2CF )
 
-    use INTRINSIC, only: LIT_INDICES
     use MLSHDF5, only: MAKEHDF5ATTRIBUTE
-    use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERNAME, GETMODULENAME, &
+    use MLSSIGNALS_M, only: GETRADIOMETERNAME, GETMODULENAME, &
       & GETSIGNALNAME
 
     ! Arguments
@@ -1375,7 +1370,7 @@ contains
     ! Given a DS, File or GroupID, find the character-valued attribute
     ! for the attribute named attrName of the dataset name
     ! Look up its id in the lit indices and return that id as LitID
-    use INTRINSIC, only: FIRST_LIT, LAST_AUTO_LIT, LIT_INDICES
+    use INTRINSIC, only: FIRST_LIT, LAST_AUTO_LIT
     use MLSHDF5, only: GETHDF5ATTRIBUTE
     use STRING_TABLE, only: ADD_CHAR, LOOKUP
     ! Args
@@ -1384,7 +1379,6 @@ contains
     integer, intent(out)          :: LitID     ! where to find attr's value
     ! Internal variables
     logical :: found
-    integer :: i
     character(len=64) :: str
     integer :: strID
     ! litID = -1 ! meaning not found
@@ -1459,19 +1453,17 @@ contains
   ! This family of subroutines assigns from the values field
   ! explicitly to the template's own field
   ! Unless spread is TRUE, we assume there are exactly enough values
-  subroutine myValuesToField_1d_dble ( tField, valuesNode, spread )
+  subroutine myValuesToField_1d_dble ( TFIELD, VALUESNODE, SPREAD, TESTUNIT )
     double precision, dimension(:), intent(out)        :: tField ! Template's own field
     integer, intent(in)                      :: VALUESNODE   ! Tree node for values
     logical, intent(in)                      :: spread
+    integer, intent(in) :: TestUnit                 ! Unit to use
     ! Internal variables
-    integer, dimension(2) :: indices
     integer :: k
     integer :: noValues
-    integer :: TestUnit                 ! Unit to use
     integer, dimension(2) :: unitAsArray ! Unit for value given
     logical :: UNITSERROR               ! From expr
     real (r8), dimension(2) :: valueAsArray ! Value given
-
     ! Executable code
     if ( valuesNode < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1497,16 +1489,16 @@ contains
     enddo
   end subroutine myValuesToField_1d_dble
 
-  subroutine myValuesToField_2d_real ( tField, shp, valuesNode, spread )
+  subroutine myValuesToField_2d_real ( TFIELD, SHP, VALUESNODE, SPREAD, TESTUNIT )
     real, dimension(:,:), intent(out)        :: tField ! Template's own field
     integer, dimension(:), intent(in)        :: SHP
     integer, intent(in)                      :: VALUESNODE   ! Tree node for values
     logical, intent(in)                      :: spread
+    integer, intent(in) :: TestUnit                 ! Unit to use
     ! Internal variables
     integer, dimension(2) :: indices
     integer :: k
     integer :: noValues
-    integer :: TestUnit                 ! Unit to use
     integer, dimension(2) :: unitAsArray ! Unit for value given
     logical :: UNITSERROR               ! From expr
     real (r8), dimension(2) :: valueAsArray ! Value given
@@ -1542,16 +1534,16 @@ contains
     enddo
   end subroutine myValuesToField_2d_real
 
-  subroutine myValuesToField_2d_dble ( tField, shp, valuesNode, spread )
+  subroutine myValuesToField_2d_dble ( TFIELD, SHP, VALUESNODE, SPREAD, TESTUNIT )
     double precision, dimension(:,:), intent(out)        :: tField ! Template's own field
     integer, dimension(:), intent(in)        :: SHP
     integer, intent(in)                      :: VALUESNODE   ! Tree node for values
     logical, intent(in)                      :: spread
+    integer, intent(in) :: TestUnit                 ! Unit to use
     ! Internal variables
     integer, dimension(2) :: indices
     integer :: k
     integer :: noValues
-    integer :: TestUnit                 ! Unit to use
     integer, dimension(2) :: unitAsArray ! Unit for value given
     logical :: UNITSERROR               ! From expr
     real (r8), dimension(2) :: valueAsArray ! Value given
@@ -1603,6 +1595,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.72  2012/10/29 17:41:16  pwagner
+! Attempted a more complete CopyQuantityTemplate
+!
 ! Revision 2.71  2012/08/08 20:00:21  vsnyder
 ! Honest! I only changed some comments!
 !
