@@ -13,7 +13,7 @@
 module Fill                     ! Create vectors and fill them.
   !=============================================================================
 
-  use MLSCommon, only: MLSFILE_T, DEFAULTUNDEFINEDVALUE
+  use MLSCOMMON, only: MLSFILE_T, DEFAULTUNDEFINEDVALUE
   use MLSKINDS, only: R8, RV
   ! This module performs the Fill operation in the Level 2 software.
   ! This takes a vector template, and creates and fills an appropriate vector
@@ -212,7 +212,7 @@ contains ! =====     Public Procedures     =============================
       & DUMP, MODIFYQUANTITYTEMPLATE
     use READAPRIORI, only: APRIORIFILES
     use SNOOPMLSL2, only: SNOOP
-    use STRING_TABLE, only: GET_STRING
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
     use SUBSETMODULE, only: APPLYMASKTOQUANTITY, RESTRICTRANGE, &
       & SETUPFLAGCLOUD, SETUPSUBSET, UPDATEMASK
     use TIME_M, only: TIME_NOW
@@ -222,7 +222,7 @@ contains ! =====     Public Procedures     =============================
       & SOURCE_REF, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED
     use VECTORSMODULE, only: ADDVECTORTODATABASE, &
-      & CLONEVECTORQUANTITY, CREATEVECTOR, &
+      & CLEARMASK, CLONEVECTORQUANTITY, CREATEVECTOR, &
       & DESTROYVECTORQUANTITYMASK, DUMPQUANTITYMASK, &
       & GETVECTORQTYBYTEMPLATEINDEX, &
       & VALIDATEVECTORQUANTITY, VECTOR_T, &
@@ -1688,7 +1688,6 @@ contains ! =====     Public Procedures     =============================
       ! However, we will first mask the quantity to account for
       ! any height, instances, etc. restrictions you may have set
       qtyWasMasked = associated( quantity%mask )
-      if ( .true. ) then
       call CloneVectorQuantity ( tempQuantity, quantity )
       if ( qtyWasMasked ) then
         if ( any(tempQuantity%mask /= quantity%mask) ) then
@@ -1696,13 +1695,25 @@ contains ! =====     Public Procedures     =============================
             & 'Mask not cloned successfully' )
         endif
       endif
-      ! call dump( tempQuantity%template )
-      ! call dump( Quantity%template )
-      if ( .true. ) call ApplyMaskToQuantity( quantity, &
+      if ( any( fillMethod == (/ &
+        & l_status, l_quality /) ) ) then
+      call ApplyMaskToQuantity( quantity, &
+        & radQuantity, ptanQuantity, odQuantity, 0._r8, &
+        & maxValue, minValue, heightRange, &
+        & .false., .false., additional, .false., &
+        & M_Fill, 0, 0, instancesNode, 0 )
+      elseif ( .not. dontMask .or. &
+        & any( fillMethod == (/ &
+        & l_applyBaseline, l_chiSQChan, l_chiSQMMaf, l_chiSQMMif, l_chiSqRatio, &
+        & l_H2OfromRHI, l_H2OPrecisionfromRHi, &
+        & l_RHIfromH2O, l_RHIPrecisionfromH2O /) ) ) then
+      call ApplyMaskToQuantity( quantity, &
         & radQuantity, ptanQuantity, odQuantity, 0._r8, &
         & maxValue, minValue, heightRange, &
         & .false., .false., additional, .false., &
         & M_Fill, heightNode, surfNode, instancesNode, 0 )
+      elseif ( dontMask ) then
+        if ( qtyWasMasked ) quantity%mask = char(0)
       endif
       if ( heightNode /= 0 .and. DEEBUG ) call dumpQuantityMask ( quantity )
       ! Then we Fill the newly masked quantity
@@ -2797,16 +2808,25 @@ contains ! =====     Public Procedures     =============================
       end select      ! s_method
       
       ! Before leaving, we must restore the original mask (or lack of one)
+      ! (unless the Fill method is l1b because we may be using the
+      ! radiance precision to set the radiance mask)
       if ( qtyWasMasked ) then
-        if ( any(tempQuantity%mask /= quantity%mask) ) &
-          & call output( 'Masks changed', advance='yes' )
+        ! if ( any(tempQuantity%mask /= quantity%mask) ) &
+        !   & call output( 'Masks changed', advance='yes' )
       endif
-      if ( .true. ) then
-      if ( qtyWasMasked ) then
+      if ( fillMethod == l_l1b ) then
+        ! For this Fill method the new mask is sticky
+        qtyWasMasked = associated(quantity%mask)
+      elseif ( qtyWasMasked ) then
         quantity%mask = tempQuantity%mask
-      !else
-        !call DestroyVectorQuantityMask( quantity )
-      endif
+      ! elseif ( associated(quantity%mask) ) then
+        ! quantity%mask = tempQuantity%mask
+        ! call DestroyVectorQuantityMask( quantity )
+      else
+        ! call outputNamedValue( 'mask associated?', associated( quantity%mask ) )
+        ! call output( 'Hey, this quantity was not masked:', advance='no' )
+        ! call display_string( quantity%template%name, advance='yes' )
+        if ( associated(quantity%mask) ) call ClearMask( quantity%mask )
       endif
       ! Housekeeping
       call destroyVectorQuantityValue ( tempQuantity, &
@@ -2914,6 +2934,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.410  2012/10/31 00:08:40  pwagner
+! Must treat Fill method L1B specially when restoring quantity mask
+!
 ! Revision 2.409  2012/10/29 17:18:24  pwagner
 ! Made consistent with FillUtils_1 api
 !
