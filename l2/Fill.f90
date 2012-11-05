@@ -209,10 +209,10 @@ contains ! =====     Public Procedures     =============================
       & REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: FLUSH_PFADATA
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
-      & DUMP, MODIFYQUANTITYTEMPLATE
+      & MODIFYQUANTITYTEMPLATE
     use READAPRIORI, only: APRIORIFILES
     use SNOOPMLSL2, only: SNOOP
-    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+    use STRING_TABLE, only: GET_STRING
     use SUBSETMODULE, only: APPLYMASKTOQUANTITY, RESTRICTRANGE, &
       & SETUPFLAGCLOUD, SETUPSUBSET, UPDATEMASK
     use TIME_M, only: TIME_NOW
@@ -223,7 +223,7 @@ contains ! =====     Public Procedures     =============================
     use TREE_TYPES, only: N_NAMED
     use VECTORSMODULE, only: ADDVECTORTODATABASE, &
       & CLEARMASK, CLONEVECTORQUANTITY, CREATEVECTOR, &
-      & DESTROYVECTORQUANTITYMASK, DUMPQUANTITYMASK, &
+      & DUMPQUANTITYMASK, &
       & GETVECTORQTYBYTEMPLATEINDEX, &
       & VALIDATEVECTORQUANTITY, VECTOR_T, &
       & VECTORTEMPLATE_T, VECTORVALUE_T, M_FILL
@@ -1686,34 +1686,27 @@ contains ! =====     Public Procedures     =============================
       endif
 
       ! However, we will first mask the quantity to account for
-      ! any height, instances, etc. restrictions you may have set
+      ! any height, instances, etc. constraints you may have set
       qtyWasMasked = associated( quantity%mask )
       call CloneVectorQuantity ( tempQuantity, quantity )
-      if ( qtyWasMasked ) then
-        if ( any(tempQuantity%mask /= quantity%mask) ) then
-          call Announce_error ( key, no_Error_Code, &
-            & 'Mask not cloned successfully' )
-        endif
-      endif
+      ! Ignore original mask if /dontMask 
+      if ( qtyWasMasked .and. dontMask .and. fillMethod /= l_l1b ) &
+        & quantity%mask = char(0)
       if ( any( fillMethod == (/ &
         & l_status, l_quality /) ) ) then
-      call ApplyMaskToQuantity( quantity, &
-        & radQuantity, ptanQuantity, odQuantity, 0._r8, &
-        & maxValue, minValue, heightRange, &
-        & .false., .false., additional, .false., &
-        & M_Fill, 0, 0, instancesNode, 0 )
-      elseif ( .not. dontMask .or. &
-        & any( fillMethod == (/ &
-        & l_applyBaseline, l_chiSQChan, l_chiSQMMaf, l_chiSQMMif, l_chiSqRatio, &
-        & l_H2OfromRHI, l_H2OPrecisionfromRHi, &
-        & l_RHIfromH2O, l_RHIPrecisionfromH2O /) ) ) then
-      call ApplyMaskToQuantity( quantity, &
-        & radQuantity, ptanQuantity, odQuantity, 0._r8, &
-        & maxValue, minValue, heightRange, &
-        & .false., .false., additional, .false., &
-        & M_Fill, heightNode, surfNode, instancesNode, 0 )
-      elseif ( dontMask ) then
-        if ( qtyWasMasked ) quantity%mask = char(0)
+        call ApplyMaskToQuantity( quantity, &
+          & radQuantity, ptanQuantity, odQuantity, 0._r8, &
+          & maxValue, minValue, heightRange, &
+          & .false., .false., additional=.true., reset=.false., &
+          & maskBit=M_Fill, heightNode=0, surfNode=0, &
+          & instancesNode=instancesNode, channelsNode=0 )
+      else
+        call ApplyMaskToQuantity( quantity, &
+          & radQuantity, ptanQuantity, odQuantity, 0._r8, &
+          & maxValue, minValue, heightRange, &
+          & .false., .false., additional=.true., reset=.false., &
+          & maskBit=M_Fill, heightNode=heightNode, surfNode=surfNode, &
+          & instancesNode=instancesNode, channelsNode=channelsNode )
       endif
       if ( heightNode /= 0 .and. DEEBUG ) call dumpQuantityMask ( quantity )
       ! Then we Fill the newly masked quantity
@@ -1795,7 +1788,7 @@ contains ! =====     Public Procedures     =============================
         baselineQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(baselineVctrIndex), baselineQtyIndex )
         call ApplyBaseline ( key, quantity, baselineQuantity, &
-          & quadrature, dontmask, ignoreTemplate )
+          & quadrature, dontMask, ignoreTemplate )
 
       case ( l_asciiFile )
         if ( .not. got ( f_file ) ) &
@@ -1984,7 +1977,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
         call Explicit ( quantity, valuesNode, spreadFlag, force, &
-          & vectors(vectorIndex)%globalUnit, dontmask, channel, &
+          & vectors(vectorIndex)%globalUnit, channel, &
           & .false., options=heightRange(1:1) )
 
       case ( l_extractChannel )
@@ -2080,6 +2073,13 @@ contains ! =====     Public Procedures     =============================
         if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
       case ( l_l1b ) ! --------------------  Fill from L1B data  -----
+        if ( any( got( &
+          & (/ f_height, f_heightRange, f_surface, f_instances, &
+          & f_maxValue, f_minValue /) &
+          & ) ) ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Mask bits set during l1b Fill are sticky--use Subset to clear them' )
+        endif
         if ( got(f_precision) ) then
           precisionQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(precisionVectorIndex), precisionQuantityIndex )
@@ -2320,7 +2320,7 @@ contains ! =====     Public Procedures     =============================
               & spreadflag, dontSumHeights, dontSumInstances, &
               & c )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
-              & vectors(vectorIndex)%globalUnit, dontmask, channel, &
+              & vectors(vectorIndex)%globalUnit, channel, &
               & .false., options=heightRange(1:1), extraQuantity=tempswapquantity )
             call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
               forWhom = 'tempswapquantity' )
@@ -2339,7 +2339,7 @@ contains ! =====     Public Procedures     =============================
               & manipulation, key, ignoreTemplate, &
               & spreadflag, dontSumHeights, dontSumInstances )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
-              & vectors(vectorIndex)%globalUnit, dontmask, channel, &
+              & vectors(vectorIndex)%globalUnit, channel, &
               & .false., options=heightRange(1:1), &
               & extraQuantity=tempswapquantity )
             call destroyVectorQuantityValue ( tempswapquantity, destroyMask=.true., &
@@ -2355,7 +2355,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. got(f_explicitValues) ) &
           & call Announce_Error ( key, noExplicitValuesGiven )
         call Explicit ( quantity, valuesNode, spreadFlag, force, &
-          & vectors(vectorIndex)%globalUnit, dontmask, channel, &
+          & vectors(vectorIndex)%globalUnit, channel, &
           & azEl=.true. )
 
       case ( l_magneticModel ) ! --------------------- Magnetic Model --
@@ -2452,11 +2452,11 @@ contains ! =====     Public Procedures     =============================
         ! "don't care", not "logSpace=.false."
         if ( got ( f_logSpace ) ) then
           call FromProfile ( quantity, valuesNode, &
-            & instancesNode, vectors(vectorIndex)%globalUnit, dontMask, &
+            & instancesNode, vectors(vectorIndex)%globalUnit, &
             & ptanQuantity, logSpace=logSpace )
         else
           call FromProfile ( quantity, valuesNode, &
-            & instancesNode, vectors(vectorIndex)%globalUnit, dontMask, &
+            & instancesNode, vectors(vectorIndex)%globalUnit, &
             & ptanQuantity )
         end if
 
@@ -2606,7 +2606,7 @@ contains ! =====     Public Procedures     =============================
           call Announce_Error ( key, no_error_code, &
             & 'Must supply multipler for scaleOverlaps fill' )
         else
-          call ScaleOverlaps ( quantity, multiplierNode, dontMask )
+          call ScaleOverlaps ( quantity, multiplierNode )
         end if
 
       case ( l_splitSideband ) ! --------------- Split the sidebands
@@ -2642,16 +2642,16 @@ contains ! =====     Public Procedures     =============================
         sourceQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(sourceVectorIndex), sourceQuantityIndex )
           if ( .not. got(f_channel) ) channel = 1
-          call SpreadChannelFill ( quantity, channel, dontMask, key, &
+          call SpreadChannelFill ( quantity, channel, key, &
             & sourceQuantity )
         else
-          call SpreadChannelFill ( quantity, channel, dontMask, key )
+          call SpreadChannelFill ( quantity, channel, key )
         endif
 
       case ( l_status )
         if ( got(f_ifMissingGMAO) ) then
           if ( MissingGMAO ) call Explicit ( quantity, &
-            & valuesNode, .true., .false., phyq_Invalid, .true., &
+            & valuesNode, .true., .false., phyq_Invalid, &
             & channel, .false., options=heightRange(1:1) )
         elseif ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) then
           call Announce_Error ( key, no_error_code, &
@@ -2696,16 +2696,16 @@ contains ! =====     Public Procedures     =============================
               & 'Quantity and sourceQuantity do not have the same template' )
           else
             call FromInterpolatedQty ( tempswapquantity, sourceQuantity, &
-              & key, dontMask, ignoreTemplate )
+              & key, ignoreTemplate )
             call FromInterpolatedQty ( sourceQuantity, quantity, &
-              & key, dontMask, ignoreTemplate )
+              & key, ignoreTemplate )
             call FromInterpolatedQty ( quantity, tempswapquantity, &
-              & key, dontMask, ignoreTemplate )
+              & key, ignoreTemplate )
           end if
         else
           ! Just a straight copy
           ! If we have a mask and we're going to obey it then do so
-          if ( associated(quantity%mask) .and. .not. dontMask ) then
+          if ( associated(quantity%mask) ) then
             where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
               tempswapquantity%values(:,:) = sourceQuantity%values(:,:)
               sourceQuantity%values(:,:) = Quantity%values(:,:)
@@ -2728,7 +2728,7 @@ contains ! =====     Public Procedures     =============================
         sourceQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(sourceVectorIndex), sourceQuantityIndex )
         call FromAnother ( quantity, sourceQuantity, ptanQuantity, &
-          & key, ignoreTemplate, spreadflag, dontMask, interpolate, force )
+          & key, ignoreTemplate, spreadflag, interpolate, force )
       case ( l_uncompressRadiance )
         if ( .not. got(f_systemTemperature) ) &
           & call Announce_Error ( key, No_Error_Code, &
@@ -2810,22 +2810,12 @@ contains ! =====     Public Procedures     =============================
       ! Before leaving, we must restore the original mask (or lack of one)
       ! (unless the Fill method is l1b because we may be using the
       ! radiance precision to set the radiance mask)
-      if ( qtyWasMasked ) then
-        ! if ( any(tempQuantity%mask /= quantity%mask) ) &
-        !   & call output( 'Masks changed', advance='yes' )
-      endif
       if ( fillMethod == l_l1b ) then
         ! For this Fill method the new mask is sticky
         qtyWasMasked = associated(quantity%mask)
       elseif ( qtyWasMasked ) then
         quantity%mask = tempQuantity%mask
-      ! elseif ( associated(quantity%mask) ) then
-        ! quantity%mask = tempQuantity%mask
-        ! call DestroyVectorQuantityMask( quantity )
       else
-        ! call outputNamedValue( 'mask associated?', associated( quantity%mask ) )
-        ! call output( 'Hey, this quantity was not masked:', advance='no' )
-        ! call display_string( quantity%template%name, advance='yes' )
         if ( associated(quantity%mask) ) call ClearMask( quantity%mask )
       endif
       ! Housekeeping
@@ -2934,6 +2924,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.411  2012/11/05 19:02:48  pwagner
+! Fixed various bugs related to last changes
+!
 ! Revision 2.410  2012/10/31 00:08:40  pwagner
 ! Must treat Fill method L1B specially when restoring quantity mask
 !
