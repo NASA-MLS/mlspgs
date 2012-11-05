@@ -545,7 +545,7 @@ contains ! =====     Public Procedures     =============================
 
     !=============================================== Explicit ==
     subroutine Explicit ( quantity, valuesNode, spreadFlag, force, &
-      & globalUnit, dontmask, channel, AzEl, options, FillValue, extraQuantity )
+      & globalUnit, channel, AzEl, options, FillValue, extraQuantity )
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
       ! fill command line or as part of a compound Fill,
@@ -565,7 +565,6 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: SPREADFLAG   ! One instance given, spread to all
       logical, intent(in) :: FORCE        ! Fill in as many instances as will fit
       integer, intent(in) :: GLOBALUNIT   ! From parent vector
-      logical, intent(in) :: DONTMASK     ! Don't bother with the mask
       integer, intent(in) :: CHANNEL
       logical, intent(in), optional :: AzEl ! Values are in [Mag, Az, El]; the
         ! desired quantity is components of Mag in the coordinate system to
@@ -710,7 +709,7 @@ contains ! =====     Public Procedures     =============================
           do chan = 1, numChans
             j = j + 1
             k = k + 1
-            if ( .not. dontMask .and. associated ( quantity%mask ) ) then
+            if ( associated ( quantity%mask ) ) then
               if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) /= 0 ) cycle
             end if
             select case (whichToReplace)
@@ -1958,14 +1957,13 @@ contains ! =====     Public Procedures     =============================
     ! If they don't, and /interpolate not set, then raise an exception
     ! (no more silent inerpolations)
     subroutine FromAnother ( quantity, sourceQuantity, ptan, &
-      & key, ignoreTemplate, spreadflag, dontMask, interpolate, force )
+      & key, ignoreTemplate, spreadflag, interpolate, force )
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: SOURCEQUANTITY
       type (VectorValue_T), pointer :: PTAN
       integer, intent(in) :: KEY        ! Tree node
       logical, intent(in) :: IGNORETEMPLATE ! If set throw caution to the wind
       logical, intent(in) :: SPREADFLAG ! If set spread across instances
-      logical, intent(in) :: DONTMASK ! If set throw caution to the wind
       logical, intent(in) :: INTERPOLATE ! If set spread across summed dimension
       logical, intent(in) :: FORCE ! Copy as much as will fit
       ! Local parameters
@@ -1976,21 +1974,21 @@ contains ! =====     Public Procedures     =============================
       ! Executable
       if ( associated ( ptan ) .and. interpolate ) then
         call FromInterpolatedQty ( quantity, sourceQuantity, &
-          & key, dontMask, ignoreTemplate, ptan )
+          & key, ignoreTemplate, ptan )
       elseif ( quantity%template%name /= sourceQuantity%template%name ) then
         if ( .not. interpolate .and. .not. ignoreTemplate ) then
           call Announce_Error ( key, No_Error_Code, &
             & 'Quantity and sourceQuantity do not have the same template' )
         else
           call FromInterpolatedQty ( quantity, sourceQuantity, &
-            & key, dontMask, ignoreTemplate )
+            & key, ignoreTemplate )
         end if
       elseif ( spreadFlag ) then
         ! Copy first instance into all (assuming instance lengths are the same)
         noInstances = Quantity%template%noInstances
         do inst = 1, noInstances
           ! If we have a mask and we're going to obey it then do so
-          if ( associated(quantity%mask) .and. .not. dontMask ) then
+          if ( associated(quantity%mask) ) then
             where ( iand ( ichar(quantity%mask(:,inst)), m_Fill ) == 0 )
               quantity%values(:,inst) = sourceQuantity%values(:,1)
             end where
@@ -2004,7 +2002,7 @@ contains ! =====     Public Procedures     =============================
         noInstances = min( sourceQuantity%template%noInstances, Quantity%template%noInstances )
         do inst = 1, noInstances
           ! If we have a mask and we're going to obey it then do so
-          if ( associated(quantity%mask) .and. .not. dontMask ) then
+          if ( associated(quantity%mask) ) then
             where ( iand ( ichar(quantity%mask(:,inst)), m_Fill ) == 0 )
               quantity%values(:,inst) = sourceQuantity%values(:,inst)
             end where
@@ -2018,7 +2016,7 @@ contains ! =====     Public Procedures     =============================
         instanceLen = min( sourceQuantity%template%instanceLen, Quantity%template%instanceLen )
         do surf = 1, instanceLen
           ! If we have a mask and we're going to obey it then do so
-          if ( associated(quantity%mask) .and. .not. dontMask ) then
+          if ( associated(quantity%mask) ) then
             where ( iand ( ichar(quantity%mask(surf,:)), m_Fill ) == 0 )
               quantity%values(surf,:) = sourceQuantity%values(surf,:)
             end where
@@ -2029,7 +2027,7 @@ contains ! =====     Public Procedures     =============================
       else
         ! Just a straight copy
         ! If we have a mask and we're going to obey it then do so
-        if ( associated(quantity%mask) .and. .not. dontMask ) then
+        if ( associated(quantity%mask) ) then
           where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
             quantity%values(:,:) = sourceQuantity%values(:,:)
           end where
@@ -2832,11 +2830,6 @@ contains ! =====     Public Procedures     =============================
             N = N + 1
             qIndex = Channel + (s-1)*quantity%template%noChans
             skipMe = .false.
-            ! if ( .not. interpolate ) then
-             ! skipMe = skipMe .or. &
-             ! & .not. dontMask .and. &
-             ! &   isVectorQtyMasked(Quantity, qIndex, i)
-            ! end if
             skipMe = skipMe .or. &
             & .not. dontMask .and. ( &
             & (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
@@ -3205,11 +3198,6 @@ contains ! =====     Public Procedures     =============================
             N = N + 1
             qIndex = Channel + (s-1)*quantity%template%noChans
             skipMe = .false.
-            ! if ( .not. interpolate ) then
-            !  skipMe = skipMe .or. &
-            !  & .not. dontMask .and. &
-            !  &   isVectorQtyMasked(Quantity, qIndex, i)
-            ! end if
             skipMe = skipMe .or. &
             & .not. dontMask .and. ( &
             & (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
@@ -3327,11 +3315,10 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- FromInterpolatedQty
     subroutine FromInterpolatedQty ( qty, source, key, &
-      & DONTMASK, ignoreTemplate, ptan )
+      & ignoreTemplate, ptan )
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: SOURCE
       integer, intent(in) :: KEY
-      logical, intent(in) :: DONTMASK
       logical, intent(in) :: IGNORETEMPLATE
       type (VectorValue_T), optional :: PTAN ! press. values
 
@@ -3474,7 +3461,7 @@ contains ! =====     Public Procedures     =============================
         ! As this subroutine was then an internal procedure to MLSL2Fill,
         ! and the formal args in the call were "Quantity" and "sourceQuantity"
         ! the correct items were actually being referred to
-        if ( associated(qty%mask) .and. .not. dontMask ) then
+        if ( associated(qty%mask) ) then
           where ( iand ( ichar(qty%mask(:,:)), m_Fill ) == 0 )
             qty%values(:,:) = source%values(:,:)
           end where
@@ -5310,7 +5297,7 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------- FromProfile --
     subroutine FromProfile_values ( quantity, inheights, invalues, &
-      & instancesNode, globalUnit, dontMask, ptan, logSpace )
+      & instancesNode, globalUnit, ptan, logSpace )
       ! Given two arrays,  (heights, invalues) vs. the quantity's own heights,
       ! does the linear interpolation appropriate to perform the fill.
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -5318,7 +5305,6 @@ contains ! =====     Public Procedures     =============================
       real(r8), dimension(:), intent(in) :: invalues
       integer, intent(in) :: INSTANCESNODE ! Tree node for instances
       integer, intent(in) :: GLOBALUNIT   ! Possible global unit
-      logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
       type (VectorValue_T), pointer :: PTAN ! press. values
       logical, intent(in), optional :: LOGSPACE ! Interpolate in logspace
 
@@ -5437,7 +5423,7 @@ contains ! =====     Public Procedures     =============================
           j = 1
           do s = 1, quantity%template%noSurfs
             do c = 1, quantity%template%noChans
-              if ( associated(quantity%mask) .and. .not. dontMask ) then
+              if ( associated(quantity%mask) ) then
                 if ( iand ( ichar(quantity%mask(j,i)), m_fill ) == 0 ) &
                   & quantity%values(j,i) = outValues(s)
               else
@@ -5463,7 +5449,7 @@ contains ! =====     Public Procedures     =============================
     end subroutine FromProfile_values
 
     subroutine FromProfile_node ( quantity, valuesNode, &
-      & instancesNode, globalUnit, dontMask, ptan, logSpace )
+      & instancesNode, globalUnit, ptan, logSpace )
       ! This fill is slightly complicated.  Given a values array along
       ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
       ! does the linear interpolation appropriate to perform the fill.
@@ -5471,7 +5457,6 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: VALUESNODE   ! Tree node for values
       integer, intent(in) :: INSTANCESNODE ! Tree node for instances
       integer, intent(in) :: GLOBALUNIT   ! Possible global unit
-      logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
       type (VectorValue_T), pointer :: PTAN ! press. values
       logical, intent(in), optional :: LOGSPACE ! Interpolate in logspace
 
@@ -5534,7 +5519,7 @@ contains ! =====     Public Procedures     =============================
       end do
 
       call FromProfile( quantity, heights, values, &
-      & instancesNode, globalUnit, dontMask, ptan, logSpace )
+      & instancesNode, globalUnit, ptan, logSpace )
       call Deallocate_test ( heights, 'heights', ModuleName )
       call Deallocate_test ( values, 'values', ModuleName )
       call MLSMessageCalls( 'pop' )
@@ -6024,10 +6009,9 @@ contains ! =====     Public Procedures     =============================
     end subroutine RotateMagneticField
 
     ! ---------------------------------------------- ScaleOverlaps -------
-    subroutine ScaleOverlaps ( quantity, multiplierNode, dontMask )
+    subroutine ScaleOverlaps ( quantity, multiplierNode )
       type (VectorValue_T), intent(inout) :: QUANTITY
       integer, intent(in) :: MULTIPLIERNODE ! Tree node for factors
-      logical :: DONTMASK               ! Flag
       ! Local variables
       real (r8) :: exprValue(2)         ! Tree expression
       integer :: exprUnit(2)            ! Tree units
@@ -6046,7 +6030,7 @@ contains ! =====     Public Procedures     =============================
             & extraInfo=(/exprUnit(1), PHYQ_Dimensionless/) )
           go to 9
         end if
-        if ( associated ( quantity%mask ) .and. .not. dontMask ) then
+        if ( associated ( quantity%mask ) ) then
           where ( iand ( ichar(quantity%mask(:,i)), m_Fill ) == 0 )
             quantity%values ( :, i ) = quantity%values ( :, i ) * exprValue(1)
           end where
@@ -6068,7 +6052,7 @@ contains ! =====     Public Procedures     =============================
             & extraInfo=(/exprUnit(1), PHYQ_Dimensionless/) )
           go to 9
         end if
-        if ( associated ( quantity%mask ) .and. .not. dontMask ) then
+        if ( associated ( quantity%mask ) ) then
           where ( iand ( ichar(quantity%mask(:,i)), m_Fill ) == 0 )
             quantity%values ( :, i ) = quantity%values ( :, i ) * exprValue(1)
           end where
@@ -6081,11 +6065,10 @@ contains ! =====     Public Procedures     =============================
     end subroutine ScaleOverlaps
 
     ! ----------------------------------------- SpreadChannelFill --------
-    subroutine SpreadChannelFill ( quantity, channel, dontMask, key, &
+    subroutine SpreadChannelFill ( quantity, channel, key, &
       & sourceQuantity )
       type(VectorValue_T), intent(inout) :: QUANTITY
       integer, intent(in) :: CHANNEL
-      logical, intent(in) :: DONTMASK
       integer, intent(in) :: KEY
       type(VectorValue_T), intent(in), optional :: SOURCEQUANTITY
       ! Local variables
@@ -6096,7 +6079,7 @@ contains ! =====     Public Procedures     =============================
       integer :: MYCHANNEL              ! Possibly offset channel
       type (Signal_T) ::  signal        ! Signal for this quantity
 
-      ! Exectuable code
+      ! Executable code
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.SpreadChannelFill', key )
       if ( present(sourceQuantity) ) then
@@ -6104,7 +6087,7 @@ contains ! =====     Public Procedures     =============================
           do s = 1, quantity%template%noSurfs
             do c = 1, quantity%template%noChans
               j = (s-1)*quantity%template%noChans + c
-              if ( associated ( quantity%mask ) .and. .not. dontMask ) then
+              if ( associated ( quantity%mask ) ) then
                 if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) == 1 ) cycle
               end if
               quantity%values ( j, i ) = &
@@ -6124,7 +6107,7 @@ contains ! =====     Public Procedures     =============================
             do c = 1, quantity%template%noChans
               if ( c == myChannel ) cycle
               j = (s-1)*quantity%template%noChans + c
-              if ( associated ( quantity%mask ) .and. .not. dontMask ) then
+              if ( associated ( quantity%mask ) ) then
                 if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) == 1 ) cycle
               end if
               quantity%values ( j, i ) = &
@@ -6176,7 +6159,7 @@ contains ! =====     Public Procedures     =============================
             & molecule=sq%template%molecule )
           if ( associated ( dq ) ) then
             call FromInterpolatedQty( dq, sq, key=0, &
-              & dontmask=.false., ignoreTemplate=.false. )
+              & ignoreTemplate=.false. )
           end if
         end if
       end do
@@ -6210,7 +6193,7 @@ contains ! =====     Public Procedures     =============================
       real(rv) :: sumCal
       real(rv) :: bprodCal
 
-      ! Exectuable code
+      ! Executable code
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.UncompressRadiance', key )
       if ( quantity%template%quantityType /= l_radiance ) &
@@ -6533,7 +6516,6 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer, dimension(3) :: dimInts
       integer(kind=hSize_t), dimension(3) :: dims
-      logical, parameter :: dontMask = .false.
       integer, parameter :: globalUnit = 0
       integer, parameter :: instancesNode = 0
       integer :: instance
@@ -6596,7 +6578,7 @@ contains ! =====     Public Procedures     =============================
               & real( &
               & reshape( values(:,:,1), (/ dimInts(1)*dimInts(2) /) ), &
               & rv), &
-              & instancesNode, globalUnit, dontMask, ptan )
+              & instancesNode, globalUnit, ptan )
           else
             call Announce_Error ( key, no_Error_Code, &
           &   'Unable to interpolate using this file data set ; noSurfs ' // &
@@ -6703,6 +6685,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.66  2012/11/05 19:04:28  pwagner
+! Most Fill methods need not handle dontMask themselves
+!
 ! Revision 2.65  2012/10/22 18:15:47  pwagner
 ! Many Subset operations now available in Fill
 !
