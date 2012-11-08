@@ -103,7 +103,7 @@ contains ! =====     Public Procedures     =============================
       & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, &
       & F_BOXCARMETHOD, &
       & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_CHANNELS, F_COLUMNS, &
-      & F_DESTINATION, F_DIAGONAL, &
+      & F_DESTINATION, F_DIAGONAL, F_DIMLIST, &
       & F_DONTMASK, F_DONTSUMHEIGHTS, F_DONTSUMINSTANCES, &
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, &
       & F_EXPLICITVALUES, F_EXPR, F_EXTINCTION, &
@@ -337,6 +337,7 @@ contains ! =====     Public Procedures     =============================
     character(len=256) :: EXTRAOBJECTS  ! Which bright objects to avoid
     integer :: Diagonal                 ! Index of diagonal vector in database
     !                                     -- for Covariance
+    character(len=16) :: DIMLIST        ! 's', 'c', or 'i' in manipulation's shift
     logical :: DONTMASK                 ! Use even masked values if TRUE
     logical :: DONTSUMHEIGHTS
     logical :: DONTSUMINSTANCES
@@ -1289,6 +1290,7 @@ contains ! =====     Public Procedures     =============================
       ! Loop over the instructions to the Fill command
       BOMask = 0
       AvoidObjects = ' '
+      dimList = 'c' ! defaults to shift or slip by channel, or surface if noFreqs < 2
       got = .false.
       multiplier = 1.
       do j = 2, nsons(key)
@@ -1339,6 +1341,9 @@ contains ! =====     Public Procedures     =============================
           channelsNode = son
         case ( f_centerVertically )
           centerVertically = get_boolean ( gson )
+        case ( f_dimList )
+          ! dimList = sub_rosa ( gson )
+          call get_string ( sub_rosa ( gson ), dimList, strip=.true. )
         case ( f_earthRadius ) ! For losGrid fill
           earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
           earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1842,6 +1847,11 @@ contains ! =====     Public Procedures     =============================
           & vectors(sourceVectorIndex), sourceQuantityIndex )
         if ( .not. got ( f_width ) ) call Announce_Error ( key, no_Error_Code, &
           & 'Must supply width for boxcar fill' )
+        if ( width == 1 ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Boxcar Fill with width=1 results in straightforward copy' )
+        elseif (  mod ( width, 2 ) == 0 ) then
+        endif
         call WithBoxcarFunction ( key, quantity, sourceQuantity, width, &
           & boxCarMethod, ignoreTemplate )
 
@@ -2317,7 +2327,7 @@ contains ! =====     Public Procedures     =============================
             call CloneVectorQuantity( tempswapquantity, quantity )
             call ByManipulation ( tempswapquantity, aQuantity, bQuantity, &
               & manipulation, key, ignoreTemplate, &
-              & spreadflag, dontSumHeights, dontSumInstances, &
+              & spreadflag, dontSumHeights, dontSumInstances, dimList, &
               & c )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
               & vectors(vectorIndex)%globalUnit, channel, &
@@ -2327,7 +2337,7 @@ contains ! =====     Public Procedures     =============================
           else
             call ByManipulation ( quantity, aQuantity, bQuantity, &
               & manipulation, key, ignoreTemplate, &
-              & spreadflag, dontSumHeights, dontSumInstances, &
+              & spreadflag, dontSumHeights, dontSumInstances, dimList, &
               & c )
           endif
         else
@@ -2337,7 +2347,7 @@ contains ! =====     Public Procedures     =============================
             call CloneVectorQuantity( tempswapquantity, quantity )
             call ByManipulation ( tempswapquantity, aQuantity, bQuantity, &
               & manipulation, key, ignoreTemplate, &
-              & spreadflag, dontSumHeights, dontSumInstances )
+              & spreadflag, dontSumHeights, dontSumInstances, dimList )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
               & vectors(vectorIndex)%globalUnit, channel, &
               & .false., options=heightRange(1:1), &
@@ -2347,7 +2357,7 @@ contains ! =====     Public Procedures     =============================
           else
             call ByManipulation ( quantity, aQuantity, bQuantity, &
               & manipulation, key, ignoreTemplate, &
-              & spreadflag, dontSumHeights, dontSumInstances )
+              & spreadflag, dontSumHeights, dontSumInstances, dimList )
           endif
         endif
 
@@ -2924,6 +2934,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.412  2012/11/08 23:21:30  pwagner
+! dimList field lets us specifiy whether to shift by [c,s,i] during manipulate
+!
 ! Revision 2.411  2012/11/05 19:02:48  pwagner
 ! Fixed various bugs related to last changes
 !
