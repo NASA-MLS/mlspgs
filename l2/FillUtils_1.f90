@@ -3649,7 +3649,7 @@ contains ! =====     Public Procedures     =============================
     ! --------------------------------------------- ByManipulation ---
     subroutine ByManipulation ( quantity, a, b, &
       & manipulation, key, ignoreTemplate, &
-      & spreadflag, dontSumHeights, dontSumInstances, &
+      & spreadflag, dontSumHeights, dontSumInstances, dimList, &
       & c )
       use MANIPULATIONUTILS, only: MANIPULATE
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -3663,6 +3663,7 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: SPREADFLAG ! If set spread across summed dimension
       logical, intent(in) :: DONTSUMHEIGHTS
       logical, intent(in) :: DONTSUMINSTANCES
+      character(len=*), intent(in)    :: DIMLIST ! E.g., 's' to shift surfaces, not chans
       ! Local parameters
 
       ! The 1 and 2-way manipulations must be entered exactly as shown
@@ -3788,7 +3789,7 @@ contains ! =====     Public Procedures     =============================
           cc = c
         endif
         call Manipulate( quantity, a, b, cc, mstr, &
-          & spreadflag, dontsumheights, dontsuminstances )
+          & spreadflag, dontsumheights, dontsuminstances, dimList )
       end select
       call MLSMessageCalls( 'pop' )
     9 if ( toggle(gen) .and. levels(gen) > 1 ) &
@@ -5555,7 +5556,7 @@ contains ! =====     Public Procedures     =============================
           call ByManipulation ( dq, aq, bq, &
             & manipulation, key=0, &
             & ignoreTemplate=.true., spreadflag=.false., dontSumHeights=.true., &
-            & dontSumInstances=.true., &
+            & dontSumInstances=.true., dimList=' ', &
             & c=c )
         else
           call MLSMessage ( MLSMSG_Warning, ModuleName // '%ManipulateVectors', &
@@ -6685,6 +6686,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.67  2012/11/08 23:21:51  pwagner
+! dimList field lets us specifiy whether to shift by [c,s,i] during manipulate
+!
 ! Revision 2.66  2012/11/05 19:04:28  pwagner
 ! Most Fill methods need not handle dontMask themselves
 !
