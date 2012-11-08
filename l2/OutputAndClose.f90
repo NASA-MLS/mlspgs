@@ -1491,11 +1491,13 @@ contains ! =====     Public Procedures     =============================
     character (len=FileNameLen) :: L2gpPhysicalFilename
     integer :: listSize
     logical :: madeFile
+    logical, parameter :: NEVERDUPSWATHNAMES = .true. ! Skip cp if dup
     integer :: numswaths
     integer :: obst
     integer, dimension(:,:), pointer :: obstruction_mafs => null()
     character(len=8) :: options
     type(MLSFile_T), pointer :: outputFile
+    character (len=MAXSWATHNAMESBUFSIZE) :: outsdList
     integer :: ReturnStatus
     integer :: SDFID                ! File handle
     character (len=MAXSWATHNAMESBUFSIZE) :: sdList
@@ -1558,11 +1560,22 @@ contains ! =====     Public Procedures     =============================
         if ( CHECKPATHS ) cycle
         madeFile = .true.
         inputFile%access = DFACC_RDONLY
-        call cpL2GPData( l2metaData, inputFile, &
-          & outputFile, create2=create2, &
-          & notUnlimited=avoidUnlimitedDims, &
-          & andGlAttributes=copyFileAttributes, &
-          & options=options )
+        if ( NEVERDUPSWATHNAMES ) then
+          numswaths = mls_InqSwath ( &
+            & outputFile%Name, outsdList, listSize, &
+            & hdfVersion=HDFVERSION_5 )
+          call cpL2GPData( l2metaData, inputFile, &
+            & outputFile, exclude=outsdList, create2=create2, &
+            & notUnlimited=avoidUnlimitedDims, &
+            & andGlAttributes=copyFileAttributes, &
+            & options=options )
+        else
+          call cpL2GPData( l2metaData, inputFile, &
+            & outputFile, create2=create2, &
+            & notUnlimited=avoidUnlimitedDims, &
+            & andGlAttributes=copyFileAttributes, &
+            & options=options )
+        endif
         create2 = .false.
       end do
       ! Now write various kinds of metadata
@@ -1767,6 +1780,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.167  2012/11/08 23:20:00  pwagner
+! Tries to avoid duplicating swath names during unsplit
+!
 ! Revision 2.166  2012/08/16 17:51:43  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
