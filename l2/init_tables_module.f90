@@ -907,6 +907,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_centerVertically, t+t_boolean, n+n_field_type/) )
     call make_tree ( (/ & ! Continuing for s_fill...
+             begin, f+f_dimList, t+t_string, n+n_field_type, &
              begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
              begin, f+f_dontSumInstances, t+t_boolean, n+n_field_type, &
              begin, f+f_dontSumHeights, t+t_boolean, n+n_field_type, &
@@ -1790,6 +1791,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.556  2012/11/08 21:08:03  pwagner
+! Fill command may take dimList as a field
+!
 ! Revision 2.555  2012/10/22 18:13:28  pwagner
 ! Many Subset operations now available in Fill
 !
