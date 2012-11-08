@@ -25,7 +25,7 @@ module ManipulationUtils        ! operations to manipulate quantities
     & REPLACESUBSTRING
   use MLSSTRINGS, only: INDEXES, LOWERCASE, SPLITNEST
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
-  use VECTORSMODULE, only: VECTORVALUE_T, M_FILL
+  use VECTORSMODULE, only: VECTORVALUE_T, M_FILL, RESHAPEVECTORVALUE
   ! This module allows us to do algebraic operations on vector quantities
   ! saving the result in a vector quantity
   ! See also Algebra Module (though I never got that to work--paw)
@@ -63,15 +63,16 @@ module ManipulationUtils        ! operations to manipulate quantities
 contains ! =====     Public Procedures     =============================
 
   subroutine Manipulate( QUANTITY, A, B, C, MSTR, &
-    & SPREADFLAG, DONTSUMHEIGHTS, DONTSUMINSTANCES )
-  type (VectorValue_T), intent(inout) :: QUANTITY
-  type (VectorValue_T), pointer :: A
-  type (VectorValue_T), pointer :: B
-  real(rv)                      :: C          ! constant "c" in manipulation
-  character (len=*)             :: MSTR       ! manipulation encoded as a string
-  logical, intent(in)           :: SPREADFLAG ! ignore shape, mask, etc.
-  logical, intent(in)           :: DONTSUMHEIGHTS ! if statistical
-  logical, intent(in)           :: DONTSUMINSTANCES ! if statistical
+    & SPREADFLAG, DONTSUMHEIGHTS, DONTSUMINSTANCES, DIMLIST )
+    type (VectorValue_T), intent(inout) :: QUANTITY
+    type (VectorValue_T), pointer :: A
+    type (VectorValue_T), pointer :: B
+    real(rv)                      :: C          ! constant "c" in manipulation
+    character (len=*)             :: MSTR       ! manipulation encoded as a string
+    logical, intent(in)           :: SPREADFLAG ! ignore shape, mask, etc.
+    logical, intent(in)           :: DONTSUMHEIGHTS ! if statistical
+    logical, intent(in)           :: DONTSUMINSTANCES ! if statistical
+    character(len=*), intent(in)  :: DIMLIST ! E.g., 's' to shift surfaces, not chans
     ! Evaluate mstr assuming it's of the form
     ! expr1 [op1 expr2]
     ! where each expr is either a primitive 'x' (one of {a, b, or c})
@@ -191,7 +192,7 @@ contains ! =====     Public Procedures     =============================
       else
         np = evaluatePrimitive( trim(part2), &
           & a, b, c, &
-      & spreadflag, dontsumheights, dontsuminstances )
+          & spreadflag, dontsumheights, dontsuminstances, dimList )
         write(vChar, '(i4)') np
       endif
       ! And substitute its value for the spaces it occupied
@@ -217,7 +218,7 @@ contains ! =====     Public Procedures     =============================
     ! Presumably we have collapsed all the nested '(..)' pairs by now
     np = evaluatePrimitive( trim(collapsedstr), &
       & a, b, c, &
-      & spreadflag, dontsumheights, dontsuminstances )
+      & spreadflag, dontsumheights, dontsuminstances, dimList )
     if ( DeeBUG ) then
       print *, 'np ', np
       print *, 'size(database) ', size(primitives)
@@ -244,9 +245,7 @@ contains ! =====     Public Procedures     =============================
         quantity%values(level:, :) = primitives(np)%values(level-1, 1)
     elseif ( MapFunction ) then
       ! Ignores mask, shape, etc. if we used the "map" function
-        quantity%values = reshape( &
-          & primitives(np)%values, shape(quantity%values) &
-          & )
+      call ReshapeVectorValue( quantity, sourceValues=primitives(np)%values )
     elseif ( .not. associated ( quantity%mask ) ) then
       quantity%values = primitives(np)%values
     else
@@ -496,7 +495,7 @@ contains ! =====     Public Procedures     =============================
   end function AddPrimitiveToDatabase
 
   function evaluatePrimitive( STR, A, B, C, &
-    & SPREADFLAG, DONTSUMHEIGHTS, DONTSUMINSTANCES ) result(VALUE)
+    & SPREADFLAG, DONTSUMHEIGHTS, DONTSUMINSTANCES, DIMLIST ) result(VALUE)
     ! Evaluate an expression composed entirely of
     ! (0) constants ('c')
     ! (1) primitives (e.g., '2')
@@ -509,9 +508,10 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), pointer   :: A
     type (VectorValue_T), pointer   :: B
     real(rv) :: C                     ! constant "c" in manipulation
-    logical, intent(in)           :: SPREADFLAG ! ignore shape, mask, etc.
-    logical, intent(in)           :: DONTSUMHEIGHTS ! if statistical
-    logical, intent(in)           :: DONTSUMINSTANCES ! if statistical
+    logical, intent(in)             :: SPREADFLAG ! ignore shape, mask, etc.
+    logical, intent(in)             :: DONTSUMHEIGHTS ! if statistical
+    logical, intent(in)             :: DONTSUMINSTANCES ! if statistical
+    character(len=*), intent(in)    :: DIMLIST ! E.g., 's' to shift surfaces, not chans
     ! Internal variables
     ! logical, parameter              :: DEEBUG = .true.
     logical                         :: done
@@ -712,11 +712,13 @@ contains ! =====     Public Procedures     =============================
             elsewhere
               newone%values = 0.
             end where
-        ! map is a no-op currently
-        ! You can use this to map quantities with equal total
+        ! You can use map to reshape quantities with equal total
         ! size, but distributed differently among channels, sirfs, instances
+        ! However, in this context, newone and part are both primitives
+        ! and are shaped identically
         case ('map')
             newone%values = part%values
+            ! call ReshapeVectorValue( newone, sourceValues=part%values )
             ! call output( 'Calling function map', advance='yes' )
         case ('channel', 'surface', 'instance', 'height', 'lon', 'lat', 'sza')
           ! These might be useful for filling arrays with indexes
@@ -765,41 +767,65 @@ contains ! =====     Public Procedures     =============================
           ! These are useful for recurrence relations, frequency shifts,
           ! and applying any filter that spans multiple heights or
           ! multiple instances
-          ! At present, they apply only to the fastest changing index
+          ! By default, they apply only to the fastest changing index
           ! in this order: channel, surface, instance
-          ! shift(a[n]) = a[n+1]
-          ! slip(a[n])  = a[n-1]
-          NoChans     = a%template%NoChans
+          ! shift(a[c,s,i]) = a[c+1,s,i]
+          ! slip(a[c,s,i])  = a[c-1,s,i]
+          ! If dimList='s'
+          ! shift(a[c,s,i]) = a[c,s+1,i]
+          ! If dimList='i'
+          ! shift(a[c,s,i]) = a[c,s,i+1]
+          
+          NoChans     = max(a%template%NoChans, 1)
           NoInstances = a%template%NoInstances
           NoSurfs     = a%template%NoSurfs
+          call outputnamedValue( 'NoChans      ', NoChans      )
+          call outputnamedValue( 'NoInstances  ', NoInstances  )
+          call outputnamedValue( 'NoSurfs      ', NoSurfs      )
+          call outputnamedValue( 'op           ', op           )
+          call outputnamedValue( 'dimList      ', dimList      )
+          call outputnamedValue( 'shape(newone)', shape(newone%values)      )
+          call outputnamedValue( 'shape(part)  ', shape(part%values)      )
           if ( NoChans*NoSurfs*NoInstances < 2 ) cycle
           select case(op)
           case ('shift')
-            if ( NoChans > 1 ) then
+            if ( NoChans > 1 .or. index(dimList,'c') > 0 ) then
               do iSurf = 1, NoSurfs
                 newone%values(1 + (isurf-1)*NoChans:isurf*NoChans-1, :) = &
                   & part%values(2 + (isurf-1)*NoChans:isurf*NoChans, :)
               enddo
-            elseif ( NoSurfs > 1 ) then
-              newone%values(1 :NoSurfs-1, :) = &
-                & part%values(2 :NoSurfs, :)
+              newone%values(NoChans*NoSurfs, :) = part%values(1, :) ! cyclic
+            elseif ( NoSurfs > 1 .or. index(dimList,'s') > 0 ) then
+              call outputnamedValue( 'shape(newone)  ', shape(newone%values(1 :1+noChans*(NoSurfs-1)-1:noChans, :))      )
+              call outputnamedValue( 'shape(part)  ', shape(part%values(1+noChans :1+noChans*noChans*NoSurfs-1:noChans, :))      )
+              do iChannel = 1, NoChans
+                newone%values(iChannel :iChannel+noChans*(NoSurfs-1)-1:noChans, :) = &
+                  & part%values(iChannel+noChans :iChannel+noChans*NoSurfs-1:noChans, :)
+              enddo
+              newone%values(NoChans*NoSurfs, :) = part%values(1, :) ! cyclic
             else
               newone%values(:, 1:NoInstances-1) = &
                 & part%values(: , 2:NoInstances)
+              newone%values(:, NoInstances) = part%values(:, 1) ! cyclic
             endif
             ! call output( 'Calling function shift', advance='yes' )
           case ('slip')
-            if ( NoChans > 1 ) then
+            if ( NoChans > 1 .or. index(dimList,'c') > 0 ) then
               do iSurf = 1, NoSurfs
                 newone%values(2 + (isurf-1)*NoChans:isurf*NoChans, :) = &
                   & part%values(1 + (isurf-1)*NoChans:isurf*NoChans-1, :)
               enddo
-            elseif ( NoSurfs > 1 ) then
-              newone%values(2 :NoSurfs, :) = &
-                & part%values(1 :NoSurfs-1, :)
+              newone%values(1, :) = part%values(NoChans*NoSurfs, :) ! cyclic
+            elseif ( NoSurfs > 1 .or. index(dimList,'s') > 0 ) then
+              do iChannel = 1, NoChans
+                newone%values(iChannel+noChans :iChannel+noChans*NoSurfs-1:noChans, :) = &
+                  & part%values(iChannel :iChannel+noChans*(NoSurfs-1)-1:noChans, :)
+              enddo
+              newone%values(1, :) = part%values(NoChans*NoSurfs, :) ! cyclic
             else
               newone%values(:, 2:NoInstances) = &
                 & part%values(: , 1:NoInstances-1)
+              newone%values(:, 1) = part%values(:, NoInstances) ! cyclic
             endif
             ! call output( 'Calling function slip', advance='yes' )
           end select                
@@ -966,6 +992,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.2  2012/11/08 23:33:48  pwagner
+! dimList field lets us specifiy whether to shift by [c,s,i]
+!
 ! Revision 2.1  2012/10/09 00:49:12  pwagner
 ! First commit
 !
