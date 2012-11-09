@@ -91,6 +91,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! ReciprocateVector            Y = A / X if Y is present, else X = A / X -- scalar A
 ! RemapVectorMask              Remap MASK1 to MASK and MASK3
 ! RemapVectorValue             Remap VALUE1 to VALUES and VALUE3
+! ReshapeVectorValue           Reshape source values to fit destination loosely
 ! ReverseMask                  Reverse bits of MASK according to TO_CLEAR
 ! RmVectorFromDatabase         Removes a vector from a database of such vectors
 ! ScaleVector                  Y = A*X if Y is present, else X = A*X.
@@ -154,7 +155,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: NULLIFYVECTORTEMPLATE, NULLIFYVECTORVALUE, NULLIFYVECTOR, POWVECTOR
   public :: QUANTITYTEMPLATE_T ! FOR FULL F95 COMPATIBILITY
   public :: RECIPROCATEVECTOR, REMAPVECTORMASK, REMAPVECTORVALUE, REVERSEMASK
-  public :: RMVECTORFROMDATABASE
+  public :: RESHAPEVECTORVALUE, RMVECTORFROMDATABASE
   public :: SCALEVECTOR, SETMASK, SUBTRACTFROMVECTOR
   public :: SUBTRACTVECTORS, VALIDATEVECTORQUANTITY
   ! Types
@@ -2551,6 +2552,32 @@ contains ! =====     Public Procedures     =============================
       &    value%template%noInstances /) )
   end subroutine RemapVectorValue
 
+  ! ------------------------------------------------  ReehapeVectorValue  -----
+  subroutine ReshapeVectorValue ( DESTINATION, SOURCE, SOURCEVALUES )
+  ! Reverse bits of MASK indexed by elements of TO_Reverse.  Numbering of mask
+    type ( VectorValue_T), optional, intent(in)    :: SOURCE
+    type ( VectorValue_T), intent(out)             :: DESTINATION
+    real(rv), dimension(:,:), optional, intent(in) :: SOURCEVALUES
+    ! Internal variables
+    integer :: i, j, k, n
+    ! Executable
+    if ( .not. associated(destination%values) ) return
+    if ( present(source) ) then
+      n = min( size(source%values), size(destination%values) )
+      destination%value1(:n) = source%value1(:n)
+    elseif ( present(sourcevalues) ) then
+      n = min( size(sourceValues), size(destination%values) )
+      k = 0
+      do j=1, size(sourcevalues, 2)
+        do i=1, size(sourcevalues, 1)
+          k = k + 1
+          if ( k > n ) exit
+          destination%value1(k) = sourcevalues(i, j)
+        enddo
+      enddo
+    endif
+  end subroutine ReshapeVectorValue
+
   ! ------------------------------------------------  ReverseMask  -----
   subroutine ReverseMask ( MASK, TO_Reverse, WHAT )
   ! Reverse bits of MASK indexed by elements of TO_Reverse.  Numbering of mask
@@ -2981,6 +3008,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.170  2012/10/30 22:07:28  pwagner
+! Now able to clear full 2d quantity mask
+!
 ! Revision 2.169  2012/10/29 17:42:31  pwagner
 ! Added optional args to CloneVectorQuantity, DestroyVectorQuantityValue
 !
