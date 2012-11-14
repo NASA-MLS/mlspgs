@@ -909,8 +909,6 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_dimList, t+t_string, n+n_field_type, &
              begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
-             begin, f+f_dontSumInstances, t+t_boolean, n+n_field_type, &
-             begin, f+f_dontSumHeights, t+t_boolean, n+n_field_type, &
              begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_ECRtoFOV, s+s_vector, f+f_template, f+f_quantities, &
@@ -1791,6 +1789,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.557  2012/11/14 00:57:26  pwagner
+! Use dimList for choosing which of {csi} to average over
+!
 ! Revision 2.556  2012/11/08 21:08:03  pwagner
 ! Fill command may take dimList as a field
 !
