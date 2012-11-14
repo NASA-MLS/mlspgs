@@ -104,7 +104,7 @@ contains ! =====     Public Procedures     =============================
       & F_BOXCARMETHOD, &
       & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_CHANNELS, F_COLUMNS, &
       & F_DESTINATION, F_DIAGONAL, F_DIMLIST, &
-      & F_DONTMASK, F_DONTSUMHEIGHTS, F_DONTSUMINSTANCES, &
+      & F_DONTMASK, &
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, &
       & F_EXPLICITVALUES, F_EXPR, F_EXTINCTION, &
       & F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, F_SHAPE, &
@@ -339,8 +339,6 @@ contains ! =====     Public Procedures     =============================
     !                                     -- for Covariance
     character(len=16) :: DIMLIST        ! 's', 'c', or 'i' in manipulation's shift
     logical :: DONTMASK                 ! Use even masked values if TRUE
-    logical :: DONTSUMHEIGHTS
-    logical :: DONTSUMINSTANCES
     integer :: ECRTOFOVQUANTITYINDEX    ! Rotation matrix
     integer :: ECRTOFOVVECTORINDEX      ! Rotation matirx
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
@@ -567,8 +565,6 @@ contains ! =====     Public Procedures     =============================
       channelsNode = 0
       colmabunits = l_molcm2 ! default units for column abundances
       dontMask = .false.
-      dontSumHeights = .false.
-      dontSumInstances = .false.
       exact = .false.
       excludeBelowBottom = .false.
       extinction = .false.
@@ -1344,6 +1340,7 @@ contains ! =====     Public Procedures     =============================
         case ( f_dimList )
           ! dimList = sub_rosa ( gson )
           call get_string ( sub_rosa ( gson ), dimList, strip=.true. )
+          dimList = lowercase( dimList )
         case ( f_earthRadius ) ! For losGrid fill
           earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
           earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1390,10 +1387,6 @@ contains ! =====     Public Procedures     =============================
           h2oPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_dontMask )
           dontMask = get_boolean ( gson )
-        case ( f_dontSumHeights )
-          dontSumHeights = get_boolean ( gson )
-        case ( f_dontSumInstances )
-          dontSumInstances = get_boolean ( gson )
         case ( f_heightRange )
           manipulation = sub_rosa ( gson )
           heightRange = ' '
@@ -1850,10 +1843,13 @@ contains ! =====     Public Procedures     =============================
         if ( width == 1 ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Boxcar Fill with width=1 results in straightforward copy' )
+          call FromAnother ( quantity, sourceQuantity, ptanQuantity, &
+            & key, ignoreTemplate=.true., spreadflag=.false., &
+            & interpolate=.false., force=.false. )
         elseif (  mod ( width, 2 ) == 0 ) then
+          call WithBoxcarFunction ( key, quantity, sourceQuantity, width, &
+            & boxCarMethod, ignoreTemplate )
         endif
-        call WithBoxcarFunction ( key, quantity, sourceQuantity, width, &
-          & boxCarMethod, ignoreTemplate )
 
       case ( l_chiSQChan )
         if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
@@ -2327,7 +2323,7 @@ contains ! =====     Public Procedures     =============================
             call CloneVectorQuantity( tempswapquantity, quantity )
             call ByManipulation ( tempswapquantity, aQuantity, bQuantity, &
               & manipulation, key, ignoreTemplate, &
-              & spreadflag, dontSumHeights, dontSumInstances, dimList, &
+              & spreadflag, dimList, &
               & c )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
               & vectors(vectorIndex)%globalUnit, channel, &
@@ -2337,7 +2333,7 @@ contains ! =====     Public Procedures     =============================
           else
             call ByManipulation ( quantity, aQuantity, bQuantity, &
               & manipulation, key, ignoreTemplate, &
-              & spreadflag, dontSumHeights, dontSumInstances, dimList, &
+              & spreadflag, dimList, &
               & c )
           endif
         else
@@ -2347,7 +2343,7 @@ contains ! =====     Public Procedures     =============================
             call CloneVectorQuantity( tempswapquantity, quantity )
             call ByManipulation ( tempswapquantity, aQuantity, bQuantity, &
               & manipulation, key, ignoreTemplate, &
-              & spreadflag, dontSumHeights, dontSumInstances, dimList )
+              & spreadflag, dimList )
             call Explicit ( quantity, valuesNode, spreadFlag, force, &
               & vectors(vectorIndex)%globalUnit, channel, &
               & .false., options=heightRange(1:1), &
@@ -2357,7 +2353,7 @@ contains ! =====     Public Procedures     =============================
           else
             call ByManipulation ( quantity, aQuantity, bQuantity, &
               & manipulation, key, ignoreTemplate, &
-              & spreadflag, dontSumHeights, dontSumInstances, dimList )
+              & spreadflag, dimList )
           endif
         endif
 
@@ -2934,6 +2930,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.413  2012/11/14 00:58:42  pwagner
+! Use dimList for choosing which of {csi} to average over; finished treating width=1
+!
 ! Revision 2.412  2012/11/08 23:21:30  pwagner
 ! dimList field lets us specifiy whether to shift by [c,s,i] during manipulate
 !
