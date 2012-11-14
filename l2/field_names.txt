@@ -129,8 +129,6 @@ do_conv
 do_freq_avg
 do_1d
 dontPack
-dontSumHeights
-dontSumInstances
 dontMask
 downsample
 dumpQuantities # of X during Newton iteration
@@ -499,6 +497,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.224  2012/11/14 00:57:11  pwagner
+# Use dimList for choosing which of {csi} to average over
+#
 # Revision 2.223  2012/10/17 00:42:37  pwagner
 # removed unused sourcesGrid
 #
