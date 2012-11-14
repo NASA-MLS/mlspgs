@@ -19,7 +19,8 @@ module ManipulationUtils        ! operations to manipulate quantities
   use MLSL2OPTIONS, only: MLSMESSAGE
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSSTATS1, only: MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, MLSRMS, MLSSTDDEV
+  use MLSSTATS1, only: MLSCOUNT, MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, &
+    & MLSRMS, MLSSTDDEV
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, &
     & NUMSTRINGELEMENTS, &
     & REPLACESUBSTRING
@@ -42,7 +43,7 @@ module ManipulationUtils        ! operations to manipulate quantities
 ! === (start of api) ===
 ! Manipulate( type(VectorValue_T) quantity, &
 !     type(VectorValue_T) a, type(VectorValue_T) b, rv c, char* mstr, &
-!       &  log spreadflag, log dontsumheights, log dontsuminstances )
+!       &  log spreadflag, char*dimList )
 ! === (end of api) ===
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= "$RCSfile$"
@@ -63,15 +64,13 @@ module ManipulationUtils        ! operations to manipulate quantities
 contains ! =====     Public Procedures     =============================
 
   subroutine Manipulate( QUANTITY, A, B, C, MSTR, &
-    & SPREADFLAG, DONTSUMHEIGHTS, DONTSUMINSTANCES, DIMLIST )
+    & SPREADFLAG, DIMLIST )
     type (VectorValue_T), intent(inout) :: QUANTITY
     type (VectorValue_T), pointer :: A
     type (VectorValue_T), pointer :: B
     real(rv)                      :: C          ! constant "c" in manipulation
     character (len=*)             :: MSTR       ! manipulation encoded as a string
     logical, intent(in)           :: SPREADFLAG ! ignore shape, mask, etc.
-    logical, intent(in)           :: DONTSUMHEIGHTS ! if statistical
-    logical, intent(in)           :: DONTSUMINSTANCES ! if statistical
     character(len=*), intent(in)  :: DIMLIST ! E.g., 's' to shift surfaces, not chans
     ! Evaluate mstr assuming it's of the form
     ! expr1 [op1 expr2]
@@ -192,7 +191,7 @@ contains ! =====     Public Procedures     =============================
       else
         np = evaluatePrimitive( trim(part2), &
           & a, b, c, &
-          & spreadflag, dontsumheights, dontsuminstances, dimList )
+          & spreadflag, dimList )
         write(vChar, '(i4)') np
       endif
       ! And substitute its value for the spaces it occupied
@@ -218,7 +217,7 @@ contains ! =====     Public Procedures     =============================
     ! Presumably we have collapsed all the nested '(..)' pairs by now
     np = evaluatePrimitive( trim(collapsedstr), &
       & a, b, c, &
-      & spreadflag, dontsumheights, dontsuminstances, dimList )
+      & spreadflag, dimList )
     if ( DeeBUG ) then
       print *, 'np ', np
       print *, 'size(database) ', size(primitives)
@@ -279,6 +278,8 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in) :: name ! of the statistical function
     real(rv), dimension(:), intent(in) :: avalues
       select case ( name )
+      case ( 'count(a)' )
+        qvalue = mlscount( avalues )
       case ( 'min(a)' )
         qvalue = mlsmin( avalues )
       case ( 'max(a)' )
@@ -495,7 +496,7 @@ contains ! =====     Public Procedures     =============================
   end function AddPrimitiveToDatabase
 
   function evaluatePrimitive( STR, A, B, C, &
-    & SPREADFLAG, DONTSUMHEIGHTS, DONTSUMINSTANCES, DIMLIST ) result(VALUE)
+    & SPREADFLAG, DIMLIST ) result(VALUE)
     ! Evaluate an expression composed entirely of
     ! (0) constants ('c')
     ! (1) primitives (e.g., '2')
@@ -509,10 +510,13 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), pointer   :: B
     real(rv) :: C                     ! constant "c" in manipulation
     logical, intent(in)             :: SPREADFLAG ! ignore shape, mask, etc.
-    logical, intent(in)             :: DONTSUMHEIGHTS ! if statistical
-    logical, intent(in)             :: DONTSUMINSTANCES ! if statistical
     character(len=*), intent(in)    :: DIMLIST ! E.g., 's' to shift surfaces, not chans
     ! Internal variables
+    logical, dimension(3)           :: average
+    character(len=3)                :: avg
+    integer, parameter              :: cc = 1      ! channel
+    integer, parameter              :: ss = cc + 1 ! surface
+    integer, parameter              :: ii = ss + 1 ! instance
     ! logical, parameter              :: DEEBUG = .true.
     logical                         :: done
     ! fun is blank unless a prior one left us "hungry" for an arg
@@ -523,6 +527,7 @@ contains ! =====     Public Procedures     =============================
     integer                         :: ind
     integer                         :: instance
     integer                         :: isurf
+    integer                         :: k  ! counter for 1st qty index
     character(len=3)                :: lastOp ! {'+', '-', '*', '/'}
     integer                         :: n
     logical                         :: negating
@@ -538,6 +543,16 @@ contains ! =====     Public Procedures     =============================
     integer                         :: surf
     character(len=32)               :: variable
     ! Executable
+    average = (/ .true., .false., .false. /)
+    if ( len_trim(dimList) > 0 ) then
+      average(cc) = index(dimList, 'c') > 0
+      average(ss) = index(dimList, 's') > 0
+      average(ii) = index(dimList, 'i') > 0
+    endif
+    avg = ' '
+    if ( average(cc) ) avg = trim(avg) // 'c'
+    if ( average(ss) ) avg = trim(avg) // 's'
+    if ( average(ii) ) avg = trim(avg) // 'i'
     shp = shape(a%values)
     call allocate_test( newone%values, shp(1), shp(2), &
       & 'newone', ModuleName // '/evaluatePrimitive' )
@@ -779,13 +794,15 @@ contains ! =====     Public Procedures     =============================
           NoChans     = max(a%template%NoChans, 1)
           NoInstances = a%template%NoInstances
           NoSurfs     = a%template%NoSurfs
-          call outputnamedValue( 'NoChans      ', NoChans      )
-          call outputnamedValue( 'NoInstances  ', NoInstances  )
-          call outputnamedValue( 'NoSurfs      ', NoSurfs      )
-          call outputnamedValue( 'op           ', op           )
-          call outputnamedValue( 'dimList      ', dimList      )
-          call outputnamedValue( 'shape(newone)', shape(newone%values)      )
-          call outputnamedValue( 'shape(part)  ', shape(part%values)      )
+          if ( DEEBUG ) then
+            call outputnamedValue( 'NoChans      ', NoChans      )
+            call outputnamedValue( 'NoInstances  ', NoInstances  )
+            call outputnamedValue( 'NoSurfs      ', NoSurfs      )
+            call outputnamedValue( 'op           ', op           )
+            call outputnamedValue( 'dimList      ', dimList      )
+            call outputnamedValue( 'shape(newone)', shape(newone%values)      )
+            call outputnamedValue( 'shape(part)  ', shape(part%values)      )
+          endif
           if ( NoChans*NoSurfs*NoInstances < 2 ) cycle
           select case(op)
           case ('shift')
@@ -796,8 +813,10 @@ contains ! =====     Public Procedures     =============================
               enddo
               newone%values(NoChans*NoSurfs, :) = part%values(1, :) ! cyclic
             elseif ( NoSurfs > 1 .or. index(dimList,'s') > 0 ) then
-              call outputnamedValue( 'shape(newone)  ', shape(newone%values(1 :1+noChans*(NoSurfs-1)-1:noChans, :))      )
-              call outputnamedValue( 'shape(part)  ', shape(part%values(1+noChans :1+noChans*noChans*NoSurfs-1:noChans, :))      )
+              if ( DEEBUG ) call outputnamedValue( 'shape(newone)  ', &
+                & shape(newone%values(1 :1+noChans*(NoSurfs-1)-1:noChans, :)) )
+              if ( DEEBUG ) call outputnamedValue( 'shape(part)  ', &
+                & shape(part%values(1+noChans :1+noChans*noChans*NoSurfs-1:noChans, :)) )
               do iChannel = 1, NoChans
                 newone%values(iChannel :iChannel+noChans*(NoSurfs-1)-1:noChans, :) = &
                   & part%values(iChannel+noChans :iChannel+noChans*NoSurfs-1:noChans, :)
@@ -830,25 +849,43 @@ contains ! =====     Public Procedures     =============================
             ! call output( 'Calling function slip', advance='yes' )
           end select                
         ! statistical function cases
-        case ( 'min', 'max', 'mean', 'median', 'rms', 'stddev' )
+        case ( 'count', 'min', 'max', 'mean', 'median', 'rms', 'stddev' )
           ! These are harder--we must interpret how to gather
-          ! or "sum" the data
-          ! By default we sum over heights, channels and instances
-          ! but optional flags may cuase us to pick out
-          ! a statistic at each height (dontSumHeights)
-          ! or at each instance (dontSumInstances)
+          ! or "average" the data
+          ! By default we average over channels, not surfaces or instances
+          ! but dimList may cause us to pick out
+          ! different choises; e.g., dimList='c,s' tells us to average
+          ! over both channels and surfaces
           NoChans     = a%template%NoChans
           NoInstances = a%template%NoInstances
           NoSurfs     = a%template%NoSurfs
-          if ( dontSumHeights .and. dontSumInstances ) then
+          ! if ( dontSumHeights .and. dontSumInstances ) then
+          if ( DEEBUG ) then
+            call outputNamedValue( 'dimList', dimList )
+            call outputNamedValue( 'average', average )
+            call outputNamedValue( 'avg', avg )
+          endif
+          select case (avg)
+          case ( 'c' )
+          ! if ( .not. average(ss) .and. .not. average(ii) ) then
+            ! Average over channels only
+            if ( DEEBUG ) call output( 'Average over channels only', advance='yes' )
             do instance = 1, NoInstances
               do iSurf = 1, NoSurfs
-                call doStatFun( newone%values(iSurf, instance), &
+                call doStatFun( qvalue, &
                   & trim(op) // '(a)', &
                   & part%values(1+(iSurf-1)*NoChans:iSurf*NoChans, instance) )
+                if ( spreadFlag ) then
+                  newone%values(1+(iSurf-1)*NoChans:iSurf*NoChans, instance) = qvalue
+                else
+                  newone%values(1+(iSurf-1)*NoChans, instance) = qvalue
+                endif
               enddo
             enddo
-          elseif ( dontSumInstances ) then
+          case ( 'cs' )
+          ! elseif ( dontSumInstances ) then
+          ! elseif ( .not. average(ii) ) then
+            if ( DEEBUG ) call output( 'Average over channels and surfaces', advance='yes' )
             do instance = 1, NoInstances
               call doStatFun( qvalue, trim(op) // '(a)', &
                 & part%values(:, instance) )
@@ -858,7 +895,10 @@ contains ! =====     Public Procedures     =============================
                 newone%values(1, instance) = qvalue
               endif
             enddo
-          elseif ( dontSumHeights ) then
+          case ( 'ci' )
+          ! elseif ( dontSumHeights ) then
+          ! elseif ( .not. average(ss) ) then
+            if ( DEEBUG ) call output( 'Average over channels and instances', advance='yes' )
             do iSurf = 1, NoSurfs
               call doStatFun( qvalue, trim(op) // '(a)', &
                 & part%values(iSurf, :) )
@@ -868,8 +908,10 @@ contains ! =====     Public Procedures     =============================
                 newone%values(iSurf, 1) = qvalue
               endif
             enddo
-          else
-            ! Sum over both heights and instances
+          case ( 'csi' )
+          ! else
+            ! Average over everything: c, s, and i
+            if ( DEEBUG ) call output( 'Average over everything: c, s, and i', advance='yes' )
             select case ( op )
             case ( 'min' )
               qvalue = mlsmin( part%values )
@@ -891,11 +933,55 @@ contains ! =====     Public Procedures     =============================
             else
               newone%values(1, 1) = qvalue
             endif
-          endif
+          case ( 'si' )
+            if ( DEEBUG ) call output( 'Average over instances and surfaces', advance='yes' )
+            do iChannel = 1, NoChans
+              call doStatFun( qvalue, trim(op) // '(a)', &
+                & reshape( &
+                &   part%values(iChannel:iChannel + noChans*(noSurfs-1):noChans, :), &
+                &  (/ NoSurfs*NoInstances /) ) )
+              if ( spreadFlag ) then
+                newone%values(iChannel:iChannel + noChans*(noSurfs-1):noChans, :) = qvalue
+              else
+                newone%values(iChannel, :) = qvalue
+              endif
+            enddo
+          ! endif
+          case ( 's' )
+            if ( DEEBUG ) call output( 'Average over only surfaces', advance='yes' )
+            do instance = 1, NoInstances
+              do iChannel = 1, NoChans
+                call doStatFun( qvalue, trim(op) // '(a)', &
+                  & part%values(iChannel:iChannel + noChans*(noSurfs-1):noChans, instance) )
+                if ( spreadFlag ) then
+                  newone%values(iChannel:iChannel + noChans*(noSurfs-1):noChans, instance) = qvalue
+                else
+                  newone%values(iChannel, instance) = qvalue
+                endif
+              enddo
+            enddo
+          case ( 'i' )
+            if ( DEEBUG ) call output( 'Average over only instances', advance='yes' )
+            k = 0
+            do iSurf = 1, NoSurfs
+              do iChannel = 1, NoChans
+                k = k + 1
+                call doStatFun( qvalue, trim(op) // '(a)', &
+                  & part%values(k, :) )
+                if ( spreadFlag ) then
+                  newone%values(k, 1) = qvalue
+                else
+                  newone%values(k, :) = qvalue
+                endif
+              enddo
+            enddo
+          case default
+            ! How could this happen?
+          end select
         case default
           ! How could this happen?
             call MLSMessage( MLSMSG_Error, ModuleName, &
-              & op // ' not a legal binary op in evaluatePrimitive' )
+              & avg // ' not recognized as a list of averageable dims' )
         end select
         fun = ' '
         negating = .false.
@@ -915,8 +1001,6 @@ contains ! =====     Public Procedures     =============================
       if ( done ) exit
     enddo
     value = AddPrimitiveToDatabase( primitives, newone )
-!         call deallocate_test( newone%values, &
-!           & 'newone', ModuleName // '/evaluatePrimitive' )
     call deallocate_test( part%values, &
       & 'part', ModuleName // '/evaluatePrimitive' )
     if ( .not. DEEBUG ) return
@@ -992,6 +1076,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.3  2012/11/14 01:00:04  pwagner
+! Use dimList for choosing which of {csi} to average over
+!
 ! Revision 2.2  2012/11/08 23:33:48  pwagner
 ! dimList field lets us specifiy whether to shift by [c,s,i]
 !
