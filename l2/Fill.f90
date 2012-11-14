@@ -1847,6 +1847,11 @@ contains ! =====     Public Procedures     =============================
             & key, ignoreTemplate=.true., spreadflag=.false., &
             & interpolate=.false., force=.false. )
         elseif (  mod ( width, 2 ) == 0 ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Boxcar Fill called with even width: adding one to make it odd' )
+          call WithBoxcarFunction ( key, quantity, sourceQuantity, width+1, &
+            & boxCarMethod, ignoreTemplate )
+        else
           call WithBoxcarFunction ( key, quantity, sourceQuantity, width, &
             & boxCarMethod, ignoreTemplate )
         endif
@@ -2930,6 +2935,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.414  2012/11/14 20:04:11  pwagner
+! Fix boxcar bug added with last commit
+!
 ! Revision 2.413  2012/11/14 00:58:42  pwagner
 ! Use dimList for choosing which of {csi} to average over; finished treating width=1
 !
