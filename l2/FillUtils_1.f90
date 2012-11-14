@@ -3649,7 +3649,7 @@ contains ! =====     Public Procedures     =============================
     ! --------------------------------------------- ByManipulation ---
     subroutine ByManipulation ( quantity, a, b, &
       & manipulation, key, ignoreTemplate, &
-      & spreadflag, dontSumHeights, dontSumInstances, dimList, &
+      & spreadflag, dimList, &
       & c )
       use MANIPULATIONUTILS, only: MANIPULATE
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -3661,8 +3661,6 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: ignoreTemplate ! If set throw caution to the wind
       ! The following args are important only for statistical functions
       logical, intent(in) :: SPREADFLAG ! If set spread across summed dimension
-      logical, intent(in) :: DONTSUMHEIGHTS
-      logical, intent(in) :: DONTSUMINSTANCES
       character(len=*), intent(in)    :: DIMLIST ! E.g., 's' to shift surfaces, not chans
       ! Local parameters
 
@@ -3714,7 +3712,7 @@ contains ! =====     Public Procedures     =============================
       StatisticalFunction = any( &
         & indexes( &
         &   mstr, &
-        &   (/ 'min   ', 'max   ', 'mean  ', 'median', 'rms   ', 'stddev' /) &
+        &   (/ 'count ', 'min   ', 'max   ', 'mean  ', 'median', 'rms   ', 'stddev' /) &
         &   ) &
         &  > 1 )
       MapFunction = ( index(mstr, 'map') > 0 )
@@ -3789,7 +3787,7 @@ contains ! =====     Public Procedures     =============================
           cc = c
         endif
         call Manipulate( quantity, a, b, cc, mstr, &
-          & spreadflag, dontsumheights, dontsuminstances, dimList )
+          & spreadflag, dimList )
       end select
       call MLSMessageCalls( 'pop' )
     9 if ( toggle(gen) .and. levels(gen) > 1 ) &
@@ -5555,8 +5553,7 @@ contains ! =====     Public Procedures     =============================
         if ( all( (/ associated(aq), associated(bq), associated(dq) /) ) ) then
           call ByManipulation ( dq, aq, bq, &
             & manipulation, key=0, &
-            & ignoreTemplate=.true., spreadflag=.false., dontSumHeights=.true., &
-            & dontSumInstances=.true., dimList=' ', &
+            & ignoreTemplate=.true., spreadflag=.false., dimList=' ', &
             & c=c )
         else
           call MLSMessage ( MLSMSG_Warning, ModuleName // '%ManipulateVectors', &
@@ -6686,6 +6683,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.68  2012/11/14 00:59:23  pwagner
+! Use dimList for choosing which of {csi} to average over
+!
 ! Revision 2.67  2012/11/08 23:21:51  pwagner
 ! dimList field lets us specifiy whether to shift by [c,s,i] during manipulate
 !
