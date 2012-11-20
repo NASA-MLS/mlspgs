@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-110r1}
-\newcommand{\docdate}{12 September 2012}
+\newcommand{\docname}{wvs-110r2}
+\newcommand{\docdate}{20 November 2012}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -118,6 +118,7 @@ co{\"o}rdinate index. The gradient $\mathbf{g}$ is
 \begin{equation}
 g_j =
  \frac{\partial}{\partial x^j}\left( \eta^{il} f_i f_l \right)
+ = \left(  f_i f_l \right)_{,j}
  = \eta^{il} ( f_{i,j} f_l + f_i f_{l,j} ) =
    f^l_{,j} f_l + f_i f^i_{,j} = 2 f^i_{,j} f_i =
    2 \mathbf{J}^i_j\, f_i\,,
@@ -132,6 +133,7 @@ derivative $\mathbf{g}^\prime$ is given by
 g_{j,k} =
  \frac{\partial}{\partial x^k} \left( \mathbf{J}^i_j f_i \right) =
  \frac{\partial}{\partial x^k} \left( f^i_{,j} f_i \right) =
+ \left( f^i_{,j} f_i \right)_{,k} =
  \mathbf{J}^i_{j,k} f_i +
  \mathbf{J}^i_j f_{i,k} =
  \mathbf{H}^i_{jk}\, f_i + \mathbf{J}^i_j \mathbf{J}_{ik} =
@@ -324,6 +326,9 @@ i.e., Equation (\ref{fourteen}), and represent $\mathbf{H}^i_{kk}$ as a
 % $Id$
 
 % $Log$
+% Revision 1.2  2012/09/14 01:39:23  vsnyder
+% Regularize notation
+%
 % Revision 1.1  2012/08/22 02:04:28  vsnyder
 % Initial commit
 %
