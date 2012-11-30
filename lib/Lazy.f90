@@ -71,7 +71,7 @@ contains
     end if
   end function Lazy_Len
 
-  pure function Lazy_Value_Character ( Optional, Absent ) result ( R )
+  elemental function Lazy_Value_Character ( Optional, Absent ) result ( R )
     character(*), optional, intent(in) :: Optional
     character(*), intent(in) :: Absent
     character(lazy_len ( optional, absent )) :: R
@@ -136,6 +136,9 @@ contains
 end module Lazy
 
 ! $Log$
+! Revision 2.3  2012/11/30 02:34:40  vsnyder
+! Make character function elemental
+!
 ! Revision 2.2  2012/11/30 02:16:43  vsnyder
 ! Use specification function instead of explicit allocation with a type-spec
 ! to compute length of result variable for Lazy_Value_Character.
