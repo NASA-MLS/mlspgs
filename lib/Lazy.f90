@@ -19,7 +19,13 @@ module Lazy
 
   public :: AndThen
 
-  ! AndThen ( A, B ) is false if A is absent, or A.and.B otherwise.
+  ! AndThen ( A, B ) with A optional is false if A is absent,
+  ! or A.and.B otherwise.
+
+! This can't be done, because the AndThen function has optional arguments
+! interface operator ( .ANDTHEN. )
+!   module procedure AndThen
+! end interface
 
   public :: Lazy_Value
 
@@ -35,10 +41,10 @@ module Lazy
     module procedure Lazy_Value_Logical, Lazy_Value_Real
   end interface
 
-! This can't be done, because the AndThen function has optional arguments
-! interface operator ( .ANDTHEN. )
-!   module procedure AndThen
-! end interface
+  public :: Lazy_Len
+
+  ! Lazy_Len ( A, B ) with A optional.
+  ! If A is present the function value is len(A); otherwise it is len(B).
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -55,15 +61,23 @@ contains
     if ( andThen ) andThen = a .and. b
   end function AndThen
 
+  pure integer function Lazy_Len ( Optional, Absent )
+    character(*), optional, intent(in) :: Optional
+    character(*), intent(in) :: Absent
+    if ( present(optional) ) then
+      lazy_len = len(optional)
+    else
+      lazy_len = len(absent)
+    end if
+  end function Lazy_Len
+
   pure function Lazy_Value_Character ( Optional, Absent ) result ( R )
     character(*), optional, intent(in) :: Optional
     character(*), intent(in) :: Absent
-    character(:), allocatable :: R
+    character(lazy_len ( optional, absent )) :: R
     if ( present(optional) ) then
-      allocate ( character(len(optional)) :: r )
       r = optional
     else
-      allocate ( character(len(absent)) :: r )
       r = absent
     end if
   end function Lazy_Value_Character
@@ -122,6 +136,10 @@ contains
 end module Lazy
 
 ! $Log$
+! Revision 2.2  2012/11/30 02:16:43  vsnyder
+! Use specification function instead of explicit allocation with a type-spec
+! to compute length of result variable for Lazy_Value_Character.
+!
 ! Revision 2.1  2012/11/30 02:07:47  vsnyder
 ! Initial commit
 !
