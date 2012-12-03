@@ -182,6 +182,7 @@ begin Construct
   !define(cloudBandForR1B,34) !define(cloudChannelForR1B,4)
   !define(cloudBandForR2,5)   !define(cloudChannelForR2,1)
   !define(cloudBandForR3,33)  !define(cloudChannelForR3,3)
+;  !define(cloudBandForR3,8)  !define(cloudChannelForR3,1)
   !define(cloudBandForR4,11)  !define(cloudChannelForR4,23)
   !define(cloudBandForR5H,15) !define(cloudChannelForR5H,25)
   !define(cloudBandForR5V,18) !define(cloudChannelForR5V,25)
@@ -192,6 +193,13 @@ begin Construct
   !define(makeOneRadDT,{dt$1: Quantity, type=singleChannelRadiance, signal=!signal(!cloudBandFor$1)!nl})
   !forall(makeOneRadDT,!allRadiometers)
   !define(allRadDTs,{!makelist({dt},{},!allRadiometers)})
+
+; some additional single channel radiances. These quantities are
+; workspaces for averaging multichannel tcir calculations.
+
+dtR3B7: Quantity, type=singleChannelRadiance, signal='R3:240.B7F:O3'
+dtR3B8: Quantity, type=singleChannelRadiance, signal='R3:240.B8F:PT'
+dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
 
   ;; cloudMax quantities in l2gp format for quality flag uses
   !define(constructCloudMinMax,{!dnl
@@ -295,7 +303,7 @@ begin Construct
   !forall(constructR4GroupedBaseline,1,2,3)
   !define(allGroupedBaselines,{!makelist({baselineR4Group},{},1,2,3)})
 ; need to define separate dacs baselines
-; to use froall it needs to take two arguments I think which I do not
+; to use forall it needs to take two arguments I think which I do not
 ; know how to do so I will hard wire this in for now
 
 ; DACS
@@ -326,6 +334,31 @@ begin Construct
                       fGrid=fGridBaselineMB31
   !define(allMIFMBBaselines, {!makelist({baselineMIF},{},!allMBs)})
 
+; special for FB
+
+  baselineMIFBand7: Quantity, type=baseline,radiometer=R3, $
+                      fGrid=fGridBaselineR3
+  baselineMIFBand8: Quantity, type=baseline, radiometer=R3,  $
+                      fGrid=fGridBaselineR3
+  baselineMIFBand9: Quantity, type=baseline, radiometer=R3, $
+                      fGrid=fGridBaselineR3
+  baselineMIFBand33: Quantity, type=baseline, radiometer=R3, $
+                      fGrid=fGridBaselineR3
+
+  !define(allMIFFBBaselines, {!makelist({baselineMIF},{},!someFBs)})
+
+; add spectral baselines
+
+  baselineSpecMIFBand7: Quantity, type=baseline,radiometer=R3, $
+                        fGrid=fGridSpecBaselineBand7
+  baselineSpecMIFBand8: Quantity, type=baseline,radiometer=R3, $
+                        fGrid=fGridSpecBaselineBand8
+  baselineSpecMIFBand9: Quantity, type=baseline,radiometer=R3, $
+                        fGrid=fGridSpecBaselineBand9
+  baselineSpecMIFBand33: Quantity, type=baseline,radiometer=R3, $
+                        fGrid=fGridSpecBaselineBand33
+  !define(allMIFSpecBaselines, {!makelist({baselineSpecMIF},{},!allspecFBs)})
+  
   ;; ----------------------------------------- Extinctions
 
   !define(constructExtinction,{!dnl
@@ -340,12 +373,21 @@ begin Construct
   !define(allExtinctions,{!makelist({extinction},{},!allRadiometers),!makelist({extinctionv2},{},!allRadiometers)})
 
   !define(constructTOTALExtinction,{!dnl
+    !ifelse($1,{R3}, {!dnl
+    totalextinction$1: Quantity, type=vmr, molecule=extinction, $
+    radiometer=$1, hGrid=hGridSingle, vGrid=vGridExtinction, $
+    fGrid=fGridExtinctionConstant!nl
+    totalextinctionv2$1: Quantity, type=vmr, molecule=extinctionv2, $
+    radiometer=$1, hGrid=hGridSingle, vGrid=vGridExtinction, $
+    fGrid=fGridExtinctionConstant!nl
+    },{
     totalextinction$1: Quantity, type=vmr, molecule=extinction, $
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
     fGrid=fGridExtinctionConstant!nl
     totalextinctionv2$1: Quantity, type=vmr, molecule=extinctionv2, $
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
     fGrid=fGridExtinctionConstant!nl})
+    })
   !forall(constructTOTALExtinction, !allRadiometers)
   !define(alltotalExtinctions,{!makelist({totalextinction},{},!allRadiometers),!makelist({totalextinctionv2},{},!allRadiometers)})
   
@@ -625,7 +667,9 @@ begin Construct
     !allMIFBaselines, $
     !allMIFDACSBaselines, $
     !allMIFMBBaselines, $
+    !allMIFFBBaselines, $
     !allGroupedBaselines, $
+    !allMIFSpecBaselines, $
     !allExtinctions, $
     !alltotalExtinctions, $
     !allMIFExtinctions, $
@@ -663,10 +707,11 @@ begin Construct
 
   !ifdef(flagUnfolded,{
   cloudOutputTemplate: VectorTemplate, quantities = [ $
-    !allFoldedRadiances, !allUnfoldedRadiances, !allDTs, !allSplitDTs, !allCloudMinMax, !allRadDTs ]
+    !allFoldedRadiances, !allUnfoldedRadiances, !allDTs, !allSplitDTs, !allCloudMinMax, !allRadDTs,  dtR3B7, dtR3B8, dtR3B9]
   },{
   cloudOutputTemplate: VectorTemplate, quantities = [ $
-    !allFoldedRadiances, !allDTs, !allCloudMinMax, !allRadDTs ]
+    !allFoldedRadiances, !allDTs, !allCloudMinMax, !allRadDTs, dtR3B7, dtR3B8, $
+    dtR3B9 ]
   })
     
 end Construct
