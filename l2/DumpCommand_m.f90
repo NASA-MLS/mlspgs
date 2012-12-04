@@ -80,8 +80,8 @@ module DumpCommand_M
 contains
 
   ! ------------------------------------- BooleanFromAnyGoodRadiances --
-  function BooleanFromAnyGoodRadiances ( root, chunk, filedatabase ) &
-    & result(hashsize)
+  function BooleanFromAnyGoodRadiances ( ROOT, CHUNK, FILEDATABASE ) &
+    & result( HASHSIZE )
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     use CONSTRUCTQUANTITYTEMPLATES, only: ANYGOODSIGNALDATA
     use CHUNKS_M, only: MLSCHUNK_T
@@ -183,7 +183,7 @@ contains
   end function BooleanFromAnyGoodRadiances
 
   ! ------------------------------------- BooleanFromAnyGoodValues --
-  function BooleanFromAnyGoodValues ( root, vectors ) result(thesize)
+  function BooleanFromAnyGoodValues ( ROOT, VECTORS ) result( THESIZE )
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
       & F_QUANTITY, F_BOOLEAN, F_STATUS
@@ -275,7 +275,7 @@ contains
   end function BooleanFromAnyGoodValues
 
   ! ------------------------------------- BooleanFromCatchWarning --
-  function BooleanFromCatchWarning ( root ) result(size)
+  function BooleanFromCatchWarning ( ROOT ) result( SIZE )
     ! Called to check if the last command resulted in a warning
     ! (either printed or suppressed)
     ! and optionally if the warning matches a supplied message string
@@ -350,7 +350,7 @@ contains
   end function BooleanFromCatchWarning
 
   ! ------------------------------------- BooleanFromComparingQtys --
-  function BooleanFromComparingQtys ( root, vectors ) result(thesize)
+  function BooleanFromComparingQtys ( ROOT, VECTORS ) result( THESIZE )
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_BOOLEAN, F_FORMULA
@@ -579,7 +579,7 @@ contains
   end function BooleanFromComparingQtys
 
   ! ------------------------------------- BooleanFromEmptyGrid --
-  function BooleanFromEmptyGrid ( root, grids ) result(thesize)
+  function BooleanFromEmptyGrid ( ROOT, GRIDS ) result( THESIZE )
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_GRID
     use GRIDDEDDATA, only: GRIDDEDDATA_T
@@ -644,7 +644,7 @@ contains
   ! (2) Status even
   ! If even one point is useable (a very low bar, admittedly) then
   ! return FALSE
-  function BooleanFromEmptySwath ( root ) result(theSize)
+  function BooleanFromEmptySwath ( ROOT ) result( THESIZE )
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FILE, F_SWATH, F_TYPE, &
@@ -756,7 +756,7 @@ contains
   end function BooleanFromEmptySwath
 
   ! ------------------------------------- BooleanFromFormula --
-  function BooleanFromFormula ( name, root ) result(size)
+  function BooleanFromFormula ( NAME, ROOT ) result( SIZE )
     ! Called either when a Boolean is first declared
     ! syntax: 
     ! name: Boolean, formula="formula"
@@ -842,9 +842,9 @@ contains
   end function BooleanFromFormula
 
   ! ------------------------- DumpCommand ------------------------
-  subroutine DumpCommand ( Root, QuantityTemplatesDB, &
-    & VectorTemplates, Vectors, ForwardModelConfigs, HGrids, griddedDataBase, &
-    & FileDataBase, MatrixDatabase, HessianDatabase )
+  subroutine DumpCommand ( ROOT, QUANTITYTEMPLATESDB, &
+    & VECTORTEMPLATES, VECTORS, FORWARDMODELCONFIGS, HGRIDS, GRIDDEDDATABASE, &
+    & FILEDATABASE, MATRIXDATABASE, HESSIANDATABASE )
 
   ! Process a "dump" command
 
@@ -888,7 +888,8 @@ contains
     use MLSL2OPTIONS, only: COMMAND_LINE, L2CFNODE, &
       & NORMAL_EXIT_STATUS, RUNTIMEVALUES, &
       & MLSMESSAGE
-    use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
+    use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME, &
+      & DUMP_SECTION_TIMINGS
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, MLSMESSAGEEXIT, &
       & MLSMSG_CRASH, MLSMSG_ERROR
     use MLSSETS, only: FINDFIRST
@@ -904,7 +905,7 @@ contains
     use READ_MIE_M, only: DUMP_MIE
     use SPECTROSCOPYCATALOG_M, only: CATALOG, DUMP, DUMP_LINES_DATABASE, LINES
     use STRING_TABLE, only: GET_STRING
-    use Time_m, only: FINISH
+    use TIME_M, only: FINISH
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
@@ -1192,6 +1193,10 @@ contains
             call dump_pointing_grid_database ( son )
           case ( f_stop )
             call finish ( 'ending mlsl2' )
+            if ( switchDetail(switches, 'time') >= 0 ) then
+              call output('(Now for the timings summary)', advance='yes')
+              call dump_section_timings
+            endif
             if ( NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave ) then
               write ( farewell, '(a,2(i0,a))' ) &
                 & "Program stopped with normal status by /stop field on DUMP statement at line ", &
@@ -1210,6 +1215,10 @@ contains
               call MLSMessageExit( farewell=farewell )
             endif
           case ( f_stopWithError )
+            if ( switchDetail(switches, 'time') >= 0 ) then
+              call output('(Now for the timings summary)', advance='yes')
+              call dump_section_timings
+            endif
             write ( farewell, '(a,2(i0,a))' ) &
                 & "Program stopped by /stopWithError field on DUMP statement at line ", &
                 & source/256, ", column ", mod(source,256), "."
@@ -1435,7 +1444,7 @@ contains
       case ( f_options )
         call get_string ( sub_rosa(gson), optionsString, strip=.true. )
         optionsString = lowerCase(optionsString)
-        call outputNamedValue( 'options', trim(optionsString) )
+        ! call outputNamedValue( 'options', trim(optionsString) )
       case ( f_pfaData )
         do i = 2, nsons(son)
           look = decoration(decoration(subtree(i,son)))
@@ -1610,8 +1619,8 @@ contains
   contains
 
     subroutine AnnounceError ( where, what, string )
-      use MoreTree, only: STARTERRORMESSAGE
-      use Output_m, only: NEWLINE
+      use MORETREE, only: STARTERRORMESSAGE
+      use OUTPUT_M, only: NEWLINE
 
       integer, intent(in) :: What, Where
       character(len=*), intent(in), optional :: String
@@ -1660,7 +1669,7 @@ contains
 
   end subroutine DumpCommand
   
-  subroutine  MLSCase ( Root )
+  subroutine  MLSCase ( ROOT )
   ! Returns TRUE if the label or Boolean field of the last Select command
   ! matches the label or Boolean field of the current Case command
   ! or if the current Case command is given the special label 'default',
@@ -1730,7 +1739,7 @@ contains
     end if
   end subroutine  MLSCase
   
-  subroutine  MLSSelect ( Root )
+  subroutine  MLSSelect ( ROOT )
   ! Fills the global variable selectLabel with
   ! the Label field or value of the Boolean field
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL
@@ -1784,7 +1793,7 @@ contains
     end if
   end subroutine MLSSelect
   
-  subroutine  MLSEndSelect ( Root )
+  subroutine  MLSEndSelect ( ROOT )
   ! Resets the global variable MLSSelecting
   ! Optionally puts note about end of selecting in log file
     use INIT_TABLES_MODULE, only: F_LABEL
@@ -1833,7 +1842,7 @@ contains
     end if
   end subroutine MLSEndSelect
   
-  logical function Skip ( Root )
+  logical function Skip ( ROOT )
     ! Returns value of Boolean field (if present);
     ! If TRUE should skip rest of section in which SKIP command appears
     ! If Boolean field absent, returns TRUE 
@@ -1899,7 +1908,7 @@ contains
 
 ! =====     Private Procedures     =====================================
 
-  function myBooleanValue ( formula ) result ( bvalue )
+  function myBooleanValue ( FORMULA ) result ( BVALUE )
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT
     use MLSSTRINGS, only: LOWERCASE
@@ -1949,7 +1958,7 @@ contains
 
   ! This evaluates a character-valued arg, being alert for special values
   ! that name global variables, e.g. 'phasename'
-  function Evaluator ( arg ) result( itsValue )
+  function Evaluator ( ARG ) result( ITSVALUE )
     use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, &
       & SIPS_VERSION
     use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
@@ -1977,7 +1986,7 @@ contains
     end select
   end function Evaluator
   
-  function BooleanToString ( Bool ) result ( str )
+  function BooleanToString ( BOOL ) result ( STR )
     ! Convert a Boolean argument to a character-valued string
     ! I.e., .true. -> 'true'
     !       .false. -> 'false'
@@ -1988,8 +1997,8 @@ contains
   end function BooleanToString
 
   ! ---------------------------------------------  returnFullFileName  -----
-  subroutine returnFullFileName ( shortName, FullName, &
-    & pcf_start, pcf_end )
+  subroutine returnFullFileName ( SHORTNAME, FULLNAME, &
+    & PCF_START, PCF_END )
     use MLSFILES, only: GETPCFROMREF
     use MLSL2OPTIONS, only: TOOLKIT
     ! Given a possibly-abbreviated shortName, return the full name
@@ -2031,6 +2040,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.79  2012/12/04 00:19:14  pwagner
+! May dump timings summary after Dump, /stop
+!
 ! Revision 2.78  2012/08/16 18:03:44  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
