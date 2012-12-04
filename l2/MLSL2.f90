@@ -39,7 +39,7 @@ program MLSL2
     & STOPAFTERSECTION, STOPWITHERROR, &
     & TOOLKIT, TOTALTIMES, PROCESSOPTIONS, &
     & CHECKL2CF, CHECKLEAK, COUNTCHUNKS, DO_DUMP, DUMP_TREE, L2CF_UNIT, &
-    & NUMSWITCHES, ORIGINALCMDS, OUTSIDEOVERLAPS, RECL, &
+    & NUMSWITCHES, ORIGINALCMDS, RECL, &
     & SECTIONSTOSKIP, SHOWDEFAULTS, SLAVEMAF, TIMING
   use MLSL2TIMINGS, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
@@ -242,8 +242,6 @@ program MLSL2
     MLSMessageConfig%MaxSeverityNameLength = i - 10
   endif
   
-  chunkdivideconfig%allowPriorOverlaps = OUTSIDEOVERLAPS
-  chunkdivideconfig%allowPostOverlaps = OUTSIDEOVERLAPS
   section_times = sectiontimes
   total_times = totaltimes
 
@@ -696,6 +694,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.190  2012/12/04 00:16:09  pwagner
+! Removed confisuion-causing OUTSIDEOVERLAPS and its cmdline option
+!
 ! Revision 2.189  2012/08/21 23:54:01  pwagner
 ! Fixed certain problems when showing settings
 !
