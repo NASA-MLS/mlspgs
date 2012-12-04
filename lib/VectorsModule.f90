@@ -1,4 +1,4 @@
-
+! Copyright 2012, by the California Institute of Technology. ALL
 ! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
 ! commercial use must be negotiated with the Office of Technology Transfer
 ! at the California Institute of Technology.
@@ -16,6 +16,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! This module provides the simple functionality for vector quantities in the
   ! MLS Level 2 software, and related programs.
 
+! === (start of toc) ===                                                 
 !     c o n t e n t s
 !     - - - - - - - -
 
@@ -99,6 +100,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! SubtractFromVector           x = x - y
 ! SubtractVectors              Returns z = x - y
 ! ValidateVectorQuantity       Test vector quantity for matching components
+! === (end of toc) ===
 
   ! --------------------------------------------------------------------------
 
@@ -2552,9 +2554,14 @@ contains ! =====     Public Procedures     =============================
       &    value%template%noInstances /) )
   end subroutine RemapVectorValue
 
-  ! ------------------------------------------------  ReehapeVectorValue  -----
+  ! ------------------------------------------------  ReshapeVectorValue  -----
+  ! Reshape source values to fit destination loosely
+  ! destination must already be allocated
+  ! Source values will come from either of
+  ! (a) source%values, if present; or
+  ! (b) an array of sourceValues
+  ! If neither is present, we silently return an unchanged destination
   subroutine ReshapeVectorValue ( DESTINATION, SOURCE, SOURCEVALUES )
-  ! Reverse bits of MASK indexed by elements of TO_Reverse.  Numbering of mask
     type ( VectorValue_T), optional, intent(in)    :: SOURCE
     type ( VectorValue_T), intent(out)             :: DESTINATION
     real(rv), dimension(:,:), optional, intent(in) :: SOURCEVALUES
@@ -3008,6 +3015,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.171  2012/11/09 00:59:08  pwagner
+! Added ReshapeVectorValue
+!
 ! Revision 2.170  2012/10/30 22:07:28  pwagner
 ! Now able to clear full 2d quantity mask
 !
