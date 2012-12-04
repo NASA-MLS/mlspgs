@@ -148,7 +148,6 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
   integer :: L2CFNODE        = 0        ! Line #, Col # of L2CF being executed
   integer :: NUMSWITCHES
-  logical :: OUTSIDEOVERLAPS = .false.  ! Allow overlaps outside proc. range
   integer :: RECL            = 20000    ! Record length for l2cf (but see --recl opt)
   character(len=128) :: SECTIONSTOSKIP = ''
   logical :: SECTIONTIMES    = .false.  ! Show times in each section
@@ -215,8 +214,8 @@ contains
   !
   ! In certain other cases we must repeat printing the message via the
   ! output module's commands
-  subroutine MLSMessage ( severity, ModuleNameIn, Message, &
-    & Advance, MLSFile, status, item )
+  subroutine MLSMessage ( SEVERITY, MODULENAMEIN, MESSAGE, &
+    & ADVANCE, MLSFILE, STATUS, ITEM )
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MLSSTRINGS, only: WRITEINTSTOCHARS
@@ -586,8 +585,6 @@ contains
           end if
         else if ( line(3+n:4+n) == 'oa' ) then
           NEED_L1BFILES = switch
-        else if ( line(3+n:7+n) == 'overl' ) then
-          OUTSIDEOVERLAPS = switch
         else if ( line(3+n:8+n) == 'patch ' ) then
           patch = switch
         else if ( line(3+n:5+n) == 'pge ' ) then
@@ -908,6 +905,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.57  2012/12/04 00:15:49  pwagner
+! Removed confisuion-causing OUTSIDEOVERLAPS and its cmdline option
+!
 ! Revision 2.56  2012/08/30 20:54:08  pwagner
 ! Improved adding, removing switches
 !
