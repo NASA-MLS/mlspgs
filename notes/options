@@ -84,7 +84,6 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
       [n] or level <= 0 => no tracking, level == 1 (default) => leak checking,
       level >= 2 => 1 + transaction reporting
   --[n]oa: Do [not] require l1boa file (defaults to requiring)
-  --[n]overlap: Do [not] allow overlaps outside of processing range
   --[n]patch: Don't [do] let run create file, swath on first directWrite
     by default, the 1st directwrite obliterates an existing file
     turning this option on will let you merely patch it instead
@@ -149,6 +148,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.55  2012/08/16 19:54:17  pwagner
+ Explains changes to [n]lac and stdout options
+
  Revision 1.54  2012/07/02 20:58:20  pwagner
  Improve messages
 
