@@ -34,11 +34,101 @@ module MLSSets
 
   implicit none
   private
-  public :: FindAll, FindFirst, FindIntersection, FindLast, FindLongestRange, &
-    & FindNext, FindUnique, &
-    & Intersect, Intersection, IsProperSet, IsProperSubset, IsSubset, &
-    & RelativeComplement, &
-    & Union, UnionSize
+
+! === (start of toc) ===                                                 
+!     c o n t e n t s                                                    
+!     - - - - - - - -                                                    
+
+!     (subroutines and functions)
+! FindAll       Find all logicals in the array that are true, or all the
+!               integers in the array equal to the probe, "matches"
+! FindFirst     Find the first logical in the array that is true, or the
+!               first [integer,real,double] in the array equal to the probe
+! FindIntersection  
+!               Compute indices of elements in intersection of two sets
+! FindLast      Find the last instead
+! FindLongestRange
+!               Find the longest stretch of consecutive matches
+! FindNext      Find the next instead
+! FindUnique    Return only the unique elements of a set;
+!                 formally, a set contains only unique elements, so this
+!                 will in fact reduce any improper set to a proper set
+! Intersect     Return true if two sets represented by arrays of integers have
+!               a common element
+! Intersection  Compute intersection of two sets
+! IsProperSet   Check that each element is unique
+! IsProperSubSet 
+!               Check that each element in A is within larger B
+! IsSubSet      Check that each element in A is within B
+! RelativeComplement
+!               Compute complement of set a relative to set b
+!               i.e., all elements in b except those in a
+! Union         Compute union of two sets
+! UnionSize     Compute the size a union of two sets would have.
+! === (end of toc) ===
+
+! === (start of api) ===
+! FindAllCharacter (char* set(:), char* it, int which(:), [int how_many], &
+!                  [char* re_mainder(:)], [int which_not(:)])      
+! FindAllInteger (int set(:), int it, int which(:), [int how_many], &
+!                  [int re_mainder(:)], [int which_not(:)])      
+! FindAllLogical (log set(:), int which(:), [int how_many], &
+!                  [int which_not(:)])      
+! int FindFirstCharacter (char* set(:), char* probe)      
+! int FindFirstNumType (numtype set(:), numtype probe, [numtype tol], &
+!      [numtype Period])
+!     (where numtype can be an int, real, or dble)
+! int FindFirstLogical (log condition(:))      
+! int FindFirstSubString (char* set, char* probe, [log reverse])      
+! FindIntersection ( set1(:), set2(:), int which1(:), int which2(:),
+!      [int how_many] )
+! int FindLastCharacter (char* set(:), char* probe, [log reverse])
+! int FindLastInteger (int set(:), int probe, [log reverse])
+! int FindLastLogical (log condition(:), [log reverse])    
+! int FindLastSubString (char* set, char* probe, [log reverse])
+! FindLongestCharacter (char* set(:), char* probe, int range(2))
+! FindLongestInteger (int set(:), int probe, int range(2))
+! FindLongestLogical (log condition(:), int range(2))
+! FindLongestSubString (char* set, char* probe, int range(2), [log reverse])
+! int FindNextCharacter (char* set(:), char* probe, int current, [log wrap], [log repeat])
+! int FindNextInteger (int set(:), int probe, int current, [log wrap], [log repeat]) 
+! int FindNextLogical (log condition(:), int current, [log wrap], [log repeat])
+! int FindNextSubString (char* set, char* probe, [log wrap], [log repeat], [log reverse])
+! FindUniqueCharacter (char* set(:), char* unique(:), [int nUnique], [int(:) counts])
+! FindUniqueCharacterSubString (char* set, char* unique, [int nUnique], [int(:) counts])
+! FindUniqueInteger (int set(:), int unique(:), [int nUnique], [int(:) counts])
+! log Intersect ( set A, set B )
+! set Intersection ( set A, set B, [char* options] )
+! log isProperSet ( set A )
+! log isProperSubset ( set A, set B )
+! log isSubset ( set A, set B )
+! set RelativeComplement ( set A, set B )
+! set Union ( set A, set B )
+! int UnionSize ( set A, set B )
+
+! Notes:
+! A set is represented either
+! as an array of integers, floats, or an array of characters; e.g.
+!   logical Intersect ( set a(:), set b(:) )
+!   set *Intersection ( set a(:), set b(:) )
+!   logical IsProperSet ( set a(:) )
+!   logical Is[Proper]SubSet ( set a(:), set b(:) )
+!   set *RelativeComplement ( set a(:), set b(:) )
+!   set *Union ( set a(:), set b(:) )
+!   int UnionSize ( set a(:), set b(:) )
+
+! The optional argument reverse, which may be supplied to some of the functions
+! causes the usual matching condition to be reversed; e.g. FindLast
+! with reverse=TRUE returns the last index of the array that does not
+! match the probe
+
+! === (end of api) ===
+
+  public :: FINDALL, FINDFIRST, FINDINTERSECTION, FINDLAST, FINDLONGESTRANGE, &
+    & FINDNEXT, FINDUNIQUE, &
+    & INTERSECT, INTERSECTION, ISPROPERSET, ISPROPERSUBSET, ISSUBSET, &
+    & RELATIVECOMPLEMENT, &
+    & UNION, UNIONSIZE
 
   interface FindFirst
     module procedure FindFirstInteger, FindFirstLogical, FindFirstCharacter
@@ -107,80 +197,6 @@ module MLSSets
   interface Union
     module procedure UnionInteger, UnionCharacter
   end interface
-
-! === (start of toc) ===                                                 
-!     c o n t e n t s                                                    
-!     - - - - - - - -                                                    
-
-!     (subroutines and functions)
-! FindAll       Find all logicals in the array that are true, or all the
-!               integers in the array equal to the probe, "matches"
-! FindFirst     Find the first logical in the array that is true, or the
-!               first [integer,real,double] in the array equal to the probe
-! FindIntersection  
-!               Compute indices of elements in intersection of two sets
-! FindLast      Find the last instead
-! FindLongestRange
-!               Find the longest stretch of consecutive matches
-! FindNext      Find the next instead
-! FindUnique    Return only the unique elements of a set;
-!                 formally, a set contains only unique elements, so this
-!                 will in fact reduce any improper set to a proper set
-! Intersect     Return true if two sets represented by arrays of integers have
-!               a common element
-! Intersection  Compute intersection of two sets
-! IsProperSet   Check that each element is unique
-! IsProperSubSet 
-!               Check that each element in A is within larger B
-! IsSubSet      Check that each element in A is within B
-! RelativeComplement
-!               Compute complement of set a relative to set b
-!               i.e., all elements in b except those in a
-! Union         Compute union of two sets
-! UnionSize     Compute the size a union of two sets would have.
-! === (end of toc) ===
-
-! === (start of api) ===
-! FindAllCharacter (char* set(:), char* it, int which(:), [int how_many], &
-!                  [char* re_mainder(:)], [int which_not(:)])      
-! FindAllInteger (int set(:), int it, int which(:), [int how_many], &
-!                  [int re_mainder(:)], [int which_not(:)])      
-! FindAllLogical (log set(:), int which(:), [int how_many], &
-!                  [int which_not(:)])      
-! int FindFirstCharacter (char* set(:), char* probe)      
-! int FindFirstNumType (numtype set(:), numtype probe, [numtype tol], &
-!      [numtype Period])
-!     (where numtype can be an int, real, or dble)
-! int FindFirstLogical (log condition(:))      
-! int FindFirstSubString (char* set, char* probe, [log reverse])      
-! FindIntersection ( set1(:), set2(:), int which1(:), int which2(:),
-!      [int how_many] )
-! int FindLastCharacter (char* set(:), char* probe, [log reverse])
-! int FindLastInteger (int set(:), int probe, [log reverse])
-! int FindLastLogical (log condition(:), [log reverse])    
-! int FindLastSubString (char* set, char* probe, [log reverse])
-! FindLongestCharacter (char* set(:), char* probe, int range(2))
-! FindLongestInteger (int set(:), int probe, int range(2))
-! FindLongestLogical (log condition(:), int range(2))
-! FindLongestSubString (char* set, char* probe, int range(2), [log reverse])
-! int FindNextCharacter (char* set(:), char* probe, int current, [log wrap], [log repeat])
-! int FindNextInteger (int set(:), int probe, int current, [log wrap], [log repeat]) 
-! int FindNextLogical (log condition(:), int current, [log wrap], [log repeat])
-! int FindNextSubString (char* set, char* probe, [log wrap], [log repeat], [log reverse])
-! FindUniqueCharacter (char* set(:), char* unique(:), [int nUnique], [int(:) counts])
-! FindUniqueCharacterSubString (char* set, char* unique, [int nUnique], [int(:) counts])
-! FindUniqueInteger (int set(:), int unique(:), [int nUnique], [int(:) counts])
-! Note:
-! In the following functions a set is represented either
-! as an array of integers or an array of characters
-! logical Intersect ( set a(:), set b(:) )
-! set *Intersection ( set a(:), set b(:) )
-! logical IsProperSet ( set a(:) )
-! logical Is[Proper]SubSet ( set a(:), set b(:) )
-! set *RelativeComplement ( set a(:), set b(:) )
-! set *Union ( set a(:), set b(:) )
-! set UnionSize ( set a(:), set b(:) )
-! === (end of api) ===
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -1070,7 +1086,7 @@ contains ! =====     Public Procedures     =============================
   end function FindNextSubString
 
   ! --------------------------------------------  FindUnique ------------------
-  subroutine FindUniqueInteger ( Set, Unique, nUnique,counts )
+  subroutine FindUniqueInteger ( Set, Unique, nUnique, counts )
     ! Find all unique elements in the array Set
     integer, dimension(:), intent(in)            :: Set
     integer, dimension(:), intent(out)           :: Unique  ! array of unique elements
@@ -1085,7 +1101,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(counts) ) counts(1:num) = myCounts(1:num)
   end subroutine FindUniqueInteger
 
-  subroutine FindUniqueReal ( Set, Unique, nUnique,counts )
+  subroutine FindUniqueReal ( Set, Unique, nUnique, counts )
     ! Find all unique elements in the array Set
     real, dimension(:), intent(in)            :: Set
     real, dimension(:), intent(out)           :: Unique  ! array of unique elements
@@ -1100,7 +1116,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(counts) ) counts(1:num) = myCounts(1:num)
   end subroutine FindUniqueReal
 
-  subroutine FindUniqueDouble ( Set, Unique, nUnique,counts )
+  subroutine FindUniqueDouble ( Set, Unique, nUnique, counts )
     ! Find all unique elements in the array Set
     double precision, dimension(:), intent(in)            :: Set
     double precision, dimension(:), intent(out)           :: Unique  ! array of unique elements
@@ -1244,36 +1260,42 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Intersection  -----
   ! Compute the intersection C of the sets A and B, each represented by
-  ! arrays of integers, characters
+  ! arrays of integers, characters, or reals
   
-  ! The reverse option exists only to allow the family of functions
+  ! options, if present, can modify this behavior: 
+  !   char    effect
+  !  ------   ------
+  !    r      The set of elements in a or b but not in both
+  !            which is Union(A, B) - Intersection(A, B)
+  !    c      The set of elements in a but not in b
+  !            which is A - B, or as our notation has it, RC ( B, A )
+  ! The 'c' option exists only to allow the family of functions
   ! to be reused internally for finding the relative complement of two sets
   
-  ! If you really want to find the "inverse intersection" you will want to
-  ! clarify whether you want
-  ! (1) The set of elements in a or b but not in both
-  !      which is Union(A, B) - Intersection(A, B); or
-  ! (2) The complement oof the intersection of A and B where perhaps
-  !      you have a third set serving as the universal set
-
-  function IntersectionInteger ( A, B, reverse ) result ( C )
+  function IntersectionInteger ( A, B, options ) result ( C )
     ! A faster algorithm is used if we're not reversing
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
-    use Sort_M, only: Sort
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
+    use Sort_M, only: SORT
 
     integer, intent(in) :: A(:), B(:)
     integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
-    logical, optional, intent(in) :: reverse
+    ! logical, optional, intent(in) :: reverse
+    character(len=*), optional, intent(in) :: options
 
     integer :: size_c, status
     integer :: I, J, K, Stat, TA(size(a)), TB(size(b)), TC(size(a)+size(b))
+    logical :: myComplement
     logical :: myReverse
+    logical :: stdIntersection
 
     ! Executable
+    myComplement = .false.
     myReverse = .false.
-    if ( present(reverse) ) myReverse = reverse
-    if ( myReverse ) then
+    if ( present(options) ) myComplement = index( options, 'c' ) > 0
+    if ( present(options) ) myReverse = index( options, 'r' ) > 0
+    stdIntersection = .not. (myComplement .or. myReverse )
+    if ( .not. stdIntersection ) then
     include 'Intersection.f9h'
     else
       ta = a
@@ -1301,53 +1323,62 @@ contains ! =====     Public Procedures     =============================
     end if
   end function IntersectionInteger
 
-  function IntersectionCharacter ( A, B, reverse ) result ( C )
+  function IntersectionCharacter ( A, B, options ) result ( C )
     ! method:
     ! Go though a, checking for each element whether a match is found in (b)
     ! If  so found, add the element
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
     character(len=*), dimension(:), intent(in) :: A(:), B(:)
     character(len=len(a)), dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
-    logical, optional, intent(in) :: reverse
+    ! logical, optional, intent(in) :: reverse
+    character(len=*), optional, intent(in) :: options
     ! Local variables
     integer :: i, j, size_c, status
     character(len=len(a)), dimension(size(a)+size(b)) :: TC
+    logical :: myComplement
     logical :: myReverse
+    logical :: stdIntersection
     
     include 'Intersection.f9h'
   end function IntersectionCharacter
 
-  function IntersectionDouble ( A, B, reverse ) result ( C )
+  function IntersectionDouble ( A, B, options ) result ( C )
     ! method:
     ! Go though a, checking for each element whether a match is found in (b)
     ! If  so found, add the element
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
     double precision, dimension(:), intent(in) :: A(:), B(:)
     double precision, dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
-    logical, optional, intent(in) :: reverse
+    ! logical, optional, intent(in) :: reverse
+    character(len=*), optional, intent(in) :: options
     ! Local variables
     integer :: i, j, size_c, status
     double precision, dimension(size(a)+size(b)) :: TC
+    logical :: myComplement
     logical :: myReverse
+    logical :: stdIntersection
     
     include 'Intersection.f9h'
   end function IntersectionDouble
 
-  function IntersectionReal ( A, B, reverse ) result ( C )
+  function IntersectionReal ( A, B, options ) result ( C )
     ! method:
     ! Go though a, checking for each element whether a match is found in (b)
     ! If  so found, add the element
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
     real, dimension(:), intent(in) :: A(:), B(:)
     real, dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
-    logical, optional, intent(in) :: reverse
+    ! logical, optional, intent(in) :: reverse
+    character(len=*), optional, intent(in) :: options
     ! Local variables
     integer :: i, j, size_c, status
     real, dimension(size(a)+size(b)) :: TC
+    logical :: myComplement
     logical :: myReverse
+    logical :: stdIntersection
     
     include 'Intersection.f9h'
   end function IntersectionReal
@@ -1452,25 +1483,21 @@ contains ! =====     Public Procedures     =============================
 
   function RelativeComplementInteger ( A, B ) result ( C )
 
-    ! use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
-    ! use Sort_M, only: Sort
-
     integer, intent(in) :: A(:), B(:)
     integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
 
-    C => Intersection ( B, A, reverse = .true. )
+    C => Intersection ( B, A, options = 'c' )
   end function RelativeComplementInteger
 
   function RelativeComplementCharacter ( A, B ) result ( C )
     ! method:
     ! Go though b, checking for each element whether a match is found in (a)
     ! If  not, add the element
-    ! use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
     character(len=*), dimension(:), intent(in) :: A(:), B(:)
     character(len=len(a)), dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
 
-    C => Intersection( B, A, reverse=.true. )
+    C => Intersection ( B, A, options = 'c' )
   end function RelativeComplementCharacter
 
   function RelativeComplementDouble ( A, B ) result ( C )
@@ -1478,7 +1505,7 @@ contains ! =====     Public Procedures     =============================
     double precision, intent(in) :: A(:), B(:)
     double precision, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
 
-    C => Intersection ( B, A, reverse = .true. )
+    C => Intersection ( B, A, options = 'c' )
   end function RelativeComplementDouble
 
   function RelativeComplementReal ( A, B ) result ( C )
@@ -1486,7 +1513,7 @@ contains ! =====     Public Procedures     =============================
     real, intent(in) :: A(:), B(:)
     real, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
 
-    C => Intersection ( B, A, reverse = .true. )
+    C => Intersection ( B, A, options = 'c' )
   end function RelativeComplementReal
 
   ! ------------------------------------------------------  Union  -----
@@ -1494,8 +1521,8 @@ contains ! =====     Public Procedures     =============================
   ! arrays of integers, characters
   function UnionInteger ( A, B ) result ( C )
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
-    use Sort_M, only: Sort
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
+    use Sort_M, only: SORT
 
     integer, intent(in) :: A(:), B(:)
     integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
@@ -1528,7 +1555,7 @@ contains ! =====     Public Procedures     =============================
     ! Method:
     ! 1st go through a, adding all non-repeated elements
     ! Then go through b, adding any that haven't been added already
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
     character(len=*), dimension(:), intent(in) :: A(:), B(:)
     character(len=len(a)), dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
@@ -1576,7 +1603,7 @@ contains ! =====     Public Procedures     =============================
   ! Compute the size of the union of the sets A and B, each represented by
   ! arrays of integers.
 
-    use Sort_M, only: Sort
+    use Sort_M, only: SORT
 
     integer, intent(in) :: A(:), B(:)
 
@@ -1667,6 +1694,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.25  2012/12/04 00:10:57  pwagner
+! Changed api to Intersection; improced module toc and api
+!
 ! Revision 2.24  2012/08/07 17:59:47  pwagner
 ! FindLast.. now takes optional arg Reverse
 !
