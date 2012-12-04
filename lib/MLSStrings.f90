@@ -2256,8 +2256,8 @@ contains
 
   ! --------------------------------------------------  unWrapLines  -----
   ! undo the splitting of commands across multiple lines by escaping line feeds
-  ! ie.e, a special escape character at line's end to denote a continuation
-  ! tio the following line
+  ! i.e, a special escape character at line's end to denote a continuation
+  ! to the following line
   ! optionally remove comment lines, i.e. lines beginning with comment character
   SUBROUTINE unWrapLines ( inLines, outLines, nOut, escape, comment )
     !
@@ -2687,6 +2687,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.88  2012/12/04 00:11:55  pwagner
+! Improved comments
+!
 ! Revision 2.87  2012/09/05 21:43:55  pwagner
 ! streq options now case sensitive; 'P'artial match means str1(i) is the part
 !
