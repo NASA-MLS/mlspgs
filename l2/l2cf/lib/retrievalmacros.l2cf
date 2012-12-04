@@ -20,6 +20,7 @@
 !define(allBands,{!forloop({i},1,33,{!i, })34}) ; 1,2,3..34
 !define(allBandLSBs,{!makelist({},{L},!allBands)})
 !define(allBandUSBs,{!forloop({i},2,20,{!i{}U,})23U,24U,25U,!forloop({i},27,31,{!i{}U,})33U})
+!define(allspecFBs,{Band7,Band8,Band9,Band33})
 !define(baselineMIFBands,{Band7,Band8,Band9,Band33})
 
 ; These will be used if we set status bits for too few radiances by Band number
@@ -1172,6 +1173,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.151  2012/12/04 18:11:01  pwagner
+; Added baselineMIFBands
+;
 ; Revision 1.150  2012/10/09 00:33:08  pwagner
 ; Consistent with new use force field
 ;
