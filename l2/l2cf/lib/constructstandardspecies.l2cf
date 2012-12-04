@@ -1,6 +1,11 @@
 ; This l2cf segment is useful for constructing `standard' species.
 ; It will make heavy use of m4 to (hopefully) simplify things.
 
+  ;; This special hGrid is defined here for convenience
+begin Construct
+  hGridSingle: hGrid, type=explicit, geodAngle=[0 degrees] ;; WVS
+end Construct
+
 begin Construct
 
   ;; ----------------------------------------- Macros
