@@ -345,7 +345,7 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
   baselineMIFBand33: Quantity, type=baseline, radiometer=R3, $
                       fGrid=fGridBaselineR3
 
-  !define(allMIFFBBaselines, {!makelist({baselineMIF},{},!someFBs)})
+  !define(allMIFFBBaselines, {!makelist({baselineMIF},{},!baselineMIFBands)})
 
 ; add spectral baselines
 
