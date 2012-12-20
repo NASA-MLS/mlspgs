@@ -3316,6 +3316,7 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- FromInterpolatedQty
     subroutine FromInterpolatedQty ( qty, source, key, &
       & ignoreTemplate, ptan )
+      use MLSNumerics, only: Interpolate_Regular_To_Irregular
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: SOURCE
       integer, intent(in) :: KEY
@@ -3421,17 +3422,43 @@ contains ! =====     Public Procedures     =============================
             & newSurfs, newValues, &
             & method='Linear', extrapolate='Constant' )
           newValues = exp ( newValues )
-        elseif( qty%template%noInstances /= qty%template%noInstances ) then
-          ! You have elected to interpolate 1-d instead of 2-d
-          ! when you have different numbers of horizontal instances
-          ! The only reasonable thing is to assume homogeneity
-          call InterpolateValues ( &
-            & oldSurfs, source%values(:,1), &
-            & newSurfs, newValues(:,1), &
-            & method='Linear', extrapolate='Constant' )
-          do instance=2, qty%template%noInstances
-            newValues(:,instance) = newValues(:,1)
-          enddo
+        else if( source%template%noInstances /= qty%template%noInstances ) then
+          ! You have elected to interpolate when you have different numbers
+          ! of horizontal instances.
+          ! The only reasonable thing is to assume homogeneity of source.
+          if ( present(ptan) ) then
+            if ( source%template%coherent .and. qty%template%minorFrame ) then
+              if ( associated(qty%values) ) then
+                if ( any(shape(ptan%values) /= shape(qty%values)) ) &
+                  & call deallocate_test ( qty%values, 'qty%values', moduleName )
+              end if
+              if ( .not. associated(qty%values) ) &
+                & call allocate_test ( qty%values, size(ptan%values,1), &
+                  & size(ptan%values,2), 'qty%values', moduleName )
+              call interpolate_regular_to_irregular ( &
+                & source%template%phi(:,1), oldSurfs, source%values, &
+                & qty%template%phi, ptan%values, qty%values )
+            else
+              ! If newSurfs is ptan, we can interpolate from the first column
+              ! of source separately to each profile/MAF of qty.
+              do instance=1, qty%template%noInstances
+                call InterpolateValues ( &
+                  & oldSurfs, source%values(:,1), &
+                  & ptan%values(:,instance), newValues(:,instance), &
+                  & method='Linear', extrapolate='Constant' )
+              end do
+            end if
+          else
+            ! Otherwise, all we can do is interpolate the first column and
+            ! spread it.
+            call InterpolateValues ( &
+              & oldSurfs, source%values(:,1), &
+              & newSurfs, newValues(:,1), &
+              & method='Linear', extrapolate='Constant' )
+            do instance=2, qty%template%noInstances
+              newValues(:,instance) = newValues(:,1)
+            end do
+          end if
         else
           call InterpolateValues ( &
             & oldSurfs, source%values, &
@@ -6683,6 +6710,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.69  2012/12/20 01:05:26  vsnyder
+! Provide coherent-to-minor frame interpolation
+!
 ! Revision 2.68  2012/11/14 00:59:23  pwagner
 ! Use dimList for choosing which of {csi} to average over
 !
