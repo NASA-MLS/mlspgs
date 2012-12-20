@@ -73,6 +73,8 @@ module MLSNumerics              ! Some low level numerical stuff
 ! IFApproximate            Compute integral using UnifDiscreteFn
 ! InterpolateArraySetup    Compute coefficients for InterpolateUsingSetup
 ! InterpolateArrayTeardown Deallocate tables created by InterpolateArraySetup
+! Interpolate_Regular_To_Irregular 2D - to - 2D interpolation using composite
+!                          1D interpolation
 ! InterpolateValues        Interpolate for new y value(s):
 !                            given old (x,y), new (x), method
 ! Interpolate_2D_Composite 2D - to - 2D interpolation using composite 1D
@@ -123,6 +125,10 @@ module MLSNumerics              ! Some low level numerical stuff
 !   nprec newX(:), nprec newY(:,:), char* method, [char* extrapolate], &
 !   [nprec badValue], [log missingRegions], [nprec dyByDx(:,:)], &
 !   [MatrixElement_T dNewByDOld], [log skipNewY], [nprec IntYdX(:,:)] )
+! Interpolate_2d_Composite ( XOld, YOld, ZOld, XNew, YNew, ZNew, &
+!   XMethod, YMethod, [XExtrapolate], [YExtrapolate] )
+! Interpolate_Regular_To_Irregular ( XOld, YOld, ZOld, &
+!   XYNew, ZNew, XMethod, YMethod, [XExtrapolate], [YExtrapolate] )
 ! InterpolateArraySetup ( nprec OldX(:), nprec NewX(:), char* Method, &
 !   coefficients_nprec Coeffs, &[log Extrapolate], [int Width], [log DyByDx], 
 !   [matrixElement_T dNewByDOld], [log IntYdX] )
@@ -148,7 +154,8 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: FAPPROXIMATE, FILLLOOKUPTABLE, FINDINRANGE, FINVAPPROXIMATE
   public :: HUNT, HUNTBOX, HUNTRANGE, IFAPPROXIMATE
   public :: INTERPOLATEARRAYSETUP, INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES
-  public :: INTERPOLATE_2D_COMPOSITE, LINEARINTERPOLATE
+  public :: Interpolate_Regular_To_Irregular, INTERPOLATE_2D_COMPOSITE
+  public :: LINEARINTERPOLATE
   public :: PUREHUNT
   public :: SETUP, SIMPSONS, SIMPSONSSUB
   public :: USELOOKUPTABLE
@@ -404,6 +411,11 @@ module MLSNumerics              ! Some low level numerical stuff
 
   interface InterpolateArraySetup
     module procedure InterpolateArraySetup_r4, InterpolateArraySetup_r8
+  end interface
+
+  interface Interpolate_Regular_To_Irregular
+    module procedure Interpolate_Regular_To_Irregular_r4, &
+                     Interpolate_Regular_To_Irregular_r8
   end interface
 
   interface InterpolateArrayTeardown
@@ -1942,6 +1954,38 @@ contains
 
   end subroutine Interp_Bilinear_2d_1d_r8
 
+  ! ------------------------  Interpolate_Regular_To_Irregular_r4  -----
+  subroutine Interpolate_Regular_To_Irregular_r4 ( XOld, YOld, ZOld, &
+    & XNew, YNew, ZNew )
+    ! Given XOld, YOld, ZOld, XYNew, interpolate to ZNew.
+    ! The shape of ZOld must be (size(xOld),size(yOld)).
+    ! The shape of ZNew must be the same as Xnew and YNew.
+    ! The only method supported is linear with constant extrapolation.
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), intent(in) :: XOld(:)
+    real(rk), intent(in) :: YOld(:)
+    real(rk), intent(in) :: ZOld(:,:)
+    real(rk), intent(in) :: XNew(:,:), YNew(:,:)
+    real(rk), intent(out) :: ZNew(:,:)
+    include 'Interpolate_Regular_To_Irregular.f9h'
+   end subroutine Interpolate_Regular_To_Irregular_r4
+
+  ! ------------------------  Interpolate_Regular_To_Irregular_r8  -----
+  subroutine Interpolate_Regular_To_Irregular_r8 ( XOld, YOld, ZOld, &
+    & XNew, YNew, ZNew )
+    ! Given XOld, YOld, ZOld, XYNew, interpolate to ZNew.
+    ! The shape of ZOld must be (size(xOld),size(yOld)).
+    ! The shape of ZNew must be the same as Xnew and YNew.
+    ! The only method supported is linear with constant extrapolation.
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: XOld(:)
+    real(rk), intent(in) :: YOld(:)
+    real(rk), intent(in) :: ZOld(:,:)
+    real(rk), intent(in) :: XNew(:,:), YNew(:,:)
+    real(rk), intent(out) :: ZNew(:,:)
+    include 'Interpolate_Regular_To_Irregular.f9h'
+   end subroutine Interpolate_Regular_To_Irregular_r8
+
   ! --------------------------------  Interpolate_2d_Composite_r4  -----
   subroutine Interpolate_2d_Composite_r4 ( XOld, YOld, ZOld, XNew, YNew, ZNew, &
     & XMethod, YMethod, XExtrapolate, YExtrapolate )
@@ -2469,6 +2513,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.75  2012/12/20 01:06:15  vsnyder
+! Add Interpolate_Regular_To_Irregular
+!
 ! Revision 2.74  2012/06/12 18:10:00  pwagner
 ! Battleship can now find non-integer roots
 !
