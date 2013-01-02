@@ -40,6 +40,7 @@ copy
 covariance
 
 dao
+derivative
 direct
 # Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
 dnwt_abandoned
@@ -176,6 +177,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.72  2013/01/02 21:38:49  pwagner
+# Added derivative method to Fill command
+#
 # Revision 2.71  2011/04/20 16:45:06  pwagner
 # Added new GriddedData origin
 #
