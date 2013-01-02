@@ -62,7 +62,7 @@ contains ! =====     Public Procedures     =============================
       & DUMPCOMMAND, SKIP, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING
     use EXPR_M, only: EXPR, EXPR_CHECK
     use FILLUTILS_1, only: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
-      & COMPUTETOTALPOWER, FILLCOVARIANCE, &
+      & COMPUTETOTALPOWER, DERIVATIVEOFSOURCE, FILLCOVARIANCE, &
       & EXTRACTSINGLECHANNEL, FILLERROR, FROMANOTHER, FROMGRID, &
       & FROML2GP, FROMPROFILE, LOSVELOCITY, &
       & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
@@ -79,7 +79,8 @@ contains ! =====     Public Procedures     =============================
       & WITHWMOTROPOPAUSE, WITHBINRESULTS, WITHBOXCARFUNCTION, &
       & STATUSQUANTITY, QUALITYFROMCHISQ, CONVERGENCEFROMCHISQ, &
       & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNUSEDRADIANCES, &
-      & SCALEOVERLAPS, SPREADCHANNELFILL, TRANSFERVECTORS, UNCOMPRESSRADIANCE, &
+      & SCALEOVERLAPS, SPREADCHANNELFILL, TRANSFERVECTORS, &
+      & TRANSFERVECTORSBYMETHOD, UNCOMPRESSRADIANCE, &
       & QTYFROMFILE, VECTORFROMFILE, ANNOUNCE_ERROR, &
       ! CODES FOR ANNOUNCE_ERROR:
       & BADESTNOISEFILL, BADGEOCALTITUDEQUANTITY, BADISOTOPEFILL, &
@@ -143,7 +144,7 @@ contains ! =====     Public Procedures     =============================
       & L_CHISQMMAF, L_CHISQMMIF, L_CHISQRATIO, L_CHOLESKY, &
       & L_CLOUDICE, L_CLOUDEXTINCTION, &
       & L_COMBINECHANNELS, L_COLUMNABUNDANCE, L_CONVERGENCERATIO, &
-      & L_DOBSONUNITS, L_DU, &
+      & L_DERIVATIVE, L_DOBSONUNITS, L_DU, &
       & L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
       & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, L_GEOLOCATION, &
       & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPHPRECISION, L_GRIDDED, &
@@ -223,7 +224,7 @@ contains ! =====     Public Procedures     =============================
     use TREE_TYPES, only: N_NAMED
     use VECTORSMODULE, only: ADDVECTORTODATABASE, &
       & CLEARMASK, CLONEVECTORQUANTITY, CREATEVECTOR, &
-      & DUMPQUANTITYMASK, &
+      & DESTROYVECTORQUANTITYVALUE, DUMPQUANTITYMASK, &
       & GETVECTORQTYBYTEMPLATEINDEX, &
       & VALIDATEVECTORQUANTITY, VECTOR_T, &
       & VECTORTEMPLATE_T, VECTORVALUE_T, M_FILL
@@ -257,6 +258,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: AQUANTITY
     type (vectorValue_T), pointer :: BASELINEQUANTITY
     type (vectorValue_T), pointer :: BNDPRESSQTY
+    type (vector_T),      pointer :: DESTVECTOR
     type (vectorValue_T), pointer :: BQUANTITY
     type (vectorValue_T), pointer :: EARTHRADIUSQTY
     type (vectorValue_T), pointer :: ECRTOFOV
@@ -270,10 +272,13 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: LSB
     type (vectorValue_T), pointer :: LSBFRACTION
     type (vectorValue_T), pointer :: MEASQTY
+    type (vector_T),      pointer :: MEASVECTOR
     type (vectorValue_T), pointer :: MINNORMQTY
     type (vectorValue_T), pointer :: MODELQTY
+    type (vector_T),      pointer :: MODELVECTOR
     type (vectorValue_T), pointer :: NBWQUANTITY
     type (vectorValue_T), pointer :: NOISEQTY
+    type (vector_T),      pointer :: NOISEVECTOR
     type (vectorValue_T), pointer :: NORMQTY
     type (vectorValue_T), pointer :: ORBITINCLINATIONQUANTITY
     type (vectorValue_T), pointer :: PRECISIONQUANTITY
@@ -286,6 +291,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: SCECIQUANTITY
     type (vectorValue_T), pointer :: SCVELQUANTITY
     type (vectorValue_T), pointer :: SOURCEQUANTITY
+    type (vector_T),      pointer :: SOURCEVECTOR
     type (vectorValue_T), pointer :: SYSTEMPQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
     type (vectorValue_T), pointer :: TEMPPRECISIONQUANTITY
@@ -568,6 +574,7 @@ contains ! =====     Public Procedures     =============================
       exact = .false.
       excludeBelowBottom = .false.
       extinction = .false.
+      fillMethod = l_none
       force = .false.
       fromPrecision = .false.
       GLStr = ' '
@@ -882,7 +889,7 @@ contains ! =====     Public Procedures     =============================
         call directReadCommand
       case ( s_fill ) ! ===================================  Fill  =====
         if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_begin ( "Fill.fillCommand", root )
+          & call trace_begin ( "Fill.fillCommand", key )
         call fillCommand
         if ( toggle(gen) .and. levels(gen) > 1 ) &
           & call trace_end ( "Fill.fillCommand" )
@@ -998,6 +1005,9 @@ contains ! =====     Public Procedures     =============================
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
         ! Loop over the instructions
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
+          & call trace_begin ( "Fill.Transfer", key )
+        nullify( destVector, measvector, modelvector, noisevector, sourceVector )
         interpolate = .false.
         skipMask = .false.
         do j = 2, nsons(key)
@@ -1020,12 +1030,34 @@ contains ! =====     Public Procedures     =============================
             c = valueAsArray(1)
           case ( f_source )
             sourceVectorIndex = decoration(fieldValue)
+            sourceVector => vectors( sourceVectorIndex )
           case ( f_destination )
             destinationVectorIndex = decoration(fieldValue)
+            destVector => vectors( destinationVectorIndex )
+          case ( f_dontMask )
+            dontMask = get_boolean ( gson )
+          case ( f_ignoreNegative )
+            ignoreNegative = get_boolean ( gson )
+          case ( f_ignoreZero )
+            ignoreZero = get_boolean ( gson )
           case ( f_interpolate )
             interpolate = get_boolean ( fieldValue )
           case ( f_manipulation )
             manipulation = sub_rosa ( gson )
+          case ( f_method )   ! How ? (if not default copy)
+            fillMethod = decoration(gson)
+          case ( f_measurements )   ! Only used for diagnostic special fills
+            measVectorIndex = decoration(fieldValue)
+            measVector => vectors( measVectorIndex )
+          case ( f_model )   ! Only used for diagnostic special fills
+            modelVectorIndex = decoration(fieldValue)
+            modelVector => vectors( modelVectorIndex )
+          case ( f_noise )   ! Only used for chi^2 special fills or addnoise
+            noiseVectorIndex = decoration(fieldValue)
+            noiseVector => vectors( noiseVectorIndex )
+          case ( f_PtanQuantity ) ! For minorframe qty
+            PtanVectorIndex = decoration(decoration(subtree(1,gson)))
+            PtanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_skipMask )
             skipMask = get_boolean ( fieldValue )
           case default ! Can't get here if type checker worked
@@ -1042,6 +1074,15 @@ contains ! =====     Public Procedures     =============================
               & vectors(destinationVectorIndex), &
               & vectors(aVecIndex), vectors(bVecIndex) )
           endif
+        else if ( fillMethod /= l_none ) then
+          if ( got ( f_ptanQuantity )  ) then
+            ptanQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(ptanVectorIndex), ptanQuantityIndex)
+          endif
+          call TransferVectorsByMethod ( key, destvector, &
+            & sourceVector, fillMethod, dontMask, interpolate, &
+            & ignorenegative, ignoreZero, measVector, modelVector, &
+            & noiseVector, ptanQuantity )
         else if ( got(f_source) ) then
           call TransferVectors ( vectors(sourceVectorIndex), &
             & vectors(destinationVectorIndex), skipMask, interpolate )
@@ -1049,6 +1090,8 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Transfer command requires either source or a to be present' )
         endif
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
+          & call trace_end ( "Fill.Transfer" )
 
       case ( s_time ) ! ===================================  Time  =====
         if ( timing ) then
@@ -1278,7 +1321,6 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------------ fillCommand -----
     subroutine fillCommand
     ! Now we're on actual Fill instructions.
-      use VECTORSMODULE, only: DESTROYVECTORQUANTITYVALUE
       integer :: JJ
       logical :: QTYWASMASKED
       type(vectorValue_T) :: TEMPQUANTITY  ! For storing original qty's mask
@@ -1528,7 +1570,7 @@ contains ! =====     Public Procedures     =============================
           profile = valueAsArray(1)
         case ( f_profileValues )
           valuesNode = subtree(j,key)
-        case ( f_PtanQuantity ) ! For losGrid fill
+        case ( f_PtanQuantity ) ! For minorframe qty
           PtanVectorIndex = decoration(decoration(subtree(1,gson)))
           PtanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_Phitan ) ! For losGrid fill
@@ -1965,6 +2007,20 @@ contains ! =====     Public Procedures     =============================
           & sourceQuantityIndex )
         call ConvergenceFromChisq ( key, quantity, sourceQuantity, scale, &
           & ignoreTemplate )
+
+      case ( l_derivative )
+        if ( .not. any ( got( &
+          & (/ f_sourceQuantity, f_geocAltitudeQuantity, f_dimList /) &
+          & ) ) ) &
+          & call Announce_Error ( key, no_Error_Code, &
+          & 'Need source quantity, geocAltitudeQuantity, dimList for ' // &
+          & 'derivative fill' )
+        sourceQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(sourceVectorIndex), sourceQuantityIndex )
+        geocAltitudeQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(geocAltitudeVectorIndex), geocAltitudeQuantityIndex)
+        call DerivativeOfSource ( quantity, sourceQuantity, geocAltitudeQuantity, &
+          & dimList, ignoreTemplate )
 
       case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
         if ( .not. all(got( (/ f_radianceQuantity, &
@@ -2935,6 +2991,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.415  2013/01/02 21:40:59  pwagner
+! Added derivative method to Fill command; Transfer can do Fill methods, too
+!
 ! Revision 2.414  2012/11/14 20:04:11  pwagner
 ! Fix boxcar bug added with last commit
 !
