@@ -480,25 +480,29 @@ contains ! =====     Public procedures     =============================
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_channel, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
-      begin, t+t_fillMethod, l+l_applyBaseline, l+l_asciiFile, l+l_binMax, l+l_binMean, &
-             l+l_binMin, l+l_binTotal, l+l_chiSqChan, l+l_chiSqMMAF, l+l_chiSqMMIF, l+l_chiSqRatio, &
-             l+l_geoLocation, l+l_columnAbundance, l+l_convergenceRatio, &
-             l+l_boxcar, l+l_combineChannels, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
-             l+l_extractChannel, l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
+      begin, t+t_fillMethod, l+l_addnoise, l+l_applyBaseline, l+l_asciiFile, &
+             l+l_binMax, l+l_binMean, l+l_binMin, l+l_binTotal, l+l_boxcar, &
+             l+l_chiSqChan, l+l_chiSqMMAF, l+l_chiSqMMIF, l+l_chiSqRatio, &
+             l+l_columnAbundance, l+l_convergenceRatio, &
+             l+l_combineChannels, l+l_derivative, &
+             l+l_estimatedNoise, l+l_explicit, l+l_extractChannel, &
+             l+l_fwdModelMean, l+l_fwdModelStdDev, l+l_fwdModelTiming, &
+             l+l_fold, l+l_geoLocation, l+l_gphPrecision, l+l_gridded, &
+             l+l_H2OFromRHI, l+l_H2OPrecisionFromRHI, l+l_hydrostatic, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
              l+l_losVel, l+l_lsGlobal, l+l_lsLocal, l+l_lsWeighted, &
              l+l_manipulate, l+l_magneticModel, l+l_magAzEl, l+l_modifyTemplate, &
-             l+l_negativePrecision, l+l_noRadsPerMIF, l+l_offsetRadiance, l+l_profile, &
-             l+l_phaseTiming, l+l_sectionTiming, l+l_fwdModelTiming, &
-             l+l_fwdModelMean, l+l_fwdModelStdDev, l+l_quality, &
-             l+l_reflectorTempModel, l+l_rotateField, l+l_vector, &
-             l+l_scaleOverlaps, l+l_splitSideband, &
-             l+l_status, l+l_resetUnusedRadiances, &
-             l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
-             l+l_H2OFromRHI, l+l_H2OPrecisionFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_swapValues, &
-             l+l_uncompressRadiance, l+l_vGrid, l+l_wmoTropopause, n+n_dt_def, &
-      begin, t+t_fwmType, l+l_baseline, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
-             l+l_cloudFull, l+l_hybrid, l+l_switchingMirror, &
+             l+l_negativePrecision, l+l_noRadsPerMIF, l+l_offsetRadiance, &
+             l+l_phaseTiming, l+l_profile, l+l_quality, &
+             l+l_rectanglefromlos, l+l_reflectorTempModel, l+l_refract, &
+             l+l_resetUnusedRadiances, &
+             l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_rotateField, &
+             l+l_scaleOverlaps, l+l_sectionTiming, l+l_splitSideband, &
+             l+l_spreadChannel, l+l_status, l+l_swapValues, &
+             l+l_uncompressRadiance, &
+             l+l_vector, l+l_vGrid, l+l_wmoTropopause, n+n_dt_def, &
+      begin, t+t_fwmType, l+l_baseline, l+l_linear, l+l_full, &
+             l+l_cloudFull, l+l_hybrid, l+l_scan, l+l_scan2d, l+l_switchingMirror, &
              l+l_polarLinear, n+n_dt_def, &
       begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
              l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
@@ -1160,10 +1164,19 @@ contains ! =====     Public procedures     =============================
              begin, f+f_a, s+s_vector, n+n_field_spec, &
              begin, f+f_b, s+s_vector, n+n_field_spec, &
              begin, f+f_c, t+t_numeric, n+n_field_type, &
+             begin, f+f_method, t+t_fillmethod, n+n_field_type, &
              begin, f+f_source, s+s_vector, n+n_field_spec, &
              begin, f+f_destination, s+s_vector, nr+n_field_spec, &
+             begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
+             begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
+             begin, f+f_ignoreZero, t+t_boolean, n+n_field_type, &
              begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
              begin, f+f_manipulation, t+t_string, n+n_field_type, &
+             begin, f+f_measurements, s+s_vector, n+n_field_spec, &
+             begin, f+f_model, s+s_vector, n+n_field_spec, &
+             begin, f+f_noise, s+s_vector, n+n_field_spec, &
+             begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_skipMask, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
@@ -1789,6 +1802,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.558  2013/01/02 21:40:33  pwagner
+! Added derivative method to Fill command; Transfer can do Fill methods, too
+!
 ! Revision 2.557  2012/11/14 00:57:26  pwagner
 ! Use dimList for choosing which of {csi} to average over
 !
