@@ -22,10 +22,10 @@ module FillUtils_1                     ! Procedures used by Fill
   use HDF5, only: HSIZE_T, H5DOPEN_F, H5DCLOSE_F
   use INIT_TABLES_MODULE, only: F_MEASUREMENTS, F_TOTALPOWERVECTOR, &
     & F_WEIGHTSVECTOR, &
-    & L_BASELINE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
-    & L_BOUNDARYPRESSURE, L_CHISQBINNED, L_CHISQCHAN, &
+    & L_ADDNOISE, L_BASELINE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
+    & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, L_CHISQRATIO, &
     & L_CHISQMMAF, L_CHISQMMIF, &
-    & L_CLOUDINDUCEDRADIANCE, &
+    & L_CLOUDINDUCEDRADIANCE, L_CLOUDMINMAX, &
     & L_COLUMNABUNDANCE, &
     & L_DNWT_FLAG, L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_CHISQRATIO, &
     & L_DOBSONUNITS, L_DU, &
@@ -35,10 +35,10 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_HEIGHT, L_ISOTOPERATIO, &
     & L_L1BMAFBASELINE, L_L1BMIF_TAI, &
     & L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
-    & L_LSLOCAL, L_LSWEIGHTED, &
+    & L_LSLOCAL, L_LSGLOBAL, L_LSWEIGHTED, &
     & L_MAGNETICFIELD, &
     & L_MAX, L_MEAN, L_MIN, L_MOLCM2, &
-    & L_NOISEBANDWIDTH, L_NONE, &
+    & L_NOISEBANDWIDTH, L_NONE, L_NORADSPERMIF, L_NORADSBINNED, &
     & L_ORBITINCLINATION, &
     & L_PRESSURE, L_PTAN,  L_QUALITY, &
     & L_RADIANCE, L_REFGPH, &
@@ -69,7 +69,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSFILES, only: HDFVERSION_5, DUMP, GETMLSFILEBYTYPE
   use MLSFILLVALUES, only: ISFILLVALUE, ISMONOTONIC, MONOTONIZE, REMOVEFILLVALUES
   use MLSKINDS, only: R4, R8, RM, RP, RV
-  use MLSL2OPTIONS, only: MLSMESSAGE
+  use MLSL2OPTIONS, only: L2CFNODE, MLSMESSAGE
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMESSAGECALLS
   use MLSNUMERICS, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
@@ -93,8 +93,9 @@ module FillUtils_1                     ! Procedures used by Fill
   use TREE, only: DECORATION, SUBTREE, NSONS, &
     & SOURCE_REF, SUBTREE
   use VECTORSMODULE, only: &
-    & CLEARUNDERMASK, COPYVECTOR, CREATEMASK, &
-    & DESTROYVECTORINFO, DESTROYVECTORQUANTITYMASK, DUMP, &
+    & CLEARUNDERMASK, CLONEVECTORQUANTITY, COPYVECTOR, CREATEMASK, &
+    & DESTROYVECTORINFO, DESTROYVECTORQUANTITYMASK, &
+    & DESTROYVECTORQUANTITYVALUE, DUMP, &
     & GETVECTORQTYBYTEMPLATEINDEX, GETVECTORQUANTITYBYTYPE, &
     & ISVECTORQTYMASKED, MASKVECTORQTY, &
     & VALIDATEVECTORQUANTITY, VECTOR_T, &
@@ -177,7 +178,7 @@ module FillUtils_1                     ! Procedures used by Fill
       & EXTRACTSINGLECHANNEL, FILLCOVARIANCE, FROMANOTHER, FROMGRID, &
       & FROML2GP, FROMPROFILE, LOSVELOCITY, &
       & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
-      & COLABUNDANCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
+      & COLABUNDANCE, DERIVATIVEOFSOURCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
       & IWCFROMEXTINCTION, RHIFROMORTOH2O, NORADSPERMIF, &
       & RHIPRECISIONFROMORTOH2O, WITHESTNOISE, &
       & HYDROSTATICALLY, FROMSPLITSIDEBAND, GPHPRECISION, &
@@ -190,7 +191,9 @@ module FillUtils_1                     ! Procedures used by Fill
       & WITHWMOTROPOPAUSE, WITHBINRESULTS, WITHBOXCARFUNCTION, &
       & STATUSQUANTITY, QUALITYFROMCHISQ, CONVERGENCEFROMCHISQ, &
       & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNUSEDRADIANCES, &
-      & SCALEOVERLAPS, SPREADCHANNELFILL, TRANSFERVECTORS, UNCOMPRESSRADIANCE, &
+      & SCALEOVERLAPS, SPREADCHANNELFILL, &
+      & TRANSFERVECTORS, TRANSFERVECTORSBYMETHOD, &
+      & UNCOMPRESSRADIANCE, &
       & ANNOUNCE_ERROR, QTYFROMFILE, VECTORFROMFILE
 
   interface FromProfile
@@ -279,14 +282,15 @@ contains ! =====     Public Procedures     =============================
     end subroutine addGaussianNoise
 
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-    subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, ExtraInfo )
+    subroutine ANNOUNCE_ERROR ( WHERE, CODE, EXTRAMESSAGE, EXTRAINFO, QUITNOW )
 
       use MORETREE, only: GET_FIELD_ID, STARTERRORMESSAGE
 
-      integer, intent(in) :: where   ! Tree node where error was noticed
+      integer, intent(in) :: WHERE   ! Tree node where error was noticed
       integer, intent(in) :: CODE    ! Code for error message
-      character (LEN=*), intent(in), optional :: ExtraMessage
-      integer, intent(in), dimension(:), optional :: ExtraInfo
+      character (len=*), intent(in), optional :: EXTRAMESSAGE
+      integer, intent(in), dimension(:), optional :: EXTRAINFO
+      logical, intent(in), optional :: QUITNOW
 
       integer :: I
 
@@ -407,6 +411,9 @@ contains ! =====     Public Procedures     =============================
       if ( present(ExtraMessage) )  call output(ExtraMessage, advance='yes')
       if ( code == no_Error_Code .and. present(extraInfo) ) &
         & call dump ( extraInfo, name='Extra info' )
+      if ( QUITNOW ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & trim(extraMessage) )
     end subroutine ANNOUNCE_ERROR
 
     ! ------------------------------------------- ApplyBaseline ----------
@@ -1872,6 +1879,60 @@ contains ! =====     Public Procedures     =============================
         & call trace_end ( 'FillUtils_1.FillCovariance' )
 
     end subroutine FillCovariance
+
+    !------------------------------------- DerivativeOfSource ------------
+    ! Compute derivative of source quantity w.r.t. dim listed
+    subroutine DerivativeOfSource ( DERIVATIVE, SOURCE, XQUANTITY, &
+      & DIMLIST, IGNORETEMPLATE )
+      use MANIPULATIONUTILS, only: MANIPULATE
+
+      type (VectorValue_T), pointer       :: DERIVATIVE
+      type (VectorValue_T), pointer       :: SOURCE
+      type (VectorValue_T), pointer       :: XQUANTITY
+      character(len=*), intent(in)        :: DIMLIST        ! 's', 'c', or 'i' in manipulation's shi
+      logical, intent(in)                 :: IGNORETEMPLATE
+
+      ! Local variables
+      type(vectorValue_T), pointer :: BOGUS         ! When we have no "b"
+      integer                      :: NOKEY
+      type(vectorValue_T), pointer :: LOWER         ! For storing (dy/dx)_l
+      type(vectorValue_T), target  :: LOWERQUANTITY ! For storing (dy/dx)_l
+      type(vectorValue_T), pointer :: UPPER         ! For storing (dy/dx)_u
+      type(vectorValue_T), target  :: UPPERQUANTITY ! For storing (dy/dx)_u
+      ! Executable
+      nullify( bogus, upper, lower )
+      nokey = 0
+      ! First: check that derivative and source are compatible
+      if ( .not. ignoretemplate ) then
+        if ( source%template%name /= &
+          & derivative%template%name ) call MLSMessage ( MLSMSG_Error, &
+          & ModuleName, "Derivative and source not compatible in fill derivative" )
+      endif
+      call CloneVectorQuantity ( upperQuantity, source )
+      call CloneVectorQuantity ( lowerQuantity, source )
+      lower => lowerQuantity
+      upper => upperQuantity
+      ! Second: compute the "upper derivative"
+      ! (dy/dx)_u = ( y[x+dx] - y[x] ) / dx
+      call Manipulate ( upper, source, xQuantity, 0._rv, &
+        & "(shift(a) - a)/(shift(b) - b)", &
+        & .false., dimList )
+      ! Third: compute the "lower derivative"
+      ! (dy/dx)_l = ( y[x] - y[x-dx] ) / dx
+      call Manipulate ( lower, source, xQuantity, 0._rv, &
+        & "(a - slip(a))/(b - slip(b))", &
+        & .false., dimList )
+      ! Last: average the two to arrive at the central difference
+      ! (dy/dx) = (1/2) * ( (dy/dx)_u + (dy/dx)_l )
+      call Manipulate ( derivative, upper, lower, 0.5_rv, &
+        & "c*(a + b)", &
+        & .false., dimList )
+      ! Housekeeping
+      call destroyVectorQuantityValue ( upperQuantity, &
+        & destroyMask=.true., destroyTemplate=.false. )
+      call destroyVectorQuantityValue ( lowerQuantity, &
+        & destroyMask=.true., destroyTemplate=.false. )
+    end subroutine DerivativeOfSource
 
     ! ------------------------------------- FoldedRadiance ---
     subroutine FoldedRadiance ( radiance, lsb, usb, &
@@ -3518,7 +3579,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: LOS ! Vector quantity to fill from
       type (VectorValue_T), intent(in) :: Ptan ! tangent pressure
       type (VectorValue_T), intent(in) :: Re ! Earth's radius
-      type (VectorValue_T), INTENT(INOUT) :: QTY ! Quantity to fill
+      type (VectorValue_T), intent(inout) :: QTY ! Quantity to fill
       integer, intent(in) :: noFineGrid   ! make finer sGrid with this number
       logical, intent(in) :: extinction  ! Flag for extinction fill and calculation
       integer, intent(out) :: errorCode ! Error code
@@ -5654,9 +5715,14 @@ contains ! =====     Public Procedures     =============================
           & 'Vertical coordinate in quantity to fill is not zeta' )
       else
         sourceHeights => sourceQuantity%template%surfs
-        if ( sourceQuantity%template%verticalCoordinate /= quantity%template%verticalCoordinate ) &
-          & call Announce_Error ( key, no_error_code, &
+        if ( sourceQuantity%template%verticalCoordinate /= quantity%template%verticalCoordinate ) then
+          call dump ( quantity%template )
+          call dump ( sourceQuantity%template )
+          call outputNamedValue( 'source is minor frame?', sourceQuantity%template%minorFrame )
+          call outputNamedValue( 'associated(ptanQuantity)?', associated(ptanQuantity) )
+          call Announce_Error ( key, no_error_code, &
           & 'Vertical coordinates in binned fill do not match' )
+        end if
       end if
 
       ! Setup index arrays
@@ -5839,8 +5905,8 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( insts, 'insts', ModuleName )
       if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
-      call MLSMessageCalls( 'pop' )
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+    9 call MLSMessageCalls( 'pop' )
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_end ( 'FillUtils_1.WithBinResults' )
     end subroutine WithBinResults
 
@@ -6191,6 +6257,146 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(gen) .and. levels(gen) > 2 ) &
         & call trace_end ( 'FillUtils_1.TransferVectors' )
     end subroutine TransferVectors
+
+    ! ---------------------------------------------- TransferVectorsByMethod -----
+    ! Fill items in dest according to method
+    ! Using either those in source or those in measVector
+
+    ! Note:
+    ! This may fill multiple quantities in destination using the same
+    ! source quantities if more than one match according to
+    ! method-dependent criteria (should we check? warn?)
+    
+    ! Which methods to permit is a question probably to be revisited
+    ! as needed
+    subroutine TransferVectorsByMethod ( KEY, DEST, &
+      & SOURCE, METHOD, DONTMASK, INTERPOLATE, &
+      & IGNORENEGATIVE, IGNOREZERO, MEASVECTOR, MODELVECTOR, &
+      & NOISEVECTOR, PTAN )
+      integer, intent(in)            :: KEY
+      type (Vector_T), pointer       :: DEST
+      type (Vector_T), pointer       :: SOURCE
+      integer, intent(in)            :: METHOD
+      logical, intent(in)            :: DONTMASK
+      logical, intent(in)            :: INTERPOLATE
+      logical, intent(in)            :: IGNORENEGATIVE
+      logical, intent(in)            :: IGNOREZERO
+      type (Vector_T), pointer       :: MODELVECTOR
+      type (Vector_T), pointer       :: MEASVECTOR
+      type (Vector_T), pointer       :: NOISEVECTOR
+      type (VectorValue_T), pointer  :: PTAN ! tangent pressure
+
+      ! Local variables
+      logical, parameter            :: ASPERCENTAGE = .false.
+      integer                       :: BININDEXER
+      integer, parameter            :: CHANNEL=0
+      type (VectorValue_T), pointer :: DQ ! Destination quantity
+      integer                       :: DQI
+      logical, parameter            :: IGNORETEMPLATE = .false.
+      real, dimension(2), parameter :: MULTIPLIER = (/ 1.0, 1.0 /)
+      integer                       :: NUMQUANTITIES
+      type (VectorValue_T), pointer :: SQ ! Source or meas quantity
+      integer                       :: SQI                      ! Quantity index in source or meas
+      type (VectorValue_T), pointer :: MQ ! Model quantity
+      type (VectorValue_T), pointer :: NQ ! Noise quantity
+      integer                       :: NUMMATCHES
+      real(r8)                      :: SCALEINSTANCES, SCALERATIO, SCALESURFS
+      integer, dimension(4), parameter :: BINMETHODS = &
+        & (/ l_binMax, l_binMean, l_binMin, l_binTotal /)
+      integer, dimension(4), parameter :: BINNEDTYPES = &
+        & (/ l_chisqBinned, l_chisqBinned, l_cloudMinMax, l_noRadsBinned /)
+      ! Executable code
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_begin ( 'FillUtils_1.TransferVectorsByMethod' )
+
+      scaleInstances=-1.0d0
+      scaleRatio=1.0d0
+      scaleSurfs=-1.0d0
+      ! First copy those things in source, loop over them
+      if ( any( method == &
+        & (/ l_chisqMMAF, l_chisqMMIF, l_chisqChan, l_noRadsPerMif /) ) ) then
+        NumQuantities = size ( measVector%quantities )
+      else
+        NumQuantities = size ( source%quantities )
+      endif
+      do sqi = 1, NumQuantities
+        if ( any( method == &
+          & (/ l_chisqMMAF, l_chisqMMIF, l_chisqChan /) ) ) then
+          sq => measVector%quantities(sqi)
+          mq => modelVector%quantities(sqi)
+          nq => noiseVector%quantities(sqi)
+        elseif ( any( method == &
+          & (/ l_noRadsPerMif /) ) ) then
+          sq => measVector%quantities(sqi)
+        else
+          sq => source%quantities(sqi)
+        endif
+        nummatches = 0
+        do dqi = 1, size ( dest%quantities ) 
+          dq => dest%quantities(dqi)
+          if ( .not. associated(dq) ) cycle
+          select case ( method )
+          case ( l_addNoise ) ! ----- Add random noise to source Quantity -------
+            nq => GetVectorQtyByTemplateIndex ( noiseVector, &
+              & source%template%quantities(sqi) )
+            call addGaussianNoise ( key, dq, sq, &
+              & nq, multiplier, spread=.false., &
+              & ignoreTemplate=ignoreTemplate )
+          case ( l_binMax, l_binMean, l_binMin, l_binTotal )
+            if ( dq%template%signal /= sq%template%signal ) cycle
+            binIndexer = FindFirst( binMethods, method )
+            if ( dq%template%quantityType /= binnedTypes(binIndexer) ) cycle
+            if ( .not. any( sq%template%quantityType == &
+              & (/ l_chiSQMMIF, l_noRadsPerMif/) ) ) cycle
+            call WithBinResults ( key, dq, sq, ptan, &
+              & channel, method, additional=.false., &
+              & excludeBelowBottom=.false., centerVertically=.false. )
+          case ( l_lsLocal, l_lsGlobal, l_lsWeighted )
+            call UsingLeastSquares ( key, dq, sq, ptan, &
+              & channel, method, &
+              & scaleInstances, scaleRatio, scaleSurfs )
+          case ( l_boxcar )
+            if ( dq%template%quantityType /= l_chisqBinned ) cycle
+            call WithBoxcarFunction ( key, dq, sq, width=3, &
+              & method=l_min, ignoreTemplate=ignoreTemplate )
+          case ( l_chiSQChan )
+            if ( dq%template%signal /= sq%template%signal ) cycle
+            if ( dq%template%quantityType /= l_chiSQChan ) cycle
+            call ChiSqChan ( key, dq, &
+              & sq, mq, nq, &
+              & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier )
+          case ( l_chiSQMMaf )
+            if ( dq%template%signal /= sq%template%signal ) cycle
+            if ( dq%template%quantityType /= l_chiSQMMaf ) cycle
+            call ChiSqMMaf ( key, dq, &
+              & sq, mq, nq, &
+              & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier )
+          case ( l_chiSQMMIF )
+            if ( dq%template%signal /= sq%template%signal ) cycle
+            if ( dq%template%quantityType /= l_chiSQMMIF ) cycle
+            call ChiSqMMiF ( key, dq, &
+              & sq, mq, nq, &
+              & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier )
+          case ( l_noRadsPerMif )
+            if ( dq%template%signal /= sq%template%signal ) cycle
+            if ( dq%template%quantityType /= l_noRadsPerMif ) cycle
+            call NoRadsPerMif ( key, dq, sq, asPercentage )
+          case default
+           call MLSMessage ( MLSMSG_Error, ModuleName, &
+             & "Unable to transfer by this method")
+          end select
+          nummatches = nummatches + 1
+        end do
+        if ( nummatches > 1 ) then
+          L2CFNode = key
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'More than one matching destination quantity in ' // &
+          & 'TransferVectorsByMethod' )
+        endif
+      end do
+      if ( toggle(gen) .and. levels(gen) > 2 ) &
+        & call trace_end ( 'FillUtils_1.TransferVectorsByMethod' )
+    end subroutine TransferVectorsByMethod
 
     ! ---------------------------------------------- UncompressRadiance -----
     subroutine UncompressRadiance ( key, quantity, totalPowerQuantity, &
@@ -6710,6 +6916,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.70  2013/01/02 21:41:31  pwagner
+! Added derivative method to Fill command; Transfer can do Fill methods, too
+!
 ! Revision 2.69  2012/12/20 01:05:26  vsnyder
 ! Provide coherent-to-minor frame interpolation
 !
