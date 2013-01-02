@@ -865,10 +865,10 @@ contains ! =====     Public Procedures     =============================
     if ( .not. repair .and. present(HGrid) ) &
       & call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'cpL2GPFile was given HGrid but no order to repair L2GPData' )
-    noSwaths = NumStringElements(trim(swathList), countEmpty)
+    noSwaths = NumStringElements( trim(swathList), countEmpty )
     if ( noSwaths < 1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'No swaths cp to file--unable to count swaths in ' // trim(swathList) )
+            & 'No swaths to cp to file--unable to count swaths in ' // trim(swathList) )
     endif
     if ( verbose ) call dump(swathlist, 'swath names')
     if ( renameSwaths ) then
@@ -981,6 +981,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Local
     logical :: allSwaths
+    logical, parameter            :: countEmpty = .true.
     integer :: DayofYear
     ! logical, parameter :: DEEBUG = .TRUE.
     integer :: File1Handle
@@ -1111,7 +1112,17 @@ contains ! =====     Public Procedures     =============================
     endif
 
     if ( present(exclude) ) then
-      call RemoveListFromList(mySwathList, myrename, exclude)
+      call RemoveListFromList( mySwathList, myrename, exclude )
+      noSwaths = NumStringElements( trim(myrename), countEmpty )
+      if ( noSwaths < 1 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'No swaths after excluding ' )
+        call outputNamedValue( 'exclude', trim(exclude) )
+        call outputNamedValue( 'mySwathList', trim(mySwathList) )
+        call close_MLSFile( MLSFile1 )
+        call close_MLSFile( MLSFile2 )
+        return
+      endif
       mySwathList = myrename
     endif
     call cpL2GPData_fileID(l2metaData, File1Handle, File2Handle, &
@@ -5030,6 +5041,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.188  2012/10/09 00:34:52  pwagner
+! Fixed bugs in OutputL2GP_attributes_MF, AppendL2GPData
+!
 ! Revision 2.187  2012/09/18 18:50:25  pwagner
 ! Dont write over already-there global attributes
 !
