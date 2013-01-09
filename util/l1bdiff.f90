@@ -585,7 +585,7 @@ contains
         maf2 = NoMAFs
         if ( options%maf2 > 0 ) maf2 = options%maf2
         if ( options%verbose ) then
-          print *, 'About to diff'
+          print *, 'About to diff :: ' // trim(sdName) // ' ::'
         elseif ( .not. options%silent ) then
           print *, ':: ' // trim(sdName) // ' ::'
         endif
@@ -855,6 +855,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.26  2012/09/12 16:40:13  pwagner
+! Works more reliably with goldbrick
+!
 ! Revision 1.25  2012/09/06 00:37:02  pwagner
 ! Works better with goldbrick
 !
