@@ -12,6 +12,8 @@
 
 # options
 # -h[elp]            brief summary of usage and options; then exit
+# -v                 verbose; echo most commands
+# -s                 silent; suppress most printing
 # -T target_name     make builds target_name instead of test e.g., lib)
 # -p prog_name       install resulting program as prog_name instead of test
 # -d prog_path       install resulting program in prog_path
@@ -170,6 +172,8 @@ DEEBUG=off
 BUILD=on
 EXTRAOPTS=
 INSTALL=on
+verbose=off
+silent=off
 prog_name=test
 target_name=test
 test_dir_name=misc
@@ -188,7 +192,7 @@ me="$0"
 my_name=build_f90_in_misc.sh
 args_dir=`pwd`
 REECHO="`echo $0 | sed 's/build_f90_in_misc.sh/reecho.sh/'`"
-# echo "args: $@"
+#echo "args: $@"
 arglist=
 
 #
@@ -259,6 +263,12 @@ while [ "$1" != "" ] ; do
 	-ni )
 	    INSTALL=off
 	;;
+	-s )
+	    silent=on
+	;;
+	-v )
+	    verbose=on
+	;;
 	-h | -help )
 	   sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
    		| sed -n 's/^..//p' | sed '1 d; $ d'
@@ -271,6 +281,13 @@ while [ "$1" != "" ] ; do
     shift
 
 done
+
+DEEBUG=$verbose
+
+if [ $silent = "on" ]
+then
+  MYMAKEOPTS="-s $MYMAKEOPTS"
+fi
 
 if [ $DEEBUG = "on" ]
 then
@@ -437,8 +454,6 @@ then
    if [ "$BUILD" = "on" ]
    then
       cd $test_dir_path/$test_dir_name
-#      make depends ghostbuster
-#      make EXTRA_PATHS="$EXTRA_PATHS"
       $MYMAKE depends ghostbuster $MYMAKEOPTS
       $MYMAKE EXTRA_PATHS="$EXTRA_PATHS" $EXTRAOPTS $MYMAKEOPTS "$target_name"
    fi
@@ -451,8 +466,6 @@ then
    if [ "$BUILD" = "on" ]
    then
       cd $test_dir_path/$test_dir_name
-#      make depends ghostbuster
-#      make
       $MYMAKE depends ghostbuster $MYMAKEOPTS
       $MYMAKE $EXTRAOPTS  $MYMAKEOPTS "$target_name"
    fi
@@ -480,13 +493,13 @@ fi
 # (4) Install
 if [ $INSTALL = "off" ]
 then
-   if [ "$DEEBUG" = "on" ]
+   if [ "$silent" != "on" ]
    then
       echo "Done with build; INSTALL = off so exiting now"
    fi
    exit 0
 fi
-if [ $DEEBUG = "on" ]
+if [ "$silent" != "on" ]
 then
    echo "Installing $prog_name in $prog_path"
 fi
@@ -506,6 +519,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.16  2008/06/27 16:59:15  pwagner
+# Worked around Intel refusal to link when main program in c
+#
 # Revision 1.15  2005/06/23 22:20:45  pwagner
 # Reworded Copyright statement
 #
