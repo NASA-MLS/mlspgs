@@ -517,7 +517,7 @@ fi
 if [ "$wrap" = "yes" ]
 then
   mv $templ2cf $stempl2cf
-  wrapLines -v -blank 1 < $stempl2cf > $templ2cf
+  wrapLines -v -blank 1 -i $stempl2cf > $templ2cf
   rm $stempl2cf
 fi
 
@@ -576,6 +576,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.7  2009/06/16 22:37:08  pwagner
+# Added -ident option to store version id for l2cf fragments
+#
 # Revision 1.6  2009/04/13 20:43:17  pwagner
 # Fixed a bug preventing macros file from using its own macros properly
 #
