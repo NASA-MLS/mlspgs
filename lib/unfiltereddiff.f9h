@@ -117,10 +117,10 @@
     endif
     myWholeArray = myWholeArray .or. &
       & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
-      & .or. myTable)
+      & .or. myTable .or. myNaNs)
     onlyWholeArray = myWholeArray .and. &
       & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
-      & .or. myTable)
+      & .or. myTable .or. myNaNs)
 
     if ( len_trim(name1) < 1 ) then
       DiffName = ' '
@@ -453,6 +453,9 @@
 
 !   end subroutine DIFF_1D_DOUBLE
 ! $Log$
+! Revision 2.16  2013/01/10 00:17:31  pwagner
+! Dumps with -N just show where NaNs are
+!
 ! Revision 2.15  2012/09/11 21:11:25  pwagner
 ! Requires 'N' option to show where NaNs, Infs are located
 !
