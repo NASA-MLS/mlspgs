@@ -66,6 +66,7 @@ module DUMP_0
 ! FILTERFILLSFROMRMS       exclude fill values when calculating rms, etc.
 !                           (not implemented yet)
 ! INTPLACES                How many places to print when dumping integer values
+! MAXNUMNANS               How many NaNs can we show where they are
 ! PCTFORMAT                use this format to print % with '-s' diff option
 ! RMSFORMAT                use this format to print min, max, rms, etc.
 ! SDFORMATDEFAULT          use this format to print s.p., d.p. by default
@@ -342,6 +343,7 @@ module DUMP_0
 
   ! These determine how dumped numerical data (s.p. or d.p.) will be formatted
   character(len=2), public, save  :: INTPLACES = '6' ! how many places
+  integer,          public, save  :: MAXNUMNANS= 60  ! how many NaNs to show
   character(len=16), public, save :: PCTFORMAT = '*' ! * means default format
   character(len=16), public, save :: RMSFORMAT = '*' ! * means default format
   character(len=16), public, save :: SDFORMATDEFAULT = '(1pg14.6)'
@@ -377,13 +379,15 @@ contains
  ! with the same shape and numeric type
  ! Its behavior is modified by the following optional parameters
  ! FillValue   Ignore these values when computing min, max
- ! Clean       Clean up after any prior dumps
  ! Width       Row size when dumping wholearrays
  ! Format      Output format when printing wholearray
+ ! LBound      Lower bound when printing wholearray indices
+ !
+ ! The following optional params are now set by options
  ! Wholearray  Whether to print whole array of differences
  ! Stats       Dump number of differences found, %
  ! RMS         Dump min, max, rms
- ! LBound      Lower bound when printing wholearray indices
+ ! Clean       Clean up after any prior dumps
   subroutine DIFF_1D_DOUBLE ( ARRAY1, NAME1, ARRAY2, NAME2, &
     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )
     double precision, intent(in) :: ARRAY1(:)
@@ -1947,7 +1951,7 @@ contains
        call output( '      1 or 2 or ..   ignored; calling routine is free to interpret', advance='yes' )
        call output( ' ', advance='yes' )
        call output( 'An exception is the behavior of w (wholearray):', advance='yes' )
-       call output( 'if all {HRblrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)', advance='yes' )
+       call output( 'if all {HNRblrs} are FALSE, i.e. unset, the whole array is dumped (or diffed)', advance='yes' )
        call output( 'if any are TRUE the whole array will be dumped only if', advance='yes' )
        call output( 'w is present or wholearray is set to TRUE', advance='yes' )
      else
@@ -3091,10 +3095,10 @@ contains
     endif
     myWholeArray = myWholeArray .or. &
       & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
-      & .or. myTable)
+      & .or. myTable .or. myNaNs)
     onlyWholeArray = myWholeArray .and. &
       & .not. (myBandwidth.or. myCollapse .or. myRatios .or. myRMS .or. myShape .or. myStats &
-      & .or. myTable)
+      & .or. myTable .or. myNaNs)
     nameHasBeenPrinted = nameHasBeenPrinted .or. myLaconic
   end subroutine theDumpBegins
 
@@ -3335,6 +3339,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.125  2013/01/10 00:18:43  pwagner
+! Dumps with -N just show where NaNs are
+!
 ! Revision 2.124  2012/09/11 21:10:24  pwagner
 ! Requires 'N' option to show where NaNs, Infs are located
 !
