@@ -36,24 +36,31 @@
       call output( pctnzero, advance='yes' )
     endif
     if ( any(shape(array) == 0) ) return
-    if ( myRMS .or. myRatios ) then
+    if ( myRMS .or. myRatios .or. myNaNs ) then
       if ( .not. any(isfinite(array)) ) then
-        call output ('(no finite values found in array--skipped) ', advance='yes')
+        call output ('(no finite values found in array) ', advance='yes')
       elseif ( .not. all(isfinite(array)) ) then
-        if ( present(name) .and. .not. nameHasBeenPrinted ) call output ( trim(name) //'   ' , advance='no' )
-        call output ('(non-finite values found in array--skipped) ', advance='yes')
+        if ( present(name) .and. .not. nameHasBeenPrinted ) &
+          & call output ( trim(name) //'   ' , advance='no' )
         if ( myNaNs ) then
           call WhereAreTheInfs ( array, which, how_many )
           if ( how_many > 0 ) then
             call outputNamedValue( 'num(Infs)', how_many )
-            if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+            if ( how_many < MAXNUMNANS ) &
+              & call outputNamedValue( 'which', which(1:how_many) )
           endif
           call WhereAreTheNaNs ( array, which, how_many )
           if ( how_many > 0 ) then
             call outputNamedValue( 'num(NaNs)', how_many )
-            if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+            if ( how_many < MAXNUMNANS ) &
+              & call outputNamedValue( 'which', which(1:how_many) )
           endif
+        else
+          call output ('(non-finite values found in array--skipped) ', advance='yes')
         endif
+      elseif ( myNaNs ) then
+        ! Don't want to do anything else, because
+        how_many = 0 ! No NaNs or Infs
       else if ( present(fillValue) ) then
         ! call output( 'dumpstats with FillValue ' // trim(name) , advance='no' )
         call printRMSetc ( Name, mlsmin(array, fillValue), &
@@ -151,6 +158,9 @@
     end if
     ! call output('Leaving dumpstats', advance='no')
 ! $Log$
+! Revision 2.33  2013/01/10 00:18:18  pwagner
+! Dumps with -N just show where NaNs are
+!
 ! Revision 2.32  2012/09/11 21:12:11  pwagner
 ! Requires 'N' option to show where NaNs, Infs are located
 !
