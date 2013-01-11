@@ -9,5 +9,6 @@ begin ChunkDivide
     homeGeodAngle = 0 degrees, homeModule = GHz, !ifdef(flagSkipL1BCheck,{/skipL1BCheck,}) $
     criticalModules = GHz, maxGap = 2 MAFs, $
     scanLowerLimit = [ -20km : 10km ], scanUpperLimit = [ 40km : 200km ], $
+    excludePostOverlaps = false, excludePriorOverlaps = false, $
     maxOrbY = 50 km
 end ChunkDivide
