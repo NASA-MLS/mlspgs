@@ -63,13 +63,14 @@ module ManipulationUtils        ! operations to manipulate quantities
 
 contains ! =====     Public Procedures     =============================
 
-  subroutine Manipulate( QUANTITY, A, B, C, MSTR, &
+  subroutine Manipulate( QUANTITY, A, B, C, STR, &
     & SPREADFLAG, DIMLIST )
+    ! Args:
     type (VectorValue_T), intent(inout) :: QUANTITY
     type (VectorValue_T), pointer :: A
     type (VectorValue_T), pointer :: B
     real(rv)                      :: C          ! constant "c" in manipulation
-    character (len=*)             :: MSTR       ! manipulation encoded as a string
+    character (len=*), intent(in) :: STR        ! manipulation encoded as a string
     logical, intent(in)           :: SPREADFLAG ! ignore shape, mask, etc.
     character(len=*), intent(in)  :: DIMLIST ! E.g., 's' to shift surfaces, not chans
     ! Evaluate mstr assuming it's of the form
@@ -90,6 +91,9 @@ contains ! =====     Public Procedures     =============================
     ! Improvements to be made:
     ! (1) Check for illegal syntax 
     ! (2) Make ops into array, and loop over them where convenient
+
+    ! Internal variables
+    character (len=MAXSTRLISTLENGTH) :: mstr ! manipulation being manipulated
     integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
     character(len=MAXSTRLISTLENGTH) :: collapsedstr
     integer :: level
@@ -101,6 +105,7 @@ contains ! =====     Public Procedures     =============================
     character(len=4) :: vchar
     ! logical, parameter :: DEEBUG = .true.
     ! Executable
+    mstr = str
     if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
     MapFunction = ( index(mstr, 'map' ) > 0 )
     nullify(primitives)
@@ -406,6 +411,7 @@ contains ! =====     Public Procedures     =============================
       if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 .or. &
         & index(element, '^') > 0 ) .and. &
         & .not. isParenthetical(element) ) then
+        if ( DEEBUG ) print *, 'element to be parenthesized: ', trim(element)
         element = '(' // trim(element) // ')'
       endif
       collapsedstr = catLists( collapsedstr, element, inseparator='+' )
@@ -1055,11 +1061,11 @@ contains ! =====     Public Procedures     =============================
   end function catTwoOperands
 
   function isParenthetical ( str ) result ( itIs )
-    ! TRUE if 1st non-blank is '(' and last non-blank is ')'
+    ! TRUE if 1st non-blank is '(' or last non-blank is ')'
     character(len=*), intent(in) :: str
     logical                      :: itIs
-    itIs = index( adjustl(str), '(' ) == 1 .and. &
-      &    index( trim(str), ')'    ) == len_trim(str)
+    itIs = index( adjustl(str), '('           ) == 1 .or. &
+      &    index( trim(str), ')', back=.true. ) == len_trim(str)
   end function isParenthetical
 
 !--------------------------- end bloc --------------------------------------
@@ -1076,6 +1082,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.4  2013/01/14 21:21:06  pwagner
+! Fixed certain bugs; others may require major changes
+!
 ! Revision 2.3  2012/11/14 01:00:04  pwagner
 ! Use dimList for choosing which of {csi} to average over
 !
