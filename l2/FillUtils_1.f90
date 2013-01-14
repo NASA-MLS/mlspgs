@@ -1401,7 +1401,9 @@ contains ! =====     Public Procedures     =============================
           &   isVectorQtyMasked(minNormQty, qIndex, i, m_linalg) .or. &
           &   minNormQty%values(qIndex, i) == 0. &
           & )
-        if ( UNIFORMCHISQRATIO .or. &
+        if ( skipMe ) then
+          if ( minNormQty%values(qIndex, i) == 0. ) qty%values(:,i) = 999._rv
+        elseif ( UNIFORMCHISQRATIO .or. &
           & size(qty%values) /= size(normQty%values) .or. &
           & size(qty%values) /= size(minNormQty%values) ) then
           qty%values(:,i) = &
@@ -1701,7 +1703,6 @@ contains ! =====     Public Procedures     =============================
     end subroutine ConvergenceFromChisq
 
     !------------------------------------- FillCovariance ------------
-
     subroutine FillCovariance ( covariance, vectors, diagonal, &
       & lengthScale, fraction, invert, ignoreTemplate )
       ! This routine fills a covariance matrix from a given set of vectors
@@ -6916,6 +6917,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.71  2013/01/14 21:22:51  pwagner
+! Changed chiSqRatio when skipped to 999
+!
 ! Revision 2.70  2013/01/02 21:41:31  pwagner
 ! Added derivative method to Fill command; Transfer can do Fill methods, too
 !
