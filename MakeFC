@@ -245,6 +245,7 @@ SHELL = /bin/sh
 # Mie_Tables
 # Mie_Tables_nohdf
 # MLS_h5ls       
+# remake_gh
 # Spartacus
 # utctotai       
 # WordSplit      
@@ -608,7 +609,7 @@ help--toolkit:
           -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--toolkit
 
 # install the mls programs from $(LEVELS) into $(INSTALLDIR)
-install:
+install: $(LEVELS)
 	@echo "Installing programs from $(LEVELS) into $(INSTALLDIR)"; \
 	if [ ! -d $(INSTALLDIR) ] ; then \
 	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
@@ -934,6 +935,11 @@ Mie_Tables_nohdf: $(CONFDIR)/$(MLSCFILE) $(MIE)/Mie_Tables.f90 l1--itm
 MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+remake_gh: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/remake_gh.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -O LDOPTS=-static \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 Spartacus: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/Spartacus.f90 l2
@@ -1281,12 +1287,16 @@ tools: chunktimes checkpvmup compare dateconverter \
   h5subset h5cat hl killmaster \
   l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
   l2pcdump \
-  machineok Mie_Tables Mie_Tables_nohdf MLS_h5ls utctotai tellMasterToQuit \
+  machineok Mie_Tables Mie_Tables_nohdf MLS_h5ls utctotai \
+  tellMasterToQuit \
   WordSplit wrapLines tools
   
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.133  2011/09/02 18:36:07  pwagner
+# Double-make workaround for tree_checker issue moved to l2
+#
 # Revision 1.132  2011/08/31 19:04:29  pwagner
 # clean now does a more thorough job
 #
