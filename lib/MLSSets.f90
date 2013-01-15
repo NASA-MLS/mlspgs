@@ -44,12 +44,12 @@ module MLSSets
 !               integers in the array equal to the probe, "matches"
 ! FindFirst     Find the first logical in the array that is true, or the
 !               first [integer,real,double] in the array equal to the probe
+! FindLast      Find the last instead
+! FindNext      Find the next instead
 ! FindIntersection  
 !               Compute indices of elements in intersection of two sets
-! FindLast      Find the last instead
 ! FindLongestRange
 !               Find the longest stretch of consecutive matches
-! FindNext      Find the next instead
 ! FindUnique    Return only the unique elements of a set;
 !                 formally, a set contains only unique elements, so this
 !                 will in fact reduce any improper set to a proper set
@@ -57,9 +57,9 @@ module MLSSets
 !               a common element
 ! Intersection  Compute intersection of two sets
 ! IsProperSet   Check that each element is unique
-! IsProperSubSet 
+! IsProperSubset 
 !               Check that each element in A is within larger B
-! IsSubSet      Check that each element in A is within B
+! IsSubset      Check that each element in A is within B
 ! RelativeComplement
 !               Compute complement of set a relative to set b
 !               i.e., all elements in b except those in a
@@ -83,7 +83,9 @@ module MLSSets
 ! FindIntersection ( set1(:), set2(:), int which1(:), int which2(:),
 !      [int how_many] )
 ! int FindLastCharacter (char* set(:), char* probe, [log reverse])
-! int FindLastInteger (int set(:), int probe, [log reverse])
+! int FindLastNumType (numtype set(:), numtype probe, [numtype tol], &
+!      [numtype Period], [log reverse])
+!     (where numtype can be an int, real, or dble)
 ! int FindLastLogical (log condition(:), [log reverse])    
 ! int FindLastSubString (char* set, char* probe, [log reverse])
 ! FindLongestCharacter (char* set(:), char* probe, int range(2))
@@ -112,7 +114,7 @@ module MLSSets
 !   logical Intersect ( set a(:), set b(:) )
 !   set *Intersection ( set a(:), set b(:) )
 !   logical IsProperSet ( set a(:) )
-!   logical Is[Proper]SubSet ( set a(:), set b(:) )
+!   logical Is[Proper]Subset ( set a(:), set b(:) )
 !   set *RelativeComplement ( set a(:), set b(:) )
 !   set *Union ( set a(:), set b(:) )
 !   int UnionSize ( set a(:), set b(:) )
@@ -143,7 +145,7 @@ module MLSSets
 
   interface FindLast
     module procedure FindLastInteger, FindLastLogical, FindLastCharacter
-    module procedure FindLastLogical2D
+    module procedure FindLastReal, FindLastDouble, FindLastLogical2D
     module procedure FindLastSubString
   end interface
 
@@ -185,8 +187,8 @@ module MLSSets
     module procedure IsProperSubsetInteger, IsProperSubsetCharacter
   end interface
 
-  interface IsSubSet
-    module procedure IsSubSetInteger, IsSubSetCharacter
+  interface IsSubset
+    module procedure IsSubsetInteger, IsSubsetCharacter
   end interface
 
   interface RelativeComplement
@@ -723,6 +725,71 @@ contains ! =====     Public Procedures     =============================
     endif
     Last = 0
   end function FindLastInteger
+
+  function FindLastReal ( Set, Probe, Tol, Reverse ) Result( theLast )
+    ! Find the Last element in the array Set that is equal to Probe
+    ! Or whose difference < Tol
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), dimension(:), intent(in) :: Set
+    real(rk), intent(in)           :: Probe
+    real(rk), intent(in), optional :: Tol
+    real(rk), intent(in), optional :: Reverse
+
+    integer                        :: theLast
+    real(rk)                       :: myTol
+    real(rk)                       :: q
+    ! Internal variables
+    logical :: myReverse
+
+    ! Executable code
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    myTol = 0.0
+    if ( present(tol) ) myTol = abs(tol)
+
+    if ( myReverse ) then
+      do theLast = size(set), 1, -1
+        if ( abs( set(theLast) - probe) > myTol ) return
+      end do
+    else
+      do theLast = size(set), 1, -1
+        if ( abs( set(theLast) - probe) <= myTol ) return
+      end do
+    endif
+    theLast = 0
+  end function FindLastReal
+
+  function FindLastDouble ( Set, Probe, Tol, Reverse ) Result( theLast )
+    ! Find the Last element in the array Set that is equal to Probe
+    ! Or whose difference < Tol
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), dimension(:), intent(in) :: Set
+    real(rk), intent(in)           :: Probe
+    real(rk), intent(in), optional :: Tol
+    real(rk), intent(in), optional :: Reverse
+
+    integer                        :: theLast
+    real(rk)                       :: myTol
+    real(rk)                       :: q
+    ! Internal variables
+    logical :: myReverse
+
+    ! Executable code
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    myTol = 0.0
+    if ( present(tol) ) myTol = abs(tol)
+    if ( myReverse ) then
+      do theLast = size(set), 1, -1
+        if ( abs( set(theLast) - probe) > myTol ) return
+      end do
+    else
+      do theLast = size(set), 1, -1
+        if ( abs( set(theLast) - probe) <= myTol ) return
+      end do
+    endif
+    theLast = 0
+  end function FindLastDouble
 
   ! -------------------------------------------  FindLastLogical  -----
   function FindLastLogical ( condition, Reverse ) result(LAST)
@@ -1694,6 +1761,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.26  2013/01/15 18:54:44  pwagner
+! Added FindLast for reals, doubles
+!
 ! Revision 2.25  2012/12/04 00:10:57  pwagner
 ! Changed api to Intersection; improced module toc and api
 !
