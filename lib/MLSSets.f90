@@ -733,7 +733,7 @@ contains ! =====     Public Procedures     =============================
     real(rk), dimension(:), intent(in) :: Set
     real(rk), intent(in)           :: Probe
     real(rk), intent(in), optional :: Tol
-    real(rk), intent(in), optional :: Reverse
+    logical, intent(in),  optional :: Reverse
 
     integer                        :: theLast
     real(rk)                       :: myTol
@@ -766,7 +766,7 @@ contains ! =====     Public Procedures     =============================
     real(rk), dimension(:), intent(in) :: Set
     real(rk), intent(in)           :: Probe
     real(rk), intent(in), optional :: Tol
-    real(rk), intent(in), optional :: Reverse
+    logical, intent(in),  optional :: Reverse
 
     integer                        :: theLast
     real(rk)                       :: myTol
@@ -1761,6 +1761,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.27  2013/01/16 22:17:20  pwagner
+! Fixed a syntax error only NAG noticed
+!
 ! Revision 2.26  2013/01/15 18:54:44  pwagner
 ! Added FindLast for reals, doubles
 !
