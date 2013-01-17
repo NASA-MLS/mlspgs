@@ -946,6 +946,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_ifMissingGMAO, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreGeolocation, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
+             begin, f+f_ignoreQuantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_ignoreTemplate, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreZero, t+t_boolean, n+n_field_type, &
              begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
@@ -1027,6 +1028,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_seed, t+t_numeric, n+n_field_type, &
              begin, f+f_shape,  t+t_numeric, n+n_field_type, &
+             begin, f+f_sourceQuantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
@@ -1293,6 +1295,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_subset, &  ! Must be AFTER s_vector
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
+             begin, f+f_a, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_radiancequantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -1313,6 +1316,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_opticalDepthCutoff, t+t_numeric, n+n_field_type, &
              begin, f+f_reverse, t+t_boolean, n+n_field_type, &
+             begin, f+f_where, t+t_string, n+n_field_type, &
              begin, f+f_reset, t+t_boolean, n+n_field_type, ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_restrictRange, &
@@ -1802,6 +1806,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.559  2013/01/17 19:59:47  pwagner
+! Preparing new fields for Tranfer command
+!
 ! Revision 2.558  2013/01/02 21:40:33  pwagner
 ! Added derivative method to Fill command; Transfer can do Fill methods, too
 !
