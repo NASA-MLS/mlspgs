@@ -129,13 +129,13 @@ contains ! =====     Public Procedures     =============================
       & F_RHIPRECISIONQUANTITY, F_RHIQUANTITY, F_ROWS, F_SCALE, &
       & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, F_SCECI, &
       & F_SCVEL, F_SCVELECI, F_SCVELECR, F_SDNAME, F_SEED, F_SKIPMASK, &
-      & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, &
-      & F_SOURCEVGRID, F_SPREAD, F_STATUS, &
+      & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITIES, &
+      & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, &
       & F_SUFFIX, F_SUPERDIAGONAL, F_SURFACE, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, F_TOTALPOWERQUANTITY, &
       & F_TYPE, F_UNIT, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
-      & F_WHEREFILL, F_WHERENOTFILL, F_WIDTH, &
+      & F_WHERE, F_WHEREFILL, F_WHERENOTFILL, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
     ! NOW THE LITERALS:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
@@ -280,8 +280,13 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: NOISEQTY
     type (vector_T),      pointer :: NOISEVECTOR
     type (vectorValue_T), pointer :: NORMQTY
+    type (vectorValue_T), pointer :: NULLQUANTITY
+    type (vectorValue_T), pointer :: ODQUANTITY              ! optical depth
     type (vectorValue_T), pointer :: ORBITINCLINATIONQUANTITY
+    type (vectorValue_T), pointer :: PHITANQUANTITY
     type (vectorValue_T), pointer :: PRECISIONQUANTITY
+    type (vectorValue_T), pointer :: PTANQUANTITY
+    type (vectorValue_T), pointer :: RADQUANTITY
     type (vectorValue_T), pointer :: QUANTITY ! Quantity to be filled
     type (vectorValue_T), pointer :: RADIANCEQUANTITY
     type (vectorValue_T), pointer :: RATIOQUANTITY
@@ -298,10 +303,6 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T)          :: TEMPSWAPQUANTITY
     type (vectorValue_T), pointer :: TOTALPOWERQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
-    type (vectorValue_T), pointer :: ODQUANTITY              ! optical depth
-    type (vectorValue_T), pointer :: PHITANQUANTITY
-    type (vectorValue_T), pointer :: PTANQUANTITY
-    type (vectorValue_T), pointer :: RADQUANTITY
     type (vectorValue_T), pointer :: USB
     type (vectorValue_T), pointer :: USBFRACTION
     type (vectorValue_T), pointer :: VMRQTY
@@ -528,6 +529,7 @@ contains ! =====     Public Procedures     =============================
     integer :: VMRQTYVCTRINDEX
     logical :: WHEREFILL                ! Replace only fill values
     logical :: WHERENOTFILL             ! Don't replace fill values
+    integer, parameter :: whereRange  = 0
     integer :: WIDTH                    ! Width of boxcar
 
     ! Executable code
@@ -620,7 +622,7 @@ contains ! =====     Public Procedures     =============================
       statusValue = 0
       whereFill = .false.
       whereNotFill = .false.
-      nullify ( ptanQuantity, radQuantity, odQuantity )
+      nullify ( nullQuantity, ptanQuantity, radQuantity, odQuantity )
 
       ! Node_id(key) is now n_spec_args.
 
@@ -1735,15 +1737,15 @@ contains ! =====     Public Procedures     =============================
       if ( any( fillMethod == (/ &
         & l_status, l_quality /) ) ) then
         call ApplyMaskToQuantity( quantity, &
-          & radQuantity, ptanQuantity, odQuantity, 0._r8, &
-          & maxValue, minValue, heightRange, &
+          & radQuantity, ptanQuantity, odQuantity, nullQuantity, 0._r8, &
+          & maxValue, minValue, heightRange, whereRange, &
           & .false., .false., additional=.true., reset=.false., &
           & maskBit=M_Fill, heightNode=0, surfNode=0, &
           & instancesNode=instancesNode, channelsNode=0 )
       else
         call ApplyMaskToQuantity( quantity, &
-          & radQuantity, ptanQuantity, odQuantity, 0._r8, &
-          & maxValue, minValue, heightRange, &
+          & radQuantity, ptanQuantity, odQuantity, nullQuantity, 0._r8, &
+          & maxValue, minValue, heightRange, whereRange, &
           & .false., .false., additional=.true., reset=.false., &
           & maskBit=M_Fill, heightNode=heightNode, surfNode=surfNode, &
           & instancesNode=instancesNode, channelsNode=channelsNode )
@@ -2991,6 +2993,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.416  2013/01/17 20:02:02  pwagner
+! New where field in Subset command
+!
 ! Revision 2.415  2013/01/02 21:40:59  pwagner
 ! Added derivative method to Fill command; Transfer can do Fill methods, too
 !
