@@ -46,21 +46,23 @@ contains ! ========= Public Procedures ============================
   ! call to restrict heights, channels, and horizontal instances
   ! instead of having each command process the l2cf fields
   ! separately
-  subroutine ApplyMaskToQuantity ( QTY, RAD, PTAN, OPTICALDEPTH, &
-    & OPTICALDEPTHCUTOFF, MAXVALUE, MINVALUE, HEIGHTRANGE, &
+  subroutine ApplyMaskToQuantity ( QTY, RAD, PTAN, OPTICALDEPTH, A, &
+    & OPTICALDEPTHCUTOFF, MAXVALUE, MINVALUE, HEIGHTRANGE, WHERERANGE, &
     & IGNORE, REVERSE, ADDITIONAL, RESET, &
     & MASKBIT, HEIGHTNODE, SURFNODE, INSTANCESNODE, CHANNELSNODE )
 
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR, GETINDEXFLAGSFROMLIST
+    use FILLUTILS_1, only: BYMANIPULATION
     use INIT_TABLES_MODULE, only: F_HEIGHT, F_PTANQUANTITY, F_QUANTITY, F_SURFACE
     use INIT_TABLES_MODULE, only: L_NONE, L_PRESSURE, &
       & L_ZETA
     use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_LENGTH, &
       & PHYQ_MIFS, PHYQ_PRESSURE
-    use MLSKINDS, only: R8
+    use MLSKINDS, only: R8, RV
     use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MLSSETS, only: FINDFIRST, FINDLAST
     use MLSSTRINGS, only: TRUELIST
     use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use TOGGLES, only: SWITCHES
@@ -68,35 +70,40 @@ contains ! ========= Public Procedures ============================
     use TREE_TYPES, only: N_COLON_LESS, N_LESS_COLON, &
       & N_LESS_COLON_LESS
     use VECTORSMODULE, only: VECTORVALUE_T, &
-      & CLEARMASK, CREATEMASK, &
+      & CLEARMASK, CLONEVECTORQUANTITY, CREATEMASK, DUMP, &
       & REVERSEMASK, SETMASK
     ! Args
     type (VectorValue_T), pointer :: QTY
     type (VectorValue_T), pointer :: RAD
     type (VectorValue_T), pointer :: PTAN
     type (VectorValue_T), pointer :: OPTICALDEPTH
+    type (VectorValue_T), pointer :: A
     real(r8), intent(in)          :: OPTICALDEPTHCUTOFF
     real(r8), intent(in)          :: MAXVALUE
     real(r8), intent(in)          :: MINVALUE
     character(len=*), intent(in)  :: HEIGHTRANGE
+    integer, intent(in)           :: WHERERANGE
     logical, intent(in)           :: IGNORE
     logical, intent(in)           :: REVERSE
     logical, intent(in)           :: ADDITIONAL
     logical, intent(in)           :: RESET
-    integer, intent(in)           :: MASKBIT                ! Bits corresponding to Mask
+    integer, intent(in)           :: MASKBIT             ! Bits corresponding to Mask
     integer, intent(in)           :: HEIGHTNODE          ! Tree node
     integer, intent(in)           :: SURFNODE            ! Tree node
     integer, intent(in)           :: INSTANCESNODE       ! Tree node
     integer, intent(in)           :: CHANNELSNODE        ! Tree node
 
     ! Local variables
+    type (VectorValue_T), pointer :: B
     logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
     integer :: CHANNEL
     integer :: COORDINATE
     logical :: DEEBUG
     logical :: DOTHISCHANNEL          ! Flag
+    logical :: DOOKHEIGHTS            ! Flag
     logical :: DOTHISHEIGHT           ! Flag
     logical, dimension(:), pointer :: doThisInstance => null()
+    integer :: FIRSTOK
     integer :: HEIGHT
     integer :: HEIGHTUNIT             ! Unit for heights command
     integer :: I
@@ -104,6 +111,7 @@ contains ! ========= Public Procedures ============================
     integer :: INSTANCE
     integer :: INSTANCEOR1            ! For coherent quantities
     integer :: j
+    integer :: LASTOK
     integer :: NODE
     character(len=128) :: NUMBERSLIST ! for a dump
     integer :: ODCUTOFFHEIGHT
@@ -111,21 +119,25 @@ contains ! ========= Public Procedures ============================
     integer :: RANGEID
     integer, dimension(1) :: S1
     integer, dimension(1) :: S2
+    integer               :: SS1
+    integer               :: SS2
     integer :: SCANDIRECTION
     integer :: SON
+    logical :: SPREADFLAG
     integer :: STATUS
     real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
     integer :: TYPE                   ! Type of value returned by expr
     integer :: UNITS(2)               ! Units returned by expr
     real(r8) :: VALUE(2)              ! Value returned by expr
     logical :: VERBOSE
+    type (VectorValue_T) :: WHEREAISOK ! where(a) /= 0
     ! Executable
     nullify ( channels, doThisInstance )
     verbose = ( switchDetail(switches,'subset') > -1 )
     DEEBUG = ( switchDetail(switches,'subset') > 0 )
     ! Do we have anything to do here?
     if ( all( (/ heightNode, surfNode, InstancesNode, channelsNode /) < 1) .and. &
-      & .not. associated( opticalDepth) .and. &
+      & .not. associated(opticalDepth) .and. .not. associated(a) .and. &
       & .not. any( (/reset, ignore/) ) ) then
       if ( verbose ) &
         & call output( 'No change needed to quantity mask', advance='yes' )
@@ -225,6 +237,19 @@ contains ! ========= Public Procedures ============================
         & 'originalMask', ModuleName )
     end if
 
+    if ( associated(a) ) then
+      nullify( b )
+      call CloneVectorQuantity( whereAIsOK, qty )
+      spreadFlag = qty%template%NoInstances /= a%template%NoInstances
+      ! Evaluate where(a)
+      call ByManipulation ( whereAIsOK, a, b, &
+        & whereRange, key=0, ignoreTemplate=.true., &
+        & spreadflag=spreadFlag, dimList=' ', &
+        & c=0._rv )
+      if ( verbose ) then
+        call dump( whereAIsOK, details=1 )
+      endif
+    endif
     ! Now we loop over the instances
     do instance = 1, qty%template%noInstances
       ! Possibly save original mask
@@ -237,6 +262,70 @@ contains ! ========= Public Procedures ============================
         !??? channel numbers don't.
         call SetMask ( qty%mask(:,instance), &
           & what=maskBit )
+        ! If this is supposed to be an 'additional' mask, merge in the
+        ! original value
+        if ( additional ) &
+          & qty%mask(:,instance) = char ( ior ( &
+          & ichar ( qty%mask(:,instance) ), ichar ( originalMask ) ) )
+        cycle ! instance
+      end if
+
+      if ( associated(a) ) then
+        call SetMask ( qty%mask(:,instance), &
+          & what=maskBit )
+        ! Find first, last heights at which whereAIsOK is 1
+        firstOK = FindFirst( whereAIsOK%values(:, instance), 1._rv )
+        lastOK  = FindLast ( whereAIsOK%values(:, instance), 1._rv )
+        if ( verbose ) then
+          call outputnamedValue( 'firstOK', firstOK )
+          call outputnamedValue( 'firstOK', firstOK )
+          call outputnamedValue( 'heightRange', heightRange )
+        endif
+        ! Now our interpretation:
+        ! If heightRange is missing, we will unmask only heights
+        ! which are OK
+        ! If 'above', we will unmask all heights above the lowest OK
+        ! If 'below', we will unmask all heights below the highest OK
+        ! These height ranges are set by ss1 and ss2
+        select case (heightRange)
+        case ('above')
+          ss1 = firstOK
+          ss2 = qty%template%noSurfs
+          doOkHeights = .false.
+        case ('below')
+          ss1 = 1
+          ss2 = lastOK
+          doOkHeights = .false.
+        case default
+          ss1 = 1
+          ss2 = qty%template%noSurfs
+          doOkHeights = .true.
+        end select
+        if ( verbose ) then
+          call outputnamedValue( 'ss1', ss1 )
+          call outputnamedValue( 'ss2', ss2 )
+        endif
+        ! If ss1 or ss2 is 0, bail; otherwise unset mask bits
+        if ( ss1 > 0 .and. ss2 > 0 ) then
+          do channel = 1, qty%template%noChans
+            doThisChannel = .true.
+            if ( associated(channels) ) doThisChannel = channels(channel)
+            if ( doThisChannel ) then
+              do height = ss1, ss2
+                !??? Make sure mask bit numbers begin at 1, even when
+                !??? channel numbers don't.
+                if ( doOkHeights ) then
+                  if ( whereAIsOK%values( &
+                    & channel+qty%template%noChans*(height-1), instance&
+                    & ) /= 1._rv ) cycle
+                endif
+                call ClearMask ( qty%mask(:,instance), &
+                  & (/ channel+qty%template%noChans*(height-1) /), &
+                  & what=maskBit )
+              end do                  ! Height loop
+            end if                    ! Do this channel
+          end do                      ! Channel loop
+        endif
         ! If this is supposed to be an 'additional' mask, merge in the
         ! original value
         if ( additional ) &
@@ -742,11 +831,11 @@ contains ! ========= Public Procedures ============================
 
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
-    use INIT_TABLES_MODULE, only: F_ADDITIONAL, F_CHANNELS, &
+    use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_CHANNELS, &
       & F_HEIGHT, F_HEIGHTRANGE, &
       & F_IGNORE, F_INSTANCES, F_MASK, F_MAXVALUE, F_MINVALUE, F_OPTICALDEPTH, &
       & F_OPTICALDEPTHCUTOFF, F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, &
-      & F_RESET, F_REVERSE, F_SOURCEQUANTITY, F_SURFACE
+      & F_RESET, F_REVERSE, F_SOURCEQUANTITY, F_SURFACE, F_WHERE
     use INIT_TABLES_MODULE, only: L_OPTICALDEPTH, &
       & L_RADIANCE
     use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
@@ -784,10 +873,12 @@ contains ! ========= Public Procedures ============================
     integer :: UNITS(2)               ! Units returned by expr
     integer :: VECTORINDEX            ! Index
     logical :: VERBOSE
+    integer :: WHERERANGE             ! E.g., 'a > 100'
 
     real(r8) :: VALUE(2)              ! Value returned by expr
     real(r8) :: OPTICALDEPTHCUTOFF    ! Maximum value of optical depth to allow
     real(r8) :: MAXVALUE, MINVALUE    ! Cutoff ranges
+    type (VectorValue_T), pointer :: A  ! The a of the 'where' field if needed
     type (VectorValue_T), pointer :: OPTICALDEPTH ! The opticalDepth quantity if needed
     type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
     type (VectorValue_T), pointer :: QTY  ! The quantity to mask
@@ -800,7 +891,7 @@ contains ! ========= Public Procedures ============================
     logical :: REVERSE                ! Flag
 
     ! Executable code
-    nullify ( qty, ptan, opticalDepth, rad, source )
+    nullify ( a, qty, ptan, opticalDepth, rad, source )
     got = .false.
     instancesNode = 0
     heightNode = 0
@@ -818,11 +909,16 @@ contains ! ========= Public Procedures ============================
     minUnit = 0
     maxUnit = 0
     verbose = ( switchDetail(switches,'subset') > -1 )
+    whereRange = 0
     do j = 2, nsons(key) ! fields of the "subset" specification
       son = subtree(j, key)
       field = get_field_id(son)   ! tree_checker prevents duplicates
       if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
       select case ( field )
+      case ( f_a )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        a => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
       case ( f_quantity )
         mainVectorIndex = decoration(decoration(subtree(1,gson)))
         quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -894,6 +990,8 @@ contains ! ========= Public Procedures ============================
         additional = Get_Boolean ( son )
       case ( f_reverse )
         reverse = Get_Boolean ( son )
+      case ( f_where )
+        whereRange = sub_rosa ( gson )
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -913,11 +1011,13 @@ contains ! ========= Public Procedures ============================
     endif
     if ( got(f_radianceQuantity) ) then
       if ( rad%template%quantityType /= l_radiance ) &
-        & call AnnounceError ( key, 'RadianceQuantity field is not a radiance quantity' )
+        & call AnnounceError ( key, &
+        & 'RadianceQuantity field is not a radiance quantity' )
       if ( any(got((/ f_height, f_mask, f_maxvalue, &
         & f_minvalue, f_opticaldepth, f_opticaldepthcutoff, f_ptanquantity, &
         & f_reset, f_reverse, f_surface /)))) call AnnounceError ( key, &
-          & 'Subset from radiance allows only additional, channel, ignore, and instances fields' )
+          & 'Subset from radiance allows only ' // &
+          & 'additional, channel, ignore, and instances fields' )
       if ( .not. qty%template%minorFrame ) call AnnounceError ( key, &
         & 'Can only mask minor frame quantities from radiance' )
       if ( qty%template%noChans > 1 ) call AnnounceError ( key, &
@@ -935,13 +1035,16 @@ contains ! ========= Public Procedures ============================
           & call AnnounceError ( key, 'Supplied quantity is not optical depth' )
         if ( qty%template%signal /= opticalDepth%template%signal .or. &
           &  qty%template%sideband /= opticalDepth%template%sideband ) &
-          & call AnnounceError ( key, 'Optical depth does not match subsetted quantity' )
+          & call AnnounceError ( key, &
+          & 'Optical depth does not match subsetted quantity' )
       end if
       ! Check for exactly one of height, ignore, instances, reset, surface
       if ( count ( got ( &
-        & (/ f_height, f_ignore, f_instances, f_reset, f_surface /) ) ) /= 1 ) &
+        & (/ f_height, f_ignore, f_instances, f_reset, f_surface, f_where /) &
+        & ) ) /= 1 ) &
           & call announceError ( key, &
-            & 'Subset must be exactly one of height, ignore, instances, surface or reset' )
+            & 'Subset must be exactly one of height, ignore, instances, ' // &
+            & 'surface, where or reset' )
     end if
 
     if ( vectors(mainVectorIndex)%globalUnit /= phyq_invalid ) then
@@ -956,8 +1059,9 @@ contains ! ========= Public Procedures ============================
 
     ! Pass all the field nodes to the workhorse subroutine
     ! Let it set the mask
-    call ApplyMaskToQuantity( qty, rad, ptan, opticalDepth, opticalDepthCutoff, &
-      & maxvalue, minValue, heightRange, ignore, reverse, additional, reset, &
+    call ApplyMaskToQuantity( qty, rad, ptan, opticalDepth, a, &
+      & opticalDepthCutoff, maxvalue, minValue, heightRange, whereRange, &
+      & ignore, reverse, additional, reset, &
       & maskBit, heightNode, surfNode, instancesNode, channelsNode )
 
     if ( switchDetail(switches,'msk') > -1 ) then
@@ -1439,6 +1543,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.27  2013/01/18 01:45:57  pwagner
+! ApplyMaskToQuantity can set mask based on values of 'a' satisfying condition 'where'
+!
 ! Revision 2.26  2012/10/22 18:14:11  pwagner
 ! Many Subset operations now available in Fill
 !
