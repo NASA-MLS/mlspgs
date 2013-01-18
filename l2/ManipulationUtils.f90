@@ -57,7 +57,7 @@ module ManipulationUtils        ! operations to manipulate quantities
   type(arrayTemp_T), dimension(:), save, pointer :: primitives => null()
 
   logical, parameter :: COUNTEMPTY = .true.
-  logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
+  logical, parameter :: DEEBUG     = .false.                 ! Usually FALSE
   integer, parameter :: MAXSTRLISTLENGTH = 128
   integer, parameter, public :: NO_ERROR_CODE = 0
 
@@ -127,7 +127,7 @@ contains ! =====     Public Procedures     =============================
     ! so we'll attempt to identify multiplications and divisions
     ! and surround such subexpressions with extra parentheses
 
-    call reorderPrecedence(mstr, collapsedstr)
+    call reorderPrecedence( mstr, collapsedstr )
     if ( DeeBUG ) then
       print *, 'incoming ', mstr
       print *, 'after reordering precedence ', collapsedstr
@@ -185,9 +185,10 @@ contains ! =====     Public Procedures     =============================
       call SplitNest ( collapsedstr, part1, part2, part3 )
       ! Now evaluate the part2
       if ( DeeBUG ) then
-        print *, 'part1 ', part1
-        print *, 'part2 ', part2
-        print *, 'part3 ', part3
+        print *, 'collapsedstr ', collapsedstr
+        print *, 'part1 ', trim(part1)
+        print *, 'part2 ', trim(part2)
+        print *, 'part3 ', trim(part3)
       endif
       if ( part2 == ' ' ) then
         ! This should never happen with well-formed formulas
@@ -198,6 +199,9 @@ contains ! =====     Public Procedures     =============================
           & a, b, c, &
           & spreadflag, dimList )
         write(vChar, '(i4)') np
+      endif
+      if ( DeeBUG ) then
+        print *, 'vchar ', vchar
       endif
       ! And substitute its value for the spaces it occupied
       if (  part1 // part3 == ' ' ) then
@@ -216,7 +220,7 @@ contains ! =====     Public Procedures     =============================
           & part3 )
       endif
       if ( DeeBUG ) then
-        print *, 'collapsedstr ', collapsedstr
+        print *, 'collapsedstr ', trim(collapsedstr)
       endif
     enddo
     ! Presumably we have collapsed all the nested '(..)' pairs by now
@@ -359,10 +363,12 @@ contains ! =====     Public Procedures     =============================
         outstr(e:e) = c
       endif
     enddo
+    ! Did we ever close the parentheses?
+    if ( gotDigit ) outstr(e+1:e+1) = ')'
     if ( DeeBug ) print *, 'outstr ', outstr
   end subroutine markDigits
 
-  subroutine reorderPrecedence(mstr, collapsedstr)
+  subroutine reorderPrecedence( mstr, collapsedstr )
     ! Identify all the terms where each term are separated by
     ! the lower-precedence operators {+, -,<,>}
     ! If any terms contain higher-precedence operators {*, /}
@@ -407,10 +413,10 @@ contains ! =====     Public Procedures     =============================
     do i=1, n
       call GetStringElement ( temp, element, i, countEmpty, inseparator='+' )
       ! Surround term with parentheses if it's a product or quotient
-      ! but not if it's (already) parenthetical
+      ! but not if it's (already) parenthetical or parentheses are not balanced
       if ( ( index(element, '*') > 0 .or. index(element, '/') > 0 .or. &
         & index(element, '^') > 0 ) .and. &
-        & .not. isParenthetical(element) ) then
+        & .not. isParenthetical(element) .and. isBalanced(element) ) then
         if ( DEEBUG ) print *, 'element to be parenthesized: ', trim(element)
         element = '(' // trim(element) // ')'
       endif
@@ -1039,6 +1045,7 @@ contains ! =====     Public Procedures     =============================
     integer :: maxind
     integer :: n
     integer, dimension(4) :: inds
+    ! logical, parameter :: DEEBUG = .true.
     ! Executable
     n = max(1, len_trim(part1))
     part1Tail = part1(n:n)
@@ -1047,9 +1054,18 @@ contains ! =====     Public Procedures     =============================
       ! Mark function name "hungry" for an arg by adding a ':' to
       ! str = trim(part1) // ': ' // adjustl(part2)
       ! Must also check if part 1 contains an embedded operator
+      ! Or an embedded '('
       inds = indexes( part1, (/ '+', '-', '*', '/' /), mode='last' )
       maxind = maxval(inds)
       if ( maxind < 1 ) then
+        if ( DeeBUG ) then
+          print *, 'cat with part1 ', trim(part1)
+          print *, 'cat with part2 ', trim(part2)
+        endif
+        if ( index(part1, '(') > 0 ) then
+          str = trim(part1) // ': ' // adjustl(part2)
+          return
+        endif
         str = '(' // trim(part1) // ': ' // trim(adjustl(part2) ) // ')'
       else
         str = part1(:maxind) // '(' // trim(part1(maxind+1:)) &
@@ -1061,12 +1077,43 @@ contains ! =====     Public Procedures     =============================
   end function catTwoOperands
 
   function isParenthetical ( str ) result ( itIs )
-    ! TRUE if 1st non-blank is '(' or last non-blank is ')'
+    ! TRUE if 1st non-blank is '(' and last non-blank is ')'
+    ! Do we really need to make this a recursive function?
     character(len=*), intent(in) :: str
     logical                      :: itIs
-    itIs = index( adjustl(str), '('           ) == 1 .or. &
+    itIs = index( adjustl(str), '('           ) == 1 .and. &
       &    index( trim(str), ')', back=.true. ) == len_trim(str)
   end function isParenthetical
+
+  function isBalanced ( str ) result ( itIs )
+    use MLSSTRINGS, only: NCOPIES
+    ! Are numbers of '(' and ')' in str equal?
+    character(len=*), intent(in) :: str
+    logical                      :: itIs
+    ! Internal variables
+    integer :: i
+    integer :: balance
+    ! Executable
+    ! 1st--Just count
+    ! Not as strict as "do they balance", but easier to check
+    itIs = ncopies( trim(str), '('           ) ==  &
+      &    ncopies( trim(str), ')'           ) 
+    if ( .not. itIs ) return
+    ! Now look more closely
+    ! Each '(' adds 1, each ')' subtracts 1, though never going negative
+    ! If 0 when done, we;'re balanced, not if not
+    balance = 0
+    do i=1, len_trim(str)
+      select case(str(i:i))
+      case ('(')
+        balance = balance + 1
+      case (')')
+        balance = max( 0, balance - 1 )
+      ! case default (leaves balance unchanged)
+      end select
+    enddo
+    itIs = ( balance == 0 )
+  end function isBalanced
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1082,6 +1129,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.5  2013/01/18 01:43:48  pwagner
+! Fixed various bugs impacting nested expressions
+!
 ! Revision 2.4  2013/01/14 21:21:06  pwagner
 ! Fixed certain bugs; others may require major changes
 !
