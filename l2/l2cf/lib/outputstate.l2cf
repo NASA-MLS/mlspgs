@@ -77,8 +77,17 @@ Copy, $
     /create
 })!dnl
 })
-!forall(copyStandardProductWithoutColumn,!NonColumnStdProds)
+;; What if we wish to Copy APriori?
+!define(copyApriori, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName($1)'
+})
 
+!forall(copyStandardProductWithoutColumn,!NonColumnStdProds)
+!ifdef(flagCopyAPiori,{
+!forall(copyApriori,!NonColumnStdProds)
+})
 !define(copyStandardProductWithColumn, {Copy, $
   type=l2gp, hdfVersion=5, $
     inputFile='!DGGFileName', swath='$1-StdProd column,$1-StdProd', inputtype=l2dgg, $
@@ -103,6 +112,9 @@ Copy, $
 !forall(copyStandardProductWithColumn,!ColumnStdProds)
 })
 })
+!ifdef(flagCopyAPiori,{
+!forall(copyApriori,!ColumnStdProds)
+})
 
 !ifdef(flagNRT,{},
 {
@@ -126,6 +138,17 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
 Copy, type=l2gp, hdfVersion=!hdfVersion, $
     inputFile='!DGGFileName', swath='UTRHI-StdProd', inputtype=l2dgg, $
     file='!l2gpFileName(RHI)', rename='UTRHI'
+
+!ifdef(flagCopyAPiori,{
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='RHI-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)'
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='UTRHI-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)'
+
+})
 
 !ifdef(flagUseGEOS5PTrop,
 {!dnl
@@ -191,10 +214,16 @@ Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
   Dump, Boolean=Band15OFFALLDAY
   Skip, Boolean=Band15OFFALLDAY  ;; No need to create OH if THz is off
   !copyStandardProductWithoutColumn({OH})
+  !ifdef(flagCopyAPiori,{
+    !copyApriori(OH)
+  })
 })
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.47  2012/05/14 22:28:05  pwagner
+; No need to create OH if THz is off
+;
 ; Revision 1.46  2011/11/30 22:12:37  pwagner
 ; Can write l2cf template to DGM file
 ;
