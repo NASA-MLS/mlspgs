@@ -2720,14 +2720,14 @@ contains
               & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
               & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
               & P_on_Xi(:i_r) )
-              P_on_Xi(:i_r) = P_on_Xi(:i_r) * sin(Xis(sort_xi(:i_r)))
+              P_on_Xi(:i_r) = P_on_Xi(:i_r) * abs(sin(Xis(sort_xi(:i_r))))
             if ( atmos_der ) &
               & call interpolate_P_to_theta_e ( &
                 & dP_dIWC(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
                 & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
                 & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
                 & dP_dIWC_on_Xi(:i_r) )
-                dP_dIWC_on_Xi(:i_r) = dP_dIWC_on_Xi(:i_r) * sin(Xis(sort_xi(:i_r)))
+                dP_dIWC_on_Xi(:i_r) = dP_dIWC_on_Xi(:i_r) * abs(sin(Xis(sort_xi(:i_r))))
             if ( temp_der ) then
               call interpolate_P_to_theta_e ( &
                 & dP_dT(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
@@ -3131,7 +3131,6 @@ contains
 
         if ( fwdModelConf%useTScat .and. .not. pfa ) then
           ! Determine the frequency subscript for the Mie tables.
-          ! We expect size(F_s) to be small, so MINLOC is fast enough.
           Mie_frq_index = Mie_freq_index ( frq, fwdModelConf%frqTol )
           ! Each Mie table applies to many frequencies, so don't interpolate
           ! again if not needed.
@@ -4601,6 +4600,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.336  2012/08/08 20:06:37  vsnyder
+! Use CreateVectorValue, DestroyVectorQuantityValue in full cloud model.
+! Exchange subscript ordering for vmrArray to improve locality.
+!
 ! Revision 2.335  2012/07/07 00:14:33  vsnyder
 ! Shorten some comments to avoid gripes about long lines
 !
