@@ -51,6 +51,11 @@ Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
 
 !ifdef(flagCopyStandardProducts,{
 
+  ;; Don't copy anything if we skipped some phases
+  BrOEmpty: Boolean, formula="false"
+  isSwathEmpty, type=l2dgg, swath='BrO-StdProd', file='!DGGFileName', Boolean=BrOEmpty
+  Dump, Boolean=BrOEmpty
+  Skip, Boolean=BrOEmpty  ;; No need if we skipped the BrO phase
 ;; Here we carry out the idea of copying standard Products out of the
 ;; DGG file and into their "proper" l2gp files
 ;;
@@ -221,6 +226,9 @@ Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.48  2013/01/22 18:44:27  pwagner
+; Can now Copy APriori swaths to std prod files
+;
 ; Revision 1.47  2012/05/14 22:28:05  pwagner
 ; No need to create OH if THz is off
 ;
