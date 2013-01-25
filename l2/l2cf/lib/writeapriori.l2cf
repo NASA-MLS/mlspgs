@@ -1,0 +1,43 @@
+!divert(-1)
+;; $Id$
+
+  ;; This is for the case where we wish to store the a priori quantities
+  ;; in the dgg files
+  !define(LabelOneAPQuantity,{!dnl
+!ifelse($1,{Temperature}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+$1,{GPH}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+$1,{H2O}, {
+  Label, quantity=aPriori.$1, label='$1_LR-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='$1_LR-APrioriPrecision'},
+$1,{O3}, {
+  Label, quantity=aPriori.$1, label='$1_LR-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='$1_LR-APrioriPrecision'},
+$1,{O3_HR}, {
+  Label, quantity=aPriori.$1, label='O3-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='O3-APrioriPrecision'},
+{
+  Label, quantity=aPriori.$1, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='$1-APrioriPrecision'})
+})
+  !define(DirectWriteOneAPQuantity,{, $
+!ifelse($1,{Temperature},
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR}, 
+   $1,{GPH}, 
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
+   {  source=aPriori.$1, precision=aPrioriPrecision.$1})})
+  
+!divert!dnl
+  !ifdef(flagWriteAPrioriToDGG,{
+begin Join
+  !forall(LabelOneAPQuantity,!allStandardProducts)
+  DirectWrite, hdfVersion=!hdfVersion, $
+  type=l2dgg !forall(DirectWriteOneAPQuantity,!allStandardProducts)
+  
+end Join
+  })
+!divert(-1)
+;$Log$
