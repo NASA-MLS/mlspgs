@@ -3379,6 +3379,7 @@ contains ! =====     Public Procedures     =============================
     subroutine FromInterpolatedQty ( qty, source, key, &
       & ignoreTemplate, ptan )
       use MLSNumerics, only: Interpolate_Regular_To_Irregular
+      use VectorsModule, only: CreateVectorValue
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: SOURCE
       integer, intent(in) :: KEY
@@ -3490,13 +3491,14 @@ contains ! =====     Public Procedures     =============================
           ! The only reasonable thing is to assume homogeneity of source.
           if ( present(ptan) ) then
             if ( source%template%coherent .and. qty%template%minorFrame ) then
-              if ( associated(qty%values) ) then
-                if ( any(shape(ptan%values) /= shape(qty%values)) ) &
-                  & call deallocate_test ( qty%values, 'qty%values', moduleName )
+              if ( source%template%noChans > 1 .or. &
+                 & qty%template%noChans > 1 ) then
+                call announce_error ( key, no_error_code, &
+                  & 'Cannot interpolate regular-to-irregular with more than one channel' )
+                go to 9
               end if
               if ( .not. associated(qty%values) ) &
-                & call allocate_test ( qty%values, size(ptan%values,1), &
-                  & size(ptan%values,2), 'qty%values', moduleName )
+                & call createVectorValue ( qty, 'qty', moduleName )
               call interpolate_regular_to_irregular ( &
                 & source%template%phi(:,1), oldSurfs, source%values, &
                 & qty%template%phi, ptan%values, qty%values )
@@ -6917,6 +6919,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.72  2013/02/01 23:42:25  vsnyder
+! Use CreateVectorValue instead of Allocate_Test
+!
 ! Revision 2.71  2013/01/14 21:22:51  pwagner
 ! Changed chiSqRatio when skipped to 999
 !
