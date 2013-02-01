@@ -12,11 +12,16 @@
 ! $Id$
 
 ! subroutine Interpolate_Regular_To_Irregular_r* ( XOld, YOld, ZOld, &
-!   & XYNew, ZNew )
-    ! Given XOld, YOld, ZOld, XYNew, interpolate to ZNew.
+!   & XNew, YNew, ZNew )
+    ! Given XOld, YOld, ZOld, XNew, YNew, interpolate to ZNew.
     ! The shape of ZOld must be (size(xOld),size(yOld)).
     ! The shape of ZNew must be the same as Xnew and Ynew
     ! The only method supported is linear with constant extrapolation.
+!   real(rk), intent(in) :: XOld(:)
+!   real(rk), intent(in) :: YOld(:)
+!   real(rk), intent(in) :: ZOld(:,:)
+!   real(rk), intent(in) :: XNew(:,:), YNew(:,:)
+!   real(rk), intent(out) :: ZNew(:,:)
 
   real(rk) :: DX(2), DY(2) ! Interpolation factors.  Xi, Eta in wvs-083.
   integer, dimension(merge(0,size(zNew,1),size(xOld)==1),size(zNew,2)) :: HX, HY
@@ -30,7 +35,7 @@
     ! Interpolate the only column of zOld onto every column of zNew.
     ! There's only one X with one column of zOld, so we only interpolate in Y
     do i = 1, size(yNew)
-      call interpolateValues ( yOld, zOld(1,:), yNew(i,:), zNew(i,:), &
+      call interpolateValues ( yOld, zOld(:,1), yNew(i,:), zNew(i,:), &
         & Method='Linear', Extrapolate='Constant' )
     end do
   else
@@ -64,9 +69,9 @@
         dy(2) = 1.0 - dy(1)
         ix = max(1, min(ix, size(xOld)-1) ) ! Constant extrapolation
         iy = max(1, min(iy, size(yOld)-1) ) ! Constant extrapolation
-        zNew(i,j) = &
-          & dy(1) * ( dx(1) * zOld(ix,iy)   + dx(2) * zOld(ix+1,iy)   ) + &
-          & dy(2) * ( dx(1) * zOld(ix,iy+1) + dx(2) * zOld(ix+1,iy+1) )
+        zNew(j,i) = &
+          & dy(1) * ( dx(1) * zOld(iy,ix)   + dx(2) * zOld(iy,ix+1)   ) + &
+          & dy(2) * ( dx(1) * zOld(iy+1,ix) + dx(2) * zOld(iy+1,ix+1) )
       end do
     end do
 
@@ -75,3 +80,6 @@
 ! end subroutine Interpolate_Regular_To_Irregular_r*
 
 ! $Log$
+! Revision 1.1  2012/12/20 01:02:39  vsnyder
+! Initial commit
+!
