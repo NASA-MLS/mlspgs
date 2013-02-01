@@ -1074,17 +1074,26 @@ contains ! =====     Public Procedures     =============================
   end function CreateVector
 
   ! ------------------------------------------  CreateVectorValue  -----
-  subroutine CreateVectorValue ( Value, What )
+  subroutine CreateVectorValue ( Value, What, Where )
   ! Allocate the Value1 component of Value and remap it.
   ! The Mask* components are destroyed.  Use CreateMask if you need to.
     type(vectorValue_t) :: Value
     character(len=*), intent(in) :: What
+    character(len=*), intent(in), optional :: Where
     call destroyVectorQuantityMask ( value )
-    call allocate_test ( value%value1, &
-      & value%template%noChans * &
-      & value%template%noSurfs * &
-      & value%template%noInstances, &
-      & trim(what) // "%values", ModuleName )
+    if ( present(where) ) then
+      call allocate_test ( value%value1, &
+        & value%template%noChans * &
+        & value%template%noSurfs * &
+        & value%template%noInstances, &
+        & trim(what) // "%values", where )
+    else
+      call allocate_test ( value%value1, &
+        & value%template%noChans * &
+        & value%template%noSurfs * &
+        & value%template%noInstances, &
+        & trim(what) // "%values", moduleName )
+    end if
     call remapVectorValue ( value )
   end subroutine CreateVectorValue
 
@@ -1180,7 +1189,7 @@ contains ! =====     Public Procedures     =============================
     else
       call deallocate_test ( value%value1, 'VALUE1', moduleName )
     end if
-    nullify ( value%value1, value%value3 )
+    nullify ( value%values, value%value3 )
     if ( present(destroyMask) ) then
       if ( destroyMask ) call destroyVectorQuantityMask ( value, forWhom )
     end if
@@ -3015,6 +3024,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.172  2012/12/04 00:11:55  pwagner
+! Improved comments
+!
 ! Revision 2.171  2012/11/09 00:59:08  pwagner
 ! Added ReshapeVectorValue
 !
