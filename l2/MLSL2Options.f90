@@ -521,6 +521,11 @@ contains
           MLSMessageConfig%skipModuleNamesThr = mod(degree, 10) + 2
           MLSMessageConfig%skipSeverityThr = mod(degree, 10) + 2
           MLSMessageConfig%skipMessageThr = degree - 10 + 2
+          ! print *, ' Processing lac option: degree ', degree
+          if ( degree > 9 ) then
+            removeSwitches = catLists(trim(removeSwitches), 'log' )
+            outputOptions%prunit = INVALIDPRUNIT
+          endif
         else if ( line(3+n:7+n) == 'leak' ) then
           checkLeak = .true.
         else if ( line(3+n:9+n) == 'master ' ) then
@@ -710,6 +715,9 @@ contains
           parallel%submit = trim ( line )
         else if ( line(3+n:5+n) == 'tk ' ) then
           toolkit = switch
+        else if ( line(3+n:9+n) == 'verbose' ) then
+          switches = catLists( trim(switches), &
+            & 'l2q,glob,mas,bool,opt1,log,pro1,time,apr,phase' )
         else if ( line(3+n:10+n) == 'version ' ) then
           do j=1, size(current_version_id)
             print *, current_version_id(j)
@@ -840,7 +848,8 @@ jloop:do while ( j < len_trim(line) )
     parallel%verbosity = switchDetail(switches, 'mas') + 1
     if ( switchDetail(switches, 'walk') > -1 ) &
       & MLSMSG_Severity_to_walkback = MLSMSG_Warning
-    outputOptions%prunit = OUTPUT_PRINT_UNIT
+    if ( outputOptions%prunit /= INVALIDPRUNIT ) &
+      & outputOptions%prunit = OUTPUT_PRINT_UNIT
     ! print *, 'Ended processing options'
     contains
     subroutine getNextArg( i, line )
@@ -905,6 +914,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.58  2013/02/04 22:01:02  pwagner
+! Added '--verbose' option; '--lac' more so
+!
 ! Revision 2.57  2012/12/04 00:15:49  pwagner
 ! Removed confisuion-causing OUTSIDEOVERLAPS and its cmdline option
 !
