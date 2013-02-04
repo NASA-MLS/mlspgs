@@ -3,8 +3,8 @@ $Id$
 Switches (set by -S option in mlsl2's command line):
 
 ========================= mlsl2 =========================
-  (where [n] appears, you may optionally suffix an integer specifying how
-   detailed you want the extra printing to be: higher the n, more the info)
+  (where [n] appears, you may optionally suffix an integer specifying how much
+   extra you want printed: the higher the n, the more printed)
   0sl =>    Warn about no lines or continuua, else silently ignored
   42 =>     Print to unit 42 when doing TScat
   alg =>    Show work in Algebra module (hoping for partial credit)
@@ -12,7 +12,7 @@ Switches (set by -S option in mlsl2's command line):
   apr[n] => Dump apriori file info 
   atb =>    Dump ATb vector during Newton iteration
   binsel => L2PC bin selection motivation
-  bool[n]=> Dump runtime Boolean flags
+  bool[n]=> Dump runtime Boolean flags when used or defined
   cab =>    Column Abundance-containing l2gp swaths dumped
   cgrid  => Check Fills done by grid method
   chi =>    chi-related diagnostic quantities dumped; chi1 for 1st chunk only
@@ -28,6 +28,7 @@ Switches (set by -S option in mlsl2's command line):
   destroy => Warn before each destroy
   diag =>   Dump diagonal of factored normal equations
   direct => Show automatic assignments to split directwrite files
+  dmiss  => Don't quit, just warn if derivative requested for qty missing from state
   dozm =>   Do minimum zeta only if requested
   drmc =>   Dump Retriever Matrices Clean
   dvec =>   Dump 'DX' vector during Newton iteration
@@ -188,6 +189,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.78  2012/08/16 19:55:34  pwagner
+ log[n] explained more fully
+
  Revision 1.77  2012/08/01 00:18:58  pwagner
  Updated; removed outdated stuff
 

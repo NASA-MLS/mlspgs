@@ -294,6 +294,18 @@ contains
 
     if ( toggle(emit) ) call trace_end ( 'FullForwardModel MAF=', fmStat%maf )
 
+  contains
+    function DerivativeMissingFromStateFun() result( SEVERITY )
+    ! Default severity (probably ERROR) can be reduced to a warning 
+    ! by adding -Sdmiss to command line
+    ! Args
+    integer :: SEVERITY
+    if ( switchDetail(switches,'dmiss') > -1 ) then ! be lenient
+      severity = min( MLSMSG_Warning, DerivativeMissingFromState )
+    else
+      severity = DerivativeMissingFromState
+    endif
+    end function DerivativeMissingFromStateFun
   end subroutine FullForwardModel
 
   ! ---------------------------------------- FullForwardModelAuto  -----
@@ -4600,6 +4612,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.337  2013/01/23 21:24:26  vsnyder
+! Use |sin| in TScat phase convolution
+!
 ! Revision 2.336  2012/08/08 20:06:37  vsnyder
 ! Use CreateVectorValue, DestroyVectorQuantityValue in full cloud model.
 ! Exchange subscript ordering for vmrArray to improve locality.
