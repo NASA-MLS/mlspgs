@@ -296,7 +296,6 @@ contains ! =====     Public Procedures     =============================
     logical :: silent
     integer :: son
     logical :: stamp
-    ! logical :: toldToSkip
     ! Executable
     detail = switchDetail( switches, 'phase' )
     silent = .false.
@@ -304,7 +303,6 @@ contains ! =====     Public Procedures     =============================
     skipDirectwrites = skipDirectWritesoriginal
     skipRetrieval = skipRetrievalOriginal
     options = ' '
-    ! toldToSkip = .false.
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -322,7 +320,6 @@ contains ! =====     Public Procedures     =============================
       case ( f_skipDirectwrites )
         skipDirectwrites = skipDirectWritesOriginal .or. &
           & get_boolean ( fieldValue )
-        ! toldToSkip = .true.
       case ( f_skipDirectwritesif )
         call get_string( sub_rosa(subtree(2,son)), booleanString )
         ! call output( 'told to skipDirectwrites: ', advance='no' )
@@ -333,11 +330,9 @@ contains ! =====     Public Procedures     =============================
           & runTimeValues%lkeys, runTimeValues%lvalues)
         ! call output( 'skipDirectwrites: ', advance='no' )
         ! call output( skipDirectwrites, advance='yes' )
-        ! toldToSkip = .true.
       case ( f_skipRetrieval )
         skipRetrieval = skipRetrievalOriginal .or. &
           & get_boolean ( fieldValue ) .or. skipRetrievalOriginal
-        ! toldToSkip = .true.
       case ( f_skipRetrievalif )
         call get_string( sub_rosa(subtree(2,son)), booleanString )
         ! call output( 'told to skipRetrieval: ', advance='no' )
@@ -348,7 +343,6 @@ contains ! =====     Public Procedures     =============================
           & runTimeValues%lkeys, runTimeValues%lvalues) .or. skipRetrievalOriginal
         ! call output( 'skipRetrieval: ', advance='no' )
         ! call output( skipRetrieval, advance='yes' )
-        ! toldToSkip = .true.
       case ( f_stamp )
         stamp = stamp .or. get_boolean ( fieldValue )
       case default ! Can't get here if tree_checker works correctly
@@ -408,12 +402,9 @@ contains ! =====     Public Procedures     =============================
       call setStamp( textcode=' ', showTime=.false. )
     endif
     call add_to_phase_timing( trim(phaseString) )
-    if ( switchDetail(switches, 'bool') > -1 ) &
+    if ( switchDetail ( switches, 'bool' ) > 0 ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
-    ! if ( toldToSkip ) &
-    !   &  call MLSMessage ( MLSMSG_Error, moduleName, &
-    !   & 'Told to skip something' )
   end subroutine addPhaseToPhaseNames
 
   ! -----------------------------------------------  dump_section_timings  -----
@@ -919,6 +910,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.45  2013/02/04 22:02:28  pwagner
+! Less verbose; trimmed commented-out stuff
+!
 ! Revision 2.44  2012/07/02 20:33:41  pwagner
 ! -Sphasen: n > 0 to bannerize phasename; n > 1 to stamp stdout with time,phase
 !
