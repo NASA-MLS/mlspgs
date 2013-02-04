@@ -18,7 +18,7 @@ module OUTPUT_M
     & REFORMATDATE, REFORMATTIME, UTC_TO_YYYYMMDD
   use MLSCOMMON, only: FILENAMELEN, FINITE_SIGNAL, IS_WHAT_IEEE
   use MLSMESSAGEMODULE, only: MLSMESSAGE, &
-    & MLSMSG_INFO, MLSMSG_ERROR
+    & DEFAULTLOGUNIT, MLSMESSAGECONFIG, MLSMSG_INFO, MLSMSG_ERROR, STDOUTLOGUNIT
   use MLSSETS, only: FINDFIRST
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
     & LIST2ARRAY, NUMSTRINGELEMENTS, WRAP
@@ -31,7 +31,8 @@ module OUTPUT_M
 !     c o n t e n t s
 !     - - - - - - - -
 !     (data types and parameters)
-! outputLines              If PrUnit = OUTPUTLINESPRUNIT, holds output until flushed
+! outputLines              If PrUnit = OUTPUTLINESPRUNIT, 
+!                            holds output until flushed
 ! outputOptions            where to send output and how to format it
 ! (some components)
 ! MLSMSG_Level             MLSMessage level if so logged
@@ -47,7 +48,10 @@ module OUTPUT_M
 
 !     (subroutines and functions)
 ! alignToFit               align printed argument to fit column range
-! banner                   surround message with stars and stripes
+! banner                   surround message with stars and stripes; e.g.,
+!                            *-----------------------------------------------*
+!                            *            Your message here                  *
+!                            *-----------------------------------------------*
 ! blanks                   print specified number of blanks [or fill chars]
 ! blanksToColumn           print blanks [or fill chars] out to specified column
 ! blanksToTab              print blanks [or fill chars] out to next tab stop
@@ -57,7 +61,8 @@ module OUTPUT_M
 ! flushOutputLines         print the current outputLines; then reset to ''
 ! getStamp                 get stamp being added to every output
 ! headLine                 print a line with extra formatting features
-! isOutputSuspended         returns TRUE if output is suspended
+!                           e.g., '*-------  Your message here   -------*'
+! isOutputSuspended        returns TRUE if output is suspended
 ! newline                  print a newline
 ! numNeedsFormat           return what format is need to output num
 ! numToChars               return what would be printed by output
@@ -121,7 +126,7 @@ module OUTPUT_M
 ! resetTabs ( [int tabs(:)] )
 ! resumeOutput
 ! revertOutput
-! restoreSettings
+! restoreSettings ( [log useToolkit] )
 ! setStamp ( [char* textCode], [log post], [int interval],
 !          [log showTime], [char* dateFormat], [char* timeFormat] )
 ! setTabs ( [char* Range], [int tabs(:)] )
@@ -1530,7 +1535,8 @@ contains
       &  n_stamp > 0 ) then
       write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     endif
-    if ( any(outputOptions%prunit == (/MSGLOGPRUNIT, BOTHPRUNIT/)) .and. .not. my_dont_log  ) then
+    if ( any(outputOptions%prunit == (/MSGLOGPRUNIT, BOTHPRUNIT/)) .and. &
+      & .not. my_dont_log  ) then
       ! We must use MLSMessage to log the chars
       the_chars = chars // ' '
       if (LOGEXTRABLANKS) n_chars = max(len(chars), 1)
@@ -1572,7 +1578,7 @@ contains
       ! endif
     end if
     
-    if ( outputOptions%prunit < 0  ) then
+    if ( outputOptions%prunit <= 0  ) then
       ! Already logged; no output to stdout
     else if ( stamped_chars == ' ' .and. present(insteadofblank)  ) then
       write ( outputOptions%prunit, '(a)', advance=my_adv ) trim_safe(insteadofblank)
@@ -2224,8 +2230,10 @@ contains
   end subroutine resetTabs
 
   ! ----------------------------------------------  restoreSettings  -----
-  subroutine restoreSettings 
+  subroutine restoreSettings ( USETOOLKIT )
   ! resume outputting to PRUNIT.
+  ! optionally set to use or ignore Toolkit
+    logical, optional, intent(in) :: useToolkit
     outputOptions%PRUNIT               = STDOUTPRUNIT
     outputOptions%MLSMSG_Level         = MLSMSG_Info
     outputOptions%newLineVal           = 10 ! 13
@@ -2267,6 +2275,14 @@ contains
     timeStampOptions%dateFormat        = 'yyyy-mm-dd'
     timeStampOptions%timeFormat        = 'hh:mm:ss'
     timeStampOptions%TIMESTAMPSTYLE    = 'post'
+    if ( .not. present(useToolkit) ) return
+    if ( useToolkit ) then
+      mlsmessageConfig%useToolkit   = .true.
+      mlsmessageConfig%logFileUnit  = DEFAULTLOGUNIT
+    else
+      mlsmessageConfig%useToolkit   = .false.
+      mlsmessageConfig%logFileUnit  = STDOUTLOGUNIT
+    endif
   end subroutine restoreSettings
 
   ! ----------------------------------------------  resumeOutput  -----
@@ -2834,6 +2850,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.98  2013/02/04 21:57:06  pwagner
+! Fixed bug sending invalidPRUnit output to stderr
+!
 ! Revision 2.97  2012/09/11 18:52:26  pwagner
 ! Added isOutputSuspended
 !
