@@ -385,20 +385,20 @@ CONTAINS
 
     nMAFs = SIZE (xMIF0)
     nMIFs = SIZE (Bias)
-    DEALLOCATE (dbias, stat=status)
+!    DEALLOCATE (dbias, stat=status)
     ALLOCATE (dbias(0:nMIFs-1))
     dbias = bias
-    DEALLOCATE (val, stat=status)
+!    DEALLOCATE (val, stat=status)
     ALLOCATE (val(0:nMIFs-1))
     tv = 0.0d0
     yv = 0.0d0
     IF (nfit > 2) THEN
        nMAFs = nMAFs - 1
-       DEALLOCATE (ang, stat=status)
+!       DEALLOCATE (ang, stat=status)
        ALLOCATE (ang(0:nMIFs-1))
-       DEALLOCATE (cv, stat=status)
+!       DEALLOCATE (cv, stat=status)
        ALLOCATE (cv(0:nMIFs-1))
-       DEALLOCATE (sv, stat=status)
+!       DEALLOCATE (sv, stat=status)
        ALLOCATE (sv(0:nMIFs-1))
        DO i = 0, (nMIFs - 1)
           ang(i) = (2.0 * Pi / nMIFs) * i
@@ -413,16 +413,16 @@ CONTAINS
     AvgBias = SUM (Bias * CalFlag) / ntot
     AvgTemp = SUM (CalTemp * CalFlag) / ntot
 
-    DEALLOCATE (BiasBuf, stat=status)
+!    DEALLOCATE (BiasBuf, stat=status)
     ALLOCATE (BiasBuf(0:nMIFs-1))
     BiasBuf = Bias * CalFlag
-    DEALLOCATE (TempBuf, stat=status)
+!    DEALLOCATE (TempBuf, stat=status)
     ALLOCATE (TempBuf(0:nMIFs-1))
     TempBuf = CalTemp * CalFlag
-    DEALLOCATE (cv_buf, stat=status)
+!    DEALLOCATE (cv_buf, stat=status)
     ALLOCATE (cv_buf(0:nMIFs-1))
     cv_buf = cv * CalFlag
-    DEALLOCATE (sv_buf, stat=status)
+!    DEALLOCATE (sv_buf, stat=status)
     ALLOCATE (sv_buf(0:nMIFs-1))
     sv_buf = sv * CalFlag
 
@@ -569,6 +569,23 @@ CONTAINS
 
     bias = dbias
 
+! Deallocate the temporary buffers
+!    REAL, DIMENSION(:), POINTER :: ang, cv, sv
+!    REAL(r8), DIMENSION(:), TARGET, ALLOCATABLE :: BiasBuf, TempBuf, &
+!         cv_buf, sv_buf
+
+    DEALLOCATE (ang, stat=status)
+    DEALLOCATE (cv,  stat=status)
+    DEALLOCATE (sv,  stat=status)
+
+    DEALLOCATE (BiasBuf, stat=status)
+    DEALLOCATE (TempBuf, stat=status)
+    DEALLOCATE (cv_buf,  stat=status)
+    DEALLOCATE (sv_buf,  stat=status)
+
+    DEALLOCATE (dbias, stat=status)
+    DEALLOCATE (val, stat=status)
+
   END SUBROUTINE THzDel
 
 !=============================================================================
@@ -664,11 +681,11 @@ CONTAINS
        ! IF (ntotx > 1 .AND. .NOT. first_fit) THEN
        IF (ntotx > 1) THEN
 
-          DEALLOCATE (yval, stat=status)
+!          DEALLOCATE (yval, stat=status)
           ALLOCATE (yval(THzChans,THzNum,ibgn:iend))
-          DEALLOCATE (tsq, stat=status)
+!          DEALLOCATE (tsq, stat=status)
           ALLOCATE (tsq(ibgn:iend))
-          DEALLOCATE (tval, stat=status)
+!          DEALLOCATE (tval, stat=status)
           ALLOCATE (tval(ibgn:iend))
 
           DO i = ibgn, iend
@@ -736,6 +753,10 @@ CONTAINS
              mfit3 = 2.0 * mfit3
           ENDIF
           last_fit = .TRUE.
+!
+          DEALLOCATE (yval,  stat=status)
+          DEALLOCATE (tsq,   stat=status)
+          DEALLOCATE (tval,  stat=status)
        ENDIF
        first_fit = .FALSE.
 
@@ -778,6 +799,7 @@ CONTAINS
        IF (mif0 > maxPt) EXIT
 
     ENDDO
+
 
   END SUBROUTINE THzCal
 
@@ -1003,12 +1025,12 @@ PRINT *, ibgn, iend, iref, iorg, (iend-ibgn+1)/148
        IF (xMIF0(maf2) >= iend) maf2 = maf2 - 1
        IF (iorbit == norbits .AND. iorbit > 1) maf1 = maf1 - 1
 
-       DEALLOCATE (tCnts, stat=status)
+!       DEALLOCATE (tCnts, stat=status)
        ALLOCATE (tCnts(THzChans,THzNum,0:(iend-ibgn)))
        tCnts = dCnts(:,:,ibgn:iend)
-       DEALLOCATE (tVarCnts, stat=status)
+!       DEALLOCATE (tVarCnts, stat=status)
        ALLOCATE (tVarCnts(THzChans,THzNum,0:(iend-ibgn)))
-       DEALLOCATE (tVargain, stat=status)
+!       DEALLOCATE (tVargain, stat=status)
        ALLOCATE (tVargain(0:(iend-ibgn)))
 
        CALL THzBound (ibgn, iend, iorbit)
@@ -1024,6 +1046,9 @@ PRINT *, ibgn, iend, iref, iorg, (iend-ibgn+1)/148
             dLlo=dLlo, yTsys=yTsys)
        diagno = diagno + 1
 
+       DEALLOCATE (tCnts,    stat=status)
+       DEALLOCATE (tVarCnts, stat=status)
+       DEALLOCATE (tVargain, stat=status)
     ENDDO
 
     CALL THzBound (0, iend, 0, fillnvbounds=.TRUE.)  ! Bounds for entire dataset
@@ -1092,6 +1117,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2013/02/06 19:05:40  quyen
+! fix hanging problem for misplaced deallocate
+!
 ! Revision 2.15  2012/08/29 17:11:37  perun
 ! Put in good case tests for Bands 15 and 20.
 !
