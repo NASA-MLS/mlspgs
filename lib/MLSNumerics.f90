@@ -48,7 +48,7 @@ module MLSNumerics              ! Some low level numerical stuff
 !                            y(x[i]) where x[i+1] - x[i] = constant
 
 !         Functions, operations, routines
-! Battleship               By wise-ranging evaluations find integer root
+! Battleship               By ever-widening evaluations find integer root
 !                             or floating root to within a given tolerance
 ! ClosestElement           Find index(es) in array closest to test value
 !                           (array may be multidimensional, non-monotonic)
@@ -90,11 +90,11 @@ module MLSNumerics              ! Some low level numerical stuff
 
 ! === (start of api) ===
 ! Battleship( int extern fun, int root, [int n1], [int maxPhase1], [int ns(:)], &
-!    [int b], [char* options] )
+!    [int b], [char* options], [int status] )
 ! Battleship( log extern fun, int root, [int n1], [int maxPhase1], [int ns(:)], &
-!    [log b], [char* options] )
+!    [log b], [char* options], [int status] )
 ! Battleship( nprec extern fun, nprec root, nprec arg1, nprec delta, &
-!    [int maxPhase1], [int ns(:)] )
+!    [int maxPhase1], [int ns(:)], [int status] )
 ! BivariateLinearInterpolation ( real X_Basis(:), real Y_Basis(:),
 !    real Table_2d(:,:), real X_Grid(:), real Y_Grid(:), real Out(:) )
 ! ClosestElement ( nprec test, nprec array, int indices, [char* options] )
@@ -482,8 +482,8 @@ contains
 
 ! -------------------------------------------------  Battleship  -----
 
-  ! This family of routines finds an integer root of a function
-  ! by evaluating it. Each evaluation is a "shot". What we consider
+  ! This family of routines finds a root of a function
+  ! by repeatedly evaluating it. Each evaluation is a "shot". What we consider
   ! a "hit" depends on the options parameter (see below).
   ! Warning--the default behavior is not the usual root-finder's
   ! (+ve on one side, -ve on the other)
@@ -505,6 +505,7 @@ contains
   ! If you wish to do the usual root-finder where the returned values change
   ! sign, set the options appropriately to "-x"
   
+  ! Method:
   ! We take shots during 2 phases:
   ! (1) outbound: ever-widening circles of radius 1 2 4 8 .. (n) (2n) ..
   !     or else prescribed shots in array ns[:]
@@ -531,8 +532,10 @@ contains
   ! A version for use with real-valued functions can be
   ! operated as a root-finder where the root is
   ! desired to be found within a tolerance of delta
+  ! The real-valued version won't be as precise or as efficient
+  ! as, say, the Zero subroutine in the Zero_m module
 
-  subroutine Battleship_int( fun, root, n1, maxPhase1, ns, b, options )
+  subroutine Battleship_int( fun, root, n1, maxPhase1, ns, b, options, status )
     ! Args
     integer, external                          :: fun
     integer, optional, intent(in)              :: n1 ! 1st circle
@@ -541,6 +544,7 @@ contains
     integer, intent(out)                       :: root ! root
     integer, optional, intent(in)              :: b ! is short
     character(len=*), optional, intent(in)     :: options
+    integer, optional, intent(out)             :: status ! /= 0 if failed
     ! Internal variables
     integer :: flast
     integer :: fnext
@@ -556,6 +560,7 @@ contains
     myOptions = '-s'
     if ( present(options) ) myOptions = options
     root = -1 ! in case we can't find root
+    if ( present(status) ) status = 1
     ! Phase 1
     ! Some error checks
     if ( present(maxPhase1) ) then
@@ -601,6 +606,7 @@ contains
       if ( shot > size(ns) ) return ! No shot was long enough
     end if
     ! Phase 2
+    if ( present(status) ) status = 0
     ! Narrow the spashes, always keeping root between x0 and x2
     x0 = x1
     do
@@ -654,7 +660,7 @@ contains
     enddo
   end subroutine Battleship_int
 
-  subroutine Battleship_log( fun, root, n1, maxPhase1, ns, b, options )
+  subroutine Battleship_log( fun, root, n1, maxPhase1, ns, b, options, status )
     ! Args
     logical, external                          :: fun
     integer, optional, intent(in)              :: n1 ! 1st circle
@@ -663,6 +669,7 @@ contains
     integer, intent(out)                       :: root ! root
     logical, optional, intent(in)              :: b ! is short
     character(len=*), optional, intent(in)     :: options
+    integer, optional, intent(out)             :: status ! /= 0 if failed
     ! Internal variables
     logical :: flast
     logical :: fnext
@@ -678,6 +685,7 @@ contains
     myOptions = '-s'
     if ( present(options) ) myOptions = options
     root = -1 ! in case we can't find root
+    if ( present(status) ) status = 1
     ! Phase 1
     ! Some error checks
     if ( present(maxPhase1) ) then
@@ -723,6 +731,7 @@ contains
       if ( shot > size(ns) ) return ! No shot was long enough
     end if
     ! Phase 2
+    if ( present(status) ) status = 0
     ! Narrow the spashes, always keeping root between x0 and x2
     x0 = x1
     do
@@ -776,12 +785,12 @@ contains
     enddo
   end subroutine Battleship_log
 
-  subroutine Battleship_r4( fun, root, arg1, delta, maxPhase1, ns )
+  subroutine Battleship_r4( fun, root, arg1, delta, maxPhase1, ns, status )
     integer, parameter :: RK = r4
       include "Battleship.f9h"
   end subroutine Battleship_r4
 
-  subroutine Battleship_r8( fun, root, arg1, delta, maxPhase1, ns )
+  subroutine Battleship_r8( fun, root, arg1, delta, maxPhase1, ns, status )
     integer, parameter :: RK = r8
       include "Battleship.f9h"
   end subroutine Battleship_r8
@@ -2513,6 +2522,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.76  2013/02/11 17:19:04  pwagner
+! Battleship returns status if cant find root
+!
 ! Revision 2.75  2012/12/20 01:06:15  vsnyder
 ! Add Interpolate_Regular_To_Irregular
 !
