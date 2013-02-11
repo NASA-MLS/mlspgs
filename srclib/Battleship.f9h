@@ -22,6 +22,7 @@
     integer, optional, intent(in)               :: maxPhase1 ! max phase1 shots
     integer, optional, dimension(:), intent(in) :: ns ! array of phase1 shots
     real(rk), intent(out)                       :: root ! root
+    integer, optional, intent(out)              :: status ! /= 0 if failed
     ! Internal variables
     real(rk) :: flast
     real(rk) :: fnext
@@ -35,6 +36,7 @@
     logical, parameter :: DEEBUG = .false.
     ! Executable
     root = -1 ! in case we can't find root
+    if ( present(status) ) status = 1
     ! Phase 1
     ! Some error checks
     if ( present(maxPhase1) ) then
@@ -63,6 +65,7 @@
       if ( shot > size(ns) ) return ! No shot was long enough
     end if
     ! Phase 2
+    if ( present(status) ) status = 0
     ! Narrow the spashes, always keeping root between x0 and x2
     if ( DEEBUG ) then
       call outputnamedValue ('No. of phase 1 shots', shot )
@@ -113,3 +116,6 @@
       end if
     enddo
 ! $Log$
+! Revision 1.1  2012/06/12 18:10:54  pwagner
+! First commit
+!
