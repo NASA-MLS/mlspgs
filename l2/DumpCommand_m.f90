@@ -118,9 +118,10 @@ contains
     integer :: son
     character(len=32) :: subSignalString
     logical :: tvalue
-    logical :: verbose
+    logical :: verbose, verboser
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
+    verboser = ( switchDetail(switches, 'bool') > 0 )
     nullify(Signal_Indices)
     ! call get_string(name, nameString)
     ! nameString = lowerCase(nameString)
@@ -173,11 +174,15 @@ contains
       print *, 'Sorry-unable to parse ', trim(signalString)
       tvalue = .false.
     end if
+    if ( verbose ) then
+      call output( trim(nameString) // ' = ', advance='no' )
+      call output( tvalue, advance='yes' )
+    endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty )
     hashsize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( switchDetail(switches, 'bool') > 0 ) &
+    if ( verboser ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromAnyGoodRadiances
@@ -193,6 +198,7 @@ contains
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
+    use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -219,9 +225,10 @@ contains
     type (vectorValue_T), pointer :: STATUSQUANTITY
     logical :: tvalue
     integer :: VECTORINDEX
-    logical :: verbose
+    logical :: verbose, verboser
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
+    verboser = ( switchDetail(switches, 'bool') > 0 )
     nullify( precisionquantity, qualityquantity, Quantity, statusquantity )
     ! call get_string(name, nameString)
     ! nameString = lowerCase(nameString)
@@ -265,11 +272,15 @@ contains
     tvalue = AnyGoodDataInQty ( a=Quantity, &
       & precision=precisionQuantity, quality=qualityQuantity, &
       & status=statusQuantity, quality_min=quality_min )
+    if ( verbose ) then
+      call output( trim(nameString) // ' = ', advance='no' )
+      call output( tvalue, advance='yes' )
+    endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty )
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( verbose ) &
+    if ( verboser ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromAnyGoodValues
@@ -288,7 +299,7 @@ contains
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -305,7 +316,10 @@ contains
     character(len=32) :: nameString
     integer :: son
     logical :: tvalue
+    logical :: verbose, verboser
     ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
+    verboser = ( switchDetail(switches, 'bool') > 0 )
     tvalue= .false.
     message = ' '
     do keyNo = 2, nsons(root)
@@ -328,8 +342,10 @@ contains
       end select
     end do
     call MLSMessageInquire( LastWarningMsg=LastWarningMsg )
-    call outputNamedValue( 'message to match', message )
-    call outputNamedValue( 'LastWarningMsg', LastWarningMsg )
+    if ( verbose ) then
+      call outputNamedValue( 'message to match', message )
+      call outputNamedValue( 'LastWarningMsg', LastWarningMsg )
+    endif
     if ( len_trim(LastWarningMsg) < 1 ) then
       tvalue = .false.
     else if ( len_trim(message) < 1 ) then
@@ -340,11 +356,15 @@ contains
       tvalue = &
         & index( lowerCase(LastWarningMsg), lowerCase(trim(adjustl(message))) ) > 0
     end if
+    if ( verbose ) then
+      call output( trim(nameString) // ' = ', advance='no' )
+      call output( tvalue, advance='yes' )
+    endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty )
     size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( switchDetail(switches, 'bool') > -1 ) &
+    if ( verboser ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromCatchWarning
@@ -361,6 +381,7 @@ contains
     use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & REPLACESUBSTRING, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
+    use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -403,9 +424,10 @@ contains
     integer, dimension(2) :: UNITASARRAY ! From expr
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
     integer :: VECTORINDEX
-    logical :: verbose
+    logical :: verbose, verboser
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
+    verboser = ( switchDetail(switches, 'bool') > 0 )
     call MLSMessageCalls( 'push', constantName=ModuleName//'%BooleanFromComparingQtys' )
     nullify( aQuantity, bQuantity )
     do keyNo = 2, nsons(root)
@@ -513,11 +535,15 @@ contains
       call MLSMessage (MLSMSG_Error, moduleName, &
         & 'Formula in compare found unrecognized op: ' // trim(op) )
     end select
+    if ( verbose ) then
+      call output( trim(nameString) // ' = ', advance='no' )
+      call output( tvalue, advance='yes' )
+    endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty )
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( verbose ) &
+    if ( verboser ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
     call MLSMessageCalls( 'pop' )
@@ -587,6 +613,7 @@ contains
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
+    use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -604,9 +631,10 @@ contains
     integer :: son
     logical :: tvalue
     integer :: value
-    logical :: verbose
+    logical :: verbose, verboser
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
+    verboser = ( switchDetail(switches, 'bool') > 0 )
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -627,11 +655,15 @@ contains
     end do
     tvalue = .true.
     if ( associated(grid) ) tvalue = grid%empty
+    if ( verbose ) then
+      call output( trim(nameString) // ' = ', advance='no' )
+      call output( tvalue, advance='yes' )
+    endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty )
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( verbose ) &
+    if ( verboser ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromEmptyGrid
@@ -661,7 +693,7 @@ contains
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -686,9 +718,10 @@ contains
     integer :: numGood
     logical, dimension(:), pointer  :: negativePrec => null() ! true if all prec < 0
     logical, dimension(:), pointer  :: oddStatus => null() ! true if all status odd
-    logical :: verbose
+    logical :: verbose, verboser
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
+    verboser = ( switchDetail(switches, 'bool') > 0 )
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -746,11 +779,15 @@ contains
       call deallocate_test( oddStatus, 'oddStatus', ModuleName )
       call DestroyL2GPContents ( l2gp )
     endif
+    if ( verbose ) then
+      call output( trim(nameString) // ' = ', advance='no' )
+      call output( tvalue, advance='yes' )
+    endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty )
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( verbose ) &
+    if ( verboser ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromEmptySwath
@@ -771,6 +808,7 @@ contains
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
+    use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -790,9 +828,10 @@ contains
     logical :: tvalue
     integer, dimension(2) :: UNITASARRAY ! From expr
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
-    logical :: verbose
+    logical :: verbose, verboser
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
+    verboser = ( switchDetail(switches, 'bool') > 0 )
     literal= .false.
     tvalue= .false.
     if ( name > 0 ) then
@@ -828,15 +867,23 @@ contains
     end do
     if ( literal ) then
       ! print *, 'Oops-you dummy! code this missing piece'
+      if ( verbose ) then
+        call output( trim(nameString) // ' = ', advance='no' )
+        call output( trim(formula), advance='yes' )
+      endif
       call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
         & lowercase(trim(nameString)), lowercase(trim(formula)), countEmpty=countEmpty )
     else
+      if ( verbose ) then
+        call output( trim(nameString) // ' = ', advance='no' )
+        call output( tvalue, advance='yes' )
+      endif
       call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
       & countEmpty=countEmpty )
     endif
     size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( verbose ) &
+    if ( verboser ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromFormula
@@ -986,7 +1033,7 @@ contains
     integer, parameter :: Numeric = noVT + 1
     integer, parameter :: Stop = numeric + 1
     integer, parameter :: Unknown = stop + 1 ! Unknown template
-
+    ! Executable
     if ( toggle(gen) ) then
       call trace_begin ( 'DumpCommand', root )
     else
@@ -1443,7 +1490,7 @@ contains
         GotFirst = .true.
       case ( f_options )
         call get_string ( sub_rosa(gson), optionsString, strip=.true. )
-        optionsString = lowerCase(optionsString)
+        ! optionsString = lowerCase(optionsString)
         ! call outputNamedValue( 'options', trim(optionsString) )
       case ( f_pfaData )
         do i = 2, nsons(son)
@@ -1677,11 +1724,12 @@ contains
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL, F_OPTIONS
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
-    use MLSSTRINGLISTS, only: GETHASHELEMENT
+    use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE, STREQ
     use MORETREE, only: GET_FIELD_ID
+    use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, TOGGLE
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: NSONS, SUB_ROSA, SUBTREE
     ! Args
@@ -1693,7 +1741,10 @@ contains
     character(len=80) :: Label  ! E.g., 'BAND8'
     character(len=8)  :: optionsString
     integer :: Son
+    logical :: verbose, verboser
     ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
+    verboser = ( switchDetail(switches, 'bool') > 0 )
     MLSSelecting = .true. ! Defaults to skipping rest of case
     if ( MLSSelectedAlready ) return
     optionsString = ' '
@@ -1730,6 +1781,10 @@ contains
       ! The streq function is a generalized string '=='
       MLSSelecting = .not. streq( label, selectLabel, optionsString )
     endif
+    if ( verbose ) then
+      call output( 'MLSCase label = ', advance='no' )
+      call output( trim(label), advance='yes' )
+    endif
     ! We must store whether we have ever had a match
     MLSSelectedAlready = MLSSelectedAlready .or. .not. MLSSelecting
     if ( toggle(gen) ) then
@@ -1745,11 +1800,12 @@ contains
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
-    use MLSSTRINGLISTS, only: GETHASHELEMENT
+    use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_FIELD_ID
+    use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, TOGGLE
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: NSONS, SUB_ROSA, SUBTREE
     ! Args
@@ -1760,7 +1816,10 @@ contains
     integer :: FieldIndex
     character(len=80) :: Label          ! E.g., 'BAND8'
     integer :: Son
+    logical :: verbose, verboser
     ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
+    verboser = ( switchDetail(switches, 'bool') > 0 )
     if ( toggle(gen) ) then
       call trace_begin ( 'MLSSelect', root )
     else
@@ -1784,6 +1843,10 @@ contains
         ! Should not have got here if parser worked correctly
       end select
     enddo
+    if ( verbose ) then
+      call output( 'Selecting label = ', advance='no' )
+      call output( trim(label), advance='yes' )
+    endif
     selectLabel = lowerCase(label)
     MLSSelecting = .true.
     if ( toggle(gen) ) then
@@ -1866,9 +1929,10 @@ contains
     integer :: GSON, J
     integer :: FieldIndex
     integer :: Son
-    logical :: verbose
+    logical :: verbose, verboser
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
+    verboser = ( switchDetail(switches, 'bool') > 0 )
     if ( toggle(gen) ) then
       call trace_begin ( 'Skip', root )
     else
@@ -1959,8 +2023,8 @@ contains
   ! This evaluates a character-valued arg, being alert for special values
   ! that name global variables, e.g. 'phasename'
   function Evaluator ( ARG ) result( ITSVALUE )
-    use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, &
-      & SIPS_VERSION
+    use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, NEED_L1BFILES, & ! , SIPS_VERSION
+      & SKIPRETRIEVAL
     use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
     use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
     ! Args
@@ -1968,6 +2032,8 @@ contains
     character(len=MAXRESULTLEN)  :: itsValue
     ! Executable
     select case (arg)
+    case ('catenatesplits')
+      itsValue = merge( 'true ', 'false', catenatesplits )
     case ('checkpaths')
       itsValue = merge( 'true ', 'false', checkpaths )
     case ('chunknumber')
@@ -1975,11 +2041,13 @@ contains
     case ('phasename')
       itsValue = lowercase(currentPhaseName)
     case ('sips_version')
-      itsValue = merge( 'true ', 'false', sips_version )
+      itsValue = 'true' ! merge( 'true ', 'false', sips_version )
     case ('need_l1bfiles')
       itsValue = merge( 'true ', 'false', need_l1bfiles )
+    case ('skipretrieval')
+      itsValue = merge( 'true ', 'false', skipretrieval )
     case default
-      ! What the devil did you mean?
+      ! What did you mean?
       ! Maybe just whether two character strings are the same
       ! that were assembled using m4 trickery
       itsValue = arg
@@ -2040,6 +2108,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.80  2013/02/12 18:17:44  pwagner
+! Removed SIPS_VERSION; raised -Sbool switch needed for most printing
+!
 ! Revision 2.79  2012/12/04 00:19:14  pwagner
 ! May dump timings summary after Dump, /stop
 !
