@@ -47,7 +47,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   ! Set the following to TRUE before delivering level 2 to sips
-  logical, parameter :: SIPS_VERSION                 =  .false. 
+  ! logical, parameter :: SIPS_VERSION                 =  .true. 
 
   ! The following should be TRUE if run with level 1 as a single PGE
   ! sharing a single PCF
@@ -129,7 +129,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Whether to catenate split autoDirectWrites
   logical            :: CATENATESPLITS                = .true.
 
-  logical            :: TOOLKIT                       =  SIPS_VERSION
+  logical            :: TOOLKIT                       =  .true. ! SIPS_VERSION
   ! --------------------------------------------------------------------------
 
   ! This is the type to store runtime Booleans set and used by the l2cf
@@ -362,7 +362,7 @@ contains
     endif
   ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
   ! So here's a good place to put any SIPS-specific settings overriding defaults
-  if ( SIPS_VERSION ) then
+  if ( .true.  ) then ! SIPS_VERSION
     ! SIPS_VERSION
     parallel%maxFailuresPerMachine = 2
     parallel%maxFailuresPerChunk = 1
@@ -370,11 +370,12 @@ contains
     switches='red'  ! Usually won't want to dump things looked for in testing
     DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
     MLSMessageConfig%limitWarnings = 4 ! 50 ! Why print all that stuff?
+    time_config%use_wall_clock = .true. ! SIPS_VERSION
   else
     ! SCF_VERSION
     switches='0sl'
+    time_config%use_wall_clock = .false. ! SIPS_VERSION
   end if
-  time_config%use_wall_clock = SIPS_VERSION
     i = 1+hp
     do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
       call getNextArg ( i, line )
@@ -452,8 +453,8 @@ contains
         else if ( line(3+n:9+n) == 'idents ' ) then
           i = i + 1
           call getNextArg ( i, line )
-        else if ( line(3+n:6+n) == 'kit ' ) then
-          MLSMessageConfig%useToolkit = switch
+        ! else if ( line(3+n:6+n) == 'kit ' ) then
+          ! MLSMessageConfig%useToolkit = switch
         else if ( line(3+n:6+n) == 'l1b=' ) then
           arg_rhs = line(7+n:7+n)
           select case(arg_rhs)
@@ -715,6 +716,7 @@ contains
           parallel%submit = trim ( line )
         else if ( line(3+n:5+n) == 'tk ' ) then
           toolkit = switch
+          MLSMessageConfig%useToolkit = switch
         else if ( line(3+n:9+n) == 'verbose' ) then
           switches = catLists( trim(switches), &
             & 'l2q,glob,mas,bool,opt1,log,pro1,time,apr,phase' )
@@ -894,7 +896,7 @@ jloop:do while ( j < len_trim(line) )
     STOPWITHERROR                 = .false.         
     CHECKPATHS                    = .false.         
     CATENATESPLITS                = .true.
-    TOOLKIT                       =  SIPS_VERSION
+    TOOLKIT                       =  .true. ! SIPS_VERSION
     call init_toggle
     call restoreConfig
   end subroutine restoreDefaults
@@ -914,6 +916,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.59  2013/02/12 18:14:15  pwagner
+! Removed SIPS_VERSION
+!
 ! Revision 2.58  2013/02/04 22:01:02  pwagner
 ! Added '--verbose' option; '--lac' more so
 !
