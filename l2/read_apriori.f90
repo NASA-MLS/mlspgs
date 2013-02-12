@@ -13,7 +13,7 @@
 module ReadAPriori
 
   use EXPR_M, only: EXPR
-  use HDF, only: DFACC_RDonly
+  use HDF, only: DFACC_RDONLY
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, &
     & F_DATE, F_DIMLIST, F_DOWNSAMPLE, &
     & F_FIELD, F_FILE, F_GRID, F_HDFVERSION, F_MISSINGVALUE, &
@@ -85,10 +85,10 @@ module ReadAPriori
 
 
 
-  public ::  APrioriFiles, APrioriFiles_T, &
-    & dumpAPrioriAttributes, processOneAprioriFile, &
-    & read_apriori, readAPrioriAttributes, &
-    & writeAPrioriAttributes
+  public ::  APRIORIFILES, APRIORIFILES_T, &
+    & DUMPAPRIORIATTRIBUTES, PROCESSONEAPRIORIFILE, &
+    & READ_APRIORI, READAPRIORIATTRIBUTES, &
+    & WRITEAPRIORIATTRIBUTES
   private ::  announce_error
   integer, private :: ERROR
   integer, private, parameter :: MAXNUMFILES = 20
@@ -149,7 +149,8 @@ contains ! =====     Public Procedures     =============================
     use DUMPCOMMAND_M, only: BOOLEANFROMFORMULA, MLSCASE, MLSENDSELECT, &
       & MLSSELECT, MLSSELECTING, SKIP
     use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP
-    use INIT_TABLES_MODULE, only: S_BOOLEAN, S_CASE, S_ENDSELECT, S_SELECT, S_SKIP
+    use INIT_TABLES_MODULE, only: S_BOOLEAN, S_CASE, S_ENDSELECT, &
+      & S_SELECT, S_SKIP
     use L2AUXDATA, only: L2AUXDATA_T, DUMP
     use L2GPDATA, only: L2GPDATA_T, DUMP
     use TREE, only: DECORATE, NSONS, SUBTREE
@@ -1067,7 +1068,7 @@ contains ! =====     Public Procedures     =============================
     type(MLSFile_T) :: MLSFile
     logical             :: verbose
     ! Executable
-    verbose = ( switchDetail(switches, 'apr') > -1 )
+    verbose = ( switchDetail(switches, 'apr') > 0 )
     if ( verbose ) call dump( MLSFile )
     if ( MLSFile%hdfVersion /= HDFVERSION_5 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -1101,7 +1102,7 @@ contains ! =====     Public Procedures     =============================
     logical             :: verbose
     character(len=*), parameter  :: whereami = 'readAPrioriAttributes_ID'
     ! Executable
-    verbose = ( switchDetail(switches, 'apr') > -1 )
+    verbose = ( switchDetail(switches, 'apr') > 0 )
     if ( verbose ) call output( 'Reading apriori attributes', advance='yes' )
     if ( hdfVersion /= HDFVERSION_5 ) then
       call MLSMessage ( MLSMSG_Warning, whereami, &
@@ -1181,7 +1182,7 @@ contains ! =====     Public Procedures     =============================
     integer             :: status
     logical             :: verbose
     ! Executable
-    verbose = ( switchDetail(switches, 'apr') > -1 )
+    verbose = ( switchDetail(switches, 'apr') > 0 )
     if ( verbose ) call output( 'Writing apriori attributes', advance='yes' )
     if ( hdfVersion /= HDFVERSION_5 ) then
       call MLSMessage ( MLSMSG_Warning, whereami, &
@@ -1351,6 +1352,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.96  2013/02/12 18:13:01  pwagner
+! Raise -Sapr switch setting needed to become verbose
+!
 ! Revision 2.95  2012/08/16 17:50:42  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
