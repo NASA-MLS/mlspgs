@@ -32,7 +32,7 @@ program MLSL2
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
-    & SECTIONTIMES, SECTIONTIMINGUNITS, SHAREDPCF, SIPS_VERSION, &
+    & SECTIONTIMES, SECTIONTIMINGUNITS, SHAREDPCF, & ! SIPS_VERSION, &
     & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, SLAVESDOOWNCLEANUP, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & SPECIALDUMPFILE, STATEFILLEDBYSKIPPEDRETRIEVALS, &
@@ -51,7 +51,8 @@ program MLSL2
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, &
     & SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, DUMP, HEADLINE, OUTPUT, &
-    & OUTPUTNAMEDVALUE, OUTPUTOPTIONS, STAMPOPTIONS, STDOUTPRUNIT, MSGLOGPRUNIT
+    & OUTPUTNAMEDVALUE, &
+    & INVALIDPRUNIT, MSGLOGPRUNIT, OUTPUTOPTIONS, STAMPOPTIONS, STDOUTPRUNIT
   use PARSER, only: CONFIGURATION
   use PVM, only: CLEARPVMARGS, FREEPVMARGS
   use SDPTOOLKIT, only: USESDPTOOLKIT
@@ -222,9 +223,12 @@ program MLSL2
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
 
-  if ( .not. toolkit .or. showDefaults .or. .not. outputOptions%buffered ) then
+  if ( .not. toolkit .or. showDefaults ) then
      outputOptions%prunit = max( STDOUTPRUNIT, &
        & outputOptions%prunit)   ! stdout or Fortran unit
+  else if ( outputOptions%prunit == INVALIDPRUNIT ) then
+     call MLSMessage( MLSMSG_Warning, ModuleName, &
+      & 'Avoding all output except possibly MLSMessages' )
   else if (parallel%master) then
      outputOptions%prunit = MSGLOGPRUNIT   ! output both logged, not sent to stdout
   else if (parallel%slave) then
@@ -346,7 +350,7 @@ program MLSL2
       call output(trim(current_version_id(j)), advance='yes')
     end do
     call output('Version built for  ', advance='no')
-    if ( SIPS_VERSION ) then
+    if ( .true. ) then ! SIPS_VERSION
       call output('S I P S', advance='yes')
     else
       call output('S C F', advance='yes')
@@ -694,6 +698,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.191  2013/02/12 18:14:38  pwagner
+! Removed SIPS_VERSION
+!
 ! Revision 2.190  2012/12/04 00:16:09  pwagner
 ! Removed confisuion-causing OUTSIDEOVERLAPS and its cmdline option
 !
