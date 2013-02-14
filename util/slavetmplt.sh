@@ -301,10 +301,23 @@ while [ "$more_opts" = "yes" ] ; do
        otheropts=`add_option "$otheropts" $1`
        shift
        ;;
-    --* )
-       echo "Skipping unknown argument: $1" >> $LOGFILE
+    --lac* )
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" $2`
+       echo "Adding arguments to reduce output: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
        shift
        ;;
+    --* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding unrecognized option: $1" >> $LOGFILE
+       shift
+       ;;
+#   --* )
+#      echo "Skipping unknown argument: $1" >> $LOGFILE
+#      shift
+#      ;;
 #    -S* )
 #       echo "Skipping switch-setting argument: $1" >> $LOGFILE
 #       shift
@@ -395,6 +408,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.23  2012/08/10 20:08:41  pwagner
+# Some changes to accommodate goldbrick
+#
 # Revision 1.22  2012/07/02 23:07:15  pwagner
 # Fixed long-standing bug
 #

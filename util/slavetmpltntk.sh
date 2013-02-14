@@ -297,10 +297,23 @@ while [ "$more_opts" = "yes" ] ; do
        otheropts=`add_option "$otheropts" $1`
        shift
        ;;
-    --* )
-       echo "Skipping unknown argument: $1" >> $LOGFILE
+    --lac* )
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" $2`
+       echo "Adding arguments to reduce output: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
        shift
        ;;
+    --* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Adding unrecognized option: $1" >> $LOGFILE
+       shift
+       ;;
+#   --* )
+#      echo "Skipping unknown argument: $1" >> $LOGFILE
+#      shift
+#      ;;
 #    -S* )
 #       echo "Skipping switch-setting argument: $1" >> $LOGFILE
 #       shift
@@ -389,6 +402,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.7  2012/09/12 19:48:37  pwagner
+# Skips '--submit l2q' args
+#
 # Revision 1.6  2012/02/15 18:13:47  pwagner
 # echo name of l2cf to log file
 #
