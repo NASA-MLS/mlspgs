@@ -36,17 +36,17 @@ module L2ParInfo
   implicit none
   private
 
-  public :: L2ParallelInfo_T, parallel, Machine_T
-  public :: AddMachineNameToDataBase, AddMachineToDataBase
-  public :: InitParallel, CloseParallel
-  public :: SlaveJoin
-  public :: GetNiceTidString, SlaveArguments
-  public :: AccumulateSlaveArguments, LogDirectWriteRequest
-  public :: SnipLastSlaveArgument, TransmitSlaveArguments
-  public :: FinishedDirectWrite, MachineNameLen, GetMachineNames, GetMachines
-  public :: FWMSlaveGroup, DirectWriteRequest_T
-  public :: InflateDirectWriteRequestDB, WaitForDirectWritePermission
-  public :: CompactDirectWriteRequestDB, Dump
+  public :: L2PARALLELINFO_T, PARALLEL, MACHINE_T
+  public :: ADDMACHINENAMETODATABASE, ADDMACHINETODATABASE
+  public :: INITPARALLEL, CLOSEPARALLEL
+  public :: SLAVEJOIN
+  public :: GETNICETIDSTRING, SLAVEARGUMENTS
+  public :: ACCUMULATESLAVEARGUMENTS, LOGDIRECTWRITEREQUEST
+  public :: SNIPLASTSLAVEARGUMENT, TRANSMITSLAVEARGUMENTS
+  public :: FINISHEDDIRECTWRITE, MACHINENAMELEN, GETMACHINENAMES, GETMACHINES
+  public :: FWMSLAVEGROUP, DIRECTWRITEREQUEST_T
+  public :: INFLATEDIRECTWRITEREQUESTDB, WAITFORDIRECTWRITEPERMISSION
+  public :: COMPACTDIRECTWRITEREQUESTDB, DUMP
   
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -65,6 +65,7 @@ module L2ParInfo
   integer, public, parameter :: NOTIFYTAG  = ChunkTag + 1  ! pvm => master: Slave exited
   integer, public, parameter :: PETITIONTAG  = NotifyTag + 1 ! master => l2q
   integer, public, parameter :: GRANTEDTAG  = PetitionTag + 1 ! l2q => master
+  integer, public, parameter :: MASTERDUMPTAG  = GrantedTag + 1 ! l2q => master
   integer, public, parameter :: MACHINEFIXEDTAG = 800
   integer, public, parameter :: GIVEUPTAG  = 999
 
@@ -95,7 +96,6 @@ module L2ParInfo
     logical :: fwmParallel = .false.    ! Set if we are in forward model parallel mode
     logical :: master = .false.         ! Set if this is a master task
     logical :: slave = .false.          ! Set if this is a slave task
-    ! logical :: stageInMemory = .false.  ! Set if master stages to memory rather
     integer :: verbosity = 0            ! Set > 0 for extra output 
     integer :: myTid                    ! My task ID in pvm       | than a file
     integer :: masterTid                ! task ID in pvm
@@ -873,6 +873,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.60  2013/02/14 19:03:32  pwagner
+! Added way for l2q to tell master to dump status
+!
 ! Revision 2.59  2012/07/10 15:19:45  pwagner
 ! Adapted to new api for RemoveNumFromList
 !
