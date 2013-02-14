@@ -14,7 +14,7 @@ program L2Q
   use dates_module, only: DATEFORM, REFORMATDATE
   use L2PARINFO, only: PARALLEL, INITPARALLEL
   use L2ParInfo, only: MACHINE_T, PARALLEL, &
-    & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, &
+    & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, MASTERDUMPTAG, NOTIFYTAG, &
     & SIG_FINISHED, SIG_REGISTER, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
     & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
     & MACHINENAMELEN, GETMACHINENAMES, &
@@ -110,7 +110,8 @@ program L2Q
   integer, parameter          :: KILLMASTERSTAG = FREEHOSTSTAG - 1
   integer, parameter          :: SUICIDETAG = KILLMASTERSTAG - 1
   integer, parameter          :: SWITCHDUMPFILETAG = SUICIDETAG - 1
-  integer, parameter          :: TURNREVIVALSONTAG = SWITCHDUMPFILETAG - 1
+  integer, parameter          :: TELLMASTERDUMPTAG = SWITCHDUMPFILETAG - 1
+  integer, parameter          :: TURNREVIVALSONTAG = TELLMASTERDUMPTAG - 1
   integer, parameter          :: TURNREVIVALSOFFTAG = TURNREVIVALSONTAG - 1
 
   ! These are special tid values
@@ -269,13 +270,15 @@ program L2Q
         tag = suicideTag ! GiveUpTag
       case ( 'switch' )
         tag = switchDumpFileTag
+      case ( 'tellmdump' )
+        tag = tellMasterDumpTag
       case default
         call MLSMessage( MLSMSG_Error, ModuleName, &
           & 'l2q would not recognize unknown command '//trim(options%command) )
       end select
       if ( any(tag == &
         & (/avoidSelectedHostsTag, checkSelectedHostsTag, freeHostsTag, &
-        & killMastersTag/) )) &
+        & killMastersTag, tellMasterDumpTag/) )) &
         & then
         call PVMF90Pack ( trim(options%selectedHosts), info )
       else
@@ -288,7 +291,7 @@ program L2Q
       call timestamp(' commanded: '//trim(options%command), advance='yes')
       if ( any(tag == &
         & (/avoidSelectedHostsTag, checkSelectedHostsTag, freeHostsTag, &
-        & killMastersTag/) )) &
+        & killMastersTag, tellMasterDumpTag/) )) &
         & then
         call timestamp(trim(options%selectedHosts), advance='yes')
       elseif ( any(tag == (/dumpHostsDBTag, dumpMastersDBTag, dumpDBTag, &
@@ -1263,6 +1266,30 @@ contains
             & advance='yes')
         end if
       end if
+      ! Listen out for any message telling us to tell selected masters to dump
+      call PVMFNRecv ( -1, tellMasterDumpTag, bufferIDRcv )
+      ! Do it if so commanded
+      if ( bufferIDRcv > 0 ) then
+        call PVMF90Unpack ( machineName, info )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking GROUPNAME' )
+        call PVMF90Unpack ( options%selectedHosts, info )
+        if ( info /= 0 ) call myPVMErrorMessage ( info, 'unpacking selectedHosts' )
+        call timestamp ( 'Received an external message to tell masters to dump ' // &
+          & trim(options%selectedHosts), advance='yes' )
+        call IDMasterFromName( masters, options%selectedHosts, IDs )
+        do i = 1, count( IDs > 0 )
+          if ( Ids(i) < 1 .or. Ids(i) > size(masters) ) then
+            call timestamp ( 'DB lacks any master matching ' // &
+              & trim(options%selectedHosts), advance='yes' )
+          else
+            call timestamp ( 'telling master ' // &
+              & trim(masters(Ids(i))%name) // ' to dump', advance='yes' )
+            if ( options%verbose ) call dump_Master( masters(Ids(i)) )
+            call PVMFSend ( masters(Ids(i))%tid, masterDumpTag, info )
+          endif
+        enddo
+        dumpMasters = .true.
+      end if
       ! Unless there's a good reason not to do so,
       ! check if any hosts are currently free and any masters need hosts
       if ( mayAssignAHost .and. associated(masters) ) then
@@ -1494,7 +1521,7 @@ contains
           command_line = trim(command_line) // ' ' // trim(line)
           options%command = lowercase(line)
           ! Special commands take yet another arg
-          if ( index('check,avoid,kill,free', trim(options%command)) > 0 ) then
+          if ( index('check,avoid,kill,free,tellmdump', trim(options%command)) > 0 ) then
             i = i + 1
             call getarg ( i, line )
             command_line = trim(command_line) // ' ' // trim(line)
@@ -1823,6 +1850,8 @@ contains
     print *, ' revive=off:  cease regularly checking for revived hosts'
     print *, ' kill m1[,m2,..]:'
     print *, '              kill selected masters cleanly'
+    print *, ' tellmdump m1[,m2,..]:'
+    print *, '              tell selected masters to dump current status'
     print *, ' switch:      flush current dumpfile'
     print *, '              ( switch to one specified by -o newfile )'
     print *, '  ( if the following commands are accompanied by the option'
@@ -2382,6 +2411,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.31  2012/07/12 17:55:16  pwagner
+! Added mdline option --free to regularly check, free abandoned hosts
+!
 ! Revision 1.30  2010/06/03 23:36:07  pwagner
 ! Tried again to fix problem of freezing
 !
