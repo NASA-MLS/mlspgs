@@ -322,7 +322,7 @@ contains ! ====     Public Procedures     ==============================
           & ( parallel%master .and. .not. parallel%fwmParallel ) .or. &
           & ( parallel%slave .and. parallel%fwmParallel ) ) then
           if ( parallel%master .and. .not. parallel%fwmParallel ) then
-            call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
+            call L2MasterTask ( chunks )
           end if
           if ( parallel%slave .and. parallel%fwmParallel ) then
             call ExpandStringRange( parallel%chunkRange, iChunks )
@@ -651,6 +651,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.180  2012/08/16 17:56:54  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.179  2012/04/26 23:15:28  pwagner
 ! Now tracks currentPhaseName and currentChunkNumber
 !
