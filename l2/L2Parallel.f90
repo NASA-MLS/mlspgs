@@ -23,11 +23,9 @@ module L2Parallel
   use CHUNKS_M, only: DUMP, MLSCHUNK_T
   use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
   use DUMP_0, only: DUMP
-  use L2AUXDATA, only: L2AUXDATA_T
-  use L2GPDATA, only: L2GPDATA_T
   use L2PARINFO, only: MACHINE_T, PARALLEL, &
-    & CHUNKTAG, GIVEUPTAG, GRANTEDTAG, PETITIONTAG, &
-    & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
+    & CHUNKTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, MASTERDUMPTAG, PETITIONTAG, &
+    & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, &
     & SIG_REQUESTDIRECTWRITE, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
     & SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
     & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
@@ -40,13 +38,13 @@ module L2Parallel
   use MLSKINDS, only: R8
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_WARNING, PVMERRORMESSAGE
-  use MLSSETS, only: FINDFIRST
+  use MLSSETS, only: FINDALL, FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, REMOVENUMFROMLIST, &
     & REPLACESUBSTRING, SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE
   use MOREPVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MLSSTRINGS, only: NAPPEARANCES
-  use OUTPUT_M, only: BLANKS, OUTPUT, TIMESTAMP
+  use OUTPUT_M, only: BANNER, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, TIMESTAMP
   use PVM, only: INFOTAG, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, &
     & PVMF90UNPACK, PVMTASKHOST, &
@@ -186,11 +184,9 @@ contains
   end subroutine GetChunkInfoFromMaster
 
   ! --------------------------------------------- L2MasterTask ----------
-  subroutine L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
+  subroutine L2MasterTask ( chunks )
     ! This is a `master' task for the l2 software
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
-    type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
-    type (L2AuxData_T), dimension(:), pointer :: L2AUXDATABASE
 
     ! Local parameter
     integer, parameter :: MAXDIRECTWRITEFILES=200 ! For internal array sizing
@@ -268,11 +264,6 @@ contains
 
     type (Machine_T),dimension(:), pointer :: Machines
     type (Machine_T)                       :: thisMachine
-    type (QuantityTemplate_T),dimension(:), pointer :: joinedQuantities 
-    ! Local quantity template database
-    type (VectorTemplate_T), dimension(:), pointer  :: joinedVectorTemplates
-    ! Local vector template database
-    type (Vector_T), dimension(:), pointer :: joinedVectors
     ! Local vector database
     type (StoredResult_T), dimension(:), pointer :: storedResults
     ! Map into the above arrays
@@ -292,8 +283,7 @@ contains
 
     ! Setup some stuff
     noChunks = size(chunks)
-    nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
-      & machines, storedResults, &
+    nullify ( machines, storedResults, &
       & directWriteRequests )
     noDirectWriteRequests = 0
     directWriteFileNames = 0
@@ -749,6 +739,18 @@ contains
         exit masterLoop
       end if
 
+      ! Listen out for any message telling us to dump current status
+      call PVMFNRecv ( -1, masterDumpTag, bufferIDRcv )
+      if ( bufferIDRcv > 0 ) then
+        if ( parallel%verbosity > 0 ) then
+          call TimeStamp ( 'Received an external message to dump our current status', &
+            & advance='yes' )
+        end if
+        call dumpMastersStatus( chunkmachines, chunknicetids, &
+          & directwritefilenames, directwritefilebusy, &
+          & chunkscompleted, chunksabandoned, chunkswriting, machines )
+      end if
+
       ! Listen out for any message telling us to switch to a new l2q
       call PVMFNRecv ( -1, sig_switchallegiance, bufferIDRcv )
       if ( bufferIDRcv > 0 .and. usingL2Q ) then
@@ -858,8 +860,7 @@ contains
               call TimeStamp ( trim(GetNiceTidString(deadTid)) // &
                 & ' died, try again.', advance='yes' )
             end if
-            call CleanUpDeadChunksOutput ( deadChunk, joinedQuantities, &
-              & joinedVectorTemplates, joinedVectors, storedResults )
+            call CleanUpDeadChunksOutput ( deadChunk, storedResults )
             chunksStarted(deadChunk) = .false.
             chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
             if ( .not. USINGOLDSUBMIT ) then
@@ -1143,24 +1144,6 @@ contains
 
     call DestroyStoredResultsDatabase ( storedResults )
 
-    if ( associated ( joinedQuantities ) ) then
-      deallocate ( joinedQuantities, STAT=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate//'joinedQuantities' )
-    end if
-
-    if ( associated ( joinedVectorTemplates ) ) then
-      deallocate ( joinedVectorTemplates, STAT=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate//'joinedVectorTemplates' )
-    end if
-
-    if ( associated ( joinedVectors ) ) then
-      deallocate ( joinedVectors, STAT=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate//'joinedVectors' )
-    end if
-
     finished = .true.
     if ( parallel%verbosity > 0 ) then
       call TimeStamp ( 'All chunks joined', advance='yes' )
@@ -1205,7 +1188,7 @@ contains
           ! Sorry--no machine ready yet; but our request is/remains queued
           chunkAndMachineReady = .false.
           machineRequestQueued = .true.
-          ! if ( switchDetail(switches,'l2q') /=0 ) call output('Sorry, l2q scorns us', advance='yes')
+          ! if ( switchDetail(switches,'l2q') > -1 ) call output('Sorry, l2q scorns us', advance='yes')
         else
           ! Good news--a machine was/has become ready
           chunkAndMachineReady = .true.
@@ -1221,7 +1204,10 @@ contains
               & call output('Added machine to db', advance='yes')
             ! machine = AddMachineNameToDataBase(machines%Name, machineName)
           endif
-          ! if ( switchDetail(switches,'l2q') /=0 ) call output('Good news, l2q likes us', advance='yes')
+          ! if ( switchDetail(switches,'l2q') > -1 ) call output('Good news, l2q likes us', advance='yes')
+          if ( switchDetail(switches,'l2q') > -1 ) then
+            call outputNamedValue( 'machine', machine )
+          endif
         endif
       else
       ! Case (3): Using submit
@@ -1339,14 +1325,10 @@ contains
   end function AddStoredResultToDatabase
 
   ! --------------------------------- CleanUpDeadChunksOutput -------------
-  subroutine CleanUpDeadChunksOutput ( chunk, joinedQuantities, &
-    & joinedVectorTemplates, joinedVectors, storedResults )
+  subroutine CleanUpDeadChunksOutput ( chunk, storedResults )
     ! This destroys the vector info etc. associated with any output
     ! from a dead chunk.
     integer, intent(in) :: CHUNK        ! Index of chunk
-    type (QuantityTemplate_T), dimension(:), pointer :: JOINEDQUANTITIES
-    type (VectorTemplate_T), dimension(:), pointer :: JOINEDVECTORTEMPLATES
-    type (Vector_T), dimension(:), pointer :: JOINEDVECTORS
     type (StoredResult_T), dimension(:), pointer :: STOREDRESULTS
 
     ! Local variables
@@ -1372,7 +1354,7 @@ contains
     end do
   end subroutine CleanUpDeadChunksOutput
   
-  ! ----------------------------------------- DestroyStoredQuantitiesDatabase ---
+  ! ----------------------------------------- DestroyStoredResultsDatabase ---
   subroutine DestroyStoredResultsDatabase ( database )
     type (StoredResult_T), dimension(:), pointer :: database
 
@@ -1391,6 +1373,70 @@ contains
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'stored quantities database' )
   end subroutine DestroyStoredResultsDatabase
+
+  ! ----------------------------------------- DumpMastersStatus ---
+  subroutine DumpMastersStatus ( CHUNKMACHINES, CHUNKNICETIDS, &
+    & DIRECTWRITEFILENAMES, DIRECTWRITEFILEBUSY, &
+    & CHUNKSCOMPLETED, CHUNKSABANDONED, CHUNKSWRITING, MACHINES )
+    integer, dimension(:) :: CHUNKMACHINES ! Machine indices for chunks
+    character(len=16), dimension(:) :: CHUNKNICETIDS ! Tids for chunks
+    integer, dimension(:) :: DIRECTWRITEFILENAMES
+    logical, dimension(:) :: DIRECTWRITEFILEBUSY
+    logical, dimension(:) :: CHUNKSCOMPLETED ! Chunks completed
+    logical, dimension(:) :: CHUNKSABANDONED ! Chunks kept failing
+    logical, dimension(:) :: CHUNKSWRITING ! Which chunks are writing
+    type (Machine_T),dimension(:), pointer :: Machines
+    integer, dimension(size(chunkmachines)) :: which, whichNot
+
+    ! Local variabels
+    integer :: i, m, n
+
+    ! Executable code
+    call banner ( 'Master Status Dumped', (/ 1, 80 /), 'C' )
+    call output( 'Chunks', advance='yes' )
+    m = 0
+    do i = 1, size(chunkmachines)
+      if ( chunkmachines(i) == 0 ) cycle
+      m = m + 1
+      call output( chunkmachines(i), advance='no' )
+      call blanks( 3 )
+      call output( chunksCompleted(i), advance='no' )
+      call blanks( 3 )
+      call output( chunksAbandoned(i), advance='no' )
+      call blanks( 3 )
+      call output( chunksWriting(i), advance='no' )
+      call blanks( 3 )
+      call output( trim(chunkNiceTids(i)), advance='yes' )
+    enddo
+    call output( 'Chunks abandoned', advance='yes' )
+    call FindAll( chunksAbandoned, which, n, whichNot )
+    if ( n > 0 ) &
+      & call output( which(1:n), advance='yes' )
+    call output( 'Chunks not completed', advance='yes' )
+    call FindAll( chunksCompleted, which, n, whichNot )
+    if ( n < m ) &
+      & call output( whichNot(1:m-n), advance='yes' )
+    call output( 'Chunks still writing', advance='yes' )
+    call FindAll( chunksWriting, which, n, whichNot )
+    if ( n > 0 ) call output( which(1:n), advance='yes' )
+    call output( 'Direct Writes', advance='yes' )
+    n = 0
+    do i = 1, size(directwritefilenames)
+      if ( directWriteFilenames(i) > 0 ) then
+        n = n + 1
+        call display_string ( directWriteFilenames(i), &
+          & strip=.true., advance='no' )
+        call blanks( 3 )
+        call output( directwritefilebusy(i), advance='yes' )
+      endif
+    enddo
+    call FindAll( directwritefilebusy, which, n, whichNot )
+    if ( n > 0 ) then
+      call output( 'Files still busy writing', advance='yes' )
+      call output( directwritefilebusy(1:n), onlyIf = .true., advance='yes' )
+    endif
+    call dump ( machines )
+  end subroutine DumpMastersStatus
 
   ! -------------------------------------- RecieveMachineFromL2Q --------------
   subroutine ReceiveMachineFromL2Q(machineName)
@@ -1733,6 +1779,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.102  2013/02/14 19:02:27  pwagner
+! Added way for l2q to tell mster to dump status; removed unused stuff
+!
 ! Revision 2.101  2012/07/02 20:38:02  pwagner
 ! Fix 'no live hosts so must stop' error with l2q; remove outdated staging stuff
 !
