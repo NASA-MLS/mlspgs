@@ -34,7 +34,7 @@
   if ( size(xOld) == 1 ) then
     ! Interpolate the only column of zOld onto every column of zNew.
     ! There's only one X with one column of zOld, so we only interpolate in Y
-    do i = 1, size(yNew)
+    do i = lbound(yNew,1), uBound(yNew,1)
       call interpolateValues ( yOld, zOld(:,1), yNew(i,:), zNew(i,:), &
         & Method='Linear', Extrapolate='Constant' )
     end do
@@ -80,6 +80,9 @@
 ! end subroutine Interpolate_Regular_To_Irregular_r*
 
 ! $Log$
+! Revision 1.2  2013/02/01 21:25:09  vsnyder
+! Correct incorrect subscript order for zOld, zNew
+!
 ! Revision 1.1  2012/12/20 01:02:39  vsnyder
 ! Initial commit
 !
