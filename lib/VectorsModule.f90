@@ -1322,8 +1322,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments:
     type(Vector_T), intent(in) :: X, Y
-    ! Local variables:
-    integer :: I              ! Subscript and loop inductor
     ! Executable statements:
     if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot .DOT. vectors having different templates" )
@@ -1545,25 +1543,65 @@ contains ! =====     Public Procedures     =============================
   end subroutine DumpNiceMaskSummary
 
   ! -----------------------------------------  DumpQuantityMask  -----
-  subroutine DumpQuantityMask ( VectorQuantity, DETAILS )
-    type (VectorValue_T), intent(in) :: VectorQuantity
-    integer, intent(in), optional :: DETAILS ! if < 0 just dump summary
+  ! Dump a quantity's mask with details and options set by those args:
+  ! Details             effect is to print ..
+  ! -------             ---------------------
+  !   -1        how many locations have their bitnumth bit set 
+  !   0         how many unique bitnumbers have been set and their meanings
+  !   1         a table of mask bits by location
+  
+  ! options contain   effect
+  ! ---------------   ------
+  !    b[n]         set bitnum to n (default was 0)
+  !     l           collapse locations to just instances, showing
+  !                   only if bitnumth bit set at all heights, channels
+  !     L           collapse locations to just instances, showing
+  !                   only if bit NOT set at all heights, channels
+  !
+  subroutine DumpQuantityMask ( VECTORQUANTITY, DETAILS, OPTIONS )
+    use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, OPTIONDETAIL
+    use MLSSTRINGS, only: READNUMSFROMCHARS
+    type (VectorValue_T), intent(in)       :: VectorQuantity
+    integer, intent(in), optional          :: DETAILS ! if < 0 just dump summary
+    character(len=*), optional, intent(in) :: options
 
     ! Local variables
+    character(len=32) :: bitCh
     integer :: bitNum                   ! bit number; e.g., 0 is m_linAlg
+    integer, dimension(18) :: bitNums
     integer :: c                        ! Channel index
     integer :: i                        ! Instance index
     integer :: j                        ! Element index
+    integer :: k                        ! bitNums index
     integer :: myDetails
+    character(len=32) :: myOptions
     integer :: n
+    integer :: nBitNums
     integer :: nUnique
     integer :: s                        ! Surface index
-    integer, dimension(1000) :: uniqueVals
+    integer, dimension(10000) :: uniqueVals
     integer :: w                        ! Line width used so far
     ! Executable
+    nUnique = 0
+    uniqueVals = 0
     myDetails = 0
     if ( present(details) ) myDetails = details
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
     bitNum = 0
+    nBitNums = -1
+    if ( index(myOptions, 'b') > 0 ) then
+      bitCh = optionDetail( myOptions, single_option='b' )
+      if ( index( bitCh, ',' ) > 0 .or. index( bitCh, '-' ) > 0 ) then
+        call ExpandStringRange ( bitCh, bitNums, nBitNums )
+      else
+        call readNumsFromChars( bitCh, bitnum )
+      endif
+    endif
+    if ( nBitNums < 0 ) then
+      nBitNums = 1
+      bitNums(1) = bitNum
+    endif
     call output ( 'Quantity ' )
     call display_string ( vectorQuantity%template%name )
 
@@ -1573,9 +1611,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( .not. associated ( vectorQuantity%mask ) ) then
       call output ( ' has no mask.', advance='yes' )
-    elseif( myDetails < 0 ) then
-      n = count( isBitSet( ichar(vectorQuantity%mask), bitNum ) )
-      call outputNamedValue( 'Num mask bits set: ', n )
+      return
     elseif( myDetails == 0 ) then
       call dump ( ichar(vectorQuantity%mask), name='  Mask =', &
         & format='(z3.2)', width = 20 )
@@ -1586,7 +1622,8 @@ contains ! =====     Public Procedures     =============================
       do i=1, nUnique
         call DumpBitNames( uniqueVals(i), MaskBitNames )
       enddo
-    else
+      return
+    elseif ( index(myOptions, 'l') < 1 .and. index(myOptions, 'L') < 1 ) then
       call newLine
       do i = 1, vectorQuantity%template%noInstances
         call output ( 'Instance: ' )
@@ -1611,13 +1648,58 @@ contains ! =====     Public Procedures     =============================
           call newLine
         end do                        ! Surface loop
       end do                          ! Instance loop
-    end if                            ! Has a mask
+      return
+    endif
+    ! These are the cases where we show results broken down by bit numbers
+    do k=1, nBitNums
+      nUnique = 0
+      uniqueVals = 0
+      bitnum = bitNums(k)
+      if ( nBitNums > 1 ) then
+        call newLine
+        call outputnamedvalue( 'bit number', bitnum )
+        call DumpBitNames( 2**bitnum, MaskBitNames, oneLine=.true. )
+      endif
+      if( myDetails < 0 ) then
+        n = count( isBitSet( ichar(vectorQuantity%mask), bitNum ) )
+        call outputNamedValue( 'Num mask bits set: ', n )
+      elseif ( index(myOptions, 'l') > 0 ) then
+        ! Collapse locations, showing where entirely masked channels and surfaces
+        do i = 1, vectorQuantity%template%noInstances
+          if ( any( &
+            & .not. isBitSet( ichar(vectorQuantity%mask(:,i)), bitNum ) &
+            & ) ) cycle
+          nUnique = nUnique + 1
+          uniqueVals ( nUnique ) = i
+        enddo
+        if ( nUnique > 0 ) then
+          call dump( uniqueVals(1:nUnique), ': Locations entirely masked' )
+        else
+          call output( ': No locations entirely masked', advance = 'yes' )
+        endif
+      elseif ( index(myOptions, 'L') > 0 ) then
+        ! Collapse locations, showing where NOT masked
+        do i = 1, vectorQuantity%template%noInstances
+          if ( all( &
+            & isBitSet( ichar(vectorQuantity%mask(:,i)), bitNum ) &
+            & ) ) cycle
+          nUnique = nUnique + 1
+          uniqueVals ( nUnique ) = i
+        enddo
+        if ( nUnique > 0 ) then
+          call dump( uniqueVals(1:nUnique), ': Locations not entirely masked' )
+        else
+          call output( ': All locations entirely masked', advance = 'yes' )
+        endif
+      endif
+    enddo
   end subroutine DumpQuantityMask
 
   ! ---------------------------------------------  DumpVectorMask  -----
-  subroutine DumpVectorMask ( VECTOR, DETAILS )
+  subroutine DumpVectorMask ( VECTOR, DETAILS, OPTIONS )
     type (Vector_T), intent(in) :: VECTOR
-    integer, intent(in), optional :: DETAILS ! if < 0 just dump summar
+    integer, intent(in), optional :: DETAILS ! if < 0 just dump summary
+    character(len=*), optional, intent(in) :: options
 
     ! Local variables
     integer :: q                        ! Quantity index
@@ -1627,7 +1709,7 @@ contains ! =====     Public Procedures     =============================
     call display_string ( vector%name, advance='yes' )
 
     do q = 1, size(vector%quantities)
-      call dumpMask ( vector%quantities(q), details )
+      call dumpMask ( vector%quantities(q), details, options )
     end do                              ! Loop over quantities
   end subroutine DumpVectorMask
   ! --------------------------------------------  DumpVectorNorms  -----
@@ -3024,6 +3106,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.173  2013/02/01 23:40:55  vsnyder
+! Add Where argument to CreateVectorValue.  Nullify correct pointers in
+! DestroyVectorValue.
+!
 ! Revision 2.172  2012/12/04 00:11:55  pwagner
 ! Improved comments
 !
