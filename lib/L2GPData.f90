@@ -641,25 +641,28 @@ contains ! =====     Public Procedures     =============================
   end subroutine ContractL2GPRecord_names
 
   subroutine ContractL2GPRecord_opt ( ol2gp, l2gp, pressures, latitudes, &
-    & longitudes, times )
+    & longitudes, intimes, hoursInDay, chunks )
     ! Dummy arguments
     type (L2GPData_T), intent(in)   :: ol2gp
     type (L2GPData_T), intent(out)  :: l2gp
     real(rgp), dimension(2), intent(in), optional :: pressures  ! range
     real(rgp), dimension(2), intent(in), optional :: latitudes  ! range
-    real(rgp), dimension(2), intent(in), optional :: longitudes  ! range
-    real(r8), dimension(2), intent(in), optional :: times  ! range
+    real(rgp), dimension(2), intent(in), optional :: longitudes ! range
+    real(r8), dimension(2), intent(in), optional  :: intimes    ! range
+    real(rgp), dimension(2), intent(in), optional :: hoursInDay ! range
+    integer, dimension(2), intent(in), optional   :: chunks     ! range
     ! Local variables
     integer :: i, n
     integer, dimension(:), pointer :: intrsctn
-    integer, dimension(300) :: whichFreqs ! subscripts
-    integer, dimension(60) :: whichLevels ! subscripts
-    integer, dimension(4000) :: whichTimes  ! subscripts
     integer, dimension(4000) :: tempTimes  ! subscripts
-
+    real(r8), dimension(2)  :: times
     integer :: useFreqs  
     integer :: useLevels 
     integer :: useTimes  
+    integer, dimension(300) :: whichFreqs ! subscripts
+    integer, dimension(60) :: whichLevels ! subscripts
+    integer, dimension(4000) :: whichTimes  ! subscripts
+
     ! logical, parameter :: DEEBug = .true.
     
     ! Executable
@@ -674,7 +677,7 @@ contains ! =====     Public Procedures     =============================
     enddo
     useFreqs = max( ol2gp%nFreqs, 1 )
     useTimes = ol2gp%nTimes
-    useLevels = ol2gp%nLevels
+    useLevels = max(ol2gp%nLevels, 1)
     if ( present(pressures) ) then
       if ( any(IsFillValue(pressures, ol2gp%MissingValue)) ) then
         ! we do nothing
@@ -729,7 +732,13 @@ contains ! =====     Public Procedures     =============================
         call deallocate_test( intrsctn, 'intersection with lons', ModuleName )
       endif
     endif
-    if ( present(times) ) then
+    ! Time may be represented as either TAI (s after midnight Jan 1 1993)
+    if ( present(intimes) ) then
+      times = intimes
+    elseif ( present(hoursInDay) ) then
+      times = hoursInDayToTime( hoursInDay, ol2gp )
+    endif
+    if ( present(intimes) .or. present(hoursInDay) ) then
       if ( any(IsFillValue(times, real(ol2gp%MissingValue, r8))) ) then
         ! we do nothing
       else
@@ -739,17 +748,21 @@ contains ! =====     Public Procedures     =============================
           ! Reverse sense (i.e., find outside of range)
           call FindInRange( ol2gp%time, times, tempTimes, n, options='-r' )
         endif
-        intrsctn => Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
-        useTimes = size(intrsctn)
-        whichTimes(1:useTimes) = intrsctn
-        if ( DeeBug ) then
-          call dump( times, 'times' )
-          call outputNamedValue( 'n', n )
-          call dump( tempTimes(1:n), 'tempTimes' )
-          call dump( intrsctn(1:useTimes), 'intrsctn' )
-        endif
-        call deallocate_test( intrsctn, 'intersection with times', ModuleName )
       endif
+    elseif ( present(chunks) ) then
+      call FindInRange( ol2gp%chunkNumber, chunks, tempTimes, n )
+    endif
+    if ( present(intimes) .or. present(hoursInDay) .or. present(chunks) ) then
+      intrsctn => Intersection( whichTimes(1:useTimes), tempTimes(1:n) )
+      useTimes = size(intrsctn)
+      whichTimes(1:useTimes) = intrsctn
+      if ( DeeBug ) then
+        call dump( times, 'times' )
+        call outputNamedValue( 'n', n )
+        call dump( tempTimes(1:n), 'tempTimes' )
+        call dump( intrsctn(1:useTimes), 'intrsctn' )
+      endif
+      call deallocate_test( intrsctn, 'intersection with times', ModuleName )
     endif
     call SetupNewL2GPRecord ( l2gp, &
       & ol2gp%nFreqs, &
@@ -1392,9 +1405,9 @@ contains ! =====     Public Procedures     =============================
         & geoBoxNames, geoBoxLowBound, geoBoxHiBound )
     else
       call ContractL2GPRecord ( fullL2gp1, l2gp1, pressures=pressures, &
-        & latitudes=latitudes, longitudes=longitudes, times=times )
+        & latitudes=latitudes, longitudes=longitudes, intimes=times )
       call ContractL2GPRecord ( fullL2gp2, l2gp2, pressures=pressures, &
-        & latitudes=latitudes, longitudes=longitudes, times=times )
+        & latitudes=latitudes, longitudes=longitudes, intimes=times )
     endif
     if ( present(chunks) ) then
       call DiffL2GPData_Chunks ( L2gp1, L2gp2, chunks, &
@@ -2314,7 +2327,7 @@ contains ! =====     Public Procedures     =============================
         & geoBoxNames, geoBoxLowBound, geoBoxHiBound )
     else
       call ContractL2GPRecord ( fullL2gp, l2gp, pressures=pressures, &
-        & latitudes=latitudes, longitudes=longitudes, times=times )
+        & latitudes=latitudes, longitudes=longitudes, intimes=times )
     endif
     if ( present(chunks) ) then
       call DUMP_L2GP_Chunks ( L2gp, Chunks, &
@@ -5023,6 +5036,16 @@ contains ! =====     Public Procedures     =============================
     L2GPFile%lastOperation = 'write'
     call MLSMessageCalls( 'pop' )
   end subroutine writeL2GPData_MLSFile
+  
+  elemental function hoursInDayToTime( hid, l2gp ) result( time )
+    ! Given rgp hid, return r8 time as tai(s)
+    ! Args:
+    real(rgp), intent(in)            :: hid ! hours in day
+    type (L2GPData_T), intent(in)   :: l2gp
+    real(r8)                        :: time
+    ! Executable
+    time = 3600._r8*hid + l2gp%time(1)
+  end function hoursInDayToTime
 
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
@@ -5041,6 +5064,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.189  2013/01/02 21:00:37  pwagner
+! Warn instead dying if no swaths to copy
+!
 ! Revision 2.188  2012/10/09 00:34:52  pwagner
 ! Fixed bugs in OutputL2GP_attributes_MF, AppendL2GPData
 !
