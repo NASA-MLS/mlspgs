@@ -922,7 +922,8 @@ contains
       & F_SIGNALS,  F_SPECTROSCOPY, F_STOP, &
       & F_STOPWITHERROR, F_SURFACE, F_TEMPLATE, F_TEXT, F_TGRID, &
       & F_VECTOR, F_VECTORMASK, F_VGRID, &
-      & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE
+      & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE, &
+      & FIELD_FIRST, FIELD_LAST
     use L2PARINFO, only: PARALLEL, CLOSEPARALLEL
     use L2PC_M, only: L2PCDATABASE, DUMPL2PC => DUMP
     use INTRINSIC, only: PHYQ_DIMENSIONLESS
@@ -984,6 +985,7 @@ contains
     character(len=128) :: Farewell
     integer :: FieldIndex
     integer :: FileIndex
+    logical, dimension(field_first:field_last) :: GOT
     logical :: GotFirst ! of something -- needed if diffing 2 of them
     logical :: GotOne ! of something -- used to test loop completion
     integer :: GSON, I, J, K, L, Look
@@ -1079,6 +1081,7 @@ contains
     GotFirst = .false.
     details = 0 - DetailReduction
     OPTIONSSTRING = '-'
+    got= .false.
 
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -1087,6 +1090,7 @@ contains
       L2CFNODE = son
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       source = source_ref(gson) ! column + 256*line in l2cf
+      got(fieldIndex) = .true.
       select case ( fieldIndex )
       ! This first heaped set of fields need no "right-hand side"
       case ( f_allBooleans, f_allFiles, f_allForwardModels, f_allGriddedData, &
@@ -1287,6 +1291,7 @@ contains
         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
         if ( type /= num_value ) call announceError ( gson, numeric )
         details = nint(values(1)) - DetailReduction
+        ! call outputnamedValue( 'DetailReduction', DetailReduction )
         ! call outputnamedValue( 'Details', details )
       case ( f_file )
         if ( present(fileDataBase) ) then
@@ -1438,8 +1443,13 @@ contains
             endif
             rmsFormat = '*'
           else if ( fieldIndex == f_mask ) then
+            if ( got(f_details) ) &
+              & call outputNamedValue( 'Dump mask with details', details )
+            if ( got(f_options) ) &
+              & call outputNamedValue( 'Dump mask with options', optionsString )
             call dumpQuantityMask ( GetVectorQtyByTemplateIndex( &
-              & vectors(vectorIndex), quantityIndex), details=details )
+              & vectors(vectorIndex), quantityIndex), &
+              & details=details, options=optionsString )
           else
             ! Special options handling
             ! 'c' means clean
@@ -1457,7 +1467,7 @@ contains
             else if ( index(optionsString, '0') > 0 ) then
               call dump ( qty1%template, details=details )
             else
-              call dumpQuantityMask( qty1, details=0 )
+              call dumpQuantityMask( qty1, details=0, options=optionsString )
             end if
           end if
         end do
@@ -2108,6 +2118,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.81  2013/02/21 21:38:10  pwagner
+! Pass options string when dumping quantity mask
+!
 ! Revision 2.80  2013/02/12 18:17:44  pwagner
 ! Removed SIPS_VERSION; raised -Sbool switch needed for most printing
 !
