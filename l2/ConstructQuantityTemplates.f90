@@ -869,7 +869,8 @@ contains ! ============= Public procedures ===================================
   end subroutine Announce_Error
 
   ! -----------------------------------------------  AnyGoodSignalData  -----
-  function AnyGoodSignalData ( signal, sideband, filedatabase, Chunk )  result (answer)
+  function AnyGoodSignalData ( SIGNAL, SIDEBAND, FILEDATABASE, CHUNK, MAFWISE ) &
+    &  result (ANSWER)
   ! Read precision of signal
   ! if all values < 0.0, return FALSE
   ! if no precision data in file, return FALSE
@@ -885,19 +886,24 @@ contains ! ============= Public procedures ===================================
     use MLSFILES, only: GETMLSFILEBYTYPE
     use MLSSIGNALS_M, only: GETSIGNALNAME
 
-    integer, intent(in) :: signal
-    integer, intent(in) :: sideband
-    logical             :: answer
-    type (MLSChunk_T), intent(in) :: Chunk
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    integer, intent(in)                         :: signal
+    integer, intent(in)                         :: sideband
+    logical                                     :: answer
+    type (MLSChunk_T), intent(in)               :: Chunk
+    type (MLSFile_T), dimension(:), pointer     :: FILEDATABASE
+    logical, dimension(:), optional, intent(out):: MAFWISE
   ! Private
-    integer :: FileID, flag, noMAFs
+    ! integer :: FileID
+    integer :: flag
+    integer :: i
+    integer :: noMAFs
     character(len=127)  :: namestring
     type (l1bData_T) :: MY_L1BDATA
     type (MLSFile_T), pointer ::     L1BFile
 
   ! Executable
   answer = .false.
+  if ( present(mafwise) ) mafwise = .false.
     L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
     if ( .not. associated(L1BFile) ) return
     call GetSignalName ( signal, nameString, &                   
@@ -917,6 +923,11 @@ contains ! ============= Public procedures ===================================
       & NeverFail= .true. )
     if ( flag == 0 ) then
       answer = .not. all (my_l1bData%DpField < 0._rk)
+      if ( present( mafwise) ) then
+        do i = 1, chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+          mafwise(i) = .not. all (my_l1bData%DpField(:,:,i) < 0._rk)
+        enddo
+      endif
       call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
     else
       answer = .false.
@@ -1334,6 +1345,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.167  2013/02/21 21:37:10  pwagner
+! New optional arg mafwise to return anysignaldata maf-by-maf
+!
 ! Revision 2.166  2012/01/05 01:20:47  pwagner
 ! Capitalized USEd stuff
 !
