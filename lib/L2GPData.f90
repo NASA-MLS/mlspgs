@@ -2362,6 +2362,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ChunkFillValue
     real(r8) :: FillValue
     real(rgp) :: FillValueGP
+    real(rgp), dimension(:), pointer :: hoursInDay
     integer :: i
     integer :: ierr
     logical :: myColumnsOnly
@@ -2462,9 +2463,18 @@ contains ! =====     Public Procedures     =============================
         & call dump ( l2gp%geodAngle, 'geodAngle:', FillValue=FillValueGP, &
         & width=width, options=options )
 
-      if ( showMe(myDetails > -1, myFields, 'time') ) &
-        & call dump ( l2gp%time, 'Time:', FillValue=FillValue, &
+      if ( showMe(myDetails > -1, myFields, 'time') ) then
+        nullify( hoursInDay )
+        call dump ( l2gp%time, 'Time:', FillValue=FillValue, &
         & width=width, options=options )
+        call allocate_test ( hoursInDay, l2gp%nTimes, &
+          & 'hoursInDay', ModuleName )
+        hoursInDay = timeToHoursInDay ( l2gp%time )
+        call dump ( hoursInDay, 'Hours In Day:', FillValue=FillValueGP, &
+        & width=width, options=options )
+        call deallocate_test ( hoursInDay, &
+          & 'hoursInDay', ModuleName )
+      endif
 
       if ( showMe(myDetails > -1, myFields, 'chunkNumber') ) &
         & call dump ( l2gp%chunkNumber, 'ChunkNumber:', &
@@ -5047,6 +5057,23 @@ contains ! =====     Public Procedures     =============================
     time = 3600._r8*hid + l2gp%time(1)
   end function hoursInDayToTime
 
+  elemental function TimeToHoursInDay( time, l2gp ) result( hid )
+    ! Given rgp hid, return r8 time as tai(s)
+    ! Args:
+    real(r8), intent(in)                      :: time
+    type (L2GPData_T), optional, intent(in)   :: l2gp
+    real(rgp)                                 :: hid ! hours in day
+    ! Local variables
+    integer :: theday
+    ! Executable
+    if ( present(l2gp) ) then
+      hid = (time - l2gp%time(1)) / 3600
+    else
+      theDay = (time+10._r8) / (24*3600._r8)
+      hid = (time - theDay*24*3600._r8) / 3600
+    endif
+  end function TimeToHoursInDay
+
 !=============================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -5064,6 +5091,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.190  2013/02/21 22:22:53  pwagner
+! New optional args ti ContractL2GPRecord
+!
 ! Revision 2.189  2013/01/02 21:00:37  pwagner
 ! Warn instead dying if no swaths to copy
 !
