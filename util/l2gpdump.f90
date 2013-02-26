@@ -13,26 +13,28 @@
 PROGRAM L2GPDump ! dumps L2GPData files
 !=================================
 
-   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-   use BitStuff, only: ISBITSET
-   use dump_0, only: dump
-   use Hdf, only: DFACC_READ
-   use HDF5, only: h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
-   use intrinsic, only: l_swath
-   use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
-     & Dump, DumpRange, ReadL2GPData, DestroyL2GPContents
+   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+   use BITSTUFF, only: ISBITSET
+   use DUMP_0, only: DUMP
+   use HDF, only: DFACC_READ
+   use HDF5, only: H5FCLOSE_F, H5GOPEN_F, H5GCLOSE_F, H5FIS_HDF5_F   
+   use INTRINSIC, only: L_SWATH
+   use L2GPDATA, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, RGP, &
+     & CONTRACTL2GPRECORD, DUMP, DUMPRANGE, READL2GPDATA, DESTROYL2GPCONTENTS, &
+     & SETUPNEWL2GPRECORD
    use MACHINE, only: HP, GETARG
-   use MLSCommon, only: MLSFile_T
-   use MLSFiles, only: HDFVERSION_5, InitializeMLSFile, MLS_INQSWATH, &
-     & close_MLSFile, open_MLSFile, split_path_name
-   use MLSHDF5, only: mls_h5open, mls_h5close
-   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
-     & MLSMessage
-   use MLSStringLists, only: catLists, ExpandStringRange, &
-     & GetStringElement, NumStringElements, &
-     & stringElement, stringElementNum
-   use OUTPUT_M, only: blanks, newline, OUTPUT, outputNamedValue, &
-     & resumeOutput, suspendOutput
+   use MLSCOMMON, only: MLSFILE_T
+   use MLSFILES, only: HDFVERSION_5, INITIALIZEMLSFILE, MLS_INQSWATH, &
+     & CLOSE_MLSFILE, OPEN_MLSFILE, SPLIT_PATH_NAME
+   use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
+   use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, MLSMSG_ERROR, MLSMSG_WARNING, &
+     & MLSMESSAGE
+   use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, &
+     & GETSTRINGELEMENT, NUMSTRINGELEMENTS, READINTSFROMLIST, &
+     & STRINGELEMENT, STRINGELEMENTNUM
+   use MLSSTRINGS, only: READNUMSFROMCHARS
+   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE, &
+     & RESUMEOUTPUT, SUSPENDOUTPUT
    
    implicit none
 
@@ -57,7 +59,9 @@ PROGRAM L2GPDump ! dumps L2GPData files
   integer, parameter :: MAXNCHUNKS = 50
 
   type options_T
-    character(len=255) ::   chunks = '*' ! wild card means 'all'
+     character(len=255) ::  chunks = '*' ! wild card means 'all'
+     integer, dimension(2)::chunkRange = 0
+     real, dimension(2)  :: hoursRange = 0.
      logical ::             debug = .true.
      logical ::             verbose = .false.
      logical ::             senseInquiry = .true.
@@ -174,6 +178,27 @@ contains
         options%columnsOnly = .true.
       else if ( filename(1:6) == '-chunk' ) then
         call getarg ( i+1+hp, options%chunks )
+        i = i + 1
+        if ( index(options%chunks, '-') > 0 ) then
+          ! call ReadIntsFromList( options%chunks, options%chunks, &
+          !  & inseparator='-' )
+          print *, 'Sorry--ReadIntsFromList not coded for this format'
+          stop
+        else
+          call ReadIntsFromList( options%chunks, options%chunkRange )
+          if ( options%chunkRange(2) < options%chunkRange(1) ) &
+            & options%chunkRange(2) = options%chunkRange(1)
+        endif
+      else if ( filename(1:5) == '-hour' ) then
+        call getarg ( i+1+hp, argstr )
+        call ReadNumsFromChars( StringElement (argstr, 1, .true. ), &
+          & options%hoursRange(1) )
+        call ReadNumsFromChars( StringElement (argstr, 2, .true. ), &
+          & options%hoursRange(2) )
+        if ( options%hoursRange(2) < options%hoursRange(1) ) &
+          & options%hoursRange(2) = options%hoursRange(1)
+        print *, 'argstr: ', argstr
+        print *, 'hours: ', options%hoursRange
         i = i + 1
       else if ( filename(1:5) == '-conv' ) then
         call getarg ( i+1+hp, argstr )
@@ -427,26 +452,45 @@ contains
         call dump(file1, l2gp)
         call close_MLSFile ( MLSFile )
       endif
-      call myDump( options, l2gp, swath )
+      if ( options%ConvergenceCutOff > -1. .or. options%QualityCutOff > -1. .or. &
+        & options%PrecisionCutOff > -1. .or. options%statusBits ) then
+        call myPcts( options, l2gp, swath )
+      else
+        call myDump( options, l2gp, swath )
+      endif
       call DestroyL2GPContents ( l2gp )
     enddo
    end subroutine dump_one_file
 
-   subroutine myDump( options, l2gp, swath )
+   subroutine myPcts( options, inl2gp, swath )
      ! Args
      type ( options_T ), intent(in)  :: options
-     type (L2GPData_T), intent(in)   :: l2gp
-     character(len=*), intent(in) :: swath
+     type (L2GPData_T), intent(in)   :: inl2gp
+     character(len=*), intent(in)    :: swath
      ! Internal variables
-     logical                         :: alreadyDumped
-     integer                         :: bitindex, i
-     integer, dimension(MAXNCHUNKS) :: chunks
-     integer :: nChunks
+     integer                         :: bitindex, i, n
+     type (L2GPData_T)               :: l2gp
      logical, dimension(:), pointer  :: negativePrec => null() ! true if all prec < 0
      logical, dimension(:), pointer  :: oddStatus => null() ! true if all status odd
      ! Executable
-     alreadyDumped = .false.
      if ( options%verbose ) print *, 'swath: ', trim(swath)
+     ! Contract to just the levels and instances requested
+     n = options%nGeoBoxDims
+     if ( any(options%chunkRange /= 0) ) then
+       call ContractL2GPRecord ( inl2gp, l2gp, chunks=options%chunkRange )
+     elseif ( any(options%hoursRange /= 0.) ) then
+       print *, 'Contracting according to hours in day: ', options%hoursRange
+       call ContractL2GPRecord ( inl2gp, l2gp, hoursInDay=options%hoursRange )
+     elseif ( n > 0 ) then
+       call ContractL2GPRecord ( inl2gp, l2gp, &
+         & options%geoBoxNames, &
+         & options%geoBoxLowBound(1:n), options%geoBoxHiBound(1:n) )
+     else
+       call SetupNewL2GPRecord ( l2gp, proto=inl2gp )
+     endif
+     ! print *, 'chunkRange ', options%chunkRange
+     ! print *, 'Contracted l2gp'
+     ! call dump( l2gp )
      if ( .not. options%merge ) then
        bitCounts = 0
        numGood = 0
@@ -466,7 +510,6 @@ contains
      numGood = numGood + count( .not. ( negativePrec .or. &
        & (mod(l2gp%status, 2) > 0) ) )
      if ( options%ConvergenceCutOff > -1. ) then
-       alreadyDumped = .true.
        numTest(1) = numTest(1) + count( .not. ( negativePrec .or. &
          & (mod(l2gp%status, 2) > 0) .or. &
          & (l2gp%Convergence < options%ConvergenceCutOff) ) )
@@ -475,16 +518,16 @@ contains
          & options%ConvergenceCutOff, 'above' )
      endif
      if ( options%QualityCutOff > -1. ) then
-       alreadyDumped = .true.
        numTest(2) = numtest(2) + count( .not. ( negativePrec .or. &
          & (mod(l2gp%status, 2) > 0) .or. &
          & (l2gp%Quality > options%QualityCutOff) ) )
+       print *, 'numTest(2) ', numTest(2)
+       print *, 'numGood ', numGood
        if ( .not. options%merge ) &
          & call showPercentages( numTest(2), numGood, 'Quality', &
          & options%QualityCutOff, 'below' )
      endif
      if ( options%PrecisionCutOff > -1. ) then
-       alreadyDumped = .true.
        ! numGood = 0
        ! numTest = 0
        do i=1, l2gp%nTimes
@@ -504,7 +547,6 @@ contains
      numNotUseable = numNotUseable + count ( negativePrec .or. oddStatus )
      numOddStatus = numOddStatus + count( oddStatus )
      if ( options%statusBits ) then
-       alreadyDumped = .true.
        ! First, and last 3 bits are special
        ! For bit 0 we filter out only points with precision < 0
        ! For the last 3
@@ -534,13 +576,35 @@ contains
      endif
      call deallocate_test( negativePrec, 'negativePrec', ModuleName )
      call deallocate_test( oddStatus, 'oddStatus', ModuleName )
-     if ( alreadyDumped ) return
+     call DestroyL2GPContents( l2gp )
+   end subroutine myPcts
+
+   subroutine myDump( options, l2gp, swath )
+     ! Args
+     type ( options_T ), intent(in)  :: options
+     type (L2GPData_T), intent(in)   :: l2gp
+     character(len=*), intent(in)    :: swath
+     ! Internal variables
+     integer, dimension(MAXNCHUNKS)  :: chunks
+     type (L2GPData_T)               :: contractedl2gp
+     integer                         :: nChunks
      ! Dump the actual swath
+     if ( options%verbose ) print *, 'swath: ', trim(swath)
      if ( options%nGeoBoxDims > 0 ) then
        call dumpRange( l2gp, &
          & options%geoBoxNames, options%geoBoxLowBound, options%geoBoxHiBound, &
          & columnsOnly=options%columnsOnly, details=options%details, &
          & fields=options%fields, options=options%dumpOptions )
+     elseif ( any(options%hoursRange /= 0.) ) then
+       print *, 'Contracting according to hours in day: ', options%hoursRange
+       call ContractL2GPRecord ( l2gp, contractedl2gp, &
+         & hoursInDay=options%hoursRange )
+       call dump( contractedl2gp, &
+         & columnsOnly=options%columnsOnly, details=options%details, &
+         & fields=options%fields, &
+         & width=options%width, options=options%dumpOptions )
+       call showSummary
+       call DestroyL2GPContents ( contractedl2gp )
      elseif ( options%chunks == '*' ) then
        call dump(l2gp, options%columnsOnly, options%details, options%fields, &
          & width=options%width, options=options%dumpOptions)
@@ -633,6 +697,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.11  2011/05/26 20:47:55  pwagner
+! Repaired use of Cutoffs for Quality and Precision (we hope)
+!
 ! Revision 1.10  2011/02/18 23:10:27  pwagner
 ! Passes -d opts to dump routines
 !
