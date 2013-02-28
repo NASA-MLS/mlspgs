@@ -27,7 +27,7 @@ contains
 
   ! Compute the pressure and zeta GL grids.
 
-    use GLnp, only: GX, NGP1
+    use GLnp, only: GX, NGP1 ! Gauss abscissae, # Gauss abscissae + 1
     use MLSCommon, only: RP, R8
 
   ! Inputs:
@@ -47,7 +47,8 @@ contains
 
     nlvl = size(z_psig)
     NLm1 = Nlvl - 1
-    maxVert = nlm1 * ngp1 + 1
+    ! Using "min" is necessary below in case there is no tangent point
+    maxVert = min ( nlm1 * ngp1 + 1, ubound(z_glgrid,1) )
 
 ! From the selected integration grid pressures define the GL pressure grid:
 
@@ -76,6 +77,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.20  2013/02/28 21:05:48  vsnyder
+! Try to cope with short paths
+!
 ! Revision 2.19  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
