@@ -968,11 +968,11 @@ contains
     real(rp) :: Del_basis
     integer :: I, J, N_Coeffs, MyRow1, MyRowN
 
-    myRow1 = row1
-    myRowN = rowN
-    if ( grid(row1) > grid(rowN) ) then ! grid is in opposite order.
-      myRow1 = rowN
-      myRowN = row1
+    myRow1 = min(row1,ubound(grid,1))
+    myRowN = min(rowN,ubound(grid,1))
+    if ( grid(myRow1) > grid(myRowN) ) then ! grid is in opposite order.
+      myRow1 = min(rowN,ubound(grid,1))
+      myRowN = min(row1,ubound(grid,1))
     end if
 
     if ( .not. update ) then
@@ -1434,6 +1434,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.24  2011/06/23 01:13:31  vsnyder
+! Add Get_Eta_1D_Hunt
+!
 ! Revision 2.23  2010/06/07 23:17:20  vsnyder
 ! Add another representation for and interpolation using etas
 !

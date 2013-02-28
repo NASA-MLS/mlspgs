@@ -909,15 +909,17 @@ path: do i = i1, i2
     end do
 
     ! now for the optional tangent quantities.
-    if ( present(tan_phi_t) ) &
-      & tan_phi_t = dot_product(t_ref(tan_ind,col1(n_tan):col2(n_tan)), &
-        & eta_p(n_tan,col1(n_tan):col2(n_tan)))
-    if ( present(dhtdzt) ) &
-      & dhtdzt = dot_product(dhidzij(tan_ind,col1(n_tan):col2(n_tan)), &
-        & eta_p(n_tan,col1(n_tan):col2(n_tan)))
+    if ( n_tan <= n_path ) then
+      if ( present(tan_phi_t) ) &
+        & tan_phi_t = dot_product(t_ref(tan_ind,col1(n_tan):col2(n_tan)), &
+          & eta_p(n_tan,col1(n_tan):col2(n_tan)))
+      if ( present(dhtdzt) ) &
+        & dhtdzt = dot_product(dhidzij(tan_ind,col1(n_tan):col2(n_tan)), &
+          & eta_p(n_tan,col1(n_tan):col2(n_tan)))
 
-    ! compute tangent temperature derivatives
-    if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives ( size(z_basis) )
+      ! compute tangent temperature derivatives
+      if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives ( size(z_basis) )
+    end if
 
     if ( do_dumps > 0 ) then
       call dump ( t_ref, name='t_ref', format='(1pg14.6)', options=options )
@@ -1059,7 +1061,7 @@ path: do i = i1, i2
     p_coeffs = size(p_basis)
     n_new = 0
     h2 = 0.0 ! Just so it's defined; this value is never used
-    do i = tan_ind, 1, -1
+    do i = min(tan_ind,ubound(z_ref,1)), 1, -1
       none = .true. ! Assume there will be no intersections
       do j = 1, size(h_ref,2)
         h1 = h2
@@ -1125,6 +1127,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.68  2011/05/09 18:02:19  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.67  2010/02/04 23:10:20  vsnyder
 ! Remove USE for unreferenced names
 !
