@@ -93,6 +93,7 @@ contains
 
     my_tan = size(path_zeta) / 2
     if ( present(tan_pt) ) my_tan = tan_pt
+    my_tan = min ( my_tan, ubound(path_zeta,1) )
 
     sps_1 = 1
     sps_n = ubound(Grids_x%l_z,1)
@@ -239,6 +240,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.16  2013/02/28 21:05:48  vsnyder
+! Try to cope with short paths
+!
 ! Revision 2.15  2010/09/25 01:20:35  vsnyder
 ! Correct intent for Do_Calc_zp argument of Comp_Eta_fzp
 !
