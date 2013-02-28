@@ -328,7 +328,7 @@ contains
     logical :: Bad      ! Ref_Corr < 1 somewhere
     integer(ip) :: HNDP ! "Solve_Hn Detail Printing"
     integer(ip) :: RCFX ! "Ref_Cor FiXup printing"
-    integer(ip) :: j, j1, j2, k, m, no_ele, panel_stat, stat
+    integer(ip) :: j, j1, j2, k, m, no_ele, panel_stat, stat, My_Tan
 
     real(rp) :: INTEGRAND_GL(Ng)
 
@@ -349,17 +349,18 @@ contains
     if ( switchDetail(switches,'RCFX') > -1 ) rcfx = 2
 
     no_ele = size(n_path)
+    my_tan = min(tan_pt, no_ele)
 
   !  Initialize the ref_corr array:
 
     ref_corr(1:no_ele) = 1.0_rp
 
     htan2 = ht * ht
-    Nt2Ht2 = (n_path(tan_pt)*ht)**2
+    Nt2Ht2 = (n_path(my_tan)*ht)**2
 
     bad = .false.
 
-    j1 = tan_pt
+    j1 = my_tan
     j2 = 2
     del_s(1) = 0.0
     do m = -1, 1, 2
@@ -444,6 +445,7 @@ contains
 
       end do ! j
 
+      if ( my_tan < tan_pt ) exit
       j1 = tan_pt + 1
       j2 = no_ele - 1
       del_s(no_ele) = 0.0
@@ -578,8 +580,9 @@ contains
 
       if ( rcfx /= 0 ) then
         call output ( tan_pt, before='Tan_Pt = ' )
-        call output ( ht, before=', Ht = ', advance='yes' )
-        call dump ( h_path, name='H_Path', format='(f14.4)' )
+        call output ( ht, before=' Ht = ' )
+        call output ( no_ele, before=' No_Ele = ' )
+        call dump ( h_path, name=' H_Path', format='(f14.4)' )
         call dump ( n_path-1.0, name='N_Path' )
         call dump ( ref_corr, name='Ref_Corr' )
       end if
@@ -595,6 +598,7 @@ contains
         & ) < 0 ) return
       call output ( tan_pt, before='Tan_PT = ' )
       call output ( ht, before=', Ht = ' )
+      call output ( no_ele, before=' No_Ele = ' )
       if ( present(NH) ) then
         call output ( stat, before=', stat = ', advance='yes' )
         call output ( n1, before='n1 = ' )
@@ -630,6 +634,9 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.42  2012/02/16 22:44:36  pwagner
+! Skip printing Ref_Corr msg unless switch rcfx set
+!
 ! Revision 2.41  2011/05/09 18:03:33  pwagner
 ! Converted to using switchDetail
 !
