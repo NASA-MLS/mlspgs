@@ -81,7 +81,7 @@ contains
   ! Forward Model Algorithm Theoretical Basis Document}, Jet Propulsion Laboratory
   ! document JPL D-18130, 19 August 2004.
 
-    use GLNP, only: GX, NG
+    use GLNP, only: GX, NG ! Gauss abscissae, # Gauss abscissae
     use MLSKinds, only: RP, R8
 
   ! Inputs
@@ -122,14 +122,18 @@ contains
     integer :: I, I1, I2   ! Subscript, loop limits
     integer :: M           ! Direction away from tangent point, +/- 1
     integer :: MNG         ! M * (NG + 1)
+    integer :: My_Tan      ! min(tan_pt,ubound(phi_corr,1))
 
-    ht = h_path(tan_pt)
-    nt = 1.0_r8 + n_path(tan_pt)
+    ! Assumes ubound(phi_corr,1) == ubound(n_path,1) == u_bound(h_path,1)
+    my_tan = min(tan_pt,ubound(phi_corr,1))
+    ht = h_path(my_tan)
+    nt = 1.0_r8 + n_path(my_tan)
 
-    i1 = tan_pt - (ng + 1)
+    i1 = my_tan - (ng + 1)
     i2 = 1
-    phi_corr(tan_pt) = 0.0
-    phi_corr(tan_pt+1) = 0.0 ! Account for zero-thickness tangent layer
+    phi_corr(my_tan) = 0.0
+    if ( my_tan < ubound(phi_corr,1) ) &
+      & phi_corr(my_tan+1) = 0.0 ! Account for zero-thickness tangent layer
 
     do m = -1, 1, 2
       mng = m * (ng + 1)
@@ -146,13 +150,13 @@ contains
             & ii = ii + dHdz_gw(g) * &
               & ( ab / sqrt(dab) - a / sqrt(da) )
         end do
-        ! The factor of 0.5 is because GW are on -1..1
+        ! The factor of 0.5 is because GX are on -1..1
         ii = 0.5 * (z_path(i) - z_path(i-mng)) * ii / ht
         phi_corr(i) = phi_corr(i-mng) + ii
         ! Linear interpolation from coarse to fine grid
         phi_corr(i-mng+m:i-m:m) = phi_corr(i-mng) + ii * gx01
       end do ! i
-      i1 = tan_pt + ng + 2
+      i1 = my_tan + ng + 2
       i2 = size(n_path)
     end do ! m
 
@@ -189,13 +193,18 @@ contains
     real(r8) :: NT         ! N at tangent point
     integer :: I, I1, I2   ! Subscript, loop limits
     integer :: M           ! Direction away from tangent point, +/- 1
+    integer :: My_Tan      ! min(tan_pt,size(h_path))
 
-    ht = h_path(tan_pt)
-    nt = 1.0_r8 + n_path(tan_pt)
+    ! Assumes ubound(phi_corr,1) == ubound(n_path,1) == u_bound(h_path,1)
+    my_tan = min(tan_pt,ubound(phi_corr,1))
+    ht = h_path(my_tan)
+    nt = 1.0_r8 + n_path(my_tan)
 
-    i1 = tan_pt - 1
+    i1 = my_tan - 1
     i2 = 1
-    phi_corr(tan_pt:tan_pt+1) = 0.0 ! Account for zero-thickness tangent layer
+    phi_corr(my_tan) = 0.0 ! Account for zero-thickness tangent layer
+    if ( my_tan < ubound(phi_corr,1) ) &
+      & phi_corr(my_tan+1) = 0.0 ! Account for zero-thickness tangent layer
 
     do m = -1, 1, 2
       ip = 0.0
@@ -216,7 +225,7 @@ contains
         ap = a
         ip = ii
       end do ! i
-      i1 = tan_pt + 2
+      i1 = my_tan + 2
       i2 = size(n_path)
     end do ! m
 
@@ -246,6 +255,7 @@ contains
     real(r8) :: NT         ! N at tangent point
     integer :: I           ! Subscript
 
+    if ( ubound(h_path,1) < 1 ) return
     ht = h_path(1)
     nt = 1.0_r8 + n_path(1)
 
@@ -253,7 +263,7 @@ contains
 
     ip = 0.0
     ap = 1.0
-    do i = 2, size(h_path)
+    do i = 2, ubound(h_path,1)
       ! trapezoidal quadrature on one panel
       a = ( ht / h_path(i) )
       b = nt / (1.0_r8 + n_path(i))
@@ -285,6 +295,9 @@ contains
 end module Phi_Refractive_Correction_m
 
 ! $Log$
+! Revision 2.5  2013/02/28 21:05:48  vsnyder
+! Try to cope with short paths
+!
 ! Revision 2.4  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
