@@ -13,15 +13,16 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   ! This modules contains routines needed for manipulating vectors.
 
-  use MLSMessageModule, only: MLSMSG_Error, &
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, &
     & MLSMESSAGE, MLSMESSAGECALLS
-  use MLSCommon, only: R8, RV
-  use MLSNumerics, only: HUNT
+  use MLSKINDS, only: R8, RV
+  use MLSNUMERICS, only: HUNT
   use MOLECULES, only: L_RHI
-  use output_m, only: OUTPUTNAMEDVALUE
-  use VectorsModule, only: VECTORVALUE_T, VECTOR_T, DUMP
-  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE, &
-    & L_VMR, L_COLUMNABUNDANCE, L_ISOTOPERATIO, L_RADIANCE, L_CALSIDEBANDFRACTION, L_LIMBSIDEBANDFRACTION, L_TSCAT, &
+  use OUTPUT_M, only: OUTPUTNAMEDVALUE
+  use VECTORSMODULE, only: VECTORVALUE_T, VECTOR_T, DUMP
+  use INTRINSIC, only: L_CALSIDEBANDFRACTION, L_CHANNEL, L_COLUMNABUNDANCE, &
+    & L_ISOTOPERATIO, L_PHITAN, L_NONE, &
+    & L_VMR, L_RADIANCE, L_LIMBSIDEBANDFRACTION, L_TSCAT, &
     & PHYQ_ANGLE, PHYQ_PROFILES
 
   implicit none
@@ -34,10 +35,10 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   private
 
-  public :: AnyGoodDataInQty, FindClosestInstances, FindOneClosestInstance, &
-    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoVGridsMatch_Vec, &
-    & DoFGridsMatch, DoQtysDescribeSameThing, &
-    & DoVectorsMatch, FillWithCombinedChannels
+  public :: ANYGOODDATAINQTY, DOHGRIDSMATCH, DOVGRIDSMATCH, DOVGRIDSMATCH_VEC, &
+    & DOFGRIDSMATCH, DOQTYSDESCRIBESAMETHING, DOVECTORSMATCH, &
+    & FILLWITHCOMBINEDCHANNELS, FINDCLOSESTINSTANCES, FINDONECLOSESTINSTANCE, &
+    & FINDINSTANCEWINDOW
 
   interface DoVGridsMatch
     module procedure DoVGridsMatch_Vec
@@ -148,7 +149,7 @@ contains
   ! ---------------------------------------- FindOneClosestInstance -----
   integer function FindOneClosestInstance ( referenceQuantity, &
     soughtQuantity, instance, useValue )
-    use HGridsDatabase, only: FINDCLOSESTMATCH
+    use HGRIDSDATABASE, only: FINDCLOSESTMATCH
     ! This returns the instance index into a stacked quantity for the
     ! instance 'closest' to the given instance in an unstacked one
     type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
@@ -201,7 +202,7 @@ contains
 
     ! Executable code
     call MLSMessageCalls( 'push', constantName='FindInstanceWindow' )
-    if ( phiWindow == 0.0 ) then
+    if ( phiWindow == 0.0_r8 ) then
       ! Just return closest instances
       closestInstance = FindOneClosestInstance ( quantity, phiTan, maf, &
         & useValue=.true. )
@@ -232,9 +233,9 @@ contains
 
   ! -------------------------------------- FillWithCombinedChannels ----------
   subroutine FillWithCombinedChannels ( quantity, sourceQuantity, message, mapping )
-    use MatrixModule_0, only: MatrixElement_T, M_Full, CreateBlock, Sparsify
-    use MLSSignals_m, only: SIGNAL_T, GETSIGNAL
-    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+    use MATRIXMODULE_0, only: MATRIXELEMENT_T, M_FULL, CREATEBLOCK, SPARSIFY
+    use MLSSIGNALS_M, only: SIGNAL_T, GETSIGNAL
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     ! This routine takes a (typically radiance) quantity on one set of channels
     ! and combines the channels together appropriately to make them representative
     ! of the data in another (presumably at a finer resolution.
@@ -464,8 +465,8 @@ contains
   ! ------------------------------------------  DoVGridsMatch_Vec  -----
   logical function DoVGridsMatch_Vec ( A, B, RelativeError, Precision )
     ! Returns true if quantities have same vGrid information
-    use MLSFillValues, only: ESSENTIALLYEQUAL
-    use dump_0, only: DUMP
+    use MLSFILLVALUES, only: ESSENTIALLYEQUAL
+    use DUMP_0, only: DUMP
     type (vectorValue_T), intent(in) :: A ! First quantity
     type (vectorValue_T), intent(in) :: B ! Second quantity
     real(rv), optional, intent(in)   :: RelativeError ! May differ by this rel amount
@@ -645,6 +646,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.42  2013/03/01 01:06:06  pwagner
+! Get R8 from MLSKinds
+!
 ! Revision 2.41  2012/07/19 03:33:18  vsnyder
 ! Pass nChan=quantity%template%noChans to CreateBlock
 !
