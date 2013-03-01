@@ -42,18 +42,20 @@ contains
       & F_PERTURBATION, F_SINGLEMAF, F_TSCAT
     use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use LEXER_CORE, only: PRINT_SOURCE
-    use MLSCOMMON, only: R8
+    use MLSKINDS, only: R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MATRIXMODULE_0, only: M_ABSENT, M_FULL, M_BANDED, M_COLUMN_SPARSE, &
       & MATRIXELEMENT_T
     use MATRIXMODULE_1, only: ADDTOMATRIX, COPYMATRIX, CREATEBLOCK, &
       & DESTROYBLOCK, DESTROYMATRIX, DUMP, FINDBLOCK, &
       & GETFROMMATRIXDATABASE, MATRIX_DATABASE_T, MATRIX_T, SCALEMATRIX
+    use MLSL2OPTIONS, only: SKIPRETRIEVAL
     use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
     use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
-    use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
+    use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE, &
+      & DUMPINSTANCEWINDOWS
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -299,7 +301,13 @@ contains
             maf1 = singleMAF
             maf2 = singleMAF
           end if
-            
+          if ( switchDetail( switches, 'fiw' ) > -1 ) &
+            & call DumpInstanceWindows ( &
+            & fwdModelIn, fwdModelExtra, maf1, maf2, &
+            & configDatabase(configs(config)), &
+            & details=switchDetail( switches, 'fiw' ) &
+            & )
+          if ( skipretrieval ) cycle
           ! Loop over mafs
           do maf = maf1, maf2
             fmStat%maf = maf
@@ -335,6 +343,7 @@ contains
         call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
         call DestroyForwardModelIntermediate ! in case scan model got used
         fmStat%newScanHydros = .true.
+        if ( skipRetrieval ) cycle
         
         ! Place the numerical derivative result into Jacobian if needed
         if ( associated ( perturbation ) ) then
@@ -485,6 +494,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.67  2013/03/01 01:09:50  pwagner
+! 'fiw' switch dumps instance window
+!
 ! Revision 2.66  2012/10/11 21:02:16  pwagner
 ! Fix timing error--dont include ForwardModel times
 !
