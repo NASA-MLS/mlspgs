@@ -31,10 +31,11 @@ module ForwardModelConfig
     module procedure Dump_ForwardModelConfigDatabase, Dump_Qty_Stuff
   end interface Dump
 
-  public :: AddForwardModelConfigToDatabase, DeriveFromForwardModelConfig
-  public :: DestroyFWMConfigDatabase, DestroyForwardModelDerived
-  public :: Dump, NullifyForwardModelConfig
-  public :: StripForwardModelConfigDatabase, PVMPackFWMConfig, PVMUnpackFWMConfig
+  public :: ADDFORWARDMODELCONFIGTODATABASE, DERIVEFROMFORWARDMODELCONFIG
+  public :: DESTROYFWMCONFIGDATABASE, DESTROYFORWARDMODELDERIVED
+  public :: DUMP, NULLIFYFORWARDMODELCONFIG
+  public :: PVMPACKFWMCONFIG, PVMUNPACKFWMCONFIG
+  public :: STRIPFORWARDMODELCONFIGDATABASE
  
   ! Public Types:
 
@@ -237,8 +238,8 @@ contains
     ! Add a quantity template to a database, or create the database if it
     ! doesn't yet exist
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-      & MLSMSG_Deallocate, MLSMSG_Error
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+      & MLSMSG_DEALLOCATE, MLSMSG_ERROR
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
@@ -319,10 +320,10 @@ contains
 
       ! Work out which channels are used.
 
-      use Allocate_Deallocate, only: Test_Allocate
-      use FilterShapes_m, only: DACSFilterShapes, FilterShapes
+      use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE
+      use FILTERSHAPES_M, only: DACSFILTERSHAPES, FILTERSHAPES
       use MLSSETS, only: FINDFIRST
-      use MLSSignals_m, only: MatchSignal
+      use MLSSIGNALS_M, only: MATCHSIGNAL
 
       type(channels_T), pointer :: Channels(:)
       integer :: UsedDACSSignals(:)          ! Indices in FwdModelConf_T%Signals
@@ -378,7 +379,7 @@ contains
     ! ...............................................  DACS_Stuff  .....
     subroutine DACS_Stuff ( DACsStaging, UsedDACSSignals )
 
-      use FilterShapes_m, only: DACSFilterShapes
+      use FILTERSHAPES_M, only: DACSFILTERSHAPES
 
       ! Identify which of our signals are DACS and how many unique DACS are involved
       ! Allocate and compute UsedDACSSignals and allocate DACsStaging.
@@ -671,7 +672,7 @@ contains
   ! --------------------------  DestroyForwardModelConfigDatabase  -----
   subroutine DestroyFWMConfigDatabase ( Database, Deep )
 
-    use Allocate_Deallocate, only: Test_Deallocate
+    use ALLOCATE_DEALLOCATE, only: TEST_DEALLOCATE
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
@@ -695,7 +696,7 @@ contains
   subroutine DestroyForwardModelDerived ( FwdModelConf )
     ! Destroy stuff in FwdModelConf derived for one forward model run
 
-    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
 
     type ( ForwardModelConfig_T ), intent(inout) :: FwdModelConf
 
@@ -752,10 +753,10 @@ contains
 
   ! --------------------------------------------- PVMPackFwmConfig -----
   subroutine PVMPackFWMConfig ( config )
-    use PVMIDL, only: PVMIDLPack
-    use MorePVM, only: PVMPackLitIndex, PVMPackStringIndex
-    use MLSSignals_m, only: PVMPackSignal
-    use VGridsDatabase, only: PVMPackVGrid
+    use PVMIDL, only: PVMIDLPACK
+    use MOREPVM, only: PVMPACKLITINDEX, PVMPACKSTRINGINDEX
+    use MLSSIGNALS_M, only: PVMPACKSIGNAL
+    use VGRIDSDATABASE, only: PVMPACKVGRID
     ! Dummy arguments
     type ( ForwardModelConfig_T ), intent(in) :: CONFIG
     ! Local variables
@@ -852,12 +853,12 @@ contains
 
   ! ----------------------------------------- PVMUnpackFWMConfig ---------
   subroutine PVMUnpackFWMConfig ( CONFIG )
-    use Allocate_Deallocate, only: Allocate_test, Test_Allocate
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSignals_m, only: PVMUnpackSignal
-    use MorePVM, only: PVMUnpackLitIndex, PVMUnpackStringIndex
-    use PVMIDL, only: PVMIDLUnpack
-    use VGridsDatabase, only: PVMUnpackVGrid
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, TEST_ALLOCATE
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSIGNALS_M, only: PVMUNPACKSIGNAL
+    use MOREPVM, only: PVMUNPACKLITINDEX, PVMUNPACKSTRINGINDEX
+    use PVMIDL, only: PVMIDLUNPACK
+    use VGRIDSDATABASE, only: PVMUNPACKVGRID
     ! Dummy arguments
     type ( ForwardModelConfig_T ), intent(out) :: CONFIG
     ! Local variables
@@ -1007,7 +1008,7 @@ contains
   ! --------------------------  StripForwardModelConfigDatabase --------
   subroutine StripForwardModelConfigDatabase ( database )
     ! This routine removes the non-global forward model configs from the database
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, TEST_DEALLOCATE
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: DATABASE
@@ -1041,8 +1042,8 @@ contains
 
   ! ------------------------------------ DestroyOneForwardModelConfig --
   subroutine DestroyOneForwardModelConfig ( Config, Deep )
-    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
-    use MLSSignals_M, only: DestroySignalDatabase
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
+    use MLSSIGNALS_M, only: DESTROYSIGNALDATABASE
 
     ! Dummy arguments
     type ( ForwardModelConfig_T), intent(inout) :: config
@@ -1112,11 +1113,11 @@ contains
   ! --------------------------------------------  Dump_Beta_Group  -----
   subroutine Dump_Beta_Group ( Beta_Group, Name, Sidebands, Details )
 
-    use Dump_0, only: Dump
-    use Intrinsic, only: Lit_indices
-    use Output_m, only: Blanks, NewLine, Output
-    use PFADataBase_m, only: Dump, PFAData
-    use String_Table, only: Display_String
+    use DUMP_0, only: DUMP
+    use INTRINSIC, only: LIT_INDICES
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+    use PFADATABASE_M, only: DUMP, PFADATA
+    use STRING_TABLE, only: DISPLAY_STRING
 
     type(beta_group_t), intent(in) :: Beta_Group(:)
     character(len=*), intent(in), optional :: Name
@@ -1198,8 +1199,8 @@ contains
   subroutine Dump_ForwardModelConfigDatabase ( Database, &
     & Where, Details, SkipPFA )
 
-    use MoreTree, only: StartErrorMessage
-    use Output_M, only: Output
+    use MORETREE, only: STARTERRORMESSAGE
+    use OUTPUT_M, only: OUTPUT
 
     type (ForwardModelConfig_T), pointer, dimension(:) :: Database
     integer, optional, intent(in) :: Where ! Tree node index
@@ -1224,13 +1225,13 @@ contains
   ! -----------------------------------  Dump_ForwardModelConfig  -----
   subroutine Dump_ForwardModelConfig ( Config, Where, Details, SkipPFA )
 
-    use Dump_0, only: DUMP
-    use Intrinsic, only: Lit_indices, PHYQ_Indices
-    use Lexer_Core, only: Print_Source
-    use MLSSignals_M, only: GetNameOfSignal, MaxSigLen, Modules
-    use Output_M, only: NewLine, Output
-    use String_Table, only: Display_String
-    use Tree, only: Null_Tree, Source_Ref
+    use DUMP_0, only: DUMP
+    use INTRINSIC, only: LIT_INDICES, PHYQ_INDICES
+    use LEXER_CORE, only: PRINT_SOURCE
+    use MLSSIGNALS_M, only: GETNAMEOFSIGNAL, MAXSIGLEN, MODULES
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TREE, only: NULL_TREE, SOURCE_REF
 
     type (ForwardModelConfig_T), intent(in) :: Config
     character(len=*), intent(in), optional :: Where
@@ -1240,12 +1241,15 @@ contains
     ! Local variables
     logical :: dumpPFA
     integer :: J, S                          ! Loop counters
+    integer :: MYDETAILS
     integer :: S1, S2                        ! Sideband limits
     character (len=MaxSigLen) :: SignalName  ! A line of text
 
     ! executable code
     dumpPFA = .true.
     if ( present(skipPFA) ) dumpPFA = .not. skipPFA
+    myDetails = 0
+    if ( present(details) ) myDetails = details
 
     s1 = (config%sidebandStart+3)/2; s2 = (config%sidebandStop+3)/2
     call display_string ( config%name, before='  Forward Model Config Name: ' )
@@ -1258,6 +1262,7 @@ contains
       call output ( where )
     end if
     call newLine
+    if ( myDetails < 0 ) return
     ! Logical scalars
     call output ( config%allLinesForRadiometer, before='  AllLinesForRadiometer: ', advance='yes' )
     call output ( config%allLinesInCatalog, before='  AllLinesInCatalog: ', advance='yes' )
@@ -1410,14 +1415,14 @@ contains
 
   ! ---------------------------------------------  Dump_Qty_Stuff  -----
   subroutine Dump_Qty_Stuff ( Qty, details )
-    use Output_m, only: NewLine, Output, OutputNamedValue
-    use VectorsModule, only: Dump
+    use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+    use VECTORSMODULE, only: DUMP
     type(qtyStuff_t), intent(in) :: Qty
     integer, optional, intent(in) :: details
     if ( associated(qty%qty) ) then
       call dump ( qty%qty, details=details )
     else
-      call output( 'Quantity not assocated for this qtyStuff type (surprised?)', advance='yes' )
+      call output( 'Quantity not assocated for this qtyStuff type', advance='yes' )
     endif
     call outputNamedValue ( 'Found in first', qty%foundInFirst )
     call newLine
@@ -1436,6 +1441,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.117  2012/05/01 22:18:50  vsnyder
+! Add IsRadianceModel component
+!
 ! Revision 2.116  2012/03/07 00:45:28  vsnyder
 ! Add TransformMIFExtinction component
 !
