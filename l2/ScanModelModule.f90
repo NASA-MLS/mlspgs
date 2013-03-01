@@ -57,9 +57,10 @@ module ScanModelModule          ! Scan model and associated calculations
 
   private
 
-  public :: DestroyForwardModelIntermediate, GetBasisGPH, GetGPHPrecision, &
-    & GetHydrostaticTangentPressure, Get2DHydrostaticTangentPressure,      &
-    & ScanForwardModel, TwoDScanForwardModel
+  public :: DESTROYFORWARDMODELINTERMEDIATE, DUMPINSTANCEWINDOWS, &
+    & GETBASISGPH, GETGPHPRECISION, &
+    & GETHYDROSTATICTANGENTPRESSURE, GET2DHYDROSTATICTANGENTPRESSURE,      &
+    & SCANFORWARDMODEL, TWODSCANFORWARDMODEL
 
   type, private :: ForwardModelIntermediate_T
 
@@ -101,11 +102,65 @@ contains ! =============== Subroutines and functions ==========================
 
   end subroutine DestroyForwardModelIntermediate
 
+  ! ---------------------------------------- DumpInstanceWindows -----------
+    ! Dump the instance windows (e.g., in temperature) 
+    ! that a 2d forward model must consider
+    ! for the range of mafs [maf1, maf2]
+  subroutine DumpInstanceWindows ( STATE, EXTRA, MAF1, MAF2, FMCONF, DETAILS )
+    use DUMP_0, only: DUMP
+    use FORWARDMODELCONFIG, only: DUMP
+    use MLSSTRINGS, only: WRITEINTSTOCHARS
+    use OUTPUT_M, only: HEADLINE, OUTPUT, OUTPUTNAMEDVALUE
+    ! Args
+    type (Vector_T), intent(in) :: STATE ! The state vector
+    type (Vector_T), intent(in) :: EXTRA ! Other stuff in the state vector
+    integer, intent(in)         :: MAF1
+    integer, intent(in)         :: MAF2
+    type (ForwardModelConfig_T), intent(in) :: FMCONF
+    integer, intent(in)         :: DETAILS ! dump FMConf if > 0
+    ! Internal variables
+    character(len=4) :: CHARS
+    character(len=16) :: HEADING
+    integer :: INSTLOW
+    integer :: INSTHIGH
+    type (VectorValue_T), pointer :: PHITAN ! Phitan component of state
+    type (VectorValue_T), pointer :: TEMP   ! Temperature component of state
+    integer :: WINDOWSTART_T         ! first instance for temperature
+    integer :: WINDOWFINISH_T        ! last instance for temperature
+    ! Executable
+    if ( fmConf%instrumentModule > 0 ) then
+      phitan => getQuantityForForwardModel ( state, extra, &
+        & quantityType=l_phitan, instrumentModule=fmConf%instrumentModule, &
+        & config=fmConf )
+    else
+      phitan => getQuantityForForwardModel ( state, extra, &
+        & quantityType=l_phitan, config=fmConf )
+    endif
+    temp => getQuantityForForwardModel ( state, extra, &
+      & quantityType=l_temperature, config=fmConf )
+    call FindInstanceWindow( temp, phitan, maf1, FMConf%phiWindow, &
+      & FMConf%windowUnits, windowstart_t, windowfinish_t )
+    instLow = min( windowstart_t, windowfinish_t )
+    instHigh = max( windowstart_t, windowfinish_t )
+    call FindInstanceWindow( temp, phitan, maf2, FMConf%phiWindow, &
+      & FMConf%windowUnits, windowstart_t, windowfinish_t )
+    instLow = min( windowstart_t, instLow )
+    instHigh = max( instHigh, windowfinish_t )
+    call writeintstochars( maf1, chars )
+    heading = adjustl(chars)
+    call writeintstochars( maf2, chars )
+    heading = trim(heading) // ',' // adjustl(chars)
+    call headline( 'Instance Window for mafs in range: '// trim(heading), &
+      & fillChar='-', before='*', after='*' )
+    call dump( FMConf, details=details-1 )
+    call outputNamedValue ( 'Instance Window', (/ instLow, instHigh /) )
+  end subroutine DumpInstanceWindows
+
   ! ----------------------------------------------- GetBasisGPH ---------------
   subroutine GetBasisGPH ( temp, refGPH, gph, R, RT, belowRef )
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height quantity, and returns
-    use Physics, only: Boltz
+    use PHYSICS, only: BOLTZ
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMP ! The temperature field
@@ -246,7 +301,7 @@ contains ! =============== Subroutines and functions ==========================
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height precisions, and
     ! returns the GPH precision.
-    use Physics, only: Boltz
+    use PHYSICS, only: BOLTZ
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMPPREC ! The temperature precision
@@ -434,9 +489,9 @@ contains ! =============== Subroutines and functions ==========================
     ! new 2D scan model 'backwards'
     ! Dummy arguments
 
-    use Dump_0, only: DUMP
-    use Output_M, only: OUTPUT
-    use QuantityTemplates, only: QuantityTemplate_T
+    use DUMP_0, only: DUMP
+    use OUTPUT_M, only: OUTPUT
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
 
     type (VectorValue_T), intent(inout) :: PTAN ! Tangent pressure sv. component
     type (VectorValue_T), intent(in) :: TEMP ! Temperature
@@ -1424,7 +1479,6 @@ contains ! =============== Subroutines and functions ==========================
   subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, &
   & fmStat, jacobian, chunkNo )
 
-use dump_0, only: dump
     use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE
     use OUTPUT_M, only: BLANKS, OUTPUT
     use PHYSICS, only: BOLTZ
@@ -2052,6 +2106,9 @@ use dump_0, only: dump
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.76  2013/03/01 01:11:10  pwagner
+! Added DumpInstanceWindows
+!
 ! Revision 2.75  2012/06/06 20:13:37  vsnyder
 ! Avoid overflow if ptan is bogus because module is turned off
 !
