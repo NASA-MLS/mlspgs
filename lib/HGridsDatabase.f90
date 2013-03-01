@@ -11,15 +11,15 @@
 
 module HGridsDatabase                   ! Horizontal grid information
   
-  use MLSCommon, only: r8
+  use MLSKINDS, only: R8
 
   implicit none
   private
 
-  public :: HGrid_T
-  public :: AddHGridToDatabase, CreateEmptyHGrid, DestroyHGridContents, &
-    & DestroyHGridDatabase, Dump, FindClosestMatch, NullifyHGrid, &
-    & TrimHGrid
+  public :: HGRID_T
+  public :: ADDHGRIDTODATABASE, CREATEEMPTYHGRID, DESTROYHGRIDCONTENTS, &
+    & DESTROYHGRIDDATABASE, DUMP, FINDCLOSESTMATCH, NULLIFYHGRID, &
+    & TRIMHGRID
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -59,8 +59,8 @@ contains ! =========== Public procedures ===================================
  ! -----------------------------------------  AddHGridToDatabase  -----
   integer function AddHGridToDatabase ( database, item )
     
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-      & MLSMSG_DeAllocate, MLSMSG_Error
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+      & MLSMSG_DEALLOCATE, MLSMSG_ERROR
 
     ! Dummy arguments
     type (HGrid_T), dimension(:), pointer :: database
@@ -78,7 +78,7 @@ contains ! =========== Public procedures ===================================
   subroutine CreateEmptyHGrid ( hGrid )
     ! Just does allocates etc.
 
-    use Allocate_Deallocate, only: Allocate_Test
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
 
     type (HGrid_T), intent(inout) :: HGRID
 
@@ -103,9 +103,8 @@ contains ! =========== Public procedures ===================================
   ! -------------------------------------------------  TrimHGrid  ------
   subroutine TrimHGrid ( hGrid, side, NOTODELETE )
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use MLSCommon, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
 
     type (HGrid_T), intent(inout) :: HGrid
     integer, intent(in) :: SIDE         ! -1 = lower, 1 = upper
@@ -167,7 +166,7 @@ contains ! =========== Public procedures ===================================
   ! ---------------------------------------  DestroyHGridContents  -----
   subroutine DestroyHGridContents ( hGrid )
 
-    use Allocate_Deallocate, only: Deallocate_Test
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
 
   ! This routine destroys the information associated with an hGrid
 
@@ -189,7 +188,7 @@ contains ! =========== Public procedures ===================================
   ! ---------------------------------------  DestroyHGridDatabase  -----
   subroutine DestroyHGridDatabase ( database )
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_DEALLOCATE, MLSMSG_ERROR
 
   ! This subroutine destroys a quantity template database
 
@@ -255,7 +254,7 @@ contains ! =========== Public procedures ===================================
 
   ! ---------------------------------------- FindClosestMatch ---
   integer function FindClosestMatch ( reference, sought, instance )
-    use MLSNumerics, only: HUNT
+    use MLSNUMERICS, only: HUNT
     ! This routine is best explained in context.  Given a 'sought' quantity
     ! e.g. ptan, radiance, the profile in reference (e.g. temperature) is found
     ! that is closest to profile 'instance' in reference
@@ -314,6 +313,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.10  2013/03/01 01:04:51  pwagner
+! Get R8 from MLSKinds
+!
 ! Revision 2.9  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
