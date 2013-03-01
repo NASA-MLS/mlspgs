@@ -756,7 +756,7 @@ contains
         toggle = saveToggle
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
-        if ( SKIPRETRIEVAL ) cycle
+        if ( SKIPRETRIEVAL .and. switchDetail( switches, 'fiw' ) < 0 ) cycle
         call time_now ( t1 )
         call sids ( key, VectorDatabase, MatrixDatabase, HessianDatabase, configDatabase, chunk)
       case ( s_select ) ! ============ Start of select .. case ==========
@@ -2979,6 +2979,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.334  2013/03/01 01:12:15  pwagner
+! 'fiw' switch dumps sids instance window even if retrieval skipped
+!
 ! Revision 2.333  2012/10/11 22:03:46  pwagner
 ! Fix timing error; print chunkNumber, phaseName instead of module when warning of abandoning
 !
