@@ -43,6 +43,7 @@ Switches (set by -S option in mlsl2's command line):
   FAC =>    Factors of normal equations during Newton iterations
   fgrid =>  Dump frequency grids after creating them
   filt =>   Dump filter shapes after reading them
+  fiw[n] => Dump instance windows for each forward model
   fmnan =>  Check forward model output for NaN and print if level > 0,
               print values if level > 1, stop if level > 2
   fmt2 =>   mean & standard deviation for timing FullForwardModel at each chunk
@@ -189,6 +190,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.79  2013/02/04 22:05:53  pwagner
+ Added dmiss switch to downgrade severity when qty missing from state
+
  Revision 1.78  2012/08/16 19:55:34  pwagner
  log[n] explained more fully
 
