@@ -90,17 +90,36 @@ end Fill
 ;; Band15OK and Band15OFF will be used to decide whther the THz module is off
 ;; and therefore how hard to work in Core+R5
 ;; (Shouldn't we check the other R5 Bands, too?)
+;; Band33OFF will cause us to flag iwc "do not use"
+;; Band4OFF will cause us to Fill affected levels of HNO3 with -999.99
+;; and to set their precisions < 0
+;; Similarly with Band7OFF with its affected levels
 begin Construct
   Band13OK: Boolean, formula="true"
   anyGoodValues, quantity=measurement.band13, precision=measurementNoise.band13, Boolean=Band13OK
   Band13OFF: Boolean, formula="not Band13OK"
+  
   Band15OK: Boolean, formula="true"
   anyGoodValues, quantity=measurement.band15, precision=measurementNoise.band15, Boolean=Band15OK
   Band15OFF: Boolean, formula="not Band15OK"
+  
+  Band33OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band33, precision=measurementNoise.band33, Boolean=Band33OK
+  Band33OFF: Boolean, formula="not Band33OK"
+  
+  Band4OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band4, precision=measurementNoise.band4, Boolean=Band4OK
+  Band4OFF: Boolean, formula="not Band4OK"
+
+  Band7OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band7, precision=measurementNoise.band7, Boolean=Band7OK
+  Band7OFF: Boolean, formula="not Band7OK"
 end Construct
 
-
 ; $Log$
+; Revision 1.1  2011/11/22 00:17:41  pwagner
+; Used in v3.40
+;
 ; Revision 1.14  2010/03/31 18:20:44  pwagner
 ; Boolean Band15OFF shows if THz module is off
 ;
