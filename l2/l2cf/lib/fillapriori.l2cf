@@ -723,42 +723,13 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=hReg.refGPH, method=explicit, explicitValues=10m, /spread
 
 end Fill
+!include(writeapriori.l2cf)
 
-  ;; This is for the case where we wish to store the a priori quantities
-  ;; in the dgg files
-  !define(LabelOneAPQuantity,{!dnl
-!ifelse($1,{Temperature}, {
-  Label, quantity=aPriori.$1_HR, label='$1-APriori'
-  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
-$1,{GPH}, {
-  Label, quantity=aPriori.$1_HR, label='$1-APriori'
-  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
-$1,{H2O}, {
-  Label, quantity=aPriori.$1_HR, label='$1-APriori'
-  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
-{
-  Label, quantity=aPriori.$1, label='$1-APriori'
-  Label, quantity=aPrioriPrecision.$1, label='$1-APrioriPrecision'})
-})
-  !define(DirectWriteOneAPQuantity,{, $
-!ifelse($1,{Temperature},
-   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR}, 
-   $1,{GPH}, 
-   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
-   $1,{H2O}, 
-   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
-   {  source=aPriori.$1, precision=aPrioriPrecision.$1})})
-  
-  !ifdef(flagWriteAPrioriToDGG,{
-begin Join
-  !forall(LabelOneAPQuantity,!allStandardProducts)
-  DirectWrite, hdfVersion=!hdfVersion, $
-  type=l2dgg !forall(DirectWriteOneAPQuantity,!allStandardProducts)
-  
-end Join
-  })
 !divert(-1)
 ;$Log$
+;Revision 1.151  2012/10/09 00:32:43  pwagner
+;Consistent with new use force field
+;
 ;Revision 1.150  2012/05/15 22:36:04  pwagner
 ;No longer using flagUseOperationalTemperature
 ;
