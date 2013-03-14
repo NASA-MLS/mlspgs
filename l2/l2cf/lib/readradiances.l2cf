@@ -31,7 +31,7 @@ begin Fill
   Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1!nl})
 })
   ;; Read all the relevant bands
-  !forall( {readRadiances}, !relevantBands)
+  !nl!forall( {readRadiances}, !relevantBands)
 
   ;; ------------------------------------------ Read L1B Baselines -----
   ;; Now do the same for the baseline information in the L1B files.
@@ -46,7 +46,7 @@ begin Fill
   Fill, quantity=correctionNoise.band$1L1BMAFBaseline, method=l1b, $
     suffix=' !L1BMAFBaselineSource precision'!nl})
   ;; Read this for all the relevant bands
-  !forall( {readL1BMAFBaseline}, !relevantBands)
+  !nl!forall( {readL1BMAFBaseline}, !relevantBands)
 
   ;; ------------------------------------------ Apply L1B Baselines -----
   ;; Now apply the baseline correction to all the radiances
@@ -56,8 +56,19 @@ begin Fill
   Fill, quantity=measurementNoise.band$1, method=applyBaseline, $
     baselineQuantity=correctionNoise.band$1L1BMAFBaseline, /quadrature!nl})
   ;; Apply to all relevant bands
-  !forall( {applyL1BMAFBaseline}, !relevantBands)
+  !nl!forall( {applyL1BMAFBaseline}, !relevantBands)
 
+  })
+  ;; ====================== End of possibly omitted section
+
+  ;; ------------------------------------------ Dump L1B Masks -----
+  ;; Do we want to dump the radiance masks?
+  !ifdef(flagDumpL1BMasks,{!dnl
+    Dump, details=2, mask=measurement.band1
+  !define(DumpL1BMask,{!dnl
+  Dump, details=3, options="-lb[0,5]", mask=measurement.band$1!nl})
+  ;; Do this for all the relevant bands
+  !nl!forall( {DumpL1BMask}, !relevantBands)
   })
   ;; ====================== End of possibly omitted section
 
@@ -116,6 +127,9 @@ end Construct
 
 
 ; $Log$
+; Revision 1.16  2012/12/06 17:37:06  pwagner
+; Added Band4OFF and Band7OFF to use with HNO3 split
+;
 ; Revision 1.15  2011/10/20 20:19:37  pwagner
 ; Set diagnostic flags for IWC, IWP if Band 33 off
 ;
