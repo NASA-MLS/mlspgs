@@ -30,6 +30,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! AddVectors                   Result Z = X + Y
 ! AddVectorTemplateToDatabase  Adds a vector template to a database of such templates
 ! AddVectorToDatabase          Adds a vector to a database of such vectors
+! AreEqual                     Check that two vectors are equal valuewise
+!                               (assumes the same template, ignores masks)
 ! AssignVector                 Destroy 1st arg, then assign 2nd arg to it
 ! AxPy                         Result z = A x + y
 ! CheckIntegrity_Vector
@@ -130,7 +132,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: DIFF, DUMP
   ! Specifics
   public :: ADDTOVECTOR, ADDVECTORS, ADDVECTORTEMPLATETODATABASE
-  public :: ADDVECTORTODATABASE, ASSIGNVECTOR, AXPY, CHECKINTEGRITY
+  public :: ADDVECTORTODATABASE, AREEQUAL, ASSIGNVECTOR, AXPY, CHECKINTEGRITY
   public :: CHECKNAN, CHECKVECTORFORNAN, CHECKVECTORQUANTITYFORNAN
   public :: CLEARMASK, CLEARUNDERMASK, CLEARVECTOR
   public :: CLONEVECTOR, CLONEVECTORQUANTITY, CONSTANTXVECTOR
@@ -430,6 +432,43 @@ contains ! =====     Public Procedures     =============================
 
     AddVectorToDatabase = newSize
   end function AddVectorToDatabase
+
+  ! ----------------------------------------  Areequal  -----
+  logical function Areequal ( A, B, C )
+
+  ! This routine checks that all values in a vector are equal to either:
+  ! (1) values in a 2nd vector with matching quantities; or
+  ! (2) equal to a supplied scalar
+
+    ! Dummy arguments
+    type (Vector_T), intent(in)           ::  A
+    type (Vector_T), intent(in), optional ::  B
+    real(rv), intent(in)                  ::  C
+
+    ! Local variables
+    type (VectorValue_T), pointer :: AQ ! a quantity
+    type (VectorValue_T), pointer :: BQ ! a quantity
+    integer :: qIndex
+    ! Executable
+    Areequal = .true.
+
+    if ( present(b) ) then
+      do qIndex = 1, size ( a%quantities ) 
+        aq => a%quantities(qIndex)
+        bq => b%quantities(qIndex)
+        if ( .not. associated(aq) .or. .not. associated(bq) ) cycle
+        Areequal = Areequal .and. all(aq%values == bq%values)
+        if ( .not. Areequal ) exit
+      enddo
+    else
+      do qIndex = 1, size ( a%quantities ) 
+        aq => a%quantities(qIndex)
+        if ( .not. associated(aq) ) cycle
+        Areequal = Areequal .and. all(aq%values == c)
+        if ( .not. Areequal ) exit
+      enddo
+    endif
+  end function Areequal
 
   ! -----------------------------------------------  AssignVector  -----
   subroutine AssignVector ( Z, X )
@@ -3106,6 +3145,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.174  2013/02/21 21:21:42  pwagner
+! Added options arg when dumping quantity or vector masks
+!
 ! Revision 2.173  2013/02/01 23:40:55  vsnyder
 ! Add Where argument to CreateVectorValue.  Nullify correct pointers in
 ! DestroyVectorValue.
