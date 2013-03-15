@@ -1618,6 +1618,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mirrorHessian, t+t_boolean, n+n_field_type, &
              begin, f+f_perturbation, s+s_vector, n+n_field_spec, &
              begin, f+f_singleMAF, t+t_numeric, n+n_field_type, &
+             begin, f+f_switches, t+t_string, n+n_field_type, &
              begin, f+f_TScat, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
@@ -1806,6 +1807,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.560  2013/03/15 20:36:03  vsnyder
+! Add 'switches' field to SIDS
+!
 ! Revision 2.559  2013/01/17 19:59:47  pwagner
 ! Preparing new fields for Tranfer command
 !
