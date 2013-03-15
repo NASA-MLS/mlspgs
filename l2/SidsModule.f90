@@ -39,7 +39,7 @@ contains
     use INIT_TABLES_MODULE, only: F_DESTROYJACOBIAN, F_FORWARDMODEL, &
       & F_FWDMODELEXTRA, F_FWDMODELIN, F_FWDMODELOUT, &
       & F_HESSIAN, F_JACOBIAN, F_MIRRORHESSIAN, &
-      & F_PERTURBATION, F_SINGLEMAF, F_TSCAT
+      & F_PERTURBATION, F_SINGLEMAF, F_SWITCHES, F_TSCAT
     use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSKINDS, only: R8
@@ -56,10 +56,11 @@ contains
     use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE, &
       & DUMPINSTANCEWINDOWS
+    use STRING_TABLE, only: GET_STRING
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
+    use TREE, only: DECORATION, NSONS, SOURCE_REF, SUBTREE, SUB_ROSA
     use VECTORSMODULE, only: VECTOR_T, &
       & COPYVECTOR, DESTROYVECTORINFO, DUMP, OPERATOR(-)
 
@@ -106,6 +107,8 @@ contains
     integer :: SINGLEMAF                ! From l2cf
     integer :: Son                      ! Of ROOT
     integer :: STATUS                   ! Flag
+    integer :: SwitchLen                ! LEN_TRIM(Switches) on entry
+    integer :: SwitchLenCur             ! LEN_TRIM(Switches) after command processing
     integer, allocatable :: ToKeep(:)   ! Molecule cross derivatives to keep
                                         ! after computing Hessian by
                                         ! perturbation. Union of molecule second
@@ -146,6 +149,9 @@ contains
     mirrorHessian = .false.
     singleMAF = -1
     fwdModelExtra => NULL()             ! Can be omitted
+    switchLen = len_trim(switches)
+    switchLenCur = switchLen + 1
+    switches(switchLenCur:switchLenCur) = ','
 
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -176,6 +182,10 @@ contains
         call expr ( subtree(2,son), exprUnits, exprValue )
         if ( exprUnits(1) /= phyq_dimensionless ) call AnnounceError ( BadSingleMAF )
         singleMAF = exprValue(1)
+      case ( f_switches )
+        call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
+        switchLenCur = len_trim(switches) + 1
+        switches(switchLenCur:switchLenCur) = ','
       case ( f_TScat )
         doTScat = Get_boolean(son)
       end select
@@ -429,6 +439,8 @@ contains
     call deallocate_test ( configs, 'configs', ModuleName )
     call add_to_retrieval_timing( 'sids', t1 )
 
+    switches(switchLen+1:) = '' ! Clobber switches from SIDS command
+
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
   contains
@@ -494,6 +506,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.68  2013/03/15 20:36:03  vsnyder
+! Add 'switches' field to SIDS
+!
 ! Revision 2.67  2013/03/01 01:09:50  pwagner
 ! 'fiw' switch dumps instance window
 !
