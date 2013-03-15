@@ -409,12 +409,12 @@ contains ! ============= Public Procedures ==========================
       jRow = findBlock ( Jacobian%row, o_qty%index, MAF )
       nVecChans = o_qty%template%noChans
       ! Dump the radiance, and Jacobian columns, to be transformed
-      if ( dumpTransform(1) >= 0 ) then
+      if ( dumpTransform(1) >= 1 ) then
         call output ( MAF, before='MAF ' )
         call dump ( o_qty, dumpTransform(1), &
           & ' fwdModelOut before transformation', options=merge('-c','  ',clean) )
       end if
-      if ( dumpTransform(2) >= 0 ) then
+      if ( dumpTransform(2) >= 1 ) then
         do inst = 1, size(fCols)
           call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2), &
             & row=jRow, column=fCols(inst) )
@@ -521,12 +521,12 @@ contains ! ============= Public Procedures ==========================
           end do ! vSurf
         end if
       end do ! jCol
-      if ( dumpTransform(1) >= 0 ) then
+      if ( dumpTransform(1) >= 1 ) then
         call output ( MAF, before='MAF ' )
         call dump ( o_qty, dumpTransform(1), &
           & ' fwdModelOut after transformation', options=merge('-c','  ',clean) )
       end if
-      if ( dumpTransform(3) >= 0 ) then
+      if ( dumpTransform(3) >= 1 ) then
         do inst = 1, size(jCols)
           call dump ( Jacobian, 'Transformed Jacobian', dumpTransform(3), &
             & row=jRow, column=jCols(inst) )
@@ -617,7 +617,7 @@ contains ! ============= Public Procedures ==========================
       f_qty%values(i,2:) = f_qty%values(i,1)
     end do
 
-    if ( dumpTransform(1) >= 0 ) then
+    if ( dumpTransform(1) >= 1 ) then
       call dump ( ptan%values(p,maf), name='PTan zetas' )
       call dump ( s_qty, details=dumpTransform(1), name='from fwdModelIn' )
       call dump ( f_qty, details=dumpTransform(1), name='to forward model' )
@@ -637,6 +637,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.54  2013/03/15 20:35:26  vsnyder
+! Change debug print level threshold from zero to one
+!
 ! Revision 2.53  2012/08/16 18:19:54  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
