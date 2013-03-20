@@ -46,7 +46,7 @@ module ForwardModelConfig
 
   type, public :: QtyStuff_T ! So we can have an array of pointers to QTY's
     type (VectorValue_T), pointer :: QTY => NULL()
-    logical :: FoundInFirst
+    logical :: FoundInFirst = .false.
   end type QtyStuff_T
 
   ! Data structures to indicate which spectral parameters are being solved.
@@ -1441,6 +1441,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.118  2013/03/01 01:08:11  pwagner
+! Snip all but name of dumped config if details < 0
+!
 ! Revision 2.117  2012/05/01 22:18:50  vsnyder
 ! Add IsRadianceModel component
 !
