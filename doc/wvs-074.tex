@@ -5,12 +5,42 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-074r3}
-\newcommand{\docdate}{22 October 2012}
+\newcommand{\docname}{\bf wvs-074r4}
+\newcommand{\docdate}{25 March 2013}
 
 \usepackage{graphicx}
 
 \usepackage{floatflt}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
 
 \begin{document}
 
@@ -57,8 +87,13 @@ wvs-071.
 
 Consider first the case when rays do not reflect from the Earth's surface. 
 
+\ifnum\pdfoutput>0
+{\includegraphics[width=450pt,height=500pt,clip=true,keepaspectratio=true,
+viewport=20 126 553 600]{./wvs-074-scatter-1}}
+\else
 {\includegraphics[width=450pt,height=500pt,clip=true,keepaspectratio=true,
 bb=20 126 553 600]{./wvs-074-scatter-1}}
+\fi
 
 We wish to calculate the angles $\xi_1$ and $\xi_2$ with respect to the
 horizon defined by the line from \pP\ to \pO, to characterize rays along
@@ -89,17 +124,20 @@ ray tangent point $t_1$ and the scattering point \pP\ is
   \psi_1 = \cos^{-1} \frac{Ht_1}{H} \,.
 \end{equation}
 %
-and similarly for the angle $\psi_2 = \angle$\pP\pC$t_2$.  The angle
-$\xi_c$ below the horizon of the ray arriving at \pP\ from the direction
-nearest to \pO\ and tangent to the Earth's surface is
+and similarly for the angle $\psi_2 = \angle$\pP\pC$t_2$.  The value of
+$\xi_1$ at which a ray arriving at \pP\ from the direction nearest to \pO\
+is tangent to the Earth's surface is denoted $\xi_c$ (not shown in the
+figure).  If $|\xi_1| > |\xi_c|$, the ray is an earth-intersecting ray,
+described below.  The value of $\xi_c$ is
 %
 \begin{equation}
   \xi_c = -\left(\frac\pi2 - \phi - \psi(R) \right)\,,\,\,
-    \phi-\frac\pi2 \leq \xi_c \leq 0\,,\,\,\psi(R) = \cos^{-1} \frac{R}H\,.
+    \phi-\frac\pi2 \leq \xi_c \leq 0\,,\,\,\psi(R) = \cos^{-1} \frac{R}H\,,
 \end{equation}
 %
-The angle $\xi_1$ below the horizon of the ray arriving at \pP\ from the
-direction nearer to \pO\ is
+where $R$ is the radius of the equivalent circular earth.  The angle
+$\xi_1$ below the horizon of the ray arriving at \pP\ from the direction
+nearer to \pO\ is
 %
 \begin{equation}
   \xi_1 = \phi - \psi_1\,,\,\, \xi_c \leq \xi_1 \leq 0\,.
@@ -128,10 +166,16 @@ and $t_2$ are $\xi_1$ and $\psi_1+\psi_2+\xi_1 = \pi+\xi_2$, respectively
 
 \newpage
 
-Consider now the case when rays reflect from the Earth's surface.
+Consider now the case when rays reflect from the Earth's surface ($|\xi_3| >
+|\xi_c|$).
 
+\ifnum\pdfoutput>0
+{\includegraphics[width=450pt,height=500pt,clip,clip=true,keepaspectratio=true,
+viewport=89 126 560 625]{./wvs-074-scatter-2}}
+\else
 {\includegraphics[width=450pt,height=500pt,clip,clip=true,keepaspectratio=true,
 bb=89 126 560 625]{./wvs-074-scatter-2}}
+\fi
 
 The tangent point for a ray reflected from the Earth's surface would be
 below the surface.  Therefore the height cannot be specified by $\zeta$
@@ -166,6 +210,9 @@ direction from \pP\ to \pO.
 % $Id$
 
 % $Log$
+% Revision 1.5  2012/10/23 02:01:26  vsnyder
+% Correct some typos
+%
 % Revision 1.4  2012/03/30 20:41:42  vsnyder
 % Repair graphics stuff
 %
