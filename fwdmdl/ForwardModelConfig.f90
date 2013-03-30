@@ -47,6 +47,7 @@ module ForwardModelConfig
   type, public :: QtyStuff_T ! So we can have an array of pointers to QTY's
     type (VectorValue_T), pointer :: QTY => NULL()
     logical :: FoundInFirst = .false.
+    logical :: WasSpecific = .false.
   end type QtyStuff_T
 
   ! Data structures to indicate which spectral parameters are being solved.
@@ -790,7 +791,7 @@ contains
       & config%ignoreHessian, config%incl_cld, config%isRadianceModel, &
       & config%lockBins, config%polarized, config%refract, config%scanAverage, &
       & config%skipOverlaps, config%spect_Der, config%switchingMirror, &
-      & config%temp_Der, config%transformMIFExtinction, config%useTScat /), &
+      & config%temp_Der, config%transformMIFextinction, config%useTScat /), &
       & msg ="Packing fwmConfig logicals" )
 
     ! Now pack the reals
@@ -887,16 +888,16 @@ contains
     ! of the program unit.
     call PVMIDLUnpack ( is, msg = "Unpacking fwmConfig integers" )
     i = 1
-    config%linearsideband        = is(i) ; i = i + 1
-    config%no_cloud_species      = is(i) ; i = i + 1
-    config%no_model_surfs        = is(i) ; i = i + 1
-    config%num_ab_terms          = is(i) ; i = i + 1
-    config%num_azimuth_angles    = is(i) ; i = i + 1
-    config%num_scattering_angles = is(i) ; i = i + 1
-    config%num_size_bins         = is(i) ; i = i + 1
-    config%sideBandStart         = is(i) ; i = i + 1
-    config%sideBandStop          = is(i) ; i = i + 1
-    config%surfaceTangentIndex   = is(i) ! ; i = i + 1
+    config%linearsideband         = is(i) ; i = i + 1
+    config%no_cloud_species       = is(i) ; i = i + 1
+    config%no_model_surfs         = is(i) ; i = i + 1
+    config%num_ab_terms           = is(i) ; i = i + 1
+    config%num_azimuth_angles     = is(i) ; i = i + 1
+    config%num_scattering_angles  = is(i) ; i = i + 1
+    config%num_size_bins          = is(i) ; i = i + 1
+    config%sideBandStart          = is(i) ; i = i + 1
+    config%sideBandStop           = is(i) ; i = i + 1
+    config%surfaceTangentIndex    = is(i) !  ; i = i + 1
     if ( i > LSMAX ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName // 'PVMUnpackFWMConfig', &
       & 'programming error--ISMAX too small' )
@@ -933,7 +934,7 @@ contains
     config%spect_der              = ls(i) ; i = i + 1
     config%switchingMirror        = ls(i) ; i = i + 1
     config%temp_der               = ls(i) ; i = i + 1
-    config%transformMIFExtinction = ls(i) !  ; i = i + 1
+    config%transformMIFextinction = ls(i) ; i = i + 1
     config%useTScat               = ls(i) !  ; i = i + 1
     if ( i > LSMAX ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName // 'PVMUnpackFWMConfig', &
@@ -1197,15 +1198,17 @@ contains
 
   ! ----------------------------  Dump_ForwardModelConfigDatabase  -----
   subroutine Dump_ForwardModelConfigDatabase ( Database, &
-    & Where, Details, SkipPFA )
+    & Where, Details, SkipPFA, QuantityTemplatesDB )
 
     use MORETREE, only: STARTERRORMESSAGE
     use OUTPUT_M, only: OUTPUT
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
 
-    type (ForwardModelConfig_T), pointer, dimension(:) :: Database
+    type (forwardModelConfig_T), pointer, dimension(:) :: Database
     integer, optional, intent(in) :: Where ! Tree node index
     integer, intent(in), optional :: Details ! for Dump_Beta_Group
     logical, optional, intent(in) :: skipPFA
+    type (quantityTemplate_t), pointer, optional, dimension(:) :: QuantityTemplatesDB
 
     ! Local variables
     integer :: I                         ! Loop counters
@@ -1213,8 +1216,8 @@ contains
     ! executable code
     if ( associated(database) ) then
       do i = 1, size(database)
-        call Dump_ForwardModelConfig( database(i), &
-          & details=details, skipPFA=skipPFA )
+        call Dump_ForwardModelConfig( database(i), details=details, &
+          & skipPFA=skipPFA, quantityTemplatesDB=quantityTemplatesDB )
       end do
     else
       if ( present(where) ) call startErrorMessage ( where )
@@ -1223,20 +1226,23 @@ contains
   end subroutine Dump_ForwardModelConfigDatabase
 
   ! -----------------------------------  Dump_ForwardModelConfig  -----
-  subroutine Dump_ForwardModelConfig ( Config, Where, Details, SkipPFA )
+  subroutine Dump_ForwardModelConfig ( Config, Where, &
+    & Details, SkipPFA, QuantityTemplatesDB )
 
     use DUMP_0, only: DUMP
     use INTRINSIC, only: LIT_INDICES, PHYQ_INDICES
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSSIGNALS_M, only: GETNAMEOFSIGNAL, MAXSIGLEN, MODULES
     use OUTPUT_M, only: NEWLINE, OUTPUT
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
     use STRING_TABLE, only: DISPLAY_STRING
     use TREE, only: NULL_TREE, SOURCE_REF
 
-    type (ForwardModelConfig_T), intent(in) :: Config
+    type (forwardModelConfig_T), intent(in) :: Config
     character(len=*), intent(in), optional :: Where
     integer, intent(in), optional :: Details ! for Dump_Beta_Group
     logical, optional, intent(in) :: skipPFA
+    type (quantityTemplate_t), pointer, optional, dimension(:) :: QuantityTemplatesDB
 
     ! Local variables
     logical :: dumpPFA
@@ -1291,6 +1297,7 @@ contains
     call output ( config%spect_der, before='  Spect_der: ', advance='yes' )
     call output ( config%switchingMirror, before='  SwitchingMirror: ', advance='yes' )
     call output ( config%temp_der, before='  Temp_der: ', advance='yes' )
+    call output ( config%transformMIFextinction, before='  TransformMIFextinction: ', advance='yes' )
     ! Strings
     call display_string ( lit_indices(config%cloud_der), before='  Cloud_der: ', advance='yes' )
     call display_string ( lit_indices(config%fwmType), before='  FwmType: ', advance='yes' )
@@ -1312,6 +1319,21 @@ contains
     call output ( config%sidebandStart, before='  Sidebands: ' )
     call output ( config%sidebandStop, before=' ', advance='yes' )
     call output ( config%SurfaceTangentIndex, before='  SurfaceTangentIndex: ', advance='yes' )
+    call output ( config%TScatMIF, before='  TScatMIF: ', advance='yes' )
+    call output ( config%xStar, before='  xStar: ', advance='yes' )
+    call output ( config%yStar, before='  yStar: ', advance='yes' )
+    ! Integer arrays
+    if ( associated(config%specificQuantities) ) then
+      if ( present(quantityTemplatesDB) ) then
+        call output ( '  Specific quantities:', advance='yes' )
+        do j = 1, size(config%specificQuantities)
+          call display_string ( quantityTemplatesDB(config%specificQuantities(j))%name, &
+            before='    ', advance='yes' )
+        end do
+      else
+        call dump ( config%specificQuantities, name='  SpecificQuantities' )
+      end if
+    end if
     ! Real scalars
     call output ( config%PhiWindow, before='  PhiWindow: ' )
     call display_string ( phyq_indices(config%windowUnits), before=' ', advance='yes' )
@@ -1398,12 +1420,12 @@ contains
     if ( associated(config%IntegrationGrid) ) then
       call dump ( config%IntegrationGrid, details=details, what='Integration grid' )
     else
-      call output ( ' no IntegrationGrid', advance='yes' )
+      call output ( '  no IntegrationGrid', advance='yes' )
     end if
     if ( associated(config%tangentGrid) ) then
       call dump ( config%tangentGrid, details=details, what='Tangent grid' )
     else
-      call output ( ' no tangentGrid', advance='yes' )
+      call output ( '  no tangentGrid', advance='yes' )
     end if
     if ( associated(config%beta_Group) .and. .not. dumpPFA ) &
       & call dump ( config%beta_Group, &
@@ -1422,9 +1444,10 @@ contains
     if ( associated(qty%qty) ) then
       call dump ( qty%qty, details=details )
     else
-      call output( 'Quantity not assocated for this qtyStuff type', advance='yes' )
+      call output( '  Quantity not assocated for this qtyStuff type', advance='yes' )
     endif
-    call outputNamedValue ( 'Found in first', qty%foundInFirst )
+    call outputNamedValue ( '  Found in first', qty%foundInFirst )
+    call outputNamedValue ( '  Was Specific', qty%wasSpecific )
     call newLine
   end subroutine Dump_Qty_Stuff
 
@@ -1441,6 +1464,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.119  2013/03/20 22:46:42  vsnyder
+! Give default value to QtyStuff_t%foundInFirst
+!
 ! Revision 2.118  2013/03/01 01:08:11  pwagner
 ! Snip all but name of dumped config if details < 0
 !
