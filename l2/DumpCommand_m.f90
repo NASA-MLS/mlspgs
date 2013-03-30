@@ -1115,7 +1115,8 @@ contains
             end if
           case ( f_allForwardModels )
             if ( haveForwardModelConfigs ) then
-              call dump ( forwardModelConfigs, where=son )
+              call dump ( forwardModelConfigs, where=son, &
+                & quantityTemplatesDB=quantityTemplatesDB )
             else
               call announceError ( son, noFWM )
             end if
@@ -1313,7 +1314,8 @@ contains
         if ( haveForwardModelConfigs ) then
           do i = 2, nsons(son)
             call dump ( & ! has no details switch
-              & forwardModelConfigs(decoration(decoration(subtree(i,son)))) )
+              & forwardModelConfigs(decoration(decoration(subtree(i,son)))), &
+              & quantityTemplatesDB=quantityTemplatesDB )
           end do
         else
           call announceError ( gson, noFWM )
@@ -2118,6 +2120,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.82  2013/03/30 00:19:48  vsnyder
+! Add quantity database to forward model config dump
+!
 ! Revision 2.81  2013/02/21 21:38:10  pwagner
 ! Pass options string when dumping quantity mask
 !
