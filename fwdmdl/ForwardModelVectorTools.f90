@@ -18,7 +18,7 @@ module ForwardModelVectorTools          ! Tools for vectors in forward models
 
   private
 
-  public :: GetQuantityForForwardModel
+  public :: GetQuantityForForwardModel, GetQtyStuffForForwardModel
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -311,6 +311,46 @@ contains
 
   end function GetQuantityForForwardModel
 
+
+  ! ---------------------------------  GetQtyStuffForForwardModel  -----
+  function GetQtyStuffForForwardModel ( vector, otherVector, quantityType, &
+    & molecule, instrumentModule, radiometer, reflector, signal, sideband, &
+    & molIndex, config, noError, matchQty, Frq )
+
+    ! This function is in many senses like GetVectorQuantityByType, (to
+    ! which it can revert), except that given a forwardModelConfig_T in
+    ! config, and possibly an index into the molecules array, it can
+    ! use the specificQuantities stuff in config to identify exactly
+    ! the right quantity.
+    use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_t
+    use MLSKinds, only: R8
+    use VectorsModule, only: Vector_T, VectorValue_T
+
+    ! Dummy arguments
+    type (Vector_T), target :: VECTOR ! First vector to look in
+    type (Vector_T), target, optional :: OTHERVECTOR ! Second vector to look in
+    integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
+    integer, intent(in),  optional :: MOLECULE     ! Molecule index (l_...)
+    integer, intent(in),  optional :: INSTRUMENTMODULE ! Instrument module index
+    integer, intent(in),  optional :: RADIOMETER   ! Radiometer index
+    integer, intent(in),  optional :: REFLECTOR    ! Reflector literal
+    integer, intent(in),  optional :: SIGNAL       ! Signal index
+    integer, intent(in),  optional :: SIDEBAND     ! -1, 0, +1
+    type (ForwardModelConfig_T), intent(in), optional :: CONFIG ! fwmConfig
+    integer, intent(in),  optional :: MOLINDEX     ! Index into the molecules array
+    logical, intent(in),  optional :: NOERROR      ! Don't give error if not found
+    type (VectorValue_T), intent(in), optional :: MATCHQTY ! Result must match this
+    real(r8), intent(in), optional :: Frq          ! Frequency
+    ! Result
+    type (QtyStuff_t) :: GetQtyStuffForForwardModel
+
+    GetQtyStuffForForwardModel%qty => GetQuantityForForwardModel ( vector, &
+      & otherVector, quantityType, molecule, instrumentModule, radiometer, &
+      & reflector, signal, sideband, molIndex, config,                     &
+      & getQtyStuffForForwardModel%foundInFirst,                           &
+      & getQtyStuffForForwardModel%wasSpecific, noError, matchQty, Frq )
+
+  end function GetQtyStuffForForwardModel
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -324,6 +364,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.23  2013/03/30 00:12:01  vsnyder
+! Add GetQtyStuffForForwardModel
+!
 ! Revision 2.22  2011/11/11 00:42:06  vsnyder
 ! Use IsExtinction array from Molecules module
 !
