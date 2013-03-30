@@ -815,10 +815,10 @@ path: do i = i1, i2
     integer, intent(in) :: n_tan       ! tangent index in path, usually n_path/2
     real(rp), intent(in) :: p_basis(:) ! horizontal temperature representation
     !                                     basis
+    integer, intent(in) :: vert_inds(:) ! What to use in [zt]_ref
     real(rp), intent(in) :: t_ref(:,:) ! temperatures at z_ref X p_basis
     real(rp), intent(in) :: dhidzij(:,:)! vertical derivative at z_ref X p_basis
     real(rp), intent(in) :: p_grid(:)  ! phi's on the path
-    integer, intent(in) :: vert_inds(:) ! What to use in [zt]_ref
 
     ! outputs:
 
@@ -1127,6 +1127,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.69  2013/02/28 21:08:29  vsnyder
+! Try not to access array out of bounds
+!
 ! Revision 2.68  2011/05/09 18:02:19  pwagner
 ! Converted to using switchDetail
 !
