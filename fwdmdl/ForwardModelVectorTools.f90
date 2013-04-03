@@ -114,8 +114,8 @@ contains
     if ( present ( noError ) ) myNoError = noError
     if ( present ( wasSpecific ) ) wasSpecific = .false.
     if ( present ( foundInFirst ) ) foundInFirst = .false.
-    myFrq = huge(0.0_r8)
 
+    myFrq = huge(0.0_r8)
     if ( present(frq) ) myFrq = frq
     nullify ( GetQuantityForForwardModel )
     closestFrq = 0
@@ -225,23 +225,25 @@ contains
 
     ! First to see if any of the matches are on our 'specificQuantity'
     ! list, if so match them.  Though pay special attention in the molIndex case.
-    else if ( associated ( config%specificQuantities ) ) then
-      specificVectorLoop: do vectorIndex = 1, noVectors
-        v => stuff(vectorIndex)%v
-        match => stuff(vectorIndex)%match
-        do quantity = 1, v%template%noQuantities
-          if ( match ( quantity ) >= 0 .and. &
-            & any ( v%template%quantities(quantity) == config%specificQuantities ) ) then
-            noFound = noFound + 1
-            if ( molEntry == 0 .or. molEntry == noFound ) then
-              GetQuantityForForwardModel => v%quantities(quantity)
-              if ( present ( foundInFirst ) ) foundInFirst = ( vectorIndex == 1 )
-              if ( present ( wasSpecific ) ) wasSpecific = .true.
-              exit specificVectorLoop
+    else if ( present(config) ) then
+      if ( associated ( config%specificQuantities ) ) then
+        specificVectorLoop: do vectorIndex = 1, noVectors
+          v => stuff(vectorIndex)%v
+          match => stuff(vectorIndex)%match
+          do quantity = 1, v%template%noQuantities
+            if ( match ( quantity ) >= 0 .and. &
+              & any ( v%template%quantities(quantity) == config%specificQuantities ) ) then
+              noFound = noFound + 1
+              if ( molEntry == 0 .or. molEntry == noFound ) then
+                GetQuantityForForwardModel => v%quantities(quantity)
+                if ( present ( foundInFirst ) ) foundInFirst = ( vectorIndex == 1 )
+                if ( present ( wasSpecific ) ) wasSpecific = .true.
+                exit specificVectorLoop
+              end if
             end if
-          end if
-        end do
-      end do specificVectorLoop
+          end do
+        end do specificVectorLoop
+      end if
     end if
 
     if ( molEntry > 1 .and. noFound < molEntry ) &
@@ -364,6 +366,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.24  2013/04/03 23:23:33  vsnyder
+! Don't look in config if it's not present
+!
 ! Revision 2.23  2013/03/30 00:12:01  vsnyder
 ! Add GetQtyStuffForForwardModel
 !
