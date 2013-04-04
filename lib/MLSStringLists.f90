@@ -15,7 +15,7 @@ module MLSStringLists               ! Module to treat string lists
 
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
-  use MLSCOMMON, only: BAREFNLEN
+  use MLSCOMMON, only: BAREFNlen
   use MLSSETS, only: FINDFIRST
   use MLSSTRINGS, only: CAPITALIZE, LOWERCASE, NCOPIES, &
     & READINTSFROMCHARS, REPLACE, REVERSE, &
@@ -44,7 +44,7 @@ module MLSStringLists               ! Module to treat string lists
 ! STRINGLISTOPTIONS  Default options string
 ! KEYNOTFOUND        key not found among keyList
 ! KEYBEYONDHASHSIZE  index of key in keyList > size(hash array)
-! LENORSIZETOOSMALL  Either charsize of strs or size(ints) too small
+! lenORSIZETOOSMALL  Either charsize of strs or size(ints) too small
 
 !     (subroutines and functions)
 ! Array2List         Converts an array of strings to a single string list
@@ -120,7 +120,7 @@ module MLSStringLists               ! Module to treat string lists
 ! char* listMatches (strlist stringList, char* string, [char* options] )
 ! LoopOverFormula (char* formula, char* arg, char* values(:), char* results(:))
 ! int NumStringElements(strlist inList, log countEmpty, &
-!   & [char inseparator], [int LongestLen])
+!   & [char inseparator], [int Longestlen])
 ! char* optionDetail(strlist inList, &
 !     [char single_option], [char* multi_option], [int pattern], &
 !     [char delims(2)] )
@@ -179,6 +179,7 @@ module MLSStringLists               ! Module to treat string lists
 ! counted in lists
 ! it may include any of the following (poss. in combination, e.g. "-wc")
 ! w    Wildcard * which allows 'a*' to equal 'abcd'
+! b    backward search when that makes sense
 ! c    case insensitive which allows 'ABCD' to equal 'abcd'
 ! f    flush left which allows 'abcd' to equal '  abcd'
 ! e    count consecutive separators as enclosing an empty element
@@ -210,7 +211,7 @@ module MLSStringLists               ! Module to treat string lists
 !   Label, quantity=state.$1, label='$1'
 !   Label, quantity=state.column_$1, label='$1 column'
 !   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
-!     file='!l2gpFileName($1)', $
+!     file='!l2gpFilename($1)', $
 !     source=state.$1, precision=outputPrecision.$1, $
 !     status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
 !     source=state.column_$1, precision=outputPrecision.column_$1!nl})
@@ -241,7 +242,7 @@ module MLSStringLists               ! Module to treat string lists
 ! values are expected. The value KEYNOTFOUND=-1 is used to indicate
 ! "no such key."
 ! (4) "No such key" is indicated by FALSE for logical values and "," strings
-! (5) If the optional extra array or list is supplied to the GetUnique...
+! (5) if the optional extra array or list is supplied to the GetUnique...
 !     function, repeated elements purely in the first arg are left undeleted;
 !     if you want uniqueness among them, too, you must invoke it twice:
 !     first w/o the extra arg, and the second time with the extra arg
@@ -300,11 +301,11 @@ module MLSStringLists               ! Module to treat string lists
   integer, public, parameter :: KEYNOTFOUND=-1
   integer, public, parameter :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
   ! strings2Ints
-  integer, public, parameter :: LENORSIZETOOSMALL=-999
+  integer, public, parameter :: lenORSIZETOOSMALL=-999
   
   ! A limitation among string list operations
   integer, private, parameter :: MAXSTRLISTLENGTH = 4096
-  integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNLen
+  integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNlen
 
   character (len=1), parameter    :: COMMA = ','
   character (len=1), parameter    :: BLANK = ' '   ! Returned for any element empty
@@ -361,7 +362,7 @@ contains
     nElems = size(inArray)
     if ( nElems <= 0 ) return
       listElem = 1
-    DO
+    do
       if (.not. present(ordering) ) then
         arrayElem = ListElem
       elseif (myLeftRight == "R") then
@@ -392,7 +393,7 @@ contains
   ! The str and lkeys are all of type character
   ! lvalues may be either an array of logicals or else
   ! a stringlist like lkeys
-  ! If a stringlist, it will be converted into an array of logicals
+  ! if a stringlist, it will be converted into an array of logicals
   ! in a natural way
   ! '[tT]*'       -> .true.
   ! anything else -> .false.
@@ -404,7 +405,7 @@ contains
     ! then evaluate the primitives
     !
     ! Limitations:
-    ! Does not check for unmatched parens or other illegal syntax
+    ! does not check for unmatched parens or other illegal syntax
     !--------Argument--------!
     character (len=*), intent(in)     :: str
     character (len=*), intent(in)     :: lkeys
@@ -631,7 +632,7 @@ contains
     ! appends an int onto end of a string list, taking care if it is blank
     ! E.g., given str1 = 'a,b,c' and int = 4
     ! returns 'a,b,c,4'
-    ! If str1 is blank, returns just '4'
+    ! if str1 is blank, returns just '4'
     !--------Argument--------!
     character (len=*), intent(in) :: STR1
     integer, intent(in)           :: INT
@@ -664,7 +665,7 @@ contains
     ! taking care if it is blank
     ! E.g., given str1 = 'a,b,c' and ints = (/4,5,5,0/)
     ! returns 'a,b,c,4,5,5,0'
-    ! If str1 is blank, returns just '4,5,5,0'
+    ! if str1 is blank, returns just '4,5,5,0'
     !--------Argument--------!
     character (len=*), intent(in)                 :: STR1
     integer, dimension(:), intent(in)             :: INTS
@@ -689,8 +690,8 @@ contains
     ! cats 2 string lists, taking care if either is blank
     ! E.g., given str1 = 'a,b,c' and str2 = 'd,e,f'
     ! returns 'a,b,c,d,e,f'
-    ! If either is blank, returns the other
-    ! If both blank, returns a blank
+    ! if either is blank, returns the other
+    ! if both blank, returns a blank
     !--------Argument--------!
     character (len=*), intent(in) :: STR1
     character (len=*), intent(in) :: STR2
@@ -748,13 +749,13 @@ contains
   end function EvaluateFormula
 
   ! ----------------------------------------  ExpandStringRange_ints  -----
-  subroutine ExpandStringRange_ints (instr, ints, length)
+  subroutine ExpandStringRange_ints (instr, ints, LENGTH)
     ! Takes a range and returns an array of integers
     ! E.g., given '1,2-5,7' returns (/1,2,3,4,5,7/)
     !--------Argument--------!
     character (len=*), intent(in) :: instr
     integer, dimension(:), intent(out) :: ints
-    integer, optional, intent(out) :: length  ! number of ints returned
+    integer, optional, intent(out) :: LENGTH  ! number of ints returned
     ! Internal variables
     integer :: elem
     integer :: ErrTyp
@@ -764,7 +765,7 @@ contains
     logical, parameter :: countEmpty=.true.
     ! Executable
     ints = 0
-    if ( present(length) ) length = 0
+    if ( present(LENGTH) ) LENGTH = 0
     if ( min(len_trim(instr), size(ints)) < 1 ) return
     call ExpandStringRange_str (instr, expandedstr)
     nelem = NumStringElements(trim(expandedstr), countEmpty)
@@ -773,7 +774,7 @@ contains
       call GetStringElement (trim(expandedstr), iChar, elem, countEmpty)
       read(iChar, *, iostat=ErrTyp) ints(elem)
     enddo
-    if ( present(length) ) length = min(nelem, size(ints))
+    if ( present(LENGTH) ) LENGTH = min(nelem, size(ints))
   end subroutine ExpandStringRange_ints
 
   ! ----------------------------------------  ExpandStringRange_log  -----
@@ -824,13 +825,13 @@ contains
   end subroutine ExpandStringRange_log
 
   ! ----------------------------------------  ExpandStringRange_real  -----
-  subroutine ExpandStringRange_real (instr, reals, length)
+  subroutine ExpandStringRange_real (instr, reals, LENGTH)
     ! Takes a range and returns an array of reals
     ! E.g., given '1,2.5-3.5+0.5,7' returns (/1.0,2.5,3.0,3.5,7.0/)
     !--------Argument--------!
     character (len=*), intent(in) :: instr
     real, dimension(:), intent(out) :: reals
-    integer, optional, intent(out) :: length  ! number of reals returned
+    integer, optional, intent(out) :: LENGTH  ! number of reals returned
     ! Internal variables
     integer :: elem
     integer :: ErrTyp
@@ -840,7 +841,7 @@ contains
     logical, parameter :: countEmpty=.true.
     ! Executable
     reals = -999.99
-    if ( present(length) ) length = 0
+    if ( present(LENGTH) ) LENGTH = 0
     if ( min(len_trim(instr), size(reals)) < 1 ) return
     call ExpandStringRange_str (instr, expandedstr)
     nelem = NumStringElements(trim(expandedstr), countEmpty)
@@ -849,7 +850,7 @@ contains
       call GetStringElement (trim(expandedstr), iChar, elem, countEmpty)
       read(iChar, *, iostat=ErrTyp) reals(elem)
     enddo
-    if ( present(length) ) length = min(nelem, size(reals))
+    if ( present(LENGTH) ) LENGTH = min(nelem, size(reals))
   end subroutine ExpandStringRange_real
 
   ! --------------------------------------------------  ExpandStringRange_str  -----
@@ -998,7 +999,7 @@ contains
     ! (a) if how == default => 'abc123'
     ! (b) if how == greedy => 'abc123def'
     ! (c) if how == stingy => '123'
-    ! If no_trim is TRUE, sub1 and sub2 may have trailing spaces
+    ! if no_trim is TRUE, sub1 and sub2 may have trailing spaces
     ! that will not be trimmed before attempting to match
     ! Method:
     ! Replace substrings sub1 and sub2 with separator character
@@ -1008,7 +1009,7 @@ contains
     !  
     ! Notes and limitations:
     ! A fundamental issue arises if sub2 occurs before sub1 in the string
-    ! Do we want to interpret the request such that we
+    ! do we want to interpret the request such that we
     ! (1) return a blank
     ! (2) look for occurrences of sub2 in the string after sub1
     ! I think we should aim for 2, as it produces a generalization
@@ -1017,7 +1018,7 @@ contains
     ! Misc questions
     ! (1) Will this still work if sub1 has leading or trailing blanks? 
     ! (2) How about sub2?
-    ! (3) Do we need an optional arg, no_trim, say, that will leave them?
+    ! (3) do we need an optional arg, no_trim, say, that will leave them?
     !     Tried coding it, but can't say for sure it works
     ! (4) What if sub1 is a substring of sub2, or vice versa?
     ! (5) Should we switch to non-ascii characters for use as separator?
@@ -1047,7 +1048,7 @@ contains
     if ( present(no_trim) ) my_no_trim = no_trim
     trimming = .not. my_no_trim
     outstr = ' '
-    strlen = LEN_trim(instr)
+    strlen = len_trim(instr)
     if (strlen < 1 .or. instr == ' ') return
     ! Which interpretation of sub2 occurring before sub1 do we make?
     isub1 = index(instr, trim(sub1))
@@ -1134,11 +1135,11 @@ contains
   ! This is useful because many of the hdfeos routines *inq*() return
   ! comma-separated lists
 
-  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
+  ! if countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
   ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
-  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+  ! if TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
   ! As an optional arg the separator may supplied, in case it isn't comma
   ! See also SplitWords
@@ -1166,12 +1167,12 @@ contains
 
     if(nElement.LE.0) then
       outElement = separator
-    elseif(LEN(inList) < nElement) then
+    elseif(len(inList) < nElement) then
       outElement = separator
     endif
     i = 1
     elem = 1
-    DO
+    do
       nextseparator = i - 1 + INDEX(inList(i:), separator)
 
       ! No more separators
@@ -1203,7 +1204,7 @@ contains
               outElement = separator
             endif
             RETURN
-          elseif(nextseparator >= LEN(inList)) then
+          elseif(nextseparator >= len(inList)) then
             outElement = separator
             RETURN
           else
@@ -1223,7 +1224,7 @@ contains
   subroutine GetHashElement_int(keys, values, key, value, &
   & countEmpty, inseparator, part_match)
 
-  ! If no match found, return KEYNOTFOUND
+  ! if no match found, return KEYNOTFOUND
 
   ! Someday you may wish to define a StringHash_T made up of the two
   ! strings
@@ -1262,7 +1263,7 @@ contains
   subroutine GetHashElement_log(keys, values, key, value, &
   & countEmpty, inseparator, part_match)
 
-  ! If no match found, return FALSE
+  ! if no match found, return FALSE
 
   ! Someday you may wish to define a StringHash_T made up of the two
   ! strings
@@ -1304,16 +1305,16 @@ contains
   ! each as a list of elements, treating the first as keys and the second as
   ! a hash table, associative array or dictionary
   ! It returns the sub-string from the hash table corresponding to the key
-  ! If the key is not found in the array of keys, it returns the separator
+  ! if the key is not found in the array of keys, it returns the separator
   
   ! This is useful because many of the hdfeos routines *inq*() return
   ! comma-separated lists
 
-  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
+  ! if countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
   ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
-  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+  ! if TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
   ! As an optional arg the separator may supplied, in case it isn't comma
   ! Another optional arg, part_match, returns a match for the 
@@ -1363,9 +1364,9 @@ contains
   ! only the unique entries. The resulting array is supplied by the caller
   ! Its first noUnique entries return the unique values found
   ! Later entries are returned unchanged
-  ! If optional extra array is supplied, instead
+  ! if optional extra array is supplied, instead
   ! returns entries from first array not also found in second
-  ! If optional fillValue is supplied, values = fillValue are ignored
+  ! if optional fillValue is supplied, values = fillValue are ignored
   ! else if optional minValue is supplied, values < minValue are ignored
   ! Some checking is done to make sure it's appropriate
 
@@ -1390,7 +1391,7 @@ contains
     ! Executable code, setup arrays
     inSize=SIZE(ints)
     allocate (duplicate(inSize), STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"duplicate")
     if ( present(extra) ) then
       extraSize=size(extra)
@@ -1399,25 +1400,25 @@ contains
       ! print *, 'SIZE(extra) ', extraSize
     else
       extraSize = -1
-      howManyMax = inSize-1 ! Don't bother with last one
+      howManyMax = inSize-1 ! don't bother with last one
     endif
     duplicate = .FALSE.
 
     ! Go through and find duplicates
 
-    DO i = 1, howManyMax
-       IF (.NOT. duplicate(i)) then
+    do i = 1, howManyMax
+       if (.NOT. duplicate(i)) then
          if ( extraSize < 1 ) then
-          DO j = i+1, inSize
-             IF (ints(j)==ints(i)) duplicate(j)=.TRUE.
-          END DO
+          do j = i+1, inSize
+             if (ints(j)==ints(i)) duplicate(j)=.TRUE.
+          end do
          else
-          DO j = 1, extraSize
-             IF (extra(j)==ints(i)) duplicate(i)=.TRUE.
-          END DO
+          do j = 1, extraSize
+             if (extra(j)==ints(i)) duplicate(i)=.TRUE.
+          end do
          endif
        endif
-    END DO
+    end do
 
     ! Ignore any values = fillValue
     if ( present(fillValue) ) then
@@ -1429,12 +1430,12 @@ contains
 
     noUnique=count(.NOT. duplicate)
 
-    IF (noUnique>SIZE(outs)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (noUnique>SIZE(outs)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & "outs too small")
 
     if ( noUnique > 0 ) then
       j=1
-      UniqueLoop: DO i = 1, noUnique
+      UniqueLoop: do i = 1, noUnique
          k = findFirst(.not. duplicate(j:))
          ! print *, 'j: ', j, '   k: ', k
          if ( k+j-1 > inSize ) then
@@ -1450,7 +1451,7 @@ contains
          endif
          ! j=j+1
          if ( j > inSize ) exit UniqueLoop
-      END DO UniqueLoop
+      end do UniqueLoop
     endif
 
     deallocate ( duplicate )
@@ -1462,9 +1463,9 @@ contains
   ! only the unique entries. The resulting list is supplied by the caller
   ! (You may safely use the same variable for str and outStr) (?? f95 std??)
   ! E.g., given 'one,two,three,one,four' returns 'one,two,three,four'
-  ! If optional string list str2 is supplied, instead
+  ! if optional string list str2 is supplied, instead
   ! returns list from str that are not also in str2
-  ! If optional FillValue supplied, ignores any entries = fillvalue
+  ! if optional FillValue supplied, ignores any entries = fillvalue
 
   subroutine GetUniqueList( str, outStr, noUnique, &
     & inseparator, IgnoreLeadingSpaces, str2, fillValue, options )
@@ -1487,7 +1488,7 @@ contains
       &                             :: inStringArray, outStringArray, inStrAr2
     integer :: nElems
     integer :: nElems2
-    integer :: LongestLen
+    integer :: Longestlen
     integer :: status
 
     ! Executable code
@@ -1500,7 +1501,7 @@ contains
     if ( present(options) ) myOptions = options
     countEmpty = ( index(myOptions, 'e') > 0 ) 
     if ( len(str) <= 0 .or. len(outstr) <= 0 ) return
-    nElems = NumStringElements(str, countEmpty, inseparator, LongestLen)
+    nElems = NumStringElements(str, countEmpty, inseparator, Longestlen)
     noUnique = nElems
     if ( present(str2) ) then
       outStr = ''
@@ -1509,26 +1510,26 @@ contains
       outStr = str
       if ( nElems <= 1 ) return
     endif
-    if ( LongestLen > MAXSTRELEMENTLENGTH ) then
+    if ( Longestlen > MAXSTRELEMENTLENGTH ) then
       ! print *, 'str: ', trim(str)
       ! print *, 'len(str): ', len(str)
-      ! print *, 'LongestLen: ', LongestLen
+      ! print *, 'Longestlen: ', Longestlen
       ! print *, 'nElems: ', nElems
       call MLSMessage(MLSMSG_Error, ModuleName, &
-         & "Element length too long in GetUniqueList")
+         & "Element LENGTH too long in GetUniqueList")
       return
     endif
     allocate (inStringArray(nElems), outStringArray(nElems), STAT=status)
     ! print *, 'shapes: ', &
     !   & (/ size(inStringArray), size(outStringArray) /)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"stringArray in GetUniqueList")
     call list2Array(str, inStringArray, countEmpty, inseparator, &
      & IgnoreLeadingSpaces)
     if ( present(str2) ) then
-      nElems2 = NumStringElements(str2, countEmpty, inseparator, LongestLen)
+      nElems2 = NumStringElements(str2, countEmpty, inseparator, Longestlen)
       allocate (inStrAr2(nElems2), STAT=status)
-      IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+      if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
            & MLSMSG_Allocate//"stringArray2 in GetUniqueList")
       call list2Array(str2, inStrAr2, countEmpty, inseparator, &
        & IgnoreLeadingSpaces)
@@ -1554,16 +1555,16 @@ contains
       endif
       deallocate (inStringArray, outStringArray)
     endif
-      ! print *, 'Done with getUniqueList'
+      ! print *, 'done with getUniqueList'
   end subroutine GetUniqueList
 
   ! ---------------------------------------------  GetUniqueStrings  -----
 
   ! This subroutine takes an array of strings and returns another containing
   ! only the unique entries. The resulting array is supplied by the caller
-  ! If optional extra array is supplied, instead
+  ! if optional extra array is supplied, instead
   ! returns entries from first array not also found in second
-  ! If optional FillValue supplied, ignores any entries = fillvalue
+  ! if optional FillValue supplied, ignores any entries = fillvalue
   ! Some checking is done to make sure it's appropriate
 
   subroutine GetUniqueStrings( inList, outList, noUnique, &
@@ -1597,7 +1598,7 @@ contains
     keepLast = ( index(myOptions, 'L') > 0 )
     inSize=SIZE(inList)
     allocate (duplicate(inSize), STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"duplicate")
     if ( present(extra) ) then
       extraSize=size(extra)
@@ -1606,11 +1607,11 @@ contains
       ! print *, 'SIZE(extra) ', extraSize
     else
       extraSize = -1
-      howManyMax = inSize-1 ! Don't bother with last one
+      howManyMax = inSize-1 ! don't bother with last one
     endif
     duplicate = .FALSE.
 
-    ! If we are keeping the last instance of a duplicated string, we'll
+    ! if we are keeping the last instance of a duplicated string, we'll
     ! simply reverse the order of the list, keep the first instance of that
     ! reversed list, then reverse again at the end
     if ( keepLast ) then
@@ -1619,21 +1620,21 @@ contains
       list = inList
     endif
     ! Go through and find duplicates
-    DO i = 1, howManyMax
-       IF (.NOT. duplicate(i)) then
+    do i = 1, howManyMax
+       if (.NOT. duplicate(i)) then
          if ( extraSize < 1 ) then
-          DO j = i+1, inSize
-             ! IF (List(j)==List(i)) duplicate(j)=.TRUE.
+          do j = i+1, inSize
+             ! if (List(j)==List(i)) duplicate(j)=.TRUE.
              duplicate(j) = duplicate(j) .or. matchem( List(j), List(i) )
-          END DO
+          end do
          else
-          DO j = 1, extraSize
-             ! IF (extra(j)==List(i)) duplicate(i)=.TRUE.
+          do j = 1, extraSize
+             ! if (extra(j)==List(i)) duplicate(i)=.TRUE.
              duplicate(j) = duplicate(j) .or. matchem( extra(j), List(i) )
-          END DO
+          end do
          endif
        endif
-    END DO
+    end do
 
     ! Ignore any values = fillValue
     if ( present(fillValue) ) then
@@ -1646,9 +1647,9 @@ contains
 
     noUnique=count(.NOT. duplicate)
 
-    IF (noUnique>SIZE(outList)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (noUnique>SIZE(outList)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & "outList too small")
-    IF (LEN(outList)<LEN(List)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (len(outList)<len(List)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & "outList strings to small")
     outList=""
 
@@ -1658,12 +1659,12 @@ contains
       !   print *, (duplicate(j+i), i=0, min(19, inSize-j))
       ! enddo
       j=1
-      UniqueLoop: DO i = 1, noUnique
-         ! UniqueHuntLoop: DO
-         !   IF (.NOT. duplicate(j)) EXIT UniqueHuntLoop
+      UniqueLoop: do i = 1, noUnique
+         ! UniqueHuntLoop: do
+         !   if (.NOT. duplicate(j)) EXIT UniqueHuntLoop
          !   j=j+1
          !   if ( j > inSize ) exit UniqueLoop
-         ! END DO UniqueHuntLoop
+         ! end do UniqueHuntLoop
          k = findFirst(.not. duplicate(j:))
          ! print *, 'j: ', j, '   k: ', k
          if ( k+j-1 > inSize ) then
@@ -1679,10 +1680,10 @@ contains
          endif
          ! j=j+1
          if ( j > inSize ) exit UniqueLoop
-      END DO UniqueLoop
+      end do UniqueLoop
     endif
-    ! print *, 'Done with UniqueLoop'
-    ! If we reversed the order, recover the original order
+    ! print *, 'done with UniqueLoop'
+    ! if we reversed the order, recover the original order
     if ( keepLast ) then
       list = outList
       ! print *, 'reversing strings'
@@ -1793,14 +1794,14 @@ contains
   ! as a list of individual elements and returns an equivalent array of
   ! sub-strings in which the n'th element is the n'th element
 
-  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
+  ! if countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
   ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
-  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+  ! if TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
   ! As an optional arg the separator may supplied, in case it isn't comma
-  ! If the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
+  ! if the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
   ! treated like "a,b,c"; otherwise the leading spaces are retained
 
   subroutine List2Array(inList, outArray, countEmpty, inseparator, &
@@ -1836,7 +1837,7 @@ contains
     elem = 1
     nElems = NumStringElements(inList, countEmpty, inseparator)
     if ( nElems <= 0 ) return
-    DO
+    do
       call GetStringElement(inList, outArray(elem), elem, countEmpty, inseparator)
       if ( myIgnoreLeadingSpaces ) outArray(elem) = adjustl(outArray(elem))
       elem = elem + 1
@@ -1931,7 +1932,7 @@ contains
   ! This is useful because many of the hdfeos routines *inq*() return
   ! comma-separated lists
   !
-  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
+  ! if countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
   ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE  
@@ -1941,13 +1942,13 @@ contains
   ! See also GetStringElement
 
   function NumStringElements(inList, countEmpty, &
-   & inseparator, LongestLen) RESULT (nElements)
+   & inseparator, Longestlen) RESULT (nElements)
     ! Dummy arguments
     character (len=*), intent(in)             :: inList
     logical, intent(in)                       :: countEmpty
     integer                                   :: nElements
     character (len=*), optional, intent(in)       :: inseparator
-    integer, OPTIONAL, intent(out)            :: LongestLen  ! Length of longest
+    integer, OPTIONAL, intent(out)            :: Longestlen  ! LENGTH of longest
 
     ! Local variables
     integer :: i, sinceLastseparated           ! Loop counters
@@ -1963,24 +1964,24 @@ contains
     endif
 
    ! Count the number of separators
-   if ( present(LongestLen) ) &
-     & LongestLen =0
+   if ( present(Longestlen) ) &
+     & Longestlen =0
    ! nElements-1 = number of separators
-   if(LEN_TRIM(inList) <= 0) then
+   if(len_TRIM(inList) <= 0) then
      nElements=0
-      if ( present(LongestLen) ) LongestLen = 0
+      if ( present(Longestlen) ) Longestlen = 0
       RETURN
    endif
 
    lastWasNotseparated = .FALSE.
    nElements = 1
    sinceLastseparated = 0
-   DO i=1, LEN_TRIM(inList)
+   do i=1, len_TRIM(inList)
      if(inList(i:i) == separator) then
        if(countEmpty .OR. lastWasNotseparated) then
          nElements = nElements+1
-            if ( present(LongestLen) ) &
-             & LongestLen = max(LongestLen, sinceLastseparated)
+            if ( present(Longestlen) ) &
+             & Longestlen = max(Longestlen, sinceLastseparated)
        endif
        lastWasNotseparated = .FALSE.
        sinceLastseparated = 0
@@ -1989,8 +1990,8 @@ contains
        sinceLastseparated = sinceLastseparated + 1
      endif
    enddo
-   if ( present(LongestLen) ) &
-     & LongestLen = max(LongestLen, sinceLastseparated)
+   if ( present(Longestlen) ) &
+     & Longestlen = max(Longestlen, sinceLastseparated)
 
   end function NumStringElements
 
@@ -2007,7 +2008,7 @@ contains
   ! multi_option is a multi-character alternate form
   ! E.g., single_option might be 'a' while multi_option might be 'answer'
   ! so the option could be set in either form '-a' or '--answer'
-  ! If patterns is present, it determines whether options must be preceded
+  ! if patterns is present, it determines whether options must be preceded
   ! by an '-' and how args are to be denoted
   ! Recognized values of pattern are
   ! 0: '-ab[arg] --xyz=arg' means  (default)
@@ -2031,16 +2032,16 @@ contains
   ! "-ab[arg1]c[arg2]d"
   ! and the test option is "b"
   ! The returned value would be 'arg1'
-  ! If the test option were "a" the returned value would be 'yes'
-  ! If the test option were "c" the returned value would be 'arg2'
-  ! If the test option were "g" the returned value would be 'no'
+  ! if the test option were "a" the returned value would be 'yes'
+  ! if the test option were "c" the returned value would be 'arg2'
+  ! if the test option were "g" the returned value would be 'no'
   ! (because g doesn't count except outside the '[]' chars)
   
   ! The behavior may be modified by pattern and delims args
   ! For which see comment above
   
   ! Notes:
-  ! (1) If the string list is "*" then
+  ! (1) if the string list is "*" then
   ! the test option is automatically present (would you like to override that?)
   ! (2) Why don't you let the '[]' pair that set off args be
   ! overridden, say by other optional args?
@@ -2102,11 +2103,11 @@ contains
       endif
 
       ! OK, test_option or its alt may be present, but where? 
-      ! Does it have an arg?
+      ! does it have an arg?
 
       do bloc = 1, NumStringElements( inList, countEmpty, inseparator=' ' )
         listBloc = StringElement( inList, bloc, countEmpty, inseparator=' ' )
-        ! Does this block begin with one "-" or two?
+        ! does this block begin with one "-" or two?
         multi = ( index( listBloc, trim(multi_prefix(myPattern)) ) > 0 )
         if ( multi ) then
           if ( .not. present(multi_option) ) cycle
@@ -2147,11 +2148,11 @@ contains
       endif
 
       ! OK, test_option or its alt may be present, but where? 
-      ! Does it have an arg?
+      ! does it have an arg?
 
       do bloc = 1, NumStringElements( inList, countEmpty, inseparator=' ' )
         listBloc = StringElement( inList, bloc, countEmpty, inseparator=' ' )
-        ! Does this block begin with one "-" or two?
+        ! does this block begin with one "-" or two?
         multi = ( index( listBloc, trim(multi_prefix(myPattern)) ) > 0 )
         if ( multi ) then
           if ( .not. present(multi_option) ) cycle
@@ -2191,11 +2192,11 @@ contains
       endif
 
       ! OK, test_option or its alt may be present, but where? 
-      ! Does it have an arg?
+      ! does it have an arg?
 
       do bloc = 1, NumStringElements( inList, countEmpty, inseparator=' ' )
         listBloc = StringElement( inList, bloc, countEmpty, inseparator=' ' )
-        ! Does this block begin with one "-" or not?
+        ! does this block begin with one "-" or not?
         if ( index(adjustl(listbloc), '-') == 1 ) then
           if ( adjustl(listBloc) == '-' // test_option ) then
             detail='yes' ! keep going--next we'll check for an arg
@@ -2226,11 +2227,11 @@ contains
       endif
 
       ! OK, test_option or its alt may be present, but where? 
-      ! Does it have an arg?
+      ! does it have an arg?
 
       do bloc = 1, NumStringElements( inList, countEmpty, inseparator=' ' )
         listBloc = StringElement( inList, bloc, countEmpty, inseparator=' ' )
-        ! Does this block begin with one "-" or two?
+        ! does this block begin with one "-" or two?
         multi = ( index( listBloc, trim(multi_prefix(myPattern)) ) > 0 )
         if ( multi ) then
           if ( .not. present(multi_option) ) cycle
@@ -2427,13 +2428,13 @@ contains
   ! each as a list of elements, treating the first as keys and the second as
   ! a hash table, associative array or dictionary
   ! It replaces with elem the sub-string from the hash table corresponding to the key
-  ! If the key is not found in the array of keys, it adds a new key
+  ! if the key is not found in the array of keys, it adds a new key
 
-  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
+  ! if countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
   ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
-  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+  ! if TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
   ! As an optional arg the separator may supplied, in case it isn't comma
   ! Another optional arg, part_match, returns a match for the 
@@ -2441,7 +2442,7 @@ contains
   ! 'won, to, tree' and key 'protocol.dat' matches 'to'
 
   ! Basic premise: Find the element number corresponding to the key
-  ! If found remove that element from both key and hash list
+  ! if found remove that element from both key and hash list
   ! then add new key and hash to lists
 
   ! Someday you may wish to define a StringHash_T made up of the two
@@ -2535,7 +2536,7 @@ contains
     ! if ( present(countEmpty) ) myCountEmpty = countEmpty
 
     outList = inList
-    IF (LEN_trim(elem) < 1 .or. len_trim(inList) < 1 &
+    if (len_trim(elem) < 1 .or. len_trim(inList) < 1 &
       & .or. StringElementNum(inList, elem, myCountEmpty, &
     & inseparator=inseparator) < 1 ) RETURN
     temp_list = trim(elem) // separator // trim(inList)
@@ -2695,7 +2696,7 @@ contains
     !  
     ! Will this still work if sub1 has leading or trailing blanks? 
     ! How about sub2?
-    ! Do we need an optional arg, no_trim, say, that will leave them?
+    ! do we need an optional arg, no_trim, say, that will leave them?
     ! Tried coding it, but can't say for sure it works
     !--------Argument--------!
     character (len=*), intent(in) :: str
@@ -2720,7 +2721,7 @@ contains
     tail = ''
     sub_str = ''
     outstr = str
-    IF (LEN_trim(str) < 1 .or. len_trim(sub1) < 1) RETURN
+    if (len_trim(str) < 1 .or. len_trim(sub1) < 1) RETURN
     my_which = 'first'
     if ( present(which) ) my_which = lowercase(which)
     my_no_trim = .false.
@@ -2885,7 +2886,7 @@ contains
     ! No element may be longer than MAXWORDLENGTH
     !--------Argument--------!
     character (len=*), intent(in) :: str
-    character (len=LEN(str)) :: outstr
+    character (len=len(str)) :: outstr
     character (len=*), optional, intent(in)       :: inseparator
 
     !----------Local vars----------!
@@ -2906,11 +2907,11 @@ contains
 
 !  Special case--only one element of str
     outstr = str
-    if(LEN(str) == 1 .OR. INDEX(str, separator) == 0) RETURN
+    if(len(str) == 1 .OR. INDEX(str, separator) == 0) RETURN
  
 ! General case
-    ALLOCATE(charBuf(LEN(str)+1), STAT=istr)
-    IF (istr /= 0) then
+    ALLOCATE(charBuf(len(str)+1), STAT=istr)
+    if (istr /= 0) then
       CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"charBuf")
       RETURN
@@ -2921,16 +2922,16 @@ contains
 ! Loop over elements
     elem = 1
     iBuf=0
-    DO
+    do
       CALL GetStringElement(str, word, elem, countEmpty, separator)
         if(word == separator) then
           EXIT
-        elseif(iBuf > LEN(str)) then
+        elseif(iBuf > len(str)) then
           EXIT
         else
-          istr = MAX(LEN_TRIM(word), 1)
+          istr = MAX(len_TRIM(word), 1)
           word = Reverse(word(:istr))
-        DO i=1, istr
+        do i=1, istr
           iBuf=iBuf+1
           charBuf(iBuf) = word(i:i)
         enddo
@@ -2944,7 +2945,7 @@ contains
       iBuf = iBuf-1
     endif
 
-    DO i=1, iBuf
+    do i=1, iBuf
       irev = iBuf - i + 1
       outstr(irev:irev) = charBuf(i)
     enddo
@@ -2988,7 +2989,7 @@ contains
     !--------Argument--------!
     character (len=*), intent(in) :: str
     character (len=*), intent(in) :: elem
-    character (len=LEN(str)) :: outstr
+    character (len=len(str)) :: outstr
     character (len=*), optional, intent(in)       :: inseparator
 
     !----------Local vars----------!
@@ -3030,14 +3031,14 @@ contains
   !        S                   sort as if switches
   !        L                   LeftRight is "L" (default)
   !        R                   LeftRight is "R"
-  ! If the shorterFirst is TRUE, the sorting is modified
+  ! if the shorterFirst is TRUE, the sorting is modified
   ! so that shorter strings come first
   ! e.g., (/'abc', 'st', 'Z', '1'/) -> (/'1', 'Z', 'st', 'abc'/)
   
-  ! If shorterFirst, leading spaces are always ignored
+  ! if shorterFirst, leading spaces are always ignored
   ! otherwise they are always significant
   ! (See SortList for contrasting treatment options)
-  !  (If you want them ignored, it's easy enough: create a tempArray
+  !  (if you want them ignored, it's easy enough: create a tempArray
   !     tempArray(1:N) = adjustl(strArray(1:N))
   !   and pass it in instead)
 
@@ -3098,11 +3099,11 @@ contains
      & binNumber(nElems), invBinNumber(nElems), &
      & jsort(nElems), inTheBin(nElems), &
      & STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+    if (status /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
          & MLSMSG_Allocate//"stringArray, etc. in SortArray")
     outIntArray = 0
     numBins = 1
-    maxStrPos = 1                ! This will hold max string length needed
+    maxStrPos = 1                ! This will hold max string LENGTH needed
     do elem = 1, nElems    
       outIntArray(elem) = 1
       if ( ShorterFirst ) then
@@ -3226,7 +3227,7 @@ contains
     endif
     deallocate (stringArray, chValue, cvInvBN, binNumber, invBinNumber, &
      & jsort, inTheBin, STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+    if (status /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
          & MLSMSG_DeAllocate//"stringArray, etc. in SortArray")
 
    contains
@@ -3294,16 +3295,16 @@ contains
   ! "0" < "9" < "A" < "Z" < "a" < "z"
   ! unless caseSensitive is FALSE, when "0" < "9" < "A" < "a" < "Z" < "z"
 
-  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
+  ! if countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
   ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
-  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+  ! if TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
   ! As an optional arg the properly sorted list is returned, too
   ! You may safely supply the same arg for both inList and sortedList
   ! As an optional arg the separator may supplied, in case it isn't comma
-  ! If the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
+  ! if the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
   ! sorted like "a,b,c"; otherwise the leading spaces make" b, c,a"
 
   ! Method:
@@ -3322,7 +3323,7 @@ contains
     logical                                       :: IgnoreLeadingSpaces
     character(len=1)                              :: LeftRight
     character (len=16)                            :: myOptions  
-    integer :: nElems, status, LongestLen
+    integer :: nElems, status, Longestlen
 
     character (len=1)               :: separator
     character (len=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
@@ -3349,16 +3350,16 @@ contains
     endif
     if ( size(outArray) <= 0 ) return
     outArray = 0
-    nElems = NumStringElements(inList, countEmpty, inseparator, LongestLen)
+    nElems = NumStringElements(inList, countEmpty, inseparator, Longestlen)
     if ( nElems <= 0 ) then
       return
-    elseif ( LongestLen > MAXSTRELEMENTLENGTH ) then
+    elseif ( Longestlen > MAXSTRELEMENTLENGTH ) then
       call MLSMessage(MLSMSG_Error, ModuleName, &
-         & "Element length too long in SortList")
+         & "Element LENGTH too long in SortList")
       return
     endif
     allocate (stringArray(nElems), STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"stringArray in SortList")
     call list2Array( inList, stringArray, countEmpty, inseparator, &
      & IgnoreLeadingSpaces )
@@ -3421,7 +3422,7 @@ contains
   ! Note: if there are multiple matches between the test string and elements
   ! of inList we return only the first
   
-  ! If you want the last instead, use ReverseList on inList && subtract
+  ! if you want the last instead, use ReverseList on inList && subtract
   ! the answer from nElements
   
   ! This is useful because many of the hdfeos routines *inq*() return
@@ -3430,7 +3431,7 @@ contains
   ! It will be the immediate precursor function in a hash table
   ! == aka associative array == aka dictionary
   !
-  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
+  ! if countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
   ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE  
@@ -3470,7 +3471,7 @@ contains
     if ( present(part_match) ) match = part_match
 
     ! Check for matches--snipping off any leading blanks
-    DO elem=1, nElements
+    do elem=1, nElements
       CALL GetStringElement(inList, listElement, elem, countEmpty, inseparator)
       if ( match ) then
         if (trim(listElement) /= ' ' .and. &
@@ -3495,9 +3496,9 @@ contains
   ! "abc,def,ghi2"
   ! and the test switch is "ghi"
   ! The returned value would be 2
-  ! If the test switch were "abc" the returned value would be 0
-  ! If the test switch were "xyz" the returned value would be -1
-  ! If the test switch were "hi2" the returned value would be -1
+  ! if the test switch were "abc" the returned value would be 0
+  ! if the test switch were "xyz" the returned value would be -1
+  ! if the test switch were "hi2" the returned value would be -1
   ! (because the start of test doesn't match the start of any list element)
   
   ! The behavior may be modified by options flag
@@ -3505,18 +3506,21 @@ contains
   
   ! Note:
   ! By default, options automatically includes "f", for backwards compatibility
-  !
-  ! If the string list contains a "*" and one of the options is "w" then
+  ! if more than one switch matches the test_switch, the result from the first
+  ! match is shown
+  !   unless one of the options is "b" (for "back") when the last match is used
+  ! if the string list contains a "*" and one of the options is "w" then
   ! the test switch is automatically present
   
-  function SwitchDetail(inList, test_switch, options) RESULT (detail)
+  function SwitchDetail( INLIST, TEST_SWITCH, OPTIONS ) result ( DETAIL )
     ! Dummy arguments
-    character (len=*), intent(in)             :: inList
-    character (len=*), intent(in)             :: test_switch
-    integer                                   :: detail
-    character (len=*), intent(in), optional  :: OPTIONS
+    character (len=*), intent(in)             :: INLIST
+    character (len=*), intent(in)             :: TEST_SWITCH
+    character (len=*), intent(in), optional   :: OPTIONS
+    integer                                   :: DETAIL
 
     ! Local variables
+    logical :: back
     logical, parameter :: COUNTEMPTY = .true.
     integer :: elem
     integer, parameter :: MAXELEMENTLENGTH = 80
@@ -3533,8 +3537,9 @@ contains
 
     nElements = NumStringElements(inList, countEmpty)
 
-    IF ( nElements <= 0 .or. test_switch == "" ) Return
+    if ( nElements <= 0 .or. test_switch == "" ) Return
 
+    back = ( index(myOptions, 'b') > 0 ) 
     if ( index(myOptions, 'c') > 0 ) then
       switch = lowercase(test_switch)
     else
@@ -3543,8 +3548,12 @@ contains
     if ( index(myOptions, 'f') > 0 ) switch = adjustl(switch)
 
    ! Check for matches
-    DO elem=1, nElements
-      CALL GetStringElement(inList, listElement, elem, countEmpty)
+    do elem=1, nElements
+      if ( back ) then
+        call GetStringElement(inList, listElement, nElements-elem+1, countEmpty)
+      else
+        call GetStringElement(inList, listElement, elem, countEmpty)
+      endif
       if ( index(myOptions, 'c') > 0 ) listElement = lowercase(listElement)
       if ( index(myOptions, 'f') > 0 ) listElement = adjustl(listElement)
       if ( trim(listElement) /= ' ' .and. &
@@ -3573,7 +3582,7 @@ contains
 
     ! E.g., given "Let me see." or 'Let me see.' returns
     !    Let me see.
-    ! If no surrounding quotes are found, returns string unchanged; unless
+    ! if no surrounding quotes are found, returns string unchanged; unless
     ! (1) mismatched quotes, e.g. 'Let me see." will:
     !     remove leading quote but leave trailing quote
     ! (2) a single unpaired quote found at beginning or end, will:
@@ -3587,28 +3596,28 @@ contains
     !         p                    stripany
     !         r                    reverse
     !         x                    extract
-    ! If strict, exceptions (1) and (2) above disregarded
+    ! if strict, exceptions (1) and (2) above disregarded
     ! i.e., surrounding quotes must match, else returns string unchanged
     
-    ! If stripany, any quotes, surrounding or internal,
+    ! if stripany, any quotes, surrounding or internal,
     ! will be removed
     
-    ! If extract, returns first substring surrounded by
+    ! if extract, returns first substring surrounded by
     ! quotes; E.g., given ([a1 a2], [a3 a4]) with quotes='[' cquotes=']' returns
     !   a1 a2
     ! (This option supersedes stripany, and is automatically strict)
     
-    ! If reverse, removes any quoted strings; 
+    ! if reverse, removes any quoted strings; 
     ! E.g., given 'b[a1 a2], c[a3 a4]' with quotes='[' cquotes=']' returns
     !   'b, c'
     ! (This option supersedes stripany, and is automatically strict)
     
-    ! If given optional arg quotes, removes only surrounding pair:
+    ! if given optional arg quotes, removes only surrounding pair:
     ! quotes[i:i] for each i=1..len[quotes]
     ! E.g., given /a\ regexp/ with quotes='/' returns
     !    a\ regexp
     
-    ! If given optional args quotes & cquotes, removes only surrounding pair:
+    ! if given optional args quotes & cquotes, removes only surrounding pair:
     ! quotes[i:i] on the left, cquotes[i:i] on the right, i=1..len[quotes]
     ! E.g., given [a particle] with quotes='[' cquotes=']' returns
     !    a particle
@@ -3628,7 +3637,7 @@ contains
     ! Note:
     ! (1) By default, if no quotes found returns input string unchanged unless
     !     extract=TRUE, in which case returns blank
-    ! (2) If len(quotes) > 1, processes them in order quotes(i:i), i=1 2 ..
+    ! (2) if len(quotes) > 1, processes them in order quotes(i:i), i=1 2 ..
     !     unless extract=TRUE in which case returns after first one found
     ! (3) Perhaps extract=TRUE should be moved from here to ExtractSubString
 
@@ -3658,7 +3667,7 @@ contains
    prim = ult - len_trim(adjustl(str)) + 1    ! Position of 1st non-blank char
    outstr=str
       
-   ! length of non-blank portion of string to be trimmed must be at least 2
+   ! LENGTH of non-blank portion of string to be trimmed must be at least 2
    if(ult-prim+1 <= 1) then
       outstr=str
       return
@@ -3873,7 +3882,7 @@ contains
         & inseparator, break, mode, addedLines=addedLines )
     else
       ! We will assume that no more than one kind of quote will appear in a str
-      ! If this assumption needs to be relaxed the following will be inadequate
+      ! if this assumption needs to be relaxed the following will be inadequate
       noQuotes = .true.
       do i=1, len_trim(quotes)
         quote = quotes(i:i)
@@ -3968,7 +3977,7 @@ contains
       if ( so == 1 ) nextwidth = max( 1, nextwidth-myOffset )
       ! print *, 'nextwidth ', nextwidth
       if ( nextwidth < 1 ) exit
-      ! Does the rest of str fit within nextwidth?
+      ! does the rest of str fit within nextwidth?
       if ( nextwidth >= len_trim(str) - so + 1 ) then
         outstr(ko:ko + nextwidth - 1) = str(so:so + nextwidth - 1)
         myLastPos = myLastPos + nextWidth
@@ -3978,7 +3987,7 @@ contains
       case ('h')
         ! 'hard' wrap
         ! we will wrap to exactly width or less, even if we have to hyphenate
-        ! Do we have any breakable spaces in next width?
+        ! do we have any breakable spaces in next width?
         ! dsp = index( str(so:so+nextwidth-1), ' ', back=.true. )
         dsp = index( str(so:so+nextwidth-1), myBreak, back=.true. )
         ! print *, 'so, ko ', so, ko
@@ -4110,6 +4119,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.53  2013/04/04 22:31:05  pwagner
+! Added "b"ackward option to switchDetail
+!
 ! Revision 2.52  2012/08/30 20:51:45  pwagner
 ! Added RemoveSwitchFromList
 !
@@ -4189,7 +4201,7 @@ end module MLSStringLists
 ! Remove tabs, which are not part of the Fortran standard
 !
 ! Revision 2.26  2007/05/22 20:56:02  vsnyder
-! Don't use list-directed write to internal files
+! don't use list-directed write to internal files
 !
 ! Revision 2.25  2007/05/14 21:51:51  pwagner
 ! Bugfix for way ifc writes ints to strings
