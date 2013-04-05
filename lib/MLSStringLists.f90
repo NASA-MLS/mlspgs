@@ -304,7 +304,7 @@ module MLSStringLists               ! Module to treat string lists
   integer, public, parameter :: lenORSIZETOOSMALL=-999
   
   ! A limitation among string list operations
-  integer, private, parameter :: MAXSTRLISTLENGTH = 4096
+  integer, private, parameter :: MAXSTRLISTLENGTH = 4*4096
   integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNlen
 
   character (len=1), parameter    :: COMMA = ','
@@ -4119,6 +4119,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.54  2013/04/05 00:47:42  pwagner
+! Increased MAXSTRLISTLENGTH by factor of 4
+!
 ! Revision 2.53  2013/04/04 22:31:05  pwagner
 ! Added "b"ackward option to switchDetail
 !
