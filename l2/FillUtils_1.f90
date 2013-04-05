@@ -3392,8 +3392,10 @@ contains ! =====     Public Procedures     =============================
       logical :: mySurfs, myNewValues
       integer :: instance
       integer :: status
+      logical :: verbose
 
       ! Executable code
+      verbose = ( switchDetail(switches, 'fill') > 0 ) ! -Sfill1
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.FromInterpolatedQty', key )
       call MLSMessageCalls( 'push', constantName='FromInterpolatedQty' )
@@ -3472,9 +3474,11 @@ contains ! =====     Public Procedures     =============================
 
         ! OK, do the work
         if ( qty%template%logBasis ) then
-          if ( any( (/ source%values <= 0. /) ) ) then
+          ! Whyd did you ever want to print this?
+          if ( any( (/ source%values <= 0. /) ) .and. verbose ) then
             call MLSMessage( MLSMSG_Warning, ModuleName, &
-              & 'source values <= 0 in FromInterpolateQty', status=status )
+              & 'log basis source values <= 0 in FromInterpolateQty', &
+              & status=status )
             if ( status == 0 ) then
               call dump( qty%template )
               call dump( source%template )
@@ -4254,6 +4258,7 @@ contains ! =====     Public Procedures     =============================
       & temperatureQuantity, refGPHQuantity, h2oQuantity, &
       & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, maxIterations, &
       & phiWindow, phiWindowUnits, chunkNo )
+    use MANIPULATEVECTORQUANTITIES, only: FINDCLOSESTINSTANCES
       ! Various hydrostatic fill operations
       integer, intent(in) :: key          ! For messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -4271,8 +4276,11 @@ contains ! =====     Public Procedures     =============================
       ! as they may be absent.
 
       ! Local variables
+      integer, dimension(:), pointer :: CLOSESTTEMPPROFILES
+      logical :: verbose
 
       ! Executable code
+      verbose = ( switchDetail(switches, 'fill') > -1 )
 
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.Hydrostatically', key )
@@ -4353,7 +4361,14 @@ contains ! =====     Public Procedures     =============================
 
     9 if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_end ( 'FillUtils_1.Hydrostatically' )
-
+      if ( .not. verbose ) return
+      nullify( closestTempProfiles )
+      call Allocate_Test ( closestTempProfiles, phitanquantity%template%noInstances, &
+        "closestTempProfiles", ModuleName )
+      call FindClosestInstances ( temperatureQuantity, phitanquantity, &
+        & closestTempProfiles )
+      call Deallocate_Test ( closestTempProfiles, "closestTempProfiles", ModuleName )
+      
     end subroutine Hydrostatically
 
     ! -------------------------------------- FromIsotope -----------
@@ -6919,6 +6934,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.73  2013/04/05 23:20:47  pwagner
+! Requires verbose settings for extra printing
+!
 ! Revision 2.72  2013/02/01 23:42:25  vsnyder
 ! Use CreateVectorValue instead of Allocate_Test
 !
