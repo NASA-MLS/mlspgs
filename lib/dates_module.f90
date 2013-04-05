@@ -18,11 +18,11 @@ module dates_module
   ! time representations (TAI93) while this module maintains
   ! an attitude of studied indifference to leap seconds.
 
-  use MLSCommon, only: NameLen
-  use MLSStringLists, only: GetStringElement, NumStringElements
-  use MLSStrings, only: capitalize, depunctuate, indexes, lowerCase, &
-    & writeIntsToChars
-  use MLSMessageModule, only: MLSMSG_Warning, MLSMessage
+  use MLSCOMMON,        only: NAMELEN
+  use MLSSTRINGLISTS,   only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
+  use MLSSTRINGS,       only: CAPITALIZE, DEPUNCTUATE, INDEXES, LOWERCASE, &
+    &                         WRITEINTSTOCHARS
+  use MLSMESSAGEMODULE, only: MLSMSG_WARNING, MLSMESSAGE
 
   implicit none
   private
@@ -87,6 +87,7 @@ module dates_module
 !                    How many seconds since the start of the day
 ! splitDateTime      Splits dateTtime
 ! tai2ccsds          tai (days, not s) -> ccsds (in "B" format)
+! tai93s2hid         tai (s, not days) -> hours-in-day
 ! tai93s2utc         tai (s, not days) -> yyyy-mm-ddThh:mm:ss.sss (i.e. "B" format)
 ! timeForm           Determines what format time is in
 ! utc_to_date        Returns date portion from dateTtime; e.g. yyyy-dddThh:mm:ss
@@ -123,6 +124,7 @@ module dates_module
 ! dble secondsinday (char* utc1)
 ! splitDateTime(char* utc, int ErrTyp, char* date, char* time, [log strict])
 ! char* tai2ccsds( int tai )
+! dble tai93s2hid( dble tai )
 ! char* tai93s2utc( dble tai )
 ! char* timeForm( char* time )
 ! char utcForm (char* utc)
@@ -238,7 +240,7 @@ module dates_module
     & eudtf2cal, eudtf2daysince, hoursbetween2utcs, hoursinday, &
     & lastday, nextMoon, reformatDate, reformatTime, &
     & secondsbetween2utcs, secondsinday, splitDateTime, &
-    & tai2ccsds, tai93s2utc, timeForm, &
+    & tai2ccsds, tai93s2hid, tai93s2utc, timeForm, &
     & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, utc2tai93s, &
     & yyyyDoy_to_mmdd, yyyymmdd_to_dai, yyyymmdd_to_Doy
 
@@ -333,6 +335,11 @@ module dates_module
     integer :: dai = 0                  ! days after 1 Jan 2001
     double precision :: seconds = 0.00  ! seconds after midnight
   end type MLSDATE_TIME_T
+  
+  ! This accounts for the number of days between the dates
+  ! '1993-01-01' and '2001-01-01':
+  ! 6 non-leap years and 2 leap years
+  integer, parameter :: DAI93TODAI01 = 6*365 + 2*366
   
 contains
   ! ---------------------------------------------  adddaystoutc  -----
@@ -452,6 +459,22 @@ contains
     ccsds = eudtf2ccsds(eudtf)
   end function tai2ccsds
 
+  ! Converts TAI in seconds to hours-in-day.
+  ! We ignore leap seconds 
+  elemental function tai93s2hid(tai93s) result (hid)
+    double precision, intent(in)   :: tai93s
+    !---function--result---!
+    double precision :: hid
+    !----local -----!
+    type(MLSDATE_TIME_T)           :: datetime
+    ! integer :: THEDAY
+    ! Executable
+    dateTime = tai93s2datetime( tai93s )
+    hid = dateTime%seconds/3600
+    ! theDay = (tai93s+10.d0) / (24*3600.d0)
+    ! hid = (tai93s - theDay*24*3600.d0) / 3600
+  end function tai93s2hid
+
   ! Converts TAI in seconds to utc Date.
   ! We ignore leap seconds 
   function tai93s2utc(tai93s) result (utc)
@@ -499,17 +522,17 @@ contains
   end function datetime2utc
 
   ! Converts TAI93 in seconds to an MLS DateTime datatype
-  function tai93s2datetime(tai93s) result (datetime)
+  elemental function tai93s2datetime(tai93s) result (datetime)
     double precision, intent(in)   :: tai93s
     !---function--result---!
     type(MLSDATE_TIME_T)           :: datetime
     !----local -----!
     integer          :: dai93         ! Number of days after 1 Jan 1993
     ! Executable
-    dai93 = int(tai93s / 86400 + 0.5)
+    dai93 = int(tai93s / 86400 + 0.5d-8)
     datetime%seconds = tai93s - 86400*dai93
     ! Now apply offset convert it to dai (2001)
-    datetime%dai = dai93 - daysbetween2utcs( '1993-01-01', '2001-01-01' )
+    datetime%dai = dai93 - DAI93TODAI01 ! daysbetween2utcs( '1993-01-01', '2001-01-01' )
   end function tai93s2datetime
 
   ! --------------------------------------------- buildCalendar ---
@@ -2382,6 +2405,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.25  2011/08/02 16:50:00  honghanh
+! Add function utc2tai93s
+!
 ! Revision 2.24  2011/04/26 20:56:16  pwagner
 ! Can convert tai93s to other date formats
 !
