@@ -83,7 +83,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   character(len=*), parameter        :: section_names = &
     & 'main,open_init,global_settings,signals,spectroscopy,' // &
     & 'read_apriori,merge_grids,chunk_divide,construct,fill,retrieve,join,' // &
-    & 'directwrite,algebra,output'
+    & 'directwrite,algebra,output,master'
 
   character(len=*), parameter        :: retrieval_names = &
     & 'newton_solver,cholesky_factor,cholesky_solver,cholesky_invert,' // &
@@ -473,8 +473,9 @@ contains ! =====     Public Procedures     =============================
       TIMEFORM = TIMEFORMSMALL
     endif
     do elem = 1, num_section_times
-        elem_time = section_timings(elem)
-        call GetStringElement(section_names, section_name, elem, countEmpty)
+      elem_time = section_timings(elem)
+      call GetStringElement(section_names, section_name, elem, countEmpty)
+      if ( section_name == 'master' .and. .not. parallel%master ) cycle
       percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
@@ -910,6 +911,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.46  2013/04/05 23:26:04  pwagner
+! Made 'master' a 'section' for timings summary
+!
 ! Revision 2.45  2013/02/04 22:02:28  pwagner
 ! Less verbose; trimmed commented-out stuff
 !
