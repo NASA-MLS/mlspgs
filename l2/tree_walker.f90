@@ -323,6 +323,9 @@ contains ! ====     Public Procedures     ==============================
           & ( parallel%slave .and. parallel%fwmParallel ) ) then
           if ( parallel%master .and. .not. parallel%fwmParallel ) then
             call L2MasterTask ( chunks )
+            call add_to_section_timing ( 'master', t1, now_stop )
+            i = i + 1
+            cycle
           end if
           if ( parallel%slave .and. parallel%fwmParallel ) then
             call ExpandStringRange( parallel%chunkRange, iChunks )
@@ -593,25 +596,45 @@ subtrees:   do while ( j <= howmany )
       call CloseParallel(numChunks, early)
       if ( parallel%slave .and. .not. SLAVESDOOWNCLEANUP ) return
       if ( .not. (myEarly .or. skipRetrieval .or. checkPaths) ) then
-        call destroyChunkDatabase ( chunks )
-        call destroy_Ant_Patterns_database
-        call destroy_DACS_Filter_Database
-        call destroy_Filter_Shapes_Database
-        call destroyBinSelectorDatabase
-        call destroyL2PCDatabase
-        if ( switchDetail ( switches, 'l2pc' ) > -1 ) &
-          & call output('Destroyed l2pc db', advance='yes')
-        call destroyFWMConfigDatabase ( forwardModelConfigDatabase )
-        call destroy_line_database
-        call destroy_pointing_grid_database
-        call destroy_spectcat_database
-        call destroyBandDatabase ( Bands )
-        call destroyModuleDatabase ( Modules )
-        call destroyRadiometerDatabase ( Radiometers )
-        call destroySpectrometerTypeDatabase ( SpectrometerTypes )
-        call destroySignalDatabase ( Signals )
-        call destroyVGridDatabase ( vGrids )
-        call destroyFGridDatabase ( fGrids )
+        if ( parallel%slave ) then
+          call destroyChunkDatabase ( chunks )
+          ! call destroy_Ant_Patterns_database
+          call destroy_DACS_Filter_Database
+          ! call destroy_Filter_Shapes_Database
+          call destroyBinSelectorDatabase
+          ! call destroyL2PCDatabase
+          call destroyFWMConfigDatabase ( forwardModelConfigDatabase )
+          call destroy_line_database
+          ! call destroy_pointing_grid_database
+          call destroy_spectcat_database
+          call destroyBandDatabase ( Bands )
+          call destroyModuleDatabase ( Modules )
+          call destroyRadiometerDatabase ( Radiometers )
+          call destroySpectrometerTypeDatabase ( SpectrometerTypes )
+          call destroySignalDatabase ( Signals )
+          call destroyVGridDatabase ( vGrids )
+          call destroyFGridDatabase ( fGrids )
+        else
+          call destroyChunkDatabase ( chunks )
+          call destroy_Ant_Patterns_database
+          call destroy_DACS_Filter_Database
+          call destroy_Filter_Shapes_Database
+          call destroyBinSelectorDatabase
+          call destroyL2PCDatabase
+          if ( switchDetail ( switches, 'l2pc' ) > -1 ) &
+            & call output('Destroyed l2pc db', advance='yes')
+          call destroyFWMConfigDatabase ( forwardModelConfigDatabase )
+          call destroy_line_database
+          call destroy_pointing_grid_database
+          call destroy_spectcat_database
+          call destroyBandDatabase ( Bands )
+          call destroyModuleDatabase ( Modules )
+          call destroyRadiometerDatabase ( Radiometers )
+          call destroySpectrometerTypeDatabase ( SpectrometerTypes )
+          call destroySignalDatabase ( Signals )
+          call destroyVGridDatabase ( vGrids )
+          call destroyFGridDatabase ( fGrids )
+        end if
       end if
       error_flag = 0
       if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
@@ -651,6 +674,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.181  2013/02/14 19:04:29  pwagner
+! Consistent with changed L2MasterTask api
+!
 ! Revision 2.180  2012/08/16 17:56:54  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
