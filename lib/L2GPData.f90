@@ -5047,6 +5047,7 @@ contains ! =====     Public Procedures     =============================
     call MLSMessageCalls( 'pop' )
   end subroutine writeL2GPData_MLSFile
   
+ ! The next two functions ignore leap seconds
   elemental function hoursInDayToTime( hid, l2gp ) result( time )
     ! Given rgp hid, return r8 time as tai(s)
     ! Args:
@@ -5058,19 +5059,18 @@ contains ! =====     Public Procedures     =============================
   end function hoursInDayToTime
 
   elemental function TimeToHoursInDay( time, l2gp ) result( hid )
-    ! Given rgp hid, return r8 time as tai(s)
+    ! Given r8 time as tai(s), return rgp hid
+    use DATES_MODULE, only: TAI93S2HID
     ! Args:
     real(r8), intent(in)                      :: time
     type (L2GPData_T), optional, intent(in)   :: l2gp
     real(rgp)                                 :: hid ! hours in day
     ! Local variables
-    integer :: theday
     ! Executable
     if ( present(l2gp) ) then
       hid = (time - l2gp%time(1)) / 3600
     else
-      theDay = (time+10._r8) / (24*3600._r8)
-      hid = (time - theDay*24*3600._r8) / 3600
+      hid = tai93s2hid( time )
     endif
   end function TimeToHoursInDay
 
@@ -5091,6 +5091,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.191  2013/02/26 00:11:49  pwagner
+! Dumps times both as tai and hoursInDay
+!
 ! Revision 2.190  2013/02/21 22:22:53  pwagner
 ! New optional args ti ContractL2GPRecord
 !
