@@ -346,7 +346,12 @@ contains
         call KillSlaves ( .true., &
           & 'No chunks to process-was your request within range?' )
       endif
-    endif    
+    endif
+    if ( switchDetail(switches,'l2q') > -1 ) then
+      call outputnamedValue( 'size(chunks)', size(chunks) )
+      call outputnamedValue( 'parallel%chunkRange', trim(parallel%chunkRange) )
+      call dump( chunksAbandoned, 'chunksAbandoned' )
+    endif
 
     machineRequestQueued = .false. ! Request one machine at a time from L2Q
     masterLoop: do ! --------------------------- Master loop -----------------------
@@ -1779,6 +1784,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.103  2013/04/05 23:31:46  pwagner
+! Added more output controllable by l2q switch setting
+!
 ! Revision 2.102  2013/02/14 19:02:27  pwagner
 ! Added way for l2q to tell mster to dump status; removed unused stuff
 !
