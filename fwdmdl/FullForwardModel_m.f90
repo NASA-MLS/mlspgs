@@ -160,7 +160,7 @@ contains
 
     temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
     if ( temp_der .and. .not. temp_in_first) &
-      & call MLSMessage ( DerivativeMissingFromState, moduleName, &
+      & call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
         & 'With config(%S): Temperature derivative requested but temperature is not in "first" state vector', &
         & datum=fwdModelConf%name )
 
@@ -182,7 +182,7 @@ contains
             & quantityType=l_vmr, molecule=mol, &
             & foundInFirst=sps_in_first, config=fwdModelConf )
           if ( .not. sps_in_first ) &
-            & call MLSMessage ( DerivativeMissingFromState, moduleName, &
+            & call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
             & 'With config(%S): ' // &
             & '%S derivative requested but %S is not in "first" state vector', &
             & datum=(/ fwdModelConf%name, lit_indices(mol), lit_indices(mol) /) )
@@ -4612,6 +4612,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.338  2013/02/04 22:06:27  pwagner
+! Added dmiss switch to downgrade severity when qty missing from state
+!
 ! Revision 2.337  2013/01/23 21:24:26  vsnyder
 ! Use |sin| in TScat phase convolution
 !
