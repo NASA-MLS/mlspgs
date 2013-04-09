@@ -721,6 +721,16 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
     
 end Construct
 
+begin Construct
+  iwcMeasNoiseTemplate: VectorTemplate, quantities = [ $
+    Band32, Band5, Band33, Band11 $
+    ]
+end Construct
+
+begin Fill
+  iwcMeasNoise : Vector, template=iwcMeasNoiseTemplate
+end Fill
+
 ; These will be used after all the chunks have been processed.
 ; Still we are trying to get all the standard species constructed early.
 begin Construct
