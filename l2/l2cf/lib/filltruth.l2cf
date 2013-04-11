@@ -90,7 +90,7 @@ begin Fill
     orbitInclination=truth.orbitInclination, $
     phiTan=truth.phiTanGHz, $
     maxIterations=20, $
-    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=13 profiles})
 
   Fill, quantity=truth.ptanTHz, method=hydrostatic, $
     h2oQuantity=truth.h2o, $
@@ -100,7 +100,7 @@ begin Fill
     orbitInclination=truth.orbitInclination, $
     phiTan=truth.phiTanTHz, $
     maxIterations=20, $
-    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=13 profiles})
 
   ;; Fill the magnetic field.
   Fill, quantity=truth.magneticField, method=magneticModel, $
@@ -117,4 +117,7 @@ begin Fill
 end Fill
 !divert(-1)
 ; $Log$
+; Revision 1.26  2010/08/26 20:34:43  pwagner
+; Now fills hi-res ozone by interpolation
+;
 !divert!dnl

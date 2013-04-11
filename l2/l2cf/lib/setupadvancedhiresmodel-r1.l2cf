@@ -4,7 +4,7 @@
 ;; linear forward model (one that is linearised about a different state
 ;; from the one in the l2pc files).
 !ifdef(flagStrict1D,{!define(phiWindowSetup,{0 profiles})},
-{!define(phiWindowSetup,{4 degrees})})
+{!define(phiWindowSetup,{5 profiles})})
 begin Construct
   r1LSetupModel_HR: ForwardModel, type=full, $
     signals=['R1A:118.B1F:PT.C1:11', 'R1A:118.B32W:PT.C3:4', $
@@ -137,6 +137,9 @@ begin Construct
 end Construct
 
 ;$Log$
+;Revision 1.6  2012/06/19 20:10:57  pwagner
+;flagDontLockBins removes /lockBins switch
+;
 ;Revision 1.5  2009/01/28 01:19:45  pwagner
 ;Added hires ozone fwms
 ;

@@ -182,7 +182,7 @@ Fill, quantity=apriori.refGPH,$
     orbitInclination=apriori.orbitInclination, $
     phiTan=apriori.phiTanGHz, $
     maxIterations=20, $
-    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=5 profiles})
   Fill, quantity=apriori.ptanTHz, method=hydrostatic, $
     h2oQuantity=apriori.h2o, $
     temperatureQuantity=apriori.temperature, $
@@ -191,7 +191,7 @@ Fill, quantity=apriori.refGPH,$
     orbitInclination=apriori.orbitInclination, $
     phiTan=apriori.phiTanTHz, $
     maxIterations=20, $
-    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=5 profiles})
     }) ;; End if not skipHydrostatic
 
   }) ;; End if gotClimatology
@@ -727,6 +727,9 @@ end Fill
 
 !divert(-1)
 ;$Log$
+;Revision 1.152  2013/03/13 19:36:47  pwagner
+;Use writeapriori.l2cf
+;
 ;Revision 1.151  2012/10/09 00:32:43  pwagner
 ;Consistent with new use force field
 ;

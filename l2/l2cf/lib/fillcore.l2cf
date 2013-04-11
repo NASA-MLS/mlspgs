@@ -50,7 +50,7 @@ begin Fill
     orbitInclination=stateCore.orbitInclination, $
     phiTan=stateCore.phiTanTHz, $
     maxIterations=20, $
-    phiWindow=4 degrees
+    phiWindow=5 profiles
 
 ; don't fill _hr here anymore
 ;  ;; Transfer the low resolution data into the high resolution data
