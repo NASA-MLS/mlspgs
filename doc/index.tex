@@ -41,6 +41,7 @@
 \fi
 
 \hyperbaseurl{}
+\renewcommand{\d}{\text{d}}
 \ifx\dvidir\undefined
   \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
 \else
@@ -190,6 +191,8 @@ or wvs-099)\\
 \h{wvs-109} & Might be doing Tikhonov wrong\\
 \h{wvs-110} & Incorporating Hessian information into the Newton method\\
 \h{wvs-111} & Effect of minimum value of $\lambda$ on convergence\\
+\h{wvs-112} & Alternative method to compute $\Delta s$ and
+              $\frac{\d \Delta s}{\d T}$\\
 \h{iy-001}  & Radiative Transfer and Second Order Model for the Microwave Limb Sounder (MLS)\\
 \h{iy-002} & Comparisons of Analytical and Numerical Mixing Ratios and Temperature Jacobians\\
 \h{iy-003} & First and Second Order Taylor Approximations for Radiances\\
@@ -206,6 +209,9 @@ or wvs-099)\\
 % $Id$
 
 % $Log$
+% Revision 1.32  2012/08/31 23:39:27  vsnyder
+% Add wvs-110 and wvs-111
+%
 % Revision 1.31  2012/08/24 22:06:53  vsnyder
 % Cannonball polishing
 %
