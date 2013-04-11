@@ -1,0 +1,256 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-112}
+\newcommand{\docdate}{10 April 2013}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\M}{\mathcal{M}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Van\\
+Subject: \>More on derivatives of radiative transfer\\
+From: \>Van Snyder\\
+Reference: \> \h{wvs-093} \\
+\end{tabbing}
+
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+From \h{wvs-093}, the radiance measured at the instrument $\M$, in the
+form used in the full forward model (i.e., after integrating the usual
+form of solution by parts) is
+%
+\begin{equation}\label{one}
+I(s_\M) = \T(s_0,S_\M)(I(s_0)-B(s_0))+B(s_\M) -
+ \int_{\zeta(s_0)}^{\zeta(s_\M)} \T(s,s_\M) \frac{\d B}{\d s}
+  \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta
+\end{equation}
+
+where $s_0$ is deep space away from the instrument, $s_\M$ is the position
+of the instrument, and
+%
+\begin{equation}\label{two}
+\T(s,s_\M) = \exp \left( - \int_{\zeta(s)}^{\zeta(s_\M)} \alpha(\sigma)
+ \frac{\d\sigma}{\d h} \frac{\d h}{\d \zeta} \, \d\zeta \right) \,.
+\end{equation}
+
+From Equation (\ref{two}),
+%
+\begin{equation}\label{three}
+\frac{\partial \T}{\partial x} =
+ - \T \frac{\partial}{\partial x}
+    \int_{\zeta(s)}^{\zeta(s_\M)} \alpha(\sigma)
+     \frac{\d\sigma}{\d h} \frac{\d h}{\d \zeta} \, \d\zeta
+=
+ - \T \int_{\zeta(s)}^{\zeta(s_\M)} \left[
+     \frac{\partial \alpha}{\partial x}
+     \frac{\d\sigma}{\d h} \frac{\d h}{\d \zeta} +
+     \alpha(\sigma) \frac{\partial}{\partial x}
+      \left( \frac{\d\sigma}{\d h} \frac{\d h}{\d \zeta}
+       \right) \right] \, \d\zeta \,.
+\end{equation}
+
+From Equation (\ref{one}), since the derivatives of $I(s_0)$, $B(s_0)$,
+and $B(s_\M)$ are zero,
+%
+\begin{equation}\label{four}
+\frac{\partial I}{\partial x} =
+ \frac{\partial \T(s_0,s_\M)}{\partial x} (I(s_0)-B(s_0))+B(s_\M) -
+  \frac\partial{\partial x} \int_{\zeta(s_0)}^{\zeta(s_\M)} \T(s,s_\M)
+   \frac{\d B}{\d s} \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta
+\end{equation}
+
+The integal in Equation (\ref{four}), after the derivative is carried
+into the integration, is
+%
+\begin{equation}
+\int_{\zeta(s_0)}^{\zeta(s_\M)} \left[
+\left( \frac{\partial \T}{\partial x} \frac{\d B}{\d s} +
+ \T \frac{\partial^2 B}{\partial s \partial x} \right)
+  \frac{\d s}{\d h} \frac{\d h}{\d\zeta} +
+ \T \frac{\d B}{\d s} \frac{\partial}{\partial x}
+  \left( \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \right)
+ \right] \, \d \zeta
+\end{equation}
+
+If $x \neq T$, $\frac\partial{\partial x} \left( \frac{\d s}{\d h}
+ \frac{\d h}{\d\zeta} \right) = 0$ and
+ $\frac{\partial^2B}{\partial s \partial x} = 0$.
+
+The integrals are actually carried out in two stages, from $\zeta(s_0)$ to
+$\zeta(s_t)$, and from $\zeta(s_t)$ to $\zeta(s_\M)$, where $t$ denotes
+the tangent point, because the correspondence between $s$ and $\zeta$ is
+monotone over those intervals, but not over the entire interval.
+
+From section 10.4.2 of the 4 August 2004 ATBD,
+%
+\begin{equation}
+\frac{\d s}{\d h} = \frac{h(\zeta)}{\sqrt{h(\zeta)^2-h(t)^2}}
+\text{ and }
+\frac{\d h}{\d \zeta} = \frac{h(\zeta)^2 k T(\zeta) \ln 10}
+                             {g_0 R_0^2 \M}
+\end{equation}
+
+where $\M$ here is the mean molecular mass, not the position of the
+instrument.  Therefore there is a singularity in each integrand at $\zeta
+= \zeta(s_t)$.  The reduction in quadrature accuracy due to these
+singularities is ameliorated using Equation (10.13) in the ATBD.  This
+involves adding and subtracting the factor multiplying $\frac{\d s}{\d h}
+\frac{\d h}{\d \zeta}$, evaluated at the lower limit, then taking it out
+of one of the integrals, leaving behind that factor multiplied by $\Delta
+s$.  The derivative of $\Delta s$ is Equation (10.18).
+
+The forward model then uses the Pythagorean theorem to compute
+%
+\begin{equation}\label{one-a}
+\Delta s_{i \rightarrow i-1} =
+\sqrt{H_i^2 -H_t^2} - \sqrt{H_{i-1}^2 -H_t^2} =
+  \Delta s_{i \rightarrow t} - \Delta s_{i-1 \rightarrow t}
+\end{equation}
+
+where $H_t$ is the tangent height.
+
+An alternative is to use the cosine rule:
+%
+\begin{equation}\label{two-a}
+\Delta s_{i \rightarrow i-1}
+= \sqrt{H_{i-1}^2 + H_i^2 - 2 H_{i-1} H_i
+           \cos \left( \delta\phi_{i \rightarrow i-1} \right)}
+\end{equation}
+
+where $\delta\phi_{i \rightarrow i-1} = \phi_i - \phi_{i-1}$ is the
+difference in orbit geodetic angles at points $i$ and $i-1$ on the path.
+
+Equation (\ref{two-a}) is roughly the same amount of work as Equation
+(\ref{one-a}), and experiments show that they produce the same values, at
+least up to six printed digits.
+
+One reason to want to use Equation (\ref{two-a}) is to replace the integral
+in Equation (10.18) in the 19 August 2004 ATBD:
+%
+\begin{equation}\label{three-a}
+\frac\d{\d T} \left( \Delta s_{i \rightarrow i-1} \right)
+= \frac{H_i \frac{\d H_i}{\d T} -
+                  H_t \frac{\d H_t}{\d T}}
+                 {\sqrt{H_i^2-H_t^2}} -
+            \frac{H_{i-1} \frac{\d H_{i-1}}{\d T} -
+                  H_t \frac{\d H_t}{\d T}}
+                 {\sqrt{H_{i-1}^2-H_t^2}}
+\end{equation}
+
+with the derivative of Equation (\ref{two-a}), \emph{viz}.
+%
+\begin{equation}\begin{split}\label{four-a}
+\frac\d{\d T} \left( \Delta s_{i \rightarrow i-1} \right) =\,&
+ \frac{H_i \frac{\d H_i}{\d T} + H_{i-1} \frac{\d H_{i-1}}{\d T} -
+       2 \left( H_i \frac{\d H_{i-1}}{\d T} + H_{i-1} \frac{\d H_i}{\d T}
+         \right) \cos \left(\delta \phi_{i \rightarrow i-1} \right) }
+      {\Delta s_{i \rightarrow i-1}}
+\end{split}\end{equation}
+
+Equation (\ref{four-a}) is slightly more work than Equation
+(\ref{three-a}), so it might not look like much of an improvement , but
+its use would have a salubrious effect in {\tt drad_tran_dT}.
+
+Equation (\ref{three-a}) is used in the derivative of the
+singularity-amelioration scheme in Equation (10.13) in the ATBD.  As such,
+it is needed only where Gauss-Legendre quadrature has been used on a path
+segment.  A complicated decision process is used within {\tt drad_tran_dT}
+to avoid evaluating Equation (\ref{three-a}) where it's not needed.  Where
+it is needed, both terms in the right-hand side of Equation (\ref{three-a})
+are needed.  The decision procedure further avoids evaluating one of them
+twice in the event Gauss-Legendre quadrature has been used on the previous
+path segment.
+
+Furthermore, the quadratures in the full forward model use $\Delta s_{i
+\rightarrow i-1}$, but do not retain the two terms in Equation
+(\ref{one-a}), \emph{viz.}, $\Delta s_{i \rightarrow t}$ and $\Delta s_{i-1
+\rightarrow t}$ separately. These terms are needed separately, however, in
+Equation (\ref{three-a}).  At the initial point on the path, the total
+distance to the tangent point, $\Delta s_{1 \rightarrow t}$, is
+calculated, and then $\Delta s_{i \rightarrow i-1}$ is subtracted from
+this for each path segment, up to the tangent point.  Then $\Delta s_{t+1
+\rightarrow t+2}$ is used for the first segment after the tangent point,
+and $\Delta s_{i \rightarrow i+1}$ is added for each segment up to the end
+of the path.
+
+Neither of these complications would be needed if Equation (\ref{four-a})
+were used.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log:
