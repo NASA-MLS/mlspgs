@@ -43,8 +43,8 @@ module WriteMetadata ! Populate metadata and write it out
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  public :: Populate_metadata_std, Populate_metadata_oth, &
-    & Get_l2gp_mcf, WriteMetaLog, NullifyPCFData
+  public :: ADDTOMETADATA, POPULATE_METADATA_STD, POPULATE_METADATA_OTH, &
+    & GET_L2GP_MCF, WRITEMETALOG, NULLIFYPCFDATA
 
 ! This data type is used to store User-defined Runtime Parameters and other
 ! information taken from the PCF.
@@ -128,6 +128,12 @@ module WriteMetadata ! Populate metadata and write it out
 
   end type PCFData_T
 
+  interface addToMetadata
+    module procedure addToMetadata_dbl
+    module procedure addToMetadata_int
+    module procedure addToMetadata_sngl
+    module procedure addToMetadata_str
+  end interface
   integer, public, parameter :: INVENTORYMETADATA = 2
   logical, public, parameter :: MCFCASESENSITIVE = .FALSE.
   logical, public, parameter :: ANNOTATEWITHPCF = .TRUE.
@@ -138,6 +144,72 @@ module WriteMetadata ! Populate metadata and write it out
   type(PCFData_T), public, save :: L2PCF
 
 contains
+
+  ! ------------ addToMetadata
+  ! This family of routines adds on to existing metadata in a file
+  subroutine addToMetadata_dbl( MCF_GRP, ATTRNAME, VALUE )
+    ! Args
+    character (len = PGSd_MET_GROUP_NAME_L), intent(in) :: MCF_GRP
+    character(len=*), intent(in)     :: ATTRNAME
+    double precision, intent(in)     :: VALUE
+    integer, external :: PGS_MET_SETATTR_D
+    ! Local variables
+    integer :: status
+    ! Executable
+    status = pgs_met_setAttr_d ( mcf_grp, trim(attrName), value )
+    if ( status /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+        & "Error in writing " // trim(attrName) )
+    end if
+  end subroutine addToMetadata_dbl
+
+  subroutine addToMetadata_int( MCF_GRP, ATTRNAME, VALUE )
+    ! Args
+    character (len = PGSd_MET_GROUP_NAME_L), intent(in) :: MCF_GRP
+    character(len=*), intent(in)     :: ATTRNAME
+    integer, intent(in)     :: VALUE
+    integer, external :: PGS_MET_SETATTR_I
+    ! Local variables
+    integer :: status
+    ! Executable
+    status = pgs_met_setAttr_i ( mcf_grp, trim(attrName), value )
+    if ( status /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+        & "Error in writing " // trim(attrName) )
+    end if
+  end subroutine addToMetadata_int
+
+  subroutine addToMetadata_sngl( MCF_GRP, ATTRNAME, VALUE )
+    ! Args
+    character (len = PGSd_MET_GROUP_NAME_L), intent(in) :: MCF_GRP
+    character(len=*), intent(in)     :: ATTRNAME
+    real, intent(in)                 :: VALUE
+    integer, external :: PGS_MET_SETATTR_D
+    ! Local variables
+    integer :: status
+    ! Executable
+    status = pgs_met_setAttr_d ( mcf_grp, trim(attrName), value*1.0d0 )
+    if ( status /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+        & "Error in writing " // trim(attrName) )
+    end if
+  end subroutine addToMetadata_sngl
+
+  subroutine addToMetadata_str( MCF_GRP, ATTRNAME, VALUE )
+    ! Args
+    character (len = PGSd_MET_GROUP_NAME_L), intent(in) :: MCF_GRP
+    character(len=*), intent(in)     :: ATTRNAME
+    character(len=*), intent(in)     :: VALUE
+    integer, external :: PGS_MET_SETATTR_S
+    ! Local variables
+    integer :: status
+    ! Executable
+    status = pgs_met_setAttr_s ( mcf_grp, trim(attrName), value )
+    if ( status /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+        & "Error in writing " // trim(attrName) )
+    end if
+  end subroutine addToMetadata_str
 
   ! ---------------------------------------------  First_grouping  -----
 
@@ -1288,6 +1360,8 @@ contains
 
   end subroutine PCF2Hdr
 
+  ! ---------------------- Private procedures ------------
+
   ! ---------------------------------------------  announce_success  -----
   subroutine announce_success ( Name, mcf, l2_type )
     character(LEN=*), intent(in) :: Name
@@ -1375,6 +1449,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.71  2013/04/12 00:06:35  pwagner
+! Added addToMetadata
+!
 ! Revision 2.70  2011/07/12 22:35:03  honghanh
 ! Change l_grid to l_hdfeos
 !
