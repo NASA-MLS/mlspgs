@@ -1398,10 +1398,10 @@ contains
 
 ! -------------------------------------------------  HuntArray_r4  -----
 
-  ! This routine does the classic hunt the value kind of thing.  This does the
-  ! hunt/bisect implemention a la Numerical Recipes.  List must be
-  ! monotonically increasing or decreasing. There is no such requirements for
-  ! values.
+  ! This routine does the classic hunt the value kind of thing.  This
+  ! does the hunt/bisect implemention a la Numerical Recipes.  List must
+  ! be monotonically increasing or decreasing. There is no such
+  ! requirement for values.
 
   subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, &
     & allowBelowValue, nearest, logSpace, fail )
@@ -1413,6 +1413,8 @@ contains
     real(rk), dimension(:), intent(in) :: values ! Values to search for
     integer, dimension(:), intent(out) :: indices ! list(indices) <= values
       !                                               <= list(indices+1)
+      !                                      1 <= indices < N unless
+      !                                      allowTopValue or allowBelowValue
     integer, optional, intent(in) :: start ! Optional start index
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
@@ -2522,6 +2524,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.77  2013/04/12 00:35:56  vsnyder
+! Describe 'index' argument of Hunt more precisely
+!
 ! Revision 2.76  2013/02/11 17:19:04  pwagner
 ! Battleship returns status if cant find root
 !
