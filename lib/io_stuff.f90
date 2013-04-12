@@ -19,6 +19,7 @@ module IO_STUFF
   public :: GET_LUN
   public :: READ_STDIN
   public :: READ_TEXTFILE
+  public :: WRITE_TEXTFILE
 
 ! === (start of toc) ===                                                 
 !     c o n t e n t s                                                    
@@ -28,12 +29,14 @@ module IO_STUFF
 ! GET_LUN       Find a Fortran logical unit number that's not in use.
 ! read_stdin    Read standard input into characters scalar or array
 ! read_textfile Read contents of a textfile into characters scalar or array
+! read_textfile Write characters scalar or array into a textfile
 ! === (end of toc) ===
 
 ! === (start of api) ===
 ! GET_LUN( int lun, [log msg] )
 ! read_stdin( str string, [int maxLineLen], [int nLines] )
 ! read_textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! writed_textfile( char* File, str string, [int maxLineLen], [int nLines] )
 ! str can be any of
 ! character(len=*)                 a scalar character string of any length
 ! character(len=*), dimension(:)   a 1d character array of any length
@@ -52,6 +55,10 @@ module IO_STUFF
 
   interface read_textfile
     module procedure read_textfile_arr, read_textfile_arr2d, read_textfile_sca
+  end interface
+
+  interface write_textfile
+    module procedure write_textfile_arr, write_textfile_arr2d, write_textfile_sca
   end interface
 
   ! The only legal unit numbers that files may be assigned
@@ -419,7 +426,127 @@ contains
     if ( present(nLines) ) nLines = recrd
   end subroutine READ_TEXTFILE_sca
   
+  !------------------ write_textfile
+  ! We assume line feeds are already in string
+  subroutine write_TEXTFILE_arr ( File, string )
+  ! write a string array out to a textfile, one line per element
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=*), dimension(:), intent(in) :: string    ! its contents
+    ! Internal variables
+    integer :: i, n
+    integer :: lun
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! print *, 'Name of textfile: ', trim(File)
+    ! What format do we use for writing each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    ! Try to write the textfile
+    call GET_LUN ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='unknown', access='sequential', &
+      & recl=size(string)*len(string(1)) + 1, iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%write_TEXTFILE_ARR-E- Unable to open textfile'
+      return
+    endif
+    do i=1, size(string)
+      n = FindFirstSubString( string(i), achar(0) )
+      if ( n < 2 ) then
+        write ( lun, '(a)', advance='yes' ) ''
+      else
+        write ( lun, '(a)', advance='yes' ) string(i)(:n-1)
+      endif
+    enddo
+    close( UNIT=lun, iostat=status )
+  end subroutine write_TEXTFILE_arr
+
+  subroutine write_TEXTFILE_arr2d ( File, chars )
+  ! write a 2-d array out to a textfile, one line per row
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=1), dimension(:,:), intent(in) :: chars    ! its contents
+    ! Internal variables
+    integer :: i, j, n
+    integer :: lun
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! print *, 'Name of textfile: ', trim(File)
+    ! What format do we use for writeing each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    ! Try to write the textfile
+    call GET_LUN ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='unknown', access='sequential', &
+      & recl=size(chars) + 1, iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%write_TEXTFILE_arr2d-E- Unable to open textfile'
+      return
+    endif
+    do i=1, size(chars,1)
+      n = FindFirstCharacter( chars(i,:), achar(0) )
+      if ( n < 2 ) then
+        write ( lun, '(a)', advance='yes' ) ''
+      else
+        write ( lun, '(a)', advance='yes' ) chars(i,:n-1)
+      endif
+    enddo
+    close( UNIT=lun, iostat=status )
+  end subroutine write_TEXTFILE_arr2d
+
+  subroutine write_TEXTFILE_sca ( File, string )
+  ! write a textfile into string array, one line per element
+    character(len=*), intent(in)  :: File ! its path and name
+    character(len=*), intent(in) :: string    ! its contents
+    ! Internal variables
+    integer :: lun
+    integer :: status
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! print *, 'Name of textfile: ', trim(File)
+    ! What format do we use for writeing each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    ! Try to write the textfile
+    call GET_LUN ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='unknown', access='sequential', &
+      & recl=len(string) + 1, iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%write_TEXTFILE_sca-E- Unable to open textfile'
+      return
+    endif
+    write ( lun, '(a)', advance='no' ) string
+    close( UNIT=lun, iostat=status )
+  end subroutine write_TEXTFILE_sca
+
 !------------ Private procedures
+  ! -------------------------------------------  FindFirstCharacter  -----
+  integer function FindFirstCharacter ( Set, Probe )
+    ! Find the first element in the array Set that is equal to Probe
+    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    character(len=*), dimension(:), intent(in) :: Set
+    character(len=*), intent(in) :: Probe
+
+    ! Executable code
+    do FindFirstCharacter = 1, size(set)
+      if ( trim(set(FindFirstCharacter)) == trim(probe) ) return
+    end do
+    FindFirstCharacter = 0
+  end function FindFirstCharacter
+
+  ! -------------------------------------------  FindFirstSubString  -----
+  integer function FindFirstSubString ( Set, Probe )
+    ! Find the first sub-string in the string Set that is (not) equal to Probe
+    character(len=*), intent(in) :: Set
+    character(len=1), intent(in) :: Probe
+
+    ! Executable code
+    do FindFirstSubString = 1, len(set)
+      if ( set(FindFirstSubString:FindFirstSubString) == probe ) return
+    end do
+    FindFirstSubString = 0
+  end function FindFirstSubString
+
   subroutine null_fill_1d( array, nullChar )
     ! Fill array with null chars
     ! Args
@@ -465,6 +592,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.15  2013/04/12 00:01:07  pwagner
+! Added write_textfile like existing read_ routines
+!
 ! Revision 2.14  2012/08/14 00:22:09  pwagner
 ! get_lun can take optional Bottom, Top args
 !
