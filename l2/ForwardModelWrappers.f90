@@ -37,7 +37,8 @@ contains ! ============= Public Procedures ==========================
     use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
       & DESTROYFORWARDMODELDERIVED, FORWARDMODELCONFIG_T, QtyStuff_t
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
-    use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
+    use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL, &
+      & GetQtyStuffForForwardModel
     use FULLCLOUDFORWARDMODEL, only: FULLCLOUDFORWARDMODELWRAPPER
     use FULLFORWARDMODEL_M, only: FULLFORWARDMODEL
     use HESSIANMODULE_1, only: HESSIAN_T
@@ -46,14 +47,15 @@ contains ! ============= Public Procedures ==========================
       & L_EXTINCTION, L_EXTINCTIONV2, L_FULL, L_HYBRID, L_LINEAR, &
       & L_MIFEXTINCTION, L_MIFEXTINCTIONV2, L_POLARLINEAR, L_PTAN, L_SCAN, &
       & L_SCAN2D, L_SWITCHINGMIRROR
-    use Intrinsic, only: L_LOWESTRETRIEVEDPRESSURE, L_VMR
+    use Intrinsic, only: L_LOWESTRETRIEVEDPRESSURE, L_VMR, Lit_Indices
     use LINEARIZEDFORWARDMODEL_M, only: LINEARIZEDFORWARDMODEL
     use MATRIXMODULE_1, only: CHECKINTEGRITY, MATRIX_T
-    use MLSL2OPTIONS, only: MLSMESSAGE
     use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR, &
+      & MLSMSG_WARNING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
+    use MoreMessage, only: MLSMessage
     use Output_m, only: Output
     use POLARLINEARMODEL_M, only: POLARLINEARMODEL
     use SCANMODELMODULE, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
@@ -76,35 +78,35 @@ contains ! ============= Public Procedures ==========================
     type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
 
     ! Local variables
-    logical :: Clean                      ! Dumps are clean, from switch dxfc
-    real :: DeltaTime
-    integer :: DumpTransform(3)           ! Dump levels for transformed stuff
-                                          ! 1 = 1's digit => Input and output
-                                          !     details = 1's digit - 2
-                                          ! 2 = 10's digit => FWM Jacobian
-                                          !     details = 10's digit - 4
-                                          ! 3 = 100's digit => Transformed Jacobian
-                                          !     details = 100's digit - 4
-    integer :: FMNaN                      ! Level of fmnan switch
-    integer :: I, K
-    type(vectorValue_t), pointer :: LRP   ! Lowest Retrieved Pressure
-    integer :: NQty                       ! Number of quantities to transform
-    type(vectorValue_t), pointer :: Ptan  ! Tangent pressure
-    type(qtyStuff_t) :: &                 ! Pointers to MIF extinction quantities
-      & Qtys(count( &                     ! (:,1) are MIF-basis, (:,2) are gridded
-          &   fwdModelIn%quantities%template%quantityType == L_MIFExtinction .or. &
-          &   fwdModelIn%quantities%template%quantityType == L_MIFExtinctionV2    &
-        & ) ,2)
-    character(len=132) :: THISNAME
-    real :: Time_start, Time_end 
-    logical :: WasSpecific(count( &
-          &   fwdModelIn%quantities%template%quantityType == L_MIFExtinction .or. &
-          &   fwdModelIn%quantities%template%quantityType == L_MIFExtinctionV2    &
-        & ) )
 
-    interface MINLOC_S
-      module procedure MINLOC_S_S, MINLOC_S_D
-    end interface
+    integer, parameter :: NT = 2           ! Number of kinds of extinction to
+                                           ! transform.  1 = extinction,
+                                           ! 2 = extinctionV2
+
+    logical :: Clean                       ! Dumps are clean, from switch dxfc
+    real :: DeltaTime
+    logical :: Derivs(nt)                  ! Derivatives requested in config
+    logical :: DoTrans(nt)                 ! Both quantities specific
+    integer :: DumpTransform(3)            ! Dump levels for transformed stuff
+                                           ! 1 = 1's digit => Input and output
+                                           !     details = 1's digit - 2
+                                           ! 2 = 10's digit => FWM Jacobian
+                                           !     details = 10's digit - 4
+                                           ! 3 = 100's digit => Transformed Jacobian
+                                           !     details = 100's digit - 4
+    type(qtyStuff_t) :: EXTQty(nt)         ! extinction quantities
+                                           ! (1) is extinction, (2) is extinctionv2
+    integer :: FMNaN                       ! Level of fmnan switch
+    integer :: I, J, K
+    type(vectorValue_t), pointer :: LRP    ! Lowest Retrieved Pressure
+    type(qtyStuff_t) :: MIFQty(nt)         ! MIF extinction quantity
+    ! Molecule types corresponding to qTypes:
+    integer, parameter :: MTypes(nt) = (/ l_Extinction, l_Extinctionv2 /)
+    type(vectorValue_t), pointer :: Ptan   ! Tangent pressure
+    ! Quantity types for MIF extinction:
+    integer, parameter :: QTypes(nt) = (/ l_MIFExtinction, l_MIFExtinctionv2 /)
+    character(len=132) :: ThisName
+    real :: Time_start, Time_end 
 
     ! Executable code
     ! Report we're starting
@@ -134,40 +136,59 @@ contains ! ============= Public Procedures ==========================
 
     if ( config%fwmType == l_full) call deriveFromForwardModelConfig ( config )
 
+    ! Look for specific MIF extinction quantities in the state vector, and
+    ! their corresponding extinction quantities.  If such are found,
+    ! transform the specified MIFextinction quantities to extinction
+    ! "molecules" before calling the forward model, and transform the
+    ! "molecules" and associated columns of the Jacobian to MIF extinction
+    ! quantities after return.  See wvs-107.
+
+    doTrans = .false.
     if ( config%transformMIFextinction ) then
-      ! Transform MIFextinction quantities to extinction molecules before
-      ! calling the forward model, and transform extinction molecules and
-      ! associated columns of the Jacobian to MIF extinction quantities after
-      ! return.  See wvs-107.
-      if ( size(qtys) == 0 ) &
+      if ( .not. associated(config%signals) ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'Forward model config ' // trim(thisName) // &
-          & ' requests MIF extinction transformation, but there are no' // &
-          & ' MIF extinction quantities' )
-      ! Find MIF extinction quantities in the state vector, and their
-      ! corresponding extinction quantities
-      nQty = 0
-      do i = 1, size(fwdModelIn%quantities)
-        if ( fwdModelIn%quantities(i)%template%radiometer /= &
-           & config%signals(1)%radiometer ) cycle
-        if ( fwdModelIn%quantities(i)%template%quantityType == l_MIFextinction ) then
-          nQty = nQty + 1
-          qtys(nQty,1)%qty => fwdModelIn%quantities(i)
-          qtys(nQty,2)%qty => GetQuantityForForwardModel ( fwdModelIn,     &
-               & quantityType=l_vmr, molecule=l_extinction, config=config, &
-               & radiometer=qtys(nQty,1)%qty%template%radiometer,          &
-               & foundInFirst=qtys(nQty,2)%foundInFirst,                   &
-               & wasSpecific=wasSpecific(nQty) )
-        else if( fwdModelIn%quantities(i)%template%quantityType == l_MIFextinctionv2 ) then
-          nQty = nQty + 1
-          qtys(nQty,1)%qty => fwdModelIn%quantities(i)
-          qtys(nQty,2)%qty => GetQuantityForForwardModel ( fwdModelIn,       &
-               & quantityType=l_vmr, molecule=l_extinctionv2, config=config, &
-               & radiometer=qtys(nQty,1)%qty%template%radiometer,            &
-               & foundInFirst=qtys(nQty,2)%foundInFirst,                     &
-               & wasSpecific=wasSpecific(nQty) )
+          & 'TransformMIFextinction requires SIGNALS in %S', datum=config%name )
+      ! All signals in a single config are for the same radiometer
+      do i = 1, nt
+        derivs(i) = .false.
+        ! First, check whether the transformed extinction is in a
+        ! molecules field in the config.  MIFQty(i)%wasSpecific is a temp here.
+        MIFQty(i)%wasSpecific = any(config%molecules == mTypes(i))
+        if ( MIFQty(i)%wasSpecific ) &
+          & MIFQty(i) = GetQtyStuffForForwardModel ( fwdModelIn,    &
+            & fwdModelExtra, quantityType=qTypes(i), config=config, &
+            & radiometer=config%signals(1)%radiometer, noError=.true. )
+
+        if ( MIFQty(i)%wasSpecific ) &
+          & extQty(i) = GetQtyStuffForForwardModel ( fwdModelIn,      &
+            & fwdModelExtra, quantityType=l_vmr, molecule=mTypes(i),  &
+            & config=config, radiometer=config%signals(1)%radiometer, &
+            & noError=.true. )
+        doTrans(i) = MIFQty(i)%wasSpecific .and. extQty(i)%wasSpecific
+        if ( doTrans(i) .and. associated(config%moleculeDerivatives) ) then
+          derivs(i) = any( config%molecules == mTypes(i) .and. &
+                    &      config%moleculeDerivatives )
+          ! If molecule derivatives are requested for MTypes(i), make
+          ! sure there is a Jacobian, and that both MIFQty(i) and EXTQty(i)
+          ! are in the state vector, not the extra vector
+          if ( derivs(i) .and. .not. &
+            & ( present(Jacobian) .and. MIFQty(i)%foundInFirst .and. &
+            &   extQty(i)%foundInFirst ) ) then
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+              & 'TransformMIFextinction requested in %S with derivatives, ' // &
+              & 'but Jacobian is not present, or %S is not in state vector', &
+              & datum=[config%name,lit_indices(mTypes(i))] )
+          end if
         end if
+
       end do
+
+      if ( .not. any(MIFqty%wasSpecific .and. extQty%wasSpecific) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'TransformMIFextinction requested, but necessary quantities are not specific' )
+    end if ! config%transformMIFextinction
+
+    if ( any(doTrans) ) then
       ! Lowest Returned Pressure is needed for extinction transformations
       lrp => GetQuantityForForwardModel ( fwdModelExtra, &
                & quantityType=l_lowestRetrievedPressure, config=config )
@@ -176,14 +197,11 @@ contains ! ============= Public Procedures ==========================
       ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
                & quantityType=l_ptan, config=config, &
                & instrumentModule=config%signals(1)%instrumentModule )
-      ! Transform MIF extinction quantities to extinction molecules
-      do k = 1, nQty
-        call transform_MIF_extinction &
-          & ( fmStat%MAF, qtys(k,1)%qty, ptan, lrp%values(1,1), qtys(k,2)%qty, &
-            & dumpTransform )
-        if ( dumpTransform(1) >= 1 ) then
-          call output ( qtys(nQty,2)%foundInFirst, before='FoundInFirst =' )
-          call output ( wasSpecific(nQty), before=' WasSpecific =', advance='yes' )
+      ! Transform MIF extinction quantity to extinction molecule
+      do i = 1, nt
+        if ( doTrans(i) ) then
+          call transform_MIF_extinction ( fmStat%MAF, MIFQty(i)%qty, &
+            & ptan, lrp%values(1,1), extQty(i)%qty, dumpTransform )
         end if
       end do
 
@@ -192,11 +210,12 @@ contains ! ============= Public Procedures ==========================
 
       ! Transform fwmJacobian and radiances for quantities for which
       ! transformation is requested.
-      do k = 1, nQty
-        call transform_FWM_extinction ( config, fmStat%MAF, fwdModelOut, &
-          & qtys(k,2)%qty, qtys(k,1)%qty, ptan, Jacobian, dumpTransform, clean )
+      do i = 1, nt
+        if ( derivs(i) ) &
+          & call transform_FWM_extinction ( config, fmStat%MAF, fwdModelOut, &
+            & extQty(i)%qty, MIFQty(i)%qty, ptan, Jacobian, dumpTransform,   &
+            & clean )
       end do
-
     else ! Run the forward model without transformation
       call doForwardModels
     end if
@@ -331,22 +350,6 @@ contains ! ============= Public Procedures ==========================
 
   end subroutine ForwardModel
 
-  pure integer function MINLOC_S_S ( A ) result ( MS )
-    ! Return the subscript in A of the minimum absolute value, as a scalar
-    real, intent(in) :: A(:)
-    integer :: M(1)
-    m = minloc(abs(a))
-    ms = m(1)
-  end function MINLOC_S_S
-
-  pure integer function MINLOC_S_D ( A ) result ( MS )
-    ! Return the subscript in A of the minimum absolute value, as a scalar
-    double precision, intent(in) :: A(:)
-    integer :: M(1)
-    m = minloc(abs(a))
-    ms = m(1)
-  end function MINLOC_S_D
-
 !{\cleardoublepage
   subroutine Transform_FWM_extinction ( Config, MAF, FwdModelOut, F_Qty, S_Qty, &
     &                                   PTan, Jacobian, DumpTransform, Clean )
@@ -432,7 +435,7 @@ contains ! ============= Public Procedures ==========================
       end if
       if ( dumpTransform(2) >= 1 ) then
         do inst = 1, size(fCols)
-          call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2)-4, &
+          call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2)-3, &
             & row=jRow, column=fCols(inst) )
         end do
       end if
@@ -544,7 +547,7 @@ contains ! ============= Public Procedures ==========================
       end if
       if ( dumpTransform(3) >= 1 ) then
         do inst = 1, size(jCols)
-          call dump ( Jacobian, 'Transformed Jacobian', dumpTransform(3)-4, &
+          call dump ( Jacobian, 'Transformed Jacobian', dumpTransform(3)-3, &
             & row=jRow, column=jCols(inst) )
         end do
       end if
@@ -576,7 +579,8 @@ contains ! ============= Public Procedures ==========================
 
     use Dump_0, only: Dump
     use MLSKinds, only: RM, RV
-    use MLSNumerics, only: InterpolateValues
+    use MLSNumerics, only: Hunt, InterpolateValues
+    use Output_m, only: Output
     use Sort_m, only: Sortp
     use VectorsModule, only: Dump, VectorValue_t
 
@@ -588,20 +592,20 @@ contains ! ============= Public Procedures ==========================
     type(vectorValue_t), intent(inout) :: F_Qty ! Forward model quantity
     integer, intent(in) :: DumpTransform(3)   ! Dump S_Qty and F_Qty
 
-    integer :: F_LRP   ! Index in F_Qty%Surfs of LRP
+    integer :: F_LRP   ! Index in F_Qty%Surfs just below LRP
     integer :: I       ! Subscript and loop inductor
     integer :: P(s_qty%template%noSurfs)
-    integer :: S_LRP   ! Index in S_Qty%Surfs of LRP
-
-    interface MINLOC_S
-      module procedure MINLOC_S_S, MINLOC_S_D
-    end interface
+    integer :: S_LRP   ! Index in sorted Ptan%Values just below LRP
 
     ! PTan might be out of order, so sort ptan%values
     call sortp ( ptan%values(:,maf), 1, ptan%template%noSurfs, p )
 
-    f_lrp = minloc_s(lrp - f_qty%template%surfs(:,1))
-    s_lrp = minloc_s(lrp - ptan%values(p,1))
+    ! Find indices in f_qty%template%surfs and ptan%values just below, but
+    ! not equal to, LRP
+    call hunt ( f_qty%template%surfs(:,1), lrp, f_lrp )
+    if ( f_qty%template%surfs(f_lrp,1) == f_lrp ) f_lrp = f_lrp - 1
+    call hunt ( ptan%values(p,1), lrp, s_lrp )
+    if ( ptan%values(p(s_lrp),1) == lrp ) s_lrp = s_lrp
 
     ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty
     call interpolateValues (                              &
@@ -623,13 +627,13 @@ contains ! ============= Public Procedures ==========================
      ! Vertical coordinate is $\zeta = \log_{10}P$,
      ! so $10^{-2\zeta}$ is $P^{-2}$).
 
-    do i = 1, f_lrp-1
-      f_qty%values(i,:) = f_qty%values(f_lrp,1) * &
+    do i = 1, f_lrp
+      f_qty%values(i,:) = f_qty%values(f_lrp+1,1) * &
         & 10.0_rm ** ( - 2.0 * ( f_qty%template%surfs(i,1) - &
-                               & ptan%values(p(s_lrp),1) ) )
+                               & ptan%values(p(s_lrp+1),1) ) )
     end do
 
-    do i = f_lrp, ubound(f_qty%values,1)
+    do i = f_lrp+1, ubound(f_qty%values,1)
       f_qty%values(i,2:) = f_qty%values(i,1)
     end do
 
@@ -637,6 +641,8 @@ contains ! ============= Public Procedures ==========================
       if ( dumpTransform(1) > 1 ) &
         & call dump ( ptan%values(p,maf), name='PTan zetas' )
       call dump ( s_qty, details=dumpTransform(1)-2, name='from fwdModelIn' )
+      call output ( lrp, before='Lowest retrieved pressure = ', &
+                    after=' zeta', advance='yes' )
       call dump ( f_qty, details=dumpTransform(1)-2, name='to forward model' )
     end if
   end subroutine Transform_MIF_Extinction
@@ -654,6 +660,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.56  2013/04/12 00:30:06  vsnyder
+! Make f_lrp, s_lrp be indices just below lrp, not nearest to lrp
+!
 ! Revision 2.55  2013/03/20 22:47:35  vsnyder
 ! Add config to references to GetQuantityForForwardModel
 !
