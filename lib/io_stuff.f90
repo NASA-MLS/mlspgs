@@ -26,17 +26,17 @@ module IO_STUFF
 !     - - - - - - - -                                                    
 
 !     (subroutines and functions)
-! GET_LUN       Find a Fortran logical unit number that's not in use.
-! read_stdin    Read standard input into characters scalar or array
-! read_textfile Read contents of a textfile into characters scalar or array
-! read_textfile Write characters scalar or array into a textfile
+! GET_LUN        Find a Fortran logical unit number that's not in use.
+! read_stdin     Read standard input into characters scalar or array
+! read_textfile  Read contents of a textfile into characters scalar or array
+! write_textfile Write characters scalar or array out to a textfile
 ! === (end of toc) ===
 
 ! === (start of api) ===
 ! GET_LUN( int lun, [log msg] )
 ! read_stdin( str string, [int maxLineLen], [int nLines] )
 ! read_textfile( char* File, str string, [int maxLineLen], [int nLines] )
-! writed_textfile( char* File, str string, [int maxLineLen], [int nLines] )
+! write_textfile( char* File, str string, [int maxLineLen], [int nLines] )
 ! str can be any of
 ! character(len=*)                 a scalar character string of any length
 ! character(len=*), dimension(:)   a 1d character array of any length
@@ -436,11 +436,8 @@ contains
     integer :: i, n
     integer :: lun
     integer :: status
-    character(len=12) :: xfmt
-    character(len=8) :: xlen
     ! print *, 'Name of textfile: ', trim(File)
     ! What format do we use for writing each line?
-    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
     ! Try to write the textfile
     call GET_LUN ( LUN )
     open(UNIT=lun, form='formatted', &
@@ -466,14 +463,11 @@ contains
     character(len=*), intent(in)  :: File ! its path and name
     character(len=1), dimension(:,:), intent(in) :: chars    ! its contents
     ! Internal variables
-    integer :: i, j, n
+    integer :: i, n
     integer :: lun
     integer :: status
-    character(len=12) :: xfmt
-    character(len=8) :: xlen
     ! print *, 'Name of textfile: ', trim(File)
     ! What format do we use for writeing each line?
-    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
     ! Try to write the textfile
     call GET_LUN ( LUN )
     open(UNIT=lun, form='formatted', &
@@ -501,11 +495,8 @@ contains
     ! Internal variables
     integer :: lun
     integer :: status
-    character(len=12) :: xfmt
-    character(len=8) :: xlen
     ! print *, 'Name of textfile: ', trim(File)
     ! What format do we use for writeing each line?
-    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
     ! Try to write the textfile
     call GET_LUN ( LUN )
     open(UNIT=lun, form='formatted', &
@@ -592,6 +583,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.16  2013/04/13 00:17:40  pwagner
+! Fixed typos in commets; removed unused variables
+!
 ! Revision 2.15  2013/04/12 00:01:07  pwagner
 ! Added write_textfile like existing read_ routines
 !
