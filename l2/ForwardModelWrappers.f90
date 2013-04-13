@@ -600,19 +600,23 @@ contains ! ============= Public Procedures ==========================
     ! PTan might be out of order, so sort ptan%values
     call sortp ( ptan%values(:,maf), 1, ptan%template%noSurfs, p )
 
-    ! Find indices in f_qty%template%surfs and ptan%values just below, but
-    ! not equal to, LRP
+    ! Find indices in f_qty%template%surfs and ptan%values, of zetas
+    ! just below, but not equal to, LRP.  Hunt returns Index such that
+    ! Array(index) <= Value < Array(index+1). We want
+    ! Array(index) < Value <= Array(index+1).
     call hunt ( f_qty%template%surfs(:,1), lrp, f_lrp )
     if ( f_qty%template%surfs(f_lrp,1) == f_lrp ) f_lrp = f_lrp - 1
     call hunt ( ptan%values(p,1), lrp, s_lrp )
-    if ( ptan%values(p(s_lrp),1) == lrp ) s_lrp = s_lrp
+    if ( ptan%values(p(s_lrp),1) == lrp ) s_lrp = s_lrp - 1
 
     ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty
     call interpolateValues (                              &
       & ptan%values(p,maf), s_qty%values(p,maf), &
       & f_qty%template%surfs(:,1), f_qty%values(:,1), 'L', 'C' )
-     !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107,
-     !  to compute extinction for the forward model
+
+     !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107, to compute
+     !  extinction for the forward model, by extrapolating downward from
+     !  the zeta above, or equal to, LRP = $\zeta_r$.
      ! \renewcommand{\arraystretch}{2}
      ! \begin{equation*}
      ! E^F_{g,j} = \left\{
@@ -623,9 +627,9 @@ contains ! ============= Public Procedures ==========================
      !   & \zeta_g < \zeta_r    & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
      ! \end{array} \right.
      ! \end{equation*}
-     ! {\tt hGrids} of {\tt F_Qty} and {\tt S_Qty} have same extent and spacing.
-     ! Vertical coordinate is $\zeta = \log_{10}P$,
-     ! so $10^{-2\zeta}$ is $P^{-2}$).
+     ! {\tt hGrids} of {\tt F_Qty} and {\tt S_Qty} have same extent and
+     ! spacing. Vertical coordinate is $\zeta = \log_{10}P$, so
+     ! $10^{-2\zeta}$ is $P^{-2}$).
 
     do i = 1, f_lrp
       f_qty%values(i,:) = f_qty%values(f_lrp+1,1) * &
@@ -660,6 +664,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.57  2013/04/13 01:33:53  vsnyder
+! Fix a typo, polish some LaTeX stuff
+!
 ! Revision 2.56  2013/04/12 00:30:06  vsnyder
 ! Make f_lrp, s_lrp be indices just below lrp, not nearest to lrp
 !
