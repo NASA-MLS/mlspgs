@@ -193,7 +193,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_REEVALUATE         = s_readPFA + 1
   integer, parameter :: S_REFLECT            = s_reevaluate + 1
   integer, parameter :: S_REGULARIZATION     = s_reflect + 1
-  integer, parameter :: S_RESTRICTRANGE      = s_regularization + 1
+  integer, parameter :: S_REPEAT             = s_regularization + 1
+  integer, parameter :: S_RESTRICTRANGE      = s_repeat + 1
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
   integer, parameter :: S_ROWSCALE           = s_retrieve + 1
   integer, parameter :: S_SELECT             = s_rowscale + 1
@@ -425,6 +426,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_reevaluate) =           add_ident ( 'reevaluate' )
     spec_indices(s_reflect) =              add_ident ( 'reflect' )
     spec_indices(s_regularization) =       add_ident ( 'regularization' )
+    spec_indices(s_repeat) =               add_ident ( 'repeat' )
     spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_rowScale) =             add_ident ( 'rowScale' )
@@ -1445,6 +1447,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_options, t+t_string, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_Boolean
+      begin, s+s_repeat, &
+             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
+             begin, f+f_formula, t+t_string, n+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ & ! Must be AFTER s_Boolean
       begin, s+s_skip, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
              begin, f+f_formula, t+t_string, n+n_field_type, &
@@ -1761,20 +1768,22 @@ contains ! =====     Public procedures     =============================
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_fill, &
-             s+s_anyGoodRadiances, s+s_anyGoodValues, s+s_case, s+s_catchWarning, &
-             s+s_compare, s+s_computeTotalPower, s+s_destroy, &
-             s+s_diff, s+s_directRead, s+s_dump, s+s_endSelect, &
+             s+s_anyGoodRadiances, s+s_anyGoodValues, &
+             s+s_case, s+s_catchWarning, s+s_compare, s+s_computeTotalPower, &
+             s+s_destroy, s+s_diff, s+s_directRead, s+s_dump, s+s_endSelect, &
              s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_flushPFA, &
-             s+s_hessian, s+s_load, s+s_matrix, s+s_negativePrecision, s+s_phase, &
-             s+s_populateL2PCBin, s+s_reevaluate, s+s_restrictRange, s+s_select, &
+             s+s_hessian, s+s_load, s+s_matrix, s+s_negativePrecision, &
+             s+s_phase, s+s_populateL2PCBin, &
+             s+s_reevaluate, s+s_repeat, s+s_restrictRange, s+s_select, &
              s+s_skip, s+s_snoop, s+s_streamlineHessian, s+s_subset, &
              s+s_time, s+s_transfer, s+s_updateMask, s+s_vector, n+n_section, &
       begin, z+z_retrieve, s+s_anyGoodValues, s+s_case, s+s_catchWarning, &
              s+s_checkpoint, s+s_compare, s+s_diff, s+s_dump, s+s_dumpBlocks, &
              s+s_endSelect, s+s_flagCloud, s+s_flushPFA, s+s_leakcheck, &
-             s+s_reevaluate, s+s_restrictRange, s+s_retrieve, s+s_select, &
-             s+s_sids, s+s_skip, s+s_snoop, s+s_subset, s+s_time, s+s_updateMask, &
+             s+s_reevaluate, s+s_repeat, s+s_restrictRange, s+s_retrieve, &
+             s+s_select, s+s_sids, s+s_skip, s+s_snoop, s+s_subset, &
+             s+s_time, s+s_updateMask, &
              n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
              s+s_case, s+s_directWrite, s+s_diff, s+s_dump, s+s_endSelect, &
@@ -1807,6 +1816,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.561  2013/04/17 00:04:45  pwagner
+! Added new Repeat control structure to Fill, Retrieve sections
+!
 ! Revision 2.560  2013/03/15 20:36:03  vsnyder
 ! Add 'switches' field to SIDS
 !
