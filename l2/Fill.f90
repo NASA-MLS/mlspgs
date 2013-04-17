@@ -59,7 +59,8 @@ contains ! =====     Public Procedures     =============================
     use DUMPCOMMAND_M, only: BOOLEANFROMANYGOODRADIANCES, &
       & BOOLEANFROMANYGOODVALUES, &
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
-      & DUMPCOMMAND, SKIP, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING
+      & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, &
+      & REPEAT=>SKIP, SKIP
     use EXPR_M, only: EXPR, EXPR_CHECK
     use FILLUTILS_1, only: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
       & COMPUTETOTALPOWER, DERIVATIVEOFSOURCE, FILLCOVARIANCE, &
@@ -159,7 +160,7 @@ contains ! =====     Public Procedures     =============================
       & L_PHASETIMING, L_PHITAN, &
       & L_PLAIN, L_PROFILE, L_PTAN,  L_QUALITY, &
       & L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, &
-      & L_REFLECTORTEMPMODEL, L_RESETUNuseDRADIANCES, L_RHI, &
+      & L_REFLECTORTEMPMODEL, L_RESETUNUSEDRADIANCES, L_RHI, &
       & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, L_SCALEOVERLAPS, &
       & L_SECTIONTIMING, L_SPD, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_STATUS, L_SWAPVALUES, &
@@ -170,11 +171,11 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
       & S_CASE, S_CATCHWARNING, S_COMPARE, S_COMPUTETOTALPOWER, S_DESTROY, &
       & S_DIFF, S_DIRECTREAD, S_DUMP, S_ENDSELECT, S_FILL, S_FILLCOVARIANCE, &
-      & S_FILLDIAGONAL, S_FLAGCLOUD, S_FLUSHL2PCBINS, S_FLUSHPFA, &
-      & S_HESSIAN, S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
-      & S_REEVALUATE, S_RESTRICTRANGE, &
-      & S_SELECT, S_SKIP, S_SNOOP, S_STREAMLINEHESSIAN, &
-      & S_SUBSET, S_TIME, S_TRANSFER, S_UPDATEMASK, S_VECTOR
+      & S_FILLDIAGONAL, S_FLAGCLOUD, S_FLUSHL2PCBINS, S_FLUSHPFA, S_HESSIAN, &
+      & S_LOAD, S_MATRIX,  S_NEGATIVEPRECISION, S_PHASE, S_POPULATEL2PCBIN, &
+      & S_REEVALUATE, S_REPEAT, S_RESTRICTRANGE, &
+      & S_SELECT, S_SKIP, S_SNOOP, S_STREAMLINEHESSIAN, S_SUBSET, &
+      & S_TIME, S_TRANSFER, S_UPDATEMASK, S_VECTOR
     ! NOW SOME ARRAYS
     use INTRINSIC, only: LIT_INDICES, &
       & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_TEMPERATURE, &
@@ -470,6 +471,7 @@ contains ! =====     Public Procedures     =============================
     integer :: REFGPHVECTORINDEX        ! In the vector database
     integer :: REFGPHPRECISIONQUANTITYINDEX      ! in the quantities database
     integer :: REFGPHPRECISIONVECTORINDEX        ! In the vector database
+    logical :: REPEATLOOP               ! Do we repeat this section?
     logical :: RESETSEED                ! Let mls_random_seed choose new seed
     integer :: RHIPRECISIONQUANTITYINDEX         ! in the quantities database
     integer :: RHIPRECISIONVECTORINDEX           ! In the vector database
@@ -545,7 +547,9 @@ contains ! =====     Public Procedures     =============================
     templateIndex = -1
     vectorIndex = -1
     maxIterations = 4
+    repeatLoop = .false. ! By default, we will not repeat
 
+    repeat_loop: do ! RepeatLoop
     ! Loop over the lines in the configuration file
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
@@ -694,7 +698,6 @@ contains ! =====     Public Procedures     =============================
         call ComputeTotalPower ( key, vectors )
       case ( s_Reevaluate )
         call decorate ( key,  BooleanFromFormula ( 0, key ) )
-
       case ( s_diff, s_dump ) ! ======================== Diff, Dump ==========
         ! Handle disassociated pointers by allocating them with zero size
         status = 0
@@ -743,9 +746,14 @@ contains ! =====     Public Procedures     =============================
             & extraInfo = (/ f_columns, f_rows /) )
         end if
 
+      case ( s_Repeat ) ! ============================== Repeat ==========
+        ! We'll Repeat the section as long as the Boolean cond'n is TRUE
+        RepeatLoop = Repeat(key)
+        ! call outputNamedValue ( 'repeat loop?', repeatLoop )
+        if ( .not. RepeatLoop ) exit repeat_loop
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
-        if ( Skip(key) ) exit
+        if ( Skip(key) ) exit repeat_loop
       case ( s_matrix ) ! ===============================  Matrix  =====
         got = .false.
         matrixType = l_plain
@@ -1141,6 +1149,8 @@ contains ! =====     Public Procedures     =============================
       if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Fill.spec" )
     end do ! End of loop of specs
+    if ( .not. repeatLoop ) exit ! Otherwise, we will repeat the section
+    enddo  repeat_loop!  RepeatLoop
 
     if ( fillError /= 0 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
@@ -2993,6 +3003,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.417  2013/04/17 00:05:07  pwagner
+! Added new Repeat control structure to Fill, Retrieve sections
+!
 ! Revision 2.416  2013/01/17 20:02:02  pwagner
 ! New where field in Subset command
 !
