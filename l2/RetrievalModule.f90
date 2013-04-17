@@ -45,7 +45,7 @@ contains
       & BOOLEANFROMANYGOODVALUES, &
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, &
-      & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
+      & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, REPEAT=>SKIP, SKIP
     use HESSIANMODULE_1, only: HESSIAN_T, CREATEEMPTYHESSIAN, DESTROYHESSIAN
     use IEEE_ARITHMETIC, only: IEEE_IS_NAN
     use EXPR_M, only: EXPR
@@ -76,7 +76,7 @@ contains
       & L_NEWTONIAN, L_NONE, L_NORM, L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_SIMPLE, &
       & S_ANYGOODVALUES, S_CATCHWARNING, S_CASE, S_COMPARE, &
       & S_DIFF, S_DUMP, S_DUMPBLOCKS, S_FLAGCLOUD, S_FLUSHPFA, S_LEAKCHECK, &
-      & S_ENDSELECT, S_REEVALUATE, S_RESTRICTRANGE, S_RETRIEVE, &
+      & S_ENDSELECT, S_REEVALUATE, S_REPEAT, S_RESTRICTRANGE, S_RETRIEVE, &
       & S_SELECT, S_SIDS, S_SKIP, S_SNOOP, S_SUBSET, S_TIME, S_UPDATEMASK
     use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use L2PARINFO, only: PARALLEL
@@ -205,6 +205,7 @@ contains
     character(len=127) :: PhaseName     ! To pass to snoopers
     logical :: PotemkinHessian 
     real(rv) :: PrecisionFactor         ! Default 0.5, precisions 'worse than this' set negative
+    logical :: REPEATLOOP               ! Do we repeat this section?
     integer :: SaveLevels(size(levels))
     logical :: SaveToggle(size(toggle))
     integer :: Son                      ! Of Root or Key
@@ -302,6 +303,7 @@ contains
     switchLenCur = switchLen + 1
     switches(switchLenCur:switchLenCur) = ','
     timing = section_times
+    repeatLoop = .false. ! By default, we will not repeat
     do j = firstVec, lastVec ! Make the vectors in the database initially empty
       nullify ( v(j)%quantities, v(j)%template%quantities )
       v(j)%name = 0 ! so Snoop won't use it
@@ -311,6 +313,9 @@ contains
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
     if ( specialDumpFile /= ' ' ) &
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
+    repeat_loop: do ! RepeatLoop
+    ! Loop over the lines in the configuration file
+
     do i_sons = 2, nsons(root) - 1      ! skip names at begin/end of section
       son = subtree(i_sons, root)
       if ( node_id(son) == n_named ) then
@@ -768,9 +773,13 @@ contains
       case ( s_endSelect ) ! ============ End of select .. case ==========
         ! We'done with seeking a match
         call MLSEndSelect (key)
+      case ( s_Repeat ) ! ============================== Repeat ==========
+        ! We'll Repeat the section as long as the Boolean cond'n is TRUE
+        RepeatLoop = Repeat(key)
+        if ( .not. RepeatLoop ) exit repeat_loop
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
-        if ( Skip(key) ) exit
+        if ( Skip(key) ) exit repeat_loop
       case ( s_snoop )
         snoopKey = key
         do i_key = 2, nsons(key)
@@ -814,6 +823,8 @@ contains
       end do
 
     end do ! i_sons = 2, nsons(root) - 1
+    if ( .not. repeatLoop ) exit ! Otherwise, we will repeat the section
+    enddo repeat_loop ! RepeatLoop
     
     ! Housekeeping
     ! if ( .not. got(f_jacobian) ) call DestroyMatrix( Jacobian )
@@ -2979,6 +2990,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.335  2013/04/17 00:05:25  pwagner
+! Added new Repeat control structure to Fill, Retrieve sections
+!
 ! Revision 2.334  2013/03/01 01:12:15  pwagner
 ! 'fiw' switch dumps sids instance window even if retrieval skipped
 !
