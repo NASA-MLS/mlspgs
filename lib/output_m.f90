@@ -12,7 +12,12 @@
 module OUTPUT_M
 
   ! Very high level printing and formatting
-  ! see also dump_0 and MLSMessageModule
+  
+  ! Should we split off lower-level stuff
+  ! (output, blanks, newLine, outputoptions, a few others)
+  ! to a new output_0 module?
+  
+  ! See also dump_0 and MLSMessageModule
   
   use DATES_MODULE, only:  BUILDCALENDAR, DAYSINMONTH, &
     & REFORMATDATE, REFORMATTIME, UTC_TO_YYYYMMDD
@@ -154,8 +159,6 @@ module OUTPUT_M
 !
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
-  integer, save, public :: LINE_WIDTH = 120 ! Not used here, but a convenient
-                                            ! place to store it
   ! Where to output?
   ! These apply if we don't output to a fortran unit number (which is > 0)
   integer, parameter, public :: INVALIDPRUNIT      = 0
@@ -180,12 +183,12 @@ module OUTPUT_M
   public :: stampOptions_T
   public :: timeStampOptions_T
 
-  interface aligntofit
+  interface ALIGNTOFIT
     module procedure aligntofit_chars, aligntofit_double, aligntofit_single
     module procedure aligntofit_integer
   end interface
 
-  interface banner
+  interface BANNER
     module procedure banner_chars
     module procedure banner_chararray
   end interface
@@ -198,7 +201,7 @@ module OUTPUT_M
     module procedure DUMPSIZE_DOUBLE, DUMPSIZE_INTEGER, DUMPSIZE_REAL
   end interface
 
-  interface getOption
+  interface GETOPTION
     module procedure getOption_char, getOption_log
   end interface
 
@@ -230,7 +233,7 @@ module OUTPUT_M
     module procedure OUTPUTLIST_INTS, OUTPUTLIST_CHARS
   end interface
 
-  interface outputNamedValue
+  interface OUTPUTNAMEDVALUE
     module procedure output_nvp_character
     module procedure output_nvp_complex
     module procedure output_nvp_dbl_array, output_nvp_double
@@ -250,7 +253,7 @@ module OUTPUT_M
   ! We can use the OutputLines mechanism for user-controlled
   ! buffering, filtering, grep-ing, or whatever
   integer, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
-  character(len=MAXOUTPUTLINESLEN), public, save     :: outputLines = ' '
+  character(len=MAXOUTPUTLINESLEN), public, save     :: OUTPUTLINES = ' '
 
   ! This is the type for configuring how to automatically format
   ! lines and whether they should be sent to stdout or elsewhere
@@ -283,7 +286,7 @@ module OUTPUT_M
     character(len=1)  :: arrayElmntSeparator = ' '
   end type
   
-  type(outputOptions_T), public, save :: outputOptions
+  type(outputOptions_T), public, save :: OUTPUTOPTIONS
 
   ! This is the type for configuring whether and how to automatically stamp
   ! lines sent to stdout
@@ -303,9 +306,9 @@ module OUTPUT_M
     character(len=8) :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
   end type
   
-  type(stampOptions_T), public, save :: stampOptions ! Could leave this private
+  type(stampOptions_T), public, save :: STAMPOPTIONS ! Could leave this private
 
-  ! This is the type for configuring how timeStamp stamps only individual lines)
+  ! This is the type for configuring how the timeStamp stamps its lines)
   type timeStampOptions_T
     logical :: post = .true.      ! Put stamp at end of line?
     logical :: showDate = .false. ! Don't show date unless TRUE
@@ -316,7 +319,7 @@ module OUTPUT_M
     character(len=8) :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
   end type
   
-  type(timeStampOptions_T), public, save :: timeStampOptions ! Could leave this private
+  type(timeStampOptions_T), public, save :: TIMESTAMPOPTIONS ! Could leave this private
 
   ! Private parameters
   logical, save, private :: SILENTRUNNING = .false. ! Suspend all further output
@@ -2850,6 +2853,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.99  2013/04/17 00:03:44  pwagner
+! Removed LINE_WIDTH; comments note possible solution to unwieldy module
+!
 ! Revision 2.98  2013/02/04 21:57:06  pwagner
 ! Fixed bug sending invalidPRUnit output to stderr
 !
