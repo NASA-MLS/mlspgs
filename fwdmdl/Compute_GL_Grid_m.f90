@@ -27,7 +27,7 @@ contains
 
   ! Compute the pressure and zeta GL grids.
 
-    use GLnp, only: GX, NGP1 ! Gauss abscissae, # Gauss abscissae + 1
+    use GLnp, only: GX, NGP1
     use MLSCommon, only: RP, R8
 
   ! Inputs:
@@ -59,7 +59,7 @@ contains
       & spread(0.5_rp * (z_psig(2:Nlvl) - z_psig(1:Nlm1)),1,Ngp1) * &
       ! New Gauss points (excludes Lobatto end points) with -1 at front:
       & spread(g_grid,2,NLm1), (/maxVert-1/))
-    z_glgrid(maxVert) = z_psig(Nlvl)
+    if ( maxVert > 0 ) z_glgrid(maxVert) = z_psig(Nlvl)
     if ( present(p_glgrid) ) p_glgrid(:maxVert) = 10.0_rp**(-z_glgrid(:maxVert))
 
   end subroutine Compute_GL_Grid
@@ -77,8 +77,8 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
-! Revision 2.20  2013/02/28 21:05:48  vsnyder
-! Try to cope with short paths
+! Revision 2.21  2013/04/19 23:56:23  vsnyder
+! Don't violate array bounds
 !
 ! Revision 2.19  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
