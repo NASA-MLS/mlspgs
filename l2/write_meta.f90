@@ -746,7 +746,7 @@ contains
     end if
 
     if ( SFINBETWEENSTARTEND ) then
-      hdfReturn = mls_sfend(hdf_sdid, hdfVersion=hdfVersion)
+      hdfReturn = mls_sfend( hdf_sdid, hdfVersion=hdfVersion, addingMetadata=.true. )
       if ( hdfReturn /= 0 ) then
           call announce_error ( 0, &
           & "Error: metadata mls_sfend in third_grouping.", &
@@ -855,7 +855,7 @@ contains
       return
     end if
 
-    hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
+    hdfReturn = mls_sfend( sdid, hdfVersion=hdfVersion, addingMetadata=.true. )
     if ( hdfReturn /= 0 ) then
         call announce_error ( 0, &
         & "Error: metadata mls_sfend in populate_metadata_std.", &
@@ -978,7 +978,7 @@ contains
       return
     end if
 
-    hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
+    hdfReturn = mls_sfend( sdid, hdfVersion=hdfVersion, addingMetadata=.true. )
     if ( hdfReturn /= 0 ) then
         call announce_error ( 0, &
         & "Error: metadata mls_sfend in populate_metadata_oth.", &
@@ -1449,6 +1449,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.72  2013/04/19 20:07:28  pwagner
+! Fixed long-standing bug in closing file after adding metadata
+!
 ! Revision 2.71  2013/04/12 00:06:35  pwagner
 ! Added addToMetadata
 !
