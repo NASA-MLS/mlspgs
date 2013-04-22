@@ -377,7 +377,7 @@ contains
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Retrieve.RestrictRange" )
       case ( s_Reevaluate )
-        call decorate ( key,  BooleanFromFormula ( 0, key ) )
+        call decorate ( key,  BooleanFromFormula ( 0, key, vectorDatabase ) )
       case ( s_retrieve )
         if ( SKIPRETRIEVAL .and. STATEFILLEDBYSKIPPEDRETRIEVALS == 0. ) cycle
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
@@ -2990,6 +2990,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.336  2013/04/22 17:51:57  pwagner
+! Reevaluate may store a literal instead of a Boolean value
+!
 ! Revision 2.335  2013/04/17 00:05:25  pwagner
 ! Added new Repeat control structure to Fill, Retrieve sections
 !
