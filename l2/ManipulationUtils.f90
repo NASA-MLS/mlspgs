@@ -14,6 +14,7 @@ module ManipulationUtils        ! operations to manipulate quantities
   !=============================================================================
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DATES_MODULE, only: TAI93S2HID
   use DUMP_0, only: DUMP
   use MLSKINDS, only: RV
   use MLSL2OPTIONS, only: MLSMESSAGE
@@ -747,7 +748,8 @@ contains ! =====     Public Procedures     =============================
             newone%values = part%values
             ! call ReshapeVectorValue( newone, sourceValues=part%values )
             ! call output( 'Calling function map', advance='yes' )
-        case ('channel', 'surface', 'instance', 'height', 'lon', 'lat', 'sza')
+        case ( 'channel', 'surface', 'instance', 'height', 'lon', 'lat', 'sza', &
+          & 'phi', 'soltime', 'losangle', 'hid' )
           ! These might be useful for filling arrays with indexes
           NoChans     = a%template%NoChans
           NoInstances = a%template%NoInstances
@@ -786,6 +788,18 @@ contains ! =====     Public Procedures     =============================
                 case ('sza')
                   newone%values(iChannel + (isurf-1)*NoChans, instance) = &
                     & a%template%solarZenith(surf, instance)
+                case ('soltime')
+                  newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                    & a%template%solarTime(surf, instance)
+                case ('losangle')
+                  newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                    & a%template%losAngle(surf, instance)
+                case ('phi')
+                  newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                    & a%template%phi(surf, instance)
+                case ('hid')
+                  newone%values(iChannel + (isurf-1)*NoChans, instance) = &
+                    & tai93s2hid(a%template%time(surf, instance))
                 end select                
               enddo
             enddo
@@ -1129,6 +1143,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.6  2013/04/22 17:51:01  pwagner
+! Added soltime, phi, losangle, hid to Gelocation functions
+!
 ! Revision 2.5  2013/01/18 01:43:48  pwagner
 ! Fixed various bugs impacting nested expressions
 !
