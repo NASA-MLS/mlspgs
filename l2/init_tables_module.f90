@@ -1091,9 +1091,13 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_reevaluate, &
+             begin, f+f_a, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_b, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_c, t+t_numeric, n+n_field_type, &
              begin, f+f_formula, t+t_string, n+n_field_type, &
              begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
              begin, f+f_label, t+t_string, n+n_field_type, &
+             begin, f+f_literal, t+t_boolean, n+n_field_type, &
              np+n_spec_def /) )
 
     call make_tree( (/ &
@@ -1816,6 +1820,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.562  2013/04/22 17:46:23  pwagner
+! Reevaluate may store a literal instead of a Boolean value
+!
 ! Revision 2.561  2013/04/17 00:04:45  pwagner
 ! Added new Repeat control structure to Fill, Retrieve sections
 !
