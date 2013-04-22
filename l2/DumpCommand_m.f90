@@ -61,7 +61,7 @@ module DumpCommand_M
 !               (a) Evaluate the formula; it may be one of two forms
 !               (1) Contains only "or", "and", "not" => logical result
 !               (2) Contains "lhs == rhs" or "lhs /= rhs" => Does it?
-!               (b) Just sture the text of the label field
+!               (b) Just store the text of the label field
 !
 ! The following subroutines depart from the sbove pattern
 ! DumpCommand    Process the Dump command, dumping any of the allowed datatypes
@@ -193,7 +193,7 @@ contains
     use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
       & F_QUANTITY, F_BOOLEAN, F_STATUS
     use MANIPULATEVECTORQUANTITIES, only: ANYGOODDATAINQTY
-    use MLSCOMMON, only: RV
+    use MLSKINDS, only: RV
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & SWITCHDETAIL
@@ -374,7 +374,8 @@ contains
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_BOOLEAN, F_FORMULA
-    use MLSCOMMON, only: R8, RV, DEFAULTUNDEFINEDVALUE
+    use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE
+    use MLSKINDS, only: R8, RV
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
     use MLSSTATS1, only: MLSMAX, MLSMIN, MLSMEAN, MLSMEDIAN
@@ -793,47 +794,68 @@ contains
   end function BooleanFromEmptySwath
 
   ! ------------------------------------- BooleanFromFormula --
-  function BooleanFromFormula ( NAME, ROOT ) result( SIZE )
+  function BooleanFromFormula ( NAME, ROOT, VECTORS ) result( SIZE )
     ! Called either when a Boolean is first declared
     ! syntax: 
     ! name: Boolean, formula="formula"
     !
     ! or when it is reevaluated
     ! syntax: 
-    ! Reevaluate, formula="formula", Boolean="name"
+    ! Reevaluate, formula="formula", Boolean="name", 
+    ! [a=a.qty], [b=b.qty], [c=value], [/literal]
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_LABEL, F_VALUES
-    use MLSKINDS, only: R8
+    use INIT_TABLES_MODULE, only: F_A, F_B, F_BOOLEAN, F_C, &
+      & F_FORMULA, F_LABEL, F_LITERAL, F_VALUES, &
+      & FIELD_FIRST, FIELD_LAST
+    use MANIPULATIONUTILS, only: MANIPULATE
+    use MLSKINDS, only: R8, RV
     use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, &
+      & MLSMESSAGE
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUT
+    use MORETREE, only: GET_BOOLEAN
+    use OUTPUT_M, only: NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    use VECTORSMODULE, only: CLONEVECTORQUANTITY, DESTROYVECTORQUANTITYVALUE, &
+      & DUMP, GETVECTORQTYBYTEMPLATEINDEX, VECTOR_T, VECTORVALUE_T
     ! Dummy args
-    integer, intent(in) :: name
-    integer, intent(in) :: root
-    integer             :: size
+    integer, intent(in) :: NAME
+    integer, intent(in) :: ROOT
+    type (vector_T), dimension(:), optional, target :: VECTORS
+    integer             :: SIZE
     ! Internal variables
+    real(rv) :: C                       ! constant "c" in formula
+    type (vectorValue_T), pointer :: AQUANTITY
+    type (vectorValue_T), pointer :: BQUANTITY
     integer :: field
     integer :: field_index
     integer :: fieldValue
     character(len=255) :: formula
+    logical, dimension(field_first:field_last) :: GOT
     integer :: keyNo
     logical :: literal
     character(len=32) :: nameString
+    integer :: QUANTITYINDEX
     integer :: son
+    integer :: source
+    type (vectorValue_T) :: TQUANTITY ! Temporary
     logical :: tvalue
     integer, dimension(2) :: UNITASARRAY ! From expr
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
+    integer :: VECTORINDEX
     logical :: verbose, verboser
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
     verboser = ( switchDetail(switches, 'bool') > 0 )
+    nullify( aQuantity, bQuantity )
+    c = 0._rv
     literal= .false.
     tvalue= .false.
+    got = .false.
     if ( name > 0 ) then
       call get_string(name, nameString)
       nameString = lowerCase(nameString)
@@ -842,13 +864,32 @@ contains
       son = subtree(keyNo,root)
       field = subtree(1,son)
       if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
+        fieldValue = decoration(decoration(subtree(2,son))) ! The field's value
+        source = subtree(2,son) ! required to be an n_dot vertex
       else
         fieldValue = son
+        source = son
       end if
       field_index = decoration(field)
+      got(field_Index) = .true.
 
       select case ( field_index )
+      case ( f_a )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        aQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+        call dump( aQuantity )
+      case ( f_b )
+        VectorIndex = decoration(decoration(subtree(1,source)))
+        QuantityIndex = decoration(decoration(decoration(subtree(2,source))))
+        bQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(VectorIndex), QuantityIndex )
+        call dump( bQuantity )
+      case(f_c)
+        call expr ( source, unitAsArray, valueAsArray )
+        c = valueAsArray(1)
+        call outputNamedValue( 'c', c )
       case ( f_Boolean )
         call get_string ( sub_rosa(subtree(2,son)), nameString, strip=.true. )
         nameString = lowerCase(nameString)
@@ -858,6 +899,10 @@ contains
       case ( f_label )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         literal = .true.
+      case ( f_literal )
+        call output( 'processing literal', advance='yes' )
+        literal = get_boolean ( fieldValue )
+        call outputNamedValue( 'literal', literal )
       case ( f_values )
         call expr ( son , unitAsArray, valueAsArray )
         tvalue = ( valueAsArray(1) /= 0 )
@@ -865,7 +910,27 @@ contains
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
-    if ( literal ) then
+    if ( literal .and. .not. got(f_label) ) then
+      ! print *, 'Oops-you dummy! code this missing piece'
+      if ( .not. present(vectors) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Cant set /literal from this section--only Fill or Retrieval' )
+      if ( .not. all( got ( (/f_formula, f_a/) ) ) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Must supply formula and a fields if literal field is present' )
+      call CloneVectorQuantity ( tQuantity, aQuantity )
+      if ( verbose ) then
+        call output( trim(nameString) // ' = ', advance='no' )
+        call output( trim(formula), advance='yes' )
+      endif
+      call Manipulate( tQuantity, AQuantity, BQuantity, C, formula, &
+        & .false., '' )
+      formula = numToChars ( tQuantity%values(1,1) )
+      call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+        & lowercase(trim(nameString)), lowercase(trim(formula)), countEmpty=countEmpty )
+      call destroyVectorQuantityValue ( tQuantity, &
+        & destroyMask=.true., destroyTemplate=.false. )
+    elseif ( literal ) then
       ! print *, 'Oops-you dummy! code this missing piece'
       if ( verbose ) then
         call output( trim(nameString) // ' = ', advance='no' )
@@ -2120,6 +2185,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.83  2013/04/22 17:49:20  pwagner
+! Reevaluate may store a literal instead of a Boolean value
+!
 ! Revision 2.82  2013/03/30 00:19:48  vsnyder
 ! Add quantity database to forward model config dump
 !
