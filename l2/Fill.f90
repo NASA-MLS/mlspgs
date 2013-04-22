@@ -697,7 +697,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_computeTotalPower )
         call ComputeTotalPower ( key, vectors )
       case ( s_Reevaluate )
-        call decorate ( key,  BooleanFromFormula ( 0, key ) )
+        call decorate ( key,  BooleanFromFormula ( 0, key, vectors ) )
       case ( s_diff, s_dump ) ! ======================== Diff, Dump ==========
         ! Handle disassociated pointers by allocating them with zero size
         status = 0
@@ -3003,6 +3003,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.418  2013/04/22 17:51:32  pwagner
+! Reevaluate may store a literal instead of a Boolean value
+!
 ! Revision 2.417  2013/04/17 00:05:07  pwagner
 ! Added new Repeat control structure to Fill, Retrieve sections
 !
