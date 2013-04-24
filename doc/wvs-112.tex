@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-112}
-\newcommand{\docdate}{10 April 2013}
+\newcommand{\docname}{wvs-112r1}
+\newcommand{\docdate}{24 April 2013}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -78,114 +78,68 @@
 \begin{tabbing}
 \phantom{References: }\= \\
 To: \>Bill, Van\\
-Subject: \>More on derivatives of radiative transfer\\
+Subject: \>New representation of temperature derivatives\\
 From: \>Van Snyder\\
 Reference: \> \h{wvs-093} \\
 \end{tabbing}
 
-
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
 
-From \h{wvs-093}, the radiance measured at the instrument $\M$, in the
-form used in the full forward model (i.e., after integrating the usual
-form of solution by parts) is
-%
-\begin{equation}\label{one}
-I(s_\M) = \T(s_0,S_\M)(I(s_0)-B(s_0))+B(s_\M) -
- \int_{\zeta(s_0)}^{\zeta(s_\M)} \T(s,s_\M) \frac{\d B}{\d s}
-  \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta
-\end{equation}
+The full forward model mitigates singularities at the tangent point using
+Equation (10.13) in the 19 August 2004 ATBD:
 
-where $s_0$ is deep space away from the instrument, $s_\M$ is the position
-of the instrument, and
-%
-\begin{equation}\label{two}
-\T(s,s_\M) = \exp \left( - \int_{\zeta(s)}^{\zeta(s_\M)} \alpha(\sigma)
- \frac{\d\sigma}{\d h} \frac{\d h}{\d \zeta} \, \d\zeta \right) \,.
-\end{equation}
+\begin{equation}\begin{split}\label{10.13}
+\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \,
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta = \,&
+G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta +
+\int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta \\
+= \,& G(\zeta_i) \Delta s_{i \rightarrow i-1} +
+\int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta
+\,,
+\end{split}\end{equation}
 
-From Equation (\ref{two}),
-%
-\begin{equation}\label{three}
-\frac{\partial \T}{\partial x} =
- - \T \frac{\partial}{\partial x}
-    \int_{\zeta(s)}^{\zeta(s_\M)} \alpha(\sigma)
-     \frac{\d\sigma}{\d h} \frac{\d h}{\d \zeta} \, \d\zeta
-=
- - \T \int_{\zeta(s)}^{\zeta(s_\M)} \left[
-     \frac{\partial \alpha}{\partial x}
-     \frac{\d\sigma}{\d h} \frac{\d h}{\d \zeta} +
-     \alpha(\sigma) \frac{\partial}{\partial x}
-      \left( \frac{\d\sigma}{\d h} \frac{\d h}{\d \zeta}
-       \right) \right] \, \d\zeta \,.
-\end{equation}
+where here, and throughout, $h$ is height, not Planck's constant.
+The temperature derivative of Equation (\ref{10.13}) is
 
-From Equation (\ref{one}), since the derivatives of $I(s_0)$, $B(s_0)$,
-and $B(s_\M)$ are zero,
-%
-\begin{equation}\label{four}
-\frac{\partial I}{\partial x} =
- \frac{\partial \T(s_0,s_\M)}{\partial x} (I(s_0)-B(s_0))+B(s_\M) -
-  \frac\partial{\partial x} \int_{\zeta(s_0)}^{\zeta(s_\M)} \T(s,s_\M)
-   \frac{\d B}{\d s} \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta
-\end{equation}
+\begin{equation}\begin{split}\label{10.13_dT}
+\frac{\d}{\d T} \int_{\zeta_i}^{\zeta_{i-1}}
+\,&  G(\zeta) \,
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta =
+\frac{\d}{\d T} \left[ G(\zeta_i) \Delta s_{i \rightarrow i-1} \right] +
+\frac{\d}{\d T} \left[ \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta)
+                       - G(\zeta_i) \right]
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta \right] \\
+= \,& \frac{\d G(\zeta_i)}{\d T} \Delta s_{i \rightarrow i-1} +
+      G(\zeta_i) \frac{\d}{\d T} \Delta s_{i \rightarrow i-1} \, + \\
+\,&
+ \int_{\zeta_i}^{\zeta_{i-1}}
+  \frac{\d}{\d T} \left[ G(\zeta) - G(\zeta_i) \right]
+  \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta +
+ \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+  \frac{\d}{\d T} \left[ \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \right]
+   \, \d\zeta
+\,.
+\end{split}\end{equation}
 
-The integal in Equation (\ref{four}), after the derivative is carried
-into the integration, is
-%
-\begin{equation}
-\int_{\zeta(s_0)}^{\zeta(s_\M)} \left[
-\left( \frac{\partial \T}{\partial x} \frac{\d B}{\d s} +
- \T \frac{\partial^2 B}{\partial s \partial x} \right)
-  \frac{\d s}{\d h} \frac{\d h}{\d\zeta} +
- \T \frac{\d B}{\d s} \frac{\partial}{\partial x}
-  \left( \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \right)
- \right] \, \d \zeta
-\end{equation}
+The forward model uses the Pythagorean theorem to compute
 
-If $x \neq T$, $\frac\partial{\partial x} \left( \frac{\d s}{\d h}
- \frac{\d h}{\d\zeta} \right) = 0$ and
- $\frac{\partial^2B}{\partial s \partial x} = 0$.
-
-The integrals are actually carried out in two stages, from $\zeta(s_0)$ to
-$\zeta(s_t)$, and from $\zeta(s_t)$ to $\zeta(s_\M)$, where $t$ denotes
-the tangent point, because the correspondence between $s$ and $\zeta$ is
-monotone over those intervals, but not over the entire interval.
-
-From section 10.4.2 of the 4 August 2004 ATBD,
-%
-\begin{equation}
-\frac{\d s}{\d h} = \frac{h(\zeta)}{\sqrt{h(\zeta)^2-h(t)^2}}
-\text{ and }
-\frac{\d h}{\d \zeta} = \frac{h(\zeta)^2 k T(\zeta) \ln 10}
-                             {g_0 R_0^2 \M}
-\end{equation}
-
-where $\M$ here is the mean molecular mass, not the position of the
-instrument.  Therefore there is a singularity in each integrand at $\zeta
-= \zeta(s_t)$.  The reduction in quadrature accuracy due to these
-singularities is ameliorated using Equation (10.13) in the ATBD.  This
-involves adding and subtracting the factor multiplying $\frac{\d s}{\d h}
-\frac{\d h}{\d \zeta}$, evaluated at the lower limit, then taking it out
-of one of the integrals, leaving behind that factor multiplied by $\Delta
-s$.  The derivative of $\Delta s$ is Equation (10.18).
-
-The forward model then uses the Pythagorean theorem to compute
-%
 \begin{equation}\label{one-a}
 \Delta s_{i \rightarrow i-1} =
-\sqrt{H_i^2 -H_t^2} - \sqrt{H_{i-1}^2 -H_t^2} =
+\sqrt{h_i^2 -h_t^2} - \sqrt{h_{i-1}^2 -h_t^2} =
   \Delta s_{i \rightarrow t} - \Delta s_{i-1 \rightarrow t}
 \end{equation}
 
-where $H_t$ is the tangent height.
+where $h_t$ is the tangent height.
 
 An alternative is to use the cosine rule:
-%
+
 \begin{equation}\label{two-a}
 \Delta s_{i \rightarrow i-1}
-= \sqrt{H_{i-1}^2 + H_i^2 - 2 H_{i-1} H_i
+= \sqrt{h_{i-1}^2 + h_i^2 - 2 h_{i-1} h_i
            \cos \left( \delta\phi_{i \rightarrow i-1} \right)}
 \end{equation}
 
@@ -196,39 +150,41 @@ Equation (\ref{two-a}) is roughly the same amount of work as Equation
 (\ref{one-a}), and experiments show that they produce the same values, at
 least up to six printed digits.
 
-One reason to want to use Equation (\ref{two-a}) is to replace the integral
-in Equation (10.18) in the 19 August 2004 ATBD:
-%
-\begin{equation}\label{three-a}
+One reason to want to use Equation (\ref{two-a}) is to replace the
+temperature derivative of path length (the integral in Equation (10.18) in
+the 19 August 2004 ATBD), i.e.,
+
+\begin{equation}\label{five}
 \frac\d{\d T} \left( \Delta s_{i \rightarrow i-1} \right)
-= \frac{H_i \frac{\d H_i}{\d T} -
-                  H_t \frac{\d H_t}{\d T}}
-                 {\sqrt{H_i^2-H_t^2}} -
-            \frac{H_{i-1} \frac{\d H_{i-1}}{\d T} -
-                  H_t \frac{\d H_t}{\d T}}
-                 {\sqrt{H_{i-1}^2-H_t^2}}
+= \frac{h_i \frac{\d h_i}{\d T} -
+                  h_t \frac{\d h_t}{\d T}}
+                 {\sqrt{h_i^2-h_t^2}} -
+            \frac{h_{i-1} \frac{\d h_{i-1}}{\d T} -
+                  h_t \frac{\d h_t}{\d T}}
+                 {\sqrt{h_{i-1}^2-h_t^2}}
 \end{equation}
 
 with the derivative of Equation (\ref{two-a}), \emph{viz}.
-%
-\begin{equation}\begin{split}\label{four-a}
+
+\begin{equation}\begin{split}\label{six}
 \frac\d{\d T} \left( \Delta s_{i \rightarrow i-1} \right) =\,&
- \frac{H_i \frac{\d H_i}{\d T} + H_{i-1} \frac{\d H_{i-1}}{\d T} -
-       2 \left( H_i \frac{\d H_{i-1}}{\d T} + H_{i-1} \frac{\d H_i}{\d T}
+ \frac{h_i \frac{\d h_i}{\d T} + h_{i-1} \frac{\d h_{i-1}}{\d T} -
+       2 \left( h_i \frac{\d h_{i-1}}{\d T} + h_{i-1} \frac{\d h_i}{\d T}
          \right) \cos \left(\delta \phi_{i \rightarrow i-1} \right) }
       {\Delta s_{i \rightarrow i-1}}
+\,.
 \end{split}\end{equation}
 
-Equation (\ref{four-a}) is slightly more work than Equation
-(\ref{three-a}), so it might not look like much of an improvement , but
+Equation (\ref{six}) is slightly more work than Equation
+(\ref{five}), so it might not look like much of an improvement, but
 its use would have a salubrious effect in {\tt drad_tran_dT}.
 
-Equation (\ref{three-a}) is used in the derivative of the
+Equation (\ref{five}) is used in the derivative of the
 singularity-amelioration scheme in Equation (10.13) in the ATBD.  As such,
 it is needed only where Gauss-Legendre quadrature has been used on a path
 segment.  A complicated decision process is used within {\tt drad_tran_dT}
-to avoid evaluating Equation (\ref{three-a}) where it's not needed.  Where
-it is needed, both terms in the right-hand side of Equation (\ref{three-a})
+to avoid evaluating Equation (\ref{five}) where it's not needed.  Where
+it is needed, both terms in the right-hand side of Equation (\ref{five})
 are needed.  The decision procedure further avoids evaluating one of them
 twice in the event Gauss-Legendre quadrature has been used on the previous
 path segment.
@@ -237,7 +193,7 @@ Furthermore, the quadratures in the full forward model use $\Delta s_{i
 \rightarrow i-1}$, but do not retain the two terms in Equation
 (\ref{one-a}), \emph{viz.}, $\Delta s_{i \rightarrow t}$ and $\Delta s_{i-1
 \rightarrow t}$ separately. These terms are needed separately, however, in
-Equation (\ref{three-a}).  At the initial point on the path, the total
+Equation (\ref{five}).  At the initial point on the path, the total
 distance to the tangent point, $\Delta s_{1 \rightarrow t}$, is
 calculated, and then $\Delta s_{i \rightarrow i-1}$ is subtracted from
 this for each path segment, up to the tangent point.  Then $\Delta s_{t+1
@@ -245,8 +201,96 @@ this for each path segment, up to the tangent point.  Then $\Delta s_{t+1
 and $\Delta s_{i \rightarrow i+1}$ is added for each segment up to the end
 of the path.
 
-Neither of these complications would be needed if Equation (\ref{four-a})
+Neither of these complications would be needed if Equation (\ref{six})
 were used.
+
+Neither Equation (\ref{five}) nor (\ref{six}) is needed, however.  Using
+the Pythagorean theorem,
+
+\begin{equation}\label{seven}
+s = \sqrt{h^2-h_t^2}
+\end{equation}
+
+wherein both $h$ and $h_t$ (the tangent height) depend upon temperature.
+
+From Equation (\ref{seven}),
+
+\begin{equation}\label{eight}
+\frac{\d s}{\d h} = \frac{h}{\sqrt{h^2-h_t^2}} = \frac{h}s
+\,.
+\end{equation}
+
+From Equation (\ref{eight}),
+
+\begin{equation}\label{nine}
+\frac{d}{\d T}\frac{\d s}{\d h}
+= \frac1s \frac{\d h}{\d T} - \frac{h}{s^2} \frac{\d s}{\d T}
+= \frac1s \frac{\d h}{\d T} - \frac{h^2}{s^3} \frac{\d h}{\d T}
+ + \frac{h h_t}{s^3} \frac{d h_t}{\d T}
+= \frac{h_t}{s^3} \left( h \frac{\d h_t}{\d T} - h_t \frac{\d h}{\d T} \right)
+\,.
+\end{equation}
+
+From the definition on page 47 of the 19 August 2004 ATBD, immediately
+before Equation (10.16),
+
+\begin{equation}\label{ten}
+\frac{\d h}{\d \zeta} = \frac{h^2 k T \ln 10}{g_0 R_0 \mathcal{M}}
+\end{equation}
+
+wherein $\mathcal{M}$ is the mean molecular mass of the atmosphere, not
+the position of the instrument.  From Equation (\ref{ten}),
+
+\begin{equation}\label{eleven}
+\frac{\d}{\d T} \frac{\d h}{\d \zeta} = \frac{h k \ln 10}{g_0 R_0 \mathcal{M}}
+ \left( 2 T \frac{\d h}{\d T} + h \right)
+= \left( \frac2h \frac{\d h}{\d T} + \frac1T \right) \frac{\d h}{\d \zeta}
+\,.
+\end{equation}
+
+From Equations (\ref{nine}) and (\ref{eleven})
+
+\begin{equation}\begin{split}\label{twelve}
+\frac{\d}{\d T} \left( \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right) = \,&
+\left( \frac{\d}{\d T} \frac{\d s}{\d h} \right) \frac{\d h}{\d \zeta} +
+\frac{\d s}{\d h} \frac{\d}{\d T} \frac{\d h}{\d \zeta} =
+\frac1s \frac{\d h}{\d \zeta}
+ \left[ \left( 2 - \frac{h_t^2}{s^2} \right) \frac{\d h}{\d T} +
+  \frac{h}T +\frac{h h_t}{s^2} \frac{\d h_t}{\d T} \right] \\
+ = \,&
+\left[ \frac1h \left( 2 - \frac{h_t^2}{s^2} \right) \frac{\d h}{\d T} +
+  \frac1T +\frac{h_t}{s^2} \frac{\d h_t}{\d T} \right]
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} =
+  \mathcal{D}(\zeta) \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+\,.
+\end{split}\end{equation}
+
+Therefore
+
+\begin{equation}\begin{split}\label{thirteen}
+\frac{\d}{\d T} \int_{\zeta_i}^{\zeta_{i-1}} \mathcal{G}(\zeta)
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \,\d \zeta = \,&
+\int_{\zeta_i}^{\zeta_{i-1}} \frac{\d}{\d T}\, \mathcal{G}(\zeta)
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta} +
+ \mathcal{G}(\zeta) \frac{\d}{\d T}
+  \left( \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \right) \,\d \zeta \\
+= \,&
+ \int_{\zeta_i}^{\zeta_{i-1}}
+  \left( \mathcal{G}(\zeta) \mathcal{D}(\zeta) +
+         \frac{\d}{\d T}\, \mathcal{G}(\zeta) \right)
+  \frac{\d s}{\d h} \frac{\d h}{\d\zeta}\d \zeta \\
+= \,& \left( \mathcal{G}(\zeta_i) \mathcal{D}(\zeta_i) +
+         \frac{\d}{\d T}\, \mathcal{G}(\zeta_i) \right)
+      \Delta s_{i \rightarrow i-1} \\
+ + \,&
+  \int_{\zeta_i}^{\zeta_{i-1}}
+   \left( \mathcal{G}(\zeta) \mathcal{D}(\zeta) -
+          \mathcal{G}(\zeta_i) \mathcal{D}(\zeta_i) +
+          \frac{\d}{\d T}\, \mathcal{G}(\zeta) -
+         \frac{\d}{\d T}\, \mathcal{G}(\zeta_i) \right)
+    \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \,\d \zeta
+\,.
+\end{split}\end{equation}
 
 \label{lastpage}
 \end{document}
