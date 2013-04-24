@@ -1095,6 +1095,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_b, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_c, t+t_numeric, n+n_field_type, &
              begin, f+f_formula, t+t_string, n+n_field_type, &
+             begin, f+f_inputBoolean, s+s_Boolean, n+n_field_spec, &
              begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
              begin, f+f_label, t+t_string, n+n_field_type, &
              begin, f+f_literal, t+t_boolean, n+n_field_type, &
@@ -1820,6 +1821,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.563  2013/04/24 00:35:47  pwagner
+! Added inputBoolean and made Reevaluate formulas more powerful
+!
 ! Revision 2.562  2013/04/22 17:46:23  pwagner
 ! Reevaluate may store a literal instead of a Boolean value
 !
