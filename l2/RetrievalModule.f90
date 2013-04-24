@@ -30,8 +30,8 @@ module RetrievalModule
 contains
 
   ! ---------------------------------------------------  Retrieve  -----
-  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, HessianDatabase, &
-    & ConfigDatabase, chunk, FileDataBase )
+  subroutine RETRIEVE ( ROOT, VECTORDATABASE, MATRIXDATABASE, HESSIANDATABASE, &
+    & CONFIGDATABASE, CHUNK, FILEDATABASE )
 
   !{Process the ``Retrieve'' section of the L2 Configuration File.
   ! The ``Retrieve'' section can have ForwardModel, Matrix, Sids, Subset or
@@ -44,7 +44,7 @@ contains
     use DUMPCOMMAND_M, only: &
       & BOOLEANFROMANYGOODVALUES, &
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
-      & DUMPCOMMAND, &
+      & DUMPCOMMAND, INITIALIZEREPEAT, NEXTREPEAT, &
       & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, REPEAT=>SKIP, SKIP
     use HESSIANMODULE_1, only: HESSIAN_T, CREATEEMPTYHESSIAN, DESTROYHESSIAN
     use IEEE_ARITHMETIC, only: IEEE_IS_NAN
@@ -117,15 +117,14 @@ contains
       & VECTOR_T, VECTORVALUE_T
 
     ! Dummy arguments:
-    integer, intent(in) :: Root         ! Of the relevant subtree of the AST;
-                                        ! It indexes an n_cf vertex
-    type(vector_T), dimension(:), target :: VectorDatabase
-    type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
-    type(Hessian_T), dimension(:), pointer :: HessianDatabase
-    type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
-
-    type(MLSChunk_T), intent(inout) :: CHUNK
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
+    integer, intent(in)                               :: ROOT ! Of the relevant subtree of the AST;
+                                                              ! It indexes an n_cf vertex
+    type(vector_T), dimension(:), target              :: VECTORDATABASE
+    type(matrix_Database_T), dimension(:), pointer    :: MATRIXDATABASE
+    type(Hessian_T), dimension(:), pointer            :: HESSIANDATABASE
+    type(forwardModelConfig_T), dimension(:), pointer :: CONFIGDATABASE
+    type(MLSChunk_T), intent(inout)                   :: CHUNK
+    type (MLSFile_T), dimension(:), pointer           :: FILEDATABASE
 
     ! Default values:
     real(r8), parameter :: DefaultInitLambda = 0.0_r8
@@ -304,6 +303,7 @@ contains
     switches(switchLenCur:switchLenCur) = ','
     timing = section_times
     repeatLoop = .false. ! By default, we will not repeat
+    call initializeRepeat
     do j = firstVec, lastVec ! Make the vectors in the database initially empty
       nullify ( v(j)%quantities, v(j)%template%quantities )
       v(j)%name = 0 ! so Snoop won't use it
@@ -777,6 +777,7 @@ contains
         ! We'll Repeat the section as long as the Boolean cond'n is TRUE
         RepeatLoop = Repeat(key)
         if ( .not. RepeatLoop ) exit repeat_loop
+        call nextRepeat
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
         if ( Skip(key) ) exit repeat_loop
@@ -2990,6 +2991,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.337  2013/04/24 00:37:42  pwagner
+! Added InitRepeat and NextRepeat calls to set/increment r/t Boolean count
+!
 ! Revision 2.336  2013/04/22 17:51:57  pwagner
 ! Reevaluate may store a literal instead of a Boolean value
 !
