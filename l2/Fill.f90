@@ -46,9 +46,9 @@ contains ! =====     Public Procedures     =============================
 
   !---------------------------------------------------  MLSL2Fill  -----
 
-  subroutine MLSL2Fill ( Root, filedatabase, GriddedDataBase, VectorTemplates, &
-    & Vectors, QtyTemplates, Matrices, Hessians, L2GPDatabase, L2AUXDatabase, &
-    & FWModelConfig, Chunks, ChunkNo )
+  subroutine MLSL2FILL ( ROOT, FILEDATABASE, GRIDDEDDATABASE, VECTORTEMPLATES, &
+    & VECTORS, QTYTEMPLATES, MATRICES, HESSIANS, L2GPDATABASE, L2AUXDATABASE, &
+    & FWMODELCONFIG, CHUNKS, CHUNKNO )
 
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
@@ -59,7 +59,8 @@ contains ! =====     Public Procedures     =============================
     use DUMPCOMMAND_M, only: BOOLEANFROMANYGOODRADIANCES, &
       & BOOLEANFROMANYGOODVALUES, &
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
-      & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, &
+      & DUMPCOMMAND, INITIALIZEREPEAT, NEXTREPEAT, &
+      & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, &
       & REPEAT=>SKIP, SKIP
     use EXPR_M, only: EXPR, EXPR_CHECK
     use FILLUTILS_1, only: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
@@ -232,19 +233,19 @@ contains ! =====     Public Procedures     =============================
     use VGRIDSDATABASE, only: VGRIDS
 
     ! Dummy arguments
-    integer, intent(in) :: ROOT    ! Of the FILL section in the AST
-    type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-    type (griddedData_T), dimension(:), pointer :: GriddedDataBase
-    type (vectorTemplate_T), dimension(:), pointer :: VectorTemplates
-    type (vector_T), dimension(:), pointer :: Vectors
-    type (quantityTemplate_T), dimension(:), pointer :: QtyTemplates
-    type (matrix_database_T), dimension(:), pointer :: Matrices
-    type (Hessian_T), dimension(:), pointer :: Hessians
-    type (l2GPData_T), dimension(:), pointer :: L2GPDatabase
-    type (l2AUXData_T), dimension(:), pointer :: L2AUXDatabase
-    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
-    type (mlSChunk_T), dimension(:), pointer :: Chunks
-    integer, intent(in) :: ChunkNo
+    integer, intent(in)                               :: ROOT ! Of the FILL section in the AST
+    type (MLSFile_T), dimension(:), pointer           :: FILEDATABASE
+    type (griddedData_T), dimension(:), pointer       :: GRIDDEDDATABASE
+    type (vectorTemplate_T), dimension(:), pointer    :: VECTORTEMPLATES
+    type (vector_T), dimension(:), pointer            :: VECTORS
+    type (quantityTemplate_T), dimension(:), pointer  :: QTYTEMPLATES
+    type (matrix_database_T), dimension(:), pointer   :: MATRICES
+    type (Hessian_T), dimension(:), pointer           :: HESSIANS
+    type (l2GPData_T), dimension(:), pointer          :: L2GPDATABASE
+    type (l2AUXData_T), dimension(:), pointer         :: L2AUXDATABASE
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWMODELCONFIG
+    type (mlSChunk_T), dimension(:), pointer          :: CHUNKS
+    integer, intent(in)                               :: CHUNKNO
 
     ! -----     Declarations for Fill and internal subroutines     -------
 
@@ -548,6 +549,7 @@ contains ! =====     Public Procedures     =============================
     vectorIndex = -1
     maxIterations = 4
     repeatLoop = .false. ! By default, we will not repeat
+    call InitializeRepeat
 
     repeat_loop: do ! RepeatLoop
     ! Loop over the lines in the configuration file
@@ -751,6 +753,7 @@ contains ! =====     Public Procedures     =============================
         RepeatLoop = Repeat(key)
         ! call outputNamedValue ( 'repeat loop?', repeatLoop )
         if ( .not. RepeatLoop ) exit repeat_loop
+        call nextRepeat
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
         if ( Skip(key) ) exit repeat_loop
@@ -3003,6 +3006,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.419  2013/04/24 00:37:42  pwagner
+! Added InitRepeat and NextRepeat calls to set/increment r/t Boolean count
+!
 ! Revision 2.418  2013/04/22 17:51:32  pwagner
 ! Reevaluate may store a literal instead of a Boolean value
 !
