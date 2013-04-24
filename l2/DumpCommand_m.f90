@@ -24,6 +24,7 @@ module DumpCommand_M
   public :: BOOLEANFROMCOMPARINGQTYS
   public :: BOOLEANFROMEMPTYGRID, BOOLEANFROMEMPTYSWATH
   public :: BOOLEANFROMFORMULA
+  public :: INITIALIZEREPEAT, NEXTREPEAT
   public :: MLSCASE, DUMPCOMMAND, MLSENDSELECT, MLSSELECT, SKIP
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -65,6 +66,9 @@ module DumpCommand_M
 !
 ! The following subroutines depart from the sbove pattern
 ! DumpCommand    Process the Dump command, dumping any of the allowed datatypes
+! InitializeRepeat 
+!                Set the Repeat counter to 0
+! NextRepeat     Add 1 to current value of Repeat counter
 ! MLSCase        Process the Case control statement
 ! MLSSelect      Process the Select control statement
 ! MLSEndSelect   Process the EndSelect control statement
@@ -806,22 +810,25 @@ contains
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_A, F_B, F_BOOLEAN, F_C, &
-      & F_FORMULA, F_LABEL, F_LITERAL, F_VALUES, &
+      & F_FORMULA, F_INPUTBOOLEAN, F_LABEL, F_LITERAL, F_VALUES, &
       & FIELD_FIRST, FIELD_LAST
     use MANIPULATIONUTILS, only: MANIPULATE
     use MLSKINDS, only: R8, RV
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, &
       & MLSMESSAGE
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
-    use MLSSTRINGS, only: LOWERCASE
+    use MLSSTRINGLISTS, only: GETHASHELEMENT, NUMSTRINGELEMENTS, &
+      & PUTHASHELEMENT, SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS
     use MORETREE, only: GET_BOOLEAN
     use OUTPUT_M, only: NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
-    use VECTORSMODULE, only: CLONEVECTORQUANTITY, DESTROYVECTORQUANTITYVALUE, &
-      & DUMP, GETVECTORQTYBYTEMPLATEINDEX, VECTOR_T, VECTORVALUE_T
+    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, &
+      & CLONEVECTORQUANTITY, CREATEVECTORVALUE, &
+      & DESTROYVECTORQUANTITYVALUE, DUMP, GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy args
     integer, intent(in) :: NAME
     integer, intent(in) :: ROOT
@@ -830,7 +837,11 @@ contains
     ! Internal variables
     real(rv) :: C                       ! constant "c" in formula
     type (vectorValue_T), pointer :: AQUANTITY
+    type (vectorValue_T), target  :: ATARGET
     type (vectorValue_T), pointer :: BQUANTITY
+    character(len=32) :: cnameString
+    character(len=32) :: cvalue
+    integer :: exprType
     integer :: field
     integer :: field_index
     integer :: fieldValue
@@ -843,6 +854,7 @@ contains
     integer :: son
     integer :: source
     type (vectorValue_T) :: TQUANTITY ! Temporary
+    type(QUANTITYTEMPLATE_T) :: TTEMPLATE
     logical :: tvalue
     integer, dimension(2) :: UNITASARRAY ! From expr
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
@@ -887,9 +899,17 @@ contains
           & vectors(VectorIndex), QuantityIndex )
         call dump( bQuantity )
       case(f_c)
-        call expr ( source, unitAsArray, valueAsArray )
+        call expr ( source, unitAsArray, valueAsArray, exprType )
+        ! c is a numeric value
         c = valueAsArray(1)
-        call outputNamedValue( 'c', c )
+        if ( verbose ) call outputNamedValue( 'c', c )
+      case ( f_inputBoolean )
+        call get_string ( sub_rosa(subtree(2,son)), cnameString, strip=.true. )
+        cnameString = lowerCase(nameString)
+        call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & cnameString, cvalue, countEmpty=countEmpty )
+        call readNumsFromChars ( cvalue, c )
+        if ( verbose ) call outputNamedValue( 'c', c )
       case ( f_Boolean )
         call get_string ( sub_rosa(subtree(2,son)), nameString, strip=.true. )
         nameString = lowerCase(nameString)
@@ -900,9 +920,9 @@ contains
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         literal = .true.
       case ( f_literal )
-        call output( 'processing literal', advance='yes' )
+        ! call output( 'processing literal', advance='yes' )
         literal = get_boolean ( fieldValue )
-        call outputNamedValue( 'literal', literal )
+        if ( verbose ) call outputNamedValue( 'literal', literal )
       case ( f_values )
         call expr ( son , unitAsArray, valueAsArray )
         tvalue = ( valueAsArray(1) /= 0 )
@@ -915,9 +935,15 @@ contains
       if ( .not. present(vectors) ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Cant set /literal from this section--only Fill or Retrieval' )
-      if ( .not. all( got ( (/f_formula, f_a/) ) ) ) &
+      if ( .not. got ( f_formula) ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Must supply formula and a fields if literal field is present' )
+        & 'Must supply formula if literal field is present' )
+      if ( .not. got ( f_a ) ) then
+        call setupNewquantitytemplate( tTemplate )
+        aQuantity => aTarget
+        aQuantity%template = tTemplate
+        call CreateVectorValue ( aQuantity, 'a' )
+      endif
       call CloneVectorQuantity ( tQuantity, aQuantity )
       if ( verbose ) then
         call output( trim(nameString) // ' = ', advance='no' )
@@ -1793,6 +1819,29 @@ contains
 
   end subroutine DumpCommand
   
+  subroutine  INITIALIZEREPEAT
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSTRINGLISTS, only: PUTHASHELEMENT
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'count', '0', countEmpty=countEmpty )
+  end subroutine  InitializeRepeat
+
+  subroutine  NEXTREPEAT
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSTRINGLISTS, only: GETHASHELEMENT, PUTHASHELEMENT
+    use MLSSTRINGS, only: READNUMSFROMCHARS, WRITEINTSTOCHARS
+    ! Internal variables
+    character(len=64) :: cvalue
+    real :: c
+    call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'count', cvalue, countEmpty=countEmpty )
+    call readNumsFromChars ( cvalue, c )
+    call writeIntsToChars ( int(c+1.), cvalue )
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'count', cvalue, countEmpty=countEmpty )
+
+  end subroutine  NextRepeat
+
   subroutine  MLSCase ( ROOT )
   ! Returns TRUE if the label or Boolean field of the last Select command
   ! matches the label or Boolean field of the current Case command
@@ -1994,7 +2043,7 @@ contains
     use MLSSTRINGLISTS, only: BOOLEANVALUE, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_FIELD_ID
-    use OUTPUT_M, only: OUTPUT
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -2029,6 +2078,7 @@ contains
           & runTimeValues%lkeys, runTimeValues%lvalues)
       case ( f_formula )
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
+        if ( verbose ) call outputNamedValue( 'formula', trim(booleanString) )
         skip = myBooleanValue ( booleanString )
       case default
         ! Should not have got here if parser worked correctly
@@ -2051,22 +2101,28 @@ contains
 
   function myBooleanValue ( FORMULA ) result ( BVALUE )
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT
-    use MLSSTRINGS, only: LOWERCASE
+    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT, SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS
     use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    use TOGGLES, only: SWITCHES
     ! Calculate the boolean value according to
     ! (1) The logical value of its formula, if the formula
     !     does not contain the special operators "==" or "/="
     ! (2) if the formula is "variable == value" and variable is
     !     is recognized and takes the value "value", return "true", else "false"
     ! (3) if the formula is "variable /= value" return not (2)
+    ! (4) if the formula is "variable < value" "true" if variable < value
     character(len=*), intent(in) :: formula
     logical :: bvalue
     ! Internal variables
     character(len=16) :: lhs, rhs
     logical, parameter :: countEmpty = .false.
     logical :: reverse  ! Do we mean NOT equal?
+    logical :: verbose
+    real :: x
+    real :: y
     ! Executable
+    verbose = ( switchDetail(switches, 'bool') > -1 )
     bvalue = .false.
     reverse = .false.
     if ( index(formula, "==") > 1 ) then
@@ -2080,6 +2136,44 @@ contains
       call GetStringElement ( formula, rhs, &
         & 2, countEmpty, inseparator='=' )
       reverse = .true.
+    elseif ( index(formula, "<") > 1 ) then
+      call GetStringElement ( formula, lhs, &
+        & 1, countEmpty, inseparator='<' )
+      call GetStringElement ( formula, rhs, &
+        & 2, countEmpty, inseparator='<' )
+      if ( verbose ) then
+        call outputnamedvalue('lhs', trim(lhs) )
+        call outputnamedvalue('rhs', trim(rhs) )
+      endif
+      lhs = Evaluator(lowercase(adjustl(lhs)))
+      rhs = Evaluator(lowercase(adjustl(rhs)))
+      if ( verbose ) then
+        call outputnamedvalue('lhs', trim(lhs) )
+        call outputnamedvalue('rhs', trim(rhs) )
+      endif
+      call readNumsFromChars ( lhs, x )
+      call readNumsFromChars ( rhs, y )
+      bvalue = ( x < y )
+      if ( verbose ) then
+        call outputNamedValue( 'x', x )
+        call outputNamedValue( 'y', y )
+      endif
+      return
+    elseif ( index(formula, ">") > 1 ) then
+      call GetStringElement ( formula, lhs, &
+        & 1, countEmpty, inseparator='>' )
+      call GetStringElement ( formula, rhs, &
+        & 2, countEmpty, inseparator='>' )
+      lhs = Evaluator(lowercase(adjustl(lhs)))
+      rhs = Evaluator(lowercase(adjustl(rhs)))
+      call readNumsFromChars ( lhs, x )
+      call readNumsFromChars ( rhs, y )
+      if ( verbose ) then
+        call outputNamedValue( 'x', x )
+        call outputNamedValue( 'y', y )
+      endif
+      bvalue = ( x > y )
+      return
     else
       bvalue = BooleanValue ( formula, &
         & runTimeValues%lkeys, runTimeValues%lvalues )
@@ -2092,8 +2186,10 @@ contains
     ! (Should we have done this for rhs, too?)
     lhs = Evaluator(lowercase(adjustl(lhs)))
     bvalue = (lhs == rhs)
-    call outputnamedvalue('lhs', trim(lhs) )
-    call outputnamedvalue('rhs', trim(rhs) )
+    if ( verbose ) then
+      call outputnamedvalue('lhs', trim(lhs) )
+      call outputnamedvalue('rhs', trim(rhs) )
+    endif
     if ( reverse ) bvalue = .not. bvalue  ! If we meant not equal
   end function myBooleanValue
 
@@ -2101,8 +2197,9 @@ contains
   ! that name global variables, e.g. 'phasename'
   function Evaluator ( ARG ) result( ITSVALUE )
     use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, NEED_L1BFILES, & ! , SIPS_VERSION
-      & SKIPRETRIEVAL
+      & RUNTIMEVALUES, SKIPRETRIEVAL
     use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
+    use MLSSTRINGLISTS, only: GETHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
     ! Args
     character(len=*), intent(in) :: arg
@@ -2115,6 +2212,9 @@ contains
       itsValue = merge( 'true ', 'false', checkpaths )
     case ('chunknumber')
       call writeIntsToChars ( currentChunkNumber, itsValue )
+    case ('count')
+      call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+        & arg, itsValue, countEmpty=countEmpty )
     case ('phasename')
       itsValue = lowercase(currentPhaseName)
     case ('sips_version')
@@ -2127,7 +2227,10 @@ contains
       ! What did you mean?
       ! Maybe just whether two character strings are the same
       ! that were assembled using m4 trickery
-      itsValue = arg
+      ! But first, let's check that you're not naming a runtime Boolean
+      call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+        & arg, itsValue, countEmpty=countEmpty )
+      if ( itsvalue == ',' ) itsValue = arg
     end select
   end function Evaluator
   
@@ -2185,6 +2288,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.84  2013/04/24 00:36:02  pwagner
+! Added inputBoolean and made Reevaluate formulas more powerful
+!
 ! Revision 2.83  2013/04/22 17:49:20  pwagner
 ! Reevaluate may store a literal instead of a Boolean value
 !
