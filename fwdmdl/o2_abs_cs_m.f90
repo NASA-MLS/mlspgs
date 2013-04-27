@@ -26,7 +26,7 @@ module O2_Abs_CS_M
 contains
 
 ! ----------------------------------------------------  O2_Abs_CS  -----
-  subroutine O2_Abs_CS ( Freq, Qn, H, Slabs, Sigma_p, Pi, Sigma_m )
+  pure subroutine O2_Abs_CS ( Freq, Qn, H, Slabs, Sigma_p, Pi, Sigma_m )
 
 ! Compute the complex absorption cross section.
 ! Modified to use Voigt with interfered lineshape
@@ -51,32 +51,29 @@ contains
     complex(rk), intent(out) :: Sigma_m
 
     integer(ip) :: J, No_lines
-    logical, pointer :: Polarized(:)          ! Which lines to use.  Same
-                                              ! as Slabs%catalog%polarized.
-
     real(rk) :: F_o_v0, Z, Denomm
     real(r8) :: V0                            ! zero field line center frequency
 
     complex(rk) :: Wing
 
     no_lines = size(slabs%catalog%lines)
-    polarized => slabs%catalog%polarized
+    associate ( polarized => slabs%catalog%polarized )
 
-    sigma_p = 0.0_rk
-    pi = 0.0_rk
-    sigma_m = 0.0_rk
-    wing = 0.0_rk
+      sigma_p = 0.0_rk
+      pi = 0.0_rk
+      sigma_m = 0.0_rk
+      wing = 0.0_rk
 
 ! Do magnetic calculation even if h = 0 for all of the Zeeman-split lines
 
-    do j = 1, no_lines
+      do j = 1, no_lines
 
-      if ( .not. polarized(j) ) cycle
+        if ( .not. polarized(j) ) cycle
 
-      v0 = lines(slabs%catalog%lines(j))%v0
-      call mag_o2_abs_cs ( qn(j), freq, v0, h, slabs%s(j)%x1, slabs%s(j)%slabs1, &
-        &                  slabs%s(j)%y, slabs%s(j)%yi, slabs%s(j)%v0s, &
-        &                  sigma_p, pi, sigma_m )
+        v0 = lines(slabs%catalog%lines(j))%v0
+        call mag_o2_abs_cs ( qn(j), freq, v0, h, slabs%s(j)%x1, slabs%s(j)%slabs1, &
+          &                  slabs%s(j)%y, slabs%s(j)%yi, slabs%s(j)%v0s, &
+          &                  sigma_p, pi, sigma_m )
 
 !{ Fill in negative frequency part of VVW lineshape for jth line
 !
@@ -86,21 +83,23 @@ contains
 !               \frac2{x_1 \nu_{0_s}} \right) \right]$, where
 !  $z = x_1 ( \nu + \nu_{0_s} )$ and $D = \sqrt{\pi} ( z^2 + y^2 )$
 
-      f_o_v0 = freq / v0
-      z = slabs%s(j)%x1 * (slabs%s(j)%v0s + freq)
-      denomm = sqrtPi * (z*z + slabs%s(j)%y*slabs%s(j)%y)
-      wing = wing + ( 0.5_rk * slabs%s(j)%slabs1 * f_o_v0 ) * cmplx( &
-        &  (slabs%s(j)%y - slabs%s(j)%yi*z) / denomm, & ! Real part
-        & (z + slabs%s(j)%y * (slabs%s(j)%y/slabs%s(j)%x1 -   & ! Imaginary part...
-        &   freq*slabs%s(j)%yi) / slabs%s(j)%v0s) / denomm -  &
-        &   2.0_rk/(slabs%s(j)%x1 * slabs%s(j)%v0s),          &
-        & kind=rk)
+        f_o_v0 = freq / v0
+        z = slabs%s(j)%x1 * (slabs%s(j)%v0s + freq)
+        denomm = sqrtPi * (z*z + slabs%s(j)%y*slabs%s(j)%y)
+        wing = wing + ( 0.5_rk * slabs%s(j)%slabs1 * f_o_v0 ) * cmplx( &
+          &  (slabs%s(j)%y - slabs%s(j)%yi*z) / denomm, & ! Real part
+          & (z + slabs%s(j)%y * (slabs%s(j)%y/slabs%s(j)%x1 -   & ! Imaginary part...
+          &   freq*slabs%s(j)%yi) / slabs%s(j)%v0s) / denomm -  &
+          &   2.0_rk/(slabs%s(j)%x1 * slabs%s(j)%v0s),          &
+          & kind=rk)
 
-    end do
+      end do
 
-    sigma_p = sigma_p + 0.5_rk * wing
-    pi = pi + wing
-    sigma_m = sigma_m + 0.5_rk * wing
+      sigma_p = sigma_p + 0.5_rk * wing
+      pi = pi + wing
+      sigma_m = sigma_m + 0.5_rk * wing
+
+    end associate
 
 ! Contribution from non-Zeeman-split lines is done in get_beta_path_scalar.
 
@@ -109,7 +108,7 @@ contains
   end subroutine O2_Abs_CS
 
 ! -----------------------------------------------  D_O2_Abs_CS_dT  -----
-  subroutine D_O2_Abs_CS_dT ( Freq, Qn, H, Slabs, Sigma_p, Pi, Sigma_m, &
+  pure subroutine D_O2_Abs_CS_dT ( Freq, Qn, H, Slabs, Sigma_p, Pi, Sigma_m, &
     &                         dSigma_p_dT, dPi_dT, dSigma_m_dT )
 
 ! Compute the complex absorption cross section and its temperature derivative.
@@ -151,31 +150,31 @@ contains
     complex(rk) :: Wing, dWing
 
     no_lines = size(slabs%catalog%lines)
-    polarized => slabs%catalog%polarized
+    associate ( polarized => slabs%catalog%polarized )
 
-    sigma_p = 0.0_rk
-    pi = 0.0_rk
-    sigma_m = 0.0_rk
-    wing = 0.0_rk
-    dSigma_p_dT = 0.0_rk
-    dPi_dT = 0.0_rk
-    dSigma_m_dT = 0.0_rk
-    dWing = 0.0_rk
+      sigma_p = 0.0_rk
+      pi = 0.0_rk
+      sigma_m = 0.0_rk
+      wing = 0.0_rk
+      dSigma_p_dT = 0.0_rk
+      dPi_dT = 0.0_rk
+      dSigma_m_dT = 0.0_rk
+      dWing = 0.0_rk
 
 ! Do magnetic calculation even if h = 0 for all of the Zeeman-split lines
 
-    do j = 1, no_lines
+      do j = 1, no_lines
 
-      if ( .not. polarized(j) ) cycle
+        if ( .not. polarized(j) ) cycle
 
-      v0 = lines(slabs%catalog%lines(j))%v0
-      call d_mag_o2_abs_cs_dT ( qn(j), freq, v0, h,                   &
-        &  slabs%s(j)%x1,     slabs%s(j)%slabs1,     slabs%s(j)%y,    &
-        &  slabs%s(j)%yi,     slabs%s(j)%v0s,                         &
-        & slabs%d(j)%dx1_dT, slabs%d(j)%dslabs1_dT, slabs%d(j)%dy_dT, &
-        & slabs%d(j)%dyi_dT, slabs%d(j)%dv0s_dT,                      &
-        &  sigma_p,     pi,     sigma_m,                              &
-        & dSigma_p_dT, dPi_dT, dSigma_m_dT )
+        v0 = lines(slabs%catalog%lines(j))%v0
+        call d_mag_o2_abs_cs_dT ( qn(j), freq, v0, h,                   &
+          &  slabs%s(j)%x1,     slabs%s(j)%slabs1,     slabs%s(j)%y,    &
+          &  slabs%s(j)%yi,     slabs%s(j)%v0s,                         &
+          & slabs%d(j)%dx1_dT, slabs%d(j)%dslabs1_dT, slabs%d(j)%dy_dT, &
+          & slabs%d(j)%dyi_dT, slabs%d(j)%dv0s_dT,                      &
+          &  sigma_p,     pi,     sigma_m,                              &
+          & dSigma_p_dT, dPi_dT, dSigma_m_dT )
 
 !{ Fill in negative frequency part of VVW lineshape for jth line
 !
@@ -239,48 +238,50 @@ contains
 !                 $\frac1{S} \frac{\partial S}{\partial T}$
 !  are gotten from the {\tt slabs} structure.
 
-      s = 0.5_rk * slabs%s(j)%slabs1 * freq / v0
-      sigma = freq + slabs%s(j)%v0s
-      z = slabs%s(j)%x1 * sigma
-      r1 = slabs%s(j)%y
-      y2 = r1**2
-      r2 = slabs%s(j)%yi*z
-      i1 = 1.0_rk / slabs%s(j)%v0s
-      i4 = 2.0_rk * i1 / slabs%s(j)%x1
-      i2 = y2 * 0.5_rk * i4
-      i3 = freq * r1 * slabs%s(j)%yi * i1
-      dv0 = slabs%d(j)%dv0s_dT * i1 ! 1/v0s dv0s/dT
-      i1 = z
-      d = oneOvSqpi / (z*z + y2)
+        s = 0.5_rk * slabs%s(j)%slabs1 * freq / v0
+        sigma = freq + slabs%s(j)%v0s
+        z = slabs%s(j)%x1 * sigma
+        r1 = slabs%s(j)%y
+        y2 = r1**2
+        r2 = slabs%s(j)%yi*z
+        i1 = 1.0_rk / slabs%s(j)%v0s
+        i4 = 2.0_rk * i1 / slabs%s(j)%x1
+        i2 = y2 * 0.5_rk * i4
+        i3 = freq * r1 * slabs%s(j)%yi * i1
+        dv0 = slabs%d(j)%dv0s_dT * i1 ! 1/v0s dv0s/dT
+        i1 = z
+        d = oneOvSqpi / (z*z + y2)
 
-      wing = wing + s * cmplx ( d * (r1 - r2), d * (i1 + i2 - i3) - i4, kind=rk )
+        wing = wing + s * cmplx ( d * (r1 - r2), d * (i1 + i2 - i3) - i4, kind=rk )
 
-      dz = slabs%d(j)%dx1_dT + slabs%d(j)%dv0s_dT / sigma
-      dD = (2.0_rk * sqrtPi) * ( z**2 * dz + y2 * slabs%d(j)%dy_dT ) * d
-      s1 = slabs%d(j)%dslabs1_dT - dD ! 1/S dS/dT - 1/D dD/dT
+        dz = slabs%d(j)%dx1_dT + slabs%d(j)%dv0s_dT / sigma
+        dD = (2.0_rk * sqrtPi) * ( z**2 * dz + y2 * slabs%d(j)%dy_dT ) * d
+        s1 = slabs%d(j)%dslabs1_dT - dD ! 1/S dS/dT - 1/D dD/dT
 
-      dr1 = s1 + slabs%d(j)%dy_dT
-      dr2 = s1 + slabs%d(j)%dyi_dT + dz
+        dr1 = s1 + slabs%d(j)%dy_dT
+        dr2 = s1 + slabs%d(j)%dyi_dT + dz
 
-      di1 = s1 + dz
-      di2 = s1 - dv0 + 2.0_rk * slabs%d(j)%dy_dT - slabs%d(j)%dx1_dT
-      di3 = s1 - dv0 + slabs%d(j)%dy_dT + slabs%d(j)%dyi_dT
-      di4 = slabs%d(j)%dslabs1_dT - slabs%d(j)%dx1_dT - dv0
+        di1 = s1 + dz
+        di2 = s1 - dv0 + 2.0_rk * slabs%d(j)%dy_dT - slabs%d(j)%dx1_dT
+        di3 = s1 - dv0 + slabs%d(j)%dy_dT + slabs%d(j)%dyi_dT
+        di4 = slabs%d(j)%dslabs1_dT - slabs%d(j)%dx1_dT - dv0
 
-      dWing = dWing + s * &
-        &             cmplx ( d * (r1 * dr1 - r2 * dr2), &
-        &                     d * (i1 * di1 + i2 * di2 - i3 * di3) - i4 * di4, &
-        &                     kind=rk )
+        dWing = dWing + s * &
+          &             cmplx ( d * (r1 * dr1 - r2 * dr2), &
+          &                     d * (i1 * di1 + i2 * di2 - i3 * di3) - i4 * di4, &
+          &                     kind=rk )
 
-    end do
+      end do
 
-    sigma_p = sigma_p + 0.5_rk * wing
-    pi =      pi      + wing
-    sigma_m = sigma_m + 0.5_rk * wing
+      sigma_p = sigma_p + 0.5_rk * wing
+      pi =      pi      + wing
+      sigma_m = sigma_m + 0.5_rk * wing
 
-    dsigma_p_dT = dsigma_p_dT + 0.5_rk * dWing
-    dpi_dT      = dpi_dT      + dWing
-    dsigma_m_dT = dsigma_m_dT + 0.5_rk * dWing
+      dsigma_p_dT = dsigma_p_dT + 0.5_rk * dWing
+      dpi_dT      = dpi_dT      + dWing
+      dsigma_m_dT = dsigma_m_dT + 0.5_rk * dWing
+
+    end associate
 
 ! Contribution from non-Zeeman-split lines is done in get_beta_path_scalar.
 
@@ -289,7 +290,7 @@ contains
   end subroutine D_O2_Abs_CS_dT
 
 ! ------------------------------------------------  Mag_O2_Abs_CS  -----
-  subroutine Mag_O2_Abs_CS ( n, nu, v0, h, x1, s, w, y, v0s, &
+  pure subroutine Mag_O2_Abs_CS ( n, nu, v0, h, x1, s, w, y, v0s, &
     &                        sigma_p, pi, sigma_m )
 
 ! Compute the frequency dependent absorption cross section for magnetic o2.
@@ -576,10 +577,10 @@ contains
   end subroutine Mag_O2_Abs_CS
 
 ! -------------------------------------------  d_Mag_O2_Abs_CS_dT  -----
-  subroutine d_Mag_O2_Abs_CS_dT ( n, nu, v0, h, x1,  s,  w,  y,  v0s, &
-    &                                          dx1, ds, dw, dy, dv0s, &
-    &                              sigma_p,     pi,     sigma_m,      &
-    &                             dSigma_p_dT, dPi_dT, dSigma_m_dT )
+  pure subroutine d_Mag_O2_Abs_CS_dT ( n, nu, v0, h, x1,  s,  w,  y,  v0s, &
+    &                                                dx1, ds, dw, dy, dv0s, &
+    &                                  sigma_p,     pi,     sigma_m,      &
+    &                                 dSigma_p_dT, dPi_dT, dSigma_m_dT )
 
 ! Compute the frequency dependent absorption cross section for magnetic o2
 ! and its temperature derivative.
@@ -806,7 +807,7 @@ contains
 
   contains
 
-    subroutine Absorption ( nu_offst, xi, r, dr ) ! Update r ("result"), dr
+    pure subroutine Absorption ( nu_offst, xi, r, dr ) ! Update r ("result"), dr
 
       real(rk), intent(in) :: nu_offst ! x1*(del_nu + kappa*...*h/...)
       real(rk), intent(in) :: Xi ! This is actually 0.5 \xi \frac{\nu}{\nu_0}
@@ -918,6 +919,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.20  2013/04/27 01:10:54  vsnyder
+! Make routines pure, needed to use ASSOCIATE construct twice
+!
 ! Revision 2.19  2010/02/04 23:09:28  vsnyder
 ! Use kind= in CMPLX
 !
