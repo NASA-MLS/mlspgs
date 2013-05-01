@@ -49,7 +49,7 @@ contains
     ! piffling at ground level, going to about 1km at 80km. 
 
     !----Argument----!
-    real(kind=r8), intent(in) :: geom_height
+    real(kind=r8), intent(in) :: geom_height ! above geoid
     real(kind=r8), intent(in), optional :: lat_geoc, lat_geod
     !----Function result----!
     real(kind=r8)::gph
@@ -75,16 +75,35 @@ contains
     sinlat = sin(lat_geoc*deg2rad)**2
     coslat = 1.0_r8 - sinlat
 
-    ! Calculate radius of earth at given latitude
+    !{ Calculate radius of earth at given geocentric latitude $\beta$
+    !  \begin{equation*}
+    !   h_0 = \sqrt{R_a^2 \cos^2\beta + R_b^2 \sin^2\beta}
+    !  \end{equation*}
+    !  where $R_a$ is the Earth's semi-major axis and $R_b$ is the
+    !  semi-minor axis.
 
     h0 = sqrt( earth_major_axis**2*coslat + earth_minor_axis**2*sinlat )
     hc = h0 + geom_height
+
+    !{ Coefficients in the spherical harmonic expansion of the Earth's
+    !  figure: $P_2 = ( 3 \sin^2 \beta - 1 ) /2$ and
+    !          $P_4 = ( 35 \sin^4 \beta - 30 \sin^2 \beta + 3 ) / 8$.
     p2 = (3*sinlat -1)/2
     p4 = (35*(sinlat**2) - 30*sinlat +3)/8
 
+    !{ Let $r$ be the ratio of the Earth's major axis to the height
+    !  measured from center of the geoid, $r = R_a / H_c$
     ahrat = earth_major_axis / hc
     ahrat = ahrat*ahrat
 
+    !{ Compute geopotential height, accounting for latitude, the Earth's
+    !  figure up to fourth-order zonal harmonics, and centripetal acceleration:
+    !  \begin{equation*}
+    !   H_\infty = \frac{Gm}{g_0 H_c} \left(
+    !    1 - J_2 P_2 r^2 - J_4 P_4 r^2 \right) +
+    !     \frac{\omega^2 r^2 \cos^2 \beta}{2 g_0}
+    !  \end{equation*}
+    !  where $J_2$ and $J_4$ are zonal spherical harmonics.
     h_inf = (gm/(g0*hc))*(1-j2*p2*ahrat - j4*p4*ahrat*ahrat) + &
       &  (omega*omega*hc*hc*coslat)/(2*g0)
 
@@ -174,6 +193,9 @@ contains
 end module heights_module
 
 ! $Log$
+! Revision 2.7  2009/06/23 18:25:43  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.6  2009/05/13 20:40:05  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !
