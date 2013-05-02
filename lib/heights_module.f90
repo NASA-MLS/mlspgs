@@ -75,15 +75,15 @@ contains
     sinlat = sin(lat_geoc*deg2rad)**2
     coslat = 1.0_r8 - sinlat
 
-    !{ Calculate radius of earth at given geocentric latitude $\beta$
+    !{ Calculate height of Earth's surface at given geocentric latitude $\beta$
     !  \begin{equation*}
-    !   h_0 = \sqrt{R_a^2 \cos^2\beta + R_b^2 \sin^2\beta}
+    !   H_0 = \sqrt{R_a^2 \cos^2\beta + R_b^2 \sin^2\beta}
     !  \end{equation*}
     !  where $R_a$ is the Earth's semi-major axis and $R_b$ is the
     !  semi-minor axis.
 
     h0 = sqrt( earth_major_axis**2*coslat + earth_minor_axis**2*sinlat )
-    hc = h0 + geom_height
+    hc = h0 + geom_height ! requested height, from center of geoid
 
     !{ Coefficients in the spherical harmonic expansion of the Earth's
     !  figure: $P_2 = ( 3 \sin^2 \beta - 1 ) /2$ and
@@ -92,7 +92,7 @@ contains
     p4 = (35*(sinlat**2) - 30*sinlat +3)/8
 
     !{ Let $r$ be the ratio of the Earth's major axis to the height
-    !  measured from center of the geoid, $r = R_a / H_c$
+    !  measured from the center of the geoid, $r = R_a / H_c$
     ahrat = earth_major_axis / hc
     ahrat = ahrat*ahrat
 
@@ -100,7 +100,7 @@ contains
     !  figure up to fourth-order zonal harmonics, and centripetal acceleration:
     !  \begin{equation*}
     !   H_\infty = \frac{Gm}{g_0 H_c} \left(
-    !    1 - J_2 P_2 r^2 - J_4 P_4 r^2 \right) +
+    !    1 - J_2 P_2 r^2 - J_4 P_4 r^4 \right) +
     !     \frac{\omega^2 r^2 \cos^2 \beta}{2 g_0}
     !  \end{equation*}
     !  where $J_2$ and $J_4$ are zonal spherical harmonics.
@@ -193,6 +193,9 @@ contains
 end module heights_module
 
 ! $Log$
+! Revision 2.8  2013/05/01 23:18:52  vsnyder
+! LaTeX cannonball polishing
+!
 ! Revision 2.7  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
