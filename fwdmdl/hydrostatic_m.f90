@@ -39,7 +39,7 @@ module Hydrostatic_m
     use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
     use Get_eta_matrix_m, only: get_eta_sparse
     use Piq_int_m, only: piq_int
-    use Physics, only: BoltzMeters => Boltz
+    use Physics, only: BoltzMeters => Boltz ! Avogadro * k * ln10 / mmm m^2/(K s^2)
 
 ! Inputs
 
@@ -71,7 +71,7 @@ module Hydrostatic_m
 
 !   real(rp) :: cl, sl ! for derivatives of Legendre polynomials dp2 and dp4
     real(rp) :: Clsq, G_ref, GHB
-    real(rp) :: R_e, R_eisq, R_eisq_A, R_eff, Slsq, Z_surf
+    real(rp) :: R_e, R_eisq, R_eff, Slsq, Z_surf
     real(rp) :: P2, P4    ! Legendre polynomials, for oblateness model
 !   real(rp) :: dp2, dp4  ! Derivatives of P2 and P4
     real(rp) :: dh_dz_S, H_calc, Z_old
@@ -110,28 +110,40 @@ module Hydrostatic_m
 !   dp2 = 3.0_rp * sl * cl
 !   dp4 = 2.5_rp * sl * cl * ( 7.0_rp * slsq - 3.0_rp )
 
-!{ compute earth radius having potential = 62636858.0 $m/s^2$:
-!  $r_e^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$
+!{ Compute radius at geoid having potential = $W_0$ (see Geometry module):
+!  $r_e^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$ in meters.
+!  First compute $r_e^{-2}$ in $m^{-2}$.  The parenthesization used here
+!  avoids potential overflow; $a^2 b^2 \approx 1.64 \times 10^{27}$, but
+!  the inner factor is $\approx 1$ and $a^2 \approx 4 \times 10^{13}$.
 
-    r_eisq_a = (eRadAsq*slsq + eRadBsq*clsq) / eRadBsq ! m^{-1}
-
-    r_eisq = r_eisq_a / eRadAsq ! (r_e)^{-2} in m^{-2}
+    r_eisq = ( (eRadAsq*slsq + eRadBsq*clsq) / eRadBsq ) / eRadAsq ! (r_e)^{-2}
 
     r_e = sqrt(1.0_rp / r_eisq) ! in meters
 
-!{ radial surface acceleration, k$m/s^2$:\\
-!  $g_{\text{ref}} = 0.001 \left ( G m ( 1 - 3 J_2 P_2(\sin \beta)
-!                       (a/r_e)^2 - 5 J_4 P_4(\sin \beta) (a/r_e)^4 ) / r_e^2
-!                       - \omega^2 \cos^2 \beta \, r_e \right )$
+!{ Radial surface acceleration at latitude $\beta$, k$m/s^2$:
+!  \begin{equation*}
+!   g_{\text{ref}} = 0.001 \left ( G m
+!                     \frac{1 - 3 J_2 P_2(\sin \beta)
+!                       (a/r_e)^2 - 5 J_4 P_4(\sin \beta) (a/r_e)^4 }{r_e^2}
+!                       - \omega^2 \cos^2 \beta \, r_e \right )
+!  \end{equation*}
 
     g_ref = 0.001_rp * (gm * (1.0_rp - 3.0_rp*j2*p2*eRadAsq*r_eisq &
         & - 5.0_rp*j4*p4*(eRadAsq*r_eisq)**2)*r_eisq - w**2 * clsq * r_e)
 
-!{ better effective Earth radius: compute $-d g_{\text{ref}} / d r$, kilometers:\\
-!  $r_{\text{eff}} = 2 g_{\text{ref}} / \left ( 2 G m (
-!                      ( 1 - 6 J_2 P_2 (\sin \beta) (a/r_e)^2
-!                          - 15 J_4 P_4 (\sin \beta) (a/r_e)^4 ) / r_e^3
-!                          + \omega^2 \cos^2 \beta \right )$
+!{ Better effective Earth radius:
+!  compute $-2\, g_{\text{ref}} / ( d g_{\text{ref}} / d r)$, kilometers:
+!  \begin{equation*}
+!   r_{\text{eff}} =
+!    \frac{2\, g_{\text{ref}}}
+!         { 2\, G m \frac{1 - 6 J_2 P_2 (\sin \beta) (a/r_e)^2
+!                         - 15 J_4 P_4 (\sin \beta) (a/r_e)^4}{r_e^3}
+!                          + \omega^2 \cos^2 \beta }
+!  \end{equation*}
+!  $d g_{\text{ref}} / d r$ has units $s^{-2}$, because we compute
+!  $d g_{\text{ref}}(\text{meters}) / d r$(meters), thereby canceling
+!  the factor of 0.001 you might have been expecting in the denominator.
+!  The entire expression has units (k$ms^{-2})/s^{-2} = $ k$m$.
 
     r_eff = 2.0_rp * g_ref / (2.0_rp * gm * (1.0_rp-6.0_rp*j2*p2 &
         & * eRadAsq*r_eisq - 15.0_rp*j4*p4*(eRadAsq*r_eisq)**2) &
@@ -172,6 +184,31 @@ module Hydrostatic_m
 ! compute the height vector
 
 ! geopotential height * g_ref
+
+!{ Equation (5.27) in the 19 August 2004 ATBD is
+!  \begin{equation*}
+!   h(\zeta,\phi) =
+!    \frac{g_0 \stackrel{\star}{R_0}^2}
+!         {g_0 \stackrel{\star}{R_0} - k\, \ln 10
+!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
+!           ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!    -\stackrel{\star}{R_0} + R_0 - R^\oplus
+!  \end{equation*}
+!  The last two terms, i.e., $R_0-R^\oplus$, are handled in {\tt metrics}.
+!  Putting the remainder over a common denominator, we have
+!  \begin{equation*}
+!   h(\zeta,\phi) =
+!    \frac{\stackrel{\star}{R_0} k \, \ln10
+!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
+!          ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!         {g_0 \stackrel{\star}{R_0} - k \, \ln10
+!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
+!          ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!  \end{equation*}
+!  Notice that $g_0$ here is not the average or equatorial surface
+!  acceleration.  Rather, it is $g_\text{ref}$, which is corrected for
+!  latitude, the Earth's figure (up to fourth order zonal harmonics), and
+!  centripetal acceleration.
     h_grid = boltz * matmul(piq,t_coeffs)
     h_grid = r_eff * h_grid / (r_eff * g_ref - h_grid)
     dhidzi = (h_grid+r_eff)**2 * boltz / (g_ref * r_eff**2)
@@ -222,7 +259,7 @@ module Hydrostatic_m
 
 !   real(rp) :: cl, sl ! for derivatives of Legendre polynomials dp2 and dp4
     real(rp) :: Clsq, G_ref, GHB
-    real(rp) :: R_e, R_eisq, R_eisq_A, R_eff, Slsq, Z_surf
+    real(rp) :: R_e, R_eisq, R_eff, Slsq, Z_surf
     real(rp) :: P2, P4    ! Legendre polynomials, for oblateness model
 !   real(rp) :: dp2, dp4  ! Derivatives of P2 and P4
     real(rp) :: dh_dz_S, H_calc, Z_old
@@ -256,28 +293,40 @@ module Hydrostatic_m
 !   dp2 = 3.0_rp * sl * cl
 !   dp4 = 2.5_rp * sl * cl * ( 7.0_rp * slsq - 3.0_rp )
 
-!{ compute earth radius having potential = 62636858.0 $m/s^2$:
-!  $r_e^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$
+!{ Compute radius at geoid having potential = $W_0$ (see Geometry module):
+!  $r_e^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$ in meters.
+!  First compute $r_e^{-2}$ in $m^{-2}$.  The parenthesization used here
+!  avoids potential overflow; $a^2 b^2 \approx 1.64 \times 10^{27}$, but
+!  the inner factor is $\approx 1$ and $a^2 \approx 4 \times 10^{13}$.
 
-    r_eisq_a = (eRadAsq*slsq + eRadBsq*clsq) / eRadBsq ! m^{-1}
-
-    r_eisq = r_eisq_a / eRadAsq ! (r_e)^{-2} in m^{-2}
+    r_eisq = ( (eRadAsq*slsq + eRadBsq*clsq) / eRadBsq ) / eRadAsq ! (r_e)^{-2}
 
     r_e = sqrt(1.0_rp / r_eisq) ! in meters
 
-!{ radial surface acceleration, k$m/s^2$:\\
-!  $g_{\text{ref}} = 0.001 \left ( G m ( 1 - 3 J_2 P_2(\sin \beta)
-!                       (a/r_e)^2 - 5 J_4 P_4(\sin \beta) (a/r_e)^4 ) /r_e^2
-!                       - \omega^2 \cos^2 \beta \, r_e \right )$
+!{ Radial surface acceleration at latitude $\beta$, k$m/s^2$:
+!  \begin{equation*}
+!   g_{\text{ref}} = 0.001 \left ( G m
+!                     \frac{1 - 3 J_2 P_2(\sin \beta)
+!                       (a/r_e)^2 - 5 J_4 P_4(\sin \beta) (a/r_e)^4 }{r_e^2}
+!                       - \omega^2 \cos^2 \beta \, r_e \right )
+!  \end{equation*}
 
     g_ref = 0.001_rp * (gm * (1.0_rp - 3.0_rp*j2*p2*eRadAsq*r_eisq &
         & - 5.0_rp*j4*p4*(eRadAsq*r_eisq)**2)*r_eisq - w**2 * clsq * r_e)
 
-!{ better effective Earth radius: compute $-d g_{\text{ref}} / d r$, kilometers:\\
-!  $r_{\text{eff}} = 2 g_{\text{ref}} / \left ( 2 G m (
-!                      ( 1 - 6 J_2 P_2 (\sin \beta) (a/r_e)^2
-!                          - 15 J_4 P_4 (\sin \beta) (a/r_e)^4 ) / r_e^3
-!                          + \omega^2 \cos^2 \beta \right )$
+!{ Better effective Earth radius:
+!  compute $-2\, g_{\text{ref}} / ( d g_{\text{ref}} / d r)$, kilometers:
+!  \begin{equation*}
+!   r_{\text{eff}} =
+!    \frac{2\, g_{\text{ref}}}
+!         { 2\, G m \frac{1 - 6 J_2 P_2 (\sin \beta) (a/r_e)^2
+!                         - 15 J_4 P_4 (\sin \beta) (a/r_e)^4}{r_e^3}
+!                          + \omega^2 \cos^2 \beta }
+!  \end{equation*}
+!  $d g_{\text{ref}} / d r$ has units $s^{-2}$, because we compute
+!  $d g_{\text{ref}}(\text{meters}) / d r$(meters), thereby canceling
+!  the factor of 0.001 you might have been expecting in the denominator.
+!  The entire expression has units (k$ms^{-2})/s^{-2} = $ k$m$.
 
     r_eff = 2.0_rp * g_ref / (2.0_rp * gm * (1.0_rp-6.0_rp*j2*p2 &
         & * eRadAsq*r_eisq - 15.0_rp*j4*p4*(eRadAsq*r_eisq)**2) &
@@ -316,6 +365,32 @@ module Hydrostatic_m
 ! compute the height vector
 
 ! geopotential height * g_ref
+
+
+!{ Equation (5.27) in the 19 August 2004 ATBD is
+!  \begin{equation*}
+!   h(\zeta,\phi) =
+!    \frac{g_0 \stackrel{\star}{R_0}^2}
+!         {g_0 \stackrel{\star}{R_0} - k\, \ln 10
+!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
+!           ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!    -\stackrel{\star}{R_0} + R_0 - R^\oplus
+!  \end{equation*}
+!  The last two terms, i.e., $R_0-R^\oplus$, are handled in {\tt metrics}.
+!  Putting the remainder over a common denominator, we have
+!  \begin{equation*}
+!   h(\zeta,\phi) =
+!    \frac{\stackrel{\star}{R_0} k \, \ln10
+!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
+!          ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!         {g_0 \stackrel{\star}{R_0} - k \, \ln10
+!          \sum_l^{\text{NH}^T} \sum_m^{\text{NP}^T}
+!          ( f^T_{lm} \eta^T_m(\phi) P_l)}
+!  \end{equation*}
+!  Notice that $g_0$ here is not the average or equatorial surface
+!  acceleration.  Rather, it is $g_\text{ref}$, which is corrected for
+!  latitude, the Earth's figure (up to fourth order zonal harmonics), and
+!  centripetal acceleration.
     h_grid = boltz * matmul(piq,t_coeffs)
     h_grid = r_eff * h_grid / (r_eff * g_ref - h_grid)
 
@@ -334,6 +409,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.21  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.20  2007/01/17 23:50:15  vsnyder
 ! Exchange dhidzi, dhidtq, make dhidtq optional
 !
