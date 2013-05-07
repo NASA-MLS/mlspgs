@@ -725,8 +725,10 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_Boolean, &
              begin, f+f_formula, t+t_string, n+n_field_type, &
-             begin, f+f_values, t+t_boolean, n+n_field_type, &
+             begin, f+f_values, t+t_string, n+n_field_type, &
              begin, f+f_label, t+t_string, n+n_field_type, &
+             begin, f+f_evaluate, t+t_boolean, n+n_field_type, &
+             begin, f+f_literal, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_fGrid, &
              begin, f+f_coordinate, t+t_fGridCoord, n+n_field_type, &
@@ -1098,7 +1100,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_inputBoolean, s+s_Boolean, n+n_field_spec, &
              begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
              begin, f+f_label, t+t_string, n+n_field_type, &
+             begin, f+f_evaluate, t+t_boolean, n+n_field_type, &
              begin, f+f_literal, t+t_boolean, n+n_field_type, &
+             begin, f+f_manipulation, t+t_string, n+n_field_type, &
              np+n_spec_def /) )
 
     call make_tree( (/ &
@@ -1455,6 +1459,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_repeat, &
              begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
              begin, f+f_formula, t+t_string, n+n_field_type, &
+             begin, f+f_values, t+t_string, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_Boolean
       begin, s+s_skip, &
@@ -1821,6 +1826,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.564  2013/05/07 22:01:30  pwagner
+! run-time Booleans can store arrays of values, formulas can evaluate named terms
+!
 ! Revision 2.563  2013/04/24 00:35:47  pwagner
 ! Added inputBoolean and made Reevaluate formulas more powerful
 !
