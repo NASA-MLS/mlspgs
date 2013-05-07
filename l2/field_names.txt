@@ -136,6 +136,7 @@ dumpQuantities # of X during Newton iteration
 earthRadius
 ECRtoFOV
 eigenVectors
+evaluate
 exact
 exclude
 excludeBelowBottom
@@ -501,6 +502,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.228  2013/05/07 22:01:30  pwagner
+# run-time Booleans can store arrays of values, formulas can evaluate named terms
+#
 # Revision 2.227  2013/04/24 00:35:47  pwagner
 # Added inputBoolean and made Reevaluate formulas more powerful
 #
