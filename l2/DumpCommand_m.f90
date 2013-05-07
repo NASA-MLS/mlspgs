@@ -59,32 +59,80 @@ module DumpCommand_M
 ! booleanFromEmptySwath
 !               The specified swath in the specified file has no useable data
 ! booleanFromFormula
-!               (a) Evaluate the formula; it may be one of two forms
+!               (a) Evaluate the formula; it may be one of the forms
 !               (1) Contains only "or", "and", "not" => logical result
-!               (2) Contains "lhs == rhs" or "lhs /= rhs" => Does it?
+!               (2) Contains "lhs rel rhs" where
+!                   rel is one of {==, /=, <, or >}  => logical result
+!               (3) A manipulation formula, signaled by the "/literal' field
+!                   (see FillByManipulation)  => string-valued result
 !               (b) Just store the text of the label field
 !
 ! The following subroutines depart from the sbove pattern
 ! DumpCommand    Process the Dump command, dumping any of the allowed datatypes
 ! InitializeRepeat 
-!                Set the Repeat counter to 0
-! NextRepeat     Add 1 to current value of Repeat counter
+!                Set the Repeat counter "count" to 0
+! NextRepeat     Add 1 to Repeat counter "count", 
+!                  store values[count] in "counts(n)"
 ! MLSCase        Process the Case control statement
 ! MLSSelect      Process the Select control statement
 ! MLSEndSelect   Process the EndSelect control statement
-! Skip           Process the Skip control statement
+! Skip           Process either the Skip or the Repeat control statement
 ! === (end of toc) ===
 
+! === (start of api) ===
+! int BooleanFromAnyGoodRadiances ( int root, type (chunk) chunk, &
+!    type(MLSFile) filedatabase(:) )
+! int BooleanFromAnyGoodValues ( int root, type (vector_t) vectors(:) )
+! int BooleanFromCatchWarning ( int root )
+! int BooleanFromComparingQtys ( int root, type (vector_t) vectors(:) )
+! int BooleanFromEmptyGrid ( int root, type (griddeddata_t) grids(:) )
+! int BooleanFromEmptySwath ( int root )
+! int BooleanFromFormula ( int name, int root, type (vector_t) vectors(:) )
+! DumpCommand ( int root, type (quantityTemplate_t) quantityTemplatesDB(:), &
+!    type (vectorTemplate_T) vectorTemplates(:), &
+!    type (vector_t) vectors(:), type (forwardModelConfig_t) forwardModelConfigs(:), &
+!    type (HGrid_T) HGrids(:), & 
+!    type (GriddedData_T) GriddedDataBase(:), type (MLSFile_T) FileDataBase(:), & 
+!    type (Matrix_Database_T) MatrixDataBase(:), type (Hessian_T) HessianDataBase(:) ) 
+! InitializeRepeat
+! NextRepeat
+! MLSCase ( int root )
+! MLSSelect ( int root )
+! MLSEndSelect ( int root )
+! Skip ( int root, char* name )
+! === (end of api) ===
+
+  interface EVALUATOR
+    module procedure EVALUATOR_SCA, EVALUATOR_ARRAY
+  end interface
 
   logical, parameter :: countEmpty = .true. ! Except where overriden locally
   integer, parameter :: MAXRESULTLEN = 64
   logical, public, save             :: MLSSELECTING = .false.
   logical, save               :: MLSSelectedAlready = .false.
-  character(LEN=MAXRESULTLEN), save :: selectLabel  = ' '
+  character(len=MAXRESULTLEN), save :: selectLabel  = ' '
+
+  ! Error codes
+  integer, parameter :: Dimless = 1
+  integer, parameter :: NoFile = dimless + 1
+  integer, parameter :: NoFileDatabase = noFile + 1
+  integer, parameter :: NoFWM = noFileDatabase + 1
+  integer, parameter :: noGriddedData = NoFWM + 1
+  integer, parameter :: NoHGrid = noGriddedData + 1
+  integer, parameter :: NoLines = noHGrid + 1
+  integer, parameter :: NoQT = noLines + 1
+  integer, parameter :: Noradiometers = noQT + 1
+  integer, parameter :: NoSignals = noradiometers + 1
+  integer, parameter :: NoTG = noSignals + 1
+  integer, parameter :: NoVectors = noTG + 1
+  integer, parameter :: NoVT = noVectors + 1
+  integer, parameter :: Numeric = noVT + 1
+  integer, parameter :: Stop = numeric + 1
+  integer, parameter :: Unknown = stop + 1 ! Unknown template
 contains
 
   ! ------------------------------------- BooleanFromAnyGoodRadiances --
-  function BooleanFromAnyGoodRadiances ( ROOT, CHUNK, FILEDATABASE ) &
+  function BOOLEANFROMANYGOODRADIANCES ( ROOT, CHUNK, FILEDATABASE ) &
     & result( HASHSIZE )
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     use CONSTRUCTQUANTITYTEMPLATES, only: ANYGOODSIGNALDATA
@@ -192,7 +240,7 @@ contains
   end function BooleanFromAnyGoodRadiances
 
   ! ------------------------------------- BooleanFromAnyGoodValues --
-  function BooleanFromAnyGoodValues ( ROOT, VECTORS ) result( THESIZE )
+  function BOOLEANFROMANYGOODVALUES ( ROOT, VECTORS ) result( THESIZE )
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
       & F_QUANTITY, F_BOOLEAN, F_STATUS
@@ -290,7 +338,7 @@ contains
   end function BooleanFromAnyGoodValues
 
   ! ------------------------------------- BooleanFromCatchWarning --
-  function BooleanFromCatchWarning ( ROOT ) result( SIZE )
+  function BOOLEANFROMCATCHWARNING ( ROOT ) result( SIZE )
     ! Called to check if the last command resulted in a warning
     ! (either printed or suppressed)
     ! and optionally if the warning matches a supplied message string
@@ -374,7 +422,7 @@ contains
   end function BooleanFromCatchWarning
 
   ! ------------------------------------- BooleanFromComparingQtys --
-  function BooleanFromComparingQtys ( ROOT, VECTORS ) result( THESIZE )
+  function BOOLEANFROMCOMPARINGQTYS ( ROOT, VECTORS ) result( THESIZE )
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_BOOLEAN, F_FORMULA
@@ -553,7 +601,7 @@ contains
       & 'Run-time Boolean flags' )
     call MLSMessageCalls( 'pop' )
   contains
-    elemental logical function isRelation( relation, a, b )
+    elemental logical function ISRELATION( relation, a, b )
       ! Do inputs a and b stand in relation ('>', '<', '=') ?
       ! Args
       character(len=*), intent(in) :: relation ! ('>', '<', '=')
@@ -572,7 +620,7 @@ contains
       end select
     end function isRelation
     
-    function statFun ( name, values, mask )
+    function STATFUN ( name, values, mask )
       ! Evaluate statistical function name of values
       ! masking if appropriate
       ! Args
@@ -610,7 +658,7 @@ contains
   end function BooleanFromComparingQtys
 
   ! ------------------------------------- BooleanFromEmptyGrid --
-  function BooleanFromEmptyGrid ( ROOT, GRIDS ) result( THESIZE )
+  function BOOLEANFROMEMPTYGRID ( ROOT, GRIDS ) result( THESIZE )
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_GRID
     use GRIDDEDDATA, only: GRIDDEDDATA_T
@@ -681,7 +729,7 @@ contains
   ! (2) Status even
   ! If even one point is useable (a very low bar, admittedly) then
   ! return FALSE
-  function BooleanFromEmptySwath ( ROOT ) result( THESIZE )
+  function BOOLEANFROMEMPTYSWATH ( ROOT ) result( THESIZE )
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FILE, F_SWATH, F_TYPE, &
@@ -798,7 +846,7 @@ contains
   end function BooleanFromEmptySwath
 
   ! ------------------------------------- BooleanFromFormula --
-  function BooleanFromFormula ( NAME, ROOT, VECTORS ) result( SIZE )
+  function BOOLEANFROMFORMULA ( NAME, ROOT, VECTORS ) result( SIZE )
     ! Called either when a Boolean is first declared
     ! syntax: 
     ! name: Boolean, formula="formula"
@@ -806,11 +854,11 @@ contains
     ! or when it is reevaluated
     ! syntax: 
     ! Reevaluate, formula="formula", Boolean="name", 
-    ! [a=a.qty], [b=b.qty], [c=value], [/literal]
+    ! [a=a.qty], [b=b.qty], [c=value], [values=..], [/literal]
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_A, F_B, F_BOOLEAN, F_C, &
-      & F_FORMULA, F_INPUTBOOLEAN, F_LABEL, F_LITERAL, F_VALUES, &
+    use INIT_TABLES_MODULE, only: F_A, F_B, F_BOOLEAN, F_C, F_EVALUATE, &
+      & F_FORMULA, F_INPUTBOOLEAN, F_LABEL, F_LITERAL, F_MANIPULATION, F_VALUES, &
       & FIELD_FIRST, FIELD_LAST
     use MANIPULATIONUTILS, only: MANIPULATE
     use MLSKINDS, only: R8, RV
@@ -819,7 +867,7 @@ contains
       & MLSMESSAGE
     use MLSSTRINGLISTS, only: GETHASHELEMENT, NUMSTRINGELEMENTS, &
       & PUTHASHELEMENT, SWITCHDETAIL
-    use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS
+    use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS, WRITEINTSTOCHARS
     use MORETREE, only: GET_BOOLEAN
     use OUTPUT_M, only: NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
@@ -835,36 +883,43 @@ contains
     type (vector_T), dimension(:), optional, target :: VECTORS
     integer             :: SIZE
     ! Internal variables
+    character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     real(rv) :: C                       ! constant "c" in formula
     type (vectorValue_T), pointer :: AQUANTITY
     type (vectorValue_T), target  :: ATARGET
     type (vectorValue_T), pointer :: BQUANTITY
     character(len=32) :: cnameString
     character(len=32) :: cvalue
+    logical :: evaluate
     integer :: exprType
     integer :: field
     integer :: field_index
     integer :: fieldValue
     character(len=255) :: formula
     logical, dimension(field_first:field_last) :: GOT
+    integer :: J
     integer :: keyNo
+    character(len=80) :: KEYSTRING
     logical :: literal
     character(len=32) :: nameString
+    integer :: NVALUES
     integer :: QUANTITYINDEX
     integer :: son
     integer :: source
     type (vectorValue_T) :: TQUANTITY ! Temporary
     type(QUANTITYTEMPLATE_T) :: TTEMPLATE
     logical :: tvalue
+    integer :: value_field
     integer, dimension(2) :: UNITASARRAY ! From expr
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
     integer :: VECTORINDEX
     logical :: verbose, verboser
     ! Executable
-    verbose = ( switchDetail(switches, 'bool') > -1 )
+    verbose = ( switchDetail(switches, 'bool') > 0 )
     verboser = ( switchDetail(switches, 'bool') > 0 )
     nullify( aQuantity, bQuantity )
     c = 0._rv
+    evaluate= .false.
     literal= .false.
     tvalue= .false.
     got = .false.
@@ -905,7 +960,7 @@ contains
         if ( verbose ) call outputNamedValue( 'c', c )
       case ( f_inputBoolean )
         call get_string ( sub_rosa(subtree(2,son)), cnameString, strip=.true. )
-        cnameString = lowerCase(nameString)
+        cnameString = lowerCase(cnameString)
         call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
           & cnameString, cvalue, countEmpty=countEmpty )
         call readNumsFromChars ( cvalue, c )
@@ -913,31 +968,79 @@ contains
       case ( f_Boolean )
         call get_string ( sub_rosa(subtree(2,son)), nameString, strip=.true. )
         nameString = lowerCase(nameString)
-      case ( f_formula )
+      case ( f_formula, f_manipulation )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         tvalue = myBooleanValue (formula)
       case ( f_label )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         literal = .true.
+      case ( f_evaluate )
+        ! call output( 'processing evaluate', advance='yes' )
+        evaluate = get_boolean ( fieldValue )
+        if ( verbose ) call outputNamedValue( 'evaluate', evaluate )
       case ( f_literal )
         ! call output( 'processing literal', advance='yes' )
         literal = get_boolean ( fieldValue )
         if ( verbose ) call outputNamedValue( 'literal', literal )
       case ( f_values )
-        call expr ( son , unitAsArray, valueAsArray )
-        tvalue = ( valueAsArray(1) /= 0 )
-        ! badRange = valueAsArray
+        value_field = son
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
-    if ( literal .and. .not. got(f_label) ) then
+    if ( verbose .and. len_trim(formula) > 0 ) &
+      & call outputNamedValue ( 'formula', trim(formula) )
+    if ( evaluate ) then
+      formula = EvaluateFormula( formula )
+      if ( verbose ) call outputNamedValue ( 'formula', trim(formula) )
+    endif
+    ! Should not have more than one of
+    ! [f_values, f_formula, f_manipulation, f_label]
+    if ( count(got( (/f_values, f_formula, f_manipulation, f_label/) ) ) /= 1 ) &
+      & call announceError ( son, 0, &
+      & ' Must supply exactly one of (values, formula, manipulation, label)' )
+    nvalues = 0
+    if ( got(f_values) ) then
+      nvalues = nsons(value_field)-1
+    endif
+    if ( nvalues == 1 ) then
+      ! We just treat this as a normal definition or reevaluation of
+      ! the named Boolean treated as a scalar
+      call get_string( sub_rosa(subtree(2, value_field)), booleanString, &
+        & strip=.true. )
+      call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+        & lowercase(trim(nameString)), booleanString, &
+        & countEmpty=countEmpty )
+    elseif ( nvalues > 1 ) then
+      ! Given an array of values we store them according to the scheme:
+      !        key             value
+      !      "name(1)"      "values(1)"
+      !      "name(2)"      "values(2)"
+      !           .   .   .   .   .
+      !  "name(nvalues)"   "values(nvalues)"
+      ! where "name" is the named Boolean
+      call writeIntsToChars( nvalues, BooleanString )
+      keyString = trim(nameString) // 'n'
+      call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+        & keyString, booleanString, &
+        & countEmpty=countEmpty )
+      ! see also how the Repeat command treats the values field
+      do j=2, nvalues+1
+        call writeIntsToChars( j-1, keyString )
+        keyString = trim(nameString) // '(' // trim(adjustl(keystring)) // ')'
+        call get_string( sub_rosa(subtree(j, value_field)), booleanString, strip=.true. )
+        if ( verboser ) then
+          call outputnamedValue( 'keyString', trim(keyString) )
+          call outputnamedValue( 'BooleanString', trim(BooleanString) )
+        endif
+        call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & keyString, booleanString, &
+          & countEmpty=countEmpty )
+      enddo
+    elseif ( got(f_manipulation) ) then
       ! print *, 'Oops-you dummy! code this missing piece'
       if ( .not. present(vectors) ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Cant set /literal from this section--only Fill or Retrieval' )
-      if ( .not. got ( f_formula) ) &
-        & call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Must supply formula if literal field is present' )
+        & 'Cant set manipulation from this section--only Fill or Retrieval' )
       if ( .not. got ( f_a ) ) then
         call setupNewquantitytemplate( tTemplate )
         aQuantity => aTarget
@@ -945,7 +1048,7 @@ contains
         call CreateVectorValue ( aQuantity, 'a' )
       endif
       call CloneVectorQuantity ( tQuantity, aQuantity )
-      if ( verbose ) then
+      if ( verboser ) then
         call output( trim(nameString) // ' = ', advance='no' )
         call output( trim(formula), advance='yes' )
       endif
@@ -958,14 +1061,14 @@ contains
         & destroyMask=.true., destroyTemplate=.false. )
     elseif ( literal ) then
       ! print *, 'Oops-you dummy! code this missing piece'
-      if ( verbose ) then
+      if ( verboser ) then
         call output( trim(nameString) // ' = ', advance='no' )
         call output( trim(formula), advance='yes' )
       endif
       call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
         & lowercase(trim(nameString)), lowercase(trim(formula)), countEmpty=countEmpty )
     else
-      if ( verbose ) then
+      if ( verboser ) then
         call output( trim(nameString) // ' = ', advance='no' )
         call output( tvalue, advance='yes' )
       endif
@@ -974,13 +1077,13 @@ contains
       & countEmpty=countEmpty )
     endif
     size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
-    if ( verboser ) &
+    if ( verbose ) &
       & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time Boolean flags' )
   end function BooleanFromFormula
 
   ! ------------------------- DumpCommand ------------------------
-  subroutine DumpCommand ( ROOT, QUANTITYTEMPLATESDB, &
+  subroutine DUMPCOMMAND ( ROOT, QUANTITYTEMPLATESDB, &
     & VECTORTEMPLATES, VECTORS, FORWARDMODELCONFIGS, HGRIDS, GRIDDEDDATABASE, &
     & FILEDATABASE, MATRIXDATABASE, HESSIANDATABASE )
 
@@ -1033,10 +1136,10 @@ contains
       & MLSMSG_CRASH, MLSMSG_ERROR
     use MLSSETS, only: FINDFIRST
     use MLSSIGNALS_M, only: DUMP, GETRADIOMETERINDEX, RADIOMETERS, SIGNALS
-    use MLSSTRINGS, only: INDEXES, LOWERCASE
+    use MLSSTRINGS, only: INDEXES, LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
     use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
-    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
     use PFADATABASE_M, only: DUMP, DUMP_PFADATABASE, DUMP_PFAFILEDATABASE, &
       & DUMP_PFASTRUCTURE, PFADATA
     use POINTINGGRID_M, only: DUMP_POINTING_GRID_DATABASE
@@ -1086,11 +1189,13 @@ contains
     real(rv) :: height  ! We will use this to dump just one surface
     integer :: hessianIndex
     integer :: hessianIndex2
+    character(len=80) :: KEYSTRING  ! E.g., 'BAND13_OK'
     character(len=80) :: Label  ! E.g., 'BAND8'
     type (Matrix_T), pointer :: matrix
     type (Matrix_T), pointer :: matrix2
     integer :: MatrixIndex
     integer :: MatrixIndex2
+    integer :: N
     character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
     type (MLSFile_T), pointer :: OneMLSFile
     character(len=80) :: OPTIONSSTRING  ! E.g., '-rbs' (see dump_0.f90)
@@ -1105,33 +1210,18 @@ contains
     integer :: Type     ! of the Details expr -- has to be num_value
     integer :: VectorIndex
     integer :: VectorIndex2
+    logical :: verbose
     integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
     double precision :: Values(2) ! of the Details expr
     integer :: What
 
-    ! Error codes
-    integer, parameter :: Dimless = 1
-    integer, parameter :: NoFile = dimless + 1
-    integer, parameter :: NoFileDatabase = noFile + 1
-    integer, parameter :: NoFWM = noFileDatabase + 1
-    integer, parameter :: noGriddedData = NoFWM + 1
-    integer, parameter :: NoHGrid = noGriddedData + 1
-    integer, parameter :: NoLines = noHGrid + 1
-    integer, parameter :: NoQT = noLines + 1
-    integer, parameter :: Noradiometers = noQT + 1
-    integer, parameter :: NoSignals = noradiometers + 1
-    integer, parameter :: NoTG = noSignals + 1
-    integer, parameter :: NoVectors = noTG + 1
-    integer, parameter :: NoVT = noVectors + 1
-    integer, parameter :: Numeric = noVT + 1
-    integer, parameter :: Stop = numeric + 1
-    integer, parameter :: Unknown = stop + 1 ! Unknown template
     ! Executable
     if ( toggle(gen) ) then
       call trace_begin ( 'DumpCommand', root )
     else
       call MLSMessageCalls( 'push', constantName=ModuleName )
     end if
+    verbose = ( switchDetail(switches, 'bool') > -1 )
     ! Were we called to do a diff or a dump?
     ! The following must be one of (/ s_dump, s_diff /)
     DiffOrDump = get_spec_id(root)
@@ -1371,10 +1461,31 @@ contains
       case ( f_Boolean )
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         booleanString = lowerCase(booleanString)
-        call output( trim(booleanString) // ' = ', advance='no' )
+        ! 1st--check whether we're dumping an array-valued run-time Boolean
         call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-          & booleanString, label, countEmpty )
-        call output( label, advance='yes' )
+          & trim(booleanString) // 'n', label, countEmpty )
+        if ( label == ',' ) then
+          call output( trim(booleanString) // ' = ', advance='no' )
+          call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+            & booleanString, label, countEmpty )
+          call output( label, advance='yes' )
+        else
+          ! OK, we're asked to dump an array-valued one
+          call readIntsFromChars ( label, n )
+          call output( 'array-valued run-time Boolean ' // trim(booleanString), &
+            & advance='yes' )
+          call output ( '  i          value', advance='yes' )
+          do i=1, n
+            call writeIntsToChars ( i, label )
+            call output ( i, advance='no' )
+            call blanks ( 4, advance='no' )
+            keyString = trim(booleanString) // '(' // trim(adjustl(label)) // ')'
+            call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+              & keyString, label, countEmpty )
+            call output ( trim(label), advance='yes' )
+            ! if ( verbose ) call outputnamedValue( 'keyString', trim(keyString) )
+          enddo
+        endif
       case ( f_clean )
         clean = get_boolean(son)
         if ( clean ) optionsString = trim(optionsString) // 'c'
@@ -1766,57 +1877,6 @@ contains
       call MLSMessageCalls( 'pop' )
     end if
 
-  contains
-
-    subroutine AnnounceError ( where, what, string )
-      use MORETREE, only: STARTERRORMESSAGE
-      use OUTPUT_M, only: NEWLINE
-
-      integer, intent(in) :: What, Where
-      character(len=*), intent(in), optional :: String
-
-      call StartErrorMessage ( where )
-
-      select case ( what )
-      case ( dimless )
-        call output ( "The field is not unitless." )
-      case ( noFile )
-        call output ( "File " // string // " not in database." )
-      case ( noFileDatabase )
-        call output ( "File database not provided." )
-      case ( noFWM )
-        call output ( "Can't dump Forward Model Configs here." )
-      case ( noGriddedData )
-        call output ( "Can't dump GriddedData here." )
-      case ( noHGrid )
-        call output ( "Can't dump HGrids here." )
-      case ( noLines )
-        call output ( "Can't dump Lines here." )
-      case ( noQT )
-        call output ( "Can't dump Quantity Templates here." )
-      case ( noradiometers )
-        call output ( "Can't dump Radiometers here." )
-      case ( noSignals )
-        call output ( "Can't dump Signals here." )
-      case ( noTG )
-        call output ( "Can't dump TGrids here." )
-      case ( noVectors )
-        call output ( "Can't dump Vectors here." )
-      case ( noVT )
-        call output ( "Can't dump Vector Templates here." )
-      case ( numeric )
-        call output ( "The field is not numeric." )
-      case ( stop )
-        call output ( "Program stopped by /stop field on DUMP statement." )
-      case ( unknown )
-        call output ( "Can't figure out what kind of template it is." )
-      case default
-        if ( present(string) ) call output ( string )
-        call output ( "No reserved error flag for this" )
-      end select
-      call newLine
-    end subroutine AnnounceError
-
   end subroutine DumpCommand
   
   subroutine  INITIALIZEREPEAT
@@ -1824,25 +1884,44 @@ contains
     use MLSSTRINGLISTS, only: PUTHASHELEMENT
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'count', '0', countEmpty=countEmpty )
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'countsn', '0', countEmpty=countEmpty )
   end subroutine  InitializeRepeat
 
   subroutine  NEXTREPEAT
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: GETHASHELEMENT, PUTHASHELEMENT
-    use MLSSTRINGS, only: READNUMSFROMCHARS, WRITEINTSTOCHARS
+    use MLSSTRINGS, only: READINTSFROMCHARS, WRITEINTSTOCHARS
+    ! use OUTPUT_M, only: OUTPUTNAMEDVALUE
     ! Internal variables
     character(len=64) :: cvalue
-    real :: c
+    integer :: c
+    character(len=16) :: keyString
+    character(len=64) :: nvalue
+    ! Executable
     call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'count', cvalue, countEmpty=countEmpty )
-    call readNumsFromChars ( cvalue, c )
-    call writeIntsToChars ( int(c+1.), cvalue )
+    call readIntsFromChars ( cvalue, c )
+    call writeIntsToChars ( c+1, cvalue )
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'count', cvalue, countEmpty=countEmpty )
+    keyString = 'counts(' // trim(adjustl(cvalue)) // ')'
+    call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'countsn', nvalue, countEmpty=countEmpty )
+    ! Are we Repeating for a sequence of values?
+    call readIntsFromChars ( nvalue, c )
+    ! call outputNamedValue( 'nvalue', nvalue )
+    if ( c < 1 ) return
+    ! If so, store the current value at the key 'counts(n)'
+    ! call outputNamedValue( 'keyString', keyString )
+    call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & keyString, cvalue, countEmpty=countEmpty )
+    call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'counts(n)', cvalue, countEmpty=countEmpty )
 
   end subroutine  NextRepeat
 
-  subroutine  MLSCase ( ROOT )
+  subroutine  MLSCASE ( ROOT )
   ! Returns TRUE if the label or Boolean field of the last Select command
   ! matches the label or Boolean field of the current Case command
   ! or if the current Case command is given the special label 'default',
@@ -1865,7 +1944,7 @@ contains
     integer :: GSON, J
     integer :: FieldIndex
     character(len=80) :: Label  ! E.g., 'BAND8'
-    character(len=8)  :: optionsString
+    character(len=16) :: optionsString
     integer :: Son
     logical :: verbose, verboser
     ! Executable
@@ -1920,7 +1999,7 @@ contains
     end if
   end subroutine  MLSCase
   
-  subroutine  MLSSelect ( ROOT )
+  subroutine  MLSSELECT ( ROOT )
   ! Fills the global variable selectLabel with
   ! the Label field or value of the Boolean field
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL
@@ -1982,7 +2061,7 @@ contains
     end if
   end subroutine MLSSelect
   
-  subroutine  MLSEndSelect ( ROOT )
+  subroutine  MLSENDSELECT ( ROOT )
   ! Resets the global variable MLSSelecting
   ! Optionally puts note about end of selecting in log file
     use INIT_TABLES_MODULE, only: F_LABEL
@@ -2031,17 +2110,29 @@ contains
     end if
   end subroutine MLSEndSelect
   
-  logical function Skip ( ROOT )
-    ! Returns value of Boolean field (if present);
-    ! If TRUE should skip rest of section in which SKIP command appears
-    ! If Boolean field absent, returns TRUE 
-    ! (otherwise it would do nothing--
-    ! this way it forces us to skip unconditionally)
-    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA
+  ! ----------- callable as either Skip or Repeat command ---------
+  ! Returns value of Boolean field (if present);
+  ! If TRUE should skip rest of section in which SKIP command appears
+  ! If Boolean field absent, returns TRUE 
+  ! (otherwise it would do nothing--
+  ! this way it forces us to skip unconditionally)
+  ! If called as Repeat, returns same result as Skip
+  ! Exception: values field, if present, will be
+  ! stored as additional runtimes Booleans; e.g.
+  ! .., values=["str1", "str2", .., "strn"] adds to r/t Booleans the following
+  !    key        value
+  ! counts(1)      str1
+  ! counts(2)      str2
+  !   .    .    .
+  ! counts(n)      strn
+  ! countsn        n
+  logical function SKIP ( ROOT, NAME )
+    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
-    use MLSSTRINGLISTS, only: BOOLEANVALUE, SWITCHDETAIL
-    use MLSSTRINGS, only: LOWERCASE
+    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETHASHELEMENT, PUTHASHELEMENT, &
+      & SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
     use MORETREE, only: GET_FIELD_ID
     use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
@@ -2049,22 +2140,33 @@ contains
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: NSONS, SUB_ROSA, SUBTREE
     ! Args
-    integer, intent(in) :: Root ! Root of the parse tree for the dump command
+    integer, intent(in)                    :: ROOT ! Root of the parse tree
+    character(len=*), intent(in), optional :: NAME
     ! Internal variables
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
+    character(len=64) :: cvalue
+    integer :: c
     integer :: GSON, J
     integer :: FieldIndex
+    character(len=80) :: KEYSTRING
+    character(len=16) :: MYNAME
+    integer :: NVALUES
     integer :: Son
+    integer :: VALUE_FIELD
     logical :: verbose, verboser
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
     verboser = ( switchDetail(switches, 'bool') > 0 )
+    myName = 'Skip'
+    if ( present(name) ) myName = name
     if ( toggle(gen) ) then
-      call trace_begin ( 'Skip', root )
+      call trace_begin ( myName, root )
     else
-      call MLSMessageCalls( 'push', constantName='Skip' )
+      call MLSMessageCalls( 'push', constantName=myName )
     end if
+    booleanString = ' '
     skip = .true. ! Defaults to skipping rest of section
+    value_field = 0
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
       fieldIndex = get_field_id(son)
@@ -2078,26 +2180,109 @@ contains
           & runTimeValues%lkeys, runTimeValues%lvalues)
       case ( f_formula )
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
-        if ( verbose ) call outputNamedValue( 'formula', trim(booleanString) )
+        if ( verboser ) call outputNamedValue( 'formula', trim(booleanString) )
         skip = myBooleanValue ( booleanString )
+      case ( f_values )
+        value_field = son
       case default
         ! Should not have got here if parser worked correctly
       end select
-      if ( verbose ) then
+      if ( verboser .and. len_trim(booleanString) > 0 ) then
         call output( trim(booleanString) // ' = ', advance='no' )
         call output( skip, advance='yes' )
       endif
       if ( skip ) &
         & call output( '(Skipping rest of this section)', advance='yes' )
     enddo
+    ! The following should only occur if we were called as Repeat
+    ! with a values=[...] field
+    if ( value_field > 0 ) then
+      nvalues = nsons(value_field)-1
+      ! Now, have we run out of values to Repeat over?
+      call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+        & 'count', cvalue, countEmpty=countEmpty )
+      call readIntsFromChars ( cvalue, c )
+      if ( c > nvalues ) then
+        Skip = .false.
+      elseif ( c < 1 ) then
+        ! The first time through, so try to grok values field
+        ! and then store the number of values as 'countsn' and the individual
+        ! values as 'counts(1)' 'counts(2)' ..
+        call writeIntsToChars( nvalues, booleanString )
+        call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & 'countsn', booleanString, &
+          & countEmpty=countEmpty )
+        do j=2, nvalues+1
+          call writeIntsToChars( j-1, keyString )
+          keyString = 'counts(' // trim(adjustl(keystring)) // ')'
+          call get_string( sub_rosa(subtree(j, value_field)), booleanString, strip=.true. )
+          if ( verboser ) then
+            call outputnamedValue( 'keyString', trim(keyString) )
+            call outputnamedValue( 'BooleanString', trim(BooleanString) )
+          endif
+          call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+            & keyString, booleanString, &
+            & countEmpty=countEmpty )
+        enddo
+      endif
+    endif
     if ( toggle(gen) ) then
-      call trace_end ( 'Skip' )
+      call trace_end ( myName )
     else
       call MLSMessageCalls( 'pop' )
     end if
   end function Skip
 
 ! =====     Private Procedures     =====================================
+
+  subroutine ANNOUNCEERROR ( where, what, string )
+    use MORETREE, only: STARTERRORMESSAGE
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+
+    integer, intent(in) :: What, Where
+    character(len=*), intent(in), optional :: String
+
+    call StartErrorMessage ( where )
+
+    select case ( what )
+    case ( dimless )
+      call output ( "The field is not unitless." )
+    case ( noFile )
+      call output ( "File " // string // " not in database." )
+    case ( noFileDatabase )
+      call output ( "File database not provided." )
+    case ( noFWM )
+      call output ( "Can't dump Forward Model Configs here." )
+    case ( noGriddedData )
+      call output ( "Can't dump GriddedData here." )
+    case ( noHGrid )
+      call output ( "Can't dump HGrids here." )
+    case ( noLines )
+      call output ( "Can't dump Lines here." )
+    case ( noQT )
+      call output ( "Can't dump Quantity Templates here." )
+    case ( noradiometers )
+      call output ( "Can't dump Radiometers here." )
+    case ( noSignals )
+      call output ( "Can't dump Signals here." )
+    case ( noTG )
+      call output ( "Can't dump TGrids here." )
+    case ( noVectors )
+      call output ( "Can't dump Vectors here." )
+    case ( noVT )
+      call output ( "Can't dump Vector Templates here." )
+    case ( numeric )
+      call output ( "The field is not numeric." )
+    case ( stop )
+      call output ( "Program stopped by /stop field on DUMP statement." )
+    case ( unknown )
+      call output ( "Can't figure out what kind of template it is." )
+    case default
+      if ( present(string) ) call output ( string )
+      call output ( "No reserved error flag for this" )
+    end select
+    call newLine
+  end subroutine AnnounceError
 
   function myBooleanValue ( FORMULA ) result ( BVALUE )
     use MLSL2OPTIONS, only: RUNTIMEVALUES
@@ -2122,7 +2307,7 @@ contains
     real :: x
     real :: y
     ! Executable
-    verbose = ( switchDetail(switches, 'bool') > -1 )
+    verbose = ( switchDetail(switches, 'bool') > 0 )
     bvalue = .false.
     reverse = .false.
     if ( index(formula, "==") > 1 ) then
@@ -2193,9 +2378,41 @@ contains
     if ( reverse ) bvalue = .not. bvalue  ! If we meant not equal
   end function myBooleanValue
 
-  ! This evaluates a character-valued arg, being alert for special values
+  function EvaluateFormula ( FORMULA ) result( ITSVALUE )
+    ! Evaluate all the terms in a formula
+    use MLSSTRINGLISTS, only: ARRAY2LIST, LIST2ARRAY, NUMSTRINGELEMENTS
+    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    ! Args
+    character(len=*), intent(in) :: formula
+    character(len=MAXRESULTLEN)  :: itsValue
+    ! Internal variables
+    character(len=MAXRESULTLEN), dimension(24) :: array, array2
+    integer :: n
+    ! Executable
+    n = NumStringElements( formula, countEmpty, inseparator=' ' )
+    ! call outputNamedValue ( 'n', n )
+    call List2Array( formula, array, countEmpty, inseparator=' ', &
+      & ignoreLeadingSpaces=.true. )
+    array2 = Evaluator( array )
+    call Array2List( array2(1:n), itsValue, inseparator=' ' )
+  end function EvaluateFormula
+
+  ! This family of functions evaluates a character-valued arg, 
+  ! being alert for special values
   ! that name global variables, e.g. 'phasename'
-  function Evaluator ( ARG ) result( ITSVALUE )
+  function Evaluator_array ( ARRAY ) result( VALUES )
+    ! Args
+    character(len=*), dimension(:), intent(in)           :: array
+    character(len=MAXRESULTLEN), dimension(size(array))  :: values
+    ! Internal variables
+    integer :: i
+    ! Executable
+    do i=1, size(array)
+      values(i) = Evaluator_sca( array(i) )
+    enddo
+  end function Evaluator_array
+
+  function Evaluator_sca ( ARG ) result( ITSVALUE )
     use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, NEED_L1BFILES, & ! , SIPS_VERSION
       & RUNTIMEVALUES, SKIPRETRIEVAL
     use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
@@ -2232,7 +2449,7 @@ contains
         & arg, itsValue, countEmpty=countEmpty )
       if ( itsvalue == ',' ) itsValue = arg
     end select
-  end function Evaluator
+  end function Evaluator_sca
   
   function BooleanToString ( BOOL ) result ( STR )
     ! Convert a Boolean argument to a character-valued string
@@ -2245,7 +2462,7 @@ contains
   end function BooleanToString
 
   ! ---------------------------------------------  returnFullFileName  -----
-  subroutine returnFullFileName ( SHORTNAME, FULLNAME, &
+  subroutine RETURNFULLFILENAME ( SHORTNAME, FULLNAME, &
     & PCF_START, PCF_END )
     use MLSFILES, only: GETPCFROMREF
     use MLSL2OPTIONS, only: TOOLKIT
@@ -2288,6 +2505,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.85  2013/05/07 22:01:30  pwagner
+! run-time Booleans can store arrays of values, formulas can evaluate named terms
+!
 ! Revision 2.84  2013/04/24 00:36:02  pwagner
 ! Added inputBoolean and made Reevaluate formulas more powerful
 !
