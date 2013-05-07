@@ -275,6 +275,7 @@ contains ! ======================= Public Procedures =========================
       call dump(l2gp, Details=-1)
     endif
     if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
+    call sleep (1)
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, createSwath=createSwath )
@@ -1227,6 +1228,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.54  2013/05/07 22:23:30  pwagner
+! A workaround to prevent unexpected Missing/Fill values
+!
 ! Revision 2.53  2012/05/10 00:48:19  pwagner
 ! A little less clumsy at creating files, swaths
 !
