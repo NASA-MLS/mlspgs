@@ -74,6 +74,8 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     character(len=1024) :: fileNameBase ! E.g., 'H2O'
     character(len=1024) :: fileName ! E.g., '/data/../MLS..H2O...he5'
   end type DirectData_T
+  integer, parameter :: S2US  = 1000000 ! How many microseconds in a s
+  integer, parameter :: DELAY = 1*S2US  ! How long to sleep in microseconds
   logical, parameter :: DEEBUG = .false.
   logical, parameter :: MAYWRITEPOSTOVERLAPS = .true.
   ! For Announce_Error
@@ -275,7 +277,7 @@ contains ! ======================= Public Procedures =========================
       call dump(l2gp, Details=-1)
     endif
     if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
-    call sleep (1)
+    call usleep ( delay )
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, createSwath=createSwath )
@@ -1228,6 +1230,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.55  2013/05/08 20:17:35  pwagner
+! Changed sleep to usleep to link with NAG
+!
 ! Revision 2.54  2013/05/07 22:23:30  pwagner
 ! A workaround to prevent unexpected Missing/Fill values
 !
