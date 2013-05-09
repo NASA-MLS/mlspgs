@@ -217,7 +217,7 @@ contains
 
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_indices
-    use Output_m, only: Output
+    use Output_m, only: NewLine, Output
     use String_Table, only: Display_String
 
     type(slabs_struct), intent(in) :: The_Slabs_Struct
@@ -237,7 +237,9 @@ contains
         call display_string ( the_slabs_struct%catalog%species_name )
       end if
       call output ( 'Molecule ' )
-      call display_string ( lit_indices(the_slabs_struct%catalog%molecule), advance='yes' )
+      call display_string ( lit_indices(the_slabs_struct%catalog%molecule) )
+      if ( the_slabs_struct%useYi ) call output ( ', use Yi' )
+      call newLine
       call dump ( the_slabs_struct%s(:nl)%v0s, name='v0s' )
       call dump ( the_slabs_struct%s(:nl)%x1, name='x1' )
       call dump ( the_slabs_struct%s(:nl)%y, name='y' )
@@ -2753,6 +2755,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.62  2011/11/11 00:42:06  vsnyder
+! Use IsExtinction array from Molecules module
+!
 ! Revision 2.61  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
