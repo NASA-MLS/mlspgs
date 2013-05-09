@@ -388,6 +388,7 @@ ulimit -s unlimited
 
 echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
 $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
+echo "Returned from $PGE_BINARY with status $?" 2>&1 | tee -a "$LOGFILE"
 
 }
       
@@ -408,6 +409,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.24  2013/02/14 19:06:36  pwagner
+# Defaults to adding instead of skipping unknown args
+#
 # Revision 1.23  2012/08/10 20:08:41  pwagner
 # Some changes to accommodate goldbrick
 #
