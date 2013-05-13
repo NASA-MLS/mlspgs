@@ -968,6 +968,7 @@ contains
     real(rp) :: Del_basis
     integer :: I, J, N_Coeffs, MyRow1, MyRowN
 
+    if ( size(grid) == 0 ) return
     myRow1 = min(row1,ubound(grid,1))
     myRowN = min(rowN,ubound(grid,1))
     if ( grid(myRow1) > grid(myRowN) ) then ! grid is in opposite order.
@@ -1434,6 +1435,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.25  2013/02/28 21:06:42  vsnyder
+! Try not to access array out of bounds
+!
 ! Revision 2.24  2011/06/23 01:13:31  vsnyder
 ! Add Get_Eta_1D_Hunt
 !
