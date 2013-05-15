@@ -44,7 +44,9 @@ contains
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
 
     integer :: B         ! Index for beta groups 
-    integer, save :: DumpFWM = -1
+    integer, save :: DumpFWM = -2          ! -2 = not called yet, -1 = no dumps,
+                                           ! low-order digit: catalog dump level
+                                           ! high-order digit: 1 => stop
     type (VectorValue_T), pointer :: F  ! An arbitrary species
     integer :: L         ! Index in spectral parameter data structure
     integer :: M         ! Index for molecules in beta groups, or size thereof
@@ -52,10 +54,7 @@ contains
     integer :: S         ! Sideband index, 1 = LSB, 2 = USB
     integer :: S1, S2    ! Bounds for sideband index S
 
-    if ( dumpFWM < 0 ) then ! done only once
-      if ( switchDetail(switches,'fwmg') > -1 ) dumpFWM = 1 ! Dump but don't stop
-      if ( switchDetail(switches,'fwmG') > -1 ) dumpFWM = 2 ! Dump and stop
-    end if
+    if ( dumpFWM < -1 ) dumpFwm = switchDetail(switches,'fwmd')
 
     s1 = (fwdModelConf%sidebandStart+3)/2; s2 = (fwdModelConf%sidebandStop+3)/2
 
@@ -133,10 +132,10 @@ contains
       end do
     end if
 
-    if ( dumpFWM > 0 ) then
+    if ( dumpFWM > -1 ) then
       call dump ( fwdModelConf, moduleName(11:len_trim(moduleName)-8) )
-      call dump ( fwdModelConf%catalog )
-      if ( dumpFWM > 1 ) stop
+      call dump ( fwdModelConf%catalog, details=mod(dumpFwm,10) )
+      if ( dumpFWM > 9 ) stop
     end if
 
   contains
@@ -167,6 +166,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.35  2012/05/08 01:34:54  vsnyder
+! Get default isotope ratio from catalog, not from 1.0
+!
 ! Revision 2.34  2011/05/09 17:48:06  pwagner
 ! Converted to using switchDetail
 !

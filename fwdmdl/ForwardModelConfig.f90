@@ -267,16 +267,14 @@ contains
     use TOGGLES, only: SWITCHES
 
     type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
-    integer :: DumpFwm = -1                ! -1 = not called yet, 0 = no dumps,
-                                           ! 1 = dump, 2 = dump and stop
+    integer :: DumpFwm = -2                ! -2 = not called yet, -1 = no dumps,
+                                           ! low-order digit: catalog dump level
+                                           ! high-order digit: 1 => stop
     logical :: Error
     integer :: S1, S2                      ! SidebandStart, SidebandStop
 
-    if ( dumpFwm < 0 ) then ! done only once
-      dumpFwm = 0
-      if ( switchDetail(switches,'fwmd') > -1 )  dumpFwm = 1
-      if ( switchDetail(switches,'fwmD') > -1 )  dumpFwm = 2
-    end if
+    if ( dumpFwm < -1 ) dumpFwm = switchDetail(switches,'fwmd')
+
     error = .false.
 
     s1 = fwdModelConf%sidebandStart
@@ -304,10 +302,10 @@ contains
       error = .true.
     end if
 
-    if ( dumpFwm > 0 .or. error ) then
+    if ( dumpFwm > -1 .or. error ) then
       call dump ( fwdModelConf, 'DeriveFromForwardModelConfig' )
-      call dump ( fwdModelConf%catalog )
-      if ( dumpFwm > 1 .and. .not. error ) stop ! error message will stop later
+      call dump ( fwdModelConf%catalog, details=mod(dumpFwm,10) )
+      if ( dumpFwm > 9 .and. .not. error ) stop ! error message will stop later
     end if
 
     if ( error ) &
@@ -664,7 +662,7 @@ contains
 
       if ( sawNoLines .and. noLinesMsg > 0 ) &
         & call MLSMessage ( MLSMSG_Warning, moduleName, &
-        & 'At least one specie has no lines or continuum' )
+        & 'At least one species has no lines or continuum' )
 
     end subroutine SpectroscopyCatalogExtract
 
@@ -1464,6 +1462,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.120  2013/03/30 00:11:39  vsnyder
+! Add Quantity database to dump, dump more stuff in config, add wasSpecific
+! to QtyStuff_t.
+!
 ! Revision 2.119  2013/03/20 22:46:42  vsnyder
 ! Give default value to QtyStuff_t%foundInFirst
 !
