@@ -30,6 +30,7 @@ Switches (set by -S option in mlsl2's command line):
   direct => Show automatic assignments to split directwrite files
   dmiss  => Don't quit, just warn if derivative requested for qty missing from state
   dozm =>   Do minimum zeta only if requested
+  dres =>   Dump forward model - measurement residual with dres detail level
   drmc =>   Dump Retriever Matrices Clean
   dvec =>   Dump 'DX' vector during Newton iteration
   dwreq[n] => Dump directwrite requests processed by master
@@ -50,10 +51,11 @@ Switches (set by -S option in mlsl2's command line):
   fmt1 =>   mean & standard deviation for timing FullForwardModel at last chunk
   fnorm =>  Dump the individual contributions to fnorm
   fvec =>   'F' vector during Newton iteration
-  fwmd =>   Dump Forward model config whenever 'derived' part is computed
-  fwmD =>   Dump Forward model config when first 'derived' part is computed, then stop
-  fwmg =>   Dump Forward model config after Get_Species_Data finishes
-  fwmG =>   Dump Forward model config after Get_Species_Data finishes, then stop
+  fwmd[n] => Dump Forward model config whenever 'derived' part is computed
+            low-order digit of n is spectroscopy catalog dump level
+            stop if n > 9
+  fwmg[n] => Dump Forward model config after Get_Species_Data finishes
+            n is used as for fwmd
   geom =>   Show geometry of chunks/hGrids
   glo[n] => Global settings, info on l1b files 
   glob =>   Show when Bright Object in FOV affects radiance precision
@@ -61,12 +63,12 @@ Switches (set by -S option in mlsl2's command line):
   grids =>  Dump Forward Model grids
   gvec =>   Dump gradient vector during Newton iteration
   help =>   Display this screen (or "?")
-  hess =>   Intermediate steps while computing hessians
+  hess =>   Intermediate steps while computing Hessians
   hgrid =>  Information on HGrid construction (at least for regular)
   hphi =>   Trace H/Phi iteration in metrics
   hphI =>   hphi, and stop if 1d approximation is used
-  jac =>    L_infty norms of blocks Jacobian during Newton iterations
-  JAC =>    Jacobian during Newton iterations
+  jac =>    L_infty norms of Jacobian blocks during Newton iterations
+  JAC[n] => Jacobian during Newton iterations with detail level n
   join =>   Intermediate steps while joining l2aux quantities
   l1b =>    l1b quantities dumped (only when filled from)
   l2aux =>  l2aux quantities (all) dumped
@@ -105,8 +107,7 @@ Switches (set by -S option in mlsl2's command line):
   point =>  Pointing grids
   pro[n] => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
               and each file l2gp, l1brad, ncep, dao input; dump filedatabase
-  psct =>   Print TScat with more detail (should use switchDetail for this)
-  Psct =>   Print TScat with most detail (should use switchDetail for this)
+  psct[n] => Print TScat table generation
   ptb =>    Show perturbed quantities if used in Sids for Jacobean, Hessian
   ptg =>    Dump full forward model pointing angles
   qtmp =>   Quantity templates being constructed, destroyed
@@ -190,6 +191,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.80  2013/03/01 01:20:45  pwagner
+ 'fiw' switch dumps instance window
+
  Revision 1.79  2013/02/04 22:05:53  pwagner
  Added dmiss switch to downgrade severity when qty missing from state
 
