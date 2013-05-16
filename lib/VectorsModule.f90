@@ -200,6 +200,11 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     module procedure DumpQuantityMask, DumpVectorMask
   end interface
 
+  interface GETVECTORQUANTITYINDEXBYNAME
+    module procedure GETVECTORQUANTITYINDEXBYNAME_CHAR
+    module procedure GETVECTORQUANTITYINDEXBYNAME_SBR
+  end interface
+
   interface L2Norm
     module procedure L2NormQ, L2NormV
   end interface
@@ -2279,17 +2284,20 @@ contains ! =====     Public Procedures     =============================
   end function GetVectorQtyByTemplateIndex
 
   ! -------------------------------  GetVectorQuantityIndexByName  -----
-  integer function GetVectorQuantityIndexByName ( vector, quantityName, NoErr )
+  ! This family of subroutines returns a quantity's index within a vector
+  ! by its quantity name
+  function GetVectorQuantityIndexByName_sbr ( VECTOR, QUANTITYNAME, &
+    & NOERR ) result( index )
 
   ! Given a quantity name's sub-rosa index, this function returns the index
-  ! of the quantity within the vector that has that name.
+  ! of the quantity within the vector matching that name.
 
     ! Dummy arguments
-    type (Vector_T), intent(in) :: Vector
-    integer, intent(in) :: QuantityName    ! Quantity name sub-rosa index.
-    logical, intent(in), optional :: NoErr ! No error if present and true.
-                                           ! Return -1 if no such quantity.
-
+    type (Vector_T), intent(in)   :: VECTOR
+    integer, intent(in)           :: QUANTITYNAME ! Quantity name sub-rosa index.
+    logical, intent(in), optional :: NOERR        ! No error if present and true.
+                                                  ! Return -1 if no such quantity.
+    integer                       :: INDEX
     ! Local variables
     character(len=127) :: MSG
     integer :: Search
@@ -2297,12 +2305,12 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     do search = 1, size(vector%quantities)
       if ( quantityName == vector%quantities(search)%template%name ) then
-        GetVectorQuantityIndexByName = search
-    return
+        index = search
+        return
       end if
     end do
     if ( present(noErr) ) then
-      GetVectorQuantityIndexByName = -1
+      index = -1
       if ( noErr ) return
     end if
     call get_string ( quantityName, msg )
@@ -2310,7 +2318,45 @@ contains ! =====     Public Procedures     =============================
     call get_string ( vector%name, msg(len_trim(msg)+2:) )
     call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
 
-  end function GetVectorQuantityIndexByName
+  end function GetVectorQuantityIndexByName_sbr
+
+  function GetVectorQuantityIndexByName_char ( VECTOR, QUANTITYNAME, &
+    & NOERR ) result( index )
+    use MLSSTRINGS, only: LOWERCASE
+
+  ! Given a quantity name, this function returns the index
+  ! of the quantity within the vector matching that name.
+
+    ! Dummy arguments
+    type (Vector_T), intent(in)   :: VECTOR
+    character(len=*), intent(in)  :: QUANTITYNAME ! Quantity name 
+    logical, intent(in), optional :: NOERR        ! No error if present and true.
+                                                  ! Return -1 if no such quantity.
+    integer                       :: INDEX
+
+    ! Local variables
+    character(len=127) :: MSG
+    integer :: Search
+
+    ! Executable code
+    ! call output( trim(quantityName), advance='yes' )
+    do search = 1, size(vector%quantities)
+      call get_string ( vector%quantities(search)%template%name, msg, strip=.true. )
+      ! call output( trim(msg), advance='yes' )
+      if ( lowercase(quantityName) == lowercase(msg) ) then
+        index = search
+        return
+      end if
+    end do
+    if ( present(noErr) ) then
+      index = -1
+      if ( noErr ) return
+    end if
+    msg = trim(quantityName) // ' is not a quantity in vector'
+    call get_string ( vector%name, msg(len_trim(msg)+2:) )
+    call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
+
+  end function GetVectorQuantityIndexByName_char
 
   ! -------------------------------  GetVectorQuantityIndexByType  -----
   integer function GetVectorQuantityIndexByType ( vector, quantityType, &
@@ -3145,6 +3191,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.175  2013/03/15 00:01:31  pwagner
+! Added function AreEqual for vectors
+!
 ! Revision 2.174  2013/02/21 21:21:42  pwagner
 ! Added options arg when dumping quantity or vector masks
 !
