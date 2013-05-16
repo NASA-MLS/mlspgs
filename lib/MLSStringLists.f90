@@ -15,7 +15,7 @@ module MLSStringLists               ! Module to treat string lists
 
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
-  use MLSCOMMON, only: BAREFNlen
+  use MLSCOMMON, only: BAREFNLEN
   use MLSSETS, only: FINDFIRST
   use MLSSTRINGS, only: CAPITALIZE, LOWERCASE, NCOPIES, &
     & READINTSFROMCHARS, REPLACE, REVERSE, &
@@ -101,7 +101,7 @@ module MLSStringLists               ! Module to treat string lists
 ! ExpandStringRange (char* str, char* outst)
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* how], [log no_trim])
-! char* EvaluateFormula (char* formula, char* values(:))
+! char* EvaluateFormula (char* formula, char* values(:), [char* values(:)])
 ! GetStringElement (strlist inList, char* outElement,
 !   nElement, log countEmpty, [char inseparator])
 ! GetHashElement (hash {keys = values}, char* key, 
@@ -248,17 +248,17 @@ module MLSStringLists               ! Module to treat string lists
 !     first w/o the extra arg, and the second time with the extra arg
 ! === (end of api) ===
 
-  public :: Array2List, BooleanValue, BuildHash, catLists, &
-   & EvaluateFormula, ExpandStringRange, ExtractSubString, &
-   & GetHashElement, GetStringElement, &
-   & GetUniqueInts, GetUniqueStrings, GetUniqueList, Intersection, IsInList, &
-   & List2Array, LoopOverFormula, listMatches, NumStringElements, &
-   & optionDetail, ParseOptions, PutHashElement, ReadIntsFromList, &
-   & RemoveElemFromList, RemoveListFromList, RemoveNumFromList, &
-   & RemoveSwitchFromList, ReplaceSubString, ReverseList, ReverseStrings, &
-   & SnipList, SortArray, SortList, StringElement, StringElementNum, &
-   & SwitchDetail, &
-   & unquote, wrap
+  public :: ARRAY2LIST, BOOLEANVALUE, BUILDHASH, CATLISTS, &
+   & EVALUATEFORMULA, EXPANDSTRINGRANGE, EXTRACTSUBSTRING, &
+   & GETHASHELEMENT, GETSTRINGELEMENT, &
+   & GETUNIQUEINTS, GETUNIQUESTRINGS, GETUNIQUELIST, INTERSECTION, ISINLIST, &
+   & LIST2ARRAY, LOOPOVERFORMULA, LISTMATCHES, NUMSTRINGELEMENTS, &
+   & OPTIONDETAIL, PARSEOPTIONS, PUTHASHELEMENT, READINTSFROMLIST, &
+   & REMOVEELEMFROMLIST, REMOVELISTFROMLIST, REMOVENUMFROMLIST, &
+   & REMOVESWITCHFROMLIST, REPLACESUBSTRING, REVERSELIST, REVERSESTRINGS, &
+   & SNIPLIST, SORTARRAY, SORTLIST, STRINGELEMENT, STRINGELEMENTNUM, &
+   & SWITCHDETAIL, &
+   & UNQUOTE, WRAP
 
   interface BooleanValue
     module procedure BooleanValue_log, BooleanValue_str
@@ -401,7 +401,7 @@ contains
   ! in a natural way
   ! '[tT]*'       -> .true.
   ! anything else -> .false.
-  function BooleanValue_log (str, lkeys, lvalues) result(BooleanValue)
+  function BooleanValue_log ( str, lkeys, lvalues, separator ) result(BooleanValue)
 
     ! Method:
     ! Progressively collapse all the '(..)' pairs into their values
@@ -411,10 +411,11 @@ contains
     ! Limitations:
     ! does not check for unmatched parens or other illegal syntax
     !--------Argument--------!
-    character (len=*), intent(in)     :: str
-    character (len=*), intent(in)     :: lkeys
-    logical, dimension(:), intent(in) :: lvalues
-    logical                           :: BooleanValue
+    character (len=*), intent(in)           :: str
+    character (len=*), intent(in)           :: lkeys
+    logical, dimension(:), intent(in)       :: lvalues
+    logical                                 :: BooleanValue
+    character (len=1), optional, intent(in) :: separator
     ! Internal variables
     logical, parameter          :: deeBug = .false.
     integer :: level
@@ -518,7 +519,7 @@ contains
           hit = .false.
         case default
           call GetHashElement( lkeys, lvalues, trim(variable), part, &
-            & countEmpty=.true. )
+            & countEmpty=.true., inseparator=separator )
           hit = .true.
         end select
         if ( hit ) then
@@ -553,12 +554,13 @@ contains
     end function evaluatePrimitive
   end function BooleanValue_log
 
-  function BooleanValue_str (str, lkeys, strvalues) result(BooleanValue)
+  function BooleanValue_str ( str, lkeys, strvalues, separator ) result(BooleanValue)
     !--------Argument--------!
-    character (len=*), intent(in)     :: str
-    character (len=*), intent(in)     :: lkeys
-    character (len=*), intent(in)     :: strvalues
-    logical                           :: BooleanValue
+    character (len=*), intent(in)           :: str
+    character (len=*), intent(in)           :: lkeys
+    character (len=*), intent(in)           :: strvalues
+    logical                                 :: BooleanValue
+    character (len=1), optional, intent(in) :: separator
     ! Internal variables
     logical, parameter                :: countEmpty = .true.
     logical, dimension(:), pointer    :: lvalues
@@ -568,7 +570,7 @@ contains
     ! Executable
     BooleanValue = .false.
     if ( len_trim(str) < 1 ) return
-    nkeys = NumStringElements( lkeys, countEmpty )
+    nkeys = NumStringElements( lkeys, countEmpty, inseparator=separator )
     if ( nkeys < 1 ) return
     nullify( lvalues )
     allocate( lvalues(nkeys), stat=status )
@@ -578,7 +580,7 @@ contains
       lvalues(key) = index( &
         & adjustl(lowercase(StringElement ( strvalues, key, countEmpty ))), 't') == 1
     enddo
-    BooleanValue = BooleanValue_log ( str, lkeys, lvalues )
+    BooleanValue = BooleanValue_log ( str, lkeys, lvalues, separator )
     deallocate ( lvalues, stat=status )
     if ( status /= 0 ) call MLSMessage( MLSMSG_Error, ModuleName, &
       & 'Unable to deallocate lvalues in BooleanValue_str' )
@@ -720,23 +722,27 @@ contains
   end function catLists_str
 
   ! -------------------------------------------------  EvaluateFormula  -----
-  function EvaluateFormula ( formula, values ) result (OUTSTR)
-    ! Evaluates a string function, plugging in the nth value for
+  function EvaluateFormula ( FORMULA, VALUES, KEYS ) result (OUTSTR)
+    ! Evaluates a string formula, plugging in the nth value for
     ! each occurrence of the nth arg appearing as '${n}'
     ! E.g., if strFun is 
     ! "x${1}: vector, template=state"
     ! and the first arg is "InitPtan" then outStr will be
     ! "xInitPtan: vector, template=state"
+    ! 
+    ! If keys is present, then instead of '${n}' substitute for
+    ! each occurrence of the nth arg appearing as '${key(n)}'
     !--------Argument--------!
-    character (len=*), intent(in)               :: formula
-    character (len=*), dimension(:), intent(in) :: values
+    character (len=*), intent(in)                         :: FORMULA
+    character (len=*), dimension(:), intent(in)           :: VALUES
+    character (len=*), dimension(:), optional, intent(in) :: KEYS
     character (len=len(formula)+size(values)*len(values)) :: OUTSTR
 
     !----------Local vars----------!
     integer :: i, n
     character (len=len(formula)+size(values)*len(values)) :: tmpstr
     character (len=len(values))                           :: value       
-    character(len=8)                                      :: variable    
+    character(len=128)                                    :: variable    
     !----------executable part----------!
     n = size(values)
     outstr = formula
@@ -744,8 +750,12 @@ contains
     if ( n < 1 .or. index( formula, '${' ) < 1 ) return
     do i=1, n
       value = values(i)
-      call WriteIntsToChars( i, variable )
-      variable = '${' // trim(adjustl(variable)) // '}'
+      if ( present(keys) ) then
+        variable = '${' // trim(keys(i)) // '}'
+      else
+        call WriteIntsToChars( i, variable )
+        variable = '${' // trim(adjustl(variable)) // '}'
+      endif
       tmpstr = outstr
       call ReplaceSubString( tmpStr, outstr, trim(variable), trim(value), &
         & which='all', no_trim=.true. )
@@ -2427,15 +2437,15 @@ contains
   ! strings
   
 
-  subroutine PutHashElement_int(keys, values, key, value, &
-  & countEmpty, inseparator, part_match)
+  subroutine PutHashElement_int( keys, values, key, value, &
+  & countEmpty, inseparator, part_match )
     ! Dummy arguments
     character (len=*), intent(inout)          :: keys
     integer, dimension(:), intent(inout)      :: values
     character (len=*), intent(in)             :: key
     integer, intent(in)                       :: value
     logical, intent(in)                       :: countEmpty
-    character (len=*), optional, intent(in)       :: inseparator
+    character (len=*), optional, intent(in)   :: inseparator
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
@@ -2458,22 +2468,22 @@ contains
       ! Can't handle arrays this big
     else
       ! key not found :: must add to keys, values
-      N = NumStringElements(keys, countEmpty)
-      keys = catlists(keys, key)
+      N = NumStringElements( keys, countEmpty, inseparator )
+      keys = catlists( keys, key, inseparator )
       values(N+1) = value
     endif
 
   end subroutine PutHashElement_int
 
-  subroutine PutHashElement_log(keys, values, key, value, &
-  & countEmpty, inseparator, part_match)
+  subroutine PutHashElement_log( keys, values, key, value, &
+  & countEmpty, inseparator, part_match )
     ! Dummy arguments
     character (len=*), intent(inout)          :: keys
     logical, dimension(:), intent(inout)      :: values
     character (len=*), intent(in)             :: key
     logical, intent(in)                       :: value
     logical, intent(in)                       :: countEmpty
-    character (len=*), optional, intent(in)       :: inseparator
+    character (len=*), optional, intent(in)   :: inseparator
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
@@ -2489,29 +2499,29 @@ contains
       separator = comma
     endif
 
-    num = StringElementNum(keys, key, countEmpty, inseparator, part_match)
+    num = StringElementNum( keys, key, countEmpty, inseparator, part_match )
     if( num > 0 .and. num <= size(values) ) then
       values(num) = value
     elseif( num > size(values) ) then
       ! Can't handle arrays this big
     else
       ! key not found :: must add to keys, values
-      N = NumStringElements(keys, countEmpty)
-      keys = catlists(keys, key)
+      N = NumStringElements( keys, countEmpty, inseparator )
+      keys = catlists( keys, key, inseparator )
       values(N+1) = value
     endif
 
   end subroutine PutHashElement_log
 
-  subroutine PutHashElement_str(keyList, hashList, key, elem, &
-  & countEmpty, inseparator, part_match)
+  subroutine PutHashElement_str( keyList, hashList, key, elem, &
+  & countEmpty, inseparator, part_match )
     ! Dummy arguments
-    character (len=*), intent(inout)   :: keyList
-    character (len=*), intent(inout)   :: hashList
-    character (len=*), intent(in)      :: key
-    character (len=*), intent(in)      :: elem
-    logical, intent(in)   :: countEmpty
-    character (len=*), optional, intent(in)       :: inseparator
+    character (len=*), intent(inout)          :: keyList
+    character (len=*), intent(inout)          :: hashList
+    character (len=*), intent(in)             :: key
+    character (len=*), intent(in)             :: elem
+    logical, intent(in)                       :: countEmpty
+    character (len=*), optional, intent(in)   :: inseparator
     logical, optional, intent(in)             :: part_match
 
     ! Local variables
@@ -2528,7 +2538,7 @@ contains
       separator = COMMA
     endif
 
-    num = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
+    num = StringElementNum( keyList, key, countEmpty, inseparator, part_match )
     if( num > 0) then
       call RemoveNumFromList( keyList, keys, num, inseparator )
       call RemoveNumFromList( hashList, hash, num, inseparator )
@@ -2536,8 +2546,8 @@ contains
       keys = keyList
       hash = hashList
     endif
-    keyList = catLists(keys, key)
-    hashList = catLists(hash, elem)
+    keyList = catLists( keys, key, inseparator )
+    hashList = catLists( hash, elem, inseparator )
 
   end subroutine PutHashElement_str
 
@@ -4228,6 +4238,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.56  2013/05/16 18:18:37  pwagner
+! Corrected bugs in BooleanValue, HashElement procedures
+!
 ! Revision 2.55  2013/05/07 21:01:21  pwagner
 ! Added array versions of Get, Put hash elements
 !
