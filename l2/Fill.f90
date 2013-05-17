@@ -103,8 +103,8 @@ contains ! =====     Public Procedures     =============================
     ! WE NEED MANY THINGS FROM INIT_TABLES_MODULE.  FIRST THE FIELDS:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_ASPERCENTAGE, F_AUTOFILL, F_AVOIDBRIGHTOBJECTS, &
-      & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, &
-      & F_BOXCARMETHOD, &
+      & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, &
+      & F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
       & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_CHANNELS, F_COLUMNS, &
       & F_DESTINATION, F_DIAGONAL, F_DIMLIST, &
       & F_DONTMASK, &
@@ -126,7 +126,8 @@ contains ! =====     Public Procedures     =============================
       & F_OFFSETAMOUNT, F_OPTIONS, F_ORBITINCLINATION, F_PHITAN, &
       & F_PHIWINDOW, F_PHIZERO, F_PRECISION, F_PRECISIONFACTOR, &
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
-      & F_QUADRATURE, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
+      & F_QUADRATURE, F_QUANTITY, F_QUANTITYNAMES, &
+      & F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
       & F_RHIPRECISIONQUANTITY, F_RHIQUANTITY, F_ROWS, F_SCALE, &
       & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, F_SCECI, &
@@ -329,9 +330,10 @@ contains ! =====     Public Procedures     =============================
     integer :: BNDPRESSVCTRINDEX
     integer :: BOMASK                   ! Set Prec. neg. if which BO in FOV
     integer :: BONUM
+    character(len=80) :: BOOLEANNAME    ! E.g., 'BQTYS'
+    integer :: BOXCARMETHOD             ! l_min, l_max, l_mean
     integer :: BQTYINDEX                ! Index of a quantity in vector
     integer :: BVECINDEX                ! Index of a vector
-    integer :: BOXCARMETHOD             ! l_min, l_max, l_mean
     real(rv) :: C                       ! constant "c" in manipulation
     logical :: CENTERVERTICALLY         ! For bin based fills
     integer :: CHANNEL                  ! For spreadChannels fill
@@ -1023,6 +1025,7 @@ contains ! =====     Public Procedures     =============================
         nullify( destVector, measvector, modelvector, noisevector, sourceVector )
         interpolate = .false.
         skipMask = .false.
+        booleanName = ' '
         do j = 2, nsons(key)
           gson = subtree(j,key)  ! The argument
           fieldIndex = get_field_id(gson)
@@ -1070,7 +1073,11 @@ contains ! =====     Public Procedures     =============================
             noiseVector => vectors( noiseVectorIndex )
           case ( f_PtanQuantity ) ! For minorframe qty
             PtanVectorIndex = decoration(decoration(subtree(1,gson)))
-            PtanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+            PtanQuantityIndex = &
+              & decoration(decoration(decoration(subtree(2,gson))))
+          case (f_quantityNames)
+            call get_string ( sub_rosa(gson), booleanName, strip=.true. )
+            booleanName = lowerCase(booleanName)
           case ( f_skipMask )
             skipMask = get_boolean ( fieldValue )
           case default ! Can't get here if type checker worked
@@ -1081,11 +1088,13 @@ contains ! =====     Public Procedures     =============================
           if ( got(f_c) ) then
             call ManipulateVectors ( manipulation, &
               & vectors(destinationVectorIndex), &
-              & vectors(aVecIndex), vectors(bVecIndex), c )
+              & vectors(aVecIndex), vectors(bVecIndex), c, &
+              & booleanName=booleanName )
           else
             call ManipulateVectors ( manipulation, &
               & vectors(destinationVectorIndex), &
-              & vectors(aVecIndex), vectors(bVecIndex) )
+              & vectors(aVecIndex), vectors(bVecIndex), &
+              & booleanName=booleanName )
           endif
         else if ( fillMethod /= l_none ) then
           if ( got ( f_ptanQuantity )  ) then
@@ -1095,10 +1104,11 @@ contains ! =====     Public Procedures     =============================
           call TransferVectorsByMethod ( key, destvector, &
             & sourceVector, fillMethod, dontMask, interpolate, &
             & ignorenegative, ignoreZero, measVector, modelVector, &
-            & noiseVector, ptanQuantity )
+            & noiseVector, ptanQuantity, booleanName )
         else if ( got(f_source) ) then
           call TransferVectors ( vectors(sourceVectorIndex), &
-            & vectors(destinationVectorIndex), skipMask, interpolate )
+            & vectors(destinationVectorIndex), skipMask, interpolate, &
+            & booleanName )
         else
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Transfer command requires either source or a to be present' )
@@ -1137,7 +1147,8 @@ contains ! =====     Public Procedures     =============================
             end if
           end do
         end if
-        call Snoop ( key=key, vectorDatabase=vectors, matrixDatabase=snoopMatrices )
+        call Snoop ( key=key, vectorDatabase=vectors, &
+          & matrixDatabase=snoopMatrices )
         deallocate ( snoopMatrices, STAT=status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Deallocate//'snoopMatrices' )
@@ -1172,9 +1183,9 @@ contains ! =====     Public Procedures     =============================
     subroutine DoStreamline
       use INIT_TABLES_MODULE, only: F_GEODANGLE, F_HESSIAN, &
         & F_SCALEHEIGHT, F_SURFACE, F_THRESHOLD
-      real(r8) :: GEODANGLE               ! For StreamlineHessian
-      real(r8) :: SCALEHEIGHT             ! Scale height for StreamlineHessian
-      integer :: SURFACE                  ! Number of surfaces for StreamlineHessian
+      real(r8) :: GEODANGLE        ! For StreamlineHessian
+      real(r8) :: SCALEHEIGHT      ! Scale height for StreamlineHessian
+      integer :: SURFACE           ! Number of surfaces for StreamlineHessian
       real(r8) :: THRESHOLD
       geodAngle = -1.0   ! means "not specified"
       scaleHeight = -1.0 ! means "not specified"
@@ -3006,6 +3017,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.420  2013/05/17 00:49:29  pwagner
+! May constrain Transfer command command to quantitynames by r/t Boolean
+!
 ! Revision 2.419  2013/04/24 00:37:42  pwagner
 ! Added InitRepeat and NextRepeat calls to set/increment r/t Boolean count
 !
