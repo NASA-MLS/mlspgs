@@ -114,7 +114,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! But if system fails to reclaim memory properly, subsequent slaves
   ! may not find enough available and therefore crash
   ! FALSE means let operating system do it automatically
-  logical            :: SLAVESDOOWNCLEANUP            = .false.
+  logical            :: SLAVESDOOWNCLEANUP            = .true.
   ! In case special dumps are to go to a special dumpfile
   character(len=255) :: SPECIALDUMPFILE               = ' '
   ! What to fill state, outputSD with if skipping retrieval
@@ -158,12 +158,12 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   integer, private :: i ! For loop constructor below
 
   type :: runTimeValues_T
-    ! Two arrays bound as a logical-valued hash
-    character(len=RTVSTRINGLENGTH)     :: lkeys       = 'true,false' 
-    character(len=RTVSTRINGLENGTH)     :: lvalues     = 'true,false'
-    ! logical, dimension(RTVARRAYLENGTH) :: lvalues     = &            
-    !  & (/ .TRUE., (.FALSE., i=2, RTVARRAYLENGTH) /)
-    ! Add two more arrays bound for each kind of hash: integer, string, real, ..
+    character(len=1)                   :: sep = achar(0)
+    ! Two arrays bound as a {keys=>values} hash
+    character(len=RTVSTRINGLENGTH)     :: lkeys       = &
+      & 'true' // achar(0) // 'false' // achar(0) // 'count' 
+    character(len=RTVSTRINGLENGTH)     :: lvalues     = &
+      & 'true' // achar(0) // 'false' // achar(0) // 'count' 
   end type runTimeValues_T
     
   type(runTimeValues_T), save :: runTimeValues
@@ -202,6 +202,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   integer, parameter :: DB_Vector             = DB_Matrix             + 1
   integer, parameter :: DB_QuantityTemplate   = DB_Vector             + 1
   integer, parameter :: DB_VectorTemplate     = DB_QuantityTemplate   + 1
+  
+  logical, private, parameter :: countEmpty = .true. ! Except where overriden locally
+  
 !=============================================================================
 contains 
   ! -------------- MLSMessage ----------------
@@ -901,6 +904,14 @@ jloop:do while ( j < len_trim(line) )
     call restoreConfig
   end subroutine restoreDefaults
 
+  ! -------------- DumpMacros ----------------
+  ! Dump the runtime macros
+  subroutine DumpMacros
+  use DUMP_0, only: DUMP
+  call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'Run-time macros', separator=runTimeValues%sep )
+  end subroutine DumpMacros
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -916,6 +927,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.60  2013/05/17 00:52:58  pwagner
+! runtime value sep now achar(0)
+!
 ! Revision 2.59  2013/02/12 18:14:15  pwagner
 ! Removed SIPS_VERSION
 !
