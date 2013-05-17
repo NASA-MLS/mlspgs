@@ -5633,22 +5633,37 @@ contains ! =====     Public Procedures     =============================
     end subroutine FromProfile_node
 
     ! ---------------------------------------------- ManipulateVectors -----
-    subroutine ManipulateVectors ( manipulation, dest, a, b, c )
+    subroutine ManipulateVectors ( MANIPULATION, DEST, A, B, C, BOOLEANNAME )
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSTRINGLISTS, only: GETHASHELEMENT
+    use MLSSTRINGS, only: STREQ
       ! Manipulate common items in a, b, copying result to those in dest
       integer, intent(in) :: MANIPULATION
-      type (Vector_T), intent(in) :: A, B
-      type (Vector_T), intent(inout) :: DEST
-      real(rv), optional            :: C  ! constant "c" in manipulation
+      type (Vector_T), intent(in)            :: A, B
+      type (Vector_T), intent(inout)         :: DEST
+      real(rv), optional                     :: C  ! constant "c" in manipulation
+      character(len=*), intent(in), optional :: BOOLEANNAME
 
       ! Local variables
-      type (VectorValue_T), pointer :: DQ ! Destination quantity
-      type (VectorValue_T), pointer :: AQ, BQ ! Source quantities
-      integer :: SQI                      ! Quantity index in source
+      type (VectorValue_T), pointer     :: DQ     ! Destination quantity
+      type (VectorValue_T), pointer     :: AQ, BQ ! Source quantities
+      integer                           :: SQI    ! Quantity index in source
+      integer                           :: N
+      character(len=64), dimension(128) :: NAMES
+      character(len=64)                 :: QNAME
 
       ! Executable code
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.ManipulateVectors' )
-
+      n = 0
+      ! If we're given a BooleanName, try to interpret it as a container for
+      ! quantity names
+      if ( present(booleanName) ) then
+        call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & lowerCase(trim(booleanName)), names, countEmpty, &
+          & inseparator=runTimeValues%sep )
+        n = FindLast( names /= runTimeValues%sep )
+      endif
       ! First copy those things in source, loop over them
       dest%globalUnit = a%globalUnit
       do sqi = 1, size ( a%quantities )
@@ -5656,7 +5671,11 @@ contains ! =====     Public Procedures     =============================
         aq => a%quantities(sqi)
         bq => b%quantities(sqi)
         dq => GetVectorQtyByTemplateIndex ( dest, a%template%quantities(sqi) )
-        if ( all( (/ associated(aq), associated(bq), associated(dq) /) ) ) then
+        if ( associated(aq) ) call get_string ( aq%template%name, qName, &
+          & strip=.true. )
+        if ( n > 0 ) then
+          if ( .not. any( streq(names, qName, options='-cf' ) )  ) cycle
+        elseif ( all( (/ associated(aq), associated(bq), associated(dq) /) ) ) then
           call ByManipulation ( dq, aq, bq, &
             & manipulation, key=0, &
             & ignoreTemplate=.true., spreadflag=.false., dimList=' ', &
@@ -6230,21 +6249,47 @@ contains ! =====     Public Procedures     =============================
     end subroutine SpreadChannelFill
 
     ! ---------------------------------------------- TransferVectors -----
-    subroutine TransferVectors ( source, dest, skipMask, interpolate )
+    subroutine TransferVectors ( SOURCE, DEST, SKIPMASK, INTERPOLATE, &
+      & BOOLEANNAME )
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
+    use MLSSTRINGS, only: STREQ
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use TOGGLES, only: SWITCHES
       ! Copy common items in source to those in dest
       type (Vector_T), intent(in) :: SOURCE
       type (Vector_T), intent(inout) :: DEST
       logical, intent(in) :: SKIPMASK
       logical, intent(in) :: INTERPOLATE
+      character(len=*), intent(in), optional :: BOOLEANNAME
 
       ! Local variables
       type (VectorValue_T), pointer :: DQ ! Destination quantity
       type (VectorValue_T), pointer :: SQ ! Source quantity
+      integer                           :: N
+      character(len=64), dimension(128) :: NAMES
+      character(len=64)                 :: QNAME
       integer :: SQI                      ! Quantity index in source
+      logical :: verbose, verboser
 
       ! Executable code
       if ( toggle(gen) .and. levels(gen) > 2 ) &
         & call trace_begin ( 'FillUtils_1.TransferVectors' )
+      verbose = ( switchDetail(switches, 'bool') > -1 )
+      verboser = ( switchDetail(switches, 'bool') > 0 )
+      n = 0
+      ! If we're given a BooleanName, try to interpret it as a container for
+      ! quantity names
+      if ( present(booleanName) ) then
+        call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & lowerCase(trim(booleanName)), names, countEmpty, &
+          & inseparator=runTimeValues%sep )
+        n = FindLast( names /= runTimeValues%sep )
+        if ( verboser ) then
+          call outputNamedValue( 'n', n )
+          call dump( names(1:n), 'names', width=1 )
+        endif
+      endif
 
       ! First copy those things in source, loop over them
       dest%globalUnit = source%globalUnit
@@ -6252,15 +6297,20 @@ contains ! =====     Public Procedures     =============================
         ! Try to find this in dest
         sq => source%quantities(sqi)
         dq => GetVectorQtyByTemplateIndex ( dest, source%template%quantities(sqi) )
-        if ( associated ( dq ) ) then
-          dq%values = sq%values
-          if ( .not. skipMask ) then
-            if ( associated(sq%mask) ) then
-              if ( .not. associated(dq%mask)) call CreateMask ( dq )
-              dq%mask = sq%mask
-            else
-              call destroyVectorQuantityMask ( dq )
-            end if
+        if ( .not. associated(dq) ) cycle
+        call get_string ( dq%template%name, qName, &
+          & strip=.true. )
+        if ( n > 0 ) then
+          if ( .not. any( streq(names, qName, options='-cf' ) )  ) cycle
+        endif
+        call output( 'Transferring quantities named ' // trim(qName), advance='yes' )
+        dq%values = sq%values
+        if ( .not. skipMask ) then
+          if ( associated(sq%mask) ) then
+            if ( .not. associated(dq%mask)) call CreateMask ( dq )
+            dq%mask = sq%mask
+          else
+            call destroyVectorQuantityMask ( dq )
           end if
         elseif ( interpolate ) then
           dq => GetVectorQuantityByType ( dest, &
@@ -6290,7 +6340,10 @@ contains ! =====     Public Procedures     =============================
     subroutine TransferVectorsByMethod ( KEY, DEST, &
       & SOURCE, METHOD, DONTMASK, INTERPOLATE, &
       & IGNORENEGATIVE, IGNOREZERO, MEASVECTOR, MODELVECTOR, &
-      & NOISEVECTOR, PTAN )
+      & NOISEVECTOR, PTAN, BOOLEANNAME )
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSTRINGLISTS, only: GETHASHELEMENT
+    use MLSSTRINGS, only: STREQ
       integer, intent(in)            :: KEY
       type (Vector_T), pointer       :: DEST
       type (Vector_T), pointer       :: SOURCE
@@ -6303,6 +6356,7 @@ contains ! =====     Public Procedures     =============================
       type (Vector_T), pointer       :: MEASVECTOR
       type (Vector_T), pointer       :: NOISEVECTOR
       type (VectorValue_T), pointer  :: PTAN ! tangent pressure
+      character(len=*), intent(in), optional :: BOOLEANNAME
 
       ! Local variables
       logical, parameter            :: ASPERCENTAGE = .false.
@@ -6316,6 +6370,9 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), pointer :: SQ ! Source or meas quantity
       integer                       :: SQI                      ! Quantity index in source or meas
       type (VectorValue_T), pointer :: MQ ! Model quantity
+      integer                           :: N
+      character(len=64), dimension(128) :: NAMES
+      character(len=64)                 :: QNAME
       type (VectorValue_T), pointer :: NQ ! Noise quantity
       integer                       :: NUMMATCHES
       real(r8)                      :: SCALEINSTANCES, SCALERATIO, SCALESURFS
@@ -6326,6 +6383,15 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       if ( toggle(gen) .and. levels(gen) > 2 ) &
         & call trace_begin ( 'FillUtils_1.TransferVectorsByMethod' )
+      n = 0
+      ! If we're given a BooleanName, try to interpret it as a container for
+      ! quantity names
+      if ( present(booleanName) ) then
+        call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+          & lowerCase(trim(booleanName)), names, countEmpty, &
+          & inseparator=runTimeValues%sep )
+        n = FindLast( names /= runTimeValues%sep )
+      endif
 
       scaleInstances=-1.0d0
       scaleRatio=1.0d0
@@ -6353,6 +6419,11 @@ contains ! =====     Public Procedures     =============================
         do dqi = 1, size ( dest%quantities ) 
           dq => dest%quantities(dqi)
           if ( .not. associated(dq) ) cycle
+          call get_string ( dq%template%name, qName, &
+            & strip=.true. )
+          if ( n > 0 ) then
+            if ( .not. any( streq(names, qName, options='-cf' ) )  ) cycle
+          endif
           select case ( method )
           case ( l_addNoise ) ! ----- Add random noise to source Quantity -------
             nq => GetVectorQtyByTemplateIndex ( noiseVector, &
@@ -6934,6 +7005,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.74  2013/05/17 00:52:01  pwagner
+! May constrain Transfer command command to quantitynames by r/t Boolean; r/t sep now achar(0)
+!
 ! Revision 2.73  2013/04/05 23:20:47  pwagner
 ! Requires verbose settings for extra printing
 !
