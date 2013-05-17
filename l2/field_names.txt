@@ -339,6 +339,7 @@ quadrature
 quality
 quantities
 quantity
+quantityNames
 quantityType
 
 radianceQuantity
@@ -502,6 +503,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.229  2013/05/17 00:48:49  pwagner
+# May constrain Transfer command command to quantitynames by r/t Boolean
+#
 # Revision 2.228  2013/05/07 22:01:30  pwagner
 # run-time Booleans can store arrays of values, formulas can evaluate named terms
 #
