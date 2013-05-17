@@ -20,8 +20,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
     & F_SKIPRETRIEVAL, F_SKIPRETRIEVALIF, F_STAMP
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
-  use MLSL2OPTIONS, only: ORIGINALCMDS, COMMAND_LINE, PROCESSOPTIONS, &
-    & RESTARTWARNINGS, RESTOREDEFAULTS, RUNTIMEVALUES, &
+  use MLSL2OPTIONS, only: COMMAND_LINE, DUMPMACROS, ORIGINALCMDS, &
+    & PROCESSOPTIONS, RESTARTWARNINGS, RESTOREDEFAULTS, RUNTIMEVALUES, &
     & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & STOPAFTERSECTION
@@ -403,8 +403,7 @@ contains ! =====     Public Procedures     =============================
     endif
     call add_to_phase_timing( trim(phaseString) )
     if ( switchDetail ( switches, 'bool' ) > 0 ) &
-      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'Run-time Boolean flags' )
+      & call dumpMacros
   end subroutine addPhaseToPhaseNames
 
   ! -----------------------------------------------  dump_section_timings  -----
@@ -911,6 +910,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.47  2013/05/17 00:53:57  pwagner
+! Use dumpMacros to dump r/t macros
+!
 ! Revision 2.46  2013/04/05 23:26:04  pwagner
 ! Made 'master' a 'section' for timings summary
 !
