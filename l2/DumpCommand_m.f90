@@ -140,7 +140,7 @@ contains
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_SIGNAL, F_BOOLEAN
     use MLSCOMMON, only: MLSFILE_T
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSSIGNALS_M, only: GETSIGNALNAME, &
       & SIGNALS
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
@@ -232,11 +232,12 @@ contains
     endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
-      & countEmpty=countEmpty )
-    hashsize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+      & countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
+    hashsize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'Run-time Boolean flags' )
+      & call dumpMacros
   end function BooleanFromAnyGoodRadiances
 
   ! ------------------------------------- BooleanFromAnyGoodValues --
@@ -246,7 +247,7 @@ contains
       & F_QUANTITY, F_BOOLEAN, F_STATUS
     use MANIPULATEVECTORQUANTITIES, only: ANYGOODDATAINQTY
     use MLSKINDS, only: RV
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
@@ -330,11 +331,12 @@ contains
     endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
-      & countEmpty=countEmpty )
-    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+      & countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
+    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'Run-time Boolean flags' )
+      & call dumpMacros
   end function BooleanFromAnyGoodValues
 
   ! ------------------------------------- BooleanFromCatchWarning --
@@ -346,7 +348,7 @@ contains
     ! CatchWarning, [message='string'], Boolean="name"
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_MESSAGE
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMESSAGEINQUIRE
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & SWITCHDETAIL
@@ -414,11 +416,12 @@ contains
     endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
-      & countEmpty=countEmpty )
-    size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+      & countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
+    size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'Run-time Boolean flags' )
+      & call dumpMacros
   end function BooleanFromCatchWarning
 
   ! ------------------------------------- BooleanFromComparingQtys --
@@ -428,7 +431,7 @@ contains
     use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_BOOLEAN, F_FORMULA
     use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE
     use MLSKINDS, only: R8, RV
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
     use MLSSTATS1, only: MLSMAX, MLSMIN, MLSMEAN, MLSMEDIAN
     use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT, &
@@ -594,11 +597,12 @@ contains
     endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
-      & countEmpty=countEmpty )
-    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+      & countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
+    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'Run-time Boolean flags' )
+      & call dumpMacros
     call MLSMessageCalls( 'pop' )
   contains
     elemental logical function ISRELATION( relation, a, b )
@@ -662,7 +666,7 @@ contains
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_GRID
     use GRIDDEDDATA, only: GRIDDEDDATA_T
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
@@ -714,11 +718,12 @@ contains
     endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
-      & countEmpty=countEmpty )
-    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+      & countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
+    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'Run-time Boolean flags' )
+      & call dumpMacros
   end function BooleanFromEmptyGrid
 
   ! ------------------------------------- BooleanFromEmptySwath --
@@ -740,7 +745,7 @@ contains
     use MLSFILES, only: HDFVERSION_5
     use MLSHDFEOS, only: MLS_SWATH_IN_FILE
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSPCF2, only: MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
@@ -838,11 +843,12 @@ contains
     endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
-      & countEmpty=countEmpty )
-    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+      & countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
+    thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'Run-time Boolean flags' )
+      & call dumpMacros
   end function BooleanFromEmptySwath
 
   ! ------------------------------------- BooleanFromFormula --
@@ -862,11 +868,11 @@ contains
       & FIELD_FIRST, FIELD_LAST
     use MANIPULATIONUTILS, only: MANIPULATE
     use MLSKINDS, only: R8, RV
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, &
       & MLSMESSAGE
-    use MLSSTRINGLISTS, only: GETHASHELEMENT, NUMSTRINGELEMENTS, &
-      & PUTHASHELEMENT, SWITCHDETAIL
+    use MLSSTRINGLISTS, only: EVALUATEFORMULA, GETHASHELEMENT, &
+      & NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS, WRITEINTSTOCHARS
     use MORETREE, only: GET_BOOLEAN
     use OUTPUT_M, only: NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
@@ -962,7 +968,8 @@ contains
         call get_string ( sub_rosa(subtree(2,son)), cnameString, strip=.true. )
         cnameString = lowerCase(cnameString)
         call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-          & cnameString, cvalue, countEmpty=countEmpty )
+          & cnameString, cvalue, countEmpty=countEmpty, &
+          & inseparator=runTimeValues%sep )
         call readNumsFromChars ( cvalue, c )
         if ( verbose ) call outputNamedValue( 'c', c )
       case ( f_Boolean )
@@ -987,17 +994,31 @@ contains
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
-    if ( verbose .and. len_trim(formula) > 0 ) &
-      & call outputNamedValue ( 'formula', trim(formula) )
-    if ( evaluate ) then
-      formula = EvaluateFormula( formula )
-      if ( verbose ) call outputNamedValue ( 'formula', trim(formula) )
-    endif
-    ! Should not have more than one of
+    ! Should have exactly one of
     ! [f_values, f_formula, f_manipulation, f_label]
     if ( count(got( (/f_values, f_formula, f_manipulation, f_label/) ) ) /= 1 ) &
       & call announceError ( son, 0, &
       & ' Must supply exactly one of (values, formula, manipulation, label)' )
+    if ( verbose .and. len_trim(formula) > 0 ) &
+      & call outputNamedValue ( 'formula', trim(formula) )
+    if ( evaluate .and. got(f_formula) ) then
+      formula = EvaluateTermwise( formula )
+      if ( verbose ) call outputNamedValue ( 'formula', trim(formula) )
+    endif
+    if ( got(f_formula) ) then
+      ! Are we in the middle of a Repeat loop? If so, replace each "${n}" with
+      ! "${count}"
+       call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+         & 'count', cvalue, countEmpty=countEmpty, &
+         & inseparator=runTimeValues%sep )
+       call readNumsFromChars ( cvalue, c )
+       if ( verboser ) call outputnamedValue ( 'c', c )
+       if ( c > 0._rv ) &
+         & formula = EvaluateFormula ( formula, (/cvalue/), (/"n"/) )
+      ! The next will explicitly evaluate run-time Booleans evoked by name via
+      ! "${name}"
+      formula =  EvaluateExplicitly( formula )
+    endif
     nvalues = 0
     if ( got(f_values) ) then
       nvalues = nsons(value_field)-1
@@ -1009,7 +1030,8 @@ contains
         & strip=.true. )
       call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
         & lowercase(trim(nameString)), booleanString, &
-        & countEmpty=countEmpty )
+        & countEmpty=countEmpty, &
+        & inseparator=runTimeValues%sep )
     elseif ( nvalues > 1 ) then
       ! Given an array of values we store them according to the scheme:
       !        key             value
@@ -1022,7 +1044,12 @@ contains
       keyString = trim(nameString) // 'n'
       call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
         & keyString, booleanString, &
-        & countEmpty=countEmpty )
+        & countEmpty=countEmpty, &
+        & inseparator=runTimeValues%sep )
+      if ( verboser ) then
+        call outputnamedValue( 'keyString', trim(keyString) )
+        call outputnamedValue( 'BooleanString', trim(BooleanString) )
+      endif
       ! see also how the Repeat command treats the values field
       do j=2, nvalues+1
         call writeIntsToChars( j-1, keyString )
@@ -1034,7 +1061,8 @@ contains
         endif
         call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
           & keyString, booleanString, &
-          & countEmpty=countEmpty )
+          & countEmpty=countEmpty, &
+          & inseparator=runTimeValues%sep )
       enddo
     elseif ( got(f_manipulation) ) then
       ! print *, 'Oops-you dummy! code this missing piece'
@@ -1055,8 +1083,11 @@ contains
       call Manipulate( tQuantity, AQuantity, BQuantity, C, formula, &
         & .false., '' )
       formula = numToChars ( tQuantity%values(1,1) )
-      call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-        & lowercase(trim(nameString)), lowercase(trim(formula)), countEmpty=countEmpty )
+      ! call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      !   & lowercase(trim(nameString)), lowercase(trim(formula)), countEmpty=countEmpty )
+      call insertHashElement ( nameString, formula, &
+        & runTimeValues%lkeys, runTimeValues%lvalues, &
+        & inseparator=runTimeValues%sep )
       call destroyVectorQuantityValue ( tQuantity, &
         & destroyMask=.true., destroyTemplate=.false. )
     elseif ( literal ) then
@@ -1065,22 +1096,78 @@ contains
         call output( trim(nameString) // ' = ', advance='no' )
         call output( trim(formula), advance='yes' )
       endif
-      call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-        & lowercase(trim(nameString)), lowercase(trim(formula)), countEmpty=countEmpty )
+      ! call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      !   & lowercase(trim(nameString)), lowercase(trim(formula)), countEmpty=countEmpty )
+      call insertHashElement ( nameString, formula, &
+        & runTimeValues%lkeys, runTimeValues%lvalues, &
+        & inseparator=runTimeValues%sep )
     else
       if ( verboser ) then
         call output( trim(nameString) // ' = ', advance='no' )
         call output( tvalue, advance='yes' )
       endif
-      call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & lowercase(trim(nameString)), BooleanToString(tvalue), &
-      & countEmpty=countEmpty )
+      ! call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
+      ! & lowercase(trim(nameString)), BooleanToString(tvalue), &
+      ! & countEmpty=countEmpty )
+      call insertHashElement ( nameString, BooleanToString(tvalue), &
+        & runTimeValues%lkeys, runTimeValues%lvalues, &
+        & inseparator=runTimeValues%sep )
     endif
-    size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty )
+    size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     if ( verbose ) &
-      & call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'Run-time Boolean flags' )
-  end function BooleanFromFormula
+      & call dumpMacros
+  contains
+    subroutine INSERTHASHELEMENT ( NAME, VALUE, KEYS, VALUES, INSEPARATOR )
+      ! Dummy args
+      character(len=*), intent(in)           :: NAME
+      character(len=*), intent(in)           :: VALUE
+      character(len=*), intent(inout)        :: KEYS
+      character(len=*), intent(inout)        :: VALUES
+      character(len=1), intent(in), optional :: INSEPARATOR
+      ! Local variables
+      character(len=64) :: cvalue
+      integer :: c
+      character (len=16)                            :: keyString
+      integer                                       :: n
+      character (len=8)                             :: nCh
+      character (len=1)                             :: separator
+      ! Executable
+      separator = ','
+      if ( present(inseparator) ) separator = inseparator
+      ! 1st--is name an array-valued hash key?
+      keyString = trim(name) // 'n'
+      call GetHashElement( keys, values, keyString, nCh, &
+        & countEmpty, inseparator=separator )
+      if ( nCh == separator ) then
+        ! No, it's just a scalar
+        call PutHashElement ( keys, values, &
+        & trim(name), value, countEmpty=countEmpty, inseparator=separator )
+      else
+        ! Yes, it's an array, so we must put it in two places:
+        ! "name(cvalue)" and "name(n)" where
+        ! cvalue is the actual value of "count"
+        ! and "name(n)" is literally that (i.e., don't evaluate "n")
+        call GetHashElement( keys, values, &
+          & 'count', cvalue, countEmpty=countEmpty, inseparator=separator )
+        keyString = trim(name) // '(n)'
+        if ( verboser ) then
+          call outputnamedValue( 'keyString', trim(keyString) )
+          call outputnamedValue( 'value', trim(value) )
+        endif
+        call PutHashElement ( keys, values, &
+          & trim(keyString), value, countEmpty=countEmpty, inseparator=separator )
+        keyString = trim(name) // '(' // trim(adjustl(cvalue)) // ')'
+        if ( verboser ) then
+          call outputnamedValue( 'keyString', trim(keyString) )
+          call outputnamedValue( 'value', trim(value) )
+        endif
+        call PutHashElement ( keys, values, &
+          & trim(keyString), value, countEmpty=countEmpty, inseparator=separator )
+      endif
+    
+    end subroutine INSERTHASHELEMENT
+  end function BOOLEANFROMFORMULA
 
   ! ------------------------- DumpCommand ------------------------
   subroutine DUMPCOMMAND ( ROOT, QUANTITYTEMPLATESDB, &
@@ -1129,7 +1216,7 @@ contains
     use MLSKINDS, only: RV
     use MLSL2OPTIONS, only: COMMAND_LINE, L2CFNODE, &
       & NORMAL_EXIT_STATUS, RUNTIMEVALUES, &
-      & MLSMESSAGE
+      & DUMPMACROS, MLSMESSAGE
     use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME, &
       & DUMP_SECTION_TIMINGS
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, MLSMESSAGEEXIT, &
@@ -1154,7 +1241,8 @@ contains
     use TREE_TYPES, only: N_SPEC_ARGS
     use VECTORSMODULE, only: VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, &
       & DIFF, DUMP, DUMPQUANTITYMASK, DUMPVECTORMASK, & ! FOR VECTORS, VECTOR QUANTITIES AND TEMPLATES
-      & GETVECTORQTYBYTEMPLATEINDEX
+      & GETVECTORQUANTITY, GETVECTORQTYBYTEMPLATEINDEX, &
+      & GETVECTORQUANTITYINDEXBYNAME
     use VGRIDSDATABASE, only: DUMP, VGRIDS
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
@@ -1162,7 +1250,7 @@ contains
     type (quantityTemplate_t), dimension(:), pointer, optional   :: QuantityTemplatesDB
     type (forwardModelConfig_t), dimension(:), pointer, optional :: ForwardModelConfigs
     type (vectorTemplate_T), dimension(:), pointer, optional     :: VectorTemplates
-    type (vector_T), dimension(:), optional                      :: Vectors
+    type (vector_T), dimension(:), target, optional              :: Vectors
     type (HGrid_T), dimension(:), pointer, optional              :: HGrids
     type (GriddedData_T), dimension(:), pointer, optional        :: griddedDataBase
     type (MLSFile_T), dimension(:), pointer, optional            :: FileDataBase
@@ -1199,6 +1287,7 @@ contains
     character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
     type (MLSFile_T), pointer :: OneMLSFile
     character(len=80) :: OPTIONSSTRING  ! E.g., '-rbs' (see dump_0.f90)
+    type (vectorValue_T), pointer :: QUANTITY
     integer :: QuantityIndex
     integer :: QuantityIndex2
     type (VectorValue_T), pointer :: QTY1, QTY2
@@ -1208,6 +1297,7 @@ contains
     type(time_t) :: Time
     character(10) :: TimeOfDay
     integer :: Type     ! of the Details expr -- has to be num_value
+    type (vector_T), pointer  :: Vector
     integer :: VectorIndex
     integer :: VectorIndex2
     logical :: verbose
@@ -1222,6 +1312,7 @@ contains
       call MLSMessageCalls( 'push', constantName=ModuleName )
     end if
     verbose = ( switchDetail(switches, 'bool') > -1 )
+    nullify ( vector, quantity )
     ! Were we called to do a diff or a dump?
     ! The following must be one of (/ s_dump, s_diff /)
     DiffOrDump = get_spec_id(root)
@@ -1286,8 +1377,7 @@ contains
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allBooleans )
-            call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
-            & 'Run-time Boolean flags' )
+            call dumpMacros
           case ( f_allFiles )
             if ( present(fileDataBase) ) then
               call dumpMLSFile ( fileDataBase )
@@ -1463,11 +1553,13 @@ contains
         booleanString = lowerCase(booleanString)
         ! 1st--check whether we're dumping an array-valued run-time Boolean
         call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-          & trim(booleanString) // 'n', label, countEmpty )
-        if ( label == ',' ) then
+          & trim(booleanString) // 'n', label, countEmpty, &
+          & inseparator=runTimeValues%sep )
+        if ( label == runTimeValues%sep ) then
           call output( trim(booleanString) // ' = ', advance='no' )
           call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-            & booleanString, label, countEmpty )
+            & booleanString, label, countEmpty, &
+            & inseparator=runTimeValues%sep )
           call output( label, advance='yes' )
         else
           ! OK, we're asked to dump an array-valued one
@@ -1481,9 +1573,17 @@ contains
             call blanks ( 4, advance='no' )
             keyString = trim(booleanString) // '(' // trim(adjustl(label)) // ')'
             call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-              & keyString, label, countEmpty )
+              & keyString, label, countEmpty, &
+              & inseparator=runTimeValues%sep )
             call output ( trim(label), advance='yes' )
             ! if ( verbose ) call outputnamedValue( 'keyString', trim(keyString) )
+            ! -- Don't retain the following--it's just for testing --
+            if ( got(f_vector) ) then
+              QuantityIndex = GetVectorQuantityIndexByName ( vector, label )
+              ! call outputNamedValue ( 'QuantityIndex', QuantityIndex )
+              Quantity => GetVectorQuantity( vector, QuantityIndex )
+              call dump( Quantity )
+            endif
           enddo
         endif
       case ( f_clean )
@@ -1850,13 +1950,12 @@ contains
         if ( details < -1 ) cycle
         if ( haveVectors ) then
           do i = 2, nsons(son)
+            vector => vectors(decoration(decoration(subtree(i,son))))
             call output ( ' Vector ' )
             if ( fieldIndex == f_vectormask ) then
-              call dumpVectorMask ( vectors(decoration(decoration(subtree(i,son)))), &
-                & details=details )
+              call dumpVectorMask ( vector, details=details )
             else
-              call dump ( vectors(decoration(decoration(subtree(i,son)))), &
-                & details=details, clean=clean )
+              call dump ( vector, details=details, clean=clean )
             end if
           end do
         else
@@ -1883,9 +1982,11 @@ contains
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: PUTHASHELEMENT
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'count', '0', countEmpty=countEmpty )
+      & 'count', '0', countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'countsn', '0', countEmpty=countEmpty )
+      & 'countsn', '0', countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
   end subroutine  InitializeRepeat
 
   subroutine  NEXTREPEAT
@@ -1900,14 +2001,17 @@ contains
     character(len=64) :: nvalue
     ! Executable
     call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'count', cvalue, countEmpty=countEmpty )
+      & 'count', cvalue, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     call readIntsFromChars ( cvalue, c )
     call writeIntsToChars ( c+1, cvalue )
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'count', cvalue, countEmpty=countEmpty )
+      & 'count', cvalue, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     keyString = 'counts(' // trim(adjustl(cvalue)) // ')'
     call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'countsn', nvalue, countEmpty=countEmpty )
+      & 'countsn', nvalue, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     ! Are we Repeating for a sequence of values?
     call readIntsFromChars ( nvalue, c )
     ! call outputNamedValue( 'nvalue', nvalue )
@@ -1915,9 +2019,11 @@ contains
     ! If so, store the current value at the key 'counts(n)'
     ! call outputNamedValue( 'keyString', keyString )
     call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & keyString, cvalue, countEmpty=countEmpty )
+      & keyString, cvalue, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'counts(n)', cvalue, countEmpty=countEmpty )
+      & 'counts(n)', cvalue, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
 
   end subroutine  NextRepeat
 
@@ -1968,7 +2074,8 @@ contains
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         booleanString = lowerCase(booleanString)
         call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-          & booleanString, label, countEmpty )
+          & booleanString, label, countEmpty, &
+          & inseparator=runTimeValues%sep )
       case (f_label)
         call get_string ( sub_rosa(gson), label, strip=.true. )
       case (f_options)
@@ -2041,7 +2148,8 @@ contains
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         booleanString = lowerCase(booleanString)
         call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-          & booleanString, label, countEmpty )
+          & booleanString, label, countEmpty, &
+          & inseparator=runTimeValues%sep )
       case (f_label)
         call get_string ( sub_rosa(gson), label, strip=.true. )
       case default
@@ -2200,9 +2308,14 @@ contains
       nvalues = nsons(value_field)-1
       ! Now, have we run out of values to Repeat over?
       call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-        & 'count', cvalue, countEmpty=countEmpty )
+        & 'count', cvalue, countEmpty=countEmpty, &
+        & inseparator=runTimeValues%sep )
       call readIntsFromChars ( cvalue, c )
-      if ( c > nvalues ) then
+      if ( verboser ) then
+        call outputnamedValue( 'nvalues', nvalues) 
+        call outputnamedValue( 'cvalue', trim(cvalue) )
+      endif
+      if ( c+1 > nvalues ) then
         Skip = .false.
       elseif ( c < 1 ) then
         ! The first time through, so try to grok values field
@@ -2211,7 +2324,8 @@ contains
         call writeIntsToChars( nvalues, booleanString )
         call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
           & 'countsn', booleanString, &
-          & countEmpty=countEmpty )
+          & countEmpty=countEmpty, &
+          & inseparator=runTimeValues%sep )
         do j=2, nvalues+1
           call writeIntsToChars( j-1, keyString )
           keyString = 'counts(' // trim(adjustl(keystring)) // ')'
@@ -2222,7 +2336,8 @@ contains
           endif
           call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
             & keyString, booleanString, &
-            & countEmpty=countEmpty )
+            & countEmpty=countEmpty, &
+            & inseparator=runTimeValues%sep )
         enddo
       endif
     endif
@@ -2361,7 +2476,7 @@ contains
       return
     else
       bvalue = BooleanValue ( formula, &
-        & runTimeValues%lkeys, runTimeValues%lvalues )
+        & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep )
       return
     endif
     rhs = lowercase(adjustl(rhs))
@@ -2378,7 +2493,31 @@ contains
     if ( reverse ) bvalue = .not. bvalue  ! If we meant not equal
   end function myBooleanValue
 
-  function EvaluateFormula ( FORMULA ) result( ITSVALUE )
+  function EvaluateExplicitly ( FORMULA ) result( ITSVALUE )
+    ! Evaluate all the terms in a formula
+    use MLSL2OPTIONS, only: RUNTIMEVALUES
+    use MLSSTRINGLISTS, only: LIST2ARRAY, EVALUATEFORMULA, NUMSTRINGELEMENTS
+    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    ! Args
+    character(len=*), intent(in) :: formula
+    character(len=MAXRESULTLEN)  :: itsValue
+    ! Internal variables
+    character(len=64), dimension(1024) :: keys, values
+    integer :: n
+    ! Executable
+    n = NumStringElements( runtimevalues%lkeys, countEmpty, &
+      & inseparator=runTimeValues%sep )
+    ! call outputNamedValue ( 'n', n )
+    call List2Array( runtimevalues%lkeys, keys, countEmpty, &
+      & inseparator=runTimeValues%sep, &
+      & ignoreLeadingSpaces=.true. )
+    call List2Array( runtimevalues%lvalues, values, countEmpty, &
+      & inseparator=runTimeValues%sep, &
+      & ignoreLeadingSpaces=.true. )
+    itsValue = evaluateFormula( formula, values, keys )
+  end function EvaluateExplicitly
+
+  function EvaluateTermwise ( FORMULA ) result( ITSVALUE )
     ! Evaluate all the terms in a formula
     use MLSSTRINGLISTS, only: ARRAY2LIST, LIST2ARRAY, NUMSTRINGELEMENTS
     use OUTPUT_M, only: OUTPUTNAMEDVALUE
@@ -2395,7 +2534,7 @@ contains
       & ignoreLeadingSpaces=.true. )
     array2 = Evaluator( array )
     call Array2List( array2(1:n), itsValue, inseparator=' ' )
-  end function EvaluateFormula
+  end function EvaluateTermwise
 
   ! This family of functions evaluates a character-valued arg, 
   ! being alert for special values
@@ -2431,7 +2570,8 @@ contains
       call writeIntsToChars ( currentChunkNumber, itsValue )
     case ('count')
       call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-        & arg, itsValue, countEmpty=countEmpty )
+        & arg, itsValue, countEmpty=countEmpty, &
+        & inseparator=runTimeValues%sep )
     case ('phasename')
       itsValue = lowercase(currentPhaseName)
     case ('sips_version')
@@ -2446,8 +2586,9 @@ contains
       ! that were assembled using m4 trickery
       ! But first, let's check that you're not naming a runtime Boolean
       call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
-        & arg, itsValue, countEmpty=countEmpty )
-      if ( itsvalue == ',' ) itsValue = arg
+        & arg, itsValue, countEmpty=countEmpty, &
+        & inseparator=runTimeValues%sep )
+      if ( itsvalue == runTimeValues%sep ) itsValue = arg
     end select
   end function Evaluator_sca
   
@@ -2505,6 +2646,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.86  2013/05/17 00:55:47  pwagner
+! May now do elementwise operations on r/t macros with repeat command; fixed many bugs
+!
 ! Revision 2.85  2013/05/07 22:01:30  pwagner
 ! run-time Booleans can store arrays of values, formulas can evaluate named terms
 !
