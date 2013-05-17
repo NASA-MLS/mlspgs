@@ -1190,6 +1190,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_noise, s+s_vector, n+n_field_spec, &
              begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_quantityNames, s+s_Boolean, n+n_field_spec, &
              begin, f+f_skipMask, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
@@ -1826,6 +1827,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.565  2013/05/17 00:48:49  pwagner
+! May constrain Transfer command command to quantitynames by r/t Boolean
+!
 ! Revision 2.564  2013/05/07 22:01:30  pwagner
 ! run-time Booleans can store arrays of values, formulas can evaluate named terms
 !
