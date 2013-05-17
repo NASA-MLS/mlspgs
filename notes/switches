@@ -23,7 +23,6 @@ Switches (set by -S option in mlsl2's command line):
   column => Extra diagnostics while integrating column abundances
   cov =>    Report details of a posteriori covariance calculation
   dacsfil => Dump DACS filter shapes after reading them
-  dbz =>    Dump Zeta in get_beta_path
   debug  => Turn on debugging in certain modules (so far only l2PC_m)
   destroy => Warn before each destroy
   diag =>   Dump diagonal of factored normal equations
@@ -75,9 +74,8 @@ Switches (set by -S option in mlsl2's command line):
   l2gp =>   l2gp swaths (all) dumped
   l2pc =>   l2pc reading progress dumped
   l2q =>    report on communications between master and l2q
-  lblb =>   Dump line-by-line Betas
-  lblB =>   lblb + temperature and pressure grids
-  LBLB =>   lblB and then stop
+  lblb[n] => units digit >0 -> dump line-by-line Betas, >1 also T, tanh, P
+            tens digit >0 dump zeta instead of P, n>99 stop after first dump 
   log[n] => Print most Log file messages only to stdout, not toolkit log
   mach =>   Machine names (that can be enslaved by master task)
   mas =>    Activities between the PVM master task and slave task
@@ -191,6 +189,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.81  2013/05/15 03:09:29  vsnyder
+ Revise processing of fwmd and fwmg dump switches
+
  Revision 1.80  2013/03/01 01:20:45  pwagner
  'fiw' switch dumps instance window
 
