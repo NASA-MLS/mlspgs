@@ -101,17 +101,21 @@ contains
     real(rp) :: Sps(size(t_path))
     integer(ip) :: I, N, NP
     character(len=4), save :: clean
-    logical, save :: DumpAll, DumpBeta, DumpStop, DumpZeta
+    integer, save :: DumpLevel ! units digit of lblb switch
+                               ! >0 dump beta, >1 dump T, Tanh
+    logical, save :: DumpStop  ! hundreds digit of lblb switch > 0
+    logical, save :: DumpZeta  ! tens digit of lblb switch > 0, dump Zeta
+                               ! instead of P
     logical, save :: First = .true. ! Fist-time flag
 
 ! begin the code
 
     if ( first ) then
       first = .false.
-      dumpStop = switchDetail(switches,'LBLB') > -1
-      dumpAll = dumpStop .or. switchDetail(switches,'lblB') > -1
-      dumpBeta = dumpAll .or. ( switchDetail(switches,'lblb') > -1 )
-      dumpZeta = switchDetail(switches,'dbz') > -1
+      dumpLevel = switchDetail(switches,'lblb')
+      dumpStop = dumpLevel > 99
+      dumpZeta = mod(dumpLevel/10,10)
+      if ( dumpLevel >= 0 ) dumpLevel = mod(dumpLevel,10)
       ! clean = switchDetail(switches,'clean') > -1
       clean = ' '
       if ( switchDetail(switches,'clean') > -1 ) clean = 'c'
@@ -185,7 +189,7 @@ contains
             & dBdT, dBdw, dBdn, dBdv, dBdf )
         end if
 
-        if ( dumpBeta ) then
+        if ( dumpLevel > 0 ) then
           call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules(1:n)), &
             & before='LBL Betas for' )
           call output ( frq, before=', FRQ = ', advance='yes' )
@@ -201,7 +205,7 @@ contains
         if ( associated(dBdT) ) &
           & dBdT = es * dBdT + RHb / t_path**2 * beta_path(:,i)
 
-        if ( dumpBeta ) then
+        if ( dumpLevel > 0 ) then
           call display_string ( lit_indices(l_rhi), before='LBL Betas for ' )
           call display_string ( lit_indices(beta_group(i)%lbl(sx)%molecules), &
             & before=' using' )
@@ -215,7 +219,7 @@ contains
     if ( toggle(emit) .and. levels(emit) > 6 ) &
       & call Trace_End ( 'ForwardModel.Get_Beta_Path_Scalar' )
 
-    if ( dumpAll ) then
+    if ( dumpLevel > 1 ) then
       if ( dumpZeta ) then
         call dump ( -log10(p_path(path_inds)), name='Zetas', options=clean )
       else
@@ -1591,6 +1595,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.112  2011/11/22 00:40:40  vsnyder
+! Add units km^{-1} in comments about beta
+!
 ! Revision 2.111  2011/11/11 00:40:41  vsnyder
 ! Treat Extinction and MIFExtinction the same way
 !
