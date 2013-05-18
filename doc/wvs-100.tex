@@ -188,10 +188,10 @@ From Equations (\ref{two}), (\ref{three}) and (\ref{tau})
 =\,& \beta^k(s) \mu^k_{lm}(s)
 \text{ and } \\
 \frac{\partial \T(s,s_m)}{\partial f^k_{lm}}
-=\,& -\T(s,s_m) \frac{\partial}{\partial f^k_{lm}}
+=\,& -\T(s,s_m) \, \frac{\partial}{\partial f^k_{lm}}
                 \int_s^{s_m} \alpha(\sigma) \,\d \sigma
 =    -\T(s,s_m) \int_s^{s_m}
-                \frac{\partial}{\partial f^k_{lm}} \alpha(\sigma) \,\d \sigma \\
+                \frac{\partial}{\partial f^k_{lm}}\, \alpha(\sigma) \,\d \sigma \\
 =\,& -\T(s,s_m) \int_s^{s_m} \beta^k(\sigma) \mu^k_{lm}(\sigma) \d \sigma
 \end{split}\end{equation}
 
@@ -518,6 +518,9 @@ central difference, which can introduce substantial error.
 % $Id$
 
 % $Log$
+% Revision 1.5  2011/02/05 01:31:52  vsnyder
+% Add temperature derivatives section
+%
 % Revision 1.4  2011/01/21 00:47:38  vsnyder
 % Add discussion of Delta B at the end
 %
