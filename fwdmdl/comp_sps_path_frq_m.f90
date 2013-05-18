@@ -128,11 +128,7 @@ contains
           end do ! sv_f
         end do ! sv_zp
 
-        if ( grids_x%lin_log(sps_i)) then
-          if ( any(sps_path(:,sps_i) == 0.0) ) call MLSMessage ( MLSMSG_Warning, &
-            & moduleName, 'For log-lin species, log(sps_path) = 0.0 somewhere' )
-          sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
-        end if
+        if ( grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
 
 !       else
       else if ( n_f /= 1 ) then
@@ -428,11 +424,7 @@ contains
         end do ! sv_f                                                                    
       end do ! sv_zp                                                                     
 
-      if ( grids_x%lin_log(1)) then                                                  
-        if ( any(path_qty == 0.0) ) call MLSMessage ( MLSMSG_Warning, &         
-          & moduleName, 'For log-lin species, log(path_qty) = 0.0 somewhere' )           
-        path_qty = EXP(path_qty)                                       
-      end if                                                                             
+      if ( grids_x%lin_log(1)) path_qty = EXP(path_qty)                                       
 
     else
 
@@ -667,6 +659,11 @@ contains
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.33  2013/05/18 00:34:44  vsnyder
+! Insert NG fine-grid (GL) points between tangent points, thereby
+! regularizing coarse-grid spacing, and reducing significantly the need
+! to use c_inds to extract coarse-grid points from the composite grid.
+!
 ! Revision 2.32  2011/08/20 00:44:58  vsnyder
 ! Remove declarations for unused variables
 !
