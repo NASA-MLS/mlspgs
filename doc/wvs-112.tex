@@ -12,7 +12,7 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-112r1}
+\newcommand{\docname}{wvs-112r2}
 \newcommand{\docdate}{24 April 2013}
 
 \ifx\pdfoutput\undefined
@@ -88,7 +88,7 @@ Reference: \> \h{wvs-093} \\
 
 The full forward model mitigates singularities at the tangent point using
 Equation (10.13) in the 19 August 2004 ATBD:
-
+%
 \begin{equation}\begin{split}\label{10.13}
 \int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \,
  \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \, \d\zeta = \,&
@@ -104,7 +104,7 @@ G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}}
 
 where here, and throughout, $h$ is height, not Planck's constant.
 The temperature derivative of Equation (\ref{10.13}) is
-
+%
 \begin{equation}\begin{split}\label{10.13_dT}
 \frac{\d}{\d T} \int_{\zeta_i}^{\zeta_{i-1}}
 \,&  G(\zeta) \,
@@ -126,7 +126,7 @@ The temperature derivative of Equation (\ref{10.13}) is
 \end{split}\end{equation}
 
 The forward model uses the Pythagorean theorem to compute
-
+%
 \begin{equation}\label{one-a}
 \Delta s_{i \rightarrow i-1} =
 \sqrt{h_i^2 -h_t^2} - \sqrt{h_{i-1}^2 -h_t^2} =
@@ -139,12 +139,9 @@ An alternative is to use the cosine rule:
 
 \begin{equation}\label{two-a}
 \Delta s_{i \rightarrow i-1}
-= \sqrt{h_{i-1}^2 + h_i^2 - 2 h_{i-1} h_i
-           \cos \left( \delta\phi_{i \rightarrow i-1} \right)}
+= \sqrt{h_{i-1}^2 + h_i^2 - 2 h_{i-1} h_i \cos ( \phi_i - \phi_{i-1} )}
+\,.
 \end{equation}
-
-where $\delta\phi_{i \rightarrow i-1} = \phi_i - \phi_{i-1}$ is the
-difference in orbit geodetic angles at points $i$ and $i-1$ on the path.
 
 Equation (\ref{two-a}) is roughly the same amount of work as Equation
 (\ref{one-a}), and experiments show that they produce the same values, at
@@ -206,15 +203,15 @@ were used.
 
 Neither Equation (\ref{five}) nor (\ref{six}) is needed, however.  Using
 the Pythagorean theorem,
-
+%
 \begin{equation}\label{seven}
 s = \sqrt{h^2-h_t^2}
 \end{equation}
 
-wherein both $h$ and $h_t$ (the tangent height) depend upon temperature.
+wherein both $h$ and $h_t$ depend upon temperature.
 
 From Equation (\ref{seven}),
-
+%
 \begin{equation}\label{eight}
 \frac{\d s}{\d h} = \frac{h}{\sqrt{h^2-h_t^2}} = \frac{h}s
 \,.
@@ -235,21 +232,22 @@ From the definition on page 47 of the 19 August 2004 ATBD, immediately
 before Equation (10.16),
 
 \begin{equation}\label{ten}
-\frac{\d h}{\d \zeta} = \frac{h^2 k T \ln 10}{g_0 R_0 \mathcal{M}}
+\frac{\d h}{\d \zeta} = \frac{h^2 k\, T \ln 10}{g_0 R_0^2 \mathcal{M}}
 \end{equation}
 
 wherein $\mathcal{M}$ is the mean molecular mass of the atmosphere, not
 the position of the instrument.  From Equation (\ref{ten}),
 
 \begin{equation}\label{eleven}
-\frac{\d}{\d T} \frac{\d h}{\d \zeta} = \frac{h k \ln 10}{g_0 R_0 \mathcal{M}}
- \left( 2 T \frac{\d h}{\d T} + h \right)
+\frac{\d}{\d T} \frac{\d h}{\d \zeta}
+ = \frac{h k \ln 10}{g_0 R_0^2 \mathcal{M}}
+    \left( 2 T \frac{\d h}{\d T} + h \right)
 = \left( \frac2h \frac{\d h}{\d T} + \frac1T \right) \frac{\d h}{\d \zeta}
 \,.
 \end{equation}
 
 From Equations (\ref{nine}) and (\ref{eleven})
-
+%
 \begin{equation}\begin{split}\label{twelve}
 \frac{\d}{\d T} \left( \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right) = \,&
 \left( \frac{\d}{\d T} \frac{\d s}{\d h} \right) \frac{\d h}{\d \zeta} +
@@ -260,41 +258,141 @@ From Equations (\ref{nine}) and (\ref{eleven})
  = \,&
 \left[ \frac1h \left( 2 - \frac{h_t^2}{s^2} \right) \frac{\d h}{\d T} +
   \frac1T +\frac{h_t}{s^2} \frac{\d h_t}{\d T} \right]
-  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} =
-  \mathcal{D}(\zeta) \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
+\,.
+\end{split}\end{equation}
+
+Since we need $\frac{\d}{\d f^T_{lm}}$, this becomes
+
+\begin{equation}\begin{split}\label{thirteen}
+\frac{\d}{\d f^T_{lm}} = \,&
+  \mathcal{D}(\zeta) \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \text{
+  where}\\
+\mathcal{D}(\zeta) = \,&
+  \frac1h \left( 2 - \frac{h_t^2}{s^2} \right) \frac{\d h}{\d f^T_{lm}} +
+  \frac{\eta^T_{lm}}T +\frac{h_t}{s^2} \frac{\d h_t}{\d f^T_{lm}}
+=
+ \frac{h_t}{h s^2} \left( h \frac{\d h_t}{\d f^T_{lm}} -
+                           h_t \frac{\d h}{\d f^T_{lm}} \right)
+  + \frac2h \frac{\d h}{\d f^T_{lm}} + \frac{\eta^T_{lm}}T
 \,.
 \end{split}\end{equation}
 
 Therefore
 
-\begin{equation}\begin{split}\label{thirteen}
-\frac{\d}{\d T} \int_{\zeta_i}^{\zeta_{i-1}} \mathcal{G}(\zeta)
+\begin{equation}\begin{split}\label{fourteen}
+\frac{\d}{\d f^T_{lm}} \int_{\zeta_i}^{\zeta_{i-1}} \mathcal{G}(\zeta)
  \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \,\d \zeta = \,&
-\int_{\zeta_i}^{\zeta_{i-1}} \frac{\d}{\d T}\, \mathcal{G}(\zeta)
+\int_{\zeta_i}^{\zeta_{i-1}} \frac{\d\mathcal{G}(\zeta)}{\d f^T_{lm}}\,
  \frac{\d s}{\d h} \frac{\d h}{\d\zeta} +
- \mathcal{G}(\zeta) \frac{\d}{\d T}
+ \mathcal{G}(\zeta) \frac{\d}{\d f^T_{lm}}
   \left( \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \right) \,\d \zeta \\
 = \,&
  \int_{\zeta_i}^{\zeta_{i-1}}
   \left( \mathcal{G}(\zeta) \mathcal{D}(\zeta) +
-         \frac{\d}{\d T}\, \mathcal{G}(\zeta) \right)
+         \frac{\d\mathcal{G}(\zeta)}{\d f^T_{lm}}\,  \right)
   \frac{\d s}{\d h} \frac{\d h}{\d\zeta}\d \zeta \\
 = \,& \left( \mathcal{G}(\zeta_i) \mathcal{D}(\zeta_i) +
-         \frac{\d}{\d T}\, \mathcal{G}(\zeta_i) \right)
+         \frac{\d\mathcal{G}(\zeta_i)}{\d f^T_{lm}} \right)
       \Delta s_{i \rightarrow i-1} \\
  + \,&
   \int_{\zeta_i}^{\zeta_{i-1}}
    \left( \mathcal{G}(\zeta) \mathcal{D}(\zeta) -
           \mathcal{G}(\zeta_i) \mathcal{D}(\zeta_i) +
-          \frac{\d}{\d T}\, \mathcal{G}(\zeta) -
-         \frac{\d}{\d T}\, \mathcal{G}(\zeta_i) \right)
+          \frac{\d\mathcal{G}(\zeta)}{\d f^T_{lm}} -
+         \frac{\d\mathcal{G}(\zeta_i)}{\d f^T_{lm}} \right)
     \frac{\d s}{\d h} \frac{\d h}{\d\zeta} \,\d \zeta
 \,.
 \end{split}\end{equation}
+
+$\mathcal{D}(\zeta_i)$ is well behaved except where $\zeta_i = \zeta_t$,
+and therefore $s = 0$.  To investigate the behavior of
+$\mathcal{D}(\zeta)$ as $h \rightarrow h_t$, use Equation (5.27) from the
+19 August 2004 ATBD (hydrostatic equilibrium):
+%
+\newcommand{\R}{\stackrel{\star}{R_0}}
+\begin{equation}
+h(\zeta,\phi) =
+ \frac{g_0 \R^2}
+      {g_0 \R - k \ln 10 \sum_l^{NH^T} \sum_m^{NP^T}
+        ( f^T_{lm} \eta^T_m(\phi) P_l)} + R
+\end{equation}
+
+where $P_l$ is given by Equation (5.28) in the 19 August 2004 ATBD and $R
+= -\R + R_0 - R^{\oplus}$, and its derivative (Equation (5.31) from the 19
+August 2004 ATBD):
+
+\begin{equation}\label{sixteen}
+\frac{\d h}{\d f^T_{lm}} =
+ \frac{g_0 \R^2 k \ln 10\, \eta^T_m(\phi) P_l}
+      {\left[ g_0 \R - k \ln 10 \sum_l^{NH^T} \sum_m^{NP^T}
+        ( f^T_{lm} \eta^T_m(\phi) P_l) \right]^2}
+= \frac{k \ln 10\, \eta^T_m(\phi) P_l}{g_0 \R^2} ( h(\zeta,\phi) - R ) ^2
+\,.
+\end{equation}
+
+Substituting Equation (\ref{sixteen}) into the first term in Equation
+(\ref{thirteen}), we have
+
+\begin{equation}\begin{split}\label{seventeen}
+\frac{h_t}{h} \, \frac1{s^2} \left[ h \frac{\d h_t}{\d f^T_{lm}} -
+                           h_t \frac{\d h}{\d f^T_{lm}} \right] = \,&
+\frac{h_t}h \, \frac{k \ln 10\, \eta^T_m(\phi) P_l}{g_0 \R^2} \,
+ \frac{h(h_t-R)^2-h_t(h-R)^2}{h^2-h_t^2} \\
+=\,& \frac{h_t}h \, \frac{k \ln 10\, \eta^T_m(\phi) P_l}{g_0 \R^2} \,
+  \frac{R^2 - h h_t}{h + h_t}
+\end{split}\end{equation}
+
+or
+
+\begin{equation}\begin{split}\label{eighteen}
+\mathcal{D}(\zeta) = \,&
+\frac{h_t}h \, \frac{k \ln 10\, \eta^T_m(\phi) P_l}{g_0 \R^2} \,
+  \frac{R^2 - h h_t}{h + h_t} + \frac2{h} \frac{\d h_t}{\d f^T_{lm}}
+   + \frac{\eta^T_{lm}}T \\
+= \,&
+\frac{k \ln 10\, \eta^T_m(\phi) P_l}{h g_0 \R^2}
+ \left[ h_t \frac{R^2 - h h_t}{h + h_t} + 2 ( h_t - R )^2 \right]
+ + \frac{\eta^T_{lm}}T
+\,.
+\end{split}\end{equation}
+
+In the limit as $h \rightarrow h_t$, this becomes
+
+\begin{equation}\label{nineteen}
+\mathcal{D}(\zeta_t) = 
+\frac{k \ln 10\, \eta^T_m(\phi) P_l}{h_t g_0 \R^2} \left[
+  \frac{R^2 - h_t^2}2 +  2 ( h_t - R )^2 \right]
+   + \frac{\eta^T_{lm}}T
+\,,
+\end{equation}
+
+which is clearly well-behaved at the tangent point.
+
+Using Equation (\ref{sixteen}), Equation (\ref{eighteen}) can be written
+
+\begin{equation}
+\mathcal{D}(\zeta) =  \left[\frac{R^2 - h h_t}{(R - h)^2} \, \frac1{h+h_t}
+ + \frac2{h} \right] \frac{\d h_t}{\d f^T_{lm}} + \frac{\eta^T_{lm}}T
+\,,
+\end{equation}
+
+or
+
+\begin{equation}
+\mathcal{D}(\zeta_t) =
+\frac1{2 h_t} \left[ \frac{R + h_t}{R - h_t}
+ + 4 \right] \frac{\d h_t}{\d f^T_{lm}} + \frac{\eta^T_{lm}}T
+\,.
+\end{equation}
+
+This is poorly behaved if the tangent point is at $h_t = R$.  From
+Equation (\ref{nineteen}), however, it is clear that $\lim_{h_t
+\rightarrow R} \mathcal{D}(\zeta_t) = \frac{\eta^T_{lm}}T$.
 
 \label{lastpage}
 \end{document}
 
 % $Id$
 
-% $Log:
+% $Log$
