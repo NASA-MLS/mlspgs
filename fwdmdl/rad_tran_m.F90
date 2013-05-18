@@ -258,13 +258,12 @@ contains
 !--------------------------------------------------  DRad_tran_df  -----
 ! This is the radiative transfer derivative wrt mixing ratio model
 
-  subroutine DRad_tran_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,     & 
-                          & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,        & 
-                          & ds_dz_gw, inc_rad_path, dAlpha_df_c, dAlpha_df_f, & 
-                          & i_start, tan_pt, i_stop,                          &
-                          & LD, d_delta_df, nz_d_delta_df, nnz_d_delta_df,    &
-                          & drad_df, dB_df, Tau, nz_zxp, nnz_zxp,             & 
-                          & alpha_path_c, Beta_c_e,                           &
+  subroutine DRad_tran_df ( max_f, gl_inds, del_zeta, Grids_f, eta_zxp,       & 
+                          & do_calc_f, do_gl, del_s, ref_cor, ds_dz_gw,       & 
+                          & inc_rad_path, dAlpha_df_c, dAlpha_df_f, i_start,  & 
+                          & tan_pt, i_stop, LD, d_delta_df, nz_d_delta_df,    &
+                          & nnz_d_delta_df, drad_df, dB_df, Tau, nz_zxp,      &
+                          & nnz_zxp, alpha_path_c, Beta_c_e,                  &
                           & dBeta_c_a_dIWC, dBeta_c_s_dIWC, dTScat_df, W0 )
 
     use d_t_script_dtnp_m, only: dT_script
@@ -276,7 +275,6 @@ contains
 ! Inputs
 
     integer, intent(in) :: Max_f            ! Leading dimension of dAlpha_df_f
-    integer, intent(in) :: indices_c(:)     ! coarse grid indicies
     integer, intent(in) :: gl_inds(:)       ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
@@ -336,11 +334,10 @@ contains
 
 ! Begin code
 
-    call get_all_d_delta_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  & 
-                            & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,     & 
-                            & ds_dz_gw, dAlpha_df_c, dAlpha_df_f,            & 
-                            & LD, d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
-                            & nothing )
+    call get_all_d_delta_df ( max_f, gl_inds, del_zeta, Grids_f, eta_zxp,    & 
+                            & do_calc_f, do_gl, del_s, ref_cor, ds_dz_gw,    & 
+                            & dAlpha_df_c, dAlpha_df_f, LD, d_delta_df,      & 
+                            & nz_d_delta_df, nnz_d_delta_df, nothing )
 
     Do_TScat = size(dB_df) > 0
 
@@ -459,14 +456,12 @@ contains
 !------------------------------------------------  D2Rad_tran_df2  -----
 ! This is the radiative transfer second derivative wrt mixing ratio model
 
-  subroutine D2Rad_tran_df2 ( max_f, indices_c, gl_inds, del_zeta, Grids_f,     &
-                            & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,        &
-                            & ds_dz_gw, inc_rad_path,                           &
-                            & d2Alpha_df2_c, d2Alpha_df2_f,                     &
-                            & i_start, tan_pt, i_stop, LD, d_delta_df,          &
-                            & nz_d_delta_df, nnz_d_delta_df,                    &
-                            & d2_delta_df2,                                     &
-                            & d2rad_df2 )
+  subroutine D2Rad_tran_df2 ( max_f, gl_inds, del_zeta, Grids_f, eta_zxp, &
+                            & do_calc_f, do_gl, del_s, ref_cor, ds_dz_gw, &
+                            & inc_rad_path, d2Alpha_df2_c, d2Alpha_df2_f, &
+                            & i_start, tan_pt, i_stop, LD, d_delta_df,    &
+                            & nz_d_delta_df, nnz_d_delta_df,              &
+                            & d2_delta_df2, d2rad_df2 )
 
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP
@@ -475,7 +470,6 @@ contains
 ! Inputs
 
     integer, intent(in) :: Max_f             ! Leading dimension of d2Alpha_df2_f
-    integer, intent(in) :: indices_c(:)      ! coarse grid indicies
     integer, intent(in) :: gl_inds(:)        ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid. This is for the whole coarse path, not just
@@ -527,11 +521,11 @@ contains
 
 ! Begin code
 
-    call get_all_d2_delta_df2( max_f, indices_c, gl_inds, del_zeta, Grids_f,     &
-                              & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,       &
-                              & ds_dz_gw, d2Alpha_df2_c, d2Alpha_df2_f,          &
-                              & LD, nz_d_delta_df, nnz_d_delta_df, d2_delta_df2, &
-                              & nothing )
+    call get_all_d2_delta_df2( max_f, gl_inds, del_zeta, Grids_f, eta_zxp,  &
+                             & do_calc_f, do_gl, del_s, ref_cor, ds_dz_gw,  &
+                             & d2Alpha_df2_c, d2Alpha_df2_f, LD,            &
+                             & nz_d_delta_df, nnz_d_delta_df, d2_delta_df2, &
+                             & nothing )
 
     do sps_i = 1, ubound(Grids_f%l_z,1)
 
@@ -569,9 +563,9 @@ contains
 
 !-------------------------------------------- Get_all_d2_delta_df2 -----
 
-  subroutine Get_all_d2_delta_df2 ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  &
-                              & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,     &
-                              & ds_dz_gw, d2Alpha_df2_c, d2Alpha_df2_f,            &
+  subroutine Get_all_d2_delta_df2 ( max_f, gl_inds, del_zeta, Grids_f,     &
+                              & eta_zxp, do_calc_f, do_gl, del_s, ref_cor, &
+                              & ds_dz_gw, d2Alpha_df2_c, d2Alpha_df2_f,    &
                               & LD, nz_d_delta_df, nnz_d_delta_df, d2_delta_df2, &
                               & nothing )
 
@@ -581,7 +575,6 @@ contains
 ! Inputs
 
     integer, intent(in) :: Max_f             ! Leading dimension of d2Alpha_df2_f
-    integer, intent(in) :: indices_c(:)      ! coarse grid indicies
     integer, intent(in) :: gl_inds(:)        ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
@@ -622,8 +615,8 @@ contains
     integer :: sps_n
     integer :: q, r                  ! state vector indices: sv_i, sv_j
     integer :: diracDelta            !   =1 if q=r;  =0 otherwise
-    integer, target, dimension(1:size(indices_c)) ::  all_inds_B_q,  all_inds_B_r
-    integer, target, dimension(1:size(indices_c)) :: more_inds_B_q, more_inds_B_r
+    integer, target, dimension(1:size(del_s)) ::  all_inds_B_q,  all_inds_B_r
+    integer, target, dimension(1:size(del_s)) :: more_inds_B_q, more_inds_B_r
     integer, pointer :: all_inds_q(:), all_inds_r(:)  ! all_inds => part of all_inds_B;
                                      ! Indices on GL grid for stuff
                                      ! used to make GL corrections
@@ -633,12 +626,12 @@ contains
                                      ! Indices on the coarse path where GL
                                      ! corrections get applied.
 
-    real(rp) :: singularity(1:size(indices_c)) ! integrand on left edge of coarse
+    real(rp) :: singularity(1:size(del_s)) ! integrand on left edge of coarse
                                      ! grid panel -- singular at tangent pt.
-    logical :: do_calc_q(1:size(indices_c)) ! Flags on coarse path where do_calc_c
+    logical :: do_calc_q(1:size(del_s)) ! Flags on coarse path where do_calc_c
                                      ! or (do_gl and any corresponding
                                      ! do_calc_f).
-    logical :: do_calc_r(1:size(indices_c)) ! Flags on coarse path where do_calc_c
+    logical :: do_calc_r(1:size(del_s)) ! Flags on coarse path where do_calc_c
                                      ! or (do_gl and any corresponding
                                      ! do_calc_f).
 
@@ -670,7 +663,7 @@ contains
         
             ! find where the non zeros are along the path (for q)
 
-            call get_do_calc_indexed ( size(do_gl), do_calc_f(:,q), indices_c, &
+            call get_do_calc_indexed ( size(do_gl), do_calc_f(:,q), &
               & gl_inds, do_gl, do_calc_q, n_inds_q, nz_d_delta_df(:,q) )
             
             nnz_d_delta_df(q) = n_inds_q
@@ -691,7 +684,7 @@ contains
             !
             ! find where the non zeros are along the path (for r)
             !
-            call get_do_calc_indexed ( size(do_gl), do_calc_f(:,r), indices_c, &
+            call get_do_calc_indexed ( size(do_gl), do_calc_f(:,r), &
               & gl_inds, do_gl, do_calc_r, n_inds_r, nz_d_delta_df(:,r) )
 
             nnz_d_delta_df(r) = n_inds_r
@@ -729,11 +722,10 @@ contains
                   diracDelta = 0.0
                 end if
 
-                call get_d2_delta_df2( diracDelta, inds_q, indices_c, gl_inds, &
-                  & all_inds_q, more_inds_q, eta_zxp(:,q), eta_zxp(:,r), &
-                  & d2Alpha_df2_c(:,sps_i), d2Alpha_df2_f(:,sps_i), &
-                  & del_s, del_zeta, &
-                  & ds_dz_gw, grids_f%values(q), grids_f%values(r), &
+                call get_d2_delta_df2( diracDelta, inds_q, gl_inds,        &
+                  & all_inds_q, more_inds_q, eta_zxp(:,q), eta_zxp(:,r),   &
+                  & d2Alpha_df2_c(:,sps_i), d2Alpha_df2_f(:,sps_i), del_s, &
+                  & del_zeta, ds_dz_gw, grids_f%values(q), grids_f%values(r), &
                   & singularity, d2_delta_df2(:,q,r), ref_cor )
 
               end if   ! sps_i == sps_j
@@ -753,16 +745,14 @@ contains
 !--------------------------------------------------  drad_tran_dt  -----
 ! This is the radiative transfer derivative wrt temperature model
 
-  subroutine DRad_tran_dt ( indices_c, gl_inds, del_zeta, h_path_c, &
-                         &  dh_dt_path_c, alpha_path_c, dAlpha_dT_path_c, &
-                         &  eta_zxp, do_calc_t_c, &
-                         &  do_calc_hyd_c, del_s, ref_cor, h_tan, dh_dt_tan, &
-                         &  do_gl, h_path_f, t_path_f, dh_dt_path_f, &
-                         &  alpha_path_f, dAlpha_dT_path_f, &
-                         &  do_calc_t_f, &
-                         &  ds_dh, dh_dz_gw, ds_dz_gw, dt_scr_dt, &
-                         &  tau, inc_rad_path, i_start, tan_pt, i_stop, &
-                         &  deriv_flags, pfa_update, drad_dt )
+  subroutine DRad_tran_dt ( gl_inds, del_zeta, h_path_c, dh_dt_path_c,     &
+                         &  alpha_path_c, dAlpha_dT_path_c, eta_zxp,       &
+                         &  do_calc_t_c, do_calc_hyd_c, del_s, ref_cor,    &
+                         &  h_tan, dh_dt_tan, do_gl, h_path_f, t_path_f,   &
+                         &  dh_dt_path_f, alpha_path_f, dAlpha_dT_path_f,  &
+                         &  do_calc_t_f, ds_dh, dh_dz_gw, ds_dz_gw,        &
+                         &  dt_scr_dt, tau, inc_rad_path, i_start, tan_pt, &
+                         &  i_stop, deriv_flags, pfa_update, drad_dt )
 
     use GLNP, only: NG
     use MLSKinds, only: RP
@@ -770,7 +760,6 @@ contains
 
 ! Inputs
 
-    integer, intent(in) :: indices_c(:) ! coarse grid indicies
     integer, intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
@@ -843,7 +832,7 @@ contains
                                      ! Indices on the coarse path where GL
                                      ! corrections get applied.
 
-    real(rp) :: d_delta_dt(size(indices_c,1),size(eta_zxp,2)) ! path x sve.
+    real(rp) :: d_delta_dt(size(del_s,1),size(eta_zxp,2)) ! path x sve.
       ! derivative of delta (incremental opacity) wrt temperature. (K)
 
     real(rp) :: fa, fb
@@ -887,10 +876,10 @@ contains
         if ( no_to_gl > 0 ) &
           & call get_inds ( do_gl, do_calc, more_inds, all_inds )
 
-        call get_d_delta_dx ( inds, indices_c, gl_inds, &
-          & all_inds, more_inds, eta_zxp(:,sv_i), &
-          & dAlpha_dT_path_c, dAlpha_dT_path_f, del_s, del_zeta, &
-          & ds_dz_gw, singularity, d_delta_dt(:,sv_i) ) ! No ref_cor yet
+        call get_d_delta_dx ( inds, gl_inds, all_inds, more_inds, &
+          & eta_zxp(:,sv_i), dAlpha_dT_path_c, dAlpha_dT_path_f,  &
+          & del_s, del_zeta, ds_dz_gw, singularity, &
+          & d_delta_dt(:,sv_i) ) ! No ref_cor yet
 
         i_begin = max(inds(1)-1, i_start)
 
@@ -1032,18 +1021,17 @@ contains
 ! This is the radiative transfer derivative wrt spectroscopy model
 !  (Here dx could be: dw, dn or dv (dNu0) )
 
-  subroutine DRad_tran_dx ( indices_c, gl_inds, del_zeta, Grids_f,        &
-                         &  eta_zxp, sps_path, sps_map, do_calc_f,        &
-                         &  dbeta_path_c, dbeta_path_f, do_gl, del_s,     &
-                         &  ref_cor, ds_dz_gw, inc_rad_path, tan_pt,      &
-                         &  i_stop, drad_dx )
+  subroutine DRad_tran_dx ( gl_inds, del_zeta, Grids_f, eta_zxp, sps_path,  &
+                         &  sps_map, do_calc_f, dbeta_path_c, dbeta_path_f, &
+                         &  do_gl, del_s, ref_cor, ds_dz_gw, inc_rad_path,  &
+                         &  tan_pt, i_stop, drad_dx )
+
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSKinds, only: RP
     use SCRT_DN_M, ONLY: DSCRT_DX
 
 ! Inputs
 
-    integer, intent(in) :: indices_c(:)      ! coarse grid indicies
     integer, intent(in) :: gl_inds(:)        ! Gauss-Legendre grid indicies
     real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
@@ -1110,7 +1098,7 @@ contains
 
 ! find where the non zeros are along the path
 
-        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
+        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), &
           & gl_inds, do_gl, do_calc, n_inds, inds_B )
 
         d_delta_dx = 0.0_rp
@@ -1135,11 +1123,10 @@ contains
         ! We're not really computing d_delta_df for lin-log mixing
         ! ratio.  It turns out that get_d_delta_df_linlog does the
         ! correct computation if we substitute dbeta_path for beta_path.
-        call get_d_delta_df_linlog ( inds, indices_c, gl_inds, &
-          & all_inds, more_inds, eta_zxp(:,sv_i), sps_path(:,sps_m), &
-          & dbeta_path_c(:,sps_i), dbeta_path_f(:,sps_i), del_s, del_zeta, &
-          & ds_dz_gw, ref_cor, grids_f%values(sv_i), singularity, &
-          & d_delta_dx )
+        call get_d_delta_df_linlog ( inds, gl_inds, all_inds, more_inds, &
+          & eta_zxp(:,sv_i), sps_path(:,sps_m), dbeta_path_c(:,sps_i),   &
+          & dbeta_path_f(:,sps_i), del_s, del_zeta, ds_dz_gw, ref_cor,   &
+          & grids_f%values(sv_i), singularity, d_delta_dx )
 
         call dscrt_dx ( tan_pt, d_delta_dx, inc_rad_path, &
                      &  1, i_stop, drad_dx(sv_i))
@@ -1152,11 +1139,10 @@ contains
 
 !--------------------------------------------  Get_all_d_delta_df  -----
 
-  subroutine Get_all_d_delta_df ( max_f, indices_c, gl_inds, del_zeta, Grids_f,  & 
-                                & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,     & 
-                                & ds_dz_gw, dAlpha_df_c, dAlpha_df_f,            & 
-                                & LD, d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
-                                & nothing )
+  subroutine Get_all_d_delta_df ( max_f, gl_inds, del_zeta, Grids_f, eta_zxp, & 
+                                & do_calc_f, do_gl, del_s, ref_cor, ds_dz_gw, & 
+                                & dAlpha_df_c, dAlpha_df_f, LD, d_delta_df,   & 
+                                & nz_d_delta_df, nnz_d_delta_df, nothing )
 
     !{ Compute
     !  \begin{equation}
@@ -1175,7 +1161,6 @@ contains
 ! Inputs
 
     integer, intent(in) :: Max_f            ! Leading dimension of dAlpha_df_f
-    integer, intent(in) :: indices_c(:)     ! coarse grid indicies
     integer, intent(in) :: gl_inds(:)       ! Gauss-Legendre grid indices
     real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
@@ -1209,8 +1194,8 @@ contains
 ! Internals
 
     integer :: n_inds, no_to_gl, sps_i, sv_i
-    integer, target, dimension(1:size(indices_c)) :: all_inds_B
-    integer, target, dimension(1:size(indices_c)) :: more_inds_B
+    integer, target, dimension(1:size(del_s)) :: all_inds_B
+    integer, target, dimension(1:size(del_s)) :: more_inds_B
     integer, pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
                                      ! Indices on GL grid for stuff
                                      ! used to make GL corrections
@@ -1220,9 +1205,9 @@ contains
                                      ! Indices on the coarse path where GL
                                      ! corrections get applied.
 
-    real(rp) :: singularity(1:size(indices_c)) ! integrand on left edge of coarse
+    real(rp) :: singularity(1:size(del_s)) ! integrand on left edge of coarse
                                          ! grid panel -- singular at tangent pt.
-    logical :: do_calc(1:size(indices_c)) ! Flags on coarse path where do_calc_c
+    logical :: do_calc(1:size(del_s))    ! Flags on coarse path where do_calc_c
                                          ! or (do_gl and any corresponding
                                          ! do_calc_f).
 
@@ -1248,7 +1233,7 @@ contains
 
         ! find where the non zeros are along the path
 
-        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), indices_c, &
+        call get_do_calc_indexed ( size(do_gl), do_calc_f(:,sv_i), &
           & gl_inds, do_gl, do_calc, n_inds, nz_d_delta_df(:,sv_i) )
 
         nnz_d_delta_df(sv_i) = n_inds
@@ -1270,11 +1255,10 @@ contains
         !  $\frac{\partial \delta_i}{\partial f^k_{lm}}$ where $i$ is the
         !  index of a path point, $k$ is the species index, and $lm$ are indices
         !  for $(\phi_l,\zeta_m)$.  {\tt sv_i} flattens $(k,l,m)$ to one index.
-        call get_d_delta_df ( inds, indices_c, gl_inds, &
-          & all_inds, more_inds, eta_zxp(:,sv_i), &
-          & dAlpha_df_c(:,sps_i), dAlpha_df_f(:,sps_i), del_s, del_zeta, &
-          & ds_dz_gw, grids_f%lin_log(sps_i), grids_f%values(sv_i), &
-          & singularity, d_delta_df(:,sv_i), ref_cor )
+        call get_d_delta_df ( inds, gl_inds, all_inds, more_inds, &
+          & eta_zxp(:,sv_i), dAlpha_df_c(:,sps_i), dAlpha_df_f(:,sps_i), &
+          & del_s, del_zeta, ds_dz_gw, grids_f%lin_log(sps_i),    &
+          & grids_f%values(sv_i), singularity, d_delta_df(:,sv_i), ref_cor )
 
       end do ! sv_i
 
@@ -1320,19 +1304,17 @@ contains
   end subroutine Get_Do_Calc
 
   ! .............................................  Get_d_delta_dx  .....
-  subroutine Get_d_delta_dx ( Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, eta_zxp, &
-    & dAlpha_dx_path_c, dAlpha_dx_path_f, Del_s, Del_Zeta, ds_dz_gw, &
+  subroutine Get_d_delta_dx ( Inds, GL_Inds, All_inds, More_inds, eta_zxp, &
+    & dAlpha_dx_path_c, dAlpha_dx_path_f, Del_s, Del_Zeta, ds_dz_gw,       &
     & Singularity, d_delta_dx, Ref_cor )
 
     ! Get d_delta_dx.  For species for which beta does not depend upon
     ! mixing ratio this gets d_delta_df if dAlpha_dx_path_* is beta_path_*.
 
-    use GLNP, only: NG
+    use GLNP, only: NG, NGP1
     use MLSKinds, only: RP
 
     integer, intent(in) :: Inds(:)       ! Indices on coarse path needing calc
-    integer, intent(in) :: Indices_c(:)  ! Subset from gl to coarse
     integer, intent(in) :: GL_Inds(:)    ! Gauss-Legendre grid indices
     integer, intent(in) :: All_inds(:)   ! Indices on GL grid for stuff
                                          ! used to make GL corrections
@@ -1360,7 +1342,7 @@ contains
 
     do i = 1, size(inds)
       ii = inds(i)
-      singularity(ii) = dAlpha_dx_path_c(ii) * eta_zxp(indices_c(ii))
+      singularity(ii) = dAlpha_dx_path_c(ii) * eta_zxp(ii*ngp1-ng)
       d_delta_dx(ii) = singularity(ii) * del_s(ii)
     end do ! i
 
@@ -1400,25 +1382,24 @@ contains
   end subroutine Get_d_delta_dx
 
   ! .............................................  Get_d_delta_df  .....
-  subroutine Get_d_delta_df ( Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, eta_zxp, &
+  subroutine Get_d_delta_df ( Inds, GL_Inds, All_inds, More_inds, eta_zxp, &
     & dAlpha_df_path_c, dAlpha_df_path_f, Del_s, Del_Zeta, ds_dz_gw, lin_log, grids_v, &
     & Singularity, d_delta_dx, Ref_cor )
 
     ! Get d_delta_dx.  For species for which beta does not depend upon
     ! mixing ratio this gets d_delta_df if dAlpha_dx_path_* is beta_path_*.
 
-    use GLNP, only: NG
+    use GLNP, only: NG, NGP1
     use MLSKinds, only: RP
 
     integer, intent(in) :: Inds(:)       ! Indices on coarse path needing calc
-    integer, intent(in) :: Indices_c(:)  ! Subset from gl to coarse
     integer, intent(in) :: GL_Inds(:)    ! Gauss-Legendre grid indices
     integer, intent(in) :: All_inds(:)   ! Indices on GL grid for stuff
                                          ! used to make GL corrections
     integer, intent(in) :: More_inds(:)  ! Indices on the coarse path where
                                          ! GL corrections get applied.
-    real(rp), intent(in) :: eta_zxp(*)   ! representation basis function.
+    real(rp), intent(in) :: eta_zxp(*)   ! representation basis function on
+                                         ! fine grid.
     real(rp), intent(in) :: dAlpha_df_path_c(*) ! dAlpha_df on coarse grid.
     real(rp), intent(in) :: dAlpha_df_path_f(*) ! dAlpha_df on GL grid.
     real(rp), intent(in) :: Del_s(:)     ! unrefracted path length.
@@ -1442,7 +1423,7 @@ contains
 
     do i = 1, size(inds)
       ii = inds(i)
-      singularity(ii) = dAlpha_df_path_c(ii) * eta_zxp(indices_c(ii))
+      singularity(ii) = dAlpha_df_path_c(ii) * eta_zxp(ii*ngp1-ng)
       d_delta_dx(ii) = singularity(ii) * del_s(ii)
     end do ! i
 
@@ -1485,19 +1466,17 @@ contains
   end subroutine Get_d_delta_df
 
   ! ...........................................  Get_d_delta_df_f  .....
-  subroutine Get_d_delta_df_f ( Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, Eta_zxp, Sps_path, &
-    & Beta_path_c, Beta_path_f, dBeta_df_c, dBeta_df_f, &
-    & Del_s, Del_Zeta, ds_dz_gw, Ref_cor, Singularity, d_delta_df )
+  subroutine Get_d_delta_df_f ( Inds, GL_Inds, All_inds, More_inds, Eta_zxp, &
+    & Sps_path, Beta_path_c, Beta_path_f, dBeta_df_c, dBeta_df_f, Del_s,     &
+    & Del_Zeta, ds_dz_gw, Ref_cor, Singularity, d_delta_df )
 
     ! Get d_delta_df for the case of species for which beta
     ! depends upon mixing ratio.
 
-    use GLNP, only: NG
+    use GLNP, only: NG, NGP1
     use MLSKinds, only: RP
 
     integer, intent(in) :: Inds(:) ! Indices on coarse path needing calc
-    integer, intent(in) :: Indices_c(:) ! Subset from gl to coarse
     integer, intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
     integer, intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
                                         ! used to make GL corrections
@@ -1528,7 +1507,7 @@ contains
 
     do i = 1, size(inds)
       ii = inds(i)
-      iii = indices_c(ii)
+      iii = ii*ngp1 - ng
       singularity(ii) = eta_zxp(iii) &
                 & * ( beta_path_c(ii) + &
                 &     sps_path(iii) * dBeta_df_c(ii) )
@@ -1574,19 +1553,17 @@ contains
   end subroutine Get_d_delta_df_f
 
   ! ......................................  Get_d_delta_df_linlog  .....
-  subroutine Get_d_delta_df_linlog ( Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, Eta_zxp, Sps_path, &
-    & Beta_path_c, Beta_path_f, Del_s, Del_Zeta, ds_dz_gw, Ref_cor, &
-    & Grids_v, Singularity, d_delta_df )
+  subroutine Get_d_delta_df_linlog ( Inds, GL_Inds, All_inds, More_inds, &
+    & Eta_zxp, Sps_path, Beta_path_c, Beta_path_f, Del_s, Del_Zeta,      &
+    & ds_dz_gw, Ref_cor, Grids_v, Singularity, d_delta_df )
 
     ! Get d_delta_df for the case of lin_log species for which beta
     ! does not depend upon mixing ratio.
 
-    use GLNP, only: NG
+    use GLNP, only: NG, NGP1
     use MLSKinds, only: RP
 
     integer, intent(in) :: Inds(:) ! Indices on coarse path needing calc
-    integer, intent(in) :: Indices_c(:) ! Subset from gl to coarse
     integer, intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
     integer, intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
                                         ! used to make GL corrections
@@ -1616,7 +1593,7 @@ contains
 
     do i = 1, size(inds)
       ii = inds(i)
-      iii = indices_c(ii)
+      iii = ii*ngp1 - ng
       singularity(ii) = eta_zxp(iii) * sps_path(iii) * &
                 & beta_path_c(ii)
       d_delta_df(ii) = singularity(ii) * del_s(ii)
@@ -1662,19 +1639,17 @@ contains
   end subroutine Get_d_delta_df_linlog
 
   ! ....................................  Get_d_delta_df_linlog_f  .....
-  subroutine Get_d_delta_df_linlog_f ( Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, Eta_zxp, Sps_path, &
-    & Beta_path_c, Beta_path_f, dBeta_df_c, dBeta_df_f, &
+  subroutine Get_d_delta_df_linlog_f ( Inds, GL_Inds, All_inds, More_inds, &
+    & Eta_zxp, Sps_path, Beta_path_c, Beta_path_f, dBeta_df_c, dBeta_df_f, &
     & Del_s, Del_Zeta, ds_dz_gw, Ref_cor, Grids_v,  Singularity, d_delta_df )
 
     ! Get d_delta_df for the case of lin_log species for which beta
     ! depends upon mixing ratio.
 
-    use GLNP, only: NG
+    use GLNP, only: NG, NGP1
     use MLSKinds, only: RP
 
     integer, intent(in) :: Inds(:) ! Indices on coarse path needing calc
-    integer, intent(in) :: Indices_c(:) ! Subset from gl to coarse
     integer, intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
     integer, intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
                                         ! used to make GL corrections
@@ -1706,7 +1681,7 @@ contains
 
     do i = 1, size(inds)
       ii = inds(i)
-      iii = indices_c(ii)
+      iii = ii*ngp1 - ng
       singularity(ii) = eta_zxp(iii) * sps_path(iii) * &
                 & ( beta_path_c(ii) + sps_path(iii) * dBeta_df_c(ii) )
       d_delta_df(ii) = singularity(ii) * del_s(ii)
@@ -1753,22 +1728,20 @@ contains
   end subroutine Get_d_delta_df_linlog_f
 
 
-! ......................................  Get_d2_delta_df2_linlog  .....
-  subroutine Get_d2_delta_df2 ( diracDelta, Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, Eta_zxp_q, Eta_zxp_r, &
-    & d2Alpha_df2_path_c, d2Alpha_df2_path_f, &
+! .............................................  Get_d2_delta_df2  .....
+  subroutine Get_d2_delta_df2 ( diracDelta, Inds, GL_Inds, All_inds, &
+    & More_inds, Eta_zxp_q, Eta_zxp_r, d2Alpha_df2_path_c, d2Alpha_df2_path_f, &
     & Del_s, Del_Zeta, ds_dz_gw, &
     & Grids_v_q, Grids_v_r, Singularity, d2_delta_df2, Ref_cor )
 
     ! Get d2_delta_df2 for the case of lin_log species for which beta
     ! does not depend upon mixing ratio.
 
-    use GLNP, only: NG
+    use GLNP, only: NG, NGP1
     use MLSKinds, only: RP
 
     integer, intent(in) :: diracDelta   !   =1 if q=r;  =0 otherwise
-    integer, intent(in) :: Inds(:)   ! Indices on coarse path needing calc
-    integer, intent(in) :: Indices_c(:) ! Subset from gl to coarse
+    integer, intent(in) :: Inds(:)      ! Indices on coarse path needing calc
     integer, intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
     integer, intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
                                         ! used to make GL corrections
@@ -1799,7 +1772,7 @@ contains
     do i = 1, size(inds)
 
       ii = inds(i)
-      iii = indices_c(ii)
+      iii = ii*ngp1 - ng
 
       singularity(ii) = d2Alpha_df2_path_c(ii) * eta_zxp_q(iii) * (eta_zxp_r(iii) - diracDelta)
       d2_delta_df2(ii) = singularity(ii) * del_s(ii)
@@ -1830,20 +1803,19 @@ contains
 
 
 ! ......................................  Get_d2_delta_df2_linlog  .....
-  subroutine Get_d2_delta_df2_linlog ( diracDelta, Inds, Indices_c, GL_Inds, &
-    & All_inds, More_inds, Eta_zxp_q, Eta_zxp_r, Sps_path, &
-    & Beta_path_c, Beta_path_f, Del_s, Del_Zeta, ds_dz_gw, Ref_cor, &
-    & Grids_v_q, Grids_v_r, Singularity, d2_delta_df2 )
+  subroutine Get_d2_delta_df2_linlog ( diracDelta, Inds, GL_Inds, All_inds, &
+    & More_inds, Eta_zxp_q, Eta_zxp_r, Sps_path, Beta_path_c, Beta_path_f,  &
+    & Del_s, Del_Zeta, ds_dz_gw, Ref_cor, Grids_v_q, Grids_v_r, &
+    & Singularity, d2_delta_df2 )
 
     ! Get d2_delta_df2 for the case of lin_log species for which beta
     ! does not depend upon mixing ratio.
 
-    use GLNP, only: NG
+    use GLNP, only: NG, NGP1
     use MLSKinds, only: RP
 
     integer, intent(in) :: diracDelta   !   =1 if q=r;  =0 otherwise
     integer, intent(in) :: Inds(:)   ! Indices on coarse path needing calc
-    integer, intent(in) :: Indices_c(:) ! Subset from gl to coarse
     integer, intent(in) :: GL_Inds(:)   ! Gauss-Legendre grid indices
     integer, intent(in) :: All_inds(:)  ! Indices on GL grid for stuff
                                         ! used to make GL corrections
@@ -1874,7 +1846,7 @@ contains
     do i = 1, size(inds)
 
       ii = inds(i)
-      iii = indices_c(ii)
+      iii = ii*ngp1 - ng
 
       singularity(ii) = eta_zxp_q(iii) * (eta_zxp_r(iii) - diracDelta) * &
                       & sps_path(iii) * beta_path_c(ii)
@@ -1907,25 +1879,24 @@ contains
 ! =====     Private Procedures     =====================================
 
   ! ----------------------------------------  Get_Do_Calc_Indexed  -----
-  subroutine Get_Do_Calc_Indexed ( N, Do_Calc_all, C_Inds, F_Inds, Do_GL, &
+  subroutine Get_Do_Calc_Indexed ( N, Do_Calc_all, F_Inds, Do_GL, &
     & Do_Calc, N_Inds, Inds )
 
-  ! Set Do_Calc if Do_Calc_All(c_inds) or Do_GL and any of the corresponding
+  ! Set Do_Calc if Do_Calc_All(1::ngp1) or Do_GL and any of the corresponding
   ! Do_Calc_All(f_inds) flags are set.
   ! Get_Do_Calc_Indexed determines that get_d_delta_df needs to integrate a
-  ! panel if do_calc_all(c_inds) is true, which means the interpolating
+  ! panel if do_calc_all(1::ngp1) is true, which means the interpolating
   ! coefficient is nonzero, or if do_gl is true and do_calc_all(f_inds) is
   ! true, which means that GL was needed, even if an interpolating
   ! coefficient is nonzero.
 
-    use GLNP, ONLY: Ng
+    use GLNP, ONLY: Ng, NGP1
 
     integer, intent(in) :: N ! sizes on coarse grid
 
 #if (defined NAG) || defined (IFC)
 !     Assumed-shape arguments are slower than assumed size
     logical, intent(in) :: Do_Calc_all(*) ! On the entire path
-    integer, intent(in) :: C_Inds(*)      ! Indices in Do_Calc_All for coarse grid
     integer, intent(in) :: F_Inds(*)      ! Indices in Do_Calc_All for find grid
     logical, intent(in) :: Do_GL(*)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(*)    ! Where on coarse grid to do calc.
@@ -1934,7 +1905,6 @@ contains
 #elif defined LF95
 !     Assumed-shape arguments are faster than assumed size
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
-    integer, intent(in) :: C_Inds(:)      ! Indices in Do_Calc_All for coarse grid
     integer, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for find grid
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
@@ -1943,7 +1913,6 @@ contains
 #else
 !     Assumed-shape arguments are faster than assumed size
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
-    integer, intent(in) :: C_Inds(:)      ! Indices in Do_Calc_All for coarse grid
     integer, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for fine grid
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
@@ -1956,11 +1925,11 @@ contains
     integer :: K
 !     logical :: T_calc(size(f_inds)/ng)
 
-!     do_calc = do_calc_all(c_inds)
+!     do_calc = do_calc_all(1::ngp1)
     i = 1 - Ng
     n_inds = 0
     do p_i = 1, n
-      do_calc(p_i) = do_calc_all(c_inds(p_i))
+      do_calc(p_i) = do_calc_all(ngp1*p_i-ng)
       if ( do_gl(p_i) ) then
         i = i + Ng
         k = f_inds(i)
@@ -2065,6 +2034,11 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.30  2013/05/18 00:34:44  vsnyder
+! Insert NG fine-grid (GL) points between tangent points, thereby
+! regularizing coarse-grid spacing, and reducing significantly the need
+! to use c_inds to extract coarse-grid points from the composite grid.
+!
 ! Revision 2.29  2011/11/09 00:17:44  vsnyder
 ! Remove non-standard TAB characters
 !
