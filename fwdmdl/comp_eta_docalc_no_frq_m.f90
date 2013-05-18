@@ -31,6 +31,7 @@ contains
                                   &   eta_zp, do_calc_zp, sps, tan_pt, &
                                   &   nz_zp, nnz_zp )
 
+    use GLNP, only: NG, NGP1
     use MLSCommon, only: RP
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse, Multiply_Eta_Column_Sparse
     use Load_Sps_Data_m, only: Grids_T
@@ -91,7 +92,7 @@ contains
     nnz_z = 0
     nnz_p = 0
 
-    my_tan = size(path_zeta) / 2
+    my_tan = ( size(path_zeta) - ng ) / 2
     if ( present(tan_pt) ) my_tan = tan_pt
     my_tan = min ( my_tan, ubound(path_zeta,1) )
 
@@ -123,8 +124,10 @@ contains
 
       call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
       &    eta_z, my_tan, 1, nz_z, nnz_z, .false. )
+      ! Fine grid points between tangent points, if any, aren't used.
+      eta_z(my_tan+1:my_tan+ng,:) = 0.0_rp
       call get_eta_sparse ( Grids_x%zet_basis(z_inda+1:z_indb), path_zeta, &
-      &    eta_z, my_tan+1, size(path_zeta), nz_z, nnz_z, .true. )
+        &    eta_z, my_tan+ngp1, size(path_zeta), nz_z, nnz_z, .true. )
       call get_eta_sparse ( Grids_x%phi_basis(p_inda+1:p_indb), path_phi,  &
       &    eta_p, 1, size(path_phi), nz_p, nnz_p, .false. )
       if ( present(nz_zp) ) then
@@ -240,6 +243,11 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.17  2013/05/18 00:34:44  vsnyder
+! Insert NG fine-grid (GL) points between tangent points, thereby
+! regularizing coarse-grid spacing, and reducing significantly the need
+! to use c_inds to extract coarse-grid points from the composite grid.
+!
 ! Revision 2.16  2013/02/28 21:05:48  vsnyder
 ! Try to cope with short paths
 !
