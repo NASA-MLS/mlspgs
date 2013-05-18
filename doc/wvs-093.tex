@@ -7,8 +7,8 @@
 \topmargin -0.45in
 \textheight 9.6in
 
-\newcommand{\docname}{\bf wvs-093r11}
-\newcommand{\docdate}{12 March 2013}
+\newcommand{\docname}{\bf wvs-093r12}
+\newcommand{\docdate}{14 March 2013}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -902,8 +902,10 @@ Taking the derivative with respect to $T_{lm}$ gives
  \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
  \,\d \zeta \,+
 \int_{\zeta_0}^{\zeta_\M}
- \T(\zeta,\zeta_\M) B^\prime(\zeta) \, \frac{\d s}{\d h}
- \frac{\partial^2 h}{\partial T_{lm} \partial \zeta} \,\d \zeta \,.
+ \T(\zeta,\zeta_\M) B^\prime(\zeta) \,
+ \frac{\partial}{\partial T_{lm}} \left[
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right]
+ \,\d \zeta \,.
 \end{equation}
 
 The first integral, together with the derivative of the boundary terms in
@@ -921,8 +923,10 @@ complete expression for the derivative is therefore
  \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
  \,\d \zeta \\
 \,& + \int_{\zeta_0}^{\zeta_\M}
- \T(\zeta,\zeta_\M) B^\prime(\zeta) \, \frac{\d s}{\d h}
- \frac{\partial^2 h}{\partial T_{lm} \partial \zeta} \,\d \zeta \\
+ \T(\zeta,\zeta_\M) B^\prime(\zeta) \,
+   \frac{\partial}{\partial T_{lm}} \left[
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right]
+ \,\d \zeta \\
 =\,&
   \int_{\zeta_0}^{\zeta_\M} \T(\zeta,\zeta_\M)\, \left[ \mu^T_{lm}(\zeta)
   \left(
@@ -933,8 +937,10 @@ complete expression for the derivative is therefore
  \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
  \,\d \zeta \\
 \,& + \int_{\zeta_0}^{\zeta_\M}
- \T(\zeta,\zeta_\M) B(\zeta) \, \frac{\d s}{\d h}
- \frac{\partial^2 h}{\partial T_{lm} \partial \zeta} \,\d \zeta \\
+ \T(\zeta,\zeta_\M) B(\zeta) \,
+ \frac{\partial}{\partial T_{lm}} \left[
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right]
+ \,\d \zeta \\
 =\,&
   \int_{\zeta_0}^{\zeta_\M} \T(\zeta,\zeta_\M)\, \left[ \mu^T_{lm}(\zeta)
   \left(
@@ -945,16 +951,49 @@ complete expression for the derivative is therefore
  \, \frac{\d s}{\d h} \frac{\d h}{\d \zeta}
  \,\d \zeta \\
 \,& + \int_{\zeta_0}^{\zeta_\M}
- \T(\zeta,\zeta_\M) B(\zeta)\mu^T_{lm}(\zeta) \, \frac{\d s}{\d h}
- \frac{\partial^2 h}{\partial T\, \partial \zeta} \,\d \zeta
-\,.
+ \T(\zeta,\zeta_\M) B(\zeta)\mu^T_l(\zeta) \mu^T_m(\phi(\zeta)) \,
+   \frac{\partial}{\partial T} \left[
+  \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right]
+ \,\d \zeta
+ \,.
 \end{split}}
 \end{equation}
 
 The first integral accounts for the dependence of $\alpha(\zeta)$ and
-$B(\zeta)$ on the path upon $T_{lm}$ where $(\phi^T_l,\zeta^T_m)$ is
-adjacent to the path.  The second accounts for the dependence of the path
-upon $T_{lm}$ where $(\phi^T_l,\zeta^T_m)$ is below the path.
+$B(\zeta)$ on the path upon $T_{lm}$, for which $\mu^T_{lm}(\zeta)$ is
+only nonzero where $(\phi^T_l,\zeta^T_m)$ is adjacent to the path.  The
+second accounts for the dependence of the path upon $T_{lm}$, for which
+$\mu^T_l(\zeta)$ and $\mu^T_m(\phi(\zeta))$ are nonzero where
+$(\phi^T_l,\zeta^T_m)$ are adjacent to or below the path.
+
+From the 19 August 2004 ATBD,
+
+\begin{equation}
+\frac{\d s}{\d h} = \frac{h(T)}{\sqrt{h(T)^2-H_t(T)^2}}
+\text{ and }
+\frac{\d h}{\d \zeta} = \frac{h(T)^2 k\, T \ln 10}{g_0 R^2_0 \mathcal{M}} \,,
+\end{equation}
+
+where $t$ denotes the tangent point.  From this,
+
+\begin{equation}
+\frac{\partial}{\partial T}
+ \left[ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \right] =
+ \left(
+ \frac{2 h(T)^2 - 3 H_t(T)^2}{\left(h(T)^2-H_t(T)^2\right)^\frac32}
+  \frac{\d h(T)}{\d T} +
+ \frac{h(T) H_t(T)}{\left(h(T)^2-H_t(T)^2\right)^\frac32}
+  \frac{\d H_t(T)}{\d T} +
+ \frac1T \frac{\d s}{\d h}
+ \right)  \frac{\d h}{\d \zeta} \,.
+\end{equation}
+
+From the definition of $B(\zeta)$ given after Equation (\ref{first}),
+
+\begin{equation}
+\frac{\text{d} B}{\text{d} T} =
+\frac{B}{T^2} \left( \frac{h\nu}k + B \right)\,.
+\end{equation}
 
 \label{lastpage}
 \end{document}
@@ -962,6 +1001,9 @@ upon $T_{lm}$ where $(\phi^T_l,\zeta^T_m)$ is below the path.
 % $Id$
 
 % $Log$
+% Revision 1.12  2013/03/14 01:49:35  vsnyder
+% Correct some typos, reduce notation confusion
+%
 % Revision 1.11  2012/08/24 22:06:53  vsnyder
 % Cannonball polishing
 %
