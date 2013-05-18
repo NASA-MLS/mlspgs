@@ -49,8 +49,8 @@ contains
 
   ! outputs
 
-    logical, intent(inout) :: do_gl(:)     ! TRUEs added for indicies to do
-  !                                          gl computation
+    logical, intent(inout) :: do_gl(:)     ! set true for indices in coarse
+                                           ! path to do gl computation
 
   ! Internal stuff
 
@@ -126,8 +126,8 @@ contains
 
   ! outputs
 
-    logical, intent(inout) :: do_gl(:)     ! set true for indicies to do
-  !                                          gl computation
+    logical, intent(inout) :: do_gl(:)     ! set true for indices in coarse
+                                           ! path to do gl computation
 
   ! Internal stuff
 
@@ -150,7 +150,7 @@ contains
     myTol = tolScale * tol
 
   ! Compute exp(incoptdepth) for all but the last level
-  !(now done outside)
+  ! (now done outside)
 
   !  do i = 1, n_path - 1
   !    call cs_expmat ( incoptdepth(:,:,i), deltau(:,:,i) )
@@ -197,9 +197,10 @@ contains
     use GLnp, only: NG, NGP1
     use MLSCommon, only: IP
 
-    logical, intent(inout) :: DO_GL(:)         ! Set true for indicies to do
-                                               ! gl computation.  First and
-                                               ! last are set false here.
+    logical, intent(inout) :: DO_GL(:)         ! Set true for indices in coarse
+                                               ! path to do gl computation. 
+                                               ! First and last are set false
+                                               ! here.
     integer, intent(in) :: Tan_Pt              ! Index of tangent point in Do_GL
     integer(ip), intent(out) :: GL_INDS(:)     ! Indices of where to do GL
     integer(ip), intent(out) :: NGL            ! How much of GL_INDS to use
@@ -207,32 +208,38 @@ contains
                                                ! where to do GL
     integer(ip), intent(out), optional :: NCG  ! How much of CG_INDS to use
 
-    integer :: I, N_PATH
+    integer :: I, I1, I2, J, N_PATH
 
-    integer, parameter :: GLIR(ng) = (/ (i, i = 2-ng, 1) /) ! for > Tan_Pt 
-    integer, parameter :: GLIL(ng) = (/ (i ,i = 1-ng, 0) /) ! for <= Tan_Pt
+    integer, parameter :: GLIX(ng) = (/ (i ,i = 1-ng, 0) /)
 
     n_path = size(do_gl)
 
   ! The first and last index must be false
 
-    do_gl((/1,n_path/)) = .FALSE.
+    do_gl(1:n_path:n_path-1) = .FALSE.
 
     ngl = 0
     if ( present(ncg) ) ncg = 0
-    do i = 2, n_path-1 ! first and last elements of do_gl are false
-      if ( do_gl(i) ) then
-        ngl = ngl + ng
-        if ( i > tan_pt ) then
-          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glir
-        else
-          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glil
+    ! The complication here arises from two sources.  First, we never doing
+    ! GL between the two tangent points, so we never insert GL points
+    ! between tan_pt and tan_pt+1.  Second, before the tangent point, DO_GL
+    ! indicates that we need GL in the previous panel, while after the tangent
+    ! point, DO_GL indicates that we need GL in the next panel.
+    i1 = 2
+    i2 = tan_pt
+    do j = 0, ngp1, ngp1
+      do i = i1, i2
+        if ( do_gl(i) ) then
+          ngl = ngl + ng
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glix + j
+          if ( present(ncg) ) then
+            ncg = ncg + 1
+            cg_inds(ncg) = i
+          end if
         end if
-        if ( present(ncg) ) then
-          ncg = ncg + 1
-          cg_inds(ncg) = i
-        end if
-      end if
+      end do
+      i1 = tan_pt+1
+      i2 = n_path - 1
     end do
 
   end subroutine Get_GL_inds
@@ -251,6 +258,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.25  2011/07/29 01:58:56  vsnyder
+! Make CG_INDS, NCG optional
+!
 ! Revision 2.24  2010/02/02 01:29:20  vsnyder
 ! Don't reference undefined parts of dtaudn
 !

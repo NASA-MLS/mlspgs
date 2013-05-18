@@ -13,7 +13,7 @@ module FullForwardModel_m
 
   ! This module contains the `full' forward model.
 
-  use GLNP, only: NGP1
+  use GLNP, only: NG, NGP1
   implicit NONE
   private
   public :: FullForwardModel
@@ -25,7 +25,7 @@ module FullForwardModel_m
 
   integer, private, parameter :: Max_New = NGP1 ! Maximum new points in
     ! coarse path in addition to ones derived from the preselected zeta grid:
-    ! the minimum zeta point plus three H_Glgrid intersections below the
+    ! the minimum zeta point plus NG H_Glgrid intersections below the
     ! tangent zeta.
 
 contains
@@ -138,16 +138,14 @@ contains
     ! Find quantities in the state vector.  For now, these are just
     ! used to set the sizes of other arrays.
     phitan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_phitan, &
-      & instrumentModule=fwdModelConf%signals(1)%instrumentModule, &
-      & config=fwdModelConf )
+      & quantityType=l_phitan, config=fwdModelConf, &
+      & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
     ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_ptan, &
-      & instrumentModule=fwdModelConf%signals(1)%instrumentModule, &
-      & foundInFirst=ptan_der, config=fwdModelConf )
+      & quantityType=l_ptan, foundInFirst=ptan_der, config=fwdModelConf, &
+      & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
     temp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_temperature, &
-      & foundInFirst=temp_in_first, config=fwdModelConf )
+      & quantityType=l_temperature, foundInFirst=temp_in_first, &
+      & config=fwdModelConf )
     call load_one_item_grid ( grids_tmp, temp, phitan, fmStat%maf, fwdModelConf, .true. )
     no_sv_p_t = grids_tmp%l_p(1) ! phi == windowFinish - windowStart + 1
     n_t_zeta = grids_tmp%l_z(1)  ! zeta
@@ -206,7 +204,8 @@ contains
     nullify ( cloudIce )
     if ( FwdModelConf%incl_cld .or. FwdModelConf%useTScat ) then
       cloudIce => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
-        & quantityType=l_vmr, molecule=l_cloudIce, config=fwdModelConf, noError=.true. )
+        & quantityType=l_vmr, molecule=l_cloudIce, config=fwdModelConf,    &
+        & noError=.true. )
     end if
     if ( associated(cloudIce) ) then
       call load_one_item_grid ( grids_IWC, cloudIce, phitan, fmStat%maf, &
@@ -223,7 +222,8 @@ contains
         &                   surfaceTangentIndex, z_psig, tan_press, &
         &                   GetQuantityForForwardModel (            &
         &                    fwdModelOut, quantityType=l_TScat,     &
-        &                    signal=fwdModelConf%signals(1)%index ) )
+        &                    signal=fwdModelConf%signals(1)%index,  &
+        &                    config=fwdModelConf ) )
 
     else
       call compute_Z_PSIG ( fwdModelConf, temp, nlvl, no_tan_hts,   &
@@ -502,8 +502,8 @@ contains
 
     integer, target :: C_INDS_B(max_c)  ! Base array for C_INDS
     integer, target :: CG_INDS_B(max_c) ! Base array for CG_INDS
-    integer :: F_INDS(max_f)            ! Indices on fine grid
-    integer, target :: GL_INDS_B(max_f) ! Base array for GL_INDS
+    integer :: F_INDS(max_c*ng)         ! Indices on fine grid
+    integer, target :: GL_INDS_B(max_c*ng) ! Base array for GL_INDS
     integer :: GRIDS(no_tan_hts)        ! Indices in ptgGrid for each tangent
     integer :: IPSD(s_i*max_f)
     integer :: nz_d_delta_df(s_a*max_c,size(grids_f%values)) ! nonzeros in
@@ -545,7 +545,7 @@ contains
     real(rp) :: dBeta_c_s_dT_path_C(s_ts*max_c)    ! on coarse path
     real(rp) :: DHDZ_PATH(max_f)      ! dH/dZ on fine path (1:npf)
     real(rp) :: DHDZ_GW_PATH(max_f)   ! dH/dZ * GW on fine path (1:npf)
-    real(rp) :: DSDH_PATH(max_f)      ! dS/dH on fine path (1:tan_pt_f-1,tan_pt_f+2:npf)
+    real(rp) :: DSDH_PATH(max_f)      ! dS/dH on fine path (1:tan_pt_f-1,tan_pt_f+ngp1+1:npf)
     real(rp) :: DSDZ_C(max_c)         ! ds/dH * dH/dZ on coarse path (1:tan_pt_c-1,tan_pt_c+2:npc)
     real(rp) :: DSDZ_GW_PATH(max_f)   ! ds/dH * dH/dZ * GW on path
     real(rp) :: DTanh_DT_C(max_c)     ! 1/tanh1_c d/dT tanh1_c
@@ -559,7 +559,8 @@ contains
     real(rp) :: More_H_Path(max_new), More_Phi_Path(max_new), More_Z_Path(max_new)
     real(rp) :: N_PATH_C(max_c)       ! Refractive index - 1 on coarse path
     real(rp) :: N_PATH_F(max_f)       ! Refractive index - 1 on fine path
-    real(rp) :: PHI_PATH(max_f)       ! Phi's on fine path, Radians
+    real(rp), target :: PHI_PATH(max_f) ! Phi's on fine path, Radians
+    real(rp), pointer :: Phi_Path_c(:)  ! Phi on the coarse path
     real(rp) :: P_PATH(max_f)         ! Pressure on path
     real(rp) :: PTG_ANGLES(no_tan_hts)
     real(rp) :: REF_CORR(max_c)       ! Refraction correction
@@ -1098,11 +1099,13 @@ contains
         if ( .not. fwdModelConf%GenerateTScat ) then
           thisRadiance =>  &
             GetQuantityForForwardModel (fwdModelOut, quantityType=l_radiance, &
-            & signal=fwdModelConf%signals(channels(i)%signal)%index, sideband=sideband )
+            & signal=fwdModelConf%signals(channels(i)%signal)%index, &
+            & sideband=sideband, config=fwdModelConf )
         else
           thisRadiance =>  &
             GetQuantityForForwardModel (fwdModelOut, quantityType=l_tscat, &
-            & signal=fwdModelConf%signals(channels(i)%signal)%index, sideband=sideband )
+            & signal=fwdModelConf%signals(channels(i)%signal)%index, &
+            & sideband=sideband, config=fwdModelConf )
         end if
         j = thisRadiance%template%noChans
         channel = channels(i)%used - channels(i)%origin + 1
@@ -1186,7 +1189,8 @@ contains
 
       ! Identify the appropriate state vector components
       ! VMRS are in beta_group%qty, gotten by get_species_data
-      gph => GetQuantityForForwardModel (fwdModelIn, fwdModelExtra, quantityType=l_gph )
+      gph => GetQuantityForForwardModel (fwdModelIn, fwdModelExtra, &
+        & quantityType=l_gph, config=fwdModelConf )
       earthRefl => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_earthRefl, config=fwdModelConf )
       losVel => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -1197,7 +1201,7 @@ contains
       refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_refGPH, config=fwdModelConf )
       scGeocAlt => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_scGeocAlt )
+        & quantityType=l_scGeocAlt, config=fwdModelConf )
       spaceRadiance => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_spaceRadiance, config=fwdModelConf )
       surfaceHeight => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -1317,8 +1321,8 @@ contains
       call createVectorValue (  cld_ext, 'cld_ext' )
 
       if ( FwdModelConf%i_saturation /= l_clear ) then
-        boundaryPressure => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_boundaryPressure, config=fwdModelConf )
+        boundaryPressure => GetQuantityForForwardModel ( fwdModelIn, &
+          & fwdModelExtra, quantityType=l_boundaryPressure, config=fwdModelConf )
         ! modify h2o mixing ratio if a special supersaturation is requested
         call modify_values_for_supersat ( fwdModelConf, grids_f, h2o_ind, &
           & grids_tmp, boundaryPressure )
@@ -1417,7 +1421,8 @@ contains
         ! Get the radiance
         thisRadiance =>  &
           GetQuantityForForwardModel (fwdModelOut, quantityType=l_radiance, &
-          & signal=fwdModelConf%signals(sigInd)%index, sideband=sideband )
+          & signal=fwdModelConf%signals(sigInd)%index, sideband=sideband,   &
+          & config=fwdModelConf )
         ! Get the sideband fraction if we need to
         if ( firstSignal%sideband == 0 .or. fwdModelConf%forceSidebandFraction ) then
           sidebandFraction => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -1635,10 +1640,10 @@ contains
       ! This is only used for convolution, which is done for both sidebands.
       if ( fwdModelConf%scanAverage ) then
         work => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_l1bMIF_TAI )
+          & quantityType=l_l1bMIF_TAI, config=fwdModelConf )
         l1bMIF_TAI => work%values
         work => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_MIFDeadTime )
+          & quantityType=l_MIFDeadTime, config=fwdModelConf )
         MIFDeadTime => work%values ! Only the (1,1) element is used.
       else
         nullify ( l1bMIF_TAI, MIFDeadTime )
@@ -1874,6 +1879,7 @@ contains
 
       if ( temp_der ) call frequency_average_derivative ( grids_tmp, &
         &               k_temp_frq(:ub,:), k_temp(:,ptg_i,:), 1, combine )
+
       ! Frequency Average the atmospheric derivatives with the appropriate
       ! filter shapes
       if ( atmos_der ) then
@@ -2248,6 +2254,7 @@ contains
 
       real(rp) :: DPhi         ! Scat_Phi - Phi_Ref
       real(rp) :: DPhi_Xi      ! dPhi - xi = psi in wvs-074
+      real(rp) :: DXi          ! acos(cos(xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1))))
       real(rp) :: Eta_s(size(Grids_tmp%phi_basis)) ! Coeffs to Scat_Tan_Phi
       real(rp) :: Phi_Old      ! Used during iteration for Scat_Tan_Phi
       real(rp) :: Phi_Ref      ! Tangent phi for the scattered ray
@@ -2340,7 +2347,7 @@ contains
         TScats(f_i)%qty => GetQuantityForForwardModel ( &
           & fwdModelOut, quantityType=l_TScat, &
           & signal=fwdModelConf%signals(channels(f_i)%signal)%index, &
-          & sideband=sideband )
+          & sideband=sideband, config=fwdModelConf )
         TScats(f_i)%qty%values = 0.0 ! Is this needed?
         if ( print_TScat .or. print_TScat_detail > -1 ) then
           call GetNameOfSignal ( fwdModelConf%signals(channels(f_i)%signal), sig, &
@@ -2692,7 +2699,7 @@ contains
           !  and the $\xi$'s, and convolve the interpolated phase function
           !  with the interpolated radiances.  The interpolated values are
           !  in order according to the sorted $\xi$'s.
-
+          !
           !  Let $x$ be temperature, $y$
           !  be IWC, and $z$ be the phase function.
           !
@@ -2726,95 +2733,82 @@ contains
             surf_i = channels(f_i)%used - channels(f_i)%origin + 1 + &
                    & TScat%template%noChans * (zeta_i-1)
             ! Interpolate P to scattering point IWC and temperature, and
-            ! angles Xi at which radiative transfer was done.
+            ! angles Xi at which radiative transfer was done.  The normalizing
+            ! factor of abs(sin(theta)) is applied in interpolate_P_to_theta_e.
             call interpolate_P_to_theta_e ( &
               & p(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
               & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
               & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
               & P_on_Xi(:i_r) )
-              P_on_Xi(:i_r) = P_on_Xi(:i_r) * abs(sin(Xis(sort_xi(:i_r))))
             if ( atmos_der ) &
               & call interpolate_P_to_theta_e ( &
                 & dP_dIWC(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
                 & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
                 & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
                 & dP_dIWC_on_Xi(:i_r) )
-                dP_dIWC_on_Xi(:i_r) = dP_dIWC_on_Xi(:i_r) * abs(sin(Xis(sort_xi(:i_r))))
             if ( temp_der ) then
               call interpolate_P_to_theta_e ( &
                 & dP_dT(t_ix+0:t_ix+1,iwc_ix+0:iwc_ix+1,:,freq_ix(f_i)), &
                 & Eta_t_iwc, Theta_e(:n_theta_e), Beg_Pos_Theta, &
                 & Xis(sort_xi(:i_r)), coeffs_Theta_e_Xi, &
                 & dP_dT_on_Xi(:i_r) )
-                dP_dT_on_Xi(:i_r) = dP_dT_on_Xi(:i_r) * sin(Xis(sort_xi(:i_r)))
-              if ( print_TScat_deriv > 1 ) then
-                call output ( f_i, before='K_temp_TScat(' )
-                call output ( i_r, before=',sort_xi(:' )
-                call dump ( k_temp_TScat(f_i,sort_xi(:i_r),:), name='),:)' )
-                call dump ( rad2deg*Xis(sort_xi(:i_r)), name='Xis' )
-                call dump ( P_on_Xi(:i_r), name='P_on_Xi' )
-                call dump ( dP_dT_on_Xi(:i_r), name='dP_dT_on_Xi' )
-              end if
             end if
 
             !{ Compute $\int_{-\pi}^\pi \, f(\xi) P(\xi)\, \text{d}\xi$ using
             ! trapezoidal quadrature, without assuming equal abscissa spacing,
             ! and including the factor of 0.5 in Equation 4.50 in the 4 June
             ! 2004 cloud forward model ATBD.  Start with the wrap-around panel.
-            ! We use acos(cos(x-y)) so as not to worry about negative angles, etc.
+            ! We use acos(cos(x-y)) so as not to worry about negative angles,
+            ! angles near 360 degrees that ought to be near zero degrees, etc.
+            dXi = acos(cos(xis(sort_xi(1)) - xis(sort_xi(i_r))) )
             TScat%values(surf_i,phi_i) = &
               & 0.25 * ( p_on_xi(i_r)*rads(f_i,sort_xi(i_r)) + &
-              &          p_on_xi(  1)*rads(f_i,sort_xi(  1)) ) * &
-              &        acos(cos(xis(sort_xi(1)) - xis(sort_xi(i_r))) )
+              &          p_on_xi(  1)*rads(f_i,sort_xi(  1)) ) * dXi
             if ( atmos_der ) then
               k_atmos_p =  &
                 & 0.25 * ( p_on_xi(i_r)*k_atmos_TScat(f_i,sort_xi(i_r),:) + &
-                &          p_on_xi(  1)*k_atmos_TScat(f_i,sort_xi(  1),:) ) * &
-                &        ( xis(sort_xi(  1)) + pix2 - xis(sort_xi(i_r)) )
+                &          p_on_xi(  1)*k_atmos_TScat(f_i,sort_xi(  1),:) ) * dXi
               if ( grid_IWC /= 0 ) &
                 k_atmos_p(grid_IWC) = k_atmos_p(grid_IWC) + &
                   & 0.25 * ( dP_dIWC_on_Xi(i_r)*rads(f_i,sort_xi(i_r)) + &
-                  &          dP_dIWC_on_Xi(  1)*rads(f_i,sort_xi(  1)) ) * &
-                  &      acos(cos(xis(sort_xi(1)) - xis(sort_xi(i_r))) )
+                  &          dP_dIWC_on_Xi(  1)*rads(f_i,sort_xi(  1)) ) * dXi
             end if
             if ( temp_der ) then
               k_temp_p =  &
                 & 0.25 * ( p_on_xi(i_r)*k_temp_TScat(f_i,sort_xi(i_r),:) + &
-                &          p_on_xi(  1)*k_temp_TScat(f_i,sort_xi(  1),:) ) * &
-                &        acos(cos(xis(sort_xi(1)) - xis(sort_xi(i_r))) )
+                &          p_on_xi(  1)*k_temp_TScat(f_i,sort_xi(  1),:) ) * dXi
               if ( grid_t /= 0 ) then
                 k_temp_p(grid_t) = k_temp_p(grid_t) + &
                   & 0.25 * ( dP_dT_on_Xi(i_r)*rads(f_i,sort_xi(i_r)) + &
-                  &          dP_dT_on_Xi(  1)*rads(f_i,sort_xi(  1)) ) * &
-                  &        acos(cos(xis(sort_xi(1)) - xis(sort_xi(i_r))) )
+                  &          dP_dT_on_Xi(  1)*rads(f_i,sort_xi(  1)) ) * dXi
               end if
             end if
             do ptg_i = 2, i_r ! Now do the rest.
+              dXi = xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1))
               TScat%values(surf_i,phi_i) = TScat%values(surf_i,phi_i) + &
                 & 0.25 * ( p_on_xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
-                &          p_on_xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * &
-                &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
+                &          p_on_xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * dXi
               if ( atmos_der ) then
                 k_atmos_p = k_atmos_p + &
                   & 0.25 * ( p_on_xi(ptg_i-1)*k_atmos_TScat(f_i,sort_xi(ptg_i-1),:) + &
                   &          p_on_xi(ptg_i  )*k_atmos_TScat(f_i,sort_xi(ptg_i  ),:) ) * &
-                  &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
+                  &        dXi
                 if ( grid_IWC /= 0 ) &
                   k_atmos_p(grid_IWC) = k_atmos_p(grid_IWC) + &
                     & 0.25 * ( dP_dIWC_on_Xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
                     &          dP_dIWC_on_Xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * &
-                    &        ( xis(sort_xi(ptg_i  )) - xis(sort_xi(ptg_i-1)) )
+                    &        dXi
               end if
               if ( temp_der ) then
                 k_temp_p = k_temp_p + &
                   & 0.25 * ( p_on_xi(ptg_i-1)*k_temp_TScat(f_i,sort_xi(ptg_i-1),:) + &
                   &          p_on_xi(ptg_i  )*k_temp_TScat(f_i,sort_xi(ptg_i  ),:) ) * &
-                  &        ( xis(sort_xi(ptg_i)) - xis(sort_xi(ptg_i-1)) )
+                  &        dXi
                 if ( grid_t /= 0 ) then
                   k_temp_p(grid_t) = k_temp_p(grid_t) + &
                     & 0.25 * ( dP_dT_on_Xi(ptg_i-1)*rads(f_i,sort_xi(ptg_i-1)) + &
                     &          dP_dT_on_Xi(ptg_i  )*rads(f_i,sort_xi(ptg_i  )) ) * &
-                    &        ( xis(sort_xi(ptg_i  )) - xis(sort_xi(ptg_i-1)) )
+                    &        dXi
                 end if
               end if
             end do ! ptg_i = 2, i_r
@@ -2832,6 +2826,12 @@ contains
                                        & temp, grids_tmp, k_temp_p, &
                                        & jacobian )
               if ( print_TScat_deriv > 1 ) then
+                call output ( f_i, before='K_temp_TScat(' )
+                call output ( i_r, before=',sort_xi(:' )
+                call dump ( k_temp_TScat(f_i,sort_xi(:i_r),:), name='),:)' )
+                call dump ( rad2deg*Xis(sort_xi(:i_r)), name='Xis' )
+                call dump ( P_on_Xi(:i_r), name='P_on_Xi' )
+                call dump ( dP_dT_on_Xi(:i_r), name='dP_dT_on_Xi' )
                 call dump ( k_temp_p, name='k_temp_p' )
                 call output ( surf_i, before='TScat%values(' )
                 call output ( phi_i, before=',' )
@@ -2914,7 +2914,7 @@ contains
       use PHYSICS, only: H_OVER_K
       use RAD_TRAN_M, only: RAD_TRAN_POL, DRAD_TRAN_DF, &
         & D2RAD_TRAN_DF2, DRAD_TRAN_DT, DRAD_TRAN_DX
-      use SCATSOURCEFUNC, only: T_SCAT, INTERP_TSCAT, CONVERT_GRID
+      use SCATSOURCEFUNC, only: T_SCAT, INTERP_TSCAT
       use TAU_M, only: GET_TAU
       USE TSCAT_SUPPORT_M, ONLY: GET_DB_DT, GET_TSCAT, GET_TSCAT_SETUP, &
         & GET_TSCAT_TEARDOWN, MIE_FREQ_INDEX
@@ -2989,6 +2989,8 @@ contains
 
       ! Set up path quantities --------------------------------------
 
+      phi_path_c => phi_path(1:npf:ngp1)
+
       ! Compute the sps_path for this Frequency
       call comp_sps_path_frq ( Grids_f, Frq, eta_zp(:npf,:), &
         & do_calc_zp, sps_path(:npf,:),                      &
@@ -3001,7 +3003,10 @@ contains
 !           & do_calc_zp, sps_path(:npf,:),                                &
 !           & do_calc_fzp, eta_fzp(:npf,:), nz_fzp, nnz_fzp,               &
 !           & firstSignal%lo, thisSideband )
-      sps_path_c(:npc,:) = sps_path(c_inds,:)
+!c      sps_path_c(i_start:i_end,:) = sps_path(c_inds(i_start:i_end),:)
+      sps_path_c(i_start:i_end,:) = sps_path(ngp1*i_start-ng:ngp1*i_end-ng:ngp1,:)
+      sps_path_c(:i_start-1,:) = 0.0
+      sps_path_c(i_end+1:npc,:) = 0.0
 
       if ( pfa ) then
         call get_beta_path_PFA ( frq, frq_i, z_path, c_inds, t_path_c, &
@@ -3016,16 +3021,16 @@ contains
             & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
         call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_c,      &
           &  tanh1_c, beta_group, sx, fwdModelConf%polarized, gl_slabs,  &
-          &  c_inds, beta_path_c, t_der_path_flags, dTanh_dT_c, vel_rel, &
-          &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c,          &
-          &  dbeta_dv_path_c, dBeta_df_path_c, grids_f%where_dBeta_df,   &
-          &  sps_path )
+          &  c_inds, beta_path_c, t_der_path_flags,                      &
+          &  dTanh_dT_c, vel_rel, dbeta_dT_path_c, dbeta_dw_path_c,      &
+          &  dbeta_dn_path_c, dbeta_dv_path_c, dBeta_df_path_c,          &
+          &  grids_f%where_dBeta_df, sps_path(:npf,:) )
       end if
 
       if ( FwdModelConf%incl_cld .and. .not. pfa ) then
-        ! Compute Scattering source function based on temp prof at all
-        ! angles U for each temperature layer assuming a plane parallel
-        ! atmosphere.
+        ! Compute Scattering source function based on temperature profile
+        ! at all angles U for each temperature layer assuming a plane
+        ! parallel atmosphere.
 
         if ( ptg_i == 1 ) then
         ! ??? Can this work?  On all pointings after the first one, ???
@@ -3100,10 +3105,12 @@ contains
 !             call comp_sps_path_no_frq ( Grids_cext,  eta_cext_zp(1:npf,:), &
 !               & cext_path(1:npf,:) )
 
-          call convert_grid ( salb_path(1:npf,:), cext_path(1:npf,:),  &
-                            & tt_path(1:npf,:), c_inds,                &
-                            & beta_path_cloud_c(1:npc), w0_path_c,     &
-                            & tt_path_c )
+          beta_path_cloud_c(1:npc) = cext_path(1:npf:ngp1,1)
+!c          beta_path_cloud_c(1:npc) = cext_path(c_inds,1)
+          w0_path_c(1:npc) = salb_path(1:npf:ngp1,1)
+!c          w0_path_c(1:npc) = salb_path(c_inds,1)
+          tt_path_c(1:npc) = tt_path(1:npf:ngp1,1)
+!c          tt_path_c(1:npc) = tt_path(c_inds,1)
 
         else
 
@@ -3122,6 +3129,8 @@ contains
         end do
 
         ! Needed to compute inc_rad_path and by rad_tran_pol
+        ! Don't restrict this to (i_start:i_end) because the end points
+        ! at 1 and npc are special.
         call two_d_t_script_cloud ( t_path_c, tt_path_c, w0_path_c, &
           & spaceRadiance%values(1,1), frq, t_script, B(:npc) )
 
@@ -3139,7 +3148,8 @@ contains
                                        & beta_path_c(j,:) )
           incoptdepth(j) = alpha_path_c(j) * del_s(j)
         end do
-        incoptdepth(i_end+1:npc) = 0.0 ! if not integrating full path
+        incoptdepth(:i_start-1) = 0.0  ! in case not integrating full path
+        incoptdepth(i_end+1:npc) = 0.0 ! in case not integrating full path
 
         if ( fwdModelConf%useTScat .and. .not. pfa ) then
           ! Determine the frequency subscript for the Mie tables.
@@ -3164,13 +3174,15 @@ contains
           ! Get TScat and derivatives on the path from the L2PC model
           call Get_TScat ( fwdModelIn, fwdModelExtra, &
             &              deg2rad*fwdModelConf%phiWindow, MAF, phitan, frq,   &
-            &              z_coarse, phi_path(c_inds), tan_pt_c, grids_f,      &
+            &              z_coarse, phi_path_c, tan_pt_c, grids_f,            &
             &              L2PC, dX, TScat, radInL2PC, grids_TScat, tt_path_c, &
             &              atmos_der, temp_der, dTScat_df, dTScat_dT )
 
           call Get_TScat_Teardown ( dX, TScat, Grids_TScat )
 
           ! Get combined clear-sky and TScat Delta B (t_script)
+          ! Don't restrict this to (i_start:i_end) because the end points
+          ! at 1 and npc are special.
           call two_d_t_script_cloud ( t_path_c(i_start:i_end),    &
             & tt_path_c(i_start:i_end), w0_path_c(i_start:i_end), &
             & spaceRadiance%values(1,1), frq, &
@@ -3181,7 +3193,9 @@ contains
 
           !{ Compute $\Delta B_{ij}$ for $j$ = Frq_i.  See page 42 in
           !  19 August 2004 ATBD JPL D-18130.
-          !  T_Script and B needed to compute inc_rad_path by rad_tran_pol
+          !  T_Script and B needed to compute inc_rad_path by rad_tran_pol.
+          !  Don't restrict this to (i_start:i_end) because the end points
+          !  at 1 and npc are special.
           call two_d_t_script ( t_path_c(i_start:i_end), &
             & spaceRadiance%values(1,1), frq, &
             & t_script(i_start:i_end), &
@@ -3294,7 +3308,7 @@ contains
 
         ! The derivatives that get_beta_path computes depend on which
         ! derivative arrays are allocated, not which ones are present.
-        ! This avoids having four paths through the code, each with a
+        ! This avoids having multiple paths through the code, each with a
         ! different set of optional arguments.
 
         call get_beta_path ( Frq, firstSignal%lo, p_path, t_path_f(:ngl),     &
@@ -3327,7 +3341,8 @@ contains
       ! Compute SCALAR radiative transfer --------------------------
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!! TScat computation needs incoptdepth(:i_end-1), but this breaks the gold brick
+!!!! TScat computation wants only incoptdepth(i_start+1:i_end-1),
+!!!! but this breaks the gold brick
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         call get_tau ( frq_i, gl_inds, cg_inds, i_start, e_rflty,  &
@@ -3373,8 +3388,8 @@ contains
         end if
 
         if ( print_path > -1 ) call dump_path ( print_path, fwdModelConf, &
-          & i_start, i_stop, i_end, phi_path(c_inds), z_path(c_inds), &
-          & sps_path_c(:npc,:), beta_path_c, alpha_path_c, incoptdepth, &
+          & i_start, i_stop, i_end, phi_path_c, z_path(1:npf:ngp1),       &
+          & sps_path_c(:npc,:), beta_path_c, alpha_path_c, incoptdepth,   &
           & inc_rad_path, t_path_c, frq_i, tau, frq )
 
       else ! Polarized model; can't combine with PFA or TScat
@@ -3449,8 +3464,8 @@ contains
           ! dimensions of eta_fzp and dAlpha_df_path_f because these
           ! correspond to explicit-shape dummy arguments.  Doing so would
           ! cause the compiler to take a copy!
-          call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f,      &
-            &  eta_fzp, do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,    &
+          call drad_tran_df ( max_f, gl_inds, del_zeta, Grids_f, eta_fzp,     &
+            &  do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,             &
             &  inc_rad_path, dAlpha_df_path_c(:npc,:), dAlpha_df_path_f,      &
             &  i_start, tan_pt_c, i_stop,                                     &
             &  size(d_delta_df,1), d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
@@ -3465,8 +3480,8 @@ contains
           ! dimensions of eta_fzp and dAlpha_df_path_f because these
           ! correspond to explicit-shape dummy arguments.  Doing so would
           ! cause the compiler to take a copy!
-          call drad_tran_df ( max_f, c_inds, gl_inds, del_zeta, Grids_f,      &
-            &  eta_fzp, do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,    &
+          call drad_tran_df ( max_f, gl_inds, del_zeta, Grids_f, eta_fzp,     &
+            &  do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,             &
             &  inc_rad_path, dAlpha_df_path_c(:npc,:), dAlpha_df_path_f,      &
             &  i_start, tan_pt_c, i_stop,                                     &
             &  size(d_delta_df,1), d_delta_df, nz_d_delta_df, nnz_d_delta_df, &
@@ -3485,8 +3500,8 @@ contains
             &                  d2Alpha_df2_path_f(:ngl,:) )
 
 
-          call d2rad_tran_df2 ( max_f, c_inds, gl_inds, del_zeta, Grids_f,    &
-            &  eta_fzp, do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,    &
+          call d2rad_tran_df2 ( max_f, gl_inds, del_zeta, Grids_f, eta_fzp,   &
+            &  do_calc_fzp, do_gl, del_s, ref_corr, dsdz_gw_path,             &
             &  inc_rad_path, d2Alpha_df2_path_c(:npc,:), d2Alpha_df2_path_f,  &
             &  i_start, tan_pt_c, i_stop,  size(d_delta_df,1),                &
             &  d_delta_df, nz_d_delta_df, nnz_d_delta_df,                     &
@@ -3499,12 +3514,11 @@ contains
           ! VMR derivatives for polarized radiance.
           ! Compute DE / Df from D Incoptdepth_pol / Df and put it
           ! into DE_DF.
-          call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, c_inds(1:p_stop),    &
-            &  Grids_f, beta_path_polarized(:,1:p_stop,:), tanh1_c(:npc), &
-            &  eta_fzp, do_calc_fzp, sps_path, del_s,                     &
-            &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),         &
-            &  d_delta_df(1:npc,:), nz_d_delta_df, nnz_d_delta_df,        &
-            &  de_df(:,:,1:p_stop,:) )
+          call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, Grids_f,               &
+            &  beta_path_polarized(:,1:p_stop,:), tanh1_c(:npc), eta_fzp,   &
+            &  do_calc_fzp, sps_path, del_s, incoptdepth_pol(:,:,1:p_stop), &
+            &  ref_corr(1:p_stop), d_delta_df(1:npc,:), nz_d_delta_df,      &
+            &  nnz_d_delta_df, de_df(:,:,1:p_stop,:) )
 
           ! Compute D radiance / Df from Tau, Prod, T_Script
           ! and DE / Df.
@@ -3557,7 +3571,7 @@ contains
 
         if ( pfa_or_not_pol ) then
 
-          call drad_tran_dt ( c_inds, gl_inds, del_zeta, h_path_c,         &
+          call drad_tran_dt ( gl_inds, del_zeta, h_path_c,                 &
             & dh_dt_path_c(1:npc,:), alpha_path_c,                         &
             & dAlpha_dT_path_c(:npc), eta_zxp_t,                           &
             & do_calc_t_c(1:npc,:), do_calc_hyd_c(1:npc,:), del_s,         &
@@ -3630,9 +3644,9 @@ contains
             k_temp_frq(:) = real(d_rad_pol_dt(2,2,:))
           end if
 
-        end if
+        end if ! pol and not pfa
 
-      end if
+      end if ! temp_der
 
       if ( spect_der ) then
 
@@ -3647,29 +3661,26 @@ contains
           ! Spectroscopic derivative  wrt: W
 
           if ( spect_der_width ) &
-            & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_w,      &
-              &  eta_zxp_w, sps_path, fwdModelConf%lineWidth%beta(sx),     &
-              &  do_calc_w, dbeta_dw_path_c, dbeta_dw_path_f, do_gl, del_s,&
-              &  ref_corr, dhdz_gw_path, inc_rad_path, tan_pt_c,           &
-              &  i_stop, k_spect_dw_frq )
+            & call drad_tran_dx ( gl_inds, del_zeta, grids_w, eta_zxp_w,   &
+              &  sps_path, fwdModelConf%lineWidth%beta(sx), do_calc_w,     &
+              &  dbeta_dw_path_c, dbeta_dw_path_f, do_gl, del_s, ref_corr, &
+              &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dw_frq )
 
           ! Spectroscopic derivative  wrt: N
 
           if ( spect_der_width_TDep ) &
-            & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_n,      &
-              &  eta_zxp_n, sps_path, fwdModelConf%lineWidth_tDep%beta(sx),&
-              &  do_calc_n, dbeta_dn_path_c, dbeta_dn_path_f, do_gl, del_s,&
-              &  ref_corr, dhdz_gw_path, inc_rad_path, tan_pt_c,           &
-              &  i_stop, k_spect_dn_frq )
+            & call drad_tran_dx ( gl_inds, del_zeta, grids_n, eta_zxp_n,    &
+              &  sps_path, fwdModelConf%lineWidth_tDep%beta(sx), do_calc_n, &
+              &  dbeta_dn_path_c, dbeta_dn_path_f, do_gl, del_s, ref_corr,  &
+              &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dn_frq )
 
           ! Spectroscopic derivative  wrt: Nu0
 
           if ( spect_der_center ) &
-            & call drad_tran_dx ( c_inds, gl_inds, del_zeta, grids_v,      &
-              &  eta_zxp_v, sps_path, fwdModelConf%lineCenter%beta(sx),    &
-              &  do_calc_v, dbeta_dv_path_c, dbeta_dv_path_f, do_gl, del_s,&
-              &  ref_corr, dhdz_gw_path, inc_rad_path, tan_pt_c,           &
-              &  i_stop, k_spect_dv_frq )
+            & call drad_tran_dx ( gl_inds, del_zeta, grids_v, eta_zxp_v,   &
+              &  sps_path, fwdModelConf%lineCenter%beta(sx), do_calc_v,    &
+              &  dbeta_dv_path_c, dbeta_dv_path_f, do_gl, del_s, ref_corr, &
+              &  dhdz_gw_path, inc_rad_path, tan_pt_c, i_stop, k_spect_dv_frq )
 
         end if
 
@@ -3756,11 +3767,13 @@ contains
       tan_pt_f = nz_if + 1 - tan_ind_f            ! fine path tangent index
       tan_pt_c = (tan_pt_f + Ng) / Ngp1           ! coarse path tangent index
       npc = 2 * tan_pt_c
-      npf = 2 * tan_pt_f
+      npf = 2 * tan_pt_f + ng
 
       ! This is not pretty but we need some coarse path extraction indices
       c_inds => c_inds_b(:npc)
-      c_inds = (/(i*Ngp1-Ng,i=1,tan_pt_c),((i-1)*Ngp1-Ng+1,i=tan_pt_c+1,npc)/)
+!c      c_inds = (/(i*Ngp1-Ng,i=1,tan_pt_c),((i-1)*Ngp1-Ng+ngp1,i=tan_pt_c+1,npc)/)
+!c      c_inds = (/(i*Ngp1-Ng,i=1,tan_pt_c),((i-1)*Ngp1-Ng+1,i=tan_pt_c+1,npc)/)
+      c_inds = (/ (i*Ngp1-Ng,i=1,npc) /) ! 1:npf:ngp1
       ! And some fine path extraction indices
       do_gl(1:npc:npc-1) = .false.; do_gl(2:npc-1) = .true.
       call get_gl_inds ( do_gl(:npc), tan_pt_c, f_inds, nglMax )
@@ -3816,8 +3829,8 @@ contains
         scat_index = 0
         scat_d2 = huge(1.0_rp)
         do scat_temp = 1, npc
-          scat_d1 = sin(phi_path(c_inds(scat_temp))-scat_phi)**2 + &
-                  &  (h_path(c_inds(scat_temp))/scat_ht-1.0_rp)**2
+          scat_d1 = sin(phi_path_c(scat_temp)-scat_phi)**2 + &
+                  &  (h_path(scat_temp*ngp1-ng)/scat_ht-1.0_rp)**2
           if ( scat_d1 < scat_d2 ) then
             scat_index = scat_temp
             scat_d2 = scat_d1
@@ -3853,8 +3866,8 @@ contains
             & call output ( TScat_Detail_Heading, advance="yes" )
           write ( line, "(f7.2,f12.4,f9.3,f11.2,f10.6,f9.2,f11.4,f8.2,i4,f8.2,i4,4x,L1)" ) &
             & rad2deg*scat_phi, scat_ht, scat_zeta, rad2deg*xi, sqrt(scat_d2), & ! km/ht, not (km/ht)**2
-            & rad2deg*tan_phi, tan_ht, rad2deg*phi_path(1), c_inds(scat_index), &
-            & rad2deg*phi_path(c_inds(scat_index)), which, myRev
+            & rad2deg*tan_phi, tan_ht, rad2deg*phi_path(1), scat_index*ngp1-ng, &
+            & rad2deg*phi_path_c(scat_index), which, myRev
           if ( present(forward) ) then; line = trim(line) // merge("   T", "   F", forward)
           else ; line = trim(line) // "   T"
           end if
@@ -3869,9 +3882,9 @@ contains
               call output ( req_s, before="Req_s = " )
               call output ( mod(phitan%values(FwdModelConf%TScatMIF,MAF),360.0_r8), &
                 & before=", Phi_ref = ", advance="yes" )
-              call dump ( z_coarse(:size(c_inds)), name="Z_Coarse" )
-              call dump ( rad2deg*phi_path(c_inds), name="Phi_Path", format="(f14.8)" )
-              call dump ( h_path(c_inds), name="H_Path", format="(f14.6)" )
+              call dump ( z_coarse(:npc), name="Z_Coarse" )
+              call dump ( rad2deg*phi_path_c, name="Phi_Path", format="(f14.8)" )
+              call dump ( h_path(1:npf:ngp1), name="H_Path", format="(f14.6)" )
             end if
             if ( scat_ht <= tan_ht .or. which > 0 ) &
               call MLSMessage ( merge(MLSMSG_Warning,MLSMSG_Error,switchDetail(switches,'igsc')>0), &
@@ -3881,8 +3894,8 @@ contains
             call output ( trim(line) // " <", advance="yes" ) ! Close enough
             if ( print_TScat_detail > 0 ) then
               call output ( tan_pt_c, before='Tan_Pt_C = ' )
-              call dump ( rad2deg*phi_path(c_inds(:scat_index)), name=', Phi_Path_C' )
-              call dump ( h_path(c_inds(:scat_index)), name='H_Path_C' )
+              call dump ( rad2deg*phi_path_c(:scat_index), name=', Phi_Path_C' )
+              call dump ( h_path(:scat_index*ngp1-ng:ngp1), name='H_Path_C' )
               call dump ( z_coarse(:scat_index), name='Z_Coarse' )
             end if
           end if
@@ -3976,15 +3989,17 @@ contains
       ! Compute Gauss Legendre (GL) grid ----------------------------------
       call compute_GL_grid ( z_coarse(:tan_pt_c), z_path(:tan_pt_f), &
         &                    p_path(:tan_pt_f) )
-      call compute_GL_grid ( z_coarse(tan_pt_c+1:npc), z_path(tan_pt_f+1:npf), &
-        &                    p_path(tan_pt_f+1:npf) )
+      ! z_path and t_path all the same within the zero-thickness tangent layer
+      call compute_GL_grid ( z_coarse(tan_pt_c+1:npc), z_path(tan_pt_f+ngp1:npf), &
+        &                    p_path(tan_pt_f+ngp1:npf) )
 
-      ! The 0.5 factor is to compensate for the GL weights adding up to 2.0.
+      ! The 0.5 factor is to compensate for the GL weights adding up to 2.0
+      ! because the GL abscissae are on -1..1.
       del_zeta(1:npc:npc-1) = 0.0_rp ! First and last ones
-      del_zeta(2:tan_pt_c) = 0.5_rp * ( z_path(c_inds(1:tan_pt_c-1)) - &
-        &                               z_path(c_inds(2:tan_pt_c)) )
-      del_zeta(tan_pt_c+1:npc-1) = 0.5_rp * ( z_path(c_inds(tan_pt_c+2:npc)) - &
-        &                                     z_path(c_inds(tan_pt_c+1:npc-1)) )
+      del_zeta(2:tan_pt_c) = 0.5_rp * ( z_coarse(1:tan_pt_c-1) - &
+        &                               z_coarse(2:tan_pt_c) )
+      del_zeta(tan_pt_c+1:npc-1) = 0.5_rp * ( z_coarse(tan_pt_c+2:npc) - &
+        &                                     z_coarse(tan_pt_c+1:npc-1) )
 
       ! Do phi refractive correction
       if ( FwdModelConf%refract ) then
@@ -4004,20 +4019,22 @@ contains
             &  nz_zp=nz_zp, nnz_zp=nnz_zp )
           call comp_1_sps_path_no_frq ( Grids_f, h2o_ind, eta_zp(1:npf,:), &
             & sps_path(1:npf,h2o_ind) )
-          call refractive_index ( p_path(1:npf), t_path(1:npf), &
-            &  n_path_f(1:npf),  &
+          call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf), &
             &  h2o_path=sps_path(1:npf, h2o_ind) )
         else
           call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf) )
-          n_path_c(:npc) = n_path_f(c_inds)
+          n_path_c(:npc) = n_path_f(1:npf:ngp1)
         end if
         ! Do the refractive correction.  Use t_path to store the correction,
         ! since we're going to recompute t_path right away.
+        ! The correction is zero at the tangent points and the zero-thickness
+        ! layer between the tangent points.
         n_path_f(1:npf) = min ( n_path_f(1:npf), MaxRefraction )
         call phi_refractive_correction ( tan_pt_f, n_path_f(1:npf), &
           & h_path(1:npf), t_path(1:npf) )
         phi_path(:tan_pt_f) = phi_path(:tan_pt_f) - t_path(:tan_pt_f)
-        phi_path(tan_pt_f+1:npf) = phi_path(tan_pt_f+1:npf) + t_path(tan_pt_f+1:npf)
+        phi_path(tan_pt_f+ngp1:npf) = phi_path(tan_pt_f+ngp1:npf) + &
+                                    & t_path(tan_pt_f+ngp1:npf)
       end if
 
       ! Get other metrics-related quantities: t_path, dhdz_path, dh_dt_path...
@@ -4033,12 +4050,14 @@ contains
           &  DHTDTL0 = tan_dh_dt, DO_CALC_HYD = do_calc_hyd(1:npf,:),    &
           &  DO_CALC_T = do_calc_t, ETA_ZXP = eta_zxp_t,                 &
           &  NZ_ZXP = nz_zxp_t, NNZ_ZXP = nnz_zxp_t )
-        dh_dt_path_c(1:npc,:) = dh_dt_path(c_inds,:)
-        do_calc_hyd(:c_inds(i_start)-1,:) = .false.
-        do_calc_hyd(c_inds(i_end)+1:npf,:) = .false.
-        do_calc_hyd_c(1:npc,:) = do_calc_hyd(c_inds,:)
-        do_calc_t_c(1:npc,:) = do_calc_t(c_inds,:)
-        eta_zxp_t_c(1:npc,:) = eta_zxp_t(c_inds,:)
+        dh_dt_path_c(1:npc,:) = dh_dt_path(1:npf:ngp1,:)
+        if ( print_tscat_detail > 0 ) &
+           & call dump ( dh_dt_path_c(:npc,:), name='dh_dT_path_c' )
+        do_calc_hyd(:i_start*ngp1-ngp1,:) = .false.
+        do_calc_hyd(i_end*ngp1-ng+1:npf,:) = .false.
+        do_calc_hyd_c(1:npc,:) = do_calc_hyd(1:npf:ngp1,:)
+        do_calc_t_c(1:npc,:) = do_calc_t(1:npf:ngp1,:)
+        eta_zxp_t_c(1:npc,:) = eta_zxp_t(1:npf:ngp1,:)
         t_der_path_flags(1:npf) = any(do_calc_t(1:npf,:),2)
       else
         call more_metrics ( tan_ind_f, tan_pt_f, Grids_tmp%phi_basis,    &
@@ -4046,8 +4065,8 @@ contains
           &  t_path(1:npf), dhdz_path(1:npf) )
       end if
 
-      h_path_c(1:npc) = h_path(c_inds)
-      t_path_c(1:npc) = t_path(c_inds)
+      h_path_c(1:npc) = h_path(1:npf:ngp1)
+      t_path_c(1:npc) = t_path(1:npf:ngp1)
 
       ! Compute eta_zp & do_calc_zp (for Zeta & Phi only)
 
@@ -4078,14 +4097,14 @@ contains
         ! Even if we did the refractive correction we need to do this,
         ! because the refractive correction changes phi_path, which
         ! changes sps_path.
-        call refractive_index ( p_path(c_inds), &
+        call refractive_index ( p_path(1:npf:ngp1), &
           &  t_path_c(1:npc), n_path_c(1:npc),  &
-          &  h2o_path=sps_path(c_inds, h2o_ind) )
+          &  h2o_path=sps_path(1:npf:ngp1, h2o_ind) )
       else if ( .not. FwdModelConf%refract ) then
         ! If we didn't do the refractive correction, we haven't yet
         ! computed the refractive index.
         call refractive_index ( p_path(1:npf), t_path(1:npf), n_path_f(1:npf) )
-        n_path_c(:npc) = n_path_f(c_inds)
+        n_path_c(:npc) = n_path_f(1:npf:ngp1)
       end if
 
       n_path_c(1:npc) = min ( n_path_c(1:npc), MaxRefraction )
@@ -4199,20 +4218,23 @@ contains
 
       call comp_refcor ( tan_pt_c, h_path_c(:npc), n_path_c(:npc), &
                     &    tan_ht, del_s(:npc), ref_corr(:npc), ier )
+
       if ( ier /= 0 ) fmStat%flags = ior(fmStat%flags,b_refraction)
 
-      ! We need dsdh_path on the fine grid for Gauss-Legendre or Gauss-
-      ! Lobatto quadrature, and on the coarse grid except at the tangent
-      ! point for trapezoidal quadrature and Gauss-Lobatto quadrature, so
-      ! compute it everywhere except at the tangent point.  Besides, it's
-      ! probably faster not to use a vector subscript to restrict it to
-      ! the fine grid.
+      !{ Since $s = \sqrt{h^2-h_t^2}$, $\frac{ds}{dh} = \frac{h}s$. We
+      ! need {\tt dsdh_path} on the fine grid for Gauss-Legendre or
+      ! Gauss-Lobatto quadrature, and on the coarse grid except at the
+      ! tangent point for trapezoidal quadrature and Gauss-Lobatto
+      ! quadrature, so compute it everywhere except at the tangent point
+      ! and in the zero-thickness tangent layer, where it has a pole. 
+      ! Besides, it's probably faster not to use a vector subscript to
+      ! restrict it to the fine grid.
 
       dsdh_path(:tan_pt_f-1) = h_path(:tan_pt_f-1) / &
         & ( sqrt(h_path(:tan_pt_f-1)**2 - tan_ht**2 ) )
-      dsdh_path(tan_pt_f+2:npf) = h_path(tan_pt_f+2:npf) / &
-        & ( sqrt(h_path(tan_pt_f+2:npf)**2 - tan_ht**2 ) )
-      dsdh_path(tan_pt_f:tan_pt_f+1) = 0.0
+      dsdh_path(tan_pt_f:tan_pt_f+ngp1) = 0.0
+      dsdh_path(tan_pt_f+ngp1+1:npf) = h_path(tan_pt_f+ngp1+1:npf) / &
+        & ( sqrt(h_path(tan_pt_f+ngp1+1:npf)**2 - tan_ht**2 ) )
 
       do i = 1, 2
         do j = 1, nglMax, ng ! Avoid a temp for (/ ( gw, j = 1, nglMax/ng ) /)
@@ -4224,7 +4246,7 @@ contains
 
         ! We need dsdz = ds/dh * dh/dz, not multiplied by GW, for
         ! trapezoidal quadrature on the coarse grid.
-        dsdz_c(:npc) = dsdh_path(c_inds) * dhdz_path(c_inds)
+        dsdz_c(:npc) = dsdh_path(1:npf:ngp1) * dhdz_path(1:npf:ngp1)
 
         ! Multiply dhdz_path by ds / ( sum( ds/dh dh/dz gw ) d zeta ) =
         ! del_s / ( sum (dsdz_gw_path) * del_zeta ), which ought to be 1.0
@@ -4260,7 +4282,7 @@ contains
         if ( .not. associated(t_s) ) call MLSMessage ( MLSMSG_Error, &
           & moduleName, "UseTScat requested but no Mie tables loaded" )
         call get_eta_stru ( t_s, t_path_c, eta_T_path_c )
-        call get_eta_stru ( iwc_s, iwc_path(c_inds,1), eta_IWC_path_c )
+        call get_eta_stru ( iwc_s, iwc_path(1:npf:ngp1,1), eta_IWC_path_c )
         ! We don't have Mie tables for this path
         prev_Mie_frq_ind = -1
       end if
@@ -4612,6 +4634,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.339  2013/04/09 18:23:56  pwagner
+! Fixed error in failing to use DerivativeMissingFromStateFun
+!
 ! Revision 2.338  2013/02/04 22:06:27  pwagner
 ! Added dmiss switch to downgrade severity when qty missing from state
 !

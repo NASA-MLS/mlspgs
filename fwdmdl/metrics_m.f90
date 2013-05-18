@@ -157,6 +157,7 @@ contains
     use CONSTANTS, only: PI, RAD2DEG
     use DUMP_0, only: DUMP
     use GET_ETA_MATRIX_M, only: GET_ETA_SPARSE
+    use GLNP, only: NG, NGP1
     use IEEE_ARITHMETIC, only: IEEE_IS_NAN
     use MLSKINDS, only: RP
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
@@ -205,8 +206,8 @@ contains
     logical :: MyForward   ! Default .true., else Forward if it's present
     integer :: NO_BAD_FITS
     integer :: NO_GRID_FITS
-    integer :: N_PATH      ! Path length = 2*(n_vert+1-tan_ind)
-    integer :: N_Tan       ! Tangent index in path, N_Path/2
+    integer :: N_PATH      ! Path length = 2*(n_vert+ngp1-tan_ind)
+    integer :: N_Tan       ! Tangent index in path, (N_Path - ngp1 + 1)/2
     integer :: N_Vert      ! Size(H_ref,1)
     integer :: P_COEFFS    ! Size(P_basis)
 
@@ -252,7 +253,7 @@ contains
 !   end if
 
     n_path = size(vert_inds)
-    n_tan = n_path / 2
+    n_tan = (n_path - ng ) / 2
     n_vert = size(h_ref,1)
 
     my_h_tol = defaultTol ! kilometers
@@ -266,8 +267,8 @@ contains
     tan_ht = tan_ht_s + req_s           ! From equivalent earth center
 
     stat = no_sol ! No solutions
-    ! The tangent point is special
-    stat(n_tan:n_tan+1) = good
+    ! The tangent points and the zero-thickness layer between them are special
+    stat(n_tan:n_tan+ngp1) = good
 
     ! p_basis and p_grid are phi's in offset radians relative to
     ! phi_t, that is, the phi_t, p_basis or p_grid = 0.0 is phi_t.
@@ -277,30 +278,33 @@ contains
       myForward = .true.
       if ( present(forward) ) myForward = forward
       theta = 2.0_rp*Acos(tan_ht/req_s)
+      ! Shouldn't need ever to look at phi_offset(n_tan+1:n_tan+ng)
       if ( myForward ) then
         phi_offset(1:n_tan) = phi_t + theta
         phi_offset(n_tan+1:) = phi_t
       else
-        phi_offset(:n_tan) = phi_t
-        phi_offset(n_tan+1:) = phi_t - theta
+        phi_offset(:n_tan+ng) = phi_t
+        phi_offset(n_tan+ngp1:) = phi_t - theta
       end if
       ! This expression for p_grid puts the midpoint of the path at the
       ! reflection point.
-      p_grid(n_tan:n_tan+1) = 0.5 * ( phi_offset(n_tan) + phi_offset(n_tan+1) )
-      h_grid(n_tan:n_tan+1) = req_s
+      p_grid(n_tan:n_tan+ngp1) = 0.5 * ( phi_offset(n_tan) + phi_offset(n_tan+ngp1) )
+      h_grid(n_tan:n_tan+ngp1) = req_s
     else
       phi_offset = phi_t
-      p_grid(n_tan:n_tan+1) = phi_offset(n_tan:n_tan+1)
-      h_grid(n_tan:n_tan+1) = tan_ht
+      p_grid(n_tan:n_tan+ngp1) = phi_offset(n_tan:n_tan+ngp1)
+      h_grid(n_tan:n_tan+ngp1) = tan_ht
     end if
 
     ! Only use the parts of the reference grids that are germane to the
     ! present path
 
-    vert_inds = (/ (i, i=n_vert,tan_ind,-1), (i, i=tan_ind,n_vert) /)
+    vert_inds = (/ (i, i=n_vert,tan_ind,-1), (tan_ind, i=1,ng), &
+                &  (i, i=tan_ind,n_vert) /)
 
     ! sign of phi vector
-    phi_sign = (/ (-1, i=n_vert,tan_ind,-1), (+1, i=tan_ind,n_vert) /)
+    phi_sign = (/ (-1.0_rp, i=n_vert,tan_ind,-1), (1.0_rp, i=1,ng), &
+               &  (+1.0_rp, i=tan_ind,n_vert) /)
 
     if ( h_phi_dump > 0 ) call dumpInput ( tan_ind )
 
@@ -310,17 +314,18 @@ contains
         &            D(K,J)        D(K,J+1)   STAT', &
         & '      P          phi    H_GRID   HREF(K,J) HREF(K,J+1)  H(TRIG)    D           N   Diffs'
 
-    no_bad_fits = n_path - 2
+    no_bad_fits = n_path - ng
     no_grid_fits = 0
 
     ! Get solutions outside of p_basis, if any, assuming constant H
-    ! outside of p_basis.
+    ! outside of p_basis.  Skip the points, if any, in the zero-thickness
+    ! tangent layer.
     do i1 = 1, n_path
-      if ( stat(i1) == good ) cycle ! Skip the tangent point
+      if ( stat(i1) == good ) cycle ! Skip the tangent points
       k = vert_inds(i1)
       h = max(tan_ht,h_ref(k,1)+r_eq) ! or h_ref(k,1) - h_surf + req_s
       p = acos(tan_ht/h) * phi_sign(i1) + phi_offset(i1)
-      if ( p >= p_basis(1) ) exit ! phi is monotone
+      if ( p >= p_basis(1) ) exit     ! phi is monotone
       p_grid(i1) = p
       h_grid(i1) = h
       no_bad_fits = no_bad_fits - 1
@@ -330,11 +335,11 @@ contains
 
     end do
     do i2 = n_path, 1, -1
-      if ( stat(i2) == good ) cycle ! Skip the tangent point
+      if ( stat(i2) == good ) cycle ! Skip the tangent points
       k = vert_inds(i2)
       h = max(tan_ht,h_ref(k,p_coeffs)+r_eq)
       p = acos(tan_ht/h) * phi_sign(i2) + phi_offset(i2)
-      if ( p <= p_basis(p_coeffs) ) exit ! phi is monotone
+      if ( p <= p_basis(p_coeffs) ) exit  ! phi is monotone
       p_grid(i2) = p
       h_grid(i2) = h
       no_bad_fits = no_bad_fits - 1
@@ -343,8 +348,8 @@ contains
           & print fmt, i2, p_coeffs, k, ang*p_grid(i2), h_grid(i2), '  Above p_basis'
     end do
       if ( debug ) then
-        print fmt, n_tan, 0, vert_inds(n_tan), ang*p_grid(n_tan), h_grid(n_tan), '  Tangent point'
-        print fmt, n_tan+1, 0, vert_inds(n_tan+1), ang*p_grid(n_tan+1), h_grid(n_tan+1), '  Tangent point'
+        print fmt, ( n_tan+j, 0, vert_inds(n_tan+j), ang*p_grid(n_tan+j), &
+                   & h_grid(n_tan+j), '  Tangent point', j = 0, ngp1 )
       end if
 
     !{ Let $H_{ij}$ denote an element of {\tt H\_ref}.  Remember that all
@@ -476,7 +481,7 @@ path: do i = i1, i2
               end if
             end if
           end do
-          i1 = n_tan + 2
+          i1 = n_tan + ngp1 + 1
           i2 = n_path
         end do
         ! Just do them all to make sure they're consistent
@@ -495,12 +500,12 @@ path: do i = i1, i2
             & ( z_ref(vert_inds(i2)) - z_ref(vert_inds(i1)))
           p_grid(j) = acos(tan_ht/h_grid(j)) * phi_sign(j) + phi_offset(j)
         end do
-        do j = n_tan+2, n_path-1
+        do j = n_tan+ngp1+1, n_path-1
           if ( stat(j) == good ) cycle
           do i2 = j, n_path-1
             if ( stat(i2) == good ) exit
           end do
-          do i1 = j, n_tan+1, -1
+          do i1 = j, n_tan+ngp1, -1
             if ( stat(i1) == good ) exit
           end do
           h_grid(j) = h_grid(i1) + (h_grid(i2)-h_grid(i1)) * &
@@ -523,7 +528,7 @@ path: do i = i1, i2
         ! of the path.
         if ( abs(p_grid(n_tan-1) - p_grid(n_tan)) > 0.9 * pi ) then
           ! Reflection point on the wrong side of the earth
-          p_grid(n_tan:n_tan+1) = mod(p_grid(n_tan:n_tan+1) + &
+          p_grid(n_tan:n_tan+ngp1) = mod(p_grid(n_tan:n_tan+ngp1) + &
             & sign(pi,p_grid(n_tan-1) - p_grid(n_tan)),pix2)
         end if
       end if
@@ -556,11 +561,11 @@ path: do i = i1, i2
       call output ( tan_ind, before=', tan_ind = ', advance='yes' )
       if ( tan_ht_s < 0.0 ) then
         call output ( n_tan, before='phi_offset (' )
-        call output ( n_tan+1, before=':', after=') (radians) ' )
-        call dump ( phi_offset(n_tan:n_tan+1), options='c' ) ! clean=.true.
+        call output ( n_tan+ngp1, before=':', after=') (radians) ' )
+        call dump ( phi_offset(n_tan:n_tan+ngp1), options='c' ) ! clean=.true.
         call output ( n_tan, before='phi_offset (' )
-        call output ( n_tan+1, before=':', after=') (degrees) ' )
-        call dump ( rad2deg*phi_offset(n_tan:n_tan+1), options='c' ) ! clean=.true.
+        call output ( n_tan+ngp1, before=':', after=') (degrees) ' )
+        call dump ( rad2deg*phi_offset(n_tan:n_tan+ngp1), options='c' ) ! clean=.true.
       end if
       call dump ( h_ref(firstRow:n_vert,:), name='h_ref', format='(f14.7)',options=options )
       if ( debug ) call dump ( vert_inds, name='vert_inds' )
@@ -768,13 +773,13 @@ path: do i = i1, i2
           write ( *, '(11x)', advance='no' )
         end if
         oops=''
-        if ( abs(h+r_eq-tan_ht/cos(p)) > 5.0e-4 ) oops='TRIG'
+        if ( abs(cos(p)*(h+r_eq)-tan_ht) > 5.0e-4 * cos(p) ) oops='TRIG'
         if ( why /= '' ) oops(6:) = why
       100 format (f11.5,f10.3,f10.3,f11.3,f10.3,1p,g14.6,i3,11g10.2)
         write (*, 100, advance='no') ang*phi, h_grid, &
           & h_ref(1)+r_eq, h_ref(2)+r_eq, &
-          & tan_ht / cos(p), &
-        ! & tan_ht * ( 1.0_rp + p2*((c2+p2*(c4+p2*c6))) ), & ! ~ tan_ht * sec(p)
+        ! & tan_ht / cos(p), &
+          & tan_ht * ( 1.0_rp + p2*((c2+p2*(c4+p2*c6))) ), & ! ~ tan_ht * sec(p)
           & d, n, dd(k:l)
         if ( present(deriv) ) then
           write ( *, '(f12.3)', advance='no' ) deriv
@@ -938,6 +943,7 @@ path: do i = i1, i2
       ! This is a subroutine instead of inline so that the references
       ! to Z_Basis in the dimensions of automatic variables are only
       ! attempted if Z_Basis is present.
+      use GLNP, only: NGP1
       integer, intent(in) :: N
       real(rp) :: ETA_T2(n_path,n)    ! n = size(z_basis)
       integer :: NZ_T2(n_path,n)      ! Nonzeros in Eta_T2
@@ -969,13 +975,13 @@ path: do i = i1, i2
                    ddhidhidtl0(tan_ind,:,:) * SPREAD(eta_p(n_tan,:),1,z_coeffs), &
                      & (/j/))
 
-      ! compute the path temperature noting where the zeros are
+      ! compute the path temperature, noting where the zeros are
       nnz_t2 = 0
       eta_t2 = 0.0
       call get_eta_sparse ( z_basis, z_ref(vert_inds), eta_t2, &
         & n_tan, 1, nz_t2, nnz_t2, .false. )
       call get_eta_sparse ( z_basis, z_ref(vert_inds), eta_t2, &
-        & n_tan+1, size(vert_inds), nz_t2, nnz_t2, .true. )
+        & n_tan+ngp1, size(vert_inds), nz_t2, nnz_t2, .true. )
 
       call multiply_eta_column_sparse ( eta_t2, nz_t2, nnz_t2, eta_p, nz_p, nnz_p, &
         & eta_zxp, nz_zxp, nnz_zxp, do_calc_t )
@@ -1127,6 +1133,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.70  2013/03/30 00:06:11  vsnyder
+! Put dummy argument declarations in same order as in subroutine statement
+!
 ! Revision 2.69  2013/02/28 21:08:29  vsnyder
 ! Try not to access array out of bounds
 !
