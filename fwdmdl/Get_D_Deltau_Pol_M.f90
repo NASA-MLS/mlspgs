@@ -23,12 +23,13 @@ module Get_D_Deltau_Pol_M
 contains
 
 ! ------------------------------------------  Get_D_Deltau_Pol_DF  -----
-  subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, Grids_f,  &
-               &  beta_path_pol, tanh1_c, eta_zxp, do_calc_f, sps_path, &
-               &  Del_S, incoptdepth, ref_cor, &
-               &  d_delta_df, nz_d_delta_df, nnz_d_delta_df, D_Deltau_Pol_DF  )
+  subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, Grids_f, beta_path_pol, &
+               &  tanh1_c, eta_zxp, do_calc_f, sps_path, Del_S,            &
+               &  incoptdepth, ref_cor, d_delta_df, nz_d_delta_df,         &
+               &  nnz_d_delta_df, D_Deltau_Pol_DF  )
 
     use DExdT_m, only: dExdT
+    use GLNP, only: NG, NGP1
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use MLSCommon, only: RP, IP
     use Opacity_m, only: Opacity
@@ -43,51 +44,51 @@ contains
       ! field vector, and the "instrument field of view plane polarized"
       ! (IFOVPP) X axis.
     real(rp), intent(in) :: STSP(:)           ! Sin(Theta) Sin(Phi)
-    integer(ip), intent(in) :: indices_c(:)   ! coarse grid indicies
     type (Grids_T), intent(in) :: Grids_f     ! All the coordinates
     complex(rp), intent(in) :: beta_path_pol(:,:,:) ! -1:1 x path x species.
-!                                               cross section for each species
-!                                               on coarse grid.
+                                              ! cross section for each species
+                                              ! on coarse grid.
     real(rp), intent(in) :: Tanh1_c(:)        ! tanh(h nu / k T) on coarse path
     real(rp), intent(in) :: eta_zxp(:,:)      ! composite path x sve
-!                                               representation basis function.
+                                              ! representation basis function.
     logical, intent(in) :: do_calc_f(:,:)     ! A logical indicating where
-!                                               eta_zxp is not zero.
+                                              ! eta_zxp is not zero.
     real(rp), intent(in) :: sps_path(:,:)     ! fine path x species.
-!                                               Path species function.
+                                              ! Path species function.
     real(rp), intent(in) :: Del_S(:)          ! unrefracted path length.  This
-      !                                         is for the whole coarse path, not
-      !                                         just the part up to the black-out
+                                              ! is for the whole coarse path, not
+                                              ! just the part up to the black-out
     complex(rp), intent(in) :: Incoptdepth(:,:,:) ! negative of incremental
-      !                                       optical depth.  2 x 2 x path
+                                              ! optical depth.  2 x 2 x path
     real(rp), intent(in) :: Ref_cor(:)        ! refracted to unrefracted path
-    !                                           length ratios.
+                                              ! length ratios, only up to the
+                                              ! black-out point.
     real(rp), intent(in) :: d_delta_df(:,:)   ! derivative of delta wrt
-!                                               mixing ratio state vector
-!                                               element.
+                                              ! mixing ratio state vector
+                                              ! element.
     integer, intent(in) :: nz_d_delta_df(:,:) ! Nonzeros in d_delta_df
     integer, intent(in) :: nnz_d_delta_df(:)  ! Column lengths in nz_delta_df
 
 ! Outputs
 
     complex(rp), intent(out) :: D_Deltau_Pol_DF(:,:,:,:) ! 2 x 2 x path x sve.
-!                                              derivative of delta Tau wrt
-!                                              mixing ratio state vector
-!                                              element.
+                                              ! derivative of delta Tau wrt
+                                              ! mixing ratio state vector
+                                              ! element.
 
 ! Internals
 
-    complex(rp) :: D_Delta_DF_Pol(-1:1,size(indices_c))
-    complex(rp) :: D_Incoptdepth_df(2,2,size(indices_c))
+    complex(rp) :: D_Delta_DF_Pol(-1:1,size(ref_cor))
+    complex(rp) :: D_Incoptdepth_df(2,2,size(ref_cor))
     integer :: I_Stop                        ! Length of coarse path
     integer :: II                            ! inds(p_i)
-    integer :: Inds(size(indices_c))         ! Where on the path to calc
+    integer :: Inds(size(ref_cor))           ! Where on the path to calc
     integer :: N_Inds                        ! Effective size of Inds
     integer :: P_I                           ! Path index
     integer :: SPS_I                         ! Species index
     integer :: SV_I                          ! State vector index
 
-    i_stop = size(indices_c)
+    i_stop = size(ref_cor)
 
 ! initialize entire array to zero
     d_deltau_pol_df = 0.0_rp
@@ -100,12 +101,12 @@ contains
 
         if ( .not. Grids_f%deriv_flags(sv_i) ) cycle
 
-        n_inds = count(do_calc_f(indices_c,sv_i))
+        n_inds = count(do_calc_f(1:ngp1*i_stop:ngp1,sv_i))
         if ( n_inds == 0 ) cycle
 
         d_delta_df_pol = 0.0
 
-        call where ( do_calc_f(indices_c,sv_i), inds(:n_inds) )
+        call where ( do_calc_f(1:ngp1*i_stop:ngp1,sv_i), inds(:n_inds) )
 
         if ( grids_f%lin_log(sps_i) ) then
 
@@ -113,7 +114,7 @@ contains
 
             ii = inds(p_i)
             d_delta_df_pol(:,ii) = beta_path_pol(:,ii,sps_i) &
-                      & * sps_path(indices_c(ii),sps_i) &
+                      & * sps_path(ii*ngp1-ng,sps_i) &
                       & * exp(-grids_f%values(sv_i))
 
           end do ! p_i
@@ -129,7 +130,7 @@ contains
         do p_i = 1, n_inds
           ii = inds(p_i)
           d_delta_df_pol(:,ii) = d_delta_df_pol(:,ii) * &
-            & ( eta_zxp(indices_c(ii),sv_i) * del_s(ii) * &
+            & ( eta_zxp(ii*ngp1-ng,sv_i) * del_s(ii) * &
             &   ref_cor(ii) * tanh1_c(ii) )
         end do ! p_i
 
@@ -150,10 +151,10 @@ contains
 ! I think these are mostly redundant to each other so WGR has
 ! replaced them with only one (left original uncommented in case I
 ! am wrong)
-!          if ( eta_zxp(indices_c(p_i),sv_i) /= 0.0 &
+!          if ( eta_zxp(p_i*ngp1-ng,sv_i) /= 0.0 &
 !            & .or. d_delta_df(p_i,sv_i) /= 0.0 &
-!            & .or. do_calc_f(indices_c(p_i),sv_i) ) then
-          if (do_calc_f(indices_c(p_i),sv_i) ) then
+!            & .or. do_calc_f(p_i*ngp1-ng,sv_i) ) then
+          if (do_calc_f(p_i*ngp1-ng,sv_i) ) then
             call dExdT ( incoptdepth(:,:,p_i), -d_incoptdepth_df(:,:,p_i), &
                        & d_deltau_pol_df(:,:,p_i,sv_i) ) ! d exp(incoptdepth) / df
           else
@@ -523,6 +524,11 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.42  2013/05/18 00:34:44  vsnyder
+! Insert NG fine-grid (GL) points between tangent points, thereby
+! regularizing coarse-grid spacing, and reducing significantly the need
+! to use c_inds to extract coarse-grid points from the composite grid.
+!
 ! Revision 2.41  2011/03/11 03:08:00  vsnyder
 ! Only use the nonzeros in d_delta_df
 !
