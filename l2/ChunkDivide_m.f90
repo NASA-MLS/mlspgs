@@ -1473,7 +1473,7 @@ contains ! ===================================== Public Procedures =====
 
     ! ----------------------------------------- NoteL1BRADChanges -----
     subroutine NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
-      use MLSSIGNALS_M, only: DUMP, GETSIGNALNAME, &
+      use MLSSIGNALS_M, only: DUMPSIGNALS=>DUMP, GETSIGNALNAME, &
         & SIGNALS
       use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, GETSTRINGELEMENT
       use MLSSTRINGS, only: LOWERCASE
@@ -1561,7 +1561,7 @@ contains ! ===================================== Public Procedures =====
         choseCriticalSignals = .true.
       endif
       do signalIndex=1, size(signals)
-        if ( swLevel >= VERBOSETHRESHOLD ) call dump( signals(signalIndex) )
+        if ( swLevel >= VERBOSETHRESHOLD ) call dumpSignals( signals(signalIndex) )
         call get_string( lit_indices(ChunkDivideConfig%criticalModules), signal_full, &
           & strip=.true. )
         critical_module_str = lowercase(signal_full)
@@ -2673,6 +2673,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.100  2013/05/21 22:50:24  pwagner
+! Workaround for ifort13 bug
+!
 ! Revision 2.99  2012/06/21 00:41:08  pwagner
 ! Added phi start and end to be used someday by HGrid
 !
