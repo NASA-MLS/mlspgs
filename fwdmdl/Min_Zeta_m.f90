@@ -26,13 +26,14 @@ contains
   subroutine Get_Min_Zeta ( P_Basis, H_Ref, T_Ref, Zeta_T, P_Grid, Tan_Pt, H_t, &
     &                       Min_Zeta, Min_Phi, Min_Index )
 
+    use GLNP, only: NGP1
     use MLSKinds, only: IP, RP
 
     real(rp), intent(in) :: P_Basis(:) ! Temperature basis phis
     real(rp), intent(in) :: H_Ref(:)   ! Tangent row of Metrics H_Ref
     real(rp), intent(in) :: T_Ref(:)   ! Tangent row of Metrics T_Ref
     real(rp), intent(in) :: Zeta_T     ! Zeta at the tangent
-    real(rp), intent(in) :: P_Grid(:)  ! Phi on the path
+    real(rp), intent(in) :: P_Grid(:)  ! Phi on the fine path
     integer, intent(in) :: Tan_Pt      ! Tangent index in P_Grid
     real(rp), intent(in) :: H_T        ! H at the tangent
 
@@ -198,12 +199,12 @@ contains
           if ( p_grid(min_index) <= min_phi ) exit
         end do
       else
-        if ( min_phi <= p_grid(tan_pt+2) .and. throw ) then
+        if ( min_phi <= p_grid(tan_pt+ngp1+1) .and. throw ) then
           ! Too close to tangent point.  Remember that the tangent is duplicated
           min_index = 0
           return
         end if
-        min_index = tan_pt + 2
+        min_index = tan_pt + ngp1 + 1
         do
           min_index = min_index + 1
           if ( min_index > size(p_grid)-1 ) then ! off the end of the path
@@ -230,6 +231,9 @@ contains
 end module Min_Zeta_m
 
 ! $Log$
+! Revision 2.4  2013/05/21 23:54:17  vsnyder
+! NG fine-grid points between coarse grid tangent points
+!
 ! Revision 2.3  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
