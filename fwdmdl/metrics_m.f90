@@ -128,7 +128,7 @@ contains
       h_tan = dot_product(h_ref(tan_ind_f,first:last),eta_t(first:last)) - h_surf
     end if
 
-    if ( max(switchDetail(switches,'metD'),switchDetail(switches,'metd')) > -1 ) then
+    if ( switchDetail(switches,'metd') > -1 ) then
       call output ( h_tan, before='H_Tan = ' )
       call output ( h_surf, before=', H_Surf = ', advance='yes' )
     end if
@@ -199,9 +199,8 @@ contains
                                          ! FullForwardModel)
 
     ! Local variables.
-    integer :: Do_Dumps    ! 0 = no dump, >0 = dump
-    integer :: H_Phi_Dump  ! 0 = no dump, >0 = dump
-    integer :: H_Phi_Stop  ! 0 = no dump, >0 = dump/stop
+    integer :: Do_Dumps    ! <0 = no dump, >=0 = dump, >0 = stop
+    integer :: H_Phi_Dump  ! <0 = no dump, >=0 = dump, >0 = stop
     integer :: I, I1, I2, IBAD, J, K
     logical :: MyForward   ! Default .true., else Forward if it's present
     integer :: NO_BAD_FITS
@@ -245,11 +244,8 @@ contains
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
 !   if ( do_dumps < 0 ) then ! First time only
-      do_dumps = max( &
-        & switchDetail(switches,'metD'),switchDetail(switches,'metd') &
-        & ) + 1
-      h_phi_stop = switchDetail(switches,'hphI')
-      h_phi_dump = max(h_phi_stop,switchDetail(switches,'hphi')) + 1
+      do_dumps = switchDetail(switches,'metd')
+      h_phi_dump = switchDetail(switches,'hphi')
 !   end if
 
     n_path = size(vert_inds)
@@ -306,7 +302,7 @@ contains
     phi_sign = (/ (-1.0_rp, i=n_vert,tan_ind,-1), (1.0_rp, i=1,ng), &
                &  (+1.0_rp, i=tan_ind,n_vert) /)
 
-    if ( h_phi_dump > 0 ) call dumpInput ( tan_ind )
+    if ( h_phi_dump >= 0 ) call dumpInput ( tan_ind )
 
       if ( debug ) &
         & print '(a)', &
@@ -314,7 +310,8 @@ contains
         &            D(K,J)        D(K,J+1)   STAT', &
         & '      P          phi    H_GRID   HREF(K,J) HREF(K,J+1)  H(TRIG)    D           N   Diffs'
 
-    no_bad_fits = n_path - ng
+    no_bad_fits = n_path - ngp1 - 1 ! Exclude coarse tangent points and fine
+                                    ! points between them
     no_grid_fits = 0
 
     ! Get solutions outside of p_basis, if any, assuming constant H
@@ -442,7 +439,7 @@ path: do i = i1, i2
     if ( no_bad_fits > 0 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & "Height_Metrics failed to find H/Phi solution for some path segment" )
-      if ( switchDetail(switches,'MHPX') > -1 .or. switchDetail(switches,'mhpx') > -1 ) then
+      if ( switchDetail(switches,'mhpx') > -1 ) then
         call dumpInput ( 1 )
         if ( .not. debug ) then
           do i = 1, size(stat), 10
@@ -514,11 +511,11 @@ path: do i = i1, i2
           p_grid(j) = acos(tan_ht/h_grid(j)) * phi_sign(j) + phi_offset(j)
         end do
       end if
-      if ( switchDetail(switches,'MHPX') > -1 .or. switchDetail(switches,'mhpx') > -1 ) then
+      if ( switchDetail(switches,'mhpx') > -1 ) then
         call dump ( h_grid, name='H_Grid after 1d fixup' )
         call dump ( rad2deg*p_grid, name='P_Grid (degrees) after 1d fixup' )
-        if ( switchDetail(switches,'MHPX') > -1 ) &
-        call MLSMessage ( MLSMSG_Error, moduleName, 'Halt requested by MHPX' )
+        if ( switchDetail(switches,'mhpx') > 0 ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName, 'Halt requested by mhpx1' )
       end if
     end if
 
@@ -538,12 +535,12 @@ path: do i = i1, i2
     ! on constant-zeta surfaces, it is impossible for the heights not to be
     ! monotone increasing away from the tangent point.
 
-    if ( do_dumps > 0 ) then
+    if ( do_dumps >= 0 ) then
       call output ( tan_ht_s, before='tan_ht_s = ' )
       call output ( req_s, before=', r_eq+h_surf = ', advance='yes' )
       call dump ( rad2deg*p_grid, name='p_grid (degrees) before refractive correction', &
         & format='(f14.8)', options=options )
-      if ( h_phi_dump == 0 ) &
+      if ( h_phi_dump < 0 ) &
         & call dump ( rad2deg*p_basis, name='p_basis (degrees)', format='(f14.6)', options=options )
       call dump ( h_grid, name='h_grid', format='(f14.6)', options=options )
     end if
@@ -873,8 +870,7 @@ path: do i = i1, i2
 
     ! Local variables.
 
-    integer :: Do_Dumps    ! 0 = no dump, >0 = dump
-    integer :: Dump_Stop   ! 0 = no dump, >0 = dump/stop
+    integer :: Do_Dumps    ! <0 = no dump, >=0 = dump, >0 = stop
     integer :: I           ! Subscript, loop inductor
     integer :: N_PATH      ! Path length = size(vert_inds)
     integer :: N_VERT      ! size(z_ref)
@@ -890,8 +886,7 @@ path: do i = i1, i2
 !   It would be nice to do this the first time only, but the
 !   retrieve command in the L2CF can now change switches
 !   if ( do_dumps < 0 ) then ! First time only
-      dump_stop = switchDetail(switches,'metD') + 1
-      do_dumps = max( dump_stop, switchDetail(switches,'metd') + 1 )
+      do_dumps = switchDetail(switches,'metd')
 !   end if
 
     n_vert = size(t_ref,1)
@@ -926,7 +921,7 @@ path: do i = i1, i2
       if ( present(dhidtlm) ) call Tangent_Temperature_Derivatives ( size(z_basis) )
     end if
 
-    if ( do_dumps > 0 ) then
+    if ( do_dumps >= 0 ) then
       call dump ( t_ref, name='t_ref', format='(1pg14.6)', options=options )
       call dump ( t_grid(:n_path), name='t_grid', format='(1pg14.6)', options=options )
       call dump ( dhitdzi(:n_path), name='dhitdzi', format='(1pg14.6)', options=options )
@@ -934,7 +929,7 @@ path: do i = i1, i2
       call dump ( col1, name='col1', options=options )
       call dump ( col2, name='col2', options=options )
       call dump_nz ( nz_p, nnz_p, what=' in More_Metrics' )
-      if ( dump_stop > 0 ) stop
+      if ( do_dumps > 0 ) stop
     end if
 
   contains
@@ -1133,6 +1128,11 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.71  2013/05/18 00:34:44  vsnyder
+! Insert NG fine-grid (GL) points between tangent points, thereby
+! regularizing coarse-grid spacing, and reducing significantly the need
+! to use c_inds to extract coarse-grid points from the composite grid.
+!
 ! Revision 2.70  2013/03/30 00:06:11  vsnyder
 ! Put dummy argument declarations in same order as in subroutine statement
 !
