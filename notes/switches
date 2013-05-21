@@ -65,7 +65,6 @@ Switches (set by -S option in mlsl2's command line):
   hess =>   Intermediate steps while computing Hessians
   hgrid =>  Information on HGrid construction (at least for regular)
   hphi =>   Trace H/Phi iteration in metrics
-  hphI =>   hphi, and stop if 1d approximation is used
   jac =>    L_infty norms of Jacobian blocks during Newton iterations
   JAC[n] => Jacobian during Newton iterations with detail level n
   join =>   Intermediate steps while joining l2aux quantities
@@ -79,8 +78,8 @@ Switches (set by -S option in mlsl2's command line):
   log[n] => Print most Log file messages only to stdout, not toolkit log
   mach =>   Machine names (that can be enslaved by master task)
   mas =>    Activities between the PVM master task and slave task
-  metd =>   Dump nonoptional outputs from metrics
-  metD =>   Dump nonoptional outputs from metrics, then stop
+  metd[n] => Dump nonoptional outputs from metrics, stop if n > 0
+  mhpx[n] => Dump information about H/Phi failure, stop if n > 0
   msk =>    Mask set up by subset command in Retrieve
   mst =>    Dump interesting stuff if normal equations cannot be factored
   ndb =>    Dump 12 interesting Newton method internal variables after every SOLVE step
@@ -189,6 +188,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.82  2013/05/17 22:53:21  vsnyder
+ Revise beta dump switches
+
  Revision 1.81  2013/05/15 03:09:29  vsnyder
  Revise processing of fwmd and fwmg dump switches
 
