@@ -22,6 +22,7 @@ a                # polarization
 adopted
 angle
 ascii
+azimuth
 
 b                # polarization
 baseline
@@ -140,6 +141,8 @@ MHz
 mif
 mifDeadTime      # How much of MIF is not collecting data
 mifExtinction    # Extinction as a minor-frame quantity
+mifExtinctionExtrapolation # exponent in MIF extinction extrapolation
+mifExtinctionForm # exponent in MIF extinction derivative extrapolation
 mifExtinctionV2  # Extinction as a minor-frame quantity
 mifs
 minutes
@@ -235,6 +238,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.61  2013/05/21 23:52:47  vsnyder
+# Add MIFExtinctionExtrapolation and MIFExtinctionForm
+#
 # Revision 2.60  2011/12/23 23:31:13  vsnyder
 # Add LowestRetrievePressure and MIFExtinction[v2]
 #
