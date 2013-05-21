@@ -411,9 +411,11 @@ contains ! =====     Public Procedures     =============================
       if ( present(ExtraMessage) )  call output(ExtraMessage, advance='yes')
       if ( code == no_Error_Code .and. present(extraInfo) ) &
         & call dump ( extraInfo, name='Extra info' )
-      if ( QUITNOW ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & trim(extraMessage) )
+      if ( present(QUITNOW) ) then
+        if ( QUITNOW ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & trim(extraMessage) )
+      end if
     end subroutine ANNOUNCE_ERROR
 
     ! ------------------------------------------- ApplyBaseline ----------
@@ -7005,6 +7007,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.75  2013/05/21 01:47:34  vsnyder
+! Don't look at QUITNOW until you're sure it's there
+!
 ! Revision 2.74  2013/05/17 00:52:01  pwagner
 ! May constrain Transfer command command to quantitynames by r/t Boolean; r/t sep now achar(0)
 !
