@@ -45,11 +45,13 @@ contains ! ============= Public Procedures ==========================
     use HYBRIDFORWARDMODEL_M, only: HYBRIDFORWARDMODEL
     use INIT_TABLES_MODULE, only: L_BASELINE, L_CLOUDFULL, &
       & L_EXTINCTION, L_EXTINCTIONV2, L_FULL, L_HYBRID, L_LINEAR, &
-      & L_MIFEXTINCTION, L_MIFEXTINCTIONV2, L_POLARLINEAR, L_PTAN, L_SCAN, &
-      & L_SCAN2D, L_SWITCHINGMIRROR
+      & L_MIFEXTINCTION, L_MIFExtinctionExtrapolation, L_MIFExtinctionForm, &
+      & L_MIFEXTINCTIONV2, L_POLARLINEAR, L_PTAN, L_SCAN, L_SCAN2D, &
+      & L_SWITCHINGMIRROR
     use Intrinsic, only: L_LOWESTRETRIEVEDPRESSURE, L_VMR, Lit_Indices
     use LINEARIZEDFORWARDMODEL_M, only: LINEARIZEDFORWARDMODEL
     use MATRIXMODULE_1, only: CHECKINTEGRITY, MATRIX_T
+    use MLSKinds, only: RV
     use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR, &
       & MLSMSG_WARNING
@@ -96,6 +98,8 @@ contains ! ============= Public Procedures ==========================
                                            !     details = 100's digit - 4
     type(qtyStuff_t) :: EXTQty(nt)         ! extinction quantities
                                            ! (1) is extinction, (2) is extinctionv2
+    real(rv) :: ExtrapExponent             ! -exponent for extinction extrapolation
+    real(rv) :: ExtrapForm                 ! -exponent for extinction derivative extrapolation
     integer :: FMNaN                       ! Level of fmnan switch
     integer :: I, J, K
     type(vectorValue_t), pointer :: LRP    ! Lowest Retrieved Pressure
@@ -189,6 +193,15 @@ contains ! ============= Public Procedures ==========================
     end if ! config%transformMIFextinction
 
     if ( any(doTrans) ) then
+      ! Use lrp as a handy temporary vector quantity pointer
+      lrp => GetQuantityForForwardModel ( fwdModelExtra, noError=.true., &
+               & quantityType=l_MIFExtinctionExtrapolation, config=config )
+      extrapExponent = -2.0
+      if ( associated(lrp) ) extrapExponent = -lrp%values(1,1)
+      lrp => GetQuantityForForwardModel ( fwdModelExtra, noError=.true., &
+               & quantityType=l_MIFExtinctionForm, config=config )
+      extrapForm = -2.0
+      if ( associated(lrp) ) extrapForm = -lrp%values(1,1)
       ! Lowest Returned Pressure is needed for extinction transformations
       lrp => GetQuantityForForwardModel ( fwdModelExtra, &
                & quantityType=l_lowestRetrievedPressure, config=config )
@@ -200,8 +213,8 @@ contains ! ============= Public Procedures ==========================
       ! Transform MIF extinction quantity to extinction molecule
       do i = 1, nt
         if ( doTrans(i) ) then
-          call transform_MIF_extinction ( fmStat%MAF, MIFQty(i)%qty, &
-            & ptan, lrp%values(1,1), extQty(i)%qty, dumpTransform )
+          call transform_MIF_extinction ( fmStat%MAF, MIFQty(i)%qty, ptan, &
+            & lrp%values(1,1), extrapExponent, extQty(i)%qty, dumpTransform )
         end if
       end do
 
@@ -213,8 +226,8 @@ contains ! ============= Public Procedures ==========================
       do i = 1, nt
         if ( derivs(i) ) &
           & call transform_FWM_extinction ( config, fmStat%MAF, fwdModelOut, &
-            & extQty(i)%qty, MIFQty(i)%qty, ptan, Jacobian, dumpTransform,   &
-            & clean )
+            & extQty(i)%qty, MIFQty(i)%qty, ptan, extrapForm, Jacobian,      &
+            & dumpTransform, clean )
       end do
     else ! Run the forward model without transformation
       call doForwardModels
@@ -352,7 +365,8 @@ contains ! ============= Public Procedures ==========================
 
 !{\cleardoublepage
   subroutine Transform_FWM_extinction ( Config, MAF, FwdModelOut, F_Qty, S_Qty, &
-    &                                   PTan, Jacobian, DumpTransform, Clean )
+    &                                   PTan, ExtrapForm, Jacobian, &
+    &                                   DumpTransform, Clean )
     ! Transform blocks of the Jacobian associated with f_qty to blocks
     ! associated with s_qty.
     ! Transform the forward model radiances to retriever radiances.
@@ -376,6 +390,7 @@ contains ! ============= Public Procedures ==========================
     type(vectorValue_t), intent(in) :: F_Qty ! Extinction quantity in fwmState
     type(vectorValue_t), intent(in) :: S_Qty ! MIF Extinction quantity in State
     type(vectorValue_t), intent(in) :: PTan  ! Tangent pressure, for S_Qty
+    real(rv), intent(in) :: ExtrapForm       ! exponent for extrapolation
     type(matrix_T), intent(inout) :: Jacobian
     integer, intent(in) :: DumpTransform(3)
     logical, intent(in) :: Clean             ! for the dumps
@@ -413,11 +428,12 @@ contains ! ============= Public Procedures ==========================
     ! \begin{equation*}
     ! 10^{-2(\zeta_g-\zeta_r)} = \left( \frac{P_g}{P_r} \right)^2
     ! \end{equation*}
+    ! $-2$ is the default if {\tt extrapForm} is not specified.
 
     forall ( vSurf=1:size(ptan%values,1), surf=1:f_qty%template%noSurfs ) &
       & p(vSurf,surf) = &
-        & 10.0_rm ** ( -2.0_rm * ( f_qty%template%surfs(surf,1) - &
-                                   ptan%values(vSurf,maf) ) )
+        & 10.0_rm ** ( extrapForm * ( f_qty%template%surfs(surf,1) - &
+                                    & ptan%values(vSurf,maf) ) )
 
     do chan = 1, size(config%channels)
       cv = config%channels(chan)%used + 1 - config%channels(chan)%origin
@@ -568,8 +584,8 @@ contains ! ============= Public Procedures ==========================
   end subroutine Transform_FWM_extinction
 
 !{\cleardoublepage
-  subroutine Transform_MIF_Extinction ( MAF, S_Qty, PTan, Lrp, F_Qty, &
-    &                                   DumpTransform )
+  subroutine Transform_MIF_Extinction ( MAF, S_Qty, PTan, Lrp, &
+    &                                   ExtrapExponent, F_Qty, DumpTransform )
 
     ! Interpolate from a MAF-indexed minor-frame quantity to the first
     ! column of an L2GP quantity.  Then spread it out in orbit geodetic
@@ -589,6 +605,7 @@ contains ! ============= Public Procedures ==========================
     type(vectorValue_t), intent(in) :: PTan   ! Zetas, for S_Qty, which has
                                               ! altitudes in meters
     real(rv), intent(in) :: LRP               ! Lowest retrieved pressure
+    real(rv), intent(in) :: ExtrapExponent    ! For extrapolation
     type(vectorValue_t), intent(inout) :: F_Qty ! Forward model quantity
     integer, intent(in) :: DumpTransform(3)   ! Dump S_Qty and F_Qty
 
@@ -617,6 +634,7 @@ contains ! ============= Public Procedures ==========================
      !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107, to compute
      !  extinction for the forward model, by extrapolating downward from
      !  the zeta above, or equal to, LRP = $\zeta_r$.
+     !  $-2$ is the default if {\tt extrapExponent} is not specified.
      ! \renewcommand{\arraystretch}{2}
      ! \begin{equation*}
      ! E^F_{g,j} = \left\{
@@ -633,8 +651,8 @@ contains ! ============= Public Procedures ==========================
 
     do i = 1, f_lrp
       f_qty%values(i,:) = f_qty%values(f_lrp+1,1) * &
-        & 10.0_rm ** ( - 2.0 * ( f_qty%template%surfs(i,1) - &
-                               & ptan%values(p(s_lrp+1),1) ) )
+        & 10.0_rm ** ( extrapExponent * ( f_qty%template%surfs(i,1) - &
+                                        & ptan%values(p(s_lrp+1),1) ) )
     end do
 
     do i = f_lrp+1, ubound(f_qty%values,1)
@@ -664,6 +682,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.58  2013/05/21 23:52:47  vsnyder
+! Add MIFExtinctionExtrapolation and MIFExtinctionForm
+!
 ! Revision 2.57  2013/04/13 01:33:53  vsnyder
 ! Fix a typo, polish some LaTeX stuff
 !
