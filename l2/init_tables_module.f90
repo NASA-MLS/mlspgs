@@ -531,9 +531,10 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_ascii, l+l_hdf, l+l_l2aux, l+l_l2cf, &
              l+l_l2dgg, l+l_l2fwm, l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_quantityType, l+l_adopted, l+l_baseline, l+l_boundarypressure, &
-             l+l_calSidebandFraction, l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, &
-             l+l_cloudIce, l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudMinMax, &
+      begin, t+t_quantityType, l+l_adopted, l+l_azimuth, l+l_baseline, &
+             l+l_boundarypressure, l+l_calSidebandFraction, l+l_chisqbinned, &
+             l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
+             l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudMinMax, &
              l+l_cloudRadSensitivity, l+l_cloudTemperature, l+l_cloudWater, l+l_columnabundance, &
              l+l_dnwt_abandoned, l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
              l+l_dnwt_chiSqMinNorm, l+l_dnwt_chiSqNorm, l+l_dnwt_chiSqRatio, &
@@ -551,7 +552,8 @@ contains ! =====     Public procedures     =============================
              l+l_lineCenter, l+l_lineWidth, l+l_lineWidth_tDep, &
              l+l_losTransFunc, l+l_losVel, l+l_lowestRetrievedPressure, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
-             l+l_MIFDeadTime, l+l_MIFExtinction,  l+l_MIFExtinctionv2, &
+             l+l_MIFDeadTime, l+l_MIFExtinction, l+l_MIFExtinctionExtrapolation, &
+             l+l_MIFExtinctionForm, l+l_MIFExtinctionv2, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
              l+l_numGrad, l+l_numJ, l+l_numNewt, &
              l+l_opticalDepth, l+l_orbitInclination, &
@@ -609,6 +611,15 @@ contains ! =====     Public procedures     =============================
     ! present in the field given by the last f_field_name, which is
     ! required to be in a specification named by the next-to-last
     ! f_field_name ... of the specification named by the spec_name.
+    ! For a single field name, an alternative form is
+    !               < n_or f_field_name
+    !                 < n_field_type t_type ... t_type > ...
+    !                 < n_field_spec s_spec ... s_spec > ...
+    !                 < n_dot s_spec f_field_name ... >
+    !               >
+    ! The n_or tree allows a field to take several forms.  It is the
+    ! responsibility of the examiner of the tree to determine which
+    ! form appears.
 
     call make_tree ( (/ &
       begin, s+s_time, np+n_spec_def, &
@@ -1827,6 +1838,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.566  2013/05/21 23:52:47  vsnyder
+! Add MIFExtinctionExtrapolation and MIFExtinctionForm
+!
 ! Revision 2.565  2013/05/17 00:48:49  pwagner
 ! May constrain Transfer command command to quantitynames by r/t Boolean
 !
