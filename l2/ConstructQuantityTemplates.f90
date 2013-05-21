@@ -1034,8 +1034,8 @@ contains ! ============= Public procedures ===================================
   subroutine InitQuantityTemplates
     ! This routine initializes the quantity template properties
     ! This is the routine one needs to update when one introduces a new quantity type.
-    use Init_Tables_Module, only:  L_ADOPTED, L_ADOPTED, L_BASELINE, L_BOUNDARYPRESSURE, &
-      L_CALSIDEBANDFRACTION, &
+    use Init_Tables_Module, only:  L_ADOPTED, L_ADOPTED, L_AZIMUTH, L_BASELINE, &
+      L_BOUNDARYPRESSURE, L_CALSIDEBANDFRACTION, &
       L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
       L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDMINMAX, L_CLOUDRADSENSITIVITY, &
       L_CLOUDTEMPERATURE, L_CLOUDWATER, L_COLUMNABUNDANCE, &
@@ -1054,7 +1054,8 @@ contains ! ============= Public procedures ===================================
       L_LINECENTER, L_LINEWIDTH, L_LINEWIDTH_TDEP, &
       L_LOSTRANSFUNC, L_LOSVEL, L_LOWESTRETRIEVEDPRESSURE, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
-      L_MIFDEADTIME, L_MIFEXTINCTION, L_MIFEXTINCTIONV2, &
+      L_MIFDEADTIME, L_MIFEXTINCTION, L_MIFExtinctionExtrapolation, &
+      L_MIFExtinctionForm, L_MIFEXTINCTIONV2, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
       L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_OPTICALDEPTH, L_ORBITINCLINATION, &
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
@@ -1093,10 +1094,11 @@ contains ! ============= Public procedures ===================================
     ! list of properties.  The list of properties for a quantity ends with
     ! either "next,", after which information for another quantity may
     ! begin, or the end of the array.  The property "none" is a zero-extent
-    ! array, provided for its documentaty value.
+    ! array, provided for its documentary value.
 
     call DefineQtyTypes ( (/ &
       l_adopted, phyq_dimensionless, none, next, &
+      l_azimuth, phyq_angle, none, next, &
       l_baseline, phyq_temperature, p_flexibleVHGrid, p_fGrid, p_radiometerOptional, &
                   p_signalOptional, p_suppressChannels, p_mustBeZeta, next, &
       l_boundaryPressure, phyq_pressure, p_hGrid, next, &
@@ -1176,9 +1178,11 @@ contains ! ============= Public procedures ===================================
       l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_mifDeadTime, phyq_time, next, &
-      l_MIFExtinction, phyq_extinction, p_flexibleVHGrid, &
+      l_mifExtinction, phyq_extinction, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
-      l_MIFExtinctionV2, phyq_extinction, p_flexibleVHGrid, &
+      l_mifExtinctionExtrapolation, phyq_dimensionless, none, next, &
+      l_mifExtinctionForm, phyq_dimensionless, none, next, &
+      l_mifExtinctionV2, phyq_extinction, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
       l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
         & p_signal, p_suppressChannels, p_mustBeZeta, next, &
@@ -1345,6 +1349,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.168  2013/05/21 23:52:47  vsnyder
+! Add MIFExtinctionExtrapolation and MIFExtinctionForm
+!
 ! Revision 2.167  2013/02/21 21:37:10  pwagner
 ! New optional arg mafwise to return anysignaldata maf-by-maf
 !
