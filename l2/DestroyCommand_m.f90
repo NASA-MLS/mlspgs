@@ -16,7 +16,7 @@ module DestroyCommand_m
   implicit None
   private
 
-  public :: DestroyCommand
+  public :: DESTROYCOMMAND
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -28,36 +28,43 @@ contains
 
   subroutine DestroyCommand ( Key, Matrices, Vectors, Grids )
 
-    use GriddedData, only: griddedData_T, &
-      & DestroyGriddedData, DestroyGriddedDataDatabase
-    use Init_Tables_Module, only: F_AllGriddedData, F_AllMatrices, F_AllVectors, &
-      & F_GRID, F_Matrix, &
-      & F_Vector
-    use MatrixModule_1, only: DestroyMatrixDatabase, DestroyMatrix, Dump, &
-      & Matrix_Database_T
-    use MoreTree, only: Get_Boolean, Get_Field_ID
-    use Output_m, only: Output
-    use String_Table, only: Display_String
-    use Toggles, only: Toggle, Gen
-    use Trace_m, only: Trace_begin, Trace_end
-    use Tree, only: Decoration, NSons, Subtree
-    use VectorsModule, only: DestroyVectorDatabase, DestroyVectorInfo, Dump, &
-      & Vector_T
+    use GRIDDEDDATA, only: GRIDDEDDATA_T, &
+      & DESTROYGRIDDEDDATA, DESTROYGRIDDEDDATADATABASE
+    use INIT_TABLES_MODULE, only: F_ALLGRIDDEDDATA, F_ALLMATRICES, &
+      & F_ALLVECTORS, F_BOOLEAN, F_GRID, F_MATRIX, &
+      & F_VECTOR
+    use MATRIXMODULE_1, only: DESTROYMATRIXDATABASE, DESTROYMATRIX, DUMP, &
+      & MATRIX_DATABASE_T
+    use MLSL2OPTIONS, only: REMOVERUNTIMEBOOLEAN
+    use MLSSTRINGS, only: LOWERCASE
+    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+    use TOGGLES, only: TOGGLE, GEN
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    use VECTORSMODULE, only: DESTROYVECTORDATABASE, DESTROYVECTORINFO, DUMP, &
+      & VECTOR_T
 
     integer, intent(in) :: Key ! Root of parse subtree
     type (matrix_database_T), dimension(:), pointer :: Matrices
     type (vector_T), dimension(:), pointer :: Vectors
     type (griddedData_T), dimension(:), pointer :: Grids
-
+    ! local variables
+    character(len=80) :: BOOLEANNAME    ! E.g., 'BQTYS'
+    integer :: gson
     logical :: DEEBUG = .false.
     integer :: gridID, J, K, MatrixToKill, Son, SourceVectorIndex
-
+    ! Executable
     if ( toggle(gen) ) call trace_begin ( 'DestroyCommand' )
     ! Here we're to try to shrink the vector database by destroying a vector
     ! or the matrix database by destroying a matrix
     ! Loop over the instructions
+    booleanName = ' '
     do j = 2, nsons(key)
       son = subtree(j,key)  ! The argument
+      gson = son
+      if ( nsons(gson) > 1 ) gson = subtree(2,gson)
       select case ( get_field_id(son) )
       case ( f_allGriddedData )
         if ( get_boolean(son) ) call DestroyGriddedDataDatabase ( grids )
@@ -65,10 +72,13 @@ contains
         if ( get_boolean(son) ) call destroyMatrixDatabase ( matrices )
       case ( f_allVectors )
         if ( get_boolean(son) ) call destroyVectorDatabase ( vectors )
+      case (f_Boolean)
+        call get_string ( sub_rosa(gson), booleanName, strip=.true. )
+        booleanName = lowerCase( booleanName )
+        call removeRunTimeBoolean( booleanName )
       case ( f_grid )
         do k = 2, nsons(son)
           gridID = decoration(decoration(subtree(k,son)))
-
           call DestroyGriddedData ( grids(gridID) )
         end do
       case ( f_matrix )
@@ -81,7 +91,6 @@ contains
              call dump ( matrices(matrixToKill), -1 )
             ! end if
           end if
-
           call DestroyMatrix ( matrices(matrixToKill) )
         end do
       case ( f_vector )
@@ -130,6 +139,9 @@ contains
 end module DestroyCommand_m
 
 ! $Log$
+! Revision 2.6  2013/05/22 20:22:26  pwagner
+! May destroy r/t Booleans
+!
 ! Revision 2.5  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
