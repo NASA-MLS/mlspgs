@@ -872,7 +872,7 @@ contains
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, &
       & MLSMESSAGE
     use MLSSTRINGLISTS, only: EVALUATEFORMULA, GETHASHELEMENT, &
-      & NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
+      & INSERTHASHELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS, WRITEINTSTOCHARS
     use MORETREE, only: GET_BOOLEAN
     use OUTPUT_M, only: NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
@@ -1083,8 +1083,6 @@ contains
       call Manipulate( tQuantity, AQuantity, BQuantity, C, formula, &
         & .false., '' )
       formula = numToChars ( tQuantity%values(1,1) )
-      ! call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      !   & lowercase(trim(nameString)), lowercase(trim(formula)), countEmpty=countEmpty )
       call insertHashElement ( nameString, formula, &
         & runTimeValues%lkeys, runTimeValues%lvalues, &
         & inseparator=runTimeValues%sep )
@@ -1096,8 +1094,6 @@ contains
         call output( trim(nameString) // ' = ', advance='no' )
         call output( trim(formula), advance='yes' )
       endif
-      ! call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      !   & lowercase(trim(nameString)), lowercase(trim(formula)), countEmpty=countEmpty )
       call insertHashElement ( nameString, formula, &
         & runTimeValues%lkeys, runTimeValues%lvalues, &
         & inseparator=runTimeValues%sep )
@@ -1106,9 +1102,6 @@ contains
         call output( trim(nameString) // ' = ', advance='no' )
         call output( tvalue, advance='yes' )
       endif
-      ! call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
-      ! & lowercase(trim(nameString)), BooleanToString(tvalue), &
-      ! & countEmpty=countEmpty )
       call insertHashElement ( nameString, BooleanToString(tvalue), &
         & runTimeValues%lkeys, runTimeValues%lvalues, &
         & inseparator=runTimeValues%sep )
@@ -1117,56 +1110,6 @@ contains
       & inseparator=runTimeValues%sep )
     if ( verbose ) &
       & call dumpMacros
-  contains
-    subroutine INSERTHASHELEMENT ( NAME, VALUE, KEYS, VALUES, INSEPARATOR )
-      ! Dummy args
-      character(len=*), intent(in)           :: NAME
-      character(len=*), intent(in)           :: VALUE
-      character(len=*), intent(inout)        :: KEYS
-      character(len=*), intent(inout)        :: VALUES
-      character(len=1), intent(in), optional :: INSEPARATOR
-      ! Local variables
-      character(len=64) :: cvalue
-      integer :: c
-      character (len=16)                            :: keyString
-      integer                                       :: n
-      character (len=8)                             :: nCh
-      character (len=1)                             :: separator
-      ! Executable
-      separator = ','
-      if ( present(inseparator) ) separator = inseparator
-      ! 1st--is name an array-valued hash key?
-      keyString = trim(name) // 'n'
-      call GetHashElement( keys, values, keyString, nCh, &
-        & countEmpty, inseparator=separator )
-      if ( nCh == separator ) then
-        ! No, it's just a scalar
-        call PutHashElement ( keys, values, &
-        & trim(name), value, countEmpty=countEmpty, inseparator=separator )
-      else
-        ! Yes, it's an array, so we must put it in two places:
-        ! "name(cvalue)" and "name(n)" where
-        ! cvalue is the actual value of "count"
-        ! and "name(n)" is literally that (i.e., don't evaluate "n")
-        call GetHashElement( keys, values, &
-          & 'count', cvalue, countEmpty=countEmpty, inseparator=separator )
-        keyString = trim(name) // '(n)'
-        if ( verboser ) then
-          call outputnamedValue( 'keyString', trim(keyString) )
-          call outputnamedValue( 'value', trim(value) )
-        endif
-        call PutHashElement ( keys, values, &
-          & trim(keyString), value, countEmpty=countEmpty, inseparator=separator )
-        keyString = trim(name) // '(' // trim(adjustl(cvalue)) // ')'
-        if ( verboser ) then
-          call outputnamedValue( 'keyString', trim(keyString) )
-          call outputnamedValue( 'value', trim(value) )
-        endif
-        call PutHashElement ( keys, values, &
-          & trim(keyString), value, countEmpty=countEmpty, inseparator=separator )
-      endif
-    
-    end subroutine INSERTHASHELEMENT
   end function BOOLEANFROMFORMULA
 
   ! ------------------------- DumpCommand ------------------------
@@ -1579,10 +1522,12 @@ contains
             ! if ( verbose ) call outputnamedValue( 'keyString', trim(keyString) )
             ! -- Don't retain the following--it's just for testing --
             if ( got(f_vector) ) then
-              QuantityIndex = GetVectorQuantityIndexByName ( vector, label )
+              QuantityIndex = GetVectorQuantityIndexByName ( vector, label, noErr=.true. )
               ! call outputNamedValue ( 'QuantityIndex', QuantityIndex )
-              Quantity => GetVectorQuantity( vector, QuantityIndex )
-              call dump( Quantity )
+              if ( QuantityIndex > 0 ) then
+                Quantity => GetVectorQuantity( vector, QuantityIndex )
+                call dump( Quantity )
+              endif
             endif
           enddo
         endif
@@ -1955,7 +1900,7 @@ contains
             if ( fieldIndex == f_vectormask ) then
               call dumpVectorMask ( vector, details=details )
             else
-              call dump ( vector, details=details, clean=clean )
+              call dump ( vector, details=details, clean=clean, options=optionsString )
             end if
           end do
         else
@@ -2646,6 +2591,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.87  2013/05/22 20:20:49  pwagner
+! Moved insertHashElement to MLSStringLists
+!
 ! Revision 2.86  2013/05/17 00:55:47  pwagner
 ! May now do elementwise operations on r/t macros with repeat command; fixed many bugs
 !
