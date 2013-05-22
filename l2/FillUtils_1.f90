@@ -6305,7 +6305,7 @@ contains ! =====     Public Procedures     =============================
         if ( n > 0 ) then
           if ( .not. any( streq(names, qName, options='-cf' ) )  ) cycle
         endif
-        call output( 'Transferring quantities named ' // trim(qName), advance='yes' )
+        if ( verboser ) call output( 'Transferring quantities named ' // trim(qName), advance='yes' )
         dq%values = sq%values
         if ( .not. skipMask ) then
           if ( associated(sq%mask) ) then
@@ -6344,8 +6344,11 @@ contains ! =====     Public Procedures     =============================
       & IGNORENEGATIVE, IGNOREZERO, MEASVECTOR, MODELVECTOR, &
       & NOISEVECTOR, PTAN, BOOLEANNAME )
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: GETHASHELEMENT
+    use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: STREQ
+    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    use DUMP_0, only: DUMP
+    use TOGGLES, only: SWITCHES
       integer, intent(in)            :: KEY
       type (Vector_T), pointer       :: DEST
       type (Vector_T), pointer       :: SOURCE
@@ -6375,6 +6378,7 @@ contains ! =====     Public Procedures     =============================
       integer                           :: N
       character(len=64), dimension(128) :: NAMES
       character(len=64)                 :: QNAME
+      logical :: verbose, verboser
       type (VectorValue_T), pointer :: NQ ! Noise quantity
       integer                       :: NUMMATCHES
       real(r8)                      :: SCALEINSTANCES, SCALERATIO, SCALESURFS
@@ -6385,6 +6389,8 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       if ( toggle(gen) .and. levels(gen) > 2 ) &
         & call trace_begin ( 'FillUtils_1.TransferVectorsByMethod' )
+      verbose = ( switchDetail(switches, 'bool') > -1 )
+      verboser = ( switchDetail(switches, 'bool') > 0 )
       n = 0
       ! If we're given a BooleanName, try to interpret it as a container for
       ! quantity names
@@ -6424,6 +6430,11 @@ contains ! =====     Public Procedures     =============================
           call get_string ( dq%template%name, qName, &
             & strip=.true. )
           if ( n > 0 ) then
+            if ( verboser ) then
+              call outputnamedValue( 'n', n )
+              call outputnamedValue( 'qName', qName )
+              call dump( names(:n), 'names', width=1 )
+            endif
             if ( .not. any( streq(names, qName, options='-cf' ) )  ) cycle
           endif
           select case ( method )
@@ -7007,6 +7018,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.76  2013/05/22 20:09:50  pwagner
+! Print only if verboser
+!
 ! Revision 2.75  2013/05/21 01:47:34  vsnyder
 ! Don't look at QUITNOW until you're sure it's there
 !
