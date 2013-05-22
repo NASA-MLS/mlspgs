@@ -33,7 +33,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! This module simply contains initial or permanent settings. Values
+  ! This module contains initial or permanent settings. Values
   ! are chosen according to what is most suitable for the environment.
   ! For example
   ! certain settings may be appropriate during development but not
@@ -155,6 +155,14 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical :: SHOWDEFAULTS    = .false.  ! Just print default opts and quit
   integer :: SLAVEMAF        = 0        ! Slave MAF for fwmParallel mode
   logical :: TIMING          = .false.  ! -T option is set
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  ! The following list of public procedures is for convenience only
+  public :: DUMPMACROS
+  public :: MLSMESSAGE
+  public :: PROCESSOPTIONS
+  public :: REMOVERUNTIMEBOOLEAN
+  public :: RESTOREDEFAULTS
   integer, private :: i ! For loop constructor below
 
   type :: runTimeValues_T
@@ -906,11 +914,41 @@ jloop:do while ( j < len_trim(line) )
 
   ! -------------- DumpMacros ----------------
   ! Dump the runtime macros
-  subroutine DumpMacros
+  subroutine DUMPMACROS
   use DUMP_0, only: DUMP
   call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time macros', separator=runTimeValues%sep )
   end subroutine DumpMacros
+
+  ! -------------- removeRuntimeBoolean ----------------
+  ! Dump the runtime macros
+  subroutine REMOVERUNTIMEBOOLEAN ( NAME )
+  use MLSSTRINGLISTS, only: GETHASHELEMENT, &
+    & REMOVEHASHARRAY, REMOVEHASHELEMENT
+    ! Dummy args
+    character(len=*), intent(in) :: NAME
+    ! Internal variables
+    character (len=16)                            :: keyString
+    character (len=8)                             :: nCh
+    ! Executable
+    ! First: is the name an array-valued r/t Boolean?
+    keyString = trim(name) // 'n'
+    call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, keyString, nCh, &
+      & countEmpty, runTimeValues%sep )
+    if ( nCh /= runTimeValues%sep ) then
+      ! Yes, it is array-valued; remove it
+      call RemoveHashArray( runTimeValues%lkeys, runTimeValues%lvalues, name, &
+        & countEmpty, runTimeValues%sep )
+    else
+      ! No, so is it scalar-valued?
+      call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, name, nCh, &
+        & countEmpty, runTimeValues%sep )
+      if ( nCh == runTimeValues%sep ) return
+      ! Yes, it is scalar-valued; remove it
+      call RemoveHashElement( runTimeValues%lkeys, runTimeValues%lvalues, name, &
+        & countEmpty, runTimeValues%sep )
+    endif
+  end subroutine removeRuntimeBoolean
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -927,6 +965,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.61  2013/05/22 20:21:33  pwagner
+! Added removeRuntimeBoolean
+!
 ! Revision 2.60  2013/05/17 00:52:58  pwagner
 ! runtime value sep now achar(0)
 !
