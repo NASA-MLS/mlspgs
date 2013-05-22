@@ -61,6 +61,7 @@ module MLSStringLists               ! Module to treat string lists
 ! GetUniqueInts      Returns array of only unique entries from input array
 ! GetUniqueList      Returns str list of only unique entries from input list
 ! GetUniqueStrings   Returns array of only unique entries from input array
+! insertHashElement  Insert a scalar or array-valued element into a hash
 ! Intersection       Return the intersection of two stringlists; may return blank
 ! IsInList           Is string in list? options may expand criteria
 ! List2Array         Converts a single string list to an array of strings
@@ -73,6 +74,9 @@ module MLSStringLists               ! Module to treat string lists
 ! PutHashElement     puts value into hash list corresponding to key string
 ! ReadIntsFromList   Read an array of ints from a string list
 ! RemoveElemFromList removes occurrence(s) of elem from a string list
+! RemoveHashArray    Removes key strings and corresponding values
+!                      based on a named array
+! RemoveHashElement  Removes key string and corresponding value
 ! RemoveListFromList removes occurrence(s) of elems in a string list from another
 ! RemoveNumFromList  removes a numbered elem from a string list
 ! RemoveSwitchFromList  
@@ -133,6 +137,10 @@ module MLSStringLists               ! Module to treat string lists
 !    & [char inseparator])
 ! RemoveElemFromList(strlist inList, strlist outList, char* elem, &
 !    & [char inseparator], [char* options])
+! RemoveHashArray (hash {keys = values}, char* key, 
+!   log countEmpty, [char inseparator], [log part_match])
+! RemoveHashElement (hash {keys = values}, char* key, 
+!   log countEmpty, [char inseparator], [log part_match])
 ! RemoveListFromList(strlist inList, strlist outList, strlist exclude, &
 !    & [char inseparator], [char* options])
 ! RemoveNumFromList(strlist inList, strlist outList, int nElement, &
@@ -251,11 +259,13 @@ module MLSStringLists               ! Module to treat string lists
   public :: ARRAY2LIST, BOOLEANVALUE, BUILDHASH, CATLISTS, &
    & EVALUATEFORMULA, EXPANDSTRINGRANGE, EXTRACTSUBSTRING, &
    & GETHASHELEMENT, GETSTRINGELEMENT, &
-   & GETUNIQUEINTS, GETUNIQUESTRINGS, GETUNIQUELIST, INTERSECTION, ISINLIST, &
+   & GETUNIQUEINTS, GETUNIQUESTRINGS, GETUNIQUELIST, &
+   & INSERTHASHELEMENT, INTERSECTION, ISINLIST, &
    & LIST2ARRAY, LOOPOVERFORMULA, LISTMATCHES, NUMSTRINGELEMENTS, &
    & OPTIONDETAIL, PARSEOPTIONS, PUTHASHELEMENT, READINTSFROMLIST, &
    & REMOVEELEMFROMLIST, REMOVELISTFROMLIST, REMOVENUMFROMLIST, &
-   & REMOVESWITCHFROMLIST, REPLACESUBSTRING, REVERSELIST, REVERSESTRINGS, &
+   & REMOVEHASHARRAY, REMOVEHASHELEMENT, REMOVESWITCHFROMLIST, &
+   & REPLACESUBSTRING, REVERSELIST, REVERSESTRINGS, &
    & SNIPLIST, SORTARRAY, SORTLIST, STRINGELEMENT, STRINGELEMENTNUM, &
    & SWITCHDETAIL, &
    & UNQUOTE, WRAP
@@ -297,6 +307,12 @@ module MLSStringLists               ! Module to treat string lists
     module procedure PutHashElement_strarray
   end interface
 
+  interface RemoveHashElement
+    module procedure RemoveHashElement_str
+    ! module procedure RemoveHashElement_int
+    ! module procedure RemoveHashElement_log
+  end interface
+
   ! Public data
   character(len=16), public, save :: STRINGLISTOPTIONS = ' '
 
@@ -318,6 +334,7 @@ module MLSStringLists               ! Module to treat string lists
   logical, private, save          :: caseSensitive       
   logical, private, save          :: ignoreLeadingSpaces 
   character(len=1), private, save :: separator           
+  logical, parameter          :: deeBug = .false.
   
 contains
 
@@ -1781,6 +1798,57 @@ contains
     end function matchem
   end subroutine GetUniqueStrings
 
+  ! -------------------------------------------------  inserthashlement  -----
+  subroutine INSERTHASHELEMENT ( NAME, VALUE, KEYS, VALUES, INSEPARATOR )
+    ! Dummy args
+    character(len=*), intent(in)           :: NAME
+    character(len=*), intent(in)           :: VALUE
+    character(len=*), intent(inout)        :: KEYS
+    character(len=*), intent(inout)        :: VALUES
+    character(len=1), intent(in), optional :: INSEPARATOR
+    ! Local variables
+    character(len=64) :: cvalue
+    integer :: c
+    character (len=16)                            :: keyString
+    integer                                       :: n
+    character (len=8)                             :: nCh
+    character (len=1)                             :: separator
+    ! Executable
+    separator = ','
+    if ( present(inseparator) ) separator = inseparator
+    ! 1st--is name an array-valued hash key?
+    keyString = trim(name) // 'n'
+    call GetHashElement( keys, values, keyString, nCh, &
+      & countEmpty, inseparator=separator )
+    if ( nCh == separator ) then
+      ! No, it's just a scalar
+      call PutHashElement ( keys, values, &
+      & trim(name), value, countEmpty=countEmpty, inseparator=separator )
+    else
+      ! Yes, it's an array, so we must put it in two places:
+      ! "name(cvalue)" and "name(n)" where
+      ! cvalue is the actual value of "count"
+      ! and "name(n)" is literally that (i.e., don't evaluate "n")
+      call GetHashElement( keys, values, &
+        & 'count', cvalue, countEmpty=countEmpty, inseparator=separator )
+      keyString = trim(name) // '(n)'
+      if ( DEEBUG ) then
+        call outputnamedValue( 'keyString', trim(keyString) )
+        call outputnamedValue( 'value', trim(value) )
+      endif
+      call PutHashElement ( keys, values, &
+        & trim(keyString), value, countEmpty=countEmpty, inseparator=separator )
+      keyString = trim(name) // '(' // trim(adjustl(cvalue)) // ')'
+      if ( DEEBUG ) then
+        call outputnamedValue( 'keyString', trim(keyString) )
+        call outputnamedValue( 'value', trim(value) )
+      endif
+      call PutHashElement ( keys, values, &
+        & trim(keyString), value, countEmpty=countEmpty, inseparator=separator )
+    endif
+
+  end subroutine INSERTHASHELEMENT
+
   ! -------------------------------------------------  Intersection  -----
   function Intersection (STR1, STR2) result (OUTSTR)
     ! return intersection of 2 string lists, blank means empty set
@@ -2670,6 +2738,108 @@ contains
       outList = unique_list(len(elem)+1:)
     endif
   end subroutine RemoveElemFromList
+
+  ! ---------------------------------------------  RemoveHashArray  -----
+  subroutine RemoveHashArray( KEYLIST, HASHLIST, KEY, &
+  & COUNTEMPTY, INSEPARATOR, PART_MATCH )
+    ! We remove an array of values from a hash
+    ! storing the array like this
+    ! array "name" contains "value_1", "value_2" .. "nalue_n"
+    !    key        value
+    !    ---        -----
+    ! "namen"        "n" (number of elements)
+    ! "name(1)"   "value_1"
+    ! "name(2)"   "value_2"
+    !    .    .    .
+    ! "name(n)"   "value_n"
+    ! Dummy arguments
+    character (len=*), intent(inout)              :: KEYLIST
+    character (len=*), intent(inout)              :: HASHLIST
+    character (len=*), intent(in)                 :: KEY
+    logical, intent(in)                           :: COUNTEMPTY
+    character (len=*), optional, intent(in)       :: INSEPARATOR
+    logical, optional, intent(in)                 :: PART_MATCH
+
+    ! Local variables
+    integer                                       :: j
+    character (len=16)                            :: keyString
+    integer                                       :: n
+    character (len=8)                             :: nCh
+    character (len=1)                             :: separator
+
+    ! Executable code
+
+    if(present(inseparator)) then
+      separator = inseparator
+    else
+      separator = COMMA
+    endif
+    
+    keyString = trim(key) // 'n'
+    call GetHashElement_str( keyList, hashList, keyString, nCh, &
+      & countEmpty, inseparator, part_match )
+    if ( nCh == separator ) return
+    call readIntsFromChars( nCh, n )
+    call RemoveHashElement_str( keyList, hashList, keyString, &
+      & countEmpty, inseparator, part_match )
+    do j=1, n
+      call writeIntsToChars( j, nCh )
+      keyString = trim(key) // '(' // trim(adjustl(nCh)) // ')'
+      call RemoveHashElement_str( keyList, hashList, keyString, &
+        & countEmpty, inseparator, part_match )
+    enddo
+
+  end subroutine RemoveHashArray
+
+  ! ---------------------------------------------  RemoveHashElement  -----
+
+  ! This subroutine removes the key and corresponding value from a hash
+  ! if key is not found among the keyList, it does nothing
+  ! This is useful because many of the hdfeos routines *inq*() return
+  ! comma-separated lists
+
+  ! if countEmpty is TRUE, consecutive separators, with no chars in between,
+  ! are treated as enclosing an empty element
+  ! Otherwise, they are treated the same as a single separator
+  ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
+  ! if TRUE, the elements would be {'a', 'b', ' ', 'd'}
+
+  ! As an optional arg the separator may supplied, in case it isn't comma
+  ! See also SplitWords
+
+  subroutine RemoveHashElement_str( keyList, hashList, key, &
+  & countEmpty, inseparator, part_match )
+    ! Dummy arguments
+    character (len=*), intent(inout)          :: keyList
+    character (len=*), intent(inout)          :: hashList
+    character (len=*), intent(in)             :: key
+    logical, intent(in)                       :: countEmpty
+    character (len=*), optional, intent(in)   :: inseparator
+    logical, optional, intent(in)             :: part_match
+
+    ! Local variables
+    integer                                    :: num
+    character (len=1)                          :: separator
+    character(len=len(keyList)+1)              :: keys
+    character(len=len(hashList)+1)             :: hash
+
+    ! Executable code
+
+    if(present(inseparator)) then
+      separator = inseparator
+    else
+      separator = COMMA
+    endif
+
+    num = StringElementNum( keyList, key, countEmpty, inseparator, part_match )
+    if( num > 0) then
+      call RemoveNumFromList( keyList, keys, num, inseparator )
+      call RemoveNumFromList( hashList, hash, num, inseparator )
+      keyList = keys
+      hashList = hash
+    endif
+
+  end subroutine RemoveHashElement_str
 
   ! ------------------------------------------------  RemoveListFromList  -----
   subroutine RemoveListFromList ( inList, outList, exclude, &
@@ -4238,6 +4408,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.57  2013/05/22 20:25:44  pwagner
+! Can insert, remove hash elements, scalar or array-valued
+!
 ! Revision 2.56  2013/05/16 18:18:37  pwagner
 ! Corrected bugs in BooleanValue, HashElement procedures
 !
