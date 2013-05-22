@@ -114,7 +114,7 @@ contains
       first = .false.
       dumpLevel = switchDetail(switches,'lblb')
       dumpStop = dumpLevel > 99
-      dumpZeta = mod(dumpLevel/10,10)
+      dumpZeta = mod(dumpLevel/10,10) > 0
       if ( dumpLevel >= 0 ) dumpLevel = mod(dumpLevel,10)
       ! clean = switchDetail(switches,'clean') > -1
       clean = ' '
@@ -1595,6 +1595,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.113  2013/05/17 22:52:32  vsnyder
+! Revise dump switch stuff
+!
 ! Revision 2.112  2011/11/22 00:40:40  vsnyder
 ! Add units km^{-1} in comments about beta
 !
