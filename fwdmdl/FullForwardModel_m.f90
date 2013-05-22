@@ -40,8 +40,7 @@ contains
 
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     use COMPUTE_Z_PSIG_M, only: COMPUTE_Z_PSIG
-    use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
-      & DESTROYFORWARDMODELDERIVED, DUMP, FORWARDMODELCONFIG_T
+    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
     use GET_SPECIES_DATA_M, only:  GET_SPECIES_DATA
@@ -626,7 +625,7 @@ contains
     real(rp), target :: RAD_AVG_PATH(max_c,s_pfa*noUsedChannels) ! Freq. Avgd.
                                                    ! LBL radiance along the path
     real(rp) :: RADIANCES(noUsedChannels,no_tan_hts) ! (noChans,Nptg)
-    real(rp) :: RADIANCES_DIFF(noUsedChannels,no_tan_hts) ! (noChans,Nptg)     ! IGOR
+!     real(rp) :: RADIANCES_DIFF(noUsedChannels,no_tan_hts) ! (noChans,Nptg)     ! IGOR
     real(rp) :: SPECT_N_PATH(max_f,size(fwdModelConf%lineWidth_TDep)) ! Line Width Temperature Dependence
     real(rp) :: SPECT_V_PATH(max_f,size(fwdModelConf%lineCenter)) ! Line Center
     real(rp) :: SPECT_W_PATH(max_f,size(fwdModelConf%lineWidth)) ! Line Width
@@ -1338,9 +1337,10 @@ contains
       use ANTENNAPATTERNS_M, only: ANTENNAPATTERNS
       use INTRINSIC, only: L_ELEVOFFSET, L_LIMBSIDEBANDFRACTION
       use CONVOLVE_ALL_M, only: CONVOLVE_RADIANCE, CONVOLVE_TEMPERATURE_DERIV, &
-        & CONVOLVE_RADIANCE_NORMALIZATION, CONVOLVE_TEMPERATURE_DERIV_NORMALIZATION, &
         & CONVOLVE_OTHER_DERIV, CONVOLVE_OTHER_SECOND_DERIV, INTERPOLATE_RADIANCE, &
         & INTERPOLATE_TEMPERATURE_DERIV, INTERPOLATE_OTHER_DERIV
+!       use CONVOLVE_ALL_M, only: CONVOLVE_TEMPERATURE_DERIV_NORMALIZATION, &
+!         & CONVOLVE_RADIANCE_NORMALIZATION
       use DUMP_0, only: DUMP
       use FOV_CONVOLVE_M, only: CONVOLVE_SUPPORT_T, FOV_CONVOLVE_SETUP, &
         & FOV_CONVOLVE_TEARDOWN, NO_FFT
@@ -1354,7 +1354,7 @@ contains
       logical :: PATCHEDAPTG       ! Used in patching the pointings
       integer :: PTG_J             ! Loop counters for patching the pointings
       real(r8) :: RAD_FFT(s_t*no_fft) ! FFT(I)                                 ! IGOR
-      real(r8) :: RAD_DIFF_FFT(s_t*no_fft) ! FFT(I-IA)                         ! IGOR
+!       real(r8) :: RAD_DIFF_FFT(s_t*no_fft) ! FFT(I-IA)                         ! IGOR
       integer :: SUPERSET          ! Output from AreSignalsSuperset
       real(rp) :: THISELEV         ! An elevation offset
       real(rp) :: THISFRACTION     ! A sideband fraction
@@ -3003,8 +3003,12 @@ contains
 !           & do_calc_zp, sps_path(:npf,:),                                &
 !           & do_calc_fzp, eta_fzp(:npf,:), nz_fzp, nnz_fzp,               &
 !           & firstSignal%lo, thisSideband )
+
 !c      sps_path_c(i_start:i_end,:) = sps_path(c_inds(i_start:i_end),:)
       sps_path_c(i_start:i_end,:) = sps_path(ngp1*i_start-ng:ngp1*i_end-ng:ngp1,:)
+!c      associate ( sps_path_x => sps_path(1:npf:ngp1,:) )
+!c        sps_path_c(i_start:i_end,:) = sps_path_x(i_start:i_end,:)
+!c      end associate
       sps_path_c(:i_start-1,:) = 0.0
       sps_path_c(i_end+1:npc,:) = 0.0
 
@@ -3705,7 +3709,6 @@ contains
       use METRICS_M, only: HEIGHT_METRICS, MORE_METRICS, MORE_POINTS, &
         & TANGENT_METRICS
       use MIN_ZETA_M, only: GET_MIN_ZETA
-      use OUTPUT_M, only: NEWLINE
       use PHI_REFRACTIVE_CORRECTION_M, only: PHI_REFRACTIVE_CORRECTION
       use READ_MIE_M, only: IWC_S, T_S
       use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
@@ -3896,6 +3899,9 @@ contains
               call output ( tan_pt_c, before='Tan_Pt_C = ' )
               call dump ( rad2deg*phi_path_c(:scat_index), name=', Phi_Path_C' )
               call dump ( h_path(:scat_index*ngp1-ng:ngp1), name='H_Path_C' )
+!c              associate ( h_path_x => h_path(1:npf:ngp1) )
+!c                call dump ( h_path_x(:scat_index), name='H_Path_C' )
+!c              end associate
               call dump ( z_coarse(:scat_index), name='Z_Coarse' )
             end if
           end if
@@ -4634,6 +4640,11 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.340  2013/05/18 00:34:43  vsnyder
+! Insert NG fine-grid (GL) points between tangent points, thereby
+! regularizing coarse-grid spacing, and reducing significantly the need
+! to use c_inds to extract coarse-grid points from the composite grid.
+!
 ! Revision 2.339  2013/04/09 18:23:56  pwagner
 ! Fixed error in failing to use DerivativeMissingFromStateFun
 !
