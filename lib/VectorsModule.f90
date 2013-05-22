@@ -1783,7 +1783,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine DumpVectorNorms
 
   ! ------------------------------------------------  Dump_Vector  -----
-  subroutine Dump_Vector ( VECTOR, DETAILS, NAME, &
+  subroutine Dump_Vector ( VECTOR, DETAILS, OPTIONS, NAME, &
     & QUANTITYTYPES, INSTRUMENTMODULES, SIGNAL_IDS, &
     & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME, &
     & THENDITCHAFTERDUMP, CLEAN )
@@ -1803,6 +1803,7 @@ contains ! =====     Public Procedures     =============================
     !                                        ! >0 Do dump quantity values
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: OPTIONS
     ! if the following are present, dump only quantities matching them
     integer, intent(in), optional, dimension(:)  :: QUANTITYTYPES
     integer, intent(in), optional, dimension(:)  :: INSTRUMENTMODULES
@@ -1820,7 +1821,7 @@ contains ! =====     Public Procedures     =============================
     integer :: J    ! Loop inductor, subscript
     integer :: MyDetails
     logical :: myditchafterdump
-    character(len=8) :: options
+    character(len=8) :: myOptions
     integer :: TotalSize
     
     myDetails = 1
@@ -1851,10 +1852,11 @@ contains ! =====     Public Procedures     =============================
       call display_string ( vector%template%name )
     end if
     call newline
-    options = ' '
+    myoptions = ' '
     if ( present(clean) ) then
-      if ( clean ) options = 'c'
+      if ( clean ) myoptions = 'c'
     endif
+    if ( present(options) ) myOptions = trim(myOptions) // options
     do j = 1, size(vector%quantities)
       dumpThisQty = myDetails > -2
       if ( associated(vector%quantities(j)%values) ) &
@@ -1877,7 +1879,7 @@ contains ! =====     Public Procedures     =============================
         & (vector%quantities(j)%template%majorFrame .eqv. majorFrame)
       if ( dumpThisQty ) then
         call output ( j, 4, after="~" )
-        call dump ( vector%quantities(j), details, options=options )
+        call dump ( vector%quantities(j), details, options=myOptions )
         if ( myditchafterdump ) return
       end if
     end do ! j
@@ -1889,7 +1891,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_Vector
 
   ! -----------------------------------------------  Dump_Vectors  -----
-  subroutine Dump_Vectors ( VECTORS, DETAILS, NAME, &
+  subroutine Dump_Vectors ( VECTORS, DETAILS, OPTIONS, NAME, &
     & QUANTITYTYPES, INSTRUMENTMODULES, SIGNAL_IDS, &
     & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME, &
     & THENDITCHAFTERDUMP )
@@ -1905,6 +1907,7 @@ contains ! =====     Public Procedures     =============================
     !                                        ! >0 Do dump quantity values
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: OPTIONS
     ! if the following are present, dump only quantities matching them
     integer, intent(in), optional, dimension(:)  :: QUANTITYTYPES
     integer, intent(in), optional, dimension(:)  :: INSTRUMENTMODULES
@@ -1976,7 +1979,7 @@ contains ! =====     Public Procedures     =============================
       if ( dumpThisVector ) then
         call output ( i, 4 )
         call output ( ': ' )
-        call dump_vector ( vectors(i), details, name, &
+        call dump_vector ( vectors(i), details, options, name, &
         & quantitytypes, instrumentmodules, signal_ids, &
         & coherent, stacked, regular, minorframe, majorframe, &
         & thenditchafterdump )
@@ -1999,20 +2002,26 @@ contains ! =====     Public Procedures     =============================
     !                                        ! >1  => Dump template with details-1
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
-    ! logical, intent(in), optional :: CLEAN   ! Passed through to dump_0%dump
     type (Vector_T), intent(in), optional :: Vector ! Only to get its name
     character(len=*), intent(in), optional :: Options ! E.g., '-sb'
+    ! If options is present and
+    ! contains        dump        but skip
+    !    1            values     template data
+    !    2            values     most template data
+    !    3        values and template data
     ! Internal variables
     logical :: Dot ! Use vector.quantity notation
     integer :: i
     character(len=32) :: oldInfo
     integer :: myDetails
+    character(len=8) :: myOptions
     integer :: nUnique
     integer, dimension(1000) :: uniqueVals
-
+    ! Executable
     myDetails = 1
     if ( present(details) ) myDetails = details
-
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
     oldInfo = MLSMessageConfig%Info
     if ( present(name) ) then
       MLSMessageConfig%Info = name
@@ -2020,76 +2029,83 @@ contains ! =====     Public Procedures     =============================
     elseif ( qty%template%name /= 0 ) then
       call get_string ( qty%template%name, MLSMessageConfig%Info )
     end if
-    dot = .false.
-    if ( present(vector) ) dot = vector%name /= 0
-    if ( dot ) then
-      call output ( ' Vector quantity name = ' )
-      if ( vector%name /= 0 ) then
-        call display_string ( vector%name )
+    if ( .not. index(myOptions, '1') > 0 ) then
+      dot = .false.
+      if ( present(vector) ) dot = vector%name /= 0
+      if ( dot ) then
+        call output ( ' Vector quantity name = ' )
+        if ( vector%name /= 0 ) then
+          call display_string ( vector%name )
+        else
+          call output ( '<none given>' )
+        end if
+        if ( qty%template%name /= 0 ) then
+          call display_string ( qty%template%name, before='.' )
+        else
+          call output ( '.<none given>' )
+        end if
       else
-        call output ( '<none given>' )
+        call output ( ' Qty_Template_Name = ' )
+        if ( qty%template%name /= 0 ) then
+          call display_string ( qty%template%name )
+        else
+          call output ( '<none given>' )
+        end if
       end if
-      if ( qty%template%name /= 0 ) then
-        call display_string ( qty%template%name, before='.' )
+      if ( qty%label /= 0 ) then
+        call output ( ', label = ' )
+        call display_string ( qty%label )
       else
-        call output ( '.<none given>' )
+        call output ( ' unlabeled ', advance='yes' )
       end if
-    else
-      call output ( ' Qty_Template_Name = ' )
-      if ( qty%template%name /= 0 ) then
-        call display_string ( qty%template%name )
-      else
-        call output ( '<none given>' )
-      end if
-    end if
-    if ( qty%label /= 0 ) then
-      call output ( ', label = ' )
-      call display_string ( qty%label )
-    else
-      call output ( ' unlabeled ', advance='yes' )
-    end if
-    if ( myDetails < -1 ) then
-      MLSMessageConfig%Info = oldInfo
-      return
+      if ( myDetails < -1 ) then
+        MLSMessageConfig%Info = oldInfo
+        return
+      endif
+      call newLine
+      if ( myDetails < 0 ) then
+        MLSMessageConfig%Info = oldInfo
+        return
+      endif
+    elseif ( qty%template%name /= 0 ) then
+      call display_string ( qty%template%name, before='.' )
     endif
-    call newLine
-    if ( myDetails < 0 ) then
-      MLSMessageConfig%Info = oldInfo
-      return
-    endif
-    call output ( qty%template%noChans, before='    noChans = ' )
-    call output ( qty%template%noSurfs, before=' noSurfs = ' )
-    call output ( qty%template%noInstances, before=' noInstances = ')
-    call output ( qty%template%instanceLen, before=' instanceLen = ', advance='yse' )
-    call output ( '    signal: ')
-    if ( qty%template%signal < 1 ) then
-      call output ( '    (no database entry for this quantity) ', advance='yes')
-    else if ( signals(qty%template%signal)%name < 1 ) then
-      call output ( '    (no name in the database for this quantity) ', advance='yes')
-    else
-      call display_string ( signals(qty%template%signal)%name, advance='yes' )
-    end if
-    if ( qty%template%quantityType == l_vmr ) then
-      call output ( '    molecule: ')
-      if ( qty%template%molecule < 1 ) then
+    if ( .not. index(myOptions, '1') > 0 &
+      & .and. .not. index(myOptions, '2') > 0 ) then
+      call output ( qty%template%noChans, before='    noChans = ' )
+      call output ( qty%template%noSurfs, before=' noSurfs = ' )
+      call output ( qty%template%noInstances, before=' noInstances = ')
+      call output ( qty%template%instanceLen, before=' instanceLen = ', advance='yse' )
+      call output ( '    signal: ')
+      if ( qty%template%signal < 1 ) then
+        call output ( '    (no database entry for this quantity) ', advance='yes')
+      else if ( signals(qty%template%signal)%name < 1 ) then
+        call output ( '    (no name in the database for this quantity) ', advance='yes')
+      else
+        call display_string ( signals(qty%template%signal)%name, advance='yes' )
+      end if
+      if ( qty%template%quantityType == l_vmr ) then
+        call output ( '    molecule: ')
+        if ( qty%template%molecule < 1 ) then
+          call output ( '    (no database entry for this quantity) ' )
+        else
+          call display_string ( lit_indices(qty%template%molecule) )
+        end if
+      end if
+      call output ( '    instrumentmodule: ')
+      if ( qty%template%instrumentModule < 1 ) then
         call output ( '    (no database entry for this quantity) ' )
       else
-        call display_string ( lit_indices(qty%template%molecule) )
+        call display_string ( modules(qty%template%instrumentModule)%name )
       end if
-    end if
-    call output ( '    instrumentmodule: ')
-    if ( qty%template%instrumentModule < 1 ) then
-      call output ( '    (no database entry for this quantity) ' )
-    else
-      call display_string ( modules(qty%template%instrumentModule)%name )
-    end if
-    call output ( qty%template%instrumentmodule, before=' = ', advance='yes')
-    call output ( '    Minor Frame? (t/f): ')
-    call output ( qty%template%minorframe )
-    call output ( ' Major Frame? (t/f): ')
-    call output ( qty%template%majorframe, advance='yes' )
-    call output ( size(qty%values(:,1)), before='    values array size is ' )
-    call output ( size(qty%values(1,:)), before='x' )
+      call output ( qty%template%instrumentmodule, before=' = ', advance='yes')
+      call output ( '    Minor Frame? (t/f): ')
+      call output ( qty%template%minorframe )
+      call output ( ' Major Frame? (t/f): ')
+      call output ( qty%template%majorframe, advance='yes' )
+      call output ( size(qty%values(:,1)), before='    values array size is ' )
+      call output ( size(qty%values(1,:)), before='x' )
+    endif
     if ( myDetails > 0 ) then
       call newLine
       call dump ( qty%values, '  Elements = ', options=options )
@@ -3191,6 +3207,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.176  2013/05/16 18:16:58  pwagner
+! Made GetVectorQuantityIndexByName generic--can supply character-valued arg
+!
 ! Revision 2.175  2013/03/15 00:01:31  pwagner
 ! Added function AreEqual for vectors
 !
