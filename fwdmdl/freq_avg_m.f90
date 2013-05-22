@@ -86,11 +86,10 @@ contains
   subroutine Freq_Avg_DACS ( F_grid, DACSFilter, Rad, Avg )
 
     ! use D_CSPLINE_M, only: CSPLINE
-    ! use D_HUNT_M, only: HUNT
     use DFFT_M, only: DTCST
     use FilterShapes_m, only: DACSFILTERSHAPE_T
     use MLSKINDS, only: I4, R8, RP
-    use MLSNumerics, only: HUNT, INTERPOLATEVALUES, PUREHUNT
+    use MLSNumerics, only: INTERPOLATEVALUES, PUREHUNT
     use SineTables_m, only: CREATESINETABLE, N_SINE => LOGSIZE_SINETABLE_R8, &
       & SINES => SINETABLE_R8
 
@@ -164,7 +163,7 @@ contains
 
     ! Determine which frequencies from F_Grid to use to span F_Grid_Fltr
 
-    use MLSNumerics, only: HUNT, PUREHUNT
+    use MLSNumerics, only: PUREHUNT
     use MLSKINDS, only: R8
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:)
@@ -207,6 +206,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.18  2011/08/26 17:53:53  pwagner
+! purehunt recovers optimized functionality of fwdmdls own hunt
+!
 ! Revision 2.17  2011/08/26 01:21:16  pwagner
 ! Fixed obvious bugs in call to Hunt
 !
