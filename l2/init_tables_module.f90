@@ -1114,6 +1114,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_evaluate, t+t_boolean, n+n_field_type, &
              begin, f+f_literal, t+t_boolean, n+n_field_type, &
              begin, f+f_manipulation, t+t_string, n+n_field_type, &
+             begin, f+f_values, t+t_string, n+n_field_type, &
              np+n_spec_def /) )
 
     call make_tree( (/ &
@@ -1178,6 +1179,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allGriddedData, t+t_boolean, n+n_field_type, &
              begin, f+f_allMatrices, t+t_boolean, n+n_field_type, &
              begin, f+f_allVectors, t+t_boolean, n+n_field_type, &
+             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
              begin, f+f_grid, s+s_gridded, s+s_concatenate, s+s_merge, &
              s+s_ConvertEtaToP, n+n_field_spec, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
@@ -1838,6 +1840,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.567  2013/05/22 20:18:35  pwagner
+! Values now a field for reevaluate; may destroy r/t Booleans
+!
 ! Revision 2.566  2013/05/21 23:52:47  vsnyder
 ! Add MIFExtinctionExtrapolation and MIFExtinctionForm
 !
