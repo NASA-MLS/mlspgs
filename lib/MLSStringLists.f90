@@ -1832,17 +1832,17 @@ contains
       call GetHashElement( keys, values, &
         & 'count', cvalue, countEmpty=countEmpty, inseparator=separator )
       keyString = trim(name) // '(n)'
-      if ( DEEBUG ) then
-        call outputnamedValue( 'keyString', trim(keyString) )
-        call outputnamedValue( 'value', trim(value) )
-      endif
+      ! if ( DEEBUG ) then
+      !  call outputnamedValue( 'keyString', trim(keyString) )
+      !  call outputnamedValue( 'value', trim(value) )
+      ! endif
       call PutHashElement ( keys, values, &
         & trim(keyString), value, countEmpty=countEmpty, inseparator=separator )
       keyString = trim(name) // '(' // trim(adjustl(cvalue)) // ')'
-      if ( DEEBUG ) then
-        call outputnamedValue( 'keyString', trim(keyString) )
-        call outputnamedValue( 'value', trim(value) )
-      endif
+      ! if ( DEEBUG ) then
+      !   call outputnamedValue( 'keyString', trim(keyString) )
+      !   call outputnamedValue( 'value', trim(value) )
+      ! endif
       call PutHashElement ( keys, values, &
         & trim(keyString), value, countEmpty=countEmpty, inseparator=separator )
     endif
@@ -4408,6 +4408,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.58  2013/05/23 16:08:20  pwagner
+! Fixed bug calling unused procedure--why didn't NAG catch this?
+!
 ! Revision 2.57  2013/05/22 20:25:44  pwagner
 ! Can insert, remove hash elements, scalar or array-valued
 !
