@@ -4,28 +4,33 @@
 ; ----------- Phase name vs. retrieval name
 ; Some phase(s) may not have Retrieve sections
 ; and so we'll need to know the last one
+; Actually, this is now the FinalPtan phase--we eliminated Core
+; Should we rename this file accordingly?
 !define(retrophase,{FinalPtan})
 
 !divert!dnl
-; This l2cf fragment does all the quality flagging for the Core
-; products (temperature)
+; This l2cf fragment does all the quality flagging for the FinalPtan
+; products
 
 begin Fill
-  ;; ------------------------------------ Temperature-Core
+  ;; ------------------------------------ Temperature-FinalPtan
   !define(flaggingBands,{8})
   !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
   !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
   !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
 
-  ;; ------------------------------------ GPH-Core
-  !define(flaggingBands,{8})
-  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
-  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
-  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+  ;; ------------------------------------ GPH-FinalPtan
+  ;;!define(flaggingBands,{8})
+  ;;!define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  ;;!makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+  ;;!makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
 
 end Fill
 
 ; $Log$
+; Revision 1.13  2006/10/26 17:28:10  dwu
+; change T and GPH cloud flag thresholds to -4K and 30K
+;
 ; Revision 1.12  2006/10/17 00:00:28  pwagner
 ; The stdProd  Convergence should be taken from FinalPtan
 ;
