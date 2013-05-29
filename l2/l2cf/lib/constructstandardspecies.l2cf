@@ -338,7 +338,7 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
   baselineMIFMB31: Quantity, type=baseline, radiometer=R4, $
                       fGrid=fGridBaselineMB31
   !define(allMIFMBBaselines, {!makelist({baselineMIF},{},!allMBs)})
-
+  
 ; special for FB
 
   baselineMIFBand7: Quantity, type=baseline,radiometer=R3, $
@@ -409,6 +409,9 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
     totalMIFextinctionv2$1: Quantity, type=MIFExtinctionv2, radiometer=$1!nl})
   !forall(constructtotalMIFExtinction, !allRadiometers)
   !define(alltotalMIFExtinctions,{!makelist({totalmifextinction},{},!allRadiometers),!makelist({totalmifextinctionv2},{},!allRadiometers)})
+
+    MIFExtinctionExtrapolation: Quantity, type=MIFExtinctionExtrapolation
+    MIFExtinctionForm: Quantity, type=MIFExtinctionForm
 
   lowestRetrievedPressure: Quantity, type=lowestRetrievedPressure
 
@@ -679,6 +682,8 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
     !alltotalExtinctions, $
     !allMIFExtinctions, $
     !alltotalMIFExtinctions, $
+    MIFExtinctionExtrapolation, $
+    MIFExtinctionForm, $
     lowestRetrievedPressure, $
     !allIsotopeRatios, $
     !allSidebandFractions, $
