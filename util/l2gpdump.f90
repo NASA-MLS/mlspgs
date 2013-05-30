@@ -15,7 +15,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
 
    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
    use BITSTUFF, only: ISBITSET
-   use DUMP_0, only: DUMP
+   use DUMP_0, only: DUMP, SDFORMATDEFAULT
    use HDF, only: DFACC_READ
    use HDF5, only: H5FCLOSE_F, H5GOPEN_F, H5GCLOSE_F, H5FIS_HDF5_F   
    use INTRINSIC, only: L_SWATH
@@ -70,6 +70,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      logical ::             columnsOnly = .false.
      logical ::             attributesToo = .false.
      character(len=16)  ::  dumpOptions = ''
+     character(len=16)  ::  format      = ''
      character(len=255) ::  dsInquiry = ''
      character(len=255) ::  attrInquiry = ''
      character(len=255) ::  fields = ''
@@ -115,6 +116,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      if ( .not. is_hdf5 ) then
        print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
      endif
+     if ( len_trim(options%format) > 1 ) SDFORMATDEFAULT = options%format
      if ( options%dsInquiry /= ' ' ) then
        call suspendOutput
        is_present = IsDSInFile( trim(filename), trim(options%dsInquiry) )
@@ -203,6 +205,9 @@ contains
       else if ( filename(1:5) == '-conv' ) then
         call getarg ( i+1+hp, argstr )
         read( argstr, * ) options%convergenceCutOff
+        i = i + 1
+      else if ( filename(1:5) == '-form' ) then
+        call getarg ( i+1+hp, options%format )
         i = i + 1
       else if ( filename(1:3) == '-d ' ) then
         call getarg ( i+1+hp, options%dumpOptions )
@@ -294,6 +299,7 @@ contains
       write (*,*) '                      if hi < lo then dump is outside geobox'
       write (*,*) '          -d opts     => pass opts to dump routines'
       write (*,*) '                          e.g., "-rs" to dump only rms, stats'
+      write (*,*) '          -format form=> format output using form'
       write (*,*) '          -[n]inqattr attr'
       write (*,*) '                      => print only if attribute attr [not] present'
       write (*,*) '          -[n]inqds ds'
@@ -697,6 +703,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.12  2013/02/26 00:14:28  pwagner
+! May constrain dump to hoursRange; range dumps also restrict pctages
+!
 ! Revision 1.11  2011/05/26 20:47:55  pwagner
 ! Repaired use of Cutoffs for Quality and Precision (we hope)
 !
