@@ -319,6 +319,7 @@ contains
 
 !------------------------- copy_swaths ---------------------
   subroutine copy_swaths
+    ! logical, parameter :: DEEBUG = .true.
     if ( options%verbose ) print *, 'Copy l2gp data to: ', trim(options%outputFile)
     do i=1, n_filenames
       call time_now ( tFile )
@@ -553,6 +554,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.14  2009/10/27 21:10:03  pwagner
+! Brought into compliance with cpL2GPData api
+!
 ! Revision 1.13  2008/10/13 23:32:41  pwagner
 ! Changed meaning of -overlap option; useful now in rolling up nrts
 !
