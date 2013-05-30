@@ -431,6 +431,7 @@ then
   echo "template: $1"
   echo "l2cf: $l2cf"
   echo "templ2cf: $templ2cf"
+  echo "PATH $PATH"
 fi
 
 if [ -f "$dotfile" ]
@@ -438,9 +439,11 @@ then
   . "$dotfile"
 fi
 
+SETREAD=`which set_read_env.sh`
+
 if [ -f "$envfile" ]
 then
-    . set_read_env.sh < $envfile
+    . $SETREAD < $envfile
 else
     echo ";;; Warning--no envfile"
 fi
@@ -449,7 +452,7 @@ if [ -f "$macrofile" ]
 then
   if [ "$expandmacros" = "yes" ]
   then
-    . set_read_env.sh < $macrofile
+    . $SETREAD < $macrofile
   fi
   l2cflines=`cat $macrofile | uniq | read_file_into_array`
   for linenosp in $l2cflines
@@ -514,6 +517,8 @@ else
   eval $M4 $ALLOPTS $TEMPLATE > $templ2cf
 fi
 
+#exit 0
+
 if [ "$wrap" = "yes" ]
 then
   mv $templ2cf $stempl2cf
@@ -576,6 +581,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.8  2013/01/09 18:50:07  pwagner
+# Cant recall why, but made this change
+#
 # Revision 1.7  2009/06/16 22:37:08  pwagner
 # Added -ident option to store version id for l2cf fragments
 #
