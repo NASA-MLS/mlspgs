@@ -29,8 +29,9 @@
 #      (to separate the strings from the file name on the command line)
 #
 # Bugs and limitations
-# (1) l2gpcat is assumed to exist, to be an executable, and to be in
-#     $HOME/mlspgs/bin/LF95.Linux
+# (1) l2gpcat is assumed to exist, to be an executable, and to be either in
+#     your PATH
+#     $MLSTOOLS/l2gpcat
 # (2) The l2gp file names are assumed to match the pattern
 #      MLS-Aura_L2GP-xxxx_*.he5
 # (3) If multiple matches, we try always to pick out the last
@@ -295,6 +296,9 @@ do
 done
 exit
 # $Log$
+# Revision 1.6  2009/12/10 18:52:58  pwagner
+# Attempts to find command first in PATH, then inder MLSTOOLS
+#
 # Revision 1.5  2009/08/18 21:05:09  pwagner
 # Added new CH3Cl stdprod
 #
