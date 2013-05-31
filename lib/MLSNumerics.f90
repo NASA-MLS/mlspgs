@@ -52,6 +52,7 @@ module MLSNumerics              ! Some low level numerical stuff
 !                             or floating root to within a given tolerance
 ! ClosestElement           Find index(es) in array closest to test value
 !                           (array may be multidimensional, non-monotonic)
+! Cross                    Cross product of two 3-vectors
 ! Destroy                  Deallocate y values in UnifDiscreteFn
 ! d2Fdx2Approximate        Compute 2nd derivative using UnifDiscreteFn
 ! dFdxApproximate          Compute derivative using UnifDiscreteFn
@@ -149,7 +150,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! === (end of api) ===
 
   public :: BATTLESHIP, BIVARIATELINEARINTERPOLATION
-  public :: CLOSESTELEMENT
+  public :: CLOSESTELEMENT, CROSS
   public :: DESTROY, DFDXAPPROXIMATE, D2FDX2APPROXIMATE, DUMP
   public :: FAPPROXIMATE, FILLLOOKUPTABLE, FINDINRANGE, FINVAPPROXIMATE
   public :: HUNT, HUNTBOX, HUNTRANGE, IFAPPROXIMATE
@@ -349,6 +350,10 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure ClosestElement_r4_1d, ClosestElement_r8_1d
     module procedure ClosestElement_r4_2d, ClosestElement_r8_2d
     module procedure ClosestElement_r4_3d, ClosestElement_r8_3d
+  end interface
+
+  interface Cross
+    module procedure Cross_r4, Cross_r8
   end interface
 
   interface CreateXArray
@@ -963,7 +968,26 @@ contains
     call rerank( indices_1d(1), shape(array), indices )
   end subroutine ClosestElement_r8_3d
 
-! -------------------------------------------------  Destroy  -----
+! --------------------------------------------------------  Cross  -----
+
+  ! Cross product of two three-vectors
+  pure function Cross_r4 ( XYZ ) result ( Cross )
+    real, intent(in) :: XYZ(3,2)
+    real :: Cross(3)
+    cross = (/ xyz(2,1)*xyz(3,2) - xyz(3,1)*xyz(2,2), &
+               xyz(1,1)*xyz(3,2) - xyz(3,1)*xyz(1,2), &
+               xyz(1,1)*xyz(2,2) - xyz(2,1)*xyz(1,2) /)
+  end function Cross_r4
+
+  pure function Cross_r8 ( XYZ ) result ( Cross )
+    double precision, intent(in) :: XYZ(3,2)
+    double precision :: Cross(3)
+    cross = (/ xyz(2,1)*xyz(3,2) - xyz(3,1)*xyz(2,2), &
+               xyz(1,1)*xyz(3,2) - xyz(3,1)*xyz(1,2), &
+               xyz(1,1)*xyz(2,2) - xyz(2,1)*xyz(1,2) /)
+  end function Cross_r8
+
+! ------------------------------------------------------  Destroy  -----
 
   ! This family of routines sets up a uniDiscFunction of the appropriate type
   subroutine destroyUnifDiscreteFn_r4 ( UDF )
@@ -982,7 +1006,7 @@ contains
     call deallocate_test ( UDF%y, "UDF%y", ModuleName )
   end subroutine destroyUnifDiscreteFn_r8
 
-! -------------------------------------------------  d2Fdx2Approximate  -----
+! --------------------------------------------  d2Fdx2Approximate  -----
 
   ! This family of routines use a uniDiscFunction to approximate a 
   ! function's 2nd derivative
@@ -1053,7 +1077,7 @@ contains
     value = itsSign*value
   end function d2Fdx2Approximate_r8
 
-! -------------------------------------------------  dFdxApproximate  -----
+! ----------------------------------------------  dFdxApproximate  -----
 
   ! This family of routines use a uniDiscFunction to approximate a 
   ! function's derivative
@@ -1290,7 +1314,7 @@ contains
     value = itsSign*value
   end function FApproximate_r8
 
-! -------------------------------------------------  FInvApproximate  -----
+! ----------------------------------------------  FInvApproximate  -----
 
   ! This family of routines use a uniDiscFunction to approximately invert 
   ! a function possibly restricting the search to a range [xS, xE]
@@ -1334,7 +1358,7 @@ contains
     call deallocate_test( xArray, 'xArray (r8)', ModuleName )
   end function FInvApproximate_r8
 
-! -------------------------------------------------  FillLookUpTable  -----
+! ----------------------------------------------  FillLookUpTable  -----
 
   ! This family of routines fills a table with evaluations of a function
   ! at regularly-spaced points
@@ -1357,7 +1381,7 @@ contains
     include 'FillLookUpTable.f9h'
   end subroutine FillLookUpTable_r8
 
-! ------------------------------------------------  FindInRange  -----
+! --------------------------------------------------  FindInRange  -----
 ! This family of subroutines search not for a single index
 ! but for all at which the corresponding elements
 ! lie within a range of values, inclusive
@@ -1499,7 +1523,7 @@ contains
     index = indices(1)
   end subroutine HuntScalar_r8
 
-  ! ---------------------------------------------------  HuntBox  -----
+  ! ----------------------------------------------------  HuntBox  -----
   ! A binary search routine with a hunt procedure, to start from last known
   ! location (if 0 < JLO < N) or from the begining otherwise.
   subroutine HuntBox_r4 ( GRIDPOINTS, MGRIDPOINTS, COORDS, INDICES, VERTICES )
@@ -1512,7 +1536,7 @@ contains
     include 'HuntBox.f9h'
   end subroutine HuntBox_r8
 
-! ------------------------------------------------  HuntRange  -----
+! ----------------------------------------------------  HuntRange  -----
 ! This family of subroutines search not for a single index
 ! but for a range within which all list elements
 ! lie within a range of values, inclusive
@@ -1545,7 +1569,7 @@ contains
     include 'HuntRange.f9h'
   end subroutine HuntRange_r8
 
-! -------------------------------------------------  IFApproximate  -----
+! ------------------------------------------------  IFApproximate  -----
 
   ! This family of routines use a uniDiscFunction to approximate a 
   ! function's integral
@@ -2043,7 +2067,7 @@ contains
     include 'Interpolate_2d_Composite.f9h'
   end subroutine Interpolate_2d_Composite_r8
 
-! -------------------------------------------------  LinearInterpolate  -----
+! --------------------------------------------  LinearInterpolate  -----
 
   ! This family of functions return a value interpolated across
   ! multiple dimensions
@@ -2105,7 +2129,7 @@ contains
     include 'hunt.f9h'
   end subroutine purehunt_r8
 
-! -------------------------------------------------  SetUp  -----
+! --------------------------------------------------------  SetUp  -----
 
   ! This family of routines sets up a uniDiscFunction of the appropriate type
   subroutine setUpUnifDiscreteFn_r4 ( UDF, N, x1, x2, &
@@ -2172,7 +2196,7 @@ contains
     enddo
   end subroutine setUpUnifDiscreteFn_r8
 
-! -------------------------------------------------  SimSubroutine  -----
+! ------------------------------------------------  SimSubroutine  -----
   ! This family provides subroutine apis to integration by Simpson's rule
   subroutine Simps_r4 ( F, DX, N, R )
 !  Simpson's Integration of discrete equal spacing
@@ -2186,7 +2210,7 @@ contains
     include 'simpson.f9h'
   end subroutine Simps_r8
 
-! -------------------------------------------------  UseLookUpTable  -----
+! -----------------------------------------------  UseLookUpTable  -----
 
   ! This family of routines use a LookUpTable to approximate a costly-to-evaluate
   ! function based on its values at a set of points
@@ -2235,7 +2259,8 @@ contains
     include 'UseLookUpTable.f9h'
   end function UseLookUpTable_r8 
 
-!-------------------- Private Procedures -----------------------------------
+!==================== Private Procedures ===============================
+! ...........................................  BattleRealToInt_r4  .....
   ! This is a utility function to convert a real-valued function into the 
   ! integer-valued function Battleship expects
   function BattleRealToInt_r4 ( arg, arg1, delta, setUp ) result( iarg )
@@ -2259,6 +2284,7 @@ contains
     endif
   end function BattleRealToInt_r4
 
+! ...........................................  BattleRealToInt_r8  .....
   function BattleRealToInt_r8 ( arg, arg1, delta, setUp ) result( iarg )
     integer, parameter :: RK = r8
     ! Args
@@ -2280,6 +2306,7 @@ contains
     endif
   end function BattleRealToInt_r8
 
+! ..............................................  createXArray_r4  .....
   ! This family creates an array of x values appropriate
   ! for the UDF
   subroutine createXArray_r4( xArray, UDF )
@@ -2296,6 +2323,7 @@ contains
     enddo
   end subroutine createXArray_r4
 
+! ..............................................  createXArray_r8  .....
   subroutine createXArray_r8( xArray, UDF )
     integer, parameter :: RK = R8
     ! Args
@@ -2310,9 +2338,10 @@ contains
     enddo
   end subroutine createXArray_r8
 
+! .................................................  psimpsons_r4  .....
   ! This family of functions performs a part of asimpson's rule integration
   ! from x1 to x
-  function psimpsons_r4( x, x1, x2, h, y ) result (sum)
+  function psimpsons_r4 ( x, x1, x2, h, y ) result (sum)
     integer, parameter :: RK = R4
     ! Args
     real(rk), intent(in)               :: x
@@ -2344,7 +2373,8 @@ contains
     sum = sum + ( (x - xArray(n))/2 * ( y(n) + yofx ) )
   end function psimpsons_r4
 
-  function psimpsons_r8( x, x1, x2, h, y ) result (sum)
+! .................................................  psimpsons_r8  .....
+  function psimpsons_r8 ( x, x1, x2, h, y ) result (sum)
     integer, parameter :: RK = R8
     ! Args
     real(rk), intent(in)               :: x
@@ -2376,9 +2406,10 @@ contains
     sum = sum + ( (x - xArray(n))/2 * ( y(n) + yofx ) )
   end function psimpsons_r8
 
+! ...................................................  reposit_r4  .....
   ! This family repositions x if it is outside [x1, x2]
   ! considering the type of BC determined by the UDF
-  subroutine reposit_r4( x, UDF, p, itsSign )
+  subroutine reposit_r4 ( x, UDF, p, itsSign )
     integer, parameter :: RK = R4
     ! Args
     real(rk), intent(in)                 :: x ! Given this x
@@ -2420,6 +2451,7 @@ contains
     end select
   end subroutine reposit_r4
 
+! ...................................................  reposit_r8  .....
   subroutine reposit_r8( x, UDF, p, itsSign )
     integer, parameter :: RK = R8
     ! Args
@@ -2462,9 +2494,10 @@ contains
     end select
   end subroutine reposit_r8
 
+! ..................................................  simpsons_r4  .....
   ! This family of functions performs simpson's rule integrations
   ! for either even or odd n
-  function simpsons_r4( n, h, y ) result (sum)
+  function simpsons_r4 ( n, h, y ) result (sum)
     integer, parameter :: RK = R4
     ! Args
     integer, intent(in)                :: n
@@ -2474,7 +2507,8 @@ contains
     call SimpsonsSub( y, h, n, sum )
   end function simpsons_r4
 
-  function simpsons_r8( n, h, y ) result (sum)
+! ..................................................  simpsons_r8  .....
+  function simpsons_r8 ( n, h, y ) result (sum)
     integer, parameter :: RK = R8
     ! Args
     integer, intent(in)                :: n
@@ -2484,6 +2518,7 @@ contains
     call SimpsonsSub( y, h, n, sum )
   end function simpsons_r8
 
+! ....................................................  D_CSPLINE  .....
   ! This family was moved here from fwdmdl
   subroutine D_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
     ! use D_HUNT_M, only: HUNT
@@ -2492,6 +2527,7 @@ contains
     include 'cspline.f9h'
   end subroutine D_CSPLINE
 
+! ....................................................  S_CSPLINE  .....
   subroutine S_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
     ! use S_HUNT_M, only: HUNT
     ! use S_PCSPL_M, only: PCSPL
@@ -2499,11 +2535,13 @@ contains
     include 'cspline.f9h'
   end subroutine S_CSPLINE
 
+! ......................................................  D_PCSPL  .....
   subroutine D_PCSPL ( TAU, C, N, IBCBEG, IBCEND )
     integer, parameter :: RK = kind(0.0d0)
     include 'pcspl.f9h'
   end subroutine D_PCSPL
 
+! ......................................................  S_PCSPL  .....
   subroutine S_PCSPL ( TAU, C, N, IBCBEG, IBCEND )
     integer, parameter :: RK = kind(0.0e0)
     include 'pcspl.f9h'
@@ -2524,6 +2562,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.78  2013/05/31 02:37:11  vsnyder
+! Add cross product
+!
 ! Revision 2.77  2013/04/12 00:35:56  vsnyder
 ! Describe 'index' argument of Hunt more precisely
 !
