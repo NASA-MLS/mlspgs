@@ -187,6 +187,7 @@ module MLSFiles               ! Utility file routines
 
    ! Assume hdf files w/o explicit hdfVersion field are this
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
+   ! MAKE SURE that HDFVersions are consecutive, as they're used for subscripts!
    integer, parameter, public :: HDFVERSION_4 = 4
    integer, parameter, public :: HDFVERSION_5 = 5
    integer, parameter         :: DEFAULT_HDFVERSION = HDFVERSION_4
@@ -2722,6 +2723,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.95  2013/05/31 00:27:44  vsnyder
+! Add cautionary comment about HDFVersions
+!
 ! Revision 2.94  2012/08/27 23:01:29  pwagner
 ! Consistent with new api for SortArray
 !
