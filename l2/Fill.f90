@@ -112,7 +112,7 @@ contains ! =====     Public Procedures     =============================
       & F_EXPLICITVALUES, F_EXPR, F_EXTINCTION, &
       & F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, F_SHAPE, &
       & F_FRACTION, F_FROMPRECISION, &
-      & F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
+      & F_GEOCALTITUDEQUANTITY, F_Geolocation, F_GPHQUANTITY, &
       & F_HEIGHT, F_HDFVERSION, F_HEIGHTRANGE, F_HESSIAN, &
       & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IFMISSINGGMAO, &
@@ -1347,6 +1347,8 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------------ fillCommand -----
     subroutine fillCommand
     ! Now we're on actual Fill instructions.
+      use Init_Tables_Module, only: L_None
+      integer :: Geolocation
       integer :: JJ
       logical :: QTYWASMASKED
       type(vectorValue_T) :: TEMPQUANTITY  ! For storing original qty's mask
@@ -1355,6 +1357,7 @@ contains ! =====     Public Procedures     =============================
       BOMask = 0
       AvoidObjects = ' '
       dimList = 'c' ! defaults to shift or slip by channel, or surface if noFreqs < 2
+      geolocation = l_none
       got = .false.
       multiplier = 1.
       do j = 2, nsons(key)
@@ -1442,6 +1445,8 @@ contains ! =====     Public Procedures     =============================
         case ( f_geocAltitudeQuantity ) ! For hydrostatic
           geocAltitudeVectorIndex = decoration(decoration(subtree(1,gson)))
           geocAltitudeQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        case ( f_geolocation )
+          geolocation = decoration(gson)
         case ( f_gphQuantity ) ! For magnetic field fill
           gphVectorIndex = decoration(decoration(subtree(1,gson)))
           gphQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -2177,7 +2182,7 @@ contains ! =====     Public Procedures     =============================
           precisionQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(precisionVectorIndex), precisionQuantityIndex )
           call FromL1B ( key, quantity, chunks(chunkNo), &
-            & filedatabase, isPrecision, suffix=suffix, &
+            & filedatabase, isPrecision, suffix=suffix, geolocation=geolocation, &
             & precisionQuantity=precisionQuantity )
         elseif ( got(f_avoidbrightobjects) ) then
           avoidObjects = lowerCase(avoidObjects)
@@ -2192,10 +2197,11 @@ contains ! =====     Public Procedures     =============================
           if ( index(avoidObjects, 'mooninsp') > 0 ) &
             & BOMask = ibset( BOMask, 0 )
           call FromL1B ( key, quantity, chunks(chunkNo), &
-            & filedatabase, isPrecision, suffix=suffix, BOMask=BOMask )
+            & filedatabase, isPrecision, suffix=suffix, geolocation=geolocation, &
+            & BOMask=BOMask )
         else
           call FromL1B ( key, quantity, chunks(chunkNo), &
-            & filedatabase, isPrecision, suffix=suffix )
+            & filedatabase, isPrecision, suffix=suffix, geolocation=geolocation )
         end if
 
       case ( l_l2gp ) ! --------------  Fill from L2GP quantity  -----
@@ -3017,6 +3023,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.421  2013/05/31 00:42:12  vsnyder
+! Add geolocation field to fill, used only if method=l1b
+!
 ! Revision 2.420  2013/05/17 00:49:29  pwagner
 ! May constrain Transfer command command to quantitynames by r/t Boolean
 !
