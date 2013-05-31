@@ -353,7 +353,7 @@ module MLSNumerics              ! Some low level numerical stuff
   end interface
 
   interface Cross
-    module procedure Cross_r4, Cross_r8
+    module procedure Cross_r4, Cross_r8, Cross2_r4, Cross2_r8
   end interface
 
   interface CreateXArray
@@ -986,6 +986,23 @@ contains
                xyz(1,1)*xyz(3,2) - xyz(3,1)*xyz(1,2), &
                xyz(1,1)*xyz(2,2) - xyz(2,1)*xyz(1,2) /)
   end function Cross_r8
+
+  pure function Cross2_r4 ( A, B ) result ( Cross )
+    real, intent(in) :: A(3), B(3)
+    real :: Cross(3)
+    cross = (/ a(2)*b(3) - a(3)*b(2), &
+               a(1)*b(3) - a(3)*b(1), &
+               a(1)*b(2) - a(2)*b(1) /)
+  end function Cross2_r4
+
+
+  pure function Cross2_r8 ( A, B ) result ( Cross )
+    double precision, intent(in) :: A(3), B(3)
+    double precision :: Cross(3)
+    cross = (/ a(2)*b(3) - a(3)*b(2), &
+               a(1)*b(3) - a(3)*b(1), &
+               a(1)*b(2) - a(2)*b(1) /)
+  end function Cross2_r8
 
 ! ------------------------------------------------------  Destroy  -----
 
@@ -2562,6 +2579,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.79  2013/05/31 23:30:37  vsnyder
+! Add two-argument cross product routines
+!
 ! Revision 2.78  2013/05/31 02:37:11  vsnyder
 ! Add cross product
 !
