@@ -497,18 +497,26 @@ contains ! ============= Public procedures ===================================
     real(rk), parameter :: SIXTH = 1.0_rk / 6.0_rk
     ! Note the similarity to CreateHGridFromMLSCFInfo:
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ! IF MODIFYING THIS SECTION PLEASE TAKE CARE, SEE BELOW!
-    integer, parameter :: NoL1BItemsToRead=7
-    character (len=15), dimension(NoL1BItemsToRead), parameter :: &
-         & L1bItemsToRead = &
-         & (/"MAFStartTimeTAI","tpGeodLat      ","tpLon          ",&
-         &   "tpGeodAngle    ","tpSolarZenith  ","tpSolarTime    ",&
-         &   "tpLosAngle     "/)
-    integer, parameter :: TransitionToModularItems = 2
-    ! Entries in the above array below TransitionToModularItems are prefixed
-    ! with either GHz or THz.  The layout of the above array is critically
-    ! bound to the select case(l1bItem) code below.  So TAKE CARE! when
-    ! modifing it.
+    type :: Item_T
+      Integer :: Type
+      character(15) :: Name
+      logical :: Modular = .true.
+    end type Item_T
+    enum, bind(C)
+      enumerator :: MAFStartTimeTAI = 1, tpGeodLat, tpLon, tpGeodAngle, &
+        & tpSolarZenith, tpSolarTime, tpLosAngle, &
+        & LastL1BItem ! Just to get the size; keep this one after the others
+    end enum
+    integer, parameter :: NoL1BItemsToRead = lastL1BItem - 1
+    type (item_t), parameter :: L1bItemsToRead(noL1BItemsToRead) = (/ &
+      !        Type              Name              Modular
+      & item_t(MAFStartTimeTAI, "MAFStartTimeTAI", .false.), &
+      & item_t(tpGeodLat,       "tpGeodLat      "), &
+      & item_t(tpLon,           "tpLon          "), &
+      & item_t(tpGeodAngle,     "tpGeodAngle    "), &
+      & item_t(tpSolarZenith,   "tpSolarZenith  "), &
+      & item_t(tpSolarTime,     "tpSolarTime    "), &
+      & item_t(tpLosAngle,      "tpLosAngle     ") /)
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     ! Local variables
@@ -595,14 +603,14 @@ contains ! ============= Public procedures ===================================
 
         do l1bItem = 1, NoL1BItemsToRead
           ! Get the name of the item to read
-          l1bItemName = l1bItemsToRead(l1bItem)
-          if ( l1bItem >= TransitionToModularItems ) then
+          l1bItemName = L1bItemsToRead(l1bItem)%name
+          if ( L1bItemsToRead(l1bItem)%modular ) then
             call GetModuleName ( instrumentModule, l1bItemName )
-            l1bItemName = trim(l1bItemName)//'.'//l1bItemsToRead(l1bItem)
+            l1bItemName = trim(l1bItemName)//'.'//L1bItemsToRead(l1bItem)%name
           else
-            l1bItemName = l1bItemsToRead(l1bItem)
+            l1bItemName = L1bItemsToRead(l1bItem)%name
           end if
-          
+
           ! Read it from the l1boa file
           l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
           call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
@@ -616,8 +624,8 @@ contains ! ============= Public procedures ===================================
           ! least boring way to write the code.  See the definition of
           ! L1BItemsToRead above for reference.
           
-          select case(l1bItem)
-          case ( 1 )
+          select case ( L1bItemsToRead(l1bItem)%type )
+          case ( MAFStartTimeTAI )
             !??? For time we have to do something a little more complicated.
             !??? This is a real kludge, and we have to find a way
             !??? to do it better in 0.5. Probably simply have time as a minor
@@ -630,18 +638,21 @@ contains ! ============= Public procedures ===================================
                   & (mifIndex-1) * sixth
               end do
             end do
-          case ( 2 )
+          case ( tpGeodLat )
             qty%geodLat = l1bField%dpField(1,:,:)
-          case ( 3 )
+          case ( tpLon )
             qty%lon = l1bField%dpField(1,:,:)
-          case ( 4 )
+          case ( tpGeodAngle )
             qty%phi = l1bField%dpField(1,:,:)
-          case ( 5 )
+          case ( tpSolarZenith )
             qty%solarZenith = l1bField%dpField(1,:,:)
-          case ( 6 )
+          case ( tpSolarTime )
             qty%solarTime = l1bField%dpField(1,:,:)
-          case ( 7 )
+          case ( tpLosAngle )
             qty%losAngle = l1bField%dpField(1,:,:)
+          case default
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "No code to read L1B item " // trim(L1bItemsToRead(l1bItem)%name) )
           end select
 
           call DeallocateL1BData ( l1bField )
@@ -1349,6 +1360,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.169  2013/05/31 00:42:35  vsnyder
+! Get geolocation if requested for L1B fill
+!
 ! Revision 2.168  2013/05/21 23:52:47  vsnyder
 ! Add MIFExtinctionExtrapolation and MIFExtinctionForm
 !
