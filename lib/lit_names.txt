@@ -80,7 +80,9 @@ full
 gauss
 geocAltitude
 geodAltitude
+geocentric
 geodAngle
+geodetic
 GHz
 gm3              # gm / meter^3
 gph
@@ -238,6 +240,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.62  2013/05/31 00:40:56  vsnyder
+# Add geocentric and geodetic
+#
 # Revision 2.61  2013/05/21 23:52:47  vsnyder
 # Add MIFExtinctionExtrapolation and MIFExtinctionForm
 #
