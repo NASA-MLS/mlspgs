@@ -3907,14 +3907,16 @@ contains ! =====     Public Procedures     =============================
     
     ! radiances are named the same independent of hdf version
     subroutine FromL1B ( root, quantity, chunk, filedatabase, &
-      & isPrecision, suffix, PrecisionQuantity, BOMask )
+      & isPrecision, suffix, Geolocation, PrecisionQuantity, BOMask )
       use BitStuff, only: NEGATIVEIFBITPATTERNSET
+      use Init_Tables_Module, only: L_Geocentric, L_Geodetic, L_None
       integer, intent(in) :: root
-      type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
-      type (MLSChunk_T), INTENT(IN) ::              CHUNK
-      type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
-      logical, intent(in)               ::          ISPRECISION
+      type (VectorValue_T), INTENT(INOUT)        :: QUANTITY
+      type (MLSChunk_T), INTENT(IN)              :: CHUNK
+      type (MLSFile_T), dimension(:), pointer    :: FILEDATABASE
+      logical, intent(in)                        :: ISPRECISION
       integer, intent(in)                        :: SUFFIX
+      integer, intent(in)                        :: Geolocation
       type (VectorValue_T), INTENT(IN), optional :: PRECISIONQUANTITY
       integer, intent(in), optional :: BOMask ! A pattern of bits--
                                               ! set prec. neg. if matched
@@ -4134,6 +4136,37 @@ contains ! =====     Public Procedures     =============================
         end do
       end if
 
+      if ( geolocation /= l_none ) then
+        select case ( geolocation )
+        case ( l_geocentric )
+          call GetModuleName( quantity%template%instrumentModule,nameString )
+          nameString = AssembleL1BQtyName('GeocLat', L1BOAFile%HDFVersion, .false., &
+            & trim(nameString))
+          call ReadL1BData ( L1BOAFile, nameString, l1bData, noMAFs, flag, &
+            & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+            & NeverFail=.false., dontPad=DONTPAD )
+          quantity%template%geodLat = RESHAPE(l1bData%dpField, &
+          & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+        case ( l_geodetic )
+          call GetModuleName( quantity%template%instrumentModule,nameString )
+          nameString = AssembleL1BQtyName('GeodLat', L1BOAFile%HDFVersion, .false., &
+            & trim(nameString))
+          call ReadL1BData ( L1BOAFile, nameString, l1bData, noMAFs, flag, &
+            & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+            & NeverFail=.false., dontPad=DONTPAD )
+          quantity%template%geodLat = RESHAPE(l1bData%dpField, &
+          & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+        end select
+        call GetModuleName( quantity%template%instrumentModule,nameString )
+        nameString = AssembleL1BQtyName('Lon', L1BOAFile%HDFVersion, .false., &
+          & trim(nameString))
+        call ReadL1BData ( L1BOAFile, nameString, l1bData, noMAFs, flag, &
+          & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & NeverFail=.false., dontPad=DONTPAD )
+        quantity%template%Lon = RESHAPE(l1bData%dpField, &
+        & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+      end if
+
       if ( switchDetail(switches, 'l1b') > -1 ) call Dump( l1bData )
       call DeallocateL1BData(l1bData)
     9 if ( toggle(gen) .and. levels(gen) > 1 ) &
@@ -4192,6 +4225,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: KEY
       ! Local variables
       real :: B(3)                      ! Magnetic field
+      integer, save :: Details = -10    ! From switchDetails('mag')
       integer :: INSTANCE               ! Loop counter
       character(len=8) :: options
       integer :: SURF                   ! Loop counter
@@ -4242,14 +4276,16 @@ contains ! =====     Public Procedures     =============================
           call to_cart ( real( (/ qty%template%geodLat(surfOr1,instance), &
             &                     qty%template%lon(surfOr1,instance), &
             &                     gphQty%values(surf,instance)*1.0e-3 /) ), xyz )
-          ! Compute the field at and w.r.t. cartesian coordinates
+          ! Compute the field at and w.r.t. cartesian coordinates.  The first
+          ! dimension of value3 is field components, not channels.
           call feldc ( xyz, b )
-          qty%values ( surf*3-2 : surf*3, instance) = b
+!3          qty%values ( surf*3-2 : surf*3, instance) = b
+          qty%value3 ( 1:3, surf, instance) = b
         end do
       end do
 
-      if ( switchDetail(switches,'mag') > -1 ) &
-        & call dump ( qty, options=options )
+      if ( details < -1 ) details = switchDetail(switches,'mag') ! only once
+      if ( details > -1 ) call dump ( qty, details=details, options=options )
     9 if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_end ( 'FillUtils_1.UsingMagneticModel' )
 
@@ -7018,6 +7054,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.77  2013/05/31 00:42:12  vsnyder
+! Add geolocation field to fill, used only if method=l1b
+!
 ! Revision 2.76  2013/05/22 20:09:50  pwagner
 ! Print only if verboser
 !
