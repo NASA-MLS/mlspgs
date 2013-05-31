@@ -314,6 +314,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical, parameter           :: DEEBUG = .FALSE.
 
     ! Private
+    character(len=1), dimension(HDFVersion_4:HDFVersion_5), parameter :: &
+      heads =       (/ ' ', '/' /), &
+      instr_tails = (/ '.', '/' /), &
+      tp_tails =    (/ ' ', '/' /)
     character(len=1) :: head
     character(len=1) :: instr_tail
     character(len=1) :: tp_tail
@@ -332,20 +336,17 @@ contains ! ============================ MODULE PROCEDURES ======================
       print *, 'is a signal: ', is_a_signal
       if ( present(InstrumentName) ) print *, 'Instrument: ', trim(InstrumentName)
     end if
-    if ( hdfVersion == HDFVERSION_5 ) then
-      head = '/'
-      instr_tail = '/'
-      tp_tail = '/'
-    else
-      head = ''
-      instr_tail = '.'
-      if ( present(InstrumentName) ) then
-        if ( trim(InstrumentName) == 'sc' ) instr_tail = ''
-      end if
-      tp_tail = ''
-    end if
+    my_instrument = ''
     if ( present(InstrumentName) ) then
-      QtyName = head // trim(InstrumentName) // instr_tail
+      my_instrument = instrumentName
+      if ( my_instrument == 'SC' ) my_instrument = 'sc'
+    end if
+    head = heads(hdfVersion)
+    instr_tail = instr_tails(hdfVersion)
+    tp_tail = tp_tails(hdfVersion)
+    if ( hdfVersion == HDFVERSION_4 .and. my_instrument == 'sc' ) instr_tail= ''
+    if ( present(InstrumentName) ) then
+      QtyName = head // trim(my_instrument) // instr_tail
     else if ( is_a_signal .or. hdfVersion /= HDFVERSION_5 ) then
       QtyName = head
     else
@@ -2675,6 +2676,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.95  2013/05/31 00:40:31  vsnyder
+! Make test for SC case insensitive
+!
 ! Revision 2.94  2012/09/11 18:53:40  pwagner
 ! Anonymized diffed arrays
 !
