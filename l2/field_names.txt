@@ -172,6 +172,7 @@ fwdModelOut
 geocAltitudeQuantity
 geodAngle
 geodAlt
+geolocation
 gph
 gphQuantity
 grid
@@ -503,6 +504,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.230  2013/05/31 00:41:33  vsnyder
+# Add geolocation
+#
 # Revision 2.229  2013/05/17 00:48:49  pwagner
 # May constrain Transfer command command to quantitynames by r/t Boolean
 #
