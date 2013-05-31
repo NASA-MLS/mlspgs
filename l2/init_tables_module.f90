@@ -75,7 +75,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_FGRIDCOORD     = t_criticalmodule+1
   integer, parameter :: T_FILLMETHOD     = t_fGridCoord+1
   integer, parameter :: T_FWMTYPE        = t_fillmethod+1
-  integer, parameter :: T_GRIDDEDORIGIN  = t_fwmType+1
+  integer, parameter :: T_GEOLOCATION    = t_fwmType+1
+  integer, parameter :: T_GRIDDEDORIGIN  = t_geolocation+1
   integer, parameter :: T_HGRIDTYPE      = t_griddedOrigin+1
   integer, parameter :: T_I_SATURATION   = t_hgridtype+1
   integer, parameter :: T_MASKS          = t_i_saturation+1
@@ -291,6 +292,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
     data_type_indices(t_fgridcoord) =      add_ident ( 'fGridCoord' )
     data_type_indices(t_fwmType) =         add_ident ( 'fwmType' )
+    data_type_indices(t_geolocation) =     add_ident ( 'geolocation' )
     data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
     data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
     data_type_indices(t_i_saturation) =    add_ident ( 'i_saturation' )
@@ -506,6 +508,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fwmType, l+l_baseline, l+l_linear, l+l_full, &
              l+l_cloudFull, l+l_hybrid, l+l_scan, l+l_scan2d, l+l_switchingMirror, &
              l+l_polarLinear, n+n_dt_def, &
+      begin, t+t_geolocation, l+l_geocentric, l+l_geodetic, l+l_none, n+n_dt_def, &
       begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
              l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
              l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
@@ -949,6 +952,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fromPrecision, t+t_boolean, n+n_field_type, &
              begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_geolocation, t+t_geolocation, n+n_field_type, &
              begin, f+f_gphQuantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -1840,6 +1844,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.568  2013/05/31 00:41:51  vsnyder
+! Add geolocation field to fill
+!
 ! Revision 2.567  2013/05/22 20:18:35  pwagner
 ! Values now a field for reevaluate; may destroy r/t Booleans
 !
