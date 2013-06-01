@@ -231,6 +231,7 @@ SHELL = /bin/sh
 # init_gen       
 # killmaster     
 # l1bdiff        
+# l1bdump
 # l1h5subset     
 # l2auxcat       
 # l2auxchi       
@@ -863,6 +864,11 @@ l1bdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1bdiff.f90 l1--itm
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+l1bdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1bdump.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 l1h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1h5subset.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
@@ -1264,7 +1270,7 @@ update:
 tools: chunktimes checkpvmup compare dateconverter \
   heconvert h5subset h5cat hl Goldbrick_More \
   killmaster \
-  l1bdiff l1h5subset \
+  l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
   l2pcdiff l2pcdump l2q \
   machineok Spartacus tellMasterToQuit WordSplit wrapLines
@@ -1285,7 +1291,7 @@ tools: chunktimes checkpvmup compare dateconverter \
   checkpvmup chunktimes CondenseLeakLog end_stmts f90tex Goldbrick_More \
   heconvert init_gen \
   h5subset h5cat hl killmaster \
-  l1bdiff l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
+  l1bdiff l1bdump l1h5subset l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
   l2pcdump \
   machineok Mie_Tables Mie_Tables_nohdf MLS_h5ls utctotai \
   tellMasterToQuit \
@@ -1294,6 +1300,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.134  2013/01/14 21:19:06  pwagner
+# Make install depend on LEVELS
+#
 # Revision 1.133  2011/09/02 18:36:07  pwagner
 # Double-make workaround for tree_checker issue moved to l2
 #
