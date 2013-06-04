@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9.0in
 
-\newcommand{\docname}{\bf wvs-074r5}
-\newcommand{\docdate}{28 March 2013}
+\newcommand{\docname}{\bf wvs-074r6}
+\newcommand{\docdate}{3 June 2013}
 
 \usepackage{graphicx}
 
@@ -131,7 +131,8 @@ figure).  If $|\xi_1| > |\xi_c|$, the ray is an earth-intersecting ray,
 described below.  The value of $\xi_c$ is
 %
 \begin{equation}
-  \xi_c = -\left(\frac\pi2 - \phi - \psi(R) \right)\,,\,\,
+%  \xi_c = -\left(\frac\pi2 - \phi - \psi(R) \right)\,,\,\,
+   \xi_c = \phi - \psi(R)\,,\,\,
     \phi-\frac\pi2 \leq \xi_c \leq 0\,,\,\,\psi(R) = \cos^{-1} \frac{R}H\,,
 \end{equation}
 %
@@ -210,6 +211,9 @@ direction from \pP\ to \pO.
 % $Id$
 
 % $Log$
+% Revision 1.7  2013/03/28 19:16:25  vsnyder
+% Improve wording as Igor suggested
+%
 % Revision 1.6  2013/03/25 22:53:44  vsnyder
 % Improve exposition and graphics
 %
