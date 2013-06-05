@@ -110,6 +110,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
+  outputoptions%nArrayElmntsPerLine = 40
   time_config%use_wall_clock = .true.
   call mls_h5open(error)
   if ( error /= 0 ) then
@@ -488,7 +489,6 @@ contains
   integer                     :: failure
   integer                     :: grp_id
   integer                     :: number
-  integer                     :: numberComplete
   integer                     :: numberFailed
   integer                     :: returnStatus
   character(len=4096)         :: failedChunks
@@ -504,7 +504,6 @@ contains
   ! Executable
   showAll = (options%details == ' ')
   number = -1
-  numberComplete = -1
   numberFailed = -1
   call h5gopen_f(fileId, '/', grp_id, returnStatus)
   showThis = showAll .or. &
@@ -514,7 +513,6 @@ contains
     call GetHDF5Attribute (grp_ID, NUMCOMPLETEATTRIBUTENAME, number)
     if ( showThis ) call blanks(4)
     if ( showThis ) call output(number, advance='yes')
-    numberComplete = number
   else
     if ( showThis ) call output(' attribute not found', advance='yes')
   endif
@@ -790,8 +788,7 @@ contains
         call output('total', advance='no')
       elseif ( phases /= ' ' ) then
         call GetStringElement( phases, myPhase, phase, .FALSE.)
-        call output(trim(myPhase), advance='no')
-        call blanks(3)
+        call output( myPhase(:14), advance='no' )
       else
         call output('phase', advance='no')
         call output(phase, advance='no')
@@ -807,6 +804,7 @@ contains
           call output( table(size(table, 1), chunk), advance='no' )
         else
           call output(table(:, chunk), advance='no')
+          !write(*, '(24F11.2)', advance='no') table(:, chunk)
         endif
         call newline
       endif
@@ -818,6 +816,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.24  2012/07/10 23:14:44  pwagner
+! Changed api in accord with GetUniqueList
+!
 ! Revision 1.23  2009/07/08 00:39:34  pwagner
 ! Should not crash when num chunks is 3500 (as with 1 profile/chunk)
 !
