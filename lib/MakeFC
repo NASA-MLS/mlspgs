@@ -88,8 +88,7 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
          fi 
 
 hdfeos5.f9h: $(IHDFEOS5INC)
-	@sed 's/^C/!/' $(IHDFEOS5INC) > temp ; \
-	mv temp hdfeos5.f9h
+	@sed 's/^C/!/' $(IHDFEOS5INC) > hdfeos5.f9h
 
 .PHONY: configure depends clean alltests tar tarz targ mostlyclean \
 	all libmls.a ghostbuster update
@@ -182,6 +181,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.60  2013/06/05 18:40:51  pwagner
+# Remove vulnerability if temp already exists in lib
+#
 # Revision 2.59  2010/10/12 22:24:29  pwagner
 # Uses Makefile.h from srclib
 #
