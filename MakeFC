@@ -992,6 +992,9 @@ update:
 		$(MAKE) -f $(MakeFName) internalcleanup ; \
 	fi
 	@$(MAKE) -f $(MakeFName) internalupdate
+	@$(MAKE) -f $(MakeFName) internaldepends
+	@$(MAKE) -f $(MakeFName) internalmftests
+	@$(MAKE) -f $(MakeFName) REVERSE=-reverse internalupdate
 
 # Useful for cleaning multiple configurations
 
@@ -1204,12 +1207,10 @@ internalupdate: internalsaymake
 		;; \
 	 esac ; \
 		cd $$dir ; \
-		../$(MLSBIN)/updatemf.sh -pc $$PLATFORMS \
+		../$(MLSBIN)/updatemf.sh $$REVERSE -pc $$PLATFORMS \
          -cf "../$(CONFDIR)/$(MLSCFILE)" $$m_option; \
 		cd .. ; \
 	done
-	@$(MAKE) -f $(MakeFName) internaldepends
-	@$(MAKE) -f $(MakeFName) internalmftests
 
 internalreset_copy:
 	@echo "MakeFC copy number reset from $(COPY_NUMBER) to 0"
@@ -1300,6 +1301,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.135  2013/06/01 00:39:57  pwagner
+# Added l1bdump
+#
 # Revision 1.134  2013/01/14 21:19:06  pwagner
 # Make install depend on LEVELS
 #
