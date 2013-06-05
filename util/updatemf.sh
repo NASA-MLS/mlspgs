@@ -11,6 +11,7 @@
 #  -pc plat_dir         Directory where platforms directory to be found
 #                        (defaults to ./)
 #  -machine             (if present) Check that machine files up-to-date
+#  -reverse             (if present) Reverse hiding the file
 #
 # --------------- End updatemf.sh help
 #
@@ -28,13 +29,19 @@
 # "$Id$"
 #----------------------- Exclude -----------------------
 
-# Function to temporarily hide a file to excclude it from calculations
+# Function to temporarily hide a file to exclude it from calculations
+# or to reverse the hiding after the calculations
 #
 
 Exclude()
 {
-	if [ -f "$1" ]
+   if [ "$reverse" = "true" -a -f "$1-x" ]
    then
+     #echo mv "$1-x" "$1"
+     mv "$1-x" "$1"
+   elif [  "$reverse" = "false" -a -f "$1" ]
+   then
+     #echo mv "$1" "$1-x"
      mv "$1" "$1-x"
    fi
 }
@@ -126,6 +133,7 @@ mcfg_dir="./"
 plat_dir="./"
 conf_dir="$MYPATH/.."
 m_update="false"
+reverse="false"
 
 while [ "$1" != "" ] ; do
 
@@ -148,6 +156,9 @@ while [ "$1" != "" ] ; do
 	-machine )
 	    m_update="true"
 	;;
+	-reverse )
+	    reverse="true"
+	;;
     esac
     shift
 done
@@ -161,17 +172,32 @@ then
    exit 1
 fi
 
-# The following fragile stuff was replaced by the more robust function my_dot
-# Delete lines such as FOPTS= or LDOPTS= because they may cause shell errors
-# (Why not create a new function to do this?)
-#temp1=`get_unique_name updatemf`
-#sed '/OPTS/d' "$confg_file" > $temp1
-#echo ". $temp1"
-#. "$temp1"
-#echo "Done with . $temp1"
-#rm "$temp1"
 my_dot "$confg_file"
 
+machines_root=$conf_dir/lib/machines
+
+# Have we been tasked with reversing a previous call where we hid
+# one or more files temporarily via Exclude commands?
+if [ "$reverse" = "true" ]
+then
+  if [ "$REECHOMACHOPTS" != "" -a "$MLSCONFG" = "$MLSF95.$MLSPLAT" ]
+  then
+    the_files=`$REECHO -dir $machines_root/"$MLSCONFG" -escape \*-x`
+    if [ "$the_files" = "" ]
+    then
+      exit 0
+    fi
+    echo "About to restore $the_files"
+    echo "in $machines_root/$MLSCONFG"
+    for file in $the_files
+    do
+      argmx=`echo $file | sed 's/-x$//'`
+      var=`Exclude $machines_root/$MLSCONFG/$argmx`
+      # echo $var
+    done
+  fi
+  exit 0
+fi
 #Re-create object-file directory for this MLSCONFG
 #unless $del_exist_dir reset to false
 #(Because mlsconfigure may be called simply to update $MLSCONFG/Makefile)
@@ -228,7 +254,6 @@ if [ "$made_new_dir" = "true" ] ; then
      # Custom configuration name -- create a machines sub-directory for it
      # We will assume that the machines sub-directories live under the path
      # $conf_dir/lib/machines/$MLSCONFG
-     machines_root=$conf_dir/lib/machines
      if [ ! -d "$machines_root" ] ; then
         echo "Unable to locate root machines directory $machines_root"
         exit
@@ -267,11 +292,16 @@ fi
 # echo "m_update $m_update REECHOMACHOPTS $REECHOMACHOPTS"
 if [ "$m_update" = "true" -a "$REECHOMACHOPTS" != "" ] ; then
   the_files=`$REECHO -dir $machines_root/$MLSCONFG fuzzy $REECHOMACHOPTS`
+  if [ "$the_files" = "" ]
+  then
+    exit 0
+  fi
   echo "About to rename $the_files"
   echo "in $machines_root/$MLSCONFG"
   for file in $the_files
   do
     var=`Exclude $machines_root/$MLSCONFG/$file`
+    # echo $var
   done
 fi
 
@@ -279,6 +309,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.7  2009/12/01 21:32:47  pwagner
+# May use the REECHOMACHOPTS mechanism to exclude certain files from machines
+#
 # Revision 1.6  2007/05/29 17:40:29  pwagner
 # compiler-specific settings now in srclib, not platforms
 #
