@@ -3532,14 +3532,6 @@ contains ! =====     Public Procedures     =============================
                                                !        X  Bounds(3):Bounds(4)
     logical, intent(in), optional :: CLEAN   ! print \size
 
-    integer :: My_Details
-    logical :: My_Clean
-
-    my_Details = 1
-    if ( present(details) ) my_Details = details
-    my_Clean = .false.
-    if ( present(clean) ) my_Clean = clean
-
     if ( matrix_block1%nRows /= matrix_block2%nRows .or. &
       & matrix_block1%nCols /= matrix_block2%nCols ) then
       call output ( 'the matrix blocks have different shapes', advance='yes' )
@@ -3715,6 +3707,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.18  2013/06/12 02:12:44  vsnyder
+! Cruft removal
+!
 ! Revision 2.17  2012/08/30 23:06:09  vsnyder
 ! Constrain diagonal above sqrt(epsilon) in Cholesky
 !
