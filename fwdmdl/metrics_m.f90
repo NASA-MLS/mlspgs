@@ -45,7 +45,6 @@ module Metrics_m
   ! For debugging output format:
   ! logical, parameter :: Clean = .false.
   character(len=4), parameter :: options=' '
-  logical, parameter :: Degrees = .true.
   real, parameter :: Ang = rad2deg ! degrees
 ! real, parameter :: Ang = 1.0     ! .not. degrees
   character(*), parameter :: Fmt = '( i4,i2,i4,f12.5,f10.3,a )'
@@ -234,7 +233,6 @@ contains
 
     real(rp) :: PHI_SIGN(size(vert_inds))   ! +/- 1.0
 
-    real(rp), parameter :: Pid2 = 0.5*pi
     real(rp), parameter :: Pix2 = 2.0*pi
 
     ! For debugging
@@ -873,7 +871,6 @@ path: do i = i1, i2
     integer :: Do_Dumps    ! <0 = no dump, >=0 = dump, >0 = stop
     integer :: I           ! Subscript, loop inductor
     integer :: N_PATH      ! Path length = size(vert_inds)
-    integer :: N_VERT      ! size(z_ref)
 
     logical :: NOT_ZERO_P(size(vert_inds),size(p_basis))
     integer :: col1(size(vert_inds))        ! First nonzero in rows of Eta_P
@@ -889,7 +886,6 @@ path: do i = i1, i2
       do_dumps = switchDetail(switches,'metd')
 !   end if
 
-    n_vert = size(t_ref,1)
     n_path = size(vert_inds)
 
     ! Interpolate Temperature (T_Ref) and the vertical height derivative
@@ -1128,6 +1124,9 @@ path: do i = i1, i2
 end module Metrics_m
 
 ! $Log$
+! Revision 2.72  2013/05/21 23:55:14  vsnyder
+! Compute No_Bad_Fits correctly, revise dump switches
+!
 ! Revision 2.71  2013/05/18 00:34:44  vsnyder
 ! Insert NG fine-grid (GL) points between tangent points, thereby
 ! regularizing coarse-grid spacing, and reducing significantly the need

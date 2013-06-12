@@ -335,9 +335,8 @@ contains
     real(rp) :: q, htan2, NH, Nt2Ht2
     real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, t1, t2, x1, x2, xm, ym
 
-    real(rp), parameter :: Htol = 1.0e-3_rp
     real(rp), parameter :: Tiny = 1.0e-8_rp
-    real(rp), parameter :: Rmax = 1.3_rp
+!   real(rp), parameter :: Rmax = 1.3_rp
 
     status = 0
     hndp = 0
@@ -634,6 +633,9 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.43  2013/02/28 21:05:48  vsnyder
+! Try to cope with short paths
+!
 ! Revision 2.42  2012/02/16 22:44:36  pwagner
 ! Skip printing Ref_Corr msg unless switch rcfx set
 !

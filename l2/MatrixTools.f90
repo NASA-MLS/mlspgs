@@ -129,7 +129,6 @@ contains ! =====  Public procedures  ===================================
 
     type (VectorValue_T), pointer :: COLQ   ! Col quantity
     type (VectorValue_T), pointer :: ROWQ   ! Row quantity
-    type (Hessian_T), pointer :: Hessian    ! The Hessian to dump
     type (Matrix_T), pointer :: MATRIX      ! The matrix to dump
     type (MatrixElement_T), pointer :: MB   ! A block from the matrix
     type (HessianElement_T), pointer :: HB  ! A block from the Hessian
@@ -955,6 +954,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.37  2012/01/27 02:57:54  vsnyder
+! Remove extraneous ' at ' in DumpBlocks
+!
 ! Revision 1.36  2011/10/04 20:25:33  honghanh
 ! Fixed bug in PVM_Pack_RC
 !

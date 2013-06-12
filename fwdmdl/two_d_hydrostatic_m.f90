@@ -33,7 +33,6 @@ module Two_D_Hydrostatic_m
   use Hydrostatic_m, only: hydrostatic
   use Load_sps_data_m, ONLY: Grids_T
   use MLSKinds, only: RP, IP
-  use Constants, only: PI
 
 ! Inputs:
 
@@ -63,8 +62,6 @@ module Two_D_Hydrostatic_m
 
   real(rp) :: CSQ ! C**2
   real(rp) :: Lat, SinBeta, SinPhi, SinPhiSQ
-
-  real(rp), parameter :: PId2=0.5_rp*pi, PI2=2.0_rp*pi, PI3d2=1.5_rp*pi
 
 ! Begin execution
 
@@ -126,6 +123,9 @@ module Two_D_Hydrostatic_m
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.18  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.17  2009/05/13 20:03:02  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !
