@@ -1466,7 +1466,7 @@ contains ! =====     Public Procedures     =============================
       real(rk), dimension(:), intent(in)   :: GeodAngle
       real(rk), dimension(:), intent(out)  :: solarZenith
       ! Local variables
-      integer, dimension(2) :: indices(2)
+      integer :: indices(2)
       integer :: maf
       ! Executable
       do maf = 1, size(GeodAngle)
@@ -2396,6 +2396,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.102  2013/06/12 02:37:14  vsnyder
+! Cruft removal
+!
 ! Revision 2.101  2012/04/25 20:32:24  pwagner
 ! Inserting missing profiles after chunk end now an option controlled by 'extendible' field
 !
