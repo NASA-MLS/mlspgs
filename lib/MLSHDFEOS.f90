@@ -681,7 +681,6 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  MLS_SWdefdim  -----
   integer function MLS_SWdefdim ( SWATHID, DIMNAME, DIMSIZE, FILENAME, &
     & hdfVersion, DONTFAIL )
-    integer, parameter :: RANK = 7
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: DIMNAME       ! Dimension name
     integer, intent(in)          :: DIMSIZE
@@ -772,7 +771,6 @@ contains ! ======================= Public Procedures =========================
   ! ---------------------------------------------  MLS_SWdiminfo  -----
   integer function MLS_SWdiminfo ( SWATHID, DIMNAME, FILENAME, &
     & hdfVersion, DONTFAIL )
-    integer, parameter :: RANK = 7
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: DIMNAME       ! Dimension name
     character(len=*), optional :: FileName
@@ -2223,6 +2221,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.45  2013/06/12 02:11:27  vsnyder
+! Cruft removal
+!
 ! Revision 2.44  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
