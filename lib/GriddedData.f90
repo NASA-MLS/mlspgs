@@ -11,7 +11,7 @@
 
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, E_DEF, E_DP
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DATES_MODULE, only: TAI2CCSDS
   use DUMP_0, only: DUMP, DUMPDATES
   use INTRINSIC, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
@@ -1041,7 +1041,7 @@ contains
   ! This first routine sets up a new grid according to the user
   ! input.  This may be based partly on an already-defined source
   ! or created from scratch.
-    use Allocate_Deallocate, only: TEST_ALLOCATE
+    use Allocate_Deallocate, only: BYTE_SIZE, TEST_ALLOCATE
     ! Dummy arguments
     type (GriddedData_T) :: QTY ! Result
     type (GriddedData_T), optional, intent(in) :: SOURCE ! Template
@@ -1137,7 +1137,7 @@ contains
       qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
     call test_allocate ( status, moduleName, 'qty%field', (/1,1,1,1,1,1/), &
       & (/ qty%noHeights, qty%noLats, qty%noLons, qty%noLsts, qty%noSzas, &
-      &    qty%noDates /), merge(e_dp,e_def,rgr==r8) )
+      &    qty%noDates /), byte_size(qty%field) )
   
   end subroutine SetupNewGriddedData
 
@@ -1561,7 +1561,8 @@ contains
     ! Given a grid, possibly add extra points in longitude beyond +/-180
     ! and in solar time beyond 0..24 to aid in interpolations.
     ! Dummy arguments
-    use Allocate_Deallocate, only: MEMORY_UNITS, TEST_ALLOCATE, TEST_DEALLOCATE
+    use Allocate_Deallocate, only: BYTE_SIZE, BYTES, MEMORY_UNITS, &
+      & TEST_ALLOCATE, TEST_DEALLOCATE
     type ( GriddedData_T ), intent(inout) :: GRID
     ! Local variables
     real (rgr), dimension(:), pointer :: NEWLONS
@@ -1631,7 +1632,7 @@ contains
       & (/ grid%noHeights, grid%noLats, &
       &    grid%noLons + lowerLon + upperLon, &
       &    grid%noLsts + lowerLst + upperLst, &
-      &    grid%noSzas, grid%noDates /), merge(e_dp,e_def,rgr==r8) )
+      &    grid%noSzas, grid%noDates /), bytes(newField) )
 
     ! Fill the 'central' part of the fields
     newLons ( 1+lowerLon : lowerLon+grid%noLons ) = grid%lons
@@ -1657,9 +1658,9 @@ contains
     ! Tidy up
     call Deallocate_test ( grid%lons, 'grid%lons', ModuleName )
     call Deallocate_test ( grid%lsts, 'grid%lsts', ModuleName )
-    s = real(merge(e_dp,e_def,rgr==r8))/memory_units * size(grid%field)
+    s = byte_size(grid%field) / MEMORY_UNITS
     deallocate ( grid%field, stat=status )
-    call test_deallocate ( status, moduleName, 'grid%values', s )
+    call test_deallocate ( status, moduleName, 'grid%field', s )
 
     ! Make grid use new values
     grid%noLons = grid%noLons + lowerLon + upperLon
@@ -1719,6 +1720,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.71  2013/06/12 02:17:27  vsnyder
+! UBYTES and BYTE_SIZE from Allocate_Deallocate
+!
 ! Revision 2.70  2012/10/11 21:00:28  pwagner
 ! Print quantityName instead of moduleName during Dump
 !
