@@ -66,7 +66,6 @@
     logical, parameter :: OBJINFOBROKEN = .true. ! starting with hdf5 1.8
     integer :: i, nmembers, h5error, count, type_id
     character(len=name_len) :: name_buffer, path_name, new_loc_name
-    logical :: dataset_found
     integer :: nsubmembers
     ! call outputNamedValue( 'loc_id', loc_id )
     ! call outputNamedValue( 'loc_name', loc_name )
@@ -107,11 +106,9 @@
           ! so we'll call h5gn_members until we get an error
            call h5gn_members_f( loc_id, trim(new_loc_name), nsubmembers, h5error )
            if ( h5error == 0 .and. nsubmembers > 0 ) then
-             dataset_found = .FALSE.
              path_name = new_loc_name
              call Query_MLSData( loc_id, trim(path_name), dataset_info)
            else
-             dataset_found = .TRUE.
              count = dataset_info%number_of_entries + 1
              dataset_info%name(count) = new_loc_name
 
@@ -119,7 +116,6 @@
            endif
         elseif (type_id .EQ. H5G_DATASET_F) then  ! H5G_DATASET_F
 
-          dataset_found = .TRUE.
           count = dataset_info%number_of_entries + 1
           dataset_info%name(count) = new_loc_name
 
@@ -127,7 +123,6 @@
 
         elseif (type_id .EQ. H5G_LINK_F) then  ! H5G_LINK_F
 
-          dataset_found = .TRUE.
           count = dataset_info%number_of_entries + 1
 
           dataset_info%name(count) = new_loc_name
@@ -136,8 +131,6 @@
 
         else 
 
-           dataset_found = .FALSE.
- 
           path_name = new_loc_name
  
            call Query_MLSData(loc_id,trim(path_name),dataset_info)
@@ -165,6 +158,9 @@
 end module MLSDataInfo
 
 ! $Log$
+! Revision 2.11  2013/06/12 02:11:10  vsnyder
+! Cruft removal
+!
 ! Revision 2.10  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
