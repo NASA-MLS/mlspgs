@@ -54,7 +54,8 @@ contains
     ! Initialize SineTable_r8 to be of size 2**LogSize - 1, unless it's
     ! already allocated and at least that big.
 
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate, E_DP
+    use Allocate_Deallocate, only: Byte_Size, Bytes, MEMORY_UNITS, &
+      & Test_Allocate, Test_Deallocate
     use DFFT_M, only: InitSineTable
 
     integer, intent(in) :: LogSize
@@ -62,7 +63,7 @@ contains
     integer :: N, Stat
 
     if ( allocated(sineTable_r8) .and. logSize + 2 > logSize_SineTable_r8 ) then
-      n = size(sineTable_r8) * E_DP
+      n = byte_size(sineTable_r8) / MEMORY_UNITS
       deallocate ( sineTable_r8, stat=stat )
       call test_deallocate ( stat, moduleName, 'SineTable_r8', n )
     end if
@@ -70,7 +71,8 @@ contains
     if ( .not. allocated(sineTable_r8) ) then
       n = 2**logSize - 1
       allocate ( sineTable_r8(n), stat=stat )
-      call test_allocate ( stat, moduleName, 'SineTable_r8', (/1/), (/n/), e_dp )
+      call test_allocate ( stat, moduleName, 'SineTable_r8', (/1/), (/n/), &
+        & bytes(sineTable_r8) )
       call initSineTable ( sineTable_r8, logSize )
       logSize_SineTable_r8 = logSize + 2
     end if
@@ -81,12 +83,12 @@ contains
 
   subroutine DestroySineTable_r8
 
-    use Allocate_Deallocate, only: Test_Deallocate, E_DP
+    use Allocate_Deallocate, only: Byte_Size, MEMORY_UNITS, Test_Deallocate
 
     integer :: N, Stat
 
     if ( allocated(sineTable_r8) ) then
-      n = size(sineTable_r8) * E_DP
+      n = byte_size(sineTable_r8) / MEMORY_UNITS
       deallocate ( sineTable_r8, stat=stat )
       call test_deallocate ( stat, moduleName, 'SineTable_r8', n )
     end if
@@ -109,6 +111,9 @@ contains
 end module SineTables_m
 
 ! $Log$
+! Revision 2.5  2013/06/12 02:17:27  vsnyder
+! UBYTES and BYTE_SIZE from Allocate_Deallocate
+!
 ! Revision 2.4  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
