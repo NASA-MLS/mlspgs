@@ -200,7 +200,6 @@ contains ! =====     Public Procedures     =============================
       real(r8), intent(in)   :: T
       real(r8)               :: dC_dT
       ! Local
-      real(r8), parameter    :: a0 = -1.2141649d0
       real(r8), parameter    :: a1 = 9.09718d0
       real(r8), parameter    :: a2 = 0.876793d0
       real, parameter        :: ILLEGALTEMP = DEFAULTUNDEFINEDVALUE
@@ -227,6 +226,9 @@ end module RHIFromH2O
 
 !
 ! $Log$
+! Revision 2.7  2013/06/12 02:21:15  vsnyder
+! Cruft removal
+!
 ! Revision 2.6  2013/03/01 01:06:57  pwagner
 ! Get R8 from MLSKinds; DEFAULTUNDEFINEDVALUE from MLSCommon
 !
