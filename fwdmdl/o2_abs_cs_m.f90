@@ -138,8 +138,6 @@ contains
     complex(rk), intent(out) :: dSigma_m_dT
 
     integer(ip) :: J, No_lines
-    logical, pointer :: Polarized(:)          ! Which lines to use.  Same
-                                              ! as Slabs%catalog%polarized.
 
     real(r8) :: V0                            ! zero field line center frequency
 
@@ -919,6 +917,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.21  2013/06/12 02:33:02  vsnyder
+! Cruft removal
+!
 ! Revision 2.20  2013/04/27 01:10:54  vsnyder
 ! Make routines pure, needed to use ASSOCIATE construct twice
 !
