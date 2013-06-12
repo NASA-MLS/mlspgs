@@ -504,7 +504,7 @@ contains ! =====     Public Procedures     =============================
   ! Return index of one found one in the table already (if replace is present
   ! and true).  See Test_And_Fetch_PFA.
     use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
       & MLSMSG_Warning
     use MLSSignals_m, only: Signals
     use MoreMessage, only: MLSMessage
@@ -1356,6 +1356,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.43  2013/06/12 02:20:59  vsnyder
+! Cruft removal
+!
 ! Revision 2.42  2011/07/23 00:17:32  vsnyder
 ! More robust response to not finding a molecule string or signal string,
 ! which might happen if the molecules list or signals database is changed

@@ -31,7 +31,7 @@ contains
     use DExdT_m, only: dExdT
     use GLNP, only: NG, NGP1
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
-    use MLSCommon, only: RP, IP
+    use MLSCommon, only: RP
     use Opacity_m, only: Opacity
     use Where_M, only: Where
 
@@ -524,6 +524,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.43  2013/06/12 02:20:19  vsnyder
+! Cruft removal
+!
 ! Revision 2.42  2013/05/18 00:34:44  vsnyder
 ! Insert NG fine-grid (GL) points between tangent points, thereby
 ! regularizing coarse-grid spacing, and reducing significantly the need
