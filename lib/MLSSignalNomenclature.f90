@@ -563,7 +563,7 @@ CONTAINS
 
     INTEGER :: upperLower
     INTEGER :: mostAdvancedField
-    INTEGER :: radiometerIndex,bandIndex,switchIndex,spectrometerIndex
+    INTEGER :: spectrometerIndex
     CHARACTER (LEN=LEN(request)) :: remainder,newRemainder,field, &
          & channelString
     LOGICAL, DIMENSION(:), ALLOCATABLE :: &
@@ -604,9 +604,6 @@ CONTAINS
     ENDIF
 
     mostAdvancedField=0
-    radiometerIndex=0
-    bandIndex=0
-    switchIndex=0
     spectrometerIndex=0
     channelString=""
 
@@ -659,8 +656,8 @@ CONTAINS
     DO signal=1,database%noValidSignals
 
        allMatch(signal)= &
-            & radiometerMatches(database%validSignals(signal)% &
-            &    radiometerIndex) .AND. &
+            & radiometerMatches(database%validSignals(signal)%radiometerIndex) &
+            &     .AND. &
             & bandMatches(database%validSignals(signal)%bandIndex) .AND. &
             & switchMatches(database%validSignals(signal)%switchIndex) .AND. &
             & spectrometerMatches(database%validSignals(signal)% &
@@ -1785,6 +1782,9 @@ end module MLSSignalNomenclature
 
 !
 ! $Log$
+! Revision 2.8  2013/06/12 02:12:07  vsnyder
+! Cruft removal
+!
 ! Revision 2.7  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !

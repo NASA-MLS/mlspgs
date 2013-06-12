@@ -83,7 +83,7 @@ contains
     ! in place of "%g" or "%G".  Then call MLSMessage.
     use MLSMessageModule, only: MLSMessage
     use MLSSignals_m, only: GetSignalName
-    use String_Table, only: Get_String, How_Many_Strings, String_Length
+    use String_Table, only: Get_String, String_Length
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module
     character (len=*), intent(in) :: Message ! Line of text
@@ -254,6 +254,9 @@ contains
 end module MoreMessage
 
 ! $Log$
+! Revision 2.8  2013/06/12 02:13:10  vsnyder
+! Cruft removal
+!
 ! Revision 2.7  2011/08/20 02:32:10  vsnyder
 ! Don't go off the end of Message string
 !
