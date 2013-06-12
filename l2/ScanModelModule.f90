@@ -110,7 +110,7 @@ contains ! =============== Subroutines and functions ==========================
     use DUMP_0, only: DUMP
     use FORWARDMODELCONFIG, only: DUMP
     use MLSSTRINGS, only: WRITEINTSTOCHARS
-    use OUTPUT_M, only: HEADLINE, OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: HEADLINE, OUTPUTNAMEDVALUE
     ! Args
     type (Vector_T), intent(in) :: STATE ! The state vector
     type (Vector_T), intent(in) :: EXTRA ! Other stuff in the state vector
@@ -2106,6 +2106,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.77  2013/06/12 02:38:33  vsnyder
+! Cruft removal
+!
 ! Revision 2.76  2013/03/01 01:11:10  pwagner
 ! Added DumpInstanceWindows
 !
