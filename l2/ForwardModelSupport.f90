@@ -442,7 +442,6 @@ contains ! =====     Public Procedures     =============================
     integer :: LBLTrees(2)              ! Tree indices of f_[lu]sbLBLMolecules
     type(spectroParam_t), pointer :: LineStru(:)
     integer :: LineTrees(3)             ! Tree indices of f_line...
-    integer :: M                        ! Max LBL molecules in either sideband
     integer :: MoleculeTree             ! Tree index of f_Molecules
     integer, dimension(:), pointer :: MyMolecules ! In a LineTree
     integer :: NELTS                    ! Number of elements of an array tree
@@ -909,7 +908,6 @@ op:     do j = 2, nsons(theTree)
       end do ! b = 1, size(info%beta_group)
 
     end do ! s = s1, s2
-    m = maxval(info%cat_size)
 
     ! Now the spectroscopy parameters.  They only make sense for LBL.
     do i = lineCenter, lineWidth_TDep
@@ -1477,6 +1475,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.165  2013/06/12 02:37:14  vsnyder
+! Cruft removal
+!
 ! Revision 2.164  2012/08/16 18:07:43  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
