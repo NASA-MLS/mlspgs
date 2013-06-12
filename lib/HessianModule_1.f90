@@ -282,7 +282,6 @@ contains
     character(len=128) :: molecules
     integer :: My_Details
     logical :: myForce
-    integer :: TotalSize  ! of all blocks
 
     my_details = 1
     if ( present(details) ) my_details = details
@@ -322,7 +321,6 @@ contains
       return
     end if
     if ( my_Details < -1 ) return
-    totalSize = 0
     do k = 1, h1%col%nb
       do j = 1, h1%col%nb
         do i = 1, h1%row%nb
@@ -672,10 +670,6 @@ contains
     integer :: I, J, K                  ! Loop indices
     integer :: IQ, JQ, KQ               ! Quantity indices
     integer :: II, JI, KI               ! Instance indices
-    logical :: MYUPDATE                 ! Copy of update
-
-    myUpdate = .false.
-    if ( present ( update ) ) myUpdate = update
 
     ! Error checking assumes templates were created by L2CF.
     if ( h%row%vec%template%name /= p%template%name ) &
@@ -908,6 +902,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.32  2013/06/12 02:10:27  vsnyder
+! Cruft removal
+!
 ! Revision 2.31  2012/02/16 22:46:45  pwagner
 ! Separated Dump_Hessian_Layout from Dump_Hessian
 !
