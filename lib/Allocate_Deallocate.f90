@@ -975,8 +975,7 @@ contains
   end function BYTE_SIZE_REALR4_1D
   integer function BYTE_SIZE_REALR4_2D ( A ) result ( BYTE_SIZE )
     real, intent(in) :: A(:,:)
-    real, parameter :: B = 0.0 ! Intel 13.0.1 doesn't like storage_size(a)
-    byte_size = ( ( storage_size(b) + 7 ) / 8 ) * size(a)
+    byte_size = bytes(a) * size(a)
   end function BYTE_SIZE_REALR4_2D
   integer function BYTE_SIZE_REALR4_3D ( A ) result ( BYTE_SIZE )
     real, intent(in) :: A(:,:,:)
@@ -1026,7 +1025,7 @@ contains
     ! When Intel is happy with storage_size(a), DO NOT multiply by len(a)!
     ! Storage_Size includes character length.
     bytes = ( ( storage_size(b) + 7 ) / 8 ) * len(a)
-!     bytes = ( ( storage_size(b) + 7 ) / 8 )
+!     bytes = ( ( storage_size(a) + 7 ) / 8 )
   end function BYTES_CHARACTER_1D
   integer function BYTES_CHARACTER_2D ( A ) result ( BYTES )
     character(len=*), intent(in) :: A(:,:)
@@ -1034,7 +1033,7 @@ contains
     ! When Intel is happy with storage_size(a), DO NOT multiply by len(a)!
     ! Storage_Size includes character length.
     bytes = ( ( storage_size(b) + 7 ) / 8 ) * len(a)
-!     bytes = ( ( storage_size(b) + 7 ) / 8 )
+!     bytes = ( ( storage_size(a) + 7 ) / 8 )
   end function BYTES_CHARACTER_2D
   integer function BYTES_CHARACTER_3D ( A ) result ( BYTES )
     character(len=*), intent(in) :: A(:,:,:)
@@ -1042,7 +1041,7 @@ contains
     ! When Intel is happy with storage_size(a), DO NOT multiply by len(a)!
     ! Storage_Size includes character length.
     bytes = ( ( storage_size(b) + 7 ) / 8 ) * len(a)
-!     bytes = ( ( storage_size(b) + 7 ) / 8 )
+!     bytes = ( ( storage_size(a) + 7 ) / 8 )
   end function BYTES_CHARACTER_3D
   integer function BYTES_COMPLEX_1D ( A ) result ( BYTES )
     complex, intent(in) :: A(:)
@@ -1197,6 +1196,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.39  2013/06/12 02:50:45  vsnyder
+! Repair a couple of harmless but ugly blunders
+!
 ! Revision 2.38  2013/06/12 02:17:03  vsnyder
 ! Add and use BYTES and BYTE_SIZE
 !
