@@ -529,7 +529,7 @@ contains
     use Load_sps_data_m, only: Grids_T, Dump
     use MLSFillValues, only: isNaN
     use MLSKinds, only: R8, RP, RV
-    use MatrixModule_1, only: FINDBLOCK, GetFullBlock
+    use MatrixModule_1, only: FINDBLOCK
     use MLSStringLists, only: switchDetail
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use output_m, only: outputNamedValue, resumeOutput, suspendOutput
@@ -1276,6 +1276,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.22  2013/06/12 02:19:16  vsnyder
+! Cruft removal
+!
 ! Revision 2.21  2012/07/10 04:10:59  vsnyder
 ! Remove noChans from Store_*_Deriv_1D because it's not used
 !
