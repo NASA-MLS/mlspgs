@@ -31,7 +31,7 @@ contains
 ! This routine automatically makes an appropriate z_grid for the
 ! users specified input
 
-    use Allocate_deallocate, only: Allocate_test, Deallocate_test
+    use Allocate_deallocate, only: Allocate_test, Test_Allocate
     use MLSCommon, only: rp, ip
     use Sort_m, only: Sort
 
@@ -45,34 +45,32 @@ contains
 
 ! outputs:
 
-    real(rp), dimension(:), pointer :: z_grid(:) ! a suitable
+    real(rp), allocatable :: z_grid(:) ! a suitable
 !                  preselected integration grid
 
 ! Keywords (Optional variables):
 
-    integer(ip), dimension(:), pointer, optional :: tan_inds(:) ! a
-!                  suitable set of pointing indicies (output).
+    integer(ip),pointer, optional :: tan_inds(:) ! a suitable set of pointing
+!                  indicies (output).
 
     real(rp), optional, intent(in) :: logp_eq_th ! threshold value for
-!                                recognizing equality
+!                  eliminating duplicates
     integer(ip), optional, intent(in) :: mult ! A multiplicative factor for
-!                        increasing the z_grid density. ie 2 means have
-!                        a grid point between the minimal necessary z_grid
+!                  increasing the z_grid density. N means have N additional
+!                  grid points between the minimal necessary z_grid
+
 ! Local variables:
 
     logical :: mask(size(zetas))
 
-    integer(ip) :: i ! generic counter
-    integer(ip) :: n ! number of elements in minimal z_grid
-    integer(ip) :: n_ele ! number of elements in zetas
+    integer(ip) :: i      ! generic counter                      
+    integer(ip) :: n      ! number of elements in minimal z_grid 
+    integer(ip) :: n_ele  ! number of elements in zetas
     integer(ip) :: n_grid ! number of elements in z_grid
-    integer(ip) :: m ! grid resolution factor
+    integer(ip) :: m      ! grid resolution factor
 
-    real(rp) :: thresh ! equality threshold
+    real(rp) :: thresh    ! equality threshold
     real(rp) :: z(size(zetas))
-    real(rp), dimension(:), pointer :: frac
-    real(rp), dimension(:), pointer :: z1
-    real(rp), dimension(:), pointer :: del_z
 
 ! BEGIN CODE
 
@@ -99,8 +97,9 @@ contains
       m = 1
     end if
     n_grid = m * (n - 1) + 1
-    nullify ( z_grid )
-    call allocate_test ( z_grid, n_grid, 'z_grid', modulename )
+    allocate ( z_grid(n_grid), stat=i )
+    call test_allocate ( i, moduleName, 'Z_Grid', [1], [n_grid], &
+      & (storage_size(z_grid)+7)/8 )
 
 ! Create a tangent pointing array index
 
@@ -112,34 +111,17 @@ contains
 
 ! Fill the grid
 
-    if ( m == 1 ) then ! not subgridding -- use the simple algorithm
-      z_grid = pack(z,mask)
-      return
-    end if
+    z_grid(1:n) = pack(z,mask)
+    if ( m == 1 ) return ! not subgridding
 
-! Fill in sub interval scale factors
+! Create z_grid with subgridding: z_grid = z_grid + del_z * frac
 
-    nullify ( frac, z1, del_z )
-    call allocate_test ( z1, n, 'z1', modulename )
-    call allocate_test ( del_z, n, 'del_z', modulename )
-    call allocate_test ( frac, m, 'frac', ModuleName )
-
-    z1 = pack(z,mask)
-    del_z = cshift(z1,1) - z1
-    frac = (/(real(i,kind=rp) / m, i = 0,m-1)/)
-
-! Create and compute z_grid
-
-    z_grid(1:n_grid-1) = reshape(spread(z1(1:n-1),1,m) &
-                       +  spread(del_z(1:n-1),1,m) &
-                       *  spread(frac,2,n-1), (/n_grid - 1/))
-    z_grid(n_grid) = z1(n)
-
-! Clean up
-
-    call deallocate_test ( frac, 'frac', modulename )
-    call deallocate_test ( del_z, 'del_z', modulename )
-    call deallocate_test ( z1, 'z1', modulename )
+    z_grid(n_grid) = z_grid(n)
+    z_grid(1:n_grid-1) = &
+      & reshape(spread(z_grid(1:n-1),1,m) + &
+      &         spread(z_grid(2:n) - z_grid(1:n-1),1,m) * &
+      &         spread((/(real(i,kind=rp) / m, i = 0,m-1)/),2,n-1), &
+      &         (/n_grid - 1/))
 
   end subroutine Make_Z_Grid
 
@@ -156,6 +138,9 @@ contains
 end module Make_Z_Grid_m
 
 ! $Log$
+! Revision 2.10  2013/06/12 02:32:06  vsnyder
+! Make z_grid allocatable instead of pointer
+!
 ! Revision 2.9  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
