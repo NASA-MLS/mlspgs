@@ -116,8 +116,6 @@ module BitStuff
   ! If you plan on using the software on a platform for which
   ! bit_size returns a different value, change the following
   integer, parameter, public :: MAXBITNUMBER = 30 ! The 31st is the sign bit
-  integer, parameter, dimension(0:MAXBITNUMBER) :: BITINDX = &
-    & (/ (ibitindx, ibitindx = 0, MAXBITNUMBER) /)
   integer, parameter, dimension(0:MAXBITNUMBER) :: BITVALUES = &
     & (/ (2**ibitindx, ibitindx = 0, MAXBITNUMBER) /)
     ! Count the number of nonzero bits in Word.
@@ -162,7 +160,6 @@ contains
     logical                            :: RELATION
 
     ! Internal variables
-    integer :: mybitnum
     integer :: probe
     !----------Executable part----------!
     relation = .FALSE.
@@ -657,6 +654,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.21  2013/06/12 02:09:16  vsnyder
+! Cruft removal
+!
 ! Revision 2.20  2012/07/04 02:11:28  vsnyder
 ! Simplify bit counting
 !
