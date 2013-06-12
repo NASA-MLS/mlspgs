@@ -99,8 +99,6 @@ module L2PC_m
   type(VectorTemplate_T), dimension(:), pointer, save :: L2PCVTS => NULL()
   type(Vector_T), dimension(:), pointer, save :: L2PCVS => NULL()
 
-  integer :: counterStart
-  parameter ( counterStart = huge (0) / 4 )
   logical :: verbose
   logical :: verboser
 
@@ -2368,6 +2366,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.122  2013/06/12 02:10:47  vsnyder
+! Cruft removal
+!
 ! Revision 2.121  2012/02/17 00:21:05  pwagner
 ! May dump layout of l2pc only with 'L' option
 !
