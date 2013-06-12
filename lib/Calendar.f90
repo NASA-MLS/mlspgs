@@ -282,10 +282,6 @@ contains
     integer, intent(out) :: HOURS, MINUTES
     real, intent(out) :: SECONDS
 
-    integer, parameter :: GREG = 2299161 ! Julian date for 15 Oct 1582 on the
-      ! Gregorian calendar.  The Gregorian calendar was adopted on this day,
-      ! which is therefore 5 Oct 1582 on the Julian calendar.
-
     real :: F
     real(tk) :: JH
 
@@ -546,6 +542,9 @@ contains
 end module Calendar
 
 ! $Log$
+! Revision 2.6  2013/06/12 02:09:32  vsnyder
+! Cruft removal
+!
 ! Revision 2.5  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
