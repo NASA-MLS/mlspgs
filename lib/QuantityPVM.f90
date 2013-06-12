@@ -210,7 +210,6 @@ contains ! ================================== Module procedures ============
   ! ---------------------------------- PVMReceiveQuantity ---------------------
   subroutine PVMReceiveQuantity ( QT, values, tid, justUnpack, mifGeolocation )
     use Allocate_Deallocate, only: ALLOCATE_TEST
-    use MLSCommon, only: R8
     use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
     use VectorsModule, only: CREATEMASK, CreateVectorValue, VectorValue_T
     type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
@@ -425,6 +424,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.25  2013/06/12 02:13:25  vsnyder
+! Cruft removal
+!
 ! Revision 2.24  2012/07/07 02:03:57  vsnyder
 ! Change type of VALUES argument to PVMReceiveQuantity from REAL to
 ! VectorValue_t.  Delete MASK argument, which nobody used.  Receive the
