@@ -32,7 +32,6 @@ contains
 ! Compute the SPS path
 
     use MLSCommon, only: RP, IP, R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use Load_sps_data_m, only: Grids_T
 
@@ -343,7 +342,6 @@ contains
 ! Compute a one-quantity path value
 
     use MLSCommon, only: RP, IP, R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use Load_sps_data_m, only: Grids_T
 
@@ -546,7 +544,7 @@ contains
     integer :: f_inda, f_indb
     integer :: no_mol, n_f
     integer :: sps_i
-    integer :: v_inda, v_indb
+    integer :: v_inda !, v_indb
     integer :: w_inda, w_indb
     integer :: sv_f, sv_zp
 
@@ -659,6 +657,9 @@ contains
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.34  2013/06/12 02:24:35  vsnyder
+! Cruft removal
+!
 ! Revision 2.33  2013/05/18 00:34:44  vsnyder
 ! Insert NG fine-grid (GL) points between tangent points, thereby
 ! regularizing coarse-grid spacing, and reducing significantly the need
