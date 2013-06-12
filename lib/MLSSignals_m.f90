@@ -1589,16 +1589,8 @@ oc:       do
     integer :: BestMatch                ! The smallest number of 
     integer :: I                        ! Loop inductors, subscripts
     integer :: NumChannelsMatch
-    logical :: MyDSBSSB
-    integer :: MySideband               ! Either sideband or probe%sideband
 
     if ( present(matchFlags) ) matchFlags = .false.
-
-    mySideband = probe%sideband
-    if ( present(sideband) ) mySideband = sideband
-
-    myDSBSSB = .false.
-    if ( present(DSBSSB) ) myDSBSSB = DSBSSB
 
     bestMatch = huge(bestMatch)
     matchSignals = 0
@@ -1890,6 +1882,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.95  2013/06/12 02:12:23  vsnyder
+! Cruft removal
+!
 ! Revision 2.94  2012/05/01 20:52:09  vsnyder
 ! Remove unused assignment
 !
