@@ -729,7 +729,7 @@ contains
     real(rv), dimension(:,:), intent(in)     :: array
     logical, intent(in)                      :: spread
     ! Local variables
-    integer, dimension(2) :: shp(2)
+    integer :: shp(2)
     ! Executable
     if ( findFirst(MODIFIABLEFIELDS, lowercase(field)) < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName // &
@@ -1595,6 +1595,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.73  2012/10/30 22:06:14  pwagner
+! Fixed some obscure bugs when modifying templates
+!
 ! Revision 2.72  2012/10/29 17:41:16  pwagner
 ! Attempted a more complete CopyQuantityTemplate
 !

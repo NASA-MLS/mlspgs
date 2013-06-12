@@ -347,9 +347,6 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! one in the same position in the QUANTITIES field of the vector template.
   end type Vector_T
 
-  integer, parameter, private :: B_sizer = 0
-  integer, parameter, private :: B = bit_size(b_sizer) ! can't use bit_size(b)
-
   private :: CreateValues
 
 contains ! =====     Public Procedures     =============================
@@ -3207,6 +3204,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.177  2013/05/22 20:24:21  pwagner
+! Dump procedures accept and obey options arg
+!
 ! Revision 2.176  2013/05/16 18:16:58  pwagner
 ! Made GetVectorQuantityIndexByName generic--can supply character-valued arg
 !
