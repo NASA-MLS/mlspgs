@@ -243,7 +243,7 @@ contains
   subroutine READ_GH ( ROOT )
     ! Read IGRF files of GH coefficients
 
-    use Allocate_Deallocate, only: E_def, Test_Allocate, Test_Deallocate
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use IO_Stuff, only: Get_Lun
     use Machine, only: IO_Error
     use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
@@ -295,7 +295,8 @@ contains
         & newGH(i)%nmax, newGH(i)%erad, newGH(i)%year
       allocate ( newGH(i)%gh(newGH(i)%nmax*(newGH(i)%nmax+2)), stat=stat )
       call test_allocate ( stat, moduleName, 'newGH%gh', &
-        & (/1/), (/newGH(i)%nmax*(newGH(i)%nmax+2) /), e_def )
+        & (/1/), (/newGH(i)%nmax*(newGH(i)%nmax+2) /), &
+        & (storage_size(newGH(i)%gh)+7)/8 )
       j = 0
       do nn = 1, newGH(i)%nmax
         do mm = 0, nn
@@ -632,7 +633,7 @@ o:  do n = 3, size(p,2)-1
   !  Output:      DIMO  Geomagnetic dipole moment in GAUSS (normalized  
   !                     to earth's radius) at the time (year)           
   !-----------------------------------------------------------------------
-    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
+
     real, intent(in) :: YEAR
     real, intent(out), optional :: DIMO
 
@@ -1008,6 +1009,9 @@ o:  do n = 3, size(p,2)-1
 end module IGRF_INT
 
 ! $Log$
+! Revision 2.7  2013/06/12 02:30:07  vsnyder
+! Cruft removal
+!
 ! Revision 2.6  2012/03/29 20:15:15  vsnyder
 ! Interim commit to make Dump_GH consistent with DumpCommand
 !
