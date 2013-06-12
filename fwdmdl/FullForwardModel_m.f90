@@ -66,7 +66,7 @@ contains
     type(matrix_T), intent(inout), optional :: Jacobian
     type(hessian_T), intent(inout), optional :: Hessian
 
-    real(rp), pointer :: Z_PSIG(:)       ! Surfs from Temperature, tangent grid
+    real(rp), allocatable :: Z_PSIG(:)   ! Surfs from Temperature, tangent grid
                                          ! and species grids, sans duplicates.
     real(rp), pointer :: TAN_PRESS(:)    ! Pressures corresponding to Z_PSIG
     type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
@@ -123,7 +123,7 @@ contains
     if ( toggle(emit) ) & ! set by -f command-line switch
       & call trace_begin ( 'FullForwardModel, MAF=', index=fmstat%maf )
 
-    nullify ( z_psig, tan_press )
+    nullify ( tan_press )
 
     ! Create the data structures for the species.  Get the
     ! spectroscopy parameters from the state vector.
@@ -289,7 +289,6 @@ contains
 
     ! Allocated in Compute_Z_PSIG:
     call deallocate_test ( tan_press,    'tan_press',    moduleName )
-    call deallocate_test ( z_psig,       'z_psig',       moduleName )
 
     if ( toggle(emit) ) call trace_end ( 'FullForwardModel MAF=', fmStat%maf )
 
@@ -729,7 +728,6 @@ contains
                               ! zeta=-3) surface
     real(rp) :: Min_Zeta      ! Minimum zeta along the path
     real(rp) :: Min_Phi       ! Phi at which minimum zeta occurs
-    real(rp), parameter :: Min_Phi_Tol = 0.25 * gx(1)**2 ! First GL point
     real(rp) :: ROT(3,3)      ! ECR-to-FOV rotation matrix
     real(rp) :: Vel_Rel       ! Vel_z / c
 
@@ -2270,7 +2268,6 @@ contains
                                ! to scattering point IWC and T for each xi
       real(rp) :: dP_dT_On_Xi(size(rads,2)) ! dP/dT * sin(abs(theta)) interpolated
                                ! to scattering point IWC and T for each xi
-      real(rp) :: Ref_Ht       ! Height of the ray at the reference phi
       real(rp) :: R_Eq         ! Equivalent circular earth radius at Phi_Ref
       real(rp) :: Scat_Ht      ! km from center of equivalent circular earth
       real(rp) :: Scat_Phi     ! Of the scattering point, radians
@@ -2510,9 +2507,6 @@ contains
             end do
             cycle
           end if
-
-          ! Height of the ray at the phi_ref
-          ref_ht = scat_ht * cos(dPhi)
 
           ! First do pointings to each zeta surface below the scattering
           ! point zeta.  Pointings to specified angles aren't guaranteed to
@@ -3005,10 +2999,10 @@ contains
 !           & firstSignal%lo, thisSideband )
 
 !c      sps_path_c(i_start:i_end,:) = sps_path(c_inds(i_start:i_end),:)
-      sps_path_c(i_start:i_end,:) = sps_path(ngp1*i_start-ng:ngp1*i_end-ng:ngp1,:)
-!c      associate ( sps_path_x => sps_path(1:npf:ngp1,:) )
-!c        sps_path_c(i_start:i_end,:) = sps_path_x(i_start:i_end,:)
-!c      end associate
+!c      sps_path_c(i_start:i_end,:) = sps_path(ngp1*i_start-ng:ngp1*i_end-ng:ngp1,:)
+      associate ( sps_path_x => sps_path(1:npf:ngp1,:) )
+        sps_path_c(i_start:i_end,:) = sps_path_x(i_start:i_end,:)
+      end associate
       sps_path_c(:i_start-1,:) = 0.0
       sps_path_c(i_end+1:npc,:) = 0.0
 
@@ -3898,10 +3892,10 @@ contains
             if ( print_TScat_detail > 0 ) then
               call output ( tan_pt_c, before='Tan_Pt_C = ' )
               call dump ( rad2deg*phi_path_c(:scat_index), name=', Phi_Path_C' )
-              call dump ( h_path(:scat_index*ngp1-ng:ngp1), name='H_Path_C' )
-!c              associate ( h_path_x => h_path(1:npf:ngp1) )
-!c                call dump ( h_path_x(:scat_index), name='H_Path_C' )
-!c              end associate
+!c              call dump ( h_path(:scat_index*ngp1-ng:ngp1), name='H_Path_C' )
+              associate ( h_path_x => h_path(1:npf:ngp1) )
+                call dump ( h_path_x(:scat_index), name='H_Path_C' )
+              end associate
               call dump ( z_coarse(:scat_index), name='Z_Coarse' )
             end if
           end if
@@ -4640,6 +4634,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.341  2013/05/22 00:19:10  vsnyder
+! Remove unreferenced USE names
+!
 ! Revision 2.340  2013/05/18 00:34:43  vsnyder
 ! Insert NG fine-grid (GL) points between tangent points, thereby
 ! regularizing coarse-grid spacing, and reducing significantly the need
