@@ -149,7 +149,7 @@ contains
 
   ! Set up array of pointing angles
 
-    use Constants, only: Deg2Rad, Ln10
+    use Constants, only: Deg2Rad
     use MLSKinds, only: RP
 
   ! inputs
@@ -176,7 +176,7 @@ contains
     real(rp), parameter :: ampl = 38.9014
     real(rp), parameter :: phas = 51.6814 * Deg2Rad
 
-    real(rp) :: hs, ht, Np1, q, sinChi, x
+    real(rp) :: hs, ht, Np1, sinChi, x
 
   ! Start code:
 
@@ -208,7 +208,6 @@ contains
       !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
 
       sinChi = x
-      q = Np1 - ht * tan_index_refr * Ln10 ! / dh_dz assumed to be 1.0
     else                              ! min(ht,Req)/Req = ht/Req
 
       !{ $H_t < H^{\oplus}: ~~
@@ -221,7 +220,6 @@ contains
       !    2 \frac{ N_t H_t }{ H_s H^{\oplus} }$
 
       sinChi = x*ht/Req
-      q = 2.0_rp * ht * Np1 / Req
     end if
 
     ptg_angle = ASIN(sinChi) - elev_offset
@@ -235,7 +233,7 @@ contains
 
   ! Set up array of pointing angles
 
-    use Constants, only: Deg2Rad, Ln10
+    use Constants, only: Deg2Rad
     use MLSCommon, only: RP
 
   ! inputs
@@ -269,7 +267,7 @@ contains
     real(rp), parameter :: ampl = 38.9014
     real(rp), parameter :: phas = 51.6814 * Deg2Rad
 
-    real(rp) :: hs, ht, Np1, q, sinChi, tp, x
+    real(rp) :: hs, ht, Np1, sinChi, tp, x
 
   ! Start code:
 
@@ -301,7 +299,6 @@ contains
       !    \frac{ \text{d} N_t }{ \text{d} \zeta_t } = - \ln 10 ( N_t - 1 )$
 
       sinChi = x
-      q = Np1 - ht * tan_index_refr * Ln10 ! / dh_dz assumed to be 1.0
     else                              ! min(ht,Req)/Req = ht/Req
 
       !{ $H_t < H^{\oplus}: ~~
@@ -314,7 +311,6 @@ contains
       !    2 \frac{ N_t H_t }{ H_s H^{\oplus} }$
 
       sinChi = x*ht/Req
-      q = 2.0_rp * ht * Np1 / Req
     end if
 
     ptg_angle = ASIN(sinChi) - elev_offset
@@ -341,6 +337,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.20  2009/06/23 18:26:11  pwagner
+! Prevent Intel from optimizing ident string away
+!
 ! Revision 2.19  2009/05/13 20:03:01  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !

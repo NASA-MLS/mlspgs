@@ -56,16 +56,14 @@ contains
 
     real(rp), intent(out)   :: Avg
 
-    integer :: N, Nfp
+    integer :: Nfp
     real(r8) :: Rmax, Rmin, Tmpary(size(f_grid_fltr))
 
-    n = size(f_grid)
     nfp = size(f_grid_fltr)
 
     rmin = minval(Rad(klo:khi))
     rmax = maxval(Rad(klo:khi))
 
-    ! call Cspline ( F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax )
     ! InterpolateValues args are:
     ! oldX, oldY, newX, newY, method
     call InterpolateValues ( F_grid, Rad, F_grid_fltr, tmpary, method='C', &
@@ -206,6 +204,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.19  2013/05/22 00:09:12  vsnyder
+! Remove unreferenced use names
+!
 ! Revision 2.18  2011/08/26 17:53:53  pwagner
 ! purehunt recovers optimized functionality of fwdmdls own hunt
 !

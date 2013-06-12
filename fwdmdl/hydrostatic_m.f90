@@ -67,7 +67,7 @@ module Hydrostatic_m
     real(rp), parameter :: ERadAsq = EarthRadA**2, ERadBsq = EarthRadB**2
     real(rp), parameter :: Boltz = boltzMeters/1.0e6_rp ! = kln10/m km^2/(K sec^2)
 
-    integer(ip) :: n_lvls,n_coeffs,iter
+    integer(ip) :: n_coeffs,iter
 
 !   real(rp) :: cl, sl ! for derivatives of Legendre polynomials dp2 and dp4
     real(rp) :: Clsq, G_ref, GHB
@@ -82,7 +82,6 @@ module Hydrostatic_m
 !
 ! begin the code
 !
-    n_lvls = size(z_grid)
     n_coeffs = size(t_basis)
 
     where ( z_grid > 2.5_rp )
@@ -255,7 +254,7 @@ module Hydrostatic_m
     real(rp), parameter :: ERadAsq = EarthRadA**2, ERadBsq = EarthRadB**2
     real(rp), parameter :: Boltz = boltzMeters/1.0e6_rp ! = kln10/m km^2/(K sec^2)
 
-    integer(ip) :: n_lvls,n_coeffs,iter
+    integer(ip) :: iter
 
 !   real(rp) :: cl, sl ! for derivatives of Legendre polynomials dp2 and dp4
     real(rp) :: Clsq, G_ref, GHB
@@ -265,24 +264,22 @@ module Hydrostatic_m
     real(rp) :: dh_dz_S, H_calc, Z_old
     real(rp), dimension(size(z_grid),size(t_basis)) :: Piq
     real(rp), dimension(1,size(t_basis)) :: Piqa, Piqb
-    real(rp), dimension(size(z_grid)) :: Mass_corr
+!   real(rp), dimension(size(z_grid)) :: Mass_corr
 !
 ! begin the code
 !
-    n_lvls = size(z_grid)
-    n_coeffs = size(t_basis)
 
-    where ( z_grid > 2.5_rp )
-!     mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
-
-!{A series expansion about z\_grid = 5/2 of
-! $\frac1{\frac78 + \frac1{10}z - \frac1{50}z^2}$ is
-! $\sum_{k=0}^{\infty} \left( \frac{(z-\frac52)^2}{50}\right)^k$.  Use the
-! first two terms.
-      mass_corr = 1.0_rp + 0.02_rp*(z_grid - 2.5_rp)**2
-    elsewhere
-      mass_corr = 1.0_rp
-    end where
+!     where ( z_grid > 2.5_rp )
+! !     mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
+! 
+! !{A series expansion about z\_grid = 5/2 of
+! ! $\frac1{\frac78 + \frac1{10}z - \frac1{50}z^2}$ is
+! ! $\sum_{k=0}^{\infty} \left( \frac{(z-\frac52)^2}{50}\right)^k$.  Use the
+! ! first two terms.
+!       mass_corr = 1.0_rp + 0.02_rp*(z_grid - 2.5_rp)**2
+!     elsewhere
+!       mass_corr = 1.0_rp
+!     end where
 !
 ! compute surface acceleration and effective earth radius
 !
@@ -409,6 +406,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.22  2013/05/02 19:45:33  vsnyder
+! Simplify r_eisq calculation, add a lot of LaTeX
+!
 ! Revision 2.21  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !

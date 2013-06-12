@@ -68,7 +68,6 @@ contains
       real(rk) :: ext_air( size(temp_air) )
       real(rk) :: DU(NU)                  ! DELTA U
       real(rk) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
-      real(rk) :: JJ0
       real(rk) :: PHH( NU, size(TEMP_AIR) )
       real(rk) :: PHI(NUA)                ! SCATTERING AZIMUTH ANGLES
       real(rk) :: RS( NU/2 )
@@ -82,7 +81,6 @@ contains
       real(rk) :: Tsource
       real(rk) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
       real(rk) :: TS                      ! SURFACE TEMPERATURE (K)
-      real(rk) :: U1(NU)
       real(rk) :: UA(NUA)                 ! COSINES OF SCATTERING AZIMUTH ANGLES
       real(rk) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
       real(rk) :: UI(NU,NU,NUA) ! COSINES OF THETAI
@@ -94,7 +92,6 @@ contains
       real(rk) :: X2
       real(rk) :: XTB(size(TEMP_AIR))
 
-      real(rk) :: mid_Z(size(Z)-1)
       real(rk) :: D_mid_Z(size(Z)-2)
 
       integer :: I
@@ -137,10 +134,6 @@ contains
       CALL get_beta_clear ( L, FREQ, TEMP_AIR, Pres, VMR_H2O, VMR_O3, VMR_N2O, &
         & NU, ext_air )
 
-      do I=1, L-1
-        mid_Z(I) = Z(I) +(Z(I+1)-Z(I))/2.
-      enddo
-
       do I=1, L-2
         D_mid_Z(I) = (Z(I+1)-Z(I))
       enddo
@@ -169,7 +162,6 @@ contains
 
       ITS0=1
       DELTA=0.01_rk
-      jj0=1.e-9_rk
 
       if ( any(w0 /= 0.0) ) ITS0=20
       
@@ -195,7 +187,6 @@ contains
 !------------------------------------------------
 
       do IP=1,NU
-         U1(IP)=-U(IP)
          do K=1,L-1
             TSCAT(IP,K)=0.0_rk
             if ( PHH(1,K) /= 0._rk ) then 
@@ -387,6 +378,9 @@ contains
 end module ScatSourceFunc
 
 ! $Log$
+! Revision 2.18  2010/06/07 23:21:30  vsnyder
+! Changed some calling sequences
+!
 ! Revision 2.17  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !

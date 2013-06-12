@@ -518,19 +518,16 @@ contains
 
 ! Local variables..
 
-    integer :: NC, NU, NUA, NAB, NR, N
-    logical :: Incl_Cld
+    integer :: NC, NU, NUA, NAB, NR
     integer(ip) :: j, k, n_path
     real(rp) :: cld_ext
 
 ! begin the code
 
-    Incl_Cld  = fwdModelConf%Incl_Cld
     NU  = fwdModelConf%NUM_SCATTERING_ANGLES
     NUA = fwdModelConf%NUM_AZIMUTH_ANGLES
     NAB = fwdModelConf%NUM_AB_TERMS
     NR  = fwdModelConf%NUM_SIZE_BINS
-    N   = fwdModelConf%no_cloud_species
 
     n_path = size(path_inds)
 
@@ -1595,6 +1592,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.114  2013/05/22 00:08:43  vsnyder
+! Repair integer-to-logical assign that NAG caught and Intel missed
+!
 ! Revision 2.113  2013/05/17 22:52:32  vsnyder
 ! Revise dump switch stuff
 !

@@ -763,7 +763,7 @@ contains ! =====  Public Procedures  ===================================
   end subroutine Get_File_Name
 
 ! --------------------------------------------  ReadIsotopeRatios  -----
-  ! Module-wise global variable LINES need to be associated before
+  ! Module-wide global variable LINES needs to be associated BEFORE
   ! calling this subroutine
   subroutine ReadIsotopeRatios ( Where, FileName, FileType )
     use INTRINSIC, only: LIT_INDICES
@@ -777,7 +777,6 @@ contains ! =====  Public Procedures  ===================================
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
 
-    logical :: Error
     integer :: FileID            ! HDF5
     integer :: I, IOSTAT
     integer :: molecule
@@ -788,7 +787,6 @@ contains ! =====  Public Procedures  ===================================
        call MLSMessage( MLSMSG_Error, moduleName // '%ReadIsotopeRatios', &
          & 'lines is still unassociated' )
 
-    error = .false.
     if ( capitalize(fileType) /= 'HDF5' ) &
       & call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Can read isotopeRatios only from hdf5 files' )
@@ -1477,6 +1475,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.55  2012/07/31 00:45:49  vsnyder
+! Remove USE and declarations for unused stuff
+!
 ! Revision 2.54  2012/05/08 01:34:29  vsnyder
 ! Cannonball polishing
 !
