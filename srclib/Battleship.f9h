@@ -27,7 +27,6 @@
     real(rk) :: flast
     real(rk) :: fnext
     integer  :: shot
-    real(rk) :: f0
     real(rk) :: f1
     real(rk) :: f2
     real(rk) :: x0
@@ -109,13 +108,15 @@
         return
       elseif ( f2*f1 < 0._rk ) then
         x0 = x1
-        f0 = f1
       else
         x2 = x1
         f2 = f1
       end if
     enddo
 ! $Log$
+! Revision 1.2  2013/02/11 17:19:39  pwagner
+! Battleship returns nonzero status if cant find root
+!
 ! Revision 1.1  2012/06/12 18:10:54  pwagner
 ! First commit
 !
