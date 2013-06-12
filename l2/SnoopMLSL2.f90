@@ -469,7 +469,7 @@ contains ! ========  Public Procedures =========================================
     integer, parameter :: DELAY=50*1000  ! For Usleep, no. microsecs
     character(len=*), parameter :: UNPACKERROR = &
       & 'unpacking response from snooper'
-    integer, parameter :: MAXARRAYARGUMENTS = 12 ! Total number of R1A etc. arguments above
+!     integer, parameter :: MAXARRAYARGUMENTS = 12 ! Total number of R1A etc. arguments above
     ! External (C) function
     external :: Usleep
 
@@ -1006,6 +1006,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.44  2013/06/12 02:39:45  vsnyder
+! Cruft removal
+!
 ! Revision 2.43  2011/05/09 18:25:47  pwagner
 ! Converted to using switchDetail
 !
