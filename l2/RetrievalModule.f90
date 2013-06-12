@@ -1517,7 +1517,6 @@ contains
         & MATRIX_CHOLESKY_T, MATRIX_SPD_T, MAXL1, MINDIAG, MULTIPLY, &
         & MULTIPLYMATRIX_XY,  MULTIPLYMATRIX_XY_T,  &
         & ROWSCALE, SCALEMATRIX, SOLVECHOLESKY, UPDATEDIAGONAL
-      use REGULARIZATION, only: REGULARIZE
       use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
       use SYMBOL_TABLE, only: ENTER_TERMINAL
       use SYMBOL_TYPES, only: T_IDENTIFIER
@@ -2991,6 +2990,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.338  2013/06/12 02:38:50  vsnyder
+! Cruft removal
+!
 ! Revision 2.337  2013/04/24 00:37:42  pwagner
 ! Added InitRepeat and NextRepeat calls to set/increment r/t Boolean count
 !
