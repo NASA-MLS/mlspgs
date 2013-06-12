@@ -59,7 +59,7 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
 
     ! Local variables
-    integer :: I, J, K                  ! Loop inductors
+    integer :: I, J                     ! Loop inductors
     integer :: NOQUANTITIES             ! How many selections?
     integer :: NOREMOVEDQUANTITIES      ! How many selections?
     integer :: NOUNIQUEQUANTITIES       ! How many selections are unique?
@@ -286,6 +286,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.18  2013/06/12 02:37:14  vsnyder
+! Cruft removal
+!
 ! Revision 2.17  2012/06/07 22:43:54  pwagner
 ! May remove Quantities, vectorTemplates
 !
