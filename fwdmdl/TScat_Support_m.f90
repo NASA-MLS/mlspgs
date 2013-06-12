@@ -286,7 +286,6 @@ contains
     type(grids_t) :: Grids_col ! Grids for one column of L2PC Jacobian
     integer :: I               ! Loop index and subscript
     integer :: Instance        ! For which instance in L2PC do we want dTScat?
-    integer :: N               ! path length
     real(rp) :: Phi_Offset     ! To shift TScat phi to path phi
     integer :: Qty             ! Loop index and subscript
     type(vectorValue_t), pointer :: SQ ! State vector quantity
@@ -300,7 +299,6 @@ contains
     integer :: W_Inda, W_Indb
     character(len=80) :: Word  ! From the string table
 
-    n = size(TScat_Path)
     dumpDX = index(switches,"DTSCDX") > 0
     dumpTScat = index(switches,"DTSCAT") > 0
     dumpJ = index(switches,"DTSCJ") > 0
@@ -739,6 +737,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.8  2013/06/12 02:24:01  vsnyder
+! Cruft removal
+!
 ! Revision 2.7  2011/07/29 01:53:28  vsnyder
 ! Make CloudIce a molecule.  Look for CloudIce instead of Cloud_A and
 ! Cloud_S.  Correct derivative computations w.r.t. CloudIce.
