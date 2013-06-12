@@ -45,11 +45,11 @@ contains
     integer, intent(out) :: No_Tan_Hts            ! Number of tangent heights
     integer, intent(out) :: SurfaceTangentIndex   ! First or surface tangent index
 
-  ! Would be intent(out) if they weren't pointers.  First thing here
-  ! is to nullify them.
-    real(rp), pointer :: Z_psig(:) ! recommended PSIG for
+    real(rp), allocatable, intent(out) :: Z_psig(:) ! recommended PSIG for
       !                                  radiative transfer calculations
       ! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
+      ! Would be intent(out) if it weren't a pointer.  First thing here
+      ! is to nullify it.
     real(rp), pointer :: Tan_Press(:)  ! Pressures at tangent points in z_psig
 
   ! Optional inputs:
@@ -62,7 +62,7 @@ contains
     real(rp), pointer :: Z_all(:)  ! consolidated storage of representation
       !                              bases for z_grid determination
 
-    nullify ( tan_press, z_all, z_psig )
+    nullify ( tan_press, z_all )
     qtys => fwdModelConf%beta_group%qty
 
 ! Insert automatic preselected integration gridder here. Need to make a
@@ -160,6 +160,9 @@ contains
 end module Compute_Z_PSIG_m
 
 ! $Log$
+! Revision 2.9  2013/06/12 02:18:56  vsnyder
+! Make Z_psig allocatable instead of pointer
+!
 ! Revision 2.8  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
