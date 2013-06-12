@@ -142,7 +142,7 @@ contains
 
   subroutine FINISH ( SHOW )
     ! Announce the time of day and CPU time of finishing
-    use Output_m, only: Output, Output_Date_and_Time
+    use Output_m, only: Output_Date_and_Time
     character(len=*), intent(in) :: SHOW
     double precision :: Finish_CPU_time
     call cpu_time ( finish_CPU_time )
@@ -295,6 +295,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.12  2013/06/12 02:15:56  vsnyder
+!Cruft removal
+!
 !Revision 2.11  2012/04/20 01:27:53  vsnyder
 !Add Begin, Finish, some cannonball polishing
 !
