@@ -88,8 +88,6 @@ contains
     real(r8) :: MyFrq                   ! Copy of Frq, or a fiction if not present
 
     integer :: BestMatch                ! Channel index of best match
-    integer :: ClosestFrq               ! Qty index of closest frequency match
-                                        ! >0 for vector 1, < 0 for vector 2
     integer :: MolEntry                 ! How many similar molecules in list?
     integer :: NoFound                  ! Number of matches found so far.
     integer :: NoVectors                ! Number of vectors we've been given
@@ -118,7 +116,6 @@ contains
     myFrq = huge(0.0_r8)
     if ( present(frq) ) myFrq = frq
     nullify ( GetQuantityForForwardModel )
-    closestFrq = 0
 
     ! First see if we can simply revert to the simpler GetVectorQuantityByType
     useGetQuantityByType = .true.
@@ -366,6 +363,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.25  2013/06/12 02:20:02  vsnyder
+! Cruft removal
+!
 ! Revision 2.24  2013/04/03 23:23:33  vsnyder
 ! Don't look in config if it's not present
 !
