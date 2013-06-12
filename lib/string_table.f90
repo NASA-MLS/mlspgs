@@ -73,7 +73,6 @@ module STRING_TABLE
 
   ! Tables
   character, allocatable, save :: CHAR_TABLE (:)
-  integer, save :: NCHARS     ! How full, not how big
   integer, allocatable, save :: HASH_TABLE (:,:)
   integer, allocatable, save :: STRINGS (:)  ! STRINGS(i) is the position
   ! in CHAR_TABLE of the last character of the i'th string
@@ -113,7 +112,6 @@ contains
 
     if ( allocated( char_table ) ) then; deallocate ( char_table ); end if
     allocate ( char_table(amount), stat = stat )
-    nchars = 0
     if ( present(status) ) then
       status = stat
       return
@@ -1060,6 +1058,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.35  2013/06/12 02:15:38  vsnyder
+! Cruft removal
+!
 ! Revision 2.34  2012/01/05 01:12:43  pwagner
 ! Added Lookup sub routine; lookup_and_insert loses optional parameter lookuponly
 !
