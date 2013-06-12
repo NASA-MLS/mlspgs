@@ -535,7 +535,7 @@ contains
     & dx_dT_out, di_dT_flag, dRad_dT_out )
 
     use MLSKinds, only: Rp, Rv, R8
-    use output_m, only: outputNamedValue                       ! IGOR
+!   use output_m, only: outputNamedValue                       ! IGOR
     use MLSNumerics, only: Coefficients=>Coefficients_r8, Hunt, &
       & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
     use ScanAverage_m, only: ScanAverage
@@ -860,6 +860,9 @@ contains
 end module FOV_Convolve_m
 
 ! $Log$
+! Revision 2.17  2013/06/12 02:19:37  vsnyder
+! Cruft removal
+!
 ! Revision 2.16  2012/07/07 00:14:33  vsnyder
 ! Shorten some comments to avoid gripes about long lines
 !
