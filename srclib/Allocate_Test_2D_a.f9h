@@ -20,7 +20,7 @@
     myLow = 1
     if ( present(low) ) myLow = low
     allocate ( To_Allocate(myLow(1):dim(1),myLow(2):dim(2)), stat=status )
-    call test_allocate ( status, moduleName, ItsName, myLow, dim, eSize )
+    call test_allocate ( status, moduleName, ItsName, myLow, dim, bytes(to_allocate) )
     if ( status == 0 ) then
       if ( present(fill) ) then
         to_allocate = fill
@@ -31,3 +31,6 @@
     if ( trackallocates > 0 ) call trackAllocate ( to_allocate, itsName, moduleName )
 
 ! $Log$
+! Revision 1.1  2008/05/21 21:48:23  vsnyder
+! Initial commit
+!

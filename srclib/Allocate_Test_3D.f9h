@@ -23,7 +23,7 @@
     if ( present(low3) ) myLow3 = low3
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2,myLow3:dim3), stat=status )
     call test_allocate ( status, moduleName, ItsName, &
-      & (/myLow1,myLow2,myLow3/), (/dim1,dim2,dim3/), eSize )
+      & (/myLow1,myLow2,myLow3/), (/dim1,dim2,dim3/), bytes(to_allocate) )
     if ( status == 0 ) then
       if ( present(fill) ) then
         to_allocate = fill
@@ -34,6 +34,9 @@
     if ( trackallocates > 0 ) call trackAllocate ( to_allocate, itsName, moduleName )
 
 ! $Log$
+! Revision 1.3  2006/07/31 20:02:03  vsnyder
+! Tracking for leak checker
+!
 ! Revision 1.2  2005/09/14 01:19:18  vsnyder
 ! Can't inquire bounds if allocate failed
 !
