@@ -14,7 +14,6 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DUMP
   use INIT_TABLES_MODULE, only: F_OPTIONS, F_SILENT, &
     & F_SKIPDIRECTWRITES, F_SKIPDIRECTWRITESIF, &
     & F_SKIPRETRIEVAL, F_SKIPRETRIEVALIF, F_STAMP
@@ -910,6 +909,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.48  2013/06/12 02:37:49  vsnyder
+! Cruft removal
+!
 ! Revision 2.47  2013/05/17 00:53:57  pwagner
 ! Use dumpMacros to dump r/t macros
 !
