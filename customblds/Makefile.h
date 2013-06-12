@@ -189,9 +189,9 @@ intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 endif
 
 NOUNASS := $(shell echo ${DUSTY} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
-SLOWASMOLASSES := -g --ap --pca --f95 --chk a,e,s
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+DONT_OPT := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//; a-O0')
 
 hdf.mod:
 	$(UTILDIR)/newAifBdiff.sh -a hdf.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
@@ -218,11 +218,11 @@ MLSStringLists.o:
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStringLists.o mlsstringlists.mod 
 mlsstringlists.mod: MLSStringLists.f90 mlscommon.mod mlsmessagemodule.mod \
 	mlssets.mod mlsstrings.mod
-	$(UTILDIR)/newAifBdiff.sh -a mlsstringlists.mod $(FC) -c -O0 $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+	$(UTILDIR)/newAifBdiff.sh -a mlsstringlists.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
 MLSStrings.o: mlsstrings.mod MLSStrings.f90 
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStrings.o mlsstrings.mod 
 mlsstrings.mod: MLSStrings.f90 mlscommon.mod ReadANumFromChars.f9h
-	$(UTILDIR)/newAifBdiff.sh -a mlsstrings.mod $(FC) -c -O0 $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+	$(UTILDIR)/newAifBdiff.sh -a mlsstrings.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
 
 else
 #	l1
@@ -352,6 +352,7 @@ endif
 NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+DONT_OPT := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//; a-O0')
 
 Hdf.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
@@ -366,9 +367,9 @@ ncep_dao.o:
 # Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
 # unless treated very carefully
 MLSStringLists.o:
-	$(FC) -c -O0 $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
 MLSStrings.o:
-	$(FC) -c -O0 $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
 
 endif
 endif
@@ -452,6 +453,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.2  2012/04/20 00:43:26  pwagner
+# Fixed NOUNASS so it works again with NAG
+#
 # Revision 1.1  2012/04/04 00:45:40  pwagner
 # First commit
 #
