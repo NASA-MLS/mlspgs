@@ -227,7 +227,6 @@ contains
   ! output module's commands
   subroutine MLSMessage ( SEVERITY, MODULENAMEIN, MESSAGE, &
     & ADVANCE, MLSFILE, STATUS, ITEM )
-    use LEXER_CORE, only: PRINT_SOURCE
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MLSSTRINGS, only: WRITEINTSTOCHARS
     use TOGGLES, only: SWITCHES
@@ -965,6 +964,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.62  2013/06/12 02:37:36  vsnyder
+! Cruft removal
+!
 ! Revision 2.61  2013/05/22 20:21:33  pwagner
 ! Added removeRuntimeBoolean
 !
