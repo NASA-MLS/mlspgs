@@ -2529,8 +2529,6 @@ contains
     character(len=*), intent(in) :: arg
     logical                      :: itIs
     ! Internal variables
-    integer, parameter :: pcMin = iachar(' ')
-    integer, parameter :: pcMax = iachar('~')
     integer :: i
     ! Executable
     itIs = isAscii(arg(1:1))
@@ -2687,6 +2685,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.89  2013/06/13 00:39:21  pwagner
+! Removed two unused params
+!
 ! Revision 2.88  2012/12/04 00:11:55  pwagner
 ! Improved comments
 !
