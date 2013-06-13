@@ -189,12 +189,14 @@ MODULE MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
 
 CONTAINS
 
-  ! ===================================================================
+  ! ====================================================================
 
-  ! The first routine parses a request for a particular radiometer
-  ! and returns an array of flags indicating which radiometers match
+  ! -------------------------------------  ParseRadiometerRequest  -----
 
   SUBROUTINE ParseRadiometerRequest (request,matches)
+
+    ! Parse a request for a particular radiometer
+    ! and return an array of flags indicating which radiometers match
 
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN) :: request
@@ -264,7 +266,7 @@ CONTAINS
 
   END SUBROUTINE ParseRadiometerRequest
 
-  ! -------------------------------------------------------------------
+  ! -------------------------------------------  ParseBandRequest  -----
 
   ! This function is similar to the above one, except that more can be omitted
   ! (e.g. the spectrometer type etc.) Also the user can specify a request for
@@ -368,7 +370,7 @@ CONTAINS
     IF (PRESENT(upperLower)) upperLower=upperLowerRequested
   END SUBROUTINE ParseBandRequest
 
-  ! -------------------------------------------------------------------
+  ! -----------------------------------------  ParseSwitchRequest  -----
 
   ! This routine parses a switch request
 
@@ -395,7 +397,7 @@ CONTAINS
     ENDDO
   END SUBROUTINE ParseSwitchRequest
 
-  ! -------------------------------------------------------------------
+  ! -----------------------------------  ParseSpectrometerRequest  -----
 
   ! This routine parses a spectrometer request. There's no need for wildcards
   ! here that make any sense.
@@ -423,7 +425,7 @@ CONTAINS
 
   END SUBROUTINE ParseSpectrometerRequest
   
-  ! -------------------------------------------------------------------
+  ! ----------------------------------------  ParseChannelRequest  -----
 
   ! This function parses a channel request.  The form is 
   ! C[<spec>+<spec>+<spec>] etc. where <spec> is n or m:n
@@ -500,7 +502,7 @@ CONTAINS
 
   END SUBROUTINE ParseChannelRequest
 
-  ! -------------------------------------------------------------------
+  ! ---------------------------------  TurnMLSChannelInfoIntoCopy  -----
 
   ! This routine makes sure that the channel information in a signal is a copy
   ! of the original, and doesn't merely point to it.
@@ -542,7 +544,7 @@ CONTAINS
     END DO
   END SUBROUTINE TurnMLSChannelInfoIntoCopy
 
-  ! -------------------------------------------------------------------
+  ! --------------------------------------  ParseMLSSignalRequest  -----
 
   ! This subroutine takes a full request and returns an index or set of
   ! indices into the valid signals data structure, along with an indication of
@@ -563,7 +565,6 @@ CONTAINS
 
     INTEGER :: upperLower
     INTEGER :: mostAdvancedField
-    INTEGER :: spectrometerIndex
     CHARACTER (LEN=LEN(request)) :: remainder,newRemainder,field, &
          & channelString
     LOGICAL, DIMENSION(:), ALLOCATABLE :: &
@@ -604,7 +605,6 @@ CONTAINS
     ENDIF
 
     mostAdvancedField=0
-    spectrometerIndex=0
     channelString=""
 
     remainder=Capitalize(request)
@@ -660,8 +660,7 @@ CONTAINS
             &     .AND. &
             & bandMatches(database%validSignals(signal)%bandIndex) .AND. &
             & switchMatches(database%validSignals(signal)%switchIndex) .AND. &
-            & spectrometerMatches(database%validSignals(signal)% &
-            &    spectrometerIndex)
+            & spectrometerMatches(database%validSignals(signal)%spectrometerIndex)
     ENDDO
        
     noMatches=COUNT(allMatch)
@@ -733,7 +732,7 @@ CONTAINS
          & MLSMSG_DeAllocate//"allMatch")
   END SUBROUTINE ParseMLSSignalRequest
 
-  ! -------------------------------------------------------------------
+  ! --------------------------------------  DestroyMLSSignalsInfo  -----
 
   ! This routine destroys a signal or signal array as created by the
   ! ParseMLSSignalRequest routine.
@@ -774,12 +773,12 @@ CONTAINS
        IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_DeAllocate//"signals")
     ELSE
-       IF (.NOT. noError) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+       IF (.NOT. useNoError) CALL MLSMessage(MLSMSG_Error,ModuleName, &
             & "This signal not allocted")
     ENDIF
   END SUBROUTINE DestroyMLSSignalsInfo
  
-  ! -------------------------------------------------------------------
+  ! ----------------------------------------  UnionMLSSignalsInfo  -----
 
   ! This subroutine combines two sets of signal lists in a set union type of
   ! operation.  Thus duplication is avoided. Note that the result must be
@@ -861,7 +860,7 @@ CONTAINS
 
   END SUBROUTINE UnionMLSSignalsInfo
 
-  ! -------------------------------------------------------------------
+  ! ----------------------------------  ConcatenateMLSSignalsInfo  -----
   
   ! This subroutine uses the one above to concatenate two lists of signals,
   ! adding signalsB into signalsA. Note that this also allows signalsA to be
@@ -892,7 +891,7 @@ CONTAINS
     ENDIF
   END SUBROUTINE ConcatenateMLSSignalsInfo
 
-  ! -------------------------------------------------------------------
+  ! ---------------------------------  IntersectionMLSSignalsInfo  -----
 
   ! This subroutine is like the union one above, but this time provides the
   ! intersection.
@@ -960,7 +959,7 @@ CONTAINS
          & MLSMSG_DeAllocate//"presentInA")
   END SUBROUTINE IntersectionMLSSignalsInfo
 
-  ! -------------------------------------------------------------------
+  ! ---------------------------------------  GetFullMLSSignalName  -----
 
   ! This subroutine gives the full name for an MLS signal
 
@@ -1044,7 +1043,7 @@ CONTAINS
 
   END SUBROUTINE GetFullMLSSignalName
 
-  ! -------------------------------------------------------------------
+  ! ----------------------------------------  ReadSignalsDatabase  -----
 
   ! This routine reads the signals database file and fills the data structure
   ! The routine doesn't do very much error checking as this file is assumed not
@@ -1662,7 +1661,7 @@ CONTAINS
              &MLSMSG_DeAllocate//"spectrometerFamilyChars")
   END SUBROUTINE ReadSignalsDatabase
 
-  ! -------------------------------------------------------------------
+  ! -------------------------------------  DestroySignalsDatabase  -----
 
   ! This routine deallocates all the information dealing with the signals
   ! database
@@ -1724,7 +1723,7 @@ CONTAINS
 
   END SUBROUTINE DestroySignalsDatabase
 
-  ! -------------------------------------------------------------------
+  ! --------------------------------------  GetMLSRadiometerNames  -----
 
   ! This routine returns an array of the MLS radiometer names from the database
 
@@ -1745,7 +1744,7 @@ CONTAINS
     names=database%radiometerInfo%name
   END SUBROUTINE GetMLSRadiometerNames
 
-  ! -------------------------------------------------------------------
+  ! --------------------------------------------  GetMLSBandNames  -----
 
   ! This routine returns an array of names of bands in MLS from the database.
 
@@ -1782,6 +1781,9 @@ end module MLSSignalNomenclature
 
 !
 ! $Log$
+! Revision 2.9  2013/06/13 21:04:58  vsnyder
+! Don't look at noError without checking whether it's present
+!
 ! Revision 2.8  2013/06/12 02:12:07  vsnyder
 ! Cruft removal
 !
