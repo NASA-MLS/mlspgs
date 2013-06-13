@@ -443,7 +443,7 @@ contains
     character(len=MAXSTRLISTLENGTH) :: part3
     logical :: pvalue
     character(len=16) :: vChar
-    logical, parameter :: countEmpty=.true.
+
     ! Executable
     BooleanValue = .FALSE.
     if ( str == ' ' ) return
@@ -1063,7 +1063,6 @@ contains
 
     !----------Local vars----------!
     character (len=len(instr)) :: str
-    integer, parameter         :: MAXREPLACEMENTS = 100
     integer, parameter         :: EARLYSUB2INTERPRETATION = 2 ! 2 or 1
     integer :: i, isub1, isub2, strlen, tmpstrlen
     character (len=7) :: my_how
@@ -1297,15 +1296,9 @@ contains
 
     ! Local variables
     integer :: elem
-    character (len=1)                          :: separator
 
     ! Executable code
 
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = comma
-    endif
     value = KEYNOTFOUND
     elem = StringElementNum(keys, key, countEmpty, inseparator, part_match)
     if( elem <= 0 ) then
@@ -1336,15 +1329,9 @@ contains
 
     ! Local variables
     integer :: elem
-    character (len=1)                          :: separator
 
     ! Executable code
 
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = COMMA
-    endif
     value = .FALSE.
     elem = StringElementNum(keys, key, countEmpty, inseparator, part_match)
     if( elem <= 0 ) then
@@ -1567,7 +1554,6 @@ contains
     ! Local variables
     logical :: countEmpty
     character(len=8) :: myOptions
-    character (len=1)               :: separator
     character (len=MAXSTRELEMENTLENGTH), dimension(:), allocatable    &
       &                             :: inStringArray, outStringArray, inStrAr2
     integer :: nElems
@@ -1576,11 +1562,6 @@ contains
     integer :: status
 
     ! Executable code
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = COMMA
-    endif
     myOptions = ' '
     if ( present(options) ) myOptions = options
     countEmpty = ( index(myOptions, 'e') > 0 ) 
@@ -1808,9 +1789,7 @@ contains
     character(len=1), intent(in), optional :: INSEPARATOR
     ! Local variables
     character(len=64) :: cvalue
-    integer :: c
     character (len=16)                            :: keyString
-    integer                                       :: n
     character (len=8)                             :: nCh
     character (len=1)                             :: separator
     ! Executable
@@ -1951,15 +1930,8 @@ contains
     ! Local variables
     integer :: elem, nElems
 
-    character (len=1)               :: separator
     logical                         :: myIgnoreLeadingSpaces
     ! Executable code
-
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = COMMA
-    endif
 
     if(present(IgnoreLeadingSpaces)) then
       myIgnoreLeadingSpaces = IgnoreLeadingSpaces
@@ -2198,12 +2170,10 @@ contains
     integer :: k
     character (len=len(inList)+2)           :: element
     character (len=len(inList))             :: listBloc ! space-separated
-    integer, parameter :: MAXELEMENTLENGTH = 80
     logical :: multi
     integer :: myPattern
     character(len=16) :: test_multi
     character :: test_option
-    logical, parameter :: USEEXTRACT = .true.
     character(len=*), dimension(0:4), parameter :: multi_prefix = &
       & (/ '--', '--', '- ', '--' , '--' /)
 
@@ -2519,15 +2489,8 @@ contains
     ! Local variables
     integer                                    :: N
     integer                                    :: num
-    character (len=1)                          :: separator
 
     ! Executable code
-
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = comma
-    endif
 
     num = StringElementNum(keys, key, countEmpty, inseparator, part_match)
     if( num > 0 .and. num <= size(values) ) then
@@ -2557,16 +2520,8 @@ contains
     ! Local variables
     integer                                    :: N
     integer                                    :: num
-    character (len=1)                          :: separator
 
     ! Executable code
-
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = comma
-    endif
-
     num = StringElementNum( keys, key, countEmpty, inseparator, part_match )
     if( num > 0 .and. num <= size(values) ) then
       values(num) = value
@@ -2594,18 +2549,10 @@ contains
 
     ! Local variables
     integer                                    :: num
-    character (len=1)                          :: separator
     character(len=len(keyList)+len(key)+1)     :: keys
     character(len=len(hashList)+len(elem)+1)   :: hash
 
     ! Executable code
-
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = COMMA
-    endif
-
     num = StringElementNum( keyList, key, countEmpty, inseparator, part_match )
     if( num > 0) then
       call RemoveNumFromList( keyList, keys, num, inseparator )
@@ -2645,16 +2592,8 @@ contains
     character (len=16)                            :: keyString
     integer                                       :: n
     character (len=8)                             :: nCh
-    character (len=1)                             :: separator
 
     ! Executable code
-
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = COMMA
-    endif
-    
     n = size(array)
     if ( n < 1 ) return
     call writeIntsToChars( n, nCh )
@@ -2709,7 +2648,6 @@ contains
     integer :: numUnique
     character(len=len(inList)+len(elem)+1) :: temp_list, unique_list
     character (len=1)               :: separator
-    logical :: Switchable
     !----------Executable part----------!
     if(present(inseparator)) then
       separator = inseparator
@@ -2719,8 +2657,6 @@ contains
     myOptions = ' '
     if ( present(options) ) myOptions = options
     myCountEmpty = index( myOptions, 'e' ) > 0  ! .true.
-    Switchable = index( myOptions, 'S' ) > 0 ! .true.
-    ! if ( present(countEmpty) ) myCountEmpty = countEmpty
 
     outList = inList
     if (len_trim(elem) < 1 .or. len_trim(inList) < 1 &
@@ -2819,18 +2755,10 @@ contains
 
     ! Local variables
     integer                                    :: num
-    character (len=1)                          :: separator
     character(len=len(keyList)+1)              :: keys
     character(len=len(hashList)+1)             :: hash
 
     ! Executable code
-
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = COMMA
-    endif
-
     num = StringElementNum( keyList, key, countEmpty, inseparator, part_match )
     if( num > 0) then
       call RemoveNumFromList( keyList, keys, num, inseparator )
@@ -2861,14 +2789,12 @@ contains
     logical :: myCountEmpty
     character(len=8) :: myOptions
     integer :: numElems
-    logical :: Switchable
     character(len=len(inList)+1) :: temp_list
     character(len=len(inList)+1) :: temp_list2
     !----------Executable part----------!
     myOptions = ' '
     if ( present(options) ) myOptions = options
     myCountEmpty = index( myOptions, 'e' ) > 0  ! .true.
-    Switchable = index( myOptions, 'S' ) > 0  ! .true.
     ! if ( present(countEmpty) ) myCountEmpty = countEmpty
     outList = inList
     if ( len_trim(exclude) < 1 .or. len_trim(inList) < 1 ) return
@@ -2903,20 +2829,10 @@ contains
     logical :: myCountEmpty
     character(len=8) :: myOptions
     integer :: num
-    character (len=1)               :: separator
-    logical :: Switchable
-    character(len=len(inList)+1) :: temp_list
     !----------Executable part----------!
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = COMMA
-    endif
     myOptions = ' '
     if ( present(options) ) myOptions = options
     myCountEmpty = index( myOptions, 'e' ) > 0  ! .true.
-    Switchable = index( myOptions, 'S' ) > 0  ! .true.
-    ! if ( present(countEmpty) ) myCountEmpty = countEmpty
 
     outList = inList
     if ( len_trim(inList) < 1 .or. nElement < 1 ) return
@@ -2927,7 +2843,6 @@ contains
       if ( i == nElement ) cycle
       call GetStringElement(inList, elem, i, &
         & myCountEmpty, inSeparator=inSeparator )
-      temp_list = outList
       outList = catLists( outList, trim(elem), inseparator )
     enddo
   end subroutine RemoveNumFromList
@@ -2946,13 +2861,7 @@ contains
     logical :: countEmpty
     character(len=len(inSwitches)) :: aSwitch, bareSwitch
     character(len=8) :: myOptions
-    character (len=1)               :: separator
     ! Executable
-    if(present(inseparator)) then
-      separator = inseparator
-    else
-      separator = COMMA
-    endif
     myOptions = ' '
     if ( present(options) ) myOptions = options
     CountEmpty = index( myOptions, 'e' ) > 0  ! .true.
@@ -3355,7 +3264,6 @@ contains
     logical                                :: switchable
     integer                                :: elem, nElems
     integer, parameter                     :: MAXCHARVALUE = 256
-    integer, parameter                     :: MAXELEM = MAXSTRELEMENTLENGTH
     integer, dimension(:), allocatable     :: chValue, cvInvBN
     integer, dimension(:), allocatable     :: binNumber, invBinNumber 
     integer, dimension(:), allocatable     :: jsort, inTheBin
@@ -3607,7 +3515,6 @@ contains
     character (len=*), optional, intent(in)       :: options
 
     ! Local variables
-    integer, parameter                            :: MAXELEM = MAXSTRELEMENTLENGTH
     logical                                       :: countEmpty
     logical                                       :: IgnoreLeadingSpaces
     character(len=1)                              :: LeftRight
@@ -4127,7 +4034,6 @@ contains
         else
           out = tmpstr(:k1-1) // tmpstr(k2+1:)
         endif
-        cycle
       enddo
     end subroutine RemoveAnyQuotedStrings
   end function unquote
@@ -4408,6 +4314,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.59  2013/06/13 00:41:27  pwagner
+! Removed lots of unused orts
+!
 ! Revision 2.58  2013/05/23 16:08:20  pwagner
 ! Fixed bug calling unused procedure--why didn't NAG catch this?
 !
