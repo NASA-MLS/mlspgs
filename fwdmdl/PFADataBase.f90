@@ -625,7 +625,6 @@ contains ! =====     Public Procedures     =============================
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
       & MLSMSG_SEVERITY_TO_QUIT, MLSMSG_WARNING
     use MLSSIGNALS_M, only: SIGNALS
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MOREMESSAGE, only: MLSMESSAGE
     use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -1137,7 +1136,7 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------  Create_or_Expand_PFADatabase  -----
   subroutine Create_or_Expand_PFADatabase ( ToAdd, PrevSize )
     use Allocate_Deallocate, only: Test_Allocate
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, &
       & MLSMSG_Error
     integer, intent(in) :: ToAdd
     integer, intent(out) :: PrevSize
@@ -1356,6 +1355,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.44  2013/06/13 21:05:18  vsnyder
+! More cruft removal
+!
 ! Revision 2.43  2013/06/12 02:20:59  vsnyder
 ! Cruft removal
 !
