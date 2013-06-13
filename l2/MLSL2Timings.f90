@@ -395,7 +395,7 @@ contains ! =====     Public Procedures     =============================
     
     if ( stamp ) then
       call setStamp( textcode=phaseString(1:24), showTime=.true., &
-        & interval=25 )
+        & interval=interval )
     else
       ! Possibly undo stamp added by prior phase
       call setStamp( textcode=' ', showTime=.false. )
@@ -909,6 +909,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.49  2013/06/13 00:43:08  pwagner
+! Make actual used of interval variable set between printing header
+!
 ! Revision 2.48  2013/06/12 02:37:49  vsnyder
 ! Cruft removal
 !
