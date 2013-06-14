@@ -428,7 +428,6 @@ contains ! =====     Public Procedures     =============================
     real                            :: percent
     real                            :: elem_time
     character(LEN=LEN(TIMEFORMBIG)) :: TIMEFORM
-    logical                         :: Unknown_nonzero
     integer                         :: timeDivisor
 
   ! Executable
@@ -447,7 +446,6 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Should be among list l_(seconds, minutes, hours)' )
     end select
-    Unknown_nonzero = .false.  ! (section_timings(unknown_section) > 0.)
     call output ( '==========================================', advance='yes' )
     call blanks ( 8, advance='no' )
     call output ( 'Level 2 section timings : ', advance='yes' )
@@ -539,7 +537,6 @@ contains ! =====     Public Procedures     =============================
       call blanks ( 2, advance='no' )
       call output ( 'percent of total retrieval time', advance='yes' )
       retrTotal = sum(section_timings(1+num_section_times:num_section_times+num_retrieval_times)) ! - &
-      Unknown_nonzero = .false.  ! (section_timings(unknown_retrieval) > 0.)
       do elem = 1, num_retrieval_times  ! num_elems
           elem_time = section_timings(num_section_times+elem)
           call GetStringElement(retrieval_names, section_name, elem, countEmpty)
@@ -909,6 +906,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.50  2013/06/14 18:49:46  vsnyder
+! Decruftification
+!
 ! Revision 2.49  2013/06/13 00:43:08  pwagner
 ! Make actual used of interval variable set between printing header
 !
