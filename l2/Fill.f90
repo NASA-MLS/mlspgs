@@ -132,13 +132,13 @@ contains ! =====     Public Procedures     =============================
       & F_RHIPRECISIONQUANTITY, F_RHIQUANTITY, F_ROWS, F_SCALE, &
       & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, F_SCECI, &
       & F_SCVEL, F_SCVELECI, F_SCVELECR, F_SDNAME, F_SEED, F_SKIPMASK, &
-      & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITIES, &
+      & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, &
       & F_SUFFIX, F_SUPERDIAGONAL, F_SURFACE, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, F_TOTALPOWERQUANTITY, &
       & F_TYPE, F_UNIT, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
-      & F_WHERE, F_WHEREFILL, F_WHERENOTFILL, F_WIDTH, &
+      & F_WHEREFILL, F_WHERENOTFILL, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
     ! NOW THE LITERALS:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
@@ -499,7 +499,7 @@ contains ! =====     Public Procedures     =============================
     logical :: SPREADFLAG               ! Do we spread values accross instances in explict
     integer :: STATUS                   ! Flag from allocate etc.
     integer :: STATUSVALUE              ! Vaue of f_status
-    logical :: STRICT                   ! Maximize checking
+!   logical :: STRICT                   ! Maximize checking
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
     integer :: SURFNODE                 ! Descendant of son
     logical :: SWITCH2INTRINSIC         ! Have mls_random_seed call intrinsic
@@ -613,7 +613,7 @@ contains ! =====     Public Procedures     =============================
       scaleRatio = 1.0
       scaleSurfs = -1.0
       spreadFlag = .false.
-      strict = .false.
+!     strict = .false.
       surfNode = 0
       switch2intrinsic = .false.
       suffix = 0
@@ -714,7 +714,6 @@ contains ! =====     Public Procedures     =============================
         call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors, &
           & GriddedDataBase=GriddedDataBase, FileDataBase=FileDataBase, &
           & MatrixDatabase=Matrices, HessianDatabase=Hessians )
-
       case ( s_hessian ) ! ===============================  Hessian  =====
         got = .false.
         do j = 2, nsons(key)
@@ -3023,6 +3022,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.422  2013/06/14 18:49:22  vsnyder
+! Decruftification
+!
 ! Revision 2.421  2013/05/31 00:42:12  vsnyder
 ! Add geolocation field to fill, used only if method=l1b
 !
