@@ -1368,12 +1368,10 @@ contains
     character(len=*), intent(in), optional :: exceptions
     character(len=len(str))                :: outstr
     ! Internal variables
-    integer :: i, n
+    integer :: i
     ! Executable
     outstr = str
-    if ( len(str) < 1 ) return
-    n = len(str)
-    do i=1, n
+    do i=1, len(str)
       if ( present(exceptions) ) then
         if ( index(exceptions, str(i:i)) > 0 ) cycle
       endif
@@ -2685,6 +2683,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.90  2013/06/14 03:02:37  vsnyder
+! Simplify ReplaceNonAscii
+!
 ! Revision 2.89  2013/06/13 00:39:21  pwagner
 ! Removed two unused params
 !
