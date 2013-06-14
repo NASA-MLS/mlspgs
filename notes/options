@@ -110,6 +110,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --stdout log: Use Toolkit log file to handle output
   --stdout out: Use stdout to handle output
   --stdout both: Send output into both log and stdout
+  --stdout unbuffered: Send output unbuffered to selected destination
   --stdout <filename>: Send unbuffered stdout to filename
   --stopAfter <section>: Stop run after <section>; e.g., 'chunk_divide'
      (see also 'Dump, /stop' in l2cf)
@@ -148,6 +149,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.58  2013/02/14 23:27:50  pwagner
+ Removed outmoded [n]kit
+
  Revision 1.57  2013/02/04 22:04:30  pwagner
  Added '--verbose' option
 
