@@ -26,12 +26,12 @@ module Make_Z_Grid_m
 
 contains
 !---------------------------------------------------------------------------
-  subroutine Make_Z_Grid ( zetas, z_grid, tan_inds, logp_eq_th, mult )
+  subroutine Make_Z_Grid ( zetas, z_grid, logp_eq_th, mult )
 
 ! This routine automatically makes an appropriate z_grid for the
 ! users specified input
 
-    use Allocate_deallocate, only: Allocate_test, Test_Allocate
+    use Allocate_deallocate, only: Allocate_test, Bytes, Test_Allocate
     use MLSCommon, only: rp, ip
     use Sort_m, only: Sort
 
@@ -41,23 +41,21 @@ contains
 !                          vertical bases for all considered species,
 !                          and a surface zeta (if desired) all concatenated
 !                          into one vector.
-!   elements in zetas do not need to be ordered.
+!                          Elements in zetas do not need to be ordered.
 
 ! outputs:
 
-    real(rp), allocatable :: z_grid(:) ! a suitable
-!                  preselected integration grid
+    real(rp), allocatable :: z_grid(:) ! a suitable preselected integration
+!                          grid
 
 ! Keywords (Optional variables):
 
-    integer(ip),pointer, optional :: tan_inds(:) ! a suitable set of pointing
-!                  indicies (output).
-
     real(rp), optional, intent(in) :: logp_eq_th ! threshold value for
-!                  eliminating duplicates
+!                          eliminating duplicates
     integer(ip), optional, intent(in) :: mult ! A multiplicative factor for
-!                  increasing the z_grid density. N means have N additional
-!                  grid points between the minimal necessary z_grid
+!                          increasing the z_grid density. N means have N
+!                          additional grid points between the minimal
+!                          necessary z_grid
 
 ! Local variables:
 
@@ -69,7 +67,7 @@ contains
     integer(ip) :: n_grid ! number of elements in z_grid
     integer(ip) :: m      ! grid resolution factor
 
-    real(rp) :: thresh    ! equality threshold
+    real(rp) :: thresh    ! threshold for eliminating duplicates
     real(rp) :: z(size(zetas))
 
 ! BEGIN CODE
@@ -99,15 +97,7 @@ contains
     n_grid = m * (n - 1) + 1
     allocate ( z_grid(n_grid), stat=i )
     call test_allocate ( i, moduleName, 'Z_Grid', [1], [n_grid], &
-      & (storage_size(z_grid)+7)/8 )
-
-! Create a tangent pointing array index
-
-    if ( present(tan_inds) ) then
-      nullify ( tan_inds )
-      call allocate_test ( tan_inds, n_grid, 'tan_inds', modulename )
-      tan_inds = (/(i,i = 1, n_grid)/)
-    end if
+      & bytes(z_grid) )
 
 ! Fill the grid
 
@@ -138,6 +128,9 @@ contains
 end module Make_Z_Grid_m
 
 ! $Log$
+! Revision 2.11  2013/06/14 20:23:02  vsnyder
+! Eliminate tan_press -- nobody used it
+!
 ! Revision 2.10  2013/06/12 02:32:06  vsnyder
 ! Make z_grid allocatable instead of pointer
 !
