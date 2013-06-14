@@ -695,6 +695,8 @@ contains
           case ( 'both' )
             OUTPUT_PRINT_UNIT = BOTHPRUNIT
             ! MLSMessageConfig%logFileUnit = STDOUTLOGUNIT
+          case ( 'unbuffered' )
+            OutputOptions%buffered = .false.
           case default
             OutputOptions%name = trim(line)
             OutputOptions%buffered = .false.
@@ -964,6 +966,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.63  2013/06/14 01:26:37  vsnyder
+! handle --stdout unbuffered
+!
 ! Revision 2.62  2013/06/12 02:37:36  vsnyder
 ! Cruft removal
 !
