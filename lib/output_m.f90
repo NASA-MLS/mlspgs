@@ -167,6 +167,12 @@ module OUTPUT_M
   integer, parameter, public :: BOTHPRUNIT         = MSGLOGPRUNIT - 1
   integer, parameter, public :: OUTPUTLINESPRUNIT  = BOTHPRUNIT - 1
 
+  logical, parameter, private :: UseStdout(OUTPUTLINESPRUNIT:INVALIDPRUNIT) = &
+    !    OUTPUTLINESPRUNIT  BOTHPRUNIT  MSGLOGPRUNIT  STDOUTPRUNIT
+    & (/ .false.,           .true.,     .false.,      .true., &
+    !    INVALIDPRUNIT
+    &    .false. /)
+
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
@@ -264,7 +270,6 @@ module OUTPUT_M
     integer :: nArrayElmntsPerLine = 7
     integer :: nBlanksBtwnElmnts   = 3
     logical :: BUFFERED            = .true.
-    logical :: OPENED              = .false.
     logical :: SKIPMLSMSGLOGGING   = .false.
     logical :: usePatternedBlanks  = .true. ! Use patterns for special fillChars
     character(len=9) :: specialFillChars = '123456789'
@@ -1443,6 +1448,7 @@ contains
 
   subroutine OUTPUT_CHAR_NOCR ( CHARS, &
     & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+    use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FROM_WHERE
@@ -1465,7 +1471,8 @@ contains
     logical :: stamp_header
     logical :: stamped
     integer :: status
-    !
+    integer :: TheUnit ! zero for PrUnit == MSGLOGPRUNIT, else unit number
+
     if ( SILENTRUNNING ) return
     my_adv = Advance_is_yes_or_no(advance)
     my_dont_stamp = stampOptions%neverStamp ! .false.
@@ -1475,6 +1482,12 @@ contains
     stamped = .false.
     stamp_header = .false.
     stamped_chars = chars
+    theUnit = 0
+    if ( outputOptions%prUnit > 0 ) then
+      theUnit = outputOptions%prUnit
+    else if ( useStdout(outputOptions%prUnit) ) then
+      theUnit = output_unit
+    end if
     ! Are we trying to avoid buffered output?
     ! If so, note the following decision and its effects:
     ! we will close and reopen for append our output file
@@ -1489,14 +1502,11 @@ contains
     ! The good part is that if we crash hard we won't lose that
     ! last line.
     if ( (.not. outputOptions%buffered) .and. &
-      & outputOptions%prUnit > 0 .and. &
-      & (.not. outputOptions%opened) .and. &
+      & theUnit /= 0 .and. &
       & ( atcolumnnumber == 1 ) ) then
-      open (outputOptions%prUnit, file=trim(outputOptions%name), status='replace', &
-        & form='formatted', access='sequential', iostat=status )
+      flush ( theUnit, iostat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to reopen prUnit for replace ' // trim(outputOptions%name) )
-      outputOptions%opened = .true.
+        & trim('Unable to flush prUnit ' // outputOptions%name) )
     endif
     ! Do we need to stamp this line? If so, at beginning or at end?
     if ( my_dont_stamp ) then
@@ -1521,22 +1531,19 @@ contains
     ! Special case: if chars is blank (chars are blank?)
     ! we'll want to print anyway
     if ( len_trim(chars) < 1 ) n_stamp = max(n_stamp, 1)
-    if ( any(outputOptions%prunit == (/STDOUTPRUNIT, BOTHPRUNIT/)) .and. &
-      &  n_stamp > RECLMAX ) then
+    if ( theUnit /= 0 .and. n_stamp > RECLMAX ) then
       nIOBlocs = 1 + (n_stamp-1)/RECLMAX
       i2 = 0
       do IOBloc=1, nIOBlocs
         i1 = i2 + 1
         i2 = min(i2+RECLMAX, n_stamp)
-        write ( *, '(a)', advance='no' ) stamped_chars(i1:i2)
+        write ( theUnit, '(a)', advance='no' ) stamped_chars(i1:i2)
       enddo
-      if ( my_adv == 'yes' ) write ( *, '(a)', advance=my_adv ) ' '
-    elseif ( any(outputOptions%prunit == (/STDOUTPRUNIT, BOTHPRUNIT/)) .and. &
-      &  len(chars) < 1 .and. my_adv == 'yes' ) then
-      write ( *, '(a)', advance=my_adv )
-    elseif ( any(outputOptions%prunit == (/STDOUTPRUNIT, BOTHPRUNIT/)) .and. &
-      &  n_stamp > 0 ) then
-      write ( *, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
+      if ( my_adv == 'yes' ) write ( theUnit, '(a)' )
+    elseif ( theUnit /= 0 .and. len(chars) < 1 .and. my_adv == 'yes' ) then
+      write ( theUnit, '(a)', advance=my_adv )
+    elseif ( theUnit /= 0 .and. n_stamp > 0 ) then
+      write ( theUnit, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     endif
     if ( any(outputOptions%prunit == (/MSGLOGPRUNIT, BOTHPRUNIT/)) .and. &
       & .not. my_dont_log  ) then
@@ -1595,24 +1602,17 @@ contains
     atLineStart = (my_adv == 'yes')
     if ( atLineStart ) then
       ! Are we trying to avoid buffered output?
-      if ( (.not. outputOptions%buffered) .and. &
-        & outputOptions%prUnit > 0 .and. &
-        & outputOptions%opened ) then
-        close(outputOptions%prUnit)
-        open (outputOptions%prUnit, file=trim(outputOptions%name), status='old', &
-          & position='append', &
-          & form='formatted', access='sequential', iostat=status )
+      if ( (.not. outputOptions%buffered) .and. theUnit /= 0 ) then
+        flush ( theUnit, iostat=status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to reopen prUnit for append ' // trim(outputOptions%name) )
+          & trim('Unable to flush prUnit ' // outputOptions%name) )
       endif
       if ( stamp_header ) then
         ! Time to add stamp as a page header on its own line
         stamped_chars = stamp(' ')
         stamped = .true.
-        if ( any(outputOptions%prunit == (/STDOUTPRUNIT, BOTHPRUNIT/)) ) then
-          write ( *, '(a)', advance='yes' ) trim(stamped_chars)
-        elseif( outputOptions%prunit > 0 ) then
-          write ( outputOptions%prunit, '(a)', advance='yes' ) trim(stamped_chars)
+        if ( theUnit /= 0 ) then
+          write ( theUnit, '(a)', advance='yes' ) trim(stamped_chars)
         end if
       end if
       if ( stamped ) then
@@ -2243,7 +2243,6 @@ contains
     outputOptions%nArrayElmntsPerLine  = 7
     outputOptions%nBlanksBtwnElmnts    = 3
     outputOptions%BUFFERED             = .true.
-    outputOptions%OPENED               = .false.
     outputOptions%SKIPMLSMSGLOGGING    = .false.
     outputOptions%usePatternedBlanks   = .true. 
     outputOptions%specialFillChars     = '123456789'
@@ -2853,6 +2852,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.100  2013/06/14 01:26:11  vsnyder
+! Use FLUSH to unbuffer output
+!
 ! Revision 2.99  2013/04/17 00:03:44  pwagner
 ! Removed LINE_WIDTH; comments note possible solution to unwieldy module
 !
