@@ -1,13 +1,13 @@
 % Making the graphics:
-%tgif -print -pdf -page 1 tree.obj ; mv tree.pdf tree-1.pdf
-%tgif -print -epsi -page 1 tree.obj ; mv tree.eps tree-1.eps
-%tgif -print -jpeg -page 1 tree.obj ; mv tree.jpeg tree-1.jpg
-%tgif -print -pdf -page 2 tree.obj ; mv tree.pdf tree-2.pdf
-%tgif -print -epsi -page 2 tree.obj ; mv tree.eps tree-2.eps
-%tgif -print -jpeg -page 2 tree.obj ; mv tree.jpeg tree-2.jpg
-%tgif -print -pdf -page 3 tree.obj ; mv tree.pdf tree-3.pdf
-%tgif -print -epsi -page 3 tree.obj ; mv tree.eps tree-3.eps
-%tgif -print -jpeg -page 3 tree.obj ; mv tree.jpeg tree-3.jpg
+%tgif -print -pdf -page 1 tree.obj ; mv -f tree.pdf tree-1.pdf
+%tgif -print -epsi -page 1 tree.obj ; mv -f tree.eps tree-1.eps
+%tgif -print -jpeg -page 1 tree.obj ; mv -f tree.jpeg tree-1.jpg
+%tgif -print -pdf -page 2 tree.obj ; mv -f tree.pdf tree-2.pdf
+%tgif -print -epsi -page 2 tree.obj ; mv -f tree.eps tree-2.eps
+%tgif -print -jpeg -page 2 tree.obj ; mv -f tree.jpeg tree-2.jpg
+%tgif -print -pdf -page 3 tree.obj ; mv -f tree.pdf tree-3.pdf
+%tgif -print -epsi -page 3 tree.obj ; mv -f tree.eps tree-3.eps
+%tgif -print -jpeg -page 3 tree.obj ; mv -f tree.jpeg tree-3.jpg
 
 \documentclass[twoside,11pt]{report}
 \usepackage{newlargemls}
@@ -1799,6 +1799,9 @@ different type declarations.)
 \end{document}
 
 % $Log$
+% Revision 1.5  2013/06/15 01:49:47  vsnyder
+% Add instructions to make graphics, position and scale graphics
+%
 % Revision 1.4  2013/06/15 01:20:03  vsnyder
 % Decorations for units etc
 %
