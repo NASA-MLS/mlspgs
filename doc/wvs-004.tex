@@ -1,10 +1,9 @@
-%
 \documentclass[twoside,11pt]{report}
-\usepackage{largemls}
-\usepackage[mtbold,mtplusscr,mtpluscal]{mathtime}
+\usepackage{newlargemls}
+%\usepackage[mtbold,mtplusscr,mtpluscal]{mathtime}
 \usepackage{times}
-\usepackage{epsfig}
-\usepackage{setspace,fancyheadings,array}
+\usepackage{graphicx}
+\usepackage{setspace,array}
 %\usepackage{chicago}
 \usepackage{pifont}
 \usepackage{pstricks,pst-node,pst-text,pst-tree}
@@ -12,13 +11,42 @@
 \usepackage{longtable}
 \usepackage{listings}
 \usepackage{xr}
-\usepackage[letterpaper,dvips,breaklinks,bookmarksopen=true,
-     extension=dvi,
+\usepackage[letterpaper,breaklinks,bookmarksopen=true,hypertex,
+%     extension=dvi,dvips,
      pdftitle={Configuration File Parser Users' Guide},
      pdfsubject={EOS MLS software},
      pdfauthor={Van Snyder},
      pdfkeywords={MLS EOS CHEM Retrieval Level2 Level3 Geophysics
        Atmosphere Data Algorithms Software Users Guide}]{hyperref}
+\usepackage[strings]{underscore}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \hypersetup{%
+    hypertexnames=false,hyperindex=true%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+      pdfpagelabels
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
 %
 %-------------------------------------------------------------------------------
 %
@@ -26,16 +54,19 @@
 %
 \begin{document}
 \rcsParseName $Name$
+\renewcommand{\rcsInfoFile}{wvs-004}
+\renewcommand{\rcsInfoRevision}{1.12}
 %
 % Do the title page etc.
 %
 \pagenumbering{roman}
 %Subject: \>Configuration File Parser Users' Guide\\
-\title{Configuration File Parser Users' Guide}
-\author{W. Van Snyder}
+\title{Configuration File Parser Users' Guide\vspace*{20pt}}
+\author{\newline\vskip 20pt W. Van Snyder}
 \shorttitle{Configuration file parser users' guide}
 %\coverpicture{\epsfig{file=v0.1firstlayer.eps,height=5in}}
-\jpld{0}
+\version{\rcsInfoRevision}
+\jpld{MLS only wvs-004}
 \maketitle
 %
 % Do the table of contents etc.
@@ -1384,11 +1415,31 @@ parent {\tt n\_dt\_def} vertex.
 
 The fields a specification may have, and the types of values that can be
 put into them, are encoded by trees of the form $<$ {\tt n\_spec\_def}
-\emph{field-spec} ... $>$.  There are three kinds of field specifications.
+\emph{field-spec} ... $>$.  The {\tt n\_spec\_def} vertex may be decorated
+with subs of the following values, given by names from the {\tt Intrinsic}
+module:
+\begin{description}
+  \item[{\tt No_Dup}] Duplicate fields are prohibited.
+  \item[{\tt All_Fields}] All fields are required.
+  \item[{\tt No_Positional}] Positional fields are prohibited.
+\end{description}
+
+There are three kinds of field specifications.
+
 \begin{description}
 \item[Specific type required] The tree of the form $<$ {\tt
-  n\_field\_type} \emph{field-name type-name ...} $>$ lists the types,
-  and therefore indirectly the set of allowed literals.
+  n\_field\_type} \emph{field-name type-name ...} $>$ lists the types, and
+  therefore indirectly the set of allowed literals.  The {\tt
+  n\_field\_type} vertex may be decorated to cause additional automatic
+  checking, with sums of values given by names in the {\tt Intrinsic}
+  module.
+  \begin{description}
+    \item[{\tt No_Array}] Field must be scalar.
+    \item[{\tt Req_Fld}] Field is required.
+    \item[{\tt Empty_OK}] Field may have empty value
+    \item[{\tt U*PHYQ\dots}] Field must have specific units; the {\tt
+    PHYQ\dots} names are defined in the {\tt Intrinsic} module.
+  \end{description} 
 \item[Label of specific specification required] The tree of the form
   $<$~{\tt n\_field\_spec} \emph{field-name spec-name ...} $>$ lists the
   specifications whose labels are allowed.
@@ -1411,7 +1462,10 @@ the form $<$ {\tt n\_section} \emph{section-name content ...} $>$.  A
 case it must be the name of a specification with previously encoded
 requirements, or a tree of the form $<$ {\tt n\_name\_def}
 \emph{parameter-name type ...} $>$, where \emph{type} is the name of a
-type, as for a specification field requirement.
+type, as for a specification field requirement.  If the {\tt n\_section}
+vertex is decorated with {\tt NO_CHECK_EQ} from the {\tt Intrinsic}
+module, there is no checking whether the \emph{name}s in specifications of
+the form \emph{name = expr} are allowed in that section.
 
 \section{Type checking, and using the type-checked tree}
 
@@ -1717,24 +1771,21 @@ different type declarations.)
 
 \chapter{Some pictures of trees}\label{trees}
 
-\label{toptree}\epsfig{file=tree.2.eps,angle=270}\newpage
-\label{bigtree}\epsfig{file=tree.1.eps}\newpage
-\label{dottree}\epsfig{file=tree.3.eps}
-
+\ifnum\pdfoutput>0
+\label{toptree}\includegraphics[bb=98 79 543 517,scale=1.00]{tree-2}\newpage
+\vspace*{3in}
+\label{bigtree}\includegraphics[bb=17 71 466 716,angle=90,scale=0.80]{tree-1}\newpage
+\label{dottree}\includegraphics[bb=70 71 777 685]{tree-3}
+\else
+\label{toptree}\includegraphics[angle=270]{tree-2}\newpage
+\label{bigtree}\includegraphics{tree-1}\newpage
+\label{dottree}\includegraphics{tree-3}
+\fi
 
 \label{lastpage}
 \end{document}
 
 % $Log$
-% Revision 1.2  2009/09/18 00:06:17  vsnyder
-% Get pictures from . instead of ./cf
-%
-% Revision 1.1  2008/06/11 20:14:50  vsnyder
-% Initial commit
-%
-% Revision 1.1  2008/06/11 20:14:50  vsnyder
-% Initial commit
-%
 % Revision 1.11  2001/11/28 02:03:38  vsnyder
 % Allow arrays of arrays
 %
@@ -1755,5 +1806,17 @@ different type declarations.)
 %
 % Revision 1.4  2000/08/31 23:28:01  vsnyder
 % Add "exprs" and delete "strings" in grammar in 3.2, correct n_and in grammar in 4.1
+%
+% Revision 1.3  2010/07/27 00:45:22  vsnyder
+% Cannonball polishing
+%
+% Revision 1.2  2009/09/18 00:06:17  vsnyder
+% Get pictures from . instead of ./cf
+%
+% Revision 1.1  2008/06/11 20:14:50  vsnyder
+% Initial commit
+%
+% Revision 1.1  2008/06/11 20:14:50  vsnyder
+% Initial commit
 %
 % $Id$
