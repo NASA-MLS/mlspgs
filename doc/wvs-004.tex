@@ -1,3 +1,14 @@
+% Making the graphics:
+%tgif -print -pdf -page 1 tree.obj ; mv tree.pdf tree-1.pdf
+%tgif -print -epsi -page 1 tree.obj ; mv tree.eps tree-1.eps
+%tgif -print -jpeg -page 1 tree.obj ; mv tree.jpeg tree-1.jpg
+%tgif -print -pdf -page 2 tree.obj ; mv tree.pdf tree-2.pdf
+%tgif -print -epsi -page 2 tree.obj ; mv tree.eps tree-2.eps
+%tgif -print -jpeg -page 2 tree.obj ; mv tree.jpeg tree-2.jpg
+%tgif -print -pdf -page 3 tree.obj ; mv tree.pdf tree-3.pdf
+%tgif -print -epsi -page 3 tree.obj ; mv tree.eps tree-3.eps
+%tgif -print -jpeg -page 3 tree.obj ; mv tree.jpeg tree-3.jpg
+
 \documentclass[twoside,11pt]{report}
 \usepackage{newlargemls}
 %\usepackage[mtbold,mtplusscr,mtpluscal]{mathtime}
@@ -1772,20 +1783,25 @@ different type declarations.)
 \chapter{Some pictures of trees}\label{trees}
 
 \ifnum\pdfoutput>0
-\label{toptree}\includegraphics[bb=98 79 543 517,scale=1.00]{tree-2}\newpage
-\vspace*{3in}
-\label{bigtree}\includegraphics[bb=17 71 466 716,angle=90,scale=0.80]{tree-1}\newpage
-\label{dottree}\includegraphics[bb=70 71 777 685]{tree-3}
+\hspace*{3in}
+\label{toptree}\includegraphics[bb=98 79 543 517,scale=1.00,angle=90]{tree-2}\newpage
+\hspace*{2in}
+\label{bigtree}\includegraphics[bb=17 71 466 716,scale=0.90,angle=180]{tree-1}\newpage
+\vspace*{-1in}
+\label{dottree}\includegraphics[bb=106 70 721 777,scale=0.90,angle=90]{tree-3}
 \else
 \label{toptree}\includegraphics[angle=270]{tree-2}\newpage
 \label{bigtree}\includegraphics{tree-1}\newpage
-\label{dottree}\includegraphics{tree-3}
+\label{dottree}\includegraphics[angle=270]{tree-3}
 \fi
 
 \label{lastpage}
 \end{document}
 
 % $Log$
+% Revision 1.4  2013/06/15 01:20:03  vsnyder
+% Decorations for units etc
+%
 % Revision 1.11  2001/11/28 02:03:38  vsnyder
 % Allow arrays of arrays
 %
