@@ -20,12 +20,13 @@ module ManipulationUtils        ! operations to manipulate quantities
   use MLSL2OPTIONS, only: MLSMESSAGE
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSSETS, only: FINDFIRST, FINDLAST, FINDNEXT
   use MLSSTATS1, only: MLSCOUNT, MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, &
     & MLSRMS, MLSSTDDEV
-  use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, &
-    & NUMSTRINGELEMENTS, &
+  use MLSSTRINGLISTS, only: ARRAY2LIST, CATLISTS, GETSTRINGELEMENT, &
+    & LIST2ARRAY, NUMSTRINGELEMENTS, &
     & REPLACESUBSTRING
-  use MLSSTRINGS, only: INDEXES, LOWERCASE, SPLITNEST
+  use MLSSTRINGS, only: INDEXES, LOWERCASE, NCOPIES, SPLITNEST, STRETCH
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
   use VECTORSMODULE, only: VECTORVALUE_T, M_FILL, RESHAPEVECTORVALUE
   ! This module allows us to do algebraic operations on vector quantities
@@ -183,7 +184,14 @@ contains ! =====     Public Procedures     =============================
     ! Collapse every sub-formula nested within parentheses
     do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
       if ( index( collapsedstr, '(' ) < 1 ) exit
+      collapsedstr = stretch( collapsedstr, options='o[(]' )
       call SplitNest ( collapsedstr, part1, part2, part3 )
+      ! For Pete's sake, is this a bug you're coding around?
+      if ( ncopies( trim(part2), ':' ) > 1 ) then
+        call ParensForAll ( collapsedstr, mstr )
+        collapsedstr = mstr
+        cycle
+      endif
       ! Now evaluate the part2
       if ( DeeBUG ) then
         print *, 'collapsedstr ', collapsedstr
@@ -196,7 +204,7 @@ contains ! =====     Public Procedures     =============================
         collapsedstr = part1
         cycle
       else
-        np = evaluatePrimitive( trim(part2), &
+        np = evaluatePrimitive( trim(adjustl(part2)), &
           & a, b, c, &
           & spreadflag, dimList )
         write(vChar, '(i4)') np
@@ -208,6 +216,9 @@ contains ! =====     Public Procedures     =============================
       if (  part1 // part3 == ' ' ) then
         collapsedstr = vChar
       elseif (  part1 == ' ' ) then
+        if ( index(part3, ':') > 1 .and. index(part3, '(') < 1 ) then
+          part3 = Parenthesize(part3)
+        endif
         ! collapsedstr = trim(vChar) // ' ' // part3
         collapsedstr = catTwoOperands( trim(vChar), part3 )
       elseif ( part3 == ' ' ) then
@@ -219,9 +230,22 @@ contains ! =====     Public Procedures     =============================
         collapsedstr = catTwoOperands( &
           & trim( catTwoOperands( trim(part1),  trim(vChar) ) ), &
           & part3 )
+        if ( DeeBUG ) then
+          print *, 'part1 ', trim(part1)
+          print *, 'vchar ', trim(part2)
+          print *, 'part3 ', trim(part3)
+        endif
       endif
       if ( DeeBUG ) then
         print *, 'collapsedstr ', trim(collapsedstr)
+      endif
+      ! Before exiting, will we need to reorder any priorities?
+      if ( index( collapsedstr, '(' ) < 1 ) then
+        call reorderPrecedence( collapsedstr, mstr )
+        collapsedstr = mstr
+        if ( DeeBUG ) then
+          print *, 'collapsedstr (reordered) ', trim(collapsedstr)
+        endif
       endif
     enddo
     ! Presumably we have collapsed all the nested '(..)' pairs by now
@@ -322,13 +346,16 @@ contains ! =====     Public Procedures     =============================
     integer                       :: i          ! char num of instr
     integer                       :: e          ! char num of outstr
     logical                       :: gotDigit
+    logical                       :: gotExponent
     character(len=*), parameter :: dlist='1234567890.' ! These are digits
-    character(len=*), parameter :: flist='-+e'         ! Fortran adds these
+    character(len=*), parameter :: elist='eE'          ! Fortran adds these
+    character(len=*), parameter :: signs='+-'          ! legal after 'e'
     ! Executable
     if ( DEEBug ) print *, 'instr ', instr
     outstr = instr
     e = 0
     gotDigit = .false.
+    gotExponent = .false.
     do i = 1, len_trim(instr)
       c = instr(i:i)
       if ( index(dlist, c ) > 0 ) then
@@ -346,10 +373,25 @@ contains ! =====     Public Procedures     =============================
           outstr(e:e) = c
         endif
         gotDigit = .true.
+        gotExponent = .false.
+      elseif ( gotExponent ) then
+        ! Check that we're not using fortran's '4.9e-6' notation
+        if ( index(signs, c ) > 0 ) then
+          ! With Fortran notation, we are just lengthening our exponent
+          e = e + 1
+          outstr(e:e) = c
+        else
+          ! We have come to the end of our digits
+          outstr(e+1:e+1) = ')'
+          e = e + 2
+          outstr(e:e) = c
+          gotDigit = .false.
+        endif
       elseif ( gotDigit ) then
         ! Check that we're not using fortran's '4.9e-6' notation
-        if ( index(flist, c ) > 0 ) then
+        if ( index(elist, c ) > 0 ) then
           ! With Fortran notation, we are just lengthening our number
+          gotExponent = .true.
           e = e + 1
           outstr(e:e) = c
         else
@@ -382,6 +424,9 @@ contains ! =====     Public Procedures     =============================
     character(len=(len(mstr)+3)) :: element
     character(len=(len(mstr)+3)) :: temp
     ! Executable
+    ! Nah--just return
+    ! collapsedstr = mstr
+    ! return
     ! 1st -- replace each '-' with '+-'
     ! (Don't worry--we'll undo this before returning)
     ! (It takes two steps for each to avoid threat of infinite loop)
@@ -402,12 +447,15 @@ contains ! =====     Public Procedures     =============================
     ! Now loop over terms
     n = NumStringElements( temp, COUNTEMPTY, inseparator='+' )
     if ( n < 1 ) then
-      call ReplaceSubString( temp, collapsedstr, '+-', '-', &
+      call ReplaceSubString( temp, collapsedstr, '+-', ' -', &
         & which='all', no_trim=.false. )
-      call ReplaceSubString( collapsedstr, temp, '+<', '<', &
+      call ReplaceSubString( collapsedstr, temp, '+<', ' <', &
         & which='all', no_trim=.false. )
-      call ReplaceSubString( temp, collapsedstr, '+>', '>', &
+      call ReplaceSubString( temp, collapsedstr, '+>', ' >', &
         & which='all', no_trim=.false. )
+      call ReplaceSubString( collapsedstr, temp, '+', ' +', &
+        & which='all', no_trim=.false. )
+      collapsedstr = temp
       return
     endif
     collapsedstr = ' '
@@ -426,7 +474,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Now undo change by reverting all '+-'
     ! (including any that may have been split by parentheses
-    call ReplaceSubString( collapsedstr, temp, '+-', '-', &
+    call ReplaceSubString( collapsedstr, temp, '+-', ' -', &
       & which='all', no_trim=.false. )
     call ReplaceSubString( temp, collapsedstr, '+(-', '-(', &
       & which='all', no_trim=.false. )
@@ -440,6 +488,9 @@ contains ! =====     Public Procedures     =============================
       & which='all', no_trim=.false. )
     call ReplaceSubString( temp, collapsedstr, '+(>', '>(', &
       & which='all', no_trim=.false. )
+    call ReplaceSubString( collapsedstr, temp, '+', ' +', &
+      & which='all', no_trim=.false. )
+    collapsedstr = temp
   end subroutine reorderPrecedence
 
   subroutine destroyPrimitives(primitives)
@@ -1055,6 +1106,8 @@ contains ! =====     Public Procedures     =============================
     ! internal variables
     character(len=1), dimension(9), parameter :: ops = &
       &          (/ '+', '-', '*', '/' , '(', ')', '^', '<', '>' /)
+    character(len=1), parameter :: oparen='(', cparen=')'
+    ! character(len=1), parameter :: oparen=' ', cparen=' '
     character(len=1) :: part1Tail, part2Head
     integer :: maxind
     integer :: n
@@ -1080,10 +1133,13 @@ contains ! =====     Public Procedures     =============================
           str = trim(part1) // ': ' // adjustl(part2)
           return
         endif
-        str = '(' // trim(part1) // ': ' // trim(adjustl(part2) ) // ')'
+        str = oparen // trim(part1) // ': ' // trim(adjustl(part2) ) // cparen
+      elseif ( index(part1, '(') > 0 ) then
+        str = trim(part1) // ': ' // adjustl(part2)
+        return
       else
-        str = part1(:maxind) // '(' // trim(part1(maxind+1:)) &
-          & // ': ' // trim(adjustl(part2) ) // ')'
+        str = part1(:maxind) // oparen // trim(part1(maxind+1:)) &
+          & // ': ' // trim(adjustl(part2) ) // cparen
       endif
     else
       str = trim(part1) // ' ' // adjustl(part2)
@@ -1098,6 +1154,86 @@ contains ! =====     Public Procedures     =============================
     itIs = index( adjustl(str), '('           ) == 1 .and. &
       &    index( trim(str), ')', back=.true. ) == len_trim(str)
   end function isParenthetical
+
+  function Parenthesize ( str ) result ( newStr )
+    ! Add parentheses to a function
+    character(len=*), intent(in) :: str
+    character(len=len(str)+8)    :: newStr
+    ! Method: starting from the ':', go backward to the first blank
+    ! and forward to the first blank
+    ! put '( ' or ') ' in place of them
+    ! Internal variables
+    integer :: col
+    integer :: dbInd
+    integer :: firstBl
+    integer :: lastBl
+    newStr = str
+    col = index( str, ':' )
+    if ( col < 1 ) return
+    firstBl = findLast( str(:col), ' ' )
+    dbInd = col+1
+    if ( str(col+1:col+1) == ' ' ) dbInd = col+2
+    lastBl = FindFirst( str(dbInd:), ' ' )
+    if ( firstBl > 1 ) then
+      newStr = str(:firstBl-1) // '( ' // str(firstBl+1:dbInd+lastBl-1) // ' )'
+    else
+      newStr = '( ' // str(firstBl+1:dbInd+lastBl-1) // ' )'
+    endif
+    if ( dbInd+lastBl-1 < len_trim(str) ) &
+      newStr = trim(newStr) // str(dbInd+lastBl:)
+  end function Parenthesize
+
+  subroutine ParensForAll ( str, outStr )
+    ! Args
+    character(len=*), intent(in)  :: str
+    character(len=*), intent(out) :: outstr
+    ! Internal variables
+    integer :: i
+    integer :: ia, ib
+    integer :: n    ! number of ':'-separated elements
+    integer :: NLOCBI
+    character(len=1) :: a, b
+    character(len=len(str)+8), dimension(24) :: stringArray
+    character(len=len(str)+8)                :: stringElm
+    ! logical, parameter                       :: DEEBUG = .true.
+    ! Executable
+    n = NumStringElements( str, countEmpty, &
+      & ':' )
+    if ( n < 2 ) return
+    call list2Array( str, stringArray, countEmpty, ':', &
+      & IgnoreLeadingSpaces = .false. )
+    do i=1, n-1
+      a = ' '
+      b = ' '
+      ! Find loc of last blank of element i
+      nlocBi = FindLast( trim(stringArray(i)), ' ' )
+      if ( nLocBi < 2 ) cycle
+      ! a is last non-blank char before nLocBi? Is a '('?
+      ia = FindLast( trim(stringArray(i)(:nLocBi)), ' ', reverse=.true. )
+      if ( ia > 0 ) a = stringArray(i)(ia:ia)
+      ! b is second non-blank char after start of element i+1? Is a ')'?
+      ib = FindNext( trim(stringArray(i+1)), ' ', current=1, reverse=.true. )
+      if ( ib > 0 ) then
+        b = stringArray(i+1)(ib:ib)
+      else
+        ib = len_trim(stringArray(i+1))
+      endif
+      if ( DEEBUG ) then
+        print *, 'stringArray(i) ', trim(stringArray(i))
+        print *, 'stringArray(i+1) ', trim(stringArray(i+1))
+        print *, 'ia ', ia
+        print *, 'ib ', ib
+      endif
+      if ( a == '(' .or. b == ')' ) cycle
+      if ( ia > 0 ) then
+        stringArray(i) = stringArray(i)(:ia) // ' (' // stringArray(i)(ia+1:)
+      else
+        stringArray(i) = ' (' // stringArray(i)
+      endif
+      stringArray(i+1) = stringArray(i+1)(:ib) // ' )' // stringArray(i+1)(ib+1:)
+    enddo
+    call Array2List( stringArray(1:n), outStr,  inseparator=':' )
+  end subroutine ParensForAll
 
   function isBalanced ( str ) result ( itIs )
     use MLSSTRINGS, only: NCOPIES
@@ -1143,6 +1279,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.7  2013/06/17 21:59:13  pwagner
+! Fixed serious bugs
+!
 ! Revision 2.6  2013/04/22 17:51:01  pwagner
 ! Added soltime, phi, losangle, hid to Gelocation functions
 !
