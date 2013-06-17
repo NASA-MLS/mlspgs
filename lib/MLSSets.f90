@@ -962,7 +962,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine FindLongestSubString
 
   ! --------------------------------------------  FindNextCharacter  -----
-  integer function FindNextCharacter ( Set, Probe, Current, Wrap, Repeat )
+  integer function FindNextCharacter ( Set, Probe, Current, &
+    & Wrap, Repeat, Reverse )
     ! Find the next element in the array Set that is equal to Probe after the
     ! current one
     ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
@@ -975,27 +976,38 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: Current
     logical, optional, intent(in) :: Wrap
     logical, optional, intent(in) :: Repeat
+    logical, optional, intent(in) :: reverse
 
     ! Local variables
     integer :: I                        ! Loop counter
     logical :: myWrap
     logical :: myRepeat
+    logical :: myReverse
 
     ! Executable code
     myWrap = .false.
     if ( present(wrap) ) myWrap = wrap
     myRepeat = .false.
     if ( present(repeat) ) myRepeat = repeat
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
     FindNextCharacter = 0
     ! We'll assume you gave us valid args; otherwise return 0
     if ( current < 1 .or. current > size(set)) return
-    if ( set(current) /= probe ) return
+    ! if ( set(current) /= probe ) return
     ! Now check for current already at end of array
     if ( current < size(set) ) then
       do i = current+1, size(set)
-        if ( trim(set(i)) == trim(probe) ) then
-          FindNextCharacter = i
-          return
+        if ( myReverse ) then
+          if ( trim(set(i)) /= trim(probe) ) then
+            FindNextCharacter = i
+            return
+          end if
+        else
+          if ( trim(set(i)) == trim(probe) ) then
+            FindNextCharacter = i
+            return
+          end if
         end if
       end do
     end if
@@ -1034,7 +1046,7 @@ contains ! =====     Public Procedures     =============================
     FindNextInteger = 0
     ! We'll assume you gave us valid args; otherwise return 0
     if ( current < 1 .or. current > size(set)) return
-    if ( set(current) /= probe ) return
+    ! if ( set(current) /= probe ) return
     ! Now check for current already at end of array
     if ( current < size(set) ) then
       do i = current+1, size(set)
@@ -1077,7 +1089,7 @@ contains ! =====     Public Procedures     =============================
     FindNextLogical = 0
     ! We'll assume you gave us valid args; otherwise return 0
     if ( current < 1 .or. current > size(condition)) return
-    if ( .not. condition(current)) return
+    ! if ( .not. condition(current)) return
     ! Now check for current already at end of array
     if ( current < size(condition) ) then
       do i = current+1, size(condition)
@@ -1127,7 +1139,7 @@ contains ! =====     Public Procedures     =============================
     FindNextSubString = 0
     ! We'll assume you gave us valid args; otherwise return 0
     if ( current < 1 .or. current > len(set)) return
-    if ( (set(current:current) == probe) .eqv. myReverse ) return
+    ! if ( (set(current:current) == probe) .eqv. myReverse ) return
     ! Now check for current already at end of array
     if ( current < len(set) ) then
       do i = current+1, len(set)
@@ -1761,6 +1773,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.28  2013/06/17 21:37:15  pwagner
+! FindNext no longer bails when current is not a solution
+!
 ! Revision 2.27  2013/01/16 22:17:20  pwagner
 ! Fixed a syntax error only NAG noticed
 !
