@@ -2122,6 +2122,7 @@ contains
   ! options, if present, can contain the following characters
   !  character                 effect
   !     a                   insert space after every character
+  !    o[xyz..]             insert space only after x or y or z or ..
   function stretch( str, options ) result( stretched )
     ! Args
     character(len=*), intent(in)           :: str
@@ -2133,21 +2134,47 @@ contains
     logical                                :: newWord
     logical                                :: everywhere
     character(len=1)                       :: space
+    character(len=256)                     :: onlyAfter
     ! Executable
     everywhere = .false.
     if ( present(options) ) everywhere = ( index(options, 'a') > 0 )
+    onlyAfter = ' '
+    if ( present(options) ) then
+      cpos = index(options, 'o')
+      if ( cpos > 0 ) then
+        cpos = index(options, '[')
+        cposq = index(options, ']')
+        onlyAfter = options(cpos:cposq)
+      endif
+    endif
     space = ' '
     stretched = str
     if ( len_trim(str) < 2 ) return
     stretched = ' '
     if ( everywhere ) then
-    cpos = len_trim(str)
+      cpos = len_trim(str)
     ! Fortran does not support (start : end : stride) syntax for substrings
     ! stretched(1:2*cpos+1:2) = str(1:cpos)
     ! stretched(2:2*cpos:2) = ' '
       do cpos = 1, len_trim(str)
         ! This is easy -- snip every space no matter where
         stretched(2*cpos-1:2*cpos) = str(cpos:cpos) // ' '
+      enddo
+    elseif( len_trim(onlyAfter) > 0 ) then
+      stretched = str
+      cposq = 1
+      if ( len_trim(str) < 2 ) return
+      do cpos = 2, len_trim(str)
+        cposq = cposq + 1
+        stretched(cposq:cposq) = str(cpos:cpos)
+        if ( cpos == len_trim(str) ) then
+          cposq = cposq + 1
+          stretched(cposq:cposq) = ' '
+        elseif ( index(trim(onlyAfter), str(cpos:cpos)) > 0 .and. &
+          & str(cpos+1:cpos+1) /= ' ' ) then
+          cposq = cposq + 1
+          stretched(cposq:cposq) = ' '
+        endif
       enddo
     else
       stretched(1:1) = str(1:1)
@@ -2683,6 +2710,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.91  2013/06/17 21:35:26  pwagner
+! You may specify better where stretch adds space
+!
 ! Revision 2.90  2013/06/14 03:02:37  vsnyder
 ! Simplify ReplaceNonAscii
 !
