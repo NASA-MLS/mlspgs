@@ -737,7 +737,6 @@ contains ! =====     Public Procedures     =============================
 
     integer                        :: theLast
     real(rk)                       :: myTol
-    real(rk)                       :: q
     ! Internal variables
     logical :: myReverse
 
@@ -770,7 +769,6 @@ contains ! =====     Public Procedures     =============================
 
     integer                        :: theLast
     real(rk)                       :: myTol
-    real(rk)                       :: q
     ! Internal variables
     logical :: myReverse
 
@@ -1357,10 +1355,9 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
     use Sort_M, only: SORT
 
-    integer, intent(in) :: A(:), B(:)
-    integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
-    ! logical, optional, intent(in) :: reverse
-    character(len=*), optional, intent(in) :: options
+    integer, dimension(:), intent(in)      :: A, B
+    integer, dimension(:), pointer         :: C ! Intent(out) -- nullified and
+    character(len=*), optional, intent(in) :: options  ! then allocated here
 
     integer :: size_c, status
     integer :: I, J, K, Stat, TA(size(a)), TB(size(b)), TC(size(a)+size(b))
@@ -1408,10 +1405,9 @@ contains ! =====     Public Procedures     =============================
     ! If  so found, add the element
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
-    character(len=*), dimension(:), intent(in) :: A(:), B(:)
-    character(len=len(a)), dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
-    ! logical, optional, intent(in) :: reverse
-    character(len=*), optional, intent(in) :: options
+    character(len=*), dimension(:), intent(in)   :: A, B
+    character(len=len(a)), dimension(:), pointer :: C ! Intent(out) -- nullified and 
+    character(len=*), optional, intent(in)       :: options    ! then allocated here
     ! Local variables
     integer :: i, j, size_c, status
     character(len=len(a)), dimension(size(a)+size(b)) :: TC
@@ -1428,10 +1424,9 @@ contains ! =====     Public Procedures     =============================
     ! If  so found, add the element
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
-    double precision, dimension(:), intent(in) :: A(:), B(:)
-    double precision, dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
-    ! logical, optional, intent(in) :: reverse
-    character(len=*), optional, intent(in) :: options
+    double precision, dimension(:), intent(in) :: A, B
+    double precision, dimension(:), pointer    :: C ! Intent(out) -- nullified and then allocated here
+    character(len=*), optional, intent(in)     :: options
     ! Local variables
     integer :: i, j, size_c, status
     double precision, dimension(size(a)+size(b)) :: TC
@@ -1448,10 +1443,9 @@ contains ! =====     Public Procedures     =============================
     ! If  so found, add the element
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
-    real, dimension(:), intent(in) :: A(:), B(:)
-    real, dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
-    ! logical, optional, intent(in) :: reverse
-    character(len=*), optional, intent(in) :: options
+    real, dimension(:), intent(in)         :: A, B
+    real, dimension(:), pointer            :: C ! Intent(out) -- nullified and
+    character(len=*), optional, intent(in) :: options  ! then allocated here
     ! Local variables
     integer :: i, j, size_c, status
     real, dimension(size(a)+size(b)) :: TC
@@ -1497,8 +1491,6 @@ contains ! =====     Public Procedures     =============================
 
     integer, intent(in) :: A(:), B(:)
 
-    integer :: I, J
-
     ! Is B the longer array? If not, we're already done
     IsProperSubsetInteger = .false.
     if ( size(a) < size(b) ) IsProperSubsetInteger = IsSubsetInteger ( A, B )
@@ -1509,8 +1501,6 @@ contains ! =====     Public Procedures     =============================
   ! Return true if the character arrays A and B have a common element
 
     character(len=*), intent(in) :: A(:), B(:)
-
-    integer :: I, J
 
     ! Is B the longer array? If not, we're already done
     IsProperSubsetCharacter = .false.
@@ -1573,8 +1563,8 @@ contains ! =====     Public Procedures     =============================
     ! Go though b, checking for each element whether a match is found in (a)
     ! If  not, add the element
 
-    character(len=*), dimension(:), intent(in) :: A(:), B(:)
-    character(len=len(a)), dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+    character(len=*), dimension(:), intent(in) :: A, B
+    character(len=len(a)), dimension(:), pointer :: C ! Intent(out) -- nullified and then allocated here
 
     C => Intersection ( B, A, options = 'c' )
   end function RelativeComplementCharacter
@@ -1636,8 +1626,8 @@ contains ! =====     Public Procedures     =============================
     ! Then go through b, adding any that haven't been added already
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
 
-    character(len=*), dimension(:), intent(in) :: A(:), B(:)
-    character(len=len(a)), dimension(:), pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+    character(len=*), dimension(:), intent(in) :: A, B
+    character(len=len(a)), dimension(:), pointer :: C ! Intent(out) -- nullified and then allocated here
     ! Local variables
     integer :: i, j, size_c, status
     character(len=len(a)), dimension(size(a)+size(b)) :: TC
@@ -1773,6 +1763,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.29  2013/06/18 17:58:29  pwagner
+! Removed unused stuff; corrected syntax NAG found Questionable
+!
 ! Revision 2.28  2013/06/17 21:37:15  pwagner
 ! FindNext no longer bails when current is not a solution
 !
