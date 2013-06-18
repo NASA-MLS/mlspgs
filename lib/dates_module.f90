@@ -233,55 +233,55 @@ module dates_module
 ! Would it be useful to uncloak it so callers might access it directly?
 
   !Here are the provided functions 
-  public :: adddaystoutc, addhourstoutc, addsecondstoutc, buildCalendar, &
-    & cal2eudtf, ccsds2tai, ccsds2eudtf, ccsdsa2b, ccsdsb2a, &
-    & dai_to_yyyymmdd, dateForm, dayOfWeek, daysbetween2utcs, daysInMonth, &
-    & daysince2eudtf, days_in_year, &
-    & eudtf2cal, eudtf2daysince, hoursbetween2utcs, hoursinday, &
-    & lastday, nextMoon, reformatDate, reformatTime, &
-    & secondsbetween2utcs, secondsinday, splitDateTime, &
-    & tai2ccsds, tai93s2hid, tai93s2utc, timeForm, &
-    & utcForm, utc_to_date, utc_to_time, utc_to_yyyymmdd, utc2tai93s, &
-    & yyyyDoy_to_mmdd, yyyymmdd_to_dai, yyyymmdd_to_Doy
+  public :: ADDDAYSTOUTC, ADDHOURSTOUTC, ADDSECONDSTOUTC, BUILDCALENDAR, &
+    & CAL2EUDTF, CCSDS2TAI, CCSDS2EUDTF, CCSDSA2B, CCSDSB2A, &
+    & DAI_TO_YYYYMMDD, DATEFORM, DAYOFWEEK, DAYSBETWEEN2UTCS, DAYSINMONTH, &
+    & DAYSINCE2EUDTF, DAYS_IN_YEAR, &
+    & EUDTF2CAL, EUDTF2DAYSINCE, HOURSBETWEEN2UTCS, HOURSINDAY, &
+    & LASTDAY, NEXTMOON, REFORMATDATE, REFORMATTIME, &
+    & SECONDSBETWEEN2UTCS, SECONDSINDAY, SPLITDATETIME, &
+    & TAI2CCSDS, TAI93S2HID, TAI93S2UTC, TIMEFORM, &
+    & UTCFORM, UTC_TO_DATE, UTC_TO_TIME, UTC_TO_YYYYMMDD, UTC2TAI93S, &
+    & YYYYDOY_TO_MMDD, YYYYMMDD_TO_DAI, YYYYMMDD_TO_DOY
 
- interface buildCalendar
-    module procedure buildCalendar_ints, buildCalendar_str
+ interface BUILDCALENDAR
+    module procedure BUILDCALENDAR_INTS, BUILDCALENDAR_STR
   end interface
 
-  interface dai_to_yyyymmdd
-    module procedure dai_to_yyyymmdd_str, dai_to_yyyymmdd_ints
+  interface DAI_TO_YYYYMMDD
+    module procedure DAI_TO_YYYYMMDD_STR, DAI_TO_YYYYMMDD_INTS
   end interface
 
-  interface dayOfWeek
-    module procedure dayOfWeek_int, dayOfWeek_str
+  interface DAYOFWEEK
+    module procedure DAYOFWEEK_INT, DAYOFWEEK_STR
   end interface
 
-  interface dump
-    module procedure dumpDateTime
+  interface DUMP
+    module procedure DUMPDATETIME
   end interface
 
- interface secondsInDay
-    module procedure secondsInDaydble
+ interface SECONDSINDAY
+    module procedure SECONDSINDAYDBLE
   end interface
 
-  interface switch
-    module procedure switch_ints
+  interface SWITCH
+    module procedure SWITCH_INTS
   end interface
 
-  interface utc_to_yyyymmdd
-    module procedure utc_to_yyyymmdd_strs, utc_to_yyyymmdd_ints
+  interface UTC_TO_YYYYMMDD
+    module procedure UTC_TO_YYYYMMDD_STRS, UTC_TO_YYYYMMDD_INTS
   end interface
 
-  interface yyyyDoy_to_mmdd
-    module procedure yyyyDoy_to_mmdd_ints
+  interface YYYYDOY_TO_MMDD
+    module procedure YYYYDOY_TO_MMDD_INTS
   end interface
 
-  interface yyyymmdd_to_dai
-    module procedure yyyymmdd_to_dai_str, yyyymmdd_to_dai_ints
+  interface YYYYMMDD_TO_DAI
+    module procedure YYYYMMDD_TO_DAI_STR, YYYYMMDD_TO_DAI_INTS
   end interface
 
-  interface yyyymmdd_to_Doy
-    module procedure yyyymmdd_to_doy_ints
+  interface YYYYMMDD_TO_DOY
+    module procedure YYYYMMDD_TO_DOY_INTS
   end interface
 
   ! utc_to_yyyymmdd
@@ -366,9 +366,7 @@ contains
     character(len=len(utc))      :: after
     ! Internal
     type(MLSDate_time_T)         :: datetime
-    integer                      :: days
     ! Executable
-    days = 0
     datetime = utc2datetime(utc)
     datetime%seconds = datetime%seconds + 60*60*hours
     ! call dumpDateTime(datetime)
@@ -386,9 +384,7 @@ contains
     character(len=len(utc))      :: after
     ! Internal
     type(MLSDate_time_T)         :: datetime
-    integer                      :: days
     ! Executable
-    days = 0
     datetime = utc2datetime(utc)
     datetime%seconds = datetime%seconds + seconds
     call reducedatetime(datetime)
@@ -796,13 +792,12 @@ contains
     !---result---!
     integer::eudtf
     !---locals---!
-    integer::year,days,year0,day0,daysinyear
+    integer::year,days,year0,day0
     !---Executable-!
     year0=eudtf0/1000
     day0=modulo(eudtf0,1000)
     year=year0
     days=daysince+day0 ! days is now days since beginning of year0
-    daysinyear=days_in_year(year)
     yrsloop:do 
 !        print*,"In yearsloop: days=",days," year=",year
         if (days > days_in_year(year)) then 
@@ -929,11 +924,10 @@ contains
     !---------Locals---------------!
     character(len=len(caldate))::dpdate ! auto-length string ???OK???
     integer::year,dayofyear,month,dayofmonth,i,j,iw
-    integer::daysinyear
     integer,dimension(3)::order
     character(len=5)::errstr
     character(len=3)::monthstring
-    character(len=50)::fmtstring,instring
+    character(len=50)::instring
     character(len=20),dimension(3)::tmpstring
     character(len=1)::tchar
     integer,dimension(12)::days_in_month
@@ -968,7 +962,6 @@ contains
     do j=1,3
         tmpstring(j)=adjustl(tmpstring(j))
     enddo
-    fmtstring=" "
     read(unit=tmpstring(1),fmt=*)dayofmonth
     read(unit=tmpstring(2),fmt="(a)")monthstring
     read(unit=tmpstring(3),fmt=*)year
@@ -983,10 +976,7 @@ contains
 
     days_in_month=DAYMAXNY(1:12)
     if ( leapyear(year) ) then
-       daysinyear=366
        days_in_month(2)=29 !Sodding February
-    else
-       daysinyear=365
     endif
 
     !Get number of this month
@@ -1146,9 +1136,6 @@ contains
     integer :: j
     integer :: month
     character(len=1)            :: s  ! The expected date field
-    character(len=1), parameter :: y = 'y'
-    character(len=1), parameter :: m = 'm'
-    character(len=1), parameter :: d = 'd'
     ! Executable
     form = 'unknown format'
     if ( len_trim(date) < 1 ) return
@@ -1634,9 +1621,7 @@ contains
     character(len=*), intent(out) :: time
     logical,intent(in), optional  :: strict
     !----------Local vars----------!
-    character(len=1), parameter :: dash='-'
     logical :: mystrict
-    character(len=*), parameter :: chars_0z = 'T00:00:00Z'
     !----------Executable part----------!
 
    if(present(strict)) then
@@ -1705,7 +1690,6 @@ contains
     logical,intent(in), optional  :: strict
     character(len=*),intent(out), optional   :: utcAt0z
     !----------Local vars----------!
-    character(len=1), parameter :: dash='-'
     logical :: mystrict
     character(len=*), parameter :: chars_0z = 'T00:00:00Z'
     !----------Executable part----------!
@@ -1753,7 +1737,6 @@ contains
     character(len=*), intent(out) :: time
     logical,intent(in), optional  :: strict
     !----------Local vars----------!
-    character(len=1), parameter :: dash='-'
     logical :: mystrict
     integer :: zpos
     !----------Executable part----------!
@@ -1961,7 +1944,6 @@ contains
     character(len=1), parameter :: dash='-'
     character(len=NameLen) :: date
     logical :: mystrict
-    character(len=1) :: utc_format        ! 'a' or 'b'
     !----------Executable part----------!
 
    year = ' '
@@ -1985,11 +1967,9 @@ contains
    if ( &
      & NumStringElements(trim(date), countEmpty=.true., inseparator=dash) == 2) then
      call GetStringElement(trim(date), day, 2, countEmpty=.true., inseparator=dash)
-     utc_format = 'b'
    else
      call GetStringElement(trim(date), month, 2, countEmpty=.true., inseparator=dash)
      call GetStringElement(trim(date), day, 3, countEmpty=.true., inseparator=dash)
-     utc_format = 'a'
    endif
    ! print *, 'num: ', NumStringElements(trim(date), countEmpty=.true., inseparator=dash)
    ! print *, 'utc_format: ', utc_format
@@ -2405,6 +2385,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.26  2013/04/05 23:19:22  pwagner
+! Added tai93s2hid
+!
 ! Revision 2.25  2011/08/02 16:50:00  honghanh
 ! Add function utc2tai93s
 !
