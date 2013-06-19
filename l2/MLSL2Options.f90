@@ -377,7 +377,7 @@ contains
     parallel%maxFailuresPerMachine = 2
     parallel%maxFailuresPerChunk = 1
     removeSwitches='slv' ! Since slave output already saved to separate files
-    switches='red'  ! Usually won't want to dump things looked for in testing
+    ! switches='red'  ! No longer a good idea
     DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
     MLSMessageConfig%limitWarnings = 4 ! 50 ! Why print all that stuff?
     time_config%use_wall_clock = .true. ! SIPS_VERSION
@@ -966,6 +966,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.64  2013/06/19 00:40:34  pwagner
+! No longer automatically reduce Details of l2cf-born Dumps
+!
 ! Revision 2.63  2013/06/14 01:26:37  vsnyder
 ! handle --stdout unbuffered
 !
