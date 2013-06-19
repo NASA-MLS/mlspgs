@@ -43,7 +43,7 @@ module DUMP_0
     & READINTSFROMCHARS, TRIM_SAFE, &
     & WRITEINTSTOCHARS
   use OUTPUT_M, only: OUTPUTOPTIONS, STAMPOPTIONS, &
-    & ALIGNTOFIT, BLANKS, BLANKSTOTAB, DUMPTABS, &
+    & ALIGNTOFIT, BLANKS, BLANKSTOTAB, &
     & NEWLINE, NUMNEEDSFORMAT, NUMTOCHARS, &
     & OUTPUT, OUTPUTLIST, OUTPUTNAMEDVALUE, RESETTABS, SETTABS
   use TIME_M, only: TIME_NOW
@@ -177,7 +177,7 @@ module DUMP_0
 !       t              trim      
 !       u              unique    
 !       w              wholearray
-!       W[i]           wholearray, looping over ith index
+!       W[i]           wholearray, looping over ith index (for rank 3 and 4 arrays only)
 !       1 or 2 or ..   ignored; calling routine is free to interpret
 
 ! An exception is the behavior of wholearray:
@@ -1451,7 +1451,7 @@ contains
     character(len=*), intent(in), optional :: TheShape
 
     integer :: LON
-    integer :: Base, I, J, K, L
+    integer :: I, J, K, L
     integer :: NumZeroRows
     character(len=len(array)) :: myFillValue
     integer :: MyWidth
@@ -1654,8 +1654,8 @@ contains
     integer :: NumZeroRows
     real    :: myFillValue
     character(len=64) :: MyFormat
+    integer :: myWidth
     integer :: nUnique
-    integer :: MyWidth
     integer, dimension(MAXNUMELEMENTS) :: counts
     real, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
@@ -1674,12 +1674,9 @@ contains
     integer, intent(in), optional :: LBOUND
     character(len=*), intent(in), optional :: options
 
-    integer :: I, J, K, L
-    integer :: NumZeroRows
-    double precision :: myFillValue
+    integer :: J
     character(len=64) :: myFormat
     integer :: nUnique
-    integer :: MyWidth
     integer, dimension(MAXNUMELEMENTS) :: counts
     double precision, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
@@ -1698,12 +1695,9 @@ contains
     integer, intent(in), optional :: LBOUND
     character(len=*), intent(in), optional :: options
 
-    integer :: I, J, K, L
-    integer :: NumZeroRows
-    real :: myFillValue
+    integer :: J
     character(len=64) :: myFormat
     integer :: nUnique
-    integer :: MyWidth
     integer, dimension(MAXNUMELEMENTS) :: counts
     real, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
@@ -1724,12 +1718,9 @@ contains
     character( len=max(len(values), len(keys)) ) :: element
     integer :: J
     integer :: NumElements
-    character(len=1) :: mySeparator
     character(len=*), parameter :: COMMA = ','
 
     call theDumpBegins ( options )
-    mySeparator = COMMA
-    if ( present(SEPARATOR) ) mySeparator = SEPARATOR
 
     NumElements = NumStringElements(keys, countEmpty, &
      & separator)
@@ -1763,12 +1754,9 @@ contains
     character( len=len(keys)) :: element
     integer :: J
     integer :: NumElements
-    character(len=1) :: mySeparator
     character(len=*), parameter :: COMMA = ','
 
     call theDumpBegins ( options )
-    mySeparator = COMMA
-    if ( present(SEPARATOR) ) mySeparator = SEPARATOR
 
     NumElements = NumStringElements(keys, countEmpty, &
      & separator)
@@ -1943,11 +1931,12 @@ contains
        call output( '      l              collapse (last index)', advance='yes' )
        call output( '      r              ratios    -- min, max, etc. of difference ratios', advance='yes' )
        call output( '      s              stats     -- number of differences', advance='yes' )
-       call output( '      p              transpose ', advance='yes' )
+       call output( '      p              transpose (for rank 2 arrays only)', advance='yes' )
        call output( '      t              trim      ', advance='yes' )
        call output( '      u              unique    ', advance='yes' )
        call output( '      w              wholearray', advance='yes' )
        call output( '      W[i]           wholearray, looping over ith index', advance='yes' )
+       call output( '                     (for rank 3 and 4 arrays only)', advance='yes' )
        call output( '      1 or 2 or ..   ignored; calling routine is free to interpret', advance='yes' )
        call output( ' ', advance='yes' )
        call output( 'An exception is the behavior of w (wholearray):', advance='yes' )
@@ -2069,7 +2058,6 @@ contains
     call writeIntsToChars( myWidth, intChars )
     tabRange = trim(tabRange) // '+' // intChars
     call setTabs( range=tabRange )
-    ! call dumpTabs
     n2 = 0
     do line=1, nLines
       n1 = n2 + 1
@@ -2085,7 +2073,6 @@ contains
     ! Reset tabs
     call newLine
     call resetTabs
-    ! call dumpTabs
   end subroutine dumpLists_ints
 
   ! -----------------------------------  dumpNamedValues  -----
@@ -2362,10 +2349,7 @@ contains
     ! Local variables
     integer                                  :: i
     integer, dimension(size(array)-1) :: increment
-    logical :: myWaves
     ! Executable
-    myWaves = .false.
-    if ( present(waves) ) myWaves = waves
     if ( size(array) < 2 ) return
     do i=2, size(array)
       increment(i-1) = array(i) - array(i-1)
@@ -3063,6 +3047,7 @@ contains
     myClean      = theDefault('clean') ! .false.
     myCollapse   = theDefault('collapse') ! .false.
     myCyclic     = theDefault('cyclic') ! .false.
+    myDirect     = theDefault('direct') ! .false.
     myGaps       = theDefault('gaps')
     myLaconic    = theDefault('laconic')
     myNaNs       = theDefault('nans')
@@ -3339,6 +3324,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.126  2013/06/19 23:14:39  pwagner
+! Remove more unused stuff; give default value to myDirect
+!
 ! Revision 2.125  2013/01/10 00:18:43  pwagner
 ! Dumps with -N just show where NaNs are
 !
