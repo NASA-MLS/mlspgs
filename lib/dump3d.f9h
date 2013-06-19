@@ -30,10 +30,6 @@
     ! Executable
     call theDumpBegins ( options )
     myRank = 3
-    myFillValue = 0.d0
-    if ( present(FillValue) ) myFillValue=FillValue
-    MyWidth = 5
-    if ( present(width) ) MyWidth = width
     if ( myUnique ) then
       call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
         & elements, nUnique, counts )
@@ -61,6 +57,9 @@
 !    include 'dump3db.f9h'
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.9  2013/06/19 23:13:44  pwagner
+! Remove more unused stuff
+!
 ! Revision 2.8  2012/06/22 20:25:18  pwagner
 ! Specify advance arg because we may now set default to 'yes'
 !
