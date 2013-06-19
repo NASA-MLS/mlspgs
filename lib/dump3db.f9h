@@ -30,6 +30,8 @@
     base = 2
     if ( present(lbound) ) base = lbound + 1
     myOptions = DEFAULTDUMPOPTIONS
+    MyWidth = 5
+    if ( present(width) ) MyWidth = width
     if ( present(options) ) myOptions = options
     indx2BSliced = 0
     if ( optiondetail( myOptions, 'W' ) /= 'no' ) then
@@ -147,6 +149,9 @@
    call theDumpEnds
 ! end subroutine DUMP_3D_DOUBLE
 ! $Log$
+! Revision 2.7  2013/06/19 23:13:44  pwagner
+! Remove more unused stuff
+!
 ! Revision 2.6  2013/06/19 20:44:28  pwagner
 ! Now obeys -W[n] option
 !
