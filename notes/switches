@@ -89,6 +89,7 @@ Switches (set by -S option in mlsl2's command line):
   NEQ =>    Normal equations during Newton iterations
   nin =>    Turn on Newton Method's internal output
   nl2cf  => Don't assume there was an l2cf; e.g.  when dumping quantity templates
+  nmono  => Don't bomb, just warn if geodetic angle phi isn't monotonic
   nodb =>   Subvert the DumpBlocks command
   norf =>   Default for Phi refractive correction in forward model is .false.
   nwt =>    Action flag at each return from Newton solver
@@ -188,6 +189,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.83  2013/05/21 23:53:21  vsnyder
+ Revise hphi, metd, and mhpx
+
  Revision 1.82  2013/05/17 22:53:21  vsnyder
  Revise beta dump switches
 
