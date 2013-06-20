@@ -64,8 +64,8 @@ module ChunkDivide_m
 !    *MLSFile_T filedatabase(:), *mlSChunk_T Chunks(:) )
 ! DestroyChunkDatabase (*mlSChunk_T Chunks(:) )
 ! === (end of api) ===
-  public :: ChunkDivide, CFM_ChunkDivide, &
-    & DestroyChunkDatabase, ReduceChunkDatabase
+  public :: CHUNKDIVIDE, CFM_CHUNKDIVIDE, &
+    & DESTROYCHUNKDATABASE, REDUCECHUNKDATABASE
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -73,7 +73,7 @@ module ChunkDivide_m
   private :: not_used_here
   !---------------------------------------------------------------------------
 
-  public :: ChunkDivideConfig_T
+  public :: CHUNKDIVIDECONFIG_T
   ! This type is filled by the l2cf and describes the configuration of the
   ! chunk division process.
   type ChunkDivideConfig_T
@@ -123,7 +123,7 @@ module ChunkDivide_m
   !
   ! Even - Hope to have chunks all about the same length, as quoted.
 
-  type(ChunkDivideConfig_T), public, save :: ChunkDivideConfig
+  type(ChunkDivideConfig_T), public, save :: CHUNKDIVIDECONFIG
 
   type MAFRange_T
     integer, dimension(2) :: L1BCover ! Range found in L1B files
@@ -131,7 +131,7 @@ module ChunkDivide_m
     integer, dimension(2) :: Expanded ! L2Cover plus prior/post overlaps
   end  type MAFRange_T
 
-  public :: Obstruction_T
+  public :: OBSTRUCTION_T
   ! This type describes obstructions in the Level 1 data which will affect the
   ! selection of chunk divisions.
   type Obstruction_T
@@ -148,9 +148,7 @@ module ChunkDivide_m
   end interface
 
   logical, parameter :: CHECKFORSHAREDMAFS = .true.
-  logical, parameter :: CHECKFORMAFSINRANGE = .true.
-  logical, parameter :: CHECKFORNONNEGOVLPS = .true.
-  logical, parameter :: BOMBIFPHINOTMONO = .true.
+  integer, parameter :: SEVERITYIFPHINOTMONO = MLSMSG_Error
   logical, parameter :: DONTPAD = .true.
   integer :: swLevel ! How much extra debugging info to print (-1 means none)
   integer, parameter :: VERBOSETHRESHOLD = 1 ! was 0; turn on extra debugging
@@ -432,7 +430,6 @@ contains ! ===================================== Public Procedures =====
       integer :: MAXLENGTH                ! nint(config%maxLength)
       integer :: LOWEROVERLAP             ! nint(config%lowerOverlap)
       integer :: UPPEROVERLAP             ! nint(config%upperOverlap)
-      integer :: NONONOVERLAP             ! maxLength-2*overlap
 
       ! Executable code
       swlevel = switchDetail(switches, 'chu' )
@@ -443,7 +440,6 @@ contains ! ===================================== Public Procedures =====
       maxLength = nint ( ChunkDivideConfig%maxLength )
       lowerOverlap = nint ( ChunkDivideConfig%lowerOverlap )
       upperOverlap = nint ( ChunkDivideConfig%upperOverlap )
-      noNonOverlap = maxLength - ( lowerOverlap + upperOverlap )
       do i = 1, ChunkDivideConfig%noChunks
         chunks(i)%firstMAFIndex = max ( (i-1)*maxLength - lowerOverlap, 0 )
         chunks(i)%lastMAFIndex = i*maxLength + upperOverlap - 1
@@ -486,9 +482,7 @@ contains ! ===================================== Public Procedures =====
 
       real(r8) :: ANGLEINCREMENT          ! Increment in hunt for homeMAF
       real(r8) :: MAXANGLE                ! Of range in data
-      real(r8) :: MAXTIME                 ! Time range in data
       real(r8) :: MINANGLE                ! Of range in data
-      real(r8) :: MINTIME                 ! Time range in data
       real(r8) :: TESTANGLE               ! Angle to check for
 
       integer   ::                       l1b_hdf_version
@@ -528,8 +522,6 @@ contains ! ===================================== Public Procedures =====
 
       minAngle = minval ( tpGeodAngle%dpField(1,1,m1:m2) )
       maxAngle = maxval ( tpGeodAngle%dpField(1,1,m1:m2) )
-      minTime = minval ( taiTime%dpField(1,1,m1:m2) )
-      maxTime = maxval ( taiTime%dpField(1,1,m1:m2) )
 
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! First try to locate the last MAF before the homeGeodAngle
@@ -1948,12 +1940,11 @@ contains ! ===================================== Public Procedures =====
               & tpGeodAngle, noMAFsRead, flag, &
               & firstMAF=mafRange%Expanded(1), lastMAF=mafRange%Expanded(2), &
               & dontPad=DONTPAD )
-            if ( BOMBIFPHINOTMONO .and. &
-              & .not. ChunkDivideConfig%skipL1BCheck ) then
+            if ( .not. ChunkDivideConfig%skipL1BCheck ) then
               if ( .not. isMonotonic(tpGeodAngle%dpField(1,1,1:noMAFsRead) ) &
                 & ) then
-                call MLSMessage ( MLSMSG_Error, ModuleName, &
-                  & 'tpGeodAngle is not monotonic--must quit', MLSFile=L1BFile )
+                call MLSMessage ( PhiNotMonotonicFun(), ModuleName, &
+                  & 'tpGeodAngle is not monotonic--may quit', MLSFile=L1BFile )
               endif
             endif
             call smoothOutDroppedMAFs(tpGeodAngle%dpField, angleWasSmoothed, &
@@ -2011,6 +2002,18 @@ contains ! ===================================== Public Procedures =====
       ! Tidy up
       call DeallocateL1BData ( taiTime )
 
+    contains
+      function PhiNotMonotonicFun() result( SEVERITY )
+      ! Default severity (probably ERROR) can be reduced to a warning 
+      ! by adding -Snmono to command line
+      ! Args
+      integer :: SEVERITY
+      if ( switchDetail(switches,'nmono') > -1 ) then ! be lenient
+        severity = min( MLSMSG_Warning, severityifphinotmono )
+      else
+        severity = severityifphinotmono
+      endif
+      end function PhiNotMonotonicFun
     end subroutine SurveyL1BData
 
     ! ----------------------------------------- PruneObstructions -----
@@ -2673,6 +2676,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.101  2013/06/20 17:56:16  pwagner
+! -Snmono lets us warn, not quit if phi not monotonic
+!
 ! Revision 2.100  2013/05/21 22:50:24  pwagner
 ! Workaround for ifort13 bug
 !
