@@ -735,6 +735,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_maxGap, t+t_numeric, n+n_field_type, &
              begin, f+f_saveObstructions, t+t_boolean, n+n_field_type, &
              begin, f+f_skipL1BCheck, t+t_boolean, n+n_field_type, &
+             begin, f+f_crashIfPhiNotMono, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_Boolean, &
@@ -1844,6 +1845,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.569  2013/06/21 17:37:39  pwagner
+! /crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
+!
 ! Revision 2.568  2013/05/31 00:41:51  vsnyder
 ! Add geolocation field to fill
 !
