@@ -104,6 +104,7 @@ cost
 covariance
 covSansReg # Compute covariance matrix without regularization
 crashBurn
+crashIfPhiNotMono
 create
 criteria
 criticalBands
@@ -505,6 +506,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.232  2013/06/21 17:37:39  pwagner
+# /crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
+#
 # Revision 2.231  2013/06/20 22:24:12  vsnyder
 # Add Model_Plane_MIF
 #
