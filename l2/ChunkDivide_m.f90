@@ -17,8 +17,8 @@ module ChunkDivide_m
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use CHUNKS_M, only: MLSCHUNK_T, DUMP
   use DUMP_0, only: DUMP
-  use INIT_TABLES_MODULE, only: F_CRITICALBANDS, F_CRITICALMODULES, &
-      & F_CRITICALSIGNALS, &
+  use INIT_TABLES_MODULE, only: F_CRASHIFPHINOTMONO, &
+      & F_CRITICALBANDS, F_CRITICALMODULES, F_CRITICALSIGNALS, &
       & F_EXCLUDEPOSTOVERLAPS, F_EXCLUDEPRIOROVERLAPS, &
       & F_HOMEMODULE, F_HOMEGEODANGLE, &
       & F_MAXLENGTH, F_MAXORBY, F_METHOD, F_NOCHUNKS, F_NOSLAVES, &
@@ -103,6 +103,7 @@ module ChunkDivide_m
     real(rp)  :: maxGap = 0.0           ! Length of time/MAFs/orbits allowed for gap
     integer   :: maxGapFamily = PHYQ_Invalid ! PHYQ_MAF, PHYQ_Time etc.
     logical   :: skipL1BCheck = .false. ! Don't check for l1b data probs
+    logical   :: crashIfPhiNotMono = .false. ! If l1b contains non-monotonic phi
     logical   :: allowPriorOverlaps = .true. ! Use MAFs before start time
     logical   :: allowPostOverlaps = .true. ! Use MAFs after end time
     logical   :: saveObstructions = .true. ! Save obstructions for Output_Close
@@ -739,6 +740,12 @@ contains ! ===================================== Public Procedures =====
           if ( ChunkDivideConfig%skipL1BCheck ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to skip checking the l1b data for problems' )
+        case ( f_crashIfPhiNotMono )
+          ChunkDivideConfig%crashIfPhiNotMono = get_boolean ( fieldValue )
+          if ( ChunkDivideConfig%crashIfPhiNotMono ) &
+            & call MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'You have elected to crash if phi, the master geodetic angle, is' // &
+            & ' not monotonic' )
         case ( f_saveObstructions )
           ChunkDivideConfig%saveObstructions = get_boolean ( fieldValue )
           if ( ChunkDivideConfig%saveObstructions ) &
@@ -749,6 +756,11 @@ contains ! ===================================== Public Procedures =====
 
       ! Now check the sanity of what we've been given, this varies a bit
       ! depending on the method
+      if ( ChunkDivideConfig%skipL1BCheck .and. &
+        & ChunkDivideConfig%crashIfPhiNotMono ) &
+        & call MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'How can we check if phi, the master geodetic angle, is' // &
+            & ' not monotonic when we skip checking the l1B file?' )
       select case ( ChunkDivideConfig%method )
       case ( l_fixed )
         needed => NeededForFixed
@@ -2004,14 +2016,15 @@ contains ! ===================================== Public Procedures =====
 
     contains
       function PhiNotMonotonicFun() result( SEVERITY )
-      ! Default severity (probably ERROR) can be reduced to a warning 
-      ! by adding -Snmono to command line
+      ! Default severity (probably ERROR) incurred
+      ! if config options set the crashIfPhiNotMono flag
       ! Args
       integer :: SEVERITY
-      if ( switchDetail(switches,'nmono') > -1 ) then ! be lenient
-        severity = min( MLSMSG_Warning, severityifphinotmono )
-      else
+      ! if ( switchDetail(switches,'nmono') > -1 ) then ! be lenient
+      if ( ChunkDivideConfig%crashIfPhiNotMono ) then ! be lenient
         severity = severityifphinotmono
+      else
+        severity = min( MLSMSG_Warning, severityifphinotmono )
       endif
       end function PhiNotMonotonicFun
     end subroutine SurveyL1BData
@@ -2676,6 +2689,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.102  2013/06/21 17:37:38  pwagner
+! /crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
+!
 ! Revision 2.101  2013/06/20 17:56:16  pwagner
 ! -Snmono lets us warn, not quit if phi not monotonic
 !
