@@ -117,6 +117,8 @@
   integer, public, parameter :: MLSMSGSTATUS_Stopped = MLSMSGSTATUS_Suppressed + 1
   integer, public, parameter :: MLSMSGSTATUS_Dumped = MLSMSGSTATUS_Stopped + 1
 
+  ! If we are asked to exit, exit with this status instead of using Fortran STOP
+  integer, public, parameter :: DEFAULTSTOPEXITSTATUS = 0
   ! So that we may limit the number of times warnings printed, messagewise
   character(len=*), parameter :: WARNINGSSUPPRESSED = '(No more warnings of this)'
   integer, parameter :: MAXNUMWARNINGS = 40 ! was 80, but most tests < 10
@@ -212,7 +214,7 @@
   end type MLSMessageConfig_T
 
   ! This variable describes the configuration
-  type (MLSMessageConfig_T), public, save :: MLSMessageConfig
+  type (MLSMessageConfig_T), public, save :: MLSMESSAGECONFIG
   
   ! The following can be used to help trace the sequence of calls that led
   ! to an error; 
@@ -232,19 +234,20 @@
     character(len=2048) :: Txt ! All the names, strung together
     integer :: Ind(0:100) = 0  ! Ind(i) is end of ith name
     integer :: Top = 0         ! Top of the stack, index into Ind
+    logical :: verbose = .false.
   end type MLSCallStack_t
-  type(MLSCallStack_t), public, save :: MLSCallStack
+  type(MLSCallStack_t), public, save :: MLSCALLSTACK
   
   ! Public procedures
-  public :: dumpConfig, restoreConfig
-  public :: MLSMessage, MLSMessage_, MLSMessageSetup, MLSMessageClose
-  public :: MLSMessageExit, MLSMessageInquire, MLSMessageInternalFile
-  public :: MLSMessageReset, PVMErrorMessage
-  public :: ReportTKStatus
-  public :: MLSMessageCalls, StopWithErrorMsg, SummarizeWarnings
+  public :: DUMPCONFIG, RESTORECONFIG
+  public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESETUP, MLSMESSAGECLOSE
+  public :: MLSMESSAGEEXIT, MLSMESSAGEINQUIRE, MLSMESSAGEINTERNALFILE
+  public :: MLSMESSAGERESET, PVMERRORMESSAGE
+  public :: REPORTTKSTATUS
+  public :: MLSMESSAGECALLS, STOPWITHERRORMSG, SUMMARIZEWARNINGS
 
-  interface MLSMessage
-    module procedure MLSMessage_
+  interface MLSMESSAGE
+    module procedure MLSMESSAGE_
   end interface
 
 contains
@@ -468,6 +471,7 @@ contains
   ! possible commands are 
   ! 'push'    push a new name onto MLSCallStack
   ! 'pop'     pop the last name off
+  ! 'top'     just return the last name
   ! 'clear'   clear the stack
   ! 'print'   print its contents as a single line
   ! 'dump'    print a walkback, one name per line, top to bottom
@@ -475,10 +479,10 @@ contains
   ! 'length'  return the total length taken by the elements on the stack
   ! 'remain'  return the total length remaining before the stack is full
   
-  ! Every command except 'print', '[r]dump', 'depth', 'length',
+  ! Every command except 'print', '[r]dump', 'depth', 'length', 'top',
   ! and 'remain' change the stack
   ! '[r]push' requires name as an input arg
-  ! '[r]pop', and '[r]dump' produce the topmost name as an output arg
+  ! '[r]pop', 'top', and '[r]dump' produce the topmost name as an output arg
   ! 'depth', 'length', and 'remain' produce coded a integer name as output arg
   ! e.g, '1249'
 
@@ -522,18 +526,21 @@ contains
       end if
       MLSCallStack%ind(MLSCallStack%top) = MLSCallStack%ind(MLSCallStack%top-1) + m
       MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top-1)+1:) = myName(:m) ! clear the rest
-    case ( 'pop' )
+    case ( 'pop', 'top' )
       if ( present(name) ) then
         if ( MLSCallStack%top < 0 ) then
           name = "Stack underflow"
         else if ( MLSCallStack%top >= ubound(MLSCallStack%ind,1) ) then
           name = "Stack overflow"
         else
-          name = MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top)+1: &
-                                  MLSCallStack%ind(MLSCallStack%top+1))
+          ! name = MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top)+1: &
+          !                        MLSCallStack%ind(MLSCallStack%top+1))
+          m = min(MLSCallStack%top,ubound(MLSCallStack%ind,1)) + 1
+          name = MLSCallStack%txt(MLSCallStack%ind(m-2)+1: &
+                                    MLSCallStack%ind(m-1))
         end if
       end if
-      MLSCallStack%top = MLSCallStack%top - 1
+      if ( command == 'pop' ) MLSCallStack%top = MLSCallStack%top - 1
     case ( 'clear' )
       MLSCallStack%txt = ' '
       MLSCallStack%top = 0
@@ -563,6 +570,7 @@ contains
       ! Unrecognized command--we'll ignore it
       if ( present(name) ) name = "What?"
     end select
+    if ( MLSCallStack%verbose .and. command /= 'dump' ) call dumpStack
 
   contains
     subroutine DumpStack ( What )
@@ -712,6 +720,7 @@ contains
         end if
       end if
       call MLSMessageClose
+      if ( status == 1 .and. MLSMessageConfig%CrashOnAnyError ) call crash_burn
       call exit_with_status ( status  )
     else
       if(present(farewell)) then
@@ -723,7 +732,10 @@ contains
         end if
       end if
       call MLSMessageClose
-      stop
+      ! stop
+      mesg='exit with default status'
+      call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
+      call exit_with_status ( DEFAULTSTOPEXITSTATUS )
     end if
   end subroutine MLSMessageExit
 
@@ -921,7 +933,7 @@ contains
     integer, intent(in)           :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
-    character(len=*) ::              Line
+    character(len=*)              :: Line
     integer                       :: line_len
     ! Assemble a full message line
 
@@ -949,8 +961,18 @@ contains
         line(line_len+3:) = snipRCSFrom ( moduleNameIn )
         line_len = len_trim(line) + 3
         line(line_len-2:line_len-1) = '):'
+      elseif ( severity >= MLSMessageConfig%skipSeverityThr ) then
+        line_len = len_trim(line) + 1
+        line(line_len:line_len) = ':'
       end if
     end if
+    ! Make sure that we don't start prefixing with a blank
+    if ( any( severity >= &
+      & (/MLSMessageConfig%skipModuleNamesThr, MLSMessageConfig%skipSeverityThr/) &
+      & ) .and. line(1:1) == ' ' ) then
+      line_len = line_len - 1
+      line(1:line_len) = line(2:line_len+1)
+    endif
     line(line_len+1:) = message
     line_len = line_len + len(message) ! Not len_trim, so we can get
     ! trailing blanks into a part of a message.  If there are trailing
@@ -1161,6 +1183,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.22  2013/06/28 18:15:51  pwagner
+! Eliminate bare stop; enhance call stack; treat each of line prefixes (severity, name) separately
+!
 ! Revision 2.21  2012/08/21 23:52:32  pwagner
 ! Removed comments about non-existent function; MaxModuleNameLength made adequate
 !
