@@ -78,6 +78,8 @@ Switches (set by -S option in mlsl2's command line):
   log[n] => Print most Log file messages only to stdout, not toolkit log
   mach =>   Machine names (that can be enslaved by master task)
   mas =>    Activities between the PVM master task and slave task
+  mess[n] => How to prefix log messages: with
+             (0) none, (1) severity, (2) module names, (3) both (actually the default)
   metd[n] => Dump nonoptional outputs from metrics, stop if n > 0
   mhpx[n] => Dump information about H/Phi failure, stop if n > 0
   msk =>    Mask set up by subset command in Retrieve
@@ -93,6 +95,7 @@ Switches (set by -S option in mlsl2's command line):
   norf =>   Default for Phi refractive correction in forward model is .false.
   nwt =>    Action flag at each return from Newton solver
   opt[n] => Print command line options 
+  parent => use parent name when prefixing log with module name
   pcf[n] => open init params obtained from pcf, info on l1b files 
   pfab =>   Dump PFA Betas
   pfaB =>   pfab + temperature and pressure grids
@@ -188,6 +191,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.85  2013/06/21 17:37:39  pwagner
+ /crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
+
  Revision 1.84  2013/06/20 22:39:45  pwagner
  -Snmono lets us warn, not quit if phi not monotonic
 
