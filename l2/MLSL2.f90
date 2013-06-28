@@ -43,9 +43,9 @@ program MLSL2
     & SECTIONSTOSKIP, SHOWDEFAULTS, SLAVEMAF, TIMING
   use MLSL2TIMINGS, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, MLSMSG_DEBUG, &
-    & MLSMSG_ERROR, MLSMSG_SEVERITY_TO_QUIT, &
-    & MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT, STDOUTLOGUNIT
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_DEBUG, &
+    & MLSMESSAGECONFIG, MLSMSG_ERROR, MLSMSG_SEVERITY_TO_QUIT, &
+    & MLSMSG_SUCCESS, MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT, STDOUTLOGUNIT
   use MLSPCF2 ! EVERYTHING
   use MLSSTRINGS, only: TRIM_SAFE
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, &
@@ -234,18 +234,35 @@ program MLSL2
   else if (parallel%slave) then
      outputOptions%prunit = STDOUTPRUNIT   ! output sent only to stdout, not logged
   end if
-
   i = SwitchDetail(switches, 'log')
   if( i == 0 .or. i > 5 .or. .not. toolkit ) then
      MLSMessageConfig%LogFileUnit = STDOUTLOGUNIT  ! -1
-  ! else
-    !  MLSMessageConfig%LogFileUnit = DEFAULTLOGUNIT ! -2
   end if
   if ( i > 9 ) then
     MLSMessageConfig%MaxModuleNameLength   = i - 10
     MLSMessageConfig%MaxSeverityNameLength = i - 10
   endif
-  
+
+  ! Dont log parent module names unless asked by -Sparent
+  outputOptions%logparent = ( SwitchDetail(switches, 'parent') > -1 ) 
+  ! How to prefix logged messages?
+  i = SwitchDetail(switches, 'mess')
+  select case (i)
+  case (0)
+    ! Skip writing module names, severity to log file for routine output
+    MLSMessageConfig%skipModuleNamesThr = MLSMSG_Warning
+    MLSMessageConfig%skipSeverityThr    = MLSMSG_Warning
+  case (1)
+    ! Skip writing module names to log file for routine output
+    MLSMessageConfig%skipModuleNamesThr = MLSMSG_Warning
+  case (2)
+    ! Skip writing severity to log file for routine output
+    MLSMessageConfig%skipSeverityThr    = MLSMSG_Warning
+  case default
+    ! Write both module names, severity to log file for routine output
+    MLSMessageConfig%skipModuleNamesThr = MLSMSG_Success
+    MLSMessageConfig%skipSeverityThr    = MLSMSG_Success
+  end select
   section_times = sectiontimes
   total_times = totaltimes
 
@@ -257,6 +274,7 @@ program MLSL2
     parallel%master = .false.
     parallel%slave = .false.
     parallel%chunkRange = '1'
+    stopWithError = .false.
     ! Issue warning about l2pc files
     call MLSMessage ( MLSMSG_Warning, ModuleName, &
     & 'checkPaths will fail if l2pc files only on local disks but master runs' &
@@ -272,6 +290,7 @@ program MLSL2
     iChunks = 0
   endif
 
+  outputOptions%parentName = 'MLSL2'
   ! If sharing a single PCF with level 1, we need to move any "mobile" PCF ids
   if ( sharedPCF ) call MovePCFIDs
   ! Setup the parallel stuff.  Register our presence with the master if we're a
@@ -349,12 +368,6 @@ program MLSL2
     do j=1, size(current_version_id)
       call output(trim(current_version_id(j)), advance='yes')
     end do
-    call output('Version built for  ', advance='no')
-    if ( .true. ) then ! SIPS_VERSION
-      call output('S I P S', advance='yes')
-    else
-      call output('S C F', advance='yes')
-    end if
     ! Don't dump_settings more than once
     if ( .not. parallel%slave ) call dump_settings
   end if
@@ -473,7 +486,7 @@ program MLSL2
     else if ( error == 0 ) then
       call Deallocate_filedatabase(filedatabase)
       call output('Deallocated filedatabase', advance='yes')
-      if ( .not. parallel%slave) then
+      if ( .not. parallel%slave ) then
         call mls_h5close(error)
         call output('Closed hdf5 library', advance='yes')
       else
@@ -672,17 +685,17 @@ contains
 
   ! ---------------------------------------------  announce_success  -----
   subroutine announce_success ( Name, unit_number )
-    character(LEN=*), intent(in)   :: Name
+    character(len=*), intent(in)   :: Name
     integer, intent(in)            :: unit_number
 
     call output ( 'Level 2 configuration file ' )
-    call output ( 'name : ' )
-    call blanks(4)
-    call output ( trim(Name), advance='no')
-    call blanks(10)
     call output ( 'unit number : ' )
     call blanks(4)
-    call output ( unit_number, advance='yes')
+    call output ( unit_number, advance='no')
+    call blanks(10)
+    call output ( 'name : ' )
+    call blanks(4)
+    call output ( trim(Name), advance='yes')
   end subroutine announce_success
 
 !-----------------------------------------------------------------------
@@ -698,6 +711,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.192  2013/06/28 19:18:42  pwagner
+! -Smess[n] and -Sparent switches; other tweaks to output
+!
 ! Revision 2.191  2013/02/12 18:14:38  pwagner
 ! Removed SIPS_VERSION
 !
