@@ -270,6 +270,7 @@ module OUTPUT_M
     integer :: nArrayElmntsPerLine = 7
     integer :: nBlanksBtwnElmnts   = 3
     logical :: BUFFERED            = .true.
+    logical :: LOGPARENT           = .false. ! Show who called output, not output
     logical :: SKIPMLSMSGLOGGING   = .false.
     logical :: usePatternedBlanks  = .true. ! Use patterns for special fillChars
     character(len=9) :: specialFillChars = '123456789'
@@ -289,6 +290,7 @@ module OUTPUT_M
     character(len=3)  :: advanceDefault = 'no' ! if advance=.. missing
     character(len=12) :: sdFormatDefault = '*' ! * means default format spec
     character(len=1)  :: arrayElmntSeparator = ' '
+    character(len=12) :: parentName = "$RCSfile$"
   end type
   
   type(outputOptions_T), public, save :: OUTPUTOPTIONS
@@ -608,8 +610,6 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
-    character(len=*), parameter :: BLANKSPACE = &
-    '                                                                    '
     integer :: I    ! Blanks to write in next WRITE statement
     logical :: lineup
     integer :: ntimes
@@ -673,8 +673,6 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
-    character(len=*), parameter :: BLANKSPACE = &
-    '                                                                    '
     ! Executable
     if ( ATCOLUMNNUMBER >= COLUMN ) return
     call blanks( COLUMN-ATCOLUMNNUMBER, fillChar, advance, dont_stamp )
@@ -728,6 +726,8 @@ contains
     call outputNamedValue ( 'buffered?', options%buffered, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'skip MLSMsg logging?', options%SKIPMLSMSGLOGGING, advance='yes', &
+      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+    call outputNamedValue ( 'log Parent Name?', options%logParent, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'use patterned blanks?', options%usePatternedBlanks, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -1567,10 +1567,18 @@ contains
       if ( my_adv == 'yes' ) n_chars = max(n_chars, 1)
       if ( n_chars < 1 ) then
       elseif ( present(from_where)  ) then
-        call MLSMessage ( outputOptions%MLSMSG_Level, from_where, my_chars(1:n_chars), &
+        call MLSMessage ( outputOptions%MLSMSG_Level, from_where, &
+          & my_chars(1:n_chars), &
+          & advance=my_adv )
+      elseif ( outputOptions%logParent ) then
+        call MLSMessage ( outputOptions%MLSMSG_Level, &
+          & outputOptions%parentName, &
+          & my_chars(1:n_chars), &
           & advance=my_adv )
       else
-        call MLSMessage ( outputOptions%MLSMSG_Level, ModuleName, my_chars(1:n_chars), &
+        call MLSMessage ( outputOptions%MLSMSG_Level, &
+          & ModuleName, &
+          & my_chars(1:n_chars), &
           & advance=my_adv )
       end if
     elseif ( outputOptions%prunit ==  OUTPUTLINESPRUNIT ) then
@@ -1827,9 +1835,7 @@ contains
     character(len=*), intent(in), optional :: FORMAT
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
-    character(len=3) :: MY_ADV
     integer :: I ! loop inductor
-    my_adv = Advance_is_yes_or_no(advance)
     do i = 1, size(values)
       call output ( values(i), advance='no', format=format, logFormat=logFormat )
       if ( i < size(values) ) then
@@ -1912,9 +1918,7 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FORMAT
     logical, optional, intent(in) :: DONT_STAMP
-    character(len=3) :: MY_ADV
     integer :: I ! loop inductor
-    my_adv = Advance_is_yes_or_no(advance)
     do i = 1, size(integers)
       call output ( integers(i), advance='no', format=format )
       if ( i < size(integers) ) then
@@ -2035,8 +2039,6 @@ contains
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     integer :: I ! loop inductor
-    character(len=3) :: MY_ADV
-    my_adv = Advance_is_yes_or_no(advance)
     do i = 1, size(values)
       call output ( values(i), advance='no', format=format, logFormat=logFormat )
       if ( i < size(values) ) then
@@ -2244,6 +2246,7 @@ contains
     outputOptions%nBlanksBtwnElmnts    = 3
     outputOptions%BUFFERED             = .true.
     outputOptions%SKIPMLSMSGLOGGING    = .false.
+    outputOptions%logParent            = .false.
     outputOptions%usePatternedBlanks   = .true. 
     outputOptions%specialFillChars     = '123456789'
     outputOptions%patterns             = (/ & ! on consecutive lines
@@ -2426,14 +2429,11 @@ contains
     logical, intent(in), optional          :: DATE  ! Include date with time
     !
     logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
-    logical :: my_dont_log
     character(len=8) :: my_style
     character(len=3) :: MY_ADV
     logical  ::         myDate
     !
     my_adv = Advance_is_yes_or_no(advance)
-    my_dont_log = outputOptions%skipmlsmsglogging ! .false.
-    if ( present(dont_log) ) my_dont_log = dont_log
     my_style = timeStampOptions%Timestampstyle
     if ( present(style) ) my_style = lowercase(style)
     myDate = timeStampOptions%showDate
@@ -2852,6 +2852,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.101  2013/06/28 17:53:44  pwagner
+! logParent, parentName added to show who called output module
+!
 ! Revision 2.100  2013/06/14 01:26:11  vsnyder
 ! Use FLUSH to unbuffer output
 !
