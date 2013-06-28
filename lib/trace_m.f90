@@ -39,7 +39,7 @@ contains ! ====     Public Procedures     ==============================
 
     use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
-    use OUTPUT_M, only: DUMPSIZE, OUTPUT
+    use OUTPUT_M, only: OUTPUTOPTIONS, DUMPSIZE, OUTPUT
     use TIME_M, only: TIME_NOW
     use TREE, only: DUMP_TREE_NODE
 
@@ -79,6 +79,7 @@ contains ! ====     Public Procedures     ==============================
       & advance='yes' )
     depth = depth + 1
     call MLSMessageCalls( 'push', constantName=Name )
+    outputOptions%parentName = Name
     if ( switchDetail( MLSNamesAreDebug, Name, options='-fc' ) > -1 .and. &
       & .not. MLSDebug ) then
       PreviousDebug = MLSDebug
@@ -96,7 +97,7 @@ contains ! ====     Public Procedures     ==============================
 
     use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
-    use OUTPUT_M, only: DUMPSIZE, NEWLINE, OUTPUT
+    use OUTPUT_M, only: OUTPUTOPTIONS, DUMPSIZE, NEWLINE, OUTPUT
     use TIME_M, only: TIME_NOW
 
     character(len=*), intent(in) :: NAME
@@ -104,6 +105,7 @@ contains ! ====     Public Procedures     ==============================
     double precision :: Delta ! memory
     integer :: I              ! Loop inductor
     character(len=10) :: Now  ! For Date_and_time
+    character(32) :: PARENTNAME
     integer :: Values(8)      ! For Date_and_time
     real :: T                 ! For timing
     character(12) :: Used     ! For timing
@@ -140,6 +142,8 @@ contains ! ====     Public Procedures     ==============================
     end if
     call newLine
     call MLSMessageCalls( 'pop' )
+    call MLSMessageCalls( 'top', parentName )
+    outputOptions%parentName = parentName
     if ( switchDetail( MLSNamesAreDebug, Name, options='-fc' ) > -1 ) then
       MLSDebug = PreviousDebug
     endif
@@ -191,6 +195,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.22  2013/06/28 18:06:14  pwagner
+! Automatically set parentName
+!
 ! Revision 2.21  2012/05/24 01:35:59  vsnyder
 ! Clean up output
 !
