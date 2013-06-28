@@ -605,9 +605,10 @@ contains ! ===================================== Public Procedures =====
         & (/ f_noChunks, f_overlap, f_noSlaves, f_scanLowerLimit, &
         &    f_scanUpperLimit, f_criticalModules, f_maxGap /)
 
-      integer, target, dimension(6) :: NeededForOrbital = &
+      integer, target, dimension(5) :: NeededForOrbital = &
         & (/ f_maxLength, f_overlap, f_homeModule, f_homeGeodAngle, &
-        &    f_criticalModules, f_maxGap /)
+        &    f_maxGap /)
+        ! &    f_criticalModules, f_maxGap /)
       integer, target, dimension(1) :: NotWantedForOrbital = &
         & (/ f_noSlaves /)
 
@@ -1477,8 +1478,8 @@ contains ! ===================================== Public Procedures =====
 
     ! ----------------------------------------- NoteL1BRADChanges -----
     subroutine NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
-      use MLSSIGNALS_M, only: DUMPSIGNALS=>DUMP, GETSIGNALNAME, &
-        & SIGNALS
+      use MLSSIGNALS_M, only: DUMPSIGNALS=>DUMP, GETSIGNALINDEX, GETSIGNALNAME, &
+        & GETNAMEOFSIGNAL, SIGNALS
       use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, GETSTRINGELEMENT
       use MLSSTRINGS, only: LOWERCASE
       use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -1501,6 +1502,7 @@ contains ! ===================================== Public Procedures =====
       logical :: choseCriticalSignals
       integer :: critical_index
       character(len=40) :: critical_module_str
+      integer, dimension(:), pointer            :: criticalIndices => null() ! taken from config or criticalModules
       character(len=160), dimension(:), pointer :: criticalSignals => null() ! taken from config or criticalModules
       integer :: critical_sub_index
       integer, pointer, dimension(:) :: goods_after_gap
@@ -1549,11 +1551,11 @@ contains ! ===================================== Public Procedures =====
       nullify ( signals_buffer, goods_after_gap, goodness_changes )
       call allocate_test( &
         & signals_buffer, nmafs , size(signals), &
-        & 'signals_buffer', ModuleName)
+        & 'signals_buffer', ModuleName )
       call allocate_test( goods_after_gap, nmafs,&
-        & 'goods_after_gap', ModuleName)
+        & 'goods_after_gap', ModuleName )
       call allocate_test( goodness_changes, nmafs,&
-        & 'goodness_changes', ModuleName)
+        & 'goodness_changes', ModuleName )
       good_signals_now = .false.   ! Initializing
       signals_buffer = .false.
       if ( associated(ChunkDivideConfig%criticalSignals) ) then
@@ -1564,12 +1566,27 @@ contains ! ===================================== Public Procedures =====
         call chooseCriticalSignals( criticalSignals )
         choseCriticalSignals = .true.
       endif
+      ! We'll need the index number for each of the critical signals
+      call allocate_test( criticalIndices, size(criticalSignals),&
+        & 'critical indices', ModuleName )
+      do critical_index = 1, size(criticalSignals)
+        call GetSignalIndex( criticalSignals(critical_index), &
+          & criticalIndices(critical_index) )
+        if ( swLevel < VERBOSETHRESHOLD ) cycle
+        call outputnamedValue( 'critical signal string', criticalSignals(critical_index) )
+        call outputnamedValue( 'its index', criticalIndices(critical_index) )
+      enddo
+      if ( swLevel >= VERBOSETHRESHOLD ) then
+        ! call dumpSignals( signals )
+        call GetNameOfSignal ( signals(1), signal_str )
+        call outputnamedValue( 'signal(1)%name', signal_str )
+        call dump( criticalSignals, 'criticalSignals' )
+        call dump( criticalIndices, 'criticalIndices' )
+      endif
       do signalIndex=1, size(signals)
-        if ( swLevel >= VERBOSETHRESHOLD ) call dumpSignals( signals(signalIndex) )
         call get_string( lit_indices(ChunkDivideConfig%criticalModules), signal_full, &
           & strip=.true. )
         critical_module_str = lowercase(signal_full)
-        if ( swLevel >= VERBOSETHRESHOLD ) call outputNamedValue( 'critical module', critical_module_str )
         call get_string( modules(signals(signalIndex)%instrumentModule)%name, signal_full, &
           & strip=.true. )
         module_str = lowercase(signal_full)
@@ -1578,7 +1595,11 @@ contains ! ===================================== Public Procedures =====
           ! No module is critical for signal data being good
         elseif ( module_str /= critical_module_str ) then
           cycle
+        elseif ( .not. any(signalIndex == criticalIndices) ) then
+          cycle
         endif
+        if ( swLevel >= VERBOSETHRESHOLD ) call dumpSignals( signals(signalIndex) )
+        if ( swLevel >= VERBOSETHRESHOLD ) call outputNamedValue( 'critical module', critical_module_str )
         if ( nmafs <= MAXMAFSINSET ) then
           good_signals_now(signalIndex) = &
             & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
@@ -1608,9 +1629,11 @@ contains ! ===================================== Public Procedures =====
       num_goodness_changes = 0
       num_goods_after_gap = 0
       howlong_nogood       = 0
+      good_after_maxgap = .false.
       do maf = mafRange%Expanded(1), mafRange%Expanded(2)
         maf_index = maf - mafRange%Expanded(1) + 1
         do signalIndex=1, size(signals)
+          if ( .not. any(signalIndex == criticalIndices) ) cycle
           good_signals_now(signalIndex) = signals_buffer(maf_index, signalIndex)
           if ( .not. good_signals_now(signalIndex) ) &
             & howlong_nogood(signalIndex) = howlong_nogood(signalIndex) + 1
@@ -1632,6 +1655,7 @@ contains ! ===================================== Public Procedures =====
         endif
         good_signals_last = good_signals_now
       enddo
+      call outputNamedValue( 'num_goods_after_gap', num_goods_after_gap )
 
       ! Task (2): Find regions where there is no signal among at least one
       ! of the critical signals
@@ -1721,15 +1745,15 @@ contains ! ===================================== Public Procedures =====
         enddo
         if ( swLevel >= VERBOSETHRESHOLD ) call dump ( valids_buffer, 'valids_buffer' )
         if ( swLevel > -1 ) then
-        call outputNamedValue ( 'count(valids_buffer)', count(valids_buffer), advance='yes')
-        call output ( 'Before converting valids to obstructions', advance='yes' )
-        call dump(obstructions)
+          call outputNamedValue ( 'count(valids_buffer)', count(valids_buffer), advance='yes')
+          call output ( 'Before converting valids to obstructions', advance='yes' )
+          call dump(obstructions)
         endif
         call ConvertFlagsToObstructions ( valids_buffer, obstructions, &
           & mafRange%Expanded, obstructionType='critical radiances' )
         if ( swLevel > -1 ) then
-        call output ( 'After converting valids to obstructions', advance='yes' )
-        call dump(obstructions)
+          call output ( 'After converting valids to obstructions', advance='yes' )
+          call dump(obstructions)
         endif
         call deallocate_test(valids_buffer, 'valids_buffer', ModuleName)
         call deallocate_test(or_valids_buffer, 'or_valids_buffer', ModuleName)
@@ -1762,8 +1786,9 @@ contains ! ===================================== Public Procedures =====
       endif
       ! OK, we have the mafs where the goodness changes, now what?
       call deallocate_test( signals_buffer, 'signals_buffer', ModuleName )
-      call deallocate_test( goods_after_gap, 'goods_after_gap', ModuleName)
-      call deallocate_test( goodness_changes, 'goodness_changes', ModuleName)
+      call deallocate_test( goods_after_gap, 'goods_after_gap', ModuleName )
+      call deallocate_test( goodness_changes, 'goodness_changes', ModuleName )
+      call deallocate_test( criticalIndices, 'critical indices', ModuleName )
     end subroutine NoteL1BRADChanges
 
     ! --------------------------------- ConvertFlagsToObstructions -----
@@ -2689,6 +2714,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.103  2013/06/28 19:02:58  pwagner
+! criticalSignals may be used in place of criticalModules; it will be effective everywhere in marking obstructions
+!
 ! Revision 2.102  2013/06/21 17:37:38  pwagner
 ! /crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
 !
