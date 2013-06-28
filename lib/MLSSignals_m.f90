@@ -1223,8 +1223,12 @@ oc:       do
       return
     end if
     do signal_index=1, size(signals)
-      if ( signals(signal_index)%name > 0 ) then
+      if ( signals(signal_index)%name > 0 .and. .false. ) then
         call Get_String ( signals(signal_index)%name, string_test )
+        if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
+          & return
+      else
+        call GetNameOfSignal ( signals(signal_index), string_test )
         if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
           & return
       end if
@@ -1882,6 +1886,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.96  2013/06/28 18:10:45  pwagner
+! Correct erroneous GetSignalIndex; do we ever need signal_T%name?
+!
 ! Revision 2.95  2013/06/12 02:12:23  vsnyder
 ! Cruft removal
 !
