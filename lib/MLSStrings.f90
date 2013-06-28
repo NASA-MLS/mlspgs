@@ -1608,15 +1608,19 @@ contains
   ! encoded and used by level 2
   ! Any other usefulness would be purest serendipity
   ! (a tempting name for this subroutine, but for once
-  ! we succeeded in resisting temptation)
+  ! we succeeded in resisting temptation--for each 'serendipity' we
+  ! would have a thousand 'crudeButUsefulHack's)
 
   subroutine SplitDetails( str, switch, details )
     character(len=*), intent(in)           :: str
     character(len=*), intent(out)          :: switch
     integer, intent(out)                   :: details
     ! Local variables
-    character(len=*), parameter :: digits='1234567890'
+    character(len=*), parameter :: digits    = '1234567890'
+    character(len=*), parameter :: nondigits = 'abcdefghijklmnopqrstuvwxyz' // &
+      &                                        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     integer                     :: firstDigitPosition
+    integer                     :: lastNonDigitPosition
     ! Executable
     switch = ' '
     details = 0   ! If details is absent, this is its default
@@ -1629,8 +1633,18 @@ contains
       ! No switch present
       call readAnIntFromChars ( str, details )
     else
-      switch = str(:firstDigitPosition-1)
-      call readAnIntFromChars ( str(firstDigitPosition:), details )
+      ! OK, we can't naively assume what we found marks the switch detail start
+      ! because there might be internal digits in the switch, e.g. 'l1bread'
+      ! Therefore, we must determine the last non-digit position
+      lastNonDigitPosition = scan( str, nondigits, back=.true. )
+      firstDigitPosition = lastNonDigitPosition + 1
+      if ( firstDigitPosition > len_trim(str) ) then
+        ! No details present
+        switch = str
+      else
+        switch = str(:firstDigitPosition-1)
+        call readAnIntFromChars ( str(firstDigitPosition:), details )
+      endif
     endif
   end subroutine SplitDetails
 
@@ -2710,6 +2724,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.92  2013/06/28 23:56:47  pwagner
+! Fixed an old bug in SplitDetails
+!
 ! Revision 2.91  2013/06/17 21:35:26  pwagner
 ! You may specify better where stretch adds space
 !
