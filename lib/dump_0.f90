@@ -1001,6 +1001,16 @@ contains
     else if ( size(array) == 1 .and. base == 0 ) then
       call name_and_size ( name, myClean, 1 )
       call output ( array(1), advance='yes' )
+    else if ( all(array .eqv. .true.) ) then
+      call name_and_size ( name, myClean, size(array) )
+      call output ( ': all ', advance='no' )
+      call output( trim(arrayShapeToString(shape(array))), advance='no' )
+      call output( ' values are T', advance='yes' )
+    else if ( all(array .eqv. .false.) ) then
+      call name_and_size ( name, myClean, size(array) )
+      call output ( ': all ', advance='no' )
+      call output( trim(arrayShapeToString(shape(array))), advance='no' )
+      call output( ' values are F', advance='yes' )
     elseif ( myGaps ) then
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
@@ -1290,7 +1300,7 @@ contains
   end subroutine DUMP_2D_INTEGER
 
   ! --------------------------------------------  DUMP_2D_LOGICAL  -----
-  recursive subroutine DUMP_2D_LOGICAL ( ARRAY, NAME, OPTIONS, TheShape )
+  recursive subroutine DUMP_2D_LOGICAL ( ARRAY, NAME, OPTIONS, THESHAPE )
     logical, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: options
@@ -1313,6 +1323,16 @@ contains
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, options=options )
+    else if ( all(array .eqv. .true.) ) then
+      call name_and_size ( name, myClean, size(array), TheShape )
+      call output ( ': all ', advance='no' )
+      call output( trim(arrayShapeToString(shape(array))), advance='no' )
+      call output( ' values are T', advance='yes' )
+    else if ( all(array .eqv. .false.) ) then
+      call name_and_size ( name, myClean, size(array), TheShape )
+      call output ( ': all ', advance='no' )
+      call output( trim(arrayShapeToString(shape(array))), advance='no' )
+      call output( ' values are F', advance='yes' )
     else
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) .and. .not. mylaconic ) call newLine
@@ -1335,7 +1355,7 @@ contains
 
   ! -----------------------------------------------  DUMP_2D_REAL  -----
   recursive subroutine DUMP_2D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
     real, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
@@ -1441,7 +1461,7 @@ contains
 
   ! -----------------------------------------------  DUMP_3D_CHAR  -----
   subroutine DUMP_3D_CHAR ( ARRAY, NAME, FILLVALUE, WIDTH, &
-    & MAXLON, OPTIONS, TheShape )
+    & MAXLON, OPTIONS, THESHAPE )
     character(len=*), intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     character(len=*), intent(in), optional :: FILLVALUE
@@ -1517,7 +1537,7 @@ contains
 
   ! --------------------------------------------  DUMP_3D_COMPLEX  -----
   subroutine DUMP_3D_COMPLEX ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
     integer, parameter :: RK = kind(0.0e0)
     complex(rk), intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
@@ -1526,7 +1546,7 @@ contains
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: LBOUND
     character(len=*), intent(in), optional :: options
-    character(len=*), intent(in), optional :: TheShape
+    character(len=*), intent(in), optional :: THESHAPE
 
     integer :: Base, I, J, K, L
     integer :: NumZeroRows
@@ -1552,7 +1572,7 @@ contains
 
   ! -------------------------------------------  DUMP_3D_DCOMPLEX  -----
   subroutine DUMP_3D_DCOMPLEX ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
@@ -1587,7 +1607,7 @@ contains
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
   subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
@@ -1612,7 +1632,7 @@ contains
 
   ! --------------------------------------------  DUMP_3D_INTEGER  -----
   subroutine DUMP_3D_INTEGER ( ARRAY, NAME, &
-    & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
+    & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS, THESHAPE )
     integer, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: FILLVALUE
@@ -1640,7 +1660,7 @@ contains
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
   subroutine DUMP_3D_REAL ( ARRAY, NAME, &
-    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, THESHAPE )
     real, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
@@ -2796,7 +2816,7 @@ contains
   end function ILOG10
 
   ! ----------------------------------------------  Name_And_Size  -----
-  subroutine Name_And_Size ( Name, Clean, Size, TheShape )
+  subroutine Name_And_Size ( NAME, CLEAN, SIZE, THESHAPE )
     character(len=*), intent(in), optional :: Name
     logical, intent(in) :: Clean
     integer, intent(in) :: Size
@@ -3324,6 +3344,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.127  2013/06/28 18:08:38  pwagner
+! Note if all logical elements equal
+!
 ! Revision 2.126  2013/06/19 23:14:39  pwagner
 ! Remove more unused stuff; give default value to myDirect
 !
