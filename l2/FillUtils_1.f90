@@ -3906,19 +3906,19 @@ contains ! =====     Public Procedures     =============================
     ! If 5, they are divided among 3 groups: GHz, THz, and spacecraft
     
     ! radiances are named the same independent of hdf version
-    subroutine FromL1B ( root, quantity, chunk, filedatabase, &
-      & isPrecision, suffix, Geolocation, PrecisionQuantity, BOMask )
+    subroutine FromL1B ( ROOT, QUANTITY, CHUNK, FILEDATABASE, &
+      & ISPRECISION, SUFFIX, GEOLOCATION, PRECISIONQUANTITY, BOMASK )
       use BitStuff, only: NEGATIVEIFBITPATTERNSET
-      use Init_Tables_Module, only: L_Geocentric, L_Geodetic, L_None
-      integer, intent(in) :: root
+      use Init_Tables_Module, only: L_GEOCENTRIC, L_GEODETIC, L_NONE
+      integer, intent(in)                        :: ROOT
       type (VectorValue_T), INTENT(INOUT)        :: QUANTITY
       type (MLSChunk_T), INTENT(IN)              :: CHUNK
       type (MLSFile_T), dimension(:), pointer    :: FILEDATABASE
       logical, intent(in)                        :: ISPRECISION
       integer, intent(in)                        :: SUFFIX
-      integer, intent(in)                        :: Geolocation
+      integer, intent(in)                        :: GEOLOCATION
       type (VectorValue_T), INTENT(IN), optional :: PRECISIONQUANTITY
-      integer, intent(in), optional :: BOMask ! A pattern of bits--
+      integer, intent(in), optional              :: BOMASK ! A pattern of bits--
                                               ! set prec. neg. if matched
       ! Local variables
       integer                               :: BO_error
@@ -4167,7 +4167,7 @@ contains ! =====     Public Procedures     =============================
         & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
       end if
 
-      if ( switchDetail(switches, 'l1b') > -1 ) call Dump( l1bData )
+      if ( switchDetail(switches, 'l1bfill') > -1 ) call Dump( l1bData )
       call DeallocateL1BData(l1bData)
     9 if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_end ( 'FillUtils_1.FromL1B' )
@@ -7054,6 +7054,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.78  2013/06/29 00:18:04  pwagner
+! Changed switch to dump l1b fills to -Sl1bfill
+!
 ! Revision 2.77  2013/05/31 00:42:12  vsnyder
 ! Add geolocation field to fill, used only if method=l1b
 !
