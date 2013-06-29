@@ -32,10 +32,11 @@ module L1BData
     & MLSMSG_L1BREAD, MLSMSG_WARNING, &
     & MLSMESSAGE, MLSMESSAGECALLS
   use MLSSTRINGS, only: INDEXES, STREQ
-  use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS
+  use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, SWITCHDETAIL
   use MORETREE, only: GET_FIELD_ID
-  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE, RESUMEOUTPUT, SUSPENDOUTPUT
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
   use STRING_TABLE, only: GET_STRING
+  use TOGGLES, only: SWITCHES
   use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
 
   implicit NONE
@@ -1460,7 +1461,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: gap
     integer :: i
     integer :: indexOut
-    integer :: lastMAF
     integer :: cmindex
     integer :: current
     integer :: maf
@@ -1505,7 +1505,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     enddo
     ! Now hunt for missing MAFs
     maf = FirstMAFCtr
-    lastmaf = maf - 1
     indexOut = 0
     if ( DEEBug ) print *, 'size(l1bDataOut%counterMAF) ', size(l1bDataOut%counterMAF)
     do cmindex = 1, l1bDataIn%noMAFs
@@ -1643,6 +1642,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     myDontPad = .false.
     if ( present(firstMAF) ) myDontPad = .true.
     if ( present(dontPad) ) myDontPad = dontPad
+    if ( switchDetail(switches, 'l1bread') > -1 ) &
+      & call output( 'About to read L1B dataset %% ' // &
+      & trim(QuantityName) // &
+      & ' %%', advance='yes' )
 
     if ( myhdfVersion == HDFVERSION_4 ) then
       call ReadL1BData_MF_hdf4 ( L1BFile, trim(QuantityName), L1bData, &
@@ -1748,7 +1751,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, dimension(:), pointer :: STRIDE
 
     real(r4), pointer, dimension(:,:,:) :: tmpR4Field
-    logical :: isL2AUX
 
     ! Executable code
     L1FileHandle = L1BFile%FileID%f_id
@@ -1758,8 +1760,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     flag = 0
     MyNeverFail = .false.
     if ( present(NeverFail) ) MyNeverFail = NeverFail
-    isL2AUX = .false.
-    if ( present(l2AUX) ) isL2AUX = L2AUX
 
     ! Find data sets for counterMAF & quantity by name
 
@@ -2023,7 +2023,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: RANK
     integer :: CMRANK
     character(len=16) :: QTYPE
-    integer :: SDS1_ID
     integer :: STATUS
 
     integer(kind=hSize_t), dimension(:), pointer :: DIMS
@@ -2040,7 +2039,6 @@ contains ! ============================ MODULE PROCEDURES ======================
       MAFoffset = max(0, FirstMAF)   ! Never let this be < 0
     endif
     call deallocateL1BData ( l1bData ) ! Avoid memory leaks
-    sds1_id = 0
 
     flag = 0
     MyNeverFail = .false.
@@ -2130,7 +2128,6 @@ contains ! ============================ MODULE PROCEDURES ======================
       else
         if ( .not. isL2AUX ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Failed to find index of counterMAF data set.')
-        sds1_id = SD_NO_COUNTERMAF
         ! Since we aren't reading these, just make them internally consistent
         do i = 1, l1bData%noMAFs
           l1bData%counterMAF(i) = l1bData%firstMAF + i - 1
@@ -2676,6 +2673,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.96  2013/06/29 00:16:37  pwagner
+! Added -SL1bread switch
+!
 ! Revision 2.95  2013/05/31 00:40:31  vsnyder
 ! Make test for SC case insensitive
 !
