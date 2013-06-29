@@ -68,7 +68,8 @@ Switches (set by -S option in mlsl2's command line):
   jac =>    L_infty norms of Jacobian blocks during Newton iterations
   JAC[n] => Jacobian during Newton iterations with detail level n
   join =>   Intermediate steps while joining l2aux quantities
-  l1b =>    l1b quantities dumped (only when filled from)
+  l1bfill => l1b quantities dumped (only when filled from)
+  l1bread => note which l1b quantity names we read
   l2aux =>  l2aux quantities (all) dumped
   l2gp =>   l2gp swaths (all) dumped
   l2pc =>   l2pc reading progress dumped
@@ -191,6 +192,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.86  2013/06/28 18:17:06  pwagner
+ Added -Sparent and -Smess[n]
+
  Revision 1.85  2013/06/21 17:37:39  pwagner
  /crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
 
