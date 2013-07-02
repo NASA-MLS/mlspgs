@@ -17,6 +17,7 @@ MODULE L3SPData
    USE MLSCommon, ONLY: r8
    USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
         & MLS_HDF_VERSION
+   USE MLSHDFEOS, ONLY: HSIZE
    USE MLSL3Common, ONLY: GridNameLen, HDFE_NOMERGE, FILENAMELEN, &
         & DIM_ERR, GEO_ERR, DAT_ERR, WR_ERR, &
         & GEO_FIELD1, GEO_FIELD9, GEO_FIELD10, &
@@ -311,19 +312,19 @@ CONTAINS
 
 ! Define the swath dimensions
 
-         status = he5_swdefdim(swID, DIM_NAME2, sp(i)%nLevels)
+         status = he5_swdefdim(swID, DIM_NAME2, hsize(sp(i)%nLevels))
          IF (status /= 0) THEN
             msr = DIM_ERR // DIM_NAME2
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swdefdim(swID, DIML_NAME, sp(i)%nLats)
+         status = he5_swdefdim(swID, DIML_NAME, hsize(sp(i)%nLats))
          IF (status /= 0) THEN
             msr = DIM_ERR // DIML_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swdefdim(swID, DIMW_NAME, sp(i)%nWave)
+         status = he5_swdefdim(swID, DIMW_NAME, hsize(sp(i)%nWave))
          IF (status /= 0) THEN
             msr = DIM_ERR // DIMW_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -720,6 +721,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.17  2008/12/02 23:14:20  pwagner
+! mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
+!
 ! Revision 1.16  2006/02/28 17:56:56  cvuu
 ! V2.00 commit
 !
