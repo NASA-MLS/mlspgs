@@ -96,6 +96,14 @@ if [ "$PGSMEM_USESHM" = "" ]
 then
   PGSMEM_USESHM=NO
 fi
+if [ "$LOCOUNT" = "" ]
+then
+  LOCOUNT=0
+fi
+if [ "$HICOUNT" = "" ]
+then
+  HICOUNT=4000
+fi
 
 export FLIB_DVT_BUFFER=0
 
@@ -136,6 +144,7 @@ $LEVEL1_BINARY_DIR/$MLSPROG_1 $EXTRA_OPTIONS "$@"
 return_status_1=`expr $?`
 H5REPACK=$LEVEL1_BINARY_DIR/h5repack
 NETCDFAUGMENT=$LEVEL1_BINARY_DIR/aug_hdfeos5
+L2GPDUMP=$LEVEL1_BINARY_DIR/l2gpdump
 if [ ! -x "$H5REPACK" ]
 then
   H5REPACK=$MLSTOOLS/H5REPACK
@@ -143,6 +152,10 @@ fi
 if [ ! -x "$NETCDFAUGMENT" ]
 then
   NETCDFAUGMENT=$MLSTOOLS/aug_hdfeos5
+fi
+if [ ! -x "$L2GPDUMP" ]
+then
+  L2GPDUMP=$MLSTOOLS/l2gpdump
 fi
 
 if [ $return_status_1 != $NORMAL_STATUS ]
@@ -205,6 +218,14 @@ return_status=`expr $?`
 if [ -x "$H5REPACK" ]
 then
   files=`echo *L2FWM*.h5 *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5 *L2AUX-[A-C]*.h5 *L2AUX-DGM_*.h5`
+  if [ "$files" = "" ]
+  then
+    if [ -d "outputs" ]
+    then
+      cd "outputs"
+      files=`$REECHO *L2GP-[A-CE-Z]*.he5 *L2GP-DGG_*.he5`
+    fi
+  fi
   for file in $files
   do
     if [ -w "$file" ]
@@ -248,6 +269,15 @@ then
   done
 fi
 
+# Check that the number of profiles is within range
+count=`$L2GPDUMP -status *L2GP-Temper*.he5 \
+  | grep 'valid data co' | awk '{print $4}'`
+if [ "$count" -lt "$LOCOUNT" -o "$count" -gt "$HICOUNT" ]
+then
+  echo "Too few or too many profiles; number was $count"
+  exit 1
+fi
+
 if [ $return_status != $NORMAL_STATUS ]
 then
    exit 1
@@ -256,6 +286,9 @@ else
 fi
 
 # $Log$
+# Revision 1.5  2012/08/10 20:09:26  pwagner
+# Some changes to accommodate goldbrick
+#
 # Revision 1.4  2012/02/15 18:12:06  pwagner
 # Offer last chance to find h5repack in HDFTOOLS directory
 #
