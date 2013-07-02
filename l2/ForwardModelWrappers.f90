@@ -549,9 +549,11 @@ contains ! ============= Public Procedures ==========================
     ! \end{equation*}
     ! where the subscripts are as above.
 
-              o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
-                & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
-                           & f_qty%values(surf,1) )
+! Let's not do the linear radiance correction. This may improve the fit the
+! actual radiances.
+!              o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
+!                & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+!                           & f_qty%values(surf,1) )
             end do ! Surf
           end do ! vSurf
         end if
@@ -682,6 +684,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.59  2013/07/02 23:31:03  wgread
+! remove linear correction for transformed mif extinction-wgr
+!
 ! Revision 2.58  2013/05/21 23:52:47  vsnyder
 ! Add MIFExtinctionExtrapolation and MIFExtinctionForm
 !
