@@ -56,6 +56,7 @@
 #               e.g. 'Xshabam Yshabam Zshabam ..'
 # -excl "bad"   exclude any arg named "bad" (before any pre- or suffixes)
 #               may be repeated; e.g. -excl bad1 -excl bad2 excludes both
+#               (Warning--this option features a trick; see below)
 # arg1          an arg to be reechoed
 #
 # Note:
@@ -65,6 +66,9 @@
 #      i.e. don't try 'reecho.sh -d -w *' to get all directories you have 
 #      write permission to (though that is a logical improvement to make)
 # (3) -dirn must stand alone--it cannot be used with any other options
+# (4) A surprising "feature" of the -excl option: if arg1 can't be found
+#     reecho.sh returns any "bad" files that can be found
+#     Our Makefiles actually rely on this trick
 # 
 # Usage (2):
 # reecho.sh --set [opts] [--set [opts] ..] - arg1 [arg2 ..]
@@ -703,6 +707,9 @@ done
 echo $result
 exit
 # $Log$
+# Revision 1.10  2010/06/08 23:25:40  pwagner
+# Added -libart and -path options
+#
 # Revision 1.9  2009/09/22 17:44:15  pwagner
 # Added -escape, -[n]first, -[n]last, and -reverse options
 #
