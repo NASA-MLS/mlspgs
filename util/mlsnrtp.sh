@@ -76,6 +76,7 @@ RONIN=$MLSTOOLS/ronin.sh
 SETREADENV=$MLSTOOLS/set_read_env.sh
 H5REPACK=$LEVEL1_BINARY_DIR/h5repack
 NETCDFAUGMENT=$LEVEL1_BINARY_DIR/aug_hdfeos5
+L2GPDUMP=$LEVEL1_BINARY_DIR/l2gpdump
 if [ ! -x "$H5REPACK" ]
 then
   H5REPACK=$MLSTOOLS/H5REPACK
@@ -84,11 +85,9 @@ if [ ! -x "$NETCDFAUGMENT" ]
 then
   NETCDFAUGMENT=$MLSTOOLS/aug_hdfeos5
 fi
-
-# Last chance to find h5repack
-if [ ! -x "$H5REPACK" ]
+if [ ! -x "$L2GPDUMP" ]
 then
-  H5REPACK=$HDFTOOLS/h5repack
+  L2GPDUMP=$MLSTOOLS/l2gpdump
 fi
 
 # Last chance to find h5repack
@@ -158,6 +157,14 @@ fi
 if [ "$PGSMEM_USESHM" = "" ]
 then
   PGSMEM_USESHM=NO
+fi
+if [ "$LOCOUNT" = "" ]
+then
+  LOCOUNT=0
+fi
+if [ "$HICOUNT" = "" ]
+then
+  HICOUNT=4000
 fi
 
 export FLIB_DVT_BUFFER=0
@@ -307,7 +314,23 @@ echo PGS_PC_Shell.sh $MASTERSCRIPT $@
 which PGS_PC_Shell.sh
 PGS_PC_Shell.sh $MASTERSCRIPT $@
 
+# Check that the number of profiles is within range
+files="*L2GP-Temper*.he5"
+if [ -f "$files" ]
+then
+  count=`$L2GPDUMP -status "$files" \
+    | grep 'valid data co' | awk '{print $4}'`
+  if [ "$count" -lt "$LOCOUNT" -o "$count" -gt "$HICOUNT" ]
+  then
+    echo "Too few or too many profiles; number was $count"
+    exit 1
+  fi
+fi
+
 # $Log$
+# Revision 1.4  2012/08/10 20:10:42  pwagner
+# Some changes to accommodate goldbrick
+#
 # Revision 1.3  2012/07/10 22:31:48  pwagner
 # Changes needed to work at the sips
 #
