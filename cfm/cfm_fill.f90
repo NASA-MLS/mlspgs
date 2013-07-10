@@ -11,7 +11,7 @@
 module CFM_Fill_m
 
     use INIT_TABLES_MODULE, only: L_LOSVEL, &
-        L_L1BMIF_TAI, L_L1BMAFBASELINE, &
+        L_L1BMIF_TAI, L_L1BMAFBASELINE, L_NONE, &
         L_ECRTOFOV, L_PTAN, L_ORBITINCLINATION, &
         L_RADIANCE, L_SCGEOCALT, L_SCVEL, &
         L_TNGTGEODALT, L_TNGTGEOCALT, L_SCVELECR, &
@@ -171,16 +171,18 @@ module CFM_Fill_m
         ! If isPrecision is .true. and BOMask is not 0, then
         ! bright object status is read from L1BOA file
         integer, intent(in), optional :: BOMask
+        integer :: geoLocation
         integer :: i
 
         fillError = 0
+        geoLocation = l_none
         i = 0
         if (present (suffix)) then
             i = create_string(suffix)
         end if
 
         call FromL1B(0, quantity, chunk, filedatabase, &
-                     isPrecision, i, precisionQuantity, BOMask)
+                     isPrecision, i, geoLocation, precisionQuantity, BOMask)
         if (fillError /= 0) then
             call MLSMessage (MLSMSG_Error, moduleName, "Can't Fill from L1B")
         end if
@@ -390,6 +392,9 @@ module CFM_Fill_m
 end module
 
 ! $Log$
+! Revision 1.14  2012/10/15 17:11:41  pwagner
+! Adapted to new api in FillUtils
+!
 ! Revision 1.13  2011/12/15 18:27:44  honghanh
 ! Documentation and code clean up, including removing unused and broken
 ! subroutines.
