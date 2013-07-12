@@ -32,8 +32,7 @@ module ForwardModelSupport
   integer, parameter :: BadHeightUnit          = BadBinSelectors + 1
   integer, parameter :: BadMoleculeGroup       = BadHeightUnit + 1
   integer, parameter :: BadQuantityType        = BadMoleculeGroup + 1
-  integer, parameter :: BadSideband            = BadQuantityType + 1
-  integer, parameter :: CloudHas               = BadSideband + 1
+  integer, parameter :: CloudHas               = BadQuantityType + 1
   integer, parameter :: CloudLBL               = CloudHas + 1
   integer, parameter :: CloudNeeds             = CloudLBL + 1
   integer, parameter :: CloudNot               = CloudNeeds + 1
@@ -64,12 +63,9 @@ module ForwardModelSupport
   integer, parameter :: SecondSansSecond1      = SecondSansFirst + 1
   integer, parameter :: SecondSansSecond2      = SecondSansSecond1 + 1
   integer, parameter :: TangentNotSubset       = SecondSansSecond2 + 1
-  integer, parameter :: ToleranceNotK          = TangentNotSubset + 1
-  integer, parameter :: TooManyCosts           = ToleranceNotK + 1
+  integer, parameter :: TooManyCosts           = TangentNotSubset + 1
   integer, parameter :: TooManyHeights         = TooManyCosts + 1
-  integer, parameter :: TScatMIF               = TooManyHeights + 1
-  integer, parameter :: WrongUnitsForFrqTol    = TScatMIF + 1
-  integer, parameter :: WrongUnitsForWindow    = WrongUnitsForFrqTol + 1
+  integer, parameter :: WrongUnitsForWindow    = TooManyHeights + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -396,17 +392,16 @@ contains ! =====     Public Procedures     =============================
       & F_DO_FREQ_AVG, F_DO_1D, F_FORCESIDEBANDFRACTION, F_FREQUENCY, F_FRQTOL, &
       & F_I_SATURATION, F_INCL_CLD, F_IGNOREHESSIAN, F_INTEGRATIONGRID, &
       & F_LINEARSIDEBAND, F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, &
-      & F_LOCKBINS, F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, &
-      & F_MOLECULES, F_MOLECULEDERIVATIVES, F_MOLECULESECONDDERIVATIVES, &
-      & F_NABTERMS, F_NAZIMUTHANGLES, &
+      & F_LOCKBINS, F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_Model_Plane_Mif, &
+      & F_MODULE, F_MOLECULES, F_MOLECULEDERIVATIVES, &
+      & F_MOLECULESECONDDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
       & F_NCLOUDSPECIES, F_NMODELSURFS, F_NO_DUP_MOL, F_NSCATTERINGANGLES, &
       & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, &
       & F_REFRACT, F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, &
       & F_TEMP_DER, F_TOLERANCE, F_TransformMIFextinction, F_TSCATMIF, F_TYPE, &
       & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, F_YSTAR
-    use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
-      & PHYQ_FREQUENCY, PHYQ_PROFILES, PHYQ_TEMPERATURE
+    use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_PROFILES
     use L2PC_M, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
     use MLSKINDS, only: R8
     use MLSL2OPTIONS, only: L2CFNODE, MLSMESSAGE
@@ -570,8 +565,6 @@ contains ! =====     Public Procedures     =============================
       case ( f_frqTol )
         call expr ( subtree(2,son), expr_units, value, type )
         info%frqTol = value(1)
-        if ( expr_units(1) /= PHYQ_Frequency ) &
-          & call AnnounceError ( WrongUnitsForFrqTol, son )
       case ( f_i_saturation )
         info%i_saturation = decoration(subtree(2,son))
       case ( f_ignoreHessian )
@@ -583,8 +576,6 @@ contains ! =====     Public Procedures     =============================
       case ( f_linearSideband )
         call expr ( subtree(2,son), expr_units, value, type )
         info%linearSideband = nint ( value(1) )
-        if ( expr_units(1) /= phyq_dimensionless ) &
-          & call AnnounceError ( badSideband, root )
       case ( f_lineCenter )
         lineTrees(lineCenter) = son
       case ( f_lineWidth )
@@ -597,6 +588,9 @@ contains ! =====     Public Procedures     =============================
         LBLTrees(1) = son
       case ( f_lsbPFAMolecules )
         PFATrees(1) = son
+      case ( f_model_plane_MIF )
+        call expr ( subtree(2,son), expr_units, value, type )
+        info%model_plane_MIF = nint ( value(1) )
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_moleculeDerivatives )
@@ -702,15 +696,11 @@ contains ! =====     Public Procedures     =============================
       case ( f_tolerance )
         call expr ( subtree(2,son), expr_units, value, type )
         info%tolerance = value(1)
-        if ( expr_units(1) /= phyq_temperature ) &
-          & call AnnounceError ( toleranceNotK, root )
       case ( f_transformMIFextinction )
         info%transformMIFextinction = get_Boolean(son)
       case ( f_TScatMIF )
         call expr ( subtree(2,son), expr_units, value, type )
         info%TScatMIF = nint(value(1))
-        if ( expr_units(1) /= phyq_dimensionless ) &
-          & call AnnounceError ( TScatMIF, root )
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
       case ( f_usbLBLMolecules )
@@ -1346,8 +1336,6 @@ op:     do j = 2, nsons(theTree)
     case ( BadQuantityType )
       call output ( 'Bin Selectors cannot apply to this quantity type', &
         & advance='yes' )
-    case ( BadSideband )
-      call output ( 'Sideband selector is not unitless', advance='yes' )
     case ( CloudHas )
       call display_string ( what, before='Cloud forward model internally has the ' )
       call output ( ' molecule', advance='yes' )
@@ -1438,19 +1426,12 @@ op:     do j = 2, nsons(theTree)
     case ( TangentNotSubset )
       call output ('Non subsurface tangent grid not a subset of integration grid', &
         & advance='yes' )
-    case ( ToleranceNotK )
-      call output ( 'Tolerance does not have dimensions of temperature/radiance', &
-        & advance='yes' )
     case ( TooManyHeights )
       call output ( 'Bin Selectors can only refer to one height range', &
         & advance='yes' )
-    case ( TScatMIF )
-      call output ( 'TScatMIF must be dimensionless', advance='yes' )
     case ( TooManyCosts )
       call output ( 'Bin Selectors can only have one cost', &
         & advance='yes' )
-    case ( WrongUnitsForFrqTol )
-      call output ( 'FrqTol units must be frequency', advance='yes' )
     case ( WrongUnitsForWindow )
       call output ( 'PhiWindow must be in degrees or profiles', &
         & advance='yes' )
@@ -1475,6 +1456,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.166  2013/07/12 23:25:28  vsnyder
+! Remove unreferenced error messages
+!
 ! Revision 2.165  2013/06/12 02:37:14  vsnyder
 ! Cruft removal
 !
