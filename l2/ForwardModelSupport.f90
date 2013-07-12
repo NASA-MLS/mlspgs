@@ -1456,8 +1456,11 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.167  2013/07/12 23:44:28  vsnyder
+! Move units checking to type checker
+!
 ! Revision 2.166  2013/07/12 23:25:28  vsnyder
-! Remove unreferenced error messages
+! Bugus checkin: Remove unreferenced error messages
 !
 ! Revision 2.165  2013/06/12 02:37:14  vsnyder
 ! Cruft removal
