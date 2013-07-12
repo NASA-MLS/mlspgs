@@ -269,25 +269,13 @@ contains
     type(vector_T), dimension(firstVec:lastVec) :: V   ! Database for snoop
 
     ! Error message codes
-    integer, parameter :: BadOpticalDepthSignal = 1
-    integer, parameter :: BadOpticalDepthQuantities = BadOpticalDepthSignal + 1
-    ! Only one of two required fields supplied
-    integer, parameter :: BothOrNeither = BadOpticalDepthQuantities + 1
+    integer, parameter :: BothOrNeither = 1
     integer, parameter :: DiagNoCov = BothOrNeither + 1
     integer, parameter :: IfAThenB = DiagNoCov + 1
-    integer, parameter :: IfUnitsAThenB = IfAThenB + 1
-    integer, parameter :: Inconsistent = IfUnitsAThenB + 1  ! Inconsistent fields
-    integer, parameter :: InconsistentQuantities = Inconsistent + 1
-    integer, parameter :: InconsistentUnits = InconsistentQuantities + 1
-    integer, parameter :: NeedBothDepthAndCutoff = InconsistentUnits + 1
-    integer, parameter :: NotGeneral = NeedBothDepthAndCutoff + 1 ! Not a general matrix
-    integer, parameter :: NotSPD = notGeneral + 1    ! Not symmetric pos. definite
-    integer, parameter :: RangeNotAppropriate = NotSPD + 1
-    integer, parameter :: WrongUnits = RangeNotAppropriate + 1
-    integer, parameter :: MustHaveOne = WrongUnits + 1
-    integer, parameter :: CannotFlagCloud = MustHaveOne + 1
-    integer, parameter :: BadQuantities = CannotFlagCloud + 1
-    integer, parameter :: BadChannel = BadQuantities + 1
+    integer, parameter :: Inconsistent = IfAThenB + 1   ! Inconsistent fields
+    integer, parameter :: NotGeneral = Inconsistent + 1 ! Not a general matrix
+    integer, parameter :: NotSPD = notGeneral + 1       ! Not symmetric pos. definite
+    integer, parameter :: WrongUnits = NotSPD + 1
 
     dumpQuantitiesNode = 0
     error = 0
@@ -838,34 +826,23 @@ contains
     if ( timing ) call sayTime
 
   contains
-    ! --------------------------------------------  AnnounceError  -----
-    subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex, String, Lit )
 
-      use INTRINSIC, only: FIELD_INDICES, SPEC_INDICES
+    ! --------------------------------------------  AnnounceError  -----
+    subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex, String )
+
+      use INTRINSIC, only: FIELD_INDICES
       use LEXER_CORE, only: PRINT_SOURCE
       use STRING_TABLE, only: DISPLAY_STRING
 
       integer, intent(in) :: Code       ! Index of error message
       integer, intent(in), optional :: FieldIndex, AnotherFieldIndex ! f_...
       character(len=*), optional :: String
-      integer, optional, intent(in) :: LIT
 
       error = max(error,1)
       call output ( '***** At ' )
       call print_source ( source_ref(son) )
       call output ( ', RetrievalModule complained: ' )
       select case ( code )
-      case ( badChannel)
-        call output ( 'Number of cloud channels must be 1')
-      case ( cannotFlagCloud )
-        call output ( 'Cannot flag clouds, missing input quantities' )
-      case ( badQuantities )
-        call output ( 'Bad quantity type for radiance or cloud radiance' )
-      case ( badOpticalDepthSignal )
-        call output ( 'Mismatch in signal/sideband for radiance and optical depth', &
-          & advance='yes' )
-      case ( badOpticalDepthQuantities )
-        call output ( 'Bad quantity type for radiance or optical depth' )
       case ( bothOrNeither )
         call output ( 'One of ' )
         call display_string ( field_indices(fieldIndex) )
@@ -879,14 +856,6 @@ contains
         call output ( 'If the ' )
         call display_string ( field_indices(fieldIndex) )
         call output ( ' field appears then the ' )
-        call display_string ( field_indices(anotherFieldIndex) )
-        call output ( ' field shall also appear.', advance='yes' )
-      case ( ifUnitsAThenB )
-        call output ( 'If the units of the ' )
-        call display_string ( field_indices(fieldIndex) )
-        call output ( ' field are ' )
-        call output ( trim(string) )
-        call output ( ' the ' )
         call display_string ( field_indices(anotherFieldIndex) )
         call output ( ' field shall also appear.', advance='yes' )
       case ( inconsistent, notGeneral, notSPD )
@@ -904,32 +873,12 @@ contains
           call output ( ' is not a symmetric positive-definite matrix.', &
             & advance='yes' )
         end select
-      case ( inconsistentQuantities )
-        call output ( 'the quantities of the "' )
-        call display_string ( field_indices(fieldIndex) )
-        call output ( '" field are inconsistent with the quantities of the "' )
-        call display_string ( field_indices(anotherFieldIndex ) )
-        call output ( '" field.', advance='yes' )
-      case ( inconsistentUnits )
-        call output ( 'the elements of the "' )
-        call display_string ( field_indices(fieldIndex) )
-        call output ( '" field have inconsistent units.', advance='yes' )
-      case ( needBothDepthAndCutoff )
-        call output ( 'OpticalDepth specified but no cutoff, or visa versa', &
-          & advance='yes' )
-      case ( rangeNotAppropriate )
-        call output ( 'Ranges are not appropriate for a ' )
-        call display_string ( spec_indices(fieldIndex) )
-        call output ( ' specification.', advance='yes' )
       case ( wrongUnits )
         call output ( 'The value(s) of the "' )
         call display_string ( field_indices(fieldIndex) )
         call output ( '" field shall have ' )
         call output ( trim(string) )
         call output ( ' units.', advance='yes' )
-      case ( mustHaveOne )
-        call output ( 'Must supply one and only one of height, ignore or reset', &
-          & advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -2990,6 +2939,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.339  2013/07/12 23:25:28  vsnyder
+! Remove unreferenced error messages
+!
 ! Revision 2.338  2013/06/12 02:38:50  vsnyder
 ! Cruft removal
 !
