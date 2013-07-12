@@ -121,14 +121,26 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
     integer :: grandTotalInstances      ! Total number of instances in destination output file
     ! for example MAF index, or profile index.
+
+    ! First subscript values for GeoLocation component
+    integer :: OrbitCoordinateIndex = 1 ! For spacecraft position
+    integer :: LOSCoordinateIndex = 2   ! For line of sight
+    real(r8), dimension(:,:,:), pointer :: Geolocation => NULL()
+
+    ! Geolocation is dimensioned (*,1, noInstances) for stacked quantities and
+    ! (*,noSurfs, noInstances) for unstacked ones.  The Geolocation coordinate
+    ! for the (*,i,j) value is geolocation(*,1,j) for a stacked quantity and
+    ! geolocation(*,i,j) for an unstacked one.  The "*" is taken from either
+    ! the OrbitCoordinateIndex or LOSCoordinateIndex component.
+
     real(r8), dimension(:,:), pointer :: phi => NULL()
 
     ! Phi is dimensioned (1, noInstances) for stacked quantities and
     ! (noSurfs, noInstances) for unstacked ones.  The PHI coordinate for the
     ! (i,j) value is phi(1,j) for a stacked quantity and phi(i,j) for an
-    ! unstacked one.
+    ! unstacked one.  Phi is either taken from or derived from Geolocation.
 
-    ! These other coordinates are dimensioned in the same manner:
+    ! These other coordinates are dimensioned in the same manner as Phi:
     real(r8), dimension(:,:), pointer :: geodLat => NULL()
     real(r8), dimension(:,:), pointer :: lon => NULL()
     real(r8), dimension(:,:), pointer :: time => NULL() ! Seconds since EPOCH
@@ -1595,6 +1607,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.74  2013/06/12 02:13:40  vsnyder
+! Cruft removal
+!
 ! Revision 2.73  2012/10/30 22:06:14  pwagner
 ! Fixed some obscure bugs when modifying templates
 !
