@@ -1958,8 +1958,11 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.572  2013/07/12 23:45:30  vsnyder
+! Functions for almost all field definitions
+!
 ! Revision 2.571  2013/07/12 23:25:28  vsnyder
-! Remove unreferenced error messages
+! Bogus checkin: Remove unreferenced error messages
 !
 ! Revision 2.570  2013/07/03 23:06:27  pwagner
 ! Added new array-constructor functions for frequently-used idioms
