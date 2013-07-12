@@ -297,7 +297,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
     LOGICAL :: TPisDig = .FALSE.
 
-    INTEGER, PARAMETER :: MinCalDif = 300   ! Minimum calibration dif (T - S)
+    INTEGER, PARAMETER :: MinCalDif = 100   ! Minimum calibration dif (T - S)
 
     CurMAFdata => CalWin%MAFdata(CalWin%current)
 
@@ -786,6 +786,7 @@ PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
                 ENDIF
              ENDDO
           ENDDO
+
           IF (minwall >= central) THEN
              CalWin%MAFdata(central)%BankCalInd%FB(bank) = (/ cal_range(1), &
                   (CalWin%MAFdata(minwall-1)%end_index + &
@@ -798,6 +799,7 @@ PRINT *, 'switch MAF: ', CurMAFdata%SciPkt(0)%MAFno
              CalWin%MAFdata(central)%BankCalInd%FB(bank) = (/ 0, 0 /)
           ENDIF
 PRINT *, 'bank, wall: ', bank, CalWin%MAFdata%BankWall%FB(bank)
+
        ELSE
           CalWin%MAFdata(central)%BankCalInd%FB(bank) = cal_range
        ENDIF
@@ -979,6 +981,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.31  2013/07/12 15:14:45  perun
+! Lowered MinCalDiff to 100 to handle tighter R4 to determine when OFF
+!
 ! Revision 2.30  2009/10/06 16:03:48  perun
 ! Handle unknown switch position
 !
