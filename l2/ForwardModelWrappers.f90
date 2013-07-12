@@ -86,7 +86,8 @@ contains ! ============= Public Procedures ==========================
                                            ! 2 = extinctionV2
 
     type(vectorValue_t), pointer :: Azimuth ! of profile plane, positive being
-                                           ! counterclockwise from orbit plane
+                                           ! counterclockwise from the
+                                           ! spacecraft velocity vector
     logical :: Clean                       ! Dumps are clean, from switch dxfc
     real :: DeltaTime
     logical :: Derivs(nt)                  ! Derivatives requested in config
@@ -695,8 +696,11 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.61  2013/07/12 23:48:54  vsnyder
+! Some stuff for out-of-orbit-plane viewing
+!
 ! Revision 2.60  2013/07/12 23:25:28  vsnyder
-! Remove unreferenced error messages
+! Bogus checkin: Remove unreferenced error messages
 !
 ! Revision 2.59  2013/07/02 23:31:03  wgread
 ! remove linear correction for transformed mif extinction-wgr
