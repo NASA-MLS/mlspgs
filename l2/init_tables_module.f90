@@ -38,7 +38,7 @@ module INIT_TABLES_MODULE
     ! INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
     ! N, NADP, ND, NDP, NO_CHECK_EQ, NP, NR, P, S, T, <all>_INDICES,
     ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
-    ! T_STRING, S_TIME and Z are used here, but everything is included so
+    ! T_STRING,s_TIME and Z are used here, but everything is included so
     ! that it can be gotten by USE INIT_TABLES_MODULE.
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
   use MOLECULES ! Everything.
@@ -54,15 +54,23 @@ module INIT_TABLES_MODULE
   use TRACE_M, only: DEPTH
   use TREE, only: DECORATE
   
-
   implicit none
+
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
-  private :: ADD_IDENT, Boolean, Boolean_Field, Boolean_Type
+  private :: ADD_IDENT
+  private :: Field_Spec, Field_Spec_Array, Field_Spec_1, Field_Spec_2
+  private :: Field_Spec_3
+  private :: Field_Type, Field_Type_Array, Field_Type_1, Field_Type_2
   private :: INIT_SPECTROSCOPY, Node
 
-  interface Boolean
-    module procedure Boolean_Field, Boolean_Type
+  interface Field_Spec
+    module procedure Field_Spec_Array, Field_Spec_1, Field_Spec_2
+    module procedure Field_Spec_3
+  end interface
+
+  interface Field_Type
+    module procedure Field_Type_Array, Field_Type_1, Field_Type_2
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -277,13 +285,12 @@ contains ! =====     Public procedures     =============================
     ! "Tree" is here because "make depends" can't see it in make_tree
     ! (because of the "include"):
     use TREE, only:
-    use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
-                          N_NAME_DEF, N_OR, N_SECTION, N_SPEC_DEF, &
-                          N_UNCHECKED
+    use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_TYPE, &
+                          N_NAME_DEF, N_OR, N_SECTION, N_SPEC_DEF
 
-    integer, parameter :: E = d*empty_OK ! Decoration for empty_ok field specs
-
-    logical, parameter :: Req = .true.   ! To specify required fields
+    logical, parameter :: Empty = .true.  ! To specify fields allowed to be empty
+    logical, parameter :: Req = .true.    ! To specify required fields
+    logical, parameter :: Scalar = .true. ! To specify scalar fields
 
   ! Reset anything to automatic parameters  
     LAST_AUTO_LIT = LAST_LIT                
@@ -293,169 +300,169 @@ contains ! =====     Public procedures     =============================
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
-    data_type_indices(t_binSelectorType) = add_ident ( 'binSelectorType' )
-    data_type_indices(t_boxCarMethod) = add_ident ( 'boxCarMethod' )
+    data_type_indices(t_binSelectorType) =   add_ident ( 'binSelectorType' )
+    data_type_indices(t_boxCarMethod) =      add_ident ( 'boxCarMethod' )
     data_type_indices(t_chunkDivideMethod) = add_ident ( 'chunkDivideMethod' )
-    data_type_indices(t_cloud_der) =       add_ident ( 'cloud_Der' )
-    data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
-    data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
-    data_type_indices(t_fgridcoord) =      add_ident ( 'fGridCoord' )
-    data_type_indices(t_fwmType) =         add_ident ( 'fwmType' )
-    data_type_indices(t_geolocation) =     add_ident ( 'geolocation' )
-    data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
-    data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
-    data_type_indices(t_i_saturation) =    add_ident ( 'i_saturation' )
-    data_type_indices(t_masks) =           add_ident ( 'masks' )
-    data_type_indices(t_maskUpdates) =     add_ident ( 'maskUpdates' )
-    data_type_indices(t_matrix) =          add_ident ( 'matrixType' )
-    data_type_indices(t_method) =          add_ident ( 'method' )
-    data_type_indices(t_module) =          add_ident ( 'module' )
-    data_type_indices(t_outputtype) =      add_ident ( 'outputType' )
-    data_type_indices(t_quantitytype) =    add_ident ( 'quantityType' )
-    data_type_indices(t_reflector) =       add_ident ( 'reflector' )
-    data_type_indices(t_rowsOrColumns) =   add_ident ( 'rowsOrColumns' )
-    data_type_indices(t_scale) =           add_ident ( 'scale' )
-    data_type_indices(t_species) =         add_ident ( 'species' )
-    data_type_indices(t_tgridcoord) =      add_ident ( 'tGridCoord' )
-    data_type_indices(t_tgridtype) =       add_ident ( 'tGridType' )
-    data_type_indices(t_units) =           add_ident ( 'units' )
-    data_type_indices(t_vgridcoord) =      add_ident ( 'vGridCoord' )
-    data_type_indices(t_vgridtype) =       add_ident ( 'vGridType' )
+    data_type_indices(t_cloud_der) =         add_ident ( 'cloud_Der' )
+    data_type_indices(t_criticalmodule) =    add_ident ( 'criticalModule' )
+    data_type_indices(t_fillmethod) =        add_ident ( 'fillMethod' )
+    data_type_indices(t_fgridcoord) =        add_ident ( 'fGridCoord' )
+    data_type_indices(t_fwmType) =           add_ident ( 'fwmType' )
+    data_type_indices(t_geolocation) =       add_ident ( 'geolocation' )
+    data_type_indices(t_griddedOrigin) =     add_ident ( 'griddedOrigin' )
+    data_type_indices(t_hgridtype) =         add_ident ( 'hGridType' )
+    data_type_indices(t_i_saturation) =      add_ident ( 'i_saturation' )
+    data_type_indices(t_masks) =             add_ident ( 'masks' )
+    data_type_indices(t_maskUpdates) =       add_ident ( 'maskUpdates' )
+    data_type_indices(t_matrix) =            add_ident ( 'matrixType' )
+    data_type_indices(t_method) =            add_ident ( 'method' )
+    data_type_indices(t_module) =            add_ident ( 'module' )
+    data_type_indices(t_outputtype) =        add_ident ( 'outputType' )
+    data_type_indices(t_quantitytype) =      add_ident ( 'quantityType' )
+    data_type_indices(t_reflector) =         add_ident ( 'reflector' )
+    data_type_indices(t_rowsOrColumns) =     add_ident ( 'rowsOrColumns' )
+    data_type_indices(t_scale) =             add_ident ( 'scale' )
+    data_type_indices(t_species) =           add_ident ( 'species' )
+    data_type_indices(t_tgridcoord) =        add_ident ( 'tGridCoord' )
+    data_type_indices(t_tgridtype) =         add_ident ( 'tGridType' )
+    data_type_indices(t_units) =             add_ident ( 'units' )
+    data_type_indices(t_vgridcoord) =        add_ident ( 'vGridCoord' )
+    data_type_indices(t_vgridtype) =         add_ident ( 'vGridType' )
     ! Put field names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
     ! Don't edit the following file directly--it is generated automatically
     ! based on the file field_names.txt
-    include 'field_add.f9h'    
+    include 'field_add.f9h'
     ! Put enumeration literals into the symbol table.  Don't add ones
     ! that are already put in by init_intrinsic or init_molecules.
     ! Don't edit the following file directly--it is generated automatically
     ! based on the file lit_names.txt
     include 'lit_add.f9h'    
     ! Put parameter names into the symbol table:
-    parm_indices(p_brightObjects) =        add_ident ( 'BrightObjects' )
-    parm_indices(p_cycle) =                add_ident ( 'Cycle' )
-    parm_indices(p_endtime) =              add_ident ( 'EndTime' )
-    parm_indices(p_igrf_file) =            add_ident ( 'IGRF_file' )
-    parm_indices(p_ignoreL1B) =            add_ident ( 'IgnoreL1B' )
-    parm_indices(p_instrument) =           add_ident ( 'Instrument' )
-    parm_indices(p_leapsecfile) =          add_ident ( 'LeapSecFile' )
-    parm_indices(p_output_version_string) =add_ident ( 'OutputVersionString' )
-    parm_indices(p_PFAfile) =              add_ident ( 'PFAFile' )
-    parm_indices(p_starttime) =            add_ident ( 'StartTime' )
+    parm_indices(p_brightObjects) =          add_ident ( 'BrightObjects' )
+    parm_indices(p_cycle) =                  add_ident ( 'Cycle' )
+    parm_indices(p_endtime) =                add_ident ( 'EndTime' )
+    parm_indices(p_igrf_file) =              add_ident ( 'IGRF_file' )
+    parm_indices(p_ignoreL1B) =              add_ident ( 'IgnoreL1B' )
+    parm_indices(p_instrument) =             add_ident ( 'Instrument' )
+    parm_indices(p_leapsecfile) =            add_ident ( 'LeapSecFile' )
+    parm_indices(p_output_version_string) =  add_ident ( 'OutputVersionString' )
+    parm_indices(p_PFAfile) =                add_ident ( 'PFAFile' )
+    parm_indices(p_starttime) =              add_ident ( 'StartTime' )
 
-    parm_indices(p_critical_bands) =       add_ident ( 'CriticalBands' )
+    parm_indices(p_critical_bands) =         add_ident ( 'CriticalBands' )
     parm_indices(p_critical_scanning_modules) = &
-                                           add_ident ( 'CriticalScanningModules' )
-    parm_indices(p_home_geod_angle) =      add_ident ( 'HomeGeodAngle' )
-    parm_indices(p_home_module) =          add_ident ( 'HomeModule' )
-    parm_indices(p_ideal_length) =         add_ident ( 'IdealLength' )
-    parm_indices(p_max_gap) =              add_ident ( 'MaxGap' )
-    parm_indices(p_noChunks) =             add_ident ( 'noChunks' )
-    parm_indices(p_overlap) =              add_ident ( 'Overlap' )
-    parm_indices(p_scan_lower_limit) =     add_ident ( 'ScanLowerLimit' )
-    parm_indices(p_scan_upper_limit) =     add_ident ( 'ScanUpperLimit' )
+                                             add_ident ( 'CriticalScanningModules' )
+    parm_indices(p_home_geod_angle) =        add_ident ( 'HomeGeodAngle' )
+    parm_indices(p_home_module) =            add_ident ( 'HomeModule' )
+    parm_indices(p_ideal_length) =           add_ident ( 'IdealLength' )
+    parm_indices(p_max_gap) =                add_ident ( 'MaxGap' )
+    parm_indices(p_noChunks) =               add_ident ( 'noChunks' )
+    parm_indices(p_overlap) =                add_ident ( 'Overlap' )
+    parm_indices(p_scan_lower_limit) =       add_ident ( 'ScanLowerLimit' )
+    parm_indices(p_scan_upper_limit) =       add_ident ( 'ScanUpperLimit' )
     ! Put section names into the symbol table:
-    section_indices(z_algebra) =           add_ident ( 'algebra' )
-    section_indices(z_chunkDivide) =       add_ident ( 'chunkDivide' )
-    section_indices(z_construct) =         add_ident ( 'construct' )
-    section_indices(z_fill) =              add_ident ( 'fill' )
-    section_indices(z_globalSettings) =    add_ident ( 'globalSettings' )
-    section_indices(z_join) =              add_ident ( 'join' )
-    section_indices(z_mergeGrids) =        add_ident ( 'mergeGrids' )
-    section_indices(z_mlsSignals) =        add_ident ( 'mlsSignals' )
-    section_indices(z_output) =            add_ident ( 'output' )
-    section_indices(z_readApriori) =       add_ident ( 'readApriori' )
-    section_indices(z_retrieve) =          add_ident ( 'retrieve' )
-    section_indices(z_spectroscopy) =      add_ident ( 'spectroscopy' )
+    section_indices(z_algebra) =             add_ident ( 'algebra' )
+    section_indices(z_chunkDivide) =         add_ident ( 'chunkDivide' )
+    section_indices(z_construct) =           add_ident ( 'construct' )
+    section_indices(z_fill) =                add_ident ( 'fill' )
+    section_indices(z_globalSettings) =      add_ident ( 'globalSettings' )
+    section_indices(z_join) =                add_ident ( 'join' )
+    section_indices(z_mergeGrids) =          add_ident ( 'mergeGrids' )
+    section_indices(z_mlsSignals) =          add_ident ( 'mlsSignals' )
+    section_indices(z_output) =              add_ident ( 'output' )
+    section_indices(z_readApriori) =         add_ident ( 'readApriori' )
+    section_indices(z_retrieve) =            add_ident ( 'retrieve' )
+    section_indices(z_spectroscopy) =        add_ident ( 'spectroscopy' )
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
-    spec_indices(s_anygoodradiances) =     add_ident ( 'anyGoodRadiances' )
-    spec_indices(s_anygoodvalues) =        add_ident ( 'anyGoodValues' )
-    spec_indices(s_apriori) =              add_ident ( 'apriori' )
-    spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
-    spec_indices(s_Boolean) =              add_ident ( 'boolean' )
-    spec_indices(s_case) =                 add_ident ( 'case' )
-    spec_indices(s_catchwarning) =         add_ident ( 'catchwarning' )
-    spec_indices(s_checkpoint) =           add_ident ( 'checkpoint' )
-    spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
-    spec_indices(s_columnScale) =          add_ident ( 'columnScale' )
-    spec_indices(s_combineChannels) =      add_ident ( 'combineChannels' )
-    spec_indices(s_compare) =              add_ident ( 'compare' )
-    spec_indices(s_computetotalpower) =    add_ident ( 'computeTotalPower' )
-    spec_indices(s_concatenate) =          add_ident ( 'concatenate' )
-    spec_indices(s_ConvertEtaToP) =        add_ident ( 'ConvertEtaToP' )
-    spec_indices(s_copy)   =               add_ident ( 'copy' )
-    spec_indices(s_cyclicJacobi) =         add_ident ( 'cyclicJacobi' )
-    spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
-    spec_indices(s_delete) =               add_ident ( 'delete' )
-    spec_indices(s_destroy) =              add_ident ( 'destroy' )
-    spec_indices(s_diff) =                 add_ident ( 'diff' )
-    spec_indices(s_directRead) =           add_ident ( 'directRead' )
-    spec_indices(s_directWrite) =          add_ident ( 'directWrite' )
-    spec_indices(s_directWriteFile) =      add_ident ( 'directWriteFile' )
-    spec_indices(s_disjointEquations) =    add_ident ( 'disjointEquations' )
-    spec_indices(s_dump) =                 add_ident ( 'dump' )
-    spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
-    spec_indices(s_endSelect) =            add_ident ( 'endSelect' )
-    spec_indices(s_fGrid) =                add_ident ( 'fGrid' )
-    spec_indices(s_fill) =                 add_ident ( 'fill' )
-    spec_indices(s_fillCovariance) =       add_ident ( 'fillCovariance' )
-    spec_indices(s_fillDiagonal)   =       add_ident ( 'fillDiagonal' )
-    spec_indices(s_flagCloud) =            add_ident ( 'flagCloud' )
-    spec_indices(s_flushL2PCBins) =        add_ident ( 'flushL2PCBins' )
-    spec_indices(s_flushPFA) =             add_ident ( 'flushPFA' )
-    spec_indices(s_forge) =                add_ident ( 'forge' )
-    spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
-    spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
-    spec_indices(s_frequencyGrid) =        add_ident ( 'frequencyGrid' )
-    spec_indices(s_gridded) =              add_ident ( 'gridded' )
-    spec_indices(s_hessian) =              add_ident ( 'hessian' )
-    spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
-    spec_indices(s_isGridEmpty) =          add_ident ( 'isGridEmpty' )
-    spec_indices(s_isSwathEmpty) =         add_ident ( 'isSwathEmpty' )
-    spec_indices(s_l1brad) =               add_ident ( 'l1brad' )
-    spec_indices(s_l1boa) =                add_ident ( 'l1boa' )
-    spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
-    spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
-    spec_indices(s_l2parsf) =              add_ident ( 'l2parsf' )
-    spec_indices(s_label) =                add_ident ( 'label' )
-    spec_indices(s_leakcheck) =            add_ident ( 'leakcheck' )
-    spec_indices(s_load) =                 add_ident ( 'load' )
-    spec_indices(s_makepfa) =              add_ident ( 'makePFA' )
-    spec_indices(s_matrix) =               add_ident ( 'matrix' )
-    spec_indices(s_merge) =                add_ident ( 'merge' )
-    spec_indices(s_mergeGrids) =           add_ident ( 'mergeGrids' )
-    spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
-    spec_indices(s_normalEquations ) =     add_ident ( 'normalEquations' )
-    spec_indices(s_output) =               add_ident ( 'output' )
-    spec_indices(s_pfaData) =              add_ident ( 'pfaData' )
-    spec_indices(s_phase) =                add_ident ( 'phase' )
-    spec_indices(s_populateL2PCBin) =      add_ident ( 'populateL2PCBin' )
-    spec_indices(s_quantity) =             add_ident ( 'quantity' )
-    spec_indices(s_readpfa) =              add_ident ( 'readPFA' )
-    spec_indices(s_readGriddedData) =      add_ident ( 'readGriddeddata' )
-    spec_indices(s_reevaluate) =           add_ident ( 'reevaluate' )
-    spec_indices(s_reflect) =              add_ident ( 'reflect' )
-    spec_indices(s_regularization) =       add_ident ( 'regularization' )
-    spec_indices(s_repeat) =               add_ident ( 'repeat' )
-    spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
-    spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
-    spec_indices(s_rowScale) =             add_ident ( 'rowScale' )
-    spec_indices(s_select) =               add_ident ( 'select' )
-    spec_indices(s_sids) =                 add_ident ( 'sids' )
-    spec_indices(s_skip) =                 add_ident ( 'skip' )
-    spec_indices(s_snoop) =                add_ident ( 'snoop' )
-    spec_indices(s_streamlineHessian) =    add_ident ( 'streamlineHessian' )
-    spec_indices(s_subset) =               add_ident ( 'subset' )
-    spec_indices(s_tgrid ) =               add_ident ( 'tGrid' )
-    spec_indices(s_transfer) =             add_ident ( 'transfer' )
-    spec_indices(s_updateMask) =           add_ident ( 'updateMask' )
-    spec_indices(s_vector) =               add_ident ( 'vector' )
-    spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
-    spec_indices(s_vgrid) =                add_ident ( 'vGrid' )
-    spec_indices(s_wmoTrop) =              add_ident ( 'wmoTrop' )
-    spec_indices(s_wmoTropfromGrids) =     add_ident ( 'wmoTropFromGrids' )
-    spec_indices(s_writePFA) =             add_ident ( 'writePFA' )
+    spec_indices(s_anygoodradiances) =       add_ident ( 'anyGoodRadiances' )
+    spec_indices(s_anygoodvalues) =          add_ident ( 'anyGoodValues' )
+    spec_indices(s_apriori) =                add_ident ( 'apriori' )
+    spec_indices(s_binSelector) =            add_ident ( 'binSelector' )
+    spec_indices(s_Boolean) =                add_ident ( 'boolean' )
+    spec_indices(s_case) =                   add_ident ( 'case' )
+    spec_indices(s_catchwarning) =           add_ident ( 'catchwarning' )
+    spec_indices(s_checkpoint) =             add_ident ( 'checkpoint' )
+    spec_indices(s_chunkDivide) =            add_ident ( 'chunkDivide' )
+    spec_indices(s_columnScale) =            add_ident ( 'columnScale' )
+    spec_indices(s_combineChannels) =        add_ident ( 'combineChannels' )
+    spec_indices(s_compare) =                add_ident ( 'compare' )
+    spec_indices(s_computetotalpower) =      add_ident ( 'computeTotalPower' )
+    spec_indices(s_concatenate) =            add_ident ( 'concatenate' )
+    spec_indices(s_ConvertEtaToP) =          add_ident ( 'ConvertEtaToP' )
+    spec_indices(s_copy)   =                 add_ident ( 'copy' )
+    spec_indices(s_cyclicJacobi) =           add_ident ( 'cyclicJacobi' )
+    spec_indices(s_empiricalGeometry) =      add_ident ( 'EmpiricalGeometry' )
+    spec_indices(s_delete) =                 add_ident ( 'delete' )
+    spec_indices(s_destroy) =                add_ident ( 'destroy' )
+    spec_indices(s_diff) =                   add_ident ( 'diff' )
+    spec_indices(s_directRead) =             add_ident ( 'directRead' )
+    spec_indices(s_directWrite) =            add_ident ( 'directWrite' )
+    spec_indices(s_directWriteFile) =        add_ident ( 'directWriteFile' )
+    spec_indices(s_disjointEquations) =      add_ident ( 'disjointEquations' )
+    spec_indices(s_dump) =                   add_ident ( 'dump' )
+    spec_indices(s_dumpblocks) =             add_ident ( 'dumpblocks' )
+    spec_indices(s_endSelect) =              add_ident ( 'endSelect' )
+    spec_indices(s_fGrid) =                  add_ident ( 'fGrid' )
+    spec_indices(s_fill) =                   add_ident ( 'fill' )
+    spec_indices(s_fillCovariance) =         add_ident ( 'fillCovariance' )
+    spec_indices(s_fillDiagonal)   =         add_ident ( 'fillDiagonal' )
+    spec_indices(s_flagCloud) =              add_ident ( 'flagCloud' )
+    spec_indices(s_flushL2PCBins) =          add_ident ( 'flushL2PCBins' )
+    spec_indices(s_flushPFA) =               add_ident ( 'flushPFA' )
+    spec_indices(s_forge) =                  add_ident ( 'forge' )
+    spec_indices(s_forwardModel) =           add_ident ( 'forwardModel' )
+    spec_indices(s_forwardModelGlobal) =     add_ident ( 'forwardModelGlobal' )
+    spec_indices(s_frequencyGrid) =          add_ident ( 'frequencyGrid' )
+    spec_indices(s_gridded) =                add_ident ( 'gridded' )
+    spec_indices(s_hessian) =                add_ident ( 'hessian' )
+    spec_indices(s_hgrid) =                  add_ident ( 'hgrid' )
+    spec_indices(s_isGridEmpty) =            add_ident ( 'isGridEmpty' )
+    spec_indices(s_isSwathEmpty) =           add_ident ( 'isSwathEmpty' )
+    spec_indices(s_l1brad) =                 add_ident ( 'l1brad' )
+    spec_indices(s_l1boa) =                  add_ident ( 'l1boa' )
+    spec_indices(s_l2aux) =                  add_ident ( 'l2aux' )
+    spec_indices(s_l2gp) =                   add_ident ( 'l2gp' )
+    spec_indices(s_l2parsf) =                add_ident ( 'l2parsf' )
+    spec_indices(s_label) =                  add_ident ( 'label' )
+    spec_indices(s_leakcheck) =              add_ident ( 'leakcheck' )
+    spec_indices(s_load) =                   add_ident ( 'load' )
+    spec_indices(s_makepfa) =                add_ident ( 'makePFA' )
+    spec_indices(s_matrix) =                 add_ident ( 'matrix' )
+    spec_indices(s_merge) =                  add_ident ( 'merge' )
+    spec_indices(s_mergeGrids) =             add_ident ( 'mergeGrids' )
+    spec_indices(s_negativePrecision ) =     add_ident ( 'negativePrecision' )
+    spec_indices(s_normalEquations ) =       add_ident ( 'normalEquations' )
+    spec_indices(s_output) =                 add_ident ( 'output' )
+    spec_indices(s_pfaData) =                add_ident ( 'pfaData' )
+    spec_indices(s_phase) =                  add_ident ( 'phase' )
+    spec_indices(s_populateL2PCBin) =        add_ident ( 'populateL2PCBin' )
+    spec_indices(s_quantity) =               add_ident ( 'quantity' )
+    spec_indices(s_readpfa) =                add_ident ( 'readPFA' )
+    spec_indices(s_readGriddedData) =        add_ident ( 'readGriddeddata' )
+    spec_indices(s_reevaluate) =             add_ident ( 'reevaluate' )
+    spec_indices(s_reflect) =                add_ident ( 'reflect' )
+    spec_indices(s_regularization) =         add_ident ( 'regularization' )
+    spec_indices(s_repeat) =                 add_ident ( 'repeat' )
+    spec_indices(s_restrictRange) =          add_ident ( 'restrictRange' )
+    spec_indices(s_retrieve) =               add_ident ( 'retrieve' )
+    spec_indices(s_rowScale) =               add_ident ( 'rowScale' )
+    spec_indices(s_select) =                 add_ident ( 'select' )
+    spec_indices(s_sids) =                   add_ident ( 'sids' )
+    spec_indices(s_skip) =                   add_ident ( 'skip' )
+    spec_indices(s_snoop) =                  add_ident ( 'snoop' )
+    spec_indices(s_streamlineHessian) =      add_ident ( 'streamlineHessian' )
+    spec_indices(s_subset) =                 add_ident ( 'subset' )
+    spec_indices(s_tgrid ) =                 add_ident ( 'tGrid' )
+    spec_indices(s_transfer) =               add_ident ( 'transfer' )
+    spec_indices(s_updateMask) =             add_ident ( 'updateMask' )
+    spec_indices(s_vector) =                 add_ident ( 'vector' )
+    spec_indices(s_vectortemplate) =         add_ident ( 'vectorTemplate' )
+    spec_indices(s_vgrid) =                  add_ident ( 'vGrid' )
+    spec_indices(s_wmoTrop) =                add_ident ( 'wmoTrop' )
+    spec_indices(s_wmoTropfromGrids) =       add_ident ( 'wmoTropFromGrids' )
+    spec_indices(s_writePFA) =               add_ident ( 'writePFA' )
 
   ! Now initialize the units tables.  Init_Units depends on the lit tables
   ! having been initialized.
@@ -479,6 +486,7 @@ contains ! =====     Public procedures     =============================
 
   ! Start with the definitions of types. These are represented by trees of
   ! the form  < n_dt_def t_type_name l_lit ... l_lit >
+
     ! The intrinsic data types are defined in the intrinsic module
     ! Define the nonintrinsic enumerated types
     call make_tree ( (/ &
@@ -636,421 +644,421 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_time, np+n_spec_def, &
       begin, s+s_gridded, &
-             begin, string(f_date), &
-             begin, string(f_dimList), &
-             begin, boolean(f_downsample), &
-             begin, string(f_file), &
-             begin, numeric(f_missingValue), &
-             begin, string(f_field), &
-             begin, f+f_origin, t+t_griddedOrigin, n+n_field_type, &
-             begin, boolean(f_sum), &
+             begin, f+f_date, string(), &
+             begin, f+f_dimList, string(), &
+             begin, f+f_downsample, boolean(), &
+             begin, f+f_file, string(), &
+             begin, f+f_missingValue, numeric(), &
+             begin, f+f_field, string(), &
+             begin, f+f_origin, field_type(t_griddedOrigin), &
+             begin, f+f_sum, boolean(), &
              np+n_spec_def, &
 !      begin, s+s_l2gp, np+n_spec_def, & ! To avoid forward reference in h/vGrid
       begin, s+s_hGrid, &
-             begin, f+f_type, t+t_hGridType, nr+n_field_type, &
-             begin, f+f_module, s+s_module, n+n_field_spec, &
-             begin, boolean(f_extendible), &
-             begin, numeric(f_fraction), &
-             begin, boolean(f_forbidOverspill), &
-             begin, numeric(f_geodAngle), &
-             begin, numeric(f_height), &
-             begin, boolean(f_insetOverlaps), &
-             begin, numeric(f_maxLowerOverlap), &
-             begin, numeric(f_maxUpperOverlap), &
-             begin, numeric(f_mif), &
-             begin, numeric(f_interpolationfactor), &
-             begin, numeric(f_inclination), &
-             begin, boolean(f_single), &
-             begin, numeric(f_solarTime), &
-             begin, numeric(f_solarZenith), &
-             begin, numeric(f_Time), &
-             begin, string(f_date), &
-             begin, numeric(f_spacing), &
-             begin, numeric(f_origin), &
-             begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
+             begin, f+f_type, field_type(t_hGridType,req=req), &
+             begin, f+f_module, field_spec(s_module), &
+             begin, f+f_extendible, boolean(), &
+             begin, f+f_fraction, numeric(), &
+             begin, f+f_forbidOverspill, boolean(), &
+             begin, f+f_geodAngle, numeric(), &
+             begin, f+f_height, numeric(), &
+             begin, f+f_insetOverlaps, boolean(), &
+             begin, f+f_maxLowerOverlap, numeric(), &
+             begin, f+f_maxUpperOverlap, numeric(), &
+             begin, f+f_mif, numeric(), &
+             begin, f+f_interpolationfactor, numeric(), &
+             begin, f+f_inclination, numeric(), &
+             begin, f+f_single, boolean(), &
+             begin, f+f_solarTime, numeric(), &
+             begin, f+f_solarZenith, numeric(), &
+             begin, f+f_Time, numeric(), &
+             begin, f+f_date, string(), &
+             begin, f+f_spacing, numeric(), &
+             begin, f+f_origin, numeric(), &
+             begin, f+f_sourceL2GP, field_spec(s_l2gp), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_readgriddedData, &
-             begin, string(f_date), &
-             begin, string(f_dimList), &
-             begin, boolean(f_downsample), &
-             begin, string(f_file), &
-             begin, f+f_grid, s+s_gridded, n+n_field_spec, &
-             begin, numeric(f_missingValue), &
-             begin, string(f_field), &
-             begin, f+f_origin, t+t_griddedOrigin, n+n_field_type, &
-             begin, boolean(f_sum), &
+             begin, f+f_date, string(), &
+             begin, f+f_dimList, string(), &
+             begin, f+f_downsample, boolean(), &
+             begin, f+f_file, string(), &
+             begin, f+f_grid, field_spec(s_gridded), &
+             begin, f+f_missingValue, numeric(), &
+             begin, f+f_field, string(), &
+             begin, f+f_origin, field_type(t_griddedOrigin), &
+             begin, f+f_sum, boolean(), &
              np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_binSelector, &
-             begin, f+f_type, t+t_binSelectorType, nr+n_field_type, &
-             begin, f+f_molecule, t+t_molecule, n+n_field_type, &
-             begin, string(f_nameFragment), &
-             begin, f+f_height, t+t_numeric_range, n+n_field_type, &
-             begin, numeric(f_cost), &
+             begin, f+f_type, field_type(t_binSelectorType,req=req), &
+             begin, f+f_molecule, field_type(t_molecule), &
+             begin, f+f_nameFragment, string(), &
+             begin, f+f_height, numeric_range(), &
+             begin, f+f_cost, numeric(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_empiricalGeometry, &
-             begin, numeric(f_terms, req=req), &
-             begin, numeric(f_iterations), &
+             begin, f+f_terms, numeric(req=req), &
+             begin, f+f_iterations, numeric(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_ConvertEtaToP, &  ! Must be AFTER S_Gridded, V_Gridded
-             begin, f+f_a, s+s_gridded, s+s_concatenate, n+n_field_spec, &
-             begin, f+f_b, s+s_gridded, s+s_concatenate, n+n_field_spec, &
-             begin, f+f_Grid, s+s_Gridded, n+n_field_spec, &
+             begin, f+f_a, field_spec(s_gridded,s_concatenate), &
+             begin, f+f_b, field_spec(s_gridded,s_concatenate), &
+             begin, f+f_Grid, field_spec(s_Gridded), &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_concatenate, &  ! Must be AFTER S_Gridded
-             begin, f+f_a, s+s_gridded, s+s_convertetatop, n+n_field_spec, &
-             begin, f+f_b, s+s_gridded, s+s_convertetatop, n+n_field_spec, &
-             begin, f+f_grid, s+s_gridded, s+s_convertetatop, n+n_field_spec, &
+             begin, f+f_a, field_spec(s_gridded,s_convertetatop), &
+             begin, f+f_b, field_spec(s_gridded,s_convertetatop), &
+             begin, f+f_grid, field_spec(s_gridded,s_convertetatop), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded
-             begin, f+f_a, s+s_gridded, s+s_concatenate, n+n_field_spec, &
-             begin, f+f_b, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_a, field_spec(s_gridded,s_concatenate), &
+             begin, f+f_b, field_spec(s_gridded,s_concatenate), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_wmoTropFromGrids, &  ! Must be AFTER S_Gridded
-             begin, f+f_grid, s+s_gridded, s+s_concatenate, n+n_field_spec, &
-             begin, f+f_a, s+s_gridded, s+s_concatenate, n+n_field_spec, &
-             begin, f+f_b, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_grid, field_spec(s_gridded,s_concatenate), &
+             begin, f+f_a, field_spec(s_gridded,s_concatenate), &
+             begin, f+f_b, field_spec(s_gridded,s_concatenate), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_delete, &
-             begin, f+f_grid, s+s_gridded, s+s_concatenate, s+s_merge, &
-             s+s_ConvertEtaToP, n+n_field_spec, &
+             begin, f+f_grid, field_spec((/ s_gridded,s_concatenate,s_merge, &
+                                       &  s_ConvertEtaToP /) ), &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_chunkDivide, &
-             begin, f+f_method, t+t_chunkDivideMethod, nr+n_field_type, &
-             begin, numeric(f_noChunks), &
-             begin, numeric(f_overlap), &
-             begin, numeric(f_lowerOverlap), &
-             begin, numeric(f_upperOverlap), &
-             begin, numeric(f_maxLength), &
-             begin, numeric(f_maxOrbY), &
-             begin, boolean(f_excludePostOverlaps), &
-             begin, boolean(f_excludePriorOverlaps), &
-             begin, numeric(f_noSlaves), &
-             begin, f+f_homeModule, t+t_module, n+n_field_type, &
-             begin, numeric(f_homeGeodAngle), &
-             begin, f+f_scanLowerLimit, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_scanUpperLimit, t+t_numeric_range, n+n_field_type, &
-             begin, string(f_criticalBands), &
-             begin, f+f_criticalModules, t+t_criticalModule, n+n_field_type, &
-             begin, string(f_criticalSignals), &
-             begin, numeric(f_maxGap), &
-             begin, boolean(f_saveObstructions), &
-             begin, boolean(f_skipL1BCheck), &
-             begin, boolean(f_crashIfPhiNotMono), &
+             begin, f+f_method, field_type(t_chunkDivideMethod,req=req), &
+             begin, f+f_noChunks, numeric(), &
+             begin, f+f_overlap, numeric(), &
+             begin, f+f_lowerOverlap, numeric(), &
+             begin, f+f_upperOverlap, numeric(), &
+             begin, f+f_maxLength, numeric(), &
+             begin, f+f_maxOrbY, numeric(), &
+             begin, f+f_excludePostOverlaps, boolean(), &
+             begin, f+f_excludePriorOverlaps, boolean(), &
+             begin, f+f_noSlaves, numeric(), &
+             begin, f+f_homeModule, field_type(t_module), &
+             begin, f+f_homeGeodAngle, numeric(), &
+             begin, f+f_scanLowerLimit, numeric_range(), &
+             begin, f+f_scanUpperLimit, numeric_range(), &
+             begin, f+f_criticalBands, string(), &
+             begin, f+f_criticalModules, field_type(t_criticalModule), &
+             begin, f+f_criticalSignals, string(), &
+             begin, f+f_maxGap, numeric(), &
+             begin, f+f_saveObstructions, boolean(), &
+             begin, f+f_skipL1BCheck, boolean(), &
+             begin, f+f_crashIfPhiNotMono, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_Boolean, &
-             begin, string(f_formula), &
-             begin, string(f_values), &
-             begin, string(f_label), &
-             begin, boolean(f_evaluate), &
-             begin, boolean(f_literal), &
+             begin, f+f_formula, string(), &
+             begin, f+f_values, string(), &
+             begin, f+f_label, string(), &
+             begin, f+f_evaluate, boolean(), &
+             begin, f+f_literal, boolean(), &
              ndp+n_spec_def, &
       begin, s+s_fGrid, &
-             begin, f+f_coordinate, t+t_fGridCoord, n+n_field_type, &
-             begin, numeric(f_values), &
+             begin, f+f_coordinate, field_type(t_fGridCoord), &
+             begin, f+f_values, numeric(), &
              nadp+n_spec_def, &
       begin, s+s_tGrid, &
-             begin, f+f_formula, t+t_numeric_range, n+n_field_type, &
-             begin, numeric(f_number), &
-             begin, numeric(f_start, req=req), &
-             begin, numeric(f_stop), &
-             begin, f+f_type, t+t_vGridType, nr+n_field_type, &
+             begin, f+f_formula, numeric_range(), &
+             begin, f+f_number, numeric(), &
+             begin, f+f_start, numeric(req=req), &
+             begin, f+f_stop, numeric(), &
+             begin, f+f_type, field_type(t_vGridType,req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_vGrid, &
-             begin, f+f_type, t+t_vGridType, nr+n_field_type, &
-             begin, f+f_coordinate, t+t_vGridCoord, n+n_field_type, &
-             begin, f+f_formula, t+t_numeric_range, n+n_field_type, &
-             begin, numeric(f_number), &
-             begin, numeric(f_resolution), &
-             begin, numeric(f_start), &
-             begin, numeric(f_stop), &
-             begin, numeric(f_values), &
-             begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
+             begin, f+f_type, field_type(t_vGridType,req=req), &
+             begin, f+f_coordinate, field_type(t_vGridCoord), &
+             begin, f+f_formula, numeric_range(), &
+             begin, f+f_number, numeric(), &
+             begin, f+f_resolution, numeric(), &
+             begin, f+f_start, numeric(), &
+             begin, f+f_stop, numeric(), &
+             begin, f+f_values, numeric(), &
+             begin, f+f_sourceL2GP, field_spec(s_l2gp), &
              ndp+n_spec_def, &
       begin, s+s_forge, &  ! Must be AFTER S_Module and S_VGrid
-             begin, f+f_module, s+s_module, nr+n_field_spec, &
-             begin, numeric(f_solarTime), &
-             begin, numeric(f_solarZenith), &
-             begin, numeric(f_geodAngle), &
-             begin, f+f_geodAlt, s+s_vGrid, n+n_field_spec, &
-             begin, numeric(f_noMIFs, req=req), &
+             begin, f+f_module, field_spec(s_module,req=req), &
+             begin, f+f_solarTime, numeric(), &
+             begin, f+f_solarZenith, numeric(), &
+             begin, f+f_geodAngle, numeric(), &
+             begin, f+f_geodAlt, field_spec(s_vGrid), &
+             begin, f+f_noMIFs, numeric(req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded and S_VGrid
-             begin, f+f_operational, s+s_gridded, s+s_concatenate, &
-             s+s_convertetatop, n+n_field_spec, &
-             begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
-             begin, numeric(f_height), &
-             begin, numeric(f_scale), &
+             begin, f+f_operational, field_spec(s_gridded,s_concatenate, &
+                    s_convertetatop), &
+             begin, f+f_climatology, field_spec(s_gridded,s_concatenate), &
+             begin, f+f_height, numeric(), &
+             begin, f+f_scale, numeric(), &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_mergeGrids, &  ! Must be AFTER S_Gridded and S_VGrid
-             begin, f+f_grid, s+s_gridded, s+s_concatenate, &
-             s+s_convertetatop, n+n_field_spec, &
-             begin, f+f_operational, s+s_gridded, s+s_concatenate, &
-             s+s_convertetatop, n+n_field_spec, &
-             begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
-             begin, numeric(f_height), &
-             begin, numeric(f_scale), &
+             begin, f+f_grid, field_spec(s_gridded,s_concatenate, &
+                               s_convertetatop), &
+             begin, f+f_operational, field_spec(s_gridded,s_concatenate, &
+                               s_convertetatop), &
+             begin, f+f_climatology, field_spec(s_gridded,s_concatenate), &
+             begin, f+f_height, numeric(), &
+             begin, f+f_scale, numeric(), &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_makePFA, & ! Must be AFTER s_vGrid and s_tGrid
-             begin, f+f_allLinesForRadiometer, t+t_boolean, nd+n_field_type, &
-             begin, f+f_allLinesInCatalog, t+t_boolean, nd+n_field_type, &
-             begin, f+f_losvel, t+t_numeric, nrs+n_field_type, &
-             begin, f+f_molecules, t+t_molecule, nr+n_field_type, &
-             begin, f+f_oversample, t+t_numeric, ns+n_field_type, &
-             begin, string(f_signals, req), &
-             begin, f+f_temperatures, s+s_tGrid, nrs+n_field_spec, &
-             begin, f+f_vGrid, s+s_vGrid, nrs+n_field_spec, &
+             begin, f+f_allLinesForRadiometer, boolean(), &
+             begin, f+f_allLinesInCatalog, boolean(), &
+             begin, f+f_losvel, numeric(req=req,scalar=scalar), &
+             begin, f+f_molecules, field_type(t_molecule,req=req), &
+             begin, f+f_oversample, numeric(scalar=scalar), &
+             begin, f+f_signals, string(req), &
+             begin, f+f_temperatures, field_spec(s_tGrid,req=req,scalar=scalar), &
+             begin, f+f_vGrid, field_spec(s_vGrid,req=req,scalar=scalar), &
              ndp+n_spec_def, &
       begin, s+s_pfaData, & ! Must be AFTER s_vGrid and s_tGrid
-             begin, numeric(f_absorption), &
-             begin, numeric(f_dAbsDnc), &
-             begin, numeric(f_dAbsDnu), &
-             begin, numeric(f_dAbsDwc), &
-             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
-             begin, string(f_signal, req), &
-             begin, f+f_temperatures, s+s_tGrid, nr+n_field_spec, &
-             begin, numeric(f_velLin), &
-             begin, f+f_vGrid, s+s_vGrid, nr+n_field_spec, &
+             begin, f+f_absorption, numeric(), &
+             begin, f+f_dAbsDnc, numeric(), &
+             begin, f+f_dAbsDnu, numeric(), &
+             begin, f+f_dAbsDwc, numeric(), &
+             begin, f+f_molecules, field_type(t_molecule), &
+             begin, f+f_signal, string(req), &
+             begin, f+f_temperatures, field_spec(s_tGrid,req=req), &
+             begin, f+f_velLin, numeric(), &
+             begin, f+f_vGrid, field_spec(s_vGrid,req=req), &
              ndp+n_spec_def, &
       begin, s+s_readPFA, &
-             begin, string(f_file, req), &
-             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
-             begin, string(f_signals), &
+             begin, f+f_file, string(req), &
+             begin, f+f_molecules, field_type(t_molecule), &
+             begin, f+f_signals, string(), &
              ndp+n_spec_def, &
       begin, s+s_writePFA, &
-             begin, boolean(f_allPFA), &
-             begin, string(f_file, req), &
-             begin, f+f_pfaData, s+s_pfaData, s+s_makePFA, n+n_field_spec, &
+             begin, f+f_allPFA, boolean(), &
+             begin, f+f_file, string(req), &
+             begin, f+f_pfaData, field_spec(s_pfaData,s_makePFA), &
              ndp+n_spec_def, &
       begin, s+s_flushPFA, &
-             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_molecules, field_type(t_molecule), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_phase, & ! Ignores rest of stuff
-             begin, string(f_options), &
-             begin, boolean(f_silent), &
-             begin, boolean(f_skipDirectWrites), &
-             begin, f+f_skipDirectWritesif, s+s_Boolean, n+n_field_spec, &
-             begin, boolean(f_skipRetrieval), &
-             begin, f+f_skipRetrievalif, s+s_Boolean, n+n_field_spec, &
-             begin, boolean(f_stamp), &
+             begin, f+f_options, string(), &
+             begin, f+f_silent, boolean(), &
+             begin, f+f_skipDirectWrites, boolean(), &
+             begin, f+f_skipDirectWritesif, field_spec(s_Boolean), &
+             begin, f+f_skipRetrieval, boolean(), &
+             begin, f+f_skipRetrievalif, field_spec(s_Boolean), &
+             begin, f+f_stamp, boolean(), &
              ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER [F, H, IWC, T, V]grid
-             begin, numeric(f_badValue), &
-             begin, f+f_fGrid, s+s_fgrid, n+n_field_spec, &
-             begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
-             begin, boolean(f_irregular), &
-             begin, boolean(f_keepChannels), &
-             begin, boolean(f_logBasis), &
-             begin, numeric(f_minValue), &
-             begin, f+f_module, s+s_module, n+n_field_spec, &
-             begin, f+f_molecule, t+t_molecule, n+n_field_type, &
-             begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
-             begin, f+f_reflector, t+t_reflector, n+n_field_type, &
-             begin, f+f_sGrid, s+s_vgrid, n+n_field_spec, &
-             begin, string(f_signal), &
-             begin, f+f_type, t+t_quantityType, n+n_field_type, &
-             begin, f+f_unit, t+t_units, n+n_field_type, &
-             begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
+             begin, f+f_badValue, numeric(), &
+             begin, f+f_fGrid, field_spec(s_fgrid), &
+             begin, f+f_hGrid, field_spec(s_hgrid), &
+             begin, f+f_irregular, boolean(), &
+             begin, f+f_keepChannels, boolean(), &
+             begin, f+f_logBasis, boolean(), &
+             begin, f+f_minValue, numeric(), &
+             begin, f+f_module, field_spec(s_module), &
+             begin, f+f_molecule, field_type(t_molecule), &
+             begin, f+f_radiometer, field_spec(s_radiometer), &
+             begin, f+f_reflector, field_type(t_reflector), &
+             begin, f+f_sGrid, field_spec(s_vgrid), &
+             begin, f+f_signal, string(), &
+             begin, f+f_type, field_type(t_quantityType), &
+             begin, f+f_unit, field_type(t_units), &
+             begin, f+f_vGrid, field_spec(s_vgrid), &
              np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
-             begin, string(f_adopt), &
-             begin, f+f_quantities, s+s_quantity, n+n_field_spec, &
-             begin, f+f_removeQuantities, s+s_quantity, n+n_field_spec, &
-             begin, f+f_removeTemplate, s+s_vectorTemplate, n+n_field_spec, &
-             begin, f+f_source, t+t_rowsOrColumns, n+n_field_type, &
-             begin, f+f_template, s+s_vectorTemplate, n+n_field_spec, &
+             begin, f+f_adopt, string(), &
+             begin, f+f_quantities, field_spec(s_quantity), &
+             begin, f+f_removeQuantities, field_spec(s_quantity), &
+             begin, f+f_removeTemplate, field_spec(s_vectorTemplate), &
+             begin, f+f_source, field_type(t_rowsOrColumns), &
+             begin, f+f_template, field_spec(s_vectorTemplate), &
              ndp+n_spec_def, &
       begin, s+s_vector, & ! Must be AFTER s_vectorTemplate
-             begin, f+f_template, s+s_vectorTemplate, nr+n_field_spec, &
-             begin, boolean(f_autoFill), &
-             begin, boolean(f_fraction), &
-             begin, boolean(f_highBound), &
-             begin, boolean(f_lengthScale), &
-             begin, boolean(f_lowBound), &
+             begin, f+f_template, field_spec(s_vectorTemplate,req=req), &
+             begin, f+f_autoFill, boolean(), &
+             begin, f+f_fraction, boolean(), &
+             begin, f+f_highBound, boolean(), &
+             begin, f+f_lengthScale, boolean(), &
+             begin, f+f_lowBound, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_hessian, &   ! Must be AFTER s_vector
-             begin, f+f_rows, s+s_vector, nr+n_field_spec, &
-             begin, f+f_columns, s+s_vector, nr+n_field_spec, &
+             begin, f+f_rows, field_spec(s_vector,req=req), &
+             begin, f+f_columns, field_spec(s_vector,req=req), &
              ndp+n_spec_def, &
       begin, s+s_l2gp, &   ! Must be AFTER s_vector
-             begin, vectorQuantity(f_source), &
-             begin, string(f_file), &
-             begin, boolean(f_compareOverlaps), &
-             begin, boolean(f_outputOverlaps), &
-             begin, vectorQuantity(f_precision), &
-             begin, boolean(f_prefixSignal), &
-             begin, string(f_swath), &
-             begin, numeric(f_hdfVersion), &
-             begin, string(f_AuraInstrument), &
+             begin, f+f_source, vectorQuantity(), &
+             begin, f+f_file, string(), &
+             begin, f+f_compareOverlaps, boolean(), &
+             begin, f+f_outputOverlaps, boolean(), &
+             begin, f+f_precision, vectorQuantity(), &
+             begin, f+f_prefixSignal, boolean(), &
+             begin, f+f_swath, string(), &
+             begin, f+f_hdfVersion, numeric(), &
+             begin, f+f_AuraInstrument, string(), &
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
-             begin, vectorQuantity(f_source), &
-             begin, boolean(f_compareOverlaps), &
-             begin, boolean(f_outputOverlaps), &
-             begin, boolean(f_prefixSignal), &
-             begin, string(f_file), &
-             begin, f+f_quantityType, t+t_quantityType, n+n_field_type, &
-             begin, string(f_sdname), &
-             begin, numeric(f_hdfVersion), &
+             begin, f+f_source, vectorQuantity(), &
+             begin, f+f_compareOverlaps, boolean(), &
+             begin, f+f_outputOverlaps, boolean(), &
+             begin, f+f_prefixSignal, boolean(), &
+             begin, f+f_file, string(), &
+             begin, f+f_quantityType, field_type(t_quantityType), &
+             begin, f+f_sdname, string(), &
+             begin, f+f_hdfVersion, numeric(), &
              ndp+n_spec_def, &
       begin, s+s_matrix, &  ! Must be AFTER s_vector
-             begin, f+f_rows, s+s_vector, n+n_field_spec, &
-             begin, f+f_columns, s+s_vector, nr+n_field_spec, &
-             begin, f+f_type, t+t_matrix, n+n_field_type, &
-             begin, string(f_source), &
+             begin, f+f_rows, field_spec(s_vector), &
+             begin, f+f_columns, field_spec(s_vector,req=req), &
+             begin, f+f_type, field_type(t_matrix), &
+             begin, f+f_source, string(), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
-      begin, s+s_fill, &  ! Must be AFTER s_vector, s_matrix and s_climatology
-             begin, vectorQuantity(f_a), &
-             begin, string(f_avoidBrightObjects), &
-             begin, boolean(f_additional), &
-             begin, boolean(f_allowMissing), &
-             begin, vectorQuantity(f_aprioriPrecision), &
-             begin, boolean(f_asPercentage), &
-             begin, vectorQuantity(f_b), &
-             begin, f+f_badRange, t+t_numeric_range, n+n_field_type, &
-             begin, vectorQuantity(f_baselineQuantity), &
-             begin, vectorQuantity(f_boundaryPressure), &
-             begin, f+f_boxCarMethod, t+t_boxCarMethod, n+n_field_type, &
-             begin, numeric(f_c), &
-             begin, numeric(f_channel), &
-             begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
-             begin, boolean(f_centerVertically)/) )
+      begin, s+s_fill, &  ! Must be AFTER s_vector,s_matrix and s_climatology
+             begin, f+f_a, vectorQuantity(), &
+             begin, f+f_avoidBrightObjects, string(), &
+             begin, f+f_additional, boolean(), &
+             begin, f+f_allowMissing, boolean(), &
+             begin, f+f_aprioriPrecision, vectorQuantity(), &
+             begin, f+f_asPercentage, boolean(), &
+             begin, f+f_b, vectorQuantity(), &
+             begin, f+f_badRange, numeric_range(), &
+             begin, f+f_baselineQuantity, vectorQuantity(), &
+             begin, f+f_boundaryPressure, vectorQuantity(), &
+             begin, f+f_boxCarMethod, field_type(t_boxCarMethod), &
+             begin, f+f_c, numeric(), &
+             begin, f+f_channel, numeric(), &
+             begin, f+f_channels, numeric_or_range(), &
+             begin, f+f_centerVertically, boolean()/) )
     call make_tree ( (/ & ! Continuing for s_fill...
-             begin, string(f_dimList), &
-             begin, boolean(f_dontMask), &
-             begin, vectorQuantity(f_earthRadius), &
-             begin, vectorQuantity(f_ECRtoFOV), &
-             begin, boolean(f_exact), &
-             begin, boolean(f_excludeBelowBottom), &
-             begin, numeric(f_explicitValues), &
+             begin, f+f_dimList, string(), &
+             begin, f+f_dontMask, boolean(), &
+             begin, f+f_earthRadius, vectorQuantity(), &
+             begin, f+f_ECRtoFOV, vectorQuantity(), &
+             begin, f+f_exact, boolean(), &
+             begin, f+f_excludeBelowBottom, boolean(), &
+             begin, f+f_explicitValues, numeric(), &
              begin, f+f_expr, &
                     begin, numeric(), &
                     begin, boolean(), &
                     begin, vectorQuantity(), &
                     n+n_or, &
-             begin, boolean(f_extinction), &
-             begin, vectorQuantity(f_fieldECR), &
-             begin, string(f_file), &
-             begin, vectorQuantity(f_flags), &
-             begin, boolean(f_force), &
-             begin, boolean(f_fromPrecision), &
-             begin, vectorQuantity(f_geocAltitudeQuantity), &
-             begin, f+f_geolocation, t+t_geolocation, n+n_field_type, &
-             begin, vectorQuantity(f_gphQuantity), &
-             begin, vectorQuantity(f_h2oQuantity), &
-             begin, vectorQuantity(f_h2oPrecisionQuantity), &
-             begin, f+f_height, t+t_numeric, t+t_numeric_range, n+n_field_type, &
-             begin, string(f_heightRange)/),  &
+             begin, f+f_extinction, boolean(), &
+             begin, f+f_fieldECR, vectorQuantity(), &
+             begin, f+f_file, string(), &
+             begin, f+f_flags, vectorQuantity(), &
+             begin, f+f_force, boolean(), &
+             begin, f+f_fromPrecision, boolean(), &
+             begin, f+f_geocAltitudeQuantity, vectorQuantity(), &
+             begin, f+f_geolocation, field_type(t_geolocation), &
+             begin, f+f_gphQuantity, vectorQuantity(), &
+             begin, f+f_h2oQuantity, vectorQuantity(), &
+             begin, f+f_h2oPrecisionQuantity, vectorQuantity(), &
+             begin, f+f_height, numeric_or_range(), &
+             begin, f+f_heightRange, string()/),  &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
-             begin, boolean(f_ifMissingGMAO), &
-             begin, boolean(f_ignoreGeolocation), &
-             begin, boolean(f_ignoreNegative), &
-             begin, f+f_ignoreQuantities, s+s_quantity, n+n_field_spec, &
-             begin, boolean(f_ignoreTemplate), &
-             begin, boolean(f_ignoreZero), &
-             begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_internalVGrid, s+s_vGrid, n+n_field_spec, &
-             begin, numeric(f_integrationTime), &
-             begin, boolean(f_interpolate), &
-             begin, boolean(f_intrinsic), &
-             begin, boolean(f_isPrecision), &
-             begin, boolean(f_logSpace), &
-             begin, vectorQuantity(f_losQty), &
-             begin, vectorQuantity(f_lsb), &
-             begin, vectorQuantity(f_lsbFraction), &
-             begin, string(f_manipulation), &
-             begin, numeric(f_maxIterations), &
-             begin, numeric(f_maxValue), &
-             begin, vectorQuantity(f_minNormQty), &
-             begin, numeric(f_minValue), &
-             begin, vectorQuantity(f_measurements) /), &
+             begin, f+f_ifMissingGMAO, boolean(), &
+             begin, f+f_ignoreGeolocation, boolean(), &
+             begin, f+f_ignoreNegative, boolean(), &
+             begin, f+f_ignoreQuantities, field_spec(s_quantity), &
+             begin, f+f_ignoreTemplate, boolean(), &
+             begin, f+f_ignoreZero, boolean(), &
+             begin, f+f_instances, numeric_or_range(), &
+             begin, f+f_internalVGrid, field_spec(s_vGrid), &
+             begin, f+f_integrationTime, numeric(), &
+             begin, f+f_interpolate, boolean(), &
+             begin, f+f_intrinsic, boolean(), &
+             begin, f+f_isPrecision, boolean(), &
+             begin, f+f_logSpace, boolean(), &
+             begin, f+f_losQty, vectorQuantity(), &
+             begin, f+f_lsb, vectorQuantity(), &
+             begin, f+f_lsbFraction, vectorQuantity(), &
+             begin, f+f_manipulation, string(), &
+             begin, f+f_maxIterations, numeric(), &
+             begin, f+f_maxValue, numeric(), &
+             begin, f+f_minNormQty, vectorQuantity(), &
+             begin, f+f_minValue, numeric(), &
+             begin, f+f_measurements, vectorQuantity() /), &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
-             begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
-             begin, vectorQuantity(f_model), &
-             begin, numeric(f_multiplier), &
-             begin, numeric(f_noFineGrid), &
-             begin, vectorQuantity(f_noise), &
-             begin, vectorQuantity(f_noiseBandwidth), &
-             begin, vectorQuantity(f_normQty), &
-             begin, numeric(f_offsetAmount), &
-             begin, vectorQuantity(f_orbitInclination) /), &
+             begin, f+f_method, field_type(t_fillmethod,req=req), &
+             begin, f+f_model, vectorQuantity(), &
+             begin, f+f_multiplier, numeric(), &
+             begin, f+f_noFineGrid, numeric(), &
+             begin, f+f_noise, vectorQuantity(), &
+             begin, f+f_noiseBandwidth, vectorQuantity(), &
+             begin, f+f_normQty, vectorQuantity(), &
+             begin, f+f_offsetAmount, numeric(), &
+             begin, f+f_orbitInclination, vectorQuantity() /), &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
-             begin, numeric(f_phiWindow), &
-             begin, numeric(f_phiZero), &
-             begin, vectorQuantity(f_precision), &
-             begin, numeric(f_precisionFactor), &
-             begin, numeric(f_profile), &
-             begin, f+f_profileValues, t+t_numeric_range, n+n_field_type, &
-             begin, vectorQuantity(f_ptanQuantity), &
-             begin, vectorQuantity(f_phitan), &
-             begin, boolean(f_quadrature), &
-             begin, vectorQuantity(f_quantity, req), &
-             begin, vectorQuantity(f_ratioQuantity), &
-             begin, vectorQuantity(f_radianceQuantity), &
-             begin, boolean(f_refract), &
-             begin, vectorQuantity(f_refGPHQuantity), &
-             begin, vectorQuantity(f_refGPHPrecisionQuantity), &
-             begin, boolean(f_resetSeed), &
-             begin, vectorQuantity(f_rhiPrecisionQuantity), &
-             begin, vectorQuantity(f_rhiQuantity) /), &
+             begin, f+f_phiWindow, numeric(), &
+             begin, f+f_phiZero, numeric(), &
+             begin, f+f_precision, vectorQuantity(), &
+             begin, f+f_precisionFactor, numeric(), &
+             begin, f+f_profile, numeric(), &
+             begin, f+f_profileValues, numeric_range(), &
+             begin, f+f_ptanQuantity, vectorQuantity(), &
+             begin, f+f_phitan, vectorQuantity(), &
+             begin, f+f_quadrature, boolean(), &
+             begin, f+f_quantity, vectorQuantity(req=req), &
+             begin, f+f_ratioQuantity, vectorQuantity(), &
+             begin, f+f_radianceQuantity, vectorQuantity(), &
+             begin, f+f_refract, boolean(), &
+             begin, f+f_refGPHQuantity, vectorQuantity(), &
+             begin, f+f_refGPHPrecisionQuantity, vectorQuantity(), &
+             begin, f+f_resetSeed, boolean(), &
+             begin, f+f_rhiPrecisionQuantity, vectorQuantity(), &
+             begin, f+f_rhiQuantity, vectorQuantity() /), &
              continue = .true. )
     call make_tree ( (/ & ! STILL Continuing for s_fill...
-             begin, numeric(f_scale), &
-             begin, numeric(f_scaleInsts), &
-             begin, numeric(f_scaleRatio), &
-             begin, numeric(f_scaleSurfs), &
-             begin, vectorQuantity(f_scVel), &
-             begin, vectorQuantity(f_scVelECI), &
-             begin, vectorQuantity(f_scVelECR), &
-             begin, vectorQuantity(f_scECI), &
-             begin, numeric(f_seed), &
-             begin, numeric(f_shape), &
-             begin, f+f_sourceQuantities, s+s_quantity, n+n_field_spec, &
-             begin, vectorQuantity(f_sourceQuantity), &
-             begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
-             begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
-             begin, f+f_sourceGrid, s+s_gridded, s+s_merge, s+s_concatenate, &
-                    s+s_ConvertEtaToP, s+s_WMOTrop, n+n_field_spec, &
-             begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
-             begin, boolean(f_spread), &
-             begin, numeric(f_status), &
-             begin, string(f_suffix) , &
-             begin, f+f_surface, t+t_numeric_range, n+n_field_type, &
-             begin, vectorQuantity(f_systemTemperature) /), &
+             begin, f+f_scale, numeric(), &
+             begin, f+f_scaleInsts, numeric(), &
+             begin, f+f_scaleRatio, numeric(), &
+             begin, f+f_scaleSurfs, numeric(), &
+             begin, f+f_scVel, vectorQuantity(), &
+             begin, f+f_scVelECI, vectorQuantity(), &
+             begin, f+f_scVelECR, vectorQuantity(), &
+             begin, f+f_scECI, vectorQuantity(), &
+             begin, f+f_seed, numeric(), &
+             begin, f+f_shape, numeric(), &
+             begin, f+f_sourceQuantities, field_spec(s_quantity), &
+             begin, f+f_sourceQuantity, vectorQuantity(), &
+             begin, f+f_sourceL2GP, field_spec(s_l2gp), &
+             begin, f+f_sourceL2AUX, field_spec(s_l2aux), &
+             begin, f+f_sourceGrid, field_spec((/ s_gridded,s_merge,s_concatenate, &
+                                             &  s_ConvertEtaToP,s_WMOTrop /) ), &
+             begin, f+f_sourceVGrid, field_spec(s_vGrid), &
+             begin, f+f_spread, boolean(), &
+             begin, f+f_status, numeric(), &
+             begin, f+f_suffix, string() , &
+             begin, f+f_surface, numeric_range(), &
+             begin, f+f_systemTemperature, vectorQuantity() /), &
              continue = .true. )
     call make_tree ( (/ & ! STILL Continuing for s_fill...
-             begin, vectorQuantity(f_temperatureQuantity), &
-             begin, vectorQuantity(f_tempPrecisionQuantity), &
-             begin, numeric(f_terms), &
-             begin, vectorQuantity(f_totalPowerQuantity), &
-             begin, vectorQuantity(f_tngtECI), &
-             begin, f+f_unit, t+t_units, n+n_field_type, &
-             begin, vectorQuantity(f_usb), &
-             begin, vectorQuantity(f_usbFraction), &
-             begin, vectorQuantity(f_vmrQuantity), &
-             begin, boolean(f_whereFill), &
-             begin, boolean(f_whereNotFill), &
-             begin, numeric(f_width), &
+             begin, f+f_temperatureQuantity, vectorQuantity(), &
+             begin, f+f_tempPrecisionQuantity, vectorQuantity(), &
+             begin, f+f_terms, numeric(), &
+             begin, f+f_totalPowerQuantity, vectorQuantity(), &
+             begin, f+f_tngtECI, vectorQuantity(), &
+             begin, f+f_unit, field_type(t_units), &
+             begin, f+f_usb, vectorQuantity(), &
+             begin, f+f_usbFraction, vectorQuantity(), &
+             begin, f+f_vmrQuantity, vectorQuantity(), &
+             begin, f+f_whereFill, boolean(), &
+             begin, f+f_whereNotFill, boolean(), &
+             begin, f+f_width, numeric(), &
              ndp+n_spec_def /), &
              continue = .true. ) ! WHEW! Finally done for s_fill
 
@@ -1059,633 +1067,633 @@ contains ! =====     Public procedures     =============================
 
     call make_tree ( (/ &
       begin, s+s_populateL2PCBin, &
-             begin, string(f_bin), &
+             begin, f+f_bin, string(), &
              nadp+n_spec_def /) )
 
     call make_tree ( (/ &
       begin, s+s_leakCheck, &
-             begin, string(f_where), &
+             begin, f+f_where, string(), &
              ndp+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_load, &
-             begin, string(f_bin, req), &
-             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, f+f_vector, s+s_vector, n+n_field_spec, &
-             begin, f+f_source, t+t_rowsOrColumns, n+n_field_type, &
+             begin, f+f_bin, string(req), &
+             begin, f+f_hessian, field_spec(s_hessian), &
+             begin, f+f_matrix, field_spec(s_matrix), &
+             begin, f+f_vector, field_spec(s_vector), &
+             begin, f+f_source, field_type(t_rowsOrColumns), &
              ndp+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_reevaluate, &
-             begin, vectorQuantity(f_a), &
-             begin, vectorQuantity(f_b), &
-             begin, numeric(f_c), &
-             begin, string(f_formula), &
-             begin, f+f_inputBoolean, s+s_Boolean, n+n_field_spec, &
-             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
-             begin, string(f_label), &
-             begin, boolean(f_evaluate), &
-             begin, boolean(f_literal), &
-             begin, string(f_manipulation), &
-             begin, string(f_values), &
+             begin, f+f_a, vectorQuantity(), &
+             begin, f+f_b, vectorQuantity(), &
+             begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
+             begin, f+f_c, numeric(), &
+             begin, f+f_evaluate, boolean(), &
+             begin, f+f_expr, &
+                    begin, numeric(), &
+                    begin, boolean(), &
+                    begin, vectorQuantity(), &
+                    n+n_or, &
+             begin, f+f_formula, string(), &
+             begin, f+f_inputBoolean, field_spec(s_Boolean), &
+             begin, f+f_label, string(), &
+             begin, f+f_literal, boolean(), &
+             begin, f+f_manipulation, string(), &
+             begin, f+f_values, string(), &
              np+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_catchwarning, &
-             begin, string(f_message), &
-             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             begin, f+f_message, string(), &
+             begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_compare, &
-             begin, vectorQuantity(f_a), &
-             begin, vectorQuantity(f_b), &
-             begin, numeric(f_c), &
-             begin, string(f_formula, req), &
-             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             begin, f+f_a, vectorQuantity(), &
+             begin, f+f_b, vectorQuantity(), &
+             begin, f+f_c, numeric(), &
+             begin, f+f_formula, string(req), &
+             begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_anyGoodRadiances, &
-             begin, string(f_signal, req), &
-             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             begin, f+f_signal, string(req), &
+             begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_anyGoodValues, &
-             begin, vectorQuantity(f_quantity), &
-             begin, vectorQuantity(f_precision), &
-             begin, vectorQuantity(f_quality), &
-             begin, vectorQuantity(f_status), &
-             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             begin, f+f_quantity, vectorQuantity(), &
+             begin, f+f_precision, vectorQuantity(), &
+             begin, f+f_quality, vectorQuantity(), &
+             begin, f+f_status, vectorQuantity(), &
+             begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_isGridEmpty, &
-             begin, f+f_grid, s+s_Gridded, s+s_concatenate, nr+n_field_spec, &
-             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             begin, f+f_grid, field_spec(s_Gridded,s_concatenate,req=req), &
+             begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_isSwathEmpty, &
-             begin, string(f_file), &
-             begin, string(f_swath), &
-             begin, f+f_type, t+t_outputType, nr+n_field_type, &
-             begin, f+f_Boolean, s+s_Boolean, nr+n_field_spec, &
+             begin, f+f_file, string(), &
+             begin, f+f_swath, string(), &
+             begin, f+f_type, field_type(t_outputType,req=req), &
+             begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_label, &
-             begin, vectorQuantity(f_quantity), &
-             begin, f+f_vector, s+s_vector, n+n_field_spec, &
-             begin, string(f_label, req), &
-             begin, boolean(f_prefixSignal), &
-             begin, boolean(f_suffixLabel), &
+             begin, f+f_quantity, vectorQuantity(), &
+             begin, f+f_vector, field_spec(s_vector), &
+             begin, f+f_label, string(req), &
+             begin, f+f_prefixSignal, boolean(), &
+             begin, f+f_suffixLabel, boolean(), &
              ndp+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_destroy, &
-             begin, boolean(f_allGriddedData), &
-             begin, boolean(f_allMatrices), &
-             begin, boolean(f_allVectors), &
-             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
-             begin, f+f_grid, s+s_gridded, s+s_concatenate, s+s_merge, &
-             s+s_ConvertEtaToP, n+n_field_spec, &
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, f+f_vector, s+s_vector, n+n_field_spec, &
+             begin, f+f_allGriddedData, boolean(), &
+             begin, f+f_allMatrices, boolean(), &
+             begin, f+f_allVectors, boolean(), &
+             begin, f+f_Boolean, field_spec(s_Boolean), &
+             begin, f+f_grid, field_spec((/ s_gridded,s_concatenate,s_merge, &
+                                       &  s_ConvertEtaToP /) ), &
+             begin, f+f_matrix, field_spec(s_matrix), &
+             begin, f+f_vector, field_spec(s_vector), &
              np+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_transfer, &
-             begin, f+f_a, s+s_vector, n+n_field_spec, &
-             begin, f+f_b, s+s_vector, n+n_field_spec, &
-             begin, numeric(f_c), &
-             begin, f+f_method, t+t_fillmethod, n+n_field_type, &
-             begin, f+f_source, s+s_vector, n+n_field_spec, &
-             begin, f+f_destination, s+s_vector, nr+n_field_spec, &
-             begin, boolean(f_dontMask), &
-             begin, boolean(f_ignoreNegative), &
-             begin, boolean(f_ignoreZero), &
-             begin, boolean(f_interpolate), &
-             begin, string(f_manipulation), &
-             begin, f+f_measurements, s+s_vector, n+n_field_spec, &
-             begin, f+f_model, s+s_vector, n+n_field_spec, &
-             begin, f+f_noise, s+s_vector, n+n_field_spec, &
-             begin, vectorQuantity(f_ptanQuantity), &
-             begin, f+f_quantityNames, s+s_Boolean, n+n_field_spec, &
-             begin, boolean(f_skipMask), &
+             begin, f+f_a, field_spec(s_vector), &
+             begin, f+f_b, field_spec(s_vector), &
+             begin, f+f_c, numeric(), &
+             begin, f+f_method, field_type(t_fillmethod), &
+             begin, f+f_source, field_spec(s_vector), &
+             begin, f+f_destination, field_spec(s_vector,req=req), &
+             begin, f+f_dontMask, boolean(), &
+             begin, f+f_ignoreNegative, boolean(), &
+             begin, f+f_ignoreZero, boolean(), &
+             begin, f+f_interpolate, boolean(), &
+             begin, f+f_manipulation, string(), &
+             begin, f+f_measurements, field_spec(s_vector), &
+             begin, f+f_model, field_spec(s_vector), &
+             begin, f+f_noise, field_spec(s_vector), &
+             begin, f+f_ptanQuantity, vectorQuantity(), &
+             begin, f+f_quantityNames, field_spec(s_Boolean), &
+             begin, f+f_skipMask, boolean(), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_negativePrecision, &
-             begin, f+f_precision, s+s_vector, nr+n_field_spec, &
-             begin, f+f_aprioriPrecision, s+s_vector, nr+n_field_spec, &
-             begin, numeric(f_precisionFactor), &
+             begin, f+f_precision, field_spec(s_vector,req=req), &
+             begin, f+f_aprioriPrecision, field_spec(s_vector,req=req), &
+             begin, f+f_precisionFactor, numeric(), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
-             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
-             begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
-             begin, boolean(f_ignoreTemplate), &
-             begin, f+f_lengthScale, s+s_vector, n+n_field_spec, &
-             begin, f+f_fraction, s+s_vector, n+n_field_spec, &
-             begin, boolean(f_invert), &
-             begin, f+f_superDiagonal, s+s_vector, n+n_field_spec, &
+             begin, f+f_matrix, field_spec(s_matrix,req=req), &
+             begin, f+f_diagonal, field_spec(s_vector,req=req), &
+             begin, f+f_ignoreTemplate, boolean(), &
+             begin, f+f_lengthScale, field_spec(s_vector), &
+             begin, f+f_fraction, field_spec(s_vector), &
+             begin, f+f_invert, boolean(), &
+             begin, f+f_superDiagonal, field_spec(s_vector), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_fillDiagonal, & ! Must be AFTER s_vector and s_matrix
-             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
-             begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
+             begin, f+f_matrix, field_spec(s_matrix,req=req), &
+             begin, f+f_diagonal, field_spec(s_vector,req=req), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_reflect, & ! Must be AFTER s_matrix
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
+             begin, f+f_matrix, field_spec(s_matrix), &
              nadp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_cyclicJacobi, & ! Must be AFTER s_matrix
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, f+f_eigenVectors, s+s_matrix, n+n_field_spec, &
+             begin, f+f_matrix, field_spec(s_matrix), &
+             begin, f+f_eigenVectors, field_spec(s_matrix), &
              nadp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_columnScale, & ! Must be AFTER s_matrix
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, f+f_scale, s+s_vector, n+n_field_spec, &
+             begin, f+f_matrix, field_spec(s_matrix), &
+             begin, f+f_scale, field_spec(s_vector), &
              nadp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_rowScale, & ! Must be AFTER s_matrix
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, f+f_scale, s+s_vector, n+n_field_spec, &
+             begin, f+f_matrix, field_spec(s_matrix), &
+             begin, f+f_scale, field_spec(s_vector), &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directRead, &
-             begin, string(f_bin), &
-             begin, f+f_file, t+t_string, nd+n_field_type, &
-             begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
-             begin, boolean(f_interpolate), &
-             begin, string(f_options), &
-             begin, vectorQuantity(f_quantity), &
-             begin, string(f_sdname), &
-             begin, boolean(f_spread), &
-             begin, f+f_type, t+t_outputType, ndr+n_field_type, &
-             begin, f+f_vector, s+s_vector, n+n_field_spec, &
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
-             np+n_spec_def /) )
+             begin, f+f_bin, string(), &
+             begin, f+f_file, string(), &
+             begin, f+f_hdfVersion, numeric(req=req), &
+             begin, f+f_interpolate, boolean(), &
+             begin, f+f_options, string(), &
+             begin, f+f_quantity, vectorQuantity(), &
+             begin, f+f_sdname, string(), &
+             begin, f+f_spread, boolean(), &
+             begin, f+f_type, field_type(t_outputType,req=req), &
+             begin, f+f_vector, field_spec(s_vector), &
+             begin, f+f_matrix, field_spec(s_matrix), &
+             begin, f+f_hessian, field_spec(s_hessian), &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWrite, &
-             begin, vectorQuantity(f_convergence), &
-             begin, f+f_file, t+t_string, nd+n_field_type, &
-             begin, f+f_hdfVersion, t+t_numeric, ndr+n_field_type, &
-             begin, boolean(f_lowerOverlap), &
-             begin, string(f_options), &
-             begin, vectorQuantity(f_precision), &
-             begin, vectorQuantity(f_quality), &
-             begin, boolean(f_single), &
-             begin, vectorQuantity(f_source), &
-             begin, vectorQuantity(f_status), &
-             begin, f+f_type, t+t_outputType, ndr+n_field_type, &
-             begin, boolean(f_upperOverlap), &
-             begin, f+f_vector, s+s_vector, n+n_field_spec, &
-             np+n_spec_def /) )
+             begin, f+f_convergence, vectorQuantity(), &
+             begin, f+f_file, string(), &
+             begin, f+f_hdfVersion, numeric(req=req), &
+             begin, f+f_lowerOverlap, boolean(), &
+             begin, f+f_options, string(), &
+             begin, f+f_precision, vectorQuantity(), &
+             begin, f+f_quality, vectorQuantity(), &
+             begin, f+f_single, boolean(), &
+             begin, f+f_source, vectorQuantity(), &
+             begin, f+f_status, vectorQuantity(), &
+             begin, f+f_type, field_type(t_outputType,req=req), &
+             begin, f+f_upperOverlap, boolean(), &
+             begin, f+f_vector, field_spec(s_vector), &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_copy, &  ! Must be AFTER s_hGrid if repairGeoLocations
-             begin, boolean(f_create), &
-             begin, string(f_exclude), &
-             begin, string(f_file, req), &
-             begin, numeric(f_hdfVersion), &
-             begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
-             begin, boolean(f_ifAnyCrashedChunks), &
-             begin, string(f_inputFile, req), &
-             begin, f+f_inputtype, t+t_outputType, n+n_field_type, &
-             begin, string(f_options), &
-             begin, string(f_rename), &
-             begin, boolean(f_repairGeolocations), &
-             begin, string(f_swath), &
-             begin, f+f_type, t+t_outputType, nr+n_field_type, &
+             begin, f+f_create, boolean(), &
+             begin, f+f_exclude, string(), &
+             begin, f+f_file, string(req), &
+             begin, f+f_hdfVersion, numeric(), &
+             begin, f+f_hGrid, field_spec(s_hgrid), &
+             begin, f+f_ifAnyCrashedChunks, boolean(), &
+             begin, f+f_inputFile, string(req), &
+             begin, f+f_inputtype, field_type(t_outputType), &
+             begin, f+f_options, string(), &
+             begin, f+f_rename, string(), &
+             begin, f+f_repairGeolocations, boolean(), &
+             begin, f+f_swath, string(), &
+             begin, f+f_type, field_type(t_outputType,req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
-             begin, boolean(f_ascii), &
-             begin, boolean(f_destroy), &
-             begin, f+f_dontPack, s+s_quantity, n+n_field_spec, &
-             begin, string(f_file, req), &
-             begin, numeric(f_hdfVersion), &
-             begin, boolean(f_metaDataOnly), &
-             begin, string(f_metaName), &
-             begin, f+f_moleculeSecondDerivatives, t+t_molecule, n+n_field_type, &
-             begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
-             begin, boolean(f_packed), &
-             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, s+s_hessian, &
-                    s+s_directWrite, n+n_field_spec, &
-             begin, f+f_type, t+t_outputType, nr+n_field_type, &
-             begin, boolean(f_writeCounterMAF), &
+             begin, f+f_ascii, boolean(), &
+             begin, f+f_destroy, boolean(), &
+             begin, f+f_dontPack, field_spec(s_quantity), &
+             begin, f+f_file, string(req), &
+             begin, f+f_hdfVersion, numeric(), &
+             begin, f+f_metaDataOnly, boolean(), &
+             begin, f+f_metaName, string(), &
+             begin, f+f_moleculeSecondDerivatives, field_type(t_molecule), &
+             begin, f+f_overlaps, field_spec(s_l2aux,s_l2gp), &
+             begin, f+f_packed, boolean(), &
+             begin, f+f_quantities, field_spec((/ s_l2aux,s_l2gp,s_matrix, &
+                                             &  s_hessian,s_directWrite /) ), &
+             begin, f+f_type, field_type(t_outputType,req=req), &
+             begin, f+f_writeCounterMAF, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_subset, &  ! Must be AFTER s_vector
-             begin, vectorQuantity(f_quantity, req), &
-             begin, vectorQuantity(f_a), &
-             begin, vectorQuantity(f_ptanquantity), &
-             begin, vectorQuantity(f_radiancequantity), &
-             begin, vectorQuantity(f_sourcequantity), &
-             begin, boolean(f_additional), &
-             begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_quantity, vectorQuantity(req), &
+             begin, f+f_a, vectorQuantity(), &
+             begin, f+f_ptanquantity, vectorQuantity(), &
+             begin, f+f_radiancequantity, vectorQuantity(), &
+             begin, f+f_sourcequantity, vectorQuantity(), &
+             begin, f+f_additional, boolean(), &
+             begin, f+f_channels, numeric_or_range(), &
              begin, f+f_height, t+t_numeric_range, numeric(), &
-             begin, string(f_heightRange), &
-             begin, boolean(f_ignore), &
-             begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_mask, t+t_masks, n+n_field_type, &
-             begin, numeric(f_maxValue), &
-             begin, numeric(f_minValue), &
-             begin, f+f_surface, t+t_numeric_range, n+n_field_type, &
-             begin, vectorQuantity(f_opticalDepth), &
-             begin, numeric(f_opticalDepthCutoff), &
-             begin, boolean(f_reverse), &
-             begin, string(f_where), &
-             begin, boolean(f_reset), ndp+n_spec_def /) )
+             begin, f+f_heightRange, string(), &
+             begin, f+f_ignore, boolean(), &
+             begin, f+f_instances, numeric_or_range(), &
+             begin, f+f_mask, field_type(t_masks), &
+             begin, f+f_maxValue, numeric(), &
+             begin, f+f_minValue, numeric(), &
+             begin, f+f_surface, numeric_range(), &
+             begin, f+f_opticalDepth, vectorQuantity(), &
+             begin, f+f_opticalDepthCutoff, numeric(), &
+             begin, f+f_reverse, boolean(), &
+             begin, f+f_where, string(), &
+             begin, f+f_reset, boolean(), ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_restrictRange, &
-             begin, vectorQuantity(f_quantity, req), &
-             begin, vectorQuantity(f_ptanquantity, req), &
-             begin, f+f_mask, t+t_masks, n+n_field_type, &
-             begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
-             begin, string(f_signals, req), &
-             begin, numeric(f_basisFraction), &
-             begin, numeric(f_minChannels), &
+             begin, f+f_quantity, vectorQuantity(req), &
+             begin, f+f_ptanquantity, vectorQuantity(req), &
+             begin, f+f_mask, field_type(t_masks), &
+             begin, f+f_measurements, field_spec(s_vector,req=req), &
+             begin, f+f_signals, string(req), &
+             begin, f+f_basisFraction, numeric(), &
+             begin, f+f_minChannels, numeric(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_flagcloud, &  ! Must be AFTER s_vector
-             begin, vectorQuantity(f_quantity, req), &
-             begin, vectorQuantity(f_cloudRadiance, req), &
-             begin, vectorQuantity(f_ptanquantity, req), &
-             begin, f+f_mask, t+t_masks, n+n_field_type, &
-             begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
-             begin, numeric(f_cloudchannels, req=req), &
-             begin, f+f_height, t+t_numeric_range, nr+n_field_type, &
-             begin, f+f_cloudHeight, t+t_numeric_range, n+n_field_type, &
-             begin, numeric(f_cloudRadianceCutoff, req=req), &
+             begin, f+f_quantity, vectorQuantity(req), &
+             begin, f+f_cloudRadiance, vectorQuantity(req), &
+             begin, f+f_ptanquantity, vectorQuantity(req), &
+             begin, f+f_mask, field_type(t_masks), &
+             begin, f+f_channels, numeric_or_range(), &
+             begin, f+f_cloudchannels, numeric(req=req), &
+             begin, f+f_height, numeric_range(req=req), &
+             begin, f+f_cloudHeight, numeric_range(), &
+             begin, f+f_cloudRadianceCutoff, numeric(req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_updateMask, &
-             begin, vectorQuantity(f_quantity, req), &
-             begin, vectorQuantity(f_sourceQuantity), &
-             begin, f+f_operation, t+t_maskUpdates, nr+n_field_type, &
-             begin, f+f_mask, t+t_masks, nr+n_field_type, &
-             begin, f+f_sourceMask, t+t_masks, n+n_field_type, &
+             begin, f+f_quantity, vectorQuantity(req), &
+             begin, f+f_sourceQuantity, vectorQuantity(), &
+             begin, f+f_operation, field_type(t_maskUpdates,req=req), &
+             begin, f+f_mask, field_type(t_masks,req=req), &
+             begin, f+f_sourceMask, field_type(t_masks), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
-             begin, boolean(f_allLinesForRadiometer), &
-             begin, boolean(f_allLinesInCatalog), &
-             begin, boolean(f_atmos_der), &
-             begin, boolean(f_atmos_second_der), &
-             begin, f+f_binSelectors, s+s_binSelector, n+n_field_spec, &
-             begin, f+f_cloud_der, t+t_cloud_der, n+n_field_type, &
-             begin, boolean(f_default_spectroscopy), &
-             begin, boolean(f_differentialScan), &
-             begin, boolean(f_do_baseline), &
-             begin, boolean(f_do_conv), &
-             begin, boolean(f_do_freq_avg), &
-             begin, boolean(f_do_1d), &
-             begin, boolean(f_forceSidebandFraction), &
-             begin, numeric(f_frqTol, phyq_frequency), &
-             begin, f+f_i_saturation, t+t_i_saturation, n+n_field_type,&
-             begin, boolean(f_ignoreHessian), &
-             begin, boolean(f_incl_cld), &
-             begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
-             begin, numeric(f_linearSideband, phyq_dimensionless), &
-             begin, f+f_lineCenter, t+t_molecule, n+n_field_type, &
-             begin, f+f_lineWidth, t+t_molecule, n+n_field_type, &
-             begin, f+f_lineWidth_TDep, t+t_molecule, n+n_field_type, &
-             begin, boolean(f_lockBins), &
-             begin, f+f_lsbLBLMolecules, t+t_molecule, n+e+n_field_type, &
-             begin, f+f_lsbPFAMolecules, t+t_molecule, n+e+n_field_type, &
-             begin, numeric(f_model_plane_mif,phyq_dimensionless), &
-             begin, f+f_module, s+s_module, n+n_field_spec, &
-             begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
-             begin, f+f_moleculeSecondDerivatives, t+t_molecule, n+n_field_type, &
-             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
-             begin, numeric(f_nabterms, phyq_dimensionless), &
-             begin, numeric(f_nazimuthangles, phyq_dimensionless), &
-             begin, numeric(f_ncloudspecies, phyq_dimensionless), &
-             begin, numeric(f_nmodelsurfs, phyq_dimensionless), &
-             begin, boolean(f_no_dup_mol), &
-             begin, numeric(f_nscatteringangles, phyq_dimensionless), &
-             begin, numeric(f_ncloudspecies, phyq_dimensionless), &
-             begin, numeric(f_nsizebins, phyq_dimensionless) /) )
+             begin, f+f_allLinesForRadiometer, boolean(), &
+             begin, f+f_allLinesInCatalog, boolean(), &
+             begin, f+f_atmos_der, boolean(), &
+             begin, f+f_atmos_second_der, boolean(), &
+             begin, f+f_binSelectors, field_spec(s_binSelector), &
+             begin, f+f_cloud_der, field_type(t_cloud_der), &
+             begin, f+f_default_spectroscopy, boolean(), &
+             begin, f+f_differentialScan, boolean(), &
+             begin, f+f_do_baseline, boolean(), &
+             begin, f+f_do_conv, boolean(), &
+             begin, f+f_do_freq_avg, boolean(), &
+             begin, f+f_do_1d, boolean(), &
+             begin, f+f_forceSidebandFraction, boolean(), &
+             begin, f+f_frqTol, numeric(phyq_frequency), &
+             begin, f+f_i_saturation, field_type(t_i_saturation),&
+             begin, f+f_ignoreHessian, boolean(), &
+             begin, f+f_incl_cld, boolean(), &
+             begin, f+f_integrationGrid, field_spec(s_vGrid), &
+             begin, f+f_linearSideband, numeric(phyq_dimensionless), &
+             begin, f+f_lineCenter, field_type(t_molecule), &
+             begin, f+f_lineWidth, field_type(t_molecule), &
+             begin, f+f_lineWidth_TDep, field_type(t_molecule), &
+             begin, f+f_lockBins, boolean(), &
+             begin, f+f_lsbLBLMolecules, field_type(t_molecule,empty=empty), &
+             begin, f+f_lsbPFAMolecules, field_type(t_molecule,empty=empty), &
+             begin, f+f_model_plane_mif, numeric(phyq_dimensionless), &
+             begin, f+f_module, field_spec(s_module), &
+             begin, f+f_moleculeDerivatives, field_type(t_molecule), &
+             begin, f+f_moleculeSecondDerivatives, field_type(t_molecule), &
+             begin, f+f_molecules, field_type(t_molecule), &
+             begin, f+f_nabterms, numeric(phyq_dimensionless), &
+             begin, f+f_nazimuthangles, numeric(phyq_dimensionless), &
+             begin, f+f_ncloudspecies, numeric(phyq_dimensionless), &
+             begin, f+f_nmodelsurfs, numeric(phyq_dimensionless), &
+             begin, f+f_no_dup_mol, boolean(), &
+             begin, f+f_nscatteringangles, numeric(phyq_dimensionless), &
+             begin, f+f_ncloudspecies, numeric(phyq_dimensionless), &
+             begin, f+f_nsizebins, numeric(phyq_dimensionless) /) )
     call make_tree ( (/ &
-             begin, boolean(f_pathNorm), &
-             begin, numeric(f_phiWindow), &
-                    ! phiWindow can be either phyq_angle or phyq_profiles
-             begin, boolean(f_polarized), &
-             begin, boolean(f_refract), &
-             begin, boolean(f_scanAverage), &
-             begin, string(f_signals), &
-             begin, boolean(f_skipOverlaps), &
-             begin, boolean(f_switchingMirror), &
-             begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
-             begin, boolean(f_spect_der), &
-             begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
-             begin, boolean(f_temp_der), &
-             begin, numeric(f_tolerance, phyq_temperature), &
-             begin, boolean(f_transformMIFextinction), &
-             begin, numeric(f_TScatMIF, phyq_dimensionless), &
-             begin, f+f_TScatMoleculeDerivatives, t+t_molecule, n+n_field_type, &
-             begin, f+f_TScatMolecules, t+t_molecule, n+n_field_type, &
-             begin, f+f_type, t+t_fwmType, nr+n_field_type, &
-             begin, f+f_usbLBLMolecules, t+t_molecule, n+e+n_field_type, &
-             begin, f+f_usbPFAMolecules, t+t_molecule, n+e+n_field_type, &
-             begin, boolean(f_useTScat), &
-             begin, f+f_xStar, s+s_vector, n+n_field_spec, &
-             begin, f+f_yStar, s+s_vector, n+n_field_spec, &
+             begin, f+f_pathNorm, boolean(), &
+             begin, f+f_phiWindow, numeric(), & ! either phyq_angle or phyq_profiles
+             begin, f+f_polarized, boolean(), &
+             begin, f+f_refract, boolean(), &
+             begin, f+f_scanAverage, boolean(), &
+             begin, f+f_signals, string(), &
+             begin, f+f_skipOverlaps, boolean(), &
+             begin, f+f_switchingMirror, boolean(), &
+             begin, f+f_specificQuantities, field_spec(s_quantity), &
+             begin, f+f_spect_der, boolean(), &
+             begin, f+f_tangentGrid, field_spec(s_vGrid), &
+             begin, f+f_temp_der, boolean(), &
+             begin, f+f_tolerance, numeric(phyq_temperature), &
+             begin, f+f_transformMIFextinction, boolean(), &
+             begin, f+f_TScatMIF, numeric(phyq_dimensionless), &
+             begin, f+f_TScatMoleculeDerivatives, field_type(t_molecule), &
+             begin, f+f_TScatMolecules, field_type(t_molecule), &
+             begin, f+f_type, field_type(t_fwmType,req=req), &
+             begin, f+f_usbLBLMolecules, field_type(t_molecule,empty=empty), &
+             begin, f+f_usbPFAMolecules, field_type(t_molecule,empty=empty), &
+             begin, f+f_useTScat, boolean(), &
+             begin, f+f_xStar, field_spec(s_vector), &
+             begin, f+f_yStar, field_spec(s_vector), &
              ndp+n_spec_def /), continue=.true. )
     call make_tree ( (/ & ! Must be AFTER s_vector
       begin, s+s_checkpoint, &
-             begin, string(f_fileName, req), &
-             begin, f+f_vectors, s+s_vector, nr+n_field_spec, &
+             begin, f+f_fileName, string(req=req), &
+             begin, f+f_vectors, field_spec(s_vector,req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_computetotalpower, &
-             begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
-             begin, f+f_weightsVector, s+s_vector, nr+n_field_spec, &
-             begin, f+f_totalPowerVector, s+s_vector, nr+n_field_spec, &
+             begin, f+f_measurements, field_spec(s_vector,req=req), &
+             begin, f+f_weightsVector, field_spec(s_vector,req=req), &
+             begin, f+f_totalPowerVector, field_spec(s_vector,req=req), &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_endSelect, &
-             begin, string(f_label), &
+             begin, f+f_label, string(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_select, &
-             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
-             begin, string(f_label), &
+             begin, f+f_Boolean, field_spec(s_Boolean), &
+             begin, f+f_label, string(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_case, &
-             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
-             begin, string(f_label), &
-             begin, string(f_options), &
+             begin, f+f_Boolean, field_spec(s_Boolean), &
+             begin, f+f_label, string(), &
+             begin, f+f_options, string(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_Boolean
       begin, s+s_repeat, &
-             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
-             begin, string(f_formula), &
-             begin, string(f_values), &
+             begin, f+f_Boolean, field_spec(s_Boolean), &
+             begin, f+f_formula, string(), &
+             begin, f+f_values, string(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ & ! Must be AFTER s_Boolean
       begin, s+s_skip, &
-             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
-             begin, string(f_formula), &
+             begin, f+f_Boolean, field_spec(s_Boolean), &
+             begin, f+f_formula, string(), &
              ndp+n_spec_def /) )
-    call make_tree ( (/ & ! Must be AFTER s_vector, s_vectorTemplate, etc.
+    call make_tree ( (/ & ! Must be AFTER s_vector,s_vectorTemplate, etc.
       begin, s+s_diff, &
-             begin, boolean(f_Clean), &
-             begin, boolean(f_crashBurn), &
-             begin, numeric(f_details), &
-             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, string(f_options), &
-             begin, vectorQuantity(f_quantity), &
-             begin, boolean(f_stop), &
-             begin, boolean(f_stopWithError), &
-             begin, string(f_text), &
-             begin, f+f_Grid, s+s_gridded, s+s_merge, s+s_Concatenate, &
-                    s+s_ConvertEtaToP, s+s_wmoTrop, n+n_field_spec, &
+             begin, f+f_Clean, boolean(), &
+             begin, f+f_crashBurn, boolean(), &
+             begin, f+f_details, numeric(), &
+             begin, f+f_hessian, field_spec(s_hessian), &
+             begin, f+f_matrix, field_spec(s_matrix), &
+             begin, f+f_options, string(), &
+             begin, f+f_quantity, vectorQuantity(), &
+             begin, f+f_stop, boolean(), &
+             begin, f+f_stopWithError, boolean(), &
+             begin, f+f_text, string(), &
+             begin, f+f_Grid, field_spec((/ s_gridded,s_merge,s_Concatenate, &
+                                       &  s_ConvertEtaToP,s_wmoTrop /) ), &
              np+n_spec_def /) )
-    call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_pfaData,
-        begin, s+s_dump, & ! s_makePFA, s_vector, s_vectorTemplate, etc.
-             begin, boolean(f_allBooleans), &
-             begin, boolean(f_allFiles), &
-             begin, boolean(f_allForwardModels), &
-             begin, boolean(f_allGriddedData), &
-             begin, boolean(f_allHessians), &
-             begin, boolean(f_allHGrids), &
-             begin, boolean(f_allL2PCs), &
-             begin, boolean(f_allLines), &
-             begin, boolean(f_allMatrices), &
-             begin, boolean(f_allPFA), &
-             begin, boolean(f_allQuantityTemplates), &
-             begin, boolean(f_allRadiometers), &
-             begin, boolean(f_allSignals), &
-             begin, boolean(f_allSpectra), &
-             begin, boolean(f_allVectors), &
-             begin, boolean(f_allVectorTemplates), &
-             begin, boolean(f_allVGrids), &
-             begin, boolean(f_antennaPatterns), &
-             begin, f+f_Boolean, s+s_Boolean, n+n_field_spec, &
-             begin, boolean(f_callStack), &
-             begin, boolean(f_commandLine), &
-             begin, boolean(f_chunkNumber), &
-             begin, boolean(f_Clean), &
-             begin, boolean(f_crashBurn), &
-             begin, boolean(f_DACSfilterShapes), &
-             begin, numeric(f_details), &
-             begin, string(f_file), &
-             begin, boolean(f_filterShapes), &
-             begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
-             begin, f+f_Grid, s+s_gridded, s+s_merge, s+s_Concatenate, &
-                    s+s_ConvertEtaToP, s+s_wmoTrop, n+n_field_spec, &
-             begin, f+f_hGrid, s+s_hgrid, n+n_field_spec/) )
+    call make_tree ( (/ & ! Must be AFTER s_forwardModel,s_hGrid,s_pfaData,
+        begin, s+s_dump, & ! s_makePFA,s_vector,s_vectorTemplate, etc.
+             begin, f+f_allBooleans, boolean(), &
+             begin, f+f_allFiles, boolean(), &
+             begin, f+f_allForwardModels, boolean(), &
+             begin, f+f_allGriddedData, boolean(), &
+             begin, f+f_allHessians, boolean(), &
+             begin, f+f_allHGrids, boolean(), &
+             begin, f+f_allL2PCs, boolean(), &
+             begin, f+f_allLines, boolean(), &
+             begin, f+f_allMatrices, boolean(), &
+             begin, f+f_allPFA, boolean(), &
+             begin, f+f_allQuantityTemplates, boolean(), &
+             begin, f+f_allRadiometers, boolean(), &
+             begin, f+f_allSignals, boolean(), &
+             begin, f+f_allSpectra, boolean(), &
+             begin, f+f_allVectors, boolean(), &
+             begin, f+f_allVectorTemplates, boolean(), &
+             begin, f+f_allVGrids, boolean(), &
+             begin, f+f_antennaPatterns, boolean(), &
+             begin, f+f_Boolean, field_spec(s_Boolean), &
+             begin, f+f_callStack, boolean(), &
+             begin, f+f_commandLine, boolean(), &
+             begin, f+f_chunkNumber, boolean(), &
+             begin, f+f_Clean, boolean(), &
+             begin, f+f_crashBurn, boolean(), &
+             begin, f+f_DACSfilterShapes, boolean(), &
+             begin, f+f_details, numeric(), &
+             begin, f+f_file, string(), &
+             begin, f+f_filterShapes, boolean(), &
+             begin, f+f_forwardModel, field_spec(s_forwardModel), &
+             begin, f+f_Grid, field_spec((/ s_gridded,s_merge,s_Concatenate, &
+                                       &  s_ConvertEtaToP,s_wmoTrop /) ), &
+             begin, f+f_hGrid, field_spec(s_hgrid)/) )
     call make_tree ( (/ & ! Continuing for s_dump...
-             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
-             begin, boolean(f_igrf), &
-             begin, string(f_l2pc), &
-             begin, f+f_lines, s+s_line, n+n_field_spec, &
-             begin, boolean(f_mark), &
-             begin, vectorQuantity(f_mask), &
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, boolean(f_MieTables), &
-             begin, string(f_options), &
-             begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
-                    n+n_field_spec, &
-             begin, boolean(f_pfaFiles), &
-             begin, numeric(f_pfaNum), &
-             begin, boolean(f_pfaStru), &
-             begin, boolean(f_phaseName), &
-             begin, boolean(f_pointingGrids), &
-             begin, vectorQuantity(f_quantity), &
-             begin, f+f_signals, s+s_signal, n+n_field_spec, &
-             begin, f+f_spectroscopy, t+t_molecule, n+n_field_type, &
-             begin, boolean(f_stop), &
-             begin, boolean(f_stopWithError), &
-             begin, f+f_template, s+s_vectorTemplate, s+s_quantity, n+n_field_spec, &
-             begin, string(f_text), &
-             begin, f+f_tGrid, s+s_tGrid, n+n_field_spec, &
-             begin, f+f_vector, s+s_vector, n+n_field_spec, &
-             begin, f+f_vectorMask, s+s_vector, n+n_field_spec, &
-             begin, f+f_vGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_hessian, field_spec(s_hessian), &
+             begin, f+f_igrf, boolean(), &
+             begin, f+f_l2pc, string(), &
+             begin, f+f_lines, field_spec(s_line), &
+             begin, f+f_mark, boolean(), &
+             begin, f+f_mask, vectorQuantity(), &
+             begin, f+f_matrix, field_spec(s_matrix), &
+             begin, f+f_MieTables, boolean(), &
+             begin, f+f_options, string(), &
+             begin, f+f_pfaData, field_spec(s_makePFA,s_pfaData,s_readPFA), &
+             begin, f+f_pfaFiles, boolean(), &
+             begin, f+f_pfaNum, numeric(), &
+             begin, f+f_pfaStru, boolean(), &
+             begin, f+f_phaseName, boolean(), &
+             begin, f+f_pointingGrids, boolean(), &
+             begin, f+f_quantity, vectorQuantity(), &
+             begin, f+f_signals, field_spec(s_signal), &
+             begin, f+f_spectroscopy, field_type(t_molecule), &
+             begin, f+f_stop, boolean(), &
+             begin, f+f_stopWithError, boolean(), &
+             begin, f+f_template, field_spec(s_vectorTemplate,s_quantity), &
+             begin, f+f_text, string(), &
+             begin, f+f_tGrid, field_spec(s_tGrid), &
+             begin, f+f_vector, field_spec(s_vector), &
+             begin, f+f_vectorMask, field_spec(s_vector), &
+             begin, f+f_vGrid, field_spec(s_vGrid), &
              np+n_spec_def/), continue=.true. )
     call make_tree ( (/ &
       begin, s+s_forwardModelGlobal, &
-             begin, string(f_antennaPatterns), &
-             begin, string(f_DACSfilterShapes), &
-             begin, string(f_filterShapes), &
-             begin, string(f_l2pc), &
-             begin, string(f_MieTables), &
-             begin, string(f_PFAFiles), &
-             begin, string(f_pointingGrids), &
+             begin, f+f_antennaPatterns, string(), &
+             begin, f+f_DACSfilterShapes, string(), &
+             begin, f+f_filterShapes, string(), &
+             begin, f+f_l2pc, string(), &
+             begin, f+f_MieTables, string(), &
+             begin, f+f_PFAFiles, string(), &
+             begin, f+f_pointingGrids, string(), &
              np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWriteFile, &
-             begin, string(f_file, req), &
-             begin, f+f_type, t+t_outputType, ndr+n_field_type, np+n_spec_def, &
+             begin, f+f_file, string(req), &
+             begin, f+f_type, field_type(t_outputType,req=req), &
+             ndp+n_spec_def, &
       begin, s+s_l1brad, &
-             begin, string(f_file), np+n_spec_def, &
+             begin, f+f_file, string(), np+n_spec_def, &
       begin, s+s_l1boa, &
-             begin, string(f_file), np+n_spec_def, &
+             begin, f+f_file, string(), np+n_spec_def, &
       begin, s+s_l2parsf, &
-             begin, string(f_file), np+n_spec_def &
+             begin, f+f_file, string(), np+n_spec_def &
              /) )
     call make_tree ( (/ &
-      begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
-             begin, f+f_apriori, s+s_vector, n+n_field_spec, &
-             begin, f+f_aprioriFraction, s+s_vector, n+n_field_spec, &
-             begin, numeric(f_aprioriScale), &
-             begin, f+f_average, s+s_matrix, n+n_field_spec, &
-             begin, boolean(f_checkpoint), &
-             begin, f+f_columnScale, t+t_scale, n+n_field_type, &
-             begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
-             begin, boolean(f_covSansReg), &
-             begin, f+f_diagnostics, s+s_vector, n+n_field_spec, &
-             begin, boolean(f_diagonal), &
-             begin, f+f_dumpQuantities, s+s_quantity, n+n_field_spec, &
-             begin, boolean(f_extendedAverage), &
-             begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
-             begin, numeric(f_fuzz), & ! Secret
-             begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
-             begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
-             begin, f+f_highBound, s+s_vector, n+n_field_spec, &
-             begin, numeric(f_hRegOrders), &
-             begin, f+f_hRegQuants, s+s_quantity, n+n_field_spec, &
-             begin, numeric(f_hRegWeights), &
-             begin, f+f_hRegWeightVec, s+s_vector, n+n_field_spec, &
-             begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
-             begin, numeric(f_lambda), &
-             begin, numeric(f_lambdaMin), &
-             begin, f+f_lowBound, s+s_vector, n+n_field_spec, &
-             begin, numeric(f_maxJ), &
-             begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
-             begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
-             begin, f+f_method, t+t_method, n+n_field_type, &
-             begin, numeric(f_muMin) /) )
+      begin, s+s_retrieve, & ! Must be AFTER s_forwardModel, s_quantity, 
+                             !               s_vector and s_matrix
+             begin, f+f_apriori, field_spec(s_vector), &
+             begin, f+f_aprioriFraction, field_spec(s_vector), &
+             begin, f+f_aprioriScale, numeric(), &
+             begin, f+f_average, field_spec(s_matrix), &
+             begin, f+f_checkpoint, boolean(), &
+             begin, f+f_columnScale, field_type(t_scale), &
+             begin, f+f_covariance, field_spec(s_matrix), &
+             begin, f+f_covSansReg, boolean(), &
+             begin, f+f_diagnostics, field_spec(s_vector), &
+             begin, f+f_diagonal, boolean(), &
+             begin, f+f_dumpQuantities, field_spec(s_quantity), &
+             begin, f+f_extendedAverage, boolean(), &
+             begin, f+f_forwardModel, field_spec(s_forwardModel,req=req), &
+             begin, f+f_fuzz, numeric(), & ! Secret
+             begin, f+f_fwdModelExtra, field_spec(s_vector,req=req), &
+             begin, f+f_fwdModelOut, field_spec(s_vector), &
+             begin, f+f_highBound, field_spec(s_vector), &
+             begin, f+f_hRegOrders, numeric(), &
+             begin, f+f_hRegQuants, field_spec(s_quantity), &
+             begin, f+f_hRegWeights, numeric(), &
+             begin, f+f_hRegWeightVec, field_spec(s_vector), &
+             begin, f+f_jacobian, field_spec(s_matrix), &
+             begin, f+f_lambda, numeric(), &
+             begin, f+f_lambdaMin, numeric(), &
+             begin, f+f_lowBound, field_spec(s_vector), &
+             begin, f+f_maxJ, numeric(), &
+             begin, f+f_measurements, field_spec(s_vector,req=req), &
+             begin, f+f_measurementSD, field_spec(s_vector), &
+             begin, f+f_method, field_type(t_method), &
+             begin, f+f_muMin, numeric() /) )
     call make_tree ( (/ & ! Continuting for s_retrieve
-             begin, boolean(f_negateSD), &
-             begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
-             begin, f+f_outputSD, s+s_vector, n+n_field_spec, &
-             begin, numeric(f_precisionFactor), &
-             begin, boolean(f_regAfter), &
-             begin, boolean(f_regApriori), &
-             begin, boolean(f_serial), &
-             begin, f+f_sparseQuantities, s+s_quantity, n+n_field_spec, &
-             begin, f+f_state, s+s_vector, nr+n_field_spec, &
-             begin, f+f_stateMax, s+s_vector, n+n_field_spec, &
-             begin, f+f_stateMin, s+s_vector, n+n_field_spec, &
-             begin, string(f_switches), &
-             begin, string(f_toggles), &
-             begin, numeric(f_toleranceA), &
-             begin, numeric(f_toleranceF), &
-             begin, numeric(f_toleranceR), &
-             begin, numeric(f_vRegOrders), &
-             begin, f+f_vRegQuants, s+s_quantity, n+n_field_spec, &
-             begin, numeric(f_vRegWeights), &
-             begin, f+f_vRegWeightVec, s+s_vector, n+n_field_spec, &
+             begin, f+f_negateSD, boolean(), &
+             begin, f+f_outputCovariance, field_spec(s_matrix), &
+             begin, f+f_outputSD, field_spec(s_vector), &
+             begin, f+f_precisionFactor, numeric(), &
+             begin, f+f_regAfter, boolean(), &
+             begin, f+f_regApriori, boolean(), &
+             begin, f+f_serial, boolean(), &
+             begin, f+f_sparseQuantities, field_spec(s_quantity), &
+             begin, f+f_state, field_spec(s_vector,req=req), &
+             begin, f+f_stateMax, field_spec(s_vector), &
+             begin, f+f_stateMin, field_spec(s_vector), &
+             begin, f+f_switches, string(), &
+             begin, f+f_toggles, string(), &
+             begin, f+f_toleranceA, numeric(), &
+             begin, f+f_toleranceF, numeric(), &
+             begin, f+f_toleranceR, numeric(), &
+             begin, f+f_vRegOrders, numeric(), &
+             begin, f+f_vRegQuants, field_spec(s_quantity), &
+             begin, f+f_vRegWeights, numeric(), &
+             begin, f+f_vRegWeightVec, field_spec(s_vector), &
              ndp+n_spec_def /), &
              continue = .true. )
     call make_tree ( (/ &
-      begin, s+s_sids, & ! Must be AFTER s_vector and s_matrix
-             begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
-             begin, f+f_fwdModelExtra, s+s_vector, n+n_field_spec, &
-             begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
-             begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
-             begin, boolean(f_destroyJacobian), &
-             begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
-             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
-             begin, boolean(f_mirrorHessian), &
-             begin, f+f_perturbation, s+s_vector, n+n_field_spec, &
-             begin, numeric(f_singleMAF), &
-             begin, string(f_switches), &
-             begin, boolean(f_TScat), &
+      begin, s+s_sids, & ! Must be AFTER s_hessian, s_vector and s_matrix
+             begin, f+f_forwardModel, field_spec(s_forwardModel,req=req), &
+             begin, f+f_fwdModelExtra, field_spec(s_vector), &
+             begin, f+f_fwdModelIn, field_spec(s_vector,req=req), &
+             begin, f+f_fwdModelOut, field_spec(s_vector,req=req), &
+             begin, f+f_destroyJacobian, boolean(), &
+             begin, f+f_jacobian, field_spec(s_matrix), &
+             begin, f+f_hessian, field_spec(s_hessian), &
+             begin, f+f_mirrorHessian, boolean(), &
+             begin, f+f_perturbation, field_spec(s_vector), &
+             begin, f+f_singleMAF, numeric(), &
+             begin, f+f_switches, string(), &
+             begin, f+f_TScat, boolean(), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
-      begin, s+s_disjointEquations, & ! Must be AFTER s_matrix
-             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
-             begin, f+f_measurementSD, s+s_vector, nr+n_field_spec, &
-             begin, f+f_retrievalExtra, s+s_vector, n+n_field_spec, &
-             begin, f+f_retrievalForwardModel, s+s_forwardModel, nr+n_field_spec, &
-             begin, f+f_retrievalIn, s+s_vector, nr+n_field_spec, &
-             begin, f+f_truthExtra, s+s_vector, n+n_field_spec, &
-             begin, f+f_truthForwardModel, s+s_forwardModel, nr+n_field_spec, &
-             begin, f+f_truthIn, s+s_vector, nr+n_field_spec, &
+      begin, s+s_disjointEquations, & ! Must be AFTER s_vector and s_matrix
+             begin, f+f_matrix, field_spec(s_matrix,req=req), &
+             begin, f+f_measurementSD, field_spec(s_vector,req=req), &
+             begin, f+f_retrievalExtra, field_spec(s_vector), &
+             begin, f+f_retrievalForwardModel, field_spec(s_forwardModel,req=req), &
+             begin, f+f_retrievalIn, field_spec(s_vector,req=req), &
+             begin, f+f_truthExtra, field_spec(s_vector), &
+             begin, f+f_truthForwardModel, field_spec(s_forwardModel,req=req), &
+             begin, f+f_truthIn, field_spec(s_vector,req=req), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
-      begin, s+s_normalEquations, & ! Must be AFTER s_matrix
-             begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
-             begin, f+f_fwdModelExtra, s+s_vector, n+n_field_spec, &
-             begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
-             begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
-             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
-             begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
-             begin, f+f_measurementSD, s+s_vector, n+n_field_spec, &
-             begin, boolean(f_residualSupplied), &
-             begin, f+f_rhsOut, s+s_vector, nr+n_field_spec, &
+      begin, s+s_normalEquations, & ! Must be AFTER s_vector and s_matrix
+             begin, f+f_forwardModel, field_spec(s_forwardModel,req=req), &
+             begin, f+f_fwdModelExtra, field_spec(s_vector), &
+             begin, f+f_fwdModelIn, field_spec(s_vector,req=req), &
+             begin, f+f_fwdModelOut, field_spec(s_vector,req=req), &
+             begin, f+f_matrix, field_spec(s_matrix,req=req), &
+             begin, f+f_measurements, field_spec(s_vector,req=req), &
+             begin, f+f_measurementSD, field_spec(s_vector), &
+             begin, f+f_residualSupplied, boolean(), &
+             begin, f+f_rhsOut, field_spec(s_vector,req=req), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_combineChannels, & ! Must be AFTER s_matrix
-             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
-             begin, f+f_sourceMatrix, s+s_matrix, nr+n_field_spec, &
+             begin, f+f_matrix, field_spec(s_matrix,req=req), &
+             begin, f+f_sourceMatrix, field_spec(s_matrix,req=req), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
-      begin, s+s_regularization, & ! Must be AFTER s_matrix
-             begin, boolean(f_horizontal), &
-             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
-             begin, numeric(f_regOrders), &
-             begin, f+f_regQuants, s+s_quantity, n+n_field_spec, &
-             begin, f+f_regWeightVec, s+s_vector, n+n_field_spec, &
-             begin, numeric(f_regWeights), &
+      begin, s+s_regularization, & ! Must be AFTER s_quantity, s_matrix and
+                                   !               s_vector
+             begin, f+f_horizontal, boolean(), &
+             begin, f+f_matrix, field_spec(s_matrix,req=req), &
+             begin, f+f_regOrders, numeric(), &
+             begin, f+f_regQuants, field_spec(s_quantity), &
+             begin, f+f_regWeightVec, field_spec(s_vector), &
+             begin, f+f_regWeights, numeric(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_frequencyGrid, & ! Must be AFTER s_vector
-             begin, f+f_atmos, s+s_vector, nr+n_field_spec, &
-             begin, numeric(f_frequencies, req=req), &
+             begin, f+f_atmos, field_spec(s_vector,req=req), &
+             begin, f+f_frequencies, numeric(req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_streamlineHessian, &
-             begin, numeric(f_geodAngle), &
-             begin, f+f_hessian, s+s_hessian, nr+n_field_spec, &
-             begin, numeric(f_scaleHeight), &
-             begin, numeric(f_surface), &
-             begin, numeric(f_threshold), &
+      begin, s+s_streamlineHessian, & ! Must be AFTER s_hessian
+             begin, f+f_geodAngle, numeric(), &
+             begin, f+f_hessian, field_spec(s_hessian,req=req), &
+             begin, f+f_scaleHeight, numeric(), &
+             begin, f+f_surface, numeric(), &
+             begin, f+f_threshold, numeric(), &
              ndp+n_spec_def, &
       begin, s+s_snoop, &
-             begin, string(f_comment), &
-             begin, string(f_phaseName), &
-             begin, numeric(f_level), &
-             begin, boolean(f_silent), &
-             begin, boolean(f_skipDirectWrites), &
-             begin, boolean(f_skipRetrieval), &
-             begin, boolean(f_stamp), &
+             begin, f+f_comment, string(), &
+             begin, f+f_phaseName, string(), &
+             begin, f+f_level, numeric(), &
+             begin, f+f_silent, boolean(), &
+             begin, f+f_skipDirectWrites, boolean(), &
+             begin, f+f_skipRetrieval, boolean(), &
+             begin, f+f_stamp, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_dumpblocks, &
-             begin, boolean(f_allHessians), &
-             begin, boolean(f_allMatrices), &
-             begin, f+f_colChannels, t+t_numeric, t+t_numeric_range, &
-                    n+n_field_type, &
-             begin, f+f_colInstances, t+t_numeric, t+t_numeric_range, &
-                    n+n_field_type, &
-             begin, f+f_colQuantity, s+s_quantity, n+n_field_spec, &
-             begin, f+f_colSurfaces, t+t_numeric, t+t_numeric_range, &
-                    n+n_field_type, &
-             begin, numeric(f_details), &
-             begin, boolean(f_diagonal), &
-             begin, f+f_hessian, s+s_hessian, n+n_field_spec, &
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, boolean(f_noAbsent), &
-             begin, f+f_rowChannels, t+t_numeric, t+t_numeric_range, &
-                    n+n_field_type, &
-             begin, f+f_rowInstances, t+t_numeric, t+t_numeric_range, &
-                    n+n_field_type, &
-             begin, f+f_rowQuantity, s+s_quantity, n+n_field_spec, &
-             begin, f+f_rowSurfaces, t+t_numeric, t+t_numeric_range, &
-                    n+n_field_type, &
-             begin, boolean(f_structure), &
+      begin, s+s_dumpblocks, & ! Must be AFTER s_hessian, s_quantity and s_matrix
+             begin, f+f_allHessians, boolean(), &
+             begin, f+f_allMatrices, boolean(), &
+             begin, f+f_colChannels, numeric_or_range(), &
+             begin, f+f_colInstances, numeric_or_range(), &
+             begin, f+f_colQuantity, field_spec(s_quantity), &
+             begin, f+f_colSurfaces, numeric_or_range(), &
+             begin, f+f_details, numeric(), &
+             begin, f+f_diagonal, boolean(), &
+             begin, f+f_hessian, field_spec(s_hessian), &
+             begin, f+f_matrix, field_spec(s_matrix), &
+             begin, f+f_noAbsent, boolean(), &
+             begin, f+f_rowChannels, numeric_or_range(), &
+             begin, f+f_rowInstances, numeric_or_range(), &
+             begin, f+f_rowQuantity, field_spec(s_quantity), &
+             begin, f+f_rowSurfaces, numeric_or_range(), &
+             begin, f+f_structure, boolean(), &
              ndp+n_spec_def /) )
     ! Define the relationships between sections and specs.  These are
     ! represented by trees of the form
@@ -1776,81 +1784,165 @@ contains ! =====     Public procedures     =============================
     ! ------------------------------------------------  MAKE_TREE  -----
     include "make_tree.f9h"
 
+    ! --------------------------------------------------  Boolean  -----
+    pure function Boolean ( Req )
+      ! Declare Boolean type
+      logical, intent(in), optional :: Req     ! Field is required if true
+      integer :: Boolean(2)
+      boolean = field_type ( t_boolean, req )
+    end function Boolean
+
     ! --------------------------------------------------  Numeric  -----
-    pure function Numeric ( FieldName, Unit, Req )
+    pure function Numeric ( Unit, Req, Scalar )
       ! Declare numeric type field, with Unit units if present
-      use TREE_TYPES, only: N_FIELD_TYPE
-      integer, intent(in), optional :: FieldName
-      integer, intent(in), optional :: Unit ! phyq_... from intrinsic module
-      logical, intent(in), optional :: Req  ! Field is required if true
-      integer, allocatable :: Numeric(:)
+      integer, intent(in), optional :: Unit    ! phyq_... from intrinsic module
+      logical, intent(in), optional :: Req     ! Field is required if true
+      logical, intent(in), optional :: Scalar  ! Field is scalar if true
+      integer :: Numeric(2)
       integer :: UnitPart
-      allocate ( numeric(merge(3,2,present(fieldName))) )
       unitPart = 0
       if ( present(unit) ) unitPart = d*u*unit
-      if ( present(fieldName) ) then
-        numeric = (/ f+fieldName, t+t_numeric, node(req)+n_field_type+unitPart /)
-      else
-        numeric = (/              t+t_numeric, node(req)+n_field_type+unitPart /)
-      end if
+      numeric = (/ t+t_numeric, node(req,scalar)+n_field_type+unitPart /)
     end function Numeric
 
+    ! -----------------------------------------  Numeric_Or_Range  -----
+    pure function Numeric_Or_Range ( Unit, Req, Scalar )
+      ! Declare numeric type field, with Unit units if present
+      integer, intent(in), optional :: Unit    ! phyq_... from intrinsic module
+      logical, intent(in), optional :: Req     ! Field is required if true
+      logical, intent(in), optional :: Scalar  ! Field is scalar if true
+      integer :: Numeric_Or_Range(3)
+      integer :: UnitPart
+      unitPart = 0
+      if ( present(unit) ) unitPart = d*u*unit
+      numeric_or_range = (/ t+t_numeric, t+t_numeric_range, &
+                         &  node(req,scalar)+n_field_type+unitPart /)
+    end function Numeric_Or_Range
+
+    ! --------------------------------------------  Numeric_Range  -----
+    pure function Numeric_Range ( Unit, Req, Scalar )
+      ! Declare numeric type field, with Unit units if present
+      integer, intent(in), optional :: Unit    ! phyq_... from intrinsic module
+      logical, intent(in), optional :: Req     ! Field is required if true
+      logical, intent(in), optional :: Scalar  ! Field is scalar if true
+      integer :: Numeric_Range(2)
+      integer :: UnitPart
+      unitPart = 0
+      if ( present(unit) ) unitPart = d*u*unit
+      numeric_range = (/ t+t_numeric_range, node(req,scalar)+n_field_type+unitPart /)
+    end function Numeric_Range
+
     ! ---------------------------------------------------  String  -----
-    pure function String ( FieldName, Req )
+    pure function String ( Req )
       ! Declare String type field
-      integer, intent(in) :: FieldName
       logical, intent(in), optional :: Req  ! Field is required if true
-      integer :: String(3)
-      string = (/ f+fieldName, t+t_string, node(req)+n_field_type /)
+      integer :: String(2)
+      string = field_type ( t_string, req )
     end function String
 
     ! -------------------------------------------  VectorQuantity  -----
-    pure function VectorQuantity ( FieldName, Req )
+    pure function VectorQuantity ( Req )
       ! Declare Vector Quantity "dot" field
-      integer, intent(in), optional :: FieldName
       logical, intent(in), optional :: Req  ! Field is required if true
-      integer, allocatable :: VectorQuantity(:)
-      allocate ( VectorQuantity(merge(5,4,present(fieldName))) )
-      if ( present(fieldName) ) then
-        VectorQuantity = (/ f+fieldName, s+s_vector, f+f_template, &
-                         &  f+f_quantities, node(req)+n_dot /)
-      else
-        VectorQuantity = (/              s+s_vector, f+f_template, &
-                         &  f+f_quantities, node(req)+n_dot /)
-      end if
+      integer :: VectorQuantity(4)
+      VectorQuantity = (/ s+s_vector, f+f_template, f+f_quantities, &
+                       &  node(req)+n_dot /)
     end function VectorQuantity
 
   end subroutine INIT_TABLES
 
-  ! We would prefer Boolean_... to be internal when
+  ! We would prefer these to be internal to Init_Tables when
   ! compilers support internal generic functions
 
-  ! --------------------------------------------  Boolean_Field  -----
-  pure function Boolean_Field ( FieldName, Req )
-    ! Declare Boolean type field
-    integer, intent(in) :: FieldName
-    logical, intent(in), optional :: Req ! True if field is required
-    integer :: Boolean_Field(3)
-    boolean_field = (/ f+fieldName, boolean( req ) /)
-  end function Boolean_Field
+  ! -------------------------------------------  Field_Spec_Array  -----
+  pure function Field_Spec_Array ( Spec, Req, Scalar )
+    ! Declare field-spec field
+    use TREE_TYPES, only: N_FIELD_SPEC
+    integer, intent(in) :: Spec(:)          ! S_...
+    logical, intent(in), optional :: Req    ! Field is required if true
+    logical, intent(in), optional :: Scalar ! Field is scalar if true
+    integer :: Field_Spec_Array(1+size(spec))
+    field_spec_array = (/ s+spec, node(req,scalar)+n_field_spec /)
+  end function Field_Spec_Array
 
-  ! ---------------------------------------------  Boolean_Type  -----
-  pure function Boolean_Type ( Req )
-    ! Declare Boolean type
+  ! -----------------------------------------------  Field_Spec_1  -----
+  pure function Field_Spec_1 ( Spec, Req, Scalar )
+    ! Declare field-spec field
+    use TREE_TYPES, only: N_FIELD_SPEC
+    integer, intent(in) :: Spec             ! S_...
+    logical, intent(in), optional :: Req    ! Field is required if true
+    logical, intent(in), optional :: Scalar ! Field is scalar if true
+    integer :: Field_Spec_1(2)
+    field_spec_1 = (/ s+spec, node(req,scalar)+n_field_spec /)
+  end function Field_Spec_1
+
+  ! -----------------------------------------------  Field_Spec_2  -----
+  pure function Field_Spec_2 ( Spec1, Spec2, Req, Scalar )
+    ! Declare field-spec field
+    use TREE_TYPES, only: N_FIELD_SPEC
+    integer, intent(in) :: Spec1, Spec2     ! S_...
+    logical, intent(in), optional :: Req    ! Field is required if true
+    logical, intent(in), optional :: Scalar ! Field is scalar if true
+    integer :: Field_Spec_2(3)
+    field_spec_2 = (/ s+spec1, s+spec2, node(req,scalar)+n_field_spec /)
+  end function Field_Spec_2
+
+  ! -----------------------------------------------  Field_Spec_3  -----
+  pure function Field_Spec_3 ( Spec1, Spec2, Spec3, Req, Scalar )
+    ! Declare field-spec field
+    use TREE_TYPES, only: N_FIELD_SPEC
+    integer, intent(in) :: Spec1, Spec2, Spec3 ! S_...
+    logical, intent(in), optional :: Req       ! Field is required if true
+    logical, intent(in), optional :: Scalar    ! Field is scalar if true
+    integer :: Field_Spec_3(4)
+    field_spec_3 = (/ s+spec1, s+spec2, s+spec3, &
+                   &  node(req,scalar)+n_field_spec /)
+  end function Field_Spec_3
+
+  ! -------------------------------------------  Field_Type_Array  -----
+  pure function Field_Type_Array ( Type, Req )
+    ! Declare field-Type field
     use TREE_TYPES, only: N_FIELD_TYPE
-    logical, intent(in), optional :: Req ! True if field is required
-    integer :: Boolean_Type(2)
-    boolean_type = (/ t+t_boolean, node(req)+n_field_type /)
-  end function Boolean_Type
+    integer, intent(in) :: Type(:)          ! T_...
+    logical, intent(in), optional :: Req    ! Field is required if true
+    integer :: Field_Type_Array(1+size(Type))
+    field_type_array =  (/ t+Type, node(req)+n_field_type /)
+  end function Field_Type_Array
+
+  ! -----------------------------------------------  Field_Type_1  -----
+  pure function Field_Type_1 ( Type, Req, Empty )
+    ! Declare field-Type field
+    use TREE_TYPES, only: N_FIELD_TYPE
+    integer, intent(in) :: Type             ! T_...
+    logical, intent(in), optional :: Req    ! Field is required if true
+    logical, intent(in), optional :: Empty  ! Empty is OK if true
+    integer :: Field_Type_1(2)
+    field_type_1 =  (/ t+Type, node(req,empty=empty)+n_field_type /)
+  end function Field_Type_1
+
+  ! -----------------------------------------------  Field_Type_2  -----
+  pure function Field_Type_2 ( Type1, Type2, Req )
+    ! Declare field-Type field
+    use TREE_TYPES, only: N_FIELD_TYPE
+    integer, intent(in) :: Type1, Type2     ! T_...
+    logical, intent(in), optional :: Req    ! Field is required if true
+    integer :: Field_Type_2(3)
+    field_type_2 =  (/ t+type1, t+type2, node(req)+n_field_type /)
+  end function Field_Type_2
 
   ! -------------------------------------------------------  Node  -----
-  pure function Node ( Req )
+  pure function Node ( Req, Scalar, Empty )
     ! Compute node generator = N if Req is absent or false, or NR
     ! if Req is present and true
-    logical, intent(in), optional :: Req ! True if field is required
+    use Intrinsic, only: D, Empty_OK, No_Array, Req_Fld
+    logical, intent(in), optional :: Req    ! Field is required if true
+    logical, intent(in), optional :: Scalar ! Scalar is required if true
+    logical, intent(in), optional :: Empty  ! Empty is OK if true
     integer :: Node
     node = n
-    if ( present(req) ) node = merge(nr,n,req)
+    if ( present(req) ) node = node + merge(d*req_fld,0,req)
+    if ( present(scalar) ) node = node + merge(d*no_array,0,scalar)
+    if ( present(empty) ) node = node + merge(d*empty_OK,0,empty)
   end function Node
 
 !--------------------------- end bloc --------------------------------------
@@ -1865,10 +1957,13 @@ contains ! =====     Public procedures     =============================
 
 end module INIT_TABLES_MODULE
 
-! ! $Log$
-! ! Revision 2.570  2013/07/03 23:06:27  pwagner
-! ! Added new array-constructor functions for frequently-used idioms
-! !
+! $Log$
+! Revision 2.571  2013/07/12 23:25:28  vsnyder
+! Remove unreferenced error messages
+!
+! Revision 2.570  2013/07/03 23:06:27  pwagner
+! Added new array-constructor functions for frequently-used idioms
+! 
 ! Revision 2.569  2013/06/21 17:37:39  pwagner
 ! /crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
 !
