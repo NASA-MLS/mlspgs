@@ -29,11 +29,12 @@ contains ! ============= Public Procedures ==========================
 
   !----------------------------------------- ForwardModel -----------
   subroutine ForwardModel ( Config, FwdModelIn, FwdModelExtra, &
-    & FwdModelOut, fmStat, Jacobian, Hessian, Vectors )
+    & FwdModelOut, FmStat, Jacobian, Hessian, Vectors )
 
     ! Call the forward model selected by Config.
 
     use BASELINEFORWARDMODEL_M, only: BASELINEFORWARDMODEL
+    use Compute_Model_Plane_m, only: Compute_Model_Plane
     use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
       & DESTROYFORWARDMODELDERIVED, FORWARDMODELCONFIG_T, QtyStuff_t
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
@@ -43,7 +44,7 @@ contains ! ============= Public Procedures ==========================
     use FULLFORWARDMODEL_M, only: FULLFORWARDMODEL
     use HESSIANMODULE_1, only: HESSIAN_T
     use HYBRIDFORWARDMODEL_M, only: HYBRIDFORWARDMODEL
-    use INIT_TABLES_MODULE, only: L_BASELINE, L_CLOUDFULL, &
+    use INIT_TABLES_MODULE, only: L_Azimuth, L_BASELINE, L_CLOUDFULL, &
       & L_EXTINCTION, L_EXTINCTIONV2, L_FULL, L_HYBRID, L_LINEAR, &
       & L_MIFEXTINCTION, L_MIFExtinctionExtrapolation, L_MIFExtinctionForm, &
       & L_MIFEXTINCTIONV2, L_POLARLINEAR, L_PTAN, L_SCAN, L_SCAN2D, &
@@ -58,7 +59,6 @@ contains ! ============= Public Procedures ==========================
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
     use MoreMessage, only: MLSMessage
-    use Output_m, only: Output
     use POLARLINEARMODEL_M, only: POLARLINEARMODEL
     use SCANMODELMODULE, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
@@ -85,6 +85,8 @@ contains ! ============= Public Procedures ==========================
                                            ! transform.  1 = extinction,
                                            ! 2 = extinctionV2
 
+    type(vectorValue_t), pointer :: Azimuth ! of profile plane, positive being
+                                           ! counterclockwise from orbit plane
     logical :: Clean                       ! Dumps are clean, from switch dxfc
     real :: DeltaTime
     logical :: Derivs(nt)                  ! Derivatives requested in config
@@ -101,11 +103,13 @@ contains ! ============= Public Procedures ==========================
     real(rv) :: ExtrapExponent             ! -exponent for extinction extrapolation
     real(rv) :: ExtrapForm                 ! -exponent for extinction derivative extrapolation
     integer :: FMNaN                       ! Level of fmnan switch
-    integer :: I, J, K
+    integer :: I, K
+    logical :: InOrbitPlane                ! Model plane is orbit plane
     type(vectorValue_t), pointer :: LRP    ! Lowest Retrieved Pressure
     type(qtyStuff_t) :: MIFQty(nt)         ! MIF extinction quantity
     ! Molecule types corresponding to qTypes:
     integer, parameter :: MTypes(nt) = (/ l_Extinction, l_Extinctionv2 /)
+    real(rv) :: Normal(3)                  ! to the profile plane, XYZ
     type(vectorValue_t), pointer :: Ptan   ! Tangent pressure
     ! Quantity types for MIF extinction:
     integer, parameter :: QTypes(nt) = (/ l_MIFExtinction, l_MIFExtinctionv2 /)
@@ -135,6 +139,12 @@ contains ! ============= Public Procedures ==========================
       dumpTransform(1) = mod(dumpTransform(1),10)
     end if
     clean = switchDetail(switches,'dxfc') > -1
+
+    ! Compute a plane for the profile, if different from the orbit plane
+    call compute_model_plane ( fwdModelExtra, config, fmStat%maf, &
+      & normal, inOrbitPlane )
+    if ( .not. inOrbitPlane ) then
+    end if
 
     ! Do the actual forward models
 
@@ -382,7 +392,8 @@ contains ! ============= Public Procedures ==========================
     use MLSL2OPTIONS, only: MLSMESSAGE
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR
     use OUTPUT_M, only: OUTPUT
-    use VECTORSMODULE, only: DUMP, M_IGNORE, M_LINALG, VECTOR_T, VECTORVALUE_T
+    use VECTORSMODULE, only: DUMP, VECTOR_T, VECTORVALUE_T
+!     use VECTORSMODULE, only: M_LINALG
 
     type(forwardModelConfig_T), intent(in) :: CONFIG
     integer, intent(in) :: MAF               ! MAjor Frame number
@@ -684,6 +695,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.60  2013/07/12 23:25:28  vsnyder
+! Remove unreferenced error messages
+!
 ! Revision 2.59  2013/07/02 23:31:03  wgread
 ! remove linear correction for transformed mif extinction-wgr
 !
