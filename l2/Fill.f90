@@ -2076,7 +2076,7 @@ contains ! =====     Public Procedures     =============================
         call Explicit ( quantity, valuesNode, spreadFlag, force, &
           & vectors(vectorIndex)%globalUnit, channel, &
           & .false., options=heightRange(1:1) )
-
+print *, 'Got back from Explicit'
       case ( l_extractChannel )
         if ( .not. all(got ( (/f_sourceQuantity,f_channel/)))) &
           & call Announce_Error ( key, no_Error_Code, &
@@ -2904,7 +2904,7 @@ contains ! =====     Public Procedures     =============================
       case default
         call Announce_error ( key, no_Error_Code, 'This fill method not yet implemented' )
       end select      ! s_method
-      
+print *, 'End of s_method'
       ! Before leaving, we must restore the original mask (or lack of one)
       ! (unless the Fill method is l1b because we may be using the
       ! radiance precision to set the radiance mask)
@@ -2912,13 +2912,22 @@ contains ! =====     Public Procedures     =============================
         ! For this Fill method the new mask is sticky
         qtyWasMasked = associated(quantity%mask)
       elseif ( qtyWasMasked ) then
+print *, 'Associated(tempQuantity%mask) = ', Associated(tempQuantity%mask)
+if ( Associated(tempQuantity%mask) ) print *, 'Shape(tempQuantity%mask) = ', Shape(tempQuantity%mask)
+print *, 'Associated(Quantity%mask) = ', Associated(Quantity%mask)
+if ( Associated(Quantity%mask) ) print *, 'Shape(Quantity%mask) = ', Shape(Quantity%mask)
+print *, 'associated(Quantity%mask,tempQuantity%mask) = ', associated(Quantity%mask,tempQuantity%mask)
+print *, 'before quantity%mask = tempQuantity%mask'
         quantity%mask = tempQuantity%mask
       else
+print *, 'Before ClearMask'
         if ( associated(quantity%mask) ) call ClearMask( quantity%mask )
       endif
       ! Housekeeping
+print *, 'Before destroyVectorQuantityValue'
       call destroyVectorQuantityValue ( tempQuantity, &
         & destroyMask=.true., destroyTemplate=.false. )
+print *, 'Leaving FillCommand'
     end subroutine fillCommand
 
     ! ............................................  Get_File_Name  .....
@@ -3022,6 +3031,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.423  2013/07/12 23:25:28  vsnyder
+! Remove unreferenced error messages
+!
 ! Revision 2.422  2013/06/14 18:49:22  vsnyder
 ! Decruftification
 !
