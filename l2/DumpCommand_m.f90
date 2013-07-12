@@ -863,14 +863,13 @@ contains
     ! [a=a.qty], [b=b.qty], [c=value], [values=..], [/literal]
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_A, F_B, F_BOOLEAN, F_C, F_EVALUATE, &
+    use INIT_TABLES_MODULE, only: F_A, F_B, F_BOOLEAN, F_C, F_EVALUATE, F_EXPR, &
       & F_FORMULA, F_INPUTBOOLEAN, F_LABEL, F_LITERAL, F_MANIPULATION, F_VALUES, &
       & FIELD_FIRST, FIELD_LAST
     use MANIPULATIONUTILS, only: MANIPULATE
     use MLSKINDS, only: R8, RV
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, &
-      & MLSMESSAGE
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMESSAGE
     use MLSSTRINGLISTS, only: EVALUATEFORMULA, GETHASHELEMENT, &
       & INSERTHASHELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS, WRITEINTSTOCHARS
@@ -975,16 +974,19 @@ contains
       case ( f_Boolean )
         call get_string ( sub_rosa(subtree(2,son)), nameString, strip=.true. )
         nameString = lowerCase(nameString)
+      case ( f_evaluate )
+        ! call output( 'processing evaluate', advance='yes' )
+        evaluate = get_boolean ( fieldValue )
+        if ( verbose ) call outputNamedValue( 'evaluate', evaluate )
+      case ( f_expr )
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'No code yet to handle "expr" field.' )
       case ( f_formula, f_manipulation )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         tvalue = myBooleanValue (formula)
       case ( f_label )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         literal = .true.
-      case ( f_evaluate )
-        ! call output( 'processing evaluate', advance='yes' )
-        evaluate = get_boolean ( fieldValue )
-        if ( verbose ) call outputNamedValue( 'evaluate', evaluate )
       case ( f_literal )
         ! call output( 'processing literal', advance='yes' )
         literal = get_boolean ( fieldValue )
@@ -2591,6 +2593,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.88  2013/07/12 23:24:11  vsnyder
+! Announce error for 'expr' field -- no code yet
+!
 ! Revision 2.87  2013/05/22 20:20:49  pwagner
 ! Moved insertHashElement to MLSStringLists
 !
