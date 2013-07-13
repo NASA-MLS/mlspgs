@@ -23,12 +23,9 @@ module Compute_Z_PSIG_m
 contains
 !------------------------------------------------  Compute_Z_PSIG  -----
 
-  subroutine Compute_Z_PSIG ( FwdModelConf, Temp, &
-    &                         Nlvl, No_Tan_Hts, SurfaceTangentIndex, &
-    &                         Z_PSIG, Tan_Press, Observer )
+  subroutine Compute_Z_PSIG ( FwdModelConf, Temp, Z_PSIG, Observer )
 
-  ! Compute the preselected integration zeta grid.  Compute Tan_Press
-  ! because it depends on z_psig.
+  ! Compute the preselected integration zeta grid.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
@@ -41,16 +38,8 @@ contains
     type (vectorValue_T), intent(in) :: TEMP      ! Temperature component of state vector
 
   ! Outputs:
-    integer, intent(out) :: Nlvl                  ! Levels in coarse grid
-    integer, intent(out) :: No_Tan_Hts            ! Number of tangent heights
-    integer, intent(out) :: SurfaceTangentIndex   ! First or surface tangent index
-
     real(rp), allocatable, intent(out) :: Z_psig(:) ! recommended PSIG for
       !                                  radiative transfer calculations
-      ! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
-      ! Would be intent(out) if it weren't a pointer.  First thing here
-      ! is to nullify it.
-    real(rp), pointer :: Tan_Press(:)  ! Pressures at tangent points in z_psig
 
   ! Optional inputs:
     type (vectorValue_T), optional, intent(in) :: Observer ! Zetas for observers-in-atmosphere
@@ -62,7 +51,7 @@ contains
     real(rp), pointer :: Z_all(:)  ! consolidated storage of representation
       !                              bases for z_grid determination
 
-    nullify ( tan_press, z_all )
+    nullify ( z_all )
     qtys => fwdModelConf%beta_group%qty
 
 ! Insert automatic preselected integration gridder here. Need to make a
@@ -123,28 +112,6 @@ contains
     call make_z_grid ( z_all, z_psig )
     call deallocate_test ( z_all, 'z_all', moduleName )
 
-! note that z_psig(1) is the designated surface
-    Nlvl = SIZE(z_psig)
-
-! Allocate tan_press and compute it from fwdModelConf%tangentGrid%surfs and
-! z_psig
-
-    if ( associated(FwdModelConf%tangentGrid) ) then
-      surfaceTangentIndex = COUNT(fwdModelConf%tangentGrid%surfs < (z_psig(1) - 0.0001_rp)) + 1
-    else
-      surfaceTangentIndex = 1
-    end if
-    no_tan_hts = Nlvl + surfaceTangentIndex - 1
-
-    call allocate_test ( tan_press, no_tan_hts, 'tan_press', moduleName )
-
-! Compute tan_press from fwdModelConf%tangentGrid%surfs and z_psig
-
-    if ( associated(FwdModelConf%tangentGrid) ) &
-      & tan_press(1:surfaceTangentIndex-1) = &
-        & fwdModelConf%tangentGrid%surfs(1:surfaceTangentIndex-1,1)
-    tan_press(surfaceTangentIndex:no_tan_hts) = z_psig
-
   end subroutine Compute_Z_PSIG
 
 !--------------------------- end bloc --------------------------------------
@@ -160,6 +127,9 @@ contains
 end module Compute_Z_PSIG_m
 
 ! $Log$
+! Revision 2.10  2013/07/13 00:04:58  vsnyder
+! Move computation of tangent pressures to Tangent_Pressures
+!
 ! Revision 2.9  2013/06/12 02:18:56  vsnyder
 ! Make Z_psig allocatable instead of pointer
 !
