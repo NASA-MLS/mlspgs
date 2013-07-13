@@ -521,11 +521,10 @@ contains
 
 ! Begin code
 
-    call get_all_d2_delta_df2( max_f, gl_inds, del_zeta, Grids_f, eta_zxp,  &
-                             & do_calc_f, do_gl, del_s, ref_cor, ds_dz_gw,  &
-                             & d2Alpha_df2_c, d2Alpha_df2_f, LD,            &
-                             & nz_d_delta_df, nnz_d_delta_df, d2_delta_df2, &
-                             & nothing )
+    call get_all_d2_delta_df2( max_f, gl_inds, del_zeta, Grids_f, eta_zxp,   &
+                             & do_calc_f, do_gl, del_s, ref_cor, ds_dz_gw,   &
+                             & d2Alpha_df2_c, d2Alpha_df2_f, nz_d_delta_df,  &
+                             & nnz_d_delta_df, d2_delta_df2, nothing )
 
     do sps_i = 1, ubound(Grids_f%l_z,1)
 
@@ -563,10 +562,10 @@ contains
 
 !-------------------------------------------- Get_all_d2_delta_df2 -----
 
-  subroutine Get_all_d2_delta_df2 ( max_f, gl_inds, del_zeta, Grids_f,     &
-                              & eta_zxp, do_calc_f, do_gl, del_s, ref_cor, &
-                              & ds_dz_gw, d2Alpha_df2_c, d2Alpha_df2_f,    &
-                              & LD, nz_d_delta_df, nnz_d_delta_df, d2_delta_df2, &
+  subroutine Get_all_d2_delta_df2 ( max_f, gl_inds, del_zeta, Grids_f,       &
+                              & eta_zxp, do_calc_f, do_gl, del_s, ref_cor,   &
+                              & ds_dz_gw, d2Alpha_df2_c, d2Alpha_df2_f,      &
+                              & nz_d_delta_df, nnz_d_delta_df, d2_delta_df2, &
                               & nothing )
 
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -593,8 +592,6 @@ contains
       !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: d2Alpha_df2_c(:,:)  ! On the coarse path
     real(rp), intent(in) :: d2Alpha_df2_f(max_f,*)  ! On the GL path
-
-    integer, intent(in) :: LD                ! Leading dimension of D_Delta_dF
 
 ! Outputs
 
@@ -1985,7 +1982,8 @@ contains
     integer, intent(out) :: More_Inds(:)
     integer, intent(out) :: All_Inds(:)
 
-    integer :: I, J, K, L, P_I
+    integer :: I, J, L, P_I
+!   integer :: K
 
     i = 1
     j = 1
@@ -2034,6 +2032,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.31  2013/07/13 00:03:21  vsnyder
+! Remove LD argument from get_all_d2_delta_df2
+!
 ! Revision 2.30  2013/05/18 00:34:44  vsnyder
 ! Insert NG fine-grid (GL) points between tangent points, thereby
 ! regularizing coarse-grid spacing, and reducing significantly the need
