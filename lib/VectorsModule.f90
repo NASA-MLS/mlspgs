@@ -171,7 +171,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! =====     Defined Operators and Generic Identifiers     ==============
 
   interface Assignment (=)
-    module procedure AssignVector
+    module procedure AssignVector, AssignVectorValue
   end interface
 
   interface CheckIntegrity
@@ -333,7 +333,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     & 'linear algebra  ', 'full derivatives', 'fill            ', &
     & 'Tikhonov        ', 'cloud           ', 'ignore          ' , &
     & 'spare           ' /)
-!      123456789012345678901234567890123456789012345678901234567890
+
   ! This type describes a vector.
 
   type Vector_T
@@ -345,6 +345,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! dimension of QUANTITIES is the same as for the QUANTITIES field of the
     ! vector template.  Each element of QUANTITIES here corresponds to the
     ! one in the same position in the QUANTITIES field of the vector template.
+!   contains
+!     final :: DestroyVectorInfo
   end type Vector_T
 
   private :: CreateValues
@@ -487,6 +489,16 @@ contains ! =====     Public Procedures     =============================
     z%template = x%template
     z%quantities => x%quantities
   end subroutine AssignVector
+
+  ! ------------------------------------------  AssignVectorValue  -----
+  subroutine AssignVectorValue ( Z, X )
+  ! Turn off assignment for vector quantities
+    use MLSMESSAGEMODULE, only: MLSMSG_CRASH, MLSMESSAGE
+    type(VectorValue_T), intent(inout) :: Z
+    type(VectorValue_T), intent(in) :: X
+    call MLSMessage ( MLSMSG_Crash, moduleName, "Assigning VectorValue_T is a no-no" )
+    z%index = x%index ! to avoid sniveling about unused dummy arguments
+  end subroutine AssignVectorValue
 
   ! -------------------------------------------------------  AXPY  -----
   type (Vector_T) function AXPY ( A, X, Y ) result (Z)
@@ -881,6 +893,7 @@ contains ! =====     Public Procedures     =============================
     character(len=*), optional, intent(in) :: OPTIONS
     ! Internal variables
     character(len=8) :: MYOPTIONS
+
     ! Executable statements:
     myOptions = ' '
     if ( present(options) ) myOptions = options
@@ -3204,6 +3217,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.178  2013/06/12 02:14:37  vsnyder
+! Cruft removal
+!
 ! Revision 2.177  2013/05/22 20:24:21  pwagner
 ! Dump procedures accept and obey options arg
 !
