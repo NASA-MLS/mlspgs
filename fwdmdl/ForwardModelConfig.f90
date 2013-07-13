@@ -140,6 +140,8 @@ module ForwardModelConfig
     ! Now the other integers
     integer :: Cat_Size(2)            ! Catalog size, by sideband, 1 = LSB, 2 = USB
     integer :: LinearSideband         ! For hybrid model, which SB is linear?
+    integer :: Model_Plane_MIF = 1    ! MIF about which model plane is rotated
+                                      ! if L_Azimuth quantity is in fwdModelExtra
     integer :: No_cloud_species       ! No of Cloud Species '2'
     integer :: No_model_surfs         ! No of Model surfaces '640'
     integer :: NoUsedChannels         ! Total in all signals
@@ -1462,6 +1464,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.121  2013/05/15 03:08:55  vsnyder
+! Revise processing of dump switch
+!
 ! Revision 2.120  2013/03/30 00:11:39  vsnyder
 ! Add Quantity database to dump, dump more stuff in config, add wasSpecific
 ! to QtyStuff_t.
