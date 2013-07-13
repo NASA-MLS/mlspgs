@@ -55,6 +55,7 @@ contains
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MOLECULES, only: L_CLOUDICE
     use MOREMESSAGE, only: MLSMESSAGE
+    use Tangent_Pressures_m, only: Tangent_Pressures
     use TOGGLES, only: EMIT, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
@@ -79,7 +80,6 @@ contains
     type (VectorValue_T), pointer :: CloudIce ! Ice water content
     type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of state vector
     type (VectorValue_T), pointer :: PTAN   ! Tangent pressure component of state vector
-    type (VectorValue_T), pointer :: SPS    ! A species component of state vector
     type (VectorValue_T), pointer :: TEMP   ! Temperature component of state vector
     integer :: Dump_Conf        ! for debugging, from -Sfmconf
     integer :: K                ! Loop inductor and subscript
@@ -175,9 +175,11 @@ contains
           ! in the "first" state vector.  Otherwise, there's no place to
           ! store the derivative in the Jacobian.
           mol = fwdModelConf%beta_group(k)%molecule
-          sps => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-            & quantityType=l_vmr, molecule=mol, &
-            & foundInFirst=sps_in_first, config=fwdModelConf )
+          ! All we want here is the SPS_in_first side effect
+          if ( associated( &
+            & GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+            &  quantityType=l_vmr, molecule=mol, &
+            &  foundInFirst=sps_in_first, config=fwdModelConf )) ) continue
           if ( .not. sps_in_first ) &
             & call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
             & 'With config(%S): ' // &
@@ -217,17 +219,18 @@ contains
   ! tangent grid and species).  Tan_Press is thrown in for free.
     if ( fwdModelConf%generateTScat ) then
       ! Make sure the TScat zeta is in the preselected grid.
-      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, no_tan_hts,   &
-        &                   surfaceTangentIndex, z_psig, tan_press, &
-        &                   GetQuantityForForwardModel (            &
-        &                    fwdModelOut, quantityType=l_TScat,     &
-        &                    signal=fwdModelConf%signals(1)%index,  &
-        &                    config=fwdModelConf ) )
+      call compute_Z_PSIG ( fwdModelConf, temp, z_psig,             &
+                          & GetQuantityForForwardModel (            &
+                          &  fwdModelOut, quantityType=l_TScat,     &
+                          &  signal=fwdModelConf%signals(1)%index,  &
+                          &  config=fwdModelConf ) )
 
     else
-      call compute_Z_PSIG ( fwdModelConf, temp, nlvl, no_tan_hts,   &
-        &                   surfaceTangentIndex, z_psig, tan_press )
+      call compute_Z_PSIG ( fwdModelConf, temp, z_psig )
     end if
+    nlvl = size(z_psig)
+    call tangent_pressures ( fwdModelConf, z_psig, no_tan_hts,   &
+                           & surfaceTangentIndex, tan_press )
 
     max_c = 2*nlvl + max_new + 1 ! Maximum coarse path length
     maxVert = (nlvl-1) * ngp1 + 1
@@ -287,23 +290,22 @@ contains
     call destroygrids_t ( grids_w )
     call destroygrids_t ( grids_v )
 
-    ! Allocated in Compute_Z_PSIG:
+    ! Allocated in tangent_pressures:
     call deallocate_test ( tan_press,    'tan_press',    moduleName )
 
     if ( toggle(emit) ) call trace_end ( 'FullForwardModel MAF=', fmStat%maf )
 
   contains
-    function DerivativeMissingFromStateFun() result( SEVERITY )
-    ! Default severity (probably ERROR) can be reduced to a warning 
-    ! by adding -Sdmiss to command line
-    ! Args
-    integer :: SEVERITY
-    if ( switchDetail(switches,'dmiss') > -1 ) then ! be lenient
-      severity = min( MLSMSG_Warning, DerivativeMissingFromState )
-    else
-      severity = DerivativeMissingFromState
-    endif
+
+    integer function DerivativeMissingFromStateFun() result( SEVERITY )
+      ! Default severity (probably ERROR) can be reduced to a warning 
+      ! by adding -Sdmiss to command line
+      ! Args
+      severity = merge( min( MLSMSG_Warning, DerivativeMissingFromState ), &
+                      & DerivativeMissingFromState, &
+                      & switchDetail(switches,'dmiss') > -1 )
     end function DerivativeMissingFromStateFun
+
   end subroutine FullForwardModel
 
   ! ---------------------------------------- FullForwardModelAuto  -----
@@ -342,7 +344,6 @@ contains
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
     use GEOMETRY, only: GET_R_EQ
     use GET_ETA_MATRIX_M, only: ETA_D_T ! TYPE FOR ETA STRUCT
-    use GLNP, only: GX
     use HESSIANMODULE_1, only: HESSIAN_T
     use INTRINSIC, only: L_A, L_RADIANCE, L_TSCAT, L_VMR
     use LOAD_SPS_DATA_M, only: DESTROYGRIDS_T, DUMP, GRIDS_T
@@ -4634,6 +4635,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.342  2013/06/12 02:35:22  vsnyder
+! Make Z_psig allocatable instead of pointer
+!
 ! Revision 2.341  2013/05/22 00:19:10  vsnyder
 ! Remove unreferenced USE names
 !
