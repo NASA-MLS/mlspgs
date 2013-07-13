@@ -1489,16 +1489,6 @@ contains
       theUnit = output_unit
     end if
     ! Are we trying to avoid buffered output?
-    ! If so, note the following decision and its effects:
-    ! we will close and reopen for append our output file
-    ! not at the beginning of a write to a fresh line
-    ! but at the end of a write to the previous line.
-
-    ! If, in the middle, we switch output files, say from file1 to file2,
-    ! it's possible that a line that should have been the last written
-    ! to file1 will instead be written to file2. 
-    ! That's the downside.
-
     ! The good part is that if we crash hard we won't lose that
     ! last line.
     if ( (.not. outputOptions%buffered) .and. &
@@ -2852,6 +2842,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.102  2013/07/13 00:01:09  vsnyder
+! Remove old comments about how unbuffering was done
+!
 ! Revision 2.101  2013/06/28 17:53:44  pwagner
 ! logParent, parentName added to show who called output module
 !
