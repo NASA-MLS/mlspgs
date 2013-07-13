@@ -95,6 +95,7 @@ contains ! =====     Public Procedures     =============================
     ! (2) Make ops into array, and loop over them where convenient
 
     ! Internal variables
+    logical :: ALREADYVALPARENS
     character (len=MAXSTRLISTLENGTH) :: mstr ! manipulation being manipulated
     integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
     character(len=MAXSTRLISTLENGTH) :: collapsedstr
@@ -180,7 +181,7 @@ contains ! =====     Public Procedures     =============================
     mstr = collapsedstr
     call ReplaceSubString( mstr, collapsedstr, 'e_', 'e-', &
       & which='all', no_trim=.true. )
-
+    alreadyValParens = .false.
     ! Collapse every sub-formula nested within parentheses
     do level =1, MAXNESTINGS ! To prevent endlessly looping if ill-formed
       if ( index( collapsedstr, '(' ) < 1 ) exit
@@ -191,7 +192,18 @@ contains ! =====     Public Procedures     =============================
         call ParensForAll ( collapsedstr, mstr )
         collapsedstr = mstr
         cycle
+      elseif ( index( trim(part2), 'val:' ) > 1 .and. .not. alreadyValParens ) then
+        alreadyValParens = .true.
+        mstr = ParenthesizeVal( collapsedstr )
+        if ( DeeBUG ) then
+          print *, 'Adding pareens to val ', part2
+          print *, 'before ', trim(collapsedstr)
+          print *, 'after ', trim(mstr)
+        endif
+        collapsedstr = mstr
+        cycle
       endif
+      alreadyValParens = .false.
       ! Now evaluate the part2
       if ( DeeBUG ) then
         print *, 'collapsedstr ', collapsedstr
@@ -737,12 +749,16 @@ contains ! =====     Public Procedures     =============================
         if ( negating ) part%values = -part%values
         op = lastOp
         if ( fun /= ' ' ) op = fun
+        if ( deebug ) then
+          print *, 'Carry out a ', trim(op)
+        endif
         select case(op)
         case ('nul')
             newone%values = part%values
         case ('+')
             newone%values = newone%values + part%values
         case ('-')
+            ! print *, 'Subtracting'
             newone%values = newone%values - part%values
         case ('*')
             newone%values = newone%values * part%values
@@ -1183,6 +1199,32 @@ contains ! =====     Public Procedures     =============================
       newStr = trim(newStr) // str(dbInd+lastBl:)
   end function Parenthesize
 
+  function ParenthesizeVal ( str ) result ( newStr )
+    ! Add parentheses to a val function
+    ! E.g., turn ' ... val: 4 ...'
+    ! to ' ... (val: 4) ...'
+    character(len=*), intent(in) :: str
+    character(len=len(str)+8)    :: newStr
+    ! Method: starting from the 'val:', go forward to the first blank
+    ! put '( ' or ') ' in place of them
+    ! Internal variables
+    integer :: col
+    integer :: dbInd
+    integer :: firstBl
+    integer :: lastBl
+    newStr = str
+    col = index( str, 'val:' )
+    if ( col < 1 ) return
+    firstBl = findFirst( str(col+5:), ' ' )
+    if ( col > 1 ) then
+      newStr = str(:col-1) // '( ' // 'val:'
+    else
+      newStr =                '( ' // 'val:'
+    endif
+    newStr = trim(newStr) // ' ' // str(col+5:col+5+firstBl-1) // &
+      & ')' // str(col+5+firstBl:)
+  end function ParenthesizeVal
+
   subroutine ParensForAll ( str, outStr )
     ! Args
     character(len=*), intent(in)  :: str
@@ -1279,6 +1321,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.8  2013/07/13 00:17:08  pwagner
+! Fixed another bug; this one affected numbers
+!
 ! Revision 2.7  2013/06/17 21:59:13  pwagner
 ! Fixed serious bugs
 !
