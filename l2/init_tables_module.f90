@@ -1258,7 +1258,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, field_type(t_outputType,req=req), &
              begin, f+f_upperOverlap, boolean(), &
              begin, f+f_vector, field_spec(s_vector), &
-             ndp+n_spec_def /) )
+             np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_copy, &  ! Must be AFTER s_hGrid if repairGeoLocations
              begin, f+f_create, boolean(), &
@@ -1958,6 +1958,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.573  2013/07/15 23:53:39  vsnyder
+! Allow repeated fields on directWrite commands
+!
 ! Revision 2.572  2013/07/12 23:45:30  vsnyder
 ! Functions for almost all field definitions
 !
