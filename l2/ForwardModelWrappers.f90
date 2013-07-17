@@ -562,10 +562,10 @@ contains ! ============= Public Procedures ==========================
     ! where the subscripts are as above.
 
 ! Let's not do the linear radiance correction. This may improve the fit the
-! actual radiances.
-!              o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
-!                & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
-!                           & f_qty%values(surf,1) )
+! actual radiances. Works better with correction in place on actual data.
+              o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
+                & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+                           & f_qty%values(surf,1) )
             end do ! Surf
           end do ! vSurf
         end if
@@ -696,6 +696,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.62  2013/07/17 16:26:21  wgread
+! restore linear correction wgr
+!
 ! Revision 2.61  2013/07/12 23:48:54  vsnyder
 ! Some stuff for out-of-orbit-plane viewing
 !
