@@ -5,8 +5,50 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-068r1}
-\newcommand{\docdate}{17 January 2008}
+\newcommand{\docname}{\bf wvs-068r2}
+\newcommand{\docdate}{16 July 2013}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\renewcommand{\d}{\text{d}}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+\newcommand\hh[2]{#1 \hr{#2}}
+\newcommand\hrpdf[1]{\href{#1.pdf}{pdf}}
+\newcommand\hpdf[1]{#1 \hrpdf{#1}}
 
 \begin{document}
 
@@ -32,16 +74,14 @@
 \vspace{-10pt}
 \begin{tabbing}
 \phantom{References: }\= \\
-To: \>Dong, Van\\
+To: \>Dong, Igor, Van\\
 Subject: \>Mie phase function, integrated scattering, and derivatives\\
 From: \>Van Snyder\\
-Reference: \>wvs-058, {\tt wvs-066}
+Reference: \>\h{wvs-058}, \h{wvs-066}
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
-
-\renewcommand{\d}{\text{d}}
 
 From the cloud ATBD JPL D-19299 (4 June 2004), the phase function is
 
@@ -78,22 +118,33 @@ which satisfies the following recurrence, from which it can be computed stably:
 \end{equation}
 
 The derivatives of $P_j^1(\cos\theta)$ w.r.t.\ $\theta$ can be computed from the
-following relation:
+following relations:
 
-\begin{equation}\begin{split}
-\frac{\d P_j^1(\cos\theta)}{\d\theta}  =\,&
- j\, \frac{P_{j+1}^1(\cos\theta)}{\sin\theta} -
+\begin{equation}
+\frac{\d P_j^1(\cos\theta)}{\d\theta}  = \left\{
+\begin{array}{ll}
+0 & j \leq 1 \\
+ & \\
+\begin{split}
+ j\,& \frac{P_{j+1}^1(\cos\theta)}{\sin\theta} -
  (j+1) \cos\theta\, \frac{P_j^1(\cos\theta)}{\sin\theta} \\
 =\,&
  j \cos\theta\, \frac{P_j^1(\cos\theta)}{\sin\theta} -
- (j+1)\, \frac{P_{j-1}^1(\cos\theta)}{\sin\theta}\,. \\
-\end{split}\end{equation}
+ (j+1)\, \frac{P_{j-1}^1(\cos\theta)}{\sin\theta}
+\end{split} & j > 1
+\end{array} \right.
+\end{equation}
+
+(see Equation 8.5.4 in National Bureau of Standards AMS 55, or Equations
+14.10.4-5 in the NIST Handbook of Mathematical Functions).  $P^1_j(\cos m
+\pi) = 0$, but $\frac{P^1_j(\cos m\pi)}{\sin(m\pi)}$ is undefined, for $m
+= 0, 1, 2, \dots.$
 
 $\theta$ is independent of $T$ and IWC, and $a_j(r,T)$ and $b_j(r,T)$ are
-independent of IWC, so derivatives of $S_1$ and $S_2$ w.r.t.\ IWC are zero and
-derivatives w.r.t.\ $T$ depend upon derivatives of $a_j(r,T)$ and $b_j(r,T)$
-w.r.t.\ $T$ in an obvious straight-forward way (see {\tt wvs-066} for
-$a_j(r,T)$ and $b_j(r,T)$ and their derivatives w.r.t.\ $T$).
+independent of IWC, so derivatives of $S_1$ and $S_2$ w.r.t.\ IWC are zero
+and derivatives w.r.t.\ $T$ depend upon derivatives of $a_j(r,T)$ and
+$b_j(r,T)$ w.r.t.\ $T$ in an obvious straight-forward way (see {\tt
+wvs-066} for $a_j(r,T)$ and $b_j(r,T)$ and their derivatives w.r.t.\ $T$).
 
 From the definition of the quantity $p_0(\theta,r)$ in Equation (\ref{two}),
 
@@ -151,9 +202,11 @@ and
   \frac{\partial \beta_{c\_s}}{\partial\text{IWC}}\,.
 \end{equation}
 
-See {\tt wvs-066} for derivatives of $\beta_{c\_s}$ and $n(r)$ w.r.t.\ $T$ and
-IWC, and the derivative of $\xi_s(r)$ w.r.t.\ $T$.
+See \h{wvs-066} for derivatives of $\beta_{c\_s}$ and $n(r)$ w.r.t.\ $T$
+and IWC, and the derivative of $\xi_s(r)$ w.r.t.\ $T$.
 
 \label{lastpage}
 \end{document}
 % $Id$
+
+% $Log$
