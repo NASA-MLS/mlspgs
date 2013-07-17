@@ -5,8 +5,50 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-065}
-\newcommand{\docdate}{7 December 2007}
+\newcommand{\docname}{\bf wvs-065r1}
+\newcommand{\docdate}{15 July 2013}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\renewcommand{\d}{\text{d}}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+\newcommand\hh[2]{#1 \hr{#2}}
+\newcommand\hrpdf[1]{\href{#1.pdf}{pdf}}
+\newcommand\hpdf[1]{#1 \hrpdf{#1}}
 
 \begin{document}
 
@@ -35,11 +77,13 @@
 To: \>Van\\
 Subject: \>Summary of Mie parameters\\
 From: \>Van Snyder\\
-Reference: \>wvs-058
+Reference: \>\h{wvs-058}, \h{wvs-070}
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
+
+\section{Mie Efficiencies}
 
 Compute
 \begin{equation}\begin{split}
@@ -78,7 +122,8 @@ A_n = -\frac{n}{m \chi} + \frac{j_{n-1}(m \chi)}
 $m = \sqrt{\epsilon}$ is the complex refractive index, and $\epsilon$ is
 the complex dielectric constant.
 
-Let $D = 2r$.  Then
+Let $D = 2r$.  Then the particle number distribution as a function of
+particle size $r$ ($\mu$m) is
 \begin{equation}\begin{split}
  n(D) =\,& \frac1{\rho_{\text{ice}}} \left\{
            N_1 D \exp(-\alpha D) +
@@ -108,6 +153,63 @@ IWC is the ice water content of the atmosphere in g/m$^3$, IWC$_0$ = 1 g/m$^3$,
 $D_0 = 1 \mu$m, $\rho_{\text{ice}} = 0.91$ g/m$^3$, and $T$ is the atmospheric
 temperature in Kelvins.
 
+\section{Phase function}
+
+The phase function is
+
+\begin{equation}\label{one}
+p(\theta,r) = \frac{p_0(\theta,r)}{C(r)}
+\end{equation}
+
+where
+
+\begin{equation}\begin{split}\label{two}
+p_0(\theta,r) =\,& |S_1(\theta,r)|^2 + |S_2(\theta,r)|^2 =
+  \Re (S_1(\theta,r))^2 + \Im (S_1(\theta,r))^2 +
+  \Re (S_2(\theta,r))^2 + \Im (S_2(\theta,r))^2 \\
+S_1 =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
+ a_j(r,T) \frac{\d P_j^1(\cos\theta)}{\d \theta} +
+ b_j(r,T) \frac{P_j^1(\cos\theta)}{\sin\theta} \right) \\
+S_2 =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
+ a_j(r,T) \frac{P_j^1(\cos\theta)}{\sin\theta} +
+ b_j(r,T) \frac{\d P_j^1(\cos\theta)}{\d \theta} \right) \\
+C(r) =\,& \frac12 \int_0^\pi p_0(\theta,r) \sin\theta \, \d \theta \,. \\
+\end{split}\end{equation}
+
+The integrated phase function is
+
+\begin{equation}\label{six}
+P(\theta) = 
+ \frac\pi{\beta_{c\_s}} \int_0^\infty
+ r^2 n(r) \xi_s(r)
+  \frac{p_0(\theta,r)}{C(r)} \,\d r \,.
+\end{equation}
+
+As shown in wvs-070, this may be reduced to a single integral:
+
+\begin{equation}
+P(\theta) =
+ \frac{\lambda^2}{2 \pi \beta_{c\_s}} \int_0^\infty n(r)\, p_0(\theta,r) \,\d r
+\end{equation}
+
+and its derivatives correspondingly simplify to
+
+\begin{equation}\begin{split}
+\frac{\partial P(\theta)}{\partial T} = \,&
+ \frac{\lambda^2}{2 \pi \beta_{c\_s}} \int_0^\infty\,
+  \frac{\partial n(r)}{\partial T}\, p_0(\theta,r) +
+  n(r) \frac{\partial p_0}{\partial T} \,\d r -
+  \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial T}
+\text{ and} \\
+\frac{\partial P(\theta)}{\partial IWC} = \,&
+ \frac{\lambda^2}{2 \pi \beta_{c\_s}} \int_0^\infty\,
+  \frac{\partial n(r)}{\partial IWC}\, p_0(\theta,r) \,\d r -
+  \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial IWC}
+\,.
+\end{split}\end{equation}
+
 \label{lastpage}
 \end{document}
 % $Id$
+
+% $Log$

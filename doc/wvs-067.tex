@@ -1,12 +1,56 @@
 \documentclass[11pt]{article}
-\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.5in
 \oddsidemargin -0.25in
 %\evensidemargin -0.5in
 \topmargin -0.25in
 \textheight 9.25in
 
-\newcommand{\docname}{\bf wvs-067r1}
-\newcommand{\docdate}{11 February 2008}
+\newcommand{\docname}{\bf wvs-067r2}
+\newcommand{\docdate}{15 July 2013}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\renewcommand{\d}{\text{d}}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+\newcommand\hh[2]{#1 \hr{#2}}
+\newcommand\hrpdf[1]{\href{#1.pdf}{pdf}}
+\newcommand\hpdf[1]{#1 \hrpdf{#1}}
 
 \begin{document}
 
@@ -35,16 +79,22 @@
 To: \>Van\\
 Subject: \>Summary of Mie formulae\\
 From: \>Van Snyder\\
-Reference: \>wvs-058
+Reference: \>\h{wvs-058}, \h{wvs-070}
 \end{tabbing}
 
 \parindent 0pt \parskip 6pt
 \vspace{-10pt}
 
+\section{Mie Efficiencies}
+
+Extinction and scattering cross sections:
+
 \begin{equation}\begin{split}
 \beta_{c\_e} =\,&\, 2 \pi \int_0^\infty r^2 n(r)\, \xi_e(r) \text{d} r \\
 \beta_{c\_s} =\,&\, 2 \pi \int_0^\infty r^2 n(r)\, \xi_s(r) \text{d} r \\
 \end{split}\end{equation}
+%
+Particle number distribution as a function of particle size $r$ ($\mu$m):
 %
 \begin{equation}\begin{split}
 n(r) =\,& N_1\, r \exp(-2 \alpha r) +
@@ -61,12 +111,14 @@ N_1 =\,& \frac{I_< \alpha^5}{4 \pi \rho} \text{ and }
 N_2 = \frac{6 I_>}{\sqrt{2 \pi^3}\, \rho\, \sigma \exp(3 \mu + 4.5 \sigma^2)}
 \end{split}\end{equation}
 %
+Extinction and scattering efficiency factors:
+%
 \begin{equation}\begin{split}
 \xi_e(r) =\,& \frac2{\chi^2} \sum_{n=1}^\infty ( 2 n + 1 ) ( \Re a_n + \Re b_n ) \\
 \xi_s(r) =\,& \frac2{\chi^2} \sum_{n=1}^\infty ( 2 n + 1 ) ( |a_n|^2 + |b_n|^2 ) \\
 \end{split}\end{equation}
 %
-where $\chi = \frac{2 \pi r}\lambda$.
+where $\chi = \frac{2 \pi r}\lambda$,
 %
 \begin{equation}
 A_n = -\frac{n}{m \chi} + \frac{j_{n-1}(m \chi)}{j_n(m \chi)}
@@ -107,7 +159,10 @@ A_n = -\frac{n}{m \chi} + \frac{j_{n-1}(m \chi)}{j_n(m \chi)}
 %
 $\lambda$ is wavelength, $T$ is temperature in Celsius, $I$ is ice water content
 in g/m$^3$, $\rho = 0.91$ g/cm$^3$ is ice density, $m$ is the complex index of
-refraction, which depends upon temperature and frequency, and
+refraction, which depends upon temperature and frequency, $j_n(\cdot)$ is
+the spherical Bessel function of the first kind, $y_n(\cdot)$ is the
+spherical Bessel function of the second kind, $h^{(2)}_n(\cdot)$ is the
+spherical Hankel function of the second kind, and
 
 \begin{equation}
 W(f_1,f_2) = \left|
@@ -119,6 +174,65 @@ W(f_1,f_2) = \left|
 \text{ is the Wronskian determinant of } f_1 \text{ and } f_2\,.
 \end{equation}
 
+\section{Phase function}
+
+The phase function is
+
+\begin{equation}\label{one}
+p(\theta,r) = \frac{p_0(\theta,r)}{C(r)}
+\end{equation}
+
+where
+
+\begin{equation}\begin{split}\label{two}
+p_0(\theta,r) =\,& |S_1(\theta,r)|^2 + |S_2(\theta,r)|^2 =
+  \Re (S_1(\theta,r))^2 + \Im (S_1(\theta,r))^2 +
+  \Re (S_2(\theta,r))^2 + \Im (S_2(\theta,r))^2 \,, \\
+S_1 =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
+ a_j(r,T) \frac{\d P_j^1(\cos\theta)}{\d \theta} +
+ b_j(r,T) \frac{P_j^1(\cos\theta)}{\sin\theta} \right) \,, \\
+S_2 =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
+ a_j(r,T) \frac{P_j^1(\cos\theta)}{\sin\theta} +
+ b_j(r,T) \frac{\d P_j^1(\cos\theta)}{\d \theta} \right) \,, \\
+C(r) =\,& \frac12 \int_0^\pi p_0(\theta,r) \sin\theta \, \d \theta \,, \\
+\end{split}\end{equation}
+
+and $P^1_j(\cos\theta)$ is the Legendre function.  The integrated phase
+function is
+
+\begin{equation}\label{six}
+P(\theta) = \frac\pi{\beta_{c\_s}} \int_0^\infty
+ r^2 n(r) \xi_s(r) p(\theta,r) \, \d r =
+ \frac\pi{\beta_{c\_s}} \int_0^\infty
+ r^2 n(r) \xi_s(r)
+  \frac{p_0(\theta,r)}{C(r)} \,\d r \,.
+\end{equation}
+
+As shown in wvs-070, this may be reduced to a single integral:
+
+\begin{equation}
+P(\theta) =
+ \frac{\lambda^2}{2 \pi \beta_{c\_s}} \int_0^\infty n(r)\, p_0(\theta,r) \,\d r
+\end{equation}
+
+and its derivatives correspondingly simplify to
+
+\begin{equation}\begin{split}
+\frac{\partial P(\theta)}{\partial T} = \,&
+ \frac{\lambda^2}{2 \pi \beta_{c\_s}} \int_0^\infty\,
+  \frac{\partial n(r)}{\partial T}\, p_0(\theta,r) +
+  n(r) \frac{\partial p_0}{\partial T} \,\d r -
+  \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial T}
+\text{ and} \\
+\frac{\partial P(\theta)}{\partial IWC} = \,&
+ \frac{\lambda^2}{2 \pi \beta_{c\_s}} \int_0^\infty\,
+  \frac{\partial n(r)}{\partial IWC}\, p_0(\theta,r) \,\d r -
+  \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial IWC}
+\,.
+\end{split}\end{equation}
+
 \label{lastpage}
 \end{document}
 % $Id$
+
+% $Log$
