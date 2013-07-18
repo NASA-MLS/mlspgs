@@ -1,3 +1,14 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
 program WrapList
 
   ! Given a list, one per line, wrap the list onto Fortran lines, with
@@ -8,6 +19,11 @@ program WrapList
   ! wrapping.
 
   ! Input is from stdin, and output is to stdout.
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+  !---------------------------------------------------------------------------
 
   integer :: I, L, R
   character(255) :: In, Out
@@ -43,3 +59,5 @@ program WrapList
   write ( *, '(a)' ) trim(out) // ' &'
 
 end program WrapList
+
+! $Log$
