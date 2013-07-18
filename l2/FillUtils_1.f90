@@ -43,7 +43,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_PRESSURE, L_PTAN,  L_QUALITY, &
     & L_RADIANCE, L_REFGPH, &
     & L_REFLTEMP, &
-    & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
+    & L_SCECI, L_SCGEOCALT, L_SCVELECI, L_SCVELECR, &
     & L_SINGLECHANNELRADIANCE, &
     & L_STATUS, L_SYSTEMTEMPERATURE, &
     & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
@@ -3980,8 +3980,6 @@ contains ! =====     Public Procedures     =============================
       case ( l_scGeocAlt )
         nameString = AssembleL1BQtyName('GeocAlt', L1BOAFile%HDFVersion, .FALSE., &
           & 'sc')
-      case ( l_scVel )
-        nameString = AssembleL1BQtyName('Vel', L1BOAFile%HDFVersion, .FALSE., 'sc')
       case ( l_scVelECI )
         nameString = AssembleL1BQtyName('VelECI', L1BOAFile%HDFVersion, .FALSE., &
           & 'sc')
@@ -7054,6 +7052,10 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.79  2013/07/18 01:10:57  vsnyder
+! Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
+! uses it anyway.
+!
 ! Revision 2.78  2013/06/29 00:18:04  pwagner
 ! Changed switch to dump l1b fills to -Sl1bfill
 !
