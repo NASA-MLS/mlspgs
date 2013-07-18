@@ -581,7 +581,7 @@ contains ! =====     Public procedures     =============================
              l+l_quality, l+l_radiance, l+l_earthradius, l+l_geolocation, &
              l+l_refGPH, l+l_refltemp, l+l_refltrans, l+l_reflrefl, l+l_reflspill, &
              l+l_rhi, l+l_singleChannelRadiance, l+l_sizedistribution, &
-             l+l_scanResidual, l+l_scatteringAngle, l+l_scECI, l+l_scVel, &
+             l+l_scanResidual, l+l_scatteringAngle, l+l_scECI, &
              l+l_scVelECI, l+l_scVelECR, l+l_scGeocAlt, &
              l+l_spaceRadiance, l+l_status, l+l_strayRadiance, &
              l+l_surfaceHeight, l+l_surfacetype, l+l_systemTemperature, &
@@ -1958,6 +1958,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.574  2013/07/18 01:10:57  vsnyder
+! Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
+! uses it anyway.
+!
 ! Revision 2.573  2013/07/15 23:53:39  vsnyder
 ! Allow repeated fields on directWrite commands
 !
