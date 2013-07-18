@@ -201,6 +201,7 @@ program L2Q
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   MLSMessageConfig%CrashOnAnyError = .true.
+  outputOptions%skipmlsmsglogging = .true.
   time_config%use_wall_clock = .true.
   parallel%master = .true.  ! not merely master, but master of masters
   parallel%slaveFilename = 'pvm' ! for later cures only
@@ -222,7 +223,6 @@ program L2Q
   if ( options%dump_file /= '<STDIN>' ) then
     OutputOptions%prunit = DUMPUNIT
     OutputOptions%buffered = options%bufferedDumpFile ! .false.
-    OutputOptions%opened = .true.
     OutputOptions%name = options%dump_file
     ! print *, 'Opening ', prunit, ' as ', trim(options%dump_file)
     open(OutputOptions%prunit, file=trim(options%dump_file), &
@@ -2140,7 +2140,6 @@ contains
         switched = .true.
         oldPrName = OutputOptions%name
         close(outputOptions%prunit)
-        OutputOptions%opened = .false.
         OutputOptions%name = tempFile
         ! print *, 'switching to ', trim(tempFile)
       endif
@@ -2163,7 +2162,6 @@ contains
       close(OutputOptions%prunit)
       if ( switched ) then
         OutputOptions%name = oldPrName
-        OutputOptions%opened = .true.
         open( oldPrUnit, file=trim(options%dump_file), &
           & position='append', &
           & status='old', form='formatted', iostat=status )
@@ -2194,7 +2192,6 @@ contains
         switched = .true.
         oldPrName = OutputOptions%name
         close(outputOptions%prunit)
-        OutputOptions%opened = .false.
         OutputOptions%name = tempFile
         ! print *, 'switching to ', trim(tempFile)
       endif
@@ -2217,7 +2214,6 @@ contains
       close(OutputOptions%prunit)
       if ( switched ) then
         OutputOptions%name = oldPrName
-        OutputOptions%opened = .true.
         open( oldPrUnit, file=trim(options%dump_file), &
           & position='append', &
           & status='old', form='formatted', iostat=status )
@@ -2411,6 +2407,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.32  2013/02/14 19:05:29  pwagner
+! Added way for l2q to tell master to dump status
+!
 ! Revision 1.31  2012/07/12 17:55:16  pwagner
 ! Added mdline option --free to regularly check, free abandoned hosts
 !
