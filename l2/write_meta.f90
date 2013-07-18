@@ -16,16 +16,18 @@ module WriteMetadata ! Populate metadata and write it out
   use HDF, only: DFACC_RDWR
   use INIT_TABLES_MODULE, only: L_L2DGG, L_L2GP, L_HDF, L_SWATH
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCOMMON, only: FILENAMELEN, NAMELEN, L2METADATA_T
+  use MLSCOMMON, only: FILENAMELEN, NAMELEN, L2METADATA_T, MLSFILE_T
   use MLSKINDS, only: R8
-  use MLSFILES, only: GETPCFROMREF, MLS_SFSTART, MLS_SFEND, SPLIT_PATH_NAME
+  use MLSFILES, only: DUMP, GETPCFROMREF, MLS_CLOSEFILE, MLS_OPENFILE, &
+    &  MLS_SFSTART, MLS_SFEND, SPLIT_PATH_NAME
   use MLSL2OPTIONS, only: TOOLKIT, SHAREDPCF
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, &
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSPCF2, only: MLSPCF_MCF_L2GP_END, MLSPCF_MCF_L2GP_START, &
     & MLSPCF_MCF_L2LOG_START
   use MLSSTRINGS, only: LOWERCASE
   use MLSSTRINGLISTS, only: GETHASHELEMENT, EXTRACTSUBSTRING, SWITCHDETAIL
-  use OUTPUT_M, only: OUTPUT, BLANKS
+  use OUTPUT_M, only: OUTPUT, BLANKS, OUTPUTNAMEDVALUE
   use PCFHDR, only: WRITEINPUTPOINTER, WRITEPCF2HDR, GLOBALATTRIBUTES
   use SDPTOOLKIT, only: PGSD_MET_GROUP_NAME_L, &
     & PGSD_MET_NUM_OF_GROUPS, PGSD_PC_FILE_PATH_MAX, PGS_PC_GETREFERENCE, &
@@ -43,11 +45,80 @@ module WriteMetadata ! Populate metadata and write it out
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  public :: ADDTOMETADATA, POPULATE_METADATA_STD, POPULATE_METADATA_OTH, &
-    & GET_L2GP_MCF, WRITEMETALOG, NULLIFYPCFDATA
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (parameters and datatypes)
+! MCGROUP_T          metadata control group
+! MCPARAM_T          metadata control object; e.g. PGEVersion
+! PCFData_T          metadata-relevant data taken from PCF
+
+!     (subroutines and functions)
+! addMCGroupToDatabase  Adds a new MCGroup to existing database of them
+! addToMetadata         Adds a new metadata field onto an existing file
+! destroyMCGroup        Deallocates any arrays in a MCGroup
+! destroyMCGroupDB      Destroys each MCGroup in a database of them, 
+!                        then deallocates it, too
+! dumpMCGroup           Dumps all the parameters in a MCGroup
+! dumpMCGroupDB         dumps each MCGroup in a database of them
+! get_l2gp_mcf          Finds the mcf relevant for a given species based on
+!                        its file name 
+! NullifyPCFData        Nullify all pointers associated with a PCFData_T
+! Populate_metadata_std Write metadata to a standard l2 product file, e.g. H2O
+! Populate_metadata_oth Write metadata to other l2 product files, e.g. DGG, DGM
+! writemetalog          Write metadata for the log file
+! writeMCF              Write a database of metadata control groups to
+!                         a metadata control file (mcf)
+! === (end of toc) ===
+
+! === (start of api) ===
+! addMCGroupToDatabase (type MCGroup_T dataBase(:), type MCGroup_T item)
+! addToMetadata (char* mcf_grp, char* mcf_grp, value)
+!      where value can be a single, double, integer, or string
+! DestroyMCGroup (type MCGroup_T MCGroup)
+! DestroyMCGroupDB (type MCGroup_T MCGroupDB(:))
+! dumpMCGroup (type MCGroup_T MCGroup)
+! dumpMCGroupDB (type MCGroup_T MCGroupDB(:))
+! Get_l2gp_mcf (char* file_base, char* meta_name, int mcf, int version)
+! NullifyPCFData (type PCFData_T P)
+! Populate_metadata_std ( int hdf_file, int mcf_file, &
+!   & char* Field_name, type(L2Metadata_T) l2metaData, &
+!   & [int hdfVersion], [int Metadata_error], &
+!   & [int filetype] )
+! Populate_metadata_oth ( int hdf_file, int mcf_file, &
+!   & int NumQuantitiesPerFile, char* QuantityNames, &
+!   & type(L2Metadata_T) l2metaData, &
+!   & [int hdfVersion], [int Metadata_error], &
+!   & [int filetype] )
+! writeMCF (type MLSFile_T MLSFile, type MCGroup_T MCGroups(:))
+! WriteMetaLog ([int metadata_error])
+! === (end of api) ===
+
+  public :: ADDMCGROUPTODATABASE, ADDTOMETADATA, &
+    & DESTROY, DESTROYMCGROUP, DESTROYMCGROUPDB, &
+    & DUMP, DUMPMCGROUP, DUMPMCGROUPDB, &
+    & GET_L2GP_MCF, NULLIFYPCFDATA, &
+    & POPULATE_METADATA_STD, POPULATE_METADATA_OTH, WRITEMCF, WRITEMETALOG
 
 ! This data type is used to store User-defined Runtime Parameters and other
 ! information taken from the PCF.
+
+  type, public :: MCGROUP_T
+    character (len=80) :: name = ' '
+    type(MCGROUP_T), dimension(:), pointer :: groups => null()
+    type(MCPARAM_T), dimension(:), pointer :: params => null()
+  end type MCGROUP_T
+
+  type, public :: MCPARAM_T
+    character (len=80) :: name          = ' '
+    character (len=80) :: mandatory     = ' '
+    character (len=80) :: data_location = ' '
+    character (len=80) :: class         = ' '
+    character (len=80) :: num_val       = ' '
+    character (len=80) :: type         = ' '
+    character (len=80) :: value         = ' '
+  end type MCPARAM_T
 
   type, public :: PCFData_T
 
@@ -134,6 +205,14 @@ module WriteMetadata ! Populate metadata and write it out
     module procedure addToMetadata_sngl
     module procedure addToMetadata_str
   end interface
+  interface DESTROY
+    module procedure DESTROYMCGROUP
+    module procedure DESTROYMCGROUPDB
+  end interface
+  interface DUMP
+    module procedure DUMPMCGROUP
+    module procedure DUMPMCGROUPDB
+  end interface
   integer, public, parameter :: INVENTORYMETADATA = 2
   logical, public, parameter :: MCFCASESENSITIVE = .FALSE.
   logical, public, parameter :: ANNOTATEWITHPCF = .TRUE.
@@ -141,9 +220,30 @@ module WriteMetadata ! Populate metadata and write it out
   logical, public, parameter :: SFINBETWEENSTARTEND = .FALSE.
   integer, public, parameter :: MCFFORL2GPOPTION = 3     ! 1, public, 2 or 3
   integer, private :: Module_error
+  integer, private :: nest_degree
   type(PCFData_T), public, save :: L2PCF
+  character(len=*), parameter :: spaces = '                                  ' &
+    & // '                                                                    '
 
 contains
+
+  !-----------------------------------------  AddMCGroupToDatabase  -----
+  integer function AddMCGroupToDatabase ( DATABASE, ITEM )
+
+  ! This routine adds a vector to a database of such vectors, 
+  ! creating the database if necessary.
+
+    ! Dummy arguments
+    type (MCGroup_T), dimension(:), pointer :: DATABASE
+    type (MCGroup_T), intent(in) ::            ITEM
+
+    ! Local variables
+    type (MCGroup_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddMCGroupToDatabase = newSize
+  end function AddMCGroupToDatabase
 
   ! ------------ addToMetadata
   ! This family of routines adds on to existing metadata in a file
@@ -211,6 +311,789 @@ contains
     end if
   end subroutine addToMetadata_str
 
+  ! ----------------------------------------DestroyMCGroup -----
+  recursive subroutine DestroyMCGroup ( MCGROUP )
+    ! Destroy a group of inventory metadata control parameters 
+    ! If the group contains other groups, destroy them, too
+    type ( MCGROUP_T ), intent(out)               :: MCGROUP
+    ! Internal variables
+    integer :: i, error
+
+    ! Executable code
+    do i=1, size(MCGroup%groups)
+      call DestroyMCGroup( MCGroup%groups(i) )
+    enddo
+    deallocate( MCGroup%groups, stat=error )
+    if ( error /= 0 ) call announce_error( 0, &
+      & 'Failed to deallocate MCGroup%groups' )
+    deallocate( MCGroup%params, stat=error )
+    if ( error /= 0 ) call announce_error( 0, &
+      & 'Failed to deallocate MCGroup%params' )
+  end subroutine DestroyMCGroup
+
+  ! ----------------------------------------DestroyMCGroupDB -----
+  subroutine DestroyMCGroupDB ( MCGROUPDB )
+    ! Destroy a database of metadata control groups
+    type ( MCGROUP_T ), dimension(:), pointer         :: MCGROUPDB
+    ! Internal variables
+    integer :: i, error
+
+    ! Executable code
+    do i=1, size(MCGroupDB)
+      call DestroyMCGroup( MCGroupDB(i) )
+    enddo
+    deallocate( MCGroupDB, stat=error )
+    if ( error /= 0 ) call announce_error( 0, &
+      & 'Failed to deallocate MCGroupDB' )
+  end subroutine DestroyMCGroupDB
+
+  ! ----------------------------------------dumpMCGroup -----
+  recursive subroutine dumpMCGroup ( MCGROUP )
+    ! dump a group of inventory metadata control parameters 
+    ! If the group contains other groups, dump them, too
+    type ( MCGROUP_T ), intent(in)               :: MCGROUP
+    ! Internal variables
+    integer :: i
+    integer :: indent
+
+    ! Executable code
+    indent = nest_degree*3
+    if ( len_trim(MCGroup%name) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'group name', &
+      & MCGroup%name )
+    nest_degree = nest_degree + 1
+    indent = nest_degree*3
+    call blanks( indent )
+    if ( .not. associated(MCGroup%groups) ) then
+      call output( ' (No subgroups of this group) ', advance='yes' )
+    else
+      do i=1, size(MCGroup%groups)
+        call output( ' Sub-group ', advance='no' )
+        call output( i, advance='yes' )
+        call dumpMCGroup( MCGroup%groups(i) )
+      enddo
+    endif
+    if ( .not. associated(MCGroup%params) ) then
+      call blanks( indent )
+      call output( ' (No parameters in this group) ', advance='yes' )
+    else
+      do i=1, size(MCGroup%params)
+        indent = nest_degree*3
+        call blanks( indent )
+        call output( ' Parameter ', advance='no' )
+        call output( i, advance='yes' )
+        indent = indent + 4
+        if ( len_trim(MCGroup%params(i)%name) > 0 ) &
+          & call outputnamedValue( spaces(:indent)//'name', &
+          & MCGroup%params(i)%name )
+        if ( len_trim(MCGroup%params(i)%mandatory) > 0 ) &
+          & call outputnamedValue( spaces(:indent)//'mandatory', &
+          & MCGroup%params(i)%mandatory )
+        if ( len_trim(MCGroup%params(i)%data_location) > 0 ) &
+          & call outputnamedValue( spaces(:indent)//'data_location', &
+          & MCGroup%params(i)%data_location )
+        if ( len_trim(MCGroup%params(i)%class) > 0 ) &
+          & call outputnamedValue( spaces(:indent)//'class', &
+          & MCGroup%params(i)%class )
+        if ( len_trim(MCGroup%params(i)%num_val) > 0 ) &
+          & call outputnamedValue( spaces(:indent)//'num_val', &
+          & MCGroup%params(i)%num_val )
+        if ( len_trim(MCGroup%params(i)%type) > 0 ) &
+          & call outputnamedValue( spaces(:indent)//'type', &
+          & MCGroup%params(i)%type )
+        if ( len_trim(MCGroup%params(i)%value) > 0 ) &
+          & call outputnamedValue( spaces(:indent)//'value', &
+          & MCGroup%params(i)%value )
+      enddo
+    endif
+    nest_degree = nest_degree - 1
+  end subroutine dumpMCGroup
+
+  ! ----------------------------------------dumpMCGroupDB -----
+  subroutine dumpMCGroupDB ( MCGROUPDB )
+    ! dump a database of metadata control groups
+    type ( MCGROUP_T ), dimension(:), pointer         :: MCGROUPDB
+    ! Internal variables
+    integer :: i
+
+    ! Executable code
+    if ( .not. associated(MCGROUPDB) ) then
+      call output( ' (MCGroup database not associated) ', advance='yes' )
+      return
+    endif
+    call output( 'Dumping MCGroup database with ', advance='no' )
+    call output( size(MCGroupDB), advance='no' )
+    call output( ' groups ', advance='yes' )
+    do i=1, size(MCGroupDB)
+      nest_degree = 1
+      call dumpMCGroup( MCGroupDB(i) )
+    enddo
+  end subroutine dumpMCGroupDB
+
+  ! -----------------------------------------------  Get_l2gp_mcf  -----
+
+  subroutine Get_l2gp_mcf ( File_base, meta_name, Mcf, Version )
+
+  ! metadata configuration file (mcf) PCF number corresponding to l2gp number
+  ! sdid
+  ! Arguments
+    character(len=*), intent(in) ::  File_base
+    character(len=*), intent(in) ::  meta_name
+    integer, intent(in), optional :: Version
+    integer, intent(inout) ::        Mcf
+    ! type(PCFData_T) :: l2pcf
+
+    ! Local
+    character (len=PGSd_PC_FILE_PATH_MAX) :: Sd_full
+    !character (len=NameLen) :: Sd_path
+    character (len=NameLen) :: Sd_name
+
+    character (len=PGSd_PC_FILE_PATH_MAX) :: Mcf_full
+    character (len=NameLen) :: Mcf_path
+    character (len=NameLen) :: Mcf_name
+    integer :: ReturnStatus, MyVersion, I
+
+    character (len=1), parameter :: COMMA = ','
+
+    ! Find species name
+    ! assume sd_name is "*l2gp_species_"
+    ! hence enclosed between "_" chars after an l2gp
+
+    logical, parameter :: DEBUG = .false.
+
+    ! Begin
+
+    if(.NOT. TOOLKIT) then
+      mcf=0
+      return
+   endif
+
+    if ( MCFFORL2GPOPTION == 1 ) then
+      mcf = mcf+1
+      return
+    end if
+
+    if ( DEBUG ) then
+      call output('file_base: ', advance='no')
+      call output(trim(file_base), advance='yes')
+      call output('meta_name: ', advance='no')
+      call output(trim(meta_name), advance='yes')
+    end if
+
+    if ( len(TRIM(file_base)) <= 0 ) then
+      mcf=0
+      return
+    end if
+
+    if ( meta_name == ' ' ) then
+      ! * The following complication is attempting to infer
+      ! * the species name based on the file name
+      ! * It is necessary only if you disdained to specify the metaName
+      ! * field in the output command
+      ! Get full file name for typical MCF file
+      do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
+
+        if ( present(version) ) then
+          myVersion=version
+        else
+          myVersion = 1
+        end if
+
+        returnStatus = PGS_PC_GetReference(i, myVersion , mcf_full)
+
+        if ( returnStatus == PGS_S_SUCCESS ) then 
+          exit
+        end if
+
+      end do
+
+      if ( DEBUG ) then
+        call output('returnStatus: ', advance='no')
+        call output(returnStatus, advance='yes')
+      end if
+
+      if ( returnStatus /= PGS_S_SUCCESS ) then 
+        mcf = 0
+        return
+      end if
+
+      ! Split full_file_names into path+name
+
+      call split_path_name ( mcf_full, mcf_path, mcf_name )
+
+      ! If   text matching not case sensitive, shift to lower case
+      if ( .NOT. MCFCASESENSITIVE ) then
+        sd_full = LowerCase(file_base)
+        mcf_name = LowerCase(mcf_name)
+      else
+        sd_full = file_base
+      end if
+
+      if ( DEBUG ) then
+        call output('mcf_full: ', advance='no')
+        call output(trim(mcf_full), advance='yes')
+        call output('mcf_path: ', advance='no')
+        call output(trim(mcf_path), advance='yes')
+        call output('mcf_name: ', advance='no')
+        call output(trim(mcf_name), advance='yes')
+      end if
+
+      ! Either we were given a short version of the sd_full
+      ! e.g., 'h2o', or else a much longer one like 'mls-aura_...'
+      if ( index(sd_full, 'mls-aura_') > 0 ) then
+        ! Get species name assuming e.g. 'mls-aura_l2gp-h2O_'
+        call ExtractSubString(sd_full, sd_name, 'mls-aura_l2gp-', '_')
+      else
+        sd_name = sd_full
+      endif
+
+      if ( DEBUG ) then
+        call output('sd_full: ', advance='no')
+        call output(trim(sd_full), advance='yes')
+        call output('sd_name: ', advance='no')
+        call output(trim(sd_name), advance='yes')
+      end if
+
+      if ( len(trim(sd_name)) <= 0 ) then
+        mcf=0
+        return
+      end if
+
+      if ( MCFFORL2GPOPTION == 3 ) then
+
+        ! get mcfspecies name from associative array
+        ! if the species name not found in spec_keys, it will return ','
+        call GetHashElement ( l2pcf%spec_keys, l2pcf%spec_hash, &
+          & trim(sd_name), sd_full, .TRUE. )
+
+        if ( DEBUG ) then
+          call output('keys: ', advance='no')
+          call output(trim(l2pcf%spec_keys), advance='yes')
+          call output('hash: ', advance='no')
+          call output(trim(l2pcf%spec_hash), advance='yes')
+          call output('hash for species name: ', advance='no')
+          call output(trim(sd_full), advance='yes')
+        end if
+
+        if ( trim(sd_full) == COMMA ) then
+          mcf = 0
+          return
+        end if
+
+        sd_name = trim(sd_full)
+
+      end if
+   elseif ( .NOT. MCFCASESENSITIVE ) then
+     sd_name = Lowercase(meta_name)
+   else
+     sd_name = meta_name
+   endif
+   ! Now try to find mcf file corresponding to species name   
+   ! assuming, e.g. '*h2o.*'                                  
+   if ( DEBUG ) then                                       
+     call output('Trying for a pcf name matching: ', advance='no')                   
+     call output(trim(sd_name), advance='yes')     
+   end if                                                  
+   mcf = GetPCFromRef(trim(sd_name), &
+    & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end, &
+    & MCFCASESENSITIVE, returnStatus)
+
+   if ( returnStatus /= 0 ) then
+     mcf = 0
+   endif
+
+  end subroutine Get_l2gp_mcf
+
+  ! ----------------------------------------NullifyPCFData -----
+  subroutine NullifyPCFData ( P )
+    ! Given a PCFData, nullify all the pointers associated with it
+    type ( PCFData_T ), intent(out) :: P
+
+    ! Executable code
+    nullify ( p%AnText )
+  end subroutine NullifyPCFData
+
+  ! --------------------------------------  Populate_metadata_std  -----
+
+  subroutine Populate_metadata_std ( HDF_FILE, MCF_FILE, &
+    & Field_name, l2metaData, hdfVersion, Metadata_error, &
+    & filetype )
+
+    ! This is the standard way to write meta data
+    ! It should work unchanged for the standard l2gp files (e.g. BrO)
+    ! and, with minor changes, for the l2gp file marked "other"
+    !
+    ! the l2aux files, also called dgm
+    ! and the dgg files will probably require special treatment
+    ! the log file should be able to use the one stolen from level 3
+    !
+
+    !    USE InitPCFs, ONLY: L2PCF
+
+    !Arguments
+
+    integer                        :: HDF_FILE, MCF_FILE
+    character (len=*)              :: Field_name
+    type (L2Metadata_T) :: l2metaData
+    integer, optional, intent(in)  :: hdfVersion
+    integer, optional, intent(out) :: Metadata_error
+    integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
+
+    !Local Variables
+
+    integer :: hdfReturn
+    integer :: returnStatus
+    integer :: sdid, hdf_sdid
+
+    character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
+    character (len=PGSd_PC_FILE_PATH_MAX) :: mcf_filename
+    integer :: version
+
+    ! the group have to be defined as 49 characters long. The C interface is 50.
+    ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
+    ! therefore making the actual length of a 
+    ! string pass of 50.
+
+    character (len = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+
+    ! Externals
+
+    integer, external :: PGS_MET_remove
+
+    !Executable code
+
+    module_error = 0
+    if ( present(metadata_error)) metadata_error=1
+    if(.NOT. TOOLKIT) return
+
+    version = 1
+    if ( mcf_file > 0 ) then
+      returnStatus = PGS_PC_GetReference (MCF_FILE, version , mcf_filename)
+    else
+      returnStatus = PGSPC_W_NO_REFERENCE_FOUND
+    end if
+
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "Error: failed to find PCF ref for MCF_FILE in populate_metadata_std.") 
+      return
+    end if
+
+    version = 1
+    returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
+
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "Error: failed to find PCF ref for HDF_FILE in populate_metadata_std.") 
+      return
+    end if
+
+    call first_grouping(HDF_FILE, MCF_FILE, groups)
+    call measured_parameter (HDF_FILE, field_name, groups, 1)
+    call third_grouping (HDF_FILE, hdf_sdid, groups, &
+      & hdfVersion, filetype, l2metaData)
+
+    if ( SFINBETWEENSTARTEND ) then
+      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
+        & hdfVersion=hdfVersion, addingMetaData=.true.)
+    else
+      sdid = hdf_sdid
+    endif 
+
+    if ( sdid == -1 ) then
+      call announce_error ( 0, &
+      & "Error: failed to open the hdf file in populate_metadata_std: "&
+      & //TRIM(physical_fileName)) 
+      return
+    end if
+
+    hdfReturn = mls_sfend( sdid, hdfVersion=hdfVersion, addingMetadata=.true. )
+    if ( hdfReturn /= 0 ) then
+        call announce_error ( 0, &
+        & "Error: metadata mls_sfend in populate_metadata_std.", &
+        & error_number=hdfReturn) 
+    end if
+
+    ! Annotate the file with the PCF
+
+    if ( ANNOTATEWITHPCF ) then
+      call PCF2Hdr( physical_filename, hdfVersion, filetype=filetype )
+    end if
+
+    returnStatus = pgs_met_remove() 
+
+    if ( present(metadata_error)) metadata_error=module_error
+
+   if(switchDetail(switches, 'pro') > -1) then
+       call announce_success(physical_filename, mcf_filename, 'standard')
+   end if
+
+  end subroutine Populate_metadata_std
+
+  ! --------------------------------------  Populate_metadata_oth  -----
+
+  subroutine Populate_metadata_oth ( HDF_FILE, MCF_FILE, &
+    & NumQuantitiesPerFile, QuantityNames, l2metaData, hdfVersion, Metadata_error, &
+    & filetype )
+
+    ! This is specially to write meta data for heterogeneous files
+    ! It should work unchanged for the 'OTH' l2gp files (e.g. ML2OTH.001.MCF)
+    ! and, with minor changes, for the l2aux files 
+
+    !Arguments
+
+    integer :: HDF_FILE, MCF_FILE, NumQuantitiesPerFile
+    character (len=*), dimension(:) :: QuantityNames
+    type (L2Metadata_T) :: l2metaData
+    integer, optional, intent(out) :: Metadata_error
+    integer, optional, intent(in) :: hdfVersion
+    integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
+
+    !Local Variables
+
+    integer :: HdfReturn
+    integer :: ReturnStatus
+    integer :: Sdid, hdf_sdid
+
+    character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
+    character (len=PGSd_PC_FILE_PATH_MAX) :: mcf_filename
+    integer :: Version, Indx
+
+    ! the group have to be defined as 49 characters long. The C interface is 50.
+    ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
+    ! therefore making the actual length of a 
+    ! string pass of 50.
+
+    character (len = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+
+    ! Externals
+
+    integer, external :: PGS_MET_remove
+
+    !Executable code
+
+    module_error = 0
+    if ( present(metadata_error)) metadata_error=1
+    if(.NOT. TOOLKIT) return
+
+    version = 1
+    if ( MCF_FILE > 0 ) then
+      returnStatus = PGS_PC_GetReference (MCF_FILE, version , mcf_filename)
+    else
+      returnStatus = PGSPC_W_NO_REFERENCE_FOUND
+    end if
+
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "Error: failed to find PCF ref for MCF_FILE in populate_metadata_oth.") 
+      return
+    end if
+
+    version = 1
+    returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
+
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "Error: failed to find PCF ref for HDF_FILE in populate_metadata_oth.") 
+      return
+    end if
+
+    call first_grouping(HDF_FILE, MCF_FILE, groups)
+
+    do indx=1, numquantitiesperfile
+
+      call measured_parameter (HDF_FILE, &
+        & QuantityNames(indx), groups, indx)
+
+    end do
+
+    call third_grouping (HDF_FILE, hdf_sdid, groups, &
+      & hdfVersion, filetype, l2metaData)
+
+    if ( SFINBETWEENSTARTEND ) then
+      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
+        & hdfVersion=hdfVersion, addingMetaData=.true.)
+    else
+      sdid = hdf_sdid
+    endif 
+
+    if ( sdid == -1 ) then
+      call announce_error ( 0, &
+      & "Error: failed to open the hdf file: "//TRIM(physical_fileName))
+      return
+    end if
+
+    hdfReturn = mls_sfend( sdid, hdfVersion=hdfVersion, addingMetadata=.true. )
+    if ( hdfReturn /= 0 ) then
+        call announce_error ( 0, &
+        & "Error: metadata mls_sfend in populate_metadata_oth.", &
+        & error_number=hdfReturn) 
+    end if
+
+! Annotate the file with the PCF
+
+    if ( ANNOTATEWITHPCF ) then
+      call PCF2Hdr( physical_filename, hdfVersion, filetype=filetype )
+      ! & hdfVersion, isHDFEOS)
+    end if
+
+    returnStatus = pgs_met_remove() 
+
+    if ( present(metadata_error)) metadata_error=module_error
+
+   if(switchDetail(switches, 'pro') > -1) then
+       call announce_success(physical_filename, mcf_filename, 'others')
+   end if
+
+  end subroutine Populate_metadata_oth
+
+  ! ----------------------------------------writeMCF -----
+  subroutine writeMCF ( MLSFILE, MCGROUPS )
+    ! Given an MLSFile_T, write a group of inventory metadata control 
+    ! parameters to it
+    ! Note that the group may contain other groups, i.e. be nested
+    type ( MLSFile_T ), intent(inout)            :: MLSFILE
+    type ( MCGROUP_T ), intent(in), dimension(:) :: MCGROUPS
+    ! Internal variables
+    integer :: error
+    integer :: i
+
+    ! Executable code
+    if ( .not. MLSfile%stillOpen ) call mls_OpenFile ( MLSFile, error )
+    call dump( MLSFile )
+    if ( error /= 0 ) call announce_error ( 0, &
+      & 'error opening MLSFile in writeMCF' )
+    write( MLSFile%fileID%f_id, * ) 'GROUP = INVENTORYMETADATA'
+    write( MLSFile%fileID%f_id, * ) 'GROUPTYPE = MASTERGROUP'
+    do i=1, size(MCGroups)
+      call writeMCGroup( MLSFile, MCGroups(i) )
+    enddo
+    write( MLSFile%fileID%f_id, * ) 'END_GROUP = INVENTORYMETADATA'
+    call mls_CloseFile ( MLSFile )
+  end subroutine writeMCF
+
+! Lori's routines
+
+  ! -----------------------------------------------  WriteMetaLog  -----
+  subroutine WriteMetaLog ( Metadata_error )
+
+    ! Brief description of subroutine
+    ! This subroutine writes metadata for the log file to a separate ASCII file.
+
+    ! Arguments
+
+    ! type( PCFData_T ), intent(in) :: Pcf
+    integer, optional, intent(out) :: Metadata_error
+
+    ! Parameters
+    ! These are PCF numbers that *must* be in the PCF file
+
+    integer, parameter :: ASCII_FILE = 101
+    integer, parameter :: THE_LOG_FILE = 100
+
+    ! Functions
+
+    integer, external :: PGS_MET_init, PGS_MET_remove
+    integer, external :: PGS_MET_setattr_s, PGS_MET_write
+    integer, external :: PGS_PC_getconfigdata
+
+    ! Internal
+
+    character (len=1) :: NullStr
+    character (len=45) :: Sval
+    character (len=32) :: Mnemonic
+    character (len=FileNameLen) :: Physical_filename
+    character (len=PGSd_PC_FILE_PATH_MAX) :: mcf_filename
+    character (len=480) :: Msg, Msr
+    character (len=PGSd_MET_GROUP_NAME_L) :: Groups(PGSd_MET_NUM_OF_GROUPS)
+
+    integer :: Result, Indx, Version
+    logical, parameter :: DEBUG=.FALSE.
+
+    ! Begin
+    module_error = 0
+    if ( present(metadata_error)) metadata_error=1
+    if(.NOT. TOOLKIT) return
+
+    nullStr = ''
+
+    version = 1
+    result = PGS_PC_GetReference (mlspcf_mcf_l2log_start, version, &
+      & mcf_filename)
+
+    if ( result /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+        & "Error: failed to find PCF ref for Log mcf in WriteMetaLog.") 
+      return
+    end if
+
+    ! Check that the PCF file contains the entries for the ASCII file
+    ! and for the log file itself
+    result = pgs_pc_getconfigdata (ASCII_FILE, physical_filename)
+
+    if ( result /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+        & "Error: failed to find PCF ref for the ASCII in WriteMetaLog.") 
+      return
+    end if
+
+    version = 1
+    result = PGS_PC_GetReference (THE_LOG_FILE, version , physical_filename)
+
+    if ( result /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+        & "Error: failed to find PCF ref for the Log in WriteMetaLog.") 
+      return
+    end if
+
+! Initialize the MCF file
+
+    if ( DEBUG ) then
+      call output('Initialize the MCF file', advance='yes')
+    end if
+
+    result = pgs_met_init(mlspcf_mcf_l2log_start, groups)
+    if ( result /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "metadata initialization error in WriteMetaLog.") 
+      return
+    end if
+
+! Set PGE values
+
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
+                               l2pcf%logGranID)
+
+    sval = 'c' // l2pcf%cycle
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
+                               sval)
+
+    indx = INDEX (l2pcf%startUTC, "T")
+
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+                               "RangeBeginningDate", l2pcf%startUTC(1:indx-1))
+!    sval= '00:00:00.000000'
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+                               "RangeBeginningTime", l2pcf%startUTC(indx+1:))
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+                               "RangeEndingDate", l2pcf%endUTC(1:indx-1))
+!    sval= '23:59:59.999999'
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+                               "RangeEndingTime", l2pcf%endUTC(indx+1:))
+
+    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "PGEVersion", &
+                               l2pcf%PGEVersion)
+
+    if ( result /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "Error in setting PGEVersion attribute in WriteMetaLog.", &
+      &  error_number=result)
+        return
+    end if
+
+    ! Write the metadata and their values to an ASCII file
+
+    if ( DEBUG ) then
+      call output('Write the metadata and their values to an ASCII file', &
+      &  advance='yes')
+    end if
+
+    result = pgs_met_write(groups(1), nullStr, ASCII_FILE)
+
+    if ( result /= PGS_S_SUCCESS ) then
+       call Pgs_smf_getMsg(result, mnemonic, msg)
+       msr = "Error: failed to write metadata in WriteMetaLog." &
+       & // trim(mnemonic) // ':  ' // trim(msg)
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+    end if
+
+    result = pgs_met_remove()
+
+    if ( present(metadata_error)) metadata_error=module_error
+
+   if(switchDetail(switches, 'pro') > -1) then
+       call announce_success(physical_filename, mcf_filename, 'Log')
+   end if
+
+   end subroutine WriteMetaLog
+
+  ! ---------------------- Private procedures ------------
+
+  ! ---------------------------------------------  announce_success  -----
+  subroutine announce_success ( Name, mcf, l2_type )
+    character(LEN=*), intent(in) :: Name
+    character(LEN=*), intent(in) :: mcf
+    character(LEN=*), intent(in) :: l2_type
+
+    call output ( 'Level 2 output product metadata type : ' )
+    call output ( trim(l2_type), advance='yes')
+    call blanks(15)
+    call output ( 'name : ' )
+    call blanks(8)
+    call output ( trim(Name), advance='yes')
+    call blanks(15)
+    call output ( 'mcf name : ' )
+    call blanks(8)
+    call output ( trim(mcf), advance='yes')
+
+  end subroutine announce_success
+
+  ! ------------------------------------------------  Announce_Error  -----
+  subroutine Announce_Error ( lcf_where, full_message, use_toolkit, &
+    & error_number )
+
+    ! Arguments
+
+    integer, intent(in) :: Lcf_where
+    character(LEN=*), intent(in) :: Full_message
+    logical, intent(in), optional :: Use_toolkit
+    integer, intent(in), optional :: Error_number
+
+    ! Local
+    logical :: Just_print_it
+    logical, parameter :: Default_output_by_toolkit = .true.
+    character (LEN=132) :: attrname, errmsg
+    integer :: Toolbox_error_num
+
+    just_print_it = .not. default_output_by_toolkit
+    if ( present(use_toolkit) ) just_print_it = .not. use_toolkit
+
+    if ( .not. just_print_it ) then
+      if ( TOOLKIT ) module_error = 1
+      call output ( '***** At ' )
+
+      if ( lcf_where > 0 ) then
+        call print_source ( source_ref(lcf_where) )
+      else
+        call output ( '(no lcf node available)' )
+      end if
+
+      call output ( " Caused the following error:", advance='yes', &
+       & from_where=ModuleName)
+      call output ( trim(full_message), advance='yes', &
+        & from_where=ModuleName)
+      if ( present(error_number) ) then
+        call output ( 'Error number ', advance='no' )
+        call output ( error_number, places=9, advance='yes' )
+        Toolbox_error_num = error_number
+        call Pgs_smf_getMsg (Toolbox_error_num, attrname, errmsg)
+        call MLSMessage (MLSMSG_WARNING, ModuleName, &
+            &  TRIM(attrname) //' ' // TRIM(errmsg) )
+      end if
+    else
+      call output ( '***Error in module ' )
+      call output ( ModuleName, advance='yes' )
+      call output ( trim(full_message), advance='yes' )
+      if ( present(error_number) ) then
+        call output ( 'Error number ' )
+        call output ( error_number, advance='yes' )
+      end if
+    end if
+
+!===========================
+  end subroutine Announce_Error
+!===========================
+
   ! ---------------------------------------------  First_grouping  -----
 
   subroutine First_grouping ( HDF_FILE, MCF_FILE, Groups )
@@ -242,13 +1125,11 @@ contains
 
     !Local Variables
 
-    integer, parameter :: ARCHIVE=1, INVENTORY=2
+    integer, parameter :: INVENTORY=2 !, ARCHIVE=1
     character (len=132) :: Attrname
     integer :: Indx, Version
     character (len=PGSd_PC_FILE_PATH_MAX) :: Physical_filename
     character (len=PGSd_PC_FILE_PATH_MAX) :: Sval
-    character (len=*), parameter :: METAWR_ERR = &
-         'Error writing metadata attribute '
     integer :: ReturnStatus
 
     ! Externals
@@ -345,16 +1226,13 @@ contains
 
     ! Local Variables
 
-    integer, parameter :: ARCHIVE=1, INVENTORY=2
+    integer, parameter :: INVENTORY=2 !, ARCHIVE=1
     character (len=132) :: Attrname
     character (len=2) :: Class
-    character (len=*), parameter :: METAWR_ERR = &
-      &  'Error writing metadata attribute '
     character (len=PGSd_PC_FILE_PATH_MAX) :: Physical_filename
     integer :: ReturnStatus
     character (len=PGSd_PC_FILE_PATH_MAX) :: Sval
     integer :: Version
-    integer, parameter :: FILEACCESSTYPE = DFACC_RDWR
 
     ! Externals
 
@@ -425,6 +1303,33 @@ contains
 
   end subroutine Measured_parameter
 
+  ! ---------------------------------------- PCF2Hdr -----
+  ! Make sure file type will be recognized
+  ! before calling writePCF2Hdr
+  ! (which only knows l_hdf, l_hdfeos, l_swath)
+  subroutine PCF2Hdr( filename, hdfVersion, filetype )
+    ! Args
+    character(len=*), intent(in)  :: filename
+    integer, optional, intent(in) :: hdfVersion
+    integer, optional, intent(in) :: fileType
+    ! Internal variables
+    integer :: myType
+    ! Executable
+    if ( .not. associated(l2pcf%anText) ) return
+    myType = l_hdf
+    if ( present(filetype) ) then
+      myType = filetype
+      select case(filetype)
+      case (l_l2dgg,l_l2gp)
+        myType = l_swath
+      ! case default
+        ! myType = filetype
+      end select
+    endif
+    call writePCF2Hdr( filename, l2pcf%anText, hdfVersion, myType )
+
+  end subroutine PCF2Hdr
+
   ! ---------------------------------------------  Third_grouping  -----
 
   subroutine Third_grouping ( HDF_FILE, hdf_sdid, Groups, &
@@ -478,14 +1383,12 @@ contains
     integer :: ReturnStatus
 
     real(r8) :: Dval
-    integer, parameter :: INVENTORY=2, ARCHIVE=1
+    integer, parameter :: INVENTORY=2 !, ARCHIVE=1
     character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
     character (len=PGSd_PC_FILE_PATH_MAX) :: sval
     character (len=132) :: attrname
     integer :: version, indx
     integer :: inptptr_filetype
-    character (len=*), parameter :: METAWR_ERR = &
-      & 'Error writing metadata attribute '
     integer :: startOrbit, stopOrbit
 
 
@@ -758,684 +1661,59 @@ contains
 
   end subroutine Third_grouping
 
-  ! --------------------------------------  Populate_metadata_std  -----
-
-  subroutine Populate_metadata_std ( HDF_FILE, MCF_FILE, &
-    & Field_name, l2metaData, hdfVersion, Metadata_error, &
-    & filetype )
-
-    ! This is the standard way to write meta data
-    ! It should work unchanged for the standard l2gp files (e.g. BrO)
-    ! and, with minor changes, for the l2gp file marked "other"
-    !
-    ! the l2aux files, also called dgm
-    ! and the dgg files will probably require special treatment
-    ! the log file should be able to use the one stolen from level 3
-    !
-
-    !    USE InitPCFs, ONLY: L2PCF
-
-    !Arguments
-
-    integer                        :: HDF_FILE, MCF_FILE
-    character (len=*)              :: Field_name
-    type (L2Metadata_T) :: l2metaData
-    integer, optional, intent(in)  :: hdfVersion
-    integer, optional, intent(out) :: Metadata_error
-    integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
-
-    !Local Variables
-
-    integer :: hdfReturn
-    integer :: returnStatus
-    integer :: sdid, hdf_sdid
-
-    integer, parameter :: INVENTORY=2, ARCHIVE=1
-    character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
-    character (len=PGSd_PC_FILE_PATH_MAX) :: mcf_filename
-    integer :: version
-    character (len=*), parameter :: METAWR_ERR = &
-      &  'Error writing metadata attribute '
-
-    ! the group have to be defined as 49 characters long. The C interface is 50.
-    ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
-    ! therefore making the actual length of a 
-    ! string pass of 50.
-
-    character (len = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
-
-    ! Externals
-
-    integer, external :: PGS_MET_remove
-
-    !Executable code
-
-    module_error = 0
-    if ( present(metadata_error)) metadata_error=1
-    if(.NOT. TOOLKIT) return
-
-    version = 1
-    if ( mcf_file > 0 ) then
-      returnStatus = PGS_PC_GetReference (MCF_FILE, version , mcf_filename)
-    else
-      returnStatus = PGSPC_W_NO_REFERENCE_FOUND
-    end if
-
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-      & "Error: failed to find PCF ref for MCF_FILE in populate_metadata_std.") 
-      return
-    end if
-
-    version = 1
-    returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
-
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-      & "Error: failed to find PCF ref for HDF_FILE in populate_metadata_std.") 
-      return
-    end if
-
-    call first_grouping(HDF_FILE, MCF_FILE, groups)
-    call measured_parameter (HDF_FILE, field_name, groups, 1)
-    call third_grouping (HDF_FILE, hdf_sdid, groups, &
-      & hdfVersion, filetype, l2metaData)
-
-    if ( SFINBETWEENSTARTEND ) then
-      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
-        & hdfVersion=hdfVersion, addingMetaData=.true.)
-    else
-      sdid = hdf_sdid
-    endif 
-
-    if ( sdid == -1 ) then
-      call announce_error ( 0, &
-      & "Error: failed to open the hdf file in populate_metadata_std: "&
-      & //TRIM(physical_fileName)) 
-      return
-    end if
-
-    hdfReturn = mls_sfend( sdid, hdfVersion=hdfVersion, addingMetadata=.true. )
-    if ( hdfReturn /= 0 ) then
-        call announce_error ( 0, &
-        & "Error: metadata mls_sfend in populate_metadata_std.", &
-        & error_number=hdfReturn) 
-    end if
-
-    ! Annotate the file with the PCF
-
-    if ( ANNOTATEWITHPCF ) then
-      call PCF2Hdr( physical_filename, hdfVersion, filetype=filetype )
-    end if
-
-    returnStatus = pgs_met_remove() 
-
-    if ( present(metadata_error)) metadata_error=module_error
-
-   if(switchDetail(switches, 'pro') > -1) then
-       call announce_success(physical_filename, mcf_filename, 'standard')
-   end if
-
-  end subroutine Populate_metadata_std
-
-  ! --------------------------------------  Populate_metadata_oth  -----
-
-  subroutine Populate_metadata_oth ( HDF_FILE, MCF_FILE, &
-    & NumQuantitiesPerFile, QuantityNames, l2metaData, hdfVersion, Metadata_error, &
-    & filetype )
-
-    ! This is specially to write meta data for heterogeneous files
-    ! It should work unchanged for the 'OTH' l2gp files (e.g. ML2OTH.001.MCF)
-    ! and, with minor changes, for the l2aux files 
-
-    !    USE InitPCFs, ONLY: L2PCF
-
-    !Arguments
-
-    integer :: HDF_FILE, MCF_FILE, NumQuantitiesPerFile
-    ! type(PCFData_T) :: L2pcf
-    character (len=*), dimension(:) :: QuantityNames
-    type (L2Metadata_T) :: l2metaData
-    integer, optional, intent(out) :: Metadata_error
-    integer, optional, intent(in) :: hdfVersion
-    ! character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
-    integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
-
-    !Local Variables
-
-    integer :: HdfReturn
-    integer :: ReturnStatus
-    integer :: Sdid, hdf_sdid
-
-    integer, parameter :: INVENTORY=2, ARCHIVE=1
-    character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
-    character (len=PGSd_PC_FILE_PATH_MAX) :: mcf_filename
-    integer :: Version, Indx
-    character (len=*), parameter :: METAWR_ERR = &
-      & 'Error writing metadata attribute '
-
-    ! the group have to be defined as 49 characters long. The C interface is 50.
-    ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
-    ! therefore making the actual length of a 
-    ! string pass of 50.
-
-    character (len = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
-
-    ! Externals
-
-    integer, external :: PGS_MET_remove
-
-    !Executable code
-
-    module_error = 0
-    if ( present(metadata_error)) metadata_error=1
-    if(.NOT. TOOLKIT) return
-
-    version = 1
-    if ( MCF_FILE > 0 ) then
-      returnStatus = PGS_PC_GetReference (MCF_FILE, version , mcf_filename)
-    else
-      returnStatus = PGSPC_W_NO_REFERENCE_FOUND
-    end if
-
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-      & "Error: failed to find PCF ref for MCF_FILE in populate_metadata_oth.") 
-      return
-    end if
-
-    version = 1
-    returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
-
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-      & "Error: failed to find PCF ref for HDF_FILE in populate_metadata_oth.") 
-      return
-    end if
-
-    call first_grouping(HDF_FILE, MCF_FILE, groups)
-
-    do indx=1, numquantitiesperfile
-
-      call measured_parameter (HDF_FILE, &
-        & QuantityNames(indx), groups, indx)
-
-    end do
-
-    call third_grouping (HDF_FILE, hdf_sdid, groups, &
-      & hdfVersion, filetype, l2metaData)
-
-    if ( SFINBETWEENSTARTEND ) then
-      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
-        & hdfVersion=hdfVersion, addingMetaData=.true.)
-    else
-      sdid = hdf_sdid
-    endif 
-
-    if ( sdid == -1 ) then
-      call announce_error ( 0, &
-      & "Error: failed to open the hdf file: "//TRIM(physical_fileName))
-      return
-    end if
-
-    hdfReturn = mls_sfend( sdid, hdfVersion=hdfVersion, addingMetadata=.true. )
-    if ( hdfReturn /= 0 ) then
-        call announce_error ( 0, &
-        & "Error: metadata mls_sfend in populate_metadata_oth.", &
-        & error_number=hdfReturn) 
-    end if
-
-! Annotate the file with the PCF
-
-    if ( ANNOTATEWITHPCF ) then
-      call PCF2Hdr( physical_filename, hdfVersion, filetype=filetype )
-      ! & hdfVersion, isHDFEOS)
-    end if
-
-    returnStatus = pgs_met_remove() 
-
-    if ( present(metadata_error)) metadata_error=module_error
-
-   if(switchDetail(switches, 'pro') > -1) then
-       call announce_success(physical_filename, mcf_filename, 'others')
-   end if
-
-  end subroutine Populate_metadata_oth
-
-  ! -----------------------------------------------  Get_l2gp_mcf  -----
-
-  subroutine Get_l2gp_mcf ( File_base, meta_name, Mcf, Version )
-
-  ! metadata configuration file (mcf) PCF number corresponding to l2gp number
-  ! sdid
-  ! Arguments
-    character(len=*), intent(in) ::  File_base
-    character(len=*), intent(in) ::  meta_name
-    integer, intent(in), optional :: Version
-    integer, intent(inout) ::        Mcf
-    ! type(PCFData_T) :: l2pcf
-
-    ! Local
-    character (len=PGSd_PC_FILE_PATH_MAX) :: Sd_full
-    !character (len=NameLen) :: Sd_path
-    character (len=NameLen) :: Sd_name
-
-    character (len=PGSd_PC_FILE_PATH_MAX) :: Mcf_full
-    character (len=NameLen) :: Mcf_path
-    character (len=NameLen) :: Mcf_name
-    integer :: ReturnStatus, MyVersion, I
-
-    character (len=1), parameter :: COMMA = ','
-
-    ! Find species name
-    ! assume sd_name is "*l2gp_species_"
-    ! hence enclosed between "_" chars after an l2gp
-
-    character (len=1), parameter :: Species_delimiter = '_'
-    character (len=4), parameter :: L2gp = 'l2gp'
-    logical, parameter :: DEBUG = .false.
-
-    ! Begin
-
-    if(.NOT. TOOLKIT) then
-      mcf=0
-      return
-   endif
-
-    if ( MCFFORL2GPOPTION == 1 ) then
-      mcf = mcf+1
-      return
-    end if
-
-    if ( DEBUG ) then
-      call output('file_base: ', advance='no')
-      call output(trim(file_base), advance='yes')
-      call output('meta_name: ', advance='no')
-      call output(trim(meta_name), advance='yes')
-    end if
-
-    if ( len(TRIM(file_base)) <= 0 ) then
-      mcf=0
-      return
-    end if
-
-    if ( meta_name == ' ' ) then
-      ! * The following complication is attempting to infer
-      ! * the species name based on the file name
-      ! * It is necessary only if you disdained to specify the metaName
-      ! * field in the output command
-      ! Get full file name for typical MCF file
-      do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
-
-        if ( present(version) ) then
-          myVersion=version
-        else
-          myVersion = 1
-        end if
-
-        returnStatus = PGS_PC_GetReference(i, myVersion , mcf_full)
-
-        if ( returnStatus == PGS_S_SUCCESS ) then 
-          exit
-        end if
-
-      end do
-
-      if ( DEBUG ) then
-        call output('returnStatus: ', advance='no')
-        call output(returnStatus, advance='yes')
-      end if
-
-      if ( returnStatus /= PGS_S_SUCCESS ) then 
-        mcf = 0
-        return
-      end if
-
-      ! Split full_file_names into path+name
-
-      call split_path_name ( mcf_full, mcf_path, mcf_name )
-
-      ! If   text matching not case sensitive, shift to lower case
-      if ( .NOT. MCFCASESENSITIVE ) then
-        sd_full = LowerCase(file_base)
-        mcf_name = LowerCase(mcf_name)
-      else
-        sd_full = file_base
-      end if
-
-      if ( DEBUG ) then
-        call output('mcf_full: ', advance='no')
-        call output(trim(mcf_full), advance='yes')
-        call output('mcf_path: ', advance='no')
-        call output(trim(mcf_path), advance='yes')
-        call output('mcf_name: ', advance='no')
-        call output(trim(mcf_name), advance='yes')
-      end if
-
-      ! Either we were given a short version of the sd_full
-      ! e.g., 'h2o', or else a much longer one like 'mls-aura_...'
-      if ( index(sd_full, 'mls-aura_') > 0 ) then
-        ! Get species name assuming e.g. 'mls-aura_l2gp-h2O_'
-        call ExtractSubString(sd_full, sd_name, 'mls-aura_l2gp-', '_')
-      else
-        sd_name = sd_full
-      endif
-
-      if ( DEBUG ) then
-        call output('sd_full: ', advance='no')
-        call output(trim(sd_full), advance='yes')
-        call output('sd_name: ', advance='no')
-        call output(trim(sd_name), advance='yes')
-      end if
-
-      if ( len(trim(sd_name)) <= 0 ) then
-        mcf=0
-        return
-      end if
-
-      if ( MCFFORL2GPOPTION == 3 ) then
-
-        ! get mcfspecies name from associative array
-        ! if the species name not found in spec_keys, it will return ','
-        call GetHashElement ( l2pcf%spec_keys, l2pcf%spec_hash, &
-          & trim(sd_name), sd_full, .TRUE. )
-
-        if ( DEBUG ) then
-          call output('keys: ', advance='no')
-          call output(trim(l2pcf%spec_keys), advance='yes')
-          call output('hash: ', advance='no')
-          call output(trim(l2pcf%spec_hash), advance='yes')
-          call output('hash for species name: ', advance='no')
-          call output(trim(sd_full), advance='yes')
-        end if
-
-        if ( trim(sd_full) == COMMA ) then
-          mcf = 0
-          return
-        end if
-
-        sd_name = trim(sd_full)
-
-      end if
-   elseif ( .NOT. MCFCASESENSITIVE ) then
-     sd_name = Lowercase(meta_name)
-   else
-     sd_name = meta_name
-   endif
-   ! Now try to find mcf file corresponding to species name   
-   ! assuming, e.g. '*h2o.*'                                  
-   if ( DEBUG ) then                                       
-     call output('Trying for a pcf name matching: ', advance='no')                   
-     call output(trim(sd_name), advance='yes')     
-   end if                                                  
-   mcf = GetPCFromRef(trim(sd_name), &
-    & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end, &
-    & MCFCASESENSITIVE, returnStatus)
-
-   if ( returnStatus /= 0 ) then
-     mcf = 0
-   endif
-
-  end subroutine Get_l2gp_mcf
-
-! Lori's routines
-
-  ! -----------------------------------------------  WriteMetaLog  -----
-  subroutine WriteMetaLog ( Metadata_error )
-
-    ! Brief description of subroutine
-    ! This subroutine writes metadata for the log file to a separate ASCII file.
-
-    ! Arguments
-
-    ! type( PCFData_T ), intent(in) :: Pcf
-    integer, optional, intent(out) :: Metadata_error
-
-    ! Parameters
-    ! These are PCF numbers that *must* be in the PCF file
-
-    integer, parameter :: ASCII_FILE = 101
-    integer, parameter :: THE_LOG_FILE = 100
-
-    ! Functions
-
-    integer, external :: PGS_MET_init, PGS_MET_remove
-    integer, external :: PGS_MET_setattr_s, PGS_MET_write
-    integer, external :: PGS_PC_getconfigdata
-
-    ! Internal
-
-    character (len=1) :: NullStr
-    character (len=45) :: Sval
-    character (len=32) :: Mnemonic
-    character (len=FileNameLen) :: Physical_filename
-    character (len=PGSd_PC_FILE_PATH_MAX) :: mcf_filename
-    character (len=480) :: Msg, Msr
-    character (len=PGSd_MET_GROUP_NAME_L) :: Groups(PGSd_MET_NUM_OF_GROUPS)
-
-    integer :: Result, Indx, Version
-    logical, parameter :: DEBUG=.FALSE.
-
-    ! Begin
-    module_error = 0
-    if ( present(metadata_error)) metadata_error=1
-    if(.NOT. TOOLKIT) return
-
-    nullStr = ''
-
-    version = 1
-    result = PGS_PC_GetReference (mlspcf_mcf_l2log_start, version, &
-      & mcf_filename)
-
-    if ( result /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-        & "Error: failed to find PCF ref for Log mcf in WriteMetaLog.") 
-      return
-    end if
-
-    ! Check that the PCF file contains the entries for the ASCII file
-    ! and for the log file itself
-    result = pgs_pc_getconfigdata (ASCII_FILE, physical_filename)
-
-    if ( result /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-        & "Error: failed to find PCF ref for the ASCII in WriteMetaLog.") 
-      return
-    end if
-
-    version = 1
-    result = PGS_PC_GetReference (THE_LOG_FILE, version , physical_filename)
-
-    if ( result /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-        & "Error: failed to find PCF ref for the Log in WriteMetaLog.") 
-      return
-    end if
-
-! Initialize the MCF file
-
-    if ( DEBUG ) then
-      call output('Initialize the MCF file', advance='yes')
-    end if
-
-    result = pgs_met_init(mlspcf_mcf_l2log_start, groups)
-    if ( result /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-      & "metadata initialization error in WriteMetaLog.") 
-      return
-    end if
-
-! Set PGE values
-
-    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
-                               l2pcf%logGranID)
-
-    sval = 'c' // l2pcf%cycle
-    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
-                               sval)
-
-    indx = INDEX (l2pcf%startUTC, "T")
-
-    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                               "RangeBeginningDate", l2pcf%startUTC(1:indx-1))
-!    sval= '00:00:00.000000'
-    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                               "RangeBeginningTime", l2pcf%startUTC(indx+1:))
-    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                               "RangeEndingDate", l2pcf%endUTC(1:indx-1))
-!    sval= '23:59:59.999999'
-    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                               "RangeEndingTime", l2pcf%endUTC(indx+1:))
-
-    result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "PGEVersion", &
-                               l2pcf%PGEVersion)
-
-    if ( result /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-      & "Error in setting PGEVersion attribute in WriteMetaLog.", &
-      &  error_number=result)
-        return
-    end if
-
-    ! Write the metadata and their values to an ASCII file
-
-    if ( DEBUG ) then
-      call output('Write the metadata and their values to an ASCII file', &
-      &  advance='yes')
-    end if
-
-    result = pgs_met_write(groups(1), nullStr, ASCII_FILE)
-
-    if ( result /= PGS_S_SUCCESS ) then
-       call Pgs_smf_getMsg(result, mnemonic, msg)
-       msr = "Error: failed to write metadata in WriteMetaLog." &
-       & // trim(mnemonic) // ':  ' // trim(msg)
-       CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-    end if
-
-    result = pgs_met_remove()
-
-    if ( present(metadata_error)) metadata_error=module_error
-
-   if(switchDetail(switches, 'pro') > -1) then
-       call announce_success(physical_filename, mcf_filename, 'Log')
-   end if
-
-   end subroutine WriteMetaLog
-
-  ! ----------------------------------------NullifyPCFData -----
-  subroutine NullifyPCFData ( P )
-    ! Given a PCFData, nullify all the pointers associated with it
-    type ( PCFData_T ), intent(out) :: P
+  ! ----------------------------------------writeMCGroup -----
+  recursive subroutine writeMCGroup ( MLSFILE, MCGROUP )
+    ! Given an MLSFile_T, write a set of inventory metadata control parameters 
+    ! to it
+    ! If the group contains other groups, do what seems proper
+    type ( MLSFile_T ), intent(inout)            :: MLSFILE
+    type ( MCGROUP_T ), intent(in)               :: MCGROUP
+    ! Internal variables
+    integer :: i
+    integer, save :: indent
 
     ! Executable code
-    nullify ( p%AnText )
-    ! nullify ( p%L1BRADPCFIds )
-  end subroutine NullifyPCFData
-
-  ! ---------------------------------------- PCF2Hdr -----
-  ! Make sure file type will be recognized
-  ! before calling writePCF2Hdr
-  ! (which only knows l_hdf, l_hdfeos, l_swath)
-  subroutine PCF2Hdr( filename, hdfVersion, filetype )
-    ! Args
-    character(len=*), intent(in)  :: filename
-    integer, optional, intent(in) :: hdfVersion
-    integer, optional, intent(in) :: fileType
-    ! Internal variables
-    integer :: myType
-    ! Executable
-    if ( .not. associated(l2pcf%anText) ) return
-    myType = l_hdf
-    if ( present(filetype) ) then
-      myType = filetype
-      select case(filetype)
-      case (l_l2dgg,l_l2gp)
-        myType = l_swath
-      ! case default
-        ! myType = filetype
-      end select
-    endif
-    call writePCF2Hdr( filename, l2pcf%anText, hdfVersion, myType )
-
-  end subroutine PCF2Hdr
-
-  ! ---------------------- Private procedures ------------
-
-  ! ---------------------------------------------  announce_success  -----
-  subroutine announce_success ( Name, mcf, l2_type )
-    character(LEN=*), intent(in) :: Name
-    character(LEN=*), intent(in) :: mcf
-    character(LEN=*), intent(in) :: l2_type
-
-    call output ( 'Level 2 output product metadata type : ' )
-    call output ( trim(l2_type), advance='yes')
-    call blanks(15)
-    call output ( 'name : ' )
-    call blanks(8)
-    call output ( trim(Name), advance='yes')
-    call blanks(15)
-    call output ( 'mcf name : ' )
-    call blanks(8)
-    call output ( trim(mcf), advance='yes')
-
-  end subroutine announce_success
-
-  ! ------------------------------------------------  Announce_Error  -----
-  subroutine Announce_Error ( lcf_where, full_message, use_toolkit, &
-    & error_number )
-
-    ! Arguments
-
-    integer, intent(in) :: Lcf_where
-    character(LEN=*), intent(in) :: Full_message
-    logical, intent(in), optional :: Use_toolkit
-    integer, intent(in), optional :: Error_number
-
-    ! Local
-    logical :: Just_print_it
-    logical, parameter :: Default_output_by_toolkit = .true.
-    character (LEN=132) :: attrname, errmsg
-    integer :: Toolbox_error_num
-
-    just_print_it = .not. default_output_by_toolkit
-    if ( present(use_toolkit) ) just_print_it = .not. use_toolkit
-
-    if ( .not. just_print_it ) then
-      if ( TOOLKIT ) module_error = 1
-      call output ( '***** At ' )
-
-      if ( lcf_where > 0 ) then
-        call print_source ( source_ref(lcf_where) )
-      else
-        call output ( '(no lcf node available)' )
-      end if
-
-      call output ( " Caused the following error:", advance='yes', &
-       & from_where=ModuleName)
-      call output ( trim(full_message), advance='yes', &
-        & from_where=ModuleName)
-      if ( present(error_number) ) then
-        call output ( 'Error number ', advance='no' )
-        call output ( error_number, places=9, advance='yes' )
-        Toolbox_error_num = error_number
-        call Pgs_smf_getMsg (Toolbox_error_num, attrname, errmsg)
-        call MLSMessage (MLSMSG_WARNING, ModuleName, &
-            &  TRIM(attrname) //' ' // TRIM(errmsg) )
-      end if
-    else
-      call output ( '***Error in module ' )
-      call output ( ModuleName, advance='yes' )
-      call output ( trim(full_message), advance='yes' )
-      if ( present(error_number) ) then
-        call output ( 'Error number ' )
-        call output ( error_number, advance='yes' )
-      end if
-    end if
-
-!===========================
-  end subroutine Announce_Error
-!===========================
+    if ( len_trim(MCGroup%name) < 1 ) return
+    indent = indent + 3
+    write( MLSFile%fileID%f_id, * ) spaces(:indent), 'GROUP = ' // trim(MCGroup%name)
+    do i=1, size(MCGroup%groups)
+      call writeMCGroup( MLSFile, MCGroup%groups(i) )
+    enddo
+    do i=1, size(MCGroup%params)
+      call writeMCParam( MCGroup%params(i) )
+    enddo
+    write( MLSFile%fileID%f_id, * )  spaces(:indent), 'END_GROUP = ' // trim(MCGroup%name)
+    indent = indent - 3
+    contains
+    subroutine writeMCParam ( MCPARAM )
+      type ( MCParam_T ), intent(in)               :: MCPARAM
+      ! Internal variables
+      ! Executable
+      indent = indent + 3
+      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+        & 'OBJECT = ' // trim(MCParam%name)
+      indent = indent + 3
+      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+        & 'Mandatory = ' // trim(MCParam%mandatory)
+      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+        & 'Data_Location = ' // trim(MCParam%data_location)
+      if ( len_trim(MCParam%class) > 0 ) &
+        & write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+        & 'Data_Location = ' // trim(MCParam%data_location)
+      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+        & 'NUM_VAL = ' // trim(MCParam%num_val)
+      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+        & 'TYPE = ' // trim(MCParam%type)
+      if ( len_trim(MCParam%value) > 0 ) &
+        & write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+        & 'Data_Location = ' // trim(MCParam%value)
+      
+      indent = indent - 3
+      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+        & 'END_OBJECT = ' // trim(MCParam%name)
+      indent = indent - 3
+    end subroutine writeMCParam
+  end subroutine writeMCGroup
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1449,6 +1727,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.73  2013/07/18 22:39:37  pwagner
+! Added datatypes, functions for metadata control
+!
 ! Revision 2.72  2013/04/19 20:07:28  pwagner
 ! Fixed long-standing bug in closing file after adding metadata
 !
