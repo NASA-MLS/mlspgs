@@ -1457,6 +1457,7 @@ contains
     character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     !
+    logical :: alreadyLogged
     integer :: i1, i2
     integer :: IOBloc
     integer :: nIOBlocs
@@ -1472,7 +1473,8 @@ contains
     logical :: stamped
     integer :: status
     integer :: TheUnit ! zero for PrUnit == MSGLOGPRUNIT, else unit number
-
+    ! Executable
+    alreadyLogged = .false.
     if ( SILENTRUNNING ) return
     my_adv = Advance_is_yes_or_no(advance)
     my_dont_stamp = stampOptions%neverStamp ! .false.
@@ -1521,6 +1523,7 @@ contains
     ! Special case: if chars is blank (chars are blank?)
     ! we'll want to print anyway
     if ( len_trim(chars) < 1 ) n_stamp = max(n_stamp, 1)
+    alreadyLogged = .true.
     if ( theUnit /= 0 .and. n_stamp > RECLMAX ) then
       nIOBlocs = 1 + (n_stamp-1)/RECLMAX
       i2 = 0
@@ -1534,6 +1537,8 @@ contains
       write ( theUnit, '(a)', advance=my_adv )
     elseif ( theUnit /= 0 .and. n_stamp > 0 ) then
       write ( theUnit, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
+    else
+      alreadyLogged = .false.
     endif
     if ( any(outputOptions%prunit == (/MSGLOGPRUNIT, BOTHPRUNIT/)) .and. &
       & .not. my_dont_log  ) then
@@ -1586,7 +1591,7 @@ contains
       ! endif
     end if
     
-    if ( outputOptions%prunit <= 0  ) then
+    if ( outputOptions%prunit <= 0 .or. alreadyLogged ) then
       ! Already logged; no output to stdout
     else if ( stamped_chars == ' ' .and. present(insteadofblank)  ) then
       write ( outputOptions%prunit, '(a)', advance=my_adv ) trim_safe(insteadofblank)
@@ -2842,6 +2847,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.103  2013/07/18 22:34:31  pwagner
+! Avoid double-printing when prUnit > 0
+!
 ! Revision 2.102  2013/07/13 00:01:09  vsnyder
 ! Remove old comments about how unbuffering was done
 !
