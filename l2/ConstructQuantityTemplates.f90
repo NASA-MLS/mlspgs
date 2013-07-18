@@ -1072,7 +1072,7 @@ contains ! ============= Public procedures ===================================
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
       L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
       L_RHI, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
-      L_SCANRESIDUAL, L_SCATTERINGANGLE, L_SCECI, L_SCVEL, L_SCVELECI, &
+      L_SCANRESIDUAL, L_SCATTERINGANGLE, L_SCECI, L_SCVELECI, &
       L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, L_STATUS, &
       L_STRAYRADIANCE, L_SURFACEHEIGHT, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
@@ -1220,7 +1220,6 @@ contains ! ============= Public procedures ===================================
       l_rhi, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, p_mustBeZeta, next, &
       l_scECI, phyq_length, p_minorFrame, p_scModule, p_xyz, next, &
       l_scGeocAlt, phyq_length, p_minorFrame, p_scModule, next, &
-      l_scVel, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scVelECI, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scVelECR, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
@@ -1360,6 +1359,10 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.170  2013/07/18 01:12:11  vsnyder
+! Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
+! uses it anyway.
+!
 ! Revision 2.169  2013/05/31 00:42:35  vsnyder
 ! Get geolocation if requested for L1B fill
 !
