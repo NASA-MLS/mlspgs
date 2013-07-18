@@ -192,7 +192,6 @@ scanResidual
 scatteringAngle # for TScat calculations
 scECI
 scGeocAlt
-scVel
 scVelECI
 scVelECR
 secondary
@@ -240,6 +239,10 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.63  2013/07/18 01:10:28  vsnyder
+# Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
+# uses it anyway.
+#
 # Revision 2.62  2013/05/31 00:40:56  vsnyder
 # Add geocentric and geodetic
 #
