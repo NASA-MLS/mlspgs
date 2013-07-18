@@ -36,7 +36,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     L_MAF, L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
     L_NOISEBANDWIDTH, L_NONE, L_NUMJ, L_ORBITINCLINATION, L_OPTICALDEPTH, &
     L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFLSPILL, L_REFLTEMP, &
-    L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
+    L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, &
     L_SCVELECI, L_SCVELECR, L_SINGLECHANNELRADIANCE, &
     L_LIMBSIDEBANDFRACTION, L_SIZEDISTRIBUTION, &
     L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
@@ -1700,218 +1700,99 @@ contains ! =====     Public Procedures     =============================
   ! returns major/minor/neither framing distinction, default unit name,
   ! and the 3 dimension names, e.g. (/l_channel, l_MIF, l_MAF/)
 
+    use Init_Tables_Module, only: First_Lit, Last_Lit
+
     ! Dummy arguments
     integer, intent(in)                :: quantityType
     character(len=*), intent(out)      :: framing
     character(len=*), intent(out)      :: units_name
     integer, dimension(3), intent(out) :: dim_names
 
+    type :: Attrib_t
+      character(7) :: Framing = 'neither'
+      character(10) :: Units_Name = ''
+      integer :: dim_names(3) = (/ l_channel, l_MIF, l_MAF /)
+    end type
+
+    type(attrib_t), save :: Attrib(first_lit:last_lit)
+    logical, save :: First = .true.
+
+    if ( first ) then ! Can't do this with a DATA statement because Attrib_t has default initialization
+      first = .false.
+    !                                             framing    units           dim_names
+    ! Default is                                 'neither', '          ', (/ l_channel, l_MIF, l_MAF /)
+      attrib(l_baseline)              = attrib_t('minor  ', 'K         ', (/ l_frequency, l_MIF, l_MAF /) )
+      attrib(l_channel)               = attrib_t('major  ', 'channel   ', (/ l_none, l_none, l_none /) )
+      attrib(l_chisqchan)             = attrib_t('major  ', 'channel   ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_chisqmmaf)             = attrib_t('major  ', '          ', (/ l_none, l_none, l_MAF /) )
+      attrib(l_chisqmmif)             = attrib_t('minor  ', '          ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_chunk)                 = attrib_t('major  ', 'chunk     ', (/ l_none, l_none, l_none /) )
+      attrib(l_cloudInducedRadiance)  = attrib_t('minor  ', 'K         ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_cloudExtinction)       = attrib_t('neither', '          ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_cloudRadSensitivity)   = attrib_t('minor  ', 'K         ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_cloudWater)            = attrib_t('neither', '          ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_dnwt_ajn)              = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_ajn)              = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_cait)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_chiSqMinNorm)     = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_chiSqNorm)        = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_diag)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_dxdx)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_dxdxl)            = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_dxn)              = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_dxnl)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_flag)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_fnmin)            = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_fnorm)            = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_gdx)              = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_gfac)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_gradn)            = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_sq)               = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_sqt)              = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_effectiveOpticalDepth) = attrib_t('minor  ', '          ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_elevOffset)            = attrib_t('neither', 'deg       ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_frequency)             = attrib_t('major  ', 'frequency ', (/ l_none, l_none, l_none /) )
+      attrib(l_geodAngle)             = attrib_t('neither', 'deg       ', (/ l_none, l_none, l_none /) )
+      attrib(l_heightOffset)          = attrib_t('minor  ', 'deg       ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_iteration)             = attrib_t('major  ', 'iteration ', (/ l_none, l_none, l_none /) )
+      attrib(l_jacobian_cols)         = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_jacobian_rows)         = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_losTransFunc)          = attrib_t('neither', '          ', (/ l_frequency, l_MIF, l_MAF /) )
+      attrib(l_losVel)                = attrib_t('minor  ', '          ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_MAF)                   = attrib_t('major  ', 'MAF       ', (/ l_none, l_none, l_none /) )
+      attrib(l_MIF)                   = attrib_t('major  ', 'MIF       ', (/ l_none, l_none, l_none /) )
+      attrib(l_noiseBandwidth)        = attrib_t('neither', 'MHz       ', (/ l_channel, l_none, l_none /) )
+      attrib(l_numJ)                  = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_opticalDepth)          = attrib_t('minor  ', '          ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_orbitInclination)      = attrib_t('minor  ', 'deg       ', (/ l_none, l_none, l_none /) )
+      attrib(l_phiTan)                = attrib_t('minor  ', 'deg       ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_ptan)                  = attrib_t('minor  ', 'log10(hPa)', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_radiance)              = attrib_t('minor  ', 'K         ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_singleChannelRadiance) = attrib_t('minor  ', 'K         ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_scanResidual)          = attrib_t('minor  ', 'm         ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_scECI)                 = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_scVelECI)              = attrib_t('minor  ', 'm/s       ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_scVelECR)              = attrib_t('minor  ', 'm/s       ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_scGeocAlt)             = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_limbSidebandFraction)  = attrib_t('neither', '          ', (/ l_channel, l_none, l_none /) )
+      attrib(l_reflSpill)             = attrib_t('major  ', '          ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_reflTemp)              = attrib_t('major  ', '          ', (/ l_none, l_none, l_MAF /) ) ! ??? K ???
+      attrib(l_spaceRadiance)         = attrib_t('neither', 'K         ', (/ l_none, l_none, l_none /) )
+      attrib(l_strayRadiance)         = attrib_t('major  ', '          ', (/ l_channel, l_none, l_MAF /) ) ! ??? K ???
+      attrib(l_surfacetype)           = attrib_t('neither', '          ', (/ l_none, l_none, l_none /) )
+      attrib(l_systemTemperature)     = attrib_t('neither', 'K         ', (/ l_channel, l_none, l_none /) )
+      attrib(l_tngtECI)               = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_tngtGeodAlt)           = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_tngtGeocAlt)           = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_totalExtinction)       = attrib_t('neither', '          ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_vmr)                   = attrib_t('neither', 'vmr       ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_xyz)                   = attrib_t('major  ', 'xyz       ', (/ l_none, l_none, l_none /) )
+    end if
+
     ! Executable code
-    units_name = ' '
-    select case (quantityType)                                       
-    case ( l_baseline )
-      framing = 'minor'
-      units_name = 'K'
-      dim_names = (/ l_frequency, l_MIF, l_MAF /)
-    case ( l_channel )  
-      framing = 'major'
-      units_name = 'channel'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_chisqchan )  
-      framing = 'major'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_chisqmmaf )  
-      framing = 'major'
-      dim_names = (/ l_none, l_none, l_MAF /)                  
-    case ( l_chisqmmif )  
-      framing = 'minor'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_chunk )  
-      framing = 'major'
-      units_name = 'chunk'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_cloudInducedRadiance )  
-      framing = 'minor'
-      units_name = 'K'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_cloudExtinction )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_cloudRadSensitivity )  
-      framing = 'minor'
-      units_name = 'K'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_cloudWater )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_dnwt_ajn )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_dnwt_axmax )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_dnwt_cait, l_dnwt_chiSqMinNorm, l_dnwt_chiSqNorm, l_dnwt_diag, &
-      & l_dnwt_dxdx, l_dnwt_dxdxl, l_dnwt_dxn, l_dnwt_dxnl, l_dnwt_flag, &
-      & l_dnwt_fnmin, l_dnwt_fnorm, l_dnwt_gdx, l_dnwt_gfac, l_dnwt_gradn, &
-      & l_dnwt_sq, l_dnwt_sqt )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_effectiveOpticalDepth )  
-      framing = 'minor'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_elevOffset )  
-      framing = 'neither'
-      units_name = 'deg'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_frequency )  
-      framing = 'major'
-      units_name = 'frequency'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_geodAngle )  
-      framing = 'neither'
-      units_name = 'deg'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_heightOffset )  
-      framing = 'minor'
-      units_name = 'deg'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_iteration )  
-      framing = 'major'
-      units_name = 'iteration'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_jacobian_cols )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_jacobian_rows )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_losTransFunc )  
-      framing = 'neither'
-      dim_names = (/ l_frequency, l_MIF, l_MAF /)                  
-    case ( l_losVel )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_MAF )  
-      framing = 'major'
-      units_name = 'MAF'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_massMeanDiameterIce )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_massMeanDiameterWater )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_MIF )  
-      framing = 'major'
-      units_name = 'MIF'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_noiseBandwidth )  
-      framing = 'neither'
-      units_name = 'MHz'
-      dim_names = (/ l_channel, l_none, l_none /)                  
-    case ( l_numJ )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_opticalDepth )  
-      framing = 'minor'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_orbitInclination )  
-      framing = 'minor'
-      units_name = 'deg'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_phiTan )  
-      framing = 'minor'
-      units_name = 'deg'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_ptan )  
-      framing = 'minor'
-      units_name = 'log10(hPa)'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_radiance )  
-      framing = 'minor'
-      units_name = 'K'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_singleChannelRadiance )  
-      framing = 'minor'
-      units_name = 'K'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_sizedistribution )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_scanResidual )  
-      framing = 'minor'
-      units_name = 'm'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_scECI )  
-      framing = 'minor'
-      units_name = 'm'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_scVel )  
-      framing = 'minor'
-      units_name = 'm/s'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_scVelECI )  
-      framing = 'minor'
-      units_name = 'm/s'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_scVelECR )  
-      framing = 'minor'
-      units_name = 'm/s'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_scGeocAlt )  
-      framing = 'minor'
-      units_name = 'm'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_limbSidebandFraction )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_none /)                  
-    case ( l_reflSpill )
-      framing = 'major'
-      dim_names = (/ l_channel, l_none, l_MAF /)
-    case ( l_reflTemp )
-      framing = 'major'
-      dim_names = (/ l_none, l_none, l_MAF /)
-    case ( l_spaceRadiance )  
-      framing = 'neither'
-      units_name = 'K'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_strayRadiance )
-      framing = 'major'
-      dim_names = (/ l_channel, l_none, l_MAF /)
-    case ( l_surfacetype )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_systemTemperature )  
-      framing = 'neither'
-      units_name = 'K'
-      dim_names = (/ l_channel, l_none, l_none /)                  
-    case ( l_tngtECI )  
-      framing = 'minor'
-      units_name = 'm'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_tngtGeodAlt )  
-      framing = 'minor'
-      units_name = 'm'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_tngtGeocAlt )  
-      framing = 'minor'
-      units_name = 'm'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_totalExtinction )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_vmr )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-      units_name = 'vmr'
-    case ( l_xyz )  
-      framing = 'major'
-      units_name = 'xyz'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case default                                                     
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    end select                                                       
+    framing =    attrib(quantityType)%framing
+    units_name = attrib(quantityType)%units_name
+    dim_names =  attrib(quantityType)%dim_names
 
   end subroutine GetQuantityAttributes
 
@@ -2001,6 +1882,10 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.87  2013/07/18 01:10:57  vsnyder
+! Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
+! uses it anyway.
+!
 ! Revision 2.86  2012/01/25 01:16:41  pwagner
 ! Improved error msg; snipped commented-out lines
 !
