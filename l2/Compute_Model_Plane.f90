@@ -39,7 +39,7 @@ contains ! ============= Public Procedures =============================
     use Constants, only: Deg2Rad
     use ForwardModelConfig, only: ForwardModelConfig_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Init_Tables_Module, only: L_Azimuth, L_ScGeocAlt, L_ScVel
+    use Init_Tables_Module, only: L_Azimuth, L_ScGeocAlt, L_ScVelECR
     use MLSKinds, only: RV
     use MLSNumerics, only: Cross ! Cross product of two 3-vectors
     use VectorsModule, only: Vector_t, VectorValue_t
@@ -120,7 +120,7 @@ contains ! ============= Public Procedures =============================
 !a    associate ( &
     velocity => &
               & GetQuantityForForwardModel ( fwdModelExtra, noError=.false., &
-              & quantityType=l_scVel, config=config ) ! )
+              & quantityType=l_scVelECR, config=config ) ! )
       v = velocity%value3(1:3,MIF,MAF)   ! V
 !a    end associate
     v = v / sqrt(dot_product(v,v)) ! Unit V
@@ -144,6 +144,9 @@ contains ! ============= Public Procedures =============================
 end module Compute_Model_Plane_m
 
 ! $Log$
+! Revision 2.2  2013/07/18 01:11:32  vsnyder
+! Replace scVel with scVelECR
+!
 ! Revision 2.1  2013/07/15 16:34:54  vsnyder
 ! Initial commit
 !
