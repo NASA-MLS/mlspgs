@@ -501,27 +501,28 @@ contains ! =====     Public procedures     =============================
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_channel, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
-      begin, t+t_fillMethod, l+l_addnoise, l+l_applyBaseline, l+l_asciiFile, &
-             l+l_binMax, l+l_binMean, l+l_binMin, l+l_binTotal, l+l_boxcar, &
+      begin, t+t_fillMethod, &
+             l+l_addnoise, l+l_applyBaseline, l+l_asciiFile, l+l_binMax, &
+             l+l_binMean, l+l_binMin, l+l_binTotal, l+l_boxcar, &
              l+l_chiSqChan, l+l_chiSqMMAF, l+l_chiSqMMIF, l+l_chiSqRatio, &
-             l+l_columnAbundance, l+l_convergenceRatio, &
-             l+l_combineChannels, l+l_derivative, &
-             l+l_estimatedNoise, l+l_explicit, l+l_extractChannel, &
-             l+l_fwdModelMean, l+l_fwdModelStdDev, l+l_fwdModelTiming, &
-             l+l_fold, l+l_geoLocation, l+l_gphPrecision, l+l_gridded, &
-             l+l_H2OFromRHI, l+l_H2OPrecisionFromRHI, l+l_hydrostatic, &
-             l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
+             l+l_columnAbundance, l+l_combineChannels, &
+             l+l_convergenceRatio, l+l_derivative, l+l_estimatedNoise, &
+             l+l_explicit, l+l_extractChannel, l+l_fold, l+l_fwdModelMean, &
+             l+l_fwdModelStdDev, l+l_fwdModelTiming, l+l_geoLocation, &
+             l+l_gphPrecision, l+l_gridded, l+l_H2OFromRHI, &
+             l+l_H2OPrecisionFromRHI, l+l_hydrostatic, l+l_isotope, &
+             l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
              l+l_losVel, l+l_lsGlobal, l+l_lsLocal, l+l_lsWeighted, &
-             l+l_manipulate, l+l_magneticModel, l+l_magAzEl, l+l_modifyTemplate, &
-             l+l_negativePrecision, l+l_noRadsPerMIF, l+l_offsetRadiance, &
-             l+l_phaseTiming, l+l_profile, l+l_quality, &
-             l+l_rectanglefromlos, l+l_reflectorTempModel, l+l_refract, &
-             l+l_resetUnusedRadiances, &
-             l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_rotateField, &
-             l+l_scaleOverlaps, l+l_sectionTiming, l+l_splitSideband, &
-             l+l_spreadChannel, l+l_status, l+l_swapValues, &
-             l+l_uncompressRadiance, &
-             l+l_vector, l+l_vGrid, l+l_wmoTropopause, n+n_dt_def, &
+             l+l_magAzEl, l+l_magneticModel, l+l_manipulate, &
+             l+l_modifyTemplate, l+l_negativePrecision, l+l_noRadsPerMIF, &
+             l+l_offsetRadiance, l+l_phaseTiming, l+l_profile, &
+             l+l_quality, l+l_rectanglefromlos, l+l_reflectorTempModel, &
+             l+l_refract, l+l_resetUnusedRadiances, l+l_RHIFromH2O, &
+             l+l_RHIPrecisionFromH2O, l+l_rotateField, l+l_scaleOverlaps, &
+             l+l_sectionTiming, l+l_splitSideband, l+l_spreadChannel, &
+             l+l_status, l+l_swapValues, l+l_uncompressRadiance, &
+             l+l_vector, l+l_vGrid, l+l_wmoTropopause, &
+             n+n_dt_def, &
       begin, t+t_fwmType, l+l_baseline, l+l_linear, l+l_full, &
              l+l_cloudFull, l+l_hybrid, l+l_scan, l+l_scan2d, l+l_switchingMirror, &
              l+l_polarLinear, n+n_dt_def, &
@@ -551,42 +552,45 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_ascii, l+l_hdf, l+l_l2aux, l+l_l2cf, &
              l+l_l2dgg, l+l_l2fwm, l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_quantityType, l+l_adopted, l+l_azimuth, l+l_baseline, &
-             l+l_boundarypressure, l+l_calSidebandFraction, l+l_chisqbinned, &
-             l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
-             l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudMinMax, &
-             l+l_cloudRadSensitivity, l+l_cloudTemperature, l+l_cloudWater, l+l_columnabundance, &
-             l+l_dnwt_abandoned, l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
-             l+l_dnwt_chiSqMinNorm, l+l_dnwt_chiSqNorm, l+l_dnwt_chiSqRatio, &
-             l+l_dnwt_count, l+l_dnwt_diag, l+l_dnwt_dxdx, l+l_dnwt_dxdxl, &
-             l+l_dnwt_dxn, l+l_dnwt_dxnl, l+l_dnwt_flag, l+l_dnwt_fnmin, &
-             l+l_dnwt_fnorm, l+l_dnwt_gdx, l+l_dnwt_gfac, &
-             l+l_dnwt_gradn, l+l_dnwt_sq, l+l_dnwt_sqt,&
-             l+l_earthRefl, l+l_ECRtoFOV, l+l_geodAltitude, l+l_effectiveOpticalDepth, &
-             l+l_elevOffset, l+l_extinction, l+l_extinctionv2, &
-             l+l_fieldAzimuth, l+l_fieldElevation, l+l_fieldStrength, &
-             l+l_fwdModelTiming, l+l_fwdModelMean, l+l_fwdModelStdDev, &
+      begin, t+t_quantityType, &
+             l+l_adopted, l+l_azimuth, l+l_baseline, l+l_boundarypressure, &
+             l+l_calSidebandFraction, l+l_chisqbinned, l+l_chisqchan, &
+             l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudExtinction, &
+             l+l_cloudIce, l+l_cloudInducedRadiance, l+l_cloudMinMax, &
+             l+l_cloudRadSensitivity, l+l_cloudTemperature, &
+             l+l_cloudWater, l+l_columnabundance, l+l_dnwt_abandoned, &
+             l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
+             l+l_dnwt_chiSqMinNorm, l+l_dnwt_chiSqNorm, &
+             l+l_dnwt_chiSqRatio, l+l_dnwt_count, l+l_dnwt_diag, &
+             l+l_dnwt_dxdx, l+l_dnwt_dxdxl, l+l_dnwt_dxn, l+l_dnwt_dxnl, &
+             l+l_dnwt_flag, l+l_dnwt_fnmin, l+l_dnwt_fnorm, l+l_dnwt_gdx, &
+             l+l_dnwt_gfac, l+l_dnwt_gradn, l+l_dnwt_sq, l+l_dnwt_sqt, &
+             l+l_earthradius, l+l_earthRefl, l+l_ECRtoFOV, &
+             l+l_effectiveOpticalDepth, l+l_elevOffset, l+l_extinction, &
+             l+l_extinctionv2, l+l_fieldAzimuth, l+l_fieldElevation, &
+             l+l_fieldStrength, l+l_fwdModelMean, l+l_fwdModelStdDev, &
+             l+l_fwdModelTiming, l+l_geodAltitude, l+l_geolocation, &
              l+l_gph, l+l_heightOffset, l+l_isotopeRatio, l+l_IWC, &
-             l+l_jacobian_cols, l+l_jacobian_rows, &
-             l+l_l1bMAFBaseline, l+l_l1bMIF_TAI, l+l_limbSidebandFraction, &
-             l+l_lineCenter, l+l_lineWidth, l+l_lineWidth_tDep, &
-             l+l_losTransFunc, l+l_losVel, l+l_lowestRetrievedPressure, &
-             l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
-             l+l_MIFDeadTime, l+l_MIFExtinction, l+l_MIFExtinctionExtrapolation, &
-             l+l_MIFExtinctionForm, l+l_MIFExtinctionv2, &
-             l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
-             l+l_numGrad, l+l_numJ, l+l_numNewt, &
-             l+l_opticalDepth, l+l_orbitInclination, &
-             l+l_phaseTiming, l+l_phiTan, l+l_ptan, &
-             l+l_quality, l+l_radiance, l+l_earthradius, l+l_geolocation, &
-             l+l_refGPH, l+l_refltemp, l+l_refltrans, l+l_reflrefl, l+l_reflspill, &
-             l+l_rhi, l+l_singleChannelRadiance, l+l_sizedistribution, &
-             l+l_scanResidual, l+l_scatteringAngle, l+l_scECI, &
-             l+l_scVelECI, l+l_scVelECR, l+l_scGeocAlt, &
+             l+l_jacobian_cols, l+l_jacobian_rows, l+l_l1bMAFBaseline, &
+             l+l_l1bMIF_TAI, l+l_limbSidebandFraction, l+l_lineCenter, &
+             l+l_lineWidth, l+l_lineWidth_tDep, l+l_losTransFunc, &
+             l+l_losVel, l+l_lowestRetrievedPressure, l+l_magneticField, &
+             l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
+             l+l_MIFDeadTime, l+l_MIFExtinction, &
+             l+l_MIFExtinctionExtrapolation, l+l_MIFExtinctionForm, &
+             l+l_MIFExtinctionv2, l+l_noiseBandwidth, l+l_noRadsBinned, &
+             l+l_noRadsPerMIF, l+l_numGrad, l+l_numJ, l+l_numNewt, &
+             l+l_opticalDepth, l+l_orbitInclination, l+l_phaseTiming, &
+             l+l_phiTan, l+l_ptan, l+l_quality, l+l_radiance, l+l_refGPH, &
+             l+l_reflrefl, l+l_reflspill, l+l_refltemp, l+l_refltrans, &
+             l+l_rhi, l+l_scanResidual, l+l_scatteringAngle, l+l_scECI, &
+             l+l_scGeocAlt, l+l_scVelECI, l+l_scVelECR, &
+             l+l_singleChannelRadiance, l+l_sizedistribution, &
              l+l_spaceRadiance, l+l_status, l+l_strayRadiance, &
              l+l_surfaceHeight, l+l_surfacetype, l+l_systemTemperature, &
-             l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
-             l+l_totalExtinction, l+l_totalPowerWeight, l+l_TScat, l+l_vmr, &
+             l+l_temperature, l+l_tngtECI, l+l_tngtGeocAlt, &
+             l+l_tngtGeodAlt, l+l_totalExtinction, l+l_totalPowerWeight, &
+             l+l_TScat, l+l_vmr, &
              n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
@@ -595,15 +599,15 @@ contains ! =====     Public procedures     =============================
              l+l_temperature_prec, n+n_dt_def, &
       begin, t+t_tgridcoord, l+l_theta, n+n_dt_def, &
       begin, t+t_tgridtype, l+l_logarithmic, n+n_dt_def, &
-      begin, t+t_units, l+l_c, l+l_days, l+l_deg, l+l_degrees, &
-             l+l_dimensionless, l+l_dimless, l+l_dl, l+l_dobsonUnits, l+l_DU, &
-             l+l_ghz, &
+      begin, t+t_units, &
+             l+l_c, l+l_days, l+l_deg, l+l_degrees, l+l_dimensionless, &
+             l+l_dimless, l+l_dl, l+l_dobsonUnits, l+l_DU, l+l_ghz, &
              l+l_hours, l+l_hpa, l+l_hz, l+l_k, l+l_khz, l+l_km, l+l_logp, &
              l+l_m, l+l_maf, l+l_mafs, l+l_mb, l+l_meters, l+l_mhz, &
-             l+l_mif, l+l_mifs, l+l_minutes, l+l_molcm2, &
-             l+l_orbits, l+l_pa, l+l_ppbv, &
-             l+l_ppmv, l+l_pptv, l+l_rad, l+l_radians, l+l_s, l+l_seconds, &
-             l+l_thz, l+l_vmr, l+l_zeta, n+n_dt_def, &
+             l+l_mif, l+l_mifs, l+l_minutes, l+l_molcm2, l+l_orbits, &
+             l+l_pa, l+l_ppbv, l+l_ppmv, l+l_pptv, l+l_rad, l+l_radians, &
+             l+l_s, l+l_seconds, l+l_thz, l+l_vmr, l+l_zeta, &
+             n+n_dt_def, &
       begin, t+t_vgridcoord, l+l_angle, l+l_dimensionless, l+l_dimless, &
              l+l_geocAltitude, l+l_geodAltitude, l+l_gph, l+l_icedensity, &
              l+l_integer, l+l_none, l+l_pressure, l+l_theta, l+l_zeta, &
@@ -1399,6 +1403,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temp_der, boolean(), &
              begin, f+f_tolerance, numeric(phyq_temperature), &
              begin, f+f_transformMIFextinction, boolean(), &
+             begin, f+f_transformRHI, boolean(), &
              begin, f+f_TScatMIF, numeric(phyq_dimensionless), &
              begin, f+f_TScatMoleculeDerivatives, field_type(t_molecule), &
              begin, f+f_TScatMolecules, field_type(t_molecule), &
@@ -1958,6 +1963,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.575  2013/07/19 01:20:37  vsnyder
+! Sort some stuff, add TransformRHI field
+!
 ! Revision 2.574  2013/07/18 01:10:57  vsnyder
 ! Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
 ! uses it anyway.
