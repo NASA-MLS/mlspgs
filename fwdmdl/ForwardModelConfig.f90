@@ -187,6 +187,7 @@ module ForwardModelConfig
     logical :: SwitchingMirror        ! Model radiance at the switching mirror
     logical :: Temp_Der               ! Do temperature derivatives
     logical :: TransformMIFExtinction ! Transform MIF extinction, see wvs-107
+    logical :: TransformRHI           ! Transform RHI
     logical :: UseTScat               ! Use TScat tables + linear model in full model
     ! Now the reals
     real (r8) :: FrqTol               ! MHz, how close to desired frequency must
@@ -744,9 +745,9 @@ contains
   end subroutine DestroyForwardModelDerived
 
   ! ------------------------------------ NullifyForwardModelConfig -----
-  subroutine NullifyForwardModelConfig ( F )
+  subroutine NullifyForwardModelConfig ( IntentionallyNotUsed )
     ! Given a forward model config, nullify all the pointers associated with it
-    type ( ForwardModelConfig_T ), intent(out) :: F
+    type ( ForwardModelConfig_T ), intent(out) :: IntentionallyNotUsed
 
     ! Executable code not needed since => NULL() initializes pointer
     ! components of intent(out) dummy arguments.
@@ -1464,6 +1465,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.122  2013/07/13 00:07:28  vsnyder
+! Add Model_Plane_MIF component
+!
 ! Revision 2.121  2013/05/15 03:08:55  vsnyder
 ! Revise processing of dump switch
 !
