@@ -25,24 +25,44 @@ program WrapList
        "$RCSfile$"
   !---------------------------------------------------------------------------
 
-  integer :: I, L, R
+  logical :: AmpBefore = .false., NoFinalComma = .false.
+  integer :: First = 0, I, L = 0, R = 0, Status
   character(255) :: In, Out
 
-  l = 0
-  r = 0
-  call get_command_argument ( 1, in ) ! Left margin
-  call get_command_argument ( 2, out ) ! Right margin
-  if ( in /= '' ) read ( in, * ) l
-  if ( out /= '' ) read ( out, * ) r
-  if ( l < 1 .or. r-l < 40 ) then
-    call get_command_argument ( 0, in )
-    print '(a)', 'Usage: ' // trim(in) // ' leftMargin rightMargin'
-    print '(a)', '  where leftMargin > 0 and rightMargin - leftMargin > 39'
-    stop
-  end if
+  i = 0
+  do
+    i = i + 1
+    call get_command_argument ( i, in ) ! Might be left margin
+    if ( in(1:1) /= '-' ) exit  ! Yup, it is
+    if ( in(1:2) == '-f' ) then
+      if ( in(3:) == '' ) then
+        i = i + 1
+        call get_command_argument ( i, in(3:) )
+      end if
+      read ( in(3:), *, iostat=status ) first
+      if ( status /= 0 ) call usage
+    else if ( in(1:2) == '-b' ) then
+      ampBefore = .true.
+    else if ( in(1:2) == '-n' ) then
+      noFinalComma = .true.
+    else
+      call usage
+    end if
+  end do
+  call get_command_argument ( i+1, out ) ! Right margin
+  if ( in /= '' ) read ( in, *, iostat=status ) l
+  if ( status /= 0 ) call usage
+  if ( out /= '' ) read ( out, *, iostat=status ) r
+  if ( status /= 0 ) call usage
+  if ( l < 1 .or. r-l < 40 ) call usage
+  if ( first <= 0 ) first = l
 
   out = ''
-  i = l
+  i = first
+  if ( ampBefore .and. first == l ) then
+    out(i:i) = '&'
+    i = i + 2
+  end if
   do
     read ( *, '(a)', end=9 ) in
     in = adjustl(in)
@@ -51,13 +71,39 @@ program WrapList
       write ( *, '(a)' ) trim(out) // ' &'
       out = ''
       i = l
+      if ( ampBefore ) then
+        out(i:i) = '&'
+        i = i + 2
+      end if
     end if
     out(i:) = trim(in) // ','
     i = len_trim(out) + 2
   end do
 9 continue
-  write ( *, '(a)' ) trim(out) // ' &'
+  if ( noFinalComma ) then
+    l = len_trim(out)
+    if ( out(l:l) == ',' ) out(l:l) = ''
+  else
+    out = trim(out) // ' &'
+  end if
+  write ( *, '(a)' ) trim(out)
+
+contains
+
+  subroutine Usage
+    call get_command_argument ( 0, in )
+    print '(a)', 'Usage: ' // trim(in) // ' [options] leftMargin rightMargin'
+    print '(a)', '  where leftMargin > 0 and rightMargin - leftMargin > 39'
+    print '(a)', '  Options: -f[ ]# => First left margin, else the same as the others'
+    print '(a)', '           -b     => Ampersand before each line, except the first'
+    print '(a)', '                     if first margin /= left margin'
+    print '(a)', '           -n     => No comma and ampersand on last line'
+    stop
+  end subroutine Usage
 
 end program WrapList
 
 ! $Log$
+! Revision 1.2  2013/07/18 22:56:16  vsnyder
+! Initial commit
+!
