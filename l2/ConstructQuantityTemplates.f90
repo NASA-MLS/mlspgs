@@ -150,7 +150,7 @@ contains ! ============= Public procedures ===================================
     ! Executable code
     if ( firstCall ) then
       call InitQuantityTemplates
-      firstCall = .true.
+      firstCall = .false.
     end if
 
     ! Set appropriate defaults
@@ -1141,10 +1141,10 @@ contains ! ============= Public procedures ===================================
       l_dnwt_chisqratio, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_count, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_diag, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_dxdx, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_dxdxl, phyq_dimensionless, p_vGrid, next, &
-      l_dnwt_dxn, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_dxdx, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_dxnl, phyq_dimensionless, p_vGrid, next, &
+      l_dnwt_dxn, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_flag, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_fnmin, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_fnorm, phyq_dimensionless, p_vGrid, next, &
@@ -1153,7 +1153,6 @@ contains ! ============= Public procedures ===================================
       l_dnwt_gradn, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_sq, phyq_dimensionless, p_vGrid, next, &
       l_dnwt_sqt, phyq_dimensionless, p_vGrid, next, &
-      l_geolocation, phyq_dimensionless, p_majorframe, p_module, next, &
       l_earthRadius, phyq_length, p_hGrid, next, &
       l_earthRefl, phyq_dimensionless, none /) )
 
@@ -1168,6 +1167,7 @@ contains ! ============= Public procedures ===================================
       l_fieldAzimuth, phyq_angle, p_hGrid, p_vGrid, next, &
       l_fieldElevation, phyq_angle, p_hGrid, p_vGrid, next, &
       l_fieldStrength, phyq_gauss, p_hGrid, p_vGrid, next, &
+      l_geolocation, phyq_dimensionless, p_majorframe, p_module, next, &
       l_gph, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_heightOffset, phyq_length, p_hGrid, p_vGrid, next, &
       l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
@@ -1183,11 +1183,11 @@ contains ! ============= Public procedures ===================================
       l_lineWidth,  phyq_frequency, p_hGrid, p_vGrid, p_molecule, next, &
       l_lineWidth_TDep, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
-      l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
+      l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, & ! ??? Really phyq_dimensionless
       l_lowestRetrievedPressure, phyq_zeta, none, next, &
       l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
-      l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, & ! ??? Really phyq_dimensionless
+      l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, & ! ??? Really phyq_dimensionless
       l_mifDeadTime, phyq_time, next, &
       l_mifExtinction, phyq_extinction, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
@@ -1195,14 +1195,14 @@ contains ! ============= Public procedures ===================================
       l_mifExtinctionForm, phyq_dimensionless, none, next, &
       l_mifExtinctionV2, phyq_extinction, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
+      l_noiseBandwidth, phyq_frequency, p_signal, next, &
       l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
         & p_signal, p_suppressChannels, p_mustBeZeta, next, &
       l_noRadsPerMIF, phyq_dimensionless, p_minorFrame, p_signal, &
         & p_suppressChannels, next, &
-      l_noiseBandwidth, phyq_frequency, p_signal, next, &
+      l_numNewt, phyq_dimensionless, p_vGrid, next, &
       l_numGrad, phyq_dimensionless, p_vGrid, next, &
-      l_numJ, phyq_dimensionless, p_vGrid, next, &
-      l_numNewt, phyq_dimensionless, p_vGrid, next /) )
+      l_numJ, phyq_dimensionless, p_vGrid, next /) )
 
     call DefineQtyTypes ( (/ &
       l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
@@ -1212,18 +1212,18 @@ contains ! ============= Public procedures ===================================
       l_ptan, phyq_zeta, p_minorFrame, p_module, next, &
       l_quality, phyq_dimensionless, p_hGrid, next, &
       l_radiance, phyq_temperature, p_minorFrame, p_signal, next, & 
-      l_refltemp, phyq_temperature, p_majorFrame, p_reflector, p_module, next, &
-      l_refltrans, phyq_dimensionless, p_signal, p_reflector, next, &
+      l_refGPH, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_reflrefl, phyq_dimensionless, p_signal, p_reflector, next, &
       l_reflspill, phyq_temperature, p_signal, p_majorframe, p_reflector, next, &
-      l_refGPH, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
+      l_refltemp, phyq_temperature, p_majorFrame, p_reflector, p_module, next, &
+      l_refltrans, phyq_dimensionless, p_signal, p_reflector, next, &
       l_rhi, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, p_mustBeZeta, next, &
+      l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
+      l_scatteringAngle, phyq_angle, p_vGrid, next, &
       l_scECI, phyq_length, p_minorFrame, p_scModule, p_xyz, next, &
       l_scGeocAlt, phyq_length, p_minorFrame, p_scModule, next, &
       l_scVelECI, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scVelECR, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
-      l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
-      l_scatteringAngle, phyq_angle, p_vGrid, next, &
       l_singleChannelRadiance, phyq_temperature, p_minorFrame, p_signal, &
                                p_suppressChannels, next, &
       l_sizeDistribution, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, & 
@@ -1234,10 +1234,10 @@ contains ! ============= Public procedures ===================================
       l_surfaceType, phyq_dimensionless, p_hGrid, next, & 
       l_systemTemperature, phyq_temperature, p_signal, next, &
       l_temperature, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
-      l_totalPowerWeight, phyq_dimensionless, p_signal, next, &
       l_tngtECI, phyq_length, p_minorFrame, p_module, p_xyz, next, &
       l_tngtGeocAlt, phyq_length, p_minorFrame, p_module, next, &
       l_tngtGeodAlt, phyq_length, p_minorFrame, p_module, next, &
+      l_totalPowerWeight, phyq_dimensionless, p_signal, next, &
       l_TScat, phyq_temperature, p_hGrid, p_signal, p_vGrid, next, &
       l_vmr, phyq_vmr, p_hGrid, p_vGrid, p_fGridOptional, &
              p_molecule, p_radiometerOptional, p_mustbezeta, next /) )
@@ -1272,7 +1272,9 @@ contains ! ============= Public procedures ===================================
         call MLSMessage ( MLSMSG_Error, ModuleName, message )
       end if
     end do
+
   contains
+
     ! --------------------------- Internal subroutine
     subroutine DefineQtyTypes ( info )
       integer, dimension(:), intent(in) :: INFO
@@ -1359,6 +1361,10 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.171  2013/07/19 01:21:49  vsnyder
+! Sort some stuff, turn off the first time flag so that InitQuantityTemplates
+! is not done on every call.
+!
 ! Revision 2.170  2013/07/18 01:12:11  vsnyder
 ! Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
 ! uses it anyway.
