@@ -466,6 +466,7 @@ toleranceR Rtolerance
 totalPowerVector
 totalPowerQuantity
 transformMIFextinction
+transformRHI
 truthExtra
 truthForwardModel
 truthIn
@@ -506,6 +507,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.233  2013/07/19 01:19:46  vsnyder
+# Add TransformRHI field
+#
 # Revision 2.232  2013/06/21 17:37:39  pwagner
 # /crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
 #
