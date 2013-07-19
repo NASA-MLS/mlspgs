@@ -13,35 +13,29 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
-  use HDF, only: &
-    & DFACC_CREATE, DFACC_RDonly, DFACC_RDWR, DFNT_FLOAT32, DFNT_INT32, &
-    & SFCREATE, SFDIMID, SFSDSCALE, &
-    & SFENDACC, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
-    & SFGDINFO, SFSDMNAME, SFWDATA_F90
-  use INIT_TABLES_MODULE, only: &
-    L_BASELINE, &
-    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CHUNK, &
-    L_CLOUDEXTINCTION, L_CLOUDWATER, &
-    L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
-    L_DNWT_AJN, L_DNWT_AXMAX, &
-    L_DNWT_CAIT, L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_DIAG, &
-    L_DNWT_DXDX, L_DNWT_DXDXL, L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, &
-    L_DNWT_FNMIN, L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, L_DNWT_GRADN, &
-    L_DNWT_SQ, L_DNWT_SQT, &
-    L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, &
-    L_FREQUENCY, L_GEODANGLE, &
-    L_HEIGHT, L_HEIGHTOFFSET, L_INTERMEDIATEFREQUENCY, &
-    L_ITERATION, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-    L_LOSTRANSFUNC, L_LOSVEL, L_LSBFREQUENCY, &
-    L_MAF, L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
-    L_NOISEBANDWIDTH, L_NONE, L_NUMJ, L_ORBITINCLINATION, L_OPTICALDEPTH, &
-    L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFLSPILL, L_REFLTEMP, &
-    L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, &
-    L_SCVELECI, L_SCVELECR, L_SINGLECHANNELRADIANCE, &
-    L_LIMBSIDEBANDFRACTION, L_SIZEDISTRIBUTION, &
-    L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
-    L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
-    L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
+  use HDF, only: DFACC_CREATE, DFACC_RDonly, DFACC_RDWR, DFNT_FLOAT32, &
+    & DFNT_INT32, SFCREATE, SFDIMID, SFENDACC, SFGDINFO, SFGINFO, &
+    & SFN2INDEX, SFRDATA_F90, SFSDMNAME, SFSDSCALE, SFSELECT, SFWDATA_F90
+  use INIT_TABLES_MODULE, only: L_BASELINE, L_CHANNEL, L_CHISQCHAN, &
+    & L_CHISQMMAF, L_CHISQMMIF, L_CHUNK, L_CLOUDEXTINCTION, &
+    & L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, L_CLOUDWATER, &
+    & L_DNWT_AJN, L_DNWT_AXMAX, L_DNWT_CAIT, L_DNWT_CHISQMINNORM, &
+    & L_DNWT_CHISQNORM, L_DNWT_DIAG, L_DNWT_DXDX, L_DNWT_DXDXL, &
+    & L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, L_DNWT_FNMIN, L_DNWT_FNORM, &
+    & L_DNWT_GDX, L_DNWT_GFAC, L_DNWT_GRADN, L_DNWT_SQ, L_DNWT_SQT, &
+    & L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, L_FREQUENCY, L_GEODANGLE, &
+    & L_HEIGHT, L_HEIGHTOFFSET, L_INTERMEDIATEFREQUENCY, L_ITERATION, &
+    & L_JACOBIAN_COLS, L_JACOBIAN_ROWS, L_LIMBSIDEBANDFRACTION, &
+    & L_LOSTRANSFUNC, L_LOSVEL, L_LSBFREQUENCY, L_MAF, &
+    & L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
+    & L_MIFEXTINCTION, L_MIFEXTINCTIONV2, L_NOISEBANDWIDTH, L_NONE, &
+    & L_NORADSPERMIF, L_NUMJ, L_OPTICALDEPTH, L_ORBITINCLINATION, &
+    & L_PHASETIMING, L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, &
+    & L_REFLSPILL, L_REFLTEMP, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, &
+    & L_SCVELECI, L_SCVELECR, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
+    & L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, &
+    & L_SYSTEMTEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
+    & L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
   use INTRINSIC, only: L_HDF, LIT_INDICES
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE, MLSFILE_T
@@ -228,7 +222,7 @@ contains ! =====     Public Procedures     =============================
     character (len=80) :: sdName
     integer :: status
     logical :: verbose
-    !
+
     myOptions = ' '
     if ( present(options) ) myOptions = options
     verbose = ( index(myOptions, 'v') > 0 )
@@ -539,7 +533,7 @@ contains ! =====     Public Procedures     =============================
     ! Name the dimensions' units (e.g. 'K')
     do dimIndex=1, L2AUXRank
       call GetQuantityAttributes( l2aux%dimensions(dimIndex)%dimensionFamily, &
-       & framing, extra_name(dimIndex), dim_names )
+       & units_name=extra_name(dimIndex) )
     end do
     call Array2List(extra_name, l2aux%DIM_Units)
     l2aux%dimensions%noValues = dimSizes
@@ -879,7 +873,7 @@ contains ! =====     Public Procedures     =============================
   subroutine ReadL2AUXData_MF_hdf4(L2AUXFile, quantityname, quantityType, l2aux, &
     & firstProf, lastProf, checkDimNames )
 
-    ! This routine reads an l2aux file, returning a filled data structure and the !
+    ! This routine reads an l2aux file, returning a filled data structure and the
     ! number of profiles read.
 
     ! Arguments
@@ -1036,7 +1030,7 @@ contains ! =====     Public Procedures     =============================
     & firstProf, lastProf, checkDimNames)
     use L1BData, only: L1BDATA_T, READL1BDATA
 
-    ! This routine reads an l2aux file, returning a filled data structure and the !
+    ! This routine reads an l2aux file, returning a filled data structure and the
     ! number of profiles read.
     ! Assumptions
     ! The data format is radiance-like, single- or double-precision
@@ -1428,7 +1422,7 @@ contains ! =====     Public Procedures     =============================
     call Deallocate_Test(dimSizes,"dimSizes",ModuleName)
     
     ! Terminate access to sd
-    status = sfendacc(sdId)      ! 
+    status = sfendacc(sdId)
     if ( status /= 0 ) then
       call announce_error (0,&
       & "Error ending access to the sd  ", L2AUXFile=L2AUXFile )
@@ -1704,13 +1698,13 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments
     integer, intent(in)                :: quantityType
-    character(len=*), intent(out)      :: framing
-    character(len=*), intent(out)      :: units_name
-    integer, dimension(3), intent(out) :: dim_names
+    character(len=*), intent(out), optional      :: framing
+    character(len=*), intent(out), optional      :: units_name
+    integer, dimension(3), intent(out), optional :: dim_names
 
     type :: Attrib_t
       character(7) :: Framing = 'neither'
-      character(10) :: Units_Name = ''
+      character(10) :: Units_Name = 'NoUnits'
       integer :: dim_names(3) = (/ l_channel, l_MIF, l_MAF /)
     end type
 
@@ -1719,80 +1713,138 @@ contains ! =====     Public Procedures     =============================
 
     if ( first ) then ! Can't do this with a DATA statement because Attrib_t has default initialization
       first = .false.
-    !                                             framing    units           dim_names
-    ! Default is                                 'neither', '          ', (/ l_channel, l_MIF, l_MAF /)
-      attrib(l_baseline)              = attrib_t('minor  ', 'K         ', (/ l_frequency, l_MIF, l_MAF /) )
-      attrib(l_channel)               = attrib_t('major  ', 'channel   ', (/ l_none, l_none, l_none /) )
-      attrib(l_chisqchan)             = attrib_t('major  ', 'channel   ', (/ l_channel, l_none, l_MAF /) )
-      attrib(l_chisqmmaf)             = attrib_t('major  ', '          ', (/ l_none, l_none, l_MAF /) )
-      attrib(l_chisqmmif)             = attrib_t('minor  ', '          ', (/ l_none, l_MIF, l_MAF /) )
-      attrib(l_chunk)                 = attrib_t('major  ', 'chunk     ', (/ l_none, l_none, l_none /) )
-      attrib(l_cloudInducedRadiance)  = attrib_t('minor  ', 'K         ', (/ l_channel, l_MIF, l_MAF /) )
-      attrib(l_cloudExtinction)       = attrib_t('neither', '          ', (/ l_channel, l_none, l_MAF /) )
-      attrib(l_cloudRadSensitivity)   = attrib_t('minor  ', 'K         ', (/ l_channel, l_none, l_MAF /) )
-      attrib(l_cloudWater)            = attrib_t('neither', '          ', (/ l_channel, l_none, l_MAF /) )
-      attrib(l_dnwt_ajn)              = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_ajn)              = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_cait)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_chiSqMinNorm)     = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_chiSqNorm)        = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_diag)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_dxdx)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_dxdxl)            = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_dxn)              = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_dxnl)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_flag)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_fnmin)            = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_fnorm)            = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_gdx)              = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_gfac)             = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_gradn)            = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_sq)               = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_dnwt_sqt)              = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_effectiveOpticalDepth) = attrib_t('minor  ', '          ', (/ l_channel, l_MIF, l_MAF /) )
-      attrib(l_elevOffset)            = attrib_t('neither', 'deg       ', (/ l_channel, l_MIF, l_MAF /) )
-      attrib(l_frequency)             = attrib_t('major  ', 'frequency ', (/ l_none, l_none, l_none /) )
-      attrib(l_geodAngle)             = attrib_t('neither', 'deg       ', (/ l_none, l_none, l_none /) )
-      attrib(l_heightOffset)          = attrib_t('minor  ', 'deg       ', (/ l_channel, l_MIF, l_MAF /) )
-      attrib(l_iteration)             = attrib_t('major  ', 'iteration ', (/ l_none, l_none, l_none /) )
-      attrib(l_jacobian_cols)         = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_jacobian_rows)         = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_losTransFunc)          = attrib_t('neither', '          ', (/ l_frequency, l_MIF, l_MAF /) )
-      attrib(l_losVel)                = attrib_t('minor  ', '          ', (/ l_xyz, l_MIF, l_MAF /) )
-      attrib(l_MAF)                   = attrib_t('major  ', 'MAF       ', (/ l_none, l_none, l_none /) )
-      attrib(l_MIF)                   = attrib_t('major  ', 'MIF       ', (/ l_none, l_none, l_none /) )
-      attrib(l_noiseBandwidth)        = attrib_t('neither', 'MHz       ', (/ l_channel, l_none, l_none /) )
-      attrib(l_numJ)                  = attrib_t('neither', '          ', (/ l_none, l_iteration, l_chunk /) )
-      attrib(l_opticalDepth)          = attrib_t('minor  ', '          ', (/ l_channel, l_MIF, l_MAF /) )
-      attrib(l_orbitInclination)      = attrib_t('minor  ', 'deg       ', (/ l_none, l_none, l_none /) )
-      attrib(l_phiTan)                = attrib_t('minor  ', 'deg       ', (/ l_none, l_MIF, l_MAF /) )
-      attrib(l_ptan)                  = attrib_t('minor  ', 'log10(hPa)', (/ l_none, l_MIF, l_MAF /) )
-      attrib(l_radiance)              = attrib_t('minor  ', 'K         ', (/ l_channel, l_MIF, l_MAF /) )
-      attrib(l_singleChannelRadiance) = attrib_t('minor  ', 'K         ', (/ l_none, l_MIF, l_MAF /) )
-      attrib(l_scanResidual)          = attrib_t('minor  ', 'm         ', (/ l_none, l_MIF, l_MAF /) )
-      attrib(l_scECI)                 = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
-      attrib(l_scVelECI)              = attrib_t('minor  ', 'm/s       ', (/ l_xyz, l_MIF, l_MAF /) )
-      attrib(l_scVelECR)              = attrib_t('minor  ', 'm/s       ', (/ l_xyz, l_MIF, l_MAF /) )
-      attrib(l_scGeocAlt)             = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
-      attrib(l_limbSidebandFraction)  = attrib_t('neither', '          ', (/ l_channel, l_none, l_none /) )
-      attrib(l_reflSpill)             = attrib_t('major  ', '          ', (/ l_channel, l_none, l_MAF /) )
-      attrib(l_reflTemp)              = attrib_t('major  ', '          ', (/ l_none, l_none, l_MAF /) ) ! ??? K ???
-      attrib(l_spaceRadiance)         = attrib_t('neither', 'K         ', (/ l_none, l_none, l_none /) )
-      attrib(l_strayRadiance)         = attrib_t('major  ', '          ', (/ l_channel, l_none, l_MAF /) ) ! ??? K ???
-      attrib(l_surfacetype)           = attrib_t('neither', '          ', (/ l_none, l_none, l_none /) )
-      attrib(l_systemTemperature)     = attrib_t('neither', 'K         ', (/ l_channel, l_none, l_none /) )
-      attrib(l_tngtECI)               = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
-      attrib(l_tngtGeodAlt)           = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
-      attrib(l_tngtGeocAlt)           = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
-      attrib(l_totalExtinction)       = attrib_t('neither', '          ', (/ l_channel, l_none, l_MAF /) )
-      attrib(l_vmr)                   = attrib_t('neither', 'vmr       ', (/ l_channel, l_none, l_MAF /) )
-      attrib(l_xyz)                   = attrib_t('major  ', 'xyz       ', (/ l_none, l_none, l_none /) )
+    ! Units should be consistent with InitQuantityTemplates in
+    ! ConstructQuantitytypes. The ones that are commented out are in the list
+    ! of members of the "quantity" type in init_tables_module.  If they become
+    ! eligible to be written in L2AUX, they need to be in this list.  But
+    ! check the fields first!
+    !                                                  framing    units           dim_names
+    ! Default for those not listed here is:           'neither', 'NoUnits   ', (/ l_channel, l_MIF, l_MAF /)
+!     attrib(l_azimuth)                    = attrib_t('neither', 'deg       ', (/ l_none, l_none, l_none /) )
+      attrib(l_baseline)                   = attrib_t('minor  ', 'K         ', (/ l_frequency, l_MIF, l_MAF /) )
+!     attrib(l_boundaryPressure)           = attrib_t('major  ', 'hPa       ', (/ l_none, l_none, l_MAF /) )
+      attrib(l_channel)                    = attrib_t('major  ', 'channel   ', (/ l_none, l_none, l_none /) )
+      attrib(l_chisqchan)                  = attrib_t('major  ', 'channel   ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_chisqmmaf)                  = attrib_t('major  ', 'NoUnits   ', (/ l_none, l_none, l_MAF /) )
+      attrib(l_chisqmmif)                  = attrib_t('minor  ', 'NoUnits   ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_chunk)                      = attrib_t('major  ', 'chunk     ', (/ l_none, l_none, l_none /) )
+      attrib(l_cloudExtinction)            = attrib_t('neither', 'NoUnits   ', (/ l_channel, l_none, l_MAF /) )
+!     attrib(l_cloudIce)                   = attrib_t('minor  ', 'gm/m^3    ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_cloudInducedRadiance)       = attrib_t('minor  ', 'K         ', (/ l_channel, l_MIF, l_MAF /) )
+!     attrib(l_cloudMinMax)                = attrib_t('minor  ', 'K         ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_cloudRadSensitivity)        = attrib_t('minor  ', 'K         ', (/ l_channel, l_none, l_MAF /) )
+!     attrib(l_cloudTemperature)           = attrib_t('minor  ', 'K         ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_cloudWater)                 = attrib_t('neither', 'NoUnits   ', (/ l_channel, l_none, l_MAF /) )
+!     attrib(l_columnAbundance)            = attrib_t('major  ', 'mol/cm^2  ', (/ l_none, l_none, l_MAF /) )
+      attrib(l_dnwt_ajn)                   = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_axmax)                 = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_cait)                  = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_chiSqMinNorm)          = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_chiSqNorm)             = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+!     attrib(l_dnwt_chiSqRatio)            = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+!     attrib(l_dnwt_count)                 = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_diag)                  = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_dxdx)                  = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_dxdxl)                 = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_dxn)                   = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_dxnl)                  = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_flag)                  = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_fnmin)                 = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_fnorm)                 = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_gdx)                   = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_gfac)                  = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_gradn)                 = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_sq)                    = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_dnwt_sqt)                   = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+!     attrib(l_earthRadius)                = attrib_t('major  ', 'm         ', (/ l_none, l_none, l_MAF /) )
+!     attrib(l_earthRefl)                  = attrib_t('neither', 'NoUnits   ', (/ l_none, l_none, l_none /) )
+!     attrib(l_ecrToFOV)                   = attrib_t('minor  ', 'NoUnits   ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_effectiveOpticalDepth)      = attrib_t('minor  ', 'NoUnits   ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_elevOffset)                 = attrib_t('neither', 'deg       ', (/ l_channel, l_MIF, l_MAF /) )
+!     attrib(l_extinction)                 = attrib_t('neither', '1/km      ', (/ l_channel, l_none, l_MAF /) )
+!     attrib(l_extinctionV2)               = attrib_t('neither', '1/km      ', (/ l_channel, l_none, l_MAF /) )
+!     attrib(l_fieldAzimuth)               = attrib_t('minor  ', 'deg       ', (/ l_none, l_MIF, l_MAF /) )
+!     attrib(l_fieldElevation)             = attrib_t('minor  ', 'deg       ', (/ l_none, l_MIF, l_MAF /) )
+!     attrib(l_fieldStrength)              = attrib_t('minor  ', 'gauss     ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_frequency)                  = attrib_t('major  ', 'MHz       ', (/ l_none, l_none, l_none /) )
+!     attrib(l_geolocation)                = attrib_t('major  ', 'NoUnits   ', (/ l_none, l_none, l_none /) )
+!     attrib(l_gph)                        = attrib_t('major  ', 'm         ', (/ l_none, l_none, l_MAF /) )
+      attrib(l_heightOffset)               = attrib_t('minor  ', 'm         ', (/ l_channel, l_MIF, l_MAF /) )
+!     attrib(l_isotopeRatio)               = attrib_t('neither', 'NoUnits   ', (/ l_none, l_none, l_none /) )
+!     attrib(l_iwc)                        = attrib_t('minor  ', 'gm/m^3    ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_jacobian_cols)              = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_jacobian_rows)              = attrib_t('neither', 'NoUnits   ', (/ l_none, l_iteration, l_chunk /) )
+!     attrib(l_l1bMAFBaseline)             = attrib_t('major  ', 'K         ', (/ l_none, l_none, l_MAF /) )
+!     attrib(l_l1bMIF_TAI)                 = attrib_t('minor  ', 's         ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_limbSidebandFraction)       = attrib_t('neither', 'NoUnits   ', (/ l_channel, l_none, l_none /) )
+!     attrib(l_lineCenter)                 = attrib_t('neither', 'MHz       ', (/ l_none, l_none, l_none /) )
+!     attrib(l_lineWidth)                  = attrib_t('neither', 'MHz       ', (/ l_none, l_none, l_none /) )
+!     attrib(l_lineWidth_TDep)             = attrib_t('neither', 'MHz       ', (/ l_none, l_none, l_none /) )
+      attrib(l_losTransFunc)               = attrib_t('neither', 'NoUnits   ', (/ l_frequency, l_MIF, l_MAF /) )
+      attrib(l_losVel)                     = attrib_t('minor  ', 'm/s       ', (/ l_xyz, l_MIF, l_MAF /) )
+!     attrib(l_lowestRetrievedPressure)    = attrib_t('neither', 'log10(hPa)', (/ l_none, l_none, l_none /) )
+!     attrib(l_magneticField)              = attrib_t('minor  ', 'gauss     ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_massMeanDiameterIce)        = attrib_t('minor  ', 'NoUnits   ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_massMeanDiameterWater)      = attrib_t('minor  ', 'NoUnits   ', (/ l_none, l_MIF, l_MAF /) )
+!     attrib(l_mifDeadTime)                = attrib_t('neither', 's         ', (/ l_none, l_none, l_none /) )
+      attrib(l_mifExtinction)              = attrib_t('minor  ', '1/km      ', (/ l_channel, l_MIF, l_MAF /) )
+!     attrib(l_mifExtinctionExtrapolation) = attrib_t('neither', 'NoUnits   ', (/ l_none, l_none, l_none /) )
+!     attrib(l_mifExtinctionForm)          = attrib_t('neither', 'NoUnits   ', (/ l_none, l_none, l_none /) )
+      attrib(l_mifExtinctionV2)            = attrib_t('minor  ', '1/km      ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_noiseBandwidth)             = attrib_t('neither', 'MHz       ', (/ l_channel, l_none, l_none /) )
+!     attrib(l_noRadsBinned)               = attrib_t('minor  ', 'NoUnits   ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_noRadsPerMIF)               = attrib_t('minor  ', 'NoUnits   ', (/ l_none, l_MIF, l_MAF /) )
+!     attrib(l_numGrad)                    = attrib_t('neither', 'iteration ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_numJ)                       = attrib_t('neither', 'iteration ', (/ l_none, l_iteration, l_chunk /) )
+      attrib(l_opticalDepth)               = attrib_t('minor  ', 'NoUnits   ', (/ l_channel, l_MIF, l_MAF /) )
+      attrib(l_orbitInclination)           = attrib_t('minor  ', 'deg       ', (/ l_none, l_none, l_none /) )
+      attrib(l_phaseTiming)                = attrib_t('minor  ', 's         ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_phiTan)                     = attrib_t('minor  ', 'deg       ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_ptan)                       = attrib_t('minor  ', 'log10(hPa)', (/ l_none, l_MIF, l_MAF /) )
+!     attrib(l_quality)                    = attrib_t('major  ', 'NoUnits   ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_radiance)                   = attrib_t('minor  ', 'K         ', (/ l_channel, l_MIF, l_MAF /) )
+!     attrib(l_refGPH)                     = attrib_t('major  ', 'm         ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_reflTemp)                   = attrib_t('major  ', 'K         ', (/ l_none, l_none, l_MAF /) )
+      attrib(l_reflSpill)                  = attrib_t('major  ', 'NoUnits   ', (/ l_channel, l_none, l_MAF /) )
+!     attrib(l_RHI)                        = attrib_t('minor  ', 'NoUnits   ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_scanResidual)               = attrib_t('minor  ', 'm         ', (/ l_none, l_MIF, l_MAF /) )
+!     attrib(l_scatteringAngle)            = attrib_t('minor  ', 'deg       ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_scECI)                      = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_scGeocAlt)                  = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_scVelECI)                   = attrib_t('minor  ', 'm/s       ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_scVelECR)                   = attrib_t('minor  ', 'm/s       ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_singleChannelRadiance)      = attrib_t('minor  ', 'K         ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_sizeDistribution)           = attrib_t('minor  ', 'NoUnits   ', (/ l_none, l_MIF, l_MAF /) )
+      attrib(l_spaceRadiance)              = attrib_t('neither', 'K         ', (/ l_none, l_none, l_none /) )
+!     attrib(l_status)                     = attrib_t('major  ', 'NoUnits   ', (/ l_none, l_none, l_MAF /) )
+      attrib(l_strayRadiance)              = attrib_t('major  ', 'K         ', (/ l_channel, l_none, l_MAF /) )
+!     attrib(l_surfaceHeight)              = attrib_t('major  ', 'm         ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_surfacetype)                = attrib_t('neither', 'NoUnits   ', (/ l_none, l_none, l_none /) )
+      attrib(l_systemTemperature)          = attrib_t('neither', 'K         ', (/ l_channel, l_none, l_none /) )
+!     attrib(l_totalPowerWeight)           = attrib_t('neither', 'NoUnits   ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_tngtECI)                    = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_tngtGeocAlt)                = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
+      attrib(l_tngtGeodAlt)                = attrib_t('minor  ', 'm         ', (/ l_xyz, l_MIF, l_MAF /) )
+!     attrib(l_TScat)                      = attrib_t('major  ', 'K         ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_vmr)                        = attrib_t('neither', 'vmr       ', (/ l_channel, l_none, l_MAF /) )
+      ! The following are not quantity types listed under t_quantityType in
+      ! init_tables_module, or in InitQuantityTemplates in
+      ! ConstructQuantityTemplates.  At least some of them are dimension
+      ! types, for which a second call to this subroutine fetches the units
+      ! attribute of the dimension (instead of the vector quantity).
+      ! Others might be fossils.
+      attrib(l_geodAngle)                  = attrib_t('neither', 'deg       ', (/ l_none, l_none, l_none /) )
+      attrib(l_iteration)                  = attrib_t('major  ', 'iteration ', (/ l_none, l_none, l_none /) )
+      attrib(l_MAF)                        = attrib_t('major  ', 'MAF       ', (/ l_none, l_none, l_none /) )
+      attrib(l_MIF)                        = attrib_t('major  ', 'MIF       ', (/ l_none, l_none, l_none /) )
+      attrib(l_totalExtinction)            = attrib_t('neither', 'NoUnits   ', (/ l_channel, l_none, l_MAF /) )
+      attrib(l_xyz)                        = attrib_t('major  ', 'xyz       ', (/ l_none, l_none, l_none /) )
     end if
 
     ! Executable code
-    framing =    attrib(quantityType)%framing
-    units_name = attrib(quantityType)%units_name
-    dim_names =  attrib(quantityType)%dim_names
+    if ( present(framing) )    framing    = attrib(quantityType)%framing
+    if ( present(units_name) ) units_name = attrib(quantityType)%units_name
+    if ( present(dim_names) )  dim_names  = attrib(quantityType)%dim_names
 
   end subroutine GetQuantityAttributes
 
@@ -1880,277 +1932,280 @@ contains ! =====     Public Procedures     =============================
 end module L2AUXData
 !=============================================================================
 
-!
+
 ! $Log$
+! Revision 2.88  2013/07/19 01:24:29  vsnyder
+! Sort some stuff, revise GetQuantityAttributes a bit more
+!
 ! Revision 2.87  2013/07/18 01:10:57  vsnyder
 ! Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
 ! uses it anyway.
-!
+
 ! Revision 2.86  2012/01/25 01:16:41  pwagner
 ! Improved error msg; snipped commented-out lines
-!
+
 ! Revision 2.85  2011/07/07 00:39:15  pwagner
 ! Accepts options as arg for dumps
-!
+
 ! Revision 2.84  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
-!
+
 ! Revision 2.83  2007/10/24 00:15:53  pwagner
 ! Removed unused declarations
-!
+
 ! Revision 2.82  2007/08/13 17:39:42  pwagner
 ! Push some procedures onto new MLSCallStack
-!
+
 ! Revision 2.81  2007/06/21 00:54:08  vsnyder
 ! Remove tabs, which are not part of the Fortran standard
-!
+
 ! Revision 2.80  2006/05/19 22:49:15  pwagner
 ! May rename copied SDs
-!
+
 ! Revision 2.79  2006/01/26 00:34:50  pwagner
 ! demoted more use statements from module level to speed Lahey compiles
-!
+
 ! Revision 2.78  2005/12/21 18:45:29  pwagner
 ! Should recognize but not copy coremetadata, pcf
-!
+
 ! Revision 2.77  2005/12/14 01:45:21  pwagner
 ! Attribute values to phase, section timing more reasonable
-!
+
 ! Revision 2.76  2005/10/11 17:39:58  pwagner
 ! Added MLSFile interface to cpL2AUXData
-!
+
 ! Revision 2.75  2005/09/21 23:17:34  pwagner
 ! Unnecessary changes
-!
+
 ! Revision 2.74  2005/08/25 20:21:41  pwagner
 ! Ensure returnStatus defined in ReadL2AUXData_MLSFile
-!
+
 ! Revision 2.73  2005/08/19 23:27:02  pwagner
 ! Uses '*' as wildcard sdList string in cpL2AUXData
-!
+
 ! Revision 2.72  2005/08/05 20:38:31  pwagner
 ! L2AUXFile arg to ReadL2AUXFile now a pointer
-!
+
 ! Revision 2.71  2005/07/06 00:29:26  pwagner
 ! optional arg options determines whether cpL2AUXData dumps DS names
-!
+
 ! Revision 2.70  2005/06/22 18:57:01  pwagner
 ! Reworded Copyright statement, moved rcs id
-!
+
 ! Revision 2.69  2005/06/14 20:41:02  pwagner
 ! Interfaces changed to accept MLSFile_T args
-!
+
 ! Revision 2.68  2005/03/03 02:10:51  vsnyder
 ! Remove unused symbols, spiff up some dumps
-!
+
 ! Revision 2.67  2004/08/19 00:19:28  pwagner
 ! Tells ReadL1BData to skip warnings about missing counterMAFs
-!
+
 ! Revision 2.66  2004/08/17 17:09:45  pwagner
 ! L2AUX files shouldn't need padding when read as l1b
-!
+
 ! Revision 2.65  2004/08/16 23:43:22  livesey
 ! Added ability to output minor frame baselines
-!
+
 ! Revision 2.64  2004/08/04 23:19:57  pwagner
 ! Much moved from MLSStrings to MLSStringLists
-!
+
 ! Revision 2.63  2004/06/29 18:05:26  pwagner
 ! May write phase, section names as file-level attributes
-!
+
 ! Revision 2.62  2004/04/16 00:48:13  livesey
 ! Added singleChannelRadiance output
-!
+
 ! Revision 2.61  2004/03/08 22:33:29  pwagner
 ! Bypass reading QuantityType attribute (why always 0)
-!
+
 ! Revision 2.60  2004/02/26 22:05:06  pwagner
 ! Can copy l2aux file w/o knowing ds names; acts more gracefully if no attributes
-!
+
 ! Revision 2.59  2004/02/05 23:36:41  pwagner
 ! WriteL2AUXAttributes now public
-!
+
 ! Revision 2.58  2004/01/27 21:38:09  pwagner
 ! Added cpL2AUXData
-!
+
 ! Revision 2.57  2003/09/03 05:25:49  livesey
 ! Bug fix in hdf5 readl2auxdata.
-!
+
 ! Revision 2.56  2003/07/15 23:39:47  pwagner
 ! Disabled most printing
-!
+
 ! Revision 2.55  2003/05/30 00:10:02  livesey
 ! Bug fix with reflTemp
-!
+
 ! Revision 2.54  2003/05/30 00:08:54  livesey
 ! Added antenna loss terms
-!
+
 ! Revision 2.53  2003/05/29 16:43:02  livesey
 ! Renamed sideband fraction
-!
+
 ! Revision 2.52  2003/05/12 02:06:32  livesey
 ! Bound r8->r4 conversion
-!
+
 ! Revision 2.51  2003/04/25 19:55:09  livesey
 ! Added more useful error message
-!
+
 ! Revision 2.50  2003/03/07 00:42:13  pwagner
 ! Abbreviated Units names; removed spaces from attribute names
-!
+
 ! Revision 2.49  2003/02/21 23:42:21  pwagner
 ! Also writes Fill Value attribute
-!
+
 ! Revision 2.48  2003/02/12 21:52:34  pwagner
 ! Renames blank dim units to none
-!
+
 ! Revision 2.47  2003/02/07 21:44:56  pwagner
 ! Capitalized 1st letter of each attribute name
-!
+
 ! Revision 2.46  2003/01/30 01:02:28  pwagner
 ! Writing attributes for hdf5 files; global and data set
-!
+
 ! Revision 2.45  2003/01/18 02:37:03  livesey
 ! Made the readl2aux data stuff work from the l2cf by adding the
 ! quantityType argument.
-!
+
 ! Revision 2.44  2003/01/17 23:11:26  pwagner
 ! Moved most ops out of LoinL2AUXData to SetupL2AUXData
-!
+
 ! Revision 2.43  2003/01/14 00:41:43  pwagner
 ! Added GetQuantityAttributes and getDimString; new fields in L2AUXData_T
-!
+
 ! Revision 2.42  2002/12/10 00:41:28  pwagner
 ! In principle can now read hdf5-formatted l2aux files; untested; njl has other plans
-!
+
 ! Revision 2.41  2002/12/07 00:25:42  pwagner
 ! Using SaveAsHDF5DS to write l2aux%values; it works
-!
+
 ! Revision 2.40  2002/12/06 01:06:13  pwagner
 ! Finally writes radaiance-like l2aux as hdf5 files
-!
+
 ! Revision 2.39  2002/12/05 19:46:23  pwagner
 ! Changes to speed up compiling tree-walker
-!
+
 ! Revision 2.38  2002/12/03 18:04:02  pwagner
 ! Repaired bug that caused WriteL2AUXData files to be tiny
-!
+
 ! Revision 2.37  2002/12/02 23:42:12  pwagner
 ! Optional param checkDimNames to ReadL2AUXData; defaults to FALSE
-!
+
 ! Revision 2.36  2002/12/02 19:11:13  pwagner
 ! Corrected data types of counterMAF and dimensions
-!
+
 ! Revision 2.35  2002/11/29 22:46:28  livesey
 ! Various bug fixes / improvements.
-!
+
 ! Revision 2.34  2002/11/29 18:50:07  livesey
 ! Initialised a variable
-!
+
 ! Revision 2.33  2002/11/26 22:16:41  jonathan
 ! Comment-out dump_l2aux diagnostics
-!
+
 ! Revision 2.32  2002/11/25 18:04:52  pwagner
 ! Consistent with latest changes to MLSAuxData
-!
+
 ! Revision 2.31  2002/11/22 21:48:02  pwagner
 ! Fleshed out WriteL2AUXData_hdf5; untested yet
-!
+
 ! Revision 2.30  2002/11/13 01:09:47  pwagner
 ! Beginnings of attempt to write hdf5 L2AUX; incomplete
-!
+
 ! Revision 2.29  2002/11/08 23:14:41  pwagner
 ! Should work again with mlsl2
-!
+
 ! Revision 2.28  2002/11/08 18:25:33  jonathan
 ! Changes to allow writing rank 2; also reuse_DimNames
-!
+
 ! Revision 2.27  2002/11/06 02:01:06  livesey
 ! Changes to fill from l2aux
-!
+
 ! Revision 2.26  2002/11/06 00:18:37  pwagner
 ! Can WriteL2AUXData w/o l2cf: useable by small utility programs
-!
+
 ! Revision 2.25  2002/10/08 17:36:21  pwagner
 ! Added idents to survive zealous Lahey optimizer
-!
+
 ! Revision 2.24  2002/08/21 01:04:53  livesey
 ! Changed to single precision for data
-!
+
 ! Revision 2.23  2002/08/15 21:47:04  pwagner
 ! WriteL2AuxData now returns non-zero status if it fails
-!
+
 ! Revision 2.22  2001/11/01 21:03:59  pwagner
 ! Uses new sfwdata_f90 generic; added toc
-!
+
 ! Revision 2.21  2001/10/26 23:13:18  pwagner
 ! Provides a single dump module interface and details
-!
+
 ! Revision 2.20  2001/10/08 23:41:27  pwagner
 ! Improved dump routines
-!
+
 ! Revision 2.19  2001/10/05 23:32:27  pwagner
 ! Added majorframe to data type; trimmed unused stuff
-!
+
 ! Revision 2.18  2001/08/06 18:35:24  pwagner
 ! Added dump_l2aux
-!
+
 ! Revision 2.17  2001/07/11 20:50:46  dwu
 ! fix problem in readl2auxdata
-!
+
 ! Revision 2.16  2001/05/30 23:53:31  livesey
 ! Changed for new version of L1BData
-!
+
 ! Revision 2.15  2001/05/12 00:18:40  livesey
 ! Tidied up issues with array bounds etc.
-!
+
 ! Revision 2.14  2001/05/03 20:32:19  vsnyder
 ! Cosmetic changes
-!
+
 ! Revision 2.13  2001/05/02 22:24:20  pwagner
 ! Removed SDPToolkit use
-!
+
 ! Revision 2.12  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
-!
+
 ! Revision 2.11  2001/04/12 22:19:33  vsnyder
 ! Improved an error message
-!
+
 ! Revision 2.10  2001/04/10 22:27:47  vsnyder
 ! Nullify explicitly instead of with <initialization> so as not to give
 ! pointers the SAVE attribute.  <initialization> is NOT executed on each
 ! entry to a procedure.
-!
+
 ! Revision 2.9  2001/04/07 00:14:27  pwagner
 ! Added announce_error
-!
+
 ! Revision 2.8  2001/03/15 18:42:29  livesey
 ! Removed quotes from dimension name prefixes
-!
+
 ! Revision 2.7  2001/03/08 02:20:12  livesey
 ! Added strip argument to a call to get_string
-!
+
 ! Revision 2.6  2001/03/06 22:40:47  livesey
 ! Working version
-!
+
 ! Revision 2.5  2001/02/14 23:41:33  livesey
 ! Removed irrelevant numProfs argument
-!
+
 ! Revision 2.4  2001/01/03 00:46:19  pwagner
 ! Changed sfgetinfo to sfginfo
-!
+
 ! Revision 2.3  2000/12/04 23:34:38  vsnyder
 ! Move more of addItemToDatabase into the include.
-!
+
 ! Revision 2.2  2000/12/04 21:48:29  pwagner
 ! ReadL2AUXData completed
-!
+
 ! Revision 2.1  2000/12/02 01:12:00  pwagner
 ! Added ReadL2AUXData
-!
+
 ! Revision 2.0  2000/09/05 18:57:02  ahanzel
 ! Changing file revision to 2.0.
-!
+
 ! Revision 1.1  2000/09/02 02:05:04  vsnyder
 ! Initial entry
-!
+
 
