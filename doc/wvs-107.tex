@@ -8,8 +8,8 @@
 \topmargin 0in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-107r12}
-\newcommand{\docdate}{10 May 2012}
+\newcommand{\docname}{\bf wvs-107r13}
+\newcommand{\docdate}{24 July 2013}
 
 \usepackage{graphicx}
 \usepackage{longtable}
@@ -223,12 +223,14 @@ Two new quantity types, MIFExtinction and MIFExtinctionv2, are introduced.
 These are not molecules, so it is impossible to tell the forward model to
 use them.
 
-Quantities of type vmr, and molecule either extinction or extinctionv2,
-and quantities of type either MIFExtinction or MIFExtinctionv2, are
-specified by the l2cf as quantities in the state vector template.
+Quantities of type vmr, with their molecules being either extinction or
+extinctionv2, and quantities of type either MIFExtinction or
+MIFExtinctionv2, are specified by the l2cf as quantities in the state
+vector template.
 
-A switch is provided in the {\tt retrieve} statement in the l2cf to
-request transformations between extinction and MIF extinction.
+A switch named {\tt TransformMIFExtinction} is provided in the {\tt
+ForwardModel} statement in the l2cf to request transformations between
+extinction and MIF extinction.
 
 If the switch is set, before calling the forward model, the forward model
 wrapper destroys any extinction molecules it finds in the state vector
@@ -369,6 +371,9 @@ forward model configuration.
 % $Id$
 
 % $Log$
+% Revision 1.12  2012/05/10 23:18:15  vsnyder
+% Add requirement to set TransformMIFExtinction switch
+%
 % Revision 1.11  2012/05/01 22:34:35  vsnyder
 % Describe subset-using-radiances command
 %
