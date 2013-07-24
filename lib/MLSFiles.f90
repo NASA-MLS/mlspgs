@@ -416,7 +416,7 @@ contains
     integer, optional, intent(in)          :: PCBottom ! (Instead of range_T)
     integer, optional, intent(in)          :: PCTop    ! (Instead of range_T)
 
-    InitializeMLSFile = 0
+    InitializeMLSFile = 0 ! Will we ever return non-zero values?
     item%type         = 0
     item%access       = 0
     item%recordLength = 0
@@ -449,8 +449,6 @@ contains
     if ( present(name) .and. present(shortName) ) then
       if ( name == shortName ) item%shortName = ""
     endif
-!     if ( item%access > 0 ) &
-!       & item%accessStr = accessType(access)
     if ( item%type > 0 .and. FILESTRINGTABLE ) &
       & call get_string(lit_indices(item%type), item%typeStr, strip=.true.)
   end function InitializeMLSFile
@@ -1759,6 +1757,7 @@ contains
     if ( present(error) ) error = FILEALREADYOPEN
     if ( MLSFile%StillOpen ) return
     ! print *, 'Opening ' // trim(MLSFile%name)
+    ! print *, 'type ', MLSFile%type
     version = 1
     PCBottom = MLSFile%PCFidRange%Bottom
     PCTop = MLSFile%PCFidRange%Top
@@ -2405,7 +2404,7 @@ contains
    ! if (the_eff_mode == 'pg' .or. the_eff_mode == 'op' ) then
    myhdfVersion = WRONGHDFVERSION
    if ( present(hdfVersion) ) myHdfVersion = hdfVersion
-   if (the_eff_mode == l_tkgen .or. the_eff_mode == l_open ) then
+   if ( any( the_eff_mode == (/l_tkgen, l_open, l_ascii/) ) ) then
      myhdfVersion = WILDCARDHDFVERSION
    elseif ( .not. any( myhdfVersion == (/HDFVERSION_4, HDFVERSION_5/) ) ) then
      if ( debug ) then
@@ -2413,6 +2412,10 @@ contains
        call output( trim(myName), advance='yes' )
        call output( 'FileAccessType: ', advance='no' )
        call output( FileAccessType, advance='yes' )
+       call outputnamedValue( 'the_eff_mode', the_eff_mode )
+       call outputnamedValue( 'l_tkgen', l_tkgen )
+       call outputnamedValue( 'l_open', l_open )
+       call outputnamedValue( 'l_ascii', l_ascii )
        if ( present(hdfVersion) ) then
        call output( 'hdfVersion: ', advance='no' )
        call output( hdfVersion, advance='yes' )
@@ -2434,6 +2437,12 @@ contains
        call output('l_hdf: ', advance='no')
        call blanks(2)
        call output(l_hdf, advance='yes')
+       call output('l_ascii: ', advance='no')
+       call blanks(2)
+       call output(l_ascii, advance='yes')
+       call output('l_open: ', advance='no')
+       call blanks(2)
+       call output(l_open, advance='yes')
        call output('File Name: ', advance='no')
        call blanks(2)
        call output(trim(myName), advance='yes')
@@ -2454,11 +2463,13 @@ contains
        call output(myhdfVersion, advance='yes')
    endif
 
-   if ( myhdfVersion < 0 ) then
+   if ( myhdfVersion < 0 .and. any( the_eff_mode == &
+   & (/ l_swath, l_hdf, l_hdfeos /) ) ) then
      ErrType = myhdfVersion
      return
    endif
     your_version = version
+    if ( debug ) call outputnamedValue( 'the_eff_mode', the_eff_mode )
     select case (the_eff_mode)
 
     ! case('pg')
@@ -2549,6 +2560,10 @@ contains
     ! case('op')
     case(l_ascii, l_open)
       theFileHandle = FH_ON_ERROR
+      if ( debug ) then
+        call outputNamedValue( 'FileAccessType', FileAccessType )
+        call outputNamedValue( 'DFACC_RDWR', DFACC_RDWR )
+      endif
       select case (FileAccessType)
       case(PGSd_IO_Gen_RSeqFrm, DFACC_RDONLY)
         status = 'old'
@@ -2635,10 +2650,15 @@ contains
         action = 'readwrite'
         position = 'append'
       case default
-        ErrType = UNKNOWNFILEACCESSTYPE
-        if ( debug ) &
-         & call output('Unknown file access type', advance='yes')
-        return
+        ! ErrType = UNKNOWNFILEACCESSTYPE
+        ! if ( debug ) &
+        !  & call output('Unknown file access type', advance='yes')
+        ! return
+        status = 'unknown'
+        access = 'sequential'
+        form = 'formatted'
+        action = 'readwrite'
+        position = 'rewind'
       end select
 
       call get_lun ( unit, msg=.false. )
@@ -2653,6 +2673,13 @@ contains
         if (unknown) status = 'unknown'
       end if
 
+      if ( debug ) then
+        call output( 'access ' // access, advance='yes')
+        call output( 'action ' // action, advance='yes')
+        call output( 'form ' // form, advance='yes')
+        call output( 'position ' // position, advance='yes')
+        call output( 'status ' // status, advance='yes')
+      endif
       if ( present(inp_rec_length) ) then
         open(unit=unit, recl=inp_rec_length, form=form, &
           & status=status, file=trim(myName), iostat=ErrType)
@@ -2723,6 +2750,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.96  2013/07/24 19:01:03  pwagner
+! Fixed bug opening non-hdf file
+!
 ! Revision 2.95  2013/05/31 00:27:44  vsnyder
 ! Add cautionary comment about HDFVersions
 !
