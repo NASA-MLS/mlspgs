@@ -49,6 +49,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Ints2Strings       Converts an array of integers to strings using "char" ftn
 ! IsAllAscii         Is a string composed entirely of ascii, i.e. non-binary
 ! IsAscii            Is each array element ascii, i.e. non-binary
+! IsComment          Does the string begin with a Comment character?
 ! IsRepeat           Is a string composed entirely of one substring repeated?
 ! lenTrimToAscii     len_trim of string ignoring all non-ascii chars
 ! LinearSearchStringArray     
@@ -96,6 +97,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! ints2Strings (int ints(:,:), char* strs(:))
 ! log(:) isAllAscii( char* arg(:) )
 ! log(:) isAscii( char arg(:) )
+! log(:) isComment( char* arg(:), [char Comment] )
 ! log IsRepeat ( char* str, [char* subtring] )
 ! int lenTrimToAscii (char* str)
 ! int LinearSearchStringArray (char* list(:), char* string, 
@@ -141,6 +143,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! w    Wildcard * which allows 'a*' to equal 'abcd'
 ! c    case insensitive which allows 'ABCD' to equal 'abcd'
 ! f    flush left which allows 'abcd' to equal '  abcd'
+! h    check only that the heads match; allows 'oldman' to match 'old'
 ! n    reverse sense of match (where appropriate)
 ! (These are different in streq_array1, however--either redo that function
 ! to make it conform, or rename the options flag there to prevent
@@ -181,7 +184,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
   public :: asciify, &
     & Capitalize, CatStrings, CompressString, count_words, &
     & delete, depunctuate, FlushArrayLeft, hhmmss_value, &
-    & indexes, ints2Strings, isAllAscii, IsAscii, IsRepeat, &
+    & indexes, ints2Strings, isAllAscii, IsComment, IsRepeat, &
     & LenTrimToAscii, LinearSearchStringArray, LowerCase, &
     & NAppearances, NCopies, &
     & ReadCompleteLineWithoutComments, readNumsFromChars, readIntsFromChars, &
@@ -1962,10 +1965,11 @@ contains
   ! -------------------------------------------------  streq_scalar  -----
   function streq_scalar (STR1, STR2, OPTIONS) result (relation)
     ! Are two strings "equal" where equality is modified by
-    ! (1) Wildcard * (off by default) which allows 'a*' to equal 'abcd'
-    ! (2) case insensitive (off by default) which allows 'ABCD' to equal 'abcd'
-    ! (3) flush left (off by default) which allows 'abcd' to equal '  abcd'
-    ! (4) reverse sense ("Are two strings unequal?")
+    ! (w) Wildcard * (off by default) which allows 'a*' to equal 'abcd'
+    ! (c) case insensitive (off by default) which allows 'ABCD' to equal 'abcd'
+    ! (f) flush left (off by default) which allows 'abcd' to equal '  abcd'
+    ! (h) head match (off by default) which allows 'abcd' to equal 'abc '
+    ! (n) reverse sense ("Are two strings unequal?")
     !
     ! Defaults to standard (str1 == str2), but options broaden cases of TRUE
     ! To turn options on, supply optional arg options which is a character
@@ -1999,6 +2003,7 @@ contains
     character(len=max(len(str1), len(str2))) :: str
     character(len=max(len(str1), len(str2))) :: ptrn  ! The one with '*'
     character(len=max(len(str1), len(str2))), dimension(MAXNUMWILDCARDS+1) :: substrs
+    logical :: head
     logical :: wildcard
     logical, parameter :: deebug = .false.
     !----------Executable part----------!
@@ -2006,6 +2011,7 @@ contains
     myOptions = ' '
     if ( present(options) ) myOptions = lowercase(options)
     wildcard = (index(myoptions, 'w') > 0)
+    head = (index(myoptions, 'h') > 0)
     ignorecase = (index(myoptions, 'c') > 0)
     flushleft  = (index(myoptions, 'f') > 0)
     reverseSense  = (index(myoptions, 'n') > 0)
@@ -2035,7 +2041,24 @@ contains
       goto 90 ! return
     endif
 
-    if ( .not. wildcard ) then
+    if ( head ) then
+      ! Check only that the heads of each string match, i.e.
+      ! up to the rightmost non-blank character of the shorter string
+      if ( ignorecase ) then
+        str  = lowercase(str1)
+        ptrn = lowercase(str2)
+      else
+        str  = str1
+        ptrn = str2
+      endif
+      if ( flushleft ) then
+        str  = adjustl(str )
+        ptrn = adjustl(ptrn)
+      endif
+      i = min( len_trim(str), len_trim(ptrn) )
+      relation = ( str(:i) == ptrn(:i) )
+      goto 90
+    elseif ( .not. wildcard ) then
       if ( ignorecase ) then
         if ( flushleft ) then
           relation = (adjustl(lowercase(str1)) == adjustl(lowercase(str2)))
@@ -2592,6 +2615,23 @@ contains
     itis = .not. ( icode < pcMin .or. icode > pcMax )
   end function isAscii
 
+  ! ---------------------------------------------------  isComment  -----
+  elemental function isComment( arg, Comment ) result( itIs )
+    ! Returns TRUE if first non-blank char is comment
+    ! Args
+    character(len=*), intent(in)    :: arg
+    character, optional, intent(in) :: Comment
+    logical                         :: itIs
+    ! Internal variables
+    character :: first
+    character :: myComment
+    ! Executable
+    myComment = '#'
+    if ( present(Comment) ) myComment = Comment
+    first = adjustl(arg)
+    itIs = ( first == myComment )
+  end function isComment
+
   ! ---------------------------------------------------  isDigit  -----
   elemental function isDigit(arg) result(itIs)
     ! Returns TRUE if arg is one of {'1', '2', ..}
@@ -2724,6 +2764,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.93  2013/07/24 19:02:43  pwagner
+! Added isComment function; streq adds new option 'h' to match string heads
+!
 ! Revision 2.92  2013/06/28 23:56:47  pwagner
 ! Fixed an old bug in SplitDetails
 !
