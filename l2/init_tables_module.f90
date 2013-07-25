@@ -578,13 +578,13 @@ contains ! =====     Public procedures     =============================
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
              l+l_MIFDeadTime, l+l_MIFExtinction, &
              l+l_MIFExtinctionExtrapolation, l+l_MIFExtinctionForm, &
-             l+l_MIFExtinctionv2, l+l_noiseBandwidth, l+l_noRadsBinned, &
-             l+l_noRadsPerMIF, l+l_numGrad, l+l_numJ, l+l_numNewt, &
-             l+l_opticalDepth, l+l_orbitInclination, l+l_phaseTiming, &
-             l+l_phiTan, l+l_ptan, l+l_quality, l+l_radiance, l+l_refGPH, &
+             l+l_MIFExtinctionv2, l+l_mifRHI, l+l_noiseBandwidth, &
+             l+l_noRadsBinned, l+l_noRadsPerMIF, l+l_numGrad, l+l_numJ, &
+             l+l_numNewt, l+l_opticalDepth, l+l_orbitInclination, &
+             l+l_phaseTiming, l+l_phiTan, l+l_ptan, l+l_quality, l+l_radiance, &
              l+l_reflrefl, l+l_reflspill, l+l_refltemp, l+l_refltrans, &
-             l+l_rhi, l+l_scanResidual, l+l_scatteringAngle, l+l_scECI, &
-             l+l_scGeocAlt, l+l_scVelECI, l+l_scVelECR, &
+             l+l_refGPH, l+l_rhi, l+l_scanResidual, l+l_scatteringAngle, &
+             l+l_scECI, l+l_scGeocAlt, l+l_scVelECI, l+l_scVelECR, &
              l+l_singleChannelRadiance, l+l_sizedistribution, &
              l+l_spaceRadiance, l+l_status, l+l_strayRadiance, &
              l+l_surfaceHeight, l+l_surfacetype, l+l_systemTemperature, &
@@ -1403,7 +1403,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temp_der, boolean(), &
              begin, f+f_tolerance, numeric(phyq_temperature), &
              begin, f+f_transformMIFextinction, boolean(), &
-             begin, f+f_transformRHI, boolean(), &
+             begin, f+f_transformMIFRHI, boolean(), &
              begin, f+f_TScatMIF, numeric(phyq_dimensionless), &
              begin, f+f_TScatMoleculeDerivatives, field_type(t_molecule), &
              begin, f+f_TScatMolecules, field_type(t_molecule), &
@@ -1963,6 +1963,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.576  2013/07/25 00:24:25  vsnyder
+! Add MIFRHI, replace TransformRHI with TransformMIFRHI
+!
 ! Revision 2.575  2013/07/19 01:20:37  vsnyder
 ! Sort some stuff, add TransformRHI field
 !
