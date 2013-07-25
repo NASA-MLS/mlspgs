@@ -400,9 +400,9 @@ contains ! =====     Public Procedures     =============================
       & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, F_REFRACT, &
       & F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, &
       & F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
-      & F_TOLERANCE, F_TransformMIFextinction, F_TransformRHI, F_TSCATMIF, &
-      & F_TYPE, F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, &
-      & F_YSTAR
+      & F_TOLERANCE, F_TransformMIFextinction, F_TransformMIFRHI, &
+      & F_TSCATMIF, F_TYPE, F_USBLBLMOLECULES, F_USBPFAMOLECULES, &
+      & F_useTSCAT, F_XSTAR, F_YSTAR
     use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_PROFILES
     use L2PC_M, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
     use MLSKINDS, only: R8
@@ -700,8 +700,8 @@ contains ! =====     Public Procedures     =============================
         info%tolerance = value(1)
       case ( f_transformMIFextinction )
         info%transformMIFextinction = get_Boolean(son)
-      case ( f_transformRHI )
-        info%transformRHI = get_Boolean(son)
+      case ( f_transformMIFRHI )
+        info%transformMIFRHI = get_Boolean(son)
       case ( f_TScatMIF )
         call expr ( subtree(2,son), expr_units, value, type )
         info%TScatMIF = nint(value(1))
@@ -1460,6 +1460,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.169  2013/07/25 00:23:41  vsnyder
+! Replace TransformRHI with TransformMIFRHI
+!
 ! Revision 2.168  2013/07/19 01:19:46  vsnyder
 ! Add TransformRHI field
 !
