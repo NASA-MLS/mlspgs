@@ -47,7 +47,7 @@ contains ! ============= Public Procedures ==========================
     use INIT_TABLES_MODULE, only: L_Azimuth, L_BASELINE, L_CLOUDFULL, &
       & L_EXTINCTION, L_EXTINCTIONV2, L_FULL, L_HYBRID, L_LINEAR, &
       & L_MIFEXTINCTION, L_MIFExtinctionExtrapolation, L_MIFExtinctionForm, &
-      & L_MIFEXTINCTIONV2, L_POLARLINEAR, L_PTAN, L_SCAN, L_SCAN2D, &
+      & L_MIFEXTINCTIONV2, L_MIFRHI, L_POLARLINEAR, L_PTAN, L_SCAN, L_SCAN2D, &
       & L_SWITCHINGMIRROR
     use Intrinsic, only: L_LOWESTRETRIEVEDPRESSURE, L_VMR, Lit_Indices
     use LINEARIZEDFORWARDMODEL_M, only: LINEARIZEDFORWARDMODEL
@@ -57,7 +57,7 @@ contains ! ============= Public Procedures ==========================
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR, &
       & MLSMSG_WARNING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2
+    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2, L_RHI
     use MoreMessage, only: MLSMessage
     use POLARLINEARMODEL_M, only: POLARLINEARMODEL
     use SCANMODELMODULE, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
@@ -81,9 +81,11 @@ contains ! ============= Public Procedures ==========================
 
     ! Local variables
 
-    integer, parameter :: NT = 2           ! Number of kinds of extinction to
+    integer, parameter :: NT = 3           ! Number of kinds of extinction to
                                            ! transform.  1 = extinction,
-                                           ! 2 = extinctionV2
+                                           ! 2 = extinctionV2, 3 = RHI
+    integer, parameter :: E1 = 1, E2 = 2   ! Limits for MIF extinction, see NT
+    integer, parameter :: R1 = 3, R2 = 3   ! Limits for MIF RHI, see NT
 
     type(vectorValue_t), pointer :: Azimuth ! of profile plane, positive being
                                            ! counterclockwise from the
@@ -99,8 +101,7 @@ contains ! ============= Public Procedures ==========================
                                            !     details = 10's digit - 4
                                            ! 3 = 100's digit => Transformed Jacobian
                                            !     details = 100's digit - 4
-    type(qtyStuff_t) :: EXTQty(nt)         ! extinction quantities
-                                           ! (1) is extinction, (2) is extinctionv2
+    type(qtyStuff_t) :: EXTQty(nt)         ! extinction quantities, see NT
     real(rv) :: ExtrapExponent             ! -exponent for extinction extrapolation
     real(rv) :: ExtrapForm                 ! -exponent for extinction derivative extrapolation
     integer :: FMNaN                       ! Level of fmnan switch
@@ -109,13 +110,15 @@ contains ! ============= Public Procedures ==========================
     type(vectorValue_t), pointer :: LRP    ! Lowest Retrieved Pressure
     type(qtyStuff_t) :: MIFQty(nt)         ! MIF extinction quantity
     ! Molecule types corresponding to qTypes:
-    integer, parameter :: MTypes(nt) = (/ l_Extinction, l_Extinctionv2 /)
+    integer, parameter :: MTypes(nt) = (/ l_Extinction, l_Extinctionv2, l_RHI /)
     real(rv) :: Normal(3)                  ! to the profile plane, XYZ
     type(vectorValue_t), pointer :: Ptan   ! Tangent pressure
     ! Quantity types for MIF extinction:
-    integer, parameter :: QTypes(nt) = (/ l_MIFExtinction, l_MIFExtinctionv2 /)
+    integer, parameter :: QTypes(nt) = &
+      & (/ l_MIFExtinction, l_MIFExtinctionv2, l_MIFRHI /)
     character(len=132) :: ThisName
-    real :: Time_start, Time_end 
+    real :: Time_start, Time_end
+    integer :: T1, T2 ! Bounds for transform indices, 1:2, 3:3, or 1:3.  see NT.
 
     ! Executable code
     ! Report we're starting
@@ -158,13 +161,23 @@ contains ! ============= Public Procedures ==========================
     ! "molecules" and associated columns of the Jacobian to MIF extinction
     ! quantities after return.  See wvs-107.
 
-    doTrans = .false.
+    t1 = 3 ! Assume no transformations
+    t2 = 0
     if ( config%transformMIFextinction ) then
+      t1 = e1
+      t2 = e2
+    end if
+    if ( config%transformMIFRHI ) then
+      t1 = min(t1,r1)
+      t2 = max(t2,r2)
+    end if
+    doTrans = .false.
+    if ( t1 <= t2 ) then ! Do MIF extinction or MIF RHI transformation
       if ( .not. associated(config%signals) ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
           & 'TransformMIFextinction requires SIGNALS in %S', datum=config%name )
       ! All signals in a single config are for the same radiometer
-      do i = 1, nt
+      do i = t1, t2
         derivs(i) = .false.
         ! First, check whether the transformed extinction is in a
         ! molecules field in the config.  MIFQty(i)%wasSpecific is a temp here.
@@ -222,9 +235,9 @@ contains ! ============= Public Procedures ==========================
                & quantityType=l_ptan, config=config, &
                & instrumentModule=config%signals(1)%instrumentModule )
       ! Transform MIF extinction quantity to extinction molecule
-      do i = 1, nt
+      do i = t1, t2
         if ( doTrans(i) ) then
-          call transform_MIF_extinction ( fmStat%MAF, MIFQty(i)%qty, ptan, &
+          call transform_MIF_Qty ( fmStat%MAF, MIFQty(i)%qty, ptan, &
             & lrp%values(1,1), extrapExponent, extQty(i)%qty, dumpTransform )
         end if
       end do
@@ -234,9 +247,9 @@ contains ! ============= Public Procedures ==========================
 
       ! Transform fwmJacobian and radiances for quantities for which
       ! transformation is requested.
-      do i = 1, nt
+      do i = t1, t2
         if ( derivs(i) ) &
-          & call transform_FWM_extinction ( config, fmStat%MAF, fwdModelOut, &
+          & call transform_FWM_Qty ( config, fmStat%MAF, fwdModelOut, &
             & extQty(i)%qty, MIFQty(i)%qty, ptan, extrapForm, Jacobian,      &
             & dumpTransform, clean )
       end do
@@ -375,9 +388,9 @@ contains ! ============= Public Procedures ==========================
   end subroutine ForwardModel
 
 !{\cleardoublepage
-  subroutine Transform_FWM_extinction ( Config, MAF, FwdModelOut, F_Qty, S_Qty, &
-    &                                   PTan, ExtrapForm, Jacobian, &
-    &                                   DumpTransform, Clean )
+  subroutine Transform_FWM_Qty ( Config, MAF, FwdModelOut, F_Qty, S_Qty, &
+    &                            PTan, ExtrapForm, Jacobian, &
+    &                            DumpTransform, Clean )
     ! Transform blocks of the Jacobian associated with f_qty to blocks
     ! associated with s_qty.
     ! Transform the forward model radiances to retriever radiances.
@@ -386,6 +399,7 @@ contains ! ============= Public Procedures ==========================
 
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+    use Init_Tables_Module, only: L_MIFExtinction, L_MIFExtinctionV2, L_MIFRHI
     use INTRINSIC, only: L_RADIANCE
     use MATRIXMODULE_0, only: DESTROYBLOCK, M_ABSENT, M_BANDED, M_FULL
     use MATRIXMODULE_1, only: FINDBLOCK, CREATEBLOCK, DUMP, MATRIX_T
@@ -418,6 +432,7 @@ contains ! ============= Public Procedures ==========================
     integer :: NVecChans ! Number of channels in radiance
     type(vectorValue_t), pointer :: O_Qty        ! Qty of output vector
     real(rv) :: P(size(ptan%values,1),f_qty%template%noSurfs) ! 10**(-2*(zeta(surf)-zeta(vSurf)))
+                       ! for MIF extinction, or ProfileRHI/MIFRHI for MIF RHI.
     real(rm) :: RowSum ! sum(Jacobian%block(jRow,fCols)%values(cz,:))
     integer :: SB      ! Sideband, zero or from the first signal in config
     integer :: Surf    ! column of Jacobian%block(jRow,fCol)%values, 
@@ -436,16 +451,28 @@ contains ! ============= Public Procedures ==========================
       jCols(inst) = findBlock ( Jacobian%col, s_qty%index, inst )
     end do
 
-    !{ Evaluate Equation (2) from wvs-107, \emph{viz.}
-    ! \begin{equation*}
-    ! 10^{-2(\zeta_g-\zeta_r)} = \left( \frac{P_g}{P_r} \right)^2
-    ! \end{equation*}
-    ! $-2$ is the default if {\tt extrapForm} is not specified.
+    select case ( s_qty%template%quantityType )
+    case ( l_MIFExtinction, l_MIFExtinctionV2 )
+      !{ Evaluate Equation (2) from wvs-107, \emph{viz.}
+      ! \begin{equation*}
+      ! 10^{-2(\zeta_g-\zeta_r)} = \left( \frac{P_g}{P_r} \right)^2
+      ! \end{equation*}
+      ! $-2$ is the default if {\tt extrapForm} is not specified.
 
-    forall ( vSurf=1:size(ptan%values,1), surf=1:f_qty%template%noSurfs ) &
-      & p(vSurf,surf) = &
-        & 10.0_rm ** ( extrapForm * ( f_qty%template%surfs(surf,1) - &
-                                    & ptan%values(vSurf,maf) ) )
+      forall ( vSurf=1:size(ptan%values,1), surf=1:f_qty%template%noSurfs ) &
+        & p(vSurf,surf) = &
+          & 10.0_rm ** ( extrapForm * ( f_qty%template%surfs(surf,1) - &
+                                      & ptan%values(vSurf,maf) ) )
+    case ( l_MIFRHI )
+      !{ Evaluate the ratio in Equation (2) from wvs-114, \emph{viz.}
+      ! \begin{equation*}
+      ! \frac{R^F_{g,j}}{R^R_{i,j}}
+      ! \end{equation*}
+
+      forall ( vSurf=1:size(ptan%values,1), surf=1:f_qty%template%noSurfs ) &
+        & p(vSurf,surf) = &
+          & f_qty%values(surf,1) / s_qty%values(vSurf,maf)
+    end select
 
     do chan = 1, size(config%channels)
       cv = config%channels(chan)%used + 1 - config%channels(chan)%origin
@@ -470,16 +497,15 @@ contains ! ============= Public Procedures ==========================
       do jCol = 1, size(jCols)
         if ( Jacobian%col%inst(jCols(jCol)) /= MAF .or. &
            & all(Jacobian%block(jRow,fCols)%kind == m_absent) ) then
-          ! Zero MIF extinction blocks of Jacobian that are off-diagonal
-          ! or would not be filled because all corresponding extinction
-          ! blocks are absent.
+          ! Zero MIF blocks of Jacobian that are off-diagonal or would not
+          ! be filled because all corresponding MIF blocks are absent.
           call destroyBlock ( Jacobian%block(jRow,jCols(jCol)) )
         else ! (inst(jRow),inst(jCol)) = nn in wvs-107
           select case ( Jacobian%block(jRow,jCols(jCol))%kind )
           case ( m_absent )
             call createBlock ( Jacobian, jrow, jCols(jCol), m_banded, &
               & Jacobian%row%nelts(jRow), bandHeight=nVecChans, &
-              & forWhom='Transform_FWM_extinction' )
+              & forWhom='Transform_FWM_Qty' )
               Jacobian%block(jRow,jCols(jCol))%values = 0
           case ( m_banded )
             if ( ubound(Jacobian%block(jRow,jCols(jCol))%values,1) /= &
@@ -490,38 +516,40 @@ contains ! ============= Public Procedures ==========================
             call MLSMessage ( MLSMSG_Error, moduleName, &
               & 'Transformed MIF extinction block neither absent or banded' )
           end select
-          do vSurf = 1, size(ptan%values,1) ! i in wvs-107, Same for all fCols
+          do vSurf = 1, size(ptan%values,1) ! i in wvs-107 and wvs-114,
+                                            ! same for all fCols
             ! For what rows of the Jacobian and elements of the state vector
             ! do we evaluate Equations (3) and (4)?
             ! ??? Why doesn't this work?  Perhaps because it's  ???
             ! ??? fiddling row (radiance) masks when it should  ???
             ! ??? be fiddling column (MIFExtinction) masks?     ???
-!             if ( associated(s_qty%mask) ) then
-!               if ( iand(ichar(s_qty%mask(vsurf,1)), m_linAlg) /= 0 ) cycle
-!             end if
-            ! Jacobian is banded.  The only nonzeros in a column are in
-            ! rows for the same MIF as the column, and the maximum number of
-            ! nonzeros is the number of channels in the band.  This could be
-            ! sharpened to the range from the smallest to largest channel
-            ! numbers, but the computations would be messier.
-            cz = cv + nVecChans*(vSurf-1) ! ci in wvs-107
+!           if ( associated(s_qty%mask) ) then
+!             if ( iand(ichar(s_qty%mask(vsurf,1)), m_linAlg) /= 0 ) cycle
+!           end if
+            ! Retriever's Jacobian block is banded.  The only nonzeros in a
+            ! column are in rows for the same MIF as the column, and the
+            ! maximum number of nonzeros is the number of channels in the
+            ! band.  This could be sharpened to the range from the smallest
+            ! to largest channel numbers, but the computations would be
+            ! messier.
+            cz = cv + nVecChans*(vSurf-1) ! ci in wvs-107 and wvs-114
             ! The surf loop runs in reverse order to sum rowSum*p in
-            ! small-to-large order
+            ! small-to-large order, to reduce round-off errors.
             do surf = f_qty%template%noSurfs, 1, -1 ! g in wvs-107
 
-    !{ Compute the inner sum in Equations (3) and (4) in wvs-107.
-    ! \begin{equation*}
-    !  \sum_{j=1}^{N_\zeta} K^F_{nj,cig}
-    ! \end{equation*}
-    ! where $n$ is the Jacobian block row number,\\
-    ! $j$ is the Jacobian block column number,\\
-    ! $c$ is the channel number,\\
-    ! $i$ is the MIF number, and\\
-    ! $g$ is the surface ($\zeta$) number.
+      !{ Compute the inner sum in Equations (3) and (4) in wvs-107.
+      ! \begin{equation*}
+      !  \sum_{j=1}^{N_\zeta} K^F_{nj,cig}
+      ! \end{equation*}
+      ! where $n$ is the Jacobian block row number,\\
+      ! $j$ is the Jacobian block column number,\\
+      ! $c$ is the channel number,\\
+      ! $i$ is the MIF number, and\\
+      ! $g$ is the surface ($\zeta$) number.
 
-    ! But we can't do
-    ! rowSum = sum(Jacobian%block(jRow,fCols)%values(cz,surf))
-    ! because "values" has the POINTER attribute.
+      ! But we can't do
+      ! rowSum = sum(Jacobian%block(jRow,fCols)%values(cz,surf))
+      ! because "values" has the POINTER attribute.
 
               rowSum = 0.0
               do inst = 1, size(fCols)
@@ -532,41 +560,51 @@ contains ! ============= Public Procedures ==========================
                 case ( m_absent )
                 case default
                   call MLSMessage ( MLSMSG_Error, moduleName, &
-                    & "Transform_FWM_extinction cannot handle sparse or banded blocks" )
+                    & "Transform_FWM_Qty cannot handle sparse or banded blocks" )
                 end select
               end do ! inst
 
-    !{Compute the retriever's Jacobian using Equation (3) in wvs-107
-    ! \begin{equation*}
-    ! \begin{array}{lll}
-    !  K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
-    !   \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
-    !   10^{-2(\zeta_g - \zeta_i)} & i = 1, \dots, N_m & c = 1, \dots, N_C\,, \\
-    ! \end{array}
-    ! \end{equation*}
-    ! where the subscripts are as above.
+      !{Compute the retriever's Jacobian using Equation (3) in wvs-107
+      ! \begin{equation*}
+      ! \begin{array}{lll}
+      !  K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
+      !   \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+      !   10^{-2(\zeta_g - \zeta_i)} & i = 1, \dots, N_m & c = 1, \dots, N_C\,, \\
+      ! \end{array}
+      ! \end{equation*}
+      ! or Equation (2) in wvs-114
+      ! \begin{equation}
+      ! \begin{array}{lll}
+      ! K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
+      !  \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+      !  \frac{R^F_{g,j}}{R^R_{i,j}} & i = 1, \dots, N_m & c = 1, \dots, N_C\,. \\
+      ! \end{array}
+      ! \end{equation}
+      ! where the subscripts are as above.
 
               Jacobian%block(jRow,jCols(jCol))%values(cz,1) = &
                 & Jacobian%block(jRow,jCols(jCol))%values(cz,1) + &
                   & rowSum * p(vSurf,surf)
 
-    !{Compute radiance using Equation (4) in wvs-107
-    ! \begin{equation*}
-    ! \begin{array}{lll}
-    ! I^R_{ci,n} = I^F_{ci,n} + \sum_{g=1}^{N_\zeta}
-    !  \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
-    !  \left( E^R_{i,n} 10^{-2(\zeta_g - \zeta_i)} -
-    !   E^F_{g,1} \right) & i = 1, \dots, N_m & c = 1, \dots, N_C \,, \\
-    ! \end{array}
-    ! \end{equation*}
-    ! where the subscripts are as above.
+              if ( s_qty%template%quantityType /= l_MIFRHI ) then
 
-! Let's not do the linear radiance correction. This may improve the fit the
-! actual radiances. Works better with correction in place on actual data.
-              o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
-                & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
-                           & f_qty%values(surf,1) )
+      !{Compute radiance using Equation (4) in wvs-107
+      ! \begin{equation*}
+      ! \begin{array}{lll}
+      ! I^R_{ci,n} = I^F_{ci,n} + \sum_{g=1}^{N_\zeta}
+      !  \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+      !  \left( E^R_{i,n} 10^{-2(\zeta_g - \zeta_i)} -
+      !   E^F_{g,1} \right) & i = 1, \dots, N_m & c = 1, \dots, N_C \,, \\
+      ! \end{array}
+      ! \end{equation*}
+      ! where the subscripts are as above.
+
+                o_qty%values(cz,maf) = o_qty%values(cz,maf) + &
+                  & rowSum * ( s_qty%values(vSurf,maf) * p(vSurf,surf) - &
+                             & f_qty%values(surf,1) )
+              end if
             end do ! Surf
+
           end do ! vSurf
         end if
       end do ! jCol
@@ -595,11 +633,11 @@ contains ! ============= Public Procedures ==========================
     ! aj%axmax in the retriever
     f_qty%values = 0.0
 
-  end subroutine Transform_FWM_extinction
+  end subroutine Transform_FWM_Qty
 
 !{\cleardoublepage
-  subroutine Transform_MIF_Extinction ( MAF, S_Qty, PTan, Lrp, &
-    &                                   ExtrapExponent, F_Qty, DumpTransform )
+  subroutine Transform_MIF_Qty ( MAF, S_Qty, PTan, Lrp, &
+    &                            ExtrapExponent, F_Qty, DumpTransform )
 
     ! Interpolate from a MAF-indexed minor-frame quantity to the first
     ! column of an L2GP quantity.  Then spread it out in orbit geodetic
@@ -608,6 +646,7 @@ contains ! ============= Public Procedures ==========================
     ! Equations (1) and (2) in wvs-107.
 
     use Dump_0, only: Dump
+    use Init_Tables_Module, only: L_MIFExtinction, L_MIFExtinctionV2, L_MIFRHI
     use MLSKinds, only: RM, RV
     use MLSNumerics, only: Hunt, InterpolateValues
     use Output_m, only: Output
@@ -645,29 +684,36 @@ contains ! ============= Public Procedures ==========================
       & ptan%values(p,maf), s_qty%values(p,maf), &
       & f_qty%template%surfs(:,1), f_qty%values(:,1), 'L', 'C' )
 
-     !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107, to compute
-     !  extinction for the forward model, by extrapolating downward from
-     !  the zeta above, or equal to, LRP = $\zeta_r$.
-     !  $-2$ is the default if {\tt extrapExponent} is not specified.
-     ! \renewcommand{\arraystretch}{2}
-     ! \begin{equation*}
-     ! E^F_{g,j} = \left\{
-     ! \begin{array}{llll}
-     !  \overline{E}^R_{n}(\zeta_g)
-     !   & \zeta_g \geq \zeta_r & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
-     !  \overline{E}^R_{n}(\zeta_r) \times 10^{-2(\zeta_g - \zeta_r)}
-     !   & \zeta_g < \zeta_r    & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
-     ! \end{array} \right.
-     ! \end{equation*}
-     ! {\tt hGrids} of {\tt F_Qty} and {\tt S_Qty} have same extent and
-     ! spacing. Vertical coordinate is $\zeta = \log_{10}P$, so
-     ! $10^{-2\zeta}$ is $P^{-2}$).
+    select case ( s_qty%template%quantityType )
+    case ( L_MIFExtinction, L_MIFExtinctionV2 )
 
-    do i = 1, f_lrp
-      f_qty%values(i,:) = f_qty%values(f_lrp+1,1) * &
-        & 10.0_rm ** ( extrapExponent * ( f_qty%template%surfs(i,1) - &
-                                        & ptan%values(p(s_lrp+1),1) ) )
-    end do
+       !{ Apply a $P^{-2}$ dependence, Equation (2) in wvs-107, to compute
+       !  extinction for the forward model, by extrapolating downward from
+       !  the zeta above, or equal to, LRP = $\zeta_r$.
+       !  $-2$ is the default if {\tt extrapExponent} is not specified.
+       ! \renewcommand{\arraystretch}{2}
+       ! \begin{equation*}
+       ! E^F_{g,j} = \left\{
+       ! \begin{array}{llll}
+       !  \overline{E}^R_{n}(\zeta_g)
+       !   & \zeta_g \geq \zeta_r & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+       !  \overline{E}^R_{n}(\zeta_r) \times 10^{-2(\zeta_g - \zeta_r)}
+       !   & \zeta_g < \zeta_r    & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+       ! \end{array} \right.
+       ! \end{equation*}
+       ! {\tt hGrids} of {\tt F_Qty} and {\tt S_Qty} have same extent and
+       ! spacing. Vertical coordinate is $\zeta = \log_{10}P$, so
+       ! $10^{-2\zeta}$ is $P^{-2}$).
+
+      do i = 1, f_lrp
+        f_qty%values(i,:) = f_qty%values(f_lrp+1,1) * &
+          & 10.0_rm ** ( extrapExponent * ( f_qty%template%surfs(i,1) - &
+                                          & ptan%values(p(s_lrp+1),1) ) )
+      end do
+
+    case ( l_mifRHI )
+      f_qty%values(1:f_lrp,:) = s_qty%values(s_lrp,1)
+    end select
 
     do i = f_lrp+1, ubound(f_qty%values,1)
       f_qty%values(i,2:) = f_qty%values(i,1)
@@ -681,7 +727,7 @@ contains ! ============= Public Procedures ==========================
                     after=' zeta', advance='yes' )
       call dump ( f_qty, details=dumpTransform(1)-2, name='to forward model' )
     end if
-  end subroutine Transform_MIF_Extinction
+  end subroutine Transform_MIF_Qty
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -696,6 +742,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.63  2013/07/25 00:25:23  vsnyder
+! Add MIF RHI transformation
+!
 ! Revision 2.62  2013/07/17 16:26:21  wgread
 ! restore linear correction wgr
 !
