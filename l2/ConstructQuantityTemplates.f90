@@ -1066,7 +1066,7 @@ contains ! ============= Public procedures ===================================
       L_LOSTRANSFUNC, L_LOSVEL, L_LOWESTRETRIEVEDPRESSURE, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
       L_MIFDEADTIME, L_MIFEXTINCTION, L_MIFExtinctionExtrapolation, &
-      L_MIFExtinctionForm, L_MIFEXTINCTIONV2, &
+      L_MIFExtinctionForm, L_MIFEXTINCTIONV2, L_MIFRHI, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
       L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_OPTICALDEPTH, L_ORBITINCLINATION, &
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
@@ -1194,6 +1194,8 @@ contains ! ============= Public procedures ===================================
       l_mifExtinctionExtrapolation, phyq_dimensionless, none, next, &
       l_mifExtinctionForm, phyq_dimensionless, none, next, &
       l_mifExtinctionV2, phyq_extinction, p_flexibleVHGrid, &
+        & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
+      l_mifRHI, phyq_dimensionless, p_flexibleVHGrid, &
         & p_minorFrame, p_radiometer, p_mustBeZeta, next, &
       l_noiseBandwidth, phyq_frequency, p_signal, next, &
       l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
@@ -1361,6 +1363,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.172  2013/07/25 00:23:00  vsnyder
+! Add MIFRHI quantity type
+!
 ! Revision 2.171  2013/07/19 01:21:49  vsnyder
 ! Sort some stuff, turn off the first time flag so that InitQuantityTemplates
 ! is not done on every call.
