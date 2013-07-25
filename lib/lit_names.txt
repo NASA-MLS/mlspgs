@@ -146,6 +146,7 @@ mifExtinction    # Extinction as a minor-frame quantity
 mifExtinctionExtrapolation # exponent in MIF extinction extrapolation
 mifExtinctionForm # exponent in MIF extinction derivative extrapolation
 mifExtinctionV2  # Extinction as a minor-frame quantity
+mifRHI           # RHI as a minor-frame quantity
 mifs
 minutes
 molcm2 # mol/cm^2
@@ -239,6 +240,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.64  2013/07/25 00:21:27  vsnyder
+# Add MIFRHI
+#
 # Revision 2.63  2013/07/18 01:10:28  vsnyder
 # Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
 # uses it anyway.
