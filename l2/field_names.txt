@@ -466,7 +466,7 @@ toleranceR Rtolerance
 totalPowerVector
 totalPowerQuantity
 transformMIFextinction
-transformRHI
+transformMIFRHI
 truthExtra
 truthForwardModel
 truthIn
@@ -507,6 +507,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.234  2013/07/25 00:24:55  vsnyder
+# Replace TransformRHI with TransformMIFRHI
+#
 # Revision 2.233  2013/07/19 01:19:46  vsnyder
 # Add TransformRHI field
 #
