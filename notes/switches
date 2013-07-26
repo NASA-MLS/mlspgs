@@ -79,6 +79,8 @@ Switches (set by -S option in mlsl2's command line):
   log[n] => Print most Log file messages only to stdout, not toolkit log
   mach =>   Machine names (that can be enslaved by master task)
   mas =>    Activities between the PVM master task and slave task
+  mcf =>    Dump lines read from MCF to create metadata control group db or
+             show steps in creating group db
   mess[n] => How to prefix log messages: with
              (0) none, (1) severity, (2) module names, (3) both (actually the default)
   metd[n] => Dump nonoptional outputs from metrics, stop if n > 0
@@ -192,6 +194,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.87  2013/06/29 00:19:08  pwagner
+ Divide l1b switch into l1bfill and l1bread
+
  Revision 1.86  2013/06/28 18:17:06  pwagner
  Added -Sparent and -Smess[n]
 
