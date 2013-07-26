@@ -13,8 +13,10 @@
 module WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
 
+  use DUMP_0, only: DUMP
   use HDF, only: DFACC_RDWR
   use INIT_TABLES_MODULE, only: L_L2DGG, L_L2GP, L_HDF, L_SWATH
+  use IO_STUFF, only: READ_TEXTFILE
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCOMMON, only: FILENAMELEN, NAMELEN, L2METADATA_T, MLSFILE_T
   use MLSKINDS, only: R8
@@ -25,8 +27,9 @@ module WriteMetadata ! Populate metadata and write it out
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSPCF2, only: MLSPCF_MCF_L2GP_END, MLSPCF_MCF_L2GP_START, &
     & MLSPCF_MCF_L2LOG_START
-  use MLSSTRINGS, only: LOWERCASE
-  use MLSSTRINGLISTS, only: GETHASHELEMENT, EXTRACTSUBSTRING, SWITCHDETAIL
+  use MLSSTRINGS, only: ISCOMMENT, LOWERCASE, STREQ
+  use MLSSTRINGLISTS, only: EXTRACTSUBSTRING, &
+    & GETHASHELEMENT, GETSTRINGELEMENT, SWITCHDETAIL
   use OUTPUT_M, only: OUTPUT, BLANKS, OUTPUTNAMEDVALUE
   use PCFHDR, only: WRITEINPUTPOINTER, WRITEPCF2HDR, GLOBALATTRIBUTES
   use SDPTOOLKIT, only: PGSD_MET_GROUP_NAME_L, &
@@ -56,6 +59,7 @@ module WriteMetadata ! Populate metadata and write it out
 
 !     (subroutines and functions)
 ! addMCGroupToDatabase  Adds a new MCGroup to existing database of them
+! addMCParamToDatabase  Adds a new MC Parameter to existing database of them
 ! addToMetadata         Adds a new metadata field onto an existing file
 ! destroyMCGroup        Deallocates any arrays in a MCGroup
 ! destroyMCGroupDB      Destroys each MCGroup in a database of them, 
@@ -64,9 +68,12 @@ module WriteMetadata ! Populate metadata and write it out
 ! dumpMCGroupDB         dumps each MCGroup in a database of them
 ! get_l2gp_mcf          Finds the mcf relevant for a given species based on
 !                        its file name 
+! mctree                parse list of mc odl-like character args
 ! NullifyPCFData        Nullify all pointers associated with a PCFData_T
 ! Populate_metadata_std Write metadata to a standard l2 product file, e.g. H2O
 ! Populate_metadata_oth Write metadata to other l2 product files, e.g. DGG, DGM
+! readMCF               Read a metadata control file (mcf) into a database of
+!                         metadata control groups
 ! writemetalog          Write metadata for the log file
 ! writeMCF              Write a database of metadata control groups to
 !                         a metadata control file (mcf)
@@ -74,6 +81,7 @@ module WriteMetadata ! Populate metadata and write it out
 
 ! === (start of api) ===
 ! addMCGroupToDatabase (type MCGroup_T dataBase(:), type MCGroup_T item)
+! addMCParamToDatabase (type MCParam_T dataBase(:), type MCParam_T item)
 ! addToMetadata (char* mcf_grp, char* mcf_grp, value)
 !      where value can be a single, double, integer, or string
 ! DestroyMCGroup (type MCGroup_T MCGroup)
@@ -81,6 +89,7 @@ module WriteMetadata ! Populate metadata and write it out
 ! dumpMCGroup (type MCGroup_T MCGroup)
 ! dumpMCGroupDB (type MCGroup_T MCGroupDB(:))
 ! Get_l2gp_mcf (char* file_base, char* meta_name, int mcf, int version)
+! mctree ( char* list(:), type MCGroup mcdb*(:) )
 ! NullifyPCFData (type PCFData_T P)
 ! Populate_metadata_std ( int hdf_file, int mcf_file, &
 !   & char* Field_name, type(L2Metadata_T) l2metaData, &
@@ -91,21 +100,25 @@ module WriteMetadata ! Populate metadata and write it out
 !   & type(L2Metadata_T) l2metaData, &
 !   & [int hdfVersion], [int Metadata_error], &
 !   & [int filetype] )
+! readMCF (type MLSFile_T MLSFile, type MCGroup_T MCGroups(:))
 ! writeMCF (type MLSFile_T MLSFile, type MCGroup_T MCGroups(:))
 ! WriteMetaLog ([int metadata_error])
 ! === (end of api) ===
 
-  public :: ADDMCGROUPTODATABASE, ADDTOMETADATA, &
+  public :: ADDMCGROUPTODATABASE, ADDMCPARAMTODATABASE, ADDTOMETADATA, &
     & DESTROY, DESTROYMCGROUP, DESTROYMCGROUPDB, &
     & DUMP, DUMPMCGROUP, DUMPMCGROUPDB, &
-    & GET_L2GP_MCF, NULLIFYPCFDATA, &
-    & POPULATE_METADATA_STD, POPULATE_METADATA_OTH, WRITEMCF, WRITEMETALOG
+    & GET_L2GP_MCF, MCTREE, NULLIFYPCFDATA, &
+    & POPULATE_METADATA_STD, POPULATE_METADATA_OTH, &
+    & READMCF, WRITEMCF, WRITEMETALOG
 
 ! This data type is used to store User-defined Runtime Parameters and other
 ! information taken from the PCF.
 
   type, public :: MCGROUP_T
     character (len=80) :: name = ' '
+    character (len=80) :: class         = ' '
+    character (len=80) :: type = ' '
     type(MCGROUP_T), dimension(:), pointer :: groups => null()
     type(MCPARAM_T), dimension(:), pointer :: params => null()
   end type MCGROUP_T
@@ -116,8 +129,10 @@ module WriteMetadata ! Populate metadata and write it out
     character (len=80) :: data_location = ' '
     character (len=80) :: class         = ' '
     character (len=80) :: num_val       = ' '
-    character (len=80) :: type         = ' '
-    character (len=80) :: value         = ' '
+    character (len=80) :: type          = ' '
+    character (len=256) :: value        = ' '
+    type(MCGROUP_T), dimension(:), pointer :: groups => null()
+    type(MCPARAM_T), dimension(:), pointer :: params => null()
   end type MCPARAM_T
 
   type, public :: PCFData_T
@@ -210,6 +225,7 @@ module WriteMetadata ! Populate metadata and write it out
     module procedure DESTROYMCGROUPDB
   end interface
   interface DUMP
+    module procedure DUMPMCPARAM
     module procedure DUMPMCGROUP
     module procedure DUMPMCGROUPDB
   end interface
@@ -224,6 +240,7 @@ module WriteMetadata ! Populate metadata and write it out
   type(PCFData_T), public, save :: L2PCF
   character(len=*), parameter :: spaces = '                                  ' &
     & // '                                                                    '
+  logical, private, parameter :: countEmpty = .true.
 
 contains
 
@@ -244,6 +261,24 @@ contains
 
     AddMCGroupToDatabase = newSize
   end function AddMCGroupToDatabase
+
+  !-----------------------------------------  AddMCParamToDatabase  -----
+  integer function AddMCParamToDatabase ( DATABASE, ITEM )
+
+  ! This routine adds a vector to a database of such vectors, 
+  ! creating the database if necessary.
+
+    ! Dummy arguments
+    type (MCParam_T), dimension(:), pointer :: DATABASE
+    type (MCParam_T), intent(in) ::            ITEM
+
+    ! Local variables
+    type (MCParam_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddMCParamToDatabase = newSize
+  end function AddMCParamToDatabase
 
   ! ------------ addToMetadata
   ! This family of routines adds on to existing metadata in a file
@@ -315,21 +350,55 @@ contains
   recursive subroutine DestroyMCGroup ( MCGROUP )
     ! Destroy a group of inventory metadata control parameters 
     ! If the group contains other groups, destroy them, too
-    type ( MCGROUP_T ), intent(out)               :: MCGROUP
+    type ( MCGROUP_T ), intent(inout)               :: MCGROUP
     ! Internal variables
     integer :: i, error
 
     ! Executable code
-    do i=1, size(MCGroup%groups)
-      call DestroyMCGroup( MCGroup%groups(i) )
-    enddo
-    deallocate( MCGroup%groups, stat=error )
-    if ( error /= 0 ) call announce_error( 0, &
-      & 'Failed to deallocate MCGroup%groups' )
-    deallocate( MCGroup%params, stat=error )
-    if ( error /= 0 ) call announce_error( 0, &
-      & 'Failed to deallocate MCGroup%params' )
+    if ( associated(MCGroup%groups) ) then
+      do i=1, size(MCGroup%groups)
+        call DestroyMCGroup( MCGroup%groups(i) )
+      enddo
+      deallocate( MCGroup%groups, stat=error )
+      if ( error /= 0 ) call announce_error( 0, &
+        & 'Failed to deallocate MCGroup%groups' )
+    endif
+    if ( associated(MCGroup%params) ) then
+      do i=1, size(MCGroup%params)
+        call DestroyMCParam( MCGroup%params(i) )
+      enddo
+      deallocate( MCGroup%params, stat=error )
+      if ( error /= 0 ) call announce_error( 0, &
+        & 'Failed to deallocate MCGroup%params' )
+    endif
   end subroutine DestroyMCGroup
+
+  ! ----------------------------------------DestroyMCParam -----
+  recursive subroutine DestroyMCParam ( MCParam )
+    ! Destroy a metadata control parameter
+    ! If it contains other params and groups, destroy them, too
+    type ( MCParam_T ), intent(inout)               :: MCParam
+    ! Internal variables
+    integer :: i, error
+
+    ! Executable code
+    if ( associated(MCParam%groups) ) then
+      do i=1, size(MCParam%groups)
+        call DestroyMCGroup( MCParam%groups(i) )
+      enddo
+      deallocate( MCParam%groups, stat=error )
+      if ( error /= 0 ) call announce_error( 0, &
+        & 'Failed to deallocate MCParam%groups' )
+    endif
+    if ( associated(MCParam%params) ) then
+      do i=1, size(MCParam%params)
+        call DestroyMCParam( MCParam%params(i) )
+      enddo
+      deallocate( MCParam%params, stat=error )
+      if ( error /= 0 ) call announce_error( 0, &
+        & 'Failed to deallocate MCParam%params' )
+    endif
+  end subroutine DestroyMCParam
 
   ! ----------------------------------------DestroyMCGroupDB -----
   subroutine DestroyMCGroupDB ( MCGROUPDB )
@@ -339,6 +408,7 @@ contains
     integer :: i, error
 
     ! Executable code
+    if ( .not. associated(MCGROUPDB) ) return
     do i=1, size(MCGroupDB)
       call DestroyMCGroup( MCGroupDB(i) )
     enddo
@@ -361,49 +431,31 @@ contains
     if ( len_trim(MCGroup%name) > 0 ) &
       & call outputnamedValue( spaces(:indent)//'group name', &
       & MCGroup%name )
+    if ( len_trim(MCGroup%class) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'class', &
+      & MCGroup%class )
+    if ( len_trim(MCGroup%type) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'type', &
+      & MCGroup%type )
     nest_degree = nest_degree + 1
     indent = nest_degree*3
-    call blanks( indent )
     if ( .not. associated(MCGroup%groups) ) then
-      call output( ' (No subgroups of this group) ', advance='yes' )
+      call blanks( indent )
+      call output( '(No subgroups of this group) ', advance='yes' )
     else
       do i=1, size(MCGroup%groups)
-        call output( ' Sub-group ', advance='no' )
+        call blanks( indent )
+        call output( 'Sub-group ', advance='no' )
         call output( i, advance='yes' )
         call dumpMCGroup( MCGroup%groups(i) )
       enddo
     endif
     if ( .not. associated(MCGroup%params) ) then
       call blanks( indent )
-      call output( ' (No parameters in this group) ', advance='yes' )
+      call output( '(No parameters in this group) ', advance='yes' )
     else
       do i=1, size(MCGroup%params)
-        indent = nest_degree*3
-        call blanks( indent )
-        call output( ' Parameter ', advance='no' )
-        call output( i, advance='yes' )
-        indent = indent + 4
-        if ( len_trim(MCGroup%params(i)%name) > 0 ) &
-          & call outputnamedValue( spaces(:indent)//'name', &
-          & MCGroup%params(i)%name )
-        if ( len_trim(MCGroup%params(i)%mandatory) > 0 ) &
-          & call outputnamedValue( spaces(:indent)//'mandatory', &
-          & MCGroup%params(i)%mandatory )
-        if ( len_trim(MCGroup%params(i)%data_location) > 0 ) &
-          & call outputnamedValue( spaces(:indent)//'data_location', &
-          & MCGroup%params(i)%data_location )
-        if ( len_trim(MCGroup%params(i)%class) > 0 ) &
-          & call outputnamedValue( spaces(:indent)//'class', &
-          & MCGroup%params(i)%class )
-        if ( len_trim(MCGroup%params(i)%num_val) > 0 ) &
-          & call outputnamedValue( spaces(:indent)//'num_val', &
-          & MCGroup%params(i)%num_val )
-        if ( len_trim(MCGroup%params(i)%type) > 0 ) &
-          & call outputnamedValue( spaces(:indent)//'type', &
-          & MCGroup%params(i)%type )
-        if ( len_trim(MCGroup%params(i)%value) > 0 ) &
-          & call outputnamedValue( spaces(:indent)//'value', &
-          & MCGroup%params(i)%value )
+        call dumpMCParam( MCGroup%params(i) )
       enddo
     endif
     nest_degree = nest_degree - 1
@@ -429,6 +481,67 @@ contains
       call dumpMCGroup( MCGroupDB(i) )
     enddo
   end subroutine dumpMCGroupDB
+
+  ! ----------------------------------------dumpMCParam -----
+  recursive subroutine dumpMCParam ( MCParam )
+    ! dump a group of inventory metadata control parameters 
+    ! If the group contains other groups, dump them, too
+    type ( MCParam_T ), intent(in)               :: MCParam
+    ! Internal variables
+    integer :: i
+    integer :: indent
+
+    ! Executable code
+    indent = nest_degree*3
+    if ( len_trim(MCParam%name) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'parameter name', &
+      & MCParam%name )
+    nest_degree = nest_degree + 1
+    indent = nest_degree*3
+    if ( .not. associated(MCParam%groups) ) then
+      call blanks( indent )
+      call output( '(No subgroups of this parameter) ', advance='yes' )
+    else
+      do i=1, size(MCParam%groups)
+        call blanks( indent )
+        call output( 'Sub-group ', advance='no' )
+        call output( i, advance='yes' )
+        call dumpMCGroup( MCParam%groups(i) )
+      enddo
+    endif
+    if ( .not. associated(MCParam%params) ) then
+      call blanks( indent )
+      call output( '(No parameters in this parameter) ', advance='yes' )
+    else
+      do i=1, size(MCParam%params)
+        call dumpMCParam( MCParam%params(i) )
+      enddo
+    endif
+    indent = nest_degree*3
+    indent = indent + 4
+    if ( len_trim(MCParam%name) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'name', &
+      & MCParam%name )
+    if ( len_trim(MCParam%mandatory) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'mandatory', &
+      & MCParam%mandatory )
+    if ( len_trim(MCParam%data_location) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'data_location', &
+      & MCParam%data_location )
+    if ( len_trim(MCParam%class) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'class', &
+      & MCParam%class )
+    if ( len_trim(MCParam%num_val) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'num_val', &
+      & MCParam%num_val )
+    if ( len_trim(MCParam%type) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'type', &
+      & MCParam%type )
+    if ( len_trim(MCParam%value) > 0 ) &
+      & call outputnamedValue( spaces(:indent)//'value', &
+      & MCParam%value )
+    nest_degree = nest_degree - 1
+  end subroutine dumpMCParam
 
   ! -----------------------------------------------  Get_l2gp_mcf  -----
 
@@ -603,6 +716,67 @@ contains
    endif
 
   end subroutine Get_l2gp_mcf
+
+   
+  ! -------------------------------------- mctree ----------------------
+  ! parse list of mc odl-like commands entered as character strings
+  ! each of one of the following form s
+  ! (a) key = value
+  ! (b) end_group [= value]
+  ! (c) end_parameter [= value]
+  ! To start a new group, choose the special key
+  !   group_name
+  ! To start a new parameter, choose the special key
+  !   parameter_name
+  subroutine mctree ( list, mcdb )
+     character(len=*), dimension(:), intent(in)   :: list
+     type (MCGroup_T), dimension(:), pointer      :: mcdb
+     ! Internal variables
+     integer :: i
+     character(len=64)  :: key
+     type (MCGROUP_T)   :: group
+     integer            :: newsize
+     type (MCPARAM_T)   :: param
+     character(len=128) :: value
+     ! Executable
+     if( size(list) < 1 ) return
+     i = 0
+     do
+       i = i+1
+       if ( i > size(list) ) exit
+       
+       ! Which form is our list_line?
+       if ( index( trim(list(i)), 'end_group' ) > 0 ) then
+         newsize = addmcgrouptodatabase( mcdb, group )
+       elseif ( any( streq( list(i), &
+         & (/ 'end_parameter', 'end_object   ' /) , options='-cfh' ) ) )  then
+         newsize = addmcparamtodatabase( group%params, param )
+       elseif( isComment(list(i)) ) then
+         ! Just a comment
+       elseif( len_trim(list(i)) < 1 ) then
+         ! Just a blank line
+       elseif ( index( trim(list(i)), '=' ) > 0 ) then
+         ! separate into key, value
+         call GetStringElement ( list(i), key, &
+           & 1, countEmpty, '=' )
+         call GetStringElement ( list(i), value, &
+           & 2, countEmpty, '=' )
+         ! Are we beginning a new group or parameter
+         if ( any( streq( key, &
+           & (/ 'group_name', 'group     ' /) , options='-cfh' ) ) )  then
+           call insertGroup ( list, mcdb, i, value )
+         elseif ( any( streq( key, &
+           & (/ 'parameter_name', 'object        ' /) , options='-cfh' ) ) )  then
+           call insertParameter ( list, group%params, i, value )
+         else
+           call setParam ( param, key, value )
+         endif
+       else
+         ! unrecognized line
+         call output( trim(list(i)) // ' is unrecognized', advance='yes' )
+       endif
+     enddo
+   end subroutine mctree
 
   ! ----------------------------------------NullifyPCFData -----
   subroutine NullifyPCFData ( P )
@@ -847,6 +1021,33 @@ contains
 
   end subroutine Populate_metadata_oth
 
+  ! ----------------------------------------readMCF -----
+  subroutine readMCF ( MLSFILE, MCGROUPS )
+    ! Given a metadata control file, read a group of inventory metadata control 
+    ! parameters from it
+    ! Note that the file must be an MLSFile_T
+    type ( MLSFile_T ), intent(inout)            :: MLSFILE
+    type ( MCGROUP_T ), pointer, dimension(:) :: MCGROUPS
+    ! Internal variables
+    integer :: list_len
+    integer, parameter :: MAXLINELENGTH  = 256
+    integer, parameter :: MAXARRAYLENGTH = 512
+    character(len=MAXLINELENGTH), dimension(MAXARRAYLENGTH) :: list
+    integer :: swLevel ! How much extra debugging info to print (-1 means none)
+    logical :: verbose
+
+    ! Executable code
+    swlevel = switchDetail(switches, 'mcf' )
+    verbose = ( swlevel >= 0 )
+    list = ' '
+    call read_textfile( MLSFILE%Name, list, nLines=list_len )
+    if ( verbose ) then
+      call outputnamedValue( 'list_len', list_len )
+      call dump( list(:list_len), 'list', width=1 )
+    endif
+    call mctree( list(:list_len), MCGroups )
+  end subroutine readMCF
+
   ! ----------------------------------------writeMCF -----
   subroutine writeMCF ( MLSFILE, MCGROUPS )
     ! Given an MLSFile_T, write a group of inventory metadata control 
@@ -857,18 +1058,27 @@ contains
     ! Internal variables
     integer :: error
     integer :: i
+    logical :: needMasterGroup
 
     ! Executable code
     if ( .not. MLSfile%stillOpen ) call mls_OpenFile ( MLSFile, error )
-    call dump( MLSFile )
+    call dump( MLSFile, details=1 )
     if ( error /= 0 ) call announce_error ( 0, &
       & 'error opening MLSFile in writeMCF' )
-    write( MLSFile%fileID%f_id, * ) 'GROUP = INVENTORYMETADATA'
-    write( MLSFile%fileID%f_id, * ) 'GROUPTYPE = MASTERGROUP'
+    needMasterGroup = .not. streq(MCGroups(1)%type, 'mastergroup', options='-cf' )
+    call outputnamedvalue ( 'MCGroups(1)%type', trim(MCGroups(1)%type) )
+    if ( needMasterGroup ) then
+      write( MLSFile%fileID%f_id, * ) 'GROUP = INVENTORYMETADATA'
+      write( MLSFile%fileID%f_id, * ) 'GROUPTYPE = MASTERGROUP'
+      nest_degree = 1
+    else
+      nest_degree = 0
+    endif
     do i=1, size(MCGroups)
       call writeMCGroup( MLSFile, MCGroups(i) )
     enddo
-    write( MLSFile%fileID%f_id, * ) 'END_GROUP = INVENTORYMETADATA'
+    if ( needMasterGroup ) write( MLSFile%fileID%f_id, * ) 'END_GROUP = INVENTORYMETADATA'
+    write( MLSFile%fileID%f_id, * ) 'END'
     call mls_CloseFile ( MLSFile )
   end subroutine writeMCF
 
@@ -1190,6 +1400,148 @@ contains
     end if
 
   end subroutine First_grouping
+
+  recursive subroutine insertGroup ( list, groups, i, name )
+    ! Loop over list until end_group
+    character(len=*), dimension(:), intent(in)   :: list
+    type (MCGroup_T), dimension(:), pointer      :: groups
+    integer, intent(inout)                       :: i
+    character(len=*), intent(in)                 :: name
+    ! Internal variables
+    type (MCGroup_T)   :: group
+    character(len=64)  :: key
+    integer            :: newsize
+    type (MCPARAM_T)   :: param
+    character(len=128) :: value
+    integer :: swLevel ! How much extra debugging info to print (-1 means none)
+    logical :: verbose
+    ! Executable
+    swlevel = switchDetail(switches, 'mcf' )
+    verbose = ( swlevel >= 0 )
+    group%name = name
+    if ( verbose ) call output( 'Inserting group named '// trim(name), advance='yes' )
+    do
+      i = i+1
+      if ( i > size(list) ) exit
+      ! Which form is our list_line?
+      if ( streq( list(i), 'end_group', options='-cfh' ) ) then
+        newsize = addmcgrouptodatabase( groups, group )
+        exit
+      elseif ( any( streq( list(i), &
+        & (/ 'end_parameter', 'end_object   ' /) , options='-cfh' ) ) )  then
+        newsize = addmcparamtodatabase( group%params, param )
+      elseif( isComment(list(i)) ) then
+        ! Just a comment
+      elseif( len_trim(list(i)) < 1 ) then
+        ! Just a blank line
+      elseif ( index( trim(list(i)), '=' ) > 0 ) then
+        ! separate into key, value
+        call GetStringElement ( list(i), key, &
+          & 1, countEmpty, '=' )
+        call GetStringElement ( list(i), value, &
+          & 2, countEmpty, '=' )
+        ! Are we beginning a new group or parameter? Maybe just grouptype?
+        if ( streq( key, &
+          & 'grouptype' , options='-cf' ) )  then
+          group%type = value
+          ! print *, "setting named group " // trim(name) // ' type to ' // trim(value)
+        elseif ( streq( key, &
+          & 'class' , options='-cf' ) )  then
+          group%class = value
+        elseif ( any( streq( key, &
+          & (/ 'group_name', 'group     ' /) , options='-cfh' ) ) )  then
+          call insertGroup ( list, group%groups, i, value )
+        elseif ( any( streq( key, &
+          & (/ 'parameter_name', 'object        ' /) , options='-cfh' ) ) )  then
+          call insertParameter ( list, group%params, i, value )
+        else
+          call setParam ( param, key, value )
+        endif
+      else
+        ! unrecognized line
+        call output( trim(list(i)) // ' is unrecognized', advance='yes' )
+      endif
+    enddo
+  end subroutine insertGroup
+
+  recursive subroutine insertParameter ( list, parameters, i, name )
+    ! Loop over list until end_parameter
+    character(len=*), dimension(:), intent(in)   :: list
+    type (MCParam_T), dimension(:), pointer      :: parameters
+    integer, intent(inout)                       :: i
+    character(len=*), intent(in)                 :: name
+    ! Internal variables
+    integer :: newsize
+    character(len=64)  :: key
+    type (MCParam_T)   :: param
+    character(len=128) :: value
+    integer :: swLevel ! How much extra debugging info to print (-1 means none)
+    logical :: verbose
+    ! Executable
+    swlevel = switchDetail(switches, 'mcf' )
+    verbose = ( swlevel >= 0 )
+    if ( verbose ) call output( 'Inserting parameter named '// trim(name), advance='yes' )
+    param%name = name
+    do
+      i = i+1
+      if ( i > size(list) ) exit
+      ! Which form is our list_line?
+      ! print *, trim(list(i)), streq( list(i), 'end_object', options='-cfh' )
+      if ( any( streq( list(i), &
+        & (/ 'end_parameter', 'end_object   ' /) , options='-cfh' ) ) )  then
+        newsize = addmcparamtodatabase( parameters, param )
+        exit
+      elseif( isComment(list(i)) ) then
+        ! Just a comment
+      elseif( len_trim(list(i)) < 1 ) then
+        ! Just a blank line
+      elseif ( index( trim(list(i)), '=' ) > 0 ) then
+        ! separate into key, value
+        call GetStringElement ( list(i), key, &
+          & 1, countEmpty, '=' )
+        call GetStringElement ( list(i), value, &
+          & 2, countEmpty, '=' )
+        if ( any( streq( key, &
+          & (/ 'group_name', 'group     ' /) , options='-cfh' ) ) )  then
+          call insertGroup ( list, param%groups, i, value )
+        elseif ( any( streq( key, &
+          & (/ 'parameter_name', 'object        ' /) , options='-cfh' ) ) )  then
+          call insertParameter ( list, param%params, i, value )
+        else
+          call setParam ( param, key, value )
+        endif
+      else
+        ! unrecognized line
+        call output( trim(list(i)) // ' is unrecognized', advance='yes' )
+      endif
+    enddo
+  end subroutine insertParameter
+
+  subroutine setParam ( param, key, value )
+    ! set key component of param to value
+    type (MCParam_T), intent(inout):: param
+    character(len=*), intent(in)   :: key, value
+    ! Internal variables
+    ! Executable
+    ! print *, 'Setting parameter key named ', trim(key), ' to ', trim(value)
+    select case (adjustl(lowercase(key)))
+    case ('name')
+      param%name          = value
+    case ('mandatory')
+      param%mandatory     = value
+    case ('data_location')
+      param%data_location = value
+    case ('class')
+      param%class         = value
+    case ('num_val')
+      param%num_val       = value
+    case ('type')
+      param%type          = value
+    case ('value')
+      param%value         = value
+    ! case default
+    end select
+  end subroutine setParam
 
   ! -----------------------------------------  Measured_parameter  -----
 
@@ -1670,50 +2022,83 @@ contains
     type ( MCGROUP_T ), intent(in)               :: MCGROUP
     ! Internal variables
     integer :: i
-    integer, save :: indent
+    integer :: indent
 
     ! Executable code
+    call output( 'Writing group ' // trim(MCGroup%name), advance='yes' )
     if ( len_trim(MCGroup%name) < 1 ) return
+    nest_degree = nest_degree + 1
+    indent = nest_degree*3
+    ! write( MLSFile%fileID%f_id, * ) spaces(:indent), '#GROUP_NAME_LEN = ', len_trim(MCGroup%name)
+    write( MLSFile%fileID%f_id, * ) spaces(:indent), 'GROUP = ' // trim(adjustl(MCGroup%name))
     indent = indent + 3
-    write( MLSFile%fileID%f_id, * ) spaces(:indent), 'GROUP = ' // trim(MCGroup%name)
-    do i=1, size(MCGroup%groups)
-      call writeMCGroup( MLSFile, MCGroup%groups(i) )
-    enddo
-    do i=1, size(MCGroup%params)
-      call writeMCParam( MCGroup%params(i) )
-    enddo
-    write( MLSFile%fileID%f_id, * )  spaces(:indent), 'END_GROUP = ' // trim(MCGroup%name)
-    indent = indent - 3
-    contains
-    subroutine writeMCParam ( MCPARAM )
-      type ( MCParam_T ), intent(in)               :: MCPARAM
-      ! Internal variables
-      ! Executable
-      indent = indent + 3
-      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
-        & 'OBJECT = ' // trim(MCParam%name)
-      indent = indent + 3
-      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
-        & 'Mandatory = ' // trim(MCParam%mandatory)
-      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
-        & 'Data_Location = ' // trim(MCParam%data_location)
-      if ( len_trim(MCParam%class) > 0 ) &
-        & write( MLSFile%fileID%f_id, * ) spaces(:indent), &
-        & 'Data_Location = ' // trim(MCParam%data_location)
-      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
-        & 'NUM_VAL = ' // trim(MCParam%num_val)
-      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
-        & 'TYPE = ' // trim(MCParam%type)
-      if ( len_trim(MCParam%value) > 0 ) &
-        & write( MLSFile%fileID%f_id, * ) spaces(:indent), &
-        & 'Data_Location = ' // trim(MCParam%value)
-      
-      indent = indent - 3
-      write( MLSFile%fileID%f_id, * ) spaces(:indent), &
-        & 'END_OBJECT = ' // trim(MCParam%name)
-      indent = indent - 3
-    end subroutine writeMCParam
+    if ( len_trim(MCGroup%class) > 0 ) &
+      & write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+      & 'CLASS = ' // trim(adjustl(MCGroup%class))
+    if ( len_trim(MCGroup%type) > 0 ) &
+      & write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+      & 'GROUPTYPE = ' // trim(adjustl(MCGroup%type))
+    if ( associated(MCGroup%groups) ) then
+      do i=1, size(MCGroup%groups)
+        call writeMCGroup( MLSFile, MCGroup%groups(i) )
+      enddo
+    endif
+    if ( associated(MCGroup%params) ) then
+      do i=1, size(MCGroup%params)
+        call writeMCParam( MLSFile, MCGroup%params(i) )
+      enddo
+    endif
+    indent = nest_degree*3
+    write( MLSFile%fileID%f_id, * )  spaces(:indent), 'END_GROUP = ' // trim(adjustl(MCGroup%name))
+    nest_degree = nest_degree - 1
   end subroutine writeMCGroup
+
+  recursive subroutine writeMCParam ( MLSFILE, MCPARAM )
+    type ( MLSFile_T ), intent(inout)            :: MLSFILE
+    type ( MCParam_T ), intent(in)               :: MCPARAM
+    ! Internal variables
+    integer :: i
+    integer :: indent
+    ! Executable
+    call output( 'Writing parameter ' // trim(MCParam%name), advance='yes' )
+    if ( len_trim(MCParam%name) < 1 ) return
+    nest_degree = nest_degree + 1
+    indent = nest_degree*3
+    write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+      & 'OBJECT = ' // trim(adjustl(MCParam%name))
+    indent = indent + 3
+    write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+      & 'Mandatory = ' // trim(adjustl(MCParam%mandatory))
+    write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+      & 'Data_Location = ' // trim(adjustl(MCParam%data_location))
+    if ( len_trim(MCParam%class) > 0 ) &
+      & write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+      & 'CLASS = ' // trim(adjustl(MCParam%class))
+    if ( len_trim(MCParam%num_val) > 0 ) &
+      & write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+      & 'NUM_VAL = ' // trim(adjustl(MCParam%num_val))
+    if ( len_trim(MCParam%type) > 0 ) &
+      & write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+      & 'TYPE = ' // trim(adjustl(MCParam%type))
+    if ( len_trim(MCParam%value) > 0 ) &
+      & write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+      & 'Value = ' // trim(adjustl(MCParam%value))
+
+    if ( associated(MCParam%groups) ) then
+      do i=1, size(MCParam%groups)
+        call writeMCGroup( MLSFile, MCParam%groups(i) )
+      enddo
+    endif
+    if ( associated(MCParam%params) ) then
+      do i=1, size(MCParam%params)
+        call writeMCParam( MLSFile, MCParam%params(i) )
+      enddo
+    endif
+    indent = nest_degree*3
+    write( MLSFile%fileID%f_id, * ) spaces(:indent), &
+      & 'END_OBJECT = ' // trim(adjustl(MCParam%name))
+    nest_degree = nest_degree - 1
+  end subroutine writeMCParam
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1727,6 +2112,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.74  2013/07/26 00:07:35  pwagner
+! Added routines to read, write, and parse MCFs
+!
 ! Revision 2.73  2013/07/18 22:39:37  pwagner
 ! Added datatypes, functions for metadata control
 !
