@@ -161,21 +161,22 @@ contains ! ============= Public Procedures ==========================
     ! "molecules" and associated columns of the Jacobian to MIF extinction
     ! quantities after return.  See wvs-107.
 
-    t1 = 3 ! Assume no transformations
+    t1 = nt+1 ! Assume no transformations
     t2 = 0
     if ( config%transformMIFextinction ) then
-      t1 = e1
-      t2 = e2
+      t1 = min(t1,e1)
+      t2 = max(t2,e2)
     end if
     if ( config%transformMIFRHI ) then
       t1 = min(t1,r1)
       t2 = max(t2,r2)
     end if
-    doTrans = .false.
+    doTrans(t1:t2) = .false.
     if ( t1 <= t2 ) then ! Do MIF extinction or MIF RHI transformation
       if ( .not. associated(config%signals) ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'TransformMIFextinction requires SIGNALS in %S', datum=config%name )
+          & 'TransformMIFextinction or Transform RHI requires SIGNALS in %S', &
+          & datum=config%name )
       ! All signals in a single config are for the same radiometer
       do i = t1, t2
         derivs(i) = .false.
@@ -186,6 +187,7 @@ contains ! ============= Public Procedures ==========================
           & MIFQty(i) = GetQtyStuffForForwardModel ( fwdModelIn,    &
             & fwdModelExtra, quantityType=qTypes(i), config=config, &
             & radiometer=config%signals(1)%radiometer, noError=.true. )
+          ! MIFQty(i)%wasSpecific is no longer a temp here
 
         if ( MIFQty(i)%wasSpecific ) &
           & extQty(i) = GetQtyStuffForForwardModel ( fwdModelIn,      &
@@ -203,8 +205,9 @@ contains ! ============= Public Procedures ==========================
             & ( present(Jacobian) .and. MIFQty(i)%foundInFirst .and. &
             &   extQty(i)%foundInFirst ) ) then
             call MLSMessage ( MLSMSG_Error, moduleName, &
-              & 'TransformMIFextinction requested in %S with derivatives, ' // &
-              & 'but Jacobian is not present, or %S is not in state vector', &
+              & 'TransformMIFextinction or TransformMIFRHI requested ' // &
+              & 'in %S with derivatives, but Jacobian is not present, ' // &
+              & 'or %S is not in state vector', &
               & datum=[config%name,lit_indices(mTypes(i))] )
           end if
         end if
@@ -213,10 +216,11 @@ contains ! ============= Public Procedures ==========================
 
       if ( .not. any(MIFqty%wasSpecific .and. extQty%wasSpecific) ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'TransformMIFextinction requested, but necessary quantities are not specific' )
+          & 'TransformMIFextinction or TransformMIFRHI requested, but ' // &
+          & 'necessary quantities are not specific' )
     end if ! config%transformMIFextinction
 
-    if ( any(doTrans) ) then
+    if ( any(doTrans(t1:t2)) ) then
       ! Use lrp as a handy temporary vector quantity pointer
       lrp => GetQuantityForForwardModel ( fwdModelExtra, noError=.true., &
                & quantityType=l_MIFExtinctionExtrapolation, config=config )
@@ -395,7 +399,7 @@ contains ! ============= Public Procedures ==========================
     ! associated with s_qty.
     ! Transform the forward model radiances to retriever radiances.
 
-    ! See Equations (3) and (4) in wvs-107.
+    ! See Equations (3) and (4) in wvs-107, and Equation (2) in wvs-114.
 
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
@@ -413,8 +417,8 @@ contains ! ============= Public Procedures ==========================
     type(forwardModelConfig_T), intent(in) :: CONFIG
     integer, intent(in) :: MAF               ! MAjor Frame number
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
-    type(vectorValue_t), intent(in) :: F_Qty ! Extinction quantity in fwmState
-    type(vectorValue_t), intent(in) :: S_Qty ! MIF Extinction quantity in State
+    type(vectorValue_t), intent(in) :: F_Qty ! Profile quantity in fwmState
+    type(vectorValue_t), intent(in) :: S_Qty ! MIF quantity in State
     type(vectorValue_t), intent(in) :: PTan  ! Tangent pressure, for S_Qty
     real(rv), intent(in) :: ExtrapForm       ! exponent for extrapolation
     type(matrix_T), intent(inout) :: Jacobian
@@ -511,10 +515,10 @@ contains ! ============= Public Procedures ==========================
             if ( ubound(Jacobian%block(jRow,jCols(jCol))%values,1) /= &
                & Jacobian%row%nelts(jRow) ) &
                  & call MLSMessage ( MLSMSG_Error, moduleName, &
-                   & 'Band structure wrong for Transformed MIF extinction block' )
+                   & 'Band structure wrong for Transformed MIF block' )
           case default
             call MLSMessage ( MLSMSG_Error, moduleName, &
-              & 'Transformed MIF extinction block neither absent or banded' )
+              & 'Transformed MIF block neither absent or banded' )
           end select
           do vSurf = 1, size(ptan%values,1) ! i in wvs-107 and wvs-114,
                                             ! same for all fCols
@@ -537,7 +541,8 @@ contains ! ============= Public Procedures ==========================
             ! small-to-large order, to reduce round-off errors.
             do surf = f_qty%template%noSurfs, 1, -1 ! g in wvs-107
 
-      !{ Compute the inner sum in Equations (3) and (4) in wvs-107.
+      !{ Compute the inner sum in Equations (3) and (4) in wvs-107,
+      !  or Equation (2) in wvs-114.
       ! \begin{equation*}
       !  \sum_{j=1}^{N_\zeta} K^F_{nj,cig}
       ! \end{equation*}
@@ -679,11 +684,18 @@ contains ! ============= Public Procedures ==========================
     call hunt ( ptan%values(p,1), lrp, s_lrp )
     if ( ptan%values(p(s_lrp),1) == lrp ) s_lrp = s_lrp - 1
 
-    ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty
+    ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty,
+    ! above the lowest retrieved pressure
     call interpolateValues (                              &
-      & ptan%values(p,maf), s_qty%values(p,maf), &
-      & f_qty%template%surfs(:,1), f_qty%values(:,1), 'L', 'C' )
+      & ptan%values(p(s_lrp+1:),maf), s_qty%values(p(s_lrp+1:),maf), &
+      & f_qty%template%surfs(f_lrp+1:,1), f_qty%values(f_lrp+1:,1), 'L', 'C' )
 
+    ! Spread the interpolated values to all columns of F_Qty
+    do i = f_lrp+1, ubound(f_qty%values,1)
+      f_qty%values(i,2:) = f_qty%values(i,1)
+    end do
+
+    ! Now create F_Qty at and below the lowest retrieved pressure
     select case ( s_qty%template%quantityType )
     case ( L_MIFExtinction, L_MIFExtinctionV2 )
 
@@ -712,12 +724,10 @@ contains ! ============= Public Procedures ==========================
       end do
 
     case ( l_mifRHI )
+      ! Constant "extrapolation" below lowest retrieved pressure, see
+      ! Equation (1) in wvs-114.
       f_qty%values(1:f_lrp,:) = s_qty%values(s_lrp,1)
     end select
-
-    do i = f_lrp+1, ubound(f_qty%values,1)
-      f_qty%values(i,2:) = f_qty%values(i,1)
-    end do
 
     if ( dumpTransform(1) >= 1 ) then
       if ( dumpTransform(1) > 1 ) &
@@ -742,6 +752,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.64  2013/07/26 18:20:26  vsnyder
+! Cannonball polishing, especially error messages
+!
 ! Revision 2.63  2013/07/25 00:25:23  vsnyder
 ! Add MIF RHI transformation
 !
