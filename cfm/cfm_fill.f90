@@ -13,7 +13,7 @@ module CFM_Fill_m
     use INIT_TABLES_MODULE, only: L_LOSVEL, &
         L_L1BMIF_TAI, L_L1BMAFBASELINE, L_NONE, &
         L_ECRTOFOV, L_PTAN, L_ORBITINCLINATION, &
-        L_RADIANCE, L_SCGEOCALT, L_SCVEL, &
+        L_RADIANCE, L_SCGEOCALT, &
         L_TNGTGEODALT, L_TNGTGEOCALT, L_SCVELECR, &
         L_TNGTECI, L_SCVELECI, L_SCECI
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
@@ -392,6 +392,9 @@ module CFM_Fill_m
 end module
 
 ! $Log$
+! Revision 1.15  2013/07/10 17:51:24  pwagner
+! Changed to be consistent with FromL1B api
+!
 ! Revision 1.14  2012/10/15 17:11:41  pwagner
 ! Adapted to new api in FillUtils
 !

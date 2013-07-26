@@ -42,7 +42,7 @@ module CFM_QuantityTemplate_m
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
       L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
       L_RHI, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
-      L_SCANRESIDUAL, L_SCATTERINGANGLE, L_SCECI, L_SCVEL, L_SCVELECI, &
+      L_SCANRESIDUAL, L_SCATTERINGANGLE, L_SCECI, L_SCVELECI, &
       L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, L_STATUS, &
       L_STRAYRADIANCE, L_SurfaceHeight, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
@@ -681,6 +681,11 @@ module CFM_QuantityTemplate_m
 end module
 
 ! $Log$
+! Revision 1.23  2011/12/23 22:56:12  honghanh
+! Add AutoFillVector call to ForwardModel2 subroutine,
+! to automatically add and fill isotope ratio in beta group
+! (according to L2CF configuration file)
+!
 ! Revision 1.22  2011/12/16 00:25:31  honghanh
 ! Improve documentation of CreateQtyTemplate
 !
