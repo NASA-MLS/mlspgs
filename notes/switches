@@ -3,149 +3,159 @@ $Id$
 Switches (set by -S option in mlsl2's command line):
 
 ========================= mlsl2 =========================
-  (where [n] appears, you may optionally suffix an integer specifying how much
-   extra you want printed: the higher the n, the more printed)
-  0sl =>    Warn about no lines or continuua, else silently ignored
-  42 =>     Print to unit 42 when doing TScat
-  alg =>    Show work in Algebra module (hoping for partial credit)
-  ant =>    Dump antenna patterns
-  apr[n] => Dump apriori file info 
-  atb =>    Dump ATb vector during Newton iteration
-  binsel => L2PC bin selection motivation
-  bool[n]=> Dump runtime Boolean flags when used or defined
-  cab =>    Column Abundance-containing l2gp swaths dumped
-  cgrid  => Check Fills done by grid method
-  chi =>    chi-related diagnostic quantities dumped; chi1 for 1st chunk only
-  cho =>    How good was the Cholesky decomposition?
-  chu =>    Enslaved chunk processing
-  clean =>  Some dumps in the forward model use this to turn on the CLEAN option
-  col =>    Dump column scale vector for Newton iteration
-  column => Extra diagnostics while integrating column abundances
-  cov =>    Report details of a posteriori covariance calculation
-  dacsfil => Dump DACS filter shapes after reading them
-  debug  => Turn on debugging in certain modules (so far only l2PC_m)
-  destroy => Warn before each destroy
-  diag =>   Dump diagonal of factored normal equations
-  direct => Show automatic assignments to split directwrite files
-  dmiss  => Don't quit, just warn if derivative requested for qty missing from state
-  dozm =>   Do minimum zeta only if requested
-  dres =>   Dump forward model - measurement residual with dres detail level
-  drmc =>   Dump Retriever Matrices Clean
-  dvec =>   Dump 'DX' vector during Newton iteration
-  dwreq[n] => Dump directwrite requests processed by master
-               *Warning--may use more memory
-  dwtime => Show how long each directwrite takes
-  dxfc =>   Do dxfq dump clean
-  dxfq =>   Dump extinction transformation in ForwardModelWrappers
-  dxn =>    Residual norm if 0, separately for quantities if > 0
-  erh =>    Stop with error if dump,/stop
-  fac =>    L_infty norms of blocks of factors of normal equations during Newton iterations
-  FAC =>    Factors of normal equations during Newton iterations
-  fgrid =>  Dump frequency grids after creating them
-  filt =>   Dump filter shapes after reading them
-  fiw[n] => Dump instance windows for each forward model
-  fmnan =>  Check forward model output for NaN and print if level > 0,
+ (if [n] appears, you may optionally suffix an integer specifying how much
+  extra you want printed: the higher the n, the more printed; default is zero)
+ 0sl     => Warn about no lines or continuua, else silently ignored
+ 42      => Print to unit 42 when doing TScat
+ alg     => Show work in Algebra module (hoping for partial credit)
+ ant     => Dump antenna patterns
+ apr[n]  => Dump apriori file info 
+ atb     => Dump ATb vector during Newton iteration
+ binsel  => L2PC bin selection motivation
+ bool[n] => Dump runtime Boolean flags when used or defined
+ cab     => Column Abundance-containing l2gp swaths dumped
+ cgrid   => Check Fills done by grid method
+ chi     => chi-related diagnostic quantities dumped; chi1 for 1st chunk only
+ cho     => How good was the Cholesky decomposition?
+ chu     => Enslaved chunk processing
+ clean   => Turn on the CLEAN option in some dumps in the forward model
+ col     => Dump column scale vector for Newton iteration
+ column  => Extra diagnostics while integrating column abundances
+ cov     => Report details of a posteriori covariance calculation
+ dacsfil => Dump DACS filter shapes after reading them
+ debug   => Turn on debugging in certain modules (so far only l2PC_m)
+ destroy => Warn before each destroy
+ dfrc[n] => Dump reason why refractive correction failed, stop if n > 0
+ diag    => Dump diagonal of factored normal equations
+ direct  => Show automatic assignments to split directwrite files
+ dmiss   => Don't quit, just warn if derivative requested for qty missing
+            from state
+ dozm    => Do minimum zeta only if requested
+ dres    => Dump forward model - measurement residual with dres detail level
+ drmc    => Dump Retriever Matrices Clean
+ dvec    => Dump 'DX' vector during Newton iteration
+ dwreq[n] => Dump directwrite requests processed by master
+              *Warning--may use more memory
+ dwtime  => Show how long each directwrite takes
+ dxfc    => Do dxfq dump clean
+ dxfq    => Dump extinction transformation in ForwardModelWrappers
+ dxn     => Residual norm if 0, separately for quantities if > 0
+ erh     => Stop with error if dump,/stop
+ fac     => L_infty norms of blocks of factors of normal equations
+            during Newton iterations
+ FAC     => Factors of normal equations during Newton iterations
+ fgrid   => Dump frequency grids after creating them
+ filt    => Dump filter shapes after reading them
+ fiw[n]  => Dump instance windows for each forward model
+ fmnan   => Check forward model output for NaN and print if level > 0,
               print values if level > 1, stop if level > 2
-  fmt2 =>   mean & standard deviation for timing FullForwardModel at each chunk
-  fmt1 =>   mean & standard deviation for timing FullForwardModel at last chunk
-  fnorm =>  Dump the individual contributions to fnorm
-  fvec =>   'F' vector during Newton iteration
-  fwmd[n] => Dump Forward model config whenever 'derived' part is computed
+ fmt2    => Mean & standard deviation for timing FullForwardModel at each chunk
+ fmt1    => Mean & standard deviation for timing FullForwardModel at last chunk
+ fnorm   => Dump the individual contributions to fnorm
+ fvec    => 'F' vector during Newton iteration
+ fwmd[n] => Dump Forward model config whenever 'derived' part is computed
             low-order digit of n is spectroscopy catalog dump level
             stop if n > 9
-  fwmg[n] => Dump Forward model config after Get_Species_Data finishes
+ fwmg[n] => Dump Forward model config after Get_Species_Data finishes
             n is used as for fwmd
-  geom =>   Show geometry of chunks/hGrids
-  glo[n] => Global settings, info on l1b files 
-  glob =>   Show when Bright Object in FOV affects radiance precision
-  gridd =>  Dump gridded data quantities
-  grids =>  Dump Forward Model grids
-  gvec =>   Dump gradient vector during Newton iteration
-  help =>   Display this screen (or "?")
-  hess =>   Intermediate steps while computing Hessians
-  hgrid =>  Information on HGrid construction (at least for regular)
-  hphi =>   Trace H/Phi iteration in metrics
-  jac =>    L_infty norms of Jacobian blocks during Newton iterations
-  JAC[n] => Jacobian during Newton iterations with detail level n
-  join =>   Intermediate steps while joining l2aux quantities
-  l1bfill => l1b quantities dumped (only when filled from)
-  l1bread => note which l1b quantity names we read
-  l2aux =>  l2aux quantities (all) dumped
-  l2gp =>   l2gp swaths (all) dumped
-  l2pc =>   l2pc reading progress dumped
-  l2q =>    report on communications between master and l2q
-  lblb[n] => units digit >0 -> dump line-by-line Betas, >1 also T, tanh, P
+ geom    => Show geometry of chunks/hGrids
+ glo[n]  => Global settings, info on l1b files 
+ glob    => Show when Bright Object in FOV affects radiance precision
+ gridd   => Dump gridded data quantities
+ grids   => Dump Forward Model grids
+ gvec    => Dump gradient vector during Newton iteration
+ help    => Display this screen (or "?")
+ hess    => Intermediate steps while computing Hessians
+ hgrid   => Information on HGrid construction (at least for regular)
+ hndp[n] => Dump arrays during refractive correction iteration, bits of
+            n = 1 => Dump the arrays if trouble
+            n = 2 => Dump the arrays and stop
+            n = 4 => Dump the iterates
+ hphi    => Trace H/Phi iteration in metrics
+ jac     => L_infty norms of Jacobian blocks during Newton iterations
+ JAC[n]  => Jacobian during Newton iterations with detail level n
+ join    => Intermediate steps while joining l2aux quantities
+ l1bfill => l1b quantities dumped (only when filled from)
+ l1bread => note which l1b quantity names we read
+ l2aux   => l2aux quantities (all) dumped
+ l2gp    => l2gp swaths (all) dumped
+ l2pc    => l2pc reading progress dumped
+ l2q     => Report on communications between master and l2q
+ lblb[n] => Units digit >0 -> dump line-by-line Betas, >1 also T, tanh, P
             tens digit >0 dump zeta instead of P, n>99 stop after first dump 
-  log[n] => Print most Log file messages only to stdout, not toolkit log
-  mach =>   Machine names (that can be enslaved by master task)
-  mas =>    Activities between the PVM master task and slave task
-  mcf =>    Dump lines read from MCF to create metadata control group db or
+ log[n]  => Print most Log file messages only to stdout, not toolkit log
+ mach    => Machine names (that can be enslaved by master task)
+ mas     => Activities between the PVM master task and slave task
+ mcf     => Dump lines read from MCF to create metadata control group db or
              show steps in creating group db
-  mess[n] => How to prefix log messages: with
-             (0) none, (1) severity, (2) module names, (3) both (actually the default)
-  metd[n] => Dump nonoptional outputs from metrics, stop if n > 0
-  mhpx[n] => Dump information about H/Phi failure, stop if n > 0
-  msk =>    Mask set up by subset command in Retrieve
-  mst =>    Dump interesting stuff if normal equations cannot be factored
-  ndb =>    Dump 12 interesting Newton method internal variables after every SOLVE step
-  Ndb =>    Dump all the Newton method's internal variables after every SOLVE step
-  NDB =>    Dump all the Newton method's internal variables before every call
-  neq =>    L_infty norms of blocks of normal equations during Newton iterations
-  NEQ =>    Normal equations during Newton iterations
-  nin =>    Turn on Newton Method's internal output
-  nl2cf  => Don't assume there was an l2cf; e.g.  when dumping quantity templates
-  nodb =>   Subvert the DumpBlocks command
-  norf =>   Default for Phi refractive correction in forward model is .false.
-  nwt =>    Action flag at each return from Newton solver
-  opt[n] => Print command line options 
-  parent => use parent name when prefixing log with module name
-  pcf[n] => open init params obtained from pcf, info on l1b files 
-  pfab =>   Dump PFA Betas
-  pfaB =>   pfab + temperature and pressure grids
-  PFAB =>   pfaB and then stop
-  pfag =>   Show PFA table generation progress
-  pguess => Iterations of the pressure guesser
-  phase[n]=> Announce phases (e.g., Core) as they begin
+ mess[n] => How to prefix log messages: with (0) none, (1) severity,
+            (2) module names, (3) both (actually the default)
+ metd[n] => Dump nonoptional outputs from metrics, stop if n > 0
+ mhpx[n] => Dump information about H/Phi failure, stop if n > 0
+ msk     => Mask set up by subset command in Retrieve
+ mst     => Dump interesting stuff if normal equations cannot be factored
+ ndb[n]  => 0 => Dump 12 interesting Newton method internal variables after
+                 every SOLVE step
+            1 => Dump all the Newton method's internal variables after
+                 every SOLVE step
+            2 => Dump all the Newton method's internal variables before
+                 every call
+ neq     => =0 => L_infty norms of blocks of normal equations during Newton
+                  iterations
+            >0 => Normal equations during Newton iterations (if you dare!)
+ nin     => Turn on Newton Method's internal output
+ nl2cf   => Don't assume there was an l2cf; e.g.  when dumping quantity
+            templates
+ nodb    => Subvert the DumpBlocks command
+ norf    => Default for Phi refractive correction in forward model is .false.
+ nwt     => Action flag at each return from Newton solver
+ opt[n]  => Print command line options 
+ parent  => use parent name when prefixing log with module name
+ pcf[n]  => open init params obtained from pcf, info on l1b files 
+ pfab[n] => Dump PFA Betas, with temperature and pressure grids if n > 0
+             stop if n > 1, also works during PFA table generation
+ pfag    => Show PFA table generation progress
+ pguess  => Iterations of the pressure guesser
+ phase[n]=> Announce phases (e.g., Core) as they begin
             n > 1 => add time stamps
-  point =>  Pointing grids
-  pro[n] => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
-              and each file l2gp, l1brad, ncep, dao input; dump filedatabase
-  psct[n] => Print TScat table generation
-  ptb =>    Show perturbed quantities if used in Sids for Jacobean, Hessian
-  ptg =>    Dump full forward model pointing angles
-  qtmp =>   Quantity templates being constructed, destroyed
-  rad =>    Radiances in ForwardModelInterface
-  rcfx =>   Print RefCor fixup details
-  RCFX =>   Print RefCor fixup with more details
-  red[n] => Reduce dumpCommand details level by n (n=2 by default)
-  reg =>    Dump regularization matrix
-  rtv =>    Dump retrieval configuration
-  sca =>    Scalars of interest to the Newton method
-  seez =>   Turn on some of Zvi's debugging output in FullForwardModel
-  sig =>    MLS Signals
-  skipdgg => Don't direct write dgg files
-  skipdgm => Don't direct write dgm files
-  slv =>    Show output of slaves using pvmfcatchout
-  snoop =>  Show work done by fortran end of snooper
-  spa =>    Sparsity structure of fac, jac, neq
-  spec =>   Spectroscopy catalog
-  speC =>   Just dump Spectroscopy catalog, then stop
-  sps =>    Species data in Get_Species_Data
-  stat =>   Dump results when a manipulation fill uses a statistical function
-  strb =>   Dump state vector if retriever sees trouble
-  subset => Intermediate steps while creating subsetting mask
-  svec =>   Final state vector after Newton iteration
-  taul =>   Print LBL Tau in FullForwardModel
-  taup =>   Print PFA Tau in FullForwardModel
-  time =>   Summarize time consumed by each code section
-  tps =>    Test_Parse_Signals
-  TScat =>  Print TScat matrix
-  vir =>    Dump 'virgin' matrix (before forming KTK)
-  xvec =>   'X' vector during Newton iteration
-  walk =>   trace walkback on every warning message
-  zdet =>   Print while determining min(zeta)
-  zmor =>   Add more zeta points
-  ZMOR =>   Print while adding more zeta points
+ point   => Pointing grids
+ pro[n]  => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
+             and each file l2gp, l1brad, ncep, dao input; dump filedatabase
+ psct[n] => Print TScat table generation
+ ptb     => Show perturbed quantities if used in Sids for Jacobean, Hessian
+ ptg     => Dump full forward model pointing angles
+ qtmp    => Quantity templates being constructed, destroyed
+ rad     => Radiances in ForwardModelInterface
+ rcfx[n] => Print RefCor fixup details, stop if n > 0
+ red[n]  => Reduce dumpCommand details level by n (n=2 by default)
+ reg     => Dump regularization matrix
+ rtv     => Dump retrieval configuration
+ sca     => Scalars of interest to the Newton method
+ seez    => Turn on some of Zvi's debugging output in FullForwardModel
+ sig     => MLS Signals
+ skipdgg => Don't direct write dgg files
+ skipdgm => Don't direct write dgm files
+ slv     => Show output of slaves using pvmfcatchout
+ snoop   => Show work done by fortran end of snooper
+ spa     => Sparsity structure of fac, jac, neq
+ spec    => Spectroscopy catalog
+ speC    => Just dump Spectroscopy catalog, then stop
+ sps     => Species data in Get_Species_Data
+ stat    => Dump results when a manipulation fill uses a statistical function
+ strb    => Dump state vector if retriever sees trouble
+ subset  => Intermediate steps while creating subsetting mask
+ svec    => Final state vector after Newton iteration
+ taul    => Print LBL Tau in FullForwardModel
+ taup    => Print PFA Tau in FullForwardModel
+ time    => Summarize time consumed by each code section
+ tps     => Test_Parse_Signals
+ TScat   => Print TScat matrix
+ vir     => Dump 'virgin' matrix (before forming KTK)
+ xvec    => 'X' vector during Newton iteration
+ walk    => trace walkback on every warning message
+ zdet    => Print while determining min(zeta)
+ zmor    => Add more zeta points
+ ZMOR    => Print while adding more zeta points
 ========================= end mlsl2 =========================
 
 The general pattern is to use upper-case letters for single-letter ones,
@@ -194,6 +204,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.88  2013/07/26 00:08:42  pwagner
+ -Smcf switch makes reading or parsing MCFs verbose
+
  Revision 1.87  2013/06/29 00:19:08  pwagner
  Divide l1b switch into l1bfill and l1bread
 
