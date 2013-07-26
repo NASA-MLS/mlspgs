@@ -1502,11 +1502,9 @@ contains
       integer :: D_KTK    ! 'kTk' kTk, which might be normalEquations
       logical :: D_Mas    ! 'mas' Announce master triggering slaves
       logical :: D_Mst    ! 'mst' Block causing factoring abnormal status
-      logical :: D_Ndb_0  ! 'ndb' Minimum Newton method debugging output
-      logical :: D_Ndb_1  ! 'Ndb' Medium Newton method debugging output
-      logical :: D_Ndb_2  ! 'NDB' Maximum Newton method debugging output
-      logical :: D_Neq_F  ! 'NEQ' Full normal equations (if you dare)
-      logical :: D_Neq_N  ! 'neq' L_Infty norms of Normal equation blocks
+      integer :: D_Ndb    ! 'ndb[n]' Newton method debugging output level
+      integer :: D_Neq    ! 'neq' > 0 Full normal equations (if you dare)
+                          !       = 0 L_Infty norms of Normal equation blocks
       logical :: D_Nin    ! 'nin' Newton method's internal output
       logical :: D_Nwt    ! 'nwt' Commands from Newton method
       logical :: D_Reg    ! 'reg' Tikhonov regularization
@@ -1587,11 +1585,8 @@ contains
       d_kTk = switchDetail ( switches, 'kTk' )
       d_mas = switchDetail ( switches, 'mas' ) > -1
       d_mst = switchDetail(switches,'mst') > -1
-      d_ndb_0 = switchDetail(switches,'ndb') > -1
-      d_ndb_1 = switchDetail(switches,'Ndb') > -1
-      d_ndb_2 = switchDetail(switches,'NDB') > -1
-      d_neq_f = switchDetail(switches,'NEQ') > -1
-      d_neq_n = switchDetail(switches,'neq') > -1
+      d_ndb = switchDetail(switches,'ndb')
+      d_neq = switchDetail(switches,'neq')
       d_nin = switchDetail(switches,'nin') > -1
       d_nwt = switchDetail(switches,'nwt') > -1
       d_reg = switchDetail(switches,'reg') > -1
@@ -2143,7 +2138,7 @@ NEWT: do ! Newton iteration
           ! Can't do the above because we need to keep the normal
           ! equations around, in order to subtract Levenberg-Marquardt and
           ! apriori covariance, in order to compute a posteriori covariance
-            if ( d_neq_n ) &
+            if ( d_neq == 0 ) &
               call dump_Linf ( normalEquations%m, &
                 & 'L_infty norms of Normal Equations blocks after scaling:', &
                 & upper=.true. )
@@ -2175,11 +2170,11 @@ NEWT: do ! Newton iteration
               & advance='yes' )
             call output ( 'Re-run with -Smst to see more details', advance='yes' )
             call newtonSolverFailed ( 'problem factoring normalEquations in evalJ', &
-              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+              & nwt_flag, prev_nwt_flag, d_ndb, aj )
 !             exit NEWT
             cycle NEWT
           end if
-            if ( d_neq_f ) &
+            if ( d_neq > 0 ) &
               & call dump ( normalEquations%m, 'Normal Equations', 2, clean=d_drmc )
             if ( d_diag ) then
               call getDiagonal ( factored%m, v(dxUnscaled) )
@@ -2252,7 +2247,7 @@ NEWT: do ! Newton iteration
               if ( got(f_highBound) ) call dump ( highBound, name='High Bound', details=9 )
             end if
             call newtonSolverFailed ( 'problem solving normalEquations in evalJ', &
-              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+              & nwt_flag, prev_nwt_flag, d_ndb, aj )
 !             exit NEWT
             cycle NEWT
           end if
@@ -2308,7 +2303,7 @@ NEWT: do ! Newton iteration
           if ( any ( matrixStatus /= 0 ) ) then
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             call newtonSolverFailed ( 'problem solving for q in levenberg', &
-              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+              & nwt_flag, prev_nwt_flag, d_ndb, aj )
 !             exit NEWT
             cycle NEWT
           end if
@@ -2333,11 +2328,13 @@ NEWT: do ! Newton iteration
           ! Can't do the above because we need to keep the normal equations
           ! around, in order to subtract Levenberg-Marquardt and apriori
           ! covariance, in order to compute a posteriori covariance
-            if ( d_neq_f ) &
-              & call dump ( normalEquations%m, 'Normal Equations', 2, clean=d_drmc )
-            if ( d_neq_n ) call dump_Linf ( normalEquations%m, &
+            if ( d_neq > 0 ) then
+              call dump ( normalEquations%m, 'Normal Equations', 2, clean=d_drmc )
+            else if ( d_neq == 0 ) then
+              call dump_Linf ( normalEquations%m, &
                 & 'L1 norms of Normal Equations blocks after Marquardt:', &
                 & upper=.true. )
+            end if
             if ( d_spa ) call dump_struct ( normalEquations%m, &
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
@@ -2355,7 +2352,7 @@ NEWT: do ! Newton iteration
               if ( got(f_highBound) ) call dump ( highBound, name='High Bound', details=9 )
             end if
             call newtonSolverFailed ( 'problem factoring normal equations in solve', &
-              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+              & nwt_flag, prev_nwt_flag, d_ndb, aj )
 !             exit NEWT
             cycle NEWT
           end if
@@ -2385,7 +2382,7 @@ NEWT: do ! Newton iteration
           if ( any ( matrixStatus /= 0 ) ) then
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             call newtonSolverFailed ( 'problem solving for aTb in solve', &
-              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+              & nwt_flag, prev_nwt_flag, d_ndb, aj )
 !             exit NEWT
             cycle NEWT
           end if
@@ -2397,7 +2394,7 @@ NEWT: do ! Newton iteration
           if ( ieee_is_nan ( aj%fnorm ) ) then
             if ( d_strb ) call dump ( v(x), name='Current state', details=9 )
             call newtonSolverFailed ( 'numerical problems (with radiances?)', &
-              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+              & nwt_flag, prev_nwt_flag, d_ndb, aj )
 !             exit NEWT
             cycle NEWT
           end if
@@ -2411,7 +2408,7 @@ NEWT: do ! Newton iteration
           if ( ieee_is_nan ( aj%fnmin ) ) then
             if ( d_strb ) call dump ( v(x), name='Current state', details=9 )
             call newtonSolverFailed ( 'numerical problems (with derivatives?)', &
-              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+              & nwt_flag, prev_nwt_flag, d_ndb, aj )
 !             exit NEWT
             cycle NEWT
           end if
@@ -2436,7 +2433,7 @@ NEWT: do ! Newton iteration
           if ( any ( matrixStatus /= 0 ) ) then
             call dump ( matrixStatus, 'matrixStatus [block, row in trouble] = ' )
             call newtonSolverFailed ( 'problem solving normal equations in solve', &
-              & nwt_flag, prev_nwt_flag, d_ndb_2, aj )
+              & nwt_flag, prev_nwt_flag, d_ndb, aj )
 !             exit NEWT
             cycle NEWT
           end if
@@ -2491,13 +2488,11 @@ NEWT: do ! Newton iteration
               ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
               end if
             end if
-            if ( d_ndb_0 ) &
-              & call my_nwtdb ( width=9, level=0, why='After Solve' )
-            if ( d_ndb_1 ) then
-              if ( d_sca ) then
-                call my_nwtdb ( width=9, why='After Solve' )
-              else
+            if ( d_ndb >= 0 ) then
+              if ( d_sca .or.  d_ndb >= 1 ) then
                 call my_nwtdb ( aj, width=9, why='After Solve' )
+              else
+                call my_nwtdb ( width=9, level=0, why='After Solve' )
               end if
             end if
         case ( nf_newx ) ! ................................  NEWX  .....
@@ -2693,17 +2688,15 @@ NEWT: do ! Newton iteration
             & matrixDatabase=(/ factored%m, normalEquations%m /) )
 
         end if
-          if ( d_ndb_2 ) call my_nwtdb ( aj, width=9 )
+          if ( d_ndb >= 2 ) call my_nwtdb ( aj, width=9 )
         prev_nwt_flag = nwt_flag
       end do NEWT ! Newton iteration
 
-        if ( d_ndb_2 ) then
-          call my_nwtdb ( aj, width=9 )
-        else if ( d_ndb_1 ) then
-          if ( d_sca ) then
-            call my_nwtdb ( width=9 )
+        if ( d_ndb >= 1 ) then
+          if ( d_sca .or. d_ndb >= 2 ) then
+            call my_nwtdb ( aj, width=9, why = "After Newton iteration" )
           else
-            call my_nwtdb ( aj, width=9 )
+            call my_nwtdb ( width=9, why = "After Newton iteration" )
           end if
         end if
 
@@ -2889,12 +2882,12 @@ NEWT: do ! Newton iteration
 
     ! ------------------------------------  NewtonSolverFailed  -----
     subroutine NewtonSolverFailed ( WHY, NWT_FLAG, PREV_NWT_FLAG, &
-      & D_NDB_2, AJ )
+      & D_NDB, AJ )
       use DNWT_Module, only: NF_START, NWT_T
       character(len=*), intent(in) :: WHY      ! What failed
       integer, intent(inout) :: NWT_FLAG       ! Solver's state flag
       integer, intent(inout) :: PREV_NWT_FLAG  ! Solver's previous state
-      logical, intent(in) :: D_NDB_2           ! "dump AJ"
+      integer, intent(in) :: D_NDB             ! dump AJ if d_ndb >= 2
       type (NWT_T), intent(in) :: AJ           ! Solver's database
 
 !       block ! for abandoned chunk version, followed by EXIT NEWT
@@ -2905,7 +2898,7 @@ NEWT: do ! Newton iteration
 !     block ! for forced gradient move version, followed by CYCLE NEWT
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Gradient move forced due to ' // trim(why) )
-          if ( d_ndb_2 ) call my_nwtdb ( aj, width=9 )
+        if ( d_ndb >= 2 ) call my_nwtdb ( aj, width=9 )
         prev_nwt_flag = nwt_flag
         nwt_flag = nf_start ! Force gradient move
 !     end block
@@ -2939,6 +2932,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.340  2013/07/26 22:41:44  vsnyder
+! Fiddling with some dump switches
+!
 ! Revision 2.339  2013/07/12 23:25:28  vsnyder
 ! Remove unreferenced error messages
 !
