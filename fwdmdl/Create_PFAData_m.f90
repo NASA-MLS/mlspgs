@@ -113,9 +113,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(emit) ) & ! set by -f command-line switch
       & call trace_begin ( 'Create_PFAData' )
     progress = switchDetail(switches,'pfag') > -1
-    dumpIt = 0
-    if ( switchDetail(switches,'pfab') > -1 ) dumpIt = 1
-    if ( switchDetail(switches,'pfaB') > -1 ) dumpIt = 2
+    dumpIt =  switchDetail(switches,'pfab')
 
     error = .false.
 
@@ -255,7 +253,7 @@ contains ! =====     Public Procedures     =============================
           ix = HookTableToFindPFA ( 0, 0, PFADatum, create_PFAData )
         end if
 
-        if ( progress .or. dumpIt > 0 ) then
+        if ( progress .or. dumpIt >= 0 ) then
           call output ( 'Created PFA for ' )
           call display_string ( lit_indices(n) )
           call output ( ' / ' )
@@ -266,7 +264,7 @@ contains ! =====     Public Procedures     =============================
           t1 = t2
         end if
 
-        if ( dumpIt > 0 ) then
+        if ( dumpIt >= 0 ) then
           call dump ( pfaDatum%Absorption, name='Absorption' )
           call dump ( pfaDatum%dAbsDwc, name='DAbsDwc' )
           call dump ( pfaDatum%dAbsDnc, name='DAbsDnc' )
@@ -438,6 +436,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.27  2013/07/26 22:19:04  vsnyder
+! Fiddle with dump switches
+!
 ! Revision 2.26  2011/08/26 00:31:39  pwagner
 ! CSpline and Hunt now USE MLSNumerics
 !
