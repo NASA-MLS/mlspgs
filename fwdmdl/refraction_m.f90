@@ -339,13 +339,10 @@ contains
 !   real(rp), parameter :: Rmax = 1.3_rp
 
     status = 0
-    hndp = 0
-    if ( switchDetail(switches,'hndp') > -1 ) hndp = hndp + 1 ! Dump the arrays if trouble
-    if ( switchDetail(switches,'Hndp') > -1 ) hndp = hndp + 2 ! Dump the arrays and stop
-    if ( switchDetail(switches,'HNDP') > -1 ) hndp = hndp + 4 ! Dump the iterates
-    rcfx = 0
-    if ( switchDetail(switches,'rcfx') > -1 ) rcfx = 1
-    if ( switchDetail(switches,'RCFX') > -1 ) rcfx = 2
+    hndp = switchDetail(switches,'hndp') ! bit 1 => Dump the arrays if trouble
+                                         ! bit 2 => Dump the arrays and stop
+                                         ! bit 4 => Dump the iterates
+    rcfx = switchDetail(switches,'rcfx')
 
     no_ele = size(n_path)
     my_tan = min(tan_pt, no_ele)
@@ -454,21 +451,21 @@ contains
       ! Things are unphysical somewhere.  Replace ref_corr by 1.0
       ! wherever it's less than 1.0.  Alternatively, the average
       ! of neighbors, or a value interpolated from neighbors could be used.
-      if ( rcfx /= 0 ) call output( 'Ref_Corr fixup needed.', advance='yes' )
+      if ( rcfx >= 0 ) call output( 'Ref_Corr fixup needed.', advance='yes' )
       call dumpArrays
-      if ( rcfx /= 0 ) call output ( 'Ref_Corr fixed at' )
+      if ( rcfx >= 0 ) call output ( 'Ref_Corr fixed at' )
       do j = 2, no_ele-1
         if ( ref_corr(j) < 1.0 ) then
           ref_corr(j) = 1.0
 !           ref_corr(j) = 0.5 * ( max(1.0_rp,min(rmax,ref_corr(j-1))) + &
 !                      & max(1.0_rp,min(rmax,ref_corr(j+1))) )
-          if ( rcfx /= 0 ) call output ( j, before=' ' )
+          if ( rcfx >= 0 ) call output ( j, before=' ' )
         end if
       end do
-      if ( rcfx /= 0 ) then
+      if ( rcfx >= 0 ) then
         call output ( '', advance='yes' )
         call dump ( ref_corr, name='Ref_Corr after fixup' )
-        if ( rcfx > 1 ) stop
+        if ( rcfx > 0 ) stop
       end if
     end if
 
@@ -577,7 +574,7 @@ contains
 
     subroutine DumpArrays
 
-      if ( rcfx /= 0 ) then
+      if ( rcfx >= 0 ) then
         call output ( tan_pt, before='Tan_Pt = ' )
         call output ( ht, before=' Ht = ' )
         call output ( no_ele, before=' No_Ele = ' )
@@ -592,9 +589,9 @@ contains
 
       real(rp), intent(in), optional :: NH, F1, F2
 
-      if ( max( &
-        & switchDetail(switches,'drfc'),switchDetail(switches,'DRFC')&
-        & ) < 0 ) return
+      integer :: DFRC
+      dfrc = switchDetail(switches,'drfc')
+      if ( dfrc < 0 ) return
       call output ( tan_pt, before='Tan_PT = ' )
       call output ( ht, before=', Ht = ' )
       call output ( no_ele, before=' No_Ele = ' )
@@ -612,7 +609,7 @@ contains
         call dump ( h_path, name='H_Path' )
         call dump ( n_path-1.0, name='N_Path' )
       end if
-      if ( switchDetail(switches,'DRFC') > -1 ) stop
+      if ( dfrc > 0 ) stop
 
     end subroutine DumpDiags
 
@@ -633,6 +630,9 @@ contains
 end module REFRACTION_M
 
 ! $Log$
+! Revision 2.44  2013/06/12 02:33:19  vsnyder
+! Cruft removal
+!
 ! Revision 2.43  2013/02/28 21:05:48  vsnyder
 ! Try to cope with short paths
 !

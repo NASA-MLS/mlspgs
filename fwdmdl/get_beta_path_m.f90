@@ -285,12 +285,14 @@ contains
     character(len=4), save :: clean
     logical, save :: DumpAll, DumpBeta, DumpStop
     logical, save :: First = .true. ! First-time flag
+    integer :: PFAB ! Dump level 0 => Beta, 1 => Temperature + pressure, 2 => stop
 
     if ( first ) then
       first = .false.
-      dumpStop = switchDetail(switches,'PFAB') > -1
-      dumpAll = dumpStop .or. switchDetail(switches,'pfaB') > -1
-      dumpBeta = dumpAll .or. ( switchDetail(switches,'pfab') > -1 )
+      pfab = switchDetail(switches,'pfab')
+      dumpStop = pfab > 1
+      dumpAll = pfab > 0
+      dumpBeta = pfab >= 0
       ! clean = switchDetail(switches,'clean') > -1
       clean = ' '
       if ( switchDetail(switches,'clean') > -1 ) clean = 'c'
@@ -1592,6 +1594,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.115  2013/06/12 02:25:18  vsnyder
+! Cruft removal
+!
 ! Revision 2.114  2013/05/22 00:08:43  vsnyder
 ! Repair integer-to-logical assign that NAG caught and Intel missed
 !
