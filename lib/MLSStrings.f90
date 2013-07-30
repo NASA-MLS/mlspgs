@@ -59,6 +59,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! NCopies            How many copies of a substring in a string
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
+! ReadIntFromBaseN   Interprets a string as base n representation
 ! ReadIntsFromChars  Converts an [array of] strings to int[s] using Fortran read
 ! ReadNumsFromChars  Converts an [array of] strings to num[s] using Fortran read
 ! ReadRomanNumerals  Converts a Roman numeral (e.g. 'ix') to its integer value
@@ -80,6 +81,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! trim_safe          trims string down, but never to length 0
 ! TrueList           describe where elements of an array are true
 ! unWrapLines        undo the splitting of commands across multiple lines
+! WriteIntAsBaseN    Converts an integer to base n representation
 ! WriteIntsToChars   Converts an array of ints to strings using Fortran write
 ! WriteRomanNumerals Converts an integer to Roman numeral (e.g. 9 to 'ix')
 ! === (end of toc) ===
@@ -107,6 +109,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! int NCopies (char* str, char* substring, [log overlap])
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
+! readIntFromBaseN (char* strs, int int, int N, [char* options])
 ! readIntsFromChars (char* strs[(:)], int ints[(:)], char* forbiddens)
 ! readNumsFromChars (char* strs[(:)], num num[(:)], char* forbiddens)
 ! readRomanNumerals (char* strs, int int)
@@ -132,6 +135,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! TrueList ( logical* list, char* str )
 ! unWrapLines (char* inLines(:), char* outLines(:), &
 !              [int nout], [char escape], [char comment])
+! writeIntAsBaseN (int int, int N, char* strs, [char* options])
 ! writeIntsToChars (int ints(:), char* strs(:))
 ! writeRomanNumerals (int int, char* strs)
 ! Many of these routines take optional arguments that greatly modify
@@ -181,19 +185,20 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! streq                     
 ! === (end of api) ===
 
-  public :: asciify, &
-    & Capitalize, CatStrings, CompressString, count_words, &
-    & delete, depunctuate, FlushArrayLeft, hhmmss_value, &
-    & indexes, ints2Strings, isAllAscii, IsComment, IsRepeat, &
-    & LenTrimToAscii, LinearSearchStringArray, LowerCase, &
-    & NAppearances, NCopies, &
-    & ReadCompleteLineWithoutComments, readNumsFromChars, readIntsFromChars, &
-    & ReadRomanNumerals, Replace, ReplaceNonAscii, Reverse, Reverse_trim, &
-    & Rot13, &
-    & shiftLRC, size_trim, SplitDetails, SplitNest, SplitWords, squeeze, &
-    & StartCase, streq, stretch, strings2Ints, &
-    & trim_safe, TrueList, unWrapLines, &
-    & writeIntsToChars, writeRomanNumerals
+  public :: ASCIIFY, &
+    & CAPITALIZE, CATSTRINGS, COMPRESSSTRING, COUNT_WORDS, &
+    & DELETE, DEPUNCTUATE, FLUSHARRAYLEFT, HHMMSS_VALUE, &
+    & INDEXES, INTS2STRINGS, ISALLASCII, ISCOMMENT, ISREPEAT, &
+    & LENTRIMTOASCII, LINEARSEARCHSTRINGARRAY, LOWERCASE, &
+    & NAPPEARANCES, NCOPIES, &
+    & READCOMPLETELINEWITHOUTCOMMENTS, READINTFROMBASEN, READINTSFROMCHARS, &
+    & READNUMSFROMCHARS, READROMANNUMERALS, &
+    & REPLACE, REPLACENONASCII, REVERSE, REVERSE_TRIM, &
+    & ROT13, &
+    & SHIFTLRC, SIZE_TRIM, SPLITDETAILS, SPLITNEST, SPLITWORDS, SQUEEZE, &
+    & STARTCASE, STREQ, STRETCH, STRINGS2INTS, &
+    & TRIM_SAFE, TRUELIST, UNWRAPLINES, &
+    & WRITEINTASBASEN, WRITEINTSTOCHARS, WRITEROMANNUMERALS
 
   interface asciify
     module procedure asciify_scalar, asciify_1d, asciify_2d, asciify_3d
@@ -1135,6 +1140,93 @@ contains
     fullLine=TRIM(ADJUSTL(fullLine))
 
   END SUBROUTINE ReadCompleteLineWithoutComments
+
+  ! ----------------  readIntFromBaseN  -----
+  ! read an integer which had been reexpressed in base n from a string
+  
+  ! Use:
+  ! Return e.g. the number 1989 in base 5 from str='30424'
+  ! i.e., 4 + 5*(2 + 5*(4 + 5*(0 + 5*3)))
+  subroutine readIntFromBaseN ( STR, K, N, OPTIONS )
+    ! returns an integer and from a string
+    ! using poorly-tested but hopefully non-critical code
+
+    ! According to the options string, the intermediate integer coefficients
+    ! will be based on
+    !  options contain            coefficient string
+    !    ---                      ------------------
+    !   (default)                 decimal integers, separated by spaces
+    !                              e.g., ''13 4 29 6''
+    !      a                      achar(c[m]) in the same order
+    !                              e.g., CR // EOT // GS // ACR   
+    !      A                      like a but converted to ascii
+    !                              e.g., '<CR>' // '<EOT>' // '<GS>' // <ACR>   
+    !      x                      "Extended" hexadecimal
+    ! 0123456789012345678901234567890123456789012345678901234567890123456789
+    ! 0123456789abcdefghijklmnopqrstuvwxyz;'[]ABCDEFGHIJKLMNOPQRSTUVWXYZ:"{}
+    !                              (good only up to base 70)
+    !
+    ! The default representation can handle arbitrarily large moduli
+    ! a or A is limited to the unique range of achar
+    ! x is good only up to a modulus of 70.
+    
+    ! Note that we do not check that the str is a valid number in base N
+    ! E.g., you can enter '10 0 1' in base 5 and get back a numerical
+    ! result of 251 instead of an error message
+
+    !--------Argument--------!
+    character (len=*), intent(in)           ::   str
+    integer, intent(out)                    ::   k ! integer result
+    integer, intent(in)                     ::   N ! the base
+    character(len=*), optional, intent(in)  ::   options
+    ! Internal variables
+    integer, dimension(:), pointer          :: C => null()
+    integer                                 :: i
+    integer                                 :: i1
+    integer                                 :: i2
+    integer                                 :: j
+    integer                                 :: m
+    character(len=8)                        :: myOptions
+    integer                                 :: status
+    character(len=8)                        :: substr
+    character(len=1)                        :: subsub
+    character(len=*), parameter             :: xtended = &
+      & '0123456789abcdefghijklmnopqrstuvwxyz;''[]ABCDEFGHIJKLMNOPQRSTUVWXYZ:"{}'
+    ! Executable
+    k = 0
+    if ( N < 2 .or. len_trim(str) < 1 ) return
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    ! First we must obtain m
+    m = ncopies( trim(str), ' ' )
+    allocate( C(0:m), stat=status )
+    i2 = 1
+    do j=m, 0, -1
+      i1 = i2
+      i2 = FindNext( str, ' ', i1 )
+      substr = str(i1:i2)
+      i1 = i2
+      ! Read each substr as an integer
+      if ( index(myOptions, 'a') > 0 .or. index(myOptions, 'A') > 0 ) then
+        ! We won't bother coding this case--it would be ridiculous anyway
+        stop
+      elseif ( index(myOptions, 'x') > 0 ) then
+        ! 'Extended' hexadecimal
+        subsub = adjustl(substr)
+        C(j) = FindFirst( (/ (xtended(i:i), i=1, len(xtended)) /) == subsub )
+        C(j) = max(0, C(j) - 1)
+      else
+        ! Plain vanilla decimal integers
+        call readIntsFromChars( substr, C(j) )
+      endif
+    enddo
+    ! call dump(C, 'coefficients')
+    k = 0
+    do j=m, 0, -1
+      k = N*k + C(j)
+    enddo
+    deallocate( C, stat=status )
+  end subroutine readIntFromBaseN
 
   ! ----------------  readIntsFromChars  ----- readNumsFromChars  -----
   ! This family of routines reads either a single number or an array
@@ -2467,11 +2559,137 @@ contains
 
   END SUBROUTINE writeIntsToChars_2d
 
-  ! ----------------  writeRomanNumerals  -----
-  ! write an integer as a string composed of roman numerals
+  ! ----------------  writeIntAsBaseN  -----
+  ! write an integer reexpressed in base n as a string
   
   ! Use:
-  ! Given e.g. the number 1989 return str='MCMLXXXIX '
+  ! Given e.g. the number 1989 in base 5 return str='30424'
+  ! i.e., 4 + 5*(2 + 5*(4 + 5*(0 + 5*3)))
+  subroutine writeIntAsBaseN ( K, N, STR, OPTIONS )
+    ! takes an integer and returns a string
+    ! using poorly-tested but hopefully non-critical code
+
+    ! Method:
+    ! First determine how many terms in expansion, or equivalently,
+    ! highest power of N; thus want N^m < num
+    ! m < (log k) / (log N)
+    ! For its coefficient c[m], must have
+    ! c[m] < k / N^m
+    ! FFor succeeding coefficients
+    ! c[m-1] < k / N^(m-1) - N c[m]
+    ! c[m-2] < k / N^(m-2) - N^2 c[m] - N c[m-1]
+    ! ...    ...    ...    ...    ...
+    ! c[m-j] < k / N^(m-j) - N^j c[m] - N^(j-1) c[m-1] - .. - N c[m-j+1]
+    ! until for j up to m
+    
+    ! According to the options string, the resulting integer coefficients
+    ! will be returned as
+    !  options contain            coefficient string
+    !    ---                      ------------------
+    !   (default)                 decimal integers, separated by spaces
+    !                              e.g., ''13 4 29 6''
+    !      a                      achar(c[m]) in the same order
+    !                              e.g., CR // EOT // GS // ACR   
+    !      A                      like a but converted to ascii
+    !                              e.g., '<CR>' // '<EOT>' // '<GS>' // <ACR>   
+    !      x                      "Extended" hexadecimal
+    ! 0123456789012345678901234567890123456789012345678901234567890123456789
+    ! 0123456789abcdefghijklmnopqrstuvwxyz;'[]ABCDEFGHIJKLMNOPQRSTUVWXYZ:"{}
+    !                              (good only up to base 70)
+    !
+    ! The default representation can handle arbitrarily large moduli
+    ! a or A is limited to the unique range of achar
+    ! x is good only up to a modulus of 70.
+    
+    ! Note that the returned string is in normal order. The coefficient of the
+    ! highest power comes first, then the next highest power, and
+    ! so on. If you want the coeffieicents in reversed order, call
+    ! this module's Reverse function afterward.
+    
+    ! If you want to remove the embedded spaces from one of the non-default
+    ! representations, call CompressString with the result
+    
+    ! If you want to convert a floating number, say '4.523' to another base,
+    ! (i) multiply it by the base as many times as you will want after
+    !     that base's "decimal" point. So for base 13 to 3 places, form
+    !    13*13*13*4.523
+    ! (ii) takes the integer part of the result
+    ! (iii) call this subroutine with that integer
+    ! (iv) Insert the "decimal" point 3places before the result's last char
+    !
+    !--------Argument--------!
+    integer, intent(in)                     ::   k ! integer to be reexpressed
+    integer, intent(in)                     ::   N ! the new base
+    character (len=*), intent(out)          ::   str
+    character(len=*), optional, intent(in)  ::   options
+    ! Internal variables
+    integer, dimension(:), pointer          :: C => null()
+    integer                                 :: j
+    integer                                 :: m
+    character(len=8)                        :: myOptions
+    double precision                        :: S, SHigher
+    integer                                 :: status
+    character(len=8)                        :: substr
+    character(len=*), parameter             :: xtended = &
+      & '0123456789abcdefghijklmnopqrstuvwxyz;''[]ABCDEFGHIJKLMNOPQRSTUVWXYZ:"{}'
+    ! Executable
+    str = ' '
+    if ( k < 0 .or. N < 2 ) return
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    ! What is the highest power needed of N?
+    m = 0
+    if ( k > 1 ) m = ( log (k*1.d0) / log (N*1.d0) ) + 1.d-3
+    allocate( C(0:m), stat=status )
+    if ( k < N ) then
+      C(0) = k
+    else
+      ! Recursively define
+      ! S[m]     = k / N^m
+      ! S[m-1] = N ( S[m] - c[m] )
+      ! S[m-j] = N ( S[m-j+1] - c[m-j+1] )
+      ! but we'll restate this for each j as
+      ! S = N ( SHigher - c[m-j=1] )
+      SHigher = k*1.d0 / N**m
+      j = 0
+      do
+        if ( (m - j) < 0 ) exit
+        c(m-j) = SHigher + 1.d-3
+        S = N*( SHigher - c(m-j) )
+        SHigher = S
+        j = j + 1
+      enddo
+    endif
+    ! print *, 'm ', m
+    ! call dump( c, 'coeffs' )
+    ! Now we turn the integers into a character string
+    ! in an appropriate way
+    if ( index(myOptions, 'a') > 0 .or. index(myOptions, 'A') > 0 ) then
+      do j = m, 0, -1
+        if ( c(j) < 177 ) str = trim(str) // ' ' // achar(c(j))
+        ! print *, 'str ', asciify(str)
+      enddo
+      str = adjustl(str)
+      if ( index(myOptions, 'A') > 0 ) str = asciify(str, 'mnemonic')
+    elseif ( index(myOptions, 'x') > 0 ) then
+      do j = m, 0, -1
+        if ( c(j) < 71 ) str = trim(str) // ' ' // xtended(c(j)+1:c(j)+1)
+        ! print *, 'str ', str
+      enddo
+      str = adjustl(str)
+    else
+      ! default
+      do j = m, 0, -1
+        call writeIntsToChars ( c(j), substr )
+        str = trim(str) // ' ' // adjustl(substr)
+        ! print *, 'substr ', substr
+        ! print *, 'str ', str
+      enddo
+      str = adjustl(str)
+    endif
+    deallocate( C, stat=status )
+  end subroutine writeIntAsBaseN
+
   subroutine writeRomanNumerals ( num, str, options )
     ! takes an integer and returns a string
     ! using poorly-tested but hopefully non-critical code
@@ -2729,6 +2947,33 @@ contains
     FindFirst = 0
   end function FindFirst
 
+  ! -------------------------------------------  FindNext  -----
+  ! We were forced to put a redundant copy here to avoid circular make dependence
+  ! that resulted when this module used MLSSets
+  integer function FindNext ( Set, Probe, Current )
+    ! Find the next substring in the string Set that is equal to Probe after the
+    ! current one
+    character(len=*), intent(in) :: Set
+    character(len=1), intent(in) :: Probe
+    integer, intent(in) :: Current
+    ! Local variables
+    integer :: i
+
+     ! Executable code
+    FindNext = 0
+    if ( current < 1 .or. current > len(set)) return
+    ! Now check for current already at end of array
+    if ( current < len(set) ) then
+      do i = current+1, len(set)
+        if ( set(i:i) == probe ) then
+          FindNext = i
+          return
+        end if
+      end do
+    end if
+    ! Uh-oh, this means current is last true, or at array end--so we return 0
+  end function FindNext
+
   ! ---------------------------------------------------  firstsubstr  -----
   elemental function firstsubstr(str, star) result(substr)
     character(len=*), intent(in) :: str
@@ -2764,6 +3009,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.94  2013/07/30 23:26:44  pwagner
+! New procedures to read/write base N integers
+!
 ! Revision 2.93  2013/07/24 19:02:43  pwagner
 ! Added isComment function; streq adds new option 'h' to match string heads
 !
