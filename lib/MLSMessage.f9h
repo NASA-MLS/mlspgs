@@ -472,6 +472,7 @@ contains
   ! 'push'    push a new name onto MLSCallStack
   ! 'pop'     pop the last name off
   ! 'top'     just return the last name
+  ! 'invert'  invert the stack (top becomes bottom, etc.)
   ! 'clear'   clear the stack
   ! 'print'   print its contents as a single line
   ! 'dump'    print a walkback, one name per line, top to bottom
@@ -517,16 +518,68 @@ contains
     case ( 'push' )
       if ( present(name) ) myName = name
       if ( present(constantName) ) myName = constantName
-      MLSCallStack%top = MLSCallStack%Top + 1
-      myName = snipRCSFrom ( myName )
-      m = len_trim(myName)
-      if ( MLSCallStack%Top > ubound(MLSCallStack%ind,1) ) then
-        call dumpStack ( adjustl(myName(:m)) )
-        return
-      end if
-      MLSCallStack%ind(MLSCallStack%top) = MLSCallStack%ind(MLSCallStack%top-1) + m
-      MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top-1)+1:) = myName(:m) ! clear the rest
+      call PushStack( myName )
     case ( 'pop', 'top' )
+      call PopStack( name )
+      if ( command == 'pop' ) MLSCallStack%top = MLSCallStack%top - 1
+    case ( 'clear' )
+      MLSCallStack%txt = ' '
+      MLSCallStack%top = 0
+    case ( 'invert' )
+      MLSCallStack = InvertStack( MLSCallStack )
+    case ( 'dump' )
+      call dumpStack
+    case ( 'print', 'rprint' )
+      if ( MLSCallStack%top < 0 ) then
+        call printItOut ( '.. Stack Underflow', MLSMSG_info )
+      else if ( MLSCallStack%top == 0 ) then
+        call printItOut ( '.. Stack Empty', MLSMSG_info )
+      else if ( MLSCallStack%top > ubound(MLSCallStack%ind,1) ) then
+        call printItOut ( '.. Stack Overflow', MLSMSG_info )
+      elseif( command == 'print' ) then
+        call printItOut ( MLSCallStack%txt(: &
+          & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
+      elseif( command == 'rprint' ) then
+        MLSCallStack = InvertStack( MLSCallStack )
+        call printItOut ( MLSCallStack%txt(: &
+          & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
+        MLSCallStack = InvertStack( MLSCallStack )
+      endif
+    case ( 'depth' )
+      write( myName, '(i8)' ) MLSCallStack%top
+      if ( present(name) ) name = myName
+    case ( 'length' )
+      write( myName, '(i8)' ) MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))
+      if ( present(name) ) name = myName
+    case ( 'remain' )
+      write( myName, '(i8)' ) len(MLSCallStack%txt) - &
+        & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))
+      if ( present(name) ) name = myName
+    ! "r"-versions of the usual commands act on the Inverted CallStack
+    case ( 'rpop', 'rtop' )
+      MLSCallStack = InvertStack( MLSCallStack )
+      call PopStack( name )
+      if ( command == 'rpop' ) MLSCallStack%top = MLSCallStack%top - 1
+      MLSCallStack = InvertStack( MLSCallStack )
+    case ( 'rpush' )
+      if ( present(name) ) myName = name
+      if ( present(constantName) ) myName = constantName
+      MLSCallStack = InvertStack( MLSCallStack )
+      call PushStack( myName )
+      MLSCallStack = InvertStack( MLSCallStack )
+    case ( 'rdump' )
+      MLSCallStack = InvertStack( MLSCallStack )
+      call dumpStack
+      MLSCallStack = InvertStack( MLSCallStack )
+    case default
+      ! Unrecognized command--we'll ignore it
+      if ( present(name) ) name = "What?"
+    end select
+    if ( MLSCallStack%verbose .and. command /= 'dump' ) call dumpStack
+
+  contains
+    subroutine PopStack ( Name )
+      character(len=*), optional, intent(inout) :: Name
       if ( present(name) ) then
         if ( MLSCallStack%top < 0 ) then
           name = "Stack underflow"
@@ -540,39 +593,21 @@ contains
                                     MLSCallStack%ind(m-1))
         end if
       end if
-      if ( command == 'pop' ) MLSCallStack%top = MLSCallStack%top - 1
-    case ( 'clear' )
-      MLSCallStack%txt = ' '
-      MLSCallStack%top = 0
-    case ( 'dump' )
-      call dumpStack
-    case ( 'print' )
-      if ( MLSCallStack%top < 0 ) then
-        call printItOut ( '.. Stack Underflow', MLSMSG_info )
-      else if ( MLSCallStack%top == 0 ) then
-        call printItOut ( '.. Stack Empty', MLSMSG_info )
-      else if ( MLSCallStack%top > ubound(MLSCallStack%ind,1) ) then
-        call printItOut ( '.. Stack Overflow', MLSMSG_info )
-      end if
-      call printItOut ( MLSCallStack%txt(: &
-        & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
-    case ( 'depth' )
-      write( myName, '(i8)' ) MLSCallStack%top
-      if ( present(name) ) name = myName
-    case ( 'length' )
-      write( myName, '(i8)' ) MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))
-      if ( present(name) ) name = myName
-    case ( 'remain' )
-      write( myName, '(i8)' ) len(MLSCallStack%txt) - &
-        & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))
-      if ( present(name) ) name = myName
-    case default
-      ! Unrecognized command--we'll ignore it
-      if ( present(name) ) name = "What?"
-    end select
-    if ( MLSCallStack%verbose .and. command /= 'dump' ) call dumpStack
+    end subroutine PopStack
 
-  contains
+    subroutine PushStack ( myname )
+      character(len=*), intent(inout) :: myname
+      MLSCallStack%top = MLSCallStack%Top + 1
+      myName = snipRCSFrom ( myName )
+      m = len_trim(myName)
+      if ( MLSCallStack%Top > ubound(MLSCallStack%ind,1) ) then
+        call dumpStack ( adjustl(myName(:m)) )
+      else
+        MLSCallStack%ind(MLSCallStack%top) = MLSCallStack%ind(MLSCallStack%top-1) + m
+        MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top-1)+1:) = myName(:m) ! clear the rest
+      end if
+    end subroutine PushStack
+
     subroutine DumpStack ( What )
       character(len=*), intent(in), optional :: What
       ! call printItOut ( trim(MLSCallStack), MLSMSG_info )
@@ -603,6 +638,33 @@ contains
                                     MLSCallStack%ind(m-1))
       end if
     end subroutine DumpStack
+
+    function InvertStack ( Stack ) result( Invert )
+      ! Return an inverted Stack; i.e. topmost now bottommost
+      ! 2nd from top now 2nd from bottom, etc.
+      ! Method: 
+      ! One-by-one pop items from input Stack, each time pushing them onto
+      ! inverted stack
+      type(MLSCallStack_t) :: STACK
+      ! Local variables
+      integer :: i
+      integer :: stackDepth
+      type(MLSCallStack_t) :: Invert
+      character(len=MAXSTACKNAMELEN) :: Name
+      ! Executable
+      if ( Stack%top <= 0 ) return
+      stackDepth = Stack%top
+      do i = 1, stackDepth
+        m = min(Stack%top,ubound(Stack%ind,1)) + 1
+        name = Stack%txt(Stack%ind(m-2)+1: &
+                                  Stack%ind(m-1))
+        Stack%top = Stack%top - 1
+        Invert%top = Invert%Top + 1
+        m = len_trim(name)
+        Invert%ind(Invert%top) = Invert%ind(Invert%top-1) + m
+        Invert%txt(Invert%ind(Invert%top-1)+1:) = Name(:m) ! clear the rest
+      enddo
+    end function InvertStack
   end subroutine MLSMessageCalls
 
   ! --------------------------------------------  MLSMessageInquire  -----
@@ -725,7 +787,7 @@ contains
     else
       if(present(farewell)) then
         if(farewell == ' ') then
-          mesg='Exiting normally with "stop"'
+          mesg='exit with default status'
           call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
         else
           call MLSMessage ( MLSMSG_Info, ModuleName, farewell, advance='y' )
@@ -733,8 +795,7 @@ contains
       end if
       call MLSMessageClose
       ! stop
-      mesg='exit with default status'
-      call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
+      ! call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
       call exit_with_status ( DEFAULTSTOPEXITSTATUS )
     end if
   end subroutine MLSMessageExit
@@ -1183,6 +1244,9 @@ contains
   
 !
 ! $Log$
+! Revision 2.23  2013/07/30 23:19:53  pwagner
+! Added a few extra cmds to MLSCallStack
+!
 ! Revision 2.22  2013/06/28 18:15:51  pwagner
 ! Eliminate bare stop; enhance call stack; treat each of line prefixes (severity, name) separately
 !
