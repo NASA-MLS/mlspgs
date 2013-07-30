@@ -11,10 +11,10 @@
 
 module MLSSets
 
-! Various operations on sets
+! Various operations on sets and sequences
 
 ! Note:
-! A set in mathematics consists of a set of elements
+! A set in mathematics consists of elements
 ! Each element in a set appears exactly once, i.e. each is unique
 
 ! We represent sets with arrays
@@ -31,6 +31,18 @@ module MLSSets
 !  (1) a proper set, 
 !  (2) a proper subset of any set except itself
 !  (3) a subset of itself, but not a proper subset of itself
+
+! The order in which elements appear is immaterial for sets.
+! For sequences, however, the order is an essential part
+! Many procedures in this module treat sets with little regard for order
+! FindFirst, -Next, -Last, and -Longest functions must
+! pay attention to order, however, so properly speaking
+! they treat sequences, not sets
+
+! Furthermore, a mathematical set's elements need not all be of the same type
+! while a sequence's elements are necessarily homogeneous. From this
+! standpoint, we might say that all the procedures in this module
+! treat sequences, not sets
 
   implicit none
   private
@@ -80,6 +92,8 @@ module MLSSets
 !     (where numtype can be an int, real, or dble)
 ! int FindFirstLogical (log condition(:))      
 ! int FindFirstSubString (char* set, char* probe, [log reverse])      
+! int FindFirstVector (int set(:,:), int probe(:), [log reverse])      
+! int FindFirstRun (int set(:), int probe(:), [log reverse])      
 ! FindIntersection ( set1(:), set2(:), int which1(:), int which2(:),
 !      [int how_many] )
 ! int FindLastCharacter (char* set(:), char* probe, [log reverse])
@@ -136,6 +150,8 @@ module MLSSets
     module procedure FindFirstInteger, FindFirstLogical, FindFirstCharacter
     module procedure FindFirstReal, FindFirstDouble, FindFirstLogical2D
     module procedure FindFirstSubString
+    module procedure FindFirstVector
+    module procedure FindFirstRun
   end interface
 
   interface FindIntersection
@@ -594,6 +610,71 @@ contains ! =====     Public Procedures     =============================
     end do
     FindFirstSubString = 0
   end function FindFirstSubString
+
+  ! -------------------------------------------  FindFirstVector  -----
+  integer function FindFirstVector ( Set, Probe, reverse, Tol )
+    ! Find the first vector in the Set that is (not) equal to Probe
+    ! Note that probe is a 1d array, Set a 2d array, and that
+    ! we match each of the first indexes in Set
+    ! See also FindFirstRun
+    integer, dimension(:,:), intent(in) :: Set
+    integer, dimension(:), intent(in)   :: Probe
+    logical, optional, intent(in)       :: reverse
+    character(len=1), optional, intent(in) :: Tol ! ignored; generic consistency
+    ! Internal variables
+    logical :: myReverse
+
+    ! Executable code
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    do FindFirstVector = 1, size(Set, 2)
+      if ( myReverse ) then
+        if ( any(set(:,FindFirstVector) /= probe) ) return
+      else
+        if ( all(set(:,FindFirstVector) == probe) ) return
+      end if
+    end do
+    FindFirstVector = 0
+  end function FindFirstVector
+
+  ! -------------------------------------------  FindFirstRun  -----
+  integer function FindFirstRun ( Set, Probe, reverse, Tol )
+    ! Find the first Run in the Set that is (not) equal to Probe
+    ! Note that probe is a 1d array, Set also a 1d array, and that
+    ! we match a run of consecutive indexes in Set
+    ! See also FindFirstVector
+    integer, dimension(:), intent(in)   :: Set
+    integer, dimension(:), intent(in)   :: Probe
+    logical, optional, intent(in)       :: reverse
+    character(len=1), optional, intent(in) :: Tol ! ignored; generic consistency
+    ! Internal variables
+    logical :: myReverse
+    integer :: n
+    ! Executable code
+    myReverse = .false.
+    if ( present(reverse) ) myReverse = reverse
+    n = size(Probe)
+    FindFirstRun = 0
+    if ( n > size(Set) ) return
+    FindFirstRun = 1
+    if ( n == size(Set) ) then
+      if ( myReverse ) then
+        if ( any(set /= probe) ) return
+      else
+        if ( all(set == probe) ) return
+      end if
+      FindFirstRun = 0
+      return
+    endif
+    do FindFirstRun = 1, size(Set) - n + 1
+      if ( myReverse ) then
+        if ( any(set(FindFirstRun:FindFirstRun+n-1) /= probe) ) return
+      else
+        if ( all(set(FindFirstRun:FindFirstRun+n-1) == probe) ) return
+      end if
+    end do
+    FindFirstRun = 0
+  end function FindFirstRun
 
   ! ---------------------------------------------  FindIntersection  -----
   ! This family of routines finds the indices of the intersection between
@@ -1763,6 +1844,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.30  2013/07/30 23:25:31  pwagner
+! FindFirst now treats integer vectors and runs, too
+!
 ! Revision 2.29  2013/06/18 17:58:29  pwagner
 ! Removed unused stuff; corrected syntax NAG found Questionable
 !
