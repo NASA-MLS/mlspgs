@@ -13,13 +13,13 @@
 module MLSRandomNumber              ! Some random number-generating things
   !=============================================================================
 
-  use MLSMessageModule, only: MLSMessage,MLSMSG_Error
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
 
   implicit none
 
   private
-  public :: srang, drang
-  public :: mls_random_number, mls_random_seed
+  public :: SRANG, DRANG
+  public :: MLS_LOTTERY,  MLS_RANDOM_NUMBER, MLS_RANDOM_SEED, MLS_SCRAMBLE
   
   ! Calculate random numbers via MATH77 routines from ran_pack (if true)
   ! or else via the f95 intrinsic (if false)
@@ -54,8 +54,10 @@ module MLSRandomNumber              ! Some random number-generating things
 !      functions and subroutines
 ! drang             gauss. distribution: 0 mean, 1 s.d. (double)
 ! srang             gauss. distribution: 0 mean, 1 s.d. (single)
+! mls_lottery       random integer(s) in supplied range
 ! mls_random_number uniform distribution in interval [0,1]
 ! mls_random_seed   put or set or size seed
+! mls_scramble      randomly permute a sequence of integers 1 2 3 .. N
 
 ! Modified to use f95 intrinsic random_number instead of ranpk1 and ranpk2
 ! Unfortunately, using NAG f95, this has side-effect of making test case
@@ -64,7 +66,66 @@ module MLSRandomNumber              ! Some random number-generating things
 ! became required for regular processing.
 ! However, its current use is for testing whether diagnostic products
 ! were correctly coded
+
+! Note: recent tests reveal that ranpk1 and ranpk2 ignore putting a new seed
+! Therefore each new random sequence is alike
 contains
+
+!     -------------- mls_lottery -----------------------
+    ! Method:                                                 
+    ! We'll reap an array of random floats and for each      
+    ! (i) multiply by 10,                                     
+    ! (ii) take the fractional part                           
+    ! (iii) convert to base N                                 
+    ! (iv) multiply by N                                      
+    ! (v) use the leading coefficient of the fractional part  
+    !     i.e., first "decimal"                               
+    subroutine mls_lottery( array_arg, range, verbose )
+      use DUMP_0, only: DUMP
+      use MLSSTRINGLISTS, only: READINTSFROMLIST
+      use MLSSTRINGS, only: WRITEINTASBASEN
+      ! Formal arguments
+      integer, intent(inout) :: array_arg(:)
+      integer, intent(in)    :: range(2)
+      logical, optional, intent(in) :: verbose
+      ! Internal variables
+      real                   :: real_args(size(array_arg))
+      integer                :: arg
+      integer                :: i
+      integer, dimension(10) :: ints
+      logical                :: myVerbose
+      integer                :: N
+      integer, dimension(630):: new_seed = 0
+      character(len=16)      :: strs
+      ! Executable
+      N = range(2) - range(1) + 1
+      if ( N <= 1 ) then
+        array_arg = range(1)
+        return
+      endif
+      myVerbose = .false.
+      if ( present(verbose) ) myVerbose = verbose
+      call mls_random_seed( new_seed=new_seed )
+      call mls_random_seed( gget=new_seed )
+      if ( myVerbose ) call dump( new_seed, 'new_seed' )
+      call mls_random_number( real_args )
+      if ( myVerbose ) call dump( real_args, 'real_args' )
+      do i=1, size(array_arg)
+        real_args(i) = 10*real_args(i)
+        real_args(i) = real_args(i) - floor(real_args(i))
+        ! Now we don't actually convert a fraction to base N
+        ! Instead we keep the leftmost 4 digits by
+        ! multiplying by N^4 and taking the integer part
+        arg = real_args(i)*N**4
+        ! Convert to baseN
+        call writeIntAsBaseN ( arg, N, strs )
+        ! Multiplying by N and then taking the leading coefficient
+        ! means the same thing a taking the next-leading one, i.e.
+        ! the silver medalist
+        call ReadIntsFromList( strs, ints )
+        array_arg(i) = max( ints(2), 0 ) + range(1)
+      enddo
+    end subroutine mls_lottery
 
 !     -------------- mls_random_number -----------------------
       subroutine MLS_RANDOM_NUMBER(array_arg)
@@ -81,7 +142,6 @@ contains
       end subroutine mls_random_number
 
 !     -------------- mls_random_seed -----------------------
-!      subroutine MLS_RANDOM_SEED(ssize, pput, gget, MATH77_ranpack, new_seed)
       subroutine MLS_RANDOM_SEED(ssize, pput, gget, new_seed)
       ! Formal arguments
       ! (Esssentially stammerings of random_zeed's)
@@ -91,7 +151,6 @@ contains
       integer, optional, intent(inout) :: new_seed(:)
       ! (Use MATH77's implementation of random numbers (if true),
       ! or switch to f95 intrinsic)
-      ! logical, optional, intent(in) ::  MATH77_ranpack
       
       ! Local variables
       integer               ::          count
@@ -137,6 +196,66 @@ contains
       endif
       return
       end subroutine mls_random_seed
+
+!     -------------- mls_scramble -----------------------
+    ! Method:                                                 
+    ! Relying on mls_lottery, create array of random ints c[i] in range 1 .. N
+    ! s[1] = c[1]
+    ! Then after each such assignment 
+    ! collapse the remaining array into a smaller remaining one
+    subroutine mls_scramble( array_arg )
+      ! Formal arguments
+      integer, intent(inout) :: array_arg(:)
+      ! Internal variables
+      integer                :: lots(size(array_arg))
+      integer                :: remaining(size(array_arg))
+      integer                :: temp_args(size(array_arg))
+      integer                :: ind
+      integer                :: i
+      integer                :: N
+      character(len=16)      :: strs
+      ! Executable
+      N = size(array_arg)
+      if ( N <= 1 ) then
+        array_arg = 1
+        return
+      endif
+      call mls_lottery( lots, (/1, N/) )
+      remaining = (/ (i, i=1, N) /)
+      do i=1, N
+        ind = lots(i)
+        if ( i < N ) then
+          ind = mod( ind, N - i + 1) + 1
+        else
+          ind = 1
+        endif
+        array_arg(i) = remaining(ind)
+        ! print *, 'Must collapse past ', i, ind, remaining(ind)
+        if ( i == N ) exit
+        call collapse( ind, remaining(1:N-i+1), temp_args(1:N-i+1) )
+        remaining(1:N-i) = temp_args(1:N-i)
+      enddo
+    end subroutine mls_scramble
+
+    subroutine collapse( k, incoming, outgoing )
+      ! Set all the elements of outgoing to those of incoming
+      ! except for k, which we skip, slipping past it
+      ! Args
+      integer, intent(in)                :: k
+      integer, dimension(:), intent(in)  :: incoming
+      integer, dimension(:), intent(out) :: outgoing
+      ! Local variables
+      integer :: i
+      integer :: pout
+      ! Executable
+      pout = 0
+      outgoing = 0
+      do i=1, size(incoming)
+        if ( i == k ) cycle
+        pout = pout + 1
+        outgoing(pout) = incoming(i)
+      enddo
+    end subroutine collapse
 
 !------------------------------------------------------------------
 !   Random number routines from MATH77 libraries
@@ -396,10 +515,10 @@ contains
 !        2.00 on a pentium produced -0.0 for -TWO*log(1.0), then got a
 !        floating point exception on sqrt(-0.0).
          if ( S <= 0.0 ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call MLSMessage ( MLSMSG_Error, ModuleName // '%srang', &
           & "Illegal S: X, Y " )
          elseif ( U3 == 0.0 ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call MLSMessage ( MLSMSG_Error, ModuleName // '%srang', &
           & "Illegal U3, harvest " )
          endif
          R = sqrt(abs(TWO*(log(U3))))/S
@@ -420,6 +539,8 @@ contains
 !         was_last_time_m77 = MATH77_RAN_PACK  ! Already done in mls_random_number
       return
       end function  SRANG
+      
+! ------------------ Private Procedures --------------------------
 
 !>> 1997-12-17 RANPK2 Krogh Removed unreferenced labels
 !>> 1995-11-22 RANPK2 Krogh Removed multiple entries.
@@ -812,7 +933,7 @@ contains
 !
 !      call ERMSG('RANPK2',1, 2,
 !     *'This random no. code will not work on this computer system.','.')
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call MLSMessage ( MLSMSG_Error, ModuleName // '%ranmod', &
           & "This rnc will not work on this computer system " )
       end subroutine RANMOD
 
@@ -1001,6 +1122,9 @@ end module MLSRandomNumber
 
 !
 ! $Log$
+! Revision 2.12  2013/08/01 20:18:38  pwagner
+! Added mls_scramble and mls_lottery for randomized permutation and integer sequence
+!
 ! Revision 2.11  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
