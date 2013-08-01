@@ -1574,7 +1574,7 @@ contains
         if ( haveGriddedData ) then
           do i = 2, nsons(son)
             gson = subtree(i,son)
-            if ( gotFirst ) then
+            if ( gotFirst .and. DiffOrDump == s_diff ) then
               vectorIndex2 = decoration(decoration(gson))
             else
               vectorIndex = decoration(decoration(gson))
@@ -1597,7 +1597,7 @@ contains
         else
           call announceError ( gson, noGriddedData )
         end if
-        GotFirst = .true.
+        gotFirst = DiffOrDump == s_diff
       case ( f_height, f_surface )
         do i = 2, nsons(son)
           call expr ( subtree(i,son), units, values, type )
@@ -1613,7 +1613,7 @@ contains
             ! The decoration is the negative of the index; see Fill, where
             ! the Hessian spec is processed.
             ! Well, that's a nasty trick.
-            if ( gotFirst ) then
+            if ( gotFirst .and. DiffOrDump == s_diff ) then
               hessianIndex2 = -decoration(decoration(gson))
             else
               hessianIndex = -decoration(decoration(gson))
@@ -1627,6 +1627,7 @@ contains
                 & options=optionsString )
             endif
           end do
+          gotFirst = DiffOrDump == s_diff
         else
           call announceError ( gson, 0, 'Unable to dump Hessian here; db empty or absent' )
         end if
@@ -1663,7 +1664,7 @@ contains
         if ( details < -1 ) cycle
         do i = 2, nsons(son)
           gson = subtree(i,son)
-          if ( gotFirst ) then
+          if ( gotFirst .and. DiffOrDump == s_diff ) then
             vectorIndex2 = decoration(decoration(subtree(1,gson)))
             quantityIndex2 = decoration(decoration(decoration(subtree(2,gson))))
             qty2 => GetVectorQtyByTemplateIndex( &
@@ -1722,13 +1723,13 @@ contains
             end if
           end if
         end do
-        GotFirst = .true.
+        GotFirst = DiffOrDump == s_diff
       case ( f_matrix ) ! Diff or Dump matrices
         if ( details < -1 ) cycle
         if ( haveMatrices ) then
           do i = 2, nsons(son)
             gson = subtree(i,son)
-            if ( gotFirst ) then
+            if ( gotFirst .and. DiffOrDump == s_diff ) then
               matrixIndex2 = decoration(decoration(gson))
             else
               matrixIndex = decoration(decoration(gson))
@@ -1748,7 +1749,7 @@ contains
         else
           call announceError ( gson, 0, 'Unable to dump matrix here; db empty or absent' )
         end if
-        GotFirst = .true.
+        GotFirst = DiffOrDump == s_diff
       case ( f_options )
         call get_string ( sub_rosa(gson), optionsString, strip=.true. )
         ! optionsString = lowerCase(optionsString)
@@ -2593,6 +2594,12 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.89  2013/08/01 20:46:30  vsnyder
+! Fix to dump two quantities with two quantity fields, two grids with two
+! grid fields, two hessians with two hessian fields, two masks with two
+! mask fields, or two matrices with two matrix fields.  Had been assuming
+! that two fields meant doing a diff.
+!
 ! Revision 2.88  2013/07/12 23:24:11  vsnyder
 ! Announce error for 'expr' field -- no code yet
 !
