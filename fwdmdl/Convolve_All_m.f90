@@ -429,8 +429,9 @@ contains
 
   ! ----------------------------------------  Convolve_OtherDeriv  -----
   subroutine Convolve_Other_Deriv ( Convolve_Support, MAF, Channel, &
-             & SbRatio, Update, Radiance, Qtys, Grids_f, &
-             & MIF_Times, DeadTime, dI_df, Jacobian, RowFlags )
+             & SbRatio, Update, Radiance, Qtys, Grids_f, MIF_Times, &
+             & DeadTime, dI_df, Jacobian, RowFlags, ExtraJacobian, &
+             & Derivs )
 
     use ForwardModelConfig, only: QtyStuff_T
     use Fov_Convolve_m, only: Convolve_Support_T, &
@@ -456,8 +457,17 @@ contains
     !                                    convolution will suffice
 
     ! Outputs
-    type (Matrix_t), intent(inout) :: Jacobian
+    type (Matrix_t), intent(inout), target :: Jacobian
     logical, intent(inout) :: rowFlags(:) ! Flag to calling code
+
+    ! Optional output
+    type (Matrix_t), intent(inout), optional, target :: ExtraJacobian
+
+    ! Optional input
+    logical, intent(in), optional :: Derivs(:) ! Same size as Qtys; if not
+                                               ! present, do all columns.  Use
+                                               ! in case grids_f%deriv_flags
+                                               ! hasn't been set.
 
     ! Local variables
     integer :: Row, Col
@@ -470,6 +480,7 @@ contains
     real(r8) :: drad_df_out(size(convolve_support%del_chi_out), &
       &                     size(di_df,dim=2))
     real(rv), pointer :: MIF_Times_for_MAF(:)
+    type (Matrix_t), pointer :: MyJacobian
 
     nullify ( MIF_Times_for_MAF )
     if ( associated(MIF_Times) ) MIF_Times_for_MAF => MIF_Times(:,maf)
@@ -488,7 +499,16 @@ contains
 
     do sps_i = 1, size(qtys)
 
-      if ( .not. qtys(sps_i)%foundInFirst ) cycle
+      if ( present(derivs) ) then
+        if ( .not. derivs(sps_i) ) cycle
+      end if
+
+      if ( qtys(sps_i)%foundInFirst ) then
+        myJacobian => jacobian
+      else
+        if ( .not. present(extraJacobian) ) cycle
+        myJacobian => extraJacobian
+      end if
 
       sv_f = grids_f%l_v(sps_i-1)
       nfz = (Grids_f%l_f(sps_i) - Grids_f%l_f(sps_i-1)) * &
@@ -496,8 +516,8 @@ contains
 
       do jf = Grids_f%windowStart(sps_i), Grids_f%windowfinish(sps_i)
 
-        col = FindBlock ( Jacobian%col, qtys(sps_i)%qty%index, jf)
-        call getFullBlock ( jacobian, row, col, 'atmospheric' )
+        col = FindBlock ( myJacobian%col, qtys(sps_i)%qty%index, jf)
+        call getFullBlock ( myJacobian, row, col, 'atmospheric' )
 
         do k = 1, nfz
 
@@ -506,7 +526,7 @@ contains
           sv_f = sv_f + 1
           if ( Grids_f%deriv_flags(sv_f) ) &
             & call loadMatrixValue ( drad_df_out(:,sv_f), &
-              & jacobian%block(row,col)%values(channel::noChans,k), sbRatio, &
+              & myJacobian%block(row,col)%values(channel::noChans,k), sbRatio, &
               & update )
         end do
 
@@ -849,7 +869,8 @@ contains
   ! ------------------------------------  Interpolate_Other_Deriv  -----
   subroutine Interpolate_Other_Deriv ( Coeffs, MAF, Channel, Chi_In, &
              & SbRatio, Update, Chi_Out, Radiance, Qtys, Grids_f, &
-             & MIF_Times, DeadTime, dI_df, Jacobian, RowFlags, Linear )
+             & MIF_Times, DeadTime, dI_df, Jacobian, RowFlags, Linear, &
+             & Derivs, ExtraJacobian )
 
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
@@ -877,15 +898,22 @@ contains
     !                                    convolution will suffice
 
     ! Outputs
-    type (Matrix_t), intent(inout) :: Jacobian
+    type (Matrix_t), intent(inout), target :: Jacobian
     logical, intent(inout) :: rowFlags(:) ! Flag to calling code
 
     ! Optional inputs
     logical, intent(in), optional :: Linear ! "Use linear interpolation"
                                             ! Deafult true.
+    logical, intent(in), optional :: Derivs(:) ! Same size as Qtys; if not
+                                               ! present, do all columns.  Use
+                                               ! in case grids_f%deriv_flags
+                                               ! hasn't been set.
+    ! Optional outputs
+    type (Matrix_t), intent(inout), optional, target :: ExtraJacobian
 
     ! Local variables
     integer :: Col, IS, JF, K, NFZ, NoChans, Row, SV_F
+    type (Matrix_t), pointer :: MyJacobian
     logical :: MyLinear
 
     real(r8) :: dRad_df_in(size(chi_in)), dRad_df_out(size(chi_out))
@@ -903,7 +931,16 @@ contains
 
     do is = 1, size(qtys)
 
-      if ( .not. qtys(is)%foundInFirst ) cycle
+      if ( present(derivs) ) then
+        if ( .not. derivs(is) ) cycle
+      end if
+
+      if ( qtys(is)%foundInFirst ) then
+        myJacobian => jacobian
+      else
+        if ( .not. present(extraJacobian) ) cycle
+        myJacobian => extraJacobian
+      end if
 
       sv_f = grids_f%l_v(is-1)
       nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
@@ -911,8 +948,8 @@ contains
 
       do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
 
-        col = FindBlock ( Jacobian%col, qtys(is)%qty%index, jf)
-        call getFullBlock ( jacobian, row, col, 'atmospheric' )
+        col = FindBlock ( myJacobian%col, qtys(is)%qty%index, jf)
+        call getFullBlock ( myJacobian, row, col, 'atmospheric' )
 
         do k = 1, nfz
 
@@ -934,8 +971,8 @@ contains
                                      & method = 'S', extrapolate = 'C' )
             end if
             call loadMatrixValue ( dRad_df_out, &
-              & jacobian%block(row,col)%values(channel::noChans,k), sbRatio, &
-              & update )
+              & myJacobian%block(row,col)%values(channel::noChans,k), &
+              & sbRatio, update )
           end if
 
         end do
@@ -1047,7 +1084,7 @@ contains
 
   ! ---------------------------------------  Store_Other_Deriv_1D  -----
   subroutine Store_Other_Deriv_1D ( MAF, Row_0, Radiance, Qtys, Grids_f, &
-                                  & dI_df, Jacobian )
+                                  & dI_df, Jacobian, ExtraJacobian, Derivs )
 
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
@@ -1065,17 +1102,36 @@ contains
     !                                  parameter for which a simple
     !                                  convolution will suffice
 
-    ! Outputs
-    type (Matrix_t), intent(inout) :: Jacobian
+    ! Output
+    type (Matrix_t), intent(inout), target :: Jacobian
+
+    ! Optional output
+    type (Matrix_t), intent(inout), optional, target :: ExtraJacobian
+
+    ! Optional input
+    logical, intent(in), optional :: Derivs(:) ! Same size as Qtys; if not
+                                               ! present, do all columns.  Use
+                                               ! in case grids_f%deriv_flags
+                                               ! hasn't been set.
 
     ! Local variables
     integer :: Col, IS, JF, K, NFZ, Row_1, SV_F
+    type (Matrix_t), pointer :: MyJacobian
 
     row_1 = FindBlock ( Jacobian%row, radiance%index, maf )
 
     do is = 1, size(qtys)
 
-      if ( .not. qtys(is)%foundInFirst ) cycle
+      if ( present(derivs) ) then
+        if ( .not. derivs(is) ) cycle
+      end if
+
+      if ( qtys(is)%foundInFirst ) then
+        myJacobian => jacobian
+      else
+        if ( .not. present(extraJacobian) ) cycle
+        myJacobian => extraJacobian
+      end if
 
       sv_f = grids_f%l_v(is-1)
       nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
@@ -1083,8 +1139,8 @@ contains
 
       do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
 
-        col = FindBlock ( Jacobian%col, qtys(is)%qty%index, jf)
-        call getFullBlock ( jacobian, row_1, col, 'atmospheric' )
+        col = FindBlock ( myJacobian%col, qtys(is)%qty%index, jf)
+        call getFullBlock ( myJacobian, row_1, col, 'atmospheric' )
 
         do k = 1, nfz
 
@@ -1092,7 +1148,7 @@ contains
 
           sv_f = sv_f + 1
           if ( Grids_f%deriv_flags(sv_f) ) &
-            & jacobian%block(row_1,col)%values(row_0,k) = di_df(sv_f)
+            & myJacobian%block(row_1,col)%values(row_0,k) = di_df(sv_f)
 
         end do
 
@@ -1104,7 +1160,7 @@ contains
 
   ! ---------------------------------------  Store_Other_Deriv_2D  -----
   subroutine Store_Other_Deriv_2D ( MAF, Channel, Radiance, Qtys, Grids_f, &
-                                  & dI_df, Jacobian )
+                                  & dI_df, Jacobian, ExtraJacobian, Derivs )
 
     use ForwardModelConfig, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
@@ -1123,10 +1179,20 @@ contains
     !                                    convolution will suffice
 
     ! Outputs
-    type (Matrix_t), intent(inout) :: Jacobian
+    type (Matrix_t), intent(inout), target :: Jacobian
+
+    ! Optional outputs
+    type (Matrix_t), intent(inout), optional, target :: ExtraJacobian
+
+    ! Optional input
+    logical, intent(in), optional :: Derivs(:) ! Same size as Qtys; if not
+                                               ! present, do all columns.  Use
+                                               ! in case grids_f%deriv_flags
+                                               ! hasn't been set.
 
     ! Local variables
     integer :: Col, IS, JF, K, NFZ, NoChans, Row, SV_F
+    type (Matrix_t), pointer :: MyJacobian
 
     noChans = Radiance%template%noChans
 
@@ -1134,7 +1200,16 @@ contains
 
     do is = 1, size(qtys)
 
-      if ( .not. qtys(is)%foundInFirst ) cycle
+      if ( present(derivs) ) then
+        if ( .not. derivs(is) ) cycle
+      end if
+
+      if ( qtys(is)%foundInFirst ) then
+        myJacobian => jacobian
+      else
+        if ( .not. present(extraJacobian) ) cycle
+        myJacobian => extraJacobian
+      end if
 
       sv_f = grids_f%l_v(is-1)
       nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
@@ -1142,8 +1217,8 @@ contains
 
       do jf = Grids_f%windowStart(is), Grids_f%windowfinish(is)
 
-        col = FindBlock ( Jacobian%col, qtys(is)%qty%index, jf)
-        call getFullBlock ( jacobian, row, col, 'atmospheric' )
+        col = FindBlock ( myJacobian%col, qtys(is)%qty%index, jf)
+        call getFullBlock ( myJacobian, row, col, 'atmospheric' )
 
         do k = 1, nfz
 
@@ -1151,7 +1226,7 @@ contains
 
           sv_f = sv_f + 1
           if ( Grids_f%deriv_flags(sv_f) ) &
-            & jacobian%block(row,col)%values(channel::noChans,k) = di_df(:,sv_f)
+            & myJacobian%block(row,col)%values(channel::noChans,k) = di_df(:,sv_f)
 
         end do
 
@@ -1276,6 +1351,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.23  2013/08/02 01:24:06  vsnyder
+! Add ExtraJacobian to compute derivatives not in state vector
+!
 ! Revision 2.22  2013/06/12 02:19:16  vsnyder
 ! Cruft removal
 !
