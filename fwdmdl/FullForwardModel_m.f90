@@ -33,7 +33,8 @@ contains
   ! -------------------------------------------- FullForwardModel -----
 
   subroutine FullForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
-                             &  FwdModelOut, FmStat, Jacobian, Hessian )
+                             &  FwdModelOut, FmStat, Jacobian, ExtraJacobian, &
+                             &  Hessian )
 
   ! This gets a little bit of data and then computes the sizes for quantities
   ! in the full forward model proper, FullForwardModelAuto.
@@ -65,6 +66,7 @@ contains
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
     type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: Jacobian
+    type(matrix_T), intent(inout), optional :: ExtraJacobian
     type(hessian_T), intent(inout), optional :: Hessian
 
     real(rp), allocatable :: Z_PSIG(:)   ! Surfs from Temperature, tangent grid
@@ -116,7 +118,7 @@ contains
     ! Flags for various derivatives
     logical :: atmos_der, atmos_second_der, ptan_der, spect_der
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
-    logical :: sps_in_first, temp_der, temp_in_first
+    logical :: temp_der, temp_in_first
     ! What severity is not having derivative in "first" state vector?
     integer, parameter :: DerivativeMissingFromState = MLSMSG_Error
 
@@ -171,20 +173,16 @@ contains
     if ( atmos_der ) then
       do k = 1, no_mol
         if ( fwdModelConf%moleculeDerivatives(k) ) then
-          ! Check that there is a vector quantity for the desired molecule
-          ! in the "first" state vector.  Otherwise, there's no place to
-          ! store the derivative in the Jacobian.
-          mol = fwdModelConf%beta_group(k)%molecule
-          ! All we want here is the SPS_in_first side effect
-          if ( associated( &
-            & GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-            &  quantityType=l_vmr, molecule=mol, &
-            &  foundInFirst=sps_in_first, config=fwdModelConf )) ) continue
-          if ( .not. sps_in_first ) &
-            & call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
-            & 'With config(%S): ' // &
-            & '%S derivative requested but %S is not in "first" state vector', &
-            & datum=(/ fwdModelConf%name, lit_indices(mol), lit_indices(mol) /) )
+          if ( .not. fwdModelConf%beta_group(k)%qty%foundInFirst ) then
+            ! If the vector quantity for the desired molecule is not in the
+            ! "first" state vector, check whether there's an ExtraJacobian.
+            if ( .not. present(extraJacobian) ) &
+              & call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
+                & 'With config(%S): ' // &
+                & '%S derivative requested but %S is not in "first" state vector, ' // &
+                & 'or ExtraJacobian is not present', &
+                & datum=(/ fwdModelConf%name, lit_indices(mol), lit_indices(mol) /) )
+          end if
         else
           ! Turn off deriv_flags where we don't want molecule derivatives,
           ! so we don't have to look at fwdModelConf%moleculeDerivatives
@@ -192,6 +190,40 @@ contains
         end if
       end do                        ! Loop over major molecules
     end if                          ! Want derivatives for atmos
+
+    if ( spect_der_center .and. &
+       & any(.not. fwdModelConf%lineCenter%qty%foundInFirst) ) then
+       ! If the vector quantity for the desired molecule is not in the
+       ! "first" state vector, check whether there's an ExtraJacobian.
+       if ( .not. present(extraJacobian) ) &
+         & call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
+           & 'With config(%S): ' // &
+           & 'derivative requested but line center is not in "first" state ' // &
+           & 'vector, or ExtraJacobian is not present', &
+           & datum=(/ fwdModelConf%name /) )
+    end if
+    if ( spect_der_width .and. &
+       & any(.not. fwdModelConf%lineWidth%qty%foundInFirst) ) then
+       ! If the vector quantity for the desired molecule is not in the
+       ! "first" state vector, check whether there's an ExtraJacobian.
+       if ( .not. present(extraJacobian) ) &
+         & call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
+           & 'With config(%S): ' // &
+           & 'derivative requested but line width is not in "first" state ' // &
+           & 'vector, or ExtraJacobian is not present', &
+           & datum=(/ fwdModelConf%name /) )
+    end if
+    if ( spect_der_width_TDep .and. &
+       & any(.not. fwdModelConf%lineWidth_TDep%qty%foundInFirst) ) then
+       ! If the vector quantity for the desired molecule is not in the
+       ! "first" state vector, check whether there's an ExtraJacobian.
+       if ( .not. present(extraJacobian) ) &
+         & call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
+           & 'With config(%S): ' // &
+           & 'derivative requested but line width temperature dependence is ' // &
+           & 'not in "first" state vector, or ExtraJacobian is not present', &
+           & datum=(/ fwdModelConf%name /) )
+    end if
 
     if ( FwdModelConf%polarized ) then
       call load_one_item_grid ( grids_mag, &
@@ -280,7 +312,7 @@ contains
                               & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,   &
                               & s_i, s_tg, s_ts,                               &
                               ! Optional:
-                              & Jacobian, Hessian )
+                              & Jacobian, ExtraJacobian, Hessian )
 
     call destroygrids_t ( grids_f )
     call destroygrids_t ( grids_iwc )
@@ -321,7 +353,7 @@ contains
                              & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,    &
                              & s_i, s_tg, s_ts,                                &
                              ! Optional:
-                             & Jacobian, Hessian )
+                             & Jacobian, ExtraJacobian, Hessian )
 
   ! This is the full radiative transfer forward model, the workhorse code.
   ! It's called FullForwardModelAuto because most of the variable-size
@@ -420,6 +452,12 @@ contains
     integer, intent(in) :: S_TS ! Multiplier for using TScat tables, 0 or 1
 
     type(matrix_T),  intent(inout), optional :: Jacobian
+    type(matrix_T),  intent(inout), optional :: ExtraJacobian ! This is used
+                                ! if a quantity with respect to which we are
+                                ! computing derivatives is found in the extra
+                                ! vector.  Usually, this means we are retrieving
+                                ! a MIF quantity, with profile derivatives
+                                ! computed here.
     type(hessian_T), intent(inout), optional :: Hessian
 
     ! Now define local variables, group by type and then
@@ -1502,7 +1540,7 @@ contains
             call convolve_other_deriv ( convolve_support, maf, chanInd, &
             & thisFraction, update, thisRadiance, beta_group%qty, Grids_f, &
             & L1BMIF_TAI, MIFDeadTime, real(k_atmos(i,:,:),kind=rp), &
-            & Jacobian, fmStat%rows )
+            & Jacobian, fmStat%rows, extraJacobian )
 
             if (atmos_second_der ) then
               call convolve_other_second_deriv ( convolve_support, maf, chanInd, &
@@ -1516,17 +1554,20 @@ contains
             & call convolve_other_deriv ( convolve_support, maf, chanInd, &
               & thisFraction, update, thisRadiance, &
               & fwdModelConf%lineCenter%qty, grids_v, L1BMIF_TAI, MIFDeadTime, &
-              & real(k_spect_dv(i,:,:),kind=rp), Jacobian, fmStat%rows )
+              & real(k_spect_dv(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+              & extraJacobian )
           if ( spect_der_Width ) &
             & call convolve_other_deriv ( convolve_support, maf, chanInd, &
               & thisFraction, update, thisRadiance, &
               & fwdModelConf%lineWidth%qty, grids_w, L1BMIF_TAI, MIFDeadTime, &
-              & real(k_spect_dw(i,:,:),kind=rp), Jacobian, fmStat%rows )
+              & real(k_spect_dw(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+              & extraJacobian )
           if ( spect_der_Width_TDep ) &
             & call convolve_other_deriv ( convolve_support, maf, chanInd, &
               & thisFraction, update, thisRadiance, &
               & fwdModelConf%lineWidth_TDep%qty, grids_n, L1BMIF_TAI, MIFDeadTime, &
-              & real(k_spect_dn(i,:,:),kind=rp), Jacobian, fmStat%rows )
+              & real(k_spect_dn(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+              & extraJacobian )
 
           call fov_convolve_teardown ( convolve_support )
 
@@ -1551,25 +1592,29 @@ contains
             & call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
               & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
               & beta_group%qty, grids_f, L1BMIF_TAI, MIFDeadTime, &
-              & real(k_atmos(i,:,:),kind=rp), Jacobian, fmStat%rows, linear=.true. )
+              & real(k_atmos(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+              & linear=.true., extraJacobian=extraJacobian )
 
           if ( spect_der_center ) &
             & call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
               & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
               & fwdModelConf%lineCenter%qty, grids_v, L1BMIF_TAI, MIFDeadTime, &
-              & real(k_spect_dv(i,:,:),kind=rp), Jacobian, fmStat%rows, linear=.true. )
+              & real(k_spect_dv(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+              & linear=.true., extraJacobian=extraJacobian )
 
           if ( spect_der_Width ) &
             & call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
               & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
               & fwdModelConf%lineWidth%qty, grids_w, L1BMIF_TAI, MIFDeadTime, &
-              & real(k_spect_dw(i,:,:),kind=rp), Jacobian, fmStat%rows, linear=.true. )
+              & real(k_spect_dw(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+              & linear=.true., extraJacobian=extraJacobian )
 
           if ( spect_der_Width_TDep ) &
             & call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
               & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
               & fwdModelConf%lineWidth_TDep%qty, grids_n, L1BMIF_TAI, MIFDeadTime, &
-              & real(k_spect_dn(i,:,:),kind=rp), Jacobian, fmStat%rows, linear=.true. )
+              & real(k_spect_dn(i,:,:),kind=rp), Jacobian, fmStat%rows, &
+              & linear=.true., extraJacobian=extraJacobian )
 
           call interpolateArrayTeardown ( coeffs )
 
@@ -4635,6 +4680,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.343  2013/07/13 00:06:20  vsnyder
+! Move computation of tangent pressures from Compute_Z_PSIG to Tangent_Pressures.
+! Remove declarations for unused symbols.
+!
 ! Revision 2.342  2013/06/12 02:35:22  vsnyder
 ! Make Z_psig allocatable instead of pointer
 !
