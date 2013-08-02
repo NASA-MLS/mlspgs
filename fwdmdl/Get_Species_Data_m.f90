@@ -32,7 +32,8 @@ contains
     ! Get vector quantities.
 
     use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
-    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL, &
+      GetQtyStuffForForwardModel
     use INTRINSIC, only: L_ISOTOPERATIO, L_LINECENTER, L_LINEWIDTH, &
       & L_LINEWIDTH_TDEP, L_VMR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
@@ -95,10 +96,9 @@ contains
 
     ! Get state vector quantities for species
     do b = 1, size(fwdModelConf%beta_group)
-      fwdModelConf%beta_group(b)%qty%qty => getQuantityForForwardModel ( &
+      fwdModelConf%beta_group(b)%qty = GetQtyStuffForForwardModel ( &
         &  fwdModelIn, fwdModelExtra, quantityType=l_vmr, molIndex=b,    &
         &  config=fwdModelConf, radiometer=fwdModelConf%signals(1)%radiometer, &
-        &  foundInFirst=fwdModelConf%beta_group(b)%qty%foundInFirst, &
         &  noError=.false. )
     end do ! b
 
@@ -166,6 +166,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.36  2013/05/15 03:08:54  vsnyder
+! Revise processing of dump switch
+!
 ! Revision 2.35  2012/05/08 01:34:54  vsnyder
 ! Get default isotope ratio from catalog, not from 1.0
 !
