@@ -1183,20 +1183,24 @@ contains
 
     ! --------------------------------------  DumpStateQuantities  -----
     subroutine DumpStateQuantities ( State, DumpQuantitiesNode, Title )
+      use MoreTree, only: StartErrorMessage
+      use Tree, only: DECORATION, NSONS, SUBTREE
       use VectorsModule, only: DUMP, GETVECTORQTYBYTEMPLATEINDEX, &
         & VECTOR_T, VECTORVALUE_T
-      use Tree, only: DECORATION, NSONS, SUBTREE
 
       type(vector_t), intent(in) :: State
       integer, intent(in) :: DumpQuantitiesNode ! in L2CF tree
       character(len=*), intent(in) :: Title
 
-      integer :: I
+      integer :: Gson, I
       type(vectorValue_t), pointer :: Qty
 
+      ! Sons of dumpQuantitiesNode are <dot vector quantity> trees.
       do i = 2, nsons(dumpQuantitiesNode)
-        qty => getVectorQtyByTemplateIndex ( state, &
-          & decoration(decoration(subtree(i,dumpQuantitiesNode))) )
+        gson = subtree(i,dumpQuantitiesNode)
+        qty => getVectorQtyByTemplateIndex ( &
+          & vectorDatabase(decoration(decoration(subtree(1,gson)))), &
+          & decoration(decoration(decoration(subtree(2,gson)))) )
         call dump ( qty, name=title )
       end do
 
@@ -2932,6 +2936,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.341  2013/08/03 00:40:42  vsnyder
+! Require vector.quantity in dumpQuantities field in retrieve spec
+!
 ! Revision 2.340  2013/07/26 22:41:44  vsnyder
 ! Fiddling with some dump switches
 !
