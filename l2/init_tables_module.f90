@@ -1563,7 +1563,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_covSansReg, boolean(), &
              begin, f+f_diagnostics, field_spec(s_vector), &
              begin, f+f_diagonal, boolean(), &
-             begin, f+f_dumpQuantities, field_spec(s_quantity), &
+             begin, f+f_dumpQuantities, vectorQuantity(), &
              begin, f+f_extendedAverage, boolean(), &
              begin, f+f_forwardModel, field_spec(s_forwardModel,req=req), &
              begin, f+f_fuzz, numeric(), & ! Secret
@@ -1963,6 +1963,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.577  2013/08/03 00:40:42  vsnyder
+! Require vector.quantity in dumpQuantities field in retrieve spec
+!
 ! Revision 2.576  2013/07/25 00:24:25  vsnyder
 ! Add MIFRHI, replace TransformRHI with TransformMIFRHI
 !
