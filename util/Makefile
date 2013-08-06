@@ -1,51 +1,22 @@
 # $RCSfile$
 
-# Compiler vendor name, to select machine_$(CVN)
-CVN = lf95
+MLSCFILE=.configure
+include ../$(MLSCFILE)
 
-FC= lf95
-FOPTS= -g --chk
-LDOPTS=
-PLATFORM= LF95.Linux.slow
-#PGSLIB= /van1/vsnyder/mlspgs/SDPToolkit/LF95
-CC=cc
-#HDF5INC=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/include
-#HDF5LIB=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/lib
-
-FAFTER=2>&1|hl
-LAFTER=2>&1|hl
-MLSF95=LF95
-MLSPLAT=Linux
-MLSCONFG=LF95.Linux
-
-PGSINC=/software/toolkit/E-LF6.1-tk5.2.11.A/toolkit5.2.11.A/include
-PGSTK=/software/toolkit/E-LF6.1-tk5.2.11.A/toolkit5.2.11.A/lib/linux
-HDFEOS=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos/lib/linux
-HDFEOS5=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos5/lib/linux
-HDF=/software/toolkit/E-LF6.1-tk5.2.11.A/HDF4.1r5/lib
-HDF5=/software/toolkit/E-LF6.1-tk5.2.11.A/hdf5-1.6.2/lib
-GCTP=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos/lib/linux
-PGSLIB=/software/toolkit/E-LF6.1-tk5.2.11.A/toolkit5.2.11.A/lib/linux
-HDFEOS_LIB=/software/toolkit/E-LF6.1-tk5.2.11.A/hdfeos/lib/linux
-HDFLIB=/software/toolkit/E-LF6.1-tk5.2.11.A/HDF4.1r5/lib
-
-machine_$(CVN).o machine.mod: machine_$(CVN).f90
-	$(FC) $(FOPTS) -c machine_$(CVN).f90
-
-compare: compare.f90 machine.mod machine_$(CVN).o
-	$(FC) $(FOPTS) -o compare compare.f90 machine_$(CVN).o
+compare2: compare2.f90
+	$(FC) $(FOPTS) -o compare2 compare2.f90
 
 CondenseLeakLog: CondenseLeakLog.f90
-	$(FC) $(FOPTS) -o CondenseLeakLog -I $(HOME)/mlspgs/lib/$(PLATFORM) \
-          CondenseLeakLog.f90 -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+	$(FC) $(FOPTS) -o CondenseLeakLog -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          CondenseLeakLog.f90 -L $(HOME)/mlspgs/lib/$(MLSCONFG) -lmls
 
 ConvertPFA: ConvertPFA.f90
-	$(FC) $(FOPTS) -o ConvertPFA -I $(HOME)/mlspgs/lib/$(PLATFORM) \
-          ConvertPFA.f90 -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+	$(FC) $(FOPTS) -o ConvertPFA -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          ConvertPFA.f90 -L $(HOME)/mlspgs/lib/$(MLSCONFG) -lmls
 
 convert_spectroscopy: convert_spectroscopy.f90
-	$(FC) $(FOPTS) -o convert_spectroscopy -I $(HOME)/mlspgs/lib/$(PLATFORM) \
-          convert_spectroscopy.f90 -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls \
+	$(FC) $(FOPTS) -o convert_spectroscopy -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          convert_spectroscopy.f90 -L $(HOME)/mlspgs/lib/$(MLSCONFG) -lmls \
           -L $(PGSLIB) -lPGSTK
 
 CopyElevMap: CopyElevMap.f90
@@ -66,21 +37,21 @@ Dump_HDF5_Structure: Dump_HDF5_Structure.o MyMLSDataInfo.o
          -lz -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.3 -lgcc $(LAFTER)
 
 DumpPFAData: DumpPFAData.f90
-	$(FC) $(FOPTS) -o DumpPFAData -I $(HOME)/mlspgs/lib/$(PLATFORM) \
-          DumpPFAData.f90 -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+	$(FC) $(FOPTS) -o DumpPFAData -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          DumpPFAData.f90 -L $(HOME)/mlspgs/lib/$(MLSCONFG) -lmls
 
 Filter_Fit: Filter_Fit.f90
 	$(FC) $(FOPTS) -o Filter_Fit Filter_Fit.f90 \
           -L/van1/vsnyder/math77/fortran/LF95/opt/ -lmath77 \
           -L/van1/vsnyder/math77/fortran/blas/LF95/opt/ -lblas
 
-f90tex: f90tex.f90 machine.mod machine_$(CVN).o
-	$(FC) $(FOPTS) -o f90tex f90tex.f90 machine_$(CVN).o -static
+f90tex: f90tex.f90
+	$(FC) $(FOPTS) -o f90tex f90tex.f90
 
 init_gen: init_gen.f90
 	$(FC) $(FOPTS) -o init_gen init_gen.f90 \
-        -I $(HOME)/mlspgs/lib/$(PLATFORM) \
-          -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+        -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          -L $(HOME)/mlspgs/lib/$(MLSCONFG) -lmls
 
 h5cat: h5cat.c
 	$(CC) -g -o h5cat -I $(HDF5INC) h5cat.c \
@@ -92,7 +63,21 @@ MyMLSDataInfo.o: MyMLSDataInfo.f90
 	$(FC) -c $(FOPTS) -I . -I ../lib/$(MLSCONFG) -I $(HDF5)/../fortran/src \
           -I $(HDF5)/../include MyMLSDataInfo.f90 $(FAFTER)
 
+Type_Generator: Type_Generator.f90
+	$(FC) $(FOPTS) -o Type_Generator -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
+          Type_Generator.f90 \
+         -L ../lib/$(MLSCONFG) -lmls \
+         -L $(PGSLIB) -lPGSTK \
+         -L $(HDF5) -lhdf5_fortran -lhdf5  \
+         -lz \
+         -ljpeg \
+         -L $(PVM_ROOT)/lib/$(PVM_ARCH) -lfpvm3 -lgpvm3 -lpvm3 \
+         -lz -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.3 -lgcc $(LAFTER)
+
 # $Log$
+# Revision 1.8  2007/01/10 00:58:36  vsnyder
+# Add CopyElevMap
+#
 # Revision 1.7  2004/09/23 23:16:11  vsnyder
 # Simplify make for compare
 #

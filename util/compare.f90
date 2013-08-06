@@ -27,8 +27,6 @@ program COMPARE
 ! Print the maximum relative and absolute difference anywhere at the end
 ! if it's not zero.
 
-  use Machine, only: IO_Error, getarg
-
   implicit NONE
 
 !---------------------------- RCS Ident Info ------------------------------
@@ -51,6 +49,7 @@ program COMPARE
   logical :: CONT = .false.       ! Continue even if control lines differ
   logical :: DoStats = .false.    ! -s option specified
   logical :: END
+  character(127) :: Errmsg
   character(127) :: File1, File2
   integer :: I, I1, I2, J
   logical :: Same = .false.       ! Print "Identical" if files are the same
@@ -87,7 +86,7 @@ program COMPARE
 
   i = 1
   do
-    call getarg ( i, line1 )
+    call get_command_argument ( i, line1 )
     if ( line1(1:1) /= '-' .and. line1 /= '' ) exit
     if ( line1(1:2) == '- ' ) then
       i = i + 1
@@ -121,16 +120,19 @@ program COMPARE
     i = i + 1
   end do
 
-  call getarg ( i, file1 )
-  open ( 10, file=file1, form='formatted', status='old', iostat=status )
+  call get_command_argument ( i, file1 )
+  open ( 10, file=file1, form='formatted', status='old', iostat=status, &
+    & iomsg=errmsg )
   if ( status /= 0 ) then
-    call io_error ( 'Unable to open input file', status, file1 )
+    print '("Unable to open input file ",a)', trim(file1)
+    print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
     stop
   end if
-  call getarg ( i+1, file2 )
+  call get_command_argument ( i+1, file2 )
   open ( 11, file=file2, form='formatted', status='old', iostat=status )
   if ( status /= 0 ) then
-    call io_error ( 'Unable to open input file', status, file2 )
+    print '("Unable to open input file ",a)', trim(file2)
+    print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
     stop
   end if
 
@@ -172,9 +174,10 @@ program COMPARE
       if ( .not. cont ) exit
     end if
 
-    read ( line2(i2+1:), *, iostat=status ) n
+    read ( line2(i2+1:), *, iostat=status, iomsg=errmsg ) n
     if ( status /= 0 ) then
-      call io_error ( line2, status )
+      print '("Unable to read number N from ",a)', trim(line2(i2+1:))
+      print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
       exit
     end if
 
@@ -184,23 +187,27 @@ program COMPARE
     if ( n == 1 ) then
       read ( line1(i1+1:), *, iostat=status ) n, r1
       if ( status /= 0 ) then
-        call io_error ( line2, status )
+        print '("Unable to read numbers N, R1 from ",a)', trim(line2(i1+1:))
+        print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
         exit
       end if
       read ( line2(i2+1:), *, iostat=status ) n, r2
       if ( status /= 0 ) then
-        call io_error ( line2, status )
+        print '("Unable to read numbers N, R2 from ",a)', trim(line2(i1+1:))
+        print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
         exit
       end if
     else
       read ( 10, *, iostat=status ) r1
       if ( status /= 0 ) then
-        call io_error ( file1, status )
+        print '("Unable to read number R1 from input file")'
+        print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
         exit
       end if
       read ( 11, *, iostat=status ) r2
       if ( status /= 0 ) then
-        call io_error ( file2, status )
+        print '("Unable to read number R2 from input file")'
+        print '("Status = ", i0, ", Message = ",a)', status, trim(errmsg)
         exit
       end if
     end if
@@ -311,7 +318,7 @@ contains
   end subroutine Stats
 
   subroutine USAGE
-    call getarg ( 0, line1 )
+    call get_command_argument ( 0, line1 )
     print *, 'Usage: ', trim(line1), ' [option] file1 file2'
     print *, ' Options: -a => Show nonzero difference for all quantities'
     print *, '          -c => Continue even if control lines differ'
@@ -322,12 +329,17 @@ contains
     print *, '          -V => Be verbose'
     print *, '          -z => Show zero difference summary at the end'
     print *, '                With -a, show zero individual differences too.'
+    print *, '          -"anything else", or missing file1 or file2'
+    print *, '             => This explanation.'
     stop
   end subroutine USAGE
 
 end program
 
 ! $Log$
+! Revision 1.18  2009/04/13 20:43:17  pwagner
+! Fixed a bug preventing macros file from using its own macros properly
+!
 ! Revision 1.17  2007/06/26 00:33:43  vsnyder
 ! Print difference relative to max(maxval(abs(r1)),maxval(abs(r2))).
 ! Get rid of eps and outputs scaled by it.

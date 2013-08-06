@@ -16,6 +16,7 @@ program F90TEX
 ! works if it's the first line of the !\{ block, and there's nothing else on
 ! the line.
 
+!>> 2013-08-06 F90TEX WV Snyder Remove dependence on machine module
 !>> 2012-02-09 F90TEX WV Snyder Stuff to make \cleardoublepage work
 !>> 2010-08-21 F90TEX WV Snyder Added -u option for usepackage
 !>> 2003-10-28 F90TEX WV Snyder Stuff to make \newpage work
@@ -23,12 +24,12 @@ program F90TEX
 
 ! =====     Declarations     ===========================================
 
-  use MACHINE, only: FILSEP, GETARG, IO_ERROR
-
   implicit NONE
 
   logical :: BOX = .true.                         ! Put a box around !{ TeX?
   character(len=8) :: DATE                        ! of program execution
+  character(127) :: Errmsg                        ! from I/O
+  character(*), parameter :: FilSep = '/'         ! file separator in path names
   integer :: I, J                                 ! Subscript / do inductor
   character(len=132) :: IN_FILE, OUT_FILE         ! File names
   integer :: IN_UNIT = 10, OUT_UNIT = 11          ! Unit numbers
@@ -69,11 +70,11 @@ program F90TEX
 
   i = 1
   do
-    call getarg ( i, in_file )
+    call get_command_argument ( i, in_file )
     if ( in_file(1:1) /= '-' ) exit
     if ( in_file(1:2) == '- ' ) then
       i = i + 1
-      call getarg ( i, in_file )
+      call get_command_argument ( i, in_file )
       exit
     end if
     if ( in_file(1:3) == '-l ' ) then
@@ -86,7 +87,7 @@ program F90TEX
       box = .false.
     else if ( in_file(1:3) == '-n ' ) then
       i = i + 1
-      call getarg ( i, number_step )
+      call get_command_argument ( i, number_step )
     else if ( in_file(1:3) == '-p ' ) then
       running = .false.
     else if ( in_file(1:3) == '-u ' ) then
@@ -95,10 +96,10 @@ program F90TEX
       else
         number_packages = number_packages + 1
         i = i + 1
-        call getarg ( i, packages(number_packages) )
+        call get_command_argument ( i, packages(number_packages) )
       end if
     else
-      call getarg ( 0, in_file )
+      call get_command_argument ( 0, in_file )
       write (*,*) &
       & 'Usage: ', trim(in_file), ' [options] [ in_file [out_file ]]'
       write (*,*) &
@@ -121,17 +122,18 @@ program F90TEX
       write (*,*) '                        can appear up to 99 times'
       write (*,*) '          -<anything else> => this output'
       write (*,*) '          -  => no more options'
-      write (*,*) ' 15 December 2010'
+      write (*,*) ' 6 August 2013'
       stop
     end if
     i = i + 1
   end do
-  call getarg ( i+1, out_file )
+  call get_command_argument ( i+1, out_file )
 
   if ( in_file /= ' ' ) then
-    open(in_unit, file=in_file, status='old', iostat=iostat)
+    open(in_unit, file=in_file, status='old', iostat=iostat, iomsg=errmsg)
     if ( iostat /= 0 ) then
-      call io_error ( 'Unable to open input file', iostat, in_file )
+      print '("Unable to open input file ",a)', trim(in_file)
+      print '("Status = ",i0," Message = ")', iostat, trim(errmsg)
       stop
     end if
     if ( out_file == ' ' ) then
@@ -143,7 +145,8 @@ program F90TEX
     end if
     open(out_unit, file=out_file, iostat=iostat)
     if ( iostat /= 0 ) then
-      call io_error ( 'Unable to open output file', iostat, out_file )
+      print '("Unable to open output file ",a)', trim(out_file)
+      print '("Status = ",i0," Message = ")', iostat, trim(errmsg)
       stop
     end if
   else
@@ -273,6 +276,9 @@ program F90TEX
   if ( state == 1 ) call output ( stop_code(sx), tex=.true. )
     
 ! Output the ending stuff
+! The only effect of the "vspace" line is that "lastpage" is defined
+! if a line of text after the last line would be on a new page.
+  call output ( 'vspace*{-1in}', tex=.true. )
   call output ( 'label{lastpage}', tex=.true. )
   call output ( 'end{document}', tex=.true. )
 
@@ -322,6 +328,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.15  2012/02/09 23:50:05  vsnyder
+! Go back to using getarg; let machine turn that into get_command_argument
+!
 ! Revision 1.12  2010/08/22 00:45:24  vsnyder
 ! Add -u option to include LaTeX packages
 !
