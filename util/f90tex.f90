@@ -35,6 +35,7 @@ program F90TEX
   integer :: IN_UNIT = 10, OUT_UNIT = 11          ! Unit numbers
   integer :: IOSTAT                               ! I/O status
   character(len=132) :: LINE                      ! From input
+  integer :: LineNo = 0                           ! Of input
   character(len=23) :: NOW                        ! Date and time, formatted
   character :: NUMBER_STEP = '1'                  ! Line number step
   integer :: Number_Packages = 0                  ! Number of packages to use
@@ -215,6 +216,7 @@ program F90TEX
 
 ! Copy the program text
   do
+    lineNo = lineNo + 1
     if ( in_unit >= 0 ) then
       read ( in_unit, '(a)', iostat=iostat ) line
     else
@@ -266,6 +268,8 @@ program F90TEX
       else
         if ( box .and. state == 2 ) call output ( '}}' )
         state = 1
+        write ( now, '("linenumbers[",i0,"]")' ) lineNo - 1
+        call output ( trim(now), tex=.true. )
         if ( sx == 2 ) call output ( '{\tt', adv='no' )
         call output ( start_code(sx), tex=.true. )
         call output ( trim(line) )
@@ -328,6 +332,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.16  2013/08/06 23:14:31  vsnyder
+! Remove dependence on machine module
+!
 ! Revision 1.15  2012/02/09 23:50:05  vsnyder
 ! Go back to using getarg; let machine turn that into get_command_argument
 !
