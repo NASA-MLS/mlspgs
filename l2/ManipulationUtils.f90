@@ -99,6 +99,7 @@ contains ! =====     Public Procedures     =============================
     character (len=MAXSTRLISTLENGTH) :: mstr ! manipulation being manipulated
     integer, parameter :: MAXNESTINGS=64 ! Max number of '(..)' pairs
     character(len=MAXSTRLISTLENGTH) :: collapsedstr
+    integer :: IFUN
     integer :: level
     logical :: MAPFUNCTION
     integer :: np ! number of primitives
@@ -106,8 +107,20 @@ contains ! =====     Public Procedures     =============================
     character(len=MAXSTRLISTLENGTH) :: part2
     character(len=MAXSTRLISTLENGTH) :: part3
     character(len=4) :: vchar
+    integer, parameter :: NFUNNAMES = 25
+    character(len=8), dimension(NFUNNAMES) :: FUNCOLONS
+    character(len=8), dimension(NFUNNAMES), parameter :: FUNNAMES = &
+      & (/ 'stddev  ', 'rms     ', 'median  ', 'mean    ', 'max     ', &
+      &    'min     ', 'count   ', 'slip    ', 'shift   ', 'channel ', &
+      &    'surface ', 'instance', 'height  ', 'lon     ', 'lat     ', &
+      &    'sza     ', 'map     ', 'log10   ', 'log     ', 'ln      ', &
+      &    'exp     ', 'ifpos   ', 'ifneg   ', 'sign    ', 'abs     ' /)
+      
     ! logical, parameter :: DEEBUG = .true.
     ! Executable
+    do iFun = 1, NFUNNAMES
+      FUNCOLONS(iFun) = trim(FunNames(iFun)) // ':'
+    enddo
     mstr = str
     if ( DeeBUG ) print *, 'mstr: ', trim(mstr)
     MapFunction = ( index(mstr, 'map' ) > 0 )
@@ -196,7 +209,19 @@ contains ! =====     Public Procedures     =============================
         alreadyValParens = .true.
         mstr = ParenthesizeVal( collapsedstr )
         if ( DeeBUG ) then
-          print *, 'Adding pareens to val ', part2
+          print *, 'Adding parens to val ', part2
+          print *, 'before ', trim(collapsedstr)
+          print *, 'after ', trim(mstr)
+        endif
+        collapsedstr = mstr
+        cycle
+      elseif ( any( indexes( trim(part2), FunColons) > 1 ) .and. &
+        &  .not. alreadyValParens ) then
+        alreadyValParens = .true.
+        iFun = FindFirst( indexes( trim(part2), FunColons) > 1 )
+        mstr = ParenthesizeFun( collapsedstr, trim(FunNames(iFun)) )
+        if ( DeeBUG ) then
+          print *, 'Adding parens to Fun ', part2, FunNames(iFun)
           print *, 'before ', trim(collapsedstr)
           print *, 'after ', trim(mstr)
         endif
@@ -1199,6 +1224,36 @@ contains ! =====     Public Procedures     =============================
       newStr = trim(newStr) // str(dbInd+lastBl:)
   end function Parenthesize
 
+  function ParenthesizeFun ( str, Fun ) result ( newStr )
+    ! Add parentheses to a Fun function
+    ! E.g., turn ' ... Fun: 4 ...'
+    ! to ' ... (Fun: 4) ...'
+    character(len=*), intent(in) :: str
+    character(len=*), intent(in) :: Fun
+    character(len=len(str)+8)    :: newStr
+    ! Method: starting from the 'fun:', go forward to the first blank
+    ! put '( ' or ') ' in place of them
+    ! Internal variables
+    integer :: col
+    integer :: dbInd
+    integer :: firstBl
+    integer :: lastBl
+    integer :: lenFunName
+    ! Executable
+    lenFunName = len(Fun)
+    newStr = str
+    col = index( str, Fun // ':' )
+    if ( col < 1 ) return
+    firstBl = findFirst( str(col+lenFunName+2:), ' ' )
+    if ( col > 1 ) then
+      newStr = str(:col-1) // '( ' // Fun // ':'
+    else
+      newStr =                '( ' // Fun // ':'
+    endif
+    newStr = trim(newStr) // ' ' // str(col+lenFunName+2:col+lenFunName+2+firstBl-1) // &
+      & ')' // str(col+lenFunName+2+firstBl:)
+  end function ParenthesizeFun
+
   function ParenthesizeVal ( str ) result ( newStr )
     ! Add parentheses to a val function
     ! E.g., turn ' ... val: 4 ...'
@@ -1321,6 +1376,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.9  2013/08/06 23:02:24  pwagner
+! Needed another change to handle nested functions
+!
 ! Revision 2.8  2013/07/13 00:17:08  pwagner
 ! Fixed another bug; this one affected numbers
 !
