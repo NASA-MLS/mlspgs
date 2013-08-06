@@ -98,12 +98,26 @@ contains
     print '(a)', '           -b     => Ampersand before each line, except the first'
     print '(a)', '                     if first margin /= left margin'
     print '(a)', '           -n     => No comma and ampersand on last line'
+    print '(a)', '           -"anything else", or a missing margin'
+    print '(a)', '                  => This explanation.'
+    print '(a)'
+    print '(a)', '  Suppose you have a list of USE names that you normally want'
+    print '(a)', '  to start in column 5, but the colon after ONLY in the USE'
+    print '(a)', '  statement is in column 18 so you want the list on that line'
+    print '(a)', '  to start in column 20. Suppose you want to wrap the end at'
+    print '(a)', '  column 74, and you want ampersands on each line after the'
+    print '(a)', '  first one.  You might use'
+    print '(a)'
+    print '(a)', '  ' // trim(in) // ' -f20 -b 5 78'
     stop
   end subroutine Usage
 
 end program WrapList
 
 ! $Log$
+! Revision 1.3  2013/07/19 00:29:54  vsnyder
+! Add -f, -b and -n options
+!
 ! Revision 1.2  2013/07/18 22:56:16  vsnyder
 ! Initial commit
 !
