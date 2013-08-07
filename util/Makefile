@@ -1,10 +1,16 @@
 # $RCSfile$
 
+# Compiler vendor name, to select machine_$(CVN)
+CVN = lf95
+
 MLSCFILE=.configure
 include ../$(MLSCFILE)
 
-compare2: compare2.f90
-	$(FC) $(FOPTS) -o compare2 compare2.f90
+machine_$(CVN).o machine.mod: machine_$(CVN).f90
+	$(FC) $(FOPTS) -c machine_$(CVN).f90
+
+compare: compare.f90
+	$(FC) $(FOPTS) -o compare compare.f90
 
 CondenseLeakLog: CondenseLeakLog.f90
 	$(FC) $(FOPTS) -o CondenseLeakLog -I $(HOME)/mlspgs/lib/$(MLSCONFG) \
@@ -74,7 +80,16 @@ Type_Generator: Type_Generator.f90
          -L $(PVM_ROOT)/lib/$(PVM_ARCH) -lfpvm3 -lgpvm3 -lpvm3 \
          -lz -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.3 -lgcc $(LAFTER)
 
+UnwrapList: UnwrapList.f90
+	$(FC) $(FOPTS) -o UnwrapList UnwrapList.f90
+
+WrapList: WrapList.f90
+	$(FC) $(FOPTS) -o WrapList WrapList.f90
+
 # $Log$
+# Revision 1.9  2013/08/06 23:14:31  vsnyder
+# Remove dependence on machine module
+#
 # Revision 1.8  2007/01/10 00:58:36  vsnyder
 # Add CopyElevMap
 #
