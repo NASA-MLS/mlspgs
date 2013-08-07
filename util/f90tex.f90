@@ -248,12 +248,14 @@ program F90TEX
         call output ( trim(line) )
       else
         call output ( stop_code(sx), tex=.true. )
+        call output ( 'nolinenumbers', tex=.true. )
         if ( adjustl(line(i+2:)) == '\newpage' .or. &
            & adjustl(line(i+2:)) == '\cleardoublepage' ) then
           state = 3
-        else if ( box ) then
-          call output ( 'framebox[' // width // '][l]{\parbox{' // &
-                        widthp // '}{', tex=.true. )
+        else
+          if ( box ) &
+            & call output ( 'framebox[' // width // '][l]{\parbox{' // &
+                          widthp // '}{', tex=.true. )
           state = 2
         end if
         call output ( trim(line(i+2:)) )
@@ -268,7 +270,10 @@ program F90TEX
       else
         if ( box .and. state == 2 ) call output ( '}}' )
         state = 1
-        write ( now, '("linenumbers[",i0,"]")' ) lineNo - 1
+        call output ( '' ) ! without this, the previous paragraph gets line
+                           ! numbers if there is more than one paragraph in
+                           ! block
+        write ( now, '("linenumbers[",i0,"]")' ) lineNo
         call output ( trim(now), tex=.true. )
         if ( sx == 2 ) call output ( '{\tt', adv='no' )
         call output ( start_code(sx), tex=.true. )
@@ -332,6 +337,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.17  2013/08/06 23:40:32  vsnyder
+! Explicitly set line number after typeset box
+!
 ! Revision 1.16  2013/08/06 23:14:31  vsnyder
 ! Remove dependence on machine module
 !
