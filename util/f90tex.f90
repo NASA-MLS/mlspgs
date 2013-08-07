@@ -156,6 +156,13 @@ program F90TEX
     out_unit = -1        ! Standard output
   end if
 
+! Replace any \ in the input file name with /, so as not to confuse LaTeX
+! when it tries to produce the page header.
+
+  do i = 1, len(in_file)
+    if ( in_file(i:i) == '\' ) in_file(i:i) = '/'
+  end do
+
 ! Output the beginning stuff
 
   call output ( 'documentclass[11pt,twoside]{article}', tex=.true. )
@@ -337,6 +344,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.18  2013/08/07 20:19:26  vsnyder
+! Repair -nb option
+!
 ! Revision 1.17  2013/08/06 23:40:32  vsnyder
 ! Explicitly set line number after typeset box
 !
