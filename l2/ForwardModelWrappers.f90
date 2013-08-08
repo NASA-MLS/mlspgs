@@ -51,7 +51,8 @@ contains ! ============= Public Procedures ==========================
       & L_SWITCHINGMIRROR
     use Intrinsic, only: L_LOWESTRETRIEVEDPRESSURE, L_VMR, Lit_Indices
     use LINEARIZEDFORWARDMODEL_M, only: LINEARIZEDFORWARDMODEL
-    use MATRIXMODULE_1, only: CHECKINTEGRITY, MATRIX_T
+    use MATRIXMODULE_1, only: CHECKINTEGRITY, CreateEmptyMatrix, DestroyMatrix, &
+      & MATRIX_T
     use MLSKinds, only: RV
     use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR, &
@@ -70,13 +71,13 @@ contains ! ============= Public Procedures ==========================
 
     ! Dummy arguments
     type(forwardModelConfig_T), intent(inout) :: CONFIG
-    type(vector_T), intent(inout), target :: FWDMODELIN ! The state
-    type(vector_T), intent(in) :: FwdModelExtra
-    type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+    type(vector_t), intent(inout), target :: FWDMODELIN ! The state
+    type(vector_t), intent(in) :: FwdModelExtra
+    type(vector_t), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
-    type(matrix_T), intent(inout), optional, target :: JACOBIAN ! The
+    type(matrix_t), intent(inout), optional, target :: JACOBIAN ! The
       ! Jacobian, used for the Newton iteration.
-    type(hessian_T), intent(inout), optional :: HESSIAN ! No transformation
+    type(hessian_t), intent(inout), optional :: HESSIAN ! No transformation
     type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
 
     ! Local variables
@@ -101,7 +102,10 @@ contains ! ============= Public Procedures ==========================
                                            !     details = 10's digit - 4
                                            ! 3 = 100's digit => Transformed Jacobian
                                            !     details = 100's digit - 4
-    type(qtyStuff_t) :: EXTQty(nt)         ! extinction quantities, see NT
+    type(qtyStuff_t) :: FwmQty(nt)         ! forward model quantities, see NT
+    type(matrix_t), target :: ExtraJacobian ! for the forward model for profile
+                                           ! quantities when retrieving MIF
+                                           ! quantities
     real(rv) :: ExtrapExponent             ! -exponent for extinction extrapolation
     real(rv) :: ExtrapForm                 ! -exponent for extinction derivative extrapolation
     integer :: FMNaN                       ! Level of fmnan switch
@@ -109,13 +113,15 @@ contains ! ============= Public Procedures ==========================
     logical :: InOrbitPlane                ! Model plane is orbit plane
     type(vectorValue_t), pointer :: LRP    ! Lowest Retrieved Pressure
     type(qtyStuff_t) :: MIFQty(nt)         ! MIF extinction quantity
-    ! Molecule types corresponding to qTypes:
-    integer, parameter :: MTypes(nt) = (/ l_Extinction, l_Extinctionv2, l_RHI /)
+    ! MIF (quantity) types:
+    integer, parameter :: MTypes(nt) = &
+      & (/ l_MIFExtinction, l_MIFExtinctionv2, l_MIFRHI /)
+    type(matrix_t), pointer :: MyJacobian  ! Either Jacobian or ExtraJacobian
     real(rv) :: Normal(3)                  ! to the profile plane, XYZ
     type(vectorValue_t), pointer :: Ptan   ! Tangent pressure
-    ! Quantity types for MIF extinction:
-    integer, parameter :: QTypes(nt) = &
-      & (/ l_MIFExtinction, l_MIFExtinctionv2, l_MIFRHI /)
+    ! Profile (molecule) types corresponding to mTypes:
+    integer, parameter :: PTypes(nt) = &
+      & (/ l_Extinction, l_Extinctionv2, l_RHI /)
     character(len=132) :: ThisName
     real :: Time_start, Time_end
     integer :: T1, T2 ! Bounds for transform indices, 1:2, 3:3, or 1:3.  see NT.
@@ -180,47 +186,58 @@ contains ! ============= Public Procedures ==========================
       ! All signals in a single config are for the same radiometer
       do i = t1, t2
         derivs(i) = .false.
-        ! First, check whether the transformed extinction is in a
-        ! molecules field in the config.  MIFQty(i)%wasSpecific is a temp here.
-        MIFQty(i)%wasSpecific = any(config%molecules == mTypes(i))
-        if ( MIFQty(i)%wasSpecific ) &
+        ! First, check whether the transformed profile quantity is in a
+        ! molecules field in the config.
+        MIFQty(i)%wasSpecific = any(config%molecules == pTypes(i))
+        if ( any(config%molecules == pTypes(i)) ) &
           & MIFQty(i) = GetQtyStuffForForwardModel ( fwdModelIn,    &
-            & fwdModelExtra, quantityType=qTypes(i), config=config, &
+            & fwdModelExtra, quantityType=mTypes(i), config=config, &
             & radiometer=config%signals(1)%radiometer, noError=.true. )
-          ! MIFQty(i)%wasSpecific is no longer a temp here
+
+        ! If MIFQty(i)%wasSpecific is false now, it either means MIFQty(i)
+        ! isn't specific, or there was no intersection between pTypes
+        ! and config%molecules
 
         if ( MIFQty(i)%wasSpecific ) &
-          & extQty(i) = GetQtyStuffForForwardModel ( fwdModelIn,      &
-            & fwdModelExtra, quantityType=l_vmr, molecule=mTypes(i),  &
+          & fwmQty(i) = GetQtyStuffForForwardModel (                  &
+            & fwdModelExtra, quantityType=l_vmr, molecule=pTypes(i),  &
             & config=config, radiometer=config%signals(1)%radiometer, &
             & noError=.true. )
-        doTrans(i) = MIFQty(i)%wasSpecific .and. extQty(i)%wasSpecific
+        doTrans(i) = MIFQty(i)%wasSpecific .and. fwmQty(i)%wasSpecific
         if ( doTrans(i) .and. associated(config%moleculeDerivatives) ) then
-          derivs(i) = any( config%molecules == mTypes(i) .and. &
-                    &      config%moleculeDerivatives )
-          ! If molecule derivatives are requested for MTypes(i), make
-          ! sure there is a Jacobian, and that both MIFQty(i) and EXTQty(i)
-          ! are in the state vector, not the extra vector
+!???      Use this when all compilers we use support FINDLOC (Fortran 2008)
+!???      derivs(i) = config%moleculeDerivatives(findloc(config%molecules,pTypes(i)))
+          do k = 1, size(config%molecules)
+            if ( config%molecules(k) == pTypes(i) ) then
+              derivs(i) = config%moleculeDerivatives(k)
+              exit
+            end if
+          end do
+          ! If molecule derivatives are requested for pTypes(i), make
+          ! sure there is a Jacobian, that MIFQty(i) is in the state
+          ! vector, and FwmQty(i) is in the extra vector.
           if ( derivs(i) .and. .not. &
             & ( present(Jacobian) .and. MIFQty(i)%foundInFirst .and. &
-            &   extQty(i)%foundInFirst ) ) then
+            &   fwmQty(i)%foundInFirst ) ) then
             call MLSMessage ( MLSMSG_Error, moduleName, &
-              & 'TransformMIFextinction or TransformMIFRHI requested ' // &
-              & 'in %S with derivatives, but Jacobian is not present, ' // &
-              & 'or %S is not in state vector', &
-              & datum=[config%name,lit_indices(mTypes(i))] )
+              & 'MIF Transformation requested with derivatives in %S, but ' // &
+              & 'Jacobian is not present, %S is not in the state vector, '  // &
+              & 'or $S is not in the extra vector', &
+              & datum=[config%name,lit_indices(mTypes(i)),lit_indices(mTypes(i))] )
           end if
         end if
 
       end do
 
-      if ( .not. any(MIFqty%wasSpecific .and. extQty%wasSpecific) ) &
+      if ( .not. any(doTrans(t1:t2)) ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'TransformMIFextinction or TransformMIFRHI requested, but ' // &
-          & 'necessary quantities are not specific' )
+          & 'MIF Transformation requested, but necessary quantities are ' // &
+          & 'not specific' )
     end if ! config%transformMIFextinction
 
     if ( any(doTrans(t1:t2)) ) then
+      call createEmptyMatrix ( extraJacobian, 0, fwdModelOut, fwdModelExtra, &
+        & .not. jacobian%row%instFirst, .not. jacobian%col%instFirst )
       ! Use lrp as a handy temporary vector quantity pointer
       lrp => GetQuantityForForwardModel ( fwdModelExtra, noError=.true., &
                & quantityType=l_MIFExtinctionExtrapolation, config=config )
@@ -242,21 +259,22 @@ contains ! ============= Public Procedures ==========================
       do i = t1, t2
         if ( doTrans(i) ) then
           call transform_MIF_Qty ( fmStat%MAF, MIFQty(i)%qty, ptan, &
-            & lrp%values(1,1), extrapExponent, extQty(i)%qty, dumpTransform )
+            & lrp%values(1,1), extrapExponent, fwmQty(i)%qty, dumpTransform )
         end if
       end do
 
       ! Run the forward model with the transformed quantities
-      call doForwardModels
+      call doForwardModels ( extraJacobian )
 
       ! Transform fwmJacobian and radiances for quantities for which
       ! transformation is requested.
       do i = t1, t2
         if ( derivs(i) ) &
-          & call transform_FWM_Qty ( config, fmStat%MAF, fwdModelOut, &
-            & extQty(i)%qty, MIFQty(i)%qty, ptan, extrapForm, Jacobian,      &
-            & dumpTransform, clean )
+          & call transform_FWM_Qty ( config, fmStat%MAF, fwdModelOut,   &
+            & fwmQty(i)%qty, MIFQty(i)%qty, ptan, extrapForm, Jacobian, &
+            & extraJacobian, dumpTransform, clean )
       end do
+      call destroyMatrix ( extraJacobian )
     else ! Run the forward model without transformation
       call doForwardModels
     end if
@@ -302,7 +320,7 @@ contains ! ============= Public Procedures ==========================
       end if
 
     end if
-      
+
     ! Do the timing stuff
     call time_now (time_end)
     deltaTime = time_end - time_start
@@ -321,7 +339,9 @@ contains ! ============= Public Procedures ==========================
 
   contains
 
-    subroutine DoForwardModels
+    subroutine DoForwardModels ( ExtraJacobian )
+
+      type(matrix_t), optional, intent(inout) :: ExtraJacobian
 
       select case (config%fwmType)
       case ( l_baseline )
@@ -337,7 +357,7 @@ contains ! ============= Public Procedures ==========================
       case ( l_full )
         call MLSMessageCalls( 'push', constantName='FullForwardModel' )
         call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
-          FwdModelOut, fmStat, Jacobian, Hessian=Hessian )
+          FwdModelOut, fmStat, Jacobian, ExtraJacobian, Hessian )
         call add_to_retrieval_timing( 'full_fwm' )
       case ( l_linear )
         call MLSMessageCalls( 'push', constantName='LinearizedForwardModel' )
@@ -393,7 +413,7 @@ contains ! ============= Public Procedures ==========================
 
 !{\cleardoublepage
   subroutine Transform_FWM_Qty ( Config, MAF, FwdModelOut, F_Qty, S_Qty, &
-    &                            PTan, ExtrapForm, Jacobian, &
+    &                            PTan, ExtrapForm, Jacobian, ExtraJacobian, &
     &                            DumpTransform, Clean )
     ! Transform blocks of the Jacobian associated with f_qty to blocks
     ! associated with s_qty.
@@ -416,28 +436,29 @@ contains ! ============= Public Procedures ==========================
 
     type(forwardModelConfig_T), intent(in) :: CONFIG
     integer, intent(in) :: MAF               ! MAjor Frame number
-    type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+    type(vector_t), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
     type(vectorValue_t), intent(in) :: F_Qty ! Profile quantity in fwmState
     type(vectorValue_t), intent(in) :: S_Qty ! MIF quantity in State
     type(vectorValue_t), intent(in) :: PTan  ! Tangent pressure, for S_Qty
     real(rv), intent(in) :: ExtrapForm       ! exponent for extrapolation
-    type(matrix_T), intent(inout) :: Jacobian
+    type(matrix_t), intent(inout), target :: Jacobian, ExtraJacobian
     integer, intent(in) :: DumpTransform(3)
     logical, intent(in) :: Clean             ! for the dumps
 
     integer :: Chan    ! Index of channel in Config
     integer :: CV      ! c in wvs-107
     integer :: CZ      ! ci, channels X zetas, in wvs-107
-    integer :: FCols(f_qty%template%noInstances) ! of Jacobian, j in wvs-107
+    integer :: FCols(f_qty%template%noInstances) ! of ExtraJacobian, j in wvs-107
     integer :: Inst    ! Loop inductor to compute fCols, j in wvs-107
     integer :: JCol    ! of Jacobian
     integer :: JCols(s_qty%template%noInstances) ! of Jacobian, n in wvs-107
     integer :: JRow    ! of Jacobian, n in wvs-107
+    type(matrix_t), pointer :: FWMJacobian   ! Either Jacobian or ExtraJacobian
     integer :: NVecChans ! Number of channels in radiance
-    type(vectorValue_t), pointer :: O_Qty        ! Qty of output vector
+    type(vectorValue_t), pointer :: O_Qty    ! Qty of output vector
     real(rv) :: P(size(ptan%values,1),f_qty%template%noSurfs) ! 10**(-2*(zeta(surf)-zeta(vSurf)))
                        ! for MIF extinction, or ProfileRHI/MIFRHI for MIF RHI.
-    real(rm) :: RowSum ! sum(Jacobian%block(jRow,fCols)%values(cz,:))
+    real(rm) :: RowSum ! sum(extraJacobian%block(jRow,fCols)%values(cz,:))
     integer :: SB      ! Sideband, zero or from the first signal in config
     integer :: Surf    ! column of Jacobian%block(jRow,fCol)%values, 
                        ! g in wvs-107
@@ -447,7 +468,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Get the block column subscripts for instances of f_qty.
     do inst = 1, f_qty%template%noInstances
-      fCols(inst) = findBlock ( Jacobian%col, f_qty%index, inst )
+      fCols(inst) = findBlock ( extraJacobian%col, f_qty%index, inst )
     end do
 
     ! Get the block column subscripts for instances of s_qty.
@@ -494,13 +515,13 @@ contains ! ============= Public Procedures ==========================
       end if
       if ( dumpTransform(2) >= 1 ) then
         do inst = 1, size(fCols)
-          call dump ( Jacobian, 'Jacobian from forward model', dumpTransform(2)-3, &
+          call dump ( extraJacobian, 'Jacobian from forward model', dumpTransform(2)-3, &
             & row=jRow, column=fCols(inst) )
         end do
       end if
       do jCol = 1, size(jCols)
         if ( Jacobian%col%inst(jCols(jCol)) /= MAF .or. &
-           & all(Jacobian%block(jRow,fCols)%kind == m_absent) ) then
+           & all(extraJacobian%block(jRow,fCols)%kind == m_absent) ) then
           ! Zero MIF blocks of Jacobian that are off-diagonal or would not
           ! be filled because all corresponding MIF blocks are absent.
           call destroyBlock ( Jacobian%block(jRow,jCols(jCol)) )
@@ -553,15 +574,15 @@ contains ! ============= Public Procedures ==========================
       ! $g$ is the surface ($\zeta$) number.
 
       ! But we can't do
-      ! rowSum = sum(Jacobian%block(jRow,fCols)%values(cz,surf))
+      ! rowSum = sum(extraJacobian%block(jRow,fCols)%values(cz,surf))
       ! because "values" has the POINTER attribute.
 
               rowSum = 0.0
               do inst = 1, size(fCols)
-                select case ( Jacobian%block(jRow,fCols(inst))%kind )
+                select case ( extraJacobian%block(jRow,fCols(inst))%kind )
                 case ( m_full )
                   rowSum = rowSum + &
-                    & Jacobian%block(jRow,fCols(inst))%values(cz,surf)
+                    & extraJacobian%block(jRow,fCols(inst))%values(cz,surf)
                 case ( m_absent )
                 case default
                   call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -625,18 +646,6 @@ contains ! ============= Public Procedures ==========================
         end do
       end if
     end do ! chan
-
-    ! Destroy columns of Jacobian corresponding to f_qty so retriever has
-    ! no hope of trying to retrieve extinction.
-    do jCol = 1, size(fCols)
-      do jRow = 1, Jacobian%row%nb
-        call destroyBlock ( Jacobian%block(jRow,fCols(jCol)) )
-      end do ! jRow
-    end do ! jCol
-
-    ! Make values of f_Qty zero so as not to confuse the calculation of
-    ! aj%axmax in the retriever
-    f_qty%values = 0.0
 
   end subroutine Transform_FWM_Qty
 
@@ -752,8 +761,8 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
-! Revision 2.65  2013/08/03 00:39:21  vsnyder
-! Pass Hessian as keyword argument; stopgap until new MIF transformations work
+! Revision 2.66  2013/08/08 02:36:58  vsnyder
+! Use ExtraJacobian for profile quantity derivatives
 !
 ! Revision 2.64  2013/07/26 18:20:26  vsnyder
 ! Cannonball polishing, especially error messages
