@@ -1207,57 +1207,70 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyMatrixDatabase
 
   ! ----------------------------------------------------  Dump_RC  -----
-  subroutine Dump_RC ( RC, R_or_C, Details )
+  subroutine Dump_RC ( RC, R_or_C, Details, Num )
     type(rc_info), intent(in) :: RC
     character(len=*), intent(in) :: R_or_C
     logical, intent(in) :: Details
-    call output ( 'Number of ' )
-    call output ( r_or_c )
-    call output ( ' blocks = ' )
-    call output ( rc%nb )
-    call output ( ' Vector that defines ' )
-    call output ( r_or_c )
-    call output ( 's' )
-    if ( rc%vec%name == 0 ) then
-      call output ( ' has no name', advance='yes' )
-    else
-      call output ( ': ' )
-      call display_string ( rc%vec%name, advance='yes' )
-    end if
-    call output ( 'Order of '//r_or_c//' blocks is ' )
-    if ( rc%instFirst ) then
-      call output ( 'instance, then quantity', advance='yes' )
-    else
-      call output ( 'quantity, then instance', advance='yes' )
+    integer, intent(in), optional :: Num ! Just for this row or column
+    if ( .not. present(num) ) then
+      call output ( rc%nb, before='Number of ' // r_or_c // ' blocks = ' )
+      call output ( ' Vector that defines ' // r_or_c // 's' )
+      if ( rc%vec%name == 0 ) then
+        call output ( ' has no name', advance='yes' )
+      else
+        call output ( ': ' )
+        call display_string ( rc%vec%name, advance='yes' )
+      end if
+      call output ( 'Order of '//r_or_c//' blocks is ' )
+      if ( rc%instFirst ) then
+        call output ( 'instance, then quantity', advance='yes' )
+      else
+        call output ( 'quantity, then instance', advance='yes' )
+      end if
     end if
     if ( details ) then
-      call output ( 'Numbers of ' )
-      call output ( r_or_c )
-      call output ( 's in each block' )
-      call output ( ':', advance='yes' )
-      if ( .not. associated(rc%nelts) ) then
-        call output( 'numbers not associated', advance='yes' )
+      if ( present(num) ) then
+        call output ( num, before='Number of ' // r_or_c // 's in ' // &
+          & r_or_c // ' block ' )
+        if ( .not. associated(rc%nelts) ) then
+          call output( ' is not associated', advance='yes' )
+        else
+          call output ( rc%nelts(num), before=': ', advance='yes' )
+        end if
+        call output ( num, before='Instance index for ' // r_or_c // ' ' )
+        if ( .not. associated(rc%inst) ) then
+          call output( ' is not associated', advance='yes' )
+        else
+          call output ( rc%inst(num), before=': ', advance='yes' )
+        end if
+        call output ( num, before='Quantity index for ' // r_or_c // ' ' )
+        if ( .not. associated(rc%quant) ) then
+          call output( ' is not associated', advance='yes' )
+        else
+          call output ( rc%quant(num), before=': ', advance='yes' )
+        end if
       else
-        call dump ( rc%nelts )
-      endif
-      call output ( 'Instance indices for blocks in the ' )
-      call output ( r_or_c )
-      call output ( 's' )
-      call output ( ':', advance='yes' )
-      if ( .not. associated(rc%inst) ) then
-        call output( 'indices not associated', advance='yes' )
-      else
-        call dump ( rc%inst )
-      endif
-      call output ( 'Quantity indices for blocks in the ' )
-      call output ( r_or_c )
-      call output ( 's' )
-      call output ( ':', advance='yes' )
-      if ( .not. associated(rc%quant) ) then
-        call output( 'indices not associated', advance='yes' )
-      else
-        call dump ( rc%quant )
-      endif
+        call output ( 'Numbers of ' // r_or_c // 's in each block:', advance='yes' )
+        if ( .not. associated(rc%nelts) ) then
+          call output( 'numbers not associated', advance='yes' )
+        else
+          call dump ( rc%nelts )
+        end if
+        call output ( 'Instance indices for blocks in the ' // r_or_c // 's:', &
+          & advance='yes' )
+        if ( .not. associated(rc%inst) ) then
+          call output( 'indices not associated', advance='yes' )
+        else
+          call dump ( rc%inst )
+        end if
+        call output ( 'Quantity indices for blocks in the ' // r_or_c // 's', &
+          & advance='yes' )
+        if ( .not. associated(rc%quant) ) then
+          call output( 'indices not associated', advance='yes' )
+        else
+          call dump ( rc%quant )
+        end if
+      end if
     end if
   end subroutine Dump_RC
 
@@ -2705,8 +2718,8 @@ contains ! =====     Public Procedures     =============================
     call newLine
     totalSize = 0
     if ( my_details > 0 ) then
-      call dump_rc ( matrix%row, 'row', my_details>0 )
-      call dump_rc ( matrix%col, 'column', my_details>0 )
+      call dump_rc ( matrix%row, 'row', my_details>0, num=row )
+      call dump_rc ( matrix%col, 'column', my_details>0, num=column )
     end if
     if ( .not. associated(matrix%block) ) then
       call output ( '      (the matrix has been destroyed)', advance='yes' )
@@ -2924,6 +2937,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.132  2013/08/08 02:37:57  vsnyder
+! Only dump RC_Info stuff for selected row or column
+!
 ! Revision 2.131  2012/07/19 19:39:48  vsnyder
 ! No, "inst" should be "quant" in CreateBlock_1.
 !
