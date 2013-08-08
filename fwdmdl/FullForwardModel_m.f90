@@ -152,6 +152,9 @@ contains
     n_t_zeta = grids_tmp%l_z(1)  ! zeta
     sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t
 
+    fwdModelConf%beta_group%qty%derivOK = fwdModelConf%moleculeDerivatives .and. &
+      & ( fwdModelConf%beta_group%qty%foundInFirst .or. present(extraJacobian) )
+      
     call load_sps_data ( FwdModelConf, phitan, fmStat%maf, grids_f )
 
     atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
@@ -170,18 +173,23 @@ contains
     spect_der_width = spect_der .and. size(fwdModelConf%lineWidth) > 0
     spect_der_width_TDep = spect_der .and. size(fwdModelConf%lineWidth_TDep) > 0
 
+    atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
+    atmos_second_der = present (hessian ) .and. FwdModelConf%atmos_second_der
+
+    ! Determine where we can compute derivatives.  We know for sure we have
+    ! a place to put them if fwdModelConf%beta_group%qty%foundInFirst, but
+    ! we also have a place to put them otherwise if ExtraJacobian is present
+    ! and there's a column there for it.
+
     if ( atmos_der ) then
       do k = 1, no_mol
         if ( fwdModelConf%moleculeDerivatives(k) ) then
-          if ( .not. fwdModelConf%beta_group(k)%qty%foundInFirst ) then
-            ! If the vector quantity for the desired molecule is not in the
-            ! "first" state vector, check whether there's an ExtraJacobian.
-            if ( .not. present(extraJacobian) ) &
-              & call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
-                & 'With config(%S): ' // &
-                & '%S derivative requested but %S is not in "first" state vector, ' // &
-                & 'or ExtraJacobian is not present', &
-                & datum=(/ fwdModelConf%name, lit_indices(mol), lit_indices(mol) /) )
+          if ( .not. fwdModelConf%beta_group(k)%qty%derivOK ) then
+            call MLSMessage ( DerivativeMissingFromStateFun(), moduleName, &
+              & 'With config(%S): ' // &
+              & '%S derivative requested but %S is not in "first" state vector, ' // &
+              & 'or ExtraJacobian is not present', &
+              & datum=(/ fwdModelConf%name, lit_indices(mol), lit_indices(mol) /) )
           end if
         else
           ! Turn off deriv_flags where we don't want molecule derivatives,
@@ -1589,7 +1597,7 @@ contains
               & real(k_temp(i,:,:),kind=rp), Jacobian, fmStat%rows )
 
           if ( atmos_der ) &
-            & call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
+            call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
               & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
               & beta_group%qty, grids_f, L1BMIF_TAI, MIFDeadTime, &
               & real(k_atmos(i,:,:),kind=rp), Jacobian, fmStat%rows, &
@@ -4680,6 +4688,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.344  2013/08/02 01:24:06  vsnyder
+! Add ExtraJacobian to compute derivatives not in state vector
+!
 ! Revision 2.343  2013/07/13 00:06:20  vsnyder
 ! Move computation of tangent pressures from Compute_Z_PSIG to Tangent_Pressures.
 ! Remove declarations for unused symbols.
