@@ -16,6 +16,7 @@ program F90TEX
 ! works if it's the first line of the !\{ block, and there's nothing else on
 ! the line.
 
+!>> 2013-08-08 F90TEX WV Snyder Remove labelstyle keyword for lstlistings
 !>> 2013-08-06 F90TEX WV Snyder Remove dependence on machine module
 !>> 2012-02-09 F90TEX WV Snyder Stuff to make \cleardoublepage work
 !>> 2010-08-21 F90TEX WV Snyder Added -u option for usepackage
@@ -86,18 +87,26 @@ program F90TEX
       box = .true.
     else if ( in_file(1:4) == '-nb ' ) then
       box = .false.
-    else if ( in_file(1:3) == '-n ' ) then
-      i = i + 1
-      call get_command_argument ( i, number_step )
+    else if ( in_file(1:2) == '-n' ) then
+      if ( in_file(3:) == '' ) then
+        i = i + 1
+        call get_command_argument ( i, number_step )
+      else
+        number_step = in_file(3:)
+      end if
     else if ( in_file(1:3) == '-p ' ) then
       running = .false.
-    else if ( in_file(1:3) == '-u ' ) then
+    else if ( in_file(1:2) == '-u' ) then
       if ( number_packages == ubound(packages,1) ) then
         print *, 'More than ', ubound(packages,1), ' ignored'
       else
         number_packages = number_packages + 1
-        i = i + 1
-        call get_command_argument ( i, packages(number_packages) )
+        if ( in_file(3:) == '' ) then
+          i = i + 1
+          call get_command_argument ( i, packages(number_packages) )
+        else
+          packages(number_packages) = in_file(3:)
+        end if
       end if
     else
       call get_command_argument ( 0, in_file )
@@ -112,18 +121,21 @@ program F90TEX
       & filsep, '"'
       write (*,*) &
       & '  and everything after it, and adding ".tex" on the end.'
-      write (*,*) ' Options: -b => put a box around !{ TeX stuff (default)'
-      write (*,*) '          -nb => don''t put a box around !{ TeX stuff'
-      write (*,*) '          -l => use lstlisting'
-      write (*,*) '          -v => use verbatim (default)'
-      write (*,*) '          -n x => line number step is x (default ', &
-      &                              number_step, ', 0 => no line numbers)'
-      write (*,*) '          -p => pagewise line numbers, default running'
-      write (*,*) '          -u package => use LaTeX package; this option'
-      write (*,*) '                        can appear up to 99 times'
-      write (*,*) '          -<anything else> => this output'
-      write (*,*) '          -  => no more options'
-      write (*,*) ' 6 August 2013'
+      write (*,*) ' Options, [ ] indicates optional blanks:'
+      write (*,*) '  -b => Put a box around !{ TeX stuff (default).'
+      write (*,*) '  -nb => Don''t put a box around !{ TeX stuff.'
+      write (*,*) '  -v => Use verbatim environment for code (default).'
+      write (*,*) '  -l => Use lstlisting environment from the listings package.'
+      write (*,*) '        This package has numerous customization features;'
+      write (*,*) '        You might wish to edit the LaTeX output to exploit them.'
+      write (*,*) '  -n[ ]# => Line number step is # (default ', &
+      &                      number_step, ', 0 => no line numbers).'
+      write (*,*) '  -p => Pagewise line numbers, default is running numbers.'
+      write (*,*) '  -u[ ]package => Use LaTeX package; this option'
+      write (*,*) '                  can appear up to 99 times.'
+      write (*,*) '  -<anything else> => This output.'
+      write (*,*) '  -  => No more options.'
+      write (*,*) ' 8 August 2013'
       stop
     end if
     i = i + 1
@@ -218,7 +230,9 @@ program F90TEX
     call output ( 'lstset{language=[90]Fortran,', tex=.true. )
     call output ( '  basicstyle=\ttfamily\footnotesize,' )
     call output ( '  keywordstyle=\bfseries,' )
-    call output ( '  labelstyle=\tiny,labelstep=' // number_step // '}' )
+!   It looks like the labelstyle and labelstep keywords have been removed
+!   call output ( '  labelstyle=\tiny,labelstep=' // number_step )
+    call output ( '}' )
   end if
 
 ! Copy the program text
@@ -344,6 +358,11 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.19  2013/08/07 20:35:42  vsnyder
+! Replace back slash in input file name with ordinary slash.  Otherwise,
+! LaTeX thinks words in the path after the back slash are commands, and
+! gets confused while trying to produce the page heading.
+!
 ! Revision 1.18  2013/08/07 20:19:26  vsnyder
 ! Repair -nb option
 !
