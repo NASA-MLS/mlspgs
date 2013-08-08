@@ -16,6 +16,7 @@ program F90TEX
 ! works if it's the first line of the !\{ block, and there's nothing else on
 ! the line.
 
+!>> 2013-08-08 F90TEX WV Snyder Remove linenumbers stuff using lstlistings
 !>> 2013-08-08 F90TEX WV Snyder Remove labelstyle keyword for lstlistings
 !>> 2013-08-06 F90TEX WV Snyder Remove dependence on machine module
 !>> 2012-02-09 F90TEX WV Snyder Stuff to make \cleardoublepage work
@@ -128,6 +129,7 @@ program F90TEX
       write (*,*) '  -l => Use lstlisting environment from the listings package.'
       write (*,*) '        This package has numerous customization features;'
       write (*,*) '        You might wish to edit the LaTeX output to exploit them.'
+      write (*,*) '        This might not work if your code has "\" in it.'
       write (*,*) '  -n[ ]# => Line number step is # (default ', &
       &                      number_step, ', 0 => no line numbers).'
       write (*,*) '  -p => Pagewise line numbers, default is running numbers.'
@@ -269,7 +271,8 @@ program F90TEX
         call output ( trim(line) )
       else
         call output ( stop_code(sx), tex=.true. )
-        call output ( 'nolinenumbers', tex=.true. )
+        if ( sx == 2 .and. number_step /= '0' ) &
+          & call output ( 'nolinenumbers', tex=.true. )
         if ( adjustl(line(i+2:)) == '\newpage' .or. &
            & adjustl(line(i+2:)) == '\cleardoublepage' ) then
           state = 3
@@ -294,8 +297,10 @@ program F90TEX
         call output ( '' ) ! without this, the previous paragraph gets line
                            ! numbers if there is more than one paragraph in
                            ! block
-        write ( now, '("linenumbers[",i0,"]")' ) lineNo
-        call output ( trim(now), tex=.true. )
+        if ( sx == 2 .and. number_step /= '0' ) then
+          write ( now, '("linenumbers[",i0,"]")' ) lineNo
+          call output ( trim(now), tex=.true. )
+        end if
         if ( sx == 2 ) call output ( '{\tt', adv='no' )
         call output ( start_code(sx), tex=.true. )
         call output ( trim(line) )
@@ -318,8 +323,8 @@ program F90TEX
 contains
 ! -------------------------------------------------     OUTPUT     -----
   subroutine OUTPUT ( TEXT, ADV, UND, TEX )
-  ! Output text to OUT_UNIT if it's positive, else to unit *.  Put a "\"
-  ! at the beginning if TEX is present (no matter with what value).
+  ! Output text to OUT_UNIT if it's positive, else to unit *.  Put a
+  ! "\" at the beginning if TEX is present (no matter with what value).
     character(len=*), intent(in) :: TEXT
     character(len=*), intent(in), optional :: ADV
     logical, intent(in), optional :: UND, TEX
@@ -358,6 +363,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.20  2013/08/08 20:11:14  vsnyder
+! Remove labelstyle and labelstep from lstlisting style
+!
 ! Revision 1.19  2013/08/07 20:35:42  vsnyder
 ! Replace back slash in input file name with ordinary slash.  Otherwise,
 ! LaTeX thinks words in the path after the back slash are commands, and
