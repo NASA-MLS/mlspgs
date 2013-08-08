@@ -48,6 +48,10 @@ module ForwardModelConfig
     type (VectorValue_T), pointer :: QTY => NULL()
     logical :: FoundInFirst = .false.
     logical :: WasSpecific = .false.
+    logical :: DerivOK = .false. ! There is a place for the forward model to
+                                 ! put the derivatives.  If .not. FoundInFirst,
+                                 ! then the forward model must have gotten
+                                 ! ExtraJacobian.
   end type QtyStuff_T
 
   ! Data structures to indicate which spectral parameters are being solved.
@@ -1465,6 +1469,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.124  2013/07/25 00:22:09  vsnyder
+! Replace TransformRHI with TransformMIFRHI
+!
 ! Revision 2.123  2013/07/19 01:18:45  vsnyder
 ! Add TransformRHI component
 !
