@@ -131,7 +131,7 @@ contains
       if ( associated(qtyStuff(mol)%qty) ) &
         & call fill_grids_2 ( grids_x, mol, qtyStuff(mol)%qty, &
           & fwdModelConf%moleculeDerivatives(mol) .and. &
-          & qtyStuff(mol)%foundInFirst )
+          & qtyStuff(mol)%derivOK )
     end do
 
 ! ** ZEBUG - Simulate qty%values for EXTINCTION, using the N2 function
@@ -782,6 +782,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.88  2012/08/08 20:08:43  vsnyder
+! Insert some comments about potential problems in Load_One_Item_Grid
+!
 ! Revision 2.87  2011/11/11 00:40:17  vsnyder
 ! Update a comment about extinction
 !
