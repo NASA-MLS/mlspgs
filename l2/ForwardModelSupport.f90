@@ -397,10 +397,10 @@ contains ! =====     Public Procedures     =============================
       & F_Model_Plane_Mif, F_MODULE, F_MOLECULEDERIVATIVES, F_MOLECULES, &
       & F_MOLECULESECONDDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
       & F_NCLOUDSPECIES, F_NMODELSURFS, F_NO_DUP_MOL, F_NSCATTERINGANGLES, &
-      & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, F_REFRACT, &
-      & F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, &
-      & F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
-      & F_TOLERANCE, F_TransformMIFextinction, F_TransformMIFRHI, &
+      & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, F_ReferenceMIF, &
+      & F_REFRACT, F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, &
+      & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, &
+      & F_TEMP_DER, F_TOLERANCE, F_TransformMIFextinction, F_TransformMIFRHI, &
       & F_TSCATMIF, F_TYPE, F_USBLBLMOLECULES, F_USBPFAMOLECULES, &
       & F_useTSCAT, F_XSTAR, F_YSTAR
     use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_PROFILES
@@ -629,6 +629,9 @@ contains ! =====     Public Procedures     =============================
         info%windowUnits = expr_units(1)
       case ( f_polarized )
         info%polarized = get_boolean(son)
+      case ( f_referenceMIF )
+        call expr ( subtree(2,son), expr_units, value, type )
+        info%referenceMIF = nint(value(1))
       case ( f_refract )
         info%refract = get_boolean(son)
       case ( f_scanAverage )
@@ -1460,6 +1463,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.170  2013/08/09 01:03:59  vsnyder
+! Add ReferenceMIF component
+!
 ! Revision 2.169  2013/07/25 00:23:41  vsnyder
 ! Replace TransformRHI with TransformMIFRHI
 !
