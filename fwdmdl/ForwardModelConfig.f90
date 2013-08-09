@@ -154,6 +154,7 @@ module ForwardModelConfig
     integer :: Num_azimuth_angles     ! No of azmuth angles '8'
     integer :: Num_scattering_angles  ! No of scattering angles '16'
     integer :: Num_size_bins          ! No of size bins '40'
+    integer :: ReferenceMIF           ! MIF number to use for MAF geolocation
     integer :: SidebandStart, SidebandStop ! Folded or SSB config?
     integer :: SurfaceTangentIndex    ! Index in Tangentgrid of Earth's surface
     integer :: TScatMIF               ! Which MIF to use for TScat LOS VEL and PHITAN
@@ -783,7 +784,7 @@ contains
       & config%no_cloud_species, config%no_model_surfs, &
       & config%num_ab_terms, config%num_azimuth_angles, &
       & config%num_scattering_angles, config%num_size_bins, &
-      & config%sidebandStart, config%sidebandStop, &
+      & config%referenceMIF, config%sidebandStart, config%sidebandStop, &
       & config%surfaceTangentIndex /), msg = "Packing fwmConfig integers" )
 
     ! Now the logical scalars
@@ -868,7 +869,7 @@ contains
     ! Dummy arguments
     type ( ForwardModelConfig_T ), intent(out) :: CONFIG
     ! Local variables
-    integer, parameter     :: ISMAX = 10
+    integer, parameter     :: ISMAX = 11
     integer, parameter     :: LSMAX = 31
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
@@ -900,6 +901,7 @@ contains
     config%num_azimuth_angles     = is(i) ; i = i + 1
     config%num_scattering_angles  = is(i) ; i = i + 1
     config%num_size_bins          = is(i) ; i = i + 1
+    config%referenceMIF           = is(i) ; i = i + 1
     config%sideBandStart          = is(i) ; i = i + 1
     config%sideBandStop           = is(i) ; i = i + 1
     config%surfaceTangentIndex    = is(i) !  ; i = i + 1
@@ -1469,6 +1471,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.125  2013/08/08 02:34:54  vsnyder
+! Add derivOK component to Qty_Stuff
+!
 ! Revision 2.124  2013/07/25 00:22:09  vsnyder
 ! Replace TransformRHI with TransformMIFRHI
 !
