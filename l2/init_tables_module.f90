@@ -1392,6 +1392,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_pathNorm, boolean(), &
              begin, f+f_phiWindow, numeric(), & ! either phyq_angle or phyq_profiles
              begin, f+f_polarized, boolean(), &
+             begin, f+f_referenceMIF, numeric(phyq_dimensionless), &
              begin, f+f_refract, boolean(), &
              begin, f+f_scanAverage, boolean(), &
              begin, f+f_signals, string(), &
@@ -1963,6 +1964,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.578  2013/08/09 01:03:59  vsnyder
+! Add ReferenceMIF component
+!
 ! Revision 2.577  2013/08/03 00:40:42  vsnyder
 ! Require vector.quantity in dumpQuantities field in retrieve spec
 !
