@@ -347,7 +347,7 @@ contains
           write ( out_unit, '(a)', advance='no' ) '\'
         write ( out_unit, '(a)', advance='no' ) text(i:i)
       end do
-      write ( out_unit, '(a)' )
+      write ( out_unit, '(a)', advance=advance )
     else
       if ( present(tex) ) write ( *, '(a)', advance='no' ) '\'
       do i = 1, len(text)
@@ -355,7 +355,7 @@ contains
           write ( *, '(a)', advance='no' ) '\'
         write ( *, '(a)', advance='no' ) text(i:i)
       end do
-      write ( *, '(a)' )
+      write ( *, '(a)', advance=advance )
     end if
     return
   end subroutine OUTPUT
@@ -363,6 +363,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.21  2013/08/08 20:48:50  vsnyder
+! Don't emit linenumbers commands if -l selected
+!
 ! Revision 1.20  2013/08/08 20:11:14  vsnyder
 ! Remove labelstyle and labelstep from lstlisting style
 !
