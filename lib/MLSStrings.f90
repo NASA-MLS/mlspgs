@@ -34,11 +34,12 @@ MODULE MLSStrings               ! Some low level string handling stuff
 
 !     (subroutines and functions)
 ! asciify            purify chars to be within printing range [32,126]
-!                      (no binary) (see also ReplaceNonAscii)
+!                      (no binary) (see also ReplaceNonAscii, unasciify)
 ! Capitalize         tr[a-z] -> [A-Z]
 ! CatStrings         Concatenate strings with a specified separator
 ! ShiftLRC           Shift string to left, center, or right
 ! CompressString     Removes all leading and embedded blanks
+! Count_quotes       Counts the number of quotes-surrounded phrases in a string
 ! Count_words        Counts the number of space-separated words in a string
 ! Delete             Deletes each instance of a char
 ! Depunctuate        Replaces punctuation with blanks
@@ -80,6 +81,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! trim_safe          trims string down, but never to length 0
 ! TrueList           describe where elements of an array are true
+! unasciify          restore non-ascii characters in place of their coded forms
+!                       (see asciify)
 ! unWrapLines        undo the splitting of commands across multiple lines
 ! WriteIntAsBaseN    Converts an integer to base n representation
 ! WriteIntsToChars   Converts an array of ints to strings using Fortran write
@@ -91,6 +94,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! char* Capitalize (char* str)
 ! CatStrings ( char* strings(:), char* sep, char* stringsCat, int L )
 ! char* CompressString (char* str)
+! int count_quotes (char* str, char lquote, char rquote)
 ! int count_words (char* str)
 ! char* delete (char* str, char ch, [int max])
 ! char* depunctuate (char* str)
@@ -133,6 +137,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! strings2Ints (char* strs(:), int ints(:,:))
 ! char* trim_safe (char* str)
 ! TrueList ( logical* list, char* str )
+! char* unasciify ( char* str, [char* how] )
 ! unWrapLines (char* inLines(:), char* outLines(:), &
 !              [int nout], [char escape], [char comment])
 ! writeIntAsBaseN (int int, int N, char* strs, [char* options])
@@ -197,7 +202,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
     & ROT13, &
     & SHIFTLRC, SIZE_TRIM, SPLITDETAILS, SPLITNEST, SPLITWORDS, SQUEEZE, &
     & STARTCASE, STREQ, STRETCH, STRINGS2INTS, &
-    & TRIM_SAFE, TRUELIST, UNWRAPLINES, &
+    & TRIM_SAFE, TRUELIST, UNASCIIFY, UNWRAPLINES, &
     & WRITEINTASBASEN, WRITEINTSTOCHARS, WRITEROMANNUMERALS
 
   interface asciify
@@ -233,7 +238,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
   integer, public, parameter :: LENORSIZETOOSMALL=-999
 
   logical, private, save          :: caseSensitive       
-  logical, private, save          :: ignoreLeadingSpaces 
+  logical, private, save          :: ignoreLeadingSpaces
+  ! The following array is used to encode non-ascii characters mnemonically
   character(len=*), dimension(33), private, parameter :: MNEMONICCODES = (/ &
    & 'nul', &
    & 'soh', &
@@ -288,7 +294,7 @@ contains
   !  '*'           replace with whatever character how was (e.g., '*')
   ! Note that some of these options may output a longer string than the input
 
-  ! (see also ReplaceNonAscii)
+  ! (see also ReplaceNonAscii, unasciify)
   function ASCIIFY_scalar (STR, HOW) result (OUTSTR)
     !--------Argument--------!
     character (len=*), intent(in)           :: STR
@@ -442,6 +448,44 @@ contains
     END DO
 
   END FUNCTION CompressString
+
+  ! ------------------------------------------------  COUNT_quotes  -----
+  FUNCTION count_quotes ( str, lquote, rquote ) RESULT (no_of_quotes)
+    ! This counts the number of quotes in a string 
+    ! For our purposes, quotes consist of any non-space characters
+    ! surrounded by an {lquote. rquote} pair
+
+    ! method:
+    ! step through string, each stride positioned between
+    ! j1, where leftmost lquote is, and j2, where leftmost rquote is
+    ! cut off both stride and evrything leftward, call remainder "remainder"
+    ! Contrast this approach with what is is done in MLSStringLists module
+    ! which uses string slicing and index arithmetic
+    ! Should we go back and simplify the latter?
+    !--------Argument--------!
+    CHARACTER (len=*), INTENT(in) :: str
+    CHARACTER (len=1), INTENT(in) :: lquote
+    CHARACTER (len=1), INTENT(in) :: rquote
+    !---------result---------!
+    INTEGER::no_of_quotes
+    !-----local-variables------!
+    INTEGER::j1
+    INTEGER::j2
+    character(len=len(str)) :: remaining
+    !-------Executable-code----!
+    no_of_quotes = 0
+    IF (index(str, lquote) < 1 .or. index(str, rquote) < 1) return
+    remaining = str
+    DO
+       j1 = index( remaining, lquote)
+       if ( j1 < 1 ) exit
+       j2 = index( remaining, rquote)
+       if ( j2 < 1 ) exit
+       no_of_quotes = no_of_quotes + 1
+       if ( j2 >= len_trim(remaining) ) exit
+       remaining = remaining(j2+1:)
+    END DO
+  END FUNCTION count_quotes
 
   ! ------------------------------------------------  COUNT_WORDS  -----
   FUNCTION count_words (str) RESULT (no_of_words)
@@ -2408,6 +2452,80 @@ contains
 
   end function trim_safe
 
+  ! -------------------------------------------------  unAsciify  -----
+  function unAsciify (STR, HOW) result (OUTSTR)
+  ! takes input string and replaces any coded forms non-printing characters
+  ! with corresponding binary characters outside ascii range
+  ! leaving other chars alone
+  ! This reverses the effect of the asciify procedure which recoded
+  ! non-ascii characters as '<something>'
+  !
+  ! How the decoding is done is according to the optional arg
+  !    how         coding
+  !    ---         -------
+  !  'decimal'    <nnn> where nnn is the decimal value (e.g. 0)
+  !  'octal'      <nnn> where nnn is the octal value (e.g. 000)
+  !  'mnemonic'   <ID> where ID is the mnemonic code (e.g. NUL)
+  ! Note that we may output a shorter string than the input
+
+  ! method:
+  ! (a) step through str, each stride positioned between
+  ! j1, where leftmost lquote is, and j2, where leftmost rquote is
+  ! (b) decode the current stride
+  ! (c) accumulate evrything leftward plus decoded portion
+  ! (d) cut off both stride and evrything leftward, call remainder "remainder"
+  ! Contrast this approach with what is is done in MLSStringLists module
+  ! which uses string slicing and index arithmetic
+  ! Should we go back and simplify the latter?
+
+  ! (see also ReplaceNonAscii, asciify)
+    !--------Argument--------!
+    character (len=*), intent(in)           :: STR
+    character (len=len(str))                :: OUTSTR
+    character (len=*), optional, intent(in) :: HOW
+    ! Internal variables
+    character(len=1) :: bchar  ! A non-ascii character
+    character(len=5) :: codedStr
+    integer :: J1
+    integer :: J2
+    character(len=8) :: myHow
+    character(len=len(str)) :: remaining
+    character(len=1), parameter :: LQUOTE = '<'
+    character(len=1), parameter :: RQUOTE = '>'
+    ! Executable
+    outstr=str
+    myHow = 'mnemonic'
+    if ( present(how) ) myHow = how
+    ! print *, 'count_quotes ', count_quotes(str, LQUOTE, RQUOTE )
+    if ( count_quotes(str, LQUOTE, RQUOTE ) < 1 ) return
+    outstr = ' '
+    remaining = str
+    do
+       j1 = index( remaining, lquote)
+       if ( j1 < 1 ) exit
+       j2 = index( remaining, rquote)
+       if ( j2 < 1 ) exit
+       codedStr = remaining(j1:j2)
+       ! print *, 'j1, j2 ', j1, j2
+       ! print *, 'codedStr ', codedStr
+       bChar = decoder( codedStr, myHow )
+       if ( j1 == 1 ) then
+         outstr = trim(outstr) // bChar
+       else
+         outstr = trim(outstr) // remaining(:j1-1) // bChar
+       endif
+       if ( j2 < len_trim(remaining) ) then
+         remaining = remaining(j2+1:)
+       else
+         remaining = ' '
+         exit
+       endif
+    enddo
+    if ( len_trim(remaining) > 1 ) &
+      & outstr = trim(outstr) // remaining
+    ! print *, 'unasciify returning char-valued ', iachar(outstr(1:1))
+  end function unAsciify
+
   ! --------------------------------------------------  unWrapLines  -----
   ! undo the splitting of commands across multiple lines by escaping line feeds
   ! i.e, a special escape character at line's end to denote a continuation
@@ -2873,38 +2991,103 @@ contains
      lastchar = str(strlen:strlen)
   end function lastchar
 
+  ! ---------------------------------------------------  decoder  -----
+  function decoder( said, how ) result ( meant )
+    ! decode what you said, a coded ascii string like this
+    ! '<NUL>'
+    ! into what you actually meant, i.e. a null char
+    character(len=*), intent(in)           :: said
+    character(len=*), intent(in)           :: how
+    character(len=1)                       :: meant
+    ! Executable
+    ! print *, 'said ', said
+    ! print *, 'how ', how
+    if ( How == 'decimal' ) then
+      meant = decimalCode( said, invert=.true. )
+    elseif ( How == 'octal' ) then
+      meant = octalCode( said, invert=.true. )
+    elseif ( How == 'mnemonic' ) then
+      meant = mnemonicCode( said, invert=.true. )
+    else
+      ! Uh-oh, that is not a recognized how
+      ! print *, 'Uh-oh, that is not a recognized how'
+      meant = achar(0) ! return a NUL char; should we crash, instead?
+    endif
+  end function decoder
+
   ! ---------------------------------------------------  octalCode  -----
-  function octalCode(arg) result(theCode)
-    character(len=1), intent(in) :: arg
+  function octalCode(arg, invert) result(theCode)
+    character(len=*), intent(in)  :: arg
+    logical, optional, intent(in) :: invert
     character(len=5) :: theCode
     ! Returns '<nnn>' where nnn is the octal code of arg
+    integer :: iCode
     character(len=3) :: nnn
-    write(nnn,'(o3.3)') iachar(arg)
-    theCode = '<' // nnn // '>'
+    logical :: myInvert
+    ! Executable
+    ! print *, 'octal arg ', arg
+    myInvert = .false.
+    if ( present(invert) ) myInvert = invert
+    if ( myInvert ) then
+      read( arg(2:len_trim(arg)-1),'(o3.3)') iCode
+      ! print *, 'arg(2:len_trim(arg)-1) ', arg(2:len_trim(arg)-1)
+      ! print *, 'iCode ', iCode
+      theCode = achar(iCode)
+    else
+      write(nnn,'(o3.3)') iachar(arg)
+      theCode = '<' // nnn // '>'
+    endif
   end function octalCode
 
   ! ---------------------------------------------------  decimalCode  -----
-  function decimalCode(arg) result(theCode)
-    character(len=1), intent(in) :: arg
+  function decimalCode(arg, invert) result(theCode)
+    character(len=*), intent(in)  :: arg
+    logical, optional, intent(in) :: invert
     character(len=5) :: theCode
     ! Returns '<n>' where n is iachar(arg)
+    integer :: iCode
     character(len=3) :: n
-    write(n,'(i3)') iachar(arg)
-    theCode = '<' // trim(adjustl(n)) // '>'
+    logical :: myInvert
+    ! Executable
+    ! print *, 'decimal arg ', arg
+    myInvert = .false.
+    if ( present(invert) ) myInvert = invert
+    if ( myInvert ) then
+      call readIntsFromChars( arg(2:len_trim(arg)-1), iCode )
+      theCode = achar(iCode)
+      ! print *, 'arg(2:len_trim(arg)-1) ', arg(2:len_trim(arg)-1)
+      ! print *, 'iCode ', iCode
+    else
+      write(n,'(i3)') iachar(arg)
+      theCode = '<' // trim(adjustl(n)) // '>'
+    endif
   end function decimalCode
 
   ! ---------------------------------------------------  mnemonicCode  -----
-  function mnemonicCode(arg) result(theCode)
-    character(len=1), intent(in) :: arg
+  function mnemonicCode(arg, invert) result(theCode)
+    character(len=*), intent(in) :: arg
+    logical, optional, intent(in) :: invert
     character(len=5) :: theCode
     ! Returns '<mnc>' where mnc is a mnemonic code like NUL
     integer :: icode
-    theCode = arg
-    if ( isAscii(arg) ) return
-    icode = iachar(arg) + 1
-    icode = min(icode, size(MNEMONICCODES))
-    
-    theCode = '<' // trim( MNEMONICCODES(icode) ) // '>'
+    logical :: myInvert
+    ! Executable
+    ! print *, 'mnemonic ', arg
+    myInvert = .false.
+    if ( present(invert) ) myInvert = invert
+    if ( myInvert ) then
+      iCode = FindFirst( MNEMONICCODES == lowercase(arg(2:len_trim(arg)-1)) )
+      if ( iCode == 33 ) iCode = 128
+      theCode = achar(max(iCode - 1, 0))
+      ! print *, 'arg(2:len_trim(arg)-1) ', arg(2:len_trim(arg)-1)
+      ! print *, 'iCode ', iCode
+    else
+      theCode = arg
+      if ( isAscii(arg) ) return
+      icode = iachar(arg) + 1
+      icode = min(icode, size(MNEMONICCODES))
+      theCode = '<' // trim( MNEMONICCODES(icode) ) // '>'
+    endif
   end function mnemonicCode
 
   ! ---------------------------------------------------  shiftChar  -----
@@ -3009,6 +3192,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.95  2013/08/09 00:43:06  pwagner
+! Added count_quotes and unasciify
+!
 ! Revision 2.94  2013/07/30 23:26:44  pwagner
 ! New procedures to read/write base N integers
 !
