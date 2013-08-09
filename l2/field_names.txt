@@ -347,6 +347,7 @@ quantityType
 
 radianceQuantity
 ratioQuantity
+referenceMIF
 refGPHPrecisionquantity
 refGPHquantity
 reflector
@@ -507,6 +508,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.235  2013/08/09 01:03:59  vsnyder
+# Add ReferenceMIF component
+#
 # Revision 2.234  2013/07/25 00:24:55  vsnyder
 # Replace TransformRHI with TransformMIFRHI
 #
