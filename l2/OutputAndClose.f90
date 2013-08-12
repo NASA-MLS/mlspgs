@@ -1464,7 +1464,7 @@ contains ! =====     Public Procedures     =============================
     use MLSHDF5, only: CPHDF5GLATTRIBUTE, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, &
       & MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
-    use MLSSETS, only: FINDFIRST, FINDNEXT
+    use MLSFINDS, only: FINDFIRST, FINDNEXT
     use MLSSTRINGLISTS, only: ARRAY2LIST, SWITCHDETAIL
     use MLSSTRINGS, only: TRIM_SAFE
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -1780,6 +1780,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.168  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.167  2012/11/08 23:20:00  pwagner
 ! Tries to avoid duplicating swath names during unsplit
 !
