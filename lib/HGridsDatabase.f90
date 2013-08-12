@@ -34,12 +34,12 @@ module HGridsDatabase                   ! Horizontal grid information
   ! This is the main datatype, an HGrid.
 
   type HGrid_T
-    integer :: NAME                 ! String index of name.
-    integer :: noProfs              ! Number of profiles in this grid
-    integer :: noProfsLowerOverlap  ! Number of profiles in the lower overlap
-    integer :: noProfsUpperOverlap  ! Number of profiles in the upper overlap
+    integer :: Name = 0                ! String index of name.            
+    integer :: noProfs                 ! Number of profiles in this grid  
+    integer :: noProfsLowerOverlap = 0 ! Number of profiles in the lower overlap
+    integer :: noProfsUpperOverlap = 0 ! Number of profiles in the upper overlap
 
-    ! Now the various coordinates in the HGrid, all dimensioned (noProfs)
+    ! Now the various coordinates in the HGrid, all dimensioned (1,noProfs)
     real(r8), dimension(:,:), pointer :: phi         => NULL()
     real(r8), dimension(:,:), pointer :: geodLat     => NULL()
     real(r8), dimension(:,:), pointer :: lon         => NULL()
@@ -313,6 +313,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.11  2013/08/12 23:47:07  vsnyder
+! Default initialize more stuff in HGrid_t
+!
 ! Revision 2.10  2013/03/01 01:04:51  pwagner
 ! Get R8 from MLSKinds
 !
