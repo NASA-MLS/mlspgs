@@ -12,7 +12,7 @@
 !=============================================================================
 MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
-
+  use MLSFINDS, only: FINDFIRST, FINDNEXT
   implicit none
   private
 
@@ -3116,47 +3116,6 @@ contains
     if ( resultcode > -1 ) shiftChar = achar(resultcode)
   end function shiftChar
 
-  ! -------------------------------------------  FindFirst  -----
-  ! We were forced to put a redundant copy here to avoid circular make dependence
-  ! that resulted when this module used MLSSets
-  integer function FindFirst ( condition )
-    ! Find the first logical in the array that is true
-    logical, dimension(:), intent(in) :: CONDITION
-
-    ! Executable code
-    do FindFirst = 1, size(condition)
-      if ( condition(FindFirst) ) return
-    end do
-    FindFirst = 0
-  end function FindFirst
-
-  ! -------------------------------------------  FindNext  -----
-  ! We were forced to put a redundant copy here to avoid circular make dependence
-  ! that resulted when this module used MLSSets
-  integer function FindNext ( Set, Probe, Current )
-    ! Find the next substring in the string Set that is equal to Probe after the
-    ! current one
-    character(len=*), intent(in) :: Set
-    character(len=1), intent(in) :: Probe
-    integer, intent(in) :: Current
-    ! Local variables
-    integer :: i
-
-     ! Executable code
-    FindNext = 0
-    if ( current < 1 .or. current > len(set)) return
-    ! Now check for current already at end of array
-    if ( current < len(set) ) then
-      do i = current+1, len(set)
-        if ( set(i:i) == probe ) then
-          FindNext = i
-          return
-        end if
-      end do
-    end if
-    ! Uh-oh, this means current is last true, or at array end--so we return 0
-  end function FindNext
-
   ! ---------------------------------------------------  firstsubstr  -----
   elemental function firstsubstr(str, star) result(substr)
     character(len=*), intent(in) :: str
@@ -3192,6 +3151,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.96  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.95  2013/08/09 00:43:06  pwagner
 ! Added count_quotes and unasciify
 !
