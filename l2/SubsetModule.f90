@@ -62,7 +62,7 @@ contains ! ========= Public Procedures ============================
       & PHYQ_MIFS, PHYQ_PRESSURE
     use MLSKINDS, only: R8, RV
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MLSSETS, only: FINDFIRST, FINDLAST
+    use MLSFINDS, only: FINDFIRST, FINDLAST
     use MLSSTRINGS, only: TRUELIST
     use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use TOGGLES, only: SWITCHES
@@ -608,7 +608,6 @@ contains ! ========= Public Procedures ============================
       & SETMASK
     use INIT_TABLES_MODULE, only: F_QUANTITY, F_PTANQUANTITY, F_BASISFRACTION, &
       & F_MINCHANNELS, F_SIGNALS, F_MEASUREMENTS, F_MASK
-    use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST
     use INIT_TABLES_MODULE, only: L_ZETA, L_RADIANCE
     use TREE, only: NSONS, SUBTREE, DECORATION
     use MORETREE, only: GET_FIELD_ID
@@ -653,7 +652,6 @@ contains ! ========= Public Procedures ============================
 
     logical :: ERRORFLAG                ! Set if problem
     logical :: FOUNDONE                 ! Flag for instance identification
-    logical :: Got(field_first:field_last)   ! "Got this field already"
 
     character(len=1), dimension(:), pointer :: MIFMASKS ! Part of rad%mask
 
@@ -673,7 +671,6 @@ contains ! ========= Public Procedures ============================
     basisFraction = 0.5
     minChannels = 1
     mask = m_linAlg
-    got = .false.
     ! Loop over arguments to this l2cf command
     do j = 2, nsons ( key )
       son = subtree ( j, key )
@@ -872,7 +869,6 @@ contains ! ========= Public Procedures ============================
     integer :: TYPE                   ! Type of value returned by expr
     integer :: UNITS(2)               ! Units returned by expr
     integer :: VECTORINDEX            ! Index
-    logical :: VERBOSE
     integer :: WHERERANGE             ! E.g., 'a > 100'
 
     real(r8) :: VALUE(2)              ! Value returned by expr
@@ -908,7 +904,6 @@ contains ! ========= Public Procedures ============================
     maskBit = m_linalg
     minUnit = 0
     maxUnit = 0
-    verbose = ( switchDetail(switches,'subset') > -1 )
     whereRange = 0
     do j = 2, nsons(key) ! fields of the "subset" specification
       son = subtree(j, key)
@@ -1089,7 +1084,7 @@ contains ! ========= Public Procedures ============================
     use INIT_TABLES_MODULE, only: F_QUANTITY, F_PTANQUANTITY, &
       & F_HEIGHT, F_CLOUDHEIGHT, F_CHANNELS, F_CLOUDCHANNELS, F_CLOUDRADIANCE, &
       & F_CLOUDRADIANCECUTOFF, F_MASK
-    use INIT_TABLES_MODULE, only: L_RADIANCE, L_CLOUDINDUCEDRADIANCE, L_ZETA
+    use INIT_TABLES_MODULE, only: L_RADIANCE, L_CLOUDINDUCEDRADIANCE
     use INTRINSIC, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE, &
       & PHYQ_DIMENSIONLESS
     use MORETREE, only: GET_FIELD_ID
@@ -1104,7 +1099,6 @@ contains ! ========= Public Procedures ============================
     ! Local variables
     integer :: CHANNEL                ! Loop index
     integer :: CHANNELSNODE           ! Tree node for channels values
-    integer :: COORDINATE             ! Vertical coordinate type
     integer :: FIELD                  ! Field type from tree
     integer :: GSON                   ! Tree node
     integer :: HEIGHT                 ! Loop counter
@@ -1260,7 +1254,6 @@ contains ! ========= Public Procedures ============================
     ! Now loop over the instances
     do instance = 1, qty%template%noInstances
       theseHeights => ptan%values(:,instance)
-      coordinate = l_zeta
 
       isCloud = .false.
 
@@ -1543,6 +1536,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.28  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.27  2013/01/18 01:45:57  pwagner
 ! ApplyMaskToQuantity can set mask based on values of 'a' satisfying condition 'where'
 !
