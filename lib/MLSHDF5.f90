@@ -34,7 +34,7 @@ module MLSHDF5
   use MLSKINDS, only: R8
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMESSAGE, MLSMESSAGECALLS
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, ISINLIST, &
     & GETSTRINGELEMENT, NUMSTRINGELEMENTS, STRINGELEMENT
   use MLSSTRINGS, only: INDEXES, LOWERCASE, REPLACE
@@ -5551,6 +5551,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.120  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.119  2012/05/17 20:19:07  pwagner
 ! Fixed bug preventing cleanly dumping MAFStartTimeUTC
 !
