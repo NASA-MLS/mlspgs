@@ -52,7 +52,7 @@ contains
     use L2PARINFO, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
       & SIG_REGISTER, NOTIFYTAG, GETNICETIDSTRING
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, PVMERRORMESSAGE
-    use MLSSETS, only: FINDFIRST
+    use MLSFINDS, only: FINDFIRST
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: OUTPUT
     use PVM, only: INFOTAG, MYPVMSPAWN, PVMFCATCHOUT, &
@@ -778,6 +778,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.27  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.26  2011/05/09 18:20:21  pwagner
 ! Converted to using switchDetail
 !
