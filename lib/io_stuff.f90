@@ -12,6 +12,8 @@
 module IO_STUFF
 
 ! Useful stuff for I/O
+  use MLSFINDS, only: FINDFIRSTCHARACTER => FINDFIRST, &
+    &                 FINDFIRSTSUBSTRING => FINDFIRST
 
   implicit none
 
@@ -511,33 +513,6 @@ contains
   end subroutine write_TEXTFILE_sca
 
 !------------ Private procedures
-  ! -------------------------------------------  FindFirstCharacter  -----
-  integer function FindFirstCharacter ( Set, Probe )
-    ! Find the first element in the array Set that is equal to Probe
-    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
-    character(len=*), dimension(:), intent(in) :: Set
-    character(len=*), intent(in) :: Probe
-
-    ! Executable code
-    do FindFirstCharacter = 1, size(set)
-      if ( trim(set(FindFirstCharacter)) == trim(probe) ) return
-    end do
-    FindFirstCharacter = 0
-  end function FindFirstCharacter
-
-  ! -------------------------------------------  FindFirstSubString  -----
-  integer function FindFirstSubString ( Set, Probe )
-    ! Find the first sub-string in the string Set that is (not) equal to Probe
-    character(len=*), intent(in) :: Set
-    character(len=1), intent(in) :: Probe
-
-    ! Executable code
-    do FindFirstSubString = 1, len(set)
-      if ( set(FindFirstSubString:FindFirstSubString) == probe ) return
-    end do
-    FindFirstSubString = 0
-  end function FindFirstSubString
-
   subroutine null_fill_1d( array, nullChar )
     ! Fill array with null chars
     ! Args
@@ -583,6 +558,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.17  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.16  2013/04/13 00:17:40  pwagner
 ! Fixed typos in commets; removed unused variables
 !
