@@ -16,7 +16,7 @@ module MLSStringLists               ! Module to treat string lists
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSCOMMON, only: BAREFNLEN
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSTRINGS, only: CAPITALIZE, LOWERCASE, NCOPIES, &
     & READINTSFROMCHARS, REPLACE, REVERSE, &
     & SPLITDETAILS, SPLITNEST, STREQ, TRIM_SAFE, WRITEINTSTOCHARS
@@ -1591,6 +1591,11 @@ contains
          & MLSMSG_Allocate//"stringArray in GetUniqueList")
     call list2Array(str, inStringArray, countEmpty, inseparator, &
      & IgnoreLeadingSpaces)
+    ! print *, 'str ', str
+    ! print *, 'nElems ', nElems
+    ! do status=1, nElems
+    !   print *,  inStringArray( status )
+    ! enddo
     if ( present(str2) ) then
       nElems2 = NumStringElements(str2, countEmpty, inseparator, Longestlen)
       allocate (inStrAr2(nElems2), STAT=status)
@@ -1612,6 +1617,9 @@ contains
       call GetUniqueStrings( inStringArray, outStringArray, noUnique, &
       & fillValue=fillValue, options=options )
       ! print *, 'noUnique: ', noUnique
+      ! do status=1, noUnique
+      !   print *,  outStringArray( status )
+      ! enddo
       if ( noUnique > 0 ) then
         call Array2List(outStringArray(1:noUnique), outStr, &
          & inseparator)
@@ -1691,6 +1699,7 @@ contains
           do j = i+1, inSize
              ! if (List(j)==List(i)) duplicate(j)=.TRUE.
              duplicate(j) = duplicate(j) .or. matchem( List(j), List(i) )
+             ! if ( duplicate(j) ) print *, List(j), List(i)
           end do
          else
           do j = 1, extraSize
@@ -1699,6 +1708,7 @@ contains
           end do
          endif
        endif
+       ! print *, i, duplicate(i)
     end do
 
     ! Ignore any values = fillValue
@@ -4314,6 +4324,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.60  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.59  2013/06/13 00:41:27  pwagner
 ! Removed lots of unused orts
 !
