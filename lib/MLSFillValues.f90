@@ -21,7 +21,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   use MLSKINDS ! EVERYTHING
   use MLSMESSAGEMODULE, only: MLSMESSAGE, &
     & MLSMSG_ERROR, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
-  use MLSSETS, only: FINDALL, FINDFIRST, FINDLAST
+  use MLSFINDS, only: FINDALL, FINDFIRST, FINDLAST
   use MLSSTRINGLISTS, only: EXTRACTSUBSTRING 
   use MLSSTRINGS, only: LOWERCASE
 
@@ -3196,6 +3196,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.31  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.30  2011/12/13 01:07:36  pwagner
 ! Now uses MLSFills if allocated; can add to or dump it
 !
