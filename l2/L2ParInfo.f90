@@ -18,7 +18,7 @@ module L2ParInfo
   use IO_STUFF, only: GET_LUN
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, PVMERRORMESSAGE
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSTATS1, only: ALLSTATS
   use MLSSTRINGS, only: LOWERCASE
   use MLSSTRINGLISTS, only: GETUNIQUEINTS, GETUNIQUESTRINGS, NUMSTRINGELEMENTS, &
@@ -873,6 +873,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.61  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.60  2013/02/14 19:03:32  pwagner
 ! Added way for l2q to tell master to dump status
 !
