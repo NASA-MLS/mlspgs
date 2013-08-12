@@ -13,23 +13,23 @@
 module ConstructVectorTemplates ! Construct a template for a vector
 !=============================================================================
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use dump_0, only: DUMP
+  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use DUMP_0, only: DUMP
   use INIT_TABLES_MODULE, only: F_ADOPT, F_QUANTITIES, &
     & F_REMOVEQUANTITIES, F_REMOVETEMPLATE, F_SOURCE, F_TEMPLATE, &
     & FIELD_FIRST, FIELD_LAST
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
   use MLSSETS, only: RELATIVECOMPLEMENT
-  use Output_M, only: OUTPUT, OUTPUTNAMEDVALUE
-  use QuantityTemplates, only: QUANTITYTEMPLATE_T
-  use String_Table, only: GET_STRING
+  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+  use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: GEN, TOGGLE, LEVELS
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NSONS, SOURCE_REF, SUB_ROSA, &
     & SUBTREE
-  use VectorsModule, only: CONSTRUCTVECTORTEMPLATE, VECTORTEMPLATE_T, &
+  use VECTORSMODULE, only: CONSTRUCTVECTORTEMPLATE, VECTORTEMPLATE_T, &
     & NULLIFYVECTORTEMPLATE
-  use L2PC_m, only: ADOPTVECTORTEMPLATE
+  use L2PC_M, only: ADOPTVECTORTEMPLATE
 
   implicit none
   private
@@ -256,9 +256,9 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( where, message, extra )
 
-    use Intrinsic, only: LIT_INDICES
-    use MoreTree, only: STARTERRORMESSAGE
-    use String_Table, only: DISPLAY_STRING
+    use INTRINSIC, only: LIT_INDICES
+    use MORETREE, only: STARTERRORMESSAGE
+    use STRING_TABLE, only: DISPLAY_STRING
 
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     character (LEN=*), intent(in) :: MESSAGE
@@ -286,6 +286,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.19  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.18  2013/06/12 02:37:14  vsnyder
 ! Cruft removal
 !
