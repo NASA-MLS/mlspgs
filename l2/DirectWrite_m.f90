@@ -31,7 +31,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use MLSKINDS, only: RV
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
   use STRING_TABLE, only: GET_STRING
@@ -277,7 +277,7 @@ contains ! ======================= Public Procedures =========================
       call dump(l2gp, Details=-1)
     endif
     if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
-    call usleep ( delay )
+    call usleep ( delay ) ! Should we make this parallel%delay?
     call AppendL2GPData( l2gp, l2gpFile, &
       & sdName, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, createSwath=createSwath )
@@ -1230,6 +1230,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.56  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.55  2013/05/08 20:17:35  pwagner
 ! Changed sleep to usleep to link with NAG
 !
