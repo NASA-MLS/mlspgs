@@ -74,7 +74,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & MLSMESSAGECALLS
   use MLSNUMERICS, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
     & INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES, HUNT
-  use MLSSETS, only: FINDFIRST, FINDLAST
+  use MLSFINDS, only: FINDFIRST, FINDLAST
   use MLSSIGNALS_M, only: GETFIRSTCHANNEL, GETSIGNALNAME, GETMODULENAME, &
     & GETSIGNAL, ISMODULESPACECRAFT, SIGNAL_T, SIGNALS
   use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, &
@@ -7052,6 +7052,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.80  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.79  2013/07/18 01:10:57  vsnyder
 ! Remove scVel since it's ambiguous whether it's ECI or ECR, and nobody
 ! uses it anyway.

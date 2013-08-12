@@ -21,7 +21,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use MLSKINDS, only: I4, R4, R8, RM
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMESSAGE
-  use MLSSETS, only: FINDFIRST, FINDLAST
+  use MLSFINDS, only: FINDFIRST, FINDLAST
   use MLSSTRINGS, only: CAPITALIZE, TRIM_SAFE
   use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
   use SYMM_TRI, only: FACTOR_SYMM_TRI, SOLVE_FACTORED_SYMM_TRI
@@ -35,8 +35,8 @@ module MLSNumerics              ! Some low level numerical stuff
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! This module contains some low level numerical stuff, hunting, interpolating
-  ! etc.
+  ! This module contains some low level numerical stuff, hunting, interpolating,
+  ! approximating roots, derivatives, integrals, and some stray functions
 ! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
@@ -1006,7 +1006,7 @@ contains
 
 ! ------------------------------------------------------  Destroy  -----
 
-  ! This family of routines sets up a uniDiscFunction of the appropriate type
+  ! This family of routines deallocates a uniDiscFunction's arrays
   subroutine destroyUnifDiscreteFn_r4 ( UDF )
     ! Args
     type(UnifDiscreteFn_r4) :: UDF ! Intent(out) would clobber retainable values
@@ -2231,6 +2231,8 @@ contains
 
   ! This family of routines use a LookUpTable to approximate a costly-to-evaluate
   ! function based on its values at a set of points
+  ! They are workhorse functions used by the more specialized functions
+  ! that approximate derivatives, integrals, etc.
   
   ! Args:       (* means optional)
   ! x              pt at which to evaluate
@@ -2579,6 +2581,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.80  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.79  2013/05/31 23:30:37  vsnyder
 ! Add two-argument cross product routines
 !
