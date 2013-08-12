@@ -15,8 +15,8 @@ module BitStuff
 
 ! This module contains routines for interrogating, manipulating, using bits.
 
-  use MLSSets, only: FindAll
-  use output_m, only: blanks, output, newline
+  use MLSFINDS, only: FINDALL
+  use OUTPUT_M, only: BLANKS, OUTPUT, NEWLINE
 
   implicit none
   private
@@ -654,6 +654,9 @@ contains
 end module BitStuff
 
 ! $Log$
+! Revision 2.22  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.21  2013/06/12 02:09:16  vsnyder
 ! Cruft removal
 !
