@@ -37,7 +37,7 @@ module ChunkDivide_m
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_DEALLOCATE, MLSMSG_WARNING, &
                               MLSMSG_ERROR, MLSMSG_ALLOCATE
   use MLSNUMERICS, only: HUNT
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSIGNALS_M, only: MODULES
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
@@ -2714,6 +2714,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.104  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.103  2013/06/28 19:02:58  pwagner
 ! criticalSignals may be used in place of criticalModules; it will be effective everywhere in marking obstructions
 !

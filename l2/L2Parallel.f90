@@ -38,7 +38,7 @@ module L2Parallel
   use MLSKINDS, only: R8
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_WARNING, PVMERRORMESSAGE
-  use MLSSETS, only: FINDALL, FINDFIRST
+  use MLSFINDS, only: FINDALL, FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, REMOVENUMFROMLIST, &
     & REPLACESUBSTRING, SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE
@@ -1784,6 +1784,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.104  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.103  2013/04/05 23:31:46  pwagner
 ! Added more output controllable by l2q switch setting
 !
