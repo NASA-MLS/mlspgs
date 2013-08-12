@@ -14,9 +14,9 @@ module MLSSpecialFunctions              ! Some special functions
 !=============================================================================
 
   USE ERMSG_M, ONLY: DERM1, SERM1
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSSets, only: FindFirst, FindLast
-  use MLSStringLists, only: ReadIntsFromList
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSFINDS, only: FINDFIRST, FINDLAST
+  use MLSStringLists, only: READINTSFROMLIST
 
   implicit none
 
@@ -2446,6 +2446,9 @@ end module MLSSpecialFunctions
 
 !
 ! $Log$
+! Revision 2.8  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.7  2010/02/04 23:08:00  vsnyder
 ! Remove USE or declaration for unused names
 !
