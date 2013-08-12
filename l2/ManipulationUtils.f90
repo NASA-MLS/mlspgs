@@ -20,7 +20,7 @@ module ManipulationUtils        ! operations to manipulate quantities
   use MLSL2OPTIONS, only: MLSMESSAGE
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSSETS, only: FINDFIRST, FINDLAST, FINDNEXT
+  use MLSFINDS, only: FINDFIRST, FINDLAST, FINDNEXT
   use MLSSTATS1, only: MLSCOUNT, MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, &
     & MLSRMS, MLSSTDDEV
   use MLSSTRINGLISTS, only: ARRAY2LIST, CATLISTS, GETSTRINGELEMENT, &
@@ -1376,6 +1376,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.10  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.9  2013/08/06 23:02:24  pwagner
 ! Needed another change to handle nested functions
 !
