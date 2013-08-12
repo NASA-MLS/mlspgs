@@ -841,21 +841,24 @@ jloop:do while ( j < len_trim(line) )
     call GetUniqueList( tempSwitches, removeSwitches, numSwitches, &
           & ignoreLeadingSpaces=.true., options='-eSL' )
     ! Remove any quote marks from switches array
+    print *, 'switches ', trim(switches)
+    print *, 'removeSwitches ', trim(removeSwitches)
     tempSwitches = unquote(switches, quotes=quotes, options='-p')
-    ! print *,  'Before sort', trim(tempSwitches) 
+    print *, 'tempSwitches ', trim(tempSwitches)
     ! Now we want to keep only the swich with the highest details level
     call sortList( tempSwitches, iarray, ',', switches )
     tempSwitches = switches
-    ! print *,   'After sort', trim(tempSwitches)
+    print *,   'After sort ', trim(tempSwitches)
     call GetUniqueList( tempSwitches, Switches, numSwitches, &
           & ignoreLeadingSpaces=.true., options='-eSL' )
-    ! print *,   'Uniquified', trim(Switches) 
+    print *,   'Uniquified ', trim(Switches) 
     ! Remove any switches embedded in the removeSwitches option 'R'
     do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
       call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
       call RemoveSwitchFromList(switches, tempSwitches, trim(aSwitch))
       switches = tempSwitches
     end do
+    print *,   'Purified ', trim(Switches) 
 
     ! If we like, we could move these next few statements to a standalone
     ! subroutine named something like processSwitches
@@ -966,6 +969,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.65  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.64  2013/06/19 00:40:34  pwagner
 ! No longer automatically reduce Details of l2cf-born Dumps
 !
