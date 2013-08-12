@@ -33,7 +33,7 @@ module DUMP_0
     & INFFUNCTION, NANFUNCTION, REORDERFILLVALUES, REPLACEFILLVALUES, &
     & WHEREARETHEINFS, WHEREARETHENANS
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSSETS, only: FINDUNIQUE
+  use MLSFINDS, only: FINDUNIQUE
   use MLSSTATS1, only: STAT_T, &
     & ALLSTATS, FILLVALUERELATION, HOWFAR, HOWNEAR, &
     & MLSMAX, MLSMEAN, MLSMIN, MLSSTDDEV, RATIOS, RESET
@@ -3344,6 +3344,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.128  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.127  2013/06/28 18:08:38  pwagner
 ! Note if all logical elements equal
 !
