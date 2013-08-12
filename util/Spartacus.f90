@@ -25,7 +25,7 @@ program Spartacus
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, MLSMESSAGEEXIT, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_DEBUG, MLSMSG_ERROR, &
     & MLSMSG_INFO, MLSMSG_SUCCESS, MLSMSG_WARNING, PVMERRORMESSAGE
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & STRINGELEMENTNUM
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ, UNWRAPLINES
@@ -1254,6 +1254,9 @@ contains
 end module BOGUS_MODULE
 
 ! $Log$
+! Revision 1.7  2012/02/13 23:47:20  pwagner
+! Needed longer MAXCMDLEN; bogus_module needed so idents shows version id
+!
 ! Revision 1.6  2011/06/24 00:40:31  pwagner
 ! Add -dryrun option; repair some cosmetic errors
 !

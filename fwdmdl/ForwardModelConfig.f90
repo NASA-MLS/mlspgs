@@ -329,7 +329,7 @@ contains
 
       use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE
       use FILTERSHAPES_M, only: DACSFILTERSHAPES, FILTERSHAPES
-      use MLSSETS, only: FINDFIRST
+      use MLSFINDS, only: FINDFIRST
       use MLSSIGNALS_M, only: MATCHSIGNAL
 
       type(channels_T), pointer :: Channels(:)
@@ -1471,6 +1471,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.126  2013/08/09 01:02:58  vsnyder
+! Add ReferenceMIF component
+!
 ! Revision 2.125  2013/08/08 02:34:54  vsnyder
 ! Add derivOK component to Qty_Stuff
 !

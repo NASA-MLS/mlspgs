@@ -30,8 +30,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_WARNING, MLSMESSAGE, MLSMESSAGECALLS
   use MLSNUMERICS, only: FINDINRANGE
-  use MLSSETS, only: FINDFIRST, FINDINTERSECTION, FINDLAST, FINDUNIQUE, &
-    & INTERSECTION
+  use MLSFINDS, only: FINDFIRST, FINDLAST, FINDUNIQUE
+  use MLSSETS, only: FINDINTERSECTION, INTERSECTION
   use MLSSTRINGS, only: CAPITALIZE, LOWERCASE
   use MLSSTRINGLISTS, only: EXTRACTSUBSTRING, &
     & GETHASHELEMENT, GETSTRINGELEMENT, GETUNIQUELIST, &
@@ -5091,6 +5091,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.192  2013/04/05 23:17:52  pwagner
+! Uses function from dates_module
+!
 ! Revision 2.191  2013/02/26 00:11:49  pwagner
 ! Dumps times both as tai and hoursInDay
 !

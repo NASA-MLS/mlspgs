@@ -26,7 +26,7 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use INTRINSIC, only: L_NONE, L_VMR, LIT_INDICES, PHYQ_INDICES
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
@@ -1607,6 +1607,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.75  2013/07/12 23:57:42  vsnyder
+! Added Geolocation component
+!
 ! Revision 2.74  2013/06/12 02:13:40  vsnyder
 ! Cruft removal
 !

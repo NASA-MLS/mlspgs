@@ -25,7 +25,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
      & GETALLHDF5DSNAMES, GETHDF5ATTRIBUTE, GETHDF5DSDIMS, &
      & ISHDF5ATTRIBUTEPRESENT, LOADFROMHDF5DS, MLS_H5OPEN, MLS_H5CLOSE
    use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG
-   use MLSSETS, only: FINDALL, FINDFIRST, FINDLAST, FINDNEXT
+   use MLSFINDS, only: FINDALL, FINDFIRST, FINDLAST, FINDNEXT
    use MLSSTATS1, only: STAT_T, STATSONONELINE, &
      & DUMPSTAT=>DUMP, STATISTICS
    use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, GETUNIQUELIST, &
@@ -816,6 +816,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.25  2013/06/05 18:47:39  pwagner
+! table should print properly, not wrap
+!
 ! Revision 1.24  2012/07/10 23:14:44  pwagner
 ! Changed api in accord with GetUniqueList
 !

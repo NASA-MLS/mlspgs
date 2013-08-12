@@ -114,7 +114,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use MLSKINDS, only: R8, RV
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, MLSMESSAGECONFIG, &
     & MLSMSG_DEALLOCATE, MLSMSG_WARNING, MLSMESSAGE
-  use MLSSETS, only: FINDFIRST, FINDUNIQUE
+  use MLSFINDS, only: FINDFIRST, FINDUNIQUE
   use MLSSIGNALS_M, only: MODULES, SIGNALS, GETSIGNALNAME
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, CHECKINTEGRITY, &
@@ -3217,6 +3217,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.179  2013/07/13 00:00:15  vsnyder
+! Define assignment, producing error message, for vector value
+!
 ! Revision 2.178  2013/06/12 02:14:37  vsnyder
 ! Cruft removal
 !

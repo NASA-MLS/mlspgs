@@ -25,6 +25,8 @@ module LinearizedForwardModel_m
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  logical, parameter :: EXPECTDELTAXALLZERO = .false.
+
 contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------  LinearizedForwardModel  -----
@@ -107,7 +109,7 @@ contains ! =====     Public Procedures     =============================
 
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DUMP_0, only: DUMP
-    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, DUMP
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
     use HESSIANMODULE_1, only: MULTIPLY
@@ -126,15 +128,15 @@ contains ! =====     Public Procedures     =============================
     use MLSNUMERICS, only: COEFFICIENTS_R8, HUNT, INTERPOLATEARRAYSETUP, &
       & INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MOLECULES, only: IsExtinction
+    use MOLECULES, only: ISEXTINCTION
     use MOREMESSAGE, only: MLSMESSAGE
     use OUTPUT_M, only: OUTPUT !, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: DISPLAY_STRING
     use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: ASSIGNMENT(=), OPERATOR(-), OPERATOR(+), &
-      & CLONEVECTOR,  DESTROYVECTORINFO, DUMP, GETVECTORQUANTITYINDEXBYNAME, &
-      & GETVECTORQUANTITYBYTYPE, M_LINALG, &
+      & AREEQUAL, CLONEVECTOR,  DESTROYVECTORINFO, DUMP, &
+      & GETVECTORQUANTITYINDEXBYNAME, GETVECTORQUANTITYBYTYPE, M_LINALG, &
       & VECTOR_T, VECTORVALUE_T
     use SORT_M, only: SORTP
 
@@ -263,8 +265,8 @@ contains ! =====     Public Procedures     =============================
       if (.not. associated (sidebandFraction) .and. .not. &
         & ( associated ( lowerSidebandFraction) .and. &
         &   associated ( upperSidebandFraction ) ) ) &
-        & call MLSMessage(MLSMSG_Error,ModuleName, &
-        & "No sideband fraction supplied")
+        & call MLSMessage( MLSMSG_Error, ModuleName, &
+        & "No sideband fraction supplied" )
     end if
 
     ! --------- Loop over sidebands ------------------------------------------------
@@ -525,9 +527,15 @@ contains ! =====     Public Procedures     =============================
       end do quantityLoop               ! End loop over quantities
 
       ! Now compute yP
+      if ( .not. areEqual(deltaX, c=0._rv) .and. EXPECTDELTAXALLZERO ) then
+        call dump ( fmConf )
+        call dump ( deltaX, name='deltaX' )
+        call MLSMessage( MLSMSG_Error, ModuleName, &
+          & "deltaX not all zero" )
+      endif
+
       if ( toggle(emit) .and. levels(emit) > 8 ) then
         call dump ( deltaX, name='deltaX' )
-
         call dump ( l2pc%j%col%inst, 'l2pc%j%col%inst' )
         call dump ( l2pc%j%col%quant, 'l2pc%j%col%quant' )
 
@@ -789,6 +797,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.88  2012/07/31 00:45:02  vsnyder
+! Comment out OUTPUTNAMEDVALUE in USE since its use is commented out
+!
 ! Revision 2.87  2011/11/11 00:42:06  vsnyder
 ! Use IsExtinction array from Molecules module
 !

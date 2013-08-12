@@ -25,7 +25,7 @@ program tellMasterToQuit
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
     & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMERRORMESSAGE
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & STRINGELEMENTNUM
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
@@ -159,3 +159,6 @@ program tellMasterToQuit
 end program tellMasterToQuit
 
 ! $Log$
+! Revision 1.1  2010/04/13 20:30:46  pwagner
+! First commit
+!
