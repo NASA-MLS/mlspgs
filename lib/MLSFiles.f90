@@ -26,7 +26,7 @@ module MLSFiles               ! Utility file routines
     & INRANGE
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_CRASH, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSTRINGS, only: CAPITALIZE, LOWERCASE
   use MLSSTRINGLISTS, only: EXTRACTSUBSTRING, &
     & REPLACESUBSTRING, SORTARRAY
@@ -2750,6 +2750,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.97  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.96  2013/07/24 19:01:03  pwagner
 ! Fixed bug opening non-hdf file
 !

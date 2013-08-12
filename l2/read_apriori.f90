@@ -125,7 +125,7 @@ contains ! =====     Public Procedures     =============================
   subroutine dumpAPrioriAttributes
     ! dump info about what apriori files were used
     ! Storing them as hdfeos5 attributes
-    use dump_0, only: dump
+    use DUMP_0, only: DUMP
     ! Executable
     call output( 'Actual apriori files and file types used', advance='yes' )
     if ( len_trim(APrioriFiles%l2gp) > 0 )&
@@ -1014,9 +1014,9 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine Get_PCF_Id ( FileNameString, Path, SubString, L2Apriori_Version, &
       & FirstPCF, LastPCF, Description, GotFile, PCF_Id, ReturnStatus )
-      use MLSFiles, only: GETPCFROMREF, SPLIT_PATH_NAME
-      use MLSL2Options, only: TOOLKIT
-      use SDPToolkit, only: PGS_PC_GETREFERENCE, PGS_S_SUCCESS
+      use MLSFILES, only: GETPCFROMREF, SPLIT_PATH_NAME
+      use MLSL2OPTIONS, only: TOOLKIT
+      use SDPTOOLKIT, only: PGS_PC_GETREFERENCE, PGS_S_SUCCESS
 
       ! Args
       character(len=*), intent(inout) :: FileNameString
@@ -1352,6 +1352,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.97  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.96  2013/02/12 18:13:01  pwagner
 ! Raise -Sapr switch setting needed to become verbose
 !
