@@ -1166,7 +1166,7 @@ contains
       & DUMP_SECTION_TIMINGS
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, MLSMESSAGEEXIT, &
       & MLSMSG_CRASH, MLSMSG_ERROR
-    use MLSSETS, only: FINDFIRST
+    use MLSFINDS, only: FINDFIRST
     use MLSSIGNALS_M, only: DUMP, GETRADIOMETERINDEX, RADIOMETERS, SIGNALS
     use MLSSTRINGS, only: INDEXES, LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
     use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
@@ -2594,6 +2594,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.90  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.89  2013/08/01 20:46:30  vsnyder
 ! Fix to dump two quantities with two quantity fields, two grids with two
 ! grid fields, two hessians with two hessian fields, two masks with two
