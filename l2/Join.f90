@@ -408,7 +408,7 @@ contains ! =====     Public Procedures     =============================
       & MLSPCF_L2DGM_START, MLSPCF_L2DGM_END, MLSPCF_L2FWM_FULL_START, &
       & MLSPCF_L2FWM_FULL_END, &
       & MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
-    use MLSSETS, only: FINDFIRST, FINDNEXT
+    use MLSFINDS, only: FINDFIRST, FINDNEXT
     use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
     use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
     use OUTPUTANDCLOSE, only: ADD_METADATA
@@ -2222,6 +2222,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.151  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.150  2012/08/16 17:58:24  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
