@@ -28,10 +28,10 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use INIT_TABLES_MODULE, only: F_COMMENT, F_PHASENAME
   use MATRIXMODULE_0, only: MATRIXELEMENT_T
   use MATRIXMODULE_1, only: MATRIX_T, RC_INFO
-  use MLSKINDS, only: R8, RM
+  use MLSKINDS, only: R8
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, PVMERRORMESSAGE
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MORETREE, only: GET_FIELD_ID
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFMYTID, &
@@ -1006,6 +1006,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.45  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.44  2013/06/12 02:39:45  vsnyder
 ! Cruft removal
 !
