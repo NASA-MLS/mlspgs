@@ -44,7 +44,7 @@ module L2PC_m
   use MLSKINDS, only: R8, R4
   use MLSMESSAGEMODULE, only: MLSMESSAGE, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSIGNALS_M, only: GETSIGNALNAME
   use MLSSTRINGLISTS, only: OPTIONDETAIL, SWITCHDETAIL
   use MLSSTRINGS, only: WRITEINTSTOCHARS
@@ -1940,10 +1940,8 @@ contains ! ============= Public Procedures ==========================
     integer :: NAMEINDEX                ! Quantity name
     integer :: NOCHANS                  ! Dimension
     integer :: NOINSTANCES              ! Dimension
-    integer :: NOINSTANCESOR1           ! Dimension
     integer :: NOQUANTITIES             ! Number of quantities in vector
     integer :: NOSURFS                  ! Dimension
-    integer :: NOSURFSOR1               ! Dimension
     integer :: OBJTYPE                  ! Irrelevant argument to HDF5
     integer :: QID                      ! HDF5 ID of quantity group
     integer :: QT0                      ! Offset into l2pc quantity templates database
@@ -2147,17 +2145,6 @@ contains ! ============= Public Procedures ==========================
         call outputNamedValue( 'radiometer', radiometer )
         call outputNamedValue( 'qtIndexOffset', qtIndexOffset )
         call outputNamedValue( 'index', qtIndexOffset + quantity - 1 )
-      endif
-
-      if (qt%coherent) then
-        noInstancesOr1 = 1
-      else
-        noInstancesOr1 = qt%noInstances
-      endif
-      if (qt%stacked) then
-        noSurfsOr1 = 1
-      else
-        noSurfsOr1 = qt%noSurfs
       endif
 
       ! Get the surfaces and phis
@@ -2366,6 +2353,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.123  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.122  2013/06/12 02:10:47  vsnyder
 ! Cruft removal
 !
