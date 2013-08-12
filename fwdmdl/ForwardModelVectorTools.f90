@@ -38,19 +38,19 @@ contains
     ! config, and possibly an index into the molecules array, it can
     ! use the specificQuantities stuff in config to identify exactly
     ! the right quantity.
-    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use Intrinsic, only: Lit_Indices
-    use Intrinsic, only: L_VMR
-    use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
-    use MLSKinds, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use MLSSets, only: FindFirst
-    use MLSSignals_m, only: GetRadiometerName, GetSignalName, Signals
-    use Molecules, only: IsExtinction
-    use QuantityTemplates, only: QuantityTemplate_T
-    use String_table, only: Get_String
-    use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use INTRINSIC, only: LIT_INDICES
+    use INTRINSIC, only: L_VMR
+    use MANIPULATEVECTORQUANTITIES, only: DOHGRIDSMATCH, DOVGRIDSMATCH
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSFINDS, only: FINDFIRST
+    use MLSSIGNALS_M, only: GETRADIOMETERNAME, GETSIGNALNAME, SIGNALS
+    use MOLECULES, only: ISEXTINCTION
+    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
+    use STRING_TABLE, only: GET_STRING
+    use VECTORSMODULE, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
 
     ! Dummy arguments
     type (Vector_T), target :: VECTOR ! First vector to look in
@@ -321,9 +321,9 @@ contains
     ! config, and possibly an index into the molecules array, it can
     ! use the specificQuantities stuff in config to identify exactly
     ! the right quantity.
-    use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_t
-    use MLSKinds, only: R8
-    use VectorsModule, only: Vector_T, VectorValue_T
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, QTYSTUFF_T
+    use MLSKINDS, only: R8
+    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
 
     ! Dummy arguments
     type (Vector_T), target :: VECTOR ! First vector to look in
@@ -363,6 +363,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.26  2013/08/12 23:48:09  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.25  2013/06/12 02:20:02  vsnyder
 ! Cruft removal
 !
