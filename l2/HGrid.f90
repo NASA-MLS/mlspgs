@@ -758,7 +758,7 @@ contains ! =====     Public Procedures     =============================
     use MLSHDF5, only: IsHDF5AttributeInFile
     use MLSKinds, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSNumerics, only: HUNT, InterpolateValues
+    use MLSNumerics, only: HUNT, InterpolateValues, SolveQuadratic
     use MLSStringLists, only: SwitchDetail
     use MLSStrings, only: hhmmss_value
     use OUTPUT_M, only: OUTPUT
@@ -1740,54 +1740,6 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test(SolarLatitudeCalibration, 'SolarLatitudeCalibration', ModuleName)
     end subroutine GetApparentLocalSolarZenith
 
-    subroutine SolveQuadratic( a, b, c, r1, r2, imPart )
-      ! Solve
-
-      ! a x^2 + b x + c = 0
-
-      ! for x = r1 + i imPart, and x = r2 - i imPart
-      ! where i^2 = -1
-
-      ! Of course because a, b, and c are all purely real
-      ! if imPart /= 0, r1 = r2
-
-      ! We bother with this to avoid truncation that would result
-      ! from taking a difference between like-signed quantities
-      ! b and + or - sqrt(disc)
-
-      ! Special cases (which you may prefer to intercept yourself)
-      ! If a = 0, we return the same root in both r1 and r2
-      ! If a = b = 0, we divide c by zero
-      real(rk), intent(in)  :: a, b, c
-      real(rk), intent(out) :: r1, r2, imPart
-      ! Local variables
-      real(rk) :: disc ! b^2 - 4 a c
-      ! Executable
-      call output('a, b, c: ')
-      call output( (/a, b, c/), advance='yes')
-      imPart = 0.
-      if ( a == 0._rk ) then
-        ! strictly, in this degenerate case, the root is unique, not repeated
-        r1 = -c/b
-        r2 = r1
-        return
-      endif
-      disc = b*b - 4*a*c
-      if ( disc < 0._rk ) then
-        imPart = sqrt(-disc) / (2*a)
-        r1 = -b / (2*a)
-        r2 = r1
-      elseif ( b < 0._rk ) then
-        r1 = ( -b + sqrt(disc) ) / (2*a)
-        r2 = c / (a*r1)
-      else
-        r1 = ( -b - sqrt(disc) ) / (2*a)
-        r2 = c / (a*r1)
-      endif
-      call output('r1, r2, imPart: ')
-      call output( (/r1, r2, imPart/), advance='yes')
-    end subroutine SolveQuadratic
-
   end subroutine CreateRegularHGrid
 
   ! --------------------------------------- DealWithObstructions -----
@@ -2396,6 +2348,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.103  2013/08/13 00:58:54  vsnyder
+! Move SolveQuadratic into MLSNumerics
+!
 ! Revision 2.102  2013/06/12 02:37:14  vsnyder
 ! Cruft removal
 !
