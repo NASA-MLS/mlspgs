@@ -82,7 +82,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSSTRINGS, only: INDEXES, LOWERCASE, WRITEINTSTOCHARS
   use MOLECULES, only: L_H2O
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
-  use QUANTITYTEMPLATES, only: EPOCH, QUANTITYTEMPLATE_T
+  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
   use RHIFROMH2O, only: H2OPRECFROMRHI, RHIFROMH2O_FACTOR, RHIPRECFROMH2O
   use SCANMODELMODULE, only: GETBASISGPH, GET2DHYDROSTATICTANGENTPRESSURE, &
     & GETGPHPRECISION
@@ -4216,25 +4216,15 @@ contains ! =====     Public Procedures     =============================
 
     ! --------------------------------------- UsingMagneticModel --
     subroutine UsingMagneticModel ( qty, gphQty, key )
-      use Geometry, only: SECPERYEAR
-      use IGRF_INT, only: FELDC, FELDCOF, TO_CART
+      use Magnetic_Field_Quantity, only: Get_Magnetic_Field_Quantity
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(inout) :: GPHQTY
       integer, intent(in) :: KEY
-      ! Local variables
-      real :: B(3)                      ! Magnetic field
-      integer, save :: Details = -10    ! From switchDetails('mag')
-      integer :: INSTANCE               ! Loop counter
-      character(len=8) :: options
-      integer :: SURF                   ! Loop counter
-      integer :: SURFOR1                ! Index
-      real    :: XYZ(3)                 ! lat, lon, height for to_cart
 
       ! Executable code
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.UsingMagneticModel', key )
-      options = ' '
-      if ( switchDetail(switches,'clean') > -1 ) options = '-c'
+
       if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_magneticField/), &
         & frequencyCoordinate=(/ l_xyz /) ) ) then
         call Announce_Error ( key, no_error_code, &
@@ -4258,32 +4248,8 @@ contains ! =====     Public Procedures     =============================
         go to 9
       end if
 
-      ! Assume the time is close enough to constant that one call to
-      ! FELDCOF is accurate enough.
+      call get_Magnetic_Field_Quantity ( qty, GPHQty )
 
-      call feldcof ( real(qty%template%time(1,1)/secPerYear + epoch) )
-
-      do instance = 1, qty%template%noInstances
-        do surf = 1, qty%template%noSurfs
-          if ( qty%template%stacked ) then
-            surfOr1 = 1
-          else
-            surfOr1 = surf
-          end if
-          ! Convert (/ lat(deg), lon(deg), height(km) /) to cartesian (e-radius)
-          call to_cart ( real( (/ qty%template%geodLat(surfOr1,instance), &
-            &                     qty%template%lon(surfOr1,instance), &
-            &                     gphQty%values(surf,instance)*1.0e-3 /) ), xyz )
-          ! Compute the field at and w.r.t. cartesian coordinates.  The first
-          ! dimension of value3 is field components, not channels.
-          call feldc ( xyz, b )
-!3          qty%values ( surf*3-2 : surf*3, instance) = b
-          qty%value3 ( 1:3, surf, instance) = b
-        end do
-      end do
-
-      if ( details < -1 ) details = switchDetail(switches,'mag') ! only once
-      if ( details > -1 ) call dump ( qty, details=details, options=options )
     9 if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_end ( 'FillUtils_1.UsingMagneticModel' )
 
@@ -7052,6 +7018,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.81  2013/08/13 02:23:06  vsnyder
+! Move magnetic field stuff to Magnetic_Field_Quantity
+!
 ! Revision 2.80  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
