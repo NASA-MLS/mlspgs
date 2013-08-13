@@ -841,24 +841,18 @@ jloop:do while ( j < len_trim(line) )
     call GetUniqueList( tempSwitches, removeSwitches, numSwitches, &
           & ignoreLeadingSpaces=.true., options='-eSL' )
     ! Remove any quote marks from switches array
-    print *, 'switches ', trim(switches)
-    print *, 'removeSwitches ', trim(removeSwitches)
     tempSwitches = unquote(switches, quotes=quotes, options='-p')
-    print *, 'tempSwitches ', trim(tempSwitches)
     ! Now we want to keep only the swich with the highest details level
     call sortList( tempSwitches, iarray, ',', switches )
     tempSwitches = switches
-    print *,   'After sort ', trim(tempSwitches)
     call GetUniqueList( tempSwitches, Switches, numSwitches, &
           & ignoreLeadingSpaces=.true., options='-eSL' )
-    print *,   'Uniquified ', trim(Switches) 
     ! Remove any switches embedded in the removeSwitches option 'R'
     do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
       call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
       call RemoveSwitchFromList(switches, tempSwitches, trim(aSwitch))
       switches = tempSwitches
     end do
-    print *,   'Purified ', trim(Switches) 
 
     ! If we like, we could move these next few statements to a standalone
     ! subroutine named something like processSwitches
@@ -969,6 +963,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.66  2013/08/13 23:05:48  pwagner
+! Removd some fugitive debug printing
+!
 ! Revision 2.65  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
