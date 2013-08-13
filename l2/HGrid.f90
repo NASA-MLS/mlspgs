@@ -70,8 +70,9 @@ contains ! =====     Public Procedures     =============================
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use L2GPData, only: L2GPDATA_T
-    use MLSCommon, only: MLSFile_T, NameLen, RK => R8, TAI93_RANGE_T
+    use MLSCommon, only: MLSFile_T, NameLen, TAI93_RANGE_T
     use MLSFiles, only: GetMLSFileByType
+    use MLSKinds, only: RK => R8
     use MLSL2Options, only: NEED_L1BFILES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSNumerics, only: HUNT
@@ -342,7 +343,7 @@ contains ! =====     Public Procedures     =============================
     use EXPR_M, only: EXPR
     use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T
     use INIT_TABLES_MODULE, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_TIME
-    use MLSCommon, only: RK => R8
+    use MLSKinds, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use TREE, only: NSONS, SUBTREE
     use String_table, only: GET_STRING
@@ -466,8 +467,9 @@ contains ! =====     Public Procedures     =============================
       & F_MIF, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_MIF
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
-    use MLSCommon, only: MLSFile_T, NameLen, RK => R8
+    use MLSCommon, only: MLSFile_T, NameLen
     use MLSFiles, only: GetMLSFileByType
+    use MLSKinds, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSNumerics, only: HUNT, InterpolateValues
 
@@ -1836,8 +1838,9 @@ contains ! =====     Public Procedures     =============================
     use HGridsDatabase, only: HGRID_T
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
-    use MLSCommon, only: MLSFile_T, NameLen, R8
+    use MLSCommon, only: MLSFile_T, NameLen
     use MLSFiles, only: GetMLSFileByType
+    use MLSKinds, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
       & MLSMSG_DeAllocate, MLSMSG_Error
     use OUTPUT_M, only: OUTPUT
@@ -2286,14 +2289,14 @@ contains ! =====     Public Procedures     =============================
     case ( unitlessMessage )
       call output ( "Value for the " )
       call dump_tree_node ( where, 0 )
-      call output ( " field is required to dimensionless", advance='yes' )
+      call output ( " field is required to be dimensionless", advance='yes' )
     end select
     end subroutine ANNOUNCE_ERROR
     
     subroutine PlaceArray_r4(array1, array2, offset)
       ! place contents of array1 inside array2, possibly offset
-      use MLSCommon, only: r4
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+      integer, parameter :: R4 = kind(0.0e0)
       ! Args
       real(r4), dimension(:,:), intent(in)     :: array1
       real(r4), dimension(:,:), intent(inout)  :: array2
@@ -2313,8 +2316,8 @@ contains ! =====     Public Procedures     =============================
 
     subroutine PlaceArray_r8(array1, array2, offset)
       ! place contents of array1 inside array2, possibly offset
-      use MLSCommon, only: r8
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+      integer, parameter :: R8 = kind(0.0d0)
       ! Args
       real(r8), dimension(:,:), intent(in)     :: array1
       real(r8), dimension(:,:), intent(inout)  :: array2
@@ -2348,6 +2351,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.104  2013/08/13 01:27:42  vsnyder
+! Get kind type parameters from MLSKinds instead of MLSCommon
+!
 ! Revision 2.103  2013/08/13 00:58:54  vsnyder
 ! Move SolveQuadratic into MLSNumerics
 !
