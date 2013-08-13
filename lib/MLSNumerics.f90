@@ -158,7 +158,7 @@ module MLSNumerics              ! Some low level numerical stuff
   public :: Interpolate_Regular_To_Irregular, INTERPOLATE_2D_COMPOSITE
   public :: LINEARINTERPOLATE
   public :: PUREHUNT
-  public :: SETUP, SIMPSONS, SIMPSONSSUB
+  public :: SETUP, SIMPSONS, SIMPSONSSUB, SolveQuadratic
   public :: USELOOKUPTABLE
 
   type, public :: Coefficients_R4
@@ -467,12 +467,16 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure setUpUnifDiscreteFn_r4, setUpUnifDiscreteFn_r8
   end interface
 
-  interface simpsons
-    module procedure simpsons_r4, simpsons_r8
+  interface Simpsons
+    module procedure Simpsons_r4, Simpsons_r8
   end interface
 
   interface SimpsonsSub
-    module procedure simps_r4, simps_r8
+    module procedure Simps_r4, Simps_r8
+  end interface
+
+  interface SolveQuadratic
+    module procedure SolveQuadratic_r4, SolveQuadratic_r8
   end interface
 
   interface UseLookUpTable
@@ -480,8 +484,8 @@ module MLSNumerics              ! Some low level numerical stuff
   end interface
 
   ! These are arrays in name only used when implementing cubic splines
-  real(r4), private, dimension(1) :: newYr4, newdYr4
-  real(r8), private, dimension(1) :: newYr8, newdYr8
+  real, private, dimension(1) :: newYr4, newdYr4
+  double precision, private, dimension(1) :: newYr8, newdYr8
 
 contains
 
@@ -732,7 +736,7 @@ contains
         else
           if ( fnext .neqv. flast ) exit
         end if
-      enddo
+      end do
       if ( shot > size(ns) ) return ! No shot was long enough
     end if
     ! Phase 2
@@ -791,12 +795,12 @@ contains
   end subroutine Battleship_log
 
   subroutine Battleship_r4( fun, root, arg1, delta, maxPhase1, ns, status )
-    integer, parameter :: RK = r4
+    integer, parameter :: RK = kind(0.0e0)
       include "Battleship.f9h"
   end subroutine Battleship_r4
 
   subroutine Battleship_r8( fun, root, arg1, delta, maxPhase1, ns, status )
-    integer, parameter :: RK = r8
+    integer, parameter :: RK = kind(0.0d0)
       include "Battleship.f9h"
   end subroutine Battleship_r8
 
@@ -885,7 +889,7 @@ contains
   !              (greatly speeds up search)
 
   subroutine ClosestElement_r4_1d ( test, array, indices, options )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
     real(rk), intent(in)               :: test
@@ -924,7 +928,7 @@ contains
   end subroutine ClosestElement_r4_2d
 
   subroutine ClosestElement_r8_2d ( test, array, indices, options )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
     real(rk), intent(in)               :: test
@@ -939,7 +943,7 @@ contains
   end subroutine ClosestElement_r8_2d
 
   subroutine ClosestElement_r4_3d ( test, array, indices, options )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
     real(rk), intent(in)               :: test
@@ -954,7 +958,7 @@ contains
   end subroutine ClosestElement_r4_3d
 
   subroutine ClosestElement_r8_3d ( test, array, indices, options )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
     real(rk), intent(in)               :: test
@@ -1033,7 +1037,7 @@ contains
   ! UDF      the uniformly discretized function type
   
   function d2Fdx2Approximate_r4 ( x, UDF ) result(value)
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: x
     type(UnifDiscreteFn_r4), intent(in)       :: UDF
@@ -1064,7 +1068,7 @@ contains
   end function d2Fdx2Approximate_r4
 
   function d2Fdx2Approximate_r8 ( x, UDF ) result(value)
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: x
     type(UnifDiscreteFn_r8), intent(in)       :: UDF
@@ -1104,7 +1108,7 @@ contains
   ! UDF      the uniformly discretized function type
   
   function dFdxApproximate_r4 ( x, UDF ) result(value)
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: x
     type(UnifDiscreteFn_r4), intent(in)       :: UDF
@@ -1135,7 +1139,7 @@ contains
   end function dFdxApproximate_r4
 
   function dFdxApproximate_r8 ( x, UDF ) result(value)
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: x
     type(UnifDiscreteFn_r8), intent(in)       :: UDF
@@ -1256,7 +1260,7 @@ contains
   ! UDF      the uniformly discretized function type
   
   function FApproximate_r4 ( x, UDF ) result(value)
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: x
     type(UnifDiscreteFn_r4), intent(in)       :: UDF
@@ -1294,7 +1298,7 @@ contains
   end function FApproximate_r4
 
   function FApproximate_r8 ( x, UDF ) result(value)
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: x
     type(UnifDiscreteFn_r8), intent(in)       :: UDF
@@ -1344,7 +1348,7 @@ contains
   ! Will return x such that y[x] is approximately y
   
   function FInvApproximate_r4 ( y, UDF, xS, xE ) result(x)
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     ! Args
     real(rk), intent(in)                 :: y
     type(UnifDiscreteFn_r4), intent(in)  :: UDF
@@ -1360,7 +1364,7 @@ contains
   end function FInvApproximate_r4
 
   function FInvApproximate_r8 ( y, UDF, xS, xE ) result(x)
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     ! Args
     real(rk), intent(in)                 :: y
     type(UnifDiscreteFn_r8), intent(in)  :: UDF
@@ -1389,12 +1393,12 @@ contains
   ! outside the range [x1, x2]
 
   subroutine FillLookUpTable_r4 ( fun, table, x1, x2, N, xtable )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     include 'FillLookUpTable.f9h'
   end subroutine FillLookUpTable_r4 
 
   subroutine FillLookUpTable_r8 ( fun, table, x1, x2, N, xtable )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     include 'FillLookUpTable.f9h'
   end subroutine FillLookUpTable_r8
 
@@ -1414,7 +1418,7 @@ contains
 !       r                 reverse sense (i.e. find outside range)
 !       c                 modulo 360 degress
   subroutine FindInRange_int ( list, vrange, which, how_many, options )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     ! Dummy args
     integer, dimension(:) :: list
     integer, dimension(2) :: vrange
@@ -1422,7 +1426,7 @@ contains
   end subroutine FindInRange_int
 
   subroutine FindInRange_r4 ( list, vrange, which, how_many, options )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     ! Dummy args
     real(rk), dimension(:) :: list
     real(rk), dimension(2) :: vrange
@@ -1430,7 +1434,7 @@ contains
   end subroutine FindInRange_r4
 
   subroutine FindInRange_r8 ( list, vrange, which, how_many, options )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     ! Dummy args
     real(rk), dimension(:) :: list
     real(rk), dimension(2) :: vrange
@@ -1447,7 +1451,7 @@ contains
   subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, &
     & allowBelowValue, nearest, logSpace, fail )
     use ieee_arithmetic, only: IEEE_Is_NaN
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
     real(rk), dimension(:), intent(in) :: list ! List to search
@@ -1471,7 +1475,7 @@ contains
   subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, &
     & allowBelowValue, nearest, logSpace, fail )
     use ieee_arithmetic, only: IEEE_Is_NaN
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
     real(rk), dimension(:), intent(in) :: list ! List to search
@@ -1494,7 +1498,7 @@ contains
 
   subroutine HuntScalar_r4 (list, value, index, start, allowTopValue, &
     & allowBelowValue, nearest, logSpace )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
     real(rk), dimension(:), intent(in) :: list ! List to search
@@ -1519,7 +1523,7 @@ contains
 
   subroutine HuntScalar_r8 (list, value, index, start, allowTopValue, &
     & allowBelowValue, nearest, logSpace )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
     real(rk), dimension(:), intent(in) :: list ! List to search
@@ -1563,7 +1567,7 @@ contains
 ! are within that range
 ! As with other Hunts, list must be monotonic
   subroutine HuntRange_int ( list, vrange, irange, options )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     ! Dummy args
     integer, dimension(:) :: list
     integer, dimension(2) :: vrange
@@ -1571,7 +1575,7 @@ contains
   end subroutine HuntRange_int
 
   subroutine HuntRange_r4 ( list, vrange, irange, options )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     ! Dummy args
     real(rk), dimension(:) :: list
     real(rk), dimension(2) :: vrange
@@ -1579,7 +1583,7 @@ contains
   end subroutine HuntRange_r4
 
   subroutine HuntRange_r8 ( list, vrange, irange, options )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     ! Dummy args
     real(rk), dimension(:) :: list
     real(rk), dimension(2) :: vrange
@@ -1596,7 +1600,7 @@ contains
   ! [xS,xE]  range over which to integrate (otherwise [UDF%x1, UDF%x2])
   
   function IFApproximate_r4 ( UDF, xS, xE ) result(value)
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     ! Args
     type(UnifDiscreteFn_r4), intent(in)  :: UDF
     real(rk), optional, intent(in)       :: xS
@@ -1630,7 +1634,7 @@ contains
   end function IFApproximate_r4
 
   function IFApproximate_r8 ( UDF, xS, xE ) result(value)
-    integer, parameter :: RK = r8
+    integer, parameter :: RK = kind(0.0d0)
     ! Args
     type(UnifDiscreteFn_r8), intent(in)  :: UDF
     real(rk), optional, intent(in)       :: xS
@@ -1686,7 +1690,7 @@ contains
 
   subroutine InterpolateArray_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
     & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY, IntYdX )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
     real(rk), dimension(:), intent(IN) :: oldX
@@ -1714,7 +1718,7 @@ contains
 
   subroutine InterpolateArray_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
     & badValue, missingRegions, dyByDx, dNewByDOld, skipNewY, IntYdX )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
     real(rk), dimension(:), intent(IN) :: oldX
@@ -1743,7 +1747,7 @@ contains
   subroutine InterpolateArraySetup_r4 ( OldX, NewX, Method, Coeffs, &
     & Extrapolate, Width, DyByDx, dNewByDOld, IntYdX )
 
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
 
     real(rk), intent(in) :: OldX(:), NewX(:)
     character(len=*), intent(in) :: Method
@@ -1768,7 +1772,7 @@ contains
   subroutine InterpolateArraySetup_r8 ( OldX, NewX, Method, Coeffs, &
     & Extrapolate, Width, DyByDx, dNewByDOld, IntYdX )
 
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
 
     real(rk), intent(in) :: OldX(:), NewX(:)
     character(len=*), intent(in) :: Method
@@ -1814,7 +1818,7 @@ contains
 
   subroutine InterpolateScalar_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
     & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX, YMIN, YMAX )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
     real(rk), dimension(:), intent(in) :: oldX
@@ -1840,7 +1844,7 @@ contains
 
   subroutine InterpolateScalar_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
     & badValue, missingRegions, dyByDx, RangeOfPeriod, skipNewY, IntYdX, YMIN, YMAX )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
     real(rk), dimension(:), intent(in) :: oldX
@@ -1866,7 +1870,7 @@ contains
 
   subroutine InterpolateScalarUsingSetup_r4 ( coeffs, oldX, oldY, newX, newY, &
     & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
     type(coefficients_r4), intent(in) :: Coeffs
@@ -1892,7 +1896,7 @@ contains
 
   subroutine InterpolateScalarUsingSetup_r8 ( coeffs, oldX, oldY, newX, newY, &
     & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
     type(coefficients_r8), intent(in) :: Coeffs
@@ -1918,7 +1922,7 @@ contains
 
   subroutine InterpolateUsingSetup_r4 ( coeffs, oldX, oldY, newX, newY, &
     & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
 
     ! Dummy arguments
     type(coefficients_r4), intent(in) :: Coeffs
@@ -1944,7 +1948,7 @@ contains
 
   subroutine InterpolateUsingSetup_r8 ( coeffs, oldX, oldY, newX, newY, &
     & method, extrapolate, badValue, missingRegions, dyByDx, skipNewY, IntYdX )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
 
     ! Dummy arguments
     type(coefficients_r8), intent(in) :: Coeffs
@@ -2013,7 +2017,7 @@ contains
     ! The shape of ZOld must be (size(xOld),size(yOld)).
     ! The shape of ZNew must be the same as Xnew and YNew.
     ! The only method supported is linear with constant extrapolation.
-    integer, parameter :: RK = kind(1.0d0)
+    integer, parameter :: RK = kind(1.0e0)
     real(rk), intent(in) :: XOld(:)
     real(rk), intent(in) :: YOld(:)
     real(rk), intent(in) :: ZOld(:,:)
@@ -2029,7 +2033,7 @@ contains
     ! The shape of ZOld must be (size(xOld),size(yOld)).
     ! The shape of ZNew must be the same as Xnew and YNew.
     ! The only method supported is linear with constant extrapolation.
-    integer, parameter :: RK = kind(1.0e0)
+    integer, parameter :: RK = kind(1.0d0)
     real(rk), intent(in) :: XOld(:)
     real(rk), intent(in) :: YOld(:)
     real(rk), intent(in) :: ZOld(:,:)
@@ -2094,42 +2098,42 @@ contains
   ! coords   2*n vertices coordinates
   
   function LinearInterpolate_1d_r4 ( values, coords, vertices ) result(value)
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     include "LinearInterpolate_1d.f9h"
   end function LinearInterpolate_1d_r4
 
   function LinearInterpolate_1d_r8 ( values, coords, vertices ) result(value)
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     include "LinearInterpolate_1d.f9h"
   end function LinearInterpolate_1d_r8
 
   function LinearInterpolate_2d_r4 ( values, coords, vertices ) result(value)
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     include "LinearInterpolate_2d.f9h"
   end function LinearInterpolate_2d_r4
 
   function LinearInterpolate_2d_r8 ( values, coords, vertices ) result(value)
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     include "LinearInterpolate_2d.f9h"
   end function LinearInterpolate_2d_r8
 
   function LinearInterpolate_3d_r4 ( values, coords, vertices ) result(value)
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     include "LinearInterpolate_3d.f9h"
   end function LinearInterpolate_3d_r4
 
   function LinearInterpolate_3d_r8 ( values, coords, vertices ) result(value)
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     include "LinearInterpolate_3d.f9h"
   end function LinearInterpolate_3d_r8
 
   function LinearInterpolate_4d_r4 ( values, coords, vertices ) result(value)
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     include "LinearInterpolate_4d.f9h"
   end function LinearInterpolate_4d_r4
 
   function LinearInterpolate_4d_r8 ( values, coords, vertices ) result(value)
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     include "LinearInterpolate_4d.f9h"
   end function LinearInterpolate_4d_r8
 
@@ -2151,7 +2155,7 @@ contains
   ! This family of routines sets up a uniDiscFunction of the appropriate type
   subroutine setUpUnifDiscreteFn_r4 ( UDF, N, x1, x2, &
     & y, BC, method, yLeft, yRight, fun )
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     ! Args
     type(UnifDiscreteFn_r4) :: UDF ! Intent(out) would clobber defaults
     integer, intent(in)  :: N
@@ -2183,7 +2187,7 @@ contains
 
   subroutine setUpUnifDiscreteFn_r8 ( UDF, N, x1, x2, &
     & y, BC, method, yLeft, yRight, fun )
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     ! Args
     type(UnifDiscreteFn_r8) :: UDF ! Intent(out) would clobber defaults
     integer, intent(in)  :: N
@@ -2217,15 +2221,48 @@ contains
   ! This family provides subroutine apis to integration by Simpson's rule
   subroutine Simps_r4 ( F, DX, N, R )
 !  Simpson's Integration of discrete equal spacing
-    integer, parameter :: RK = r4
+    integer, parameter :: RK = kind(0.0e0)
     include 'simpson.f9h'
   end subroutine Simps_r4
 
   subroutine Simps_r8 ( F, DX, N, R )
 !  Simpson's Integration of discrete equal spacing
-    integer, parameter :: RK = r8
+    integer, parameter :: RK = kind(0.0d0)
     include 'simpson.f9h'
   end subroutine Simps_r8
+
+! -----------------------------------------------  SolveQuadratic  -----
+   ! Solve
+
+   ! a x^2 + b x + c = 0
+
+   ! for x = r1 + i imPart, and x = r2 - i imPart
+   ! where i^2 = -1
+
+   ! Of course because a, b, and c are all purely real
+   ! if imPart /= 0, r1 = r2
+
+   ! We bother with this to avoid truncation that would result
+   ! from taking a difference between like-signed quantities
+   ! b and + or - sqrt(disc)
+
+   ! Special cases (which you may prefer to intercept yourself)
+   ! If a = 0, we return the same root in both r1 and r2
+   ! If a = b = 0, we divide c by zero
+
+  subroutine SolveQuadratic_r4 ( A, B, C, R1, R2, ImPart )
+   integer, parameter :: RK = kind(0.0e0)
+   real(rk), intent(in)  :: A, B, C
+   real(rk), intent(out) :: R1, R2, ImPart
+   include 'SolveQuadratic.f9h'
+ end subroutine SolveQuadratic_r4
+
+  subroutine SolveQuadratic_r8 ( A, B, C, R1, R2, ImPart )
+   integer, parameter :: RK = kind(0.0d0)
+   real(rk), intent(in)  :: A, B, C
+   real(rk), intent(out) :: R1, R2, ImPart
+   include 'SolveQuadratic.f9h'
+ end subroutine SolveQuadratic_r8
 
 ! -----------------------------------------------  UseLookUpTable  -----
 
@@ -2268,13 +2305,13 @@ contains
 
   function UseLookUpTable_r4 ( x, table, x1, x2, xtable, &
     & missingValue, options, xS, xE, yBottom, yTop ) result(value)
-    integer, parameter :: RK = R4
+    integer, parameter :: RK = kind(0.0e0)
     include 'UseLookUpTable.f9h'
   end function UseLookUpTable_r4 
 
   function UseLookUpTable_r8 ( x, table, x1, x2, xtable, &
     & missingValue, options, xS, xE, yBottom, yTop ) result(value)
-    integer, parameter :: RK = R8
+    integer, parameter :: RK = kind(0.0d0)
     include 'UseLookUpTable.f9h'
   end function UseLookUpTable_r8 
 
@@ -2328,7 +2365,7 @@ contains
 ! ..............................................  createXArray_r4  .....
   ! This family creates an array of x values appropriate
   ! for the UDF
-  subroutine createXArray_r4( xArray, UDF )
+  subroutine CreateXArray_r4( xArray, UDF )
     integer, parameter :: RK = R4
     ! Args
     real(rk), dimension(:), pointer      :: xArray
@@ -2340,10 +2377,10 @@ contains
     do i=1, UDF%N
       xArray(i) = UDF%x1 + (i-1)*(UDF%x2-UDF%x1)/(UDF%N-1)
     enddo
-  end subroutine createXArray_r4
+  end subroutine CreateXArray_r4
 
 ! ..............................................  createXArray_r8  .....
-  subroutine createXArray_r8( xArray, UDF )
+  subroutine CreateXArray_r8( xArray, UDF )
     integer, parameter :: RK = R8
     ! Args
     real(rk), dimension(:), pointer      :: xArray
@@ -2355,12 +2392,12 @@ contains
     do i=1, UDF%N
       xArray(i) = UDF%x1 + (i-1)*(UDF%x2-UDF%x1)/(UDF%N-1)
     enddo
-  end subroutine createXArray_r8
+  end subroutine CreateXArray_r8
 
 ! .................................................  psimpsons_r4  .....
   ! This family of functions performs a part of asimpson's rule integration
   ! from x1 to x
-  function psimpsons_r4 ( x, x1, x2, h, y ) result (sum)
+  function Psimpsons_r4 ( x, x1, x2, h, y ) result (sum)
     integer, parameter :: RK = R4
     ! Args
     real(rk), intent(in)               :: x
@@ -2390,10 +2427,10 @@ contains
     ! Now integrate over the distance from x[n] to x
     ! using, less accurately, a trapezoidal quadrature
     sum = sum + ( (x - xArray(n))/2 * ( y(n) + yofx ) )
-  end function psimpsons_r4
+  end function Psimpsons_r4
 
 ! .................................................  psimpsons_r8  .....
-  function psimpsons_r8 ( x, x1, x2, h, y ) result (sum)
+  function Psimpsons_r8 ( x, x1, x2, h, y ) result (sum)
     integer, parameter :: RK = R8
     ! Args
     real(rk), intent(in)               :: x
@@ -2423,12 +2460,12 @@ contains
     ! Now integrate over the distance from x[n] to x
     ! using, less accurately, a trapezoidal quadrature
     sum = sum + ( (x - xArray(n))/2 * ( y(n) + yofx ) )
-  end function psimpsons_r8
+  end function Psimpsons_r8
 
 ! ...................................................  reposit_r4  .....
   ! This family repositions x if it is outside [x1, x2]
   ! considering the type of BC determined by the UDF
-  subroutine reposit_r4 ( x, UDF, p, itsSign )
+  subroutine Reposit_r4 ( x, UDF, p, itsSign )
     integer, parameter :: RK = R4
     ! Args
     real(rk), intent(in)                 :: x ! Given this x
@@ -2468,10 +2505,10 @@ contains
       p = max( p, UDF%x1 )
       p = min( p, UDF%x2 )
     end select
-  end subroutine reposit_r4
+  end subroutine Reposit_r4
 
 ! ...................................................  reposit_r8  .....
-  subroutine reposit_r8( x, UDF, p, itsSign )
+  subroutine Reposit_r8( x, UDF, p, itsSign )
     integer, parameter :: RK = R8
     ! Args
     real(rk), intent(in)                 :: x ! Given this x
@@ -2511,12 +2548,12 @@ contains
       p = max( p, UDF%x1 )
       p = min( p, UDF%x2 )
     end select
-  end subroutine reposit_r8
+  end subroutine Reposit_r8
 
 ! ..................................................  simpsons_r4  .....
   ! This family of functions performs simpson's rule integrations
   ! for either even or odd n
-  function simpsons_r4 ( n, h, y ) result (sum)
+  function Simpsons_r4 ( n, h, y ) result (sum)
     integer, parameter :: RK = R4
     ! Args
     integer, intent(in)                :: n
@@ -2524,10 +2561,10 @@ contains
     real(rk), dimension(:), intent(in) :: y
     real(rk)                           :: sum
     call SimpsonsSub( y, h, n, sum )
-  end function simpsons_r4
+  end function Simpsons_r4
 
 ! ..................................................  simpsons_r8  .....
-  function simpsons_r8 ( n, h, y ) result (sum)
+  function Simpsons_r8 ( n, h, y ) result (sum)
     integer, parameter :: RK = R8
     ! Args
     integer, intent(in)                :: n
@@ -2535,7 +2572,7 @@ contains
     real(rk), dimension(:), intent(in) :: y
     real(rk)                           :: sum
     call SimpsonsSub( y, h, n, sum )
-  end function simpsons_r8
+  end function Simpsons_r8
 
 ! ....................................................  D_CSPLINE  .....
   ! This family was moved here from fwdmdl
@@ -2581,6 +2618,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.81  2013/08/13 00:58:43  vsnyder
+! Move SolveQuadratic into MLSNumerics
+!
 ! Revision 2.80  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
