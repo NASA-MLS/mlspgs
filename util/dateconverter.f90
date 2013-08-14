@@ -13,13 +13,13 @@
 program dateconverter
 !=================================
 
-   use dates_module, ONLY: adddaystoutc, addhourstoutc, addsecondstoutc, &
-     & dai_to_yyyymmdd, dateForm, dayofweek, hoursinday, &
-     & reFormatDate, secondsinday, splitDateTime, &
-     & yyyymmdd_to_dai
-   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
-   use MLSStringLists, ONLY: ExpandStringRange, StringElement
-   use MLSStrings, ONLY: lowerCase, ncopies, readNumsFromChars
+   use DATES_MODULE, only: ADDDAYSTOUTC, ADDHOURSTOUTC, ADDSECONDSTOUTC, &
+     & DATEFORM, DAYOFWEEK, HOURSINDAY, &
+     & REFORMATDATE, RESETSTARTINGDATE, SECONDSINDAY, SPLITDATETIME, &
+     & YYYYMMDD_TO_DAI
+   use MACHINE, only: HP, GETARG
+   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE
+   use MLSSTRINGS, only: LOWERCASE, NCOPIES, READNUMSFROMCHARS
 
    IMPLICIT NONE
 
@@ -48,7 +48,7 @@ program dateconverter
     character(len=255) :: outputFormat= ' '    ! output format
     character(len=255) :: inputFormat= ' '     ! input format
     character(len=255) :: inputTime= ' '       ! input time
-    character(len=255) :: argRange= ' '        ! which arg numbers to do
+    character(len=255) :: argRange= ' '        ! which date numbers to do
   end type options_T
 
   type ( options_T ) :: options
@@ -65,7 +65,6 @@ program dateconverter
    integer, parameter ::          MAXDATES = 100
    character (LEN=MAXLISTLENGTH) :: converted_date
    character (LEN=MAXLISTLENGTH) :: converted_time
-   integer                       :: dai
    character (LEN=MAXLISTLENGTH) :: date
    character(len=MAXLISTLENGTH), dimension(MAXDATES) :: dates
    logical, dimension(MAXDATES)  :: doThisDate
@@ -75,7 +74,7 @@ program dateconverter
    double precision              :: hours
    integer                       :: i
    character (LEN=MAXLISTLENGTH) :: intermediate_date
-   character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
+   ! character (LEN=*), parameter  :: intermediateForm = 'yyyymmdd'
    character(len=*), parameter   :: MFORMAT = 'yyyy M dd'
    integer                       :: n_dates = 0
    integer                       :: nDays
@@ -254,6 +253,11 @@ contains
         call readNumsFromChars(arg, options%hoursOffset)
         i = i + 1
         exit
+      elseif ( date(1:3) == '-R ' ) then
+        call getarg ( i+1+hp, arg )
+        call resetStartingdate( arg )
+        i = i + 1
+        exit
       elseif ( date(1:3) == '-S ' ) then
         call getarg ( i+1+hp, arg )
         read(arg, * ) options%secondsOffset
@@ -337,10 +341,12 @@ contains
       write (*,*) '                    e.g., 2007-274T14:40:00Z'
       write (*,*) '                    prints 14.66667'
       write (*,*) ' -i format   => input format'
+      write (*,*) '               by default attempt to auto-recognize'
       write (*,*) '               if format is "tai", treat input as '
       write (*,*) '               (double-precision) seconds since'
       write (*,*) '               1993-01-01T00:00:00'
-      write (*,*) '               by default attempt to auto-recognize'
+      write (*,*) ' -R date     => Reset starting date to "date"'
+      write (*,*) '               (needed if any dates prior to Jan 1 1993)'
       write (*,*) ' -t time     => optional time-of-day (military-style)'
       write (*,*) '               e.g., "06:53:10"'
       write (*,*) ' -number     => subtract "number" days'
@@ -350,9 +356,9 @@ contains
       write (*,*) ' -S number   => subtract "number" seconds'
       write (*,*) ' +S number   => add "number" seconds'
       write (*,*) ' -arg  range =>'
-      write (*,*) '       Run just the args defined by the expression range'
-      write (*,*) '       e.g., 7 means run only the 7th arg, '
-      write (*,*) '           1,3-9+2,12 means run args 1,3,5,7,9,12'
+      write (*,*) '       Run just the dates indexed by the expression range'
+      write (*,*) '       e.g., 7 means run only the 7th of the dates, '
+      write (*,*) '           1,3-9+2,12 means run dates 1,3,5,7,9,12'
       write (*,*) ' -d          => switch on debug mode'
       write (*,*) ' -v          => switch on verbose mode'
       write (*,*) ' -w          => print day-of-week in 2 characters'
@@ -372,6 +378,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.6  2011/01/04 00:53:04  pwagner
+! Among other improvements, can now convert times to {hours,seconds}-in-day
+!
 ! Revision 1.5  2010/06/28 17:04:13  pwagner
 ! Added 'tai' format to convert l2gp%time field
 !
