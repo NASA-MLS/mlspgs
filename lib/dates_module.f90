@@ -53,6 +53,7 @@ module dates_module
 ! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
+!     (data types and parameters)
 
 !     (subroutines and functions)
 ! adddaystoutc       add specified number of days to a utc date-time format
@@ -81,6 +82,9 @@ module dates_module
 !                     (or next after input date); less accurate than toolkit AA
 ! ReformatDate       Turns 'yyyymmdd' -> 'yyyy-mm-dd'; or more general format
 ! ReformatTime       Turns 'hhmmss.sss' -> 'hh:mm:ss'
+! ResetStartingDate  Choose a different starting date for the tai format
+! RestoreStartingDate
+!                    Revert to Jan 01 1993 for the tai starting date
 ! secondsbetween2utcs 
 !                    How many seconds between 2 date-times
 ! secondsinday 
@@ -101,6 +105,11 @@ module dates_module
 ! yyyyDoy_to_mmdd    Converts yyyy and day-of-year to month and day
 ! yyyymmdd_to_dai    Converts yyyymmdd to days after Jan 1, 2001
 ! yyyymmdd_to_Doy    Converts yyyy, mont, and day to day-of-year
+
+! Bugs and limitations:
+! These procedures are valid only for dates on or after the tai starting date,
+! by default Jan 1 1993. For dates prior to that date, you must first call
+! ResetStartingDate.
 
 ! === (end of toc) ===
 
@@ -239,6 +248,7 @@ module dates_module
     & DAYSINCE2EUDTF, DAYS_IN_YEAR, &
     & EUDTF2CAL, EUDTF2DAYSINCE, HOURSBETWEEN2UTCS, HOURSINDAY, &
     & LASTDAY, NEXTMOON, REFORMATDATE, REFORMATTIME, &
+    & RESETSTARTINGDATE, RESTORESTARTINGDATE, &
     & SECONDSBETWEEN2UTCS, SECONDSINDAY, SPLITDATETIME, &
     & TAI2CCSDS, TAI93S2HID, TAI93S2UTC, TIMEFORM, &
     & UTCFORM, UTC_TO_DATE, UTC_TO_TIME, UTC_TO_YYYYMMDD, UTC2TAI93S, &
@@ -326,10 +336,16 @@ module dates_module
   double precision, parameter :: LUNARPERIOD = 60.d0*(44 + 60.d0*( &
     & 12 + 24.d0*29 ) ) ! 29d 12h 44m
 
-  ! This is a private type to be used internally
+  ! These are the starting dates for the two date formats we drag around:
+  ! the first is for the tai format
+  character(len=16)            :: TAIStartingDate   = '1993-01-01'
+  ! the second is for our MLSdate_Time format
+  character(len=*), parameter  :: MLSStartingDate   = '2001-01-01'
+  
+  ! This is a private type used only internally
   ! Note we don't bother with leap seconds
   ! which rather limits its accuracy and usefulness
-  ! One easy improvement would be to incopoporate the starting
+  ! One easy improvement would be to incorporate the starting
   ! date--that would allow us to unify the different numerical date types
   type MLSDATE_TIME_T
     integer :: dai = 0                  ! days after 1 Jan 2001
@@ -339,7 +355,7 @@ module dates_module
   ! This accounts for the number of days between the dates
   ! '1993-01-01' and '2001-01-01':
   ! 6 non-leap years and 2 leap years
-  integer, parameter :: DAI93TODAI01 = 6*365 + 2*366
+  integer :: DAI93TODAI01 = 6*365 + 2*366
   
 contains
   ! ---------------------------------------------  adddaystoutc  -----
@@ -386,8 +402,11 @@ contains
     type(MLSDate_time_T)         :: datetime
     ! Executable
     datetime = utc2datetime(utc)
+    ! call dump ( datetime )
     datetime%seconds = datetime%seconds + seconds
+    ! call dump ( datetime )
     call reducedatetime(datetime)
+    ! call dump ( datetime )
     after = datetime2utc(datetime)
   end function addsecondstoutc
 
@@ -494,7 +513,6 @@ contains
     type(MLSDATE_TIME_T)         :: datetimeRdcd ! So we don't clobber datetime
     integer                      :: dai93
     character(len=16)            :: hhmmss
-    character(len=16)            :: otherStartingDate = '19930101'
     character(len=16)            :: yyyymmdd
     ! Executable
     datetimeRdcd = datetime
@@ -502,8 +520,10 @@ contains
     ! call dump ( datetimeRdcd )
     ! Now convert to our internal representations
     if ( datetimeRdcd%dai < 0 ) then
-      dai93 = datetimeRdcd%dai + daysbetween2utcs( otherStartingDate, '20010101' )
-      call dai_to_yyyymmdd( dai93, yyyymmdd, startingDate=otherStartingDate )
+      dai93 = datetimeRdcd%dai + daysbetween2utcs( TAIStartingDate, MLSStartingDate )
+      call dai_to_yyyymmdd( dai93, yyyymmdd, startingDate=TAIStartingDate )
+      ! print *, 'dai93 ', dai93
+      ! print *, 'yyyymmdd ', yyyymmdd
     else
       call dai_to_yyyymmdd( datetimeRdcd%dai, yyyymmdd )
     endif
@@ -516,6 +536,20 @@ contains
     endif
     utc = trim(utc) // 'T' // adjustl(hhmmss)
   end function datetime2utc
+
+  ! Reset the starting date
+  subroutine resetStartingDate ( newDate )
+    character(len=*), intent(in) :: newDate
+    ! print *, 'Resetting starting date to ' // newdate
+    TAIStartingDate = newDate
+    DAI93TODAI01 = daysbetween2utcs( newDate, MLSStartingDate )
+  end subroutine resetStartingDate
+
+  ! Restore the starting date
+  subroutine RestoreStartingDate
+    TAIStartingDate = '19930101'
+    DAI93TODAI01 = 6*365 + 2*366
+  end subroutine RestoreStartingDate
 
   ! Converts TAI93 in seconds to an MLS DateTime datatype
   elemental function tai93s2datetime(tai93s) result (datetime)
@@ -1058,12 +1092,12 @@ contains
     integer :: ErrTyp
     integer :: loss
     integer :: mydai
-    character(len=8) :: mystartingDate
+    character(len=16) :: mystartingDate
     !----------Executable part----------!
    if(present(startingDate)) then
       mystartingDate=startingDate
    else
-      mystartingDate='20010101'
+      mystartingDate=MLSStartingDate
    endif
    call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy, mm, dd, nodash=.true.)
    if ( dai < 0 ) return
@@ -1111,6 +1145,7 @@ contains
     integer :: yyyy, mm, dd
     character(len=8) :: year, month, day
     ! executable
+    str = ' '
     call dai_to_yyyymmdd(dai, yyyy, mm, dd, startingDate)
     ! print *, 'dai: ', dai
     ! print *, 'yyyy: ', yyyy
@@ -1418,6 +1453,7 @@ contains
           reFormat = trim(reFormat) // tempFormat(7:8)
           i = i + 1
         else
+          ! print *, 'tempFormat: ', tempFormat
           call yyyymmdd_to_doy_str(tempFormat, doy)
           write(doyString, '(a1, i3.3)') 'd', doy
           reFormat = trim(reFormat) // doyString
@@ -2010,7 +2046,6 @@ contains
   end function utcForm
 
   ! ---------------------------------------------  yyyymmdd_to_dai_ints  -----
-
   subroutine yyyymmdd_to_dai_ints(yyyy, mm, dd, dai, startingDate)
     ! Routine that returns the number of days after a starting date
     ! from 3 ints: the form yyyymmdd
@@ -2021,7 +2056,7 @@ contains
     integer,intent(out) :: dai
     character(len=*),intent(in),optional :: startingDate  ! If not Jan 1 2001
     !----------Local vars----------!
-    character(len=8) :: mystartingDate
+    character(len=16) :: mystartingDate
     integer :: yyyy1, mm1, dd1, doy1
     integer :: yyyy2, doy2
     integer :: ErrTyp
@@ -2031,11 +2066,12 @@ contains
    if(present(startingDate)) then
       mystartingDate=startingDate
    else
-      mystartingDate='20010101'
+      mystartingDate=MLSStartingDate
    endif
    call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
    call yyyymmdd_to_doy_str(mystartingDate, doy1)
    call yyyymmdd_to_doy_ints(yyyy, mm, dd, doy2)
+   ! print *, 'doy1, doy2, yyyy1, yyyy ', doy1, doy2, yyyy1, yyyy
    yyyy2 = yyyy
    daiNegative = yyyy1 > yyyy2
    if ( daiNegative ) then
@@ -2065,7 +2101,7 @@ contains
     integer, intent(out) :: dai
     character(len=*),intent(in),optional :: startingDate  ! If not Jan 1 2001
     !----------Local vars----------!
-    character(len=8) :: mystartingDate
+    character(len=16) :: mystartingDate
     integer :: yyyy1, mm1, dd1, doy1
     integer :: yyyy2, mm2, dd2, doy2
     integer :: ErrTyp
@@ -2075,7 +2111,7 @@ contains
    if(present(startingDate)) then
       mystartingDate=startingDate
    else
-      mystartingDate='20010101'
+      mystartingDate=MLSStartingDate
    endif
    call utc_to_yyyymmdd_ints(mystartingDate, ErrTyp, yyyy1, mm1, dd1, nodash=.true.)
    call utc_to_yyyymmdd_ints(str, ErrTyp, yyyy2, mm2, dd2, nodash=.true.)
@@ -2131,21 +2167,22 @@ contains
   end subroutine yyyymmdd_to_doy_ints
 
   ! ---------------------------------------------  yyyymmdd_to_doy_str  -----
-  subroutine yyyymmdd_to_doy_str(str, doy)
+  subroutine yyyymmdd_to_doy_str( str, doy )
     ! Routine that returns the number of days after the year's start
     ! for a string of the form yyyymmdd
     !--------Argument--------!
-    character(len=*),intent(in) :: str
-    integer,intent(out) :: doy
+    character(len=*), intent(in) :: str
+    integer, intent(out) :: doy
     !----------Local vars----------!
     integer :: year, month, day
     character(len=2) :: dayCh, monCh
     character(len=4) :: yearCh
     !----------Executable part----------!
-     ! call utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, nodash=.true.)
      doy = -1
      if ( len_trim(str) < 8 ) return
      ! print *, 'str: ', str
+     ! In case we came here with any illegal characters in the fields
+     if ( index(str(1:8), '*') > 0 ) return
      ! In case we came here with '-' separators between the fields
      if ( index(str(1:8), '-') > 0 ) then
        call GetStringElement( str, yearCh, 1, .true., '-' )
@@ -2385,6 +2422,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.27  2013/06/18 23:02:22  pwagner
+! Removed more unused stuff
+!
 ! Revision 2.26  2013/04/05 23:19:22  pwagner
 ! Added tai93s2hid
 !
