@@ -25,7 +25,7 @@ program L2Q
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
     & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMERRORMESSAGE
-  use MLSSETS, only: FINDFIRST
+  use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & STRINGELEMENTNUM
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
@@ -2407,6 +2407,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.33  2013/07/18 22:36:38  pwagner
+! Consistent with having deleted OutputOptions%opened
+!
 ! Revision 1.32  2013/02/14 19:05:29  pwagner
 ! Added way for l2q to tell master to dump status
 !
