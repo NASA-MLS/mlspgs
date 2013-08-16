@@ -1135,6 +1135,19 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in) :: What
     character(len=*), intent(in), optional :: Where
     call destroyVectorQuantityMask ( value )
+    if ( associated(value%value1) .and. associated(value%values) .and. &
+         associated(value%value3) ) then
+      if ( size(value%value1) == &
+        & value%template%noChans * &
+          & value%template%noSurfs * &
+          & value%template%noInstances .and. &
+        & size(value%values,1) == value%template%noChans * &
+          & value%template%noSurfs .and. &
+        & size(value%values,2) == value%template%noInstances .and. &
+        & size(value%value3,1) == value%template%noChans .and. &
+          & size(value%value3,2) == value%template%noSurfs .and. &
+          & size(value%value3,3) == value%template%noInstances ) return
+    end if
     if ( present(where) ) then
       call allocate_test ( value%value1, &
         & value%template%noChans * &
@@ -3217,6 +3230,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.180  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.179  2013/07/13 00:00:15  vsnyder
 ! Define assignment, producing error message, for vector value
 !
