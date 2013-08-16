@@ -22,7 +22,7 @@ module QuantityTemplates         ! Quantities within vectors
   use INTRINSIC, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
     & PHYQ_TIME
   use MLSFILLVALUES, only: RERANK
-  use MLSKINDS, only: R8, RV
+  use MLSKINDS, only: RT => R8 ! RT is "kind of Real components of template"
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use INTRINSIC, only: L_NONE, L_VMR, LIT_INDICES, PHYQ_INDICES
@@ -47,7 +47,7 @@ module QuantityTemplates         ! Quantities within vectors
 
   ! Define some global parameters and data types.
 
-  real(r8), parameter :: EPOCH = 1993.0 ! Starting point for time references
+  real(rt), parameter :: EPOCH = 1993.0 ! Starting point for time references
 
   type QuantityTemplate_T
 
@@ -83,7 +83,7 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! This one indicates whether log or linear interpolation should be used
     logical :: logBasis                 ! If set use log
-    real(r8) :: minValue                ! Minimum value to consider if using log
+    real(rt) :: minValue                ! Minimum value to consider if using log
 
     ! This information describes how much of the data is in the overlap
     ! regions if any.
@@ -92,7 +92,7 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: noInstancesUpperOverlap
 
     ! Misc. information
-    real(r8) :: badValue      ! Value used to flag bad/missing data
+    real(rt) :: badValue      ! Value used to flag bad/missing data
     integer :: unit           ! Unit quantity is in when scaled as below,
                               ! an l_lit of the type t_units in Units.f90.
 
@@ -107,7 +107,7 @@ module QuantityTemplates         ! Quantities within vectors
                                   ! defined in Init_Tables_Module.
     logical :: sharedVGrid        ! Set if surfs is a pointer not a copy
     integer :: vGridIndex         ! Index of any vGrid used
-    real(r8), dimension(:,:), pointer :: surfs => NULL()
+    real(rt), dimension(:,:), pointer :: surfs => NULL()
 
     ! This is dimensioned (noSurfs,1) for coherent quantities and
     ! (noSurfs, noInstances) for incoherent ones.  Pretending the values are
@@ -125,7 +125,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! First subscript values for GeoLocation component
     integer :: OrbitCoordinateIndex = 1 ! For spacecraft position
     integer :: LOSCoordinateIndex = 2   ! For line of sight
-    real(r8), dimension(:,:,:), pointer :: Geolocation => NULL()
+    real(rt), dimension(:,:,:), pointer :: Geolocation => NULL()
 
     ! Geolocation is dimensioned (*,1, noInstances) for stacked quantities and
     ! (*,noSurfs, noInstances) for unstacked ones.  The Geolocation coordinate
@@ -133,7 +133,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! geolocation(*,i,j) for an unstacked one.  The "*" is taken from either
     ! the OrbitCoordinateIndex or LOSCoordinateIndex component.
 
-    real(r8), dimension(:,:), pointer :: phi => NULL()
+    real(rt), dimension(:,:), pointer :: phi => NULL()
 
     ! Phi is dimensioned (1, noInstances) for stacked quantities and
     ! (noSurfs, noInstances) for unstacked ones.  The PHI coordinate for the
@@ -141,27 +141,27 @@ module QuantityTemplates         ! Quantities within vectors
     ! unstacked one.  Phi is either taken from or derived from Geolocation.
 
     ! These other coordinates are dimensioned in the same manner as Phi:
-    real(r8), dimension(:,:), pointer :: geodLat => NULL()
-    real(r8), dimension(:,:), pointer :: lon => NULL()
-    real(r8), dimension(:,:), pointer :: time => NULL() ! Seconds since EPOCH
-    real(r8), dimension(:,:), pointer :: solarTime => NULL()
-    real(r8), dimension(:,:), pointer :: solarZenith => NULL()
-    real(r8), dimension(:,:), pointer :: losAngle => NULL()
+    real(rt), dimension(:,:), pointer :: geodLat => NULL()
+    real(rt), dimension(:,:), pointer :: lon => NULL()
+    real(rt), dimension(:,:), pointer :: time => NULL() ! Seconds since EPOCH
+    real(rt), dimension(:,:), pointer :: solarTime => NULL()
+    real(rt), dimension(:,:), pointer :: solarZenith => NULL()
+    real(rt), dimension(:,:), pointer :: losAngle => NULL()
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! For quantities containing `channels' the following information may or
     ! may not be useful.
 
-    ! Some quantities are on abritrary freqency grids; these quantities refer
+    ! Some quantities are on arbitrary freqency grids; these quantities refer
     ! to those.
     integer, pointer :: ChanInds(:) => NULL() ! Indices of values of Channels
                                         ! that are true
     logical, pointer :: Channels(:) => NULL() ! If /keepChannels is set
     integer :: fGridIndex               ! Index of any fGrid Index used
-    real(r8), dimension(:), pointer :: frequencies => NULL() ! List of frequencies
+    real(rt), dimension(:), pointer :: frequencies => NULL() ! List of frequencies
                                         ! for Channels(ChanInds)
     integer :: frequencyCoordinate      ! An enumerated type, e.g. FG_USBFreq
-    real(r8) :: lo                      ! Local oscillator frequency, MHz
+    real(rt) :: lo                      ! Local oscillator frequency, MHz
     logical :: sharedFGrid              ! Set of frequencies are a pointer not a copy
     integer :: sideband                 ! Associated sideband -1, 0, +1
     integer :: signal                   ! Index into signals database
@@ -214,7 +214,7 @@ module QuantityTemplates         ! Quantities within vectors
     module procedure myValuesToField_2d_dble
   end interface
 
-  public :: EPOCH, QuantityTemplate_T
+  public :: EPOCH, QuantityTemplate_T, RT
   public :: CHECKINTEGRITY, DUMP
   public :: AddQuantityTemplateToDatabase, InflateQuantityTemplateDatabase
   public :: CopyQuantityTemplate, &
@@ -738,7 +738,7 @@ contains
     ! How would you go about changing integer or l_ -valued fields?
     type (QuantityTemplate_T), intent(inout) :: Z
     character(len=*), intent(in)             :: field
-    real(rv), dimension(:,:), intent(in)     :: array
+    real(rt), dimension(:,:), intent(in)     :: array
     logical, intent(in)                      :: spread
     ! Local variables
     integer :: shp(2)
@@ -825,7 +825,7 @@ contains
     ! How would you go about changing integer or l_ -valued fields?
     type (QuantityTemplate_T), intent(inout) :: Z
     character(len=*), intent(in)             :: field
-    real(rv), intent(in)                     :: newvalue
+    real(rt), intent(in)                     :: newvalue
     if ( findFirst(MODIFIABLEFIELDS, lowercase(field)) < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName // &
         & 'ModifyQuantityTemplate_allocate', &
@@ -934,7 +934,7 @@ contains
     logical, intent(in), optional :: sharedVGrid
     logical, intent(in), optional :: sharedHGrid
     logical, intent(in), optional :: sharedFGrid
-    real(r8), intent(in), optional :: badValue
+    real(rt), intent(in), optional :: badValue
 
     ! Local variables
     integer :: noSurfsToAllocate        ! For allocations
@@ -959,10 +959,10 @@ contains
     qty%minorFrame = .false.
     qty%majorFrame = .false.
     qty%logBasis = .false.
-    qty%minValue = - huge ( 0.0_r8 )
+    qty%minValue = - huge ( 0.0_rt )
     qty%noInstancesLowerOverlap = 0
     qty%noInstancesUpperOverlap = 0
-    qty%badValue = huge ( 0.0_r8 )
+    qty%badValue = huge ( 0.0_rt )
     qty%unit = 0
     qty%instanceLen = 1
     qty%verticalCoordinate = l_none
@@ -974,7 +974,7 @@ contains
     qty%frequencyCoordinate = l_none
     qty%sharedFGrid = .false.
     qty%fGridIndex = 0
-    qty%lo = 0.0_r8
+    qty%lo = 0.0_rt
     qty%signal = 0
     qty%sideband = 0
     qty%instrumentModule = 0
@@ -1475,7 +1475,7 @@ contains
     integer :: noValues
     integer, dimension(2) :: unitAsArray ! Unit for value given
     logical :: UNITSERROR               ! From expr
-    real (r8), dimension(2) :: valueAsArray ! Value given
+    real (rt), dimension(2) :: valueAsArray ! Value given
     ! Executable code
     if ( valuesNode < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1513,7 +1513,7 @@ contains
     integer :: noValues
     integer, dimension(2) :: unitAsArray ! Unit for value given
     logical :: UNITSERROR               ! From expr
-    real (r8), dimension(2) :: valueAsArray ! Value given
+    real (rt), dimension(2) :: valueAsArray ! Value given
 
     ! Executable code
     if ( valuesNode < 1 ) then
@@ -1558,7 +1558,7 @@ contains
     integer :: noValues
     integer, dimension(2) :: unitAsArray ! Unit for value given
     logical :: UNITSERROR               ! From expr
-    real (r8), dimension(2) :: valueAsArray ! Value given
+    real (rt), dimension(2) :: valueAsArray ! Value given
 
     ! Executable code
     if ( valuesNode < 1 ) then
@@ -1607,6 +1607,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.76  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.75  2013/07/12 23:57:42  vsnyder
 ! Added Geolocation component
 !
