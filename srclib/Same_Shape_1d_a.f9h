@@ -1,0 +1,26 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Same_Shape_*_1d_a ( New, ItsName, ModuleName, TheShape )
+!   Some_Type, pointer, dimension(:) :: New
+    integer, intent(in) :: TheShape
+    character(*), intent(in) :: ItsName, ModuleName
+    if ( .not. associated(new) ) then
+      call allocate_test ( new, theShape, itsName, moduleName )
+    else
+      if ( any( shape(new) /= (/ theShape /) ) ) &
+        & call allocate_test ( new, theShape, itsName, moduleName )
+    end if
+! end subroutine Same_Shape_*_1d_a
+
+! $Id$
+
+! $Log$
