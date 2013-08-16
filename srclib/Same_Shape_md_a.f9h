@@ -10,8 +10,8 @@
 ! foreign countries or providing access to foreign persons.
 
 ! subroutine Same_Shape_*_2d_a ( New, ItsName, ModuleName, TheShape )
-!   Some_Type, pointer, dimension(:) :: New
-    integer, intent(in) :: TheShape(:...)
+!   Some_Type, pointer, dimension(:...) :: New
+    integer, intent(in) :: TheShape(:)
     character(*), intent(in) :: ItsName, ModuleName
     if ( .not. associated(new) ) then
       call allocate_test ( new, theShape, itsName, moduleName )
@@ -24,3 +24,6 @@
 ! $Id$
 
 ! $Log$
+! Revision 1.1  2013/08/16 02:03:58  vsnyder
+! Initial commit
+!
