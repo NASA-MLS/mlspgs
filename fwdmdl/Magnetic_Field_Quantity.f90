@@ -29,13 +29,13 @@ module Magnetic_Field_Quantity
 
 contains
 
-  subroutine Get_Magnetic_Field_Qty_GPH ( Qty, GPHQty )
+  subroutine Get_Magnetic_Field_Qty_GPH ( Qty, GPHQty, MAF )
 
   ! Compute the magnetic field at the geolocations given by Qty (lat,lon)
   ! and GPHQty (altitude), and put the values in Qty%Value3.
 
-    use Geometry, only: SecPerYear
-    use IGRF_INT, only: FELDC, FELDCOF, To_Cart
+    use Geometry, only: SecPerYear, To_Cart
+    use IGRF_INT, only: FELDC, FELDCOF
     use MLSStringLists, only: SwitchDetail
     use QuantityTemplates, only: Epoch
     use Toggles, only: Switches
@@ -43,9 +43,11 @@ contains
 
     type (vectorValue_t), intent(inout) :: Qty
     type (vectorValue_t), intent(inout) :: GPHQty
+    integer, intent(in), optional :: MAF ! to use for GPH quantity
 
     real :: B(3)                      ! Magnetic field
     integer, save :: Details = -10    ! From switchDetails('mag')
+    integer :: GPHInstance
     integer :: INSTANCE               ! Loop counter
     character(len=8), save :: options = ''
     integer :: SURF                   ! Loop counter
@@ -63,6 +65,8 @@ contains
     call feldcof ( real(qty%template%time(1,1)/secPerYear + epoch) )
 
     do instance = 1, qty%template%noInstances
+      gphInstance = instance
+      if ( present(MAF) ) gphInstance = MAF
       do surf = 1, qty%template%noSurfs
         if ( qty%template%stacked ) then
           surfOr1 = 1
@@ -72,7 +76,7 @@ contains
         ! Convert (/ lat(deg), lon(deg), height(km) /) to cartesian (e-radius)
         call to_cart ( real( (/ qty%template%geodLat(surfOr1,instance), &
           &                     qty%template%lon(surfOr1,instance), &
-          &                     gphQty%values(surf,instance)*1.0e-3 /) ), xyz )
+          &                     gphQty%values(surf,gphInstance)*1.0e-3 /) ), xyz )
         ! Compute the field at and w.r.t. cartesian coordinates in XYZ.
         call feldc ( xyz, b )
         ! The first dimension of value3 is field components, not channels.
@@ -89,8 +93,8 @@ contains
   ! Compute the magnetic field at the geolocations given by XYZ, and
   ! put the values in Qty%Value3.
 
-    use Geometry, only: SecPerYear
-    use IGRF_INT, only: FELDC, FELDCOF, To_Cart
+    use Geometry, only: SecPerYear, To_Cart
+    use IGRF_INT, only: FELDC, FELDCOF
     use MLSStringLists, only: SwitchDetail
     use QuantityTemplates, only: Epoch
     use Toggles, only: Switches
@@ -148,6 +152,9 @@ contains
 end module Magnetic_Field_Quantity
 
 ! $Log$
+! Revision 2.2  2013/08/16 02:31:25  vsnyder
+! Add MAF argument, get To_Cart from Geometry
+!
 ! Revision 2.1  2013/08/13 02:22:41  vsnyder
 ! Initial commit
 !
