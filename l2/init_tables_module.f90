@@ -1375,7 +1375,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lockBins, boolean(), &
              begin, f+f_lsbLBLMolecules, field_type(t_molecule,empty=empty), &
              begin, f+f_lsbPFAMolecules, field_type(t_molecule,empty=empty), &
-             begin, f+f_model_plane_mif, numeric(phyq_dimensionless), &
              begin, f+f_module, field_spec(s_module), &
              begin, f+f_moleculeDerivatives, field_type(t_molecule), &
              begin, f+f_moleculeSecondDerivatives, field_type(t_molecule), &
@@ -1964,6 +1963,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.579  2013/08/16 02:34:46  vsnyder
+! Remove Model_Plane_MIF
+!
 ! Revision 2.578  2013/08/09 01:03:59  vsnyder
 ! Add ReferenceMIF component
 !
