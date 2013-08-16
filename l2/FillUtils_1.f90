@@ -4215,42 +4215,49 @@ contains ! =====     Public Procedures     =============================
     end subroutine FromL2AUX
 
     ! --------------------------------------- UsingMagneticModel --
-    subroutine UsingMagneticModel ( qty, gphQty, key )
+    subroutine UsingMagneticModel ( qty, gphQty, key, SpacingOnly, MAF )
       use Magnetic_Field_Quantity, only: Get_Magnetic_Field_Quantity
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(inout) :: GPHQTY
       integer, intent(in) :: KEY
+      logical, intent(in), optional :: SpacingOnly
+      integer, intent(in), optional :: MAF ! to use for GPH quantity
+
+      logical :: Error
 
       ! Executable code
       if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_begin ( 'FillUtils_1.UsingMagneticModel', key )
 
+      error = .false.
       if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_magneticField/), &
         & frequencyCoordinate=(/ l_xyz /) ) ) then
         call Announce_Error ( key, no_error_code, &
-          & 'Quantity does not describe magnetic field' )
-        go to 9
+          & 'Magnetic field quantity does not describe magnetic field' )
+        error = .true.
       end if
       if ( .not. ValidateVectorQuantity ( gphQty, quantityType=(/l_gph/), &
         & frequencyCoordinate=(/ l_none /), verticalCoordinate=(/l_zeta/) ) ) then
         call Announce_Error ( key, no_error_code, &
           & 'GPH quantity does not describe gph field' )
-        go to 9
+        error = .true.
       end if
-      if ( .not. DoHGridsMatch ( qty, gphQty ) ) then
-        call Announce_Error ( key, no_error_code, &
-          & 'Quantity and GPHQuanity do not share the same horizontal basis' )
-        go to 9
+      if ( .not. present(MAF) ) then
+        if ( .not. DoHGridsMatch ( qty, gphQty, spacingOnly ) ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'Magnetic field quantity and GPHQuantity do not have compatible horizontal basis' )
+        error = .true.
+        end if
       end if
       if ( .not. DoVGridsMatch ( qty, gphQty ) ) then
         call Announce_Error ( key, no_error_code, &
-          & 'Quantity and GPHQuantity do not share the same vertical basis' )
-        go to 9
+          & 'Magnetic field quantity and GPHQuantity do not share the same vertical basis' )
+        error = .true.
       end if
 
-      call get_Magnetic_Field_Quantity ( qty, GPHQty )
+      if ( .not. error ) call get_Magnetic_Field_Quantity ( qty, GPHQty, MAF )
 
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
+      if ( toggle(gen) .and. levels(gen) > 1 ) &
         & call trace_end ( 'FillUtils_1.UsingMagneticModel' )
 
     end subroutine UsingMagneticModel
@@ -7018,6 +7025,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.82  2013/08/16 02:50:42  vsnyder
+! Add MAF and SpacingOnly arguments to UsingMagneticModel
+!
 ! Revision 2.81  2013/08/13 02:23:06  vsnyder
 ! Move magnetic field stuff to Magnetic_Field_Quantity
 !
