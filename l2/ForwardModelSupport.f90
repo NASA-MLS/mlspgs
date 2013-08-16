@@ -49,8 +49,8 @@ module ForwardModelSupport
   integer, parameter :: LinearSidebandHasUnits = LBLandPFA + 1
   integer, parameter :: LineNotMolecule        = LinearSidebandHasUnits + 1
   integer, parameter :: LineParamTwice         = LineNotMolecule + 1
-  integer, parameter :: MIFextinction_signals  = LineParamTwice + 1
-  integer, parameter :: NeedBothXYStar         = MIFextinction_signals + 1
+  integer, parameter :: MIFTransformation_signals = LineParamTwice + 1
+  integer, parameter :: NeedBothXYStar         = MIFTransformation_signals + 1
   integer, parameter :: Nested                 = NeedBothXYStar + 1
   integer, parameter :: NoArray                = Nested + 1
   integer, parameter :: NoBetaGroup            = NoArray + 1
@@ -59,7 +59,7 @@ module ForwardModelSupport
   integer, parameter :: PFANotMolecule         = NoPolarizedAndPFA + 1
   integer, parameter :: PFATwice               = PFANotMolecule + 1
   integer, parameter :: PolarizedAndAllLines   = PFATwice + 1
-  integer, parameter :: SecondSansFirst        = PolarizedAndAllLines + 1
+  integer, parameter :: SecondSansFirst        = PolarizedAndAllLines  + 1
   integer, parameter :: SecondSansSecond1      = SecondSansFirst + 1
   integer, parameter :: SecondSansSecond2      = SecondSansSecond1 + 1
   integer, parameter :: TangentNotSubset       = SecondSansSecond2 + 1
@@ -379,6 +379,7 @@ contains ! =====     Public Procedures     =============================
     ! add to the database
 
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use DECLARATION_TABLE, only: RANGE
     use EXPR_M, only: EXPR
     use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T, &
       & LINECENTER, LINEWIDTH, LINEWIDTH_TDEP, &
@@ -393,16 +394,15 @@ contains ! =====     Public Procedures     =============================
       & F_DO_FREQ_AVG, F_FORCESIDEBANDFRACTION, F_FREQUENCY, F_FRQTOL, &
       & F_IGNOREHESSIAN, F_INCL_CLD, F_INTEGRATIONGRID, F_I_SATURATION, &
       & F_LINEARSIDEBAND, F_LINECENTER, F_LINEWIDTH, F_LINEWIDTH_TDEP, &
-      & F_LOCKBINS, F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, &
-      & F_Model_Plane_Mif, F_MODULE, F_MOLECULEDERIVATIVES, F_MOLECULES, &
-      & F_MOLECULESECONDDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
-      & F_NCLOUDSPECIES, F_NMODELSURFS, F_NO_DUP_MOL, F_NSCATTERINGANGLES, &
-      & F_NSIZEBINS, F_PATHNORM, F_PHIWINDOW, F_POLARIZED, F_ReferenceMIF, &
-      & F_REFRACT, F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, &
-      & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, &
-      & F_TEMP_DER, F_TOLERANCE, F_TransformMIFextinction, F_TransformMIFRHI, &
-      & F_TSCATMIF, F_TYPE, F_USBLBLMOLECULES, F_USBPFAMOLECULES, &
-      & F_useTSCAT, F_XSTAR, F_YSTAR
+      & F_LOCKBINS, F_LSBLBLMOLECULES, F_LSBPFAMOLECULES, F_MODULE, &
+      & F_MOLECULEDERIVATIVES, F_MOLECULES, F_MOLECULESECONDDERIVATIVES, &
+      & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
+      & F_NO_DUP_MOL, F_NSCATTERINGANGLES, F_NSIZEBINS, F_PATHNORM, &
+      & F_PHIWINDOW, F_POLARIZED, F_ReferenceMIF, F_REFRACT, F_SCANAVERAGE, &
+      & F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, F_SPECT_DER, &
+      & F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, F_TOLERANCE, &
+      & F_TransformMIFextinction, F_TransformMIFRHI, F_TSCATMIF, F_TYPE, &
+      & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, F_YSTAR
     use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_PROFILES
     use L2PC_M, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
     use MLSKINDS, only: R8
@@ -590,9 +590,6 @@ contains ! =====     Public Procedures     =============================
         LBLTrees(1) = son
       case ( f_lsbPFAMolecules )
         PFATrees(1) = son
-      case ( f_model_plane_MIF )
-        call expr ( subtree(2,son), expr_units, value, type )
-        info%model_plane_MIF = nint ( value(1) )
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_moleculeDerivatives )
@@ -1007,8 +1004,9 @@ op:     do j = 2, nsons(theTree)
 
     ! Now some more error checking
     ! MIFExtinction transformation needs signals
-    if ( info%transformMIFextinction .and. .not. associated(info%signals) ) &
-      & call announceError ( MIFextinction_signals, root )
+    if ( ( info%transformMIFextinction .or. info%transformMIFRhi ) &
+         & .and. .not. associated(info%signals) ) &
+      & call announceError ( MIFTransformation_signals, root )
 
     ! If any PFA, can't do polarized
     if ( any(info%anyPFA(s1:s2)) .and. info%polarized ) &
@@ -1392,8 +1390,8 @@ op:     do j = 2, nsons(theTree)
     case ( LineParamTwice )
       call display_string ( lit_indices(decoration(where)), before='Molecule '  )
       call output ( ' listed twice for spectral parameter', advance='yes' )
-    case ( MIFextinction_signals )
-      call output ( 'MIF extinction transformation needs signals', advance='yes' )
+    case ( MIFTransformation_signals )
+      call output ( 'MIF transformation needs signals', advance='yes' )
     case ( NeedBothXYStar )
       call output ( 'X/YStar must either be both present or both absent', &
         & advance='yes' )
@@ -1463,6 +1461,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.171  2013/08/16 02:34:46  vsnyder
+! Remove Model_Plane_MIF
+!
 ! Revision 2.170  2013/08/09 01:03:59  vsnyder
 ! Add ReferenceMIF component
 !
