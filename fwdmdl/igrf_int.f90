@@ -27,7 +27,7 @@ module IGRF_INT
   implicit NONE
   private
   public :: DUMP_GH, FELDCOF, FELDC, FELDG, FINDB0, IGRF_SUB, READ_GH
-  public :: SHELLC, SHELLG, TO_CART
+  public :: SHELLC, SHELLG
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -46,18 +46,6 @@ module IGRF_INT
   end type GH_T
 
 ! *****     Private Variables     **************************************
-
-! AQUAD   Square of major half axis for earth ellipsoid
-! BQUAD   Square of minor half axis for earth ellipsoid
-
-  real, parameter :: AQUAD = (EarthRadA/1000.0)**2 ! Km**2
-  real, parameter :: BQUAD = (EarthRadB/1000.0)**2 ! Km**2
-
-! ERAD    Earth radius for normalization of Cartesian
-!         coordinates (6371.2 Km) as recommended by the International
-!         Astronomical Union
-
-  real, save ::              ERAD = 6371.2
 
 ! Coefficients read from IGRF files
 
@@ -371,6 +359,8 @@ contains
   !          B0           Magnetic field strength in gauss
   !-----------------------------------------------------------------------
 
+    use Geometry, only: To_Cart
+
     real, intent(in) :: WHERE(3), DIMO
     real, intent(out) :: FL
     integer, intent(out), optional :: ICODE
@@ -585,6 +575,9 @@ o:  do n = 3, size(p,2)-1
   !                 pointing in the tangential plane to the north, east
   !                 and downward.
   !-----------------------------------------------------------------------
+
+    use Geometry, only: To_Cart
+
     real, intent(in) :: WHERE(3)
     real, intent(out) :: BNORTH, BEAST, BDOWN, BABS
 
@@ -842,32 +835,6 @@ o:  do n = 3, size(p,2)-1
 
   end subroutine FELDCOF
 
-  ! ----------------------------------------------------  To_Cart  -----
-  subroutine To_Cart ( WHERE, CART, CT, ST, CP, SP )
-  ! Convert Geodetic latitude and longitude, and altitude, to Cartesian
-    real, intent(in) :: WHERE(3)        ! Latitude, Longitude, Altitude
-    real, intent(out) :: CART(3)        ! X, Y, Z
-    real, intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine of Lat, Lon
-    real :: D, MyCt, MySt, MyCp, MySp, RHO, RLAT, RLON
-
-    rlat = where(1)*deg2Rad
-    myct = sin(rlat)
-    myst = cos(rlat)
-    d = sqrt(aquad-(aquad-bquad)*myct*myct)
-    rlon = where(2)*deg2Rad
-    mycp = cos(rlon)
-    mysp = sin(rlon)
-    cart(3) = (where(3)+bquad/d)*myct/erad
-    rho = (where(3)+aquad/d)*myst/erad
-    cart(1) = rho*mycp
-    cart(2) = rho*mysp
-    if ( present(ct) ) ct = myct
-    if ( present(st) ) st = myst
-    if ( present(cp) ) cp = mycp
-    if ( present(sp) ) sp = mysp
-
-  end subroutine To_Cart
-
 ! *****     Private Procedures     *************************************
 
   ! ------------------------------------------------------  FELDI  -----
@@ -1009,6 +976,9 @@ o:  do n = 3, size(p,2)-1
 end module IGRF_INT
 
 ! $Log$
+! Revision 2.8  2013/08/16 02:29:46  vsnyder
+! Move To_Cart to Geometry
+!
 ! Revision 2.7  2013/06/12 02:30:07  vsnyder
 ! Cruft removal
 !
