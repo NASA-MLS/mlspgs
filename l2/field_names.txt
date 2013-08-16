@@ -277,7 +277,6 @@ minNormQty
 minValue
 mirrorHessian
 missingValue
-model_plane_MIF
 moleculeDerivatives
 molecules
 moleculeSecondDerivatives
@@ -508,6 +507,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.236  2013/08/16 02:34:46  vsnyder
+# Remove Model_Plane_MIF
+#
 # Revision 2.235  2013/08/09 01:03:59  vsnyder
 # Add ReferenceMIF component
 #
