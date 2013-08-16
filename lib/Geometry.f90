@@ -24,8 +24,8 @@ module Geometry
   public :: EarthRadA, EarthRadB, EarthSurfaceGPH
   public :: GM, G0, J2, J4, SecPerYear, W, MaxRefraction
 
-  ! Functions
-  public :: GeodToGeocLat, Get_R_Eq
+  ! Procedures
+  public :: GeocToGeodLat, GeodToGeocLat, Get_R_Eq, To_Cart
 
   ! Earth dimensions.
 
@@ -37,17 +37,28 @@ module Geometry
 
   ! Gravity-related terms.
 
-  real(rp), parameter :: GM = 3.98600436e14_rp ! m^3/sec^2
-  real(r8), parameter :: G0 = 9.80665          ! Nominal little g ms-2
+  ! IUGG (International Union of Geodesy and Geodynamics) 1999 values from
+  ! http://www.gfy.ku.dk/~iag/Travaux_99/sc3.htm (part III)
 
-  ! These are the 1980 reference geoid values.
+  ! Geocentric Earth gravitational constant, including Earth's atmosphere
 
-  real(rp), parameter :: J2 = 0.0010826256_rp
-  real(rp), parameter :: J4 = -.0000023709122_rp
+! real(rp), parameter :: GM = 3.986004418e14_rp ! m^3/sec^2 (IUGG 1999 value)
+  real(rp), parameter :: GM = 3.98600436e14_rp  ! m^3/sec^2
+
+  ! Mean equatorial gravity
+
+  real(r8), parameter :: G0 = 9.80665           ! Nominal little g ms-2
+! real(r8), parameter :: G0 = 9.7803278         ! IUGG 1999 value
+
+  ! Stokes second- and fourth-degree zonal harmonics
+
+  real(rp), parameter :: J2 = 0.0010826256_rp   ! 1980 reference geoid value
+! real(rp), parameter :: J2 = 0.0010826359_rp   ! IUGG 1999 value
+  real(rp), parameter :: J4 = -.0000023709122_rp  ! 1980 reference geoid value
 
   ! earth rotational velocity.
 
-  real(rp), parameter :: W = 7.292115e-05_rp   ! rad/sec
+  real(rp), parameter :: W = 7.292115e-05_rp    ! rad/sec
 
   ! Earth surface geopotential height.
 
@@ -61,6 +72,32 @@ module Geometry
   ! This is the maximum amount of refraction allowed
   real(r8), parameter :: MaxRefraction = 0.0004 ! Add one to get refractive index
 
+  interface GeocToGeodLat
+    module procedure GeocToGeodLat_D, GeocToGeodLat_S
+  end interface
+
+  interface GeodToGeocLat
+    module procedure GeodToGeocLat_D, GeodToGeocLat_S
+  end interface
+
+  interface To_Cart
+    module procedure To_Cart_D, To_Cart_S
+  end interface
+
+! *****     Private Constants     **************************************
+
+! AQUAD   Square of major half axis for earth ellipsoid
+! BQUAD   Square of minor half axis for earth ellipsoid
+
+  real, parameter :: AQUAD = (EarthRadA/1000.0)**2 ! Km**2
+  real, parameter :: BQUAD = (EarthRadB/1000.0)**2 ! Km**2
+
+! ERAD    Earth radius for normalization of Cartesian
+!         coordinates (6371.2 Km) as recommended by the International
+!         Astronomical Union
+
+  real, parameter :: ERAD = 6371.2
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -69,28 +106,87 @@ module Geometry
 
 contains
 
-  ! ----------------------------------------------  GeodToGeocLat  -----
-  real(r8) elemental function GeodToGeocLat ( geodLat )
+  ! --------------------------------------------  GeocToGeodLat_D  -----
+  double precision elemental function GeocToGeodLat_D ( geocLat ) result ( GeodLat )
 
-  ! Convert a geodetic latitude (IN DEGREES!) into a geocentric one (IN RADIANS!)
-  ! (IN RADIANS!)
+  !{ Convert a geocentric latitude $\lambda$ to a geodetic one $\mu$, both
+  !  in degrees.
+  !  Use the relation $\mu = \tan^{-1} \frac{f^2 \sin\lambda}{\cos\lambda}$,
+  !  where $f$ is the ratio of the equatorial to polar Earth radii.
 
-    use Constants, only: Deg2Rad, PI
+    use Constants, only: Deg2Rad, Rad2Deg
+
+    double precision, intent(in) :: geocLat
+
+    double precision :: Lat ! Geocentric latitude in radians
+    double precision, parameter :: F2 = Earth_Axis_Ratio_Squared
+
+    lat = deg2Rad * geocLat
+    geodLat = rad2Deg * atan2 ( f2 * sin(lat), cos(lat) )
+
+  end function GeocToGeodLat_D
+
+  ! --------------------------------------------  GeocToGeodLat_S  -----
+  real elemental function GeocToGeodLat_S ( geocLat ) result ( GeodLat )
+
+  !{ Convert a geocentric latitude $\lambda$ to a geodetic one $\mu$. both
+  !  in degrees.
+  !  Use the relation $\mu = \tan^{-1} \frac{f^2 \sin\lambda}{\cos\lambda}$,
+  !  where $f$ is the ratio of the equatorial to polar Earth radii.
+
+    use Constants, only: Deg2Rad, Rad2Deg
+
+    real, intent(in) :: geocLat
+
+    real :: Lat ! Geocentric latitude in radians
+    real, parameter :: F2 = Earth_Axis_Ratio_Squared
+
+    lat = deg2Rad * geocLat
+    geodLat = rad2Deg * atan2 ( f2 * sin(lat), cos(lat) )
+
+  end function GeocToGeodLat_S
+
+  ! --------------------------------------------  GeodToGeocLat_D  -----
+  double precision elemental function GeodToGeocLat_D ( GeodLat ) result ( GeocLat )
+
+  !{ Convert a geodetic latitude $\mu$ (IN DEGREES!) into a geocentric one
+  !  $\lambda$ (IN RADIANS!)
+  !  Use the relation $\lambda = \tan^{-1} \frac{\sin\mu}{f^2 \cos\mu}$,
+  !  where $f$ is the ratio of the equatorial to polar Earth radii.
+
+    use Constants, only: Deg2Rad
 
     ! Arguments
-    real (r8), intent(in) :: geodLat
+    double precision, intent(in) :: GeodLat
 
-    ! Executable code, use special method for high latitudes.
-    if ( geodLat > 89.0 ) then
-      geodtoGeocLat = 0.5 * PI + Earth_Axis_Ratio_Squared * &
-           (geodLat-90.0) * deg2rad
-    else if ( geodLat < -89.0 ) then
-      geodToGeocLat = -0.5 * PI + Earth_Axis_Ratio_Squared * &
-           (geodLat+90.0) * deg2rad
-    else
-       geodToGeocLat=atan( (1.0/Earth_Axis_Ratio_Squared) * tan(geodLat*deg2rad))
-    end if
-  end function GeodToGeocLat
+    double precision :: Lat ! Geodetic latitude in radians
+    double precision, parameter :: F2 = Earth_Axis_Ratio_Squared
+
+    lat = geodLat * deg2rad
+    geocLat = atan2 ( sin(lat), f2*cos(lat) )
+
+  end function GeodToGeocLat_D
+
+  ! --------------------------------------------  GeodToGeocLat_S  -----
+  real elemental function GeodToGeocLat_S ( GeodLat ) result ( GeocLat )
+
+  !{ Convert a geodetic latitude $\mu$ (IN DEGREES!) into a geocentric one
+  !  $\lambda$ (IN RADIANS!)
+  !  Use the relation $\lambda = \tan^{-1} \frac{\sin\mu}{f^2 \cos\mu}$,
+  !  where $f$ is the ratio of the equatorial to polar Earth radii.
+
+    use Constants, only: Deg2Rad
+
+    ! Arguments
+    real, intent(in) :: GeodLat
+
+    real :: Lat ! Geodetic latitude in radians
+    real, parameter :: F2 = Earth_Axis_Ratio_Squared
+
+    lat = geodLat * deg2rad
+    geocLat = atan2 ( sin(lat), f2*cos(lat) )
+
+  end function GeodToGeocLat_S
 
   ! ----------------------------------------------------  Get_R_eq -----
   real(rp) elemental function Get_R_Eq ( Phi, Csq ) result ( R_eq )
@@ -124,6 +220,60 @@ contains
 
   end function Get_R_Eq
 
+  ! --------------------------------------------------  To_Cart_D  -----
+  subroutine To_Cart_D ( WHERE, CART, CT, ST, CP, SP )
+  ! Convert Geodetic latitude and longitude (degrees), and altitude, to Cartesian
+    use Constants, only: Deg2Rad
+    double precision, intent(in) :: WHERE(3) ! Latitude, Longitude, Altitude
+    double precision, intent(out) :: CART(3) ! X, Y, Z
+    double precision, intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine of Lat, Lon
+    double precision :: D, MyCt, MySt, MyCp, MySp, RHO, RLAT, RLON
+
+    rlat = where(1)*deg2Rad
+    myct = sin(rlat)
+    myst = cos(rlat)
+    d = sqrt(aquad-(aquad-bquad)*myct*myct)
+    rlon = where(2)*deg2Rad
+    mycp = cos(rlon)
+    mysp = sin(rlon)
+    cart(3) = (where(3)+bquad/d)*myct/erad
+    rho = (where(3)+aquad/d)*myst/erad
+    cart(1) = rho*mycp
+    cart(2) = rho*mysp
+    if ( present(ct) ) ct = myct
+    if ( present(st) ) st = myst
+    if ( present(cp) ) cp = mycp
+    if ( present(sp) ) sp = mysp
+
+  end subroutine To_Cart_D
+
+  ! --------------------------------------------------  To_Cart_S  -----
+  subroutine To_Cart_S ( WHERE, CART, CT, ST, CP, SP )
+  ! Convert Geodetic latitude and longitude (degrees), and altitude, to Cartesian
+    use Constants, only: Deg2Rad
+    real, intent(in) :: WHERE(3)        ! Latitude, Longitude, Altitude
+    real, intent(out) :: CART(3)        ! X, Y, Z
+    real, intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine of Lat, Lon
+    real :: D, MyCt, MySt, MyCp, MySp, RHO, RLAT, RLON
+
+    rlat = where(1)*deg2Rad
+    myct = sin(rlat)
+    myst = cos(rlat)
+    d = sqrt(aquad-(aquad-bquad)*myct*myct)
+    rlon = where(2)*deg2Rad
+    mycp = cos(rlon)
+    mysp = sin(rlon)
+    cart(3) = (where(3)+bquad/d)*myct/erad
+    rho = (where(3)+aquad/d)*myst/erad
+    cart(1) = rho*mycp
+    cart(2) = rho*mysp
+    if ( present(ct) ) ct = myct
+    if ( present(st) ) st = myst
+    if ( present(cp) ) cp = mycp
+    if ( present(sp) ) sp = mysp
+
+  end subroutine To_Cart_S
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -137,6 +287,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.20  2013/08/16 02:27:56  vsnyder
+! Add GeocToGeod, move To_Cart here from igrf_int
+!
 ! Revision 2.19  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
