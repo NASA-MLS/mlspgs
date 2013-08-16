@@ -39,9 +39,11 @@ contains ! ============= Public Procedures =============================
     use Constants, only: Deg2Rad
     use ForwardModelConfig, only: ForwardModelConfig_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Init_Tables_Module, only: L_Azimuth, L_ScGeocAlt, L_ScVelECR
+    use Geometry, only: To_Cart
+    use Init_Tables_Module, only: L_Azimuth, L_ScVelECR
     use MLSKinds, only: RV
     use MLSNumerics, only: Cross ! Cross product of two 3-vectors
+    use QuantityTemplates, only: RT
     use VectorsModule, only: Vector_t, VectorValue_t
 
     type(vector_t), intent(in) :: FwdModelExtra
@@ -55,7 +57,6 @@ contains ! ============= Public Procedures =============================
     real(rv), parameter :: Tol = 0.001 ! If |sin(azimuth)| < tol, the
       ! model plane is in the orbit plane.
 
-    type(vectorValue_t), pointer :: Altitude ! Use associate construct ???
     real(rv) :: Azimuth ! AzimuthQuantity%values(1,1)
     type(vectorValue_t), pointer :: AzimuthQuantity  ! angle by which the
       ! model plane is rotated counterclockwise from the spacecraft
@@ -63,8 +64,8 @@ contains ! ============= Public Procedures =============================
     real(rv) :: Caz, Saz  ! Cos(azimuth), Sin(azimuth)
     integer :: MIF        ! about which model plane is rotated
     real(rv) :: P(3)      ! Normal to orbit plane
-    real(rv) :: S(3)      ! Vector to the SC at MAF 1 and MIF 1
-    real(rv) :: V(3)      ! Unit normal parallel to SC velocity
+    real(rt) :: S(3)      ! Vector to the SC
+    real(rt) :: V(3)      ! Unit normal parallel to SC velocity
     type(vectorValue_t), pointer :: Velocity ! Use associate construct ???
 
     ! The model plane is assumed to be the orbit plane if either there
@@ -80,24 +81,6 @@ contains ! ============= Public Procedures =============================
 
     caz = cos(azimuth*deg2rad)    
     inOrbitPlane = .false.
-
-    ! Get geolocation information from altitude quantity.
-    ! This will generate an error message if there is no altitude quantity.
-!a    associate ( &
-    altitude => &
-              & GetQuantityForForwardModel ( fwdModelExtra, noError=.false., &
-              & quantityType=l_scGeocAlt, config=config ) ! )
-      ! Assume geodLat is actually geocentric latitude.  Hopefully, the
-      ! scGeocAlt quantity was filled with geolocation=geocentric.  The
-      ! lon and geodLat quantities are in degrees, and dimensioned MIFxMAF.
-      ! |S| = 1 by construction.
-      MIF = max(1, min(config%model_Plane_MIF,ubound(altitude%template%lon,1)))
-      s(1) = cos(altitude%template%lon(MIF,MAF)*deg2rad) * &
-           & cos(altitude%template%geodLat(MIF,MAF)*deg2rad)
-      s(2) = sin(altitude%template%lon(MIF,MAF)*deg2rad) * &
-           & cos(altitude%template%geodLat(MIF,MAF)*deg2rad)
-      s(3) = sin(altitude%template%geodLat(MIF,MAF)*deg2rad)
-!a    end associate
 
     !{ Given $\mathbf{S}$, the spacecraft position and $\mathbf{V}$, the
     !  spacecraft velocity, the vector $\mathbf{P} = \mathbf{S} \times
@@ -117,12 +100,18 @@ contains ! ============= Public Procedures =============================
     !  $\alpha$ is an anti-clockwise rotation, from the spacecraft velocity
     !  vector, about the spacecraft position vector.
 
+    ! Get geolocation information from velocity quantity.
+    ! This will generate an error message if there is no velocity quantity.
+
 !a    associate ( &
     velocity => &
               & GetQuantityForForwardModel ( fwdModelExtra, noError=.false., &
               & quantityType=l_scVelECR, config=config ) ! )
+      call to_cart ( (/ velocity%template%geodLat(MIF,MAF), &
+                     &  velocity%template%lon(MIF,MAF), 0.0_rt /), s )
       v = velocity%value3(1:3,MIF,MAF)   ! V
 !a    end associate
+    s = s / sqrt(dot_product(s,s)) ! Unit S
     v = v / sqrt(dot_product(v,v)) ! Unit V
     p = cross(s, v)                ! right-handed unit normal to the orbit plane
     normal = dot_product(s,v) - v  ! in orbit plane, the vector T above
@@ -144,6 +133,9 @@ contains ! ============= Public Procedures =============================
 end module Compute_Model_Plane_m
 
 ! $Log$
+! Revision 2.3  2013/08/16 02:35:34  vsnyder
+! Get all geolocation from SCVelECR quantity
+!
 ! Revision 2.2  2013/07/18 01:11:32  vsnyder
 ! Replace scVel with scVelECR
 !
