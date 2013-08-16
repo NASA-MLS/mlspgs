@@ -38,7 +38,7 @@ module Allocate_Deallocate
 
   public :: BYTE_SIZE, BYTES, ALLOCATE_TEST, DEALLOCATE_TEST, DEALLOC_STATUS, & 
     & SET_GARBAGE_COLLECTION, REPORTALLOCATEDEALLOCATE, &
-    & Test_Allocate, Test_Deallocate
+    & Same_Shape, Test_Allocate, Test_Deallocate
 
   interface ALLOCATE_TEST
     ! For separate scalar arguments for bounds
@@ -127,6 +127,11 @@ module Allocate_Deallocate
   ! If Ref is not associated, deallocate New.  Otherwise, if Ref and New
   ! have the same shape (but not necessarily the same bounds), do nothing.
   ! Otherwise, allocate New with the same bounds as Ref.
+  ! subroutine Same_Shape ( New, ItsName, ModuleName, TheShape )
+  ! If New is not associated, or if any of its dimensions are different
+  ! from TheShape, allocate New with the shape given by TheShape.
+  ! The reason to put TheShape at the end is so as not to have a generic
+  ! conflict with the integer versions.
   interface Same_Shape
     module procedure Same_Shape_CHARACTER_1D, Same_Shape_CHARACTER_2D
     module procedure Same_Shape_CHARACTER_3D
@@ -142,6 +147,20 @@ module Allocate_Deallocate
     module procedure Same_Shape_REALR4_3D, Same_Shape_REALR4_4D
     module procedure Same_Shape_REALR8_1D, Same_Shape_REALR8_2D
     module procedure Same_Shape_REALR8_3D, Same_Shape_REALR8_4D
+    module procedure Same_Shape_CHARACTER_1D_A, Same_Shape_CHARACTER_2D_A
+    module procedure Same_Shape_CHARACTER_3D_A
+    module procedure Same_Shape_COMPLEX_1D_A, Same_Shape_COMPLEX_2D_A
+    module procedure Same_Shape_COMPLEX_3D_A
+    module procedure Same_Shape_DCOMPLEX_1D_A, Same_Shape_DCOMPLEX_2D_A
+    module procedure Same_Shape_DCOMPLEX_3D_A
+    module procedure Same_Shape_INTEGER_1D_A, Same_Shape_INTEGER_2D_A
+    module procedure Same_Shape_INTEGER_3D_A, Same_Shape_INTEGER_4D_A
+    module procedure Same_Shape_LOGICAL_1D_A, Same_Shape_LOGICAL_2D_A
+    module procedure Same_Shape_LOGICAL_3D_A
+    module procedure Same_Shape_REALR4_1D_A, Same_Shape_REALR4_2D_A
+    module procedure Same_Shape_REALR4_3D_A, Same_Shape_REALR4_4D_A
+    module procedure Same_Shape_REALR8_1D_A, Same_Shape_REALR8_2D_A
+    module procedure Same_Shape_REALR8_3D_A, Same_Shape_REALR8_4D_A
   end interface
 
   integer, save :: DEALLOC_STATUS = 0
@@ -1198,12 +1217,12 @@ contains
   ! ------------------------------------  Same_Shape_Character_2d  -----
   subroutine Same_Shape_Character_2d ( Ref, New, ItsName, ModuleName )
     character(len=*), pointer, dimension(:,:) :: Ref, New
-    include "Same_Shape_2d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Character_2d
   ! ------------------------------------  Same_Shape_Character_3d  -----
   subroutine Same_Shape_Character_3d ( Ref, New, ItsName, ModuleName )
     character(len=*), pointer, dimension(:,:,:) :: Ref, New
-    include "Same_Shape_3d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Character_3d
   ! --------------------------------------  Same_Shape_Complex_1d  -----
   subroutine Same_Shape_Complex_1d ( Ref, New, ItsName, ModuleName )
@@ -1213,12 +1232,12 @@ contains
   ! --------------------------------------  Same_Shape_Complex_2d  -----
   subroutine Same_Shape_Complex_2d ( Ref, New, ItsName, ModuleName )
     complex, pointer, dimension(:,:) :: Ref, New
-    include "Same_Shape_2d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Complex_2d
   ! --------------------------------------  Same_Shape_Complex_3d  -----
   subroutine Same_Shape_Complex_3d ( Ref, New, ItsName, ModuleName )
     complex, pointer, dimension(:,:,:) :: Ref, New
-    include "Same_Shape_3d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Complex_3d
   ! -------------------------------------  Same_Shape_Dcomplex_1d  -----
   subroutine Same_Shape_Dcomplex_1d ( Ref, New, ItsName, ModuleName )
@@ -1228,12 +1247,12 @@ contains
   ! -------------------------------------  Same_Shape_Dcomplex_2d  -----
   subroutine Same_Shape_Dcomplex_2d ( Ref, New, ItsName, ModuleName )
     complex(kind(0.0d0)), pointer, dimension(:,:) :: Ref, New
-    include "Same_Shape_2d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Dcomplex_2d
   ! -------------------------------------  Same_Shape_Dcomplex_3d  -----
   subroutine Same_Shape_Dcomplex_3d ( Ref, New, ItsName, ModuleName )
     complex(kind(0.0d0)), pointer, dimension(:,:,:) :: Ref, New
-    include "Same_Shape_3d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Dcomplex_3d
   ! ---------------------------------------  Same_Shape_RealR8_1d  -----
   subroutine Same_Shape_RealR8_1d ( Ref, New, ItsName, ModuleName )
@@ -1243,17 +1262,17 @@ contains
   ! ---------------------------------------  Same_Shape_RealR8_2d  -----
   subroutine Same_Shape_RealR8_2d ( Ref, New, ItsName, ModuleName )
     double precision, pointer, dimension(:,:) :: Ref, New
-    include "Same_Shape_2d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_RealR8_2d
   ! ---------------------------------------  Same_Shape_RealR8_3d  -----
   subroutine Same_Shape_RealR8_3d ( Ref, New, ItsName, ModuleName )
     double precision, pointer, dimension(:,:,:) :: Ref, New
-    include "Same_Shape_3d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_RealR8_3d
   ! ---------------------------------------  Same_Shape_RealR8_4d  -----
   subroutine Same_Shape_RealR8_4d ( Ref, New, ItsName, ModuleName )
     double precision, pointer, dimension(:,:,:,:) :: Ref, New
-    include "Same_Shape_4d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_RealR8_4d
   ! --------------------------------------  Same_Shape_Integer_1d  -----
   subroutine Same_Shape_Integer_1d ( Ref, New, ItsName, ModuleName )
@@ -1263,17 +1282,17 @@ contains
   ! --------------------------------------  Same_Shape_Integer_2d  -----
   subroutine Same_Shape_Integer_2d ( Ref, New, ItsName, ModuleName )
     integer, pointer, dimension(:,:) :: Ref, New
-    include "Same_Shape_2d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Integer_2d
   ! --------------------------------------  Same_Shape_Integer_3d  -----
   subroutine Same_Shape_Integer_3d ( Ref, New, ItsName, ModuleName )
     integer, pointer, dimension(:,:,:) :: Ref, New
-    include "Same_Shape_3d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Integer_3d
   ! --------------------------------------  Same_Shape_Integer_4d  -----
   subroutine Same_Shape_Integer_4d ( Ref, New, ItsName, ModuleName )
     integer, pointer, dimension(:,:,:,:) :: Ref, New
-    include "Same_Shape_4d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Integer_4d
   ! --------------------------------------  Same_Shape_Logical_1d  -----
   subroutine Same_Shape_Logical_1d ( Ref, New, ItsName, ModuleName )
@@ -1283,12 +1302,12 @@ contains
   ! --------------------------------------  Same_Shape_Logical_2d  -----
   subroutine Same_Shape_Logical_2d ( Ref, New, ItsName, ModuleName )
     logical, pointer, dimension(:,:) :: Ref, New
-    include "Same_Shape_2d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Logical_2d
   ! --------------------------------------  Same_Shape_Logical_3d  -----
   subroutine Same_Shape_Logical_3d ( Ref, New, ItsName, ModuleName )
     logical, pointer, dimension(:,:,:) :: Ref, New
-    include "Same_Shape_3d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_Logical_3d
   ! -----------------------------------------  Same_Shape_RealR4_1d  -----
   subroutine Same_Shape_RealR4_1d ( Ref, New, ItsName, ModuleName )
@@ -1298,18 +1317,138 @@ contains
   ! -----------------------------------------  Same_Shape_RealR4_2d  -----
   subroutine Same_Shape_RealR4_2d ( Ref, New, ItsName, ModuleName )
     real, pointer, dimension(:,:) :: Ref, New
-    include "Same_Shape_2d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_RealR4_2d
   ! ---------------------------------------  Same_Shape_RealR4_3d  -----
   subroutine Same_Shape_RealR4_3d ( Ref, New, ItsName, ModuleName )
     real, pointer, dimension(:,:,:) :: Ref, New
-    include "Same_Shape_3d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_RealR4_3d
   ! ---------------------------------------  Same_Shape_RealR4_4d  -----
   subroutine Same_Shape_RealR4_4d ( Ref, New, ItsName, ModuleName )
     real, pointer, dimension(:,:,:,:) :: Ref, New
-    include "Same_Shape_4d.f9h"
+    include "Same_Shape_md.f9h"
   end subroutine Same_Shape_RealR4_4d
+  ! ----------------------------------  Same_Shape_Character_1d_a  -----
+  subroutine Same_Shape_Character_1d_a ( New, ItsName, ModuleName, TheShape )
+    character(len=*), pointer, dimension(:) :: New
+    include "Same_Shape_1d_a.f9h"
+  end subroutine Same_Shape_Character_1d_a
+  ! ----------------------------------  Same_Shape_Character_2d_a  -----
+  subroutine Same_Shape_Character_2d_a ( New, ItsName, ModuleName, TheShape )
+    character(len=*), pointer, dimension(:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Character_2d_a
+  ! ----------------------------------  Same_Shape_Character_3d_a  -----
+  subroutine Same_Shape_Character_3d_a ( New, ItsName, ModuleName, TheShape )
+    character(len=*), pointer, dimension(:,:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Character_3d_a
+  ! ------------------------------------  Same_Shape_Complex_1d_a  -----
+  subroutine Same_Shape_Complex_1d_a ( New, ItsName, ModuleName, TheShape )
+    complex, pointer, dimension(:) :: New
+    include "Same_Shape_1d_a.f9h"
+  end subroutine Same_Shape_Complex_1d_a
+  ! ------------------------------------  Same_Shape_Complex_2d_a  -----
+  subroutine Same_Shape_Complex_2d_a ( New, ItsName, ModuleName, TheShape )
+    complex, pointer, dimension(:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Complex_2d_a
+  ! ------------------------------------  Same_Shape_Complex_3d_a  -----
+  subroutine Same_Shape_Complex_3d_a ( New, ItsName, ModuleName, TheShape )
+    complex, pointer, dimension(:,:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Complex_3d_a
+  ! -----------------------------------  Same_Shape_Dcomplex_1d_a  -----
+  subroutine Same_Shape_Dcomplex_1d_a ( New, ItsName, ModuleName, TheShape )
+    complex(kind(0.0d0)), pointer, dimension(:) :: New
+    include "Same_Shape_1d_a.f9h"
+  end subroutine Same_Shape_Dcomplex_1d_a
+  ! -----------------------------------  Same_Shape_Dcomplex_2d_a  -----
+  subroutine Same_Shape_Dcomplex_2d_a ( New, ItsName, ModuleName, TheShape )
+    complex(kind(0.0d0)), pointer, dimension(:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Dcomplex_2d_a
+  ! -----------------------------------  Same_Shape_Dcomplex_3d_a  -----
+  subroutine Same_Shape_Dcomplex_3d_a ( New, ItsName, ModuleName, TheShape )
+    complex(kind(0.0d0)), pointer, dimension(:,:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Dcomplex_3d_a
+  ! -------------------------------------  Same_Shape_RealR8_1d_a  -----
+  subroutine Same_Shape_RealR8_1d_a ( New, ItsName, ModuleName, TheShape )
+    double precision, pointer, dimension(:) :: New
+    include "Same_Shape_1d_a.f9h"
+  end subroutine Same_Shape_RealR8_1d_a
+  ! -------------------------------------  Same_Shape_RealR8_2d_a  -----
+  subroutine Same_Shape_RealR8_2d_a ( New, ItsName, ModuleName, TheShape )
+    double precision, pointer, dimension(:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_RealR8_2d_a
+  ! -------------------------------------  Same_Shape_RealR8_3d_a  -----
+  subroutine Same_Shape_RealR8_3d_a ( New, ItsName, ModuleName, TheShape )
+    double precision, pointer, dimension(:,:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_RealR8_3d_a
+  ! -------------------------------------  Same_Shape_RealR8_4d_a  -----
+  subroutine Same_Shape_RealR8_4d_a ( New, ItsName, ModuleName, TheShape )
+    double precision, pointer, dimension(:,:,:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_RealR8_4d_a
+  ! ------------------------------------  Same_Shape_Integer_1d_a  -----
+  subroutine Same_Shape_Integer_1d_a ( New, ItsName, ModuleName, TheShape )
+    integer, pointer, dimension(:) :: New
+    include "Same_Shape_1d_a.f9h"
+  end subroutine Same_Shape_Integer_1d_a
+  ! ------------------------------------  Same_Shape_Integer_2d_a  -----
+  subroutine Same_Shape_Integer_2d_a ( New, ItsName, ModuleName, TheShape )
+    integer, pointer, dimension(:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Integer_2d_a
+  ! ------------------------------------  Same_Shape_Integer_3d_a  -----
+  subroutine Same_Shape_Integer_3d_a ( New, ItsName, ModuleName, TheShape )
+    integer, pointer, dimension(:,:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Integer_3d_a
+  ! ------------------------------------  Same_Shape_Integer_4d_a  -----
+  subroutine Same_Shape_Integer_4d_a ( New, ItsName, ModuleName, TheShape )
+    integer, pointer, dimension(:,:,:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Integer_4d_a
+  ! ------------------------------------  Same_Shape_Logical_1d_a  -----
+  subroutine Same_Shape_Logical_1d_a ( New, ItsName, ModuleName, TheShape )
+    logical, pointer, dimension(:) :: New
+    include "Same_Shape_1d_a.f9h"
+  end subroutine Same_Shape_Logical_1d_a
+  ! ------------------------------------  Same_Shape_Logical_2d_a  -----
+  subroutine Same_Shape_Logical_2d_a ( New, ItsName, ModuleName, TheShape )
+    logical, pointer, dimension(:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Logical_2d_a
+  ! ------------------------------------  Same_Shape_Logical_3d_a  -----
+  subroutine Same_Shape_Logical_3d_a ( New, ItsName, ModuleName, TheShape )
+    logical, pointer, dimension(:,:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_Logical_3d_a
+  ! -------------------------------------  Same_Shape_RealR4_1d_a  -----
+  subroutine Same_Shape_RealR4_1d_a ( New, ItsName, ModuleName, TheShape )
+    real, pointer, dimension(:) :: New
+    include "Same_Shape_1d_a.f9h"
+  end subroutine Same_Shape_RealR4_1d_a
+  ! -------------------------------------  Same_Shape_RealR4_2d_a  -----
+  subroutine Same_Shape_RealR4_2d_a ( New, ItsName, ModuleName, TheShape )
+    real, pointer, dimension(:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_RealR4_2d_a
+  ! -------------------------------------  Same_Shape_RealR4_3d_a  -----
+  subroutine Same_Shape_RealR4_3d_a ( New, ItsName, ModuleName, TheShape )
+    real, pointer, dimension(:,:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_RealR4_3d_a
+  ! -------------------------------------  Same_Shape_RealR4_4d_a  -----
+  subroutine Same_Shape_RealR4_4d_a ( New, ItsName, ModuleName, TheShape )
+    real, pointer, dimension(:,:,:,:) :: New
+    include "Same_Shape_md_a.f9h"
+  end subroutine Same_Shape_RealR4_4d_a
 
   ! ----------------------------------  memproduct  -----
   function memproduct ( elementSize, dimensions ) result( p )
@@ -1338,6 +1477,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.41  2013/08/16 02:05:34  vsnyder
+! Make Same_Shape public (oops), add Same_Shape..._a versions
+!
 ! Revision 2.40  2013/08/16 01:06:22  vsnyder
 ! Add Same_Shape
 !
