@@ -144,8 +144,6 @@ module ForwardModelConfig
     ! Now the other integers
     integer :: Cat_Size(2)            ! Catalog size, by sideband, 1 = LSB, 2 = USB
     integer :: LinearSideband         ! For hybrid model, which SB is linear?
-    integer :: Model_Plane_MIF = 1    ! MIF about which model plane is rotated
-                                      ! if L_Azimuth quantity is in fwdModelExtra
     integer :: No_cloud_species       ! No of Cloud Species '2'
     integer :: No_model_surfs         ! No of Model surfaces '640'
     integer :: NoUsedChannels         ! Total in all signals
@@ -154,7 +152,7 @@ module ForwardModelConfig
     integer :: Num_azimuth_angles     ! No of azmuth angles '8'
     integer :: Num_scattering_angles  ! No of scattering angles '16'
     integer :: Num_size_bins          ! No of size bins '40'
-    integer :: ReferenceMIF           ! MIF number to use for MAF geolocation
+    integer :: ReferenceMIF = 1       ! MIF number to use for MAF geolocation
     integer :: SidebandStart, SidebandStop ! Folded or SSB config?
     integer :: SurfaceTangentIndex    ! Index in Tangentgrid of Earth's surface
     integer :: TScatMIF               ! Which MIF to use for TScat LOS VEL and PHITAN
@@ -1323,6 +1321,7 @@ contains
     call output ( config%Num_azimuth_angles, before='  Num_azimuth_angles: ', advance='yes' )
     call output ( config%Num_scattering_angles, before='  Num_scattering_angles: ', advance='yes' )
     call output ( config%Num_size_bins, before='  Num_size_bins: ', advance='yes' )
+    call output ( config%ReferenceMIF, before='  ReferenceMIF: ', advance='yes' )
     call output ( config%sidebandStart, before='  Sidebands: ' )
     call output ( config%sidebandStop, before=' ', advance='yes' )
     call output ( config%SurfaceTangentIndex, before='  SurfaceTangentIndex: ', advance='yes' )
@@ -1471,6 +1470,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.127  2013/08/12 23:48:08  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.126  2013/08/09 01:02:58  vsnyder
 ! Add ReferenceMIF component
 !
