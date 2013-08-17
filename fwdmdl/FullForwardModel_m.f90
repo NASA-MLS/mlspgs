@@ -333,7 +333,7 @@ contains
     ! Allocated in tangent_pressures:
     call deallocate_test ( tan_press,    'tan_press',    moduleName )
 
-    if ( toggle(emit) ) call trace_end ( 'FullForwardModel MAF=', fmStat%maf )
+    if ( toggle(emit) ) call trace_end ( 'FullForwardModel, MAF=', fmStat%maf )
 
   contains
 
@@ -1171,7 +1171,7 @@ contains
       call DestroyVectorQuantityValue ( cld_ext, forWhom='cld_ext' )
     end if
 
-    if ( toggle(emit) ) call trace_end ( 'FullForwardModelAuto MAF=', fmStat%maf )
+    if ( toggle(emit) ) call trace_end ( 'FullForwardModelAuto, MAF=', fmStat%maf )
 
   contains
 
@@ -4688,6 +4688,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.345  2013/08/08 02:35:25  vsnyder
+! Set Qty_Stuff%derivOK if ExtraJacobian is present
+!
 ! Revision 2.344  2013/08/02 01:24:06  vsnyder
 ! Add ExtraJacobian to compute derivatives not in state vector
 !
