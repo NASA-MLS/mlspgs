@@ -10,20 +10,19 @@
 ! foreign countries or providing access to foreign persons.
 
 module TRACE_M
+
   use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
   use MLSSTRINGLISTS, only: SWITCHDETAIL
+
   implicit none
   private
-  public :: Trace_Begin, Trace_End
-  integer, public, save :: DEPTH   ! Depth in tree.  Used for trace printing.
 
-  integer, parameter :: ClockStackMax = 100
-  real :: ClockStack(0:clockStackMax) = 0.0
-  double precision :: Memory(0:clockStackMax) = 0.0d0
+  public :: Trace_Begin, Trace_End
+
   character (len=8), save :: PreviousDate = ' '
   logical, save           :: PreviousDebug
   logical, save           :: PreviousVerbose
-  logical, parameter      :: DEEBUG = .false.
+  logical, parameter      :: DEEBUG = .true.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -32,137 +31,126 @@ module TRACE_M
 !---------------------------------------------------------------------------
 
 contains ! ====     Public Procedures     ==============================
+
 ! --------------------------------------------------  TRACE_BEGIN  -----
-  subroutine TRACE_BEGIN ( NAME, ROOT, INDEX )
+  subroutine TRACE_BEGIN ( NAME, ROOT, INDEX, Cond )
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
-    use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
+    use Call_Stack_m, only: Push_Stack
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
-    use OUTPUT_M, only: OUTPUTOPTIONS, DUMPSIZE, OUTPUT
-    use TIME_M, only: TIME_NOW
-    use TREE, only: DUMP_TREE_NODE
+    use OUTPUT_M, only: OUTPUTOPTIONS
 
     character(len=*), intent(in) :: NAME
     integer, intent(in), optional :: ROOT
     integer, intent(in), optional :: INDEX
-    integer :: I              ! Loop inductor
-    character(len=10) :: Now  ! For Date_and_time
+    logical, intent(in), optional :: Cond  ! Print if true, default true
+
+    logical :: MyCond
+
     ! Executable
+ 
     call Checkdate
-    if ( depth < 0 ) call output ( depth, before='***** Why is depth = ', &
-      & after=' negative?', advance='yes' )
-    if ( present(root) ) then
-      call output ( root, 6 ); call output ( ': ' )
+
+    myCond = .true.
+    if ( present(cond) ) myCond = cond
+
+    if ( myCond ) then
+      call push_stack ( name, root, index, before='Enter ', where=.true. )
     else
-      call output ( '        ' )
+      call push_stack ( name, root, index )
     end if
-    do i = 1, depth
-      call output ( '.' )
-    end do
-    call output ( 'Enter ' ); call output ( name )
-    if ( present(index) ) call output( index, before=' ' )
-    call date_and_time ( time=now )
-    call output ( ' at ' // now(1:2) // ':' // now(3:4) // ':' // now(5:) )
-    if ( present(root) ) then
-      call output ( ' with ' );
-      call dump_tree_node ( root, 0 )
-    else
-      call output ( ' ' )
-    end if
-    if ( depth >= 0 .and. depth < clockStackMax ) then
-      call time_now ( clockStack(depth) )
-      clockStack(depth+1) = 0.0
-      memory(depth) = NoBytesAllocated
-    end if
-    call dumpsize ( memory_units * nobytesallocated, before = 'Memory ', &
-      & advance='yes' )
-    depth = depth + 1
+
     call MLSMessageCalls( 'push', constantName=Name )
     outputOptions%parentName = Name
     if ( switchDetail( MLSNamesAreDebug, Name, options='-fc' ) > -1 .and. &
       & .not. MLSDebug ) then
       PreviousDebug = MLSDebug
       MLSDebug = .true.
-    endif
+    end if
     if ( switchDetail( MLSNamesAreVerbose, Name, options='-fc' ) > -1 .and. &
       & .not. MLSVerbose ) then
       PreviousVerbose = MLSVerbose
       MLSVerbose = .true.
-    endif
+    end if
+
   end subroutine TRACE_BEGIN
+
 ! --------------------------------------------------    TRACE_END  -----
-  subroutine TRACE_END ( NAME, INDEX )
+  subroutine TRACE_END ( NAME, INDEX, Cond )
   ! Decrement DEPTH.  Print "EXIT NAME" with DEPTH dots in front.
 
-    use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
-    use OUTPUT_M, only: OUTPUTOPTIONS, DUMPSIZE, NEWLINE, OUTPUT
-    use TIME_M, only: TIME_NOW
+    use Call_Stack_m, only: Pop_Stack, Stack_t, Top_Stack
+    use MLSMessageModule, only: MLSMessageCalls
+    use Output_m, only: NewLine, Output, OutputOptions
+    use String_Table, only: Create_String, Display_String
 
-    character(len=*), intent(in) :: NAME
-    integer, intent(in), optional :: INDEX
-    double precision :: Delta ! memory
-    integer :: I              ! Loop inductor
-    character(len=10) :: Now  ! For Date_and_time
+    character(len=*), intent(in) :: NAME   ! No longer used -- taken from stack
+    integer, intent(in), optional :: INDEX ! No longer used -- taken from stack
+    logical, intent(in), optional :: Cond  ! Print if true, default true
+
+    type(stack_t) :: Frame
     character(32) :: PARENTNAME
-    integer :: Values(8)      ! For Date_and_time
-    real :: T                 ! For timing
-    character(12) :: Used     ! For timing
+
+    logical :: MyCond
+
     ! Executable
+
     call Checkdate
-    depth = depth - 1
-    if ( depth < 0 ) call output ( depth, before='***** Why is depth = ', &
-      & after=' negative?', advance='yes' )
-    call output ( '        ' )
-    do i = 1, depth
-      call output ( '.' )
-    end do
-    call output ( 'Exit ' ); call output ( name )
-    if ( present(index) ) call output( index, before=' ' )
-    call date_and_time ( time=now, values=values )
-    call output ( ' at ' // now(1:2) // ':' // now(3:4) // ':' // now(5:) )
-    if ( depth >= 0 .and. depth < clockStackMax ) then
-      call time_now ( t )
-      clockStack(depth) = t - clockStack(depth)
-!     call output ( clockStack(depth) - clockStack(depth+1), &
-!       & format='(g10.3)', before=' used ' )
-      write ( used, '(g10.3)' ) clockStack(depth)
-      call output ( ' used ' // trim(adjustl(used)) // ' cpu' )
-      if ( memory(depth) /= noBytesAllocated ) then
-        delta = memory_units * (noBytesAllocated-memory(depth))
-        if ( abs(delta) < huge(1) ) then
-          call dumpSize ( int(delta), before=', Memory changed by ' )
+
+    myCond = .true.
+    if ( present(cond) ) myCond = cond
+
+    if ( myCond ) then
+      if ( deebug ) then
+        call top_stack ( frame )
+        if ( frame%now == '' ) then
+          ! Push_Stack always fills Now, so this must be the empty stack default
+          call output ( 'Stack underflow noticed with NAME = ' // trim(name) )
+          if ( present(index) ) call output ( index, before=' INDEX = ' )
+          call newLine
         else
-          call dumpSize ( delta, before=', Memory changed by ' )
+          if ( frame%text /= create_string(name) ) then
+            call display_string ( frame%text, before='Name at top of stack = "' )
+            call output ( '" but NAME = "' // trim(name) // '"', advance='yes' )
+          end if
+          if ( present(index) ) then
+            if ( frame%index /= index ) then
+              call output ( frame%index, before='INDEX at top of stack = ' )
+              call output ( index, before=' but INDEX argument = ', advance='yes' )
+            end if
+          end if
         end if
-        call dumpSize ( memory_units * nobytesallocated, before = ' to ' )
-        memory(depth) = nobytesallocated
       end if
+      call pop_stack ( 'Exit ', .true. )
+    else
+      call pop_stack
     end if
-    call newLine
+
     call MLSMessageCalls( 'pop' )
     call MLSMessageCalls( 'top', parentName )
     outputOptions%parentName = parentName
     if ( switchDetail( MLSNamesAreDebug, Name, options='-fc' ) > -1 ) then
       MLSDebug = PreviousDebug
-    endif
+    end if
     if ( switchDetail( MLSNamesAreVerbose, Name, options='-fc' ) > -1 ) then
       MLSVerbose = PreviousVerbose
-    endif
+    end if
+
   end subroutine TRACE_END
 
 !------------------------ private procedures ---------------------
   ! -- CheckDate
   ! Checks for a jump in the date --
   ! So that we don't accidentally drop (multiples of) 24 hours in 
-  ! marking times entering and exiting q Naamed process
+  ! marking times entering and exiting Named process
   subroutine CheckDate
     character (len=8) :: CurrentDate
     ! Executable
     call date_and_time( date=CurrentDate )
     if ( len_trim(PreviousDate) > 0 ) then
-      if ( PreviousDate /= CurrentDate .or. DEEBUG ) &
+      if ( PreviousDate /= CurrentDate ) &
+!???  if ( PreviousDate /= CurrentDate .or. DEEBUG ) &
         & call DateLine ( PreviousDate, CurrentDate )
     endif
     PreviousDate = CurrentDate
@@ -195,6 +183,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.23  2013/08/17 03:10:13  vsnyder
+! Use Call_Stack
+!
 ! Revision 2.22  2013/06/28 18:06:14  pwagner
 ! Automatically set parentName
 !
