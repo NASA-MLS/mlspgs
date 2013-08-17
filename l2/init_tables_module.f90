@@ -659,27 +659,31 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def, &
 !      begin, s+s_l2gp, np+n_spec_def, & ! To avoid forward reference in h/vGrid
       begin, s+s_hGrid, &
-             begin, f+f_type, field_type(t_hGridType,req=req), &
-             begin, f+f_module, field_spec(s_module), &
+             begin, f+f_date, string(), &
              begin, f+f_extendible, boolean(), &
              begin, f+f_fraction, numeric(), &
              begin, f+f_forbidOverspill, boolean(), &
              begin, f+f_geodAngle, numeric(), &
+             begin, f+f_geodLat, numeric(), &
              begin, f+f_height, numeric(), &
              begin, f+f_insetOverlaps, boolean(), &
+             begin, f+f_interpolationfactor, numeric(), &
+             begin, f+f_inclination, numeric(), &
+             begin, f+f_lon, numeric(), &
+             begin, f+f_losAngle, numeric(), &
+             begin, f+f_maxLowerOverlap, numeric(), &
              begin, f+f_maxLowerOverlap, numeric(), &
              begin, f+f_maxUpperOverlap, numeric(), &
              begin, f+f_mif, numeric(), &
-             begin, f+f_interpolationfactor, numeric(), &
-             begin, f+f_inclination, numeric(), &
+             begin, f+f_module, field_spec(s_module), &
+             begin, f+f_origin, numeric(), &
              begin, f+f_single, boolean(), &
              begin, f+f_solarTime, numeric(), &
              begin, f+f_solarZenith, numeric(), &
-             begin, f+f_Time, numeric(), &
-             begin, f+f_date, string(), &
              begin, f+f_spacing, numeric(), &
-             begin, f+f_origin, numeric(), &
              begin, f+f_sourceL2GP, field_spec(s_l2gp), &
+             begin, f+f_Time, numeric(), &
+             begin, f+f_type, field_type(t_hGridType,req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_readgriddedData, &
@@ -1963,6 +1967,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.580  2013/08/17 00:19:27  pwagner
+! Fixed HGrids may have geolocations overridden
+!
 ! Revision 2.579  2013/08/16 02:34:46  vsnyder
 ! Remove Model_Plane_MIF
 !
