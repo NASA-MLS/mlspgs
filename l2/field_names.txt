@@ -173,6 +173,7 @@ fwdModelOut
 geocAltitudeQuantity
 geodAngle
 geodAlt
+geodLat
 geolocation
 gph
 gphQuantity
@@ -242,6 +243,8 @@ literal
 lockBins
 logBasis
 logSpace
+lon
+losAngle
 losqty
 losVel   # used for MakePFA
 lowBound # for the state vector during retrieval
@@ -507,6 +510,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.237  2013/08/17 00:19:27  pwagner
+# Fixed HGrids may have geolocations overridden
+#
 # Revision 2.236  2013/08/16 02:34:46  vsnyder
 # Remove Model_Plane_MIF
 #
