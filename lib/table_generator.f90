@@ -22,7 +22,7 @@ module TABLE_GENERATOR
   use MLSCF, only: ALLOCATE_MLSCF, MLSCF_T, MLSCFCELL_T
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING, STRING_LENGTH
-  use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE
   use TREE, only: DUMP_TREE_NODE, NODE_ID, &
                   NODE_KIND, NSONS, PSEUDO, SOURCE_REF, &
@@ -75,7 +75,6 @@ contains ! ====     Public Procedures     ==============================
     logical :: MYUPCASE
     integer :: SON            ! Son of root
 
-    depth = 0
     error = 0
     isection = 0
     if ( toggle(gen) ) call trace_begin ( 'GENERATE_TABLE', root )
@@ -352,6 +351,9 @@ contains ! ====     Public Procedures     ==============================
 end module TABLE_GENERATOR
 
 ! $Log$
+! Revision 2.9  2013/08/17 02:56:58  vsnyder
+! Remove references to DEPTH from trace_m
+!
 ! Revision 2.8  2009/06/23 18:25:44  pwagner
 ! Prevent Intel from optimizing ident string away
 !
