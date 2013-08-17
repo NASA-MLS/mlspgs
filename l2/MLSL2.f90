@@ -30,7 +30,8 @@ program MLSL2
   use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
   use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
-    & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
+    & LEVEL1_HDFVERSION, AURA_L1BFILES, NEED_L1BFILES, &
+    & NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
     & SECTIONTIMES, SECTIONTIMINGUNITS, SHAREDPCF, & ! SIPS_VERSION, &
     & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, SLAVESDOOWNCLEANUP, &
@@ -484,14 +485,14 @@ program MLSL2
       ! call mls_h5close(error)
       ! call MLSMessageExit
     else if ( error == 0 ) then
-      call Deallocate_filedatabase(filedatabase)
-      call output('Deallocated filedatabase', advance='yes')
       if ( .not. parallel%slave ) then
+        call Deallocate_filedatabase(filedatabase)
+        call output('Deallocated filedatabase', advance='yes')
         call mls_h5close(error)
         call output('Closed hdf5 library', advance='yes')
       else
         call MLSMessage ( MLSMSG_Warning, moduleName, &
-          & "We are a slave, thus unable to mls_close in this version" )
+          & "We are a slave, unable to mls_*close in this version" )
       endif
       if (error /= 0) then
          call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -629,7 +630,9 @@ contains
       end if
       call outputNamedValue ( 'Preflight check paths?', checkPaths, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Need L1B files?', checkPaths, advance='yes', &
+      call outputNamedValue ( 'Need L1B files?', NEED_L1BFILES, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Reading Aura L1B files?', AURA_L1BFILES, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Skip all direct writes?', SKIPDIRECTWRITES, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -711,6 +714,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.193  2013/08/17 00:22:14  pwagner
+! New cmdline arg relaxes some for non-Aura l1b datasets
+!
 ! Revision 2.192  2013/06/28 19:18:42  pwagner
 ! -Smess[n] and -Sparent switches; other tweaks to output
 !
