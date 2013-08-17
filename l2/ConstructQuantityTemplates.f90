@@ -472,8 +472,10 @@ contains ! ============= Public procedures ===================================
       & ASSEMBLEL1BQTYNAME
     use MLSCOMMON, only: MLSFILE_T, NAMELEN
     use MLSKINDS, only: RK => R8
+    use MLSL2OPTIONS, only: AURA_L1BFILES
     use MLSFILES, only: GETMLSFILEBYTYPE
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_L1BREAD
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, &
+      & MLSMSG_ERROR, MLSMSG_L1BREAD, MLSMSG_WARNING
     use MLSSIGNALS_M, only:  ISMODULESPACECRAFT, GETMODULENAME
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: OUTPUT
@@ -525,11 +527,13 @@ contains ! ============= Public procedures ===================================
     type (MLSFile_T), pointer             :: L1BFile
     character (len=NameLen) :: l1bItemName
     integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex, hdfVersion
+    logical :: MissingOK
 
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
     ! quantity.  Otherwise, we have to read it all from the l1boa file
     ! ourselves.
+    MissingOK = .not. AURA_L1BFILES
 
     if ( present(mifGeolocation) ) then
       ! -------------------------------------- Got mifGeolocation ------------
@@ -565,9 +569,16 @@ contains ! ============= Public procedures ===================================
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
 
       call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
-        & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
-      if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_L1BRead//l1bItemName )
+        & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & neverfail=MissingOK )
+      if ( l1bFlag /= 0 .and. .not. MissingOK ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_L1BRead//l1bItemName )
+      elseif ( l1bFlag /= 0 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & MLSMSG_L1BRead//l1bItemName )
+        ! return
+      endif
 
       qty%name = 0
       call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
@@ -584,6 +595,9 @@ contains ! ============= Public procedures ===================================
         call output ( "Instance offset for minor frame quantity is:" )
         call output ( qty%instanceOffset, advance='yes' )
       end if
+      
+      ! In case we didn't find the proper item in the l1boa files
+      if ( l1bFlag /= 0 ) return
 
       if ( .not. IsModuleSpacecraft(instrumentModule) ) then
         call GetModuleName ( instrumentModule, l1bItemName )
@@ -591,9 +605,16 @@ contains ! ============= Public procedures ===================================
         
         l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
         call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
-          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
-        if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_L1BRead//l1bItemName )
+          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & neverfail=MissingOK )
+        if ( l1bFlag /= 0 .and. .not. MissingOK ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & MLSMSG_L1BRead//l1bItemName )
+        elseif ( l1bFlag /= 0 ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & MLSMSG_L1BRead//l1bItemName )
+          return
+        endif
         
         ! Now we're going to deal with a VGrid for this quantity
         qty%verticalCoordinate = l_geodAltitude
@@ -615,9 +636,15 @@ contains ! ============= Public procedures ===================================
           l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
           call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
             & l1bFlag, firstMAF=chunk%firstMafIndex, &
-            & lastMAF=chunk%lastMafIndex )
-          if ( l1bFlag == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & MLSMSG_L1BRead//l1bItemName )
+            & lastMAF=chunk%lastMafIndex, neverfail=MissingOK )
+          if ( l1bFlag /= 0 .and. .not. MissingOK ) then
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & MLSMSG_L1BRead//l1bItemName )
+          elseif ( l1bFlag /= 0 ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & MLSMSG_L1BRead//l1bItemName )
+            cycle
+          endif
           
           ! Now we have to save this field in the quantity data.
           ! This is rather a kludgy way of doing it but this worked out the
@@ -679,6 +706,8 @@ contains ! ============= Public procedures ===================================
 
     ! In later versions we'll probably need to think about FILL_VALUEs and
     ! setting things to the badData flag.
+    
+    ! We thought about about them, but not too hard apparently
   end subroutine ConstructMinorFrameQuantity
 
   ! ------------------------------------ ForgeMinorFrames --------------
@@ -1002,14 +1031,16 @@ contains ! ============= Public procedures ===================================
       & noSurfs=1, coherent=.true., stacked=.true., regular=.true., &
       & noChans=noChans, sharedHGrid=.true., sharedVGrid=.true. )
     call SetupEmptyVGridForQuantity ( qty )
-
-    qty%phi => source%phi(1:1,:)
-    qty%geodLat => source%geodLat(1:1,:)
-    qty%lon => source%lon(1:1,:)
-    qty%time => source%time(1:1,:)
-    qty%solarTime => source%solarTime(1:1,:)
-    qty%solarZenith => source%solarZenith(1:1,:)
-    qty%losAngle => source%losAngle(1:1,:)
+    ! In some rare cases, e.g. non-Aura satellite data, source may be a dud
+    if ( associated(source%phi) ) then
+      qty%phi => source%phi(1:1,:)
+      qty%geodLat => source%geodLat(1:1,:)
+      qty%lon => source%lon(1:1,:)
+      qty%time => source%time(1:1,:)
+      qty%solarTime => source%solarTime(1:1,:)
+      qty%solarZenith => source%solarZenith(1:1,:)
+      qty%losAngle => source%losAngle(1:1,:)
+    endif
 
     qty%majorFrame = .true.
     qty%minorFrame = .false.
@@ -1363,6 +1394,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.173  2013/08/17 00:23:35  pwagner
+! New cmdline arg relaxes some for non-Aura l1b datasets
+!
 ! Revision 2.172  2013/07/25 00:23:00  vsnyder
 ! Add MIFRHI quantity type
 !
