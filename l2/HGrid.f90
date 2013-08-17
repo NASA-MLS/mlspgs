@@ -58,9 +58,9 @@ contains ! =====     Public Procedures     =============================
     use EXPR_M, only: EXPR
     use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
     use INIT_TABLES_MODULE, only: F_DATE, &
-      & F_EXTENDIBLE, F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
+      & F_EXTENDIBLE, F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, F_GEODLAT, &
       & F_HEIGHT, F_INCLINATION, F_INSETOVERLAPS, F_INTERPOLATIONFACTOR, &
-      & F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
+      & F_LON, F_LOSANGLE, F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
       & F_MODULE, F_ORIGIN, &
       & F_SINGLE, F_SOLARTIME, F_SOLARZENITH, F_SOURCEL2GP, F_SPACING, &
       & F_TIME, F_TYPE, &
@@ -122,9 +122,12 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
     logical :: FORBIDOVERSPILL          ! If set don't allow overlaps beyond L1B
     integer :: GEODANGLENODE            ! Tree node
+    integer :: GEODLATNODE            ! Tree node
     logical :: GOT_FIELD(field_first:field_last)
     logical :: INSETOVERLAPS            ! Flag
     integer :: L1BFLAG
+    integer :: LONNODE                  ! Tree node
+    integer :: LOSANGLENODE             ! Tree node
     integer :: MAXLOWEROVERLAP          ! For some hGrids
     integer :: MAXUPPEROVERLAP          ! For some hGrids
     integer :: MIF                      ! For fixed hGrids
@@ -172,6 +175,9 @@ contains ! =====     Public Procedures     =============================
     solarZenithNode = 0
     timeNode = 0
     geodAngleNode = 0
+    geodLatNode = 0
+    LosAngleNode = 0
+    lonNode = 0
 
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
@@ -239,6 +245,12 @@ contains ! =====     Public Procedures     =============================
           & call announce_error ( field, angleUnitMessage )
       case ( f_geodAngle )
         geodAngleNode = son
+      case ( f_geodLat )
+        geodLatNode = son
+      case ( f_losAngle )
+        losAngleNode = son
+      case ( f_lon )
+        lonNode = son
       case ( f_single )
         single = get_boolean ( fieldValue )
       case ( f_solarTime )
@@ -260,20 +272,28 @@ contains ! =====     Public Procedures     =============================
 
     select case (hGridType)
 
-    case ( l_height, l_fractional, l_fixed ) ! ----- Fractional or Height ------
+    case ( l_height, l_fractional, l_fixed ) ! --Fixed, Fractional or Height --
       if (.not. got_field(f_module) ) then
         call announce_error ( root, NoModule )
       elseif (.not. NEED_L1BFILES ) then
         call announce_error ( root, NoL1BFILES )
       else
+        ! 1st--did we set any explicit geolocations?
+        if ( any ( got_field ( (/ f_geodAngle, f_geodLat, f_losAngle, f_lon, &
+          & f_solarTime, f_solarZenith, f_time /) ) ) ) then
+          call CreateExplicitHGrid ( son, date, geodAngleNode, geodLatNode, &
+            & solarTimeNode, solarZenithNode, lonNode, losAngleNode, &
+            & processingRange%startTime, timeNode, hGrid )
+        endif
         call CreateMIFBasedHGrids ( filedatabase, hGridType, chunk, &
           & got_field, root, height, fraction, interpolationFactor, &
           & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
       end if
 
     case ( l_explicit ) ! ----------------- Explicit ------------------
-      call CreateExplicitHGrid ( son, date, geodAngleNode, solarTimeNode, &
-        & solarZenithNode, processingRange%startTime, timeNode, hGrid )
+      call CreateExplicitHGrid ( son, date, geodAngleNode, geodLatNode, &
+        & solarTimeNode, solarZenithNode, lonNode, losAngleNode, &
+        & processingRange%startTime, timeNode, hGrid )
 
     case ( l_regular ) ! ----------------------- Regular --------------
       if (.not. got_field(f_module) ) then
@@ -336,8 +356,9 @@ contains ! =====     Public Procedures     =============================
   end function CreateHGridFromMLSCFInfo
 
   ! ----------------------------------------  CreateExplicitHGrid  -----
-  subroutine CreateExplicitHGrid ( key, date, geodAngleNode, solarTimeNode, &
-    & solarZenithNode, time, timeNode, hGrid )
+  subroutine CreateExplicitHGrid ( key, date, geodAngleNode, geodLatNode, &
+        & solarTimeNode, solarZenithNode, lonNode, losAngleNode, &
+        & Time, timeNode, hGrid )
 
     use SDPToolkit, only: MLS_UTCTOTAI
     use EXPR_M, only: EXPR
@@ -351,8 +372,11 @@ contains ! =====     Public Procedures     =============================
 
     ! dummy arguments
     integer, intent(in) :: KEY          ! Tree node
-    integer, intent(in) :: DATE     ! Date if any
+    integer, intent(in) :: DATE          ! Date if any
     integer, intent(in) :: GEODANGLENODE ! Geod angle if any
+    integer, intent(in) :: GEODLATNODE   ! Geod latitude if any
+    integer, intent(in) :: LONNODE       ! longitude if any
+    integer, intent(in) :: LOSANGLENODE  ! los angle if any
     integer, intent(in) :: SOLARTIMENODE ! Solar time if any
     integer, intent(in) :: SOLARZENITHNODE ! Solar zenith angle if any
     integer, intent(in) :: TIMENODE ! Explicit d.p. numeric time field if any
@@ -369,29 +393,38 @@ contains ! =====     Public Procedures     =============================
     real(rk) :: EXPR_VALUE(2)   ! Output from Expr subroutine
     integer :: RETURNSTATUS             ! Flag
     character(len=80) :: DATESTRING
+    ! The following mysterious integers allow us
+    ! to engage in some contemptible trickery to fill
+    ! the HGrid's geolocation fields--a better
+    ! method would call a well-written procedure, passing it appropriate
+    ! args for each field
+    ! However, we inherited this piece-o-work and just
+    ! expanded it include three more fields
+    integer, parameter :: NUMPARAMS = 7
+    integer, parameter :: PHIPARAM = 1
+    integer, parameter :: SOLARTIMEPARAM = PHIPARAM + 1
+    integer, parameter :: SOLARZENITHPARAM = SOLARTIMEPARAM + 1
+    integer, parameter :: TIMEPARAM = SOLARZENITHPARAM + 1
+    integer, parameter :: LONPARAM = TIMEPARAM + 1
+    integer, parameter :: LOSANGLEPARAM = LONPARAM + 1
+    integer, parameter :: GEODLATPARAM = LOSANGLEPARAM + 1
 
     ! Executable code
-
+    ! 1st--try to get the number of instances by rude count
     noProfs = 0
-    if ( geodAngleNode /= 0 ) noProfs = nsons ( geodAngleNode ) - 1
-    if ( solarTimeNode /= 0 ) then
-      if ( noProfs /= 0 ) then
-        if ( nsons ( solarTimeNode ) - 1 /= noProfs ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Inconsistent explicit hGrid definition' )
-      else
-        noProfs = nsons ( solarTimeNode ) - 1
-      end if
-    end if
-    if ( solarZenithNode /= 0 ) then
-      if ( noProfs /= 0 ) then
-        if ( nsons ( solarZenithNode ) - 1 /= noProfs ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Inconsistent explicit hGrid definition' )
-      else
-        noProfs = nsons ( solarZenithNode ) - 1
-      end if
-    end if
+    if ( geodAngleNode /= 0 ) then
+      noProfs = nsons ( geodAngleNode ) - 1
+    elseif ( geodLatNode /= 0 ) then
+      noProfs = nsons ( geodLatNode ) - 1
+    elseif ( solarTimeNode /= 0 ) then
+      noProfs = nsons ( solarTimeNode ) - 1
+    elseif ( solarZenithNode /= 0 ) then
+      noProfs = nsons ( solarZenithNode ) - 1
+    elseif ( lonNode /= 0 ) then
+      noProfs = nsons ( lonNode ) - 1
+    elseif ( losAngleNode /= 0 ) then
+      noProfs = nsons ( losAngleNode ) - 1
+    endif
 
     ! Create an hGrid with this many profiles and no overlaps
     hGrid%noProfs = noProfs
@@ -415,27 +448,41 @@ contains ! =====     Public Procedures     =============================
     hGrid%geodLat = 0.0_rk
     hGrid%solarTime = 0.0_rk
     hGrid%solarZenith = 0.0_rk
+    hGrid%lon = 0.0_rk
+    hGrid%losAngle = 0.0_rk
 
     ! Loop over the parameters we might have
     ! which may override any set above
-    do param = 1, 4
+    do param = 1, NUMPARAMS
       select case ( param )
-      case ( 1 )
+      case ( PHIPARAM )
         values => hGrid%phi
         node = geodAngleNode
         units = phyq_angle
-      case ( 2 )
+      case ( SOLARTIMEPARAM )
         values => hGrid%solarTime
         node = solarTimeNode
         units = phyq_time
-      case ( 3 )
+      case ( SOLARZENITHPARAM )
         values => hGrid%solarZenith
         node = solarZenithNode
         units = phyq_angle
-      case ( 4 )
+      case ( TIMEPARAM )
         values => hGrid%Time
         node = TimeNode
         units = phyq_time
+      case ( LONPARAM )
+        values => hGrid%lon
+        node = lonNode
+        units = phyq_angle
+      case ( LOSANGLEPARAM )
+        values => hGrid%losAngle
+        node = losAngleNode
+        units = phyq_angle
+      case ( GEODLATPARAM )
+        values => hGrid%GeodLat
+        node = geodLatNode
+        units = phyq_angle
       end select
       if ( node /= 0 ) then
         do prof = 1, hGrid%noProfs
@@ -462,9 +509,10 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
     use Dump_0, only: DUMP
-    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID
-    use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, &
-      & F_MIF, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_MIF
+    use HGridsDatabase, only: CREATEEMPTYHGRID, DUMP, HGRID_T, TRIMHGRID
+    use INIT_TABLES_MODULE, only: F_FRACTION, F_GEODANGLE, F_GEODLAT, F_HEIGHT, &
+      & F_LON, F_LOSANGLE, F_MIF, F_TIME, &
+      & F_SOLARTIME, F_SOLARZENITH, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_MIF
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use MLSCommon, only: MLSFile_T, NameLen
@@ -508,6 +556,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L1BITEM                  ! Loop counter
     integer :: MAF                      ! Loop counter etc.
     real(rk) :: MinAngle, MaxAngle
+    logical :: MissingOK
     integer :: NOMAFS                   ! Dimension
     real(rk), dimension(:,:,:), pointer :: TpGeodAlt, TpGeodAngle
 
@@ -605,9 +654,16 @@ contains ! =====     Public Procedures     =============================
     ! MIFs we would choose in the interpolationFactor=1 case.
     ! Work out how many profiles this is going to be.
     
-    ! Create an empty hGrid
-    hGrid%noProfs = NINT(noMAFs*interpolationFactor)
-    call CreateEmptyHGrid(hGrid)
+    if ( .not. any( got_field ( (/ f_geodAngle, f_geodLat, f_losAngle, f_lon, &
+      & f_solarTime, f_solarZenith, f_time /) ) ) ) then
+      ! Create an empty hGrid
+      hGrid%noProfs = NINT(noMAFs*interpolationFactor)
+      call CreateEmptyHGrid( hGrid )
+      MissingOK = .false.
+    else
+      MissingOK = .true.
+      call dump( hGrid )
+    endif
     
     hGrid%noProfsLowerOverlap = 0
     hGrid%noProfsUpperOverlap = 0
@@ -631,8 +687,8 @@ contains ! =====     Public Procedures     =============================
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
       call ReadL1BData ( L1BFile, l1bItemName, l1bField,noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
-        & dontPad=.true. )
-      if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & neverfail=MissingOK, dontPad=.true. )
+      if ( l1bFlag==-1 .and. .not. MissingOK) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
       if ( deebug .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
         call dump(l1bField%DpField(1,1,:), 'MAFStartTimeTAI (before interpolating)')
@@ -2351,6 +2407,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.105  2013/08/17 00:20:25  pwagner
+! Fixed HGrids may have geolocations overridden
+!
 ! Revision 2.104  2013/08/13 01:27:42  vsnyder
 ! Get kind type parameters from MLSKinds instead of MLSCommon
 !
