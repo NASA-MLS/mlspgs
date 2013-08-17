@@ -37,7 +37,7 @@ module TREE_CHECKER
   use OUTPUT_M, only: NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, FLOAT_VALUE
   use TOGGLES, only: CON, TOGGLE
-  use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, &
                   NODE_ID, NODE_KIND, NSONS, NULL_TREE, PSEUDO, SOURCE_REF,  &
                   SUB_ROSA, SUBTREE
@@ -105,7 +105,6 @@ contains ! ====     Public Procedures     ==============================
     integer :: I              ! Loop inductor
     integer :: NUM_SECTIONS   ! Number of begin ... ends
     integer :: SON            ! Son of root
-    depth = 0
     error = 0
     num_sections = 0
     if ( present(first_section) ) first_section = 0
@@ -1316,6 +1315,12 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.35  2012/05/24 21:05:49  vsnyder
+! Allow check_dot to have reflexive elements in the required spec tree, i.e.
+! <dot a b ... z> really means <dot a b+ ... z>.  The first and last ones
+! are not reflexive.  This allows, for example, a vectorTemplate to get
+! its quantities from other vector templates.
+!
 ! Revision 1.34  2012/05/05 00:12:36  vsnyder
 ! Add support for 'not' operator
 !

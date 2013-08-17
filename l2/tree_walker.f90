@@ -100,7 +100,7 @@ contains ! ====     Public Procedures     ==============================
     use STRING_TABLE, only: GET_STRING
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NSONS, SUBTREE
     use VECTORSMODULE, only: DESTROYVECTORDATABASE, DUMP_VECTORS, &
       & VECTOR_T, VECTORTEMPLATE_T
@@ -178,7 +178,6 @@ contains ! ====     Public Procedures     ==============================
       & lowercase( trim(stopAfterSection) ) ) > 0 )
     stopBeforeChunkLoop = ( stopBeforeChunkLoop .and. stopAfterSection /= ' ' )
     reducedChunks      = .false.
-    depth = 0
     skipSections = .false.
     do i=section_first, section_last
       call get_string ( section_indices(i), section_name, strip=.true. )
@@ -674,6 +673,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.183  2013/08/12 23:49:41  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.182  2013/04/05 23:25:41  pwagner
 ! Made 'master' a 'section' for timings summary
 !
