@@ -1134,6 +1134,11 @@ contains ! =====     Public Procedures     =============================
     type(vectorValue_t) :: Value
     character(len=*), intent(in) :: What
     character(len=*), intent(in), optional :: Where
+    ! Local variables
+    integer :: valueSize
+    valueSize = max( 1, value%template%noChans * &
+        & value%template%noSurfs * &
+        & value%template%noInstances )
     call destroyVectorQuantityMask ( value )
     if ( associated(value%value1) .and. associated(value%values) .and. &
          associated(value%value3) ) then
@@ -1150,15 +1155,11 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( present(where) ) then
       call allocate_test ( value%value1, &
-        & value%template%noChans * &
-        & value%template%noSurfs * &
-        & value%template%noInstances, &
+        & valueSize, &
         & trim(what) // "%values", where )
     else
       call allocate_test ( value%value1, &
-        & value%template%noChans * &
-        & value%template%noSurfs * &
-        & value%template%noInstances, &
+        & valueSize, &
         & trim(what) // "%values", moduleName )
     end if
     call remapVectorValue ( value )
@@ -2114,6 +2115,9 @@ contains ! =====     Public Procedures     =============================
         else
           call display_string ( lit_indices(qty%template%molecule) )
         end if
+      elseif ( qty%template%quantityType > 0 ) then
+        call output( 'Quantity type: ', advance='no' )
+        call display_string ( lit_indices(qty%template%quantityType), advance='yes' )
       end if
       call output ( '    instrumentmodule: ')
       if ( qty%template%instrumentModule < 1 ) then
@@ -2126,8 +2130,12 @@ contains ! =====     Public Procedures     =============================
       call output ( qty%template%minorframe )
       call output ( ' Major Frame? (t/f): ')
       call output ( qty%template%majorframe, advance='yes' )
-      call output ( size(qty%values(:,1)), before='    values array size is ' )
-      call output ( size(qty%values(1,:)), before='x' )
+      if ( size(qty%values) > 0 ) then
+        call output ( size(qty%values(:,1)), before='    values array size is ' )
+        call output ( size(qty%values(1,:)), before='x' )
+      else
+        call output ( '    values array size is 0', advance='yes' )
+      endif
     endif
     if ( myDetails > 0 ) then
       call newLine
@@ -3230,6 +3238,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.181  2013/08/16 02:28:38  vsnyder
+! Don't reallocate VALUES if it's the right shape
+!
 ! Revision 2.180  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
