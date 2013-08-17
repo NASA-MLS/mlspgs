@@ -178,9 +178,7 @@ contains ! =====     Public Procedures     =============================
        call output('====  (These must be supplied through the l2cf) ======', &
          & advance='yes')
      end if
-     if ( toggle(gen) ) then
-       call trace_end ( "OpenAndInit" )
-     end if
+     if ( toggle(gen) ) call trace_end ( "OpenAndInitialize" )
      if ( timing ) call sayTime
      return
    end if
@@ -199,7 +197,7 @@ contains ! =====     Public Procedures     =============================
       if ( returnStatus == 0 ) then
         numFiles = addFileToDatabase(filedatabase, L1BFile)
         ifl1 = ifl1 + 1
-      endif
+      end if
 
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
 
@@ -372,9 +370,7 @@ contains ! =====     Public Procedures     =============================
    if ( levels(gen) > 0 .or. details > -3 ) &
         & call Dump_open_init ( filedatabase, &
           & CCSDSEndTime, CCSDSStartTime, processingrange, details )
-   if ( toggle(gen) ) then            
-     call trace_end ( "OpenAndInit" ) 
-   end if                             
+   if ( toggle(gen) ) call trace_end ( "OpenAndInitialize" ) 
    if ( timing ) call sayTime         
    return                             
 
@@ -636,6 +632,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.102  2013/08/17 02:55:23  vsnyder
+! Regularized trace usage
+!
 ! Revision 2.101  2012/08/16 17:49:40  pwagner
 ! Simplify; remove unused stuff
 !
