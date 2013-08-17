@@ -40,19 +40,11 @@ module INIT_TABLES_MODULE
     ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
     ! T_STRING,s_TIME and Z are used here, but everything is included so
     ! that it can be gotten by USE INIT_TABLES_MODULE.
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
   use MOLECULES ! Everything.
   use Units, only: INIT_UNITS
   ! We're adding the following use statements to clue the makefiles'
   ! dependency calculator for srclib's tree_checker
-  use DECLARATION_TABLE, only: DECLARATION
-  use LEXER_CORE, only: PRINT_SOURCE
-  use MORETREE, only: SCALAR
-  use OUTPUT_M, only: NEWLINE
-  use STRING_TABLE, only: DISPLAY_STRING
-  use TOGGLES, only: CON
-  use TRACE_M, only: DEPTH
-  use TREE, only: DECORATE
+  use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
   
   implicit none
 
@@ -1967,6 +1959,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.581  2013/08/17 02:55:44  vsnyder
+! Remove unused USE named
+!
 ! Revision 2.580  2013/08/17 00:19:27  pwagner
 ! Fixed HGrids may have geolocations overridden
 !
