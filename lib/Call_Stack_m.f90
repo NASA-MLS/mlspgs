@@ -112,6 +112,7 @@ contains ! ====     Public Procedures     ==============================
     use Time_m, only: Time_Now
 
     character(len=*), intent(in), optional :: Before
+    character(len=10) :: Used
     logical, intent(in), optional :: Where
 
     double precision :: Delta
@@ -123,8 +124,8 @@ contains ! ====     Public Procedures     ==============================
     if ( stack_ptr < lbound(stack,1) ) return
     call time_now ( t )
     t = t - stack(stack_ptr)%clock
-    call output ( t, format='(g10.3)', before=' used ' )
-    call output ( ' cpu' )
+    write ( used, '(g10.3)' ) t
+    call output ( ' used ' // trim(adjustl(used)) //  ' cpu' )
     if ( stack(stack_ptr)%memory /= noBytesAllocated ) then
       delta = memory_units * (noBytesAllocated - stack(stack_ptr)%memory)
       if ( abs(delta) < huge(1) ) then
@@ -201,6 +202,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.2  2013/08/17 03:08:12  vsnyder
+! Some cannonball polishing (already!)
+!
 ! Revision 2.1  2013/08/17 02:57:41  vsnyder
 ! Initial commit
 !
