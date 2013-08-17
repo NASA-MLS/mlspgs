@@ -96,6 +96,8 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! The following is FALSE only for runs that don't need orbit/attitude info
   logical            :: NEED_L1BFILES                 = .true.
+  ! The following is FALSE only for runs that use non-Aura satellite data
+  logical            :: AURA_L1BFILES                 = .true.
   ! Set if run must not create file, instead just append to it
   logical            :: PATCH                         = .false. 
   ! Whether to restart printing identical warnings at each new phase
@@ -601,6 +603,8 @@ contains
           end if
         else if ( line(3+n:4+n) == 'oa' ) then
           NEED_L1BFILES = switch
+        else if ( line(3+n:6+n) == 'aura' ) then
+          AURA_L1BFILES = switch
         else if ( line(3+n:8+n) == 'patch ' ) then
           patch = switch
         else if ( line(3+n:5+n) == 'pge ' ) then
@@ -891,6 +895,7 @@ jloop:do while ( j < len_trim(line) )
     DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION
     LEVEL1_HDFVERSION             = WILDCARDHDFVERSION
     NEED_L1BFILES                 = .true.
+    AURA_L1BFILES                 = .true.
     PATCH                         = .false. 
     RESTARTWARNINGS               = .true.
     SECTIONTIMINGUNITS            = L_SECONDS
@@ -963,6 +968,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.67  2013/08/17 00:22:14  pwagner
+! New cmdline arg relaxes some for non-Aura l1b datasets
+!
 ! Revision 2.66  2013/08/13 23:05:48  pwagner
 ! Removd some fugitive debug printing
 !
