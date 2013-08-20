@@ -356,7 +356,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in)           :: FROMITEMID ! Group etc. to Cp attr from
     integer, intent(in)           :: TOITEMID   ! Group etc. to Cp attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
-    logical, intent(in), optional :: skip_if_already_there
+    logical, intent(in), optional :: skip_if_already_there ! Or if not in fromItemID
 
     ! Local variables
     logical :: my_skip
@@ -367,7 +367,8 @@ contains ! ======================= Public Procedures =========================
     call MLSMessageCalls( 'push', constantName='CpHDF5Attribute_string' )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip = skip_if_already_there
-    is_present = IsHDF5AttributePresent_in_DSID(fromitemID, name)
+    is_present = IsHDF5AttributePresent_in_DSID( fromitemID, name )
+    if ( my_skip .and. .not. is_present ) go to 9
     if ( .not. is_present ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to cp: attribute not found ' // trim(name) )
     is_present = IsHDF5AttributePresent_in_DSID(toitemID, name)
@@ -5551,6 +5552,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.121  2013/08/20 00:30:38  pwagner
+! May also skip if attribute not where we cp from
+!
 ! Revision 2.120  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
