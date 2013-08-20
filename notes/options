@@ -44,6 +44,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
       1: Print every warning only once
   The above options cannot be concatenated after one hyphen,
   because -S , -R, and -w take the rest of the option as its "string"
+  --[n]aura: The level 1 input files are [not] MLS-Aura (defaults to aura)
   --[n]cat: Do [not] cat the split dgg/dgm directwrite files after run completes
   --check: Just check l2cf and quit
   --chunk 'range': Run just the range defined by the expression 'range'
@@ -149,6 +150,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.59  2013/06/14 01:26:53  vsnyder
+ describe --stdout unbuffered
+
  Revision 1.58  2013/02/14 23:27:50  pwagner
  Removed outmoded [n]kit
 
