@@ -290,7 +290,8 @@ contains
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='old', iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile'
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile ' // &
+        & trim(File)
       return
     endif
     recrd = 0
@@ -344,7 +345,8 @@ contains
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='old', iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR2D-E- Unable to open textfile'
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR2D-E- Unable to open textfile ' // &
+        & trim(File)
       return
     endif
     recrd = 1
@@ -403,7 +405,8 @@ contains
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='old', iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile'
+      write(*,*) 'IO_STUFF%READ_TEXTFILE_ARR-E- Unable to open textfile ' // &
+        & trim(File)
       return
     endif
     recrd = 0
@@ -446,7 +449,8 @@ contains
       & file=trim(File), status='unknown', access='sequential', &
       & recl=size(string)*len(string(1)) + 1, iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%write_TEXTFILE_ARR-E- Unable to open textfile'
+      write(*,*) 'IO_STUFF%write_TEXTFILE_ARR-E- Unable to open textfile ' // &
+        & trim(File)
       return
     endif
     do i=1, size(string)
@@ -476,7 +480,8 @@ contains
       & file=trim(File), status='unknown', access='sequential', &
       & recl=size(chars) + 1, iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%write_TEXTFILE_arr2d-E- Unable to open textfile'
+      write(*,*) 'IO_STUFF%write_TEXTFILE_arr2d-E- Unable to open textfile ' // &
+        & trim(File)
       return
     endif
     do i=1, size(chars,1)
@@ -505,7 +510,8 @@ contains
       & file=trim(File), status='unknown', access='sequential', &
       & recl=len(string) + 1, iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%write_TEXTFILE_sca-E- Unable to open textfile'
+      write(*,*) 'IO_STUFF%write_TEXTFILE_sca-E- Unable to open textfile ' // &
+        & trim(File)
       return
     endif
     write ( lun, '(a)', advance='no' ) string
@@ -558,6 +564,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.18  2013/08/20 00:29:36  pwagner
+! Print name of text file that we choke on
+!
 ! Revision 2.17  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
