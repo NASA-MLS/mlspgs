@@ -1701,7 +1701,8 @@ contains ! =====     Public Procedures     =============================
           call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
             & l2auxPhysicalFilename, 'Phase Names' )
           call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
-            & l2auxPhysicalFilename, 'ForwardModel Names' )
+            & l2auxPhysicalFilename, 'ForwardModel Names', &
+            & skip_if_already_there=.true. )
           call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
             & l2auxPhysicalFilename, 'MiscNotes' )
         endif
@@ -1780,6 +1781,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.169  2013/08/20 00:32:11  pwagner
+! Avoid crashing when no ForwardModel Names attribute missing
+!
 ! Revision 2.168  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
