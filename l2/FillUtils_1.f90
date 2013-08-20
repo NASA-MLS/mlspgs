@@ -69,7 +69,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSFILES, only: HDFVERSION_5, DUMP, GETMLSFILEBYTYPE
   use MLSFILLVALUES, only: ISFILLVALUE, ISMONOTONIC, MONOTONIZE, REMOVEFILLVALUES
   use MLSKINDS, only: R4, R8, RM, RP, RV
-  use MLSL2OPTIONS, only: L2CFNODE, MLSMESSAGE
+  use MLSL2OPTIONS, only: AURA_L1BFILES, L2CFNODE, MLSMESSAGE
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMESSAGECALLS
   use MLSNUMERICS, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
@@ -282,13 +282,15 @@ contains ! =====     Public Procedures     =============================
     end subroutine addGaussianNoise
 
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-    subroutine ANNOUNCE_ERROR ( WHERE, CODE, EXTRAMESSAGE, EXTRAINFO, QUITNOW )
+    subroutine ANNOUNCE_ERROR ( WHERE, CODE, &
+      & EXTRAMESSAGE, QTY, EXTRAINFO, QUITNOW )
 
       use MORETREE, only: GET_FIELD_ID, STARTERRORMESSAGE
 
       integer, intent(in) :: WHERE   ! Tree node where error was noticed
       integer, intent(in) :: CODE    ! Code for error message
       character (len=*), intent(in), optional :: EXTRAMESSAGE
+      type (VectorValue_T), optional, intent(in) :: QTY
       integer, intent(in), dimension(:), optional :: EXTRAINFO
       logical, intent(in), optional :: QUITNOW
 
@@ -411,6 +413,7 @@ contains ! =====     Public Procedures     =============================
       if ( present(ExtraMessage) )  call output(ExtraMessage, advance='yes')
       if ( code == no_Error_Code .and. present(extraInfo) ) &
         & call dump ( extraInfo, name='Extra info' )
+      if ( present(qty) ) call dump( qty )
       if ( present(QUITNOW) ) then
         if ( QUITNOW ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2447,18 +2450,21 @@ contains ! =====     Public Procedures     =============================
       if ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_losVel/), &
         & minorFrame=.true., &
-        & frequencyCoordinate=(/l_none/) ) ) call Announce_Error ( key, No_Error_Code, &
-        & 'Quantity to fill is not a valid LOS Velocity' )
+        & frequencyCoordinate=(/l_none/) ) ) &
+        call Announce_Error ( key, No_Error_Code, &
+        & 'Quantity to fill is not a valid LOS Velocity', qty )
       if ( .not. ValidateVectorQuantity ( tngtECI, &
         & quantityType=(/l_tngtECI/), &
         & minorFrame=.true., &
-        & frequencyCoordinate=(/l_xyz/) ) ) call Announce_Error ( key, No_Error_Code, &
-        & 'Tangent ECI quantity is not of an appropriate form' )
+        & frequencyCoordinate=(/l_xyz/) ) ) &
+        call Announce_Error ( key, No_Error_Code, &
+        & 'Tangent ECI quantity is not of an appropriate form', tngtECI )
       if ( .not. ValidateVectorQuantity ( scECI, &
         & quantityType=(/l_scECI/), &
         & minorFrame=.true., &
-        & frequencyCoordinate=(/l_xyz/) ) ) call Announce_Error ( key, No_Error_Code, &
-        & 'Spacecraft ECI quantity is not of an approriate form' )
+        & frequencyCoordinate=(/l_xyz/) ) ) &
+        call Announce_Error ( key, No_Error_Code, &
+        & 'Spacecraft ECI quantity is not of an approriate form', scECI )
       if ( qty%template%instrumentModule /= tngtECI%template%instrumentModule ) &
         & call Announce_Error ( key, No_Error_Code, &
         & 'LOS Velocity and Tangent ECI quantities are not for the same module' )
@@ -2466,6 +2472,12 @@ contains ! =====     Public Procedures     =============================
         & call Announce_Error ( key, No_Error_Code, &
         & 'Spacecraft ECI quantity is not for the spacecraft' )
 
+      ! Don't wast any effort if the values are all still zero
+      if ( all(tngtECI%values == 0._rv) ) then
+        if ( toggle(gen) .and. levels(gen) > 1 ) &
+          & call trace_end ( 'FillUtils_1.LOSVelocity' )
+        return
+      endif
       noMAFs = qty%template%noInstances
       noMIFs = qty%template%noSurfs
 
@@ -4045,6 +4057,12 @@ contains ! =====     Public Procedures     =============================
               call MaskVectorQty ( quantity, row, column, M_LinAlg )
             end do
           end do
+        elseif (.not. Aura_L1BFILES ) then
+          ! This is the case where we're reading from level 1 files
+          ! that aren't Aura files
+          ! We'll allow but issue a warning
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Unable to find ' // trim(nameString) // ' in non-Aura file' )
         else
           call Announce_Error ( root, errorReadingL1B )
         endif
@@ -7025,6 +7043,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.83  2013/08/20 00:33:40  pwagner
+! Avoid more crashes caused by non-Aura l1boa data
+!
 ! Revision 2.82  2013/08/16 02:50:42  vsnyder
 ! Add MAF and SpacingOnly arguments to UsingMagneticModel
 !
