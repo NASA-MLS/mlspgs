@@ -111,7 +111,7 @@ contains ! =====     Public Procedures     =============================
     use QUANTITYTEMPLATES, only: ADDQUANTITYTEMPLATETODATABASE, &
       & QUANTITYTEMPLATE_T
     use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, TOGGLE
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED
@@ -159,6 +159,8 @@ contains ! =====     Public Procedures     =============================
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       son = subtree(i,root)
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Construct.spec", son )
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
         name = sub_rosa(subtree(1,son))
@@ -220,6 +222,8 @@ contains ! =====     Public Procedures     =============================
         end if
       case default ! Can't get here if tree_checker worked correctly
       end select
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Construct.spec" )
     end do
 
     if ( specialDumpFile /= ' ' ) &
@@ -291,6 +295,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.68  2013/08/21 00:23:01  pwagner
+! -g[level] can trace individual Construct specs
+!
 ! Revision 2.67  2012/08/16 17:55:00  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
