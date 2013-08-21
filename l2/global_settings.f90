@@ -11,8 +11,8 @@
 
 module GLOBAL_SETTINGS
 
-  use MLSCommon, only: FILENAMELEN
-  use output_m, only: OUTPUTNAMEDVALUE
+  use MLSCOMMON, only: FILENAMELEN
+  use OUTPUT_M, only: OUTPUTNAMEDVALUE
 
   implicit none
 
@@ -32,7 +32,7 @@ module GLOBAL_SETTINGS
 ! L2ProfileToL1MAF                Find MAF closest to a profile number
 ! === (end of toc) ===
 
-  public :: L1MAFToL2Profile, L2ProfileToL1MAF, SET_GLOBAL_SETTINGS
+  public :: L1MAFTOL2PROFILE, L2PROFILETOL1MAF, SET_GLOBAL_SETTINGS
 
   character(LEN=FileNameLen), public :: LEAPSECFILENAME = ''
 
@@ -200,11 +200,12 @@ contains
     call destroyl2gpcontents( l2gp )
   end function L2ProfileToL1MAF
 
-  subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-    & filedatabase, FGrids, l2gpDatabase, DirectDatabase, processingRange )
+  subroutine SET_GLOBAL_SETTINGS ( ROOT, FORWARDMODELCONFIGDATABASE, &
+    & FILEDATABASE, FGRIDS, L2GPDATABASE, DIRECTDATABASE, PROCESSINGRANGE )
 
     use BITSTUFF, only: ISBITSET
-    use DATES_MODULE, only: UTC_TO_YYYYMMDD
+    use DATES_MODULE, only: PRECEDESUTC, RESETSTARTINGDATE, SECONDSBETWEEN2UTCS, &
+      & UTC_TO_YYYYMMDD
     use DIRECTWRITE_M, only: DIRECTDATA_T, &
       & ADDDIRECTTODATABASE, DUMP, SETUPNEWDIRECT
     use DUMPCOMMAND_M, only: DUMPCOMMAND
@@ -266,7 +267,7 @@ contains
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
-    & DUMP_TREE_NODE, SOURCE_REF
+      & DUMP_TREE_NODE, SOURCE_REF
     use TREE_TYPES, only: N_EQUAL, N_NAMED
     use VGRID, only: CREATEVGRIDFROMMLSCFINFO
     use VGRIDSDATABASE, only: ADDVGRIDTODATABASE, VGRIDS
@@ -277,13 +278,13 @@ contains
     use MLSHDF5, only: GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEINFILE
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
 
-    integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
-    type(ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
-    type (MLSFile_T), pointer :: FILEDATABASE(:)
-    type ( fGrid_T ), pointer, optional :: FGrids(:)
-    type ( l2gpData_T), pointer, optional :: L2GPDATABASE(:)
-    type (DirectData_T), pointer, optional :: DirectDatabase(:)
-    type (TAI93_Range_T), optional :: processingRange ! Data processing range
+    integer, intent(in)                    :: ROOT    ! Index of N_CF node in abstract syntax tree
+    type(ForwardModelConfig_T), pointer    :: FORWARDMODELCONFIGDATABASE(:)
+    type (MLSFile_T), pointer              :: FILEDATABASE(:)
+    type ( fGrid_T ), pointer, optional    :: FGRIDS(:)
+    type ( l2gpData_T), pointer, optional  :: L2GPDATABASE(:)
+    type (DirectData_T), pointer, optional :: DIRECTDATABASE(:)
+    type (TAI93_Range_T), optional         :: PROCESSINGRANGE ! Data processing range
 
     ! Local variables
     character(len=BO_NAMELEN), dimension(BO_NAMEDIMS) :: BO_names
@@ -605,14 +606,22 @@ contains
       if ( LeapSecFileName /= '' ) then
         if ( DEEBUG ) call output( 'About to read leapsec file' // &
           & trim(LeapSecFileName), advance='yes' )
-        returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
-        & processingrange%starttime)
-        if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
-        if ( returnStatus /= 0 ) then
-          call announce_error(0, &
-          & 'Error converting start time in mls_utctotai; code number: ')
-          call output(returnStatus, advance='yes')
-        end if
+        if ( precedesUTC ( '1993-01-01', start_time_string ) ) then
+          returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
+            & processingrange%starttime)
+          if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
+          if ( returnStatus /= 0 ) then
+            call announce_error(0, &
+            & 'Error converting start time in mls_utctotai; code number: ')
+            call output(returnStatus, advance='yes')
+          end if
+        else
+          ! The starting time is before our nominal 1993 start date
+          ! We'll use the dates_module as a fallback
+          call ResetStartingDate( '1961-01-01' )
+          processingrange%starttime = &
+            & secondsbetween2utcs ( '1961-01-01', start_time_string )
+        endif
       endif
       call FinishUp
       return
@@ -673,14 +682,23 @@ contains
       if ( LeapSecFileName /= '' ) then
         if ( DEEBUG ) call output( 'About to read leapsec file' // &
           & trim(LeapSecFileName), advance='yes' )
-        returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
-        & processingrange%starttime)
-        if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
-        if ( returnStatus /= 0 ) then
-          call announce_error(0, &
-          & 'Error converting start time in mls_utctotai; code number: ')
-          call output(returnStatus, advance='yes')
-        end if
+        if ( precedesUTC ( '1993-01-01', start_time_string ) ) then
+          returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
+          & processingrange%starttime)
+          if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
+          if ( returnStatus /= 0 ) then
+            call announce_error(0, &
+            & 'Error converting start time in mls_utctotai; code number: ')
+            call output(returnStatus, advance='yes')
+          end if
+        else
+          ! The starting time is before our nominal 1993 start date
+          ! We'll use the dates_module as a fallback
+          call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
+          call ResetStartingDate( '1961-01-01' )
+          processingrange%starttime = &
+            & secondsbetween2utcs ( '1961-01-01', start_time_string )
+        endif
       else if ( got(1) ) then
         processingrange%starttime = minTime + start_time_from_1stMAF
       else if ( .not. TOOLKIT ) then
@@ -692,13 +710,22 @@ contains
       processingRange%endTime = end_time_from_1stMAF
     else
       if ( LeapSecFileName /= '' ) then
-        returnStatus = mls_utctotai(trim(LeapSecFileName), end_time_string, &
-        & processingrange%endtime)
-        if ( returnStatus /= 0 ) then
-          call announce_error(0, &
-          & 'Error converting end time in mls_utctotai; code number: ')
-          call output(returnStatus, advance='yes')
-        end if
+        if ( precedesUTC ( '1993-01-01', end_time_string ) ) then
+          returnStatus = mls_utctotai(trim(LeapSecFileName), end_time_string, &
+          & processingrange%endtime)
+          if ( returnStatus /= 0 ) then
+            call announce_error(0, &
+            & 'Error converting end time in mls_utctotai; code number: ')
+            call output(returnStatus, advance='yes')
+          end if
+        else
+          ! The starting time is before our nominal 1993 start date
+          ! We'll use the dates_module as a fallback
+          call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
+          call ResetStartingDate( '1961-01-01' )
+          processingrange%endtime = &
+            & secondsbetween2utcs ( '1961-01-01', end_time_string )
+        endif
       else if ( got(2) ) then
         processingrange%endtime = minTime + end_time_from_1stMAF
       else if ( .not. TOOLKIT ) then
@@ -1234,6 +1261,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.145  2012/08/16 17:51:07  pwagner
+! Exploit level 2-savvy MLSMessage
+!
 ! Revision 2.144  2012/04/20 00:46:13  pwagner
 ! Treats MAF as 0-based; more robustly handles crashed chunks
 !
