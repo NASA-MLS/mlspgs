@@ -662,7 +662,7 @@ contains ! =====     Public Procedures     =============================
       MissingOK = .false.
     else
       MissingOK = .true.
-      call dump( hGrid )
+      ! call dump( hGrid )
     endif
     
     hGrid%noProfsLowerOverlap = 0
@@ -2407,6 +2407,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.106  2013/08/21 00:25:04  pwagner
+! Removed a debugging remnant dumped when overriding geolocations
+!
 ! Revision 2.105  2013/08/17 00:20:25  pwagner
 ! Fixed HGrids may have geolocations overridden
 !
