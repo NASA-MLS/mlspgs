@@ -80,6 +80,7 @@ module dates_module
 ! lastday            How many days in leap month
 ! nextMoon           utc date, time of next (new) moon 
 !                     (or next after input date); less accurate than toolkit AA
+! precedesutc        Did utcdate1 precede utcdate2?
 ! ReformatDate       Turns 'yyyymmdd' -> 'yyyy-mm-dd'; or more general format
 ! ReformatTime       Turns 'hhmmss.sss' -> 'hh:mm:ss'
 ! ResetStartingDate  Choose a different starting date for the tai format
@@ -89,7 +90,7 @@ module dates_module
 !                    How many seconds between 2 date-times
 ! secondsinday 
 !                    How many seconds since the start of the day
-! splitDateTime      Splits dateTtime
+! splitDateTime      Splits dateTtime into date, time
 ! tai2ccsds          tai (days, not s) -> ccsds (in "B" format)
 ! tai93s2hid         tai (s, not days) -> hours-in-day
 ! tai93s2utc         tai (s, not days) -> yyyy-mm-ddThh:mm:ss.sss (i.e. "B" format)
@@ -102,6 +103,7 @@ module dates_module
 !                     (b) yyyy-dddThh:mm:ss.sss
 !                     (n) yyyydddThh:mm:ss.sss (no-dash)
 ! utc2tai93s         yyyy-mm-ddThh:mm:ss.sss (i.e. "B" format) -> tai (s, not days)
+!                     (see also secondsbetween2utcs)
 ! yyyyDoy_to_mmdd    Converts yyyy and day-of-year to month and day
 ! yyyymmdd_to_dai    Converts yyyymmdd to days after Jan 1, 2001
 ! yyyymmdd_to_Doy    Converts yyyy, mont, and day to day-of-year
@@ -127,8 +129,11 @@ module dates_module
 ! int hoursbetween2utcs (char* utc1, char* utc2)
 ! dble hoursinday (char* utc1)
 ! char* nextMoon ([char* date], [phase])
+! log precedesutc ( char* date1,  char* date2 )
 ! char* ReformatDate (char* date, [char* fromForm], [char* toForm])
 ! char* ReformatTime (char* time, [char* form])
+! resetStartingDate ( char* newDate )
+! restoreStartingDate
 ! dble secondsbetween2utcs (char* utc1, char* utc2)
 ! dble secondsinday (char* utc1)
 ! splitDateTime(char* utc, int ErrTyp, char* date, char* time, [log strict])
@@ -247,7 +252,7 @@ module dates_module
     & DAI_TO_YYYYMMDD, DATEFORM, DAYOFWEEK, DAYSBETWEEN2UTCS, DAYSINMONTH, &
     & DAYSINCE2EUDTF, DAYS_IN_YEAR, &
     & EUDTF2CAL, EUDTF2DAYSINCE, HOURSBETWEEN2UTCS, HOURSINDAY, &
-    & LASTDAY, NEXTMOON, REFORMATDATE, REFORMATTIME, &
+    & LASTDAY, NEXTMOON, PRECEDESUTC, REFORMATDATE, REFORMATTIME, &
     & RESETSTARTINGDATE, RESTORESTARTINGDATE, &
     & SECONDSBETWEEN2UTCS, SECONDSINDAY, SPLITDATETIME, &
     & TAI2CCSDS, TAI93S2HID, TAI93S2UTC, TIMEFORM, &
@@ -1299,6 +1304,51 @@ contains
     ! print *, 'hours before next phase ', hoursbetween2utcs( date, next )
   end function nextMoon
 
+  ! ------------------ precedesutc -------------------
+  function precedesutc( date1, date2 ) result( earlier )
+    ! Determine whether date1 came before date2
+    ! Notes: 
+    ! (1) we assume both date1 and date2 are in utc format
+    ! (2): we take pains not convert our args into MLS_Date_Time
+    ! because we may have called this function to check if
+    ! we must reset TAIStarting
+
+    ! Args
+    character(len=*),  intent(in) :: date1
+    character(len=*),  intent(in) :: date2
+    logical                       :: earlier
+    ! Internal variables
+    character(len=16) :: hhmmss1
+    character(len=16) :: hhmmss2
+    integer :: error
+    integer :: year1, month1, day1, Doy1
+    integer :: year2, month2, day2, Doy2
+    ! Executable
+    earlier = .true.
+    call utc_to_yyyymmdd( date1, error, year1, month1, day1 )
+    call utc_to_yyyymmdd( date2, error, year2, month2, day2 )
+    ! Obviously if the years are different ..
+    if ( year1 < year2 ) then
+      return
+    elseif ( year2 < year1 ) then
+      earlier = .false.
+      return
+    endif
+    ! The years are equal, so we check days-of-year
+    call yyyymmdd_to_doy( year1, month1, day1, Doy1 )
+    call yyyymmdd_to_doy( year2, month2, day2, Doy2 )
+    if ( Doy1 < Doy2 ) then
+      return
+    elseif ( Doy2 < Doy1 ) then
+      earlier = .false.
+      return
+    endif
+    ! The days are equal, so we're down to the times; ugh
+    call utc_to_time( date1, error, hhmmss1 )
+    call utc_to_time( date2, error, hhmmss2 )
+    earlier = ( hhmmss2seconds(hhmmss1) < hhmmss2seconds(hhmmss2) )
+  end function precedesutc
+
   ! ---------------------------------------------  reducedatetime  -----
   subroutine reducedatetime(datetime)
     ! Reduces the seconds field of a datetime to a permissible value
@@ -1615,7 +1665,7 @@ contains
 
   ! ---------------------------------------------  secondsbetween2utcs  -----
   function secondsbetween2utcs( utc1, utc2 ) result(seconds)
-    ! Given a utc return a date later (or earlier) by days
+    ! Find how many seconds separate two utcs
     ! Args
     character(len=*), intent(in) :: utc1, utc2
     double precision             :: seconds
@@ -1625,13 +1675,17 @@ contains
     ! Executable
     datetime1 = utc2datetime(utc1)
     datetime2 = utc2datetime(utc2)
+    ! print *, 'utc1, utc2 ', utc1, ' ', utc2
+    ! call dump (datetime1)
+    ! call dump (datetime2)
     days = datetime2%dai - datetime1%dai
+    ! print *, 'days ', days
     seconds = 24.d0*60*60*days + ( datetime2%seconds - datetime1%seconds )
   end function secondsbetween2utcs
 
   ! ---------------------------------------------  secondsindaydble  -----
   function secondsindaydble( utc1 ) result(seconds)
-    ! Given a utc return a date later (or earlier) by days
+    ! Given a utc return how many seconds since its day began
     ! Args
     character(len=*), intent(in) :: utc1
     double precision             :: seconds
@@ -1766,7 +1820,7 @@ contains
     ! (B) yyyy-dddThh:mm:ss.sss
     ! where the field separator 'T' divides the string into two
     ! sub-strings encoding the date and time
-    ! (See also utc_to_date and utc_to_yyymmdd)
+    ! (See also utc_to_date and utc_to_yyyymmdd)
     !--------Argument--------!
     character(len=*),intent(in)   :: str
     integer, intent(out)          :: ErrTyp
@@ -1938,6 +1992,7 @@ contains
 
   ! ------------ utc2tai93s ------
   ! Function returns time since midnight Jan 1 1993 in s
+  ! (see also secondsbetween2utcs)
   function utc2tai93s ( utc ) result ( tai93s )
     character(len=*), intent(in) :: utc
     double precision             :: tai93s
@@ -2422,6 +2477,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.28  2013/08/14 17:25:15  pwagner
+! Added reset and restore StartingDates to handle dates before Jan 1 1993
+!
 ! Revision 2.27  2013/06/18 23:02:22  pwagner
 ! Removed more unused stuff
 !
