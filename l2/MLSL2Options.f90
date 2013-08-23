@@ -16,14 +16,15 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use MLSCOMMON, only: MLSFILE_T
   use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
-  use MLSMessageModule, only: DEFAULTLOGUNIT, MLSMESSAGECONFIG, &
+  use MLSMessageModule, only: MLSMESSAGECONFIG, &
     & MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_TESTWARNING, &
     & MLSMSG_SEVERITY_TO_WALKBACK, MLSMSG_WARNING, &
-    & SAYMESSAGE => MLSMESSAGE, STDOUTLOGUNIT
+    & SAYMESSAGE => MLSMESSAGE
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
   use OUTPUT_M, only: OUTPUTOPTIONS, &
     & INVALIDPRUNIT, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT, &
     & OUTPUT, OUTPUTNAMEDVALUE
+  use PrintIt_m, only: DEFAULTLOGUNIT, STDOUTLOGUNIT
 
   implicit none
   public
@@ -323,26 +324,27 @@ contains
   ! (2) parsing cmdline, if supplied as an arg
   ! The return value will be the filename (if any)
   function processOptions ( cmdline ) result ( filename )
-  use ALLOCATE_DEALLOCATE, only: TRACKALLOCATES, &
-    & CLEARONALLOCATE
-  use IO_STUFF, only: GET_LUN
-  use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
-    & SNIPLASTSLAVEARGUMENT
-  use LEXER_M, only: CAPIDENTIFIERS
-  use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
-  use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
-  use MLSCOMMON, only: FILENAMELEN
-  use MLSSTRINGLISTS, only: CATLISTS, &
-    & GETSTRINGELEMENT, GETUNIQUELIST, &
-    & NUMSTRINGELEMENTS, REMOVESWITCHFROMLIST, &
-    & SORTLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
-  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
-  use PCFHDR, only: GLOBALATTRIBUTES
-  use SET_TOGGLES_M, only: SET_TOGGLES
-  use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
-  use STRING_TABLE, only: DO_LISTING
-  use TIME_M, only: TIME_CONFIG
-  use TOGGLES, only: SWITCHES
+    use ALLOCATE_DEALLOCATE, only: TRACKALLOCATES, &
+      & CLEARONALLOCATE
+    use IO_STUFF, only: GET_LUN
+    use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
+      & SNIPLASTSLAVEARGUMENT
+    use LEXER_M, only: CAPIDENTIFIERS
+    use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
+    use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
+    use MLSCOMMON, only: FILENAMELEN
+    use MLSSTRINGLISTS, only: CATLISTS, &
+      & GETSTRINGELEMENT, GETUNIQUELIST, &
+      & NUMSTRINGELEMENTS, REMOVESWITCHFROMLIST, &
+      & SORTLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
+    use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
+    use PCFHDR, only: GLOBALATTRIBUTES
+    use PrintIt_m, only: Set_Config
+    use SET_TOGGLES_M, only: SET_TOGGLES
+    use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
+    use STRING_TABLE, only: DO_LISTING
+    use TIME_M, only: TIME_CONFIG
+    use TOGGLES, only: SWITCHES
     ! Args
     character(len=*), intent(in), optional :: cmdline
     character(len=FiLENAMELEN)             :: filename
@@ -732,7 +734,7 @@ contains
           parallel%submit = trim ( line )
         else if ( line(3+n:5+n) == 'tk ' ) then
           toolkit = switch
-          MLSMessageConfig%useToolkit = switch
+          call set_config ( useToolkit = switch )
         else if ( line(3+n:9+n) == 'verbose' ) then
           switches = catLists( trim(switches), &
             & 'l2q,glob,mas,bool,opt1,log,pro1,time,apr,phase' )
@@ -968,6 +970,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.68  2013/08/23 02:52:13  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 2.67  2013/08/17 00:22:14  pwagner
 ! New cmdline arg relaxes some for non-Aura l1b datasets
 !
