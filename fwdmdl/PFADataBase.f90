@@ -628,6 +628,7 @@ contains ! =====     Public Procedures     =============================
     use MOREMESSAGE, only: MLSMESSAGE
     use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use PrintIt_m, only: Set_Config
     ! HDF5 INTENTIONALLY LAST TO AVOID LONG LF95 COMPILES
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
     use TOGGLES, only: GEN, TOGGLE
@@ -742,11 +743,13 @@ contains ! =====     Public Procedures     =============================
     ! Report all errors instead of quitting on the first one
     error = .false.
     MLSMSG_Severity_to_quit = MLSMSG_Error + 1
+    call set_config ( severity_to_quit = MLSMSG_Severity_to_quit )
     do g = 1, ubound(PFAFileDatum%ix,1)
       error = error .or. &
         & hookTableToFindPFA ( f, g, PFAData(PFAFileDatum%ix(g)), PFAFileDatum%ix(g) ) /= 0
     end do
     MLSMSG_Severity_to_quit = MLSMSG_Error
+    call set_config ( severity_to_quit = MLSMSG_Severity_to_quit )
     if ( error ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & 'Errors while hooking up and finding PFA tables' )
 
@@ -1355,6 +1358,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.45  2013/08/23 02:51:26  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 2.44  2013/06/13 21:05:18  vsnyder
 ! More cruft removal
 !
