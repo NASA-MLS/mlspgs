@@ -26,7 +26,7 @@ module MLSSignals_M
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, CAPITALIZE
   use MORETREE, only: GET_BOOLEAN, STARTERRORMESSAGE
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: BLANKS, HEADLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TIME_M, only: TIME_NOW
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
@@ -60,6 +60,7 @@ module MLSSignals_M
 ! DisplaySignalName_signal        ... given a signal structure
 ! Dump                            ...
 ! Dump_Bands                      ...
+! Dump_Modules                      ...
 ! Dump_Radiometers                ...
 ! Dump_Signals                    ...
 ! Dump_Spectrometertypes          ...
@@ -79,6 +80,7 @@ module MLSSignals_M
 ! GetSignalName                   Given an index in the signals database, constructs full signal name.
 ! GetSpectrometerTypeName         Place spectrometer name and number in string
 ! IsModuleSpacecraft              Returns true if the module is really the spacecraft
+! IsSpacecraftAura                Returns true if the s/c is really Aura
 ! MatchSignal                     Given an array Signals, find the matching one
 ! MatchSignalPair                 Determine whether two signals match
 ! MLSSignals                      Process the MLSSignals section of the L2 configuration file
@@ -90,23 +92,23 @@ module MLSSignals_M
   private ! So as not to re-export everything accessed by USE association.
 
   ! Public procedures and interfaces:
-  public :: AddBandToDatabase, AddModuleToDatabase, AddRadiometerToDatabase
-  public :: AddSignalToDatabase, AddSpectrometerTypeToDatabase, AreSignalsSuperset
-  public :: DestroyBandDatabase, DestroyModuleDatabase
-  public :: DestroyRadiometerDatabase, DestroySignal, DestroySignalDatabase
-  public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase
-  public :: DisplayRadiometer, DisplaySignalName
-  public :: DisplaySignalName_index, DisplaySignalName_signal
-  public :: Dump, Dump_Bands, Dump_Radiometers, Dump_Signal, Dump_Signals
-  public :: Dump_Spectrometertypes
-  public :: GetAllModules, GetBandName, GetFirstChannel, GetModuleFromRadiometer
-  public :: GetModuleIndex, GetSidebandLoop, GetSidebandStartStop, GetSignalIndex
-  public :: GetModuleFromSignal, GetModuleName, GetNameOfSignal
-  public :: GetRadiometerFromSignal, GetRadiometerName, GetRadiometerIndex
-  public :: GetSignal, GetSignalName
-  public :: GetSpectrometerTypeName, IsModuleSpacecraft, MatchSignal
-  public :: MatchSignalPair, MLSSignals
-  public :: PVMPackSignal, PVMUnpackSignal
+  public :: ADDBANDTODATABASE, ADDMODULETODATABASE, ADDRADIOMETERTODATABASE
+  public :: ADDSIGNALTODATABASE, ADDSPECTROMETERTYPETODATABASE, ARESIGNALSSUPERSET
+  public :: DESTROYBANDDATABASE, DESTROYMODULEDATABASE
+  public :: DESTROYRADIOMETERDATABASE, DESTROYSIGNAL, DESTROYSIGNALDATABASE
+  public :: DESTROYSPECTROMETERTYPE, DESTROYSPECTROMETERTYPEDATABASE
+  public :: DISPLAYRADIOMETER, DISPLAYSIGNALNAME
+  public :: DISPLAYSIGNALNAME_INDEX, DISPLAYSIGNALNAME_SIGNAL
+  public :: DUMP, DUMP_BANDS, DUMP_RADIOMETERS, DUMP_SIGNAL, DUMP_SIGNALS
+  public :: DUMP_MODULES, DUMP_SPECTROMETERTYPES
+  public :: GETALLMODULES, GETBANDNAME, GETFIRSTCHANNEL, GETMODULEFROMRADIOMETER
+  public :: GETMODULEINDEX, GETSIDEBANDLOOP, GETSIDEBANDSTARTSTOP, GETSIGNALINDEX
+  public :: GETMODULEFROMSIGNAL, GETMODULENAME, GETNAMEOFSIGNAL
+  public :: GETRADIOMETERFROMSIGNAL, GETRADIOMETERNAME, GETRADIOMETERINDEX
+  public :: GETSIGNAL, GETSIGNALNAME
+  public :: GETSPECTROMETERTYPENAME, ISSPACECRAFTAURA, ISMODULESPACECRAFT
+  public :: MATCHSIGNAL, MATCHSIGNALPAIR, MLSSIGNALS
+  public :: PVMPACKSIGNAL, PVMUNPACKSIGNAL
 
   integer, public, parameter :: MaxSigLen = 80 ! Maximum length of a signal name
 
@@ -121,16 +123,17 @@ module MLSSignals_M
   ! =====     Defined Operators and Generic Identifiers     ==============
   
   interface Dump
-    module procedure Dump_Bands, Dump_OneRadiometer, Dump_Radiometers, &
-      & Dump_Signal, Dump_Signals, &
-      & Dump_SpectrometerType, Dump_SpectrometerTypes
+    module procedure DUMP_BANDS, DUMP_MODULES, DUMP_ONERADIOMETER, &
+      & DUMP_RADIOMETERS, DUMP_SIGNAL, DUMP_SIGNALS, &
+      & DUMP_SPECTROMETERTYPE, DUMP_SPECTROMETERTYPES
   end interface
 
   ! This boring type defines a module
   type, public :: Module_T
     integer :: Name                     ! Sub_rosa index of declaration's label
     integer :: Node                     ! Node of tree where module declared
-    logical :: spaceCraft               ! Set if `module' is in fact s/c
+    logical :: spaceCraft               ! Set if module is in fact s/c
+    logical :: Aura  = .true.           ! Set if s/c is in fact Aura
   end type Module_T
 
   ! This type defines a radiometer.
@@ -195,8 +198,8 @@ module MLSSignals_M
   ! Now some databases, the first are fairly obvious.
   !??? Should these be public ???
 
-  type(module_T), public, save, pointer, dimension(:) :: Modules => NULL()
-  type(band_T), public, save, pointer, dimension(:) :: Bands => NULL()
+  type(module_T), public, save, pointer, dimension(:)     :: Modules => NULL()
+  type(band_T), public, save, pointer, dimension(:)       :: Bands => NULL()
   type(radiometer_T), public, save, pointer, dimension(:) :: Radiometers => NULL()
   type(spectrometerType_T), public, save, pointer, dimension(:) ::&
     & SpectrometerTypes => NULL()
@@ -204,7 +207,7 @@ module MLSSignals_M
   ! This array is the signals database.  The first entries are the official
   ! `valid' signals in the instrument.  Later one can derive things from that.
   ! for subsets of channels etc.
-  type(signal_T), public, save, pointer, dimension(:) :: Signals => NULL()
+  type(signal_T), public, save, pointer, dimension(:)     :: Signals => NULL()
   integer, public, save :: Instrument = l_emls
   integer, parameter :: MAXRADIOMETERNAMELEN = 16
 
@@ -315,6 +318,8 @@ contains
           end if
           got(field) = .true.
           select case ( field )
+          case (f_Aura)
+            thisModule%Aura = get_boolean(son)
           case (f_spaceCraft)
             thisModule%spacecraft = get_boolean(son)
           case default
@@ -924,6 +929,28 @@ oc:       do
       call output ( bands(i)%centerFrequency, advance='yes' )
     end do
   end subroutine DUMP_BANDS
+
+  ! -------------------------------------------  Dump_Modules  -----
+  subroutine Dump_Modules
+    !
+    integer :: i
+    if ( .not. associated(modules) ) then
+      call output( '(modules not associated)', advance='yes' )
+      return
+    endif
+    call headline( 'modules' )
+    do i=1, size(modules)
+      call output( i , advance='no' )
+      call blanks( 3 )
+      call display_string ( modules(i)%name, advance='no' ) 
+      call blanks( 3 )
+      call output( 's/c? ', advance='no' )
+      call output( modules(i)%spaceCraft, advance='no' ) 
+      call blanks( 3 )
+      call output( 'Aura? ', advance='no' )
+      call output( modules(i)%Aura, advance='yes' ) 
+    enddo
+  end subroutine Dump_Modules
 
   ! -------------------------------------------  Dump_OneRadiometer  -----
   subroutine Dump_OneRadiometer ( RADIOMETER )
@@ -1572,6 +1599,13 @@ oc:       do
     IsModuleSpacecraft = modules(thisModule)%spacecraft
   end function IsModuleSpacecraft
 
+  ! -----------------------------------------  IsSpaceCraftAura  -----
+  logical function IsSpaceCraftAura()
+    ! Returns true if the s/c is really the Aura spacecraft
+    IsSpaceCraftAura = associated( modules )
+    if ( IsSpaceCraftAura ) IsSpaceCraftAura = all( modules%Aura )
+  end function IsSpaceCraftAura
+
   ! -----------------------------------------------  MatchSignals  -----
   integer function MatchSignals ( Signals, Probe, sideband, channel, matchFlags, &
     & NoMatchFails, FromWhere, DSBSSB )
@@ -1886,6 +1920,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.97  2013/08/23 23:27:48  pwagner
+! Added function to return whether or not s/c is Aura
+!
 ! Revision 2.96  2013/06/28 18:10:45  pwagner
 ! Correct erroneous GetSignalIndex; do we ever need signal_T%name?
 !
