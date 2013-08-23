@@ -11,13 +11,14 @@
 
 module TRACE_M
 
-  use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
-  use MLSSTRINGLISTS, only: SWITCHDETAIL
-
   implicit none
   private
 
   public :: Trace_Begin, Trace_End
+
+  interface Trace_Begin
+    module procedure Trace_Begin_B, Trace_Begin_C, Trace_Begin_I
+  end interface
 
   character (len=8), save :: PreviousDate = ' '
   logical, save           :: PreviousDebug
@@ -32,16 +33,57 @@ module TRACE_M
 
 contains ! ====     Public Procedures     ==============================
 
-! --------------------------------------------------  TRACE_BEGIN  -----
-  subroutine TRACE_BEGIN ( NAME, ROOT, INDEX, Cond )
+! ------------------------------------------------  TRACE_BEGIN_B  -----
+  subroutine TRACE_BEGIN_B ( NAME_I, NAME_C, ROOT, INDEX, Cond )
+  ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
+  ! We assume the actual argument is a SAVE variable.
+  ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
+  ! front.  Increment DEPTH.
+
+    use String_Table, only: Create_String
+
+    integer, intent(inout) :: NAME_I
+    character(len=*), intent(in) :: NAME_C
+    integer, intent(in), optional :: ROOT
+    integer, intent(in), optional :: INDEX
+    logical, intent(in), optional :: Cond  ! Print if true, default true
+
+    if ( name_i <= 0 ) name_i = create_string ( name_c )
+    call trace_begin ( name_i, root, index, cond )
+
+  end subroutine TRACE_BEGIN_B
+
+! ------------------------------------------------  TRACE_BEGIN_C  -----
+  subroutine TRACE_BEGIN_C ( NAME_C, ROOT, INDEX, Cond )
+  ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
+  ! front.  Increment DEPTH.
+
+    use String_Table, only: Create_String
+
+    character(len=*), intent(in) :: NAME_C
+    integer, intent(in), optional :: ROOT
+    integer, intent(in), optional :: INDEX
+    logical, intent(in), optional :: Cond  ! Print if true, default true
+
+    integer :: Name_I
+
+    name_i = create_string ( name_c )
+    call trace_begin ( name_i, root, index, cond )
+
+  end subroutine TRACE_BEGIN_C
+
+! ------------------------------------------------  TRACE_BEGIN_I  -----
+  subroutine TRACE_BEGIN_I ( NAME, ROOT, INDEX, Cond )
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
     use Call_Stack_m, only: Push_Stack
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
-    use OUTPUT_M, only: OUTPUTOPTIONS
+    use MLSCommon, only: MLSDebug, MLSVerbose, MLSNamesAreDebug, MLSNamesAreVerbose
+    use MLSMessagemodule, only: MLSMessagecalls
+    use Output_m, only: OutputOptions
+    use String_Table, only: Create_String, Get_String
 
-    character(len=*), intent(in) :: NAME
+    integer, intent(in) :: NAME
     integer, intent(in), optional :: ROOT
     integer, intent(in), optional :: INDEX
     logical, intent(in), optional :: Cond  ! Print if true, default true
@@ -61,34 +103,37 @@ contains ! ====     Public Procedures     ==============================
       call push_stack ( name, root, index )
     end if
 
-    call MLSMessageCalls( 'push', constantName=Name )
-    outputOptions%parentName = Name
-    if ( switchDetail( MLSNamesAreDebug, Name, options='-fc' ) > -1 .and. &
-      & .not. MLSDebug ) then
+    if ( create_string(MLSNamesAreDebug) == name .and. .not. MLSDebug ) then
       PreviousDebug = MLSDebug
       MLSDebug = .true.
     end if
-    if ( switchDetail( MLSNamesAreVerbose, Name, options='-fc' ) > -1 .and. &
-      & .not. MLSVerbose ) then
+    if ( create_string(MLSNamesAreVerbose) == name .and. .not. MLSVerbose ) then
       PreviousVerbose = MLSVerbose
       MLSVerbose = .true.
     end if
 
-  end subroutine TRACE_BEGIN
+    call get_string ( name, outputOptions%parentName )
+    call MLSMessageCalls( 'push', name=outputOptions%parentName )
+
+  end subroutine TRACE_BEGIN_I
 
 ! --------------------------------------------------    TRACE_END  -----
   subroutine TRACE_END ( NAME, INDEX, Cond )
   ! Decrement DEPTH.  Print "EXIT NAME" with DEPTH dots in front.
 
     use Call_Stack_m, only: Pop_Stack, Stack_t, Top_Stack
+    use MLSCommon, only: MLSDebug, MLSVerbose, MLSNamesAreDebug, MLSNamesAreVerbose
     use MLSMessageModule, only: MLSMessageCalls
+    use MLSStringLists, only: SwitchDetail
     use Output_m, only: NewLine, Output, OutputOptions
     use String_Table, only: Create_String, Display_String
+    use Toggles, only: Switches
 
-    character(len=*), intent(in) :: NAME   ! No longer used -- taken from stack
+    character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
     integer, intent(in), optional :: INDEX ! No longer used -- taken from stack
     logical, intent(in), optional :: Cond  ! Print if true, default true
 
+    integer :: Check = -2
     type(stack_t) :: Frame
     character(32) :: PARENTNAME
 
@@ -98,43 +143,50 @@ contains ! ====     Public Procedures     ==============================
 
     call Checkdate
 
-    myCond = .true.
-    if ( present(cond) ) myCond = cond
+    if ( check < -1 ) check = switchDetail ( switches, 'chktr' )
 
-    if ( myCond ) then
-      if ( deebug ) then
-        call top_stack ( frame )
-        if ( frame%now == '' ) then
-          ! Push_Stack always fills Now, so this must be the empty stack default
-          call output ( 'Stack underflow noticed with NAME = ' // trim(name) )
-          if ( present(index) ) call output ( index, before=' INDEX = ' )
-          call newLine
-        else
+    call top_stack ( frame )
+    if ( check > -1 ) then
+      if ( frame%now == '' ) then
+        ! Push_Stack always fills Now, so this must be the empty stack default
+        call output ( 'Stack underflow noticed ' )
+        if ( present(name) ) call output ( 'with NAME = ' // trim(name) )
+        if ( present(index) ) call output ( index, before=' INDEX = ' )
+        call newLine
+      else
+        if ( present(name) ) then
           if ( frame%text /= create_string(name) ) then
             call display_string ( frame%text, before='Name at top of stack = "' )
             call output ( '" but NAME = "' // trim(name) // '"', advance='yes' )
           end if
-          if ( present(index) ) then
-            if ( frame%index /= index ) then
-              call output ( frame%index, before='INDEX at top of stack = ' )
-              call output ( index, before=' but INDEX argument = ', advance='yes' )
-            end if
+        end if
+        if ( present(index) ) then
+          if ( frame%index /= index ) then
+            call output ( frame%index, before='INDEX at top of stack = ' )
+            call output ( index, before=' but INDEX argument = ', advance='yes' )
           end if
         end if
       end if
-      call pop_stack ( 'Exit ', .true. )
-    else
-      call pop_stack
+    end if
+
+    if ( create_string(MLSNamesAreDebug) == frame%text .and. .not. MLSDebug ) then
+      PreviousDebug = MLSDebug
+      MLSDebug = .true.
+    end if
+    if ( create_string(MLSNamesAreVerbose) == frame%text .and. .not. MLSVerbose ) then
+      PreviousVerbose = MLSVerbose
+      MLSVerbose = .true.
     end if
 
     call MLSMessageCalls( 'pop' )
-    call MLSMessageCalls( 'top', parentName )
-    outputOptions%parentName = parentName
-    if ( switchDetail( MLSNamesAreDebug, Name, options='-fc' ) > -1 ) then
-      MLSDebug = PreviousDebug
-    end if
-    if ( switchDetail( MLSNamesAreVerbose, Name, options='-fc' ) > -1 ) then
-      MLSVerbose = PreviousVerbose
+    call MLSMessageCalls( 'top', outputOptions%parentName )  
+
+    myCond = .true.
+    if ( present(cond) ) myCond = cond
+    if ( myCond ) then
+      call pop_stack ( 'Exit ', .true. )
+    else
+      call pop_stack
     end if
 
   end subroutine TRACE_END
@@ -183,6 +235,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.24  2013/08/23 02:50:47  vsnyder
+! Use Call_Stack
+!
 ! Revision 2.23  2013/08/17 03:10:13  vsnyder
 ! Use Call_Stack
 !
