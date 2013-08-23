@@ -16,9 +16,9 @@ module ForwardModelSupport
 
   implicit none
   private
-  public :: ConstructForwardModelConfig, ForwardModelGlobalSetup, &
-    & CreateBinSelectorFromMLSCFInfo, printForwardModelTiming, &
-    & resetForwardModelTiming, ShowFwdModelNames, FillFwdModelTimings
+  public :: CONSTRUCTFORWARDMODELCONFIG, FORWARDMODELGLOBALSETUP, &
+    & CREATEBINSELECTORFROMMLSCFINFO, PRINTFORWARDMODELTIMING, &
+    & RESETFORWARDMODELTIMING, SHOWFWDMODELNAMES, FILLFWDMODELTIMINGS
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: ModuleName= &
@@ -211,7 +211,7 @@ contains ! =====     Public Procedures     =============================
     ! ............................................  Get_File_Name  .....
     subroutine Get_File_Name ( pcfCode, &
       & fileType, fileDataBase, MLSFile, MSG, pcfEndCode )
-      use HDF, only: DFACC_RDonly
+      use HDF, only: DFACC_RDONLY
       use INIT_TABLES_MODULE, only: FIELD_INDICES
       use MLSCOMMON, only: MLSFILE_T
       use MLSFILES, only: HDFVERSION_5, &
@@ -379,7 +379,6 @@ contains ! =====     Public Procedures     =============================
     ! add to the database
 
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use DECLARATION_TABLE, only: RANGE
     use EXPR_M, only: EXPR
     use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T, &
       & LINECENTER, LINEWIDTH, LINEWIDTH_TDEP, &
@@ -401,7 +400,7 @@ contains ! =====     Public Procedures     =============================
       & F_PHIWINDOW, F_POLARIZED, F_ReferenceMIF, F_REFRACT, F_SCANAVERAGE, &
       & F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, F_SPECT_DER, &
       & F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, F_TOLERANCE, &
-      & F_TransformMIFextinction, F_TransformMIFRHI, F_TSCATMIF, F_TYPE, &
+      & F_TRANSFORMMIFEXTINCTION, F_TRANSFORMMIFRHI, F_TSCATMIF, F_TYPE, &
       & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, F_YSTAR
     use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_PROFILES
     use L2PC_M, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
@@ -515,6 +514,7 @@ contains ! =====     Public Procedures     =============================
     info%switchingMirror= .false.
     info%temp_der = .false.
     info%transformMIFextinction = .false.
+    info%transformMIFRHI = .false.
     info%TScatMIF = 1
     info%useTScat = .false.
     info%where = root
@@ -1461,6 +1461,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.172  2013/08/23 00:32:47  pwagner
+! Initialize transformMIFRHI
+!
 ! Revision 2.171  2013/08/16 02:34:46  vsnyder
 ! Remove Model_Plane_MIF
 !
