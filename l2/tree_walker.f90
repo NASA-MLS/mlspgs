@@ -70,7 +70,7 @@ contains ! ====     Public Procedures     ==============================
     use MATRIXMODULE_1, only: DESTROYMATRIXDATABASE, MATRIX_DATABASE_T
     use MERGEGRIDSMODULE, only: MERGEGRIDS
     use MLSCOMMON, only: TAI93_RANGE_T, MLSFILE_T
-    use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, &
+    use MLSL2OPTIONS, only: AURA_L1BFILES, CHECKPATHS, NEED_L1BFILES, &
       & SKIPRETRIEVAL, SLAVESDOOWNCLEANUP, SPECIALDUMPFILE, STOPAFTERSECTION, &
       & MLSMESSAGE
     use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_INFO, &
@@ -79,7 +79,8 @@ contains ! ====     Public Procedures     ==============================
     use MLSFINDS, only: FINDFIRST
     use MLSSIGNALS_M, only: BANDS, DESTROYBANDDATABASE, DESTROYMODULEDATABASE, &
       & DESTROYRADIOMETERDATABASE, DESTROYSIGNALDATABASE, &
-      & DESTROYSPECTROMETERTYPEDATABASE, MLSSIGNALS, MODULES, RADIOMETERS, &
+      & DESTROYSPECTROMETERTYPEDATABASE, ISSPACECRAFTAURA, &
+      & MLSSIGNALS, MODULES, RADIOMETERS, &
       & SIGNALS, SPECTROMETERTYPES
     use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, ISINLIST, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
@@ -229,6 +230,11 @@ contains ! ====     Public Procedures     ==============================
             call MLSMessage ( MLSMSG_Info, ModuleName, &
               & 'Go back and uncomment the previous line in tree_walker' )
         end if
+        ! Here's one way for the l2cf to set Aura to .false.
+        ! Put a line like
+        !  SC: Module, Aura=false, /spaceCraft
+        ! in your MLSSignals section
+        AURA_L1BFILES = AURA_L1BFILES .and. IsSpaceCraftAura()
         call add_to_section_timing ( 'signals', t1, now_stop )
         if ( now_stop ) then
           call finishUp(.true.)
@@ -673,6 +679,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.184  2013/08/17 02:54:32  vsnyder
+! Remove references to DEPTH from trace_m
+!
 ! Revision 2.183  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
