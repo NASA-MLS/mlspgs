@@ -22,8 +22,7 @@ module OUTPUT_M
   use DATES_MODULE, only:  BUILDCALENDAR, DAYSINMONTH, &
     & REFORMATDATE, REFORMATTIME, UTC_TO_YYYYMMDD
   use MLSCOMMON, only: FILENAMELEN, FINITE_SIGNAL, IS_WHAT_IEEE
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, &
-    & DEFAULTLOGUNIT, MLSMESSAGECONFIG, MLSMSG_INFO, MLSMSG_ERROR, STDOUTLOGUNIT
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_INFO, MLSMSG_ERROR
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
     & LIST2ARRAY, NUMSTRINGELEMENTS, WRAP
@@ -2233,6 +2232,7 @@ contains
   subroutine restoreSettings ( USETOOLKIT )
   ! resume outputting to PRUNIT.
   ! optionally set to use or ignore Toolkit
+    use PrintIt_m, only: DefaultLogUnit, Set_Config, StdoutLogUnit
     logical, optional, intent(in) :: useToolkit
     outputOptions%PRUNIT               = STDOUTPRUNIT
     outputOptions%MLSMSG_Level         = MLSMSG_Info
@@ -2276,13 +2276,8 @@ contains
     timeStampOptions%timeFormat        = 'hh:mm:ss'
     timeStampOptions%TIMESTAMPSTYLE    = 'post'
     if ( .not. present(useToolkit) ) return
-    if ( useToolkit ) then
-      mlsmessageConfig%useToolkit   = .true.
-      mlsmessageConfig%logFileUnit  = DEFAULTLOGUNIT
-    else
-      mlsmessageConfig%useToolkit   = .false.
-      mlsmessageConfig%logFileUnit  = STDOUTLOGUNIT
-    endif
+    call set_config ( useToolkit = useToolkit, &
+      & logFileUnit=merge(defaultLogUnit, stdoutLogUnit, useToolkit) )
   end subroutine restoreSettings
 
   ! ----------------------------------------------  resumeOutput  -----
@@ -2847,6 +2842,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.105  2013/08/23 02:51:04  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 2.104  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
