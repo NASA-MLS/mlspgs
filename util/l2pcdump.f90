@@ -38,6 +38,7 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
      & NumStringElements, StringElementNum
    use MLSStrings, only: lowercase, trim_safe
    use output_m, only: dump, outputOptions, output
+   use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
    use TOGGLES, only: SWITCHES
    use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE
@@ -91,8 +92,7 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
   real        ::                 t2
   real        ::                 tFile
   ! 
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
   INTPLACES = '8'
   CALL mls_h5open(error)
@@ -311,6 +311,9 @@ end program l2pcdump
 !==================
 
 ! $Log$
+! Revision 1.3  2011/02/18 23:10:33  pwagner
+! Passes -d opts to dump routines
+!
 ! Revision 1.2  2010/09/03 22:13:18  pwagner
 ! May dump blocks by name
 !

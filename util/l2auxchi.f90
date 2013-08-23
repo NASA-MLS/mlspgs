@@ -32,6 +32,7 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
    use MLSStringLists, only: catLists, GetStringElement, NumStringElements
    use MLSStrings, only: LOWERCASE, WriteIntsToChars
    use output_m, only: blanks, newline, output, resumeOutput, suspendOutput
+   use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -83,8 +84,7 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
   real, dimension( MAXDS, MAXFILES ) :: table
   real        :: tFile
   ! 
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
   FILLVALUERELATION = '<' ! we want to know % chi^2 are < 1 (or whatever)
   CALL mls_h5open(error)
@@ -420,6 +420,9 @@ end program l2auxchi
 !==================
 
 ! $Log$
+! Revision 1.5  2010/06/09 18:14:14  pwagner
+! Made compatible with new dump api
+!
 ! Revision 1.4  2009/04/13 20:43:17  pwagner
 ! Fixed a bug preventing macros file from using its own macros properly
 !

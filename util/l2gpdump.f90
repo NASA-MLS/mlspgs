@@ -35,6 +35,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MLSSTRINGS, only: READNUMSFROMCHARS
    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE, &
      & RESUMEOUTPUT, SUSPENDOUTPUT
+   use PrintIt_m, only: Set_Config
    
    implicit none
 
@@ -104,9 +105,8 @@ PROGRAM L2GPDump ! dumps L2GPData files
   character(len=*), parameter     :: bitNames = &
     & '  dontuse,   bewary,     info,    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
   ! 
-  MLSMessageConfig%useToolkit = .false.   
-  MLSMessageConfig%logFileUnit = -1       
-  CALL mls_h5open(error)
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
+  call mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
      call get_filename(filename, n_filenames, options)
@@ -703,6 +703,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.13  2013/05/30 20:43:10  pwagner
+! Commandline option -form allows us modify print format
+!
 ! Revision 1.12  2013/02/26 00:14:28  pwagner
 ! May constrain dump to hoursRange; range dumps also restrict pctages
 !

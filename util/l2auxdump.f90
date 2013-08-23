@@ -34,6 +34,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
      & NUMSTRINGELEMENTS, STRINGELEMENTNUM
    use MLSSTRINGS, only: INDEXES, LOWERCASE, TRIM_SAFE
    use OUTPUT_M, only: DUMP, OUTPUT
+   use PrintIt_m, only: Set_Config
    use TIME_M, only: TIME_NOW, TIME_CONFIG
    
    implicit none
@@ -91,8 +92,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   real        ::                 t2
   real        ::                 tFile
   ! 
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
   INTPLACES = '8'
   DEFAULTMAXLON = 32
@@ -557,6 +557,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.14  2012/06/14 00:02:44  pwagner
+! Changed how dump options input; now use -o 'opts'
+!
 ! Revision 1.13  2011/01/04 00:50:45  pwagner
 ! Shortened field width of MAFStartTimeUTC dumps to 32
 !

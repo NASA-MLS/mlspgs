@@ -32,6 +32,7 @@ program tellMasterToQuit
   use OUTPUT_M, only: BLANKS, NEWLINE, &
     & OUTPUT, OUTPUT_DATE_AND_TIME, outputNamedValue, OutputOptions, &
     & TIMESTAMP
+  use PrintIt_m, only: Set_Config
   use PVM, only: PVMOK, &
     & ClearPVMArgs, GETMACHINENAMEFROMTID, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
@@ -139,8 +140,7 @@ program tellMasterToQuit
   end type master_T
 
   !
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   MLSMessageConfig%CrashOnAnyError = .true.
   time_config%use_wall_clock = .true.
   parallel%master = .true.  ! not merely master, but master of masters
@@ -159,6 +159,9 @@ program tellMasterToQuit
 end program tellMasterToQuit
 
 ! $Log$
+! Revision 1.2  2013/08/12 23:50:59  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 1.1  2010/04/13 20:30:46  pwagner
 ! First commit
 !

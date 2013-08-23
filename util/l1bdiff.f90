@@ -31,8 +31,9 @@ program l1bdiff ! diffs two l1b or L2AUX files
    use MLSStringLists, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
    use MLSStrings, only: REPLACE, STREQ, WRITEINTSTOCHARS
    use output_m, only: RESUMEOUTPUT, SUSPENDOUTPUT, OUTPUT, OUTPUTNAMEDVALUE
+   use PrintIt_m, only: Set_Config
    use Time_M, only: TIME_NOW, TIME_CONFIG
-   
+
    implicit none
 
 !---------------------------- RCS Ident Info ------------------------------
@@ -79,7 +80,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
     character(len=255) :: referenceFileName= 'default.h5'  ! reference filename
     character(len=80)  :: dumpOptions       = ' '
   end type options_T
-  
+
   type ( options_T ) ::          options
   integer, parameter ::          MAXDS = 300
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
@@ -97,9 +98,8 @@ program l1bdiff ! diffs two l1b or L2AUX files
   real        ::                 t1
   real        ::                 t2
   real        ::                 tFile
-  ! 
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  !
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
   DIFFRMSMEANSRMS = .true.
   CALL mls_h5open(error)
@@ -156,7 +156,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
       endif
       call mySelfDiff(trim(filenames(i)), options%hdfVersion, options)
       if ( options%timing ) call sayTime('diffing this file', tFile)
-    else 
+    else
       if ( options%verbose ) then
         print *, 'diffing from: ', trim(filenames(i))
       endif
@@ -282,7 +282,7 @@ contains
       print *,  "Enter the name of the HDF5 l1b or l2aux file. "
       read(*,'(a)') filename
     endif
-    
+
   end subroutine get_options
 !------------------------- print_help ---------------------
   subroutine print_help
@@ -383,11 +383,11 @@ contains
     real :: stime
     integer :: status
     integer :: the_hdfVersion
-    
+
     ! hdf4 externals
     integer :: sfstart, sffinfo, sfselect, sfginfo, sfend
     external :: sfstart, sffinfo, sfselect, sfginfo, sfend
-    
+
     ! Executable code
     stime = t2
     ! the_hdfVersion = HDFVERSION_5
@@ -472,12 +472,12 @@ contains
       endif
     else
       sdfid1 = sfstart( trim(File1), DFACC_READ )
-      status = sffinfo( sdfid1, noSds, nsize ) 
+      status = sffinfo( sdfid1, noSds, nsize )
       ! print *, 'status ', status
       ! print *, 'noSds ', noSds
       mysdList = '*'
       sdfid2 = sfstart( trim(File2), DFACC_READ )
-      status = sffinfo( sdfid1, noSds, nsize ) 
+      status = sffinfo( sdfid1, noSds, nsize )
       ! print *, 'status ', status
       ! print *, 'noSds ', noSds
     endif
@@ -495,7 +495,7 @@ contains
         if ( len_trim(options%group) > 1 ) sdName = trim(options%group) // sdName
       else
         sds_id = sfselect( sdfid1, i-1 ) ! "c" arrays begin with index 0
-        status = sfginfo( sds_id, sdName, rank, dimsizes, data_type, num_attrs ) 
+        status = sfginfo( sds_id, sdName, rank, dimsizes, data_type, num_attrs )
         ! print *, 'sdName: ', sdName
       endif
 !      if ( sdName == 'PCF' .or. &
@@ -737,7 +737,7 @@ contains
     integer :: status
     integer :: the_hdfVersion
     logical, parameter :: SKIPIFRANKTOOHIGH = .false.
-    
+
     ! Executable code
     ! the_hdfVersion = HDFVERSION_5
     the_hdfVersion = hdfVersion
@@ -855,6 +855,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.27  2013/01/09 18:48:05  pwagner
+! Dont omit sdname from output
+!
 ! Revision 1.26  2012/09/12 16:40:13  pwagner
 ! Works more reliably with goldbrick
 !

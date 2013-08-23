@@ -33,6 +33,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
      & StringElement, StringElementNum
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
+   use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -99,8 +100,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   integer :: NUMSWATHSPERFILE
   integer :: NUMSWATHSSOFAR
   ! 
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
@@ -554,6 +554,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.15  2013/05/30 20:41:09  pwagner
+! Reduce amount of debug printing
+!
 ! Revision 1.14  2009/10/27 21:10:03  pwagner
 ! Brought into compliance with cpL2GPData api
 !

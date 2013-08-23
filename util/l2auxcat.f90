@@ -28,8 +28,9 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
      & RemoveElemFromList, StringElement, StringElementNum
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
+   use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
-   
+
    implicit none
 
 !---------------------------- RCS Ident Info ------------------------------
@@ -62,7 +63,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
     character(len=255) ::    rename = ' '               ! how to rename them
     character(len=255), dimension(MAXFILES) :: filenames
   end type options_T
-  
+
   type ( options_T ) :: options
 
   logical, parameter :: COUNTEMPTY = .false.
@@ -83,9 +84,8 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
   real        :: t1
   real        :: t2
   real        :: tFile
-  ! 
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  !
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
@@ -115,7 +115,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
         print *, 'DS Names in: ', trim(options%filenames(i))
         call GetAllHDF5DSNames (trim(options%filenames(i)), '/', mysdList)
         call dump(mysdList, 'DS names')
-      else 
+      else
         if ( options%verbose ) then
           print *, 'Copying from: ', trim(options%filenames(i))
         endif
@@ -223,7 +223,7 @@ contains
        &  "The default output file name will be used."
       read(*,'(a)') filename
     endif
-    
+
   end subroutine get_filename
 !------------------------- print_help ---------------------
   subroutine print_help
@@ -265,6 +265,9 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.4  2006/05/19 22:48:30  pwagner
+! May rename copied SDs
+!
 ! Revision 1.3  2005/09/23 21:01:13  pwagner
 ! use_wall_clock now a component of time_config
 !

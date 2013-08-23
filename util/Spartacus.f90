@@ -32,6 +32,7 @@ program Spartacus
   use OUTPUT_M, only: BLANKS, NEWLINE, &
     & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTNAMEDVALUE, OUTPUTOPTIONS, &
     & TIMESTAMP
+  use PrintIt_m, only: Set_Config
   use PVM, only: PVMOK, &
     & CLEARPVMARGS, GETMACHINENAMEFROMTID, MYPVMSPAWN, NEXTPVMARG,  &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
@@ -197,8 +198,7 @@ program Spartacus
   logical :: SKIPDEATHWATCH           ! Don't check for deaths
   integer :: TIDARR(1)                ! One tid
   !
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   MLSMessageConfig%CrashOnAnyError = .true.
   time_config%use_wall_clock = .true.
   parallel%master = .true.  ! not merely master, but master of masters
@@ -1254,6 +1254,9 @@ contains
 end module BOGUS_MODULE
 
 ! $Log$
+! Revision 1.8  2013/08/12 23:50:59  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 1.7  2012/02/13 23:47:20  pwagner
 ! Needed longer MAXCMDLEN; bogus_module needed so idents shows version id
 !

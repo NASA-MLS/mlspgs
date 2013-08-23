@@ -22,6 +22,7 @@ program l2gpdiff ! show diffs between swaths in two different files
    use MLSStringLists, only: catLists, ExpandStringRange
    use MLSStrings, only: WriteIntsToChars
    use output_m, only: resumeOutput, suspendOutput, output, outputNamedValue
+   use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
    
    implicit none
@@ -94,8 +95,7 @@ program l2gpdiff ! show diffs between swaths in two different files
   real                                    :: tFile
   logical, parameter                      :: USEALLINPUTSWATHS = .true.
   ! 
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
@@ -427,6 +427,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.19  2012/02/13 23:42:42  pwagner
+! -d opts passes opts to underlying dump routines
+!
 ! Revision 1.18  2010/11/17 01:26:44  pwagner
 ! debug option dumps commandline options
 !

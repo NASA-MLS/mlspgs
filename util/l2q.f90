@@ -32,6 +32,7 @@ program L2Q
   use OUTPUT_M, only: BLANKS, NEWLINE, &
     & OUTPUT, OUTPUT_DATE_AND_TIME, outputNamedValue, OutputOptions, &
     & TIMESTAMP
+  use PrintIt_m, only: Set_Config
   use PVM, only: PVMOK, &
     & ClearPVMArgs, GETMACHINENAMEFROMTID, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
@@ -198,8 +199,7 @@ program L2Q
   type(Machine_T), dimension(:), pointer :: hosts => null()
   type(master_T), dimension(:), pointer :: masters => null()
   !
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   MLSMessageConfig%CrashOnAnyError = .true.
   outputOptions%skipmlsmsglogging = .true.
   time_config%use_wall_clock = .true.
@@ -2407,6 +2407,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.34  2013/08/14 17:27:26  pwagner
+! Moved FindSomethings into MLSFinds
+!
 ! Revision 1.33  2013/07/18 22:36:38  pwagner
 ! Consistent with having deleted OutputOptions%opened
 !

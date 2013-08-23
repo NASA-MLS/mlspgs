@@ -29,6 +29,7 @@ program l2pcdiff ! show diffs between swaths in two different files
    use MLSStringLists, only: catLists, ExpandStringRange
    use MLSStrings, only: WriteIntsToChars
    use output_m, only: resumeOutput, suspendOutput, output, outputNamedValue
+   use PrintIt_m, only: Set_Config
    use SDPToolkit, only: UseSDPToolkit
    use Time_M, only: Time_Now, time_config
    use TOGGLES, only: SWITCHES
@@ -88,8 +89,7 @@ program l2pcdiff ! show diffs between swaths in two different files
   call allocate_decl ( ndecls=8000 )
   call allocate_tree ( n_tree=2000000 )
   call init_tables
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
   UseSDPToolkit = .false.
   SWITCHES = ' ' ! 'l2pc1,hess'
@@ -259,3 +259,6 @@ end program l2pcdiff
 !==================
 
 ! $Log$
+! Revision 1.1  2010/11/25 01:20:32  pwagner
+! First commit
+!

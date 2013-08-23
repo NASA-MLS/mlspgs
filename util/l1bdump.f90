@@ -29,6 +29,7 @@ program l1bdump ! dumps an l1b or L2AUX file
    use MLSStringLists, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
    use MLSStrings, only: REPLACE, STREQ
    use output_m, only: RESUMEOUTPUT, SUSPENDOUTPUT, OUTPUT
+   use PrintIt_m, only: Set_Config
    use Time_M, only: TIME_NOW, TIME_CONFIG
    
    implicit none
@@ -89,8 +90,7 @@ program l1bdump ! dumps an l1b or L2AUX file
   real        ::                 t2
   real        ::                 tFile
   ! 
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   time_config%use_wall_clock = .true.
   CALL mls_h5open(error)
   n_filenames = 0
@@ -476,3 +476,6 @@ end program l1bdump
 !==================
 
 ! $Log$
+! Revision 1.1  2013/06/01 00:40:26  pwagner
+! First commit
+!

@@ -33,6 +33,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
    use MLSSTRINGS, only: LOWERCASE
    use OUTPUT_M, only: OUTPUTOPTIONS, &
      & BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME
+   use PrintIt_m, only: Set_Config
    use TIME_M, only: TIME_NOW, TIME_CONFIG
    
    implicit none
@@ -108,8 +109,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   integer, dimension(MAXCHUNKS) :: which
   logical :: showTimings
   ! 
-  MLSMessageConfig%useToolkit = .false.
-  MLSMessageConfig%logFileUnit = -1
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
   outputoptions%nArrayElmntsPerLine = 40
   time_config%use_wall_clock = .true.
   call mls_h5open(error)
@@ -816,6 +816,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.26  2013/08/12 23:50:59  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 1.25  2013/06/05 18:47:39  pwagner
 ! table should print properly, not wrap
 !
