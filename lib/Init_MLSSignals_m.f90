@@ -35,7 +35,8 @@ module Init_MLSSignals_m
   integer, parameter :: Last_signal_type = last_molecule_type
 
   ! Fields used in signal specifications:
-  integer, parameter :: F_band = field_First
+  integer, parameter :: F_Aura              = field_First
+  integer, parameter :: F_band              = f_Aura + 1
   integer, parameter :: F_centerFrequency   = f_band + 1
   integer, parameter :: F_channel           = f_centerFrequency + 1
   integer, parameter :: F_channels          = f_channel + 1
@@ -96,6 +97,7 @@ contains
       & first_parm_index, last_parm_index, n_section_indices, n_spec_indices )
 
     ! Put field names into the symbol table
+    field_indices(f_Aura) =                add_ident ( 'Aura' )
     field_indices(f_band) =                add_ident ( 'band' )
     field_indices(f_centerFrequency) =     add_ident ( 'centerFrequency' )
     field_indices(f_channel) =             add_ident ( 'channel' )
@@ -164,6 +166,7 @@ contains
 
     call make_tree ( (/ &
       begin, s+s_module, &
+             begin, f+f_Aura, t+t_boolean, n+n_field_type, &
              begin, f+f_spacecraft, t+t_boolean, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_radiometer, &          ! Must be after module
@@ -217,6 +220,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.29  2013/08/23 23:23:11  pwagner
+! Added Aura field to Module spec
+!
 ! Revision 2.28  2011/01/29 00:46:42  vsnyder
 ! Add units checking
 !
