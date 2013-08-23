@@ -13,17 +13,12 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  use HDF, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCommon, only: MLSFile_T
   use MLSStrings, only: Capitalize
-  use PVM, only: InfoTag, &
-    & PVMDATADEFAULT, PVMFInitSend, PVMF90Pack, SIG_AboutToDie
-  use SDPToolkit, only: PGS_S_SUCCESS, &
-    & PGS_SMF_MASK_LEV_N, PGS_SMF_MASK_LEV_E, PGS_SMF_MASK_LEV_F, &
-    & PGS_SMF_MASK_LEV_W, PGS_SMF_MASK_LEV_M, PGS_SMF_MASK_LEV_S, &
-    & UseSDPToolkit, &
-    & PGS_SMF_GenerateStatusReport, PGS_SMF_TestStatusLevel
+  use PrintIt_m, only: DefaultLogUnit, InvalidLogUnit, PrefixLen, &
+    & PrintItOut, StdoutLogUnit
+  use SDPToolkit, only: PGS_S_SUCCESS
 
   implicit none
   private
@@ -76,6 +71,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! E.g., setting threshold to 0 will print every status, even success
 
   subroutine ReportTKStatus( status, ModuleNameIn, Message, Threshold )
+    use SDPToolkit, only: PGS_SMF_TestStatusLevel
     ! Dummy arguments
     integer, intent(in) :: status ! e.g. PGS_TD_NOLEAPSECFILE
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
@@ -103,6 +99,9 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     ! This routine converts an hdf access type
     ! like DFACC_RDONLY into a string like 'rdonly'
     ! If access type is unrecognized, returns 'unknown'
+
+    use HDF, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
+
     ! Args
     integer, intent(in)           :: dfacc
     character(len=8)              :: str
@@ -123,6 +122,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! We're a slave and we're about to expire
   ! Before we do, however, try to tell the master why
   subroutine LastGasp ( ModuleNameIn, Message )
+    use PVM, only: InfoTag, &
+      & PVMDATADEFAULT, PVMFInitSend, PVMF90Pack, SIG_AboutToDie
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
     ! Local variables
@@ -145,6 +146,9 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   function level2severity ( level ) result(severity)
 
     ! This routine converts a toolkit levelmask to an mls severity
+    use SDPToolkit, only: &
+      & PGS_SMF_MASK_LEV_N, PGS_SMF_MASK_LEV_E, PGS_SMF_MASK_LEV_F, &
+      & PGS_SMF_MASK_LEV_W, PGS_SMF_MASK_LEV_M, PGS_SMF_MASK_LEV_S
     ! Args
     integer, intent(in)           :: level
     integer :: severity
@@ -166,62 +170,6 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     end select
   end function level2severity
 
-  ! --------------------------------------------  PRINTITOUT  -----
-  subroutine PRINTITOUT ( INLINE, SEVERITY, LINE_LEN, NOPREFIX  )
-    ! In any way we're asked
-    ! Args
-    character(len=*), intent(in) :: INLINE
-    integer, intent(in) :: SEVERITY
-    integer, optional, intent(in) :: LINE_LEN
-    logical, optional, intent(in) :: NOPREFIX
-    ! Local variables
-    character(len=len(inline)) :: Line
-    logical :: log_it
-    integer :: loggedLength
-    character(len=len(inline)+len(MLSMessageConfig%prefix)) :: loggedLine
-    integer :: ioerror
-    integer :: maxLineLength
-    logical :: myNoPrefix
-    ! Executable
-    if ( MLSMessageConfig%AsciifyMessages ) then
-      line = asciify(inLine)
-    else
-      line = inLine
-    endif
-    loggedLength = len_trim(line)
-    if ( present(line_len) ) loggedLength = line_len
-    myNoPrefix = .false.
-    if ( present(noPrefix) ) myNoPrefix = noPrefix
-    loggedLine = line
-    if ( TRIM(MLSMessageConfig%prefix) /= ' ' .and. .not. myNoPrefix ) then
-      loggedLength = loggedLength + len_trim(MLSMessageConfig%prefix)
-      loggedLine = TRIM(MLSMessageConfig%prefix) // &
-           & TRIM(line)
-    endif
-    maxLineLength = min( loggedLength, len(loggedLine) )
-    log_it = &
-    & (MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
-    & .or. &
-    & severity >= MLSMSG_Severity_to_quit
-    if( log_it .and. loggedLength > 0 .and. MLSMessageConfig%useToolkit) then
-      ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:maxLineLength) )
-    end if
-
-    ! Now, if we're also logging to a file then write to that too.
-    select case ( MLSMessageConfig%logFileUnit  )
-    case ( 0 :  )
-      write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
-    case ( STDOUTLOGUNIT  )
-      if ( USEDEFAULTFORMATSTDOUT ) then
-        write ( UNIT=*, FMT=* ) TRIM(line)
-      else
-        write ( UNIT=*, FMT='(a)' ) TRIM(line)
-      endif
-    case default ! DEFAULTLOGUNIT
-    end select
-
-  end subroutine PRINTITOUT
-
 !=======================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -238,6 +186,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.43  2013/08/23 02:51:04  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 2.42  2012/08/16 17:38:07  pwagner
 ! Refers to module variable constant instead of '-1'
 !
