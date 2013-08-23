@@ -16,6 +16,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCommon, only: MLSFile_T
   use MLSStrings, only: Capitalize
+  use PrintIt_m, only: DefaultLogUnit, InvalidLogUnit, PrefixLen, &
+    & PrintItOut, StdoutLogUnit
   implicit none
   private
 
@@ -118,30 +120,6 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     severity = MLSMSG_Info
   end function level2severity
 
-  ! --------------------------------------------  PRINTITOUT  -----
-  subroutine PRINTITOUT ( LINE, SEVERITY, LINE_LEN, NOPREFIX  )
-    ! In any way we're asked
-    ! Args
-    character(len=*), intent(in) :: LINE
-    integer, intent(in) :: SEVERITY
-    integer, optional, intent(in) :: LINE_LEN
-    logical, optional, intent(in) :: NOPREFIX
-    ! Now, if we're also logging to a file then write to that too.
-
-    select case ( MLSMessageConfig%logFileUnit  )
-    case ( 0 :  )
-      write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
-    case ( -1  )
-      if ( USEDEFAULTFORMATSTDOUT ) then
-        write ( UNIT=*, FMT=* ) TRIM(line)
-      else
-        write ( UNIT=*, FMT='(a)' ) TRIM(line)
-      endif
-    case default
-    end select
-
-  end subroutine PRINTITOUT
-
 !=======================================================================
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -158,6 +136,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.11  2013/08/23 02:51:04  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 2.10  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
