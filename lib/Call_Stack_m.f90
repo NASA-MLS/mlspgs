@@ -64,7 +64,7 @@ contains ! ====     Public Procedures     ==============================
     logical, intent(in), optional :: Size  ! Dump memory size (default true)
     logical, intent(in), optional :: CPU   ! Print CPU (default false)
     logical, intent(in), optional :: DoDepth ! Print "depth" dots (default true)
-    logical, intent(in), optional :: Rev  ! Print in reverse order (default false)
+    logical, intent(in), optional :: Rev   ! Print in reverse order (default false)
     character(len=*), intent(in), optional :: Advance ! Default 'yes'
 
     character(len=3) :: MyAdvance
@@ -105,7 +105,7 @@ contains ! ====     Public Procedures     ==============================
     end if
 
     do depth = first, last, inc
-      do i = 1, merge(depth,0,myDoDepth)
+      do i = lbound(stack,1), merge(depth,-1,myDoDepth)
         call output ( '.' )
       end do
       if ( present(before) ) call output ( before )
@@ -177,7 +177,7 @@ contains ! ====     Public Procedures     ==============================
     end if
     call newLine
 
-    stack_ptr = max(0,stack_ptr-1)
+    stack_ptr = stack_ptr - 1
 
   end subroutine Pop_Stack
 
@@ -232,9 +232,11 @@ contains ! ====     Public Procedures     ==============================
     intrinsic :: Date_And_Time, Storage_Size
 
     if ( .not. allocated(stack) ) then
+      ! Don't allocate with lbound < 0
       allocate ( stack(startingStackSize), stat=stat )
       call test_allocate ( stat, moduleName, 'Stack', &
         & ubounds=(/startingStackSize/), elementSize=storage_size(stack) )
+      stack_ptr = lbound(stack,1) - 1
     end if
     if ( stack_ptr >= ubound(stack,1) ) then
       allocate ( temp_stack(2*stack_ptr), stat=stat )
@@ -244,11 +246,10 @@ contains ! ====     Public Procedures     ==============================
       call move_alloc ( temp_stack, stack )
     end if
     stack_ptr = stack_ptr + 1
-    stack(stack_ptr) = stack_t ( text=name )
+    stack(stack_ptr) = stack_t ( memory=noBytesAllocated, text=name )
     if ( present(root) ) stack(stack_ptr)%tree = root
     if ( present(index) ) stack(stack_ptr)%index = index
     call time_now ( stack(stack_ptr)%clock )
-    stack(stack_ptr)%memory = noBytesAllocated
     call date_and_time ( stack(stack_ptr)%now )
     if ( present(before) .or. present(where) ) &
       & call dump_stack ( .true., before, where, advance='yes' )
@@ -285,6 +286,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.4  2013/08/23 03:16:52  vsnyder
+! Simplify Push_Stack, some cannonball polishing (I couldn't resist)
+!
 ! Revision 2.3  2013/08/23 02:49:19  vsnyder
 ! Add Get_Frame, Rev, and Stack_Depth
 !
