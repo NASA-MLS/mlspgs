@@ -46,7 +46,7 @@ program MLSL2
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_DEBUG, &
     & MLSMESSAGECONFIG, MLSMSG_ERROR, MLSMSG_SEVERITY_TO_QUIT, &
-    & MLSMSG_SUCCESS, MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT, STDOUTLOGUNIT
+    & MLSMSG_SUCCESS, MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT
   use MLSPCF2 ! EVERYTHING
   use MLSSTRINGS, only: TRIM_SAFE
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, &
@@ -55,6 +55,7 @@ program MLSL2
     & OUTPUTNAMEDVALUE, &
     & INVALIDPRUNIT, MSGLOGPRUNIT, OUTPUTOPTIONS, STAMPOPTIONS, STDOUTPRUNIT
   use PARSER, only: CONFIGURATION
+  use PrintIt_m, only: Set_Config, StdoutLogUnit
   use PVM, only: CLEARPVMARGS, FREEPVMARGS
   use SDPTOOLKIT, only: USESDPTOOLKIT
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
@@ -183,8 +184,9 @@ program MLSL2
   FILESTRINGTABLE = .true.
   !---------------- Task (2) ------------------
 ! Where to send output, how severe an error to quit
-   outputOptions%prunit = OUTPUT_PRINT_UNIT
-   MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
+  outputOptions%prunit = OUTPUT_PRINT_UNIT
+  MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
+  call set_config ( severity_to_quit = MLSMSG_Severity_to_quit )
 
 ! Clear the command line arguments we're going to accumulate to pass
 ! to slave tasks
@@ -237,7 +239,7 @@ program MLSL2
   end if
   i = SwitchDetail(switches, 'log')
   if( i == 0 .or. i > 5 .or. .not. toolkit ) then
-     MLSMessageConfig%LogFileUnit = STDOUTLOGUNIT  ! -1
+     call set_config ( LogFileUnit = STDOUTLOGUNIT ) ! -1
   end if
   if ( i > 9 ) then
     MLSMessageConfig%MaxModuleNameLength   = i - 10
@@ -562,8 +564,10 @@ contains
   subroutine Dump_settings
   ! Show current run-time settings resulting from
   ! command-line, MLSL2Options, etc.
+    use PrintIt_m, only: Get_Config
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
     character(len=255) :: Command ! Command that executed the program
+    integer :: LogFileUnit
     character(len=8) :: string
     call getarg ( 0, command )
     if ( command /= '' ) then
@@ -655,7 +659,8 @@ contains
       end if
       call outputNamedValue ( 'Standard output unit', outputOptions%prunit, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Log file unit', MLSMessageConfig%LogFileUnit, advance='yes', &
+      call get_config ( logFileUnit = logFileUnit )
+      call outputNamedValue ( 'Log file unit', logFileUnit, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Crash on any error?', MLSMessageConfig%crashOnAnyError, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -714,6 +719,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.194  2013/08/23 02:52:13  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 2.193  2013/08/17 00:22:14  pwagner
 ! New cmdline arg relaxes some for non-Aura l1b datasets
 !
