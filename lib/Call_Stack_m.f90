@@ -14,22 +14,27 @@ module Call_Stack_m
   implicit NONE
   private
 
-  public :: Dump_Stack, Stack_t, Pop_Stack, Push_Stack, Top_Stack
+  public :: Stack_t
+  public :: Dump_Stack, Get_Frame, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
 
   type :: Stack_t
     real :: Clock = 0.0                ! Whatever Time_Now returns (CPU or ?)
     integer :: Index = -1              ! Extra info, e.g. MAF number
-    double precision :: Memory = 0.0d0 ! in use, in Memory_Units
+    double precision :: Memory = 0.0d0 ! In use, in Memory_Units
     character(len=10) :: Now = ''      ! Date and time
-    integer :: Text = 0                ! index in string table
-    integer :: Tree = 0                ! where in l2cf
+    integer :: Text = 0                ! Index in string table
+    integer :: Tree = 0                ! Where in l2cf, -1 if stack not allocated,
+                                       ! -2 if stack index < 1, -3 if stack index
+                                       ! > stack_ptr.
   end type
 
-  integer, parameter :: StartingStackSize = 100
-  type(stack_t), allocatable, save :: Stack(:)
-  integer, save :: Stack_Ptr = 0
+  interface Push_Stack
+    module procedure Push_Stack_b, Push_Stack_c, Push_Stack_i
+  end interface
 
-  logical, private :: DEEBUG = .true.  ! Complain about memory inconsistency
+  integer, parameter, private :: StartingStackSize = 100
+  type(stack_t), allocatable, save, private :: Stack(:)
+  integer, save, private :: Stack_Ptr = 0
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -40,7 +45,7 @@ module Call_Stack_m
 contains ! ====     Public Procedures     ==============================
 
 ! ---------------------------------------------------  Dump_Stack  -----
-  subroutine Dump_Stack ( Top, Before, Where, Size, CPU, Advance )
+  subroutine Dump_Stack ( Top, Before, Where, Size, CPU, DoDepth, Rev, Advance )
     ! Dump the call stack.  If Top is present and true, dump only the top
     ! frame.  If Before is present, print it after "depth" dots and before
     ! anything else.  If Where is present and true, and the Tree component
@@ -58,20 +63,26 @@ contains ! ====     Public Procedures     ==============================
     logical, intent(in), optional :: Where ! Dump tree location
     logical, intent(in), optional :: Size  ! Dump memory size (default true)
     logical, intent(in), optional :: CPU   ! Print CPU (default false)
+    logical, intent(in), optional :: DoDepth ! Print "depth" dots (default true)
+    logical, intent(in), optional :: Rev  ! Print in reverse order (default false)
     character(len=*), intent(in), optional :: Advance ! Default 'yes'
 
     character(len=3) :: MyAdvance
-    integer :: Depth, I
+    integer :: Depth, First, I, Inc, Last
     logical :: Error
-    logical :: MyCPU, MySize, MyTop, MyWhere
+    logical :: MyCPU, MyDoDepth, MyRev, MySize, MyTop, MyWhere
 
     myAdvance = 'yes'
-    myCPU = .false.; mySize = .true.; myTop = .false.; myWhere = .false.
+    myCPU = .false.; myDoDepth = .true.; myRev = .false.; mySize = .true.
+    myTop = .false.; myWhere = .false.
 
-    if ( present(advance) ) myAdvance = advance
-    if ( present(cpu) ) myCPU = cpu
-    if ( present(size) ) mySize = size
     if ( present(top) ) myTop = top
+    if ( present(advance) ) myAdvance = advance
+    if ( stack_ptr /= merge(stack_ptr,lbound(stack,1),myTop) ) myAdvance = 'yes'
+    if ( present(cpu) ) myCPU = cpu
+    if ( present(doDepth) ) myDoDepth = doDepth
+    if ( present(rev) ) myRev = rev
+    if ( present(size) ) mySize = size
     if ( present(where) ) myWhere = Where
 
     error = .not. allocated(stack)
@@ -83,8 +94,18 @@ contains ! ====     Public Procedures     ==============================
       return
     end if
 
-    do depth = stack_ptr, merge(stack_ptr,lbound(stack,1),myTop), -1
-      do i = 1, depth
+    if ( myRev ) then ! Dump stack bottop-up
+      first = merge(stack_ptr,lbound(stack,1),myTop)
+      last = stack_ptr
+      inc = 1
+    else              ! Dump stack top-down
+      first = stack_ptr
+      last = merge(stack_ptr,lbound(stack,1),myTop)
+      inc = -1
+    end if
+
+    do depth = first, last, inc
+      do i = 1, merge(depth,0,myDoDepth)
         call output ( '.' )
       end do
       if ( present(before) ) call output ( before )
@@ -102,6 +123,25 @@ contains ! ====     Public Procedures     ==============================
     end do
 
   end subroutine Dump_Stack
+
+! ----------------------------------------------------  Get_Frame  -----
+  type(stack_t) function Get_Frame ( Depth )
+    ! Get stack(depth) if 1 <= Depth <= Stack_Ptr, otherwise result is
+    ! default initialized except if Stack is not allocated, %tree= -1, if
+    ! Depth < lbound(stack,1), %tree= -2, and if Depth > Stack_Ptr, %tree= -3.
+    integer, intent(in) :: Depth
+
+    if ( .not. allocated(stack) ) then
+      get_frame%tree = -1
+    else if ( depth < lbound(stack,1) ) then
+      get_frame%tree = -2
+    else if ( depth > stack_ptr ) then
+      get_frame%tree = -3
+    else
+      get_frame = stack(depth)
+    end if
+
+  end function Get_Frame
 
 ! ----------------------------------------------------  Pop_Stack  -----
   subroutine Pop_Stack ( Before, Where )
@@ -141,14 +181,47 @@ contains ! ====     Public Procedures     ==============================
 
   end subroutine Pop_Stack
 
-! ---------------------------------------------------  Push_Stack  -----
-  subroutine Push_Stack ( Name, Root, Index, Before, Where )
+! -------------------------------------------------  Push_Stack_B  -----
+  subroutine Push_Stack_B ( Name_I, Name_C, Root, Index, Before, Where )
+    ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
+    ! We assume the actual argument is a SAVE variable.
     ! Push the stack.  If Before or Where are present, dump the new top frame.
-    use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
     use String_Table, only: Create_String
-    use Time_m, only: Time_Now
+
+    integer, intent(inout) :: Name_I
+    character(len=*), intent(in) :: Name_C
+    integer, optional, intent(in) :: Root  ! Where in configuration tree
+    integer, optional, intent(in) :: Index ! Whatever caller wants to send
+    character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
+    logical, intent(in), optional :: Where
+
+    if ( name_i <= 0 ) name_i = create_string ( name_c )
+    call push_stack ( name_i, Root, Index, Before, Where )
+
+  end subroutine Push_Stack_B
+
+! -------------------------------------------------  Push_Stack_C  -----
+  subroutine Push_Stack_C ( Name, Root, Index, Before, Where )
+    ! Push the stack.  If Before or Where are present, dump the new top frame.
+    use String_Table, only: Create_String
 
     character(len=*), intent(in) :: Name
+    integer, optional, intent(in) :: Root  ! Where in configuration tree
+    integer, optional, intent(in) :: Index ! Whatever caller wants to send
+    character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
+    logical, intent(in), optional :: Where
+
+    call push_stack ( create_string ( name ), Root, Index, Before, Where )
+
+  end subroutine Push_Stack_C
+
+! -------------------------------------------------  Push_Stack_I  -----
+  subroutine Push_Stack_I ( Name, Root, Index, Before, Where )
+    ! Push the stack.  If Before or Where are present, dump the new top frame.
+    use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
+    use Time_m, only: Time_Now
+
+    integer, intent(in) :: Name
     integer, optional, intent(in) :: Root  ! Where in configuration tree
     integer, optional, intent(in) :: Index ! Whatever caller wants to send
     character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
@@ -171,7 +244,7 @@ contains ! ====     Public Procedures     ==============================
       call move_alloc ( temp_stack, stack )
     end if
     stack_ptr = stack_ptr + 1
-    stack(stack_ptr) = stack_t ( text=create_string ( name ) )
+    stack(stack_ptr) = stack_t ( text=name )
     if ( present(root) ) stack(stack_ptr)%tree = root
     if ( present(index) ) stack(stack_ptr)%index = index
     call time_now ( stack(stack_ptr)%clock )
@@ -179,14 +252,24 @@ contains ! ====     Public Procedures     ==============================
     call date_and_time ( stack(stack_ptr)%now )
     if ( present(before) .or. present(where) ) &
       & call dump_stack ( .true., before, where, advance='yes' )
-  end subroutine Push_Stack
+  end subroutine Push_Stack_I
+
+! --------------------------------------------------  Stack_Depth  -----
+  integer function Stack_Depth ()
+    ! Return -1 if the stack is not allocated, else Stack_Ptr
+    stack_depth = merge(stack_ptr, -1, allocated(stack) )
+  end function Stack_Depth
 
 ! ----------------------------------------------------  Top_Stack  -----
   subroutine Top_Stack ( Top )
     type(stack_t), intent(out) :: Top
-    if ( .not. allocated(stack) ) return
-    if ( stack_ptr < lbound(stack,1) ) return
-    top = stack(stack_ptr)
+    if ( .not. allocated(stack) ) then
+      top%tree = -1
+    else if ( stack_ptr < lbound(stack,1) ) then
+      top%tree = -2
+    else
+      top = stack(stack_ptr)
+    end if
   end subroutine Top_Stack
 
 !--------------------------- end bloc --------------------------------------
@@ -202,6 +285,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.3  2013/08/23 02:49:19  vsnyder
+! Add Get_Frame, Rev, and Stack_Depth
+!
 ! Revision 2.2  2013/08/17 03:08:12  vsnyder
 ! Some cannonball polishing (already!)
 !
