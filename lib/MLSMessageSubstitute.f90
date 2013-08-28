@@ -13,13 +13,27 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
+  use CALL_STACK_M, only: DUMP_STACK
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCommon, only: MLSFile_T
-  use MLSStrings, only: Capitalize
-  use PrintIt_m, only: DefaultLogUnit, InvalidLogUnit, PrefixLen, &
-    & PrintItOut, StdoutLogUnit
+  use MLSCommon, only: MLSFILE_T
+  use MLSStrings, only: CAPITALIZE
+  use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, LOGUNITNAME, PREFIXLEN, &
+    & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_SUCCESS, &
+    & MLSMSG_TESTWARNING, MLSMSG_WARNING, MLSMESSAGECONFIG_T, &
+    & DEFAULTLOGUNIT, INVALIDLOGUNIT, PREFIXLEN, &
+    & PRINTITOUT, SNIPRCSFROM, &
+    & STDOUTLOGUNIT, MLSMESSAGECONFIG, &
+    & MLSMSG_SEVERITY_SO_FAR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK
   implicit none
+
   private
+  
+  public :: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_SUCCESS, &
+    & MLSMSG_TESTWARNING, MLSMSG_WARNING, MLSMESSAGECONFIG_T, &
+    & DEFAULTLOGUNIT, INVALIDLOGUNIT, PREFIXLEN, &
+    & STDOUTLOGUNIT, MLSMESSAGECONFIG, &
+    & MLSMSG_SEVERITY_SO_FAR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -136,6 +150,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.12  2013/08/28 00:35:39  pwagner
+! Moved more stuff from MLSMessage down to PrintIt module
+!
 ! Revision 2.11  2013/08/23 02:51:04  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
