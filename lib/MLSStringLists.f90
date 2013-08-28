@@ -13,8 +13,8 @@
 module MLSStringLists               ! Module to treat string lists
 !=============================================================================
 
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
+  use PRINTIT_M, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT
   use MLSCOMMON, only: BAREFNLEN
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGS, only: CAPITALIZE, LOWERCASE, NCOPIES, &
@@ -553,7 +553,7 @@ contains
                 & .not. ( value .and. part )
           case default
             ! How could this happen?
-              call MLSMessage( MLSMSG_Error, ModuleName, &
+              call myMessage( MLSMSG_Error, ModuleName, &
                 & lastOp // ' not a legal binary op in evaluatePrimitive' )
           end select
           negating = .false.
@@ -591,7 +591,7 @@ contains
     if ( nkeys < 1 ) return
     nullify( lvalues )
     allocate( lvalues(nkeys), stat=status )
-    if ( status /= 0 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+    if ( status /= 0 ) call myMessage( MLSMSG_Error, ModuleName, &
       & 'Unable to allocate lvalues in BooleanValue_str' )
     do key = 1, nkeys
       lvalues(key) = index( &
@@ -599,7 +599,7 @@ contains
     enddo
     BooleanValue = BooleanValue_log ( str, lkeys, lvalues, separator )
     deallocate ( lvalues, stat=status )
-    if ( status /= 0 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+    if ( status /= 0 ) call myMessage( MLSMSG_Error, ModuleName, &
       & 'Unable to deallocate lvalues in BooleanValue_str' )
   end function BooleanValue_str
 
@@ -1462,7 +1462,7 @@ contains
     ! Executable code, setup arrays
     inSize=SIZE(ints)
     allocate (duplicate(inSize), STAT=status)
-    if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (status /= 0) CALL myMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"duplicate")
     if ( present(extra) ) then
       extraSize=size(extra)
@@ -1501,7 +1501,7 @@ contains
 
     noUnique=count(.NOT. duplicate)
 
-    if (noUnique>SIZE(outs)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (noUnique>SIZE(outs)) CALL myMessage(MLSMSG_Error,ModuleName, &
          & "outs too small")
 
     if ( noUnique > 0 ) then
@@ -1510,7 +1510,7 @@ contains
          k = findFirst(.not. duplicate(j:))
          ! print *, 'j: ', j, '   k: ', k
          if ( k+j-1 > inSize ) then
-           call MLSMessage(MLSMSG_Error, ModuleName, &
+           call myMessage(MLSMSG_Error, ModuleName, &
              & "k goes past array end in GetUniqueInts")
            outs(i)=ints(inSize)
            return
@@ -1580,14 +1580,14 @@ contains
       ! print *, 'len(str): ', len(str)
       ! print *, 'Longestlen: ', Longestlen
       ! print *, 'nElems: ', nElems
-      call MLSMessage(MLSMSG_Error, ModuleName, &
+      call myMessage(MLSMSG_Error, ModuleName, &
          & "Element LENGTH too long in GetUniqueList")
       return
     endif
     allocate (inStringArray(nElems), outStringArray(nElems), STAT=status)
     ! print *, 'shapes: ', &
     !   & (/ size(inStringArray), size(outStringArray) /)
-    if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (status /= 0) CALL myMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"stringArray in GetUniqueList")
     call list2Array(str, inStringArray, countEmpty, inseparator, &
      & IgnoreLeadingSpaces)
@@ -1599,7 +1599,7 @@ contains
     if ( present(str2) ) then
       nElems2 = NumStringElements(str2, countEmpty, inseparator, Longestlen)
       allocate (inStrAr2(nElems2), STAT=status)
-      if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+      if (status /= 0) CALL myMessage(MLSMSG_Error,ModuleName, &
            & MLSMSG_Allocate//"stringArray2 in GetUniqueList")
       call list2Array(str2, inStrAr2, countEmpty, inseparator, &
        & IgnoreLeadingSpaces)
@@ -1671,7 +1671,7 @@ contains
     keepLast = ( index(myOptions, 'L') > 0 )
     inSize=SIZE(inList)
     allocate (duplicate(inSize), STAT=status)
-    if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (status /= 0) CALL myMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"duplicate")
     if ( present(extra) ) then
       extraSize=size(extra)
@@ -1722,9 +1722,9 @@ contains
 
     noUnique=count(.NOT. duplicate)
 
-    if (noUnique>SIZE(outList)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (noUnique>SIZE(outList)) CALL myMessage(MLSMSG_Error,ModuleName, &
          & "outList too small")
-    if (len(outList)<len(List)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (len(outList)<len(List)) CALL myMessage(MLSMSG_Error,ModuleName, &
          & "outList strings to small")
     outList=""
 
@@ -1743,7 +1743,7 @@ contains
          k = findFirst(.not. duplicate(j:))
          ! print *, 'j: ', j, '   k: ', k
          if ( k+j-1 > inSize ) then
-           call MLSMessage(MLSMSG_Error, ModuleName, &
+           call myMessage(MLSMSG_Error, ModuleName, &
              & "k goes past array end in GetUniqueStrings")
            outList(i)=List(inSize)
            return
@@ -3120,7 +3120,7 @@ contains
 ! General case
     ALLOCATE(charBuf(len(str)+1), STAT=istr)
     if (istr /= 0) then
-      CALL MLSMessage(MLSMSG_Error,ModuleName, &
+      CALL myMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"charBuf")
       RETURN
     endif
@@ -3306,7 +3306,7 @@ contains
      & binNumber(nElems), invBinNumber(nElems), &
      & jsort(nElems), inTheBin(nElems), &
      & STAT=status)
-    if (status /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+    if (status /= 0) CALL myMessage(MLSMSG_Error, ModuleName, &
          & MLSMSG_Allocate//"stringArray, etc. in SortArray")
     outIntArray = 0
     numBins = 1
@@ -3434,7 +3434,7 @@ contains
     endif
     deallocate (stringArray, chValue, cvInvBN, binNumber, invBinNumber, &
      & jsort, inTheBin, STAT=status)
-    if (status /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+    if (status /= 0) CALL myMessage(MLSMSG_Error, ModuleName, &
          & MLSMSG_DeAllocate//"stringArray, etc. in SortArray")
 
    contains
@@ -3560,12 +3560,12 @@ contains
     if ( nElems <= 0 ) then
       return
     elseif ( Longestlen > MAXSTRELEMENTLENGTH ) then
-      call MLSMessage(MLSMSG_Error, ModuleName, &
+      call myMessage(MLSMSG_Error, ModuleName, &
          & "Element LENGTH too long in SortList")
       return
     endif
     allocate (stringArray(nElems), STAT=status)
-    if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    if (status /= 0) CALL myMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"stringArray in SortList")
     call list2Array( inList, stringArray, countEmpty, inseparator, &
      & IgnoreLeadingSpaces )
@@ -4273,6 +4273,32 @@ contains
   end subroutine wrap_noQuotes
 
 !============================ Private ==============================
+  ! ------------------------------------  myMessage  -----
+  subroutine myMessage ( severity, name, line, advance )
+    ! Args
+    integer, intent(in)           :: severity
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: line
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    ! Local variables
+    integer :: nChars
+    character(len=len(line) + len(name) + 3) :: thus
+    ! Executable
+    nChars = len(line)
+    thus = line
+    if ( len_trim(name) > 0 ) then
+      nChars = len(line) + len(name) + 3
+      thus = '(' // trim(name) // ') ' // line
+    endif
+    if ( severity > MLSMSG_Warning ) then
+      call PrintItOut( thus(1:nChars), SEVERITY, exitStatus = 1  )
+    else
+      call PrintItOut( thus(1:nChars), SEVERITY  )
+    endif
+  end subroutine myMessage
+
   subroutine prepOptions( options )
     ! Process options into separate optional args
     ! You should call this at the start of every procedure
@@ -4324,6 +4350,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.61  2013/08/28 00:38:17  pwagner
+! Added a local version of MyMessage to evade possible circular dependency
+!
 ! Revision 2.60  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !

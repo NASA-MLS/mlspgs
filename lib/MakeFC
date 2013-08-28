@@ -43,8 +43,7 @@ endif
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #These modules require custom builds, so omit build commands from dependencies
-CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90 \
-    MLSStrings.f90 MLSStringLists.f90
+CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90 
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 
 ifdef HDFINC
@@ -181,6 +180,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.61  2013/08/28 00:39:15  pwagner
+# Lifted custom builds from MLSStrings.f90 MLSStringLists.f90
+#
 # Revision 2.60  2013/06/05 18:40:51  pwagner
 # Remove vulnerability if temp already exists in lib
 #
