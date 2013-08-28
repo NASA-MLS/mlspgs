@@ -13,15 +13,29 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
+  use CALL_STACK_M, only: DUMP_STACK
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCommon, only: MLSFile_T
-  use MLSStrings, only: Capitalize
-  use PrintIt_m, only: DefaultLogUnit, InvalidLogUnit, PrefixLen, &
-    & PrintItOut, StdoutLogUnit
+  use MLSStrings, only: CAPITALIZE
+  use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, LOGUNITNAME, PREFIXLEN, &
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_SUCCESS, &
+    & MLSMSG_TESTWARNING, MLSMSG_WARNING, MLSMESSAGECONFIG_T, &
+    & DEFAULTLOGUNIT, INVALIDLOGUNIT, PREFIXLEN, &
+    & PRINTITOUT, SNIPRCSFROM, &
+    & STDOUTLOGUNIT, MLSMESSAGECONFIG, &
+    & MLSMSG_SEVERITY_SO_FAR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK
   use SDPToolkit, only: PGS_S_SUCCESS
 
   implicit none
   private
+  
+  public :: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_SUCCESS, &
+    & MLSMSG_TESTWARNING, MLSMSG_WARNING, MLSMESSAGECONFIG_T, &
+    & DEFAULTLOGUNIT, INVALIDLOGUNIT, PREFIXLEN, &
+    & STDOUTLOGUNIT, MLSMESSAGECONFIG, &
+    & MLSMSG_SEVERITY_SO_FAR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -71,7 +85,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! E.g., setting threshold to 0 will print every status, even success
 
   subroutine ReportTKStatus( status, ModuleNameIn, Message, Threshold )
-    use SDPToolkit, only: PGS_SMF_TestStatusLevel
+    use SDPToolkit, only: PGS_SMF_TESTSTATUSLEVEL
     ! Dummy arguments
     integer, intent(in) :: status ! e.g. PGS_TD_NOLEAPSECFILE
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
@@ -122,8 +136,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! We're a slave and we're about to expire
   ! Before we do, however, try to tell the master why
   subroutine LastGasp ( ModuleNameIn, Message )
-    use PVM, only: InfoTag, &
-      & PVMDATADEFAULT, PVMFInitSend, PVMF90Pack, SIG_AboutToDie
+    use PVM, only: INFOTAG, &
+      & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, SIG_ABOUTTODIE
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
     ! Local variables
@@ -186,6 +200,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.44  2013/08/28 00:35:39  pwagner
+! Moved more stuff from MLSMessage down to PrintIt module
+!
 ! Revision 2.43  2013/08/23 02:51:04  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
