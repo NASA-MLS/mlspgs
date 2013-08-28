@@ -29,9 +29,9 @@ module Allocate_Deallocate
 ! **************************************************
 
   use MACHINE, only: MLS_GC_NOW
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_Warning
-  use Track_m, only: TrackAllocate, TrackDeallocate
+  use PRINTIT_M, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
+    & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT
+  use Track_m, only: TRACKALLOCATE, TRACKDEALLOCATE
 
   implicit NONE
   private
@@ -282,7 +282,7 @@ contains
         l = 0
       end if
       if ( status /= 0 ) &
-        & call MLSMessage ( MLSMSG_Error, moduleNameIn, &
+        & call myMessage ( MLSMSG_Error, moduleNameIn, &
           & MLSMSG_Allocate // ItsName  // bounds(:l) )
     end if
 
@@ -323,7 +323,7 @@ contains
 
     if ( status /= 0 ) then
       write ( line, '(", status = ", i0)' ) status
-      call MLSMessage ( MLSMSG_Warning, moduleNameIn, &
+      call myMessage ( MLSMSG_Warning, moduleNameIn, &
         & MLSMSG_DeAllocate // itsName // trim(line) )
       dealloc_status = max(dealloc_status, status)
     else if ( collect_garbage_each_time ) then
@@ -1209,6 +1209,32 @@ contains
     bytes = ( ( storage_size(b) + 7 ) / 8 )
   end function BYTES_REALR8_6D
 
+  ! ------------------------------------  myMessage  -----
+  subroutine myMessage ( severity, name, line, advance )
+    ! Args
+    integer, intent(in)           :: severity
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: line
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    ! Local variables
+    integer :: nChars
+    character(len=len(line) + len(name) + 3) :: thus
+    ! Executable
+    nChars = len(line)
+    thus = line
+    if ( len_trim(name) > 0 ) then
+      nChars = len(line) + len(name) + 3
+      thus = '(' // trim(name) // ') ' // line
+    endif
+    if ( severity > MLSMSG_Warning ) then
+      call PrintItOut( thus(1:nChars), SEVERITY, exitStatus = 1  )
+    else
+      call PrintItOut( thus(1:nChars), SEVERITY  )
+    endif
+  end subroutine myMessage
+
   ! ------------------------------------  Same_Shape_Character_1d  -----
   subroutine Same_Shape_Character_1d ( Ref, New, ItsName, ModuleName )
     character(len=*), pointer, dimension(:) :: Ref, New
@@ -1477,6 +1503,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.42  2013/08/28 00:38:17  pwagner
+! Added a local version of MyMessage to evade possible circular dependency
+!
 ! Revision 2.41  2013/08/16 02:05:34  vsnyder
 ! Make Same_Shape public (oops), add Same_Shape..._a versions
 !
