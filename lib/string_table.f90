@@ -19,8 +19,8 @@ module STRING_TABLE
   use IO_STUFF, only: GET_LUN
   use MACHINE, only: CRASH_BURN, IO_ERROR
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use MLSMessageModule, only: MLSMSG_DEALLOCATE, MLSMSG_ALLOCATE, &
-                              MLSMSG_ERROR, MLSMESSAGE
+  use PRINTIT_M, only: MLSMSG_DEALLOCATE, MLSMSG_ALLOCATE, &
+                              MLSMSG_ERROR, PRINTITOUT
   implicit NONE
   private
 
@@ -1001,13 +1001,15 @@ contains
     end if
 
     if (status /= 0) &
-      call MLSMessage(MLSMSG_Error, moduleName, MLSMSG_Allocate // "temp_inunits")
+      call PRINTITOUT(  MLSMSG_Allocate // "temp_inunits", MLSMSG_Error, &
+        & 1, exitStatus=1 )
 
     if (associated(inunit_list)) then
       temp_inunits(1:size(inunit_list)) = inunit_list
       deallocate(inunit_list, stat=status)
       if (status /= 0) &
-        call MLSMessage(MLSMSG_Error, moduleName, MLSMSG_DeAllocate // "inunit_list")
+        call PRINTITOUT( MLSMSG_DeAllocate // "inunit_list", &
+        & 1, exitStatus=1 )
     end if
 
     temp_inunits(size(temp_inunits)) = inunit
@@ -1024,7 +1026,8 @@ contains
       inunit_counter = 0
       deallocate(inunit_list, stat=status)
       if (status /= 0) &
-        call MLSMessage(MLSMSG_Error, moduleName, MLSMSG_DeAllocate // "inunit_list")
+        call PRINTITOUT( MLSMSG_DeAllocate // "inunit_list", &
+        & 1, exitStatus=1 )
       inunit_list => NULL()
     else
       inunit_counter = inunit_counter + 1
@@ -1058,6 +1061,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.36  2013/08/28 00:36:45  pwagner
+! Moved more stuff from MLSMessage down to PrintIt module
+!
 ! Revision 2.35  2013/06/12 02:15:38  vsnyder
 ! Cruft removal
 !
