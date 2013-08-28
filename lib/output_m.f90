@@ -21,13 +21,18 @@ module OUTPUT_M
   
   use DATES_MODULE, only:  BUILDCALENDAR, DAYSINMONTH, &
     & REFORMATDATE, REFORMATTIME, UTC_TO_YYYYMMDD
+  use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCOMMON, only: FILENAMELEN, FINITE_SIGNAL, IS_WHAT_IEEE
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_INFO, MLSMSG_ERROR
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
     & LIST2ARRAY, NUMSTRINGELEMENTS, WRAP
   use MLSSTRINGS, only: REPLACENONASCII, LOWERCASE, NCOPIES, &
     & READINTSFROMCHARS, TRIM_SAFE, WRITEINTSTOCHARS
+  use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, &
+    & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_INFO, MLSMSG_ERROR, &
+    & MLSMSG_SEVERITY_TO_QUIT, &
+    & MLSMSG_WARNING, &
+    & PRINTITOUT, STDOUTLOGUNIT, MLSMESSAGECONFIG
   implicit none
   private
 
@@ -1496,8 +1501,9 @@ contains
       & theUnit /= 0 .and. &
       & ( atcolumnnumber == 1 ) ) then
       flush ( theUnit, iostat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & trim('Unable to flush prUnit ' // outputOptions%name) )
+      if ( status /= 0 ) call PrintItOut ( &
+        & trim('Unable to flush prUnit ' // outputOptions%name), &
+        & 1, exitStatus=1 )
     endif
     ! Do we need to stamp this line? If so, at beginning or at end?
     if ( my_dont_stamp ) then
@@ -1561,16 +1567,16 @@ contains
       if ( my_adv == 'yes' ) n_chars = max(n_chars, 1)
       if ( n_chars < 1 ) then
       elseif ( present(from_where)  ) then
-        call MLSMessage ( outputOptions%MLSMSG_Level, from_where, &
+        call myMessage ( outputOptions%MLSMSG_Level, from_where, &
           & my_chars(1:n_chars), &
           & advance=my_adv )
       elseif ( outputOptions%logParent ) then
-        call MLSMessage ( outputOptions%MLSMSG_Level, &
+        call myMessage ( outputOptions%MLSMSG_Level, &
           & outputOptions%parentName, &
           & my_chars(1:n_chars), &
           & advance=my_adv )
       else
-        call MLSMessage ( outputOptions%MLSMSG_Level, &
+        call myMessage ( outputOptions%MLSMSG_Level, &
           & ModuleName, &
           & my_chars(1:n_chars), &
           & advance=my_adv )
@@ -1606,7 +1612,7 @@ contains
       ! Are we trying to avoid buffered output?
       if ( (.not. outputOptions%buffered) .and. theUnit /= 0 ) then
         flush ( theUnit, iostat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( status /= 0 ) call myMessage ( MLSMSG_Error, ModuleName, &
           & trim('Unable to flush prUnit ' // outputOptions%name) )
       endif
       if ( stamp_header ) then
@@ -2063,7 +2069,7 @@ contains
     !
     n_chars = min(len(string), lenstring)
     if ( len(string) < 1  ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      call myMessage ( MLSMSG_Error, ModuleName, &
         & 'Bad string arg in OUTPUT_STRING' )
     else if ( len_trim(string) < 1 .or. LENSTRING < 1  ) then
       call output_ ( '', advance )
@@ -2606,6 +2612,103 @@ contains
     val = ( kFlag > 0 )
   end subroutine getOption_log
 
+  ! ------------------------------------  myMessage  -----
+  subroutine myMessage_old ( severity, name, line, advance )
+    ! Args
+    integer, intent(in)           :: severity
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: line
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+    ! Local variables
+    integer :: nChars
+    character(len=len(line) + len(name) + 3) :: thus
+    ! Executable
+    nChars = len(line)
+    thus = line
+    if ( len_trim(name) > 0 ) then
+      nChars = len(line) + len(name) + 3
+      thus = '(' // trim(name) // ') ' // line
+    endif
+    if ( severity > MLSMSG_Warning ) then
+      call PrintItOut( thus(1:nChars), SEVERITY, exitStatus = 1  )
+    else
+      call PrintItOut( thus(1:nChars), SEVERITY  )
+    endif
+  end subroutine myMessage_old
+
+  subroutine myMessage ( Severity, ModuleNameIn, Message, &
+    & Advance )
+
+    ! Print a message (unless printing is suppressed).  If it has %[Nn]
+    ! in it, replace that with newline.
+
+    ! Dummy arguments
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+
+    ! Local variables
+    !                                     If nonzero, do not insert prefix.
+    logical :: AllOfIt                  ! Print all of it (no %n or %N remains)
+    integer :: L1, L2                   ! How far in the line have we printed?
+    character (len=512), save :: Line   ! Line to output, should be long enough
+    integer, save :: Line_len=0         ! Number of saved characters in line.
+    integer :: LogFileUnit
+    logical :: My_adv
+
+    ! Executable code
+    my_adv = .true.
+    if ( present(advance) ) &
+      & my_adv = advance(1:1) /= 'n' .and. advance(1:1) /= 'N'
+
+    my_adv = my_adv .and. ( severity >= MLSMessageConfig%skipMessageThr )
+    if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
+         & (severity /= MLSMSG_Debug) ) then
+      l1 = 0
+      do
+        l2 = index(Message(l1+1:),'%n' )
+        if ( l2 == 0 ) l2 = index(Message(l1+1:),'%N')
+        allOfIt = l2 == 0
+        l2 = l2 + l1 - 1 ! Last character before %n or %N, if any
+        if ( allOfIt ) l2 = len(Message) ! no %n or %N
+        call assembleFullLine( Severity, ModuleNameIn, Message(l1+1:l2), &
+          & line, line_len )
+        l1 = l2 + 2 ! "n" or "N" of %n or %N
+         ! Log the message using the toolkit routine
+         ! (or its substitute )
+         ! if either using toolkit or severity is sufficient to
+         ! quit (which means we might have been called directly
+         ! rather than from output module )
+
+        if ( my_adv .or. .not. allOfIt ) then
+          call printitout( line, severity, line_len )
+          line_len = 0
+          line = ' '
+        end if
+        if ( allOfIt ) exit
+      end do
+
+    end if
+
+    ! Now if it's an error, and the message is complete, then try to close
+    ! log file if any and quit (or crash)
+
+    if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
+      call get_config ( logFileUnit = logFileUnit )
+      if ( logFileUnit > 0 ) close ( logFileUnit  )
+      if ( severity >= MLSMSG_Crash .or. MLSMessageConfig%CrashOnAnyError ) then
+        NEVERCRASH = .false.
+        call crash_burn
+      endif
+      call exit_with_status ( 1  )
+    end if
+  end subroutine myMessage
+
   ! .............................................  nCharsinFormat  .....
   function nCharsinFormat ( Format ) result(nplusm)
     ! Utility to calculate how many characters in a format spec:         
@@ -2632,7 +2735,7 @@ contains
     call ourExtractSubString(TRIM(myFormat), kChar, 'f', '.')             
     if ( kChar == '0' ) return ! Special case of e.g. 'f0.3'
     read (kChar, '(i2)') m                                                
-    if (m < 1) call MLSMessage ( MLSMSG_Error, ModuleName, &              
+    if (m < 1) call myMessage ( MLSMSG_Error, ModuleName, &              
       & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )      
     if ( index(TRIM(myFormat), 'x' ) == 0 ) then                          
       n = 0                                                               
@@ -2642,7 +2745,7 @@ contains
       if (n < 1) then                                                     
         print *, trim(kChar)                                              
         print *, trim(myFormat)                                           
-        call MLSMessage ( MLSMSG_Error, ModuleName, &                     
+        call myMessage ( MLSMSG_Error, ModuleName, &                     
           & 'Bad conversion to n in OUTPUT_xxxLE (format not "{defg}"' )  
       end if                                                              
     end if                                                                 
@@ -2723,7 +2826,7 @@ contains
       outstr(pos2+1:) = ' '   ! To fill to the end with blanks
       outstr(pos2+1:pose) = instr(pos2+1+d:pose+d)
     else
-      call MLSMessage ( MLSMSG_Error, ModuleName, &              
+      call myMessage ( MLSMSG_Error, ModuleName, &              
       & 'Not yet able to replace shorter substring with longer' ) 
     end if
   end subroutine ourReplaceSubString
@@ -2842,6 +2945,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.106  2013/08/28 00:35:39  pwagner
+! Moved more stuff from MLSMessage down to PrintIt module
+!
 ! Revision 2.105  2013/08/23 02:51:04  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
