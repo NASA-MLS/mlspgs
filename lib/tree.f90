@@ -13,8 +13,8 @@ module TREE
 
   use ERROR_HANDLER, only: COMPILER, ERROR_INTRO
   use MACHINE, only: IO_ERROR
-  use MLSMessageModule, only: STOPWITHERRORMSG
-  use OUTPUT_M, only: NewLine, OUTPUT
+  use PRINTIT_M, only: PRINTITOUT, MLSMSG_ERROR
+  use OUTPUT_M, only: NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, LOOKUP_AND_INSERT
   use SYMBOL_TABLE, only: SET_SYMBOL, SYMBOL
   use SYMBOL_TYPES, only: T_NULL
@@ -149,7 +149,8 @@ contains
       end if
       call io_error ( 'TREE%ALLOCATE_TREE-E- Unable to allocate tree', &
         stat, ' ' )
-      call StopWithErrorMsg ( 'TREE%ALLOCATE_TREE-E- Unable to allocate tree' )
+      call PrintItOut ( 'TREE%ALLOCATE_TREE-E- Unable to allocate tree', &
+        & 1, exitStatus=1 )
     end if
     call init_tree
   end subroutine ALLOCATE_TREE
@@ -609,6 +610,15 @@ contains
     call StopWithErrorMsg ( 'Possibly an error in the source code' )
   end subroutine TREE_ERROR
 
+  ! ------------------ Private ---------------------
+  ! ------------ StopWithErrorMsg ------------
+  subroutine StopWithErrorMsg ( Message )
+    ! Print Message, dump calling stack (if any) and stop
+    character (len=*), intent(in) :: Message ! Line of text
+    ! Executable
+    call PrintItOut( message, MLSMSG_ERROR, exitStatus = 1  )
+  end subroutine StopWithErrorMsg
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -622,6 +632,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.17  2013/08/28 00:36:21  pwagner
+! Moved more stuff from MLSMessage down to PrintIt module
+!
 ! Revision 2.16  2012/03/15 22:46:37  vsnyder
 ! Make nsons pure, some cannonball polishing
 !
