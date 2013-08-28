@@ -16,8 +16,8 @@ module TIME_M
 ! Compute either CPU time, in arbitrary units, or wall-clock time, in
 ! seconds since midnight.
 
-  use dates_module, only: yyyymmdd_to_dai
-  use MLSMessageModule, only: MLSMSG_Warning, MLSMessage
+  use DATES_MODULE, only: YYYYMMDD_TO_DAI
+  use PRINTIT_M, only: MLSMSG_WARNING, PRINTITOUT
   implicit none
   private
 
@@ -134,7 +134,7 @@ contains
 
   subroutine BEGIN ( SHOW )
     ! Announce the time of day of starting
-    use Output_m, only: Output_Date_and_Time
+    use Output_m, only: OUTPUT_DATE_AND_TIME
     character(len=*), intent(in) :: SHOW
     call cpu_time ( start_CPU_time )
     call output_date_and_time ( msg=show )
@@ -142,7 +142,7 @@ contains
 
   subroutine FINISH ( SHOW )
     ! Announce the time of day and CPU time of finishing
-    use Output_m, only: Output_Date_and_Time
+    use Output_m, only: OUTPUT_DATE_AND_TIME
     character(len=*), intent(in) :: SHOW
     double precision :: Finish_CPU_time
     call cpu_time ( finish_CPU_time )
@@ -157,8 +157,9 @@ contains
     ! If not default, will try for any value != retry_config%FAILED_RESULT
     ! Therefore, there's no reason to input both args
     if ( present(successful_result) .and. present(failed_result) ) then
-      call MLSMessage( MLSMSG_Warning, ModuleName, &
-       "both args supplied in call to init_retry--only FAILED_RESULT effective")
+      call PrintItOut( &
+        & "both args supplied in call to init_retry--only FAILED_RESULT effective", &
+        & MLSMSG_Warning )
     endif
     retry_config%failed_result = FAILED_DEFAULT  
     retry_config%successful_result = SUCCESSFUL_DEFAULT
@@ -295,6 +296,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.13  2013/08/28 00:37:14  pwagner
+!Moved more stuff from MLSMessage down to PrintIt module
+!
 !Revision 2.12  2013/06/12 02:15:56  vsnyder
 !Cruft removal
 !
