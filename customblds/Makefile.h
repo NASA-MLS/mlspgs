@@ -214,15 +214,15 @@ ncep_dao.o: ncep_dao.mod
 
 # Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
 # unless treated vry carefully
-MLSStringLists.o:
-	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStringLists.o mlsstringlists.mod 
-mlsstringlists.mod: MLSStringLists.f90 mlscommon.mod mlsmessagemodule.mod \
-	mlssets.mod mlsstrings.mod
-	$(UTILDIR)/newAifBdiff.sh -a mlsstringlists.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
-MLSStrings.o: mlsstrings.mod MLSStrings.f90 
-	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStrings.o mlsstrings.mod 
-mlsstrings.mod: MLSStrings.f90 mlscommon.mod ReadANumFromChars.f9h
-	$(UTILDIR)/newAifBdiff.sh -a mlsstrings.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+#MLSStringLists.o:
+#	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStringLists.o mlsstringlists.mod 
+#mlsstringlists.mod: MLSStringLists.f90 mlscommon.mod mlsmessagemodule.mod \
+#	mlssets.mod mlsstrings.mod
+#	$(UTILDIR)/newAifBdiff.sh -a mlsstringlists.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+#MLSStrings.o: mlsstrings.mod MLSStrings.f90 
+#	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStrings.o mlsstrings.mod 
+#mlsstrings.mod: MLSStrings.f90 mlscommon.mod ReadANumFromChars.f9h
+#	$(UTILDIR)/newAifBdiff.sh -a mlsstrings.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
 
 else
 #	l1
@@ -366,10 +366,10 @@ ncep_dao.o:
 
 # Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
 # unless treated very carefully
-MLSStringLists.o:
-	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
-MLSStrings.o:
-	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
+#MLSStringLists.o:
+#	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
+#MLSStrings.o:
+#	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
 
 endif
 endif
@@ -453,6 +453,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.3  2013/06/12 18:18:04  pwagner
+# Changes to pass most FOPTS for Strings modules
+#
 # Revision 1.2  2012/04/20 00:43:26  pwagner
 # Fixed NOUNASS so it works again with NAG
 #
