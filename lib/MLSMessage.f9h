@@ -77,40 +77,6 @@
 ! === (end of api) ===
   ! ---------------------------------------------------------------------------
 
-  ! Define some low level parameters.  These are used by the calling code to
-  ! indicate the severity or otherwise of the messages.
-  ! Normally, we treat any severity of Error or worse as reason to stop.
-  ! Any Warning is worth recording, and suppressed when too numerous.
-  ! Info may be customized to show, phase name, chunk number, etc.
-  ! Be advised, Crash may not properly close files opened by your run.
-  ! Use it only for specific debugging where you need a walkback.
-  ! See also MLSMessageConfig%crashOnAnyError
-
-  integer, public, parameter :: MLSMSG_Success     = PGS_S_SUCCESS ! == 0
-  integer, public, parameter :: MLSMSG_Debug       = MLSMSG_Success + 1
-  integer, public, parameter :: MLSMSG_Info        = MLSMSG_Debug + 1
-  integer, public, parameter :: MLSMSG_Warning     = MLSMSG_Info + 1
-  integer, public, parameter :: MLSMSG_Error       = MLSMSG_Warning + 1
-  integer, public, parameter :: MLSMSG_Crash       = MLSMSG_Error + 1
-  integer, public, parameter :: MLSMSG_TestWarning = MLSMSG_Crash + 1
-
-  ! MLSMSG_Severity_to_* can be reset in a main program to cause us
-  ! to become more lenient (set it higher) or strict (set it lower )
-  integer, public, save      :: MLSMSG_Severity_so_far      = PGS_S_SUCCESS
-  integer, public, save      :: MLSMSG_Severity_to_quit     = MLSMSG_Error
-  integer, public, save      :: MLSMSG_Severity_to_walkback = MLSMSG_Error
-
-  private :: SeverityNames
-  character (len=*), dimension(MLSMSG_Success:MLSMSG_Crash), parameter :: &
-     & SeverityNames = (/&
-     & "Success", &
-     & "Debug  ", &
-     & "Info   ", &
-     & "Warning", &
-     & "Error  ", &
-     & "Crash  " &
-     /)
-
   ! Returned status values of how MLSMessage fared or how message was treated
   integer, public, parameter :: MLSMSGSTATUS_Normal = PGS_S_SUCCESS ! == 0
   integer, public, parameter :: MLSMSGSTATUS_Suppressed = MLSMSGSTATUS_Normal + 1
@@ -142,8 +108,6 @@
 
   ! This set of parameters are simple prefixes for common messages
 
-  character (len=*), public, parameter :: MLSMSG_Allocate = &
-     & "Allocation failed: "
   character (len=*), public, parameter :: MLSMSG_Fileopen = &
      & "Failed to open file: "
   character (len=*), public, parameter :: MLSMSG_Keyword = &
@@ -152,8 +116,6 @@
      & "Unable to read L1B data item: "
   character (len=*), public, parameter :: MLSMSG_Duplicate = &
      & "There is already an entry with the name "
-  character (len=*), public, parameter :: MLSMSG_DeAllocate = &
-     & "Deallocation failed: "
   character (len=*), public, parameter :: MLSMSG_PVM = &
      & "PVM Error: "
 
@@ -162,52 +124,7 @@
   logical, private, parameter :: USEDEFAULTFORMATSTDOUT = .false. ! Use FMT=*
   ! This datatype describes the configuration of the messaging suite
 
-  ! May get some of these from MLSCommon? 
-  type, public :: MLSMessageConfig_T
-    ! We log messages by toolkit (if useToolkit and UseSDPToolkit are TRUE )
-    ! In the following, values would have the effect of adding logged messages:
-    ! DEFAULTLOGUNIT: none added
-    ! STDOUTLOGUNIT:  to stdout
-    !  n > 0:         to ftn unit n
-    integer :: logFileUnit             = DEFAULTLOGUNIT ! -2
-    ! In the following, values would have the effect on identical warnings of:
-    ! -1: Print every one without suppression
-    !  0: Suppress every one
-    !  1: Print every one only once
-    integer :: limitWarnings           = 1000 ! Max number each warning
-    integer :: masterTID               = -1 ! Where to send error msg
-    character (len=prefixLen) :: prefix &
-      &                                = ''   ! Prefix to every msg
-    ! Instead of showing both module names and severity for every message
-    ! you can control thresholds
-    ! (1) the severity below which to skip showing module names
-    integer :: skipModuleNamesThr      = MLSMSG_Success ! Always show module
-    ! (2) the severity below which to skip showing severity
-    integer :: skipSeverityThr         = MLSMSG_Success ! Always show severity
-    ! (3) the severity below which to skip messages entirely
-    integer :: skipMessageThr          = MLSMSG_Success ! Always show messages
-    ! (4) simply skip every debug
-    logical :: suppressDebugs          = .false.
-
-    ! Instead of simply calling them Info, you could use something more
-    ! informative, like Phase names
-    character (len=prefixLen) :: Info   &
-      &                                = ''      ! What (else) to call Info
-    logical :: useToolkit              = .true.
-    integer :: MaxModuleNameLength     = 32      ! Abbreviate longer name
-    integer :: MaxSeverityNameLength   = 8       ! Abbreviate longer severity
-    logical :: CrashOnAnyError         = .false. ! See crash warning
-    logical :: SendErrMsgToMaster      = .false. ! send last gasp to master?
-    logical :: ShowCumulativeSeverity  = .false. ! print severity_so_far?
-    logical :: StackTrace              = .false. ! Trace via MLSMessageCalls?
-    ! Track the last file we were reading/writing if an error occurs and
-    ! that file isn't passed in the call statement
-    type(MLSFile_T) :: MLSFile ! which file were we reading/writing last?
-  end type MLSMessageConfig_T
-
-  ! This variable describes the configuration
-  type (MLSMessageConfig_T), public, save :: MLSMESSAGECONFIG
-  
+ 
   ! The following can be used to help trace the sequence of calls that led
   ! to an error; 
   
@@ -249,7 +166,6 @@ contains
   ! dump the configuration
 
   subroutine dumpConfig( config )
-    use PrintIt_m, only: Get_Config, LogUnitName, PrefixLen
     ! arg
     type(MLSMessageConfig_T), optional, intent(in) :: config
     ! Internal args
@@ -697,7 +613,7 @@ contains
   subroutine MLSMessageSetup ( SuppressDebugs, LogFileUnit, Prefix, useToolkit, &
     & CrashOnAnyError  )
 
-    use PrintIt_m, only: Get_Config, Set_Config, StdoutLogUnit
+    use PrintIt_m, only: GET_CONFIG, SET_CONFIG, STDOUTLOGUNIT
 
     ! Dummy arguments
     logical, optional, intent(in) :: SuppressDebugs
@@ -732,7 +648,7 @@ contains
   ! This routine simply closes the MLSMessage log file if there is one.
   ! It does so by pointing further logged messages at stdout
   subroutine MLSMessageClose
-    use PrintIt_m, only: Set_Config
+    use PrintIt_m, only: SET_CONFIG
     ! Executable code
     call set_config ( logFileUnit = STDOUTLOGUNIT ) ! -1
   end subroutine MLSMessageClose
@@ -800,7 +716,7 @@ contains
     ! (4) Clear last Warning Msg
     !
     ! (Would it be better to have 4 different routines?)
-    use PrintIt_m, only: Get_Config, Set_Config
+    use PrintIt_m, only: GET_CONFIG, SET_CONFIG
     ! Args
     integer, intent(in), optional :: logFileUnit
     logical, intent(in), optional :: CrashOnAnyError
@@ -857,7 +773,7 @@ contains
   ! i.e., we wouldn't mess with masterTID or logFileUnit
 
   subroutine restoreConfig
-    use PrintIt_m, only: Set_Config
+    use PrintIt_m, only: SET_CONFIG
     MLSMessageConfig%limitWarnings           = 1000 
     MLSMessageConfig%skipModuleNamesThr      = MLSMSG_Success ! Always show module   
     MLSMessageConfig%skipSeverityThr         = MLSMSG_Success ! Always show severit  
@@ -946,62 +862,6 @@ contains
     call dump ( '    error code   : ', MLSFile%errorCode)
   end subroutine dumpFile
 
-  !-----------------------------------------  assembleFullLine  -----
-  ! Assemble the full line out of 
-  ! (1) A severity level
-  ! (2) The module name
-  ! (3) Whatever message we're asked to repeat
-  subroutine assembleFullLine( Severity, ModuleNameIn, Message, &
-    & line, line_len )
-    integer, intent(in)           :: Severity ! e.g. MLSMSG_Error
-    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
-    character (len=*), intent(in) :: Message ! Line of text
-    character(len=*)              :: Line
-    integer                       :: line_len
-    ! Assemble a full message line
-
-    if ( severity < MLSMessageConfig%skipMessageThr ) then
-      return
-    elseif ( line_len == 0 ) then
-      if ( severity < MLSMessageConfig%skipSeverityThr ) then
-        line = ' '
-      elseif ( severity > MLSMSG_Success-1 .and. severity < MLSMSG_Crash+1 ) then
-        line = trim(SeverityNamesFun(severity))
-        if ( MLSMessageConfig%ShowCumulativeSeverity .and. len_trim(line) > 0 ) then
-          line = trim(line) // ':' // &
-            & trim(SeverityNamesFun(MLSMSG_Severity_so_far))
-        endif
-        if ( severity == MLSMSG_Info .and. &
-          & len_trim(MLSMessageConfig%Info) > 0 ) &
-          & line = trim(line) // ' ' // MLSMessageConfig%Info
-      else
-        line = 'Unknown'
-      end if
-      line_len = len_trim(line)
-      if ( severity >= MLSMessageConfig%skipModuleNamesThr .and. &
-        & len_trim(snipRCSFrom ( moduleNameIn )) > 0 ) then
-        line(line_len+1:line_len+2) = ' ('
-        line(line_len+3:) = snipRCSFrom ( moduleNameIn )
-        line_len = len_trim(line) + 3
-        line(line_len-2:line_len-1) = '):'
-      elseif ( severity >= MLSMessageConfig%skipSeverityThr ) then
-        line_len = len_trim(line) + 1
-        line(line_len:line_len) = ':'
-      end if
-    end if
-    ! Make sure that we don't start prefixing with a blank
-    if ( any( severity >= &
-      & (/MLSMessageConfig%skipModuleNamesThr, MLSMessageConfig%skipSeverityThr/) &
-      & ) .and. line(1:1) == ' ' ) then
-      line_len = line_len - 1
-      line(1:line_len) = line(2:line_len+1)
-    endif
-    line(line_len+1:) = message
-    line_len = line_len + len(message) ! Not len_trim, so we can get
-    ! trailing blanks into a part of a message.  If there are trailing
-    ! blanks remaining when my_adv is true, they'll be trimmed off.
-  end subroutine assembleFullLine
-
   ! --------------------------------------------  dump  -----
   subroutine dump ( name, intValue, charValue, logValue, trimName  )
     ! In any way we're asked
@@ -1030,7 +890,7 @@ contains
       line = name // ' : ' // trim(value)
       if ( myTrim ) line = trim(name) // ' : ' // trim(value)
     endif
-    call printitout(trim(line), MLSMSG_Error)
+    call printitout( trim(line), MLSMSG_Info )
   end subroutine dump
 
   function LowerCase (str) result (outstr)
@@ -1061,7 +921,8 @@ contains
     ! Print a message (unless printing is suppressed).  If it has %[Nn]
     ! in it, replace that with newline.
 
-    use PrintIt_m, only: Get_Config
+    use PrintIt_m, only: GET_CONFIG
+    use CALL_STACK_M, only: DUMP_STACK
     ! Dummy arguments
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
@@ -1125,6 +986,8 @@ contains
       elseif( MLSMessageConfig%MLSFile%name /= ' ' ) then
         call dumpFile( MLSMessageConfig%MLSFile )
       endif
+      ! Here's a chance to use our (separate) call stack
+      call dump_stack( where=.true., CPU=.true. )
       if ( MLSMessageConfig%SendErrMsgToMaster .and. &
         & MLSMessageConfig%masterTID > 0 ) call LastGasp(ModulenameIn, Message )
       call get_config ( logFileUnit = logFileUnit )
@@ -1137,62 +1000,11 @@ contains
     end if
   end subroutine MLSMessageStd
 
-  function ModuleNameFun ( moduleName ) result (name)
-    ! Return name of module unless asked to abbreviate
-    character(len=*), intent(in)    :: moduleName
-    character(len=len(ModuleName))  :: name
-    name = moduleName
-    if ( len_trim(moduleName) < 1 ) name = 'Unknown'
-    if ( MLSMessageConfig%MaxModuleNameLength < 1 ) then
-      name = ' '
-    elseif ( MLSMessageConfig%MaxModuleNameLength < len(ModuleName) ) then
-      name = name(1:MLSMessageConfig%MaxModuleNameLength) // ' '
-    endif
-  end function ModuleNameFun
-
-  function SeverityNamesFun ( severity ) result (name)
-    ! Return name of level corresponding to severity, if recognized
-    ! If not recignized, return  'Unknown'
-    ! Full name unless asked to abbreviate
-    integer, intent(in)                   :: severity
-    character(len=len(SeverityNames(1)))  :: name
-    if ( severity < MLSMSG_Success .or. severity > MLSMSG_Crash ) then
-      name = 'Unknown'
-    else
-      name = SeverityNames( severity )
-    endif
-    if ( MLSMessageConfig%MaxSeverityNameLength < 1 ) then
-      name = ' '
-    elseif ( MLSMessageConfig%MaxSeverityNameLength < len(SeverityNames(1)) ) then
-      name = name(1:MLSMessageConfig%MaxSeverityNameLength) // ' '
-    endif
-  end function SeverityNamesFun
-
-  function snipRCSFrom ( with ) result ( without )
-    ! Trim nonsense involving RCS system from input "with"
-    ! (if present)
-    ! Args
-    character(len=*), intent(in) :: with
-    character(len=len(with))     :: without
-    integer :: secondBuck
-      if ( with(1:1) == '$' ) then
-      ! The with is <dollar>RCSFile: <filename>,v <dollar><otherstuff>
-      ! The without is <filename><otherstuff>
-        secondBuck = 1 + index( with(2:),'$')
-        if ( secondBuck-3 > 11 .and. secondBuck < len_trim(with) ) then
-          ! without = with(11:(LEN_TRIM(with)-8))
-          without = with(11:secondBuck-4) // with(secondBuck+1:)
-        else
-          without = with(11:(LEN_TRIM(with)-8))
-        endif
-      else
-        without = with
-      end if
-      without = ModuleNameFun( without )
-  end function snipRCSFrom
-  
 !
 ! $Log$
+! Revision 2.25  2013/08/28 00:35:39  pwagner
+! Moved more stuff from MLSMessage down to PrintIt module
+!
 ! Revision 2.24  2013/08/23 02:51:04  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
