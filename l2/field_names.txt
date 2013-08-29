@@ -431,6 +431,7 @@ spectroscopy
 spect_der  # spectroscopy derivatives
 spread
 stamp
+stack
 state
 stateMax # for the state vector during retrieval
 stateMin # for the state vector during retrieval
@@ -510,6 +511,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.238  2013/08/29 19:36:45  pwagner
+# May Dump plain stack, too
+#
 # Revision 2.237  2013/08/17 00:19:27  pwagner
 # Fixed HGrids may have geolocations overridden
 #
