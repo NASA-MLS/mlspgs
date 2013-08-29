@@ -137,7 +137,6 @@ contains
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     use CONSTRUCTQUANTITYTEMPLATES, only: ANYGOODSIGNALDATA
     use CHUNKS_M, only: MLSCHUNK_T
-    use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_SIGNAL, F_BOOLEAN
     use MLSCOMMON, only: MLSFILE_T
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
@@ -426,7 +425,6 @@ contains
 
   ! ------------------------------------- BooleanFromComparingQtys --
   function BOOLEANFROMCOMPARINGQTYS ( ROOT, VECTORS ) result( THESIZE )
-    use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_BOOLEAN, F_FORMULA
     use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE
@@ -1123,6 +1121,7 @@ contains
 
     use ANTENNAPATTERNS_M, only: DUMP_ANTENNA_PATTERNS_DATABASE
     use CALENDAR, only: DURATION_FORMATTED, TIME_T, TK
+    use CALL_STACK_M, only: DUMP_STACK
     use DECLARATION_TABLE, only: NUM_VALUE
     use DUMP_0, only: DIFF, DUMP, RMSFORMAT
     use EXPR_M, only: EXPR
@@ -1145,7 +1144,7 @@ contains
       & F_HGRID, F_IGRF, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, &
       & F_MIETABLES, F_OPTIONS, F_PFADATA, F_PFAFILES, F_PFANUM, F_PFASTRU, &
       & F_PHASENAME, F_POINTINGGRIDS, F_QUANTITY, &
-      & F_SIGNALS,  F_SPECTROSCOPY, F_STOP, &
+      & F_SIGNALS,  F_SPECTROSCOPY, F_STACK, F_STOP, &
       & F_STOPWITHERROR, F_SURFACE, F_TEMPLATE, F_TEXT, F_TGRID, &
       & F_VECTOR, F_VECTORMASK, F_VGRID, &
       & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE, &
@@ -1164,8 +1163,8 @@ contains
       & DUMPMACROS, MLSMESSAGE
     use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME, &
       & DUMP_SECTION_TIMINGS
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, MLSMESSAGEEXIT, &
-      & MLSMSG_CRASH, MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, &
+      & MLSMSG_CRASH, MLSMSG_ERROR, MLSMESSAGEEXIT
     use MLSFINDS, only: FINDFIRST
     use MLSSIGNALS_M, only: DUMP, GETRADIOMETERINDEX, RADIOMETERS, SIGNALS
     use MLSSTRINGS, only: INDEXES, LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
@@ -1778,6 +1777,8 @@ contains
           call output ( what, after=': ' )
           call dump ( catalog(what), details=details )
         end do
+      case ( f_stack )
+        call dump_stack( where=.true., CPU=.true. )
       case ( f_template ) ! Dump vector templates or quantity templates
         if ( details < -1 ) cycle
         do i = 2, nsons(son)
@@ -2594,6 +2595,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.91  2013/08/29 19:37:41  pwagner
+! May Dump plain stack, too
+!
 ! Revision 2.90  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
