@@ -1515,6 +1515,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_quantity, vectorQuantity(), &
              begin, f+f_signals, field_spec(s_signal), &
              begin, f+f_spectroscopy, field_type(t_molecule), &
+             begin, f+f_stack, boolean(), &
              begin, f+f_stop, boolean(), &
              begin, f+f_stopWithError, boolean(), &
              begin, f+f_template, field_spec(s_vectorTemplate,s_quantity), &
@@ -1959,6 +1960,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.582  2013/08/29 19:37:04  pwagner
+! May Dump plain stack, too
+!
 ! Revision 2.581  2013/08/17 02:55:44  vsnyder
 ! Remove unused USE named
 !
