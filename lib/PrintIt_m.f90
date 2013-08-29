@@ -24,9 +24,9 @@ module PrintIt_m
 
   ! These apply if we don't log messages to a Fortran unit number
   ! other than Error_Unit or Output_Unit
-  integer, parameter, public :: StdoutLogUnit       = Output_Unit
-  integer, parameter, public :: DefaultLogUnit      = Error_Unit
-  integer, parameter, public :: InvalidLogUnit      = max(0,stdoutLogUnit+1)
+  integer, parameter, public :: InvalidLogUnit      = 0 ! max(0,stdoutLogUnit+1)
+  integer, parameter, public :: StdoutLogUnit       = InvalidLogUnit - 1 ! Output_Unit
+  integer, parameter, public :: DefaultLogUnit      = StdoutLogUnit - 1 ! Error_Unit
 
   integer, parameter, public :: PGS_S_SUCCESS = 0
   integer, parameter, public :: PrefixLen = 32
@@ -37,7 +37,7 @@ module PrintIt_m
     integer :: Severity_To_Quit = 0
     logical :: UseDefaultFormatStdout = .false.
     logical :: UseToolkit = .true.
-    character(len=prefixLen) :: Prefix
+    character(len=prefixLen) :: Prefix = ''
   end type Config_t
 
   type(config_t), private, save :: Config
@@ -240,6 +240,7 @@ contains
     integer :: ioerror
     integer :: maxLineLength
     logical :: myNoPrefix
+    logical, parameter :: DEEBUG = .false.
     ! Executable
     if ( config%AsciifyMessages ) then
       line = asciify(inLine)
@@ -247,7 +248,7 @@ contains
       line = inLine
     end if
     loggedLength = len_trim(line)
-    if ( present(line_len) ) loggedLength = line_len
+    if ( present(line_len) ) loggedLength = max( line_len, loggedLength )
     myNoPrefix = .false.
     if ( present(noPrefix) ) myNoPrefix = noPrefix
     loggedLine = line
@@ -258,8 +259,12 @@ contains
     end if
     maxLineLength = min( loggedLength, len(loggedLine) )
     log_it = (config%useToolkit .and. UseSDPToolkit) .or. &
-           & severity >= config%severity_to_quit
-    if( log_it .and. loggedLength > 0 .and. config%useToolkit) then
+      & severity >= config%severity_to_quit
+    if ( DEEBUG .and. log_it ) then
+      print *, 'trim(loggedLine) ', trim(loggedLine)
+      print *, 'maxLineLength ', maxLineLength
+    endif
+    if( log_it .and. maxLineLength > 0 .and. config%useToolkit ) then
       ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:maxLineLength) )
     end if
 
@@ -402,6 +407,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.3  2013/08/29 19:34:52  pwagner
+! Fixed some bugs affecting logging via toolkit
+!
 ! Revision 2.2  2013/08/28 00:35:19  pwagner
 ! Moved more stuff from MLSMessage down to PrintIt module
 !
