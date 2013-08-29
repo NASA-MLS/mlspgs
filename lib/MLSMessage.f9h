@@ -475,6 +475,7 @@ contains
   contains
     subroutine PopStack ( Name )
       character(len=*), optional, intent(inout) :: Name
+      if ( MLSCallStack%top < 1 ) return
       if ( present(name) ) then
         if ( MLSCallStack%top < 0 ) then
           name = "Stack underflow"
@@ -1002,6 +1003,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.26  2013/08/29 19:16:23  pwagner
+! Prevent an odd error pop-ing an empty stack
+!
 ! Revision 2.25  2013/08/28 00:35:39  pwagner
 ! Moved more stuff from MLSMessage down to PrintIt module
 !
