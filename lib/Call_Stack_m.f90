@@ -152,30 +152,31 @@ contains ! ====     Public Procedures     ==============================
     use Time_m, only: Time_Now
 
     character(len=*), intent(in), optional :: Before
-    character(len=10) :: Used
     logical, intent(in), optional :: Where
 
     double precision :: Delta
     real :: T
+    character(len=10) :: Used
 
-    if ( present(before) .or. present(where) ) &
-      & call dump_stack ( .true., before, where, size=.false., advance='no' )
-    if ( .not. allocated(stack) ) return
-    if ( stack_ptr < lbound(stack,1) ) return
-    call time_now ( t )
-    t = t - stack(stack_ptr)%clock
-    write ( used, '(g10.3)' ) t
-    call output ( ' used ' // trim(adjustl(used)) //  ' cpu' )
-    if ( stack(stack_ptr)%memory /= noBytesAllocated ) then
-      delta = memory_units * (noBytesAllocated - stack(stack_ptr)%memory)
-      if ( abs(delta) < huge(1) ) then
-        call dumpSize ( int(delta), before=', Memory changed by ' )
-      else
-        call dumpSize ( delta, before=', Memory changed by ' )
+    if ( present(before) .or. present(where) ) then
+      call dump_stack ( .true., before, where, size=.false., advance='no' )
+      if ( .not. allocated(stack) ) return
+      if ( stack_ptr < lbound(stack,1) ) return
+      call time_now ( t )
+      t = t - stack(stack_ptr)%clock
+      write ( used, '(g10.3)' ) t
+      call output ( ' used ' // trim(adjustl(used)) //  ' cpu' )
+      if ( stack(stack_ptr)%memory /= noBytesAllocated ) then
+        delta = memory_units * (noBytesAllocated - stack(stack_ptr)%memory)
+        if ( abs(delta) < huge(1) ) then
+          call dumpSize ( int(delta), before=', Memory changed by ' )
+        else
+          call dumpSize ( delta, before=', Memory changed by ' )
+        end if
+        call dumpSize ( memory_units * noBytesAllocated, before = ' to ' )
       end if
-      call dumpSize ( memory_units * noBytesAllocated, before = ' to ' )
+      call newLine
     end if
-    call newLine
 
     stack_ptr = stack_ptr - 1
 
@@ -232,7 +233,7 @@ contains ! ====     Public Procedures     ==============================
     intrinsic :: Date_And_Time, Storage_Size
 
     if ( .not. allocated(stack) ) then
-      ! Don't allocate with lbound < 0
+      ! If you allocate with lbound < 0, other stuff won't work.
       allocate ( stack(startingStackSize), stat=stat )
       call test_allocate ( stat, moduleName, 'Stack', &
         & ubounds=(/startingStackSize/), elementSize=storage_size(stack) )
@@ -286,6 +287,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.5  2013/08/29 19:47:52  vsnyder
+! Don't output anything in Pop_Stack if Before and Where absent
+!
 ! Revision 2.4  2013/08/23 03:16:52  vsnyder
 ! Simplify Push_Stack, some cannonball polishing (I couldn't resist)
 !
