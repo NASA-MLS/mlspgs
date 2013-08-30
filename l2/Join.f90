@@ -104,6 +104,7 @@ contains ! =====     Public Procedures     =============================
     real :: DWT2                        ! Time we finished
     real :: DWT22                       ! Time we finished, too
     integer :: KEY                      ! Tree node
+    integer :: Me = -1                  ! String index for trace
     integer :: MLSCFLINE                ! Line number in l2cf
     integer :: NODIRECTWRITES           ! Array size
     integer :: NODIRECTWRITESCOMPLETED  ! Counter
@@ -123,7 +124,7 @@ contains ! =====     Public Procedures     =============================
     
     ! Executable code
     DEEBUG = ( switchDetail(switches, 'direct') > -1 )!  .or. .true.
-    if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
+    call trace_begin ( me, "MLSL2Join", root, cond=toggle(gen) )
     timing = section_times
     if ( timing ) call time_now ( t1 )
     if ( specialDumpFile /= ' ' ) &
@@ -331,7 +332,7 @@ contains ! =====     Public Procedures     =============================
     if ( error /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Error in Join section' )
 
-    if ( toggle(gen) ) call trace_end ( "MLSL2Join" )
+    call trace_end ( "MLSL2Join", cond=toggle(gen) )
     if ( timing ) call sayTime
 
   contains
@@ -349,7 +350,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine MLSL2Join
 
-  ! ------------------------------------------------ DirectWriteCommand -----
+  ! -----------------------------------------  DirectWriteCommand  -----
   ! 
   ! Direct write is probably going to become the predominant form
   ! of output in the software, as the other forms have become a
@@ -473,7 +474,8 @@ contains ! =====     Public Procedures     =============================
     integer :: l2gp_Version
     logical :: lowerOverlap
     integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
-    integer :: MYFILE              ! File permission granted for
+    integer :: Me = -1                  ! String index for trace
+    integer :: MYFILE                   ! File permission granted for
     logical :: MYMAKEREQUEST            ! Copy of makeRequest
     character(len=FileNameLen) :: MYTHEFILE  ! File permission granted for
     character(len=256), dimension(:), pointer :: NAMEBUFFER
@@ -523,8 +525,8 @@ contains ! =====     Public Procedures     =============================
     SKIPDGM = ( switchDetail(switches, 'skipdgm') > -1 )
     nullify(thisDirect)
 
-    if ( toggle(gen) .and. switchDetail(switches,'dwreq') > -1 ) &
-      & call trace_begin ( "DirectWriteCommand", node )
+    call trace_begin ( me, "DirectWriteCommand", node, &
+      & cond=toggle(gen) .and. switchDetail(switches,'dwreq') > -1 )
     call time_now ( timeIn )
     TimeSetUp = TimeIn
     TimeWriting = TimeIn
@@ -826,15 +828,15 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgg writes ' // trim(filename) )
       call DeallocateStuff
-      if ( toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 ) &
-        & call trace_end ( "DirectWriteCommand" )
+      call trace_end ( "DirectWriteCommand", &
+        & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
       return
     else if ( skipdgm .and. any ( outputType == (/ l_l2fwm, l_l2aux, l_hdf /) ) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgm/fwm writes ' // trim(filename) )
       call DeallocateStuff
-      if ( toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 ) &
-        & call trace_end ( "DirectWriteCommand" )
+      call trace_end ( "DirectWriteCommand", &
+        & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
       return
     else
       ! OK, it's time to write this bit of the file
@@ -849,8 +851,8 @@ contains ! =====     Public Procedures     =============================
         else if ( outputType /= DirectDataBase(myFile)%type ) then
           call DeallocateStuff
           if ( DeeBUG ) print *, 'Short-circuiting ' // trim(filename)
-          if ( toggle(gen) .and. switchDetail(switches,'dwreq') > -1 ) &
-            & call trace_end ( "DirectWriteCommand" )
+          call trace_end ( "DirectWriteCommand", &
+            & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
           return
         end if
         createFileFlag = .not. any ( createdFilenames == myFile )
@@ -939,8 +941,8 @@ contains ! =====     Public Procedures     =============================
       ! Done what we wished to do if just checking paths or SKIPDIRECTWRITES
       if ( checkPaths ) then
       ! if ( SKIPDIRECTWRITES .or. checkPaths ) then
-        if ( toggle(gen) .and. switchDetail(switches,'dwreq') > -1 ) &
-        & call trace_end ( "DirectWriteCommand" )
+        call trace_end ( "DirectWriteCommand", &
+          & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
         return
       endif
       
@@ -1359,8 +1361,8 @@ contains ! =====     Public Procedures     =============================
       endif
     end if
 
-    if ( toggle(gen) .and. switchDetail(switches,'dwreq') > -1 ) &
-      & call trace_end ( "DirectWriteCommand" )
+    call trace_end ( "DirectWriteCommand", &
+      & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
     call DeallocateStuff
 
   contains
@@ -1764,14 +1766,15 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), pointer :: ThisL2GP
     integer :: Index
     integer :: FirstProfile, LastProfile ! Profile range in the l2gp to output to
+    real(rv) :: HUGERGP
+    integer :: Me = -1                   ! String index for trace
     integer :: NoSurfsInL2GP, NoFreqsInL2GP
     integer :: UseFirstInstance, UseLastInstance, NoOutputInstances
     logical :: L2gpDataIsNew
-    real(rv) :: HUGERGP
    
     hugeRgp = real ( huge(0.0_rgp), rv )
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_begin ( "JoinL2GPQuantities", key )
+    call trace_begin ( me, "JoinL2GPQuantities", key, &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
 
     ! If this is the first chunk, we have to setup the l2gp quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
@@ -1895,7 +1898,8 @@ contains ! =====     Public Procedures     =============================
     thisL2GP%status(firstProfile:lastProfile)=0
     thisL2GP%quality(firstProfile:lastProfile)=0.0
 
-    if ( toggle(gen) .and. levels(gen) > 0 ) call trace_end ( "JoinL2GPQuantities" )
+    call trace_end ( "JoinL2GPQuantities", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
   end subroutine JoinL2GPQuantities
 
   ! ----------------------------------------  JoinL2AUXQuantities  -----
@@ -1937,6 +1941,7 @@ contains ! =====     Public Procedures     =============================
     integer :: LASTMAF
     integer :: LASTPROFILE
     integer :: MAF
+    integer :: Me = -1             ! String index for trace
     integer :: NOMAFS
     integer :: NOOUTPUTINSTANCES
     integer :: USEFIRSTINSTANCE
@@ -1950,8 +1955,8 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     DEEBUG = ( switchDetail(switches, 'join') > -1 )
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_begin ( "JoinL2AUXQuantities", key )
+    call trace_begin ( me, "JoinL2AUXQuantities", key, &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
 
     hugeR4 = real ( huge(0.0_r4), r8 )
 
@@ -2135,8 +2140,8 @@ contains ! =====     Public Procedures     =============================
       &      thisL2AUX%dimensions(2)%noValues, &
       &      lastProfile-firstProfile+1/) )
     
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_end ( "JoinL2AUXQuantities" )
+    call trace_end ( "JoinL2AUXQuantities", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
 
   end subroutine JoinL2AUXQuantities
 
@@ -2222,6 +2227,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.152  2013/08/30 02:45:42  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.151  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
