@@ -111,6 +111,7 @@ contains ! =====     Public Procedures     =============================
     character(len=255) :: FileName      ! Duh
     integer :: I, J                     ! Loop inductor, subscript
     integer :: Lun                      ! Unit number for reading a file
+    integer :: Me = -1                  ! String index for trace
     type (MLSFile_T), pointer   :: MLSFile
     integer :: Son                      ! Some subtree of root.
     integer :: Version
@@ -124,8 +125,8 @@ contains ! =====     Public Procedures     =============================
     if ( parallel%master .and. .not. parallel%fwmParallel ) return
 
     error = 0
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_begin ( 'ForwardModelGlobalSetup', root )
+    call trace_begin ( me, 'ForwardModelGlobalSetup', root, &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
 
     ! "Root" now indexes an n_spec_args vertex.  See "Configuration file
     ! parser users' guide" for pictures of the trees being analyzed.
@@ -202,8 +203,8 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_end ( 'ForwardModelGlobalSetup' )
+    call trace_end ( 'ForwardModelGlobalSetup', &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
     any_errors = error
 
   contains
@@ -438,6 +439,7 @@ contains ! =====     Public Procedures     =============================
     integer :: LBLTrees(2)              ! Tree indices of f_[lu]sbLBLMolecules
     type(spectroParam_t), pointer :: LineStru(:)
     integer :: LineTrees(3)             ! Tree indices of f_line...
+    integer :: Me = -1                  ! String index for trace
     integer :: MoleculeTree             ! Tree index of f_Molecules
     integer, dimension(:), pointer :: MyMolecules ! In a LineTree
     integer :: NELTS                    ! Number of elements of an array tree
@@ -467,8 +469,8 @@ contains ! =====     Public Procedures     =============================
     call NullifyForwardModelConfig ( info ) ! for Sun's rubbish compiler
 
     error = 0
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_begin ( "ConstructForwardModelConfig", root )
+    call trace_begin ( me, "ConstructForwardModelConfig", root, &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
 
     ! Set sensible defaults
     info%allLinesForRadiometer = .false.
@@ -1103,8 +1105,8 @@ op:     do j = 2, nsons(theTree)
         & 'An error occured; see **** above' )
     end if
 
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_end ( "ConstructForwardModelConfig" )
+    call trace_end ( "ConstructForwardModelConfig", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
 
   contains
     ! ...............................................  CheckCloud  .....
@@ -1461,6 +1463,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.173  2013/08/30 02:45:39  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.172  2013/08/23 00:32:47  pwagner
 ! Initialize transformMIFRHI
 !
