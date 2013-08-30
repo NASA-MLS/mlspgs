@@ -34,9 +34,12 @@ module TRACE_M
 contains ! ====     Public Procedures     ==============================
 
 ! ------------------------------------------------  TRACE_BEGIN_B  -----
-  subroutine TRACE_BEGIN_B ( NAME_I, NAME_C, ROOT, INDEX, Cond )
+  subroutine TRACE_BEGIN_B ( NAME_I, NAME_C, ROOT, INDEX, String, Cond )
   ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
-  ! We assume the actual argument is a SAVE variable.
+  ! We assume the actual argument is a SAVE variable.  Thereby, if
+  ! Name_I is positive, we assume it's the result of entering Name_C,
+  ! and it isn't done again.
+
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
@@ -46,15 +49,16 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), intent(in) :: NAME_C
     integer, intent(in), optional :: ROOT
     integer, intent(in), optional :: INDEX
-    logical, intent(in), optional :: Cond  ! Print if true, default true
+    integer, intent(in), optional :: String ! To display after Name_I
+    logical, intent(in), optional :: Cond   ! Print if true, default true
 
     if ( name_i <= 0 ) name_i = create_string ( name_c )
-    call trace_begin ( name_i, root, index, cond )
+    call trace_begin ( name_i, root, index, string, cond )
 
   end subroutine TRACE_BEGIN_B
 
 ! ------------------------------------------------  TRACE_BEGIN_C  -----
-  subroutine TRACE_BEGIN_C ( NAME_C, ROOT, INDEX, Cond )
+  subroutine TRACE_BEGIN_C ( NAME_C, ROOT, INDEX, String, Cond )
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
@@ -63,17 +67,18 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), intent(in) :: NAME_C
     integer, intent(in), optional :: ROOT
     integer, intent(in), optional :: INDEX
-    logical, intent(in), optional :: Cond  ! Print if true, default true
+    integer, intent(in), optional :: String ! To display after Name_C
+    logical, intent(in), optional :: Cond   ! Print if true, default true
 
     integer :: Name_I
 
     name_i = create_string ( name_c )
-    call trace_begin ( name_i, root, index, cond )
+    call trace_begin ( name_i, root, index, string, cond )
 
   end subroutine TRACE_BEGIN_C
 
 ! ------------------------------------------------  TRACE_BEGIN_I  -----
-  subroutine TRACE_BEGIN_I ( NAME, ROOT, INDEX, Cond )
+  subroutine TRACE_BEGIN_I ( NAME, ROOT, INDEX, String, Cond )
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
@@ -86,7 +91,8 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: NAME
     integer, intent(in), optional :: ROOT
     integer, intent(in), optional :: INDEX
-    logical, intent(in), optional :: Cond  ! Print if true, default true
+    integer, intent(in), optional :: String ! To display after Name_I
+    logical, intent(in), optional :: Cond   ! Print if true, default true
 
     logical :: MyCond
 
@@ -121,7 +127,15 @@ contains ! ====     Public Procedures     ==============================
   subroutine TRACE_END ( NAME, INDEX, Cond )
   ! Decrement DEPTH.  Print "EXIT NAME" with DEPTH dots in front.
 
-    use Call_Stack_m, only: Pop_Stack, Stack_t, Top_Stack
+  ! The only reason to provide Name is if you want to check whether stack
+  ! pushes and pops match, by setting -Schktr.  You probably don't need to
+  ! bother with this if you can see both Trace_Begin and Trace_end, and
+  ! they're invoked with the same condition.
+
+  ! Index is no longer used.  It's taken from the stack, but retained for
+  ! compatibility.
+
+    use Call_Stack_m, only: Pop_Stack, Stack_t, Stack_Depth, Top_Stack
     use MLSCommon, only: MLSDebug, MLSVerbose, MLSNamesAreDebug, MLSNamesAreVerbose
     use MLSMessageModule, only: MLSMessageCalls
     use MLSStringLists, only: SwitchDetail
@@ -147,8 +161,7 @@ contains ! ====     Public Procedures     ==============================
 
     call top_stack ( frame )
     if ( check > -1 ) then
-      if ( frame%now == '' ) then
-        ! Push_Stack always fills Now, so this must be the empty stack default
+      if ( stack_depth() <= 0 ) then
         call output ( 'Stack underflow noticed ' )
         if ( present(name) ) call output ( 'with NAME = ' // trim(name) )
         if ( present(index) ) call output ( index, before=' INDEX = ' )
@@ -235,6 +248,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.25  2013/08/30 03:55:49  vsnyder
+! Add String argument to Trace_Begin
+!
 ! Revision 2.24  2013/08/23 02:50:47  vsnyder
 ! Use Call_Stack
 !
