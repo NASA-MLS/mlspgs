@@ -137,6 +137,8 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I                ! Loop counter
     integer :: KEY              ! S_... from Init_Tables_Module.
+    integer :: Me = -1          ! String index for trace
+    integer :: Me_Spec = -1     ! String index for trace
     integer :: NAME             ! Sub-rosa index of name
     integer :: SON              ! Son or grandson of Root
     real :: T1, T2              ! for timing
@@ -146,7 +148,7 @@ contains ! =====     Public Procedures     =============================
     timing = section_times
     if ( timing ) call time_now ( t1 )
 
-    if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
+    call trace_begin ( me, "MLSL2Construct", root, cond=toggle(gen) )
     if ( specialDumpFile /= ' ' ) &
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
 
@@ -159,8 +161,8 @@ contains ! =====     Public Procedures     =============================
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       son = subtree(i,root)
-      if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Construct.spec", son )
+      call trace_begin ( me_spec, "Construct.spec", son, &
+        & cond=toggle(gen) .and. levels(gen) > 0 )
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
         name = sub_rosa(subtree(1,son))
@@ -222,13 +224,11 @@ contains ! =====     Public Procedures     =============================
         end if
       case default ! Can't get here if tree_checker worked correctly
       end select
-      if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Construct.spec" )
+      call trace_end ( "Construct.spec", cond=toggle(gen) .and. levels(gen) > 0 )
     end do
 
-    if ( specialDumpFile /= ' ' ) &
-      & call revertOutput
-    if ( toggle(gen) ) call trace_end ( "MLSL2Construct" )
+    if ( specialDumpFile /= ' ' ) call revertOutput
+    call trace_end ( "MLSL2Construct", cond=toggle(gen) )
 
     if ( timing ) call sayTIme
 
@@ -295,6 +295,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.69  2013/08/30 02:45:35  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.68  2013/08/21 00:23:01  pwagner
 ! -g[level] can trace individual Construct specs
 !

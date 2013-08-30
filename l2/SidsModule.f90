@@ -99,6 +99,7 @@ contains
     integer :: MAF1                     ! Loop limit
     integer :: MAF2                     ! Loop limit
     integer :: MAF                      ! Index
+    integer :: Me = -1                  ! String index for trace
     integer :: QUANTITY                 ! Index
     logical :: GETANAJAC                ! Forward model needs to compute analytical Jacobians
     integer :: ROWINSTANCE              ! From jacobian
@@ -136,7 +137,7 @@ contains
     integer, parameter :: PerturbationNotState = NotPlain + 1 ! Ptb. not same as state
     integer, parameter :: WrongDestroyJacobian = PerturbationNotState + 1 ! destroyJacobian with Hessian
 
-    if ( toggle(gen) ) call trace_begin ( "SIDS", root )
+    call trace_begin ( Me, "SIDS", root, cond=toggle(gen) )
     call time_now ( t1 )
 
     nullify ( configs, perturbation, Hessian )
@@ -441,7 +442,7 @@ contains
 
     switches(switchLen+1:) = '' ! Clobber switches from SIDS command
 
-    if ( toggle(gen) ) call trace_end ( "SIDS" )
+    call trace_end ( "SIDS", cond=toggle(gen) )
 
   contains
     ! --------------------------------------------  AnnounceError  -----
@@ -506,6 +507,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.69  2013/08/30 02:45:48  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.68  2013/03/15 20:36:03  vsnyder
 ! Add 'switches' field to SIDS
 !
