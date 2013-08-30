@@ -245,7 +245,7 @@ contains ! ====     Public Procedures     ==============================
         end select
       end if
     end select
-    if ( toggle(con) ) call trace_end ( 'EXPR', cond=toggle(con) )
+    call trace_end ( 'EXPR', cond=toggle(con) )
   contains
     subroutine AnnounceError ( where, what )
       use OUTPUT_M, only: OUTPUT
@@ -405,6 +405,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.22  2013/08/30 16:44:09  pwagner
+! Trying to fix bug in call trace usage
+!
 ! Revision 2.21  2013/08/30 03:56:02  vsnyder
 ! Revise use of trace_begin and trace_end
 !
