@@ -493,9 +493,10 @@ contains
     type (GriddedData_T), dimension(:), pointer :: Database
 
     ! Local variables
+    integer :: Me = -1           ! String index for trace
     integer :: qtyIndex, status
 
-    if ( toggle(gen) ) call trace_begin ( "DestroyGriddedDataDatabase" )
+    call trace_begin ( me, "DestroyGriddedDataDatabase", cond=toggle(gen) )
 
     if (associated(database)) then
       do qtyIndex=1,size(database)
@@ -505,9 +506,8 @@ contains
       if (status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_DeAllocate//"database")
     endif
-    if ( toggle(gen) ) then
-      call trace_end ( "DestroyGriddedDataDatabase" )
-    end if
+    call trace_end ( "DestroyGriddedDataDatabase", cond=toggle(gen) )
+
   end subroutine DestroyGriddedDataDatabase
 
   ! --------------------------------------------  DiffGriddedData  -----
@@ -1720,6 +1720,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.72  2013/08/30 03:56:01  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.71  2013/06/12 02:17:27  vsnyder
 ! UBYTES and BYTE_SIZE from Allocate_Deallocate
 !
