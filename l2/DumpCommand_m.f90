@@ -2217,9 +2217,9 @@ contains
     myName = 'Skip'
     if ( present(name) ) myName = name
     if ( toggle(gen) ) then
-      call trace_begin ( myName, root )
+      call trace_begin ( trim(myName), root )
     else
-      call MLSMessageCalls( 'push', constantName=myName )
+      call MLSMessageCalls( 'push', constantName=trim(myName) )
     end if
     booleanString = ' '
     skip = .true. ! Defaults to skipping rest of section
@@ -2291,7 +2291,7 @@ contains
       endif
     endif
     if ( toggle(gen) ) then
-      call trace_end ( myName )
+      call trace_end ( trim(myName) )
     else
       call MLSMessageCalls( 'pop' )
     end if
@@ -2595,6 +2595,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.92  2013/08/30 23:19:28  pwagner
+! Fixed problem of empty spaces while tracing 'Skip'
+!
 ! Revision 2.91  2013/08/29 19:37:41  pwagner
 ! May Dump plain stack, too
 !
