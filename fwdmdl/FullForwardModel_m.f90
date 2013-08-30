@@ -103,6 +103,7 @@ contains
                                 ! Z_PSIG & Min Zeta & surface Zeta
     integer :: MAX_F            ! Length of longest possible fine path
                                 ! (all npf<max_f)
+    integer :: Me = -1          ! String index for trace
     integer :: S_A  ! Multiplier for atmos derivative sizes, 0 or 1
     integer :: S_H  ! Multiplier for atmos second derivative sizes, 0 or 1
     integer :: S_I  ! Multiplier for ice/cloud sizes, 0 or 1
@@ -122,8 +123,8 @@ contains
     ! What severity is not having derivative in "first" state vector?
     integer, parameter :: DerivativeMissingFromState = MLSMSG_Error
 
-    if ( toggle(emit) ) & ! set by -f command-line switch
-      & call trace_begin ( 'FullForwardModel, MAF=', index=fmstat%maf )
+    call trace_begin ( me, 'FullForwardModel, MAF=', index=fmstat%maf, &
+      & cond=toggle(emit) ) ! set by -f command-line switch
 
     nullify ( tan_press )
 
@@ -333,7 +334,7 @@ contains
     ! Allocated in tangent_pressures:
     call deallocate_test ( tan_press,    'tan_press',    moduleName )
 
-    if ( toggle(emit) ) call trace_end ( 'FullForwardModel, MAF=', fmStat%maf )
+    call trace_end ( 'FullForwardModel, MAF=', fmStat%maf, cond=toggle(emit) )
 
   contains
 
@@ -484,6 +485,11 @@ contains
     integer :: J                  ! Loop index and other uses.
     integer :: K                  ! Loop index and other uses.
     integer :: MAF                ! MAF under consideration
+    integer :: Me = -1            ! String index for trace
+    integer :: Me_Hydro = -1      ! String index for trace
+    integer :: Me_PointingLoop = -1 ! String index for trace
+    integer :: Me_Sideband = -1   ! String index for trace
+    integer :: Me_SidebandLoop = -1 ! String index for trace
     integer :: MIF                ! MIF number for tan_press(ptg_i)
     integer :: Min_Index          ! If > 0, P_Path(min_index) <= Min_Phi <=
                                   ! P_Path(min_index+1), else min zeta is at
@@ -880,8 +886,8 @@ contains
     ! ------------------------------------------------------------------------
 !   Print *, '** Enter ForwardModel, MAF =',fmstat%maf   ! ** ZEBUG
 
-    if ( toggle(emit) ) & ! set by -f command-line switch
-      & call trace_begin ( 'FullForwardModelAuto, MAF=', index=fmstat%maf )
+    call trace_begin ( me, 'FullForwardModelAuto, MAF=', index=fmstat%maf, &
+      & cond=toggle(emit) )
 
     ! Set flags from command-line switches
     clean = ' '
@@ -984,8 +990,8 @@ contains
     ! geodetic locations of the temperature phi basis -- not necessarily
     ! the tangent phi's, which may be somewhat different.
 
-    if ( toggle(emit) .and. levels(emit) > 0 ) &
-      & call Trace_Begin ( 'ForwardModel.Hydrostatic' )
+    call Trace_Begin ( Me_Hydro, 'ForwardModel.Hydrostatic', &
+      & cond=toggle(emit) .and. levels(emit) > 0 )
 
     ! Temperature's windowStart:windowFinish are correct here.
     ! RefGPH and temperature have the same horizontal basis.
@@ -1005,16 +1011,16 @@ contains
         &  dhdz_glgrid )
     end if
 
-    if ( toggle(emit) .and. levels(emit) > 0 ) then
-      call Trace_End ( 'ForwardModel.Hydrostatic' )
-      call Trace_Begin ( 'ForwardModel.SidebandLoop' )
-    end if
+    call Trace_End ( 'ForwardModel.Hydrostatic', &
+      & cond=toggle(emit) .and. levels(emit) > 0 )
+    call Trace_Begin ( me_SidebandLoop, 'ForwardModel.SidebandLoop', &
+      & cond=toggle(emit) .and. levels(emit) > 0 )
 
     ! Loop over sidebands ----------------------------------------------------
     do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
 
-      if ( toggle(emit) .and. levels(emit) > 1 ) &
-        & call Trace_Begin ( 'ForwardModel.Sideband ', index=thisSideband )
+      call Trace_Begin ( me_Sideband, 'ForwardModel.Sideband ', &
+        & index=thisSideband, cond=toggle(emit) .and. levels(emit) > 1 )
 
       sx = ( thisSideband + 3 ) / 2 ! [-1,+1] => [1,2]
 
@@ -1037,8 +1043,8 @@ contains
       call frequency_setup_1 ( tan_press, grids )
 
       ! Loop over pointings --------------------------------------------------
-      if ( toggle(emit) .and. levels(emit) > 2 ) &
-        & call Trace_Begin ( 'ForwardModel.PointingLoop' )
+      call Trace_Begin ( me_PointingLoop, 'ForwardModel.PointingLoop', &
+        & cond=toggle(emit) .and. levels(emit) > 2 )
 
       if ( switchDetail( switches, 'nfmpt', options='-fc' ) > -1 ) then
        ! no op; maybe print
@@ -1066,8 +1072,8 @@ contains
         call generate_TScat
       end if
 
-      if ( toggle(emit) .and. levels(emit) > 2 ) &
-        & call Trace_End ( 'ForwardModel.PointingLoop' )
+      call Trace_End ( 'ForwardModel.PointingLoop', &
+        & cond=toggle(emit) .and. levels(emit) > 2 )
 
       if ( .not. fwdModelConf%generateTScat ) call convolution ! or interpolate to ptan
 
@@ -1096,13 +1102,13 @@ contains
       call deallocate_test ( k_spect_dn_frq, 'k_spect_dn_frq',     moduleName )
       call deallocate_test ( k_spect_dv_frq, 'k_spect_dv_frq',     moduleName )
 
-      if ( toggle(emit) .and. levels(emit) > 1 ) &
-        & call trace_end ( 'ForwardModel.Sideband ',index=thisSideband )
+      call trace_end ( 'ForwardModel.Sideband ', index=thisSideband, &
+        & cond=toggle(emit) .and. levels(emit) > 1 )
 
     end do            ! End of loop over sidebands -------------------------
 
-    if ( toggle(emit) .and. levels(emit) > 0 ) &
-      & call Trace_End ( 'ForwardModel.SidebandLoop' )
+    call Trace_End ( 'ForwardModel.SidebandLoop', &
+      & cond=toggle(emit) .and. levels(emit) > 0 )
 
     if ( FwdModelConf%anyPFA(1) .or. FwdModelConf%anyPFA(2) ) &
       & call destroy_tau ( tau_PFA, "Tau_PFA", moduleName )
@@ -1171,7 +1177,8 @@ contains
       call DestroyVectorQuantityValue ( cld_ext, forWhom='cld_ext' )
     end if
 
-    if ( toggle(emit) ) call trace_end ( 'FullForwardModelAuto, MAF=', fmStat%maf )
+    call trace_end ( 'FullForwardModelAuto, MAF=', fmStat%maf, &
+      & cond=toggle(emit) )
 
   contains
 
@@ -1197,8 +1204,10 @@ contains
         & L_SPACERADIANCE
       use ManipulateVectorQuantities, only: DoHGridsMatch
 
-      if ( toggle(emit)  .and. levels(emit) > 0 ) &
-      &  call trace_begin ( 'ForwardModel.Both_Sidebands_Setup' )
+      integer :: Me = -1    ! String index for trace
+
+      call trace_begin ( me, 'ForwardModel.Both_Sidebands_Setup', &
+        & cond=toggle(emit)  .and. levels(emit) > 0  )
 
       fmStat%flags = 0 ! Assume no errors
 
@@ -1305,8 +1314,8 @@ contains
                    &     ( Earth_Axis_Ratio_Squared_m1 * &
                    &       SIN(orbIncline%values(1,maf)*Deg2Rad)**2 + 1 )
 
-      if ( toggle(emit) .and. levels(emit) > 0 ) &
-      &  call trace_end ( 'ForwardModel.Both_Sidebands_Setup' )
+      call trace_end ( 'ForwardModel.Both_Sidebands_Setup', &
+        & cond=toggle(emit) .and. levels(emit) > 0  )
 
     end subroutine Both_Sidebands_Setup
 
@@ -1395,6 +1404,7 @@ contains
 
       integer ChanInd, Channel, I, J, SigInd, Ptg_I
       real(rp) :: DELTAPTG         ! Used for patching the pointings
+      integer :: Me = -1           ! String index for trace
       integer :: MINSUPERSET       ! Min. value of superset > 0
       logical :: PATCHEDAPTG       ! Used in patching the pointings
       integer :: PTG_J             ! Loop counters for patching the pointings
@@ -1411,8 +1421,8 @@ contains
       type (VectorValue_T), pointer :: SIDEBANDFRACTION ! The sideband fraction to use
       type (VectorValue_T), pointer :: THISRADIANCE     ! A radiance vector quantity
 
-      if ( toggle(emit) .and. levels(emit) > 2 ) &
-        & call trace_begin ( 'ForwardModel.Convolution' )
+      call trace_begin ( me, 'ForwardModel.Convolution', &
+        & cond=toggle(emit) .and. levels(emit) > 2 )
 
       ! Check that the angles are in the correct order.  If they
       ! are not it means (give or take some approximations in the
@@ -1630,8 +1640,8 @@ contains
 
       end do                            ! Channel loop
 
-      if ( toggle(emit) .and. levels(emit) > 2 ) &
-        & call trace_end ( 'ForwardModel.Convolution' )
+      call trace_end ( 'ForwardModel.Convolution', &
+        & cond=toggle(emit) .and. levels(emit) > 2 )
 
     end subroutine Convolution
 
@@ -1647,10 +1657,11 @@ contains
       real(rp) :: One_dhdz(1), One_dxdh(1)
       real(rp) :: REQ_OUT(phitan%template%nosurfs)
 
-      type (VectorValue_T), pointer :: WORK   ! Temporary stuff
+      integer :: Me = -1                    ! String index for trace
+      type (VectorValue_T), pointer :: WORK ! Temporary stuff
 
-      if ( toggle(emit)  .and. levels(emit) > 0 ) &
-      &  call trace_begin ( 'ForwardModel.Convolution_Setup' )
+      call trace_begin ( me, 'ForwardModel.Convolution_Setup', &
+        & cond=toggle(emit)  .and. levels(emit) > 0 )
 
       ! Compute equivalent earth radius
 
@@ -1701,8 +1712,8 @@ contains
         nullify ( l1bMIF_TAI, MIFDeadTime )
       end if
 
-      if ( toggle(emit) .and. levels(emit) > 0 ) &
-      &  call trace_end ( 'ForwardModel.Convolution_Setup' )
+      call trace_end ( 'ForwardModel.Convolution_Setup', &
+        & cond=toggle(emit) .and. levels(emit) > 0 )
 
     end subroutine Convolution_Setup
 
@@ -1723,9 +1734,10 @@ contains
       integer, intent(in) :: Ptg_i ! Pointing index
 
       integer :: C, ShapeInd
+      integer :: Me = -1           ! String index for trace
 
-      if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call trace_begin ( 'ForwardModel.Frequency_Average' )
+      call trace_begin ( me, 'ForwardModel.Frequency_Average', &
+        & cond=toggle(emit) .and. levels(emit) > 4 )
 
 ! Conditions:  8 Frequency averaging?   -  N N - - N N Y Y Y Y
 !  - means     4 PFA?                   N  N N Y Y Y Y N N Y Y
@@ -1812,8 +1824,8 @@ contains
       end if
 
 
-      if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call trace_end ( 'ForwardModel.Frequency_Average' )
+      call trace_end ( 'ForwardModel.Frequency_Average', &
+        & cond=toggle(emit) .and. levels(emit) > 4 )
     end subroutine Frequency_Average
 
   ! ...............................  Frequency_Average_Derivative  .....
@@ -1830,11 +1842,12 @@ contains
       logical, intent(in) :: Combine        ! "Combine LBL and PFA"
 
       integer :: C, ShapeInd
-      real(rp) :: R    ! Frequency-averaged value
-      integer :: SV_I  ! State-vector index
+      integer :: Me = -1 ! String index for trace
+      real(rp) :: R      ! Frequency-averaged value
+      integer :: SV_I    ! State-vector index
 
-      if ( toggle(emit) .and. levels(emit) > 6 ) &
-        call trace_begin ( 'ForwardModel.Frequency_Average_Derivative ', index=mol )
+      call trace_begin ( me, 'ForwardModel.Frequency_Average_Derivative ', &
+          & index=mol, cond=toggle(emit) .and. levels(emit) > 6 )
 
       if ( combine ) then
         ! Simply add newly-computed PFA derivatives in K_frq to
@@ -1847,8 +1860,8 @@ contains
             k(c,sv_i) = k(c,sv_i) + k_frq(c,sv_i)
           end do
         end do
-        if ( toggle(emit) .and. levels(emit) > 6 ) &
-          call trace_end ( 'ForwardModel.Frequency_Average_Derivative ', index=mol )
+        call trace_end ( 'ForwardModel.Frequency_Average_Derivative ', &
+          & index=mol, cond=toggle(emit) .and. levels(emit) > 6 )
         return
       end if
 
@@ -1907,8 +1920,8 @@ contains
       case default              ! Impossible
       end select                ! Frequency averaging or not
 
-      if ( toggle(emit) .and. levels(emit) > 6 ) &
-        call trace_end ( 'ForwardModel.Frequency_Average_Derivative ', index=mol )
+      call trace_end ( 'ForwardModel.Frequency_Average_Derivative ', &
+        & index=mol, cond=toggle(emit) .and. levels(emit) > 6 )
 
     end subroutine Frequency_Average_Derivative
 
@@ -1920,11 +1933,12 @@ contains
       ! Frequency Average the temperature derivatives with the appropriate
       ! filter shapes
 
-      integer :: K  ! Loop inductor
-      integer :: UB ! Upper bound for first dimension of k_..._frq
+      integer :: K       ! Loop inductor
+      integer :: Me = -1 ! String index for trace
+      integer :: UB      ! Upper bound for first dimension of k_..._frq
 
-      if ( toggle(emit) .and. levels(emit) > 5 ) &
-        call trace_begin ( 'ForwardModel.Frequency_Average_Derivatives' )
+      call trace_begin ( me, 'ForwardModel.Frequency_Average_Derivatives', &
+        & cond=toggle(emit) .and. levels(emit) > 5 )
 
       ub = noFreqs
       if ( combine ) ub = max(ub,noUsedChannels)
@@ -1964,8 +1978,8 @@ contains
           & combine )
       end do
 
-      if ( toggle(emit) .and. levels(emit) > 5 ) &
-        call trace_end ( 'ForwardModel.Frequency_Average_Derivatives' )
+      call trace_end ( 'ForwardModel.Frequency_Average_Derivatives', &
+        & cond=toggle(emit) .and. levels(emit) > 5 )
 
     end subroutine Frequency_Average_Derivatives
 
@@ -2357,6 +2371,7 @@ contains
       integer :: I             ! Loop inductor
       integer :: I_R           ! Index in Rad, Xis, eventually number of them
       integer :: I_Z           ! Index of scattering point zeta in Z_psig
+      integer :: Me = -1       ! String index for trace
       integer :: N_Theta_e     ! size(theta_e) or size(theta_e)-1, depending
                                ! upon whether theta_e covers 0..360 or lacks one
       integer :: Phi_i         ! Loop inductor and subscript
@@ -2379,7 +2394,7 @@ contains
       real(rp), parameter :: PIX2 = 2.0_rp * pi
       real(rp), parameter :: PID2 = 0.5 * pi
 
-      if ( toggle(emit) ) call Trace_Begin ( 'Generate_TScat' )
+      call Trace_Begin ( me, 'Generate_TScat', cond=toggle(emit) )
       switch42 = switchDetail(switches,"42") > -1
       if ( switch42 ) write ( 42, '(a)' ) &
         & 'Phi_Ref  Scat_Phi  Scat_Ht   Scat_Zeta      Xi     Rad    Signal'
@@ -2899,7 +2914,7 @@ contains
         end do
       end if
 
-      if ( toggle(emit) ) call Trace_End ( 'Generate_TScat' )
+      call Trace_End ( 'Generate_TScat', cond=toggle(emit) )
 
     end subroutine Generate_TScat
 
@@ -3011,6 +3026,7 @@ contains
       integer, pointer :: GL_INDS(:) ! Index of GL points -- subset of f_inds
       integer :: I_STOP              ! Stop path integration before I_End
       integer :: J, L                ! Loop inductor and subscript
+      integer :: Me = -1             ! String index for trace
       integer :: Mie_Frq_Index       ! Index of Frq in F_s in Read_Mie
       integer :: NCG                 ! Number of panels needing GL = Size(cg_inds)
       integer :: NGL                 ! Total # of GL points = Size(gl_inds)
@@ -3028,8 +3044,8 @@ contains
       logical, parameter :: cld_fine = .false.
       real(r8), parameter :: TOL = 1.D-190
 
-      if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call Trace_Begin ( 'ForwardModel.One_Frequency ', index=frq_i )
+      call Trace_Begin ( 'ForwardModel.One_Frequency ', index=frq_i, &
+        & cond=toggle(emit) .and. levels(emit) > 4 )
 
       pfa_or_not_pol = pfa .or. .not. fwdModelConf%polarized
 
@@ -3738,8 +3754,8 @@ contains
 
       end if
 
-      if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call Trace_End ( 'ForwardModel.One_Frequency ', index=frq_i )
+      call Trace_End ( 'ForwardModel.One_Frequency ', index=frq_i, &
+        & cond=toggle(emit) .and. levels(emit) > 4 )
 
     end subroutine One_Frequency
 
@@ -3790,6 +3806,8 @@ contains
 
       integer :: I_start, I_end ! Boundaries of coarse path to use
       character(max(128,len(TScat_Detail_Heading)+10)) :: Line    ! Of output
+      integer :: Me = -1        ! String index for trace
+      integer :: Me_Etc = -1    ! String index for trace
       logical :: MyRev          ! "Reverse the integration path"
       real(rp) :: R_EQ          ! Equivalent Earth Radius at true surface
       real(rp) :: REQ_S  ! Equivalent Earth Radius at height reference surface
@@ -3799,15 +3817,15 @@ contains
       real(rp) :: Tan_Ht ! Geometric tangent height, km, from equivalent Earth center
       real(rp) :: Tan_Ht_S ! Tangent height above 1 bar reference surface, km
 
-      if ( toggle(emit) .and. levels(emit) > 3 ) &
-        & call Trace_Begin ( 'ForwardModel.Pointing ', index=ptg_i )
+      call Trace_Begin ( me, 'ForwardModel.Pointing ', index=ptg_i, &
+        & cond=toggle(emit) .and. levels(emit) > 3 )
 
       ! Assume it's not an earth-intersecting ray and min zeta is at
       ! the tangent point
       e_rflty = 1.0
 
-      if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call Trace_Begin ( 'ForwardModel.Metrics_Etc' )
+      call Trace_Begin ( me_Etc, 'ForwardModel.Metrics_Etc', &
+        & cond=toggle(emit) .and. levels(emit) > 4 )
 
       ! Compute where the tangent is.
       tan_ind_c = max(1,ptg_i-surfaceTangentIndex+1) ! On coarse grid
@@ -3955,10 +3973,10 @@ contains
           end if
         end if
         if ( scat_index < 1 ) then
-          if ( toggle(emit) ) then
-            if ( levels(emit) > 4 ) call trace_end ( 'ForwardModel.Metrics_Etc' )
-            if ( levels(emit) > 3 ) call trace_end ( 'ForwardModel.Pointing ', index=ptg_i )
-          end if
+          call trace_end ( 'ForwardModel.Metrics_Etc', &
+            & cond=toggle(emit) .and. levels(emit) > 4 )
+          call trace_end ( 'ForwardModel.Pointing ', index=ptg_i, &
+            & cond=toggle(emit) .and. levels(emit) > 3 )
           return ! No ray to trace
         end if
         i_start = 1
@@ -4341,8 +4359,8 @@ contains
         prev_Mie_frq_ind = -1
       end if
 
-      if ( toggle(emit) .and. levels(emit) > 4 ) &
-        & call trace_end ( 'ForwardModel.Metrics_Etc' )
+      call trace_end ( 'ForwardModel.Metrics_Etc', &
+        & cond=toggle(emit) .and. levels(emit) > 4  )
 
 !{{\bfseries Notations}
 !
@@ -4516,8 +4534,8 @@ contains
       ! grid for each pointing, but we don't need to deallocate it here
       ! because the allocate_test in frequency_setup_2 will deallocate it.
 
-      if ( toggle(emit) .and. levels(emit) > 3 ) &
-        & call trace_end ( 'ForwardModel.Pointing ', index=ptg_i )
+      call trace_end ( 'ForwardModel.Pointing ', index=ptg_i, &
+        & cond=toggle(emit) .and. levels(emit) > 3 )
 
       ! End of pointing loop -------------------------------------------------
     end subroutine One_Pointing
@@ -4688,6 +4706,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.346  2013/08/17 02:56:19  vsnyder
+! Regularize trace usage
+!
 ! Revision 2.345  2013/08/08 02:35:25  vsnyder
 ! Set Qty_Stuff%derivOK if ExtraJacobian is present
 !

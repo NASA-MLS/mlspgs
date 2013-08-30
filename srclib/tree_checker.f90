@@ -103,12 +103,13 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out), optional :: FIRST_SECTION     ! Which son of root?
     integer, intent(out), optional :: HOW_MANY_SECTIONS ! Number of begin ... ends
     integer :: I              ! Loop inductor
+    integer :: Me = -1        ! String index for trace
     integer :: NUM_SECTIONS   ! Number of begin ... ends
     integer :: SON            ! Son of root
     error = 0
     num_sections = 0
     if ( present(first_section) ) first_section = 0
-    if ( toggle(con) ) call trace_begin ( 'CHECK_TREE', root )
+    call trace_begin ( me, 'CHECK_TREE', root, cond=toggle(con) )
     do i = 1, nsons(root)
       son = subtree(i,root)
       select case ( node_id(son) )
@@ -127,7 +128,7 @@ contains ! ====     Public Procedures     ==============================
     end do
     error_flag = error
     if ( present(how_many_sections) ) how_many_sections = num_sections
-    if ( toggle(con) ) call trace_end ( 'CHECK_TREE' )
+    call trace_end ( 'CHECK_TREE', cond=toggle(con) )
   end subroutine CHECK_TREE
 
   ! -------------------------------------------------  Check_Type  -----
@@ -350,12 +351,13 @@ contains ! ====     Public Procedures     ==============================
     integer :: FIELD_TEST ! A son of Field_Ref in AssignBody
     integer :: I         ! Index of son of "root"
     integer :: LOOK_FOR  ! Look for an enum_value or a spec?
+    integer :: Me = -1   ! String index for trace
     logical :: NO_ARRAY_ALLOWED ! Field is n_field_type and is required to be scalar
     integer :: SON1, SON ! Sons of "root"
     integer :: SPEC_DECL ! Tree node of the spec's declaration
     integer :: Stat      ! From AssignBody
 
-    if ( toggle(con) ) call trace_begin ( 'ASSIGN', root )
+    call trace_begin ( me, 'ASSIGN', root, cond=toggle(con) )
     son1 = subtree(1,root)
     if ( node_id(son1) == n_identifier ) then
       spec_decl = decoration(root)
@@ -425,7 +427,8 @@ contains ! ====     Public Procedures     ==============================
     else
       call announce_error ( son1, not_name )
     end if
-    if ( toggle(con) ) call trace_end ( 'ASSIGN' )
+    call trace_end ( 'ASSIGN', cond=toggle(con) )
+
   contains
 
     recursive integer function AssignBody ( Root, Field, Start ) result ( Stat )
@@ -434,10 +437,11 @@ contains ! ====     Public Procedures     ==============================
       integer, intent(in) :: Start  ! index of sons of field
       type(decls) :: DECL  ! Declaration of a name
       integer :: J         ! Index of root of "field"
+      integer :: Me = -1   ! String index for trace
       integer :: TEST_TYPE ! Used to test the tree-node for a type reference
       integer :: TYPE_DECL ! Tree node of declaration of name of field's type
 
-      if ( toggle(con) ) call trace_begin ( 'AssignBody', root )
+      call trace_begin ( me, 'AssignBody', root, cond=toggle(con) )
 
       ! Stat = 0 => Type and units OK
       !      = 1 => wrong type
@@ -471,7 +475,7 @@ contains ! ====     Public Procedures     ==============================
                 else
                   call decorate ( root, decl%tree )  ! decorate root with tree
                 end if
-                if ( toggle(con) ) call trace_end ( 'AssignBody' )
+                call trace_end ( 'AssignBody', cond=toggle(con) )
     return
               end if
               decl = prior_decl(decl,look_for)
@@ -493,7 +497,7 @@ contains ! ====     Public Procedures     ==============================
           stat = 1
         end if
       end select
-      if ( toggle(con) ) call trace_end ( 'AssignBody' )
+      call trace_end ( 'AssignBody', cond=toggle(con) )
     end function AssignBody
 
   end subroutine ASSIGN
@@ -513,10 +517,11 @@ contains ! ====     Public Procedures     ==============================
     integer :: Field_Ref  ! The value of a field -- a ref to a n_spec_arg
     integer :: First      ! label in <dot label field> son of root
     integer :: Last       ! field in <dot label field> son of root
+    integer :: Me = -1    ! String index for trace
     integer :: Test_Type  ! Used to test the tree-node for a type reference
     integer :: Type_Decl  ! Tree node of declaration of name of field's type
 
-    if ( toggle(con) ) call trace_begin ( 'Check_Dot', root )
+    call trace_begin ( me, 'Check_Dot', root, cond=toggle(con) )
 
     stat = 3 ! Assume no label referenced in <dot label field>
     type_decl = decoration(subtree(start,field)) ! Required spec
@@ -534,7 +539,7 @@ contains ! ====     Public Procedures     ==============================
       end if
       decl = prior_decl(decl,label)
     end do
-    if ( toggle(con) ) call trace_end ( 'Check_Dot', stat )
+    call trace_end ( 'Check_Dot', stat, cond=toggle(con) )
 
   contains
 
@@ -547,10 +552,11 @@ contains ! ====     Public Procedures     ==============================
       integer :: Field_Chk  ! index of n_asg vertex
       integer :: K     ! Index of sons of Field_Ref, to find N_Asg vertex
       integer :: L     ! Index of sons of Field_Test, to find next spec_arg
+      integer :: Me = -1    ! String index for trace
       integer :: Name_Look  ! sub_rosa of Start son of Field
 
-      if ( toggle(con) ) &
-        & call trace_begin ( 'Check_Deep', subtree(start,field), field_ref )
+      call trace_begin ( me, 'Check_Deep', subtree(start,field), field_ref, &
+        & cond=toggle(con) )
 
       stat = 0 ! Assume success
       field_look = decoration(subtree(start,field))
@@ -593,7 +599,7 @@ contains ! ====     Public Procedures     ==============================
         end if
       end do ! k
       stat = 2 ! no such field
-    9 if ( toggle(con) ) call trace_end ( 'Check_Deep', stat )
+    9 call trace_end ( 'Check_Deep', stat, cond=toggle(con) )
     end function Check_Deep
 
   end function Check_Dot
@@ -677,12 +683,13 @@ contains ! ====     Public Procedures     ==============================
   ! table.
     integer, intent(in) :: ROOT    ! Root of tree being worked ( n_dt_def )
 
+    integer :: Me = -1   ! String index for trace
     integer :: SON       ! Son of Root
 
-    if ( toggle(con) ) call trace_begin ( 'DEF_FUNC', root )
+    call trace_begin ( me, 'DEF_FUNC', root, cond=toggle(con) )
     son = subtree(1,root)
     call declare ( sub_rosa(son), 0.0d0, function, decoration(son), root )
-    if ( toggle(con) ) call trace_end ( 'DEF_FUNC', root )
+    call trace_end ( 'DEF_FUNC', root, cond=toggle(con) )
   end subroutine DEF_FUNC
 ! --------------------------------------------------  DEF_SECTION  -----
   subroutine DEF_SECTION ( ROOT )
@@ -697,9 +704,10 @@ contains ! ====     Public Procedures     ==============================
     type(decls) :: DECL  ! Declaration of a parameter type
     integer :: GSON      ! The type name node for a parameter declaration
     integer :: I         ! Loop inductor
+    integer :: Me = -1   ! String index for trace
     integer :: SON       ! Son of Root
 
-    if ( toggle(con) ) call trace_begin ( 'DEF_SECTION', root )
+    call trace_begin ( me, 'DEF_SECTION', root, cond=toggle(con) )
     son = subtree(1,root)
     call declare ( sub_rosa(son), 0.0d0, section, decoration(son), root )
     do i = 2, nsons(root)
@@ -713,7 +721,7 @@ contains ! ====     Public Procedures     ==============================
         call decorate ( gson, decl%tree )    ! the dt_def
       end if
     end do
-    if ( toggle(con) ) call trace_end ( 'DEF_SECTION', root )
+    call trace_end ( 'DEF_SECTION', root, cond=toggle(con) )
   end subroutine DEF_SECTION
 ! -----------------------------------------------------  DEF_SPEC  -----
   recursive subroutine DEF_SPEC ( ROOT )
@@ -727,10 +735,11 @@ contains ! ====     Public Procedures     ==============================
     type(decls) :: DECL       ! Current declaration of "son"
     integer :: FIELD_NAME, FIELD_TYPE   ! Grandsons
     integer :: I, J           ! Loop inductors
+    integer :: Me = -1        ! String index for trace
     integer :: SON            ! I'th son of "root"
     integer :: SPEC_NAME      ! First son of "root"
 
-    if ( toggle(con) ) call trace_begin ( 'DEF_SPEC', root )
+    call trace_begin ( me, 'DEF_SPEC', root, cond=toggle(con) )
     spec_name = subtree(1,root)
     call declare ( sub_rosa(spec_name), 0.0d0, spec, decoration(spec_name), &
                    root )
@@ -758,14 +767,16 @@ contains ! ====     Public Procedures     ==============================
         end do
       end if
     end do
-    if ( toggle(con) ) call trace_end ( 'DEF_SPEC' )
+    call trace_end ( 'DEF_SPEC', cond=toggle(con) )
+
   contains
 
     subroutine DEF_ONE_SPEC ( SON, START )
       integer, intent(in) :: SON   ! of spec_def or n_or
       integer, intent(in) :: START ! of sons of SON
-      integer :: J               ! Loop inductor
-      if ( toggle(con) ) call trace_begin ( 'DEF_ONE_SPEC', root )
+      integer :: J                 ! Loop inductor
+      integer :: Me = -1           ! String index for trace
+      call trace_begin ( me, 'DEF_ONE_SPEC', root, cond=toggle(con) )
       select case ( node_id(son) )
       case ( n_field_type )
         do j = start, nsons(son)
@@ -786,7 +797,7 @@ contains ! ====     Public Procedures     ==============================
         ! The rest of the sons are field names, for which new decorations
         ! Won't help -- in fact, the f_field_name's index is best.
       end select
-      if ( toggle(con) ) call trace_end ( 'DEF_ONE_SPEC', root )
+      call trace_end ( 'DEF_ONE_SPEC', root, cond=toggle(con) )
     end subroutine DEF_ONE_SPEC
 
   end subroutine DEF_SPEC
@@ -799,9 +810,10 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: ROOT    ! Root of tree being worked ( n_dt_def )
 
     integer :: I              ! Loop inductor
+    integer :: Me = -1        ! String index for trace
     integer :: SON            ! I'th son of "root"
 
-    if ( toggle(con) ) call trace_begin ( 'DEF_TYPE', root )
+    call trace_begin ( me, 'DEF_TYPE', root, cond=toggle(con) )
     son = subtree(1,root)
     call declare ( sub_rosa(son), 0.0d0, type_name, decoration(son), root )
 !   call decorate ( son, root )
@@ -811,7 +823,7 @@ contains ! ====     Public Procedures     ==============================
                      decoration(son), root )
 !     call decorate ( son, root )
     end do
-    if ( toggle(con) ) call trace_end ( 'DEF_TYPE' )
+    call trace_end ( 'DEF_TYPE', cond=toggle(con) )
   end subroutine DEF_TYPE
 
 ! --------------------------------------------------------  EQUAL  -----
@@ -821,6 +833,7 @@ contains ! ====     Public Procedures     ==============================
     integer :: CHECK          ! At first, subtree where NAME is declared;
                               ! later, output from Check_Field_Type
     type(decls) :: DECL       ! Declaration of son1
+    integer :: Me = -1        ! String index for trace
     integer :: SECT           ! The section the parameter appears in
     integer :: SON1, SON2     ! Sons of Root
     integer :: Stat           ! From EXPR
@@ -828,7 +841,8 @@ contains ! ====     Public Procedures     ==============================
     integer :: TYPE_DECL      ! Tree node of declaration of name of param's type
     integer :: UNITS          ! Output from "expr"
     double precision :: VALUE ! Output from "expr", not otherwise used
-    if ( toggle(con) ) call trace_begin ( 'EQUAL', root )
+
+    call trace_begin ( me, 'EQUAL', root, cond=toggle(con) )
     sect = decoration(root)
     decl = get_decl(sub_rosa(sect), section )   ! Known to be a
                              ! valid section name if we get this far
@@ -869,7 +883,7 @@ contains ! ====     Public Procedures     ==============================
         end if
       end if
     end if
-    if ( toggle(con) ) call trace_end ( 'EQUAL' )
+    call trace_end ( 'EQUAL', cond=toggle(con) )
   end subroutine EQUAL
 
 ! ---------------------------------------------------------  EXPR  -----
@@ -897,11 +911,12 @@ contains ! ====     Public Procedures     ==============================
     integer :: ME                  ! node_id(root)
     integer :: SON1, SON2          ! Sons of "root"
     integer :: STRING              ! sub_rosa(root)
+    integer :: Trace = -1          ! String index for trace
     integer :: TYPE2               ! Type for a son of "root"
     integer :: UNITS2              ! Units for a son of "root"
     double precision :: VALUE2     ! Value for a son of "root"
 
-    if ( toggle(con) ) call trace_begin ( 'EXPR', root )
+    call trace_begin ( trace, 'EXPR', root, cond=toggle(con) )
     stat = 0 ! Assume status is OK
     units = phyq_dimensionless     ! default
     value = 0.0d0                  ! default
@@ -1124,8 +1139,10 @@ contains ! ====     Public Procedures     ==============================
     case default ! ---------------------------------------------------------
       call local_error ( root, no_code_for )
     end select
-    if ( toggle(con) ) call trace_end ( 'EXPR' )
+    call trace_end ( 'EXPR', cond=toggle(con) )
+
   contains
+
     subroutine LOCAL_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT )
       integer, intent(in) :: WHERE   ! Tree node where error was noticed
       integer, intent(in) :: CODE    ! Code for error message
@@ -1138,6 +1155,7 @@ contains ! ====     Public Procedures     ==============================
       type = empty
       units = phyq_invalid
     end subroutine LOCAL_ERROR
+
   end function EXPR
 
 ! -------------------------------------------------------  ONE_CF  -----
@@ -1149,10 +1167,11 @@ contains ! ====     Public Procedures     ==============================
     type(decls) :: DECL            ! Declaration of "name" on "begin name"
     integer :: GSON1, GSON2        ! Grandsons of ROOT being analyzed
     integer :: I, N                ! Loop inductor, number of sons
+    integer :: Me = -1             ! String index for trace
     integer :: SON1, SONN          ! Sons of ROOT being analyzed
     integer :: STRING1, STRINGN    ! Sub_Rosa of first and last sons
 
-    if ( toggle(con) ) call trace_begin ( 'ONE_CF', root )
+    call trace_begin ( me, 'ONE_CF', root, cond=toggle(con) )
     n = nsons(root)
     son1 = subtree(1,root) ;   sonn = subtree(n,root)
     string1 = sub_rosa(son1) ; stringn = sub_rosa(sonn)
@@ -1199,7 +1218,7 @@ contains ! ====     Public Procedures     ==============================
         call announce_error ( sonn, no_code_for )
       end select
     end do
-    if ( toggle(con) ) call trace_end ( 'ONE_CF' )
+    call trace_end ( 'ONE_CF', cond=toggle(con) )
   end subroutine ONE_CF
 ! ------------------------------------------------------  SET_ONE  -----
   subroutine SET_ONE ( ROOT )
@@ -1208,9 +1227,11 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: ROOT    ! Index of the "n_set_one" tree node
     integer :: FIELD               ! Tree node of field's declaration
     integer :: FIELD_LIT           ! f_... for a field
+    integer :: Me = -1             ! String index for trace
     integer :: SON                 ! Son of n_set_one tree node
     integer :: SPEC_DECL           ! Tree node of the spec's declaration
-    if ( toggle(con) ) call trace_begin ( 'SET_ONE', root )
+
+    call trace_begin ( me, 'SET_ONE', root, cond=toggle(con) )
     son = subtree(1,root)
     spec_decl = decoration(root)
     field = check_field(son,spec_decl)
@@ -1232,7 +1253,7 @@ contains ! ====     Public Procedures     ==============================
         call announce_error ( son, wrong_type )
       end if
     end if
-    if ( toggle(con) ) call trace_end ( 'SET_ONE' )
+    call trace_end ( 'SET_ONE', cond=toggle(con) )
   end subroutine SET_ONE
 ! ----------------------------------------------------  SPEC_ARGS  -----
   subroutine SPEC_ARGS ( ROOT )
@@ -1243,6 +1264,7 @@ contains ! ====     Public Procedures     ==============================
     integer :: FIELD_LIT      ! f_... for a field
     integer :: FLAGS          ! Flags from decoration(spec_decl)
     integer :: I              ! Loop inductor
+    integer :: Me = -1        ! String index for trace
     integer :: SECT           ! The section the spec appears in
     integer :: SON            ! I'th son of "root"
     type(decls) :: SPEC_DECL  ! Declaration of first son, if any
@@ -1250,7 +1272,7 @@ contains ! ====     Public Procedures     ==============================
     integer :: TYPE, UNITS    ! Output from "expr"
     double precision :: VALUE ! Output from "expr"
 
-    if ( toggle(con) ) call trace_begin ( 'SPEC_ARGS', root )
+    call trace_begin ( me, 'SPEC_ARGS', root, cond=toggle(con) )
     sect = decoration(root)
     spec_decl = get_decl( sub_rosa(sect), section )   ! Known to be a
                              ! valid section name if we get this far
@@ -1300,7 +1322,7 @@ contains ! ====     Public Procedures     ==============================
         end do
       end if
     end if
-    if ( toggle(con) ) call trace_end ( 'SPEC_ARGS' )
+    call trace_end ( 'SPEC_ARGS', cond=toggle(con) )
   end subroutine SPEC_ARGS
 
   logical function not_used_here()
@@ -1315,6 +1337,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.36  2013/08/17 02:54:54  vsnyder
+! Remove references to DEPTH from trace_m
+!
 ! Revision 1.35  2012/05/24 21:05:49  vsnyder
 ! Allow check_dot to have reflexive elements in the required spec tree, i.e.
 ! <dot a b ... z> really means <dot a b+ ... z>.  The first and last ones

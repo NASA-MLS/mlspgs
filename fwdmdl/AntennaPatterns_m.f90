@@ -113,6 +113,7 @@ contains
     integer :: HowManySignals(3*size(signals)) ! for each pattern
     integer :: HowManySignalLines(3*size(signals)) ! for each pattern
     integer :: I, J, K, L                    ! Loop inductors, subscripts
+    integer :: Me = -1                       ! String index for trace
     integer :: power2                        ! Power 2 size of antenna pattern
     real(r8) :: Lambda
     real(r8) :: LambdaX2Pi                   ! 2 * Pi * Lambda
@@ -129,7 +130,7 @@ contains
     !                                          the "only_count_em" argument
     real(r8) :: V(2)                         ! To read a line from the file
 
-    if ( toggle(gen) ) call trace_begin ( "Read_Antenna_Patterns_File", where )
+    call trace_begin ( me, "Read_Antenna_Patterns_File", where, cond=toggle(gen) )
 
     if ( associated(AntennaPatterns) ) call destroy_ant_patterns_database
 
@@ -261,14 +262,12 @@ outer1: do
     end do ! i
 
     if ( switchDetail(switches,'ant') > -1 ) call dump_Antenna_Patterns_database
-    if ( toggle(gen) ) then
-      call trace_end ( "Read_Antenna_Patterns_File" )
-    end if
+    call trace_end ( "Read_Antenna_Patterns_File", cond=toggle(gen) )
 
     return
-  98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
-  99 call io_error ( "While reading the antenna pattern file", status )
-     call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+ 98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
+ 99 call io_error ( "While reading the antenna pattern file", status )
+    call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
   end subroutine Read_Antenna_Patterns_File
 
   ! -----------------------------------  Close_Antenna_Patterns_File  -----
@@ -372,6 +371,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.15  2011/05/09 17:43:04  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.14  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !

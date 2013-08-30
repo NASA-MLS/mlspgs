@@ -163,6 +163,7 @@ contains ! =====     Public Procedures     =============================
     integer :: INSTANCELEN              ! For the state quantity
     integer :: LOWER                    ! Array index
     integer :: MAF                      ! Major frame to do
+    integer :: Me = -1                  ! String index for trace
     integer :: MIF                      ! Minor frame loop counter
     integer :: NOPOINTINGS              ! Number of pointings in the l2pc file
     integer :: QTYIND                   ! Loop index for main loop
@@ -234,8 +235,8 @@ contains ! =====     Public Procedures     =============================
 
     maf = fmStat%maf
 
-    if ( toggle(emit) ) &
-      & call trace_begin ( 'LinearizedForwardModel, MAF=', index=maf )
+    call trace_begin ( me, 'LinearizedForwardModel, MAF=', index=maf, &
+      & cond=toggle(emit) )
 
     nullify ( dense )
 
@@ -693,7 +694,7 @@ contains ! =====     Public Procedures     =============================
       if ( switchDetail(switches,'RAD') > -1 ) stop
     end if
 
-    if ( toggle(emit) ) call trace_end ( 'LinearizedForwardModel' )
+    call trace_end ( 'LinearizedForwardModel', cond=toggle(emit) )
 
   contains
 
@@ -797,6 +798,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.89  2013/08/12 23:48:09  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.88  2012/07/31 00:45:02  vsnyder
 ! Comment out OUTPUTNAMEDVALUE in USE since its use is commented out
 !

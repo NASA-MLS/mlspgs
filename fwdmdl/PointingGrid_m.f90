@@ -95,14 +95,15 @@ contains
     integer :: HowManyRadiometers            ! gotten by counting the file
     integer :: I, N                          ! Loop inductor, subscript, temp
     character(len=MaxSigLen) :: Line         ! From the input file
+    integer :: Me = -1                       ! String index for trace
     integer :: NumHeights                    ! Read from the input
     integer :: Sideband                      ! Specified in a signal
     integer :: SignalCount                   ! From Parse_Signal
     integer :: Status                        ! From read or allocate
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
 
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_begin ( "Read_Pointing_Grid_File", where )
+    call trace_begin ( me, "Read_Pointing_Grid_File", where, &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
 
     if ( associated(pointingGrids) ) call destroy_pointing_grid_database
 
@@ -224,8 +225,8 @@ outer2: do
     call deallocate_test ( howManyGrids, 'HowManyGrids', moduleName )
 
     if ( switchDetail(switches,'point') > -1 ) call dump_pointing_grid_database
-    if ( toggle(gen) .and. levels(gen) > 0 ) &
-      & call trace_end ( "Read_Pointing_Grid_File" )
+    call trace_end ( "Read_Pointing_Grid_File", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
 
     Return
 
@@ -313,6 +314,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.12  2011/05/09 17:52:15  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.11  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !

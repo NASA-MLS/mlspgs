@@ -105,6 +105,7 @@ contains ! =====  Public Procedures  ===================================
     integer :: I, J, K, L               ! Loop inductors, Subscripts
     integer :: IsotopeRatiosFile = 0
     integer :: Key                      ! Index of spec_arg
+    integer :: Me = -1                  ! String index for trace
     type (MLSFile_T), pointer   :: MLSFile
     integer :: Molecule                 ! Molecule for which the catalog applies
     integer :: Name                     ! Index of name in string table
@@ -138,7 +139,7 @@ contains ! =====  Public Procedures  ===================================
     integer, parameter :: WrongSize = TooBig + 1       ! Wrong number of elements
     integer, parameter :: WrongUnits = wrongSize + 1   ! Wrong physical units
 
-    if ( toggle(gen) ) call trace_begin ( "Spectroscopy", root )
+    call trace_begin ( me, "Spectroscopy", root, cond=toggle(gen) )
     
     error = 0
     timing = .false.
@@ -400,9 +401,7 @@ contains ! =====  Public Procedures  ===================================
       stop
     end if
     if ( switchDetail(switches,'spec') > -1 ) call dump_SpectCat_database ( catalog )
-    if ( toggle(gen) ) then
-      call trace_end ( "Spectroscopy" )
-    end if
+    call trace_end ( "Spectroscopy", cond=toggle(gen) )
     if ( timing ) call sayTime
 
     if ( error > 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -1475,6 +1474,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.56  2013/06/12 02:23:45  vsnyder
+! Cruft removal
+!
 ! Revision 2.55  2012/07/31 00:45:49  vsnyder
 ! Remove USE and declarations for unused stuff
 !

@@ -112,6 +112,7 @@ contains
     real(r8) :: LHS, RHS                ! For computing grid
     integer :: I, N                     ! Loop inductor, subscript
     character(80) :: Line               ! From the file
+    integer :: Me = -1                  ! String index for trace
     integer :: Number_in_shape          ! How many points in each filter?
     integer :: NumFilterShapes          ! How many filter shapes in file?
     integer :: Offset                   ! From start of FilterShapes -- to extend it
@@ -126,7 +127,7 @@ contains
 
     namelist /Filter/ lhs, rhs, number_in_shape
 
-    if ( toggle(gen) ) call trace_begin ( "Read_Filter_Shapes_File", where )
+    call trace_begin ( me, "Read_Filter_Shapes_File", where, cond=toggle(gen) )
 
     ! Determine the size of the created or expanded FilterShapes array
     offset = 0
@@ -200,9 +201,7 @@ contains
     end do ! Loop over filter shapes
 
     if ( switchDetail(switches,'filt') > -1 ) call dump_filter_shapes_database
-    if ( toggle(gen) ) then
-      call trace_end ( "Read_Filter_Shapes_File" )
-    end if
+    call trace_end ( "Read_Filter_Shapes_File", cond=toggle(gen) )
 
     return
  98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
@@ -555,6 +554,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.26  2011/05/09 17:44:59  pwagner
+! Converted to using switchDetail
+!
 ! Revision 2.25  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !

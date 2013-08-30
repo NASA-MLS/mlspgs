@@ -96,17 +96,18 @@ contains
 
 ! Local variables.
 
-    real(rp), pointer :: dBdf(:), dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
-    real(rp) :: ES(size(t_path)) ! Used for RHi calculation
-    real(rp) :: Sps(size(t_path))
-    integer(ip) :: I, N, NP
     character(len=4), save :: clean
+    real(rp), pointer :: dBdf(:), dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     integer, save :: DumpLevel ! units digit of lblb switch
                                ! >0 dump beta, >1 dump T, Tanh
     logical, save :: DumpStop  ! hundreds digit of lblb switch > 0
     logical, save :: DumpZeta  ! tens digit of lblb switch > 0, dump Zeta
                                ! instead of P
+    real(rp) :: ES(size(t_path)) ! Used for RHi calculation
     logical, save :: First = .true. ! Fist-time flag
+    real(rp) :: Sps(size(t_path))
+    integer(ip) :: I, N, NP
+    integer :: Me = -1         ! String index for trace
 
 ! begin the code
 
@@ -121,8 +122,8 @@ contains
       if ( switchDetail(switches,'clean') > -1 ) clean = 'c'
     end if
 
-    if ( toggle(emit) .and. levels(emit) > 6 ) &
-      & call Trace_Begin ( 'ForwardModel.Get_Beta_Path_Scalar' )
+    call Trace_Begin ( me, 'ForwardModel.Get_Beta_Path_Scalar', &
+      & cond=toggle(emit) .and. levels(emit) > 6 )
 
     nullify ( dBdf, dBdn, dBdT, dBdv, dBdw ) ! Disassociated means "Don't compute it"
 
@@ -216,8 +217,8 @@ contains
 
     end do ! i = 1, size(beta_group)
 
-    if ( toggle(emit) .and. levels(emit) > 6 ) &
-      & call Trace_End ( 'ForwardModel.Get_Beta_Path_Scalar' )
+    call Trace_End ( 'ForwardModel.Get_Beta_Path_Scalar', &
+      & cond=toggle(emit) .and. levels(emit) > 6 )
 
     if ( dumpLevel > 1 ) then
       if ( dumpZeta ) then
@@ -1594,6 +1595,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.116  2013/07/26 22:19:05  vsnyder
+! Fiddle with dump switches
+!
 ! Revision 2.115  2013/06/12 02:25:18  vsnyder
 ! Cruft removal
 !
