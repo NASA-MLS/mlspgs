@@ -30,9 +30,9 @@ module MergeGridsModule
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-contains ! =================================== Public procedures
+contains ! ===================================  Public procedures  =====
 
-  ! ----------------------------------------- MergeGrid
+  ! -------------------------------------------------  MergeGrids  -----
 
   subroutine MergeGrids ( ROOT, L2GPDATABASE, L2AUXDATABASE, &
     & GRIDDEDDATABASE, FILEDATABASE )
@@ -76,18 +76,15 @@ contains ! =================================== Public procedures
     integer :: LastGEOS5PCF   = 1
     integer :: LastHeightPCF  = 1
     integer :: LastNCEPPCF    = 1
+    integer :: Me = -1                  ! String index for trace
     integer :: NAME                     ! Index into string table
     integer :: SON                      ! Tree node
     integer :: VALUE
     logical :: verbose
 
     ! excutable code
-    if ( toggle(gen) ) then
-      call trace_begin ( "MergeGrids", root )
-    else
-      call MLSMessageCalls( 'push', constantName=ModuleName )
-    endif
-    ! Executable code
+    call trace_begin ( me, "MergeGrids", root, cond=toggle(gen) )
+
     verbose = ( switchDetail(switches, 'grid' ) > -1 )
     
     do i = 2, nsons(root) - 1           ! Skip the begin and end stuff
@@ -186,16 +183,11 @@ contains ! =================================== Public procedures
           & 'Unrecognized command in MergeGrids section' )
       end select
     end do
-    if ( toggle(gen) ) then
-      call trace_end ( "MergeGrids" )
-    else
-      call MLSMessageCalls( 'pop' )
-    endif
-    
+    call trace_end ( "MergeGrids", cond=toggle(gen) )    
 
   end subroutine MergeGrids
 
-  ! ---------------------------------------- ConvertEtaToP --
+  ! ----------------------------------------------  ConvertEtaToP  -----
   type (griddedData_T) function ConvertEtaToP ( root, griddedDataBase ) &
     & result ( newGrid )
     use GriddedData, only: GRIDDEDDATA_T, DUMP, NULLIFYGRIDDEDDATA, &
@@ -214,12 +206,12 @@ contains ! =================================== Public procedures
     ! to pressure surfaces
 
     ! Local variables
-    ! Local variables
-    integer :: SON                    ! Tree node
     integer :: FIELD                  ! Another tree node
     integer :: FIELD_INDEX            ! Type of tree node
-    integer :: VALUE                  ! Tree node
     integer :: I                      ! Loop counter
+    integer :: Me = -1                ! String index for trace
+    integer :: SON                    ! Tree node
+    integer :: VALUE                  ! Tree node
 
     type (griddedData_T), pointer :: A ! Temperatures on eta surfaces
     type (griddedData_T), pointer :: B ! Pressures on eta surfaces
@@ -227,14 +219,15 @@ contains ! =================================== Public procedures
 !    type (VGrid_T), pointer       :: V ! Desired pressure surfaces
 
     logical, parameter :: DEEBUG = .false.
+
     ! Executable code
+    call trace_begin ( me, "ConvertEtaToP", root, cond=toggle(gen) )
     nullify( a, b, v )
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
-    if ( toggle(gen) ) call trace_begin ( "ConvertEtaToP", root )
 
     if ( DEEBUG ) then
       call dump(griddedDataBase)
-    endif
+    end if
     ! Get the information from the l2cf    
     ! Note that init_tables_module has insisted that we have all
     ! arguments so we don't need a 'got' type arrangement
@@ -285,13 +278,12 @@ contains ! =================================== Public procedures
     newGrid%units               = a%units
     newGrid%verticalCoordinate  = v%verticalCoordinate
     newGrid%missingValue        = a%missingValue
-9   if ( toggle(gen) ) call trace_end ( "ConvertEtaToP" )
+9   call trace_end ( "ConvertEtaToP", cond=toggle(gen) )
 
   end function ConvertEtaToP
 
-  ! ---------------------------------------- Concatenate --
-  function Concatenate ( root, griddedDataBase ) &
-    & result ( newGrid )
+  ! ------------------------------------------------  Concatenate  -----
+  function Concatenate ( root, griddedDataBase ) result ( newGrid )
     use GriddedData, only: GRIDDEDDATA_T, DUMP, &
       & CONCATENATEGRIDDEDDATA, COPYGRID, DESTROYGRIDDEDDATA, NULLIFYGRIDDEDDATA
     use Init_tables_module, only: F_A, F_B, F_GRID
@@ -317,13 +309,15 @@ contains ! =================================== Public procedures
     integer :: I                      ! Loop counter
     logical, parameter :: IgnoreEmptyGrids = .false.
     type (griddedData_T), target :: Intermediate
+    integer :: Me = -1                ! String index for trace
     integer :: SON                    ! Tree node
     integer :: VALUE                  ! Tree node
     logical :: WEARETHEFIRST
+
     ! Executable code
+    call trace_begin ( me, "Concatenate", root, cond=toggle(gen) )
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
     call nullifyGriddedData ( Intermediate ) ! for Sun's still useless compiler
-    if ( toggle(gen) ) call trace_begin ( "Concatenate", root )
 
     ! Get the information from the l2cf
     grids_node = 0
@@ -360,7 +354,7 @@ contains ! =================================== Public procedures
         db_index = decoration(decoration(subtree(i, grids_node )))
         b => griddedDataBase ( db_index )
         if ( b%empty .and. .not. IgnoreEmptyGrids ) then
-          if ( toggle(gen) ) call trace_end ( "Concatenate" )
+          call trace_end ( "Concatenate", cond=toggle(gen) )
           return
         endif
         atleastonegrid = .true.
@@ -411,10 +405,11 @@ contains ! =================================== Public procedures
     newGrid%verticalCoordinate  = a%verticalCoordinate
     newGrid%missingValue        = a%missingValue
 
-    if ( toggle(gen) ) call trace_end ( "Concatenate" )
+    call trace_end ( "Concatenate", cond=toggle(gen) )
+
   end function Concatenate
 
-  ! ------------------------------------ DeleteGriddedData ---
+  ! ------------------------------------------  DeleteGriddedData  -----
   subroutine DeleteGriddedData ( root, griddedDataBase )
     use Tree, only: NSONS, SUBTREE, DECORATION
     use GriddedData, only: DESTROYGRIDDEDDATA, GRIDDEDDATA_T
@@ -494,6 +489,7 @@ contains ! =================================== Public procedures
     integer :: LAT                      ! Loop counter
     integer :: LON                      ! Loop counter
     integer :: LST                      ! Loop counter
+    integer :: Me = -1                  ! String index for trace
     integer :: SON                      ! Tree node
     integer :: STATUS                   ! Flag from allocate
     integer :: SURF                     ! Loop counter
@@ -524,8 +520,8 @@ contains ! =================================== Public procedures
 
     ! Executable code
 
+    call trace_begin ( me, "MergeOneGrid", root, cond=toggle(gen) )
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
-    if ( toggle(gen) ) call trace_begin ( "MergeOneGrid", root )
 
     ! Get the information from the l2cf    
     ! Note that init_tables_module has insisted that we have all
@@ -719,7 +715,9 @@ contains ! =================================== Public procedures
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'operMapped or cliMapped' )
     call finishUp ( done = .true. )
+
   contains
+
     subroutine FinishUp ( done )
       logical, optional, intent(in) :: done
       logical :: myDone
@@ -742,12 +740,13 @@ contains ! =================================== Public procedures
         call dump( climatology%heights, 'cl h' )
         call blanks(3)
         call output( v_is_pressure, advance='yes' )
-      endif
-      if ( myDone .and. toggle(gen) ) call trace_end ( "MergeOneGrid" )
+      end if
+      if ( myDone ) call trace_end ( "MergeOneGrid", cond=toggle(gen) )
     end subroutine FinishUp
+
   end function MergeOneGrid
 
-  ! ----------------------------------------- wmoTropFromGrid
+  ! --------------------------------------------  wmoTropFromGrid  -----
   type (griddedData_T) function wmoTropFromGrid ( root, griddedDataBase ) &
     & result ( newGrid )
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -797,6 +796,7 @@ contains ! =================================== Public procedures
     integer :: iSza
     integer :: lat
     integer :: lon
+    integer :: Me = -1               ! String index for trace
     real :: missingValue
     integer :: nLev
     integer :: nValid
@@ -817,9 +817,9 @@ contains ! =================================== Public procedures
     integer, parameter :: hPa2Pa  = 100 ! Factor convert hPa to Pa
 
     ! Executable code
+    call trace_begin ( me, "wmoTropFromGrid", root, cond=toggle(gen) )
     nullify( xyTemp, xyPress, h, p, t )
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
-    if ( toggle(gen) ) call trace_begin ( "wmoTropFromGrid", root )
     MISSINGVALUE = REAL( DEFAULTUNDEFINEDVALUE )
 
     ! Get the information from the l2cf    
@@ -853,12 +853,12 @@ contains ! =================================== Public procedures
       if ( Temperatures%empty ) then
         call MLSMessage ( MLSMSG_Warning, moduleName, &
           & 'Empty Temperatures grid for calculating wmo tropopause' )
-        if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+        call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
         return
       elseif ( Pressures%empty ) then
         call MLSMessage ( MLSMSG_Warning, moduleName, &
           & 'Empty Pressures grid for calculating wmo tropopause' )
-        if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+        call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
         return
       endif
     ! What if Temperatures and Pressures don't match
@@ -918,7 +918,7 @@ contains ! =================================== Public procedures
     if ( .not. associated(Temperatures) ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'No associated Temperatures grid for calculating wmo tropopause' )
-      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+      call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
       return
     endif
     call SetupNewGriddedData ( newGrid, source=Temperatures, &
@@ -936,13 +936,13 @@ contains ! =================================== Public procedures
       newGrid%empty = .true.
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'Temperatures grid was empty' )
-      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+      call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
       return
     elseif ( Pressures%empty ) then
       newGrid%empty = .true.
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'Pressures grid was empty' )
-      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+      call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
       return
     endif
     newGrid%lats               = Temperatures%lats
@@ -958,7 +958,7 @@ contains ! =================================== Public procedures
     if ( nlev < 2 ) then
       call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'Too few levels on Temperatures grid for calculating wmo tropopause' )
-      if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+      call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
       return
     endif
     ! Right now we can't read eta levels, only pressures
@@ -1072,7 +1072,7 @@ contains ! =================================== Public procedures
       stop
     endif
     if ( DEEBUG ) call dump( newGrid )
-    if ( toggle(gen) ) call trace_end ( "wmoTropFromGrid" )
+    call trace_end ( "wmoTropFromGrid", cond=toggle(gen) )
   end function wmoTropFromGrid
 
 !--------------------------- end bloc --------------------------------------
@@ -1088,6 +1088,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.48  2013/08/30 02:45:44  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.47  2012/08/16 18:01:04  pwagner
 ! Exploit level 2-savvy MLSMessage
 !
