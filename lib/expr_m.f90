@@ -54,6 +54,7 @@ contains ! ====     Public Procedures     ==============================
     integer :: ME                  ! node_id(root)
     integer :: Son1                ! First son of "root"
     integer :: STRING              ! Sub_rosa(root)
+    integer :: Trace = -1          ! String index for trace
     integer :: TYPE1, TYPE2        ! Type of son of "root"
     integer :: UNITS2(2)           ! Units of an expression
     double precision :: VALUE2(2)  ! Value of an expression
@@ -69,7 +70,7 @@ contains ! ====     Public Procedures     ==============================
     integer, parameter :: UnsupportedFunc = outOfRange + 1
     integer, parameter :: WrongNumArgs = unsupportedFunc + 1
 
-    if ( toggle(con) ) call trace_begin ( 'EXPR', root )
+    call trace_begin ( trace, 'EXPR', root, cond=toggle(con) )
     units = (/ phyq_dimensionless, phyq_invalid /)     ! default
     value = 0.0d0                                      ! default
     if ( present(scale) ) scale = 1.0d0                ! default
@@ -244,7 +245,7 @@ contains ! ====     Public Procedures     ==============================
         end select
       end if
     end select
-    if ( toggle(con) ) call trace_end ( 'EXPR' )
+    if ( toggle(con) ) call trace_end ( 'EXPR', cond=toggle(con) )
   contains
     subroutine AnnounceError ( where, what )
       use OUTPUT_M, only: OUTPUT
@@ -404,6 +405,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.21  2013/08/30 03:56:02  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.20  2012/05/07 23:00:57  vsnyder
 ! StartErrorMessage moved to include to avoid a circular dependence
 ! between expr_m and MoreTree
