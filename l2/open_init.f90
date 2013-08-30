@@ -15,20 +15,11 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
-  use DATES_MODULE, only: UTC_TO_YYYYMMDD
-  use HDF, only: DFACC_RDONLY
-  use INTRINSIC, only: L_HDF
   use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, TAI93_RANGE_T
-  use MLSKINDS, only: R8
   use MLSL2OPTIONS, only: SPECIALDUMPFILE, TOOLKIT
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGE
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use PCFHDR, only: GLOBALATTRIBUTES, CREATEPCFANNOTATION, FILLTAI93ATTRIBUTE
-  use SDPTOOLKIT, only: MAX_ORBITS
-  use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
   implicit none
 
@@ -70,11 +61,16 @@ contains ! =====     Public Procedures     =============================
     ! the necessary inputs via the l2cf and
     ! processing user inputs during global settings section
 
+    use DATES_MODULE, only: UTC_TO_YYYYMMDD
+    use HDF, only: DFACC_RDONLY
+    use INTRINSIC, only: L_HDF
     use L1BDATA, only: FINDMAXMAF, READL1BATTRIBUTE
     use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
     use MLSFILES, only: WILDCARDHDFVERSION, &
       & ADDFILETODATABASE, INITIALIZEMLSFILE, MLS_OPENFILE
+    use MLSKINDS, only: R8
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGE
     use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
       &                MLSPCF_L1B_RAD_START, &
       &                MLSPCF_L2_PARAM_PGEVERSION, &
@@ -88,10 +84,13 @@ contains ! =====     Public Procedures     =============================
       &                MLSPCF_L2_PARAM_SWITCHES, &
       &                MLSPCF_PCF_START
     use MLSSTRINGS, only: LOWERCASE
-    use SDPTOOLKIT, only: PGS_PC_GETFILESIZE, PGS_TD_UTCTOTAI,&
+    use PCFHDR, only: GLOBALATTRIBUTES, CREATEPCFANNOTATION, FILLTAI93ATTRIBUTE
+    use SDPTOOLKIT, only: MAX_ORBITS, PGS_PC_GETFILESIZE, PGS_TD_UTCTOTAI,&
       &    PGS_PC_GETCONFIGDATA, PGS_PC_GETREFERENCE, PGS_S_SUCCESS, &
       &    PGSTD_E_NO_LEAP_SECS
     use TIME_M, only: TIME_NOW
+    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use WRITEMETADATA, only: L2PCF, MCFCASESENSITIVE
 
     ! Arguments
@@ -113,6 +112,7 @@ contains ! =====     Public Procedures     =============================
     integer                      :: Ifl1
     type (MLSFile_T)             :: L1BFile
     integer                      :: L1FileHandle
+    integer :: Me = -1           ! String index for trace
     integer                      :: numFiles
     integer                      :: ReturnStatus
     integer                      :: Status, Size ! From allocate
@@ -131,11 +131,11 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: OrbPeriod(max_orbits) = 0.0
 
     ! Executable code
+    call trace_begin ( me, "OpenAndInitialize", cond=toggle(gen) )
     timing = section_times
     if ( timing ) call time_now ( t1 )
 
     error = 0
-    if ( toggle(gen) ) call trace_begin ( "OpenAndInitialize" )
 
 ! Read the PCF into an annotation for file headers
 
@@ -178,7 +178,7 @@ contains ! =====     Public Procedures     =============================
        call output('====  (These must be supplied through the l2cf) ======', &
          & advance='yes')
      end if
-     if ( toggle(gen) ) call trace_end ( "OpenAndInitialize" )
+     call trace_end ( "OpenAndInitialize", cond=toggle(gen) )
      if ( timing ) call sayTime
      return
    end if
@@ -368,11 +368,10 @@ contains ! =====     Public Procedures     =============================
 
    Details = switchDetail(switches, 'pcf') - 2 ! -3 means don't dump
    if ( levels(gen) > 0 .or. details > -3 ) &
-        & call Dump_open_init ( filedatabase, &
+      & call Dump_open_init ( filedatabase, &
           & CCSDSEndTime, CCSDSStartTime, processingrange, details )
-   if ( toggle(gen) ) call trace_end ( "OpenAndInitialize" ) 
    if ( timing ) call sayTime         
-   return                             
+   call trace_end ( "OpenAndInitialize", cond=toggle(gen) )
 
   contains
     subroutine SayTime
@@ -632,6 +631,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.103  2013/08/30 02:45:50  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.102  2013/08/17 02:55:23  vsnyder
 ! Regularized trace usage
 !
