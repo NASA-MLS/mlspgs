@@ -102,7 +102,7 @@ contains ! =============== Subroutines and functions ==========================
 
   end subroutine DestroyForwardModelIntermediate
 
-  ! ---------------------------------------- DumpInstanceWindows -----------
+  ! ----------------------------------------  DumpInstanceWindows  -----
     ! Dump the instance windows (e.g., in temperature) 
     ! that a 2d forward model must consider
     ! for the range of mafs [maf1, maf2]
@@ -156,7 +156,7 @@ contains ! =============== Subroutines and functions ==========================
     call outputNamedValue ( 'Instance Window', (/ instLow, instHigh /) )
   end subroutine DumpInstanceWindows
 
-  ! ----------------------------------------------- GetBasisGPH ---------------
+  ! ------------------------------------------------  GetBasisGPH  -----
   subroutine GetBasisGPH ( temp, refGPH, gph, R, RT, belowRef )
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height quantity, and returns
@@ -295,7 +295,7 @@ contains ! =============== Subroutines and functions ==========================
     ! That's it  
   end subroutine GetBasisGPH
 
-  ! ----------------------------------------------- GetGPHPrecision ---------------
+  ! --------------------------------------------  GetGPHPrecision  -----
   subroutine GetGPHPrecision ( tempPrec, refGPHPrec, &
     & gphPrec )
     ! This function takes a state vector, containing one and only one
@@ -481,7 +481,7 @@ contains ! =============== Subroutines and functions ==========================
     ! That's it  
   end subroutine GetGPHPrecision
 
-  ! ---------------------------------- Get2DHydroStaticTangentPressure ----------
+  ! ----------------------------  Get2DHydroStaticTangentPressure  -----
   subroutine Get2DHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, &
     & orbIncl, phiTan, geocAlt, maxIterations, phiWindow, phiWindowUnits, &
     & chunkNo )
@@ -524,6 +524,7 @@ contains ! =============== Subroutines and functions ==========================
 
     integer :: I                        ! Iteration counter
     integer :: MAF                      ! MAF counter
+    integer :: Me = -1                  ! String index for trace
     real (r8), dimension(ptan%template%noSurfs, ptan%template%noInstances) :: &
       EARTHRADIUS ! Earth radius (minor frame)
 
@@ -531,7 +532,7 @@ contains ! =============== Subroutines and functions ==========================
     ! Get a really simple first guess, assuming a uniform log scale height of
     ! 16km
 
-    if ( toggle(emit) ) call trace_begin ('Get2DHydrostaticTangentPressure' )
+    call trace_begin (me, 'Get2DHydrostaticTangentPressure', cond=toggle(emit) )
 
     earthRadius = earthRadA*earthRadB/sqrt( &
       & (earthRadA**2-earthRadB**2)*sin(GeodToGeocLat(ptan%template%geodLat))**2 + earthRadB**2)
@@ -630,11 +631,11 @@ contains ! =============== Subroutines and functions ==========================
     
     call Deallocate_test ( fmStat%rows, 'fmStat%rows', ModuleName )
 
-    if ( toggle(emit) ) call trace_end ('Get2DHydrostaticTangentPressure' )
+    call trace_end ( 'Get2DHydrostaticTangentPressure', cond=toggle(emit) )
 
   end subroutine Get2DHydrostaticTangentPressure
 
-  ! ---------------------------------- GetHydroStaticTangentPressure ----------
+  ! ------------------------------  GetHydroStaticTangentPressure  -----
   subroutine GetHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, geocAlt, &
     maxIterations )
     ! This routine is a pressure `guesser'.  It works by comparing the
@@ -691,10 +692,11 @@ contains ! =============== Subroutines and functions ==========================
 
     integer :: iteration                ! Loop stuff
     integer :: maf                      ! Loop counter
+    integer :: Me = -1                  ! String index for trace
 
     ! Executable code
 
-    if ( toggle(emit) ) call trace_begin ('GetHydrostaticTangentPressure' )
+    call trace_begin ( me, 'GetHydrostaticTangentPressure', cond=toggle(emit) )
 
     nullify ( aCoeff, basisGPH, basisLower, basisSpacing, basisUpper, &
       & bCoeff, cCoeff, closestH2OProfiles, closestTempProfiles, deltaRT, &
@@ -904,11 +906,11 @@ contains ! =============== Subroutines and functions ==========================
 
     call Deallocate_Test ( rt, "rt", ModuleName ) ! Was allocated in GetBasisGPH
 
-    if ( toggle(emit) ) call trace_end ('GetHydrostaticTangentPressure' )
+    call trace_end ( 'GetHydrostaticTangentPressure', cond=toggle(emit) )
 
   end subroutine GetHydrostaticTangentPressure
 
-  ! ---------------------------------------- ScanForwardModel --------------
+  ! -------------------------------------------  ScanForwardModel  -----
   subroutine ScanForwardModel ( fmConf, state, extra, &
     & fwmOut, fmStat, jacobian )
     ! This is the main `scan model' for the module. It compares altitude reported
@@ -932,6 +934,7 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Local variables
 
+    integer :: Me = -1                  ! String index for trace
     integer :: NOMAFS                   ! Dimension
     integer :: NOMIFS                   ! Dimension
     integer :: NOTEMPS                  ! Dimension
@@ -950,7 +953,7 @@ contains ! =============== Subroutines and functions ==========================
     type (VectorValue_T), pointer :: RESIDUAL ! Resulting component of fwmOut
     type (VectorValue_T), pointer :: TEMP ! Temperature component of state
 
-    if ( toggle ( emit ) ) call trace_begin ( 'ScanForwardModel' )
+    call trace_begin ( me, 'ScanForwardModel', cond=toggle(emit) )
 
     ! Executable code -----------------------
 
@@ -1005,7 +1008,7 @@ contains ! =============== Subroutines and functions ==========================
     noMAFs = ptan%template%noInstances
     noTemps = temp%template%noSurfs
     call scanForwardModelAuto
-    if ( toggle ( emit ) ) call trace_end ( 'ScanForwardModel' )
+    call trace_end ( 'ScanForwardModel', cond=toggle(emit) )
 
   contains
 
@@ -1475,7 +1478,7 @@ contains ! =============== Subroutines and functions ==========================
     end subroutine ScanForwardModelAuto
 
   end subroutine ScanForwardModel
-  ! ---------------------------------------- twodScanForwardModel -----------
+  ! ---------------------------------------  TwodScanForwardModel  -----
   subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, &
   & fmStat, jacobian, chunkNo )
 
@@ -1512,70 +1515,71 @@ contains ! =============== Subroutines and functions ==========================
     logical :: PTANINSTATE           ! Set if ptan in state, not extra
   !
     integer :: First, Last           ! Nonzeros in Eta_at_one*
-    INTEGER :: windowstart_t         ! first instance for temperature
-    INTEGER :: windowfinish_t        ! last instance for temperature
-    INTEGER :: windowstart_h2o       ! first instance for water vapor
-    INTEGER :: windowfinish_h2o      ! last instance for water vapor
-    INTEGER :: sv_z                  ! height basis index
-    INTEGER :: sv_p                  ! horizontal basis index
-    INTEGER :: row                   ! Block row in jacobian
-    INTEGER :: col                   ! Block col in jacobian
+    integer :: Me = -1               ! String index for trace
+    integer :: windowstart_t         ! first instance for temperature
+    integer :: windowfinish_t        ! last instance for temperature
+    integer :: windowstart_h2o       ! first instance for water vapor
+    integer :: windowfinish_h2o      ! last instance for water vapor
+    integer :: sv_z                  ! height basis index
+    integer :: sv_p                  ! horizontal basis index
+    integer :: row                   ! Block row in jacobian
+    integer :: col                   ! Block col in jacobian
   !
-    REAL(rp) :: z_surf
-    REAL(rp) :: surf_temp
-    REAL(rp) :: surf_refr_indx(1)
+    real(rp) :: z_surf
+    real(rp) :: surf_temp
+    real(rp) :: surf_refr_indx(1)
   !
-    REAL(rp), POINTER :: earthradc(:)  ! square of minor axis of earth ellipsoid
+    real(rp), pointer :: earthradc(:)  ! square of minor axis of earth ellipsoid
   !                              in orbit plane projected system
-    REAL(rp), POINTER :: red_phi_t(:)
-    REAL(rp), POINTER :: sinbeta(:)
-    REAL(rp), POINTER :: sinphi2(:)
-    REAL(rp), POINTER :: cosphi2(:)
-    REAL(rp), POINTER :: geoclats(:)
-    REAL(rp), POINTER :: sinlat2(:)
-    REAL(rp), POINTER :: coslat2(:)
-    REAL(rp), POINTER :: g_ref(:)
-    REAL(rp), POINTER :: earth_radius(:)
-    REAL(rp), POINTER :: eff_earth_radius(:)
-    REAL(rp), POINTER :: p2(:)
-    REAL(rp), POINTER :: p4(:)
-    REAL(rp), POINTER :: ratio2(:)
-    REAL(rp), POINTER :: ratio4(:)
-    REAL(rp), POINTER :: ratio2_gph(:)
-    REAL(rp), POINTER :: ratio4_gph(:)
-    REAL(rp), POINTER :: tan_temp(:)
-    REAL(rp), POINTER :: tan_h2o(:)
-    REAL(rp), POINTER :: tan_refr_indx(:)
-    REAL(rp), POINTER :: l1altrefr(:)
-    REAL(rp), POINTER :: refgeomalt_denom(:)
-    REAL(rp), POINTER :: l1refalt(:)
-    REAL(rp), POINTER :: mass_corr(:)
-    REAL(rp), POINTER :: dgphdr(:)
-    REAL(rp), POINTER :: dscandz(:)
-    REAL(rp), POINTER :: temp_at_surf_phi(:)
-    REAL(rp), POINTER :: eta_z(:,:)
-    REAL(rp), POINTER :: eta_p_t(:,:)
-    REAL(rp), POINTER :: eta_p_h2o(:,:)
-    REAL(rp), POINTER :: piq(:,:)
-    REAL(rp), POINTER :: eta_piqxp(:,:)
-    REAL(rp), POINTER :: eta_zxp_t(:,:)
-    REAL(rp), POINTER :: eta_zxp_h2o(:,:)
-    REAL(rp), POINTER :: eta_at_one_phi(:)
-    REAL(rp), POINTER :: eta_at_one_zeta(:)
+    real(rp), pointer :: red_phi_t(:)
+    real(rp), pointer :: sinbeta(:)
+    real(rp), pointer :: sinphi2(:)
+    real(rp), pointer :: cosphi2(:)
+    real(rp), pointer :: geoclats(:)
+    real(rp), pointer :: sinlat2(:)
+    real(rp), pointer :: coslat2(:)
+    real(rp), pointer :: g_ref(:)
+    real(rp), pointer :: earth_radius(:)
+    real(rp), pointer :: eff_earth_radius(:)
+    real(rp), pointer :: p2(:)
+    real(rp), pointer :: p4(:)
+    real(rp), pointer :: ratio2(:)
+    real(rp), pointer :: ratio4(:)
+    real(rp), pointer :: ratio2_gph(:)
+    real(rp), pointer :: ratio4_gph(:)
+    real(rp), pointer :: tan_temp(:)
+    real(rp), pointer :: tan_h2o(:)
+    real(rp), pointer :: tan_refr_indx(:)
+    real(rp), pointer :: l1altrefr(:)
+    real(rp), pointer :: refgeomalt_denom(:)
+    real(rp), pointer :: l1refalt(:)
+    real(rp), pointer :: mass_corr(:)
+    real(rp), pointer :: dgphdr(:)
+    real(rp), pointer :: dscandz(:)
+    real(rp), pointer :: temp_at_surf_phi(:)
+    real(rp), pointer :: eta_z(:,:)
+    real(rp), pointer :: eta_p_t(:,:)
+    real(rp), pointer :: eta_p_h2o(:,:)
+    real(rp), pointer :: piq(:,:)
+    real(rp), pointer :: eta_piqxp(:,:)
+    real(rp), pointer :: eta_zxp_t(:,:)
+    real(rp), pointer :: eta_zxp_h2o(:,:)
+    real(rp), pointer :: eta_at_one_phi(:)
+    real(rp), pointer :: eta_at_one_zeta(:)
   !
-    LOGICAL, POINTER :: not_zero_z(:,:)
-    LOGICAL, POINTER :: not_zero_p_t(:,:)
-    LOGICAL, POINTER :: not_zero_p_h2o(:,:)
-    LOGICAL, POINTER :: not_zero_t(:,:)
-    LOGICAL, POINTER :: not_zero_h2o(:,:)
+    logical, pointer :: not_zero_z(:,:)
+    logical, pointer :: not_zero_p_t(:,:)
+    logical, pointer :: not_zero_p_h2o(:,:)
+    logical, pointer :: not_zero_t(:,:)
+    logical, pointer :: not_zero_h2o(:,:)
     real :: T0, T1, T2                     ! For timing
     logical, parameter :: always_timing = .false.  ! if worried about NAG taking so long
     logical :: Timing  ! if worried about NAG taking so long
     logical, parameter :: total_times = .true.
     integer :: isurf
 
-    if ( toggle(emit) ) & ! set by -f command-line switch
-      & call trace_begin ( 'TwoDScanForwardModel, MAF=', index=fmstat%maf )
+    call trace_begin ( me, 'TwoDScanForwardModel, MAF=', index=fmstat%maf, &
+      & cond=toggle(emit) ) ! set by -f command-line switch
   ! Time this
     call time_now ( t0 )
     call time_now ( t1 )
@@ -1587,7 +1591,7 @@ contains ! =============== Subroutines and functions ==========================
     if ( timing ) &
       & call output('beginning timing for 2d scan forward model', advance='yes')
   ! nullify all pointers
-    NULLIFY ( coslat2, cosphi2, dgphdr, dscandz, earthradc, earth_radius,      &
+    nullify ( coslat2, cosphi2, dgphdr, dscandz, earthradc, earth_radius,      &
       & eff_earth_radius, eta_at_one_phi, eta_at_one_zeta, eta_p_h2o,          &
       & eta_piqxp, eta_p_t, eta_z, eta_zxp_h2o, eta_zxp_t, geoclats,           &
       & g_ref, l1altrefr, l1refalt, mass_corr, not_zero_h2o, not_zero_p_h2o,   &
@@ -2022,7 +2026,8 @@ contains ! =============== Subroutines and functions ==========================
       call sayTime ( 'all of 2d scan forward model' )
     endif
 
-    if ( toggle(emit) ) call trace_end ( 'TwoDScanForwardModel MAF=', fmStat%maf )
+    call trace_end ( 'TwoDScanForwardModel MAF=', fmStat%maf, &
+      & cond=toggle(emit) )
 
   contains
     ! ..................................................  SayTime  .....
@@ -2106,6 +2111,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.78  2013/08/30 02:45:47  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.77  2013/06/12 02:38:33  vsnyder
 ! Cruft removal
 !
