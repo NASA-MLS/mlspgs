@@ -62,7 +62,7 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
-    use String_Table, only: Create_String
+    use STRING_TABLE, only: CREATE_STRING
 
     character(len=*), intent(in) :: NAME_C
     integer, intent(in), optional :: ROOT
@@ -82,11 +82,11 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
-    use Call_Stack_m, only: Push_Stack
-    use MLSCommon, only: MLSDebug, MLSVerbose, MLSNamesAreDebug, MLSNamesAreVerbose
-    use MLSMessagemodule, only: MLSMessagecalls
-    use Output_m, only: OutputOptions
-    use String_Table, only: Create_String, Get_String
+    use CALL_STACK_M, only: PUSH_STACK
+    use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use OUTPUT_M, only: OUTPUTOPTIONS
+    use STRING_TABLE, only: CREATE_STRING, GET_STRING
 
     integer, intent(in) :: NAME
     integer, intent(in), optional :: ROOT
@@ -135,13 +135,13 @@ contains ! ====     Public Procedures     ==============================
   ! Index is no longer used.  It's taken from the stack, but retained for
   ! compatibility.
 
-    use Call_Stack_m, only: Pop_Stack, Stack_t, Stack_Depth, Top_Stack
-    use MLSCommon, only: MLSDebug, MLSVerbose, MLSNamesAreDebug, MLSNamesAreVerbose
-    use MLSMessageModule, only: MLSMessageCalls
-    use MLSStringLists, only: SwitchDetail
-    use Output_m, only: NewLine, Output, OutputOptions
-    use String_Table, only: Create_String, Display_String
-    use Toggles, only: Switches
+    use CALL_STACK_M, only: POP_STACK, STACK_T, STACK_DEPTH, TOP_STACK
+    use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
+    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTOPTIONS
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING
+    use TOGGLES, only: SWITCHES
 
     character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
     integer, intent(in), optional :: INDEX ! No longer used -- taken from stack
@@ -199,7 +199,7 @@ contains ! ====     Public Procedures     ==============================
     if ( myCond ) then
       call pop_stack ( 'Exit ', .true. )
     else
-      call pop_stack
+      call pop_stack ( Silent = .true. )
     end if
 
   end subroutine TRACE_END
@@ -248,6 +248,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.26  2013/08/30 23:13:20  pwagner
+! Prevent unwanted printing during routine trace_end
+!
 ! Revision 2.25  2013/08/30 03:55:49  vsnyder
 ! Add String argument to Trace_Begin
 !
