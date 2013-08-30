@@ -82,6 +82,7 @@ contains ! =====     Public Procedures     =============================
     logical, pointer :: LINEFLAG(:) ! Use this line
     integer :: M        ! Index for Molecules
     logical, target :: MaxLineFlag(mostLines)
+    integer :: Me = -1  ! String index for trace
     type(catalog_t) :: MyCatalog
     integer :: N        ! A molecule name
     integer :: NFP      ! Number of points in filter bank's frequency grid
@@ -110,8 +111,9 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: NoFilter = noCat + 1
     integer, parameter :: NoLines = noFilter + 1
 
-    if ( toggle(emit) ) & ! set by -f command-line switch
-      & call trace_begin ( 'Create_PFAData' )
+
+    call trace_begin ( me, 'Create_PFAData', &
+      & cond=toggle(emit) ) ! set by -f command-line switch
     progress = switchDetail(switches,'pfag') > -1
     dumpIt =  switchDetail(switches,'pfab')
 
@@ -284,8 +286,7 @@ contains ! =====     Public Procedures     =============================
       call output ( t2-t0, before='Total CPU time for CreatePFA = ', advance='yes' )
     end if
 
-    if ( toggle(emit) ) & ! set by -f command-line switch
-      & call trace_end ( 'Create_PFAData' )
+    call trace_end ( 'Create_PFAData', cond=toggle(emit) )
 
   contains
 
@@ -436,6 +437,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.28  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.27  2013/07/26 22:19:04  vsnyder
 ! Fiddle with dump switches
 !
