@@ -416,13 +416,21 @@ contains ! =====     Public Procedures     =============================
     type(matrix_Kronecker_T) :: MATRIXKRONECKER
     type(matrix_SPD_T) :: MATRIXSPD
     type(matrix_T) ::     MATRIXPLAIN
-    real(r8) :: MAXVALUE                 ! Value of f_maxValue field
-    integer :: MAXVALUEUNIT              ! Unit for f_maxValue field
+    real(r8) :: MAXVALUE                ! Value of f_maxValue field
+    integer :: MAXVALUEUNIT             ! Unit for f_maxValue field
     integer :: MANIPULATION             ! String index
     type(matrix_T), pointer :: MATRIX
     integer :: MATRIXTOFILL             ! Index in database
     integer :: MATRIXTYPE               ! Type of matrix, L_... from init_tables
     integer :: MAXITERATIONS            ! For hydrostatic fill
+    integer :: Me = -1                  ! String index for trace
+    integer :: Me_FillCommand = -1      ! String index for trace
+    integer :: Me_FlagCloud = -1        ! String index for trace
+    integer :: Me_RestrictRange = -1    ! String index for trace
+    integer :: Me_Spec = -1             ! String index for trace
+    integer :: Me_Subset = -1           ! String index for trace
+    integer :: Me_UpdateMask = -1       ! String index for trace
+    integer :: Me_Transfer = -1         ! String index for trace
     integer :: MEASQTYINDEX
     integer :: MEASVECTORINDEX
     character(len=80) :: MESSAGE        ! Possible error message
@@ -542,7 +550,7 @@ contains ! =====     Public Procedures     =============================
     if ( timing ) call time_now ( t1 )
     old_math77_ran_pack = math77_ran_pack
 
-    if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
+    call trace_begin ( me, "MLSL2Fill", root, cond=toggle(gen) )
     if ( specialDumpFile /= ' ' ) &
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
 
@@ -558,8 +566,8 @@ contains ! =====     Public Procedures     =============================
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       son = subtree(i,root)
-      if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Fill.spec", son )
+      call trace_begin ( me_spec, "Fill.spec", son, &
+        & cond=toggle(gen) .and. levels(gen) > 0 )
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
         vectorName = sub_rosa(subtree(1,son))
@@ -805,18 +813,16 @@ contains ! =====     Public Procedures     =============================
         end if
 
       case ( s_subset )
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_begin ( "Fill.subset", root )
+        call trace_begin ( me_subset, "Fill.subset", root, &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
         call SetupSubset ( key, vectors )
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_end ( "Fill.subset" )
+        call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
 
       case ( s_restrictRange )
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_begin ( "Fill.RestrictRange", root )
+        call trace_begin ( me_restrictRange, "Fill.RestrictRange", root, &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
         call RestrictRange ( key, vectors )
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_end ( "Fill.RestrictRange" )
+        call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
 
       case ( s_flushL2PCBins )
         call FlushLockedBins
@@ -886,28 +892,25 @@ contains ! =====     Public Procedures     =============================
         end do
 
       case ( s_updateMask )
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_begin ( "Fill.UpdateMask", root )
+        call trace_begin ( me_updateMask, "Fill.UpdateMask", root, &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
         call UpdateMask ( key, vectors )
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_end ( "Fill.UpdateMask" )
+        call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
 
       case ( s_flagCloud )
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_begin ( "Fill.flagCloud", root )
+        call trace_begin ( me_flagCloud, "Fill.flagCloud", root, &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
         call SetupflagCloud ( key, vectors )
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_end ( "Fill.flagCloud" )
+        call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
 
-      case ( s_directRead ) ! =============================  direectRead  =====
+      case ( s_directRead ) ! =======================  directRead  =====
         call directReadCommand
       case ( s_fill ) ! ===================================  Fill  =====
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_begin ( "Fill.fillCommand", key )
+        call trace_begin ( me_fillCommand, "Fill.fillCommand", key, &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
         call fillCommand
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_end ( "Fill.fillCommand" )
-      case ( s_fillcovariance ) ! ===============  Covariance  =====
+        call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
+      case ( s_fillcovariance ) ! ===================  Covariance  =====
         invert = .false. ! Default if the field isn't present
         lengthScale = 0
         fraction = 0
@@ -1019,8 +1022,8 @@ contains ! =====     Public Procedures     =============================
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
         ! Loop over the instructions
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_begin ( "Fill.Transfer", key )
+        call trace_begin ( me_transfer, "Fill.Transfer", key, &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
         nullify( destVector, measvector, modelvector, noisevector, sourceVector )
         interpolate = .false.
         skipMask = .false.
@@ -1111,9 +1114,8 @@ contains ! =====     Public Procedures     =============================
         else
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Transfer command requires either source or a to be present' )
-        endif
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_end ( "Fill.Transfer" )
+        end if
+        call trace_end ( "Fill.Transfer", cond=toggle(gen) .and. levels(gen) > 1 )
 
       case ( s_time ) ! ===================================  Time  =====
         if ( timing ) then
@@ -1159,18 +1161,17 @@ contains ! =====     Public Procedures     =============================
 
       case default ! Can't get here if tree_checker worked correctly
       end select
-      if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Fill.spec" )
+      call trace_end ( "Fill.spec", cond=toggle(gen) .and. levels(gen) > 0 )
     end do ! End of loop of specs
     if ( .not. repeatLoop ) exit ! Otherwise, we will repeat the section
-    enddo  repeat_loop!  RepeatLoop
+    end do  repeat_loop!  RepeatLoop
 
     if ( fillError /= 0 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
     end if
 
     if ( specialDumpFile /= ' ' ) call revertOutput
-    if ( toggle(gen) ) call trace_end ( "MLSL2Fill" )
+    call trace_end ( "MLSL2Fill", cond=toggle(gen) )
     math77_ran_pack = old_math77_ran_pack
     if ( timing ) call sayTime
 
@@ -3020,6 +3021,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.425  2013/08/30 02:45:37  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.424  2013/07/12 23:26:51  vsnyder
 ! Mistakenly commited a bunch of debugging stuff
 !
