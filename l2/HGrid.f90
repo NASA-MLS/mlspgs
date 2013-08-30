@@ -96,15 +96,16 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
 
     ! Local variables
-    integer :: DATE                 ! Tree node
+    integer :: DATE                     ! Tree node
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
     double precision :: EXPR_VALUE(2)   ! Output from Expr subroutine
+    real(rk) :: fraction, height
     integer :: hGridType
     real(rk) :: interpolationFactor
     integer :: instrumentModule
-    real(rk) :: fraction, height
-    real(rk) :: spacing, origin
     type (L2GPData_T), pointer :: L2GP  ! The l2gp to use 
+    integer :: Me = -1                  ! String index for trace
+    real(rk) :: spacing, origin
 
     integer :: keyNo                    ! Entry in the mlscf line
     integer :: fieldValue               ! Node in the tree
@@ -159,8 +160,8 @@ contains ! =====     Public Procedures     =============================
     call nullifyHGrid ( hgrid ) ! for Sun's rubbish compiler
     
     hGrid%name = name
-    if ( toggle(gen) .and. levels(gen) > 1 ) &
-      & call trace_begin ( "CreateHGridFromMLSCFInfo", root )
+    call trace_begin ( me, "CreateHGridFromMLSCFInfo", root, &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
 
     got_field = .false.
     interpolationFactor = 1.0
@@ -350,8 +351,8 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName // '/' &
       & // 'CreateHGridFromMLSCFInfo', &
       & "See ***** above for error message" )
-    if ( toggle(gen) .and. levels(gen) > 1 ) &
-      & call trace_end ( "CreateHGridFromMLSCFInfo" )
+    call trace_end ( "CreateHGridFromMLSCFInfo", &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
 
   end function CreateHGridFromMLSCFInfo
 
@@ -2054,7 +2055,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine DumpChunkHGridGeometry
 
-  ! ------------------------------------------------ ComputeAllHGridOffsets ---
+  ! -------------------------------------  ComputeAllHGridOffsets  -----
   subroutine ComputeAllHGridOffsets ( root, treeindex, chunks, filedatabase, &
     & l2gpDatabase, processingRange )
     ! This routine goes through the L1 file and works out how big each HGrid is going to be
@@ -2088,6 +2089,7 @@ contains ! =====     Public Procedures     =============================
     integer :: C                        ! Inner loop counter
     integer :: HGRID                    ! Loop counter
     integer :: HowMany                  ! How many sons does Root have?
+    integer :: Me = -1                  ! String index for trace
     integer :: NOHGRIDS                 ! Number of hGrids
     integer :: SON                      ! Tree node
     integer :: sum1, sum2, sum3
@@ -2096,7 +2098,7 @@ contains ! =====     Public Procedures     =============================
     type(HGrid_T) :: DUMMYHGRID         ! A temporary hGrid
     integer, dimension(:), pointer :: LowerOverlaps => null()
     ! Executable code
-    if ( toggle(gen) ) call trace_begin ( "ComputeAllHGridOffsets", root )
+    call trace_begin ( me, "ComputeAllHGridOffsets", root, cond=toggle(gen) )
     if ( specialDumpFile /= ' ' ) &
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
     ! Slightly clever loop here, the zero run doesn't do anything except
@@ -2247,10 +2249,10 @@ contains ! =====     Public Procedures     =============================
 
     call deAllocate_Test ( LowerOverlaps, 'LowerOverlaps', ModuleName )
     if ( specialDumpFile /= ' ' ) call revertOutput
-    if ( toggle(gen) ) call trace_end ( "ComputeAllHGridOffsets" )
+    call trace_end ( "ComputeAllHGridOffsets", cond=toggle(gen) )
   end subroutine ComputeAllHGridOffsets
 
-  ! ------------------------------------- ComputeNextChunksHGridOffsets --
+  ! ------------------------------  ComputeNextChunksHGridOffsets  -----
   ! This routine is CURRENTLY NOT USED!
   subroutine ComputeNextChunksHGridOffsets ( chunks, chunkNo, hGrids )
     use Allocate_Deallocate, only :ALLOCATE_TEST
@@ -2407,6 +2409,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.107  2013/08/30 02:45:41  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.106  2013/08/21 00:25:04  pwagner
 ! Removed a debugging remnant dumped when overriding geolocations
 !
