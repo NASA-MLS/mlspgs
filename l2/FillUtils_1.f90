@@ -70,8 +70,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSFILLVALUES, only: ISFILLVALUE, ISMONOTONIC, MONOTONIZE, REMOVEFILLVALUES
   use MLSKINDS, only: R4, R8, RM, RP, RV
   use MLSL2OPTIONS, only: AURA_L1BFILES, L2CFNODE, MLSMESSAGE
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-    & MLSMESSAGECALLS
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
   use MLSNUMERICS, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
     & INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES, HUNT
   use MLSFINDS, only: FINDFIRST, FINDLAST
@@ -90,8 +89,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATION, SUBTREE, NSONS, &
-    & SOURCE_REF, SUBTREE
+  use TREE, only: DECORATION, SUBTREE, NSONS, SOURCE_REF, SUBTREE
   use VECTORSMODULE, only: &
     & CLEARUNDERMASK, CLONEVECTORQUANTITY, COPYVECTOR, CREATEMASK, &
     & DESTROYVECTORINFO, DESTROYVECTORQUANTITYMASK, &
@@ -104,8 +102,10 @@ module FillUtils_1                     ! Procedures used by Fill
 
   implicit none
   private
+  
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: ModuleName= "$RCSfile$"
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
   private :: not_used_here
 !---------------------------------------------------------------------------
 
@@ -204,8 +204,8 @@ module FillUtils_1                     ! Procedures used by Fill
 
 contains ! =====     Public Procedures     =============================
 
-    ! ------------------------------------------- addGaussianNoise ---
-    subroutine addGaussianNoise ( key, quantity, sourceQuantity, &
+    ! ------------------------------------------- AddGaussianNoise -----
+    subroutine AddGaussianNoise ( key, quantity, sourceQuantity, &
               & noiseQty, multiplier, spread, ignoreTemplate )
       use MLSRandomNumber, only: DRANG
       ! A special fill: quantity = sourceQuantity + g() noiseQty
@@ -217,17 +217,18 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(inout) ::      quantity
       type (VectorValue_T), intent(in) ::         sourceQuantity
       type (VectorValue_T), intent(in) ::         noiseQty
-      real, dimension(:), intent(in) ::           multiplier
+      real, dimension(:), intent(in)   ::         multiplier
       logical, intent(in)              ::         ignoreTemplate
       logical, intent(in)              ::         spread
 
       ! Local variables
       integer                          ::    ROW, COLUMN
       real                             ::    a, b
+      integer :: Me = -1               ! String index for trace
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.addGaussianNoise', key )
+      call trace_begin ( me, 'FillUtils_1.addGaussianNoise', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! First check that things are OK.
       if ( .not. ignoreTemplate .and. .not. FillableChiSq ( quantity, &
         & sourceQuantity, noiseQty ) ) then
@@ -277,9 +278,9 @@ contains ! =====     Public Procedures     =============================
         end do
       endif
 
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.addGaussianNoise' )
-    end subroutine addGaussianNoise
+    9 call trace_end ( 'FillUtils_1.addGaussianNoise', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
+    end subroutine AddGaussianNoise
 
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
     subroutine ANNOUNCE_ERROR ( WHERE, CODE, &
@@ -435,13 +436,14 @@ contains ! =====     Public Procedures     =============================
       integer :: CHAN
       integer :: IND                    ! Combined MIF/CHAN
       integer :: i
+      integer :: Me = -1                ! String index for trace
       integer :: numProfs
       logical :: skipMe
 
       ! Executable code
 
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ApplyBaseline', key )
+      call trace_begin ( me, 'FillUtils_1.ApplyBaseline', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. ignoreTemplate ) then
         if ( quantity%template%quantityType /= l_radiance ) &
           & call Announce_Error ( key, no_Error_Code, &
@@ -495,25 +497,26 @@ contains ! =====     Public Procedures     =============================
           end do
         end do
       end if
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ApplyBaseline' )
+      call trace_end ( 'FillUtils_1.ApplyBaseline', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ApplyBaseline
 
-    ! ---------------------------------------------- AutoFillVector -----
+    ! --------------------------------------------- AutoFillVector -----
     subroutine AutoFillVector ( vector )
       ! Automatically Fill items in vector we know how to
       type (Vector_T), intent(inout) :: Vector
 
       ! Local variables
       type (VectorValue_T), pointer :: SQ ! vector quantity
+      integer :: Me = -1                  ! String index for trace
       integer :: MOL                      ! Molecule index 
       integer :: SQI                      ! Quantity index 
       character(len=32) :: str
       ! DEEBUG = .true.
       ! Executable code
 
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_begin ( 'FillUtils_1.AutoFillVector' )
+      call trace_begin ( me, 'FillUtils_1.AutoFillVector', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
       ! Loop over its qtys
       do sqi = 1, size ( vector%quantities )
         sq => vector%quantities(sqi)
@@ -526,17 +529,16 @@ contains ! =====     Public Procedures     =============================
             if ( DEEBUG ) then
               call outputNamedValue( 'molecule', str )
               call outputNamedValue( 'isotoperatio', Catalog(mol)%DefaultIsotopeRatio )
-            endif
-          endif
+            end if
+          end if
         case default
         end select
-      enddo
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_end ( 'FillUtils_1.AutoFillVector' )
+      end do
+      call trace_end ( cond=toggle(gen) .and. levels(gen) > 2 )
     end subroutine AutoFillVector
 
-    ! ------------------------------------- deallocateStuff ---
-    subroutine deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
+    ! -------------------------------------------- deallocateStuff -----
+    subroutine DeallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
       real (r8), pointer, dimension(:) :: Zetab
       real (r8), pointer, dimension(:) :: Zetac
       real (r8), pointer, dimension(:) :: Zetai
@@ -555,7 +557,7 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( Zetai, 'Zetai', ModuleName )
     end subroutine DeallocateStuff
 
-    !=============================================== Explicit ==
+    !--------------------------------------------------  Explicit  -----
     subroutine Explicit ( quantity, valuesNode, spreadFlag, force, &
       & globalUnit, channel, AzEl, options, FillValue, extraQuantity )
 
@@ -600,6 +602,7 @@ contains ! =====     Public Procedures     =============================
       integer :: chan
       integer :: K                        ! Loop counter
       integer :: I,J                      ! Other indices
+      integer :: Me = -1                  ! String index for trace
       logical :: MyAzEl
       real(kind(quantity%values)) :: myValue
       character (len=8) :: myOptions
@@ -615,8 +618,8 @@ contains ! =====     Public Procedures     =============================
       character(len=2) :: whichToReplace ! '/=' (.ne. fillValue), '==', or ' ' (always)
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.Explicit', valuesNode )
+      call trace_begin ( me, 'FillUtils_1.Explicit', valuesNode, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       myAzEl = .false.
       if ( present(azEl) ) myAzEl = azEl
       myOptions = ' '
@@ -752,8 +755,8 @@ contains ! =====     Public Procedures     =============================
         & call Deallocate_test ( values, 'values', ModuleName )
       ! No, don't do this, because sourceHeights might be our vgrid
       ! call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.Explicit' )
+      call trace_end ( 'FillUtils_1.Explicit', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine Explicit
 
@@ -781,11 +784,12 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), pointer :: THISRESULT ! The total power quantity to fill
       type (VectorValue_T), pointer :: WEIGHTSQUANTITY ! The total power quantity to fill
 
+      integer :: Me = -1                ! String index for trace
       real(rv) :: TOTALWEIGHT
       
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ComputeTotalPower', key )
+      call trace_begin ( me, 'FillUtils_1.ComputeTotalPower', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       do i = 2, nsons(key)
         son = subtree(i,key)
         field = get_field_id(son)
@@ -836,11 +840,11 @@ contains ! =====     Public Procedures     =============================
           thisResult%values = thisResult%values / totalWeight
         end if
       end do                            ! End loop over (effectively) radiometers
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ComputeTotalPower' )
+      call trace_end ( 'FillUtils_1.ComputeTotalPower', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ComputeTotalPower
 
-    ! ------------------------------------------- ExtractSingleChannel ---
+    ! -------------------------------------  ExtractSingleChannel  -----
     subroutine ExtractSingleChannel ( key, quantity, sourceQuantity, &
       & channel, ignoreTemplate )
       integer, intent(in) :: KEY        ! Tree node
@@ -850,10 +854,11 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in)              :: ignoreTemplate
       ! Local variables
       integer :: CHANIND                ! Channel index
+      integer :: Me = -1                ! String index for trace
       integer :: MIF                    ! Minor frame index
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ExtractSingleChannel', key )
+      call trace_begin ( me, 'FillUtils_1.ExtractSingleChannel', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. ignoreTemplate ) then
         if ( quantity%template%quantityType /= l_singleChannelRadiance ) &
           & call announce_error ( key, no_Error_Code, 'Quantity to fill must be of type singleChannelRadiance' )
@@ -870,11 +875,11 @@ contains ! =====     Public Procedures     =============================
         quantity%values ( mif, : ) = &
           & sourceQuantity%values ( chanInd + ( mif - 1 ) * sourceQuantity%template%noChans, : )
       end do
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ExtractSingleChannel' )
+      call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
+
     end subroutine ExtractSingleChannel
 
-    ! ------------------------------------------- ChiSqChan ---
+    ! ------------------------------------------------  ChiSqChan  -----
     subroutine ChiSqChan ( key, qty, measQty, modelQty, noiseQty, &
     & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier, &
     & firstInstance, lastInstance )
@@ -904,14 +909,15 @@ contains ! =====     Public Procedures     =============================
       integer ::                             S           ! Surface loop counter
       integer ::                             I           ! Instances
       integer ::                             QINDEX
+      integer :: Me = -1                     ! String index for trace
       integer ::                             NOCHANS
       integer ::                             N           ! Num. of summed values
       logical ::                             skipMe
       real                             ::    a, b
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ChiSqChan', key )
+      call trace_begin ( me, 'FillUtils_1.ChiSqChan', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
       if ( &
@@ -1006,11 +1012,11 @@ contains ! =====     Public Procedures     =============================
       end do
       call deallocate_test(values, &
         & 'chi^2 unsummed', ModuleName)
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ChiSqChan' )
+    9 call trace_end ( 'FillUtils_1.ChiSqChan', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ChiSqChan
 
-    ! ------------------------------------------- ChiSqMMaf ---
+    ! ------------------------------------------------  ChiSqMMaf  -----
     subroutine ChiSqMMaf ( key, qty, measQty, modelQty, noiseQty, &
     & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier, &
     & firstInstance, lastInstance )
@@ -1037,16 +1043,17 @@ contains ! =====     Public Procedures     =============================
       integer ::                             UseFirstInstance, UseLastInstance, &
       &                                      NoOutputInstances
       integer ::                             I           ! Instances
-      integer ::                             ROW         ! Running 1st coord
       integer ::                             INSTANCELEN ! Num of rows
+      integer :: Me = -1                     ! String index for trace
       integer ::                             N           ! Num. of summed values
+      integer ::                             ROW         ! Running 1st coord
       logical ::                             skipMe
 
       real                             ::    a, b
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ChiSqMMaf', key )
+      call trace_begin ( me, 'FillUtils_1.ChiSqMMaf', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
       ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
@@ -1148,13 +1155,12 @@ contains ! =====     Public Procedures     =============================
           end if
         end if
       end do
-      call deallocate_test(values, &
-        & 'chi^2 unsummed', ModuleName)
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ChiSqMMaf', key )
+      call deallocate_test ( values, 'chi^2 unsummed', ModuleName)
+    9 call trace_end ( 'FillUtils_1.ChiSqMMaf', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ChiSqMMaf
 
-    ! ------------------------------------------- ChiSqMMif ---
+    ! ------------------------------------------------  ChiSqMMif  -----
     subroutine ChiSqMMif ( key, qty, measQty, modelQty, noiseQty, &
     & dontMask, ignoreZero, ignoreNegative, ignoreTemplate, multiplier, &
     & firstInstance, lastInstance )
@@ -1183,16 +1189,17 @@ contains ! =====     Public Procedures     =============================
       integer ::                             C           ! Channel loop counter
       integer ::                             S           ! Surface loop counter
       integer ::                             I           ! Instances
-      integer ::                             QINDEX
+      integer :: Me = -1                     ! String index for trace
       integer ::                             NOMIFS
       integer ::                             N           ! Num. of summed values
+      integer ::                             QINDEX
       logical ::                             skipMe
 
       real                             ::    a, b
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ChiSqMMif', key )
+      call trace_begin ( me, 'FillUtils_1.ChiSqMMif', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
       if ( &
@@ -1212,7 +1219,7 @@ contains ! =====     Public Procedures     =============================
       ! First check that things are OK.
       if ( ignoreTemplate ) then
         ! Anything goes
-      elseif ( .not. ValidateVectorQuantity ( qty, &
+      else if ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_chiSqMMif/), minorFrame=.true.) ) then
         call Announce_error ( key, No_Error_code, &
         & 'Attempting to fill wrong quantity with chi^2 MMIFwise'  )
@@ -1287,11 +1294,11 @@ contains ! =====     Public Procedures     =============================
       end do
       call deallocate_test(values, &
         & 'chi^2 unsummed', ModuleName)
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ChiSqMMif' )
+    9 call trace_end ( 'FillUtils_1.ChiSqMMif', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ChiSqMMif
 
-    ! ------------------------------------------- ChiSqRatio ---
+    ! -----------------------------------------------  ChiSqRatio  -----
     subroutine ChiSqRatio ( key, qty, normQty, minNormQty, flagQty, &
     & dontMask, ignoreTemplate, firstInstance, lastInstance )
       ! A special fill of the ratio
@@ -1329,14 +1336,15 @@ contains ! =====     Public Procedures     =============================
       &                                      NoOutputInstances
       integer ::                             I           ! Instances
       integer ::                             ITER        ! Instances
-      integer ::                             QINDEX
+      integer :: Me = -1                     ! String index for trace
       integer ::                             NOCHANS
+      integer ::                             QINDEX
       logical ::                             skipMe
       logical, parameter ::                  FakeData = .false.
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ChiSqRatio', key )
+      call trace_begin ( me, 'FillUtils_1.ChiSqRatio', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       ! First check that things are OK.
       if ( ignoreTemplate ) then
@@ -1419,8 +1427,8 @@ contains ! =====     Public Procedures     =============================
             & normQty%values(1:qIndex, i) / minNormQty%values(1:qIndex, i)
         endif
       end do
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ChiSqRatio' )
+    9 call trace_end ( 'FillUtils_1.ChiSqRatio', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ChiSqRatio
 
     ! ------------------------------------------- ColAbundance ---
@@ -1456,6 +1464,7 @@ contains ! =====     Public Procedures     =============================
       integer :: FIRSTSURFACEBELOW
       integer :: USEFIRSTINSTANCE
       integer :: USELASTINSTANCE
+      integer :: Me = -1           ! String index for trace
       integer :: N
       integer :: NOOUTPUTINSTANCES
       real (r8) :: THISBNDPRESS
@@ -1463,7 +1472,7 @@ contains ! =====     Public Procedures     =============================
       real (r8) :: zetaTmp
       real (r8) :: COLUMNSUM
       real (r8) :: TRAPEZOIDSUM
-      real (r8) :: DELTAZETA      ! Zetai[s+1] - Zetai[s]
+      real (r8) :: DELTAZETA       ! Zetai[s+1] - Zetai[s]
       real (r8) :: INVERMG
       real (r8)                        :: Zetaa
       real (r8), pointer, dimension(:) :: Zetab
@@ -1477,8 +1486,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), pointer, dimension(:) :: Pi         ! p[i] in hPa
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ColAbundance', key )
+      call trace_begin ( me, 'FillUtils_1.ColAbundance', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! First check that things are OK.
       if ( ignoreTemplate ) then
         ! Anything goes
@@ -1672,11 +1681,11 @@ contains ! =====     Public Procedures     =============================
         qty%values ( 1, instance ) = InverMg * columnSum
       end do
       call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ColAbundance' )
+    9 call trace_end ( 'FillUtils_1.ColAbundance', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ColAbundance
 
-    ! -------------------------------------------- ConvergenceFromChisq --------
+    ! -------------------------------------  ConvergenceFromChisq  -----
     subroutine ConvergenceFromChisq ( key, quantity, sourceQuantity, &
       & scale, ignoreTemplate )
       integer, intent(in) :: KEY        ! Tree node
@@ -1685,29 +1694,29 @@ contains ! =====     Public Procedures     =============================
       real(r8), intent(in) :: SCALE     ! A scale factor
       logical, intent(in)           ::       IGNORETEMPLATE
       ! Local variables
+      integer :: Me = -1                ! String index for trace
       integer ::                             QINDEX
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ConvergenceFromChisq', key )
+      call trace_begin ( me, 'FillUtils_1.ConvergenceFromChisq', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Do some sanity checking
       if ( .not. ignoreTemplate ) then
         if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
           & 'Convergence quantity must be quality' )
         if ( sourceQuantity%template%quantityType /= l_dnwt_chisqRatio ) call Announce_error ( &
           & key, no_error_code, 'sourceQuantity must be of type chisqRatio' )
-      endif
+      end if
       if ( UNIFORMCHISQRATIO ) then
         quantity%values(1,:) = scale * sourceQuantity%values(1,1)
       else
         qIndex = findLast( sourceQuantity%values(:,1) /= 0._rv )
         if ( qIndex > 0 ) &
           & quantity%values(1,:) = scale * sourceQuantity%values(qIndex,1)
-      endif
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ConvergenceFromChisq' )
+      end if
+      call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ConvergenceFromChisq
 
-    !------------------------------------- FillCovariance ------------
+    !--------------------------------------------  FillCovariance  -----
     subroutine FillCovariance ( covariance, vectors, diagonal, &
       & lengthScale, fraction, invert, ignoreTemplate )
       ! This routine fills a covariance matrix from a given set of vectors
@@ -1733,6 +1742,7 @@ contains ! =====     Public Procedures     =============================
       integer :: I                        ! Instance index
       integer :: J                        ! Loop index
       integer :: K                        ! Loop index
+      integer :: Me = -1                  ! String index for trace
       integer :: N                        ! Size of matrix block
       integer :: Q                        ! Quantity index
       type (MatrixElement_t), pointer :: M ! The matrix being filled
@@ -1745,8 +1755,8 @@ contains ! =====     Public Procedures     =============================
       logical :: ANYOFFDIAG             ! Flag to indicate presence of off diagonal elements
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FillCovariance' )
+      call trace_begin ( me, 'FillUtils_1.FillCovariance', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       ! Apply mask to diagonal
       nullify ( condition )
@@ -1881,12 +1891,12 @@ contains ! =====     Public Procedures     =============================
 
       call DestroyVectorInfo ( DMasked )
       call DestroyVectorInfo ( LMasked )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FillCovariance' )
+      call trace_end ( 'FillUtils_1.FillCovariance', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine FillCovariance
 
-    !------------------------------------- DerivativeOfSource ------------
+    !----------------------------------------  DerivativeOfSource  -----
     ! Compute derivative of source quantity w.r.t. dim listed
     subroutine DerivativeOfSource ( DERIVATIVE, SOURCE, XQUANTITY, &
       & DIMLIST, IGNORETEMPLATE )
@@ -1953,11 +1963,12 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer :: C                        ! Channel loop inductor
       integer :: I                        ! Array index
+      integer :: Me = -1                  ! String index for trace
       integer :: MIF                      ! Minor frame loop inductor
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FoldedRadiance', key )
+      call trace_begin ( me, 'FillUtils_1.FoldedRadiance', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! First some sanity checks
       if ( .not. ValidateVectorQuantity ( radiance, quantityType=(/l_radiance/), &
         & sideband=(/0/), minorFrame=.true. )) &
@@ -2003,8 +2014,8 @@ contains ! =====     Public Procedures     =============================
           i = i + 1
         end do
       end do
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FoldedRadiance' )
+    9 call trace_end ( 'FillUtils_1.FoldedRadiance', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine FoldedRadiance
 
@@ -2120,6 +2131,7 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer :: MYCHANNEL              ! Possibly offset channel
       integer :: i, mif, maf
+      integer :: Me = -1                ! String index for trace
       type (Signal_T) :: signalIn, signalOut, signalRef
       real(r8), dimension(:), pointer :: freq1, freqL1, freqU1
       real(r8), dimension(:), pointer :: freq2, freqL2, freqU2
@@ -2128,8 +2140,8 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: scaledRad   ! scaled radiance according to the f^4 law
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromSplitSideband', key )
+      call trace_begin ( me, 'FillUtils_1.FromSplitSideband', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       nullify(freq, freqL, freqU, freq1, freqL1, freqU1, freq2, freqL2, freqU2)
 
       ! check for qualified quantity
@@ -2296,11 +2308,11 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( freq2, 'frequencies', ModuleName )
       call deallocate_test ( freqL2,'LSBfrequencies', ModuleName )
       call deallocate_test ( freqU2,'USBfrequencies', ModuleName )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromSplitSideband' )
+      call trace_end ( 'FillUtils_1.FromSplitSideband', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine FromSplitSideband
 
-    ! ------------------------------------- GPHPrecision ----
+    ! ---------------------------------------------  GPHPrecision  -----
     subroutine GPHPrecision ( key, quantity, &
       & tempPrecisionQuantity, refGPHPrecisionQuantity )
       ! Fill the GPH precision from the temperature and refGPH precision,
@@ -2312,10 +2324,11 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: REFGPHPRECISIONQUANTITY
 
       ! Local variables
+      integer :: Me = -1                  ! String index for trace
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.GPHPrecision', key )
+      call trace_begin ( me, 'FillUtils_1.GPHPrecision', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       select case ( quantity%template%quantityType )
       case ( l_gph )
@@ -2339,14 +2352,13 @@ contains ! =====     Public Procedures     =============================
         call Announce_error ( 0, no_error_code, 'GPH precision needed for result of GPHPrecision' )
       end select
 
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end( 'FillUtils_1.GPHPrecision' )
+    9 call trace_end( 'FillUtils_1.GPHPrecision', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine GPHPrecision
 
-      ! ------------------------------------- IWCFromExtinction ----
-    subroutine IWCFromExtinction ( quantity, &
-     & sourceQuantity, temperatureQuantity)
+      ! --------------------------------------  IWCFromExtinction  -----
+    subroutine IWCFromExtinction ( Quantity, SourceQuantity, TemperatureQuantity)
       ! Actually, the meaning of the next two is reversed if invert is TRUE)
       type (VectorValue_T), intent(inout) :: QUANTITY ! (IWC) Quantity to fill
       type (VectorValue_T), intent(in) :: sourceQuantity ! cloud extinction
@@ -2360,10 +2372,10 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noInstances) :: x2, y2
       real (r8), dimension(Temperaturequantity%template%noInstances) :: x1, y1
       integer :: i
+      integer :: Me = -1                     ! String index for trace
 
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_begin ( 'FillUtils_1.IWCFromExtinction' )
-      call MLSMessageCalls( 'push', constantName='IWCFromExtinction' )
+      call trace_begin ( me, 'FillUtils_1.IWCFromExtinction', &
+        & cond=toggle(gen) .and. levels(gen) > 2  )
       if ( .not. (quantity%template%coherent .and. sourceQuantity%template%coherent &
          .and. Temperaturequantity%template%coherent)) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2416,14 +2428,13 @@ contains ! =====     Public Procedures     =============================
 
         quantity%values(:,i) = iwc0*Ez
       end do
-      call MLSMessageCalls( 'pop' )
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_end ( 'FillUtils_1.IWCFromExtinction' )
+      call trace_end ( 'FillUtils_1.IWCFromExtinction', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
 
     end subroutine IWCFromExtinction
 
-    ! ------------------------------------------- LOSVelocity ---
-    subroutine LOSVelocity ( key, qty, tngtECI, scECI, scVel)
+    ! ----------------------------------------------  LOSVelocity  -----
+    subroutine LOSVelocity ( key, qty, tngtECI, scECI, scVel )
       ! A special fill from geometry arguments
       use Geometry, only: OMEGA => W
       integer, intent(in) :: KEY
@@ -2434,8 +2445,8 @@ contains ! =====     Public Procedures     =============================
 
 
       ! Local variables
-      integer :: MAF                      ! Loop counter
-      integer :: MIF                      ! Loop counter
+      integer :: MAF, MIF                 ! Loop counters
+      integer :: Me = -1                  ! String index for trace
       integer :: noMAFs                   ! Number of major frames
       integer :: noMIFs                   ! Number of minor frames for this module
       integer :: x,y,z                    ! Indicies into the vectors
@@ -2444,8 +2455,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(3) :: los       ! Normalised line of sight vector
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.LOSVelocity', key )
+      call trace_begin ( me, 'FillUtils_1.LOSVelocity', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! First check that things are OK.
       if ( .not. ValidateVectorQuantity ( qty, &
         & quantityType=(/l_losVel/), &
@@ -2472,51 +2483,48 @@ contains ! =====     Public Procedures     =============================
         & call Announce_Error ( key, No_Error_Code, &
         & 'Spacecraft ECI quantity is not for the spacecraft' )
 
-      ! Don't wast any effort if the values are all still zero
-      if ( all(tngtECI%values == 0._rv) ) then
-        if ( toggle(gen) .and. levels(gen) > 1 ) &
-          & call trace_end ( 'FillUtils_1.LOSVelocity' )
-        return
-      endif
-      noMAFs = qty%template%noInstances
-      noMIFs = qty%template%noSurfs
+      ! Don't waste any effort if the values are all still zero
+      if ( any(tngtECI%values /= 0._rv) ) then
+        noMAFs = qty%template%noInstances
+        noMIFs = qty%template%noSurfs
 
-      do maf = 1, noMAFs
-        do mif = 1, noMIFs
+        do maf = 1, noMAFs
+          do mif = 1, noMIFs
 
-          ! First compute the tangent point velocity in ECI coordinates due
-          ! to the rotation of the earth.  This no doubt makes approximations
-          ! due to the slight non alignment between the earth's rotation axis and
-          ! the ECI z axis, but I'm going to ignore this.
+            ! First compute the tangent point velocity in ECI coordinates due
+            ! to the rotation of the earth.  This no doubt makes approximations
+            ! due to the slight non alignment between the earth's rotation axis and
+            ! the ECI z axis, but I'm going to ignore this.
 
-          ! Work out the indices in 3*mif,maf space
-          x = 1 + 3*(mif-1)
-          y = x+1
-          z = x+2
+            ! Work out the indices in 3*mif,maf space
+            x = 1 + 3*(mif-1)
+            y = x+1
+            z = x+2
 
-          tngtVel= omega* (/ -tngtECI%values(y,maf), &
-            &                 tngtECI%values(x,maf), 0.0_r8 /)
+            tngtVel= omega* (/ -tngtECI%values(y,maf), &
+              &                 tngtECI%values(x,maf), 0.0_r8 /)
 
-          ! Now compute the line of sight direction normal
-          los = tngtECI%values(x:z,maf) - scECI%values(x:z,maf)
-          los = los / sqrt(sum(los**2))
+            ! Now compute the line of sight direction normal
+            los = tngtECI%values(x:z,maf) - scECI%values(x:z,maf)
+            los = los / sqrt(sum(los**2))
 
-          ! Now compute the net velocity in this direction.  For the moment I'll
-          ! assume +ve means the sc and tp are moving apart, and -ve that they're
-          ! getting closer.
+            ! Now compute the net velocity in this direction.  For the moment I'll
+            ! assume +ve means the sc and tp are moving apart, and -ve that they're
+            ! getting closer.
 
-          qty%values(mif,maf) = dot_product(tngtVel, los) - &
-            &                   dot_product(scVel%values(x:z,maf), los)
+            qty%values(mif,maf) = dot_product(tngtVel, los) - &
+              &                   dot_product(scVel%values(x:z,maf), los)
 
-          ! Note that even though x,y,z have been used up to now for a GHz/THz
-          ! minor frame quantity, they're OK with this sc one too.
+            ! Note that even though x,y,z have been used up to now for a GHz/THz
+            ! minor frame quantity, they're OK with this sc one too.
+          end do
         end do
-      end do
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.LOSVelocity' )
+      end if
+      call trace_end ( 'FillUtils_1.LOSVelocity', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine LOSVelocity
 
-    ! ------------------------------------- NoRadsPerMIF -----
+    ! ---------------------------------------------  NoRadsPerMIF  -----
     subroutine NoRadsPerMif ( key, quantity, measQty, asPercentage )
       use BitStuff, only: BITEQ
       ! Count number of valid (i.e., not masked) radiances
@@ -2536,14 +2544,15 @@ contains ! =====     Public Procedures     =============================
       type(VectorValue_T), intent(in) :: MEASQTY
       logical, intent(in), optional   :: asPercentage ! as % of 
       ! Local variables
-      integer  :: possible
-      integer  :: MIF, MAF               ! Loop counters
       integer  :: I0, I1                 ! Indices
+      integer  :: MAF, MIF               ! Loop counters
+      integer  :: Me = -1                ! String index for trace
       logical  :: pct
+      integer  :: possible
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.NoRadsPerMif', key )
+      call trace_begin ( me, 'FillUtils_1.NoRadsPerMif', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       pct = .false.
       if ( present(asPercentage) ) pct = asPercentage
       possible = measQty%template%noChans
@@ -2570,11 +2579,11 @@ contains ! =====     Public Procedures     =============================
         quantity%values = measQty%template%noChans
         if ( pct ) quantity%values = 100*quantity%values/possible
       end if
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.NoRadsPerMif' )
+      call trace_end ( 'FillUtils_1.NoRadsPerMif', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine NoRadsPerMIF
 
-    ! ------------------------------------ PhiTanWithRefraction --
+    ! -------------------------------------  PhiTanWithRefraction  -----
     subroutine PhiTanWithRefraction ( key, quantity, &
       & h2o, orbIncline, ptan, refGPH, temperature, ignoreTemplate )
 
@@ -2596,12 +2605,12 @@ contains ! =====     Public Procedures     =============================
       real(rp) :: PhiCorrs(temperature%template%noInstances,temperature%template%noSurfs)
       real(rp), dimension(temperature%template%noInstances) :: REQS
       real(rv), dimension(temperature%template%noSurfs) :: Heights, N, PhiCorr, PS
-      integer :: I, J ! Subscripts, loop inductors
+      integer :: I, J     ! Subscripts, loop inductors
+      integer :: Me = -1  ! String index for trace
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.PhiTanWithRefraction', key )
-      call MLSMessageCalls( 'push', constantName='PhiTanWithRefraction' )
+      call trace_begin ( me, 'FillUtils_1.PhiTanWithRefraction', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! More sanity checks
       if ( .not. ignoreTemplate ) then
         if ( quantity%template%instrumentModule /= ptan%template%instrumentModule ) &
@@ -2676,9 +2685,8 @@ contains ! =====     Public Procedures     =============================
           &                      phiCorrs, quantity%values(:,j), update=.true. )
       end do ! j
 
-      call MLSMessageCalls( 'pop' )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.PhiTanWithRefraction' )
+      call trace_end ( 'FillUtils_1.PhiTanWithRefraction', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine PhiTanWithRefraction
 
       ! ------------------------------------- RHIFromOrToH2O ----
@@ -2725,14 +2733,15 @@ contains ! =====     Public Procedures     =============================
       integer ::                          I_H2O       ! Instance num for values
       integer ::                          I_T         ! Instance num for values
       integer ::                          invs        ! 1 if invert, else -1
-      integer ::                          QINDEX
-      integer ::                          N           ! Num. of summed values
       logical                          :: matched_h2o_channels
       logical                          :: matched_h2o_instances
       logical                          :: matched_sizes
       logical                          :: matched_surfs
       logical                          :: matched_T_channels
       logical                          :: matched_T_instances
+      integer :: Me = -1                  ! String index for trace
+      integer ::                          N           ! Num. of summed values
+      integer ::                          QINDEX
       integer ::                          S           ! Surface loop counter
       integer ::                          S_H2O       ! Instance num for surfs
       integer ::                          S_RHI       ! Instance num for surfs
@@ -2754,9 +2763,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs, quantity%template%noInstances) :: &
        &                                  values
       ! Executable statements
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.RHIFromOrToH2O', key )
-      call MLSMessageCalls( 'push', constantName='RHIFromOrToH2O' )
+      call trace_begin ( me, 'FillUtils_1.RHIFromOrToH2O', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       values = 0.
       ! Let any undefined values be so marked (but not necessarily masked)
       ! An exceptionally dubious step -- should remove this idea
@@ -2959,12 +2967,11 @@ contains ! =====     Public Procedures     =============================
           call dump(Quantity%values(:,1), 'RHI(%)')
         end if
       end if
-      call MLSMessageCalls( 'pop' )
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.RHIFromOrToH2O' )
+    9 call trace_end ( 'FillUtils_1.RHIFromOrToH2O', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine RHIFromOrToH2O
 !MJF
-    ! ------------------------------------- RHIPrecisionFromOrToH2O ----
+    ! ----------------------------------  RHIPrecisionFromOrToH2O  -----
     subroutine RHIPrecisionFromOrToH2O ( key, quantity, &
      & sourcePrecisionQuantity, tempPrecisionQuantity, sourceQuantity, &
      & temperatureQuantity, &
@@ -3028,6 +3035,7 @@ contains ! =====     Public Procedures     =============================
       logical                          :: matched_TPrecision_instances
       logical                          :: matched_T_channels
       logical                          :: matched_T_instances
+      integer :: Me = -1                  ! String index for trace
       integer ::                          N           ! Num. of summed values
       logical, parameter ::               NEGATIVETOO = .true.
       integer ::                          QINDEX
@@ -3056,9 +3064,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(quantity%template%noSurfs, quantity%template%noInstances) :: &
        &                                  values
       ! Executable statements
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.RHIPrecisionFromOrToH2O', key )
-      call MLSMessageCalls( 'push', constantName='RHIPrecisionFromOrToH2O' )
+      call trace_begin ( me, 'FillUtils_1.RHIPrecisionFromOrToH2O', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       values = 0.
       ! Let any undefined values be so marked (but not necessarily masked)
       ! An exceptionally dubious step -- should remove this idea
@@ -3334,12 +3341,11 @@ contains ! =====     Public Procedures     =============================
           call dump(Quantity%values(:,1), 'RHI(%)')
         end if
       end if
-      call MLSMessageCalls( 'pop' )
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.RHIPrecisionFromOrToH2O' )
+    9 call trace_end ( 'FillUtils_1.RHIPrecisionFromOrToH2O', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine RHIPrecisionFromOrToH2O
 !MJF
-    ! ----------------------------------- FromASCIIFile --------
+    ! --------------------------------------------  FromASCIIFile  -----
     subroutine FromAsciiFile ( key, quantity, filename, badRange )
       use IO_STUFF, only: GET_LUN
       use MACHINE, only: IO_ERROR
@@ -3350,11 +3356,12 @@ contains ! =====     Public Procedures     =============================
       real(r8), dimension(2), optional, intent(in) :: BADRANGE ! Range for missing data
       ! Local variables
       integer :: LUN                    ! Unit number
+      integer :: Me = -1                ! String index for trace
       integer :: STATUS                 ! Flag from open/close/read etc.
       character(len=1024) :: FILENAMESTR
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromAsciiFile', key )
+      call trace_begin ( me, 'FillUtils_1.FromAsciiFile', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       call get_lun ( lun, msg=.false. )
       if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "No logical unit numbers available" )
@@ -3385,11 +3392,11 @@ contains ! =====     Public Procedures     =============================
           quantity%mask = char(ior(ichar(quantity%mask),M_LinAlg))
         end where
       end if
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromAsciiFile' )
+      call trace_end ( 'FillUtils_1.FromAsciiFile', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine FromAsciiFile
 
-    ! ------------------------------------------- FromInterpolatedQty
+    ! --------------------------------------  FromInterpolatedQty  -----
     subroutine FromInterpolatedQty ( qty, source, key, &
       & ignoreTemplate, ptan )
       use MLSNumerics, only: Interpolate_Regular_To_Irregular
@@ -3403,16 +3410,16 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       real (r8), dimension(:), pointer :: oldSurfs, newSurfs
       real (r8), dimension(:,:), pointer :: newValues
-      logical :: mySurfs, myNewValues
       integer :: instance
+      integer :: Me = -1              ! String index for trace
+      logical :: mySurfs, myNewValues
       integer :: status
       logical :: verbose
 
       ! Executable code
       verbose = ( switchDetail(switches, 'fill') > 0 ) ! -Sfill1
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromInterpolatedQty', key )
-      call MLSMessageCalls( 'push', constantName='FromInterpolatedQty' )
+      call trace_begin ( me, 'FillUtils_1.FromInterpolatedQty', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. ignoreTemplate ) then
         if ( .not. DoQtysDescribeSameThing ( qty, source ) ) then
           call Announce_error ( key, no_error_code, &
@@ -3578,9 +3585,8 @@ contains ! =====     Public Procedures     =============================
           qty%values = source%values
         end if
       end if
-      call MLSMessageCalls( 'pop' )
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromInterpolatedQty' )
+    9 call trace_end ( 'FillUtils_1.FromInterpolatedQty', &
+        & cond=toggle(gen) .and. levels(gen) > 1  )
 
     end subroutine FromInterpolatedQty
 
@@ -3608,6 +3614,7 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer :: i, j, maf, mif                ! Loop counter
       integer :: maxZ, minZ                    ! pressure range indices of sGrid
+      integer :: Me = -1                       ! String index for trace
       integer :: noMAFs,noMIFs,noDepths
       integer, dimension(qty%template%noSurfs,qty%template%noInstances) :: cnt
       real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: out
@@ -3619,8 +3626,8 @@ contains ! =====     Public Procedures     =============================
         & los%template%noSurfs,los%template%noInstances) :: beta
       real (r8) :: ds, ColTrans
 
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromLosGrid', key )
+      call trace_begin ( me, 'FillUtils_1.FromLosGrid', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       errorCode=0
 
@@ -3750,12 +3757,12 @@ contains ! =====     Public Procedures     =============================
       end do                              ! End instance loop
       ! average all non-zero bins
       where (cnt > 0) qty%values = out/cnt
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromLosGrid' )
+      call trace_end ( 'FillUtils_1.FromLosGrid', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine FromLosGrid
 
-    ! --------------------------------------------- ByManipulation ---
+    ! -------------------------------------------  ByManipulation  -----
     subroutine ByManipulation ( quantity, a, b, &
       & manipulation, key, ignoreTemplate, &
       & spreadflag, dimList, &
@@ -3802,15 +3809,15 @@ contains ! =====     Public Procedures     =============================
       real(rv) :: cc
       integer :: I
       logical :: MAPFUNCTION
-      integer :: NUMWAYS ! 1 or 2
+      integer :: Me = -1   ! String index for trace
+      integer :: NUMWAYS   ! 1 or 2
       character (len=128) :: MSTR
       logical :: OKSOFAR
       logical :: StatisticalFunction
       logical :: USESC
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ByManipulation', key )
-      call MLSMessageCalls( 'push', constantName='ByManipulation' )
+      call trace_begin ( me, 'FillUtils_1.ByManipulation', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Currently we have a rather brain dead approach to this, so
       ! check that what the user has asked for, we can supply.
       call get_string ( manipulation, mstr, strip=.true. )
@@ -3898,13 +3905,12 @@ contains ! =====     Public Procedures     =============================
         call Manipulate( quantity, a, b, cc, mstr, &
           & spreadflag, dimList )
       end select
-      call MLSMessageCalls( 'pop' )
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ByManipulation' )
+    9 call trace_end ( 'FillUtils_1.ByManipulation', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine ByManipulation
 
-    ! ----------------------------------------- FromL1B ----
+    ! --------------------------------------------------  FromL1B  -----
     ! Fills a quantity that is stored as a dataset in either the
     ! l1boa file (lat, lons, etc.)
     ! l1brad file (radiances, radiance precisions, etc.)
@@ -3942,12 +3948,13 @@ contains ! =====     Public Procedures     =============================
       type (l1bData_T)                      :: L1BDATA
       type (MLSFile_T), pointer             :: L1BFile
       type (MLSFile_T), pointer             :: L1BOAFile
-      integer                               :: ROW, COLUMN
+      integer                               :: COLUMN
+      integer :: Me = -1                    ! String index for trace
       integer                               :: myBOMask
-
+      integer                               :: ROW
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromL1B', root )
+      call trace_begin ( me, 'FillUtils_1.FromL1B', root, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       myBOMask = 0
       if ( present(BOMask) ) myBOMask = BOMask
       ! print *, 'Filling vector quantity from l1b'
@@ -4185,11 +4192,11 @@ contains ! =====     Public Procedures     =============================
 
       if ( switchDetail(switches, 'l1bfill') > -1 ) call Dump( l1bData )
       call DeallocateL1BData(l1bData)
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromL1B' )
+    9 call trace_end ( 'FillUtils_1.FromL1B', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine FromL1B
 
-    ! ------------------------------------------- FromL2AUX --
+    ! ------------------------------------------------  FromL2AUX  -----
     subroutine FromL2AUX ( qty, l2aux, errorCode )
       type ( VectorValue_T), intent(inout) :: QTY
       type ( L2AUXData_T), intent(in) :: L2AUX
@@ -4197,9 +4204,10 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       integer :: FIRSTPROFILE
       integer :: LASTPROFILE
+      integer :: Me = -1        ! String index for trace
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromL2AUX' )
+      call trace_begin ( me, 'FillUtils_1.FromL2AUX', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       errorCode = 0
       ! Work out which profile in the l2aux this belongs to
       firstProfile = qty%template%instanceOffset - qty%template%noInstancesLowerOverlap
@@ -4228,11 +4236,11 @@ contains ! =====     Public Procedures     =============================
       qty%values = reshape ( l2aux%values ( :, :,  &
         & firstProfile : lastProfile ), &
         & (/ qty%template%instanceLen, qty%template%noInstances /) )
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromL2AUX' )
+    9 call trace_end ( 'FillUtils_1.FromL2AUX', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine FromL2AUX
 
-    ! --------------------------------------- UsingMagneticModel --
+    ! ---------------------------------------  UsingMagneticModel  -----
     subroutine UsingMagneticModel ( qty, gphQty, key, SpacingOnly, MAF )
       use Magnetic_Field_Quantity, only: Get_Magnetic_Field_Quantity
       type (VectorValue_T), intent(inout) :: QTY
@@ -4242,10 +4250,11 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in), optional :: MAF ! to use for GPH quantity
 
       logical :: Error
+      integer :: Me = -1                   ! String index for trace
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.UsingMagneticModel', key )
+      call trace_begin ( me, 'FillUtils_1.UsingMagneticModel', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       error = .false.
       if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_magneticField/), &
@@ -4275,17 +4284,16 @@ contains ! =====     Public Procedures     =============================
 
       if ( .not. error ) call get_Magnetic_Field_Quantity ( qty, GPHQty, MAF )
 
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.UsingMagneticModel' )
+      call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine UsingMagneticModel
 
-    ! ------------------------------------- Hydrostatically ----
+    ! ------------------------------------------  Hydrostatically  -----
     subroutine Hydrostatically ( key, quantity, &
       & temperatureQuantity, refGPHQuantity, h2oQuantity, &
       & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, maxIterations, &
       & phiWindow, phiWindowUnits, chunkNo )
-    use MANIPULATEVECTORQUANTITIES, only: FINDCLOSESTINSTANCES
+      use MANIPULATEVECTORQUANTITIES, only: FINDCLOSESTINSTANCES
       ! Various hydrostatic fill operations
       integer, intent(in) :: key          ! For messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -4304,13 +4312,14 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       integer, dimension(:), pointer :: CLOSESTTEMPPROFILES
+      integer :: Me = -1                ! String index for trace
       logical :: verbose
 
       ! Executable code
       verbose = ( switchDetail(switches, 'fill') > -1 )
 
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.Hydrostatically', key )
+      call trace_begin ( me, 'FillUtils_1.Hydrostatically', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       select case ( quantity%template%quantityType )
       case ( l_gph )
@@ -4386,8 +4395,8 @@ contains ! =====     Public Procedures     =============================
         call Announce_error ( 0, 0, 'No such fill yet' )
       end select
 
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.Hydrostatically' )
+    9 call trace_end ( 'FillUtils_1.Hydrostatically', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. verbose ) return
       nullify( closestTempProfiles )
       call Allocate_Test ( closestTempProfiles, phitanquantity%template%noInstances, &
@@ -4398,10 +4407,8 @@ contains ! =====     Public Procedures     =============================
       
     end subroutine Hydrostatically
 
-    ! -------------------------------------- FromIsotope -----------
-
-    subroutine FromIsotope ( quantity, sourceQuantity, &
-              & ratioQuantity )
+    ! ----------------------------------------------  FromIsotope  -----
+    subroutine FromIsotope ( Quantity, SourceQuantity, RatioQuantity )
       ! This routine fills one vector from another, given an appropriate
       ! isotope ratio.
 
@@ -4411,10 +4418,11 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       real (r8) :: FACTOR                 ! Multiplier to apply to sourceQuantity
+      integer :: Me = -1                  ! String index for trace
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromIsotope' )
+      call trace_begin ( me, 'FillUtils_1.FromIsotope', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/ l_vmr /), frequencyCoordinate=(/ l_none /) ) ) &
@@ -4454,14 +4462,13 @@ contains ! =====     Public Procedures     =============================
       end if
 
       quantity%values = sourceQuantity%values * factor
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromIsotope' )
+      call trace_end ( 'FillUtils_1.FromIsotope', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine FromIsotope
 
-    ! ---------------------------------- WithEstdNoise ---
-    subroutine WithEstNoise ( quantity, radiance, &
-      & sysTemp, nbw, integrationTime )
+    ! --------------------------------------------  WithEstdNoise  -----
+    subroutine WithEstNoise ( Quantity, Radiance, SysTemp, Nbw, IntegrationTime )
 
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -4472,14 +4479,15 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       integer :: C                        ! Channel loop counter
-      integer :: S                        ! Surface loop counter
       integer :: I                        ! Index into first dimension of values
+      integer :: Me = -1                  ! String index for trace
+      integer :: S                        ! Surface loop counter
 
       real (r8), dimension(:), pointer :: WIDTH ! Channel widths in MHz
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.WithEstNoise' )
+      call trace_begin ( me, 'FillUtils_1.WithEstNoise', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/l_radiance/), minorFrame=.true.) ) &
@@ -4534,12 +4542,12 @@ contains ! =====     Public Procedures     =============================
           i = i + 1
         end do
       end do
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.WithEstNoise' )
+      call trace_end ( 'FillUtils_1.WithEstNoise', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine WithEstNoise
 
-    ! ----------------------------------------- WithReflectorTemperature ---
+    ! ---------------------------------  WithReflectorTemperature  -----
     subroutine WithReflectorTemperature ( key, quantity, phiZero, termsNode )
       integer, intent(in) :: KEY         ! Tree node for messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
@@ -4548,12 +4556,13 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       integer :: I                      ! Loop counter
+      integer :: Me = -1                ! String index for trace
       integer, DIMENSION(2) :: UNITASARRAY ! Unit for value given
       real (r8), DIMENSION(2) :: VALUEASARRAY ! Value give
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.WithReflectorTemperature', key )
+      call trace_begin ( me, 'FillUtils_1.WithReflectorTemperature', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( quantity%template%quantityType /= l_reflTemp ) &
         & call Announce_Error ( key, no_error_code, &
         & 'Inappropriate quantity for reflector temperature fill' )
@@ -4577,12 +4586,11 @@ contains ! =====     Public Procedures     =============================
             & sin ( Deg2Rad * ((i+1)/2) * ( quantity%template%phi(1,:) - phiZero ) )
         end if
       end do
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.WithReflectorTemperature' )
+      call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine WithReflectorTemperature
 
-    ! ----------------------------------------- WithReichlerWMOTP -------------
+    ! ----------------------------------------  WithReichlerWMOTP  -----
     subroutine WithReichlerWMOTP ( tpPres, temperature )
       
       use wmoTropopause, only: EXTRATROPICS, TWMO
@@ -4593,24 +4601,29 @@ contains ! =====     Public Procedures     =============================
       ! 
       type (VectorValue_T), intent(inout) :: TPPRES ! Result
       type (VectorValue_T), intent(in) :: TEMPERATURE
+
       ! Local variables
-      integer :: instance
-      integer :: invert
+
+      logical :: AlreadyDumped
+      integer :: Instance
+      integer :: Invert
+      integer :: Me = -1                   ! String index for trace
       real :: MISSINGVALUE
-      integer :: nlev
-      integer :: nvalid
-      real, dimension( size(temperature%values, 1) ) :: p ! Pa
-      real, parameter :: pliml = 65.*100 ! in Pa
-      real, parameter :: plimlex = 65.*100 ! in Pa
-      real, parameter :: plimu = 550.*100 ! in Pa
-      real, dimension( size(temperature%values, 1) ) :: t
-      real :: trp
+      integer :: Nlev
+      integer :: Nvalid
+      real, dimension( size(temperature%values, 1) ) :: P ! Pa
+      real, parameter :: Pliml = 65.*100 ! in Pa
+      real, parameter :: Plimlex = 65.*100 ! in Pa
+      real, parameter :: Plimu = 550.*100 ! in Pa
+      real, dimension( size(temperature%values, 1) ) :: T
+      real :: Trp
       real, dimension(:), pointer :: xyTemp, xyPress
-      logical :: alreadyDumped
       ! logical, parameter :: DEEBUG = .false.
+
       ! Executable
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.WithReichlerWMOTP' )
+
+      call trace_begin ( me, 'FillUtils_1.WithReichlerWMOTP', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       nullify( xyTemp, xyPress )
       nlev = size(temperature%values, 1)
       MISSINGVALUE = REAL( DEFAULTUNDEFINEDVALUE )
@@ -4694,11 +4707,11 @@ contains ! =====     Public Procedures     =============================
         call Deallocate_test ( xyPress, 'xyPress', ModuleName )
       end do instanceLoop
       if ( DEEBUG ) call dump( tpPres%values, 'tpPres%values' )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.WithReichlerWMOTP' )
+      call trace_end ( 'FillUtils_1.WithReichlerWMOTP', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine WithReichlerWMOTP
 
-    ! ----------------------------------------- WithWMOTropopause ------
+    ! ------------------------------------------  WithWMOTropopause  -----
     subroutine WithWMOTropopause ( tpPres, temperature, refGPH, grid )
       use Geometry, only: GEODTOGEOCLAT
       use Hydrostatic_M, only: HYDROSTATIC
@@ -4713,12 +4726,13 @@ contains ! =====     Public Procedures     =============================
       real(rv), dimension(grid%noSurfs) :: HFINE ! Temperature on fine grid
       real(rv), dimension(grid%noSurfs) :: DTDH ! d(tFine)/d(hFine)
       real(rv), dimension(grid%noSurfs) :: DUMMYT ! Extra arg. for interpolateValues
-      integer :: I                      ! Instance counter
-      integer :: S500                   ! 500mb surface?
-      integer :: LOWCANDIDATE           ! Possbile tb but below 500hPa
-      integer :: S                      ! Surface counter
-      integer :: S0                     ! Surface to start looking from
       integer :: DS                     ! No. surfs less than 2km above s
+      integer :: I                      ! Instance counter
+      integer :: LOWCANDIDATE           ! Possbile tb but below 500hPa
+      integer :: Me = -1                ! String index for trace
+      integer :: S0                     ! Surface to start looking from
+      integer :: S500                   ! 500mb surface?
+      integer :: S                      ! Surface counter
       logical :: VALIDTP                ! Flag
 
       ! Now the rules for the WMO tropopause are:
@@ -4756,9 +4770,8 @@ contains ! =====     Public Procedures     =============================
       ! (ie describe the right quantities, and all on the same horizontal
       ! grid).
 
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.WithWMOTropopause' )
-      call MLSMessageCalls( 'push', constantName='WithWMOTropopause' )
+      call trace_begin ( me, 'FillUtils_1.WithWMOTropopause', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Loop over the instances
       tpPres%values = 0.0
       instanceLoop: do i = 1, temperature%template%noInstances
@@ -4842,12 +4855,11 @@ contains ! =====     Public Procedures     =============================
           tpPres%values(1,i) = 10.0 ** ( - grid%surfs(s,1) )
         end if
       end do instanceLoop
-      call MLSMessageCalls( 'pop' )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.WithWMOTropopause' )
+      call trace_end ( 'FillUtils_1.WithWMOTropopause', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine WithWMOTropopause
 
-    ! -------------------------------------------- QualityFromChisq --------
+    ! -----------------------------------------  QualityFromChisq  -----
     ! Compute Quality as a function of chi^2
     ! namely, Q = scale / chi^2
     ! The computation is done at the first vertical surface
@@ -4860,15 +4872,17 @@ contains ! =====     Public Procedures     =============================
       real(r8), intent(in)                 :: SCALE     ! A scale factor
       integer, intent(in)                  :: HEIGHTNODE ! What height to use
       logical, intent(in)                  :: IGNORETEMPLATE
+
       ! Local variables
+      real(r8) :: HEIGHT                ! The height to consider
+      integer :: Me = -1                ! String index for trace
+      integer :: SURFACE                ! Surface index
       integer, dimension(2) :: UNITASARRAY ! From expr
       real(r8), dimension(2) :: VALUEASARRAY ! From expr
-      real(r8) :: HEIGHT                ! The height to consider
-      integer :: SURFACE                ! Surface index
+
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.QualityFromChisq', key )
-      call MLSMessageCalls( 'push', constantName='QualityFromChisq' )
+      call trace_begin ( me, 'FillUtils_1.QualityFromChisq', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Do some sanity checking
       if ( .not. ignoreTemplate ) then
         if ( quantity%template%quantityType /= l_quality ) call Announce_error ( key, no_error_code, &
@@ -4877,7 +4891,7 @@ contains ! =====     Public Procedures     =============================
           & key, no_error_code, 'sourceQuantity must be of type chisqBinned' )
         if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) call Announce_error ( &
           & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
-      endif
+      end if
       ! Work out the height
       if ( heightNode /= 0 ) then
         if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( key, no_error_code, &
@@ -4895,12 +4909,11 @@ contains ! =====     Public Procedures     =============================
       where ( sourceQuantity%values(surface,:) /= 0.0_r8 )
         quantity%values(1,:) = scale / sourceQuantity%values(surface,:)
       end where
-      call MLSMessageCalls( 'pop' )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.QualityFromChisq' )
+      call trace_end ( 'FillUtils_1.QualityFromChisq', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine QualityFromChisq
 
-    ! -------------------------------------------- StatusQuantity --------
+    ! -------------------------------------------  StatusQuantity  -----
     subroutine StatusQuantity ( key, quantity, sourceQuantity, statusValue, &
       & minValue, maxValue, heightNode, &
       & additional, exact, ignoreTemplate )
@@ -4914,15 +4927,17 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: ADDITIONAL ! Is this an additional flag or a fresh start?
       logical, intent(in) :: EXACT ! Set status to exact statusValue , don't OR values
       logical, intent(in) :: IGNORETEMPLATE
+
       ! Local variables
       real(r8) :: HEIGHT                ! The height to consider
+      integer :: Me = -1                ! String index for trace
       integer :: SURFACE                ! Surface index
       integer, dimension(2) :: UNITASARRAY ! From expr
       real(r8), dimension(2) :: VALUEASARRAY ! From expr
+
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.StatusQuantity', key )
-      call MLSMessageCalls( 'push', constantName='StatusQuantity' )
+      call trace_begin ( me, 'FillUtils_1.StatusQuantity', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Do some sanity checking
       if ( .not. ignoreTemplate ) then
         if ( quantity%template%quantityType /= l_status ) call Announce_error ( key, no_error_code, &
@@ -4968,16 +4983,15 @@ contains ! =====     Public Procedures     =============================
             & sourceQuantity%values(surface,:) < minValue )
               quantity%values(1,:) = ior ( nint ( quantity%values(1,:) ), statusValue )
           end where
-        endif
-      endif
-      call MLSMessageCalls( 'pop' )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.StatusQuantity' )
+        end if
+      end if
+      call trace_end ( 'FillUtils_1.StatusQuantity', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine StatusQuantity
 
-    ! ------------------------------------------ UsingLeastSquares -----
-    subroutine UsingLeastSquares  ( key, Quantity, SourceQuantity, ptanQuantity, &
-      & channel, method, scaleInstances, scaleRatio, scaleSurfs )
+    ! ----------------------------------------  UsingLeastSquares  -----
+    subroutine UsingLeastSquares  ( Key, Quantity, SourceQuantity, PtanQuantity, &
+      & Channel, Method, ScaleInstances, ScaleRatio, ScaleSurfs )
       ! This fills a coherent Quantity from a a typically incoherent
       ! SourceQuantity using a least-squares approximation to a first-order
       ! Taylor series.
@@ -5001,13 +5015,14 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: W, WMAX               ! Weight if method == l_lsWeighted
       integer :: QS, QI, SS, SI         ! Loop counters
       integer :: KRANK                  ! Rank of least-squares solution
+      integer :: Me = -1                ! String index for trace
       integer :: MYCHANNEL              ! Channel or 1
       integer :: NRows
       integer :: NSourceQuant  ! Number of values in SourceQuantity
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.UsingLeastSquares', key )
+      call trace_begin ( me, 'FillUtils_1.UsingLeastSquares', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       ! Check the output quantity
       if ( .not. ValidateVectorQuantity ( quantity, &
@@ -5152,12 +5167,12 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( RHS,      'RHS',      moduleName )
       if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.UsingLeastSquares' )
+    9 call trace_end ( 'FillUtils_1.UsingLeastSquares', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine UsingLeastSquares
 
-    !=============================== FromGrid ============
+    ! -------------------------------------------------  FromGrid  -----
     subroutine FromGrid(quantity, grid, allowMissing, errorCode)
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -5171,11 +5186,12 @@ contains ! =====     Public Procedures     =============================
       logical :: DEEBUG
       integer :: instance,surf            ! Loop counter
       integer :: instIndex,surfIndex      ! Indices
+      integer :: Me = -1                  ! String index for trace
       real(rv) :: newValue
       logical :: noGrid
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromGrid' )
+      call trace_begin ( me, 'FillUtils_1.FromGrid', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       errorCode = 0
       DEEBUG = .false.
       ! DEEBUG = ( grid%quantityName == 'TEMPERATURE' .or. &
@@ -5250,11 +5266,11 @@ contains ! =====     Public Procedures     =============================
             & debug=.false. )
           call outputNamedValue( 'interpolated value', newValue )
       endif
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromGrid' )
+    9 call trace_end ( 'FillUtils_1.FromGrid', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine FromGrid
 
-    !=============================== FromL2GP ==========
+    ! -------------------------------------------------  FromL2GP  -----
     subroutine FromL2GP ( quantity,l2gp, interpolate, profile, &
       & errorCode, ignoreGeolocation, fromPrecision )
 
@@ -5277,17 +5293,17 @@ contains ! =====     Public Procedures     =============================
       ! needs to be so big !????????? NJL)
 
       ! Local variables
-      integer ::    FIRSTPROFILE, LASTPROFILE
+      integer :: FIRSTPROFILE, LASTPROFILE
       integer, dimension(1) :: FIRSTPROFILEASARRAY
       integer :: INSTANCE               ! Loop counter
+      integer :: Me = -1                ! String index for trace
       integer :: THISPROFILE            ! Index
       type (Coefficients_R8) :: COEFFS  ! For interpolation
       real (r8), dimension(quantity%template%noSurfs) :: outZeta
       real (r4), dimension(:,:,:), pointer :: SOURCE
 
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromL2GP' )
-      call MLSMessageCalls( 'push', constantName='FromL2GP' )
+      call trace_begin ( me, 'FillUtils_1.FromL2GP', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       errorCode=0
       ! Make sure this quantity is appropriate
       if ( .not. ValidateVectorQuantity(quantity, coherent=.TRUE., stacked=.TRUE., &
@@ -5421,13 +5437,12 @@ contains ! =====     Public Procedures     =============================
         end do
         call InterpolateArrayTeardown ( coeffs )
       end if
-      call MLSMessageCalls( 'pop' )
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromL2GP' )
+    9 call trace_end ( 'FillUtils_1.FromL2GP', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine FromL2GP
 
-    ! -------------------------------------- FromProfile --
+    ! ----------------------------------------------  FromProfile  -----
     subroutine FromProfile_values ( quantity, inheights, invalues, &
       & instancesNode, globalUnit, ptan, logSpace )
       ! Given two arrays,  (heights, invalues) vs. the quantity's own heights,
@@ -5449,6 +5464,7 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(:), pointer :: ININDS ! Indices
       logical, dimension(:), pointer :: INSTANCES ! Flags
       logical :: LOCALOUTHEIGHTS ! Set if out heights is our own variable
+      integer :: Me = -1                ! String index for trace
       logical :: MYLOGSPACE             ! Interpolate in log space?
       integer :: NOPOINTS               ! Number of points supplied
       integer :: NOUNIQUE               ! Number of unique heights supplied
@@ -5459,9 +5475,8 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromProfile_values', instancesNode )
-      call MLSMessageCalls( 'push', constantName='FromProfile_values' )
+      call trace_begin ( me, 'FillUtils_1.FromProfile_values', instancesNode, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Set some stuff up
       myLogSpace = quantity%template%logBasis
       if ( present ( logSpace ) ) myLogSpace = logSpace
@@ -5575,11 +5590,11 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( outvalues, 'outvalues', ModuleName )
       call Deallocate_test ( duplicated, 'duplicated', ModuleName )
       call Deallocate_test ( instances, 'instances', ModuleName )
-      call MLSMessageCalls( 'pop' )
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromProfile_values' )
+    9 call trace_end ( 'FillUtils_1.FromProfile_values', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine FromProfile_values
 
+    ! -----------------------------------------  FromProfile_node  -----
     subroutine FromProfile_node ( quantity, valuesNode, &
       & instancesNode, globalUnit, ptan, logSpace )
       ! This fill is slightly complicated.  Given a values array along
@@ -5601,12 +5616,12 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
       real (r8), dimension(2) :: EXPRVALUE ! Value of expression
-      integer, dimension(2) :: EXPRUNIT   ! Unit for expression
+      integer, dimension(2) :: EXPRUNIT ! Unit for expression
+      integer :: Me = -1                ! String index for trace
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.FromProfile_node', instancesNode )
-      call MLSMessageCalls( 'push', constantName='FromProfile_node' )
+      call trace_begin ( me, 'FillUtils_1.FromProfile_node', instancesNode, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       ! Check the quantity is amenable to this type of fill
       if ( .not. ValidateVectorQuantity ( quantity, &
@@ -5651,15 +5666,14 @@ contains ! =====     Public Procedures     =============================
       end do
 
       call FromProfile( quantity, heights, values, &
-      & instancesNode, globalUnit, ptan, logSpace )
+        & instancesNode, globalUnit, ptan, logSpace )
       call Deallocate_test ( heights, 'heights', ModuleName )
       call Deallocate_test ( values, 'values', ModuleName )
-      call MLSMessageCalls( 'pop' )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.FromProfile_node' )
+      call trace_end ( 'FillUtils_1.FromProfile_node', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine FromProfile_node
 
-    ! ---------------------------------------------- ManipulateVectors -----
+    ! ----------------------------------------  ManipulateVectors  -----
     subroutine ManipulateVectors ( MANIPULATION, DEST, A, B, C, BOOLEANNAME )
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: GETHASHELEMENT
@@ -5675,13 +5689,14 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), pointer     :: DQ     ! Destination quantity
       type (VectorValue_T), pointer     :: AQ, BQ ! Source quantities
       integer                           :: SQI    ! Quantity index in source
+      integer :: Me = -1                          ! String index for trace
       integer                           :: N
       character(len=64), dimension(128) :: NAMES
       character(len=64)                 :: QNAME
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ManipulateVectors' )
+      call trace_begin ( me, 'FillUtils_1.ManipulateVectors', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       n = 0
       ! If we're given a BooleanName, try to interpret it as a container for
       ! quantity names
@@ -5712,11 +5727,11 @@ contains ! =====     Public Procedures     =============================
           & 'dq not associated' )
         end if
       end do
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ManipulateVectors' )
+      call trace_end ( 'FillUtils_1.ManipulateVectors', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ManipulateVectors
 
-    ! -------------------------------------------- WithBinResults -----
+    ! -------------------------------------------  WithBinResults  -----
     subroutine WithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
       & channel, method, additional, excludeBelowBottom, centerVertically )
       ! This fills a coherent quantity with the max/min binned value of
@@ -5740,15 +5755,15 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(:,:), pointer :: SURFS ! Surface mapping source->quantity
       integer, dimension(:,:), pointer :: INSTS ! Instance mapping source->quantity
       integer :: QS, QI, SS, SI                   ! Loop counters
+      integer :: Me = -1                ! String index for trace
       integer :: MYCHANNEL              ! Channel or 1
       integer :: NumQtyInstances        ! E.g., num MAFs
       integer :: NumSourceInstances     ! E.g., num MAFs
       logical :: ExtraProfile           ! True when profile stands outside chunk
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.WithBinResults', key )
-      call MLSMessageCalls( 'push', constantName='WithBinResults' )
+      call trace_begin ( me, 'FillUtils_1.WithBinResults', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
       ! Check the output quantity
       if ( .not. ValidateVectorQuantity ( quantity, &
@@ -5969,12 +5984,11 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( insts, 'insts', ModuleName )
       if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
-    9 call MLSMessageCalls( 'pop' )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.WithBinResults' )
+    9 call trace_end ( 'FillUtils_1.WithBinResults', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine WithBinResults
 
-    ! --------------------------------------------- WithBoxcarFunction  ----
+    ! --------------------------------------  WithBoxcarFunction   -----
     subroutine WithBoxcarFunction ( key, quantity, sourceQuantity, &
     & width, method, ignoreTemplate )
       integer, intent(in) :: KEY        ! Key for tree node
@@ -5983,14 +5997,16 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in)                      :: WIDTH
       integer, intent(in)                      :: METHOD  ! L_MEAN, L_MAX, L_MIN
       logical, intent(in)              ::         IGNORETEMPLATE
+
       ! Local variables
       integer :: I, I1, I2              ! Instance indices
       integer :: HALFWIDTH
+      integer :: Me = -1                ! String index for trace
       real(r8), dimension(:,:), pointer :: OLDVALUES
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.WithBoxcarFunction', key )
+      call trace_begin ( me, 'FillUtils_1.WithBoxcarFunction', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. ignoreTemplate .and. &
         & quantity%template%name /= sourceQuantity%template%name ) then
         call Announce_Error ( key, no_error_code, 'Quantity and source quantity do not match' )
@@ -6035,20 +6051,21 @@ contains ! =====     Public Procedures     =============================
       if ( associated ( quantity%values, sourceQuantity%values ) ) then
         call Deallocate_test ( oldValues, 'oldValues', ModuleName )
       end if
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.WithBoxcarFunction' )
+    9 call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine WithBoxcarFunction
 
-    ! ----------------------------------------- offsetradiancequantity -----
+    ! -----------------------------------  OffsetRadianceQuantity  -----
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), intent(in) :: RADIANCEQUANTITY
       real (rv), intent(in) :: AMOUNT
 
+      integer :: Me = -1                  ! String index for trace
+
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_begin ( 'FillUtils_1.OffsetRadianceQuantity' )
+      call trace_begin ( me, 'FillUtils_1.OffsetRadianceQuantity', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/l_radiance/) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -6066,17 +6083,19 @@ contains ! =====     Public Procedures     =============================
           quantity%values = quantity%values + amount
         end where
       end if
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_end ( 'FillUtils_1.OffsetRadianceQuantity' )
+      call trace_end ( cond=toggle(gen) .and. levels(gen) > 2 )
     end subroutine OffsetRadianceQuantity
 
-    ! ---------------------------------------------- ResetUnusedRadiances --
+    ! -------------------------------------  ResetUnusedRadiances  -----
     subroutine ResetUnusedRadiances ( quantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
       real (rv), intent(in) :: AMOUNT
+
+      integer :: Me = -1                    ! String index for trace
+
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_begin ( 'FillUtils_1.ResetUnusedRadiances' )
+      call trace_begin ( me, 'FillUtils_1.ResetUnusedRadiances', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/l_radiance/) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -6084,11 +6103,10 @@ contains ! =====     Public Procedures     =============================
       where ( quantity%values > amount*0.9 )
         quantity%values = quantity%values - amount
       end where
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_end ( 'FillUtils_1.ResetUnusedRadiances' )
+      call trace_end ( cond=toggle(gen) .and. levels(gen) > 2 )
     end subroutine ResetUnusedRadiances
 
-    ! --------------------------------------------- RotateMagneticField ----
+    ! --------------------------------------  RotateMagneticField  -----
     subroutine RotateMagneticField ( key, qty, fieldECR, ecrToFOV )
       integer, intent(in) :: KEY        ! Where are we in the l2cf?
       type (VectorValue_T), intent(inout) :: QTY ! The quantity to fill
@@ -6098,13 +6116,14 @@ contains ! =====     Public Procedures     =============================
       integer :: INSTANCE               ! Loop counter
       integer :: SURFACE                ! Loop counter
       integer :: MAF(1)                 ! Which MAF is the best match to this instance
+      integer :: Me = -1                ! String index for trace
       real(r8) :: THISFIELD(3)          ! A magnetic field vector
       real(r8) :: ROTATION(3,3)         ! One rotation matrix
       real(r8) :: STRENGTH              ! The field strength
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.RotateMagneticField', key )
+      call trace_begin ( me, 'FillUtils_1.RotateMagneticField', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Do some sanity checks
       if ( .not. any ( qty%template%quantityType == &
         & (/ l_fieldStrength, l_fieldAzimuth, l_fieldElevation /) ) ) then
@@ -6158,12 +6177,12 @@ contains ! =====     Public Procedures     =============================
           end select
         end do
       end do
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.RotateMagneticField' )
+    9 call trace_end ( 'FillUtils_1.RotateMagneticField', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine RotateMagneticField
 
-    ! ---------------------------------------------- ScaleOverlaps -------
+    ! --------------------------------------------  ScaleOverlaps  -----
     subroutine ScaleOverlaps ( quantity, multiplierNode )
       type (VectorValue_T), intent(inout) :: QUANTITY
       integer, intent(in) :: MULTIPLIERNODE ! Tree node for factors
@@ -6171,10 +6190,11 @@ contains ! =====     Public Procedures     =============================
       real (r8) :: exprValue(2)         ! Tree expression
       integer :: exprUnit(2)            ! Tree units
       integer :: i,j                    ! Loop counters / indices
+      integer :: Me = -1                ! String index for trace
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.ScaleOverlaps', multiplierNode )
+      call trace_begin ( me, 'FillUtils_1.ScaleOverlaps', multiplierNode, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       scaleLowerLoop: do i = 1, quantity%template%noInstancesLowerOverlap
         if ( i+1 > nsons ( multiplierNode ) ) exit scaleLowerLoop
         call expr_check ( subtree( i+1, multiplierNode ), exprUnit, exprValue, &
@@ -6215,11 +6235,11 @@ contains ! =====     Public Procedures     =============================
           quantity%values ( :, i ) = quantity%values ( :, i ) * exprValue(1)
         end if
       end do scaleUpperLoop
-    9 if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.ScaleOverlaps' )
+    9 call trace_end ( 'FillUtils_1.ScaleOverlaps', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine ScaleOverlaps
 
-    ! ----------------------------------------- SpreadChannelFill --------
+    ! ----------------------------------------  SpreadChannelFill  -----
     subroutine SpreadChannelFill ( quantity, channel, key, &
       & sourceQuantity )
       type(VectorValue_T), intent(inout) :: QUANTITY
@@ -6231,12 +6251,13 @@ contains ! =====     Public Procedures     =============================
       integer :: C                      ! Channel loop counter
       integer :: S                      ! Surface loop counter
       integer :: J                      ! Destination index
+      integer :: Me = -1                ! String index for trace
       integer :: MYCHANNEL              ! Possibly offset channel
       type (Signal_T) ::  signal        ! Signal for this quantity
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.SpreadChannelFill', key )
+      call trace_begin ( me, 'FillUtils_1.SpreadChannelFill', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( present(sourceQuantity) ) then
         do i = 1, quantity%template%noInstances
           do s = 1, quantity%template%noSurfs
@@ -6271,11 +6292,11 @@ contains ! =====     Public Procedures     =============================
           end do
         end do
       end if
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.SpreadChannelFill' )
+      call trace_end ( 'FillUtils_1.SpreadChannelFill', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine SpreadChannelFill
 
-    ! ---------------------------------------------- TransferVectors -----
+    ! ------------------------------------------  TransferVectors  -----
     subroutine TransferVectors ( SOURCE, DEST, SKIPMASK, INTERPOLATE, &
       & BOOLEANNAME )
     use MLSL2OPTIONS, only: RUNTIMEVALUES
@@ -6293,6 +6314,7 @@ contains ! =====     Public Procedures     =============================
       ! Local variables
       type (VectorValue_T), pointer :: DQ ! Destination quantity
       type (VectorValue_T), pointer :: SQ ! Source quantity
+      integer :: Me = -1                  ! String index for trace
       integer                           :: N
       character(len=64), dimension(128) :: NAMES
       character(len=64)                 :: QNAME
@@ -6300,8 +6322,8 @@ contains ! =====     Public Procedures     =============================
       logical :: verbose, verboser
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_begin ( 'FillUtils_1.TransferVectors' )
+      call trace_begin ( me, 'FillUtils_1.TransferVectors', &
+        & cond=toggle(gen) .and. levels(gen) > 2  )
       verbose = ( switchDetail(switches, 'bool') > -1 )
       verboser = ( switchDetail(switches, 'bool') > 0 )
       n = 0
@@ -6315,8 +6337,8 @@ contains ! =====     Public Procedures     =============================
         if ( verboser ) then
           call outputNamedValue( 'n', n )
           call dump( names(1:n), 'names', width=1 )
-        endif
-      endif
+        end if
+      end if
 
       ! First copy those things in source, loop over them
       dest%globalUnit = source%globalUnit
@@ -6349,11 +6371,11 @@ contains ! =====     Public Procedures     =============================
           end if
         end if
       end do
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_end ( 'FillUtils_1.TransferVectors' )
+      call trace_end ( 'FillUtils_1.TransferVectors', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
     end subroutine TransferVectors
 
-    ! ---------------------------------------------- TransferVectorsByMethod -----
+    ! ----------------------------------  TransferVectorsByMethod  -----
     ! Fill items in dest according to method
     ! Using either those in source or those in measVector
 
@@ -6397,23 +6419,25 @@ contains ! =====     Public Procedures     =============================
       logical, parameter            :: IGNORETEMPLATE = .false.
       real, dimension(2), parameter :: MULTIPLIER = (/ 1.0, 1.0 /)
       integer                       :: NUMQUANTITIES
-      type (VectorValue_T), pointer :: SQ ! Source or meas quantity
-      integer                       :: SQI                      ! Quantity index in source or meas
-      type (VectorValue_T), pointer :: MQ ! Model quantity
+      type (VectorValue_T), pointer :: SQ  ! Source or meas quantity
+      integer                       :: SQI ! Quantity index in source or meas
+      integer :: Me = -1                   ! String index for trace
+      type (VectorValue_T), pointer :: MQ  ! Model quantity
       integer                           :: N
       character(len=64), dimension(128) :: NAMES
       character(len=64)                 :: QNAME
       logical :: verbose, verboser
-      type (VectorValue_T), pointer :: NQ ! Noise quantity
+      type (VectorValue_T), pointer :: NQ  ! Noise quantity
       integer                       :: NUMMATCHES
       real(r8)                      :: SCALEINSTANCES, SCALERATIO, SCALESURFS
       integer, dimension(4), parameter :: BINMETHODS = &
         & (/ l_binMax, l_binMean, l_binMin, l_binTotal /)
       integer, dimension(4), parameter :: BINNEDTYPES = &
         & (/ l_chisqBinned, l_chisqBinned, l_cloudMinMax, l_noRadsBinned /)
+
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_begin ( 'FillUtils_1.TransferVectorsByMethod' )
+      call trace_begin ( me, 'FillUtils_1.TransferVectorsByMethod', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
       verbose = ( switchDetail(switches, 'bool') > -1 )
       verboser = ( switchDetail(switches, 'bool') > 0 )
       n = 0
@@ -6521,11 +6545,11 @@ contains ! =====     Public Procedures     =============================
           & 'TransferVectorsByMethod' )
         endif
       end do
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_end ( 'FillUtils_1.TransferVectorsByMethod' )
+      call trace_end ( 'FillUtils_1.TransferVectorsByMethod', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
     end subroutine TransferVectorsByMethod
 
-    ! ---------------------------------------------- UncompressRadiance -----
+    ! ---------------------------------------  UncompressRadiance  -----
     subroutine UncompressRadiance ( key, quantity, totalPowerQuantity, &
       & systemTemperatureQuantity, termsNode )
       integer, intent(in) :: KEY        ! Tree node for messages
@@ -6541,10 +6565,11 @@ contains ! =====     Public Procedures     =============================
       integer :: I
       integer :: J 
       integer :: K
+      integer :: Me = -1                      ! String index for trace
       integer :: Nchannels
       integer :: Npointings
       real(rv), dimension(noTerms) :: myTerms
-      integer, DIMENSION(2) :: UNITASARRAY ! Unit for value given
+      integer, DIMENSION(2) :: UNITASARRAY    ! Unit for value given
       real (r8), DIMENSION(2) :: VALUEASARRAY ! Value give
       real(rv) :: b
       real(rv) :: bTsys
@@ -6552,8 +6577,8 @@ contains ! =====     Public Procedures     =============================
       real(rv) :: bprodCal
 
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.UncompressRadiance', key )
+      call trace_begin ( me, 'FillUtils_1.UncompressRadiance', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( quantity%template%quantityType /= l_radiance ) &
         & call Announce_Error ( key, no_error_code, &
         & 'Inappropriate quantity for uncompressRadiance fill' )
@@ -6619,12 +6644,12 @@ contains ! =====     Public Procedures     =============================
           end if
         end do
       end do
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.UncompressRadiance' )
+      call trace_end ( 'FillUtils_1.UncompressRadiance', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine UncompressRadiance
 
-    ! ------------------------------------------- QtyFromFile ----------
+    ! ----------------------------------------------  QtyFromFile  -----
     subroutine QtyFromFile ( key, quantity, MLSFile, &
       & filetype, options, sdname, spread, interpolate )
       use MLSHDF5, only: MATCHHDF5ATTRIBUTES
@@ -6636,16 +6661,19 @@ contains ! =====     Public Procedures     =============================
       character(len=*), optional, intent(in) :: sdname
       logical, intent(in)                    :: spread
       logical, intent(in)                    :: interpolate
+
       ! Local variables
       integer, parameter                      :: MAXLISTLENGTH=256
       character (LEN=10*MAXLISTLENGTH)        :: attrnames
       character (LEN=10*MAXLISTLENGTH)        :: attrvalues
       logical homogeneous
+      integer :: Me = -1                      ! String index for trace
       character(len=80) :: name
       character (len=80) :: Str
+
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.QtyFromFile', key )
+      call trace_begin ( me, 'FillUtils_1.QtyFromFile', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       homogeneous = index(lowercase(options), 'h') > 0
       ! How do we access the dataset to read? By name or by attribute?
       if ( index(lowercase(options), 'a') < 1 ) then
@@ -6669,11 +6697,11 @@ contains ! =====     Public Procedures     =============================
       endif
       call NamedQtyFromFile ( key, quantity, MLSFile, &
         & filetype, name, spread, interpolate, homogeneous )
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.QtyFromFile' )
+      call trace_end ( 'FillUtils_1.QtyFromFile', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine QtyFromFile
     
-    ! ------------------------------------------- VectorFromFile ----------
+    ! -------------------------------------------  VectorFromFile  -----
     subroutine VectorFromFile ( key, Vector, MLSFile, &
       & filetype, options, spread, interpolate )
       use MLSHDF5, only: GETALLHDF5DSNAMES, MATCHHDF5ATTRIBUTES
@@ -6684,10 +6712,12 @@ contains ! =====     Public Procedures     =============================
       character(len=*), intent(in) :: OPTIONS
       logical, intent(in)                    :: spread
       logical, intent(in)                    :: interpolate
+
       ! Local variables
       integer :: DSI                      ! Dataset index in file
       character(len=MAXSDNAMESBUFSIZE) :: DSNames
       logical :: homogeneous
+      integer :: Me = -1                  ! String index for trace
       character(len=64) :: name
       type (VectorValue_T), pointer :: quantity 
       integer, parameter                      :: MAXLISTLENGTH=256
@@ -6695,9 +6725,10 @@ contains ! =====     Public Procedures     =============================
       character (LEN=10*MAXLISTLENGTH)        :: attrvalues
       integer :: SQI                      ! Quantity index in source
       character (len=80) :: Str
+
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_begin ( 'FillUtils_1.VectorFromFile', key )
+      call trace_begin ( me, 'FillUtils_1.VectorFromFile', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       homogeneous = index(lowercase(options), 'h') > 0
       call output( 'Now in VectorFromFile', advance='yes' )
       call GetAllHDF5DSNames( MLSFile, DSNames )
@@ -6716,7 +6747,7 @@ contains ! =====     Public Procedures     =============================
             else
               call writeIntsToChars ( sqi, Name )
               Name = 'Quantity ' // trim(Name)
-            endif
+            end if
             if ( lowercase(trim(name)) /= &
               & lowercase(StringElement( DSNames, dsi, countEmpty )) ) &
               & cycle
@@ -6725,7 +6756,7 @@ contains ! =====     Public Procedures     =============================
               call outputNamedValue( 'shape(values)' // trim(name), &
                 & shape(quantity%values) )
               call dump( MLSFile )
-            endif
+            end if
           else
             ! By attribute
             attrnames  = 'TemplateName,tempQtyType'
@@ -6737,19 +6768,19 @@ contains ! =====     Public Procedures     =============================
             call MatchHDF5Attributes ( MLSFile, attrNames, attrValues, name )
             ! call Announce_Error ( key, no_Error_Code, &
             ! &   'Unable to read Vector from File by attribute yet' )
-          endif
+          end if
           if ( len_trim(name) > 0 ) &
             & call NamedQtyFromFile ( key, quantity, MLSFile, &
             & filetype, name, spread, interpolate, homogeneous )
-        enddo
-      enddo
-      if ( toggle(gen) .and. levels(gen) > 1 ) &
-        & call trace_end ( 'FillUtils_1.VectorFromFile' )
+        end do
+      end do
+      call trace_end ( 'FillUtils_1.VectorFromFile', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine VectorFromFile
 
-  ! -- Private procedures ----------
+    ! =====  Private procedures  =======================================
 
-    ! ------------------------------------------- FillableChiSq ---
+    ! --------------------------------------------  FillableChiSq  -----
     function FillableChiSq ( qty, measQty, modelQty, noiseQty ) result ( aok )
       ! Purpose (A)
       !   Check whether we may proceed with special fill of chi squared
@@ -6775,11 +6806,12 @@ contains ! =====     Public Procedures     =============================
       ! if radiances need only check on signal
       ! if vmr, check on others
 
-     ! Local variables
-      logical ::       minorFrame   ! TRUE if radiances, FALSE if vmr
+      ! Local variables
+      integer :: Me = -1            ! String index for trace
+      logical :: MinorFrame         ! TRUE if radiances, FALSE if vmr
 
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_begin ( 'FillUtils_1.FillableChiSq' )
+      call trace_begin ( me, 'FillUtils_1.FillableChiSq', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
       aok = .true.
 
       ! (0)
@@ -6855,11 +6887,11 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
 
-    9 if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_end ( 'FillUtils_1.FillableChiSq' )
+    9 call trace_end ( 'FillUtils_1.FillableChiSq', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
     end function FillableChiSq
 
-    ! ------------------------------------------- NamedQtyFromFile ----------
+    ! -----------------------------------------  NamedQtyFromFile  -----
     subroutine NamedQtyFromFile ( key, quantity, MLSFile, &
       & filetype, name, spread, interpolate, homogeneous )
       use MLSHDF5, only: GETHDF5ATTRIBUTE, GETHDF5DSDIMS, LOADFROMHDF5DS
@@ -6871,6 +6903,7 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in)                    :: spread
       logical, intent(in)                    :: interpolate
       logical, intent(in)                    :: homogeneous
+
       ! Local variables
       integer, dimension(3) :: dimInts
       integer(kind=hSize_t), dimension(3) :: dims
@@ -6878,16 +6911,18 @@ contains ! =====     Public Procedures     =============================
       integer, parameter :: instancesNode = 0
       integer :: instance
       type( L2AUXData_T ) :: l2aux ! Result
-      type( l2GPData_T ) :: l2gp ! Result
+      type( l2GPData_T ) :: l2gp   ! Result
+      integer :: Me = -1           ! String index for trace
       integer :: noSurfs
       type (VectorValue_T), pointer :: PTAN => null()
       integer :: status
       real(r8), dimension(:), pointer :: surfs  => null()
       real(rv), dimension(:,:,:), pointer :: values => null()
       logical :: Verbose
+
       ! Executable code
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_begin ( 'FillUtils_1.NamedQtyFromFile', key )
+      call trace_begin ( me, 'FillUtils_1.NamedQtyFromFile', key, &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
       verbose = ( switchDetail(switches, 'fill') > -1 )
       call GetHDF5DSDims ( MLSFile, name, DIMS )
       dimInts = max(dims, int(1,hsize_t))
@@ -6963,10 +6998,12 @@ contains ! =====     Public Procedures     =============================
         endif
         call DeAllocate_test ( values, 'values read from file', ModuleName )
       end select
-      if ( toggle(gen) .and. levels(gen) > 2 ) &
-        & call trace_end ( 'FillUtils_1.NamedQtyFromFile' )
+      call trace_end ( 'FillUtils_1.NamedQtyFromFile', &
+        & cond=toggle(gen) .and. levels(gen) > 2 )
+
     contains
-      subroutine FillMyInstances( values1, values2 )
+
+      subroutine FillMyInstances ( values1, values2 )
         ! Handle the following cases:
         ! (1) values2 has only 1 instance
         ! (2) values2 has the same number of instances as values1
@@ -7043,6 +7080,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.84  2013/08/30 02:45:38  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.83  2013/08/20 00:33:40  pwagner
 ! Avoid more crashes caused by non-Aura l1boa data
 !
