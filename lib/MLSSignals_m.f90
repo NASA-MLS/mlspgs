@@ -23,17 +23,9 @@ module MLSSignals_M
   use MLSCOMMON, only: R8
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, PVMERRORMESSAGE
-  use MLSSTRINGLISTS, only: SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, CAPITALIZE
-  use MORETREE, only: GET_BOOLEAN, STARTERRORMESSAGE
   use OUTPUT_M, only: BLANKS, HEADLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
-  use TIME_M, only: TIME_NOW
-  use TOGGLES, only: GEN, SWITCHES, TOGGLE
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
-    & SUB_ROSA, SUBTREE
-  use TREE_TYPES, only: N_NAMED
 
   implicit none
 
@@ -222,6 +214,16 @@ contains
   ! -------------------------------------------------  MLSSignals  -----
   subroutine MLSSignals ( ROOT )
     ! Process the MLSSignals section of the L2 configuration file.
+
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MORETREE, only: GET_BOOLEAN, STARTERRORMESSAGE
+    use TIME_M, only: TIME_NOW
+    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
+      & SUB_ROSA, SUBTREE
+    use TREE_TYPES, only: N_NAMED
+
     integer, intent(in) :: ROOT         ! The "cf" vertex for the section
 
     type(band_T) :: Band                ! To be added to the database
@@ -236,6 +238,7 @@ contains
     integer :: I, J, K                  ! Subscript and loop inductor.
     integer :: Key                      ! Indexes the spec_args vertex.
     integer :: Last                     ! "last" field of "spectrometer"
+    integer :: Me = -1                  ! Signal index for trace
     integer :: Name                     ! sub_rosa of label of specification,
                                         ! if any, else zero.
     type(radiometer_T) :: Radiometer    ! To be added to the database
@@ -263,7 +266,7 @@ contains
 
     error = 0
     timing = .false.
-    if ( toggle(gen) ) call trace_begin ( "MLSSignals", root )
+    call trace_begin ( me, "MLSSignals", root, cond=toggle(gen) )
     do i = 2, nsons(root)-1 ! skip "MLSSignals" at "begin" and "end"
       son = subtree(i,root) ! A spec_args vertex now
       if ( node_id(son) == n_named ) then
@@ -559,12 +562,10 @@ contains
       call dump ( bands )
       call dump ( signals )
     end if
-    if ( toggle(gen) ) then
-      call trace_end ( "MLSSignals" )
-    end if
+    call trace_end ( "MLSSignals", cond=toggle(gen) )
     if ( timing ) call sayTime
 
-    contains
+  contains
     ! --------------------------------------------  AnnounceError  -----
     subroutine AnnounceError ( Code, FieldIndex, MoreFields )
       integer, intent(in) :: Code       ! Index of error message
@@ -1920,6 +1921,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.98  2013/08/30 03:56:02  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.97  2013/08/23 23:27:48  pwagner
 ! Added function to return whether or not s/c is Aura
 !
