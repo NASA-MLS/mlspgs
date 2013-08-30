@@ -209,8 +209,8 @@ module MLSCommon                ! Common definitions for the MLS software
     integer :: recordLength=0! its max record_length, if any
     integer :: errorCode=0  ! non-zero usu. means trouble
     logical :: StillOpen=.false.
-    type(Range_T) :: PCFidRange
-    type(Fileids_T) :: FileID
+    type(Range_T) :: PCFidRange = Range_T()
+    type(Fileids_T) :: FileID = FileIDs_T()
   end type MLSFile_T
 
   ! The next datatype describes the information on the L1B data files in use
@@ -473,6 +473,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.38  2013/08/30 23:12:21  pwagner
+! Default values for all MLSFile_T fields
+!
 ! Revision 2.37  2011/12/13 01:06:03  pwagner
 ! Generalized Fill by MLSFill type; added MLSVerbose and MLSDebug
 !
