@@ -180,7 +180,7 @@ fi
 
 masterIdent="none"
 otheropts="-g"
-switches="-S'slv,opt1,log,pro,time,glob1'"
+switches="--stdout out -S'slv,opt1,log,pro,time,glob1'"
 # otheropts="-g -S'slv,opt1,log,pro,time,glob1'"
 # otheropts="$OTHEROPTS"
 echo "otheropts starting as $otheropts" 2>&1 | tee -a "$LOGFILE"
@@ -409,6 +409,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.25  2013/05/09 18:04:08  pwagner
+# Log return status
+#
 # Revision 1.24  2013/02/14 19:06:36  pwagner
 # Defaults to adding instead of skipping unknown args
 #
