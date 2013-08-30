@@ -92,8 +92,7 @@ contains
       & MLSMESSAGE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING, &
       & CURRENTCHUNKNUMBER, CURRENTPHASENAME
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-      & MLSMESSAGECALLS, MLSMESSAGERESET
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGERESET
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MLSSTRINGS, only: WRITEINTSTOCHARS
@@ -268,6 +267,15 @@ contains
 
     type(vector_T), dimension(firstVec:lastVec) :: V   ! Database for snoop
 
+    ! Indices for trace strings, need to have negative initial values;
+    ! See Push_Stack_b in Call_Stack
+    integer :: Me = -1                  ! "Retrieve"
+    integer :: Me_FlagCloud = -1        ! "Retrieve.flagCloud"
+    integer :: Me_RestrictRange = -1    ! "Retrieve.RestrictRange
+    integer :: Me_Retrieve = -1         ! "Retrieve.retrieve"
+    integer :: Me_Subset = -1           ! "Retrieve.subset"
+    integer :: Me_UpdateMask = -1       ! "Retrieve.UpdateMask"
+
     ! Error message codes
     integer, parameter :: BothOrNeither = 1
     integer, parameter :: DiagNoCov = BothOrNeither + 1
@@ -298,522 +306,518 @@ contains
     end do
     call time_now ( t1 )
 
-    if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
+    call trace_begin ( me, "Retrieve", root, cond=toggle(gen) )
     if ( specialDumpFile /= ' ' ) &
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-    repeat_loop: do ! RepeatLoop
-    ! Loop over the lines in the configuration file
+repeat_loop: do ! RepeatLoop
+      ! Loop over the lines in the configuration file
 
-    do i_sons = 2, nsons(root) - 1      ! skip names at begin/end of section
-      son = subtree(i_sons, root)
-      if ( node_id(son) == n_named ) then
-        key = subtree(2, son)
-      else
-        key = son
-      end if
-      L2CFNODE = key
-
-      ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
-      ! parser users' guide" for pictures of the trees being analyzed.
-
-      if ( MLSSelecting .and. &
-        & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
-      if ( get_spec_id(key) /= s_catchWarning ) &
-        & call MLSMessageReset( clearLastWarning=.true. )
-
-      got = .false.
-      spec = get_spec_id(key)
-      PotemkinHessian = .false.
-      select case ( spec )
-      case ( s_anygoodvalues )
-        call decorate ( key, &
-          & BooleanFromAnyGoodValues ( key, vectorDatabase ) )
-      case ( s_catchWarning )
-        call decorate ( key,  BooleanFromCatchWarning ( key ) )
-      case ( s_compare )
-        call decorate ( key,  BooleanFromComparingQtys ( key, vectorDatabase ) )
-      case ( s_diff, s_dump )
-        if ( .not. SKIPRETRIEVAL ) &
-          & call dumpCommand ( key, forwardModelConfigs=configDatabase, &
-          & vectors=vectorDatabase, FileDataBase=FileDataBase, &
-          & MatrixDatabase=MatrixDatabase, Hessiandatabase=HessianDatabase )
-      case ( s_dumpblocks )
-        if ( .not. SKIPRETRIEVAL ) &
-          & call DumpBlocks ( key, matrixDatabase, hessianDatabase )
-      case ( s_flagCloud )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Retrieve.flagCloud", root )
-        call SetupflagCloud ( key, vectorDatabase )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Retrieve.flagCloud" )
-      case ( s_flushPFA )
-        call flush_PFAData ( key, status )
-        error = max(error,status)
-      case ( s_leakCheck )
-        if ( trackAllocates > 0 ) then
-          whereLeakCheck = "In retrieval module..."
-          if ( nsons(key) > 1 ) then
-            call get_string ( sub_rosa(subtree(2,subtree(2,key))), whereLeakCheck, &
-              & strip=.true. )
-          end if
-          call reportLeaks ( whereLeakCheck )
+      do i_sons = 2, nsons(root) - 1      ! skip names at begin/end of section
+        son = subtree(i_sons, root)
+        if ( node_id(son) == n_named ) then
+          key = subtree(2, son)
+        else
+          key = son
         end if
-      case ( s_restrictRange )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Retrieve.RestrictRange", root )
-        call RestrictRange ( key, vectorDatabase )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Retrieve.RestrictRange" )
-      case ( s_Reevaluate )
-        call decorate ( key,  BooleanFromFormula ( 0, key, vectorDatabase ) )
-      case ( s_retrieve )
-        if ( SKIPRETRIEVAL .and. STATEFILLEDBYSKIPPEDRETRIEVALS == 0. ) cycle
-        if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
-        saveLevels = levels
-        saveToggle = toggle
-        aprioriScale = 1.0
-        columnScaling = l_none
-        covSansReg = .false.
-        diagonal = .false.
-        extendedAverage = .false.
-        hRegQuants = 0
-        hRegWeights = 0
-        nullify ( hRegWeightVec )
-        initLambda = defaultInitLambda
-        lambdaMin = defaultLambdaMin
-        maxJacobians = defaultMaxJ
-        method = defaultMethod
-        muMin = defaultMuMin
-        negateSD = .false.
-        precisionFactor = 0.5_rv
-        toleranceA = defaultToleranceA
-        toleranceF = defaultToleranceF
-        toleranceR = defaultToleranceR
-        vRegQuants = 0
-        vRegWeights = 0
-        parallelMode = parallel%fwmParallel .and. parallel%master
-        tikhonovApriori = .false.
-        tikhonovBefore = .true.
-        tikhonovNeeded = .false.
-        nullify ( vRegWeightVec )
-        do i_key = 2, nsons(key) ! fields of the "retrieve" specification
-          son = subtree(i_key, key)
-          L2CFNODE = son
-          field = get_field_id(son)  ! tree_checker prevents duplicates
-          got(field) = .true.
-          select case ( field )
-          case ( f_apriori )
-            apriori => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_aprioriFraction )
-            aprioriFraction => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_average )
-            ixAverage = decoration(subtree(2,son)) ! averagingKernel matrix vertex
-          case ( f_columnScale )
-            columnScaling = decoration(subtree(2,son))
-          case ( f_covariance )      ! of apriori
-            call getFromMatrixDatabase ( &
-              & matrixDatabase(decoration(decoration(subtree(2,son)))), &
-              & covariance)
-            if ( .not. associated(covariance) ) &
-              & call announceError ( notSPD, field )
-          case ( f_covSansReg )
-            covSansReg = get_Boolean(son)
-          case ( f_diagnostics )
-            diagnostics => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_diagonal )
-            diagonal = get_Boolean(son)
-          case ( f_dumpQuantities )
-            dumpQuantitiesNode = son
-          case ( f_extendedAverage )
-            extendedAverage = get_boolean(son)
-          case ( f_forwardModel )
-            call allocate_test ( configIndices, nsons(son)-1, "ConfigIndices", &
-              & moduleName )
-            do k = 2, nsons(son)
-              configIndices(k-1) = decoration(decoration(subtree(k,son)))
-            end do
-          case ( f_fwdModelExtra )
-            fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_fwdModelOut )
-            fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_highBound )
-            highBound => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_hRegOrders )
-            hRegOrders = son
-            tikhonovNeeded = .true.
-          case ( f_hRegQuants )
-            hRegQuants = son
-          case ( f_hRegWeights )
-            hRegWeights = son
-          case ( f_hRegWeightVec )
-            hRegWeightVec => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_jacobian )
-            ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
-          case ( f_lowBound )
-            lowBound => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_measurements )
-            measurements => vectorDatabase(decoration(decoration(subtree(2,son))))
-            call cloneVector ( v(f), measurements, vectorNameText='_f' )
-          case ( f_measurementSD )
-            measurementSD => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_method )
-            method = decoration(subtree(2,son))
-          case ( f_negateSD )
-            negateSD = get_boolean ( son )
-          case ( f_regAfter )
-            tikhonovBefore = .not. get_Boolean(son)
-          case ( f_regApriori )
-            tikhonovApriori = get_Boolean(son)
-          case ( f_serial )
-            parallelMode = parallelMode .and. .not. get_boolean ( son )
-          case ( f_outputCovariance )
-            ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
-          case ( f_outputSD )
-            outputSD => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_precisionFactor )
-            precisionFactor = value(1)
-          case ( f_sparseQuantities )
-            call Allocate_Test ( sparseQuantities, nsons(son)-1, &
-              & 'sparseQuantities', ModuleName )
-            do k = 2, nsons(son)
-              sparseQuantities(k-1) = decoration(decoration(subtree(k,son)))
-            end do
-          case ( f_state )
-            state => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_stateMax )
-            stateMax => vectorDatabase(decoration(decoration(subtree(2,son))))
-            do k = 1, size(stateMax%quantities)
-              stateMax%quantities(k)%values = -huge(0.0_rv)
-            end do
-          case ( f_stateMin )
-            stateMin => vectorDatabase(decoration(decoration(subtree(2,son))))
-            do k = 1, size(stateMin%quantities)
-              stateMin%quantities(k)%values = huge(0.0_rv)
-            end do
-          case ( f_switches )
-            call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
-            switchLenCur = len_trim(switches) + 1
-            switches(switchLenCur:switchLenCur) = ','
-          case ( f_toggles )
-            call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
-            call set_toggles ( switches(switchLenCur+1:) )
-            switches(switchLenCur+1:) = ''
-          case ( f_aprioriScale, f_fuzz, f_lambda, f_lambdamin, f_maxJ, &
-            &    f_muMin, f_toleranceA, f_toleranceF, f_toleranceR )
-            call expr ( subtree(2,son), units, value, type )
-            if ( units(1) /= phyq_dimensionless ) &
-              & call announceError ( wrongUnits, field, string='no' )
-            select case ( field )
-            case ( f_aprioriScale )
-              aprioriScale = value(1)
-            case ( f_fuzz )
-              fuzz = value(1)
-            case ( f_lambda )
-              initLambda = value(1)
-            case ( f_lambdamin )
-              lambdaMin = value(1)
-            case ( f_maxJ )
-              maxJacobians = nint(value(1))
-            case ( f_muMin )
-              muMin = value(1)
-            case ( f_toleranceA )
-              toleranceA = value(1)
-            case ( f_toleranceF )
-              toleranceF = value(1)
-            case ( f_toleranceR )
-              toleranceR = value(1)
-            end select
-          case ( f_vRegOrders )
-            vRegOrders = son
-            tikhonovNeeded = .true.
-          case ( f_vRegQuants )
-            vRegQuants = son
-          case ( f_vRegWeights )
-            vRegWeights = son
-          case ( f_vRegWeightVec )
-            vRegWeightVec => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case default
-            ! Shouldn't get here if the type checker worked
-          end select
-        end do ! ! fields of the "retrieve" specification
+        L2CFNODE = key
 
-        if ( skipRetrieval ) then
-          if ( got(f_state) ) then
-            call ClearVector( state, real(statefilledbyskippedretrievals, rv) )
-            call output ( 'Clearing retrieval state vector name: ' )
-            call display_string ( state%name )
-            call output ( ', template name: ' )
-            call display_string ( state%template%name, advance='yes' )
+        ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
+        ! parser users' guide" for pictures of the trees being analyzed.
+
+        if ( MLSSelecting .and. &
+          & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
+        if ( get_spec_id(key) /= s_catchWarning ) &
+          & call MLSMessageReset( clearLastWarning=.true. )
+
+        got = .false.
+        spec = get_spec_id(key)
+        PotemkinHessian = .false.
+        select case ( spec )
+        case ( s_anygoodvalues )
+          call decorate ( key, &
+            & BooleanFromAnyGoodValues ( key, vectorDatabase ) )
+        case ( s_catchWarning )
+          call decorate ( key,  BooleanFromCatchWarning ( key ) )
+        case ( s_compare )
+          call decorate ( key,  BooleanFromComparingQtys ( key, vectorDatabase ) )
+        case ( s_diff, s_dump )
+          if ( .not. SKIPRETRIEVAL ) &
+            & call dumpCommand ( key, forwardModelConfigs=configDatabase, &
+            & vectors=vectorDatabase, FileDataBase=FileDataBase, &
+            & MatrixDatabase=MatrixDatabase, Hessiandatabase=HessianDatabase )
+        case ( s_dumpblocks )
+          if ( .not. SKIPRETRIEVAL ) &
+            & call DumpBlocks ( key, matrixDatabase, hessianDatabase )
+        case ( s_flagCloud )
+          call trace_begin ( me_flagCloud, "Retrieve.flagCloud", root, &
+            & cond=toggle(gen) .and. levels(gen) > 0 )
+          call SetupflagCloud ( key, vectorDatabase )
+          call trace_end ( cond=toggle(gen) .and. levels(gen) > 0 )
+        case ( s_flushPFA )
+          call flush_PFAData ( key, status )
+          error = max(error,status)
+        case ( s_leakCheck )
+          if ( trackAllocates > 0 ) then
+            whereLeakCheck = "In retrieval module..."
+            if ( nsons(key) > 1 ) then
+              call get_string ( sub_rosa(subtree(2,subtree(2,key))), whereLeakCheck, &
+                & strip=.true. )
+            end if
+            call reportLeaks ( whereLeakCheck )
           end if
-          if ( got(f_outputSD) ) then
-            call ClearVector( outputSD, real(statefilledbyskippedretrievals, rv) )
-            call output ( 'Clearing retrieval precision vector name: ' )
-            call display_string ( state%name )
-            call output ( ', template name: ' )
-            call display_string ( state%template%name, advance='yes' )
+        case ( s_restrictRange )
+          call trace_begin ( me_restrictRange, "Retrieve.RestrictRange", root, &
+            & cond=toggle(gen) .and. levels(gen) > 0 )
+          call RestrictRange ( key, vectorDatabase )
+          call trace_end ( cond=toggle(gen) .and. levels(gen) > 0 )
+        case ( s_Reevaluate )
+          call decorate ( key,  BooleanFromFormula ( 0, key, vectorDatabase ) )
+        case ( s_retrieve )
+          if ( SKIPRETRIEVAL .and. STATEFILLEDBYSKIPPEDRETRIEVALS == 0. ) cycle
+          call trace_begin ( me_retrieve, "Retrieve.retrieve", root, &
+            & cond=toggle(gen) )
+          saveLevels = levels
+          saveToggle = toggle
+          aprioriScale = 1.0
+          columnScaling = l_none
+          covSansReg = .false.
+          diagonal = .false.
+          extendedAverage = .false.
+          hRegQuants = 0
+          hRegWeights = 0
+          nullify ( hRegWeightVec )
+          initLambda = defaultInitLambda
+          lambdaMin = defaultLambdaMin
+          maxJacobians = defaultMaxJ
+          method = defaultMethod
+          muMin = defaultMuMin
+          negateSD = .false.
+          precisionFactor = 0.5_rv
+          toleranceA = defaultToleranceA
+          toleranceF = defaultToleranceF
+          toleranceR = defaultToleranceR
+          vRegQuants = 0
+          vRegWeights = 0
+          parallelMode = parallel%fwmParallel .and. parallel%master
+          tikhonovApriori = .false.
+          tikhonovBefore = .true.
+          tikhonovNeeded = .false.
+          nullify ( vRegWeightVec )
+          do i_key = 2, nsons(key) ! fields of the "retrieve" specification
+            son = subtree(i_key, key)
+            L2CFNODE = son
+            field = get_field_id(son)  ! tree_checker prevents duplicates
+            got(field) = .true.
+            select case ( field )
+            case ( f_apriori )
+              apriori => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_aprioriFraction )
+              aprioriFraction => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_average )
+              ixAverage = decoration(subtree(2,son)) ! averagingKernel matrix vertex
+            case ( f_columnScale )
+              columnScaling = decoration(subtree(2,son))
+            case ( f_covariance )      ! of apriori
+              call getFromMatrixDatabase ( &
+                & matrixDatabase(decoration(decoration(subtree(2,son)))), &
+                & covariance)
+              if ( .not. associated(covariance) ) &
+                & call announceError ( notSPD, field )
+            case ( f_covSansReg )
+              covSansReg = get_Boolean(son)
+            case ( f_diagnostics )
+              diagnostics => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_diagonal )
+              diagonal = get_Boolean(son)
+            case ( f_dumpQuantities )
+              dumpQuantitiesNode = son
+            case ( f_extendedAverage )
+              extendedAverage = get_boolean(son)
+            case ( f_forwardModel )
+              call allocate_test ( configIndices, nsons(son)-1, "ConfigIndices", &
+                & moduleName )
+              do k = 2, nsons(son)
+                configIndices(k-1) = decoration(decoration(subtree(k,son)))
+              end do
+            case ( f_fwdModelExtra )
+              fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_fwdModelOut )
+              fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_highBound )
+              highBound => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_hRegOrders )
+              hRegOrders = son
+              tikhonovNeeded = .true.
+            case ( f_hRegQuants )
+              hRegQuants = son
+            case ( f_hRegWeights )
+              hRegWeights = son
+            case ( f_hRegWeightVec )
+              hRegWeightVec => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_jacobian )
+              ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
+            case ( f_lowBound )
+              lowBound => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_measurements )
+              measurements => vectorDatabase(decoration(decoration(subtree(2,son))))
+              call cloneVector ( v(f), measurements, vectorNameText='_f' )
+            case ( f_measurementSD )
+              measurementSD => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_method )
+              method = decoration(subtree(2,son))
+            case ( f_negateSD )
+              negateSD = get_boolean ( son )
+            case ( f_regAfter )
+              tikhonovBefore = .not. get_Boolean(son)
+            case ( f_regApriori )
+              tikhonovApriori = get_Boolean(son)
+            case ( f_serial )
+              parallelMode = parallelMode .and. .not. get_boolean ( son )
+            case ( f_outputCovariance )
+              ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
+            case ( f_outputSD )
+              outputSD => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_precisionFactor )
+              precisionFactor = value(1)
+            case ( f_sparseQuantities )
+              call Allocate_Test ( sparseQuantities, nsons(son)-1, &
+                & 'sparseQuantities', ModuleName )
+              do k = 2, nsons(son)
+                sparseQuantities(k-1) = decoration(decoration(subtree(k,son)))
+              end do
+            case ( f_state )
+              state => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case ( f_stateMax )
+              stateMax => vectorDatabase(decoration(decoration(subtree(2,son))))
+              do k = 1, size(stateMax%quantities)
+                stateMax%quantities(k)%values = -huge(0.0_rv)
+              end do
+            case ( f_stateMin )
+              stateMin => vectorDatabase(decoration(decoration(subtree(2,son))))
+              do k = 1, size(stateMin%quantities)
+                stateMin%quantities(k)%values = huge(0.0_rv)
+              end do
+            case ( f_switches )
+              call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
+              switchLenCur = len_trim(switches) + 1
+              switches(switchLenCur:switchLenCur) = ','
+            case ( f_toggles )
+              call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
+              call set_toggles ( switches(switchLenCur+1:) )
+              switches(switchLenCur+1:) = ''
+            case ( f_aprioriScale, f_fuzz, f_lambda, f_lambdamin, f_maxJ, &
+              &    f_muMin, f_toleranceA, f_toleranceF, f_toleranceR )
+              call expr ( subtree(2,son), units, value, type )
+              if ( units(1) /= phyq_dimensionless ) &
+                & call announceError ( wrongUnits, field, string='no' )
+              select case ( field )
+              case ( f_aprioriScale )
+                aprioriScale = value(1)
+              case ( f_fuzz )
+                fuzz = value(1)
+              case ( f_lambda )
+                initLambda = value(1)
+              case ( f_lambdamin )
+                lambdaMin = value(1)
+              case ( f_maxJ )
+                maxJacobians = nint(value(1))
+              case ( f_muMin )
+                muMin = value(1)
+              case ( f_toleranceA )
+                toleranceA = value(1)
+              case ( f_toleranceF )
+                toleranceF = value(1)
+              case ( f_toleranceR )
+                toleranceR = value(1)
+              end select
+            case ( f_vRegOrders )
+              vRegOrders = son
+              tikhonovNeeded = .true.
+            case ( f_vRegQuants )
+              vRegQuants = son
+            case ( f_vRegWeights )
+              vRegWeights = son
+            case ( f_vRegWeightVec )
+              vRegWeightVec => vectorDatabase(decoration(decoration(subtree(2,son))))
+            case default
+              ! Shouldn't get here if the type checker worked
+            end select
+          end do ! ! fields of the "retrieve" specification
+
+          if ( skipRetrieval ) then
+            if ( got(f_state) ) then
+              call ClearVector( state, real(statefilledbyskippedretrievals, rv) )
+              call output ( 'Clearing retrieval state vector name: ' )
+              call display_string ( state%name )
+              call output ( ', template name: ' )
+              call display_string ( state%template%name, advance='yes' )
+            end if
+            if ( got(f_outputSD) ) then
+              call ClearVector( outputSD, real(statefilledbyskippedretrievals, rv) )
+              call output ( 'Clearing retrieval precision vector name: ' )
+              call display_string ( state%name )
+              call output ( ', template name: ' )
+              call display_string ( state%template%name, advance='yes' )
+            end if
+            call output ( ' (skipping retrieval) ', advance='yes' )
+            levels = saveLevels
+            toggle = saveToggle
+            call trace_end ( "Retrieve.retrieve", cond=toggle(gen) )
+            cycle
+          endif
+
+          if ( got(f_apriori) .neqv. got(f_covariance) ) &
+            & call announceError ( bothOrNeither, f_apriori, f_covariance )
+          if ( diagonal .and. .not. got(f_covariance) ) &
+            & call announceError ( diagNoCov )
+          if ( got(f_regApriori) .and. .not. got(f_apriori) ) &
+            & call announceError ( ifAThenB, f_regApriori, f_apriori )
+          if ( got(f_hRegOrders) .neqv. &
+            & (got(f_hRegWeights) .or. got(f_hRegWeightVec)) ) then
+            call announceError ( bothOrNeither, f_hRegOrders, f_hRegWeights )
+            call announceError ( bothOrNeither, f_hRegOrders, f_hRegWeightVec )
           end if
-          call output ( ' (skipping retrieval) ', advance='yes' )
+          if ( got(f_hRegQuants) .and. .not. got(f_hRegOrders) ) &
+            & call announceError ( ifAThenB, f_hRegQuants, f_hRegOrders )
+          if ( got(f_vRegOrders) .neqv. &
+            & (got(f_vRegWeights) .or. got(f_vRegWeightVec)) ) then
+            call announceError ( bothOrNeither, f_vRegOrders, f_vRegWeights )
+            call announceError ( bothOrNeither, f_vRegOrders, f_vRegWeightVec )
+          end if
+          if ( got(f_vRegQuants) .and. .not. got(f_vRegOrders) ) &
+            & call announceError ( ifAThenB, f_vRegQuants, f_vRegOrders )
+          if ( negateSD .and. .not. tikhonovBefore ) &
+            & call announceError ( inconsistent, f_negateSD, f_regAfter )
+          if ( negateSD .and. .not. got(f_outputSD) ) &
+            & call AnnounceError ( ifAThenB, f_negateSD, f_outputSD )
+
+          if ( error == 0 ) then
+
+            ! Verify the consistency of various matrices and vectors
+            if ( got(f_apriori) ) then
+              if ( apriori%template%name /= state%template%name ) &
+                & call announceError ( inconsistent, f_apriori, f_state )
+            end if
+            if ( got(f_aprioriFraction) ) then
+              if ( aprioriFraction%template%name /= state%template%name ) &
+                & call announceError ( inconsistent, f_aprioriFraction, f_state )
+            end if
+            if ( associated(covariance) ) then
+              if ( covariance%m%row%vec%template%name /= state%template%name .or. &
+                &  covariance%m%col%vec%template%name /= state%template%name ) &
+                &  call announceError ( inconsistent, f_covariance, f_state )
+            end if
+            if ( got(f_highBound) ) then
+              if ( highBound%template%name /= state%template%name ) &
+                & call announceError ( inconsistent, f_highBound, f_state )
+            end if
+            if ( got(f_lowBound) ) then
+              if ( lowBound%template%name /= state%template%name ) &
+                & call announceError ( inconsistent, f_lowBound, f_state )
+            end if
+            if ( got(f_measurementSD) ) then
+              if ( measurementSD%template%name /= measurements%template%name ) &
+                & call announceError ( inconsistent, f_measurementSD, f_measurements )
+            end if
+            if ( got(f_stateMax) ) then
+              if ( stateMax%template%name /= state%template%name ) &
+                & call announceError ( inconsistent, f_stateMax, f_state )
+            end if
+            if ( got(f_stateMin) ) then
+              if ( stateMin%template%name /= state%template%name ) &
+                & call announceError ( inconsistent, f_stateMin, f_state )
+            end if
+          end if
+
+          if ( error == 0 ) then
+
+            if ( switchDetail ( switches, 'rtv' ) > -1 ) call DumpRetrievalConfig
+
+            ! Create the Hessian object
+            if ( got(f_hessian) ) then
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Not ready to handle a Hessian field in Retrieve command yet' )
+            else
+              hessian => myHessian
+              hessian = createEmptyHessian ( 0, measurements, state, Potemkin=.true. )
+              PotemkinHessian = .true.
+            end if
+
+            ! Create the Jacobian matrix
+            if ( got(f_jacobian) ) then
+              k = decoration(ixJacobian)
+              if ( k == 0 ) then
+                call createEmptyMatrix ( myJacobian, &
+                  & sub_rosa(subtree(1,ixJacobian)), measurements, state )
+                k = addToMatrixDatabase( matrixDatabase, myJacobian )
+                call decorate ( ixJacobian, k )
+              end if
+              call getFromMatrixDatabase ( matrixDatabase(k), jacobian )
+              if ( jacobian%row%vec%template%name /= measurements%template%name ) &
+                & call announceError ( inconsistent, f_jacobian, f_measurements )
+              if ( jacobian%col%vec%template%name /= state%template%name ) &
+                & call announceError ( inconsistent, f_jacobian, f_state )
+            else
+              jacobian => myJacobian
+              call createEmptyMatrix ( jacobian, 0, measurements, state )
+            end if
+
+            ! Create the output covariance matrix
+            if ( got(f_outputCovariance) ) then
+              k = decoration(ixCovariance)
+              if ( k == 0 ) then
+                call createEmptyMatrix ( myCovariance%m, &
+                  & sub_rosa(subtree(1,ixCovariance)), state, state )
+                k = addToMatrixDatabase( matrixDatabase, myCovariance )
+                call decorate ( ixCovariance, k )
+              end if
+              call getFromMatrixDatabase ( matrixDatabase(k), outputCovariance )
+              if ( .not. associated(outputCovariance) ) then
+                call announceError ( notSPD, f_outputCovariance )
+              else
+                if ( outputCovariance%m%row%vec%template%name /= state%template%name &
+                  & .or. &
+                  &  outputCovariance%m%col%vec%template%name /= state%template%name ) &
+                  & call announceError ( inconsistent, f_outputCovariance, f_state )
+              end if
+            else
+              outputCovariance => myCovariance
+              call createEmptyMatrix ( myCovariance%m, 0, state, state )
+            end if
+
+            ! Create the averaging kernel matrix
+            if ( got(f_average) ) then
+              k = decoration(ixAverage)
+              if ( k == 0 ) then
+                call createEmptyMatrix ( myAverage, &
+                  & sub_rosa(subtree(1,ixAverage)), state, state )
+                k = addToMatrixDatabase( matrixDatabase, myAverage )
+                call decorate ( ixAverage, k )
+              end if
+              call getFromMatrixDatabase ( matrixDatabase(k), outputAverage )
+              call display_string ( outputAverage%name, advance='yes' )
+              if ( .not. associated(outputAverage) ) then
+                call announceError ( notGeneral, f_average )
+              else
+                if ( outputAverage%row%vec%template%name /= state%template%name &
+                  & .or. &
+                  &  outputAverage%col%vec%template%name /= state%template%name ) &
+                  & call announceError ( inconsistent, f_average, f_state )
+              end if
+            end if
+
+            ! Create the matrix for adding the Tikhonov regularization to the
+            ! normal equations
+            if ( tikhonovNeeded ) then
+              call createEmptyMatrix ( tikhonov, 0, state, state, text='_Tikhonov' )
+              k = addToMatrixDatabase( matrixDatabase, tikhonov )
+            end if
+          end if
+          if ( error == 0 ) then
+            ! Do the retrieval
+            jacobian_Cols = 0
+            jacobian_Rows = 0
+            if ( got(f_lowBound) ) call getInBounds ( state, lowBound, 'low' )
+            if ( got(f_highBound) ) call getInBounds ( state, highBound, 'high' )
+
+            select case (method)
+            case( l_lowcloud, l_highcloud)
+              ! use this for testing
+              if(.not. got(f_maxJ)) maxJacobians = 5
+              if(.not. got(f_lambda)) initlambda = 10.
+              call CloudRetrieval(Method, ConfigDatabase,configIndices,fwdModelExtra,&
+                 & measurements,MeasurementSD, state, OutputSD, Covariance, &
+                 & jacobian, chunk,maxJacobians,initlambda)
+              call add_to_retrieval_timing( 'low_cloud', t1 )
+            case ( l_newtonian, l_simple )
+              call newtonSolver
+            case default
+              call MLSMessage ( MLSMSG_Error, moduleName, &
+              & "this retrieval method has not yet been implemented" )
+            end select
+
+            !??? Make sure the jacobian and outputCovariance get destroyed
+            !??? after ?what? happens?  Can we destroy the entire matrix
+            !??? database at the end of each chunk?
+            if ( .not. got(f_jacobian) ) call destroyMatrix ( jacobian )
+            if ( .not. got(f_outputCovariance) ) &
+              & call destroyMatrix ( outputCovariance%m )
+          else
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+              & "No retrieval done -- error in configuration" )
+          end if
+          if ( got(f_fwdModelOut) ) then
+            call copyVector ( fwdModelOut, v(f) )
+            call copyVectorMask ( fwdModelOut, measurements )
+          end if
+          call deallocate_test ( configIndices, "ConfigIndices", moduleName )
           levels = saveLevels
           toggle = saveToggle
-          if ( toggle(gen) )  call trace_end ( "Retrieve.retrieve" )
-          cycle
-        endif
-
-        if ( got(f_apriori) .neqv. got(f_covariance) ) &
-          & call announceError ( bothOrNeither, f_apriori, f_covariance )
-        if ( diagonal .and. .not. got(f_covariance) ) &
-          & call announceError ( diagNoCov )
-        if ( got(f_regApriori) .and. .not. got(f_apriori) ) &
-          & call announceError ( ifAThenB, f_regApriori, f_apriori )
-        if ( got(f_hRegOrders) .neqv. &
-          & (got(f_hRegWeights) .or. got(f_hRegWeightVec)) ) then
-          call announceError ( bothOrNeither, f_hRegOrders, f_hRegWeights )
-          call announceError ( bothOrNeither, f_hRegOrders, f_hRegWeightVec )
-        end if
-        if ( got(f_hRegQuants) .and. .not. got(f_hRegOrders) ) &
-          & call announceError ( ifAThenB, f_hRegQuants, f_hRegOrders )
-        if ( got(f_vRegOrders) .neqv. &
-          & (got(f_vRegWeights) .or. got(f_vRegWeightVec)) ) then
-          call announceError ( bothOrNeither, f_vRegOrders, f_vRegWeights )
-          call announceError ( bothOrNeither, f_vRegOrders, f_vRegWeightVec )
-        end if
-        if ( got(f_vRegQuants) .and. .not. got(f_vRegOrders) ) &
-          & call announceError ( ifAThenB, f_vRegQuants, f_vRegOrders )
-        if ( negateSD .and. .not. tikhonovBefore ) &
-          & call announceError ( inconsistent, f_negateSD, f_regAfter )
-        if ( negateSD .and. .not. got(f_outputSD) ) &
-          & call AnnounceError ( ifAThenB, f_negateSD, f_outputSD )
-
-        if ( error == 0 ) then
-
-          ! Verify the consistency of various matrices and vectors
-          if ( got(f_apriori) ) then
-            if ( apriori%template%name /= state%template%name ) &
-              & call announceError ( inconsistent, f_apriori, f_state )
-          end if
-          if ( got(f_aprioriFraction) ) then
-            if ( aprioriFraction%template%name /= state%template%name ) &
-              & call announceError ( inconsistent, f_aprioriFraction, f_state )
-          end if
-          if ( associated(covariance) ) then
-            if ( covariance%m%row%vec%template%name /= state%template%name .or. &
-              &  covariance%m%col%vec%template%name /= state%template%name ) &
-              &  call announceError ( inconsistent, f_covariance, f_state )
-          end if
-          if ( got(f_highBound) ) then
-            if ( highBound%template%name /= state%template%name ) &
-              & call announceError ( inconsistent, f_highBound, f_state )
-          end if
-          if ( got(f_lowBound) ) then
-            if ( lowBound%template%name /= state%template%name ) &
-              & call announceError ( inconsistent, f_lowBound, f_state )
-          end if
-          if ( got(f_measurementSD) ) then
-            if ( measurementSD%template%name /= measurements%template%name ) &
-              & call announceError ( inconsistent, f_measurementSD, f_measurements )
-          end if
-          if ( got(f_stateMax) ) then
-            if ( stateMax%template%name /= state%template%name ) &
-              & call announceError ( inconsistent, f_stateMax, f_state )
-          end if
-          if ( got(f_stateMin) ) then
-            if ( stateMin%template%name /= state%template%name ) &
-              & call announceError ( inconsistent, f_stateMin, f_state )
-          end if
-        end if
-
-        if ( error == 0 ) then
-
-          if ( switchDetail ( switches, 'rtv' ) > -1 ) call DumpRetrievalConfig
-
-          ! Create the Hessian object
-          if ( got(f_hessian) ) then
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Not ready to handle a Hessian field in Retrieve command yet' )
-          else
-            hessian => myHessian
-            hessian = createEmptyHessian ( 0, measurements, state, Potemkin=.true. )
-            PotemkinHessian = .true.
-          end if
-
-          ! Create the Jacobian matrix
-          if ( got(f_jacobian) ) then
-            k = decoration(ixJacobian)
-            if ( k == 0 ) then
-              call createEmptyMatrix ( myJacobian, &
-                & sub_rosa(subtree(1,ixJacobian)), measurements, state )
-              k = addToMatrixDatabase( matrixDatabase, myJacobian )
-              call decorate ( ixJacobian, k )
-            end if
-            call getFromMatrixDatabase ( matrixDatabase(k), jacobian )
-            if ( jacobian%row%vec%template%name /= measurements%template%name ) &
-              & call announceError ( inconsistent, f_jacobian, f_measurements )
-            if ( jacobian%col%vec%template%name /= state%template%name ) &
-              & call announceError ( inconsistent, f_jacobian, f_state )
-          else
-            jacobian => myJacobian
-            call createEmptyMatrix ( jacobian, 0, measurements, state )
-          end if
-
-
-          ! Create the output covariance matrix
-          if ( got(f_outputCovariance) ) then
-            k = decoration(ixCovariance)
-            if ( k == 0 ) then
-              call createEmptyMatrix ( myCovariance%m, &
-                & sub_rosa(subtree(1,ixCovariance)), state, state )
-              k = addToMatrixDatabase( matrixDatabase, myCovariance )
-              call decorate ( ixCovariance, k )
-            end if
-            call getFromMatrixDatabase ( matrixDatabase(k), outputCovariance )
-            if ( .not. associated(outputCovariance) ) then
-              call announceError ( notSPD, f_outputCovariance )
-            else
-              if ( outputCovariance%m%row%vec%template%name /= state%template%name &
-                & .or. &
-                &  outputCovariance%m%col%vec%template%name /= state%template%name ) &
-                & call announceError ( inconsistent, f_outputCovariance, f_state )
-            end if
-          else
-            outputCovariance => myCovariance
-            call createEmptyMatrix ( myCovariance%m, 0, state, state )
-          end if
-
-          ! Create the averaging kernel matrix
-          if ( got(f_average) ) then
-            k = decoration(ixAverage)
-            if ( k == 0 ) then
-              call createEmptyMatrix ( myAverage, &
-                & sub_rosa(subtree(1,ixAverage)), state, state )
-              k = addToMatrixDatabase( matrixDatabase, myAverage )
-              call decorate ( ixAverage, k )
-            end if
-            call getFromMatrixDatabase ( matrixDatabase(k), outputAverage )
-            call display_string ( outputAverage%name, advance='yes' )
-            if ( .not. associated(outputAverage) ) then
-              call announceError ( notGeneral, f_average )
-            else
-              if ( outputAverage%row%vec%template%name /= state%template%name &
-                & .or. &
-                &  outputAverage%col%vec%template%name /= state%template%name ) &
-                & call announceError ( inconsistent, f_average, f_state )
-            end if
-          end if
-
-          ! Create the matrix for adding the Tikhonov regularization to the
-          ! normal equations
-          if ( tikhonovNeeded ) then
-            call createEmptyMatrix ( tikhonov, 0, state, state, text='_Tikhonov' )
-            k = addToMatrixDatabase( matrixDatabase, tikhonov )
-          end if
-        end if
-        if ( error == 0 ) then
-          ! Do the retrieval
-          jacobian_Cols = 0
-          jacobian_Rows = 0
-          if ( got(f_lowBound) ) call getInBounds ( state, lowBound, 'low' )
-          if ( got(f_highBound) ) call getInBounds ( state, highBound, 'high' )
-
-          select case (method)
-          case( l_lowcloud, l_highcloud)
-            ! use this for testing
-            if(.not. got(f_maxJ)) maxJacobians = 5
-            if(.not. got(f_lambda)) initlambda = 10.
-            call CloudRetrieval(Method, ConfigDatabase,configIndices,fwdModelExtra,&
-               & measurements,MeasurementSD, state, OutputSD, Covariance, &
-               & jacobian, chunk,maxJacobians,initlambda)
-            call add_to_retrieval_timing( 'low_cloud', t1 )
-          case ( l_newtonian, l_simple )
-            call newtonSolver
-          case default
-            call MLSMessage ( MLSMSG_Error, moduleName, &
-            & "this retrieval method has not yet been implemented" )
-          end select
-
-          !??? Make sure the jacobian and outputCovariance get destroyed
-          !??? after ?what? happens?  Can we destroy the entire matrix
-          !??? database at the end of each chunk?
-          if ( .not. got(f_jacobian) ) call destroyMatrix ( jacobian )
-          if ( .not. got(f_outputCovariance) ) &
-            & call destroyMatrix ( outputCovariance%m )
-        else
-          call MLSMessage ( MLSMSG_Error, moduleName, &
-            & "No retrieval done -- error in configuration" )
-        end if
-        if ( got(f_fwdModelOut) ) then
-          call copyVector ( fwdModelOut, v(f) )
-          call copyVectorMask ( fwdModelOut, measurements )
-        end if
-        call deallocate_test ( configIndices, "ConfigIndices", moduleName )
-        levels = saveLevels
-        toggle = saveToggle
-        if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
-      case ( s_sids )
-        if ( SKIPRETRIEVAL .and. switchDetail( switches, 'fiw' ) < 0 ) cycle
-        call time_now ( t1 )
-        call sids ( key, VectorDatabase, MatrixDatabase, HessianDatabase, configDatabase, chunk)
-      case ( s_select ) ! ============ Start of select .. case ==========
-        ! We'll start seeking a matching case
-        call MLSSelect (key)
-      case ( s_case ) ! ============ seeking matching case ==========
-        ! We'll continue seeking a match unless the case is TRUE
-        call MLSCase (key)
-      case ( s_endSelect ) ! ============ End of select .. case ==========
-        ! We'done with seeking a match
-        call MLSEndSelect (key)
-      case ( s_Repeat ) ! ============================== Repeat ==========
-        ! We'll Repeat the section as long as the Boolean cond'n is TRUE
-        RepeatLoop = Repeat(key)
-        if ( .not. RepeatLoop ) exit repeat_loop
-        call nextRepeat
-      case ( s_skip ) ! ============================== Skip ==========
-        ! We'll skip the rest of the section if the Boolean cond'n is TRUE
-        if ( Skip(key) ) exit repeat_loop
-      case ( s_snoop )
-        snoopKey = key
-        do i_key = 2, nsons(key)
-          son = subtree(i_key, key)
-          field = get_field_id(son)  ! tree_checker prevents duplicates
-          select case ( field )
-          case ( f_comment )
-            call get_string ( sub_rosa(subtree(2,son)), snoopComment, strip=.true. )
-          case ( f_phaseName )
-            call get_string ( sub_rosa(subtree(2,son)), phaseName, strip=.true. )
-          case ( f_level )
-            call expr ( subtree(2,son), units, value, type )
-            if ( units(1) /= phyq_dimensionless ) &
-              & call announceError ( wrongUnits, field, string='no' )
-            snoopLevel = nint(value(1))
-          end select
-        end do
-      case ( s_subset )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Retrieve.subset", root )
-        call SetupSubset ( key, vectorDatabase )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Retrieve.subset" )
-      case ( s_time )
-        if ( timing ) then
-          call sayTime
-        else
+          call trace_end ( "Retrieve.retrieve", cond=toggle(gen) )
+        case ( s_sids )
+          if ( SKIPRETRIEVAL .and. switchDetail( switches, 'fiw' ) < 0 ) cycle
           call time_now ( t1 )
-          timing = .true.
-        end if
-      case ( s_updateMask )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Retrieve.UpdateMask", root )
-        call UpdateMask ( key, vectorDatabase )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Retrieve.UpdateMask" )
-      end select
+          call sids ( key, VectorDatabase, MatrixDatabase, HessianDatabase, configDatabase, chunk)
+        case ( s_select ) ! ============ Start of select .. case ==========
+          ! We'll start seeking a matching case
+          call MLSSelect (key)
+        case ( s_case ) ! ================ seeking matching case ==========
+          ! We'll continue seeking a match unless the case is TRUE
+          call MLSCase (key)
+        case ( s_endSelect ) ! =========== End of select .. case ==========
+          ! We'done with seeking a match
+          call MLSEndSelect (key)
+        case ( s_Repeat ) ! ============================= Repeat ==========
+          ! We'll Repeat the section as long as the Boolean cond'n is TRUE
+          RepeatLoop = Repeat(key)
+          if ( .not. RepeatLoop ) exit repeat_loop
+          call nextRepeat
+        case ( s_skip ) ! ================================= Skip ==========
+          ! We'll skip the rest of the section if the Boolean cond'n is TRUE
+          if ( Skip(key) ) exit repeat_loop
+        case ( s_snoop )
+          snoopKey = key
+          do i_key = 2, nsons(key)
+            son = subtree(i_key, key)
+            field = get_field_id(son)  ! tree_checker prevents duplicates
+            select case ( field )
+            case ( f_comment )
+              call get_string ( sub_rosa(subtree(2,son)), snoopComment, strip=.true. )
+            case ( f_phaseName )
+              call get_string ( sub_rosa(subtree(2,son)), phaseName, strip=.true. )
+            case ( f_level )
+              call expr ( subtree(2,son), units, value, type )
+              if ( units(1) /= phyq_dimensionless ) &
+                & call announceError ( wrongUnits, field, string='no' )
+              snoopLevel = nint(value(1))
+            end select
+          end do
+        case ( s_subset )
+          call trace_begin ( me_subset, "Retrieve.subset", root, &
+            & cond=toggle(gen) .and. levels(gen) > 0 )
+          call SetupSubset ( key, vectorDatabase )
+          call trace_end ( cond=toggle(gen) .and. levels(gen) > 0 )
+        case ( s_time )
+          if ( timing ) then
+            call sayTime
+          else
+            call time_now ( t1 )
+            timing = .true.
+          end if
+        case ( s_updateMask )
+          call trace_begin ( me_updateMask, "Retrieve.UpdateMask", root, &
+            & cond=toggle(gen) .and. levels(gen) > 0 )
+          call UpdateMask ( key, vectorDatabase )
+          call trace_end ( cond=toggle(gen) .and. levels(gen) > 0 )
+        end select
 
-      do j = firstVec, lastVec
-        call destroyVectorInfo ( v(j) )
-      end do
+        do j = firstVec, lastVec
+          call destroyVectorInfo ( v(j) )
+        end do
 
-    end do ! i_sons = 2, nsons(root) - 1
-    if ( .not. repeatLoop ) exit ! Otherwise, we will repeat the section
-    enddo repeat_loop ! RepeatLoop
+      end do ! i_sons = 2, nsons(root) - 1
+      if ( .not. repeatLoop ) exit ! Otherwise, we will repeat the section
+    end do repeat_loop ! RepeatLoop
     
     ! Housekeeping
     ! if ( .not. got(f_jacobian) ) call DestroyMatrix( Jacobian )
@@ -822,7 +826,7 @@ contains
     if ( specialDumpFile /= ' ' ) call revertOutput
 
     switches(switchLen+1:) = '' ! Clobber switches from retrieve command
-    if ( toggle(gen) ) call trace_end ( "Retrieve" )
+    call trace_end ( "Retrieve", cond=toggle(gen) )
     if ( timing ) call sayTime
 
   contains
@@ -1299,10 +1303,12 @@ contains
       type (Vector_T), intent(inout) :: DIAGNOSTICS
       integer, intent(in) :: QuantityIndex
       real(r8), intent(in) :: Value
+
       integer :: Latest
+      integer :: Me = -1                ! String index for trace
       type(vectorValue_T), pointer :: Diag_Qty    ! A quantity in the
                                         ! Diagnostics vector
-      call MLSMessageCalls( 'push', constantName='FillDiagQty' )
+      call trace_begin ( me, 'Retrieve.FillDiagQty', cond=.false. )
       diag_qty => GetVectorQuantityByType ( diagnostics, &
         & quantityType=QuantityIndex, noError=.true. )
       if ( associated(diag_qty) ) then
@@ -1326,7 +1332,7 @@ contains
           end if
         end if
       end if
-      call MLSMessageCalls( 'pop' )
+      call trace_end
     end subroutine FillDiagQty
 
     ! ----------------------------------------------  FillDiagVec  -----
@@ -1342,7 +1348,9 @@ contains
       integer, intent(in), optional :: JACOBIAN_ROWS
       integer, intent(in), optional :: JACOBIAN_COLS
 
-      call MLSMessageCalls( 'push', constantName='FillDiagVec' )
+      integer :: Me = -1               ! String index for trace
+
+      call trace_begin ( me, 'Retrieve.FillDiagVec', cond=.false. )
       call fillDiagQty ( diagnostics,  l_dnwt_ajn, aj%ajn )
       call fillDiagQty ( diagnostics,  l_dnwt_axmax, aj%axmax )
       call fillDiagQty ( diagnostics,  l_dnwt_cait, aj%cait )
@@ -1372,7 +1380,7 @@ contains
         & call fillDiagQty ( diagnostics,  l_jacobian_rows, real(jacobian_rows,rv) )
       if ( present ( jacobian_cols ) ) &
         & call fillDiagQty ( diagnostics,  l_jacobian_cols, real(jacobian_cols,rv) )
-      call MLSMessageCalls( 'pop' )
+      call trace_end
     end subroutine FillDiagVec
 
     ! ----------------------------------------------  GetInBounds  -----
@@ -1539,6 +1547,7 @@ contains
       integer :: LATESTMAFSTARTED       ! For FWMParallel stuff
       real(r8) :: LoopCounter            ! Abandon after 50 * maxJ loop iterations
       integer, dimension(2) :: MATRIXSTATUS ! Flag from matrix calculations
+      integer :: Me = -1                ! String index for trace
       real(rv) :: MU                    ! Move Length = scale for DX
       integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
                                         ! to get J.
@@ -1570,7 +1579,7 @@ contains
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
 
-      call MLSMessageCalls( 'push', constantName='NewtonSolver' )
+      call trace_begin ( me, 'Retrieve.NewtonSolver', cond=.false. )
       ! Set flags from switches
       d_atb = switchDetail ( switches, 'atb' ) > -1
       d_col = switchDetail(switches,'col') > -1
@@ -2881,10 +2890,10 @@ NEWT: do ! Newton iteration
       call destroyVectorInfo ( q )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
       call add_to_retrieval_timing( 'newton_solver', t1 )
-      call MLSMessageCalls( 'pop' )
+      call trace_end
     end subroutine NewtonSolver
 
-    ! ------------------------------------  NewtonSolverFailed  -----
+    ! ---------------------------------------  NewtonSolverFailed  -----
     subroutine NewtonSolverFailed ( WHY, NWT_FLAG, PREV_NWT_FLAG, &
       & D_NDB, AJ )
       use DNWT_Module, only: NF_START, NWT_T
@@ -2936,6 +2945,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.342  2013/08/30 02:45:46  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.341  2013/08/03 00:40:42  vsnyder
 ! Require vector.quantity in dumpQuantities field in retrieve spec
 !
