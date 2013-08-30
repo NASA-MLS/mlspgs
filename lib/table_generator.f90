@@ -28,6 +28,7 @@ module TABLE_GENERATOR
                   NODE_KIND, NSONS, PSEUDO, SOURCE_REF, &
                   SUB_ROSA, SUBTREE
   use TREE_TYPES ! Everything, especially everything beginning with N_
+
   implicit NONE
   private
 
@@ -71,13 +72,14 @@ contains ! ====     Public Procedures     ==============================
                                               ! and true.
 
     integer :: I              ! Loop inductor
+    integer :: Me = -1        ! String index for trace
     logical :: MYQUOTE
     logical :: MYUPCASE
     integer :: SON            ! Son of root
 
     error = 0
     isection = 0
-    if ( toggle(gen) ) call trace_begin ( 'GENERATE_TABLE', root )
+    call trace_begin ( me, 'GENERATE_TABLE', root, cond=toggle(gen) )
     myquote = .false.
     if ( present(quote) ) myquote = quote
     myupcase = .false.
@@ -94,9 +96,12 @@ contains ! ====     Public Procedures     ==============================
       case default ;        call announce_error ( son, no_code_for )
       end select
     end do
-    if ( toggle(gen) ) call trace_end ( 'GENERATE_TABLE' )
+    call trace_end ( 'GENERATE_TABLE', cond=toggle(gen) )
+
 ! =====     Internal Procedures     ====================================
+
   contains
+
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS )
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
@@ -143,12 +148,13 @@ contains ! ====     Public Procedures     ==============================
     integer :: GSON1, GSON2   ! Sons of Son
     integer :: I              ! Index of son
     integer :: L              ! Length of a string
+    integer :: Me = -1        ! String index for trace
     integer :: SON            ! A son of root
     integer :: TYPE           ! Type of son
     integer :: UNITS(2)       ! Units of son
     double precision :: VALUE(2) ! Value of son
 
-    if ( toggle(gen) ) call trace_begin ( 'FILL_CELL', root )
+    call trace_begin ( me, 'FILL_CELL', root, cond=toggle(gen) )
     ic = ic + 1
     if ( ic > size(cell) ) then
       call announce_error ( root, msgnum )
@@ -226,7 +232,7 @@ contains ! ====     Public Procedures     ==============================
       cell(ic)%keyword = ' '
       call fill_cell_expr ( root, cell(ic) )
     end select
-    if ( toggle(gen) ) call trace_end ( 'FILL_CELL' )
+    call trace_end ( 'FILL_CELL', cond=toggle(gen) )
   end subroutine FILL_CELL
 ! -----------------------------------------------  FILL_CELL_EXPR  -----
   subroutine FILL_CELL_EXPR ( ROOT, CELL )
@@ -266,10 +272,11 @@ contains ! ====     Public Procedures     ==============================
 
     integer :: GSON1, GSON2        ! Grandsons of ROOT being analyzed
     integer :: I, N                ! Loop inductor, number of sons
+    integer :: Me = -1             ! String index for trace
     integer :: SON1, SONN          ! Sons of ROOT being analyzed
     integer :: STRING1             ! Sub_Rosa of first sons
 
-    if ( toggle(gen) ) call trace_begin ( 'ONE_CF', root )
+    call trace_begin ( me, 'ONE_CF', root, cond=toggle(gen) )
     isection = isection + 1
     idef = 0
     ispec = 0
@@ -311,7 +318,7 @@ contains ! ====     Public Procedures     ==============================
     end do
     l2cf_data%sections(isection)%NoSectionDefs = idef
     l2cf_data%sections(isection)%NoSectionEntries = ispec
-    if ( toggle(gen) ) call trace_end ( 'ONE_CF' )
+    call trace_end ( 'ONE_CF', cond=toggle(gen) )
   end subroutine ONE_CF
 ! ----------------------------------------------------  SPEC_ARGS  -----
   subroutine SPEC_ARGS ( ROOT )
@@ -320,9 +327,10 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: ROOT
 
     integer :: I              ! Loop inductor
+    integer :: Me = -1        ! String index for trace
     integer :: SON            ! I'th son of "root"
 
-    if ( toggle(gen) ) call trace_begin ( 'SPEC_ARGS', root )
+    call trace_begin ( me, 'SPEC_ARGS', root, cond=toggle(gen) )
     son = subtree(1,root)
     call get_string ( sub_rosa(son), &
       l2cf_data%sections(isection)%entries(ispec)%MlscfEntryName, myupcase )
@@ -334,7 +342,7 @@ contains ! ====     Public Procedures     ==============================
         too_many_cells )
     end do
     l2cf_data%sections(isection)%entries(ispec)%MlscfEntryNoKeys = icell
-    if ( toggle(gen) ) call trace_end ( 'SPEC_ARGS' )
+    call trace_end ( 'SPEC_ARGS', cond=toggle(gen) )
   end subroutine SPEC_ARGS
 
   end subroutine GENERATE_TABLE
@@ -351,6 +359,9 @@ contains ! ====     Public Procedures     ==============================
 end module TABLE_GENERATOR
 
 ! $Log$
+! Revision 2.10  2013/08/30 03:56:02  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.9  2013/08/17 02:56:58  vsnyder
 ! Remove references to DEPTH from trace_m
 !
