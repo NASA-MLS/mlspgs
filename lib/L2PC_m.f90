@@ -1577,8 +1577,9 @@ contains ! ============= Public Procedures ==========================
     integer :: DUMMY           ! Ignored return from AddToDatabase
     integer :: FILEID          ! From hdf5
     type (L2PCInfo_T) :: INFO  ! Info for one bin
-    type (L2pc_t) :: L2PC    ! The l2pc read from one bin
-    logical :: MYSHALLOW                ! Value of shallow
+    type (L2pc_t) :: L2PC      ! The l2pc read from one bin
+    integer :: Me = -1         ! String index for trace
+    logical :: MYSHALLOW       ! Value of shallow
     integer :: NOBINS          ! Number of bins
     integer :: STATUS          ! Flag from HDF5
 
@@ -1589,7 +1590,7 @@ contains ! ============= Public Procedures ==========================
     myShallow = .true.
     if ( present ( shallow ) ) myShallow = shallow
 
-    if ( toggle (gen) ) call trace_begin ( "ReadCompleteHDF5L2PCFile", where )
+    call trace_begin ( me, "ReadCompleteHDF5L2PCFile", where, cond=toggle (gen) )
     MLSFile%content = 'l2pc'
     MLSFile%access = DFACC_RDONLY
     MLSFile%HDFVersion = HDFVERSION_5
@@ -1640,7 +1641,7 @@ contains ! ============= Public Procedures ==========================
     end do
 
     ! Don't close the file, we're keeping it open to read blocks from it later
-    if ( toggle (gen) ) call trace_end ( "ReadCompleteHDF5L2PCFile" )
+    call trace_end ( "ReadCompleteHDF5L2PCFile", cond=toggle (gen) )
   end subroutine ReadCompleteHDF5L2PCFile
 
   ! --------------------------------------- ReadOneHDF5L2PCRecord ------------
@@ -2353,6 +2354,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.124  2013/08/30 03:56:01  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.123  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
