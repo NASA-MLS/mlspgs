@@ -34,9 +34,7 @@ module ReadAPriori
   use MLSL2OPTIONS, only: CHECKPATHS, DEFAULT_HDFVERSION_READ, L2CFNODE, &
     & SPECIALDUMPFILE, TOOLKIT, &
     & MLSMESSAGE
-  use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, &
-    & MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
   use MLSPCF2, only: &
     & MLSPCF_L2APRIORI_START, MLSPCF_L2APRIORI_END, &
     & MLSPCF_L2CLIM_START, MLSPCF_L2CLIM_END, &
@@ -53,7 +51,6 @@ module ReadAPriori
   use STRING_TABLE, only: GET_STRING
   use TIME_M, only: TIME_NOW
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
   use TREE_TYPES, only: N_NAMED
@@ -153,6 +150,8 @@ contains ! =====     Public Procedures     =============================
       & S_SELECT, S_SKIP
     use L2AUXDATA, only: L2AUXDATA_T, DUMP
     use L2GPDATA, only: L2GPDATA_T, DUMP
+    use MLSL2TIMINGS, only: SECTION_TIMES
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, NSONS, SUBTREE
     use TREE_TYPES, only: N_NAMED
     ! Dummy arguments
@@ -171,20 +170,12 @@ contains ! =====     Public Procedures     =============================
     integer :: LastGEOS5PCF
     integer :: LastHeightPCF
     integer :: LastNCEPPCF
-    integer :: NAME                     ! Index into string table
-    integer :: SON              ! Of root, an n_spec_args or a n_named
-    real :: T1, T2                      ! for timing
-    logical :: TIMING
+    integer :: Me = -1             ! String index for trace
+    integer :: NAME                ! Index into string table
+    integer :: SON                 ! Of root, an n_spec_args or a n_named
 
+    call trace_begin ( me, "read_apriori", root, cond=toggle(gen) )
 
-    if ( toggle(gen) ) then
-      call trace_begin ( "read_apriori", root )
-    else
-      call MLSMessageCalls( 'push', constantName=ModuleName )
-    endif
-
-    timing = section_times
-    if ( timing ) call time_now ( t1 )
     error = 0
 
     ! Will we be dumping info? To what level of detail?
@@ -255,29 +246,8 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with read_apriori section')
     end if
-    
-    if ( toggle(gen) ) then
-      call trace_end("read_apriori")
-    else
-      call MLSMessageCalls( 'pop' )
-    endif
-  
-    if ( timing ) call sayTime
-    return
 
-  contains
-
-    subroutine SayTime
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
-      end if
-      call output ( "Timing for read_apriori = " )
-      call output ( dble(t2 - t1), advance = 'yes' )
-      timing = .false.
-    end subroutine SayTime
+    call trace_end( "read_apriori", cond=section_times .or. toggle(gen) )
 
   end subroutine read_apriori
   
@@ -406,7 +376,6 @@ contains ! =====     Public Procedures     =============================
     ! Now parse file and field names
     Details = switchDetail(switches, 'apr') - 2
     Debug = ( Details > -3 )
-    timing = section_times
     downsample = .false.
     sumDelp = .false.
     fileName = 0
@@ -1352,6 +1321,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.98  2013/08/30 02:45:51  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.97  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
