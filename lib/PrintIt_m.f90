@@ -123,9 +123,10 @@ module PrintIt_m
      & "Info   ", &
      & "Warning", &
      & "Error  ", &
-     & "Crash  " &
+     & "Crash  "  &
      /)
- !---------------------------- RCS Module Info ------------------------------
+
+!---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
@@ -133,12 +134,12 @@ module PrintIt_m
 
 contains
 
-  !-----------------------------------------  assembleFullLine  -----
+  !--------------------------------------------  AssembleFullLine  -----
   ! Assemble the full line out of 
   ! (1) A severity level
   ! (2) The module name
   ! (3) Whatever message we're asked to repeat
-  subroutine assembleFullLine( Severity, ModuleNameIn, Message, &
+  subroutine AssembleFullLine( Severity, ModuleNameIn, Message, &
     & line, line_len )
     integer, intent(in)           :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
@@ -187,7 +188,7 @@ contains
     line_len = line_len + len(message) ! Not len_trim, so we can get
     ! trailing blanks into a part of a message.  If there are trailing
     ! blanks remaining when my_adv is true, they'll be trimmed off.
-  end subroutine assembleFullLine
+  end subroutine AssembleFullLine
 
   ! -------------------------------------------------  Get_Config  -----
   subroutine Get_Config ( Asciify, LogFileUnit, Prefix, &
@@ -293,6 +294,7 @@ contains
 
   end subroutine PrintItOut
 
+  ! ----------------------------------------------  ModuleNameFun  -----
   function ModuleNameFun ( moduleName ) result (name)
     ! Return name of module unless asked to abbreviate
     character(len=*), intent(in)    :: moduleName
@@ -306,6 +308,7 @@ contains
     endif
   end function ModuleNameFun
 
+  ! -------------------------------------------  SeverityNamesFun  -----
   function SeverityNamesFun ( severity ) result (name)
     ! Return name of level corresponding to severity, if recognized
     ! If not recignized, return  'Unknown'
@@ -324,7 +327,8 @@ contains
     endif
   end function SeverityNamesFun
 
-  function snipRCSFrom ( with ) result ( without )
+  ! ------------------------------------------------  SnipRCSFrom  -----
+  function SnipRCSFrom ( with ) result ( without )
     ! Trim nonsense involving RCS system from input "with"
     ! (if present)
     ! Args
@@ -345,7 +349,7 @@ contains
         without = with
       end if
       without = ModuleNameFun( without )
-  end function snipRCSFrom
+  end function SnipRCSFrom
   
   ! -------------------------------------------------  Set_Config  -----
   subroutine Set_Config ( Asciify, LogFileUnit, Prefix, &
@@ -407,6 +411,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.4  2013/08/30 03:56:02  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.3  2013/08/29 19:34:52  pwagner
 ! Fixed some bugs affecting logging via toolkit
 !
