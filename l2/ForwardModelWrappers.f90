@@ -55,14 +55,13 @@ contains ! ============= Public Procedures ==========================
       & MATRIX_T
     use MLSKinds, only: RV
     use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR, &
-      & MLSMSG_WARNING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2, L_RHI
     use MoreMessage, only: MLSMessage
     use POLARLINEARMODEL_M, only: POLARLINEARMODEL
     use SCANMODELMODULE, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
-    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+    use STRING_TABLE, only: Create_String, DISPLAY_STRING, GET_STRING
     use SWITCHINGMIRRORMODEL_M, only: SWITCHINGMIRRORMODEL
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: EMIT, SWITCHES, TOGGLE
@@ -112,11 +111,13 @@ contains ! ============= Public Procedures ==========================
     integer :: I, K
     logical :: InOrbitPlane                ! Model plane is orbit plane
     type(vectorValue_t), pointer :: LRP    ! Lowest Retrieved Pressure
+    integer :: Me = -1                     ! String index for trace
     type(qtyStuff_t) :: MIFQty(nt)         ! MIF extinction quantity
     ! MIF (quantity) types:
     integer, parameter :: MTypes(nt) = &
       & (/ l_MIFExtinction, l_MIFExtinctionv2, l_MIFRHI /)
     type(matrix_t), pointer :: MyJacobian  ! Either Jacobian or ExtraJacobian
+    integer :: Nobody = -1                 ! String index for trace
     real(rv) :: Normal(3)                  ! to the profile plane, XYZ
     type(vectorValue_t), pointer :: Ptan   ! Tangent pressure
     ! Profile (molecule) types corresponding to mTypes:
@@ -125,20 +126,17 @@ contains ! ============= Public Procedures ==========================
     character(len=132) :: ThisName
     real :: Time_start, Time_end
     integer :: T1, T2 ! Bounds for transform indices, 1:2, 3:3, or 1:3.  see NT.
+    integer :: Who    ! Either config%name or Nobody
 
     ! Executable code
     ! Report we're starting
-    if ( config%name /= 0 ) then
-      call get_string ( config%name, thisName )
-    else
-      thisName = '[unnamed]'
+    who = config%name
+    if ( who == 0 ) then
+      if ( nobody <= 0 ) nobody = create_string ( '[unnamed]' )
+      who = nobody
     end if
 
-    if ( toggle(emit) ) then
-      call trace_begin ( 'ForwardModel ' // trim(thisName) )
-    else
-      call MLSMessageCalls( 'push', constantName='ForwardModel ' // trim(thisName) )
-    end if
+    call trace_begin ( me, 'ForwardModel ', string=who, cond=toggle(emit) )
     ! Setup the timing
     call time_now (time_start)
 
@@ -332,11 +330,7 @@ contains ! ============= Public Procedures ==========================
       & config%sum_squareDeltaTime + (deltaTime * deltaTime)
 
     ! Report we're finished
-    if ( toggle(emit) ) then
-      call trace_end ( 'ForwardModel ' // trim(thisName) )
-    else
-      call MLSMessageCalls( 'pop' )
-    end if
+    call trace_end ( 'ForwardModel', cond=toggle(emit) )
 
   contains
 
@@ -344,49 +338,66 @@ contains ! ============= Public Procedures ==========================
 
       type(matrix_t), optional, intent(inout) :: ExtraJacobian
 
+      integer :: Me_BaselineForwardModel   = -1 ! String index for trace
+      integer :: Me_CloudForwardModel      = -1 ! String index for trace
+      integer :: Me_FullForwardModel       = -1 ! String index for trace
+      integer :: Me_HybridForwardModel     = -1 ! String index for trace
+      integer :: Me_LinearizedForwardModel = -1 ! String index for trace
+      integer :: Me_PolarForwardModel      = -1 ! String index for trace
+      integer :: Me_ScanForwardModel       = -1 ! String index for trace
+      integer :: Me_Scan2DForwardModel     = -1 ! String index for trace
+      integer :: Me_SwitchingForwardModel  = -1 ! String index for trace
+
       select case (config%fwmType)
       case ( l_baseline )
-        call MLSMessageCalls( 'push', constantName='BaselineForwardModel' )
+        call trace_begin ( Me_BaselineForwardModel, 'BaselineForwardModel', &
+          & cond=.false. )
         call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian )
         call add_to_retrieval_timing( 'baseline' )
       case ( l_cloudFull )
-        call MLSMessageCalls( 'push', constantName='CloudForwardModel' )
+        call trace_begin ( Me_CloudForwardModel, 'CloudForwardModel', &
+          & cond=.false. )
         call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian )
         call add_to_retrieval_timing( 'fullcloud_fwm' )
       case ( l_full )
-        call MLSMessageCalls( 'push', constantName='FullForwardModel' )
+        call trace_begin ( Me_FullForwardModel, 'FullForwardModel', cond=.false. )
         call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian, ExtraJacobian, Hessian )
         call add_to_retrieval_timing( 'full_fwm' )
-      case ( l_linear )
-        call MLSMessageCalls( 'push', constantName='LinearizedForwardModel' )
-        call LinearizedForwardModel ( config, FwdModelIn, FwdModelExtra, &
-          FwdModelOut, fmStat, Jacobian, vectors )
-        call add_to_retrieval_timing( 'linear_fwm' )
       case ( l_hybrid )
-        call MLSMessageCalls( 'push', constantName='HybridForwardModel' )
+        call trace_begin ( Me_HybridForwardModel, 'HybridForwardModel', &
+          & cond=.false. )
         call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian, vectors )
         call add_to_retrieval_timing( 'hybrid' )
+      case ( l_linear )
+        call trace_begin ( Me_LinearizedForwardModel, 'LinearizedForwardModel', &
+          & cond=.false. )
+        call LinearizedForwardModel ( config, FwdModelIn, FwdModelExtra, &
+          FwdModelOut, fmStat, Jacobian, vectors )
+        call add_to_retrieval_timing( 'linear_fwm' )
       case ( l_polarLinear )
-        call MLSMessageCalls( 'push', constantName='PolarForwardModel' )
+        call trace_begin ( Me_PolarForwardModel, 'PolarForwardModel', &
+          & cond=.false. )
         call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian, vectors )
         call add_to_retrieval_timing( 'polar_linear' )
       case ( l_scan )
-        call MLSMessageCalls( 'push', constantName='ScanForwardModel' )
+        call trace_begin ( Me_ScanForwardModel, 'ScanForwardModel', cond=.false. )
         call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian )
         call add_to_retrieval_timing( 'scan_fwm' )
       case ( l_scan2d )
-        call MLSMessageCalls( 'push', constantName='TwoDForwardModel' )
+        call trace_begin ( Me_Scan2DForwardModel, 'Scan2DForwardModel', &
+          & cond=.false. )
         call TwoDScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian )
         call add_to_retrieval_timing( 'twod_scan_fwm' )
       case ( l_switchingMirror )
-        call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
+        call trace_begin ( Me_SwitchingForwardModel, 'SwitchingForwardModel', &
+          & cond=.false. )
         call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian )
         call add_to_retrieval_timing( 'switching_mirror' )
@@ -394,19 +405,21 @@ contains ! ============= Public Procedures ==========================
       end select
 
       if ( config%isRadianceModel ) then
-        call MLSMessageCalls( 'push', constantName='BaselinForwardModel' )
+        call trace_begin ( Me_BaselineForwardModel, 'BaselineForwardModel', &
+          & cond=.false. )
         call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian )
-        call MLSMessageCalls( 'pop' )
+        call trace_end ( cond=.false. )
         call add_to_retrieval_timing( 'baseline' )
-        call MLSMessageCalls( 'push', constantName='SwitchingForwardModel' )
+        call trace_begin ( Me_SwitchingForwardModel, 'SwitchingForwardModel', &
+          & cond=.false. )
         call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
           FwdModelOut, fmStat, Jacobian )
-        call MLSMessageCalls( 'pop' )
+        call trace_end ( cond=.false. )
         call add_to_retrieval_timing( 'switching_mirror' )
       end if
 
-      call MLSMessageCalls( 'pop' ) ! for all the cases
+      call trace_end ( cond=.false. ) ! for all the cases
 
     end subroutine DoForwardModels
 
@@ -834,6 +847,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.68  2013/08/30 02:45:40  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.67  2013/08/16 02:51:04  vsnyder
 ! Add Fill_Magnetic_Field
 !
