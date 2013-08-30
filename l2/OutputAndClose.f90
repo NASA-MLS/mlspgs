@@ -158,8 +158,9 @@ contains ! =====     Public Procedures     =============================
     type(MLSFile_T), pointer :: inputFile
     integer :: KEY                      ! Index of spec_args node
     integer :: listSize
+    integer :: Me = -1                  ! String index for trace
     integer :: Metadata_error
-    character (len=32) :: meta_name    ! From the metaName= field
+    character (len=32) :: meta_name     ! From the metaName= field
     integer :: NAME                     ! string index of label on output
     logical :: newFile                  ! is this file new?
     type (HGrid_T), target :: newHGrid
@@ -195,11 +196,11 @@ contains ! =====     Public Procedures     =============================
     logical :: WriteMetaDataOnly        ! Because it was a directWrite
 
     ! Executable code
+
+    call trace_begin ( me, "Output_Close", root, cond=toggle(gen) )
     timing = section_times
     if ( timing ) call time_now ( t1 )
     nullify ( dontPack )
-
-    if ( toggle(gen) ) call trace_begin ( "Output_Close", root)
 
     error = 0
 
@@ -750,7 +751,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( timing ) call sayTime
-    if ( toggle(gen) ) call trace_end ( "Output_Close")
+    call trace_end ( "Output_Close", cond=toggle(gen) )
 
   contains
     subroutine SayTime
@@ -1781,6 +1782,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.170  2013/08/30 02:45:45  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.169  2013/08/20 00:32:11  pwagner
 ! Avoid crashing when no ForwardModel Names attribute missing
 !
