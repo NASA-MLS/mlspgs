@@ -223,6 +223,7 @@ contains ! ===================================== Public Procedures =====
     ! Local variables
     type (MLSFile_T), pointer :: DACSFile
     type (MAFRange_T) :: MAFRange
+    integer :: Me = -1                  ! String index for trace
     integer :: STATUS                   ! From deallocate
 
     ! For announce_error:
@@ -242,7 +243,7 @@ contains ! ===================================== Public Procedures =====
     swlevel = switchDetail(switches, 'chu' )
     nullify(ChunkDivideConfig%criticalSignals)    ! Just for Sun's compiler
 
-    if ( toggle(gen) ) call trace_begin ( "ChunkDivide", root )
+    call trace_begin ( me, "ChunkDivide", root, cond=toggle(gen) )
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -372,9 +373,8 @@ contains ! ===================================== Public Procedures =====
     end do
 
     if ( swLevel > -1 ) call dump ( chunks )
-    if ( specialDumpFile /= ' ' ) &
-      & call revertOutput
-    if ( toggle(gen) ) call trace_end ( "ChunkDivide" )
+    if ( specialDumpFile /= ' ' ) call revertOutput
+    call trace_end ( "ChunkDivide", cond=toggle(gen) )
 
   contains
 
@@ -2714,6 +2714,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.105  2013/08/30 02:45:34  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.104  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !

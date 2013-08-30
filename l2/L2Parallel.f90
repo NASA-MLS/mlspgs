@@ -222,6 +222,7 @@ contains
     integer :: INFO                     ! From PVM
     integer :: L2QTID                   ! TID of queue manager
     integer :: MACHINE                  ! Index
+    integer :: Me = -1                  ! String index for trace
     integer :: MSGTAG                   ! Dummy from PVMFBufInfo
     integer :: NEXTCHUNK                ! A chunk number
     integer :: NEXTTICKET               ! For direct write handling
@@ -276,7 +277,7 @@ contains
     ! so if it's not then quit.
     if ( finished ) return
 
-    if ( toggle(gen) ) call trace_begin ( "L2MasterTask")
+    call trace_begin ( me, "L2MasterTask", cond=toggle(gen))
     usingSubmit = trim(parallel%submit) /= ''
     usingL2Q = ( index(parallel%submit, 'l2q') > 0 )
     USINGOLDSUBMIT = USINGSUBMIT .and. .not. usingL2Q
@@ -1156,7 +1157,7 @@ contains
     dumpfulldwreqs = switchDetail(switches,'dwreq1') > -1
     if ( switchDetail(switches,'dwreq') > -1 ) &
       & call dump(directWriteRequests, statsOnly=.not. dumpfulldwreqs)
-    if ( toggle(gen) ) call trace_end ( "L2MasterTask")
+    call trace_end ( "L2MasterTask", cond=toggle(gen) )
 
   contains
 
@@ -1784,6 +1785,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.105  2013/08/30 02:45:43  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.104  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
