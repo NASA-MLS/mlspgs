@@ -12,7 +12,7 @@
 
 module PrintIt_m
 
-  use ISO_Fortran_Env, only: ERROR_UNIT, OUTPUT_UNIT
+  use ISO_FORTRAN_ENV, only: ERROR_UNIT, OUTPUT_UNIT
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCOMMON, only: MLSFILE_T
 
@@ -103,7 +103,7 @@ module PrintIt_m
     logical :: StackTrace              = .false. ! Trace via MLSMessageCalls?
     ! Track the last file we were reading/writing if an error occurs and
     ! that file isn't passed in the call statement
-    type(MLSFile_T) :: MLSFile ! which file were we reading/writing last?
+    type(MLSFile_T) :: MLSFile = MLSFile_T() ! which file were we reading/writing last?
   end type MLSMessageConfig_T
 
   ! This variable describes the configuration
@@ -224,7 +224,7 @@ contains
   end function LogUnitName
 
   ! -------------------------------------------------  PrintItOut  -----
-  subroutine PrintItOut ( INLINE, SEVERITY, LINE_LEN, NOPREFIX, EXITSTATUS  )
+  subroutine PrintItOut ( INLINE, SEVERITY, LINE_LEN, NOPREFIX, EXITSTATUS, NOEXIT  )
     ! In any way we're asked
     use SDPToolkit, only: USESDPTOOLKIT, PGS_SMF_GENERATESTATUSREPORT
     ! Args
@@ -233,6 +233,7 @@ contains
     integer, optional, intent(in) :: LINE_LEN
     logical, optional, intent(in) :: NOPREFIX
     integer, intent(in), optional :: EXITSTATUS
+    logical, optional, intent(in) :: NOEXIT
     ! Local variables
     character(len=len(inline)) :: Line
     logical :: log_it
@@ -240,6 +241,7 @@ contains
     character(len=len(inline)+len(config%prefix)) :: loggedLine
     integer :: ioerror
     integer :: maxLineLength
+    logical :: myNoExit
     logical :: myNoPrefix
     logical, parameter :: DEEBUG = .false.
     ! Executable
@@ -250,6 +252,8 @@ contains
     end if
     loggedLength = len_trim(line)
     if ( present(line_len) ) loggedLength = max( line_len, loggedLength )
+    myNoExit = .false.
+    if ( present(noExit) ) myNoExit = noExit
     myNoPrefix = .false.
     if ( present(noPrefix) ) myNoPrefix = noPrefix
     loggedLine = line
@@ -283,6 +287,7 @@ contains
     end select
     ! Have we been tasked with something more?
     ! Exit? Crash?
+    if ( myNoExit ) return
     if ( severity >= MLSMSG_Crash .or. &
       & (severity > MLSMSG_Warning .and. MLSMessageConfig%CrashOnAnyError) &
       & ) then
@@ -411,6 +416,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.5  2013/08/30 23:11:27  pwagner
+! NoExit option prevents unwanted stop
+!
 ! Revision 2.4  2013/08/30 03:56:02  vsnyder
 ! Revise use of trace_begin and trace_end
 !
