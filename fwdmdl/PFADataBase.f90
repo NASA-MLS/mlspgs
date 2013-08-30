@@ -643,6 +643,7 @@ contains ! =====     Public Procedures     =============================
     integer :: F, G                    ! Subscripts, loop inductors
     integer(hid_t) :: GroupID          ! From HDF5 open group
     integer :: IPFA                    ! Index in PFA database
+    integer :: Me = -1                 ! String index for trace
     character(len=molNameLen), pointer :: MyMolecules(:)
     character(len=maxSigLen), pointer :: MySignalStrings(:) ! From the HDF5
     integer :: SB                      ! Sideband, from the signal
@@ -651,7 +652,7 @@ contains ! =====     Public Procedures     =============================
     logical :: Trouble                 ! If molecule or signal doesn't work
 
 
-    if ( toggle(gen) ) call trace_begin ( "Process_PFA_File_datum", where )
+    call trace_begin ( me, "Process_PFA_File_datum", where, cond=toggle(gen) )
     ! Open the file
 
     call OpenPFAFile ( PFAFileDatum, source_ref(where) )
@@ -754,7 +755,7 @@ contains ! =====     Public Procedures     =============================
       & 'Errors while hooking up and finding PFA tables' )
 
     Process_PFA_File_datum = f
-    if ( toggle(gen) ) call trace_end ( "Process_PFA_File_datum" )
+    call trace_end ( "Process_PFA_File_datum", cond=toggle(gen) )
 
   end function Process_PFA_File_datum
 
@@ -1358,6 +1359,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.46  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.45  2013/08/23 02:51:26  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
