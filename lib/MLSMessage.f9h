@@ -347,7 +347,7 @@ contains
     endif
     call MLSMessageCalls( 'push', constantName=ModuleNameIn )
     if ( severity >= MLSMSG_Severity_to_quit ) then
-      call StopWithErrorMsg( Message, MLSFile, advance=advance )
+      call StopWithErrorMsg( Message, MLSFile, advance=advance, severity=severity )
       myStatus = MLSMSGSTATUS_Stopped
     else
       call MLSMessageCalls( 'dump' )
@@ -569,6 +569,7 @@ contains
 
   subroutine MLSMessageInquire( Warning_msg, timesWarned, &
     &  totalnumwarnings, LastWarningMsg  )
+    use MLSSTRINGS, only: LOWERCASE
     ! Args
     integer, optional, intent(out)          :: timesWarned ! how many times 
     character(len=*), optional, intent(in)  :: Warning_msg ! this happened
@@ -775,35 +776,29 @@ contains
 
   subroutine restoreConfig
     use PrintIt_m, only: SET_CONFIG
-    MLSMessageConfig%limitWarnings           = 1000 
-    MLSMessageConfig%skipModuleNamesThr      = MLSMSG_Success ! Always show module   
-    MLSMessageConfig%skipSeverityThr         = MLSMSG_Success ! Always show severit  
-    MLSMessageConfig%skipMessageThr          = MLSMSG_Success ! Always show messages  
-    MLSMessageConfig%suppressDebugs          = .false.                                
-    MLSMessageConfig%MaxModuleNameLength     = 32
-    MLSMessageConfig%MaxSeverityNameLength   = 8 
-    MLSMessageConfig%CrashOnAnyError         = .false. ! See crash warning                                                       
-    MLSMessageConfig%SendErrMsgToMaster      = .false. ! send last gasp to master?                                               
-    MLSMessageConfig%ShowCumulativeSeverity  = .false. ! print severity_so_far?                
-    MLSMessageConfig%StackTrace              = .false. ! Trace via MLSMessageCalls?            
+    MLSMessageConfig = MLSMessageConfig_T()
     MLSMSG_Severity_to_quit                  = MLSMSG_Error
     MLSMSG_Severity_to_walkback              = MLSMSG_Error
     call set_config ( asciify=.true., prefix='' )
   end subroutine restoreConfig
 
   ! ------------ StopWithErrorMsg ------------
-  subroutine StopWithErrorMsg ( Message, MLSFile, Advance )
+  subroutine StopWithErrorMsg ( Message, MLSFile, Advance, severity )
     ! Print Message, dump calling stack (if any) and stop
     character (len=*), intent(in) :: Message ! Line of text
-    type(MLSFile_T), intent(in), optional :: MLSFile
+    type(MLSFile_T), intent(in), optional  :: MLSFile
     character(len=*), intent(in), optional :: Advance
+    integer, intent(in), optional          :: severity
     ! Internal variables
     character(len=32) :: name
+    integer :: mySeverity
     ! Executable
+    mySeverity = MLSMSG_Error
+    if ( present(severity) ) mySeverity = MLSMSG_Error
     name = ' '
     call MLSMessageCalls( 'dump', name )
     if ( len_trim(name) < 1 ) name = ModuleName
-    call MLSMessageStd( MLSMSG_Error, name, Message, MLSFile=MLSFile, &
+    call MLSMessageStd( mySeverity, name, Message, MLSFile=MLSFile, &
       & advance=advance )
   end subroutine StopWithErrorMsg
 
@@ -894,28 +889,6 @@ contains
     call printitout( trim(line), MLSMSG_Info )
   end subroutine dump
 
-  function LowerCase (str) result (outstr)
-    ! takes A-Z  and replaces with a-z
-    ! leaving other chars alone
-    !--------Argument--------!
-    character (len=*), intent(in) :: STR
-    character (len=len(str))      :: OUTSTR
-
-    !----------Local vars----------!
-    integer            :: i, icode
-    integer, parameter :: offset=IACHAR("a")-IACHAR("A")
-    !----------Executable part----------!
-    outstr=str
-
-    DO i = 1, LEN(str)
-       icode=IACHAR(outstr(i:i))
-       IF ( icode >=IACHAR("A") .AND. icode <= IACHAR("Z")) THEN
-          outstr(i:i)=achar(icode+offset)
-       END IF
-    END DO
-
-  END FUNCTION LowerCase
-
   subroutine MLSMessageStd ( Severity, ModuleNameIn, Message, &
     & Advance, MLSFile )
 
@@ -968,7 +941,7 @@ contains
          ! rather than from output module )
 
         if ( my_adv .or. .not. allOfIt ) then
-          call printitout( line, severity, line_len )
+          call printitout( line, severity, line_len, NoExit =.true. )
           line_len = 0
           line = ' '
         end if
@@ -979,7 +952,6 @@ contains
 
     ! Now if it's an error, and the message is complete, then try to close
     ! log file if any and quit (or crash)
-
     if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
       ! Here's a chance to dump facts about last file we were reading/writing
       if ( present(MLSFile) ) then
@@ -1003,6 +975,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.27  2013/08/30 23:15:53  pwagner
+! Fixed some bugs preventing effective dump_stack
+!
 ! Revision 2.26  2013/08/29 19:16:23  pwagner
 ! Prevent an odd error pop-ing an empty stack
 !
