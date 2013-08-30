@@ -89,6 +89,8 @@ contains
     integer :: Error               ! 0 = no error occurred.
     integer :: I_SONS              ! Son indices of sons of root
     integer :: LHS                 ! Index in tree of LHS
+    integer :: Me = -1             ! String index for trace
+    integer :: Me_Loop = -1        ! String index for trace
     integer :: Q                   ! Index of quantity in a vector
     integer :: RHS                 ! Index in tree of root of RHS
     integer :: SON                 ! Son of root
@@ -122,10 +124,10 @@ contains
 
     error = 0
 
-    if ( toggle(gen) ) call trace_begin ( 'Algebra', root )
+    call trace_begin ( me, 'Algebra', root, cond=toggle(gen) )
     do i_sons = 2, nsons(root) - 1 ! skip names at begin and end
       son = subtree(i_sons,root)
-      if ( toggle(gen) ) call trace_begin ( 'Algebra loop', son )
+      call trace_begin ( me_loop, 'Algebra loop', son, cond=toggle(gen) )
       if ( node_id(son) /= n_equal ) then
         call AlgebraCommands ( son, VectorDatabase, MatrixDatabase, chunk, forwardModelConfigDatabase )
       else
@@ -277,9 +279,9 @@ contains
           end select
         end if
       end if
-200   if ( toggle(gen) ) call trace_end ( 'Algebra loop' )
+200   call trace_end ( 'Algebra loop', cond=toggle(gen) )
     end do ! i_sons
-    if ( toggle(gen) ) call trace_end ( 'Algebra' )
+    call trace_end ( 'Algebra', cond=toggle(gen) )
 
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & 'An error occurred in the Algebra section' )
@@ -582,6 +584,7 @@ contains
       integer :: Son1, Son2        ! Sons of Root
       integer :: SPEC              ! Index of spec of label, e.g. S_Matrix
       integer :: String            ! String table index
+      integer :: Trace_me = -1     ! String table index for trace
       integer :: What2             ! WHAT for second subexpression
       type(vector_t), save :: EmptyVector
       type(vector_t) :: Vector2
@@ -597,7 +600,7 @@ contains
 
 !      call print_subtree ( root, 0, dump_decor=.true. )
 
-      if ( toggle(gen) ) call trace_begin ( 'Algebra.Expr', root )
+      call trace_begin ( Trace_me, 'Algebra.Expr', root, cond=toggle(gen) )
       dvalue = 0.0_r8
       me = node_id(root)
       select case ( me )
@@ -1210,7 +1213,7 @@ contains
         call destroyStuff ( what2, vector2, matrix2, matrix_c2, matrix_k2, &
           & matrix_s2 )
       end select
-      if ( toggle(gen) ) call trace_end ( 'Algebra.Expr' )
+      call trace_end ( 'Algebra.Expr', cond=toggle(gen) )
     end subroutine Expr
 
     ! .............................................  DestroyStuff  .....
@@ -1524,6 +1527,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.28  2013/08/30 02:45:32  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.27  2011/12/21 01:44:32  vsnyder
 ! Change some intents, and explain why
 !
