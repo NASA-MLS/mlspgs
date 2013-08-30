@@ -56,11 +56,11 @@ contains ! ====     Public Procedures     ==============================
     ! is not zero, print the line and column number from the configuration
     ! file.
 
-    use Allocate_Deallocate, only: Memory_Units
-    use Lexer_Core, only: Print_Source
-    use Output_m, only: DumpSize, Output
-    use String_Table, only: Display_String
-    use Tree, only: Dump_Tree_Node, Source_Ref
+    use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: DUMPSIZE, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
     logical, intent(in), optional :: Top   ! Dump only the top frame
     character(len=*), intent(in), optional :: Before ! first thing output
@@ -149,25 +149,29 @@ contains ! ====     Public Procedures     ==============================
   end function Get_Frame
 
 ! ----------------------------------------------------  Pop_Stack  -----
-  subroutine Pop_Stack ( Before, Where )
+  subroutine Pop_Stack ( Before, Where, Silent )
     ! Pop the stack.  If Before or Where are present, dump the top frame first.
 
-    use Allocate_Deallocate, only: Memory_Units, NoBytesAllocated
-    use Output_m, only: DumpSize, NewLine, Output
-    use Time_m, only: Time_Now
+    use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
+    use OUTPUT_M, only: DUMPSIZE, NEWLINE, OUTPUT
+    use TIME_M, only: TIME_NOW
 
     character(len=*), intent(in), optional :: Before
     logical, intent(in), optional :: Where
+    logical, intent(in), optional :: silent
 
     double precision :: Delta
     logical :: HaveStack
     real :: T
     character(len=10) :: Used
-
+    logical :: mySilent
+    ! Executable
+    mySilent = .false.
+    if ( present(silent) ) mySilent=.true.
     haveStack = allocated(stack)
     if ( haveStack ) haveStack = stack_ptr >= lbound(stack,1)
 
-    if ( present(before) .or. present(where) ) then
+    if ( .not. mySilent .and. (present(before) .or. present(where)) ) then
       ! We call dump_stack even without haveStack because it prints
       ! an error message if we don't have a stack.
       call dump_stack ( .true., before, where, size=.false., advance='no' )
@@ -197,7 +201,7 @@ contains ! ====     Public Procedures     ==============================
     ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
     ! We assume the actual argument is a SAVE variable.
     ! Push the stack.  If Before or Where are present, dump the new top frame.
-    use String_Table, only: Create_String
+    use STRING_TABLE, only: CREATE_STRING
 
     integer, intent(inout) :: Name_I
     character(len=*), intent(in) :: Name_C
@@ -215,7 +219,7 @@ contains ! ====     Public Procedures     ==============================
 ! -------------------------------------------------  Push_Stack_C  -----
   subroutine Push_Stack_C ( Name, Root, Index, String, Before, Where )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
-    use String_Table, only: Create_String
+    use STRING_TABLE, only: CREATE_STRING
 
     character(len=*), intent(in) :: Name
     integer, optional, intent(in) :: Root   ! Where in configuration tree
@@ -232,8 +236,8 @@ contains ! ====     Public Procedures     ==============================
 ! -------------------------------------------------  Push_Stack_I  -----
   subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
-    use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
-    use Time_m, only: Time_Now
+    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, NOBYTESALLOCATED
+    use TIME_M, only: TIME_NOW
 
     integer, intent(in) :: Name
     integer, optional, intent(in) :: Root  ! Where in configuration tree
@@ -292,7 +296,7 @@ contains ! ====     Public Procedures     ==============================
 ! =====     Private Procedures     =====================================
 
   subroutine Show_When
-    use Output_m, only: Output
+    use OUTPUT_M, only: OUTPUT
     character(8) :: Date
     character(10) :: Time
     call date_and_time ( date=date, time=time )
@@ -313,6 +317,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.7  2013/08/30 23:14:26  pwagner
+! pop_stack may pop silently
+!
 ! Revision 2.6  2013/08/30 03:55:00  vsnyder
 ! Add "string" to stack.  Delete "now" from stack.  Add switch to control
 ! printing current date and time in Dump_Stack.  More repairs in Pop_Stack.
