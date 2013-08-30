@@ -243,8 +243,7 @@ contains
       & NEED_L1BFILES, SPECIALDUMPFILE, STOPAFTERSECTION, TOOLKIT, &
       & MLSMESSAGE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, &
-      & MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
     use MLSPCF2, only: MLSPCF_L2GP_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2DGM_START, MLSPCF_L2DGM_END, MLSPCF_L2FWM_FULL_START, &
       & MLSPCF_L2FWM_FULL_END, &
@@ -298,13 +297,18 @@ contains
     integer :: I, J                ! Index of son, grandson of root
     ! integer :: INPUT_VERSION_STRING  ! Sub_rosa index
     logical ::  ItExists
-    type (L1BData_T) :: l1bField   ! L1B data
+    type (L1BData_T) :: L1bField   ! L1B data
+    type(MLSFile_T), pointer :: L1BFile
+    character(len=Name_Len) :: L1bItemName
     integer :: L1BFLAG
+    integer :: Me = -1             ! String index for trace
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
     integer :: NAME                ! Sub-rosa index of name of vGrid or hGrid
     integer :: NOMAFS              ! Number of MAFs of L1B data read
     integer :: NUMFILES
-    integer :: OUTPUT_VERSION_STRING  ! Sub_rosa index
+    integer :: OrbNum(max_orbits)
+    real(r8) :: OrbPeriod(max_orbits)
+    integer :: OUTPUT_VERSION_STRING ! Sub_rosa index
     integer :: param_id            ! e.g., p_brightObjects
     logical :: Restricted          ! Some commands not available
     integer :: ReturnStatus        ! non-zero means trouble
@@ -324,10 +328,6 @@ contains
     character(len=FileNameLen) :: FilenameString
     character (len=name_len) :: QUANTITY
     character(len=*), parameter :: Time_conversion='(F32.0)'
-    character(len=Name_Len) :: l1bItemName
-    integer :: OrbNum(max_orbits)
-    real(r8) :: OrbPeriod(max_orbits)
-    type(MLSFile_T), pointer :: L1BFile
 
     integer, parameter :: Param_restricted = 1 ! Parameter not allowed
     integer, parameter :: Spec_restricted = param_restricted + 1 ! Spec not allowed
@@ -347,11 +347,7 @@ contains
     stopTimeIsAbsolute = .false.
     LeapSecFileName = ''
 
-    if ( toggle(gen) ) then
-      call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
-    else
-      call MLSMessageCalls( 'push', constantName=ModuleName )
-    endif
+    call trace_begin ( me, 'SET_GLOBAL_SETTINGS', root, cond=toggle(gen) )
 
     Details = switchDetail(switches, 'glo') - 3
 
@@ -360,7 +356,7 @@ contains
       DetailReduction = 0
     elseif ( DetailReduction == 0 ) then ! By default, reduce details level by 2
       DetailReduction = 2
-    endif
+    end if
 
     do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
       son = subtree(i,root)
@@ -850,11 +846,7 @@ contains
 
       if ( specialDumpFile /= ' ' ) &
         & call revertOutput
-      if ( toggle(gen) ) then
-        call trace_end ( 'SET_GLOBAL_SETTINGS' )
-      else
-        call MLSMessageCalls( 'pop' )
-      end if
+      call trace_end ( 'SET_GLOBAL_SETTINGS', cond=toggle(gen) )
       if ( timing ) call sayTime
 
     end subroutine FinishUp
@@ -1261,6 +1253,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.146  2013/08/21 00:27:13  pwagner
+! Code around nominal 1993 starting date limitation; awaiting better solution
+!
 ! Revision 2.145  2012/08/16 17:51:07  pwagner
 ! Exploit level 2-savvy MLSMessage
 !

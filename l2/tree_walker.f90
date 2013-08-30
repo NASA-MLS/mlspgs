@@ -137,6 +137,7 @@ contains ! ====     Public Procedures     ==============================
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
     type (Matrix_Database_T), dimension(:), &
       & pointer ::                               Matrices
+    integer :: Me = -1                           ! String index for trace
     logical ::                                   now_stop
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
     logical ::                                   REDUCEDCHUNKS
@@ -157,6 +158,10 @@ contains ! ====     Public Procedures     ==============================
     type (VectorTemplate_T), dimension(:), pointer :: VectorTemplates
 
     ! Executable
+    call trace_begin ( me, 'WALK_TREE_TO_DO_MLS_L2', &
+      & subtree(first_section,root), cond=toggle(gen) )
+    call time_now ( t1 )
+
     nullify ( chunks, forwardModelConfigDatabase, griddedDataBase, hessians, &
       & directDatabase, hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectorTemplates, fGrids, vGrids )
@@ -184,9 +189,6 @@ contains ! ====     Public Procedures     ==============================
       call get_string ( section_indices(i), section_name, strip=.true. )
       skipSections(i) = isInList( sectionstoskip, section_name, '-fc' )
     end do
-    if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
-      & subtree(first_section,root) )
-    call time_now ( t1 )
     call OpenAndInitialize ( processingRange, filedatabase )
     call add_to_section_timing ( 'open_init', t1, now_stop )
     if ( now_stop ) then
@@ -642,7 +644,7 @@ subtrees:   do while ( j <= howmany )
         end if
       end if
       error_flag = 0
-      if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
+      call trace_end ( 'WALK_TREE_TO_DO_MLS_L2', cond=toggle(gen) )
     end subroutine FinishUp
 
     subroutine SayTime ( What, startTime )
@@ -679,6 +681,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.185  2013/08/23 23:32:55  pwagner
+! May use l2cf to set l1b file type to non-Aura
+!
 ! Revision 2.184  2013/08/17 02:54:32  vsnyder
 ! Remove references to DEPTH from trace_m
 !
