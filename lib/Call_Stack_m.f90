@@ -16,12 +16,13 @@ module Call_Stack_m
 
   public :: Stack_t
   public :: Dump_Stack, Get_Frame, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
+  public :: Say_When
 
   type :: Stack_t
     real :: Clock = 0.0                ! Whatever Time_Now returns (CPU or ?)
     integer :: Index = -1              ! Extra info, e.g. MAF number
     double precision :: Memory = 0.0d0 ! In use, in Memory_Units
-    character(len=10) :: Now = ''      ! Date and time
+    integer :: String = 0              ! Index in string table
     integer :: Text = 0                ! Index in string table
     integer :: Tree = 0                ! Where in l2cf, -1 if stack not allocated,
                                        ! -2 if stack index < 1, -3 if stack index
@@ -31,6 +32,9 @@ module Call_Stack_m
   interface Push_Stack
     module procedure Push_Stack_b, Push_Stack_c, Push_Stack_i
   end interface
+
+  ! Display date and time during push and pop displays
+  logical, save :: Say_When = .false.
 
   integer, parameter, private :: StartingStackSize = 100
   type(stack_t), allocatable, save, private :: Stack(:)
@@ -110,11 +114,12 @@ contains ! ====     Public Procedures     ==============================
       end do
       if ( present(before) ) call output ( before )
       if ( stack(depth)%text /= 0 ) call display_string ( stack(depth)%text )
+      if ( stack(depth)%string /= 0 ) &
+        & call display_string ( stack(depth)%string, before=' ' )
       if ( stack(depth)%index >= 0 ) call output ( stack(depth)%index )
       if ( myWhere .and. stack(depth)%tree /= 0 ) &
         & call print_source ( source_ref(stack(depth)%tree), before=', ' )
-      call output ( ' at ' // stack(depth)%now(1:2) // ':' // &
-        & stack(depth)%now(3:4) // ':' // trim(stack(depth)%now(5:)) )
+      if ( say_when ) call show_when
       if ( mySize ) call dumpSize ( memory_units * stack(depth)%memory, &
         & before = ' Memory: ' )
       if ( myCPU ) call output ( stack(depth)%clock, format='(g10.3)', &
@@ -155,13 +160,18 @@ contains ! ====     Public Procedures     ==============================
     logical, intent(in), optional :: Where
 
     double precision :: Delta
+    logical :: HaveStack
     real :: T
     character(len=10) :: Used
 
+    haveStack = allocated(stack)
+    if ( haveStack ) haveStack = stack_ptr >= lbound(stack,1)
+
     if ( present(before) .or. present(where) ) then
+      ! We call dump_stack even without haveStack because it prints
+      ! an error message if we don't have a stack.
       call dump_stack ( .true., before, where, size=.false., advance='no' )
-      if ( .not. allocated(stack) ) return
-      if ( stack_ptr < lbound(stack,1) ) return
+      if ( .not. haveStack ) return
       call time_now ( t )
       t = t - stack(stack_ptr)%clock
       write ( used, '(g10.3)' ) t
@@ -178,12 +188,12 @@ contains ! ====     Public Procedures     ==============================
       call newLine
     end if
 
-    stack_ptr = stack_ptr - 1
+    if ( haveStack ) stack_ptr = stack_ptr - 1
 
   end subroutine Pop_Stack
 
 ! -------------------------------------------------  Push_Stack_B  -----
-  subroutine Push_Stack_B ( Name_I, Name_C, Root, Index, Before, Where )
+  subroutine Push_Stack_B ( Name_I, Name_C, Root, Index, String, Before, Where )
     ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
     ! We assume the actual argument is a SAVE variable.
     ! Push the stack.  If Before or Where are present, dump the new top frame.
@@ -191,33 +201,36 @@ contains ! ====     Public Procedures     ==============================
 
     integer, intent(inout) :: Name_I
     character(len=*), intent(in) :: Name_C
-    integer, optional, intent(in) :: Root  ! Where in configuration tree
-    integer, optional, intent(in) :: Index ! Whatever caller wants to send
+    integer, optional, intent(in) :: Root   ! Where in configuration tree
+    integer, optional, intent(in) :: Index  ! Whatever caller wants to send
+    integer, optional, intent(in) :: String ! To print after Name_C
     character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
     logical, intent(in), optional :: Where
 
-    if ( name_i <= 0 ) name_i = create_string ( name_c )
-    call push_stack ( name_i, Root, Index, Before, Where )
+    if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
+    call push_stack ( name_i, Root, Index, String, Before, Where )
 
   end subroutine Push_Stack_B
 
 ! -------------------------------------------------  Push_Stack_C  -----
-  subroutine Push_Stack_C ( Name, Root, Index, Before, Where )
+  subroutine Push_Stack_C ( Name, Root, Index, String, Before, Where )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
     use String_Table, only: Create_String
 
     character(len=*), intent(in) :: Name
-    integer, optional, intent(in) :: Root  ! Where in configuration tree
-    integer, optional, intent(in) :: Index ! Whatever caller wants to send
+    integer, optional, intent(in) :: Root   ! Where in configuration tree
+    integer, optional, intent(in) :: Index  ! Whatever caller wants to send
+    integer, optional, intent(in) :: String ! To print after Name
     character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
     logical, intent(in), optional :: Where
 
-    call push_stack ( create_string ( name ), Root, Index, Before, Where )
+    call push_stack ( create_string ( trim(name) ), Root, Index, String, &
+      & Before, Where )
 
   end subroutine Push_Stack_C
 
 ! -------------------------------------------------  Push_Stack_I  -----
-  subroutine Push_Stack_I ( Name, Root, Index, Before, Where )
+  subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
     use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
     use Time_m, only: Time_Now
@@ -225,6 +238,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: Name
     integer, optional, intent(in) :: Root  ! Where in configuration tree
     integer, optional, intent(in) :: Index ! Whatever caller wants to send
+    integer, optional, intent(in) :: String ! To print after Name
     character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
     logical, intent(in), optional :: Where
 
@@ -250,10 +264,11 @@ contains ! ====     Public Procedures     ==============================
     stack(stack_ptr) = stack_t ( memory=noBytesAllocated, text=name )
     if ( present(root) ) stack(stack_ptr)%tree = root
     if ( present(index) ) stack(stack_ptr)%index = index
+    if ( present(string) ) stack(stack_ptr)%string = string
     call time_now ( stack(stack_ptr)%clock )
-    call date_and_time ( stack(stack_ptr)%now )
     if ( present(before) .or. present(where) ) &
       & call dump_stack ( .true., before, where, advance='yes' )
+
   end subroutine Push_Stack_I
 
 ! --------------------------------------------------  Stack_Depth  -----
@@ -274,6 +289,17 @@ contains ! ====     Public Procedures     ==============================
     end if
   end subroutine Top_Stack
 
+! =====     Private Procedures     =====================================
+
+  subroutine Show_When
+    use Output_m, only: Output
+    character(8) :: Date
+    character(10) :: Time
+    call date_and_time ( date=date, time=time )
+    call output ( ' at ' // time(1:2) // ':' // time(3:4) // ':' // &
+      & time(5:) // ' on ' // date(1:4) // '/' // date(5:6) // '/' // date(7:8) )
+  end subroutine Show_When
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -287,6 +313,10 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.6  2013/08/30 03:55:00  vsnyder
+! Add "string" to stack.  Delete "now" from stack.  Add switch to control
+! printing current date and time in Dump_Stack.  More repairs in Pop_Stack.
+!
 ! Revision 2.5  2013/08/29 19:47:52  vsnyder
 ! Don't output anything in Pop_Stack if Before and Where absent
 !
