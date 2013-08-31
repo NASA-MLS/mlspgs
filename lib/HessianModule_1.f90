@@ -21,13 +21,14 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   use HESSIANMODULE_0, only: CLEARBLOCK, COPYBLOCK, CREATEBLOCK, &
     & DESTROYBLOCK, HESSIANELEMENT_T, RH, &
     & H_ABSENT, H_SPARSE, H_FULL, OPTIMIZEBLOCK
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ALLOCATE, &
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MATRIXMODULE_1, only: DEFINERCINFO, DESTROYRCINFO, NULLIFYRCINFO, RC_INFO
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use OUTPUT_M, only: BLANKSTOCOLUMN, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use STRING_TABLE, only: DISPLAY_STRING
   use TOGGLES, only: SWITCHES
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use VECTORSMODULE, only: VECTOR_T
 
   implicit none
@@ -728,10 +729,11 @@ contains
     ! Local variables
     integer :: CB                       ! Column block
     integer :: RB                       ! Row block
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: MYMIRROR                 ! Copy of mirror
     integer, pointer :: MyMolecules(:)
 
-    call MLSMessageCalls( 'push', constantName=ModuleName // '%InsertHessianPlane_1' )
+    call trace_begin ( me, 'InsertHessianPlane_1', cond=.false. )
     myMirror = .false.
     if ( present ( mirror ) ) myMirror = mirror
     nullify ( myMolecules )
@@ -743,7 +745,7 @@ contains
            & .and. .not. &
            & any( m%col%vec%quantities(m%col%quant(b))%template%molecule == &
            &      myMolecules) ) then
-          call MLSMessageCalls( 'pop' )
+          call trace_end ( cond=.false. )
           return
         endif
       end if
@@ -775,7 +777,7 @@ contains
       end do
     end do
     
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine InsertHessianPlane_1
 
   ! ----------------------------------------------- NullifyHessian -----
@@ -902,6 +904,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.33  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.32  2013/06/12 02:10:27  vsnyder
 ! Cruft removal
 !
