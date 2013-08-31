@@ -116,7 +116,7 @@ contains ! ====     Public Procedures     ==============================
       if ( stack(depth)%text > 0 ) call display_string ( stack(depth)%text )
       if ( stack(depth)%string > 0 ) &
         & call display_string ( stack(depth)%string, before=' ' )
-      if ( stack(depth)%index >= 0 ) call output ( stack(depth)%index )
+      if ( stack(depth)%index >= 0 ) call output ( stack(depth)%index, before=' ' )
       if ( myWhere .and. stack(depth)%tree > 0 ) &
         & call print_source ( source_ref(stack(depth)%tree), before=', ' )
       if ( say_when ) call show_when
@@ -318,6 +318,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.9  2013/08/31 02:25:57  vsnyder
+! Output a blank before Index component in Dump_Stack
+!
 ! Revision 2.8  2013/08/31 01:23:13  vsnyder
 ! Don't try to display strings or trees with negative indices
 !
