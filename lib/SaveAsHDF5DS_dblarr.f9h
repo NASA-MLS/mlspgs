@@ -22,16 +22,17 @@
 ! $Id$
 
     ! Local variables
-    integer :: spaceID                  ! ID for dataspace
-    integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
-    integer(hsize_t), dimension(size(shape(value))) :: SHP, MAXDIMS ! Shape
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: Rank                     ! Rank of VALUE
+    integer (HID_T) :: setID            ! ID for dataset
+    integer(hsize_t), dimension(size(shape(value))) :: SHP, MAXDIMS ! Shape
+    integer :: spaceID                  ! ID for dataspace
+    integer :: status                   ! Flag from HDF5
 
     ! Executable code
     rank = size(shp)
 
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_dblarr'//digits(rank) )
+    call trace_begin ( 'SaveAsHDF5DS_dblarr'//digits(rank), cond=.false. )
     shp = shape(value)
     maxdims = shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -44,10 +45,13 @@
     call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
       & int ( (/ shp, ones(rank:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
 !   end subroutine SaveAsHDF5DS_dblarr*
 
 ! $Log$
+! Revision 2.2  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.1  2008/05/09 23:27:18  vsnyder
 ! Initial commit
 !

@@ -21,16 +21,16 @@
 
     ! Local variables
     integer :: Rank ! = size(shape(value)))
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: SETID                    ! ID of dataset
     integer(hsize_t) :: SHP(size(shape(value))) ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
+    integer :: STATUS                   ! Flag from HDF5
 
 ! $Id$
 
     ! Executable code
     rank = size(shape(value))
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_' // sfx )
+    call trace_begin ( 'LoadPtrFromHDF5DS_' // sfx, cond=.false. )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -41,10 +41,13 @@
     call allocate_test ( value, int(shp), 'Value', moduleName )
     call h5dread_f ( setID, H5T, value, (/ shp, ones(rank:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'LoadPtrFromHDF5DS_' // sfx, cond=.false. )
 ! end subroutine LoadPtrFromHDF5DS_*
 
 ! $Log$
+! Revision 2.2  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.1  2008/05/22 01:05:48  vsnyder
 ! Initial commit
 !
