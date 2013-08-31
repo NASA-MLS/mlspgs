@@ -28,7 +28,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & ISFILLVALUE, REPLACEFILLVALUES
   use MLSHDFEOS, only: HSIZE
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, &
-    & MLSMSG_WARNING, MLSMESSAGE, MLSMESSAGECALLS
+    & MLSMSG_WARNING, MLSMESSAGE
   use MLSNUMERICS, only: FINDINRANGE
   use MLSFINDS, only: FINDFIRST, FINDLAST, FINDUNIQUE
   use MLSSETS, only: FINDINTERSECTION, INTERSECTION
@@ -40,6 +40,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
     & RESUMEOUTPUT, SUSPENDOUTPUT
   use STRING_TABLE, only: DISPLAY_STRING
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
   implicit none
 
@@ -416,7 +417,8 @@ contains ! =====     Public Procedures     =============================
     ! This call has been altered recently, so that it can be used to create
     ! a swath as well as adding to one. 
 
-  use MLSHDFEOS, only: MLS_SWATH_IN_FILE
+    use MLSHDFEOS, only: MLS_SWATH_IN_FILE
+
     ! Arguments
 
     type(MLSFile_T)                :: L2GPFile
@@ -443,6 +445,7 @@ contains ! =====     Public Procedures     =============================
     integer :: actual_ntimes
     logical :: alreadyOpen
     type (L2GPData_T) :: largerl2gp
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: myLastProfile
     character (len=L2GPNameLen) :: myswathName
     logical :: notUnlimited
@@ -453,7 +456,7 @@ contains ! =====     Public Procedures     =============================
     ! logical, parameter :: DEEBUG = .false.
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='AppendL2GPData_MLSFile' )
+    call trace_begin ( me, 'AppendL2GPData_MLSFile', cond=.false. )
     status = 0
 
     if (present(lastProfile)) then
@@ -577,7 +580,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. alreadyOpen )  call mls_closeFile(L2GPFile, Status)
     L2GPFile%errorCode = status
     L2GPFile%lastOperation = 'append'
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'AppendL2GPData_MLSFile', cond=.false. )
   end subroutine AppendL2GPData_MLSFile
 
   !------------------------------------------  ContractL2GPRecord  -----
@@ -3508,11 +3511,12 @@ contains ! =====     Public Procedures     =============================
     integer(kind=size_t), dimension(7) :: hflddims
     character (LEN=480) :: msr
 
-    integer :: first, freq, lev, nDims, nFlds, size, swid, status
-    integer, dimension(3) :: start, stride, edge
     integer, dimension(4) :: dims
+    integer :: first, freq, lev, nDims, nFlds, size, swid, status
     integer(kind=size_t), dimension(4) :: hdims
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
+    integer, dimension(3) :: start, stride, edge
     logical :: firstCheck, lastCheck
 
     real(r4), pointer, dimension(:) :: REALFREQ
@@ -3524,7 +3528,7 @@ contains ! =====     Public Procedures     =============================
     logical :: ReadingData
     logical :: deeBugHere
     ! Executable code
-    call MLSMessageCalls( 'push', constantName= 'ReadL2GPData_MF_hdf' )
+    call trace_begin ( me,  'ReadL2GPData_MF_hdf', cond=.false. )
     deeBugHere = DEEBUG ! .or. .true.
     nullify ( realFreq, realSurf, realProf, real3 )
     hdfVersion = L2GPFile%hdfVersion
@@ -3687,7 +3691,7 @@ contains ! =====     Public Procedures     =============================
       if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
            &detach from swath interface after reading.', MLSFile=L2GPFile)
       if (present(numProfs)) numProfs=myNumProfs
-      call MLSMessageCalls( 'pop' )
+      call trace_end (  'ReadL2GPData_MF_hdf', cond=.false. )
       if(DEEBUG) call outputNamedValue( 'no data read; nTimes', myNumProfs )
       return
     endif
@@ -3832,10 +3836,9 @@ contains ! =====     Public Procedures     =============================
     !  firstprof,lastprof,myNumProfs
     ! Set numProfs if wanted
     if (present(numProfs)) numProfs=myNumProfs
-    call MLSMessageCalls( 'pop' )
-    !-----------------------------
+    call trace_end (  'ReadL2GPData_MF_hdf', cond=.false. )
+
   end subroutine ReadL2GPData_MF_hdf
-  !-----------------------------
 
   !----------------------------------------  writeL2GPData_fileID  -----
   ! This subroutine is an amalgamation of the last three
@@ -3870,8 +3873,8 @@ contains ! =====     Public Procedures     =============================
     l2gpFile%stillOpen = .true.
     call WriteL2GPData(l2gp, l2gpFile, &
     & swathName, notUnlimited)
+
   end subroutine writeL2GPData_fileID
-  !-------------------------------------------------------------
 
   ! --------------------------------------  OutputL2GP_createFile_MF  -----
   subroutine OutputL2GP_createFile_MF (l2gp, L2GPFile, &
@@ -5013,10 +5016,11 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: notUnlimited
     ! Local
     logical :: alreadyOpen
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: status
     ! Executable code
 
-    call MLSMessageCalls( 'push', constantName='writeL2GPData_MLSFile' )
+    call trace_begin ( me, 'writeL2GPData_MLSFile', cond=.false. )
     status = 0
     alreadyOpen = L2GPFile%stillOpen
     if ( .not. alreadyOpen ) then
@@ -5044,7 +5048,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. alreadyOpen )  call mls_closeFile(L2GPFile, Status)
     L2GPFile%errorCode = status
     L2GPFile%lastOperation = 'write'
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'writeL2GPData_MLSFile', cond=.false. )
   end subroutine writeL2GPData_MLSFile
   
  ! The next two functions ignore leap seconds
@@ -5091,6 +5095,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.193  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
 ! Revision 2.192  2013/04/05 23:17:52  pwagner
 ! Uses function from dates_module
 !
