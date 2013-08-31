@@ -32,21 +32,21 @@
 ! $Id$
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: LOCID                    ! ID of file or group or subgroup
+    integer :: MEMSPACEID               ! ID of dataspace
+    integer :: Rank
+    integer :: SETID                    ! ID of dataset
     integer(hsize_t), dimension(size(shape(value))) :: SHP ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
-    integer :: MEMSPACEID               ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-    integer :: LOCID                    ! ID of file or group or subgroup
-    integer :: Rank
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
+    rank = size(shp)
+    call trace_begin ( 'LoadFromHDF5DS_'//sfx, cond=.false. )
     locID = MLSFile%fileID%f_id
     if ( MLSFile%fileID%grp_id > 0 ) locID = MLSFile%fileID%grp_id
     ! This next is inelegant: grp_id should be a linked list
     if ( MLSFile%fileID%sd_id > 0 ) locID = MLSFile%fileID%sd_id
-    rank = size(shp)
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_'//sfx )
     shp = shape ( value )
     if ( .not. MLSFile%stillOpen ) then
       call mls_openFile(MLSFile, status)
@@ -59,7 +59,7 @@
     if ( status /= 0 ) then
       if ( present(missingOK) ) then
         if ( missingOK ) then
-          call MLSMessageCalls( 'pop' )
+          call trace_end ( 'LoadFromHDF5DS_'//sfx, cond=.false. )
           return
         end if
       end if
@@ -84,10 +84,13 @@
         & (/ shp, ones(rank:6) /), status )
       call finishLoad ( name, status, spaceID, setID, MLSFile=MLSFile )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'LoadFromHDF5DS_'//sfx, cond=.false. )
 !   end subroutine LoadFromHDF5DS_*
 
 ! $Log$
+! Revision 2.5  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.4  2012/05/08 01:15:42  vsnyder
 ! Option allows numeric DS silently to be absent
 !
