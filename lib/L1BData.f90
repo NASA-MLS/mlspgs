@@ -29,14 +29,14 @@ module L1BData
     & MLS_OPENFILE, MLS_CLOSEFILE
   use MLSKINDS, only: R4, R8
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-    & MLSMSG_L1BREAD, MLSMSG_WARNING, &
-    & MLSMESSAGE, MLSMESSAGECALLS
+    & MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMESSAGE
   use MLSSTRINGS, only: INDEXES, STREQ
   use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, SWITCHDETAIL
   use MORETREE, only: GET_FIELD_ID
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: SWITCHES
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
 
   implicit NONE
@@ -207,8 +207,8 @@ module L1BData
 
 contains ! ============================ MODULE PROCEDURES =======================
 
-  !-------------------------------------------  allocateL1BData  -----
-  subroutine allocateL1BData ( l1bData, &
+  ! --------------------------------------------  AllocateL1BData  -----
+  subroutine AllocateL1BData ( l1bData, &
     & indims, trueRank, datatype, &
     & L1bDataSibling )
     ! Allocate arrays in l1bData type
@@ -293,9 +293,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     l1bData%NoAuxInds              = l1bDataSibling%NoAuxInds       
     l1bData%TrueRank               = l1bDataSibling%TrueRank        
     l1bData%NameInst               = l1bDataSibling%NameInst
-  end subroutine allocateL1BData
+  end subroutine AllocateL1BData
 
-  !-------------------------------------------  AssembleL1BQtyName  -----
+  ! -----------------------------------------  AssembleL1BQtyName  -----
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, &
     & InstrumentName, dont_compress_name) &
     & result(QtyName)
@@ -402,7 +402,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if                                         
   end function AssembleL1BQtyName
 
-  !-------------------------------------------------  ContractL1BData  -----
+  ! --------------------------------------------  ContractL1BData  -----
   subroutine ContractL1BData ( L1BDataIn, L1BDataOut, noMAFs, &
     & firstMAF, lastMAF, firstChannel, lastChannel, firstMIF, lastMIF )
     ! Contract full l1bdataIn to just those mafs
@@ -478,7 +478,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     l1bDataOut%lastMAFCtr = maxval(l1bDataOut%counterMAF)
   end subroutine ContractL1BData
 
-  !-------------------------------------------  cpL1BData  -----
+  ! --------------------------------------------------  cpL1BData  -----
   subroutine cpL1BData ( l1bData1, l1bData2, offsetMAF )
     ! cp all components from l1bdata1 to l1bdata2
     ! increment counterMAF by offsetMAF (if present)
@@ -502,7 +502,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( associated(l1bdata1%dpField) ) l1bdata2%dpField=l1bdata1%dpField
   end subroutine cpL1BData
 
-  !-------------------------------------------  DeallocateL1BData  -----
+  ! ------------------------------------------  DeallocateL1BData  -----
   subroutine DeallocateL1BData ( l1bData )
     ! This should be called when an l1bData is finished with
     type( L1BData_T ), intent(inout) :: L1bData
@@ -514,7 +514,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     call deallocate_test ( l1bData%dpField, 'l1bData%dpField', ModuleName )
   end subroutine DeallocateL1BData
 
-  !-------------------------------------------------  DiffL1BData  -----
+  ! ------------------------------------------------  DiffL1BData  -----
   subroutine DiffL1BData ( l1bData1, l1bData2, &
     & details, options, numDiffs, mafStart, mafEnd, l1bValues1, l1bValues2, &
     & Period )
@@ -810,7 +810,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     end subroutine doneHere
   end subroutine DiffL1BData
 
-  !-------------------------------------------------  DumpL1BData  -----
+  ! ------------------------------------------------  DumpL1BData  -----
   subroutine DumpL1BData ( l1bData, details, options )
     ! Disclose pertinent, perhaps damning facts about an l1brad quantity
     type( L1BData_T ), intent(inout) :: L1bData
@@ -875,7 +875,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
   end subroutine DumpL1BData
 
-  ! ------------------------------------------------  GetL1BFile  -----
+  ! -------------------------------------------------  GetL1BFile  -----
   function GetL1BFile ( filedatabase, fieldName, options, object ) &
     & result(item)
   ! Which MLSFile contains a given sd name or attribute name
@@ -916,14 +916,16 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical :: alreadyOpen
     integer :: i
     integer :: locID
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: myhdfVersion
     character(len=80) :: myObject
     character(len=8) :: myOptions
     character(len=1) :: openedCode ! What type of object did we open? s,g,f
     integer :: returnStatus
+
     ! Executable code
     ! DEEBUG = (fieldname=='DACsDeconvolved')
-    call MLSMessageCalls( 'push', constantName='GetL1BFile' )
+    call trace_begin ( me, 'GetL1BFile' , cond=.false. )
     nullify(item)
     myOptions = '-d' ! By default, search for sd names
     if (present(options)) myOptions = options
@@ -977,7 +979,7 @@ contains ! ============================ MODULE PROCEDURES ======================
             item => filedatabase(i)
             if ( .not. alreadyOpen ) &
               & call mls_closeFile(filedatabase(i), returnStatus)
-            call MLSMessageCalls( 'pop' )
+            call trace_end ( 'GetL1BFile' , cond=.false. )
             return
           end if
         else
@@ -1002,16 +1004,18 @@ contains ! ============================ MODULE PROCEDURES ======================
             & ) then
             item => filedatabase(i)
             if ( .not. alreadyOpen ) call closeEverything(filedatabase(i))
-            call MLSMessageCalls( 'pop' )
+            call trace_end ( 'GetL1BFile' , cond=.false. )
             return
           end if
         end if
         if ( .not. alreadyOpen ) call closeEverything(filedatabase(i))
       end if
     end do
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'GetL1BFile' , cond=.false. )
     ! if ( DEEBUG ) stop
+
   contains
+
     subroutine closeEverything(L1BFile)
       ! Args:
       type(MLSFile_T) :: L1BFile
@@ -1044,10 +1048,11 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     ! Local variables
     integer :: i
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: myhdfVersion
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='FindL1BData' )
+    call trace_begin ( me, 'FindL1BData' , cond=.false. )
     if ( present(hdfVersion) ) then
       myhdfVersion = hdfVersion
     else
@@ -1074,10 +1079,11 @@ contains ! ============================ MODULE PROCEDURES ======================
         end if
       end if
     end do
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'FindL1BData' , cond=.false. )
+
   end function FindL1BData
 
-  ! ------------------------------------------------  FindMaxMAF  -----
+  ! -------------------------------------------------  FindMaxMAF  -----
   integer function FindMaxMAF ( files, minMAF )
   ! Find maximum MAF among files (using counterMAF arrays)
 
@@ -1148,7 +1154,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( present(minMAF) ) minMAF = myMinMAF
   end function FindMaxMAF
 
-  !--------------------------------------------------  IsL1BGappy  -----
+  ! -------------------------------------------------  IsL1BGappy  -----
   logical function IsL1BGappy ( l1bData, ignoreGlobalAttrs )
     ! Look for gaps in l1bData, returning true if any found
   use PCFHdr, only: GLOBALATTRIBUTES
@@ -1269,7 +1275,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   end subroutine L1bradSetup
 
-  !-------------------------------------ReadL1BAttribute_intarr1l---------
+  ! ----------------------------------  ReadL1BAttribute_intarr1l  -----
   subroutine ReadL1BAttribute_intarr1 ( L1BFile, value, AttrName, Flag )
     
     use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, GETHDF5ATTRIBUTE
@@ -1325,7 +1331,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       & call mls_closeFile(L1BFile, status)
   end subroutine ReadL1BAttribute_intarr1
 
-  !-------------------------------------ReadL1BAttribute_dblarr1---------
+  ! -----------------------------------  ReadL1BAttribute_dblarr1  -----
   subroutine ReadL1BAttribute_dblarr1 ( L1BFile, value, AttrName, Flag )
     
     use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, GETHDF5ATTRIBUTE
@@ -1379,7 +1385,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       & call mls_closeFile(L1BFile, status)
   end subroutine ReadL1BAttribute_dblarr1
 
-  !-------------------------------------------------  PadL1BData  -----
+  ! -------------------------------------------------  PadL1BData  -----
   subroutine PadL1BData ( L1BDataIn, L1BDataOut, FirstMAF, LastMAF, NoMAFs )
     ! Pad l1bdataIn to fit NoMafs (assuming noMafs >= l1bdatain%NoMAFs)
     ! beginning with 1st MAF number of day
@@ -1433,7 +1439,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     call cpField(l1bdataIn, 1, l1bdataOut, 1, m=oldSize)
   end subroutine PadL1BData
 
-  !-------------------------------------------------  BadPadL1BData  -----
+  ! ----------------------------------------------  BadPadL1BData  -----
   subroutine BadPadL1BData ( L1BDataIn, L1BDataOut, FirstMAFCtr, NoMAFs, &
     & PrecisionIn, PrecisionOut, force )
     ! Pad l1bdataIn to fit NoMafs (assuming noMafs >= l1bdatain%NoMAFs)
@@ -1556,7 +1562,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     enddo
   end subroutine BadPadL1BData
 
-  !-------------------------------------------------  ReadL1BData_fileHandle  -----
+  ! -------------------------------------  ReadL1BData_fileHandle  -----
   ! In time we will do away with most file-handle based interfaces
   subroutine ReadL1BData_fileHandle ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad, L2AUX )
@@ -1599,7 +1605,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     return
   end subroutine ReadL1BData_fileHandle
 
-  !-------------------------------------------------  ReadL1BData_MLSFile  -----
+  ! ----------------------------------------  ReadL1BData_MLSFile  -----
   subroutine ReadL1BData_MLSFile ( L1BFile, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
     
@@ -1708,7 +1714,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( .not. alreadyOpen )  call mls_closeFile(L1BFile, returnStatus)
   end subroutine ReadL1BData_MLSFile
 
-  !--------------------------------------------  ReadL1BData_MF_hdf4  -----
+  ! ----------------------------------------  ReadL1BData_MF_hdf4  -----
   subroutine ReadL1BData_MF_hdf4 ( L1BFile, QuantityName, L1bData, &
     & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     
@@ -1984,7 +1990,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   end subroutine ReadL1BData_MF_hdf4
 
-  !--------------------------------------------  ReadL1BData_MF_hdf5  -----
+  ! ----------------------------------------  ReadL1BData_MF_hdf5  -----
   subroutine ReadL1BData_MF_hdf5 ( L1BFile, QuantityName, L1bData, NoMAFs, &
     & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     use HDF5, only: HSIZE_T
@@ -2486,7 +2492,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
   end subroutine Reshape_For_HDF4
 
-  ! ---------------------------------------------  cpField  -----
+  ! ----------------------------------------------------  cpField  -----
   subroutine cpField(l1bDataIn, nIn, l1bdataOut, nOut, m)
     ! copy data from l1bDataIn to l1bdataOut starting from index n(In, Out)
     ! where the starting point may be different for the two
@@ -2550,8 +2556,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     endif
   end subroutine cpField
 
-  ! ---------------------------------------------  zeroField  -----
-  subroutine zeroField(l1bData, n, value, m, chValue)
+  ! --------------------------------------------------  ZeroField  -----
+  subroutine ZeroField(l1bData, n, value, m, chValue)
     ! Set l1bData to zero starting from index n
     ! Optionally continue zeroing for m indices
     ! (thus default is m==1)
@@ -2581,25 +2587,25 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( associated(l1BData%dpField)  ) then
         l1BData%dpField(:,:,n:n+nn) = zero
     endif
-  end subroutine zeroField
+  end subroutine ZeroField
 
-  ! ---------------------------------------------  myminval  -----
-  function myminval(ints) result(mymin)
+  ! ---------------------------------------------------  MyMinval  -----
+  function MyMinval ( ints ) result ( mymin )
   ! find minimum value of integer array ints
   ! subject to constraint that none is < 0
   ! (so we avoid picking any undefined, i.e. -999)
   ! Args
-  integer, dimension(:), intent(in)  :: ints
-  integer                            :: mymin
-  ! Internal variables
-  integer :: i
-  ! Executable
-  mymin= maxval(ints)
-  if ( size(ints) < 2 ) return
-  do i=1, size(ints)
-    if ( ints(i) > 0 ) mymin=min(mymin, ints(i))
-  enddo
-  end function myminval
+    integer, dimension(:), intent(in)  :: ints
+    integer                            :: mymin
+    ! Internal variables
+    integer :: i
+    ! Executable
+    mymin= maxval(ints)
+    if ( size(ints) < 2 ) return
+    do i=1, size(ints)
+      if ( ints(i) > 0 ) mymin=min(mymin, ints(i))
+    enddo
+  end function MyMinval
 
   ! ---------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( lcf_where, full_message, use_toolkit, &
@@ -2673,6 +2679,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.97  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.96  2013/06/29 00:16:37  pwagner
 ! Added -SL1bread switch
 !
