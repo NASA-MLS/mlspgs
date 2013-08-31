@@ -64,7 +64,7 @@ contains ! ============= Public Procedures ==========================
     use STRING_TABLE, only: Create_String, DISPLAY_STRING, GET_STRING
     use SWITCHINGMIRRORMODEL_M, only: SWITCHINGMIRRORMODEL
     use TIME_M, only: TIME_NOW
-    use TOGGLES, only: EMIT, SWITCHES, TOGGLE
+    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: CHECKNAN, DUMP, VECTOR_T, VECTORVALUE_T
 
@@ -136,7 +136,7 @@ contains ! ============= Public Procedures ==========================
       who = nobody
     end if
 
-    call trace_begin ( me, 'ForwardModel ', string=who, cond=toggle(emit) )
+    call trace_begin ( me, 'ForwardModel', string=who, cond=toggle(emit) )
     ! Setup the timing
     call time_now (time_start)
 
@@ -447,6 +447,7 @@ contains ! ============= Public Procedures ==========================
       real(rt) :: H        ! magQty%template%phi(.) / Angle
       integer :: I, J
       type(vectorValue_t), pointer :: MagQty   ! Magnetic field quantity
+      integer :: Me = -1   ! String index for trace cacheing
       type(vectorValue_t), pointer :: PTan     ! Tangent pressure
       type(vectorValue_t), pointer :: RefGPH   ! Geopotential height
       type(vectorValue_t), pointer :: SCVelECR ! Spacecraft Velocity
@@ -459,6 +460,8 @@ contains ! ============= Public Procedures ==========================
       ! the spacing along the viewing direction.  From that, replace
       ! (lat,lon) in magQty, then compute the magnetic field.
 
+      call trace_begin ( me, 'Fill_Magnetic_Field', &
+        & cond=toggle(emit) .and. levels(emit) > 0 )
       magQty => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
               & quantityType=l_magneticField, config=config )
       pTan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -492,6 +495,8 @@ contains ! ============= Public Procedures ==========================
       refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_refGPH, config=config )
       call usingMagneticModel ( magQty, refGPH, config%where, MAF=MAF )
+      call trace_end ( 'Fill_Magnetic_Field', &
+        & cond=toggle(emit) .and. levels(emit) > 1 )
 
     end subroutine Fill_Magnetic_Field
 
@@ -517,6 +522,8 @@ contains ! ============= Public Procedures ==========================
     use MLSL2OPTIONS, only: MLSMESSAGE
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR
     use OUTPUT_M, only: OUTPUT
+    use TOGGLES, only: EMIT, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: DUMP, VECTOR_T, VECTORVALUE_T
 !     use VECTORSMODULE, only: M_LINALG
 
@@ -540,6 +547,7 @@ contains ! ============= Public Procedures ==========================
     integer :: JCols(s_qty%template%noInstances) ! of Jacobian, n in wvs-107
     integer :: JRow    ! of Jacobian, n in wvs-107
     type(matrix_t), pointer :: FWMJacobian   ! Either Jacobian or ExtraJacobian
+    integer :: Me = -1 ! String index for trace cacheing
     integer :: NVecChans ! Number of channels in radiance
     type(vectorValue_t), pointer :: O_Qty    ! Qty of output vector
     real(rv) :: P(size(ptan%values,1),f_qty%template%noSurfs) ! 10**(-2*(zeta(surf)-zeta(vSurf)))
@@ -549,6 +557,9 @@ contains ! ============= Public Procedures ==========================
     integer :: Surf    ! column of Jacobian%block(jRow,fCol)%values, 
                        ! g in wvs-107
     integer :: VSurf   ! Surface (zeta) index in a MIF, i in wvs-107
+
+    call trace_begin ( me, 'Transform_FWM_Qty', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
 
     sb = merge( 0, config%signals(1)%sideband, config%forceFoldedOutput )
 
@@ -733,6 +744,9 @@ contains ! ============= Public Procedures ==========================
       end if
     end do ! chan
 
+    call trace_end ( 'Transform_FWM_Qty', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
+
   end subroutine Transform_FWM_Qty
 
 !{\cleardoublepage
@@ -751,6 +765,8 @@ contains ! ============= Public Procedures ==========================
     use MLSNumerics, only: Hunt, InterpolateValues
     use Output_m, only: Output
     use Sort_m, only: Sortp
+    use Toggles, only: Emit, Levels, Toggle
+    use Trace_m, only: Trace_begin, Trace_end
     use VectorsModule, only: Dump, VectorValue_t
 
     integer, intent(in) :: MAF                ! MAjor Frame number
@@ -764,8 +780,12 @@ contains ! ============= Public Procedures ==========================
 
     integer :: F_LRP   ! Index in F_Qty%Surfs just below LRP
     integer :: I       ! Subscript and loop inductor
+    integer :: Me = -1 ! String index for trace cacheing
     integer :: P(s_qty%template%noSurfs)
     integer :: S_LRP   ! Index in sorted Ptan%Values just below LRP
+
+    call trace_begin ( me, 'Transform_MIF_Qty', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
 
     ! PTan might be out of order, so sort ptan%values
     call sortp ( ptan%values(:,maf), 1, ptan%template%noSurfs, p )
@@ -832,6 +852,10 @@ contains ! ============= Public Procedures ==========================
                     after=' zeta', advance='yes' )
       call dump ( f_qty, details=dumpTransform(1)-2, name='to forward model' )
     end if
+
+    call trace_end ( 'Transform_MIF_Qty', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
+
   end subroutine Transform_MIF_Qty
 
 !--------------------------- end bloc --------------------------------------
@@ -847,6 +871,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.69  2013/08/31 02:29:39  vsnyder
+! Add tracing in MIF transformation, magnetic field
+!
 ! Revision 2.68  2013/08/30 02:45:40  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
