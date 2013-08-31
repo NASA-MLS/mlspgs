@@ -21,10 +21,11 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   ! (EXCEPT FOR DAO DIMENSIONS)
   use MLSKINDS, only: RGR=>R4, R8
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, &
-    & MLSMSG_WARNING, MLSMESSAGECONFIG, MLSMESSAGE, MLSMESSAGECALLS
+    & MLSMSG_WARNING, MLSMESSAGECONFIG, MLSMESSAGE
   use MLSSTRINGLISTS, only: SNIPLIST
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
   use OUTPUT_M, only: OUTPUTOPTIONS, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, NEWLINE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
   implicit none
   private
@@ -181,10 +182,13 @@ contains
     type ( GriddedData_T ), intent(in) :: A
     type ( GriddedData_T ), intent(in) :: B
     type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
+
     ! Local variables
     logical, parameter :: DEEBUG = .false.
+    integer :: Me = -1                  ! String index for trace cacheing
+
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='ConcatenateGriddedData_2' )
+    call trace_begin ( me, 'ConcatenateGriddedData_2' , cond=.false. )
     ! First, check that the grids A and B are conformable.
     if ( a%verticalCoordinate /= b%verticalCoordinate .or. &
       & a%equivalentLatitude .neqv. b%equivalentLatitude .or. &
@@ -245,7 +249,7 @@ contains
 
     x%field ( :, :, :, :, :, 1:a%noDates ) = a%field
     x%field ( :, :, :, :, :, a%noDates+1:x%noDates ) = b%field
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'ConcatenateGriddedData_2' , cond=.false. )
   end subroutine ConcatenateGriddedData_2
 
   subroutine ConcatenateGriddedData_array ( Database, indices, X )
@@ -262,9 +266,10 @@ contains
     integer, dimension(size(indices)) :: i1
     integer, dimension(size(indices)) :: i2
     integer :: index1
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: noDates
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='ConcatenateGriddedData_array' )
+    call trace_begin ( me, 'ConcatenateGriddedData_array' , cond=.false. )
     call DestroyGriddedData ( X )
     if ( size(indices) < 1 .or. size(database) < 1 ) go to 9
     index1 = indices(1)
@@ -333,7 +338,8 @@ contains
       x%dateEnds(i1(i):i2(i)) = Database(index1)%dateEnds
       x%field ( :, :, :, :, :, i1(i):i2(i) ) = Database(index1)%field
     enddo
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( 'ConcatenateGriddedData_array' , cond=.false. )
+
   end subroutine ConcatenateGriddedData_array
 
   ! ---------------------------------------- ConvertFromEtaLevelGrids ------------------
@@ -346,17 +352,20 @@ contains
     type ( GriddedData_T ), intent(in)  :: PGrid  ! Pressures on eta surfaces
     type ( GriddedData_T ), intent(in)  :: NGrid  ! What surfaces to use
     type ( GriddedData_T ), intent(out) :: OutGrid ! T on pressure level
+
     ! Internal variables
     integer :: iDate, iSza, iLst, iLon, iLat, iHeight
-    real(rgr), dimension(:), pointer    :: pEta => null()
+    integer :: Me = -1                  ! String index for trace cacheing
+    real(rgr), dimension(TGrid%noHeights) :: pEta
     logical, parameter :: DEEBUG = .false.
+
     ! Executable code
-    nullify( pEta )
+    call trace_begin ( me, 'ConvertFromEtaLevelGrids' , cond=.false. )
+
     ! GriddedData must match
-    call MLSMessageCalls( 'push', constantName='ConvertFromEtaLevelGrids' )
     if ( .not. DoGriddeddataMatch( PGrid, TGrid ) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Gridded T,P data must match' )
+        & 'Gridded T,P data must match' )
     call DestroyGriddedData ( OutGrid )
     call SetupNewGriddedData ( OutGrid, source=TGrid, noHeights=NGrid%noHeights )
     ! Copy the information over
@@ -373,7 +382,6 @@ contains
         & 'Grid shapes do not conform' )
       go to 9
     endif
-    call allocate_test( pEta, TGrid%noHeights, 'pEta', moduleName )
     OutGrid%heights(1:OutGrid%noHeights) = NGrid%heights(1:OutGrid%noHeights)
     OutGrid%lats = TGrid%lats
     OutGrid%lons = TGrid%lons
@@ -427,8 +435,7 @@ contains
       call dump( OutGrid%field( :, 1, 1, 1, 1, 1 ), 'T out (2)' )
       stop
     endif
-    call deallocate_test( pEta,   'pEta', moduleName )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( 'ConvertFromEtaLevelGrids' , cond=.false. )
   end subroutine ConvertFromEtaLevelGrids
 
   ! ---------------------------------------- CopyGrid ------------------
@@ -1206,9 +1213,10 @@ contains
     ! 365 days, 6 hours, 9 minutes, 9.55 seconds
 
     ! Local variables
-    ! First the dimensions of the slice
+    integer :: Me = -1                  ! String index for trace cacheing
+    ! Dimensions of the slice
     integer :: NOHEIGHTS, NOLATS, NOLONS, NOLSTS, NOSZAS, NODATES
-    ! Now the number of corners
+    ! Number of corners
     integer :: NOCORNERS
     ! Missing value to use
     real(r8) :: MYMISSINGVALUE
@@ -1250,7 +1258,7 @@ contains
     real(r8), dimension(size(heights)) :: subSlice
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='SliceGriddedData' )
+    call trace_begin ( me, 'SliceGriddedData' , cond=.false. )
     myMissingValue = grid%missingValue
     if ( present ( missingValue ) ) myMissingValue = missingValue
     ! Get size of problem and check things out
@@ -1553,7 +1561,8 @@ contains
     if ( DEEBUG ) call dump ( slice(:,1:10,1,:,1,1), &
         & '    sliced field values (1st longitude) =' , &
         & FillValue=Grid%MissingValue )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'SliceGriddedData' , cond=.false. )
+
   end subroutine SliceGriddedData
 
   ! -------------------------------------------- WrapGriddedData ---
@@ -1564,18 +1573,21 @@ contains
     use Allocate_Deallocate, only: BYTE_SIZE, BYTES, MEMORY_UNITS, &
       & TEST_ALLOCATE, TEST_DEALLOCATE
     type ( GriddedData_T ), intent(inout) :: GRID
+
     ! Local variables
     real (rgr), dimension(:), pointer :: NEWLONS
     real (rgr), dimension(:), pointer :: NEWLSTS
     real (rgr), dimension(:,:,:,:,:,:), pointer :: NEWFIELD
     real :: S ! Size in bytes of a deallocated field
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: LOWERLON
     integer :: UPPERLON
     integer :: LOWERLST
     integer :: UPPERLST
     integer :: STATUS
+
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='WrapGriddedData' )
+    call trace_begin ( me, 'WrapGriddedData' , cond=.false. )
     ! Don't bother with quantities that have no lon or lst variation.
     if ( grid%noLons <= 1 .and. grid%noLsts <= 1 ) go to 9
 
@@ -1668,7 +1680,8 @@ contains
     grid%lons => newLons
     grid%lsts => newLsts
     grid%field => newField
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( 'WrapGriddedData' , cond=.false. )
+
   end subroutine WrapGriddedData
 
   ! -------- Private ---------------
@@ -1720,6 +1733,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.73  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.72  2013/08/30 03:56:01  vsnyder
 ! Revise use of trace_begin and trace_end
 !
