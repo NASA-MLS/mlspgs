@@ -539,7 +539,7 @@ contains ! ====     Public Procedures     ==============================
       end if
       decl = prior_decl(decl,label)
     end do
-    call trace_end ( 'Check_Dot', stat, cond=toggle(con) )
+    call trace_end ( 'Check_Dot', cond=toggle(con) )
 
   contains
 
@@ -599,7 +599,7 @@ contains ! ====     Public Procedures     ==============================
         end if
       end do ! k
       stat = 2 ! no such field
-    9 call trace_end ( 'Check_Deep', stat, cond=toggle(con) )
+    9 call trace_end ( 'Check_Deep', cond=toggle(con) )
     end function Check_Deep
 
   end function Check_Dot
@@ -689,7 +689,7 @@ contains ! ====     Public Procedures     ==============================
     call trace_begin ( me, 'DEF_FUNC', root, cond=toggle(con) )
     son = subtree(1,root)
     call declare ( sub_rosa(son), 0.0d0, function, decoration(son), root )
-    call trace_end ( 'DEF_FUNC', root, cond=toggle(con) )
+    call trace_end ( 'DEF_FUNC', cond=toggle(con) )
   end subroutine DEF_FUNC
 ! --------------------------------------------------  DEF_SECTION  -----
   subroutine DEF_SECTION ( ROOT )
@@ -721,7 +721,7 @@ contains ! ====     Public Procedures     ==============================
         call decorate ( gson, decl%tree )    ! the dt_def
       end if
     end do
-    call trace_end ( 'DEF_SECTION', root, cond=toggle(con) )
+    call trace_end ( 'DEF_SECTION', cond=toggle(con) )
   end subroutine DEF_SECTION
 ! -----------------------------------------------------  DEF_SPEC  -----
   recursive subroutine DEF_SPEC ( ROOT )
@@ -797,7 +797,7 @@ contains ! ====     Public Procedures     ==============================
         ! The rest of the sons are field names, for which new decorations
         ! Won't help -- in fact, the f_field_name's index is best.
       end select
-      call trace_end ( 'DEF_ONE_SPEC', root, cond=toggle(con) )
+      call trace_end ( 'DEF_ONE_SPEC', cond=toggle(con) )
     end subroutine DEF_ONE_SPEC
 
   end subroutine DEF_SPEC
@@ -1337,6 +1337,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.37  2013/08/30 03:53:10  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 1.36  2013/08/17 02:54:54  vsnyder
 ! Remove references to DEPTH from trace_m
 !
