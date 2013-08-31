@@ -16,8 +16,7 @@ module MergeGridsModule
   ! Secondary operations may be performed directly on the gridded data--
   ! e.g., calculating wmo tropopause pressures from eta-level temperatures
   use MLSL2OPTIONS, only: MLSMESSAGE, L2CFNODE
-  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING, &
-    & MLSMESSAGECALLS
+  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
 
   implicit none
   private
@@ -102,13 +101,13 @@ contains ! ===================================  Public procedures  =====
       select case ( get_spec_id(key) )
       case ( s_Boolean )
         call decorate ( key,  BooleanFromFormula ( name, key ) )
-      case ( s_select ) ! ============ Start of select .. case ==========
+      case ( s_select ) ! ============ Start of select .. case =========
         ! We'll start seeking a matching case
         call MLSSelect (key)
-      case ( s_case ) ! ============ seeking matching case ==========
+      case ( s_case ) ! ================ seeking matching case =========
         ! We'll continue seeking a match unless the case is TRUE
         call MLSCase (key)
-      case ( s_endSelect ) ! ============ End of select .. case ==========
+      case ( s_endSelect ) ! =========== End of select .. case =========
         ! We'done with seeking a match
         call MLSEndSelect (key)
       case ( s_concatenate )
@@ -158,7 +157,7 @@ contains ! ===================================  Public procedures  =====
         endif
       case ( s_reevaluate )
         call decorate ( key,  BooleanFromFormula ( 0, key ) )
-      case ( s_skip ) ! ============================== Skip ==========
+      case ( s_skip ) ! ================================ Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
         if ( Skip(key) ) exit
       case ( s_wmoTrop )
@@ -1088,6 +1087,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.49  2013/08/31 02:29:12  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.48  2013/08/30 02:45:44  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
