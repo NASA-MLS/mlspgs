@@ -113,11 +113,11 @@ contains ! ====     Public Procedures     ==============================
         call output ( '.' )
       end do
       if ( present(before) ) call output ( before )
-      if ( stack(depth)%text /= 0 ) call display_string ( stack(depth)%text )
-      if ( stack(depth)%string /= 0 ) &
+      if ( stack(depth)%text > 0 ) call display_string ( stack(depth)%text )
+      if ( stack(depth)%string > 0 ) &
         & call display_string ( stack(depth)%string, before=' ' )
       if ( stack(depth)%index >= 0 ) call output ( stack(depth)%index )
-      if ( myWhere .and. stack(depth)%tree /= 0 ) &
+      if ( myWhere .and. stack(depth)%tree > 0 ) &
         & call print_source ( source_ref(stack(depth)%tree), before=', ' )
       if ( say_when ) call show_when
       if ( mySize ) call dumpSize ( memory_units * stack(depth)%memory, &
@@ -158,16 +158,17 @@ contains ! ====     Public Procedures     ==============================
 
     character(len=*), intent(in), optional :: Before
     logical, intent(in), optional :: Where
-    logical, intent(in), optional :: silent
+    logical, intent(in), optional :: Silent
 
     double precision :: Delta
     logical :: HaveStack
+    logical :: MySilent
     real :: T
     character(len=10) :: Used
-    logical :: mySilent
+
     ! Executable
     mySilent = .false.
-    if ( present(silent) ) mySilent=.true.
+    if ( present(silent) ) mySilent = silent
     haveStack = allocated(stack)
     if ( haveStack ) haveStack = stack_ptr >= lbound(stack,1)
 
@@ -317,6 +318,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.8  2013/08/31 01:23:13  vsnyder
+! Don't try to display strings or trees with negative indices
+!
 ! Revision 2.7  2013/08/30 23:14:26  pwagner
 ! pop_stack may pop silently
 !
