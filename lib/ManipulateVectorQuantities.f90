@@ -13,12 +13,12 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   ! This modules contains routines needed for manipulating vectors.
 
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, &
-    & MLSMESSAGE, MLSMESSAGECALLS
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMESSAGE
   use MLSKINDS, only: R8, RV
   use MLSNUMERICS, only: HUNT
   use MOLECULES, only: L_RHI
   use OUTPUT_M, only: OUTPUTNAMEDVALUE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use VECTORSMODULE, only: VECTORVALUE_T, VECTOR_T, DUMP
   use INTRINSIC, only: L_CALSIDEBANDFRACTION, L_CHANNEL, L_COLUMNABUNDANCE, &
     & L_ISOTOPERATIO, L_PHITAN, L_NONE, &
@@ -196,12 +196,14 @@ contains
     integer, intent(in) :: WINDOWUNITS
     integer, intent(out) :: WINDOWSTART ! Output window start
     integer, intent(out) :: WINDOWFINISH ! Output window finish
+
     ! Internal variables
     integer :: CLOSESTINSTANCE
-    real(r8) :: PHIMIN, PHIMAX           ! Limiting values of phi for this MAF
+    integer :: Me = -1                  ! String index for trace cacheing
+    real(r8) :: PHIMIN, PHIMAX          ! Limiting values of phi for this MAF
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='FindInstanceWindow' )
+    call trace_begin ( me, 'FindInstanceWindow', cond=.false. )
     if ( phiWindow == 0.0_r8 ) then
       ! Just return closest instances
       closestInstance = FindOneClosestInstance ( quantity, phiTan, maf, &
@@ -228,7 +230,7 @@ contains
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Invalid units for window specification' )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine FindInstanceWindow
 
   ! -------------------------------------- FillWithCombinedChannels ----------
@@ -646,6 +648,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.43  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.42  2013/03/01 01:06:06  pwagner
 ! Get R8 from MLSKinds
 !
