@@ -32,13 +32,13 @@ module MLSHDF5
   use MLSDATAINFO, only: MLSDATAINFO_T, QUERY_MLSDATA
   use MLSFILES, only: HDFVERSION_5, INITIALIZEMLSFILE, MLS_OPENFILE
   use MLSKINDS, only: R8
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-    & MLSMESSAGE, MLSMESSAGECALLS
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGE
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, ISINLIST, &
     & GETSTRINGELEMENT, NUMSTRINGELEMENTS, STRINGELEMENT
   use MLSSTRINGS, only: INDEXES, LOWERCASE, REPLACE
   use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
   ! LETS BREAK DOWN OUR use, PARAMETERS FIRST
   use HDF5, only: H5F_ACC_RDonly_F, H5F_ACC_RDWR_F, &
     & H5P_DATASET_CREATE_F, &
@@ -359,12 +359,13 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: skip_if_already_there ! Or if not in fromItemID
 
     ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_skip
     logical :: is_present
     character (len=4096) :: value1
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='CpHDF5Attribute_string' )
+    call trace_begin ( me, 'CpHDF5Attribute_string', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip = skip_if_already_there
     is_present = IsHDF5AttributePresent_in_DSID( fromitemID, name )
@@ -376,7 +377,7 @@ contains ! ======================= Public Procedures =========================
     call GetHDF5Attribute ( fromitemID, name, value1 )
     call MakeHDF5Attribute ( toitemID, name, trim(value1), &
       & skip_if_already_there )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine CpHDF5Attribute_string
 
   ! -----------------------------------  CpHDF5GlAttribute_string  -----
@@ -390,12 +391,13 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: fromfileID
     integer :: fromgrpID
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag
     integer :: tofileID
     integer :: togrpID
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='CpHDFGlAttribute_string' )
+    call trace_begin ( me, 'CpHDFGlAttribute_string', cond=.false. )
     call h5fopen_f ( trim(fromFilename), H5F_ACC_RDONLY_F, fromFileID, status )
     call h5fopen_f ( trim(toFilename), H5F_ACC_RDWR_F, toFileID, status )
     call h5gopen_f ( fromFileID, '/', fromgrpid, status )
@@ -406,7 +408,7 @@ contains ! ======================= Public Procedures =========================
     call h5gclose_f ( togrpid, status )
     call h5fclose_f ( fromFileID, status )
     call h5fclose_f ( toFileID, status )
-    call MLSMessageCalls( 'pop' )
+    call trace_begin ( 'CpHDFGlAttribute_string', cond=.false. )
   end subroutine CpHDF5GlAttribute_string
 
   ! -------------------------------  DumpHDF5Attributes  -----
@@ -431,6 +433,7 @@ contains ! ======================= Public Procedures =========================
     integer :: itemID
     integer, dimension(1024) :: iValue
     integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
+    integer :: Me = -1                  ! String index for trace cacheing
     character(len=MAXNDSNAMES*32) :: myNames
     character(len=128) :: name
     integer :: numAttrs
@@ -441,7 +444,7 @@ contains ! ======================= Public Procedures =========================
     integer :: type_id
     integer(kind=Size_t) :: type_size
     ! Executable
-    call MLSMessageCalls( 'push', constantName='DumpHDF5Attributes' )
+    call trace_begin ( me, 'DumpHDF5Attributes', cond=.false. )
     myNames = '*' ! Wildcard means 'all'
     if ( present(names) ) myNames = names
     if ( present(groupName) ) then
@@ -544,7 +547,7 @@ contains ! ======================= Public Procedures =========================
         & 'Unable to open dataset' // trim(DSName) // &
         & ' while dumping its attributes' )
     endif
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'DumpHDF5Attributes', cond=.false. )
   end subroutine DumpHDF5Attributes
   
   ! -------------------------------  DumpHDF5DS  -----
@@ -579,6 +582,7 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:,:,:), pointer :: iValue => null()
     integer :: k
     integer :: m
+    integer :: Me = -1                  ! String index for trace cacheing
     character(len=MAXNDSNAMES*32) :: myNames
     character(len=128) :: name
     character(len=128) :: namePrinted
@@ -593,9 +597,10 @@ contains ! ======================= Public Procedures =========================
     integer :: type_id
     integer(kind=Size_t) :: type_size
     ! logical, parameter :: DEEBUG = .true.
+
     ! Executable
+    call trace_begin ( me, 'DumpHDF5DS', cond=.false. )
     if ( present(options) .and. DEEBUG ) call outputNamedValue( 'options', options )
-    call MLSMessageCalls( 'push', constantName='DumpHDF5DS' )
     skipCharValues = .false.
     if ( present(options) ) &
       & skipCharValues = any( indexes(options, (/dopt_rms, dopt_stats/)) > 0 )
@@ -812,7 +817,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close group' // trim(groupName) // &
       & ' while dumping its datasets' )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'DumpHDF5DS', cond=.false. )
   end subroutine DumpHDF5DS
 
   ! -------------------------------  GetAllHDF5AttrNames  -----
@@ -829,6 +834,7 @@ contains ! ======================= Public Procedures =========================
     integer :: attr_id
     integer :: i
     integer :: itemID
+    integer :: Me = -1                  ! String index for trace cacheing
     character(len=128) :: name
     integer(kind=Size_t) :: namelength
     integer :: num
@@ -836,7 +842,7 @@ contains ! ======================= Public Procedures =========================
     character(len=len(names)) :: tempnames
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetAllHDF5AttrNames' )
+    call trace_begin ( me, 'GetAllHDF5AttrNames', cond=.false. )
     namelength = len(name)
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -888,7 +894,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for all attr names' )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( 'GetAllHDF5AttrNames', cond=.false. )
   end subroutine GetAllHDF5AttrNames
 
   ! -----------------------------------  GetAllHDF5DSNames_fileID  -----
@@ -901,12 +907,13 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: i                        ! loop counter
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: omitSlash
     integer :: STATUS                   ! Flag
     type(MLSDataInfo_T) :: dataset_info
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetAllHDF5DSNames_fileID' )
+    call trace_begin ( me, 'GetAllHDF5DSNames_fileID', cond=.false. )
     omitSlash = .true.
     if ( present(andSlash) ) omitSlash = .not. andSlash
     ! Initializing values returned if there was trouble
@@ -943,7 +950,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting DSNames' )
     call deallocate_test ( dataset_info%name, 'dataset_info%name', moduleName )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetAllHDF5DSNames_fileID
 
   ! ---------------------------------  GetAllHDF5DSNames_filename  -----
@@ -955,10 +962,11 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: fileID
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetAllHDF5DSNames_filename' )
+    call trace_begin ( me, 'GetAllHDF5DSNames_filename', cond=.false. )
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting DSNames ' // trim(filename) )
@@ -977,7 +985,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting DSNames ' // trim(filename) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetAllHDF5DSNames_filename
 
   ! ---------------------------------  GetAllHDF5DSNames_MLSFile  -----
@@ -988,9 +996,10 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     character, parameter :: gname = '/'
+    integer :: Me = -1                  ! String index for trace cacheing
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetAllHDF5DSNames_MLSFile' )
+    call trace_begin ( me, 'GetAllHDF5DSNames_MLSFile', cond=.false. )
     ! Do we have any FileID fields?
     If ( .not. MLSFile%stillOpen .or. all( &
       & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
@@ -1004,7 +1013,7 @@ contains ! ======================= Public Procedures =========================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'all fields of MLSFile%Fileid are 0', MLSFile=MLSFile )
     endif
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetAllHDF5DSNames_MLSFile
 
   ! --------------------------------------  MakeHDF5Attribute_dbl  -----
@@ -1018,10 +1027,11 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: DSID                     ! ID for dataspace
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_dbl' )
+    call trace_begin ( me, 'MakeHDF5Attribute_dbl', cond=.false. )
     ! (Maybe) create the attribute
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_DOUBLE, dsID, attrID &
       &, skip_if_already_there ) ) then
@@ -1029,7 +1039,7 @@ contains ! ======================= Public Procedures =========================
       call h5aWrite_f ( attrID, H5T_NATIVE_DOUBLE, value, ones, status )
       call finishMakeAttrib ( name, status, attrID, dsID )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine MakeHDF5Attribute_dbl
 
   ! -------------------------------------  MakeHDF5Attribute_sngl  -----
@@ -1043,10 +1053,11 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: DSID                     ! ID for dataspace
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_sngl' )
+    call trace_begin ( me, 'MakeHDF5Attribute_sngl', cond=.false. )
     ! (Maybe) create the attribute
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_REAL, dsID, attrID, &
       & skip_if_already_there ) ) then
@@ -1054,7 +1065,7 @@ contains ! ======================= Public Procedures =========================
       call h5aWrite_f ( attrID, H5T_NATIVE_REAL, value, ones, status )
       call finishMakeAttrib ( name, status, attrID, dsID )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine MakeHDF5Attribute_sngl
 
   ! --------------------------------------  MakeHDF5Attribute_int  -----
@@ -1068,10 +1079,11 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: DSID                     ! ID for dataspace
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_int' )
+    call trace_begin ( me, 'MakeHDF5Attribute_int', cond=.false. )
     ! (Maybe) create the attribute
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_INTEGER, dsID, attrID, &
       & skip_if_already_there ) ) then
@@ -1079,7 +1091,7 @@ contains ! ======================= Public Procedures =========================
       call h5aWrite_f ( attrID, H5T_NATIVE_INTEGER, value, ones, status )
       call finishMakeAttrib ( name, status, attrID, dsID )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine MakeHDF5Attribute_int
 
   ! ----------------------------------  MakeHDF5Attribute_logical  -----
@@ -1092,13 +1104,14 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: IVALUE                   ! Value as integer
+    integer :: Me = -1                  ! String index for trace cacheing
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_logical' )
+    call trace_begin ( me, 'MakeHDF5Attribute_logical', cond=.false. )
     iValue = 0
     if ( value ) iValue = 1
     call MakeHDF5Attribute ( itemID, name, iValue, skip_if_already_there )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine MakeHDF5Attribute_logical
 
   ! ------------------------------  MakeHDF5Attribute_logicalarr1  -----
@@ -1111,16 +1124,17 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: IValue(size(value))      ! 1 for true, 0 for false
+    integer :: Me = -1                  ! String index for trace cacheing
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_logicalarr1' )
+    call trace_begin ( me, 'MakeHDF5Attribute_logicalarr1', cond=.false. )
     where ( value )
       iValue = 1
     elsewhere
       iValue = 0
     end where
     call MakeHDF5Attribute ( itemID, name, iValue, skip_if_already_there )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine MakeHDF5Attribute_logicalarr1
 
   ! -----------------------------------  MakeHDF5Attribute_string  -----
@@ -1137,13 +1151,14 @@ contains ! ======================= Public Procedures =========================
     integer :: DSID                     ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! Type for string
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_dont_trim
     logical :: my_skip
     logical :: is_present
     logical, parameter :: NEVERDELETE = .true.
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_string' )
+    call trace_begin ( me, 'MakeHDF5Attribute_string', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     my_dont_trim = .false.
@@ -1208,7 +1223,7 @@ contains ! ======================= Public Procedures =========================
     call h5tClose_f ( stringtype, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close stringtype ' // trim(name) )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( 'MakeHDF5Attribute_string', cond=.false. )
   end subroutine MakeHDF5Attribute_string
 
   ! -----------------------------------  MakeHDF5Attribute_textFile  -----
@@ -1229,6 +1244,7 @@ contains ! ======================= Public Procedures =========================
     integer :: firstChar, lastChar
     integer :: iblock, nblocks
     logical :: is_present
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: myMaxLineLen
     character(len=len(name)+3) :: newname
     integer :: STATUS                   ! Flag from HDF5
@@ -1237,7 +1253,7 @@ contains ! ======================= Public Procedures =========================
     character(LEN=MAXTEXTSIZE)              :: value
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_textFile' )
+    call trace_begin ( me, 'MakeHDF5Attribute_textFile', cond=.false. )
     myMaxLineLen = DFLTMAXLINELENGTH
     if ( present(maxLineLen) ) myMaxLineLen = maxLineLen
     ! Try to read the textfile
@@ -1322,7 +1338,7 @@ contains ! ======================= Public Procedures =========================
     call h5tClose_f ( stringtype, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close stringtype ' // trim(name) )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( 'MakeHDF5Attribute_textFile', cond=.false. )
   end subroutine MakeHDF5Attribute_textFile
 
   ! -------------------------------  MakeHDF5Attribute_stringarr1  -----
@@ -1336,13 +1352,14 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: DSID                     ! ID for dataspace
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! Type for string
     logical :: my_skip
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_stringarr1' )
+    call trace_begin ( me, 'MakeHDF5Attribute_stringarr1', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip = skip_if_already_there
     if ( my_skip ) then
@@ -1369,7 +1386,7 @@ contains ! ======================= Public Procedures =========================
     call h5aWrite_f ( attrID, stringtype, value, &
       & ones, status )
     call finishMakeAttrib ( name, status, attrID, dsID, stringType )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine MakeHDF5Attribute_stringarr1
 
   ! ---------------------------------  MakeHDF5Attribute_snglarr1  -----
@@ -1382,12 +1399,13 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: spaceID                  ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_snglarr1' )
+    call trace_begin ( me, 'MakeHDF5Attribute_snglarr1', cond=.false. )
     ! (Maybe) create the attribute
     shp = shape(value)
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_REAL, spaceID, &
@@ -1397,7 +1415,7 @@ contains ! ======================= Public Procedures =========================
         & int ( (/ shp, ones(1:6) /), hsize_t ), status )
       call finishMakeAttrib ( name, status, attrID, spaceID )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine MakeHDF5Attribute_snglarr1
 
   ! ----------------------------------  MakeHDF5Attribute_dblarr1  -----
@@ -1410,12 +1428,13 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: spaceID                  ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_dblarr1' )
+    call trace_begin ( me, 'MakeHDF5Attribute_dblarr1', cond=.false. )
     ! (Maybe) create the attribute
     shp = shape(value)
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_DOUBLE, spaceID, &
@@ -1425,7 +1444,7 @@ contains ! ======================= Public Procedures =========================
         & int ( (/ shp, ones(1:6) /), hsize_t ), status )
       call finishMakeAttrib ( name, status, attrID, spaceID )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine MakeHDF5Attribute_dblarr1
 
   ! ----------------------------------  MakeHDF5Attribute_intarr1  -----
@@ -1438,12 +1457,13 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: spaceID                  ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5Attribute_intarr1' )
+    call trace_begin ( me, 'MakeHDF5Attribute_intarr1', cond=.false. )
     ! (Maybe) create the attribute
     shp = shape(value)
     if ( startMakeAttrib ( itemId, name, H5T_NATIVE_INTEGER, spaceID, &
@@ -1453,7 +1473,7 @@ contains ! ======================= Public Procedures =========================
         & int ( (/ shp, ones(1:6) /), hsize_t ), status )
       call finishMakeAttrib ( name, status, attrID, spaceID )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine MakeHDF5Attribute_intarr1
 
   ! -----------------------------------  MakeHDF5AttributeDSN_int  -----
@@ -1467,11 +1487,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: dataID                   ! ID for dataspace
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag from HDF5
     logical :: my_skip
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_int' )
+    call trace_begin ( me, 'MakeHDF5AttributeDSN_int', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1483,7 +1504,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine MakeHDF5AttributeDSN_int
 
   ! -------------------------------  MakeHDF5AttributeDSN_logical  -----
@@ -1500,11 +1521,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: dataID                   ! ID for data
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag from HDF5
     logical :: my_skip
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_logical' )
+    call trace_begin ( me, 'MakeHDF5AttributeDSN_logical', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1516,7 +1538,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine MakeHDF5AttributeDSN_logical
 
   ! --------------------------------  MakeHDF5AttributeDSN_string  -----
@@ -1530,11 +1552,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: dataID                   ! ID for data
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_skip
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_string' )
+    call trace_begin ( me, 'MakeHDF5AttributeDSN_string', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1552,7 +1575,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine MakeHDF5AttributeDSN_string
 
   ! -------------------------------  MakeHDF5AttributeDSN_st_arr1  -----
@@ -1566,11 +1589,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: dataID                   ! ID for data
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_skip
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_st_arr1' )
+    call trace_begin ( me, 'MakeHDF5AttributeDSN_st_arr1', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1582,7 +1606,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
 
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine MakeHDF5AttributeDSN_st_arr1
 
   ! ------------------------------  MakeHDF5AttributeDSN_single  -----
@@ -1596,11 +1620,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: dataID                   ! ID for data
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_skip
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_single' )
+    call trace_begin ( me, 'MakeHDF5AttributeDSN_single', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1611,7 +1636,7 @@ contains ! ======================= Public Procedures =========================
     call h5dclose_f ( dataID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
- 9  call MLSMessageCalls( 'pop' )
+ 9  call trace_end ( cond=.false. )
 
   end subroutine MakeHDF5AttributeDSN_single
 
@@ -1626,11 +1651,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: dataID                   ! ID for data
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_skip
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_snglarr1' )
+    call trace_begin ( me, 'MakeHDF5AttributeDSN_snglarr1', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1641,11 +1667,11 @@ contains ! ======================= Public Procedures =========================
     call h5dclose_f ( dataID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
- 9  call MLSMessageCalls( 'pop' )
+ 9  call trace_end ( cond=.false. )
 
   end subroutine MakeHDF5AttributeDSN_snglarr1
 
-  ! -------------------------------  MakeHDF5AttributeDSN_double  -----
+  ! --------------------------------  MakeHDF5AttributeDSN_double  -----
   subroutine MakeHDF5AttributeDSN_double ( fileID, dataName, attrName, value, &
    & skip_if_already_there )
     integer, intent(in) :: FILEID       ! FIle where to find them
@@ -1656,11 +1682,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: dataID                   ! ID for data
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_skip
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_double' )
+    call trace_begin ( me, 'MakeHDF5AttributeDSN_double', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1671,7 +1698,7 @@ contains ! ======================= Public Procedures =========================
     call h5dclose_f ( dataID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
 
   end subroutine MakeHDF5AttributeDSN_double
 
@@ -1686,11 +1713,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: dataID                   ! ID for data
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_skip
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='MakeHDF5AttributeDSN_dblarr1' )
+    call trace_begin ( me, 'MakeHDF5AttributeDSN_dblarr1', cond=.false. )
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
@@ -1701,7 +1729,7 @@ contains ! ======================= Public Procedures =========================
     call h5dclose_f ( dataID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data ' // trim(dataName) )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
 
   end subroutine MakeHDF5AttributeDSN_dblarr1
 
@@ -1713,10 +1741,11 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_int' )
+    call trace_begin ( me, 'GetHDF5Attribute_int', cond=.false. )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
@@ -1740,7 +1769,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name), &
       & MLSFile=MLSFile )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine GetHDF5Attribute_int
 
   ! -----------------------------------  GetHDF5Attribute_intarr1  -----
@@ -1751,11 +1780,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_intarr1' )
+    call trace_begin ( me, 'GetHDF5Attribute_intarr1', cond=.false. )
     shp = shape(value)
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
@@ -1781,7 +1811,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name), &
       & MLSFile=MLSFile )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine GetHDF5Attribute_intarr1
 
   ! ------------------------------------  GetHDF5Attribute_string  -----
@@ -1793,12 +1823,13 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     ! logical, parameter :: DEEBUG = .true.
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag from HDF5
-    integer :: STRINGTYPE               ! String type
     integer(kind=Size_t) :: STRINGSIZE               ! String size
+    integer :: STRINGTYPE               ! String type
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_string' )
+    call trace_begin ( me, 'GetHDF5Attribute_string', cond=.false. )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
@@ -1844,7 +1875,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close string type for attribute ' // trim(name), &
       & MLSFile=MLSFile )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine GetHDF5Attribute_string
 
   ! --------------------------------  GetHDF5Attribute_stringarr1  -----
@@ -1855,13 +1886,14 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
-    integer :: STATUS                   ! Flag from HDF5
-    integer :: STRINGTYPE               ! String type
-    integer(kind=Size_t) :: STRINGSIZE               ! String size
+    integer :: Me = -1                  ! String index for trace cacheing
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
+    integer :: STATUS                   ! Flag from HDF5
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
+    integer :: STRINGTYPE               ! String type
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_stringarr1' )
+    call trace_begin ( me, 'GetHDF5Attribute_stringarr1', cond=.false. )
     shp = shape(value)
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
@@ -1902,7 +1934,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close string type for attribute ' // trim(name), &
       & MLSFile=MLSFile )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine GetHDF5Attribute_stringarr1
 
   ! -----------------------------------  GetHDF5Attribute_logical  -----
@@ -1913,9 +1945,10 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: IVALUE                     ! Value as integer
+    integer :: Me = -1                  ! String index for trace cacheing
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_logical' )
+    call trace_begin ( me, 'GetHDF5Attribute_logical', cond=.false. )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
       if ( DEEBUG ) call outputNamedValue( 'MLSFile%fileID%sd_ID', MLSFile%fileID%sd_ID )
@@ -1930,7 +1963,7 @@ contains ! ======================= Public Procedures =========================
 
     if ( DEEBUG ) call outputNamedValue( 'ivalue', ivalue )
     value = ( iValue == 1 )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine GetHDF5Attribute_logical
 
   ! -------------------------------  GetHDF5Attribute_logicalarr1  -----
@@ -1941,9 +1974,10 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: IVALUE(size(VALUE,1))      ! Value as integer
+    integer :: Me = -1                  ! String index for trace cacheing
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_logicalarr1' )
+    call trace_begin ( me, 'GetHDF5Attribute_logicalarr1', cond=.false. )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call GetHDF5Attribute ( MLSFile%fileID%sd_ID, name, iValue )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
@@ -1954,7 +1988,7 @@ contains ! ======================= Public Procedures =========================
       go to 9
     endif
     value = ( iValue == 1 )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine GetHDF5Attribute_logicalarr1
 
   ! ----------------------------------  GetHDF5Attribute_snglarr1  -----
@@ -1965,11 +1999,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_snglarr1' )
+    call trace_begin ( me, 'GetHDF5Attribute_snglarr1', cond=.false. )
     shp = shape(value)
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
@@ -1995,7 +2030,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close 1d attribute array  ' // trim(name), &
       & MLSFile=MLSFile )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine GetHDF5Attribute_snglarr1
 
   ! --------------------------------------  GetHDF5Attribute_sngl  -----
@@ -2006,10 +2041,11 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_sngl' )
+    call trace_begin ( me, 'GetHDF5Attribute_sngl', cond=.false. )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
@@ -2033,7 +2069,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close sngl attribute  ' // trim(name) )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine GetHDF5Attribute_sngl
 
   ! ---------------------------------------  GetHDF5Attribute_dbl  -----
@@ -2044,10 +2080,11 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_dbl' )
+    call trace_begin ( me, 'GetHDF5Attribute_dbl', cond=.false. )
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
     elseif ( MLSFile%fileID%grp_ID > 0 ) then
@@ -2071,7 +2108,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dble attribute  ' // trim(name), &
       & MLSFile=MLSFile )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine GetHDF5Attribute_dbl
 
   ! -----------------------------------  GetHDF5Attribute_dblarr1  -----
@@ -2082,11 +2119,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attribute_dblarr1' )
+    call trace_begin ( me, 'GetHDF5Attribute_dblarr1', cond=.false. )
     shp = shape(value)
     if ( MLSFile%fileID%sd_ID > 0 ) then
       call h5aOpen_name_f ( MLSFile%fileID%sd_ID, name, attrID, status )
@@ -2112,7 +2150,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dblarr1 attribute  ' // trim(name), &
       & MLSFile=MLSFile )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine GetHDF5Attribute_dblarr1
 
   ! ---------------------------------------  GetHDF5Attr_ID_int  -----
@@ -2122,17 +2160,18 @@ contains ! ======================= Public Procedures =========================
     integer, intent(out) :: VALUE         ! Result
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_int' )
+    call trace_begin ( me, 'GetHDF5Attr_ID_int', cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5Attr_ID_int
 
   ! -----------------------------------  GetHDF5Attr_ID_intarr1  -----
@@ -2142,17 +2181,18 @@ contains ! ======================= Public Procedures =========================
     integer, intent(out) :: VALUE(:)      ! Result
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_intarr1' )
+    call trace_begin ( me, 'GetHDF5Attr_ID_intarr1', cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5Attr_ID_intarr1
 
   ! ------------------------------------  GetHDF5Attr_ID_string  -----
@@ -2162,17 +2202,18 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(out) :: VALUE ! Result
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_string' )
+    call trace_begin ( me, 'GetHDF5Attr_ID_string', cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5Attr_ID_string
 
   ! --------------------------------  GetHDF5Attr_ID_stringarr1  -----
@@ -2182,17 +2223,18 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(out) :: VALUE(:) ! Result
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_stringarr1' )
+    call trace_begin ( me, 'GetHDF5Attr_ID_stringarr1', cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5Attr_ID_stringarr1
 
   ! -----------------------------------  GetHDF5Attr_ID_logical  -----
@@ -2202,17 +2244,18 @@ contains ! ======================= Public Procedures =========================
     logical, intent(out) :: VALUE         ! Value of attribute
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_logical' )
+    call trace_begin ( me, 'GetHDF5Attr_ID_logical', cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5Attr_ID_logical
 
   ! -------------------------------  GetHDF5Attr_ID_logicalarr1  -----
@@ -2222,17 +2265,18 @@ contains ! ======================= Public Procedures =========================
     logical, intent(out) :: VALUE(:)      ! Value of attribute
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_logicalarr1' )
+    call trace_begin ( me, 'GetHDF5Attr_ID_logicalarr1', cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5Attr_ID_logicalarr1
 
   ! ----------------------------------  GetHDF5Attr_ID_snglarr1  -----
@@ -2242,17 +2286,18 @@ contains ! ======================= Public Procedures =========================
     real, intent(out) :: VALUE(:)       ! The attribute array result
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_snglarr1' )
+    call trace_begin ( me, 'GetHDF5Attr_ID_snglarr1', cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5Attr_ID_snglarr1
 
   ! --------------------------------------  GetHDF5Attr_ID_sngl  -----
@@ -2262,17 +2307,18 @@ contains ! ======================= Public Procedures =========================
     real, intent(out) :: VALUE          ! The attribute result
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_sngl' )
+    call trace_begin ( me, 'GetHDF5Attr_ID_sngl', cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5Attr_ID_sngl
 
   ! ---------------------------------------  GetHDF5Attr_ID_dbl  -----
@@ -2282,37 +2328,39 @@ contains ! ======================= Public Procedures =========================
     double precision, intent(out) :: VALUE ! The attribute result
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_dbl' )
+    call trace_begin ( me, 'GetHDF5Attr_ID_dbl', cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5Attr_ID_dbl
 
-  ! -----------------------------------  GetHDF5Attr_ID_dblarr1  -----
+  ! -------------------------------------  GetHDF5Attr_ID_dblarr1  -----
   subroutine GetHDF5Attr_ID_dblarr1 ( itemID, name, value )
     integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
     character (len=*), intent(in) :: NAME     ! Name of attribute
     double precision, intent(out) :: VALUE(:) ! The attribute result
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5Attr_ID_dblarr1' )
+    call trace_begin ( me, 'GetHDF5Attr_ID_dblarr1', cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = itemID
     MLSFile%stillOpen = .true.
     call GetHDF5Attribute ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5Attr_ID_dblarr1
 
   ! --------------------------------  GetHDF5AttributePtr_intarr1  -----
@@ -2327,11 +2375,12 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: LB                       ! 1, else LowBound
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     integer(kind=hSize_t), dimension(1) :: MaxShp, SHP  ! Shape
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5AttributePtr_intarr1' )
+    call trace_begin ( me, 'GetHDF5AttributePtr_intarr1', cond=.false. )
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
@@ -2349,7 +2398,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5AttributePtr_intarr1
 
   ! -----------------------------  GetHDF5AttributePtr_stringarr1  -----
@@ -2364,13 +2413,14 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: LB                       ! 1, else LowBound
-    integer :: STATUS                   ! Flag from HDF5
-    integer :: STRINGTYPE               ! String type
-    integer(kind=Size_t) :: STRINGSIZE               ! String size
+    integer :: Me = -1                  ! String index for trace cacheing
     integer(kind=hSize_t), dimension(1) :: MaxShp, SHP ! Shape
+    integer :: STATUS                   ! Flag from HDF5
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
+    integer :: STRINGTYPE               ! String type
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5AttributePtr_stringarr1' )
+    call trace_begin ( me, 'GetHDF5AttributePtr_stringarr1', cond=.false. )
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
@@ -2399,7 +2449,7 @@ contains ! ======================= Public Procedures =========================
     call h5tClose_f ( stringType, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close string type for attribute ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5AttributePtr_stringarr1
 
   ! ----------------------------  GetHDF5AttributePtr_logicalarr1  -----
@@ -2412,14 +2462,15 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer, pointer :: IVALUE(:)         ! Value as integer
+    integer :: Me = -1                    ! String index for trace cacheing
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5AttributePtr_logicalarr1' )
+    call trace_begin ( me, 'GetHDF5AttributePtr_logicalarr1', cond=.false. )
     nullify ( ivalue )
     call GetHDF5AttributePtr ( itemID, name, iValue, lowBound )
     value = ( iValue == 1 )
     call deallocate_test ( ivalue, 'IValue', moduleName )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5AttributePtr_logicalarr1
 
   ! -------------------------------  GetHDF5AttributePtr_snglarr1  -----
@@ -2434,11 +2485,12 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: LB                       ! 1, else LowBound
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     integer(kind=hSize_t), dimension(1) :: MaxShp, SHP  ! Shape
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5AttributePtr_snglarr1' )
+    call trace_begin ( me, 'GetHDF5AttributePtr_snglarr1', cond=.false. )
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
@@ -2456,7 +2508,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close 1d attribute array  ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5AttributePtr_snglarr1
 
   ! ---------------------------------  GetHDF5AttributePtr_dblarr1  -----
@@ -2471,11 +2523,12 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: LB                       ! 1, else LowBound
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     integer(kind=hSize_t), dimension(1) :: MaxShp, SHP  ! Shape
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5AttributePtr_dblarr1' )
+    call trace_begin ( me, 'GetHDF5AttributePtr_dblarr1', cond=.false. )
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
@@ -2493,7 +2546,7 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dblarr1 attribute  ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5AttributePtr_dblarr1
 
   ! ---------------------------------  MatchHDF5Attributes  -----
@@ -2748,17 +2801,18 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     ! logical, parameter :: DEEBUG = .true.
-    integer :: dspace_id                ! spaceID for Attr
-    integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
-    integer :: my_rank, rank
     integer :: AttrID                   ! ID for Attr
     integer :: classID
+    integer :: dspace_id                ! spaceID for Attr
+    integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: my_rank, rank
     integer :: STATUS                   ! Flag
     integer :: type_id
     integer(kind=Size_t) :: type_size
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5AttrDims' )
+    call trace_begin ( me, 'GetHDF5AttrDims', cond=.false. )
     ! Initializing values returned if there was trouble
     dims = -1
     if ( present(maxDims)) maxDims = -1
@@ -2797,7 +2851,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting dims of ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5AttrDims
 
   ! ----------------------------------------------  GetHDF5DSDims  -----
@@ -2810,12 +2864,13 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     integer :: dspace_id                ! spaceID for DS
     integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: my_rank, rank
     integer :: SETID                    ! ID for DS
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5DSDims' )
+    call trace_begin ( me, 'GetHDF5DSDims', cond=.false. )
     ! Initializing values returned if there was trouble
     dims = -1
     if ( present(maxDims)) maxDims = -1
@@ -2837,7 +2892,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting dims ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5DSDims_ID
 
   subroutine GetHDF5DSDims_MLSFile ( MLSFile, name, DIMS, maxDims )
@@ -2845,11 +2900,13 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: NAME ! Name of DS
     integer(kind=hSize_t), dimension(:), intent(out) :: DIMS ! Values of dimensions
     integer(kind=hSize_t), dimension(:), optional, intent(out) :: MAXDIMS ! max Values
+
     ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5DSDims_ID' )
+    call trace_begin ( me, 'GetHDF5DSDims_ID', cond=.false. )
     ! Do we have any FileID fields?
     If ( .not. MLSFile%stillOpen .or. all( &
       & (/ MLSFile%FileId%f_id, MLSFile%FileId%grp_id, MLSFile%FileId%sd_id /) &
@@ -2866,7 +2923,7 @@ contains ! ======================= Public Procedures =========================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'all fields of MLSFile%Fileid are 0', MLSFile=MLSFile )
     endif
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5DSDims_MLSFile
 
   ! ----------------------------------------------  GetHDF5DSRank  -----
@@ -2877,11 +2934,12 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     integer :: dspace_id                ! spaceID for DS
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: SETID                    ! ID for DS
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5DSRank' )
+    call trace_begin ( me, 'GetHDF5DSRank', cond=.false. )
     rank = -1                           ! means trouble
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2893,7 +2951,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting rank ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5DSRank
 
   ! ---------------------------------------------  GetHDF5DSQType  -----
@@ -2903,12 +2961,13 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(out) :: Qtype    ! 'real' or 'integer' or ..
 
     ! Local variables
-    integer :: type_id                  ! typeID for DS
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: SETID                    ! ID for DS
     integer :: STATUS                   ! Flag
+    integer :: type_id                  ! typeID for DS
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='GetHDF5DSQType' )
+    call trace_begin ( me, 'GetHDF5DSQType', cond=.false. )
     Qtype = 'unknown'                   ! means trouble
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2926,7 +2985,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting rank ' // trim(name))
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine GetHDF5DSQType
 
   ! --------------------------------------  IsHDF5AttributeInFile_DS  -----
@@ -2939,14 +2998,16 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: DSNAME ! Name for the dataset
     character (len=*), intent(in) :: NAME ! Name for the attribute
     logical                       :: SOODESU
+
     ! Local variables
-    integer :: fileID                   ! Where to look
     integer :: ATTRID                   ! ID for attribute if present
+    integer :: fileID                   ! Where to look
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: SETID                    ! ID for DS if present
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='IsHDF5AttributeInFile_DS' )
+    call trace_begin ( me, 'IsHDF5AttributeInFile_DS', cond=.false. )
     SooDesu = .false.
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2967,7 +3028,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end function IsHDF5AttributeInFile_DS
 
   ! --------------------------------------  IsHDF5AttributeInFile_Grp  -----
@@ -2981,13 +3042,14 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: NAME ! Name for the attribute
     logical                       :: SOODESU
     ! Local variables
-    integer :: fileID                   ! Where to look
     integer :: ATTRID                   ! ID for attribute if present
+    integer :: fileID                   ! Where to look
     integer :: GRPID                    ! ID for group if present
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='IsHDF5AttributeInFile_Grp' )
+    call trace_begin ( me, 'IsHDF5AttributeInFile_Grp', cond=.false. )
     SooDesu = .false.
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3008,7 +3070,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end function IsHDF5AttributeInFile_Grp
 
   ! ---------------------------------------------  IsHDF5DSInFile  -----
@@ -3016,13 +3078,15 @@ contains ! ======================= Public Procedures =========================
     ! This routine returns true if the given HDF5 DS is present
     character (len=*), intent(in) :: FILENAME ! Where to look
     character (len=*), intent(in) :: NAME ! Name for the dataset
+
     ! Local variables
     integer :: FILEID                   ! Where to look
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: SETID                    ! ID for DS if present
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='IsHDF5DSInFile' )
+    call trace_begin ( me, 'IsHDF5DSInFile', cond=.false. )
     IsHDF5DSInFile = .false.
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3039,7 +3103,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for DS ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end function IsHDF5DSInFile
 
   ! -----------------------------  IsHDF5AttributePresent_in_DSID  -----
@@ -3047,12 +3111,14 @@ contains ! ======================= Public Procedures =========================
     ! This routine returns true if the given HDF5 attribute is present
     integer, intent(in) :: SETID        ! Dataset ID--Where to look
     character (len=*), intent(in) :: NAME ! Name for the attribute
+
     ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: ATTRID                   ! ID for attribute if present
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='IsHDF5AttributePresent_in_DSID' )
+    call trace_begin ( me, 'IsHDF5AttributePresent_in_DSID', cond=.false. )
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
@@ -3066,7 +3132,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end function IsHDF5AttributePresent_in_DSID
 
   ! ------------------------------  IsHDF5AttributePresent_in_fID  -----
@@ -3079,13 +3145,16 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: DSNAME ! Name for the dataset
     character (len=*), intent(in) :: NAME ! Name for the attribute
     logical, optional, intent(in) :: is_grpattr ! DSNAME is a group name
-    integer :: SETID                    ! ID for dataset if present
+
+    ! Local variables
     integer :: ATTRID                   ! ID for attribute if present
-    integer :: STATUS                   ! Flag
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_grpattr
+    integer :: SETID                    ! ID for dataset if present
+    integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='IsHDF5AttributePresent_in_fID' )
+    call trace_begin ( me, 'IsHDF5AttributePresent_in_fID', cond=.false. )
     my_grpattr = .false.
     if ( present(is_grpattr) ) my_grpattr = is_grpattr
     if ( my_grpattr ) then
@@ -3112,7 +3181,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end function IsHDF5AttributePresent_in_fID
 
   ! ------------------------------  IsHDF5AttributePresent_in_grp  -----
@@ -3122,12 +3191,15 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: fileID        ! file ID--Where to look
     character (len=*), intent(in) :: grpName ! Name for the group
     character (len=*), intent(in) :: NAME ! Name for the attribute
-    integer :: GRPID                    ! ID for group if present
+
+    ! Local variables
     integer :: ATTRID                   ! ID for attribute if present
+    integer :: GRPID                    ! ID for group if present
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='IsHDF5AttributePresent_in_grp' )
+    call trace_begin ( me, 'IsHDF5AttributePresent_in_grp', cond=.false. )
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
@@ -3147,7 +3219,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end function IsHDF5AttributePresent_in_grp
 
   ! ------------------------------  IsHDF5AttributePresent_in_MLSFile  -----
@@ -3156,11 +3228,14 @@ contains ! ======================= Public Procedures =========================
     ! somewhere under the MLSFile tree
     type (MLSFile_T)   :: MLSFile
     character (len=*), intent(in) :: NAME ! Name for the attribute
+
+    ! Local variables
     integer :: ATTRID                   ! ID for attribute
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='IsHDF5AttributePresent_in_MLSFile' )
+    call trace_begin ( me, 'IsHDF5AttributePresent_in_MLSFile', cond=.false. )
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute ' // trim(name) )
@@ -3175,7 +3250,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end function IsHDF5AttributePresent_in_MLSFile
 
   ! --------------------------------------------  IsHDF5DSPresent  -----
@@ -3188,11 +3263,14 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     character (len=MAXNDSNAMES*32) :: DSNames ! Names of DS in file (,-separated)
     character(len=8) :: myOptions
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: SETID                    ! ID for DS if present
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='IsHDF5DSPresent' )
+    call trace_begin ( me, 'IsHDF5DSPresent', cond=.false. )
     myOptions = ' ' ! By default, match name exactly
     if (present(options)) myOptions = options
     call h5eSet_auto_f ( 0, status )
@@ -3212,7 +3290,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for DS ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end function IsHDF5DSPresent
 
   ! -----------------------------------------  IsHDF5GroupPresent  -----
@@ -3220,12 +3298,14 @@ contains ! ======================= Public Procedures =========================
     ! This routine returns true if the given HDF5 DS is present
     integer, intent(in) :: LOCID        ! Where to look
     character (len=*), intent(in) :: NAME ! Name for the dataset
+
     ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: SETID                    ! ID for DS if present
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='IsHDF5GroupPresent' )
+    call trace_begin ( me, 'IsHDF5GroupPresent', cond=.false. )
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for Group ' // trim(name) )
@@ -3235,7 +3315,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for Group ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end function IsHDF5GroupPresent
 
   ! --------------------------------------------  IsHDF5ItemPresent  -----
@@ -3247,14 +3327,16 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: LOCID        ! Where to look
     character (len=*), intent(in) :: NAME ! Name for the dataset
     character (len=*), optional, intent(in) :: options ! E.g., -c
+
     ! Local variables
     character (len=MAXNDSNAMES*32) :: DSNames ! Names of DS in file (,-separated)
+    integer :: Me = -1                  ! String index for trace cacheing
     character(len=8) :: myOptions
     integer :: SETID                    ! ID for DS if present
     integer :: STATUS                   ! Flag
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='IsHDF5ItemPresent' )
+    call trace_begin ( me, 'IsHDF5ItemPresent', cond=.false. )
     myOptions = ' ' ! By default, match name exactly, search for sd names
     if (present(options)) myOptions = options
     call h5eSet_auto_f ( 0, status )
@@ -3278,7 +3360,7 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for item ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end function IsHDF5ItemPresent
 
   ! --------------------------------------  SaveAsHDF5DS_charsclr  -----
@@ -3289,15 +3371,16 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: VALUE ! The scalar char string
 
     ! Local variables
-    integer :: spaceID                  ! ID for dataspace
+    integer :: Me = -1                  ! String index for trace cacheing
     integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
     integer(kind=hsize_t), dimension(1) :: SHP        ! Shape
+    integer :: spaceID                  ! ID for dataspace
+    integer :: status                   ! Flag from HDF5
     integer(hid_t) :: s_type_id
     integer(hid_t) :: type_id
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_charsclr' )
+    call trace_begin ( me, 'SaveAsHDF5DS_charsclr', cond=.false. )
     ! Create the dataspace
     shp = 1
     call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
@@ -3315,7 +3398,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, s_type_id, value, &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine SaveAsHDF5DS_charsclr
 
   ! --------------------------------------  SaveAsHDF5DS_chararr1  -----
@@ -3358,6 +3441,7 @@ contains ! ======================= Public Procedures =========================
     integer, optional, intent(in) :: maxLineLen
 
     ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: myMaxLineLen
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
@@ -3368,7 +3452,7 @@ contains ! ======================= Public Procedures =========================
     character(LEN=MAXTEXTSIZE)              :: value
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_textFile' )
+    call trace_begin ( me, 'SaveAsHDF5DS_textFile', cond=.false. )
     myMaxLineLen = DFLTMAXLINELENGTH
     if ( present(maxLineLen) ) myMaxLineLen = maxLineLen
     ! Try to read the textfile
@@ -3394,7 +3478,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, s_type_id, trim(value), &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine SaveAsHDF5DS_textFile
 
   ! ---------------------------------------  SaveAsHDF5DS_intarr1  -----
@@ -3469,10 +3553,11 @@ contains ! ======================= Public Procedures =========================
     logical, optional, intent(in)     :: adding_to
 
     ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
     character :: MyFillValue, MyValue(size(value))   ! T = true, F = false
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_logarr1' )
+    call trace_begin ( me, 'SaveAsHDF5DS_logarr1', cond=.false. )
     ! Turn fillValue into a character
     myFillValue = 'F'
     if ( present(fillValue) ) then
@@ -3486,7 +3571,7 @@ contains ! ======================= Public Procedures =========================
     endwhere
     ! write ( myValue, '(L1)' ) value
     call saveAsHDF5DS ( locID, name, myValue, finalShape, myFillValue, adding_to )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine SaveAsHDF5DS_logarr1
 
   ! ---------------------------------------  SaveAsHDF5DS_dblarr1  -----
@@ -3561,13 +3646,14 @@ contains ! ======================= Public Procedures =========================
     logical, optional, intent(in)     :: adding_to
 
     ! Local variables
-    integer :: spaceID                  ! ID for dataspace
+    integer :: Me = -1                  ! String index for trace cacheing
     integer (HID_T) :: setID            ! ID for dataset
-    integer :: status                   ! Flag from HDF5
     integer(kind=hsize_t), dimension(1) :: SHP, MAXDIMS        ! Shape
+    integer :: spaceID                  ! ID for dataspace
+    integer :: status                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='SaveAsHDF5DS_snglarr1' )
+    call trace_begin ( me, 'SaveAsHDF5DS_snglarr1', cond=.false. )
     shp = shape(value)
     maxdims=shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -3580,7 +3666,7 @@ contains ! ======================= Public Procedures =========================
     call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
       & int ( (/ shp, ones(1:6) /), hsize_t ), status )
     call finishSaveDS ( name, status, setID, spaceID )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine SaveAsHDF5DS_snglarr1
 
   ! --------------------------------------  SaveAsHDF5DS_snglarr2  -----
@@ -3669,17 +3755,18 @@ contains ! ======================= Public Procedures =========================
     character(len=*), parameter :: Sfx = 'charscalar'
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
     type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_'//sfx )
+    call trace_begin ( me, 'LdFromHDF5DS_ID_'//sfx , cond=.false. )
     status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
       & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
     MLSFile%fileID%sd_id = locID
     MLSFile%stillOpen = .true.
     call LoadFromHDF5DS ( MLSFile, name, value )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
 
   end subroutine LdFrmHDF5DS_ID_charscalar
 
@@ -3853,13 +3940,14 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
     ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
     character :: MyValue(size(value))   ! 'F' = false, 'T' = true
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='LdFromHDF5DS_ID_logarr1' )
+    call trace_begin ( me, 'LdFromHDF5DS_ID_logarr1', cond=.false. )
     call LoadFromHDF5DS ( locID, name, myValue, start, count, stride, block )
     value = myValue == 'T'
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine LdFrmHDF5DS_ID_logarr1
 
   ! -------------------------------------  LdFrmHDF5DS_ID_dblarr1  -----
@@ -4046,13 +4134,15 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(out) :: VALUE    ! The scalar itself
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer :: SPACEID                  ! ID of dataspace
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: SETID                    ! ID of dataset
-    integer :: STRINGTYPE               ! String type
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: STATUS                   ! Flag from HDF5
     integer(kind=Size_t) :: STRINGSIZE               ! String size
+    integer :: STRINGTYPE               ! String type
+
     value = ' '
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_charscalar' )
+    call trace_begin ( me, 'LoadFromHDF5DS_charscalar', cond=.false. )
     call h5dOpen_f ( MLSFile%fileID%sd_id, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name), &
@@ -4080,7 +4170,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataset ' // trim(name), &
       & MLSFile=MLSFile )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
 
   end subroutine LoadFromHDF5DS_charscalar
 
@@ -4256,13 +4346,14 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(:), optional, intent(in) :: block
                                  ! Size of element block
     ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
     character :: MyValue(size(value))   ! 'F' = false, 'T' = true
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadFromHDF5DS_logarr1' )
+    call trace_begin ( me, 'LoadFromHDF5DS_logarr1', cond=.false. )
     call LoadFromHDF5DS ( MLSFile, name, myValue, start, count, stride, block )
     value = myValue == 'T'
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine LoadFromHDF5DS_logarr1
 
   ! -------------------------------------  LoadFromHDF5DS_dblarr1  -----
@@ -4467,16 +4558,17 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in), optional :: LowBound
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
-    integer(hsize_t) :: SHP(1)          ! Shape of value
-    integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-    integer :: STRINGTYPE               ! String type
-    integer(kind=Size_t) :: STRINGSIZE               ! String size
     integer :: LB, UB
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: SETID                    ! ID of dataset
+    integer(hsize_t) :: SHP(1)          ! Shape of value
+    integer :: STATUS                   ! Flag from HDF5
+    integer :: SPACEID                  ! ID of dataspace
+    integer(kind=Size_t) :: STRINGSIZE               ! String size
+    integer :: STRINGTYPE               ! String type
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_chararr1' )
+    call trace_begin ( me, 'LoadPtrFromHDF5DS_chararr1', cond=.false. )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4498,7 +4590,7 @@ contains ! ======================= Public Procedures =========================
     call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
     call h5dread_f ( setID, stringtype, value, (/ shp(1), ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID, stringType=stringType )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine LoadPtrFromHDF5DS_chararr1
 
   ! ---------------------------------  LoadPtrFromHDF5DS_chararr2  -----
@@ -4510,15 +4602,16 @@ contains ! ======================= Public Procedures =========================
     character (len=*), pointer :: VALUE(:,:) ! The array itself
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: SETID                    ! ID of dataset
     integer(hsize_t) :: SHP(2)          ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-    integer :: STRINGTYPE               ! String type
+    integer :: STATUS                   ! Flag from HDF5
     integer(kind=Size_t) :: STRINGSIZE               ! String size
+    integer :: STRINGTYPE               ! String type
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_chararr2' )
+    call trace_begin ( me, 'LoadPtrFromHDF5DS_chararr2', cond=.false. )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4537,7 +4630,7 @@ contains ! ======================= Public Procedures =========================
     call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
     call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:5) /), status )
     call finishLoad ( name, status, spaceID, setID, stringType=stringType )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine LoadPtrFromHDF5DS_chararr2
 
   ! ----------------------------------  LoadPtrFromHDF5DS_intarr1  -----
@@ -4550,14 +4643,15 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in), optional :: LowBound
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: LB, UB
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: SETID                    ! ID of dataset
     integer(hsize_t) :: SHP(1)          ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-    integer :: LB, UB
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_intarr1' )
+    call trace_begin ( me, 'LoadPtrFromHDF5DS_intarr1', cond=.false. )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4572,7 +4666,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
       & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine LoadPtrFromHDF5DS_intarr1
 
   ! ----------------------------------  LoadPtrFromHDF5DS_intarr2  -----
@@ -4627,11 +4721,12 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in), optional :: LowBound
 
     ! Local variables
-    character, pointer :: MyValue(:)      ! 'F' = false, 'T' = true
     integer :: LB, UB
+    integer :: Me = -1                  ! String index for trace cacheing
+    character, pointer :: MyValue(:)      ! 'F' = false, 'T' = true
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_logarr1' )
+    call trace_begin ( me, 'LoadPtrFromHDF5DS_logarr1', cond=.false. )
     nullify ( myValue )
     call LoadPtrFromHDF5DS ( locID, name, myValue )
     lb = 1
@@ -4640,7 +4735,7 @@ contains ! ======================= Public Procedures =========================
     call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
     value = myValue == 'T'
     call deallocate_test ( myValue, 'myValue', moduleName )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine LoadPtrFromHDF5DS_logarr1
 
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr1  -----
@@ -4653,14 +4748,15 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in), optional :: LowBound
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: LB, UB
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: SETID                    ! ID of dataset
     integer(hsize_t) :: SHP(1)          ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-    integer :: LB, UB
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_dblarr1' )
+    call trace_begin ( me, 'LoadPtrFromHDF5DS_dblarr1', cond=.false. )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4675,7 +4771,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
       & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine LoadPtrFromHDF5DS_dblarr1
 
   ! ----------------------------------  LoadPtrFromHDF5DS_dblarr2  -----
@@ -4730,14 +4826,15 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in), optional :: LowBound
 
     ! Local variables
-    integer :: STATUS                   ! Flag from HDF5
+    integer :: LB, UB
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: SETID                    ! ID of dataset
     integer(hsize_t) :: SHP(1)          ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
-    integer :: SETID                    ! ID of dataset
-    integer :: LB, UB
+    integer :: STATUS                   ! Flag from HDF5
 
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='LoadPtrFromHDF5DS_snglarr1' )
+    call trace_begin ( me, 'LoadPtrFromHDF5DS_snglarr1', cond=.false. )
     call h5dOpen_f ( locID, name, setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataset ' // trim(name) )
@@ -4752,7 +4849,7 @@ contains ! ======================= Public Procedures =========================
     call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
       & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine LoadPtrFromHDF5DS_snglarr1
 
   ! ---------------------------------  LoadPtrFromHDF5DS_snglarr2  -----
@@ -4804,11 +4901,14 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: ITEMID        ! Group etc. to make attr. for
     character(len=*), intent(in) :: NAME ! Name of attribute
     integer, intent(out) :: INDEX        ! String index
+
     ! Local variables
     character (len=1024) :: LINE
     integer :: L
+    integer :: Me = -1                  ! String index for trace cacheing
+
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='ReadLitIndexFromHDF5Attr' )
+    call trace_begin ( me, 'ReadLitIndexFromHDF5Attr', cond=.false. )
     call GetHDF5Attribute ( itemID, name, line )
     l = len_trim(line)
     if ( l > 0 ) then
@@ -4816,7 +4916,7 @@ contains ! ======================= Public Procedures =========================
     else
       index = 0
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine ReadLitIndexFromHDF5Attr
 
   ! --------------------------------  ReadStringIndexFromHDF5Attr  -----
@@ -4826,17 +4926,20 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: ITEMID        ! Group etc. to make attr. for
     character(len=*), intent(in) :: NAME ! Name of attribute
     integer, intent(out) :: INDEX        ! String index
+
     ! Local variables
     character (len=1024) :: LINE
+    integer :: Me = -1                  ! String index for trace cacheing
+
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='ReadStringIndexFromHDF5Attr' )
+    call trace_begin ( me, 'ReadStringIndexFromHDF5Attr', cond=.false. )
     call GetHDF5Attribute ( itemID, name, line )
     if ( len_trim ( line ) > 0 ) then
       index = GetStringIndexFromString ( trim(line) )
     else
       index = 0
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine ReadStringIndexFromHDF5Attr
 
   ! -------------------------------  WriteLitIndexAsHDF5Attribute  -----
@@ -4845,14 +4948,18 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: ITEMID        ! Group etc. to make attr. for
     character(len=*), intent(in) :: NAME ! Name of attribute
     integer, intent(in) :: INDEX         ! String index
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='WriteLitIndexAsHDF5Attribute' )
+    call trace_begin ( me, 'WriteLitIndexAsHDF5Attribute', cond=.false. )
     if ( index == 0 ) then
       call MakeHDF5Attribute ( itemID, name, '' )
     else
       call WriteStringIndexAsHDF5Attribute ( itemID, name, lit_indices ( index ) )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine WriteLitIndexAsHDF5Attribute
 
   ! ----------------------------  WriteStringIndexAsHDF5Attribute  -----
@@ -4861,17 +4968,20 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: ITEMID        ! Group etc. to make attr. for
     character(len=*), intent(in) :: NAME ! Name of attribute
     integer, intent(in) :: INDEX         ! String index
+
     ! Local variables
     character(len=1024) :: LINE
+    integer :: Me = -1                  ! String index for trace cacheing
+
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='WriteStringIndexAsHDF5Attribute' )
+    call trace_begin ( me, 'WriteStringIndexAsHDF5Attribute', cond=.false. )
     if ( index == 0 ) then
       call MakeHDF5Attribute ( itemID, name, '' )
     else
       call get_string ( index, line, strip=.true., noError=.true. )
       call MakeHDF5Attribute ( itemID, name, trim(line) )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine WriteStringIndexAsHDF5Attribute
 
 ! ======================= Private Procedures ===========================
@@ -4921,7 +5031,9 @@ contains ! ======================= Public Procedures =========================
     integer, optional, intent(in)     :: iFill
     real, optional, intent(in)        :: rFill
     integer, dimension(:), optional, intent(in) :: chunk_dims
+
     ! Internal variables
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_adding_to
     logical :: my_fill
     integer(hsize_t), dimension(size(maxdims,1)) :: my_chunkdims, my_maxdims
@@ -4930,8 +5042,9 @@ contains ! ======================= Public Procedures =========================
     double precision :: dFilled
     integer :: iFilled
     real :: rFilled
+
     ! Executable
-    call MLSMessageCalls( 'push', constantName='CreateSpaceSet' )
+    call trace_begin ( me, 'CreateSpaceSet', cond=.false. )
     my_adding_to = .false.
     if ( present(adding_to) ) my_adding_to = adding_to
     my_chunkdims = maxdims
@@ -5017,7 +5130,7 @@ contains ! ======================= Public Procedures =========================
           & status )
       end if
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine CreateSpaceSet
 
 ! ---------------------------------------------------  Dump_space  -----
@@ -5054,8 +5167,12 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in), optional :: MemspaceID ! dataspace ID
     integer, intent(in), optional :: StringType ! stringtype ID
     type (MLSFile_T), optional   :: MLSFile
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+
     ! Executable
-    call MLSMessageCalls( 'push', constantName='FinishLoad' )
+    call trace_begin ( me, 'FinishLoad', cond=.false. )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dataset ' // trim(name), &
       & MLSFile=MLSFile )
@@ -5079,7 +5196,7 @@ contains ! ======================= Public Procedures =========================
         & 'Unable to close string type for ' // trim(name), &
         & MLSFile=MLSFile )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine FinishLoad
 
 ! ---------------------------------------------  FinishMakeAttrib  -----
@@ -5090,8 +5207,12 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: AttrID               ! attrib ID
     integer, intent(in) :: DSID                 ! dataset ID
     integer, intent(in), optional :: StringType ! stringType ID
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+
     ! Executable
-    call MLSMessageCalls( 'push', constantName='FinishMakeHDF5Attrib' )
+    call trace_begin ( me, 'FinishMakeHDF5Attrib', cond=.false. )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to write attribute ' // trim(name) )
     ! Finish off
@@ -5106,7 +5227,7 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close stringType ' // trim(name) )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine FinishMakeAttrib
 
 ! -------------------------------------------------  FinishSaveDS  -----
@@ -5119,8 +5240,12 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: SpaceID              ! dataspace ID
     integer, intent(in), optional :: StringType ! stringtype ID
     integer, intent(in), optional :: MemspaceID ! arrayspace ID
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+
     ! Executable
-    call MLSMessageCalls( 'push', constantName='FinishSaveDS' )
+    call trace_begin ( me, 'FinishSaveDS', cond=.false. )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to write to dataset for ' // trim(name) )
     ! Close things
@@ -5140,7 +5265,7 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close stringtype for ' // trim(name) )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine FinishSaveDS
 
 ! -------------------------------------------------  Get_DS_Shape  -----
@@ -5154,8 +5279,12 @@ contains ! ======================= Public Procedures =========================
     integer                           :: value_rank
     integer(hsize_t)                  :: maxdims(size(dims))
     integer                           :: status
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+
     ! Executable
-    call MLSMessageCalls( 'push', constantName='Get_DS_Shape' )
+    call trace_begin ( me, 'Get_DS_Shape', cond=.false. )
     value_rank = size(dims)
     call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
     if ( status /= 0 )  call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -5167,7 +5296,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= rank ) call my_message ( MLSMSG_Error, ModuleName, &
       & 'Unable to get dimension information for dataset ' // trim(name) , &
       & 'rank(space), h5s status', (/rank, status/) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine Get_DS_Shape
 
 ! ---------------------------------------------------  MLS_extend  -----
@@ -5181,15 +5310,17 @@ contains ! ======================= Public Procedures =========================
     integer, optional, intent(inout) :: dataSpaceID
                                  ! Starting coordinatess of hyperslab
   ! Local variables
-    integer                           :: spaceID
-    integer                           :: rank
     integer(hsize_t), dimension(7)    :: dims, maxdims, my_start
-    integer                           :: status
     integer                           :: i
-    logical                           :: itFits
     logical                           :: is_simple
+    logical                           :: itFits
+    integer :: Me = -1                ! String index for trace cacheing
+    integer                           :: rank
+    integer                           :: spaceID
+    integer                           :: status
+
   ! Executable code
-    call MLSMessageCalls( 'push', constantName='MLS_extend' )
+    call trace_begin ( me, 'MLS_extend', cond=.false. )
     my_start = 0
     dims = 0
     if ( present(start) ) my_start(1:size(start)) = start
@@ -5237,7 +5368,7 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to get return dataspaceID in mls_extend' )
     end if
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end subroutine MLS_extend
 
 ! ------------------------------------------------  MLS_hyperslab  -----
@@ -5263,9 +5394,12 @@ contains ! ======================= Public Procedures =========================
     integer                           :: value_rank, rank
     integer(hsize_t), dimension(7)    :: dims, maxdims
     integer                           :: status
+                                 ! Starting coordinatess of hyperslab
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
 
     ! Begin execution
-    call MLSMessageCalls( 'push', constantName='MLS_hyperslab' )
+    call trace_begin ( me, 'MLS_hyperslab', cond=.false. )
     ! Check that pattern 1 or pattern 2 is satisfied
     status = 0
     if ( present(start) ) status = status + 1
@@ -5308,7 +5442,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set hyperslab for dataset ' // trim(name) )
     if ( DEEBUG ) print *, 'Returning memspaceID ', memspaceID
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine MLS_hyperslab
 
 ! -------------------------------------------  MLS_hyperslab_save  -----
@@ -5331,9 +5465,12 @@ contains ! ======================= Public Procedures =========================
     integer(hsize_t), dimension(7)    :: dims, maxdims
     integer                           :: status
     character(len=*), parameter :: name = 'mls_hyperslab_save'
+                                 ! Starting coordinatess of hyperslab
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
 
     ! Begin execution
-    call MLSMessageCalls( 'push', constantName='MLS_hyperslab_save' )
+    call trace_begin ( me, 'MLS_hyperslab_save', cond=.false. )
     ! Check that pattern 1 or pattern 2 is satisfied
     status = 0
     if ( present(start) ) status = status + 1
@@ -5367,7 +5504,7 @@ contains ! ======================= Public Procedures =========================
     end if
     if ( status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set hyperslab for dataset ' // trim(name) )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( cond=.false. )
   end subroutine MLS_hyperslab_save
 
 ! ---------------------------------------------------  My_message  -----
@@ -5488,11 +5625,13 @@ contains ! ======================= Public Procedures =========================
     integer, intent(out) :: AttrId        ! Attrib ID
     logical, intent(in), optional :: Skip_if_already_there ! Duh...
     integer(kind=hsize_t), intent(in), optional :: Shp(:) ! Shape of array attrib, else scalar
+
     ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: my_skip
     integer :: STATUS                   ! Flag from HDF5
     ! Executable
-    call MLSMessageCalls( 'push', constantName='StartMakeAttrib' )
+    call trace_begin ( me, 'StartMakeAttrib', cond=.false. )
     startMakeAttrib = .false.
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip = skip_if_already_there
@@ -5511,7 +5650,7 @@ contains ! ======================= Public Procedures =========================
     call h5aCreate_f ( itemID, trim(name), type, spaceID, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create attribute ' // trim(name) )
-  9 call MLSMessageCalls( 'pop' )
+  9 call trace_end ( cond=.false. )
   end function StartMakeAttrib
 
 ! --------------------------------------------  WhatTypeAmI  -----
@@ -5552,6 +5691,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.122  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.121  2013/08/20 00:30:38  pwagner
 ! May also skip if attribute not where we cp from
 !
