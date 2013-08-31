@@ -23,7 +23,7 @@ module TRACE_M
   character (len=8), save :: PreviousDate = ' '
   logical, save           :: PreviousDebug
   logical, save           :: PreviousVerbose
-  logical, parameter      :: DEEBUG = .true.
+  logical, parameter      :: DEEBUG = .false.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -52,7 +52,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: String ! To display after Name_I
     logical, intent(in), optional :: Cond   ! Print if true, default true
 
-    if ( name_i <= 0 ) name_i = create_string ( name_c )
+    if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
     call trace_begin ( name_i, root, index, string, cond )
 
   end subroutine TRACE_BEGIN_B
@@ -72,7 +72,7 @@ contains ! ====     Public Procedures     ==============================
 
     integer :: Name_I
 
-    name_i = create_string ( name_c )
+    name_i = create_string ( trim(name_c) )
     call trace_begin ( name_i, root, index, string, cond )
 
   end subroutine TRACE_BEGIN_C
@@ -183,11 +183,11 @@ contains ! ====     Public Procedures     ==============================
       end if
     end if
 
-    if ( create_string(MLSNamesAreDebug) == frame%text .and. .not. MLSDebug ) then
+    if ( create_string(trim(MLSNamesAreDebug)) == frame%text .and. .not. MLSDebug ) then
       PreviousDebug = MLSDebug
       MLSDebug = .true.
     end if
-    if ( create_string(MLSNamesAreVerbose) == frame%text .and. .not. MLSVerbose ) then
+    if ( create_string(trim(MLSNamesAreVerbose)) == frame%text .and. .not. MLSVerbose ) then
       PreviousVerbose = MLSVerbose
       MLSVerbose = .true.
     end if
@@ -215,8 +215,7 @@ contains ! ====     Public Procedures     ==============================
     ! Executable
     call date_and_time( date=CurrentDate )
     if ( len_trim(PreviousDate) > 0 ) then
-      if ( PreviousDate /= CurrentDate ) &
-!???  if ( PreviousDate /= CurrentDate .or. DEEBUG ) &
+      if ( PreviousDate /= CurrentDate .or. DEEBUG ) &
         & call DateLine ( PreviousDate, CurrentDate )
     endif
     PreviousDate = CurrentDate
@@ -249,6 +248,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.28  2013/08/31 02:01:51  vsnyder
+! Always trim names sent to string table
+!
 ! Revision 2.27  2013/08/31 01:24:01  vsnyder
 ! Better debugging output
 !
