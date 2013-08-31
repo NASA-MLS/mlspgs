@@ -129,9 +129,10 @@ module DumpCommand_M
   integer, parameter :: Numeric = noVT + 1
   integer, parameter :: Stop = numeric + 1
   integer, parameter :: Unknown = stop + 1 ! Unknown template
+
 contains
 
-  ! ------------------------------------- BooleanFromAnyGoodRadiances --
+  ! --------------------------------  BooleanFromAnyGoodRadiances  -----
   function BOOLEANFROMANYGOODRADIANCES ( ROOT, CHUNK, FILEDATABASE ) &
     & result( HASHSIZE )
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
@@ -239,7 +240,7 @@ contains
       & call dumpMacros
   end function BooleanFromAnyGoodRadiances
 
-  ! ------------------------------------- BooleanFromAnyGoodValues --
+  ! -----------------------------------  BooleanFromAnyGoodValues  -----
   function BOOLEANFROMANYGOODVALUES ( ROOT, VECTORS ) result( THESIZE )
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
@@ -338,7 +339,7 @@ contains
       & call dumpMacros
   end function BooleanFromAnyGoodValues
 
-  ! ------------------------------------- BooleanFromCatchWarning --
+  ! ------------------------------------  BooleanFromCatchWarning  -----
   function BOOLEANFROMCATCHWARNING ( ROOT ) result( SIZE )
     ! Called to check if the last command resulted in a warning
     ! (either printed or suppressed)
@@ -423,14 +424,14 @@ contains
       & call dumpMacros
   end function BooleanFromCatchWarning
 
-  ! ------------------------------------- BooleanFromComparingQtys --
+  ! -----------------------------------  BooleanFromComparingQtys  -----
   function BOOLEANFROMCOMPARINGQTYS ( ROOT, VECTORS ) result( THESIZE )
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_BOOLEAN, F_FORMULA
     use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE
     use MLSKINDS, only: R8, RV
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSTATS1, only: MLSMAX, MLSMIN, MLSMEAN, MLSMEDIAN
     use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & REPLACESUBSTRING, SWITCHDETAIL
@@ -438,6 +439,7 @@ contains
     use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
+    use Trace_m, only: Trace_Begin, Trace_End
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, M_FILL, &
       & GETVECTORQTYBYTEMPLATEINDEX
@@ -470,6 +472,7 @@ contains
     character(len=255) :: formula
     character(len=255) :: formulaTemp
     integer :: keyNo
+    integer :: Me = -1                   ! String index for trace cacheing
     character(len=32) :: nameString
     integer :: QUANTITYINDEX
     integer :: son
@@ -479,10 +482,11 @@ contains
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
     integer :: VECTORINDEX
     logical :: verbose, verboser
+
     ! Executable
+    call trace_begin ( me, "BooleanFromComparingQtys", cond=.false. )
     verbose = ( switchDetail(switches, 'bool') > -1 )
     verboser = ( switchDetail(switches, 'bool') > 0 )
-    call MLSMessageCalls( 'push', constantName=ModuleName//'%BooleanFromComparingQtys' )
     nullify( aQuantity, bQuantity )
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
@@ -601,8 +605,10 @@ contains
       & inseparator=runTimeValues%sep )
     if ( verboser ) &
       & call dumpMacros
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( "BooleanFromComparingQtys", cond=.false. )
+
   contains
+
     elemental logical function ISRELATION( relation, a, b )
       ! Do inputs a and b stand in relation ('>', '<', '=') ?
       ! Args
@@ -1163,8 +1169,8 @@ contains
       & DUMPMACROS, MLSMESSAGE
     use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME, &
       & DUMP_SECTION_TIMINGS
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS, &
-      & MLSMSG_CRASH, MLSMSG_ERROR, MLSMESSAGEEXIT
+    use MLSMESSAGEMODULE, only: MLSMSG_CRASH, MLSMSG_ERROR, MLSMessageCalls, &
+      & MLSMESSAGEEXIT
     use MLSFINDS, only: FINDFIRST
     use MLSSIGNALS_M, only: DUMP, GETRADIOMETERINDEX, RADIOMETERS, SIGNALS
     use MLSSTRINGS, only: INDEXES, LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
@@ -1227,6 +1233,7 @@ contains
     type (Matrix_T), pointer :: matrix2
     integer :: MatrixIndex
     integer :: MatrixIndex2
+    integer :: Me = -1               ! String index for trace cacheing
     integer :: N
     character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
     type (MLSFile_T), pointer :: OneMLSFile
@@ -1250,11 +1257,7 @@ contains
     integer :: What
 
     ! Executable
-    if ( toggle(gen) ) then
-      call trace_begin ( 'DumpCommand', root )
-    else
-      call MLSMessageCalls( 'push', constantName=ModuleName )
-    end if
+    call trace_begin ( me, 'DumpCommand', root, cond=toggle(gen) )
     verbose = ( switchDetail(switches, 'bool') > -1 )
     nullify ( vector, quantity )
     ! Were we called to do a diff or a dump?
@@ -1778,7 +1781,7 @@ contains
           call dump ( catalog(what), details=details )
         end do
       case ( f_stack )
-        call dump_stack( where=.true., CPU=.true. )
+        call dump_stack( where=.true., CPU=.true., doDepth=details>0 )
       case ( f_template ) ! Dump vector templates or quantity templates
         if ( details < -1 ) cycle
         do i = 2, nsons(son)
@@ -1919,11 +1922,7 @@ contains
       end select
     end do
 
-    if ( toggle(gen) ) then
-      call trace_end ( 'DumpCommand' )
-    else
-      call MLSMessageCalls( 'pop' )
-    end if
+    call trace_end ( 'DumpCommand', cond=toggle(gen) )
 
   end subroutine DumpCommand
   
@@ -1983,7 +1982,6 @@ contains
   ! a wildcard matching anything
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL, F_OPTIONS
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE, STREQ
     use MORETREE, only: GET_FIELD_ID
@@ -1996,23 +1994,21 @@ contains
     integer, intent(in) :: root
     ! Internal variables
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND8'
-    integer :: GSON, J
     integer :: FieldIndex
+    integer :: GSON, J
     character(len=80) :: Label  ! E.g., 'BAND8'
+    integer :: Me = -1          ! String index for trace cacheing
     character(len=16) :: optionsString
     integer :: Son
     logical :: verbose, verboser
+
     ! Executable
+    call trace_begin ( me, 'MLSCase', root, cond=toggle(gen) )
     verbose = ( switchDetail(switches, 'bool') > -1 )
     verboser = ( switchDetail(switches, 'bool') > 0 )
     MLSSelecting = .true. ! Defaults to skipping rest of case
     if ( MLSSelectedAlready ) return
     optionsString = ' '
-    if ( toggle(gen) ) then
-      call trace_begin ( 'MLSCase', root )
-    else
-      call MLSMessageCalls( 'push', constantName='MLSCase' )
-    end if
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
       fieldIndex = get_field_id(son)
@@ -2048,11 +2044,7 @@ contains
     endif
     ! We must store whether we have ever had a match
     MLSSelectedAlready = MLSSelectedAlready .or. .not. MLSSelecting
-    if ( toggle(gen) ) then
-      call trace_end ( 'MLSCase' )
-    else
-      call MLSMessageCalls( 'pop' )
-    end if
+    call trace_end ( 'MLSCase', cond=toggle(gen) )
   end subroutine  MLSCase
   
   subroutine  MLSSELECT ( ROOT )
@@ -2060,7 +2052,6 @@ contains
   ! the Label field or value of the Boolean field
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_FIELD_ID
@@ -2073,19 +2064,17 @@ contains
     integer, intent(in) :: root
     ! Internal variables
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND8'
-    integer :: GSON, J
     integer :: FieldIndex
+    integer :: GSON, J
     character(len=80) :: Label          ! E.g., 'BAND8'
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: Son
     logical :: verbose, verboser
+
     ! Executable
+    call trace_begin ( me, 'MLSSelect', root, cond=toggle(gen) )
     verbose = ( switchDetail(switches, 'bool') > -1 )
     verboser = ( switchDetail(switches, 'bool') > 0 )
-    if ( toggle(gen) ) then
-      call trace_begin ( 'MLSSelect', root )
-    else
-      call MLSMessageCalls( 'push', constantName='MLSSelect' )
-    end if
     label = ' '
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -2111,18 +2100,14 @@ contains
     endif
     selectLabel = lowerCase(label)
     MLSSelecting = .true.
-    if ( toggle(gen) ) then
-      call trace_end ( 'MLSSelect' )
-    else
-      call MLSMessageCalls( 'pop' )
-    end if
+    call trace_end ( 'MLSSelect', cond=toggle(gen) )
   end subroutine MLSSelect
   
   subroutine  MLSENDSELECT ( ROOT )
   ! Resets the global variable MLSSelecting
   ! Optionally puts note about end of selecting in log file
     use INIT_TABLES_MODULE, only: F_LABEL
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_Info
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_Info
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_FIELD_ID
     use STRING_TABLE, only: GET_STRING
@@ -2133,16 +2118,13 @@ contains
     integer, intent(in) :: root
     ! Internal variables
     character(len=80) :: Label  ! E.g., 'BAND8'
-    integer :: GSON, J
     integer :: FieldIndex
+    integer :: GSON, J
+    integer :: Me = -1          ! String index for trace cacheing
     integer :: Son
     ! Executable
     MLSSelectedAlready = .false.
-    if ( toggle(gen) ) then
-      call trace_begin ( 'MLSEndSelect', root )
-    else
-      call MLSMessageCalls( 'push', constantName='MLSEndSelect' )
-    end if
+    call trace_begin ( me, 'MLSEndSelect', root, cond=toggle(gen) )
     label = ' '
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -2160,11 +2142,7 @@ contains
     MLSSelecting = .false.
     if ( len_trim(label) > 0 ) call MLSMessage (MLSMSG_Info, moduleName, &
         & 'End selecting for ' // trim(label) // '::' // trim(SelectLabel) )
-    if ( toggle(gen) ) then
-      call trace_end ( 'MLSEndSelect' )
-    else
-      call MLSMessageCalls( 'pop' )
-    end if
+    call trace_end ( 'MLSEndSelect', cond=toggle(gen) )
   end subroutine MLSEndSelect
   
   ! ----------- callable as either Skip or Repeat command ---------
@@ -2186,7 +2164,6 @@ contains
   logical function SKIP ( ROOT, NAME )
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: BOOLEANVALUE, GETHASHELEMENT, PUTHASHELEMENT, &
       & SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
@@ -2203,24 +2180,22 @@ contains
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     character(len=64) :: cvalue
     integer :: c
-    integer :: GSON, J
     integer :: FieldIndex
+    integer :: GSON, J
     character(len=80) :: KEYSTRING
+    integer :: Me = -1                  ! String index for trace cacheing
     character(len=16) :: MYNAME
     integer :: NVALUES
     integer :: Son
     integer :: VALUE_FIELD
     logical :: verbose, verboser
+
     ! Executable
     verbose = ( switchDetail(switches, 'bool') > -1 )
     verboser = ( switchDetail(switches, 'bool') > 0 )
     myName = 'Skip'
     if ( present(name) ) myName = name
-    if ( toggle(gen) ) then
-      call trace_begin ( trim(myName), root )
-    else
-      call MLSMessageCalls( 'push', constantName=trim(myName) )
-    end if
+    call trace_begin ( me, myName, root, cond=toggle(gen) )
     booleanString = ' '
     skip = .true. ! Defaults to skipping rest of section
     value_field = 0
@@ -2250,7 +2225,7 @@ contains
       endif
       if ( skip ) &
         & call output( '(Skipping rest of this section)', advance='yes' )
-    enddo
+    end do
     ! The following should only occur if we were called as Repeat
     ! with a values=[...] field
     if ( value_field > 0 ) then
@@ -2263,10 +2238,10 @@ contains
       if ( verboser ) then
         call outputnamedValue( 'nvalues', nvalues) 
         call outputnamedValue( 'cvalue', trim(cvalue) )
-      endif
+      end if
       if ( c+1 > nvalues ) then
         Skip = .false.
-      elseif ( c < 1 ) then
+      else if ( c < 1 ) then
         ! The first time through, so try to grok values field
         ! and then store the number of values as 'countsn' and the individual
         ! values as 'counts(1)' 'counts(2)' ..
@@ -2282,19 +2257,15 @@ contains
           if ( verboser ) then
             call outputnamedValue( 'keyString', trim(keyString) )
             call outputnamedValue( 'BooleanString', trim(BooleanString) )
-          endif
+          end if
           call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
             & keyString, booleanString, &
             & countEmpty=countEmpty, &
             & inseparator=runTimeValues%sep )
         enddo
       endif
-    endif
-    if ( toggle(gen) ) then
-      call trace_end ( trim(myName) )
-    else
-      call MLSMessageCalls( 'pop' )
     end if
+    call trace_end ( myName, cond=toggle(gen) )
   end function Skip
 
 ! =====     Private Procedures     =====================================
@@ -2595,6 +2566,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.93  2013/08/31 02:29:12  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.92  2013/08/30 23:19:28  pwagner
 ! Fixed problem of empty spaces while tracing 'Skip'
 !
