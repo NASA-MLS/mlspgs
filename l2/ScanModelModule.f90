@@ -41,8 +41,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use MATRIXMODULE_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, &
     & CREATEEMPTYMATRIX, DESTROYMATRIX, CLEARMATRIX
   use MLSKINDS, only: R8, RP, RV
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
-    & MLSMESSAGECALLS
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSNUMERICS, only : HUNT, INTERPOLATEVALUES
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use MOLECULES, only: L_H2O
@@ -161,6 +160,7 @@ contains ! =============== Subroutines and functions ==========================
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height quantity, and returns
     use PHYSICS, only: BOLTZ
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMP ! The temperature field
@@ -190,6 +190,8 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), dimension(temp%template%noInstances) :: CORRECTION ! To apply to gph
     real (r8), dimension(temp%template%noInstances) :: DELTAGEOPOT ! noInstances
 
+    integer :: Me = -1                  ! String index for trace cacheing
+
     integer :: MYBELOWREF               ! Result of a hunt
     real (r8) :: ABOVEREFWEIGHT         ! Interpolation weight
     
@@ -200,7 +202,7 @@ contains ! =============== Subroutines and functions ==========================
     real (r8) :: REFLOGP                ! Log p of pressure reference surface
     real (r8) :: BASISGAP               ! Space between adjacent surfaces
 
-    call MLSMessageCalls( 'push', constantName='GetBasisGPH' )
+    call trace_begin ( me, 'GetBasisGPH', cond=.false. )
     nullify ( myR, myRT )
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( temp,&
@@ -291,7 +293,7 @@ contains ! =============== Subroutines and functions ==========================
 
     if ( present(belowRef) ) belowRef = myBelowRef
          
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'GetBasisGPH', cond=.false. )
     ! That's it  
   end subroutine GetBasisGPH
 
@@ -302,6 +304,7 @@ contains ! =============== Subroutines and functions ==========================
     ! temperature and reference geopotential height precisions, and
     ! returns the GPH precision.
     use PHYSICS, only: BOLTZ
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMPPREC ! The temperature precision
@@ -349,6 +352,8 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), dimension(tempPrec%template%noSurfs, &
       & tempPrec%template%noInstances) :: GPHPREC2A ! squared PGH precision (alt)
 
+    integer :: Me = -1                  ! String index for trace cacheing
+
     integer :: MYBELOWREF               ! Result of a hunt
     real (r8) :: ABOVEREFWEIGHT         ! Interpolation weight
     
@@ -361,7 +366,7 @@ contains ! =============== Subroutines and functions ==========================
     integer, dimension( size(GPHPREC, 1), size(GPHPREC, 2) ) &
       &       :: ITSSIGN                ! < 0 if tempprec or refgphprec are
 
-    call MLSMessageCalls( 'push', constantName='GepGPHPrecision' )
+    call trace_begin ( me, 'GetGPHPrecision', cond=.false. )
     ! Check that we get the right kinds of quantities
     if ( ( .not. ValidateVectorQuantity( tempPrec,&
       &            coherent=.true., &
@@ -477,7 +482,7 @@ contains ! =============== Subroutines and functions ==========================
     end do
     GPHPrec = ITSSIGN * sqrt ( GPHPrec2 )
      
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'GetGPHPrecision', cond=.false. )
     ! That's it  
   end subroutine GetGPHPrecision
 
@@ -2111,6 +2116,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.79  2013/08/31 02:29:12  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.78  2013/08/30 02:45:47  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
