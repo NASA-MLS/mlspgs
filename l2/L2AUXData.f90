@@ -42,7 +42,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSKINDS, only: R8, R4
   use MLSL2OPTIONS, only: DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGECALLS
+    & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSIGNALS_M, only: GETMODULENAME, MODULES
   use MLSSTRINGS, only: LOWERCASE
   use MLSSTRINGLISTS, only: ARRAY2LIST, GETSTRINGELEMENT, LIST2ARRAY, &
@@ -741,44 +741,44 @@ contains ! =====     Public Procedures     =============================
     myDetails = 1
     if ( present(details) ) myDetails = details
     
-      call output ( 'L2AUX Data: ')
-      call display_string ( l2aux%name, ierr=ierr )
-      if ( ierr /= 0 ) call output ( '(not found in string table)')
-      if ( myDetails < -1 ) return
-      if ( associated(modules) ) then
-        call output ( '    instrumentmodule: ')
-        call display_string ( modules(l2aux%instrumentmodule)%name, &
-          & advance='no', ierr=ierr ) 
-        if ( ierr /= 0 ) then
-          call output ( ' (not found in string table)', advance='no')
-        else
-          call output ( l2aux%instrumentmodule, before=' = ', advance='no')
-        end if
+    call output ( 'L2AUX Data: ')
+    call display_string ( l2aux%name, ierr=ierr )
+    if ( ierr /= 0 ) call output ( '(not found in string table)')
+    if ( myDetails < -1 ) return
+    if ( associated(modules) ) then
+      call output ( '    instrumentmodule: ')
+      call display_string ( modules(l2aux%instrumentmodule)%name, &
+        & advance='no', ierr=ierr ) 
+      if ( ierr /= 0 ) then
+        call output ( ' (not found in string table)', advance='no')
+      else
+        call output ( l2aux%instrumentmodule, before=' = ', advance='no')
       end if
-      call output ( '', advance='yes')
-      call output ( '  Minor Frame? (t/f): ')
-      call output ( l2aux%minorframe, advance='no')
-      call output ( '  Major Frame? (t/f): ')
-      call output ( l2aux%majorframe, advance='yes')
-      if ( myDetails < 0 ) return
-      do dim=1, l2auxrank
-        call output ( '  dimension: ')
-        call output ( dim )
+    end if
+    call output ( '', advance='yes')
+    call output ( '  Minor Frame? (t/f): ')
+    call output ( l2aux%minorframe, advance='no')
+    call output ( '  Major Frame? (t/f): ')
+    call output ( l2aux%majorframe, advance='yes')
+    if ( myDetails < 0 ) return
+    do dim=1, l2auxrank
+      call output ( '  dimension: ')
+      call output ( dim )
+      call output ( '           ')
+      if ( associated(l2aux%dimensions(dim)%values) ) then
+        call output ( '  nValues: ')
+        call output ( l2aux%dimensions(dim)%novalues, 3, advance='no')
         call output ( '           ')
-        if ( associated(l2aux%dimensions(dim)%values) ) then
-          call output ( '  nValues: ')
-          call output ( l2aux%dimensions(dim)%novalues, 3, advance='no')
-          call output ( '           ')
-          call output ( '  dimension family: ')
-          call output ( l2aux%dimensions(dim)%dimensionfamily, 3, advance='yes')
-          call dump ( l2aux%dimensions(dim)%values, &
-            & 'dim values:', options=options )
-         else
-          call output ( ' is not associated', advance='yes')
-         end if
-      end do
-      if ( myDetails < 1 ) return
-      call dump ( l2aux%values, 'values:', options=options )
+        call output ( '  dimension family: ')
+        call output ( l2aux%dimensions(dim)%dimensionfamily, 3, advance='yes')
+        call dump ( l2aux%dimensions(dim)%values, &
+          & 'dim values:', options=options )
+       else
+        call output ( ' is not associated', advance='yes')
+       end if
+    end do
+    if ( myDetails < 1 ) return
+    call dump ( l2aux%values, 'values:', options=options )
  
   end subroutine Dump_L2AUX
     
@@ -822,8 +822,9 @@ contains ! =====     Public Procedures     =============================
   subroutine ReadL2AUXData_MLSFile(L2AUXFile, quantityname, quantityType, l2aux,&
     & firstProf, lastProf, checkDimNames)
 
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-    & MLS_CLOSEFILE, MLS_OPENFILE
+    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
+      & MLS_CLOSEFILE, MLS_OPENFILE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
     ! This routine reads an l2aux file, returning a filled data structure
     ! and the number of profiles read.
@@ -836,11 +837,14 @@ contains ! =====     Public Procedures     =============================
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
     logical, optional, intent(in) :: checkDimNames
+
     ! Local variables
     logical :: alreadyOpen
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: returnStatus
+
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='ReadL2AUXData_MLSFile' )
+    call trace_begin ( me, 'ReadL2AUXData_MLSFile', cond=.false. )
     returnStatus = 0
     alreadyOpen = L2AUXFile%stillOpen
     if ( L2AUXFile%access == DFACC_CREATE ) then
@@ -866,7 +870,7 @@ contains ! =====     Public Procedures     =============================
 
     L2AUXFile%errorCode = returnStatus
     L2AUXFile%lastOperation = 'read'
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'ReadL2AUXData_MLSFile', cond=.false. )
   end subroutine ReadL2AUXData_MLSFile
 
   ! -----------------------------------------  ReadL2AUXData_MF_hdf4  -----
@@ -1121,8 +1125,9 @@ contains ! =====     Public Procedures     =============================
   subroutine WriteL2AUXData_MLSFile(l2aux, L2AUXFile, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
 
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-    & MLS_CLOSEFILE, MLS_OPENFILE
+    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
+      & MLS_CLOSEFILE, MLS_OPENFILE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
@@ -1141,8 +1146,10 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     logical :: alreadyOpen
+    integer :: Me = -1                  ! String index for trace cacheing
+
     ! Executable code
-    call MLSMessageCalls( 'push', constantName='WriteL2AUXData_MLSFile' )
+    call trace_begin ( me, 'WriteL2AUXData_MLSFile', cond=.false. )
     alreadyOpen = L2AUXFile%stillOpen
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2AUXFile, returnStatus)
@@ -1167,7 +1174,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. alreadyOpen )  call mls_closeFile(L2AUXFile, returnStatus)
     L2AUXFile%errorCode = returnStatus
     L2AUXFile%lastOperation = 'write'
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'WriteL2AUXData_MLSFile', cond=.false. )
   end subroutine WriteL2AUXData_MLSFile
 
   ! ----------------------------------------  WriteL2AUXData_MF_hdf5  -----
@@ -1179,12 +1186,12 @@ contains ! =====     Public Procedures     =============================
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file;
   !  also note the attempt to convert l2aux%values to KIND of l1b radiances)
-  use HDF5, only: H5GCLOSE_F, H5GOPEN_F
-  use MLS_DATAPRODUCTS, only: DATAPRODUCTS_T
-  use MLSAUXDATA, only: BUILD_MLSAUXDATA
-  use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
-  use MLSL2TIMINGS, only: SHOWTIMINGNAMES
-  use PCFHDR, only: H5_WRITEGLOBALATTR
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+    use MLS_DATAPRODUCTS, only: DATAPRODUCTS_T
+    use MLSAUXDATA, only: BUILD_MLSAUXDATA
+    use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
+    use MLSL2TIMINGS, only: SHOWTIMINGNAMES
+    use PCFHDR, only: H5_WRITEGLOBALATTR
 
     type (L2AUXData_T), intent(inout) :: L2AUX
     type(MLSFile_T)                :: L2AUXFile
@@ -1467,77 +1474,77 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------  WriteL2AUXAttributes  -----
   subroutine WriteL2AUXAttributes ( L2FileHandle, l2aux, name)
-  use MLSHDF5, only: MAKEHDF5ATTRIBUTE
-  ! Writes the pertinent attributes for an l2aux
-  ! Arguments
-  integer, intent(in) :: L2FileHandle
-  type (L2AUXData_T), intent(inout) :: L2AUX
-  character(len=*) :: name
-  ! Internal variables
-  integer :: dim
-  character(len=16), dimension(L2AUXRank) :: dim_name
-  character(len=16), dimension(L2AUXRank) :: dim_unit
-  character(len=16) :: dim_of_i
-  character(len=16) :: framing
-  character(len=2) :: i_char
-  logical :: is_timing
-  integer :: ndims
-  character(len=*), parameter :: ottff = '1,2,3,4,5'
-  ! Executable
-  is_timing = ( index( lowercase(name), 'timing') > 0 )
-  if ( is_timing ) then
-    l2aux%majorframe = .false.
-    l2aux%minorframe = .false.
-    l2aux%minorframe = .false.
-    l2aux%DIM_Names  = 'chunk,' // name(1:5) // ',none'
-    l2aux%DIM_Units  =  'none,none,none'
-    l2aux%VALUE_Units=  's'
-  endif
-  if ( DEEBUG ) then
-    call output('Writing attributes to: ', advance='no')
-    call output(trim(Name), advance='yes')
-  end if
-  call MakeHDF5Attribute(L2FileHandle, name, 'Title', name)
-  call MakeHDF5Attribute(L2FileHandle, name, 'Units', &
-    & trim(l2aux%VALUE_Units))
-  call MakeHDF5Attribute(L2FileHandle, name, 'DimensionNames', &
-    & trim(l2aux%DIM_Names))
-  if ( l2aux%majorframe ) then
-    framing = 'major'
-  else if ( l2aux%minorframe ) then
-    framing = 'minor'
-  else
-    framing = 'neither'
-  end if
-  call MakeHDF5Attribute(L2FileHandle, name, 'Framing', trim(framing))
-  call MakeHDF5Attribute(L2FileHandle, name, 'InstrumentModule', &
-    & l2aux%instrumentmodule)
-  call MakeHDF5Attribute(L2FileHandle, name, 'QuantityType', &
-    & l2aux%quantitytype)
-  call MakeHDF5Attribute(L2FileHandle, name, 'MissingValue', &
-    & (/ real(UNDEFINED_VALUE, r8) /) )
-  dim_name = ' '
-  dim_unit = ' '
-  ndims = min( NumStringElements(trim(l2aux%DIM_Names), .true.), L2AUXRank )
-  if ( ndims < 1 ) return
-  call List2Array(trim(l2aux%DIM_Names), dim_name, .true.)
-  call List2Array(trim(l2aux%DIM_Units), dim_unit, .true.)
-  ! loop of dimensions
-  do dim=1, ndims
-    call GetStringElement (ottff, i_char, dim, .true.)
-    dim_of_i = 'dim ' // trim(i_char)
-    if ( trim(dim_unit(dim)) == ' ' ) dim_unit(dim) = 'none'
-    call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i), &
-      & trim(dim_name(dim)))
-    call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i) // ' units', &
-      & trim(dim_unit(dim)))
-    if ( l2aux%dimensions(dim)%noValues > 0 ) then
-      if ( AreDimValuesNonTrivial(l2aux%dimensions(dim)%DimensionFamily) ) then
-        call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i)// ' values', &
-        & real(l2aux%dimensions(dim)%values))
-      end if
+    use MLSHDF5, only: MAKEHDF5ATTRIBUTE
+    ! Writes the pertinent attributes for an l2aux
+    ! Arguments
+    integer, intent(in) :: L2FileHandle
+    type (L2AUXData_T), intent(inout) :: L2AUX
+    character(len=*) :: name
+    ! Internal variables
+    integer :: dim
+    character(len=16), dimension(L2AUXRank) :: dim_name
+    character(len=16), dimension(L2AUXRank) :: dim_unit
+    character(len=16) :: dim_of_i
+    character(len=16) :: framing
+    character(len=2) :: i_char
+    logical :: is_timing
+    integer :: ndims
+    character(len=*), parameter :: ottff = '1,2,3,4,5'
+    ! Executable
+    is_timing = ( index( lowercase(name), 'timing') > 0 )
+    if ( is_timing ) then
+      l2aux%majorframe = .false.
+      l2aux%minorframe = .false.
+      l2aux%minorframe = .false.
+      l2aux%DIM_Names  = 'chunk,' // name(1:5) // ',none'
+      l2aux%DIM_Units  =  'none,none,none'
+      l2aux%VALUE_Units=  's'
+    endif
+    if ( DEEBUG ) then
+      call output('Writing attributes to: ', advance='no')
+      call output(trim(Name), advance='yes')
     end if
-  end do
+    call MakeHDF5Attribute(L2FileHandle, name, 'Title', name)
+    call MakeHDF5Attribute(L2FileHandle, name, 'Units', &
+      & trim(l2aux%VALUE_Units))
+    call MakeHDF5Attribute(L2FileHandle, name, 'DimensionNames', &
+      & trim(l2aux%DIM_Names))
+    if ( l2aux%majorframe ) then
+      framing = 'major'
+    else if ( l2aux%minorframe ) then
+      framing = 'minor'
+    else
+      framing = 'neither'
+    end if
+    call MakeHDF5Attribute(L2FileHandle, name, 'Framing', trim(framing))
+    call MakeHDF5Attribute(L2FileHandle, name, 'InstrumentModule', &
+      & l2aux%instrumentmodule)
+    call MakeHDF5Attribute(L2FileHandle, name, 'QuantityType', &
+      & l2aux%quantitytype)
+    call MakeHDF5Attribute(L2FileHandle, name, 'MissingValue', &
+      & (/ real(UNDEFINED_VALUE, r8) /) )
+    dim_name = ' '
+    dim_unit = ' '
+    ndims = min( NumStringElements(trim(l2aux%DIM_Names), .true.), L2AUXRank )
+    if ( ndims < 1 ) return
+    call List2Array(trim(l2aux%DIM_Names), dim_name, .true.)
+    call List2Array(trim(l2aux%DIM_Units), dim_unit, .true.)
+    ! loop of dimensions
+    do dim=1, ndims
+      call GetStringElement (ottff, i_char, dim, .true.)
+      dim_of_i = 'dim ' // trim(i_char)
+      if ( trim(dim_unit(dim)) == ' ' ) dim_unit(dim) = 'none'
+      call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i), &
+        & trim(dim_name(dim)))
+      call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i) // ' units', &
+        & trim(dim_unit(dim)))
+      if ( l2aux%dimensions(dim)%noValues > 0 ) then
+        if ( AreDimValuesNonTrivial(l2aux%dimensions(dim)%DimensionFamily) ) then
+          call MakeHDF5Attribute(L2FileHandle, name, trim(dim_of_i)// ' values', &
+          & real(l2aux%dimensions(dim)%values))
+        end if
+      end if
+    end do
   end subroutine WriteL2AUXAttributes
 
   ! -------------------------------------------------  GetDimSize  -----
@@ -1934,6 +1941,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.89  2013/08/31 02:29:12  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.88  2013/07/19 01:24:29  vsnyder
 ! Sort some stuff, revise GetQuantityAttributes a bit more
 !
