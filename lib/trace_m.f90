@@ -162,20 +162,22 @@ contains ! ====     Public Procedures     ==============================
     call top_stack ( frame )
     if ( check > -1 ) then
       if ( frame%tree < 0 .or. stack_depth() <= 0 ) then
-        call output ( 'Stack underflow noticed ' )
+        call output ( 'In Trace_End, stack underflow noticed ' )
         if ( present(name) ) call output ( 'with NAME = ' // trim(name) )
         if ( present(index) ) call output ( index, before=' INDEX = ' )
         call newLine
       else
         if ( present(name) ) then
-          if ( frame%text /= create_string(name) ) then
-            call display_string ( frame%text, before='Name at top of stack = "' )
+          if ( frame%text /= create_string(trim(name)) ) then
+            call display_string ( frame%text, &
+              & before='In Trace_End, name at top of stack = "' )
             call output ( '" but NAME = "' // trim(name) // '"', advance='yes' )
           end if
         end if
         if ( present(index) ) then
           if ( frame%index /= index ) then
-            call display_string ( frame%text, before='In frame for "' )
+            call display_string ( frame%text, &
+              & before='In Trace_End, in frame for "' )
             call output ( frame%index, before='", INDEX at top of stack = ' )
             call output ( index, before=' but INDEX argument = ', advance='yes' )
           end if
@@ -248,6 +250,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.29  2013/08/31 02:26:21  vsnyder
+! Better debugging output
+!
 ! Revision 2.28  2013/08/31 02:01:51  vsnyder
 ! Always trim names sent to string table
 !
