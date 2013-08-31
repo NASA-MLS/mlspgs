@@ -21,6 +21,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   use DUMP_0, only: DIFF, DUMP
   use MLSKinds, only: RH=>RM ! Renamed here to make it easier to change later
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
   implicit none
   private
@@ -133,7 +134,7 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 
 contains
 
-  ! ----------------------------------------------- AugmentHessian -----
+  ! ---------------------------------------------  AugmentHessian  -----
   subroutine AugmentHessian ( H, N, factor )
     ! Make space for N extra elements in the Hessian tuple if it's not
     ! already there If factor is present then don't merely add 'just
@@ -143,7 +144,7 @@ contains
     ! than h%tuples, and subsequent elemental procedures passed
     ! h%tuples w/o an array subsection will be operating
     ! with undefined values (paw)
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     
     type(HessianElement_T), intent(inout) :: H
     integer, intent(in) :: N
@@ -152,11 +153,12 @@ contains
     ! Local variables
     real(rh) :: myFactor
     type(tuple_t), dimension(:), pointer :: oldTuple  ! Used to expand 'in place'
+    integer :: extra                    ! How many to add
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: stat                     ! Status from allocates etc
     integer :: space                    ! How many tuples are free
-    integer :: extra                    ! How many to add
 
-    call MLSMessageCalls( 'push', constantName=ModuleName // '%AugmentHessian' )
+    call trace_begin ( me, 'AugmentHessian', cond=.false. )
     myFactor = 1.0_rh
     if ( present(factor) ) myFactor = factor
     if ( h%kind == h_full ) &
@@ -195,7 +197,7 @@ contains
       deallocate ( oldTuple, stat=stat )
       call test_deallocate ( stat, moduleName, "oldTuple" )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'AugmentHessian', cond=.false. )
   end subroutine AugmentHessian
 
   ! -------------------------------------------------  CloneBlock  -----
@@ -206,8 +208,10 @@ contains
       !                            destroyBlock gets a chance to clean up surds
     type(HessianElement_T), intent(in) :: X
     character(len=*), intent(in) :: ForWhom
+
     ! Local variables
     integer :: stat
+
     ! Executable
     call destroyBlock ( z )
     z%nRows  = x%nRows
@@ -246,7 +250,7 @@ contains
     end select
   end subroutine CopyBlock
 
-  ! ------------------------------------------ ClearHessianBlock_0 -----
+  ! ----------------------------------------  ClearHessianBlock_0  -----
   subroutine ClearHessianBlock_0 ( H )
     ! Clear a HessianElement_T structure
     type(HessianElement_T), intent(inout) :: H
@@ -264,11 +268,10 @@ contains
 
   end subroutine ClearHessianBlock_0
 
-  ! ----------------------------------------- Create_Empty_Hessian -----
+  ! ---------------------------------------  Create_Empty_Hessian  -----
   subroutine CreateHessianBlock_0 ( H, nRows, nCols1, nCols2, H_kind, initTuples, &
                                   & Fill )
   ! Create an empty HessianElement_T structure
-    use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
 
     type(HessianElement_T), intent(inout) :: H ! inout so we can destroy it before
                                         ! its components are nullified by
@@ -278,9 +281,10 @@ contains
     integer, intent(in), optional :: initTuples
     real(rh), intent(in), optional :: Fill ! Fill value if H_kind==h_full
 
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: STAT                     ! Status from allocate
 
-    call MLSMessageCalls( 'push', constantName=ModuleName // '%CreateHessianBlock_0' )
+    call trace_begin ( me, 'CreateHessianBlock_0', cond=.false. )
     call clearBlock ( H )
 
     h%nRows = nRows
@@ -315,10 +319,10 @@ contains
     if ( DEEBUG ) then
       call dump( h%values, 'h%values' )
     end if
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'CreateHessianBlock_0', cond=.false. )
   end subroutine CreateHessianBlock_0
 
-  ! ---------------------------------------------- Densify_Hessian -----
+  ! --------------------------------------------  Densify_Hessian  -----
   subroutine Densify_Hessian ( H )
   ! Convert a Hessian represented by tuples to an explicit representation
 
@@ -346,7 +350,7 @@ contains
 
   end subroutine Densify_Hessian
 
-  ! ------------------------------------------- Diff_Hessian_Blocks -----
+  ! ----------------------------------------  Diff_Hessian_Blocks  -----
   subroutine Diff_Hessian_Blocks ( H1, H2, Details, Indices, options, Clean )
     use MLSFILLVALUES, only: REPOPULATE
     use MLSSTRINGLISTS, only: OPTIONDETAIL, UNQUOTE
@@ -482,7 +486,7 @@ contains
     end subroutine Diff_like
   end subroutine Diff_Hessian_Blocks
 
-  ! ------------------------------------------- Dump_Hessian_Block -----
+  ! -----------------------------------------  Dump_Hessian_Block  -----
   subroutine Dump_Hessian_Block ( H, Name, Details, Indices, Clean, Options )
     use MLSFILLVALUES, only: ISNAN, REPOPULATE
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
@@ -598,7 +602,7 @@ contains
 
   end subroutine Dump_Hessian_Block
 
-  ! ----------------------------------- Hessian_Vec_Vec_Multiply_D -----
+  ! ---------------------------------  Hessian_Vec_Vec_Multiply_D  -----
   subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, SCALAR, P, Update )
   !{ Multiply a Hessian {\tt H} by {\tt V1} and {\tt V2}, with a factor of
   !  {\tt SCALAR}, giving {\tt P}:
@@ -620,7 +624,7 @@ contains
 
   end subroutine Hessian_Vec_Vec_Multiply_D
 
-  ! ----------------------------------- Hessian_Vec_Vec_Multiply_S -----
+  ! ---------------------------------  Hessian_Vec_Vec_Multiply_S  -----
   subroutine Hessian_Vec_Vec_Multiply_S ( H, V1, V2, SCALAR, P, Update )
     !{ Multiply a Hessian {\tt H} by {\tt V1} and {\tt V2}, with a factor of
     !  {\tt SCALAR}, giving {\tt P}:
@@ -642,7 +646,7 @@ contains
 
   end subroutine Hessian_Vec_Vec_Multiply_S
 
-  ! ------------------------------------- InsertHessianPlane_Array -----
+  ! -----------------------------------  InsertHessianPlane_Array  -----
   subroutine InsertHessianPlane_Array ( H, plane, k, mirroring )
     ! Insert the supplied array in (:,:,k) of the HessianElement_T
     ! or the (:,k,:) plane if mirroring is present and true
@@ -712,11 +716,11 @@ contains
 
   end subroutine InsertHessianPlane_Array
 
-  ! ------------------------------------ InsertHessianPlane_Matrix -----
+  ! ----------------------------------  InsertHessianPlane_Matrix  -----
   subroutine InsertHessianPlane_Matrix ( H, plane, k, mirroring )
     ! Insert the supplied matrix_0 element in (:,:,k) of the HessianElement_T
     ! or the (:,k,:) plane if mirroring is present and true
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MATRIXMODULE_0, only: MATRIXELEMENT_T, M_FULL, M_ABSENT, M_COLUMN_SPARSE, M_BANDED 
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
@@ -727,10 +731,11 @@ contains
     logical, intent(in), optional :: MIRRORING
 
     integer :: I, J, P, R, N
+    integer :: Me = -1                  ! String index for trace cacheing
     logical :: MYMIRRORING
     type ( tuple_t ) :: oneTuple
 
-    call MLSMessageCalls( 'push', constantName=ModuleName // '%InsertHessianPlane_Matrix' )
+    call trace_begin ( me, 'InsertHessianPlane_Matrix', cond=.false. )
     myMirroring = .false.
     if ( present ( mirroring ) ) myMirroring = mirroring
 
@@ -750,7 +755,7 @@ contains
 
     ! Nothing to do if matrix is empty
     if ( plane%kind == M_Absent ) then
-      call MLSMessageCalls( 'pop' )
+      call trace_end ( 'InsertHessianPlane_Matrix', cond=.false. )
       return
     endif
 
@@ -828,13 +833,13 @@ contains
 
     call optimizeBlock ( h )
 
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'InsertHessianPlane_Matrix', cond=.false. )
   end subroutine InsertHessianPlane_Matrix
 
-  ! ------------------------------------------------ OptimizeBlock -----
+  ! ----------------------------------------------  OptimizeBlock  -----
   ! Rewrite this from scratch before use
   subroutine OptimizeBlock ( H )
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_WARNING
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
     use SORT_M, only: SORTP
@@ -850,6 +855,7 @@ contains
     integer :: N        ! Number to end up with
     integer :: I,J,K    ! Loop counters
     integer :: MaxRank  ! Used to place a tuple out of the running
+    integer :: Me = -1  ! String index for trace cacheing
     integer :: STATUS   ! Flag from allocate
     logical, parameter :: DEEBUG = .true.
     logical :: verbose
@@ -857,11 +863,11 @@ contains
     verbose = ( switchDetail(switches, 'hess') > -1 )
     if ( h%optimizedAlready ) return
     h%optimizedAlready = .true.
-    call MLSMessageCalls( 'push', constantName=ModuleName // '%OptimizeBlock' )
+    call trace_begin ( me, 'OptimizeBlock', cond=.false. )
     if ( DONTOPTIMIZE ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
          & "Skipping buggy optimizeBlocks (paw)" )
-       call MLSMessageCalls( 'pop' )
+       call trace_end ( 'OptimizeBlock', cond=.false. )
        return
     else if ( DEEBUG .and. any( h%kind == (/ h_full, h_sparse /) ) .and. &
       & h%tuplesFilled > 0 ) then
@@ -877,7 +883,7 @@ contains
       end if
     end if
     if ( h%kind == h_Absent .or. h%kind == h_Unknown ) then
-      call MLSMessageCalls( 'pop' )
+      call trace_end ( 'OptimizeBlock', cond=.false. )
       return
     endif
     if ( h%kind == h_Full ) then
@@ -886,7 +892,7 @@ contains
       ! 2.5 times the space of a single value.
       if ( 2.5 * n > size(h%values) .or. DONTOPTIMIZEFULLS ) then
         h%optimizedAlready = .true.
-        call MLSMessageCalls( 'pop' )
+        call trace_end ( 'OptimizeBlock', cond=.false. )
         return ! sparsifying won't improve things
       else if ( n < 1 ) then
         ! all values 0; so make it absent
@@ -898,7 +904,7 @@ contains
         if ( verbose ) call output( 'Returned from Sparsifying full Hesssian', advance='yes' )
       end if
       if ( h%kind /= h_Sparse ) then
-        call MLSMessageCalls( 'pop' )
+        call trace_end ( 'OptimizeBlock', cond=.false. )
         return
       endif
     elseif ( h%kind == h_Sparse ) then
@@ -913,7 +919,7 @@ contains
     if ( h%tuplesFilled == 0 ) then
       call clearBlock ( h )
       if ( verbose ) call output( 'We optimized the block away', advance='yes' )
-      call MLSMessageCalls( 'pop' )
+      call trace_end ( 'OptimizeBlock', cond=.false. )
       return
     end if
 
@@ -928,7 +934,7 @@ contains
     if ( n == 0 ) then
       call clearBlock ( h )
       if ( verbose ) call output( 'We optimized the block away', advance='yes' )
-      call MLSMessageCalls( 'pop' )
+      call trace_end ( 'OptimizeBlock', cond=.false. )
       return
     end if
 
@@ -950,7 +956,7 @@ contains
     if ( OPTIMIZEMEANSSPARISFY ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & "Skipping remainder of optimizeBlocks after sparsifying(paw)" )
-      call MLSMessageCalls( 'pop' )
+      call trace_end ( 'OptimizeBlock', cond=.false. )
       return
     end if
     ! -------------------------------------------------------------
@@ -1036,25 +1042,25 @@ o:    do while ( i < n )
       end if
     end if
     ! -------------------------------------------------------------
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'OptimizeBlock', cond=.false. )
   end subroutine OptimizeBlock
 
-  ! --------------------------------------------- Sparsify_Full_Hessian -----
+  ! --------------------------------------  Sparsify_Full_Hessian  -----
   subroutine Sparsify_Full_Hessian ( H )
     ! Sparsify the representation of a full H
 
-    use MLSMessageModule, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
 
     type (HessianElement_T), intent(inout) :: H
     integer :: i, j, k, l, n
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: status
     logical :: verbose
     ! Executable
     if ( h%kind /= h_full .or. .not. associated(h%values) ) return
     verbose = ( switchDetail(switches, 'hess') > -1 ) .or. .true.
-    call MLSMessageCalls( 'push', constantName=ModuleName // '%SparsifyFullHessian' )
+    call trace_begin ( me, 'SparsifyFullHessian', cond=.false. )
     n = count(h%values /= 0)
     if ( verbose ) &
       & call outputNamedValue ( 'About to Sparsify Hessian with non-zeros', n )
@@ -1085,30 +1091,32 @@ o:    do while ( i < n )
     end do
     h%tuplesFilled = l
     call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'SparsifyFullHessian', cond=.false. )
   end subroutine Sparsify_Full_Hessian
 
-  ! --------------------------------------------- Sparsify_Hessian -----
+  ! -------------------------------------------  Sparsify_Hessian  -----
   subroutine Sparsify_Hessian ( H )
     ! (Re-)Sparsify the representation of H
     ! depending on whether its representation is currently Full
     ! or already Sparse
 
-    use MLSMessageModule, only: MLSMESSAGE, MLSMESSAGECALLS, MLSMSG_ERROR
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
 
     type (HessianElement_T), intent(inout) :: H
     integer :: i
+    integer :: Me = -1                  ! String index for trace cacheing
     integer :: newSize
     integer :: status
     type(tuple_t), pointer :: Tuples(:) => NULL()
     logical :: verbose
+
     ! Executable
     ! h%optimizedAlready = .false.
+    call trace_begin ( me, 'Sparsify_Hessian', cond=.false. )
     nullify( tuples )
     verbose = ( switchDetail(switches, 'hess') > -1 ) .or. .true.
-    call MLSMessageCalls( 'push', constantName=ModuleName // '%SparsifyHessian' )
     select case (h%kind)
     case (h_Full)
       if ( verbose ) call output( 'Sparsifying full hessian', advance='yes' )
@@ -1117,38 +1125,36 @@ o:    do while ( i < n )
       if ( associated(h%values) ) call sparsify_full_Hessian( h )
     case (h_Sparse)
       if ( h%tuplesFilled < 1 ) then
-        call MLSMessageCalls( 'pop' )
+        call trace_end ( 'Sparsify_Hessian', cond=.false. )
         return
-      endif
+      end if
       newSize = count ( h%tuples ( 1:h%tuplesFilled ) % h /= 0._rh )
       if ( verbose ) call outputNamedValue( 'Sparsifying sparse hessian', newsize )
       if ( newSize ==  h%tuplesFilled ) then
-        call MLSMessageCalls( 'pop' )
+        call trace_end ( 'Sparsify_Hessian', cond=.false. )
         return
-      elseif ( newSize > 0 ) then
+      else if ( newSize > 0 ) then
         allocate(tuples(newSize), stat=status)
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-           & "Unable to allocate replacement tuples in Sparsify" )
+        call test_allocate ( status, moduleName, 'Tuples(NewSize)' )
         newSize = 0
         do i = 1, h%tuplesFilled
           if ( h%tuples(i)%h == 0.0 ) cycle
           newSize = newSize + 1
           tuples(newSize) = h%tuples(i)
-        enddo
-      endif
-      deallocate(h%tuples, stat=status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-         & "Unable to deallocate original tuples in Sparsify" )
+        end do
+      end if
+      deallocate ( h%tuples, stat=status )
+      call test_deallocate ( status, moduleName, 'h%tuples' )
       h%tuplesFilled = newSize
       h%tuples => tuples
     case default
       if ( verbose ) call output( 'Sparsifying ??? hessian', advance='yes' )
-      ! We don't need to anything for these cases, do we?
+      ! We don't need to do anything for these cases, do we?
     end select
-    call MLSMessageCalls( 'pop' )
+    call trace_end ( 'Sparsify_Hessian', cond=.false. )
   end subroutine Sparsify_Hessian
 
-  ! ------------------------------------- Sparsify_Hessian_Array_D -----
+  ! -----------------------------------  Sparsify_Hessian_Array_D  -----
   subroutine Sparsify_Hessian_Array_D ( H_Array, H )
   ! Create a sparse representation of H_Array in H.
 
@@ -1162,7 +1168,7 @@ o:    do while ( i < n )
 
   end subroutine Sparsify_Hessian_Array_D
 
-  ! ------------------------------------- Sparsify_Hessian_Array_S -----
+  ! -----------------------------------  Sparsify_Hessian_Array_S  -----
   subroutine Sparsify_Hessian_Array_S ( H_Array, H )
   ! Create a sparse representation of H_Array in H.
 
@@ -1176,7 +1182,7 @@ o:    do while ( i < n )
 
   end subroutine Sparsify_Hessian_Array_S
 
-  !  ----------------------------------------- StreamlineHessian_0 -----
+  !  ---------------------------------------  StreamlineHessian_0  -----
   subroutine StreamlineHessian_0 ( H, Q1, Q2, Surface, ScaleHeight, Threshold )
     ! Remove elements 
     ! (1) between levels separated vertically by more than ScaleHeight (units); or
@@ -1342,7 +1348,7 @@ o:    do while ( i < n )
     call destroyBlock ( emptyBlock )
   end subroutine CreateEmptyBlock
 
-  !  ----------------------------------------- Unsparsify -----
+  !  ------------------------------------------------  Unsparsify  -----
   ! Fill out h%values based on its sparse nTuples (or else zeros)
   ! Should you combine this with Repopulate from MLSFillValues module?
   subroutine Unsparsify ( H )
@@ -1384,6 +1390,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.27  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.26  2012/02/02 01:11:04  pwagner
 ! Added Procedures to Clone, Copy blocks just like with matrices
 !

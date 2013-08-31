@@ -104,9 +104,9 @@ contains ! ====     Public Procedures     ==============================
     if ( present(cond) ) myCond = cond
 
     if ( myCond ) then
-      call push_stack ( name, root, index, before='Enter ', where=.true. )
+      call push_stack ( name, root, index, string, before='Enter ', where=.true. )
     else
-      call push_stack ( name, root, index )
+      call push_stack ( name, root, index, string )
     end if
 
     if ( create_string(MLSNamesAreDebug) == name .and. .not. MLSDebug ) then
@@ -161,7 +161,7 @@ contains ! ====     Public Procedures     ==============================
 
     call top_stack ( frame )
     if ( check > -1 ) then
-      if ( stack_depth() <= 0 ) then
+      if ( frame%tree < 0 .or. stack_depth() <= 0 ) then
         call output ( 'Stack underflow noticed ' )
         if ( present(name) ) call output ( 'with NAME = ' // trim(name) )
         if ( present(index) ) call output ( index, before=' INDEX = ' )
@@ -175,7 +175,8 @@ contains ! ====     Public Procedures     ==============================
         end if
         if ( present(index) ) then
           if ( frame%index /= index ) then
-            call output ( frame%index, before='INDEX at top of stack = ' )
+            call display_string ( frame%text, before='In frame for "' )
+            call output ( frame%index, before='", INDEX at top of stack = ' )
             call output ( index, before=' but INDEX argument = ', advance='yes' )
           end if
         end if
@@ -248,6 +249,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.27  2013/08/31 01:24:01  vsnyder
+! Better debugging output
+!
 ! Revision 2.26  2013/08/30 23:13:20  pwagner
 ! Prevent unwanted printing during routine trace_end
 !
