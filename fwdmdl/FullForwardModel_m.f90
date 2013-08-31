@@ -990,7 +990,7 @@ contains
     ! geodetic locations of the temperature phi basis -- not necessarily
     ! the tangent phi's, which may be somewhat different.
 
-    call Trace_Begin ( Me_Hydro, 'ForwardModel.Hydrostatic', &
+    call Trace_Begin ( me_Hydro, 'ForwardModel.Hydrostatic', &
       & cond=toggle(emit) .and. levels(emit) > 0 )
 
     ! Temperature's windowStart:windowFinish are correct here.
@@ -1846,7 +1846,7 @@ contains
       real(rp) :: R      ! Frequency-averaged value
       integer :: SV_I    ! State-vector index
 
-      call trace_begin ( me, 'ForwardModel.Frequency_Average_Derivative ', &
+      call trace_begin ( me, 'ForwardModel.Frequency_Average_Derivative=', &
           & index=mol, cond=toggle(emit) .and. levels(emit) > 6 )
 
       if ( combine ) then
@@ -1860,7 +1860,7 @@ contains
             k(c,sv_i) = k(c,sv_i) + k_frq(c,sv_i)
           end do
         end do
-        call trace_end ( 'ForwardModel.Frequency_Average_Derivative ', &
+        call trace_end ( 'ForwardModel.Frequency_Average_Derivative=', &
           & index=mol, cond=toggle(emit) .and. levels(emit) > 6 )
         return
       end if
@@ -1920,7 +1920,7 @@ contains
       case default              ! Impossible
       end select                ! Frequency averaging or not
 
-      call trace_end ( 'ForwardModel.Frequency_Average_Derivative ', &
+      call trace_end ( 'ForwardModel.Frequency_Average_Derivative=', &
         & index=mol, cond=toggle(emit) .and. levels(emit) > 6 )
 
     end subroutine Frequency_Average_Derivative
@@ -3044,7 +3044,7 @@ contains
       logical, parameter :: cld_fine = .false.
       real(r8), parameter :: TOL = 1.D-190
 
-      call Trace_Begin ( 'ForwardModel.One_Frequency ', index=frq_i, &
+      call Trace_Begin ( me, 'ForwardModel.One_Frequency=', index=frq_i, &
         & cond=toggle(emit) .and. levels(emit) > 4 )
 
       pfa_or_not_pol = pfa .or. .not. fwdModelConf%polarized
@@ -3754,7 +3754,7 @@ contains
 
       end if
 
-      call Trace_End ( 'ForwardModel.One_Frequency ', index=frq_i, &
+      call Trace_End ( 'ForwardModel.One_Frequency=', index=frq_i, &
         & cond=toggle(emit) .and. levels(emit) > 4 )
 
     end subroutine One_Frequency
@@ -3817,7 +3817,7 @@ contains
       real(rp) :: Tan_Ht ! Geometric tangent height, km, from equivalent Earth center
       real(rp) :: Tan_Ht_S ! Tangent height above 1 bar reference surface, km
 
-      call Trace_Begin ( me, 'ForwardModel.Pointing ', index=ptg_i, &
+      call Trace_Begin ( me, 'ForwardModel.Pointing=', index=ptg_i, &
         & cond=toggle(emit) .and. levels(emit) > 3 )
 
       ! Assume it's not an earth-intersecting ray and min zeta is at
@@ -3975,7 +3975,7 @@ contains
         if ( scat_index < 1 ) then
           call trace_end ( 'ForwardModel.Metrics_Etc', &
             & cond=toggle(emit) .and. levels(emit) > 4 )
-          call trace_end ( 'ForwardModel.Pointing ', index=ptg_i, &
+          call trace_end ( 'ForwardModel.Pointing=', index=ptg_i, &
             & cond=toggle(emit) .and. levels(emit) > 3 )
           return ! No ray to trace
         end if
@@ -4534,7 +4534,7 @@ contains
       ! grid for each pointing, but we don't need to deallocate it here
       ! because the allocate_test in frequency_setup_2 will deallocate it.
 
-      call trace_end ( 'ForwardModel.Pointing ', index=ptg_i, &
+      call trace_end ( 'ForwardModel.Pointing=', index=ptg_i, &
         & cond=toggle(emit) .and. levels(emit) > 3 )
 
       ! End of pointing loop -------------------------------------------------
@@ -4706,6 +4706,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.347  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.346  2013/08/17 02:56:19  vsnyder
 ! Regularize trace usage
 !
