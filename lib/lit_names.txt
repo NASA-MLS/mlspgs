@@ -224,6 +224,7 @@ TScat
 
 uncompressRadiance
 UMLS
+us
 USBFrequency
 
 vmr
@@ -240,6 +241,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.65  2013/09/03 23:59:16  pwagner
+# Added us (microsecond)
+#
 # Revision 2.64  2013/07/25 00:21:27  vsnyder
 # Add MIFRHI
 #
