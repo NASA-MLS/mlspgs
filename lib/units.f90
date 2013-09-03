@@ -52,6 +52,7 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_meters, 1.0d0, phyq_length )
     call declare_unit ( l_km, 1000.0d0, phyq_length )
 
+    call declare_unit ( l_us, 1.0d-6, phyq_time )
     call declare_unit ( l_s, 1.0d0, phyq_time )
     call declare_unit ( l_seconds, 1.0d0, phyq_time )
     call declare_unit ( l_minutes, 60.0d0, phyq_time )
@@ -147,6 +148,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.38  2013/09/03 23:59:33  pwagner
+! Added us (microsecond)
+!
 ! Revision 2.37  2011/12/23 23:32:22  vsnyder
 ! Add MIFExtinctionv2 (as a comment)
 !
