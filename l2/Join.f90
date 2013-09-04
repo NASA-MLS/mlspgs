@@ -33,8 +33,9 @@ module Join                     ! Join together chunk based data.
   ! Parameters for Announce_Error
 
   integer :: ERROR
-  integer, parameter :: NO_ERROR_CODE=0
-  integer, parameter :: NotAllowed=1
+  logical, parameter :: CATENATESPLITS  = .true.
+  integer, parameter :: NO_ERROR_CODE   = 0
+  integer, parameter :: NotAllowed      = 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -402,7 +403,7 @@ contains ! =====     Public Procedures     =============================
       & MLS_CLOSEFILE, MLS_OPENFILE, SPLIT_PATH_NAME
     use MLSHDFEOS, only: MLS_SWATH_IN_FILE
     use MLSKINDS, only: R8
-    use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, &
+    use MLSL2OPTIONS, only: CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, PATCH, SKIPDIRECTWRITES, TOOLKIT
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSPCF2, only: MLSPCF_L2GP_START, MLSPCF_L2GP_END, &
@@ -2227,6 +2228,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.153  2013/09/04 17:35:23  pwagner
+! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+!
 ! Revision 2.152  2013/08/30 02:45:42  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
