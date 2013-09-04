@@ -49,11 +49,14 @@ contains
     & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
     & N_SPEC_INDICES )
 
-    use Intrinsic, only: Begin, Add_Ident, Data_Type_Indices, &
-      & F, Field_Indices, Func_Indices, &
-      & G, Init_Intrinsic, L, Lit_Indices, &
-      & N, P, Parm_Indices, S, Spec_Indices, Section_Indices, T, T_Numeric, Z
-    use Tree_Types, only: N_Arg_Def, N_Func_Def
+    ! "use Tree" really belongs in make_tree, but "make depends" can't see it there
+    ! (because of the "include"):
+    use TREE, only:
+    use INTRINSIC, only: BEGIN, ADD_IDENT, DATA_TYPE_INDICES, &
+      & F, FIELD_INDICES, FUNC_INDICES, &
+      & G, INIT_INTRINSIC, L, LIT_INDICES, &
+      & N, P, PARM_INDICES, S, SPEC_INDICES, SECTION_INDICES, T, T_NUMERIC, Z
+    use TREE_TYPES, only: N_ARG_DEF, N_FUNC_DEF
 
     integer, intent(in) :: N_DATA_TYPE_INDICES
     integer, intent(in) :: N_FIELD_INDICES
@@ -131,6 +134,9 @@ contains
 end module Functions
 
 ! $Log$
+! Revision 2.12  2013/09/04 00:01:39  pwagner
+! Comments preceding use TREE made more uniform across modules
+!
 ! Revision 2.11  2012/03/12 18:35:34  vsnyder
 ! Add ln and log10
 !
