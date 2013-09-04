@@ -138,7 +138,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_BOOLEAN            = s_binSelector + 1
   integer, parameter :: S_CASE               = s_boolean + 1
   integer, parameter :: S_CATCHWARNING       = s_case + 1
-  integer, parameter :: S_CHECKPOINT         = s_catchwarning + 1
+  integer, parameter :: S_CATENATE           = s_catchwarning + 1
+  integer, parameter :: S_CHECKPOINT         = s_catenate + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_checkpoint + 1
   integer, parameter :: S_COLUMNSCALE        = s_chunkDivide + 1
   integer, parameter :: S_COMBINECHANNELS    = s_columnScale + 1
@@ -206,7 +207,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_SELECT             = s_rowscale + 1
   integer, parameter :: S_SIDS               = s_select + 1
   integer, parameter :: S_SKIP               = s_sids + 1
-  integer, parameter :: S_SNOOP              = s_skip + 1
+  integer, parameter :: S_SLEEP              = s_skip + 1
+  integer, parameter :: S_SNOOP              = s_sleep + 1
   integer, parameter :: S_STREAMLINEHESSIAN  = s_snoop + 1
   integer, parameter :: S_SUBSET             = s_streamlineHessian + 1
   integer, parameter :: S_TGRID              = s_subset + 1
@@ -375,6 +377,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_Boolean) =                add_ident ( 'boolean' )
     spec_indices(s_case) =                   add_ident ( 'case' )
     spec_indices(s_catchwarning) =           add_ident ( 'catchwarning' )
+    spec_indices(s_catenate) =               add_ident ( 'catenate' )
     spec_indices(s_checkpoint) =             add_ident ( 'checkpoint' )
     spec_indices(s_chunkDivide) =            add_ident ( 'chunkDivide' )
     spec_indices(s_columnScale) =            add_ident ( 'columnScale' )
@@ -443,6 +446,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_select) =                 add_ident ( 'select' )
     spec_indices(s_sids) =                   add_ident ( 'sids' )
     spec_indices(s_skip) =                   add_ident ( 'skip' )
+    spec_indices(s_sleep) =                  add_ident ( 'sleep' )
     spec_indices(s_snoop) =                  add_ident ( 'snoop' )
     spec_indices(s_streamlineHessian) =      add_ident ( 'streamlineHessian' )
     spec_indices(s_subset) =                 add_ident ( 'subset' )
@@ -1276,6 +1280,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, field_type(t_outputType,req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_catenate, &  ! Must be AFTER s_l2aux and s_l2gp
+             begin, f+f_file, string(), &
+             begin, f+f_type, field_type(t_outputType), &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_sleep, &  ! Must be AFTER s_l2aux and s_l2gp
+             begin, f+f_time, numeric(), &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_ascii, boolean(), &
              begin, f+f_destroy, boolean(), &
@@ -1776,10 +1789,10 @@ contains ! =====     Public procedures     =============================
       begin, z+z_algebra, s+s_columnScale, s+s_combineChannels, s+s_cyclicJacobi, &
              s+s_disjointEquations, s+s_normalEquations, s+s_reflect, &
              s+s_regularization, s+s_rowScale, nc+n_section, &
-      begin, z+z_output, s+s_Boolean, s+s_case, s+s_copy, s+s_destroy, &
-             s+s_diff, s+s_dump, s+s_dumpblocks, s+s_endSelect, s+s_hgrid, &
-             s+s_isSwathEmpty, s+s_output, s+s_Reevaluate, &
-             s+s_select, s+s_Skip, s+s_time, n+n_section /) )
+      begin, z+z_output, s+s_Boolean, s+s_case, s+s_catenate, s+s_copy, &
+             s+s_destroy, s+s_diff, s+s_dump, s+s_dumpblocks, s+s_endSelect, &
+             s+s_hgrid, s+s_isSwathEmpty, s+s_output, s+s_Reevaluate, &
+             s+s_select, s+s_Skip, s+s_Sleep, s+s_time, n+n_section /) )
 
   contains
 
@@ -1960,6 +1973,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.583  2013/09/04 17:36:21  pwagner
+! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+!
 ! Revision 2.582  2013/08/29 19:37:04  pwagner
 ! May Dump plain stack, too
 !
