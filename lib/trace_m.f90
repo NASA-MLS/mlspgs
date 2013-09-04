@@ -140,7 +140,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTOPTIONS
-    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING !, Get_String
     use TOGGLES, only: SWITCHES
 
     character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
@@ -159,7 +159,14 @@ contains ! ====     Public Procedures     ==============================
 
     if ( check < -1 ) check = switchDetail ( switches, 'chktr' )
 
-    call top_stack ( frame )
+    myCond = merge(.true., .false., present(name))
+    if ( present(cond) ) myCond = cond
+    if ( myCond ) then
+      call pop_stack ( 'Exit ', .true., frame=frame )
+    else
+      call pop_stack ( frame=frame, Silent = .true. )
+    end if
+
     if ( check > -1 ) then
       if ( frame%tree < 0 .or. stack_depth() <= 0 ) then
         call output ( 'In Trace_End, stack underflow noticed ' )
@@ -194,16 +201,10 @@ contains ! ====     Public Procedures     ==============================
       MLSVerbose = .true.
     end if
 
+!   call top_stack ( frame )
+!   call get_string ( frame%text, outputOptions%parentName )
     call MLSMessageCalls( 'pop' )
     call MLSMessageCalls( 'top', outputOptions%parentName )  
-
-    myCond = .true.
-    if ( present(cond) ) myCond = cond
-    if ( myCond ) then
-      call pop_stack ( 'Exit ', .true. )
-    else
-      call pop_stack ( Silent = .true. )
-    end if
 
   end subroutine TRACE_END
 
@@ -250,6 +251,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.30  2013/09/04 02:49:35  vsnyder
+! Simplify stack handling in Trace_End
+!
 ! Revision 2.29  2013/08/31 02:26:21  vsnyder
 ! Better debugging output
 !
