@@ -17,7 +17,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 !=======================================================================================
 
   use HDF, only: DFACC_RDONLY, DFACC_RDWR
-  use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, &
+  use MLSL2OPTIONS, only: CHECKPATHS, &
     & DEFAULT_HDFVERSION_WRITE, L2CFNODE, &
     & SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT, MLSMESSAGE
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_WARNING
@@ -85,10 +85,12 @@ contains ! =====     Public Procedures     =============================
       & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, &
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP, L_L2PC, &
-      & S_BOOLEAN, S_CASE, S_COPY, S_DESTROY, S_DIFF, S_DUMP, S_DUMPBLOCKS, &
+      & S_BOOLEAN, S_CASE, S_CATENATE, S_COPY, &
+      & S_DESTROY, S_DIFF, S_DUMP, S_DUMPBLOCKS, &
       & S_ENDSELECT, S_HGRID, S_ISSWATHEMPTY, &
-      & S_OUTPUT, S_REEVALUATE, S_SELECT, S_SKIP, S_TIME
-    use INTRINSIC, only: L_ASCII, L_SWATH, L_HDF, LIT_INDICES, PHYQ_DIMENSIONLESS
+      & S_OUTPUT, S_REEVALUATE, S_SELECT, S_SKIP, S_SLEEP, S_TIME
+    use INTRINSIC, only: L_ASCII, L_SWATH, L_HDF, LIT_INDICES, &
+      & PHYQ_DIMENSIONLESS, PHYQ_TIME
     use L2AUXDATA, only: L2AUXDATA_T, CPL2AUXDATA
     use L2GPDATA, only: AVOIDUNLIMITEDDIMS, L2GPDATA_T, &
       & MAXSWATHNAMESBUFSIZE, WRITEMASTERSFILEATTRIBUTES, CPL2GPDATA
@@ -137,6 +139,7 @@ contains ! =====     Public Procedures     =============================
 
     type (MLSChunk_T) ::  AllChunks     ! in one
     logical :: ASCII                    ! Is this l2pc ascii?
+    integer :: delay                    ! how many microseconds to sleep
     logical :: Destroy                  ! matrices after outputting them
     logical :: create
     integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
@@ -214,25 +217,6 @@ contains ! =====     Public Procedures     =============================
     usingOldSubmit = usingSubmit .and. .not. usingL2Q
     WRITEMASTERSFILEATTRIBUTES = .not. parallel%master ! cp file attributes from slaves
 
-    ! Before looping over lines in l2cf, do any automatic tasks
-    ! Catenate any split Direct Writes
-    ! (Because copy commands may refer to DGG/DGM file)
-    ! We assume hdfVersion is 5
-    ! (Shouldn't you test and report an error if it's not?)
-    if ( CATENATESPLITS .and. associated(DirectDatabase) &
-      & .and. .not. SKIPDIRECTWRITES ) then
-      call output( ' unsplitting dgg/dgm files', advance='yes' )
-      call unsplitFiles ( DirectDatabase, FileDatabase, usingOldSubmit, debug )
-    else
-      call output( 'catenatesplits: ', advance='no' )
-      call output( catenatesplits, advance='yes' )
-      call output( 'associated(DirectDatabase): ', advance='no' )
-      call output( associated(DirectDatabase), advance='yes' )
-      call output( 'skipdirectwrites: ', advance='no' )
-      call output( skipdirectwrites, advance='yes' )
-    end if
-
-    
     AllChunks%firstMAFIndex = chunks(1)%firstMAFIndex
     AllChunks%noMAFsLowerOverlap = chunks(1)%noMAFsLowerOverlap
     AllChunks%lastMAFIndex = chunks(size(chunks))%lastMAFIndex
@@ -280,6 +264,35 @@ contains ! =====     Public Procedures     =============================
       select case ( get_spec_id(key) )
       case ( s_Boolean )
         call decorate ( key,  BooleanFromFormula ( name, key ) )
+      case ( s_Catenate )
+        if ( associated(DirectDatabase) &
+          & .and. .not. SKIPDIRECTWRITES ) then
+          call output( ' unsplitting dgg/dgm files', advance='yes' )
+          call unsplitFiles ( DirectDatabase, FileDatabase, usingOldSubmit, debug )
+        end if
+      case ( s_sleep ) ! ============ Sleep ==========
+        delay = 1000 ! defaults to 1000 microseconds
+        do field_no = 2, nsons(key)       ! Skip the command name
+          gson = subtree(field_no, key)   ! An assign node
+          if ( nsons(gson) > 1 ) then
+            fieldValue = decoration(subtree(2,gson)) ! The field's value
+          else
+            fieldValue = gson
+          end if
+          field_index = decoration(subtree(1,gson))
+          got(field_index) = .true.
+          select case ( field_index )   ! Field name
+          case ( f_create )
+            ! Did we say for how long?
+            call expr ( subtree(2,gson), units, value, type )
+            if ( units(1) /= phyq_time ) &
+              & call Announce_error ( gson, &
+              & 'Wrong units for sleep time')
+            delay = value(1)*1.d6  ! Converted to microseconds
+          case default
+          end select 
+        enddo
+        call usleep ( delay )
       case ( s_select ) ! ============ Start of select .. case ==========
         ! We'll start seeking a matching case
         call MLSSelect (key)
@@ -1782,6 +1795,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.171  2013/09/04 17:35:47  pwagner
+! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+!
 ! Revision 2.170  2013/08/30 02:45:45  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
