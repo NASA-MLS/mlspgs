@@ -149,7 +149,7 @@ contains ! ====     Public Procedures     ==============================
   end function Get_Frame
 
 ! ----------------------------------------------------  Pop_Stack  -----
-  subroutine Pop_Stack ( Before, Where, Silent )
+  subroutine Pop_Stack ( Before, Where, Frame, Silent )
     ! Pop the stack.  If Before or Where are present, dump the top frame first.
 
     use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
@@ -158,6 +158,7 @@ contains ! ====     Public Procedures     ==============================
 
     character(len=*), intent(in), optional :: Before
     logical, intent(in), optional :: Where
+    type(stack_t), intent(out), optional :: Frame
     logical, intent(in), optional :: Silent
 
     double precision :: Delta
@@ -193,7 +194,10 @@ contains ! ====     Public Procedures     ==============================
       call newLine
     end if
 
-    if ( haveStack ) stack_ptr = stack_ptr - 1
+    if ( haveStack ) then
+      if ( present(frame) ) frame = stack(stack_ptr)
+      stack_ptr = stack_ptr - 1
+    end if
 
   end subroutine Pop_Stack
 
@@ -318,6 +322,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.10  2013/09/04 02:49:00  vsnyder
+! Add 'Frame' argument to Pop_Stack to return top frame before popping
+!
 ! Revision 2.9  2013/08/31 02:25:57  vsnyder
 ! Output a blank before Index component in Dump_Stack
 !
