@@ -28,7 +28,7 @@ program MLSL2
     & ADDFILETODATABASE, DEALLOCATE_FILEDATABASE, DUMP, &
     & INITIALIZEMLSFILE, MLS_OPENFILE, MLS_CLOSEFILE
   use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
-  use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, CURRENT_VERSION_ID, &
+  use MLSL2OPTIONS, only: CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, AURA_L1BFILES, NEED_L1BFILES, &
     & NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
@@ -604,8 +604,6 @@ contains
       call outputNamedValue ( 'Allow overlaps outside proc. range?', &
         & (/ChunkDivideConfig%allowPriorOverlaps, ChunkDivideConfig%allowPostOverlaps/), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Catenate split dgg/dgm after run completes?', catenateSplits, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Is this run in forward model parallel?', parallel%fwmParallel, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Avoid creating file on first directWrite?', patch, advance='yes', &
@@ -719,6 +717,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.195  2013/09/04 17:34:52  pwagner
+! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+!
 ! Revision 2.194  2013/08/23 02:52:13  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
