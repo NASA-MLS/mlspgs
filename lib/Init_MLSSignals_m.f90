@@ -11,16 +11,16 @@
 
 module Init_MLSSignals_m
 
-  use INTRINSIC, only: Add_Ident, Begin, D, F, Field_First, G, L, &
-    & Last_Intrinsic_Lit, Last_Intrinsic_Spec, N, NADP, NDP, NP, NR, P, S, &
-    & Spec_First, T, T_Boolean, T_Numeric, T_Numeric_Range, T_Polarization, &
-    & T_String, Z
+  use INTRINSIC, only: ADD_IDENT, BEGIN, D, F, FIELD_FIRST, G, L, &
+    & LAST_INTRINSIC_LIT, LAST_INTRINSIC_SPEC, N, NADP, NDP, NP, NR, P, S, &
+    & SPEC_FIRST, T, T_BOOLEAN, T_NUMERIC, T_NUMERIC_RANGE, T_POLARIZATION, &
+    & T_STRING, Z
 
   use INTRINSIC, only: DATA_TYPE_INDICES, DU, FIELD_INDICES, FUNC_INDICES, &
     & LIT_INDICES, PARM_INDICES, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
     & SECTION_INDICES, SPEC_INDICES
 
-  use MOLECULES, only: Init_Molecules, Last_Molecule, Last_Molecule_Type
+  use MOLECULES, only: INIT_MOLECULES, LAST_MOLECULE, LAST_MOLECULE_TYPE
   implicit NONE
 
   public
@@ -81,7 +81,7 @@ contains
     & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
     & N_SPEC_INDICES )
 
-    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! "use Tree" really belongs in make_tree, but "make depends" can't see it there
     ! (because of the "include"):
     use TREE, only:
     use TREE_TYPES, only: N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
@@ -220,6 +220,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.30  2013/09/04 00:00:59  pwagner
+! Comments preceding use TREE made more uniform across modules
+!
 ! Revision 2.29  2013/08/23 23:23:11  pwagner
 ! Added Aura field to Module spec
 !
