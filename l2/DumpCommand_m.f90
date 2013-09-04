@@ -2472,7 +2472,7 @@ contains
   end function Evaluator_array
 
   function Evaluator_sca ( ARG ) result( ITSVALUE )
-    use MLSL2OPTIONS, only: CATENATESPLITS, CHECKPATHS, NEED_L1BFILES, & ! , SIPS_VERSION
+    use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, &
       & RUNTIMEVALUES, SKIPRETRIEVAL
     use MLSL2TIMINGS, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
     use MLSSTRINGLISTS, only: GETHASHELEMENT
@@ -2482,8 +2482,6 @@ contains
     character(len=MAXRESULTLEN)  :: itsValue
     ! Executable
     select case (arg)
-    case ('catenatesplits')
-      itsValue = merge( 'true ', 'false', catenatesplits )
     case ('checkpaths')
       itsValue = merge( 'true ', 'false', checkpaths )
     case ('chunknumber')
@@ -2494,8 +2492,6 @@ contains
         & inseparator=runTimeValues%sep )
     case ('phasename')
       itsValue = lowercase(currentPhaseName)
-    case ('sips_version')
-      itsValue = 'true' ! merge( 'true ', 'false', sips_version )
     case ('need_l1bfiles')
       itsValue = merge( 'true ', 'false', need_l1bfiles )
     case ('skipretrieval')
@@ -2566,6 +2562,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.94  2013/09/04 16:32:51  pwagner
+! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+!
 ! Revision 2.93  2013/08/31 02:29:12  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
