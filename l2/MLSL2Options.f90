@@ -47,9 +47,6 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! The following should be adjusted before delivery to sips
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-  ! Set the following to TRUE before delivering level 2 to sips
-  ! logical, parameter :: SIPS_VERSION                 =  .true. 
-
   ! The following should be TRUE if run with level 1 as a single PGE
   ! sharing a single PCF
   ! (in which case we need to move some of the "mobile" PCF ids)
@@ -129,8 +126,6 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: STOPWITHERROR                 = .false.         
   ! Whether to do only a pre-flight checkout of paths
   logical            :: CHECKPATHS                    = .false.         
-  ! Whether to catenate split autoDirectWrites
-  logical            :: CATENATESPLITS                = .true.
 
   logical            :: TOOLKIT                       =  .true. ! SIPS_VERSION
   ! --------------------------------------------------------------------------
@@ -351,7 +346,6 @@ contains
     ! Internal variables
     character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
     character(len=16) :: aSwitch
-    logical :: COPYARG               ! Copy this argument to parallel command line
     integer :: DEGREE                ! index affecting degree of option
     logical, parameter :: DEEBUG = .false.
     logical :: EXIST
@@ -403,7 +397,6 @@ contains
     ! Now process the other options
     command_line = ' '
     cmds:    do
-      copyArg = .true.
       call getNextArg ( i, line )
       if ( DEEBUG ) print *, i, trim(line)
       if ( len_trim( line ) < 1 ) then
@@ -417,9 +410,7 @@ contains
           switch = .false.
           n = 1
         end if
-        if ( line(3+n:5+n) == 'cat' ) then
-          catenateSplits = switch
-        else if ( line(3+n:8+n) == 'check ' ) then
+        if ( line(3+n:8+n) == 'check ' ) then
           checkl2cf = switch
         ! Using lowercase so either --checkPaths or --checkpaths work
         ! Perhaps we should do this for all multiletter options
@@ -443,7 +434,6 @@ contains
           showDefaults = switch
         else if ( line(3+n:7+n) == 'delay' ) then
           if ( line(8+n:) /= ' ' ) then
-            copyArg = .false.
             line(:7+n) = ' '
           else
             i = i + 1
@@ -544,7 +534,6 @@ contains
         else if ( line(3+n:7+n) == 'leak' ) then
           checkLeak = .true.
         else if ( line(3+n:9+n) == 'master ' ) then
-          copyArg = .false.
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%master = .true.
           i = i + 1
@@ -557,7 +546,6 @@ contains
           call AccumulateSlaveArguments(word)
         else if ( line(3+n:21+n) == 'maxfailuresperchunk' ) then
           if ( line(22+n:) /= ' ' ) then
-            copyArg = .false.
             line(:21+n) = ' '
           else
             i = i + 1
@@ -570,7 +558,6 @@ contains
           end if
         else if ( line(3+n:23+n) == 'maxfailurespermachine' ) then
           if ( line(24+n:) /= ' ' ) then
-            copyArg = .false.
             line(:23+n) = ' '
           else
             i = i + 1
@@ -584,7 +571,6 @@ contains
         else if ( line(3+n:10+n) == 'memtrack' ) then
           v = 1
           if ( line(11+n:) /= ' ' ) then
-            copyArg = .false.
             read ( line(11+n:), *, iostat=status ) v
             if ( status /= 0 ) then
               call io_error ( "After --memtrack option", status, line )
@@ -638,7 +624,6 @@ contains
           call getNextArg ( i, line )
           sectionsToSkip = lowercase(line)
         else if ( line(3+n:10+n) == 'slavemaf' ) then
-          copyArg=.false.
           if ( line(11+n:) /= ' ' ) then
             line(:10+n) = ' '
           else
@@ -651,7 +636,6 @@ contains
             stop
           end if
         else if ( line(3+n:7+n) == 'slave' ) then
-          copyArg=.false.
           parallel%slave = .true.
           if ( line(8+n:) /= ' ' .and. .false.) then
             line(:7+n) = ' '
@@ -686,7 +670,6 @@ contains
             stop
           end if
         else if ( line(3+n:9+n) == 'stdout ' ) then
-          copyArg = .true.
           if ( .not. switch ) then
             OUTPUT_PRINT_UNIT = INVALIDPRUNIT
             return
@@ -728,7 +711,6 @@ contains
             stop
           end if
         else if ( line(3+n:9+n) == 'submit ' ) then
-          copyArg = .false.
           i = i + 1
           call getNextArg ( i, line )
           parallel%submit = trim ( line )
@@ -911,7 +893,6 @@ jloop:do while ( j < len_trim(line) )
     STOPAFTERSECTION              = ' ' ! Blank means 
     STOPWITHERROR                 = .false.         
     CHECKPATHS                    = .false.         
-    CATENATESPLITS                = .true.
     TOOLKIT                       =  .true. ! SIPS_VERSION
     call init_toggle
     call restoreConfig
@@ -970,6 +951,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.69  2013/09/04 17:34:03  pwagner
+! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+!
 ! Revision 2.68  2013/08/23 02:52:13  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
