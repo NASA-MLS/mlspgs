@@ -267,12 +267,6 @@ while [ "$more_opts" = "yes" ] ; do
        otheropts=`add_option "$otheropts" --tk`
        shift
        ;;
-    --cat )
-       otheropts=`add_option "$otheropts" --cat`
-       echo "Adding argument to catenate split dgg/dgm files: $1" >> $LOGFILE
-       echo "$otheropts" >> $LOGFILE
-       shift
-       ;;
     --wall )
        otheropts=`add_option "$otheropts" --wall`
        echo "Adding argument to use wall clock: $1" >> $LOGFILE
@@ -409,6 +403,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.26  2013/08/30 17:22:46  pwagner
+# Trying to stop slaves from writing to toolkit log
+#
 # Revision 1.25  2013/05/09 18:04:08  pwagner
 # Log return status
 #

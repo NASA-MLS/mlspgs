@@ -91,7 +91,6 @@ SAVEJOBSTATS="yes"
 # variable OTHEROPTS, the following are set:
 # -g       trace path of execution through code sections
 # --wall   show timing in wall clock times
-# --cat    have master task catenate any split dgg/dgm files
 # slv      insert slave outputs among master's stdout
 # mas      show master's pvm activities as they occur
 # chu      show chunk divisions
@@ -99,7 +98,7 @@ SAVEJOBSTATS="yes"
 # log      copy any log file messages to stdout
 # pro      announce input files at opening, output files at creation
 # time     summarize time consumed by each code  section, phase, etc.
-otheropts="$OTHEROPTS -g --wall --cat -S'mas,chu,opt1,log,pro,time'"
+otheropts="$OTHEROPTS -g --wall -S'mas,chu,opt1,log,pro,time'"
 l2cf="$1"
 echo "We were called as $0 $@"
 # Check that assumptions are valid
@@ -309,6 +308,9 @@ else
 fi
 
 # $Log$
+# Revision 1.6  2012/02/15 18:12:06  pwagner
+# Offer last chance to find h5repack in HDFTOOLS directory
+#
 # Revision 1.5  2009/02/13 17:37:05  pwagner
 # Running mlspgs automatically prints license text
 #

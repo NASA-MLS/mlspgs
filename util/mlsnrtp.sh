@@ -59,7 +59,6 @@ GZIPLEVEL="1"
 # variable OTHEROPTS, the following are set:
 # -g       trace path of execution through code sections
 # --wall   show timing in wall clock times
-# --cat    have master task catenate any split dgg/dgm files
 # chu      show chunk divisions
 # opt1     show command line options
 # log      copy any log file messages to stdout
@@ -68,7 +67,7 @@ GZIPLEVEL="1"
 #EXTRA_OPTIONS="$@"
 echo "Launching mlsnrtp with args $@"
 PCF=$2
-otheropts="$OTHEROPTS --sharedPCF -g --wall --cat --submit l2q --delay 20000 -S'l2q,glob,mas,chu,opt1,log,pro,time'"
+otheropts="$OTHEROPTS --sharedPCF -g --wall --submit l2q --delay 20000 -S'l2q,glob,mas,chu,opt1,log,pro,time'"
 
 # Define the tools we will need
 SPARTACUS=$MLSTOOLS/Spartacus
@@ -328,6 +327,9 @@ then
 fi
 
 # $Log$
+# Revision 1.5  2013/07/03 17:53:39  pwagner
+# LOCOUNT and HICOUNT set acceptable range for count of profiles to catch bogus geodetic angles
+#
 # Revision 1.4  2012/08/10 20:10:42  pwagner
 # Some changes to accommodate goldbrick
 #
