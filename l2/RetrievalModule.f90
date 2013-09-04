@@ -1332,7 +1332,7 @@ repeat_loop: do ! RepeatLoop
           end if
         end if
       end if
-      call trace_end
+      call trace_end ( 'Retrieve.FillDiagQty', cond=.false. )
     end subroutine FillDiagQty
 
     ! ----------------------------------------------  FillDiagVec  -----
@@ -1380,7 +1380,7 @@ repeat_loop: do ! RepeatLoop
         & call fillDiagQty ( diagnostics,  l_jacobian_rows, real(jacobian_rows,rv) )
       if ( present ( jacobian_cols ) ) &
         & call fillDiagQty ( diagnostics,  l_jacobian_cols, real(jacobian_cols,rv) )
-      call trace_end
+      call trace_end ( 'Retrieve.FillDiagVec', cond=.false. )
     end subroutine FillDiagVec
 
     ! ----------------------------------------------  GetInBounds  -----
@@ -2890,7 +2890,7 @@ NEWT: do ! Newton iteration
       call destroyVectorInfo ( q )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
       call add_to_retrieval_timing( 'newton_solver', t1 )
-      call trace_end
+      call trace_end ( 'Retrieve.NewtonSolver', cond=.false. )
     end subroutine NewtonSolver
 
     ! ---------------------------------------  NewtonSolverFailed  -----
@@ -2945,6 +2945,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.343  2013/09/04 02:50:05  vsnyder
+! Add 'cond' argument in three calls to Trace_End
+!
 ! Revision 2.342  2013/08/30 02:45:46  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
