@@ -30,7 +30,7 @@ program MLSL2
   use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
   use MLSL2OPTIONS, only: CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
-    & LEVEL1_HDFVERSION, AURA_L1BFILES, NEED_L1BFILES, &
+    & LEVEL1_HDFVERSION, AURA_L1BFILES, MLSL2DEBUG, NEED_L1BFILES, &
     & NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
     & SECTIONTIMES, SECTIONTIMINGUNITS, SHAREDPCF, & ! SIPS_VERSION, &
@@ -236,6 +236,7 @@ program MLSL2
      outputOptions%prunit = MSGLOGPRUNIT   ! output both logged, not sent to stdout
   else if (parallel%slave) then
      outputOptions%prunit = STDOUTPRUNIT   ! output sent only to stdout, not logged
+     call set_config( useToolkit=.false. )
   end if
   i = SwitchDetail(switches, 'log')
   if( i == 0 .or. i > 5 .or. .not. toolkit ) then
@@ -717,6 +718,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.196  2013/09/06 20:58:18  pwagner
+! Trying again to prevent slaves from logging to toolkit
+!
 ! Revision 2.195  2013/09/04 17:34:52  pwagner
 ! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 !
