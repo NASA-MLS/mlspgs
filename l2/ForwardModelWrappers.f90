@@ -795,9 +795,9 @@ contains ! ============= Public Procedures ==========================
     ! Array(index) <= Value < Array(index+1). We want
     ! Array(index) < Value <= Array(index+1).
     call hunt ( f_qty%template%surfs(:,1), lrp, f_lrp )
-    if ( f_qty%template%surfs(f_lrp,1) == f_lrp ) f_lrp = f_lrp - 1
-    call hunt ( ptan%values(p,1), lrp, s_lrp )
-    if ( ptan%values(p(s_lrp),1) == lrp ) s_lrp = s_lrp - 1
+    if ( f_qty%template%surfs(f_lrp,1) == lrp ) f_lrp = f_lrp - 1
+    call hunt ( ptan%values(p,maf), lrp, s_lrp )
+    if ( ptan%values(p(s_lrp),maf) == lrp ) s_lrp = s_lrp - 1
 
     ! Interpolate in Zeta only, from S_Qty to the first column of F_Qty,
     ! above the lowest retrieved pressure
@@ -835,7 +835,7 @@ contains ! ============= Public Procedures ==========================
       do i = 1, f_lrp
         f_qty%values(i,:) = f_qty%values(f_lrp+1,1) * &
           & 10.0_rm ** ( extrapExponent * ( f_qty%template%surfs(i,1) - &
-                                          & ptan%values(p(s_lrp+1),1) ) )
+                                          & ptan%values(p(s_lrp+1),maf) ) )
       end do
 
     case ( l_mifRHI )
@@ -871,6 +871,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.70  2013/09/06 20:44:34  pwagner
+! Fixed bugs in Transform_MIF_Qty
+!
 ! Revision 2.69  2013/08/31 02:29:39  vsnyder
 ! Add tracing in MIF transformation, magnetic field
 !

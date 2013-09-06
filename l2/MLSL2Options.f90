@@ -24,7 +24,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   use OUTPUT_M, only: OUTPUTOPTIONS, &
     & INVALIDPRUNIT, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT, &
     & OUTPUT, OUTPUTNAMEDVALUE
-  use PrintIt_m, only: DEFAULTLOGUNIT, STDOUTLOGUNIT
+  use PrintIt_m, only: DEFAULTLOGUNIT, GET_CONFIG, STDOUTLOGUNIT
 
   implicit none
   public
@@ -128,6 +128,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: CHECKPATHS                    = .false.         
 
   logical            :: TOOLKIT                       =  .true. ! SIPS_VERSION
+  logical            :: MLSL2DEBUG                    =  .false.
   ! --------------------------------------------------------------------------
 
   ! This is the type to store runtime Booleans set and used by the l2cf
@@ -239,6 +240,7 @@ contains
     integer, intent(out), optional :: status ! 0 if msg printed, 1 if suppressed
     type(dbItem_T), intent(in), optional  :: item
     ! Internal variables
+    integer :: logFileUnit  ! Where we will log
     integer :: LogThreshold ! Severity at which we will log
     logical :: mustRepeat   ! if we will repeat via output
     character(len=16) :: myChars
@@ -247,8 +249,9 @@ contains
     logical :: outputInstead   ! if we will call output instead
     character(len=64) :: WarningPreamble
     ! Executable
+    call get_config( logFileUnit=logFileUnit )
     myMessage = Message
-    mustRepeat = ( MLSMessageConfig%logFileUnit == DEFAULTLOGUNIT .and. &
+    mustRepeat = ( logFileUnit == DEFAULTLOGUNIT .and. &
       & OutputOptions%PrUnit == STDOUTPRUNIT )
     LogThreshold = SwitchDetail( switches, 'log' )
     ! Treat log as if it were 'log6'; i.e. output instead every severity
@@ -258,6 +261,14 @@ contains
     if ( LogThreshold > -1 .and. LogThreshold < 6 ) then
       outputInstead = ( severity < LogThreshold .and. &
         & mustRepeat )
+    endif
+    if ( MLSL2DEBUG ) then
+      print *, 'mustRepeat ', mustRepeat
+      print *, 'outputInstead ', outputInstead
+      print *, 'STDOUTPRUNIT ', STDOUTPRUNIT
+      print *, 'OutputOptions%PrUnit ', OutputOptions%PrUnit
+      print *, 'DEFAULTLOGUNIT ', DEFAULTLOGUNIT
+      print *, 'Config%logFileUnit ', logFileUnit
     endif
     ! For severity "info" just do the call and return
     ! For severity "warn" do the call and 
@@ -951,6 +962,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.70  2013/09/06 20:49:17  pwagner
+! Solve another case where we repeated warnings
+!
 ! Revision 2.69  2013/09/04 17:34:03  pwagner
 ! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 !
