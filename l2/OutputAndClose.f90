@@ -25,7 +25,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   implicit none
   private
-  public :: Output_Close, add_metadata
+  public :: OUTPUT_CLOSE, ADD_METADATA
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -40,7 +40,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   logical, parameter :: DGGFILEISHYBRID = .false.      ! may write PCF as DS?
   logical, parameter :: LOGFILEGETSMETADATA = .false.  ! metadata to log file?
   logical, parameter :: FAKEPARALLELMASTER =  .false.  ! make up fake stuff?
-  integer, parameter:: MAXQUANTITIESPERFILE=10000
+  integer, parameter :: MAXQUANTITIESPERFILE = 10000
   ! For Announce_Error
   integer :: ERROR
 
@@ -77,40 +77,35 @@ contains ! =====     Public Procedures     =============================
     use HGRIDSDATABASE, only: HGRID_T, &
       & ADDHGRIDTODATABASE, DUMP
     use INIT_TABLES_MODULE, only: F_CREATE, F_DESTROY, F_DONTPACK, &
-      & F_EXCLUDE, F_FILE, F_HDFVERSION, F_HGRID, &
-      & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
+      & F_FILE, F_HDFVERSION, &
       & F_METADATAONLY, F_METANAME, F_MOLECULESECONDDERIVATIVES, &
-      & F_OPTIONS, F_OVERLAPS, F_PACKED, &
-      & F_QUANTITIES, F_RENAME, F_REPAIRGEOLOCATIONS, &
-      & F_SWATH, F_TYPE, F_WRITECOUNTERMAF, &
+      & F_OVERLAPS, F_PACKED, &
+      & F_QUANTITIES, &
+      & F_TYPE, F_WRITECOUNTERMAF, &
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP, L_L2PC, &
       & S_BOOLEAN, S_CASE, S_CATENATE, S_COPY, &
       & S_DESTROY, S_DIFF, S_DUMP, S_DUMPBLOCKS, &
       & S_ENDSELECT, S_HGRID, S_ISSWATHEMPTY, &
       & S_OUTPUT, S_REEVALUATE, S_SELECT, S_SKIP, S_SLEEP, S_TIME
-    use INTRINSIC, only: L_ASCII, L_SWATH, L_HDF, LIT_INDICES, &
+    use INTRINSIC, only: LIT_INDICES, &
       & PHYQ_DIMENSIONLESS, PHYQ_TIME
-    use L2AUXDATA, only: L2AUXDATA_T, CPL2AUXDATA
-    use L2GPDATA, only: AVOIDUNLIMITEDDIMS, L2GPDATA_T, &
-      & MAXSWATHNAMESBUFSIZE, WRITEMASTERSFILEATTRIBUTES, CPL2GPDATA
+    use L2AUXDATA, only: L2AUXDATA_T
+    use L2GPDATA, only: L2GPDATA_T, WRITEMASTERSFILEATTRIBUTES
     use L2PC_M, only: OUTPUTHDF5L2PC
     use L2PARINFO, only: PARALLEL
     use MATRIXMODULE_1, only: MATRIX_DATABASE_T
     use MATRIXTOOLS, only: DUMPBLOCKS
-    use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T, FILENAMELEN, L2METADATA_T
+    use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T, FILENAMELEN
     use MLSFILES, only: &
-      & ADDINITIALIZEMLSFILE, DUMP, GETMLSFILEBYNAME, &
-      & MLS_INQSWATH
+      & DUMP
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
-      & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END, &
-      & MLSPCF_L2CLIM_START, MLSPCF_L2CLIM_END
-    use MLSSTRINGLISTS, only: INTERSECTION, SWITCHDETAIL
-    use MLSSTRINGS, only: LOWERCASE, TRIM_SAFE
+    use MLSPCF2, only: MLSPCF_L2GP_END, &
+      & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MLSSTRINGS, only: TRIM_SAFE
     use MORETREE, only: GET_SPEC_ID, GET_BOOLEAN
-    use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, REVERTOUTPUT, SWITCHOUTPUT
-    use PCFHDR, only: HE5_WRITEMLSFILEATTR
+    use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -131,60 +126,38 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type (griddedData_T), dimension(:), pointer :: GriddedDataBase
     type (TAI93_Range_T), intent(in) :: processingRange
-    type (L2Metadata_T) :: l2metaData ! L2GP metadata 
 
     logical, intent(in) :: canWriteL2PC ! Flag
 
     ! - - - Local declarations - - -
 
     type (MLSChunk_T) ::  AllChunks     ! in one
-    logical :: ASCII                    ! Is this l2pc ascii?
-    integer :: delay                    ! how many microseconds to sleep
-    logical :: Destroy                  ! matrices after outputting them
-    logical :: create
-    integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
     logical, parameter :: DEBUG = .false.
-    character (len=MAXSWATHNAMESBUFSIZE) :: EXCLUDE   ! From the exclude= field
+    integer :: delay                    ! how many microseconds to sleep
+    logical :: DESTROY
+    integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
     integer :: FIELD_INDEX              ! F_... field code
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     integer :: FIELDVALUE               ! For get_boolean
     character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
-    integer :: FORMATTYPE               ! l_hdf or l_swath
     logical, dimension(field_first:field_last) :: GOT ! Fields
     integer :: GSON                     ! Son of Son -- an assign node
-    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
-    integer :: HGridIndex
     type (HGrid_T), dimension(:), pointer :: HGrids => null()
-    character (len=FileNameLen) :: INPUTFILE_BASE    ! From the inputfile= field
-    character (len=FileNameLen) :: inputPhysicalFilename
-    integer :: INPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
-    type(MLSFile_T), pointer :: inputFile
+    integer :: HDFVERSION
     integer :: KEY                      ! Index of spec_args node
-    integer :: listSize
     integer :: Me = -1                  ! String index for trace
     integer :: Metadata_error
     character (len=32) :: meta_name     ! From the metaName= field
     integer :: NAME                     ! string index of label on output
-    logical :: newFile                  ! is this file new?
     type (HGrid_T), target :: newHGrid
     type (HGrid_T), pointer :: newHGridp
     integer :: NODE
     integer :: noGapsHGIndex = 0
-    integer :: noSwaths
-    character(len=8) :: optionsString   ! e.g. '-f'
     integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
-    type(MLSFile_T), pointer :: outputFile
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     logical :: PACKED                   ! Do we pack this l2pc?
-    character (len=FileNameLen) :: PhysicalFilename
     integer :: QUANTITIESNODE           ! A tree node
-    integer :: RECLEN                   ! For file stuff
-    character (len=MAXSWATHNAMESBUFSIZE) :: rename
-    logical :: RepairGeoLocations
-    character (len=MAXSWATHNAMESBUFSIZE) :: sdList
-    character (len=MAXSWATHNAMESBUFSIZE) :: sdListThere
     integer :: SECONDDERIVNODE
-    logical :: skipCopy
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: SPEC_NO                  ! Index of son of Root
     real :: T1, T2     ! for timing
@@ -196,7 +169,7 @@ contains ! =====     Public Procedures     =============================
     double precision :: Value(2)        ! Value returned by EXPR
     logical :: TIMING
     logical :: WriteCounterMAF          ! Add the counter MAF field
-    logical :: WriteMetaDataOnly        ! Because it was a directWrite
+    logical :: writeMetaDataOnly
 
     ! Executable code
 
@@ -228,25 +201,13 @@ contains ! =====     Public Procedures     =============================
       print *, 'lastMAFIndex: ', AllChunks%lastMAFIndex
       call dump(AllChunks)
     endif
-    inputPhysicalFilename = ' '
-    PhysicalFilename = ' '
     ! Loop over the lines in the l2cf
 
     do spec_no = 2, nsons(root)-1 ! Skip name at begin and end of section
 
-      hdfVersion = DEFAULT_HDFVERSION_WRITE
-      exclude = ''
       meta_name = ''
-      sdList = '*' ! This is wildcard meaning 'every sd or swath'
-      rename = ' ' ! This is a blank meaning 'Dont rename the swaths'
-      optionsString = ' ' ! This is a blank meaning 'Dont rename the swaths'
       writeCounterMAF = .false.
-      writeMetaDataOnly = .false.
       got = .false.
-      repairGeoLocations = .false.
-      skipCopy = .false.
-      create = .false.
-      newFile = .false.
 
       son = subtree(spec_no,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -315,256 +276,7 @@ contains ! =====     Public Procedures     =============================
         if ( checkPaths ) cycle
         call decorate ( key, BooleanFromEmptySwath ( key ) )
       case ( s_copy )
-        do field_no = 2, nsons(key)       ! Skip the command name
-          gson = subtree(field_no, key)   ! An assign node
-          if ( nsons(gson) > 1 ) then
-            fieldValue = decoration(subtree(2,gson)) ! The field's value
-          else
-            fieldValue = gson
-          end if
-          field_index = decoration(subtree(1,gson))
-          got(field_index) = .true.
-          select case ( field_index )   ! Field name
-          case ( f_create )
-            create = get_boolean ( gson )
-          case ( f_exclude )
-            call get_string ( sub_rosa(subtree(2,gson)), exclude, strip=.true. )
-          case ( f_file )
-            call get_string ( sub_rosa(subtree(2,gson)), file_base, strip=.true. )
-            if ( DEBUG ) print *, 'file_base: ', trim(file_base)
-          case ( f_hdfVersion )
-            call expr ( subtree(2,gson), units, value, type )
-            if ( units(1) /= phyq_dimensionless ) &
-              & call Announce_error ( gson, &
-              & 'No units allowed for hdfVersion: just integer 4 or 5')
-            hdfVersion = value(1)
-          case ( f_hgrid )
-            HGridIndex = decoration(fieldValue)
-            if ( DEBUG ) print *, 'HGridIndex: ', HGridIndex
-          case ( f_ifAnyCrashedChunks )
-            skipCopy = get_boolean ( gson ) .and. &
-              & ( parallel%numFailedChunks == 0 )
-          case ( f_inputfile )
-            call get_string ( sub_rosa(subtree(2, gson)), inputfile_base, strip=.true. )
-          case ( f_inputtype )
-            input_type = decoration(subtree(2, gson))
-          case ( f_options )
-            call get_string ( sub_rosa(subtree(2, gson)), optionsString, strip=.true. )
-            optionsString = lowerCase(optionsString)
-            if (switchDetail( switches, 'pro') > 0 ) &
-              & call outputNamedValue( 'options', trim(optionsString) )
-          case ( f_rename )
-            call get_string ( sub_rosa(subtree(2,gson)), rename, strip=.true. )
-          case ( f_repairGeoLocations )
-            repairGeoLocations = get_boolean ( gson )
-          case ( f_swath )
-            call get_string ( sub_rosa(subtree(2,gson)), sdList, strip=.true. )
-          case ( f_type )
-            output_type = decoration(subtree(2, gson))
-            call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
-          case default                  ! Parser should have caught this
-          end select
-        end do
-        ! Make certain we have everything we need
-        if ( ( got(f_repairGeoLocations) .and. .not. got(f_hgrid) ) ) &
-          & call MLSMessage(MLSMSG_Error, ModuleName, &
-          & "Cannot repair Geolocs w/o an HGrid to copy from")
-        if ( .not. associated(HGrids) ) then
-          if ( got(f_hgrid) ) &
-          & call MLSMessage(MLSMSG_Error, ModuleName, &
-          & "No HGrids defined yet")
-        else
-          if ( ( size(HGrids) < 1 .and. got(f_hgrid) ) ) &
-          & call MLSMessage(MLSMSG_Error, ModuleName, &
-          & "No HGrids defined yet")
-        endif
-        if ( ( got(f_swath) .and. got(f_exclude) ) ) &
-          & call MLSMessage(MLSMSG_Error, ModuleName, &
-          & "Cannot copy specifying both swaths and excludes")
-        ! To skip or not to skip
-        if ( skipCopy ) then
-          call MLSMessage(MLSMSG_Info, ModuleName, &
-          & "No crashed chunks so skipping this copy")
-          cycle
-        endif
-        if ( .not. got(f_inputtype) ) input_type = output_type
-
-        select case ( output_type )
-        case ( l_l2aux ) ! --------------------- Copying l2aux files -----
-          call returnFullFileName(file_base, PhysicalFilename, &
-            & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
-          outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
-          if ( .not. associated(outputFile) ) then
-            newFile = .true.
-            outputFile => AddInitializeMLSFile(filedatabase, &
-              & content=outputTypeStr, &
-              & name=PhysicalFilename, shortName=file_base, &
-              & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-              & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
-          endif
-        case ( l_l2gp ) ! --------------------- Copying l2gp files -----
-          call returnFullFileName(file_base, PhysicalFilename, &
-            & mlspcf_l2gp_start, mlspcf_l2gp_end)
-          outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
-          if ( .not. associated(outputFile) ) then
-            newFile = .true.
-            outputFile => AddInitializeMLSFile(filedatabase, &
-              & content=outputTypeStr, &
-              & name=PhysicalFilename, shortName=file_base, &
-              & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-              & PCBottom=mlspcf_l2gp_start, PCTop=mlspcf_l2gp_end)
-          endif
-        case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
-          call returnFullFileName(file_base, PhysicalFilename, &
-            & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
-          outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
-          if ( .not. associated(outputFile) ) then
-            newFile = .true.
-            outputFile => AddInitializeMLSFile(filedatabase, &
-              & content=outputTypeStr, &
-              & name=PhysicalFilename, shortName=file_base, &
-              & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
-              & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
-          endif
-        case default
-        end select
-
-        if ( .not. associated(outputFile) ) then
-          call MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Unable to Copy to ' // trim(PhysicalFilename) )
-        endif
-        if ( DEBUG ) call dump( outputFile, details=2 )
-
-        select case ( input_type )
-        case ( l_l2aux ) ! --------------------- Copying l2aux files -----
-          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-            & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
-          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
-          if ( .not. associated(inputFile) ) then
-            call MLSMessage(MLSMSG_Error, ModuleName, &
-              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
-          endif
-        case ( l_l2gp ) ! --------------------- Copying l2gp files -----
-          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-            & mlspcf_l2gp_start, mlspcf_l2gp_end)
-          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
-          if ( .not. associated(inputFile) ) then
-            call MLSMessage(MLSMSG_Error, ModuleName, &
-              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
-          endif
-        case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
-          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-            & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
-          inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
-          if ( .not. associated(inputFile) ) then
-            call output( ' output base ', advance='no' )
-            call output( trim(file_base), advance='yes' )
-            call output( ' output file ', advance='no' )
-            call output( trim(outputFile%name), advance='yes' )
-            call output( ' input base ', advance='no' )
-            call output( trim(inputfile_base), advance='yes' )
-            call output( ' input file ', advance='no' )
-            call output( '(not associated)', advance='yes' )
-            call dump(filedatabase)
-            call MLSMessage(MLSMSG_Error, ModuleName, &
-              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
-          endif
-        case ( l_ascii, l_l2cf ) ! --------------------- Copying ascii files -----
-          call returnFullFileName(inputfile_base, inputPhysicalFilename, &
-            & mlspcf_l2clim_start, mlspcf_l2clim_end)
-          inputFile => AddInitializeMLSFile( filedatabase, &
-              & content=trim(inputfile_base), &
-              & name=inputPhysicalFilename, shortName=inputfile_base, &
-              & type=l_ascii, access=DFACC_RDWR, &
-              & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end )
-          if ( .not. associated(inputFile) ) then
-            call MLSMessage(MLSMSG_Warning, ModuleName, &
-              & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
-            cycle
-          endif
-          if ( DEBUG ) call dump( inputFile )
-        case default
-        end select
-
-        if ( DEBUG ) print *, 'inputPhysicalfileName: ', trim(inputPhysicalfileName)
-        if ( DEBUG ) print *, 'outputPhysicalfileName: ', trim(PhysicalfileName)
-        if ( DEBUG ) print *, 'repairGeoLocations: ', repairGeoLocations
-        if ( DEBUG ) print *, 'create: ', create
-        if ( DEBUG ) call display_string ( lit_indices(output_type), &
-        &             strip=.true., advance='yes' )
-        if ( DEBUG ) call display_string ( lit_indices(input_type), &
-        &             strip=.true., advance='yes' )
-
-        if ( CHECKPATHS ) cycle
-
-        if ( DEBUG ) call dump( inputFile, details=2 )
-        if ( repairGeoLocations ) optionsString = trim(optionsString) // 'r'
-        select case ( output_type )
-        case ( l_l2aux ) ! --------------------- Copying to l2aux files -----
-          formattype = l_hdf
-          ! Note that we haven't yet implemented repair stuff for l2aux
-          ! So crashed chunks remain crashed chunks
-          if ( input_type /= output_type ) then
-            ! So far we only allow copying text files
-            if ( .not. any( input_type == (/ l_ascii, l_l2cf /) ) ) then
-              call MLSMessage(MLSMSG_Warning, ModuleName, &
-              & 'Unable to copy to l2aux file file type for' // trim(inputPhysicalFilename) )
-              cycle
-            endif
-            call CopyTextFileToHDF ( file_base, DEBUG, filedatabase, inputFile )
-          else
-            call cpL2AUXData(inputFile, &
-              & outputFile, create2=create, &
-              & sdList=trim(sdList))
-          endif
-        case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
-          formattype = l_swath
-          ! How to use swaths field? See definition of sdList
-          ! Before trying to cp these swaths, make sure they're actually there
-          noSwaths = mls_InqSwath ( inputFile%name, sdListThere, listSize, &
-           & hdfVersion=inputFile%hdfVersion )
-          sdList = Intersection( sdList, sdListThere )
-          if ( sdList == ' ' ) cycle
-          if ( got(f_exclude) .and. .not. repairGeoLocations ) then
-            call cpL2GPData( l2metaData, inputfile, &
-              & outputfile, create2=create, &
-              & exclude=trim(exclude), &
-              & notUnlimited=avoidUnlimitedDims, &
-              & andGlAttributes=copyFileAttributes, options=optionsString )
-          elseif ( .not. got(f_exclude) .and. repairGeoLocations ) then
-            if ( DEBUG ) print *,' size(filedatabse) ', size(filedatabase)
-            if ( DEBUG ) print *, 'input file: ', trim(inputPhysicalFilename)
-            if ( DEBUG ) print *, 'output file: ', trim(PhysicalFilename)
-            call cpL2GPData( l2metaData, inputfile, &
-              & outputfile, create2=create, &
-              & swathList=trim(sdList), rename=rename, &
-              & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes, &
-              & HGrid=HGrids(HGridIndex), options=optionsString )
-          elseif ( got(f_exclude) .and. repairGeoLocations ) then
-            call cpL2GPData( l2metaData, inputfile, &
-              & outputfile, create2=create, &
-              & swathList=trim(sdList), rename=rename, &
-              & exclude=trim(exclude), &
-              & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes, &
-              & HGrid=HGrids(HGridIndex), options=optionsString )
-          else
-            call cpL2GPData( l2metaData, inputfile, &
-              & outputfile, create2=create, &
-              & swathList=trim(sdList), rename=rename, &
-              & notUnlimited=avoidUnlimitedDims, &
-              & andGlAttributes=copyFileAttributes, options=optionsString )
-          endif
-          call he5_writeMLSFileAttr( outputFile )
-          if ( noGapsHGIndex > 0 ) &
-            & call writeHGridComponents( trim(PhysicalFilename), &
-            & HGrids(noGapsHGIndex) )
-        case default
-        end select
-        
-        if ( TOOLKIT .and. newFile ) then
-          call add_metadata ( son, file_base, l2metaData, &
-          & outputfile%hdfVersion, formattype, metadata_error )
-        endif
+        call copyQuantity( key, filedatabase )
 
       case ( s_Destroy )
         call destroyCommand ( key, matrices, vectors, griddedDataBase )
@@ -630,19 +342,19 @@ contains ! =====     Public Procedures     =============================
         select case ( output_type )
         case ( l_l2cf ) ! ------------------------------ Writing l2cf file ---
           call CopyTextFileToHDF ( file_base, DEBUG, filedatabase )
-          cycle
+          return
 
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
         if ( noGapsHGIndex > 0 ) newHGridp => HGrids(noGapsHGIndex)
           call OutputL2GP ( key, file_base, DEBUG, &
             & output_type, mlspcf_l2gp_start, mlspcf_l2gp_end, &
             & filedatabase, l2gpDatabase, newHGridp )
-          if ( .not. TOOLKIT ) cycle
+          if ( .not. TOOLKIT ) return
 
         case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
           call OutputL2AUX ( key, file_base, DEBUG, writeCounterMAF, &
             & filedatabase, l2auxDatabase )
-          if ( .not. TOOLKIT ) cycle
+          if ( .not. TOOLKIT ) return
 
         case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
           if ( checkPaths ) exit   ! Not done on sips, so this is good enough
@@ -651,8 +363,6 @@ contains ! =====     Public Procedures     =============================
           ! In that case, I will ignore the possibility of checkPaths being true
           if ( .not. canWriteL2PC ) call MLSMessage( MLSMSG_Error, ModuleName, &
             & "Cannot write l2pc files with multi chunk l2cf's" )
-          recLen = 0
-          ascii = .false.
           destroy = .false.
           packed = .false.
           secondDerivNode = 0
@@ -690,7 +400,7 @@ contains ! =====     Public Procedures     =============================
           call OutputL2GP ( key, file_base, DEBUG, &
             & output_type, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
             & filedatabase, l2gpDatabase, newHGridp )
-          if ( .not. TOOLKIT ) cycle
+          if ( .not. TOOLKIT ) return
 
         case default
           if ( any(output_type /= (/ l_l2gp, l_l2dgg, l_l2aux, l_l2pc /)) ) then
@@ -1045,6 +755,342 @@ contains ! =====     Public Procedures     =============================
       call output ( Code, advance='yes' )
     end  if
   end subroutine ANNOUNCE_ERROR
+
+  ! ---------------------------------------------  CopyQuantity  -----
+  subroutine CopyQuantity ( key, fileDatabase )
+    ! Do the work of copying named quantity data to a named file
+    use EXPR_M, only: EXPR
+    use HGRIDSDATABASE, only: HGRID_T, DUMP
+    use INIT_TABLES_MODULE, only: F_CREATE, &
+      & F_EXCLUDE, F_FILE, F_HDFVERSION, F_HGRID, &
+      & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
+      & F_OPTIONS, &
+      & F_RENAME, F_REPAIRGEOLOCATIONS, &
+      & F_SWATH, F_TYPE, &
+      & FIELD_FIRST, FIELD_LAST, &
+      & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP
+    use INTRINSIC, only: L_ASCII, L_SWATH, L_HDF, LIT_INDICES, &
+      & PHYQ_DIMENSIONLESS
+    use L2AUXDATA, only: CPL2AUXDATA
+    use L2GPDATA, only: AVOIDUNLIMITEDDIMS, &
+      & MAXSWATHNAMESBUFSIZE, CPL2GPDATA
+    use L2PARINFO, only: PARALLEL
+    use MLSCOMMON, only: MLSFILE_T, FILENAMELEN, L2METADATA_T
+    use MLSFILES, only: ADDINITIALIZEMLSFILE, DUMP, GETMLSFILEBYNAME, &
+      & MLS_INQSWATH
+    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
+      & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END, &
+      & MLSPCF_L2CLIM_START, MLSPCF_L2CLIM_END
+    use MLSSTRINGLISTS, only: INTERSECTION, SWITCHDETAIL
+    use MLSSTRINGS, only: LOWERCASE
+    use MORETREE, only: GET_BOOLEAN
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use PCFHDR, only: HE5_WRITEMLSFILEATTR
+    use TOGGLES, only: SWITCHES
+    use TREE, only: DECORATION, NSONS, SUBTREE, SUB_ROSA
+    ! Args
+    integer, intent(in)                       :: KEY
+    type (MLSFile_T), dimension(:), pointer   :: FILEDATABASE
+    ! Local variables
+    logical :: create
+    logical, parameter :: DEBUG = .false.
+    character (len=MAXSWATHNAMESBUFSIZE) :: EXCLUDE   ! From the exclude= field
+    integer :: FIELD_INDEX              ! F_... field code
+    integer :: FIELD_NO                 ! Index of assign vertex sons of Key
+    integer :: FIELDVALUE               ! For get_boolean
+    character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
+    integer :: FORMATTYPE               ! l_hdf or l_swath
+    logical, dimension(field_first:field_last) :: GOT ! Fields
+    type (HGrid_T), dimension(:), pointer :: HGrids => null()
+    integer :: GSON                     ! Son of Son -- an assign node
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: HGridIndex
+    integer :: INPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
+    type(MLSFile_T), pointer :: inputFile
+    character (len=FileNameLen) :: INPUTFILE_BASE    ! From the inputfile= field
+    character (len=FileNameLen) :: inputPhysicalFilename
+    type (L2Metadata_T) :: l2metaData ! L2GP metadata 
+    integer :: listSize
+    integer :: Metadata_error
+    logical :: newFile                  ! is this file new?
+    integer :: noGapsHGIndex = 0
+    integer :: noSwaths
+    character(len=8) :: optionsString   ! e.g. '-f'
+    integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
+    type(MLSFile_T), pointer :: outputFile
+    character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
+    character (len=FileNameLen) :: PhysicalFilename
+    character (len=MAXSWATHNAMESBUFSIZE) :: rename
+    logical :: RepairGeoLocations
+    character (len=MAXSWATHNAMESBUFSIZE) :: sdList
+    character (len=MAXSWATHNAMESBUFSIZE) :: sdListThere
+    logical :: skipCopy
+    integer :: SON                      ! Of Root -- spec_args or named node
+    integer :: Type                     ! Type of value returned by EXPR
+    integer :: Units(2)                 ! Units of value returned by EXPR
+    double precision :: Value(2)        ! Value returned by EXPR
+    ! Executable
+    hdfVersion = DEFAULT_HDFVERSION_WRITE
+    exclude = ''
+    sdList = '*' ! This is wildcard meaning 'every sd or swath'
+    rename = ' ' ! This is a blank meaning 'Dont rename the swaths'
+    optionsString = ' ' ! This is a blank meaning 'Dont rename the swaths'
+    got = .false.
+    repairGeoLocations = .false.
+    skipCopy = .false.
+    create = .false.
+    newFile = .false.
+    do field_no = 2, nsons(key)       ! Skip the command name
+      gson = subtree(field_no, key)   ! An assign node
+      if ( nsons(gson) > 1 ) then
+        fieldValue = decoration(subtree(2,gson)) ! The field's value
+      else
+        fieldValue = gson
+      end if
+      field_index = decoration(subtree(1,gson))
+      got(field_index) = .true.
+      select case ( field_index )   ! Field name
+      case ( f_create )
+        create = get_boolean ( gson )
+      case ( f_exclude )
+        call get_string ( sub_rosa(subtree(2,gson)), exclude, strip=.true. )
+      case ( f_file )
+        call get_string ( sub_rosa(subtree(2,gson)), file_base, strip=.true. )
+        if ( DEBUG ) print *, 'file_base: ', trim(file_base)
+      case ( f_hdfVersion )
+        call expr ( subtree(2,gson), units, value, type )
+        if ( units(1) /= phyq_dimensionless ) &
+          & call Announce_error ( gson, &
+          & 'No units allowed for hdfVersion: just integer 4 or 5')
+        hdfVersion = value(1)
+      case ( f_hgrid )
+        HGridIndex = decoration(fieldValue)
+        if ( DEBUG ) print *, 'HGridIndex: ', HGridIndex
+      case ( f_ifAnyCrashedChunks )
+        skipCopy = get_boolean ( gson ) .and. &
+          & ( parallel%numFailedChunks == 0 )
+      case ( f_inputfile )
+        call get_string ( sub_rosa(subtree(2, gson)), inputfile_base, strip=.true. )
+      case ( f_inputtype )
+        input_type = decoration(subtree(2, gson))
+      case ( f_options )
+        call get_string ( sub_rosa(subtree(2, gson)), optionsString, strip=.true. )
+        optionsString = lowerCase(optionsString)
+        if (switchDetail( switches, 'pro') > 0 ) &
+          & call outputNamedValue( 'options', trim(optionsString) )
+      case ( f_rename )
+        call get_string ( sub_rosa(subtree(2,gson)), rename, strip=.true. )
+      case ( f_repairGeoLocations )
+        repairGeoLocations = get_boolean ( gson )
+      case ( f_swath )
+        call get_string ( sub_rosa(subtree(2,gson)), sdList, strip=.true. )
+      case ( f_type )
+        output_type = decoration(subtree(2, gson))
+        call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
+      case default                  ! Parser should have caught this
+      end select
+    end do
+    ! Make certain we have everything we need
+    if ( ( got(f_repairGeoLocations) .and. .not. got(f_hgrid) ) ) &
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & "Cannot repair Geolocs w/o an HGrid to copy from")
+    if ( .not. associated(HGrids) ) then
+      if ( got(f_hgrid) ) &
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & "No HGrids defined yet")
+    else
+      if ( ( size(HGrids) < 1 .and. got(f_hgrid) ) ) &
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & "No HGrids defined yet")
+    endif
+    if ( ( got(f_swath) .and. got(f_exclude) ) ) &
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & "Cannot copy specifying both swaths and excludes")
+    ! To skip or not to skip
+    if ( skipCopy ) then
+      call MLSMessage(MLSMSG_Info, ModuleName, &
+      & "No crashed chunks so skipping this copy")
+      return
+    endif
+    if ( .not. got(f_inputtype) ) input_type = output_type
+
+    select case ( output_type )
+    case ( l_l2aux ) ! --------------------- Copying l2aux files -----
+      call returnFullFileName(file_base, PhysicalFilename, &
+        & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
+      outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
+      if ( .not. associated(outputFile) ) then
+        newFile = .true.
+        outputFile => AddInitializeMLSFile(filedatabase, &
+          & content=outputTypeStr, &
+          & name=PhysicalFilename, shortName=file_base, &
+          & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end)
+      endif
+    case ( l_l2gp ) ! --------------------- Copying l2gp files -----
+      call returnFullFileName(file_base, PhysicalFilename, &
+        & mlspcf_l2gp_start, mlspcf_l2gp_end)
+      outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
+      if ( .not. associated(outputFile) ) then
+        newFile = .true.
+        outputFile => AddInitializeMLSFile(filedatabase, &
+          & content=outputTypeStr, &
+          & name=PhysicalFilename, shortName=file_base, &
+          & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+          & PCBottom=mlspcf_l2gp_start, PCTop=mlspcf_l2gp_end)
+      endif
+    case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
+      call returnFullFileName(file_base, PhysicalFilename, &
+        & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
+      outputFile => GetMLSFileByName(filedatabase, PhysicalFilename)
+      if ( .not. associated(outputFile) ) then
+        newFile = .true.
+        outputFile => AddInitializeMLSFile(filedatabase, &
+          & content=outputTypeStr, &
+          & name=PhysicalFilename, shortName=file_base, &
+          & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+          & PCBottom=mlspcf_l2dgg_start, PCTop=mlspcf_l2dgg_end)
+      endif
+    case default
+    end select
+
+    if ( .not. associated(outputFile) ) then
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to Copy to ' // trim(PhysicalFilename) )
+    endif
+    if ( DEBUG ) call dump( outputFile, details=2 )
+
+    select case ( input_type )
+    case ( l_l2aux ) ! --------------------- Copying l2aux files -----
+      call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+        & mlspcf_l2dgm_start, mlspcf_l2dgm_end)
+      inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
+      if ( .not. associated(inputFile) ) then
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+      endif
+    case ( l_l2gp ) ! --------------------- Copying l2gp files -----
+      call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+        & mlspcf_l2gp_start, mlspcf_l2gp_end)
+      inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
+      if ( .not. associated(inputFile) ) then
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+      endif
+    case ( l_l2dgg ) ! --------------------- Copying l2dgg files -----
+      call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+        & mlspcf_l2dgg_start, mlspcf_l2dgg_end)
+      inputFile => GetMLSFileByName(filedatabase, inputPhysicalFilename)
+      if ( .not. associated(inputFile) ) then
+        call output( ' output base ', advance='no' )
+        call output( trim(file_base), advance='yes' )
+        call output( ' output file ', advance='no' )
+        call output( trim(outputFile%name), advance='yes' )
+        call output( ' input base ', advance='no' )
+        call output( trim(inputfile_base), advance='yes' )
+        call output( ' input file ', advance='no' )
+        call output( '(not associated)', advance='yes' )
+        call dump(filedatabase)
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+      endif
+    case ( l_ascii, l_l2cf ) ! --------------------- Copying ascii files -----
+      call returnFullFileName(inputfile_base, inputPhysicalFilename, &
+        & mlspcf_l2clim_start, mlspcf_l2clim_end)
+      inputFile => AddInitializeMLSFile( filedatabase, &
+          & content=trim(inputfile_base), &
+          & name=inputPhysicalFilename, shortName=inputfile_base, &
+          & type=l_ascii, access=DFACC_RDWR, &
+          & PCBottom=mlspcf_l2clim_start, PCTop=mlspcf_l2clim_end )
+      if ( .not. associated(inputFile) ) then
+        call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(inputPhysicalFilename) )
+        return
+      endif
+      if ( DEBUG ) call dump( inputFile )
+    case default
+    end select
+
+    if ( DEBUG ) print *, 'inputPhysicalfileName: ', trim(inputPhysicalfileName)
+    if ( DEBUG ) print *, 'outputPhysicalfileName: ', trim(PhysicalfileName)
+    if ( DEBUG ) print *, 'repairGeoLocations: ', repairGeoLocations
+    if ( DEBUG ) print *, 'create: ', create
+    if ( DEBUG ) call display_string ( lit_indices(output_type), &
+    &             strip=.true., advance='yes' )
+    if ( DEBUG ) call display_string ( lit_indices(input_type), &
+    &             strip=.true., advance='yes' )
+
+    if ( CHECKPATHS ) return
+
+    if ( DEBUG ) call dump( inputFile, details=2 )
+    if ( repairGeoLocations ) optionsString = trim(optionsString) // 'r'
+    select case ( output_type )
+    case ( l_l2aux ) ! --------------------- Copying to l2aux files -----
+      formattype = l_hdf
+      ! Note that we haven't yet implemented repair stuff for l2aux
+      ! So crashed chunks remain crashed chunks
+      if ( input_type /= output_type ) then
+        ! So far we only allow copying text files
+        if ( .not. any( input_type == (/ l_ascii, l_l2cf /) ) ) then
+          call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'Unable to copy to l2aux file file type for' // trim(inputPhysicalFilename) )
+          return
+        endif
+        call CopyTextFileToHDF ( file_base, DEBUG, filedatabase, inputFile )
+      else
+        call cpL2AUXData(inputFile, &
+          & outputFile, create2=create, &
+          & sdList=trim(sdList))
+      endif
+    case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
+      formattype = l_swath
+      ! How to use swaths field? See definition of sdList
+      ! Before trying to cp these swaths, make sure they're actually there
+      noSwaths = mls_InqSwath ( inputFile%name, sdListThere, listSize, &
+       & hdfVersion=inputFile%hdfVersion )
+      sdList = Intersection( sdList, sdListThere )
+      if ( sdList == ' ' ) return
+      if ( got(f_exclude) .and. .not. repairGeoLocations ) then
+        call cpL2GPData( l2metaData, inputfile, &
+          & outputfile, create2=create, &
+          & exclude=trim(exclude), &
+          & notUnlimited=avoidUnlimitedDims, &
+          & andGlAttributes=copyFileAttributes, options=optionsString )
+      elseif ( .not. got(f_exclude) .and. repairGeoLocations ) then
+        if ( DEBUG ) print *,' size(filedatabse) ', size(filedatabase)
+        if ( DEBUG ) print *, 'input file: ', trim(inputPhysicalFilename)
+        if ( DEBUG ) print *, 'output file: ', trim(PhysicalFilename)
+        call cpL2GPData( l2metaData, inputfile, &
+          & outputfile, create2=create, &
+          & swathList=trim(sdList), rename=rename, &
+          & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes, &
+          & HGrid=HGrids(HGridIndex), options=optionsString )
+      elseif ( got(f_exclude) .and. repairGeoLocations ) then
+        call cpL2GPData( l2metaData, inputfile, &
+          & outputfile, create2=create, &
+          & swathList=trim(sdList), rename=rename, &
+          & exclude=trim(exclude), &
+          & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes, &
+          & HGrid=HGrids(HGridIndex), options=optionsString )
+      else
+        call cpL2GPData( l2metaData, inputfile, &
+          & outputfile, create2=create, &
+          & swathList=trim(sdList), rename=rename, &
+          & notUnlimited=avoidUnlimitedDims, &
+          & andGlAttributes=copyFileAttributes, options=optionsString )
+      endif
+      call he5_writeMLSFileAttr( outputFile )
+      if ( noGapsHGIndex > 0 ) &
+        & call writeHGridComponents( trim(PhysicalFilename), &
+        & HGrids(noGapsHGIndex) )
+    case default
+    end select
+
+    if ( TOOLKIT .and. newFile ) then
+      call add_metadata ( son, file_base, l2metaData, &
+      & outputfile%hdfVersion, formattype, metadata_error )
+    endif
+  end subroutine CopyQuantity
 
   ! ---------------------------------------------  OutputL2AUX  -----
   subroutine OutputL2AUX ( key, fileName, DEBUG, writeCounterMAF, &
@@ -1795,6 +1841,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.172  2013/09/06 21:10:45  pwagner
+! Move CopyQuantity into a separate subroutine
+!
 ! Revision 2.171  2013/09/04 17:35:47  pwagner
 ! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 !
