@@ -31,17 +31,6 @@ module PrintIt_m
   integer, parameter, public :: PGS_S_SUCCESS = 0
   integer, parameter, public :: PrefixLen = 32
 
-  type, private :: Config_t
-    logical :: AsciifyMessages = .true.
-    integer :: LogFileUnit = DefaultLogUnit
-    integer :: Severity_To_Quit = 0
-    logical :: UseDefaultFormatStdout = .false.
-    logical :: UseToolkit = .true.
-    character(len=prefixLen) :: Prefix = ''
-  end type Config_t
-
-  type(config_t), private, save :: Config
-
   ! May get some of these from MLSCommon? 
   ! Define some low level parameters.  These are used by the calling code to
   ! indicate the severity or otherwise of the messages.
@@ -66,11 +55,14 @@ module PrintIt_m
      & "Deallocation failed: "
   type, public :: MLSMessageConfig_T
     ! We log messages by toolkit (if useToolkit and UseSDPToolkit are TRUE )
+    ! --- ------- ------ ------- ------- ------- -------
     ! In the following, values would have the effect of adding logged messages:
     ! DEFAULTLOGUNIT: none added
     ! STDOUTLOGUNIT:  to stdout
     !  n > 0:         to ftn unit n
     integer :: logFileUnit             = DEFAULTLOGUNIT ! -2
+    ! --- ------- ------ ------- ------- ------- -------
+
     ! In the following, values would have the effect on identical warnings of:
     ! -1: Print every one without suppression
     !  0: Suppress every one
@@ -104,6 +96,10 @@ module PrintIt_m
     ! Track the last file we were reading/writing if an error occurs and
     ! that file isn't passed in the call statement
     type(MLSFile_T) :: MLSFile = MLSFile_T() ! which file were we reading/writing last?
+
+    logical :: AsciifyMessages = .true.
+    integer :: Severity_To_Quit = 0
+    logical :: UseDefaultFormatStdout = .false.
   end type MLSMessageConfig_T
 
   ! This variable describes the configuration
@@ -196,12 +192,12 @@ contains
     logical, intent(out), optional :: Asciify, UseDefaultFormatStdout, UseToolkit
     integer, intent(out), optional :: LogFileUnit, Severity_to_Quit
     character(len=*), intent(out), optional :: Prefix
-    if ( present(asciify) ) asciify = config%asciifyMessages 
-    if ( present(logFileUnit) ) logFileUnit = config%logFileUnit 
-    if ( present(prefix) ) prefix = config%prefix
-    if ( present(severity_to_quit) ) severity_to_quit = config%severity_to_quit 
-    if ( present(useDefaultFormatStdout) ) useDefaultFormatStdout = config%useDefaultFormatStdout
-    if ( present(useToolkit) ) useToolkit = config%useToolkit
+    if ( present(asciify) ) asciify = MLSMessageConfig%asciifyMessages 
+    if ( present(logFileUnit) ) logFileUnit = MLSMessageConfig%logFileUnit 
+    if ( present(prefix) ) prefix = MLSMessageConfig%prefix
+    if ( present(severity_to_quit) ) severity_to_quit = MLSMessageConfig%severity_to_quit 
+    if ( present(useDefaultFormatStdout) ) useDefaultFormatStdout = MLSMessageConfig%useDefaultFormatStdout
+    if ( present(useToolkit) ) useToolkit = MLSMessageConfig%useToolkit
   end subroutine Get_Config
 
   ! ------------------------------------------------  LogUnitName  -----
@@ -238,14 +234,14 @@ contains
     character(len=len(inline)) :: Line
     logical :: log_it
     integer :: loggedLength
-    character(len=len(inline)+len(config%prefix)) :: loggedLine
+    character(len=len(inline)+len(MLSMessageConfig%prefix)) :: loggedLine
     integer :: ioerror
     integer :: maxLineLength
     logical :: myNoExit
     logical :: myNoPrefix
     logical, parameter :: DEEBUG = .false.
     ! Executable
-    if ( config%AsciifyMessages ) then
+    if ( MLSMessageConfig%AsciifyMessages ) then
       line = asciify(inLine)
     else
       line = inLine
@@ -257,33 +253,33 @@ contains
     myNoPrefix = .false.
     if ( present(noPrefix) ) myNoPrefix = noPrefix
     loggedLine = line
-    if ( trim(config%prefix) /= ' ' .and. .not. myNoPrefix ) then
-      loggedLength = loggedLength + len_trim(config%prefix)
-      loggedLine = trim(config%prefix) // &
+    if ( trim(MLSMessageConfig%prefix) /= ' ' .and. .not. myNoPrefix ) then
+      loggedLength = loggedLength + len_trim(MLSMessageConfig%prefix)
+      loggedLine = trim(MLSMessageConfig%prefix) // &
            & trim(line)
     end if
     maxLineLength = min( loggedLength, len(loggedLine) )
-    log_it = (config%useToolkit .and. UseSDPToolkit) .or. &
-      & severity >= config%severity_to_quit
+    log_it = (MLSMessageConfig%useToolkit .and. UseSDPToolkit) .or. &
+      & severity >= MLSMessageConfig%severity_to_quit
     if ( DEEBUG .and. log_it ) then
       print *, 'trim(loggedLine) ', trim(loggedLine)
       print *, 'maxLineLength ', maxLineLength
     endif
-    if( log_it .and. maxLineLength > 0 .and. config%useToolkit ) then
+    if( log_it .and. maxLineLength > 0 .and. MLSMessageConfig%useToolkit ) then
       ioerror = PGS_SMF_GenerateStatusReport ( loggedLine(1:maxLineLength) )
     end if
 
     ! Now, if we're also logging to a file then write to that too.
-    select case ( config%logFileUnit  )
+    select case ( MLSMessageConfig%logFileUnit  )
     case ( StdoutLogUnit  )
-      if ( config%useDefaultFormatStdout ) then
+      if ( MLSMessageConfig%useDefaultFormatStdout ) then
         write ( unit=*, fmt=* ) trim(line)
       else
         write ( unit=*, fmt='(a)' ) trim(line)
       end if
     case ( defaultLogUnit )
     case default
-      write ( UNIT=max(config%logFileUnit,1), FMT=* ) trim(line)
+      write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) trim(line)
     end select
     ! Have we been tasked with something more?
     ! Exit? Crash?
@@ -362,19 +358,19 @@ contains
     logical, intent(in), optional :: Asciify, UseDefaultFormatStdout, UseToolkit
     integer, intent(in), optional :: LogFileUnit, Severity_to_Quit
     character(len=*), intent(in), optional :: Prefix
-    if ( present(asciify) ) config%asciifyMessages  = asciify
-    if ( present(logFileUnit) ) config%logFileUnit  = logFileUnit
-    if ( present(prefix) ) config%prefix = prefix
-    if ( present(severity_to_quit) ) config%severity_to_quit  = severity_to_quit
-    if ( present(useToolkit) ) config%useToolkit = useToolkit
-    if ( present(useDefaultFormatStdout) ) config%useDefaultFormatStdout = useDefaultFormatStdout
+    if ( present(asciify) ) MLSMessageConfig%asciifyMessages  = asciify
+    if ( present(logFileUnit) ) MLSMessageConfig%logFileUnit  = logFileUnit
+    if ( present(prefix) ) MLSMessageConfig%prefix = prefix
+    if ( present(severity_to_quit) ) MLSMessageConfig%severity_to_quit  = severity_to_quit
+    if ( present(useToolkit) ) MLSMessageConfig%useToolkit = useToolkit
+    if ( present(useDefaultFormatStdout) ) MLSMessageConfig%useDefaultFormatStdout = useDefaultFormatStdout
   end subroutine Set_Config
 
 ! *****  Private Procedures     ****************************************
 
   ! -------------------------------------------------  ASCIIFY  -----
   ! takes input string and replaces any non-printing characters
-  ! with corresponding ones in range [32,126]
+  ! with a substitute '@'
   function ASCIIFY (STR) result (OUTSTR)
     !--------Argument--------!
     character (len=*), intent(in) :: STR
@@ -416,6 +412,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.6  2013/09/06 20:41:38  pwagner
+! Remove config in favor of using MLSMessageConfig
+!
 ! Revision 2.5  2013/08/30 23:11:27  pwagner
 ! NoExit option prevents unwanted stop
 !
