@@ -44,13 +44,12 @@ REECHO="`echo $0 | sed 's/mlsnrt/reecho/'`"
 # variable OTHEROPTS, the following are set:
 # -g       trace path of execution through code sections
 # --wall   show timing in wall clock times
-# --cat    have master task catenate any split dgg/dgm files
 # chu      show chunk divisions
 # opt1     show command line options
 # log      copy any log file messages to stdout
 # pro      announce input files at opening, output files at creation
 # time     summarize time consumed by each code  section, phase, etc.
-otheropts="$OTHEROPTS -g --wall --cat -S'chu,opt1,log,pro,time'"
+otheropts="$OTHEROPTS -g --wall -S'chu,opt1,log,pro,time'"
 
 # Check that assumptions are valid
 if [ "$PGS_PC_INFO_FILE" = "" ]
@@ -286,6 +285,9 @@ else
 fi
 
 # $Log$
+# Revision 1.6  2013/07/02 22:49:09  pwagner
+# LOCOUNT and HICOUNT set acceptable range for count of profiles to catch bogus geodetic angles
+#
 # Revision 1.5  2012/08/10 20:09:26  pwagner
 # Some changes to accommodate goldbrick
 #
