@@ -776,7 +776,23 @@ contains
 
   subroutine restoreConfig
     use PrintIt_m, only: SET_CONFIG
-    MLSMessageConfig = MLSMessageConfig_T()
+    ! The next won't work because of Intel v12 internal compiler error
+    ! MLSMessageConfig = MLSMessageConfig_T()
+    ! So instead,
+    MLSMessageConfig%limitWarnings           = 1000 
+    MLSMessageConfig%prefix                  = ' '  
+    MLSMessageConfig%skipModuleNamesThr      = MLSMSG_Success ! Always show module   
+    MLSMessageConfig%skipSeverityThr         = MLSMSG_Success ! Always show severit  
+    MLSMessageConfig%skipMessageThr          = MLSMSG_Success ! Always show messages  
+    MLSMessageConfig%suppressDebugs          = .false.                                
+    MLSMessageConfig%AsciifyMessages         = .true.                                                                            
+    MLSMessageConfig%MaxModuleNameLength     = 32
+    MLSMessageConfig%MaxSeverityNameLength   = 8 
+    MLSMessageConfig%CrashOnAnyError         = .false. ! See crash warning                                                       
+    MLSMessageConfig%SendErrMsgToMaster      = .false. ! send last gasp to master?                                               
+    MLSMessageConfig%ShowCumulativeSeverity  = .false. ! print severity_so_far?                
+    MLSMessageConfig%StackTrace              = .false. ! Trace via MLSMessageCalls?            
+
     MLSMSG_Severity_to_quit                  = MLSMSG_Error
     MLSMSG_Severity_to_walkback              = MLSMSG_Error
     call set_config ( asciify=.true., prefix='' )
@@ -975,6 +991,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.28  2013/09/09 18:37:15  pwagner
+! Workaround for ifort v12 internal compiler error
+!
 ! Revision 2.27  2013/08/30 23:15:53  pwagner
 ! Fixed some bugs preventing effective dump_stack
 !
