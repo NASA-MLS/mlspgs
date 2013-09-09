@@ -132,6 +132,8 @@ else
    MLSCFILE=.configure
 endif
 
+SRCLIB=srclib
+-include $(SRCLIB)/Makefile.h
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
@@ -408,6 +410,12 @@ else
  $(UTCDIR)/mls_UTCjdtoTAIjd.c \
  test.f90
 endif
+
+# We have custom build commands for the srclib .f90 source files
+# in custmblds, so omit build commands from the Makefile.dep
+# automatcially created in srclib
+CUSTOM_BUILDS=tree_checker.f90 getCF_m.f90
+CUSTOM_PREFXD := $(shell ${REECHO} -dir srclib -prefix=-db $(CUSTOM_BUILDS))
 
 # Here are some miscellaneous variables for special tools
 MIESOURCESWITHHDF = $(shell ${REECHO} -excl $(MIE)/WriteNoHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
@@ -1176,7 +1184,8 @@ internaldepends:
         cd srclib; \
         temp_name_1=`../${UNIQUE_NAME} 1` ;\
         temp_name_2=`../${UNIQUE_NAME} 2` ;\
-        ../$(MLSBIN)/makemakedep.sh -p $$temp_name_1 ../lib ../l2; \
+        ../$(MLSBIN)/makemakedep.sh -p $$temp_name_1 $(UP_OR_LOW)  $(CUSTOM_PREFXD) \
+           ../lib ../l2; \
         sed 's/OBJS =/srclib_objs =/' $$temp_name_1 > $$temp_name_2; \
         rm -f $$temp_name_1 ; \
         mv $$temp_name_2 Makefile.dep; \
@@ -1312,6 +1321,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.137  2013/08/09 16:56:02  pwagner
+# Can build [Un]WrapList
+#
 # Revision 1.136  2013/06/05 18:58:10  pwagner
 # Should reverse hiding files in machines directory after calculating dependency
 #
