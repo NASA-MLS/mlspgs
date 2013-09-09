@@ -22,58 +22,60 @@ MakeFName = MakeFC
 
 # ---------------------- Paths to special directories
 # where to store .configure
-CONFDIR=..
+ifndef CONFDIR
+ CONFDIR := ..
+endif
 
 # where configure and makemakedep.sh are stored
-MLSBIN=../util
+MLSBIN=$(CONFDIR)/util
 
 # where sources for cfm are stored
-cfm_sources=../cfm
+cfm_sources=$(CONFDIR)/cfm
 
 # where objects and libcfm.a are stored
 cfm_objs=$(cfm_sources)/$(MLSCONFG)
 
 # where sources for l1 are stored
-l1_sources=../l1
+l1_sources=$(CONFDIR)/l1
 
 # where objects and libmls.a are stored
 l1_objs=$(l1_sources)/$(MLSCONFG)
 
 # where sources for l2 are stored
-l2_sources=../l2
+l2_sources=$(CONFDIR)/l2
 
 # where objects and libmls.a are stored
 l2_objs=$(l2_sources)/$(MLSCONFG)
 
 # where sources for libmls.a are stored
-libmls_sources=../lib
+libmls_sources=$(CONFDIR)/lib
 
 # where objects and libmls.a are stored
 libmls_objs=$(libmls_sources)/$(MLSCONFG)
 
 # where sources (but not OBJS) shared with l3, etc. are stored
-srclib=../srclib
+srclib=$(CONFDIR)/srclib
 
 # where sources (but not OBJS) shared with l3, etc. are stored
-blaslib=../blas
+blaslib=$(CONFDIR)/blas
 
 # where blas objects and libmlspack.a are stored
 libblas_objs=$(blaslib)/$(MLSCONFG)
 
 # where sources for the forward model are stored
-libfwdmdl_sources=../fwdmdl
+libfwdmdl_sources=$(CONFDIR)/fwdmdl
 
 # where forward model objects and libfwdmdl.a are stored
 libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
 
 # where sources for the cloud forward model are stored
-libcloud_sources=../cloudfwdm
+libcloud_sources=$(CONFDIR)/cloudfwdm
 
 # where cloud forward model objects and libfwdmdl.a are stored
 libcloud_objs=$(libcloud_sources)/$(MLSCONFG)
 
 # where sources for the cloud forward model are stored
-libmlsl3_sources=../l3
+libmlsl3_sources=$(CONFDIR)/l3
 
 # where cloud forward model objects and libfwdmdl.a are stored
 libmlsl3_objs=$(libmlsl3_sources)/$(MLSCONFG)
@@ -81,7 +83,7 @@ libmlsl3_objs=$(libmlsl3_sources)/$(MLSCONFG)
 # where certain databses are stored relating to species, molecules, etc.
 # currently used only by make to build mol_parm.f9h and mol_add.f9h
 # for which see special rules in customblds
-TABLES_DIR=../tables
+TABLES_DIR=$(CONFDIR)/tables
 
 # where the platforms directory is
 PLATFORMS = .
@@ -224,6 +226,9 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR) $(UPTODATEMARKS)
 
 # $Log$
+# Revision 1.6  2012/06/19 23:06:42  pwagner
+# Can be used by l3, l3m
+#
 # Revision 1.5  2012/04/05 18:37:03  pwagner
 # Stopped cpp warnings about everything
 #
