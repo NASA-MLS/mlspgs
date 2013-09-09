@@ -12,9 +12,10 @@
 
 module PrintIt_m
 
-  use ISO_FORTRAN_ENV, only: ERROR_UNIT, OUTPUT_UNIT
+  ! use ISO_FORTRAN_ENV, only: ERROR_UNIT, OUTPUT_UNIT
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCOMMON, only: MLSFILE_T
+  use SDPToolkit, only: USESDPTOOLKIT, PGS_SMF_GENERATESTATUSREPORT
 
   implicit none
   private
@@ -95,7 +96,7 @@ module PrintIt_m
     logical :: StackTrace              = .false. ! Trace via MLSMessageCalls?
     ! Track the last file we were reading/writing if an error occurs and
     ! that file isn't passed in the call statement
-    type(MLSFile_T) :: MLSFile = MLSFile_T() ! which file were we reading/writing last?
+    type(MLSFile_T) :: MLSFile ! = MLSFile_T() (crashes under intel v12)
 
     logical :: AsciifyMessages = .true.
     integer :: Severity_To_Quit = 0
@@ -222,7 +223,6 @@ contains
   ! -------------------------------------------------  PrintItOut  -----
   subroutine PrintItOut ( INLINE, SEVERITY, LINE_LEN, NOPREFIX, EXITSTATUS, NOEXIT  )
     ! In any way we're asked
-    use SDPToolkit, only: USESDPTOOLKIT, PGS_SMF_GENERATESTATUSREPORT
     ! Args
     character(len=*), intent(in) :: INLINE
     integer, intent(in) :: SEVERITY
@@ -412,6 +412,9 @@ contains
 end module PrintIt_m
 
 ! $Log$
+! Revision 2.7  2013/09/09 18:36:58  pwagner
+! Workaround for ifort v12 internal compiler error
+!
 ! Revision 2.6  2013/09/06 20:41:38  pwagner
 ! Remove config in favor of using MLSMessageConfig
 !
