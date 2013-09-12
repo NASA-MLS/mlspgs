@@ -17,7 +17,7 @@ module MLSStringLists               ! Module to treat string lists
     & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT
   use MLSCOMMON, only: BAREFNLEN
   use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGS, only: CAPITALIZE, LOWERCASE, NCOPIES, &
+  use MLSSTRINGS, only: ASCIIFY, CAPITALIZE, LOWERCASE, NCOPIES, &
     & READINTSFROMCHARS, REPLACE, REVERSE, &
     & SPLITDETAILS, SPLITNEST, STREQ, TRIM_SAFE, WRITEINTSTOCHARS
 
@@ -455,9 +455,9 @@ contains
       call SplitNest ( collapsedstr, part1, part2, part3 )
       ! Now evaluate the part2
       if ( DeeBUG ) then
-        print *, 'part1 ', part1
-        print *, 'part2 ', part2
-        print *, 'part3 ', part3
+        print *, 'part1 ', trim(part1)
+        print *, 'part2 ', trim(part2)
+        print *, 'part3 ', trim(part3)
       endif
       if ( part2 == ' ' ) then
         ! This should never happen with well-formed formulas
@@ -478,7 +478,7 @@ contains
           & ' ' // part3
       endif
       if ( DeeBUG ) then
-        print *, 'collapsedstr ', collapsedstr
+        print *, 'collapsedstr ', trim(collapsedstr)
       endif
     enddo
     ! Presumably we have collapsed all the nested '(..)' pairs by now
@@ -538,6 +538,12 @@ contains
           call GetHashElement( lkeys, lvalues, trim(variable), part, &
             & countEmpty=.true., inseparator=separator )
           hit = .true.
+          if ( DeeBug ) then
+            print *, trim(variable), ' is ', part
+            if ( present(separator) ) print *, 'iachar(separator)', ' is ', iachar(separator)
+            print *, 'keys', ' is ', trim(lkeys)
+            print *, 'values', ' is ', lvalues
+          endif
         end select
         if ( hit ) then
           if ( negating ) part = .not. part
@@ -594,8 +600,13 @@ contains
     if ( status /= 0 ) call myMessage( MLSMSG_Error, ModuleName, &
       & 'Unable to allocate lvalues in BooleanValue_str' )
     do key = 1, nkeys
+      ! print *, 'value(key) ', &
+      !   & adjustl(lowercase(StringElement ( strvalues, key, countEmpty, inseparator=separator )))
       lvalues(key) = index( &
-        & adjustl(lowercase(StringElement ( strvalues, key, countEmpty ))), 't') == 1
+        & adjustl(lowercase(&
+        & StringElement ( strvalues, key, countEmpty, inseparator=separator )&
+        & )) &
+        & , 't') == 1
     enddo
     BooleanValue = BooleanValue_log ( str, lkeys, lvalues, separator )
     deallocate ( lvalues, stat=status )
@@ -4350,6 +4361,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.62  2013/09/12 23:26:47  pwagner
+! Fixed bug in converting strvalues to lvalues in BooleanValue_str
+!
 ! Revision 2.61  2013/08/28 00:38:17  pwagner
 ! Added a local version of MyMessage to evade possible circular dependency
 !
