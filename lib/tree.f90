@@ -276,9 +276,12 @@ contains
     call output ( '', advance=advance )
   end subroutine DUMP_TREE_NODE
 
-  subroutine DUMP_TREE_NODE_NAME ( WHERE )
+  subroutine DUMP_TREE_NODE_NAME ( WHERE, ADVANCE, BEFORE )
     integer, intent(in) :: WHERE
-    call display_string ( tree_texts(the_tree(where) % node) )
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE
+    call display_string ( tree_texts(the_tree(where) % node), advance=advance, &
+                        & before=before )
   end subroutine DUMP_TREE_NODE_NAME
 
   subroutine INIT_TREE
@@ -632,6 +635,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.18  2013/09/12 03:12:46  vsnyder
+! Add Advance and Before to Dump_Tree_Node_Name
+!
 ! Revision 2.17  2013/08/28 00:36:21  pwagner
 ! Moved more stuff from MLSMessage down to PrintIt module
 !
