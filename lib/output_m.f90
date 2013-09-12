@@ -878,7 +878,7 @@ contains
     elseif ( amount == int(amount) ) then
       write ( howMuch, '(i6)' ) int(amount)
     else
-      write ( howMuch, '(f6.1)' ) amount
+      write ( howMuch, '(f8.1)' ) amount
     end if
     call output_ ( trim(adjustl(howMuch)) )
     call output_ ( trim(suffix) )
@@ -2945,6 +2945,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.107  2013/09/12 01:56:50  vsnyder
+! Change f6.1 format to f8.1 format in DumpSize_Double
+!
 ! Revision 2.106  2013/08/28 00:35:39  pwagner
 ! Moved more stuff from MLSMessage down to PrintIt module
 !
