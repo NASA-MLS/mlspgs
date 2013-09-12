@@ -34,7 +34,7 @@ module TRACE_M
 contains ! ====     Public Procedures     ==============================
 
 ! ------------------------------------------------  TRACE_BEGIN_B  -----
-  subroutine TRACE_BEGIN_B ( NAME_I, NAME_C, ROOT, INDEX, String, Cond )
+  subroutine TRACE_BEGIN_B ( NAME_I, NAME_C, ROOT, INDEX, String, Cond, Advance )
   ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
   ! We assume the actual argument is a SAVE variable.  Thereby, if
   ! Name_I is positive, we assume it's the result of entering Name_C,
@@ -51,14 +51,15 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: INDEX
     integer, intent(in), optional :: String ! To display after Name_I
     logical, intent(in), optional :: Cond   ! Print if true, default true
+    character(len=*), intent(in), optional :: Advance
 
     if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
-    call trace_begin ( name_i, root, index, string, cond )
+    call trace_begin ( name_i, root, index, string, cond, advance )
 
   end subroutine TRACE_BEGIN_B
 
 ! ------------------------------------------------  TRACE_BEGIN_C  -----
-  subroutine TRACE_BEGIN_C ( NAME_C, ROOT, INDEX, String, Cond )
+  subroutine TRACE_BEGIN_C ( NAME_C, ROOT, INDEX, String, Cond, Advance )
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
@@ -69,6 +70,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: INDEX
     integer, intent(in), optional :: String ! To display after Name_C
     logical, intent(in), optional :: Cond   ! Print if true, default true
+    character(len=*), intent(in), optional :: Advance
 
     integer :: Name_I
 
@@ -78,7 +80,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine TRACE_BEGIN_C
 
 ! ------------------------------------------------  TRACE_BEGIN_I  -----
-  subroutine TRACE_BEGIN_I ( NAME, ROOT, INDEX, String, Cond )
+  subroutine TRACE_BEGIN_I ( NAME, ROOT, INDEX, String, Cond, Advance )
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
@@ -93,6 +95,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: INDEX
     integer, intent(in), optional :: String ! To display after Name_I
     logical, intent(in), optional :: Cond   ! Print if true, default true
+    character(len=*), intent(in), optional :: Advance
 
     logical :: MyCond
 
@@ -104,7 +107,8 @@ contains ! ====     Public Procedures     ==============================
     if ( present(cond) ) myCond = cond
 
     if ( myCond ) then
-      call push_stack ( name, root, index, string, before='Enter ', where=.true. )
+      call push_stack ( name, root, index, string, before='Enter ', &
+        & where=.true., advance=advance )
     else
       call push_stack ( name, root, index, string )
     end if
@@ -132,9 +136,6 @@ contains ! ====     Public Procedures     ==============================
   ! bother with this if you can see both Trace_Begin and Trace_end, and
   ! they're invoked with the same condition.
 
-  ! Index is no longer used.  It's taken from the stack, but retained for
-  ! compatibility.
-
     use CALL_STACK_M, only: POP_STACK, STACK_T, STACK_DEPTH, TOP_STACK
     use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
@@ -144,7 +145,7 @@ contains ! ====     Public Procedures     ==============================
     use TOGGLES, only: SWITCHES
 
     character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
-    integer, intent(in), optional :: INDEX ! No longer used -- taken from stack
+    integer, intent(in), optional :: INDEX ! Use value from stack if not present
     logical, intent(in), optional :: Cond  ! Print if true, default true
 
     integer :: Check = -2
@@ -162,9 +163,9 @@ contains ! ====     Public Procedures     ==============================
     myCond = merge(.true., .false., present(name))
     if ( present(cond) ) myCond = cond
     if ( myCond ) then
-      call pop_stack ( 'Exit ', .true., frame=frame )
+      call pop_stack ( 'Exit ', .true., frame=frame, index=index )
     else
-      call pop_stack ( frame=frame, Silent = .true. )
+      call pop_stack ( frame=frame, index=index, Silent = .true. )
     end if
 
     if ( check > -1 ) then
@@ -251,6 +252,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.31  2013/09/12 03:12:13  vsnyder
+! Add Advance to Trace_Begin, pass Index through Trace_End to Pop_Stack
+!
 ! Revision 2.30  2013/09/04 02:49:35  vsnyder
 ! Simplify stack handling in Trace_End
 !
