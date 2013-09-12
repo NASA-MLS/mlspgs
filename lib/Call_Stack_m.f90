@@ -49,7 +49,8 @@ module Call_Stack_m
 contains ! ====     Public Procedures     ==============================
 
 ! ---------------------------------------------------  Dump_Stack  -----
-  subroutine Dump_Stack ( Top, Before, Where, Size, CPU, DoDepth, Rev, Advance )
+  subroutine Dump_Stack ( Top, Before, Where, Size, CPU, DoDepth, Rev, Index, &
+                        & Advance )
     ! Dump the call stack.  If Top is present and true, dump only the top
     ! frame.  If Before is present, print it after "depth" dots and before
     ! anything else.  If Where is present and true, and the Tree component
@@ -69,6 +70,7 @@ contains ! ====     Public Procedures     ==============================
     logical, intent(in), optional :: CPU   ! Print CPU (default false)
     logical, intent(in), optional :: DoDepth ! Print "depth" dots (default true)
     logical, intent(in), optional :: Rev   ! Print in reverse order (default false)
+    integer, intent(in), optional :: Index ! Print this instead of from stack
     character(len=*), intent(in), optional :: Advance ! Default 'yes'
 
     character(len=3) :: MyAdvance
@@ -116,7 +118,11 @@ contains ! ====     Public Procedures     ==============================
       if ( stack(depth)%text > 0 ) call display_string ( stack(depth)%text )
       if ( stack(depth)%string > 0 ) &
         & call display_string ( stack(depth)%string, before=' ' )
-      if ( stack(depth)%index >= 0 ) call output ( stack(depth)%index, before=' ' )
+      if ( present(index) ) then
+        call output ( index, before=' ' )
+      else if ( stack(depth)%index >= 0 ) then
+        call output ( stack(depth)%index, before=' ' )
+      end if
       if ( myWhere .and. stack(depth)%tree > 0 ) &
         & call print_source ( source_ref(stack(depth)%tree), before=', ' )
       if ( say_when ) call show_when
@@ -149,7 +155,7 @@ contains ! ====     Public Procedures     ==============================
   end function Get_Frame
 
 ! ----------------------------------------------------  Pop_Stack  -----
-  subroutine Pop_Stack ( Before, Where, Frame, Silent )
+  subroutine Pop_Stack ( Before, Where, Frame, Index, Silent )
     ! Pop the stack.  If Before or Where are present, dump the top frame first.
 
     use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
@@ -159,6 +165,7 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), intent(in), optional :: Before
     logical, intent(in), optional :: Where
     type(stack_t), intent(out), optional :: Frame
+    integer, intent(in), optional :: Index
     logical, intent(in), optional :: Silent
 
     double precision :: Delta
@@ -176,7 +183,8 @@ contains ! ====     Public Procedures     ==============================
     if ( .not. mySilent .and. (present(before) .or. present(where)) ) then
       ! We call dump_stack even without haveStack because it prints
       ! an error message if we don't have a stack.
-      call dump_stack ( .true., before, where, size=.false., advance='no' )
+      call dump_stack ( .true., before, where, size=.false., index=index, &
+        & advance='no' )
       if ( .not. haveStack ) return
       call time_now ( t )
       t = t - stack(stack_ptr)%clock
@@ -202,7 +210,8 @@ contains ! ====     Public Procedures     ==============================
   end subroutine Pop_Stack
 
 ! -------------------------------------------------  Push_Stack_B  -----
-  subroutine Push_Stack_B ( Name_I, Name_C, Root, Index, String, Before, Where )
+  subroutine Push_Stack_B ( Name_I, Name_C, Root, Index, String, Before, Where, &
+    & Advance )
     ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
     ! We assume the actual argument is a SAVE variable.
     ! Push the stack.  If Before or Where are present, dump the new top frame.
@@ -215,6 +224,7 @@ contains ! ====     Public Procedures     ==============================
     integer, optional, intent(in) :: String ! To print after Name_C
     character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
     logical, intent(in), optional :: Where
+    character(len=*), intent(in), optional :: Advance
 
     if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
     call push_stack ( name_i, Root, Index, String, Before, Where )
@@ -222,7 +232,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine Push_Stack_B
 
 ! -------------------------------------------------  Push_Stack_C  -----
-  subroutine Push_Stack_C ( Name, Root, Index, String, Before, Where )
+  subroutine Push_Stack_C ( Name, Root, Index, String, Before, Where, Advance )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
     use STRING_TABLE, only: CREATE_STRING
 
@@ -232,6 +242,7 @@ contains ! ====     Public Procedures     ==============================
     integer, optional, intent(in) :: String ! To print after Name
     character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
     logical, intent(in), optional :: Where
+    character(len=*), intent(in), optional :: Advance
 
     call push_stack ( create_string ( trim(name) ), Root, Index, String, &
       & Before, Where )
@@ -239,7 +250,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine Push_Stack_C
 
 ! -------------------------------------------------  Push_Stack_I  -----
-  subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where )
+  subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where, Advance )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
     use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, NOBYTESALLOCATED
     use TIME_M, only: TIME_NOW
@@ -250,6 +261,7 @@ contains ! ====     Public Procedures     ==============================
     integer, optional, intent(in) :: String ! To print after Name
     character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
     logical, intent(in), optional :: Where
+    character(len=*), intent(in), optional :: Advance ! Default yes in Dump_Stack
 
     integer :: Stat
     type(stack_t), allocatable :: Temp_Stack(:)
@@ -276,7 +288,7 @@ contains ! ====     Public Procedures     ==============================
     if ( present(string) ) stack(stack_ptr)%string = string
     call time_now ( stack(stack_ptr)%clock )
     if ( present(before) .or. present(where) ) &
-      & call dump_stack ( .true., before, where, advance='yes' )
+      & call dump_stack ( .true., before, where, advance=advance )
 
   end subroutine Push_Stack_I
 
@@ -322,6 +334,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.11  2013/09/12 03:11:18  vsnyder
+! Add Index argument to Pop_Stack and Dump_Stack
+!
 ! Revision 2.10  2013/09/04 02:49:00  vsnyder
 ! Add 'Frame' argument to Pop_Stack to return top frame before popping
 !
