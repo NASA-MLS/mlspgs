@@ -166,7 +166,7 @@ begin MergeGrids
   Reevaluate, Boolean=geos57Meteorology, formula="not geos57Meteorology"
   Skip, formula="not geos57Meteorology"
   Reevaluate, Boolean=meteorologyType, label="geos5_7-nc4"
-  Delete, grid=gmaoTemperatureInput1
+  Delete, grid=gmaoPressureInput1
 end MergeGrids
 
 begin ReadApriori
@@ -436,6 +436,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.5  2012/05/29 21:26:22  pwagner
+;Fixed bug that prevented geos57Meteorology from ever being true
+;
 ;Revision 1.4  2012/05/14 22:54:34  pwagner
 ;Uses new Select .. Case .. EndSelect
 ;
