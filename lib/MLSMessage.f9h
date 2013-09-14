@@ -148,7 +148,7 @@
   type(MLSCallStack_t), public, save :: MLSCALLSTACK
   
   ! Public procedures
-  public :: DUMPCONFIG, RESTORECONFIG
+  public :: DUMPCONFIG, RESTORECONFIG, SetConfig
   public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESETUP, MLSMESSAGECLOSE
   public :: MLSMESSAGEEXIT, MLSMESSAGEINQUIRE, MLSMESSAGEINTERNALFILE
   public :: MLSMESSAGERESET, PVMERRORMESSAGE
@@ -161,11 +161,11 @@
 
 contains
 
-  ! ------------------------------------------------  dumpConfig  -----
+  ! ------------------------------------------------  DumpConfig  -----
 
   ! dump the configuration
 
-  subroutine dumpConfig( config )
+  subroutine DumpConfig( config )
     ! arg
     type(MLSMessageConfig_T), optional, intent(in) :: config
     ! Internal args
@@ -211,7 +211,7 @@ contains
     call dump ( 'Skip Severity thr       ', intValue=myConfig%skipSeverityThr         )
     call dump ( 'Skip Messages thr       ', intValue=myConfig%skipMessageThr          )
     call dump ( 'Suppress Debugs         ', logValue=myConfig%suppressDebugs          )
-  end subroutine dumpConfig
+  end subroutine DumpConfig
 
   ! ------------------------------------------------  MLSMessage_  -----
 
@@ -384,6 +384,7 @@ contains
 
   ! If name is omitted, it will be lost or assumed blank, as appropriate
 
+  ! --------------------------------------------  MLSMessageCalls  -----
   subroutine MLSMessageCalls ( command, name, constantName )
     ! Args
     character(len=*), intent(in)              :: command
@@ -493,7 +494,7 @@ contains
 
     subroutine PushStack ( myname )
       character(len=*), intent(inout) :: myname
-      MLSCallStack%top = MLSCallStack%Top + 1
+      MLSCallStack%top = max(MLSCallStack%Top + 1, 1) ! MAX in case it underflowed earlier
       myName = snipRCSFrom ( myName )
       m = len_trim(myName)
       if ( MLSCallStack%Top > ubound(MLSCallStack%ind,1) ) then
@@ -563,7 +564,7 @@ contains
     end function InvertStack
   end subroutine MLSMessageCalls
 
-  ! --------------------------------------------  MLSMessageInquire  -----
+  ! ------------------------------------------  MLSMessageInquire  -----
 
   ! This routine returns requested info about Warnings
 
@@ -593,7 +594,7 @@ contains
       & LastWarningMsg = MLSMSGWarnings%LastWarningMsg
   end subroutine MLSMessageInquire
 
-  !-----------------------------------------  MLSMessageInternalFile  -----
+  !--------------------------------------  MLSMessageInternalFile  -----
   function MLSMessageInternalFile( Severity, ModuleNameIn, Message ) result(line)
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
@@ -655,7 +656,7 @@ contains
     call set_config ( logFileUnit = STDOUTLOGUNIT ) ! -1
   end subroutine MLSMessageClose
 
-  ! --------------------------------------------  MLSMessageExit  -----
+  ! ---------------------------------------------  MLSMessageExit  -----
 
   ! This routine (optionally) logs farewell, advances
   ! (hopefully) gracefully ends logging, and exits 
@@ -768,13 +769,13 @@ contains
     & ' Info='//trim(adjustl(line)) // ' ' // place, MLSMSG_Error )
   end subroutine PVMErrorMessage
 
-  ! ------------------------------------------------  restoreConfig  -----
+  ! ----------------------------------------------  RestoreConfig  -----
 
   ! restore the configuration to its default settings
   ! where it makes sense
   ! i.e., we wouldn't mess with masterTID or logFileUnit
 
-  subroutine restoreConfig
+  subroutine RestoreConfig
     use PrintIt_m, only: SET_CONFIG
     ! The next won't work because of Intel v12 internal compiler error
     ! MLSMessageConfig = MLSMessageConfig_T()
@@ -796,9 +797,20 @@ contains
     MLSMSG_Severity_to_quit                  = MLSMSG_Error
     MLSMSG_Severity_to_walkback              = MLSMSG_Error
     call set_config ( asciify=.true., prefix='' )
-  end subroutine restoreConfig
+  end subroutine RestoreConfig
 
-  ! ------------ StopWithErrorMsg ------------
+  ! --------------------------------------------------  SetConfig  -----
+  subroutine SetConfig ( Opts )
+    character(len=*), intent(in) :: Opts(:)
+    character(len=len(opts)) :: MyOpts(0:size(opts,1)+1)
+    namelist / in / MLSMessageConfig
+    myOpts(0) = '&in'
+    myOpts(1:size(opts,1)) = opts
+    myOpts(size(opts,1)+1) = '/'
+    read ( myOpts, in )
+  end subroutine SetConfig
+
+  ! -------------------------------------------  StopWithErrorMsg  -----
   subroutine StopWithErrorMsg ( Message, MLSFile, Advance, severity )
     ! Print Message, dump calling stack (if any) and stop
     character (len=*), intent(in) :: Message ! Line of text
@@ -818,7 +830,7 @@ contains
       & advance=advance )
   end subroutine StopWithErrorMsg
 
-  ! ------------ SummarizeWarnings ------------
+  ! ------------------------------------------  SummarizeWarnings  -----
   subroutine SummarizeWarnings
     ! Print summary of warnings received
     ! Internal variables
@@ -848,7 +860,7 @@ contains
   end subroutine SummarizeWarnings
 
   ! Private procedures
-  ! --------------------------------------------  dumpFile  -----
+  ! ---------------------------------------------------  dumpFile  -----
   subroutine dumpFile ( MLSFile  )
     ! Show everything about it
     type(MLSFile_T) :: MLSFile
@@ -874,7 +886,7 @@ contains
     call dump ( '    error code   : ', MLSFile%errorCode)
   end subroutine dumpFile
 
-  ! --------------------------------------------  dump  -----
+  ! -----------------------------------------------------  dump  -----
   subroutine dump ( name, intValue, charValue, logValue, trimName  )
     ! In any way we're asked
     character(len=*), intent(in) :: name
@@ -905,6 +917,7 @@ contains
     call printitout( trim(line), MLSMSG_Info )
   end subroutine dump
 
+  ! ----------------------------------------------  MLSMessageStd  -----
   subroutine MLSMessageStd ( Severity, ModuleNameIn, Message, &
     & Advance, MLSFile )
 
@@ -991,6 +1004,10 @@ contains
 
 !
 ! $Log$
+! Revision 2.29  2013/09/14 01:21:30  vsnyder
+! Repair stack underflow problem in MLSMessageCalls with 'push' option.
+! Add SetConfig.  Some cannonball polishing.
+!
 ! Revision 2.28  2013/09/09 18:37:15  pwagner
 ! Workaround for ifort v12 internal compiler error
 !
