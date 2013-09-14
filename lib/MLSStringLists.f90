@@ -17,7 +17,7 @@ module MLSStringLists               ! Module to treat string lists
     & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT
   use MLSCOMMON, only: BAREFNLEN
   use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGS, only: ASCIIFY, CAPITALIZE, LOWERCASE, NCOPIES, &
+  use MLSSTRINGS, only: CAPITALIZE, LOWERCASE, NCOPIES, &
     & READINTSFROMCHARS, REPLACE, REVERSE, &
     & SPLITDETAILS, SPLITNEST, STREQ, TRIM_SAFE, WRITEINTSTOCHARS
 
@@ -4361,6 +4361,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.63  2013/09/14 01:20:25  vsnyder
+! Delete unused use name
+!
 ! Revision 2.62  2013/09/12 23:26:47  pwagner
 ! Fixed bug in converting strvalues to lvalues in BooleanValue_str
 !
