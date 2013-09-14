@@ -214,7 +214,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   
 !=============================================================================
 contains 
-  ! -------------- MLSMessage ----------------
+  ! -------------------------------------------------  MLSMessage  -----
   ! Process the level 2-savvy MLSMessage call
   ! Optionally give l2cf line #, dump an item, and so on before summoning
   ! regular MLSMessage
@@ -324,7 +324,7 @@ contains
     end subroutine SayIt
   end subroutine MLSMessage
 
-  ! -------------- processOptions ----------------
+  ! ---------------------------------------------  ProcessOptions  -----
   ! Process the command line options; either from
   ! (1) the command line directly, by calls to getNextArg; or
   ! (2) parsing cmdline, if supplied as an arg
@@ -339,6 +339,7 @@ contains
     use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
     use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
     use MLSCOMMON, only: FILENAMELEN
+    use MLSMESSAGEMODULE, only: SetConfig
     use MLSSTRINGLISTS, only: CATLISTS, &
       & GETSTRINGELEMENT, GETUNIQUELIST, &
       & NUMSTRINGELEMENTS, REMOVESWITCHFROMLIST, &
@@ -353,7 +354,7 @@ contains
     use TOGGLES, only: SWITCHES
     ! Args
     character(len=*), intent(in), optional :: cmdline
-    character(len=FiLENAMELEN)             :: filename
+    character(len=FileNameLen)             :: filename
     ! Internal variables
     character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
     character(len=16) :: aSwitch
@@ -600,6 +601,12 @@ contains
           else
             trackAllocates = 0
           end if
+        else if ( line(3+n:9+n) == 'msgconf' ) then
+          if ( line(10+n:10+n) /= '=' ) then
+            i = i + 1
+            call getNextArg ( i, line(11:) )
+          end if
+          call setConfig ( [ line(11:) ] )
         else if ( line(3+n:4+n) == 'oa' ) then
           NEED_L1BFILES = switch
         else if ( line(3+n:6+n) == 'aura' ) then
@@ -876,9 +883,9 @@ jloop:do while ( j < len_trim(line) )
       command_line = trim(command_line) // ' ' // trim(line)
       call AccumulateSlaveArguments(line) ! pass them to slave processes
     end subroutine getNextArg
-  end function processOptions
+  end function ProcessOptions
   
-  ! -------------- RestoreDefaults ----------------
+  ! --------------------------------------------  RestoreDefaults  -----
   ! Restore the options to their default values
   ! Now some things it makes no sense to overwrite, so it makes
   ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
@@ -909,7 +916,7 @@ jloop:do while ( j < len_trim(line) )
     call restoreConfig
   end subroutine restoreDefaults
 
-  ! -------------- DumpMacros ----------------
+  ! -------------------------------------------------  DumpMacros  -----
   ! Dump the runtime macros
   subroutine DUMPMACROS
   use DUMP_0, only: DUMP
@@ -917,7 +924,7 @@ jloop:do while ( j < len_trim(line) )
       & 'Run-time macros', separator=runTimeValues%sep )
   end subroutine DumpMacros
 
-  ! -------------- removeRuntimeBoolean ----------------
+  ! ---------------------------------------  RemoveRuntimeBoolean  -----
   ! Dump the runtime macros
   subroutine REMOVERUNTIMEBOOLEAN ( NAME )
   use MLSSTRINGLISTS, only: GETHASHELEMENT, &
@@ -962,6 +969,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.71  2013/09/14 01:22:02  vsnyder
+! Add MSGConf option
+!
 ! Revision 2.70  2013/09/06 20:49:17  pwagner
 ! Solve another case where we repeated warnings
 !
