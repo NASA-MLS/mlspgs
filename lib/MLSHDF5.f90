@@ -408,7 +408,7 @@ contains ! ======================= Public Procedures =========================
     call h5gclose_f ( togrpid, status )
     call h5fclose_f ( fromFileID, status )
     call h5fclose_f ( toFileID, status )
-    call trace_begin ( 'CpHDFGlAttribute_string', cond=.false. )
+    call trace_end ( 'CpHDFGlAttribute_string', cond=.false. )
   end subroutine CpHDF5GlAttribute_string
 
   ! -------------------------------  DumpHDF5Attributes  -----
@@ -5691,6 +5691,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.123  2013/09/14 00:37:20  pwagner
+! Corrected erroneous double call to trace_begin
+!
 ! Revision 2.122  2013/08/31 01:24:53  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
