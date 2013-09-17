@@ -64,7 +64,7 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! or a an excursion outside its region of validity was detected
 ! Sometimes we simply want to consider only non-zero values
 
-! Could w generalize this to mark as Fill values any values above or
+! Could we generalize this to mark as Fill values any values above or
 ! below a threshold, or whose absolute value is above a threshold?
 ! === (start of toc) ===                                                 
 !     c o n t e n t s
@@ -80,13 +80,13 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! Depopulate        Finds locations of non-zero values in presumably
 !                     sparse array
 ! Dump              Dump the MLSFills database
-! EmbedArray        Replace a bloc of elements in the larger array
-!                   with the smaller
+! EmbedArray        Replace a hyperslab of elements in the larger array
+!                     with the smaller
 ! EssentiallyEqual  Returns true if two real arguments 'close enough'
 !                    (See comments below for interpretation
 !                     of array versions)
-! ExtractArray      Extract a bloc of elements from the larger array
-!                     (optionally allocates bloc first)
+! ExtractArray      Extract a hyperslab of elements from the larger array
+!                     (optionally allocates slab first)
 ! Extremum          Returns the value farther from 0
 ! FillFunction      Returns the Fill value
 ! GatherArray       Gather a subset of elements from a larger array
@@ -125,10 +125,12 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! Depopulate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
 !   & [nprec testvalue], [nprec values[:], [char* options] )
 ! Dump ( [MLSFill_T Database(:)] )
-! EmbedArray ( bloc, array, int range[2], [char* options] )
+! EmbedArray ( slab, array, &
+!   int start[2], int count[2], int stride[2], int block[2], [char* options] )
 ! log EssentiallyEqual ( nprec A, nprec B, &
 !   [nprec FillValue], [nprec Precision] )
-! ExtractArray ( bloc, array, int range[2], [char* options] )
+! ExtractArray ( slab, array, &
+!   int start[2], int count[2], int stride[2], int block[2], [char* options] )
 ! nprec Extremum( nprec arg1, nprec arg2 )
 ! nprec FillFunction( nprec arg )
 ! GatherArray ( bloc, array, int which1[:], &
@@ -764,11 +766,14 @@ contains
   ! ---------------------------------------------  EmbedArray  -----
   ! This family of routines replace a bloc of elements in a larger
   ! array with corresponding elements from a smaller
-  subroutine EmbedArray_1d_int ( ibloc, iarray, range, options )
+  subroutine EmbedArray_1d_int ( ibloc, iarray, start, count, stride, block, options )
     integer, dimension(:), pointer :: ibloc
     integer, dimension(:), pointer :: iarray ! The larger array
     integer, parameter :: RK = R4
-    integer, dimension(2), intent(in)     :: range
+    integer, dimension(:), intent(in)     :: start
+    integer, dimension(:), intent(in)     :: count
+    integer, dimension(:), intent(in)     :: stride
+    integer, dimension(:), intent(in)     :: block
     character(len=*), intent(in), optional :: options
     ! Local variables
     real(rk), dimension(:), pointer :: bloc => null()
@@ -783,30 +788,33 @@ contains
       & ModuleName, "unable to allocate 1-d array for int embedding" )
     array = iarray
     bloc = ibloc
-    call EmbedArray ( bloc, array, range, options )
+    call EmbedArray ( bloc, array, start, count, stride, block, options )
     iarray = array
     deallocate( bloc, array, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, "unable to deallocate 1-d bloc for int embedding" )
   end subroutine EmbedArray_1d_int
 
-  subroutine EmbedArray_1d_r4 ( bloc, array, range, options )
+  subroutine EmbedArray_1d_r4 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_1d.f9h'
   end subroutine EmbedArray_1d_r4
 
-  subroutine EmbedArray_1d_r8 ( bloc, array, range, options )
+  subroutine EmbedArray_1d_r8 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_1d.f9h'
   end subroutine EmbedArray_1d_r8
 
-  subroutine ExtractArray_1d_int ( ibloc, iarray, range, options )
+  subroutine ExtractArray_1d_int ( ibloc, iarray, start, count, stride, block, options )
     integer, dimension(:), pointer :: ibloc
     integer, dimension(:), pointer :: iarray ! The larger array
     integer, parameter :: RK = R4
-    integer, dimension(2), intent(in)     :: range
+    integer, dimension(:), intent(in)     :: start
+    integer, dimension(:), intent(in)     :: count
+    integer, dimension(:), intent(in)     :: stride
+    integer, dimension(:), intent(in)     :: block
     character(len=*), intent(in), optional :: options
     ! Local variables
     real(rk), dimension(:), pointer :: bloc => null()
@@ -822,7 +830,7 @@ contains
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, "unable to allocate 1-d array for int extracting" )
     array = iarray
-    call ExtractArray ( bloc, array, range, options )
+    call ExtractArray ( bloc, array, start, count, stride, block, options )
     if ( .not. associated(ibloc) ) then
       allocate( ibloc(size(bloc)), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
@@ -834,61 +842,61 @@ contains
       & ModuleName, "unable to deallocate 1-d bloc for int extracting" )
   end subroutine ExtractArray_1d_int
 
-  subroutine ExtractArray_1d_r4 ( bloc, array, range, options )
+  subroutine ExtractArray_1d_r4 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_1d.f9h'
   end subroutine ExtractArray_1d_r4
 
-  subroutine ExtractArray_1d_r8 ( bloc, array, range, options )
+  subroutine ExtractArray_1d_r8 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_1d.f9h'
   end subroutine ExtractArray_1d_r8
 
-  subroutine EmbedArray_2d_r4 ( bloc, array, range1, range2, options )
+  subroutine EmbedArray_2d_r4 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_2d.f9h'
   end subroutine EmbedArray_2d_r4
 
-  subroutine EmbedArray_2d_r8 ( bloc, array, range1, range2, options )
+  subroutine EmbedArray_2d_r8 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_2d.f9h'
   end subroutine EmbedArray_2d_r8
 
-  subroutine ExtractArray_2d_r4 ( bloc, array, range1, range2, options )
+  subroutine ExtractArray_2d_r4 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_2d.f9h'
   end subroutine ExtractArray_2d_r4
 
-  subroutine ExtractArray_2d_r8 ( bloc, array, range1, range2, options )
+  subroutine ExtractArray_2d_r8 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_2d.f9h'
   end subroutine ExtractArray_2d_r8
 
-  subroutine EmbedArray_3d_r4 ( bloc, array, range1, range2, range3, options )
+  subroutine EmbedArray_3d_r4 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_3d.f9h'
   end subroutine EmbedArray_3d_r4
 
-  subroutine EmbedArray_3d_r8 ( bloc, array, range1, range2, range3, options )
+  subroutine EmbedArray_3d_r8 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_3d.f9h'
   end subroutine EmbedArray_3d_r8
 
-  subroutine ExtractArray_3d_r4 ( bloc, array, range1, range2, range3, options )
+  subroutine ExtractArray_3d_r4 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_3d.f9h'
   end subroutine ExtractArray_3d_r4
 
-  subroutine ExtractArray_3d_r8 ( bloc, array, range1, range2, range3, options )
+  subroutine ExtractArray_3d_r8 ( slab, array, start, count, stride, block, options )
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_3d.f9h'
@@ -3196,6 +3204,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.32  2013/09/17 22:35:13  pwagner
+! Changed api of Embed, Extract arrays to match hyperslab
+!
 ! Revision 2.31  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
