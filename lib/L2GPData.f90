@@ -2815,11 +2815,17 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(2) :: myLevels ! subscript range
     integer, dimension(2) :: myTimes  ! subscript range
 
+    integer, dimension(3) :: start
+    integer, dimension(3) :: count
+    integer, dimension(3) :: block
+    integer, dimension(3) :: stride
     logical :: useFreqs  
     logical :: useLevels 
     logical :: useTimes  
     
     ! Executable
+    block = 1
+    stride = 1
     useFreqs   = .false.
     useLevels  = .false.
     useTimes   = .false.
@@ -2867,21 +2873,28 @@ contains ! =====     Public Procedures     =============================
     ! we supplied 0 originally
     myFreqs(2) = max( myFreqs(2), myFreqs(1) )
     myLevels(2) = max( myLevels(2), myLevels(1) )
-    call ExtractArray ( l2gp%pressures    , ol2gp%pressures    , myLevels )
-    call ExtractArray ( l2gp%frequency    , ol2gp%frequency    , myFreqs )
-    call ExtractArray ( l2gp%latitude     , ol2gp%latitude     , myTimes )
-    call ExtractArray ( l2gp%longitude    , ol2gp%longitude    , myTimes )
-    call ExtractArray ( l2gp%solarTime    , ol2gp%solarTime    , myTimes )
-    call ExtractArray ( l2gp%solarZenith  , ol2gp%solarZenith  , myTimes )
-    call ExtractArray ( l2gp%losAngle     , ol2gp%losAngle     , myTimes )
-    call ExtractArray ( l2gp%geodAngle    , ol2gp%geodAngle    , myTimes )
-    call ExtractArray ( l2gp%time         , ol2gp%time         , myTimes )
-    call ExtractArray ( l2gp%chunkNumber  , ol2gp%chunkNumber  , myTimes )
-    call ExtractArray ( l2gp%l2gpValue    , ol2gp%l2gpValue    , myFreqs, myLevels, myTimes )
-    call ExtractArray ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, myFreqs, myLevels, myTimes )
-    call ExtractArray ( l2gp%status       , ol2gp%status       , myTimes )
-    call ExtractArray ( l2gp%quality      , ol2gp%quality      , myTimes )
-    call ExtractArray ( l2gp%convergence  , ol2gp%convergence  , myTimes )
+    ! convert to hyperslab params start, count, stride, block
+    start(1) = mylevels(1)
+    start(2) = myTimes(1)
+    start(3) = myFreqs(1)
+    count(1) = mylevels(2) - mylevels(1) + 1
+    count(2) = myTimes(2) - myTimes(1) + 1
+    count(3) = myFreqs(2) - myFreqs(1) + 1
+    call ExtractArray ( l2gp%pressures    , ol2gp%pressures    , start, count, stride, block )
+    call ExtractArray ( l2gp%frequency    , ol2gp%frequency    , start(3:3), count(3:3), stride(3:3), block(3:3) )
+    call ExtractArray ( l2gp%latitude     , ol2gp%latitude     , start(2:2), count(2:2), stride(2:2), block(2:2) )
+    call ExtractArray ( l2gp%longitude    , ol2gp%longitude    , start(2:2), count(2:2), stride(2:2), block(2:2) )
+    call ExtractArray ( l2gp%solarTime    , ol2gp%solarTime    , start(2:2), count(2:2), stride(2:2), block(2:2) )
+    call ExtractArray ( l2gp%solarZenith  , ol2gp%solarZenith  , start(2:2), count(2:2), stride(2:2), block(2:2) )
+    call ExtractArray ( l2gp%losAngle     , ol2gp%losAngle     , start(2:2), count(2:2), stride(2:2), block(2:2) )
+    call ExtractArray ( l2gp%geodAngle    , ol2gp%geodAngle    , start(2:2), count(2:2), stride(2:2), block(2:2) )
+    call ExtractArray ( l2gp%time         , ol2gp%time         , start(2:2), count(2:2), stride(2:2), block(2:2) )
+    call ExtractArray ( l2gp%chunkNumber  , ol2gp%chunkNumber  , start(2:2), count(2:2), stride(2:2), block(2:2) )
+    call ExtractArray ( l2gp%l2gpValue    , ol2gp%l2gpValue    , start, count, stride, block )
+    call ExtractArray ( l2gp%l2gpPrecision, ol2gp%l2gpPrecision, start, count, stride, block )
+    call ExtractArray ( l2gp%status       , ol2gp%status       , start(2:2), count(2:2), stride(2:2), block(2:2) )
+    call ExtractArray ( l2gp%quality      , ol2gp%quality      , start(2:2), count(2:2), stride(2:2), block(2:2) )
+    call ExtractArray ( l2gp%convergence  , ol2gp%convergence  , start(2:2), count(2:2), stride(2:2), block(2:2) )
   end subroutine ExtractL2GPRecord
 
   !------------------------------------------  IsL2GPSetUp  -----
@@ -5095,6 +5108,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.194  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
 ! Revision 2.193  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
