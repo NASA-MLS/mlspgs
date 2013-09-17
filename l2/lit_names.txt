@@ -82,6 +82,7 @@ fwdModelStdDev
 fractional
 full_derivatives
 
+gather
 geos5
 geos5_7
 geoLocation
@@ -157,6 +158,7 @@ rotateField
 scaleOverlaps
 scan
 scan2d
+scatter
 sectionTiming
 simple # Nathaniel's simple replacement for DNWT
 # spaceRadiance -- in lib/lit_names
@@ -177,6 +179,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.73  2013/09/17 23:02:45  pwagner
+# Added Scatter, Gather methods
+#
 # Revision 2.72  2013/01/02 21:38:49  pwagner
 # Added derivative method to Fill command
 #
