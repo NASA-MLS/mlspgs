@@ -1425,7 +1425,7 @@ contains ! =====     Public Procedures     =============================
         case ( f_explicitValues ) ! For explicit fill
           valuesNode = subtree(j,key)
         case ( f_expr )
-          call Announce_Error ( key, noCodeFor )
+          call Announce_Error ( gson, noCodeFor, extraInfo=(/ f_expr /) )
         case ( f_extinction ) ! For cloud extinction fill
           extinction = get_boolean ( gson )
         case ( f_fieldECR ) ! For hydrostatic
@@ -3021,6 +3021,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.426  2013/09/17 00:52:38  vsnyder
+! Correct 'no_code_for' error message
+!
 ! Revision 2.425  2013/08/30 02:45:37  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
