@@ -71,6 +71,7 @@ baselineQuantity
 basisFraction
 bin
 binSelectors
+block
 Boolean
 boundarypressure
 boxCarMethod
@@ -101,6 +102,7 @@ convergence
 coordinate
 copy
 cost
+count
 covariance
 covSansReg # Compute covariance matrix without regularization
 crashBurn
@@ -439,6 +441,7 @@ status
 # step already in MLSSignals field set, so can't put it here, too
 stop
 stopWithError
+stride
 structure
 suffixLabel
 sum
@@ -511,6 +514,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.239  2013/09/17 23:03:49  pwagner
+# Added block, count, stride fields to select hyperslabs
+#
 # Revision 2.238  2013/08/29 19:36:45  pwagner
 # May Dump plain stack, too
 #
