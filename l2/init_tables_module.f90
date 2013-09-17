@@ -504,7 +504,7 @@ contains ! =====     Public procedures     =============================
              l+l_columnAbundance, l+l_combineChannels, &
              l+l_convergenceRatio, l+l_derivative, l+l_estimatedNoise, &
              l+l_explicit, l+l_extractChannel, l+l_fold, l+l_fwdModelMean, &
-             l+l_fwdModelStdDev, l+l_fwdModelTiming, l+l_geoLocation, &
+             l+l_fwdModelStdDev, l+l_fwdModelTiming, l+l_gather, l+l_geoLocation, &
              l+l_gphPrecision, l+l_gridded, l+l_H2OFromRHI, &
              l+l_H2OPrecisionFromRHI, l+l_hydrostatic, l+l_isotope, &
              l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
@@ -514,7 +514,7 @@ contains ! =====     Public procedures     =============================
              l+l_offsetRadiance, l+l_phaseTiming, l+l_profile, &
              l+l_quality, l+l_rectanglefromlos, l+l_reflectorTempModel, &
              l+l_refract, l+l_resetUnusedRadiances, l+l_RHIFromH2O, &
-             l+l_RHIPrecisionFromH2O, l+l_rotateField, l+l_scaleOverlaps, &
+             l+l_RHIPrecisionFromH2O, l+l_rotateField, l+l_scaleOverlaps, l+l_scatter, &
              l+l_sectionTiming, l+l_splitSideband, l+l_spreadChannel, &
              l+l_status, l+l_swapValues, l+l_uncompressRadiance, &
              l+l_vector, l+l_vGrid, l+l_wmoTropopause, &
@@ -938,6 +938,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_b, vectorQuantity(), &
              begin, f+f_badRange, numeric_range(), &
              begin, f+f_baselineQuantity, vectorQuantity(), &
+             begin, f+f_block, numeric(), &
              begin, f+f_boundaryPressure, vectorQuantity(), &
              begin, f+f_boxCarMethod, field_type(t_boxCarMethod), &
              begin, f+f_c, numeric(), &
@@ -945,6 +946,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_channels, numeric_or_range(), &
              begin, f+f_centerVertically, boolean()/) )
     call make_tree ( (/ & ! Continuing for s_fill...
+             begin, f+f_count, numeric(), &
              begin, f+f_dimList, string(), &
              begin, f+f_dontMask, boolean(), &
              begin, f+f_earthRadius, vectorQuantity(), &
@@ -1045,7 +1047,9 @@ contains ! =====     Public procedures     =============================
                                              &  s_ConvertEtaToP,s_WMOTrop /) ), &
              begin, f+f_sourceVGrid, field_spec(s_vGrid), &
              begin, f+f_spread, boolean(), &
+             begin, f+f_start, numeric(), &
              begin, f+f_status, numeric(), &
+             begin, f+f_stride, numeric(), &
              begin, f+f_suffix, string() , &
              begin, f+f_surface, numeric_range(), &
              begin, f+f_systemTemperature, vectorQuantity() /), &
@@ -1493,13 +1497,17 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allSpectra, boolean(), &
              begin, f+f_allVectors, boolean(), &
              begin, f+f_allVectorTemplates, boolean(), &
-             begin, f+f_allVGrids, boolean(), &
+             begin, f+f_allVGrids, boolean() /), &
+             continue=.true. )
+    call make_tree ( (/ & ! Continuing for s_dump...
              begin, f+f_antennaPatterns, boolean(), &
+             begin, f+f_block, numeric(), &
              begin, f+f_Boolean, field_spec(s_Boolean), &
              begin, f+f_callStack, boolean(), &
              begin, f+f_commandLine, boolean(), &
              begin, f+f_chunkNumber, boolean(), &
              begin, f+f_Clean, boolean(), &
+             begin, f+f_count, numeric(), &
              begin, f+f_crashBurn, boolean(), &
              begin, f+f_DACSfilterShapes, boolean(), &
              begin, f+f_details, numeric(), &
@@ -1524,13 +1532,17 @@ contains ! =====     Public procedures     =============================
              begin, f+f_pfaNum, numeric(), &
              begin, f+f_pfaStru, boolean(), &
              begin, f+f_phaseName, boolean(), &
-             begin, f+f_pointingGrids, boolean(), &
+             begin, f+f_pointingGrids, boolean() /), &
+             continue=.true. )
+    call make_tree ( (/ & ! Continuing for s_dump...
              begin, f+f_quantity, vectorQuantity(), &
              begin, f+f_signals, field_spec(s_signal), &
              begin, f+f_spectroscopy, field_type(t_molecule), &
              begin, f+f_stack, boolean(), &
+             begin, f+f_start, numeric(), &
              begin, f+f_stop, boolean(), &
              begin, f+f_stopWithError, boolean(), &
+             begin, f+f_stride, numeric(), &
              begin, f+f_template, field_spec(s_vectorTemplate,s_quantity), &
              begin, f+f_text, string(), &
              begin, f+f_tGrid, field_spec(s_tGrid), &
@@ -1973,6 +1985,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.585  2013/09/17 23:02:19  pwagner
+! Added Scatter, Gather methods
+!
 ! Revision 2.584  2013/09/17 00:54:12  vsnyder
 ! Alphabetize data_type_indices and data type trees
 !
