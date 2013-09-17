@@ -23,7 +23,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use INIT_TABLES_MODULE, only: F_MEASUREMENTS, F_TOTALPOWERVECTOR, &
     & F_WEIGHTSVECTOR, &
     & L_ADDNOISE, L_BASELINE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
-    & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, L_CHISQRATIO, &
+    & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, &
     & L_CLOUDINDUCEDRADIANCE, L_CLOUDMINMAX, &
     & L_COLUMNABUNDANCE, &
@@ -176,7 +176,7 @@ module FillUtils_1                     ! Procedures used by Fill
   public :: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
       & COMPUTETOTALPOWER, DEALLOCATESTUFF, &
       & EXTRACTSINGLECHANNEL, FILLCOVARIANCE, FROMANOTHER, FROMGRID, &
-      & FROML2GP, FROMPROFILE, LOSVELOCITY, &
+      & FROML2GP, FROMPROFILE, GATHER, LOSVELOCITY, &
       & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
       & COLABUNDANCE, DERIVATIVEOFSOURCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
       & IWCFROMEXTINCTION, RHIFROMORTOH2O, NORADSPERMIF, &
@@ -191,7 +191,7 @@ module FillUtils_1                     ! Procedures used by Fill
       & WITHWMOTROPOPAUSE, WITHBINRESULTS, WITHBOXCARFUNCTION, &
       & STATUSQUANTITY, QUALITYFROMCHISQ, CONVERGENCEFROMCHISQ, &
       & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNUSEDRADIANCES, &
-      & SCALEOVERLAPS, SPREADCHANNELFILL, &
+      & SCALEOVERLAPS, SCATTER, SPREADCHANNELFILL, &
       & TRANSFERVECTORS, TRANSFERVECTORSBYMETHOD, &
       & UNCOMPRESSRADIANCE, &
       & ANNOUNCE_ERROR, QTYFROMFILE, VECTORFROMFILE
@@ -615,7 +615,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), pointer, dimension(:) :: VALUES
       real (r8), dimension(2) :: valueAsArray ! Value given
       logical :: Verbose
-      character(len=128) :: whichInstances
+      ! character(len=128) :: whichInstances
       character(len=2) :: whichToReplace ! '/=' (.ne. fillValue), '==', or ' ' (always)
 
       ! Executable code
@@ -625,7 +625,7 @@ contains ! =====     Public Procedures     =============================
       if ( present(azEl) ) myAzEl = azEl
       myOptions = ' '
       if ( present(options) ) myOptions = options
-      whichInstances = ' '
+      ! whichInstances = ' '
 
       testUnit = quantity%template%unit
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
@@ -1338,7 +1338,7 @@ contains ! =====     Public Procedures     =============================
       integer ::                             I           ! Instances
       integer ::                             ITER        ! Instances
       integer :: Me = -1                     ! String index for trace
-      integer ::                             NOCHANS
+      ! integer ::                             NOCHANS
       integer ::                             QINDEX
       logical ::                             skipMe
       logical, parameter ::                  FakeData = .false.
@@ -1389,7 +1389,7 @@ contains ! =====     Public Procedures     =============================
       ! If we've not been asked to output anything then don't carry on
       if ( noOutputInstances < 1 ) go to 9
 
-      noChans = qty%template%noChans
+      ! noChans = qty%template%noChans
       do i=useFirstInstance, useLastInstance
         if ( FakeData ) then
           ! Let's just fake up some data here
@@ -1910,15 +1910,14 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in)                 :: IGNORETEMPLATE
 
       ! Local variables
-      type(vectorValue_T), pointer :: BOGUS         ! When we have no "b"
-      integer                      :: NOKEY
+      ! integer                      :: NOKEY
       type(vectorValue_T), pointer :: LOWER         ! For storing (dy/dx)_l
       type(vectorValue_T), target  :: LOWERQUANTITY ! For storing (dy/dx)_l
       type(vectorValue_T), pointer :: UPPER         ! For storing (dy/dx)_u
       type(vectorValue_T), target  :: UPPERQUANTITY ! For storing (dy/dx)_u
       ! Executable
-      nullify( bogus, upper, lower )
-      nokey = 0
+      nullify( upper, lower )
+      ! nokey = 0
       ! First: check that derivative and source are compatible
       if ( .not. ignoretemplate ) then
         if ( source%template%name /= &
@@ -2312,6 +2311,80 @@ contains ! =====     Public Procedures     =============================
       call trace_end ( 'FillUtils_1.FromSplitSideband', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine FromSplitSideband
+
+    ! --------------------------------------------- Gather ---
+    ! The most barbaric of Fill methods:
+    ! Go through the source quantity's values, gathering
+    ! them into the quanity's values
+    ! according to the start, stride, block, and count arrays
+    ! No checking is done
+    
+    ! (See also Scatter)
+    ! See the hdf5 introduction to HDF5 description of the hyperslab
+    ! for a discussion of what we mean
+    ! Let the following diagram serve as a mnemonic
+    !         n2 ->
+    ! o x x o x x o x x o x x
+    ! o x x o x x o x x o x x
+    ! o x x o x x o x x o x x
+    ! o o o o o o o o o o o o  n1
+    ! o x x o x x o x x o x x  |
+    ! o x x o x x o x x o x x  v
+    ! o x x o x x o x x o x x
+    ! o o o o o o o o o o o o 
+    ! The above is an array from sourceQuantity sized 8x12 (as n1 x n2)
+    ! We plan to gather the elements marked by x into the
+    ! contiguous array in quantity sized 6x8
+    ! Each block is 3x2 (3,2)
+    ! The start is at (1,2)
+    ! The stride is (4,3)
+    ! The count is (2,4)
+    ! Note: if the 2nd index of block is 0, then do all instances
+    ! and just hyperslabify the first index
+    subroutine Gather ( quantity, sourceQuantity, start, count, stride, block )
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), pointer :: SOURCEQUANTITY
+      integer, dimension(:), intent(in) :: start
+                                   ! Starting coordinates of hyperslab
+      integer, dimension(:), intent(in) :: count
+                                   ! Num of blocks to select from dataspace
+      integer, dimension(:), intent(in) :: stride
+                                   ! How many elements to move in each direction
+      integer, dimension(:), intent(in) :: block
+                                   ! Size of element block
+      ! Local parameters
+      integer :: II, JJ ! Block counters
+      integer :: i, j   ! Counters within a block
+      integer :: n1, n2 ! indices in sourceQuantity array
+      integer :: m1, m2 ! indices in quantity array
+      ! Executable
+      if ( block(2) < 1 ) then
+        ! do every instance of the 2nd index
+        do n2=1, size(quantity%values, 2)
+          do II=1, count(1)
+            do i=1, block(1)
+              n1 = start(1) - 1 + (II-1)*stride(1) + i
+              m1 = (II-1)*block(1) + i
+              quantity%values(m1, n2) = sourceQuantity%values(n1, n2)
+            enddo
+          enddo
+        enddo
+      else
+        do JJ=1, count(2)
+          do II=1, count(1)
+            do j=1, block(2)
+              n2 = start(2) - 1 + (JJ-1)*stride(2) + j
+              m2 = (JJ-1)*block(2) + j
+              do i=1, block(1)
+                n1 = start(1) - 1 + (II-1)*stride(1) + i
+                m1 = (II-1)*block(1) + i
+                quantity%values(m1, m2) = sourceQuantity%values(n1, n2)
+              enddo
+            enddo
+          enddo
+        enddo
+      endif
+    end subroutine Gather
 
     ! ---------------------------------------------  GPHPrecision  -----
     subroutine GPHPrecision ( key, quantity, &
@@ -2733,7 +2806,7 @@ contains ! =====     Public Procedures     =============================
       integer ::                          I           ! Instances
       integer ::                          I_H2O       ! Instance num for values
       integer ::                          I_T         ! Instance num for values
-      integer ::                          invs        ! 1 if invert, else -1
+      ! integer ::                          invs        ! 1 if invert, else -1
       logical                          :: matched_h2o_channels
       logical                          :: matched_h2o_instances
       logical                          :: matched_sizes
@@ -2771,11 +2844,11 @@ contains ! =====     Public Procedures     =============================
       ! An exceptionally dubious step -- should remove this idea
       if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
       ! Will we convert %RHI to vmr?
-      if ( invert ) then
-        invs = 1
-      else
-        invs = -1
-      end if
+      !  if ( invert ) then
+      !    invs = 1
+      !  else
+      !    invs = -1
+      !  end if
       ! Do we need to internally convert the vmr units?
       if ( VMR_UNITS == 'ppmv' ) then
         vmr_unit_cnv = 6
@@ -3803,7 +3876,6 @@ contains ! =====     Public Procedures     =============================
       ! Not listed below but also available are the manipulations 
       ! 'a^c' and 'c^a' (also called 'a**c' and 'c**a')
       logical, parameter :: autoRecognizeGeneralExp = .true.
-      integer, parameter :: MAXSTRLISTLENGTH = 128
       ! Local variables
       character (len=1) :: ABNAME
       type (VectorValue_T), pointer :: AORB
@@ -3815,7 +3887,7 @@ contains ! =====     Public Procedures     =============================
       character (len=128) :: MSTR
       logical :: OKSOFAR
       logical :: StatisticalFunction
-      logical :: USESC
+      ! logical :: USESC
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.ByManipulation', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
@@ -3824,7 +3896,7 @@ contains ! =====     Public Procedures     =============================
       call get_string ( manipulation, mstr, strip=.true. )
       mstr = lowercase(mstr)
       
-      usesC = present(c)
+      ! usesC = present(c)
       ! StatisticalFunction = ( FindFirst( valid1WayManipulations, mstr ) > 7 )
       StatisticalFunction = any( &
         & indexes( &
@@ -4467,6 +4539,80 @@ contains ! =====     Public Procedures     =============================
         & cond=toggle(gen) .and. levels(gen) > 1 )
 
     end subroutine FromIsotope
+
+    ! --------------------------------------------- Scatter ---
+    ! The equally-most barbaric of Fill methods:
+    ! Go through the source quantity's values, Scattering
+    ! them into the quanity's values
+    ! according to the start, stride, block, and count arrays
+    ! No checking is done
+    
+    ! (See also Gather)
+    ! See the hdf5 introduction to HDF5 description of the hyperslab
+    ! for a discussion of what we mean
+    ! Let the following diagram serve as a mnemonic
+    !         n2 ->
+    ! o x x o x x o x x o x x
+    ! o x x o x x o x x o x x
+    ! o x x o x x o x x o x x
+    ! o o o o o o o o o o o o  n1
+    ! o x x o x x o x x o x x  |
+    ! o x x o x x o x x o x x  v
+    ! o x x o x x o x x o x x
+    ! o o o o o o o o o o o o 
+    ! The above is an array from quantity sized 8x12 (as n1 x n2)
+    ! We plan to Scatter into the elements marked by x from the
+    ! contiguous array in sourcequantity sized 6x8
+    ! Each block is 3x2 (3,2)
+    ! The start is at (1,2)
+    ! The stride is (4,3)
+    ! The count is (2,4)
+    ! Note: if the 2nd index of block is 0, then do all instances
+    ! and just hyperslabify the first index
+    subroutine Scatter ( quantity, sourceQuantity, start, count, stride, block )
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), pointer :: SOURCEQUANTITY
+      integer, dimension(:), intent(in) :: start
+                                   ! Starting coordinates of hyperslab
+      integer, dimension(:), intent(in) :: count
+                                   ! Num of blocks to select from dataspace
+      integer, dimension(:), intent(in) :: stride
+                                   ! How many elements to move in each direction
+      integer, dimension(:), intent(in) :: block
+                                   ! Size of element block
+      ! Local parameters
+      integer :: II, JJ ! Block counters
+      integer :: i, j   ! Counters within a block
+      integer :: n1, n2 ! indices in Quantity array
+      integer :: m1, m2 ! indices in sourcequantity array
+      ! Executable
+      if ( block(2) < 1 ) then
+        ! do every instance of the 2nd index
+        do n2=1, size(quantity%values, 2)
+          do II=1, count(1)
+            do i=1, block(1)
+              n1 = start(1) - 1 + (II-1)*stride(1) + i
+              m1 = (II-1)*block(1) + i
+              quantity%values(n1, n2) = sourceQuantity%values(m1, n2)
+            enddo
+          enddo
+        enddo
+      else
+        do JJ=1, count(2)
+          do II=1, count(1)
+            do j=1, block(2)
+              n2 = start(2) - 1 + (JJ-1)*stride(2) + j
+              m2 = (JJ-1)*block(2) + j
+              do i=1, block(1)
+                n1 = start(1) - 1 + (II-1)*stride(1) + i
+                m1 = (II-1)*block(1) + i
+                quantity%values(n1, n2) = sourceQuantity%values(m1, m2)
+              enddo
+            enddo
+          enddo
+        enddo
+      endif
+    end subroutine Scatter
 
     ! --------------------------------------------  WithEstdNoise  -----
     subroutine WithEstNoise ( Quantity, Radiance, SysTemp, Nbw, IntegrationTime )
@@ -5288,7 +5434,6 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: fromPrecision ! Flag
 
       ! Local parameters
-      real(r8), parameter :: FTOL = 1.0e-3 ! 1 kHz
       real(r8), parameter :: TOLERANCE=0.05 ! Tolerence for angles
       real(r8), parameter :: TIMETOL=5.0  ! Tolerence for time (not sure why this
       ! needs to be so big !????????? NJL)
@@ -5316,14 +5461,6 @@ contains ! =====     Public Procedures     =============================
         &  ((quantity%template%noChans/=1) .or. (l2gp%nFreqs/=0)) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity and l2gp have different number of channels' )
-!       call dump ( l2gp%frequency, 'l2gp' )
-!       call dump ( quantity%template%frequencies, 'quantity' )
-!       if ( associated ( quantity%template%frequencies ) ) then
-!         if ( any ( abs ( l2gp%frequency - &
-!           & quantity%template%frequencies ) > fTol ) ) &
-!           & call MLSMessage ( MLSMSG_Error, ModuleName, &
-!           & 'Quantity and l2gp have different frequency grids' )
-!       end if
 
       if ( quantity%template%noSurfs /= l2gp%nLevels .and. (.not. interpolate) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -5613,7 +5750,7 @@ contains ! =====     Public Procedures     =============================
       integer :: NOPOINTS               ! Number of points supplied
       integer :: I                      ! Loop counters / indices
       integer :: TESTUNIT               ! Unit for value
-      logical :: MYLOGSPACE             ! Interpolate in log space?
+      ! logical :: MYLOGSPACE             ! Interpolate in log space?
       real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
       real (r8), dimension(2) :: EXPRVALUE ! Value of expression
@@ -5635,8 +5772,8 @@ contains ! =====     Public Procedures     =============================
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
 
       ! Set some stuff up
-      myLogSpace = quantity%template%logBasis
-      if ( present ( logSpace ) ) myLogSpace = logSpace
+      ! myLogSpace = quantity%template%logBasis
+      ! if ( present ( logSpace ) ) myLogSpace = logSpace
       noPoints = nsons ( valuesNode ) - 1
       nullify ( heights, values )
       call Allocate_test ( heights, noPoints, 'heights', ModuleName )
@@ -7081,6 +7218,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.86  2013/09/17 22:47:49  pwagner
+! Added Scatter, Gather methods
+!
 ! Revision 2.85  2013/09/17 00:52:15  vsnyder
 ! Correct 'no_code_for' error message
 !
