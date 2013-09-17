@@ -44,7 +44,8 @@ module INTRINSIC
 
 ! Data types that don't have enumerated literals:
   integer, parameter :: T_FIRST             = 1
-  integer, parameter :: T_NUMERIC           = t_first
+  integer, parameter :: T_A_DOT_B           = t_first
+  integer, parameter :: T_NUMERIC           = t_a_dot_b + 1
   integer, parameter :: T_NUMERIC_RANGE     = t_numeric + 1
   integer, parameter :: T_STRING            = t_numeric_range + 1
 ! Enumeration types:
@@ -58,7 +59,7 @@ module INTRINSIC
 
 ! Abstract physical quantities:
   integer, parameter :: FIRST_PHYQ = 0
-  integer, parameter :: PHYQ_INVALID =         FIRST_PHYQ ! Invalid unit given by user
+  integer, parameter :: PHYQ_INVALID =         first_phyq ! Invalid unit given by user
   integer, parameter :: PHYQ_DIMENSIONLESS =   phyq_invalid+1     ! Dimensionless quantity
   integer, parameter :: PHYQ_LENGTH =          phyq_dimensionless+1  ! Default meters
   integer, parameter :: PHYQ_TIME =            phyq_length+1         ! Default seconds
@@ -164,6 +165,7 @@ contains ! =====     Public procedures     =============================
     ! Put intrinsic predefined identifiers into the symbol table.
 
     ! Put intrinsic non-enumeration type names into symbol table
+    data_type_indices(t_a_dot_b) =         add_ident ( 'a.b' )
     data_type_indices(t_numeric) =         add_ident ( 'numeric' )
     data_type_indices(t_numeric_range) =   add_ident ( 'numeric_range' )
     data_type_indices(t_string) =          add_ident ( 'string' )
@@ -298,6 +300,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.68  2013/09/17 00:55:49  vsnyder
+! Add A_Dot_B type
+!
 ! Revision 2.67  2012/01/05 01:14:11  pwagner
 ! Added get_phyq function to phyq indices; also LAST_AUTO_LIT
 !
