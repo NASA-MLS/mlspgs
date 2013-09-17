@@ -358,8 +358,9 @@ contains ! =====     Public Procedures     =============================
         end do
         call output ( " are required.", advance='yes' )
       case ( noCodeFor )
-        call output ( " no code for " )
-        call display_string ( field_indices(extraInfo(i)), advance='yes' )
+        call output ( 're is no code for the "' )
+        call display_string ( field_indices(extraInfo(1)) )
+        call output ( '" field', advance='yes' )
       case ( needGeocAltitude )
         call output ( " fill needs geocAltitudeQuantity.", advance='yes' )
       case ( needH2O )
@@ -7080,6 +7081,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.85  2013/09/17 00:52:15  vsnyder
+! Correct 'no_code_for' error message
+!
 ! Revision 2.84  2013/08/30 02:45:38  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
