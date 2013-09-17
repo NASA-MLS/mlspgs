@@ -66,7 +66,7 @@ contains ! =====     Public Procedures     =============================
     use FILLUTILS_1, only: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
       & COMPUTETOTALPOWER, DERIVATIVEOFSOURCE, FILLCOVARIANCE, &
       & EXTRACTSINGLECHANNEL, FILLERROR, FROMANOTHER, FROMGRID, &
-      & FROML2GP, FROMPROFILE, LOSVELOCITY, &
+      & FROML2GP, FROMPROFILE, GATHER, LOSVELOCITY, &
       & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
       & COLABUNDANCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
       & IWCFROMEXTINCTION, RHIFROMORTOH2O, NORADSPERMIF, &
@@ -81,10 +81,10 @@ contains ! =====     Public Procedures     =============================
       & WITHWMOTROPOPAUSE, WITHBINRESULTS, WITHBOXCARFUNCTION, &
       & STATUSQUANTITY, QUALITYFROMCHISQ, CONVERGENCEFROMCHISQ, &
       & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNUSEDRADIANCES, &
-      & SCALEOVERLAPS, SPREADCHANNELFILL, TRANSFERVECTORS, &
+      & SCALEOVERLAPS, SCATTER, SPREADCHANNELFILL, TRANSFERVECTORS, &
       & TRANSFERVECTORSBYMETHOD, UNCOMPRESSRADIANCE, &
       & QTYFROMFILE, VECTORFROMFILE, ANNOUNCE_ERROR, &
-      ! CODES FOR ANNOUNCE_ERROR:
+      ! codes for ANNOUNCE_ERROR:
       & BADESTNOISEFILL, BADGEOCALTITUDEQUANTITY, BADISOTOPEFILL, &
       & BADLOSGRIDFILL, BADLOSVELFILL, BADREFGPHQUANTITY, &
       & BADREFRACTFILL, BADTEMPERATUREQUANTITY, BOTHFRACTIONANDLENGTH, &
@@ -100,12 +100,12 @@ contains ! =====     Public Procedures     =============================
     use GRIDDEDDATA, only: GRIDDEDDATA_T
     use HESSIANMODULE_1, only: ADDHESSIANTODATABASE, CREATEEMPTYHESSIAN, &
       & STREAMLINEHESSIAN, HESSIAN_T
-    ! WE NEED MANY THINGS FROM INIT_TABLES_MODULE.  FIRST THE FIELDS:
+    ! We need many things from init_tables_module.  first the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_ASPERCENTAGE, F_AUTOFILL, F_AVOIDBRIGHTOBJECTS, &
-      & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, &
+      & F_B, F_BADRANGE, F_BASELINEQUANTITY, F_BIN, F_BLOCK, &
       & F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
-      & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_CHANNELS, F_COLUMNS, &
+      & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_CHANNELS, F_COLUMNS, F_COUNT, &
       & F_DESTINATION, F_DIAGONAL, F_DIMLIST, &
       & F_DONTMASK, &
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, &
@@ -133,14 +133,14 @@ contains ! =====     Public Procedures     =============================
       & F_SCALEINSTS, F_SCALERATIO, F_SCALESURFS, F_SCECI, &
       & F_SCVEL, F_SCVELECI, F_SCVELECR, F_SDNAME, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
-      & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, &
+      & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_START, F_STATUS, F_STRIDE, &
       & F_SUFFIX, F_SUPERDIAGONAL, F_SURFACE, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, F_TOTALPOWERQUANTITY, &
       & F_TYPE, F_UNIT, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
       & F_WHEREFILL, F_WHERENOTFILL, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
-    ! NOW THE LITERALS:
+    ! Now the literals:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
       & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQCHAN, &
@@ -149,7 +149,8 @@ contains ! =====     Public Procedures     =============================
       & L_COMBINECHANNELS, L_COLUMNABUNDANCE, L_CONVERGENCERATIO, &
       & L_DERIVATIVE, L_DOBSONUNITS, L_DU, &
       & L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
-      & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, L_GEOLOCATION, &
+      & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, &
+      & L_GATHER, L_GEOLOCATION, &
       & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPHPRECISION, L_GRIDDED, &
       & L_H2OFROMRHI, L_H2OPRECISIONFROMRHI, L_HYDROSTATIC, L_ISOTOPE, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
@@ -164,12 +165,12 @@ contains ! =====     Public Procedures     =============================
       & L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, &
       & L_REFLECTORTEMPMODEL, L_RESETUNUSEDRADIANCES, L_RHI, &
       & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, L_SCALEOVERLAPS, &
-      & L_SECTIONTIMING, L_SPD, L_SPREADCHANNEL, &
+      & L_SECTIONTIMING, L_SCATTER, L_SPD, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_STATUS, L_SWAPVALUES, &
       & L_TEMPERATURE, L_TNGTGEODALT, &
       & L_TNGTGEOCALT, L_UNCOMPRESSRADIANCE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAuse, &
       & L_ZETA
-    ! NOW THE SPECIFICATIONS:
+    ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_ANYGOODVALUES, S_ANYGOODRADIANCES, &
       & S_CASE, S_CATCHWARNING, S_COMPARE, S_COMPUTETOTALPOWER, S_DESTROY, &
       & S_DIFF, S_DIRECTREAD, S_DUMP, S_ENDSELECT, S_FILL, S_FILLCOVARIANCE, &
@@ -178,7 +179,7 @@ contains ! =====     Public Procedures     =============================
       & S_REEVALUATE, S_REPEAT, S_RESTRICTRANGE, &
       & S_SELECT, S_SKIP, S_SNOOP, S_STREAMLINEHESSIAN, S_SUBSET, &
       & S_TIME, S_TRANSFER, S_UPDATEMASK, S_VECTOR
-    ! NOW SOME ARRAYS
+    ! Now some arrays
     use INTRINSIC, only: LIT_INDICES, &
       & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_TEMPERATURE, &
       & PHYQ_TIME, PHYQ_LENGTH, PHYQ_ANGLE, PHYQ_PROFILES
@@ -193,8 +194,8 @@ contains ! =====     Public Procedures     =============================
       & GETKINDFROMMATRIXDATABASE, GETFROMMATRIXDATABASE, K_PLAIN, K_SPD, &
       & MATRIX_CHOLESKY_T, MATRIX_DATABASE_T, MATRIX_KRONECKER_T, MATRIX_SPD_T, &
       & MATRIX_T, NULLIFYMATRIX
-    ! NOTE: IF YOU EVER WANT TO INCLUDE DEFINED ASSIGNMENT FOR MATRICES, PLEASE
-    ! CAREFULLY CHECK OUT THE CODE AROUND THE CALL TO SNOOP.
+    ! NOTE: if you ever want to include defined assignment for matrices, please
+    ! carefully check out the code around the call to snoop.
     use MLSL2OPTIONS, only: DEFAULT_HDFVERSION_READ, L2CFNODE, &
       & SKIPRETRIEVAL, SPECIALDUMPFILE, MLSMESSAGE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
@@ -1348,8 +1349,10 @@ contains ! =====     Public Procedures     =============================
     subroutine fillCommand
     ! Now we're on actual Fill instructions.
       use Init_Tables_Module, only: L_None
-      integer :: Geolocation
+      integer :: GEOLOCATION
       integer :: JJ
+      integer :: MUL
+      integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
       logical :: QTYWASMASKED
       type(vectorValue_T) :: TEMPQUANTITY  ! For storing original qty's mask
       ! Executable
@@ -1360,6 +1363,10 @@ contains ! =====     Public Procedures     =============================
       geolocation = l_none
       got = .false.
       multiplier = 1.
+      start = 0
+      count = 0
+      stride = 0
+      block = 0
       do j = 2, nsons(key)
         gson = subtree(j,key) ! The argument
         fieldIndex = get_field_id(gson)
@@ -1689,6 +1696,27 @@ contains ! =====     Public Procedures     =============================
           vGridIndex=decoration(decoration(gson))
         case ( f_spread ) ! For explicit fill, note that gson here is not same as others
           spreadFlag = get_boolean ( gson )
+        case ( f_start, f_count, f_stride, f_block ) ! For selecting hyperslab
+          multiplierNode = subtree(j,key)
+          ! Either start = [a, b] or start = b are possible
+          do jj=1, min(nsons(multiplierNode)-1, 2)
+            call expr(subtree(jj+1,multiplierNode),unitAsArray,valueAsArray)
+            mul = valueAsArray(1)
+            select case ( fieldIndex )
+            case ( f_start )
+              start(jj) = mul
+            case ( f_count )
+              count(jj) = mul
+            case ( f_stride )
+              stride(jj) = mul
+            case ( f_block )
+              block(jj) = mul
+            end select
+          end do
+          if ( DEEBUG ) then
+            call output('index start: ', advance='no')
+            call output(valueAsArray, advance='yes')
+          end if
         case ( f_status )
           valuesNode = subtree(j,key)
           call expr_check ( gson , unitAsArray, valueAsArray, &
@@ -2141,6 +2169,20 @@ contains ! =====     Public Procedures     =============================
           call Announce_error ( key, no_Error_Code, trim(GLStr) // &
             & 'geolocation not recognized' )
         end select
+
+      case ( l_gather, l_scatter ) ! ------------  Gather  -----
+        if ( .not. all(got( &
+          &(/ f_sourceQuantity, f_start, f_count, f_stride, f_block /) &
+          & )) ) &
+          & call Announce_Error ( key, no_Error_Code, &
+            & 'Need sourceQuantity, start, count, stride, and block for this fill' )
+        sourceQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(sourceVectorIndex), sourceQuantityIndex )
+        if ( fillMethod == l_gather ) then
+          call Gather( quantity, sourceQuantity, start, count, stride, block )
+        else
+          call Scatter( quantity, sourceQuantity, start, count, stride, block )
+        endif
 
       case ( l_gphPrecision) ! -------------  GPH precision  -----
         ! Need a tempPrecision and a refgphPrecision quantity
@@ -3021,6 +3063,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.427  2013/09/17 22:43:45  pwagner
+! Added Scatter, Gather methods
+!
 ! Revision 2.426  2013/09/17 00:52:38  vsnyder
 ! Correct 'no_code_for' error message
 !
