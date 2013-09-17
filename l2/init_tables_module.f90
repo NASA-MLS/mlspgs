@@ -299,8 +299,8 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_chunkDivideMethod) = add_ident ( 'chunkDivideMethod' )
     data_type_indices(t_cloud_der) =         add_ident ( 'cloud_Der' )
     data_type_indices(t_criticalmodule) =    add_ident ( 'criticalModule' )
-    data_type_indices(t_fillmethod) =        add_ident ( 'fillMethod' )
     data_type_indices(t_fgridcoord) =        add_ident ( 'fGridCoord' )
+    data_type_indices(t_fillmethod) =        add_ident ( 'fillMethod' )
     data_type_indices(t_fwmType) =           add_ident ( 'fwmType' )
     data_type_indices(t_geolocation) =       add_ident ( 'geolocation' )
     data_type_indices(t_griddedOrigin) =     add_ident ( 'griddedOrigin' )
@@ -523,16 +523,16 @@ contains ! =====     Public procedures     =============================
              l+l_cloudFull, l+l_hybrid, l+l_scan, l+l_scan2d, l+l_switchingMirror, &
              l+l_polarLinear, n+n_dt_def, &
       begin, t+t_geolocation, l+l_geocentric, l+l_geodetic, l+l_none, n+n_dt_def, &
-      begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
-             l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
-             l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
-             l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def /) )
-    call make_tree ( (/ &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_geos5, &
              l+l_geos5_7, l+l_gloria, l+l_merra, l+l_ncep, l+l_none, l+l_strat, &
              l+l_surfaceHeight, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
-             l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
+             l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def /) )
+    call make_tree ( (/ &
+      begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
+             l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
+             l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
+             l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def, &
       begin, t+t_masks, l+l_cloud, l+l_fill, l+l_full_derivatives, l+l_ignore, &
              l+l_linalg, l+l_spare, l+l_tikhonov, n+n_dt_def, &
       begin, t+t_maskUpdates, l+l_andMasks, l+l_copy, l+l_invert, l+l_orMasks, &
@@ -542,9 +542,6 @@ contains ! =====     Public procedures     =============================
       begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, &
              l+l_simple, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
-      begin, t+t_rowsOrColumns, l+l_rows, l+l_columns, n+n_dt_def, &
-      begin, t+t_reflector, l+l_primary, l+l_secondary, l+l_tertiary, &
-             l+l_complete, n+n_dt_def, &
       begin, t+t_outputType, l+l_ascii, l+l_hdf, l+l_l2aux, l+l_l2cf, &
              l+l_l2dgg, l+l_l2fwm, l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
@@ -587,7 +584,10 @@ contains ! =====     Public procedures     =============================
              l+l_temperature, l+l_tngtECI, l+l_tngtGeocAlt, &
              l+l_tngtGeodAlt, l+l_totalExtinction, l+l_totalPowerWeight, &
              l+l_TScat, l+l_vmr, &
-             n+n_dt_def /) )
+             n+n_dt_def , &
+      begin, t+t_reflector, l+l_primary, l+l_secondary, l+l_tertiary, &
+             l+l_complete, n+n_dt_def, &
+      begin, t+t_rowsOrColumns, l+l_rows, l+l_columns, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
              l+l_none, l+l_norm, n+n_dt_def, &
@@ -1973,6 +1973,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.584  2013/09/17 00:54:12  vsnyder
+! Alphabetize data_type_indices and data type trees
+!
 ! Revision 2.583  2013/09/04 17:36:21  pwagner
 ! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 !
