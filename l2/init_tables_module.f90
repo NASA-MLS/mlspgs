@@ -1497,8 +1497,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_allSpectra, boolean(), &
              begin, f+f_allVectors, boolean(), &
              begin, f+f_allVectorTemplates, boolean(), &
-             begin, f+f_allVGrids, boolean() /), &
-             continue=.true. )
+             begin, f+f_allVGrids, boolean() /) )
     call make_tree ( (/ & ! Continuing for s_dump...
              begin, f+f_antennaPatterns, boolean(), &
              begin, f+f_block, numeric(), &
@@ -1516,7 +1515,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_forwardModel, field_spec(s_forwardModel), &
              begin, f+f_Grid, field_spec((/ s_gridded,s_merge,s_Concatenate, &
                                        &  s_ConvertEtaToP,s_wmoTrop /) ), &
-             begin, f+f_hGrid, field_spec(s_hgrid)/) )
+             begin, f+f_hGrid, field_spec(s_hgrid)/) , &
+             continue=.true. )
     call make_tree ( (/ & ! Continuing for s_dump...
              begin, f+f_hessian, field_spec(s_hessian), &
              begin, f+f_igrf, boolean(), &
@@ -1985,6 +1985,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.586  2013/09/18 18:29:07  pwagner
+! Corrected placement of continue=.true. in s_dump
+!
 ! Revision 2.585  2013/09/17 23:02:19  pwagner
 ! Added Scatter, Gather methods
 !
