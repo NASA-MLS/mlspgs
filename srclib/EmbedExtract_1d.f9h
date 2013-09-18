@@ -12,12 +12,15 @@
 ! $Id$
 
     ! Dummy args
-    real(rk), dimension(:), pointer :: bloc
+    real(rk), dimension(:), pointer :: slab
     real(rk), dimension(:), pointer :: array ! The larger array
-    integer, dimension(2), intent(in)     :: range
+    integer, dimension(:), intent(in)     :: start
+    integer, dimension(:), intent(in)     :: count
+    integer, dimension(:), intent(in)     :: stride
+    integer, dimension(:), intent(in)     :: block
     character(len=*), intent(in), optional :: options
     ! Local variables
-    integer :: i
+    integer :: i, ii, n1, m1
     character(len=4) :: myOptions
     integer :: status
     ! Executable
@@ -26,21 +29,32 @@
     
     select case(direction)
     case('m') ! embedding
-      do i=range(1), range(2)
-        array(i) = bloc( i - range(1) + 1 )
+      do II=1, count(1)
+        do i=1, block(1)
+          n1 = start(1) - 1 + (II-1)*stride(1) + i
+          m1 = (II-1)*block(1) + i
+          array(n1) = slab(m1)
+        enddo
       enddo
     case('x') ! extracting
       ! Do we need to allocate bloc first?
       if ( index(myOptions, 'a') > 0 ) then
-        allocate(bloc(range(2)-range(1)+1), stat=status)
+        allocate(slab(block(1)*count(1)), stat=status)
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
           & ModuleName, "unable to allocate 1-d bloc before extracting" )
       endif
-      do i=range(1), range(2)
-        bloc( i - range(1) + 1 ) = array(i)
+      do II=1, count(1)
+        do i=1, block(1)
+          n1 = start(1) - 1 + (II-1)*stride(1) + i
+          m1 = (II-1)*block(1) + i
+          slab(m1) = array(n1)
+        enddo
       enddo
     case default
       call MLSMessage ( MLSMSG_Error, &
       & ModuleName, "direction neither embedding nor extracting" )
     end select
 ! $Log$
+! Revision 1.1  2006/01/14 00:48:25  pwagner
+! First commit
+!

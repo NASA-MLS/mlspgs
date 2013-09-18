@@ -12,13 +12,15 @@
 ! $Id$
 
     ! Dummy args
-    real(rk), dimension(:,:), pointer :: bloc
+    real(rk), dimension(:,:), pointer :: slab
     real(rk), dimension(:,:), pointer :: array ! The larger array
-    integer, dimension(2), intent(in)     :: range1
-    integer, dimension(2), intent(in)     :: range2
+    integer, dimension(:), intent(in)     :: start
+    integer, dimension(:), intent(in)     :: count
+    integer, dimension(:), intent(in)     :: stride
+    integer, dimension(:), intent(in)     :: block
     character(len=*), intent(in), optional :: options
     ! Local variables
-    integer :: i, j
+    integer :: i, j, ii, jj, n1, n2, m1, m2
     character(len=4) :: myOptions
     integer :: status
     ! Executable
@@ -27,21 +29,37 @@
     
     select case(direction)
     case('m') ! embedding
-      do j=range2(1), range2(2)
-        do i=range1(1), range1(2)
-          array(i, j) = bloc( i - range1(1) + 1, j - range2(1) + 1  )
+      do JJ=1, count(2)
+        do II=1, count(1)
+          do j=1, block(2)
+            n2 = start(2) - 1 + (JJ-1)*stride(2) + j
+            m2 = (JJ-1)*block(2) + j
+            do i=1, block(1)
+              n1 = start(1) - 1 + (II-1)*stride(1) + i
+              m1 = (II-1)*block(1) + i
+              array(n1, n2) = slab(m1, m2)
+            enddo
+          enddo
         enddo
       enddo
     case('x') ! extracting
       ! Do we need to allocate bloc first?
       if ( index(myOptions, 'a') > 0 ) then
-        allocate(bloc(range1(2)-range1(1)+1, range2(2)-range2(1)+1), stat=status)
+        allocate(slab(block(1)*count(1), block(2)*count(2)), stat=status)
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
           & ModuleName, "unable to allocate 2-d bloc before extracting" )
       endif
-      do j=range2(1), range2(2)
-        do i=range1(1), range1(2)
-         bloc( i - range1(1) + 1, j - range2(1) + 1  ) = array(i, j)
+      do JJ=1, count(2)
+        do II=1, count(1)
+          do j=1, block(2)
+            n2 = start(2) - 1 + (JJ-1)*stride(2) + j
+            m2 = (JJ-1)*block(2) + j
+            do i=1, block(1)
+              n1 = start(1) - 1 + (II-1)*stride(1) + i
+              m1 = (II-1)*block(1) + i
+              slab(m1, m2) = array(n1, n2)
+            enddo
+          enddo
         enddo
       enddo
     case default
@@ -49,3 +67,6 @@
       & ModuleName, "direction neither embedding nor extracting" )
     end select
 ! $Log$
+! Revision 1.1  2006/01/14 00:48:25  pwagner
+! First commit
+!
