@@ -66,9 +66,11 @@ contains ! ====     Public Procedures     ==============================
     integer, parameter :: NotFunc = nonNumeric + 1 ! Not a function
     integer, parameter :: NotLogical = notFunc + 1 ! Not logical
     integer, parameter :: NotUnitless = notLogical + 1 ! Not unitless
-    integer, parameter :: OutOfRange = notUnitless + 1
+    integer, parameter :: NotUnitlessArg = notUnitless + 1 ! Not unitless
+    integer, parameter :: OutOfRange = notUnitlessArg + 1
     integer, parameter :: UnsupportedFunc = outOfRange + 1
     integer, parameter :: WrongNumArgs = unsupportedFunc + 1
+    integer, parameter :: wrongUnits = wrongNumArgs + 1
 
     call trace_begin ( trace, 'EXPR', root, cond=toggle(con) )
     units = (/ phyq_dimensionless, phyq_invalid /)     ! default
@@ -111,7 +113,8 @@ contains ! ====     Public Procedures     ==============================
           if ( type2 /= num_value ) then
             call announceError ( subtree(2,root), nonNumeric )
           else if ( units(1) /= phyq_dimensionless ) then
-            call announceError ( subtree(2,root), notUnitless )
+            !??? Does the tree checker already check this?
+            call announceError ( subtree(2,root), notUnitlessArg )
           else
             select case ( decl%units ) ! the function index in this case
             case ( f_exp )
@@ -149,7 +152,9 @@ contains ! ====     Public Procedures     ==============================
       value = 1.0
       do i = nsons(root), 1, -1 ! Power operator is right associative
         call expr ( subtree(i,root), units, value2, type2 )
-        if ( type2 == num_value ) then
+        if ( any(units /= phyq_dimensionless ) ) then
+            call announceError ( subtree(2,root), notUnitless )
+        else if ( type2 == num_value ) then
           value = value2(1) ** value
         else
           value = value2 ** value
@@ -180,6 +185,7 @@ contains ! ====     Public Procedures     ==============================
           end if
         case ( n_plus, n_minus )
           if ( nsons(root) > 1 ) then
+            if ( any(units /= units2) ) call announceError ( root, wrongUnits )
             if ( me == n_plus ) then
               value = value + value2
             else !  me == n_minus
@@ -189,11 +195,20 @@ contains ! ====     Public Procedures     ==============================
             value = - value
           end if
         case ( n_mult )
+          if ( .not. any(units == phyq_dimensionless) .and. &
+             & .not. any(units2 == phyq_dimensionless) ) &
+             & call announceError ( root, wrongUnits )
           value = value * value2
           where ( units == phyq_dimensionless ) units = units2
         case ( n_div )
+          if ( .not. any(units == phyq_dimensionless) .and. &
+             & .not. any(units2 == phyq_dimensionless) ) &
+             & call announceError ( root, wrongUnits )
           value = value / value2
         case ( n_into )
+          if ( .not. any(units == phyq_dimensionless) .and. &
+             & .not. any(units2 == phyq_dimensionless) ) &
+             & call announceError ( root, wrongUnits )
           value = value2 / value
           units = units2
         case ( n_less, n_less_eq, n_greater, n_greater_eq, n_equal_equal, n_not_equal )
@@ -204,6 +219,8 @@ contains ! ====     Public Procedures     ==============================
               call announceError ( subtree(2,root), nonNumeric )
           else if ( type2 /= num_value ) then
             call announceError ( subtree(2,root), nonNumeric )
+          else if ( any(units /= units2) ) then
+            call announceError ( root, wrongUnits )
           else
             select case ( me )
             case ( n_less )
@@ -248,9 +265,9 @@ contains ! ====     Public Procedures     ==============================
     call trace_end ( 'EXPR', cond=toggle(con) )
   contains
     subroutine AnnounceError ( where, what )
-      use OUTPUT_M, only: OUTPUT
+      use Output_m, only: Output
       use String_Table, only: Display_String
-      use TREE, only: DUMP_TREE_NODE
+      use Tree, only: Dump_Tree_Node
       integer, intent(in) :: Where ! Tree index
       integer, intent(in) :: What  ! Error index
       call startErrorMessage ( where )
@@ -268,6 +285,10 @@ contains ! ====     Public Procedures     ==============================
         call display_string ( string, before='Argument of ' )
         call output ( ' is not logical.', advance='yes' )
       case ( notUnitless )
+        call output ( 'Operands of ' )
+        call dump_tree_node ( where, 0 )
+        call output ( ' are not unitless.', advance='yes' )
+      case ( notUnitlessArg )
         call display_string ( string, before='Argument of ' )
         call output ( ' is not unitless.', advance='yes' )
       case ( outOfRange )
@@ -280,6 +301,10 @@ contains ! ====     Public Procedures     ==============================
       case ( wrongNumArgs )
         call output ( 'Incorrect number of arguments for ' )
         call display_string ( string, advance='yes' )
+      case ( wrongUnits )
+        call output ( 'Units of operands of ' )
+        call dump_tree_node ( where, 0 )
+        call output ( ' are not compatible.', advance='yes' )
       end select
       ! There's no way to return an error, so return something
       if ( present(type) ) type = empty
@@ -405,6 +430,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.23  2013/09/19 23:27:38  vsnyder
+! More careful units checking
+!
 ! Revision 2.22  2013/08/30 16:44:09  pwagner
 ! Trying to fix bug in call trace usage
 !
