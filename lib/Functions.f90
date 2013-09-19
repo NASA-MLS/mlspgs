@@ -56,7 +56,7 @@ contains
       & F, FIELD_INDICES, FUNC_INDICES, &
       & G, INIT_INTRINSIC, L, LIT_INDICES, &
       & N, P, PARM_INDICES, S, SPEC_INDICES, SECTION_INDICES, T, T_NUMERIC, Z
-    use TREE_TYPES, only: N_ARG_DEF, N_FUNC_DEF
+    use TREE_TYPES, only: N_Dot, N_ARG_DEF, N_FUNC_DEF, N_Or
 
     integer, intent(in) :: N_DATA_TYPE_INDICES
     integer, intent(in) :: N_FIELD_INDICES
@@ -64,6 +64,9 @@ contains
     integer, intent(in) :: FIRST_PARM_INDEX, LAST_PARM_INDEX
     integer, intent(in) :: N_SECTION_INDICES
     integer, intent(in) :: N_SPEC_INDICES
+
+    integer, parameter :: Num_or_Dot(5) = &
+      & (/ begin, t+t_numeric, begin, n+n_dot, n+n_or /)
 
     ! Initialize the intrinsic types
 
@@ -95,22 +98,22 @@ contains
       begin, g+f_cholesky, n+n_func_def, &
       begin, g+f_clearLower, n+n_func_def, &
       begin, g+f_exp, &
-             begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
+             begin, num_or_dot, n+n_arg_def, n+n_func_def, &
       begin, g+f_getDiagonal, n+n_func_def, &
       begin, g+f_invert, n+n_func_def, &
       begin, g+f_ln, &
-             begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
+             begin, num_or_dot, n+n_arg_def, n+n_func_def, &
       begin, g+f_log, &
-             begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
+             begin, num_or_dot, n+n_arg_def, n+n_func_def, &
       begin, g+f_log10, &
-             begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
+             begin, num_or_dot, n+n_arg_def, n+n_func_def, &
       begin, g+f_mod, &
-             begin, t+t_numeric, t+t_numeric, n+n_arg_def, n+n_func_def, &
+             begin, num_or_dot, num_or_dot, n+n_arg_def, n+n_func_def, &
       !??? Automatic type checking for f_sqrt may be difficult, given that
       !??? we want to allow numbers or matrices.  It may be necessary either
       !??? to give up on that, or to do init_functions after init_tables.
       begin, g+f_sqrt, &
-             begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
+             begin, num_or_dot, n+n_arg_def, n+n_func_def, &
       begin, g+f_transpose, n+n_func_def, &
       begin, g+f_xtx, n+n_func_def /) )
 
@@ -134,6 +137,9 @@ contains
 end module Functions
 
 ! $Log$
+! Revision 2.13  2013/09/19 23:31:50  vsnyder
+! Allow number or dot for exp, logs, sqrt
+!
 ! Revision 2.12  2013/09/04 00:01:39  pwagner
 ! Comments preceding use TREE made more uniform across modules
 !
