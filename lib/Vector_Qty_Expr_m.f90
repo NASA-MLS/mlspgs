@@ -522,7 +522,6 @@ contains ! ====     Public Procedures     ==============================
         vector_index = decoration(decoration(subtree(1,root)))
         qty_index = decoration(decoration(decoration(subtree(2,root))))
         call nullifyQuantityTemplate ( qty%template )
-print '(a,i0)', 'Cloning vector quantity at ', root
         call cloneVectorQuantity ( qty, &
           & GetVectorQtyByTemplateIndex( &
           & vectors(vector_index), qty_index ), options='d' )
@@ -628,6 +627,9 @@ print '(a,i0)', 'Cloning vector quantity at ', root
 end module Vector_Qty_Expr_m
 
 ! $Log$
+! Revision 2.2  2013/09/19 23:24:11  vsnyder
+! Remove debugging print
+!
 ! Revision 2.1  2013/09/19 23:23:10  vsnyder
 ! Initial commit
 !
