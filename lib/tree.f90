@@ -18,7 +18,7 @@ module TREE
   use STRING_TABLE, only: DISPLAY_STRING, LOOKUP_AND_INSERT
   use SYMBOL_TABLE, only: SET_SYMBOL, SYMBOL
   use SYMBOL_TYPES, only: T_NULL
-  use TOGGLES, only: CON, TOGGLE
+  use TOGGLES, only: CON, Switches, TOGGLE
   use TREE_TYPES, only: LAST_TREE_NODE, N_EOF, N_NULL, TREE_INIT, TREE_MAP
   implicit NONE
   private
@@ -155,13 +155,14 @@ contains
     call init_tree
   end subroutine ALLOCATE_TREE
 
-  subroutine BUILD_TREE ( NEW_NODE, NSONS, DECORATION )
+  subroutine BUILD_TREE ( NEW_NODE, NSONS, DECORATION, Trace )
   ! Pop NSONS nodes from the orchard stack to the tree.  Build a new tree
   ! node of type NEW_NODE over them.  Leave the new node on the stack at
   ! TREE_SP+1.
     integer, intent(in) :: NEW_NODE
     integer, intent(in) :: NSONS
     integer, intent(in), optional :: DECORATION
+    integer, intent(in), optional :: Trace
     integer :: LEFT_SON, MY_DECOR, SOURCE_REF
     my_decor = null_tree
     if ( present(decoration) ) my_decor = decoration
@@ -181,6 +182,12 @@ contains
     the_tree(tree_sp) = tree_node( new_node, my_decor, nsons, source_ref, &
                                  !    kind   left_son
                                    internal, left_son )
+    if ( present(trace) ) then
+      if ( trace > 0 ) then
+        call output ( 'Build ' )
+        call print_subtree ( tree_sp, 0, .true. )
+      end if
+    end if
     tree_sp = tree_sp - 1     ! Stack push
     n_tree_stack = n_tree_stack + 1 - nsons
   end subroutine BUILD_TREE
@@ -635,6 +642,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.19  2013/09/19 23:25:57  vsnyder
+! Add some tracing
+!
 ! Revision 2.18  2013/09/12 03:12:46  vsnyder
 ! Add Advance and Before to Dump_Tree_Node_Name
 !
