@@ -957,7 +957,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_expr, &
                     begin, numeric(), &
                     begin, boolean(), &
-                    begin, vectorQuantity(), &
+                    begin, vectorQuantity(scalar=.true.,expr=.true.), &
                     n+n_or, &
              begin, f+f_extinction, boolean(), &
              begin, f+f_fieldECR, vectorQuantity(), &
@@ -1868,12 +1868,14 @@ contains ! =====     Public procedures     =============================
     end function String
 
     ! -------------------------------------------  VectorQuantity  -----
-    pure function VectorQuantity ( Req )
+    pure function VectorQuantity ( Req, Scalar, Expr )
       ! Declare Vector Quantity "dot" field
       logical, intent(in), optional :: Req  ! Field is required if true
+      logical, intent(in), optional :: Scalar  ! Field is scalar if true
+      logical, intent(in), optional :: Expr ! Expr is OK if true
       integer :: VectorQuantity(4)
       VectorQuantity = (/ s+s_vector, f+f_template, f+f_quantities, &
-                       &  node(req)+n_dot /)
+                       &  node(req,scalar=scalar,expr=expr)+n_dot /)
     end function VectorQuantity
 
   end subroutine INIT_TABLES
@@ -1958,18 +1960,20 @@ contains ! =====     Public procedures     =============================
   end function Field_Type_2
 
   ! -------------------------------------------------------  Node  -----
-  pure function Node ( Req, Scalar, Empty )
+  pure function Node ( Req, Scalar, Empty, Expr )
     ! Compute node generator = N if Req is absent or false, or NR
     ! if Req is present and true
-    use Intrinsic, only: D, Empty_OK, No_Array, Req_Fld
+    use Intrinsic, only: D, Empty_OK, Expr_OK, No_Array, Req_Fld
     logical, intent(in), optional :: Req    ! Field is required if true
     logical, intent(in), optional :: Scalar ! Scalar is required if true
     logical, intent(in), optional :: Empty  ! Empty is OK if true
+    logical, intent(in), optional :: Expr   ! Expr is OK if true
     integer :: Node
     node = n
     if ( present(req) ) node = node + merge(d*req_fld,0,req)
     if ( present(scalar) ) node = node + merge(d*no_array,0,scalar)
     if ( present(empty) ) node = node + merge(d*empty_OK,0,empty)
+    if ( present(expr) ) node = node + merge(d*expr_OK,0,expr)
   end function Node
 
 !--------------------------- end bloc --------------------------------------
@@ -1985,6 +1989,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.587  2013/09/19 23:36:58  vsnyder
+! Require Vector Quantity in Fill's expr to be scalar
+!
 ! Revision 2.586  2013/09/18 18:29:07  pwagner
 ! Corrected placement of continue=.true. in s_dump
 !
