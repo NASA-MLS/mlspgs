@@ -123,8 +123,13 @@ contains ! ====     Public Procedures     ==============================
       else if ( stack(depth)%index >= 0 ) then
         call output ( stack(depth)%index, before=' ' )
       end if
-      if ( myWhere .and. stack(depth)%tree > 0 ) &
-        & call print_source ( source_ref(stack(depth)%tree), before=', ' )
+      if ( myWhere .and. stack(depth)%tree > 0 ) then
+        if ( source_ref(stack(depth)%tree) == 0 ) then
+          call output ( stack(depth)%tree, before=', tree at ' )
+        else
+          call print_source ( source_ref(stack(depth)%tree), before=', ' )
+        end if
+      end if
       if ( say_when ) call show_when
       if ( mySize ) call dumpSize ( memory_units * stack(depth)%memory, &
         & before = ' Memory: ' )
@@ -334,6 +339,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.12  2013/09/19 23:33:10  vsnyder
+! More graceful handling of zero source ref
+!
 ! Revision 2.11  2013/09/12 03:11:18  vsnyder
 ! Add Index argument to Pop_Stack and Dump_Stack
 !

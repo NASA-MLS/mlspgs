@@ -17,8 +17,8 @@ module DECLARATION_TABLE
 ! for initializing the representation of intrinsic types accessed from
 ! the INTRINSIC module.
 
-  use INTRINSIC, only: PHYQ_INDICES, PHYQ_INVALID, T_A_DOT_B, T_BOOLEAN, &
-   &                   T_NUMERIC, T_NUMERIC_RANGE, T_STRING
+  use INTRINSIC, only: LIT_INDICES, PHYQ_INDICES, PHYQ_INVALID, T_A_DOT_B, &
+   &                   T_BOOLEAN, T_NUMERIC, T_NUMERIC_RANGE, T_STRING
   use MACHINE, only: IO_ERROR
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, HOW_MANY_STRINGS, STRING_TABLE_SIZE
@@ -28,10 +28,10 @@ module DECLARATION_TABLE
   private
 
   public :: ALLOCATE_DECL, DEALLOCATE_DECL, DECLARATION, DECLARE
-  public :: DECLARED, DECLS, DOT, DUMP_DECL, DUMP_1_DECL, EMPTY
+  public :: DECLARED, DECLS, DOT, DUMP_DECL, DUMP_A_DECL, DUMP_1_DECL, EMPTY
   public :: ENUM_VALUE, EXPRN, EXPRN_M, EXPRN_V, FIELD, FUNCTION, GET_DECL
   public :: INIT_DECL, LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, NUM_VALUE
-  public :: PRIOR_DECL, RANGE, REDECLARE
+  public :: PHYS_UNIT_NAME, PRIOR_DECL, RANGE, REDECLARE
   public :: SECTION, SECTION_NODE, STR_RANGE, STR_VALUE, SPEC, TREE_NODE
   public :: TYPE_MAP, TYPE_NAME, TYPE_NAMES, UNDECLARED, UNITS_NAME
 
@@ -73,33 +73,35 @@ module DECLARATION_TABLE
   integer, parameter :: NAMED_VALUE = 10! X = expr
   integer, parameter :: NUM_VALUE = 11  ! Entity is a numeric value, value is
                                         ! in the "value" field"
-  integer, parameter :: RANGE = 12      ! A range -- not used in decl table
+  integer, parameter :: PHYS_UNIT_NAME = 12 ! PHYQ_....
+  integer, parameter :: RANGE = 13      ! A range -- not used in decl table
   integer, parameter :: SECTION = 14    ! Name of a section
-  integer, parameter :: SECTION_NODE = 14 ! Tree node of a section
-  integer, parameter :: STR_RANGE = 15  ! String range -- for dates
-  integer, parameter :: STR_VALUE = 16  ! The string is the value
-  integer, parameter :: SPEC = 17       ! Name of a specification, e.g. vGrid
-  integer, parameter :: TREE_NODE = 18  ! Name of a tree node, e.g. n_plus
-  integer, parameter :: TYPE_NAME = 19  ! Name of a data type
-  integer, parameter :: UNDECLARED = 20 ! Entity is undeclared
-  integer, parameter :: UNITS_NAME = 21 ! Name is a units name, e.g. km, hPa
+  integer, parameter :: SECTION_NODE = 15 ! Tree node of a section
+  integer, parameter :: STR_RANGE = 16  ! String range -- for dates
+  integer, parameter :: STR_VALUE = 17  ! The string is the value
+  integer, parameter :: SPEC = 18       ! Name of a specification, e.g. vGrid
+  integer, parameter :: TREE_NODE = 19  ! Name of a tree node, e.g. n_plus
+  integer, parameter :: TYPE_NAME = 20  ! Name of a data type
+  integer, parameter :: UNDECLARED = 21 ! Entity is undeclared
+  integer, parameter :: UNITS_NAME = 22 ! Name is a units name, e.g. km, hPa
                                         ! Scale to "canonical" units of the
                                         ! name is in "value", e.g. km = 1000.0
 
   character(len=*), parameter :: TYPE_NAMES(empty:units_name) = &
-  (/ 'empty     ', 'dot       ', 'enum_value', 'exprn     ', 'exprn_m   ', &
-     'exprn_v   ', 'field     ', 'function  ', 'label     ', 'log_value ', &
-     'nam_value ', 'num_value ', 'range     ', 'section   ', 'section_n ', &
-     'str_range ', 'str_value ', 'spec      ', 'tree      ', 'type_name ', &
-     'undeclared', 'units     ' /)
+  (/ 'empty         ', 'dot           ', 'enum_value    ', 'exprn         ', &
+     'exprn_m       ', 'exprn_v       ', 'field         ', 'function      ', &
+     'label         ', 'log_value     ', 'nam_value     ', 'num_value     ', &
+     'phys_unit_name', 'range         ', 'section       ', 'section_n     ', &
+     'str_range     ', 'str_value     ', 'spec          ', 'tree          ', &
+     'type_name     ', 'undeclared    ', 'units         ' /)
 
 ! Mapping from declaration table types to data types:
   integer, parameter :: TYPE_MAP(empty:units_name) =      &
-  (/ 0,         t_a_dot_b, 0,               0, 0,         &
-     0,         0,         0,               0, t_boolean, &
-     0,         t_numeric, t_numeric_range, 0, 0,         &
-     0,         t_string,  0,               0, 0,         &
-     0,         0 /)
+  (/ 0, t_a_dot_b, 0,         0,               0,         &
+     0, 0,         0,         0,               t_boolean, &
+     0, t_numeric, 0,         t_numeric_range, 0,         &
+     0, 0,         t_string,  0,               0,         &
+     0, 0,         0 /)
 
 ! -----     Private declarations     -----------------------------------
   type(decls), save, allocatable :: DECL_TABLE(:)
@@ -225,6 +227,27 @@ contains ! =====     Public Procedures     =============================
       call dump_1_decl ( i )
     end do
   end subroutine DUMP_DECL
+! --------------------------------------------------  DUMP_A_DECL  -----
+  subroutine DUMP_A_DECL ( Decl )
+    type(decls), intent(in) :: Decl
+    call output ( ' type=' )
+    call output ( trim(type_names(decl%type)) )
+    call output ( decl%value, before=' value=' )
+    call output ( ' units=' )
+    if ( decl%type == units_name ) then
+      if ( phyq_indices(decl%units) == 0 ) then
+        call output ( ' <unknown> ' )
+      else
+        call display_string ( phyq_indices(decl%units) )
+      end if
+    else if  ( decl%type == phys_unit_name ) then
+      call display_string ( lit_indices(decl%units) )
+    else
+      call output ( decl%units )
+    end if
+    call output ( ' tree=' )
+    call output ( decl%tree, advance='yes' )
+  end subroutine DUMP_A_DECL
 ! --------------------------------------------------  DUMP_1_DECL  -----
   subroutine DUMP_1_DECL ( SYMBOL )
     integer, intent(in) :: SYMBOL  ! Index of symbol whose declaration to dump
@@ -236,22 +259,7 @@ contains ! =====     Public Procedures     =============================
       call output ( decl, 4 )
       call output ( symbol, 5 ); call output ( ': ' )
       call display_string ( symbol )
-      call output ( ' value=' )
-      call output ( decl_table(decl)%value )
-      call output ( ' type=' )
-      call output ( trim(type_names(decl_table(decl)%type)) )
-      call output ( ' units=' )
-      if ( decl_table(decl)%type == units_name ) then
-        if ( phyq_indices(decl_table(decl)%units) == 0 ) then
-          call output ( ' <unknown> ' )
-        else
-          call display_string ( phyq_indices(decl_table(decl)%units) )
-        end if
-      else
-        call output ( decl_table(decl)%units )
-      end if
-      call output ( ' tree=' )
-      call output ( decl_table(decl)%tree, advance='yes' )
+      call dump_a_decl ( decl_table(decl) )
       decl = decl_table(decl)%prior
     end do
   end subroutine DUMP_1_DECL
@@ -386,6 +394,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.12  2013/09/19 23:29:33  vsnyder
+! Add Dump_A_Decl, PHYS_Unit
+!
 ! Revision 2.11  2013/09/17 00:55:07  vsnyder
 ! Add Dot type
 !
