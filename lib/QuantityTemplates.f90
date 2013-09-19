@@ -30,7 +30,6 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
-  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: SWITCHES
   use TREE, only: NSONS, SUBTREE
 
@@ -203,11 +202,11 @@ module QuantityTemplates         ! Quantities within vectors
     module procedure WriteAttributes_QuantityTemplate
   end interface
 
-  ! Local procedures
   interface CHECKINTEGRITY
     module procedure CheckIntegrity_QuantityTemplate
   end interface
 
+  ! Local procedures
   interface myValuesToField
     module procedure myValuesToField_2d_real
     module procedure myValuesToField_1d_dble
@@ -215,12 +214,11 @@ module QuantityTemplates         ! Quantities within vectors
   end interface
 
   public :: EPOCH, QuantityTemplate_T, RT
-  public :: CHECKINTEGRITY, DUMP
   public :: AddQuantityTemplateToDatabase, InflateQuantityTemplateDatabase
-  public :: CopyQuantityTemplate, &
+  public :: CheckIntegrity, CopyQuantityTemplate, &
     & DestroyQuantityTemplateContents, DestroyQuantityTemplateDatabase, &
-    & ModifyQuantityTemplate, &
-    & NullifyQuantityTemplate, SetupNewQuantityTemplate, WriteAttributes
+    & Dump, ModifyQuantityTemplate, NullifyQuantityTemplate, &
+    & QuantitiesAreCompatible, SetupNewQuantityTemplate, WriteAttributes
   integer, parameter :: NUMMODS = 9
   character(*), dimension(NUMMODS), parameter :: MODIFIABLEFIELDS = (/&
     & 'surfs      ', &
@@ -420,7 +418,6 @@ contains
 
     use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERNAME, GETMODULENAME
     use OUTPUT_M, only: NEWLINE
-    use STRING_TABLE, only: DISPLAY_STRING
     use VGRIDSDATABASE, only: DUMP
 
     type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATE
@@ -489,7 +486,7 @@ contains
       call output ( ' vGridIndex = ' )
       call output ( quantity_template%vGridIndex )
     end if
-    if ( .not. myNoL2CF ) call display_string ( lit_indices(quantity_template%verticalCoordinate), &
+    if ( .not. myNoL2CF ) call myDisplayString ( lit_indices(quantity_template%verticalCoordinate), &
       & before=' vertical coordinate = ', advance='yes' )
     call output ( '      sharedFGrid = ' )
     call output ( quantity_template%sharedFGrid, advance='no' )
@@ -552,13 +549,13 @@ contains
           & call dump ( quantity_template%losAngle,    '      LosAngle = ' )
       end if
       if ( associated(quantity_template%frequencies)  .and. .not. myNoL2CF ) then
-        call display_string ( lit_indices(quantity_template%frequencyCoordinate), &
+        call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
           & before='      FrequencyCoordinate = ', advance='yes' )
         call dump ( quantity_template%frequencies, ' Frequencies = ' )
       end if
     else
       if ( associated(quantity_template%frequencies)  .and. .not. myNoL2CF ) &
-        & call display_string ( lit_indices(quantity_template%frequencyCoordinate), &
+        & call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
           & before='      FrequencyCoordinate = ', advance='yes' )
     end if
   end subroutine DUMP_QUANTITY_TEMPLATE
@@ -868,6 +865,26 @@ contains
     ! be explicitly defined after the call.
 
   end subroutine NullifyQuantityTemplate
+
+  ! ------------------------------------  QuantitiesAreCompatible  -----
+  logical function QuantitiesAreCompatible ( Qty_1, Qty_2 )
+    type(quantityTemplate_t), intent(in) :: Qty_1, Qty_2
+    QuantitiesAreCompatible = &
+      & qty_1%quantityType == qty_2%quantityType .and. &
+      & qty_1%noInstances == qty_2%noInstances .and. &
+      & qty_1%noSurfs == qty_2%noSurfs .and. &
+      & qty_1%noChans == qty_2%noChans .and. &
+      & qty_1%coherent .eqv. qty_2%coherent .and. &
+      & qty_1%stacked .eqv. qty_2%stacked .and. &
+      & qty_1%regular .eqv. qty_2%regular .and. &
+      & qty_1%minorFrame .eqv. qty_2%minorFrame .and. &
+      & qty_1%majorFrame .eqv. qty_2%majorFrame .and. &
+      & qty_1%logBasis .eqv. qty_2%logBasis .and. &
+      & qty_1%instanceLen == qty_2%instanceLen .and. &
+      & qty_1%verticalCoordinate == qty_2%verticalCoordinate .and. &
+      & qty_1%grandTotalInstances == qty_2%grandTotalInstances .and. &
+      & qty_1%frequencyCoordinate == qty_2%frequencyCoordinate
+  end function QuantitiesAreCompatible
 
   ! ----------------------------  ReadAttributes_QuantityTemplate  -----
   subroutine ReadAttributes_QuantityTemplate ( dsID, QT )
@@ -1426,17 +1443,20 @@ contains
   end subroutine GetHDF5AttrAsStrID
 
   ! --------------------------------------------  myDisplayString  -----
-  subroutine myDisplayString ( index, advance )
+  subroutine myDisplayString ( index, advance, before )
     ! Given a string index, display the string or an error message
-    use String_Table, only: HOW_MANY_STRINGS
+    use String_Table, only: DISPLAY_STRING, HOW_MANY_STRINGS
     integer, intent(in) :: index
     character(len=*), intent(in), optional :: advance
+    character(len=*), intent(in), optional :: before
 
     ! Executable code
+    if ( present(before) ) call output ( before )
     if ( index < 1 ) then
-      call output ( '(string index < 1)' )
+      call output ( '(string index < 1)', advance=advance )
     else if ( index > how_many_strings() ) then ! How can an integer be a NaN ?????
-      call output ( how_many_strings(), before='(string index > ', after=')' )
+      call output ( how_many_strings(), before='(string index > ', after=')', &
+        & advance=advance )
     else
       call display_string ( index, advance )
     end if
@@ -1445,7 +1465,7 @@ contains
   ! ------------------------------------------------  myGetString  -----
   subroutine myGetString ( index, what, strip )
     ! Given a string index, Get the string or an error message
-    use String_Table, only: HOW_MANY_STRINGS
+    use STRING_TABLE, only: GET_STRING, HOW_MANY_STRINGS
     integer, intent(in)           :: index
     character(len=*), intent(out) :: what
     logical, intent(in), optional :: strip
@@ -1607,6 +1627,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.77  2013/08/16 02:27:04  vsnyder
+! Declare RT named constant = R8, and use it for REAL components
+!
 ! Revision 2.76  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
