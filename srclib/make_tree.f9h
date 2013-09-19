@@ -14,7 +14,7 @@
 
 ! $Id$
 
-  subroutine MAKE_TREE ( IDS, CONTINUE )
+  subroutine MAKE_TREE ( IDS, CONTINUE, Trace )
   ! Build a tree specified by the "ids" array.  "begin" marks the
   ! beginning of a tree.  A tree-node marks the end of the corresponding
   ! tree.  Pseudo-terminals are decorated with their indices.
@@ -34,6 +34,7 @@
 
     integer, intent(in) :: IDS(:)
     logical, intent(in), optional :: CONTINUE
+    integer, intent(in), optional :: Trace ! passed through to Build_Tree
 
     integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
     integer :: DECOR, I, J, K, ITEM, N_IDS, STRING, WHICH
@@ -90,7 +91,7 @@
         case ( z/1000 ) ! Sections
           string = section_indices(item)
         case ( n/1000 ) ! Tree nodes
-          call build_tree ( item, stack(m), decor )
+          call build_tree ( item, stack(m), decor, trace )
           m = m - 1
           if ( m < lbound(stack,1) ) then
             j = index(moduleName, ':') + 2
@@ -121,6 +122,9 @@
   end subroutine MAKE_TREE
 
 ! $Log$
+! Revision 1.10  2012/02/01 00:05:44  vsnyder
+! Spiff an error message
+!
 ! Revision 1.9  2005/06/22 20:03:56  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
