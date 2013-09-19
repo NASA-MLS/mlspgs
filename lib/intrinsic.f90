@@ -37,7 +37,8 @@ module INTRINSIC
   integer, parameter :: NO_ARRAY = 1      ! Field must be scalar
   integer, parameter :: REQ_FLD = 2       ! Required field
   integer, parameter :: EMPTY_OK = 4      ! Field can have empty value
-  integer, parameter :: U = 10            ! U*PHYQ_... requires those units
+  integer, parameter :: EXPR_OK = 8       ! Expr of dots is OK
+  integer, parameter :: U = 20            ! U*PHYQ_... requires those units
 ! A "section" vertex may be decorated with the following flag:
   integer, parameter :: NO_CHECK_EQ = 1   ! Don't check whether the section's
                                           ! A=B contents are allowed.
@@ -300,6 +301,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.69  2013/09/19 23:26:44  vsnyder
+! Add Expr_OK
+!
 ! Revision 2.68  2013/09/17 00:55:49  vsnyder
 ! Add A_Dot_B type
 !
