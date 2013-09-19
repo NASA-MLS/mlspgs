@@ -14,9 +14,6 @@ module UNITS
 ! Provide several units and unit conversion constants.
 ! Initialize the declaration table with the unit names and scales.
 
-  use Constants, only: Rad2Deg
-  use MLSKinds, only: R8
-
   implicit NONE
   public
 
@@ -27,6 +24,7 @@ module UNITS
 !---------------------------------------------------------------------------
 
 contains ! =====     Public procedures     =============================
+
 ! ---------------------------------------------------  INIT_UNITS  -----
   subroutine INIT_UNITS
     ! Put scale factors for units into the declaration table.
@@ -41,12 +39,13 @@ contains ! =====     Public procedures     =============================
     ! between "init_tables_module" and "declaration_table" would
     ! result.
 
-    use INTRINSIC ! "units" type literals, beginning with L_,
+    use Constants, only: Rad2Deg
+    use Intrinsic ! "units" type literals, beginning with L_,
                   ! Abstract physical quantities beginning with PHYQ_
 
-    call declare_unit ( l_dimensionless, 1.0d0, phyq_dimensionless )
-    call declare_unit ( l_dimless, 1.0d0, phyq_dimensionless )
     call declare_unit ( l_dl, 1.0d0, phyq_dimensionless )
+    call declare_unit ( l_dimless, 1.0d0, phyq_dimensionless )
+    call declare_unit ( l_dimensionless, 1.0d0, phyq_dimensionless )
 
     call declare_unit ( l_m, 1.0d0, phyq_length )
     call declare_unit ( l_meters, 1.0d0, phyq_length )
@@ -123,18 +122,47 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_profiles, 1.0d0, phyq_profiles )
 
   contains
+
     subroutine DECLARE_UNIT ( NAME, VALUE, PHYS_UNIT )
-      use DECLARATION_TABLE, only: DECLARE, UNITS_NAME
+      use DECLARATION_TABLE, only: DECLARE, PHYS_UNIT_NAME, UNITS_NAME
+      use Intrinsic, only: PHYQ_Indices
       use TREE, only: NULL_TREE
       integer, intent(in) :: NAME
       integer, intent(in) :: PHYS_UNIT
       double precision, intent(in) :: VALUE
     ! Declare "name" to be a unit of abstract kind "phys_unit" (e.g. length)
     ! and a scale to that kind of "value"
+      !              string             value  type        units
       call declare ( lit_indices(name), value, units_name, phys_unit, &
+      !              tree
                      null_tree )
+      !              string                   value  type
+      call declare ( phyq_indices(phys_unit), value, phys_unit_name, &
+      !              units tree
+                     name, null_tree )
     end subroutine DECLARE_UNIT
+
   end subroutine INIT_UNITS
+
+! ----------------------------------------------------  Base_Unit  -----
+  integer function Base_Unit ( PHYS_Unit )
+    ! Get the base unit corresponding to a physical unit.
+    ! The base unit is one with scale == 1.0.
+    use Declaration_Table, only: Decls, Get_Decl, Phys_Unit_Name, Prior_Decl
+    use Intrinsic, only: L_Dimensionless, PHYQ_Indices, PHYQ_Invalid
+    integer, intent(in) :: PHYS_Unit
+    type(decls) :: Decl
+    base_unit = l_dimensionless ! for want of a better default
+    decl = get_decl ( phyq_indices(phys_unit), type=phys_unit_name )
+    do while ( decl%type == phys_unit_name )
+      if ( decl%value == 1.0d0 ) then
+        base_unit = decl%units
+        exit
+      end if
+      decl = prior_decl(decl)
+    end do
+  end function Base_Unit
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -148,6 +176,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.39  2013/09/19 23:25:28  vsnyder
+! Add Base_Units
+!
 ! Revision 2.38  2013/09/03 23:59:33  pwagner
 ! Added us (microsecond)
 !
