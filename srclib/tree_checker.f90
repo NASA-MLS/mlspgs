@@ -1028,6 +1028,9 @@ contains ! ====     Public Procedures     ==============================
       stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
       if ( stat /= 0 ) &
   go to 9
+      stat = dot_or_num ()
+      if ( type /= num_value ) &
+  go to 9
       if ( type == num_value .and. type2 == num_value ) then
         if ( units /= phyq_dimensionless .and. &
              units2 /= phyq_dimensionless .and. &
@@ -1094,12 +1097,12 @@ contains ! ====     Public Procedures     ==============================
         stat = dot_or_num ()
         if ( type /= num_value ) &
   go to 9
-        if ( type == num_value .and. type2 == num_value .and. &
-           units /= phyq_dimensionless .and. &
-           units2 /= phyq_dimensionless .and. &
-           units /= units2 ) then
-          call local_error ( root, inconsistent_units, (/ son1, son2 /) )
-        else
+        if ( type == num_value .and. type2 == num_value ) then
+          if ( units /= phyq_dimensionless .and. &
+               units2 /= phyq_dimensionless .and. &
+               units /= units2 ) then
+            call local_error ( root, inconsistent_units, (/ son1, son2 /) )
+          end if
           if ( me == n_plus ) then
             value = value + value2
           else !  me == n_minus
@@ -1447,6 +1450,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.39  2013/09/19 23:34:33  vsnyder
+! Type-check and decorate dots in expressions
+!
 ! Revision 1.38  2013/08/31 01:26:06  vsnyder
 ! Don't pass root as index to trace_end
 !
