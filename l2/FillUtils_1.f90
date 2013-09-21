@@ -176,7 +176,7 @@ module FillUtils_1                     ! Procedures used by Fill
   public :: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
       & COMPUTETOTALPOWER, DEALLOCATESTUFF, &
       & EXTRACTSINGLECHANNEL, FILLCOVARIANCE, FROMANOTHER, FROMGRID, &
-      & FROML2GP, FROMPROFILE, GATHER, LOSVELOCITY, &
+      & FROML2GP, FROMPROFILE, GATHER, GEOIDDATA, LOSVELOCITY, &
       & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
       & COLABUNDANCE, DERIVATIVEOFSOURCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
       & IWCFROMEXTINCTION, RHIFROMORTOH2O, NORADSPERMIF, &
@@ -2385,6 +2385,55 @@ contains ! =====     Public Procedures     =============================
         enddo
       endif
     end subroutine Gather
+
+    ! ----------------------------------------  GeoidData  -----
+    ! Load the geoid data from the DEM toolkit files
+    ! at the default resolution unless another is specified
+    ! If source quantity is present use geoid data to make it
+    ! relative to geoid instead of ellipsoid
+    subroutine GeoidData ( quantity, sourceQuantity, resolution )
+      use SDPTOOLKIT, only: PGSd_DEM_90ARC, PGSd_DEM_GEOID, PGSd_DEM_DEGREE, &
+        & PGS_DEM_GETQUALITYDATA
+      type(VectorValue_T), intent(inout)        :: QUANTITY
+      type(VectorValue_T), intent(in), optional :: SOURCEQUANTITY
+      integer, intent(in), optional             :: RESOLUTION
+      ! Local variables
+      integer*2, dimension(40)          :: BUFFER
+      integer :: I                      ! Instance loop counter
+      integer :: J                      ! Destination index
+      double precision, parameter       :: DLATRANGE = 0.5d0
+      double precision, parameter       :: DLONRANGE = 1.0d0
+      double precision, dimension(2)    :: latitude
+      double precision, dimension(2)    :: longitude
+      integer :: Me = -1                ! String index for trace
+      integer :: MYRESOLUTION              ! Possibly offset channel
+      integer :: STATUS
+
+      ! Executable code
+      call trace_begin ( me, 'FillUtils_1.GeoidData', 0, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
+      myResolution = PGSd_DEM_90ARC
+      if ( present(resolution) ) myResolution = resolution
+      do I=1, quantity%template%noInstances
+        latitude(1) = quantity%template%geodLat(1, i) - dlatRange
+        latitude(2) = quantity%template%geodLat(1, i) + dlatRange
+        longitude(1) = quantity%template%lon(1, i) - dlonRange
+        longitude(2) = quantity%template%lon(1, i) + dlonRange
+        status = PGS_DEM_getqualitydata (myResolution, &
+          & PGSd_DEM_geoid, PGSd_DEM_degree, latitude, longitude, buffer )
+        if ( present(sourceQuantity)) then
+          do j=1, quantity%template%noSurfs
+            quantity%values(j, i) = sourceQuantity%values(j, i) - buffer(1)
+          enddo
+        else
+          do j=1, quantity%template%noSurfs
+            quantity%values(j, i) = buffer(1)
+          enddo
+        endif
+      enddo
+      call trace_end ( 'FillUtils_1.GeoidData', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
+    end subroutine GeoidData
 
     ! ---------------------------------------------  GPHPrecision  -----
     subroutine GPHPrecision ( key, quantity, &
@@ -7218,6 +7267,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.87  2013/09/21 00:24:21  pwagner
+! Added geoid Fill methods
+!
 ! Revision 2.86  2013/09/17 22:47:49  pwagner
 ! Added Scatter, Gather methods
 !
