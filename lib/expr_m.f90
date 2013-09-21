@@ -262,7 +262,7 @@ contains ! ====     Public Procedures     ==============================
         end select
       end if
     end select
-    call trace_end ( 'EXPR', cond=toggle(con) )
+    call trace_end ( 'EXPR', index=type, cond=toggle(con) )
   contains
     subroutine AnnounceError ( where, what )
       use Output_m, only: Output
@@ -430,6 +430,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.24  2013/09/21 00:35:50  vsnyder
+! More trace output
+!
 ! Revision 2.23  2013/09/19 23:27:38  vsnyder
 ! More careful units checking
 !
