@@ -15,6 +15,8 @@ module ChunkDivide_m
   ! the data into chunks.
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use ChunkDivideConfig_m, only: ChunkDivideConfig_t, ChunkDivideConfig, Dump, &
+    & Dump_CriticalSignals
   use CHUNKS_M, only: MLSCHUNK_T, DUMP
   use DUMP_0, only: DUMP
   use INIT_TABLES_MODULE, only: F_CRASHIFPHINOTMONO, &
@@ -25,8 +27,8 @@ module ChunkDivide_m
       & F_OVERLAP, F_LOWEROVERLAP, &
       & F_SAVEOBSTRUCTIONS, F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, &
       & F_SKIPL1BCHECK, F_UPPEROVERLAP, &
-      & FIELD_FIRST, FIELD_LAST, L_EVEN, &
-      & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, L_BOTH, L_EITHER
+      & FIELD_FIRST, FIELD_LAST, L_BOTH, L_EITHER, L_EVEN, &
+      & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, S_Dump
   use INTRINSIC, only: L_NONE, FIELD_INDICES, LIT_INDICES, PHYQ_ANGLE, &
       & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
   use L1BDATA, only: L1BDATA_T, READL1BDATA, GETL1BFILE, NAME_LEN, &
@@ -43,7 +45,7 @@ module ChunkDivide_m
   use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
       & REVERTOUTPUT, SWITCHOUTPUT
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-  use TOGGLES, only: GEN, TOGGLE, SWITCHES
+  use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
 
   implicit none
   private
@@ -73,44 +75,7 @@ module ChunkDivide_m
   private :: not_used_here
   !---------------------------------------------------------------------------
 
-  public :: CHUNKDIVIDECONFIG_T
-  ! This type is filled by the l2cf and describes the configuration of the
-  ! chunk division process.
-  type ChunkDivideConfig_T
-    integer :: method = l_none          ! See below.
-    real(rp) :: maxLength = 0           ! Maximum length of chunks
-    integer :: maxLengthFamily = PHYQ_Invalid ! PHYQ_Angle etc.
-    integer :: noChunks = 0             ! Number of chunks for [fixed]
-    real(rp) :: overlap = 0.0           ! Desired length of overlaps
-    real(rp) :: lowerOverlap = 0.0      ! Desired length of lower overlaps
-    real(rp) :: upperOverlap = 0.0      ! Desired length of lower overlaps
-    integer :: overlapFamily = PHYQ_Invalid ! PHYQ_MAF, PHYQ_Time etc.
-    integer :: lowerOverlapFamily = PHYQ_Invalid
-    integer :: upperOverlapFamily = PHYQ_Invalid
-    integer :: noSlaves = 0             ! Number of slave nodes [even]
-    integer :: homeModule = l_none      ! Which module to consider [orbital]
-    real(rp) :: homeGeodAngle = 0.0     ! Aim for one chunk to start here [orbital]
-    logical   :: scanLLSet = .false.    ! True if scan lower limit should be used
-    logical   :: scanULSet = .false.    ! True if scan upper limit should be used
-    real(rp), dimension(2) :: scanLowerLimit ! Range for bottom of scan
-    real(rp), dimension(2) :: scanUpperLimit ! Range for top of scan
-    real(rp) :: maxOrbY = -1.0                 ! Maximum out of plane distance allowed <=0.0 default
-    character(len=128) :: criticalBands = ' ' ! Which bands must be scanning
-    integer   :: criticalModules = l_none ! Which modules must be scanning
-    logical   :: chooseCriticalSignals = .true. ! Use criticalModules, Bands?
-    character(len=160), dimension(:), pointer &
-      & :: criticalSignals => null() ! Which signals must be on
-    real(rp)  :: maxGap = 0.0           ! Length of time/MAFs/orbits allowed for gap
-    integer   :: maxGapFamily = PHYQ_Invalid ! PHYQ_MAF, PHYQ_Time etc.
-    logical   :: skipL1BCheck = .false. ! Don't check for l1b data probs
-    logical   :: crashIfPhiNotMono = .false. ! If l1b contains non-monotonic phi
-    logical   :: allowPriorOverlaps = .true. ! Use MAFs before start time
-    logical   :: allowPostOverlaps = .true. ! Use MAFs after end time
-    logical   :: saveObstructions = .true. ! Save obstructions for Output_Close
-    logical   :: DACSDeconvolved = .true. ! Don't need to do this in level 2
-    integer   :: numPriorOverlaps = 0     ! How many profiles before processingRanges
-    integer   :: numPostOverlaps = 0     ! How many profiles after processingRanges
-  end type ChunkDivideConfig_T
+  public :: CHUNKDIVIDECONFIG_T, CHUNKDIVIDECONFIG
 
   ! The chunk divide methods are:
   !
@@ -123,8 +88,6 @@ module ChunkDivide_m
   !           orbit where possible.
   !
   ! Even - Hope to have chunks all about the same length, as quoted.
-
-  type(ChunkDivideConfig_T), public, save :: CHUNKDIVIDECONFIG
 
   type MAFRange_T
     integer, dimension(2) :: L1BCover ! Range found in L1B files
@@ -144,7 +107,6 @@ module ChunkDivide_m
 
   interface dump
     module procedure DUMP_OBSTRUCTIONS
-    module procedure DUMP_CONFIG
     ! module procedure DUMP_CRITICALSIGNALS
   end interface
 
@@ -202,6 +164,7 @@ contains ! ===================================== Public Procedures =====
   ! ------------------------------------------------  Chunk Divide -----
   subroutine ChunkDivide ( root, processingRange, filedatabase, chunks )
 
+    use DumpCommand_m, only: DumpCommand
     use EXPR_M, only: EXPR
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSCOMMON, only: TAI93_RANGE_T
@@ -222,8 +185,10 @@ contains ! ===================================== Public Procedures =====
 
     ! Local variables
     type (MLSFile_T), pointer :: DACSFile
+    integer :: I                        ! Loop inductor
     type (MAFRange_T) :: MAFRange
     integer :: Me = -1                  ! String index for trace
+    integer :: Son                      ! of section root
     integer :: STATUS                   ! From deallocate
 
     ! For announce_error:
@@ -251,7 +216,22 @@ contains ! ===================================== Public Procedures =====
       & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
 
     ! First decode the l2cf instructions
-    call ChunkDivideL2CF ( root )
+
+    ! Eventually the ChunkDivide command will be free floating, in the meantime
+    ! find it within the section
+    ! WE CAN GET RID OF THIS BIT WHEN THE COMMAND FLOATS FREE LATER
+    if ( nsons(root) <= 2 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'ChunkDivide section cannot be empty' )
+    do i = 2, nsons(root)-1      ! Skip the begin/end section
+      son = subtree(i,root)
+      if ( node_id(son) == n_named ) son = subtree(2,son) ! Ignore label
+      select case ( get_spec_id(son) )
+      case ( s_dump )
+        call dumpCommand ( son )
+      case ( s_chunkDivide )
+        call chunkDivideL2CF ( son )
+      end select
+    end do
 
     ! For methods other than fixed, we want to survey the L1 data and note the
     ! location of obstructions
@@ -586,11 +566,12 @@ contains ! ===================================== Public Procedures =====
     end subroutine ChunkDivide_PE
 
     !--------------------------------------------- ChunkDivideL2CF -----
-    subroutine ChunkDivideL2CF ( sectionRoot )
+    subroutine ChunkDivideL2CF ( root )
       ! This subroutine identifies, separates, and checks values from the section
       ! of the MLSCF (ChunkDivide) passed to Scan/Divide.
-      integer, intent(in) :: SECTIONROOT    ! Root of the ChunkDivide section of the
-      ! MLSCF abstract syntax tree
+      use Init_Tables_Module, only: Field_Indices
+      integer, intent(in) :: ROOT    ! Root of the ChunkDivide command
+                                     ! MLSCF abstract syntax tree
       ! type (ChunkDivideConfig_T), intent(out) :: CONFIG ! Result of operation
 
       integer, target, dimension(3) :: NeededForFixed = &
@@ -619,15 +600,15 @@ contains ! ===================================== Public Procedures =====
         & (/ f_noChunks, f_homeModule, f_homeGeodAngle /)
 
       ! Local variables
-      integer :: FIELDINDEX               ! Tree type
-      integer :: fieldValue               ! Node in the tree
-      integer :: GSON                     ! A son of son the ChunkDivide section node
+      integer :: FieldIndex               ! Of son of the ChunkDivide command
+      integer :: GSON                     ! A son of son the ChunkDivide command node
       integer :: I                        ! Loop inductor
       integer :: J                        ! Another loop inductor
+      logical :: Log_Value                ! For boolean fields
+      integer :: Me = -1                  ! String index for trace cacheing
       integer :: numCriticalSignals       ! How many crit. Sigs
-      integer :: ROOT                     ! Root of ChunkDivide command
       integer :: signalsNode              ! Node where crit. Sig. begin
-      integer :: SON                      ! A son of the ChunkDivide section node
+      integer :: SON                      ! A son of the ChunkDivide command
       integer :: UNITS(2)                 ! Units of expression
       integer, dimension(:), pointer :: NEEDED ! Which fields are needed
       integer, dimension(:), pointer :: NOTWANTED ! Which fields are not wanted
@@ -635,33 +616,29 @@ contains ! ===================================== Public Procedures =====
       real(rp) :: VALUE(2)                ! Value of expression
 
       ! Executable code
+      call trace_begin ( me, 'ChunkDivideL2CF', root, &
+        & cond=toggle(gen) .and. levels(gen) > 0 )
       swlevel = switchDetail(switches, 'chu' )
       error = 0
-
-      ! Eventually the ChunkDivide command will be free floating, in the meantime
-      ! find it within the section
-      ! WE CAN GET RID OF THIS BIT WHEN THE COMMAND FLOATS FREE LATER
-      if ( nsons(sectionRoot) <= 2 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'ChunkDivide section cannot be empty' )
-      do i = 2, nsons(sectionRoot)-1      ! Skip the begin/end section
-        root = subtree(i,sectionRoot)
-        if ( node_id(root) /= n_named ) cycle
-        if ( get_spec_id(root) == s_chunkDivide ) exit
-      end do
+      ChunkDivideConfig%where = root
 
       got = .false.
 
-      ! Loop through the command identifying parameters.
+      ! Loop through the command identifying fields and storing values.
       do i = 2, nsons(root) ! Skip the command
         son = subtree(i,root)
         fieldIndex = get_field_id(son)
         got(fieldIndex) = .true.
+        call trace_begin ( 'ChunkDivideL2CF.loop', root, &
+          & string=field_indices(fieldIndex),&
+          & cond=toggle(gen) .and. levels(gen) > 1 )
         if (nsons(son) > 1 ) then
           gson = subtree(2,son)
           call expr ( gson, units, value )
-          fieldValue = decoration(subtree(2,son)) ! The field's value
+          log_value = nint(value(1)) /= 0
         else
-          fieldValue = son
+          value = 0.0
+          log_value = .false.
         end if
         ! Get value for this field if appropriate
         select case ( fieldIndex )
@@ -724,12 +701,12 @@ contains ! ===================================== Public Procedures =====
               & ChunkDivideConfig%criticalSignals(j-1), strip=.true. )
           end do
         case ( f_excludePostOverlaps )
-          ChunkDivideConfig%allowPostOverlaps = .not. get_boolean ( fieldValue )
+          ChunkDivideConfig%allowPostOverlaps = log_value
           if ( .not. ChunkDivideConfig%allowPostOverlaps ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
-            & 'You have elected to exclude MAFs after to time range' )
+            & 'You have elected to exclude MAFs after time range' )
         case ( f_excludePriorOverlaps )
-          ChunkDivideConfig%allowPriorOverlaps = .not. get_boolean ( fieldValue )
+          ChunkDivideConfig%allowPriorOverlaps = log_value
           if ( .not. ChunkDivideConfig%allowPriorOverlaps ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to exclude MAFs prior to time range' )
@@ -737,22 +714,24 @@ contains ! ===================================== Public Procedures =====
           ChunkDivideConfig%maxGap = value(1)
           ChunkDivideConfig%maxGapFamily = units(1)
         case ( f_skipL1BCheck )
-          ChunkDivideConfig%skipL1BCheck = get_boolean ( fieldValue )
+          ChunkDivideConfig%skipL1BCheck = log_value
           if ( ChunkDivideConfig%skipL1BCheck ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to skip checking the l1b data for problems' )
         case ( f_crashIfPhiNotMono )
-          ChunkDivideConfig%crashIfPhiNotMono = get_boolean ( fieldValue )
+          ChunkDivideConfig%crashIfPhiNotMono = log_value
           if ( ChunkDivideConfig%crashIfPhiNotMono ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to crash if phi, the master geodetic angle, is' // &
             & ' not monotonic' )
         case ( f_saveObstructions )
-          ChunkDivideConfig%saveObstructions = get_boolean ( fieldValue )
+          ChunkDivideConfig%saveObstructions = log_value
           if ( ChunkDivideConfig%saveObstructions ) &
             & call MLSMessage(MLSMSG_Warning, ModuleName, &
             & 'You have elected to save obstructions (possibly for Output_Close)' )
         end select
+        call trace_end ( 'ChunkDivideL2CF.loop', &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
       end do
 
       ! Now check the sanity of what we've been given, this varies a bit
@@ -850,6 +829,8 @@ contains ! ===================================== Public Procedures =====
         & 'Problem with ChunkDivide command' )
 
       ! That's it, we're all valid now.
+      call trace_end ( 'ChunkDivideL2CF', &
+        & cond=toggle(gen) .and. levels(gen) > 0 )
 
     end subroutine ChunkDivideL2CF
 
@@ -913,116 +894,6 @@ contains ! ===================================== Public Procedures =====
       endif
     end subroutine CheckChunkSanity
   end subroutine ChunkDivide
-
-  ! -------------------------------------------- Dump_config -----
-  subroutine Dump_config(config)
-
-    use Intrinsic, only: PHYQ_INDICES
-
-    ! Args
-    type(ChunkDivideConfig_T), intent(in) :: Config
-
-    ! Executable code
-    swlevel = switchDetail(switches, 'chu' )
-    call output ( 'method ' )
-    call display_string ( lit_indices(Config%method), &
-      &             strip=.true., advance='yes' )
-    call output ( 'max Length ' )
-    call output ( config%maxLength, advance='yes' )
-    call output ( 'max Length Family ' )
-    call display_string ( phyq_indices(Config%maxLengthFamily), &
-      &             strip=.true., advance='yes' )
-    call output ( 'num chunks ' )
-    call output ( config%noChunks, advance='yes' )
-    call output ( 'overlap ' )
-    call output ( config%overlap, advance='yes' )
-    call output ( 'overlap Family ' )
-    call display_string ( phyq_indices(Config%overlapFamily), &
-      &             strip=.true., advance='yes' )
-    call output ( 'lower overlap ' )
-    call output ( config%loweroverlap, advance='yes' )
-    call output ( 'lower overlap Family ' )
-    call display_string ( phyq_indices(Config%loweroverlapFamily), &
-      &             strip=.true., advance='yes' )
-    call output ( 'upper overlap ' )
-    call output ( config%upperoverlap, advance='yes' )
-    call output ( 'upper overlap Family ' )
-    call display_string ( phyq_indices(Config%upperoverlapFamily), &
-      &             strip=.true., advance='yes' )
-    call output ( 'num slaves ' )
-    call output ( config%noSlaves, advance='yes' )
-    call output ( 'home module ' )
-    call display_string ( lit_indices(Config%homeModule), &
-      &             strip=.true., advance='yes' )
-    call output ( 'home Geod Angle ' )
-    call output ( config%homeGeodAngle, advance='yes' )
-    call output ( 'set scan lower limit? ' )
-    call output ( config%scanLLSet, advance='yes' )
-    if ( config%scanLLSet ) then
-    call output ( 'Bottom scan range ' )
-    call output ( config%scanLowerLimit, advance='yes' )
-    endif
-    call output ( 'set scan upper limit? ' )
-    call output ( config%scanULSet, advance='yes' )
-    if ( config%scanULSet ) then
-    call output ( 'Top scan range ' )
-    call output ( config%scanUpperLimit, advance='yes' )
-    endif
-    call output ( 'max out-of-plane distance ' )
-    call output ( config%maxOrbY, advance='yes' )
-    call output ( 'critical modules ' )
-    call display_string ( lit_indices(Config%criticalModules), &
-      &             strip=.true., advance='yes' )
-    call output ( 'critical bands ' )
-    call output ( trim(config%criticalBands), advance='yes' )
-    call output ( 'use critical modules to choose critical signals?' )
-    call output ( config%chooseCriticalSignals, advance='yes' )
-    call output ( 'max gap ' )
-    call output ( config%maxGap, advance='yes' )
-    call output ( 'max Gap Family ' )
-    call display_string ( phyq_indices(Config%maxGapFamily), &
-      &             strip=.true., advance='yes' )
-    call output ( 'skip check of l1b files ' )
-    call output ( config%skipL1BCheck, advance='yes' )
-    call output ( 'allow overlaps to prior day?' )
-    call output ( config%allowPriorOverlaps, advance='yes' )
-    call output ( 'allow overlaps to next day?' )
-    call output ( config%allowPostOverlaps, advance='yes' )
-    call output ( 'save obstructions?' )
-    call output ( config%saveObstructions, advance='yes' )
-    call output ( 'DACS already deconvolved?' )
-    call output ( config%DACSDeconvolved, advance='yes' )
-    call Dump_criticalSignals(config%criticalSignals)
-  end subroutine Dump_config
-
-  ! -------------------------------------------- Dump_criticalSignals -----
-  subroutine Dump_criticalSignals(criticalSignals)
-
-    use Output_M, only: OUTPUT
-
-    character(len=160), dimension(:), pointer &
-      & :: criticalSignals       ! Which signals must be on
-    ! Local variables
-    integer :: i                        ! Loop counter
-    ! Executable code
-    swlevel = switchDetail(switches, 'chu' )
-    if ( associated ( criticalSignals ) ) then
-      if ( size(criticalSignals) == 0 ) then
-        call output ( 'criticalSignals is a zero size array.', advance='yes' )
-      else
-        call output ( 'Dumping ' )
-        call output ( size(criticalSignals) )
-        call output ( ' criticalSignals:', advance='yes' )
-        do i = 1, size(criticalSignals)
-          call output ( i )
-          call output ( ': ' )
-          call output ( trim(criticalSignals(i)), advance='yes' )
-        end do
-      end if
-    else
-      call output ( 'critical Signals is not associated.', advance='yes')
-    end if
-  end subroutine Dump_criticalSignals
 
   ! -------------------------------------------- Dump Obstructions -----
   subroutine Dump_Obstructions ( obstructions )
@@ -2714,6 +2585,11 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.106  2013/09/21 00:39:43  vsnyder
+! Repair some tree examination errors.  Move ChunkDivideConfig_t,
+! ChunkDivideConfig, and some dumpers to ChunkDivideConfig_m.  Call
+! DumpCommand.
+!
 ! Revision 2.105  2013/08/30 02:45:34  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
