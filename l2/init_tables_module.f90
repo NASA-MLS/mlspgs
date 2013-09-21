@@ -958,7 +958,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_expr, &
                     begin, numeric(), &
                     begin, boolean(), &
-                    begin, vectorQuantity(scalar=.true.,expr=.true.), &
+                    begin, vectorQuantity(expr=.true.), &
                     n+n_or, &
              begin, f+f_extinction, boolean(), &
              begin, f+f_fieldECR, vectorQuantity(), &
@@ -1505,6 +1505,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_Boolean, field_spec(s_Boolean), &
              begin, f+f_callStack, boolean(), &
              begin, f+f_commandLine, boolean(), &
+             begin, f+f_chunkDivide, boolean(), &
              begin, f+f_chunkNumber, boolean(), &
              begin, f+f_Clean, boolean(), &
              begin, f+f_count, numeric(), &
@@ -1771,7 +1772,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_overlap, t+t_numeric, n+n_name_def, &
              begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
-             s+s_time, s+s_chunkDivide, n+n_section, &
+             s+s_time, s+s_chunkDivide, s+s_dump, n+n_section, &
       begin, z+z_construct, s+s_anyGoodRadiances, s+s_anyGoodValues, &
              s+s_Boolean, s+s_catchWarning, s+s_compare, s+s_dump, &
              s+s_forge, s+s_forwardModel, s+s_hgrid, s+s_phase, s+s_quantity, &
@@ -1990,6 +1991,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.589  2013/09/21 00:37:20  vsnyder
+! Add ChunkDivide field for Dump
+!
 ! Revision 2.588  2013/09/21 00:23:59  pwagner
 ! Added geoid Fill methods
 !
