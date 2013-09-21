@@ -49,15 +49,19 @@ contains ! ====     Public Procedures     ==============================
   ! --------------------------------------------  Vector_Qty_Expr  -----
   recursive integer function Vector_Qty_Expr ( Root, Vectors, Qty, Number, &
     & Units, ForWhom ) result ( Stat )
+
     ! Evaluate an expression.  The result is
-    !   0 => result is a vector quantity, and Qty is that quantity;
-    !        this is always a new quantity, and needs to be destroyed
-    !   1 => result is a number, and Number is its value
-    !  <0 => an error occurred, and both Qty and Number are undefined; the
-    !        value is the negative of the error code.
-    ! Range (colon, etc.), power (^), and function reference are not
-    ! supported.
+    !   Dot => result is a vector quantity, and Qty is that quantity;
+    !          this is always a new quantity, and needs to be destroyed.
+    !          Number is undefined.
+    !   Num_Value => result is a number, and Number is its value.  Qty is
+    !          undefined.
+    !  <0 =>   an error occurred, and both Qty and Number are undefined; the
+    !          value is the negative of the error code.
+    ! Range (colon, etc.) and power (^) are not supported.  The only
+    ! functions supported are exp, ln, log, log10, and sqrt.
     ! Boolean-valued operators set values to 1 for true, zero for false
+
     use Declaration_Table, only: Decls, Function, Get_Decl, Units_Name
     use Functions, only: F_Exp, F_Ln, F_Log, F_Log10, F_Sqrt
     use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Invalid
@@ -176,7 +180,7 @@ contains ! ====     Public Procedures     ==============================
     go to 9
             end if
             select case ( decl%units )
-            case ( f_exp ) ! .............................................
+            case ( f_exp ) ! ...........................................
               select case ( stat )
               case ( dot )
                 if ( any(qty%values > log(huge(qty%values(1,1)))) ) then
@@ -191,7 +195,7 @@ contains ! ====     Public Procedures     ==============================
                   number = exp(value_1)
                 end if
               end select
-            case ( f_ln, f_log ) ! .......................................
+            case ( f_ln, f_log ) ! .....................................
               select case ( stat )
               case ( dot )
                 if ( any(qty%values <= 0.0) ) then
@@ -206,7 +210,7 @@ contains ! ====     Public Procedures     ==============================
                   number = log(value_1)
                 end if
               end select
-            case ( f_log10 ) ! ...........................................
+            case ( f_log10 ) ! .........................................
               select case ( stat )
               case ( dot )
                 if ( any(qty%values <= 0.0) ) then
@@ -221,7 +225,7 @@ contains ! ====     Public Procedures     ==============================
                   number = log10(value_1)
                 end if
               end select
-            case ( f_sqrt ) ! ............................................
+            case ( f_sqrt ) ! ..........................................
               select case ( stat )
               case ( dot )
                 if ( any(qty%values < 0.0) ) then
@@ -627,6 +631,9 @@ contains ! ====     Public Procedures     ==============================
 end module Vector_Qty_Expr_m
 
 ! $Log$
+! Revision 2.3  2013/09/21 00:36:23  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.2  2013/09/19 23:24:11  vsnyder
 ! Remove debugging print
 !
