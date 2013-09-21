@@ -76,7 +76,7 @@ module STRING_TABLE
   integer, allocatable, save :: HASH_TABLE (:,:)
   integer, allocatable, save :: STRINGS (:)  ! STRINGS(i) is the position
   ! in CHAR_TABLE of the last character of the i'th string
-  integer, save :: NSTRING    ! How full, not how big
+  integer, save :: NSTRING = 0   ! How full, not how big
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -1061,6 +1061,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.37  2013/09/21 00:20:56  pwagner
+! Initialize NSTRING so HOW_MANY_STRINGS can be checked at start
+!
 ! Revision 2.36  2013/08/28 00:36:45  pwagner
 ! Moved more stuff from MLSMessage down to PrintIt module
 !
