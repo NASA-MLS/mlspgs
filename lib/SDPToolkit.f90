@@ -34,7 +34,7 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 ! PGS_TD.f
 ! PGS_TD_3.f
 
-! Plust interfaces for toolkit routines.
+! Plus interfaces for toolkit routines.
 
 ! Remarks:  This module contains include files required to use the toolkit.
 ! Note that the include files with numbers in the names are generated 
@@ -58,6 +58,8 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
    INCLUDE 'PGS_TD_3.f'
    INCLUDE 'PGS_MET_13.f'
    INCLUDE 'PGS_MET.f'
+   INCLUDE 'PGS_DEM_14.f'
+   INCLUDE 'PGS_DEM.f'
 
 
 ! Now define f90 interfaces for some toolkit routines.
@@ -136,6 +138,46 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
         character(len = *), INTENT(IN) :: time
         DOUBLE PRECISION, INTENT(out) :: dtime
       END FUNCTION mls_utctotai
+
+! Digital Elevation Model (DEM) functions
+      integer function PGS_DEM_Open( resolutionList, numResolutions, &
+        & layerList, numLayers )
+        integer, dimension(2) :: resolutionList
+        integer, intent(in)   :: numResolutions
+        integer, dimension(2) :: layerList
+        integer, intent(in)   :: numLayers
+      end function PGS_DEM_Open
+
+      integer function PGS_DEM_Close( resolutionList, numResolutions, &
+        & layerList, numLayers )
+        integer, dimension(2) :: resolutionList
+        integer, intent(in)   :: numResolutions
+        integer, dimension(2) :: layerList
+        integer, intent(in)   :: numLayers
+      end function PGS_DEM_Close
+
+      integer function PGS_DEM_GetPoint( resolutionList, numResolutions, &
+        & layer, positionCode, &
+        & pntlatitude, pntLongitude, numPoints, interpolation, interpValue )
+        integer, dimension(2) :: resolutionList
+        integer, intent(in)   :: numResolutions
+        integer, intent(in)   :: positionCode
+        double precision, dimension(:) :: pntlatitude
+        double precision, dimension(:) :: pntlongitude
+        integer, intent(in)   :: numPoints
+        integer, intent(in)   :: interpolation
+        integer*2, dimension(:)   :: interpValue
+      end function PGS_DEM_GetPoint
+
+      integer function PGS_DEM_GetQualityData( resolution, qualityField, &
+        & positionCode, latitude, longitude, qualityData )
+        integer, intent(in)   :: resolution
+        integer, intent(in)   :: qualityField
+        integer, intent(in)   :: positionCode
+        double precision, dimension(2) :: latitude
+        double precision, dimension(2) :: longitude
+        integer*2, dimension(:)   :: qualityData
+      end function PGS_DEM_GetQualityData
 
 ! Metadata functions
 ! In the following, groups or imd_group will be
@@ -234,6 +276,9 @@ end module SDPToolkit
 
 !
 ! $Log$
+! Revision 2.20  2013/09/21 00:22:21  pwagner
+! Added PGS_DEM stuff
+!
 ! Revision 2.19  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
