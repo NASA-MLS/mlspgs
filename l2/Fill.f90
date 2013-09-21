@@ -66,7 +66,7 @@ contains ! =====     Public Procedures     =============================
     use FILLUTILS_1, only: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
       & COMPUTETOTALPOWER, DERIVATIVEOFSOURCE, FILLCOVARIANCE, &
       & EXTRACTSINGLECHANNEL, FILLERROR, FROMANOTHER, FROMGRID, &
-      & FROML2GP, FROMPROFILE, GATHER, LOSVELOCITY, &
+      & FROML2GP, FROMPROFILE, GATHER, GEOIDDATA, LOSVELOCITY, &
       & CHISQCHAN, CHISQMMAF, CHISQMMIF, CHISQRATIO, &
       & COLABUNDANCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
       & IWCFROMEXTINCTION, RHIFROMORTOH2O, NORADSPERMIF, &
@@ -150,8 +150,8 @@ contains ! =====     Public Procedures     =============================
       & L_DERIVATIVE, L_DOBSONUNITS, L_DU, &
       & L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
       & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, &
-      & L_GATHER, L_GEOLOCATION, &
-      & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPHPRECISION, L_GRIDDED, &
+      & L_GATHER, L_GEOCALTITUDE, L_GEODALTITUDE, L_GEOLOCATION, &
+      & L_GEOIDDATA, L_GPHPRECISION, L_GPHRESETTOGEOID, L_GRIDDED, &
       & L_H2OFROMRHI, L_H2OPRECISIONFROMRHI, L_HYDROSTATIC, L_ISOTOPE, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
       & L_L1B, L_L2GP, L_L2AUX, &
@@ -2184,6 +2184,14 @@ contains ! =====     Public Procedures     =============================
           call Scatter( quantity, sourceQuantity, start, count, stride, block )
         endif
 
+      case ( l_geoidData ) ! ------------  geoidData  -----
+        sourceQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(sourceVectorIndex), sourceQuantityIndex )
+        call geoidData ( quantity, sourceQuantity )
+
+      case ( l_gphResetToGeoid ) ! ------------  gphResetToGeoid  -----
+        call geoidData ( quantity )
+
       case ( l_gphPrecision) ! -------------  GPH precision  -----
         ! Need a tempPrecision and a refgphPrecision quantity
         if ( .not.all(got( (/ f_refGPHPrecisionQuantity, f_tempPrecisionQuantity /))) ) &
@@ -3063,6 +3071,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.428  2013/09/21 00:24:44  pwagner
+! Added geoid Fill methods
+!
 ! Revision 2.427  2013/09/17 22:43:45  pwagner
 ! Added Scatter, Gather methods
 !
