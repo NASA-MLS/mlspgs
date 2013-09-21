@@ -43,7 +43,7 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
-    use String_Table, only: Create_String
+    use STRING_TABLE, only: CREATE_STRING, HOW_MANY_STRINGS
 
     integer, intent(inout) :: NAME_I
     character(len=*), intent(in) :: NAME_C
@@ -52,7 +52,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: String ! To display after Name_I
     logical, intent(in), optional :: Cond   ! Print if true, default true
     character(len=*), intent(in), optional :: Advance
-
+    if ( how_many_strings() < 1 ) return
     if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
     call trace_begin ( name_i, root, index, string, cond, advance )
 
@@ -63,7 +63,7 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
-    use STRING_TABLE, only: CREATE_STRING
+    use STRING_TABLE, only: CREATE_STRING, HOW_MANY_STRINGS
 
     character(len=*), intent(in) :: NAME_C
     integer, intent(in), optional :: ROOT
@@ -74,6 +74,7 @@ contains ! ====     Public Procedures     ==============================
 
     integer :: Name_I
 
+    if ( how_many_strings() < 1 ) return
     name_i = create_string ( trim(name_c) )
     call trace_begin ( name_i, root, index, string, cond )
 
@@ -88,7 +89,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use OUTPUT_M, only: OUTPUTOPTIONS
-    use STRING_TABLE, only: CREATE_STRING, GET_STRING
+    use STRING_TABLE, only: CREATE_STRING, GET_STRING, HOW_MANY_STRINGS
 
     integer, intent(in) :: NAME
     integer, intent(in), optional :: ROOT
@@ -101,6 +102,7 @@ contains ! ====     Public Procedures     ==============================
 
     ! Executable
  
+    if ( how_many_strings() < 1 ) return
     call Checkdate
 
     myCond = .true.
@@ -141,7 +143,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTOPTIONS
-    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING !, Get_String
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS !, Get_String
     use TOGGLES, only: SWITCHES
 
     character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
@@ -156,6 +158,7 @@ contains ! ====     Public Procedures     ==============================
 
     ! Executable
 
+    if ( how_many_strings() < 1 ) return
     call Checkdate
 
     if ( check < -1 ) check = switchDetail ( switches, 'chktr' )
@@ -252,6 +255,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.32  2013/09/21 00:21:39  pwagner
+! Check if string table initialized first
+!
 ! Revision 2.31  2013/09/12 03:12:13  vsnyder
 ! Add Advance to Trace_Begin, pass Index through Trace_End to Pop_Stack
 !
