@@ -1128,6 +1128,7 @@ contains
     use ANTENNAPATTERNS_M, only: DUMP_ANTENNA_PATTERNS_DATABASE
     use CALENDAR, only: DURATION_FORMATTED, TIME_T, TK
     use CALL_STACK_M, only: DUMP_STACK
+    use ChunkDivideConfig_m, only: ChunkDivideConfig, Dump
     use DECLARATION_TABLE, only: NUM_VALUE
     use DUMP_0, only: DIFF, DUMP, RMSFORMAT
     use EXPR_M, only: EXPR
@@ -1144,7 +1145,8 @@ contains
       & F_ALLQUANTITYTEMPLATES, F_ALLRADIOMETERS, F_ALLSIGNALS, F_ALLSPECTRA, &
       & F_ALLVECTORS, F_ALLVECTORTEMPLATES, F_ALLVGRIDS, F_ANTENNAPATTERNS, &
       & F_BOOLEAN, &
-      & F_CALLSTACK, F_CHUNKNUMBER, F_CLEAN, F_COMMANDLINE, F_CRASHBURN, &
+      & F_CALLSTACK, F_CHUNKDIVIDE, F_CHUNKNUMBER, F_CLEAN, F_COMMANDLINE, &
+      & F_CRASHBURN, &
       & F_DETAILS, F_DACSFILTERSHAPES, &
       & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HEIGHT, F_HESSIAN, &
       & F_HGRID, F_IGRF, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, &
@@ -1317,7 +1319,7 @@ contains
         & f_allPFA, f_allQuantityTemplates, &
         & f_allRadiometers, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
-        & f_callStack, f_chunkNumber, f_commandLine, f_crashBurn, &
+        & f_callStack, f_chunkDivide, f_chunkNumber, f_commandLine, f_crashBurn, &
         & f_DACSfilterShapes, f_filterShapes, f_igrf, &
         & f_MieTables, f_pfaFiles, f_pfaStru, f_phaseName, f_pointingGrids, &
         & f_stop, f_stopWithError )
@@ -1436,6 +1438,8 @@ contains
             call dump_antenna_patterns_database ( son )
           case ( f_callStack )
             call MLSMessageCalls ( 'dump' )
+          case ( f_chunkDivide )
+            call dump ( chunkDivideConfig )
           case ( f_chunkNumber )
             call outputNamedValue ( 'chunk number', currentChunkNumber )
           case ( f_commandLine )
@@ -2562,6 +2566,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.95  2013/09/21 00:38:11  vsnyder
+! Add ChunkDivide
+!
 ! Revision 2.94  2013/09/04 16:32:51  pwagner
 ! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 !
