@@ -504,10 +504,11 @@ contains ! =====     Public procedures     =============================
              l+l_columnAbundance, l+l_combineChannels, &
              l+l_convergenceRatio, l+l_derivative, l+l_estimatedNoise, &
              l+l_explicit, l+l_extractChannel, l+l_fold, l+l_fwdModelMean, &
-             l+l_fwdModelStdDev, l+l_fwdModelTiming, l+l_gather, l+l_geoLocation, &
-             l+l_gphPrecision, l+l_gridded, l+l_H2OFromRHI, &
-             l+l_H2OPrecisionFromRHI, l+l_hydrostatic, l+l_isotope, &
-             l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
+             l+l_fwdModelStdDev, l+l_fwdModelTiming, &
+             l+l_gather, l+l_geoidData, l+l_geoLocation, &
+             l+l_gphPrecision, l+l_gphResetToGeoid, l+l_gridded, &
+             l+l_H2OFromRHI, l+l_H2OPrecisionFromRHI, l+l_hydrostatic, &
+             l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
              l+l_losVel, l+l_lsGlobal, l+l_lsLocal, l+l_lsWeighted, &
              l+l_magAzEl, l+l_magneticModel, l+l_manipulate, &
              l+l_modifyTemplate, l+l_negativePrecision, l+l_noRadsPerMIF, &
@@ -1989,6 +1990,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.588  2013/09/21 00:23:59  pwagner
+! Added geoid Fill methods
+!
 ! Revision 2.587  2013/09/19 23:36:58  vsnyder
 ! Require Vector Quantity in Fill's expr to be scalar
 !
