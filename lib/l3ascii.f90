@@ -24,7 +24,7 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
   use MLSSTRINGS, only: CAPITALIZE, &
     & COUNT_WORDS, READCOMPLETELINEWITHOUTCOMMENTS
   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
-  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+  use TREE, only: DUMP_TREE_NODE, WHERE
 
   implicit NONE
   private
@@ -814,7 +814,7 @@ itemsloop:do
       call output ( '***** At ' )
 
       if ( lcf_where > 0 ) then
-          call print_source ( source_ref(lcf_where) )
+          call print_source ( where(lcf_where) )
       else
         call output ( '(no lcf node available)' )
       end if
@@ -865,6 +865,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.37  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.36  2012/03/06 19:30:07  pwagner
 ! Capitalize USEd stuff; R4 and R8 got from MLSKinds
 !
