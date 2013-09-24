@@ -89,7 +89,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATION, SUBTREE, NSONS, SOURCE_REF, SUBTREE
+  use TREE, only: DECORATION, SUBTREE, NSONS, SUBTREE
   use VECTORSMODULE, only: &
     & CLEARUNDERMASK, CLONEVECTORQUANTITY, COPYVECTOR, CREATEMASK, &
     & DESTROYVECTORINFO, DESTROYVECTORQUANTITYMASK, &
@@ -3471,8 +3471,9 @@ contains ! =====     Public Procedures     =============================
     ! --------------------------------------------  FromASCIIFile  -----
     subroutine FromAsciiFile ( key, quantity, filename, badRange )
       use IO_STUFF, only: GET_LUN
+      use Lexer_Core, only: Get_Where
       use MACHINE, only: IO_ERROR
-      use MOREMESSAGE, only: ONEMOREMESSAGE => MLSMESSAGE
+      use Tree, only: Where
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       integer, intent(in) :: FILENAME   ! ASCII filename to read from
@@ -3492,21 +3493,21 @@ contains ! =====     Public Procedures     =============================
       open ( unit=lun, file=filenameStr, status='old', form='formatted', &
         & access='sequential', iostat=status )
       if ( status /= 0 ) then
-        call io_Error ( "Unable to open ASCII input file ", status, filenameStr )
-        call ONEMOREMESSAGE( MLSMSG_Error, ModuleName, 'Error opening ASCII file at %l', &
-          & (/ source_ref(key) /) )
+        call io_Error ( "Unable to open ASCII input file ", status, fileNameStr )
+        call get_where ( where(key), fileNameStr, before='Error opening ASCII file at ' )
+        call MLSMessage( MLSMSG_Error, ModuleName, fileNameStr )
       end if
       read ( unit=lun, fmt=*, iostat=status ) quantity%values
       if ( status /= 0 ) then
         call io_Error ( "Unable to read ASCII input file ", status, filenameStr )
-        call ONEMOREMESSAGE( MLSMSG_Error, ModuleName, 'Error reading ASCII file %l', &
-          & (/ source_ref(key) /) )
+        call get_where ( where(key), fileNameStr, before='Error reading ASCII file at ' )
+        call MLSMessage( MLSMSG_Error, ModuleName, fileNameStr )
       end if
       close ( unit=lun, iostat=status )
       if ( status /= 0 ) then
         call io_Error ( "Unable to close ASCII input file ", status, filenameStr )
-        call ONEMOREMESSAGE( MLSMSG_Error, ModuleName, 'Error closing ASCII file at %l', &
-          & (/ source_ref(key) /) )
+        call get_where ( where(key), fileNameStr, before='Error closing  ASCII file at ' )
+        call MLSMessage( MLSMSG_Error, ModuleName, fileNameStr )
       end if
       if ( present ( badRange ) ) then
         if ( .not. associated ( quantity%mask ) ) call CreateMask ( quantity )
@@ -7267,6 +7268,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.88  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.87  2013/09/21 00:24:21  pwagner
 ! Added geoid Fill methods
 !
