@@ -2307,14 +2307,14 @@ contains ! =====     Public Procedures     =============================
 
     use LEXER_CORE, only: PRINT_SOURCE
     use OUTPUT_M, only: OUTPUT
-    use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+    use TREE, only: DUMP_TREE_NODE, Where_At => Where
 
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
 
     error = max(error,1)
     call output ( '***** At ' )
-    call print_source ( source_ref(where) )
+    call print_source ( where_at(where) )
     call output ( ': ' )
     select case ( code )
     case ( angleUnitMessage )
@@ -2409,6 +2409,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.108  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.107  2013/08/30 02:45:41  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
