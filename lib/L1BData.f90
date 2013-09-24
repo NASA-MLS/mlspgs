@@ -37,7 +37,7 @@ module L1BData
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: SWITCHES
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
+  use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, WHERE
 
   implicit NONE
 
@@ -2635,7 +2635,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       call output ( '***** At ' )
 
       if ( lcf_where > 0 ) then
-        call print_source ( source_ref(lcf_where) )
+        call print_source ( where(lcf_where) )
       else
         call output ( '(no lcf node available)' )
       end if
@@ -2679,6 +2679,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.98  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.97  2013/08/31 01:24:53  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !

@@ -289,7 +289,7 @@ module MLSFiles               ! Utility file routines
 
 contains
 
-  !-----------------------------------------  accessDFACCToStr  -----
+  !--------------------------------------------  accessDFACCToStr  -----
   function accessDFACCToStr ( dfacc ) result(str)
 
   ! This routine converts an hdf access type
@@ -311,7 +311,7 @@ contains
   end select
   end function accessDFACCToStr
 
-  !-----------------------------------------  accessStrToDFACC  -----
+  !--------------------------------------------  accessStrToDFACC  -----
   function accessStrToDFACC ( str ) result(dfacc)
 
   ! This routine converts a string like 'rdonly' into an hdf access type
@@ -333,7 +333,7 @@ contains
   end select
   end function accessStrToDFACC
 
-  !-----------------------------------------  AddFileToDatabase  -----
+  !-------------------------------------------  AddFileToDatabase  -----
   integer function AddFileToDatabase ( DATABASE, ITEM )
 
   ! This routine adds a vector to a database of such vectors, 
@@ -351,7 +351,7 @@ contains
     AddFileToDatabase = newSize
   end function AddFileToDatabase
 
-  !-----------------------------------------  AddInitializeMLSFile  -----
+  !----------------------------------------  AddInitializeMLSFile  -----
   function AddInitializeMLSFile ( DATABASE, type, access, content, name, &
     & shortName, HDFVersion, recordLength, PCFIdRange, PCBottom, PCTop ) &
     & result(item)
@@ -383,7 +383,7 @@ contains
     item => Database(newSize)
   end function AddInitializeMLSFile
 
-  !-----------------------------------------  AreTheSameFile  -----
+  !----------------------------------------------  AreTheSameFile  -----
   function AreTheSameFile ( File1, File2 ) &
     & result(SooDesu)
 
@@ -397,7 +397,7 @@ contains
     SooDesu = ( File1%name == File2%name )
   end function AreTheSameFile
 
-  !-----------------------------------------  InitializeMLSFile  -----
+  !-------------------------------------------  InitializeMLSFile  -----
   integer function InitializeMLSFile ( ITEM, type, access, content, name, &
     & shortName, HDFVersion, recordLength, PCFIdRange, PCBottom, PCTop )
 
@@ -453,7 +453,7 @@ contains
       & call get_string(lit_indices(item%type), item%typeStr, strip=.true.)
   end function InitializeMLSFile
 
-  ! ---------------------------------------------  GetPCFromRef  -----
+  ! -----------------------------------------------  GetPCFromRef  -----
 
   ! This function takes a FileName as an arg and a range of PC numbers
   ! [PCBottom, PCTop] which are integers
@@ -723,7 +723,7 @@ contains
   endif
   end function maskName
 
-  ! ---------------------------------------------  open_MLSFile  -----
+  ! ----------------------------------------------  open_MLSFile  -----
 
   ! This routine opens an mls file using either the toolbox
   ! or else a Fortran OPEN statement
@@ -917,7 +917,7 @@ contains
     
   end subroutine open_MLSFile
 
-  ! ---------------------------------------------  close_MLSFile  -----
+  ! ----------------------------------------------  close_MLSFile  -----
 
   ! This subroutine closes an mls file using either the toolbox
   ! or else a Fortran CLOSE statement
@@ -997,7 +997,7 @@ contains
 
   end subroutine close_MLSFile
 
-  !-----------------------------------------  RmFileFromDatabase  -----
+  !------------------------------------------  RmFileFromDatabase  -----
   integer function RmFileFromDatabase ( DATABASE, ITEM )
 
   ! This routine removes a vector from a database of such vectors, 
@@ -1019,7 +1019,7 @@ contains
     RmFileFromDatabase = newSize
   end function RmFileFromDatabase
 
-  ! ----------------------  Deallocate_filedatabase  -----
+  ! ------------------------------------  Deallocate_filedatabase  -----
 
   ! This routine deallocates the file database, closing any files
   ! that may still be open
@@ -1041,7 +1041,7 @@ contains
         & ModuleName, "Cannot deallocate file database" )
   end subroutine Deallocate_filedatabase
 
-  ! ------------------------------------------ Dump_FileDataBase ------------
+  ! ------------------------------------------  Dump_FileDataBase  -----
 
   subroutine Dump_FileDataBase ( database, Name, details )
 
@@ -1275,7 +1275,7 @@ contains
     close( UNIT=MLSFile_save%FileID%f_id )
   end function readnchars
   
-  ! ---------------------------------------------  he2he5_fileaccess  -----
+  ! ------------------------------------------  he2he5_fileaccess  -----
 
   ! This function converts hdfeos2 file access types to
   ! corresponding hdfeos5 numbers
@@ -1307,7 +1307,7 @@ contains
 
   end function he2he5_fileaccess
 
-  ! ---------------------------------------------  hdf2hdf5_fileaccess  -----
+  ! ----------------------------------------  hdf2hdf5_fileaccess  -----
 
   ! This function converts hdf4 file access types to
   ! corresponding hdf5 numbers
@@ -1337,7 +1337,7 @@ contains
 
   end function hdf2hdf5_fileaccess
 
-  ! ---------------------------------------------  mls_inqswath  -----
+  ! -----------------------------------------------  mls_inqswath  -----
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
 
@@ -1400,7 +1400,7 @@ contains
 
   end function mls_inqswath
 
-  ! ---------------------------------------------  mls_sfstart  -----
+  ! ------------------------------------------------  mls_sfstart  -----
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
   ! with hdf4-style FileAccess (e.g., DFACC_RDONLY)
@@ -1515,7 +1515,7 @@ contains
 
   end function mls_sfstart
 
-  ! ---------------------------------------------  mls_sfend  -----
+  ! --------------------------------------------------  mls_sfend  -----
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
   ! Right now, it works for hdf4 files in general, but only for adding
@@ -1583,7 +1583,7 @@ contains
 
   end function mls_sfend
 
-  ! ---------------------------------------------  mls_hdf_version  -----
+  ! --------------------------------------------  mls_hdf_version  -----
 
   ! This function returns the hdf version of the file:
   ! hdf version         returned value   integer
@@ -1936,7 +1936,7 @@ contains
     if ( present(error) ) error = ioerror
   end subroutine mls_CloseFileType
 
-!----------------------- mls_exists
+!----------------------------------------------------  mls_exists  -----
   integer function mls_exists(filename)
   ! returns 0 if file exists, FILENOTFOUND if not
   ! Argument
@@ -1947,7 +1947,7 @@ contains
   mls_exists = merge(0, FILENOTFOUND, exist)
   end function mls_exists
 
-  !-----------------------------------------  transfer_MLSFile  -----
+  !--------------------------------------------  transfer_MLSFile  -----
   integer function transfer_MLSFile ( ITEM, path, name )
 
   ! This routine transforms an MLSFile, e.g. relocating its path
@@ -2077,7 +2077,7 @@ contains
     call split_path_name(fullName, path, name)
   end function strip_path
 
-  ! ---------------------------------------------  mls_io_gen_closeF  -----
+  ! ------------------------------------------  mls_io_gen_closeF  -----
 
   ! This function closes a generic file using either the toolbox
   ! or else a Fortran CLOSE statement
@@ -2249,7 +2249,7 @@ contains
 
   end function mls_io_gen_closeF
 
-  ! ---------------------------------------------  mls_io_gen_openF  -----
+  ! -------------------------------------------  mls_io_gen_openF  -----
 
   ! This function opens a generic file using either the toolbox
   ! or else a Fortran OPEN statement
@@ -2750,6 +2750,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.98  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.97  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
