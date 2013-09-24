@@ -52,7 +52,7 @@ module ReadAPriori
   use TIME_M, only: TIME_NOW
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
-    &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
+    &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, Where
   use TREE_TYPES, only: N_NAMED
 
   implicit none
@@ -1270,7 +1270,7 @@ contains ! =====     Public Procedures     =============================
       call output ( '***** At ' )
 
       if ( lcf_where > 0 ) then
-          call print_source ( source_ref(lcf_where) )
+          call print_source ( where(lcf_where) )
       else
         call output ( '(no lcf node available)' )
       end if
@@ -1321,6 +1321,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.99  2013/09/24 23:47:23  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.98  2013/08/30 02:45:51  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
