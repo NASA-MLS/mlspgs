@@ -111,6 +111,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use BITSTUFF, only: DUMPBITNAMES, ISBITSET
   use DUMP_0, only: DIFF, DUMP
   use INTRINSIC, only: LIT_INDICES, PHYQ_INVALID, L_VMR
+  use Lexer_Core, only: Where_T
   use MLSKINDS, only: R8, RV
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, MLSMESSAGECONFIG, &
     & MLSMSG_DEALLOCATE, MLSMSG_WARNING, MLSMESSAGE
@@ -265,7 +266,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
      
     ! Administrative stuff
     integer :: Name = 0        ! Sub-rosa index of name, if any, else zero
-    integer :: Where = 0       ! Source_ref for creation if by L2CF
+    type(where_t) :: Where     ! Source_ref for creation if by L2CF
 
     ! General information about the vector
 
@@ -338,7 +339,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   type Vector_T
     integer :: Name = 0        ! Sub-rosa index of the vector name
-    integer :: Where = 0       ! Source_ref for creation if by L2CF
+    type(where_t) :: Where     ! Source_ref for creation if by L2CF
     integer :: GlobalUnit = PHYQ_Invalid ! Alternative units for whole vector
     type (VectorTemplate_T) :: TEMPLATE ! Template for this vector
     type (VectorValue_T), dimension(:), pointer :: QUANTITIES => NULL() ! The
@@ -952,7 +953,7 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), intent(in) :: quantities(:)
     integer, intent(in) :: selected(:)  ! Which quantities are selected?
     type (VectorTemplate_T), intent(out) :: vectorTemplate
-    integer, intent(in), optional :: where ! source_ref if created by L2CF
+    type(where_t), intent(in), optional :: where ! source_ref if created by L2CF
     character(len=*), intent(in), optional :: ForWhom ! use instead of ModuleName
 
     ! Executable code
@@ -1099,7 +1100,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: highBound
     logical, intent(in), optional :: lowBound
     logical, intent(in), optional :: noValues ! Don't create values for it.
-    integer, intent(in), optional :: where    ! source_ref
+    type(where_t), intent(in), optional :: where    ! source_ref
 
     ! Local variables
     integer :: QUANTITY                 ! Loop index
@@ -1201,7 +1202,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     vector%name = 0
-    vector%where = 0
+    vector%where = where_t(0,0)
 
     if ( .not. associated(vector%quantities) ) return
     call destroyVectorValue ( vector )
@@ -1303,7 +1304,7 @@ contains ! =====     Public Procedures     =============================
     vectorTemplate%totalInstances = 0
     vectorTemplate%totalElements = 0
     vectorTemplate%name = 0
-    vectorTemplate%where = 0
+    vectorTemplate%where = where_t(0,0)
   end subroutine DestroyVectorTemplateInfo
 
   ! -----------------------------------------  DestroyVectorValue  -----
@@ -1867,7 +1868,7 @@ contains ! =====     Public Procedures     =============================
       call output ( 'Name = ' )
       call display_string ( vector%name )
     end if
-    if ( vector%where /= 0 ) then
+    if ( vector%where%source /= 0 ) then
       call output ( ' created at ' )
       call print_source ( vector%where )
     end if
@@ -3238,6 +3239,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.182  2013/08/17 00:17:24  pwagner
+! Guard against certain crashes with non-Aura datasets
+!
 ! Revision 2.181  2013/08/16 02:28:38  vsnyder
 ! Don't reallocate VALUES if it's the right shape
 !
