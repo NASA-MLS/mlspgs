@@ -25,7 +25,7 @@ module TABLE_GENERATOR
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE
   use TREE, only: DUMP_TREE_NODE, NODE_ID, &
-                  NODE_KIND, NSONS, PSEUDO, SOURCE_REF, &
+                  NODE_KIND, NSONS, PSEUDO, WHERE_AT=>WHERE, &
                   SUB_ROSA, SUBTREE
   use TREE_TYPES ! Everything, especially everything beginning with N_
 
@@ -113,7 +113,7 @@ contains ! ====     Public Procedures     ==============================
 
     error = max(error,1)
     call output ( '***** At ' )
-    call print_source ( source_ref(where) )
+    call print_source ( where_at(where) )
     call output ( ' table_generator complained: ' )
     select case ( code )
     case ( no_code_for )
@@ -359,6 +359,9 @@ contains ! ====     Public Procedures     ==============================
 end module TABLE_GENERATOR
 
 ! $Log$
+! Revision 2.11  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.10  2013/08/30 03:56:02  vsnyder
 ! Revise use of trace_begin and trace_end
 !
