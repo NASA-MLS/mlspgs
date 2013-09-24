@@ -872,7 +872,7 @@ contains ! ============= Public procedures ===================================
 
     use LEXER_CORE, only: PRINT_SOURCE
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use TREE, only: SOURCE_REF
+    use TREE, only: WHERE_AT=>WHERE
     use Intrinsic, only: LIT_INDICES
     use STRING_TABLE, only: DISPLAY_STRING
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
@@ -896,7 +896,7 @@ contains ! ============= Public procedures ===================================
     end if
     call output ( 'At ' )
     if ( where > 0 ) then
-      call print_source ( source_ref(where) )
+      call print_source ( where_at(where) )
     else
       call output ( '(no lcf tree available)' )
     end if
@@ -1394,6 +1394,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.174  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.173  2013/08/17 00:23:35  pwagner
 ! New cmdline arg relaxes some for non-Aura l1b datasets
 !
