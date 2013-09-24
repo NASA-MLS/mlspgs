@@ -20,6 +20,7 @@ module MoreMessage ! Messaging with extra functionality
   public :: MessageWithDouble, MessageWithDoubleArray
   public :: MessageWithInteger, MessageWithIntegerArray
   public :: MessageWithSingle, MessageWithSingleArray
+  public :: MessageWithWhere
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -35,21 +36,25 @@ module MoreMessage ! Messaging with extra functionality
     module procedure MessageWithDouble, MessageWithDoubleArray
     module procedure MessageWithInteger, MessageWithIntegerArray
     module procedure MessageWithSingle, MessageWithSingleArray
+    module procedure MessageWithWhere
   end interface
 
 contains
 
   ! ------------------------------------------  MessageWithDouble  -----
   subroutine MessageWithDouble ( Severity, ModuleNameIn, Message, Datum, &
-    & Advance )
-    ! Insert "Datum" into "Message" in place of "%r" or "%R", then call
-    ! MLSMessage.
+    & Where, Advance )
+    ! Insert "Datum" into "Message" in place of "%r" or "%R" and the
+    ! position in files indicated by Where, if present, in place of "%w"
+    ! or "%W". then call MLSMessage.
+    use Lexer_Core, only: Get_Where, Where_t
     use MLSMessageModule, only: MLSMessage
     integer, parameter :: RK = kind(0.0d0)
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module
     character (len=*), intent(in) :: Message ! Line of text
     real(rk), intent(in) :: Datum
+    type(where_t), intent(in), optional :: Where
     character (len=*), intent(in), optional :: Advance ! Do not advance
     !                                 if present and the first character is 'N'
     !                                 or 'n'
@@ -58,15 +63,18 @@ contains
 
   ! -------------------------------------  MessageWithDoubleArray  -----
   subroutine MessageWithDoubleArray ( Severity, ModuleNameIn, Message, Datum, &
-    & Advance )
-    ! Insert "Datum" into "Message" in place of "%r" or "%R", then call
-    ! MLSMessage.
+    & Where, Advance )
+    ! Insert "Datum" into "Message" in place of "%r" or "%R" and the
+    ! position in files indicated by Where, if present, in place of "%w"
+    ! or "%W". then call MLSMessage.
+    use Lexer_Core, only: Get_Where, Where_t
     use MLSMessageModule, only: MLSMessage
     integer, parameter :: RK = kind(0.0d0)
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module
     character (len=*), intent(in) :: Message ! Line of text
     real(rk), intent(in) :: Datum(:)
+    type(where_t), intent(in), optional :: Where
     character (len=*), intent(in), optional :: Advance ! Do not advance
     !                                 if present and the first character is 'N'
     !                                 or 'n'
@@ -75,12 +83,14 @@ contains
 
   ! -----------------------------------------  MessageWithInteger  -----
   subroutine MessageWithInteger ( Severity, ModuleNameIn, Message, Datum, &
-    & Advance )
-    ! Insert "Datum" into "Message" in place of "%d" or "%D".
-    ! Insert the string indexed by "Datum" into "Message" in place of
-    ! "%s" or "%S".  Insert the line and column number represented by "Datum"
-    ! in place of "%l" or "%L".  Insert the signal indexed by "Datum"
-    ! in place of "%g" or "%G".  Then call MLSMessage.
+    & Where, Advance )
+    ! Insert "Datum" into "Message" in place of "%d" or "%D". Insert the
+    ! string indexed by "Datum" into "Message" in place of "%s" or "%S". 
+    ! Insert the line and column number represented by "Datum" in place of
+    ! "%l" or "%L".  Insert the signal indexed by "Datum" in place of "%g" or
+    ! "%G".  Insert the position in files indicated by Where, if present, in
+    ! place of "%w" or "%W".  Then call MLSMessage.
+    use Lexer_Core, only: Get_Where, Where_t
     use MLSMessageModule, only: MLSMessage
     use MLSSignals_m, only: GetSignalName
     use String_Table, only: Get_String, String_Length
@@ -88,6 +98,7 @@ contains
     character (len=*), intent(in) :: ModuleNameIn ! Name of module
     character (len=*), intent(in) :: Message ! Line of text
     integer, intent(in) :: Datum
+    type(where_t), intent(in), optional :: Where
     character (len=*), intent(in), optional :: Advance ! Do not advance
     !                                 if present and the first character is 'N'
     !                                 or 'n'
@@ -124,11 +135,16 @@ contains
         i = i + 2
         call get_string ( datum, line(l:), strip=.false., noerror=.true., ierr=ierr )
         if ( ierr == 0 ) then
-          l = l + string_length ( datum )
+          l = l + string_length ( datum ) + 1
         else
-          l = len_trim(line)
+          l = len_trim(line) + 1
         end if
         ok = .false.
+      else if ( (message(i:i+1) == '%w' .or. message(i:i+1) == '%W') .and. &
+        & present(where) ) then
+        i = i + 2
+        call get_where ( where, line(l:) )
+        l = len_trim(line) + 1
       else
         i = i + 1
         l = l + 1
@@ -139,12 +155,14 @@ contains
 
   ! ------------------------------------  MessageWithIntegerArray  -----
   subroutine MessageWithIntegerArray ( Severity, ModuleNameIn, Message, Datum, &
-    & Advance )
-    ! Insert "Datum" into "Message" in place of "%d" or "%D".
-    ! Insert the string indexed by "Datum" into "Message" in place of
-    ! "%s" or "%S".  Insert the line and column number represented by "Datum"
-    ! in place of "%l" or "%L".  Insert the signal indexed by "Datum"
-    ! in place of "%g" or "%G".  Then call MLSMessage.
+    & Where, Advance )
+    ! Insert "Datum" into "Message" in place of "%d" or "%D". Insert the
+    ! string indexed by "Datum" into "Message" in place of "%s" or "%S". 
+    ! Insert the line and column number represented by "Datum" in place of
+    ! "%l" or "%L".  Insert the signal indexed by "Datum" in place of "%g" or
+    ! "%G".  Insert the position in files indicated by Where, if present, in
+    ! place of "%w" or "%W".  Then call MLSMessage.
+    use Lexer_Core, only: Get_Where, Where_t
     use MLSMessageModule, only: MLSMessage
     use MLSSignals_m, only: GetSignalName
     use String_Table, only: Get_String, String_Length
@@ -152,6 +170,7 @@ contains
     character (len=*), intent(in) :: ModuleNameIn ! Name of module
     character (len=*), intent(in) :: Message ! Line of text
     integer, intent(in) :: Datum(:)
+    type(where_t), intent(in), optional :: Where
     character (len=*), intent(in), optional :: Advance ! Do not advance
     !                                 if present and the first character is 'N'
     !                                 or 'n'
@@ -193,11 +212,16 @@ contains
         i = i + 2
         call get_string ( datum(nd), line(l:), strip=.false., noerror=.true., ierr=ierr )
         if ( ierr == 0 ) then
-          l = l + string_length ( datum(nd) )
+          l = l + string_length ( datum(nd) ) + 1
         else
-          l = len_trim(line)
+          l = len_trim(line) + 1
         end if
         nd = nd + 1
+      else if ( (message(i:i+1) == '%w' .or. message(i:i+1) == '%W') .and. &
+        & present(where) ) then
+        i = i + 2
+        call get_where ( where, line(l:) )
+        l = len_trim(line) + 1
       else
         i = i + 1
         l = l + 1
@@ -208,15 +232,18 @@ contains
 
   ! ------------------------------------------  MessageWithSingle  -----
   subroutine MessageWithSingle ( Severity, ModuleNameIn, Message, Datum, &
-    & Advance )
-    ! Insert "Datum" into "Message" in place of "%r" or "%R", then call
-    ! MLSMessage.
+    & Where, Advance )
+    ! Insert "Datum" into "Message" in place of "%r" or "%R" and the
+    ! position in files indicated by Where, if present, in place of "%w"
+    ! or "%W". then call MLSMessage.
+    use Lexer_Core, only: Get_Where, Where_t
     use MLSMessageModule, only: MLSMessage
     integer, parameter :: RK = kind(0.0e0)
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module
     character (len=*), intent(in) :: Message ! Line of text
     real(rk), intent(in) :: Datum
+    type(where_t), intent(in), optional :: Where
     character (len=*), intent(in), optional :: Advance ! Do not advance
     !                                 if present and the first character is 'N'
     !                                 or 'n'
@@ -225,20 +252,61 @@ contains
 
   ! -------------------------------------  MessageWithSingleArray  -----
   subroutine MessageWithSingleArray ( Severity, ModuleNameIn, Message, Datum, &
-    & Advance )
-    ! Insert "Datum" into "Message" in place of "%r" or "%R", then call
-    ! MLSMessage.
+    & Where, Advance )
+    ! Insert "Datum" into "Message" in place of "%r" or "%R" and the
+    ! position in files indicated by Where, if present, in place of "%w"
+    ! or "%W". then call MLSMessage.
+    use Lexer_Core, only: Get_Where, Where_t
     use MLSMessageModule, only: MLSMessage
     integer, parameter :: RK = kind(0.0e0)
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module
     character (len=*), intent(in) :: Message ! Line of text
     real(rk), intent(in) :: Datum(:)
+    type(where_t), intent(in), optional :: Where
     character (len=*), intent(in), optional :: Advance ! Do not advance
     !                                 if present and the first character is 'N'
     !                                 or 'n'
     include 'MoreMessageArray.f9h'
   end subroutine MessageWithSingleArray
+
+  ! -------------------------------------------  MessageWithWhere  -----
+  subroutine MessageWithWhere ( Severity, ModuleNameIn, Message, Where, &
+    & Advance )
+    ! Insert "Where" into "Message" in place of "%w" or "%W". then call
+    ! MLSMessage.
+    use Lexer_Core, only: Get_Where, Where_t
+    use MLSMessageModule, only: MLSMessage
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module
+    character (len=*), intent(in) :: Message ! Line of text
+    type(where_t), intent(in) :: Where
+    character (len=*), intent(in), optional :: Advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
+
+    character(512) :: Line ! Should be long enough
+    integer :: I, L        ! Next positions in input, Line
+    integer :: N           ! Len_Trim(Message)
+
+    n = len_trim(message)
+    i = 1
+    l = 1
+    do
+      line(l:l) = message(i:i)
+      if ( i >= n ) exit
+      if ( (message(i:i+1) == '%w' .or. message(i:i+1) == '%W') ) then
+        i = i + 2
+        call get_where ( where, line(l:) )
+        l = len_trim(line) + 1
+      else
+        i = i + 1
+        l = l + 1
+      end if
+    end do
+    call MLSMessage ( severity, moduleNameIn, line(:l), advance )
+
+  end subroutine MessageWithWhere
 
 !=======================================================================
 !--------------------------- end bloc --------------------------------------
@@ -254,6 +322,9 @@ contains
 end module MoreMessage
 
 ! $Log$
+! Revision 2.9  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.8  2013/06/12 02:13:10  vsnyder
 ! Cruft removal
 !
