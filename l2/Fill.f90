@@ -224,7 +224,7 @@ contains ! =====     Public Procedures     =============================
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
-      & SOURCE_REF, SUB_ROSA, SUBTREE
+      & SUB_ROSA, SUBTREE, WHERE
     use TREE_TYPES, only: N_NAMED
     use VECTORSMODULE, only: ADDVECTORTODATABASE, &
       & CLEARMASK, CLONEVECTORQUANTITY, CREATEVECTOR, &
@@ -682,7 +682,7 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, AddVectorToDatabase ( vectors, &
           & CreateVector ( vectorName, vectorTemplates(templateIndex), &
           & qtyTemplates, globalUnit=globalUnit, highBound=highBound, lowBound=lowBound, &
-          & where=source_ref(key) ) ) )
+          & where=where(key) ) ) )
         ! That's the end of the create operation
         ! Do we want to autofill any of its qtys?
         if ( autoFill .and. associated(vectors) ) &
@@ -752,7 +752,7 @@ contains ! =====     Public Procedures     =============================
           ! *******************************************
           call decorate ( key, -addHessianToDatabase(hessians, &
             & createEmptyHessian ( vectorName, &
-            & vectors(rowVector), vectors(colVector), where=source_ref(key) )) )
+            & vectors(rowVector), vectors(colVector), where=where(key) )) )
         else
           call announce_error ( key, missingField, &
             & extraInfo = (/ f_columns, f_rows /) )
@@ -790,22 +790,22 @@ contains ! =====     Public Procedures     =============================
           case ( l_cholesky )
             call NullifyMatrix ( matrixCholesky%m )
             call createEmptyMatrix ( matrixCholesky%m, vectorName, &
-              & vectors(rowVector), vectors(colVector), where=source_ref(key) )
+              & vectors(rowVector), vectors(colVector), where=where(key) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixCholesky) )
           case ( l_kronecker )
             call NullifyMatrix ( matrixKronecker%m )
             call createEmptyMatrix ( matrixKronecker%m, vectorName, &
-              & vectors(rowVector), vectors(colVector), where=source_ref(key) )
+              & vectors(rowVector), vectors(colVector), where=where(key) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixKronecker) )
           case ( l_plain )
             call NullifyMatrix ( matrixPlain )
             call createEmptyMatrix ( matrixPlain, vectorName, vectors(rowVector), &
-              vectors(colVector), where=source_ref(key) )
+              vectors(colVector), where=where(key) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixPlain) )
           case ( l_spd )
             call NullifyMatrix ( matrixSPD%m )
             call createEmptyMatrix ( matrixSPD%m, vectorName, &
-              & vectors(colVector), vectors(colVector), where=source_ref(key) )
+              & vectors(colVector), vectors(colVector), where=where(key) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixSPD) )
           end select
         else
@@ -1345,16 +1345,27 @@ contains ! =====     Public Procedures     =============================
       endif
     end subroutine directReadCommand
 
-    ! ------------------------------------------------ fillCommand -----
-    subroutine fillCommand
+    ! ----------------------------------------------  FillCommand  -----
+    subroutine FillCommand
     ! Now we're on actual Fill instructions.
       use Init_Tables_Module, only: L_None
-      integer :: GEOLOCATION
+use Dump_0, only: Dump
+use Intrinsic, only: Lit_Indices
+use String_Table, only: Display_String
+use Tree, only: Dump_Tree_Node
+use Units, only: Base_Unit
+use Vector_Qty_Expr_m, only: Dot, Log_Value, Num_Value, Vector_Qty_Expr
+use VectorsModule, only: DestroyVectorQuantityMask, DestroyVectorQuantityValue, &
+Dump_Vector_Quantity
+double precision :: Number
+integer :: Stat
+      integer :: Geolocation
       integer :: JJ
       integer :: MUL
       integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
       logical :: QTYWASMASKED
       type(vectorValue_T) :: TEMPQUANTITY  ! For storing original qty's mask
+integer :: TheUnits
       ! Executable
       ! Loop over the instructions to the Fill command
       BOMask = 0
@@ -1432,6 +1443,25 @@ contains ! =====     Public Procedures     =============================
         case ( f_explicitValues ) ! For explicit fill
           valuesNode = subtree(j,key)
         case ( f_expr )
+!         valuesNode = subtree(j,key)
+do jj = 2, nsons(subtree(j,key))
+stat = vector_qty_expr ( subtree(jj,subtree(j,key)), vectors, tempQuantity, &
+number, theUnits, 'Fill' )
+select case ( stat )
+case ( log_value, num_value )
+call output ( number, before='Numeric value of "expr" field = ' )
+if ( theUnits /= phyq_dimensionless ) &
+call display_string ( lit_indices(base_unit(theUnits)), before=' ' )
+call output ( '', advance='yes' )
+case ( dot )
+call output ( 'Got vector qty result', advance='yes' )
+call dump_vector_quantity ( tempQuantity, details=1, name='Quantity value of "expr" field' )
+call destroyVectorQuantityMask ( tempQuantity )
+call destroyVectorQuantityValue ( tempQuantity )
+case default
+call output ( 'Got Vector_Qty_Expr_Error', advance='yes' )
+end select
+end do
           call Announce_Error ( gson, noCodeFor, extraInfo=(/ f_expr /) )
         case ( f_extinction ) ! For cloud extinction fill
           extinction = get_boolean ( gson )
@@ -1791,8 +1821,7 @@ contains ! =====     Public Procedures     =============================
       ! Ignore original mask if /dontMask 
       if ( qtyWasMasked .and. dontMask .and. fillMethod /= l_l1b ) &
         & quantity%mask = char(0)
-      if ( any( fillMethod == (/ &
-        & l_status, l_quality /) ) ) then
+      if ( any( fillMethod == (/ l_status, l_quality /) ) ) then
         call ApplyMaskToQuantity( quantity, &
           & radQuantity, ptanQuantity, odQuantity, nullQuantity, 0._r8, &
           & maxValue, minValue, heightRange, whereRange, &
@@ -2968,7 +2997,7 @@ contains ! =====     Public Procedures     =============================
       ! Housekeeping
       call destroyVectorQuantityValue ( tempQuantity, &
         & destroyMask=.true., destroyTemplate=.false. )
-    end subroutine fillCommand
+    end subroutine FillCommand
 
     ! ............................................  Get_File_Name  .....
     subroutine Get_File_Name ( fileIndex, pcfCode, &
@@ -3071,6 +3100,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.429  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.428  2013/09/21 00:24:44  pwagner
 ! Added geoid Fill methods
 !
