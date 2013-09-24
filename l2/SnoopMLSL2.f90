@@ -42,7 +42,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use SYMBOL_TABLE, only: ENTER_TERMINAL
   use SYMBOL_TYPES, only: T_IDENTIFIER
-  use TREE, only:  NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
+  use TREE, only:  NSONS, SUB_ROSA, SUBTREE, Where
   use TOGGLES, only: SWITCHES
   use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T
 
@@ -447,6 +447,7 @@ contains ! ========  Public Procedures =========================================
     & r2aName, r2bName, r2cName, r2dName, &
     & r3aName, r3bName, r3cName, r3dName )
 
+    use Lexer_Core, only: Get_Where
     ! Arguments
     integer, intent(in), optional :: KEY ! Tree node where snoop called
     type (Vector_T), dimension(:), optional :: VectorDatabase
@@ -503,8 +504,7 @@ contains ! ========  Public Procedures =========================================
     comment = 'Unknown'
     phaseName = ''
     if ( present(key) ) then
-      write ( location, * ) source_ref(key)/256
-      location = adjustl(trim(location))
+      call get_where ( where(key), location )
       do i = 2, nsons(key)
         son = subtree(i,key)
         select case ( get_field_id(son) )
@@ -1006,6 +1006,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.46  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.45  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
