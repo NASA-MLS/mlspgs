@@ -107,7 +107,7 @@ contains
     use TOGGLES, only: GEN, SWITCHES, TOGGLE, LEVELS
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TRACK_M, only: REPORTLEAKS
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, Where, SUB_ROSA, &
       & SUBTREE
     use TREE_TYPES, only: N_NAMED
     use VECTORSMODULE, only: CLEARMASK, CLEARUNDERMASK, &
@@ -844,7 +844,7 @@ repeat_loop: do ! RepeatLoop
 
       error = max(error,1)
       call output ( '***** At ' )
-      call print_source ( source_ref(son) )
+      call print_source ( where(son) )
       call output ( ', RetrievalModule complained: ' )
       select case ( code )
       case ( bothOrNeither )
@@ -1219,7 +1219,7 @@ repeat_loop: do ! RepeatLoop
       ! Executable code
       call output ( '---------------------------- Begin retrieval configuration dump', advance='yes' )
       call output ( 'Dumping retrieval configuration for retrieve statement at ' )
-      call print_source ( source_ref ( son ) )
+      call print_source ( where ( son ) )
       call output ( '', advance='yes' )
       call output ( 'Retrieval state vector name: ' )
       call display_string ( state%name )
@@ -2945,6 +2945,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.344  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.343  2013/09/04 02:50:05  vsnyder
 ! Add 'cond' argument in three calls to Trace_End
 !
