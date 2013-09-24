@@ -190,7 +190,7 @@ contains ! ====     Public Procedures     ==============================
                 end if
               case ( num_value )
                 if ( number > log(huge(number)) ) then
-                  stat = announce_error ( son2, outOfRange )
+                  stat = announce_error ( son2, outOfRange, number=number )
                 else
                   number = exp(value_1)
                 end if
@@ -205,7 +205,7 @@ contains ! ====     Public Procedures     ==============================
                 end if
               case ( num_value )
                 if ( number < 0.0 ) then
-                  stat = announce_error ( son2, outOfRange )
+                  stat = announce_error ( son2, outOfRange, number=number )
                 else
                   number = log(value_1)
                 end if
@@ -220,7 +220,7 @@ contains ! ====     Public Procedures     ==============================
                 end if
               case ( num_value )
                 if ( number < 0.0 ) then
-                  stat = announce_error ( son2, outOfRange )
+                  stat = announce_error ( son2, outOfRange, number=number )
                 else
                   number = log10(value_1)
                 end if
@@ -235,7 +235,7 @@ contains ! ====     Public Procedures     ==============================
                 end if
               case ( num_value )
                 if ( number < 0.0 ) then
-                  stat = announce_error ( son2, outOfRange )
+                  stat = announce_error ( son2, outOfRange, number=number )
                 else
                   number = sqrt(value_1)
                 end if
@@ -550,60 +550,67 @@ contains ! ====     Public Procedures     ==============================
 
   contains
 
-    integer function Announce_Error ( Where, What )
+    integer function Announce_Error ( Where, What, Number )
+      use Lexer_Core, only: Where_t
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-      use String_Table, only: Get_String
-      use Tree, only: Node_id, Source_Ref, Subtree, Sub_Rosa, Tree_Text
+      use String_Table, only: Get_String, String_Length
+      use Tree, only: Node_id, Subtree, Sub_Rosa, Tree_Text, Where_At=>Where
       integer, intent(in) :: Where ! Tree node index
       integer, intent(in) :: What  ! Error code
+      double precision, intent(in), optional :: Number
 
-      integer :: Column, Line
+      type(where_t) :: Where_is
+      integer :: L, N
       character(len=127) :: Name, QtyNames(2,2), String
 
       announce_error = -what
-      line = source_ref (where)
-      column = mod(line,256)
-      line = line/256
+      where_is = where_at(where)
+      write ( string, 1 ) where_is%source/256, mod(where_is%source,256)
+      1 format ( 'At line ', i0, ', column ', i0 )
+      l = len_trim(string) + 1
+      if ( where_is%file /= 0 ) then
+        string(l:l+3) = ' in '
+        call get_string ( where_is%file, string(l+5:), strip=.true. )
+        l = len_trim(string) + 1
+      end if
       select case ( what )
       case ( bad_operator )
         call get_string ( tree_text(node_id(where)), name )
-        write ( string, 1 ) line, column, trim(name)
-      1 format ( 'At line ', i0, ', column ', i0, ', cannot handle ', a, &
-               & ' in this context.' )
+        n = string_length ( tree_text(node_id(where)) )
+        write ( string(l:), 3 ) name(:n)
+      3 format ( ', cannot handle ', a, ' in this context.' )
       case ( bad_terminal )
         call get_string ( sub_rosa(where), name )
-        write ( string, 1 ) line, column, trim(name)
+        n = string_length ( tree_text(node_id(where)) )
+        write ( string, 3 ) name(:n)
       case ( incompatible )
         call get_string ( subtree(1,subtree(1,where)), qtyNames(1,1) )
         call get_string ( subtree(2,subtree(1,where)), qtyNames(2,1) )
         call get_string ( subtree(1,subtree(2,where)), qtyNames(1,2) )
         call get_string ( subtree(2,subtree(2,where)), qtyNames(2,2) )
-        write ( string, 3 ) line, column, &
-          & trim(qtyNames(1,1)), trim(qtyNames(2,1)), &
-          & trim(qtyNames(1,2)), trim(qtyNames(2,2))
-      3 format ( 'At line ', i0, ', column ', i0, ' the quantities "', a, &
-          & '.', a, '" and "', a, '.', a, '" are incompatible.' )
+        write ( string(l:), 4 ) trim(qtyNames(1,1)), trim(qtyNames(2,1)), &
+                              & trim(qtyNames(1,2)), trim(qtyNames(2,2))
+      4 format ( ', the quantities "', a, '.', a, '" and "', a, '.', a, &
+          & '" are incompatible.' )
       case ( notFunc )
         call get_string ( sub_rosa(where), name )
-        write ( string, 4 ) line, column, trim(name)
-      4 format ( 'At line ', i0, ', column ', i0, '"', a, &
-               & '" is not a function name.' )
+        write ( string(l:), 5 ) trim(name)
+      5 format ( ', "', a, '" is not a function name.' )
       case ( outOfRange )
-        write ( string, 5 ) line, column
-      5 format ( 'At line ', i0, ', column ', i0, &
-               & ', the function argument is out of range.' )
+        if ( present(number) ) then
+          write ( string(l:), 6 ) number
+      6   format ( ', the function argument ', g15.7, ' is out of range.' )
+        else
+          string(l:) = ', the function argument is out of range.'
+        end if
       case ( unsupportedFunc )
         call get_string ( sub_rosa(where), name )
-        write ( string, 6 ) line, column, trim(name)
-      6 format ( 'At line ', i0, ', column ', i0, '"', a, &
-               & '" is not a supported function.' )
+        write ( string(l:), 8 ) trim(name)
+      8 format ( ', "', a, '" is not a supported function.' )
       case ( wrongNumArgs )
-        write ( string, 7 ) line, column
-      7 format ( 'At line ', i0, ', column ', i0, &
-               & ', the function has the wrong number of arguments.' )
+        string(l:) = ', the function has the wrong number of arguments.'
       case ( wrongUnits )
-        write ( string, 8 ) line, column
-      8 format ( 'At line ', i0, ', column ', i0, ', the units are incorrect.' )
+        string(l:) = ', the units are incorrect.'
       end select
 
       if ( present(forWhom) ) then
@@ -631,6 +638,9 @@ contains ! ====     Public Procedures     ==============================
 end module Vector_Qty_Expr_m
 
 ! $Log$
+! Revision 2.4  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.3  2013/09/21 00:36:23  vsnyder
 ! Cannonball polishing
 !
