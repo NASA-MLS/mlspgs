@@ -14,16 +14,16 @@ module LEXER_M
 ! Lexers for MLS.
 
   use ERROR_HANDLER, only: ERROR_WALKBACK
-  use LEXER_CORE, only: NEED, TOKEN
+  use LEXER_CORE, only: NEED, PRINT_SOURCE, TOKEN, Where_t
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: ADD_CHAR, CLEAR_STRING, DISPLAY_STRING, &
                           EOF, EOL, GET_CHAR, HOW_MANY_STRINGS, &
-                          LOOKUP_AND_INSERT, NEW_LINE, SOURCE_COLUMN, &
-                          SOURCE_LINE
+                          INCLUDE_STACK_TOP, LOOKUP_AND_INSERT, NEW_LINE, &
+                          SOURCE_COLUMN, SOURCE_LINE
   use SYMBOL_TABLE, only: ADD_TERMINAL, DUMP_1_SYMBOL, ENTER_TERMINAL, &
                           SET_SYMBOL, SYMBOL
   use SYMBOL_TYPES ! everything
-  use TOGGLES, only: CON, EMIT, GEN, LEX, PAR, SYN, TAB, TOGGLE ! (everything)
+  use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, TAB, TOGGLE
   private
 
   public :: Lexer, Lex_Signal
@@ -45,7 +45,8 @@ module LEXER_M
   integer, parameter :: CONT = 12
   integer, parameter :: QUOTE = 13
   integer, parameter :: APOST = 14
-  integer, parameter :: TOG_CH = 15
+  integer, parameter :: SHARP = 15
+  integer, parameter :: TOG_CH = 16
 
   ! Parameter for classifying ASCII characters
   integer, parameter :: CLASSES(0:127) = (/ &
@@ -58,7 +59,7 @@ module LEXER_M
 ! CAN     EM      SUB     ESC     FS      GS      RS      US
   more,   more,   more,   more,   more,   more,   more,   more,   & ! 030
 ! SPACE   !       "       #       $       %       &       '
-  spaces, more,   quote,  more,   cont,   more,   more,   apost,  & ! 040
+  spaces, more,   quote,  sharp,  cont,   more,   more,   apost,  & ! 040
 ! (       )       *       +       ,       -       .       /
   punct,  punct,  op_char,op_char,punct,  op_char,dot,    op_char,& ! 050
 ! 0       1       2       3       4       5       6       7
@@ -117,7 +118,8 @@ contains
     integer, parameter :: SQ2 = 13   ! Second string-started-by-quote state
     integer, parameter :: SA1 = 14   ! First string-started-by-apost state
     integer, parameter :: SA2 = 15   ! Second string-started-by-apost state
-    integer, parameter :: TOG = 16
+    integer, parameter :: SH1 = 16   ! #
+    integer, parameter :: TOG = 17   ! @...
 
     character, save :: CH          ! Current character
     integer :: CLASS               ! Classification of current character
@@ -131,6 +133,9 @@ contains
     integer :: STATE               ! Current state of lexer DFA
     integer :: STRING_INDEX        ! Index of token in string table
 
+    integer :: File                ! String index from include stack
+
+    call include_stack_top ( file )
     state = start
     do
       if ( need ) then; call get_char ( ch ); need = .false.; end if
@@ -140,6 +145,10 @@ contains
         class = classes(class)
       else
         class = more
+      end if
+      if ( levels(lex) > 0 ) then
+        call output ( state, before='State = ' )
+        call output ( class, before=' Class = ', advance='yes' )
       end if
 
 !     Recognize a token according to the following DFA.  Column labels are
@@ -165,24 +174,26 @@ contains
 !  sq2       8     8      8      8     8     8     8    8     8     8
 !  sa1      sa1   sa1    sa1    sa1   sa1   sa1    9    9    sa1   sa1
 !  sa2       8     8      8      8     8     8     8    8     8     8
+!  sh1      sh1    4      4      4     4     4     4    4     4     4
 !
-!           more quote apost  dot
-!  start   start  sq1   sa1    4
-!  id        2     2     2     2
-!  num       3     3     3   num2
-!  num2      3     3     3     3
-!  num3     10    10    10    10
-!  num4     10    10    10    10
-!  num5      3     3     3     3
-!  op        4     4     4     4
-!  pun       5     5     5     5
-!  cmt      cmt   cmt   cmt   cmt
-!  cont      7     7     7     7
-!  cont2   start start start start
-!  sq1      sq1   sq2   sq1   sq1
-!  sq2       8    sq1    8     8
-!  sa1      sa1    8    sa2    8
-!  sa2       8     8    sa1    8
+!           more quote apost  dot  sharp
+!  start   start  sq1   sa1    4    sh1
+!  id        2     2     2     2     2
+!  num       3     3     3   num2    3
+!  num2      3     3     3     3     3
+!  num3     10    10    10    10     3
+!  num4     10    10    10    10     3
+!  num5      3     3     3     3     3
+!  op        4     4     4     4     4
+!  pun       5     5     5     5     5
+!  cmt      cmt   cmt   cmt   cmt   cmt
+!  cont      7     7     7     7     7
+!  cont2   start start start start start
+!  sq1      sq1   sq2   sq1   sq1   sq1
+!  sq2       8    sq1    8     8     8
+!  sa1      sa1    8    sa2    8     8
+!  sa2       8     8    sa1    8     8
+!  sh1       4     4     4     4     4
 
 !     The actions are:
 !     1.   define EOF token.
@@ -214,7 +225,7 @@ contains
           call lookup_and_insert ( string_index, found ) ! will be found
                                                          ! if tables OK
           the_token = token( symbol(string_index), string_index, .false., &
-                             source_start )
+                             where_t(file, source_start) )
     exit ! main lexer loop
         case ( cmt )
           call new_line
@@ -226,13 +237,13 @@ contains
         case ( eof_in )
           string_index = enter_terminal ( '<eof>', t_end_of_input )
           the_token = token( t_end_of_input, string_index, .false., &
-                             source_start )
+                             where_t(file, source_start) )
           call set_symbol ( string_index, t_end_of_input )
     exit ! main lexer loop
         case ( eol_in )
           string_index = enter_terminal ( '<eos>', t_end_of_stmt )
           the_token = token( t_end_of_stmt, string_index, .false., &
-                             source_start )
+                             where_t(file, source_start) )
           call set_symbol ( string_index, t_end_of_stmt )
           need = .true.
     exit ! main lexer loop
@@ -244,6 +255,9 @@ contains
           call add_char ( ch )
           need = .true.
           state = sa1
+        case ( sharp );
+          call add_char ( ch )
+          state = sh1; need = .true.
         case ( tog_ch );           state = tog; need = .true.
         case default
           call error ( unrec_char )
@@ -256,7 +270,8 @@ contains
             end select
           end do
           string_index = enter_terminal ( '<aft>', t_aft_cont )
-          the_token = token( t_aft_cont, string_index, .false., source_start )
+          the_token = token( t_aft_cont, string_index, .false., &
+                           & where_t(file, source_start) )
           need = .false.
         end select ! class
       case ( id )
@@ -269,7 +284,7 @@ contains
           string_index = add_terminal ( t_identifier )
           the_token = token( symbol(string_index), string_index, &
                              term_types(symbol(string_index)) /= res_word, &
-                             source_start )
+                             where_t(file, source_start) )
     exit ! main lexer loop
         end select ! class
       case ( num ) ! digit(digit|_)* 
@@ -283,7 +298,7 @@ contains
         case default
           string_index = add_terminal ( t_number )
           the_token = token( t_number, string_index, .true., &
-                             source_start )
+                             where_t(file, source_start) )
     exit ! main lexer loop
         end select ! class
       case ( num2 ) ! digit(digit|_)* . digit(digit|_)*
@@ -294,7 +309,7 @@ contains
           if ( ch /= 'e' .and. ch /= 'E' ) then
             string_index = add_terminal ( t_number )
             the_token = token( t_number, string_index, .true., &
-                               source_start )
+                               where_t(file, source_start) )
     exit ! main lexer loop
           end if
           call add_char ( ch )
@@ -313,14 +328,14 @@ contains
         else
           string_index = add_terminal ( t_inc_num )
           the_token = token( t_inc_num, string_index, .true., &
-                             source_start )
+                             where_t(file, source_start) )
     exit ! main lexer loop
         end if
       case ( num4 ) ! digit(digit|_)* . digit(digit|_)* E +|-
         if ( class /= digit ) then
           string_index = add_terminal ( t_inc_num )
           the_token = token( t_inc_num, string_index, .true., &
-                             source_start )
+                             where_t(file, source_start) )
     exit ! main lexer loop
         end if
         call add_char ( ch )
@@ -333,7 +348,7 @@ contains
         case default
           string_index = add_terminal ( t_number )
           the_token = token( t_number, string_index, .true., &
-                             source_start )
+                             where_t(file, source_start) )
     exit ! main lexer loop
         end select ! class
       case ( op )
@@ -341,17 +356,9 @@ contains
           call add_char ( ch )
           need = .true.
         else
-          call lookup_and_insert ( string_index, found )
-          if ( .not. found ) then
-            call set_symbol ( string_index, t_unk_op )
-          else if ( term_types(symbol(string_index)) == def_op ) then
-            the_token = token( symbol(string_index), string_index, .false., &
-                               source_start )
+          call lookup_op
+          if ( found ) then
     exit ! main lexer loop
-          end if
-          call error ( unrec_token )
-          if ( toggle(lex) ) then
-            call dump_1_symbol ( string_index, advance='yes' )
           end if
           state = start
         end if ! class
@@ -363,7 +370,7 @@ contains
           call set_symbol ( string_index, t_unk_pun )
         else if ( term_types(symbol(string_index)) == def_pun ) then
           the_token = token( symbol(string_index), string_index, .false., &
-                             source_start )
+                             where_t(file, source_start) )
     exit ! main lexer loop
         end if
         call error ( unrec_token )
@@ -386,7 +393,8 @@ contains
           exit; end if
           end do
           string_index = enter_terminal ( '<aft>', t_aft_cont )
-          the_token = token( t_aft_cont, string_index, .false., source_start )
+          the_token = token( t_aft_cont, string_index, .false., &
+                           & where_t(file, source_start) )
     exit ! main lexer loop
         end select ! class
       case ( contin2 )
@@ -403,7 +411,8 @@ contains
         case ( eof_in, eol_in )
           call clear_string
           string_index = enter_terminal ( '<inc>', t_inc_str )
-          the_token = token( t_inc_str, string_index, .false., source_start )
+          the_token = token( t_inc_str, string_index, .false., &
+                           & where_t(file, source_start) )
     exit ! main lexer loop
         case ( quote )
           call add_char ( ch )
@@ -419,7 +428,8 @@ contains
           state = sq1
         else
           string_index = add_terminal ( t_string )
-          the_token = token( t_string, string_index, .true., source_start )
+          the_token = token( t_string, string_index, .true., &
+                           & where_t(file, source_start) )
     exit ! main lexer loop
         end if
       case ( sa1 )
@@ -427,7 +437,8 @@ contains
         case ( eof_in, eol_in )
           call clear_string
           string_index = enter_terminal ( '<inc>', t_inc_str )
-          the_token = token( t_inc_str, string_index, .false., source_start )
+          the_token = token( t_inc_str, string_index, .false., &
+                           & where_t(file, source_start) )
     exit ! main lexer loop
         case ( apost )
           call add_char ( ch )
@@ -443,9 +454,20 @@ contains
           state = sa1
         else
           string_index = add_terminal ( t_string )
-          the_token = token( t_string, string_index, .true., source_start )
+          the_token = token( t_string, string_index, .true., &
+                           & where_t(file, source_start) )
     exit ! main lexer loop
         end if
+      case ( sh1 )   ! #<letter>*
+        if ( class == letter ) then
+          need = .true.
+          call add_char ( ch )
+        else
+          call lookup_op
+          if ( found ) &
+    exit ! main lexer loop
+          state = start
+        end if ! class
       case ( tog )
         select case ( cap(ch) )
         case ( 'T' ) ! Dump entire token table
@@ -460,11 +482,11 @@ contains
         case ( 'A' ); toggle(syn) = .not. toggle(syn)
         case ( 'S' ); toggle(tab) = .not. toggle(tab)
         case default
-          call output ( source_line, 5 )
+          call include_stack_top ( file )
+          call print_source ( source_line+256+source_column, file=file )
           call output (": *** REMARK *** undefined toggle '" )
-          call output ( cap(ch) ); call output ( "' in column " )
-          call output ( source_column )
-          call output ( ' ignored.', advance='yes' )
+          call output ( cap(ch) )
+          call output ( '" ignored.', advance='yes' )
         end select ! cap(ch)
         need = .true.
         state = start
@@ -489,7 +511,13 @@ contains
 
     subroutine ERROR ( CODE )
       integer, intent(in) :: CODE
-      call output ( source_line, 5 )
+      call include_stack_top ( file )
+      if ( file /= 0 ) then
+        call display_string ( file, before=' in ' )
+        call output ( source_line, before=' at line ' )
+      else
+        call output ( source_line, 5 )
+      end if
       select case ( code )
       case ( double_under )
         call output ( ': Double underscore in column ' )
@@ -516,6 +544,24 @@ contains
       end select
       call error_walkback ( source_line )
     end subroutine ERROR
+
+    subroutine Lookup_Op
+      call lookup_and_insert ( string_index, found )
+      if ( .not. found ) then
+        call set_symbol ( string_index, t_unk_op )
+      else
+        found = term_types(symbol(string_index)) == def_op
+        if ( found ) &
+        the_token = token( symbol(string_index), string_index, .false., &
+                           where_t(file, source_start) )
+      end if
+      if ( .not. found ) then
+        call error ( unrec_token )
+        if ( toggle(lex) ) then
+          call dump_1_symbol ( string_index, advance='yes' )
+        end if
+      end if
+    end subroutine Lookup_Op
 
   end subroutine LEXER
 
@@ -569,7 +615,8 @@ contains
         select case ( class )
         case ( eof_in, spaces )
           string_index = enter_terminal ( '<eof>', t_end_of_input )
-          the_token = token( t_end_of_input, string_index, .false., where )
+          the_token = token( t_end_of_input, string_index, .false., &
+                           & where_t(0, where) )
           call set_symbol ( string_index, t_end_of_input )
     exit
         case ( letter, digit )
@@ -583,13 +630,14 @@ contains
             call set_symbol ( string_index, t_unk_op )
           else
             the_token = token( symbol(string_index), string_index, .false., &
-                               where )
+                             & where_t(0, where) )
           end if
     exit ! main lexer loop
         case default
           call lookup_and_insert ( string_index, found )
           call set_symbol ( string_index, t_unk_op )
-          the_token = token( t_unk_op, string_index, .false., where )
+          the_token = token( t_unk_op, string_index, .false., &
+                           & where_t(0, where) )
     exit ! main lexer loop
         end select
       case ( id )
@@ -598,7 +646,8 @@ contains
         else
           where = where - 1
           string_index = add_terminal ( t_identifier )
-          the_token = token( t_identifier, string_index, .true., source_start )
+          the_token = token( t_identifier, string_index, .true., &
+                           & where_t(0, source_start) )
     exit ! main lexer loop
         end if
       end select
@@ -624,6 +673,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.24  2013/09/24 23:08:31  vsnyder
+! Add #include
+!
 ! Revision 2.23  2011/04/18 19:33:26  vsnyder
 ! Add support for relational operators and boolean-valued expressions
 !
