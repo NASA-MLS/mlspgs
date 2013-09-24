@@ -72,7 +72,7 @@ contains ! =====     Public Procedures     =============================
     use MORETREE, only: GET_SPEC_ID
     use OUTPUT_M, only: OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
-    use TREE, only: SUBTREE, NSONS, NODE_ID, SOURCE_REF
+    use TREE, only: SUBTREE, NSONS, NODE_ID, Where_At => Where
     use TREE_TYPES, only: N_NAMED
     use TIME_M, only: TIME_NOW
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -264,7 +264,7 @@ contains ! =====     Public Procedures     =============================
             ! On the second pass, log all our direct write requests.
             ! (and correct the count of Direct Writes if we're automatically
             !  distributing them, instead of relying on one line/one write)
-            if(DEEBUG)call print_source ( source_ref(son) )
+            if(DEEBUG)call print_source ( where_at(son) )
             if(DEEBUG)print*,'Calling direct write to do a setup'
             call DirectWriteCommand ( son, ticket, vectors, &
               & DirectdataBase, fileDatabase,  &
@@ -277,7 +277,7 @@ contains ! =====     Public Procedures     =============================
             if ( son == directWriteNodeGranted ) then
               didTheWrite = .true.
               call time_now ( dwt2 )
-              if(DEEBUG)call print_source ( source_ref(son) )
+              if(DEEBUG)call print_source ( where_at(son) )
               if(DEEBUG)print*,'Calling direct write to do the write'
               if(DEEBUG)print*,'Asked to create file? ', createFile
               if(DEEBUG)print*,'the file ', trim(theFile)
@@ -2180,7 +2180,7 @@ contains ! =====     Public Procedures     =============================
     use LEXER_CORE, only: PRINT_SOURCE
     use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: DISPLAY_STRING
-    use TREE, only: SOURCE_REF
+    use TREE, only: Where_At => Where
 
     integer, intent(in) :: where   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
@@ -2196,7 +2196,7 @@ contains ! =====     Public Procedures     =============================
 
     call output ( '***** At ' )
     if ( where > 0 ) then
-      call print_source ( source_ref(where) )
+      call print_source ( where_at(where) )
     else
       call output ( '(no lcf tree available)' )
     end if
@@ -2228,6 +2228,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.154  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.153  2013/09/04 17:35:23  pwagner
 ! Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 !
