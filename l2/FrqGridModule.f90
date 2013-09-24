@@ -53,7 +53,7 @@ contains
     use MLSCommon, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MoreTree, only: Get_Field_Id
-    use Tree, only: Decoration, Nsons, Source_Ref, Subtree
+    use Tree, only: Decoration, Nsons, Subtree, Where
     use VectorsModule, only: Vector_T
 
     ! Dummy arguments:
@@ -119,17 +119,17 @@ contains
 
   contains
 
-    subroutine AnnounceError ( Why, Where )
+    subroutine AnnounceError ( Why, Key )
 
       use Lexer_Core, only: Print_Source
       use Output_M, only: Output
 
       integer, intent(in) :: Why
-      integer, intent(in) :: Where
+      integer, intent(in) :: Key ! Tree node index
 
       error = max(error,1)
       call output ( '***** At ' )
-      call print_source ( source_ref(where) )
+      call print_source ( where(key) )
       call output ( ', RetrievalModule complained: ' )
       select case ( why )
       case ( noUnits )
@@ -154,6 +154,9 @@ contains
 end module FrqGridModule
 
 ! $Log$
+! Revision 2.4  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.3  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
