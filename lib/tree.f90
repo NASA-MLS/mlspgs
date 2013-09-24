@@ -29,7 +29,7 @@ module TREE
   public :: INIT_TREE, INSERT_NODE
   public :: NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
   public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_SUBTREE
-  public :: SUB_ROSA, SUBTREE, TREE_TEXT
+  public :: SUB_ROSA, SUBTREE, THE_FILE, TREE_TEXT, WHERE
 
   ! Tree node kinds:
   integer, public, parameter :: PSEUDO = 0   ! Tree node is pseudo terminal
@@ -43,9 +43,14 @@ module TREE
   ! Index of the "null tree node"
   integer, public, parameter :: NULL_TREE = 0
 
+  interface Push_Pseudo_Terminal
+    module procedure Push_Pseudo_Terminal_Integer, Push_Pseudo_Terminal_Where
+  end interface
+
   type :: TREE_NODE
     integer :: NODE      ! What kind of tree node
     integer :: DECOR     ! Decoration, an integer or tree node index
+    integer :: FILE = 0  ! String index of file
     integer :: NSONS     ! How many sons
     integer :: SOURCE    ! 256*line + column
     integer :: KIND      ! PSEUDO, INTERNAL, MORE or OTHER
@@ -163,14 +168,17 @@ contains
     integer, intent(in) :: NSONS
     integer, intent(in), optional :: DECORATION
     integer, intent(in), optional :: Trace
-    integer :: LEFT_SON, MY_DECOR, SOURCE_REF
+    integer :: FILE, LEFT_SON, MY_DECOR, SOURCE_REF
     my_decor = null_tree
     if ( present(decoration) ) my_decor = decoration
     if ( tree_sp + nsons > ubound(the_tree,1) ) then
       call tree_error ( underflow, null_tree )
     end if
-    if ( nsons == 0 ) then; source_ref = 0
-    else; source_ref = the_tree(tree_sp+nsons)%source; end if
+    if ( nsons == 0 ) then; file = 0; source_ref = 0
+    else
+      file = the_tree(tree_sp+nsons)%file
+      source_ref = the_tree(tree_sp+nsons)%source
+    end if
     left_son = tree_point + 1
     call pop_to_tree ( nsons )
     ! Push new node onto the stack
@@ -178,8 +186,8 @@ contains
       call tree_error ( no_tree_space, null_tree )
 !     call double_tree
     end if
-                                   ! node      decor   nsons  source
-    the_tree(tree_sp) = tree_node( new_node, my_decor, nsons, source_ref, &
+                                   ! node      decor   file, nsons  source
+    the_tree(tree_sp) = tree_node( new_node, my_decor, file, nsons, source_ref, &
                                  !    kind   left_son
                                    internal, left_son )
     if ( present(trace) ) then
@@ -280,6 +288,8 @@ contains
       call output ( the_tree(where)%source/256, before=' line ' )
       call output ( mod(the_tree(where)%source,256), before=' column ' )
     end if
+    if ( the_tree(where)%file /= 0 ) &
+      & call display_string ( the_tree(where)%file, before=' in ' )
     call output ( '', advance=advance )
   end subroutine DUMP_TREE_NODE
 
@@ -304,8 +314,8 @@ contains
     end do
     tree_point = null_tree
     call delete_tree_stack
-                                      ! node  decor  nsons  source kind
-    the_tree(tree_point) = tree_node( n_null, null_tree, 0, 0, internal, &
+                                      ! node  decor   file nsons source kind
+    the_tree(tree_point) = tree_node( n_null, null_tree, 0,   0, 0, internal, &
                                       ! left_son
                                       null_tree )
   end subroutine INIT_TREE
@@ -387,27 +397,41 @@ contains
     end if
   end subroutine PRINT_SUBTREE
 
-  subroutine PUSH_PSEUDO_TERMINAL ( SUB_ROSA, SOURCE, DECOR )
+  subroutine PUSH_PSEUDO_TERMINAL_INTEGER ( SUB_ROSA, SOURCE, DECOR, FILE )
   ! Push the pseudo-terminal with string index SUB_ROSA, source SOURCE
   ! and decoration DECOR onto the tree stack.  If DECOR is absent, use
   ! null_tree.
     integer, intent(in) :: SUB_ROSA
     integer, intent(in) :: SOURCE
     integer, intent(in), optional :: DECOR
-    integer :: MY_DECOR
+    integer, intent(in), optional :: FILE
+    integer :: MY_DECOR, MY_FILE
     my_decor = null_tree
     if ( present(decor) ) my_decor = decor
+    my_file = 0
+    if ( present(file) ) my_file = file
     if ( tree_sp <= tree_point ) then
       call tree_error ( no_tree_space, null_tree )
 !     call double_tree
     end if
-                                   ! node                       decor
+                                 ! node                        decor
     the_tree(tree_sp) = tree_node( tree_map(symbol(sub_rosa)), my_decor, &
-                             ! nsons  source  kind    sub_rosa
-                                   0, source, pseudo, sub_rosa )
+                             ! file nsons  source  kind    sub_rosa
+                               my_file, 0, source, pseudo, sub_rosa )
     tree_sp = tree_sp - 1     ! push tree stack
     n_tree_stack = n_tree_stack + 1
-  end subroutine PUSH_PSEUDO_TERMINAL
+  end subroutine PUSH_PSEUDO_TERMINAL_INTEGER
+
+  subroutine PUSH_PSEUDO_TERMINAL_WHERE (SUB_ROSA, WHERE, DECOR )
+  ! Push the pseudo-terminal with string index SUB_ROSA, source SOURCE
+  ! and decoration DECOR onto the tree stack.  If DECOR is absent, use
+  ! null_tree.
+    use Lexer_Core, only: Where_t
+    integer, intent(in) :: SUB_ROSA
+    type(where_t), intent(in) :: WHERE
+    integer, intent(in), optional :: DECOR
+    call push_pseudo_terminal ( sub_rosa, where%source, decor, where%file )
+  end subroutine PUSH_PSEUDO_TERMINAL_WHERE
 
   subroutine REPLACE_SONS ( T, K, M, U )
   ! Replace sons k .. m of t with the tree node at u.  This will leave an
@@ -496,11 +520,26 @@ contains
     subtree = the_tree(where) % link + which - 1
   end function SUBTREE
 
+  integer function THE_FILE ( WHERE )
+  ! Return the SOURCE field of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    the_file = the_tree(where) % file
+  end function THE_FILE
+
   integer function TREE_TEXT ( TREE_NODE )
   ! Return the string index of the text of the tree node
     integer, intent(in) :: TREE_NODE
     tree_text = tree_texts(tree_node)
   end function TREE_TEXT
+
+  function Where ( Tree )
+    use Lexer_Core, only: Where_T
+    integer, intent(in) :: Tree ! Tree node index
+    type(where_t) :: Where
+    where%source = the_tree(tree)%source
+    where%file = the_tree(tree)%file
+  end function Where
+
 ! =====     Private procedures     =======================================
 
   subroutine DOUBLE_TREE ( STATUS )
@@ -642,6 +681,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.20  2013/09/24 23:09:15  vsnyder
+! Replace Source with Where_t, add Where function
+!
 ! Revision 2.19  2013/09/19 23:25:57  vsnyder
 ! Add some tracing
 !
