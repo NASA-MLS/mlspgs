@@ -15,16 +15,29 @@ module LEXER_CORE
 
   implicit NONE
   private
-  public :: NEED, TOKEN, INIT_LEXER, PRINT_SOURCE
+  public :: Get_Where, NEED, TOKEN, INIT_LEXER, PRINT_SOURCE, Where_T
+
+  type :: Where_T
+    integer :: FILE = 0            ! String index
+    integer :: SOURCE = 0          ! 256*srcLine + srcCol
+  end type Where_T
 
   type :: TOKEN
     integer :: CLASS               ! Token class = token index
     integer :: STRING_INDEX        ! Position in string table
     logical :: PSEUDO              ! "token is pseudo-terminal"
-    integer :: SOURCE              ! 256*srcLine + srcCol
+    type(where_t) :: Where
   end type TOKEN
 
   logical, save :: NEED = .true.   ! "Lexer needs to read a character"
+
+  interface Get_Where
+    module procedure Get_Where_Integer, Get_Where_Where
+  end interface
+
+  interface Print_Source
+    module procedure Print_Source_Integer, Print_Source_Where
+  end interface
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -60,23 +73,67 @@ contains
     if ( my_stat == 0 ) call init_toggle
     need = .true.
     if ( present(stat) ) stat = my_stat
-    return
   end subroutine INIT_LEXER
 
-  subroutine PRINT_SOURCE ( SOURCE, ADVANCE, BEFORE )
+  subroutine Get_Where_Integer ( Where, Text, File, Before, After )
+    use String_Table, only: Get_String
+    integer, intent(in) :: Where
+    character(len=*), intent(out) :: Text
+    integer, intent(in), optional :: File
+    character(len=*), intent(in), optional :: Before, After
+    integer :: L
+    if ( present(before) ) then
+      text = before
+      l = len(before) + 1
+    end if
+    write ( text(l:), 1 ) where/256, mod(where,256)
+  1 format ( 'line ', i0, ', column ', i0 )
+    if ( present(file) ) then
+      if ( file > 0 ) then
+        l = len_trim(text) + 1
+        text(l:l+3) = ' in '
+        call get_string ( file, text(l+4:) )
+      end if
+    end if
+    if ( present(after) ) then
+      l = len_trim(text) + 1
+      text(l:) = after
+    end if
+  end subroutine Get_Where_Integer
+
+  subroutine Get_Where_Where ( Where, Text, Before, After  )
+    type(where_t), intent(in) :: Where
+    character(len=*), intent(out) :: Text
+    character(len=*), intent(in), optional :: Before, After
+    call get_where ( where%source, text, where%file, before, after )
+  end subroutine Get_Where_Where
+
+  subroutine PRINT_SOURCE_INTEGER ( SOURCE, ADVANCE, BEFORE, After, File )
   ! Output "line LLL, column CCC"
+    use String_Table, only: Display_String
     use OUTPUT_M, only: OUTPUT
 
     integer, intent(in) :: SOURCE  ! 256*srcLine + srcCol
     character(len=*), intent(in), optional :: ADVANCE
-    character(len=*), intent(in), optional :: BEFORE
+    character(len=*), intent(in), optional :: BEFORE, After
+    integer, intent(in), optional :: File ! From include stack
     if ( present(before) ) call output ( before )
-    call output ( 'line ' )
-    call output ( source/256 )
-    call output ( ', column ' )
-    call output ( mod(source,256), advance=advance )
-  end subroutine PRINT_SOURCE
+    call output ( source/256 , before='line ' )
+    call output ( mod(source,256), before=', column ' )
+    if ( present(file) ) then
+      if ( file /= 0 ) call display_string ( file, before=' in ', strip=.true. )
+    end if
+    if ( present(after) ) call output ( after )
+    call output ( '', advance=advance )
+  end subroutine PRINT_SOURCE_INTEGER
 
+  subroutine Print_Source_Where ( Where, Advance, Before, After )
+    type(where_t), intent(in) :: Where
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE, After
+    call print_source ( where%source, advance, before, after, where%file )
+  end subroutine Print_Source_Where
+    
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -90,6 +147,9 @@ contains
 end module LEXER_CORE
 
 ! $Log$
+! Revision 2.8  2013/09/24 23:08:14  vsnyder
+! Add Get_Where, version of Print_Source that uses Where_t
+!
 ! Revision 2.7  2010/08/05 17:45:34  honghanh
 ! Adding subroutine init_string_table in string_table module
 !
