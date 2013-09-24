@@ -60,7 +60,7 @@ contains
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NSONS, SOURCE_REF, SUBTREE, SUB_ROSA
+    use TREE, only: DECORATION, NSONS, SUBTREE, SUB_ROSA, Where
     use VECTORSMODULE, only: VECTOR_T, &
       & COPYVECTOR, DESTROYVECTORINFO, DUMP, OPERATOR(-)
 
@@ -451,7 +451,7 @@ contains
 
       error = max(error,1)
       call output ( '***** At ' )
-      call print_source ( source_ref(root) )
+      call print_source ( where(root) )
       call output ( ' SidsModule complained: ' )
       select case ( code )
       case ( badSingleMAF )
@@ -507,6 +507,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.70  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.69  2013/08/30 02:45:48  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
