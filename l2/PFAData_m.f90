@@ -500,7 +500,7 @@ contains ! =====     Public Procedures     =============================
     use MLSStrings, only: Capitalize
     use MoreTree, only: FillDecorArray, FillSubrosaArray, Get_Field_ID
     use String_Table, only: Get_String
-    use Tree, only: Decorate, Node_Id, NSons, Source_Ref, Sub_Rosa, Subtree
+    use Tree, only: Decorate, Node_Id, NSons, Sub_Rosa, Subtree
     use Tree_Types, only: N_String
 
     integer, intent(in) :: Root ! of the MakePFA subtree, below name if any
@@ -547,7 +547,7 @@ contains ! =====     Public Procedures     =============================
         & 'Error trying to read PFAData' )
     else
       call read_PFADatabase ( fileName, fileType, molecules, signals, &
-        & source_ref(root) )
+        & root )
       if ( name /= 0 ) then
         j = size(PFAData)
         call decorate ( root, j )
@@ -674,6 +674,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.28  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.27  2009/06/23 18:46:18  pwagner
 ! Prevent Intel from optimizing ident string away
 !
