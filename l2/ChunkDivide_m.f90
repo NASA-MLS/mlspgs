@@ -174,7 +174,7 @@ contains ! ===================================== Public Procedures =====
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use TIME_M, only: TIME_NOW
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE, SUB_ROSA
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA, WHERE_AT=>WHERE
     use TREE_TYPES, only: N_NAMED
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
 
@@ -365,8 +365,8 @@ contains ! ===================================== Public Procedures =====
       integer, intent(in) :: where, Code, field
 
       error = max(error,1)
-      call print_source ( source_ref(where) )
-      call output ( ' ChunkDivide complained: ' )
+      call print_source ( where_at(where) )
+      call output ( ', ChunkDivide complained: ' )
       select case ( code )
       case ( BadUnits )
         call output ( ' The field ' )
@@ -2585,6 +2585,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.107  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.106  2013/09/21 00:39:43  vsnyder
 ! Repair some tree examination errors.  Move ChunkDivideConfig_t,
 ! ChunkDivideConfig, and some dumpers to ChunkDivideConfig_m.  Call
