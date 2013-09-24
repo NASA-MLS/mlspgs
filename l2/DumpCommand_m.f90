@@ -1164,6 +1164,7 @@ contains
       & FIELD_FIRST, FIELD_LAST
     use L2PARINFO, only: PARALLEL, CLOSEPARALLEL
     use L2PC_M, only: L2PCDATABASE, DUMPL2PC => DUMP
+    use Lexer_Core, only: Get_Where, Where_t
     use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use MACHINE, only: NEVERCRASH
     use MATRIXMODULE_1, only: MATRIX_T, MATRIX_DATABASE_T, &
@@ -1194,7 +1195,7 @@ contains
     use TIME_M, only: FINISH
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, Where
     use TREE_TYPES, only: N_SPEC_ARGS
     use VECTORSMODULE, only: VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, &
       & DIFF, DUMP, DUMPQUANTITYMASK, DUMPVECTORMASK, & ! FOR VECTORS, VECTOR QUANTITIES AND TEMPLATES
@@ -1221,7 +1222,7 @@ contains
     integer :: DetailReduction
     integer :: Details
     integer :: DiffOrDump
-    character(len=128) :: Farewell
+    character(len=255) :: Farewell
     integer :: FieldIndex
     integer :: FileIndex
     logical, dimension(field_first:field_last) :: GOT
@@ -1252,7 +1253,6 @@ contains
     integer :: QuantityIndex2
     type (VectorValue_T), pointer :: QTY1, QTY2
     integer :: Son
-    integer :: Source ! column*256 + line
     integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
     integer :: STARTNODE
     character :: TempText*20, Text*255
@@ -1268,6 +1268,7 @@ contains
     integer, dimension(3) :: UNITASARRAY ! From expr
     real(r8), dimension(3) :: VALUEASARRAY ! From expr
     integer :: What
+    type(where_t) :: Where_At
 
     ! Executable
     call trace_begin ( me, 'DumpCommand', root, cond=toggle(gen) )
@@ -1326,7 +1327,7 @@ contains
       gson = son
       L2CFNODE = son
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
-      source = source_ref(gson) ! column + 256*line in l2cf
+      where_at = where(gson) ! column + 256*line in l2cf & file name
       got(fieldIndex) = .true.
       select case ( fieldIndex )
       ! This first heaped set of fields need no "right-hand side"
@@ -1488,30 +1489,30 @@ contains
               call dump_section_timings
             endif
             if ( NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave ) then
-              write ( farewell, '(a,2(i0,a))' ) &
-                & "Program stopped with normal status by /stop field on DUMP statement at line ", &
-                & source/256, ", column ", mod(source,256), "."
+              call get_where ( where_at, farewell, &
+                & before="Program stopped with normal status by /stop field on DUMP statement at ", &
+                & after="." )
               call MLSMessageExit( NORMAL_EXIT_STATUS, farewell=farewell )
             else if( parallel%slave ) then
               call closeParallel(0)
-              write ( farewell, '(a,2(i0,a))' ) &
-                & "Slave stopped by /stop field on DUMP statement at line ", &
-                & source/256, ", column ", mod(source,256), "."
+              call get_where ( where_at, farewell, &
+                & before="Slave stopped by /stop field on DUMP statement at ", &
+                & after="." )
               call MLSMessageExit( farewell=farewell )
             else
-              write ( farewell, '(a,2(i0,a))' ) &
-                & "Program stopped by /stop field on DUMP statement at line ", &
-                & source/256, ", column ", mod(source,256), "."
+              call get_where ( where_at, farewell, &
+                & before="Program stopped by /stop field on DUMP statement at ", &
+                & after="." )
               call MLSMessageExit( farewell=farewell )
-            endif
+            end if
           case ( f_stopWithError )
             if ( switchDetail(switches, 'time') >= 0 ) then
               call output('(Now for the timings summary)', advance='yes')
               call dump_section_timings
-            endif
-            write ( farewell, '(a,2(i0,a))' ) &
-                & "Program stopped by /stopWithError field on DUMP statement at line ", &
-                & source/256, ", column ", mod(source,256), "."
+            end if
+            call get_where ( where_at, farewell, &
+              & before="Program stopped by /stopWithError field on DUMP statement at ", &
+                & after="." )
             call MLSMessageExit( 1, farewell=farewell )
           end select
         end if
@@ -1909,11 +1910,8 @@ contains
             end if
             i = max(index(text,'%l'), index(text,'%L'))
             if ( i /= 0 ) then
-              source = source_ref(subtree(k,son))
-              write ( tempText(1:10), * ) source/256
-              write ( tempText(11:20), * ) mod(source,256)
-              text = text(:i-1) // "line " // trim(adjustl(tempText(1:10))) // &
-                & ", column " // trim(adjustl(tempText(11:20))) // text(i+2:)
+              call get_where ( where(subtree(k,son)), tempText )
+              text = text(:i-1) // trim(tempText) // text(i+2:)
               cycle
             end if
             i = max(index(text,'%s'), index(text,'%S'))
@@ -2311,7 +2309,7 @@ contains
 
 ! =====     Private Procedures     =====================================
 
-  subroutine ANNOUNCEERROR ( where, what, string )
+  subroutine AnnounceError ( where, what, string )
     use MORETREE, only: STARTERRORMESSAGE
     use OUTPUT_M, only: NEWLINE, OUTPUT
 
@@ -2614,6 +2612,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.97  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.96  2013/09/24 00:56:02  pwagner
 ! May specify hyperslab when dumping
 !
