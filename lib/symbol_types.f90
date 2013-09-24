@@ -59,7 +59,8 @@ module SYMBOL_TYPES
   integer, parameter :: T_IDENTIFIER =       T_END_OF_STMT + 1   ! <IDENTIFIER>
   integer, parameter :: T_NUMBER =           T_IDENTIFIER + 1    ! <NUMBER>
   integer, parameter :: T_STRING =           T_NUMBER + 1        ! <STRING>
-  integer, parameter :: T_UNK_OP =           T_STRING + 1        ! unknown operator
+  integer, parameter :: T_INCLUDE =          T_STRING + 1        ! #include
+  integer, parameter :: T_UNK_OP =           T_INCLUDE + 1       ! unknown operator
   integer, parameter :: T_UNK_PUN =          T_UNK_OP + 1        ! unknown punctuator
   integer, parameter :: T_UNK_CH =           T_UNK_PUN + 1       ! unknown character
   integer, parameter :: T_INC_NUM =          T_UNK_CH + 1        ! incomplete number
@@ -113,10 +114,10 @@ module SYMBOL_TYPES
      def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
   !  >=        ,         ^         begin     end       and       or
      def_op,   def_pun,  def_op,   res_word, res_word, res_word, res_word, &
-  !  or        <eof>     <eos>     <ident>   <numcon>  <string>  unk_op  
-     res_word, object,   object,   ident,    numcon,   string,   unk_op,   &
-  !  unk_pun   unk_ch    inc_num   inc_str   junk
-     unk_pun,  unk_ch,   inc_num,  inc_str,  aft_cont /)
+  !  or        <eof>     <eos>     <ident>   <numcon>  <string>  include 
+     res_word, object,   object,   ident,    numcon,   string,   def_op,   &
+  !  unk_op  unk_pun   unk_ch    inc_num   inc_str   junk
+     unk_op, unk_pun,  unk_ch,   inc_num,  inc_str,  aft_cont /)
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -167,6 +168,7 @@ contains
     case ( t_identifier );        call add_char ( '<identifier>' )
     case ( t_number );            call add_char ( '<number>' )
     case ( t_string );            call add_char ( '<string>' )
+    case ( t_include );           call add_char ( '#include' )
     case ( t_unk_op );            call add_char ( '<unk_op>' )
     case ( t_unk_pun );           call add_char ( '<unk_pun>' )
     case ( t_unk_ch );            call add_char ( '<unk_ch>' )
@@ -220,6 +222,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.16  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.15  2012/05/05 00:11:51  vsnyder
 ! Add support for 'not' operator
 !
