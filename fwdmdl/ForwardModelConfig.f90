@@ -440,7 +440,6 @@ contains
       use PFADATABASE_M, only: TEST_AND_FETCH_PFA
       use READ_MIE_M, only: BETA_C_A, BETA_C_S
       use STRING_TABLE, only: DISPLAY_STRING
-      use TREE, only: SOURCE_REF
 
       integer :: B                    ! Index for beta groups
       integer :: Channel              ! Index in fwdModelConf%channels
@@ -475,7 +474,6 @@ contains
                   & fwdModelConf%signalIndices(fwdModelConf%channels(channel)%signal), &
                   & sb, fwdModelConf%channels(channel)%used, fwdModelConf%spect_der)
               if ( fwdModelConf%beta_group(b)%pfa(sx)%data(channel,p) == 0 ) then
-                if ( source_ref(fwdModelConf%where) /= 0 ) &
                 call startErrorMessage ( fwdModelConf%where )
                 call display_string ( &
                   & lit_indices(fwdModelConf%beta_group(b)%molecule), &
@@ -504,7 +502,6 @@ contains
         & LINES, MOSTLINES
       use STRING_TABLE, only: DISPLAY_STRING ! , GET_STRING
       use TOGGLES, only: SWITCHES
-      use TREE, only: SOURCE_REF
 
       integer :: B         ! Beta_group index
       integer :: C         ! Spectroscopy catalog extract size/index
@@ -545,14 +542,12 @@ contains
             fwdModelConf%beta_group(b)%lbl(sx)%cat_index(m) = c
             n = fwdModelConf%beta_group(b)%lbl(sx)%molecules(m)
             if ( n > ubound(catalog,1) .or. n < lbound(catalog,1) ) then ! Probably RHi
-              if ( source_ref(fwdModelConf%where) /= 0 ) &
               call startErrorMessage ( fwdModelConf%where )
               call display_string ( lit_indices(n), &
                 & before=' No spectroscopy catalog for ', advance='yes' )
               error = .true.
               cycle
             else if ( catalog(n)%molecule == l_none ) then
-              if ( source_ref(fwdModelConf%where) /= 0 ) &
               call startErrorMessage ( fwdModelConf%where )
               call display_string ( lit_indices(n), &
                 & before=' No spectroscopy catalog for ', advance='yes' )
@@ -629,7 +624,6 @@ contains
               if ( l == 0 .and. all ( fwdModelConf%catalog(s,c)%continuum == 0.0 ) &
                 & .and. noLinesMsg > 0 ) then
                 sawNoLines = .true.
-                if ( source_ref(fwdModelConf%where) /= 0 ) &
                 call startErrorMessage ( fwdModelConf%where )
                 call display_string ( lit_indices(n), &
                   & before='No relevant lines or continuum for ', advance='yes' )
@@ -651,7 +645,6 @@ contains
                 & 'fwdModelConf%catalog(?,?)%polarized(0)', moduleName )
               if ( all(catalog(n)%continuum == 0.0) .and. noLinesMsg > 0 ) then
                 sawNoLines = .true.
-                if ( source_ref(fwdModelConf%where) /= 0 ) &
                 call startErrorMessage ( fwdModelConf%where )
                 call display_string ( lit_indices(n), &
                   & before='No lines or continuum for ', advance='yes' )
@@ -1241,7 +1234,7 @@ contains
     use OUTPUT_M, only: NEWLINE, OUTPUT
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
     use STRING_TABLE, only: DISPLAY_STRING
-    use TREE, only: NULL_TREE, SOURCE_REF
+    use TREE, only: NULL_TREE, Where_At => Where
 
     type (forwardModelConfig_T), intent(in) :: Config
     character(len=*), intent(in), optional :: Where
@@ -1266,7 +1259,7 @@ contains
     call display_string ( config%name, before='  Forward Model Config Name: ' )
     if ( config%where /= null_tree ) then
       call output ( ' defined at ' )
-      call print_source ( source_ref(config%where) )
+      call print_source ( where_at(config%where) )
     end if
     if ( present(where) ) then
       call output ( ' from ' )
@@ -1470,6 +1463,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.128  2013/08/16 02:32:14  vsnyder
+! Remove ModelPlaneMIF
+!
 ! Revision 2.127  2013/08/12 23:48:08  pwagner
 ! FindSomethings moved to MLSFinds module
 !

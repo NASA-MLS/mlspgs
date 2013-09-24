@@ -39,8 +39,8 @@ module TREE_CHECKER
   use TOGGLES, only: CON, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, &
-                  NODE_ID, NODE_KIND, NSONS, NULL_TREE, PSEUDO, SOURCE_REF,  &
-                  SUB_ROSA, SUBTREE
+                  NODE_ID, NODE_KIND, NSONS, NULL_TREE, PSEUDO, SUB_ROSA, &
+                  SUBTREE, THE_FILE
   use TREE_TYPES ! Everything, especially everything beginning with N_
   implicit NONE
   private
@@ -163,7 +163,7 @@ contains ! ====     Public Procedures     ==============================
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT )
     use Intrinsic, only: PHYQ_Indices
-    use Tree, only: Node_Kind, Pseudo
+    use Tree, only: Node_Kind, Pseudo, Where_At => Where
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
     integer, intent(in), optional :: SONS(:) ! Tree nodes, maybe sons of
@@ -175,7 +175,7 @@ contains ! ====     Public Procedures     ==============================
                                    ! or subtrees of "sons" or subtree of "expect"
 
     error = max(error,1)
-    call StartErrorMessage ( where )
+    call startErrorMessage ( where )
     select case ( code )
     case ( already_declared )
       call dump_tree_node ( where, 0 )
@@ -217,7 +217,7 @@ contains ! ====     Public Procedures     ==============================
     case ( no_such_reference )
       call display_string ( sub_rosa(where), before='there is no reference to ' )
       call output ( ' in the field at ' )
-      call print_source ( source_ref(sons(1)), advance='yes' )
+      call print_source ( where_at(sons(1)), advance='yes' )
     case ( not_field_of )
       call display_string ( sub_rosa(where) )
       call display_string ( sub_rosa(subtree(1,fields(1))), &
@@ -1275,6 +1275,7 @@ contains ! ====     Public Procedures     ==============================
   subroutine ONE_CF ( ROOT )
   ! Analyze one configuration, with abstract syntax tree rooted at ROOT.
   ! The root is an N_CF node.
+    use Tree, Only: Where
     integer, intent(in) :: ROOT
 
     type(decls) :: DECL            ! Declaration of "name" on "begin name"
@@ -1290,9 +1291,9 @@ contains ! ====     Public Procedures     ==============================
     string1 = sub_rosa(son1) ; stringn = sub_rosa(sonn)
     if ( string1 /= stringn ) then
       call output ( '***** Names on BEGIN at ' )
-      call print_source ( source_ref(subtree(1,root)), advance='yes' )
+      call print_source ( where(subtree(1,root)), advance='yes' )
       call output ( '*****      and END at ' )
-      call print_source ( source_ref(subtree(n,root)) )
+      call print_source ( where(subtree(n,root)) )
       call output ( ' are not the same.', advance='yes' )
 !     call output ( '***** Processing suppressed.', advance='yes' )
       error = max(error,1)
@@ -1450,6 +1451,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.40  2013/09/20 00:56:18  vsnyder
+! Allow relational operators to have dot operands
+!
 ! Revision 1.39  2013/09/19 23:34:33  vsnyder
 ! Type-check and decorate dots in expressions
 !
