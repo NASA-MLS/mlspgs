@@ -266,7 +266,7 @@ contains
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
-      & DUMP_TREE_NODE, SOURCE_REF
+      & DUMP_TREE_NODE
     use TREE_TYPES, only: N_EQUAL, N_NAMED
     use VGRID, only: CREATEVGRIDFROMMLSCFINFO
     use VGRIDSDATABASE, only: ADDVGRIDTODATABASE, VGRIDS
@@ -420,7 +420,7 @@ contains
           if ( restricted ) call NotAllowed ( son, param_restricted )
           do j = 2, nsons(son)
             if ( process_PFA_File ( sub_rosa(subtree(j,son)), &
-              & source_ref(subtree(j,son)) ) /= 0 ) continue
+              & subtree(j,son) ) /= 0 ) continue
           end do
         case ( p_starttime )
           if ( restricted ) call NotAllowed ( son, param_restricted )
@@ -1253,6 +1253,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.147  2013/08/30 02:45:49  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.146  2013/08/21 00:27:13  pwagner
 ! Code around nominal 1993 starting date limitation; awaiting better solution
 !

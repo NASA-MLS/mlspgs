@@ -109,6 +109,12 @@ begin Construct
   UTRHi:Quantity, vGrid=vGridUTRHi, $
     hGrid=hGridStandard, type=vmr, molecule=RHi
 
+;; special quantity for mif rhi retrievals
+  RHiPrfl: Quantity, vGrid=vGridHiRes, hGrid=hGridSingle, type=vmr, $
+    molecule=RHi
+;; this is the mif extinction molecule
+  MIFRHi: Quantity, type=MIFRHi, radiometer=R3
+
   ;; ----------------------------------------- Columns
   tpPressure: Quantity, type=boundaryPressure, hGrid=hGridStandard
   oneHundredHPa: Quantity, type=boundaryPressure, hGrid=hGridStandard
@@ -665,7 +671,7 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
     massMeanDiameterIce, massMeanDiameterWater, $
     !allMolecules, $
     !allHiResMolecules, $
-    RHiVMR, RHiVMRSNGL, UTRHi, rhi, rhi_HR, $
+    RHiVMR, RHiVMRSNGL, UTRHi, rhi, rhi_HR, RHiPrfl, MIFRHi, $
     !allColumns, $
     !allBaselines, $
     !allBaselinesFine, $

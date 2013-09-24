@@ -69,7 +69,7 @@ contains ! =====  Public procedures  ===================================
     use Output_M, only: NewLine, OUTPUT
     use String_Table, only: DISPLAY_STRING
     use Toggles, only: Switches
-    use Tree, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
+    use Tree, only: DECORATION, NSONS, SUBTREE, Where
     use VectorsModule, only: GetVectorQtyByTemplateIndex, &
       & VECTORVALUE_T
 
@@ -288,7 +288,7 @@ contains ! =====  Public procedures  ===================================
       call output ( 'Dump of ' )
       if ( diagonal ) call output ( 'diagonal of ' )
       call display_string ( matrix%name )
-      call print_source ( source_ref(key), before=' at ' )
+      call print_source ( where(key), before=' at ' )
       if ( matrix%row%vec%name /= 0 ) &
         & call display_string ( matrix%row%vec%name, before=', row vector ' )
       if ( matrix%col%vec%name /= 0 ) &
@@ -350,7 +350,7 @@ contains ! =====  Public procedures  ===================================
     do hessianIndex = hessian1, hessianEnd
       call output ( 'Dump of ' )
       call display_string ( hessians(hessianIndex)%name )
-      call print_source ( source_ref(key), before=' at ' )
+      call print_source ( where(key), before=' at ' )
       if ( hessians(hessianIndex)%row%vec%name /= 0 ) &
         & call display_string ( hessians(hessianIndex)%row%vec%name, before=', row vector ' )
       if ( hessians(hessianIndex)%col%vec%name /= 0 ) &
@@ -954,6 +954,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.38  2013/06/12 02:38:02  vsnyder
+! Cruft removal
+!
 ! Revision 1.37  2012/01/27 02:57:54  vsnyder
 ! Remove extraneous ' at ' in DumpBlocks
 !
