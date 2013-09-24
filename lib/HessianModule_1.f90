@@ -21,6 +21,7 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   use HESSIANMODULE_0, only: CLEARBLOCK, COPYBLOCK, CREATEBLOCK, &
     & DESTROYBLOCK, HESSIANELEMENT_T, RH, &
     & H_ABSENT, H_SPARSE, H_FULL, OPTIMIZEBLOCK
+  use Lexer_Core, only: Where_T
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MATRIXMODULE_1, only: DEFINERCINFO, DESTROYRCINFO, NULLIFYRCINFO, RC_INFO
@@ -35,8 +36,8 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   private
 
   type :: Hessian_T
-    integer :: Name = 0  ! Sub-rosa index of Hessian name, if any, else zero
-    integer :: Where = 0 ! Source_ref for creation if by L2CF
+    integer :: Name = 0    ! Sub-rosa index of Hessian name, if any, else zero
+    type(where_t) :: Where ! in input, if created if by L2CF
     type(RC_Info) :: Col, Row  ! Column and row info
     type(HessianElement_T), dimension(:,:,:), pointer :: BLOCK => NULL()
     logical :: optimizedAlready = .false. ! Have we been through OptimizeHessian?
@@ -160,7 +161,7 @@ contains
       ! instance is the minor order.
     character(len=*), intent(in), optional :: Text     ! A name to use
       ! instead of "Name."
-    integer, intent(in), optional :: Where             ! source_ref
+    type(where_t), intent(in), optional :: Where ! in input, if created if by L2CF
     logical, intent(in), optional :: Potemkin    ! Don't allocate if TRUE
 
     integer :: I, J, K                  ! Loop counters
@@ -221,7 +222,7 @@ contains
     
     integer :: status
     hessian%name = 0
-    hessian%where = 0
+    hessian%where = where_t(0,0)
     if ( associated(hessian%block) ) then
       do i = 1, hessian%row%nb
         do j = 1, hessian%col%nb
@@ -303,7 +304,7 @@ contains
     else
       call output ( ' (unnamed l2pcs) ' )
     end if
-    if ( h1%where > 0 .and. h2%where > 0 ) then
+    if ( h1%where%source > 0 .and. h2%where%source > 0 ) then
       call output ( ', created at ' )
       call print_source ( h1%where )
       call output ( ' and ' )
@@ -512,7 +513,7 @@ contains
       call output ( 'Name = ' )
       call display_string ( h%name )
     end if
-    if ( h%where > 0 ) then
+    if ( h%where%source > 0 ) then
       call output ( ', created at ' )
       call print_source ( h%where )
     end if
@@ -904,6 +905,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.34  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.33  2013/08/31 01:24:53  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
