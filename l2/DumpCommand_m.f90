@@ -669,12 +669,12 @@ contains
   function BOOLEANFROMEMPTYGRID ( ROOT, GRIDS ) result( THESIZE )
     use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_GRID
-    use GRIDDEDDATA, only: GRIDDEDDATA_T
+    use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUT
+    use OUTPUT_M, only: OUTPUT, HEADLINE
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -717,8 +717,10 @@ contains
     tvalue = .true.
     if ( associated(grid) ) tvalue = grid%empty
     if ( verbose ) then
+      if ( verboser ) call headLine( 'Checking for empty grid' )
       call output( trim(nameString) // ' = ', advance='no' )
       call output( tvalue, advance='yes' )
+      if ( verboser ) call dump( grid, details=-2 )
     endif
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & lowercase(trim(nameString)), BooleanToString(tvalue), &
@@ -988,6 +990,7 @@ contains
       case ( f_formula, f_manipulation )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         tvalue = myBooleanValue (formula)
+        if ( verbose ) call outputNamedValue ( 'tvalue', trim(formula) )
       case ( f_label )
         call get_string ( sub_rosa(subtree(2,son)), formula, strip=.true. )
         literal = .true.
@@ -1023,7 +1026,9 @@ contains
          & formula = EvaluateFormula ( formula, (/cvalue/), (/"n"/) )
       ! The next will explicitly evaluate run-time Booleans evoked by name via
       ! "${name}"
+      if ( verboser ) call outputNamedValue ( 'formula (2nd)', trim(formula) )
       formula =  EvaluateExplicitly( formula )
+      if ( verboser ) call outputNamedValue ( 'formula (3rd)', trim(formula) )
     endif
     nvalues = 0
     if ( got(f_values) ) then
@@ -1128,7 +1133,7 @@ contains
     use ANTENNAPATTERNS_M, only: DUMP_ANTENNA_PATTERNS_DATABASE
     use CALENDAR, only: DURATION_FORMATTED, TIME_T, TK
     use CALL_STACK_M, only: DUMP_STACK
-    use ChunkDivideConfig_m, only: ChunkDivideConfig, Dump
+    use CHUNKDIVIDECONFIG_M, only: CHUNKDIVIDECONFIG, DUMP
     use DECLARATION_TABLE, only: NUM_VALUE
     use DUMP_0, only: DIFF, DUMP, RMSFORMAT
     use EXPR_M, only: EXPR
@@ -1144,15 +1149,15 @@ contains
       & F_ALLL2PCS, F_ALLLINES, F_ALLMATRICES, F_ALLPFA, &
       & F_ALLQUANTITYTEMPLATES, F_ALLRADIOMETERS, F_ALLSIGNALS, F_ALLSPECTRA, &
       & F_ALLVECTORS, F_ALLVECTORTEMPLATES, F_ALLVGRIDS, F_ANTENNAPATTERNS, &
-      & F_BOOLEAN, &
-      & F_CALLSTACK, F_CHUNKDIVIDE, F_CHUNKNUMBER, F_CLEAN, F_COMMANDLINE, &
-      & F_CRASHBURN, &
+      & F_BLOCK, F_BOOLEAN, &
+      & F_CALLSTACK, F_CHUNKDIVIDE, F_CHUNKNUMBER, F_CLEAN, &
+      & F_COMMANDLINE, F_COUNT, F_CRASHBURN, &
       & F_DETAILS, F_DACSFILTERSHAPES, &
       & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HEIGHT, F_HESSIAN, &
       & F_HGRID, F_IGRF, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, &
       & F_MIETABLES, F_OPTIONS, F_PFADATA, F_PFAFILES, F_PFANUM, F_PFASTRU, &
       & F_PHASENAME, F_POINTINGGRIDS, F_QUANTITY, &
-      & F_SIGNALS,  F_SPECTROSCOPY, F_STACK, F_STOP, &
+      & F_SIGNALS,  F_SPECTROSCOPY, F_STACK, F_START, F_STOP, F_STRIDE, &
       & F_STOPWITHERROR, F_SURFACE, F_TEMPLATE, F_TEXT, F_TGRID, &
       & F_VECTOR, F_VECTORMASK, F_VGRID, &
       & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE, &
@@ -1165,7 +1170,7 @@ contains
       & DIFF, DUMP, GETFROMMATRIXDATABASE
     use MLSCOMMON, only: MLSFILE_T
     use MLSFILES, only: DUMPMLSFILE => DUMP, GETMLSFILEBYNAME
-    use MLSKINDS, only: RV
+    use MLSKINDS, only: R8, RV
     use MLSL2OPTIONS, only: COMMAND_LINE, L2CFNODE, &
       & NORMAL_EXIT_STATUS, RUNTIMEVALUES, &
       & DUMPMACROS, MLSMESSAGE
@@ -1229,6 +1234,7 @@ contains
     real(rv) :: height  ! We will use this to dump just one surface
     integer :: hessianIndex
     integer :: hessianIndex2
+    integer :: JJ
     character(len=80) :: KEYSTRING  ! E.g., 'BAND13_OK'
     character(len=80) :: Label  ! E.g., 'BAND8'
     type (Matrix_T), pointer :: matrix
@@ -1236,6 +1242,7 @@ contains
     integer :: MatrixIndex
     integer :: MatrixIndex2
     integer :: Me = -1               ! String index for trace cacheing
+    integer :: MUL
     integer :: N
     character(len=80) :: NAMESTRING  ! E.g., 'L2PC-band15-SZASCALARHIRES'
     type (MLSFile_T), pointer :: OneMLSFile
@@ -1246,6 +1253,8 @@ contains
     type (VectorValue_T), pointer :: QTY1, QTY2
     integer :: Son
     integer :: Source ! column*256 + line
+    integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
+    integer :: STARTNODE
     character :: TempText*20, Text*255
     type(time_t) :: Time
     character(10) :: TimeOfDay
@@ -1256,6 +1265,8 @@ contains
     logical :: verbose
     integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
     double precision :: Values(2) ! of the Details expr
+    integer, dimension(3) :: UNITASARRAY ! From expr
+    real(r8), dimension(3) :: VALUEASARRAY ! From expr
     integer :: What
 
     ! Executable
@@ -1299,6 +1310,11 @@ contains
     end if
 
     clean = .false.
+    start = 0
+    count = 0
+    stride = 0
+    block = 0
+    startNode = 0
     GotFirst = .false.
     details = 0 - DetailReduction
     OPTIONSSTRING = '-'
@@ -1549,6 +1565,27 @@ contains
         details = nint(values(1)) - DetailReduction
         ! call outputnamedValue( 'DetailReduction', DetailReduction )
         ! call outputnamedValue( 'Details', details )
+      case ( f_start, f_count, f_stride, f_block ) ! For selecting hyperslab
+        startNode = subtree(j, root)
+        ! Either start = [a, b] or start = b are possible
+        do jj=1, min(nsons(startNode)-1, 2)
+          call expr(subtree(jj+1,startNode), unitAsArray, valueAsArray)
+          mul = valueAsArray(1)
+          select case ( fieldIndex )
+          case ( f_start )
+            start(jj) = mul
+          case ( f_count )
+            count(jj) = mul
+          case ( f_stride )
+            stride(jj) = mul
+          case ( f_block )
+            block(jj) = mul
+          end select
+        end do
+        if ( verbose ) then
+          call output('index start: ', advance='no')
+          call output(valueAsArray, advance='yes')
+        end if
       case ( f_file )
         if ( present(fileDataBase) ) then
           do i = 2, nsons(son)
@@ -2327,7 +2364,7 @@ contains
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS
-    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
     use TOGGLES, only: SWITCHES
     ! Calculate the boolean value according to
     ! (1) The logical value of its formula, if the formula
@@ -2350,17 +2387,20 @@ contains
     bvalue = .false.
     reverse = .false.
     if ( index(formula, "==") > 1 ) then
+      if ( verbose ) call output( 'Have "=="', advance='yes' )
       call GetStringElement ( formula, lhs, &
         & 1, countEmpty, inseparator='=' )
       call GetStringElement ( formula, rhs, &
         & 2, countEmpty, inseparator='=' )
     elseif ( index(formula, "/=") > 1 ) then
+      if ( verbose ) call output( 'Have "/="', advance='yes' )
       call GetStringElement ( formula, lhs, &
         & 1, countEmpty, inseparator='/' )
       call GetStringElement ( formula, rhs, &
         & 2, countEmpty, inseparator='=' )
       reverse = .true.
     elseif ( index(formula, "<") > 1 ) then
+      if ( verbose ) call output( 'Have "<"', advance='yes' )
       call GetStringElement ( formula, lhs, &
         & 1, countEmpty, inseparator='<' )
       call GetStringElement ( formula, rhs, &
@@ -2384,6 +2424,7 @@ contains
       endif
       return
     elseif ( index(formula, ">") > 1 ) then
+      if ( verbose ) call output( 'Have ">"', advance='yes' )
       call GetStringElement ( formula, lhs, &
         & 1, countEmpty, inseparator='>' )
       call GetStringElement ( formula, rhs, &
@@ -2399,8 +2440,15 @@ contains
       bvalue = ( x > y )
       return
     else
-      bvalue = BooleanValue ( formula, &
+      if ( verbose ) then
+        call output( 'Calling BooleanValue', advance='yes' )
+        call output( runTimeValues%lkeys, advance='yes' )
+        call output( runTimeValues%lvalues, advance='yes' )
+      endif
+      bvalue = BooleanValue ( trim(formula), &
         & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep )
+      if ( verbose ) &
+        & call outputnamedvalue( trim(formula) // 'evaluates', bvalue )
       return
     endif
     rhs = lowercase(adjustl(rhs))
@@ -2566,6 +2614,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.96  2013/09/24 00:56:02  pwagner
+! May specify hyperslab when dumping
+!
 ! Revision 2.95  2013/09/21 00:38:11  vsnyder
 ! Add ChunkDivide
 !
