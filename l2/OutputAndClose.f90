@@ -726,7 +726,7 @@ contains ! =====     Public Procedures     =============================
 
     use LEXER_CORE, only: PRINT_SOURCE
     use OUTPUT_M, only: OUTPUT
-    use TREE, only: SOURCE_REF
+    use TREE, only: Where_At => Where
 
     integer, intent(in) :: Where   ! Tree node where error was noticed
     character(LEN=*), intent(in) :: Full_Message
@@ -740,7 +740,7 @@ contains ! =====     Public Procedures     =============================
 
     call output ( '***** At ' )
     if ( where > 0 ) then
-      call print_source ( source_ref(where) )
+      call print_source ( where_at(where) )
     else
       call output ( '(no lcf node available)' )
     end if
@@ -1841,6 +1841,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.173  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.172  2013/09/06 21:10:45  pwagner
 ! Move CopyQuantity into a separate subroutine
 !
