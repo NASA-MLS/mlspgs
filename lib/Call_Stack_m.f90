@@ -61,7 +61,7 @@ contains ! ====     Public Procedures     ==============================
     use LEXER_CORE, only: PRINT_SOURCE
     use OUTPUT_M, only: DUMPSIZE, OUTPUT
     use STRING_TABLE, only: DISPLAY_STRING
-    use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+    use TREE, only: DUMP_TREE_NODE, SOURCE_REF, WHERE_AT=>Where
 
     logical, intent(in), optional :: Top   ! Dump only the top frame
     character(len=*), intent(in), optional :: Before ! first thing output
@@ -127,7 +127,7 @@ contains ! ====     Public Procedures     ==============================
         if ( source_ref(stack(depth)%tree) == 0 ) then
           call output ( stack(depth)%tree, before=', tree at ' )
         else
-          call print_source ( source_ref(stack(depth)%tree), before=', ' )
+          call print_source ( where_at(stack(depth)%tree), before=', ' )
         end if
       end if
       if ( say_when ) call show_when
@@ -339,6 +339,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.13  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.12  2013/09/19 23:33:10  vsnyder
 ! More graceful handling of zero source ref
 !
