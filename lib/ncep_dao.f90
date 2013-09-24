@@ -39,7 +39,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
     & PGSD_GCT_INVERSE, &
     & USESDPTOOLKIT
-  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+  use TREE, only: DUMP_TREE_NODE, WHERE
 
   implicit none
   private
@@ -2558,7 +2558,7 @@ contains
       call output ( '***** At ' )
 
       if(lcf_where > 0) then
-        call print_source ( source_ref(lcf_where) )
+        call print_source ( where(lcf_where) )
       else
         call output ( '(no lcf node available)' )
       endif
@@ -2612,6 +2612,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.74  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.73  2012/07/11 20:01:06  pwagner
 ! Dont use DEEBUG until after its defined
 !
