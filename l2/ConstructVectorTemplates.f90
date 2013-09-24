@@ -25,8 +25,7 @@ module ConstructVectorTemplates ! Construct a template for a vector
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: GEN, TOGGLE, LEVELS
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATION, NSONS, SOURCE_REF, SUB_ROSA, &
-    & SUBTREE
+  use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE, WHERE
   use VECTORSMODULE, only: CONSTRUCTVECTORTEMPLATE, VECTORTEMPLATE_T, &
     & NULLIFYVECTORTEMPLATE
   use L2PC_M, only: ADOPTVECTORTEMPLATE
@@ -159,14 +158,14 @@ contains ! =====     Public Procedures     =============================
       if ( DEEBUG ) call dump( relativeQuantities, 'relativeQuantities ' )
       call ConstructVectorTemplate ( name, &
         & quantityTemplates, relativeQuantities, &
-        & vectorTemplate, where=source_ref(root), forWhom=moduleName )
+        & vectorTemplate, where=where(root), forWhom=moduleName )
       call deallocate_test ( removedQuantities, "removedQuantities", ModuleName )
       call deallocate_test ( quantities, "quantities", ModuleName )
       call deallocate_test ( relativeQuantities, "relativeQuantities", ModuleName )
     else
       call ConstructVectorTemplate ( name, &
         & quantityTemplates, quantities(1:noUniqueQuantities), &
-        & vectorTemplate, where=source_ref(root), forWhom=moduleName )
+        & vectorTemplate, where=where(root), forWhom=moduleName )
       call deallocate_test ( quantities, "quantities", ModuleName )
     endif
 
@@ -286,6 +285,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.20  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.19  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
