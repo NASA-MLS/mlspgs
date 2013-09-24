@@ -1455,7 +1455,7 @@ contains ! ========= Public Procedures ============================
     
     use INTRINSIC, only: FIELD_INDICES
     use LEXER_CORE, only: PRINT_SOURCE
-    use TREE, only: SOURCE_REF
+    use TREE, only: Where
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use OUTPUT_M, only: OUTPUT
     use String_Table, only: Display_String
@@ -1465,7 +1465,7 @@ contains ! ========= Public Procedures ============================
     integer, intent(in), optional :: FIELDINDEX, ANOTHERFIELDINDEX ! f_...
     
     call output ( '***** At ' )
-    call print_source ( source_ref(node) )
+    call print_source ( where(node) )
     call output ( ', SubsetModule complained: ', advance='yes' )
     call output ( trim(string), advance='yes' )
     if ( present ( fieldIndex ) ) then
@@ -1536,6 +1536,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.29  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.28  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !

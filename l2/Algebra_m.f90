@@ -503,13 +503,13 @@ contains
     subroutine Announce_Error ( Where, What )
       use LEXER_CORE, only: PRINT_SOURCE
       use OUTPUT_M, only: OUTPUT
-      use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+      use TREE, only: DUMP_TREE_NODE, WHERE_AT=>WHERE
       integer :: Where        ! Root of subtree where error occurred
       integer :: What         ! What message to emit
 
       error = max(error,1)
       call output ( '***** At ', from_where = "Algebra module" )
-      call print_source ( source_ref(where) )
+      call print_source ( where_at(where) )
       call output ( ', tree ' )
       call output ( where )
       call output ( ': ' )
@@ -1527,6 +1527,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.29  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.28  2013/08/30 02:45:32  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
