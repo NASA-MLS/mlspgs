@@ -15,7 +15,9 @@ module PARSER
 
 ! cf -> one_cf+ 'EOF'
 ! one_cf -> ('begin' 'name' 'EOS' spec+ 'end' 'name' )? 'EOS'
+! one_cf -> #include "file" 'EOS'
 ! spec -> 'name' spec_rest 'EOS'
+! spec -> #include "file" 'EOS'
 ! spec -> 'EOS'
 ! spec_rest -> \lambda
 ! spec_rest -> '=' expr +
@@ -66,7 +68,10 @@ module PARSER
   integer, private :: ERROR             ! 0 => no errors yet
                                         ! 1 => errors but not yet EOF
                                         ! 2 => errors and EOF seen
-  type(token), private :: NEXT          ! The next token
+  type(token), private, save :: NEXT    ! The next token, SAVE only because
+                                        ! a component of TOKEN has default
+                                        ! initialization, and the standard
+                                        ! thereby requires SAVE (go figure)
 
   ! Tree node to generate depending upon which operator token appears.
   ! We only need values for the ones that generate tree nodes.
@@ -134,7 +139,7 @@ contains ! ====     Public Procedures     ==============================
     call output ( ' but got ' )
     call dump_1_symbol ( next%string_index, advance='no' )
     call output ( ' at ' )
-    call print_source ( next%source, advance='yes' )
+    call print_source ( next%where, advance='yes' )
     if ( present(after) ) then
       if ( any(next%class == after) ) then
         return ! needs more work -- trying to insert missing symbol
@@ -230,7 +235,7 @@ contains ! ====     Public Procedures     ==============================
       end if
       if ( next%class == t_identifier ) then
         ! First, put unit back on stack (it was popped at end of PRIMARY)
-        call push_pseudo_terminal ( next%string_index, next%source )
+        call push_pseudo_terminal ( next%string_index, next%where )
         call build_tree ( n_unit, 2 )
         call get_token  ! the identifier is used up
       end if
@@ -324,7 +329,7 @@ contains ! ====     Public Procedures     ==============================
   ! If it's a pseudo-terminal token, push it on the tree stack.
     call lexer ( next )
     if ( next%pseudo ) call &
-      push_pseudo_terminal ( next%string_index, next%source )
+      push_pseudo_terminal ( next%string_index, next%where )
   end subroutine GET_TOKEN
 
 ! ------------------------------------------------------  LFACTOR  -----
@@ -387,6 +392,7 @@ contains ! ====     Public Procedures     ==============================
 ! -------------------------------------------------------  ONE_CF  -----
   subroutine ONE_CF
     ! one_cf -> ('begin' 'name' 'EOS' spec+ 'end' 'name' )? 'EOS'
+    ! one_cf -> #include "file" 'EOS'
     integer :: HOW_MANY       ! How many sons of the generated tree node
     if ( toggle(par) ) call where ( 'ONE_CF' )
 o:  do
@@ -410,6 +416,8 @@ o:  do
         call test_token ( t_end_of_stmt )
         call build_tree ( n_cf, how_many )
     exit
+      case ( t_include )
+        call Do_Include
       case default
         if ( error > 1 ) exit
         call announce_error ( (/ t_begin, t_end_of_stmt /) )
@@ -477,6 +485,9 @@ o:  do
   integer function SPEC ()
   ! Analyze specifications in a section.
   ! Return how many specifications got generated -- 0 or 1
+  ! spec -> 'name' spec_rest 'EOS'
+  ! spec -> #include "file" 'EOS'
+  ! spec -> 'EOS'
     if ( toggle(par) ) call where ( 'SPEC' )
     do
       select case ( next%class )
@@ -489,6 +500,10 @@ o:  do
         call spec_rest
         call test_token ( t_end_of_stmt )
         spec = 1
+    exit
+      case ( t_include )
+        call do_include
+        spec = 0
     exit
       case default
         if ( error > 1 ) exit
@@ -570,6 +585,27 @@ o:  do
     if ( toggle(par) ) call finish ( 'TERM' )
   end subroutine TERM
 
+! ---------------------------------------------------  DO_INCLUDE  -----
+  subroutine Do_Include
+    use String_Table, only: Open_Include
+    integer :: File
+    if ( toggle(par) ) call where ( 'Do_Include' )
+    call lexer ( next )
+    if ( next%class == t_string ) then
+      file = next%string_index
+      call lexer ( next )
+      if ( next%class /= t_end_of_stmt ) then
+        error = max(error,1)
+        call announce_error ( (/ t_end_of_stmt /) )
+      else
+        call open_include ( file )
+      end if
+    else
+      call announce_error ( (/ t_string /) )
+    end if
+    if ( toggle(par) ) call finish ( 'Do_Include' )
+  end subroutine Do_Include
+
 ! ---------------------------------------------------  TEST_TOKEN  -----
   subroutine TEST_TOKEN ( THE_TERMINAL )
     integer, intent(in) :: THE_TERMINAL
@@ -600,7 +636,7 @@ o:  do
     character(len=*), intent(in) :: WHAT
     call output ( repeat('.',depth) // 'Enter ' // trim(what) )
     call output ( ' at ' )
-    call print_source ( next%source, advance='yes' )
+    call print_source ( next%where, advance='yes' )
     depth = depth + 1
   end subroutine WHERE
 
@@ -617,6 +653,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.26  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.25  2012/05/05 00:11:51  vsnyder
 ! Add support for 'not' operator
 !

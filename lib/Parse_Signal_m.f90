@@ -259,7 +259,7 @@ contains
     use Symbol_Table, only: Dump_Symbol_Class, Enter_Terminal
     use Symbol_Types, only: T_Colon, T_Dot, T_End_of_input, T_Identifier, &
       & T_Minus, T_Plus
-    use Tree, only: Decoration, Source_Ref
+    use Tree, only: Decoration, Where_At => Where
 
     character(len=*), intent(in) :: Signal_String ! Input
     integer, pointer :: Signal_Indices(:)         ! Indices in the signals
@@ -541,7 +541,7 @@ o:  do
       if ( present(tree) ) myTree = tree
       call output ( '***** At ' )
       if ( mytree > 0 ) then
-        call print_source ( source_ref(mytree) )
+        call print_source ( where_at(mytree) )
       else
         call output ( '(no lcf tree available)' )
       end if
@@ -670,6 +670,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.26  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.25  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
