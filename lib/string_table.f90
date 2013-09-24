@@ -19,20 +19,24 @@ module STRING_TABLE
   use IO_STUFF, only: GET_LUN
   use MACHINE, only: CRASH_BURN, IO_ERROR
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use PRINTIT_M, only: MLSMSG_DEALLOCATE, MLSMSG_ALLOCATE, &
-                              MLSMSG_ERROR, PRINTITOUT
+  use PRINTIT_M, only: MLSMSG_DEALLOCATE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
+                       PRINTITOUT
   implicit NONE
   private
 
   ! Public procedures
-  public :: ADD_CHAR, ADDINUNIT, ALLOCATE_CHAR_TABLE, ALLOCATE_HASH_TABLE
-  public :: ALLOCATE_STRING_TABLE, CLEAR_STRING, COMPARE_STRINGS, CREATE_STRING
-  public :: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, DESTROY_STRING_TABLE
-  public :: DISPLAY_STRING, DISPLAY_STRING_LIST, ENTER_STRING, FLOAT_VALUE
-  public :: GET_CHAR, GET_STRING, HOW_MANY_STRINGS, INDEX, INDEX_IN_STRING
-  public :: LEN, LOOKUP, LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE
-  public :: OPEN_INPUT, STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR
-  public :: INIT_STRING_TABLE
+  public :: ADD_CHAR, ADD_INCLUDE_DIRECTORY, ADDINUNIT, ALLOCATE_CHAR_TABLE
+  public :: ALLOCATE_HASH_TABLE, ALLOCATE_STRING_TABLE, CLEAR_STRING
+  public :: COMPARE_STRINGS, CREATE_STRING, DESTROY_CHAR_TABLE
+  public :: DESTROY_HASH_TABLE, DESTROY_STRING_TABLE, DISPLAY_STRING
+  public :: DISPLAY_STRING_LIST, ENTER_STRING, FIND_FILE, FLOAT_VALUE, GET_CHAR
+  public :: GET_STRING, HOW_MANY_STRINGS, INCLUDE_STACK_TOP, INDEX
+  public :: INIT_STRING_TABLE, INDEX_IN_STRING, LEN, LOOKUP, LOOKUP_AND_INSERT
+  public :: NEW_LINE, NUMERICAL_VALUE, OPEN_INCLUDE, OPEN_INPUT, STRING_LENGTH
+  public :: STRING_TABLE_SIZE, UNGET_CHAR
+
+  ! Public variables and named constants
+  public :: Do_Listing, EOF, EOL, Includes, Source_Line, Source_Column
 
   interface DISPLAY_STRING
     module procedure DISPLAY_STRING, DISPLAY_STRING_LIST
@@ -47,16 +51,20 @@ module STRING_TABLE
   end interface
 
   ! Public parameters
-  character, public, parameter :: EOF = ACHAR(4)  ! ^D
-  character, public, parameter :: EOL = ACHAR(10) ! ^J
+  character, parameter :: EOF = ACHAR(4)  ! ^D
+  character, parameter :: EOL = ACHAR(10) ! ^J
 
   ! Public control variables
-  logical, save, public :: DO_LISTING = .false.
+  logical, save :: DO_LISTING = .false.
 
   ! Public information variables
-  integer, save, public :: SOURCE_LINE = 0   ! Current line number
-  integer, save, public :: SOURCE_COLUMN     ! Column number of current
-                                             ! character
+
+  integer, save, protected, allocatable :: Includes(:) ! String table indices
+                                              ! of directories to search for
+                                              ! files; see Find_File
+  integer, save, protected :: SOURCE_LINE = 0 ! Current line number
+  integer, save, protected :: SOURCE_COLUMN   ! Column number of current
+                                              ! character
 
 ! =====     End of public declarations     ==================================
 
@@ -70,6 +78,18 @@ module STRING_TABLE
   integer, save :: CUR_POS = 1          ! Current position -- last one used
   integer, save :: inunit_counter = 0
   integer, dimension(:), pointer, save :: inunit_list => NULL() ! Input unit, * if null
+
+  type :: Inunit_Stack_t
+    integer :: File = 0      ! string table index of complete file name
+    integer :: Unit = 0      ! I/O unit
+    integer :: Line = 0      ! in the file
+    integer :: Column = 0    ! in the line
+  end type Inunit_Stack_t
+
+  type(inunit_stack_t), allocatable :: Inunit_Stack(:)
+  integer, parameter :: Init_Stack_Size = 10
+
+  integer :: Inunit_Stack_Ptr = 0
 
   ! Tables
   character, allocatable, save :: CHAR_TABLE (:)
@@ -103,6 +123,30 @@ contains
     end do
     return
   end subroutine ADD_CHAR
+  ! ================================     ADD_INCLUDE_DIRECTORY     =====
+  subroutine ADD_INCLUDE_DIRECTORY ( Directory, Stat )
+    character(len=*), intent(in) :: Directory
+    integer, intent(out), optional :: Stat
+    integer :: Dir_String ! String index of directory
+    integer :: MyStat
+    integer, allocatable :: Temp_List(:)
+    dir_string = create_string ( trim(directory) )
+    if ( .not. allocated(includes) ) then
+      allocate ( temp_list(1), stat=myStat )
+    else
+      allocate ( temp_list(size(includes)+1), stat=myStat )
+      temp_list(:size(includes)) = includes
+    end if
+    if ( present(stat) ) stat = myStat
+    if ( myStat /= 0 ) then
+      if ( present(stat) ) return
+      call io_error &
+      ( 'STRING_TABLE%ALLOCATE_CHAR_TABLE-E- Unable to allocate include directory list', &
+      & myStat )
+    end if
+    temp_list(size(temp_list)) = dir_string
+    call move_alloc ( temp_list, includes )
+  end subroutine ADD_INCLUDE_DIRECTORY
   ! ==================================     ALLOCATE_CHAR_TABLE     =====
   subroutine ALLOCATE_CHAR_TABLE ( AMOUNT, STATUS )
     integer, intent(in) :: AMOUNT  ! How many characters to allocate
@@ -363,6 +407,33 @@ contains
     enter_string = nstring
     return
   end function ENTER_STRING
+  ! ============================================     Find_File     =====
+  subroutine Find_File ( Directories, File_Name, Exist, Full_Text )
+  ! Look for File_Name in directories.  If it is found, set Exist=true
+  ! and put its full text in Full_Text, otherwise set Exist=false.
+    integer, intent(in) :: Directories(:) ! String indices
+    integer, intent(in) :: File_Name      ! String index
+    logical, intent(out) :: Exist
+    character(len=*), intent(out) :: Full_Text
+    integer :: I, L
+    exist = .false.
+    do i = 1, size(directories)
+      l = 1
+      if ( directories(i) > 0 ) then
+        call get_string ( directories(i), full_text, strip=.true. )
+        l = string_length(directories(i)) + 1
+        if ( full_text(l:l) /= '/' ) then
+          full_text(l:l) = '/'
+          l = l + 1
+        end if
+      end if
+      call get_string ( file_name, full_text(l:), strip=.true. )
+      inquire ( file=full_text, exist=exist )
+      if ( exist ) return
+    end do
+    call get_string ( file_name, full_text, strip=.true. )
+    inquire ( file=full_text, exist=exist )
+  end subroutine Find_File
  ! ===========================================     FLOAT_VALUE     =====
   double precision function FLOAT_VALUE ( STRING )
   ! Return the FLOAT value of a string indexed by STRING
@@ -405,9 +476,12 @@ contains
         end if
         ! Non-advancing input is used so that trailing blanks in
         ! the record can be distinguished from padding.
-        if ( associated(inunit_list) ) then
-          read ( inunit_list(inunit_counter), '(a)', advance='no', eor=100, end=200, err=400, &
-            iostat=iostat ) char_table(cur_end)
+        if ( inunit_stack_ptr > 0 ) then
+          read ( inunit_stack(inunit_stack_ptr)%unit, '(a)', advance='no', &
+            & eor=100, end=200, err=400, iostat=iostat ) char_table(cur_end)
+        else if ( associated(inunit_list) ) then
+          read ( inunit_list(inunit_counter), '(a)', advance='no', eor=100, &
+            & end=200, err=400, iostat=iostat ) char_table(cur_end)
         else
           read ( *, '(a)', advance='no', eor=100, end=200, err=400, &
             iostat=iostat ) char_table(cur_end)
@@ -415,7 +489,14 @@ contains
       end do
 100   char_table(cur_end) = EOL
       go to 300
-200   call SetNextInUnit
+200   if ( inunit_stack_ptr > 0 ) then
+        close ( inunit_stack(inunit_stack_ptr)%unit ) ! Ignore status
+        source_line = inunit_stack(inunit_stack_ptr)%line
+        source_column = inunit_stack(inunit_stack_ptr)%column
+        inunit_stack_ptr = inunit_stack_ptr-1
+      else
+        call SetNextInUnit
+      end if
       if (inunit_counter == 0) then ! has no more file to read from
         char_table(cur_end) = EOF
         at_eof = .true.
@@ -529,6 +610,16 @@ contains
     how_many_strings = nstring
     return
   end function HOW_MANY_STRINGS
+  ! ====================================     INCLUDE_STACK_TOP     =====
+  subroutine INCLUDE_STACK_TOP ( File )
+  ! Get the directory and file name string indices from the top of the
+  ! include stack, if there is anything in it, else zeros.
+    integer, intent(out) :: File
+    file = 0
+    if ( .not. allocated(inunit_stack) ) return
+    if ( inunit_stack_ptr == 0 ) return
+    file = inunit_stack(inunit_stack_ptr)%file
+  end subroutine INCLUDE_STACK_TOP
   ! ======================================     INDEX_IN_STRING     =====
   integer function INDEX_IN_STRING ( STRING, SUBSTRING, CASELESS, STRIP )
   ! Works like intrinsic INDEX, but with integer string indices instead of
@@ -643,13 +734,80 @@ contains
       read ( text, * ) numerical_value
     end subroutine GET_VALUE
   end function NUMERICAL_VALUE
+  ! =========================================     OPEN_INCLUDE     =====
+  subroutine Open_Include ( File_Name, Stat )
+  ! Check the inunit stack to make sure File_Name isn't there.  If not,
+  ! put it on the stack and open the file.
+
+    integer, intent(in) :: File_Name ! String index
+    integer, optional, intent(out) :: STAT
+
+    integer :: Dir    ! Directory string index from includes list
+    logical :: Exist  ! Does file exist?  For use in INQUIRE statement
+    integer :: Incl   ! Index in include directory list
+    integer :: MyFile ! File_Name or string index of directory/file
+    ! Can't use String_Length here because it's not pure
+    ! Assume maximum include path name is 254.
+    character(len=strings(file_name) - strings(file_name-1)+255) :: MyName
+    integer :: MyStat
+    type(inunit_stack_t), allocatable :: Temp_Stack(:)
+
+    myStat = 0
+    if ( .not. allocated(inunit_stack) ) &
+      & allocate ( inunit_stack(:init_stack_size), stat=myStat )
+    if ( myStat == 0 ) then
+      if ( inunit_stack_ptr >= ubound(inunit_stack,1) ) then
+        allocate ( temp_stack(:2*ubound(inunit_stack,1)), stat=myStat )
+        if ( myStat == 0 ) then
+          temp_stack(:ubound(inunit_stack,1)) = inunit_stack
+          call move_alloc ( temp_stack, inunit_stack )
+        end if
+      end if
+    end if
+    if ( myStat /= 0 ) then
+      if ( present(stat) ) then
+        stat = myStat
+        return
+      end if
+      call io_error ( 'STRING_TABLE%OPEN_INCLUDE-E- Unable to allocate unit stack', &
+                    &  myStat )
+      call crash_burn
+      return
+    end if
+    ! Look for the file name in the directory list
+    dir = 0
+    incl = 0
+    if ( .not. allocated(includes) ) allocate ( includes(1:0) ) ! Assume it worked
+    call find_file ( includes, file_name, exist, myName )
+    if ( .not. exist ) then
+      call display_string ( file_name, &
+        & before= 'STRING_TABLE%OPEN_INCLUDE-E- the include file "', strip=.true. )
+      call output ( '" could not be found.', advance='yes' )
+      call crash_burn
+      return
+    end if
+    myFile = create_string ( trim(myName) )
+    if ( any(inunit_stack(:inunit_stack_ptr)%file == myFile) ) then
+      call display_string ( myFile, &
+        & before='STRING_TABLE%OPEN_INCLUDE-E- Circular Include involving ', &
+        & advance='yes' )
+      call crash_burn
+      return
+    end if
+    inunit_stack_ptr = inunit_stack_ptr + 1
+    inunit_stack(inunit_stack_ptr)%file = myFile
+    call open_input ( myName, stat=stat, unit=inunit_stack(inunit_stack_ptr)%unit )
+    inunit_stack(inunit_stack_ptr)%line = source_line
+    inunit_stack(inunit_stack_ptr)%column = source_column
+  end subroutine Open_Include
   ! ===========================================     OPEN_INPUT     =====
-  subroutine OPEN_INPUT ( FILE_NAME, STAT )
+  subroutine OPEN_INPUT ( FILE_NAME, STAT, UNIT )
   ! Open the file given by FILE_NAME for input.  If it can't be opened and
   ! STAT is present, return the status.  If it can't be opened and STAT is
   ! absent, ask the user for it.
     character(len=*), intent(in) :: FILE_NAME
     integer, optional, intent(out) :: STAT
+    integer, optional, intent(out) :: UNIT ! Use this instead of AddInUnit
 
     integer :: IOSTAT, inunit
     character(max(file_name_len,len(file_name))) :: MY_FILE
@@ -670,7 +828,11 @@ contains
       if ( iostat == 0 ) then
         at_eof = .false.
         source_line = 0
-        call AddInUnit(inunit)
+        if ( present(unit) ) then
+          unit = inunit
+        else
+          call AddInUnit(inunit)
+        end if
         return
       end if
       if ( present(stat) ) then
@@ -800,8 +962,8 @@ contains
     integer :: I         ! Subscript, loop inductor
     logical :: INSERT    ! Insert if not found
     integer :: LOC       ! Where HASH_KEY was found in HASH_TABLE
-    logical :: myDEBUG    ! .false. or CASELESS
-    logical :: NOCASE    ! .false. or CASELESS
+    logical :: myDEBUG   ! .false. or DEBUG
+    logical :: NOCASE    ! .false. (case sensitive) or CASELESS
     integer :: STATUS    ! Result, see HASH_LOOKUP
 
     nocase = .false.
@@ -1042,7 +1204,7 @@ contains
     cur_end = 0
     cur_pos = 1
     inunit_counter = 0
-    ! inunit_list may not be null here if AddInUnit 
+    ! inunit_list might not be null here if AddInUnit 
     ! has been used before this call
     if (associated(inunit_list)) deallocate(inunit_list)
     inunit_list => NULL()
@@ -1061,6 +1223,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.38  2013/09/24 23:07:16  vsnyder
+! Add Includes, Open_Include, Find_File
+!
 ! Revision 2.37  2013/09/21 00:20:56  pwagner
 ! Initialize NSTRING so HOW_MANY_STRINGS can be checked at start
 !
