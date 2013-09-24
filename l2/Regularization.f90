@@ -165,7 +165,7 @@ contains
     ! --------------------------------------------  AnnounceError  -----
     subroutine AnnounceError ( code, where )
       use Lexer_Core, only: PRINT_SOURCE
-      use Tree, only: SOURCE_REF
+      use Tree, only: Where_At => Where
 
       integer, intent(in) :: Code    ! The message number
       integer, intent(in) :: Where   ! Where in the tree
@@ -180,7 +180,7 @@ contains
         if ( RegAnnouncements(code) > MaxNumAnnouncements ) return ! Suppressed
       endif
       call output ( '***** At or near ' )
-      call print_source ( source_ref(where) )
+      call print_source ( where_at(where) )
       call output ( ', Regularization complained: ' )
       select case ( code )
       case ( fieldSizes )       ! size(regOrders) /= size(regQuants)
@@ -718,6 +718,9 @@ o:          do while ( c2 <= ni )
 end module Regularization
 
 ! $Log$
+! Revision 2.42  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.41  2012/07/11 20:02:54  pwagner
 ! Suppress annoying messages after 10
 !
