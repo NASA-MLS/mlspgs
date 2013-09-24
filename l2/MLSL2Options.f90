@@ -226,10 +226,10 @@ contains
   ! output module's commands
   subroutine MLSMessage ( SEVERITY, MODULENAMEIN, MESSAGE, &
     & ADVANCE, MLSFILE, STATUS, ITEM )
+    use Lexer_Core, only: Get_Where
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MLSSTRINGS, only: WRITEINTSTOCHARS
     use TOGGLES, only: SWITCHES
-    use TREE, only: SOURCE_REF
+    use TREE, only: Where
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
@@ -247,7 +247,6 @@ contains
     character(len=256) :: myMessage
     integer :: myStatus
     logical :: outputInstead   ! if we will call output instead
-    character(len=64) :: WarningPreamble
     ! Executable
     call get_config( logFileUnit=logFileUnit )
     myMessage = Message
@@ -285,12 +284,11 @@ contains
     endif
     ! Do we have an l2cf node we were processing?
     if ( L2CFNode /= 0 ) then
-      call writeIntsToChars ( source_ref(L2CFNode)/256, myChars )
-      WarningPreamble = '***** At '  // trim(myChars) // ', column'
-      call writeIntsToChars ( mod(source_ref(L2CFNode), 256), myChars )
-      WarningPreamble = trim(WarningPreamble)  // ' ' // trim(myChars) 
-      myMessage = trim(WarningPreamble) // ': ' // Message
-    endif
+      call get_where ( where(L2CFNode), myMessage, &
+        & before='***** At ', after=': ' // Message )
+    else
+      myMessage = '(no tree node): ' // message
+    end if
     if ( present(item) ) then
       call output ( '(Not ready to dump arbitrary datatypes yet) ', advance='yes' )
       select case ( item%dbType )
@@ -349,7 +347,7 @@ contains
     use PrintIt_m, only: Set_Config
     use SET_TOGGLES_M, only: SET_TOGGLES
     use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
-    use STRING_TABLE, only: DO_LISTING
+    use STRING_TABLE, only: Add_Include_Directory, DO_LISTING
     use TIME_M, only: TIME_CONFIG
     use TOGGLES, only: SWITCHES
     ! Args
@@ -361,6 +359,7 @@ contains
     integer :: DEGREE                ! index affecting degree of option
     logical, parameter :: DEEBUG = .false.
     logical :: EXIST
+    logical :: Field_Is_Include      ! Field is include file path, not L2CF name
     integer, dimension(100)           :: iarray
     integer :: J
     character(len=2048) :: LINE      ! Into which is read the command args
@@ -408,6 +407,7 @@ contains
     end do
     ! Now process the other options
     command_line = ' '
+    field_is_include = .false.
     cmds:    do
       call getNextArg ( i, line )
       if ( DEEBUG ) print *, i, trim(line)
@@ -775,6 +775,7 @@ jloop:do while ( j < len_trim(line) )
             ! call option_usage
             filename = 'help'
             return ! will dump help mesg
+          case ( 'I' ); field_is_include = .true. ! Next field is include path
           case ( 'K' ); capIdentifiers = .true.
           case ( 'k' ); capIdentifiers = .false.
           case ( 'M' ); outputOptions%prunit = MSGLOGPRUNIT ! -2
@@ -825,6 +826,9 @@ jloop:do while ( j < len_trim(line) )
           end select
           ! i = i + 1
         end do jLoop
+      else if ( field_is_include ) then
+        call add_include_directory ( line )
+        field_is_include = .false.
       else
         filename = line
         exit ! This must be the l2cf filename
@@ -969,6 +973,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.72  2013/09/24 23:29:45  vsnyder
+! Add -I option, Use Where instead of Source_Ref for messages
+!
 ! Revision 2.71  2013/09/14 01:22:02  vsnyder
 ! Add MSGConf option
 !
