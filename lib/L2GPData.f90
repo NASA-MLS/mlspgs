@@ -45,13 +45,14 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   implicit none
 
   private
-  public :: L2GPData_T
-  public :: L2GPNameLen
-  public :: AddL2GPToDatabase, AppendL2GPData, ContractL2GPRecord, cpL2GPData, &
-    & DestroyL2GPContents, DestroyL2GPDatabase, &
-    & diff, diffRange, Dump, dumpRange, &
-    & ExpandL2GPDataInPlace, ExtractL2GPRecord, isL2GPSetUp, &
-    & ReadL2GPData, RepairL2GP, SetupNewL2GPRecord, WriteL2GPData
+  public :: L2GPDATA_T
+  public :: L2GPNAMELEN
+  public :: ADDL2GPTODATABASE, APPENDL2GPDATA, &
+    & CONTRACTL2GPRECORD, CONVERTL2GPTOQUANTITY, CPL2GPDATA, &
+    & DESTROYL2GPCONTENTS, DESTROYL2GPDATABASE, &
+    & DIFF, DIFFRANGE, DUMP, DUMPRANGE, &
+    & EXPANDL2GPDATAINPLACE, EXTRACTL2GPRECORD, ISL2GPSETUP, &
+    & READL2GPDATA, REPAIRL2GP, SETUPNEWL2GPRECORD, WRITEL2GPDATA
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -129,6 +130,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! AddL2GPToDatabase       Adds an l2gp data type to a database
 ! AppendL2GPData          Appends L2GP onto end of existing swath file
 ! ContractL2GPRecord      Gather a reduced L2GP from an existing L2GP
+! ConvertL2GPToQuantity   Convert an L2GP data type into a Vector Quantity
 ! cpL2GPData              Copies swaths from one l2gp file to another
 ! DestroyL2GPContents     Deallocates all the arrays allocated for an L2GP
 ! DestroyL2GPDatabase     Destroys an L2GP database
@@ -818,6 +820,24 @@ contains ! =====     Public Procedures     =============================
     call GatherArray ( l2gp%convergence  , ol2gp%convergence  , &
       & whichTimes(1:useTimes) )
   end subroutine ContractL2GPRecord_opt
+
+  !------------------------------------------  ConvertL2GPToQuantity  -----
+  ! Convert an existing l2gp data type to an equivalent
+  ! vector quantity
+
+  subroutine ConvertL2GPToQuantity ( l2gp, Quantity )
+    use QUANTITYTEMPLATES, only: SETUPNEWQUANTITYTEMPLATE
+    use VECTORSMODULE, only: VECTORVALUE_T, CREATEVECTORVALUE
+    ! Dummy arguments
+    type (L2GPData_T), intent(in)   ::     l2gp
+    type (VectorValue_T), intent(out)  ::  Quantity
+    ! Internal variables
+    ! Executable
+    call SetupNewQuantityTemplate ( Quantity%template, l2gp%nTimes, l2gp%nLevels, &
+      & 1, .true., .true., .true. )
+    call CreateVectorValue ( Quantity, 'L2GP'  )
+    if ( associated(l2gp%l2gpValue) ) Quantity%values = l2gp%l2gpValue(1,:,:)
+  end subroutine ConvertL2GPToQuantity
 
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
@@ -5108,6 +5128,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.195  2013/09/17 22:35:40  pwagner
+! Changed api of Embed, Extract arrays to match hyperslab
+!
 ! Revision 2.194  2013/08/31 01:24:53  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
