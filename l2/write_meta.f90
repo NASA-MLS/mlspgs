@@ -36,7 +36,7 @@ module WriteMetadata ! Populate metadata and write it out
     & PGSD_MET_NUM_OF_GROUPS, PGSD_PC_FILE_PATH_MAX, PGS_PC_GETREFERENCE, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET
   use TOGGLES, only: SWITCHES
-  use TREE, only: SOURCE_REF
+  use TREE, only: Where
 
   implicit none
 
@@ -1273,7 +1273,7 @@ contains
       call output ( '***** At ' )
 
       if ( lcf_where > 0 ) then
-        call print_source ( source_ref(lcf_where) )
+        call print_source ( where(lcf_where) )
       else
         call output ( '(no lcf node available)' )
       end if
@@ -2112,6 +2112,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.75  2013/09/24 23:47:23  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.74  2013/07/26 00:07:35  pwagner
 ! Added routines to read, write, and parse MCFs
 !
