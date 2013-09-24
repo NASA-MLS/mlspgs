@@ -18,6 +18,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
+  use Lexer_Core, only: Where_T
   use MATRIXMODULE_0, only: ADD_MATRIX_BLOCKS, ASSIGNMENT(=), CHECKINTEGRITY, &
     & CHOLESKYFACTOR, CLEARLOWER, CLEARROWS, COLUMNSCALE, COL_L1, COPYBLOCK, &
     & CREATEBLOCK, CYCLICJACOBI, DENSECYCLICJACOBI, DENSIFY, &
@@ -250,7 +251,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   type Matrix_T
     integer :: Name = 0  ! Sub-rosa index of matrix name, if any, else zero
-    integer :: Where = 0       ! Source_ref for creation if by L2CF
+    type(where_t) :: Where     ! in input, if created if by L2CF
     type(RC_Info) :: Col, Row  ! Column and row info
     type(matrixElement_T), dimension(:,:), pointer :: BLOCK => NULL()
   end type Matrix_T
@@ -870,7 +871,7 @@ contains ! =====     Public Procedures     =============================
       ! instance is the minor order.
     character(len=*), intent(in), optional :: Text     ! A name to use
       ! instead of "Name."
-    integer, intent(in), optional :: Where             ! source_ref
+    type(where_t), intent(in), optional :: Where ! in input, if created if by L2CF
 
     integer :: I, J      ! Subscripts, loop inductors
     integer :: STATUS    ! From ALLOCATE
@@ -1135,7 +1136,7 @@ contains ! =====     Public Procedures     =============================
     call destroyBlock ( a )
     call destroyRCInfo ( a%row )
     call destroyRCInfo ( a%col )
-    a%where = 0
+    a%where = where_t(0,0)
   end subroutine DestroyMatrix
 
   ! ------------------------------------  DestroyMatrixInDatabase  -----
@@ -2501,7 +2502,7 @@ contains ! =====     Public Procedures     =============================
       call output ( ' and ' )
       call display_string ( matrix2%name )
     end if
-    if ( matrix1%where > 0 .and. matrix2%where > 0 ) then
+    if ( matrix1%where%source > 0 .and. matrix2%where%source > 0 ) then
       call output ( ', created at ' )
       call print_source ( matrix1%where )
       call output ( ' and ' )
@@ -2711,7 +2712,7 @@ contains ! =====     Public Procedures     =============================
       call output ( 'Name = ' )
       call display_string ( matrix%name )
     end if
-    if ( matrix%where > 0 ) then
+    if ( matrix%where%source > 0 ) then
       call output ( ', created at ' )
       call print_source ( matrix%where )
     end if
@@ -2937,6 +2938,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.133  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.132  2013/08/08 02:37:57  vsnyder
 ! Only dump RC_Info stuff for selected row or column
 !
