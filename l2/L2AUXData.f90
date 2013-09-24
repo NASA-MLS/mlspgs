@@ -50,7 +50,6 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use OUTPUT_M, only: OUTPUT
   use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-  use TREE, only: SOURCE_REF
 
   implicit none
 
@@ -1898,7 +1897,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE, L2AUXFile )
-  use MLSFiles, only: DUMP
+    use MLSFiles, only: DUMP
+    use TREE, only: Where_At => Where
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     character(LEN=*), intent(in)    :: full_message
     integer, intent(in), optional :: CODE    ! Code for error message
@@ -1907,7 +1907,7 @@ contains ! =====     Public Procedures     =============================
     error = max(error,1)
     call output ( '***** At ' )
     if ( where > 0 ) then
-      call print_source ( source_ref(where) )
+      call print_source ( where_at(where) )
     else
       call output ( '(no lcf node available)' )
     end if
@@ -1941,6 +1941,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.90  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.89  2013/08/31 02:29:12  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
