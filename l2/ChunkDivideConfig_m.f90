@@ -86,7 +86,7 @@ contains ! ===================================  Public Procedures  =====
     use LEXER_CORE, only: PRINT_SOURCE
     use Output_m, only: Output
     use String_Table, only: Display_String
-    use TREE, only: SOURCE_REF
+    use TREE, only: WHERE
 
     ! Args
     type(ChunkDivideConfig_T), intent(in) :: Config
@@ -95,7 +95,7 @@ contains ! ===================================  Public Procedures  =====
 
     ! Executable code
     swlevel = switchDetail(switches, 'chu' )
-    call print_source ( source_ref(config%where), &
+    call print_source ( where(config%where), &
       & before='ChunkDivide configuration at ', advance='yes' )
     call display_string ( lit_indices(Config%method), &
       &             strip=.true., before='  method ', advance='yes' )
@@ -197,6 +197,9 @@ contains ! ===================================  Public Procedures  =====
 end module ChunkDivideConfig_m
 
 ! $Log$
+! Revision 2.2  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.1  2013/09/21 00:26:14  vsnyder
 ! Initial commit; avoid circular dependence between ChunkDivide and DumpCommand
 !
