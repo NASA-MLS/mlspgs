@@ -1188,7 +1188,7 @@ contains ! ======================= Public Procedures =========================
   subroutine ANNOUNCE_ERROR ( Where, Full_message, Code, Penalty )
 
     use LEXER_CORE, only: PRINT_SOURCE
-    use TREE, only: SOURCE_REF
+    use TREE, only: WHERE_AT=>WHERE
 
     ! Args:
     integer, intent(in) :: Where   ! Tree node where error was noticed
@@ -1203,7 +1203,7 @@ contains ! ======================= Public Procedures =========================
 
     call output ( '***** At ' )
     if ( where > 0 ) then
-      call print_source ( source_ref(where) )
+      call print_source ( where_at(where) )
     else
       call output ( '(no lcf node available)' )
     end if
@@ -1230,6 +1230,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.57  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.56  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
