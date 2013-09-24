@@ -596,7 +596,7 @@ contains ! =====     Public Procedures     =============================
   integer function Process_PFA_File_node ( PFAFileIndex, Where )
 
     integer, intent(in) :: PFAFileIndex ! Sub-rosa index for file name
-    integer, intent(in) :: Where  ! Source_ref field, for error messages
+    integer, intent(in) :: Where  ! tree node index, for error messages
 
     type(PFAFile_t) :: PFAFileDatum
     ! Open the file
@@ -608,7 +608,7 @@ contains ! =====     Public Procedures     =============================
   integer function Process_PFA_File_name ( PFAFileName, Where )
 
     character(len=*), intent(in) :: PFAFileName ! Actual path/name
-    integer, intent(in) :: Where  ! Source_ref field, for error messages
+    integer, intent(in) :: Where  ! tree node index, for error messages
 
     type(PFAFile_t) :: PFAFileDatum
     ! Open the file
@@ -621,6 +621,7 @@ contains ! =====     Public Procedures     =============================
   integer function Process_PFA_File_datum ( PFAFileDatum, Where )
 
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
+    use Lexer_Core, only: Get_Where
     use MLSHDF5, only: LOADPTRFROMHDF5DS
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
       & MLSMSG_SEVERITY_TO_QUIT, MLSMSG_WARNING
@@ -633,10 +634,10 @@ contains ! =====     Public Procedures     =============================
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
     use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: SOURCE_REF
+    use TREE, only: Where_At => Where
 
     type(PFAFile_t) :: PFAFileDatum
-    integer, intent(in) :: Where  ! Source_ref field, for error messages
+    integer, intent(in) :: Where  ! tree node index, for error messages and tracing
 
     logical, pointer :: Channels(:)
     logical :: Error
@@ -651,18 +652,17 @@ contains ! =====     Public Procedures     =============================
     integer :: STAT                    ! From HDF5 open or read, or allocate
     logical :: Trouble                 ! If molecule or signal doesn't work
 
-
     call trace_begin ( me, "Process_PFA_File_datum", where, cond=toggle(gen) )
     ! Open the file
 
-    call OpenPFAFile ( PFAFileDatum, source_ref(where) )
+    call OpenPFAFile ( PFAFileDatum, where )
 
     ! Open the Index group and read the Molecules and Signals data sets
     call h5gOpen_f ( PFAFileDatum%HDF5_fileID, 'Index', groupID, stat )
     if ( stat /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to open HDF5 PFA Index group in %s at %l', &
-        & (/PFAFileDatum%fileName,source_ref(where)/) )
+        & 'Unable to open HDF5 PFA Index group in %s at %w', &
+        & (/PFAFileDatum%fileName /), where=where_at(where) )
     nullify ( myMolecules, mySignalStrings )
     call loadPtrFromHDF5DS ( groupID, 'Molecules', myMolecules )
     call loadPtrFromHDF5DS ( groupID, 'Signals', mySignalStrings )
@@ -689,16 +689,16 @@ contains ! =====     Public Procedures     =============================
         if ( PFAFileDatum%fileName /= 0 ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & "The string " // trim(myMolecules(g)) // &
-            & " in %s at %l is not a molecule.%n" // &
+            & " in %s at %w is not a molecule.%n" // &
             & "Molecule list probably changed after PFA tables generated.", &
-            & (/PFAFileDatum%fileName,source_ref(where)/) )
+            & (/PFAFileDatum%fileName /), where=where_at(where) )
         else
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & "The string " // trim(myMolecules(g)) // &
             & " in " // trim(PFAFileDatum%namestring) // &
-            & " at %l is not a molecule.%n" // &
+            & " at %w is not a molecule.%n" // &
             & "Molecule list probably changed after PFA tables generated.", &
-            & source_ref(where) )
+            & where=where_at(where) )
         end if
       end if
       PFAData(iPFA)%signal = &
@@ -797,13 +797,14 @@ contains ! =====     Public Procedures     =============================
     use MOREMESSAGE, only: MLSMESSAGE
     use MORETREE, only: GETSTRINGINDEXFROMSTRING
     use PARSE_SIGNAL_M, only: GET_INDIVIDUAL_SIGNALS
+    use Tree, only: Where_At => Where
     ! HDF5 INTENTIONALLY LAST TO AVOID LONG LF95 COMPILES
     use HDF5, only: H5FCLOSE_F, H5GCLOSE_F
 
     integer, intent(in) :: FileNameIndex
     integer, intent(in) :: FileTypeIndex ! HDF5 is all we can do
     integer, intent(in) :: TheMolecules(:), TheSignals(:)
-    integer, intent(in) :: Where ! Source_ref field, for error messages
+    integer, intent(in) :: Where ! tree index, for error messages
 
     integer, pointer :: AllSignals(:) ! String table indices for AllSignalStrings
     character(len=maxSigLen), pointer :: AllSignalStrings(:) ! from expanding a signal
@@ -880,8 +881,8 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( allSignals, 'AllSignals', moduleName )
       call deallocate_test ( allSignalStrings, 'AllSignalStrings', moduleName )
       if ( nPFA == 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'No PFA Data to read from %s at %l.', &
-        & (/ fileNameIndex, where /) )
+        & 'No PFA Data to read from %s at %w.', &
+        & (/ fileNameIndex /), where=where_at(where) )
 
       ! Read the groups
       call openPFAFile ( PFAFiles(f), where )
@@ -892,16 +893,17 @@ contains ! =====     Public Procedures     =============================
           & PFAData(PFAFiles(f)%ix(g)), .true., f=f, g=g )
         call h5gClose_f ( PFAData(PFAFiles(f)%ix(g))%HDF5_groupID, iostat )
         if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to close HDF5 PFA group %s%%s in %s at %l.', &
+          & 'Unable to close HDF5 PFA group %s%%s in %s at %w.', &
           & (/lit_indices(PFAData(PFAFiles(f)%ix(g))%molecule),&
-          &   PFAData(PFAFiles(f)%ix(g))%signal,PFAFiles(f)%fileName,where/) )
+          &   PFAData(PFAFiles(f)%ix(g))%signal,PFAFiles(f)%fileName/), &
+          &   where=where_at(where) )
         PFAData(PFAFiles(f)%ix(g))%open = .false.
       end do ! i = 1, nPFA
       call H5FClose_F ( PFAFiles(f)%HDF5_FileID, iostat )
       PFAFiles(f)%open = .false.
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close PFA data file %s at %l.', &
-        & (/PFAFiles(f)%fileName,where/) )
+        & 'Unable to close PFA data file %s at %w.', &
+        & (/PFAFiles(f)%fileName/),where=where_at(where) )
       call deallocate_test ( groups, 'Groups', moduleName )
 !   else
 !     Nothing -- Read_PFAData only allows HDF5 file type
@@ -1169,6 +1171,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMSG_Error, MLSMSG_FileOpen
     use MoreMessage, only: MLSMessage
     use String_Table, only: Get_String
+    use Tree, only: Where_At => Where
     use HDF5, only: H5F_ACC_RDONLY_F, H5FOpen_F
     type(PFAFile_t), intent(inout) :: PFAFileDatum
     integer, intent(in) :: Where
@@ -1184,8 +1187,8 @@ contains ! =====     Public Procedures     =============================
     call h5fopen_f ( trim(PFAFileName), H5F_ACC_RDONLY_F, &
       & PFAFileDatum%HDF5_fileID, stat )
     if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Fileopen // ' %s (HDF5 PFA data) at %l.', &
-          & (/PFAFileDatum%fileName,where/) )
+          & MLSMSG_Fileopen // ' %s (HDF5 PFA data) at %w.', &
+          & (/PFAFileDatum%fileName/),where=where_at(where) )
     PFAFileDatum%open = .true.
   end subroutine OpenPFAFile
 
@@ -1195,6 +1198,7 @@ contains ! =====     Public Procedures     =============================
     use String_Table, only: Get_String, String_Length
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MoreMessage, only: MLSMessage
+    use Tree, only: Where_At => Where
     use HDF5, only: H5GOpen_f
     type(PFAFile_t), intent(inout) :: PFAFileDatum
     type(PFAData_t), intent(inout) :: PFADatum
@@ -1213,8 +1217,8 @@ contains ! =====     Public Procedures     =============================
         & PFADatum%HDF5_groupID, iostat )
       if ( iostat /= 0 ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to open HDF5 PFA group ' // theGroup(:l) // ' in %s at %l.', &
-          & (/PFAFileDatum%fileName,where/) )
+          & 'Unable to open HDF5 PFA group ' // theGroup(:l) // ' in %s at %w.', &
+          & (/PFAFileDatum%fileName/),where=where_at(where) )
       PFADatum%open = .true.
     end if
   end subroutine OpenPFAGroup
@@ -1359,6 +1363,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.47  2013/09/24 23:28:17  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.46  2013/08/30 03:56:23  vsnyder
 ! Revise use of trace_begin and trace_end
 !
