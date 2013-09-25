@@ -169,6 +169,18 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
         integer*2, dimension(:)   :: interpValue
       end function PGS_DEM_GetPoint
 
+      integer function PGS_DEM_GetSize( resolution, qualityField, &
+        & positionCode, latitude, longitude, numVertPix, numHorizPix, pixByte )
+        integer, intent(in)   :: resolution
+        integer, intent(in)   :: qualityField
+        integer, intent(in)   :: positionCode
+        double precision, dimension(2) :: latitude
+        double precision, dimension(2) :: longitude
+        integer, intent(out)  :: numVertPix
+        integer, intent(out)  :: numHorizPix
+        integer, intent(out)  :: pixByte
+      end function PGS_DEM_GetSize
+
       integer function PGS_DEM_GetQualityData( resolution, qualityField, &
         & positionCode, latitude, longitude, qualityData )
         integer, intent(in)   :: resolution
@@ -178,6 +190,17 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
         double precision, dimension(2) :: longitude
         integer*2, dimension(:)   :: qualityData
       end function PGS_DEM_GetQualityData
+
+      integer function PGS_DEM_SortModels( resolutionList, numResolutions, &
+        & layer, positionCode, latitude, longitude, completeData )
+        integer, dimension(2) :: resolutionList
+        integer, intent(in)   :: numResolutions
+        integer, intent(in)   :: layer
+        integer, intent(in)   :: positionCode
+        double precision, dimension(2) :: latitude
+        double precision, dimension(2) :: longitude
+        integer, intent(out)  :: completeData
+      end function PGS_DEM_SortModels
 
 ! Metadata functions
 ! In the following, groups or imd_group will be
@@ -276,6 +299,9 @@ end module SDPToolkit
 
 !
 ! $Log$
+! Revision 2.21  2013/09/25 00:46:27  pwagner
+! Added 2 more DEM interfaces
+!
 ! Revision 2.20  2013/09/21 00:22:21  pwagner
 ! Added PGS_DEM stuff
 !
