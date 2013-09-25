@@ -74,6 +74,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! Dump_vectors                 Display how vector database is made up
 ! Dump_Vector_Quantity         Display a vector quantity
 ! Dump_vector_templates        Display how vector template database is made up
+! GatherVectorQuantity         Returns a new quantity whose values are
+!                                the smaller set in the hyperslab described
+!                                by start, count, stride, block
 ! GetVectorQuantity            Returns pointer to quantity by name in vector
 ! GetVectorQuantityByType      Returns pointer to quantity by type in vector
 ! GetVectorQtyByTemplateIndex  Returns pointer to quantity by template in vector
@@ -111,11 +114,12 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use BITSTUFF, only: DUMPBITNAMES, ISBITSET
   use DUMP_0, only: DIFF, DUMP
   use INTRINSIC, only: LIT_INDICES, PHYQ_INVALID, L_VMR
-  use Lexer_Core, only: Where_T
+  use LEXER_CORE, only: WHERE_T
+  use MLSFILLVALUES, only: EXTRACTARRAY
+  use MLSFINDS, only: FINDFIRST, FINDUNIQUE
   use MLSKINDS, only: R8, RV
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, MLSMESSAGECONFIG, &
     & MLSMSG_DEALLOCATE, MLSMSG_WARNING, MLSMESSAGE
-  use MLSFINDS, only: FINDFIRST, FINDUNIQUE
   use MLSSIGNALS_M, only: MODULES, SIGNALS, GETSIGNALNAME
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, CHECKINTEGRITY, &
@@ -151,7 +155,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: DUMPVECTORNORMS
   public :: DUMP_VECTOR, DUMP_VECTORS, DUMP_VECTOR_QUANTITY
   public :: DUMP_VECTOR_TEMPLATE, DUMP_VECTOR_TEMPLATES
-  public :: GETVECTORQUANTITY, GETVECTORQUANTITYBYTYPE
+  public :: GATHERVECTORQUANTITY, GETVECTORQUANTITY, GETVECTORQUANTITYBYTYPE
   public :: GETVECTORQTYBYTEMPLATEINDEX, GETVECTORQUANTITYINDEXBYNAME
   public :: GETVECTORQUANTITYINDEXBYTYPE, INFLATEVECTORDATABASE
   public :: INFLATEVECTORTEMPLATEDATABASE, ISVECTORQTYMASKED
@@ -2222,6 +2226,29 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine Dump_Vector_Templates
 
+  ! ------------------------------------------  GatherVectorQuantity  -----
+  function GatherVectorQuantity ( quantity, start, count, stride, block )
+
+  ! This function returns a pointer to the information about one quantity
+  ! within a vector.
+
+    ! Dummy arguments
+    type(VectorValue_T), pointer :: Quantity
+    integer, dimension(:), intent(in) :: start
+    integer, dimension(:), intent(in) :: count
+    integer, dimension(:), intent(in) :: stride
+    integer, dimension(:), intent(in) :: block
+
+    ! Result
+    type(VectorValue_T), pointer :: GatherVectorQuantity
+
+    call CloneVectorQuantity( GatherVectorQuantity, quantity )
+    call DestroyVectorQuantityValue( GatherVectorQuantity, destroyMask=.true., &
+      & destroyTemplate=.false. )
+    call ExtractArray ( GatherVectorQuantity%values, quantity%values, &
+      & start, count, stride, block, options='-a' )
+  end function GatherVectorQuantity
+
   ! ------------------------------------------  GetVectorQuantity  -----
   function GetVectorQuantity ( vector, quantity )
 
@@ -3239,6 +3266,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.183  2013/09/24 23:27:14  vsnyder
+! Use Get_Where or Print_Source to start error messages
+!
 ! Revision 2.182  2013/08/17 00:17:24  pwagner
 ! Guard against certain crashes with non-Aura datasets
 !
