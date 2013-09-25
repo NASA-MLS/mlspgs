@@ -432,6 +432,7 @@ contains
     integer, intent(in) :: File_Name      ! String index
     logical, intent(out) :: Exist
     character(len=*), intent(out) :: Full_Text
+    logical :: Change
     integer :: I, L
     exist = .false.
     do i = 1, size(directories)
@@ -446,15 +447,29 @@ contains
       end if
       call get_string ( file_name, full_text(l:), strip=.true. )
       inquire ( file=full_text, exist=exist )
-      if ( exist ) return
+      if ( exist ) exit
     end do
-    call get_string ( file_name, full_text, strip=.true. )
-    ! Remove multiple slashes from path name; inquire opened seems not
-    ! to catch circular includes in this case
-    do
+    if ( .not. exist ) call get_string ( file_name, full_text, strip=.true. )
+    ! Remove multiple slashes from path name and replace instances of /./
+    ! with /; inquire opened seems not to catch circular includes in these cases
+    change = .true.
+    do while ( change )
+      change = .false.
       i = index(full_text, '//')
-      if ( i == 0 ) exit
-      full_text(i:) = full_text(i+1:)
+      if ( i /= 0 ) then
+        change = .true.
+        full_text(i:) = full_text(i+1:)
+      end if
+      i = index(full_text, '/./')
+      if ( i /= 0 ) then
+        change = .true.
+        full_text(i:) = full_text(i+2:)
+      end if
+    end do
+    ! Remove prefixes of "./"; inquire opened seems not
+    ! to catch circular includes in this case
+    do while ( full_text(1:2) == './' )
+      full_text = full_text(3:)
     end do
     inquire ( file=full_text, exist=exist )
   end subroutine Find_File
@@ -1263,6 +1278,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.40  2013/09/25 02:05:15  vsnyder
+! Even more improved include loop detector
+!
 ! Revision 2.39  2013/09/25 01:02:10  vsnyder
 ! Improved include loop detector
 !
