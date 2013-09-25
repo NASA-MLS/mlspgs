@@ -887,7 +887,8 @@ contains
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, &
       & CLONEVECTORQUANTITY, CREATEVECTORVALUE, &
-      & DESTROYVECTORQUANTITYVALUE, DUMP, GETVECTORQTYBYTEMPLATEINDEX
+      & DESTROYVECTORQUANTITYVALUE, DUMP, GATHERVECTORQUANTITY, &
+      & GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy args
     integer, intent(in) :: NAME
     integer, intent(in) :: ROOT
@@ -1164,7 +1165,7 @@ contains
       & FIELD_FIRST, FIELD_LAST
     use L2PARINFO, only: PARALLEL, CLOSEPARALLEL
     use L2PC_M, only: L2PCDATABASE, DUMPL2PC => DUMP
-    use Lexer_Core, only: Get_Where, Where_t
+    use LEXER_CORE, only: GET_WHERE, WHERE_T
     use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use MACHINE, only: NEVERCRASH
     use MATRIXMODULE_1, only: MATRIX_T, MATRIX_DATABASE_T, &
@@ -1194,12 +1195,12 @@ contains
     use STRING_TABLE, only: GET_STRING
     use TIME_M, only: FINISH
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, Where
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END, WHERE
+    use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_SPEC_ARGS
     use VECTORSMODULE, only: VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, &
-      & DIFF, DUMP, DUMPQUANTITYMASK, DUMPVECTORMASK, & ! FOR VECTORS, VECTOR QUANTITIES AND TEMPLATES
-      & GETVECTORQUANTITY, GETVECTORQTYBYTEMPLATEINDEX, &
+      & DIFF, DUMP, DESTROYVECTORQUANTITYVALUE, DUMPQUANTITYMASK, DUMPVECTORMASK, &
+      & GATHERVECTORQUANTITY, GETVECTORQUANTITY, GETVECTORQTYBYTEMPLATEINDEX, &
       & GETVECTORQUANTITYINDEXBYNAME
     use VGRIDSDATABASE, only: DUMP, VGRIDS
 
@@ -1328,6 +1329,7 @@ contains
       L2CFNODE = son
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       where_at = where(gson) ! column + 256*line in l2cf & file name
+      source = source_ref(gson) ! column + 256*line in l2cf
       got(fieldIndex) = .true.
       select case ( fieldIndex )
       ! This first heaped set of fields need no "right-hand side"
@@ -1504,12 +1506,12 @@ contains
                 & before="Program stopped by /stop field on DUMP statement at ", &
                 & after="." )
               call MLSMessageExit( farewell=farewell )
-            end if
+            endif
           case ( f_stopWithError )
             if ( switchDetail(switches, 'time') >= 0 ) then
               call output('(Now for the timings summary)', advance='yes')
               call dump_section_timings
-            end if
+            endif
             call get_where ( where_at, farewell, &
               & before="Program stopped by /stopWithError field on DUMP statement at ", &
                 & after="." )
@@ -1747,14 +1749,24 @@ contains
               & vectors(vectorIndex), quantityIndex), &
               & details=details, options=optionsString )
           else
+
+            if ( clean ) optionsString = trim(optionsString) // 'c'
+            ! Special hyperslab handling
+            ! We create a new vector quantity qty2 based on qty1
+            ! dump that
+            ! and then destroy it
+            if ( any(got( (/f_start, f_count, f_stride, f_block/) ) ) ) then
+              qty2 = GatherVectorQuantity( qty1, start, count, stride, block ) 
+              call dump ( qty2, details=details, &
+                & vector=vectors(vectorIndex), options=optionsString )
+              call DestroyVectorQuantityValue( qty2, destroyMask=.true., &
+                & destroyTemplate=.true. )
             ! Special options handling
             ! 'c' means clean
             ! '0' means dump template
             ! '1' means dump values
             ! '2' means dump mask
-
-            if ( clean ) optionsString = trim(optionsString) // 'c'
-            if ( .not. any(indexes(optionsString, (/'0','1','2'/)) > 0 ) ) then
+            elseif ( .not. any(indexes(optionsString, (/'0','1','2'/)) > 0 ) ) then
               call dump ( qty1, details=details, &
                 & vector=vectors(vectorIndex), options=optionsString )
             else if ( index(optionsString, '1') > 0 ) then
@@ -2612,6 +2624,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.98  2013/09/25 16:33:27  pwagner
+! Uses hyperslab fields when dumping vector.quantities
+!
 ! Revision 2.97  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
