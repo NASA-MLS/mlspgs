@@ -57,7 +57,8 @@ program MLSL2
   use PARSER, only: CONFIGURATION
   use PrintIt_m, only: Set_Config, StdoutLogUnit
   use PVM, only: CLEARPVMARGS, FREEPVMARGS
-  use SDPTOOLKIT, only: USESDPTOOLKIT
+  use SDPTOOLKIT, only: PGSd_DEM_30ARC, PGSd_DEM_90ARC, &
+    & PGSd_DEM_ELEV, PGSd_DEM_WATER_LAND, USESDPTOOLKIT, PGS_DEM_CLOSE
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, GET_STRING, ADDINUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
@@ -164,6 +165,11 @@ program MLSL2
 
   type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
   type (MLSFile_T)                        ::     MLSL2CF
+  ! DEM nonsense
+  integer, dimension(2) :: resolutionList
+  integer   :: numResolutions
+  integer, dimension(2) :: layerList
+  integer   :: numLayers
   ! Executable
   nullify (filedatabase)
   !---------------- Task (1) ------------------
@@ -503,6 +509,18 @@ program MLSL2
       end if
     end if
   end if
+  if ( Toolkit ) then
+    ! Coda
+    numResolutions = 2
+    numLayers = 2
+    resolutionList(1) = PGSd_DEM_30ARC
+    resolutionList(2) = PGSd_DEM_90ARC
+    layerList(1) = PGSd_DEM_ELEV
+    layerList(2) = PGSd_DEM_WATER_LAND
+    status = PGS_DEM_Close ( resolutionList, numResolutions, &
+      & layerList, numLayers )
+    call outputNamedValue( 'PGS_DEM_Close status', status )
+  endif
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
   if ( trackAllocates > 0 ) call ReportLeaks ( "At end of program execution..." )
@@ -718,6 +736,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.197  2013/09/25 18:51:55  pwagner
+! Closes DEM stuff before exiting
+!
 ! Revision 2.196  2013/09/06 20:58:18  pwagner
 ! Trying again to prevent slaves from logging to toolkit
 !
