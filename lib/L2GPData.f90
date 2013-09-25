@@ -836,6 +836,14 @@ contains ! =====     Public Procedures     =============================
     call SetupNewQuantityTemplate ( Quantity%template, l2gp%nTimes, l2gp%nLevels, &
       & 1, .true., .true., .true. )
     call CreateVectorValue ( Quantity, 'L2GP'  )
+    ! Don't bother copying any of the gelocations if l2gp%latitudes not associated
+    if ( .not. associated(l2gp%latitude) ) return
+    Quantity%template%geodLat(1,:)        = l2gp%latitude
+    Quantity%template%lon(1,:)            = l2gp%longitude
+    Quantity%template%time(1,:)           = l2gp%time
+    Quantity%template%losAngle(1,:)       = l2gp%losAngle
+    Quantity%template%solarTime(1,:)      = l2gp%solarTime
+    Quantity%template%solarZenith(1,:)    = l2gp%solarZenith
     if ( associated(l2gp%l2gpValue) ) Quantity%values = l2gp%l2gpValue(1,:,:)
   end subroutine ConvertL2GPToQuantity
 
@@ -5128,6 +5136,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.196  2013/09/24 00:53:53  pwagner
+! Can now convert an l2gpData type to a vector quantity
+!
 ! Revision 2.195  2013/09/17 22:35:40  pwagner
 ! Changed api of Embed, Extract arrays to match hyperslab
 !
