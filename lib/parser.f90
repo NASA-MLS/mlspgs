@@ -587,18 +587,21 @@ o:  do
 
 ! ---------------------------------------------------  DO_INCLUDE  -----
   subroutine Do_Include
+    use Lexer_Core, only: Where_t
     use String_Table, only: Open_Include
     integer :: File
+    type(where_t) :: Where_at ! In case Open_Include needs to print a message
     if ( toggle(par) ) call where ( 'Do_Include' )
     call lexer ( next )
     if ( next%class == t_string ) then
+      where_at = next%where
       file = next%string_index
       call lexer ( next )
       if ( next%class /= t_end_of_stmt ) then
         error = max(error,1)
         call announce_error ( (/ t_end_of_stmt /) )
       else
-        call open_include ( file )
+        call open_include ( file, where_at%source, where_at%file )
       end if
     else
       call announce_error ( (/ t_string /) )
@@ -653,6 +656,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.27  2013/09/25 01:02:41  vsnyder
+! Add include files
+!
 ! Revision 2.26  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !
