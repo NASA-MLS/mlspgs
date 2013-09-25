@@ -29,11 +29,11 @@ module STRING_TABLE
   public :: ALLOCATE_HASH_TABLE, ALLOCATE_STRING_TABLE, CLEAR_STRING
   public :: COMPARE_STRINGS, CREATE_STRING, DESTROY_CHAR_TABLE
   public :: DESTROY_HASH_TABLE, DESTROY_STRING_TABLE, DISPLAY_STRING
-  public :: DISPLAY_STRING_LIST, ENTER_STRING, FIND_FILE, FLOAT_VALUE, GET_CHAR
-  public :: GET_STRING, HOW_MANY_STRINGS, INCLUDE_STACK_TOP, INDEX
-  public :: INIT_STRING_TABLE, INDEX_IN_STRING, LEN, LOOKUP, LOOKUP_AND_INSERT
-  public :: NEW_LINE, NUMERICAL_VALUE, OPEN_INCLUDE, OPEN_INPUT, STRING_LENGTH
-  public :: STRING_TABLE_SIZE, UNGET_CHAR
+  public :: DISPLAY_STRING_LIST, DUMP_INUNIT_STACK, ENTER_STRING, FIND_FILE
+  public :: FLOAT_VALUE, GET_CHAR, GET_STRING, HOW_MANY_STRINGS, INCLUDE_STACK_TOP
+  public :: INDEX, INIT_STRING_TABLE, INDEX_IN_STRING, LEN, LOOKUP
+  public :: LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE, OPEN_INCLUDE, OPEN_INPUT
+  public :: STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR
 
   ! Public variables and named constants
   public :: Do_Listing, EOF, EOL, Includes, Source_Line, Source_Column
@@ -384,6 +384,23 @@ contains
     call display_string ( string(size(string)), advance, strip, ierr, before=' ')
     if ( present(ierr) )  ierr = max(jerr,ierr)
   end subroutine DISPLAY_STRING_LIST
+  ! ====================================     DUMP_INUNIT_STACK     =====
+  subroutine DUMP_INUNIT_STACK
+    integer :: I
+    if ( .not. allocated(inunit_stack) .or. inunit_stack_ptr <= 0 ) then
+      call output ( "There is no inunit stack to dump", advance="yes" )
+      return
+    end if
+    call output ( "Inunit Stack, top down", advance="yes" )
+    do i = inunit_stack_ptr, 1, -1
+      call output ( i, format='(i3)' )
+      call output ( inunit_stack(i)%unit, before=': unit ' )
+      call output ( inunit_stack(i)%line, before=', line ' )
+      call output ( inunit_stack(i)%column, before=', column ' )
+      call output ( inunit_stack(i)%file, before=', file ' )
+      call display_string ( inunit_stack(i)%file, before=': ', advance='yes' )
+    end do
+  end subroutine DUMP_INUNIT_STACK
   ! ====================================     DUMP_STRING_TABLE     =====
   subroutine DUMP_STRING_TABLE
   ! Dump the entire string table
@@ -422,8 +439,8 @@ contains
       if ( directories(i) > 0 ) then
         call get_string ( directories(i), full_text, strip=.true. )
         l = string_length(directories(i)) + 1
-        if ( full_text(l:l) /= '/' ) then
-          full_text(l:l) = '/'
+        if ( full_text(l-1:l-1) /= '/' ) then
+          full_text(l-1:l-1) = '/'
           l = l + 1
         end if
       end if
@@ -432,6 +449,13 @@ contains
       if ( exist ) return
     end do
     call get_string ( file_name, full_text, strip=.true. )
+    ! Remove multiple slashes from path name; inquire opened seems not
+    ! to catch circular includes in this case
+    do
+      i = index(full_text, '//')
+      if ( i == 0 ) exit
+      full_text(i:) = full_text(i+1:)
+    end do
     inquire ( file=full_text, exist=exist )
   end subroutine Find_File
  ! ===========================================     FLOAT_VALUE     =====
@@ -735,11 +759,12 @@ contains
     end subroutine GET_VALUE
   end function NUMERICAL_VALUE
   ! =========================================     OPEN_INCLUDE     =====
-  subroutine Open_Include ( File_Name, Stat )
+  subroutine Open_Include ( File_Name, Source, InFile, Stat )
   ! Check the inunit stack to make sure File_Name isn't there.  If not,
   ! put it on the stack and open the file.
 
     integer, intent(in) :: File_Name ! String index
+    integer, intent(in) :: Source, InFile ! 256*line+column, string index
     integer, optional, intent(out) :: STAT
 
     integer :: Dir    ! Directory string index from includes list
@@ -788,23 +813,38 @@ contains
     end if
     myFile = create_string ( trim(myName) )
     if ( any(inunit_stack(:inunit_stack_ptr)%file == myFile) ) then
-      call display_string ( myFile, &
-        & before='STRING_TABLE%OPEN_INCLUDE-E- Circular Include involving ', &
-        & advance='yes' )
-      call crash_burn
+      call loop
+      return
+    end if
+    inquire ( file=myName, opened=exist )
+    if ( exist )  then
+      call loop
       return
     end if
     inunit_stack_ptr = inunit_stack_ptr + 1
     inunit_stack(inunit_stack_ptr)%file = myFile
-    call open_input ( myName, stat=stat, unit=inunit_stack(inunit_stack_ptr)%unit )
     inunit_stack(inunit_stack_ptr)%line = source_line
     inunit_stack(inunit_stack_ptr)%column = source_column
+    call open_input ( myName, stat=stat, unit=inunit_stack(inunit_stack_ptr)%unit )
+  contains
+    subroutine Loop
+      call display_string ( myFile, &
+        & before='STRING_TABLE%OPEN_INCLUDE-E- Circular Include involving ', &
+        & advance='yes' )
+      call output ( source/256, before='Line ' )
+      call output ( mod(source,256), before=', column ' )
+      if ( inFile /= 0 ) call display_string ( inFile, before = ' in ' )
+      call output ( '', advance='yes' )
+      call crash_burn
+      return
+    end subroutine Loop
   end subroutine Open_Include
   ! ===========================================     OPEN_INPUT     =====
   subroutine OPEN_INPUT ( FILE_NAME, STAT, UNIT )
   ! Open the file given by FILE_NAME for input.  If it can't be opened and
   ! STAT is present, return the status.  If it can't be opened and STAT is
-  ! absent, ask the user for it.
+  ! absent, ask the user for it.  If Unit is not present, add it to the
+  ! input unit queue using AddInUnit.
     character(len=*), intent(in) :: FILE_NAME
     integer, optional, intent(out) :: STAT
     integer, optional, intent(out) :: UNIT ! Use this instead of AddInUnit
@@ -1223,6 +1263,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.39  2013/09/25 01:02:10  vsnyder
+! Improved include loop detector
+!
 ! Revision 2.38  2013/09/24 23:07:16  vsnyder
 ! Add Includes, Open_Include, Find_File
 !
