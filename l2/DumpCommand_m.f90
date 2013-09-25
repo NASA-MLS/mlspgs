@@ -1195,8 +1195,8 @@ contains
     use STRING_TABLE, only: GET_STRING
     use TIME_M, only: FINISH
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END, WHERE
-    use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, WHERE
     use TREE_TYPES, only: N_SPEC_ARGS
     use VECTORSMODULE, only: VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, &
       & DIFF, DUMP, DESTROYVECTORQUANTITYVALUE, DUMPQUANTITYMASK, DUMPVECTORMASK, &
@@ -1329,7 +1329,6 @@ contains
       L2CFNODE = son
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       where_at = where(gson) ! column + 256*line in l2cf & file name
-      source = source_ref(gson) ! column + 256*line in l2cf
       got(fieldIndex) = .true.
       select case ( fieldIndex )
       ! This first heaped set of fields need no "right-hand side"
@@ -2624,6 +2623,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.99  2013/09/25 18:46:50  pwagner
+! Fixed bug introduced with last commit
+!
 ! Revision 2.98  2013/09/25 16:33:27  pwagner
 ! Uses hyperslab fields when dumping vector.quantities
 !
