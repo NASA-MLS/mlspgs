@@ -2392,35 +2392,80 @@ contains ! =====     Public Procedures     =============================
     ! If source quantity is present use geoid data to make it
     ! relative to geoid instead of ellipsoid
     subroutine GeoidData ( quantity, sourceQuantity, resolution )
-      use SDPTOOLKIT, only: PGSd_DEM_90ARC, PGSd_DEM_GEOID, PGSd_DEM_DEGREE, &
-        & PGS_DEM_GETQUALITYDATA
+      use SDPTOOLKIT, only: PGSd_DEM_30ARC, PGSd_DEM_90ARC, PGSd_DEM_GEOID, &
+        & PGSd_DEM_DEGREE !, &
+!        & PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
       type(VectorValue_T), intent(inout)        :: QUANTITY
       type(VectorValue_T), intent(in), optional :: SOURCEQUANTITY
       integer, intent(in), optional             :: RESOLUTION
       ! Local variables
-      integer*2, dimension(40)          :: BUFFER
+      integer*2, dimension(4000)        :: BUFFER
       integer :: I                      ! Instance loop counter
       integer :: J                      ! Destination index
-      double precision, parameter       :: DLATRANGE = 0.5d0
+      double precision, parameter       :: DLATRANGE = 5.0d-1
       double precision, parameter       :: DLONRANGE = 1.0d0
       double precision, dimension(2)    :: latitude
       double precision, dimension(2)    :: longitude
       integer :: Me = -1                ! String index for trace
       integer :: MYRESOLUTION              ! Possibly offset channel
+      integer :: NUMRESOLUTIONS
+      integer :: NUMVERTPIX
+      integer :: NUMHORIZPIX
+      integer :: PIXBYTE
+      integer, dimension(2) :: resolutionList
       integer :: STATUS
+      integer, dimension(2) :: COMPLETEDATA
+      integer, external :: PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
 
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.GeoidData', 0, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
       myResolution = PGSd_DEM_90ARC
       if ( present(resolution) ) myResolution = resolution
+      numResolutions = 2
+      resolutionList(1) = PGSd_DEM_30ARC
+      resolutionList(2) = PGSd_DEM_90ARC
       do I=1, quantity%template%noInstances
-        latitude(1) = quantity%template%geodLat(1, i) - dlatRange
-        latitude(2) = quantity%template%geodLat(1, i) + dlatRange
-        longitude(1) = quantity%template%lon(1, i) - dlonRange
-        longitude(2) = quantity%template%lon(1, i) + dlonRange
+        latitude(1) =  quantity%template%geodLat(1, i) + dlatRange
+        latitude(2) =  quantity%template%geodLat(1, i) - dlatRange
+        longitude(1) =  quantity%template%lon(1, i) - dlonRange
+        longitude(2) =  quantity%template%lon(1, i) + dlonRange
+        ! Ensure latitudes, longitudes within permissible ranges:
+        ! -90 < lat < 90
+        ! -180 < lon < 180
+        latitude = min(latitude, 90.d0)
+        latitude = max(latitude, -90.d0)
+        longitude = min(longitude, 179.d0)
+        longitude = max(longitude, -179.d0)
+        ! status = PGS_DEM_sortModels ( ResolutionList, numResolutions, &
+        !  & PGSd_DEM_geoid, PGSd_DEM_degree, latitude, longitude, &
+        !  & completeData(1) )
+        ! call outputNamedValue( 'status (sortModels)', status )
+        ! call outputNamedValue( 'latitude', latitude )
+        ! call outputNamedValue( 'longitude', longitude )
+        ! call outputNamedValue( 'completeData(1)', completeData(1) )
+
+        ! status = PGS_DEM_getsize ( myResolution, &
+         ! & PGSd_DEM_geoid, PGSd_DEM_degree, latitude, longitude, &
+         ! & numVertPix, numHorizPix, pixByte )
+      !    call outputNamedValue( 'status (GetSize)', status )
+      !    call outputNamedValue( 'latitude', latitude )
+      !    call outputNamedValue( 'longitude', longitude )
+      !    call outputNamedValue( 'numVertPix', status )
+      !    call outputNamedValue( 'numHorizPix', status )
+      !    call outputNamedValue( 'PixByte', status )
+
         status = PGS_DEM_getqualitydata (myResolution, &
           & PGSd_DEM_geoid, PGSd_DEM_degree, latitude, longitude, buffer )
+        if ( status /= 0 ) then
+           call outputNamedValue( 'latitude', latitude )
+           call outputNamedValue( 'longitude', longitude )
+           call outputNamedValue( 'i', i )
+           call outputNamedValue( 'status(getQuality)', status )
+           call dump( buffer, 'buffer' )
+           call MLSMessage ( MLSMSG_Error, &
+            & ModuleName, "nonzero status in GeodData; must quit" )
+        endif
         if ( present(sourceQuantity)) then
           do j=1, quantity%template%noSurfs
             quantity%values(j, i) = sourceQuantity%values(j, i) - buffer(1)
@@ -7268,6 +7313,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.89  2013/09/25 16:39:53  pwagner
+! Repaired GeoidData
+!
 ! Revision 2.88  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
