@@ -260,7 +260,10 @@ contains
     use PFADATABASE_M, only: PROCESS_PFA_FILE
     use PCFHDR, only: GLOBALATTRIBUTES, FILLTAI93ATTRIBUTE
     use READAPRIORI, only: APRIORIFILES
-    use SDPTOOLKIT, only: MAX_ORBITS, MLS_UTCTOTAI
+    use SDPTOOLKIT, only: MAX_ORBITS, MLS_UTCTOTAI, &
+      & PGSd_DEM_3ARC, PGSd_DEM_30ARC, PGSd_DEM_90ARC, &
+      & PGSd_DEM_ELEV, PGSd_DEM_WATER_LAND, &
+      & PGS_DEM_OPEN
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
@@ -331,6 +334,12 @@ contains
 
     integer, parameter :: Param_restricted = 1 ! Parameter not allowed
     integer, parameter :: Spec_restricted = param_restricted + 1 ! Spec not allowed
+    ! DEM nonsense
+    integer, dimension(2) :: resolutionList
+    integer   :: numResolutions
+    integer, dimension(2) :: layerList
+    integer   :: numLayers
+    ! Executable
 
     restricted = .not. all( (/present(FGrids), present(l2gpDatabase), &
                            present(DirectDatabase), present(processingRange) /))
@@ -357,6 +366,20 @@ contains
     elseif ( DetailReduction == 0 ) then ! By default, reduce details level by 2
       DetailReduction = 2
     end if
+    
+    ! Start Digital Elevation Model
+    if ( Toolkit ) then
+      ! Initialize
+      numResolutions = 2
+      numLayers = 2
+      resolutionList(1) = PGSd_DEM_30ARC
+      resolutionList(2) = PGSd_DEM_90ARC
+      layerList(1) = PGSd_DEM_ELEV
+      layerList(2) = PGSd_DEM_WATER_LAND
+      status = PGS_DEM_Open ( resolutionList, numResolutions, &
+        & layerList, numLayers )
+      call outputNamedValue( 'PGS_DEM_Open status', status )
+    endif
 
     do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
       son = subtree(i,root)
@@ -1253,6 +1276,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.148  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.147  2013/08/30 02:45:49  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
