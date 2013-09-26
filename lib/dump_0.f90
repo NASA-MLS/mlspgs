@@ -222,10 +222,10 @@ module DUMP_0
 
   interface DUMP        ! dump n-d arrays of homogeneous type
     module procedure DUMP_1D_BIT, DUMP_1D_CHAR, DUMP_1D_COMPLEX, DUMP_1D_DCOMPLEX
-    module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER
+    module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER, DUMP_1D_INTEGER_2B
     module procedure DUMP_1D_LOGICAL, DUMP_1D_REAL
     module procedure DUMP_2D_CHAR, DUMP_2D_COMPLEX, DUMP_2D_DCOMPLEX
-    module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER
+    module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER, DUMP_2D_INTEGER_2B
     module procedure DUMP_2D_LOGICAL, DUMP_2D_REAL
     module procedure DUMP_3D_CHAR, DUMP_3D_DOUBLE, DUMP_3D_INTEGER
     module procedure DUMP_3D_REAL, DUMP_3D_COMPLEX, DUMP_3D_DCOMPLEX
@@ -981,6 +981,30 @@ contains
     include 'dump1db.f9h'
   end subroutine DUMP_1D_INTEGER
 
+  ! --------------------------------------------  DUMP_1D_INTEGER_2B  -----
+  subroutine DUMP_1D_INTEGER_2B ( ARRAY, NAME, &
+    & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
+    integer*2, intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
+    integer, intent(in), optional :: LBOUND ! Low bound for Array
+    character(len=*), optional, intent(in) :: OPTIONS
+    character(len=*), intent(in), optional :: TheShape
+
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    integer, dimension(MAXNUMELEMENTS) :: elements
+    integer :: myFillValue
+    integer :: Base, J, K
+    character(len=64) :: MyFormat
+    integer :: MyWidth
+    integer :: NumZeroRows
+    integer :: nUnique
+    call dump( int(array), NAME, &
+    & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
+  end subroutine DUMP_1D_INTEGER_2B
+
   ! ----------------------------------------------  DUMP_1D_LOGICAL ----
   subroutine DUMP_1D_LOGICAL ( ARRAY, NAME, LBOUND, OPTIONS, TheShape )
     logical, intent(in) :: ARRAY(:)
@@ -1298,6 +1322,31 @@ contains
     include 'dump2d.f9h'
     include 'dump2db.f9h'
   end subroutine DUMP_2D_INTEGER
+
+  ! --------------------------------------------  DUMP_2D_INTEGER_2B  -----
+  recursive subroutine DUMP_2D_INTEGER_2B ( ARRAY, NAME, &
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+    integer*2, intent(in) :: ARRAY(:,:)
+    character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: FILLVALUE
+    character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
+    integer, intent(in), optional :: LBOUND ! to print for first dimension
+    character(len=*), intent(in), optional :: options
+    character(len=*), intent(in), optional :: TheShape
+
+    integer :: Base, I, J, K
+    integer :: MyWidth
+    integer :: NumZeroRows
+    integer :: myFillValue
+    character(len=64) :: MyFormat
+    integer :: nUnique
+    integer, dimension(MAXNUMELEMENTS) :: counts
+    integer, dimension(MAXNUMELEMENTS) :: elements
+
+    call dump( int(array), NAME, &
+    & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
+  end subroutine DUMP_2D_INTEGER_2B
 
   ! --------------------------------------------  DUMP_2D_LOGICAL  -----
   recursive subroutine DUMP_2D_LOGICAL ( ARRAY, NAME, OPTIONS, THESHAPE )
@@ -3344,6 +3393,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.129  2013/09/26 15:25:41  pwagner
+! Added 2-byte integer dumps
+!
 ! Revision 2.128  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
