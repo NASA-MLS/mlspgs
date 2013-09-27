@@ -782,9 +782,7 @@ contains
     integer, intent(in) :: Source, InFile ! 256*line+column, string index
     integer, optional, intent(out) :: STAT
 
-    integer :: Dir    ! Directory string index from includes list
     logical :: Exist  ! Does file exist?  For use in INQUIRE statement
-    integer :: Incl   ! Index in include directory list
     integer :: MyFile ! File_Name or string index of directory/file
     ! Can't use String_Length here because it's not pure
     ! Assume maximum include path name is 254.
@@ -794,10 +792,10 @@ contains
 
     myStat = 0
     if ( .not. allocated(inunit_stack) ) &
-      & allocate ( inunit_stack(:init_stack_size), stat=myStat )
+      & allocate ( inunit_stack(1:init_stack_size), stat=myStat )
     if ( myStat == 0 ) then
       if ( inunit_stack_ptr >= ubound(inunit_stack,1) ) then
-        allocate ( temp_stack(:2*ubound(inunit_stack,1)), stat=myStat )
+        allocate ( temp_stack(1:2*ubound(inunit_stack,1)), stat=myStat )
         if ( myStat == 0 ) then
           temp_stack(:ubound(inunit_stack,1)) = inunit_stack
           call move_alloc ( temp_stack, inunit_stack )
@@ -815,8 +813,6 @@ contains
       return
     end if
     ! Look for the file name in the directory list
-    dir = 0
-    incl = 0
     if ( .not. allocated(includes) ) allocate ( includes(1:0) ) ! Assume it worked
     call find_file ( includes, file_name, exist, myName )
     if ( .not. exist ) then
@@ -1278,6 +1274,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.41  2013/09/27 22:35:36  pwagner
+! Supplied lower bounds on allocates in Open_Include to mollify NAG
+!
 ! Revision 2.40  2013/09/25 02:05:15  vsnyder
 ! Even more improved include loop detector
 !
