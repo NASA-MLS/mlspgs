@@ -112,7 +112,7 @@ contains ! =====     Public Procedures     =============================
       & F_EXPLICITVALUES, F_EXPR, F_EXTINCTION, &
       & F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, F_SHAPE, &
       & F_FRACTION, F_FROMPRECISION, &
-      & F_GEOCALTITUDEQUANTITY, F_Geolocation, F_GPHQUANTITY, &
+      & F_GEOCALTITUDEQUANTITY, F_GEOLOCATION, F_GPHQUANTITY, &
       & F_HEIGHT, F_HDFVERSION, F_HEIGHTRANGE, F_HESSIAN, &
       & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IFMISSINGGMAO, &
@@ -2214,12 +2214,13 @@ end do
         endif
 
       case ( l_geoidData ) ! ------------  geoidData  -----
-        sourceQuantity => GetVectorQtyByTemplateIndex( &
-          & vectors(sourceVectorIndex), sourceQuantityIndex )
-        call geoidData ( quantity, sourceQuantity )
+        call geoidData ( quantity )
 
       case ( l_gphResetToGeoid ) ! ------------  gphResetToGeoid  -----
-        call geoidData ( quantity )
+        gphQuantity => GetVectorQtyByTemplateIndex( &
+          & vectors(GPHVectorIndex), GPHQuantityIndex )
+        call geoidData ( quantity, gphQuantity )
+
 
       case ( l_gphPrecision) ! -------------  GPH precision  -----
         ! Need a tempPrecision and a refgphPrecision quantity
@@ -3100,6 +3101,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.430  2013/09/27 00:39:59  pwagner
+! More intuitive interpretations for geoidData, gphResetToGeoid methods
+!
 ! Revision 2.429  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
