@@ -2240,8 +2240,9 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), intent(in) :: block
 
     ! Result
-    type(VectorValue_T), pointer :: GatherVectorQuantity
-
+    type(VectorValue_T) :: GatherVectorQuantity
+    ! Internal variables
+    ! Executable
     call CloneVectorQuantity( GatherVectorQuantity, quantity )
     call DestroyVectorQuantityValue( GatherVectorQuantity, destroyMask=.true., &
       & destroyTemplate=.false. )
@@ -3266,6 +3267,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.184  2013/09/25 00:58:15  pwagner
+! Added a gather operation for Vector quantities
+!
 ! Revision 2.183  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !
