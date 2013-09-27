@@ -1226,6 +1226,7 @@ contains
     character(len=255) :: Farewell
     integer :: FieldIndex
     integer :: FileIndex
+    character(8) :: fieldName
     logical, dimension(field_first:field_last) :: GOT
     logical :: GotFirst ! of something -- needed if diffing 2 of them
     logical :: GotOne ! of something -- used to test loop completion
@@ -1253,6 +1254,7 @@ contains
     integer :: QuantityIndex
     integer :: QuantityIndex2
     type (VectorValue_T), pointer :: QTY1, QTY2
+    type (VectorValue_T) :: VectorValue
     integer :: Son
     integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
     integer :: STARTNODE
@@ -1576,16 +1578,22 @@ contains
           select case ( fieldIndex )
           case ( f_start )
             start(jj) = mul
+            fieldName = 'start'
           case ( f_count )
             count(jj) = mul
+            fieldName = 'count'
           case ( f_stride )
             stride(jj) = mul
+            fieldName = 'stride'
           case ( f_block )
             block(jj) = mul
+            fieldName = 'block'
           end select
         end do
         if ( verbose ) then
-          call output('index start: ', advance='no')
+          call output('index ', advance='no')
+          call output(trim(fieldName), advance='no')
+          call output(':', advance='no')
           call output(valueAsArray, advance='yes')
         end if
       case ( f_file )
@@ -1755,10 +1763,10 @@ contains
             ! dump that
             ! and then destroy it
             if ( any(got( (/f_start, f_count, f_stride, f_block/) ) ) ) then
-              qty2 = GatherVectorQuantity( qty1, start, count, stride, block ) 
-              call dump ( qty2, details=details, &
-                & vector=vectors(vectorIndex), options=optionsString )
-              call DestroyVectorQuantityValue( qty2, destroyMask=.true., &
+              VectorValue = GatherVectorQuantity( qty1, start, count, stride, block ) 
+              call dump ( VectorValue, details=2, &
+                & vector=vectors(vectorIndex), options='-1' )
+              call DestroyVectorQuantityValue( VectorValue, destroyMask=.true., &
                 & destroyTemplate=.true. )
             ! Special options handling
             ! 'c' means clean
@@ -2623,6 +2631,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.100  2013/09/27 00:38:12  pwagner
+! May select hyperslab when dumping quantity
+!
 ! Revision 2.99  2013/09/25 18:46:50  pwagner
 ! Fixed bug introduced with last commit
 !
