@@ -2217,6 +2217,9 @@ end do
         call geoidData ( quantity )
 
       case ( l_gphResetToGeoid ) ! ------------  gphResetToGeoid  -----
+        if ( .not. got(f_GPHQuantity) ) &
+          call Announce_Error ( key, no_Error_Code, &
+          'Need gphQuantity for this method' )
         gphQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(GPHVectorIndex), GPHQuantityIndex )
         call geoidData ( quantity, gphQuantity )
@@ -3101,6 +3104,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.431  2013/09/28 00:31:34  pwagner
+! Added check for required GPHQuantity with gphResetToGeoid method
+!
 ! Revision 2.430  2013/09/27 00:39:59  pwagner
 ! More intuitive interpretations for geoidData, gphResetToGeoid methods
 !
