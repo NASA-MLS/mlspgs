@@ -13,14 +13,48 @@ module MoreTree
 
 ! Some routines for tree analysis that don't quite fit anywhere else.
 
+  use StartErrorMessage_m, only: StartErrorMessage ! bacause others use it from here
   use Tree, only: Decoration, Node_ID, NSons, Subtree
-  
+
   implicit NONE
   public
 
   interface FillArray
-    module procedure FillDecorArray, FillStringArray
+    module procedure FillDecorArray_I, FillDecorArray_TX
+    module procedure FillStringArray_I, FillStringArray_TX
   end interface FillArray
+
+  interface FillDecorArray
+    module procedure FillDecorArray_I, FillDecorArray_TX
+  end interface
+
+  interface FillStringArray
+    module procedure FillStringArray_I, FillStringArray_TX
+  end interface
+
+  interface FillSubrosaArray
+    module procedure FillSubrosaArray_I, FillSubrosaArray_TX
+  end interface
+
+  interface Get_Boolean
+    module procedure Get_Boolean_I, Get_Boolean_TX
+  end interface
+
+  interface Get_Dot_Decors
+    module procedure Get_Dot_Decors_I, Get_Dot_Decors_TX, Get_Dot_Decors_TX_TX
+  end interface
+
+  interface Get_Field_Id
+    module procedure Get_Field_Id_I, Get_Field_Id_TX
+  end interface
+
+  interface Get_Spec_Id
+    module procedure Get_Spec_Id_I, Get_Spec_Id_TX
+  end interface
+
+  interface Scalar
+    module procedure Scalar_I, Scalar_TX
+  end interface
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -30,8 +64,8 @@ module MoreTree
 
 contains ! ====     Public Procedures     ==============================
 
-  ! ---------------------------------------------  FillDecorArray  -----
-  integer function FillDecorArray ( Where, Array, ArrayName ) result(Error)
+  ! -------------------------------------------  FillDecorArray_I  -----
+  integer function FillDecorArray_I ( Where, Array, ArrayName ) result(Error)
     ! Fill Array with the decorations of sons 2..n of Where.
     ! Result > 0 => field had a range in it.
     ! Array is allocated here with Allocate_Test, so don't send me an
@@ -60,10 +94,23 @@ contains ! ====     Public Procedures     ==============================
         call display_string ( sub_rosa(subtree(1,where)), advance='yes' )
       end if
     end do
-  end function FillDecorArray
+  end function FillDecorArray_I
 
-  ! --------------------------------------------  FillStringArray  -----
-  integer function FillStringArray ( Where, Array, ArrayName ) result(Error)
+  ! ------------------------------------------  FillDecorArray_TX  -----
+  integer function FillDecorArray_TX ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the decorations of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Tree, only: TX
+    type(tx), intent(in) :: Where ! in the tree
+    integer, pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName ! For error message
+    error = fillDecorArray ( where%i, array, arrayName )
+  end function FillDecorArray_TX
+
+  ! ------------------------------------------  FillStringArray_I  -----
+  integer function FillStringArray_I ( Where, Array, ArrayName ) result(Error)
     ! Fill Array with the sub-rosas of sons 2..n of Where.
     ! Result > 0 => field had a range in it.
     ! Array is allocated here with Allocate_Test, so don't send me an
@@ -94,10 +141,24 @@ contains ! ====     Public Procedures     ==============================
         call display_string ( sub_rosa(subtree(1,where)), advance='yes' )
       end if
     end do
-  end function FillStringArray
+  end function FillStringArray_I
 
-  ! -------------------------------------------  FillSubrosaArray  -----
-  integer function FillSubrosaArray ( Where, Array, ArrayName ) result(Error)
+  ! -----------------------------------------  FillStringArray_TX  -----
+  integer function FillStringArray_TX ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the sub-rosas of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Tree, only: TX
+
+    type(tx), intent(in) :: Where ! in the tree
+    character(len=*), pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName ! For error message
+    error = fillStringArray ( where%i, array, arrayName )
+  end function FillStringArray_TX
+
+  ! -----------------------------------------  FillSubrosaArray_I  -----
+  integer function FillSubrosaArray_I ( Where, Array, ArrayName ) result(Error)
     ! Fill Array with the decorations of sons 2..n of Where.
     ! Result > 0 => field had a range in it.
     ! Array is allocated here with Allocate_Test, so don't send me an
@@ -126,10 +187,24 @@ contains ! ====     Public Procedures     ==============================
         call display_string ( sub_rosa(subtree(1,where)), advance='yes' )
       end if
     end do
-  end function FillSubrosaArray
+  end function FillSubrosaArray_I
 
-  ! ------------------------------------------------  Get_Boolean  -----
-  logical function Get_Boolean ( Root )
+  ! ----------------------------------------  FillSubrosaArray_TX  -----
+  integer function FillSubrosaArray_TX ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the decorations of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Tree, only: TX
+
+    type(tx), intent(in) :: Where ! in the tree
+    integer, pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName ! For error message
+    error = fillSubrosaArray ( where%i, array, arrayName )
+  end function FillSubrosaArray_TX 
+
+  ! ----------------------------------------------  Get_Boolean_I  -----
+  logical function Get_Boolean_I ( Root ) result ( Boolean )
   ! Get the value of a field that is required to have type t_boolean.
   ! Return true if node_id(root) is n_set_one.  Otherwise return decoration of
   ! root, or of child of root if children
@@ -140,24 +215,34 @@ contains ! ====     Public Procedures     ==============================
     integer :: Son, Units(2)
     double precision :: Value(2)
     if ( node_id(root) == n_set_one ) then
-      get_boolean = .true.
+      boolean = .true.
     else
       if ( nsons ( root ) /= 0 ) then
         son = subtree(2,root)
         if ( node_id(son) == n_identifier ) then
-          get_boolean = decoration(son) == l_true
+          boolean = decoration(son) == l_true
         else
           call expr ( son, units, value )
-          get_boolean = nint(value(1)) /= 0
+          boolean = nint(value(1)) /= 0
         end if
       else
-        get_boolean = decoration(root) == l_true
+        boolean = decoration(root) == l_true
       end if
     end if
-  end function Get_Boolean
+  end function Get_Boolean_I
 
-  ! ---------------------------------------------  Get_Dot_Decors  -----
-  subroutine Get_Dot_Decors ( Root, FirstDecor, SecondDecor )
+  ! --------------------------------------------  Get_Boolean_TX  -----
+  logical function Get_Boolean_TX ( Root ) result ( Boolean )
+  ! Get the value of a field that is required to have type t_boolean.
+  ! Return true if node_id(root) is n_set_one.  Otherwise return decoration of
+  ! root, or of child of root if children
+    use Tree, only: TX
+    type(tx), intent(in) :: Root
+    boolean = get_boolean ( root%i )
+  end function Get_Boolean_TX
+
+  ! -------------------------------------------  Get_Dot_Decors_I  -----
+  subroutine Get_Dot_Decors_I ( Root, FirstDecor, SecondDecor )
   ! Assume that node_id(root) is n_dot.
   ! Set FirstDecor = the decoration of the declaration of the first son,
   ! and SecondDecor = the decoration of the declaration of the second son.
@@ -165,23 +250,65 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) :: FirstDecor, SecondDecor
     firstDecor = decoration(decoration(subtree(1,root)))
     secondDecor = decoration(decoration(decoration(subtree(2,root))))
-  end subroutine Get_Dot_Decors
+  end subroutine Get_Dot_Decors_I
 
-  ! -----------------------------------------------  Get_Field_Id  -----
-  integer function Get_Field_Id ( Root )
+  ! ------------------------------------------  Get_Dot_Decors_TX  -----
+  subroutine Get_Dot_Decors_TX ( Root, FirstDecor, SecondDecor )
+  ! Assume that node_id(root) is n_dot.
+  ! Set FirstDecor = the decoration of the declaration of the first son,
+  ! and SecondDecor = the decoration of the declaration of the second son.
+    use Tree, only: TX
+    type(tx), intent(in) :: Root
+    integer, intent(out) :: FirstDecor, SecondDecor
+    firstDecor = decoration(decoration(subtree(1,root)))
+    secondDecor = decoration(decoration(decoration(subtree(2,root))))
+  end subroutine Get_Dot_Decors_TX
+
+  ! ---------------------------------------  Get_Dot_Decors_TX_TX  -----
+  subroutine Get_Dot_Decors_TX_TX ( Root, FirstDecor, SecondDecor )
+  ! Assume that node_id(root) is n_dot.
+  ! Set FirstDecor = the decoration of the declaration of the first son,
+  ! and SecondDecor = the decoration of the declaration of the second son.
+    use Tree, only: TX, Decoration_TX_TX
+    type(tx), intent(in) :: Root
+    type(tx), intent(out) :: FirstDecor, SecondDecor
+    firstDecor = decoration_tx_tx(decoration_tx_tx(subtree(1,root)))
+    secondDecor = decoration_tx_tx(decoration_tx_tx(decoration_tx_tx(subtree(2,root))))
+  end subroutine Get_Dot_Decors_TX_TX
+
+  ! ---------------------------------------------  Get_Field_Id_I  -----
+  integer function Get_Field_Id_I ( Root ) result ( Get_Field_Id )
   ! Assume that node_id(root) is either n_asg or n_set_one.
   ! Return the field ID.
     integer, intent(in) :: Root
     get_field_id = decoration(subtree(1,root))
-  end function Get_Field_Id
+  end function Get_Field_Id_I
 
-  ! ------------------------------------------------  Get_Spec_Id  -----
-  integer function Get_Spec_Id ( Root )
+  ! ---------------------------------------------  Get_Field_Id_TX  -----
+  integer function Get_Field_Id_TX ( Root ) result ( Get_Field_Id )
+  ! Assume that node_id(root) is either n_asg or n_set_one.
+  ! Return the field ID.
+    use Tree, only: TX, Decoration_TX_TX
+    type(tx), intent(in) :: Root
+    get_field_id = decoration(subtree(1,root))
+  end function Get_Field_Id_TX
+
+  ! ----------------------------------------------  Get_Spec_Id_I  -----
+  integer function Get_Spec_Id_I ( Root ) result ( Get_Spec_Id )
   ! Assume that node_id(root) is n_spec_args.
   ! Return the spec ID.
     integer, intent(in) :: Root
     get_spec_id = decoration(subtree(1,decoration(subtree(1,root))))
-  end function Get_Spec_Id
+  end function Get_Spec_Id_I
+
+  ! ----------------------------------------------  Get_Spec_Id_TX  -----
+  integer function Get_Spec_Id_TX ( Root ) result ( Get_Spec_Id )
+  ! Assume that node_id(root) is n_spec_args.
+  ! Return the spec ID.
+    use Tree, only: TX, Decoration_TX_TX
+    type(tx), intent(in) :: Root
+    get_spec_id = decoration(subtree(1,decoration_tx_tx(subtree(1,root))))
+  end function Get_Spec_Id_TX
 
   ! --------------------------------------  GetLitIndexFromString  -----
   integer function GetLitIndexFromString ( line, stringIndex )
@@ -213,22 +340,27 @@ contains ! ====     Public Procedures     ==============================
       & caseSensitive=caseSensitive )
   end function GetStringIndexFromString
 
-  ! -----------------------------------------------------  Scalar  -----
-  logical function Scalar ( Root )
+  ! ---------------------------------------------------  Scalar_I  -----
+  logical function Scalar_I ( Root ) result ( IsScalar )
     use Tree, only: Node_Id, Nsons, SUbtree
     use Tree_Types, only: N_Array
 
     ! Return "root has two sons, and the second one is not N_Array"
     integer, intent(in) :: Root
 
-    scalar = .false.
+    isScalar = .false.
     if ( nsons(root) > 2 ) return
     if ( node_id(subtree(2,root)) == n_array ) return
-    scalar = .true.
-  end function Scalar
+    isScalar = .true.
+  end function Scalar_I
 
-  ! ------------------------------------------  StartErrorMessage  -----
-  include "StartErrorMessage.f9h"
+  ! --------------------------------------------------  Scalar_TX  -----
+  logical function Scalar_TX ( Root ) result ( IsScalar )
+    use Tree, only: TX
+    ! Return "root has two sons, and the second one is not N_Array"
+    type(tx), intent(in) :: Root
+    isScalar = scalar(root%i)
+  end function Scalar_TX
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -243,6 +375,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.19  2013/09/30 23:59:57  vsnyder
+! Routines for TX type, move StartErrorMessage from include to module
+!
 ! Revision 2.18  2012/05/07 23:00:57  vsnyder
 ! StartErrorMessage moved to include to avoid a circular dependence
 ! between expr_m and MoreTree
