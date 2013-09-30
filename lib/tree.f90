@@ -29,7 +29,7 @@ module TREE
   public :: INIT_TREE, INSERT_NODE
   public :: NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
   public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_SUBTREE
-  public :: SUB_ROSA, SUBTREE, THE_FILE, TREE_TEXT, WHERE
+  public :: STACK_SUBTREE_TX, SUB_ROSA, SUBTREE, THE_FILE, TREE_TEXT, TX, WHERE
 
   ! Tree node kinds:
   integer, public, parameter :: PSEUDO = 0   ! Tree node is pseudo terminal
@@ -43,9 +43,89 @@ module TREE
   ! Index of the "null tree node"
   integer, public, parameter :: NULL_TREE = 0
 
+  interface Add_Sons_From_Stack
+    module procedure Add_Sons_From_Stack_I, Add_Sons_From_Stack_TX
+  end interface
+
+  interface Copy_To_Stack
+    module procedure Copy_To_Stack_I, Copy_To_Stack_TX
+  end interface
+
+  interface Decorate
+    module procedure Decorate_I, Decorate_TX, Decorate_TX_TX
+  end interface
+
+  interface Decoration
+    module procedure Decoration_I, Decoration_TX
+  end interface
+
+  interface Delete_Tree
+    module procedure Delete_Tree_I, Delete_Tree_TX
+  end interface
+
+  interface Dump_Tree_Node
+    module procedure Dump_Tree_Node_I, Dump_Tree_Node_TX
+  end interface
+
+  interface Dump_Tree_Node_Name
+    module procedure Dump_Tree_Node_Name_I, Dump_Tree_Node_Name_TX
+  end interface
+
+  interface Insert_Node
+    module procedure Insert_Node_I, Insert_Node_TX
+  end interface
+
+  interface Node_ID
+    module procedure Node_ID_I, Node_ID_TX
+  end interface
+
+  interface Node_Kind
+    module procedure Node_Kind_I, Node_Kind_TX
+  end interface
+
+  interface Nsons
+    module procedure Nsons_I, Nsons_TX
+  end interface
+
+  interface Print_Subtree
+    module procedure Print_Subtree_I, Print_Subtree_TX
+  end interface
+
   interface Push_Pseudo_Terminal
     module procedure Push_Pseudo_Terminal_Integer, Push_Pseudo_Terminal_Where
   end interface
+
+  interface Replace_Sons
+    module procedure Replace_Sons_I, Replace_Sons_TX
+  end interface
+
+  interface Source_Ref
+    module procedure Source_Ref_I, Source_Ref_TX
+  end interface
+
+  interface Sub_Rosa
+    module procedure Sub_Rosa_I, Sub_Rosa_TX
+  end interface
+
+  interface Subtree
+    module procedure Subtree_I, Subtree_TX
+  end interface
+
+  interface The_File
+    module procedure The_File_I, The_File_TX
+  end interface
+
+  interface Tree_Text
+    module procedure Tree_Text_I, Tree_Text_TX
+  end interface
+
+  interface Where
+    module procedure Where_I, Where_TX
+  end interface
+
+  type :: TX             ! For tree node index, to give strong typing
+    integer :: I         ! The real tree node index
+  end type TX
 
   type :: TREE_NODE
     integer :: NODE      ! What kind of tree node
@@ -79,7 +159,7 @@ module TREE
 
 contains
 
-  subroutine ADD_SONS_FROM_STACK ( T, N )
+  subroutine ADD_SONS_FROM_STACK_I ( T, N )
   ! Add the top N tree nodes on the stack as new sons of T, after the last
   ! son already present.  Pop the N nodes from the stack.
     integer, intent(in) :: T            ! The tree node to get the new sons
@@ -138,7 +218,15 @@ contains
         call pop_to_tree ( n )
       end if ! in_place
     end if
-  end subroutine ADD_SONS_FROM_STACK
+  end subroutine ADD_SONS_FROM_STACK_I
+
+  subroutine ADD_SONS_FROM_STACK_TX ( T, N )
+  ! Add the top N tree nodes on the stack as new sons of T, after the last
+  ! son already present.  Pop the N nodes from the stack.
+    type(tx), intent(in) :: T           ! The tree node to get the new sons
+    integer, intent(in) :: N            ! How many sons to get
+    call add_sons_from_stack ( t%i, n )
+  end subroutine ADD_SONS_FROM_STACK_TX
 
   subroutine ALLOCATE_TREE ( N_TREE, STATUS )
   ! Allocate a TREE array with N_TREE elements
@@ -200,7 +288,7 @@ contains
     n_tree_stack = n_tree_stack + 1 - nsons
   end subroutine BUILD_TREE
 
-  subroutine COPY_TO_STACK ( T, K, M )
+  subroutine COPY_TO_STACK_I ( T, K, M )
   ! Copy sons k..m of t to the top of the stack
     integer, intent(in) :: T            ! Parent of nodes to be copied
     integer, intent(in) :: K            ! First son to be copied
@@ -213,13 +301,21 @@ contains
       tree_sp = tree_sp - 1             ! Push stack
       n_tree_stack = n_tree_stack + 1
     end do
-  end  subroutine COPY_TO_STACK
+  end  subroutine COPY_TO_STACK_I
+
+  subroutine COPY_TO_STACK_TX ( T, K, M )
+  ! Copy sons k..m of t to the top of the stack
+    type(tx), intent(in) :: T           ! Parent of nodes to be copied
+    integer, intent(in) :: K            ! First son to be copied
+    integer, intent(in) :: M            ! Last son to be copied
+    call copy_to_stack ( t%i, k, m )
+  end subroutine COPY_TO_STACK_TX
 
   subroutine DEALLOCATE_TREE
     deallocate( the_tree )
   end subroutine DEALLOCATE_TREE
 
-  subroutine DECORATE ( WHERE, DECORATION )
+  subroutine DECORATE_I ( WHERE, DECORATION )
   ! Decorate tree WHERE with DECORATION
     integer, intent(in) :: WHERE
     integer, intent(in) :: DECORATION
@@ -236,19 +332,45 @@ contains
       call output ( decoration )
       call output ( ')', advance='yes' )
     end if
-  end subroutine DECORATE
+  end subroutine DECORATE_I
 
-  integer function DECORATION ( WHERE )
+  subroutine DECORATE_TX ( WHERE, DECORATION )
+  ! Decorate tree WHERE with DECORATION
+    type(tx), intent(in) :: WHERE
+    integer, intent(in) :: DECORATION
+    call decorate ( where%i, decoration )
+  end subroutine DECORATE_TX
+
+  subroutine DECORATE_TX_TX ( WHERE, DECORATION )
+  ! Decorate tree WHERE with DECORATION
+    type(tx), intent(in) :: WHERE
+    type(tx), intent(in) :: DECORATION
+    call decorate ( where%i, decoration%i )
+  end subroutine DECORATE_TX_TX
+
+  pure integer function DECORATION_I ( WHERE ) result ( Decoration )
   ! Return the decoration of the tree WHERE
     integer, intent(in) :: WHERE
     decoration = the_tree(where) % decor
-  end function DECORATION
+  end function DECORATION_I
 
-  subroutine DELETE_TREE ( WHERE )
+  pure type(tx) function DECORATION_TX ( WHERE ) result ( Decoration )
+  ! Return the decoration of the tree WHERE
+    type(tx), intent(in) :: WHERE
+    decoration%i = the_tree(where%i) % decor
+  end function DECORATION_TX
+
+  subroutine DELETE_TREE_I ( WHERE )
   ! Discard everything at WHERE and above in the tree
     integer, intent(in) :: WHERE
     tree_point = where - 1
-  end subroutine DELETE_TREE
+  end subroutine DELETE_TREE_I
+
+  subroutine DELETE_TREE_TX ( WHERE )
+  ! Discard everything at WHERE and above in the tree
+    type(tx), intent(in) :: WHERE
+    tree_point = where%i - 1
+  end subroutine DELETE_TREE_TX
 
   subroutine DELETE_TREE_STACK
   ! Discard everything in the tree stack
@@ -256,7 +378,7 @@ contains
     n_tree_stack = 0
   end subroutine DELETE_TREE_STACK
 
-  subroutine DUMP_TREE_NODE ( WHERE, INDENT, ADVANCE )
+  subroutine DUMP_TREE_NODE_I ( WHERE, INDENT, ADVANCE )
   ! Indent INDENT spaces, then dump the tree WHERE
     integer, intent(in) :: WHERE
     integer, intent(in) :: INDENT
@@ -291,15 +413,31 @@ contains
     if ( the_tree(where)%file /= 0 ) &
       & call display_string ( the_tree(where)%file, before=' in ' )
     call output ( '', advance=advance )
-  end subroutine DUMP_TREE_NODE
+  end subroutine DUMP_TREE_NODE_I
 
-  subroutine DUMP_TREE_NODE_NAME ( WHERE, ADVANCE, BEFORE )
+  subroutine DUMP_TREE_NODE_TX ( WHERE, INDENT, ADVANCE )
+  ! Indent INDENT spaces, then dump the tree WHERE
+    type(tx), intent(in) :: WHERE
+    integer, intent(in) :: INDENT
+    character(len=*), intent(in), optional :: ADVANCE
+    call dump_tree_node ( where%i, indent, advance )
+  end subroutine DUMP_TREE_NODE_TX
+
+  subroutine DUMP_TREE_NODE_NAME_I ( WHERE, ADVANCE, BEFORE )
     integer, intent(in) :: WHERE
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE
     call display_string ( tree_texts(the_tree(where) % node), advance=advance, &
                         & before=before )
-  end subroutine DUMP_TREE_NODE_NAME
+  end subroutine DUMP_TREE_NODE_NAME_I
+
+  subroutine DUMP_TREE_NODE_NAME_TX ( WHERE, ADVANCE, BEFORE )
+    type(tx), intent(in) :: WHERE
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE
+    call display_string ( tree_texts(the_tree(where%i) % node), advance=advance, &
+                        & before=before )
+  end subroutine DUMP_TREE_NODE_NAME_TX
 
   subroutine INIT_TREE
     logical :: FOUND     ! Did lookup_and_insert find it?
@@ -320,14 +458,14 @@ contains
                                       null_tree )
   end subroutine INIT_TREE
 
-  subroutine INSERT_NODE ( NEW_NODE, T, K, M )
+  subroutine INSERT_NODE_I ( NEW_NODE, T, K, M )
   ! Insert a node having ID = newNode as the k'th son of t.  Make the sons
   ! k..m of t sons of newNode.  Reduce the number of sons of t to
   ! n-k+m-1.  Don't use this procedure during parsing:  It checks nTree,
   ! not treesp!
     integer, intent(in) :: NEW_NODE     ! ID of the node to be inserted
     integer, intent(in) :: T            ! The parent of the inserted node
-    integer, intent(in) :: K            ! Which sone of T NEW_NODE is to be
+    integer, intent(in) :: K            ! Which son of T NEW_NODE is to be
     integer, intent(in) :: M            ! Sons k..m of T become sons of
                                         !  NEW_NODE
     integer :: N                        ! NSONS(T)
@@ -340,25 +478,56 @@ contains
     call build_tree ( new_node, n )
     call replace_sons ( t, m, k, tree_sp + 1 )
     call pop ( 1 )
-  end subroutine INSERT_NODE
+  end subroutine INSERT_NODE_I
 
-  integer function NODE_ID ( WHERE )
+  subroutine INSERT_NODE_TX ( NEW_NODE, T, K, M )
+  ! Insert a node having ID = newNode as the k'th son of t.  Make the sons
+  ! k..m of t sons of newNode.  Reduce the number of sons of t to
+  ! n-k+m-1.  Don't use this procedure during parsing:  It checks nTree,
+  ! not treesp!
+    integer, intent(in) :: NEW_NODE     ! ID of the node to be inserted
+    type(tx), intent(in) :: T           ! The parent of the inserted node
+    integer, intent(in) :: K            ! Which son of T NEW_NODE is to be
+    integer, intent(in) :: M            ! Sons k..m of T become sons of
+                                        !  NEW_NODE
+    call insert_node ( new_node, t%i, k, m )
+  end subroutine INSERT_NODE_TX
+
+  pure integer function NODE_ID_I ( WHERE ) result ( Node_ID )
   ! Return the node id of the tree node at WHERE
     integer, intent(in) :: WHERE
     node_id = the_tree(where) % node
-  end function NODE_ID
+  end function NODE_ID_I
 
-  integer function NODE_KIND ( WHERE )
+  pure integer function NODE_ID_TX ( WHERE ) result ( Node_ID )
+  ! Return the node id of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    node_id = the_tree(where%i) % node
+  end function NODE_ID_TX
+
+  pure integer function NODE_KIND_I ( WHERE ) result ( Node_Kind )
   ! Return the kind of tree(where).
     integer, intent(in) :: WHERE
     node_kind = the_tree(where) % kind
-  end function NODE_KIND
+  end function NODE_KIND_I
 
-  pure integer function NSONS ( WHERE )
+  pure integer function NODE_KIND_TX ( WHERE ) result ( Node_Kind )
+  ! Return the kind of tree(where).
+    type(tx), intent(in) :: WHERE
+    node_kind = the_tree(where%i) % kind
+  end function NODE_KIND_TX
+
+  pure integer function NSONS_I ( WHERE ) result ( Nsons )
   ! Return the node id of the tree node at WHERE
     integer, intent(in) :: WHERE
     nsons = the_tree(where) % nsons
-  end function NSONS
+  end function NSONS_I
+
+  pure integer function NSONS_TX ( WHERE ) result ( Nsons )
+  ! Return the node id of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    nsons = the_tree(where%i) % nsons
+  end function NSONS_TX
 
   subroutine POP ( N )
   ! Delete the top N nodes from the orchard stack
@@ -367,7 +536,7 @@ contains
     n_tree_stack = n_tree_stack - n
   end subroutine POP
 
-  recursive subroutine PRINT_SUBTREE ( SUBROOT, DEPTH, DUMP_DECOR )
+  recursive subroutine PRINT_SUBTREE_I ( SUBROOT, DEPTH, DUMP_DECOR )
   ! Print the subtree rooted at SUBROOT, starting with DEPTH leading
   ! dots.  Display the decoration of each tree node if DUMP_DECOR is
   ! present and .true.
@@ -395,7 +564,17 @@ contains
         call print_subtree ( subtree(i,myRoot), depth+1, dump_decor )
       end do
     end if
-  end subroutine PRINT_SUBTREE
+  end subroutine PRINT_SUBTREE_I
+
+  recursive subroutine PRINT_SUBTREE_TX ( SUBROOT, DEPTH, DUMP_DECOR )
+  ! Print the subtree rooted at SUBROOT, starting with DEPTH leading
+  ! dots.  Display the decoration of each tree node if DUMP_DECOR is
+  ! present and .true.
+    type(tx), intent(in) :: SUBROOT
+    integer, intent(in) :: DEPTH
+    logical, intent(in), optional :: DUMP_DECOR
+    call print_subtree ( subroot%i, depth, dump_decor )
+  end subroutine PRINT_SUBTREE_TX
 
   subroutine PUSH_PSEUDO_TERMINAL_INTEGER ( SUB_ROSA, SOURCE, DECOR, FILE )
   ! Push the pseudo-terminal with string index SUB_ROSA, source SOURCE
@@ -433,7 +612,7 @@ contains
     call push_pseudo_terminal ( sub_rosa, where%source, decor, where%file )
   end subroutine PUSH_PSEUDO_TERMINAL_WHERE
 
-  subroutine REPLACE_SONS ( T, K, M, U )
+  subroutine REPLACE_SONS_I ( T, K, M, U )
   ! Replace sons k .. m of t with the tree node at u.  This will leave an
   ! empty space if k < m.
     integer, intent(in) :: T            ! The tree node whose sons are to
@@ -479,13 +658,30 @@ contains
         tree_sp = tree_sp - 1
       end do
     end if
-  end subroutine REPLACE_SONS
+  end subroutine REPLACE_SONS_I
 
-  integer function SOURCE_REF ( WHERE )
+  subroutine REPLACE_SONS_TX ( T, K, M, U )
+  ! Replace sons k .. m of t with the tree node at u.  This will leave an
+  ! empty space if k < m.
+    type(tx), intent(in) :: T           ! The tree node whose sons are to
+                                        ! be replaced
+    integer, intent(in) :: K            ! The first son of T to be replaced
+    integer, intent(in) :: M            ! The last son of T to be replaced
+    type(tx), intent(in) :: U           ! The new tree node
+    call replace_sons ( t%i, k, m, u%i )
+  end subroutine REPLACE_SONS_TX
+
+  pure integer function SOURCE_REF_I ( WHERE ) result ( Source_Ref )
   ! Return the SOURCE field of the tree node at WHERE
     integer, intent(in) :: WHERE
     source_ref = the_tree(where) % source
-  end function SOURCE_REF
+  end function SOURCE_REF_I
+
+  pure integer function SOURCE_REF_TX ( WHERE ) result ( Source_Ref )
+  ! Return the SOURCE field of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    source_ref = the_tree(where%i) % source
+  end function SOURCE_REF_TX
 
   integer function STACK_SUBTREE ( WHICH )
   ! Return the root of the WHICH'th subtree of the node atop the stack
@@ -493,16 +689,28 @@ contains
     stack_subtree = subtree(which, tree_sp+1)
   end function STACK_SUBTREE
 
-  integer function SUB_ROSA ( WHERE )
+  type(tx) function STACK_SUBTREE_TX ( WHICH )
+  ! Return the root of the WHICH'th subtree of the node atop the stack
+    integer, intent(in) :: WHICH
+    stack_subtree_tx%i = subtree(which, tree_sp+1)
+  end function STACK_SUBTREE_TX
+
+  integer function SUB_ROSA_I ( WHERE ) result ( Sub_Rosa )
   ! Return the sub_rosa string pointer from the tree node at WHERE
     integer, intent(in) :: WHERE
     if ( the_tree(where) % kind /= pseudo ) then
       call tree_error ( not_pseudo, where )
     end if
     sub_rosa = the_tree(where) % link
-  end function SUB_ROSA
+  end function SUB_ROSA_I
 
-  integer function SUBTREE ( WHICH, WHERE )
+  integer function SUB_ROSA_TX ( WHERE )
+  ! Return the sub_rosa string pointer from the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    sub_rosa_tx = sub_rosa ( where % i )  
+  end function SUB_ROSA_TX
+
+  integer function SUBTREE_I ( WHICH, WHERE ) result ( Subtree )
   ! Return the root of the WHICH'th subtree of the tree node at WHERE
   ! The zero'th subtree of WHERE is WHERE
     integer, intent(in) :: WHICH
@@ -518,27 +726,57 @@ contains
       call tree_error ( no_more_sons, where )
     end if
     subtree = the_tree(where) % link + which - 1
-  end function SUBTREE
+  end function SUBTREE_I
 
-  integer function THE_FILE ( WHERE )
+  integer function SUBTREE_TX ( WHICH, WHERE )
+  ! Return the root of the WHICH'th subtree of the tree node at WHERE
+  ! The zero'th subtree of WHERE is WHERE
+    integer, intent(in) :: WHICH
+    type(tx), intent(in) :: WHERE
+    subtree_tx = Subtree ( which, where%i )
+  end function SUBTREE_TX
+
+  pure integer function THE_FILE_I ( WHERE ) result ( The_File )
   ! Return the SOURCE field of the tree node at WHERE
     integer, intent(in) :: WHERE
     the_file = the_tree(where) % file
-  end function THE_FILE
+  end function THE_FILE_I
 
-  integer function TREE_TEXT ( TREE_NODE )
+  pure integer function THE_FILE_TX ( WHERE ) result ( The_File )
+  ! Return the SOURCE field of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    the_file = the_tree(where%i) % file
+  end function THE_FILE_TX
+
+  pure integer function TREE_TEXT_I ( TREE_NODE ) result ( Tree_Text )
   ! Return the string index of the text of the tree node
     integer, intent(in) :: TREE_NODE
-    tree_text = tree_texts(tree_node)
-  end function TREE_TEXT
+    tree_text = tree_texts ( tree_node )
+  end function TREE_TEXT_I
 
-  function Where ( Tree )
+  pure integer function TREE_TEXT_TX ( TREE_NODE ) result ( Tree_Text )
+  ! Return the string index of the text of the tree node
+    type(tx), intent(in) :: TREE_NODE
+    tree_text = tree_texts ( tree_node%i )
+  end function TREE_TEXT_TX
+
+  function Where_I ( Tree ) result ( Where )
+  ! Return the Where_T structure at Tree
     use Lexer_Core, only: Where_T
     integer, intent(in) :: Tree ! Tree node index
     type(where_t) :: Where
     where%source = the_tree(tree)%source
     where%file = the_tree(tree)%file
-  end function Where
+  end function Where_I
+
+  function Where_TX ( Tree ) result ( Where )
+  ! Return the Where_T structure at Tree
+    use Lexer_Core, only: Where_T
+    type(tx), intent(in) :: Tree ! Tree node index
+    type(where_t) :: Where
+    where%source = the_tree(tree%i)%source
+    where%file = the_tree(tree%i)%file
+  end function Where_TX
 
 ! =====     Private procedures     =======================================
 
@@ -681,6 +919,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.21  2013/09/30 23:03:04  vsnyder
+! Add TX type for tree index and generics to use it
+!
 ! Revision 2.20  2013/09/24 23:09:15  vsnyder
 ! Replace Source with Where_t, add Where function
 !
