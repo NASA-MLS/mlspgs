@@ -55,13 +55,17 @@ module PARSER
   use SYMBOL_TYPES ! Everything, especially everything beginning with T_
   use TOGGLES, only: PAR, TOGGLE
   use TREE, only: TREE_BUILDER => BUILD_TREE, N_TREE_STACK, POP, &
-                  PUSH_PSEUDO_TERMINAL, STACK_SUBTREE
+                  PUSH_PSEUDO_TERMINAL, STACK_SUBTREE, TX
   use TREE_TYPES   ! Everything, especially everything beginning with N_
 
   implicit NONE
   private
 
   public :: CONFIGURATION
+
+  interface Configuration
+    module procedure Configuration_I, Configuration_TX
+  end interface
 
   integer, private :: Depth             ! of calls, for tracing
 
@@ -105,8 +109,8 @@ module PARSER
 !---------------------------------------------------------------------------
 
 contains ! ====     Public Procedures     ==============================
-! ------------------------------------------------  CONFIGURATION  -----
-  subroutine CONFIGURATION ( ROOT ) ! cf -> one_cf+ 'EOF'
+! ----------------------------------------------  CONFIGURATION_I  -----
+  subroutine CONFIGURATION_I ( ROOT ) ! cf -> one_cf+ 'EOF'
     integer, intent(out) :: ROOT   ! Root of the abstract syntax tree
     depth = 0 ! in case toggle(par) is set
     error = 0
@@ -118,7 +122,21 @@ contains ! ====     Public Procedures     ==============================
     call build_tree ( n_eof, 1 )   ! Force n_cfs off the stack
     root = stack_subtree ( 1 )
     if ( error > 0 ) root = -1
-  end subroutine CONFIGURATION
+  end subroutine CONFIGURATION_I
+! ---------------------------------------------  CONFIGURATION_TX  -----
+  subroutine CONFIGURATION_TX ( ROOT ) ! cf -> one_cf+ 'EOF'
+    type(tx), intent(out) :: ROOT   ! Root of the abstract syntax tree
+    depth = 0 ! in case toggle(par) is set
+    error = 0
+    call get_token
+    do while ( next%class /= t_end_of_input )
+      call one_cf
+    end do
+    call build_tree ( n_cfs, n_tree_stack ) ! collect everything
+    call build_tree ( n_eof, 1 )   ! Force n_cfs off the stack
+    root%i = stack_subtree ( 1 )
+    if ( error > 0 ) root%i = -1
+  end subroutine CONFIGURATION_TX
 ! =====     Private Procedures     =====================================
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( THE_TERMINALS, AFTER )
@@ -656,6 +674,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.28  2013/09/30 23:03:04  vsnyder
+! Add TX type for tree index and generics to use it
+!
 ! Revision 2.27  2013/09/25 01:02:41  vsnyder
 ! Add include files
 !
