@@ -24,7 +24,7 @@ module TREE
   private
 
   public :: ADD_SONS_FROM_STACK, ALLOCATE_TREE, BUILD_TREE, COPY_TO_STACK
-  public :: DEALLOCATE_TREE, DECORATE, DECORATION, DELETE_TREE
+  public :: DEALLOCATE_TREE, DECORATE, DECORATION, DECORATION_TX_TX, DELETE_TREE
   public :: DELETE_TREE_STACK, DUMP_TREE_NODE, DUMP_TREE_NODE_NAME
   public :: INIT_TREE, INSERT_NODE
   public :: NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
@@ -124,7 +124,7 @@ module TREE
   end interface
 
   type :: TX             ! For tree node index, to give strong typing
-    integer :: I         ! The real tree node index
+    integer :: I = 0     ! The real tree node index
   end type TX
 
   type :: TREE_NODE
@@ -354,11 +354,17 @@ contains
     decoration = the_tree(where) % decor
   end function DECORATION_I
 
-  pure type(tx) function DECORATION_TX ( WHERE ) result ( Decoration )
+  pure integer function DECORATION_TX ( WHERE ) result ( Decoration )
+  ! Return the decoration of the tree WHERE
+    type(tx), intent(in) :: WHERE
+    decoration = the_tree(where%i) % decor
+  end function DECORATION_TX
+
+  pure type(tx) function DECORATION_TX_TX ( WHERE ) result ( Decoration )
   ! Return the decoration of the tree WHERE
     type(tx), intent(in) :: WHERE
     decoration%i = the_tree(where%i) % decor
-  end function DECORATION_TX
+  end function DECORATION_TX_TX
 
   subroutine DELETE_TREE_I ( WHERE )
   ! Discard everything at WHERE and above in the tree
@@ -728,12 +734,12 @@ contains
     subtree = the_tree(where) % link + which - 1
   end function SUBTREE_I
 
-  integer function SUBTREE_TX ( WHICH, WHERE )
+  type(tx) function SUBTREE_TX ( WHICH, WHERE )
   ! Return the root of the WHICH'th subtree of the tree node at WHERE
   ! The zero'th subtree of WHERE is WHERE
     integer, intent(in) :: WHICH
     type(tx), intent(in) :: WHERE
-    subtree_tx = Subtree ( which, where%i )
+    subtree_tx%i = Subtree ( which, where%i )
   end function SUBTREE_TX
 
   pure integer function THE_FILE_I ( WHERE ) result ( The_File )
@@ -919,6 +925,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.22  2013/09/30 23:59:06  vsnyder
+! Default initializer for tx%i, add decoration_tx_tx
+!
 ! Revision 2.21  2013/09/30 23:03:04  vsnyder
 ! Add TX type for tree index and generics to use it
 !
