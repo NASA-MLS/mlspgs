@@ -34,6 +34,7 @@ contains ! ====     Public Procedures     ==============================
                                  STR_VALUE, UNDECLARED, UNITS_NAME
     use Functions, only: F_Exp, F_Ln, F_Log, F_Log10, F_Sqrt
     use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
+    use StartErrorMessage_m, only: StartErrorMessage
     use STRING_TABLE, only: FLOAT_VALUE
     use TOGGLES, only: CON, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -312,8 +313,6 @@ contains ! ====     Public Procedures     ==============================
       value = 0.0
     end subroutine AnnounceError
 
-    include "StartErrorMessage.f9h"
-
   end subroutine EXPR
 
   ! -------------------------------------------------  EXPR_CHECK  -----
@@ -430,6 +429,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.25  2013/09/30 23:59:24  vsnyder
+! Move StartErrorMessage from include to module
+!
 ! Revision 2.24  2013/09/21 00:35:50  vsnyder
 ! More trace output
 !
