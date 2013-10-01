@@ -39,6 +39,8 @@ module HGridsDatabase                   ! Horizontal grid information
     integer :: noProfsLowerOverlap = 0 ! Number of profiles in the lower overlap
     integer :: noProfsUpperOverlap = 0 ! Number of profiles in the upper overlap
 
+    ! This is the maf number passing nearest to the grid point
+    integer, dimension(:), pointer    :: maf         => NULL()
     ! Now the various coordinates in the HGrid, all dimensioned (1,noProfs)
     real(r8), dimension(:,:), pointer :: phi         => NULL()
     real(r8), dimension(:,:), pointer :: geodLat     => NULL()
@@ -83,6 +85,8 @@ contains ! =========== Public procedures ===================================
     type (HGrid_T), intent(inout) :: HGRID
 
     ! Executable code
+    call Allocate_Test ( hGrid%maf, hGrid%noProfs, &
+      & 'hGrid%maf', ModuleName )
     call Allocate_Test ( hGrid%phi, 1, hGrid%noProfs, &
       & 'hGrid%phi', ModuleName )
     call Allocate_Test ( hGrid%geodLat, 1, hGrid%noProfs, &
@@ -111,6 +115,7 @@ contains ! =========== Public procedures ===================================
     integer, intent(in) :: NOTODELETE ! How many to delete, default all
     ! Local variables
     integer :: newNoProfs
+    integer, dimension(:), pointer  :: inttemp
     real(r8), dimension(:), pointer :: temp
     integer :: first, last
 
@@ -133,11 +138,15 @@ contains ! =========== Public procedures ===================================
     if ( newNoProfs < 0 ) call MLSMessage ( &
         & MLSMSG_Error, ModuleName, 'Too many profiles to delete' )
 
-    nullify ( temp )
+    nullify ( inttemp, temp )
+    call allocate_test ( inttemp, hGrid%noProfs, 'inttemp', ModuleName )
     call allocate_test ( temp, hGrid%noProfs, 'temp', ModuleName )
     hGrid%noProfs = newNoProfs
 
     ! Now allocate each entry and trim it
+    inttemp = hGrid%maf(:)               ! ------------------------- Maf
+    call Allocate_Test ( hGrid%maf, newNoProfs, 'hGrid%maf', ModuleName)
+    hGrid%maf(:) = inttemp ( first : last )
     temp = hGrid%phi(1,:)               ! ------------------------- Phi
     call Allocate_Test ( hGrid%phi, 1, newNoProfs, 'hGrid%phi', ModuleName)
     hGrid%phi(1,:) = temp ( first : last )
@@ -175,6 +184,7 @@ contains ! =========== Public procedures ===================================
 
     ! Executable code
     
+    call deallocate_test ( hGrid%maf, 'hGrid%maf', ModuleName )
     call deallocate_test ( hGrid%phi, 'hGrid%phi', ModuleName )
     call deallocate_test ( hGrid%geodLat, 'hGrid%geodLat', ModuleName )
     call deallocate_test ( hGrid%lon, 'hGrid%lon', ModuleName )
@@ -215,19 +225,19 @@ contains ! =========== Public procedures ===================================
     integer :: IERR
     integer :: J
       IERR = 0
-      call output ( 'Name = ' )
+      call output ( 'Name = ', advance='no' )
       if ( aHgrid%name > 0 ) then
         call display_string ( aHgrid%name, ierr=ierr )
-        if ( ierr /= 0 ) call output ( '(not found in string table)')
+        if ( ierr /= 0 ) call output ( '(not found in string table)', advance='no' )
       else
-        call output('(unknown)')
+        call output('(unknown)', advance='no' )
       endif
-      call output ( aHgrid%noProfs, before=' noProfs = ' )
-      call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ' )
+      call output ( aHgrid%noProfs, before=' noProfs = ', advance='no' )
+      call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ', advance='no' )
       call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='yes' )
-      call output ( ' prof       phi       geodLat           lon' )
-      call output ( '          time     solarTime   solarZenith' )
-      call output ( '      losAngle', advance='yes' )
+      call output ( ' prof       phi       geodLat           lon', advance='no' )
+      call output ( '          time     solarTime   solarZenith', advance='no' )
+      call output ( '      losAngle  nearest maf', advance='yes' )
       do j = 1, aHgrid%noProfs
         call output ( j, places=5 )
         call output ( aHgrid%phi(1,j), '(1x,1pg13.6)' )
@@ -236,7 +246,8 @@ contains ! =========== Public procedures ===================================
         call output ( aHgrid%time(1,j), '(1x,1pg13.6)' )
         call output ( aHgrid%solarTime(1,j), '(1x,1pg13.6)' )
         call output ( aHgrid%solarZenith(1,j), '(1x,1pg13.6)' )
-        call output ( aHgrid%losAngle(1,j), '(1x,1pg13.6)', advance='yes' )
+        call output ( aHgrid%losAngle(1,j), '(1x,1pg13.6)', advance='no' )
+        call output ( aHgrid%maf(j), places=6, advance='yes' )
       end do
   end subroutine DUMP_a_HGRID
 
@@ -313,6 +324,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.12  2013/10/01 22:16:45  pwagner
+! Added maf component to HGrid_T
+!
 ! Revision 2.11  2013/08/12 23:47:07  vsnyder
 ! Default initialize more stuff in HGrid_t
 !
