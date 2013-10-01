@@ -15,8 +15,8 @@ module HGrid                    ! Horizontal grid information
 
   implicit none
   private
-  public :: CreateHGridFromMLSCFInfo, ComputeNextChunksHGridOffsets, &
-    & ComputeAllHGridOffsets, DealWithObstructions
+  public :: CREATEHGRIDFROMMLSCFINFO, COMPUTENEXTCHUNKSHGRIDOFFSETS, &
+    & COMPUTEALLHGRIDOFFSETS, DEALWITHOBSTRUCTIONS
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -54,9 +54,9 @@ contains ! =====     Public Procedures     =============================
     & ( name, root, filedatabase, l2gpDatabase, processingRange, chunk, &
     & onlyComputingOffsets ) result ( hGrid )
 
-    use Chunks_m, only: MLSChunk_T
+    use CHUNKS_M, only: MLSCHUNK_T
     use EXPR_M, only: EXPR
-    use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
+    use HGRIDSDATABASE, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
     use INIT_TABLES_MODULE, only: F_DATE, &
       & F_EXTENDIBLE, F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, F_GEODLAT, &
       & F_HEIGHT, F_INCLINATION, F_INSETOVERLAPS, F_INTERPOLATIONFACTOR, &
@@ -67,17 +67,17 @@ contains ! =====     Public Procedures     =============================
       & FIELD_FIRST, FIELD_LAST, &
       & L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, &
       & L_L2GP, L_REGULAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_LENGTH
-    use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
-      & AssembleL1BQtyName
-    use L2GPData, only: L2GPDATA_T
-    use MLSCommon, only: MLSFile_T, NameLen, TAI93_RANGE_T
-    use MLSFiles, only: GetMLSFileByType
-    use MLSKinds, only: RK => R8
-    use MLSL2Options, only: NEED_L1BFILES
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
-    use MLSNumerics, only: HUNT
-    use MLSStringLists, only: SwitchDetail
-    use MoreTree, only: GET_BOOLEAN
+    use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
+      & ASSEMBLEL1BQTYNAME
+    use L2GPDATA, only: L2GPDATA_T
+    use MLSCOMMON, only: MLSFILE_T, NAMELEN, TAI93_RANGE_T
+    use MLSFILES, only: GETMLSFILEBYTYPE
+    use MLSKINDS, only: RK => R8
+    use MLSL2OPTIONS, only: NEED_L1BFILES
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_L1BREAD
+    use MLSNUMERICS, only: HUNT
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MORETREE, only: GET_BOOLEAN
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -342,6 +342,14 @@ contains ! =====     Public Procedures     =============================
 
       call deallocateL1BData ( l1bField ) ! Avoid memory leaks
     end select
+    
+    ! Find nearest maf based on time
+    l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
+    call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+      & l1bFlag, firstMAF=chunk%firstMAFIndex, &
+      & lastMAF=chunk%lastMAFIndex, &
+      & dontPad=DONTPAD )
+    call Hunt ( l1bField%dpField(1,1,:), hgrid%time(1,:), hgrid%maf, allowTopValue=.true. )
 
     if ( switchDetail(switches, 'geom') >= 0 .and. .not. mySuppressGeometryDump ) &
       & call DumpChunkHGridGeometry ( hGrid, chunk, &
@@ -361,15 +369,15 @@ contains ! =====     Public Procedures     =============================
         & solarTimeNode, solarZenithNode, lonNode, losAngleNode, &
         & Time, timeNode, hGrid )
 
-    use SDPToolkit, only: MLS_UTCTOTAI
+    use SDPTOOLKIT, only: MLS_UTCTOTAI
     use EXPR_M, only: EXPR
-    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T
+    use HGRIDSDATABASE, only: CREATEEMPTYHGRID, HGRID_T
     use INIT_TABLES_MODULE, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_TIME
-    use MLSKinds, only: RK => R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSKINDS, only: RK => R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use TREE, only: NSONS, SUBTREE
-    use String_table, only: GET_STRING
-    use Global_Settings, only: LEAPSECFILENAME
+    use STRING_TABLE, only: GET_STRING
+    use GLOBAL_SETTINGS, only: LEAPSECFILENAME
 
     ! dummy arguments
     integer, intent(in) :: KEY          ! Tree node
@@ -507,20 +515,20 @@ contains ! =====     Public Procedures     =============================
     & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
     ! This is part of ConstructHGridFromMLSCFInfo
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use Chunks_m, only: MLSChunk_T
-    use Dump_0, only: DUMP
-    use HGridsDatabase, only: CREATEEMPTYHGRID, DUMP, HGRID_T, TRIMHGRID
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use CHUNKS_M, only: MLSCHUNK_T
+    use DUMP_0, only: DUMP
+    use HGRIDSDATABASE, only: CREATEEMPTYHGRID, DUMP, HGRID_T, TRIMHGRID
     use INIT_TABLES_MODULE, only: F_FRACTION, F_GEODANGLE, F_GEODLAT, F_HEIGHT, &
       & F_LON, F_LOSANGLE, F_MIF, F_TIME, &
       & F_SOLARTIME, F_SOLARZENITH, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_MIF
-    use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
-      & AssembleL1BQtyName
-    use MLSCommon, only: MLSFile_T, NameLen
-    use MLSFiles, only: GetMLSFileByType
-    use MLSKinds, only: RK => R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
-    use MLSNumerics, only: HUNT, InterpolateValues
+    use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
+      & ASSEMBLEL1BQTYNAME
+    use MLSCOMMON, only: MLSFILE_T, NAMELEN
+    use MLSFILES, only: GETMLSFILEBYTYPE
+    use MLSKINDS, only: RK => R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_L1BREAD
+    use MLSNUMERICS, only: HUNT, INTERPOLATEVALUES
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     integer, intent(in)               :: HGRIDTYPE
@@ -801,27 +809,27 @@ contains ! =====     Public Procedures     =============================
     
     ! With older l1b files (pre v2.0), some coordinates
     ! (solar time, solar zenith angle) are mean rather than apparent local
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use ChunkDivide_m, only: ChunkDivideConfig
-    use Chunks_m, only: MLSChunk_T, Dump
-    use Constants, only: DEG2RAD, RAD2DEG
-    use Dates_module, only: utc_to_time
-    use Dump_0, only: DIFF, DUMP
-    use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
-    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID, FINDCLOSESTMATCH
-    use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
-      & AssembleL1BQtyName
-    use MLSCommon, only: MLSFile_T, NameLen, TAI93_RANGE_T
-    use MLSFiles, only: HDFVERSION_5, Dump, GetMLSFileByType
-    use MLSFillValues, only: isMonotonic, Monotonize
-    use MLSHDF5, only: IsHDF5AttributeInFile
-    use MLSKinds, only: RK => R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    use MLSNumerics, only: HUNT, InterpolateValues, SolveQuadratic
-    use MLSStringLists, only: SwitchDetail
-    use MLSStrings, only: hhmmss_value
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
+    use CHUNKS_M, only: MLSCHUNK_T, DUMP
+    use CONSTANTS, only: DEG2RAD, RAD2DEG
+    use DATES_MODULE, only: UTC_TO_TIME
+    use DUMP_0, only: DIFF, DUMP
+    use EMPIRICALGEOMETRY, only: EMPIRICALLONGITUDE, CHOOSEOPTIMUMLON0
+    use HGRIDSDATABASE, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID, FINDCLOSESTMATCH
+    use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
+      & ASSEMBLEL1BQTYNAME
+    use MLSCOMMON, only: MLSFILE_T, NAMELEN, TAI93_RANGE_T
+    use MLSFILES, only: HDFVERSION_5, DUMP, GETMLSFILEBYTYPE
+    use MLSFILLVALUES, only: ISMONOTONIC, MONOTONIZE
+    use MLSHDF5, only: ISHDF5ATTRIBUTEINFILE
+    use MLSKINDS, only: RK => R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSNUMERICS, only: HUNT, INTERPOLATEVALUES, SOLVEQUADRATIC
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use MLSSTRINGS, only: HHMMSS_VALUE
     use OUTPUT_M, only: OUTPUT
-    use String_Table, only: Display_String
+    use STRING_TABLE, only: DISPLAY_STRING
     use TOGGLES, only: SWITCHES
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -1517,7 +1525,7 @@ contains ! =====     Public Procedures     =============================
 
     subroutine closestApparentLocalSolarZenith( allGeodAngle, allSolarZenith, &
       & GeodAngle, solarZenith )
-    use MLSNumerics, only: CLOSESTELEMENT
+    use MLSNUMERICS, only: CLOSESTELEMENT
       ! Another approach--compare against linear interpolation
       ! Dummy arguments
       real(rk), dimension(:,:), intent(in) :: allGeodAngle
@@ -1803,10 +1811,10 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------- DealWithObstructions -----
   subroutine DealWithObstructions ( HGrid, obstructions, DestroyOld )
-    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-    use ChunkDivide_m, only: Obstruction_T
-    use HGridsDatabase, only: HGRID_T, CreateEmptyHGrid, DestroyHGridContents
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use CHUNKDIVIDE_M, only: OBSTRUCTION_T
+    use HGRIDSDATABASE, only: HGRID_T, CREATEEMPTYHGRID, DESTROYHGRIDCONTENTS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
     ! Args
     type (HGRID_T), pointer :: HGRID
     type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
@@ -1891,17 +1899,17 @@ contains ! =====     Public Procedures     =============================
   subroutine DumpChunkHGridGeometry ( hGrid, chunk, &
     & instrumentModuleName, filedatabase )
 
-    use Chunks_m, only: MLSChunk_T
-    use HGridsDatabase, only: HGRID_T
-    use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
-      & AssembleL1BQtyName
-    use MLSCommon, only: MLSFile_T, NameLen
-    use MLSFiles, only: GetMLSFileByType
-    use MLSKinds, only: R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
-      & MLSMSG_DeAllocate, MLSMSG_Error
+    use CHUNKS_M, only: MLSCHUNK_T
+    use HGRIDSDATABASE, only: HGRID_T
+    use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
+      & ASSEMBLEL1BQTYNAME
+    use MLSCOMMON, only: MLSFILE_T, NAMELEN
+    use MLSFILES, only: GETMLSFILEBYTYPE
+    use MLSKINDS, only: R8
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
+      & MLSMSG_DEALLOCATE, MLSMSG_ERROR
     use OUTPUT_M, only: OUTPUT
-    use String_Table, only: DISPLAY_STRING
+    use STRING_TABLE, only: DISPLAY_STRING
 
     type (HGrid_T), intent(in) :: HGRID
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -2059,21 +2067,21 @@ contains ! =====     Public Procedures     =============================
   subroutine ComputeAllHGridOffsets ( root, treeindex, chunks, filedatabase, &
     & l2gpDatabase, processingRange )
     ! This routine goes through the L1 file and works out how big each HGrid is going to be
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Chunks_m, only: MLSChunk_T
-    use ChunkDivide_m, only: ChunkDivideConfig
-    use HGridsDatabase, only: HGRID_T, DESTROYHGRIDCONTENTS, DUMP
-    use Init_Tables_Module, only: Z_CONSTRUCT, S_HGRID, Z_OUTPUT
-    use L2GPData, only: L2GPDATA_T
-    use MLSCommon, only: MLSFILE_T, TAI93_RANGE_T
-    use MLSL2Options, only: SPECIALDUMPFILE
-    use MoreTree, only: GET_SPEC_ID
-    use MLSMessageModule, only: MLSMessage, MLSMSG_ERROR
-    use MLSStringLists, only: SwitchDetail
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use CHUNKS_M, only: MLSCHUNK_T
+    use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
+    use HGRIDSDATABASE, only: HGRID_T, DESTROYHGRIDCONTENTS, DUMP
+    use INIT_TABLES_MODULE, only: Z_CONSTRUCT, S_HGRID, Z_OUTPUT
+    use L2GPDATA, only: L2GPDATA_T
+    use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T
+    use MLSL2OPTIONS, only: SPECIALDUMPFILE
+    use MORETREE, only: GET_SPEC_ID
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: SUBTREE, NSONS, NODE_ID, DECORATION
+    use TREE, only: SUBTREE, NSONS, NODE_ID, DECORATION
     use TREE_TYPES, only: N_NAMED
     ! Dummy arguments
     integer, intent(in) :: ROOT         ! Tree node for whole l2cf
@@ -2281,7 +2289,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------- PlaceHGridContents --
   subroutine PlaceHGridContents ( HGrid1, HGrid2, offset )
     ! Place the contents of one Hgrid1 inside HGrid2, possibly offset
-    use HGridsDatabase, only: HGRID_T
+    use HGRIDSDATABASE, only: HGRID_T
     ! Args
     type(HGRID_T), intent(in)     :: HGrid1
     type(HGRID_T), intent(inout)  :: HGrid2
@@ -2307,7 +2315,7 @@ contains ! =====     Public Procedures     =============================
 
     use LEXER_CORE, only: PRINT_SOURCE
     use OUTPUT_M, only: OUTPUT
-    use TREE, only: DUMP_TREE_NODE, Where_At => Where
+    use TREE, only: DUMP_TREE_NODE, WHERE_AT => WHERE
 
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
@@ -2353,7 +2361,7 @@ contains ! =====     Public Procedures     =============================
     
     subroutine PlaceArray_r4(array1, array2, offset)
       ! place contents of array1 inside array2, possibly offset
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+      use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
       integer, parameter :: R4 = kind(0.0e0)
       ! Args
       real(r4), dimension(:,:), intent(in)     :: array1
@@ -2374,7 +2382,7 @@ contains ! =====     Public Procedures     =============================
 
     subroutine PlaceArray_r8(array1, array2, offset)
       ! place contents of array1 inside array2, possibly offset
-      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+      use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
       integer, parameter :: R8 = kind(0.0d0)
       ! Args
       real(r8), dimension(:,:), intent(in)     :: array1
@@ -2409,6 +2417,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.109  2013/10/01 22:17:51  pwagner
+! Added maf component to HGrid_T
+!
 ! Revision 2.108  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
