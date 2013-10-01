@@ -422,7 +422,7 @@ subtrees:   do while ( j <= howmany )
                   call MLSL2Fill ( son, filedatabase, griddedDataBase, &
                   & vectorTemplates, vectors, qtyTemplates, matrices, hessians, &
                   & l2gpDatabase, l2auxDatabase, forwardModelConfigDatabase, &
-                  & chunks, chunkNo )
+                  & chunks, chunkNo, hgrids )
                 end if
                 call add_to_section_timing ( 'fill', t1, now_stop )
               case ( z_join )
@@ -681,6 +681,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.186  2013/08/30 02:45:52  vsnyder
+! Revise calls to trace_begin and trace_end
+!
 ! Revision 2.185  2013/08/23 23:32:55  pwagner
 ! May use l2cf to set l1b file type to non-Aura
 !
