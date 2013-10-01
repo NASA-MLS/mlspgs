@@ -435,21 +435,24 @@ contains
     logical :: Change
     integer :: I, L
     exist = .false.
-    do i = 1, size(directories)
-      l = 1
-      if ( directories(i) > 0 ) then
-        call get_string ( directories(i), full_text, strip=.true. )
-        l = string_length(directories(i)) + 1
-        if ( full_text(l-1:l-1) /= '/' ) then
-          full_text(l-1:l-1) = '/'
-          l = l + 1
+    call get_string ( file_name, full_text, strip=.true. )
+    inquire ( file=full_text, exist=exist )
+    if ( .not. exist ) then
+      do i = 1, size(directories)
+        l = 1
+        if ( directories(i) > 0 ) then
+          call get_string ( directories(i), full_text, strip=.true. )
+          l = string_length(directories(i)) + 1
+          if ( full_text(l-1:l-1) /= '/' ) then
+            full_text(l:l) = '/'
+            l = l + 1
+          end if
         end if
-      end if
-      call get_string ( file_name, full_text(l:), strip=.true. )
-      inquire ( file=full_text, exist=exist )
-      if ( exist ) exit
-    end do
-    if ( .not. exist ) call get_string ( file_name, full_text, strip=.true. )
+        call get_string ( file_name, full_text(l:), strip=.true. )
+        inquire ( file=full_text, exist=exist )
+        if ( exist ) exit
+      end do
+    end if
     ! Remove multiple slashes from path name and replace instances of /./
     ! with /; inquire opened seems not to catch circular includes in these cases
     change = .true.
@@ -1274,6 +1277,10 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.42  2013/10/01 02:12:02  vsnyder
+! Check current directory first for includes.  Handle the case of a prefix
+! in the directory list not ending with "/" correctly.
+!
 ! Revision 2.41  2013/09/27 22:35:36  pwagner
 ! Supplied lower bounds on allocates in Open_Include to mollify NAG
 !
