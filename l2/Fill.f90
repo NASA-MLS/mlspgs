@@ -48,7 +48,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine MLSL2FILL ( ROOT, FILEDATABASE, GRIDDEDDATABASE, VECTORTEMPLATES, &
     & VECTORS, QTYTEMPLATES, MATRICES, HESSIANS, L2GPDATABASE, L2AUXDATABASE, &
-    & FWMODELCONFIG, CHUNKS, CHUNKNO )
+    & FWMODELCONFIG, CHUNKS, CHUNKNO, HGRIDS )
 
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
@@ -100,6 +100,7 @@ contains ! =====     Public Procedures     =============================
     use GRIDDEDDATA, only: GRIDDEDDATA_T
     use HESSIANMODULE_1, only: ADDHESSIANTODATABASE, CREATEEMPTYHESSIAN, &
       & STREAMLINEHESSIAN, HESSIAN_T
+    use HGRIDSDATABASE, only: HGRID_T
     ! We need many things from init_tables_module.  first the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_ASPERCENTAGE, F_AUTOFILL, F_AVOIDBRIGHTOBJECTS, &
@@ -183,6 +184,8 @@ contains ! =====     Public Procedures     =============================
     use INTRINSIC, only: LIT_INDICES, &
       & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_TEMPERATURE, &
       & PHYQ_TIME, PHYQ_LENGTH, PHYQ_ANGLE, PHYQ_PROFILES
+    use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
+      & ASSEMBLEL1BQTYNAME
     use L2GPDATA, only: L2GPDATA_T, COL_SPECIES_HASH, COL_SPECIES_KEYS
     use L2AUXDATA, only: L2AUXDATA_T
     use L2PC_M, only: POPULATEL2PCBINBYNAME, LOADHESSIAN, LOADMATRIX, LOADVECTOR
@@ -196,12 +199,13 @@ contains ! =====     Public Procedures     =============================
       & MATRIX_T, NULLIFYMATRIX
     ! NOTE: if you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
+    use MLSFILES, only: GETMLSFILEBYTYPE
     use MLSL2OPTIONS, only: DEFAULT_HDFVERSION_READ, L2CFNODE, &
       & SKIPRETRIEVAL, SPECIALDUMPFILE, MLSMESSAGE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
       & ADDPHASETOPHASENAMES, FILLTIMINGS, FINISHTIMINGS
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-      & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMESSAGERESET
+      & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_L1BREAD, MLSMESSAGERESET
     use MLSPCF2, only: MLSPCF_L2APRIORI_START, MLSPCF_L2APRIORI_END
     use MLSRANDOMNUMBER, only: MLS_RANDOM_SEED, MATH77_RAN_PACK
     use MLSSTRINGLISTS, only: CATLISTS, GETHASHELEMENT, &
@@ -248,6 +252,7 @@ contains ! =====     Public Procedures     =============================
     type(ForwardModelConfig_T), dimension(:), pointer :: FWMODELCONFIG
     type (mlSChunk_T), dimension(:), pointer          :: CHUNKS
     integer, intent(in)                               :: CHUNKNO
+    type (HGrid_T), dimension(:), pointer ::     HGrids
 
     ! -----     Declarations for Fill and internal subroutines     -------
 
@@ -402,6 +407,8 @@ contains ! =====     Public Procedures     =============================
     logical :: INVERT                   ! "Invert the specified covariance matrix"
     logical :: ISPRECISION              ! l1b precision, not radiances if TRUE
     integer :: KEY                      ! Definitely n_named
+    type (L1BData_T) :: l1bField ! L1B data
+    type (MLSFile_T), pointer             :: L1BFile
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
     integer :: L2GPINDEX                ! Index into L2GPDatabase
     integer :: LENGTHSCALE              ! Index of lengthscale vector in database
@@ -1348,24 +1355,30 @@ contains ! =====     Public Procedures     =============================
     ! ----------------------------------------------  FillCommand  -----
     subroutine FillCommand
     ! Now we're on actual Fill instructions.
-      use Init_Tables_Module, only: L_None
-use Dump_0, only: Dump
-use Intrinsic, only: Lit_Indices
-use String_Table, only: Display_String
-use Tree, only: Dump_Tree_Node
-use Units, only: Base_Unit
-use Vector_Qty_Expr_m, only: Dot, Log_Value, Num_Value, Vector_Qty_Expr
-use VectorsModule, only: DestroyVectorQuantityMask, DestroyVectorQuantityValue, &
-Dump_Vector_Quantity
-double precision :: Number
-integer :: Stat
+      use INIT_TABLES_MODULE, only: L_NONE
+      use DUMP_0, only: DUMP
+      use INTRINSIC, only: LIT_INDICES
+      use STRING_TABLE, only: DISPLAY_STRING
+      use TREE, only: DUMP_TREE_NODE
+      use UNITS, only: BASE_UNIT
+      use VECTOR_QTY_EXPR_M, only: DOT, LOG_VALUE, NUM_VALUE, VECTOR_QTY_EXPR
+      use VECTORSMODULE, only: DESTROYVECTORQUANTITYMASK, DESTROYVECTORQUANTITYVALUE, &
+      Dump_Vector_Quantity
+      double precision :: Number
+      integer :: Stat
+      logical, parameter :: DONTPAD = .false.
       integer :: Geolocation
+      integer :: I
       integer :: JJ
+      integer :: L1BFLAG
+      integer :: MAF
       integer :: MUL
+      integer :: NOMAFS
+      integer :: NOSURFS
       integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
       logical :: QTYWASMASKED
       type(vectorValue_T) :: TEMPQUANTITY  ! For storing original qty's mask
-integer :: TheUnits
+      integer :: TheUnits
       ! Executable
       ! Loop over the instructions to the Fill command
       BOMask = 0
@@ -1444,24 +1457,24 @@ integer :: TheUnits
           valuesNode = subtree(j,key)
         case ( f_expr )
 !         valuesNode = subtree(j,key)
-do jj = 2, nsons(subtree(j,key))
-stat = vector_qty_expr ( subtree(jj,subtree(j,key)), vectors, tempQuantity, &
-number, theUnits, 'Fill' )
-select case ( stat )
-case ( log_value, num_value )
-call output ( number, before='Numeric value of "expr" field = ' )
-if ( theUnits /= phyq_dimensionless ) &
-call display_string ( lit_indices(base_unit(theUnits)), before=' ' )
-call output ( '', advance='yes' )
-case ( dot )
-call output ( 'Got vector qty result', advance='yes' )
-call dump_vector_quantity ( tempQuantity, details=1, name='Quantity value of "expr" field' )
-call destroyVectorQuantityMask ( tempQuantity )
-call destroyVectorQuantityValue ( tempQuantity )
-case default
-call output ( 'Got Vector_Qty_Expr_Error', advance='yes' )
-end select
-end do
+        do jj = 2, nsons(subtree(j,key))
+          stat = vector_qty_expr ( subtree(jj,subtree(j,key)), vectors, tempQuantity, &
+          number, theUnits, 'Fill' )
+          select case ( stat )
+          case ( log_value, num_value )
+            call output ( number, before='Numeric value of "expr" field = ' )
+            if ( theUnits /= phyq_dimensionless ) &
+            call display_string ( lit_indices(base_unit(theUnits)), before=' ' )
+            call output ( '', advance='yes' )
+          case ( dot )
+            call output ( 'Got vector qty result', advance='yes' )
+            call dump_vector_quantity ( tempQuantity, details=1, name='Quantity value of "expr" field' )
+            call destroyVectorQuantityMask ( tempQuantity )
+            call destroyVectorQuantityValue ( tempQuantity )
+          case default
+            call output ( 'Got Vector_Qty_Expr_Error', advance='yes' )
+          end select
+        end do
           call Announce_Error ( gson, noCodeFor, extraInfo=(/ f_expr /) )
         case ( f_extinction ) ! For cloud extinction fill
           extinction = get_boolean ( gson )
@@ -2195,8 +2208,28 @@ end do
         case ( 'time' )
           quantity%values = quantity%template%time
         case default
-          call Announce_error ( key, no_Error_Code, trim(GLStr) // &
-            & 'geolocation not recognized' )
+          ! We will try to read it from the l1boa file--hope you named it properly
+          L1BFile => GetMLSFileByType(filedatabase, content='l1boa')
+          call ReadL1BData ( L1BFile, GLStr, l1bField, noMAFs, &
+            & l1bFlag, firstMAF=Chunks(ChunkNo)%firstMAFIndex, &
+            & lastMAF=Chunks(ChunkNo)%lastMAFIndex, &
+            & dontPad=DONTPAD )
+          if ( l1bFlag == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & MLSMSG_L1BRead//trim(GLStr) )
+          ! call Announce_error ( key, no_Error_Code, trim(GLStr) // &
+          !  & 'geolocation not recognized' )
+          noSurfs = quantity%template%noSurfs
+          if ( quantity%template%hGridIndex > 0 .and. &
+            & noSurfs /= size(l1bField%dpField, 2) ) then
+            noSurfs = min(quantity%template%noSurfs, size(l1bField%dpField, 2))
+            do i=1, quantity%template%noInstances
+              maf = Hgrids(quantity%template%hGridIndex)%maf(i)
+              quantity%value3(:,1:noSurfs,i) = l1bField%dpField(:,1:noSurfs,maf)
+            enddo
+          else
+            quantity%value3 = l1bField%dpField
+          endif
+          call deallocateL1BData ( l1bField ) ! Avoid memory leaks
         end select
 
       case ( l_gather, l_scatter ) ! ------------  Gather  -----
@@ -3104,6 +3137,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.432  2013/10/01 22:20:58  pwagner
+! geolocation Fill method can fill from any named dataset in l1boa file
+!
 ! Revision 2.431  2013/09/28 00:31:34  pwagner
 ! Added check for required GPHQuantity with gphResetToGeoid method
 !
