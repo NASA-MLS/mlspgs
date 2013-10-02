@@ -498,8 +498,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fGridCoord, l+l_channel, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, &
-             l+l_addnoise, l+l_applyBaseline, l+l_asciiFile, l+l_binMax, &
-             l+l_binMean, l+l_binMin, l+l_binTotal, l+l_boxcar, &
+             l+l_addnoise, l+l_applyBaseline, l+l_ascenddescend, l+l_asciiFile, &
+             l+l_binMax, l+l_binMean, l+l_binMin, l+l_binTotal, l+l_boxcar, &
              l+l_chiSqChan, l+l_chiSqMMAF, l+l_chiSqMMIF, l+l_chiSqRatio, &
              l+l_columnAbundance, l+l_combineChannels, &
              l+l_convergenceRatio, l+l_derivative, l+l_estimatedNoise, &
@@ -1991,6 +1991,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.590  2013/10/02 00:48:03  pwagner
+! Added ascenddescend Fill Method
+!
 ! Revision 2.589  2013/09/21 00:37:20  vsnyder
 ! Add ChunkDivide field for Dump
 !
