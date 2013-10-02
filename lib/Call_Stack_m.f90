@@ -50,7 +50,7 @@ contains ! ====     Public Procedures     ==============================
 
 ! ---------------------------------------------------  Dump_Stack  -----
   subroutine Dump_Stack ( Top, Before, Where, Size, CPU, DoDepth, Rev, Index, &
-                        & Advance )
+                        & String, Advance )
     ! Dump the call stack.  If Top is present and true, dump only the top
     ! frame.  If Before is present, print it after "depth" dots and before
     ! anything else.  If Where is present and true, and the Tree component
@@ -71,6 +71,7 @@ contains ! ====     Public Procedures     ==============================
     logical, intent(in), optional :: DoDepth ! Print "depth" dots (default true)
     logical, intent(in), optional :: Rev   ! Print in reverse order (default false)
     integer, intent(in), optional :: Index ! Print this instead of from stack
+    character(len=*), optional, intent(in) :: String
     character(len=*), intent(in), optional :: Advance ! Default 'yes'
 
     character(len=3) :: MyAdvance
@@ -123,6 +124,7 @@ contains ! ====     Public Procedures     ==============================
       else if ( stack(depth)%index >= 0 ) then
         call output ( stack(depth)%index, before=' ' )
       end if
+      if ( present(string) ) call output ( ' ' // string )
       if ( myWhere .and. stack(depth)%tree > 0 ) then
         if ( source_ref(stack(depth)%tree) == 0 ) then
           call output ( stack(depth)%tree, before=', tree at ' )
@@ -160,7 +162,7 @@ contains ! ====     Public Procedures     ==============================
   end function Get_Frame
 
 ! ----------------------------------------------------  Pop_Stack  -----
-  subroutine Pop_Stack ( Before, Where, Frame, Index, Silent )
+  subroutine Pop_Stack ( Before, Where, Frame, Index, String, Silent )
     ! Pop the stack.  If Before or Where are present, dump the top frame first.
 
     use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
@@ -171,6 +173,7 @@ contains ! ====     Public Procedures     ==============================
     logical, intent(in), optional :: Where
     type(stack_t), intent(out), optional :: Frame
     integer, intent(in), optional :: Index
+    character(len=*), optional, intent(in) :: String
     logical, intent(in), optional :: Silent
 
     double precision :: Delta
@@ -189,7 +192,7 @@ contains ! ====     Public Procedures     ==============================
       ! We call dump_stack even without haveStack because it prints
       ! an error message if we don't have a stack.
       call dump_stack ( .true., before, where, size=.false., index=index, &
-        & advance='no' )
+        & string=string, advance='no' )
       if ( .not. haveStack ) return
       call time_now ( t )
       t = t - stack(stack_ptr)%clock
@@ -339,6 +342,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.14  2013/10/02 01:28:21  vsnyder
+! Add 'string' argument to pop_stack, dump_stack
+!
 ! Revision 2.13  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !

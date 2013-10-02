@@ -120,10 +120,12 @@ contains
     end if
   end subroutine DESTROY_SYMBOL_TABLE
   ! ========================================     DUMP_1_SYMBOL     =====
-  subroutine DUMP_1_SYMBOL ( SYMBOL, ADVANCE )
+  subroutine DUMP_1_SYMBOL ( SYMBOL, ADVANCE, BEFORE )
   ! Print the symbol index, type and text.
     integer, intent(in) :: SYMBOL
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE
+    if ( present(before) ) call output ( before )
     call output ( symbol ); call output ( ': ' )
     call display_string ( type_texts(term_types(symbols(symbol))) )
     call output ( ' ' )
@@ -259,6 +261,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.14  2013/10/02 01:31:41  vsnyder
+! Add Before argument to Dump_1_Symbol
+!
 ! Revision 2.13  2009/06/23 18:25:44  pwagner
 ! Prevent Intel from optimizing ident string away
 !
