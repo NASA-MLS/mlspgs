@@ -59,13 +59,13 @@ module LEXER_M
 ! CAN     EM      SUB     ESC     FS      GS      RS      US
   more,   more,   more,   more,   more,   more,   more,   more,   & ! 030
 ! SPACE   !       "       #       $       %       &       '
-  spaces, more,   quote,  sharp,  cont,   more,   more,   apost,  & ! 040
+  spaces, op_char,quote,  sharp,  cont,   more,   more,   apost,  & ! 040
 ! (       )       *       +       ,       -       .       /
   punct,  punct,  op_char,op_char,punct,  op_char,dot,    op_char,& ! 050
 ! 0       1       2       3       4       5       6       7
   digit,  digit,  digit,  digit,  digit,  digit,  digit,  digit,  & ! 060
 ! 8       9       :       ;       <       =       >       ?
-  digit,  digit,  op_char,cmt,    op_char,op_char,op_char,more,   & ! 070
+  digit,  digit,  op_char,cmt,    op_char,op_char,op_char,op_char,& ! 070
 ! @       A       B       C       D       E       F       G
   tog_ch, letter, letter, letter, letter, letter, letter, letter, & ! 100
 ! H       I       J       K       L       M       N       O
@@ -673,6 +673,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.25  2013/10/02 01:33:46  vsnyder
+! Make ! and ? operator characters
+!
 ! Revision 2.24  2013/09/24 23:08:31  vsnyder
 ! Add #include
 !
