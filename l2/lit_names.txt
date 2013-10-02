@@ -17,6 +17,7 @@ addnoise
 andMasks
 applyBaseline
 apriori
+ascenddescend
 asciiFile
 
 binMax
@@ -181,6 +182,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.75  2013/10/02 00:47:45  pwagner
+# Added ascenddescend Fill Method
+#
 # Revision 2.74  2013/09/21 00:23:41  pwagner
 # Added geoid Fill methods
 #
