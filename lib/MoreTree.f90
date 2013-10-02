@@ -13,7 +13,7 @@ module MoreTree
 
 ! Some routines for tree analysis that don't quite fit anywhere else.
 
-  use StartErrorMessage_m, only: StartErrorMessage ! bacause others use it from here
+  use StartErrorMessage_m, only: StartErrorMessage ! Others use it from here too
   use Tree, only: Decoration, Node_ID, NSons, Subtree
 
   implicit NONE
@@ -375,6 +375,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.20  2013/10/02 02:07:44  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.19  2013/09/30 23:59:57  vsnyder
 ! Routines for TX type, move StartErrorMessage from include to module
 !
