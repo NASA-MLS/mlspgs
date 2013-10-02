@@ -187,7 +187,7 @@ module FillUtils_1                     ! Procedures used by Fill
       & FROML2AUX, USINGMAGNETICMODEL, &
       & FROMINTERPOLATEDQTY, FROMLOSGRID, &
       & BYMANIPULATION, MANIPULATEVECTORS, WITHREFLECTORTEMPERATURE, &
-      & WITHREICHLERWMOTP, &
+      & WITHASCORDESC, WITHREICHLERWMOTP, &
       & WITHWMOTROPOPAUSE, WITHBINRESULTS, WITHBOXCARFUNCTION, &
       & STATUSQUANTITY, QUALITYFROMCHISQ, CONVERGENCEFROMCHISQ, &
       & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNUSEDRADIANCES, &
@@ -2393,8 +2393,8 @@ contains ! =====     Public Procedures     =============================
     ! relative to geoid instead of ellipsoid
     subroutine GeoidData ( quantity, sourceQuantity, resolution )
       use SDPTOOLKIT, only: PGSd_DEM_30ARC, PGSd_DEM_90ARC, PGSd_DEM_GEOID, &
-        & PGSd_DEM_DEGREE !, &
-!        & PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
+        & PGSd_DEM_DEGREE , &
+        & PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
       type(VectorValue_T), intent(inout)        :: QUANTITY
       type(VectorValue_T), intent(in), optional :: SOURCEQUANTITY
       integer, intent(in), optional             :: RESOLUTION
@@ -2415,7 +2415,7 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(2) :: resolutionList
       integer :: STATUS
       integer, dimension(2) :: COMPLETEDATA
-      integer, external :: PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
+      !integer, external :: PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
 
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.GeoidData', 0, &
@@ -4708,6 +4708,43 @@ contains ! =====     Public Procedures     =============================
         enddo
       endif
     end subroutine Scatter
+
+    ! --------------------------------------------  WithEstdNoise  -----
+    ! Fills a quantity with values determined by whether the s/c
+    ! is in ascending or descending mode: +1 is ascending, -1 is descending
+    ! method:
+    ! We read the s/c velocity and look at the sign of its z component
+    subroutine WithAscOrDesc ( QUANTITY, CHUNK, FILEDATABASE, HGRIDS )
+    use HGRIDSDATABASE, only: HGRID_T
+
+      ! Dummy arguments
+      type (VectorValue_T), intent(inout)        :: QUANTITY ! Quantity to fill
+      type (MLSChunk_T), INTENT(IN)              :: CHUNK
+      type (MLSFile_T), dimension(:), pointer    :: FILEDATABASE
+      type (HGrid_T), dimension(:), pointer      :: HGrids
+      ! Local variables
+      integer                                    :: I, MAF
+      integer                                    :: l1bError
+      type (l1bData_T)                           :: L1BDATA
+      type (MLSFile_T), pointer                  :: L1BFile
+      type (MLSFile_T), pointer                  :: L1BOAFile
+      integer                                    :: noMAFs
+      integer                                    :: noSurfs
+      ! Executable
+      L1BOAFile => GetMLSFileByType(filedatabase, content='l1boa')
+      call ReadL1BData ( L1BOAFile, 'sc/VelECI', L1BDATA, noMAFs, &
+        & flag=l1bError, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+        & NeverFail= .true., &
+        & dontPad=DONTPAD )
+      noSurfs = min(quantity%template%noSurfs, size(L1BData%dpField, 2))
+      do i=1, quantity%template%noInstances
+        maf = Hgrids(quantity%template%hGridIndex)%maf(i)
+        if ( maf < 1 ) maf = i
+        quantity%values(1:noSurfs,i) = sign(1._rv, &
+          & L1BData%dpField(3,1:noSurfs,maf))
+      enddo
+      call deallocateL1BData ( L1BData ) ! Avoid memory leaks
+    end subroutine WithAscOrDesc
 
     ! --------------------------------------------  WithEstdNoise  -----
     subroutine WithEstNoise ( Quantity, Radiance, SysTemp, Nbw, IntegrationTime )
@@ -7313,6 +7350,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.90  2013/10/02 00:48:55  pwagner
+! Added ascenddescend Fill Method
+!
 ! Revision 2.89  2013/09/25 16:39:53  pwagner
 ! Repaired GeoidData
 !
