@@ -33,8 +33,11 @@ module SYMBOL_TYPES
   integer, parameter :: T_MINUS =            T_PLUS + 1
   integer, parameter :: T_STAR =             T_MINUS + 1
   integer, parameter :: T_SLASH =            T_STAR + 1
-  integer, parameter :: T_BACKSLASH =        T_SLASH + 1
-  integer, parameter :: T_DOT =              T_BACKSLASH + 1
+  integer, parameter :: T_ASSIGN =           T_SLASH + 1
+  integer, parameter :: T_BACKSLASH =        T_ASSIGN + 1
+  integer, parameter :: T_BANG =             T_BACKSLASH + 1
+  integer, parameter :: T_COND =             T_BANG + 1
+  integer, parameter :: T_DOT =              T_COND + 1
   integer, parameter :: T_COLON =            T_DOT + 1
   integer, parameter :: T_COLON_LESS =       T_COLON + 1
   integer, parameter :: T_LESS_COLON =       T_COLON_LESS + 1
@@ -108,17 +111,18 @@ module SYMBOL_TYPES
   integer, parameter :: TERM_TYPES(t_null: t_last_terminal) = &
   !  t_null    (         )         [         ]         +         -
   (/ object,   def_pun,  def_pun,  def_pun,  def_pun,  def_op,   def_op,   &
-  !  *         /         \         .         :         :<        <:      
+  !  *         /         :=        \         !         ?         .         
      def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
-  !  <:<       =         ==        /=        <         <=        >
+  !  :         :<        <:        <:<       =         ==        /=        
      def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
-  !  >=        ,         ^         begin     end       and       or
-     def_op,   def_pun,  def_op,   res_word, res_word, res_word, res_word, &
-  !  or        <eof>     <eos>     <ident>   <numcon>  <string>  include 
-     res_word, object,   object,   ident,    numcon,   string,   def_op,   &
-  !  unk_op  unk_pun   unk_ch    inc_num   inc_str   junk
-     unk_op, unk_pun,  unk_ch,   inc_num,  inc_str,  aft_cont /)
-
+  !  <         <=        >         >=        ,         ^         begin     
+     def_op,   def_op,   def_op,   def_op,   def_pun,  def_op,   res_word, &
+  !  end       and       or        not       <eof>     <eos>     <ident>   
+     res_word, res_word, res_word, res_word, object,   object,   ident,    &
+  !  <numcon>  <string>  include   unk_op    unk_pun   unk_ch    inc_num   
+     numcon,   string,   def_op,   unk_op,   unk_pun,  unk_ch,   inc_num,  &
+  !  inc_str   junk
+     inc_str,  aft_cont  /)
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -143,7 +147,10 @@ contains
     case ( t_minus );             call add_char ( '-' )
     case ( t_star );              call add_char ( '*' )
     case ( t_slash );             call add_char ( '/' )
+    case ( t_assign );            call add_char ( ':=' )
     case ( t_backslash );         call add_char ( '\' )
+    case ( t_bang );              call add_char ( '!' )
+    case ( t_cond );              call add_char ( '?' )
     case ( t_dot );               call add_char ( '.' )
     case ( t_colon );             call add_char ( ':' )
     case ( t_less_colon );        call add_char ( '<:' )
@@ -209,6 +216,7 @@ contains
     end select
     return
   end subroutine INIT_TYPE
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -222,6 +230,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.17  2013/10/02 01:33:10  vsnyder
+! Add :=, ? and ! symbols for variable assignment  and conditional expressions
+!
 ! Revision 2.16  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !
