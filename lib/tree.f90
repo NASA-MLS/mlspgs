@@ -25,8 +25,8 @@ module TREE
 
   public :: ADD_SONS_FROM_STACK, ALLOCATE_TREE, BUILD_TREE, COPY_TO_STACK
   public :: DEALLOCATE_TREE, DECORATE, DECORATION, DECORATION_TX_TX, DELETE_TREE
-  public :: DELETE_TREE_STACK, DUMP_TREE_NODE, DUMP_TREE_NODE_NAME
-  public :: INIT_TREE, INSERT_NODE
+  public :: DELETE_TREE_STACK, DUMP_TOP_STACK, DUMP_TOP_STACK_NAME
+  public :: DUMP_TREE_NODE, DUMP_TREE_NODE_NAME, INIT_TREE, INSERT_NODE
   public :: NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
   public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_SUBTREE
   public :: STACK_SUBTREE_TX, SUB_ROSA, SUBTREE, THE_FILE, TREE_TEXT, TX, WHERE
@@ -384,8 +384,23 @@ contains
     n_tree_stack = 0
   end subroutine DELETE_TREE_STACK
 
+  subroutine DUMP_TOP_STACK ( INDENT, ADVANCE )
+    ! Indent INDENT spaces, then dump the top node of the tree stack
+    integer, intent(in) :: INDENT
+    character(len=*), intent(in), optional :: ADVANCE
+    call dump_tree_node ( tree_sp, indent, advance )
+  end subroutine DUMP_TOP_STACK
+
+  subroutine DUMP_TOP_STACK_NAME ( ADVANCE, BEFORE )
+    ! Dump the name of the top node of the tree stack
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: BEFORE
+    call display_string ( tree_texts(the_tree(tree_sp) % node), &
+                        & advance=advance, before=before )
+  end subroutine DUMP_TOP_STACK_NAME
+
   subroutine DUMP_TREE_NODE_I ( WHERE, INDENT, ADVANCE )
-  ! Indent INDENT spaces, then dump the tree WHERE
+  ! Indent INDENT spaces, then dump the tree at WHERE
     integer, intent(in) :: WHERE
     integer, intent(in) :: INDENT
     character(len=*), intent(in), optional :: ADVANCE
@@ -925,6 +940,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.23  2013/10/02 01:31:06  vsnyder
+! Add Dump_Top_Stack, Dump_Top_Stack_Name
+!
 ! Revision 2.22  2013/09/30 23:59:06  vsnyder
 ! Default initializer for tx%i, add decoration_tx_tx
 !
