@@ -33,7 +33,7 @@ module DECLARATION_TABLE
   public :: INIT_DECL, LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, NUM_VALUE
   public :: PHYS_UNIT_NAME, PRIOR_DECL, RANGE, REDECLARE
   public :: SECTION, SECTION_NODE, STR_RANGE, STR_VALUE, SPEC, TREE_NODE
-  public :: TYPE_MAP, TYPE_NAME, TYPE_NAMES, UNDECLARED, UNITS_NAME
+  public :: TYPE_MAP, TYPE_NAME, TYPE_NAMES, UNDECLARED, UNITS_NAME, VARIABLE
 
   type :: DECLS
     double precision :: VALUE
@@ -41,13 +41,14 @@ module DECLARATION_TABLE
     integer :: UNITS          ! Depends on "type" field:
                               ! "units_name" => Index of "units" of name,
                               !            e.g. km = length, ...
-                              ! "exprn" => Index < offset in matrix database
-                              !            Index > offset in vector database
+                              ! "exprn" => < 0 offset in matrix database
+                              !            > 0 offset in vector database
                               !            0 = double-precision value only
                               ! "field" => Index of field
                               ! "function" => Index of function
                               ! "section" => Index of section
                               ! "spec" => Index of specification
+                              ! "variable" => Type of its first value
     integer :: TREE           ! Index of declaration in the tree
     integer :: PRIOR          ! Index of previous declaration
   end type DECLS
@@ -86,22 +87,23 @@ module DECLARATION_TABLE
   integer, parameter :: UNITS_NAME = 22 ! Name is a units name, e.g. km, hPa
                                         ! Scale to "canonical" units of the
                                         ! name is in "value", e.g. km = 1000.0
+  integer, parameter :: VARIABLE = 23   ! Name is a variable, e.g. A := <expr>
 
-  character(len=*), parameter :: TYPE_NAMES(empty:units_name) = &
+  character(len=*), parameter :: TYPE_NAMES(empty:variable) = &
   (/ 'empty         ', 'dot           ', 'enum_value    ', 'exprn         ', &
      'exprn_m       ', 'exprn_v       ', 'field         ', 'function      ', &
      'label         ', 'log_value     ', 'nam_value     ', 'num_value     ', &
      'phys_unit_name', 'range         ', 'section       ', 'section_n     ', &
      'str_range     ', 'str_value     ', 'spec          ', 'tree          ', &
-     'type_name     ', 'undeclared    ', 'units         ' /)
+     'type_name     ', 'undeclared    ', 'units         ', 'variable      ' /)
 
 ! Mapping from declaration table types to data types:
-  integer, parameter :: TYPE_MAP(empty:units_name) =      &
+  integer, parameter :: TYPE_MAP(empty:variable) =        &
   (/ 0, t_a_dot_b, 0,         0,               0,         &
      0, 0,         0,         0,               t_boolean, &
      0, t_numeric, 0,         t_numeric_range, 0,         &
      0, 0,         t_string,  0,               0,         &
-     0, 0,         0 /)
+     0, 0,         0,         0 /)
 
 ! -----     Private declarations     -----------------------------------
   type(decls), save, allocatable :: DECL_TABLE(:)
@@ -204,7 +206,15 @@ contains ! =====     Public Procedures     =============================
       call output ( ', TYPE = ' ); call output ( trim(type_names(type)) )
       call output ( ', UNITS = ' )
       if ( type == units_name ) then
-        call display_string ( phyq_indices(units) )
+        if ( phyq_indices(units) == 0 ) then
+          call output ( ' <unknown> ' )
+        else
+          call display_string ( phyq_indices(units) )
+        end if
+      else if ( type == phys_unit_name ) then
+        call display_string ( lit_indices(units) )
+      else if ( type == variable ) then
+        call output ( units, before=trim(type_names(units)) // ' = ' )
       else
         call output ( units )
       end if
@@ -240,8 +250,10 @@ contains ! =====     Public Procedures     =============================
       else
         call display_string ( phyq_indices(decl%units) )
       end if
-    else if  ( decl%type == phys_unit_name ) then
+    else if ( decl%type == phys_unit_name ) then
       call display_string ( lit_indices(decl%units) )
+    else if ( decl%type == variable ) then
+      call output ( decl%units, before=trim(type_names(decl%units)) // ' = ' )
     else
       call output ( decl%units )
     end if
@@ -394,6 +406,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.13  2013/10/02 01:30:03  vsnyder
+! Add 'variable' type
+!
 ! Revision 2.12  2013/09/19 23:29:33  vsnyder
 ! Add Dump_A_Decl, PHYS_Unit
 !
