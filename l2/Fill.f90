@@ -77,7 +77,7 @@ contains ! =====     Public Procedures     =============================
       & FROML2AUX, USINGMAGNETICMODEL, &
       & FROMINTERPOLATEDQTY, FROMLOSGRID, &
       & BYMANIPULATION, MANIPULATEVECTORS, WITHREFLECTORTEMPERATURE, &
-      & WITHREICHLERWMOTP, &
+      & WITHASCORDESC, WITHREICHLERWMOTP, &
       & WITHWMOTROPOPAUSE, WITHBINRESULTS, WITHBOXCARFUNCTION, &
       & STATUSQUANTITY, QUALITYFROMCHISQ, CONVERGENCEFROMCHISQ, &
       & USINGLEASTSQUARES, OFFSETRADIANCEQUANTITY, RESETUNUSEDRADIANCES, &
@@ -142,8 +142,8 @@ contains ! =====     Public Procedures     =============================
       & F_WHEREFILL, F_WHERENOTFILL, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
-    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
-      & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
+    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCENDDESCEND, &
+      & L_ASCIIFILE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHISQRATIO, L_CHOLESKY, &
       & L_CLOUDICE, L_CLOUDEXTINCTION, &
@@ -1931,6 +1931,9 @@ contains ! =====     Public Procedures     =============================
         call ApplyBaseline ( key, quantity, baselineQuantity, &
           & quadrature, dontMask, ignoreTemplate )
 
+      case ( l_ascenddescend )
+        call WithAscOrDesc ( quantity, chunks(chunkNo), fileDatabase, hgrids )
+
       case ( l_asciiFile )
         if ( .not. got ( f_file ) ) &
           & call Announce_Error ( key, no_Error_Code, &
@@ -2221,7 +2224,7 @@ contains ! =====     Public Procedures     =============================
           noSurfs = quantity%template%noSurfs
           if ( quantity%template%hGridIndex > 0 .and. &
             & noSurfs /= size(l1bField%dpField, 2) ) then
-            noSurfs = min(quantity%template%noSurfs, size(l1bField%dpField, 2))
+            noSurfs = min(noSurfs, size(l1bField%dpField, 2))
             do i=1, quantity%template%noInstances
               maf = Hgrids(quantity%template%hGridIndex)%maf(i)
               quantity%value3(:,1:noSurfs,i) = l1bField%dpField(:,1:noSurfs,maf)
@@ -3137,6 +3140,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.433  2013/10/02 00:48:26  pwagner
+! Added ascenddescend Fill Method
+!
 ! Revision 2.432  2013/10/01 22:20:58  pwagner
 ! geolocation Fill method can fill from any named dataset in l1boa file
 !
