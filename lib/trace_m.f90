@@ -130,7 +130,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine TRACE_BEGIN_I
 
 ! --------------------------------------------------    TRACE_END  -----
-  subroutine TRACE_END ( NAME, INDEX, Cond )
+  subroutine TRACE_END ( NAME, INDEX, String, Cond )
   ! Decrement DEPTH.  Print "EXIT NAME" with DEPTH dots in front.
 
   ! The only reason to provide Name is if you want to check whether stack
@@ -148,6 +148,7 @@ contains ! ====     Public Procedures     ==============================
 
     character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
     integer, intent(in), optional :: INDEX ! Use value from stack if not present
+    character(len=*), optional, intent(in) :: String
     logical, intent(in), optional :: Cond  ! Print if true, default true
 
     integer :: Check = -2
@@ -166,7 +167,7 @@ contains ! ====     Public Procedures     ==============================
     myCond = merge(.true., .false., present(name))
     if ( present(cond) ) myCond = cond
     if ( myCond ) then
-      call pop_stack ( 'Exit ', .true., frame=frame, index=index )
+      call pop_stack ( 'Exit ', .true., frame=frame, index=index, string=string )
     else
       call pop_stack ( frame=frame, index=index, Silent = .true. )
     end if
@@ -255,6 +256,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.33  2013/10/02 01:28:36  vsnyder
+! Add 'string' argument to trace_end
+!
 ! Revision 2.32  2013/09/21 00:21:39  pwagner
 ! Check if string table initialized first
 !
