@@ -21,13 +21,15 @@ module PARSER
 ! spec -> 'EOS'
 ! spec_rest -> \lambda
 ! spec_rest -> '=' expr +
+! spec_rest -> ':=' expr +
 ! spec_rest -> ( ',' spec_list )
 ! spec_rest -> : name ( ',' spec_list )
 ! spec_list -> ( ',', field_list ) *
 ! field_list -> expr ( '=' expr + )?
 ! field_list -> '/' 'name'
 ! expr -> array
-! expr -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
+! expr -> cond ( '?' cond ':' cond ) ?
+! cond -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
 ! array -> '[' ( , expr )* ']'
 ! limit -> lterm ( 'or' lterm ) *
 ! lterm -> lneg ( 'and' lneg ) *
@@ -54,8 +56,8 @@ module PARSER
   use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
   use SYMBOL_TYPES ! Everything, especially everything beginning with T_
   use TOGGLES, only: PAR, TOGGLE
-  use TREE, only: TREE_BUILDER => BUILD_TREE, N_TREE_STACK, POP, &
-                  PUSH_PSEUDO_TERMINAL, STACK_SUBTREE, TX
+  use TREE, only: TREE_BUILDER => BUILD_TREE, DUMP_TOP_STACK_NAME, N_TREE_STACK, &
+                  POP, PUSH_PSEUDO_TERMINAL, STACK_SUBTREE, TX
   use TREE_TYPES   ! Everything, especially everything beginning with N_
 
   implicit NONE
@@ -84,7 +86,9 @@ module PARSER
   data gen(t_minus)           / n_minus           / ! -
   data gen(t_star)            / n_mult            / ! *
   data gen(t_slash)           / n_div             / ! /
+  data gen(t_assign)          / n_variable        / ! :=
   data gen(t_backslash)       / n_into            / ! \
+  data gen(t_cond)            / n_cond            / ! ? ... :
   data gen(t_dot)             / n_dot             / ! .
   data gen(t_colon)           / n_colon           / ! :
   data gen(t_colon_less)      / n_colon_less      / ! :<
@@ -232,6 +236,22 @@ contains ! ====     Public Procedures     ==============================
     if ( toggle(par) ) call finish ( 'BUILD_TREE', nsons )
   end subroutine BUILD_TREE
 
+! ---------------------------------------------------------  COND  -----
+  recursive subroutine COND
+  ! cond -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
+    integer :: N
+    if ( toggle(par) ) call where ( 'COND' )
+    call limit
+    n = next%class
+    select case ( n )
+    case ( t_colon, t_colon_less, t_less_colon, t_less_colon_less )
+      call get_token
+      call limit
+      call build_tree ( gen(n), 2 )
+    end select
+    if ( toggle(par) ) call finish ( 'COND' )
+  end subroutine COND
+
 ! --------------------------------------------------------  EXPON  -----
   recursive subroutine EXPON  ! expon -> unitless 'unit' ? => n_unit
                               !       -> string
@@ -264,7 +284,7 @@ contains ! ====     Public Procedures     ==============================
 ! ---------------------------------------------------------  EXPR  -----
   recursive subroutine EXPR
     ! expr -> array
-    ! expr -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
+    ! expr -> cond ( '?' cond '!' cond ) ?
     integer :: N, NSONS
     if ( toggle(par) ) call where ( 'EXPR' )
     if ( next%class == t_left_bracket ) then
@@ -272,14 +292,15 @@ contains ! ====     Public Procedures     ==============================
       call array ( nsons )
       call build_tree ( n_array, nsons )
     else
-      call limit
+      call cond
       n = next%class
-      select case ( n )
-      case ( t_colon, t_colon_less, t_less_colon, t_less_colon_less )
+      if ( n == t_cond ) then
         call get_token
-        call limit
-        call build_tree ( gen(n), 2 )
-      end select
+        call cond
+        call test_token ( t_bang )
+        call cond
+        call build_tree ( n_cond, 3 )
+      end if
     end if
     if ( toggle(par) ) call finish ( 'EXPR' )
   end subroutine EXPR
@@ -337,7 +358,10 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: NSONS
     depth = depth - 1
     call output ( repeat('.',depth) // 'Exit  ' // trim(what) )
-    if ( present(nsons) ) call output ( nsons, before=' ' )
+    if ( present(nsons) ) then
+      call output ( nsons, before=' ' )
+      call dump_top_stack_name ( before=' ' )
+    end if
     call newLine
   end subroutine FINISH
 
@@ -556,6 +580,12 @@ o:  do
         call build_tree ( n_spec_args, 1 )
 !       call get_token
     exit
+      case ( t_assign )       ! spec_rest -> ':=' expr +
+        call get_token
+        how_many = 1
+        call value ( how_many )
+        call build_tree ( n_variable, how_many )
+    exit
       case ( t_equal )        ! spec_rest -> '=' expr +
         call get_token
         how_many = 1
@@ -674,6 +704,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.29  2013/10/02 01:35:46  vsnyder
+! Add conditional expressions ?...! and variable assignment :=
+!
 ! Revision 2.28  2013/09/30 23:03:04  vsnyder
 ! Add TX type for tree index and generics to use it
 !
