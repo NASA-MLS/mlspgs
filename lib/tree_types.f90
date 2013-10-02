@@ -30,7 +30,8 @@ module TREE_TYPES
   integer, parameter :: N_CFS =        n_cf +1         ! All the configs
   integer, parameter :: N_COLON =      n_cfs + 1       ! A range
   integer, parameter :: N_COLON_LESS = n_colon + 1     ! Range open on right
-  integer, parameter :: N_DIV =        n_colon_less + 1
+  integer, parameter :: N_COND =       n_colon_less + 1
+  integer, parameter :: N_DIV =        n_cond + 1
   integer, parameter :: N_DOT =        n_div + 1
   integer, parameter :: N_DT_DEF =     n_dot + 1       ! Data type definition
   integer, parameter :: N_EQUAL =      n_dt_def + 1    ! = in X = Y spec
@@ -61,12 +62,13 @@ module TREE_TYPES
   integer, parameter :: N_SPEC_DEF =   n_spec_args + 1 ! what fields in spec?
   integer, parameter :: N_UNCHECKED =  n_spec_def + 1  ! field type not checked
   integer, parameter :: N_UNIT =       n_unchecked + 1 ! number // units
+  integer, parameter :: N_VARIABLE =   n_unit + 1      ! := in name := expr
 
-  integer, parameter :: LAST_TREE_NODE = N_UNIT
+  integer, parameter :: LAST_TREE_NODE = N_VARIABLE
 
   ! mapping from pseudo-terminal indices to corresponding tree nodes.
   integer, parameter :: tree_map ( min_pseudo: max_pseudo ) = &
-  !    t_identifier, t_number
+  !    t_identifier, t_number, t_string
     (/ n_identifier, n_number, n_string /)
 
 !---------------------------- RCS Module Info ------------------------------
@@ -95,6 +97,7 @@ contains
     case ( n_Cfs );        call add_char ( 'cfs' )
     case ( n_Colon );      call add_char ( 'colon' )
     case ( n_Colon_less ); call add_char ( 'colon_less' )
+    case ( n_cond );       call add_char ( 'cond' )
     case ( n_Div );        call add_char ( 'div' )
     case ( n_Dot );        call add_char ( 'dot' )
     case ( n_DT_Def );     call add_char ( 'dt_def' )
@@ -104,8 +107,8 @@ contains
     case ( n_Field_Type ); call add_char ( 'field_type' )
     case ( n_Func_Def );   call add_char ( 'func_def' )
     case ( n_Func_Ref );   call add_char ( 'func_ref' )
-    case ( n_greater );    call add_char ( 'greater' )
-    case ( n_greater_eq ); call add_char ( 'greater_eq' )
+    case ( n_Greater );    call add_char ( 'greater' )
+    case ( n_Greater_eq ); call add_char ( 'greater_eq' )
     case ( n_Into );       call add_char ( 'into' )
     case ( n_Less );       call add_char ( 'less' )
     case ( n_Less_colon ); call add_char ( 'less_colon' )
@@ -126,6 +129,7 @@ contains
     case ( n_Spec_def );   call add_char ( 'spec_def' )
     case ( n_Unchecked );  call add_char ( 'unchecked' )
     case ( n_Unit );       call add_char ( 'unit' )
+    case ( n_Variable );   call add_char ( 'variable' )
     case default
       write ( *,* )'TREE_TYPES%TREE_INIT-E- No initializer for &
                      &tree node with index ', tree_node
@@ -145,6 +149,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 2.15  2013/10/02 01:34:46  vsnyder
+! Add conditional ?...! and variable assignment := tree nodes
+!
 ! Revision 2.14  2012/05/05 00:11:51  vsnyder
 ! Add support for 'not' operator
 !
