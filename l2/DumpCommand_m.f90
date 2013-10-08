@@ -2266,8 +2266,13 @@ contains
       case (f_Boolean)
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         booleanString = lowerCase(booleanString)
-        skip = BooleanValue ( booleanString, &
-          & runTimeValues%lkeys, runTimeValues%lvalues)
+        if ( verbose ) then
+          call output( 'Calling BooleanValue', advance='yes' )
+          call output( runTimeValues%lkeys, advance='yes' )
+          call output( runTimeValues%lvalues, advance='yes' )
+        endif
+        skip = BooleanValue ( trim(booleanString), &
+          & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep )
       case ( f_formula )
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         if ( verboser ) call outputNamedValue( 'formula', trim(booleanString) )
@@ -2631,6 +2636,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.101  2013/10/08 23:52:48  pwagner
+! Fixed call to BOOLEANVALUE--must use trim
+!
 ! Revision 2.100  2013/09/27 00:38:12  pwagner
 ! May select hyperslab when dumping quantity
 !
