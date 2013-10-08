@@ -234,19 +234,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: P_OUTPUT_VERSION_STRING       = p_leapsecfile + 1
   integer, parameter :: P_PFAFILE                     = p_output_version_string + 1
   integer, parameter :: P_STARTTIME                   = p_pfafile + 1
-  ! In ChunkDivide section:
-  integer, parameter :: P_CRITICAL_BANDS              = p_starttime  + 1
-  integer, parameter :: P_CRITICAL_SCANNING_MODULES   = p_critical_bands + 1
-  integer, parameter :: P_HOME_GEOD_ANGLE             = p_critical_scanning_modules + 1
-  integer, parameter :: P_HOME_MODULE                 = p_home_geod_angle + 1
-  integer, parameter :: P_IDEAL_LENGTH                = p_home_module + 1
-  integer, parameter :: P_IGNOREL1B                   = p_ideal_length + 1
-  integer, parameter :: P_MAX_GAP                     = p_ignorel1b + 1
-  integer, parameter :: P_NOCHUNKS                    = p_max_gap + 1
-  integer, parameter :: P_OVERLAP                     = p_noChunks + 1
-  integer, parameter :: P_SCAN_LOWER_LIMIT            = p_overlap + 1
-  integer, parameter :: P_SCAN_UPPER_LIMIT            = p_scan_lower_limit + 1
-  integer, parameter :: LAST_PARM = p_scan_upper_limit
+  integer, parameter :: LAST_PARM                     = p_starttime
 
 ! Table for section ordering:
   integer, parameter :: OK = 1, & ! NO = 0
@@ -268,7 +256,7 @@ module INIT_TABLES_MODULE
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Retrieve
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Join
            0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,   OK,  & ! Algebra
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0/) & ! Output
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   OK/) & ! Output
 !       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
 
@@ -337,24 +325,12 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_cycle) =                  add_ident ( 'Cycle' )
     parm_indices(p_endtime) =                add_ident ( 'EndTime' )
     parm_indices(p_igrf_file) =              add_ident ( 'IGRF_file' )
-    parm_indices(p_ignoreL1B) =              add_ident ( 'IgnoreL1B' )
     parm_indices(p_instrument) =             add_ident ( 'Instrument' )
     parm_indices(p_leapsecfile) =            add_ident ( 'LeapSecFile' )
     parm_indices(p_output_version_string) =  add_ident ( 'OutputVersionString' )
     parm_indices(p_PFAfile) =                add_ident ( 'PFAFile' )
     parm_indices(p_starttime) =              add_ident ( 'StartTime' )
 
-    parm_indices(p_critical_bands) =         add_ident ( 'CriticalBands' )
-    parm_indices(p_critical_scanning_modules) = &
-                                             add_ident ( 'CriticalScanningModules' )
-    parm_indices(p_home_geod_angle) =        add_ident ( 'HomeGeodAngle' )
-    parm_indices(p_home_module) =            add_ident ( 'HomeModule' )
-    parm_indices(p_ideal_length) =           add_ident ( 'IdealLength' )
-    parm_indices(p_max_gap) =                add_ident ( 'MaxGap' )
-    parm_indices(p_noChunks) =               add_ident ( 'noChunks' )
-    parm_indices(p_overlap) =                add_ident ( 'Overlap' )
-    parm_indices(p_scan_lower_limit) =       add_ident ( 'ScanLowerLimit' )
-    parm_indices(p_scan_upper_limit) =       add_ident ( 'ScanUpperLimit' )
     ! Put section names into the symbol table:
     section_indices(z_algebra) =             add_ident ( 'algebra' )
     section_indices(z_chunkDivide) =         add_ident ( 'chunkDivide' )
@@ -1761,17 +1737,6 @@ contains ! =====     Public procedures     =============================
              n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
-             begin, p+p_critical_bands, t+t_string, n+n_name_def, &
-             begin, p+p_critical_scanning_modules, t+t_criticalModule, n+n_name_def, &
-             begin, p+p_home_geod_angle, t+t_numeric, n+n_name_def, &
-             begin, p+p_home_module, t+t_module, n+n_name_def, &
-             begin, p+p_ideal_length, t+t_numeric, n+n_name_def, &
-             begin, p+p_max_gap, t+t_numeric, n+n_name_def, &
-             begin, p+p_noChunks, t+t_numeric, n+n_name_def, &
-             begin, p+p_ignoreL1B, t+t_boolean, n+n_name_def, &
-             begin, p+p_overlap, t+t_numeric, n+n_name_def, &
-             begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
-             begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              s+s_time, s+s_chunkDivide, s+s_dump, n+n_section, &
       begin, z+z_construct, s+s_anyGoodRadiances, s+s_anyGoodValues, &
              s+s_Boolean, s+s_catchWarning, s+s_compare, s+s_dump, &
@@ -1991,6 +1956,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.591  2013/10/08 23:51:03  pwagner
+! Removed unused p_types from ChunkDivide; may have multiple Output sections
+!
 ! Revision 2.590  2013/10/02 00:48:03  pwagner
 ! Added ascenddescend Fill Method
 !
