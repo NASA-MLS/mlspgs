@@ -38,6 +38,7 @@ contains ! ===================================  Public procedures  =====
 
     use DumpCommand_m, only: BOOLEANFROMEMPTYGRID, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use GriddedData, only: GRIDDEDDATA_T, &
       & ADDGRIDDEDDATATODATABASE, DESTROYGRIDDEDDATA
     use Init_tables_module, only: F_GRID, &
@@ -54,7 +55,7 @@ contains ! ===================================  Public procedures  =====
     use ReadAPriori, only: PROCESSONEAPRIORIFILE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
-    use Tree_Types, only: N_NAMED
+    use Tree_Types, only: N_NAMED, N_Variable
     use Toggles, only: GEN, SWITCHES, TOGGLE
 
     integer, intent(in) :: ROOT         ! Tree root
@@ -88,6 +89,10 @@ contains ! ===================================  Public procedures  =====
     
     do i = 2, nsons(root) - 1           ! Skip the begin and end stuff
       son = subtree ( i, root )
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+    cycle
+      end if
       if ( node_id(son) == n_named ) then ! Is spec labed?
         key = subtree ( 2, son )
         name = sub_rosa ( subtree(1,son) )
@@ -1087,6 +1092,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.50  2013/10/09 23:41:55  vsnyder
+! Add Evaluate_Variable
+!
 ! Revision 2.49  2013/08/31 02:29:12  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
