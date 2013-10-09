@@ -267,8 +267,8 @@ contains ! =====     Public procedures     =============================
     ! "Tree" is here because "make depends" can't see it in make_tree
     ! (because of the "include"):
     use TREE, only:
-    use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_TYPE, &
-                          N_NAME_DEF, N_OR, N_SECTION, N_SPEC_DEF
+    use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_TYPE, N_NAME_DEF, &
+                          N_OR, N_SECTION, N_SPEC_DEF, N_VARIABLE_REF
 
     logical, parameter :: Empty = .true.  ! To specify fields allowed to be empty
     logical, parameter :: Req = .true.    ! To specify required fields
@@ -1524,6 +1524,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_template, field_spec(s_vectorTemplate,s_quantity), &
              begin, f+f_text, string(), &
              begin, f+f_tGrid, field_spec(s_tGrid), &
+             begin, f+f_variable, n+n_variable_ref, &
              begin, f+f_vector, field_spec(s_vector), &
              begin, f+f_vectorMask, field_spec(s_vector), &
              begin, f+f_vGrid, field_spec(s_vGrid), &
@@ -1956,6 +1957,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.592  2013/10/09 23:44:39  vsnyder
+! Add Variable field for Dump
+!
 ! Revision 2.591  2013/10/08 23:51:03  pwagner
 ! Removed unused p_types from ChunkDivide; may have multiple Output sections
 !
