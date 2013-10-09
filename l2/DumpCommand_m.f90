@@ -1124,7 +1124,7 @@ contains
       & call dumpMacros
   end function BOOLEANFROMFORMULA
 
-  ! ------------------------- DumpCommand ------------------------
+  ! ------------------------------------------------  DumpCommand  -----
   subroutine DUMPCOMMAND ( ROOT, QUANTITYTEMPLATESDB, &
     & VECTORTEMPLATES, VECTORS, FORWARDMODELCONFIGS, HGRIDS, GRIDDEDDATABASE, &
     & FILEDATABASE, MATRIXDATABASE, HESSIANDATABASE )
@@ -1135,7 +1135,7 @@ contains
     use CALENDAR, only: DURATION_FORMATTED, TIME_T, TK
     use CALL_STACK_M, only: DUMP_STACK
     use CHUNKDIVIDECONFIG_M, only: CHUNKDIVIDECONFIG, DUMP
-    use DECLARATION_TABLE, only: NUM_VALUE
+    use DECLARATION_TABLE, only: Dump_A_Decl, Decls, Get_Decl, NUM_VALUE, Variable
     use DUMP_0, only: DIFF, DUMP, RMSFORMAT
     use EXPR_M, only: EXPR
     use FILTERSHAPES_M, only: DUMP_FILTER_SHAPES_DATABASE, &
@@ -1159,7 +1159,7 @@ contains
       & F_MIETABLES, F_OPTIONS, F_PFADATA, F_PFAFILES, F_PFANUM, F_PFASTRU, &
       & F_PHASENAME, F_POINTINGGRIDS, F_QUANTITY, &
       & F_SIGNALS,  F_SPECTROSCOPY, F_STACK, F_START, F_STOP, F_STRIDE, &
-      & F_STOPWITHERROR, F_SURFACE, F_TEMPLATE, F_TEXT, F_TGRID, &
+      & F_STOPWITHERROR, F_SURFACE, F_TEMPLATE, F_TEXT, F_TGRID, F_VARIABLE, &
       & F_VECTOR, F_VECTORMASK, F_VGRID, &
       & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE, &
       & FIELD_FIRST, FIELD_LAST
@@ -1192,7 +1192,7 @@ contains
     use QUANTITYTEMPLATES, only: DUMP, QUANTITYTEMPLATE_T
     use READ_MIE_M, only: DUMP_MIE
     use SPECTROSCOPYCATALOG_M, only: CATALOG, DUMP, DUMP_LINES_DATABASE, LINES
-    use STRING_TABLE, only: GET_STRING
+    use STRING_TABLE, only: Display_String, GET_STRING
     use TIME_M, only: FINISH
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -1220,6 +1220,7 @@ contains
     logical :: Clean
     real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
     character(8) :: Date
+    type(decls) :: Decl ! of an l2cf Variable
     integer :: DetailReduction
     integer :: Details
     integer :: DiffOrDump
@@ -1956,6 +1957,17 @@ contains
           call output ( ' TGrid ' )
           call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
         end do
+      case ( f_variable )
+        do i = 2, nsons(son)
+          call display_string ( sub_rosa(subtree(i,son)) )
+          decl = get_decl ( sub_rosa(subtree(i,son)), type=variable )
+          if ( decl%type /= variable ) then
+            call display_string ( sub_rosa(subtree(i,son)), before='The symbol ' )
+            call output ( ' is not a variable.', advance='yes' )
+          else
+            call dump_a_decl ( decl, before=' is' )
+          end if
+        end do
       case ( f_vectormask, f_vector ) ! Dump entire vectors
         if ( details < -1 ) cycle
         if ( haveVectors ) then
@@ -2636,6 +2648,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.102  2013/10/09 23:44:13  vsnyder
+! Add Variable field
+!
 ! Revision 2.101  2013/10/08 23:52:48  pwagner
 ! Fixed call to BOOLEANVALUE--must use trim
 !
