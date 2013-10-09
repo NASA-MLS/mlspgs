@@ -89,6 +89,7 @@ contains ! =====     Public Procedures     =============================
       & BOOLEANFROMANYGOODVALUES, &
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use FGRID, only: FGRID_T
     use FORWARDMODELCONFIG, only: ADDFORWARDMODELCONFIGTODATABASE, &
       & FORWARDMODELCONFIG_T
@@ -114,7 +115,7 @@ contains ! =====     Public Procedures     =============================
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_NAMED
+    use TREE_TYPES, only: N_NAMED, N_Variable
     use VECTORSMODULE, only: ADDVECTORTEMPLATETODATABASE, &
       & VECTOR_T, VECTORTEMPLATE_T
 
@@ -163,6 +164,10 @@ contains ! =====     Public Procedures     =============================
       son = subtree(i,root)
       call trace_begin ( me_spec, "Construct.spec", son, &
         & cond=toggle(gen) .and. levels(gen) > 0 )
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+    go to 9
+      end if
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
         name = sub_rosa(subtree(1,son))
@@ -224,7 +229,7 @@ contains ! =====     Public Procedures     =============================
         end if
       case default ! Can't get here if tree_checker worked correctly
       end select
-      call trace_end ( "Construct.spec", cond=toggle(gen) .and. levels(gen) > 0 )
+    9 call trace_end ( "Construct.spec", cond=toggle(gen) .and. levels(gen) > 0 )
     end do
 
     if ( specialDumpFile /= ' ' ) call revertOutput
@@ -295,6 +300,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.70  2013/10/09 23:41:00  vsnyder
+! Add Evaluate_Variable
+!
 ! Revision 2.69  2013/08/30 02:45:35  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
