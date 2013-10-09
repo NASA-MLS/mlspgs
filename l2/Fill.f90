@@ -62,6 +62,7 @@ contains ! =====     Public Procedures     =============================
       & DUMPCOMMAND, INITIALIZEREPEAT, NEXTREPEAT, &
       & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, &
       & REPEAT=>SKIP, SKIP
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use EXPR_M, only: EXPR, EXPR_CHECK
     use FILLUTILS_1, only: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
       & COMPUTETOTALPOWER, DERIVATIVEOFSOURCE, FILLCOVARIANCE, &
@@ -229,7 +230,7 @@ contains ! =====     Public Procedures     =============================
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
       & SUB_ROSA, SUBTREE, WHERE
-    use TREE_TYPES, only: N_NAMED
+    use TREE_TYPES, only: N_NAMED, N_Variable
     use VECTORSMODULE, only: ADDVECTORTODATABASE, &
       & CLEARMASK, CLONEVECTORQUANTITY, CREATEVECTOR, &
       & DESTROYVECTORQUANTITYVALUE, DUMPQUANTITYMASK, &
@@ -576,6 +577,10 @@ contains ! =====     Public Procedures     =============================
       son = subtree(i,root)
       call trace_begin ( me_spec, "Fill.spec", son, &
         & cond=toggle(gen) .and. levels(gen) > 0 )
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+    go to 9
+      end if
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
         vectorName = sub_rosa(subtree(1,son))
@@ -1169,7 +1174,7 @@ contains ! =====     Public Procedures     =============================
 
       case default ! Can't get here if tree_checker worked correctly
       end select
-      call trace_end ( "Fill.spec", cond=toggle(gen) .and. levels(gen) > 0 )
+    9 call trace_end ( "Fill.spec", cond=toggle(gen) .and. levels(gen) > 0 )
     end do ! End of loop of specs
     if ( .not. repeatLoop ) exit ! Otherwise, we will repeat the section
     end do  repeat_loop!  RepeatLoop
@@ -3140,6 +3145,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.434  2013/10/09 23:41:20  vsnyder
+! Add Evaluate_Variable
+!
 ! Revision 2.433  2013/10/02 00:48:26  pwagner
 ! Added ascenddescend Fill Method
 !
