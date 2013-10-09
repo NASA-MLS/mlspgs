@@ -215,6 +215,7 @@ contains
   subroutine MLSSignals ( ROOT )
     ! Process the MLSSignals section of the L2 configuration file.
 
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MORETREE, only: GET_BOOLEAN, STARTERRORMESSAGE
     use TIME_M, only: TIME_NOW
@@ -222,7 +223,7 @@ contains
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
       & SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_NAMED
+    use TREE_TYPES, only: N_NAMED, N_Variable
 
     integer, intent(in) :: ROOT         ! The "cf" vertex for the section
 
@@ -269,6 +270,10 @@ contains
     call trace_begin ( me, "MLSSignals", root, cond=toggle(gen) )
     do i = 2, nsons(root)-1 ! skip "MLSSignals" at "begin" and "end"
       son = subtree(i,root) ! A spec_args vertex now
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+    cycle
+      end if
       if ( node_id(son) == n_named ) then
         name = sub_rosa(subtree(1, son))
         key = subtree(2, son)
@@ -1921,6 +1926,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.99  2013/10/09 01:08:03  vsnyder
+! Add call to Evaluate_Variable
+!
 ! Revision 2.98  2013/08/30 03:56:02  vsnyder
 ! Revise use of trace_begin and trace_end
 !
