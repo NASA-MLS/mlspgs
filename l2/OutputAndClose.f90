@@ -70,6 +70,7 @@ contains ! =====     Public Procedures     =============================
     use DIRECTWRITE_M, only: DIRECTDATA_T, DUMP
     use DUMPCOMMAND_M, only: BOOLEANFROMEMPTYSWATH, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use EXPR_M, only: EXPR
     use GRIDDEDDATA, only: GRIDDEDDATA_T
     use HESSIANMODULE_1, only: HESSIAN_T
@@ -110,7 +111,7 @@ contains ! =====     Public Procedures     =============================
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
-    use TREE_TYPES, only: N_NAMED
+    use TREE_TYPES, only: N_NAMED, N_Variable
     use VECTORSMODULE, only: VECTOR_T
     use WRITEMETADATA, only: L2PCF, WRITEMETALOG
 
@@ -210,6 +211,10 @@ contains ! =====     Public Procedures     =============================
       got = .false.
 
       son = subtree(spec_no,root)
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+    cycle
+      end if
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
         name = sub_rosa(subtree(1,son))
@@ -1841,6 +1846,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.174  2013/10/09 23:42:13  vsnyder
+! Add Evaluate_Variable
+!
 ! Revision 2.173  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
