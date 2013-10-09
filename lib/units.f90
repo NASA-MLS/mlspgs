@@ -126,7 +126,6 @@ contains ! =====     Public procedures     =============================
     subroutine DECLARE_UNIT ( NAME, VALUE, PHYS_UNIT )
       use DECLARATION_TABLE, only: DECLARE, PHYS_UNIT_NAME, UNITS_NAME
       use Intrinsic, only: PHYQ_Indices
-      use TREE, only: NULL_TREE
       integer, intent(in) :: NAME
       integer, intent(in) :: PHYS_UNIT
       double precision, intent(in) :: VALUE
@@ -135,11 +134,11 @@ contains ! =====     Public procedures     =============================
       !              string             value  type        units
       call declare ( lit_indices(name), value, units_name, phys_unit, &
       !              tree
-                     null_tree )
+                     lit_indices(name) )
       !              string                   value  type
       call declare ( phyq_indices(phys_unit), value, phys_unit_name, &
       !              units tree
-                     name, null_tree )
+                     name, lit_indices(name) )
     end subroutine DECLARE_UNIT
 
   end subroutine INIT_UNITS
@@ -176,6 +175,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.40  2013/10/09 23:39:23  vsnyder
+! Put lit index in 'tree' field of unit declaration
+!
 ! Revision 2.39  2013/09/19 23:25:28  vsnyder
 ! Add Base_Units
 !
