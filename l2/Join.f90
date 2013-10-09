@@ -53,6 +53,7 @@ contains ! =====     Public Procedures     =============================
     use DIRECTWRITE_M, only: DIRECTDATA_T
     use DUMPCOMMAND_M, only: DUMPCOMMAND, &
       & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use HGRIDSDATABASE, only: HGRID_T
     use INIT_TABLES_MODULE, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, &
       & S_ENDSELECT, S_CASE, S_DIFF, S_DUMP, S_LABEL, S_SELECT, S_SKIP
@@ -73,7 +74,7 @@ contains ! =====     Public Procedures     =============================
     use OUTPUT_M, only: OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TREE, only: SUBTREE, NSONS, NODE_ID, Where_At => Where
-    use TREE_TYPES, only: N_NAMED
+    use TREE_TYPES, only: N_NAMED, N_Variable
     use TIME_M, only: TIME_NOW
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: VECTOR_T
@@ -178,6 +179,10 @@ contains ! =====     Public Procedures     =============================
       ! Simply loop over lines in the l2cf
       do mlscfLine = 2, nsons(root) - 1 ! Skip begin/end section
         son = subtree(mlscfLine,root)
+        if ( node_id(son) == n_variable ) then
+          call evaluate_variable ( son )
+      cycle
+        end if
         if ( node_id(son) == n_named ) then ! Is spec labeled?
           key = subtree(2,son)
         else
@@ -2228,6 +2233,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.155  2013/10/09 23:41:36  vsnyder
+! Add Evaluate_Variable
+!
 ! Revision 2.154  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
