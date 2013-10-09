@@ -15,7 +15,7 @@ module TREE
   use MACHINE, only: IO_ERROR
   use PRINTIT_M, only: PRINTITOUT, MLSMSG_ERROR
   use OUTPUT_M, only: NEWLINE, OUTPUT
-  use STRING_TABLE, only: DISPLAY_STRING, LOOKUP_AND_INSERT
+  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, LOOKUP_AND_INSERT
   use SYMBOL_TABLE, only: SET_SYMBOL, SYMBOL
   use SYMBOL_TYPES, only: T_NULL
   use TOGGLES, only: CON, Switches, TOGGLE
@@ -26,10 +26,11 @@ module TREE
   public :: ADD_SONS_FROM_STACK, ALLOCATE_TREE, BUILD_TREE, COPY_TO_STACK
   public :: DEALLOCATE_TREE, DECORATE, DECORATION, DECORATION_TX_TX, DELETE_TREE
   public :: DELETE_TREE_STACK, DUMP_TOP_STACK, DUMP_TOP_STACK_NAME
-  public :: DUMP_TREE_NODE, DUMP_TREE_NODE_NAME, INIT_TREE, INSERT_NODE
-  public :: NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
+  public :: DUMP_TREE_NODE, DUMP_TREE_NODE_NAME, GET_TREE_NODE_NAME, INIT_TREE
+  public :: INSERT_NODE, NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
   public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_SUBTREE
-  public :: STACK_SUBTREE_TX, SUB_ROSA, SUBTREE, THE_FILE, TREE_TEXT, TX, WHERE
+  public :: STACK_SUBTREE_TX, SUB_ROSA, SUBTREE, THE_FILE, TREE_NODE_NAME
+  public :: TREE_TEXT, TX, WHERE
 
   ! Tree node kinds:
   integer, public, parameter :: PSEUDO = 0   ! Tree node is pseudo terminal
@@ -69,6 +70,10 @@ module TREE
 
   interface Dump_Tree_Node_Name
     module procedure Dump_Tree_Node_Name_I, Dump_Tree_Node_Name_TX
+  end interface
+
+  interface Get_Tree_Node_Name
+    module procedure Get_Tree_Node_Name_I, Get_Tree_Node_Name_TX
   end interface
 
   interface Insert_Node
@@ -115,6 +120,10 @@ module TREE
     module procedure The_File_I, The_File_TX
   end interface
 
+  interface Tree_Node_Name
+    module procedure Tree_Node_Name_I, Tree_Node_Name_TX
+  end interface
+
   interface Tree_Text
     module procedure Tree_Text_I, Tree_Text_TX
   end interface
@@ -123,19 +132,19 @@ module TREE
     module procedure Where_I, Where_TX
   end interface
 
-  type :: TX             ! For tree node index, to give strong typing
-    integer :: I = 0     ! The real tree node index
+  type :: TX              ! For tree node index, to give strong typing
+    integer :: I = 0      ! The real tree node index
   end type TX
 
   type :: TREE_NODE
-    integer :: NODE      ! What kind of tree node
-    integer :: DECOR     ! Decoration, an integer or tree node index
-    integer :: FILE = 0  ! String index of file
-    integer :: NSONS     ! How many sons
-    integer :: SOURCE    ! 256*line + column
-    integer :: KIND      ! PSEUDO, INTERNAL, MORE or OTHER
-    integer :: LINK      ! Sub_rosa if PSEUDO, Left_son if INTERNAL, next
-                         !  if MORE, not used if EMPTY
+    integer :: NODE       ! What kind of tree node
+    integer :: DECOR      ! Decoration, an integer or tree node index
+    integer :: FILE = 0   ! String index of file
+    integer :: NSONS      ! How many sons
+    integer :: SOURCE = 0 ! 256*line + column
+    integer :: KIND       ! PSEUDO, INTERNAL, MORE or OTHER
+    integer :: LINK       ! Sub_rosa if PSEUDO, Left_son if INTERNAL, next
+                          !  if MORE, not used if EMPTY
   end type TREE_NODE
 
   type(TREE_NODE), save, allocatable :: THE_TREE(:)
@@ -316,7 +325,7 @@ contains
   end subroutine DEALLOCATE_TREE
 
   subroutine DECORATE_I ( WHERE, DECORATION )
-  ! Decorate tree WHERE with DECORATION
+  ! Decorate tree node at WHERE with DECORATION
     integer, intent(in) :: WHERE
     integer, intent(in) :: DECORATION
     the_tree(where) % decor = decoration
@@ -335,33 +344,33 @@ contains
   end subroutine DECORATE_I
 
   subroutine DECORATE_TX ( WHERE, DECORATION )
-  ! Decorate tree WHERE with DECORATION
+  ! Decorate tree node at WHERE with DECORATION
     type(tx), intent(in) :: WHERE
     integer, intent(in) :: DECORATION
     call decorate ( where%i, decoration )
   end subroutine DECORATE_TX
 
   subroutine DECORATE_TX_TX ( WHERE, DECORATION )
-  ! Decorate tree WHERE with DECORATION
+  ! Decorate tree node at WHERE with DECORATION
     type(tx), intent(in) :: WHERE
     type(tx), intent(in) :: DECORATION
     call decorate ( where%i, decoration%i )
   end subroutine DECORATE_TX_TX
 
   pure integer function DECORATION_I ( WHERE ) result ( Decoration )
-  ! Return the decoration of the tree WHERE
+  ! Return the decoration of the tree node at WHERE
     integer, intent(in) :: WHERE
     decoration = the_tree(where) % decor
   end function DECORATION_I
 
   pure integer function DECORATION_TX ( WHERE ) result ( Decoration )
-  ! Return the decoration of the tree WHERE
+  ! Return the decoration of the tree node at WHERE
     type(tx), intent(in) :: WHERE
     decoration = the_tree(where%i) % decor
   end function DECORATION_TX
 
   pure type(tx) function DECORATION_TX_TX ( WHERE ) result ( Decoration )
-  ! Return the decoration of the tree WHERE
+  ! Return the decoration of the tree node at WHERE
     type(tx), intent(in) :: WHERE
     decoration%i = the_tree(where%i) % decor
   end function DECORATION_TX_TX
@@ -399,32 +408,40 @@ contains
                         & advance=advance, before=before )
   end subroutine DUMP_TOP_STACK_NAME
 
-  subroutine DUMP_TREE_NODE_I ( WHERE, INDENT, ADVANCE )
-  ! Indent INDENT spaces, then dump the tree at WHERE
+  subroutine DUMP_TREE_NODE_I ( WHERE, INDENT, ADVANCE, TYPE_NAME )
+  ! Indent INDENT spaces, then dump the tree node at WHERE
     integer, intent(in) :: WHERE
     integer, intent(in) :: INDENT
     character(len=*), intent(in), optional :: ADVANCE
+    optional :: Type_Name
+    interface
+      integer function Type_Name ( Decor )
+      ! Return the string index to print for the decoration
+        integer, intent(in) :: Decor ! Tree(where)%Decor
+      end function Type_Name
+    end interface
     integer :: I
     do i = 1, indent; call output ( '.' ); end do
     select case ( the_tree(where) % kind )
     case ( empty )
       call output ( 'empty' )
     case ( more )
-      call output ( 'more, nsons = ' )
-      call output ( the_tree(where) % nsons )
-      call output ( ', next = ' )
-      call output ( the_tree(where) % link )
+      call output ( the_tree(where) % nsons, before='more, nsons = ' )
+      call output ( the_tree(where) % link, before=', next = ' )
     case ( pseudo, internal )
+      call dump_tree_node_name ( where )
       if ( the_tree(where) % kind == pseudo ) then
-        call dump_tree_node_name ( where )
-        call output ( ' ' )
-        call display_string ( sub_rosa(where) )
+        call display_string ( sub_rosa(where), before=' ' )
       else
-        call dump_tree_node_name ( where )
+        call output ( the_tree(where) % nsons, before=', ' )
+        call output ( ' sons' )
       end if
       if ( the_tree(where)%decor /= null_tree ) then
-        call output ( ' decor=' )
-        call output ( the_tree(where) % decor )
+        call output ( the_tree(where) % decor, before=' decor=' )
+        i = 0
+        if ( present(type_name) .and. the_tree(where)%kind == internal ) &
+          & i = type_name(the_tree(where)%decor)
+        if ( i /= 0 ) call display_string ( i, before=' type=' )
       end if
     end select
     if ( the_tree(where)%source /= 0 ) then
@@ -436,15 +453,22 @@ contains
     call output ( '', advance=advance )
   end subroutine DUMP_TREE_NODE_I
 
-  subroutine DUMP_TREE_NODE_TX ( WHERE, INDENT, ADVANCE )
-  ! Indent INDENT spaces, then dump the tree WHERE
+  subroutine DUMP_TREE_NODE_TX ( WHERE, INDENT, ADVANCE, TYPE_NAME )
+  ! Indent INDENT spaces, then dump the tree node at WHERE
     type(tx), intent(in) :: WHERE
     integer, intent(in) :: INDENT
     character(len=*), intent(in), optional :: ADVANCE
-    call dump_tree_node ( where%i, indent, advance )
+    interface
+      integer function Type_Name ( Decor )
+      ! Return the string index to print for the decoration
+        integer, intent(in) :: Decor ! Tree(where)%Decor
+      end function Type_Name
+    end interface
+    call dump_tree_node ( where%i, indent, advance, type_name=type_name )
   end subroutine DUMP_TREE_NODE_TX
 
   subroutine DUMP_TREE_NODE_NAME_I ( WHERE, ADVANCE, BEFORE )
+  ! Dump the name of the tree node at WHERE
     integer, intent(in) :: WHERE
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE
@@ -453,12 +477,27 @@ contains
   end subroutine DUMP_TREE_NODE_NAME_I
 
   subroutine DUMP_TREE_NODE_NAME_TX ( WHERE, ADVANCE, BEFORE )
+  ! Dump the name of the tree node at WHERE
     type(tx), intent(in) :: WHERE
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE
     call display_string ( tree_texts(the_tree(where%i) % node), advance=advance, &
                         & before=before )
   end subroutine DUMP_TREE_NODE_NAME_TX
+
+  subroutine GET_TREE_NODE_NAME_I ( WHERE, STRING )
+  ! Get the name of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    character(len=*), intent(out), optional :: STRING
+    call get_string ( tree_texts(the_tree(where) % node), string )
+  end subroutine GET_TREE_NODE_NAME_I
+
+  subroutine GET_TREE_NODE_NAME_TX ( WHERE, STRING )
+  ! Get the name of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    character(len=*), intent(out), optional :: STRING
+    call display_string ( tree_texts(the_tree(where%i) % node), string )
+  end subroutine GET_TREE_NODE_NAME_TX
 
   subroutine INIT_TREE
     logical :: FOUND     ! Did lookup_and_insert find it?
@@ -527,13 +566,13 @@ contains
   end function NODE_ID_TX
 
   pure integer function NODE_KIND_I ( WHERE ) result ( Node_Kind )
-  ! Return the kind of tree(where).
+  ! Return the kind of the tree node at WHERE
     integer, intent(in) :: WHERE
     node_kind = the_tree(where) % kind
   end function NODE_KIND_I
 
   pure integer function NODE_KIND_TX ( WHERE ) result ( Node_Kind )
-  ! Return the kind of tree(where).
+  ! Return the kind ofthe tree node at WHERE
     type(tx), intent(in) :: WHERE
     node_kind = the_tree(where%i) % kind
   end function NODE_KIND_TX
@@ -557,19 +596,26 @@ contains
     n_tree_stack = n_tree_stack - n
   end subroutine POP
 
-  recursive subroutine PRINT_SUBTREE_I ( SUBROOT, DEPTH, DUMP_DECOR )
+  recursive subroutine PRINT_SUBTREE_I ( SUBROOT, DEPTH, DUMP_DECOR, TYPE_NAME )
   ! Print the subtree rooted at SUBROOT, starting with DEPTH leading
   ! dots.  Display the decoration of each tree node if DUMP_DECOR is
   ! present and .true.
     integer, intent(in) :: SUBROOT
     integer, intent(in) :: DEPTH
     logical, intent(in), optional :: DUMP_DECOR
+    optional :: Type_Name
+    interface
+      integer function Type_Name ( Decor )
+      ! Return the string index to print for the decoration
+        integer, intent(in) :: Decor ! Tree(where)%Decor
+      end function Type_Name
+    end interface
     integer :: I, MyRoot
     myRoot = subroot
     if ( myRoot < 0 ) myRoot = tree_sp + 1
     call output ( myRoot, 5 )
     call output ( ':' )
-    call dump_tree_node ( myRoot, depth )
+    call dump_tree_node ( myRoot, depth, type_name=type_name )
     if ( present(dump_decor) ) then
       if ( dump_decor ) then
       ! In Fortran 2000:
@@ -582,19 +628,26 @@ contains
     call newLine
     if ( the_tree(myRoot)%kind == internal ) then
       do i = 1, nsons(myRoot)
-        call print_subtree ( subtree(i,myRoot), depth+1, dump_decor )
+        call print_subtree ( subtree(i,myRoot), depth+1, dump_decor, &
+          & type_name=type_name )
       end do
     end if
   end subroutine PRINT_SUBTREE_I
 
-  recursive subroutine PRINT_SUBTREE_TX ( SUBROOT, DEPTH, DUMP_DECOR )
+  recursive subroutine PRINT_SUBTREE_TX ( SUBROOT, DEPTH, DUMP_DECOR, TYPE_NAME )
   ! Print the subtree rooted at SUBROOT, starting with DEPTH leading
   ! dots.  Display the decoration of each tree node if DUMP_DECOR is
   ! present and .true.
     type(tx), intent(in) :: SUBROOT
     integer, intent(in) :: DEPTH
     logical, intent(in), optional :: DUMP_DECOR
-    call print_subtree ( subroot%i, depth, dump_decor )
+    interface
+      integer function Type_Name ( Decor )
+      ! Return the string index to print for the decoration
+        integer, intent(in) :: Decor ! Tree(where)%Decor
+      end function Type_Name
+    end interface
+    call print_subtree ( subroot%i, depth, dump_decor, type_name )
   end subroutine PRINT_SUBTREE_TX
 
   subroutine PUSH_PSEUDO_TERMINAL_INTEGER ( SUB_ROSA, SOURCE, DECOR, FILE )
@@ -717,7 +770,7 @@ contains
   end function STACK_SUBTREE_TX
 
   integer function SUB_ROSA_I ( WHERE ) result ( Sub_Rosa )
-  ! Return the sub_rosa string pointer from the tree node at WHERE
+  ! Return the sub_rosa string index from the tree node at WHERE
     integer, intent(in) :: WHERE
     if ( the_tree(where) % kind /= pseudo ) then
       call tree_error ( not_pseudo, where )
@@ -726,7 +779,7 @@ contains
   end function SUB_ROSA_I
 
   integer function SUB_ROSA_TX ( WHERE )
-  ! Return the sub_rosa string pointer from the tree node at WHERE
+  ! Return the sub_rosa string index from the tree node at WHERE
     type(tx), intent(in) :: WHERE
     sub_rosa_tx = sub_rosa ( where % i )  
   end function SUB_ROSA_TX
@@ -769,20 +822,32 @@ contains
     the_file = the_tree(where%i) % file
   end function THE_FILE_TX
 
+  pure integer function TREE_NODE_NAME_I ( WHERE )
+  ! Get the string index of the name of the tree node at WHERE
+    integer, intent(in) :: WHERE
+    tree_node_name_i = tree_texts(the_tree(where) % node)
+  end function TREE_NODE_NAME_I
+
+  pure integer function TREE_NODE_NAME_TX ( WHERE )
+  ! Get the string index of the name of the tree node at WHERE
+    type(tx), intent(in) :: WHERE
+    tree_node_name_tx = tree_texts(the_tree(where%i) % node)
+  end function TREE_NODE_NAME_TX
+
   pure integer function TREE_TEXT_I ( TREE_NODE ) result ( Tree_Text )
-  ! Return the string index of the text of the tree node
+  ! Return the string index of the text of the tree_node at TREE_NODE
     integer, intent(in) :: TREE_NODE
     tree_text = tree_texts ( tree_node )
   end function TREE_TEXT_I
 
   pure integer function TREE_TEXT_TX ( TREE_NODE ) result ( Tree_Text )
-  ! Return the string index of the text of the tree node
+  ! Return the string index of the text of the tree_node at TREE_NODE
     type(tx), intent(in) :: TREE_NODE
     tree_text = tree_texts ( tree_node%i )
   end function TREE_TEXT_TX
 
   function Where_I ( Tree ) result ( Where )
-  ! Return the Where_T structure at Tree
+  ! Return the Where_T structure of the text of the tree node at WHERE
     use Lexer_Core, only: Where_T
     integer, intent(in) :: Tree ! Tree node index
     type(where_t) :: Where
@@ -791,7 +856,7 @@ contains
   end function Where_I
 
   function Where_TX ( Tree ) result ( Where )
-  ! Return the Where_T structure at Tree
+  ! Return the Where_T structure of the text of the tree node at WHERE
     use Lexer_Core, only: Where_T
     type(tx), intent(in) :: Tree ! Tree node index
     type(where_t) :: Where
@@ -940,6 +1005,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.24  2013/10/09 01:09:42  vsnyder
+! Add some routines, spiff up dumps
+!
 ! Revision 2.23  2013/10/02 01:31:06  vsnyder
 ! Add Dump_Top_Stack, Dump_Top_Stack_Name
 !
