@@ -206,10 +206,12 @@ contains
     use BITSTUFF, only: ISBITSET
     use DATES_MODULE, only: PRECEDESUTC, RESETSTARTINGDATE, SECONDSBETWEEN2UTCS, &
       & UTC_TO_YYYYMMDD
+    use Declaration_Table, only: Named_Value, Redeclare, Str_Value
     use DIRECTWRITE_M, only: DIRECTDATA_T, &
       & ADDDIRECTTODATABASE, DUMP, SETUPNEWDIRECT
     use DUMPCOMMAND_M, only: DUMPCOMMAND
     use EMPIRICALGEOMETRY, only: INITEMPIRICALGEOMETRY
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use FGRID, only: ADDFGRIDTODATABASE, CREATEFGRIDFROMMLSCFINFO, DUMP, FGRID_T
     use FORWARDMODELCONFIG, only: ADDFORWARDMODELCONFIGTODATABASE, DUMP, &
       & FORWARDMODELCONFIG_T
@@ -270,7 +272,7 @@ contains
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
       & DUMP_TREE_NODE
-    use TREE_TYPES, only: N_EQUAL, N_NAMED
+    use TREE_TYPES, only: N_EQUAL, N_NAMED, N_Variable
     use VGRID, only: CREATEVGRIDFROMMLSCFINFO
     use VGRIDSDATABASE, only: ADDVGRIDTODATABASE, VGRIDS
     use WRITEMETADATA, only: L2PCF
@@ -312,7 +314,8 @@ contains
     integer :: OrbNum(max_orbits)
     real(r8) :: OrbPeriod(max_orbits)
     integer :: OUTPUT_VERSION_STRING ! Sub_rosa index
-    integer :: param_id            ! e.g., p_brightObjects
+    integer :: Param               ! Tree index of param i.e., name before =
+    integer :: Param_id            ! e.g., p_brightObjects
     logical :: Restricted          ! Some commands not available
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
@@ -386,7 +389,10 @@ contains
       L2CFNODE = son
       if ( node_id(son) == n_equal ) then
         sub_rosa_index = sub_rosa(subtree(2,son))
-        param_id = decoration(subtree(1,son))
+        param = subtree(1,son)
+        call redeclare ( sub_rosa(param), 0.0d0+sub_rosa_index, named_value, &
+          & str_value, son ) ! Put its value in the declaration table
+        param_id = decoration(param)
         if ( TOOLKIT .and. &
           & any( param_id == &
           & (/ p_output_version_string, p_cycle, p_starttime, p_endtime, &
@@ -462,6 +468,8 @@ contains
         case default
           call announce_error(son, 'unrecognized global settings parameter')
         end select
+      else if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
       else
         if ( node_id(son) == n_named ) then
           name = sub_rosa(subtree(1,son))
@@ -1276,6 +1284,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.149  2013/09/25 01:04:33  pwagner
+! Added DEM stuff
+!
 ! Revision 2.148  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
