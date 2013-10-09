@@ -12,11 +12,11 @@
 program MLSL2
   use ALLOCATE_DEALLOCATE, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES
   use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
-  use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
+  use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL, &
+    & Get_Type
   use HDF, only: DFACC_RDONLY
   use INIT_TABLES_MODULE, only: INIT_TABLES
-  use INTRINSIC, only: L_ASCII, L_TKGEN, &
-    & LIT_INDICES
+  use INTRINSIC, only: L_ASCII, L_TKGEN, LIT_INDICES
   use L2GPDATA, only: AVOIDUNLIMITEDDIMS
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
     & TRANSMITSLAVEARGUMENTS
@@ -425,7 +425,7 @@ program MLSL2
     if ( do_dump ) call dump_decl
     if ( toggle(syn) ) then
       call output ( 'Begin type-checked abstract syntax tree:', advance='yes' )
-      call print_subtree ( root, 0 )
+      call print_subtree ( root, 0, type_name=get_type )
       call output ( 'End type-checked abstract syntax tree', advance='yes' )
     end if
 
@@ -736,6 +736,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.198  2013/10/09 23:46:38  vsnyder
+! Pass Get_Type to tree dumper
+!
 ! Revision 2.197  2013/09/25 18:51:55  pwagner
 ! Closes DEM stuff before exiting
 !
