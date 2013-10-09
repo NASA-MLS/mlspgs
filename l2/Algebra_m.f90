@@ -54,6 +54,7 @@ contains
     use CHUNKS_M, only: MLSCHUNK_T
     use DECLARATION_TABLE, only: DECLARE, DECLS, EMPTY, EXPRN, EXPRN_M, &
       & EXPRN_V, GET_DECL, LABEL, NUM_VALUE, REDECLARE
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use INIT_TABLES_MODULE, only: S_MATRIX, S_QUANTITY, S_VECTOR
     use MATRIXMODULE_1, only: ADDTOMATRIX, ADDTOMATRIXDATABASE, ASSIGNMATRIX, &
@@ -130,6 +131,8 @@ contains
       call trace_begin ( me_loop, 'Algebra loop', son, cond=toggle(gen) )
       if ( node_id(son) /= n_equal ) then
         call AlgebraCommands ( son, VectorDatabase, MatrixDatabase, chunk, forwardModelConfigDatabase )
+      else if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
       else
         ! Evaluate the RHS
         rhs = subtree(2,son)
@@ -1527,6 +1530,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.30  2013/10/09 02:26:59  vsnyder
+! Add Evaluate_Variable
+!
 ! Revision 2.29  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
