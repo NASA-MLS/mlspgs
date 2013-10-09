@@ -96,8 +96,12 @@ module INTRINSIC
 
   ! The following parameters are for building trees:
   integer, parameter :: BEGIN = -1  ! Start of a tree
-  integer, parameter :: D = 1000000 ! Decoration
-  integer, parameter :: DU = d*u    ! DU*PHYQ_... on n_field_type requires those units
+  integer, parameter :: D = 1000000 ! Decoration, D*1 on n_func_def requires
+                                    ! uniform but unspecified argument types
+  integer, parameter :: DU = d*u    ! DU*PHYQ_... on n_field_type requires those
+                                    ! units.  DU*type on n_func_def specifies
+                                    ! function result type, else the result
+                                    ! type is the same as the first argument.
   integer, parameter :: F = 1000    ! Field index
   integer, parameter :: G = 2000    ! Function index
   integer, parameter :: L = 3000    ! Lit index
@@ -287,7 +291,7 @@ contains ! =====     Public procedures     =============================
     call lookup ( strID, found, caseless=.true., debug=.false. )
     if ( found ) phyq_index = get_phyq_lit( strID )
   end function get_phyq_str
-
+    
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -301,6 +305,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.70  2013/10/09 01:05:18  vsnyder
+! Comments to clarify use of D and DU
+!
 ! Revision 2.69  2013/09/19 23:26:44  vsnyder
 ! Add Expr_OK
 !
