@@ -2392,6 +2392,7 @@ contains ! =====     Public Procedures     =============================
     ! If source quantity is present use geoid data to make it
     ! relative to geoid instead of ellipsoid
     subroutine GeoidData ( quantity, sourceQuantity, resolution )
+      use, intrinsic :: ISO_C_BINDING, only: C_SHORT
       use SDPTOOLKIT, only: PGSd_DEM_30ARC, PGSd_DEM_90ARC, PGSd_DEM_GEOID, &
         & PGSd_DEM_DEGREE , &
         & PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
@@ -2399,7 +2400,8 @@ contains ! =====     Public Procedures     =============================
       type(VectorValue_T), intent(in), optional :: SOURCEQUANTITY
       integer, intent(in), optional             :: RESOLUTION
       ! Local variables
-      integer*2, dimension(4000)        :: BUFFER
+      ! integer*2, dimension(4000)        :: BUFFER
+      integer(kind=c_short), dimension(4000)      :: BUFFER
       integer :: I                      ! Instance loop counter
       integer :: J                      ! Destination index
       double precision, parameter       :: DLATRANGE = 5.0d-1
@@ -6604,7 +6606,7 @@ contains ! =====     Public Procedures     =============================
           & lowerCase(trim(booleanName)), names, countEmpty, &
           & inseparator=runTimeValues%sep )
         n = FindLast( names /= runTimeValues%sep )
-        if ( verboser ) then
+        if ( verboser .and. n > 0 ) then
           call outputNamedValue( 'n', n )
           call dump( names(1:n), 'names', width=1 )
         end if
@@ -6622,7 +6624,7 @@ contains ! =====     Public Procedures     =============================
         if ( n > 0 ) then
           if ( .not. any( streq(names, qName, options='-cf' ) )  ) cycle
         endif
-        if ( verboser ) call output( 'Transferring quantities named ' // trim(qName), advance='yes' )
+        if ( verboser .and. n > 0 ) call output( 'Transferring quantities named ' // trim(qName), advance='yes' )
         dq%values = sq%values
         if ( .not. skipMask ) then
           if ( associated(sq%mask) ) then
@@ -7350,6 +7352,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.91  2013/10/09 00:26:27  pwagner
+! Protect against certain obscure crashes; use c_short instead of 2-byte integer
+!
 ! Revision 2.90  2013/10/02 00:48:55  pwagner
 ! Added ascenddescend Fill Method
 !
