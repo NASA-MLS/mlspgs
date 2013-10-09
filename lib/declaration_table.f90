@@ -18,40 +18,44 @@ module DECLARATION_TABLE
 ! the INTRINSIC module.
 
   use INTRINSIC, only: LIT_INDICES, PHYQ_INDICES, PHYQ_INVALID, T_A_DOT_B, &
-   &                   T_BOOLEAN, T_NUMERIC, T_NUMERIC_RANGE, T_STRING
+    &                  T_BOOLEAN, T_NUMERIC, T_NUMERIC_RANGE, T_STRING
   use MACHINE, only: IO_ERROR
-  use OUTPUT_M, only: OUTPUT
-  use STRING_TABLE, only: DISPLAY_STRING, HOW_MANY_STRINGS, STRING_TABLE_SIZE
+  use OUTPUT_M, only: NewLine, OUTPUT
+  use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS, &
+    &                     STRING_TABLE_SIZE
   use TOGGLES, only: TAB, TOGGLE
 
   implicit NONE
   private
 
-  public :: ALLOCATE_DECL, DEALLOCATE_DECL, DECLARATION, DECLARE
-  public :: DECLARED, DECLS, DOT, DUMP_DECL, DUMP_A_DECL, DUMP_1_DECL, EMPTY
-  public :: ENUM_VALUE, EXPRN, EXPRN_M, EXPRN_V, FIELD, FUNCTION, GET_DECL
-  public :: INIT_DECL, LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, NUM_VALUE
-  public :: PHYS_UNIT_NAME, PRIOR_DECL, RANGE, REDECLARE
-  public :: SECTION, SECTION_NODE, STR_RANGE, STR_VALUE, SPEC, TREE_NODE
-  public :: TYPE_MAP, TYPE_NAME, TYPE_NAMES, UNDECLARED, UNITS_NAME, VARIABLE
+  public :: ALLOCATE_DECL, Allocate_Test, Allocate_Value, DEALLOCATE_DECL
+  public :: Deallocate_Test, Deallocate_Value, DECLARATION, DECLARE
+  public :: DECLARED, DECLS, DOT, DUMP_DECL, DUMP_A_DECL, DUMP_1_DECL
+  public :: DUMP_VALUES, EMPTY, ENUM_VALUE, Equal_Value, EXPRN, EXPRN_M
+  public :: EXPRN_V, FIELD, FUNCTION, GET_DECL, GET_TYPE, INIT_DECL, LABEL
+  public :: LOG_VALUE, NAMED_VALUE, NULL_DECL, NUM_VALUE, PHYS_UNIT_NAME
+  public :: PRIOR_DECL, RANGE, REDECLARE, SECTION, SECTION_NODE, STR_RANGE
+  public :: STR_VALUE, SPEC, TREE_NODE, TYPE_MAP, TYPE_NAME, TYPE_NAMES
+  public :: TYPE_NAME_INDICES, UNDECLARED, Unequal_Value, UNITS_NAME, Value_t
+  public :: VARIABLE
 
-  type :: DECLS
-    double precision :: VALUE
-    integer :: TYPE           ! "units", "variable", "spec", "field", "value", ...
-    integer :: UNITS          ! Depends on "type" field:
-                              ! "units_name" => Index of "units" of name,
-                              !            e.g. km = length, ...
-                              ! "exprn" => < 0 offset in matrix database
-                              !            > 0 offset in vector database
-                              !            0 = double-precision value only
-                              ! "field" => Index of field
-                              ! "function" => Index of function
-                              ! "section" => Index of section
-                              ! "spec" => Index of specification
-                              ! "variable" => Type of its first value
-    integer :: TREE           ! Index of declaration in the tree
-    integer :: PRIOR          ! Index of previous declaration
-  end type DECLS
+  public :: Operator(==), Operator(/=)
+
+  interface operator(==)
+    module procedure Equal_Value ! Two value_t objects are equal
+  end interface
+
+  interface operator(/=)
+    module procedure Unequal_Value ! Two value_t objects are unequal
+  end interface
+
+  interface Allocate_Test
+    module procedure Allocate_Value
+  end interface
+
+  interface Deallocate_Test
+    module procedure Deallocate_Value
+  end interface
 
   integer, parameter :: NULL_DECL = 0   ! Index and type of the null
                                         ! declaration
@@ -89,6 +93,39 @@ module DECLARATION_TABLE
                                         ! name is in "value", e.g. km = 1000.0
   integer, parameter :: VARIABLE = 23   ! Name is a variable, e.g. A := <expr>
 
+  integer, parameter :: LAST_TYPE = VARIABLE
+
+  type :: Value_t             ! Used if decls%type == variable or named_value
+    integer :: TYPE = empty   ! Value type, subset of decls%type
+    double precision :: VALUE(2) = 0.0d0 ! Real if type == num_value or range
+                              ! 0 => false, 1 => true if type == log_value
+                              ! string index if type == enum_value, label,
+                              !   named_value, str_range, str_value
+    integer :: Units(2) = 0   ! Subset of decls%units, depends on Type
+  end type Value_t
+
+  type :: DECLS
+    double precision :: VALUE = 0.0d0
+    integer :: TYPE = empty   ! "units", "variable", "spec", "field", "value", ...
+    integer :: UNITS = 0      ! Depends on "type" field:
+                              ! "units_name" => Index of "units" of name,
+                              !            e.g. km = length, ...
+                              ! "enum_value" => The enumerator's lit index
+                              ! "exprn" => < 0 offset in matrix database
+                              !            > 0 offset in vector database
+                              !            0 = double-precision value only
+                              ! "field" => Index of field
+                              ! "function" => Index of function
+                              ! "named_value" => Type of its first value
+                              ! "section" => Index of section
+                              ! "spec" => Index of specification
+                              ! "variable" => Type of its first value
+    integer :: TREE = 0       ! Index of declaration in the tree, except for
+                              ! "units_name" => string index of name
+    integer :: PRIOR = null_decl ! Index of previous declaration
+    type(value_t), allocatable :: Values(:) ! If type == variable or named_value
+  end type DECLS
+
   character(len=*), parameter :: TYPE_NAMES(empty:variable) = &
   (/ 'empty         ', 'dot           ', 'enum_value    ', 'exprn         ', &
      'exprn_m       ', 'exprn_v       ', 'field         ', 'function      ', &
@@ -96,6 +133,9 @@ module DECLARATION_TABLE
      'phys_unit_name', 'range         ', 'section       ', 'section_n     ', &
      'str_range     ', 'str_value     ', 'spec          ', 'tree          ', &
      'type_name     ', 'undeclared    ', 'units         ', 'variable      ' /)
+
+  ! String indices of type names, filled on first call to get_type
+  integer :: TYPE_NAME_INDICES(empty:variable) = -1
 
 ! Mapping from declaration table types to data types:
   integer, parameter :: TYPE_MAP(empty:variable) =        &
@@ -152,11 +192,36 @@ contains ! =====     Public Procedures     =============================
     symbol_decl = null_decl
     return
   end subroutine ALLOCATE_DECL
+! -----------------------------------------------  Allocate_Value  -----
+  subroutine Allocate_Value ( Value, N, ItsName, ModuleName )
+    use Allocate_Deallocate, only: Test_Allocate
+    type(value_t), allocatable :: Value(:)
+    integer, intent(in) :: N
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer :: Stat
+    call deallocate_test ( value, itsName, moduleName )
+    allocate ( value(1:n), stat=stat )
+    call test_allocate ( stat, moduleName, ItsName, [1], [n], &
+      & storage_size(value) / 8 )
+  end subroutine Allocate_Value
 ! ----------------------------------------------  DEALLOCATE_DECL  -----
   subroutine DEALLOCATE_DECL
     if ( allocated(decl_table) ) deallocate ( decl_table )
     if ( allocated(symbol_decl) ) deallocate( symbol_decl )
   end subroutine DEALLOCATE_DECL
+! ---------------------------------------------  Deallocate_Value  -----
+  subroutine Deallocate_Value ( Value, ItsName, ModuleName )
+    use Allocate_Deallocate, only: Memory_Units, Test_Deallocate
+    type(value_t), allocatable :: Value(:)
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer :: N, Stat
+    if ( allocated(value) ) then
+      n = size(value)
+      deallocate ( value, stat=stat )
+      call test_deallocate ( stat, moduleName, ItsName,  &
+        & n * (storage_size(value) / 8) / memory_units )
+    end if
+  end subroutine Deallocate_Value
 ! --------------------------------------------------  DECLARATION  -----
   type(decls) function DECLARATION ( STRING )
     integer, intent(in) :: STRING  ! String index for which declaration needed
@@ -165,12 +230,13 @@ contains ! =====     Public Procedures     =============================
     declaration = decl_table(symbol_decl(string))
   end function DECLARATION
 ! ------------------------------------------------------  DECLARE  -----
-  subroutine DECLARE ( STRING, VALUE, TYPE, UNITS, TREE )
+  subroutine DECLARE ( STRING, VALUE, TYPE, UNITS, TREE, VALUES )
     integer, intent(in) :: STRING  ! String index of name to declare
     double precision, intent(in) :: VALUE    ! Declared value
     integer, intent(in) :: TYPE    ! Type of object, e.g. UNITS, LABEL...
     integer, intent(in) :: UNITS   ! Units of value -- index of units string
     integer, intent(in) :: TREE    ! Index of tree node of declaration
+    type(value_t), allocatable, intent(inout), optional :: Values(:)
 
     integer :: STAT
     type(decls), allocatable :: OLD_DECL(:)
@@ -198,27 +264,12 @@ contains ! =====     Public Procedures     =============================
     if ( string > ubound(symbol_decl,1) ) & ! Assume string_table is increased
       & call increase_symbol_decl
     decl_table(num_decls) = decls ( value, type, units, tree, &
-                                    symbol_decl(string) )
+                                    symbol_decl(string), null() )
+    if ( present(values) ) call move_alloc ( values, decl_table(num_decls)%values )
     symbol_decl(string) = num_decls
     if ( toggle(tab) ) then
-      call output ( 'Declare ' ); call display_string ( string )
-      call output ( ' with VALUE = ' ); call output ( value )
-      call output ( ', TYPE = ' ); call output ( trim(type_names(type)) )
-      call output ( ', UNITS = ' )
-      if ( type == units_name ) then
-        if ( phyq_indices(units) == 0 ) then
-          call output ( ' <unknown> ' )
-        else
-          call display_string ( phyq_indices(units) )
-        end if
-      else if ( type == phys_unit_name ) then
-        call display_string ( lit_indices(units) )
-      else if ( type == variable ) then
-        call output ( units, before=trim(type_names(units)) // ' = ' )
-      else
-        call output ( units )
-      end if
-      call output ( ', TREE = ' ); call output ( tree, advance='yes' )
+      call display_string ( string, before='Declare ' )
+      call dump_a_decl ( decl_table(num_decls), before=' with' )
     end if
   end subroutine DECLARE
 ! -----------------------------------------------------  DECLARED  -----
@@ -238,27 +289,52 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine DUMP_DECL
 ! --------------------------------------------------  DUMP_A_DECL  -----
-  subroutine DUMP_A_DECL ( Decl )
+  subroutine DUMP_A_DECL ( Decl, Before, Value_Only )
+    use Lexer_Core, only: Print_Source
+    use Tree, only: Subtree, Sub_Rosa
     type(decls), intent(in) :: Decl
-    call output ( ' type=' )
-    call output ( trim(type_names(decl%type)) )
-    call output ( decl%value, before=' value=' )
-    call output ( ' units=' )
-    if ( decl%type == units_name ) then
-      if ( phyq_indices(decl%units) == 0 ) then
-        call output ( ' <unknown> ' )
-      else
-        call display_string ( phyq_indices(decl%units) )
-      end if
-    else if ( decl%type == phys_unit_name ) then
-      call display_string ( lit_indices(decl%units) )
-    else if ( decl%type == variable ) then
-      call output ( decl%units, before=trim(type_names(decl%units)) // ' = ' )
-    else
-      call output ( decl%units )
+    character(len=*), intent(in), optional :: Before
+    logical, intent(in), optional :: Value_Only
+    logical :: All
+    all = .true.
+    if ( present(value_only) ) all = .not. value_only
+    if ( present(before) ) call output ( before )
+    if ( all ) then
+      call output ( ' type=' )
+      call output ( trim(type_names(decl%type)) )
     end if
-    call output ( ' tree=' )
-    call output ( decl%tree, advance='yes' )
+    if ( .not. allocated(decl%values) ) &
+      & call output ( decl%value, before=' value=' )
+    select case ( decl%type )
+    case ( enum_value )
+      call display_string ( sub_rosa(subtree(1,decl%tree)), before=' of type ' )
+    case ( phys_unit_name )
+      call display_string ( lit_indices(decl%units), before=' units=' )
+    case ( named_value, variable )
+      if ( decl%units >= empty .and. decl%units <= last_type ) &
+        & call output ( ' ' // trim(type_names(decl%units)) )
+      if ( decl%units == str_value .and. decl%value > 0 ) &
+        & call display_string ( nint(decl%value), before=' ' )
+    case ( units_name )
+      if ( phyq_indices(decl%units) == 0 ) then
+        call output ( ' units=<unknown> ' )
+      else
+        call display_string ( phyq_indices(decl%units), before=' units=' )
+      end if
+    case default
+      call output ( decl%units, before=' units=' )
+    end select
+    if ( all ) then
+      call output ( ' tree=' )
+      call output ( decl%tree )
+      call print_source ( decl%tree, before=' ' )
+    end if
+    if ( allocated(decl%values) ) then
+      call output ( ' values:', advance='yes' )
+      call dump_values ( decl%values )
+    else
+      call newLine
+    end if
   end subroutine DUMP_A_DECL
 ! --------------------------------------------------  DUMP_1_DECL  -----
   subroutine DUMP_1_DECL ( SYMBOL )
@@ -275,6 +351,71 @@ contains ! =====     Public Procedures     =============================
       decl = decl_table(decl)%prior
     end do
   end subroutine DUMP_1_DECL
+! --------------------------------------------------  DUMP_VALUES  -----
+  subroutine DUMP_VALUES ( VALUES, BEFORE, ADVANCE )
+    type(value_t), intent(in) :: Values(:)
+    character(len=*), intent(in), optional :: BEFORE, ADVANCE
+    integer :: I, N
+    if ( present(before) ) call output ( before, advance )
+    do i = 1, size(values)
+      call output ( i, places=3 )
+      call output ( ': ' )
+      select case ( values(i)%type )
+      case ( enum_value )  ! values%value(1) is a string index
+        call display_string ( nint(values(i)%value(1)) , advance='yes' )
+      case ( label )       ! values%value(1) is a string index
+        call display_string ( nint(values(i)%value(1)), advance='yes' )
+      case ( log_value )   ! values%value(1) 0= 0 => false, else true
+        call output ( trim(merge('true ','false',values(i)%value(1)/=0.0d0)), &
+          & advance='yes' )
+      case ( named_value, variable )
+        select case ( values(i)%units(1) )
+        case ( num_value )
+          call output ( values(i)%value(1), advance='yes' )
+        case ( range )
+          call output ( values(i)%value(1) )
+          call output ( values(i)%value(2), before=' : ', advance='yes' )
+        case ( str_range )
+          n = nint(values(i)%value(1))
+          if ( n > 0 ) call display_string ( nint(values(i)%value(1)) )
+          n = nint(values(i)%value(2))
+          if ( n > 0 ) then
+            call display_string ( n, before=' : ', advance='yes' )
+          else
+            call output ( ' : ', advance='yes' )
+          end if
+        case ( str_value )
+          n = nint(values(i)%value(1))
+          if ( n > 0 ) then
+            call display_string ( n, advance='yes' )
+          else
+            call newLine
+          end if
+        case default
+          call newLine
+        end select
+      case ( num_value )   ! values%value(1) is a number
+        call output ( values(i)%value(1), advance='yes' )
+      case ( range )       ! values%value(1:2) are numbers
+        call output ( values(i)%value(1) )
+        call output ( values(i)%value(2), before=' : ', advance='yes' )
+      case ( str_range )   ! values%value(1:2) are string indices
+        call display_string ( nint(values(i)%value(1)) )
+        call display_string ( nint(values(i)%value(2)), before=' : ', &
+          & advance='yes' )
+      case ( str_value )   ! values%value(1) is a string index
+        call display_string ( nint(values(i)%value(1)), advance='yes' )
+      case default
+        call output ( trim(type_names(values(i)%type )), advance='yes' )
+      end select
+    end do
+  end subroutine DUMP_VALUES
+! --------------------------------------------------  Equal_Value  -----
+  elemental logical function Equal_Value ( V1, V2 )
+    type(value_t), intent(in) :: V1, V2
+    equal_value = v1%type == v2%type .and. all(v1%value == v2%value) .and. &
+                  all(v1%units == v2%units)
+  end function Equal_Value
 ! -----------------------------------------------------  GET_DECL  -----
   type(decls) function GET_DECL ( STRING, TYPE, UNITS, TREE )
   ! Get the latest declaration of "string" having a "type" field equal
@@ -301,11 +442,21 @@ contains ! =====     Public Procedures     =============================
       if ( prior == null_decl ) return
     end do
   end function GET_DECL
+  ! --------------------------------------------------  Get_Type  -----
+  ! Return the string index for the type indexed by Decor
+  integer function Get_Type ( Decor )
+    integer, intent(in) :: Decor  ! Tree node decoration
+    if ( type_name_indices(empty) < 0 ) call init_type_indices
+    get_type = 0
+    if ( decor >= empty .and. decor <= last_type ) &
+      & get_type = type_name_indices ( decor )
+  end function Get_Type
 ! ----------------------------------------------------  INIT_DECL  -----
   subroutine INIT_DECL
     !                             value type  units     tree prior
     decl_table(null_decl) = decls(0.0d0,empty,phyq_invalid,0,null_decl)
     num_decls = 0
+    if ( type_name_indices(empty) < 0 ) call init_type_indices
   end subroutine INIT_DECL
 ! ---------------------------------------------------  PRIOR_DECL  -----
   type(decls) function PRIOR_DECL ( THE_DECL, TYPE, UNITS )
@@ -331,15 +482,16 @@ contains ! =====     Public Procedures     =============================
     end do
   end function PRIOR_DECL
 ! ----------------------------------------------------  REDECLARE  -----
-  subroutine REDECLARE ( STRING, VALUE, TYPE, UNITS, TREE )
+  subroutine REDECLARE ( STRING, VALUE, TYPE, UNITS, TREE, VALUES )
   ! Find the latest declaration for "string" of type "type".  If there
-  ! isn't one, declare it.  Otherwise, change the "value", "units" and
-  ! "tree" fields of the found one.
+  ! isn't one, declare it.  Otherwise, change the "value", "units",
+  ! "tree" and "values" fields of the found one.
     integer, intent(in) :: STRING  ! String index of name to declare
     double precision, intent(in) :: VALUE    ! Declared value
     integer, intent(in) :: TYPE    ! Type of object, e.g. UNITS, LABEL...
-    integer, intent(in) :: UNITS   ! Units of value -- index of units string
-    integer, intent(in) :: TREE    ! Index of tree node of declaration
+    integer, intent(in), optional :: UNITS   ! Units of value -- index of units string
+    integer, intent(in), optional :: TREE    ! Index of tree node of declaration
+    type(value_t), allocatable, intent(inout), optional :: Values(:)
     integer :: PRIOR
     if ( string > ubound(symbol_decl,1) ) & ! Assume string_table is increased
       & call increase_symbol_decl
@@ -351,13 +503,27 @@ contains ! =====     Public Procedures     =============================
       end if
       if ( decl_table(prior)%type == type ) then
         decl_table(prior)%value = value
-        decl_table(prior)%units = units
-        decl_table(prior)%tree = tree
+        if ( present(units) )  decl_table(prior)%units = units
+        if ( present(tree) )   decl_table(prior)%tree = tree
+        if ( present(values) ) then
+          call deallocate_test ( decl_table(prior)%values, &
+            & 'decl_table(prior)%values', moduleName )
+          call move_alloc ( values, decl_table(prior)%values )
+        end if
+        if ( toggle(tab) ) then
+          call display_string ( string, before='Redeclare ' )
+          call dump_a_decl ( decl_table(prior), before=' with' )
+        end if
         return
       end if
       prior = decl_table(prior)%prior
     end do
   end subroutine REDECLARE
+! ------------------------------------------------  Unequal_Value  -----
+  elemental logical function Unequal_Value ( V1, V2 )
+    type(value_t), intent(in) :: V1, V2
+    unequal_value = .not. ( v1 == v2 )
+  end function Unequal_Value
 
 ! =====     Private Procedures     =====================================
 ! -----------------------------------------  Increase_Symbol_Decl  -----
@@ -393,6 +559,14 @@ contains ! =====     Public Procedures     =============================
     symbol_decl(ubound(old_decl,1)+1:) = null_decl
     deallocate ( old_decl )
   end subroutine Increase_Symbol_Decl
+! --------------------------------------------  INIT_TYPE_INDICES  -----
+  subroutine INIT_TYPE_INDICES
+    integer :: I
+    do i = empty, last_type
+      type_name_indices(i) = create_string ( trim(type_names(i)) )
+    end do
+  end subroutine INIT_TYPE_INDICES
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -406,6 +580,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.14  2013/10/09 23:39:49  vsnyder
+! Add Allocate_Test etc, equality etc.
+!
 ! Revision 2.13  2013/10/02 01:30:03  vsnyder
 ! Add 'variable' type
 !
