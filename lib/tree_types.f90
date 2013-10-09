@@ -63,8 +63,9 @@ module TREE_TYPES
   integer, parameter :: N_UNCHECKED =  n_spec_def + 1  ! field type not checked
   integer, parameter :: N_UNIT =       n_unchecked + 1 ! number // units
   integer, parameter :: N_VARIABLE =   n_unit + 1      ! := in name := expr
+  integer, parameter :: N_VARIABLE_REF = n_variable + 1 ! field needs a variable
 
-  integer, parameter :: LAST_TREE_NODE = N_VARIABLE
+  integer, parameter :: LAST_TREE_NODE = N_VARIABLE_REF
 
   ! mapping from pseudo-terminal indices to corresponding tree nodes.
   integer, parameter :: tree_map ( min_pseudo: max_pseudo ) = &
@@ -84,52 +85,53 @@ contains
   ! else is handled in TREE % INIT_TREE
     integer, intent(in) :: TREE_NODE    ! One of the parameters above
     select case ( tree_node )
-    case ( n_Eof );        call add_char ( 'eof' )
-    case ( n_Null );       call add_char ( 'null' )
-    case ( n_Identifier ); call add_char ( 'identifier' )
-    case ( n_Number );     call add_char ( 'number' )
-    case ( n_String );     call add_char ( 'string' )
-    case ( n_And );        call add_char ( 'and' )
-    case ( n_Arg_Def );    call add_char ( 'arg_def' )
-    case ( n_Array );      call add_char ( 'array' )
-    case ( n_Asg );        call add_char ( 'assign' )
-    case ( n_Cf );         call add_char ( 'cf' )
-    case ( n_Cfs );        call add_char ( 'cfs' )
-    case ( n_Colon );      call add_char ( 'colon' )
-    case ( n_Colon_less ); call add_char ( 'colon_less' )
-    case ( n_cond );       call add_char ( 'cond' )
-    case ( n_Div );        call add_char ( 'div' )
-    case ( n_Dot );        call add_char ( 'dot' )
-    case ( n_DT_Def );     call add_char ( 'dt_def' )
-    case ( n_Equal );      call add_char ( 'equal' )
-    case ( n_Equal_Equal ); call add_char ( 'equal_equal' )
-    case ( n_Field_Spec ); call add_char ( 'field_spec' )
-    case ( n_Field_Type ); call add_char ( 'field_type' )
-    case ( n_Func_Def );   call add_char ( 'func_def' )
-    case ( n_Func_Ref );   call add_char ( 'func_ref' )
-    case ( n_Greater );    call add_char ( 'greater' )
-    case ( n_Greater_eq ); call add_char ( 'greater_eq' )
-    case ( n_Into );       call add_char ( 'into' )
-    case ( n_Less );       call add_char ( 'less' )
-    case ( n_Less_colon ); call add_char ( 'less_colon' )
+    case ( n_Eof );          call add_char ( 'eof' )
+    case ( n_Null );         call add_char ( 'null' )
+    case ( n_Identifier );   call add_char ( 'identifier' )
+    case ( n_Number );       call add_char ( 'number' )
+    case ( n_String );       call add_char ( 'string' )
+    case ( n_And );          call add_char ( 'and' )
+    case ( n_Arg_Def );      call add_char ( 'arg_def' )
+    case ( n_Array );        call add_char ( 'array' )
+    case ( n_Asg );          call add_char ( 'assign' )
+    case ( n_Cf );           call add_char ( 'cf' )
+    case ( n_Cfs );          call add_char ( 'cfs' )
+    case ( n_Colon );        call add_char ( 'colon' )
+    case ( n_Colon_less );   call add_char ( 'colon_less' )
+    case ( n_cond );         call add_char ( 'cond' )
+    case ( n_Div );          call add_char ( 'div' )
+    case ( n_Dot );          call add_char ( 'dot' )
+    case ( n_DT_Def );       call add_char ( 'dt_def' )
+    case ( n_Equal );        call add_char ( 'equal' )
+    case ( n_Equal_Equal );  call add_char ( 'equal_equal' )
+    case ( n_Field_Spec );   call add_char ( 'field_spec' )
+    case ( n_Field_Type );   call add_char ( 'field_type' )
+    case ( n_Func_Def );     call add_char ( 'func_def' )
+    case ( n_Func_Ref );     call add_char ( 'func_ref' )
+    case ( n_Greater );      call add_char ( 'greater' )
+    case ( n_Greater_eq );   call add_char ( 'greater_eq' )
+    case ( n_Into );         call add_char ( 'into' )
+    case ( n_Less );         call add_char ( 'less' )
+    case ( n_Less_colon );   call add_char ( 'less_colon' )
     case ( n_Less_colon_less ); call add_char ( 'less_colon_less' )
-    case ( n_Less_eq );    call add_char ( 'less_eq' )
-    case ( n_Minus );      call add_char ( 'minus' )
-    case ( n_Mult );       call add_char ( 'mult' )
-    case ( n_Name_def );   call add_char ( 'name_def' )
-    case ( n_Named );      call add_char ( 'named' )
-    case ( n_Not );        call add_char ( 'not' )
-    case ( n_Not_Equal );  call add_char ( 'not_equal' )
-    case ( n_Or );         call add_char ( 'or' )
-    case ( n_Plus );       call add_char ( 'plus' )
-    case ( n_Pow );        call add_char ( 'power' )
-    case ( n_Section );    call add_char ( 'section' )
-    case ( n_Set_one );    call add_char ( 'set_one' )
-    case ( n_Spec_args );  call add_char ( 'spec_args' )
-    case ( n_Spec_def );   call add_char ( 'spec_def' )
-    case ( n_Unchecked );  call add_char ( 'unchecked' )
-    case ( n_Unit );       call add_char ( 'unit' )
-    case ( n_Variable );   call add_char ( 'variable' )
+    case ( n_Less_eq );      call add_char ( 'less_eq' )
+    case ( n_Minus );        call add_char ( 'minus' )
+    case ( n_Mult );         call add_char ( 'mult' )
+    case ( n_Name_def );     call add_char ( 'name_def' )
+    case ( n_Named );        call add_char ( 'named' )
+    case ( n_Not );          call add_char ( 'not' )
+    case ( n_Not_Equal );    call add_char ( 'not_equal' )
+    case ( n_Or );           call add_char ( 'or' )
+    case ( n_Plus );         call add_char ( 'plus' )
+    case ( n_Pow );          call add_char ( 'power' )
+    case ( n_Section );      call add_char ( 'section' )
+    case ( n_Set_one );      call add_char ( 'set_one' )
+    case ( n_Spec_args );    call add_char ( 'spec_args' )
+    case ( n_Spec_def );     call add_char ( 'spec_def' )
+    case ( n_Unchecked );    call add_char ( 'unchecked' )
+    case ( n_Unit );         call add_char ( 'unit' )
+    case ( n_Variable );     call add_char ( 'variable' )
+    case ( n_Variable_ref ); call add_char ( 'variable_ref' )
     case default
       write ( *,* )'TREE_TYPES%TREE_INIT-E- No initializer for &
                      &tree node with index ', tree_node
@@ -149,6 +151,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 2.16  2013/10/09 01:10:30  vsnyder
+! Add Variable_Ref tree node for field type definition
+!
 ! Revision 2.15  2013/10/02 01:34:46  vsnyder
 ! Add conditional ?...! and variable assignment := tree nodes
 !
