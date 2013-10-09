@@ -145,6 +145,7 @@ contains ! =====     Public Procedures     =============================
     & fileDataBase )
     use DUMPCOMMAND_M, only: BOOLEANFROMFORMULA, MLSCASE, MLSENDSELECT, &
       & MLSSELECT, MLSSELECTING, SKIP
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP
     use INIT_TABLES_MODULE, only: S_BOOLEAN, S_CASE, S_ENDSELECT, &
       & S_SELECT, S_SKIP
@@ -153,7 +154,7 @@ contains ! =====     Public Procedures     =============================
     use MLSL2TIMINGS, only: SECTION_TIMES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, NSONS, SUBTREE
-    use TREE_TYPES, only: N_NAMED
+    use TREE_TYPES, only: N_NAMED, N_Variable
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -193,6 +194,10 @@ contains ! =====     Public Procedures     =============================
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       son = subtree(i,root)
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+    cycle
+      end if
       if ( node_id(son) == n_named ) then ! Is spec labed?
         key = subtree ( 2, son )
         name = sub_rosa ( subtree(1,son) )
@@ -1321,6 +1326,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.100  2013/10/09 23:43:41  vsnyder
+! Add Evaluate_Variable
+!
 ! Revision 2.99  2013/09/24 23:47:23  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
