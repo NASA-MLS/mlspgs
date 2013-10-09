@@ -165,6 +165,7 @@ contains ! ===================================== Public Procedures =====
   subroutine ChunkDivide ( root, processingRange, filedatabase, chunks )
 
     use DumpCommand_m, only: DumpCommand
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use EXPR_M, only: EXPR
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSCOMMON, only: TAI93_RANGE_T
@@ -175,7 +176,7 @@ contains ! ===================================== Public Procedures =====
     use TIME_M, only: TIME_NOW
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA, WHERE_AT=>WHERE
-    use TREE_TYPES, only: N_NAMED
+    use TREE_TYPES, only: N_NAMED, N_Variable
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
 
     integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
@@ -224,13 +225,17 @@ contains ! ===================================== Public Procedures =====
       & 'ChunkDivide section cannot be empty' )
     do i = 2, nsons(root)-1      ! Skip the begin/end section
       son = subtree(i,root)
-      if ( node_id(son) == n_named ) son = subtree(2,son) ! Ignore label
-      select case ( get_spec_id(son) )
-      case ( s_dump )
-        call dumpCommand ( son )
-      case ( s_chunkDivide )
-        call chunkDivideL2CF ( son )
-      end select
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
+      else
+        if ( node_id(son) == n_named ) son = subtree(2,son) ! Ignore label
+        select case ( get_spec_id(son) )
+        case ( s_dump )
+          call dumpCommand ( son )
+        case ( s_chunkDivide )
+          call chunkDivideL2CF ( son )
+        end select
+      end if
     end do
 
     ! For methods other than fixed, we want to survey the L1 data and note the
@@ -2585,6 +2590,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.108  2013/10/09 23:40:34  vsnyder
+! Add Evaluate_Variable
+!
 ! Revision 2.107  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
