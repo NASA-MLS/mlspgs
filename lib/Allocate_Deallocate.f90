@@ -30,7 +30,7 @@ module Allocate_Deallocate
 
   use MACHINE, only: MLS_GC_NOW
   use PRINTIT_M, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT
+    & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT, SnipRCSFrom
   use Track_m, only: TRACKALLOCATE, TRACKDEALLOCATE
 
   implicit NONE
@@ -1209,15 +1209,13 @@ contains
     bytes = ( ( storage_size(b) + 7 ) / 8 )
   end function BYTES_REALR8_6D
 
-  ! ------------------------------------  myMessage  -----
-  subroutine myMessage ( severity, name, line, advance )
+  ! --------------------------------------------------  myMessage  -----
+  subroutine myMessage ( severity, name, line )
     ! Args
     integer, intent(in)           :: severity
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: line
-    character (len=*), intent(in), optional :: Advance ! Do not advance
-    !                                 if present and the first character is 'N'
-    !                                 or 'n'
+
     ! Local variables
     integer :: nChars
     character(len=len(line) + len(name) + 3) :: thus
@@ -1225,14 +1223,14 @@ contains
     nChars = len(line)
     thus = line
     if ( len_trim(name) > 0 ) then
-      nChars = len(line) + len(name) + 3
-      thus = '(' // trim(name) // ') ' // line
-    endif
+      nChars = len(line) + len_trim(snipRCSfrom(name)) + 3
+      thus = '(' // trim(snipRCSfrom(name)) // ') ' // line
+    end if
     if ( severity > MLSMSG_Warning ) then
       call PrintItOut( thus(1:nChars), SEVERITY, exitStatus = 1  )
     else
       call PrintItOut( thus(1:nChars), SEVERITY  )
-    endif
+    end if
   end subroutine myMessage
 
   ! ------------------------------------  Same_Shape_Character_1d  -----
@@ -1503,6 +1501,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.43  2013/10/09 01:02:05  vsnyder
+! Add SnipRCSFromName to MyMessage
+!
 ! Revision 2.42  2013/08/28 00:38:17  pwagner
 ! Added a local version of MyMessage to evade possible circular dependency
 !
