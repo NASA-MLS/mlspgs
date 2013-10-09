@@ -46,6 +46,7 @@ contains
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, INITIALIZEREPEAT, NEXTREPEAT, &
       & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, REPEAT=>SKIP, SKIP
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use HESSIANMODULE_1, only: HESSIAN_T, CREATEEMPTYHESSIAN, DESTROYHESSIAN
     use IEEE_ARITHMETIC, only: IEEE_IS_NAN
     use EXPR_M, only: EXPR
@@ -109,7 +110,7 @@ contains
     use TRACK_M, only: REPORTLEAKS
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, Where, SUB_ROSA, &
       & SUBTREE
-    use TREE_TYPES, only: N_NAMED
+    use TREE_TYPES, only: N_NAMED, N_Variable
     use VECTORSMODULE, only: CLEARMASK, CLEARUNDERMASK, &
       & CLEARVECTOR, CLONEVECTOR, COPYVECTOR, COPYVECTORMASK, CREATEMASK, &
       & DESTROYVECTORINFO, DUMPVECTORNORMS, GETVECTORQUANTITYBYTYPE, M_LINALG, &
@@ -314,6 +315,10 @@ repeat_loop: do ! RepeatLoop
 
       do i_sons = 2, nsons(root) - 1      ! skip names at begin/end of section
         son = subtree(i_sons, root)
+        if ( node_id(son) == n_variable ) then
+          call evaluate_variable ( son )
+      cycle
+        end if
         if ( node_id(son) == n_named ) then
           key = subtree(2, son)
         else
@@ -2945,6 +2950,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.345  2013/10/09 23:42:29  vsnyder
+! Add Evaluate_Variable
+!
 ! Revision 2.344  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
