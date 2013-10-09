@@ -521,57 +521,6 @@ subtrees:   do while ( j <= howmany )
             & canWriteL2PC )
         end if
 
-        ! For case where there was one chunk, destroy vectors etc.
-        ! This is to guard against destroying stuff needed by l2pc writing
-        if ( canWriteL2PC ) then
-          if ( warnOnDestroy ) call output('About to MLSL2Deconstruct', advance='yes' )
-          call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
-            & mifGeolocation, hGrids )
-          if ( warnOnDestroy ) call output('About to destroy hessian db', advance='yes' )
-          call DestroyHessianDatabase ( hessians )
-          if ( warnOnDestroy ) call output('About to destroy matrix db', advance='yes' )
-          call DestroyMatrixDatabase ( matrices )
-          if ( warnOnDestroy ) call output('About to destroy vector db', advance='yes' )
-          call DestroyVectorDatabase ( vectors )
-        end if
-
-        if ( specialDumpFile /= ' ' ) &
-          & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
-        ! Now tidy up any remaining `pointer' data.
-        ! processingRange needs no deallocation
-        details = SwitchDetail(switches, 'gridd')
-        if ( details > -1 .and. .not. parallel%slave &
-         & .and. associated(griddedDataBase) ) then
-          call Dump( griddedDataBase, details )
-        end if
-        if ( warnOnDestroy ) call output('About to destroy gridded db', advance='yes' )
-        call DestroyGriddedDataDatabase ( griddedDataBase )
-        details = SwitchDetail(switches, 'l2gp')
-        if ( details > -1 .and. .not. parallel%slave) then
-          call Dump( l2gpDatabase, details=details )
-        else if ( switchDetail(switches,'cab') > -1 .and. .not. parallel%slave) then
-          call Dump( l2gpDatabase, ColumnsOnly=.true. )
-        end if
-        if ( warnOnDestroy ) call output('About to destroy l2gp db', advance='yes' )
-        call DestroyL2GPDatabase ( l2gpDatabase )
-        details = SwitchDetail(switches, 'l2aux')
-        if ( details > -1 .and. .not. parallel%slave) then
-          call Dump( l2auxDatabase, details=details )
-        end if
-        if ( warnOnDestroy ) call output('About to destroy l2aux db', advance='yes' )
-        call DestroyL2AUXDatabase ( l2auxDatabase )
-        if ( warnOnDestroy ) call output('About to destroy direct db', advance='yes' )
-        call DestroyDirectDatabase ( DirectDatabase )
-        ! vectors, vectorTemplates and qtyTemplates destroyed at the
-        ! end of each chunk
-        ! fileDataBase is deallocated in MLSL2
-        details = SwitchDetail(switches, 'pro') - 2 ! 'pro' prints only size(DB)
-        if ( details > -3 &
-          & .and. associated(fileDataBase) ) then
-          call Dump( fileDataBase, details=details )
-        end if
-        if ( specialDumpFile /= ' ' ) &
-          & call revertOutput
         call add_to_section_timing ( 'output', t1)
 
       case default
@@ -590,15 +539,71 @@ subtrees:   do while ( j <= howmany )
   contains
 
     subroutine FinishUp ( Early )
+      ! Deallocate and utterly destroy all the arrays we allocated
       use FILTERSHAPES_M, only: DESTROY_FILTER_SHAPES_DATABASE, &
         & DESTROY_DACS_FILTER_DATABASE
       logical, intent(in), optional :: Early
+      ! Local variables
       logical :: myEarly
       integer :: numChunks
+      ! Executable
       myEarly = .false.
       if ( present(early) ) myEarly = early
       numChunks = 0
       if ( associated(Chunks) ) numChunks = size(Chunks)
+      ! This used to be done at the end of the Output section
+      ! For case where there was one chunk, destroy vectors etc.
+      ! This is to guard against destroying stuff needed by l2pc writing
+      if ( canWriteL2PC ) then
+        if ( warnOnDestroy ) call output('About to MLSL2Deconstruct', advance='yes' )
+        call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
+          & mifGeolocation, hGrids )
+        if ( warnOnDestroy ) call output('About to destroy hessian db', advance='yes' )
+        call DestroyHessianDatabase ( hessians )
+        if ( warnOnDestroy ) call output('About to destroy matrix db', advance='yes' )
+        call DestroyMatrixDatabase ( matrices )
+        if ( warnOnDestroy ) call output('About to destroy vector db', advance='yes' )
+        call DestroyVectorDatabase ( vectors )
+      end if
+
+      if ( specialDumpFile /= ' ' ) &
+        & call switchOutput( specialDumpFile, keepOldUnitOpen=.true. )
+      ! Now tidy up any remaining `pointer' data.
+      ! processingRange needs no deallocation
+      details = SwitchDetail(switches, 'gridd')
+      if ( details > -1 .and. .not. parallel%slave &
+       & .and. associated(griddedDataBase) ) then
+        call Dump( griddedDataBase, details )
+      end if
+      if ( warnOnDestroy ) call output('About to destroy gridded db', advance='yes' )
+      call DestroyGriddedDataDatabase ( griddedDataBase )
+      details = SwitchDetail(switches, 'l2gp')
+      if ( details > -1 .and. .not. parallel%slave) then
+        call Dump( l2gpDatabase, details=details )
+      else if ( switchDetail(switches,'cab') > -1 .and. .not. parallel%slave) then
+        call Dump( l2gpDatabase, ColumnsOnly=.true. )
+      end if
+      if ( warnOnDestroy ) call output('About to destroy l2gp db', advance='yes' )
+      call DestroyL2GPDatabase ( l2gpDatabase )
+      details = SwitchDetail(switches, 'l2aux')
+      if ( details > -1 .and. .not. parallel%slave) then
+        call Dump( l2auxDatabase, details=details )
+      end if
+      if ( warnOnDestroy ) call output('About to destroy l2aux db', advance='yes' )
+      call DestroyL2AUXDatabase ( l2auxDatabase )
+      if ( warnOnDestroy ) call output('About to destroy direct db', advance='yes' )
+      call DestroyDirectDatabase ( DirectDatabase )
+      ! vectors, vectorTemplates and qtyTemplates destroyed at the
+      ! end of each chunk
+      ! fileDataBase is deallocated in MLSL2
+      details = SwitchDetail(switches, 'pro') - 2 ! 'pro' prints only size(DB)
+      if ( details > -3 &
+        & .and. associated(fileDataBase) ) then
+        call Dump( fileDataBase, details=details )
+      end if
+      if ( specialDumpFile /= ' ' ) &
+        & call revertOutput
+
       call SummarizeWarnings
       call CloseParallel(numChunks, early)
       if ( parallel%slave .and. .not. SLAVESDOOWNCLEANUP ) return
@@ -681,6 +686,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.187  2013/10/01 22:18:56  pwagner
+! Passes hgrids to MLSL2Fill
+!
 ! Revision 2.186  2013/08/30 02:45:52  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
