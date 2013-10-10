@@ -17,7 +17,7 @@
 ! inline them, and then perhaps optimize away redundant assignment of type
 ! and units components.
 
-! $RCSFile: $
+! $RCSfile$
 
 ! ----------------------------------------------------  Value_Add  -----
   elemental type(value_t) function Value_Add ( V1, V2 ) result ( R )
@@ -69,6 +69,9 @@
   end function Value_Unequal
 
 ! $Log$
+! Revision 2.2  2013/10/10 22:40:31  vsnyder
+! Spell RCSfile correctly
+!
 ! Revision 2.1  2013/10/10 22:39:31  vsnyder
 ! Initial commit
 !

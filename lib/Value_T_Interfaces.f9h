@@ -17,7 +17,7 @@
 ! them, and then perhaps optimize away redundant assignment of type and
 ! units components.
 
-! $RCSFile: $
+! $RCSfile$
 
   interface operator(==)
     module procedure Value_Equal ! Two value_t objects are equal
@@ -46,6 +46,9 @@
   end interface
 
 ! $Log$
+! Revision 2.2  2013/10/10 22:40:21  vsnyder
+! Spell RCSfile correctly
+!
 ! Revision 2.1  2013/10/10 22:39:32  vsnyder
 ! Initial commit
 !
