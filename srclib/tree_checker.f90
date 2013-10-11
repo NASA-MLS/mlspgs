@@ -17,21 +17,25 @@ module TREE_CHECKER
 ! Traverse the tree output by the parser, which includes definitions
 ! put into it by init_tables_module before the parser runs.  Check
 ! that things fit together.  Fill in the declaration table.  Decorate
-! cross-references within the tree with anything that might be useful
-! in table_generator.
+! cross-references within the tree with anything that might be useful.
+! Decorate internal vertices in expressions with the index of the
+! result type from Declaration_Table.
 
   use DECLARATION_TABLE, only: DECLARATION, DECLARE, DECLARED, DECLS, &
-    &                          DOT, DUMP_1_DECL, EMPTY, ENUM_VALUE, FIELD, &
-    &                          FUNCTION, GET_DECL, LABEL, LOG_VALUE, &
-    &                          NAMED_VALUE, NULL_DECL, NUM_VALUE, PRIOR_DECL, &
-    &                          RANGE, REDECLARE, SECTION, SPEC, STR_VALUE, &
-    &                          UNDECLARED, TYPE_MAP, TYPE_NAME, UNITS_NAME
+    &                          DOT, DUMP_A_DECL, DUMP_1_DECL, EMPTY, &
+    &                          ENUM_VALUE, FIELD, FUNCTION, GET_DECL, &
+    &                          LABEL, LOG_VALUE,  NAMED_VALUE, NULL_DECL, &
+    &                          NUM_VALUE, PRIOR_DECL, RANGE, REDECLARE, &
+    &                          SECTION, SPEC, STR_VALUE, UNDECLARED, &
+    &                          TYPE_MAP, TYPE_NAME, TYPE_NAMES, UNITS_NAME, &
+    &                          VARIABLE
   use INIT_TABLES_MODULE, only: DATA_TYPE_INDICES, FIELD_FIRST, FIELD_INDICES, &
     &                           FIELD_LAST, LIT_INDICES, PHYQ_DIMENSIONLESS, &
     &                           SECTION_FIRST,SECTION_INDICES, SECTION_LAST, &
     &                           SECTION_ORDERING, T_BOOLEAN
-  use INTRINSIC, only: ALL_FIELDS, EMPTY_OK, EXPR_OK, NO_ARRAY, NO_CHECK_EQ, &
-    &                  NO_DUP, NO_POSITIONAL, PHYQ_INVALID, REQ_FLD, U
+  use INTRINSIC, only: ALL_FIELDS, DU, EMPTY_OK, EXPR_OK, NO_ARRAY,&
+    &                  NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, PHYQ_INVALID, &
+    &                  REQ_FLD, U
   use LEXER_CORE, only: PRINT_SOURCE
   use MoreTree, only: Scalar, StartErrorMessage
   use OUTPUT_M, only: NEWLINE, OUTPUT
@@ -67,7 +71,8 @@ module TREE_CHECKER
   integer, private, parameter :: NOT_FIELD_OF = NO_SUCH_REFERENCE + 1
   integer, private, parameter :: NOT_FUNC = NOT_FIELD_OF + 1
   integer, private, parameter :: NOT_LIT_OF_TYPE = NOT_FUNC + 1
-  integer, private, parameter :: NOT_NAME = NOT_LIT_OF_TYPE + 1
+  integer, private, parameter :: NOT_LOG_VALUE = NOT_LIT_OF_TYPE + 1
+  integer, private, parameter :: NOT_NAME = NOT_LOG_VALUE + 1
   integer, private, parameter :: NOT_NAME_OR_STRING = NOT_NAME + 1
   integer, private, parameter :: NOT_NUMERIC = NOT_NAME_OR_STRING + 1
   integer, private, parameter :: NOT_SECTION = NOT_NUMERIC + 1
@@ -161,7 +166,7 @@ contains ! ====     Public Procedures     ==============================
 
 ! =====     Private Procedures     =====================================
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT )
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT, GOT  )
     use Intrinsic, only: PHYQ_Indices
     use Tree, only: Node_Kind, Pseudo, Where_At => Where
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
@@ -171,6 +176,7 @@ contains ! ====     Public Procedures     ==============================
                                    ! their declarations are dumped.
     integer, intent(in), optional :: FIELDS(:) ! Field indices
     integer, intent(in), optional :: EXPECT    ! Something expected
+    integer, intent(in), optional :: GOT       ! Got this instead of expected
     integer :: I                   ! Index for "sons" or "section_ordering"
                                    ! or subtrees of "sons" or subtree of "expect"
 
@@ -189,7 +195,16 @@ contains ! ====     Public Procedures     ==============================
         & before='an empty value is not allowed for the "' )
       call output ( '" field.', advance='yes' )
     case ( inconsistent_types )
-      call output ( 'types are not consistent.', advance = 'yes' )
+      call output ( 'types are not consistent' )
+      if ( present(expect) ) then
+        call output ( ', expected ' )
+        call output ( trim(type_names(expect)) )
+      end if
+      if ( present(got) ) then
+        call output ( ', got ' )
+        call output ( trim(type_names(got)) )
+      end if
+      call output ( '.', advance='yes' )
     case ( inconsistent_units )
       call output ( 'units are not consistent.', advance = 'yes' )
     case ( missing_field )
@@ -225,6 +240,8 @@ contains ! ====     Public Procedures     ==============================
     case ( not_func )
       call display_string ( fields(1) )
       call output ( ' is not a valid function.', advance='yes' )
+    case ( not_log_value )
+      call output ( 'is not boolean.', advance = 'yes' )
     case ( not_name )
       call output ( 'is not a name.', advance = 'yes' )
     case ( not_name_or_string )
@@ -385,6 +402,8 @@ contains ! ====     Public Procedures     ==============================
         no_array_allowed = mod(decoration(field)/no_array,2) /= 0
         if ( node_id(field) == n_field_type ) then
           look_for = enum_value
+        else if  ( node_id(field) == n_variable_ref ) then
+          look_for = variable
         else ! node_id(field) == n_field_spec or node_id(field) == n_dot
           look_for = label
         end if
@@ -469,7 +488,7 @@ contains ! ====     Public Procedures     ==============================
       integer :: TEST_TYPE ! Used to test the tree-node for a type reference
       integer :: TYPE_DECL ! Tree node of declaration of name of field's type
 
-      call trace_begin ( me, 'AssignBody', root, cond=toggle(con) )
+      call trace_begin ( me, 'AssignBody', root, index=field, cond=toggle(con) )
 
       ! Stat = 0 => Type and units OK
       !      else wrong type
@@ -487,7 +506,11 @@ contains ! ====     Public Procedures     ==============================
           stat = wrong_type ! Wrong type
         end if
       case ( n_identifier )
-        if ( node_id(field) /= n_dot ) then      ! Field doesn't need x.y
+        if ( node_id(field) == n_variable_ref ) then
+          decl = get_decl(sub_rosa(root),look_for)
+          if  ( decl%tree /= null_tree ) &
+    go to 9
+        else if ( node_id(field) /= n_dot ) then ! Field doesn't need x.y
           do j = start, nsons(field)             ! Try all of the types
             type_decl = decoration(subtree(j,field))
             decl = get_decl(sub_rosa(root),look_for)
@@ -947,15 +970,16 @@ contains ! ====     Public Procedures     ==============================
     ! FIELD.
 
     integer :: Arg_Tree            ! Root of tree of allowed argument types
-    type(decls) :: DECL            ! Declaration record for "root"
+    integer :: Decor               ! Decoration of a tree node
+    type(decls) :: DECL, DECL2     ! Declaration record for "root", function arg
     integer :: I, J
     integer :: ME                  ! node_id(root)
-    integer :: SON1, SON2          ! Sons of "root"
+    integer :: SON1, SON2, SON3    ! Sons of "root"
     integer :: STRING              ! sub_rosa(root)
     integer :: Trace = -1          ! String index for trace
-    integer :: TYPE2               ! Type for a son of "root"
-    integer :: UNITS2              ! Units for a son of "root"
-    double precision :: VALUE2     ! Value for a son of "root"
+    integer :: TYPE2, TYPE3        ! Types for sons of "root"
+    integer :: UNITS2, UNITS3      ! Units for sons of "root"
+    double precision :: VALUE2, VALUE3 ! Values for sons of "root"
 
     call trace_begin ( trace, 'EXPR', root, cond=toggle(con) )
     stat = 0 ! Assume status is OK
@@ -1000,6 +1024,21 @@ contains ! ====     Public Procedures     ==============================
           value = value - decl%value
         end if
       end if
+    case ( n_cond ) ! ------------------------------------------------------
+      son1 = subtree(1,root); son2 = subtree(2,root); son3 = subtree(3,root)
+      stat = expr ( son1, type, units, value, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      if ( type /= log_value ) call local_error ( root, not_log_value )
+      stat = expr ( son2, type2, units2, value2, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      stat = expr ( son3, type3, units3, value3, field, start, field_look, field_test )
+      if ( stat /= 0 ) &
+  go to 9
+      type = type2
+      if ( type2 /= type3 ) &
+        & call local_error ( son3, inconsistent_types, got=type3, expect=type2 )
     case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less ) ! ------
       son1 = subtree(1,root); son2 = subtree(2,root)
       stat = expr ( son1, type, units, value, field, start, field_look, field_test )
@@ -1009,7 +1048,7 @@ contains ! ====     Public Procedures     ==============================
       if ( stat /= 0 ) &
   go to 9
       if ( type /= type2 ) then
-        call local_error ( root, inconsistent_types, (/ son1, son2 /) )
+        call local_error ( son2, inconsistent_types, (/ son1, son2 /) )
       end if
 ! Don't test units here.  The field might use : for something other than range.
 !       if ( type == num_value .and. type2 == num_value .and. &
@@ -1108,9 +1147,9 @@ contains ! ====     Public Procedures     ==============================
           else !  me == n_minus
             value = value - value2
           end if
+        else if ( type == dot .or. type2 == dot ) then
+            type = dot
         end if
-      else if ( type == dot .or. type2 == dot ) then
-        type = dot
       else if ( me == n_minus ) then
         value = - value
       end if
@@ -1181,39 +1220,72 @@ contains ! ====     Public Procedures     ==============================
       decl = get_decl(string,function)
       do while ( decl%tree /= null_tree )
         if ( decl%type == function ) then
-          if ( nsons(decl%tree) == 1 ) & ! No argument # or type checking
+          if ( nsons(decl%tree) < 2 ) then ! Check only consistency of args
+            decor = decoration(decl%tree)
+            if ( decor > 0 ) then
+              son1 = subtree(2,root)
+              type = empty
+              if ( nsons(root) > 1 ) then
+                stat = expr ( son1, type, units, value, &
+                            & field, start, field_look, field_test )
+                if ( stat /= 0 ) &
   go to 9
-          arg_tree = subtree(2,decl%tree)
-          if ( node_id(arg_tree) /= n_arg_def ) & ! No argument # or type checking
+              end if
+              if ( mod(decor,u) /= 0 ) then ! Uniform argument types required
+                do i = 3, nsons(root)
+                  son2 = subtree(i,root)
+                  stat = expr ( son2, type2, units, value, &
+                              & field, start, field_look, field_test )
+                  if ( stat /= 0 ) &
   go to 9
-          if ( nsons(root) /= 1 + nsons(arg_tree) ) then
-            call local_error ( root, wrong_num_args, fields=(/string/) )
-          else
-            do i = 1, nsons(arg_tree)
-              stat = expr ( subtree(i+1,root), type, units, value, &
-                          & field, start, field_look, field_test )
-              if ( stat /= 0 ) &
-  go to 9
-              son2 = subtree(i,arg_tree)
-              if ( node_id(subtree(i,arg_tree)) == n_or ) then
-                do j = 1, nsons(son2)
-                  if ( type_map(type) == decoration(subtree(j,son2)) ) then
-                    if ( type == num_value .and. units /= phyq_dimensionless ) &
-                      & call local_error ( subtree(i+1,root), not_unitless, fields=(/string/) )
-  go to 9
+                  if ( type /= empty .and. type /= type2 ) then
+                    call local_error ( son2, inconsistent_types, &
+                      & (/ son1, son2 /), expect=type, got=type2 )
+                  else if ( type == enum_value ) then
+                    decl2 = get_decl(sub_rosa(son2),enum_value)
+                    type = decl2%tree
                   end if
                 end do
-              else
-                if ( type_map(type) /= decoration(son2) ) then
-                  call local_error ( subtree(i+1,root), wrong_arg_type, &
-                    & fields=(/string/), expect=subtree(i,arg_tree) )
-                else if ( units /= phyq_dimensionless ) then
-                  call local_error ( subtree(i+1,root), not_unitless, fields=(/string/) )
-                end if
               end if
-            end do
+              if ( decor >= u ) type = decor / u
+            end if
+          else ! check argument number and types
+            arg_tree = subtree(2,decl%tree)
+            if ( node_id(arg_tree) /= n_arg_def ) & ! No argument # or type checking
   go to 9
+            if ( node_id(arg_tree) == n_arg_def ) then
+              if ( nsons(root) /= 1 + nsons(arg_tree) ) then
+                call local_error ( root, wrong_num_args, fields=(/string/) )
+  go to 9
+              end if
+            end if
+            if ( node_id(arg_tree) == n_arg_def ) then
+              do i = 1, nsons(arg_tree)
+                stat = expr ( subtree(i+1,root), type, units, value, &
+                            & field, start, field_look, field_test )
+                if ( stat /= 0 ) &
+  go to 9
+                son2 = subtree(i,arg_tree)
+                if ( node_id(subtree(i,arg_tree)) == n_or ) then
+                  do j = 1, nsons(son2)
+                    if ( type_map(type) == decoration(subtree(j,son2)) ) then
+                      if ( type == num_value .and. units /= phyq_dimensionless ) &
+                        & call local_error ( subtree(i+1,root), not_unitless, fields=(/string/) )
+  go to 9
+                    end if
+                  end do
+                else
+                  if ( type_map(type) /= decoration(son2) ) then
+                    call local_error ( subtree(i+1,root), wrong_arg_type, &
+                      & fields=(/string/), expect=subtree(i,arg_tree) )
+                  else if ( units /= phyq_dimensionless ) then
+                    call local_error ( subtree(i+1,root), not_unitless, fields=(/string/) )
+                  end if
+                end if
+              end do
+            end if
           end if
+  go to 9
         end if
         decl = prior_decl(decl,function)
       end do
@@ -1222,10 +1294,31 @@ contains ! ====     Public Procedures     ==============================
       stat = check_dot ( root, field, start, field_look, field_test )
       type = undeclared
       if ( stat /= 3 ) type = dot
+    case ( n_array )
+      son1 = subtree(1,root)
+      stat = expr ( son1, type, units, value )
+      if ( stat /= 0 ) &
+  go to 9
+      do i = 2, nsons(root)
+        son2 = subtree(i,root)
+        stat = expr ( son2, type2, units2, value2 )
+        if ( stat /= 0 ) &
+  go to 9
+        if ( type /= type2 ) &
+          call local_error ( son2, inconsistent_types, (/ son1, son2 /) )
+      end do
     case default ! ---------------------------------------------------------
       call local_error ( root, no_code_for )
     end select
-  9 call trace_end ( 'EXPR', index=stat, cond=toggle(con) )
+  9 if ( stat == 0 ) then
+      select case ( me )
+      case ( n_identifier, n_number, n_string ) ! ----------------------------
+      case default
+        call decorate ( root, type )
+      end select
+    end if
+    call trace_end ( 'EXPR', index=stat, string=trim(type_names(type)), &
+      & cond=toggle(con) )
 
   contains
 
@@ -1233,30 +1326,22 @@ contains ! ====     Public Procedures     ==============================
       ! If type and type2 are both dot, or if one is dot and the other
       ! is numeric the type is dot.  Otherwise if both are numeric
       ! it is num_value.  Otherwise it is empty, and an error has been
-      ! announced.  If the type is empty, the result is stat=wrong_type, else
-      ! it is stat=0.
-      stat = wrong_type ! Assume wrong
-      if ( type == dot ) then
-        if ( type2 == dot .or. type2 == num_value ) then
-          dot_or_num = 0
-        else
-          call local_error ( root, wrong_type )
-        end if
-  return
-      end if
-      if ( type2 == dot ) then
+      ! announced.  If the type is empty, the result is wrong_type, else
+      ! it is zero.
+      dot_or_num = wrong_type ! Assume wrong
+      if ( type == type2 ) then
         if ( type == dot .or. type == num_value ) then
-          type = dot
           dot_or_num = 0
-        else
-          call local_error ( root, wrong_type )
         end if
-  return
+      else if ( type == dot .and. type2 == num_value .or. &
+                type == num_value .and. type2 == dot  ) then
+        type = dot
+        dot_or_num = 0
       end if
-      if ( type == num_value .and. type2 == num_value ) dot_or_num = 0
+      if ( dot_or_num /= 0 ) call local_error ( root, wrong_type )
     end function Dot_or_Num
 
-    subroutine LOCAL_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT )
+    subroutine LOCAL_ERROR ( WHERE, CODE, SONS, FIELDS, EXPECT, GOT )
       integer, intent(in) :: WHERE   ! Tree node where error was noticed
       integer, intent(in) :: CODE    ! Code for error message
       integer, intent(in), optional :: SONS(:) ! Tree nodes, maybe sons of
@@ -1264,7 +1349,8 @@ contains ! ====     Public Procedures     ==============================
                                      ! their declarations are dumped.
       integer, intent(in), optional :: FIELDS(:) ! Field indices
       integer, intent(in), optional :: EXPECT    ! Expected type
-      call announce_error ( where, code, sons, fields, expect )
+      integer, intent(in), optional :: GOT       ! Actual type
+      call announce_error ( where, code, sons, fields, expect, got )
       type = empty
       units = phyq_invalid
     end subroutine LOCAL_ERROR
@@ -1328,6 +1414,8 @@ contains ! ====     Public Procedures     ==============================
       case ( n_spec_args )            ! x,(y[=expr])+
         call decorate ( sonn, son1 )  ! show spec_args the section name
         call spec_args ( sonn )
+      case ( n_variable )
+        call variable_def ( sonn )
       case default
         call announce_error ( sonn, no_code_for )
       end select
@@ -1439,6 +1527,52 @@ contains ! ====     Public Procedures     ==============================
     call trace_end ( 'SPEC_ARGS', cond=toggle(con) )
   end subroutine SPEC_ARGS
 
+! -------------------------------------------------  Variable_Def  -----
+  subroutine Variable_Def ( Root )
+    ! Verify that the expressions in the right-hand side of := all have the
+    ! same type.
+    ! If the first son of Root has previously appeared on the left side of :=
+    ! check that the type of the left-hand side is the same as the right.
+    ! If the first son of Root has not previously appeared, declare it with
+    ! the type of the right-hand side.
+    integer, intent(in) :: Root ! Tree index of n_variable from := operator
+    type(decls) :: Decl         ! of left son
+    integer :: I, J
+    integer :: Me = -1          ! String index for trace cacheing
+    integer :: Son1, Son2, Sonn ! Left son, right sons
+    integer :: String           ! String index of variable at Son1
+    integer :: Units            ! Of right sons
+    integer :: Type1, Type2     ! Types of right sons
+    double precision :: Value
+
+    call trace_begin ( me, 'Variable_Def', root, cond=toggle(con) )
+    son2 = subtree(2,root)
+    j = expr ( son2, type1, units, value )
+    do i = 3, nsons(root)
+      sonn = subtree(i,root)
+      j = expr ( sonn, type2, units, value )
+      if ( type1 /= type2 ) then
+        call announce_error ( sonn, inconsistent_types, expect=type1, &
+          & got=type2 )
+      end if
+    end do
+    son1 = subtree(1,root)
+    string = sub_rosa(son1)
+    decl = get_decl ( string, variable )
+    if ( decl%type /= variable ) then
+      call declare ( string, 0.0d0, variable, type1, son1 )
+      if ( toggle(con) ) decl = get_decl ( string, variable )
+    else
+      if ( decl%units /= type1 ) then
+        call announce_error ( root, inconsistent_types, expect=decl%units, &
+          & got=type1 )
+      end if
+    end if
+    call decorate ( son1, son2 )
+    call trace_end ( 'Variable_Def', string=trim(type_names(decl%units)), &
+      & cond=toggle(con) )
+  end subroutine Variable_Def
+
   logical function not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -1451,6 +1585,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.41  2013/09/24 23:28:00  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 1.40  2013/09/20 00:56:18  vsnyder
 ! Allow relational operators to have dot operands
 !
