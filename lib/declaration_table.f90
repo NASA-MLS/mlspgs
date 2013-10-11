@@ -28,33 +28,28 @@ module DECLARATION_TABLE
   implicit NONE
   private
 
-  public :: ALLOCATE_DECL, Allocate_Test, Allocate_Value, DEALLOCATE_DECL
-  public :: Deallocate_Test, Deallocate_Value, DECLARATION, DECLARE
-  public :: DECLARED, DECLS, DOT, DUMP_DECL, DUMP_A_DECL, DUMP_1_DECL
-  public :: DUMP_VALUES, EMPTY, ENUM_VALUE, Equal_Value, EXPRN, EXPRN_M
-  public :: EXPRN_V, FIELD, FUNCTION, GET_DECL, GET_TYPE, INIT_DECL, LABEL
-  public :: LOG_VALUE, NAMED_VALUE, NULL_DECL, NUM_VALUE, PHYS_UNIT_NAME
-  public :: PRIOR_DECL, RANGE, REDECLARE, SECTION, SECTION_NODE, STR_RANGE
-  public :: STR_VALUE, SPEC, TREE_NODE, TYPE_MAP, TYPE_NAME, TYPE_NAMES
-  public :: TYPE_NAME_INDICES, UNDECLARED, Unequal_Value, UNITS_NAME, Value_t
-  public :: VARIABLE
+  public :: ALLOCATE_DECL, Allocate_Test, Value_Allocate, DEALLOCATE_DECL
+  public :: Deallocate_Test, DECLARATION, DECLARE, DECLARED, DECLS, DOT
+  public :: DUMP_DECL, DUMP_A_DECL, DUMP_1_DECL, DUMP_VALUES, EMPTY, ENUM_VALUE
+  public :: EXPRN, EXPRN_M, EXPRN_V, FIELD, FUNCTION, GET_DECL, GET_TYPE
+  public :: INIT_DECL, LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, NUM_VALUE
+  public :: PHYS_UNIT_NAME, PRIOR_DECL, RANGE, REDECLARE, SECTION
+  public :: SECTION_NODE, STR_RANGE, STR_VALUE, SPEC, TREE_NODE, TYPE_MAP
+  public :: TYPE_NAME, TYPE_NAMES, TYPE_NAME_INDICES, UNDECLARED, UNITS_NAME
+  public :: Value_Add, Value_Deallocate, Value_Diff, Value_Div, Value_Equal
+  public :: Value_Neg, Value_Prod, Value_Same, Value_t, Value_Unequal, VARIABLE
 
   public :: Operator(==), Operator(/=)
+  public :: Operator(+), Operator(-), Operator(*), Operator(/)
 
-  interface operator(==)
-    module procedure Equal_Value ! Two value_t objects are equal
-  end interface
-
-  interface operator(/=)
-    module procedure Unequal_Value ! Two value_t objects are unequal
-  end interface
+  include "Value_T_Interfaces.f9h"
 
   interface Allocate_Test
-    module procedure Allocate_Value
+    module procedure Value_Allocate
   end interface
 
   interface Deallocate_Test
-    module procedure Deallocate_Value
+    module procedure Value_Deallocate
   end interface
 
   integer, parameter :: NULL_DECL = 0   ! Index and type of the null
@@ -192,36 +187,13 @@ contains ! =====     Public Procedures     =============================
     symbol_decl = null_decl
     return
   end subroutine ALLOCATE_DECL
-! -----------------------------------------------  Allocate_Value  -----
-  subroutine Allocate_Value ( Value, N, ItsName, ModuleName )
-    use Allocate_Deallocate, only: Test_Allocate
-    type(value_t), allocatable :: Value(:)
-    integer, intent(in) :: N
-    character(len=*), intent(in) :: ItsName, ModuleName
-    integer :: Stat
-    call deallocate_test ( value, itsName, moduleName )
-    allocate ( value(1:n), stat=stat )
-    call test_allocate ( stat, moduleName, ItsName, [1], [n], &
-      & storage_size(value) / 8 )
-  end subroutine Allocate_Value
+
 ! ----------------------------------------------  DEALLOCATE_DECL  -----
   subroutine DEALLOCATE_DECL
     if ( allocated(decl_table) ) deallocate ( decl_table )
     if ( allocated(symbol_decl) ) deallocate( symbol_decl )
   end subroutine DEALLOCATE_DECL
-! ---------------------------------------------  Deallocate_Value  -----
-  subroutine Deallocate_Value ( Value, ItsName, ModuleName )
-    use Allocate_Deallocate, only: Memory_Units, Test_Deallocate
-    type(value_t), allocatable :: Value(:)
-    character(len=*), intent(in) :: ItsName, ModuleName
-    integer :: N, Stat
-    if ( allocated(value) ) then
-      n = size(value)
-      deallocate ( value, stat=stat )
-      call test_deallocate ( stat, moduleName, ItsName,  &
-        & n * (storage_size(value) / 8) / memory_units )
-    end if
-  end subroutine Deallocate_Value
+
 ! --------------------------------------------------  DECLARATION  -----
   type(decls) function DECLARATION ( STRING )
     integer, intent(in) :: STRING  ! String index for which declaration needed
@@ -229,6 +201,7 @@ contains ! =====     Public Procedures     =============================
       & call increase_symbol_decl
     declaration = decl_table(symbol_decl(string))
   end function DECLARATION
+
 ! ------------------------------------------------------  DECLARE  -----
   subroutine DECLARE ( STRING, VALUE, TYPE, UNITS, TREE, VALUES )
     integer, intent(in) :: STRING  ! String index of name to declare
@@ -272,6 +245,7 @@ contains ! =====     Public Procedures     =============================
       call dump_a_decl ( decl_table(num_decls), before=' with' )
     end if
   end subroutine DECLARE
+
 ! -----------------------------------------------------  DECLARED  -----
   logical function DECLARED ( STRING )
     integer, intent(in) :: STRING
@@ -279,6 +253,7 @@ contains ! =====     Public Procedures     =============================
       & call increase_symbol_decl
     declared = symbol_decl(string) /= null_decl
   end function DECLARED
+
 ! ----------------------------------------------------  DUMP_DECL  -----
   subroutine DUMP_DECL
     integer :: I    ! Loop inductor
@@ -288,6 +263,7 @@ contains ! =====     Public Procedures     =============================
       call dump_1_decl ( i )
     end do
   end subroutine DUMP_DECL
+
 ! --------------------------------------------------  DUMP_A_DECL  -----
   subroutine DUMP_A_DECL ( Decl, Before, Value_Only )
     use Lexer_Core, only: Print_Source
@@ -336,6 +312,7 @@ contains ! =====     Public Procedures     =============================
       call newLine
     end if
   end subroutine DUMP_A_DECL
+
 ! --------------------------------------------------  DUMP_1_DECL  -----
   subroutine DUMP_1_DECL ( SYMBOL )
     integer, intent(in) :: SYMBOL  ! Index of symbol whose declaration to dump
@@ -351,6 +328,7 @@ contains ! =====     Public Procedures     =============================
       decl = decl_table(decl)%prior
     end do
   end subroutine DUMP_1_DECL
+
 ! --------------------------------------------------  DUMP_VALUES  -----
   subroutine DUMP_VALUES ( VALUES, BEFORE, ADVANCE )
     type(value_t), intent(in) :: Values(:)
@@ -410,12 +388,7 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
   end subroutine DUMP_VALUES
-! --------------------------------------------------  Equal_Value  -----
-  elemental logical function Equal_Value ( V1, V2 )
-    type(value_t), intent(in) :: V1, V2
-    equal_value = v1%type == v2%type .and. all(v1%value == v2%value) .and. &
-                  all(v1%units == v2%units)
-  end function Equal_Value
+
 ! -----------------------------------------------------  GET_DECL  -----
   type(decls) function GET_DECL ( STRING, TYPE, UNITS, TREE )
   ! Get the latest declaration of "string" having a "type" field equal
@@ -442,6 +415,7 @@ contains ! =====     Public Procedures     =============================
       if ( prior == null_decl ) return
     end do
   end function GET_DECL
+
   ! --------------------------------------------------  Get_Type  -----
   ! Return the string index for the type indexed by Decor
   integer function Get_Type ( Decor )
@@ -451,6 +425,7 @@ contains ! =====     Public Procedures     =============================
     if ( decor >= empty .and. decor <= last_type ) &
       & get_type = type_name_indices ( decor )
   end function Get_Type
+
 ! ----------------------------------------------------  INIT_DECL  -----
   subroutine INIT_DECL
     !                             value type  units     tree prior
@@ -458,6 +433,7 @@ contains ! =====     Public Procedures     =============================
     num_decls = 0
     if ( type_name_indices(empty) < 0 ) call init_type_indices
   end subroutine INIT_DECL
+
 ! ---------------------------------------------------  PRIOR_DECL  -----
   type(decls) function PRIOR_DECL ( THE_DECL, TYPE, UNITS )
   ! Return the prior declaration of "the_decl" with specified values of
@@ -481,6 +457,7 @@ contains ! =====     Public Procedures     =============================
       prior = prior_decl%prior
     end do
   end function PRIOR_DECL
+
 ! ----------------------------------------------------  REDECLARE  -----
   subroutine REDECLARE ( STRING, VALUE, TYPE, UNITS, TREE, VALUES )
   ! Find the latest declaration for "string" of type "type".  If there
@@ -519,11 +496,35 @@ contains ! =====     Public Procedures     =============================
       prior = decl_table(prior)%prior
     end do
   end subroutine REDECLARE
-! ------------------------------------------------  Unequal_Value  -----
-  elemental logical function Unequal_Value ( V1, V2 )
-    type(value_t), intent(in) :: V1, V2
-    unequal_value = .not. ( v1 == v2 )
-  end function Unequal_Value
+
+! -----------------------------------------------  Value_Allocate  -----
+  subroutine Value_Allocate ( Value, N, ItsName, ModuleName )
+    use Allocate_Deallocate, only: Test_Allocate
+    type(value_t), allocatable :: Value(:)
+    integer, intent(in) :: N
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer :: Stat
+    call deallocate_test ( value, itsName, moduleName )
+    allocate ( value(1:n), stat=stat )
+    call test_allocate ( stat, moduleName, ItsName, [1], [n], &
+      & storage_size(value) / 8 )
+  end subroutine Value_Allocate
+
+! ---------------------------------------------  Value_Deallocate  -----
+  subroutine Value_Deallocate ( Value, ItsName, ModuleName )
+    use Allocate_Deallocate, only: Memory_Units, Test_Deallocate
+    type(value_t), allocatable :: Value(:)
+    character(len=*), intent(in) :: ItsName, ModuleName
+    integer :: N, Stat
+    if ( allocated(value) ) then
+      n = size(value)
+      deallocate ( value, stat=stat )
+      call test_deallocate ( stat, moduleName, ItsName,  &
+        & n * (storage_size(value) / 8) / memory_units )
+    end if
+  end subroutine Value_Deallocate
+
+  include "Value_T_Implementations.f9h"
 
 ! =====     Private Procedures     =====================================
 ! -----------------------------------------  Increase_Symbol_Decl  -----
@@ -580,6 +581,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.15  2013/10/11 00:44:28  vsnyder
+! Get Values_t operations from the include files
+!
 ! Revision 2.14  2013/10/09 23:39:49  vsnyder
 ! Add Allocate_Test etc, equality etc.
 !
