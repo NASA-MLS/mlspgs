@@ -62,7 +62,8 @@ module TREE_CHECKER
   integer, private, parameter :: INCONSISTENT_UNITS = INCONSISTENT_TYPES + 1
   integer, private, parameter :: MISSING_FIELD = INCONSISTENT_UNITS + 1
   integer, private, parameter :: NO_CODE_FOR = MISSING_FIELD + 1
-  integer, private, parameter :: NO_DOT = NO_CODE_FOR + 1
+  integer, private, parameter :: NO_DECLARATION = NO_CODE_FOR + 1
+  integer, private, parameter :: NO_DOT = NO_DECLARATION + 1
   integer, private, parameter :: NO_DUPLICATE_FIELDS = NO_DOT + 1
   integer, private, parameter :: NO_EXPR = NO_DUPLICATE_FIELDS + 1
   integer, private, parameter :: NO_POSITIONAL_FIELDS = NO_EXPR + 1
@@ -213,6 +214,9 @@ contains ! ====     Public Procedures     ==============================
     case ( no_code_for )
       call output ( 'there is no code to analyze ' )
       call dump_tree_node ( where, 0, advance='yes' )
+    case ( no_declaration )
+      call display_string ( sub_rosa(where), before='the symbol ' )
+      call output ( ' does not appear as a label of a specification', advance='yes' )
     case ( no_dot )
       call output ( 'a reference of the form X.Y is not allowed.', &
         advance='yes' )
@@ -232,7 +236,7 @@ contains ! ====     Public Procedures     ==============================
     case ( no_such_reference )
       call display_string ( sub_rosa(where), before='there is no reference to ' )
       call output ( ' in the field at ' )
-      call print_source ( where_at(sons(1)), advance='yes' )
+      if ( present(sons) ) call print_source ( where_at(sons(1)), advance='yes' )
     case ( not_field_of )
       call display_string ( sub_rosa(where) )
       call display_string ( sub_rosa(subtree(1,fields(1))), &
@@ -449,6 +453,8 @@ contains ! ====     Public Procedures     ==============================
             end if
             select case ( stat )
             case ( 0 )
+            case ( no_declaration )
+              call announce_error ( subtree(1,son), no_declaration )
             case ( no_expr )
               call announce_error ( subtree(2,son), no_expr, fields=(/ field_lit /) )
             case ( no_such_field )
@@ -586,16 +592,22 @@ contains ! ====     Public Procedures     ==============================
     last = subtree(2,root)  ! field in <dot label field>
     field_last = sub_rosa(last)
     decl = get_decl(sub_rosa(first),label)
-    do while ( decl%tree /= null_tree )
-      test_type = decoration(subtree(1,decl%tree)) ! spec's index
-      if ( test_type == type_decl ) then  ! right kind of spec
-        field_ref = decl%tree
-        call decorate ( first, field_ref ) ! decorate label_ref with tree
-        stat = check_deep ( start+1, nsons(field), field_ref )
-        if ( stat == 0 ) exit
-      end if
-      decl = prior_decl(decl,label)
-    end do
+    if ( decl%tree /= null_tree ) then
+      do while ( decl%tree /= null_tree )
+        test_type = decoration(subtree(1,decl%tree)) ! spec's index
+        if ( test_type == type_decl ) then  ! right kind of spec
+          field_ref = decl%tree
+          call decorate ( first, field_ref ) ! decorate label_ref with tree
+          stat = check_deep ( start+1, nsons(field), field_ref )
+          if ( stat == 0 ) exit
+        end if
+        decl = prior_decl(decl,label)
+      end do
+    else
+      stat = no_declaration
+      field_look = -1 ! The name before the dot doesn't exist
+      field_test = -1 ! The name before the dot doesn't exist
+    end if
     call trace_end ( 'Check_Dot', stat, cond=toggle(con) )
 
   contains
@@ -752,7 +764,10 @@ contains ! ====     Public Procedures     ==============================
 
     call trace_begin ( me, 'DEF_FUNC', root, cond=toggle(con) )
     son = subtree(1,root)
-    call declare ( sub_rosa(son), 0.0d0, function, decoration(son), root )
+    !              String         Value                Type
+    call declare ( sub_rosa(son), sub_rosa(son)+0.0d0, function, &
+    !              Units            Tree
+                 & decoration(son), root )
     call trace_end ( 'DEF_FUNC', cond=toggle(con) )
   end subroutine DEF_FUNC
 ! --------------------------------------------------  DEF_SECTION  -----
@@ -773,12 +788,17 @@ contains ! ====     Public Procedures     ==============================
 
     call trace_begin ( me, 'DEF_SECTION', root, cond=toggle(con) )
     son = subtree(1,root)
-    call declare ( sub_rosa(son), 0.0d0, section, decoration(son), root )
+                 ! String         Value                Type
+    call declare ( sub_rosa(son), sub_rosa(son)+0.0d0, section, &
+                 ! Units            Tree
+                 & decoration(son), root )
     do i = 2, nsons(root)
       son = subtree(i,root)
       if ( node_id(son) == n_name_def ) then
         gson = subtree(1,son)
-        call declare ( sub_rosa(gson), 0.0d0, named_value, &
+                     ! String          Value                 Type
+        call declare ( sub_rosa(gson), sub_rosa(gson)+0.0d0, named_value, &
+                     ! Units            Tree
                        decoration(gson), son )
         gson = subtree(2,son)
         decl = get_decl(sub_rosa(gson),type_name)
@@ -805,21 +825,27 @@ contains ! ====     Public Procedures     ==============================
 
     call trace_begin ( me, 'DEF_SPEC', root, cond=toggle(con) )
     spec_name = subtree(1,root)
-    call declare ( sub_rosa(spec_name), 0.0d0, spec, decoration(spec_name), &
-                   root )
+                 ! String               Value                Type
+    call declare ( sub_rosa(spec_name), sub_rosa(son)+0.0d0, spec, &
+                 ! Units                  Tree
+                 & decoration(spec_name), root )
 !   call decorate ( spec_name, root )
     do i = 2, nsons(root)
       son = subtree(i,root)
-      son=son ! Without this, the compiler inexplicably uses "root" instead
-              ! of "son" below ???
+      son=son ! Without this, the LF95 compiler inexplicably uses "root"
+              ! instead of "son" below ???
       field_name = subtree(1,son)
       decl = get_decl(sub_rosa(field_name),field)
       if ( decl%tree == null_tree ) then ! don't make several
+                       ! String                Value       Type
         call redeclare ( sub_rosa(field_name), decl%value, field, &
+                       ! Units                   Tree
                          decoration(field_name), son )
       else ! need to make several -- one for each
+                     ! String                Value       Type
         call declare ( sub_rosa(field_name), decl%value, field, &
-                       decoration(field_name), son )
+                     ! Units                   Tree
+                     & decoration(field_name), son )
       end if
       if ( node_id(son) /= n_or ) then
         ! First son is the field name
@@ -879,11 +905,16 @@ contains ! ====     Public Procedures     ==============================
 
     call trace_begin ( me, 'DEF_TYPE', root, cond=toggle(con) )
     son = subtree(1,root)
-    call declare ( sub_rosa(son), 0.0d0, type_name, decoration(son), root )
+                 ! String         Value                Type
+    call declare ( sub_rosa(son), sub_rosa(son)+0.0d0, type_name, &
+                 ! Units            Tree
+                 & decoration(son), root )
 !   call decorate ( son, root )
     do i = 2, nsons(root)
       son = subtree(i,root)
-      call declare ( sub_rosa(son), decoration(son) + 0.0d0, enum_value, &
+      !              String         Value                Type
+      call declare ( sub_rosa(son), sub_rosa(son)+0.0d0, enum_value, &
+      !              Units            Tree
                      decoration(son), root )
 !     call decorate ( son, root )
     end do
@@ -992,11 +1023,15 @@ contains ! ====     Public Procedures     ==============================
       if ( .not. declared(string) ) then
         select case ( me )
         case ( n_identifier )
+                       ! String  Value  Type        Units         Tree
           call declare ( string, 0.0d0, undeclared, phyq_invalid, root )
         case ( n_number )
+                       ! String  Value                        Type
           call declare ( string, float_value(sub_rosa(root)), num_value, &
-                         phyq_dimensionless, root )
+                       ! Units               Tree
+                       & phyq_dimensionless, root )
         case ( n_string )
+                       ! String  Value  Type        Units         Tree
           call declare ( string, 0.0d0, str_value, phyq_invalid, root )
         end select
       end if
@@ -1560,7 +1595,8 @@ contains ! ====     Public Procedures     ==============================
     string = sub_rosa(son1)
     decl = get_decl ( string, variable )
     if ( decl%type /= variable ) then
-      call declare ( string, 0.0d0, variable, type1, son1 )
+                   ! String  Value         Type      Units  Tree
+      call declare ( string, string+0.0d0, variable, type1, son1 )
       if ( toggle(con) ) decl = get_decl ( string, variable )
     else
       if ( decl%units /= type1 ) then
@@ -1585,6 +1621,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.42  2013/10/11 00:46:16  vsnyder
+! Variables and functions
+!
 ! Revision 1.41  2013/09/24 23:28:00  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
