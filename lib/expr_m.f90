@@ -572,7 +572,7 @@ contains ! ====     Public Procedures     ==============================
 
     subroutine Move_Value ( Value )
       ! Move Value to Values
-      type(value_t), intent(in), allocatable :: Value(:)
+      type(value_t), intent(inout), allocatable :: Value(:)
       call move_alloc ( value, values )
     end subroutine Move_Value
 
@@ -737,6 +737,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.27  2013/10/15 23:55:20  pwagner
+! NAG demanded this change to intent in Move_Value
+!
 ! Revision 2.26  2013/10/11 01:47:21  vsnyder
 ! Revision for array results seems to work
 !
