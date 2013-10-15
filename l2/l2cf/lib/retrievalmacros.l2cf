@@ -760,6 +760,45 @@ Begin Fill
     refGPHPrecisionquantity=tempVectorPrecision.refGPH, $
     tempPrecisionQuantity=tempVectorPrecision.temperature_hr
 
+;; Do we correct for the Geoid offset w.r.t the reference ellipsoid?
+!ifdef(flagCorrectGPHForGeoid, {
+end Fill
+begin Join
+  ;; GPH relative to reference ellipsoid
+  Label, quantity=tempVectorState.!theQuantity, label='GPH-Ellipsoid'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity
+end Join
+begin Fill
+  ;; reference ellipsoid offset from geoid
+  Fill, quantity=standardProducts.!theQuantity, method=geoidData
+end Fill
+begin Join
+  Label, quantity=standardProducts.!theQuantity, label='Ellipsoid-Geoid'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=standardProducts.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity
+end Join
+begin Fill
+  ;; GPH relative to geoid
+  Fill, quantity=standardProducts.!theQuantity, gphQuantity=tempVectorState.!theQuantity, $
+    method=gphResetToGeoid
+end Fill
+begin Join
+  Label, quantity=standardProducts.!theQuantity, label='GPH-Geoid'
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
+    source=standardProducts.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
+    status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
+    convergence=tempVectorDiagnostics.convergence!theQuantity
+end Join
+begin Fill
+  ;; copy this to tempVectorState
+  Fill, quantity=tempVectorState.!theQuantity, sourceQuantity=standardProducts.!theQuantity, $
+    method=vector
+})
 }, $1,{RHI}, {
   ;; Do fancy things to make RHI agree with H2O and temperature
   Fill, quantity=tempVectorState.!theQuantity, h2oQuantity=tempVectorState.h2o_hr, $
@@ -1173,6 +1212,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.152  2012/12/04 18:45:12  pwagner
+; Added allspecFBs
+;
 ; Revision 1.151  2012/12/04 18:11:01  pwagner
 ; Added baselineMIFBands
 ;
