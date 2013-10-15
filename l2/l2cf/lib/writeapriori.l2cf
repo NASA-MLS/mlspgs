@@ -38,6 +38,20 @@ begin Join
   type=l2dgg !forall(DirectWriteOneAPQuantity,!allStandardProducts)
   
 end Join
+
+;; We ought to have a different quantity type for ascend/descend instead of
+;; resorting to this trickery
+begin Fill
+  Fill, quantity=aPriori.surfaceType, method=ascenddescend
+end Fill
+begin Join
+  Label, quantity=aPriori.surfaceType, label='Ascend(+1)Descend(-1)'
+  DirectWrite, hdfVersion=!hdfVersion, $
+  type=l2dgg, source=aPriori.surfaceType
+end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.1  2013/01/25 21:26:18  pwagner
+;First commit
+;
