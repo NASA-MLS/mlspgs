@@ -537,6 +537,44 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=highBound.totalmifextinctionv2R4, method=explicit, $
         explicitValues=0.1, /spread
 
+  ;; Species with diurnally varying bounds
+  ;; Let's see the solar zenith angles (0 is directly overhead'
+  Fill, quantity=lowBound.oh, method=manipulate, $
+    manipulation='sza(a)', $
+    a=lowBound.oh, b=tempVectorState.OH, c=95
+  Dump, text='Solar zenith angles (0 is directly overhead)'
+  Dump, details=2, quantity=lowBound.oh
+  ;; day time values
+  Fill, quantity=lowBound.OH,method=profile, profileValues = $
+    [ 1000mb : -400pptv, $
+      0.316228mb : -400pptv, 0.215443mb : -400pptv, $
+      0.146780mb : -500pptv, 0.1mb : -1000pptv, $
+      0.068129mb : -1500pptv, 0.046416mb : -2000pptv, $
+      0.031623mb : -3000pptv, 0.021544mb : -3000pptv, $
+      0.01467mb : -3000pptv, 0.01mb : -3000pptv, $
+      0.006813mb : -3000pptv, 0.00464159mb : -3000pptv, $
+      0.003162mb : -5000pptv]
+  Dump, text='day time values'
+  Dump, details=2, quantity=lowBound.oh
+  ;; night time values
+  Fill, quantity=tempVectorState.OH,method=profile, profileValues = $
+    [ 1000mb : -150pptv, $
+      0.316228mb : -150pptv, 0.215443mb : -200pptv, $
+      0.146780mb : -400pptv, 0.1mb : -500pptv, $
+      0.068129mb : -700pptv, 0.046416mb : -1200pptv, $
+      0.031623mb : -1500pptv, 0.021544mb : -3000pptv, $
+      0.01467mb : -3000pptv, 0.01mb : -4000pptv, $
+      0.006813mb : -2000pptv, 0.00464159mb : -3000pptv, $
+      0.003162mb : -4000pptv]
+  Dump, text='night time values'
+  Dump, details=2, quantity=tempVectorState.oh
+  ;; Combine day and night time values according to
+  ;; day_time*ifpos(95-sza) + night_time*ifneg(95-sza)
+  Fill, quantity=lowBound.oh, method=manipulate, $
+    manipulation='a*ifpos(c-sza(a)) + b*ifneg(c-sza(a))', $
+    a=lowBound.oh, b=tempVectorState.OH, c=95
+  Dump, text='Separating OH low bound into day and night values'
+  Dump, details=2, quantity=lowBound.oh
 
   !interpolateToHiRes(lowBound.temperature_HR)
   !interpolateToHiRes(highBound.temperature_HR)
@@ -744,6 +782,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.154  2013/05/28 20:35:58  pwagner
+;Brought up-to-date with recent tests in v4.00 series BA-01
+;
 ;Revision 1.153  2013/04/11 16:35:34  pwagner
 ;Replaced 4 degree phiWindows with 5 profiles
 ;
