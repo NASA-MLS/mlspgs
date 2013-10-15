@@ -70,7 +70,7 @@ contains ! =====     Public Procedures     =============================
     use DIRECTWRITE_M, only: DIRECTDATA_T, DUMP
     use DUMPCOMMAND_M, only: BOOLEANFROMEMPTYSWATH, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
-    use Evaluate_Variable_m, only: Evaluate_Variable
+    use EVALUATE_VARIABLE_M, only: EVALUATE_VARIABLE
     use EXPR_M, only: EXPR
     use GRIDDEDDATA, only: GRIDDEDDATA_T
     use HESSIANMODULE_1, only: HESSIAN_T
@@ -111,7 +111,7 @@ contains ! =====     Public Procedures     =============================
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
-    use TREE_TYPES, only: N_NAMED, N_Variable
+    use TREE_TYPES, only: N_NAMED, N_VARIABLE
     use VECTORSMODULE, only: VECTOR_T
     use WRITEMETADATA, only: L2PCF, WRITEMETALOG
 
@@ -272,7 +272,10 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key,  BooleanFromFormula ( 0, key ) )
       case ( s_skip ) ! ============================== Skip ==========
         ! We'll skip the rest of the section if the Boolean cond'n is TRUE
-        if ( Skip(key) ) exit
+        if ( Skip(key) ) then
+          call output( '(Skipping rest of this section)', advance='yes' )
+          exit
+        endif
       case ( s_diff, s_dump )
         call dumpCommand ( key, griddedDataBase=griddedDataBase, &
           & FiledataBase=FileDataBase, MatrixdataBase=matrices, &
@@ -771,14 +774,14 @@ contains ! =====     Public Procedures     =============================
       & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
       & F_OPTIONS, &
       & F_RENAME, F_REPAIRGEOLOCATIONS, &
-      & F_SWATH, F_TYPE, &
+      & F_SWATH, F_TOATTRIBUTE, F_TYPE, &
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP
     use INTRINSIC, only: L_ASCII, L_SWATH, L_HDF, LIT_INDICES, &
       & PHYQ_DIMENSIONLESS
     use L2AUXDATA, only: CPL2AUXDATA
     use L2GPDATA, only: AVOIDUNLIMITEDDIMS, &
-      & MAXSWATHNAMESBUFSIZE, CPL2GPDATA
+      & MAXSWATHNAMESBUFSIZE, CPL2GPDATA, CPL2GPDATATOATTRIBUTE
     use L2PARINFO, only: PARALLEL
     use MLSCOMMON, only: MLSFILE_T, FILENAMELEN, L2METADATA_T
     use MLSFILES, only: ADDINITIALIZEMLSFILE, DUMP, GETMLSFILEBYNAME, &
@@ -831,6 +834,7 @@ contains ! =====     Public Procedures     =============================
     character (len=MAXSWATHNAMESBUFSIZE) :: sdListThere
     logical :: skipCopy
     integer :: SON                      ! Of Root -- spec_args or named node
+    logical :: toAttribute
     integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
     double precision :: Value(2)        ! Value returned by EXPR
@@ -845,6 +849,7 @@ contains ! =====     Public Procedures     =============================
     skipCopy = .false.
     create = .false.
     newFile = .false.
+    toAttribute = .false.
     do field_no = 2, nsons(key)       ! Skip the command name
       gson = subtree(field_no, key)   ! An assign node
       if ( nsons(gson) > 1 ) then
@@ -889,6 +894,8 @@ contains ! =====     Public Procedures     =============================
         repairGeoLocations = get_boolean ( gson )
       case ( f_swath )
         call get_string ( sub_rosa(subtree(2,gson)), sdList, strip=.true. )
+      case ( f_toAttribute )
+        toAttribute = get_boolean ( gson )
       case ( f_type )
         output_type = decoration(subtree(2, gson))
         call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
@@ -1055,7 +1062,11 @@ contains ! =====     Public Procedures     =============================
        & hdfVersion=inputFile%hdfVersion )
       sdList = Intersection( sdList, sdListThere )
       if ( sdList == ' ' ) return
-      if ( got(f_exclude) .and. .not. repairGeoLocations ) then
+      if ( toAttribute ) then
+        if ( len_trim(rename) < 1 ) rename = sdlist
+        call cpL2GPDataToAttribute( inputfile, outputfile, &
+          & sdList, rename )
+      elseif ( got(f_exclude) .and. .not. repairGeoLocations ) then
         call cpL2GPData( l2metaData, inputfile, &
           & outputfile, create2=create, &
           & exclude=trim(exclude), &
@@ -1846,6 +1857,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.175  2013/10/15 23:52:55  pwagner
+! May copy quantity values to a file global attribute
+!
 ! Revision 2.174  2013/10/09 23:42:13  vsnyder
 ! Add Evaluate_Variable
 !
