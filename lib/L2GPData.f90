@@ -48,7 +48,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: L2GPDATA_T
   public :: L2GPNAMELEN
   public :: ADDL2GPTODATABASE, APPENDL2GPDATA, &
-    & CONTRACTL2GPRECORD, CONVERTL2GPTOQUANTITY, CPL2GPDATA, &
+    & CONTRACTL2GPRECORD, CONVERTL2GPTOQUANTITY, &
+    & CPL2GPDATA, CPL2GPDATATOATTRIBUTE, &
     & DESTROYL2GPCONTENTS, DESTROYL2GPDATABASE, &
     & DIFF, DIFFRANGE, DUMP, DUMPRANGE, &
     & EXPANDL2GPDATAINPLACE, EXTRACTL2GPRECORD, ISL2GPSETUP, &
@@ -132,6 +133,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! ContractL2GPRecord      Gather a reduced L2GP from an existing L2GP
 ! ConvertL2GPToQuantity   Convert an L2GP data type into a Vector Quantity
 ! cpL2GPData              Copies swaths from one l2gp file to another
+! cpL2GPDataToAttribute   Copies swathvalues from one l2gp file to another's
+!                           file-level attributes
 ! DestroyL2GPContents     Deallocates all the arrays allocated for an L2GP
 ! DestroyL2GPDatabase     Destroys an L2GP database
 ! Diff                    Shows differences between two swaths
@@ -1259,6 +1262,36 @@ contains ! =====     Public Procedures     =============================
     L2GPFile2%access = originalAccess
 
   end subroutine cpL2GPData_MLSFile
+
+  ! ---------------------- cpL2GPDataToAttribute  ---------------------------
+
+  subroutine cpL2GPDataToAttribute( L2GPfile1, L2GPfile2, &
+    & swathname, attrname )
+    !------------------------------------------------------------------------
+    use HDFEOS5, only: HE5T_NATIVE_REAL
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE
+
+    ! Given MLSFiles L2GPfile1 and L2GPfile2,
+    ! This routine copies the l2gpdata named swathname from 1 to the
+    ! file level attribute named attrname in 2
+    ! Arguments
+
+    type (L2Metadata_T) :: l2metaData
+    type(MLSFile_T)               :: L2GPfile1 ! file 1
+    type(MLSFile_T)               :: L2GPfile2 ! file 2
+    character (len=*), optional, intent(in) :: swathname ! Name to copy
+    character (len=*), optional, intent(in) :: attrname ! But rename it this
+    ! Local
+    type (L2GPData_T) :: l2gp
+    integer :: status
+    !
+    call ReadL2GPData ( L2GPfile1, trim(swathname), l2gp )
+    if ( .not. L2GPfile2%stillOpen ) call open_MLSFile( L2GPfile2 )
+    status = he5_ehwrglatt( L2GPfile2%fileID%f_id, &
+            & trim(attrname), HE5T_NATIVE_REAL, hsize(l2gp%nTimes), &
+            &  l2gp%l2gpValue(1,1,:) )
+    call close_MLSFile( L2GPfile2 )
+  end subroutine cpL2GPDataToAttribute
 
   ! ------------------------------------------ DiffL2GPData_CHUNKS ------------
 
@@ -5136,6 +5169,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.197  2013/09/25 00:45:44  pwagner
+! Convert must set quantity geolocations, too
+!
 ! Revision 2.196  2013/09/24 00:53:53  pwagner
 ! Can now convert an l2gpData type to a vector quantity
 !
