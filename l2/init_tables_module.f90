@@ -1258,6 +1258,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_rename, string(), &
              begin, f+f_repairGeolocations, boolean(), &
              begin, f+f_swath, string(), &
+             begin, f+f_toAttribute, boolean(), &
              begin, f+f_type, field_type(t_outputType,req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -1957,6 +1958,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.593  2013/10/15 23:52:06  pwagner
+! May copy quantity values to a file global attribute
+!
 ! Revision 2.592  2013/10/09 23:44:39  vsnyder
 ! Add Variable field for Dump
 !
