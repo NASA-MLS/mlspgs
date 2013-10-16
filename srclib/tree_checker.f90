@@ -814,6 +814,7 @@ contains ! ====     Public Procedures     ==============================
   ! the root. Decorate each field_type node with the specification name.
   ! Decorate each field name with its parent field_type node.  Decorate
   ! each field type name with the dt_def node for the type.
+
     integer, intent(in) :: ROOT      ! Root of tree being worked ( n_spec_def )
 
     type(decls) :: DECL       ! Current declaration of "son"
@@ -825,8 +826,8 @@ contains ! ====     Public Procedures     ==============================
 
     call trace_begin ( me, 'DEF_SPEC', root, cond=toggle(con) )
     spec_name = subtree(1,root)
-                 ! String               Value                Type
-    call declare ( sub_rosa(spec_name), sub_rosa(son)+0.0d0, spec, &
+                 ! String               Value                      Type
+    call declare ( sub_rosa(spec_name), sub_rosa(spec_name)+0.0d0, spec, &
                  ! Units                  Tree
                  & decoration(spec_name), root )
 !   call decorate ( spec_name, root )
@@ -1621,6 +1622,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.43  2013/10/12 01:19:04  vsnyder
+! Handle undefined vector correctly in Check_Dot
+!
 ! Revision 1.42  2013/10/11 00:46:16  vsnyder
 ! Variables and functions
 !
