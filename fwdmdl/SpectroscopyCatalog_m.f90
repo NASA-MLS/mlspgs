@@ -70,6 +70,7 @@ contains ! =====  Public Procedures  ===================================
       & Test_Allocate, Test_DeAllocate
     ! We need a lot of names from Init_Spectroscopy_Module.  First, the spec
     ! ID's:
+    use Evaluate_Variable_m, only: Evaluate_Variable
     use INIT_SPECTROSCOPY_M, only: S_LINE, S_SPECTRA, S_READSPECTROSCOPY, &
       & S_READISOTOPERATIOS, S_WRITESPECTROSCOPY, &
     ! NOW THE FIELDS:
@@ -88,7 +89,7 @@ contains ! =====  Public Procedures  ===================================
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_NAMED, N_STRING
+    use TREE_TYPES, only: N_NAMED, N_STRING, N_Variable
     use MLSSIGNALS_M, only: INSTRUMENT
 
     ! Dummy argument
@@ -150,12 +151,12 @@ contains ! =====  Public Procedures  ===================================
     numLines = offsetLines
     do i = 2, nsons(root)-1             ! Skip names of section
       son = subtree(i,root)
-      if ( node_id(son) == n_named ) then
-        key = subtree(2,son)
+      if ( node_id(son) == n_variable ) then
+        call evaluate_variable ( son )
       else
-        key = son
+        key = merge( subtree(2,son), son, node_id(son) == n_named )
+        if ( get_spec_id(key) == s_line ) numLines = numLines + 1
       end if
-      if ( get_spec_id(key) == s_line ) numLines = numLines + 1
     end do
 
     ! Create or expand the Lines database
@@ -1474,6 +1475,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.57  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.56  2013/06/12 02:23:45  vsnyder
 ! Cruft removal
 !
