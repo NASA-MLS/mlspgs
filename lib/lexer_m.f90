@@ -35,18 +35,19 @@ module LEXER_M
   integer, parameter :: DIGIT = 2
   integer, parameter :: PUNCT = 3
   integer, parameter :: OP_CHAR = 4
-  integer, parameter :: DOT = 5
-  integer, parameter :: SPACES = 6
-  integer, parameter :: EOL_IN = 7
-  integer, parameter :: EOF_IN = 8
-  integer, parameter :: CMT = 9
-  integer, parameter :: MORE = 10
-  integer, parameter :: UNDER = 11
-  integer, parameter :: CONT = 12
-  integer, parameter :: QUOTE = 13
-  integer, parameter :: APOST = 14
-  integer, parameter :: SHARP = 15
-  integer, parameter :: TOG_CH = 16
+  integer, parameter :: MINUS = 5       ! So that =- will not be an operator 
+  integer, parameter :: DOT = 6
+  integer, parameter :: SPACES = 7
+  integer, parameter :: EOL_IN = 8
+  integer, parameter :: EOF_IN = 9
+  integer, parameter :: CMT = 10
+  integer, parameter :: MORE = 11
+  integer, parameter :: UNDER = 12
+  integer, parameter :: CONT = 13
+  integer, parameter :: QUOTE = 14
+  integer, parameter :: APOST = 15
+  integer, parameter :: SHARP = 16
+  integer, parameter :: TOG_CH = 17
 
   ! Parameter for classifying ASCII characters
   integer, parameter :: CLASSES(0:127) = (/ &
@@ -61,7 +62,7 @@ module LEXER_M
 ! SPACE   !       "       #       $       %       &       '
   spaces, op_char,quote,  sharp,  cont,   more,   more,   apost,  & ! 040
 ! (       )       *       +       ,       -       .       /
-  punct,  punct,  op_char,op_char,punct,  op_char,dot,    op_char,& ! 050
+  punct,  punct,  op_char,op_char,punct,  minus,  dot,    op_char,& ! 050
 ! 0       1       2       3       4       5       6       7
   digit,  digit,  digit,  digit,  digit,  digit,  digit,  digit,  & ! 060
 ! 8       9       :       ;       <       =       >       ?
@@ -155,45 +156,45 @@ contains
 !     Classes, row labels are DFA states.  Table elements are DFA states or
 !     actions to be taken when a token is recognized.
 !
-!         letter digit opchar punct  under  cmt eolin eofin space  cont
-!  start    id    num    op    pun    id    cmt    6    1   start  cont
-!  id       id    id      2      2    id     2     2    2     2     2
-!  num       3    num     3      3    num    3     3    3     3     3
-!  num2   e=num3 num2     3      3   num2    3     3    3     3     3
+!         letter digit opchar  minus  punct  under  cmt eolin eofin space
+!  start    id    num    op      op    pun    id    cmt    6    1   start
+!  id       id    id      2       2      2    id     2     2    2     2
+!  num       3    num     3       3      3    num    3     3    3     3
+!  num2   e=num3 num2     3       3      3   num2    3     3    3     3
 !         else 3
-!  num3     10   num5  +-=num4  10    10    10    10   10    10    10
-!                      else 10
-!  num4     10   num5    10     10    10    10    10   10    10    10
-!  num5      3   num5     3      3   num5    3     3    3     3     3
-!  op        4     4      4      4     4     4     4    4     4     4
-!  pun       5     5      5      5     5     5     5    5     5     5
-!  cmt      cmt   cmt    cmt    cmt   cmt   cmt  start  1    cmt   cmt
-!  cont      7     7      7      7     7   cont2 cont2  1   cont    7
-!  cont2   start start  start  start start cont2 cont2  1  cont2  cont
-!  sq1      sq1   sq1    sq1    sq1   sq1   sq1    9    9    sq1   sq1
-!  sq2       8     8      8      8     8     8     8    8     8     8
-!  sa1      sa1   sa1    sa1    sa1   sa1   sa1    9    9    sa1   sa1
-!  sa2       8     8      8      8     8     8     8    8     8     8
-!  sh1      sh1    4      4      4     4     4     4    4     4     4
+!  num3     10   num5  +-=num4 +-=num4  10    10    10    10   10    10
+!                      else 10 else 10
+!  num4     10   num5    10      10     10    10    10    10   10    10
+!  num5      3   num5     3       3      3   num5    3     3    3     3
+!  op        4     4     op      op      4     4     4     4    4     4
+!  pun       5     5      5       5      5     5     5     5    5     5
+!  cmt      cmt   cmt    cmt     cmt    cmt   cmt   cmt  start  1    cmt
+!  cont      7     7      7       7      7     7   cont2 cont2  1   cont
+!  cont2   start start  start   start  start start cont2 cont2  1  cont2
+!  sq1      sq1   sq1    sq1     sq1    sq1   sq1   sq1    9    9    sq1
+!  sq2       8     8      8       8      8     8     8     8    8     8
+!  sa1      sa1   sa1    sa1     sa1    sa1   sa1   sa1    9    9    sa1
+!  sa2       8     8      8       8      8     8     8     8    8     8
+!  sh1      sh1    4      4       4      4     4     4     4    4     4
 !
-!           more quote apost  dot  sharp
-!  start   start  sq1   sa1    4    sh1
-!  id        2     2     2     2     2
-!  num       3     3     3   num2    3
-!  num2      3     3     3     3     3
-!  num3     10    10    10    10     3
-!  num4     10    10    10    10     3
-!  num5      3     3     3     3     3
-!  op        4     4     4     4     4
-!  pun       5     5     5     5     5
-!  cmt      cmt   cmt   cmt   cmt   cmt
-!  cont      7     7     7     7     7
-!  cont2   start start start start start
-!  sq1      sq1   sq2   sq1   sq1   sq1
-!  sq2       8    sq1    8     8     8
-!  sa1      sa1    8    sa2    8     8
-!  sa2       8     8    sa1    8     8
-!  sh1       4     4     4     4     4
+!           cont  more quote apost  dot  sharp
+!  start    cont start  sq1   sa1    4    sh1
+!  id        2     2     2     2     2     2
+!  num       3     3     3     3   num2    3
+!  num2      3     3     3     3     3     3
+!  num3     10    10    10    10    10     3
+!  num4     10    10    10    10    10     3
+!  num5      3     3     3     3     3     3
+!  op        4     4     4     4     4     4
+!  pun       5     5     5     5     5     5
+!  cmt      cmt   cmt   cmt   cmt   cmt   cmt
+!  cont      7     7     7     7     7     7
+!  cont2   cont  start start start start start
+!  sq1      sq1   sq1   sq2   sq1   sq1   sq1
+!  sq2       8     8    sq1    8     8     8
+!  sa1      sa1   sa1    8    sa2    8     8
+!  sa2       8     8     8    sa1    8     8
+!  sh1       4     4     4     4     4     4
 
 !     The actions are:
 !     1.   define EOF token.
@@ -219,9 +220,9 @@ contains
         case ( digit );            state = num
         case ( punct );            state = pun
         case ( op_char );          state = op
-        case ( dot )
+        case ( dot, minus )
           need = .true.
-          call add_char ( '.' )
+          call add_char ( ch )
           call lookup_and_insert ( string_index, found ) ! will be found
                                                          ! if tables OK
           the_token = token( symbol(string_index), string_index, .false., &
@@ -495,7 +496,6 @@ contains
     if ( toggle(lex) ) then
       call dump_1_symbol ( the_token%string_index, advance='yes' )
     end if
-    return
 
   contains
 
@@ -623,7 +623,7 @@ contains
           call add_char ( ch )
           source_start = where
           state = id
-        case ( dot, punct, op_char )
+        case ( dot, minus, op_char, punct )
           call add_char ( ch )
           call lookup_and_insert ( string_index, found )
           if ( .not. found ) then
@@ -656,7 +656,6 @@ contains
     if ( toggle(lex) ) then
       call dump_1_symbol ( the_token%string_index, advance='yes' )
     end if
-    return
 
   end subroutine Lex_Signal
 
@@ -673,6 +672,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.26  2013/10/16 01:13:50  vsnyder
+! New 'minus' class for hyphen so =- will be two operators
+!
 ! Revision 2.25  2013/10/02 01:33:46  vsnyder
 ! Make ! and ? operator characters
 !
