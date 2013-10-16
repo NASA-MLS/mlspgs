@@ -24,6 +24,7 @@ module DECLARATION_TABLE
   use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS, &
     &                     STRING_TABLE_SIZE
   use TOGGLES, only: TAB, TOGGLE
+  use Tree, only: Null_Tree
 
   implicit NONE
   private
@@ -99,6 +100,34 @@ module DECLARATION_TABLE
     integer :: Units(2) = 0   ! Subset of decls%units, depends on Type
   end type Value_t
 
+  ! Type            Units                Value           Tree
+  ! EMPTY           0                    0.0d0           null_tree
+  ! DOT
+  ! ENUM_VALUE      data type index      string index    DT_Def
+  ! EXPRN
+  ! EXPRN_M
+  ! EXPRN_V
+  ! FIELD           field index          0.0d0           Field_type
+  !                                      0.0d0           Field_Spec
+  ! FUNCTION        function index       string index    Func_def
+  ! LABEL           PHYQ_Invalid         0.0d0           Spec_Args
+  ! LOG_VALUE
+  ! NAMED_VALUE     param index          string index    Name_Def
+  ! NUM_VALUE       PHYQ_Dimensionless   its value       Number
+  ! PHYS_UNIT_NAME  its lit index        value           string index
+  ! RANGE
+  ! SECTION         section index        string index    Section
+  ! SECTION_NODE
+  ! STR_RANGE
+  ! STR_VALUE       PHYQ_Invalid         0.0d0           String
+  ! SPEC            spec index           string index    Spec_def
+  ! TREE_NODE
+  ! TYPE_NAME       type index           string index    DT_Def
+  ! UNDECLARED      PHYQ_Invalid         0.0d0           Identifier
+  ! UNITS_NAME      PHYQ_...             Value           string index
+  ! VARIABLE        Type of first        string index    Identifier
+  !                 element of value
+
   type :: DECLS
     double precision :: VALUE = 0.0d0
     integer :: TYPE = empty   ! "units", "variable", "spec", "field", "value", ...
@@ -115,7 +144,7 @@ module DECLARATION_TABLE
                               ! "section" => Index of section
                               ! "spec" => Index of specification
                               ! "variable" => Type of its first value
-    integer :: TREE = 0       ! Index of declaration in the tree, except for
+    integer :: TREE = null_tree ! Index of declaration in the tree, except for
                               ! "units_name" => string index of name
     integer :: PRIOR = null_decl ! Index of previous declaration
     type(value_t), allocatable :: Values(:) ! If type == variable or named_value
@@ -129,7 +158,8 @@ module DECLARATION_TABLE
      'str_range     ', 'str_value     ', 'spec          ', 'tree          ', &
      'type_name     ', 'undeclared    ', 'units         ', 'variable      ' /)
 
-  ! String indices of type names, filled on first call to get_type
+  ! String indices of type names, filled on first call to Get_Type or
+  ! Init_Decl
   integer :: TYPE_NAME_INDICES(empty:variable) = -1
 
 ! Mapping from declaration table types to data types:
@@ -336,8 +366,10 @@ contains ! =====     Public Procedures     =============================
     integer :: I, N
     if ( present(before) ) call output ( before, advance )
     do i = 1, size(values)
-      call output ( i, places=3 )
-      call output ( ': ' )
+      if ( size(values) > 1 ) then
+        call output ( i, places=3 )
+        call output ( ': ' )
+      end if
       select case ( values(i)%type )
       case ( enum_value )  ! values%value(1) is a string index
         call display_string ( nint(values(i)%value(1)) , advance='yes' )
@@ -420,7 +452,7 @@ contains ! =====     Public Procedures     =============================
   ! Return the string index for the type indexed by Decor
   integer function Get_Type ( Decor )
     integer, intent(in) :: Decor  ! Tree node decoration
-    if ( type_name_indices(empty) < 0 ) call init_type_indices
+    if ( (empty) < 0 ) call init_type_indices
     get_type = 0
     if ( decor >= empty .and. decor <= last_type ) &
       & get_type = type_name_indices ( decor )
@@ -581,6 +613,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.16  2013/10/16 01:12:47  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.15  2013/10/11 00:44:28  vsnyder
 ! Get Values_t operations from the include files
 !
