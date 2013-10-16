@@ -106,7 +106,7 @@ contains ! ====     Public Procedures     ==============================
         if ( decl%type == empty ) decl = get_decl(string, enum_value)
         if ( decl%type == empty ) decl = get_decl(string, variable)
       else
-        decl = decls(0.0d0, undeclared, phyq_invalid, 0, 0 )
+        decl = decls(0.0d0, undeclared, phyq_invalid, 0, 0, null() )
       end if
       if ( present(type) ) type = decl%type
       units = decl%units
@@ -436,6 +436,9 @@ contains ! ====     Public Procedures     ==============================
         call output ( scale(2), before=' ' )
       end if
       call newLine
+      if ( present(values) ) then
+        if ( size(values) > 1 ) call dump_values ( values )
+      end if
     end if
     if ( present(type) ) then
       call trace_end ( 'EXPR', index=n, string='Type=' //trim(type_names(type)), &
@@ -737,6 +740,10 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.28  2013/10/16 01:12:02  vsnyder
+! Include Null() in for allocatable component in Decls() constructor.
+! Don't try to dump Values if it's not present.
+!
 ! Revision 2.27  2013/10/15 23:55:20  pwagner
 ! NAG demanded this change to intent in Move_Value
 !
