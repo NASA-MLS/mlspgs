@@ -2394,8 +2394,8 @@ contains ! =====     Public Procedures     =============================
     subroutine GeoidData ( quantity, sourceQuantity, resolution )
       use, intrinsic :: ISO_C_BINDING, only: C_SHORT
       use SDPTOOLKIT, only: PGSd_DEM_30ARC, PGSd_DEM_90ARC, PGSd_DEM_GEOID, &
-        & PGSd_DEM_DEGREE , &
-        & PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
+        & PGSd_DEM_DEGREE !, &
+        !& PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
       type(VectorValue_T), intent(inout)        :: QUANTITY
       type(VectorValue_T), intent(in), optional :: SOURCEQUANTITY
       integer, intent(in), optional             :: RESOLUTION
@@ -2417,7 +2417,7 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(2) :: resolutionList
       integer :: STATUS
       integer, dimension(2) :: COMPLETEDATA
-      !integer, external :: PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
+      integer, external :: PGS_DEM_GETQUALITYDATA, PGS_DEM_GETSIZE, PGS_DEM_SORTMODELS
 
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.GeoidData', 0, &
@@ -2464,9 +2464,9 @@ contains ! =====     Public Procedures     =============================
            call outputNamedValue( 'longitude', longitude )
            call outputNamedValue( 'i', i )
            call outputNamedValue( 'status(getQuality)', status )
-           call dump( buffer, 'buffer' )
+           call dump( buffer(1:10), 'buffer' )
            call MLSMessage ( MLSMSG_Error, &
-            & ModuleName, "nonzero status in GeodData; must quit" )
+            & ModuleName, "nonzero status in GeoidData; must quit" )
         endif
         if ( present(sourceQuantity)) then
           do j=1, quantity%template%noSurfs
@@ -7352,6 +7352,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.92  2013/10/17 18:36:15  pwagner
+! GeoidData needs to call integer externals in DEM (but why?)
+!
 ! Revision 2.91  2013/10/09 00:26:27  pwagner
 ! Protect against certain obscure crashes; use c_short instead of 2-byte integer
 !
