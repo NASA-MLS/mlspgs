@@ -1,12 +1,33 @@
 !divert(-1)
 ; $Id$
-;; All the stuff related to the outmoded operations of
-;; outputting standard products in any manner except
-;; that controlled by flagCopyStandardProducts
-;; is slated to removed in a future revision of this file.
-;; In particular, all the early stuff immediately below the
-;; section header will be gone soon
+;; Except for special sids or l2pc runs, quantities are stored
+;; using DirectWrite commands in Join sections during the loop of chunks
+;; The remaining Output section task would then be to cataenate the
+;; split DGG/DGM files and Copy any standard products to individual
+;; files.
 !divert!dnl
+
+;; Do we need ascend/descend info?
+!ifdef(flagAscendDescend,{
+;; We ought to have a different quantity type for ascend/descend instead of
+;; resorting to this trickery
+begin Fill
+  Fill, quantity=aPriori.surfaceType, method=ascenddescend
+end Fill
+begin Join
+  Label, quantity=aPriori.surfaceType, label='Ascend(+1)Descend(-1)'
+  DirectWrite, hdfVersion=5, $
+  type=l2dgg, source=aPriori.surfaceType
+end Join
+;; What if we wish to Copy APriori?
+!define(copyAscDescToAttributei, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='Ascend(+1)Descend(-1)', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', $
+    /toAttribute
+})
+})
+
 begin Output
 
 ;; We might make up a bunch of m4 flags to control the next two things
@@ -174,6 +195,10 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
 
 })
 })
+!ifdef(flagAscendDescend,{
+!forall(copyAscDescToAttributei,!NonColumnStdProds,!ColumnStdProds,IWC)
+})
+
 })
 
 })
@@ -230,6 +255,9 @@ Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.50  2013/09/04 17:38:34  pwagner
+; Add new Sleep, Catenate commands
+;
 ; Revision 1.49  2013/01/24 22:40:47  pwagner
 ; Prevent Copying StdProds if skipped BrO phase
 ;
