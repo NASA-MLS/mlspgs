@@ -133,10 +133,6 @@ begin GlobalSettings
 !forall(readPolarO3HRL2PC,!polarizedBands)
     ;; Now define any forward models that will be used in more than one phase.
 
-    ;; Define the scan models
-    scanFwmGHz: ForwardModel, type=scan2d, module=GHz,  phiWindow=5 profiles
-    scanFwmTHz: ForwardModel, type=scan2d, module=THz,  phiWindow=5 profiles
-
     ;; Define l2pc bin selectors
     elevationCost: BinSelector, type=fieldElevation, cost = 10 degrees
     strengthCost: BinSelector, type=fieldStrength, cost = 1 gauss
@@ -153,4 +149,7 @@ begin GlobalSettings
 end GlobalSettings
 !divert(-1)
 ; $Log$
+; Revision 1.1  2010/04/21 23:36:37  pwagner
+; First commit
+;
 !divert!dnl
