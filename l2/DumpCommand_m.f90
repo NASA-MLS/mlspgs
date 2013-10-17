@@ -2077,7 +2077,10 @@ contains
     verbose = ( switchDetail(switches, 'bool') > -1 )
     verboser = ( switchDetail(switches, 'bool') > 0 )
     MLSSelecting = .true. ! Defaults to skipping rest of case
-    if ( MLSSelectedAlready ) return
+    if ( MLSSelectedAlready ) then
+      call trace_end ( 'MLSCase', cond=toggle(gen) )
+      return
+    endif
     optionsString = ' '
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -2648,6 +2651,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.103  2013/10/17 18:27:29  pwagner
+! Must call trace_end in MLSSelect no matter what
+!
 ! Revision 2.102  2013/10/09 23:44:13  vsnyder
 ! Add Variable field
 !
