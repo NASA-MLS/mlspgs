@@ -27,7 +27,8 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MLSFILES, only: HDFVERSION_5, INITIALIZEMLSFILE, MLS_INQSWATH, &
      & CLOSE_MLSFILE, OPEN_MLSFILE, SPLIT_PATH_NAME
    use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
-   use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, MLSMSG_ERROR, MLSMSG_WARNING, &
+   use MLSHDFEOS, only: MLS_ISGLATT, HE5_EHRDGLATT
+   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
      & MLSMESSAGE
    use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, &
      & GETSTRINGELEMENT, NUMSTRINGELEMENTS, READINTSFROMLIST, &
@@ -35,7 +36,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MLSSTRINGS, only: READNUMSFROMCHARS
    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE, &
      & RESUMEOUTPUT, SUSPENDOUTPUT
-   use PrintIt_m, only: Set_Config
+   use PRINTIT_M, only: SET_CONFIG
    
    implicit none
 
@@ -56,7 +57,6 @@ PROGRAM L2GPDump ! dumps L2GPData files
 ! Then run it
 ! LF95.Linux/test [options] [filenames]
 
-  integer, parameter ::  max_nsds = 1000  ! Maximum number of datasets in file.
   integer, parameter :: MAXNCHUNKS = 50
 
   type options_T
@@ -104,7 +104,8 @@ PROGRAM L2GPDump ! dumps L2GPData files
   integer, dimension(MAXNUMBITSUSED, 2), save :: bitCounts = 0
   character(len=*), parameter     :: bitNames = &
     & '  dontuse,   bewary,     info,    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
-  ! 
+  real(rgp), dimension(:), pointer :: values => null()
+  ! Executable
   call set_config ( useToolkit = .false., logFileUnit = -1 )
   call mls_h5open(error)
   n_filenames = 0
@@ -332,8 +333,8 @@ contains
   end subroutine print_help
   
   function IsAttributeInFile( file, attribute ) result(sooDesu)
-    use MLSHDF5, only: IsHDF5ItemPresent
-    use HDF5, only: h5fopen_f, H5F_ACC_RDONLY_F
+    use MLSHDF5, only: ISHDF5ITEMPRESENT
+    use HDF5, only: H5FOPEN_F, H5F_ACC_RDONLY_F
     ! Dummy args
     character(len=*), intent(in) :: file
     character(len=*), intent(in) :: attribute
@@ -357,8 +358,8 @@ contains
   end function IsAttributeInFile
 
   function IsDSInFile( file, DS ) result(sooDesu)
-    use MLSHDF5, only: IsHDF5ItemPresent
-    use HDF5, only: h5fopen_f, H5F_ACC_RDONLY_F
+    use MLSHDF5, only: ISHDF5ITEMPRESENT
+    use HDF5, only: H5FOPEN_F, H5F_ACC_RDONLY_F
     ! Dummy args
     character(len=*), intent(in) :: file
     character(len=*), intent(in) :: DS
@@ -419,7 +420,6 @@ contains
     type (L2GPData_T) :: l2gp
     type(MLSFile_T)                :: MLSFile
     integer :: noSwaths
-    integer :: record_length
     integer :: status
     character (len=L2GPNameLen) :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
@@ -456,6 +456,16 @@ contains
         call open_MLSFile( MLSFile )
         file1 = MLSFile%FileID%f_id
         call dump(file1, l2gp)
+        ! call output( 'Trying to find Ascend(+1)Descend(-1) attribute', advance='yes' )
+        if ( mls_isglatt ( file1, 'Ascend(+1)Descend(-1)' ) ) then
+          ! call output( 'Found it!', advance='yes' )
+          call Allocate_test ( values, l2gp%nTimes, 'asc/desc values', ModuleName )
+          status = he5_EHrdglatt(file1, &
+            & 'Ascend(+1)Descend(-1)', &
+            &  values )
+          call dump( values, 'Ascend(+1)Descend(-1)' )
+          call DeAllocate_test ( values, 'asc/desc values', ModuleName )
+        endif
         call close_MLSFile ( MLSFile )
       endif
       if ( options%ConvergenceCutOff > -1. .or. options%QualityCutOff > -1. .or. &
@@ -703,6 +713,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.14  2013/08/23 02:51:48  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.13  2013/05/30 20:43:10  pwagner
 ! Commandline option -form allows us modify print format
 !
