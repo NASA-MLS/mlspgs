@@ -4728,7 +4728,6 @@ contains ! =====     Public Procedures     =============================
       integer                                    :: I, MAF
       integer                                    :: l1bError
       type (l1bData_T)                           :: L1BDATA
-      type (MLSFile_T), pointer                  :: L1BFile
       type (MLSFile_T), pointer                  :: L1BOAFile
       integer                                    :: noMAFs
       integer                                    :: noSurfs
@@ -5716,16 +5715,23 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------------  FromProfile  -----
     subroutine FromProfile_values ( quantity, inheights, invalues, &
-      & instancesNode, globalUnit, ptan, logSpace )
+      & instancesNode, globalUnit, ptan, logSpace, dontLatch )
       ! Given two arrays,  (heights, invalues) vs. the quantity's own heights,
       ! does the linear interpolation appropriate to perform the fill.
+      ! By default, latch the supplied heights to the quantity's own
+      ! optionally dont latch
+      !
+      ! Another gotcha: interpolate using only the quantity's heights at its first
+      ! instance, then spread out to all other instances
+      ! Should we let the user override this?
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-      real(r8), dimension(:), intent(in) :: inheights
-      real(r8), dimension(:), intent(in) :: invalues
+      real(r8), dimension(:), intent(in) :: INHEIGHTS ! Supplied heights
+      real(r8), dimension(:), intent(in) :: INVALUES
       integer, intent(in) :: INSTANCESNODE ! Tree node for instances
       integer, intent(in) :: GLOBALUNIT   ! Possible global unit
       type (VectorValue_T), pointer :: PTAN ! press. values
       logical, intent(in), optional :: LOGSPACE ! Interpolate in logspace
+      logical, intent(in), optional :: DONTLATCH ! Dont latch supplied heights
 
       ! Local variables
       integer :: C                      ! Channel loop counter
@@ -5737,6 +5743,7 @@ contains ! =====     Public Procedures     =============================
       logical, dimension(:), pointer :: INSTANCES ! Flags
       logical :: LOCALOUTHEIGHTS ! Set if out heights is our own variable
       integer :: Me = -1                ! String index for trace
+      logical :: MYLATCH                ! Latch supplied heights to quantity's own?
       logical :: MYLOGSPACE             ! Interpolate in log space?
       integer :: NOPOINTS               ! Number of points supplied
       integer :: NOUNIQUE               ! Number of unique heights supplied
@@ -5745,11 +5752,13 @@ contains ! =====     Public Procedures     =============================
       integer :: S                      ! Surface loop counter
       integer :: STATUS                 ! Flag
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
+      logical :: Verbose
 
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.FromProfile_values', instancesNode, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
       ! Set some stuff up
+      verbose = associated(ptan) .and. .false.
       myLogSpace = quantity%template%logBasis
       if ( present ( logSpace ) ) myLogSpace = logSpace
       if ( myLogSpace .and. any ( invalues <= 0.0 ) ) then
@@ -5757,6 +5766,8 @@ contains ! =====     Public Procedures     =============================
           & 'Non-positive input data in log profile fill (reset logSpace=false?)' )
         go to 9
       end if
+      myLatch = .true.
+      if ( present(dontLatch) ) myLatch = .not. dontLatch
       nullify ( heights, values, duplicated, outHeights, outValues, instances )
       noPoints = size(invalues)
       call Allocate_test ( heights, noPoints, 'values', ModuleName )
@@ -5769,6 +5780,7 @@ contains ! =====     Public Procedures     =============================
       heights = inHeights
       values = invalues
       if ( myLogSpace ) values = log ( invalues )
+      if ( verbose ) call outputnamedValue( 'myLatch', myLatch )
 
       ! Get the appropriate height coordinate for output, for pressure take log.
       if ( associated(ptan) ) then
@@ -5784,9 +5796,10 @@ contains ! =====     Public Procedures     =============================
         outHeights => quantity%template%surfs(:,1)
       end if
 
-      ! Now, if the quantity is coherent, let's assume the user wanted the
-      ! 'nearest' values
-      if ( quantity%template%coherent .or. associated(ptan) ) then
+      ! Now, let's assume the user wanted the
+      ! 'nearest' values, so first latch the supplied heights to
+      ! the nearest quantity heights or equivalent
+      if ( myLatch ) then
         nullify ( inInds )
         call allocate_test ( inInds, noPoints, 'inInds', ModuleName )
         ! Hunt fails with non-monotonic outHeights
@@ -5797,6 +5810,10 @@ contains ! =====     Public Procedures     =============================
               & 'Ptan non-monotonic' )                                       
             call dump( outHeights, 'outHeights' )
           endif
+        endif
+        if ( verbose ) then
+          call dump( 10.**(-outHeights), 'outHeights (hPa)' )
+          call dump( 10.**(-heights), 'heights (hpa)' )
         endif
         call hunt ( outHeights, heights, inInds, &
          & nearest=.true., allowTopValue=.true., fail=fail )
@@ -5817,13 +5834,26 @@ contains ! =====     Public Procedures     =============================
         inInds(1:noUnique) = pack ( inInds, .not. duplicated )
         heights(1:noUnique) = outHeights ( inInds(1:noUnique) )
         values(1:noUnique) = pack ( values, .not. duplicated )
+        if ( verbose ) then
+          call dump( inInds(1:noUnique), 'inInds(1:noUnique)' )
+          call dump( heights(1:noUnique), 'heights(1:noUnique)' )
+          call dump( values(1:noUnique), 'values(1:noUnique)' )
+        endif
         call deallocate_test ( inInds, 'inInds', ModuleName )
+      else
+        noUnique = noPoints
       end if
 
       ! Now do the interpolation for the first instance
+      ! Here's where, for incoherent quantities, we might
+      ! interpolate separately for each instance if the user so wished
       call InterpolateValues ( heights(1:noUnique), values(1:noUnique), outHeights, &
         & outValues, 'Linear', extrapolate='Constant' )
 
+        if ( verbose ) then
+          call outputnamedValue( 'noUnique', noUnique )
+          call dump( outValues, 'outValues' )
+        endif
       if ( myLogSpace ) outValues = exp ( outValues )
 
       ! Work out what instances we're going to spread this to
@@ -5868,7 +5898,7 @@ contains ! =====     Public Procedures     =============================
 
     ! -----------------------------------------  FromProfile_node  -----
     subroutine FromProfile_node ( quantity, valuesNode, &
-      & instancesNode, globalUnit, ptan, logSpace )
+      & instancesNode, globalUnit, ptan, logSpace, dontLatch )
       ! This fill is slightly complicated.  Given a values array along
       ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
       ! does the linear interpolation appropriate to perform the fill.
@@ -5878,13 +5908,13 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: GLOBALUNIT   ! Possible global unit
       type (VectorValue_T), pointer :: PTAN ! press. values
       logical, intent(in), optional :: LOGSPACE ! Interpolate in logspace
+      logical, intent(in), optional :: DONTLATCH ! Dont latch supplied heights
 
       ! Local variables
       integer :: HEIGHTUNIT             ! Unit for height
       integer :: NOPOINTS               ! Number of points supplied
       integer :: I                      ! Loop counters / indices
       integer :: TESTUNIT               ! Unit for value
-      ! logical :: MYLOGSPACE             ! Interpolate in log space?
       real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
       real (r8), dimension(:), pointer :: VALUES ! Values for the points
       real (r8), dimension(2) :: EXPRVALUE ! Value of expression
@@ -5906,8 +5936,6 @@ contains ! =====     Public Procedures     =============================
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
 
       ! Set some stuff up
-      ! myLogSpace = quantity%template%logBasis
-      ! if ( present ( logSpace ) ) myLogSpace = logSpace
       noPoints = nsons ( valuesNode ) - 1
       nullify ( heights, values )
       call Allocate_test ( heights, noPoints, 'heights', ModuleName )
@@ -5938,7 +5966,7 @@ contains ! =====     Public Procedures     =============================
       end do
 
       call FromProfile( quantity, heights, values, &
-        & instancesNode, globalUnit, ptan, logSpace )
+        & instancesNode, globalUnit, ptan, logSpace, dontLatch )
       call Deallocate_test ( heights, 'heights', ModuleName )
       call Deallocate_test ( values, 'values', ModuleName )
       call trace_end ( 'FillUtils_1.FromProfile_node', &
@@ -7352,6 +7380,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.93  2013/10/24 21:10:23  pwagner
+! /dontLatch in profile Fills retains profile heights as input
+!
 ! Revision 2.92  2013/10/17 18:36:15  pwagner
 ! GeoidData needs to call integer externals in DEM (but why?)
 !
