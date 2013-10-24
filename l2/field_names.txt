@@ -132,8 +132,9 @@ do_baseline
 do_conv
 do_freq_avg
 do_1d
-dontPack
+dontLatch
 dontMask
+dontPack
 downsample
 dumpQuantities # of X during Newton iteration
 
@@ -446,7 +447,6 @@ stride
 structure
 suffixLabel
 sum
-superDiagonal
 surface
 swath
 switches
@@ -517,6 +517,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.243  2013/10/24 21:04:10  pwagner
+# /dontLatch in profile Fills retains profile heights as input
+#
 # Revision 2.242  2013/10/15 23:51:52  pwagner
 # May copy quantity values to a file global attribute
 #
