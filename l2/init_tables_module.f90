@@ -925,6 +925,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_count, numeric(), &
              begin, f+f_dimList, string(), &
+             begin, f+f_dontLatch, boolean(), &
              begin, f+f_dontMask, boolean(), &
              begin, f+f_earthRadius, vectorQuantity(), &
              begin, f+f_ECRtoFOV, vectorQuantity(), &
@@ -1187,7 +1188,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lengthScale, field_spec(s_vector), &
              begin, f+f_fraction, field_spec(s_vector), &
              begin, f+f_invert, boolean(), &
-             begin, f+f_superDiagonal, field_spec(s_vector), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_fillDiagonal, & ! Must be AFTER s_vector and s_matrix
@@ -1958,6 +1958,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.594  2013/10/24 21:04:30  pwagner
+! /dontLatch in profile Fills retains profile heights as input
+!
 ! Revision 2.593  2013/10/15 23:52:06  pwagner
 ! May copy quantity values to a file global attribute
 !
