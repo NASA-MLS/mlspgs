@@ -1238,6 +1238,7 @@ contains
     real(rv) :: height  ! We will use this to dump just one surface
     integer :: hessianIndex
     integer :: hessianIndex2
+    integer :: HSLABRANK ! Rank of hyperslab; i.e. size(count)
     integer :: JJ
     character(len=80) :: KEYSTRING  ! E.g., 'BAND13_OK'
     character(len=80) :: Label  ! E.g., 'BAND8'
@@ -1573,9 +1574,11 @@ contains
       case ( f_start, f_count, f_stride, f_block ) ! For selecting hyperslab
         startNode = subtree(j, root)
         ! Either start = [a, b] or start = b are possible
-        do jj=1, min(nsons(startNode)-1, 2)
+        hSlabRank = min(nsons(startNode)-1, 3)
+        do jj=1, hSlabRank
           call expr(subtree(jj+1,startNode), unitAsArray, valueAsArray)
           mul = valueAsArray(1)
+          ! call outputNamedValue( 'mul', mul )
           select case ( fieldIndex )
           case ( f_start )
             start(jj) = mul
@@ -1593,9 +1596,7 @@ contains
         end do
         if ( verbose ) then
           call output('index ', advance='no')
-          call output(trim(fieldName), advance='no')
-          call output(':', advance='no')
-          call output(valueAsArray, advance='yes')
+          call output(trim(fieldName), advance='yes')
         end if
       case ( f_file )
         if ( present(fileDataBase) ) then
@@ -1761,12 +1762,32 @@ contains
             if ( clean ) optionsString = trim(optionsString) // 'c'
             ! Special hyperslab handling
             ! We create a new vector quantity qty2 based on qty1
-            ! dump that
+            ! dump that qty2
             ! and then destroy it
             if ( any(got( (/f_start, f_count, f_stride, f_block/) ) ) ) then
-              VectorValue = GatherVectorQuantity( qty1, start, count, stride, block ) 
-              call dump ( VectorValue, details=2, &
-                & vector=vectors(vectorIndex), options='-1' )
+              VectorValue = GatherVectorQuantity( qty1, &
+                & start(1:hSlabRank), count(1:hSlabRank), &
+                & stride(1:hSlabRank), block(1:hSlabRank) ) 
+              if ( verbose ) then
+                call outputNamedValue( 'start(1:rank)', start(1:hSlabRank) )
+                call outputNamedValue( 'count(1:rank)', count(1:hSlabRank) )
+                call outputNamedValue( 'stride(1:rank)', stride(1:hSlabRank) )
+                call outputNamedValue( 'block(1:rank)', block(1:hSlabRank) )
+              endif
+              if ( index(optionsString, '1') < 1 ) &
+                & call dump ( VectorValue, details=0, &
+                & vector=vectors(vectorIndex) )
+              select case ( hSlabRank )
+              case (1)
+                call dump( VectorValue%value1, 'values as 1-d array' )
+              case (2)
+                call dump( VectorValue%values, 'values as 2-d array' )
+              case (3)
+                call dump( VectorValue%value3, 'values as 3-d array' )
+              case default
+                call MLSMessage (MLSMSG_Error, moduleName, &
+                  & 'rand of hyperslab must be one of 1,2, or 3' )
+              end select
               call DestroyVectorQuantityValue( VectorValue, destroyMask=.true., &
                 & destroyTemplate=.true. )
             ! Special options handling
@@ -2651,6 +2672,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.104  2013/10/24 21:12:19  pwagner
+! Corrected some bugs in dumping hyperslabs
+!
 ! Revision 2.103  2013/10/17 18:27:29  pwagner
 ! Must call trace_end in MLSSelect no matter what
 !
