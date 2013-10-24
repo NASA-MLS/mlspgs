@@ -1,0 +1,122 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Print_Grammar
+
+  implicit NONE
+  private
+  public :: PRNTGM
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine PRNTGM
+
+    use IO, only: OUTPUT
+    use S1, only: LENGTH, MOVSTR
+    use S3, only: ACTION, PRDIND, PRODCN, VALUE, VOCAB
+    use TABCOM, only: NTERMS, NUMPRD, NVOC
+    implicit NONE
+
+  ! Print the grammar neatly.
+
+  ! *****     External References     ********************************
+
+  ! LENGTH  calculates the length of a vocabulary item.
+  ! MOVSTR  moves a vocabulary item form the symbol table.
+
+  !     *****     Local Variables     ************************************
+
+  ! I       is a loop induction variable.
+  ! ISTART  is the starting position in the line for the right hand side
+  !         of a production.
+  ! J,K,L   are loop inductors, subscripts and temporary variables.
+  ! LINE    is used for message assembly.
+
+    integer :: I, ISTART, J, K, L
+    character(len=120) :: LINE
+
+  !     *****     Procedures     *****************************************
+
+    line = ' '
+    line(15:31) = 'T E R M I N A L S'
+    line(53:77) = 'N O N   T E R M I N A L S'
+    call output (line(1:77))
+    call output (line(1:1))
+
+  ! Print the terminals and nonterminals.
+
+    do i = 1, max(nterms, nvoc-nterms)
+      j = 11
+      if (i .le. nterms) then
+        write ( line(2:9), '(2i4)' ) i, value(i)
+        call movstr (vocab(i), line, j, 120)
+        j = j + 1
+      end if
+      if (nterms+i .le. nvoc) then
+        j = max(j, 46)
+        write ( line(j:j+3), '(i4)' ) nterms+i
+        j = j + 5
+        call movstr (vocab(nterms+i), line, j, 120)
+      end if
+      call output (line(1:j-1))
+    end do
+
+    ! Print the productions.
+
+    line(1:1) = '1'
+    line(26:54) = 'T H E   P R O D U C T I O N S'
+    call output (line(1:54))
+    i = 1
+    do while (i <= numprd)
+      call output (line(1:1))
+      j = 12
+      call movstr (vocab(prodcn(prdind(i))), line, j, 120)
+      line(j+1:j+2) = '->'
+      istart = j + 1
+      k = prodcn(prdind(i))
+      do while (prodcn(prdind(i)) == k)
+        write ( line(2:10), '(i4,i5)' ) i, action(i)
+        line(istart:istart+1) = '->'
+        j = istart + 3
+        do l = prdind(i)+1, prdind(i+1)-1
+          if (length(vocab(prodcn(l)))+j .gt. 120) then
+            call output (line(1:j-1))
+            j = istart + 5
+          end if
+          call movstr (vocab(prodcn(l)), line, j, 120)
+          j = j + 1
+        end do
+        call output (line(1:j-1))
+        i = i + 1
+      end do
+    end do
+
+  end subroutine PRNTGM
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Print_Grammar
+
+! $Log$
