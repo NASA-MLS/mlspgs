@@ -109,13 +109,13 @@ contains ! =====     Public Procedures     =============================
       & F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
       & F_C, F_CENTERVERTICALLY, F_CHANNEL, F_CHANNELS, F_COLUMNS, F_COUNT, &
       & F_DESTINATION, F_DIAGONAL, F_DIMLIST, &
-      & F_DONTMASK, &
+      & F_DONTLATCH, F_DONTMASK, &
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXACT, F_EXCLUDEBELOWBOTTOM, &
       & F_EXPLICITVALUES, F_EXPR, F_EXTINCTION, &
       & F_FIELDECR, F_FILE, F_FLAGS, F_FORCE, F_SHAPE, &
       & F_FRACTION, F_FROMPRECISION, &
       & F_GEOCALTITUDEQUANTITY, F_GEOLOCATION, F_GPHQUANTITY, &
-      & F_HEIGHT, F_HDFVERSION, F_HEIGHTRANGE, F_HESSIAN, &
+      & F_HEIGHT, F_HEIGHTRANGE, F_HESSIAN, &
       & F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IFMISSINGGMAO, &
       & F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNORETEMPLATE, F_IGNOREZERO, &
@@ -136,7 +136,7 @@ contains ! =====     Public Procedures     =============================
       & F_SCVEL, F_SCVELECI, F_SCVELECR, F_SDNAME, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_START, F_STATUS, F_STRIDE, &
-      & F_SUFFIX, F_SUPERDIAGONAL, F_SURFACE, &
+      & F_SUFFIX, F_SURFACE, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, F_TOTALPOWERQUANTITY, &
       & F_TYPE, F_UNIT, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
@@ -185,8 +185,7 @@ contains ! =====     Public Procedures     =============================
     use INTRINSIC, only: LIT_INDICES, &
       & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_TEMPERATURE, &
       & PHYQ_TIME, PHYQ_LENGTH, PHYQ_ANGLE, PHYQ_PROFILES
-    use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
-      & ASSEMBLEL1BQTYNAME
+    use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA
     use L2GPDATA, only: L2GPDATA_T, COL_SPECIES_HASH, COL_SPECIES_KEYS
     use L2AUXDATA, only: L2AUXDATA_T
     use L2PC_M, only: POPULATEL2PCBINBYNAME, LOADHESSIAN, LOADMATRIX, LOADVECTOR
@@ -201,7 +200,7 @@ contains ! =====     Public Procedures     =============================
     ! NOTE: if you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
     use MLSFILES, only: GETMLSFILEBYTYPE
-    use MLSL2OPTIONS, only: DEFAULT_HDFVERSION_READ, L2CFNODE, &
+    use MLSL2OPTIONS, only: L2CFNODE, &
       & SKIPRETRIEVAL, SPECIALDUMPFILE, MLSMESSAGE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
       & ADDPHASETOPHASENAMES, FILLTIMINGS, FINISHTIMINGS
@@ -233,7 +232,7 @@ contains ! =====     Public Procedures     =============================
     use TREE_TYPES, only: N_NAMED, N_Variable
     use VECTORSMODULE, only: ADDVECTORTODATABASE, &
       & CLEARMASK, CLONEVECTORQUANTITY, CREATEVECTOR, &
-      & DESTROYVECTORQUANTITYVALUE, DUMPQUANTITYMASK, &
+      & DUMPQUANTITYMASK, &
       & GETVECTORQTYBYTEMPLATEINDEX, &
       & VALIDATEVECTORQUANTITY, VECTOR_T, &
       & VECTORTEMPLATE_T, VECTORVALUE_T, M_FILL
@@ -356,6 +355,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Diagonal                 ! Index of diagonal vector in database
     !                                     -- for Covariance
     character(len=16) :: DIMLIST        ! 's', 'c', or 'i' in manipulation's shift
+    logical :: DONTLATCH                ! Dont latch supplied heights to quantity's own
     logical :: DONTMASK                 ! Use even masked values if TRUE
     integer :: ECRTOFOVQUANTITYINDEX    ! Rotation matrix
     integer :: ECRTOFOVVECTORINDEX      ! Rotation matirx
@@ -517,7 +517,7 @@ contains ! =====     Public Procedures     =============================
     integer :: STATUS                   ! Flag from allocate etc.
     integer :: STATUSVALUE              ! Vaue of f_status
 !   logical :: STRICT                   ! Maximize checking
-    integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
+    ! integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
     integer :: SURFNODE                 ! Descendant of son
     logical :: SWITCH2INTRINSIC         ! Have mls_random_seed call intrinsic
     !                                     -- for Covariance
@@ -601,6 +601,7 @@ contains ! =====     Public Procedures     =============================
       channel = 0
       channelsNode = 0
       colmabunits = l_molcm2 ! default units for column abundances
+      dontLatch = .false.
       dontMask = .false.
       exact = .false.
       excludeBelowBottom = .false.
@@ -948,9 +949,9 @@ contains ! =====     Public Procedures     =============================
             call announce_error ( key, notImplemented, "Decay" ) !???
           case ( f_invert )
             invert = get_boolean ( subtree(j,key) )
-          case ( f_superDiagonal )
-            superDiagonal = gson
-            call announce_error ( key, notImplemented, "SuperDiagonal" ) !???
+          !      case ( f_superDiagonal )
+          !        superDiagonal = gson
+          !        call announce_error ( key, notImplemented, "SuperDiagonal" ) !???
           end select
         end do
 
@@ -1065,6 +1066,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_destination )
             destinationVectorIndex = decoration(fieldValue)
             destVector => vectors( destinationVectorIndex )
+          case ( f_dontLatch )
+            dontLatch = get_boolean ( gson )
           case ( f_dontMask )
             dontMask = get_boolean ( gson )
           case ( f_ignoreNegative )
@@ -1242,17 +1245,17 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------------ directReadCommand -----
     subroutine directReadCommand
-    use L2PC_M, only: READCOMPLETEHDF5L2PCFILE
-    ! Now we're on actual directRead instructions.
-    logical, parameter :: DEEBUG = .true.
-      integer :: EXPRUNITS(2)             ! From expr
-      real (r8) :: EXPRVALUE(2)           ! From expr
+      use L2PC_M, only: READCOMPLETEHDF5L2PCFILE
+      ! Now we're on actual directRead instructions.
+      logical, parameter :: DEEBUG = .false.
+      ! integer :: EXPRUNITS(2)             ! From expr
+      ! real (r8) :: EXPRVALUE(2)           ! From expr
       integer :: fieldIndex
       integer :: file                     ! Index into string table
       integer :: fileType
       character(len=8) :: fileTypeStr
       integer :: gson
-      integer :: hdfversion
+      ! integer :: hdfversion
       logical :: interpolate
       integer :: j
       character(len=32) :: sdname
@@ -1260,7 +1263,7 @@ contains ! =====     Public Procedures     =============================
       type (vector_T), pointer :: Vector
       ! Loop over the instructions to the directRead command
       got = .false.
-      hdfVersion = DEFAULT_HDFVERSION_READ
+      ! hdfVersion = DEFAULT_HDFVERSION_READ
       file = 0
       options = ' '
       binname = 0
@@ -1286,14 +1289,14 @@ contains ! =====     Public Procedures     =============================
         case ( f_hessian )
           hessianToFill = decoration(decoration(gson))
           if ( DEEBUG ) call output ( 'Processing hessian field', advance='yes' )
-        case ( f_hdfVersion )
-          if ( DEEBUG ) call output ( 'Begin Processing hdfversion field', advance='yes' )
-          call expr ( gson, exprUnits, exprValue )
-          if ( DEEBUG ) call output ( 'Processing hdfversion field', advance='yes' )
-          if ( exprUnits(1) /= phyq_dimensionless ) &
-            & call Announce_error ( son, NO_ERROR_CODE, &
-            & 'No units allowed for hdfVersion: just integer 4 or 5')
-          hdfVersion = exprValue(1)
+        !case ( f_hdfVersion )
+        !  if ( DEEBUG ) call output ( 'Begin Processing hdfversion field', advance='yes' )
+        !  call expr ( gson, exprUnits, exprValue )
+        !  if ( DEEBUG ) call output ( 'Processing hdfversion field', advance='yes' )
+        !  if ( exprUnits(1) /= phyq_dimensionless ) &
+        !    & call Announce_error ( son, NO_ERROR_CODE, &
+        !    & 'No units allowed for hdfVersion: just integer 4 or 5')
+        !  hdfVersion = exprValue(1)
         case ( f_bin )
           binName = sub_rosa ( gson )
         case ( f_file )
@@ -1364,7 +1367,6 @@ contains ! =====     Public Procedures     =============================
       use DUMP_0, only: DUMP
       use INTRINSIC, only: LIT_INDICES
       use STRING_TABLE, only: DISPLAY_STRING
-      use TREE, only: DUMP_TREE_NODE
       use UNITS, only: BASE_UNIT
       use VECTOR_QTY_EXPR_M, only: DOT, LOG_VALUE, NUM_VALUE, VECTOR_QTY_EXPR
       use VECTORSMODULE, only: DESTROYVECTORQUANTITYMASK, DESTROYVECTORQUANTITYVALUE, &
@@ -1513,6 +1515,8 @@ contains ! =====     Public Procedures     =============================
         case ( f_h2oPrecisionQuantity ) ! For rhi precision
           h2oPrecisionVectorIndex = decoration(decoration(subtree(1,gson)))
           h2oPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        case ( f_dontLatch )
+          dontLatch = get_boolean ( gson )
         case ( f_dontMask )
           dontMask = get_boolean ( gson )
         case ( f_heightRange )
@@ -2675,12 +2679,13 @@ contains ! =====     Public Procedures     =============================
         if ( got ( f_logSpace ) ) then
           call FromProfile ( quantity, valuesNode, &
             & instancesNode, vectors(vectorIndex)%globalUnit, &
-            & ptanQuantity, logSpace=logSpace )
+            & ptanQuantity, logSpace=logSpace, dontLatch=dontLatch )
         else
           call FromProfile ( quantity, valuesNode, &
             & instancesNode, vectors(vectorIndex)%globalUnit, &
-            & ptanQuantity )
+            & ptanQuantity, dontLatch=dontLatch )
         end if
+        ! if ( associated(ptanQuantity) ) call dump( quantity%values(:,1), 'profile values' )
 
       case ( l_refract )              ! --------- refraction for phiTan -----
         ! More sanity checks
@@ -2693,7 +2698,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. all ( got ( (/ f_h2oQuantity, f_orbitinclination, &
           & f_ptanQuantity, f_refGPHquantity, f_temperatureQuantity /) ) ) ) then
             call Announce_error ( key, badRefractFill )
-            call announce_error ( key, missingField, extraInfo= &
+            call Announce_error ( key, missingField, extraInfo= &
               & (/ f_h2oQuantity, f_orbitinclination, &
               & f_ptanQuantity, f_refGPHquantity, f_temperatureQuantity /) )
           end if
@@ -3145,6 +3150,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.435  2013/10/24 21:05:20  pwagner
+! /dontLatch in profile Fills retains profile heights as input
+!
 ! Revision 2.434  2013/10/09 23:41:20  vsnyder
 ! Add Evaluate_Variable
 !
