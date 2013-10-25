@@ -2142,7 +2142,9 @@ contains ! =====     Public Procedures     =============================
         call output ( '    values array size is 0', advance='yes' )
       endif
     endif
-    if ( myDetails > 0 ) then
+    if ( .not. associated(qty%values) ) then
+      call output( 'values array is not associated', advance='yes' )
+    elseif ( myDetails > 0 ) then
       call newLine
       call dump ( qty%values, '  Elements = ', options=options )
       if ( associated(qty%mask) ) then
@@ -2241,13 +2243,24 @@ contains ! =====     Public Procedures     =============================
 
     ! Result
     type(VectorValue_T) :: GatherVectorQuantity
-    ! Internal variables
     ! Executable
     call CloneVectorQuantity( GatherVectorQuantity, quantity )
     call DestroyVectorQuantityValue( GatherVectorQuantity, destroyMask=.true., &
       & destroyTemplate=.false. )
-    call ExtractArray ( GatherVectorQuantity%values, quantity%values, &
-      & start, count, stride, block, options='-a' )
+    select case( size(count) )
+    case (1)
+      call ExtractArray ( GatherVectorQuantity%value1, quantity%value1, &
+        & start, count, stride, block, options='-a' )
+    case (2)
+      call ExtractArray ( GatherVectorQuantity%values, quantity%values, &
+        & start, count, stride, block, options='-a' )
+    case (3)
+      call ExtractArray ( GatherVectorQuantity%value3, quantity%value3, &
+        & start, count, stride, block, options='-a' )
+    case default
+      call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "GatherVectorQuantity can handle only count sized 1, 2, or 3" )
+    end select
   end function GatherVectorQuantity
 
   ! ------------------------------------------  GetVectorQuantity  -----
@@ -3267,6 +3280,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.185  2013/09/27 00:41:14  pwagner
+! Fixed bug in GatherVectorQuantity
+!
 ! Revision 2.184  2013/09/25 00:58:15  pwagner
 ! Added a gather operation for Vector quantities
 !
