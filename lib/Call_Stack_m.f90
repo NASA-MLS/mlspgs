@@ -126,11 +126,8 @@ contains ! ====     Public Procedures     ==============================
       end if
       if ( present(string) ) call output ( ' ' // string )
       if ( myWhere .and. stack(depth)%tree > 0 ) then
-        if ( source_ref(stack(depth)%tree) == 0 ) then
-          call output ( stack(depth)%tree, before=', tree at ' )
-        else
-          call print_source ( where_at(stack(depth)%tree), before=', ' )
-        end if
+        call output ( stack(depth)%tree, before=', tree at ' )
+        call print_source ( where_at(stack(depth)%tree), before=', ' )
       end if
       if ( say_when ) call show_when
       if ( mySize ) call dumpSize ( memory_units * stack(depth)%memory, &
@@ -342,6 +339,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.15  2013/10/26 00:41:30  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.14  2013/10/02 01:28:21  vsnyder
 ! Add 'string' argument to pop_stack, dump_stack
 !
