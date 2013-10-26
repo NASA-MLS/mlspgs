@@ -3,7 +3,6 @@ module MI_INIT_M
 ! Machine-independent initialization
 
   use IO, only : INUNIT, PRUNIT, TBUNIT
-  use MACHINE, only : IO_ERROR
 
   implicit NONE
   private
@@ -20,6 +19,7 @@ contains
     character(len=*), intent(inout) :: FILE
 
     integer :: IOSTAT
+    character(len=127) :: MSG ! in case of I/O error
     logical :: OPENED
 
     inquire ( unit=inunit, opened=opened )
@@ -27,9 +27,10 @@ contains
     do
       if ( file /= ' ' ) then
         open ( inunit, file=file, status='OLD', form='FORMATTED', &
-               iostat=IOSTAT )
+               iostat=IOSTAT, iomsg=MSG )
         if ( iostat == 0 ) exit
-        call io_error ( 'Unable to open input file', iostat, file )
+        write ( *, '(a,i0/3a/a)' ) 'Unable to open input file, IOSTAT = ', &
+          & iostat, 'File: "', trim(file), '"', trim(msg)
       end if
       do
         write ( *, * ) 'Enter input file name: '
@@ -39,13 +40,14 @@ contains
         write ( *, * ) 'Nothing entered.'
       end do
     end do
-    return
+
   end subroutine OPEN_INPUT
 
   subroutine OPEN_LISTING ( FILE )
     character(len=*), intent(inout) :: FILE
 
     integer :: IOSTAT
+    character(len=127) :: MSG ! in case of I/O error
     logical :: OPENED
 
     inquire ( unit=inunit, opened=opened )
@@ -53,9 +55,10 @@ contains
     do
       if ( file /= ' ' ) then
         open ( prunit, file=file, status='UNKNOWN', form='FORMATTED', &
-               iostat=IOSTAT )
+               iostat=IOSTAT, iomsg=MSG )
         if ( iostat == 0 ) exit
-        call io_error ( 'Unable to open listing file', iostat, file )
+        write ( *, '(a,i0/3a/a)' ) 'Unable to open listing file, IOSTAT = ', &
+          & iostat, 'File: "', trim(file), '"', trim(msg)
       end if
       do
         write ( *, * ) 'Enter listing file name: '
@@ -73,6 +76,7 @@ contains
     character(len=*), intent(inout) :: FILE
 
     integer :: IOSTAT
+    character(len=127) :: MSG ! in case of I/O error
     logical :: OPENED
 
     inquire ( unit=inunit, opened=opened )
@@ -80,9 +84,10 @@ contains
     do
       if ( file /= ' ' ) then
         open ( tbunit, file=file, status='UNKNOWN', form='FORMATTED', &
-               iostat=IOSTAT )
+               iostat=IOSTAT, iomsg=MSG )
         if ( iostat == 0 ) exit
-        call io_error ( 'Unable to open output file', iostat, file )
+        write ( *, '(a,i0/3a/a)' ) 'Unable to open output file, IOSTAT = ', &
+          & iostat, 'File: "', trim(file), '"', trim(msg)
       end if
       do
         write ( *, * ) 'Enter output file name: '
