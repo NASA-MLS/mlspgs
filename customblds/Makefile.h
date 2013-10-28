@@ -16,6 +16,17 @@
 # foreign countries or providing access to foreign persons.
 
 # "$Id$"
+# Two useful utilities
+$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
+	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+   $(UTILDIR)/init_gen.f90
+$(INSTALLDIR)/lr: $(UTILDIR)/lr/*.f90
+	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -O LDOPTS=-static \
+	-C $(MLSCFILE) $(UTILDIR)/lr/*.f90
+
 ifneq ($(short_name),doc)
 ifndef CASCADE
 #	l1
@@ -85,12 +96,6 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
 ifeq ($(short_name),l2)
 # This uses the utility program init_gen to create two
 # up-to-date prereqs for init_tables_module
-$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
-	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
-	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
-   $(UTILDIR)/init_gen.f90
-
 $(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
 	sort -f -u $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
           -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
@@ -148,12 +153,6 @@ L3MMData.o: l3mmdata.mod
 ifeq ($(short_name),lib)
 # This uses the utility program init_gen to create two
 # up-to-date prereqs for intrinsic
-$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
-	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
-	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
-   $(UTILDIR)/init_gen.f90
-
 $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
 	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
           -l last_intrinsic_lit -pl_ \
@@ -185,6 +184,11 @@ ieee_arithmetic.mod: ieee_arithmetic.f90
 
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+$(S)/parser.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+	$(INSTALLDIR)/lr \
+          $(UTILDIR)/lr/l2cf.grm \
+          $(S)/parser.f9h
 
 endif
 
@@ -266,12 +270,6 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
 ifeq ($(short_name),l2)
 # This uses the utility program init_gen to create two
 # up-to-date prereqs for init_tables_module
-$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
-	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
-	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
-   $(UTILDIR)/init_gen.f90
-
 $(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
 	sort -f -u $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
           -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
@@ -318,12 +316,6 @@ L3MMDiag.o: $(S)/L3MMDiag.f90
 ifeq ($(short_name),lib)
 # This uses the utility program init_gen to create two
 # up-to-date prereqs for intrinsic
-$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
-	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
-	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
-   $(UTILDIR)/init_gen.f90
-
 $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
 	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
           -l last_intrinsic_lit -pl_ \
@@ -346,6 +338,11 @@ machine.o: $(MACH_DIR)/machine.f90
 	rm -f machine.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+$(S)/parser.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+	$(INSTALLDIR)/lr \
+          $(UTILDIR)/lr/l2cf.grm \
+          $(S)/parser.f9h
 
 endif
 
@@ -453,6 +450,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.4  2013/08/28 00:39:46  pwagner
+# Lifted custom builds from MLSStrings.f90 MLSStringLists.f90
+#
 # Revision 1.3  2013/06/12 18:18:04  pwagner
 # Changes to pass most FOPTS for Strings modules
 #
