@@ -244,6 +244,7 @@ SHELL = /bin/sh
 # l2pcdiff
 # l2pcdump       
 # l2q            
+# lr
 # machineok      
 # Mie_Tables
 # Mie_Tables_nohdf
@@ -478,7 +479,7 @@ lib:
 blas:
 	$(MAKE) -f $(MakeFName) -C $@
 
-l1--itm:
+l1--itm: l1
 	$(MAKE) -f $(MakeFName) -C l1 PROG=init_tables_module.o MARK_ALL_AS_UPTODATE=no
 
 #              (functional targets)
@@ -838,7 +839,7 @@ heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
    
 init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -c $(MLSCONFG) -p $@ -M $(MAKE) -O LDOPTS=-static \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
@@ -931,6 +932,11 @@ l2q: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2q.f90 l2
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+lr: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/lr/*.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/lr/*.f90
 
 machineok: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/machineok.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -1313,7 +1319,7 @@ tools: chunktimes checkpvmup compare dateconverter \
   checkpvmup chunktimes CondenseLeakLog end_stmts f90tex Goldbrick_More \
   heconvert h5subset h5cat hl init_gen killmaster \
   l1bdiff l1bdump l1h5subset \
-  l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump l2pcdump \
+  l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump l2pcdump lr \
   machineok Mie_Tables Mie_Tables_nohdf MLS_h5ls UnwrapList utctotai \
   tellMasterToQuit \
   WordSplit wrapLines WrapList tools
@@ -1321,6 +1327,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.138  2013/09/09 23:18:32  pwagner
+# Compute dependencies in srclib according to .mod-style
+#
 # Revision 1.137  2013/08/09 16:56:02  pwagner
 # Can build [Un]WrapList
 #
