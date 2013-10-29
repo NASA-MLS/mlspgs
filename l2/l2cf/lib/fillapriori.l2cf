@@ -75,11 +75,6 @@ begin Fill
       46mb: 4.7e-5, 32mb:2.7e-5,22mb:1.2e-5,15mb:5.1e-6, $
       10mb:5.8e-7,0.00001mb:1.0e-7]
 ; r3 extinction
-;   Fill, quantity=apriori.totalextinctionr3,method=profile, profileValues = $
-;      [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
-;      215mb : 0.001, 147mb : 0.0005, 100mb : 0.0003, 68mb:0.0002, $
-;      46mb: 0.0001, 32mb:7.0e-5,22mb:4.0e-5,15mb:9.3e-6, $
-;      10mb:2.7e-6,0.00001mb:1.0e-7]
 ; these values are better suited for mif extinction
    Fill, quantity=apriori.totalextinctionr3,method=profile, profileValues = $
       [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
@@ -254,6 +249,10 @@ Fill, quantity=apriori.refGPH,$
   ;; 1 ppbv is too small for OH.  Better with a profile?
   Fill, quantity=aprioriPrecision.oh,   method=profile, $
     profileValues = [ 10mb : 0.1ppbv, 1mb : 1 ppbv, 0.1mb : 5 ppbv, 0.01mb : 10 ppbv ]
+  ;; Be careful not to apply scaling twice to oh precision!
+  Fill, quantity=aprioriPrecision.oh, method=manipulate, $
+    a=aprioriPrecision.oh, c=1.5, manipulation='c*a'
+
   ;; 100pptv is far too small for so2
   Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 10 ppbv
 
@@ -303,9 +302,6 @@ Fill, quantity=apriori.refGPH,$
       0.03mb:5ppmv, 0.01mb: 15ppmv, 0.003mb: 50ppmv, 0.001mb:150ppmv ]
 
   ;; We already filled the hires ozone precision by inerpolating the std res
-  ;   Fill, quantity=aprioriPrecision.o3_hr, method=profile,$
-  ;     profileValues=[ 500hPa:0.05ppmv, 316hPa:0.1ppmv, 215hPa:0.1ppmv, $
-  ; 	147hPa:0.2ppmv, 46hPa:0.5ppmv, 22hPa:1.5ppmv] 
 
   ;; ------------------------------ A priori extinction precisions
 
@@ -326,10 +322,6 @@ Fill, quantity=apriori.refGPH,$
       215mb : 0.0026, 147mb : 0.0006, 100mb : 0.0003, 68mb:9.0e-5, $
       46mb: 3.8e-5, 32mb:2.0e-5,22mb:9.2e-6,15mb:1.9e-6,10mb:1.0e-6, $
       0.00001mb:1.0e-6]
-;      [ 1000mb: 0.0001, 681mb:0.0001, 464mb : 0.0001, 316mb : 0.0001, $
-;      215mb : 0.0001, 147mb : 0.0001, 100mb : 0.0001, 68mb:9.0e-5, $
-;      46mb: 3.8e-5, 32mb:2.0e-5,22mb:9.2e-6,15mb:1.9e-6,10mb:1.0e-6, $
-;      0.00001mb:1.0e-6]
    Fill, quantity=aprioriPrecision.totalextinctionr3,method=profile, $
         profileValues = $
      [ 1000mb: 1.0E-7, 681mb:0.0005, 464mb : 0.001, 316mb : 0.001, $
@@ -341,10 +333,6 @@ Fill, quantity=apriori.refGPH,$
      /spread, explicitValues=1.0e6
    Fill, quantity=aprioriPrecision.totalextinctionr4,method=profile, $
         profileValues = $
-;      [ 1000mb: 0.004, 681mb:0.004, 464mb : 0.004, 316mb : 0.004, $
-;      215mb : 0.004, 147mb : 0.004, 100mb : 0.0008, 68mb:0.0005, $
-;      46mb: 0.0002, 32mb:0.0001,22mb:0.0001,15mb:4.0e-5,10mb:7.0e-6, $
-;      0.00001mb:1.0e-6]
       [ 1000mb: 0.0001, 681mb:0.0001, 464mb : 0.0001, 316mb : 0.0001, $
       215mb : 0.0001, 147mb : 0.0001, 100mb : 0.0001, 68mb:0.0001, $
       46mb: 0.0001, 32mb:0.0001,22mb:0.0001,15mb:4.0e-5,10mb:7.0e-6, $
@@ -782,6 +770,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.155  2013/10/15 17:43:23  pwagner
+;Separates OH lowbounds into day, night values
+;
 ;Revision 1.154  2013/05/28 20:35:58  pwagner
 ;Brought up-to-date with recent tests in v4.00 series BA-01
 ;
