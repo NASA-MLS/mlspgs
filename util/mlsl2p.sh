@@ -132,7 +132,11 @@ if [ "$PGE_BINARY_DIR" = "" ]
 then
   PGE_BINARY_DIR=$HOME/pvm3/bin/LINUX
 fi
-PGE_BINARY=$PGE_BINARY_DIR/mlsl2
+
+if [ "$PGE_BINARY" = "" ]
+then
+  PGE_BINARY=$PGE_BINARY_DIR/mlsl2
+fi
 
 if [ ! -x "$PGE_BINARY"  ]
 then
@@ -348,6 +352,9 @@ else
 fi
 
 # $Log$
+# Revision 1.25  2013/09/04 17:44:45  pwagner
+# Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+#
 # Revision 1.24  2012/02/15 18:12:06  pwagner
 # Offer last chance to find h5repack in HDFTOOLS directory
 #
