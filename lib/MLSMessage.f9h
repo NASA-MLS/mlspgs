@@ -143,6 +143,7 @@
     character(len=2048) :: Txt ! All the names, strung together
     integer :: Ind(0:100) = 0  ! Ind(i) is end of ith name
     integer :: Top = 0         ! Top of the stack, index into Ind
+    logical :: silent  = .false. ! E.g., in case it becomes corrupted
     logical :: verbose = .false.
   end type MLSCallStack_t
   type(MLSCallStack_t), public, save :: MLSCALLSTACK
@@ -499,6 +500,7 @@ contains
       m = len_trim(myName)
       if ( MLSCallStack%Top > ubound(MLSCallStack%ind,1) ) then
         call dumpStack ( adjustl(myName(:m)) )
+        MLSCallStack%silent = .true.
       else
         MLSCallStack%ind(MLSCallStack%top) = MLSCallStack%ind(MLSCallStack%top-1) + m
         MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top-1)+1:) = myName(:m) ! clear the rest
@@ -508,6 +510,7 @@ contains
     subroutine DumpStack ( What )
       character(len=*), intent(in), optional :: What
       ! call printItOut ( trim(MLSCallStack), MLSMSG_info )
+      if ( MLSCallStack%silent ) return
       if ( present(name) ) name = '' ! In case the stack is weird
       call printItOut ( 'Calling stack (bottom-up)', MLSMSG_info )
       if ( MLSCallStack%top < 0 ) then
@@ -1004,6 +1007,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.30  2013/11/01 00:06:33  pwagner
+! Prevent dumps of a corrupt MLSCallStack
+!
 ! Revision 2.29  2013/09/14 01:21:30  vsnyder
 ! Repair stack underflow problem in MLSMessageCalls with 'push' option.
 ! Add SetConfig.  Some cannonball polishing.
