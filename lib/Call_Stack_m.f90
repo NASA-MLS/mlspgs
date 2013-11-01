@@ -14,9 +14,9 @@ module Call_Stack_m
   implicit NONE
   private
 
-  public :: Stack_t
-  public :: Dump_Stack, Get_Frame, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
-  public :: Say_When
+  public :: STACK_T
+  public :: DUMP_STACK, GET_FRAME, POP_STACK, PUSH_STACK, STACK_DEPTH, TOP_STACK
+  public :: SAY_WHEN
 
   type :: Stack_t
     real :: Clock = 0.0                ! Whatever Time_Now returns (CPU or ?)
@@ -36,9 +36,13 @@ module Call_Stack_m
   ! Display date and time during push and pop displays
   logical, save :: Say_When = .false.
 
+  logical, save, private :: StaySilent = .false. ! E.g., in case it becomes corrupted
+  logical, save, private :: Verbose = .false. ! Print each push, pop
   integer, parameter, private :: StartingStackSize = 100
+  integer, parameter, private :: MAXDOUBLINGS = 10 ! To limit max stack size
   type(stack_t), allocatable, save, private :: Stack(:)
   integer, save, private :: Stack_Ptr = 0
+  integer, save, private :: Stack_Doublings = 0
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -61,7 +65,7 @@ contains ! ====     Public Procedures     ==============================
     use LEXER_CORE, only: PRINT_SOURCE
     use OUTPUT_M, only: DUMPSIZE, OUTPUT
     use STRING_TABLE, only: DISPLAY_STRING
-    use TREE, only: DUMP_TREE_NODE, SOURCE_REF, WHERE_AT=>Where
+    use TREE, only: WHERE_AT=>Where
 
     logical, intent(in), optional :: Top   ! Dump only the top frame
     character(len=*), intent(in), optional :: Before ! first thing output
@@ -78,7 +82,8 @@ contains ! ====     Public Procedures     ==============================
     integer :: Depth, First, I, Inc, Last
     logical :: Error
     logical :: MyCPU, MyDoDepth, MyRev, MySize, MyTop, MyWhere
-
+    ! Executable
+    if ( StaySilent ) return
     myAdvance = 'yes'
     myCPU = .false.; myDoDepth = .true.; myRev = .false.; mySize = .true.
     myTop = .false.; myWhere = .false.
@@ -164,6 +169,7 @@ contains ! ====     Public Procedures     ==============================
 
     use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
     use OUTPUT_M, only: DUMPSIZE, NEWLINE, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
     use TIME_M, only: TIME_NOW
 
     character(len=*), intent(in), optional :: Before
@@ -180,6 +186,15 @@ contains ! ====     Public Procedures     ==============================
     character(len=10) :: Used
 
     ! Executable
+    if ( Verbose ) then
+      call output( 'Popping ', advance='no' )
+      if ( stack(stack_ptr)%string > 0 ) &
+        & call display_string ( stack(stack_ptr)%string, before=' ' )
+      if ( stack(stack_ptr)%text > 0 ) &
+        & call display_string ( stack(stack_ptr)%text, before=' ' )
+      call newLine
+    endif
+    if ( StaySilent ) return
     mySilent = .false.
     if ( present(silent) ) mySilent = silent
     haveStack = allocated(stack)
@@ -258,6 +273,8 @@ contains ! ====     Public Procedures     ==============================
   subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where, Advance )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
     use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, NOBYTESALLOCATED
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
     use TIME_M, only: TIME_NOW
 
     integer, intent(in) :: Name
@@ -270,17 +287,38 @@ contains ! ====     Public Procedures     ==============================
 
     integer :: Stat
     type(stack_t), allocatable :: Temp_Stack(:)
-    intrinsic :: Date_And_Time, Storage_Size
+    intrinsic :: Storage_Size
+    ! Executable
+    if ( StaySilent ) return
 
     if ( .not. allocated(stack) ) then
       ! If you allocate with lbound < 0, other stuff won't work.
       allocate ( stack(startingStackSize), stat=stat )
+      if ( stat /= 0 ) then
+        call output ( 'Unable to alloxate temp_stack', advance='yes' )
+        StaySilent = .true.
+        return
+      endif
       call test_allocate ( stat, moduleName, 'Stack', &
         & ubounds=(/startingStackSize/), elementSize=storage_size(stack) )
       stack_ptr = lbound(stack,1) - 1
     end if
     if ( stack_ptr >= ubound(stack,1) ) then
+      ! Must increase stack size
+      ! so we double it
+      ! But limit number doublings to MAXDOUBLINGS
+      Stack_Doublings = Stack_Doublings + 1
+      if ( Stack_Doublings > MAXDOUBLINGS ) then
+        call output( 'Maximum number of stack size doublings exceeded', advance='yes' )
+        StaySilent = .true.
+        return
+      endif
       allocate ( temp_stack(2*stack_ptr), stat=stat )
+      if ( stat /= 0 ) then
+        call output ( 'Unable to alloxate temp_stack', advance='yes' )
+        StaySilent = .true.
+        return
+      endif
       call test_allocate ( stat, moduleName, 'Temp_Stack', &
         & ubounds=(/2*stack_ptr/), elementSize=storage_size(stack) )
       temp_stack(:min(stack_ptr,ubound(stack,1))) = stack
@@ -294,6 +332,14 @@ contains ! ====     Public Procedures     ==============================
     call time_now ( stack(stack_ptr)%clock )
     if ( present(before) .or. present(where) ) &
       & call dump_stack ( .true., before, where, advance=advance )
+    if ( Verbose ) then
+      call output( 'Pushing ', advance='no' )
+      if ( stack(stack_ptr)%string > 0 ) &
+        & call display_string ( stack(stack_ptr)%string, before=' ' )
+      if ( stack(stack_ptr)%text > 0 ) &
+        & call display_string ( stack(stack_ptr)%text, before=' ' )
+      call newLine
+    endif
 
   end subroutine Push_Stack_I
 
@@ -339,6 +385,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.16  2013/11/01 00:03:29  pwagner
+! Added safeguards limiting stacksize, dumping corrupted stacks, etc.
+!
 ! Revision 2.15  2013/10/26 00:41:30  vsnyder
 ! Cannonball polishing
 !
