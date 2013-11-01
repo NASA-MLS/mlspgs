@@ -24,6 +24,7 @@ module TRACE_M
   logical, save           :: PreviousDebug
   logical, save           :: PreviousVerbose
   logical, parameter      :: DEEBUG = .false.
+  logical, parameter      :: VERBOSE = .false.
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -43,6 +44,7 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
+    use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: CREATE_STRING, HOW_MANY_STRINGS
 
     integer, intent(inout) :: NAME_I
@@ -54,6 +56,8 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), intent(in), optional :: Advance
     if ( how_many_strings() < 1 ) return
     if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
+    if ( Verbose ) &
+      & call output( 'Trace_Begin ' // trim(Name_c), advance='yes' )
     call trace_begin ( name_i, root, index, string, cond, advance )
 
   end subroutine TRACE_BEGIN_B
@@ -63,6 +67,7 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
+    use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: CREATE_STRING, HOW_MANY_STRINGS
 
     character(len=*), intent(in) :: NAME_C
@@ -76,6 +81,9 @@ contains ! ====     Public Procedures     ==============================
 
     if ( how_many_strings() < 1 ) return
     name_i = create_string ( trim(name_c) )
+    if ( Verbose ) &
+      & call output( 'Trace_Begin ' // trim(Name_c), advance='yes' )
+
     call trace_begin ( name_i, root, index, string, cond )
 
   end subroutine TRACE_BEGIN_C
@@ -104,7 +112,6 @@ contains ! ====     Public Procedures     ==============================
  
     if ( how_many_strings() < 1 ) return
     call Checkdate
-
     myCond = .true.
     if ( present(cond) ) myCond = cond
 
@@ -161,6 +168,11 @@ contains ! ====     Public Procedures     ==============================
 
     if ( how_many_strings() < 1 ) return
     call Checkdate
+    if ( Verbose ) then
+      call output( 'Trace_End ', advance='no' )
+      if ( present(name) ) call output( trim(Name), advance='no' )
+      call newLine
+    endif
 
     if ( check < -1 ) check = switchDetail ( switches, 'chktr' )
 
@@ -256,6 +268,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.34  2013/11/01 00:04:11  pwagner
+! Verbose tracks begin, end
+!
 ! Revision 2.33  2013/10/02 01:28:36  vsnyder
 ! Add 'string' argument to trace_end
 !
