@@ -8,6 +8,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   -A: Dump the un-decorated abstract syntax tree.
   -a: Dump the decorated type-checked abstract syntax tree.
   -c: Trace expression evaluation and tree decoration.
+  -Dmodule1,module12,.. : Set debugging on for modules 1, 2, ..
   -d: Dump the declaration table after type checking
   -f[digit]: Trace Forward model.  Bigger digit means 
                     more output.
@@ -36,6 +37,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
      m: minutes
      s: seconds (default)
   -t: Trace declaration table construction.
+  -Vmodule1,module12,.. : Set verboseness to TRUE for modules 1, 2, ..
   -v: List the configuration file.
   -w[p][integer]: Suppress printing identical warnings after integer (e.g. 100)
         (if p present, don't restart count at each phase) (Missing integer=1)
@@ -43,7 +45,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
       0: Suppress every warning
       1: Print every warning only once
   The above options cannot be concatenated after one hyphen,
-  because -S , -R, and -w take the rest of the option as its "string"
+  because -D, -S, -R, -V, and -w take the rest of the option as its "string"
   --[n]aura: The level 1 input files are [not] MLS-Aura (defaults to aura)
   --check: Just check l2cf and quit
   --chunk 'range': Run just the range defined by the expression 'range'
@@ -150,6 +152,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.62  2013/09/14 01:11:14  vsnyder
+ Add MSGConf
+
  Revision 1.61  2013/09/04 17:41:20  pwagner
  Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 
