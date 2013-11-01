@@ -1263,7 +1263,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) then
       call MLSMessage(MLSMSG_Warning, ModuleName, &
         & 'Unable to write attribute--failed to read textfile' )
-      return
+      goto 9
     endif
     ! Unfortunately, a lot of null characters sneak into this
     value = Replace( value, char(0), char(32) ) ! Replace null with space
@@ -1280,7 +1280,7 @@ contains ! ======================= Public Procedures =========================
         newName = trim(name) // adjustl(blockChar)
         call MakeHDF5Attribute( itemID, newName, value(firstChar:lastChar) )
       enddo
-      return
+      goto 9
     endif
 
     my_skip = .false.
@@ -5691,6 +5691,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.124  2013/11/01 00:05:13  pwagner
+! Match trace_begin, _end in MakeHDF5Attribute_textFile
+!
 ! Revision 2.123  2013/09/14 00:37:20  pwagner
 ! Corrected erroneous double call to trace_begin
 !
