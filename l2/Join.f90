@@ -547,6 +547,7 @@ contains ! =====     Public Procedures     =============================
     lastFieldIndex = 0
     noSources = 0
     hdfVersion = DEFAULT_HDFVERSION_WRITE
+    error = 0
     file = 0
     filename = 'undefined'
     lowerOverlap = .false.
@@ -762,7 +763,11 @@ contains ! =====     Public Procedures     =============================
     end if
     
     ! Bail out at this stage if there is some kind of error.
-    if ( error /= 0 ) return
+    if ( error /= 0 ) then
+      call trace_end ( "DirectWriteCommand", &
+        & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
+      return
+    endif
 
     ! Distribute sources among available DirectWrite files if filename undefined
     if ( distributingSources ) then
@@ -787,6 +792,8 @@ contains ! =====     Public Procedures     =============================
     ! If we're skipping all directwrites, let's deallocate and return
     if ( SKIPDIRECTWRITES ) then
       call DeallocateStuff
+      call trace_end ( "DirectWriteCommand", &
+        & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
       return
     endif
 
@@ -1303,6 +1310,8 @@ contains ! =====     Public Procedures     =============================
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to close (1)' // trim(filename), &
           & MLSFile=directFile )
+        call trace_end ( "DirectWriteCommand", &
+          & cond=toggle(gen) .and. switchDetail(switches, 'dwreq') > -1 )
         return
       end if
       if ( isnewdirect .and. (TOOLKIT .or. CATENATESPLITS) ) then
@@ -2233,6 +2242,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.156  2013/11/01 00:15:15  pwagner
+! Match trace_begins and _ends scrupulously
+!
 ! Revision 2.155  2013/10/09 23:41:36  vsnyder
 ! Add Evaluate_Variable
 !
