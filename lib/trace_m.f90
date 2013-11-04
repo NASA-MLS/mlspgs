@@ -93,9 +93,10 @@ contains ! ====     Public Procedures     ==============================
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
 
-    use CALL_STACK_M, only: PUSH_STACK
+    use CALL_STACK_M, only: STACK_T, PUSH_STACK, TOP_STACK
     use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
+    use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: OUTPUTOPTIONS
     use STRING_TABLE, only: CREATE_STRING, GET_STRING, HOW_MANY_STRINGS
 
@@ -106,10 +107,11 @@ contains ! ====     Public Procedures     ==============================
     logical, intent(in), optional :: Cond   ! Print if true, default true
     character(len=*), intent(in), optional :: Advance
 
+    type(stack_t) :: Frame
     logical :: MyCond
+    character(32) :: PARENTNAME
 
     ! Executable
- 
     if ( how_many_strings() < 1 ) return
     call Checkdate
     myCond = .true.
@@ -122,11 +124,18 @@ contains ! ====     Public Procedures     ==============================
       call push_stack ( name, root, index, string )
     end if
 
-    if ( create_string(MLSNamesAreDebug) == name .and. .not. MLSDebug ) then
+    ! Must we set debug or verbose based on the module name?
+    ! (Actually this "prior state" is among the things that Call_Stack
+    ! might track for us)
+    call top_stack ( frame )
+    call get_string ( frame%text, parentName )
+    if ( switchDetail( MLSNamesAreDebug, parentName, options='-fc' ) > -1 &
+      & .and. .not. MLSDebug ) then
       PreviousDebug = MLSDebug
       MLSDebug = .true.
     end if
-    if ( create_string(MLSNamesAreVerbose) == name .and. .not. MLSVerbose ) then
+    if ( switchDetail( MLSNamesAreVerbose, parentName, options='-fc' ) > -1 &
+      & .and. .not. MLSVerbose ) then
       PreviousVerbose = MLSVerbose
       MLSVerbose = .true.
     end if
@@ -150,7 +159,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTOPTIONS
-    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS !, Get_String
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS, GET_STRING
     use TOGGLES, only: SWITCHES
 
     character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
@@ -165,7 +174,6 @@ contains ! ====     Public Procedures     ==============================
     logical :: MyCond
 
     ! Executable
-
     if ( how_many_strings() < 1 ) return
     call Checkdate
     if ( Verbose ) then
@@ -209,13 +217,16 @@ contains ! ====     Public Procedures     ==============================
       end if
     end if
 
-    if ( create_string(trim(MLSNamesAreDebug)) == frame%text .and. .not. MLSDebug ) then
-      PreviousDebug = MLSDebug
-      MLSDebug = .true.
+    ! Have we set debug or verbose based on the module name?
+    ! If so, revert to the previous values
+    call get_string ( frame%text, parentName )
+    if ( switchDetail( MLSNamesAreDebug, parentName, options='-fc' ) > -1 &
+      & .and. MLSDebug ) then
+      MLSDebug = PreviousDebug
     end if
-    if ( create_string(trim(MLSNamesAreVerbose)) == frame%text .and. .not. MLSVerbose ) then
-      PreviousVerbose = MLSVerbose
-      MLSVerbose = .true.
+    if ( switchDetail( MLSNamesAreVerbose, parentName, options='-fc' ) > -1 &
+      & .and. MLSVerbose ) then
+      MLSVerbose = PreviousVerbose
     end if
 
 !   call top_stack ( frame )
@@ -268,6 +279,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.35  2013/11/04 22:52:39  pwagner
+! Treat MLSNamesAreDebug, MLSNamesAreVerbose like switches
+!
 ! Revision 2.34  2013/11/01 00:04:11  pwagner
 ! Verbose tracks begin, end
 !
