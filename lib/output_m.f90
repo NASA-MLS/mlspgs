@@ -22,10 +22,11 @@ module OUTPUT_M
   use DATES_MODULE, only:  BUILDCALENDAR, DAYSINMONTH, &
     & REFORMATDATE, REFORMATTIME, UTC_TO_YYYYMMDD
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCOMMON, only: FILENAMELEN, FINITE_SIGNAL, IS_WHAT_IEEE
+  use MLSCOMMON, only: FILENAMELEN, FINITE_SIGNAL, MLSDEBUG, MLSVERBOSE, &
+    & IS_WHAT_IEEE
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
-    & LIST2ARRAY, NUMSTRINGELEMENTS, WRAP
+    & LIST2ARRAY, NUMSTRINGELEMENTS, SWITCHDETAIL, WRAP
   use MLSSTRINGS, only: REPLACENONASCII, LOWERCASE, NCOPIES, &
     & READINTSFROMCHARS, TRIM_SAFE, WRITEINTSTOCHARS
   use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, &
@@ -33,6 +34,7 @@ module OUTPUT_M
     & MLSMSG_SEVERITY_TO_QUIT, &
     & MLSMSG_WARNING, &
     & PRINTITOUT, STDOUTLOGUNIT, MLSMESSAGECONFIG
+  use TOGGLES, only: SWITCHES
   implicit none
   private
 
@@ -61,6 +63,7 @@ module OUTPUT_M
 !                            *-----------------------------------------------*
 !                            *            Your message here                  *
 !                            *-----------------------------------------------*
+! BeVerbose                Do extra printing?
 ! blanks                   print specified number of blanks [or fill chars]
 ! blanksToColumn           print blanks [or fill chars] out to specified column
 ! blanksToTab              print blanks [or fill chars] out to next tab stop
@@ -72,6 +75,7 @@ module OUTPUT_M
 ! headLine                 print a line with extra formatting features
 !                           e.g., '*-------  Your message here   -------*'
 ! isOutputSuspended        returns TRUE if output is suspended
+! LetsDebug                Do debug printing?
 ! newline                  print a newline
 ! numNeedsFormat           return what format is need to output num
 ! numToChars               return what would be printed by output
@@ -97,6 +101,7 @@ module OUTPUT_M
 ! === (start of api) ===
 ! alignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
 ! banner ( char* chars, [int columnRange(2)], [char alignment], [int skips] )
+! log BeVerbose ( char* switch, threshold )
 ! blanks ( int n_blanks, [char fillChar], [char* advance] )
 ! blanksToColumn ( int column, [char fillChar], [char* advance] )
 ! blanksToTab ( [int tabn], [char* fillChar] )
@@ -112,6 +117,7 @@ module OUTPUT_M
 !          [char fillChar], [char* Before], [char* After], 
 !          [int columnRange(2)], [char alignment], [int skips] )
 ! log isOutputSuspended ()
+! log LetsDebug ( char* switch, threshold )
 ! NewLine
 ! char* numNeedsFormat ( value )
 ! char* numToChars ( value, [char* format] )
@@ -180,9 +186,9 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: ALIGNTOFIT, BANNER, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, &
+  public :: ALIGNTOFIT, BANNER, BEVERBOSE, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, &
     & DUMP, DUMPSIZE, DUMPTABS, FLUSHOUTPUTLINES, GETSTAMP, HEADLINE, &
-    & NEXTCOLUMN, NEXTTAB, NEWLINE, NUMNEEDSFORMAT, NUMTOCHARS, &
+    & LETSDEBUG, NEXTCOLUMN, NEXTTAB, NEWLINE, NUMNEEDSFORMAT, NUMTOCHARS, &
     & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTLIST, &
     & OUTPUTNAMEDVALUE, &
     & RESETTABS, RESTORESETTINGS, RESUMEOUTPUT, REVERTOUTPUT, &
@@ -605,6 +611,15 @@ contains
     call blanks ( lineLen-2, FillChar='-' )
     call output( '*', advance = 'yes' )
   end subroutine BANNER_CHARARRAY
+
+  ! -----------------------------------------------------  BEVERBOSE  -----
+  logical function BEVERBOSE ( SWITCH, THRESHOLD )
+    ! Args
+    character(len=*), intent(in) :: SWITCH
+    integer, intent(in)          :: THRESHOLD
+    ! Executable
+    BeVerbose = switchDetail( switches, switch ) > threshold .or. MLSVerbose
+  end function BEVERBOSE
 
   ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
@@ -1046,6 +1061,15 @@ contains
   ! Have we suspended outputting to PRUNIT?
     isOutputSuspended = silentRunning
   end function isOutputSuspended
+
+  ! -----------------------------------------------------  LETSDEBUG  -----
+  logical function LETSDEBUG ( SWITCH, THRESHOLD )
+    ! Args
+    character(len=*), intent(in) :: SWITCH
+    integer, intent(in)          :: THRESHOLD
+    ! Executable
+    letsDebug = switchDetail( switches, switch ) > threshold .or. MLSDebug
+  end function LETSDEBUG
 
   ! ----------------------------------------------------  NewLine  -----
   subroutine NewLine
@@ -2945,6 +2969,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.108  2013/11/04 22:53:51  pwagner
+! Added beVerbose, letsDebug
+!
 ! Revision 2.107  2013/09/12 01:56:50  vsnyder
 ! Change f6.1 format to f8.1 format in DumpSize_Double
 !
