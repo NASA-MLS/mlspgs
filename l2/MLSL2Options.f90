@@ -14,9 +14,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
-  use MLSCOMMON, only: MLSFILE_T
-  use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
-  use MLSMessageModule, only: MLSMESSAGECONFIG, &
+  use MLSCOMMON, only: MLSFILE_T, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
+  use MLSFILES, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
+  use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, &
     & MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_TESTWARNING, &
     & MLSMSG_SEVERITY_TO_WALKBACK, MLSMSG_WARNING, &
     & SAYMESSAGE => MLSMESSAGE
@@ -24,7 +24,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   use OUTPUT_M, only: OUTPUTOPTIONS, &
     & INVALIDPRUNIT, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT, &
     & OUTPUT, OUTPUTNAMEDVALUE
-  use PrintIt_m, only: DEFAULTLOGUNIT, GET_CONFIG, STDOUTLOGUNIT
+  use PRINTIT_M, only: DEFAULTLOGUNIT, GET_CONFIG, STDOUTLOGUNIT
 
   implicit none
   public
@@ -226,10 +226,10 @@ contains
   ! output module's commands
   subroutine MLSMessage ( SEVERITY, MODULENAMEIN, MESSAGE, &
     & ADVANCE, MLSFILE, STATUS, ITEM )
-    use Lexer_Core, only: Get_Where
+    use LEXER_CORE, only: GET_WHERE
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
-    use TREE, only: Where
+    use TREE, only: WHERE
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
@@ -344,10 +344,10 @@ contains
       & SORTLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
     use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
     use PCFHDR, only: GLOBALATTRIBUTES
-    use PrintIt_m, only: Set_Config
+    use PRINTIT_M, only: SET_CONFIG
     use SET_TOGGLES_M, only: SET_TOGGLES
     use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
-    use STRING_TABLE, only: Add_Include_Directory, DO_LISTING
+    use STRING_TABLE, only: ADD_INCLUDE_DIRECTORY, DO_LISTING
     use TIME_M, only: TIME_CONFIG
     use TOGGLES, only: SWITCHES
     ! Args
@@ -770,6 +770,9 @@ jloop:do while ( j < len_trim(line) )
             else
               call set_toggles ( line(j:j) )
             end if
+          case ( 'D' ) ! This turns debugging on for some modules
+            MLSNamesAreDebug = catLists(trim(MLSNamesAreDebug), line(j+1:))
+            exit ! Took the rest of the string, so there can't be more options
           case ( 'd' ); do_dump = .true.
           case ( 'h', 'H', '?' )     ! Describe command line usage
             ! call option_usage
@@ -807,6 +810,9 @@ jloop:do while ( j < len_trim(line) )
               end if
               j = j + 1
             end do
+          case ( 'V' ) ! This sets verbose to TRUE some modules
+            MLSNamesAreVerbose = catLists(trim(MLSNamesAreVerbose), line(j+1:))
+            exit ! Took the rest of the string, so there can't be more options
           case ( 'v' ); do_listing = .true.
           case ( 'w' )
             MLSMessageConfig%limitWarnings = 1
@@ -973,6 +979,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.73  2013/11/04 22:56:02  pwagner
+! Added -Vmodules and -Dmodules to turn on verbose and debug module-wide
+!
 ! Revision 2.72  2013/09/24 23:29:45  vsnyder
 ! Add -I option, Use Where instead of Source_Ref for messages
 !
