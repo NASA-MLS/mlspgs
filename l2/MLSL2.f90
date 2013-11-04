@@ -13,7 +13,7 @@ program MLSL2
   use ALLOCATE_DEALLOCATE, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES
   use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL, &
-    & Get_Type
+    & GET_TYPE
   use HDF, only: DFACC_RDONLY
   use INIT_TABLES_MODULE, only: INIT_TABLES
   use INTRINSIC, only: L_ASCII, L_TKGEN, LIT_INDICES
@@ -23,7 +23,7 @@ program MLSL2
   use LEAKCHECK_M, only: LEAKCHECK
   use LEXER_CORE, only: INIT_LEXER
   use MACHINE, only: GETARG, HP, IO_ERROR
-  use MLSCOMMON, only: MLSFILE_T
+  use MLSCOMMON, only: MLSFILE_T, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
   use MLSFILES, only: FILESTRINGTABLE, &
     & ADDFILETODATABASE, DEALLOCATE_FILEDATABASE, DUMP, &
     & INITIALIZEMLSFILE, MLS_OPENFILE, MLS_CLOSEFILE
@@ -55,7 +55,7 @@ program MLSL2
     & OUTPUTNAMEDVALUE, &
     & INVALIDPRUNIT, MSGLOGPRUNIT, OUTPUTOPTIONS, STAMPOPTIONS, STDOUTPRUNIT
   use PARSER, only: CONFIGURATION
-  use PrintIt_m, only: Set_Config, StdoutLogUnit
+  use PRINTIT_M, only: SET_CONFIG, STDOUTLOGUNIT
   use PVM, only: CLEARPVMARGS, FREEPVMARGS
   use SDPTOOLKIT, only: PGSd_DEM_30ARC, PGSd_DEM_90ARC, &
     & PGSd_DEM_ELEV, PGSd_DEM_WATER_LAND, USESDPTOOLKIT, PGS_DEM_CLOSE
@@ -152,7 +152,6 @@ program MLSL2
   character(len=2048) :: LINE      ! Into which is read the command args
   integer :: NUMFILES
   ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
-! integer :: RECORD_LENGTH
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: STATUS                ! From OPEN
   real :: T0, T1, T2               ! For timing
@@ -583,7 +582,7 @@ contains
   subroutine Dump_settings
   ! Show current run-time settings resulting from
   ! command-line, MLSL2Options, etc.
-    use PrintIt_m, only: Get_Config
+    use PRINTIT_M, only: GET_CONFIG
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
     character(len=255) :: Command ! Command that executed the program
     integer :: LogFileUnit
@@ -674,6 +673,14 @@ contains
         call outputNamedValue ( '(All switches)', trim(switches), advance='yes', &
           & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
+      if ( MLSNamesAreDebug /= ' ' ) then
+        call outputNamedValue ( '(Modules to debug)', trim(MLSNamesAreDebug), advance='yes', &
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      end if
+      if ( MLSNamesAreVerbose /= ' ' ) then
+        call outputNamedValue ( '(Modules are verbose)', trim(MLSNamesAreVerbose), advance='yes', &
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      end if
       call outputNamedValue ( 'Standard output unit', outputOptions%prunit, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call get_config ( logFileUnit = logFileUnit )
@@ -736,6 +743,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.199  2013/11/04 22:56:59  pwagner
+! Print which modules are berbose, debugged
+!
 ! Revision 2.198  2013/10/09 23:46:38  vsnyder
 ! Pass Get_Type to tree dumper
 !
