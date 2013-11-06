@@ -24,7 +24,7 @@ module MLSSignals_M
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, PVMERRORMESSAGE
   use MLSSTRINGS, only: LOWERCASE, CAPITALIZE
-  use OUTPUT_M, only: BLANKS, HEADLINE, OUTPUT
+  use OUTPUT_M, only: BLANKS, HEADLINE, NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
 
   implicit none
@@ -51,6 +51,7 @@ module MLSSignals_M
 ! DisplaySignalName_index         ... given a signal index
 ! DisplaySignalName_signal        ... given a signal structure
 ! Dump                            ...
+! Dump_All                            ...
 ! Dump_Bands                      ...
 ! Dump_Modules                      ...
 ! Dump_Radiometers                ...
@@ -92,7 +93,7 @@ module MLSSignals_M
   public :: DISPLAYRADIOMETER, DISPLAYSIGNALNAME
   public :: DISPLAYSIGNALNAME_INDEX, DISPLAYSIGNALNAME_SIGNAL
   public :: DUMP, DUMP_BANDS, DUMP_RADIOMETERS, DUMP_SIGNAL, DUMP_SIGNALS
-  public :: DUMP_MODULES, DUMP_SPECTROMETERTYPES
+  public :: DUMP_ALL, DUMP_MODULES, DUMP_SPECTROMETERTYPES
   public :: GETALLMODULES, GETBANDNAME, GETFIRSTCHANNEL, GETMODULEFROMRADIOMETER
   public :: GETMODULEINDEX, GETSIDEBANDLOOP, GETSIDEBANDSTARTSTOP, GETSIGNALINDEX
   public :: GETMODULEFROMSIGNAL, GETMODULENAME, GETNAMEOFSIGNAL
@@ -190,18 +191,19 @@ module MLSSignals_M
   ! Now some databases, the first are fairly obvious.
   !??? Should these be public ???
 
-  type(module_T), public, save, pointer, dimension(:)     :: Modules => NULL()
-  type(band_T), public, save, pointer, dimension(:)       :: Bands => NULL()
-  type(radiometer_T), public, save, pointer, dimension(:) :: Radiometers => NULL()
-  type(spectrometerType_T), public, save, pointer, dimension(:) ::&
-    & SpectrometerTypes => NULL()
+  type(module_T), public, save, pointer, dimension(:)  :: MODULES => NULL()   
+  type(band_T), public, save, pointer, dimension(:)    :: BANDS => NULL()     
+  type(radiometer_T), public, save, pointer, dimension(:) &
+    &                                                  :: RADIOMETERS => NULL()
+  type(spectrometerType_T), public, save, pointer, dimension(:) &
+    &                                                  :: SPECTROMETERTYPES => NULL()
 
   ! This array is the signals database.  The first entries are the official
   ! `valid' signals in the instrument.  Later one can derive things from that.
   ! for subsets of channels etc.
-  type(signal_T), public, save, pointer, dimension(:)     :: Signals => NULL()
-  integer, public, save :: Instrument = l_emls
-  integer, parameter :: MAXRADIOMETERNAMELEN = 16
+  type(signal_T), public, save, pointer, dimension(:)  :: SIGNALS => NULL()           
+  integer, public, save                                :: INSTRUMENT = l_emls         
+  integer, parameter                                   :: MAXRADIOMETERNAMELEN = 16   
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -215,7 +217,7 @@ contains
   subroutine MLSSignals ( ROOT )
     ! Process the MLSSignals section of the L2 configuration file.
 
-    use Evaluate_Variable_m, only: Evaluate_Variable
+    use EVALUATE_VARIABLE_M, only: EVALUATE_VARIABLE
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MORETREE, only: GET_BOOLEAN, STARTERRORMESSAGE
     use TIME_M, only: TIME_NOW
@@ -223,7 +225,7 @@ contains
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
       & SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_NAMED, N_Variable
+    use TREE_TYPES, only: N_NAMED, N_VARIABLE
 
     integer, intent(in) :: ROOT         ! The "cf" vertex for the section
 
@@ -328,6 +330,8 @@ contains
           select case ( field )
           case (f_Aura)
             thisModule%Aura = get_boolean(son)
+          case ( f_instrument )
+            instrument = decoration(gson)
           case (f_spaceCraft)
             thisModule%spacecraft = get_boolean(son)
           case default
@@ -935,6 +939,22 @@ oc:       do
       call output ( bands(i)%centerFrequency, advance='yes' )
     end do
   end subroutine DUMP_BANDS
+
+  ! -------------------------------------------  Dump_All  -----
+  ! Dump all databases related to Signals, Modules, etc.
+  subroutine Dump_All
+    !
+    call headline( 'All databases related to Signals', &
+      & fillChar='-', before='*', after='*' )
+    call output ( '   Instrument: ', advance='no' )
+    call display_string ( lit_indices(instrument) )
+    call newLine
+    call dump_modules
+    call dump_radiometers (radiometers )
+    call dump_bands( bands )
+    call dump_spectrometerTypes( spectrometerTypes )
+    call dump_signals( signals )
+  end subroutine Dump_All
 
   ! -------------------------------------------  Dump_Modules  -----
   subroutine Dump_Modules
@@ -1926,6 +1946,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.100  2013/11/06 01:47:26  pwagner
+! May read instrument field of module; e.g. emls
+!
 ! Revision 2.99  2013/10/09 01:08:03  vsnyder
 ! Add call to Evaluate_Variable
 !
