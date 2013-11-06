@@ -41,7 +41,7 @@
                 do i=1, block(1)
                   n1 = start(1) - 1 + (II-1)*stride(1) + i
                   m1 = (II-1)*block(1) + i
-                  array(n1, n2, n2) = slab(m1, m2, m3)
+                  array(n1, n2, n3) = slab(m1, m2, m3)
                 enddo
               enddo
             enddo
@@ -67,7 +67,7 @@
                 do i=1, block(1)
                   n1 = start(1) - 1 + (II-1)*stride(1) + i
                   m1 = (II-1)*block(1) + i
-                  slab(m1, m2, m3) = array(n1, n2, n2)
+                  slab(m1, m2, m3) = array(n1, n2, n3)
                 enddo
               enddo
             enddo
@@ -79,6 +79,9 @@
       & ModuleName, "direction neither embedding nor extracting" )
     end select
 ! $Log$
+! Revision 1.2  2013/09/18 16:22:01  pwagner
+! Changed api for Embed, ExtractArray procedures--now select hyperslabs
+!
 ! Revision 1.1  2006/01/14 00:48:25  pwagner
 ! First commit
 !
