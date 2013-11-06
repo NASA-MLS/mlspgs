@@ -13,12 +13,14 @@ module SpectroscopyCatalog_m
 
 ! Process the Spectroscopy section.  Read the "old format" spectroscopy catalog
 
-  use INTRINSIC, only: L_NONE
+  use INTRINSIC, only: L_NONE, L_HDF
   use MLSKINDS, only: R8
   use MLSCOMMON, only: MLSFILE_T
+  use MLSFILES, only: HDFVERSION_5, &
+    & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE
   use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE
-  use Spectroscopy_Types, only: Line_t, Lines, Catalog_t, MaxContinuum , &
-    & AddLineToDatabase
+  use SPECTROSCOPY_TYPES, only: LINE_T, LINES, CATALOG_T, MAXCONTINUUM , &
+    & ADDLINETODATABASE
 
   ! More USEs below in each procedure.
 
@@ -26,10 +28,10 @@ module SpectroscopyCatalog_m
 
   private
   ! Public procedures:
-  public :: Spectroscopy, SearchByQn
-  public :: Destroy_Line_Database, Destroy_SpectCat_Database
-  public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump_SpectCat_Item, Dump
-  public :: ReadIsotopeRatios, Read_Spectroscopy, Write_Spectroscopy
+  public :: SPECTROSCOPY, SEARCHBYQN
+  public :: DESTROY_LINE_DATABASE, DESTROY_SPECTCAT_DATABASE
+  public :: DUMP_LINES_DATABASE, DUMP_SPECTCAT_DATABASE, DUMP_SPECTCAT_ITEM, DUMP
+  public :: READISOTOPERATIOS, READ_SPECTROSCOPY, WRITE_SPECTROSCOPY
 
   ! Public types:
   public :: Line_T, Catalog_T ! From Spectroscopy_Types
@@ -67,10 +69,10 @@ contains ! =====  Public Procedures  ===================================
   ! Process the spectroscopy section.
 
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
-      & Test_Allocate, Test_DeAllocate
+      & TEST_ALLOCATE, TEST_DEALLOCATE
     ! We need a lot of names from Init_Spectroscopy_Module.  First, the spec
     ! ID's:
-    use Evaluate_Variable_m, only: Evaluate_Variable
+    use EVALUATE_VARIABLE_M, only: EVALUATE_VARIABLE
     use INIT_SPECTROSCOPY_M, only: S_LINE, S_SPECTRA, S_READSPECTROSCOPY, &
       & S_READISOTOPERATIOS, S_WRITESPECTROSCOPY, &
     ! NOW THE FIELDS:
@@ -89,7 +91,7 @@ contains ! =====  Public Procedures  ===================================
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_NAMED, N_STRING, N_Variable
+    use TREE_TYPES, only: N_NAMED, N_STRING, N_VARIABLE
     use MLSSIGNALS_M, only: INSTRUMENT
 
     ! Dummy argument
@@ -460,7 +462,7 @@ contains ! =====  Public Procedures  ===================================
     subroutine Expr_Check ( Root, Value, NeededUnits )
     ! Evaluate the expression at Root giving Value.  Make sure its units
     ! are NeededUnits
-      use Expr_M, only: Expr
+      use EXPR_M, only: EXPR
       integer, intent(in) :: Root
       real(r8), intent(out) :: Value
       integer, intent(in) :: NeededUnits
@@ -474,7 +476,7 @@ contains ! =====  Public Procedures  ===================================
 
     ! ..................................................  SayTime  .....
     subroutine SayTime
-      use Output_m, only: Output
+      use OUTPUT_M, only: OUTPUT
       call time_now ( t2 )
       call output ( "Timing for Spectroscopy = " )
       call output ( dble(t2 - t1), advance = 'yes' )
@@ -485,7 +487,7 @@ contains ! =====  Public Procedures  ===================================
   ! --------------------------------------  Destroy_Line_Database  -----
   subroutine Destroy_Line_Database
 
-    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
 
     integer :: I, Status                   ! From deallocate
     if ( .not. associated(lines) ) return
@@ -501,7 +503,7 @@ contains ! =====  Public Procedures  ===================================
 
   ! ----------------------------------  Destroy_SpectCat_Database  -----
   subroutine Destroy_SpectCat_Database
-    use Allocate_Deallocate, only: Deallocate_Test
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     integer :: I
     do i = first_molecule, last_molecule
       call deallocate_test ( catalog(i)%lines, "Catalog(i)%lines", moduleName )
@@ -513,9 +515,9 @@ contains ! =====  Public Procedures  ===================================
 
   ! --------------------------------------------------  Dump_Line  -----
   subroutine Dump_Line ( Line )
-    use Dump_0, only: Dump
-    use Output_m, only: Blanks, Output
-    use String_Table, only: Display_String
+    use DUMP_0, only: DUMP
+    use OUTPUT_M, only: BLANKS, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
     type(line_t), intent(in) :: Line
 
     if ( line%line_name /= 0 ) then
@@ -547,7 +549,7 @@ contains ! =====  Public Procedures  ===================================
 
   ! ----------------------------------------  Dump_Lines_Database  -----
   subroutine Dump_Lines_Database ( Start, End, Number )
-    use Output_m, only: Blanks, Output
+    use OUTPUT_M, only: BLANKS, OUTPUT
     integer, intent(in), optional :: Start, End
     logical, intent(in), optional :: Number
     integer :: I                   ! Subscript, loop inductor
@@ -581,7 +583,7 @@ contains ! =====  Public Procedures  ===================================
 
   ! -------------------------------------  Dump_SpectCat_Database  -----
   subroutine Dump_SpectCat_Database ( Catalog, Name, Sideband, Details )
-    use Output_m, only: NewLine, Output
+    use OUTPUT_M, only: NEWLINE, OUTPUT
 
     type(catalog_T), intent(in) :: Catalog(:)
     character(len=*), intent(in), optional :: Name
@@ -605,10 +607,10 @@ contains ! =====  Public Procedures  ===================================
 
   ! -----------------------------------------  Dump_SpectCat_Item  -----
   subroutine Dump_SpectCat_Item ( Catalog, Details )
-    use Dump_0, only: Dump
-    use Intrinsic, only: Lit_indices
-    use Output_m, only: Blanks, NewLine, Output
-    use String_Table, only: Display_String, String_Length
+    use DUMP_0, only: DUMP
+    use INTRINSIC, only: LIT_INDICES
+    use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING, STRING_LENGTH
 
     type(catalog_T), intent(in) :: Catalog
     integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines,
@@ -704,14 +706,14 @@ contains ! =====  Public Procedures  ===================================
   ! ............................................  Get_File_Name  .....
   subroutine Get_File_Name ( pcfCode, &
     & spectroscopyFile, fileDataBase, MLSFile, toolkit, MSG, pcfEndCode )
-    use hdf, only: dfacc_rdonly
-    use intrinsic, only: l_hdf
-    use MLSCommon, only: MLSFile_T
-    use MLSFiles, only: HDFVERSION_5, &
-      & AddInitializeMLSFile, GetPCFromRef, split_path_name
-    use output_m, only: output
-    use SDPToolkit, only: Pgs_pc_getReference
-    use String_Table, only: Get_String
+    use HDF, only: DFACC_RDONLY
+    use INTRINSIC, only: L_HDF
+    use MLSCOMMON, only: MLSFILE_T
+    use MLSFILES, only: HDFVERSION_5, &
+      & ADDINITIALIZEMLSFILE, GETPCFROMREF, SPLIT_PATH_NAME
+    use OUTPUT_M, only: OUTPUT
+    use SDPTOOLKIT, only: PGS_PC_GETREFERENCE
+    use STRING_TABLE, only: GET_STRING
     ! Dummy args
     integer, intent(in) :: pcfCode
     integer, intent(in) :: spectroscopyFile ! parser id
@@ -770,7 +772,7 @@ contains ! =====  Public Procedures  ===================================
     use MLSHDF5, only: LOADFROMHDF5DS
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSTRINGS, only: CAPITALIZE
-    use MOLECULES, only: IsExtinction
+    use MOLECULES, only: ISEXTINCTION
     use STRING_TABLE, only: GET_STRING
     use HDF5, only: H5F_ACC_RDONLY_F, H5FOPEN_F, H5FCLOSE_F
 
@@ -813,19 +815,22 @@ contains ! =====  Public Procedures  ===================================
   ! Should be OK now.
   subroutine Read_Spectroscopy ( Where, FileName, FileType )
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
-      & Test_Allocate, Test_Deallocate
+      & TEST_ALLOCATE, TEST_DEALLOCATE
 !   use DECLARATION_TABLE, only: DECLARE, DECLS, GET_DECL, LABEL
-!   use INTRINSIC, only: PHYQ_INVALID
+    use HDF, only: DFACC_RDONLY
+    use INTRINSIC, only: LIT_INDICES ! , PHYQ_INVALID
     use IO_STUFF, only: GET_LUN
     use MACHINE, only: IO_ERROR
-    use MLSHDF5, only: GETHDF5DSDIMS, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSIGNALS_M, only: MAXSIGLEN
+    use MLSHDF5, only: GETHDF5ATTRIBUTE, GETHDF5DSDIMS, &
+      & ISHDF5ATTRIBUTEPRESENT, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+    use MLSSIGNALS_M, only: INSTRUMENT, MAXSIGLEN
     use MLSSTRINGS, only: CAPITALIZE
     use MORETREE, only: GETLITINDEXFROMSTRING, GETSTRINGINDEXFROMSTRING
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+    use STRING_TABLE, only: GET_STRING
     use TREE, only: NULL_TREE
-    use HDF5, only: H5F_ACC_RDonly_F, H5FOPEN_F, H5FCLOSE_F, HSIZE_T
+    use HDF5, only: HSIZE_T
 
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
@@ -837,11 +842,14 @@ contains ! =====  Public Procedures  ===================================
     logical :: Error
     integer :: FileID            ! HDF5
     integer :: I, IOSTAT, J, L, Line1, LineN, LUN, L2
+    character(len=16) :: InstrumentName
+    character(len=16) :: InstrumentNameFromFile
     type(line_t) :: Line
     integer, pointer :: LineIndices(:)
     integer, pointer :: LineList(:)
     character(len=maxSigLen) :: LineName
     character(len=maxSigLen), pointer :: LineNames(:)
+    type (MLSFile_T)   :: MLSFile
     type(catalog_t), pointer :: MyCatalog(:)
     type(line_t), pointer :: MyLines(:)
     character(len=63) :: MoleculeName
@@ -878,9 +886,26 @@ contains ! =====  Public Procedures  ===================================
     error = .false.
     signalError = .false.
     if ( capitalize(fileType) == 'HDF5' ) then
-      call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
+      iostat = InitializeMLSFile ( MLSFile, name=fileName, type=l_hdf, &
+        & access=DFACC_RDONLY, HDFVersion=HDFVERSION_5, content='HDFSpectroscopy' )
+      call mls_OpenFile ( MLSFile, iostat )
+      fileID = MLSFile%FileId%f_id
+      ! call h5fopen_f ( trim(fileName), H5F_ACC_RDONLY_F, fileID, iostat )
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
         & 'Unable to open HDF5 Spectroscopy file ' // trim(fileName) // '.' )
+      ! Was the InstrumentName written to the file as an attribute?
+      call get_string ( lit_indices(instrument), instrumentName )
+      if ( IsHDF5AttributePresent(MLSFile, 'InstrumentName' ) ) then
+        call GetHDF5Attribute ( MLSFile, 'InstrumentName', InstrumentNameFromFile )
+        if ( instrumentName /= InstrumentNameFromFile ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Unmatched instrument name in HDFSpectroscopy file is ' // &
+          & trim(InstrumentNameFromFile), MLSFile=MLSFile )
+      else
+        call MLSMessage ( MLSMSG_Warning, moduleName, &
+          & 'Unable to verify that instrument name in HDFSpectroscopy file is ' // &
+          & trim(InstrumentName) )
+      endif
       ! Create or expand the Lines database
       call getHDF5DSDims ( fileID, 'Delta', Shp )
       nLines = shp(1)
@@ -1035,7 +1060,8 @@ contains ! =====  Public Procedures  ===================================
       call deallocate_test ( lineIndices,   'LineIndices', moduleName )
       call deallocate_test ( moleculeNames, 'MoleculeNames', moduleName )
       call deallocate_test ( qLog,          'QLog', moduleName )
-      call H5FClose_F ( fileID, iostat )
+      ! call H5FClose_F ( fileID, iostat )
+      call mls_CloseFile( MLSFile, iostat )
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
         & 'Unable to close HDF5 Spectroscopy file ' // trim(fileName) // '.' )
     else if ( capitalize(fileType) == 'UNFORMATTED' ) then
@@ -1136,8 +1162,8 @@ contains ! =====  Public Procedures  ===================================
 
   contains
     subroutine AnnounceError ( What )
-      use MoreTree, only: StartErrorMessage
-      use Output_m, only: Output
+      use MORETREE, only: STARTERRORMESSAGE
+      use OUTPUT_M, only: OUTPUT
       character(len=*), intent(in) :: What
       call startErrorMessage ( where )
       call output ( what, advance='yes' )
@@ -1180,9 +1206,9 @@ contains ! =====  Public Procedures  ===================================
     use INTRINSIC, only: LIT_INDICES
     use IO_STUFF, only: GET_LUN
     use MACHINE, only: IO_ERROR
-    use MLSHDF5, only: SAVEASHDF5DS
+    use MLSHDF5, only: MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSIGNALS_M, only: GETSIGNALNAME, MAXSIGLEN, SIGNALS
+    use MLSSIGNALS_M, only: GETSIGNALNAME, INSTRUMENT, MAXSIGLEN, SIGNALS
     use MLSSTRINGS, only: CAPITALIZE
     use MORETREE, only: STARTERRORMESSAGE
     use OUTPUT_M, only: OUTPUT
@@ -1196,6 +1222,7 @@ contains ! =====  Public Procedures  ===================================
     real(r8) :: Continuum(first_molecule:last_molecule,maxContinuum)
     integer :: FileID   ! For HDF
     integer :: I, IOSTAT, J, L, LUN, L2
+    character(len=16) :: InstrumentName
     integer :: LineIndices(first_molecule-1:last_molecule)
     integer, pointer :: LineList(:)
     character(len=63) :: LineName
@@ -1395,6 +1422,10 @@ contains ! =====  Public Procedures  ===================================
       call saveAsHDF5DS ( fileID, 'Molecule', molecules )
       call saveAsHDF5DS ( fileID, 'Qlog', qlog )
       call deallocate_test ( lineList, 'LineList', moduleName )
+      ! Write the instrument name as a file-level attribute
+      
+      call get_string ( lit_indices(instrument), instrumentName )
+      call MakeHDF5Attribute ( fileID, 'InstrumentName', instrumentName )
       ! Close the file
       call H5FClose_F ( fileID, iostat )
       if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -1475,6 +1506,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.58  2013/10/16 01:14:39  vsnyder
+! Add Evaluate_Variable
+!
 ! Revision 2.57  2013/08/30 03:56:23  vsnyder
 ! Revise use of trace_begin and trace_end
 !
