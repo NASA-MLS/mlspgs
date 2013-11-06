@@ -20,6 +20,7 @@ module Init_MLSSignals_m
     & LIT_INDICES, PARM_INDICES, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
     & SECTION_INDICES, SPEC_INDICES
 
+  use INTRINSIC, only: L_EMLS, L_UMLS, L_XPTL1
   use MOLECULES, only: INIT_MOLECULES, LAST_MOLECULE, LAST_MOLECULE_TYPE
   implicit NONE
 
@@ -45,7 +46,8 @@ module Init_MLSSignals_m
   integer, parameter :: F_direction         = f_deferred + 1
   integer, parameter :: F_first             = f_direction + 1
   integer, parameter :: F_frequency         = f_first + 1
-  integer, parameter :: F_last              = f_frequency + 1
+  integer, parameter :: F_instrument        = f_frequency + 1
+  integer, parameter :: F_last              = f_instrument + 1
   integer, parameter :: F_lo                = f_last + 1
   integer, parameter :: F_module            = f_lo + 1
   integer, parameter :: F_polarization      = f_module + 1
@@ -62,10 +64,13 @@ module Init_MLSSignals_m
   integer, parameter :: Last_Signal_Field   = f_width
 
   ! Literals used in signal specifications:
-  integer, parameter :: Last_Signal_Lit     = last_molecule
+  integer, parameter :: Last_Signal_Lit    = last_molecule
+
+  ! Enumeration types:
+  integer, parameter :: T_INSTRUMENTTYPE   = last_intrinsic_spec+1
 
   ! Signal specifications:
-  integer, parameter :: S_band             = last_intrinsic_spec + 1
+  integer, parameter :: S_band             = t_instrumenttype + 1
   integer, parameter :: S_module           = s_band + 1
   integer, parameter :: S_radiometer       = s_module + 1
   integer, parameter :: S_signal           = s_radiometer + 1
@@ -84,7 +89,7 @@ contains
     ! "use Tree" really belongs in make_tree, but "make depends" can't see it there
     ! (because of the "include"):
     use TREE, only:
-    use TREE_TYPES, only: N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
+    use TREE_TYPES, only: N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF, N_DT_DEF
 
     integer, intent(in) :: N_DATA_TYPE_INDICES
     integer, intent(in) :: N_FIELD_INDICES
@@ -107,6 +112,7 @@ contains
     field_indices(f_direction) =           add_ident ( 'direction' )
     field_indices(f_first) =               add_ident ( 'first' )
     field_indices(f_frequency) =           add_ident ( 'frequency' )
+    field_indices(f_instrument) =          add_ident ( 'instrument' )
     field_indices(f_last) =                add_ident ( 'last' )
     field_indices(f_lo) =                  add_ident ( 'lo' )
     field_indices(f_module) =              add_ident ( 'module' )
@@ -121,6 +127,9 @@ contains
     field_indices(f_suffix) =              add_ident ( 'suffix' )
     field_indices(f_switch) =              add_ident ( 'switch' )
     field_indices(f_width) =               add_ident ( 'width' )
+
+    ! Put enumeration type names into the symbol table
+    data_type_indices(t_instrumenttype) =  add_ident ( 'instrumenttype' )
     ! Put spec names into the symbol table
     spec_indices(s_band) =                 add_ident ( 'band' )
     spec_indices(s_module) =               add_ident ( 'module' )
@@ -165,8 +174,12 @@ contains
     ! f_field_name ... of the specification named by the spec_name.
 
     call make_tree ( (/ &
-      begin, s+s_module, &
+             begin, t+t_instrumentType, &
+             l+l_emls, l+l_umls, l+l_xptl1, n+n_dt_def /) )
+    call make_tree ( (/ &
+      begin, s+s_module, &          ! Must be after module
              begin, f+f_Aura, t+t_boolean, n+n_field_type, &
+             begin, f+f_instrument, t+t_instrumentType, n+n_field_type, &
              begin, f+f_spacecraft, t+t_boolean, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_radiometer, &          ! Must be after module
@@ -220,6 +233,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.31  2013/11/06 01:46:30  pwagner
+! May read instrument field of module; e.g. emls
+!
 ! Revision 2.30  2013/09/04 00:00:59  pwagner
 ! Comments preceding use TREE made more uniform across modules
 !
