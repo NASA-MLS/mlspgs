@@ -143,13 +143,11 @@ contains
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSSIGNALS_M, only: GETSIGNALNAME, &
       & SIGNALS
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
-      & SWITCHDETAIL
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUT
+    use OUTPUT_M, only: BEVERBOSE, OUTPUT
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
     ! integer, intent(in) :: name
@@ -172,8 +170,8 @@ contains
     logical :: tvalue
     logical :: verbose, verboser
     ! Executable
-    verbose = ( switchDetail(switches, 'bool') > -1 )
-    verboser = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
+    verboser = BeVerbose ( 'bool', 0 )
     nullify(Signal_Indices)
     ! call get_string(name, nameString)
     ! nameString = lowerCase(nameString)
@@ -242,23 +240,19 @@ contains
 
   ! -----------------------------------  BooleanFromAnyGoodValues  -----
   function BOOLEANFROMANYGOODVALUES ( ROOT, VECTORS ) result( THESIZE )
-    use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
       & F_QUANTITY, F_BOOLEAN, F_STATUS
     use MANIPULATEVECTORQUANTITIES, only: ANYGOODDATAINQTY
     use MLSKINDS, only: RV
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
-      & SWITCHDETAIL
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUT
+    use OUTPUT_M, only: BEVERBOSE, OUTPUT
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, &
       & GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy args
-    ! integer, intent(in) :: name
     integer, intent(in) :: root
     type (vector_T), dimension(:) :: Vectors
     integer             :: thesize
@@ -280,8 +274,8 @@ contains
     integer :: VECTORINDEX
     logical :: verbose, verboser
     ! Executable
-    verbose = ( switchDetail(switches, 'bool') > -1 )
-    verboser = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
+    verboser = BeVerbose ( 'bool', 0 )
     nullify( precisionquantity, qualityquantity, Quantity, statusquantity )
     ! call get_string(name, nameString)
     ! nameString = lowerCase(nameString)
@@ -346,16 +340,13 @@ contains
     ! and optionally if the warning matches a supplied message string
     ! syntax: 
     ! CatchWarning, [message='string'], Boolean="name"
-    use DUMP_0, only: DUMP
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_MESSAGE
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMESSAGEINQUIRE
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
-      & SWITCHDETAIL
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: BEVERBOSE, OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
     integer, intent(in) :: root
@@ -372,8 +363,8 @@ contains
     logical :: tvalue
     logical :: verbose, verboser
     ! Executable
-    verbose = ( switchDetail(switches, 'bool') > -1 )
-    verboser = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
+    verboser = BeVerbose ( 'bool', 0 )
     tvalue= .false.
     message = ' '
     do keyNo = 2, nsons(root)
@@ -434,12 +425,11 @@ contains
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSTATS1, only: MLSMAX, MLSMIN, MLSMEAN, MLSMEDIAN
     use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT, &
-      & REPLACESUBSTRING, SWITCHDETAIL
+      & REPLACESUBSTRING
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUT
+    use OUTPUT_M, only: BEVERBOSE, OUTPUT
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: SWITCHES
-    use Trace_m, only: Trace_Begin, Trace_End
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, M_FILL, &
       & GETVECTORQTYBYTEMPLATEINDEX
@@ -485,8 +475,8 @@ contains
 
     ! Executable
     call trace_begin ( me, "BooleanFromComparingQtys", cond=.false. )
-    verbose = ( switchDetail(switches, 'bool') > -1 )
-    verboser = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
+    verboser = BeVerbose ( 'bool', 0 )
     nullify( aQuantity, bQuantity )
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
@@ -671,12 +661,10 @@ contains
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_GRID
     use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
-      & SWITCHDETAIL
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUT, HEADLINE
+    use OUTPUT_M, only: BEVERBOSE, OUTPUT, HEADLINE
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
     integer, intent(in) :: root
@@ -694,8 +682,8 @@ contains
     integer :: value
     logical :: verbose, verboser
     ! Executable
-    verbose = ( switchDetail(switches, 'bool') > -1 )
-    verboser = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
+    verboser = BeVerbose ( 'bool', 0 )
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -754,12 +742,10 @@ contains
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSPCF2, only: MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT, &
-      & SWITCHDETAIL
+    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: BEVERBOSE, OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
     integer, intent(in) :: root
@@ -784,8 +770,8 @@ contains
     logical, dimension(:), pointer  :: oddStatus => null() ! true if all status odd
     logical :: verbose, verboser
     ! Executable
-    verbose = ( switchDetail(switches, 'bool') > -1 )
-    verboser = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
+    verboser = BeVerbose ( 'bool', 0 )
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -877,17 +863,16 @@ contains
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMESSAGE
     use MLSSTRINGLISTS, only: EVALUATEFORMULA, GETHASHELEMENT, &
-      & INSERTHASHELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT, SWITCHDETAIL
+      & INSERTHASHELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS, WRITEINTSTOCHARS
     use MORETREE, only: GET_BOOLEAN
-    use OUTPUT_M, only: NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: BEVERBOSE, NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, &
       & CLONEVECTORQUANTITY, CREATEVECTORVALUE, &
-      & DESTROYVECTORQUANTITYVALUE, DUMP, GATHERVECTORQUANTITY, &
+      & DESTROYVECTORQUANTITYVALUE, DUMP, &
       & GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy args
     integer, intent(in) :: NAME
@@ -927,8 +912,8 @@ contains
     integer :: VECTORINDEX
     logical :: verbose, verboser
     ! Executable
-    verbose = ( switchDetail(switches, 'bool') > 0 )
-    verboser = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
+    verboser = BeVerbose ( 'bool', 0 )
     nullify( aQuantity, bQuantity )
     c = 0._rv
     evaluate= .false.
@@ -1181,11 +1166,12 @@ contains
     use MLSMESSAGEMODULE, only: MLSMSG_CRASH, MLSMSG_ERROR, MLSMessageCalls, &
       & MLSMESSAGEEXIT
     use MLSFINDS, only: FINDFIRST
-    use MLSSIGNALS_M, only: DUMP, GETRADIOMETERINDEX, RADIOMETERS, SIGNALS
+    use MLSSIGNALS_M, only: RADIOMETERS, SIGNALS, &
+      & DUMP, DUMP_ALL, GETRADIOMETERINDEX
     use MLSSTRINGS, only: INDEXES, LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
     use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
-    use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: BEVERBOSE, BLANKS, OUTPUT, OUTPUTNAMEDVALUE
     use PFADATABASE_M, only: DUMP, DUMP_PFADATABASE, DUMP_PFAFILEDATABASE, &
       & DUMP_PFASTRUCTURE, PFADATA
     use POINTINGGRID_M, only: DUMP_POINTING_GRID_DATABASE
@@ -1277,7 +1263,7 @@ contains
 
     ! Executable
     call trace_begin ( me, 'DumpCommand', root, cond=toggle(gen) )
-    verbose = ( switchDetail(switches, 'bool') > -1 )
+    verbose = BeVerbose ( 'bool', -1 )
     nullify ( vector, quantity )
     ! Were we called to do a diff or a dump?
     ! The following must be one of (/ s_dump, s_diff /)
@@ -1432,7 +1418,9 @@ contains
             end if
           case ( f_allSignals )
             if ( details < -1 ) cycle
-            if ( associated(signals) ) then
+            if ( details > 1 ) then
+              call dump_all
+            elseif ( associated(signals) ) then
               call dump ( signals, details=details>0 )
             else
               call announceError ( son, noSignals )
@@ -1765,15 +1753,15 @@ contains
             ! dump that qty2
             ! and then destroy it
             if ( any(got( (/f_start, f_count, f_stride, f_block/) ) ) ) then
-              VectorValue = GatherVectorQuantity( qty1, &
-                & start(1:hSlabRank), count(1:hSlabRank), &
-                & stride(1:hSlabRank), block(1:hSlabRank) ) 
               if ( verbose ) then
                 call outputNamedValue( 'start(1:rank)', start(1:hSlabRank) )
                 call outputNamedValue( 'count(1:rank)', count(1:hSlabRank) )
                 call outputNamedValue( 'stride(1:rank)', stride(1:hSlabRank) )
                 call outputNamedValue( 'block(1:rank)', block(1:hSlabRank) )
               endif
+              VectorValue = GatherVectorQuantity( qty1, &
+                & start(1:hSlabRank), count(1:hSlabRank), &
+                & stride(1:hSlabRank), block(1:hSlabRank) ) 
               if ( index(optionsString, '1') < 1 ) &
                 & call dump ( VectorValue, details=0, &
                 & vector=vectors(vectorIndex) )
@@ -2073,12 +2061,12 @@ contains
   ! a wildcard matching anything
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL, F_OPTIONS
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
+    use MLSSTRINGLISTS, only: GETHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE, STREQ
     use MORETREE, only: GET_FIELD_ID
-    use OUTPUT_M, only: OUTPUT
+    use OUTPUT_M, only: BEVERBOSE, OUTPUT
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: NSONS, SUB_ROSA, SUBTREE
     ! Args
@@ -2095,8 +2083,8 @@ contains
 
     ! Executable
     call trace_begin ( me, 'MLSCase', root, cond=toggle(gen) )
-    verbose = ( switchDetail(switches, 'bool') > -1 )
-    verboser = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
+    verboser = BeVerbose ( 'bool', 0 )
     MLSSelecting = .true. ! Defaults to skipping rest of case
     if ( MLSSelectedAlready ) then
       call trace_end ( 'MLSCase', cond=toggle(gen) )
@@ -2146,12 +2134,12 @@ contains
   ! the Label field or value of the Boolean field
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
+    use MLSSTRINGLISTS, only: GETHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_FIELD_ID
-    use OUTPUT_M, only: OUTPUT
+    use OUTPUT_M, only: BEVERBOSE, OUTPUT
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: NSONS, SUB_ROSA, SUBTREE
     ! Args
@@ -2167,8 +2155,8 @@ contains
 
     ! Executable
     call trace_begin ( me, 'MLSSelect', root, cond=toggle(gen) )
-    verbose = ( switchDetail(switches, 'bool') > -1 )
-    verboser = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
+    verboser = BeVerbose ( 'bool', 0 )
     label = ' '
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -2258,13 +2246,12 @@ contains
   logical function SKIP ( ROOT, NAME )
     use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETHASHELEMENT, PUTHASHELEMENT, &
-      & SWITCHDETAIL
+    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETHASHELEMENT, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
     use MORETREE, only: GET_FIELD_ID
-    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: BEVERBOSE, OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: NSONS, SUB_ROSA, SUBTREE
     ! Args
@@ -2285,8 +2272,8 @@ contains
     logical :: verbose, verboser
 
     ! Executable
-    verbose = ( switchDetail(switches, 'bool') > -1 )
-    verboser = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
+    verboser = BeVerbose ( 'bool', 0 )
     myName = 'Skip'
     if ( present(name) ) myName = name
     call trace_begin ( me, myName, root, cond=toggle(gen) )
@@ -2420,10 +2407,9 @@ contains
 
   function myBooleanValue ( FORMULA ) result ( BVALUE )
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT, SWITCHDETAIL
+    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT
     use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS
-    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
-    use TOGGLES, only: SWITCHES
+    use OUTPUT_M, only: BEVERBOSE, OUTPUT, OUTPUTNAMEDVALUE
     ! Calculate the boolean value according to
     ! (1) The logical value of its formula, if the formula
     !     does not contain the special operators "==" or "/="
@@ -2441,7 +2427,7 @@ contains
     real :: x
     real :: y
     ! Executable
-    verbose = ( switchDetail(switches, 'bool') > 0 )
+    verbose = BeVerbose ( 'bool', -1 )
     bvalue = .false.
     reverse = .false.
     if ( index(formula, "==") > 1 ) then
@@ -2527,7 +2513,7 @@ contains
     ! Evaluate all the terms in a formula
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: LIST2ARRAY, EVALUATEFORMULA, NUMSTRINGELEMENTS
-    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    ! use OUTPUT_M, only: OUTPUTNAMEDVALUE
     ! Args
     character(len=*), intent(in) :: formula
     character(len=MAXRESULTLEN)  :: itsValue
@@ -2550,7 +2536,7 @@ contains
   function EvaluateTermwise ( FORMULA ) result( ITSVALUE )
     ! Evaluate all the terms in a formula
     use MLSSTRINGLISTS, only: ARRAY2LIST, LIST2ARRAY, NUMSTRINGELEMENTS
-    use OUTPUT_M, only: OUTPUTNAMEDVALUE
+    ! use OUTPUT_M, only: OUTPUTNAMEDVALUE
     ! Args
     character(len=*), intent(in) :: formula
     character(len=MAXRESULTLEN)  :: itsValue
@@ -2672,6 +2658,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.105  2013/11/07 00:26:44  pwagner
+! May dump all dbs related to signals if details >1; use beVerbose
+!
 ! Revision 2.104  2013/10/24 21:12:19  pwagner
 ! Corrected some bugs in dumping hyperslabs
 !
