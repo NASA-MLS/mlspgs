@@ -145,14 +145,16 @@
     integer :: Top = 0         ! Top of the stack, index into Ind
     logical :: silent  = .false. ! E.g., in case it becomes corrupted
     logical :: verbose = .false.
+    logical, dimension(:), pointer :: verboseDB => null()
+    logical, dimension(:), pointer :: debugDB   => null()
   end type MLSCallStack_t
   type(MLSCallStack_t), public, save :: MLSCALLSTACK
   
   ! Public procedures
-  public :: DUMPCONFIG, RESTORECONFIG, SetConfig
-  public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESETUP, MLSMESSAGECLOSE
+  public :: DUMPCONFIG, RESTORECONFIG, SETCONFIG
+  public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESTD, MLSMESSAGESETUP
   public :: MLSMESSAGEEXIT, MLSMESSAGEINQUIRE, MLSMESSAGEINTERNALFILE
-  public :: MLSMESSAGERESET, PVMERRORMESSAGE
+  public :: MLSMESSAGECLOSE, MLSMESSAGERESET, PVMERRORMESSAGE
   public :: REPORTTKSTATUS
   public :: MLSMESSAGECALLS, STOPWITHERRORMSG, SUMMARIZEWARNINGS
 
@@ -477,34 +479,72 @@ contains
   contains
     subroutine PopStack ( Name )
       character(len=*), optional, intent(inout) :: Name
-      if ( MLSCallStack%top < 1 ) return
+      ! Internal variables
+      integer :: newSize
+      integer :: oldSize
+      ! Executable
+      oldSize = MLSCallStack%top
+      if ( oldSize < 1 ) return
       if ( present(name) ) then
-        if ( MLSCallStack%top < 0 ) then
+        if ( oldSize < 0 ) then
           name = "Stack underflow"
-        else if ( MLSCallStack%top >= ubound(MLSCallStack%ind,1) ) then
+        else if ( oldSize >= ubound(MLSCallStack%ind,1) ) then
           name = "Stack overflow"
         else
-          ! name = MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top)+1: &
-          !                        MLSCallStack%ind(MLSCallStack%top+1))
-          m = min(MLSCallStack%top,ubound(MLSCallStack%ind,1)) + 1
+          ! name = MLSCallStack%txt(MLSCallStack%ind(oldSize)+1: &
+          !                        MLSCallStack%ind(oldSize+1))
+          m = min(oldSize,ubound(MLSCallStack%ind,1)) + 1
           name = MLSCallStack%txt(MLSCallStack%ind(m-2)+1: &
                                     MLSCallStack%ind(m-1))
         end if
       end if
+      if ( .not. associated(MLSCallStack%verboseDB) ) return
+      oldSize = min( oldSize, size(MLSCallStack%verboseDB) )
+      newSize = RmLogicalFromDatabase( MLSCallStack%verboseDB, oldSize )
+      newSize = RmLogicalFromDatabase( MLSCallStack%debugDB, oldSize )
+      if ( newSize > 0 ) then
+        MLSDebug   = MLSCallStack%debugDB(newSize)
+        MLSVerbose = MLSCallStack%VerboseDB(newSize)
+      else
+        MLSDebug   = .false.
+        MLSVerbose = .false.
+      endif
+     !  call PrintItOut ( 'After PopStack ', MLSMSG_Info )
+     !  call dump ( 'newSize ', intValue=MLSCallStack%top - 1 )
+     !  if ( associated(MLSCallStack%verboseDB) ) then
+     !    call dump ( 'size(MLSCallStack%verboseDB) ', intValue=size(MLSCallStack%verboseDB) )
+     !    call dump ( 'size(MLSCallStack%debugDB) ', intValue=size(MLSCallStack%debugDB) )
+     !  else
+     !    call PrintItOut ( 'verbose and debug dbs not associated ', MLSMSG_Info )
+     !  endif
     end subroutine PopStack
 
     subroutine PushStack ( myname )
       character(len=*), intent(inout) :: myname
-      MLSCallStack%top = max(MLSCallStack%Top + 1, 1) ! MAX in case it underflowed earlier
+      ! Internal variables
+      integer :: newSize
+      integer :: oldSize
+      ! Executable
+      oldSize = MLSCallStack%top
+      MLSCallStack%top = max(oldSize + 1, 1) ! MAX in case it underflowed earlier
+      newSize = MLSCallStack%top
+      newSize = AddLogicalToDatabase( MLSCallStack%verboseDB, MLSVerbose )
+      newSize = AddLogicalToDatabase( MLSCallStack%debugDB, MLSDebug )
       myName = snipRCSFrom ( myName )
       m = len_trim(myName)
-      if ( MLSCallStack%Top > ubound(MLSCallStack%ind,1) ) then
+      if ( newSize > ubound(MLSCallStack%ind,1) ) then
         call dumpStack ( adjustl(myName(:m)) )
         MLSCallStack%silent = .true.
       else
-        MLSCallStack%ind(MLSCallStack%top) = MLSCallStack%ind(MLSCallStack%top-1) + m
-        MLSCallStack%txt(MLSCallStack%ind(MLSCallStack%top-1)+1:) = myName(:m) ! clear the rest
+        MLSCallStack%ind(newSize) = MLSCallStack%ind(newSize-1) + m
+        MLSCallStack%txt(MLSCallStack%ind(newSize-1)+1:) = myName(:m) ! clear the rest
       end if
+      ! MLSCallStack%top = min( MLSCallStack%top, newSize )
+     !  call PrintItOut ( 'After PushStack ' // trim(myname), MLSMSG_Info )
+     !  call dump ( 'oldSize ', intValue=oldSize )
+     !  call dump ( 'newSize ', intValue=MLSCallStack%top )
+     !  call dump ( 'size(MLSCallStack%verboseDB) ', intValue=size(MLSCallStack%verboseDB) )
+     !  call dump ( 'size(MLSCallStack%debugDB) ', intValue=size(MLSCallStack%debugDB) )
     end subroutine PushStack
 
     subroutine DumpStack ( What )
@@ -863,6 +903,84 @@ contains
   end subroutine SummarizeWarnings
 
   ! Private procedures
+  ! ------------------------------------------  AddLogicalToDatabase  -----
+  integer function AddLogicalToDatabase ( Database, Item )
+    logical, dimension(:), pointer :: Database
+    logical, intent(in) :: Item
+
+    ! Local variables
+    logical, dimension(:), pointer :: tempDatabase
+
+    integer :: newSize, status
+
+    ! Executable code
+
+    if ( associated(database) ) then ! tree_checker prevents duplicate names
+      newSize=SIZE(database)+1
+    else
+      newSize=1
+    end if
+
+    allocate(tempDatabase(newSize),STAT=status)
+    if ( status/=0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "tempDatabase")
+
+    if ( newSize>1 ) tempDatabase(1:newSize-1) = database
+    if ( ASSOCIATED(database) ) deallocate ( database, stat=status )
+    if ( status /= 0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // "database" )
+    database => tempDatabase
+    database(newSize) = item
+
+    AddLogicalToDatabase = newSize
+  end function AddLogicalToDatabase
+
+  ! ------------------------------------------  RmLogicalFromDatabase  -----
+  integer function RmLogicalFromDatabase ( Database, itemIndex )
+    logical, dimension(:), pointer :: Database
+    integer, intent(in) :: itemIndex   ! Index of item
+
+    ! Local variables
+    logical, dimension(:), pointer :: tempDatabase
+    logical, parameter :: okToDeallocEmptyDB = .true.
+
+    integer :: newSize, status
+    integer :: i
+    ! Executable code
+    newSize=0
+    if ( .not. associated(database) ) then
+      call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+        & "Attempt to remove item from an empty database")
+    elseif ( size(database) < itemIndex .or. itemIndex < 1) then
+      call dump ( 'size(database) ', intValue=size(database) )
+      call dump ( 'itemIndex ', intValue=itemIndex )
+      call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+        & "Attempt to remove an item not found in database")
+    elseif ( size(database) == 1) then
+      if ( okToDeallocEmptyDB ) then
+        deallocate ( database, stat=status )
+        if ( status /= 0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate // "database" )
+      endif
+    else
+      allocate(tempDatabase(SIZE(database)-1), STAT=status)
+      if ( status/=0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate // "tempDatabase")
+      do i=1, SIZE(database)
+        if (i /= itemIndex) then
+          newSize = newSize+1
+          tempDatabase(newSize) = database(i)
+        endif
+      enddo
+      deallocate ( database, stat=status )
+      if ( status /= 0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "database" )
+      database => tempDatabase
+    end if
+
+    RmLogicalFromDatabase = newSize
+  end function RmLogicalFromDatabase
+
   ! ---------------------------------------------------  dumpFile  -----
   subroutine dumpFile ( MLSFile  )
     ! Show everything about it
@@ -927,7 +1045,7 @@ contains
     ! Print a message (unless printing is suppressed).  If it has %[Nn]
     ! in it, replace that with newline.
 
-    use PrintIt_m, only: GET_CONFIG
+    use PRINTIT_M, only: GET_CONFIG
     use CALL_STACK_M, only: DUMP_STACK
     ! Dummy arguments
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
@@ -1007,6 +1125,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.31  2013/11/13 18:57:50  pwagner
+! verbose and debug dbs track and restore states in MLSCallStack
+!
 ! Revision 2.30  2013/11/01 00:06:33  pwagner
 ! Prevent dumps of a corrupt MLSCallStack
 !
