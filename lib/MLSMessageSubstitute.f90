@@ -15,9 +15,10 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
   use CALL_STACK_M, only: DUMP_STACK
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCommon, only: MLSFILE_T
-  use MLSStrings, only: CAPITALIZE
+  use MLSCOMMON, only: MLSFILE_T, MLSDEBUG, MLSVERBOSE
+  use MLSSTRINGS, only: CAPITALIZE
   use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, LOGUNITNAME, PREFIXLEN, &
+    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_SUCCESS, &
     & MLSMSG_TESTWARNING, MLSMSG_WARNING, MLSMESSAGECONFIG_T, &
     & DEFAULTLOGUNIT, INVALIDLOGUNIT, PREFIXLEN, &
@@ -88,11 +89,6 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     character (len=*), intent(in) :: Message ! Line of text
     integer, intent(in), optional :: Threshold ! Min severity to log message
 
-    ! Internal variables
-    integer :: levelmask
-    integer :: myThreshold
-    integer :: severity
-
     ! Executable code
     call MLSMessage( MLSMSG_Info, ModuleNameIn, Message )
   end subroutine ReportTKStatus
@@ -150,6 +146,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.13  2013/11/13 21:41:35  pwagner
+! Compatible with PRINTIT_M, MLSMessage.f9h
+!
 ! Revision 2.12  2013/08/28 00:35:39  pwagner
 ! Moved more stuff from MLSMessage down to PrintIt module
 !
