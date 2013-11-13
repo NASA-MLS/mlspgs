@@ -21,8 +21,6 @@ module TRACE_M
   end interface
 
   character (len=8), save :: PreviousDate = ' '
-  logical, save           :: PreviousDebug
-  logical, save           :: PreviousVerbose
   logical, parameter      :: DEEBUG = .false.
   logical, parameter      :: VERBOSE = .false.
 
@@ -125,18 +123,14 @@ contains ! ====     Public Procedures     ==============================
     end if
 
     ! Must we set debug or verbose based on the module name?
-    ! (Actually this "prior state" is among the things that Call_Stack
-    ! might track for us)
     call top_stack ( frame )
     call get_string ( frame%text, parentName )
     if ( switchDetail( MLSNamesAreDebug, parentName, options='-fc' ) > -1 &
       & .and. .not. MLSDebug ) then
-      PreviousDebug = MLSDebug
       MLSDebug = .true.
     end if
     if ( switchDetail( MLSNamesAreVerbose, parentName, options='-fc' ) > -1 &
       & .and. .not. MLSVerbose ) then
-      PreviousVerbose = MLSVerbose
       MLSVerbose = .true.
     end if
 
@@ -217,18 +211,6 @@ contains ! ====     Public Procedures     ==============================
       end if
     end if
 
-    ! Have we set debug or verbose based on the module name?
-    ! If so, revert to the previous values
-    call get_string ( frame%text, parentName )
-    if ( switchDetail( MLSNamesAreDebug, parentName, options='-fc' ) > -1 &
-      & .and. MLSDebug ) then
-      MLSDebug = PreviousDebug
-    end if
-    if ( switchDetail( MLSNamesAreVerbose, parentName, options='-fc' ) > -1 &
-      & .and. MLSVerbose ) then
-      MLSVerbose = PreviousVerbose
-    end if
-
 !   call top_stack ( frame )
 !   call get_string ( frame%text, outputOptions%parentName )
     call MLSMessageCalls( 'pop' )
@@ -279,6 +261,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.36  2013/11/13 19:05:01  pwagner
+! Replaced idea of saving and restoring previous states of verbose, debug with stack
+!
 ! Revision 2.35  2013/11/04 22:52:39  pwagner
 ! Treat MLSNamesAreDebug, MLSNamesAreVerbose like switches
 !
