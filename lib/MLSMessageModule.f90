@@ -15,8 +15,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
   use CALL_STACK_M, only: DUMP_STACK
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCommon, only: MLSFile_T
-  use MLSStrings, only: CAPITALIZE
+  use MLSCOMMON, only: MLSFILE_T, MLSDEBUG, MLSVERBOSE
+  use MLSSTRINGS, only: CAPITALIZE
   use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, LOGUNITNAME, PREFIXLEN, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_SUCCESS, &
@@ -25,7 +25,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     & PRINTITOUT, SNIPRCSFROM, &
     & STDOUTLOGUNIT, MLSMESSAGECONFIG, &
     & MLSMSG_SEVERITY_SO_FAR, MLSMSG_SEVERITY_TO_QUIT, MLSMSG_SEVERITY_TO_WALKBACK
-  use SDPToolkit, only: PGS_S_SUCCESS
+  use SDPTOOLKIT, only: PGS_S_SUCCESS
 
   implicit none
   private
@@ -200,6 +200,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.45  2013/11/13 19:02:13  pwagner
+! store or restore MLSDEBUG and MLSVERBOSE
+!
 ! Revision 2.44  2013/08/28 00:35:39  pwagner
 ! Moved more stuff from MLSMessage down to PrintIt module
 !
