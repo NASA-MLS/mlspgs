@@ -304,17 +304,9 @@ while [ "$more_opts" = "yes" ] ; do
        echo "Adding unrecognized option: $1" >> $LOGFILE
        shift
        ;;
-#   --* )
-#      echo "Skipping unknown argument: $1" >> $LOGFILE
-#      shift
-#      ;;
-#    -S* )
-#       echo "Skipping switch-setting argument: $1" >> $LOGFILE
-#       shift
-#       ;;
-    -S* )
+    -[DRSV]* )
        switches="$switches $1"
-       echo "Appending switch-setting argument: $1" >> $LOGFILE
+       echo "Appending one of the switch-setting arguments: $1" >> $LOGFILE
        shift
        ;;
     -f* )
@@ -396,6 +388,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.9  2013/09/04 17:44:45  pwagner
+# Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+#
 # Revision 1.8  2013/02/14 19:06:53  pwagner
 # Defaults to adding instead of skipping unknown args
 #

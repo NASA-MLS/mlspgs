@@ -308,17 +308,9 @@ while [ "$more_opts" = "yes" ] ; do
        echo "Adding unrecognized option: $1" >> $LOGFILE
        shift
        ;;
-#   --* )
-#      echo "Skipping unknown argument: $1" >> $LOGFILE
-#      shift
-#      ;;
-#    -S* )
-#       echo "Skipping switch-setting argument: $1" >> $LOGFILE
-#       shift
-#       ;;
-    -S* )
+    -[DRSV]* )
        switches="$switches $1"
-       echo "Appending switch-setting argument: $1" >> $LOGFILE
+       echo "Appending one of the switch-setting arguments: $1" >> $LOGFILE
        shift
        ;;
     -f* )
@@ -403,6 +395,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.27  2013/09/04 17:44:45  pwagner
+# Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+#
 # Revision 1.26  2013/08/30 17:22:46  pwagner
 # Trying to stop slaves from writing to toolkit log
 #
