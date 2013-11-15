@@ -152,7 +152,7 @@
   
   ! Public procedures
   public :: DUMPCONFIG, RESTORECONFIG, SETCONFIG
-  public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESTD, MLSMESSAGESETUP
+  public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESETUP
   public :: MLSMESSAGEEXIT, MLSMESSAGEINQUIRE, MLSMESSAGEINTERNALFILE
   public :: MLSMESSAGECLOSE, MLSMESSAGERESET, PVMERRORMESSAGE
   public :: REPORTTKSTATUS
@@ -1125,6 +1125,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.32  2013/11/15 00:15:11  pwagner
+! Remove MLSMESSAGESTD from public list
+!
 ! Revision 2.31  2013/11/13 18:57:50  pwagner
 ! verbose and debug dbs track and restore states in MLSCallStack
 !
