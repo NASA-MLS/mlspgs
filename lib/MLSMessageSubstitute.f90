@@ -52,22 +52,15 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   
   ! Here, however, the Toolkit `substitute' just does a simple print.
   
-  ! Alternate entries for special circumstances are PVMErrorMessage
-  ! (to log a PVM Error)
-  ! and ReportTKStatus
+  ! For alternate procedures see the toc in MLSMessage.f9h
   
-  ! Another choice to report an error is StopWithErrorMsg
-  ! which lets you dump a calling stack you create using MLSMessageCalls
-  ! (to report on the severity of a PGS Toolkit return status)
-  
-  ! Yet another mode is MLSMessage_, useful if you overload MLSMessage with
-  ! another module's MLSMessage subroutine accepting extra args
-  ! which can then turn around and call MLSMessage_
-
   ! We dispense with most of the toolkit panoply, needing only the modules
   ! Machine
   ! MLSKinds
   ! MLSCommon
+  ! CALL_STACK_M
+  ! PRINTIT_M
+  ! MLSSTRINGS
 
   integer, public, parameter ::  PGS_S_SUCCESS = 0
 
@@ -117,6 +110,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   subroutine LastGasp ( ModuleNameIn, Message )
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
+    call MLSMessage( MLSMSG_Info, ModuleNameIn, 'No pvm to send ' // Message )
   end subroutine LastGasp
 
   !-----------------------------------------  level2severity  -----
@@ -146,6 +140,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.14  2013/11/15 00:03:51  pwagner
+! Comments confess need for 3 more modules; LastGasp gasps its inability
+!
 ! Revision 2.13  2013/11/13 21:41:35  pwagner
 ! Compatible with PRINTIT_M, MLSMessage.f9h
 !
