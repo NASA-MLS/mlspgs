@@ -50,13 +50,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! file (PCF# 10101) in the toolkit.  In the Toolkit `substitute' it just
   ! does a simple print.
   
-  ! Alternate entries for special circumstances are PVMErrorMessage
-  ! (to log a PVM Error)
-  ! and ReportTKStatus
-  
-  ! Another choice to report an error is StopWithErrorMsg
-  ! which lets you dump a calling stack you create using MLSMessageCalls
-  ! (to report on the severity of a PGS Toolkit return status)
+  ! For alternate procedures see the toc in MLSMessage.f9h
   
   ! Yet another mode is MLSMessage_, useful if you overload MLSMessage with
   ! another module's MLSMessage subroutine accepting extra args
@@ -68,10 +62,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! calling code.
 
   ! A lighter-weight substitute is MLSMessageSubstitute.f90 which dispenses
-  ! with most of the toolkit panoply, needing only the modules
-  ! Machine
-  ! MLSKinds
-  ! MLSCommon
+  ! with most of the toolkit panoply.
 
   include 'MLSMessage.f9h'
 
@@ -85,7 +76,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! E.g., setting threshold to 0 will print every status, even success
 
   subroutine ReportTKStatus( status, ModuleNameIn, Message, Threshold )
-    use SDPToolkit, only: PGS_SMF_TESTSTATUSLEVEL
+    use SDPTOOLKIT, only: PGS_SMF_TESTSTATUSLEVEL
     ! Dummy arguments
     integer, intent(in) :: status ! e.g. PGS_TD_NOLEAPSECFILE
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
@@ -200,6 +191,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.46  2013/11/15 00:14:08  pwagner
+! Comments consistent with those of Substitute
+!
 ! Revision 2.45  2013/11/13 19:02:13  pwagner
 ! store or restore MLSDEBUG and MLSVERBOSE
 !
