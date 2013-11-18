@@ -14,18 +14,21 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use INIT_TABLES_MODULE, only: F_OPTIONS, F_SILENT, &
+  use INIT_TABLES_MODULE, only: F_DEBUG, F_OPTIONS, F_SILENT, &
     & F_SKIPDIRECTWRITES, F_SKIPDIRECTWRITESIF, &
-    & F_SKIPRETRIEVAL, F_SKIPRETRIEVALIF, F_STAMP
+    & F_SKIPRETRIEVAL, F_SKIPRETRIEVALIF, F_STAMP, F_VERBOSE, &
+    & FIELD_FIRST, FIELD_LAST
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
+  use MLSCommon, only: MLSDebug, MLSVerbose, &
+    & MLSDebugSticky, MLSVerboseSticky
   use MLSL2OPTIONS, only: COMMAND_LINE, DUMPMACROS, ORIGINALCMDS, &
     & PROCESSOPTIONS, RESTARTWARNINGS, RESTOREDEFAULTS, RUNTIMEVALUES, &
     & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
     & STOPAFTERSECTION
   use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, &
-    & MLSMESSAGE, MLSMESSAGERESET, MLSMSG_ERROR
+    & MLSMESSAGE, MLSMESSAGECALLS, MLSMESSAGERESET, MLSMSG_ERROR
   use MLSSTRINGS, only: LOWERCASE 
   use MLSSTRINGLISTS, only: BOOLEANVALUE, CATLISTS, GETSTRINGELEMENT, &
     & NUMSTRINGELEMENTS, STRINGELEMENTNUM, SWITCHDETAIL
@@ -281,10 +284,12 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NAME               ! String index of name
     integer, intent(in) :: ROOT               ! Root of phase subtree
     ! Local variables
+    logical :: debug
     integer :: detail
     integer :: field
     integer :: field_index
     integer :: fieldValue
+    logical, dimension(field_first:field_last) :: GOT
     integer :: interval
     integer :: keyNo
     logical, save :: LASTPHASEOVERWROTEOPTS = .false.
@@ -295,6 +300,7 @@ contains ! =====     Public Procedures     =============================
     logical :: silent
     integer :: son
     logical :: stamp
+    logical :: verbose
     ! Executable
     detail = switchDetail( switches, 'phase' )
     silent = .false.
@@ -302,6 +308,7 @@ contains ! =====     Public Procedures     =============================
     skipDirectwrites = skipDirectWritesoriginal
     skipRetrieval = skipRetrievalOriginal
     options = ' '
+    got= .false.
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
@@ -311,7 +318,11 @@ contains ! =====     Public Procedures     =============================
         fieldValue = son
       end if
       field_index = decoration(field)
+      got(field_Index) = .true.
       select case ( field_index )
+      case ( f_debug )
+        debug = get_boolean ( fieldValue )
+        call output( 'Processing debug field', advance='yes' )
       case ( f_options )
         call get_string ( sub_rosa(subtree(2,son)), options, strip=.true. )
       case ( f_silent )
@@ -344,26 +355,42 @@ contains ! =====     Public Procedures     =============================
         ! call output( skipRetrieval, advance='yes' )
       case ( f_stamp )
         stamp = stamp .or. get_boolean ( fieldValue )
+      case ( f_verbose )
+        verbose = get_boolean ( fieldValue )
+        call output( 'Processing verbos field', advance='yes' )
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
     call get_string(name, phaseString)
     currentPhaseName = phaseString
+    ! Restore settings if last one overwrote them
     if ( LASTPHASEOVERWROTEOPTS ) then
       call restoredefaults
       booleanstring = processOptions( trim( ORIGINALCMDS ) )
+      MLSDebugSticky = .false.
+      MLSVerboseSticky = .false.
       call output( 'Restoring default command-line args', advance='yes' )
       call outputNamedValue( 'command_line', trim(command_line) )
       call outputNamedValue( 'Switches', trim(Switches) )
     endif
+    ! Does this phase overwrite settings?
+    LASTPHASEOVERWROTEOPTS = .false. ! If not, we won't need to restore them next time
     if ( options /= ' ' ) then
       booleanstring = processOptions( trim(options ) )
       LASTPHASEOVERWROTEOPTS = .true.
       call output( 'Overwriting default command-line args', advance='yes' )
       call outputNamedValue( 'command_line', trim(command_line) )
       call outputNamedValue( 'Switches', trim(Switches) )
-    else
-      LASTPHASEOVERWROTEOPTS = .false.
+    endif
+    if( got(f_debug) ) then
+      MLSDebug = debug
+      MLSDebugSticky = .true.
+      LASTPHASEOVERWROTEOPTS = .true.
+    endif
+    if( got(f_verbose) ) then
+      MLSVerbose = verbose
+      MLSVerboseSticky = .true.
+      LASTPHASEOVERWROTEOPTS = .true.
     endif
     
     if ( RESTARTWARNINGS ) call MLSMessageReset( Warnings=.true. )
@@ -906,6 +933,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.51  2013/11/18 22:26:07  pwagner
+! phase spec takes optional /debug /verbose fields
+!
 ! Revision 2.50  2013/06/14 18:49:46  vsnyder
 ! Decruftification
 !
