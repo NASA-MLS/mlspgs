@@ -92,7 +92,8 @@ contains ! ====     Public Procedures     ==============================
   ! front.  Increment DEPTH.
 
     use CALL_STACK_M, only: STACK_T, PUSH_STACK, TOP_STACK
-    use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
+    use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
+      & MLSDebugSticky, MLSVerboseSticky, MLSNamesAreVerbose, MLSNamesAreDebug
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: OUTPUTOPTIONS
@@ -126,11 +127,11 @@ contains ! ====     Public Procedures     ==============================
     call top_stack ( frame )
     call get_string ( frame%text, parentName )
     if ( switchDetail( MLSNamesAreDebug, parentName, options='-fc' ) > -1 &
-      & .and. .not. MLSDebug ) then
+      & .and. .not. MLSDebugSticky ) then
       MLSDebug = .true.
     end if
     if ( switchDetail( MLSNamesAreVerbose, parentName, options='-fc' ) > -1 &
-      & .and. .not. MLSVerbose ) then
+      & .and. .not. MLSVerboseSticky ) then
       MLSVerbose = .true.
     end if
 
@@ -149,7 +150,6 @@ contains ! ====     Public Procedures     ==============================
   ! they're invoked with the same condition.
 
     use CALL_STACK_M, only: POP_STACK, STACK_T, STACK_DEPTH, TOP_STACK
-    use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTOPTIONS
@@ -261,6 +261,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.37  2013/11/18 22:24:03  pwagner
+! Sticky versions of verbose, debug available
+!
 ! Revision 2.36  2013/11/13 19:05:01  pwagner
 ! Replaced idea of saving and restoring previous states of verbose, debug with stack
 !
