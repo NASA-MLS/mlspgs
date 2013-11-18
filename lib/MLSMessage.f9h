@@ -143,8 +143,11 @@
     character(len=2048) :: Txt ! All the names, strung together
     integer :: Ind(0:100) = 0  ! Ind(i) is end of ith name
     integer :: Top = 0         ! Top of the stack, index into Ind
+    ! The next two apply only inside MLSCallStack procedures
     logical :: silent  = .false. ! E.g., in case it becomes corrupted
     logical :: verbose = .false.
+    ! These dbs affect other modules, letting us store and restore
+    ! the amount of extra printing each equires
     logical, dimension(:), pointer :: verboseDB => null()
     logical, dimension(:), pointer :: debugDB   => null()
   end type MLSCallStack_t
@@ -374,9 +377,14 @@ contains
   ! 'clear'   clear the stack
   ! 'print'   print its contents as a single line
   ! 'dump'    print a walkback, one name per line, top to bottom
+  ! 'dumpdb'  dump verboseDB and debugDB
   ! 'depth'   return the number of elements on the stack
   ! 'length'  return the total length taken by the elements on the stack
   ! 'remain'  return the total length remaining before the stack is full
+  ! 'verbosedb' reset all the elements of verboseDB
+  !            (forgetting all the prior states of verboseness)
+  ! 'debugdb' reset all the elements of debugDB
+  !            (forgetting all the prior states of debugging)
   
   ! Every command except 'print', '[r]dump', 'depth', 'length', 'top',
   ! and 'remain' change the stack
@@ -388,16 +396,19 @@ contains
   ! If name is omitted, it will be lost or assumed blank, as appropriate
 
   ! --------------------------------------------  MLSMessageCalls  -----
-  subroutine MLSMessageCalls ( command, name, constantName )
+  subroutine MLSMessageCalls ( command, name, constantName, lvalue )
     ! Args
     character(len=*), intent(in)              :: command
     ! Because name is (inout) you cannot call this with a constant
     ! so if you wish to use a constant use constantName instead
     character(len=*), optional, intent(inout) :: name
     character(len=*), optional, intent(in)    :: constantName
+    logical, optional, intent(in)             :: lvalue
     ! Internal variables
     character(len=1), parameter :: comma = achar(0) ! '?' ! ','
+    integer :: i
     integer :: m
+    logical :: myLValue
     character(len=MAXSTACKNAMELEN) :: myName
     logical, parameter  :: nosubsequentwarnings = .false.
     ! Executable
@@ -413,6 +424,8 @@ contains
       end if
     end if
     myName = ' '
+    myLValue = .false.
+    if ( present(lvalue) ) myLValue = lvalue
     select case( command )
     case ( 'push' )
       if ( present(name) ) myName = name
@@ -428,6 +441,21 @@ contains
       MLSCallStack = InvertStack( MLSCallStack )
     case ( 'dump' )
       call dumpStack
+    case ( 'dumpdb', 'dumpDB' )
+      if ( associated(  MLSCallStack%debugDB) ) then
+        call dump( 'db', charValue='debug' )
+        do i=1, size(MLSCallStack%debugDB)
+          write( myName, '(i2)' ) i
+          call dump( trim(myName), logValue=MLSCallStack%debugDB(i) )
+        enddo
+      endif
+      if ( associated(  MLSCallStack%verboseDB) ) then
+        call dump( 'db', charValue='verbose' )
+        do i=1, size(MLSCallStack%verboseDB)
+          write( myName, '(i2)' ) i
+          call dump( trim(myName), logValue=MLSCallStack%verboseDB(i) )
+        enddo
+      endif
     case ( 'print', 'rprint' )
       if ( MLSCallStack%top < 0 ) then
         call printItOut ( '.. Stack Underflow', MLSMSG_info )
@@ -470,6 +498,10 @@ contains
       MLSCallStack = InvertStack( MLSCallStack )
       call dumpStack
       MLSCallStack = InvertStack( MLSCallStack )
+    case ( 'verbosedb', 'verboseDB' )
+      if ( associated(MLSCallStack%verboseDB) ) MLSCallStack%verboseDB = myLValue
+    case ( 'debugdb', 'debugDB' )
+      if ( associated(MLSCallStack%debugDB) ) MLSCallStack%debugDB = myLValue
     case default
       ! Unrecognized command--we'll ignore it
       if ( present(name) ) name = "What?"
@@ -501,13 +533,20 @@ contains
       if ( .not. associated(MLSCallStack%verboseDB) ) return
       oldSize = min( oldSize, size(MLSCallStack%verboseDB) )
       newSize = RmLogicalFromDatabase( MLSCallStack%verboseDB, oldSize )
-      newSize = RmLogicalFromDatabase( MLSCallStack%debugDB, oldSize )
-      if ( newSize > 0 ) then
-        MLSDebug   = MLSCallStack%debugDB(newSize)
+      if ( MLSVerboseSticky ) then
+        ! nothing--keep existing MLSVerbose
+      elseif ( newSize > 0 ) then
         MLSVerbose = MLSCallStack%VerboseDB(newSize)
       else
-        MLSDebug   = .false.
         MLSVerbose = .false.
+      endif
+      newSize = RmLogicalFromDatabase( MLSCallStack%debugDB, oldSize )
+      if ( MLSDebugSticky ) then
+        ! nothing--keep existing MLSDebug
+      elseif ( newSize > 0 ) then
+        MLSDebug   = MLSCallStack%debugDB(newSize)
+      else
+        MLSDebug   = .false.
       endif
      !  call PrintItOut ( 'After PopStack ', MLSMSG_Info )
      !  call dump ( 'newSize ', intValue=MLSCallStack%top - 1 )
@@ -1125,6 +1164,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.33  2013/11/18 22:22:48  pwagner
+! Sticky versions of verbose, debug available
+!
 ! Revision 2.32  2013/11/15 00:15:11  pwagner
 ! Remove MLSMESSAGESTD from public list
 !
