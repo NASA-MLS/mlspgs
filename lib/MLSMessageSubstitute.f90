@@ -15,7 +15,8 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
   use CALL_STACK_M, only: DUMP_STACK
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCOMMON, only: MLSFILE_T, MLSDEBUG, MLSVERBOSE
+  use MLSCOMMON, only: MLSFILE_T, MLSDEBUG, MLSVERBOSE, &
+    & MLSDEBUGSTICKY, MLSVERBOSESTICKY
   use MLSSTRINGS, only: CAPITALIZE
   use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, LOGUNITNAME, PREFIXLEN, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
@@ -140,6 +141,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.15  2013/11/18 22:23:34  pwagner
+! Sticky versions of verbose, debug available
+!
 ! Revision 2.14  2013/11/15 00:03:51  pwagner
 ! Comments confess need for 3 more modules; LastGasp gasps its inability
 !
