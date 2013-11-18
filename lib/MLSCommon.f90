@@ -55,6 +55,10 @@ module MLSCommon                ! Common definitions for the MLS software
 ! TAI93_Range_T start, end times in TAI93 formatted r8
 ! MLSVerbose    Should we print extra stuff?
 ! MLSDebug      Should we print even more stuff?
+! MLSVerboseSticky
+!               Retain value of MLSVerbose thoughout pahse
+! MLSDebugSticky
+!               Retain value of MLSDebug thoughout pahse
 
 !     (subroutines and functions)
 ! inRange       does an argument lie with a specified range or interval
@@ -134,6 +138,8 @@ module MLSCommon                ! Common definitions for the MLS software
   !-----------------------------------------------------------
   logical, public :: MLSVerbose = .false. ! Should we print extra stuff?
   logical, public :: MLSDebug =   .false. ! Should we print even more stuff?
+  logical, public :: MLSVerboseSticky = .false. ! Always, not just by module
+  logical, public :: MLSDebugSticky =   .false. ! Always, not just by module
   integer, parameter :: DEBUGNAMESLEN = 256
   character(len=DEBUGNAMESLEN), public, save :: MLSNamesAreDebug   = ' '
   character(len=DEBUGNAMESLEN), public, save :: MLSNamesAreVerbose = ' '
@@ -473,6 +479,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.39  2013/11/18 21:41:51  pwagner
+! Sticky versions of verbose, debug available
+!
 ! Revision 2.38  2013/08/30 23:12:21  pwagner
 ! Default values for all MLSFile_T fields
 !
