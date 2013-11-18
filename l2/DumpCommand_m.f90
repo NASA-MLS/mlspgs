@@ -1448,6 +1448,8 @@ contains
             call dump_antenna_patterns_database ( son )
           case ( f_callStack )
             call MLSMessageCalls ( 'dump' )
+            if ( details > 0) &
+              & call MLSMessageCalls ( 'dumpdb' )
           case ( f_chunkDivide )
             call dump ( chunkDivideConfig )
           case ( f_chunkNumber )
@@ -2658,6 +2660,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.106  2013/11/18 22:33:28  pwagner
+! /callStack dumps verbose and debug dbs
+!
 ! Revision 2.105  2013/11/07 00:26:44  pwagner
 ! May dump all dbs related to signals if details >1; use beVerbose
 !
