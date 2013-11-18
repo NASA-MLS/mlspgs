@@ -829,6 +829,7 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_phase, & ! Ignores rest of stuff
+             begin, f+f_debug, boolean(), &
              begin, f+f_options, string(), &
              begin, f+f_silent, boolean(), &
              begin, f+f_skipDirectWrites, boolean(), &
@@ -836,6 +837,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_skipRetrieval, boolean(), &
              begin, f+f_skipRetrievalif, field_spec(s_Boolean), &
              begin, f+f_stamp, boolean(), &
+             begin, f+f_verbose, boolean(), &
              ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER [F, H, IWC, T, V]grid
              begin, f+f_badValue, numeric(), &
@@ -1958,6 +1960,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.595  2013/11/18 22:26:30  pwagner
+! phase spec takes optional /debug /verbose fields
+!
 ! Revision 2.594  2013/10/24 21:04:30  pwagner
 ! /dontLatch in profile Fills retains profile heights as input
 !
