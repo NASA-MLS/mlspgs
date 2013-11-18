@@ -119,6 +119,7 @@ dAbsDnu
 dAbsDwc
 DACSfilterShapes
 date
+debug
 default_spectroscopy
 destination
 destroy
@@ -499,6 +500,7 @@ vector
 vectorMask
 vectors
 velLin # Velocity linearization
+verbose
 vGrid
 vmrQuantity
 vRegOrders
@@ -517,6 +519,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.244  2013/11/18 22:25:36  pwagner
+# phase spec takes optional /debug /verbose fields
+#
 # Revision 2.243  2013/10/24 21:04:10  pwagner
 # /dontLatch in profile Fills retains profile heights as input
 #
