@@ -851,7 +851,7 @@ jloop:do while ( j < len_trim(line) )
     if ( parallel%master ) &
       & removeSwitches = catLists( trim(removeSwitches), 'bool,walk' )
     if ( parallel%slave ) &
-      & removeSwitches = catLists( trim(removeSwitches), 'chu,chu1,l2q,mas,slv' )
+      & removeSwitches = catLists( trim(removeSwitches), 'chu,l2q,mas,slv' )
     ! Remove any quote marks from RemoveSwitches array
     tempSwitches = unquote(removeSwitches, quotes=quotes, options='-p')
     call GetUniqueList( tempSwitches, removeSwitches, numSwitches, &
@@ -864,11 +864,14 @@ jloop:do while ( j < len_trim(line) )
     call GetUniqueList( tempSwitches, Switches, numSwitches, &
           & ignoreLeadingSpaces=.true., options='-eSL' )
     ! Remove any switches embedded in the removeSwitches option 'R'
+    ! call outputNamedValue( 'starting List', trim(switches) )
+    ! call outputNamedValue( 'to remove', trim(removeSwitches) )
     do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
       call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
       call RemoveSwitchFromList(switches, tempSwitches, trim(aSwitch))
       switches = tempSwitches
     end do
+    ! call outputNamedValue( 'result List', trim(switches) )
 
     ! If we like, we could move these next few statements to a standalone
     ! subroutine named something like processSwitches
@@ -979,6 +982,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.74  2013/11/20 01:00:45  pwagner
+! slaves were dumping chunkdivide data for all chunks; fixed
+!
 ! Revision 2.73  2013/11/04 22:56:02  pwagner
 ! Added -Vmodules and -Dmodules to turn on verbose and debug module-wide
 !
