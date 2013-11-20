@@ -36,16 +36,16 @@ begin Fill
 
   !ifdef(flagSetTopOfHCl,{
 
-  Dump, text='Before setting top of HCl to 3ppbv'
-  Dump, details=2, quantity=apriori.hcl
+  ;;Dump, text='Before setting top of HCl to 3ppbv'
+  ;;Dump, details=2, quantity=apriori.hcl
   ;; Set the top of HCl to 3ppbv
   ;; (We will be able to dispense with bookending Subsets soon)
   Subset, quantity=apriori.hcl, height=[2.4mb:0.00001mb], mask=fill
   Fill, quantity=apriori.hcl, method=explicit, explicitValues=3ppbv, /spread
   Subset, quantity=apriori.hcl, mask=fill, /reset
 
-  Dump, text='After setting top of HCl to 3ppbv'
-  Dump, details=2, quantity=apriori.hcl
+  ;;Dump, text='After setting top of HCl to 3ppbv'
+  ;;Dump, details=2, quantity=apriori.hcl
 })
   ;; Possibly overwrite temperature with the merged product
   !ifdef(flagIgnoreMeteorology,{},{Fill, quantity=apriori.temperature, $
@@ -530,8 +530,8 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=lowBound.oh, method=manipulate, $
     manipulation='sza(a)', $
     a=lowBound.oh, b=tempVectorState.OH, c=95
-  Dump, text='Solar zenith angles (0 is directly overhead)'
-  Dump, details=2, quantity=lowBound.oh
+  ;;Dump, text='Solar zenith angles (0 is directly overhead)'
+  ;;Dump, details=2, quantity=lowBound.oh
   ;; day time values
   Fill, quantity=lowBound.OH,method=profile, profileValues = $
     [ 1000mb : -400pptv, $
@@ -542,8 +542,8 @@ Fill, quantity=apriori.refGPH,$
       0.01467mb : -3000pptv, 0.01mb : -3000pptv, $
       0.006813mb : -3000pptv, 0.00464159mb : -3000pptv, $
       0.003162mb : -5000pptv]
-  Dump, text='day time values'
-  Dump, details=2, quantity=lowBound.oh
+  ;;Dump, text='day time values'
+  ;;Dump, details=2, quantity=lowBound.oh
   ;; night time values
   Fill, quantity=tempVectorState.OH,method=profile, profileValues = $
     [ 1000mb : -150pptv, $
@@ -554,15 +554,15 @@ Fill, quantity=apriori.refGPH,$
       0.01467mb : -3000pptv, 0.01mb : -4000pptv, $
       0.006813mb : -2000pptv, 0.00464159mb : -3000pptv, $
       0.003162mb : -4000pptv]
-  Dump, text='night time values'
-  Dump, details=2, quantity=tempVectorState.oh
+  ;;Dump, text='night time values'
+  ;;Dump, details=2, quantity=tempVectorState.oh
   ;; Combine day and night time values according to
   ;; day_time*ifpos(95-sza) + night_time*ifneg(95-sza)
   Fill, quantity=lowBound.oh, method=manipulate, $
     manipulation='a*ifpos(c-sza(a)) + b*ifneg(c-sza(a))', $
     a=lowBound.oh, b=tempVectorState.OH, c=95
-  Dump, text='Separating OH low bound into day and night values'
-  Dump, details=2, quantity=lowBound.oh
+  ;;Dump, text='Separating OH low bound into day and night values'
+  ;;Dump, details=2, quantity=lowBound.oh
 
   !interpolateToHiRes(lowBound.temperature_HR)
   !interpolateToHiRes(highBound.temperature_HR)
@@ -770,6 +770,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.156  2013/10/29 18:18:27  pwagner
+;Now scale aprioriPrecision.oh automatically
+;
 ;Revision 1.155  2013/10/15 17:43:23  pwagner
 ;Separates OH lowbounds into day, night values
 ;
