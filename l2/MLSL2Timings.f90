@@ -322,7 +322,7 @@ contains ! =====     Public Procedures     =============================
       select case ( field_index )
       case ( f_debug )
         debug = get_boolean ( fieldValue )
-        call output( 'Processing debug field', advance='yes' )
+        if ( stamp ) call output( 'Processing debug field', advance='yes' )
       case ( f_options )
         call get_string ( sub_rosa(subtree(2,son)), options, strip=.true. )
       case ( f_silent )
@@ -332,9 +332,9 @@ contains ! =====     Public Procedures     =============================
           & get_boolean ( fieldValue )
       case ( f_skipDirectwritesif )
         call get_string( sub_rosa(subtree(2,son)), booleanString )
-        ! call output( 'told to skipDirectwrites: ', advance='no' )
-        ! call output( BooleanValue ( lowercase(booleanString), &
-        !   & runTimeValues%lkeys, runTimeValues%lvalues), advance='yes' )
+        if ( stamp ) call output( 'told to skipDirectwrites: ', advance='no' )
+        if ( stamp ) call output( BooleanValue ( lowercase(booleanString), &
+          & runTimeValues%lkeys, runTimeValues%lvalues), advance='yes' )
         skipDirectwrites = skipDirectWritesOriginal .or. &
           & BooleanValue ( lowercase(booleanString), &
           & runTimeValues%lkeys, runTimeValues%lvalues)
@@ -345,9 +345,9 @@ contains ! =====     Public Procedures     =============================
           & get_boolean ( fieldValue ) .or. skipRetrievalOriginal
       case ( f_skipRetrievalif )
         call get_string( sub_rosa(subtree(2,son)), booleanString )
-        ! call output( 'told to skipRetrieval: ', advance='no' )
-        ! call output( BooleanValue ( lowercase(booleanString), &
-        !   & runTimeValues%lkeys, runTimeValues%lvalues), advance='yes' )
+        if ( stamp )call output( 'told to skipRetrieval: ', advance='no' )
+        if ( stamp ) call output( BooleanValue ( lowercase(booleanString), &
+          & runTimeValues%lkeys, runTimeValues%lvalues), advance='yes' )
         skipRetrieval = skipRetrievalOriginal .or. &
           & BooleanValue ( lowercase(booleanString), &
           & runTimeValues%lkeys, runTimeValues%lvalues) .or. skipRetrievalOriginal
@@ -357,7 +357,7 @@ contains ! =====     Public Procedures     =============================
         stamp = stamp .or. get_boolean ( fieldValue )
       case ( f_verbose )
         verbose = get_boolean ( fieldValue )
-        call output( 'Processing verbos field', advance='yes' )
+        if ( stamp ) call output( 'Processing verbose field', advance='yes' )
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
@@ -933,6 +933,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.52  2013/11/20 00:58:08  pwagner
+! Reduce printing during non-verbose processing
+!
 ! Revision 2.51  2013/11/18 22:26:07  pwagner
 ! phase spec takes optional /debug /verbose fields
 !
