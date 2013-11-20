@@ -2420,7 +2420,7 @@ contains ! =====     Public Procedures     =============================
         ! Need a temperature and a refgph quantity
         if ( .not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /))) ) &
           call Announce_Error ( key, needTempREFGPH )
-
+        nullify( phiTanQuantity ) ! We may accidentally refer to it later
         temperatureQuantity => GetVectorQtyByTemplateIndex( &
           &  vectors(temperatureVectorIndex), temperatureQuantityIndex)
         if ( temperatureQuantity%template%quantityType /= l_Temperature ) &
@@ -3150,6 +3150,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.436  2013/11/20 01:01:33  pwagner
+! Prevent accidental reference to undefined pointer phiTanQuantity
+!
 ! Revision 2.435  2013/10/24 21:05:20  pwagner
 ! /dontLatch in profile Fills retains profile heights as input
 !
