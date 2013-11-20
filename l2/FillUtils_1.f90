@@ -76,11 +76,11 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSFINDS, only: FINDFIRST, FINDLAST
   use MLSSIGNALS_M, only: GETFIRSTCHANNEL, GETSIGNALNAME, GETMODULENAME, &
     & GETSIGNAL, ISMODULESPACECRAFT, SIGNAL_T, SIGNALS
-  use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, &
+  use MLSSTRINGLISTS, only: GETHASHELEMENT, NUMSTRINGELEMENTS, &
     & STRINGELEMENT, SWITCHDETAIL
   use MLSSTRINGS, only: INDEXES, LOWERCASE, WRITEINTSTOCHARS
   use MOLECULES, only: L_H2O
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BEVERBOSE, BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
   use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
   use RHIFROMH2O, only: H2OPRECFROMRHI, RHIFROMH2O_FACTOR, RHIPRECFROMH2O
   use SCANMODELMODULE, only: GETBASISGPH, GET2DHYDROSTATICTANGENTPRESSURE, &
@@ -4269,7 +4269,7 @@ contains ! =====     Public Procedures     =============================
       if ( isPrecision .and. myBOMask /= 0 .and. BO_error == 0 ) then
         noMAFs = size(l1bData%dpField, 3)
         maxMIFs = l1bData%maxMIFs
-        if ( switchDetail(switches, 'glob') > 0 ) then ! e.g., 'glob1'
+        if ( BeVerbose( 'glob', 1 ) ) then ! e.g., 'glob1'
           call output ( 'Quantity shape:' )
           call output ( quantity%template%instanceLen )
           call output ( ' ( ' )
@@ -4290,7 +4290,7 @@ contains ! =====     Public Procedures     =============================
           call outputNamedValue( 'maxMIFs', maxMIFs )
           call outputNamedValue( 'noChans', quantity%template%noChans )
         endif
-        if ( switchDetail(switches, 'glob') > 1 ) then ! e.g., 'glob2'
+        if ( BeVerbose( 'glob', 2 ) ) then ! e.g., 'glob2'
           call dump( l1bData%dpField(1,:,:), '(Before applying bright object mask)' )
         endif
         do channel = 1, quantity%template%noChans
@@ -4298,7 +4298,7 @@ contains ! =====     Public Procedures     =============================
           & NegativeIfBitPatternSet( l1bData%dpField(channel,:,:), &
           & BO_stat%intField(1, 1:maxMIFs, 1:noMAFs), myBOMask )
         enddo
-        if ( switchDetail(switches, 'glob') > 1 ) &
+        if ( BeVerbose( 'glob', 2 ) ) &
           & call dump( l1bData%dpField(1,:,:), '(After applying bright object mask)' )
         call DeallocateL1BData(BO_stat)
       end if
@@ -4360,7 +4360,7 @@ contains ! =====     Public Procedures     =============================
         & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
       end if
 
-      if ( switchDetail(switches, 'l1bfill') > -1 ) call Dump( l1bData )
+      if ( BeVerbose( 'l1bfill', 0 ) ) call Dump( l1bData )
       call DeallocateL1BData(l1bData)
     9 call trace_end ( 'FillUtils_1.FromL1B', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
@@ -4461,8 +4461,8 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------  Hydrostatically  -----
     subroutine Hydrostatically ( key, quantity, &
       & temperatureQuantity, refGPHQuantity, h2oQuantity, &
-      & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, maxIterations, &
-      & phiWindow, phiWindowUnits, chunkNo )
+      & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, &
+      & maxIterations, phiWindow, phiWindowUnits, chunkNo )
       use MANIPULATEVECTORQUANTITIES, only: FINDCLOSESTINSTANCES
       ! Various hydrostatic fill operations
       integer, intent(in) :: key          ! For messages
@@ -4486,7 +4486,7 @@ contains ! =====     Public Procedures     =============================
       logical :: verbose
 
       ! Executable code
-      verbose = ( switchDetail(switches, 'fill') > -1 )
+      verbose = ( BeVerbose( 'fill', -1 ) )
 
       call trace_begin ( me, 'FillUtils_1.Hydrostatically', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
@@ -4567,7 +4567,7 @@ contains ! =====     Public Procedures     =============================
 
     9 call trace_end ( 'FillUtils_1.Hydrostatically', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
-      if ( .not. verbose ) return
+      if ( .not. verbose .or. .not. associated(phitanquantity) ) return
       nullify( closestTempProfiles )
       call Allocate_Test ( closestTempProfiles, phitanquantity%template%noInstances, &
         "closestTempProfiles", ModuleName )
@@ -5476,7 +5476,7 @@ contains ! =====     Public Procedures     =============================
       DEEBUG = .false.
       ! DEEBUG = ( grid%quantityName == 'TEMPERATURE' .or. &
       !   & grid%description == 'Temperature' )
-      check = (switchDetail(switches, 'cgrid') > -1)
+      check = (BeVerbose( 'cgrid', -1 ))
       if ( check ) call outputNamedValue( 'check', check )
       noGrid = .not. associated(grid%field)
       if ( .not. noGrid ) noGrid = grid%empty
@@ -5630,7 +5630,7 @@ contains ! =====     Public Procedures     =============================
         ! Now check that geodAngle's are a sufficient match
         if ( any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
           &         quantity%template%phi(1,:)) > tolerance) ) then
-          if ( switchDetail(switches, 'l2gp') > -1) then
+          if ( BeVerbose( 'l2gp', -1 ) ) then
             call dump ( l2gp%geodAngle(firstProfile:lastProfile), 'L2GP geodetic angle' )
             call dump ( quantity%template%phi(1,:), 'Quantity Geodetic angle' )
           endif
@@ -5641,7 +5641,7 @@ contains ! =====     Public Procedures     =============================
         ! Now check that the times match
         if ( any(abs(l2gp%time(firstProfile:lastProfile)- &
           &         quantity%template%time(1,:)) > timeTol) ) then
-          if ( switchDetail(switches, 'l2gp') > -1) then
+          if ( BeVerbose( 'l2gp', -1 ) ) then
             call dump ( l2gp%time(firstProfile:lastProfile), 'L2GP geodetic angle' )
             call dump ( quantity%template%time(1,:), 'Quantity Geodetic angle' )
           endif
@@ -5976,7 +5976,6 @@ contains ! =====     Public Procedures     =============================
     ! ----------------------------------------  ManipulateVectors  -----
     subroutine ManipulateVectors ( MANIPULATION, DEST, A, B, C, BOOLEANNAME )
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: GETHASHELEMENT
     use MLSSTRINGS, only: STREQ
       ! Manipulate common items in a, b, copying result to those in dest
       integer, intent(in) :: MANIPULATION
@@ -6600,10 +6599,7 @@ contains ! =====     Public Procedures     =============================
     subroutine TransferVectors ( SOURCE, DEST, SKIPMASK, INTERPOLATE, &
       & BOOLEANNAME )
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: STREQ
-    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
-    use TOGGLES, only: SWITCHES
       ! Copy common items in source to those in dest
       type (Vector_T), intent(in) :: SOURCE
       type (Vector_T), intent(inout) :: DEST
@@ -6624,7 +6620,7 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.TransferVectors', &
         & cond=toggle(gen) .and. levels(gen) > 2  )
-      verbose = ( switchDetail(switches, 'bool') > -1 )
+      verbose = ( BeVerbose( 'bool', -1 ) )
       verboser = ( switchDetail(switches, 'bool') > 0 )
       n = 0
       ! If we're given a BooleanName, try to interpret it as a container for
@@ -6691,11 +6687,8 @@ contains ! =====     Public Procedures     =============================
       & IGNORENEGATIVE, IGNOREZERO, MEASVECTOR, MODELVECTOR, &
       & NOISEVECTOR, PTAN, BOOLEANNAME )
     use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MLSSTRINGS, only: STREQ
-    use OUTPUT_M, only: OUTPUTNAMEDVALUE
     use DUMP_0, only: DUMP
-    use TOGGLES, only: SWITCHES
       integer, intent(in)            :: KEY
       type (Vector_T), pointer       :: DEST
       type (Vector_T), pointer       :: SOURCE
@@ -7380,6 +7373,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.94  2013/11/20 01:02:49  pwagner
+! Reduce some printing; switch to use of BeVerbose function
+!
 ! Revision 2.93  2013/10/24 21:10:23  pwagner
 ! /dontLatch in profile Fills retains profile heights as input
 !
