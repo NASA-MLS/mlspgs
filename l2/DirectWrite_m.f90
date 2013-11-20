@@ -33,7 +33,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: SWITCHDETAIL
-  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BEVERBOSE, BLANKS, OUTPUT, OUTPUTNAMEDVALUE
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: SWITCHES
   use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, DUMP
@@ -205,10 +205,9 @@ contains ! ======================= Public Procedures =========================
     character(len=8) :: overlaps ! 'lower', 'upper', or 'none'
     integer :: NOTOWRITE
     integer :: TOTALPROFS
-
     logical :: verbose
     ! Executable
-    verbose = ( switchDetail(switches, 'direct') > -1 )
+    verbose = BeVerbose ( 'direct', -1 )
     if ( present(createSwath) ) then
       if ( createSwath ) then
         call outputNamedValue( '  creating swath', trim(sdname) )
@@ -321,7 +320,7 @@ contains ! ======================= Public Procedures =========================
     character(len=32)             :: SDNAME       ! Name of sd in output file
     logical :: verbose
     ! Executable
-    verbose = ( switchDetail(switches, 'direct') > -1 )
+    verbose = BeVerbose ( 'direct', -1 )
     nameQtyByTemplate = .true.
     if ( present(options) ) nameQtyByTemplate = &
       & .not. ( index(options, 'num') > 0 )
@@ -389,7 +388,7 @@ contains ! ======================= Public Procedures =========================
     character(len=*), parameter :: sdDebug = "R1A:118.B1F:PT.S0.FB25-1 Core"
     logical :: verbose
     ! Executable
-    verbose = ( switchDetail(switches, 'direct') > -1 )
+    verbose = BeVerbose ( 'direct', -1 )
 
     alreadyOpen = L2AUXFile%stillOpen
     deebughere = ( deebug .or. sdname == sdDebug ) .and. .false.
@@ -863,12 +862,15 @@ contains ! ======================= Public Procedures =========================
     myDetails = 1
     if ( present(details) ) myDetails = details
 
-    call output ( 'File Name index: ')
-    call output ( directWrite%fileIndex )
-    call output ( '   File Name (base): ')
-    call output ( trim(directWrite%fileNameBase), advance='yes' )
+    if ( myDetails > -2 ) then
+      call output ( 'File Name index: ')
+      call output ( directWrite%fileIndex )
+      call output ( '   File Name (base): ')
+      call output ( trim(directWrite%fileNameBase), advance='yes' )
+    endif
     call output ( 'Full File Name  : ')
     call output ( trim(directWrite%fileName), advance='yes' )
+    if ( myDetails < -1 ) return
     call output ( 'Type  : ')
     call output ( directWrite%type, advance='no' )
     call blanks ( 3 )
@@ -1230,6 +1232,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.58  2013/11/20 00:56:19  pwagner
+! Reduce default dump of directWriteDB to just file names
+!
 ! Revision 2.57  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
