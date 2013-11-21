@@ -47,6 +47,10 @@
       call blanksToColumn( tabc, fillChar=fillChar, advance='no' )
     endif
     if ( present(after) ) then
+      if ( present(taba) ) then
+        oldWrapPastColnum = wrapPastColNum
+        wrapPastColNum = taba
+      endif
       call output ( value, advance='no' )
       if ( present(taba) ) then
         call blanksToColumn( taba, advance='no' )
@@ -55,6 +59,8 @@
         else
           call output ( '', advance=my_advance, dont_stamp=dont_stamp )
         endif
+        wrapPastColNum = oldWrapPastColnum
+        oldWrapPastColnum = 0
       else
         call output ( after, advance=my_advance, dont_stamp=dont_stamp )
       endif
@@ -62,6 +68,9 @@
       call output ( value, advance=my_advance, dont_stamp=dont_stamp )
     endif
 ! $Log$
+! Revision 2.7  2013/11/21 21:21:41  pwagner
+! Wrap lines at the right-hand border when outputting named arrays with borders
+!
 ! Revision 2.6  2012/08/01 00:06:53  pwagner
 ! Allows line advance even when past taba
 !
