@@ -300,7 +300,7 @@ module OUTPUT_M
     character(len=3)  :: advanceDefault = 'no' ! if advance=.. missing
     character(len=12) :: sdFormatDefault = '*' ! * means default format spec
     character(len=1)  :: arrayElmntSeparator = ' '
-    character(len=12) :: parentName = "$RCSfile$"
+    character(len=27) :: parentName = "$RCSfile$"
   end type
   
   type(outputOptions_T), public, save :: OUTPUTOPTIONS
@@ -346,6 +346,8 @@ module OUTPUT_M
   logical, private, parameter :: LOGEXTRABLANKS = .false.
   integer, private, parameter :: MAXNUMTABSTOPS = 24
   integer, private, parameter :: RECLMAX = 1024  ! This is NAG's limit
+  integer, save, private :: WRAPPASTCOLNUM = 0  ! Don't print beyond (if > 0)
+  integer, save, private :: OLDWRAPPASTCOLNUM = 0
   ! These next tab stops can be reset using the procedure setTabs
   ! the default values correspond to range coded '5-120+5'
   ! (read as from 5 to 120 in intervals of 5)
@@ -1505,6 +1507,8 @@ contains
     alreadyLogged = .false.
     if ( SILENTRUNNING ) return
     my_adv = Advance_is_yes_or_no(advance)
+    ! If we're not advancing and we've been a string of length 0 to print ..
+    if ( my_adv == 'no' .and. len(chars) < 1 ) return
     my_dont_stamp = stampOptions%neverStamp ! .false.
     if ( present(dont_stamp) ) my_dont_stamp = dont_stamp
     my_dont_stamp = ( my_dont_stamp .or. &
@@ -1691,6 +1695,7 @@ contains
     do i = 1, size(chars)
       call output ( chars(i), &
         & insteadofblank=insteadofblank, newLineVal=newLineVal )
+      if ( len(chars(1)) > 1 ) call SeparateElements( i, size(chars) )
     end do
     if ( present(advance)  ) then
       call output_ ( '', advance=advance )
@@ -1862,15 +1867,7 @@ contains
     integer :: I ! loop inductor
     do i = 1, size(values)
       call output ( values(i), advance='no', format=format, logFormat=logFormat )
-      if ( i < size(values) ) then
-        if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) &
-          & call output_( outputOptions%arrayElmntSeparator, advance='no' )
-        if ( mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
-          call output_ ( '', advance='yes', DONT_STAMP=.true. )
-        else
-          call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
-        endif
-      endif
+      call SeparateElements( i, size(values) )
     end do
     if ( present(advance)  ) then
       call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
@@ -1945,15 +1942,7 @@ contains
     integer :: I ! loop inductor
     do i = 1, size(integers)
       call output ( integers(i), advance='no', format=format )
-      if ( i < size(integers) ) then
-        if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) &
-          & call output_( outputOptions%arrayElmntSeparator, advance='no' )
-        if ( mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
-          call output_ ( '', advance='yes', DONT_STAMP=.true. )
-        else
-          call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
-        endif
-      endif
+      call SeparateElements( i, size(integers) )
     end do
     if ( present(advance)  ) then
       call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
@@ -2007,15 +1996,7 @@ contains
     else
       do i = 1, size(logs)
         call output ( logs(i), advance='no' )
-      if ( i < size(logs) ) then
-        if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) &
-          & call output_( outputOptions%arrayElmntSeparator, advance='no' )
-        if ( mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
-          call output_ ( '', advance='yes', DONT_STAMP=.true. )
-        else
-          call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
-        endif
-      endif
+        call SeparateElements( i, size(logs) )
       end do
     endif
     if ( present(advance) ) call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
@@ -2065,15 +2046,7 @@ contains
     integer :: I ! loop inductor
     do i = 1, size(values)
       call output ( values(i), advance='no', format=format, logFormat=logFormat )
-      if ( i < size(values) ) then
-        if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) &
-          & call output_( outputOptions%arrayElmntSeparator, advance='no' )
-        if ( mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
-          call output_ ( '', advance='yes', DONT_STAMP=.true. )
-        else
-          call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
-        endif
-      endif
+      call SeparateElements( i, size(values) )
     end do
     if ( present(advance)  ) then
       call output_ ( '', advance=advance, DONT_STAMP=DONT_STAMP )
@@ -2166,11 +2139,14 @@ contains
   ! before: what extra to print at start of each line
   ! after: what extra to print at end of each line
   ! colon: what to print instead of ':'
+  ! fillChar: instead of spaces if you use tabs to align name, value
   ! tabn: column number where name begins
   ! tabc: column number where colon occurs
   ! taba: column number where after begins
   ! advance: whether to advance after printing pair (by default we WILL advance)
   ! dont_stamp: override setting to stamp end of each line
+  ! By means of optional args you can create a line like
+  ! *   name                   value   *
   subroutine output_nvp_character ( name, value, &
    & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
     character(len=*), intent(in)          :: name
@@ -2554,8 +2530,7 @@ contains
     & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, STYLE, DATE )
   end subroutine timeStamp_logical
 
-  ! Internal procedures
-  
+  ! ------------------ Private procedures -------------------------
   ! .......................................  Advance_is_yes_or_no  .....
   function Advance_is_yes_or_no ( str ) result ( outstr )
     ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
@@ -2635,6 +2610,30 @@ contains
     kFlag = index( arg, trim(flag) )
     val = ( kFlag > 0 )
   end subroutine getOption_log
+
+  ! ------------------------------------  SeparateElements  -----
+  ! insert blanks or separator between consecutive elements while outputting
+  subroutine SeparateElements (i, n )
+    ! Args
+    integer, intent(in) :: i ! Element number
+    integer, intent(in) :: n ! Number of elements
+    ! Executable
+    if ( i >= n ) return
+    if ( wrappastcolnum > 0 .and. atcolumnnumber >= wrappastcolnum ) then
+      call newLine
+      return
+    endif
+    if ( wrappastcolnum == 0 .and. &
+      & mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
+      call output_ ( '', advance='yes', DONT_STAMP=.true. )
+      return
+    endif
+    if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) then
+      call output_( outputOptions%arrayElmntSeparator, advance='no' )
+    else
+      call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
+    endif
+  end subroutine SeparateElements
 
   ! ------------------------------------  myMessage  -----
   subroutine myMessage_old ( severity, name, line, advance )
@@ -2969,6 +2968,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.109  2013/11/21 21:21:41  pwagner
+! Wrap lines at the right-hand border when outputting named arrays with borders
+!
 ! Revision 2.108  2013/11/04 22:53:51  pwagner
 ! Added beVerbose, letsDebug
 !
