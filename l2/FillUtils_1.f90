@@ -67,7 +67,8 @@ module FillUtils_1                     ! Procedures used by Fill
   ! CAREFULLY CHECK OUT THE CODE AROUND THE CALL TO SNOOP.
   use MLSCOMMON, only: MLSFILE_T, DEFAULTUNDEFINEDVALUE
   use MLSFILES, only: HDFVERSION_5, DUMP, GETMLSFILEBYTYPE
-  use MLSFILLVALUES, only: ISFILLVALUE, ISMONOTONIC, MONOTONIZE, REMOVEFILLVALUES
+  use MLSFILLVALUES, only: ISFILLVALUE, ISFINITE, ISMONOTONIC, &
+    & MONOTONIZE, REMOVEFILLVALUES
   use MLSKINDS, only: R4, R8, RM, RP, RV
   use MLSL2OPTIONS, only: AURA_L1BFILES, L2CFNODE, MLSMESSAGE
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
@@ -1313,7 +1314,7 @@ contains ! =====     Public Procedures     =============================
       ! The actual number of iterations will be less than this
       
       ! Depending on UNIFORMCHISQRATIO
-      ! TRUE    all values will equal the ratio of tghe last ieration
+      ! TRUE    all values will equal the ratio of the last iteration
       ! FALSE   nth value will be ratio for nth iteration, up to last one
       !           and all zero thereafter
       ! After the last iteration, all "surfaces" above this are zero-filled
@@ -1708,9 +1709,11 @@ contains ! =====     Public Procedures     =============================
           & key, no_error_code, 'sourceQuantity must be of type chisqRatio' )
       end if
       if ( UNIFORMCHISQRATIO ) then
-        quantity%values(1,:) = scale * sourceQuantity%values(1,1)
+        if ( isFinite( sourceQuantity%values(1,1) ) ) &
+          & quantity%values(1,:) = scale * sourceQuantity%values(1,1)
       else
-        qIndex = findLast( sourceQuantity%values(:,1) /= 0._rv )
+        qIndex = findLast( sourceQuantity%values(:,1) /= 0._rv .and. &
+          & isFinite(sourceQuantity%values(:,1)) )
         if ( qIndex > 0 ) &
           & quantity%values(1,:) = scale * sourceQuantity%values(qIndex,1)
       end if
@@ -7373,6 +7376,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.95  2013/11/21 21:23:52  pwagner
+! Further steps to prevent Fiiling convergence ratios with non-finite values
+!
 ! Revision 2.94  2013/11/20 01:02:49  pwagner
 ! Reduce some printing; switch to use of BeVerbose function
 !
