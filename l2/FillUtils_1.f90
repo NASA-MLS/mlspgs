@@ -1342,6 +1342,7 @@ contains ! =====     Public Procedures     =============================
       ! integer ::                             NOCHANS
       integer ::                             QINDEX
       logical ::                             skipMe
+      logical ::                             willBeNaN
       logical, parameter ::                  FakeData = .false.
 
       ! Executable code
@@ -1406,18 +1407,20 @@ contains ! =====     Public Procedures     =============================
             normQty%values(iter, i) = 1.1 + 0.05*(qIndex+1-iter)
           enddo
         endif
+        willBeNaN = .false.
         ! Now find the iteration number
         qIndex = findLast( flagQty%values(:,i)            /= 0._rv  .and. &
           &                minNormQty%values(:, i) /= 0._rv )
         if ( qIndex == 0 .or. qIndex >= qty%template%noSurfs ) cycle
+        willBeNaN = minNormQty%values(qIndex, i) == 0.
         skipMe = &
-          & .not. dontMask .and. ( &
+          & (.not. dontMask .and. ( &
           &   isVectorQtyMasked(normQty, qIndex, i, m_linalg) .or. &
-          &   isVectorQtyMasked(minNormQty, qIndex, i, m_linalg) .or. &
-          &   minNormQty%values(qIndex, i) == 0. &
-          & )
+          &   isVectorQtyMasked(minNormQty, qIndex, i, m_linalg) &
+          & ) ) .or. &
+          &   willBeNaN
         if ( skipMe ) then
-          if ( minNormQty%values(qIndex, i) == 0. ) qty%values(:,i) = 999._rv
+          if ( willBeNaN ) qty%values(:,i) = 999._rv
         elseif ( UNIFORMCHISQRATIO .or. &
           & size(qty%values) /= size(normQty%values) .or. &
           & size(qty%values) /= size(minNormQty%values) ) then
@@ -7376,6 +7379,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.96  2013/11/22 00:22:49  pwagner
+! Simpler, hopefully better, too, way to prevent NaNs in ChiSqRatio
+!
 ! Revision 2.95  2013/11/21 21:23:52  pwagner
 ! Further steps to prevent Fiiling convergence ratios with non-finite values
 !
