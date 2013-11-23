@@ -34,6 +34,69 @@
 # then as a final step repack them
 
 # usage: see (1) above
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+   echo $extant_files_result
+}
+
+#------------------------------- hide_files ------------
+#
+# Hide files when something goes awry
+# usage: hide_files arg1 [arg2] ..
+
+hide_files()
+{
+   hide_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               hide_files_result="$hide_files_result $file"
+         fi
+      done
+   fi
+   echo $hide_files_result
+   if [ ! -d hidden ]
+   then
+     mkdir hidden
+   fi
+   mv $hide_files_result hidden
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
 
 GZIPLEVEL="1"
 #          ^^^---- compression level ("" means none)
@@ -268,13 +331,33 @@ then
   done
 fi
 
-# Check that the number of profiles is within range
-count=`$L2GPDUMP -status *L2GP-Temper*.he5 \
-  | grep 'valid data co' | awk '{print $4}'`
-if [ "$count" -lt "$LOCOUNT" -o "$count" -gt "$HICOUNT" ]
+echo "Check that the number of profiles is within range"
+#pwd
+#ls
+if [ -d outputs ]
 then
-  echo "Too few or too many profiles; number was $count"
-  exit 1
+#  ls outputs/*
+  cd outputs
+else
+  echo "Separate outputs directory not found"
+fi
+#pwd
+#ls
+$L2GPDUMP -status *L2GP-Temper*.he5
+files=`extant_files *L2GP-Temp*.he5`
+echo "$files"
+if [ -f "$files" ]
+then
+  echo "Checking $L2GPDUMP -status $files"
+  count=`$L2GPDUMP -status "$files" \
+    | grep 'valid data co' | awk '{print $4}'`
+  if [ "$count" -lt "$LOCOUNT" -o "$count" -gt "$HICOUNT" ]
+  then
+    echo "Too few or too many profiles; number was $count"
+    echo hide_files *.he5 *.met *.xml *.h5
+    hide_files *.he5 *.met *.xml *.h5
+    exit 1
+  fi
 fi
 
 if [ $return_status != $NORMAL_STATUS ]
@@ -285,6 +368,9 @@ else
 fi
 
 # $Log$
+# Revision 1.7  2013/09/06 16:39:15  pwagner
+# Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+#
 # Revision 1.6  2013/07/02 22:49:09  pwagner
 # LOCOUNT and HICOUNT set acceptable range for count of profiles to catch bogus geodetic angles
 #
