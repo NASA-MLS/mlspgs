@@ -63,9 +63,9 @@ program MLSL2
     & DESTROY_STRING_TABLE, GET_STRING, ADDINUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
   use TIME_M, only: BEGIN, FINISH, TIME_NOW, TIME_CONFIG
-  use TOGGLES, only: SYN, SWITCHES, TOGGLE
+  use TOGGLES, only: LEVELS, SYN, SWITCHES, TOGGLE
   use TRACK_M, only: REPORTLEAKS
-  use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
+  use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, NSONS, PRINT_SUBTREE, SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
 
@@ -408,10 +408,14 @@ program MLSL2
       advance='yes' )
       error = 1
   else
-    if ( dump_tree ) then
+    if ( dump_tree >= 0 ) then
       call output ( 'Begin un-type-checked abstract syntax tree:', &
         & advance='yes' )
-      call print_subtree ( root, 0 )
+      if ( dump_tree > 0 ) then
+        call print_subtree ( root, 0 )
+      else
+        call print_subtree ( subtree(nsons(root),root), 0 )
+      end if
       call output ( 'End un-type-checked abstract syntax tree', &
         & advance='yes' )
     end if
@@ -424,7 +428,11 @@ program MLSL2
     if ( do_dump ) call dump_decl
     if ( toggle(syn) ) then
       call output ( 'Begin type-checked abstract syntax tree:', advance='yes' )
-      call print_subtree ( root, 0, type_name=get_type )
+      if ( levels(syn) > 0 ) then
+        call print_subtree ( root, 0, type_name=get_type )
+      else
+        call print_subtree ( subtree(nsons(root),root), 0, type_name=get_type )
+      end if
       call output ( 'End type-checked abstract syntax tree', advance='yes' )
     end if
 
@@ -743,6 +751,10 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.200  2013/11/26 22:40:51  vsnyder
+! Change -A to -A[n] with n>0 meaning dump the entire tree, including the
+! type-checking stuff, and n==0 or absent meaning dump only the parser output.
+!
 ! Revision 2.199  2013/11/04 22:56:59  pwagner
 ! Print which modules are berbose, debugged
 !
