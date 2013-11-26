@@ -56,7 +56,13 @@ module SYMBOL_TYPES
   integer, parameter :: T_AND =              T_END + 1           ! AND
   integer, parameter :: T_OR =               T_AND + 1           ! OR
   integer, parameter :: T_NOT =              T_OR + 1            ! NOT
-  integer, parameter :: T_END_OF_INPUT =     T_NOT + 1           ! <EOF>
+  integer, parameter :: T_CASE =             T_NOT + 1           ! CASE
+  integer, parameter :: T_DEFAULT =          T_CASE + 1          ! DEFAULT
+  integer, parameter :: T_ELSE =             T_DEFAULT + 1       ! ELSE
+  integer, parameter :: T_IF =               T_ELSE + 1          ! IF
+  integer, parameter :: T_SELECT =           T_IF + 1            ! SELECT
+  integer, parameter :: T_THEN =             T_SELECT + 1        ! THRN
+  integer, parameter :: T_END_OF_INPUT =     T_THEN + 1          ! <EOF>
   integer, parameter :: T_END_OF_STMT =      T_END_OF_INPUT + 1  ! <EOS>
   ! T_IDENTIFIER, T_NUMBER, T_STRING must be consecutive
   integer, parameter :: T_IDENTIFIER =       T_END_OF_STMT + 1   ! <IDENTIFIER>
@@ -117,12 +123,15 @@ module SYMBOL_TYPES
      def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
   !  <         <=        >         >=        ,         ^         begin     
      def_op,   def_op,   def_op,   def_op,   def_pun,  def_op,   res_word, &
-  !  end       and       or        not       <eof>     <eos>     <ident>   
-     res_word, res_word, res_word, res_word, object,   object,   ident,    &
-  !  <numcon>  <string>  include   unk_op    unk_pun   unk_ch    inc_num   
-     numcon,   string,   def_op,   unk_op,   unk_pun,  unk_ch,   inc_num,  &
-  !  inc_str   junk
-     inc_str,  aft_cont  /)
+  !  end       and       or        not       case      default   else      
+     res_word, res_word, res_word, res_word, res_word, res_word, res_word, &
+  !  if        select    then      <eof>     <eos>     <ident>   <numcon>  
+     res_word, res_word, res_word, object,   object,   ident,    numcon,   &
+  !  <string>  include   unk_op    unk_pun   unk_ch    inc_num   inc_str   
+     string,   def_op,   unk_op,   unk_pun,  unk_ch,   inc_num,  inc_str,  &
+  !  junk
+     aft_cont  /)
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -170,6 +179,12 @@ contains
     case ( t_and );               call add_char ( 'AND' )
     case ( t_or );                call add_char ( 'OR' )
     case ( t_not );               call add_char ( 'NOT' )
+    case ( t_case );              call add_char ( 'CASE' )
+    case ( t_default );           call add_char ( 'DEFAULT' )
+    case ( t_else );              call add_char ( 'ELSE' )
+    case ( t_if );                call add_char ( 'IF' )
+    case ( t_select );            call add_char ( 'SELECT' )
+    case ( t_then );              call add_char ( 'THEN' )
     case ( t_end_of_input );      call add_char ( '<eof>' )
     case ( t_end_of_stmt );       call add_char ( '<eos>' )
     case ( t_identifier );        call add_char ( '<identifier>' )
@@ -230,6 +245,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.18  2013/11/26 22:42:32  vsnyder
+! Add CASE, DEFAULT, ELSE, IF, SELECT, THEN reserved words
+!
 ! Revision 2.17  2013/10/02 01:33:10  vsnyder
 ! Add :=, ? and ! symbols for variable assignment  and conditional expressions
 !
