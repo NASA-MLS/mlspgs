@@ -1,0 +1,206 @@
+&C Copyright 2005, by the California Institute of Technology. ALL
+&C RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+&C commercial use must be negotiated with the Office of Technology Transfer
+&C at the California Institute of Technology.
+
+&C This software may be subject to U.S. export control laws. By accepting this
+&C software, the user agrees to comply with all applicable U.S. export laws and
+&C regulations. User has the responsibility to obtain export licenses, or other
+&C export authority as may be required before exporting such information to
+&C foreign countries or providing access to foreign persons.
+
+&C $RCSfile$
+
+&C introduces a comment.
+&C Format of vocabulary definition is '&V vocab_symbol vocab_value'
+&C where 'vocab_value' is a number that must match the value defined by
+&C T_... for the corresponding vocab_symbol.
+
+&C Format of productions is
+&C   'lhs rhs &S action &A' if another rhs present,
+&C   'lhs rhs &S action &P' if no other rhs present, but more prods
+&C   'lhs rhs &S action &G' if no more productions,
+&C   USE &G, not &P &G FOR THE LAST PRODUCTION!
+&C   'rhs' is a sequence of terminal and nonterminal symbols separated
+&C   by blanks.  If a symbol contains blanks it can be enclosed in
+&C   angle brackets (< and >).
+&C   The 'action' is a number that specifies the tree node and
+&C   building rule packed into one decimal number.
+&C   The low order  digit specifies the action:
+&C     0 - build no tree node, in which case the high-order digits
+&C         are ignored,
+&C     1 - build a tree node,
+&C     2 - build a tree node iff it would have more than 1 son.
+&C     9 - do some non-parsing action, e.g., open an include file
+&C   The high order digits of the number are the tree node id, and
+&C   must match the tree node identities provided by N_... in the
+&C   compiler.  If the action is zero, '&S action' may be omitted.
+
+&V (                   1       &C  t_left_parenthesis
+&V )                   2       &C  t_right_parenthesis
+&V [                   3       &C  t_left_bracket
+&V ]                   4       &C  t_right_bracket
+&V +                   5       &C  t_plus
+&V -                   6       &C  t_minus
+&V *                   7       &C  t_star
+&V /                   8       &C  t_slash
+&V :=                  9       &C  t_assign
+&V \                   10      &C  t_backslash
+&V !                   11      &C  t_bang
+&V ?                   12      &C  t_cond
+&V dot                 13      &C  t_dot
+&V :                   14      &C  t_colon
+&V :&<                 15      &C  t_colon_less
+&V &<:                 16      &C  t_less_colon
+&V &<:&<               17      &C  t_less_colon_less
+&V =                   18      &C  t_equal
+&V ==                  19      &C  t_equal_equal
+&V /=                  20      &C  t_not_equal
+&V &<                  21      &C  t_less
+&V &<=                 22      &C  t_less_eq
+&V &>                  23      &C  t_greater
+&V &>=                 24      &C  t_greater_eq
+&V ,                   25      &C  t_comma
+&V ^                   26      &C  t_hat
+&V begin               27      &C  t_begin
+&V end                 28      &C  t_end
+&V and                 29      &C  t_and
+&V or                  30      &C  t_or
+&V not                 31      &C  t_not
+&V case                32      &C  t_case
+&V default             33      &C  t_default
+&V else                34      &C  t_else
+&V if                  35      &C  t_if
+&V select              36      &C  t_select
+&V then                37      &C  t_then
+&V EOG                 38      &C  t_end_of_input
+&V EOS                 39      &C  t_end_of_stmt
+&V name                40      &C  t_identifier
+&V number              41      &C  t_number
+&V string              42      &C  t_string
+&V #include            43      &C  t_include
+
+cf cfs &A
+   EOS+ cfs &P
+
+cfs one_cf &A
+    cfs one_cf &P
+
+one_cf begin name EOS+ specs end name EOS+ &S 101 &A       &C n_cf
+       include EOS* &P                                     &C include file
+
+EOS+ EOS &A
+     EOS+ EOS &P
+
+EOS* &A
+     EOS+ &P
+
+specs &A
+      specs spec &A
+      select case EOS+ cases end select EOS+ &S 441 &A     &C n_select
+      if_stmt more_if end if &S 281 &A                     &C n_if
+      include EOS* &P                                      &C include file
+
+&C We need to consume the EOS here so it won't be the first
+&C token we see after closing the include file.
+
+include #include string EOS &S 9 &P                        &C include file
+
+cases case_test cases &A
+      case default EOS+ specs &S 151 &P                    &C n_default
+
+&C "expr" is a scalar
+
+case_test case ( expr ) EOS+ specs &S 491 &P               &C n_test
+
+if_stmt if ( expr ) then EOS+ specs &S 491 &P              &C n_test
+
+more_if else if ( expr ) then EOS+ specs more_if &S 481 &A &C n_test
+     else EOS+ specs &S 191 &P                             &C n_else
+
+&C "value" is either a scalar or an array enclosed in brackets
+
+spec name = value EOS+ &S 201 &A                           &C n_equal
+     name := value EOS+ &S 521 &A                          &C n_variable
+     name : spec_rest EOS+ &S 371 &A                       &C n_named
+     spec_rest EOS+ &P
+
+spec_rest name fields &S 461 &P                            &C n_spec_args
+
+fields &A
+       , field fields &P
+
+field name = value &S 81 &A                                &C n_asg
+      / name &S 451 &P                                     &C n_set_one
+
+&C "value" can be an array enclosed in brackets, or an array of
+&C arrays, but not any deeper nesting of arrays.
+
+value expr &A
+      [ value2_list ] &P
+
+value2_list value2 &A
+            value2_list , value2 &P
+
+value2 expr &A
+       [ exprs ] &S 71 &P                                  &C n_array
+
+exprs expr &A
+      exprs , expr &P
+
+expr cond &A
+     test ? expr ! expr &S 141 &P                          &C n_cond
+
+cond limit &A
+     limit :     limit &S 121 &A                           &C n_colon
+     limit :&<   limit &S 131 &A                           &C n_colon_less
+     limit &<:   limit &S 311 &A                           &C n_less_colon
+     limit &<:&< limit &S 321 &P                           &C n_less_colon_less
+
+limit lterm &A
+      limit or lterm &S 401 &P                             &C n_or
+
+lterm lnot &A
+      lterm and lnot &S 51 &P                              &C n_and
+
+lnot  test &A
+      not test &S 381 &P                                   &C n_not
+
+test lfactor &A
+     lfactor &<  lfactor &S 301 &A                         &C n_less
+     lfactor &<= lfactor &S 331 &A                         &C n_less_eq
+     lfactor &>  lfactor &S 261 &A                         &C n_greater
+     lfactor &>= lfactor &S 271 &A                         &C n_greater_eq
+     lfactor == lfactor &S 211 &A                          &C n_equal_equal
+     lfactor /= lfactor &S 391 &P                          &C n_not_equal
+
+lfactor term &A
+        + term &S 411 &A                                   &C n_plus
+        - term &S 341 &A                                   &C n_minus
+        lfactor + term &S 411 &A                           &C n_plus
+        lfactor - term &S 341 &P                           &C n_minus
+
+term factor &A
+     term * factor &S 351 &A                               &C n_mult
+     term / factor &S 161 &A                               &C n_div
+     term \ factor &S 291 &P                               &C n_into
+
+factor primary &A
+       primary ^ factor &S 421 &P                          &C n_pow
+
+primary name dots &S 172 &A                                &C n_dots?
+        number &A
+        number name &S 511 &A                              &C n_unit
+        string &A
+        ( expr ) &A
+        ( expr ) name &S 511 &A                            &C n_unit
+        name [ expr ] &S 481 &A                            &C n_subscript
+        func_ref &A
+        func_ref name &S 511 &P                            &C n_unit
+
+func_ref name ( value2_list ) &S 251 &P                    &C n_func_ref
+
+dots &A
+     dot name dots &G
+
+&C $Log$
