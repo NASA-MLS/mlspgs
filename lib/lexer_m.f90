@@ -105,22 +105,23 @@ contains
     ! Parameters for states
     integer, parameter :: START = 1
     integer, parameter :: ID = 2
-    integer, parameter :: NUM = 3    ! digit(digit|_)*
-    integer, parameter :: NUM2 = 4   ! digit(digit|_)* . digit(digit|_)*
-    integer, parameter :: NUM3 = 5   ! digit(digit|_)* . digit(digit|_)* E
-    integer, parameter :: NUM4 = 6   ! digit(digit|_)* . digit(digit|_)* E +|-
-    integer, parameter :: NUM5 = 7   ! digit(digit|_)* . digit(digit|_)* E (+|-)?
+    integer, parameter :: ID2 = 3    ! identifier space+
+    integer, parameter :: NUM = 4    ! digit(digit|_)*
+    integer, parameter :: NUM2 = 5   ! digit(digit|_)* . digit(digit|_)*
+    integer, parameter :: NUM3 = 6   ! digit(digit|_)* . digit(digit|_)* E
+    integer, parameter :: NUM4 = 7   ! digit(digit|_)* . digit(digit|_)* E +|-
+    integer, parameter :: NUM5 = 8   ! digit(digit|_)* . digit(digit|_)* E (+|-)?
                                      ! digit(digit|_)*
-    integer, parameter :: OP = 8
-    integer, parameter :: PUN = 9 
-    integer, parameter :: CONTIN = 10
-    integer, parameter :: CONTIN2 = 11
-    integer, parameter :: SQ1 = 12   ! First string-started-by-quote state
-    integer, parameter :: SQ2 = 13   ! Second string-started-by-quote state
-    integer, parameter :: SA1 = 14   ! First string-started-by-apost state
-    integer, parameter :: SA2 = 15   ! Second string-started-by-apost state
-    integer, parameter :: SH1 = 16   ! #
-    integer, parameter :: TOG = 17   ! @...
+    integer, parameter :: OP = 9
+    integer, parameter :: PUN = 10
+    integer, parameter :: CONTIN = 11
+    integer, parameter :: CONTIN2 = 12
+    integer, parameter :: SQ1 = 13   ! First string-started-by-quote state
+    integer, parameter :: SQ2 = 14   ! Second string-started-by-quote state
+    integer, parameter :: SA1 = 15   ! First string-started-by-apost state
+    integer, parameter :: SA2 = 16   ! Second string-started-by-apost state
+    integer, parameter :: SH1 = 17   ! #
+    integer, parameter :: TOG = 18   ! @...
 
     character, save :: CH          ! Current character
     integer :: CLASS               ! Classification of current character
@@ -158,7 +159,8 @@ contains
 !
 !         letter digit opchar  minus  punct  under  cmt eolin eofin space
 !  start    id    num    op      op    pun    id    cmt    6    1   start
-!  id       id    id      2       2      2    id     2     2    2     2
+!  id       id    id     11      11     11    id    11    11   11    11
+!  id2      11    11     11      11     11    11    11    11   11   id2
 !  num       3    num     3       3      3    num    3     3    3     3
 !  num2   e=num3 num2     3       3      3   num2    3     3    3     3
 !         else 3
@@ -179,7 +181,8 @@ contains
 !
 !           cont  more quote apost  dot  sharp
 !  start    cont start  sq1   sa1    4    sh1
-!  id        2     2     2     2     2     2
+!  id       11    11    11    11    11    11
+!  id2      11    11    11    11    11    11
 !  num       3     3     3     3   num2    3
 !  num2      3     3     3     3     3     3
 !  num3     10    10    10    10    10     3
@@ -210,6 +213,9 @@ contains
 !     8.   define string token.
 !     9.   define "error -- incomplete string"
 !    10.   define "error -- incomplete floating-point number"
+!    11.   if the next character is not "(" and its class is not letter,
+!          end-of-line, end_of_file, or character, define identifier, 
+!          else do action 2.
 
       select case ( state )
       case ( start )
@@ -281,13 +287,20 @@ contains
           if ( capIdentifiers ) ch = cap(ch)
           call add_char ( ch )
           need = .true.
+        case ( spaces )
+          need = .true.
+          state = id2
         case default
-          string_index = add_terminal ( t_identifier )
-          the_token = token( symbol(string_index), string_index, &
-                             term_types(symbol(string_index)) /= res_word, &
-                             where_t(file, source_start) )
+          call check_reserved_word
     exit ! main lexer loop
         end select ! class
+      case ( id2 ) ! gobble up spaces after an identifier
+        if ( class == spaces ) then
+          need = .true.
+        else
+          call check_reserved_word
+    exit ! main lexer loop
+        end if
       case ( num ) ! digit(digit|_)* 
         select case ( class )
         case ( digit ); call add_char ( ch ); need = .true.
@@ -499,6 +512,24 @@ contains
 
   contains
 
+    subroutine Check_Reserved_Word
+      ! The current token looks like an identifier. The next character is
+      ! not a space.  If it's not (, a letter, an end-of-line, end-of-file,
+      ! or comment, the symbol cannot be a reserved word
+      logical :: Not_Reserved
+      not_reserved = ch /= '(' .and. class /= letter .and. &
+                     class /= eol_in .and. class /= eof_in .and. class /= cmt
+      string_index = add_terminal ( t_identifier )
+      if ( not_reserved ) then
+        the_token = token( t_identifier, string_index, .true., &
+                           where_t(file, source_start) )
+      else
+        the_token = token( symbol(string_index), string_index, &
+                           term_types(symbol(string_index)) /= res_word, &
+                           where_t(file, source_start) )
+      end if
+    end subroutine Check_Reserved_Word
+
     character function CAP ( CH )
       character, intent(in) :: CH
       if ( ch >= 'a' .and. ch <= 'z' ) then
@@ -506,7 +537,6 @@ contains
       else
         cap = ch
       end if
-      return
     end function
 
     subroutine ERROR ( CODE )
@@ -672,6 +702,10 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.27  2013/11/26 22:50:14  vsnyder
+! Add Check_Reserved_Word.  Don't call a word reserved if it's followed by a
+! letter, left parenthesis, end-of-line, end-of-file, or semicolon.
+!
 ! Revision 2.26  2013/10/16 01:13:50  vsnyder
 ! New 'minus' class for hyphen so =- will be two operators
 !
