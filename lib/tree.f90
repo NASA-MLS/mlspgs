@@ -25,12 +25,12 @@ module TREE
 
   public :: ADD_SONS_FROM_STACK, ALLOCATE_TREE, BUILD_TREE, COPY_TO_STACK
   public :: DEALLOCATE_TREE, DECORATE, DECORATION, DECORATION_TX_TX, DELETE_TREE
-  public :: DELETE_TREE_STACK, DUMP_TOP_STACK, DUMP_TOP_STACK_NAME
+  public :: DELETE_TREE_STACK, DUMP_STACK, DUMP_TOP_STACK, DUMP_TOP_STACK_NAME
   public :: DUMP_TREE_NODE, DUMP_TREE_NODE_NAME, GET_TREE_NODE_NAME, INIT_TREE
   public :: INSERT_NODE, NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
-  public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_SUBTREE
-  public :: STACK_SUBTREE_TX, SUB_ROSA, SUBTREE, THE_FILE, TREE_NODE_NAME
-  public :: TREE_TEXT, TX, WHERE
+  public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_SUB_ROSA
+  public :: STACK_SUBTREE, STACK_SUBTREE_TX, SUB_ROSA, SUBTREE, THE_FILE
+  public :: TREE_NODE_NAME,TREE_TEXT, TX, WHERE
 
   ! Tree node kinds:
   integer, public, parameter :: PSEUDO = 0   ! Tree node is pseudo terminal
@@ -122,10 +122,6 @@ module TREE
 
   interface Tree_Node_Name
     module procedure Tree_Node_Name_I, Tree_Node_Name_TX
-  end interface
-
-  interface Tree_Text
-    module procedure Tree_Text_I, Tree_Text_TX
   end interface
 
   interface Where
@@ -393,18 +389,38 @@ contains
     n_tree_stack = 0
   end subroutine DELETE_TREE_STACK
 
+  subroutine DUMP_STACK ( Subtrees )
+    ! Dump the tree stack.  If Subtrees is present and true, dump trees
+    ! rooted in the stack.
+    logical, intent(in), optional :: Subtrees
+    integer :: Depth, I
+    logical :: My_Trees
+    my_trees = .false.
+    if ( present(subtrees) ) my_trees = subtrees
+    do i = tree_sp+1, ubound(the_tree,1)
+      if ( my_trees ) then
+        depth = 0
+        call print_subtree ( i, depth )
+      else
+        call output ( i, 5 )
+        call output ( ':' )
+        call dump_tree_node ( i, 0, advance='yes' )
+      end if
+    end do
+  end subroutine DUMP_STACK
+
   subroutine DUMP_TOP_STACK ( INDENT, ADVANCE )
     ! Indent INDENT spaces, then dump the top node of the tree stack
     integer, intent(in) :: INDENT
     character(len=*), intent(in), optional :: ADVANCE
-    call dump_tree_node ( tree_sp, indent, advance )
+    call dump_tree_node ( tree_sp+1, indent, advance )
   end subroutine DUMP_TOP_STACK
 
   subroutine DUMP_TOP_STACK_NAME ( ADVANCE, BEFORE )
     ! Dump the name of the top node of the tree stack
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE
-    call display_string ( tree_texts(the_tree(tree_sp) % node), &
+    call display_string ( tree_texts(the_tree(tree_sp+1) % node), &
                         & advance=advance, before=before )
   end subroutine DUMP_TOP_STACK_NAME
 
@@ -507,7 +523,7 @@ contains
       call tree_init (i)
       call lookup_and_insert ( where, found, .false. )
       ! It's OK if it found one -- maybe it's a terminal text, too.
-      if ( .not. found ) then; call set_symbol(where, t_null); end if
+      if ( .not. found ) then; call set_symbol(where, where); end if
       tree_texts(i) = where
     end do
     tree_point = null_tree
@@ -650,7 +666,8 @@ contains
     call print_subtree ( subroot%i, depth, dump_decor, type_name )
   end subroutine PRINT_SUBTREE_TX
 
-  subroutine PUSH_PSEUDO_TERMINAL_INTEGER ( SUB_ROSA, SOURCE, DECOR, FILE )
+  subroutine PUSH_PSEUDO_TERMINAL_INTEGER ( SUB_ROSA, SOURCE, DECOR, FILE, &
+    & CLASS )
   ! Push the pseudo-terminal with string index SUB_ROSA, source SOURCE
   ! and decoration DECOR onto the tree stack.  If DECOR is absent, use
   ! null_tree.
@@ -658,24 +675,29 @@ contains
     integer, intent(in) :: SOURCE
     integer, intent(in), optional :: DECOR
     integer, intent(in), optional :: FILE
-    integer :: MY_DECOR, MY_FILE
+    integer, intent(in), optional :: CLASS ! of string
+    integer :: MY_CLASS, MY_DECOR, MY_FILE
     my_decor = null_tree
     if ( present(decor) ) my_decor = decor
     my_file = 0
     if ( present(file) ) my_file = file
+    my_class = symbol(sub_rosa)
+    if ( present(class) ) my_class = class
+
     if ( tree_sp <= tree_point ) then
       call tree_error ( no_tree_space, null_tree )
 !     call double_tree
     end if
-                                 ! node                        decor
-    the_tree(tree_sp) = tree_node( tree_map(symbol(sub_rosa)), my_decor, &
+                                 ! node                   decor
+    the_tree(tree_sp) = tree_node( tree_map(my_class), my_decor, &
                              ! file nsons  source  kind    sub_rosa
                                my_file, 0, source, pseudo, sub_rosa )
     tree_sp = tree_sp - 1     ! push tree stack
     n_tree_stack = n_tree_stack + 1
   end subroutine PUSH_PSEUDO_TERMINAL_INTEGER
 
-  subroutine PUSH_PSEUDO_TERMINAL_WHERE (SUB_ROSA, WHERE, DECOR )
+  subroutine PUSH_PSEUDO_TERMINAL_WHERE (SUB_ROSA, WHERE, DECOR, &
+    & CLASS )
   ! Push the pseudo-terminal with string index SUB_ROSA, source SOURCE
   ! and decoration DECOR onto the tree stack.  If DECOR is absent, use
   ! null_tree.
@@ -683,7 +705,8 @@ contains
     integer, intent(in) :: SUB_ROSA
     type(where_t), intent(in) :: WHERE
     integer, intent(in), optional :: DECOR
-    call push_pseudo_terminal ( sub_rosa, where%source, decor, where%file )
+    integer, intent(in), optional :: CLASS ! of string
+    call push_pseudo_terminal ( sub_rosa, where%source, decor, where%file, class )
   end subroutine PUSH_PSEUDO_TERMINAL_WHERE
 
   subroutine REPLACE_SONS_I ( T, K, M, U )
@@ -769,6 +792,11 @@ contains
     stack_subtree_tx%i = subtree(which, tree_sp+1)
   end function STACK_SUBTREE_TX
 
+  integer function STACK_SUB_ROSA ()
+  ! Return the sub_rosa index of the top stack frame
+    stack_sub_rosa = the_tree(tree_sp+1) % link
+  end function STACK_SUB_ROSA
+
   integer function SUB_ROSA_I ( WHERE ) result ( Sub_Rosa )
   ! Return the sub_rosa string index from the tree node at WHERE
     integer, intent(in) :: WHERE
@@ -834,17 +862,11 @@ contains
     tree_node_name_tx = tree_texts(the_tree(where%i) % node)
   end function TREE_NODE_NAME_TX
 
-  pure integer function TREE_TEXT_I ( TREE_NODE ) result ( Tree_Text )
-  ! Return the string index of the text of the tree_node at TREE_NODE
+  pure integer function TREE_TEXT ( TREE_NODE )
+  ! Return the string index of the text of the tree node id TREE_NODE
     integer, intent(in) :: TREE_NODE
     tree_text = tree_texts ( tree_node )
-  end function TREE_TEXT_I
-
-  pure integer function TREE_TEXT_TX ( TREE_NODE ) result ( Tree_Text )
-  ! Return the string index of the text of the tree_node at TREE_NODE
-    type(tx), intent(in) :: TREE_NODE
-    tree_text = tree_texts ( tree_node%i )
-  end function TREE_TEXT_TX
+  end function TREE_TEXT
 
   function Where_I ( Tree ) result ( Where )
   ! Return the Where_T structure of the text of the tree node at WHERE
@@ -1005,6 +1027,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.25  2013/11/26 22:46:52  vsnyder
+! Add Dump_Stack, class of string in Push_Pseudo_Terminal, Stack_Sub_Rosa
+!
 ! Revision 2.24  2013/10/09 01:09:42  vsnyder
 ! Add some routines, spiff up dumps
 !
