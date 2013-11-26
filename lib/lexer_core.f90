@@ -111,12 +111,19 @@ contains
   subroutine PRINT_SOURCE_INTEGER ( SOURCE, ADVANCE, BEFORE, After, File )
   ! Output "line LLL, column CCC"
     use String_Table, only: Display_String
-    use OUTPUT_M, only: OUTPUT
+    use OUTPUT_M, only: NewLine, OUTPUT
 
     integer, intent(in) :: SOURCE  ! 256*srcLine + srcCol
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: BEFORE, After
     integer, intent(in), optional :: File ! From include stack
+    logical :: MyAdv
+    myAdv = .false.
+    if ( present(advance) ) then
+      ! This kludge is necessary because "call output ( '', advance=advance )
+      ! outputs one blank character, instead of zero.
+      myAdv = advance(1:1) == 'y' .or. advance(1:1) == 'Y'
+    end if
     if ( present(before) ) call output ( before )
     call output ( source/256 , before='line ' )
     call output ( mod(source,256), before=', column ' )
@@ -124,7 +131,7 @@ contains
       if ( file /= 0 ) call display_string ( file, before=' in ', strip=.true. )
     end if
     if ( present(after) ) call output ( after )
-    call output ( '', advance=advance )
+    if ( myAdv ) call newLine
   end subroutine PRINT_SOURCE_INTEGER
 
   subroutine Print_Source_Where ( Where, Advance, Before, After )
@@ -147,6 +154,9 @@ contains
 end module LEXER_CORE
 
 ! $Log$
+! Revision 2.9  2013/11/26 22:44:48  vsnyder
+! Spiff up dump
+!
 ! Revision 2.8  2013/09/24 23:08:14  vsnyder
 ! Add Get_Where, version of Print_Source that uses Where_t
 !
