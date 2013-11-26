@@ -142,7 +142,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical :: CHECKLEAK = .false.   ! Check parse tree for potential memory leaks
   logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
   logical :: DO_DUMP = .false.     ! Dump declaration table
-  logical :: DUMP_TREE = .false.   ! Dump tree after parsing
+  integer :: DUMP_TREE = -1        ! Dump tree after parsing
   ! Wouldn't it be better to use get_lun at the moment we open the l2cf?
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
   integer :: L2CFNODE        = 0        ! Line #, Col # of L2CF being executed
@@ -762,7 +762,10 @@ jloop:do while ( j < len_trim(line) )
           select case ( line(j:j) )
           case ( ' ' )
             exit
-          case ( 'A' ); dump_tree = .true.
+          case ( 'A' )
+            dump_tree = 0
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) &
+              & dump_tree = ichar(line(j+1:j+1)) - ichar('0')
           case ( 'a', 'c', 'f', 'g', 'l', 'p', 't' )
             if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
               call set_toggles ( line(j:j+1) )
@@ -982,6 +985,10 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.75  2013/11/26 22:40:51  vsnyder
+! Change -A to -A[n] with n>0 meaning dump the entire tree, including the
+! type-checking stuff, and n==0 or absent meaning dump only the parser output.
+!
 ! Revision 2.74  2013/11/20 01:00:45  pwagner
 ! slaves were dumping chunkdivide data for all chunks; fixed
 !
