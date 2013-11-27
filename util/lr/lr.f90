@@ -170,6 +170,7 @@ program LR
   use Generate_Table, only: GENTAB
   use GRAMMAR, only: RDGRAM
   use Grounded, only: GROUND
+  use, intrinsic :: ISO_Fortran_Env, only: Error_Unit
   use LISTS, only: LISTS_INIT
   use Print_Grammar, only: PRNTGM
   use Print_Set, only: PNTSET
@@ -215,11 +216,18 @@ program LR
      end if
   end if
 
-  if ( lnadqt /= 0 ) stop 1
+  if ( lnadqt /= 0 ) then
+    write ( error_unit, '(a,i0)' ) &
+      'Error: Grammar is not LR(1), last inadequate state is ', lnadqt
+    stop 1
+  end if
 
 end program LR
 
 ! $Log$
+! Revision 1.2  2013/11/27 01:33:47  vsnyder
+! Stop with stop-code 1 if not LR
+!
 ! Revision 1.1  2013/10/24 22:41:14  vsnyder
 ! Initial commit
 !
