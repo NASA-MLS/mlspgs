@@ -184,6 +184,9 @@ program LR
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
+  integer :: LNADQT = 1 ! Last inadequate state number, zero if grammar is LR.
+                        ! Initially nonzero in case the grammar isn't analyzed.
+
   call md_init
   call lists_init
   call rdgram
@@ -202,7 +205,7 @@ program LR
   if (toggle(ichar('X')) == 0) call xref
   if (toggle(ichar('N')) == 0) then
      call analyz
-     call pntset
+     call pntset ( lnadqt )
 
      ! Toggle L (initially on) outputs the tables.
 
@@ -212,6 +215,11 @@ program LR
      end if
   end if
 
+  if ( lnadqt /= 0 ) stop 1
+
 end program LR
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

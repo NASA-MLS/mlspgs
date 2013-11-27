@@ -23,7 +23,7 @@ module Print_Set
 
 contains
 
-  subroutine PNTSET
+  subroutine PNTSET ( LNADQT )
 
     use ANACOM, only: IFINAL, INDBAS
     use Delete, only: DELCS
@@ -37,6 +37,10 @@ contains
     use TABCOM, only: NUMPRD
     use TOGGLES
     implicit NONE
+
+    integer, intent(out) :: LNADQT
+    ! LNADQT  is the state number of the last inadequate state.  Zero if
+    !         the grammar is adequate, it is LR(1).
 
     ! Print the configuration sets.
 
@@ -71,7 +75,6 @@ contains
     ! LINK    is a pointer to a list node when cross reference lists are
     !         being constructed or printed.
     ! LINE    is used for message assembly.
-    ! LNADQT  is the state number of the last inadequate state.
     ! LSTHED  is an array of pointers to lists of states in which a
     !         a production is analyzed.
     ! REDUCE  is .TRUE. iff the last configuration printed was a reducing
@@ -83,7 +86,6 @@ contains
     integer K, L, LINK
     character(len=120) :: LINE
     integer LSTHED(NUMPRD)
-    integer LNADQT
     logical REDUCE
 
   !     *****     Procedures     *****************************************
@@ -306,3 +308,6 @@ contains
 end module Print_Set
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
