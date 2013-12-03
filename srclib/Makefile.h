@@ -158,7 +158,8 @@ SHELL = /bin/sh
 export PREPRO=$(patsubst %.F90,%.f90,$(wildcard *.F90))
 
 cfm_f90 := $(shell ${REECHO} $(cfm_sources)/*.f $(cfm_sources)/*.[Ff]9? $(cfm_sources)/*.c)
-lr_f90 := $(shell ${REECHO} $(lr_sources)/*.f $(lr_sources)/*.[Ff]9? $(lr_sources)/*.c $(lr_sources)/*.txt)
+lr_f90 := $(shell ${REECHO} $(lr_sources)/*.f $(lr_sources)/*.[Ff]9? $(lr_sources)/*.c \
+  $(lr_sources)/*.txt $(lr_sources)/*.grm )
 l1_f90 := $(shell ${REECHO} $(l1_sources)/*.f $(l1_sources)/*.[Ff]9? $(l1_sources)/*.c)
 l2_f90 := $(shell ${REECHO} $(l2_sources)/*.f $(l2_sources)/*.[Ff]9? $(l2_sources)/*.c $(l2_sources)/*.txt)
 libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.[Ff]9? \
@@ -234,6 +235,9 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR) $(UPTODATEMARKS)
 
 # $Log$
+# Revision 1.8  2013/12/03 00:04:53  pwagner
+# Should now build lr automatically
+#
 # Revision 1.7  2013/09/09 23:19:23  pwagner
 # Compute dependencies according to .mod-style
 #
