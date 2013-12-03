@@ -67,9 +67,9 @@ changesyntax({@!})
 ; Note: if for some reason "%" is unsuitable, simply replace pctChar below
 !define(pctChar,%)
 ;!define(sublist2pct,{%$1})
-!define(sublist2pct,{!pctChar$1})
+!define(sublist2pct,{!pctChar $1})
 ; Replace each ',' with '%'
-!define(list2pct,{!forall({sublist2pct}, $@ ) })
+!define(list2pct,{!tidyList(!forall({sublist2pct}, $@ )) })
 !define(pyScriptArgs0,{-!pctChar !list2pct(!shift($@))})
 !define(pyScriptArgs1,{-!pctChar !list2pct($1) !list2pct(!shift($@))})
 !define(pyScriptArgs11,{-1 -!pctChar $1 !list2pct(!shift($@))})
@@ -228,6 +228,10 @@ changesyntax({@!})
 })})
 !define(tidyList,{!tidyOneWord({$1})!ifelse($#,1,{},{,!tidyList}(!shift($@)))})
 
+;; These remove left and right brackets
+!define(snipLBracket,{!translit({$1},{[})})
+!define(snipRBracket,{!translit({$1},{]})})
+!define(snipBrackets,{!snipLBracket(snipRBracket({$1}))})
 ;; This one clears diversions (taken from the m4 manual)
 !define(clearDivert,
 {!pushdef({num},!divnum)!divert(-1)!undivert($@)!divert(!num)!popdef(num)})
@@ -236,6 +240,9 @@ changesyntax({@!})
 ;; (for things like flaggingBands)
 !define(nargs, {$#})
 ;$Log$
+;Revision 1.19  2010/05/25 22:41:45  pwagner
+;Added more list macros
+;
 ;Revision 1.18  2010/05/19 17:54:30  pwagner
 ;Now able to add, remove Items from list
 ;
