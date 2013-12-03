@@ -50,6 +50,9 @@ l2_objs=$(l2_sources)/$(MLSCONFG)
 # where sources for libmls.a are stored
 libmls_sources=$(CONFDIR)/lib
 
+# where sources for lr are stored
+lr_sources=$(MLSBIN)/lr
+
 # where objects and libmls.a are stored
 libmls_objs=$(libmls_sources)/$(MLSCONFG)
 
@@ -155,11 +158,12 @@ SHELL = /bin/sh
 export PREPRO=$(patsubst %.F90,%.f90,$(wildcard *.F90))
 
 cfm_f90 := $(shell ${REECHO} $(cfm_sources)/*.f $(cfm_sources)/*.[Ff]9? $(cfm_sources)/*.c)
+lr_f90 := $(shell ${REECHO} $(lr_sources)/*.f $(lr_sources)/*.[Ff]9? $(lr_sources)/*.c $(lr_sources)/*.txt)
 l1_f90 := $(shell ${REECHO} $(l1_sources)/*.f $(l1_sources)/*.[Ff]9? $(l1_sources)/*.c)
 l2_f90 := $(shell ${REECHO} $(l2_sources)/*.f $(l2_sources)/*.[Ff]9? $(l2_sources)/*.c $(l2_sources)/*.txt)
 libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.[Ff]9? \
   $(srclib)/*.f9h $(libmls_sources)/*.c \
-  $(libmls_sources)/lit_names.txt)
+  $(libmls_sources)/lit_names.txt) $(lr_f90)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.[Ff]9?)
 libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.[Ff]9?)
 libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f $(libcloud_sources)/*.c)
@@ -200,9 +204,13 @@ $(PROG): $(MakeFName)
 $(libblas_objs)/libmlspack.a: $(BLAS_PREQS)
 	$(MAKE) -f $(MakeFName) libmlspack.a -C $(blaslib) $(UPTODATEMARKS)
 
-$(libmls_objs)/libmls.a: $(LIB_prereqs)
+$(libmls_objs)/libmls.a: $(LIB_prereqs) $(INSTALLDIR)/lr 
 	echo Makefile.h $(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) $(UPTODATEMARKS)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) $(UPTODATEMARKS)
+
+$(INSTALLDIR)/lr: $(lr_f90) 
+	echo Makefile.h $(MAKE) -f $(MakeFName) lr -C $(CONFDIR) $(UPTODATEMARKS)
+	$(MAKE) -f $(MakeFName) lr -C $(CONFDIR) $(UPTODATEMARKS)
 
 $(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs)
 	echo Makefile.h $(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources) $(UPTODATEMARKS)
@@ -226,6 +234,9 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR) $(UPTODATEMARKS)
 
 # $Log$
+# Revision 1.7  2013/09/09 23:19:23  pwagner
+# Compute dependencies according to .mod-style
+#
 # Revision 1.6  2012/06/19 23:06:42  pwagner
 # Can be used by l3, l3m
 #
