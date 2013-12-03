@@ -23,9 +23,10 @@ $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
    $(UTILDIR)/init_gen.f90
 $(INSTALLDIR)/lr: $(UTILDIR)/lr/*.f90
-	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -c $(MLSCONFG) -p $@ -M $(MAKE) -O LDOPTS=-static \
-	-C $(MLSCFILE) $(UTILDIR)/lr/*.f90
+	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
+   -p lr -M $(MAKE) \
+	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+        $(UTILDIR)/lr/*.f90
 
 ifneq ($(short_name),doc)
 ifndef CASCADE
@@ -188,7 +189,7 @@ intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 $(S)/parser.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
-          $(S)/parser.f9h
+          $(S)/parser.f9h $(LRAFTER)
 
 endif
 
@@ -342,7 +343,7 @@ intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 $(S)/parser.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
-          $(S)/parser.f9h
+          $(S)/parser.f9h $(LRAFTER)
 
 endif
 
@@ -450,6 +451,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.5  2013/10/28 23:12:17  pwagner
+# May build parser.f9h
+#
 # Revision 1.4  2013/08/28 00:39:46  pwagner
 # Lifted custom builds from MLSStrings.f90 MLSStringLists.f90
 #
