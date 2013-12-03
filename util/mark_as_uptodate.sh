@@ -226,7 +226,7 @@ mark_files()
    if [ "$extant_files_result" != "" -a "$TOUCH_MODULES" = "yes" ]            
    then  
      touch $extant_files_result
-     if [ "$verbose" != "" ]            
+     if [ "$verbose" != "no" ]            
      then  
         echo "touched: $extant_files_result"                      
      fi                                 
@@ -235,13 +235,13 @@ mark_files()
    if [ "$extant_files_result" != "" -a "$TOUCH_OBJECTS" = "yes" ]            
    then  
      touch $extant_files_result
-     if [ "$verbose" != "" ]            
+     if [ "$verbose" != "no" ]            
      then  
         echo "touched: $extant_files_result"                      
         echo "Now will $MYMAKE in `pwd`"                      
      fi                                 
    fi
-   if [ "$verbose" != "" ]            
+   if [ "$verbose" != "no" ]            
    then  
       echo "Now will $MYMAKE in `pwd`"                        
    fi                                 
@@ -255,8 +255,6 @@ mark_files()
    do
      if [ "$MLSCONFG" != "" -a "$MLSCFILE" != "" ]
      then
-#       $MYMAKE -t MLSCONFG="$MLSCONFG" MLSCFILE="$MLSCFILE" \
-#           MARK_ALL_AS_UPTODATE=no
         if [ "$PRINT_STDOUT" = "yes" ]
         then
           $MYMAKE MLSCONFG="$MLSCONFG" MLSCFILE="$MLSCFILE" \
@@ -268,7 +266,6 @@ mark_files()
         fi
      elif [ "$MLSCONFG" != "" ]
      then
-#        $MYMAKE -t MLSCONFG="$MLSCONFG" MARK_ALL_AS_UPTODATE=no
         if [ "$PRINT_STDOUT" = "yes" ]
         then
           $MYMAKE MLSCONFG="$MLSCONFG" MARK_ALL_AS_UPTODATE=no \
@@ -279,7 +276,6 @@ mark_files()
         fi
      elif [ "$MLSCFILE" != "" ]
      then
-#       $MYMAKE -t MLSCFILE="$MLSCFILE" MARK_ALL_AS_UPTODATE=no
         if [ "$PRINT_STDOUT" = "yes" ]
         then
           $MYMAKE MLSCFILE="$MLSCFILE" MARK_ALL_AS_UPTODATE=no \
@@ -289,8 +285,6 @@ mark_files()
            FC="$me" LDOPTS= FAFTER= LAFTER= >> $temp1
         fi
      else
-#       $MYMAKE -t MARK_ALL_AS_UPTODATE=no
-#        echo $MYMAKE MARK_ALL_AS_UPTODATE=no FC="$me" LDOPTS=
         if [ "$PRINT_STDOUT" = "yes" ]
         then
           $MYMAKE MARK_ALL_AS_UPTODATE=no FC="$me" LDOPTS=
@@ -469,7 +463,7 @@ then
   echo "skip prerequisite directories? $SKIP_PDS"
   echo "remaining args (prereq dirs): $@"
 fi
-if [ "$verbose" != "" ]
+if [ "$verbose" != "no" ]
 then
   if [ "$special_use" = "yes" ]
   then
@@ -516,7 +510,7 @@ then
      exit 1
    fi
    touch "$object_name"
-   if [ "$verbose" != "" ]                     
+   if [ "$verbose" != "no" ]                     
    then                                        
      echo "Touching object name $object_name"  
    fi                                          
@@ -525,7 +519,7 @@ elif [ "$special_use" = "yes" ]
 then
    if [ -f "$last_target_name" ]
    then
-      if [ "$verbose" != "" -a "$special_use" = "yes" ]
+      if [ "$verbose" != "no" -a "$special_use" = "yes" ]
       then
          echo "touching $target_name"
       fi
@@ -535,7 +529,7 @@ then
       echo "link target $target_name not found in mark_as_uptodate.sh"
       exit 1
    else
-      if [ "$verbose" != "" -a "$special_use" = "yes" ]
+      if [ "$verbose" != "no" -a "$special_use" = "yes" ]
       then
          echo "rebuilding $target_name via $1"
       fi
@@ -572,7 +566,7 @@ fi
 if [ "$SKIP_PDS" != "yes" ]
 then
    while [ "$1" != "" ] ; do
-     if [ "$verbose" != "" ]
+     if [ "$verbose" != "no" ]
      then
        echo "Marking prerequisite directory $1 as up to date"
      fi
@@ -603,7 +597,7 @@ then
 fi
 if [ "$MARK_ALL_AS_UPTODATE" != "yes" ]
 then
-   if [ "$verbose" != "" ]            
+   if [ "$verbose" != "no" ]            
    then                               
      echo "Targets already up to date--no marking necessary"
    fi                                 
@@ -613,20 +607,23 @@ mark_files
 rm -f "$record_file"                                                           
 if [ -f "$last_target_name" ]
 then
-   if [ "$verbose" != "" ]
+   if [ "$verbose" != "no" ]
    then
      echo "Marking $target_name as up to date"
    fi
    touch $target_name
 fi
 
-if [ "$verbose" != "" ]              
+if [ "$verbose" != "no" ]              
 then                                 
   echo "Targets marked up to date"   
 fi                                   
 exit 0
 
 # $Log$
+# Revision 1.8  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.7  2003/02/03 22:02:08  pwagner
 # May take multiple main targets
 #
