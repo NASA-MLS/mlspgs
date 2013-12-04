@@ -522,7 +522,12 @@ fi
 if [ "$wrap" = "yes" ]
 then
   mv $templ2cf $stempl2cf
-  wrapLines -v -blank 1 -i $stempl2cf > $templ2cf
+  WRAPOPTS="-v -blank 1"
+  if [ "$WIDTH" != "" ]
+  then
+    WRAPOPTS="$WRAPOPTS -width $WIDTH"
+  fi
+  wrapLines $WRAPOPTS -i $stempl2cf > $templ2cf
   rm $stempl2cf
 fi
 
@@ -581,6 +586,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.9  2013/05/30 20:38:52  pwagner
+# Fixed error where set_read_env.sh not local
+#
 # Revision 1.8  2013/01/09 18:50:07  pwagner
 # Cant recall why, but made this change
 #
