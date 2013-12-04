@@ -80,50 +80,64 @@
 &V string              42      &C  t_string
 &V #include            43      &C  t_include
 
-cf cfs &A
-   EOS+ cfs &P
+cf cfs &P
 
 cfs one_cf &A
     cfs one_cf &P
 
-one_cf begin name EOS+ specs end name EOS+ &S 101 &A       &C n_cf
-       include EOS* &P                                     &C include file
+cases_outer case_test_outer cases_outer &A
+            case default EOS cfs &S 151 &P                &C n_default
+
+case_test_outer = case ( expr ) EOS cfs &S 491 &P         &C n_test
+
+if_stmt_outer if ( expr ) then EOS cfs &S 491 &P          &C n_test
+
+more_if_outer &A
+     else if_stmt_outer more_if_outer &A
+     else EOS cfs &S 191 &P                               &C n_else
+
+one_cf EOS &A
+       select case ( expr ) EOS+ cases_outer end select EOS &S 441 &A &C n_select
+       if_stmt_outer more_if_outer end if EOS &S 281 &A   &C n_if
+       begin name EOS specs end name EOS &S 101 &A       &C n_cf
+       include EOS &P                                     &C include file
 
 EOS+ EOS &A
      EOS+ EOS &P
 
-EOS* &A
-     EOS+ &P
-
 specs &A
-      specs spec &A
-      select case EOS+ cases end select EOS+ &S 441 &A     &C n_select
-      if_stmt more_if end if &S 281 &A                     &C n_if
-      include EOS* &P                                      &C include file
+      specs spec &P
+
+spec one_spec EOS &P
+
+&C "value" is either a scalar or an array enclosed in brackets
+
+one_spec &A
+         select case ( expr ) EOS+ cases end select &S 441 &A &C n_select
+         if_stmt more_if end if &S 281 &A                  &C n_if
+         name := value &S 521 &A                           &C n_variable
+         name : spec_rest &S 371 &A                        &C n_named
+         spec_rest &A
+         name = value &S 201 &A                            &C n_equal
+         include &P                                        &C include file
 
 &C We need to consume the EOS here so it won't be the first
 &C token we see after closing the include file.
 
-include #include string EOS &S 9 &P                        &C include file
+include #include string &S 9 &P                            &C include file
 
 cases case_test cases &A
-      case default EOS+ specs &S 151 &P                    &C n_default
+      case default EOS specs &S 151 &P                     &C n_default
 
 &C "expr" is a scalar
 
-case_test case ( expr ) EOS+ specs &S 491 &P               &C n_test
+case_test case ( expr ) EOS specs &S 491 &P                &C n_test
 
-if_stmt if ( expr ) then EOS+ specs &S 491 &P              &C n_test
+if_stmt if ( expr ) then EOS specs &S 491 &P               &C n_test
 
-more_if else if ( expr ) then EOS+ specs more_if &S 481 &A &C n_test
-     else EOS+ specs &S 191 &P                             &C n_else
-
-&C "value" is either a scalar or an array enclosed in brackets
-
-spec name = value EOS+ &S 201 &A                           &C n_equal
-     name := value EOS+ &S 521 &A                          &C n_variable
-     name : spec_rest EOS+ &S 371 &A                       &C n_named
-     spec_rest EOS+ &P
+more_if &A
+     else if_stmt more_if &A
+     else EOS specs &S 191 &P                              &C n_else
 
 spec_rest name fields &S 461 &P                            &C n_spec_args
 
@@ -204,3 +218,6 @@ dots &A
      dot name dots &G
 
 &C $Log$
+&C Revision 1.1  2013/11/26 23:25:36  vsnyder
+&C Initial commit
+&C
