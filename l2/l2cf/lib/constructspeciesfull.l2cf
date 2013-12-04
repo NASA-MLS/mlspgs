@@ -41,7 +41,7 @@ begin Construct
   ;;  ;; Here are only the linear ones
   ;;  !removeItem(!list2pct({OH},{O3},{O3_HR},{H2O},{CO}),!instrumentMolecules)
   
-  !define(allLinearMoleculesList,{!removeItem(!list2pct({OH},{O3},{O3_HR},{H2O},{CO}),!instrumentMolecules)})
+  !define(allLinearMoleculesList,{!removeItem(!list2pct({OH},{O3},{O3_HR},{H2O}),!instrumentMolecules)})
   ;; Now print them as defined above
   ;;!allLinearMoleculesList
   !define(allLinearMolecules,{!tidyList(!allLinearMoleculesList)})
@@ -785,6 +785,9 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.2  2013/12/04 17:27:08  pwagner
+;Forgot macros require bang sigil; fixed
+;
 ;Revision 1.1  2013/12/03 23:58:47  pwagner
 ;First commit
 ;
