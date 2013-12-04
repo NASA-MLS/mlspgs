@@ -783,6 +783,9 @@ begin Fill
   tempVectorPrecision: Vector, template=stateTemplate
   tempVectorDiagnostics: Vector, template=otherDiagnosticsTemplate
 end Fill
-divert(-1)
+!divert(-1)
 ;$Log$
+;Revision 1.1  2013/12/03 23:58:47  pwagner
+;First commit
+;
 !divert!dnl
