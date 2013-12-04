@@ -10,13 +10,14 @@ def mrClean(a, s):
 
 def diff(l,u):
    """Return the difference of the lists l, u"""
-   from sets import Set
+   # DeprecationWarning: the sets module is deprecated
+   # If using a really old version of python, i.e. pre-2.6,
+   # uncomment the next 2 lines
+   # from sets import Set
+   #  s = Set(l) - Set(u)
 
 
- #  print "lll"+l+"lll"
- #  print "uuu"+u+"uuu"
-   
-   s = Set(l) - Set(u)
+   s = set(l) - set(u)
    #print s
    # remove unwanted chars from the result Set([<>])
    w = str(s).split('[')[1].split(']')[0].replace("'","").replace(',','').split(' ')
