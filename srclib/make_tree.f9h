@@ -29,6 +29,8 @@
     ! You may need to copy this USE statement to the routine or module
     ! that incorporates this one by "include", because "make depends" can't
     ! see through includes:
+    use Symbol_Table, only: Symbol, Set_Symbol
+    use Symbol_Types, only: T_Identifier, T_Null
     use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     implicit NONE
 
@@ -40,6 +42,7 @@
     integer :: DECOR, I, J, K, ITEM, N_IDS, STRING, WHICH
     integer, save :: M = 0, STACK(0:30) = 0
     logical :: MyCont
+    integer :: Save_Symbol
 
     myCont = .false.
     if ( present(continue) ) myCont = continue
@@ -115,13 +118,19 @@
           print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
           stop
         end if
+        save_symbol = symbol(string)
+        call set_symbol ( string, t_identifier ) ! make push_pseudo_terminal work
         call push_pseudo_terminal ( string, 0, decor = item )
+        call set_symbol ( string, save_symbol ) ! in case it was a reserved word
         stack(m) = stack(m) + 1
       end if
     end do
   end subroutine MAKE_TREE
 
 ! $Log$
+! Revision 1.11  2013/09/19 23:33:46  vsnyder
+! Provide for tracing
+!
 ! Revision 1.10  2012/02/01 00:05:44  vsnyder
 ! Spiff an error message
 !
