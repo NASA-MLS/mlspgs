@@ -764,8 +764,10 @@ jloop:do while ( j < len_trim(line) )
             exit
           case ( 'A' )
             dump_tree = 0
-            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) &
-              & dump_tree = ichar(line(j+1:j+1)) - ichar('0')
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+              dump_tree = ichar(line(j+1:j+1)) - ichar('0')
+              j = j + 1
+            end if
           case ( 'a', 'c', 'f', 'g', 'l', 'p', 't' )
             if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
               call set_toggles ( line(j:j+1) )
@@ -985,6 +987,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.76  2013/12/05 23:52:21  vsnyder
+! Process # in -A# option correctly
+!
 ! Revision 2.75  2013/11/26 22:40:51  vsnyder
 ! Change -A to -A[n] with n>0 meaning dump the entire tree, including the
 ! type-checking stuff, and n==0 or absent meaning dump only the parser output.
