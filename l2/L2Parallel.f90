@@ -44,7 +44,8 @@ module L2Parallel
   use MLSSTRINGS, only: LOWERCASE
   use MOREPVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MLSSTRINGS, only: NAPPEARANCES
-  use OUTPUT_M, only: BANNER, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, TIMESTAMP
+  use OUTPUT_M, only: BANNER, BEVERBOSE, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
+    & TIMESTAMP
   use PVM, only: INFOTAG, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, &
     & PVMF90UNPACK, PVMTASKHOST, &
@@ -62,8 +63,8 @@ module L2Parallel
   implicit none
   private
 
-  public :: L2MasterTask
-  public :: GetChunkInfoFromMaster
+  public :: L2MASTERTASK
+  public :: GETCHUNKINFOFROMMASTER
   
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -73,7 +74,8 @@ module L2Parallel
 
   ! Parameters
   integer, parameter :: HDFNAMELEN = 132 ! Max length of name of swath/sd
-  character(len=*), parameter :: GROUPNAME = "mlsl2" ! Set by l2q
+  character(len=*), parameter :: &
+    &                   GROUPNAME = "mlsl2" ! Set by l2q
   logical, parameter :: NOTFORGOTTEN = .false. ! Note the death of forgottens
   integer, save      :: FIXDELAYFORSLAVETOFINISH   = 1500000 ! 15000000 ! 15 sec
   integer, save      :: KILLINGSLAVESDELAY   = 1000000 ! 1 sec
@@ -168,7 +170,7 @@ contains
     call BitsToBooleans( Bits, logicals )
     ChunkDivideConfig%allowPriorOverlaps = logicals(1)
     ChunkDivideConfig%allowPostOverlaps  = logicals(2)
-    if( switchDetail(switches, 'opt') > -1 .or. parallel%verbosity > 0 ) then
+    if( BeVerbose( 'opt', -1 ) .or. parallel%verbosity > 0 ) then
       call output(' (chunk info received from master) ', advance='yes')
       call output(' Chunk number                       :            ', advance='no')
       call blanks(4, advance='no')
@@ -179,7 +181,7 @@ contains
       call blanks(4, advance='no')
       call output(ChunkDivideConfig%allowPostOverlaps, advance='yes')
     endif
-    if ( switchDetail(switches,'chu') >=0 ) call dump ( chunks )
+    if ( BeVerbose( 'chu', -1 ) ) call dump ( chunks )
 
   end subroutine GetChunkInfoFromMaster
 
@@ -308,7 +310,7 @@ contains
       & 'No machines available for master to assign to slave tasks' )
       if ( .not. any(machines%OK) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'No machines OK for master to assign to slave tasks' )
-      if ( switchDetail(switches,'mach') > -1 .or. &
+      if ( BeVerbose( 'mach', -1 ) .or. &
         & parallel%verbosity > 1 ) call dump ( machines )
     elseif ( .not. usingSubmit ) then
       call GetMachines ( machines )
@@ -317,7 +319,7 @@ contains
       & 'No machines available for master to assign to slave tasks' )
       if ( .not. any(machines%OK) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'No machines OK for master to assign to slave tasks' )
-      if ( switchDetail(switches,'mach') > -1 .or. &
+      if ( BeVerbose( 'mach', -1 ).or. &
         & parallel%verbosity > 1 ) call dump ( machines )
     else
       noMachines = 0
@@ -348,7 +350,7 @@ contains
           & 'No chunks to process-was your request within range?' )
       endif
     endif
-    if ( switchDetail(switches,'l2q') > -1 ) then
+    if ( BeVerbose( 'l2q', -1 ) ) then
       call outputnamedValue( 'size(chunks)', size(chunks) )
       call outputnamedValue( 'parallel%chunkRange', trim(parallel%chunkRange) )
       call dump( chunksAbandoned, 'chunksAbandoned' )
@@ -401,7 +403,7 @@ contains
           exit
         else ! ------------------------------------- Start job using pvmspawn
           commandLine = trim(parallel%pgeName)   ! was 'mlsl2'
-          if ( switchDetail(switches,'slv') > -1 ) then
+          if ( BeVerbose( 'slv', -1 ) ) then
             call PVMFCatchOut ( 1, info )
             if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
           end if
@@ -438,7 +440,7 @@ contains
             chunkNiceTids(nextChunk) = GetNiceTidString(chunkTids(nextChunk))
             chunksStarted(nextChunk) = .true.
             if ( parallel%verbosity > 0 ) then
-              if ( switchDetail(switches,'l2q') > 0 ) then
+              if ( BeVerbose( 'l2q', 0 ) ) then
                 call output ( tidArr(1) )
                 call output ( ' ' )
               endif
@@ -448,7 +450,7 @@ contains
                 & ' ' // trim(chunkNiceTids(nextChunk)), &
                 & advance='yes' )
             end if
-            if ( switchDetail(switches,'l2q') > 0 ) &
+            if ( BeVerbose( 'l2q', 0 ) ) &
               & call output ( chunkTids(nextChunk), advance='yes' )
             call WelcomeSlave ( nextChunk, chunkTids(nextChunk) )
             if ( usingL2Q ) call ThankL2Q(machines(machine), L2Qtid)
@@ -667,7 +669,7 @@ contains
             call output ( chunk )
             call output ( ' ticket ' )
             call TimeStamp ( returnedTicket, advance='yes')
-            if ( switchDetail ( switches, 'dwtime' ) > -1 ) then
+            if ( BeVerbose( 'dwtime', -1 ) ) then
               call output ( ' after ' )
               call output( timeDWHasBeenWriting( fileIndex, chunk ) )
               call output ( ' (s) ' )
@@ -854,7 +856,7 @@ contains
               machines(deadMachine)%free = .true.
             end if
             if ( parallel%verbosity > 0 ) then
-              if ( switchDetail(switches,'l2q') > -1 ) then
+              if ( BeVerbose( 'l2q', -1 ) ) then
                 call output ( deadTID )
                 call output ( ' ' )
               endif
@@ -892,7 +894,7 @@ contains
                 call output ( deadChunk )
                 call output ( ' ticket ' )
                 call TimeStamp ( request%ticket, advance='yes')
-                if ( switchDetail ( switches, 'dwtime' ) > -1 ) then
+                if ( BeVerbose( 'dwtime', -1 ) ) then
                   call output ( ' after ' )
                   call output( timeDWHasBeenWriting( fileIndex, deadChunk ) )
                   call output ( ' (s) ' )
@@ -964,7 +966,7 @@ contains
             call KillSlaves (.true., 'Dead slave tid doesnt match machine tid')
           endif
           call TellL2QMachineDied( machines(deadMachine), L2Qtid )
-          if ( switchDetail(switches,'l2q') > -1 ) then
+          if ( BeVerbose( 'l2q', -1 ) ) then
             call output ( 'Bad news about chunk ' )
             call output ( deadChunk )
             call TimeStamp ( ' on slave ' // trim(machines(deadMachine)%name) // &
@@ -975,7 +977,7 @@ contains
           ! (so we won't try to free it when we're finished)
           chunkTids(deadChunk) = 0
         elseif ( usingL2Q ) then
-          if ( switchDetail(switches,'l2q') > -1 ) then
+          if ( BeVerbose( 'l2q', -1 ) ) then
             call output ( 'tID ' )
             call output ( deadTID )
             call TimeStamp ( ' finished normally ', advance='yes' )
@@ -1115,7 +1117,7 @@ contains
         & call usleep ( parallel%delay )
     end do masterLoop ! --------------------- End of master loop --------------
 
-    if ( switchDetail(switches,'l2q') > -1 ) then
+    if ( BeVerbose( 'l2q', -1 )) then
       call TimeStamp ( '   Finished', advance='yes' )
       call dump( chunkNiceTids, 'chunkNiceTids', options='t' )
       call dump( chunkTids, 'chunkTids' )
@@ -1138,7 +1140,7 @@ contains
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'No chunks were processed successfully.' )
 
-    if ( switchDetail ( switches, 'dwtime' ) > -1 ) then
+    if ( BeVerbose( 'dwtime', -1 ) ) then
       call dump( maxTimeDWFileTook, 'max time to do direct writes' )
       call dump( maxTimeChunkSpentWriting, 'max time chunks spent writing' )
     endif
@@ -1206,12 +1208,12 @@ contains
           if ( machine < 1 ) then
             thisMachine%name = machineName
             machine = AddMachineToDataBase(machines, thisMachine)
-            if ( switchDetail(switches,'l2q') > -1 ) &
+            if ( BeVerbose( 'l2q', -1 ) ) &
               & call output('Added machine to db', advance='yes')
             ! machine = AddMachineNameToDataBase(machines%Name, machineName)
           endif
           ! if ( switchDetail(switches,'l2q') > -1 ) call output('Good news, l2q likes us', advance='yes')
-          if ( switchDetail(switches,'l2q') > -1 ) then
+          if ( BeVerbose( 'l2q', -1 ) ) then
             call outputNamedValue( 'machine', machine )
           endif
         endif
@@ -1288,7 +1290,7 @@ contains
             machine = chunkMachines(chunk)
             call TellL2QMachineFinished( &
               & trim(machines(machine)%name), machines(machine)%tid, L2Qtid, 0 )
-            if ( switchDetail(switches,'l2q') > -1 ) then
+            if ( BeVerbose( 'l2q', -1 ) ) then
               call output( 'tid: ', advance='no' )
               call output( machines(machine)%tid, advance='no' )
               call output( 'machine name: ', advance='no' )
@@ -1477,7 +1479,7 @@ contains
       if ( bufferIDRcv < 0 ) then
         call PVMErrorMessage ( info, "checking for Granted message" )
       else if ( bufferIDRcv > 0 ) then
-        if ( switchDetail(switches,'l2q') > -1 ) &
+        if ( BeVerbose( 'l2q', -1 ) ) &
           & call TimeStamp('Weve been granted a host', advance='yes')
         ! Granted us a machine
         call PVMF90Unpack ( machineName, info )
@@ -1492,7 +1494,7 @@ contains
         if ( beat < max(NBEATS, 1)) call usleep ( parallel%delay )
       endif
     enddo
-    if ( switchDetail(switches,'l2q') > -1 .and. len_trim(machineName) > 0 ) &
+    if ( BeVerbose( 'l2q', -1 ) .and. len_trim(machineName) > 0 ) &
       & call TimeStamp('Received from l2q ' // trim(machineName), advance='yes')
   end subroutine ReceiveMachineFromL2Q
 
@@ -1528,13 +1530,15 @@ contains
     call PVMF90Pack ( noChunks, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'packing number of chunks' )
+    indx = INDEX (L2PCF%startUTC, "T")
+    if ( len_trim(l2PCF%RunID) > 0 ) then
+      dateString = l2PCF%RunID
+    elseif ( indx > 0 ) then
     ! Now send our data date as a string
     ! We might reasonably expect one of two formats for startUTC:
     ! 1996-051T00:00:00.000000Z (using yyyy-dayofyear)
     ! 2006-05-07T00:00:00.000000Z (using yyyy-month-dayofmonth)
     ! (e.g., '2006d121')
-    indx = INDEX (L2PCF%startUTC, "T")
-    if ( indx > 0 ) then
       if ( all( NAppearances(L2PCF%startUTC(1:indx-1), (/'-'/)) > 1 ) ) then
         dateString = L2PCF%startUTC(1:indx-1) ! it was yyyy-month-dayofmonth
       else
@@ -1567,7 +1571,7 @@ contains
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
     ! Identify ourselves
-    if ( switchDetail(switches,'l2q') > -1 ) &
+    if ( BeVerbose( 'l2q', -1 ) ) &
       & call TimeStamp('Requesting host from l2q', advance='yes')
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( sig_requestHost, info )
@@ -1676,7 +1680,7 @@ contains
     call PVMFSend ( L2Qtid, petitionTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending finish packet' )
-    if ( switchDetail(switches, 'l2q') > -1 ) then
+    if ( BeVerbose( 'l2q', -1 ) ) then
       call output('Telling l2q about death of host ', advance='no')
       call output(trim(machine%name), advance='no')
       call blanks(2)
@@ -1696,7 +1700,7 @@ contains
     !
     ! If slave finished normally, give it enough time to deconstruct gracefully
     call usleep( delay )
-    if ( switchDetail(switches,'l2q') > -1 ) then
+    if ( BeVerbose( 'l2q', -1 ) ) then
       call output( 'Releasing ' )
       call output( tid )
       call output( ' ' // trim(machinename), advance='yes' )
@@ -1764,7 +1768,7 @@ contains
     call PVMFSend ( L2Qtid, petitionTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, 'sending finish packet' )
-    if ( switchDetail(switches, 'l2q') > -1 ) then
+    if ( BeVerbose( 'l2q', -1 ) ) then
       call output('Thanking l2q for host ', advance='no')
       call TimeStamp(machine%tid, advance='yes')
     endif
@@ -1785,6 +1789,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.106  2013/12/05 01:45:32  pwagner
+! Pass RunID to l2q if non-blank; started using BeVerbose
+!
 ! Revision 2.105  2013/08/30 02:45:43  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
