@@ -99,6 +99,7 @@ SAVEJOBSTATS="yes"
 # pro      announce input files at opening, output files at creation
 # time     summarize time consumed by each code  section, phase, etc.
 otheropts="$OTHEROPTS -g --wall -S'mas,chu,opt1,log,pro,time'"
+verbose=`echo "$otheropts" | grep -i verbose`
 
 # Check that assumptions are valid
 if [ "$PGS_PC_INFO_FILE" = "" ]
@@ -250,16 +251,20 @@ echo SAVEJOBSTATS $SAVEJOBSTATS
 echo masterlog $masterlog
 echo PGE_SCRIPT_DIR/jobstat-sips.sh $PGE_SCRIPT_DIR/jobstat-sips.sh
 # Save record of progress thru phases
-if [ "$SAVEJOBSTATS" = "yes" -a -x "$PGE_SCRIPT_DIR/jobstat-sips.sh" ]
+#l2cf=`grep -i l2cf $masterlog | head -1 | awk '{print $9}'`
+l2cf=`grep -i 'Level 2 configuration file' $masterlog | head -1 | awk '{print $13}'`
+if [ "$SAVEJOBSTATS" = "yes" -a -x "$PGE_SCRIPT_DIR/jobstat-sips.sh" -a -f "$l2cf" ]
 then
   # This sleep is to give slave tasks extra time to complete stdout
   sleep 20
   JOBSTATSFILE="$JOBDIR/phases.stats"
-  #l2cf=`grep -i l2cf $masterlog | head -1 | awk '{print $9}'`
-  l2cf=`grep -i 'Level 2 configuration file name' $masterlog | head -1 | awk '{print $9}'`
-  $PGE_SCRIPT_DIR/jobstat-sips.sh -S $PGE_BINARY_DIR/mlsqlog-scan-sips.py \
-    -t $PGE_SCRIPT_DIR/split_path.sh ${JOBDIR}/pvmlog "$l2cf" "$masterlog" \
-    > "$JOBSTATSFILE"
+  JOBSOPTS="-S $PGE_BINARY_DIR/mlsqlog-scan-sips.py -t $PGE_SCRIPT_DIR/split_path.sh ${JOBDIR}/pvmlog $l2cf $masterlog"
+  if [ "$verbose" != "" ]
+  then
+    JOBSOPTS="-v $JOBSOPTS"
+  fi
+  echo "$PGE_SCRIPT_DIR/jobstat-sips.sh $JOBSOPTS"
+  $PGE_SCRIPT_DIR/jobstat-sips.sh $JOBSOPTS > "$JOBSTATSFILE"
 else
   JOBSTATSFILE="none"
 fi
@@ -352,6 +357,9 @@ else
 fi
 
 # $Log$
+# Revision 1.26  2013/10/29 16:58:20  pwagner
+# May set environment variable PGE_BINARY
+#
 # Revision 1.25  2013/09/04 17:44:45  pwagner
 # Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 #
