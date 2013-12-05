@@ -19,7 +19,7 @@ module Open_Init
   use MLSL2OPTIONS, only: SPECIALDUMPFILE, TOOLKIT
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & SWITCHDETAIL
-  use OUTPUT_M, only: BLANKS, OUTPUT
+  use OUTPUT_M, only: BEVERBOSE, BLANKS, OUTPUT
 
   implicit none
 
@@ -98,35 +98,36 @@ contains ! =====     Public Procedures     =============================
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
-    !Local Variables
-    logical, parameter :: DEBUG = .FALSE.
+    ! Local Variables
+    ! logical, parameter :: DEBUG = .FALSE.
     logical, parameter :: CaseSensitive = .true.
-
-   ! The following parameters will only be needed if PCF ids are missing
-    character(len=*), parameter :: DEFAULTANTEXT= &
-      & 'PCF file number missing from PCF--add this line'
 
     character(len=CCSDSlen)      :: CCSDSEndTime
     character(len=CCSDSlen)      :: CCSDSStartTime
+    ! The following parameters will only be needed if PCF ids are missing
+    character(len=*), parameter :: DEFAULTANTEXT= &
+      & 'PCF file number missing from PCF--add this line'
+
     integer                      :: Details   ! How much info about l1b files to dump
-    integer                      :: Ifl1
-    type (MLSFile_T)             :: L1BFile
-    integer                      :: L1FileHandle
-    integer :: Me = -1           ! String index for trace
-    integer                      :: numFiles
-    integer                      :: ReturnStatus
-    integer                      :: Status, Size ! From allocate
-
-    character (len=fileNameLen)  :: name
-
     character(len=len(switches)) :: extra_switches
 
+    integer                      :: Ifl1
     integer                      :: Indx, Version                            
 
     integer                      :: l1bFlag
+    type (MLSFile_T)             :: L1BFile
+    integer                      :: L1FileHandle
+    integer :: Me = -1           ! String index for trace
+    character (len=fileNameLen)  :: name
+    integer                      :: numFiles
+
+    integer                      :: ReturnStatus
+    character(len=16)            :: RUNID
+    integer                      :: Status, Size ! From allocate
+
     real                         :: T1, T2                      ! for timing 
     logical                      :: TIMING                                   
-
+    ! Executable
     integer :: OrbNum(max_orbits) = 0
     real(r8) :: OrbPeriod(max_orbits) = 0.0
 
@@ -286,7 +287,13 @@ contains ! =====     Public Procedures     =============================
       call announce_error ( "Missing pcf param: output version" )
     end if
 
-    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_Cycle, l2pcf%cycle)
+    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_Cycle, RunID ) ! l2pcf%cycle)
+    if ( len_trim(RunID) < 5 ) then
+      l2pcf%cycle = RunID
+    else
+      l2pcf%cycle = 'c01'
+      l2pcf%RunID = RunID
+    endif
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
       call announce_error ( "Missing pcf param: cycle" )
@@ -367,7 +374,7 @@ contains ! =====     Public Procedures     =============================
         & 'Problem with open_init section')
 
    Details = switchDetail(switches, 'pcf') - 2 ! -3 means don't dump
-   if ( levels(gen) > 0 .or. details > -3 ) &
+   if ( levels(gen) > 0 .or. details > -3 .or. BeVerbose('pcf', -1) ) &
       & call Dump_open_init ( filedatabase, &
           & CCSDSEndTime, CCSDSStartTime, processingrange, details )
    if ( timing ) call sayTime         
@@ -550,6 +557,9 @@ contains ! =====     Public Procedures     =============================
     call output ( 'cycle:   ' )
     call output ( l2pcf%cycle, advance='yes' )
 
+    call output ( 'RunID:   ' )
+    call output ( l2pcf%RunID, advance='yes' )
+
     call output ( 'Log file name:   ' )
     call output ( TRIM(l2pcf%logGranID), advance='yes' )
 
@@ -631,6 +641,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.104  2013/12/05 01:43:48  pwagner
+! Read RunID component from cycle field of pcf; started using BeVerbose
+!
 ! Revision 2.103  2013/08/30 02:45:50  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
