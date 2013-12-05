@@ -29,14 +29,14 @@ module WriteMetadata ! Populate metadata and write it out
     & MLSPCF_MCF_L2LOG_START
   use MLSSTRINGS, only: ISCOMMENT, LOWERCASE, STREQ
   use MLSSTRINGLISTS, only: EXTRACTSUBSTRING, &
-    & GETHASHELEMENT, GETSTRINGELEMENT, SWITCHDETAIL
-  use OUTPUT_M, only: OUTPUT, BLANKS, OUTPUTNAMEDVALUE
+    & GETHASHELEMENT, GETSTRINGELEMENT
+  use OUTPUT_M, only: OUTPUT, BEVERBOSE, BLANKS, OUTPUTNAMEDVALUE
   use PCFHDR, only: WRITEINPUTPOINTER, WRITEPCF2HDR, GLOBALATTRIBUTES
   use SDPTOOLKIT, only: PGSD_MET_GROUP_NAME_L, &
     & PGSD_MET_NUM_OF_GROUPS, PGSD_PC_FILE_PATH_MAX, PGS_PC_GETREFERENCE, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET
   use TOGGLES, only: SWITCHES
-  use TREE, only: Where
+  use TREE, only: WHERE
 
   implicit none
 
@@ -138,11 +138,12 @@ module WriteMetadata ! Populate metadata and write it out
   type, public :: PCFData_T
 
     ! cycle # of processing run
+    character (len=4) :: cycle         ! add to output files
 
-    character (len=4) :: cycle
+    ! id string processing run
+    character (len=16) :: RunID = ' '
 
     ! version string in PCF output file names
-
     character (len=15) :: PGEVersion   ! add to output files
 
     character(len=27) :: StartUTC
@@ -898,7 +899,7 @@ contains
 
     if ( present(metadata_error)) metadata_error=module_error
 
-   if(switchDetail(switches, 'pro') > -1) then
+   if(BeVerbose( 'pro', -1 )) then
        call announce_success(physical_filename, mcf_filename, 'standard')
    end if
 
@@ -1015,7 +1016,7 @@ contains
 
     if ( present(metadata_error)) metadata_error=module_error
 
-   if(switchDetail(switches, 'pro') > -1) then
+   if(BeVerbose( 'pro', -1 )) then
        call announce_success(physical_filename, mcf_filename, 'others')
    end if
 
@@ -1033,12 +1034,12 @@ contains
     integer, parameter :: MAXLINELENGTH  = 256
     integer, parameter :: MAXARRAYLENGTH = 512
     character(len=MAXLINELENGTH), dimension(MAXARRAYLENGTH) :: list
-    integer :: swLevel ! How much extra debugging info to print (-1 means none)
+    ! integer :: swLevel ! How much extra debugging info to print (-1 means none)
     logical :: verbose
 
     ! Executable code
-    swlevel = switchDetail(switches, 'mcf' )
-    verbose = ( swlevel >= 0 )
+    ! swlevel = switchDetail(switches, 'mcf' )
+    verbose = BeVerbose( 'mcf', -1 )
     list = ' '
     call read_textfile( MLSFILE%Name, list, nLines=list_len )
     if ( verbose ) then
@@ -1221,7 +1222,7 @@ contains
 
     if ( present(metadata_error)) metadata_error=module_error
 
-   if(switchDetail(switches, 'pro') > -1) then
+   if(BeVerbose( 'pro', -1 )) then
        call announce_success(physical_filename, mcf_filename, 'Log')
    end if
 
@@ -1413,11 +1414,11 @@ contains
     integer            :: newsize
     type (MCPARAM_T)   :: param
     character(len=128) :: value
-    integer :: swLevel ! How much extra debugging info to print (-1 means none)
+    ! integer :: swLevel ! How much extra debugging info to print (-1 means none)
     logical :: verbose
     ! Executable
-    swlevel = switchDetail(switches, 'mcf' )
-    verbose = ( swlevel >= 0 )
+    ! swlevel = switchDetail(switches, 'mcf' )
+    verbose = BeVerbose( 'mcf', -1 )
     group%name = name
     if ( verbose ) call output( 'Inserting group named '// trim(name), advance='yes' )
     do
@@ -1475,11 +1476,11 @@ contains
     character(len=64)  :: key
     type (MCParam_T)   :: param
     character(len=128) :: value
-    integer :: swLevel ! How much extra debugging info to print (-1 means none)
+    ! integer :: swLevel ! How much extra debugging info to print (-1 means none)
     logical :: verbose
     ! Executable
-    swlevel = switchDetail(switches, 'mcf' )
-    verbose = ( swlevel >= 0 )
+    ! swlevel = switchDetail(switches, 'mcf' )
+    verbose = BeVerbose( 'mcf', -1 )
     if ( verbose ) call output( 'Inserting parameter named '// trim(name), advance='yes' )
     param%name = name
     do
@@ -2112,6 +2113,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.76  2013/12/05 01:42:03  pwagner
+! Added RunID component to pcf; started using BeVerbose
+!
 ! Revision 2.75  2013/09/24 23:47:23  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
