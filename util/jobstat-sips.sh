@@ -13,6 +13,7 @@
 #  -S scan-sript     Use scan-sript instead of mlsqlog-scan-sips.py
 #  -t split-sript    Use split-sript instead of split_path.sh
 #  -dryrun           Don't execute commands, just echo them
+#  -v                verbose; print extra
 #  -h[elp]           Show this help message
 #  -vers number      The mlsl2 was version number (default is v2.2)
 
@@ -25,6 +26,9 @@
 #     "#/users/pwagner/l2tests/v2.1/2006d121/pvmlog/riverrun.11864.log mlsl2.log"
 #    (b) Requires the script split_path.sh be in your PATH
 #      (unless you override it by a command-line option)
+# (3) for mlsl2 versions prior to 2.2, a different format of the masterlog
+#     is assumed to extract the name of the l2cf; version 2.2 or later share
+#     a common format as far as extracting that name is concerned
 #
 # --------------- End jobstat help
 # Copyright 2005, by the California Institute of Technology. ALL
@@ -135,6 +139,10 @@ execute()
   if [ "$dryrun" = "yes" ]
   then
     echo $@
+  elif [ "$verbose" = "yes" ]
+  then
+    echo $@
+    $@
   else
     $@
   fi
@@ -151,10 +159,10 @@ execute()
 me="$0"
 my_name=jobstat
 I=uncat
-NORMAL_STATUS=0
 TIDYUPAFTER=1
 #           ^----- Set this to 1 to rm any temp files we create
 dryrun="no"
+verbose="no"
 SCANNER="mlsqlog-scan-sips.py"
 the_splitter=split_path.sh
 version=2.2
@@ -165,17 +173,21 @@ while [ "$more_opts" = "yes" ] ; do
     case "$1" in
 
     -S )
-	    shift
+       shift
        SCANNER="$1"
        shift
        ;;
     -t )
-	    shift
+       shift
        the_splitter="$1"
        shift
        ;;
+    -v )
+       verbose="yes"
+       shift
+       ;;
     -vers )
-	    shift
+       shift
        version="$1"
        shift
        ;;
@@ -195,19 +207,17 @@ while [ "$more_opts" = "yes" ] ; do
 done
 
 # Do we need to split the log files?
-# ls $1/*
-# ls $1
-# echo '$1/*', $1/*
-# echo $1/* | wc -w
 nlogs=`echo $1/* | wc -w`
+if [ "$verbose" = "yes" ]
+then
+  echo "number of log files $nlogs"
+fi
 
 if [ "$nlogs" = 1 -a "$1/*" = "$1/mlsl2.log" ]
 then
   echo "Splitting already-catenated logfiles $1/*"
   ls $1
   time usedir=`uncat_logs $1/*`
-  # echo mlsqlog-scan-sips.py $usedir xxx $2 $3
-  # mlsqlog-scan-sips.py $usedir xxx $2 $3
   execute $SCANNER $usedir xxx $2 $3 $version
   if [ "$TIDYUPAFTER" = "1" ]
   then
@@ -215,12 +225,13 @@ then
     /bin/rm -fr $usedir
   fi
 else
-  # echo mlsqlog-scan-sips.py $1 xxx $2 $3
-  # mlsqlog-scan-sips.py $1 xxx $2 $3
   execute $SCANNER $1 xxx $2 $3 $version
 fi
 exit 0
 # $Log$
+# Revision 1.2  2012/07/03 15:20:41  pwagner
+# Fixed bug confusing single chunk with result of cat
+#
 # Revision 1.1  2006/10/19 18:32:03  pwagner
 # First commit
 #
