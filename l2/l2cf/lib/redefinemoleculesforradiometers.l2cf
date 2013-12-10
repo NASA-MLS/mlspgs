@@ -178,11 +178,16 @@
   [ SNGLT_DLTA_O2, SNGLT_DLTA_O2, SNGLT_DLTA_O_18_O ], [ SO2, S_32_O2, $
     S_32_O2_V2, S_33_O2, S_34_O2 ] ]})
 
-!define(moleculeFamiliesForInstrument,{[ BRO, CH3CL, CH3CN, CH3COCH3, $
-  CH3OH, CLO, CLONO2, CLOOCL, CLOUD_A, CLOUD_S, CO, CO2, COF2, $
-  EXTINCTION, EXTINCTIONV2, H2CO, H2O, H2O2, H2S, H2SO4, HBR, HCL, HCN, HCOOH, HF, $
-  HNO3, HO2, HOBR, HOCL, HOONO2, N2, N2O, NO, NO2, O, O2, O3, OCLO, OCS, $
-  OH, SNGLT_DLTA_O2, SO2 ]})
+    ;;; !define(moleculeFamiliesForInstrument,{[ BRO, CH3CL, CH3CN, CH3COCH3, $
+    ;;;   CH3OH, CLO, CLONO2, CLOOCL, CLOUD_A, CLOUD_S, CO, CO2, COF2, $
+    ;;;   EXTINCTION, EXTINCTIONV2, H2CO, H2O, H2O2, H2S, H2SO4, HBR, HCL, HCN, HCOOH, HF, $
+    ;;;   HNO3, HO2, HOBR, HOCL, HOONO2, N2, N2O, NO, NO2, O, O2, O3, OCLO, OCS, $
+    ;;;   OH, SNGLT_DLTA_O2, SO2 ]})
+!define(moleculeFamiliesForInstrument,{[ BRO, CH2CHCN, CH3CH2CN, $
+  CH3CH2OH, CH3CL, CH3CN, CH3COCH3, CH3OH, CH3OOH, CLO, CLOOCL, CLOUD_A, $
+  CLOUD_S, CO, COF2, EXTINCTION, EXTINCTIONV2, H2CO, H2O, H2O2, H2S, $
+  H2SO4, HCL, HCN, HCOCH2OH, HF, HNO3, HO2, HOCL, HONO, HOONO, HOONO2, $
+  N2, N2O, NO, NO2, O2, O3, OCLO, OCS, OH, SO2 ]})
 
 ;; The following are a even further slimmed-down set of molecules
 ;; for which we will seek second-order corrections to our l2pc-based
