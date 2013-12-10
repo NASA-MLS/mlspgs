@@ -14,10 +14,10 @@ begin Construct
   ;; non-isotopic species (at least for the moment).
   ;; Separated into classes according to which vGrids they'll use
   ;; -- standard linear vGrid --
-  !define(allLinearMolecules,{!tidyList( $
-    BrO, CH2CHCN, CH3CH2CN, CH3CH2OH, CH3Cl, CH3CN, CH3COCH3, CH3OH, CH3OOH, $
-    CO, ClO, H2CO, H2O2, H2S, $
-    HCN, HCl, HNO3, HO2, HOCl, N2, N2O, NO, NO2, O2, OCS, SO2)})
+  ;;  !define(allLinearMolecules,{!tidyList( $
+  ;;    BrO, CH2CHCN, CH3CH2CN, CH3CH2OH, CH3Cl, CH3CN, CH3COCH3, CH3OH, CH3OOH, $
+  ;;    CO, ClO, H2CO, H2O2, H2S, $
+  ;;    HCN, HCl, HNO3, HO2, HOCl, N2, N2O, NO, NO2, O2, OCS, SO2)})
   ;; -- standard log vGrid --
   !define(allLogMolecules,{H2O})
   ;; -- hid-res linear vGrid --
@@ -29,6 +29,11 @@ begin Construct
   ;; -- OH has its own vGrid --
   !define(OHMolecule,{OH})
 
+  !define(instrumentMolecules,{!tidyList(!moleculeFamiliesForInstrument)})
+  
+  !define(allLinearMoleculesList,{!removeItem(!list2pct({OH},{O3},{O3_HR},{H2O}),!instrumentMolecules)})
+  ;; Now print them as defined above
+  !define(allLinearMolecules,{!tidyList(!allLinearMoleculesList)})
   ;; Most users can pretty much ignore the stuff below here.
   ;; (And much of the stuff above really!)
 
