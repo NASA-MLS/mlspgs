@@ -29,7 +29,7 @@
     !define(l2pcSuffixMonthly,{})
     !define(l2pcSuffixConstant,{})},
     {!define(l2pcPrefix,{!inpathl2pc/MLS-Aura_L2Cal-})
-    !define(l2pcSuffixMonthly,{_!l2pcVersion_m!month.h5})
+    !define(l2pcSuffixMonthly,{_!l2pcVersion_!month.h5})
     !define(l2pcSuffixConstant,{_!l2pcVersion_0000d000.h5})})
 
     !define(readStandardL2PC,{!dnl
@@ -149,6 +149,9 @@ begin GlobalSettings
 end GlobalSettings
 !divert(-1)
 ; $Log$
+; Revision 1.2  2013/10/17 22:31:17  pwagner
+; scan models lacked specificQuantities, anyway, so removed them
+;
 ; Revision 1.1  2010/04/21 23:36:37  pwagner
 ; First commit
 ;
