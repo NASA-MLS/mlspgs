@@ -5,6 +5,10 @@
 !divert!dnl
 
 begin Output
+
+;; We might make up a bunch of m4 flags to control the next two things
+Sleep, time=10000us
+Catenate
 ;; --------------------------------- Standard product L2GP files ---
 ;; First those with columns
 !define(outputStandardProductWithColumn, {Output, $
@@ -42,4 +46,7 @@ Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.1  2013/10/18 22:49:38  pwagner
+; Split outputstate.l2cf into 3 files
+;
 !divert!dnl
