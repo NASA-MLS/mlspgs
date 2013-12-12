@@ -189,7 +189,9 @@ contains
       type_texts(i) = where
     end do
     symbols(how_many_strings()+1:) = t_null
-    if ( debug > 0 ) call dump_symbol_table
+    if ( present(debug) ) then
+      if ( debug > 0 ) call dump_symbol_table
+    end if
   end subroutine INIT_SYMBOL_TABLE
   ! ===========================================     SET_SYMBOL     =====
   subroutine SET_SYMBOL ( STRING, CLASS )
@@ -258,6 +260,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.16  2013/12/12 23:38:21  vsnyder
+! Don't look at DEBUG in INIT_SYMBOL_TABLE without first making sure it's present
+!
 ! Revision 2.15  2013/12/12 01:59:06  vsnyder
 ! Change type of debug from logical to integer, add more dumps
 !
