@@ -217,15 +217,14 @@ contains
   subroutine MLSSignals ( ROOT )
     ! Process the MLSSignals section of the L2 configuration file.
 
-    use EVALUATE_VARIABLE_M, only: EVALUATE_VARIABLE
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MORETREE, only: GET_BOOLEAN, STARTERRORMESSAGE
+    use MORETREE, only: GET_BOOLEAN, Get_Label_And_Spec, STARTERRORMESSAGE
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
       & SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_NAMED, N_VARIABLE
 
     integer, intent(in) :: ROOT         ! The "cf" vertex for the section
 
@@ -249,6 +248,7 @@ contains
     type(signal_T) :: Signal            ! To be added to the database
     type(spectrometerType_T) :: SpectrometerType ! To be added to the database
     real(r8) :: Start                   ! "start" field of "spectrometer"
+    type(next_tree_node_state) :: State ! of tree traverser
     real(r8) :: Step                    ! "step" field of "spectrometer"
     type(module_T) :: thisModule        ! To be added to database
     logical :: TIMING                   ! For S_Time
@@ -270,19 +270,10 @@ contains
     error = 0
     timing = .false.
     call trace_begin ( me, "MLSSignals", root, cond=toggle(gen) )
-    do i = 2, nsons(root)-1 ! skip "MLSSignals" at "begin" and "end"
-      son = subtree(i,root) ! A spec_args vertex now
-      if ( node_id(son) == n_variable ) then
-        call evaluate_variable ( son )
-    cycle
-      end if
-      if ( node_id(son) == n_named ) then
-        name = sub_rosa(subtree(1, son))
-        key = subtree(2, son)
-      else
-        name = 0
-        key = son
-      end if
+    do
+      son = next_tree_node(root,state)
+      if ( son == 0 ) exit
+      call get_label_and_spec ( son, name, key )
       ! node_id(key) is now n_spec_args
 
       got = .false.
@@ -1946,6 +1937,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.101  2013/12/12 02:08:36  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.100  2013/11/06 01:47:26  pwagner
 ! May read instrument field of module; e.g. emls
 !

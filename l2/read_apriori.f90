@@ -53,7 +53,6 @@ module ReadAPriori
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, Where
-  use TREE_TYPES, only: N_NAMED
 
   implicit none
   private
@@ -145,16 +144,16 @@ contains ! =====     Public Procedures     =============================
     & fileDataBase )
     use DUMPCOMMAND_M, only: BOOLEANFROMFORMULA, MLSCASE, MLSENDSELECT, &
       & MLSSELECT, MLSSELECTING, SKIP
-    use Evaluate_Variable_m, only: Evaluate_Variable
     use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP
     use INIT_TABLES_MODULE, only: S_BOOLEAN, S_CASE, S_ENDSELECT, &
       & S_SELECT, S_SKIP
     use L2AUXDATA, only: L2AUXDATA_T, DUMP
     use L2GPDATA, only: L2GPDATA_T, DUMP
     use MLSL2TIMINGS, only: SECTION_TIMES
+    use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, NSONS, SUBTREE
-    use TREE_TYPES, only: N_NAMED, N_Variable
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -174,6 +173,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Me = -1             ! String index for trace
     integer :: NAME                ! Index into string table
     integer :: SON                 ! Of root, an n_spec_args or a n_named
+    type(next_tree_node_state) :: State ! of tree traverser
 
     call trace_begin ( me, "read_apriori", root, cond=toggle(gen) )
 
@@ -192,18 +192,10 @@ contains ! =====     Public Procedures     =============================
     ! call outputNamedValue ( 'mlspcf_l2geos5_start', mlspcf_l2geos5_start )
     ! call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
 
-    do i = 2, nsons(root)-1 ! Skip the section name at begin and end
-      son = subtree(i,root)
-      if ( node_id(son) == n_variable ) then
-        call evaluate_variable ( son )
-    cycle
-      end if
-      if ( node_id(son) == n_named ) then ! Is spec labed?
-        key = subtree ( 2, son )
-        name = sub_rosa ( subtree(1,son) )
-      else
-        key = son
-      end if
+    do 
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
+      call get_label_and_spec ( son, name, key )
       L2CFNODE= key
       if ( MLSSelecting .and. &
         & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
@@ -275,6 +267,7 @@ contains ! =====     Public Procedures     =============================
       &                  READL2AUXDATA, DUMP
     use L2GPDATA, only: L2GPDATA_T, &
       & ADDL2GPTODATABASE, READL2GPDATA, DUMP
+    use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID
     use NCEP_DAO, only: READ_CLIMATOLOGY, READGRIDDEDDATA, READGLORIAFILE
     use SURFACEHEIGHT_M, only: OPEN_SURFACE_HEIGHT_FILE, &
       & READ_SURFACE_HEIGHT_FILE, CLOSE_SURFACE_HEIGHT_FILE
@@ -361,13 +354,9 @@ contains ! =====     Public Procedures     =============================
     HMOT = ' '
     L2apriori_version = 1
     got = .false.
-    if ( node_id(root) == n_named ) then ! Is spec labeled?
-      key = subtree(2,root)
-      l2Name = sub_rosa(subtree(1,root))
-    else
-      key = root
-      l2Name = 0
-    end if
+    son = root ! Because first argument of get_label_and_spec is inout
+               ! (and it's needed later anyway)
+    call get_label_and_spec ( son, l2Name, key )
 
     ! Node_id(key) is now n_spec_args.
 
@@ -386,7 +375,6 @@ contains ! =====     Public Procedures     =============================
     fileName = 0
     gridIndex = 0
     griddedOrigin = l_none
-    son = root
     swathName = 0
     do j = 2, nsons(key)
       field = subtree(j,key)
@@ -1326,6 +1314,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.101  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.100  2013/10/09 23:43:41  vsnyder
 ! Add Evaluate_Variable
 !
