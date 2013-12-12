@@ -89,7 +89,6 @@ contains ! =====     Public Procedures     =============================
       & BOOLEANFROMANYGOODVALUES, &
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND
-    use Evaluate_Variable_m, only: Evaluate_Variable
     use FGRID, only: FGRID_T
     use FORWARDMODELCONFIG, only: ADDFORWARDMODELCONFIGTODATABASE, &
       & FORWARDMODELCONFIG_T
@@ -106,7 +105,8 @@ contains ! =====     Public Procedures     =============================
     use MLSL2OPTIONS, only: L2CFNODE, NEED_L1BFILES, SPECIALDUMPFILE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADDPHASETOPHASENAMES
     use MLSMESSAGEMODULE, only: MLSMESSAGERESET
-    use MORETREE, only: GET_SPEC_ID
+    use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use OUTPUT_M, only: BLANKS, OUTPUT, &
       & REVERTOUTPUT, SWITCHOUTPUT
     use QUANTITYTEMPLATES, only: ADDQUANTITYTEMPLATETODATABASE, &
@@ -115,7 +115,6 @@ contains ! =====     Public Procedures     =============================
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
-    use TREE_TYPES, only: N_NAMED, N_Variable
     use VECTORSMODULE, only: ADDVECTORTEMPLATETODATABASE, &
       & VECTOR_T, VECTORTEMPLATE_T
 
@@ -142,6 +141,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Me_Spec = -1     ! String index for trace
     integer :: NAME             ! Sub-rosa index of name
     integer :: SON              ! Son or grandson of Root
+    type(next_tree_node_state) :: State ! of tree traverser
     real :: T1, T2              ! for timing
     logical :: TIMING
 
@@ -160,21 +160,12 @@ contains ! =====     Public Procedures     =============================
     ! The rest is fairly simple really.  We just loop over the mlscf 
     ! instructions and hand them off to people
 
-    do i = 2, nsons(root)-1 ! Skip the section name at begin and end
-      son = subtree(i,root)
+    do
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
       call trace_begin ( me_spec, "Construct.spec", son, &
         & cond=toggle(gen) .and. levels(gen) > 0 )
-      if ( node_id(son) == n_variable ) then
-        call evaluate_variable ( son )
-    go to 9
-      end if
-      if ( node_id(son) == n_named ) then ! Is spec labeled?
-        key = subtree(2,son)
-        name = sub_rosa(subtree(1,son))
-      else ! Son is n_spec_args
-        key = son
-        name = 0
-      end if
+      call get_label_and_spec ( son, name, key )
       L2CFNODE = key
 
       ! Node_id(key) is now n_spec_args.
@@ -229,7 +220,7 @@ contains ! =====     Public Procedures     =============================
         end if
       case default ! Can't get here if tree_checker worked correctly
       end select
-    9 call trace_end ( "Construct.spec", cond=toggle(gen) .and. levels(gen) > 0 )
+      call trace_end ( "Construct.spec", cond=toggle(gen) .and. levels(gen) > 0 )
     end do
 
     if ( specialDumpFile /= ' ' ) call revertOutput
@@ -300,6 +291,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.71  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.70  2013/10/09 23:41:00  vsnyder
 ! Add Evaluate_Variable
 !
