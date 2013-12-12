@@ -20,8 +20,8 @@ module LEXER_M
                           EOF, EOL, GET_CHAR, HOW_MANY_STRINGS, &
                           INCLUDE_STACK_TOP, LOOKUP_AND_INSERT, NEW_LINE, &
                           SOURCE_COLUMN, SOURCE_LINE
-  use SYMBOL_TABLE, only: ADD_TERMINAL, DUMP_1_SYMBOL, ENTER_TERMINAL, &
-                          SET_SYMBOL, SYMBOL
+  use SYMBOL_TABLE, only: ADD_TERMINAL, DUMP_SYMBOL_TABLE, DUMP_1_SYMBOL, &
+                          ENTER_TERMINAL, SET_SYMBOL, SYMBOL
   use SYMBOL_TYPES ! everything
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, TAB, TOGGLE
   private
@@ -84,6 +84,8 @@ module LEXER_M
 ! x       y       z       {       |       }       ~       DEL
   letter, letter, letter, more,   cont,   more,   more,   more   /) ! 170
 
+  logical, private, save :: First = .true.
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -136,6 +138,17 @@ contains
     integer :: STRING_INDEX        ! Index of token in string table
 
     integer :: File                ! String index from include stack
+
+    if ( first .and. toggle(lex) .and. levels(lex) > 1 ) then
+      first = .false.
+      call output ( 'Term_Types:', advance='yes' )
+      do i = lbound(term_types,1), ubound(term_types,1), 7
+        do column = i, min(ubound(term_types,1),i+6)
+          call output ( term_types(column), format='(i4)' )
+        end do
+        call output ( '', advance='yes' )
+      end do
+    end if
 
     call include_stack_top ( file )
     state = start
@@ -485,9 +498,7 @@ contains
       case ( tog )
         select case ( cap(ch) )
         case ( 'T' ) ! Dump entire token table
-          do i = 1, how_many_strings()
-            call dump_1_symbol ( i, advance='yes' )
-          end do
+          call dump_symbol_table
         case ( 'C' ); toggle(con) = .not. toggle(con)
         case ( 'E' ); toggle(emit) = .not. toggle(emit)
         case ( 'G' ); toggle(gen) = .not. toggle(gen)
@@ -514,19 +525,31 @@ contains
 
     subroutine Check_Reserved_Word
       ! The current token looks like an identifier. The next character is
-      ! not a space.  If it's not (, a letter, an end-of-line, end-of-file,
+      ! not a space.  If it's not (, @, a letter, an end-of-line, end-of-file,
       ! or comment, the symbol cannot be a reserved word
       logical :: Not_Reserved
-      not_reserved = ch /= '(' .and. class /= letter .and. &
+      not_reserved = ch /= '(' .and. class /= tog_ch .and. class /= letter .and. &
                      class /= eol_in .and. class /= eof_in .and. class /= cmt
       string_index = add_terminal ( t_identifier )
+      if ( toggle(lex) .and. levels(lex) > 1 ) then
+        call output ( 'In Check_Reserved_Word with ch = "' )
+        call output ( ch )
+        call output ( class, before='" and class = ' )
+        call display_string ( string_index, before=', ' )
+      end if
       if ( not_reserved ) then
+        if ( toggle(lex) .and. levels(lex) > 1 ) &
+          & call output ( ' cannot be reserved', advance='yes' )
         the_token = token( t_identifier, string_index, .true., &
                            where_t(file, source_start) )
       else
         the_token = token( symbol(string_index), string_index, &
                            term_types(symbol(string_index)) /= res_word, &
                            where_t(file, source_start) )
+      if ( toggle(lex) .and. levels(lex) > 1 ) &
+        & call output ( ' is' // &
+          & trim(merge(' not','    ',term_types(symbol(string_index)) /= res_word)) // &
+          & ' reserved', advance='yes' )
       end if
     end subroutine Check_Reserved_Word
 
@@ -702,6 +725,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.28  2013/12/12 02:03:22  vsnyder
+! Add some dumps to Check_Reserved_Word
+!
 ! Revision 2.27  2013/11/26 22:50:14  vsnyder
 ! Add Check_Reserved_Word.  Don't call a word reserved if it's followed by a
 ! letter, left parenthesis, end-of-line, end-of-file, or semicolon.
