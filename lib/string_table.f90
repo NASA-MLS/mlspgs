@@ -285,7 +285,7 @@ contains
   ! string was found or inserted.
     character(len=*), intent(in) :: TEXT
     logical, optional, intent(in) :: CASELESS
-    logical, optional, intent(in) :: DEBUG
+    integer, optional, intent(in) :: DEBUG
 
     logical :: FOUND
 
@@ -734,7 +734,7 @@ contains
     integer, intent(out) :: STRING
     logical, intent(out) :: FOUND
     logical, optional, intent(in) :: CASELESS
-    logical, optional, intent(in) :: DEBUG
+    integer, optional, intent(in) :: DEBUG
     call LOOKUP_AND_INSERT_MAYBE ( STRING, FOUND, CASELESS, DEBUG, &
       & LOOKUPONLY=.true. )
   end subroutine LOOKUP
@@ -749,7 +749,7 @@ contains
     integer, intent(out) :: STRING
     logical, intent(out) :: FOUND
     logical, optional, intent(in) :: CASELESS
-    logical, optional, intent(in) :: DEBUG
+    integer, optional, intent(in) :: DEBUG
     call LOOKUP_AND_INSERT_MAYBE ( STRING, FOUND, CASELESS, DEBUG, &
       & LOOKUPONLY=.false. )
   end subroutine LOOKUP_AND_INSERT
@@ -1009,20 +1009,20 @@ contains
     integer, intent(out) :: STRING
     logical, intent(out) :: FOUND
     logical, optional, intent(in) :: CASELESS
-    logical, optional, intent(in) :: DEBUG
+    integer, optional, intent(in) :: DEBUG
     logical, optional, intent(in) :: LOOKUPONLY ! DONTINSERT
 
     integer :: HASH_KEY  ! Integer derived from characters of STRING
     integer :: I         ! Subscript, loop inductor
     logical :: INSERT    ! Insert if not found
     integer :: LOC       ! Where HASH_KEY was found in HASH_TABLE
-    logical :: myDEBUG   ! .false. or DEBUG
+    integer :: myDEBUG   ! zero or DEBUG
     logical :: NOCASE    ! .false. (case sensitive) or CASELESS
     integer :: STATUS    ! Result, see HASH_LOOKUP
 
     nocase = .false.
     if ( present(caseless) ) nocase = caseless
-    myDEBUG = .false.
+    myDEBUG = 0
     if ( present(DEBUG) ) myDEBUG = DEBUG
     insert = .true.
     if ( present(LookupOnly) ) insert = .not. lookUpOnly
@@ -1056,7 +1056,7 @@ contains
         hash_table(2,loc) = nstring
         string = nstring
         strings(nstring+1) = strings(nstring)
-        if ( myDEBUG ) then
+        if ( myDEBUG > 2 ) then
 !        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
 !                       'hash_key was not found in table'
 !      write (*, *) 'hash key: ', hash_key
@@ -1139,7 +1139,7 @@ contains
         call crash_burn
       end if
       ! The hash key matches; check whether the string does
-      if ( myDEBUG ) then
+      if ( myDEBUG > 1 ) then
 ! write (*, *) 'Compare', hash_table(2,loc), ': ', &
 ! char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
 ! ' to ', nstring+1, ': ', char_table(strings(nstring)+1:strings(nstring+1))
@@ -1277,6 +1277,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.43  2013/12/12 02:00:15  vsnyder
+! Change type of debug from logical to integer
+!
 ! Revision 2.42  2013/10/01 02:12:02  vsnyder
 ! Check current directory first for includes.  Handle the case of a prefix
 ! in the directory list not ending with "/" correctly.
