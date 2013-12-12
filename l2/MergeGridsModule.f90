@@ -38,7 +38,6 @@ contains ! ===================================  Public procedures  =====
 
     use DumpCommand_m, only: BOOLEANFROMEMPTYGRID, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
-    use Evaluate_Variable_m, only: Evaluate_Variable
     use GriddedData, only: GRIDDEDDATA_T, &
       & ADDGRIDDEDDATATODATABASE, DESTROYGRIDDEDDATA
     use Init_tables_module, only: F_GRID, &
@@ -50,12 +49,13 @@ contains ! ===================================  Public procedures  =====
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: MLSFILE_T
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MoreTree, only: GET_SPEC_ID
-    use output_m, only: OUTPUT, OUTPUTNAMEDVALUE
+    use MoreTree, only: Get_Label_And_Spec, GET_SPEC_ID
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
+    use Output_m, only: OUTPUT, OUTPUTNAMEDVALUE
     use ReadAPriori, only: PROCESSONEAPRIORIFILE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
-    use Tree_Types, only: N_NAMED, N_Variable
+    use Tree_Types, only: N_NAMED
     use Toggles, only: GEN, SWITCHES, TOGGLE
 
     integer, intent(in) :: ROOT         ! Tree root
@@ -79,7 +79,8 @@ contains ! ===================================  Public procedures  =====
     integer :: Me = -1                  ! String index for trace
     integer :: NAME                     ! Index into string table
     integer :: SON                      ! Tree node
-    integer :: VALUE
+    type(next_tree_node_state) :: State ! of tree traverser
+    integer :: Value
     logical :: verbose
 
     ! excutable code
@@ -87,18 +88,10 @@ contains ! ===================================  Public procedures  =====
 
     verbose = ( switchDetail(switches, 'grid' ) > -1 )
     
-    do i = 2, nsons(root) - 1           ! Skip the begin and end stuff
-      son = subtree ( i, root )
-      if ( node_id(son) == n_variable ) then
-        call evaluate_variable ( son )
-    cycle
-      end if
-      if ( node_id(son) == n_named ) then ! Is spec labed?
-        key = subtree ( 2, son )
-        name = sub_rosa ( subtree(1,son) )
-      else
-        key = son
-      end if
+    do 
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
+      call get_label_and_spec ( son, name, key )
       L2CFNODE = key
       if ( MLSSelecting .and. &
         & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
@@ -1092,6 +1085,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.51  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.50  2013/10/09 23:41:55  vsnyder
 ! Add Evaluate_Variable
 !
