@@ -141,7 +141,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical :: CHECKL2CF = .false.   ! Just check the l2cf and quit
   logical :: CHECKLEAK = .false.   ! Check parse tree for potential memory leaks
   logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
-  logical :: DO_DUMP = .false.     ! Dump declaration table
+  integer :: DO_DUMP = 0           ! Dump declaration table if > 0
   integer :: DUMP_TREE = -1        ! Dump tree after parsing
   ! Wouldn't it be better to use get_lun at the moment we open the l2cf?
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
@@ -327,7 +327,7 @@ contains
   ! (1) the command line directly, by calls to getNextArg; or
   ! (2) parsing cmdline, if supplied as an arg
   ! The return value will be the filename (if any)
-  function processOptions ( cmdline ) result ( filename )
+  function ProcessOptions ( cmdLine ) result ( fileName )
     use ALLOCATE_DEALLOCATE, only: TRACKALLOCATES, &
       & CLEARONALLOCATE
     use IO_STUFF, only: GET_LUN
@@ -351,8 +351,8 @@ contains
     use TIME_M, only: TIME_CONFIG
     use TOGGLES, only: SWITCHES
     ! Args
-    character(len=*), intent(in), optional :: cmdline
-    character(len=FileNameLen)             :: filename
+    character(len=*), intent(in), optional :: cmdLine
+    character(len=FileNameLen)             :: fileName
     ! Internal variables
     character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
     character(len=16) :: aSwitch
@@ -778,7 +778,11 @@ jloop:do while ( j < len_trim(line) )
           case ( 'D' ) ! This turns debugging on for some modules
             MLSNamesAreDebug = catLists(trim(MLSNamesAreDebug), line(j+1:))
             exit ! Took the rest of the string, so there can't be more options
-          case ( 'd' ); do_dump = .true.
+          case ( 'd' ); do_dump = 1
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+              do_dump = ichar(line(j+1:j+1)) - ichar('0')
+              j = j + 1
+            end if
           case ( 'h', 'H', '?' )     ! Describe command line usage
             ! call option_usage
             filename = 'help'
@@ -987,6 +991,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.77  2013/12/12 02:10:07  vsnyder
+! Change type of do_dump from logical to integer
+!
 ! Revision 2.76  2013/12/05 23:52:21  vsnyder
 ! Process # in -A# option correctly
 !
