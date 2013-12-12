@@ -173,10 +173,11 @@ contains ! ===================================== Public Procedures =====
     use MLSL2OPTIONS, only: NEED_L1BFILES, SPECIALDUMPFILE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use TIME_M, only: TIME_NOW
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA, WHERE_AT=>WHERE
-    use TREE_TYPES, only: N_NAMED, N_Variable
+    use Tree_Types, only: N_Named
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
 
     integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
@@ -190,9 +191,11 @@ contains ! ===================================== Public Procedures =====
     type (MAFRange_T) :: MAFRange
     integer :: Me = -1                  ! String index for trace
     integer :: Son                      ! of section root
+    type(next_tree_node_state) :: State ! of tree traverser
     integer :: STATUS                   ! From deallocate
 
     ! For announce_error:
+    logical :: DidOne                   ! Found a ChunkDivide spec
     integer :: ERROR                    ! Error level
     integer :: CHUNK                    ! Loop counter
 
@@ -221,22 +224,21 @@ contains ! ===================================== Public Procedures =====
     ! Eventually the ChunkDivide command will be free floating, in the meantime
     ! find it within the section
     ! WE CAN GET RID OF THIS BIT WHEN THE COMMAND FLOATS FREE LATER
-    if ( nsons(root) <= 2 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & 'ChunkDivide section cannot be empty' )
-    do i = 2, nsons(root)-1      ! Skip the begin/end section
-      son = subtree(i,root)
-      if ( node_id(son) == n_variable ) then
-        call evaluate_variable ( son )
-      else
-        if ( node_id(son) == n_named ) son = subtree(2,son) ! Ignore label
-        select case ( get_spec_id(son) )
-        case ( s_dump )
-          call dumpCommand ( son )
-        case ( s_chunkDivide )
-          call chunkDivideL2CF ( son )
-        end select
-      end if
+    didOne = .false.
+    do
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
+      if ( node_id(son) == n_named ) son = subtree(2,son) ! Ignore label
+      select case ( get_spec_id(son) )
+      case ( s_dump )
+        call dumpCommand ( son )
+      case ( s_chunkDivide )
+        call chunkDivideL2CF ( son )
+        didOne = .true.
+      end select
     end do
+    if ( .not. didOne ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'ChunkDivide section must include a ChunkDivide Spec' )
 
     ! For methods other than fixed, we want to survey the L1 data and note the
     ! location of obstructions
@@ -2590,6 +2592,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.109  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.108  2013/10/09 23:40:34  vsnyder
 ! Add Evaluate_Variable
 !
