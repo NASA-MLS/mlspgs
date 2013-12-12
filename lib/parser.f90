@@ -11,54 +11,7 @@
 
 module PARSER
 
-! Parser for L2CF.
-
-! cf -> one_cf+ 'EOF'
-! one_cf -> ('begin' 'name' 'EOS' spec+ 'end' 'name' )? 'EOS'
-! one_cf -> #include "file" 'EOS'
-! spec -> 'name' spec_rest 'EOS'
-! spec -> #include "file" 'EOS'
-! spec -> 'EOS'
-! spec_rest -> \lambda
-! spec_rest -> '=' expr +
-! spec_rest -> ':=' expr +
-! spec_rest -> ( ',' spec_list )
-! spec_rest -> : name ( ',' spec_list )
-! spec_list -> ( ',', field_list ) *
-! field_list -> expr ( '=' expr + )?
-! field_list -> '/' 'name'
-! expr -> array
-! expr -> cond ( '?' cond ':' cond ) ?
-! cond -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
-! array -> '[' ( , expr )* ']'
-! limit -> lterm ( 'or' lterm ) *
-! lterm -> lneg ( 'and' lneg ) *
-! lneg -> 'not'? lfactor
-! lfactor -> bterm ( '<' | '<=' | '>' | '>=' | '==' | '/=' bterm ) *
-! bterm -> term ( '+' | '-' term ) *
-! term -> factor ( '*' | '/' factor )*
-! factor -> expon ( '^' expon )*
-! expon -> unitless 'unit' ? => n_unit
-! expon -> string
-! unitless -> primary
-! unitless -> '+' primary => n_plus
-! unitless -> '-' primary => n_minus
-! primary -> 'name' ( '.' 'name' ) ?
-! primary -> 'name' '(' expr list ',' ')'
-! primary -> 'number'
-! primary -> '(' expr ')'
-
-! The notation and method are described in wvs-004.
-
-  use LEXER_CORE, only: PRINT_SOURCE, TOKEN
-  use LEXER_M, only: LEXER
-  use OUTPUT_M, only: NEWLINE, OUTPUT
-  use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
-  use SYMBOL_TYPES ! Everything, especially everything beginning with T_
-  use TOGGLES, only: PAR, TOGGLE
-  use TREE, only: TREE_BUILDER => BUILD_TREE, DUMP_TOP_STACK_NAME, N_TREE_STACK, &
-                  POP, PUSH_PSEUDO_TERMINAL, STACK_SUBTREE, TX
-  use TREE_TYPES   ! Everything, especially everything beginning with N_
+! Parser for MLS CF.  The grammar is processed by the LR processor.
 
   implicit NONE
   private
@@ -66,45 +19,8 @@ module PARSER
   public :: CONFIGURATION
 
   interface Configuration
-    module procedure Configuration_I, Configuration_TX
+    module procedure LR_Parser, LR_Parser_TX
   end interface
-
-  integer, private :: Depth             ! of calls, for tracing
-
-  integer, private :: ERROR             ! 0 => no errors yet
-                                        ! 1 => errors but not yet EOF
-                                        ! 2 => errors and EOF seen
-  type(token), private, save :: NEXT    ! The next token, SAVE only because
-                                        ! a component of TOKEN has default
-                                        ! initialization, and the standard
-                                        ! thereby requires SAVE (go figure)
-
-  ! Tree node to generate depending upon which operator token appears.
-  ! We only need values for the ones that generate tree nodes.
-  integer, private :: GEN(t_null: t_last_terminal)
-  data gen(t_plus)            / n_plus            / ! +
-  data gen(t_minus)           / n_minus           / ! -
-  data gen(t_star)            / n_mult            / ! *
-  data gen(t_slash)           / n_div             / ! /
-  data gen(t_assign)          / n_variable        / ! :=
-  data gen(t_backslash)       / n_into            / ! \
-  data gen(t_cond)            / n_cond            / ! ? ... :
-  data gen(t_dot)             / n_dot             / ! .
-  data gen(t_colon)           / n_colon           / ! :
-  data gen(t_colon_less)      / n_colon_less      / ! :<
-  data gen(t_less_colon)      / n_less_colon      / ! <:
-  data gen(t_less_colon_less) / n_less_colon_less / ! <:<
-  data gen(t_equal)           / n_equal           / ! =
-  data gen(t_equal_equal)     / n_equal_equal     / ! ==
-  data gen(t_not)             / n_not             / ! not
-  data gen(t_not_equal)       / n_not_equal       / ! /=
-  data gen(t_less)            / n_less            / ! <
-  data gen(t_less_eq)         / n_less_eq         / ! <=
-  data gen(t_greater)         / n_greater         / ! >
-  data gen(t_greater_eq)      / n_greater_eq      / ! >=
-  data gen(t_hat)             / n_pow             / ! >
-  data gen(t_and)             / n_and             / ! and
-  data gen(t_or)              / n_or              / ! or
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -112,584 +28,442 @@ module PARSER
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-contains ! ====     Public Procedures     ==============================
-! ----------------------------------------------  CONFIGURATION_I  -----
-  subroutine CONFIGURATION_I ( ROOT ) ! cf -> one_cf+ 'EOF'
-    integer, intent(out) :: ROOT   ! Root of the abstract syntax tree
-    depth = 0 ! in case toggle(par) is set
-    error = 0
-    call get_token
-    do while ( next%class /= t_end_of_input )
-      call one_cf
-    end do
-    call build_tree ( n_cfs, n_tree_stack ) ! collect everything
-    call build_tree ( n_eof, 1 )   ! Force n_cfs off the stack
-    root = stack_subtree ( 1 )
-    if ( error > 0 ) root = -1
-  end subroutine CONFIGURATION_I
-! ---------------------------------------------  CONFIGURATION_TX  -----
-  subroutine CONFIGURATION_TX ( ROOT ) ! cf -> one_cf+ 'EOF'
+contains ! ====     Procedures     =====================================
+
+  subroutine LR_Parser_TX ( Root )
+    use Tree, only: TX
     type(tx), intent(out) :: ROOT   ! Root of the abstract syntax tree
-    depth = 0 ! in case toggle(par) is set
-    error = 0
-    call get_token
-    do while ( next%class /= t_end_of_input )
-      call one_cf
-    end do
-    call build_tree ( n_cfs, n_tree_stack ) ! collect everything
-    call build_tree ( n_eof, 1 )   ! Force n_cfs off the stack
-    root%i = stack_subtree ( 1 )
-    if ( error > 0 ) root%i = -1
-  end subroutine CONFIGURATION_TX
-! =====     Private Procedures     =====================================
-! -----------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( THE_TERMINALS, AFTER )
-    integer, intent(in) :: THE_TERMINALS(:)
-    integer, intent(in), optional :: AFTER(:)
-    integer :: I
-    error = max(error,1)
-    call output ( '***** Expected ', advance='no' )
-    if ( size(the_terminals) > 1 ) then
-      call output ( 'one of ', advance='yes' )
-      do i = 1, size(the_terminals)
-        call dump_symbol_class ( the_terminals(i), advance='yes' )
-      end do
-      call output ( '*****' )
-    else
-      call dump_symbol_class ( the_terminals(1), advance='no' )
-    end if
-    call output ( ' but got ' )
-    call dump_1_symbol ( next%string_index, advance='no' )
-    call output ( ' at ' )
-    call print_source ( next%where, advance='yes' )
-    if ( present(after) ) then
-      if ( any(next%class == after) ) then
-        return ! needs more work -- trying to insert missing symbol
-      end if
-    end if
-    call output ( 'Skipping until expected symbol or end of input.', &
-      advance='yes' )
-    call output ( 'Processing suppressed.', advance='yes' )
-    do while ( all(next%class /= the_terminals) )
-      if ( next%class == t_end_of_input ) then
-        error = 2
-        return
-      end if
-      call lexer ( next )
-    end do
-    return
-  end subroutine ANNOUNCE_ERROR
+    call lr_parser ( root%i )
+  end subroutine LR_Parser_TX
 
-! --------------------------------------------------------  ARRAY  -----
-  recursive subroutine ARRAY ( HOW_MANY ) ! [ <expr> ( , <expr> )* ]
-    integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
-    if ( toggle(par) ) call where ( 'ARRAY' )
-    call get_token     ! Consume the left bracket
-    if ( next%class == t_right_bracket ) then
-      call get_token ! Consume the right bracket
-    else
-      do
-        call expr
-        how_many = how_many + 1
-        if ( next%class == t_right_bracket ) then
-          call get_token ! Consume the right bracket
-      exit
-        end if
-        if ( next%class /= t_comma ) then
-          call announce_error ( (/ t_right_bracket, t_comma /) )
-          if ( next%class == t_end_of_input .or. &
-               next%class == t_end_of_stmt ) &
-      exit
-        end if
-        call get_token   ! Consume the comma
-      end do
-    end if
-    if ( toggle(par) ) call finish ( 'ARRAY' )
-  end subroutine ARRAY
+  subroutine LR_Parser ( Root )
 
-! --------------------------------------------------------  BTERM  -----
-  recursive subroutine BTERM ! BTERM -> term ( +|- term ) *
-    integer :: N
-    if ( toggle(par) ) call where ( 'BTERM' )
-    call term
-    do
-      n = next%class
-      if ( n == t_plus .or. n == t_minus ) then
-        call get_token
-        call term
-        call build_tree ( gen(n), 2 )
+    use LEXER_CORE, only: PRINT_SOURCE, TOKEN
+    use LEXER_M, only: LEXER
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+    use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
+    use SYMBOL_TYPES, only: T_End_Of_Input, T_Include, T_Last_Terminal, T_Null
+    use TOGGLES, only: LEVELS, PAR, TOGGLE
+    use TREE, only: BUILD_TREE, Dump_Top_Stack, N_TREE_STACK,&
+                    PUSH_PSEUDO_TERMINAL,  STACK_SUBTREE
+    use TREE_TYPES, only: N_CFS, N_Null
+
+    integer, intent(out) :: Root   ! Index in tree of root of the parsed tree
+
+    type :: Stack_Frame
+      integer :: State         ! The parser state
+      integer :: Tree_Index    ! Tree stack pointer of state's LHS
+    end type Stack_Frame
+
+    type(stack_frame), allocatable :: Stack(:)
+    integer :: SP              ! Stack pointer
+
+    logical :: Need            ! Need to get a token from the lexer
+    integer :: Prev_Error
+
+    include "parser.f9h"
+
+    integer :: LR_0(nstate)    ! If LR_0(I) /= 0, state I is an LR(0) state,
+                               ! i.e., one reduction and no productions.
+                               ! LR_0(I) is the production number to reduce.
+    integer :: Map(t_null:t_last_terminal) ! Map token classes to parser
+                               ! vocabulary indices
+    integer :: Work(nstate,nvoc)
+
+    integer :: Newsta, Nowsta  ! Next state, Current state
+    integer :: Voc             ! Vocabulary index of token or LHS
+    type(token) :: The_Token   ! From the lexer
+
+    ! Convert the lists to search for transitions and reductions to the
+    ! array WORK(nstate:nvoc).
+    ! If Work(i,j) > 0 the next state is Work(i,j)
+    ! If Work(i,j) < 0 reduce production -Work(i,j)
+    ! If Work(i,j) == 0 a syntax error has occurred
+    call make_work ( FTRN, TRAN, ENT, FRED, NSET, LSET, LS, PROD, VAL, &
+                   & Work, LR_0, map )
+
+    prev_error = 0             ! Line number of previous error
+    sp = 0
+    newsta = abs(tran(1))      ! The LR generator likes to put the <SOG>
+                               ! symbol before the goal symbol.  The lexer
+                               ! doesn't produce this symbol before the first
+                               ! input.  Putting the parser in the state
+                               ! adjacent to state 1 skips that symbol.
+    voc = 0                    ! Don't display symbol in Transition routine
+
+    call transition            ! push Newsta onto the parser stack and
+                               ! make it Nowsta.
+
+    need = .true.              ! Indicate a token is necessary
+
+    do while ( nowsta /= ifinal )
+      if ( lr_0(nowsta) > 0 ) then
+        ! The current state is an LR(0) state, meaning it does one reduction
+        ! and no transitions.  The production in lr_0(nowsta) can be
+        ! reduced without needing to go to the lexer to get a token.
+        call reduce_production ( lr_0(nowsta) )
       else
-    exit
-      end if
-    end do
-    if ( toggle(par) ) call finish ( 'BTERM' )
-  end subroutine BTERM
-
-! ---------------------------------------------------  BUILD_TREE  -----
-  subroutine BUILD_TREE ( NEW_NODE, NSONS, DECORATION )
-    integer, intent(in) :: NEW_NODE
-    integer, intent(in) :: NSONS
-    integer, intent(in), optional :: DECORATION
-
-    if ( toggle(par) ) call where ( 'BUILD_TREE' )
-    call tree_builder ( new_node, nsons, decoration )
-    if ( toggle(par) ) call finish ( 'BUILD_TREE', nsons )
-  end subroutine BUILD_TREE
-
-! ---------------------------------------------------------  COND  -----
-  recursive subroutine COND
-  ! cond -> limit ( ( ':' | ':<' | '<:' | '<:<' ) limit )?
-    integer :: N
-    if ( toggle(par) ) call where ( 'COND' )
-    call limit
-    n = next%class
-    select case ( n )
-    case ( t_colon, t_colon_less, t_less_colon, t_less_colon_less )
-      call get_token
-      call limit
-      call build_tree ( gen(n), 2 )
-    end select
-    if ( toggle(par) ) call finish ( 'COND' )
-  end subroutine COND
-
-! --------------------------------------------------------  EXPON  -----
-  recursive subroutine EXPON  ! expon -> unitless 'unit' ? => n_unit
-                              !       -> string
-                              ! unitless -> primary
-                              !          -> '+' primary => n_plus
-                              !          -> '-' primary => n_minus
-    integer :: N
-    if ( toggle(par) ) call where ( 'EXPON' )
-    n = next%class
-    if ( n == t_string ) then
-      call get_token
-    else
-      if ( n == t_plus .or. n == t_minus ) then
-        call get_token
-        call primary
-        call build_tree ( gen(n), 1 )
-      else
-        call primary
-      end if
-      if ( next%class == t_identifier ) then
-        ! First, put unit back on stack (it was popped at end of PRIMARY)
-        call push_pseudo_terminal ( next%string_index, next%where )
-        call build_tree ( n_unit, 2 )
-        call get_token  ! the identifier is used up
-      end if
-    end if
-    if ( toggle(par) ) call finish ( 'EXPON' )
-  end subroutine EXPON 
-
-! ---------------------------------------------------------  EXPR  -----
-  recursive subroutine EXPR
-    ! expr -> array
-    ! expr -> cond ( '?' cond '!' cond ) ?
-    integer :: N, NSONS
-    if ( toggle(par) ) call where ( 'EXPR' )
-    if ( next%class == t_left_bracket ) then
-      nsons = 0
-      call array ( nsons )
-      call build_tree ( n_array, nsons )
-    else
-      call cond
-      n = next%class
-      if ( n == t_cond ) then
-        call get_token
-        call cond
-        call test_token ( t_bang )
-        call cond
-        call build_tree ( n_cond, 3 )
-      end if
-    end if
-    if ( toggle(par) ) call finish ( 'EXPR' )
-  end subroutine EXPR
-
-! -------------------------------------------------------  FACTOR  -----
-  recursive subroutine FACTOR  ! factor -> expon ( ^ expon )*
-    integer :: HOW_MANY       ! sons of the n_pow node
-    if ( toggle(par) ) call where ( 'FACTOR' )
-    call expon
-    if ( next%class == t_hat ) then
-      how_many = 1
-      do while ( next%class == t_hat )
-        call get_token
-        call expon
-        how_many = how_many + 1
-      end do
-      call build_tree ( n_pow, how_many )
-    end if
-    if ( toggle(par) ) call finish ( 'FACTOR' )
-  end subroutine FACTOR 
-
-! ---------------------------------------------------  FIELD_LIST  -----
-  subroutine FIELD_LIST
-    integer :: HOW_MANY       ! sons of the n_asg node
-    if ( toggle(par) ) call where ( 'FIELD_LIST' )
-    do
-      select case ( next%class )
-      case ( t_identifier, t_string, & ! field_list -> expr ( '=' expr + )?
-             t_number )
-        call expr
-        if ( next%class == t_equal ) then
-          call get_token
-          how_many = 1
-          call value ( how_many )
-          call build_tree ( n_asg, how_many )
+        if ( need ) then
+          call lexer ( the_token )
+          need = .false.
         end if
-    exit
-      case ( t_slash )       ! field_list -> '/' 'name'
-        call get_token
-        call test_token ( t_identifier )
-        call build_tree ( n_set_one, 1 )
-    exit
-      case default
-        if ( error > 1 ) exit
-        call announce_error ( (/ t_identifier, t_string, t_slash /) )
-      end select
+        ! Decide what to do
+        if ( map(the_token%class) <= 0 .or. map(the_token%class) > nterms ) &
+          & call catastrophic_error ( 'No vocabulary index mapping for', the_token )
+        voc = work(nowsta,map(the_token%class))
+        if ( voc > 0 ) then
+          newsta = voc
+          if ( the_token%pseudo ) then
+            call push_pseudo_terminal ( the_token%string_index, &
+                                      & the_token%where, class=the_token%class )
+            if ( toggle(par) .and. levels(par) > 1 ) then
+              call output ( 'Push pseudo terminal ' )
+              call dump_1_symbol ( the_token%string_index )
+              call print_source ( the_token%where, before=' at ' )
+              call output ( n_tree_stack, before=' leaving n_tree_stack = ', &
+                & advance='yes' )
+            end if
+          end if
+          call transition
+          need = .true.        ! Consume the token
+        else if ( voc < 0 ) then
+          call reduce_production ( -voc )
+        else ! Syntax error
+         call no_transition
+        end if
+      end if
     end do
-    if ( toggle(par) ) call finish ( 'FIELD_LIST' )
-  end subroutine FIELD_LIST
 
-! -------------------------------------------------------  FINISH  -----
-  subroutine FINISH ( WHAT, NSONS )
-  ! for tracing
-    character(len=*), intent(in) :: WHAT
-    integer, intent(in), optional :: NSONS
-    depth = depth - 1
-    call output ( repeat('.',depth) // 'Exit  ' // trim(what) )
-    if ( present(nsons) ) then
-      call output ( nsons, before=' ' )
-      call dump_top_stack_name ( before=' ' )
+    call build_tree ( n_cfs, n_tree_stack )  ! glue together everything on the
+                                             ! stack
+    if ( toggle(par) ) then
+      call output ( 'Finished parsing and built ' )
+      call dump_top_stack ( 0, advance='yes' )
     end if
-    call newLine
-  end subroutine FINISH
 
-! ----------------------------------------------------  GET_TOKEN  -----
-  subroutine GET_TOKEN
-  ! Call the lexer to get a token.
-  ! If it's a pseudo-terminal token, push it on the tree stack.
-    call lexer ( next )
-    if ( next%pseudo ) call &
-      push_pseudo_terminal ( next%string_index, next%where )
-  end subroutine GET_TOKEN
+    call build_tree ( n_null, 1 )            ! pop the n_cfs, leave the n_null
 
-! ------------------------------------------------------  LFACTOR  -----
-  recursive subroutine LFACTOR ! lfactor -> bterm ( <|<=|>|>=|==|/= bterm ) *
-    integer :: N
-    if ( toggle(par) ) call where ( 'LFACTOR' )
-    call bterm
-    do
-      n = next%class
-      select case ( n )
-      case ( t_less, t_less_eq, t_greater, t_greater_eq, t_equal_equal, &
-           & t_not_equal )
-        call get_token
-        call bterm
-        call build_tree ( gen(n), 2 )
-      case default
-    exit
-      end select
-    end do
-    if ( toggle(par) ) call finish ( 'LFACTOR' )
-  end subroutine LFACTOR
-
-! --------------------------------------------------------  LIMIT  -----
-  recursive subroutine LIMIT  ! limit -> lterm ( or lterm ) *
-    if ( toggle(par) ) call where ( 'LIMIT' )
-    call lterm
-    do while ( next%class == t_or )
-      call get_token
-      call lterm
-      call build_tree ( n_or, 2 )
-    end do
-    if ( toggle(par) ) call finish ( 'LIMIT' )
-  end subroutine LIMIT
-
-! ---------------------------------------------------------  LNEG  -----
-  recursive subroutine LNEG  ! lneg -> not? lfactor
-    if ( toggle(par) ) call where ( 'LNEG' )
-    if ( next%class == t_not ) then
-      call get_token
-      call lfactor
-      call build_tree ( n_not, 1 )
+    if ( prev_error > 0 ) then
+      call output ( prev_error, before='Last error at line ', advance='yes' )
+      root = -1
     else
-      call lfactor
+      root = stack_subtree(1)
     end if
-    if ( toggle(par) ) call finish ( 'LNEG' )
-  end subroutine LNEG
 
-! --------------------------------------------------------  LTERM  -----
-  recursive subroutine LTERM  ! lterm -> lneg ( and lneg ) *
-    if ( toggle(par) ) call where ( 'LTERM' )
-    call lneg
-    do while ( next%class == t_and )
-      call get_token
-      call lneg
-      call build_tree ( n_and, 2 )
-    end do
-    if ( toggle(par) ) call finish ( 'LTERM' )
-  end subroutine LTERM
+  contains
 
-! -------------------------------------------------------  ONE_CF  -----
-  subroutine ONE_CF
-    ! one_cf -> ('begin' 'name' 'EOS' spec+ 'end' 'name' )? 'EOS'
-    ! one_cf -> #include "file" 'EOS'
-    integer :: HOW_MANY       ! How many sons of the generated tree node
-    if ( toggle(par) ) call where ( 'ONE_CF' )
-o:  do
-      select case ( next%class )
-      case ( t_end_of_stmt )  ! one_cf -> 'eos'
-        call get_token
-    exit
-      case ( t_begin )        ! one_cf -> 'begin' 'name' 'eos'
-                              !           spec+ 'end' 'name' 'eos'
-        how_many = 2          ! one for begin, one for end, one for each spec
-        call get_token
-        call test_token ( t_identifier )
-        call test_token ( t_end_of_stmt )
-        do while ( next%class /= t_end )
-          if ( error > 1 ) exit o
-          how_many = how_many + spec()
-          if ( next%class == t_end_of_input ) exit ! must have gotten an error
-        end do
-        call get_token        ! consume the t_end
-        call test_token ( t_identifier )
-        call test_token ( t_end_of_stmt )
-        call build_tree ( n_cf, how_many )
-    exit
-      case ( t_include )
-        call Do_Include
-      case default
-        if ( error > 1 ) exit
-        call announce_error ( (/ t_begin, t_end_of_stmt /) )
-        if ( next%class == t_end_of_input ) exit
-      end select
-    end do o
-    if ( toggle(par) ) call finish ( 'ONE_CF' )
-  end subroutine ONE_CF
+! -------------------------------------------  Catastrophic_Error  -----
+    subroutine Catastrophic_Error ( Text, The_Token, State, Nonterminal )
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Crash
+      character(len=*), intent(in):: Text
+      type(token), intent(in), optional  :: The_Token
+      integer, intent(in), optional :: State, Nonterminal
+      call output ( '***** Catastrophic Error *****', advance='yes' )
+      if ( present(state) ) &
+        & call output ( state, before='The current state is ', advance='yes' )
+      if ( present(nonterminal) ) &
+        & call output ( nonterminal, before='The nonterminal symbol is ', &
+          & advance='yes' )
+      if ( present(the_token) ) then
+        call output ( 'Next token is ' )
+        call dump_symbol_class ( the_token%class, advance='yes' )
+      end if
+      call MLSMessage ( MLSMSG_Crash, moduleName, trim(text) )
+      stop 666
+    end subroutine Catastrophic_Error
 
-! ------------------------------------------------------  PRIMARY  -----
-  recursive subroutine PRIMARY
-    integer :: N
-    if ( toggle(par) ) call where ( 'PRIMARY' )
-    do
-      select case ( next%class )
-      case ( t_identifier )   ! primary -> 'name' ( '.' 'name' ) ?
-        call get_token
-        if ( next%class == t_dot ) then
-          call get_token
-          call test_token ( t_identifier )
-          call build_tree ( n_dot, 2 )
-        else if ( next%class == t_left_parenthesis ) then
-          ! primary -> 'name' '(' expr list ',' ')'
-          n = 1
-          call get_token
-          do while ( next%class /= t_right_parenthesis )
-            call expr
-            n = n + 1
-            if ( next%class /= t_comma ) &
-          exit
-            call get_token
+! ---------------------------------------------------  Do_Include  -----
+    subroutine Do_Include
+      ! Assuming "#include string" is reduced as an LR(0) production,
+      ! both the top stack frame and the current token are "string".
+      ! We don't want "string" in the tree, so pop it off the stack.
+      use String_Table, only: Display_String, Open_Include
+      use Tree, only: Pop
+      call open_include ( the_token%string_index, the_token%where%source, &
+                        & the_token%where%file )
+      call pop ( 1 )
+      if ( toggle(par) ) &
+        & call display_string ( the_token%string_index, &
+          & before='Opened include file ', advance='yes' )
+    end subroutine Do_Include
+
+! -----------------------------------------------  Error_Walkback  -----
+    subroutine Error_Walkback ( Line )
+      integer, intent(in) :: Line      ! Line number of error
+      if ( prev_error > 0 ) call output ( prev_error, &
+        & before='Previous error at line ', advance='yes' )
+      prev_error = line
+    end subroutine Error_Walkback
+
+! ----------------------------------------------------  Make_Work  -----
+    subroutine Make_Work ( FTRN, TRAN, ENT, FRED, NSET, LSET, LS, PROD, VAL, &
+                         & Work, LR_0, Map )
+
+    ! Make the Work, LR_0 and Map arrays, to avoid searching FTRN, TRAN,
+    ! FRED, NSET, LSET, and LS to determine whether to reduce a production
+    ! or make a transition.
+
+    ! Positive elements of WORK are new state numbers and indicate transitions.
+    ! Negative elements of WORK are indices of productions to reduce.
+    ! Zero elements of WORK indicate syntax errors.
+
+    ! Columns 1:NTERMS are indexed by terminal symbol vocabulary indices. 
+    ! Columns NTERMS+1:NVOC are indexed by nonterminal symbol vocabulary
+    ! indices, never indicate reductions, and errors are not possible.
+
+      integer, intent(in) :: FTRN(0:), TRAN(:), ENT(:)
+      integer, intent(in) :: FRED(0:), NSET(:), LSET(0:), LS(:)
+      integer, intent(in) :: PROD(:), VAL(:)
+      integer, intent(out) :: WORK(:,:) ! ( NSTATE : NVOC )
+      integer, intent(out) :: LR_0(:)   ! ( NSTATE ), "state is an LR(0) state"
+      integer, intent(out) :: Map(t_null:) ! Inverse of VAL
+
+      ! FTRN(0:nstate): Indexed by state number.  First (actually last)
+      ! transitions.  Transitions for state S are in TRAN(FTRN(S-1)+1:FTRN(S)).
+
+      ! TRAN(1:ntrans): New state indices, indexed by FTRN, q.v.
+
+      ! ENT(1:nstate): Indexed by state number.  Index of vocabulary symbol
+      ! used to enter a state.
+
+      ! FRED(0:nstate): Indexed by state number.  First (actually last)
+      ! reductions.  Lookahead sets for state S are NSET(FRED(S-1)+1:FRED(S)).
+
+      ! NSET(1:nlooks): Lookahead set indices, indexed by FRED, q.v.
+
+      ! LSET(0:ncsets): Last elements of lookahead sets, indexed by NSET, q.v.
+      ! For lookahead set L, elements are LS(LSET(L-1)+1:LSET(L)).
+
+      ! LS(1:lsets): Elements of lookahead sets.
+
+      ! PROD(1:nlooks): Production numbers to reduce if lookahead is in the
+      ! set, indexed by FRED, q.v.
+
+      logical :: Error
+      integer :: I, J, L
+
+      error = .false. ! Assume OK
+      work = 0
+
+      ! Fill in the transitions
+      do i = 1, ubound(ftrn,1)
+        work(i,ent(tran(ftrn(i-1)+1:ftrn(i)))) = tran(ftrn(i-1)+1:ftrn(i))
+      end do
+
+      ! Fill in the reductions
+      do i = 1, ubound(fred,1)
+        do j = fred(i-1)+1, fred(i)
+          do l = lset(nset(j)-1)+1, lset(nset(j))
+            if ( work(i,ls(l)) > 0 ) then
+              write ( *, '(3(a,i0))' ) &
+                & 'Grammar is not LR.  Intersection in state ', i, &
+                & ' with transition to state ', work(i,ls(l)), &
+                & ' on vocabulary symbol with internal index ', ls(l)
+                error = .true.
+            else if ( work(i,ls(l)) < 0 ) then
+              write ( *, '(3(a,i0))' ) &
+                & 'Grammar is not LR.  Intersection in state ', i, &
+                & ' with reduction of production ', -work(i,ls(l)), &
+                & ' on vocabulary symbol with internal index ', ls(l)
+                error = .true.
+            else
+              work(i,ls(l)) = -prod(j)
+            end if
           end do
-          call build_tree ( n_func_ref, n ) ! Do this BEFORE test_token because
-                                            ! test_token will push the unit
-                                            ! name if it's there
-          call test_token ( t_right_parenthesis )
+        end do
+      end do
+
+      do i = 1, ubound(work,1)
+        if ( ftrn(i) == ftrn(i-1) .and. &    ! No transitions
+           & fred(i) == fred(i-1)+1 ) then   ! One reduction
+          lr_0(i) = prod(fred(i))
+        else
+          lr_0(i) = 0
         end if
-    exit
-      case ( t_number )       ! primary -> 'number'
-        call get_token
-    exit
-      case ( t_left_parenthesis ) ! primary -> '(' expr ')'
-        call get_token
-        call expr
-        call test_token ( t_right_parenthesis )
-    exit
-      case default
-        if ( error > 1 ) exit
-        call announce_error ( (/ t_identifier, t_number, &
-                                 t_string, t_left_parenthesis /), &
-                      after = (/ t_end_of_input, t_end_of_stmt,  &
-                                 t_right_bracket,  t_comma /) )
-        if ( next%class == t_end_of_input .or. &
-             next%class == t_end_of_stmt .or. &
-             next%class == t_right_bracket .or. &
-             next%class == t_comma ) &
-    exit
-      end select
-    end do
-    if ( next%class == t_identifier ) call pop ( 1 ) ! delete unit name
-    if ( toggle(par) ) call finish ( 'PRIMARY' )
-  end subroutine PRIMARY
+      end do
 
-! ---------------------------------------------------------  SPEC  -----
-  integer function SPEC ()
-  ! Analyze specifications in a section.
-  ! Return how many specifications got generated -- 0 or 1
-  ! spec -> 'name' spec_rest 'EOS'
-  ! spec -> #include "file" 'EOS'
-  ! spec -> 'EOS'
-    if ( toggle(par) ) call where ( 'SPEC' )
-    do
-      select case ( next%class )
-      case ( t_end_of_stmt )  ! spec -> 'EOS'
-        call get_token
-        spec = 0
-    exit
-      case ( t_identifier )   ! spec -> 'name' spec_rest 'EOS'
-        call get_token
-        call spec_rest
-        call test_token ( t_end_of_stmt )
-        spec = 1
-    exit
-      case ( t_include )
-        call do_include
-        spec = 0
-    exit
-      case default
-        if ( error > 1 ) exit
-        call announce_error ( (/ t_identifier, t_end_of_stmt /) )
-        if ( next%class == t_end_of_input ) exit
-      end select
-    end do
-    if ( toggle(par) ) call finish ( 'SPEC' )
-  end function SPEC
+      do i = 1, ubound(val,1)
+        if ( val(i) > 0 .and. val(i) < ubound(map,1) ) map(val(i)) = i
+      end do
 
-! ----------------------------------------------------  SPEC_LIST  -----
-  subroutine SPEC_LIST
-    integer :: HOW_MANY       ! sons of the n_asg node
-    if ( toggle(par) ) call where ( 'SPEC_LIST' )
-    how_many = 1
-    do while ( next%class == t_comma )  ! spec_list -> ( ',', field_list ) *
-      call get_token
-      call field_list
-      how_many = how_many + 1
-    end do
-    call build_tree ( n_spec_args, how_many )
-    if ( toggle(par) ) call finish ( 'SPEC_LIST' )
-  end subroutine SPEC_LIST
-
-! ----------------------------------------------------  SPEC_REST  -----
-  subroutine SPEC_REST
-    integer :: HOW_MANY       ! sons of the n_equal node
-    if ( toggle(par) ) call where ( 'SPEC_REST' )
-    do
-      select case ( next%class )
-      case ( t_end_of_stmt )  ! spec_rest -> \lambda
-        call build_tree ( n_spec_args, 1 )
-!       call get_token
-    exit
-      case ( t_assign )       ! spec_rest -> ':=' expr +
-        call get_token
-        how_many = 1
-        call value ( how_many )
-        call build_tree ( n_variable, how_many )
-    exit
-      case ( t_equal )        ! spec_rest -> '=' expr +
-        call get_token
-        how_many = 1
-        call value ( how_many )
-        call build_tree ( n_equal, how_many )
-    exit
-      case ( t_comma )        ! spec_rest -> ( ',' spec_list )
-        call spec_list
-    exit
-      case ( t_colon )        ! spec_rest -> : name ( ',' spec_list )
-        call get_token
-        call test_token ( t_identifier )
-        call spec_list
-        call build_tree ( n_named, 2 )
-    exit
-      case default
-        if ( error > 1 ) &
-    exit
-        call announce_error ( (/ t_end_of_stmt, t_equal, t_comma /) )
-        if ( next%class == t_end_of_input .or. &
-             next%class == t_right_bracket.or. &
-             next%class == t_comma ) &
-    exit
-      end select
-    end do
-    if ( toggle(par) ) call finish ( 'SPEC_REST' )
-  end subroutine SPEC_REST
-
-! ---------------------------------------------------------  TERM  -----
-  recursive subroutine TERM   ! term -> factor ( *|/ factor )*
-    integer :: N
-    if ( toggle(par) ) call where ( 'TERM' )
-    call factor
-    do
-      n = next%class
-      select case ( n )
-      case ( t_star, t_slash, t_backslash )
-        call get_token
-        call factor
-        call build_tree ( gen(n), 2 )
-      case default
-    exit
-      end select
-    end do
-    if ( toggle(par) ) call finish ( 'TERM' )
-  end subroutine TERM
-
-! ---------------------------------------------------  DO_INCLUDE  -----
-  subroutine Do_Include
-    use Lexer_Core, only: Where_t
-    use String_Table, only: Open_Include
-    integer :: File
-    type(where_t) :: Where_at ! In case Open_Include needs to print a message
-    if ( toggle(par) ) call where ( 'Do_Include' )
-    call lexer ( next )
-    if ( next%class == t_string ) then
-      where_at = next%where
-      file = next%string_index
-      call lexer ( next )
-      if ( next%class /= t_end_of_stmt ) then
-        error = max(error,1)
-        call announce_error ( (/ t_end_of_stmt /) )
-      else
-        call open_include ( file, where_at%source, where_at%file )
+      if ( levels(par) > 1 ) then
+        call output ( "Parser's WORK array:", advance='yes' )
+        do i = 1, size(work,2), 20
+          call output ( '      ' )
+          do l = i, min(i+19,size(work,2))
+            call output ( l, format='(i6)' )
+          end do
+          call newline
+          do j = 1, size(work,1)
+            call output ( j, format='(i5,":")' )
+            do l = i, min(i+19,size(work,2))
+              call output ( work(j,l), format='(i6)' )
+            end do
+            call newline
+          end do
+        end do
       end if
-    else
-      call announce_error ( (/ t_string /) )
-    end if
-    if ( toggle(par) ) call finish ( 'Do_Include' )
-  end subroutine Do_Include
 
-! ---------------------------------------------------  TEST_TOKEN  -----
-  subroutine TEST_TOKEN ( THE_TERMINAL )
-    integer, intent(in) :: THE_TERMINAL
-    if ( next%class == the_terminal ) then
-      call get_token
-      return
-    end if
-    if ( error > 1 ) return
-    error = max(error,1)
-    call announce_error ( (/ the_terminal /) )
-  end subroutine TEST_TOKEN
+      if ( error ) then
+        write ( *, '(a)' ) 'Make_Work_m.Make_Work%E%- Grammar is not LR'
+        stop
+      end if
 
-! --------------------------------------------------------  VALUE  -----
-  subroutine VALUE ( HOW_MANY )
-    integer, intent(inout) :: HOW_MANY  ! Incremented once for each expr
-    select case ( next%class )
-    case ( t_left_bracket )
-      call array ( how_many )
-    case ( t_comma, t_end_of_stmt )
-    case default
-      call expr
-      how_many = how_many + 1
-    end select
-  end subroutine VALUE
+    end subroutine Make_Work
 
-! --------------------------------------------------------  WHERE  -----
-  subroutine WHERE ( WHAT )
-    character(len=*), intent(in) :: WHAT
-    call output ( repeat('.',depth) // 'Enter ' // trim(what) )
-    call output ( ' at ' )
-    call print_source ( next%where, advance='yes' )
-    depth = depth + 1
-  end subroutine WHERE
+! ------------------------------------------------  No_Transition  -----
+    subroutine No_Transition ( Expected )
+      ! This is a REALLY CRUDE error recovery routine.
+      integer, intent(in), optional :: Expected
+      integer :: I
+      call output ( the_token%where%source / 256,5 )
+      call output ( ': *** Error ***  Unexpected Input ')
+      call dump_1_symbol ( the_token%string_index )
+      if ( the_token%class /= t_end_of_input ) then
+        call print_source ( the_token%where, before=' at ' )
+        call output (' in parser state ' )
+        call output ( nowsta, advance='yes' )
+        if ( present(expected) ) then
+          call output ( 'Expected ', advance='no' )
+          call dump_symbol_class ( expected, advance='yes' )
+        else
+          call output ( 'Expected one of: ', advance='yes' )
+          do i = 1, nterms
+            if ( work(nowsta,i) > 0 ) &
+              & call dump_symbol_class ( map(i), advance='yes' )
+          end do
+        end if
+        call lexer( the_token )
+        call error_walkback ( the_token%where%source / 256 )
+      else
+        call output (' in parser state ' )
+        call output ( nowsta, advance='yes' )
+        if ( present(expected) ) then
+          call output ( 'Expected ', advance='no' )
+          call dump_symbol_class ( expected, advance='yes' )
+        else
+          call output ( 'Expected one of: ', advance='yes' )
+          do i = 1, nterms
+            if ( work(nowsta,i) > 0 ) &
+              & call dump_symbol_class ( map(i), advance='yes' )
+          end do
+        end if
+        call error_walkback ( the_token%where%source / 256 )
+        sp = sp - 1
+        if ( sp <= 0 ) call catastrophic_error ( 'Parser stack underflow' )
+        nowsta = stack(sp)%state
+      end if
+    end subroutine
+
+! --------------------------------------------  Reduce_Production  -----
+    subroutine Reduce_Production ( Prod )
+      integer, intent(in) :: Prod ! Index of production to reduce
+      integer :: Action       ! action when reducing a production:
+                              !      1 = produce a node
+                              !      2 = produce a node iff > 1 sons
+      integer :: I            ! temporary variable
+      integer :: LHS_TREE     ! tree stack index for lhs
+      integer :: NEW_NODE     ! tree node to make
+      integer :: NSONS        ! number of tree parts associated with rhs
+
+      sp = sp - lens(prod)    ! Pop RHS-length frames from the stack
+      nowsta = stack(sp)%state
+      lhs_tree = stack(sp)%tree_index
+      nsons = n_tree_stack - lhs_tree
+      i = act(prod)           ! use i for temp while getting action
+      new_node = i / 10
+      action = mod(i, 10)
+
+      if ( toggle(par) ) then
+        call output ( prod, before='Reduce production ' )
+        call output ( lens(prod), before=' consuming ' )
+        call output ( trim(merge(' symbol ', ' symbols', lens(prod)==1)) )
+        if ( action /= 0 ) call output ( new_node, before=' building ' )
+        if ( levels(par) > 0 ) &
+          & call output ( nowsta, before=', returning to state ' )
+      end if
+      if ( i /= 0 ) then
+        if ( action==1 .or. action==2 .and. nsons>1 ) then
+          call build_tree ( new_node, nsons )
+          if ( toggle(par) ) then
+            call output ( ' and build ' )
+            call dump_top_stack ( 0 )
+          end if
+        else if ( action == 9 ) then
+          call do_include
+        end if
+      else if ( toggle(par) .and. nsons>0 ) then
+          call output ( nsons, before=' subsuming ' )
+          call output ( trim(merge(' tree node ', ' tree nodes', nsons==1)) )
+      end if
+      if ( toggle(par) ) then
+        if ( levels(par) > 2 ) then
+          call output ( sp, before=', stack(' )
+          call output ( stack(sp)%state, before=') = (' )
+          call output ( stack(sp)%tree_index, before=',' )
+          call output ( ')' )
+        end if
+        call output ( '.', advance='yes' )
+      end if
+
+      newsta = work(nowsta,lhs(prod))
+      if ( newsta == 0 ) &
+        & call catastrophic_error ( 'There is no state transition', &
+          & state=nowsta, nonterminal=lhs(prod) )
+      voc = val(lhs(prod))
+      call transition
+
+    end subroutine Reduce_Production
+
+! ---------------------------------------------------  Transition  -----
+    subroutine Transition
+      ! Set the current state (Nowsta) to the new state (Newsta)
+      ! and push it on the stack with N_Tree_Stack.
+      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+      integer :: N, S
+      integer :: Stat
+      type(stack_frame), allocatable :: TempStack(:)
+
+      ! Make sure we have a stack, and it's big enough to push the new state
+      n = 0
+      if ( allocated(stack) ) n = ubound(stack,1)
+      if ( sp >= n ) then
+        s = max(100,2*n)
+        allocate ( tempStack(s), stat=stat )
+        call test_allocate ( stat, moduleName, 'Stack', [1], [s], &
+                           & storage_size(stack) )
+        if ( allocated(stack) ) tempStack(1:sp) = stack(1:sp)
+        call move_alloc ( tempStack, stack )
+      end if
+
+      nowsta = newsta
+      sp = sp + 1
+      stack(sp) = stack_frame(nowsta,n_tree_stack)
+
+      if ( toggle(par) ) then
+        call output ( newsta, before='Enter state ' )
+        if ( voc /= 0 ) then
+          call output ( ' with ' )
+          if ( voc < 0 ) then
+            call output ( ent(nowsta), before='nonterminal symbol number ' )
+          else
+            call dump_1_symbol ( the_token%string_index )
+            call print_source ( the_token%where, before=' at ' )
+          end if
+        end if
+        call output ( n_tree_stack, before=', n_tree_stack = ' )
+        if ( levels(par) > 2 ) then
+          call output ( sp, before=', stack(' )
+          call output ( stack(sp)%state, before=') = (' )
+          call output ( stack(sp)%tree_index, before=',' )
+          call output ( ')' )
+        end if
+        call newLine
+      end if
+
+    end subroutine Transition
+
+  end subroutine LR_Parser
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -704,6 +478,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.30  2013/12/12 02:01:54  vsnyder
+! Entirely replaced with LR parser
+!
 ! Revision 2.29  2013/10/02 01:35:46  vsnyder
 ! Add conditional expressions ?...! and variable assignment :=
 !
