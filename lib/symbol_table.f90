@@ -25,8 +25,9 @@ module SYMBOL_TABLE
   private
 
   public :: ADD_TERMINAL, ALLOCATE_SYMBOL_TABLE, DESTROY_SYMBOL_TABLE
-  public :: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS, DUMP_SYMBOL_TYPE
-  public :: ENTER_TERMINAL, INIT_SYMBOL_TABLE, SET_SYMBOL, SYMBOL
+  public :: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS, DUMP_SYMBOL_TABLE
+  public :: DUMP_SYMBOL_TYPE, ENTER_TERMINAL, INIT_SYMBOL_TABLE, SET_SYMBOL
+  public :: SYMBOL
 
   integer, save, private :: CLASS_TEXTS(T_NULL: T_LAST_TERMINAL)
   integer, save, private, allocatable :: SYMBOLS(:)
@@ -45,15 +46,15 @@ contains
   ! Its text has already been entered into the string table by
   ! STRING_TABLE % ADD_CHAR.
     integer, intent(in) :: TERMINAL
-    logical, optional, intent(in) :: DEBUG
+    integer, optional, intent(in) :: DEBUG
     logical, optional, intent(in) :: CASESENSITIVE
 
     integer :: WHERE
     logical :: FOUND
-    logical :: myDEBUG
+    integer :: myDEBUG
     logical :: myCASESENSITIVE
     
-    myDEBUG = .false.
+    myDEBUG = 0
     if ( present(DEBUG) ) myDEBUG = DEBUG
 
     myCaseSensitive = .not. caseless_look(terminal)
@@ -63,7 +64,8 @@ contains
     if ( where > size(symbols) ) then
       call increase_symbols ! String table was expanded
     end if
-    if ( toggle(tab) .OR. myDEBUG ) then
+    if ( .not. found ) then; symbols(where) = terminal; end if
+    if ( toggle(tab) .OR. myDEBUG > 0 ) then
       call output ( 'Looked up ' ); call output ( terminal )
       call output ( ' ' ); call display_string ( where )
       if ( caseless_look(terminal) ) then; call output ( ' caseless' ); end if
@@ -72,19 +74,19 @@ contains
       else
         call output ( ' and inserted it at ' )
       end if
-      call output ( where, advance='yes' )
+      call output ( where )
+      call output ( symbols(where), before=' with symbol ', advance='yes' )
     end if
-    if ( .not. found ) then; symbols(where) = terminal; end if
     add_terminal = where
-    return
   end function ADD_TERMINAL
   ! ================================     ALLOCATE_SYMBOL_TABLE     =====
-  subroutine ALLOCATE_SYMBOL_TABLE ( N_CHARS, N_SYMBOLS, STATUS )
+  subroutine ALLOCATE_SYMBOL_TABLE ( N_CHARS, N_SYMBOLS, STATUS, DEBUG )
   ! Allocate character, string and symbol tables.
   ! Also does INIT_SYMBOL_TABLE
     integer, intent(in) :: N_CHARS      ! Size of character table
     integer, intent(in) :: N_SYMBOLS    ! Size of string and symbol tables
     integer, intent(out), optional :: STATUS      ! from ALLOCATE
+    integer, intent(in), optional :: DEBUG
 
     integer :: STAT
     if ( allocated(symbols) ) then; deallocate ( symbols ); end if
@@ -107,8 +109,7 @@ contains
       stat, '' )
       stop
     end if
-    call init_symbol_table
-    return
+    call init_symbol_table ( debug )
   end subroutine ALLOCATE_SYMBOL_TABLE
   ! =================================     DESTROY_SYMBOL_TABLE     =====
   subroutine DESTROY_SYMBOL_TABLE ( Status )
@@ -130,7 +131,6 @@ contains
     call display_string ( type_texts(term_types(symbols(symbol))) )
     call output ( ' ' )
     call display_string ( symbol, advance=advance )
-    return
   end subroutine DUMP_1_SYMBOL
   ! ====================================     DUMP_SYMBOL_CLASS     =====
   subroutine DUMP_SYMBOL_CLASS ( SYM_CLASS, ADVANCE )
@@ -138,7 +138,6 @@ contains
     integer, intent(in) :: SYM_CLASS
     character(len=*), intent(in), optional :: ADVANCE
     call display_string ( class_texts(sym_class), advance )
-    return
   end subroutine DUMP_SYMBOL_CLASS
   ! ====================================     DUMP_SYMBOL_TABLE     =====
   subroutine DUMP_SYMBOL_TABLE
@@ -155,7 +154,6 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     call display_string ( type_texts(term_types(symbols(symtyp))), &
                           advance )
-    return
   end subroutine DUMP_SYMBOL_TYPE
   ! =======================================     ENTER_TERMINAL     =====
   integer function ENTER_TERMINAL ( TEXT, TERMINAL, DEBUG, CASESENSITIVE )
@@ -163,22 +161,22 @@ contains
   ! then enter it and its terminal index into the symbol table.
     character(len=*), intent(in) :: TEXT
     integer, intent(in) :: TERMINAL
-    logical, optional, intent(in) :: DEBUG
+    integer, optional, intent(in) :: DEBUG
     logical, optional, intent(in) :: CASESENSITIVE
     call add_char ( text )
     enter_terminal = add_terminal ( terminal, DEBUG=DEBUG, CASESENSITIVE=CASESENSITIVE )
-    return
   end function ENTER_TERMINAL
   ! ====================================     INIT_SYMBOL_TABLE     =====
-  subroutine INIT_SYMBOL_TABLE
+  subroutine INIT_SYMBOL_TABLE ( DEBUG )
   ! Initialize the symbol table, the table of string indices of terminal
   ! names, and the table of terminal type names.
+    integer, intent(in), optional :: DEBUG
     logical :: FOUND          ! Argument for LOOKUP_AND_INSERT
     integer :: I              ! Loop inductor
     integer :: WHERE          ! Where was the symbol inserted?
     do i = t_null, t_last_terminal
       call init_terminal ( i )
-      where = add_terminal ( i )
+      where = add_terminal ( i, debug=debug )
       class_texts(i) = where
     end do
     ! This loop puts token types into the string table.
@@ -191,6 +189,7 @@ contains
       type_texts(i) = where
     end do
     symbols(how_many_strings()+1:) = t_null
+    if ( debug > 0 ) call dump_symbol_table
   end subroutine INIT_SYMBOL_TABLE
   ! ===========================================     SET_SYMBOL     =====
   subroutine SET_SYMBOL ( STRING, CLASS )
@@ -207,7 +206,6 @@ contains
   ! Return the symbol class of the STRING
     integer, intent(in) :: STRING
     symbol = symbols(string)
-    return
   end function SYMBOL
 
 ! =====     Private procedures    ======================================
@@ -245,7 +243,6 @@ contains
     symbols(:size(old_symbol)) = old_symbol
     symbols(size(old_symbol)+1:) = t_null
     deallocate ( old_symbol )
-    return
   end subroutine INCREASE_SYMBOLS
 
 !--------------------------- end bloc --------------------------------------
@@ -261,6 +258,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.15  2013/12/12 01:59:06  vsnyder
+! Change type of debug from logical to integer, add more dumps
+!
 ! Revision 2.14  2013/10/02 01:31:41  vsnyder
 ! Add Before argument to Dump_1_Symbol
 !
