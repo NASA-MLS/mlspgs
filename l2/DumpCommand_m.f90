@@ -1976,7 +1976,7 @@ contains
             call display_string ( sub_rosa(subtree(i,son)), before='The symbol ' )
             call output ( ' is not a variable.', advance='yes' )
           else
-            call dump_a_decl ( decl, before=' is' )
+            call dump_a_decl ( decl, before=' is', details=details )
           end if
         end do
       case ( f_vectormask, f_vector ) ! Dump entire vectors
@@ -2660,6 +2660,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.107  2013/12/12 02:09:29  vsnyder
+! Add 'details' to dump_a_decl
+!
 ! Revision 2.106  2013/11/18 22:33:28  pwagner
 ! /callStack dumps verbose and debug dbs
 !
