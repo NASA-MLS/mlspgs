@@ -2064,9 +2064,11 @@ contains ! =====     Public Procedures     =============================
   end subroutine DumpChunkHGridGeometry
 
   ! -------------------------------------  ComputeAllHGridOffsets  -----
-  subroutine ComputeAllHGridOffsets ( root, treeindex, chunks, filedatabase, &
+  subroutine ComputeAllHGridOffsets ( root, first_section, chunks, filedatabase, &
     & l2gpDatabase, processingRange )
-    ! This routine goes through the L1 file and works out how big each HGrid is going to be
+    ! This routine goes through the L2CF up to an Output section to accumulate
+    ! HGrid sizes from the Construct sections, and through the L1 file to work
+    ! out how big each HGrid is going to be
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use CHUNKS_M, only: MLSCHUNK_T
     use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
@@ -2078,25 +2080,25 @@ contains ! =====     Public Procedures     =============================
     use MORETREE, only: GET_SPEC_ID
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
+      & Next_Tree_Node_State
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: SUBTREE, NSONS, NODE_ID, DECORATION
     use TREE_TYPES, only: N_NAMED
     ! Dummy arguments
-    integer, intent(in) :: ROOT         ! Tree node for whole l2cf
-    integer, intent(in) :: treeindex    ! Where in the tree are we
+    integer, intent(in) :: Root         ! of the entire tree
+    integer, intent(in) :: First_Section ! First subtree after definitions
     type(MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     type(L2GPData_T), dimension(:), pointer :: L2GPDatabase
     type(TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     ! Local variables
-    integer :: SECTION                  ! Index of section
     integer :: LINE                     ! Line in l2cf
     integer :: CHUNK                    ! Loop counter
     integer :: C                        ! Inner loop counter
     integer :: HGRID                    ! Loop counter
-    integer :: HowMany                  ! How many sons does Root have?
     integer :: Me = -1                  ! String index for trace
     integer :: NOHGRIDS                 ! Number of hGrids
     integer :: SON                      ! Tree node
@@ -2104,6 +2106,8 @@ contains ! =====     Public Procedures     =============================
     integer :: GSON                     ! son of son
     integer :: KEY                      ! Tree node
     type(HGrid_T) :: DUMMYHGRID         ! A temporary hGrid
+    type(next_tree_node_state) :: State1 ! while hunting for Construct sections
+    type(next_tree_node_state) :: State2 ! within Construct sections
     integer, dimension(:), pointer :: LowerOverlaps => null()
     ! Executable code
     call trace_begin ( me, "ComputeAllHGridOffsets", root, cond=toggle(gen) )
@@ -2113,19 +2117,21 @@ contains ! =====     Public Procedures     =============================
     ! count the number of hGrids.  The other run works out how big each HGrid
     ! is going to be for each chunk.  This is stored in chunks%hGridOffsets.
     ! Finally we accumulate these to get offsets.
-    howMany = nsons(root)
     noHGrids = 0
     do chunk = 0, size(chunks)
-      section = treeindex
       hGrid = 1
       ! Loop over all the setions in the l2cf, look for construct sections
-      sectionLoop: do while ( section <= howMany )
-        son = subtree ( section, root )
+      call init_next_tree_node ( state1 )
+      sectionLoop: do
+        son = next_tree_node ( root, state1, start=first_section, traceLevel=4 )
+        if ( son == 0 ) exit
         select case ( decoration ( subtree ( 1, son ) ) )
         case ( z_construct )
           ! Now loop through the construct section and identify the hGrids
-          do line = 2, nsons ( son ) - 1 ! Skip begin and end
-            gson = subtree ( line, son )
+          call init_next_tree_node ( state2 )
+          do
+            gson = next_tree_node ( son, state2, traceLevel=5 )
+            if ( gson == 0 ) exit
             if ( node_id(gson) == n_named ) then ! Is spec labeled?
               key = subtree(2,gson)
               if ( get_spec_id(key) == s_hGrid ) then
@@ -2171,7 +2177,6 @@ contains ! =====     Public Procedures     =============================
           exit sectionLoop
         case default
         end select
-        section = section + 1
       end do sectionLoop
 
       ! If this is the first time round, we now know how many hGrids there
@@ -2417,6 +2422,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.110  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.109  2013/10/01 22:17:51  pwagner
 ! Added maf component to HGrid_T
 !
