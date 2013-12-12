@@ -17,13 +17,13 @@ module DECLARATION_TABLE
 ! for initializing the representation of intrinsic types accessed from
 ! the INTRINSIC module.
 
-  use INTRINSIC, only: LIT_INDICES, PHYQ_INDICES, PHYQ_INVALID, T_A_DOT_B, &
-    &                  T_BOOLEAN, T_NUMERIC, T_NUMERIC_RANGE, T_STRING
+  use INTRINSIC, only: LIT_INDICES, PARM_INDICES, PHYQ_INDICES, PHYQ_INVALID, &
+    &                  T_A_DOT_B, T_BOOLEAN, T_NUMERIC, T_NUMERIC_RANGE, T_STRING
   use MACHINE, only: IO_ERROR
   use OUTPUT_M, only: NewLine, OUTPUT
   use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS, &
     &                     STRING_TABLE_SIZE
-  use TOGGLES, only: TAB, TOGGLE
+  use TOGGLES, only: LEVELS, TAB, TOGGLE
   use Tree, only: Null_Tree
 
   implicit NONE
@@ -51,6 +51,10 @@ module DECLARATION_TABLE
 
   interface Deallocate_Test
     module procedure Value_Deallocate
+  end interface
+
+  interface Get_Decl
+    module procedure Get_Decl_Array, Get_Decl_Scalar
   end interface
 
   integer, parameter :: NULL_DECL = 0   ! Index and type of the null
@@ -91,26 +95,28 @@ module DECLARATION_TABLE
 
   integer, parameter :: LAST_TYPE = VARIABLE
 
-  type :: Value_t             ! Used if decls%type == variable or named_value
-    integer :: TYPE = empty   ! Value type, subset of decls%type
-    double precision :: VALUE(2) = 0.0d0 ! Real if type == num_value or range
-                              ! 0 => false, 1 => true if type == log_value
-                              ! string index if type == enum_value, label,
-                              !   named_value, str_range, str_value
-    integer :: Units(2) = 0   ! Subset of decls%units, depends on Type
+  type :: Value_t             ! Used if decls%type == variable or named_value,
+                              ! or as the value of an array-valued expression
+    integer :: What = empty   ! Variable or Named_Value, or Empty if it's
+                              ! an expression result value
+    integer :: Type           ! type index
+    double precision :: Value(2) = 0.0d0 ! Numeric value if type is numeric
+                                         ! String index if type is string
+                                         ! Lit index otherwise
+    integer :: Units(2) = 0   ! PHYQ_...
   end type Value_t
 
   ! Type            Units                Value           Tree
   ! EMPTY           0                    0.0d0           null_tree
   ! DOT
-  ! ENUM_VALUE      data type index      string index    DT_Def
+  ! ENUM_VALUE      lit index            string index    DT_Def
   ! EXPRN
   ! EXPRN_M
   ! EXPRN_V
   ! FIELD           field index          0.0d0           Field_type
   !                                      0.0d0           Field_Spec
   ! FUNCTION        function index       string index    Func_def
-  ! LABEL           PHYQ_Invalid         0.0d0           Spec_Args
+  ! LABEL           PHYQ_Invalid         string index    Spec_Args
   ! LOG_VALUE
   ! NAMED_VALUE     param index          string index    Name_Def
   ! NUM_VALUE       PHYQ_Dimensionless   its value       Number
@@ -119,7 +125,7 @@ module DECLARATION_TABLE
   ! SECTION         section index        string index    Section
   ! SECTION_NODE
   ! STR_RANGE
-  ! STR_VALUE       PHYQ_Invalid         0.0d0           String
+  ! STR_VALUE       PHYQ_Invalid         string index    String
   ! SPEC            spec index           string index    Spec_def
   ! TREE_NODE
   ! TYPE_NAME       type index           string index    DT_Def
@@ -272,7 +278,7 @@ contains ! =====     Public Procedures     =============================
     symbol_decl(string) = num_decls
     if ( toggle(tab) ) then
       call display_string ( string, before='Declare ' )
-      call dump_a_decl ( decl_table(num_decls), before=' with' )
+      call dump_a_decl ( decl_table(num_decls), before=' with', details=levels(tab) )
     end if
   end subroutine DECLARE
 
@@ -285,27 +291,31 @@ contains ! =====     Public Procedures     =============================
   end function DECLARED
 
 ! ----------------------------------------------------  DUMP_DECL  -----
-  subroutine DUMP_DECL
+  subroutine DUMP_DECL ( Details )
+    integer, intent(in), optional :: Details
     integer :: I    ! Loop inductor
     if ( num_decls <= 0 ) return
     call output ( ' dec  str', advance='yes' )
     do i = 1, how_many_strings()
-      call dump_1_decl ( i )
+      call dump_1_decl ( i, details=details )
     end do
   end subroutine DUMP_DECL
 
 ! --------------------------------------------------  DUMP_A_DECL  -----
-  subroutine DUMP_A_DECL ( Decl, Before, Value_Only )
+  subroutine DUMP_A_DECL ( Decl, Before, Details )
     use Lexer_Core, only: Print_Source
-    use Tree, only: Subtree, Sub_Rosa
+    use Tree, only: Decoration, Subtree, Sub_Rosa
     type(decls), intent(in) :: Decl
     character(len=*), intent(in), optional :: Before
-    logical, intent(in), optional :: Value_Only
-    logical :: All
-    all = .true.
-    if ( present(value_only) ) all = .not. value_only
+    integer, intent(in), optional :: Details ! 0 -> no tree or source location
+                                             ! 1 -> tree & source (default)
+                                             ! >1 -> values of type and what
+    integer :: MyDetails
+    integer :: Enum_Type ! Type def of enum if variable of enum type
     if ( present(before) ) call output ( before )
-    if ( all ) then
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    if ( myDetails > 0 ) then
       call output ( ' type=' )
       call output ( trim(type_names(decl%type)) )
     end if
@@ -316,11 +326,17 @@ contains ! =====     Public Procedures     =============================
       call display_string ( sub_rosa(subtree(1,decl%tree)), before=' of type ' )
     case ( phys_unit_name )
       call display_string ( lit_indices(decl%units), before=' units=' )
-    case ( named_value, variable )
-      if ( decl%units >= empty .and. decl%units <= last_type ) &
-        & call output ( ' ' // trim(type_names(decl%units)) )
+    case ( variable )
+      if ( decl%units >= empty .and. decl%units <= last_type ) then
+        call output ( ' ' // trim(type_names(decl%units)) )
+      else
+        call output ( decl%units, before=' What is ' )
+        call output ( '?' )
+      end if
       if ( decl%units == str_value .and. decl%value > 0 ) &
         & call display_string ( nint(decl%value), before=' ' )
+    case ( named_value )
+      call output ( decl%units, before=' param index=' )
     case ( units_name )
       if ( phyq_indices(decl%units) == 0 ) then
         call output ( ' units=<unknown> ' )
@@ -330,22 +346,29 @@ contains ! =====     Public Procedures     =============================
     case default
       call output ( decl%units, before=' units=' )
     end select
-    if ( all ) then
-      call output ( ' tree=' )
-      call output ( decl%tree )
+    if ( myDetails > 0 ) then
+      call output ( decl%tree, before=' tree=' )
       call print_source ( decl%tree, before=' ' )
     end if
     if ( allocated(decl%values) ) then
       call output ( ' values:', advance='yes' )
-      call dump_values ( decl%values )
+      enum_type = 0
+      if ( decl%type == variable ) then
+        select case ( decl%units ) ! Type of first element of value
+        case ( enum_value, label )
+          enum_type = decoration(decl%tree)
+        end select
+      end if 
+      call dump_values ( decl%values, type_tree=enum_type, details=details )
     else
       call newLine
     end if
   end subroutine DUMP_A_DECL
 
 ! --------------------------------------------------  DUMP_1_DECL  -----
-  subroutine DUMP_1_DECL ( SYMBOL )
+  subroutine DUMP_1_DECL ( SYMBOL, Details )
     integer, intent(in) :: SYMBOL  ! Index of symbol whose declaration to dump
+    integer, intent(in), optional :: Details
     integer :: DECL                ! Index of decl of "symbol"
     if ( symbol > ubound(symbol_decl,1) ) & ! Assume string_table is increased
       & call increase_symbol_decl
@@ -354,75 +377,112 @@ contains ! =====     Public Procedures     =============================
       call output ( decl, 4 )
       call output ( symbol, 5 ); call output ( ': ' )
       call display_string ( symbol )
-      call dump_a_decl ( decl_table(decl) )
+      call dump_a_decl ( decl_table(decl), details=details )
       decl = decl_table(decl)%prior
     end do
   end subroutine DUMP_1_DECL
 
 ! --------------------------------------------------  DUMP_VALUES  -----
-  subroutine DUMP_VALUES ( VALUES, BEFORE, ADVANCE )
+  subroutine DUMP_VALUES ( VALUES, BEFORE, ADVANCE, Type_Tree, Details )
+    use Tree, only: Subtree, Sub_Rosa
     type(value_t), intent(in) :: Values(:)
     character(len=*), intent(in), optional :: BEFORE, ADVANCE
-    integer :: I, N
+    integer, intent(in), optional :: Type_Tree ! Root of type def if enum_value
+    integer, intent(in), optional :: Details
+    logical :: DoWhat ! Print %what and %type
+    integer :: I, MyDetails, N
+    integer :: The_Type
     if ( present(before) ) call output ( before, advance )
+    the_type = 0
+    if ( present(type_tree) ) the_type = type_tree
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     do i = 1, size(values)
-      if ( size(values) > 1 ) then
-        call output ( i, places=3 )
-        call output ( ': ' )
-      end if
-      select case ( values(i)%type )
-      case ( enum_value )  ! values%value(1) is a string index
-        call display_string ( nint(values(i)%value(1)) , advance='yes' )
-      case ( label )       ! values%value(1) is a string index
-        call display_string ( nint(values(i)%value(1)), advance='yes' )
+      doWhat = myDetails > 1
+      call output ( i, places=3 )
+      call output ( ': ' )
+      select case ( values(i)%what )
+      case ( enum_value, label )  ! values%value(1) is a string index
+        call display_string ( nint(values(i)%value(1)) )
+        if ( the_type /= 0 ) &
+          & call display_string ( sub_rosa(subtree(1,the_type)), before=' ' )
       case ( log_value )   ! values%value(1) 0= 0 => false, else true
-        call output ( trim(merge('true ','false',values(i)%value(1)/=0.0d0)), &
-          & advance='yes' )
-      case ( named_value, variable )
-        select case ( values(i)%units(1) )
-        case ( num_value )
-          call output ( values(i)%value(1), advance='yes' )
-        case ( range )
-          call output ( values(i)%value(1) )
-          call output ( values(i)%value(2), before=' : ', advance='yes' )
-        case ( str_range )
-          n = nint(values(i)%value(1))
-          if ( n > 0 ) call display_string ( nint(values(i)%value(1)) )
-          n = nint(values(i)%value(2))
-          if ( n > 0 ) then
-            call display_string ( n, before=' : ', advance='yes' )
-          else
-            call output ( ' : ', advance='yes' )
-          end if
-        case ( str_value )
-          n = nint(values(i)%value(1))
-          if ( n > 0 ) then
-            call display_string ( n, advance='yes' )
-          else
-            call newLine
-          end if
-        case default
-          call newLine
-        end select
+        call output ( trim(merge('true ','false',values(i)%value(1)/=0.0d0)) )
+!       case ( named_value, variable )
+!         select case ( values(i)%units(1) )
+!         case ( enum_value, label )
+!           call display_string ( nint(values(i)%value(1)) )
+!           if ( the_type /= 0 ) &
+!             & call display_string ( sub_rosa(subtree(1,the_type)), before=' ' )
+!         case ( num_value )
+!           call output ( values(i)%value(1), advance='yes' )
+!           call display_string ( phyq_indices(values(i)%units(1)), before=' ' )
+!         case ( range )
+!           call output ( values(i)%value(1) )
+!           call display_string ( phyq_indices(values(i)%units(1)), before=' ' )
+!           call output ( values(i)%value(2), before=' : ' )
+!           call display_string ( phyq_indices(values(i)%units(2)), before=' ' )
+!         case ( str_range )
+!           n = nint(values(i)%value(1))
+!           if ( n > 0 ) call display_string ( nint(values(i)%value(1)) )
+!           n = nint(values(i)%value(2))
+!           if ( n > 0 ) then
+!             call display_string ( n, before=' : ' )
+!           else
+!             call output ( ' : ' )
+!           end if
+!         case ( str_value )
+!           n = nint(values(i)%value(1))
+!           if ( n > 0 ) call display_string ( n )
+!         case default
+!         end select
+      case ( named_value )  ! values%value(1) is a string index
+        call display_string ( nint(values(i)%value(1)) )
+        if ( the_type /= 0 ) &
+          & call display_string ( parm_indices(the_type), before=' ' )
       case ( num_value )   ! values%value(1) is a number
-        call output ( values(i)%value(1), advance='yes' )
+        call output ( values(i)%value(1) )
+        call display_string ( phyq_indices(values(i)%units(1)), before=' ' )
       case ( range )       ! values%value(1:2) are numbers
         call output ( values(i)%value(1) )
+        call display_string ( phyq_indices(values(i)%units(1)), before=' ' )
         call output ( values(i)%value(2), before=' : ', advance='yes' )
+        call display_string ( phyq_indices(values(i)%units(2)), before=' ' )
       case ( str_range )   ! values%value(1:2) are string indices
         call display_string ( nint(values(i)%value(1)) )
-        call display_string ( nint(values(i)%value(2)), before=' : ', &
-          & advance='yes' )
+        call display_string ( nint(values(i)%value(2)), before=' : ' )
       case ( str_value )   ! values%value(1) is a string index
-        call display_string ( nint(values(i)%value(1)), advance='yes' )
+        n = nint(values(i)%value(1))
+        if ( n > 0 ) then
+          call display_string ( n )
+        else
+          call output ( '<no value>' )
+        end if
       case default
-        call output ( trim(type_names(values(i)%type )), advance='yes' )
+        doWhat = .true.
       end select
+      if ( doWhat ) then
+        call output ( values(i)%what, before=' %what=' )
+        call output ( values(i)%type, before=' %type=' )
+      end if
+      call newline
     end do
   end subroutine DUMP_VALUES
 
-! -----------------------------------------------------  GET_DECL  -----
-  type(decls) function GET_DECL ( STRING, TYPE, UNITS, TREE )
+! -----------------------------------------------  GET_DECL_ARRAY  -----
+  type(decls) function GET_DECL_ARRAY ( String, Types ) result ( decl )
+    ! Hunt for decls of types.  Return the first one found, or empty if none
+    integer, intent(in) :: String   ! String index of identifier
+    integer, intent(in) :: Types(:)
+    integer :: I
+    do i = 1, size(types)
+      decl = get_decl ( string, types(i) )
+      if ( decl%type /= empty ) return
+    end do
+  end function GET_DECL_ARRAY
+
+! ----------------------------------------------  GET_DECL_SCALAR  -----
+  type(decls) function GET_DECL_SCALAR ( STRING, TYPE, UNITS, TREE ) result ( decl )
   ! Get the latest declaration of "string" having a "type" field equal
   ! to "type" (if present), a "units" field equal to "units" (if
   ! present) and a "tree" field equal to "tree" (if present).  Return it
@@ -435,18 +495,18 @@ contains ! =====     Public Procedures     =============================
     logical :: GOT_IT
     integer :: PRIOR
 
-    get_decl = declaration(string)
+    decl = declaration(string)
     do
       got_it = .true.
-      if ( present(type) ) got_it = get_decl%type == type
-      if ( got_it .and. present(units) ) got_it = get_decl%units == units
-      if ( got_it .and. present(tree) ) got_it = get_decl%tree == tree
+      if ( present(type) ) got_it = decl%type == type
+      if ( got_it .and. present(units) ) got_it = decl%units == units
+      if ( got_it .and. present(tree) ) got_it = decl%tree == tree
       if ( got_it ) return
-      prior = get_decl%prior
-      get_decl = prior_decl(get_decl)
+      prior = decl%prior
+      decl = prior_decl(decl)
       if ( prior == null_decl ) return
     end do
-  end function GET_DECL
+  end function GET_DECL_SCALAR
 
   ! --------------------------------------------------  Get_Type  -----
   ! Return the string index for the type indexed by Decor
@@ -613,6 +673,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.17  2013/12/12 01:55:54  vsnyder
+! Provide a place for variable values in the declaration table
+!
 ! Revision 2.16  2013/10/16 01:12:47  vsnyder
 ! Cannonball polishing
 !
