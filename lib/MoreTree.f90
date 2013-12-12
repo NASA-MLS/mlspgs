@@ -48,6 +48,10 @@ module MoreTree
     module procedure Get_Field_Id_I, Get_Field_Id_TX
   end interface
 
+  interface Get_Label_And_Spec
+    module procedure Get_Label_And_Spec_I, Get_Label_And_Spec_TX
+  end interface
+
   interface Get_Spec_Id
     module procedure Get_Spec_Id_I, Get_Spec_Id_TX
   end interface
@@ -293,6 +297,56 @@ contains ! ====     Public Procedures     ==============================
     get_field_id = decoration(subtree(1,root))
   end function Get_Field_Id_TX
 
+  ! ---------------------------------------  Get_Label_And_Spec_I  -----
+  subroutine Get_Label_And_Spec_I ( Root, Label, Spec )
+  ! Starting at root, if its node_id is n_named, get Label from sub_rosa
+  ! of its first son and Spec from its second.  Otherwise, set Label = 0
+  ! and Spec = Root.  If Spec is absent, set Root to what Spec would be.
+    use Tree, only: Sub_Rosa
+    use Tree_Types, only: N_Named
+    integer, intent(inout) :: Root ! inout in case Spec is absent
+    integer, intent(out) :: Label
+    integer, intent(out), optional :: Spec
+    integer :: MySpec
+    if ( node_id(root) == n_named ) then
+      label = sub_rosa(subtree(1,root))
+      mySpec = subtree(2,root)
+    else
+      label = 0
+      mySpec = root
+    end if
+    if ( present(spec) ) then
+      spec = mySpec
+    else
+      root = mySpec
+    end if
+  end subroutine Get_Label_And_Spec_I
+
+  ! --------------------------------------  Get_Label_And_Spec_TX  -----
+  subroutine Get_Label_And_Spec_TX ( Root, Label, Spec )
+  ! Starting at root, if its node_id is n_named, get Label from sub_rosa
+  ! of its first son and Spec from its second.  Otherwise, set Label = 0
+  ! and Spec = Root.
+    use Tree, only: Sub_Rosa, TX
+    use Tree_Types, only: N_Named
+    type(tx), intent(inout) :: Root ! inout in case Spec is absent
+    integer, intent(out) :: Label
+    type(tx), intent(out), optional :: Spec
+    type(tx) :: MySpec
+    if ( node_id(root) == n_named ) then
+      label = sub_rosa(subtree(1,root))
+      mySpec = subtree(2,root)
+    else
+      label = 0
+      mySpec = root
+    end if
+    if ( present(spec) ) then
+      spec = mySpec
+    else
+      root = mySpec
+    end if
+  end subroutine Get_Label_And_Spec_TX
+
   ! ----------------------------------------------  Get_Spec_Id_I  -----
   integer function Get_Spec_Id_I ( Root ) result ( Get_Spec_Id )
   ! Assume that node_id(root) is n_spec_args.
@@ -375,6 +429,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.21  2013/12/12 01:56:44  vsnyder
+! Add Get_Label_And_Spec
+!
 ! Revision 2.20  2013/10/02 02:07:44  vsnyder
 ! Cannonball polishing
 !
