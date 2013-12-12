@@ -65,7 +65,7 @@ program MLSL2
   use TIME_M, only: BEGIN, FINISH, TIME_NOW, TIME_CONFIG
   use TOGGLES, only: LEVELS, SYN, SWITCHES, TOGGLE
   use TRACK_M, only: REPORTLEAKS
-  use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, NSONS, PRINT_SUBTREE, SUBTREE
+  use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, NSONS, SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
 
@@ -182,7 +182,8 @@ program MLSL2
   end if
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
-  call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957 )
+  call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957, &
+    & DEBUG=0 )
   call allocate_decl ( ndecls=8000 )
   call allocate_tree ( n_tree=2000000 )
   call init_tables
@@ -411,11 +412,7 @@ program MLSL2
     if ( dump_tree >= 0 ) then
       call output ( 'Begin un-type-checked abstract syntax tree:', &
         & advance='yes' )
-      if ( dump_tree > 0 ) then
-        call print_subtree ( root, 0 )
-      else
-        call print_subtree ( subtree(nsons(root),root), 0 )
-      end if
+      call print_interesting_subtrees ( dump_tree )
       call output ( 'End un-type-checked abstract syntax tree', &
         & advance='yes' )
     end if
@@ -425,14 +422,10 @@ program MLSL2
     call time_now ( t1 )
     call check_tree ( root, error, first_section )
     if ( timing ) call sayTime ( 'Type checking the L2CF' )
-    if ( do_dump ) call dump_decl
+    if ( do_dump > 0 ) call dump_decl ( do_dump )
     if ( toggle(syn) ) then
       call output ( 'Begin type-checked abstract syntax tree:', advance='yes' )
-      if ( levels(syn) > 0 ) then
-        call print_subtree ( root, 0, type_name=get_type )
-      else
-        call print_subtree ( subtree(nsons(root),root), 0, type_name=get_type )
-      end if
+      call print_interesting_subtrees ( levels(syn), type_name=get_type )
       call output ( 'End type-checked abstract syntax tree', advance='yes' )
     end if
 
@@ -541,6 +534,36 @@ program MLSL2
   end if
 
 contains
+
+  subroutine Print_Interesting_Subtrees ( Level, Type_Name )
+    use Tree, only: Dump_Tree_Node, Node_ID, Print_Subtree
+    use Tree_Types, only: N_CF, N_If, N_Select
+    integer, intent(in) :: Level ! If > 0, print the entire tree rooted at
+                               ! Root, else print only subtrees with roots
+                               ! having tree indices of n_cf, n_if and n_select
+    optional :: Type_Name
+    interface
+      integer function Type_Name ( Decor )
+      ! Return the string index to print for the decoration
+        integer, intent(in) :: Decor ! Tree(where)%Decor
+      end function Type_Name
+    end interface
+    integer :: I ! Subtree index
+    if ( level > 0 ) then
+      call print_subtree ( root, 0, type_name=type_name )
+    else
+      call output ( root, 5 )
+      call output ( ':' )
+      call dump_tree_node ( root, 0, type_name=type_name, advance='yes' )
+      do i = 1, nsons(root)
+        select case ( node_id(subtree(i,root)) )
+        case ( N_CF, N_If, N_Select )
+          call print_subtree ( subtree(i,root), 1, type_name=type_name )
+        end select
+      end do
+    end if
+  end subroutine Print_Interesting_Subtrees
+
   subroutine SayTime ( What )
     character(len=*), intent(in) :: What
     call time_now ( t2 )
@@ -751,6 +774,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.201  2013/12/12 02:10:58  vsnyder
+! Add 'debug' to init_lexer, move syntax tree printing into internal subroutine
+!
 ! Revision 2.200  2013/11/26 22:40:51  vsnyder
 ! Change -A to -A[n] with n>0 meaning dump the entire tree, including the
 ! type-checking stuff, and n==0 or absent meaning dump only the parser output.
