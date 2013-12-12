@@ -37,18 +37,18 @@ contains ! ====     Public Procedures     ==============================
   ! If its result is an array, return the values in VALUES.
 
     use DECLARATION_TABLE, only: Allocate_Test, Deallocate_Test, DECLARED, &
-      DECLS, Dump_Values, EMPTY, ENUM_VALUE, FUNCTION, LOG_VALUE, NAMED_VALUE, &
-      NUM_VALUE, GET_DECL, RANGE, STR_RANGE, STR_VALUE, Type_Names, &
-      Type_Name_Indices, UNDECLARED, UNITS_NAME, Variable
+      DECLS, Dump_Values, EMPTY, ENUM_VALUE, FUNCTION, LABEL, LOG_VALUE, &
+      NAMED_VALUE, NUM_VALUE, GET_DECL, RANGE, STR_RANGE, STR_VALUE, &
+      Type_Names, Type_Name_Indices, UNDECLARED, UNITS_NAME, Variable
     use Functions, only: F_Difference, F_Exp, F_Ln, F_Log, F_Log10, &
       F_Intersection, F_Sqrt, F_Union, F_Without
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_Indices, PHYQ_INVALID
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_Indices, PHYQ_INVALID, T_Unknown
     use Output_m, only: NewLine, Output
     use StartErrorMessage_m, only: StartErrorMessage
     use STRING_TABLE, only: Display_String, FLOAT_VALUE
     use TOGGLES, only: CON, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE, Tree_Node_Name
+    use TREE, only: Decoration, NODE_ID, NSONS, SUB_ROSA, SUBTREE, Tree_Node_Name
     use TREE_TYPES ! Everything, especially everything beginning with N_
 
     integer, intent(in) :: ROOT         ! Root of expression subtree
@@ -102,21 +102,30 @@ contains ! ====     Public Procedures     ==============================
     case ( n_identifier ) ! ------------------------------------------------
       string = sub_rosa(root)
       if ( declared(string) ) then
-        decl = get_decl(string, named_value)
-        if ( decl%type == empty ) decl = get_decl(string, enum_value)
-        if ( decl%type == empty ) decl = get_decl(string, variable)
+        decl = get_decl ( string, [ named_value, variable, enum_value, label ] )
       else
         decl = decls(0.0d0, undeclared, phyq_invalid, 0, 0, null() )
       end if
       if ( present(type) ) type = decl%type
       units = decl%units
       value = decl%value
-!       if ( decl%type == enum_value ) value = string
       if ( present(values) ) then
-        if ( allocated(decl%values) ) then
+        if ( decl%type == variable .and. allocated(decl%values) ) then
           n = size(decl%values)
           call allocate_test ( values, size(decl%values), 'Values', moduleName )
           values = decl%values
+        else
+          call allocate_test ( values, 1, 'Values', moduleName )
+          values = value_t(decl%type,decl%type,value,units)
+          select case ( decl%type )
+          case ( enum_value, label )
+            ! Make sure values is allocated so we don't need to test for it
+            ! after calling EXPR recursively.
+            type1 = decl%tree ! dt_def node if enum_value, first son is type name
+                              ! spec_args node if label, first son is spec name,
+                              ! decoration of first son is spec_def node
+            if ( decl%type == label ) type1 = decoration(subtree(1,type1))
+          end select
         end if
       end if
     case ( n_number ) ! ----------------------------------------------------
@@ -225,8 +234,8 @@ contains ! ====     Public Procedures     ==============================
         end select
       end if
     case ( n_pow ) ! -------------------------------------------------------
-      value = 1.0
-      do i = nsons(root), 1, -1 ! Power operator is right associative
+      call expr ( subtree(1,root), units, value, type1, scale, values1 )
+      do i = nsons(root)-1, 1, -1 ! Power operator is right associative
         call expr ( subtree(i,root), units, value2, type2, scale, values2 )
         if ( size(values1) /= size(values2) ) then
           call announceError ( root, differentShapes )
@@ -342,7 +351,7 @@ contains ! ====     Public Procedures     ==============================
                 values1%value(j) = merge(1.0,0.0,values1%value(j) /= values2%value(j))
               end select
             end do
-            call set_values ( type1 )
+            call set_values ( log_value )
           end if
         case ( n_and, n_or ) ! ---------------------------------------------
           if ( present(type) ) type = log_value
@@ -377,7 +386,7 @@ contains ! ====     Public Procedures     ==============================
             call deallocate_test ( values3, 'Values3', moduleName )
             call allocate_test ( values1, 1, 'Values1', moduleName )
             call expr ( subtree(1,root), units, value2, type2, scale, values2 )
-            values1(1) = value_t(type,value,units)
+            values1(1) = value_t(empty,type,value,units)
             call set_values ( type2 ) ! Makes values1 deallocated
             do i = 2, nsons(root)
               call expr ( subtree(i,root), units, value2, type2, scale, values2 )
@@ -405,9 +414,15 @@ contains ! ====     Public Procedures     ==============================
         ! Make sure values is allocated so we don't need to test for it
         ! after calling EXPR recursively.
         call allocate_test ( values, 1, 'Values', moduleName )
-        values = value_t(type,value,units)
+        values = value_t(empty,type,value,units)
       end if
       if ( present(type) ) type = values(1)%type
+      select case ( values(1)%type )
+      case ( enum_value, label )
+        values%type = type1
+      case default
+        values%what = values%type
+      end select
       value = values(1)%value
       units = values(1)%units
     end if
@@ -465,9 +480,11 @@ contains ! ====     Public Procedures     ==============================
     subroutine AnnounceError ( where, what )
       use Output_m, only: Output
       use String_Table, only: Display_String
-      use Tree, only: Dump_Tree_Node
+      use Tree, only: Dump_Tree_Node, Dump_Tree_Node_Name, Internal, &
+        & Node_Kind, Pseudo, Sub_Rosa
       integer, intent(in) :: Where ! Tree index
       integer, intent(in) :: What  ! Error index
+      integer :: NodeIs
       OK = .false.
       call startErrorMessage ( where )
       select case ( what )
@@ -482,7 +499,12 @@ contains ! ====     Public Procedures     ==============================
         call output ( ' EXPR invoked for array but VALUES argument not present.', &
           advance='yes' )
       case ( nonNumeric )
-        call display_string ( string, before='Argument of ' )
+        nodeIs = node_kind ( where )
+        if ( nodeIs == pseudo ) then
+          call display_string ( sub_rosa(where) )
+        else
+          call dump_tree_node_name ( where, before='Argument of ' )
+        end if
         call output ( ' is not numeric.', advance='yes' )
       case ( notFunc )
         call display_string ( string )
@@ -593,6 +615,14 @@ contains ! ====     Public Procedures     ==============================
         if ( present(values) ) then
           call move_alloc ( values1, values )
           values%type = type
+          values%what = decl%type
+          select case ( decl%type )
+          case ( enum_value )
+            values%type = decl%units
+          case ( variable )
+            values%type = decl%units
+            if ( allocated(decl%values) ) units = decl%values(1)%units(1)
+          end select
         else
           value = values1(1)%value
           call deallocate_test ( values1, 'Values1', moduleName )
@@ -740,6 +770,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.29  2013/12/12 02:03:41  vsnyder
+! Add ability to substitute variable values
+!
 ! Revision 2.28  2013/10/16 01:12:02  vsnyder
 ! Include Null() in for allocatable component in Decls() constructor.
 ! Don't try to dump Values if it's not present.
