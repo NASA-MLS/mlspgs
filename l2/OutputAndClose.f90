@@ -70,7 +70,6 @@ contains ! =====     Public Procedures     =============================
     use DIRECTWRITE_M, only: DIRECTDATA_T, DUMP
     use DUMPCOMMAND_M, only: BOOLEANFROMEMPTYSWATH, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
-    use EVALUATE_VARIABLE_M, only: EVALUATE_VARIABLE
     use EXPR_M, only: EXPR
     use GRIDDEDDATA, only: GRIDDEDDATA_T
     use HESSIANMODULE_1, only: HESSIAN_T
@@ -105,13 +104,13 @@ contains ! =====     Public Procedures     =============================
       & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MLSSTRINGS, only: TRIM_SAFE
-    use MORETREE, only: GET_SPEC_ID, GET_BOOLEAN
+    use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID, GET_BOOLEAN
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
-    use TREE_TYPES, only: N_NAMED, N_VARIABLE
     use VECTORSMODULE, only: VECTOR_T
     use WRITEMETADATA, only: L2PCF, WRITEMETALOG
 
@@ -161,6 +160,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SECONDDERIVNODE
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: SPEC_NO                  ! Index of son of Root
+    type(next_tree_node_state) :: State ! of tree traverser
     real :: T1, T2     ! for timing
     integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
@@ -204,24 +204,15 @@ contains ! =====     Public Procedures     =============================
     endif
     ! Loop over the lines in the l2cf
 
-    do spec_no = 2, nsons(root)-1 ! Skip name at begin and end of section
+    do 
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
 
       meta_name = ''
       writeCounterMAF = .false.
       got = .false.
 
-      son = subtree(spec_no,root)
-      if ( node_id(son) == n_variable ) then
-        call evaluate_variable ( son )
-    cycle
-      end if
-      if ( node_id(son) == n_named ) then ! Is spec labeled?
-        key = subtree(2,son)
-        name = sub_rosa(subtree(1,son))
-      else ! Son is n_spec_args
-        key = son
-        name = 0
-      end if
+      call get_label_and_spec ( son, name, key )
       L2CFNODE = key
 
       if ( MLSSelecting .and. &
@@ -443,8 +434,8 @@ contains ! =====     Public Procedures     =============================
         end if
 
       case default
-        call announce_error ( spec_no, &
-          &  "Error--unknown spec_no: parser should have caught this")
+        call announce_error ( son, &
+          &  "Error--unknown son: parser should have caught this")
 
       end select
 
@@ -1857,6 +1848,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.176  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.175  2013/10/15 23:52:55  pwagner
 ! May copy quantity values to a file global attribute
 !
