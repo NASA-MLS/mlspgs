@@ -1413,7 +1413,7 @@ contains
     ! litID = -1 ! meaning not found
     call GetHDF5Attribute ( dsID, attrname, str )
     call add_char( trim(str) )
-    call lookup ( strID, found, caseless=.true., debug=.false. )
+    call lookup ( strID, found, caseless=.true., debug=0 )
     do litID=first_lit, Last_auto_lit
       if ( lit_indices(litID) == strID ) return
     enddo
@@ -1438,7 +1438,7 @@ contains
     strID = -1 ! meaning not found
     call GetHDF5Attribute ( dsID, attrname, str )
     call add_char( trim(str) )
-    call lookup ( strID, found, caseless=.true., debug=.false. )
+    call lookup ( strID, found, caseless=.true., debug=0 )
     
   end subroutine GetHDF5AttrAsStrID
 
@@ -1627,6 +1627,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.78  2013/09/19 23:31:08  vsnyder
+! Use MyDisplayString more, add QuantitiesAreCompatible
+!
 ! Revision 2.77  2013/08/16 02:27:04  vsnyder
 ! Declare RT named constant = R8, and use it for REAL components
 !
