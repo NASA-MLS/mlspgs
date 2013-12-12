@@ -45,7 +45,8 @@ module INTRINSIC
 
 ! Data types that don't have enumerated literals:
   integer, parameter :: T_FIRST             = 1
-  integer, parameter :: T_A_DOT_B           = t_first
+  integer, parameter :: T_UNKNOWN           = t_first
+  integer, parameter :: T_A_DOT_B           = t_unknown + 1
   integer, parameter :: T_NUMERIC           = t_a_dot_b + 1
   integer, parameter :: T_NUMERIC_RANGE     = t_numeric + 1
   integer, parameter :: T_STRING            = t_numeric_range + 1
@@ -170,6 +171,7 @@ contains ! =====     Public procedures     =============================
     ! Put intrinsic predefined identifiers into the symbol table.
 
     ! Put intrinsic non-enumeration type names into symbol table
+    data_type_indices(t_unknown) =         add_ident ( 'unknown' )
     data_type_indices(t_a_dot_b) =         add_ident ( 'a.b' )
     data_type_indices(t_numeric) =         add_ident ( 'numeric' )
     data_type_indices(t_numeric_range) =   add_ident ( 'numeric_range' )
@@ -221,9 +223,6 @@ contains ! =====     Public procedures     =============================
   ! "left" of the trees that represent the input.  The tree-walker
   ! stumbles upon them in its normal course of operation, never really
   ! realizing they're special (because by then they're not).
-
-  ! Start with the definitions of types. These are represented by trees of
-  ! the form  < n_dt_def t_type_name l_lit ... l_lit >
 
   ! Start with the definitions of types. These are represented by trees of
   ! the form  < n_dt_def t_type_name l_lit ... l_lit >
@@ -288,7 +287,7 @@ contains ! =====     Public procedures     =============================
     ! Executable
     phyq_index= -1 ! Not found
     call add_char( trim(str) )
-    call lookup ( strID, found, caseless=.true., debug=.false. )
+    call lookup ( strID, found, caseless=.true., debug=0 )
     if ( found ) phyq_index = get_phyq_lit( strID )
   end function get_phyq_str
     
@@ -305,6 +304,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.71  2013/12/12 01:59:44  vsnyder
+! Change type of debug from logical to integer, add 'unknown' type
+!
 ! Revision 2.70  2013/10/09 01:05:18  vsnyder
 ! Comments to clarify use of D and DU
 !
