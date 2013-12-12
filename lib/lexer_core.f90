@@ -47,7 +47,7 @@ module LEXER_CORE
 
 contains
 
-  subroutine INIT_LEXER ( N_CHARS, N_SYMBOLS, HASH_TABLE_SIZE, STAT )
+  subroutine INIT_LEXER ( N_CHARS, N_SYMBOLS, HASH_TABLE_SIZE, STAT, DEBUG )
   ! Allocate the character, symbol and hash tables, which automatically
   ! initializes them.
     use STRING_TABLE, only: ALLOCATE_HASH_TABLE, INIT_STRING_TABLE
@@ -59,6 +59,7 @@ contains
                                         ! symbol tables
     integer, intent(in) :: HASH_TABLE_SIZE   ! Duh
     integer, intent(out), optional :: STAT   ! Status from a called routine
+    integer, intent(in), optional :: DEBUG
     integer :: MY_STAT
 
     ! Since Lexer is the one using get_char subroutine,
@@ -68,8 +69,8 @@ contains
     call init_string_table
 
     call allocate_hash_table ( hash_table_size, my_stat )
-    if (my_stat == 0 ) &
-      call allocate_symbol_table ( n_chars, n_symbols, my_stat )
+    if ( my_stat == 0 ) &
+      call allocate_symbol_table ( n_chars, n_symbols, my_stat, debug )
     if ( my_stat == 0 ) call init_toggle
     need = .true.
     if ( present(stat) ) stat = my_stat
@@ -154,6 +155,9 @@ contains
 end module LEXER_CORE
 
 ! $Log$
+! Revision 2.10  2013/12/12 02:02:19  vsnyder
+! Change type of debug from logical to integer
+!
 ! Revision 2.9  2013/11/26 22:44:48  vsnyder
 ! Spiff up dump
 !
