@@ -53,7 +53,6 @@ contains ! =====     Public Procedures     =============================
     use DIRECTWRITE_M, only: DIRECTDATA_T
     use DUMPCOMMAND_M, only: DUMPCOMMAND, &
       & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
-    use Evaluate_Variable_m, only: Evaluate_Variable
     use HGRIDSDATABASE, only: HGRID_T
     use INIT_TABLES_MODULE, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, &
       & S_ENDSELECT, S_CASE, S_DIFF, S_DUMP, S_LABEL, S_SELECT, S_SKIP
@@ -70,11 +69,12 @@ contains ! =====     Public Procedures     =============================
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
       & ADD_TO_DIRECTWRITE_TIMING, ADD_TO_SECTION_TIMING
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR
-    use MORETREE, only: GET_SPEC_ID
+    use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID
+    use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
+      & Next_Tree_Node_State
     use OUTPUT_M, only: OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
-    use TREE, only: SUBTREE, NSONS, NODE_ID, Where_At => Where
-    use TREE_TYPES, only: N_NAMED, N_Variable
+    use TREE, only: SUBTREE, NSONS, Where_At => Where
     use TIME_M, only: TIME_NOW
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: VECTOR_T
@@ -106,14 +106,15 @@ contains ! =====     Public Procedures     =============================
     real :: DWT2                        ! Time we finished
     real :: DWT22                       ! Time we finished, too
     integer :: KEY                      ! Tree node
+    integer :: Label                    ! Not actually used
     integer :: Me = -1                  ! String index for trace
-    integer :: MLSCFLINE                ! Line number in l2cf
     integer :: NODIRECTWRITES           ! Array size
     integer :: NODIRECTWRITESCOMPLETED  ! Counter
     integer :: NOEXTRAWRITES            ! Correction to NODIRECTWRITES
     integer :: PASS                     ! Loop counter
     integer :: SON                      ! Tree node
     integer :: SPECID                   ! Type of l2cf line this is
+    type(next_tree_node_state) :: State ! of tree traverser
     integer :: STATUS
     integer :: TICKET                   ! Direct write permission ticket
     ! integer :: THEFILE                  ! Direct write permission on file
@@ -177,17 +178,11 @@ contains ! =====     Public Procedures     =============================
       end if
       
       ! Simply loop over lines in the l2cf
-      do mlscfLine = 2, nsons(root) - 1 ! Skip begin/end section
-        son = subtree(mlscfLine,root)
-        if ( node_id(son) == n_variable ) then
-          call evaluate_variable ( son )
-      cycle
-        end if
-        if ( node_id(son) == n_named ) then ! Is spec labeled?
-          key = subtree(2,son)
-        else
-          key = son
-        end if
+      call init_next_tree_node ( state )
+      do 
+        son = next_tree_node ( root, state )
+        if ( son == 0 ) exit
+        call get_label_and_spec ( son, label, key )
         L2CFNODE = key
         if ( MLSSelecting .and. &
           & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
@@ -227,7 +222,7 @@ contains ! =====     Public Procedures     =============================
         case ( s_l2gp, s_l2aux )
           ! Only do these the first time round
           if ( pass == 1 .and. .not. checkpaths ) then
-            call JoinQuantities ( son, vectors, l2gpDatabase, l2auxDatabase, &
+            call JoinQuantities ( key, vectors, l2gpDatabase, l2auxDatabase, &
               & chunkNo, chunks )
           end if
         case ( s_label )
@@ -2242,6 +2237,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.157  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.156  2013/11/01 00:15:15  pwagner
 ! Match trace_begins and _ends scrupulously
 !
