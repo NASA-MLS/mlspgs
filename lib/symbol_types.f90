@@ -92,7 +92,7 @@ module SYMBOL_TYPES
        ( .true., i = t_string+1, max_pseudo ), &
        ( .false., i = max_pseudo+1, t_last_terminal ) /)
 
-! Terminal symbol types.  These are used for debug printing.
+! Terminal symbol types.
 
   integer, parameter :: RES_WORD = 1              ! Reserved word
   integer, parameter :: IDENT =    RES_WORD + 1   ! Identifier
@@ -107,7 +107,8 @@ module SYMBOL_TYPES
   integer, parameter :: INC_STR =  INC_NUM + 1    ! Incomplete string
   integer, parameter :: UNK_CH =   INC_STR + 1    ! Unknown character
   integer, parameter :: AFT_CONT = UNK_CH + 1     ! After continuation
-  integer, parameter :: OBJECT =   AFT_CONT + 1   ! None of the above
+  integer, parameter :: TREENODE = AFT_CONT + 1   ! Tree node
+  integer, parameter :: OBJECT =   TREENODE + 1   ! None of the above
 
   integer, parameter :: FIRST_TYPE = RES_WORD
   integer, parameter :: LAST_TYPE = OBJECT
@@ -219,10 +220,11 @@ contains
     case ( unk_op );    call add_char ( '<undefined operator>' )
     case ( def_pun );   call add_char ( '<defined punctuator>' )
     case ( unk_pun );   call add_char ( '<undefined punctuator>' )
-    case ( unk_ch );    call add_char ( '<unrecognized character>' )
     case ( inc_num );   call add_char ( '<incomplete number>' )
     case ( inc_str );   call add_char ( '<incomplete string>' )
+    case ( unk_ch );    call add_char ( '<unrecognized character>' )
     case ( aft_cont );  call add_char ( '<after continuation>' )
+    case ( treeNode);   call add_char ( '<tree node>' )
     case ( object );    call add_char ( '<object>' )
     case default
       write ( *, * ) 'SYMBOL_TYPES%INIT_TYPE-E- No initializer for &
@@ -245,6 +247,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.19  2013/12/12 01:58:00  vsnyder
+! Add variable definition, and IF and SELECT constructs
+!
 ! Revision 2.18  2013/11/26 22:42:32  vsnyder
 ! Add CASE, DEFAULT, ELSE, IF, SELECT, THEN reserved words
 !
