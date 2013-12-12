@@ -142,7 +142,6 @@ contains
   ! HLDIDX  is the index in the HOLD array.
   ! HOLD    is used to collect 10 integers for output.
   ! I       is a loop induction variable and subscript.
-  ! IEND    is the upper limit for I in some loops.
   ! IPTR    is a list pointer.
   ! J       is a loop induction variable and subscript.
   ! K       is a subscript.
@@ -154,7 +153,7 @@ contains
   ! LSTPTR  is a pointer to a list element.
   ! TVOC    is the total length of all vocabulary items
 
-    integer HLDIDX, HOLD(10), I, IEND, IPTR, J, K, L, LENPTR, N, NLOOKS, NSTATE
+    integer HLDIDX, HOLD(10), I, IPTR, J, K, L, LENPTR, N, NLOOKS, NSTATE
     character(len=120) :: LINE
     integer LNGPRD, LNGVCB, LSTPTR, TVOC
     integer :: LS(lsets), LSET(lsets+1:ncsets+lsets+1)
@@ -474,3 +473,6 @@ contains
 end module Generate_Table
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

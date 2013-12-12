@@ -29,7 +29,6 @@ contains
 
   subroutine RDGRAM
 
-    use Error_Handler, only: Error
     use SIZES, only: MXPRDC, MXPROD
     use STRING, only: SHDPTR
     use S1, only: ENTER, MOVSTR
@@ -156,7 +155,7 @@ contains
     use Error_Handler, only: Error
     use IO, only: NEW_LINE ! reads a new line of text.
     use READCM, only: LINENO, LINPTR
-    use SIZES, only: MAXSHD, MAXSST
+    use SIZES, only: MAXSHD
     use STRING, only: SHDPTR, SSTPTR
     use S1, only: BUILD_SYMBOL_TABLE, ENTER, STHEAD
     use S3, only: ACTION
@@ -396,3 +395,6 @@ contains
 end module GRAMMAR
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

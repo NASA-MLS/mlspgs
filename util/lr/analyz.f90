@@ -32,7 +32,7 @@ contains
     use NULLABLE_M, only: FIND_NULLABLE   ! Find nullable nonterminals
     use Sort_Configurations, only: SORTCG
     use S3, only: HEADCS, HEADEN, PRDIND, PRODCN
-    use S5, only: ADDBAS, DEQUE, MAXBAS, NEWBAS
+    use S5, only: ADDBAS, DEQUE, NEWBAS
     use TABCOM, only: NTERMS, NVOC
     use Transitions_And_Reductions, only: TRNRED
 
@@ -102,3 +102,6 @@ contains
 end module Analysis
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:13  vsnyder
+! Initial commit
+!
