@@ -88,6 +88,8 @@ contains ! ====     Public Procedures     ==============================
       & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, TOOLKIT
     use MLSL2TIMINGS, only: ADD_TO_SECTION_TIMING, TOTAL_TIMES, &
       & CURRENTCHUNKNUMBER
+    use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
+      & Next_Tree_Node_State
     use OPEN_INIT, only: OPENANDINITIALIZE
     use OUTPUTANDCLOSE, only: OUTPUT_CLOSE
     use OUTPUT_M, only: BLANKS, GETSTAMP, OUTPUT, &
@@ -111,6 +113,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
     logical, intent(in) ::     COUNTCHUNKS ! Just count the chunks, print them out and quit
+
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     character(len=*), intent(in) :: SECTIONSTOSKIP
     ! Internal variables
@@ -129,10 +132,11 @@ contains ! ====     Public Procedures     ==============================
       & pointer ::                               GriddedDataBase
     type (Hessian_T), dimension(:), pointer ::   Hessians
     type (HGrid_T), dimension(:), pointer ::     HGrids
-    integer ::                                   HOWMANY  ! Nsons(Root)
-    integer ::                                   I, J     ! Loop inductors
+    integer ::                                   HOWMANY ! Nsons(Root)
+    integer ::                                   I       ! Loop inductors
     integer, dimension(1) :: ICHUNKS
     integer ::                                   LASTCHUNK ! For chunk loop
+    integer ::                                   LastInner ! subtree number
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
     type (Matrix_Database_T), dimension(:), &
@@ -145,7 +149,8 @@ contains ! ====     Public Procedures     ==============================
     character(len=32) ::                         section_name
     logical ::                                   showTime
     logical, dimension(SECTION_FIRST:SECTION_LAST) :: skipSections
-    integer ::                                   SON              ! Son of Root
+    integer ::                                   SON     ! Son of Root
+    type(next_tree_node_state) ::                State, State2 ! of tree traverser
     logical ::                                   STOPBEFORECHUNKLOOP
     real    ::                                   t1, t2, tChunk
     character(len=24) ::                         textCode
@@ -185,7 +190,7 @@ contains ! ====     Public Procedures     ==============================
     stopBeforeChunkLoop = ( stopBeforeChunkLoop .and. stopAfterSection /= ' ' )
     reducedChunks      = .false.
     skipSections = .false.
-    do i=section_first, section_last
+    do i = section_first, section_last
       call get_string ( section_indices(i), section_name, strip=.true. )
       skipSections(i) = isInList( sectionstoskip, section_name, '-fc' )
     end do
@@ -195,15 +200,15 @@ contains ! ====     Public Procedures     ==============================
       call finishUp ( .true. )
       return
     end if
-    i = first_section
     howmany = nsons(root)
 
     ! -----------------------------------------------------
     ! ----------------------------------------------------- Loop over tree
 
     ! Now loop over the sections in the tree
-    do while ( i <= howmany )
-      son = subtree(i,root)
+    do
+      son = next_tree_node(root,state,start=first_section)
+      if ( son == 0 ) exit
       L2CFNODE = son
       section_index = decoration(subtree(1,son))
       call get_string ( section_indices(section_index), section_name, &
@@ -228,9 +233,9 @@ contains ! ====     Public Procedures     ==============================
       case ( z_mlsSignals )
         call MLSSignals ( son )
         if ( switchDetail(switches,'tps') > -1 ) then
-            ! call test_parse_signals
-            call MLSMessage ( MLSMSG_Info, ModuleName, &
-              & 'Go back and uncomment the previous line in tree_walker' )
+          ! call test_parse_signals
+          call MLSMessage ( MLSMSG_Info, ModuleName, &
+            & 'Go back and uncomment the previous line in tree_walker' )
         end if
         ! Here's one way for the l2cf to set Aura to .false.
         ! Put a line like
@@ -284,7 +289,8 @@ contains ! ====     Public Procedures     ==============================
           if ( (.not. checkPaths .or. parallel%chunkRange /= '') .and. &
             & NEED_L1BFILES ) then
             call ChunkDivide ( son, processingRange, filedatabase, chunks )
-            call ComputeAllHGridOffsets ( root, i+1, chunks, filedatabase, &
+            call ComputeAllHGridOffsets ( root, first_section, chunks, &
+              & filedatabase, &
             & l2gpDatabase, processingRange )
           else
             allocate ( chunks(1), stat=error_flag )
@@ -331,7 +337,6 @@ contains ! ====     Public Procedures     ==============================
           if ( parallel%master .and. .not. parallel%fwmParallel ) then
             call L2MasterTask ( chunks )
             call add_to_section_timing ( 'master', t1, now_stop )
-            i = i + 1
             cycle
           end if
           if ( parallel%slave .and. parallel%fwmParallel ) then
@@ -379,11 +384,11 @@ contains ! ====     Public Procedures     ==============================
             firstChunk = 1
             lastChunk = size(chunks)
           end if
-          j = FindFirst( .not. chunksSkipped(firstChunk:lastChunk) )
-          if ( j < 1 .and. COMPLAINIFSKIPPEDEVERYCHUNK ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'We have skipped every chunk' )
-          j = i + 1 ! In case no chunks get processed
+          if ( FindFirst( .not. chunksSkipped(firstChunk:lastChunk) ) < 1 .and. &
+            & COMPLAINIFSKIPPEDEVERYCHUNK ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'We have skipped every chunk' )
+          lastInner = state%ancestors(1)%subtree ! In case no chunks get processed
           do chunkNo = firstChunk, lastChunk ! --------------------- Chunk loop
             call resumeOutput ! In case the last phase was  silent
             if ( chunksSkipped(chunkNo) ) cycle
@@ -398,9 +403,13 @@ contains ! ====     Public Procedures     ==============================
             elseif( .not. parallel%slave ) then
               currentChunkNumber = chunkNo  ! Stored for dumping
             endif
-            j = i
-subtrees:   do while ( j <= howmany )
-              son = subtree(j,root)
+            call init_next_tree_node ( state2 )
+subtrees:   do
+              ! Start inner loop for one chunk at the current position
+              ! in the outer loop
+              son = next_tree_node(root,state2,start=state%ancestors(1)%subtree)
+              if ( son == 0 ) exit subtrees
+              lastInner = state2%ancestors(1)%subtree
               L2CFNODE = son
               section_index = decoration(subtree(1,son))
               call get_string ( section_indices(section_index), section_name, &
@@ -442,7 +451,6 @@ subtrees:   do while ( j <= howmany )
                 ! exit subtrees
                 ! This may simply be a skipped section
               end select
-              j = j + 1
             end do subtrees
 
             if ( switchDetail(switches,'chi') > 0 .and. chunkNo > 1 ) then
@@ -492,12 +500,14 @@ subtrees:   do while ( j <= howmany )
               return
             end if
           end do ! ---------------------------------- End of chunk loop
+          ! Continue the outer loop after the last section processed in
+          ! the chunk loop
+          state%ancestors(1)%subtree = lastInner
           ! Clear any locked l2pc bins out.
           if ( warnOnDestroy ) call output('About to flushl2pc bins', advance='yes' )
           call FlushLockedBins
           ! Done with the chunksSkipped array
           call deallocate_test( chunksSkipped, 'chunksSkipped', ModuleName )
-          i = j - 1 ! one gets added back in at the end of the outer loop
         end if
 
         ! If we're stamping stdout with phase, times, etc.
@@ -530,7 +540,6 @@ subtrees:   do while ( j <= howmany )
           call output(trim(section_name), advance='yes')
         end if
       end select
-      i = i + 1
     end do
 
     ! Now finish up
@@ -686,6 +695,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.188  2013/10/09 00:24:30  pwagner
+! May have multiple Output sections
+!
 ! Revision 2.187  2013/10/01 22:18:56  pwagner
 ! Passes hgrids to MLSL2Fill
 !

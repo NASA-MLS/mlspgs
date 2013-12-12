@@ -168,7 +168,7 @@ contains
       call MLSMessage ( MLSMSG_Warning, ModuleName // 'L2ProfileToL1MAF', &                      
       & 'l1boa File not found--hope you dont need one' )
       return
-    endif
+    end if
     quantity = 'MAFStartTimeTAI'
     l1bItemName = AssembleL1BQtyName ( quantity, HDFVERSION_5, .false. )
     call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
@@ -189,7 +189,7 @@ contains
       call deallocatel1bdata( l1bfield )
       call destroyl2gpcontents( l2gp )
       return
-    endif
+    end if
     call ClosestElement( l2gp%time(profile), l1bField%dpField(1,1,:)*1._r8, indices )
     MAF = indices(1) - 1
     if ( DEEBUG ) call outputNamedValue( 'size(time)', size(l2gp%time) )
@@ -211,7 +211,6 @@ contains
       & ADDDIRECTTODATABASE, DUMP, SETUPNEWDIRECT
     use DUMPCOMMAND_M, only: DUMPCOMMAND
     use EMPIRICALGEOMETRY, only: INITEMPIRICALGEOMETRY
-    use Evaluate_Variable_m, only: Evaluate_Variable
     use FGRID, only: ADDFGRIDTODATABASE, CREATEFGRIDFROMMLSCFINFO, DUMP, FGRID_T
     use FORWARDMODELCONFIG, only: ADDFORWARDMODELCONFIGTODATABASE, DUMP, &
       & FORWARDMODELCONFIG_T
@@ -254,7 +253,9 @@ contains
     use MLSSTRINGLISTS, only: ARRAY2LIST, CATLISTS, SWITCHDETAIL, &
       & NUMSTRINGELEMENTS, STRINGELEMENT
     use MLSSIGNALS_M, only: INSTRUMENT
-    use MORETREE, only: GET_FIELD_ID, GET_SPEC_ID, STARTERRORMESSAGE
+    use MORETREE, only: GET_FIELD_ID, GET_LABEL_AND_SPEC, GET_SPEC_ID, &
+      & STARTERRORMESSAGE
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTCALENDAR, &
       & REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: GET_PFADATA_FROM_L2CF, FLUSH_PFADATA, MAKE_PFADATA, &
@@ -272,7 +273,7 @@ contains
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
       & DUMP_TREE_NODE
-    use TREE_TYPES, only: N_EQUAL, N_NAMED, N_Variable
+    use TREE_TYPES, only: N_EQUAL, N_IF, N_NAMED, N_Select, N_Variable
     use VGRID, only: CREATEVGRIDFROMMLSCFINFO
     use VGRIDSDATABASE, only: ADDVGRIDTODATABASE, VGRIDS
     use WRITEMETADATA, only: L2PCF
@@ -320,6 +321,7 @@ contains
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
     integer :: spec_id             ! e.g., s_binSelector
+    type(next_tree_node_state) :: State ! of tree traverser
     logical :: StopEarly
     integer :: Sub_rosa_index
     integer :: The_HDF_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
@@ -382,10 +384,11 @@ contains
       status = PGS_DEM_Open ( resolutionList, numResolutions, &
         & layerList, numLayers )
       call outputNamedValue( 'PGS_DEM_Open status', status )
-    endif
+    end if
 
-    do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
-      son = subtree(i,root)
+    do
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
       L2CFNODE = son
       if ( node_id(son) == n_equal ) then
         sub_rosa_index = sub_rosa(subtree(2,son))
@@ -468,16 +471,9 @@ contains
         case default
           call announce_error(son, 'unrecognized global settings parameter')
         end select
-      else if ( node_id(son) == n_variable ) then
-        call evaluate_variable ( son )
       else
-        if ( node_id(son) == n_named ) then
-          name = sub_rosa(subtree(1,son))
-          son = subtree(2,son)
-        else
-          name = 0
-        end if
-      L2CFNODE = son
+        call get_label_and_spec ( son, name )
+        L2CFNODE = son
         spec_id = get_spec_id(son)
         if ( TOOLKIT .and. &
           & any( spec_id == &
@@ -1284,6 +1280,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.150  2013/10/09 23:43:17  vsnyder
+! Add Evaluate_Variable, declare param correctly
+!
 ! Revision 2.149  2013/09/25 01:04:33  pwagner
 ! Added DEM stuff
 !
