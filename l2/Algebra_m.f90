@@ -54,7 +54,6 @@ contains
     use CHUNKS_M, only: MLSCHUNK_T
     use DECLARATION_TABLE, only: DECLARE, DECLS, EMPTY, EXPRN, EXPRN_M, &
       & EXPRN_V, GET_DECL, LABEL, NUM_VALUE, REDECLARE
-    use Evaluate_Variable_m, only: Evaluate_Variable
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use INIT_TABLES_MODULE, only: S_MATRIX, S_QUANTITY, S_VECTOR
     use MATRIXMODULE_1, only: ADDTOMATRIX, ADDTOMATRIXDATABASE, ASSIGNMATRIX, &
@@ -69,9 +68,10 @@ contains
     use MLSKINDS, only: R8, RV
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: DISPLAY_STRING
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, PRINT_SUBTREE
     use TREE_TYPES ! EVERYTHING, EXCEPT TREE_INIT; REMAINDER BEGIN WITH N_
@@ -88,7 +88,6 @@ contains
     type(decls) :: DECL            ! Declaration of the LHS name
     real(r8) :: DVALUE             ! Value of expr if it's a number
     integer :: Error               ! 0 = no error occurred.
-    integer :: I_SONS              ! Son indices of sons of root
     integer :: LHS                 ! Index in tree of LHS
     integer :: Me = -1             ! String index for trace
     integer :: Me_Loop = -1        ! String index for trace
@@ -108,6 +107,8 @@ contains
     type(matrix_t), target :: Matrix
     type(matrix_SPD_t) :: Matrix_S
 
+    type(next_tree_node_state) :: State ! of tree traverser
+
     type(vector_t) :: Vector
 
     ! Parameters for Announce_Error
@@ -126,13 +127,13 @@ contains
     error = 0
 
     call trace_begin ( me, 'Algebra', root, cond=toggle(gen) )
-    do i_sons = 2, nsons(root) - 1 ! skip names at begin and end
-      son = subtree(i_sons,root)
-      call trace_begin ( me_loop, 'Algebra loop', son, cond=toggle(gen) )
+    do
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
+      call trace_begin ( me_loop, 'Algebra loop', son, &
+        & cond=toggle(gen) .and. levels(gen) > 0 )
       if ( node_id(son) /= n_equal ) then
         call AlgebraCommands ( son, VectorDatabase, MatrixDatabase, chunk, forwardModelConfigDatabase )
-      else if ( node_id(son) == n_variable ) then
-        call evaluate_variable ( son )
       else
         ! Evaluate the RHS
         rhs = subtree(2,son)
@@ -282,8 +283,8 @@ contains
           end select
         end if
       end if
-200   call trace_end ( 'Algebra loop', cond=toggle(gen) )
-    end do ! i_sons
+200   call trace_end ( 'Algebra loop', cond=toggle(gen) .and. levels(gen) > 0 )
+    end do
     call trace_end ( 'Algebra', cond=toggle(gen) )
 
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -1530,6 +1531,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.31  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.30  2013/10/09 02:26:59  vsnyder
 ! Add Evaluate_Variable
 !
