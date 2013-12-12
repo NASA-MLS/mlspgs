@@ -17,7 +17,7 @@ module TREE
   use OUTPUT_M, only: NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, LOOKUP_AND_INSERT
   use SYMBOL_TABLE, only: SET_SYMBOL, SYMBOL
-  use SYMBOL_TYPES, only: T_NULL
+  use SYMBOL_TYPES, only: TREENODE, T_NULL
   use TOGGLES, only: CON, Switches, TOGGLE
   use TREE_TYPES, only: LAST_TREE_NODE, N_EOF, N_NULL, TREE_INIT, TREE_MAP
   implicit NONE
@@ -474,6 +474,7 @@ contains
     type(tx), intent(in) :: WHERE
     integer, intent(in) :: INDENT
     character(len=*), intent(in), optional :: ADVANCE
+    optional :: TYPE_NAME
     interface
       integer function Type_Name ( Decor )
       ! Return the string index to print for the decoration
@@ -523,7 +524,7 @@ contains
       call tree_init (i)
       call lookup_and_insert ( where, found, .false. )
       ! It's OK if it found one -- maybe it's a terminal text, too.
-      if ( .not. found ) then; call set_symbol(where, where); end if
+      if ( .not. found ) then; call set_symbol(where, treeNode); end if
       tree_texts(i) = where
     end do
     tree_point = null_tree
@@ -1027,6 +1028,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.26  2013/12/12 02:01:17  vsnyder
+! Add 'type_name' dummy procedure to Dump_Tree_Node
+!
 ! Revision 2.25  2013/11/26 22:46:52  vsnyder
 ! Add Dump_Stack, class of string in Push_Pseudo_Terminal, Stack_Sub_Rosa
 !
