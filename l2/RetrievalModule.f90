@@ -46,7 +46,6 @@ contains
       & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
       & DUMPCOMMAND, INITIALIZEREPEAT, NEXTREPEAT, &
       & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, REPEAT=>SKIP, SKIP
-    use Evaluate_Variable_m, only: Evaluate_Variable
     use HESSIANMODULE_1, only: HESSIAN_T, CREATEEMPTYHESSIAN, DESTROYHESSIAN
     use IEEE_ARITHMETIC, only: IEEE_IS_NAN
     use EXPR_M, only: EXPR
@@ -94,9 +93,12 @@ contains
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING, &
       & CURRENTCHUNKNUMBER, CURRENTPHASENAME
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGERESET
-    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
+    use MORETREE, only: GET_BOOLEAN, Get_Label_And_Spec, GET_FIELD_ID, &
+      & GET_SPEC_ID
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MLSSTRINGS, only: WRITEINTSTOCHARS
+    use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
+      & Next_Tree_Node_State
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: FLUSH_PFADATA
     use SET_TOGGLES_M, only: SET_TOGGLES
@@ -110,7 +112,6 @@ contains
     use TRACK_M, only: REPORTLEAKS
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, Where, SUB_ROSA, &
       & SUBTREE
-    use TREE_TYPES, only: N_NAMED, N_Variable
     use VECTORSMODULE, only: CLEARMASK, CLEARUNDERMASK, &
       & CLEARVECTOR, CLONEVECTOR, COPYVECTOR, COPYVECTORMASK, CREATEMASK, &
       & DESTROYVECTORINFO, DUMPVECTORNORMS, GETVECTORQUANTITYBYTYPE, M_LINALG, &
@@ -168,7 +169,7 @@ contains
     integer :: HRegQuants               ! Regularization quantities
     integer :: HRegWeights              ! Weight of regularization conditions
     type(vector_T), pointer :: HRegWeightVec  ! Weight vector for regularization
-    integer :: I_Key, I_Sons, J         ! Subscripts and loop inductors
+    integer :: I_Key, J                 ! Subscripts and loop inductors
     real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
     integer :: IxAverage                ! Index in tree of averagingKernel
     integer :: IxCovariance             ! Index in tree of outputCovariance
@@ -181,6 +182,7 @@ contains
     integer :: K                        ! Subscript, loop inductor, local temp
     integer :: Key                      ! Index of an n_spec_args.  Either
                                         ! a son or grandson of root.
+    integer :: Label                    ! Of a spec (not actually used)
     real(r8) :: LambdaMin               ! Minimum Levenberg-Marquardt parameter
     type(vector_T), pointer :: LowBound ! For state during retrieval
     integer :: MaxJacobians             ! Maximum number of Jacobian
@@ -240,6 +242,7 @@ contains
     integer :: VRegQuants               ! Regularization quantities
     integer :: VRegWeights              ! Weight of regularization conditions
     type(vector_T), pointer :: VRegWeightVec  ! Weight vector for regularization
+    type(next_tree_node_state) :: Walk ! of tree traverser
     character(len=63) :: WhereLeakCheck ! From LeakCheck command, else default
 
     ! Indexes in the private vectors database
@@ -313,17 +316,11 @@ contains
 repeat_loop: do ! RepeatLoop
       ! Loop over the lines in the configuration file
 
-      do i_sons = 2, nsons(root) - 1      ! skip names at begin/end of section
-        son = subtree(i_sons, root)
-        if ( node_id(son) == n_variable ) then
-          call evaluate_variable ( son )
-      cycle
-        end if
-        if ( node_id(son) == n_named ) then
-          key = subtree(2, son)
-        else
-          key = son
-        end if
+      call init_next_tree_node ( walk )
+      do 
+        son = next_tree_node ( root, walk )
+        if ( son == 0 ) exit
+        call get_label_and_spec ( son, label, key )
         L2CFNODE = key
 
         ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
@@ -820,7 +817,7 @@ repeat_loop: do ! RepeatLoop
           call destroyVectorInfo ( v(j) )
         end do
 
-      end do ! i_sons = 2, nsons(root) - 1
+      end do ! sons
       if ( .not. repeatLoop ) exit ! Otherwise, we will repeat the section
     end do repeat_loop ! RepeatLoop
     
@@ -2950,6 +2947,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.346  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.345  2013/10/09 23:42:29  vsnyder
 ! Add Evaluate_Variable
 !
