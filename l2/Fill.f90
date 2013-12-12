@@ -62,7 +62,6 @@ contains ! =====     Public Procedures     =============================
       & DUMPCOMMAND, INITIALIZEREPEAT, NEXTREPEAT, &
       & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, &
       & REPEAT=>SKIP, SKIP
-    use Evaluate_Variable_m, only: Evaluate_Variable
     use EXPR_M, only: EXPR, EXPR_CHECK
     use FILLUTILS_1, only: ADDGAUSSIANNOISE, APPLYBASELINE, AUTOFILLVECTOR, &
       & COMPUTETOTALPOWER, DERIVATIVEOFSOURCE, FILLCOVARIANCE, &
@@ -213,7 +212,9 @@ contains ! =====     Public Procedures     =============================
       & STRINGELEMENT, STRINGELEMENTNUM
     use MLSSTRINGS, only: LOWERCASE
     use MOLECULES, only: L_H2O
-    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
+    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, Get_Label_And_Spec, &
+      & GET_SPEC_ID
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
       & REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: FLUSH_PFADATA
@@ -227,9 +228,7 @@ contains ! =====     Public Procedures     =============================
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
-      & SUB_ROSA, SUBTREE, WHERE
-    use TREE_TYPES, only: N_NAMED, N_Variable
+    use TREE, only: DECORATE, DECORATION, NSONS, SUB_ROSA, SUBTREE, WHERE
     use VECTORSMODULE, only: ADDVECTORTODATABASE, &
       & CLEARMASK, CLONEVECTORQUANTITY, CREATEVECTOR, &
       & DUMPQUANTITYMASK, &
@@ -318,6 +317,8 @@ contains ! =====     Public Procedures     =============================
 
     type (Matrix_T), dimension(:), pointer :: SNOOPMATRICES
     type (Matrix_T), pointer :: ONEMATRIX
+
+    type(next_tree_node_state) :: State ! of tree traverser
 
     logical :: ADDITIONAL               ! Flag for binMax/binMin
     logical :: ALLOWMISSING             ! Flag from l2cf
@@ -573,21 +574,12 @@ contains ! =====     Public Procedures     =============================
     repeat_loop: do ! RepeatLoop
     ! Loop over the lines in the configuration file
 
-    do i = 2, nsons(root)-1 ! Skip the section name at begin and end
-      son = subtree(i,root)
+    do 
+      son = next_tree_node ( root, state )
+      if ( son == 0 ) exit
       call trace_begin ( me_spec, "Fill.spec", son, &
         & cond=toggle(gen) .and. levels(gen) > 0 )
-      if ( node_id(son) == n_variable ) then
-        call evaluate_variable ( son )
-    go to 9
-      end if
-      if ( node_id(son) == n_named ) then ! Is spec labeled?
-        key = subtree(2,son)
-        vectorName = sub_rosa(subtree(1,son))
-      else
-        key = son
-        vectorName = 0
-      end if
+      call get_label_and_spec ( son, vectorName, key )
       L2CFNODE = key
       if ( MLSSelecting .and. &
         & .not. any( get_spec_id(key) == (/ s_endselect, s_select, s_case /) ) ) cycle
@@ -1177,7 +1169,7 @@ contains ! =====     Public Procedures     =============================
 
       case default ! Can't get here if tree_checker worked correctly
       end select
-    9 call trace_end ( "Fill.spec", cond=toggle(gen) .and. levels(gen) > 0 )
+      call trace_end ( "Fill.spec", cond=toggle(gen) .and. levels(gen) > 0 )
     end do ! End of loop of specs
     if ( .not. repeatLoop ) exit ! Otherwise, we will repeat the section
     end do  repeat_loop!  RepeatLoop
@@ -3150,6 +3142,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.437  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.436  2013/11/20 01:01:33  pwagner
 ! Prevent accidental reference to undefined pointer phiTanQuantity
 !
