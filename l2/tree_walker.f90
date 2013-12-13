@@ -88,8 +88,7 @@ contains ! ====     Public Procedures     ==============================
       & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, TOOLKIT
     use MLSL2TIMINGS, only: ADD_TO_SECTION_TIMING, TOTAL_TIMES, &
       & CURRENTCHUNKNUMBER
-    use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
-      & Next_Tree_Node_State
+    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use OPEN_INIT, only: OPENANDINITIALIZE
     use OUTPUTANDCLOSE, only: OUTPUT_CLOSE
     use OUTPUT_M, only: BLANKS, GETSTAMP, OUTPUT, &
@@ -136,7 +135,6 @@ contains ! ====     Public Procedures     ==============================
     integer ::                                   I       ! Loop inductors
     integer, dimension(1) :: ICHUNKS
     integer ::                                   LASTCHUNK ! For chunk loop
-    integer ::                                   LastInner ! subtree number
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
     type (Matrix_Database_T), dimension(:), &
@@ -150,7 +148,7 @@ contains ! ====     Public Procedures     ==============================
     logical ::                                   showTime
     logical, dimension(SECTION_FIRST:SECTION_LAST) :: skipSections
     integer ::                                   SON     ! Son of Root
-    type(next_tree_node_state) ::                State, State2 ! of tree traverser
+    type(next_tree_node_state) ::                State, Save1, Save2 ! of tree traverser
     logical ::                                   STOPBEFORECHUNKLOOP
     real    ::                                   t1, t2, tChunk
     character(len=24) ::                         textCode
@@ -207,6 +205,7 @@ contains ! ====     Public Procedures     ==============================
 
     ! Now loop over the sections in the tree
     do
+      save1 = state
       son = next_tree_node(root,state,start=first_section)
       if ( son == 0 ) exit
       L2CFNODE = son
@@ -388,8 +387,8 @@ contains ! ====     Public Procedures     ==============================
             & COMPLAINIFSKIPPEDEVERYCHUNK ) &
               & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'We have skipped every chunk' )
-          lastInner = state%ancestors(1)%subtree ! In case no chunks get processed
           do chunkNo = firstChunk, lastChunk ! --------------------- Chunk loop
+            state = save1 ! Back up so first repeated section is next
             call resumeOutput ! In case the last phase was  silent
             if ( chunksSkipped(chunkNo) ) cycle
             call time_now ( tChunk )
@@ -403,13 +402,12 @@ contains ! ====     Public Procedures     ==============================
             elseif( .not. parallel%slave ) then
               currentChunkNumber = chunkNo  ! Stored for dumping
             endif
-            call init_next_tree_node ( state2 )
 subtrees:   do
               ! Start inner loop for one chunk at the current position
               ! in the outer loop
-              son = next_tree_node(root,state2,start=state%ancestors(1)%subtree)
+              save2 = state ! before advancing to section below
+              son = next_tree_node(root,state)
               if ( son == 0 ) exit subtrees
-              lastInner = state2%ancestors(1)%subtree
               L2CFNODE = son
               section_index = decoration(subtree(1,son))
               call get_string ( section_indices(section_index), section_name, &
@@ -500,9 +498,9 @@ subtrees:   do
               return
             end if
           end do ! ---------------------------------- End of chunk loop
+          state = save2
           ! Continue the outer loop after the last section processed in
           ! the chunk loop
-          state%ancestors(1)%subtree = lastInner
           ! Clear any locked l2pc bins out.
           if ( warnOnDestroy ) call output('About to flushl2pc bins', advance='yes' )
           call FlushLockedBins
@@ -695,6 +693,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.189  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.188  2013/10/09 00:24:30  pwagner
 ! May have multiple Output sections
 !
