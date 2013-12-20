@@ -81,9 +81,9 @@ contains
 
   !{ Evaluate Legendre functions of the first kind and degree 1,
   ! $P_j^1/\sin\theta$, using
-  ! P1(0) = 0, P1(1) = 1, P1(j) = C1(j)*P1(j-1)*cos(theta) - C2(j)*P1(j-2)
-  ! where P1(j) is $P_j^1(\cos\theta)$.  Evaluate their derivatives using
-  ! dP_j^1(cos(theta))/dTheta = j*cos(theta)*P(j) - (j+1)*P(j-1)
+  ! $P1(0) = 0, P1(1) = 1, P1(j) = C1(j) P1(j-1) \cos(\theta) - C2(j) P1(j-2)$
+  ! where $P1(j)$ is $P_j^1(\cos\theta)$.  Evaluate their derivatives using
+  ! $dP_j^1 (\cos(\theta))/d\theta = j \cos(\theta) P(j) - (j+1) P(j-1)$
 
     use MLSKinds, only: RK => R8
 
@@ -119,6 +119,9 @@ contains
 end module P1_m
 
 ! $Log$
+! Revision 1.2  2009/07/06 22:08:38  vsnyder
+! Added print to not_used_here to preserve Id
+!
 ! Revision 1.1  2008/04/19 01:15:27  vsnyder
 ! Initial commit
 !
