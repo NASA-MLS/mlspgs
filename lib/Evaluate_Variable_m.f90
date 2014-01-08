@@ -28,14 +28,16 @@ contains ! ====     Public Procedures     ==============================
 ! Evaluate a variable defined by <name> := <expr>.
 ! Put its value in the Values component of its declaration.
 
-    use Declaration_Table, only: Allocate_Test, Deallocate_Test, Range, &
-      & Redeclare, Str_Range, Value_t, Variable
+    use Declaration_Table, only: Allocate_Test, Deallocate_Test, Dump_Values, &
+      & Redeclare, Value_t, Variable
     use Expr_m, only: Expr
-    use Toggles, only: Gen, Toggle
+    use Output_m, only: Output
+    use Toggles, only: Gen, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     use Tree, only: Nsons, Subtree, Sub_Rosa
     integer, intent(in) :: Root  ! The := tree node of the definition
 
+    integer :: Details           ! Dump expression values
     integer :: I
     integer :: Me = -1           ! String index for trace cacheing
     integer :: N                 ! For allocation
@@ -45,19 +47,31 @@ contains ! ====     Public Procedures     ==============================
     type(value_t), allocatable :: Values1(:), Values2(:), Values3(:)
 
     call trace_begin ( me, 'Evaluate_Variable', root, cond=toggle(gen) )
-    do i = 2, nsons(root)
-      call expr ( subtree(i,root), units, value, type, values=values2 )
-      if ( allocated(values1) ) then
-        call allocate_test ( values3, size(values1)+size(values2), &
-          & 'Values3', moduleName )
-        values3 = [ values1, values2 ]
-        call deallocate_test ( values1, 'Values1', moduleName )
-        call deallocate_test ( values2, 'Values2', moduleName )
-        call move_alloc ( values3, values1 )
-      else
-        call move_alloc ( values2, values1 )
+    details = merge(levels(gen),0,toggle(gen))
+    call expr ( subtree(2,root), units, value, type, values=values1 )
+    if ( details > 1 ) then
+      call output ( 1, before='Element ' )
+      call output ( ' of value', advance='yes' )
+      call dump_values ( values1, details=9 )
+    end if
+    do i = 3, nsons(root)
+      call expr ( subtree(i,root), units, value,  type, values=values2 )
+      if ( details > 1 ) then
+        call output ( i-1, before='Element ' )
+        call output ( ' of value', advance='yes' )
+        call dump_values ( values2, details=9 )
       end if
+      call allocate_test ( values3, size(values1)+size(values2), &
+        & 'Values3', moduleName )
+      values3 = [ values1, values2 ]
+      call deallocate_test ( values1, 'Values1', moduleName )
+      call deallocate_test ( values2, 'Values2', moduleName )
+      call move_alloc ( values3, values1 )
     end do
+    if ( details > 0 ) then
+      call output ( 'Final value of variable', advance='yes' )
+      call dump_values ( values1, details=9 )
+    end if
     call redeclare ( sub_rosa(subtree(1,root)), value(1), variable, &
       & values=values1 ) ! Declares it if it wasn't already declared
     call trace_end ( 'Evaluate_Variable', cond=toggle(gen) )
@@ -77,6 +91,9 @@ contains ! ====     Public Procedures     ==============================
 end module Evaluate_Variable_m
 
 ! $Log$
+! Revision 2.2  2014/01/08 21:09:06  vsnyder
+! Add more type checking and tracing
+!
 ! Revision 2.1  2013/10/09 01:06:36  vsnyder
 ! Initial commit
 !
