@@ -513,7 +513,7 @@ contains
   ! Get the name of the tree node at WHERE
     type(tx), intent(in) :: WHERE
     character(len=*), intent(out), optional :: STRING
-    call display_string ( tree_texts(the_tree(where%i) % node), string )
+    call get_string ( tree_texts(the_tree(where%i) % node), string )
   end subroutine GET_TREE_NODE_NAME_TX
 
   subroutine INIT_TREE
@@ -1028,6 +1028,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.27  2014/01/08 21:07:58  vsnyder
+! Get_Tree_Node_Name_TX ought to get the name, not display it
+!
 ! Revision 2.26  2013/12/12 02:01:17  vsnyder
 ! Add 'type_name' dummy procedure to Dump_Tree_Node
 !
