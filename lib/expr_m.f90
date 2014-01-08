@@ -78,7 +78,8 @@ contains ! ====     Public Procedures     ==============================
     ! Error codes
     integer, parameter :: BadNode = 1 ! Unsupported tree node in expr
     integer, parameter :: DifferentShapes = badNode + 1 ! Shapes of operands differ
-    integer, parameter :: NoArray = differentShapes + 1 ! No VALUES argument
+    integer, parameter :: DifferentTypes = differentShapes + 1 ! Types of operands differ
+    integer, parameter :: NoArray = differentTypes + 1 ! No VALUES argument
     integer, parameter :: NonNumeric = noArray + 1 ! Non numeric arg for func
     integer, parameter :: NotFunc = nonNumeric + 1 ! Not a function
     integer, parameter :: NotLogical = notFunc + 1 ! Not logical
@@ -110,23 +111,31 @@ contains ! ====     Public Procedures     ==============================
       units = decl%units
       value = decl%value
       if ( present(values) ) then
+        ! Make sure values is allocated so we don't need to test for it
+        ! after calling EXPR recursively.
         if ( decl%type == variable .and. allocated(decl%values) ) then
           n = size(decl%values)
           call allocate_test ( values, size(decl%values), 'Values', moduleName )
           values = decl%values
         else
           call allocate_test ( values, 1, 'Values', moduleName )
-          values = value_t(decl%type,decl%type,value,units)
+          type1 = decl%type
+          values = value_t(decl%type,decl%type,value,units,decoration(root))
           select case ( decl%type )
           case ( enum_value, label )
-            ! Make sure values is allocated so we don't need to test for it
-            ! after calling EXPR recursively.
             type1 = decl%tree ! dt_def node if enum_value, first son is type name
                               ! spec_args node if label, first son is spec name,
                               ! decoration of first son is spec_def node
-            if ( decl%type == label ) type1 = decoration(subtree(1,type1))
+            if ( decl%type == label ) then
+              type1 = decoration(subtree(1,type1))
+            else
+              values(1)%type = type1
+            end if
           end select
+          values(1)%decor = decoration(root)
         end if
+      else if ( decl%type == variable ) then
+        if ( size(decl%values) > 1 ) call announceError ( root, noArray )
       end if
     case ( n_number ) ! ----------------------------------------------------
       string = sub_rosa(root)
@@ -265,6 +274,26 @@ contains ! ====     Public Procedures     ==============================
       else
         call expr ( subtree(3,root), units, value, type, scale, values1 )
       end if
+    case ( n_array ) ! -------------------------------------------------
+      if ( .not. present(values) ) then
+        if ( nsons(root) > 1 ) then
+          call announceError ( root, noArray )
+        else
+          call expr ( subtree(i,root), units, value, type, scale )
+        end if
+      else
+        call expr ( subtree(1,root), units, value2, type1, scale, values1 )
+        do i = 2, nsons(root)
+          call expr ( subtree(i,root), units, value2, type2, scale, values2 )
+          call allocate_test ( values3, size(values1) + size(values2), &
+            & 'Values3', moduleName )
+          values3 = [ values1, values2 ]
+          call deallocate_test ( values1, 'Values1', moduleName )
+          call deallocate_test ( values2, 'Values2', moduleName )
+          call move_alloc ( values3, values1 )
+        end do
+        call set_values ( type2 ) ! Makes values1 deallocated
+      end if
     case default
       call expr ( subtree(1,root), units, value, type1, scale, values1 )
       if ( present(type) ) type = type1
@@ -326,7 +355,28 @@ contains ! ====     Public Procedures     ==============================
           do j = 1, 2
             values1%units(j) = values2%units(j)
           end do
-        case ( n_less, n_less_eq, n_greater, n_greater_eq, n_equal_equal, n_not_equal )
+        case ( n_equal_equal, n_not_equal )
+          if ( present(type) ) type = log_value
+          if ( type1 /= type2 ) &
+            & call announceError ( root, differentTypes )
+          if ( type1 == num_value ) then
+            if ( .not. check_units ( values1, values2 ) ) &
+              &  call announceError ( root, wrongUnits )
+          end if
+          if ( OK ) then
+            do j = 1, 2
+              select case ( me )
+              case ( n_equal_equal ) ! -------------------------------------
+                values1%value(j) = merge(1.0,0.0,values1%value(j) == values2%value(j))
+              case ( n_not_equal ) ! ---------------------------------------
+                values1%value(j) = merge(1.0,0.0,values1%value(j) /= values2%value(j))
+              end select
+            end do
+            values1%type = log_value
+            values1%what = log_value
+            call set_values ( log_value )
+          end if
+        case ( n_less, n_less_eq, n_greater, n_greater_eq )
           if ( present(type) ) type = log_value
           if ( type1 /= num_value ) &
              & call announceError ( subtree(1,root), nonNumeric )
@@ -345,12 +395,10 @@ contains ! ====     Public Procedures     ==============================
                 values1%value(j) = merge(1.0,0.0,values1%value(j) > values2%value(j))
               case ( n_greater_eq ) ! --------------------------------------
                 values1%value(j) = merge(1.0,0.0,values1%value(j) >= values2%value(j))
-              case ( n_equal_equal ) ! -------------------------------------
-                values1%value(j) = merge(1.0,0.0,values1%value(j) == values2%value(j))
-              case ( n_not_equal ) ! ---------------------------------------
-                values1%value(j) = merge(1.0,0.0,values1%value(j) /= values2%value(j))
               end select
             end do
+            values1%type = log_value
+            values1%what = log_value
             call set_values ( log_value )
           end if
         case ( n_and, n_or ) ! ---------------------------------------------
@@ -375,28 +423,6 @@ contains ! ====     Public Procedures     ==============================
             values1%value(1) = 1 - nint(values1%value(1))
             call set_values ( log_value )
           end if
-        case ( n_array ) ! -------------------------------------------------
-          if ( .not. present(values) ) then
-            if ( nsons(root) > 1 ) then
-              call announceError ( root, noArray )
-            else
-              call expr ( subtree(i,root), units, value, type, scale )
-            end if
-          else
-            call deallocate_test ( values3, 'Values3', moduleName )
-            call allocate_test ( values1, 1, 'Values1', moduleName )
-            call expr ( subtree(1,root), units, value2, type2, scale, values2 )
-            values1(1) = value_t(empty,type,value,units)
-            call set_values ( type2 ) ! Makes values1 deallocated
-            do i = 2, nsons(root)
-              call expr ( subtree(i,root), units, value2, type2, scale, values2 )
-              n = size(values) + size(values2)
-              call allocate_test ( values1, n, 'Values1', moduleName )
-              values1(1:size(values)) = values
-              values1(size(values)+1:n) = values2
-              call set_values ( type2 ) ! Makes values1 deallocated
-            end do
-          end if
         case default
           call announceError ( root, badNode )
         end select
@@ -414,15 +440,20 @@ contains ! ====     Public Procedures     ==============================
         ! Make sure values is allocated so we don't need to test for it
         ! after calling EXPR recursively.
         call allocate_test ( values, 1, 'Values', moduleName )
-        values = value_t(empty,type,value,units)
+        values = value_t(empty,type,value,units,0)
       end if
-      if ( present(type) ) type = values(1)%type
-      select case ( values(1)%type )
-      case ( enum_value, label )
-        values%type = type1
-      case default
-        values%what = values%type
-      end select
+      if ( present(type) ) then
+        type = values(1)%type
+        if ( values(1)%what == enum_value ) type = values(1)%what
+      end if
+      if ( me /= n_identifier .and. me /= n_array ) then
+        select case ( values(1)%what )
+        case ( enum_value, label )
+          values%type = type1
+        case default
+          values%what = values%type
+        end select
+      end if
       value = values(1)%value
       units = values(1)%units
     end if
@@ -494,6 +525,9 @@ contains ! ====     Public Procedures     ==============================
       case ( differentShapes )
         call dump_tree_node ( where, 0 )
         call output ( ' has operands with different shapes.', advance='yes' )
+      case ( differentTypes )
+        call dump_tree_node ( where, 0 )
+        call output ( ' has operands with different types.', advance='yes' )
       case ( noArray )
         call dump_tree_node ( where, 0 )
         call output ( ' EXPR invoked for array but VALUES argument not present.', &
@@ -614,15 +648,6 @@ contains ! ====     Public Procedures     ==============================
       if ( allocated(values1) ) then
         if ( present(values) ) then
           call move_alloc ( values1, values )
-          values%type = type
-          values%what = decl%type
-          select case ( decl%type )
-          case ( enum_value )
-            values%type = decl%units
-          case ( variable )
-            values%type = decl%units
-            if ( allocated(decl%values) ) units = decl%values(1)%units(1)
-          end select
         else
           value = values1(1)%value
           call deallocate_test ( values1, 'Values1', moduleName )
@@ -770,6 +795,10 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.30  2014/01/08 21:11:22  vsnyder
+! More type checking.  Better handling of arrays.  Allow == and /= for
+! types other than numeric.
+!
 ! Revision 2.29  2013/12/12 02:03:41  vsnyder
 ! Add ability to substitute variable values
 !
