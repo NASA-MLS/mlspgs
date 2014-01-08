@@ -104,6 +104,7 @@ module DECLARATION_TABLE
                                          ! String index if type is string
                                          ! Lit index otherwise
     integer :: Units(2) = 0   ! PHYQ_...
+    integer :: Decor = 0      ! Decoration if expr was identifier
   end type Value_t
 
   ! Type            Units                Value           Tree
@@ -324,6 +325,8 @@ contains ! =====     Public Procedures     =============================
     select case ( decl%type )
     case ( enum_value )
       call display_string ( sub_rosa(subtree(1,decl%tree)), before=' of type ' )
+      call display_string ( lit_indices(decl%units), before=' lit ' )
+      call output ( decl%units, before=' ' )
     case ( phys_unit_name )
       call display_string ( lit_indices(decl%units), before=' units=' )
     case ( variable )
@@ -406,36 +409,10 @@ contains ! =====     Public Procedures     =============================
         call display_string ( nint(values(i)%value(1)) )
         if ( the_type /= 0 ) &
           & call display_string ( sub_rosa(subtree(1,the_type)), before=' ' )
+        call output ( values(i)%decor, before=' decor=' )
       case ( log_value )   ! values%value(1) 0= 0 => false, else true
         call output ( trim(merge('true ','false',values(i)%value(1)/=0.0d0)) )
-!       case ( named_value, variable )
-!         select case ( values(i)%units(1) )
-!         case ( enum_value, label )
-!           call display_string ( nint(values(i)%value(1)) )
-!           if ( the_type /= 0 ) &
-!             & call display_string ( sub_rosa(subtree(1,the_type)), before=' ' )
-!         case ( num_value )
-!           call output ( values(i)%value(1), advance='yes' )
-!           call display_string ( phyq_indices(values(i)%units(1)), before=' ' )
-!         case ( range )
-!           call output ( values(i)%value(1) )
-!           call display_string ( phyq_indices(values(i)%units(1)), before=' ' )
-!           call output ( values(i)%value(2), before=' : ' )
-!           call display_string ( phyq_indices(values(i)%units(2)), before=' ' )
-!         case ( str_range )
-!           n = nint(values(i)%value(1))
-!           if ( n > 0 ) call display_string ( nint(values(i)%value(1)) )
-!           n = nint(values(i)%value(2))
-!           if ( n > 0 ) then
-!             call display_string ( n, before=' : ' )
-!           else
-!             call output ( ' : ' )
-!           end if
-!         case ( str_value )
-!           n = nint(values(i)%value(1))
-!           if ( n > 0 ) call display_string ( n )
-!         case default
-!         end select
+        call output ( 'log_value' )
       case ( named_value )  ! values%value(1) is a string index
         call display_string ( nint(values(i)%value(1)) )
         if ( the_type /= 0 ) &
@@ -574,11 +551,8 @@ contains ! =====     Public Procedures     =============================
         decl_table(prior)%value = value
         if ( present(units) )  decl_table(prior)%units = units
         if ( present(tree) )   decl_table(prior)%tree = tree
-        if ( present(values) ) then
-          call deallocate_test ( decl_table(prior)%values, &
-            & 'decl_table(prior)%values', moduleName )
-          call move_alloc ( values, decl_table(prior)%values )
-        end if
+        if ( present(values) ) &
+          & call move_alloc ( values, decl_table(prior)%values )
         if ( toggle(tab) ) then
           call display_string ( string, before='Redeclare ' )
           call dump_a_decl ( decl_table(prior), before=' with' )
@@ -673,6 +647,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.18  2014/01/08 21:09:43  vsnyder
+! Add more tracing info
+!
 ! Revision 2.17  2013/12/12 01:55:54  vsnyder
 ! Provide a place for variable values in the declaration table
 !
