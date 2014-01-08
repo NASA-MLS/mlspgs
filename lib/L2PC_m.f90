@@ -2259,7 +2259,9 @@ contains ! ============= Public Procedures ==========================
           call get_string ( lit_indices(qt%molecule), line )
           call MakeHDF5Attribute ( qID, 'molecule', trim(line) )
           if ( isExtinction(qt%molecule) ) then
-            call get_string ( radiometers(qt%radiometer)%prefix, line )
+            line = 'none'
+            if ( radiometers(qt%radiometer)%prefix /= 0 ) &
+              & call get_string ( radiometers(qt%radiometer)%prefix, line )
             call MakeHDF5Attribute ( qID, 'radiometer', trim(line) )
           end if
         case (l_radiance, l_calsidebandfraction, l_limbsidebandfraction, &
@@ -2354,6 +2356,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.125  2014/01/08 18:31:48  pwagner
+! Fixed crash on gettting extinction radiometer prefix
+!
 ! Revision 2.124  2013/08/30 03:56:01  vsnyder
 ! Revise use of trace_begin and trace_end
 !
