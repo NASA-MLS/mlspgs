@@ -162,7 +162,7 @@ contains ! ====     Public Procedures     ==============================
 
     ! Executable
     call trace_begin ( me, 'WALK_TREE_TO_DO_MLS_L2', &
-      & subtree(first_section,root), cond=toggle(gen) )
+      & subtree(first_section,root), index=first_section, cond=toggle(gen) )
     call time_now ( t1 )
 
     nullify ( chunks, forwardModelConfigDatabase, griddedDataBase, hessians, &
@@ -693,6 +693,10 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.190  2013/12/13 21:25:30  vsnyder
+! Use the iterator correctly so the correct number of chunks are run, and
+! the output section is run
+!
 ! Revision 2.189  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
