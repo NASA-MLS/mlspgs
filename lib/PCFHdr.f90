@@ -20,6 +20,7 @@ module PCFHdr
 
    use DATES_MODULE, only: UTC_TO_DATE, UTC_TO_YYYYMMDD, UTCFORM
    use HDF, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
+   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
    use INTRINSIC, only: L_HDFEOS, L_HDF, L_SWATH
    use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, NAMELEN
    use MLSFILES, only: GETPCFROMREF, HDFVERSION_4, HDFVERSION_5, &
@@ -28,7 +29,7 @@ module PCFHdr
    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
      & MLSMSG_WARNING, MLSMSG_DEALLOCATE, MLSMSG_FILEOPEN
    use MLSSTRINGS, only: LOWERCASE
-   use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+   use OUTPUT_M, only: OUTPUT
    use SDPTOOLKIT, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
      & PGSD_IO_GEN_RDIRUNF, PGS_PC_GETREFERENCE, &
@@ -1525,6 +1526,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.58  2014/01/09 00:24:29  pwagner
+!# Some procedures formerly in output_m now got from highOutput
+!#
 !# Revision 2.57  2012/09/18 18:49:27  pwagner
 !# Reduced severity when unable to convert utc; capitalize names in use statements
 !#
