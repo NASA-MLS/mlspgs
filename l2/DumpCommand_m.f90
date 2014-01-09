@@ -15,6 +15,8 @@ module DumpCommand_M
 ! Or functions to set a run-time Boolean flag.
 ! (Should these latter functions be moved into a special Boolean module?)
 
+  use HIGHOUTPUT, only: BEVERBOSE, HEADLINE, NUMTOCHARS, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
   implicit none
   private
 
@@ -145,7 +147,6 @@ contains
       & SIGNALS
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: BEVERBOSE, OUTPUT
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
     use STRING_TABLE, only: GET_STRING
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -247,7 +248,6 @@ contains
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: BEVERBOSE, OUTPUT
     use STRING_TABLE, only: GET_STRING
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, &
@@ -345,7 +345,6 @@ contains
     use MLSMESSAGEMODULE, only: MLSMESSAGEINQUIRE
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: BEVERBOSE, OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
@@ -427,7 +426,6 @@ contains
     use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT, &
       & REPLACESUBSTRING
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: BEVERBOSE, OUTPUT
     use STRING_TABLE, only: GET_STRING
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -663,7 +661,6 @@ contains
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: BEVERBOSE, OUTPUT, HEADLINE
     use STRING_TABLE, only: GET_STRING
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
@@ -744,7 +741,6 @@ contains
       & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
     use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: BEVERBOSE, OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     ! Dummy args
@@ -866,7 +862,6 @@ contains
       & INSERTHASHELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS, WRITEINTSTOCHARS
     use MORETREE, only: GET_BOOLEAN
-    use OUTPUT_M, only: BEVERBOSE, NUMTOCHARS, OUTPUT, OUTPUTNAMEDVALUE
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
     use STRING_TABLE, only: GET_STRING
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -1171,7 +1166,6 @@ contains
     use MLSSTRINGS, only: INDEXES, LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
     use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
-    use OUTPUT_M, only: BEVERBOSE, BLANKS, OUTPUT, OUTPUTNAMEDVALUE
     use PFADATABASE_M, only: DUMP, DUMP_PFADATABASE, DUMP_PFAFILEDATABASE, &
       & DUMP_PFASTRUCTURE, PFADATA
     use POINTINGGRID_M, only: DUMP_POINTING_GRID_DATABASE
@@ -2022,7 +2016,6 @@ contains
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: GETHASHELEMENT, PUTHASHELEMENT
     use MLSSTRINGS, only: READINTSFROMCHARS, WRITEINTSTOCHARS
-    ! use OUTPUT_M, only: OUTPUTNAMEDVALUE
     ! Internal variables
     character(len=64) :: cvalue
     integer :: c
@@ -2066,7 +2059,6 @@ contains
     use MLSSTRINGLISTS, only: GETHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE, STREQ
     use MORETREE, only: GET_FIELD_ID
-    use OUTPUT_M, only: BEVERBOSE, OUTPUT
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -2139,7 +2131,6 @@ contains
     use MLSSTRINGLISTS, only: GETHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_FIELD_ID
-    use OUTPUT_M, only: BEVERBOSE, OUTPUT
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -2251,7 +2242,6 @@ contains
     use MLSSTRINGLISTS, only: BOOLEANVALUE, GETHASHELEMENT, PUTHASHELEMENT
     use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
     use MORETREE, only: GET_FIELD_ID
-    use OUTPUT_M, only: BEVERBOSE, OUTPUT, OUTPUTNAMEDVALUE
     use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -2360,7 +2350,6 @@ contains
 
   subroutine AnnounceError ( where, what, string )
     use MORETREE, only: STARTERRORMESSAGE
-    use OUTPUT_M, only: NEWLINE, OUTPUT
 
     integer, intent(in) :: What, Where
     character(len=*), intent(in), optional :: String
@@ -2411,7 +2400,6 @@ contains
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT
     use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS
-    use OUTPUT_M, only: BEVERBOSE, OUTPUT, OUTPUTNAMEDVALUE
     ! Calculate the boolean value according to
     ! (1) The logical value of its formula, if the formula
     !     does not contain the special operators "==" or "/="
@@ -2515,7 +2503,6 @@ contains
     ! Evaluate all the terms in a formula
     use MLSL2OPTIONS, only: RUNTIMEVALUES
     use MLSSTRINGLISTS, only: LIST2ARRAY, EVALUATEFORMULA, NUMSTRINGELEMENTS
-    ! use OUTPUT_M, only: OUTPUTNAMEDVALUE
     ! Args
     character(len=*), intent(in) :: formula
     character(len=MAXRESULTLEN)  :: itsValue
@@ -2538,7 +2525,6 @@ contains
   function EvaluateTermwise ( FORMULA ) result( ITSVALUE )
     ! Evaluate all the terms in a formula
     use MLSSTRINGLISTS, only: ARRAY2LIST, LIST2ARRAY, NUMSTRINGELEMENTS
-    ! use OUTPUT_M, only: OUTPUTNAMEDVALUE
     ! Args
     character(len=*), intent(in) :: formula
     character(len=MAXRESULTLEN)  :: itsValue
@@ -2660,6 +2646,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.108  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.107  2013/12/12 02:09:29  vsnyder
 ! Add 'details' to dump_a_decl
 !
