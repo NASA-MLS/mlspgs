@@ -15,9 +15,10 @@ module MergeGridsModule
   ! information.
   ! Secondary operations may be performed directly on the gridded data--
   ! e.g., calculating wmo tropopause pressures from eta-level temperatures
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use MLSL2OPTIONS, only: MLSMESSAGE, L2CFNODE
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
-
+  use OUTPUT_M, only: BLANKS, OUTPUT
   implicit none
   private
 
@@ -51,7 +52,6 @@ contains ! ===================================  Public procedures  =====
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MoreTree, only: Get_Label_And_Spec, GET_SPEC_ID
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use Output_m, only: OUTPUT, OUTPUTNAMEDVALUE
     use ReadAPriori, only: PROCESSONEAPRIORIFILE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
@@ -190,7 +190,6 @@ contains ! ===================================  Public procedures  =====
     use GriddedData, only: GRIDDEDDATA_T, DUMP, NULLIFYGRIDDEDDATA, &
       & CONVERTFROMETALEVELGRIDS
     use Init_tables_module, only: F_A, F_B, F_GRID
-    use output_m, only: OUTPUT, OUTPUTNAMEDVALUE
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -454,7 +453,6 @@ contains ! ===================================  Public procedures  =====
     use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE
     use MLSKINDS, only: R8
     use MLSFillValues, only: ESSENTIALLYEQUAL
-    use output_m, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
     use Toggles, only: GEN, TOGGLE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE, DECORATION
@@ -757,7 +755,6 @@ contains ! ===================================  Public procedures  =====
     use MLSFILLVALUES, only: ISFILLVALUE, REMOVEFILLVALUES
     use MLSSTATS1, only: MLSMIN, MLSMAX, MLSMEAN
     use MLSSTRINGS, only: LOWERCASE
-    use OUTPUT_M, only: OUTPUT
     use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: NSONS, SUBTREE, DECORATION
@@ -1085,6 +1082,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.52  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.51  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
