@@ -11,30 +11,22 @@
 
 module OUTPUT_M
 
-  ! Very high level printing and formatting
-  
-  ! Should we split off lower-level stuff
-  ! (output, blanks, newLine, outputoptions, a few others)
-  ! to a new output_0 module?
+  ! Normal level printing and formatting
   
   ! See also dump_0 and MLSMessageModule
   
-  use DATES_MODULE, only:  BUILDCALENDAR, DAYSINMONTH, &
-    & REFORMATDATE, REFORMATTIME, UTC_TO_YYYYMMDD
+  use DATES_MODULE, only:REFORMATDATE, REFORMATTIME
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCOMMON, only: FILENAMELEN, FINITE_SIGNAL, MLSDEBUG, MLSVERBOSE, &
+  use MLSCOMMON, only: FILENAMELEN, FINITE_SIGNAL, &
     & IS_WHAT_IEEE
-  use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
-    & LIST2ARRAY, NUMSTRINGELEMENTS, SWITCHDETAIL, WRAP
-  use MLSSTRINGS, only: REPLACENONASCII, LOWERCASE, NCOPIES, &
-    & READINTSFROMCHARS, TRIM_SAFE, WRITEINTSTOCHARS
+  use MLSSTRINGLISTS, only: NCHARSINFORMAT
+  use MLSSTRINGS, only: REPLACENONASCII, LOWERCASE, &
+    & READINTSFROMCHARS, TRIM_SAFE
   use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, &
     & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_INFO, MLSMSG_ERROR, &
     & MLSMSG_SEVERITY_TO_QUIT, &
     & MLSMSG_WARNING, &
-    & PRINTITOUT, STDOUTLOGUNIT, MLSMESSAGECONFIG
-  use TOGGLES, only: SWITCHES
+    & PRINTITOUT, MLSMESSAGECONFIG
   implicit none
   private
 
@@ -58,69 +50,26 @@ module OUTPUT_M
 ! timeStampOptions         how to stamp when calling timeStamp
 
 !     (subroutines and functions)
-! alignToFit               align printed argument to fit column range
-! banner                   surround message with stars and stripes; e.g.,
-!                            *-----------------------------------------------*
-!                            *            Your message here                  *
-!                            *-----------------------------------------------*
-! BeVerbose                Do extra printing?
 ! blanks                   print specified number of blanks [or fill chars]
-! blanksToColumn           print blanks [or fill chars] out to specified column
-! blanksToTab              print blanks [or fill chars] out to next tab stop
-! dump                     dump output or stamp options
-! dumpsize                 print a nicely-formatted memory size 
-! dumptabs                 print the current tab stop positions
 ! flushOutputLines         print the current outputLines; then reset to ''
-! getStamp                 get stamp being added to every output
-! headLine                 print a line with extra formatting features
-!                           e.g., '*-------  Your message here   -------*'
+! getOutputStatus          returns normally private data
 ! isOutputSuspended        returns TRUE if output is suspended
-! LetsDebug                Do debug printing?
 ! newline                  print a newline
-! numNeedsFormat           return what format is need to output num
-! numToChars               return what would be printed by output
 ! output                   print argument
-! outputCalendar           output nicely-formatted calendar page
-! output_date_and_time     print nicely formatted date and time
-! outputList               output array as comma-separated list; e.g. '(1,2,..)'
-! outputNamedValue         print nicely formatted name and value
-! resettabs                restore tab stops to what was in effect at start
 ! restoreSettings          restore default settings for output, stamps, tabs
 ! revertOutput             revert output to file used before switchOutput
 !                           if you will revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
-! setStamp                 set stamp to be added to every output automatically
-! setTabs                  set tab stops (to be used by tab)
 ! suspendOutput            suspend output
 ! switchOutput             switch output to a new named file
-! tab                      move to next tab stop
-! timestamp                print argument with a timestamp manually
-!                            (both stdout and logged output)
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! alignToFit ( char* chars, int columnRange(2), char alignment, [int skips] )
-! banner ( char* chars, [int columnRange(2)], [char alignment], [int skips] )
-! log BeVerbose ( char* switch, threshold )
 ! blanks ( int n_blanks, [char fillChar], [char* advance] )
-! blanksToColumn ( int column, [char fillChar], [char* advance] )
-! blanksToTab ( [int tabn], [char* fillChar] )
-! Dump ( options )
-! DumpSize ( n, [char* advance], [units] )
-!       where n can be an int or a real, and 
-!       units is a scalar of the same type, if present
-! DumpTabs ( [int tabs(:)] )
 ! flushOutputLines ( [int prUnit] )
-! getStamp ( [char* textCode], [log post], [int interval],
-!          [log showTime], [char* dateFormat], [char* timeFormat] )
-! headLine ( char* chars, 
-!          [char fillChar], [char* Before], [char* After], 
-!          [int columnRange(2)], [char alignment], [int skips] )
+! int getOutputStatus( char* name )
 ! log isOutputSuspended ()
-! log LetsDebug ( char* switch, threshold )
 ! NewLine
-! char* numNeedsFormat ( value )
-! char* numToChars ( value, [char* format] )
 ! output ( char* chars, [char* advance], [char* from_where], 
 !          [log dont_log], [char* log_chars], [char* insteadOfBlank],
 !          [log dont_stamp], [int newlineval] )
@@ -129,34 +78,11 @@ module OUTPUT_M
 ! output ( value, [char* format], [char* advance],
 !          [char* Before], [char* After] )
 !       where value can be any numerical type, either scalar or 1-d array
-! output_date_and_time ( [log date], [log time], [char* from_where], 
-!          [char* msg], [char* dateFormat], [char* timeFormat], 
-!          [double CPU_seconds], [char* advance] )
-! outputCalendar ( [char* date], [char* datenote], [char* notes(:)], 
-!          [dontwrap] )
-! outputList ( values(:), [char* sep], [char* delims] )
-! outputNamedValue ( char* name, value, [char* advance],
-!          [char colon], [char fillChar], [char* Before], [char* After], 
-!          [integer tabn], [integer tabc], [integer taba], log dont_stamp] )
-! resetTabs ( [int tabs(:)] )
 ! resumeOutput
 ! revertOutput
 ! restoreSettings ( [log useToolkit] )
-! setStamp ( [char* textCode], [log post], [int interval],
-!          [log showTime], [char* dateFormat], [char* timeFormat] )
-! setTabs ( [char* Range], [int tabs(:)] )
 ! suspendOutput
 ! switchOutput ( char* filename, [int unit] )
-! tab ( [int tabn], [char* fillChar] )
-! timeStamp ( char* chars, [char* advance], [char* from_where], 
-!          [log dont_log], [char* log_chars], [char* insteadOfBlank],
-!          [char*8 style], [log date] )
-! timeStamp ( log value, [char* advance], [char* from_where], 
-!          [log dont_log], [char* log_chars], [char* insteadOfBlank],
-!          [char*8 style], [log date] )
-! timeStamp ( int int, [int places], [char* advance],
-!          [log fill], [char* format], [char* Before], [char* After],
-!          [char*8 style], [log date] )
 ! === (end of api) ===
 !
 ! Note:
@@ -186,48 +112,17 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: ALIGNTOFIT, BANNER, BEVERBOSE, BLANKS, BLANKSTOCOLUMN, BLANKSTOTAB, &
-    & DUMP, DUMPSIZE, DUMPTABS, FLUSHOUTPUTLINES, GETSTAMP, HEADLINE, &
-    & LETSDEBUG, NEXTCOLUMN, NEXTTAB, NEWLINE, NUMNEEDSFORMAT, NUMTOCHARS, &
-    & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTLIST, &
-    & OUTPUTNAMEDVALUE, &
-    & RESETTABS, RESTORESETTINGS, RESUMEOUTPUT, REVERTOUTPUT, &
-    & SETSTAMP, SETTABS, SUSPENDOUTPUT, SWITCHOUTPUT, TAB, TIMESTAMP
+  public :: BLANKS, FLUSHOUTPUTLINES, GETOUTPUTSTATUS, NEWLINE, OUTPUT, &
+    & OUTPUT_CHAR_NOCR, RESTORESETTINGS, &
+    & RESUMEOUTPUT, REVERTOUTPUT, SUSPENDOUTPUT, SWITCHOUTPUT
 
   ! These types made public because the class instances are public
-  public :: outputOptions_T
-  public :: stampOptions_T
-  public :: timeStampOptions_T
-
-  interface ALIGNTOFIT
-    module procedure aligntofit_chars, aligntofit_double, aligntofit_single
-    module procedure aligntofit_integer
-  end interface
-
-  interface BANNER
-    module procedure banner_chars
-    module procedure banner_chararray
-  end interface
-
-  interface DUMP
-    module procedure DUMPOUTPUTOPTIONS, DUMPSTAMPOPTIONS, DUMPTIMESTAMPOPTIONS
-  end interface
-
-  interface DUMPSIZE
-    module procedure DUMPSIZE_DOUBLE, DUMPSIZE_INTEGER, DUMPSIZE_REAL
-  end interface
+  public :: OUTPUTOPTIONS_T
+  public :: STAMPOPTIONS_T
+  public :: TIMESTAMPOPTIONS_T
 
   interface GETOPTION
-    module procedure getOption_char, getOption_log
-  end interface
-
-  interface NUMNEEDSFORMAT
-    module procedure numNeedsFormat_double, numNeedsFormat_integer, numNeedsFormat_single
-    module procedure numNeedsFormat_complex, numNeedsFormat_dcomplx
-  end interface
-
-  interface NUMTOCHARS
-    module procedure numtochars_double, numtochars_integer, numtochars_single
+    module procedure GETOPTION_CHAR, GETOPTION_LOG
   end interface
 
   ! Embeddded <cr> print multiple lines
@@ -245,27 +140,6 @@ module OUTPUT_M
     module procedure OUTPUT_CHAR_NOCR
   end interface
 
-  interface OUTPUTLIST
-    module procedure OUTPUTLIST_INTS, OUTPUTLIST_CHARS
-  end interface
-
-  interface OUTPUTNAMEDVALUE
-    module procedure output_nvp_character
-    module procedure output_nvp_complex
-    module procedure output_nvp_dbl_array, output_nvp_double
-    module procedure output_nvp_int_array, output_nvp_integer
-    module procedure output_nvp_log_array, output_nvp_logical
-    module procedure output_nvp_sngl_array, output_nvp_single
-  end interface
-
-  interface TAB
-    module procedure blanksToTab
-  end interface
-  
-  interface TIMESTAMP
-    module procedure timestamp_char, timestamp_integer, timestamp_logical
-  end interface
-  
   ! We can use the OutputLines mechanism for user-controlled
   ! buffering, filtering, grep-ing, or whatever
   integer, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
@@ -344,17 +218,9 @@ module OUTPUT_M
   logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
   integer, save, private :: LINESSINCELASTSTAMP = 0
   logical, private, parameter :: LOGEXTRABLANKS = .false.
-  integer, private, parameter :: MAXNUMTABSTOPS = 24
   integer, private, parameter :: RECLMAX = 1024  ! This is NAG's limit
   integer, save, private :: WRAPPASTCOLNUM = 0  ! Don't print beyond (if > 0)
-  integer, save, private :: OLDWRAPPASTCOLNUM = 0
-  ! These next tab stops can be reset using the procedure setTabs
-  ! the default values correspond to range coded '5-120+5'
-  ! (read as from 5 to 120 in intervals of 5)
-  character(len=*), parameter :: INITTABRANGE = '5-120+5'
-  integer, dimension(MAXNUMTABSTOPS), save, private :: TABSTOPS = &
-    & (/ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, &
-    &   65, 70, 75, 80, 85, 90, 95,100,105,110,115,120 /)
+
   ! For certain numerical values we will use list directed '*' format
   ! unless optional FORMAT specifier supplied
   double precision, parameter, dimension(3) :: DPREFERDEFAULTFORMAT = &
@@ -362,8 +228,6 @@ module OUTPUT_M
   real, parameter, dimension(3) :: RPREFERDEFAULTFORMAT = &
     & (/ -1., 0., 1. /)  ! For which values to use default format '*'
   character(len=16), private, save :: NONFINITEFORMAT = '(1pg14.6)' ! 'NaN, Inf'
-  character(len=12), private :: sdNeedsFormat = '(1pg14.6)'
-  character(len=12), private :: sdNeedsFragment = '(1pg14'
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -372,256 +236,6 @@ module OUTPUT_M
 !---------------------------------------------------------------------------
 
 contains
-
-  ! -----------------------------------------------------  ALIGNTOFIT  -----
-  ! Align chars to fit within column range
-  ! Alignment controls whether the chars are
-  ! L    Flushed left
-  ! R    Flushed right
-  ! C    Centered
-  ! J    Justified (padding spaces to any existing spaces)
-  subroutine ALIGNTOFIT_CHARS ( CHARS, COLUMNRANGE, ALIGNMENT, SKIPS )
-    character(len=*), intent(in)      :: CHARS
-    ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), intent(in) :: COLUMNRANGE
-    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
-    integer, optional, intent(in)     :: SKIPS ! How many spaces between chars
-    !
-    ! Internal variables
-    character(len=max(len(chars), abs(columnRange(2)-columnRange(1)))) :: &
-      & ALLCHARS
-    integer :: char1
-    integer :: char2
-    integer :: firstSpace
-    integer :: m
-    integer :: nc
-    integer :: padLeft
-    integer :: padRight
-    integer :: spaces
-    ! Executable
-    allChars = chars
-    if ( present(skips) ) then
-      if ( skips > 0 .and. len_trim(chars) > 0 ) then
-        allChars = stretch(chars, skips)
-      endif
-    endif
-    if ( columnRange(1) > 0 ) then
-      spaces = columnRange(2) - max( columnRange(1), atColumnNumber )
-      if ( spaces < 1 ) return
-      if ( columnRange(1) > atColumnNumber ) &
-        & call blanks( columnRange(1) - atColumnNumber )
-    else
-      spaces = columnRange(2) - columnRange(1)
-    endif
-    firstSpace = 0
-    nc = max( len_trim(allchars), 1 )
-    select case (lowercase(alignment))
-    case ('l')
-      char1    = 1
-      padLeft  = 0
-      char2    = min( nc, spaces )
-      padRight = spaces - char2
-    case ('r')
-      char1    = max(1, nc-spaces+1)
-      char2    = nc
-      padLeft  = spaces - (char2-char1+1)
-      padRight = 0
-    case ('c', 'j')
-      m = (spaces - nc) / 2
-      padLeft  = max( m, 0 )
-      padRight = max( spaces - nc - m, 0 )
-      char1 = max(1-m, 1)
-      char2 = min(nc+m, nc)
-      if ( lowercase(alignment) == 'j' .and. padRight > 0 ) &
-        & firstSpace = index( allChars, ' ' )
-    end select
-    if ( firstSpace > 1 ) then
-      call output_( allChars(char1:firstSpace-1) )
-      call blanks( padRight+padLeft+1 )
-      if ( firstSpace+1 < char2 ) call output_( allChars(firstSpace+1:char2) )
-    else
-      call blanks( padLeft )
-      call output_( allChars(char1:char2) )
-      call blanks( padRight )
-    endif
-  end subroutine ALIGNTOFIT_CHARS
-
-  subroutine ALIGNTOFIT_DOUBLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
-    double precision, intent(in)      :: value
-    ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), intent(in) :: COLUMNRANGE
-    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
-    character(len=*), optional, intent(in)     :: FORMAT
-    !
-    ! Internal variables
-    character(len=30) :: line
-    ! Executable
-    line = numToChars( value, format )
-    call alignToFit( trim(line), columnRange, alignment )
-  end subroutine ALIGNTOFIT_DOUBLE
-
-  subroutine ALIGNTOFIT_INTEGER ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
-    integer, intent(in)               :: value
-    ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), intent(in) :: COLUMNRANGE
-    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
-    character(len=*), optional, intent(in)     :: FORMAT
-    !
-    ! Internal variables
-    character(len=30) :: line
-    ! Executable
-    line = numToChars( value, format )
-    call alignToFit( trim(line), columnRange, alignment )
-  end subroutine ALIGNTOFIT_INTEGER
-
-  subroutine ALIGNTOFIT_SINGLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
-    real, intent(in)      :: value
-    ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), intent(in) :: COLUMNRANGE
-    character(len=1), intent(in)      :: ALIGNMENT ! L, R, C, or J
-    character(len=*), optional, intent(in)     :: FORMAT
-    !
-    ! Internal variables
-    character(len=30) :: line
-    ! Executable
-    line = numToChars( value, format )
-    call alignToFit( trim(line), columnRange, alignment )
-  end subroutine ALIGNTOFIT_SINGLE
-
-  ! -----------------------------------------------------  BANNER  -----
-  ! Surround your message with stars and stripes; e.g.,
-  ! *-----------------------------------------------*
-  ! *            Your message here                  *
-  ! *-----------------------------------------------*
-  ! For multiline messages, you may divide them into elements of
-  ! a character array, or else a longer character scalar and
-  ! supply LineLength for the routine to wrap at word boundaries
-  subroutine BANNER_CHARS ( CHARS, COLUMNRANGE, ALIGNMENT, SKIPS, LINELENGTH )
-    character(len=*), intent(in)                :: CHARS
-    ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
-    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
-    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
-    integer, optional, intent(in)               :: LINELENGTH
-    !
-    ! Internal variables
-    integer :: addedLines
-    character(len=1)      :: myAlignment
-    integer, dimension(2) :: myColumnRange
-    integer :: lineLen, mySkips,  padding
-    character(len=2*len(chars))      :: wrappedChars
-    character(len=160), dimension(:), pointer :: lines
-    logical, parameter :: DEBUG = .false.
-    ! Executable
-    myAlignment = 'C'
-    if ( present(alignment) ) myAlignment = alignment
-    mySkips = 0
-    if ( present(skips) ) mySkips = skips
-    if ( present(LineLength) ) then
-      ! We will wrap the input to fit within LineLength, but remembering
-      ! the stars and padding
-      call wrap( chars, wrappedChars, width=LineLength-4, &
-        & inseparator=achar(0), addedLines=addedLines )
-      addedLines = addedLines + 1
-      allocate(lines(addedLines))
-      lines = ' '
-      call List2Array( wrappedChars, lines, &
-        & countEmpty=.true., inseparator=achar(0) )
-      call banner( lines, alignment=alignment )
-      deallocate(lines)
-      return
-    elseif ( present(columnRange) ) then
-      myColumnRange = columnRange
-    else
-      lineLen = max( 80, 4 + len_trim(chars)*(1+mySkips) )
-      padding = ( lineLen - len_trim(chars)*(1+mySkips) ) / 2
-      myColumnRange(1) = 1 + padding
-      myColumnRange(2) = lineLen - padding
-    endif
-    
-    ! define padding as the larger of columnrange(1) and 1
-    padding = max( 1, myColumnRange(1) )
-    LineLen = padding + myColumnRange(2) - 1
-    if ( DEBUG ) then
-      call outputnamedValue( 'padding', padding )
-      call outputnamedValue( 'LineLen', LineLen )
-      call outputnamedValue( 'myColumnRange', myColumnRange )
-    endif
-    ! Top border
-    call output( '*' )
-    call blanks ( lineLen-2, FillChar='-' )
-    call output( '*', advance = 'yes' )
-    ! Left star, then message, then right star
-    call output( '*' )
-    call alignToFit( chars, myColumnRange, myAlignment, skips )
-    call blanksToColumn( lineLen )
-    call output( '*', advance = 'yes' )
-    ! Bottom border
-    call output( '*' )
-    call blanks ( lineLen-2, FillChar='-' )
-    call output( '*', advance = 'yes' )
-  end subroutine BANNER_CHARS
-
-  subroutine BANNER_CHARARRAY ( CHARARRAY, COLUMNRANGE, ALIGNMENT, SKIPS )
-    character(len=*), dimension(:), intent(in)  :: CHARARRAY
-    ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
-    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
-    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
-    !
-    ! Internal variables
-    integer :: i
-    ! Internal variables
-    character(len=1)      :: myAlignment
-    integer, dimension(2) :: myColumnRange
-    integer :: lineLen, mySkips,  padding
-    ! Executable
-    myAlignment = 'C'
-    if ( present(alignment) ) myAlignment = alignment
-    mySkips = 0
-    if ( present(skips) ) mySkips = skips
-    if ( present(columnRange) ) then
-      myColumnRange = columnRange
-    else
-      lineLen = 80
-      padding = LineLen
-      do i = 1, size(chararray)
-        lineLen = max( lineLen, 4 + len_trim(chararray(i))*(1+mySkips) )
-        padding = min( padding, &
-          & ( lineLen - len_trim(chararray(i))*(1+mySkips) ) / 2 )
-      enddo
-      myColumnRange(1) = 1 + padding
-      myColumnRange(2) = lineLen - padding
-    endif
-    
-    ! define padding as the larger of columnrange(1) and 1
-    padding = max( 1, myColumnRange(1) )
-    LineLen = padding + myColumnRange(2) - 1
-    ! Top border
-    call output( '*' )
-    call blanks ( lineLen-2, FillChar='-' )
-    call output( '*', advance = 'yes' )
-    do i = 1, size(chararray)
-      ! Left star, then message, then right star
-      call output( '*' )
-      call alignToFit( chararray(i), myColumnRange, myAlignment, skips )
-      call blanksToColumn( lineLen )
-      call output( '*', advance = 'yes' )
-    enddo
-    ! Bottom border
-    call output( '*' )
-    call blanks ( lineLen-2, FillChar='-' )
-    call output( '*', advance = 'yes' )
-  end subroutine BANNER_CHARARRAY
-
-  ! -----------------------------------------------------  BEVERBOSE  -----
-  logical function BEVERBOSE ( SWITCH, THRESHOLD )
-    ! Args
-    character(len=*), intent(in) :: SWITCH
-    integer, intent(in)          :: THRESHOLD
-    ! Executable
-    BeVerbose = switchDetail( switches, switch ) > threshold .or. MLSVerbose
-  end function BEVERBOSE
 
   ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
@@ -686,266 +300,6 @@ contains
     call pr_blanks ( n_blanks, fillChar=fillChar, advance=advance, dont_stamp=dont_stamp )
   end subroutine BLANKS
 
-  ! -----------------------------------------------------  BLANKSTOCOLUMN  -----
-  subroutine BLANKSTOCOLUMN ( COLUMN, FILLCHAR, ADVANCE, DONT_STAMP )
-  ! Output N_BLANKS blanks to PRUNIT out to column COLUMN.
-  ! (or optionally that many copies of fillChar)
-    integer, intent(in) :: COLUMN
-    character(len=*), intent(in), optional :: ADVANCE
-    character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
-    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
-    ! Executable
-    if ( ATCOLUMNNUMBER >= COLUMN ) return
-    call blanks( COLUMN-ATCOLUMNNUMBER, fillChar, advance, dont_stamp )
-  end subroutine BLANKSTOCOLUMN
-
-  ! ------------------------------------------------  blanksToTab  -----
-  ! Print blanks out to next tabstop
-  ! (or else to tabstop number tabn)
-  subroutine blanksToTab ( tabn, fillChar )
-    ! Args
-    integer, optional, intent(in) :: TABN
-    character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
-    ! Internal variables
-    integer :: nTab
-    ! Executable
-    if ( present(tabn) ) then
-      if ( tabn < 1 .or. tabn > MAXNUMTABSTOPS ) return
-      if ( atColumnNumber < tabStops(tabn) ) &
-        & call blanksToColumn( tabStops(tabn), fillChar )
-    else
-      nTab = findFirst( tabStops > atColumnNumber )
-      if ( nTab > 0 ) &
-        & call blanksToColumn( tabStops(nTab), fillChar )
-    endif
-  end subroutine blanksToTab
-
-  ! ---------------------------------------------- DumpOuputOptions -----
-  subroutine DumpOutputOptions(options)
-    ! Show output options
-    type(outputOptions_T), intent(in) :: options
-    ! Internal variables
-    logical, parameter :: checkingTabbing = .false.
-    character(len=10), parameter :: decade = '1234567890'
-    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
-    integer :: i
-    ! Executable
-    call blanks(80, fillChar='-', advance='yes')
-    call headline( 'Summary of output options', &
-      & fillChar='-', before='*', after='*' )
-    call outputNamedValue ( 'unit number', options%prUnit, advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    if ( options%prUnit < 0 ) then
-      call outputNamedValue ( 'meaning', prunitname(options%prUnit), &
-        & advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    endif
-    call outputNamedValue ( 'file name', trim(options%name), advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'logging level', options%MLSMSG_Level, advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'buffered?', options%buffered, advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'skip MLSMsg logging?', options%SKIPMLSMSGLOGGING, advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'log Parent Name?', options%logParent, advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'use patterned blanks?', options%usePatternedBlanks, advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'special fills', trim(options%specialFillChars), advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'lineup fills', trim(options%lineupFillChars), advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call outputNamedValue ( 'tab stops', tabstops, advance='yes', &
-      & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    do i=1, MAXNUMTABSTOPS
-      call tab( fillChar=fillChar )
-      call output_( '^', advance='no' )
-    enddo
-    call newline
-    if ( CHECKINGTABBING ) then
-      do i=1, MAXNUMTABSTOPS
-        call blanksToColumn( tabStops(i), fillChar=fillChar )
-        call output_( '^', advance='no' )
-      enddo
-      call newline
-    endif
-    do
-      call output_( decade, advance='no' )
-      if ( atColumnNumber > 132 ) exit
-    enddo
-    call newline
-    call blanks(80, fillChar='-', advance='yes')
-  contains
-    function PRUnitName( prUnit ) result( name )
-      ! Return an appropriate name for the prUnit number
-      ! Args
-      integer, intent(in) :: prUnit
-      character(len=12) :: name
-      ! Executable
-      select case ( prUnit )
-      case ( STDOUTPRUNIT )
-        name = 'stdout'
-      case ( MSGLOGPRUNIT )
-        name = 'mls logfile'
-      case ( BOTHPRUNIT )
-        name = 'stdout+log'
-      case ( OUTPUTLINESPRUNIT )
-        name = 'outputLines'
-      case ( INVALIDPRUNIT )
-        name = 'invalid'
-      case default ! > 0
-        name = 'Fortran unit'
-      end select
-    end function PRUnitName
-  end subroutine DumpOutputOptions
-
-  ! ---------------------------------------------- DumpStampOptions -----
-  subroutine DumpStampOptions(options)
-    ! Show output options
-    type(StampOptions_T), intent(in) :: options
-    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
-     call blanks(80, fillChar='-', advance='yes')
-    call headline( 'Summary of automatic stamp options', &
-      & fillChar='-', before='*', after='*' )
-     call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'show time', options%showTime, advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'extra text', trim_safe(options%textCode), advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'date format', trim_safe(options%dateFormat), advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'time format', trim_safe(options%timeFormat), advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'interval', options%interval, advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'style of timeStamps', trim_safe(options%timestampstyle), advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call blanks(80, fillChar='-', advance='yes')
-  end subroutine DumpStampOptions
-
-  ! ---------------------------------------------- DUMPTIMESTAMPOPTIONS -----
-  subroutine DUMPTIMESTAMPOPTIONS(options)
-    ! Show output options
-    type(TimeStampOptions_T), intent(in) :: options
-    character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
-     call blanks(80, fillChar='-', advance='yes')
-    call headline( 'Summary of time stamp options', &
-      & fillChar='-', before='*', after='*' )
-     call outputNamedValue ( 'stamp end of line', options%post, advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'show date', options%showDate, advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'extra text', trim_safe(options%textCode), advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'date format', trim_safe(options%dateFormat), advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'time format', trim_safe(options%timeFormat), advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-     call outputNamedValue ( 'style of timeStamps', trim_safe(options%timestampstyle), advance='yes', &
-       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    call blanks(80, fillChar='-', advance='yes')
-  end subroutine DUMPTIMESTAMPOPTIONS
-
-  ! ---------------------------------------------- DumpSize_double -----
-  subroutine DumpSize_double ( n, advance, units, Before, After )
-    double precision, intent(in) :: N
-    character(len=*), intent(in), optional :: ADVANCE
-    real, intent(in), optional :: units
-    character(len=*), intent(in), optional :: Before, After
-    ! Local parameters
-    real, parameter :: KB = 1024.0
-    real, parameter :: MB = KB * 1024.0
-    real, parameter :: GB = MB * 1024.0
-    real, parameter :: TB = GB * 1024.0
-    double precision :: Amount ! N * MyUnits
-    character(len=8) :: HowMuch
-    real             :: myUnits
-    character(len=6) :: Suffix
-    ! Make a 'nice' output
-    if ( present(before) ) call output_ ( before )
-    myUnits = 1.0
-    if ( present(units) ) myUnits = units
-    if ( myUnits == 0.0 ) then
-      call output ( n, format='(e12.1)' )
-      call output_ ( ' (illegal units)', advance=advance )
-      return
-    end if
-    amount = n*myUnits
-    if ( abs(n) < kb/myUnits ) then
-      suffix = ' bytes'
-    else if ( abs(n) < Mb/myUnits ) then
-      amount = amount/kb
-      suffix = ' kB'
-    else if ( abs(n) < Gb/myUnits ) then
-      amount = amount/Mb
-      suffix = ' MB'
-    else if ( abs(n) < Tb/myUnits ) then
-      amount = amount/Gb
-      suffix = ' GB'
-    else
-      amount = amount/Tb
-      suffix = ' TB'
-    end if
-    if ( amount < -99999 ) then     ! I6 format limits this
-      call output_( '(-HUGE)' )
-    elseif ( amount > 999999 ) then ! I6 format limits this
-      call output_( '(HUGE)' )
-    elseif ( amount == int(amount) ) then
-      write ( howMuch, '(i6)' ) int(amount)
-    else
-      write ( howMuch, '(f8.1)' ) amount
-    end if
-    call output_ ( trim(adjustl(howMuch)) )
-    call output_ ( trim(suffix) )
-    if ( present(after) ) call output_ ( after )
-    call output_ ( '', advance=advance )
-  end subroutine DumpSize_double
-
-  ! --------------------------------------------- DumpSize_integer -----
-  subroutine DumpSize_integer ( n, advance, units, Before, After )
-    integer, intent(in) :: N
-    character(len=*), intent(in), optional :: ADVANCE
-    integer, intent(in), optional :: units ! E.g., 1024 for kB
-    character(len=*), intent(in), optional :: Before, After
-    ! Executable
-    if ( present(units) ) then
-      call dumpSize ( dble(n), advance=advance, units=real(units), &
-        & before=before, after=after )
-    else
-      call dumpSize ( dble(n), advance=advance, before=before, after=after )
-    end if
-  end subroutine DumpSize_integer
-
-  ! ------------------------------------------------ DumpSize_real -----
-  subroutine DumpSize_real ( n, advance, units, Before, After )
-    real, intent(in) :: N
-    character(len=*), intent(in), optional :: ADVANCE
-    real, intent(in), optional :: units
-    character(len=*), intent(in), optional :: Before, After
-    ! Make a 'nice' output
-    call dumpsize ( dble(n), advance, units, before, after )
-  end subroutine DumpSize_real
-
-  ! ----------------------------------------------  dumpTabs  -----
-  ! Show tab stops in effect
-  ! Optionally returning them as an integer array
-  subroutine dumpTabs ( tabs )
-    ! Args
-    integer, dimension(:), optional, intent(out) :: tabs
-    ! Internal variables
-    integer :: n
-    ! Executable
-    call output( 'Current tab stops', advance='yes' )
-    call output( TABSTOPS, advance='yes' )
-    if ( present(tabs) ) then
-      n = min(size(tabs), MAXNUMTABSTOPS)
-      tabs = 0
-      tabs(1:n) = TABSTOPS(1:n)
-    endif
-  end subroutine dumpTabs
-
   ! ----------------------------------------------  flushOutputLines  -----
   ! print or log OutputLines
   ! then reset to ''
@@ -974,89 +328,29 @@ contains
     outputOptions%prUnit = oldPrUnit
     OutputLines = ' '
   end subroutine flushOutputLines
-
-  ! ----------------------------------------------  getStamp  -----
-  subroutine getStamp ( textCode, showTime, dateFormat, timeFormat, &
-    & post, interval )
-  ! get stamp being added to every output to PRUNIT.
-    character(len=*), optional, intent(out) :: textCode
-    logical, optional, intent(out)          :: showTime
-    character(len=*), optional, intent(out) :: dateFormat
-    character(len=*), optional, intent(out) :: timeFormat
-    logical, optional, intent(out)          :: post
-    integer, optional, intent(out)          :: interval
-    if ( present(showTime) )   showTime   = stampOptions%showTime
-    if ( present(textCode) )   textCode   = stampOptions%textCode
-    if ( present(dateFormat) ) dateFormat = stampOptions%dateFormat
-    if ( present(timeFormat) ) timeFormat = stampOptions%timeFormat
-    if ( present(post) )       post       = stampOptions%post
-    if ( present(interval) )   interval   = stampOptions%interval
-  end subroutine getStamp
-
-  ! -----------------------------------------------------  HEADLINE  -----
-  ! Print your message with extra formatting features; e.g.,
-  ! *----------------  Your message here   ----------------*
-  ! See also banner
-  subroutine HEADLINE ( CHARS, fillChar, Before, After, &
-    & COLUMNRANGE, ALIGNMENT, SKIPS )
-    character(len=*), intent(in)                :: CHARS
-    character(len=1), intent(in), optional :: fillChar      ! For padding
-    character(len=*), intent(in), optional :: Before, After ! text to print
-    ! If columnRange(1) < 1, just use starting columns; otherwise move to
-    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
-    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
-    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
-    !
-    ! Internal variables
-    character(len=1)      :: myAlignment
-    integer, dimension(2) :: myColumnRange      ! To fit chars
-    integer, dimension(2) :: myFullColumnRange  ! Must fit before and after, too
-    integer :: mySkips,  rightpadding
-    character(len=1) :: myFillChar
+  
+  ! ---------------------------------------------- getOutputStatus
+  ! Returns certain normally private data
+  ! intended for modules like highOutput and maybe some others
+  ! result will be an integer
+  ! equal to the value of integer-valued data
+  ! or to 1 if the logical-valued data is TRUE, 0 if FALSE
+  function getOutputStatus( name ) result( status )
+    ! Args
+    character(len=*), intent(in) :: name
+    integer :: status
     ! Executable
-    if ( present(columnRange) ) then
-      myFullColumnRange = columnRange
-    else
-      myFullColumnRange(1) = 1
-      myFullColumnRange(2) = 80
+    if ( index(lowercase(name), 'column' ) > 0 ) then
+      status = atColumnNumber
+    elseif( index(lowercase(name), 'start' ) > 0 ) then
+      status = merge(1, 0, atLineStart)
+    elseif( index(lowercase(name), 'lines' ) > 0 ) then
+      status = linesSincelastStamp
+    elseif( index(lowercase(name), 'silent' ) > 0 ) then
+      status = merge(1, 0, silentRunning)
     endif
-    myColumnRange = myFullColumnRange
-    mySkips = 0
-    if ( present(skips) ) mySkips = skips
-    myFillChar = ' '
-    if ( present(fillChar) ) myFillChar = fillChar
-    myAlignment = 'C'
-    if ( present(alignment) ) myAlignment = alignment
-    ! call outputNamedValue ( 'myFullColumnRange', myFullColumnRange )
-    ! call outputNamedValue ( 'myColumnRange', myColumnRange )
-    ! call outputNamedValue ( 'mySkips', mySkips )
-    ! call outputNamedValue ( 'myFillChar', myFillChar )
-    ! Adjust for lengths of before, after
-    if ( present(before) ) myColumnRange(1) = myFullColumnRange(1) + len(before)
-    if ( present(after) ) then
-      myColumnRange(2) = myFullColumnRange(2) - len(after)
-      rightpadding = len(after) - 1
-    endif
-    call blanksToColumn( myFullColumnRange(1), advance='no' )
-    if ( present(before) ) call output(before, advance='no' )
-    if ( mySkips == 0 .and. myAlignment == 'C' .and. myFillChar /= ' ' ) then
-      ! OK, final adjustments of myColumnRange
-      myColumnRange(1) = &
-        & ( myColumnRange(1) + myColumnRange(2) + 1 - len(chars) )/2
-      myColumnRange(2) =  myColumnRange(1) - 1 + len(chars)
-      ! call outputNamedValue ( 'myColumnRange', myColumnRange )
-      call blanksToColumn( myColumnRange(1), fillChar=fillChar, advance='no' )
-      call aligntofit( chars, myColumnRange, myAlignment, skips )
-      call blanksToColumn( myFullColumnRange(2)-rightpadding, &
-        & fillChar=fillChar, advance='no' )
-      if ( present(after) ) call output(after, advance='no' )
-    else
-      call aligntofit( chars, myColumnRange, myAlignment, skips )
-      call blanksToColumn(myFullColumnRange(2)-rightpadding, advance='no' )
-      if ( present(after) ) call output(after, advance='no' )
-    endif
-    call newLine
-  end subroutine HEADLINE
+  end function getOutputStatus
+    
 
   ! ----------------------------------------------  isOutputSuspended  -----
   logical function isOutputSuspended ()
@@ -1064,357 +358,10 @@ contains
     isOutputSuspended = silentRunning
   end function isOutputSuspended
 
-  ! -----------------------------------------------------  LETSDEBUG  -----
-  logical function LETSDEBUG ( SWITCH, THRESHOLD )
-    ! Args
-    character(len=*), intent(in) :: SWITCH
-    integer, intent(in)          :: THRESHOLD
-    ! Executable
-    letsDebug = switchDetail( switches, switch ) > threshold .or. MLSDebug
-  end function LETSDEBUG
-
   ! ----------------------------------------------------  NewLine  -----
   subroutine NewLine
     call output_ ( '', advance='yes' )
   end subroutine NewLine
-
-  ! ----------------------------------------------------  NextColumn  -----
-  function NextColumn() result(Column)
-    ! Args
-    integer :: Column
-    Column = atColumnNumber
-  end function NextColumn
-
-  ! ----------------------------------------------------  NextTab  -----
-  function NextTab() result(Column)
-    ! Args
-    integer :: Column
-    ! Internal variables
-    integer :: nTab
-    ! Executable
-    Column = 0
-    nTab = findFirst( tabStops > atColumnNumber )
-    if ( nTab > 0 ) Column = max( tabStops(nTab), atColumnNumber )
-  end function NextTab
-
-  ! ----------------------------------------------------  numNeedsFormat  -----
-  ! This family of functions return what format is needed to be printed by output
-  function numNeedsFormat_double( value, inFormat ) result ( format )
-    ! Args
-    double precision, intent(in) :: VALUE
-    character(len=*), optional, intent(in)  :: inFormat
-    character(len=30) :: format
-    ! Internal variables
-    character(len=30) :: charValue
-    character(len=2)  :: dotm
-    character(len=30) :: ndotm
-    integer :: I
-    ! Executable
-    call whatSDNeedsFormat( ndotm, dotm, inFormat )
-    charValue = adjustl(numToChars ( value, format=ndotm ))
-    ! call outputNamedValue( 'ndotm', ndotm )
-    ! call outputNamedValue( 'charValue', charValue )
-    i = len_trim(charValue)
-    write(charValue, *) i+5
-    format = '(1pg' // trim(adjustl(charValue)) // dotm // ')'
-  end function numNeedsFormat_double
-
-  function numNeedsFormat_integer( value, inFormat ) result ( format )
-    ! Args
-    integer, intent(in) :: VALUE
-    character(len=*), optional, intent(in)  :: inFormat
-    character(len=30) :: format
-    ! Internal variables
-    character(len=30) :: charValue
-    integer :: I
-    ! Executable
-    charValue = numToChars(value)
-    i = len_trim(charValue)
-    write(charValue, *) i+5
-    format = '(i' // trim(adjustl(charValue)) // ')'
-  end function numNeedsFormat_integer
-
-  function numNeedsFormat_single( value, inFormat ) result ( format )
-    ! Args
-    real, intent(in) :: VALUE
-    character(len=*), optional, intent(in)  :: inFormat
-    character(len=30) :: format
-    ! Internal variables
-    character(len=30) :: charValue
-    character(len=2)  :: dotm
-    character(len=30) :: ndotm
-    integer :: I
-    ! Executable
-    call whatSDNeedsFormat( ndotm, dotm, inFormat )
-    charValue = adjustl(numToChars ( value, format=ndotm ))
-    i = len_trim(charValue)
-    write(charValue, *) i+5
-    format = '(1pg' // trim(adjustl(charValue)) // dotm // ')'
-  end function numNeedsFormat_single
-
-  function numNeedsFormat_complex( value, inFormat ) result ( format )
-    ! Args
-    integer, parameter :: RK = kind(0.0e0)
-    complex(rk), intent(in) :: VALUE
-    character(len=*), optional, intent(in)  :: inFormat
-    character(len=45) :: format
-    ! Internal variables
-    character(len=30) :: charValue
-    character(len=2)  :: dotm
-    character(len=30) :: ndotm
-    integer :: I
-    ! Executable
-    call whatSDNeedsFormat( ndotm, dotm, inFormat )
-    charValue = adjustl(numToChars ( abs(value), format=ndotm ))
-    i = len_trim(charValue)
-    write(charValue, *) i+5
-    format = '(1x,"(",1pg' // trim(adjustl(charValue)) // dotm // ',",",1pg' &
-      & // trim(adjustl(charValue)) // dotm // ',")")'
-  end function numNeedsFormat_complex
-
-  function numNeedsFormat_dcomplx( value, inFormat ) result ( format )
-    ! Args
-    integer, parameter :: RK = kind(0.0d0)
-    complex(rk), intent(in) :: VALUE
-    character(len=*), optional, intent(in)  :: inFormat
-    character(len=45) :: format
-    ! Internal variables
-    character(len=30) :: charValue
-    character(len=2)  :: dotm
-    character(len=30) :: ndotm
-    integer :: I
-    ! Executable
-    call whatSDNeedsFormat( ndotm, dotm, inFormat )
-    charValue = adjustl(numToChars ( abs(value), format=ndotm ))
-    i = len_trim(charValue)
-    write(charValue, *) i+5
-    format = '(1x,"(",1pg' // trim(adjustl(charValue)) // dotm // ',",",1pg' &
-      & // trim(adjustl(charValue)) // dotm // ',")")'
-  end function numNeedsFormat_dcomplx
-
-  ! ----------------------------------------------------  numToChars  -----
-  ! This family of functions return what would otherwise be printed by output
-  function numToChars_double( value, format ) result ( line )
-    ! Args
-    double precision, intent(in) :: VALUE
-    character(len=*), intent(in), optional :: Format    ! How to print
-    character(len=30) :: line
-    ! Internal variables
-    character(len=30) :: FormatSpec
-    integer :: I, J, K
-    ! Executable
-    FormatSpec = outputOptions%sdFormatDefault
-    if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
-    if ( present(Format)  ) then
-      if ( format /= '*' ) FormatSpec = Format
-    endif
-    include 'numToChars.f9h'
-  end function numToChars_double
-
-  function numToChars_integer( value, format ) result ( line )
-    ! Args
-    integer, intent(in) :: VALUE
-    character(len=*), intent(in), optional :: Format    ! How to print
-    character(len=30) :: line
-    ! Executable
-    if ( present(Format)  ) then
-      write( line, Format ) value
-    else
-      write( line, * ) value
-    endif
-    line = adjustl(line)
-  end function numToChars_integer
-
-  function numToChars_single( value, format ) result ( line )
-    ! Args
-    real, intent(in) :: VALUE
-    character(len=*), intent(in), optional :: Format    ! How to print
-    character(len=30) :: line
-    ! Internal variables
-    character(len=30) :: FormatSpec
-    integer :: I, J, K
-    ! Executable
-    FormatSpec = outputOptions%sdFormatDefault
-    if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
-    if ( present(Format)  ) then
-      if ( format /= '*' ) FormatSpec = Format
-    endif
-    include 'numToChars.f9h'
-  end function numToChars_single
-
-  ! ---------------------------------------  OUTPUTCALENDAR  -----
-  subroutine OUTPUTCALENDAR ( date, datenote, notes, dontWrap )
-    ! output a nicely-formatted calendar of current month with
-    ! today's date in "bold"
-    ! Args
-    character(len=*), intent(in), optional :: date ! date instead of current one
-    ! dateNote, (notes), if present, is (an array of)
-    ! stringLists, (one per day in the month,)
-    character(len=*), optional :: dateNote ! Note for the current date
-    ! Each string list contains either a blank for a date, meaning
-    ! nothing will be printed in the calendar square for that date,
-    ! or else it contains '/'-separated lines of text, each of
-    ! which will be printed on a separate line within the square
-    character(len=*), dimension(:), optional :: notes
-    logical, optional                        :: dontWrap ! Dont wrap notes to fit
-    ! Internal variables
-    integer, parameter :: MAXNOTELENGTH = 256
-    ! This should be modified for internationalization; e.g. with
-    ! an include statement or suchlike
-    character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
-      & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
-      & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
-      & 'November ', 'December '/)
-
-    character(len=*), dimension(7), parameter :: DAYSOFWEEK = (/ &
-      & 'Sunday   ', 'Monday   ', 'Tuesday  ', 'Wednesday', 'Thursday ', &
-      & 'Friday   ', 'Saturday '/)
-    logical, parameter :: countEmpty = .true.
-    character(len=1), parameter :: inseparator = '/'
-    character(len=*), parameter :: utcformat = 'yyyy-mm-dd' ! 'yyyy-Doy'
-    integer :: aday
-    integer :: col1
-    integer :: col2
-    character(len=16) :: date2, dateString
-    integer :: day
-    integer, dimension(6,7) :: days, daysOfYear
-    integer :: ErrTyp
-    integer :: iwk
-    integer :: month
-    logical :: myDontWrap
-    character(len=10) :: noteString
-    integer :: numRows
-    integer :: numWeeks
-    integer :: row
-    logical :: today
-    integer :: wkdy
-    character(len=MAXNOTELENGTH) :: wrappedNote
-    integer :: year
-    ! Executable
-    myDontWrap = .false.
-    if ( present(dontWrap) ) myDontWrap = dontWrap
-    if ( present(date) ) then
-      dateString = date
-    else
-      dateString = '' ! Intel 12 and earlier doesn't fill with blanks
-      call date_and_time ( date=dateString )
-    endif
-    col1 = index(lowercase(dateString), 't')
-    if ( col1 > 0 ) then
-      date2 = dateString(1:col1-1)
-       if ( nCopies(dateString(:col1-1), '-') < 2 ) &
-        & date2 = reformatDate( dateString(1:col1-1), fromForm='yyyy-Doy', toForm=utcformat )
-    else
-      date2 = reformatDate( dateString, fromForm='*', toForm=utcformat )
-    endif
-    call utc_to_yyyymmdd( date2, ErrTyp, year, month, day )
-    if ( month < 0 ) then
-    endif
-    call buildCalendar( year, month, days, daysOfYear )
-    ! Temporary use of   w i d e  tabstops
-    call settabs( '14-210+14' )
-    call newline
-    call alignToFit( trim(monthName(month)), (/ 1, 100 /), 'c', skips=1 )
-    call newline
-    col2 = 0
-    do wkdy=1, 7
-      col1 = col2 + 1
-      col2 = tabStops(wkdy)
-      call alignToFit( trim(daysOfWeek(wkdy)), (/ col1, col2 /), 'c' )
-    enddo
-    call newline
-    numWeeks = 4
-    if ( any( days(5,:) /= 0 ) ) numWeeks = 5
-    if ( any( days(6,:) /= 0 ) ) numWeeks = 6
-    ! How many rows will we need?
-    numRows = 4
-    if ( present(dateNote) ) then
-      if ( myDontWrap ) then
-        wrappedNote = dateNote
-      else
-        call wrap( dateNote, wrappedNote, 10, '/' )
-      endif
-      numRows = max( numRows, &
-        & NumStringElements( wrappedNote, countEmpty, inseparator ) + 2 &
-        & )
-    endif
-    if ( present(notes) ) then
-      do aday=1, min( size(notes), daysInMonth( month, year ) )
-        if ( myDontWrap ) then
-          wrappedNote = notes(aday)
-        else
-          call wrap( notes(aday), wrappedNote, 10, '/' )
-        endif
-        numRows = max( numRows, &
-          & NumStringElements( wrappedNote, countEmpty, inseparator ) + 2 &
-          & )
-      enddo
-    endif
-    do iwk = 1, numWeeks
-      ! Start with horizontal line
-      call blanksToTab( 7, fillChar='-' )
-      call newline
-      do row=1, numRows
-        col2 = 0
-        do wkdy=1, 7
-          col1 = col2 + 1
-          col2 = tabStops(wkdy)
-          today = ( days(iwk, wkdy) == day )
-          if ( today ) then
-            call output_('||')
-          else
-            call output_('|')
-          endif
-          if ( days(iwk, wkdy) < 1 ) then
-            ! Don't write notes or anything else in "empty" days
-          elseif ( row == 1 ) then
-            call writeIntsToChars( days(iwk, wkdy), dateString )
-            dateString = adjustl(dateString)
-            call alignToFit( trim(dateString), (/ col1, col2-1 /), 'r' )
-          elseif( row == numRows ) then
-            call writeIntsToChars( daysOfYear(iwk, wkdy), dateString )
-            dateString = adjustl(dateString)
-            call alignToFit( 'd' // trim(dateString), (/ col1, col2-1 /), 'r' )
-          elseif( present(dateNote) .and. today ) then
-            if ( myDontWrap ) then
-              wrappedNote = dateNote
-            else
-              call wrap( dateNote, wrappedNote, 10, '/' )
-            endif
-            call GetStringElement ( wrappedNote, noteString, &
-              & row-1, countEmpty, inseparator )
-            if ( noteString == inseparator ) noteString = ' '
-            call output_( noteString )
-          elseif( present(notes) ) then
-            if ( days(iwk, wkdy) <= size(notes) ) then
-              if ( myDontWrap ) then
-                wrappedNote = notes(days(iwk, wkdy))
-              else
-                call wrap( notes(days(iwk, wkdy)), wrappedNote, 10, '/' )
-              endif
-              call GetStringElement ( wrappedNote, noteString, &
-                & row-1, countEmpty, inseparator )
-              if ( noteString == inseparator ) noteString = ' '
-              call output_( noteString )
-            endif
-          endif
-          if ( today ) then
-            call blanksToColumn(col2-1)
-            call output_('|')
-          else
-            call blanksToTab
-          endif
-        enddo ! wkdy
-        call output_('|')
-        call newline
-      enddo ! row
-      ! begin with 
-    enddo ! week
-    call blanksToTab( 7, fillChar='-' )
-    call newline
-    ! Restore tabstops
-    call settabs( '5-120+5' )
-  end subroutine OUTPUTCALENDAR
 
   ! ------------------------------------------------  OUTPUT_CHAR  -----
   ! Output CHARS to PRUNIT.
@@ -1727,78 +674,6 @@ contains
     end if
   end subroutine OUTPUT_COMPLEX
 
-  ! ---------------------------------------  OUTPUT_DATE_AND_TIME  -----
-  subroutine OUTPUT_DATE_AND_TIME ( date, time, &
-    & from_where, msg, dateFormat, timeFormat, CPU_Seconds, advance )
-    ! Output nicely-formatted date, time, and extra message
-    ! We'll assume we won't want this line stamped with date and time
-    ! (for fear of being redundant, which we fear)
-    logical, intent(in), optional :: date ! output date as character string
-    logical, intent(in), optional :: time ! output time as character string
-    character(len=*), intent(in), optional :: FROM_WHERE
-    character(len=*), intent(in), optional :: MSG
-    character(len=*), intent(in), optional :: DATEFORMAT
-    character(len=*), intent(in), optional :: TIMEFORMAT
-    double precision, intent(in), optional :: CPU_Seconds
-    character(len=*), intent(in), optional :: ADVANCE
-
-    character(len=16) :: dateString
-    logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
-    integer :: HH, MM, MS, SS
-    logical :: myDate
-    logical :: myTime
-    character(len=3) :: MY_ADV
-    real :: My_CPU, Seconds
-    character(len=16) :: timeString
-
-    myDate = .true.
-    if ( present(date) ) myDate = date
-    myTime = .true.
-    if ( present(time) ) myTime = time
-    if ( .not. (myDate .or. myTime) ) return ! Why call if won't print?
-    my_adv = 'no'
-    if ( .not. present(msg) ) then
-      my_adv = 'yes'
-      if ( present(advance) ) my_adv = advance
-    end if
-    dateString = '' ! Intel 12 and earlier doesn't fill with blanks
-    timeString = '' ! Intel 12 and earlier doesn't fill with blanks
-    call date_and_time ( date=dateString, time=timeString )
-    dateString = reFormatDate(trim(dateString), toForm=dateFormat)
-    timeString = reFormatTime(trim(timeString), timeFormat)
-    if ( myDate .and. myTime ) then
-      call output_ ( trim(dateString), from_where=from_where, advance='no', &
-        & DONT_STAMP=DONT_STAMP )
-      call blanks(3)
-      call output_ ( trim(timeString), from_where=from_where, advance=my_adv, &
-        & DONT_STAMP=DONT_STAMP )
-    else if ( myDate ) then
-      call output_ ( trim(dateString), from_where=from_where, advance=my_adv, &
-        & DONT_STAMP=DONT_STAMP )
-    else if ( myTime ) then
-      call output_ ( trim(TimeString), from_where=from_where, advance=my_adv, &
-        & DONT_STAMP=DONT_STAMP )
-    end if
-    if ( .not. present(msg) ) return
-    my_adv = 'yes'
-    if ( present(advance) ) my_adv = advance
-    call blanks ( 3 )
-    call output_ ( trim(msg), from_where=from_where, &
-      & advance=merge ( 'no ', my_adv, present(CPU_seconds) ), &
-      & DONT_STAMP=DONT_STAMP )
-    if ( present(CPU_seconds) ) then
-      hh = CPU_seconds / 3600
-      my_cpu = CPU_seconds - hh * 3600
-      mm = my_cpu / 60
-      seconds = my_cpu - mm * 60
-      ss = seconds
-      ms = nint(1000 * (seconds-ss))
-      write ( timeString, '(2(i2.2,":"),i2.2,".",i3.3)' ) hh, mm, ss, ms
-      call output_ ( '   CPU time ' // trim(timeString), from_where=from_where, &
-        & advance=my_adv, DONT_STAMP=DONT_STAMP )
-    end if
-  end subroutine OUTPUT_DATE_AND_TIME
-
   ! --------------------------------------------  OUTPUT_DCOMPLEX  -----
   subroutine OUTPUT_DCOMPLEX ( VALUE, Format, ADVANCE, Before, After )
     integer, parameter :: RK = kind(0.0d0)
@@ -2075,165 +950,6 @@ contains
     end if
   end subroutine OUTPUT_STRING
 
-  ! ----------------------------------------------  OUTPUTLIST  -----
-  ! This family of routines outputs an array as a comma-separated list
-  ! E.g., given the array (/ 1, 2, 3, .. /) outputs
-  ! '(1, 2, 3, .. )'
-  ! optionally using sep instead of ',' and delims instead of '()'
-  subroutine OUTPUTLIST_CHARS ( array, sep, delims )
-    ! Args
-    character(len=*), dimension(:), intent(in)      :: array
-    character(len=*), optional, intent(in) :: sep
-    character(len=*), optional, intent(in) :: delims
-    ! Local variables
-    character(len=1) :: comma
-    integer          :: i
-    character(len=2) :: parens
-    ! Executable
-    if ( size(array) < 1 ) return
-    comma = ','
-    if ( present(sep) ) comma = sep
-    parens = '()'
-    if ( present(delims) ) parens = delims
-    call output( parens(1:1) )
-    do i=1, size(array)
-      call output( trim_safe(array(i)) )
-      if ( i < size(array) ) call output( comma )
-    enddo
-    call output( parens(2:2) )
-  end subroutine OUTPUTLIST_CHARS
-
-  subroutine OUTPUTLIST_INTS ( array, sep, delims )
-    ! Args
-    integer, dimension(:), intent(in)      :: array
-    character(len=*), optional, intent(in) :: sep
-    character(len=*), optional, intent(in) :: delims
-    ! Local variables
-    character(len=1) :: comma
-    integer          :: i
-    character(len=2) :: parens
-    ! Executable
-    if ( size(array) < 1 ) return
-    comma = ','
-    if ( present(sep) ) comma = sep
-    parens = '()'
-    if ( present(delims) ) parens = delims
-    call output( parens(1:1) )
-    do i=1, size(array)
-      call output( array(i) )
-      if ( i < size(array) ) call output( comma )
-    enddo
-    call output( parens(2:2) )
-  end subroutine OUTPUTLIST_INTS
-
-  ! ----------------------------------------------  outputNamedValue  -----
-  ! This family of routines outputs a paired name and value
-  ! (Basically saving you a few lines over the idiom
-  !  call output ( trim(name), advance='no' )
-  !  call output ( ': ', advance='no' )
-  !  call output ( value, advance='yes' )
-  
-  ! to print following line to stdout
-  !  name: value
-  ! Optional args control
-  ! before: what extra to print at start of each line
-  ! after: what extra to print at end of each line
-  ! colon: what to print instead of ':'
-  ! fillChar: instead of spaces if you use tabs to align name, value
-  ! tabn: column number where name begins
-  ! tabc: column number where colon occurs
-  ! taba: column number where after begins
-  ! advance: whether to advance after printing pair (by default we WILL advance)
-  ! dont_stamp: override setting to stamp end of each line
-  ! By means of optional args you can create a line like
-  ! *   name                   value   *
-  subroutine output_nvp_character ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
-    character(len=*), intent(in)          :: name
-    character(len=*), intent(in)          :: value
-    include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_character
-
-  subroutine output_nvp_complex ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
-    character(len=*), intent(in)          :: name
-    complex, intent(in)                   :: value
-    include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_complex
-
-  subroutine output_nvp_double ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
-    character(len=*), intent(in)          :: name
-    double precision, intent(in)                   :: value
-    include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_double
-
-  subroutine output_nvp_dbl_array ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
-    character(len=*), intent(in)          :: name
-    double precision, dimension(:), intent(in)     :: value
-    include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_dbl_array
-
-  subroutine output_nvp_int_array ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
-    character(len=*), intent(in)          :: name
-    integer, dimension(:), intent(in)     :: value
-    include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_int_array
-
-  subroutine output_nvp_integer ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
-    character(len=*), intent(in)          :: name
-    integer, intent(in)                   :: value
-    include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_integer
-
-  subroutine output_nvp_log_array ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
-    character(len=*), intent(in)          :: name
-    logical, dimension(:), intent(in)     :: value
-    include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_log_array
-
-  subroutine output_nvp_logical ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
-    character(len=*), intent(in)          :: name
-    logical, intent(in)                   :: value
-    include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_logical
-
-  subroutine output_nvp_single ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
-    character(len=*), intent(in)          :: name
-    real, intent(in)                      :: value
-    include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_single
-
-  subroutine output_nvp_sngl_array ( name, value, &
-   & ADVANCE, colon, fillChar, Before, After, TABN, TABC, TABA, DONT_STAMP )
-    character(len=*), intent(in)          :: name
-    real, dimension(:), intent(in)     :: value
-    include 'output_name_value_pair.f9h'
-  end subroutine output_nvp_sngl_array
-
-  ! ----------------------------------------------  resetTabs  -----
-  ! Restore tab stops to what was in effect at start
-  ! Optionally returning them as an integer array
-  subroutine resetTabs ( tabs )
-    ! Args
-    integer, dimension(:), optional, intent(out) :: tabs
-    ! Internal variables
-    integer :: n
-    ! Executable
-    call setTabs( range=INITTABRANGE )
-    if ( present(tabs) ) then
-      n = min(size(tabs), MAXNUMTABSTOPS)
-      tabs = 0
-      tabs(1:n) = TABSTOPS(1:n)
-    endif
-  end subroutine resetTabs
-
   ! ----------------------------------------------  restoreSettings  -----
   subroutine restoreSettings ( USETOOLKIT )
   ! resume outputting to PRUNIT.
@@ -2315,48 +1031,6 @@ contains
 
   end subroutine revertOutput
 
-  ! ----------------------------------------------  setStamp  -----
-  subroutine setStamp ( textCode, showTime, dateFormat, timeFormat, &
-    & post, interval )
-  ! set stamp to be added to every output to PRUNIT.
-    character(len=*), optional, intent(in) :: textCode
-    logical, optional, intent(in)          :: showTime
-    character(len=*), optional, intent(in) :: dateFormat
-    character(len=*), optional, intent(in) :: timeFormat
-    logical, optional, intent(in)          :: post
-    integer, optional, intent(in)          :: interval
-    if ( present(showTime) )   stampOptions%showTime   = showTime  
-    if ( present(textCode) )   stampOptions%textCode   = textCode  
-    if ( present(dateFormat) ) stampOptions%dateFormat = dateFormat
-    if ( present(timeFormat) ) stampOptions%timeFormat = timeFormat
-    if ( present(post) )       stampOptions%post       = post
-    if ( present(interval) )   stampOptions%interval   = interval
-  end subroutine setStamp
-
-  ! ----------------------------------------------  setTabs  -----
-  subroutine setTabs ( RANGE, TABS )
-    ! Set tabstops
-    ! Methods:
-    ! (1) a string range; e.g., "8, 32-100+8"
-    !     is converterd to "8, 32, 40, 48, 56, 64, 72, 80, 88, 96"
-    ! (2) an arrays of ints; e.g., (/ 4, 9, 12, 18, 22, 30, 35, 40 /)
-    ! (3) reset back to the defaults (equiv to "5-120+5")
-    ! Args
-    character(len=*), optional, intent(in)         :: Range
-    integer, dimension(:), optional, intent(in)    :: Tabs
-    ! Internal variables
-    integer :: n
-    ! Executable
-    if ( present(range) ) then
-      call ExpandStringRange ( range, TABSTOPS )
-    elseif ( present(tabs) ) then
-      n = min( MAXNUMTABSTOPS, size(tabs) )
-      tabStops(1:n) = tabs(1:n) 
-    else
-      call ExpandStringRange ( '5-120+5', TABSTOPS )
-    endif
-  end subroutine setTabs
-
   ! ----------------------------------------------  suspendOutput  -----
   subroutine suspendOutput 
   ! suspend outputting to PRUNIT.
@@ -2405,130 +1079,6 @@ contains
     outputOptions%prunit = SwitchUnit
     NeedToAppend = .true.
   end subroutine switchOutput
-
-  ! ------------------------------------------------  timeStamp  -----
-  ! time-stamp output on demand, not automatic:
-  ! Either in style pre or post
-  ! (pre) '(HH:MM:SS) chars'
-  ! (post) 'chars (HH:MM:SS)'
-  ! Note that in pre-style, the time will be printed only if ATLINESTART true
-  ! in post-style, the time will be printed only if MY_ADV is 'yes'
-  subroutine timeStamp_char ( CHARS, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, STYLE, DATE )
-    character(len=*), intent(in) :: CHARS
-    character(len=*), intent(in), optional :: ADVANCE
-    character(len=*), intent(in), optional :: FROM_WHERE
-    logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
-    character(len=*), intent(in), optional :: LOG_CHARS
-    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
-    character(len=8), intent(in), optional :: STYLE ! pre or post
-    logical, intent(in), optional          :: DATE  ! Include date with time
-    !
-    logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
-    character(len=8) :: my_style
-    character(len=3) :: MY_ADV
-    logical  ::         myDate
-    !
-    my_adv = Advance_is_yes_or_no(advance)
-    my_style = timeStampOptions%Timestampstyle
-    if ( present(style) ) my_style = lowercase(style)
-    myDate = timeStampOptions%showDate
-    if ( present(date) ) myDate = date
-    if ( my_style == 'post' ) then
-      call output_( CHARS, &
-        & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
-        & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK, DONT_STAMP=DONT_STAMP )
-      if ( my_adv=='yes' ) then
-        call output_(' (', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
-        call OUTPUT_DATE_AND_TIME( date=myDate, &
-          & dateFormat=timeStampOptions%dateFormat, &
-          & timeFormat=timeStampOptions%timeFormat, &
-          & advance='no')
-        call output_(')', ADVANCE='yes', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
-      end if
-    else
-      if ( ATLINESTART ) then
-        call output_('(', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
-        call OUTPUT_DATE_AND_TIME( date=myDate, &
-          & dateFormat=timeStampOptions%dateFormat, &
-          & timeFormat=timeStampOptions%timeFormat, &
-          & advance='no')
-        call output_(')', ADVANCE='no', DONT_LOG=DONT_LOG, DONT_STAMP=DONT_STAMP)
-      end if
-      call output_( CHARS, &
-        & ADVANCE, FROM_WHERE, DONT_LOG, &
-        & LOG_CHARS, INSTEADOFBLANK, DONT_STAMP=DONT_STAMP )
-    end if
-  end subroutine timeStamp_char
-
-  subroutine timeStamp_integer ( INT, &
-    & PLACES, ADVANCE, FILL, FORMAT, Before, After, style, date )
-    integer, intent(in) :: INT
-    integer, intent(in), optional :: PLACES
-    character(len=*), intent(in), optional :: ADVANCE
-    logical, intent(in), optional :: FILL
-    character(len=*), intent(in), optional :: FORMAT
-    character(len=*), intent(in), optional :: Before, After ! text to print
-    character(len=*), intent(in), optional :: style ! pre or post
-    logical, intent(in), optional          :: DATE  ! Include date with time
-    !
-    logical, parameter :: DONT_STAMP = .true. ! Don't double-stamp
-    character(len=8) :: my_style
-    character(len=3) :: MY_ADV
-    logical  ::         myDate
-    !
-    my_adv = Advance_is_yes_or_no(advance)
-    my_style = timeStampOptions%Timestampstyle
-    if ( present(style) ) my_style = lowercase(style)
-    myDate = timeStampOptions%showDate
-    if ( present(date) ) myDate = date
-    if ( my_style == 'post' ) then
-      call output_integer( INT, PLACES, &
-        & ADVANCE='no', FILL=FILL, FORMAT=FORMAT, BEFORE=BEFORE, AFTER=AFTER, &
-        & DONT_STAMP=DONT_STAMP )
-      if ( my_adv=='yes' ) then
-        call output_(' (', ADVANCE='no', DONT_STAMP=DONT_STAMP )
-        call OUTPUT_DATE_AND_TIME( date=myDate, &
-          & dateFormat=timeStampOptions%dateFormat, &
-          & timeFormat=timeStampOptions%timeFormat, &
-          & advance='no')
-        call output_(')', ADVANCE='yes', DONT_STAMP=DONT_STAMP)
-      end if
-    else
-      if ( ATLINESTART ) then
-        call output_('(', ADVANCE='no', DONT_STAMP=DONT_STAMP)
-        call OUTPUT_DATE_AND_TIME( date=myDate, &
-          & dateFormat=timeStampOptions%dateFormat, &
-          & timeFormat=timeStampOptions%timeFormat, &
-          & advance='no')
-        call output_(')', ADVANCE='no', DONT_STAMP=DONT_STAMP)
-      end if
-      call output_integer( INT, PLACES, &
-        & ADVANCE, FILL, FORMAT, BEFORE, AFTER, DONT_STAMP=DONT_STAMP )
-    end if
-  end subroutine timeStamp_integer
-
-  subroutine timeStamp_logical ( value, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, STYLE, DATE )
-    logical, intent(in) ::                    value
-    character(len=*), intent(in), optional :: ADVANCE
-    character(len=*), intent(in), optional :: FROM_WHERE
-    logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
-    character(len=*), intent(in), optional :: LOG_CHARS
-    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
-    character(len=8), intent(in), optional :: STYLE ! pre or post
-    logical, intent(in), optional          :: DATE  ! Include date with time
-    ! Internal variables
-    character(len=1) :: str
-    ! Executable
-    if ( value ) then
-      str = 'T'
-    else
-      str = 'F'
-    endif
-    call timeStamp_char(str, &
-    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, STYLE, DATE )
-  end subroutine timeStamp_logical
 
   ! ------------------ Private procedures -------------------------
   ! .......................................  Advance_is_yes_or_no  .....
@@ -2732,128 +1282,6 @@ contains
     end if
   end subroutine myMessage
 
-  ! .............................................  nCharsinFormat  .....
-  function nCharsinFormat ( Format ) result(nplusm)
-    ! Utility to calculate how many characters in a format spec:         
-    ! [n{xX}][,]{DEFGdefg}m.b                                             
-    ! where n, m, and b are digits (we care only about n and m)           
-    ! return (n+m)
-    ! Tested for specs: sci. format esm.b and eng. format enm.b
-    ! Also for min. width spec: 'f0.b' it will silently return 0
-    ! (It's up to you to handle that correctly)
-    ! Args                                                                
-    character(len=*), intent(in) ::  Format                               
-    integer :: nplusm                                                     
-    ! Local variables                                                     
-    character(len=20) :: kChar, myFormat                                  
-    integer :: n, m
-    ! Executable                                                          
-    nplusm = 0                                                            
-    kChar=lowerCase(Format)
-    call ourReplaceSubString(kChar, myFormat, 'es', 'f')                   
-    call ourReplaceSubString(myFormat, kChar, 'en', 'f')                   
-    call ourReplaceSubString(kChar, myFormat, 'g', 'f')                   
-    call ourReplaceSubString(myFormat, kChar, 'e', 'f')                   
-    call ourReplaceSubString(kChar, myFormat, 'd', 'f')                   
-    call ourExtractSubString(TRIM(myFormat), kChar, 'f', '.')             
-    if ( kChar == '0' ) return ! Special case of e.g. 'f0.3'
-    read (kChar, '(i2)') m                                                
-    if (m < 1) call myMessage ( MLSMSG_Error, ModuleName, &              
-      & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )      
-    if ( index(TRIM(myFormat), 'x' ) == 0 ) then                          
-      n = 0                                                               
-    else                                                                  
-      call ourExtractSubString(TRIM(myFormat), kChar, '(', 'x')           
-      read (kChar, '(i2)') n                                              
-      if (n < 1) then                                                     
-        print *, trim(kChar)                                              
-        print *, trim(myFormat)                                           
-        call myMessage ( MLSMSG_Error, ModuleName, &                     
-          & 'Bad conversion to n in OUTPUT_xxxLE (format not "{defg}"' )  
-      end if                                                              
-    end if                                                                 
-    nplusm = n + m                                                        
-  end function nCharsinFormat
-
-  ! ........................................  whatSDNeedsFormat
-  ! parse inFormat which might be
-  ! (1) absent, in which case format=sdNeedsFormat and dotm='.6'
-  ! (2) '(*)', in which case format=sdNeedsFormat and dotm='.6'
-  ! (3) '(*.m)', in which case format=(sdNeedsFragment //'.m') and dotm='.m'
-  subroutine whatSDNeedsFormat ( format, dotm, inFormat )
-    character(len=*), optional, intent(in)  :: inFormat
-    character(len=*), intent(out)           :: format
-    character(len=*), intent(out)           :: dotm
-    integer :: dot
-    if ( .not. present(inFormat) ) then
-      format = sdNeedsFormat
-      dotm = '.6'
-    elseif ( index(inFormat, '.') < 1 ) then
-      format = sdNeedsFormat
-      dotm = '.6'
-    else
-      ! Must find integer after '.'
-      dot = index( inFormat, '.' )
-      dotm = inFormat(dot:dot+1)
-      format = trim(sdNeedsFragment) // trim(dotm) // ')'
-    endif
-  end subroutine whatSDNeedsFormat
-  ! ........................................  ourExtractSubString  .....
-  subroutine ourExtractSubString ( instr, outstr, sub1, sub2 )
-    ! Extract portion of instr between sub1 and sub2 and return as outstr
-    ! Args
-    character (len=*), intent(in) :: instr
-    character (len=*), intent(out) :: outstr
-    character (len=1), intent(in) :: sub1
-    character (len=1), intent(in) :: sub2
-    ! Internal variables
-    integer :: pos1
-    integer :: pos2
-    ! Begin executable
-    outstr = ''
-    pos1 = index(instr, sub1) 
-    if ( pos1 < 1 ) return
-    pos2 = index(instr, sub2)
-    if ( pos2-1 < pos1+1 ) return
-    outstr = instr(pos1+1:pos2-1)
-  end subroutine ourExtractSubString
-
-  ! ........................................  ourReplaceSubString  .....
-  subroutine ourReplaceSubString ( instr, outstr, sub1, sub2 )
-    ! Swap a single instance in instr of sub1 with sub2 and return as outstr
-    ! Args
-    character (len=*), intent(in) :: instr
-    character (len=*), intent(out) :: outstr
-    character (len=*), intent(in) :: sub1
-    character (len=*), intent(in) :: sub2
-    ! Internal variables
-    integer :: d
-    integer :: pos
-    integer :: pos1
-    integer :: pos2
-    integer :: pose
-    ! Begin executable
-    outstr = instr
-    pos =index(instr, sub1) 
-    if ( pos < 1 .or. pos > len_trim(outstr)) return
-    pos1 = pos
-    if ( len(sub1) == len(sub2) ) then
-      pos2 = pos1 + len(sub1) - 1
-      outstr(pos1:pos2) = sub2
-    elseif ( len(sub1) > len(sub2) ) then
-      d = len(sub1) - len(sub2)
-      pos2 = pos1 + len(sub2) - 1
-      outstr(pos1:pos2) = sub2
-      pose = min(len(instr), len(outstr))
-      if ( pos2 == pose ) return
-      outstr(pos2+1:) = ' '   ! To fill to the end with blanks
-      outstr(pos2+1:pose) = instr(pos2+1+d:pose+d)
-    else
-      call myMessage ( MLSMSG_Error, ModuleName, &              
-      & 'Not yet able to replace shorter substring with longer' ) 
-    end if
-  end subroutine ourReplaceSubString
-
   ! -----------------------------------------------------  PR_BLANKS  -----
   subroutine PR_BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
   ! Output N_BLANKS blanks to PRUNIT.
@@ -2893,26 +1321,6 @@ contains
       if ( n < 1 ) exit   ! was if n == 0, but this should be safer
     end do
   end subroutine PR_BLANKS
-
-  ! ----------------------------------------------  stretch  -----
-  function stretch( arg, skips ) result(chars)
-  ! stretch input arg by inserting skips number of spaces
-  ! between each pair of consecutive characters
-  ! Args
-    character(len=*), intent(in)      :: arg
-    integer, intent(in)               :: skips
-    character(len=(1+skips)*len(arg)) :: chars
-    ! Internal variables
-    integer :: i, k
-    ! Executable
-    chars = ' '
-    if ( len_trim(arg) < 1 ) return
-    do i=1, len_trim(arg)
-      ! E.g., if skips==1, k ~ 1 3 5 7 ..
-      k = 1 + (skips+1)*(i-1)
-      chars(k:k) = arg(i:i)
-    enddo
-  end function stretch
 
   ! ----------------------------------------------  stamp  -----
   function stamp( chars )
@@ -2968,6 +1376,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.110  2014/01/09 00:22:18  pwagner
+! Split output module procedures between it and new highOutput
+!
 ! Revision 2.109  2013/11/21 21:21:41  pwagner
 ! Wrap lines at the right-hand border when outputting named arrays with borders
 !
