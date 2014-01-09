@@ -26,7 +26,8 @@ module MLSHDF5
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DOPT_LACONIC, DOPT_RMS, DOPT_STATS, &
     & DUMP, DUMPNAMEDVALUES
-  use HDF, only: DFACC_RDonly
+  use HDF, only: DFACC_RDONLY
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INTRINSIC, only: L_HDF
   use MLSCOMMON, only: MLSFILE_T
   use MLSDATAINFO, only: MLSDATAINFO_T, QUERY_MLSDATA
@@ -37,7 +38,7 @@ module MLSHDF5
   use MLSSTRINGLISTS, only: CATLISTS, ISINLIST, &
     & GETSTRINGELEMENT, NUMSTRINGELEMENTS, STRINGELEMENT
   use MLSSTRINGS, only: INDEXES, LOWERCASE, REPLACE
-  use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: NEWLINE, OUTPUT
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   ! LETS BREAK DOWN OUR use, PARAMETERS FIRST
   use HDF5, only: H5F_ACC_RDonly_F, H5F_ACC_RDWR_F, &
@@ -5691,6 +5692,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.125  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.124  2013/11/01 00:05:13  pwagner
 ! Match trace_begin, _end in MakeHDF5Attribute_textFile
 !
