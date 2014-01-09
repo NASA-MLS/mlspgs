@@ -101,6 +101,7 @@ contains ! =====     Public Procedures     =============================
     use HESSIANMODULE_1, only: ADDHESSIANTODATABASE, CREATEEMPTYHESSIAN, &
       & STREAMLINEHESSIAN, HESSIAN_T
     use HGRIDSDATABASE, only: HGRID_T
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     ! We need many things from init_tables_module.  first the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_ASPERCENTAGE, F_AUTOFILL, F_AVOIDBRIGHTOBJECTS, &
@@ -215,8 +216,7 @@ contains ! =====     Public Procedures     =============================
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, Get_Label_And_Spec, &
       & GET_SPEC_ID
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
-      & REVERTOUTPUT, SWITCHOUTPUT
+    use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: FLUSH_PFADATA
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
       & MODIFYQUANTITYTEMPLATE
@@ -3142,6 +3142,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.438  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.437  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
