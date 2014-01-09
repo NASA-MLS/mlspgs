@@ -546,13 +546,14 @@ contains
       & FOV_Convolve_3d
     use HessianModule_0, only: DUMP
     use HessianModule_1, only: HESSIAN_T
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     use Load_sps_data_m, only: Grids_T, Dump
     use MLSFillValues, only: isNaN
     use MLSKinds, only: R8, RP, RV
     use MatrixModule_1, only: FINDBLOCK
     use MLSStringLists, only: switchDetail
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
-    use output_m, only: outputNamedValue, resumeOutput, suspendOutput
+    use output_m, only: resumeOutput, suspendOutput
     use TOGGLES, only: switches
     use VectorsModule, only: VectorValue_T
 
@@ -1351,6 +1352,9 @@ contains
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.24  2014/01/09 00:26:39  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.23  2013/08/02 01:24:06  vsnyder
 ! Add ExtraJacobian to compute derivatives not in state vector
 !
