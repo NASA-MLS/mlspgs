@@ -19,8 +19,9 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
     & TEST_ALLOCATE, TEST_DEALLOCATE
   use DUMP_0, only: DIFF, DUMP
-  use MLSKinds, only: RH=>RM ! Renamed here to make it easier to change later
-  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+  use MLSKINDS, only: RH=>RM ! Renamed here to make it easier to change later
+  use OUTPUT_M, only: OUTPUT
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
   implicit none
@@ -1390,6 +1391,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.28  2014/01/09 00:25:06  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.27  2013/08/31 01:24:53  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
