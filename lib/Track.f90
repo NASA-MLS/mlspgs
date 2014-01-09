@@ -1135,7 +1135,7 @@ contains
   end subroutine TrackDeallocate_L3
 
   subroutine ReportLeaks ( Where )
-    use output_m, only: DumpSize
+    use HIGHOUTPUT, only: DUMPSIZE
     character(len=*), intent(in), optional :: Where
     double precision :: Total ! memory still allocated that we could find
     if ( present(where) )  write ( *, '(a)' ) trim(where)
@@ -1466,6 +1466,9 @@ contains
 end module Track_m
 
 ! $Log$
+! Revision 2.7  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.6  2009/06/23 18:25:42  pwagner
 ! Prevent Intel from optimizing ident string away
 !
