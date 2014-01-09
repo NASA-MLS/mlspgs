@@ -15,6 +15,7 @@ module L2ParInfo
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use IO_STUFF, only: GET_LUN
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, PVMERRORMESSAGE
@@ -24,7 +25,7 @@ module L2ParInfo
   use MLSSTRINGLISTS, only: GETUNIQUEINTS, GETUNIQUESTRINGS, NUMSTRINGELEMENTS, &
     & REMOVENUMFROMLIST, STRINGELEMENT, SWITCHDETAIL
   use MOREPVM, only: PVMPACKSTRINGINDEX, PVMUNPACKSTRINGINDEX
-  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: OUTPUT
   use PVM, only: INFOTAG, &
     & PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
     & PVMDATADEFAULT, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT, SIG_ABOUTTODIE
@@ -873,6 +874,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.62  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.61  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
