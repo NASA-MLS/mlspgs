@@ -15,12 +15,13 @@ module ConstructVectorTemplates ! Construct a template for a vector
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INIT_TABLES_MODULE, only: F_ADOPT, F_QUANTITIES, &
     & F_REMOVEQUANTITIES, F_REMOVETEMPLATE, F_SOURCE, F_TEMPLATE, &
     & FIELD_FIRST, FIELD_LAST
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
   use MLSSETS, only: RELATIVECOMPLEMENT
-  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: OUTPUT
   use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: GEN, TOGGLE, LEVELS
@@ -285,6 +286,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.21  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.20  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
