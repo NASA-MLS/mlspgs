@@ -109,7 +109,7 @@ contains ! =============== Subroutines and functions ==========================
     use DUMP_0, only: DUMP
     use FORWARDMODELCONFIG, only: DUMP
     use MLSSTRINGS, only: WRITEINTSTOCHARS
-    use OUTPUT_M, only: HEADLINE, OUTPUTNAMEDVALUE
+    use HIGHOUTPUT, only: HEADLINE, OUTPUTNAMEDVALUE
     ! Args
     type (Vector_T), intent(in) :: STATE ! The state vector
     type (Vector_T), intent(in) :: EXTRA ! Other stuff in the state vector
@@ -2116,6 +2116,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.80  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.79  2013/08/31 02:29:12  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
