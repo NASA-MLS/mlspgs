@@ -54,7 +54,7 @@
       call output ( value, advance='no' )
       if ( present(taba) ) then
         call blanksToColumn( taba, advance='no' )
-        if ( taba >= atColumnNumber) then
+        if ( taba >= getOutputStatus( 'column' ) ) then
           call output ( after, advance=my_advance, dont_stamp=dont_stamp )
         else
           call output ( '', advance=my_advance, dont_stamp=dont_stamp )
@@ -68,6 +68,9 @@
       call output ( value, advance=my_advance, dont_stamp=dont_stamp )
     endif
 ! $Log$
+! Revision 2.8  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.7  2013/11/21 21:21:41  pwagner
 ! Wrap lines at the right-hand border when outputting named arrays with borders
 !
