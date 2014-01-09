@@ -13,12 +13,13 @@
 module MLSStats1                 ! Calculate statistics of rank n arrays
 !=============================================================================
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use MLSKINDS, only: R4, R8
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
   use MLSFINDS, only: FINDALL, FINDFIRST, FINDLAST
   use MLSSTRINGLISTS, only: CATLISTS
   use MLSSTRINGS, only: LOWERCASE
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
   use SORT_M, only: SORT, SORTP
 
   implicit none
@@ -2419,6 +2420,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.25  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.24  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
