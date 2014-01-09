@@ -15,11 +15,12 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
+  use HIGHOUTPUT, only: BEVERBOSE
   use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, TAI93_RANGE_T
   use MLSL2OPTIONS, only: SPECIALDUMPFILE, TOOLKIT
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & SWITCHDETAIL
-  use OUTPUT_M, only: BEVERBOSE, BLANKS, OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT
 
   implicit none
 
@@ -641,6 +642,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.105  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.104  2013/12/05 01:43:48  pwagner
 ! Read RunID component from cycle field of pcf; started using BeVerbose
 !
