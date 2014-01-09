@@ -134,7 +134,7 @@ contains
 
   subroutine BEGIN ( SHOW )
     ! Announce the time of day of starting
-    use Output_m, only: OUTPUT_DATE_AND_TIME
+    use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
     character(len=*), intent(in) :: SHOW
     call cpu_time ( start_CPU_time )
     call output_date_and_time ( msg=show )
@@ -142,7 +142,7 @@ contains
 
   subroutine FINISH ( SHOW )
     ! Announce the time of day and CPU time of finishing
-    use Output_m, only: OUTPUT_DATE_AND_TIME
+    use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
     character(len=*), intent(in) :: SHOW
     double precision :: Finish_CPU_time
     call cpu_time ( finish_CPU_time )
@@ -296,6 +296,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.14  2014/01/09 00:24:29  pwagner
+!Some procedures formerly in output_m now got from highOutput
+!
 !Revision 2.13  2013/08/28 00:37:14  pwagner
 !Moved more stuff from MLSMessage down to PrintIt module
 !
