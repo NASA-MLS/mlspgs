@@ -760,6 +760,7 @@ contains ! =====     Public Procedures     =============================
     ! Do the work of copying named quantity data to a named file
     use EXPR_M, only: EXPR
     use HGRIDSDATABASE, only: HGRID_T, DUMP
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     use INIT_TABLES_MODULE, only: F_CREATE, &
       & F_EXCLUDE, F_FILE, F_HDFVERSION, F_HGRID, &
       & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
@@ -783,7 +784,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSTRINGLISTS, only: INTERSECTION, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_BOOLEAN
-    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: OUTPUT
     use PCFHDR, only: HE5_WRITEMLSFILEATTR
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUBTREE, SUB_ROSA
@@ -1848,6 +1849,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.177  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.176  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
