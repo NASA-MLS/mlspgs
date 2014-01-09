@@ -12,7 +12,7 @@
 module GLOBAL_SETTINGS
 
   use MLSCOMMON, only: FILENAMELEN
-  use OUTPUT_M, only: OUTPUTNAMEDVALUE
+  use HIGHOUTPUT, only: OUTPUTCALENDAR, OUTPUTNAMEDVALUE
 
   implicit none
 
@@ -256,7 +256,7 @@ contains
     use MORETREE, only: GET_FIELD_ID, GET_LABEL_AND_SPEC, GET_SPEC_ID, &
       & STARTERRORMESSAGE
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTCALENDAR, &
+    use OUTPUT_M, only: BLANKS, OUTPUT, &
       & REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: GET_PFADATA_FROM_L2CF, FLUSH_PFADATA, MAKE_PFADATA, &
       & READ_PFADATA, WRITE_PFADATA
@@ -1280,6 +1280,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.151  2013/12/12 02:11:26  vsnyder
+! Use iterator to handle variables, and IF and SELECT constructs
+!
 ! Revision 2.150  2013/10/09 23:43:17  vsnyder
 ! Add Evaluate_Variable, declare param correctly
 !

@@ -12,6 +12,7 @@
 program L2Q
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use dates_module, only: DATEFORM, REFORMATDATE
+  use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME, OUTPUTNAMEDVALUE, TIMESTAMP
   use L2PARINFO, only: PARALLEL, INITPARALLEL
   use L2ParInfo, only: MACHINE_T, PARALLEL, &
     & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, MASTERDUMPTAG, NOTIFYTAG, &
@@ -30,8 +31,7 @@ program L2Q
     & STRINGELEMENTNUM
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
   use OUTPUT_M, only: BLANKS, NEWLINE, &
-    & OUTPUT, OUTPUT_DATE_AND_TIME, outputNamedValue, OutputOptions, &
-    & TIMESTAMP
+    & OUTPUT, OutputOptions
   use PrintIt_m, only: Set_Config
   use PVM, only: PVMOK, &
     & ClearPVMArgs, GETMACHINENAMEFROMTID, &
@@ -2407,6 +2407,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.35  2013/08/23 02:51:48  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.34  2013/08/14 17:27:26  pwagner
 ! Moved FindSomethings into MLSFinds
 !

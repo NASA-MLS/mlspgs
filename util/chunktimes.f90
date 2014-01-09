@@ -16,6 +16,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
    use DUMP_0, only: DUMP
    use HDF, only: DFACC_RDONLY
    use HDF5, only: HSIZE_T, H5FIS_HDF5_F, H5GCLOSE_F, H5GOPEN_F
+    use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
    use L1BDATA, only: NAME_LEN
    use MACHINE, only: HP, GETARG
    use MLSKINDS, only: R4, R8
@@ -32,7 +33,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
      & NUMSTRINGELEMENTS, STRINGELEMENT, STRINGELEMENTNUM
    use MLSSTRINGS, only: LOWERCASE
    use OUTPUT_M, only: OUTPUTOPTIONS, &
-     & BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME
+     & BLANKS, NEWLINE, OUTPUT
    use PrintIt_m, only: Set_Config
    use TIME_M, only: TIME_NOW, TIME_CONFIG
    
@@ -816,6 +817,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.27  2013/08/23 02:51:47  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.26  2013/08/12 23:50:59  pwagner
 ! FindSomethings moved to MLSFinds module
 !

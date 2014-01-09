@@ -17,6 +17,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use DUMP_0, only: DIFF, DIFF_FUN, DUMP
   use HDF, only: DFACC_RDONLY, DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INTRINSIC ! "UNITS" TYPE LITERALS, BEGINNING WITH L_
   use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE, MLSFILE_T, L2METADATA_T
   use MLSFILES, only: FILENOTFOUND, &
@@ -37,8 +38,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & GETHASHELEMENT, GETSTRINGELEMENT, GETUNIQUELIST, &
     & LIST2ARRAY, NUMSTRINGELEMENTS, REMOVELISTFROMLIST, REPLACESUBSTRING, &
     & STRINGELEMENTNUM, SWITCHDETAIL
-  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
-    & RESUMEOUTPUT, SUSPENDOUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT, RESUMEOUTPUT, SUSPENDOUTPUT
   use STRING_TABLE, only: DISPLAY_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
@@ -1297,11 +1297,11 @@ contains ! =====     Public Procedures     =============================
 
   subroutine DiffL2GPData_CHUNKS ( fullL2gp1, fullL2gp2, Chunks, &
     & Details, options, fields, numDiffs )
-    ! Dump selected chunks of an l2gp
+    ! Diff selected chunks of an l2gp
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          FULLL2GP1
     type (l2gpData_T), intent(in) ::          FULLL2GP2
-    integer, intent(in), dimension(:) :: Chunks ! Which chunks to dump
+    integer, intent(in), dimension(:) :: Chunks ! Which chunks to diff
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
     !                                        ! -2 Skip all but name
@@ -1356,12 +1356,12 @@ contains ! =====     Public Procedures     =============================
 
   subroutine DiffL2GPData_LEVELS ( fullL2gp1, fullL2gp2, Pressures, Chunks, &
     & Details, options, fields, numDiffs )
-    ! Dump selected levels of an l2gp
+    ! DDiff selected levels of an l2gp
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          FULLL2GP1
     type (l2gpData_T), intent(in) ::          FULLL2GP2
-    real(rgp), intent(in), dimension(:) :: pressures ! Which levels to dump
-    integer, intent(in), optional, dimension(:) :: Chunks ! Which chunks to dump
+    real(rgp), intent(in), dimension(:) :: pressures ! Which levels to diff
+    integer, intent(in), optional, dimension(:) :: Chunks ! Which chunks to diff
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
     !                                        ! -2 Skip all but name
@@ -1433,7 +1433,7 @@ contains ! =====     Public Procedures     =============================
     real(rgp), intent(in), dimension(2), optional :: latitudes ! range
     real(rgp), intent(in), dimension(2), optional :: longitudes ! range
     real(r8), intent(in), dimension(2), optional :: times ! range
-    integer, intent(in), optional, dimension(:) :: Chunks ! Which chunks to dump
+    integer, intent(in), optional, dimension(:) :: Chunks ! Which chunks to diff
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
     !                                        ! -2 Skip all but name
@@ -5169,6 +5169,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.198  2013/10/15 23:53:40  pwagner
+! May copy quantity values to a file global attribute
+!
 ! Revision 2.197  2013/09/25 00:45:44  pwagner
 ! Convert must set quantity geolocations, too
 !

@@ -113,6 +113,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     & TEST_DEALLOCATE
   use BITSTUFF, only: DUMPBITNAMES, ISBITSET
   use DUMP_0, only: DIFF, DUMP
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INTRINSIC, only: LIT_INDICES, PHYQ_INVALID, L_VMR
   use LEXER_CORE, only: WHERE_T
   use MLSFILLVALUES, only: EXTRACTARRAY
@@ -121,7 +122,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, MLSMESSAGECONFIG, &
     & MLSMSG_DEALLOCATE, MLSMSG_WARNING, MLSMESSAGE
   use MLSSIGNALS_M, only: MODULES, SIGNALS, GETSIGNALNAME
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
   use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, CHECKINTEGRITY, &
     & COPYQUANTITYTEMPLATE, DESTROYQUANTITYTEMPLATECONTENTS, DUMP, &
     & NULLIFYQUANTITYTEMPLATE
@@ -3280,6 +3281,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.186  2013/10/25 23:05:42  pwagner
+! Fixed error that caused dumping hyperslab to segment fault if rank /= 2
+!
 ! Revision 2.185  2013/09/27 00:41:14  pwagner
 ! Fixed bug in GatherVectorQuantity
 !

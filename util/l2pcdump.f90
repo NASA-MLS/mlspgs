@@ -18,6 +18,7 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
    use Dump_0, only: DUMP, INTPLACES
    use Hdf, only: DFACC_READ
    use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
+   use HIGHOUTPUT, only: DUMP
    use INIT_TABLES_MODULE, only: INIT_TABLES
    use Intrinsic, only: l_hdf
    use L2PC_m, only: DestroyL2PC, Dump, L2PCDatabase, &
@@ -37,7 +38,7 @@ program l2pcdump ! dumps datasets, attributes from l2pc files
    use MLSStringLists, only: catLists, GetStringElement, List2Array, &
      & NumStringElements, StringElementNum
    use MLSStrings, only: lowercase, trim_safe
-   use output_m, only: dump, outputOptions, output
+   use output_m, only: outputOptions, output
    use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
    use TOGGLES, only: SWITCHES
@@ -311,6 +312,9 @@ end program l2pcdump
 !==================
 
 ! $Log$
+! Revision 1.4  2013/08/23 02:51:48  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.3  2011/02/18 23:10:33  pwagner
 ! Passes -d opts to dump routines
 !

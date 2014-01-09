@@ -17,6 +17,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
    use DUMP_0, only: DEFAULTMAXLON, DUMP, DUMPDUMPOPTIONS, INTPLACES
    use HDF, only: DFACC_READ
    use HDF5, only: H5FIS_HDF5_F, H5GCLOSE_F, H5GOPEN_F
+   use HIGHOUTPUT, only: DUMP
    use L1BDATA, only: L1BDATA_T, NAME_LEN, PRECISIONSUFFIX, &
      & DEALLOCATEL1BDATA, READL1BDATA
    use MACHINE, only: HP, GETARG
@@ -33,7 +34,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
    use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, &
      & NUMSTRINGELEMENTS, STRINGELEMENTNUM
    use MLSSTRINGS, only: INDEXES, LOWERCASE, TRIM_SAFE
-   use OUTPUT_M, only: DUMP, OUTPUT
+   use OUTPUT_M, only: OUTPUT
    use PrintIt_m, only: Set_Config
    use TIME_M, only: TIME_NOW, TIME_CONFIG
    
@@ -557,6 +558,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.15  2013/08/23 02:51:47  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.14  2012/06/14 00:02:44  pwagner
 ! Changed how dump options input; now use -o 'opts'
 !

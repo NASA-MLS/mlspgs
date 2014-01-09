@@ -14,6 +14,7 @@ program l2gpdiff ! show diffs between swaths in two different files
 !=================================
 
    use dump_0, only: dumpTableSide, rmsFormat
+   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
    use L2GPData, only: Diff, MAXSWATHNAMESBUFSIZE
    use MACHINE, only: HP, GETARG
    use MLSFiles, only: mls_exists, HDFVERSION_5, MLS_INQSWATH
@@ -21,7 +22,7 @@ program l2gpdiff ! show diffs between swaths in two different files
    use MLSMessageModule, only: MLSMessageConfig
    use MLSStringLists, only: catLists, ExpandStringRange
    use MLSStrings, only: WriteIntsToChars
-   use output_m, only: resumeOutput, suspendOutput, output, outputNamedValue
+   use output_m, only: resumeOutput, suspendOutput, output
    use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
    
@@ -427,6 +428,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.20  2013/08/23 02:51:48  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.19  2012/02/13 23:42:42  pwagner
 ! -d opts passes opts to underlying dump routines
 !

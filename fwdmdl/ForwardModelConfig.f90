@@ -1436,7 +1436,8 @@ contains
 
   ! ---------------------------------------------  Dump_Qty_Stuff  -----
   subroutine Dump_Qty_Stuff ( Qty, details )
-    use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: NEWLINE, OUTPUT
     use VECTORSMODULE, only: DUMP
     type(qtyStuff_t), intent(in) :: Qty
     integer, optional, intent(in) :: details
@@ -1463,6 +1464,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.129  2013/09/24 23:28:17  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 2.128  2013/08/16 02:32:14  vsnyder
 ! Remove ModelPlaneMIF
 !

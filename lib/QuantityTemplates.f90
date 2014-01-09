@@ -19,6 +19,7 @@ module QuantityTemplates         ! Quantities within vectors
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
   use EXPR_M, only: EXPR_CHECK
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INTRINSIC, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
     & PHYQ_TIME
   use MLSFILLVALUES, only: RERANK
@@ -29,7 +30,7 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
-  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: OUTPUT
   use TOGGLES, only: SWITCHES
   use TREE, only: NSONS, SUBTREE
 
@@ -1627,6 +1628,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.79  2013/12/12 01:57:17  vsnyder
+! Change type of debug from logical to integer
+!
 ! Revision 2.78  2013/09/19 23:31:08  vsnyder
 ! Use MyDisplayString more, add QuantitiesAreCompatible
 !

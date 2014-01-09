@@ -53,6 +53,7 @@ contains ! ====     Public Procedures     ==============================
     use HESSIANMODULE_1, only: DESTROYHESSIANDATABASE, HESSIAN_T
     use HGRIDSDATABASE, only: HGRID_T
     use HGRID, only: COMPUTEALLHGRIDOFFSETS
+    use HIGHOUTPUT, only: GETSTAMP, SETSTAMP
     use INIT_TABLES_MODULE, only: L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF,  &
       & SECTION_FIRST, SECTION_LAST, &
       & Z_ALGEBRA, Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, &
@@ -91,8 +92,8 @@ contains ! ====     Public Procedures     ==============================
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use OPEN_INIT, only: OPENANDINITIALIZE
     use OUTPUTANDCLOSE, only: OUTPUT_CLOSE
-    use OUTPUT_M, only: BLANKS, GETSTAMP, OUTPUT, &
-      & RESUMEOUTPUT, REVERTOUTPUT, SETSTAMP, SWITCHOUTPUT
+    use OUTPUT_M, only: BLANKS, OUTPUT, &
+      & RESUMEOUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use POINTINGGRID_M, only: DESTROY_POINTING_GRID_DATABASE
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
     use READAPRIORI, only: READ_APRIORI
@@ -693,6 +694,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.191  2014/01/08 21:04:16  vsnyder
+! Add more info to entry trace
+!
 ! Revision 2.190  2013/12/13 21:25:30  vsnyder
 ! Use the iterator correctly so the correct number of chunks are run, and
 ! the output section is run

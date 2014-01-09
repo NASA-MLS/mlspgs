@@ -27,7 +27,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
      & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH, InitializeMLSFile
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
-   use MLSSets, only: FindFirst
+   use MLSFinds, only: FindFirst
    use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
      & Intersection, NumStringElements, RemoveElemFromList, &
      & StringElement, StringElementNum
@@ -554,6 +554,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.16  2013/08/23 02:51:47  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.15  2013/05/30 20:41:09  pwagner
 ! Reduce amount of debug printing
 !

@@ -18,6 +18,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
    use Hdf, only: DFACC_CREATE, DFACC_READ
    use HDF5, only: H5FIS_HDF5_F, &
      & H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F, H5GCREATE_F
+   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
    use L1BData, only: L1BData_T, NAME_LEN, &
      & CONTRACTL1BDATA, DEALLOCATEL1BDATA, DIFF, READL1BDATA
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
@@ -30,7 +31,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
      & MLSMESSAGE
    use MLSStringLists, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
    use MLSStrings, only: REPLACE, STREQ, WRITEINTSTOCHARS
-   use output_m, only: RESUMEOUTPUT, SUSPENDOUTPUT, OUTPUT, OUTPUTNAMEDVALUE
+   use output_m, only: RESUMEOUTPUT, SUSPENDOUTPUT, OUTPUT
    use PrintIt_m, only: Set_Config
    use Time_M, only: TIME_NOW, TIME_CONFIG
 
@@ -855,6 +856,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.28  2013/08/23 02:51:47  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.27  2013/01/09 18:48:05  pwagner
 ! Dont omit sdname from output
 !

@@ -11,35 +11,27 @@
 
 program Spartacus
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DATES_MODULE, only: DATEFORM, REFORMATDATE
-  use IO_STUFF, only: READ_TEXTFILE
+  use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME, TIMESTAMP
   use L2PARINFO, only: PARALLEL, INITPARALLEL
   use L2PARINFO, only: MACHINE_T, PARALLEL, &
     & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, &
-    & SIG_FINISHED, SIG_REGISTER, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
+    & SIG_FINISHED, SIG_REGISTER, &
     & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
-    & MACHINENAMELEN, GETMACHINES, GETNICETIDSTRING, GETMACHINENAMES, &
+    & MACHINENAMELEN, GETMACHINES, GETNICETIDSTRING, &
     & DUMP, ADDMACHINETODATABASE
   use MLSCOMMON, only: FILENAMELEN
   use MLSL2OPTIONS, only: CURRENT_VERSION_ID
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, MLSMESSAGEEXIT, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_DEBUG, MLSMSG_ERROR, &
-    & MLSMSG_INFO, MLSMSG_SUCCESS, MLSMSG_WARNING, PVMERRORMESSAGE
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMESSAGECONFIG, &
+    & MLSMSG_ERROR, &
+    & MLSMSG_WARNING, PVMERRORMESSAGE
   use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
-    & STRINGELEMENTNUM
-  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ, UNWRAPLINES
-  use OUTPUT_M, only: BLANKS, NEWLINE, &
-    & OUTPUT, OUTPUT_DATE_AND_TIME, OUTPUTNAMEDVALUE, OUTPUTOPTIONS, &
-    & TIMESTAMP
+  use MLSSTRINGS, only: LOWERCASE, UNWRAPLINES
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTOPTIONS
   use PrintIt_m, only: Set_Config
-  use PVM, only: PVMOK, &
-    & CLEARPVMARGS, GETMACHINENAMEFROMTID, MYPVMSPAWN, NEXTPVMARG,  &
+  use PVM, only: CLEARPVMARGS, MYPVMSPAWN, NEXTPVMARG, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
-    & PVMF90UNPACK, PVMFPSTAT, &
-    & PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, PVMTASKHOST, &
-    & PVMFFREEBUF
-  use SORT_M, only: SORT
+    & PVMF90UNPACK, &
+    & PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, PVMTASKHOST
   use TIME_M, only: TIME_NOW, TIME_CONFIG
   use TOGGLES, only: GEN, LEVELS, &
     & TOGGLE
@@ -68,49 +60,27 @@ program Spartacus
 
   implicit none
 
-  integer :: BUFFERID
   character(len=2048) :: command_line ! All the opts
-  logical, parameter :: COUNTEMPTY = .true.
   logical, parameter :: DEEBUG = .false.
-  integer :: ERROR
-  integer :: I
   integer :: INFO
   integer :: INUNIT = -1       ! Input unit, * if < 0
   character(len=2048) :: LINE      ! Into which is read the command args
   integer, parameter :: LIST_UNIT = 20  ! Unit # for hosts file if not stdin
-  character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES => null()
-  integer, parameter :: MAXNUMMASTERS = 100 ! Mas num running simultaneously
-  integer, parameter :: MAXNUMMULTIPROCS = 8 ! For some architectures > 1000 
-  integer :: RECL = 10000          ! Record length for list
   integer :: STATUS                ! From OPEN
   logical :: success               ! From INQUIRE
   logical :: SWITCH                ! "First letter after -- was not n"
-  real :: T0, T1, T2, T_CONVERSION ! For timing
-  integer :: TAG
+  real :: T0, T2, T_CONVERSION ! For timing
   integer :: TID                   ! Our own TID
-  character(len=32) :: TIDSTR
 
   character(len=*), parameter :: GROUPNAME = "mlsl2"
-  character(len=*), parameter :: LISTNAMEEXTENSION = ".txt"
   integer, parameter          :: AVOIDSELECTEDHOSTSTAG = GIVEUPTAG - 1
   integer, parameter          :: CHECKREVIVEDHOSTSTAG = AVOIDSELECTEDHOSTSTAG - 1
   integer, parameter          :: CHECKSELECTEDHOSTSTAG = CHECKREVIVEDHOSTSTAG - 1
   integer, parameter          :: CLEANMASTERDBTAG = CHECKSELECTEDHOSTSTAG - 1
   integer, parameter          :: DUMPDBTAG = CLEANMASTERDBTAG - 1
   integer, parameter          :: DUMPMASTERSDBTAG = DUMPDBTAG - 1
-  integer, parameter          :: DUMPHOSTSDBTAG = DUMPMASTERSDBTAG - 1
-  integer, parameter          :: FREEANYHOSTSTAG = DUMPHOSTSDBTAG - 1
-  integer, parameter          :: FREEHOSTSTAG = FREEANYHOSTSTAG - 1
-  integer, parameter          :: KILLMASTERSTAG = FREEHOSTSTAG - 1
-  integer, parameter          :: SUICIDETAG = KILLMASTERSTAG - 1
-  integer, parameter          :: SWITCHDUMPFILETAG = SUICIDETAG - 1
-  integer, parameter          :: TURNREVIVALSONTAG = SWITCHDUMPFILETAG - 1
-  integer, parameter          :: TURNREVIVALSOFFTAG = TURNREVIVALSONTAG - 1
 
   integer, parameter          :: DUMPUNIT = LIST_UNIT + 1
-  integer, parameter          :: TEMPUNIT = DUMPUNIT + 1
-  integer, parameter          :: HDBUNIT = TEMPUNIT + 1
-  integer, parameter          :: MDBUNIT = HDBUNIT + 1
 !---------------------------- RCS Ident Info ------------------------------
   character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
@@ -176,19 +146,17 @@ program Spartacus
   integer, dimension(:), pointer :: CmdMACHINES ! Machine indices for Cmds
   integer, dimension(:), pointer :: CmdTIDS ! Tids for Cmds
   character(len=16), dimension(:), pointer :: CmdNICETIDS ! Tids for Cmds
-  character(len=MAXCMDLEN) :: Cmd
   integer :: CmdID
+  character(len=MAXCMDLEN) :: Cmd
   character(len=MAXCMDLEN), dimension(MAXNUMCMDS) :: Cmds ! Cmds
   logical, dimension(:), pointer :: CmdSCOMPLETED ! Cmds completed
   logical, dimension(:), pointer :: CmdSSTARTED ! Cmds being processed
   logical, dimension(:), pointer :: CmdSABANDONED ! Cmds kept failing
-  type(Machine_T), dimension(:), pointer :: hosts => null()
   integer :: L2QTid
   character(len=MAXLINELEN), dimension(MAXNUMLINES) :: lines
   integer :: machine
   logical :: machineRequestQueued
   type (Machine_T),dimension(:), pointer :: Machines
-  type(master_T), dimension(:), pointer :: masters => null()
   integer :: nextCmd
   integer :: noCmds
   integer :: noMachines
@@ -222,7 +190,7 @@ program Spartacus
   if ( options%dump_file /= '<STDIN>' ) then
     OutputOptions%prunit = DUMPUNIT
     OutputOptions%buffered = options%bufferedDumpFile ! .false.
-    OutputOptions%opened = .true.
+    ! OutputOptions%opened = .true.
     OutputOptions%name = options%dump_file
     ! print *, 'Opening ', prunit, ' as ', trim(options%dump_file)
     open(OutputOptions%prunit, file=trim(options%dump_file), &
@@ -653,9 +621,7 @@ contains
     ! Internal variables
     integer :: i
     integer :: j
-    integer :: lineVal
     integer :: n
-    character(len=8) :: subcase
     ! Executable
     i = 1+hp
     command_line = ' '
@@ -884,7 +850,6 @@ contains
     !
     integer :: BUFFERID                 ! From PVM
     character(len=16) :: DATESTRING
-    integer :: INDX
     integer :: INFO                     ! From PVM
     character(len=16) :: L2QSTRING
     !
@@ -1149,7 +1114,6 @@ contains
     integer                                    :: info
     ! Internal variables
     character(len=MAXCMDLEN) :: arg
-    character(len=MAXCMDLEN) :: cmd
     integer :: elem
     integer :: nargs
     ! Executable
@@ -1254,6 +1218,9 @@ contains
 end module BOGUS_MODULE
 
 ! $Log$
+! Revision 1.9  2013/08/23 02:51:47  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.8  2013/08/12 23:50:59  pwagner
 ! FindSomethings moved to MLSFinds module
 !

@@ -16,6 +16,7 @@ program l2pcdiff ! show diffs between swaths in two different files
    use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
    use dump_0, only: dumpTableSide, rmsFormat
    use Hdf, only: DFACC_RDONLY
+   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
    use INIT_TABLES_MODULE, only: INIT_TABLES
    use intrinsic, only: l_hdf
    use L2PC_m, only: Diff
@@ -28,7 +29,7 @@ program l2pcdiff ! show diffs between swaths in two different files
    use MLSMessageModule, only: MLSMessageConfig
    use MLSStringLists, only: catLists, ExpandStringRange
    use MLSStrings, only: WriteIntsToChars
-   use output_m, only: resumeOutput, suspendOutput, output, outputNamedValue
+   use output_m, only: resumeOutput, suspendOutput, output
    use PrintIt_m, only: Set_Config
    use SDPToolkit, only: UseSDPToolkit
    use Time_M, only: Time_Now, time_config
@@ -259,6 +260,9 @@ end program l2pcdiff
 !==================
 
 ! $Log$
+! Revision 1.2  2013/08/23 02:51:48  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.1  2010/11/25 01:20:32  pwagner
 ! First commit
 !

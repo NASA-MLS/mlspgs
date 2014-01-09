@@ -18,6 +18,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use DUMP_0, only: DUMP, SDFORMATDEFAULT
    use HDF, only: DFACC_READ
    use HDF5, only: H5FCLOSE_F, H5GOPEN_F, H5GCLOSE_F, H5FIS_HDF5_F   
+   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
    use INTRINSIC, only: L_SWATH
    use L2GPDATA, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, RGP, &
      & CONTRACTL2GPRECORD, DUMP, DUMPRANGE, READL2GPDATA, DESTROYL2GPCONTENTS, &
@@ -34,7 +35,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      & GETSTRINGELEMENT, NUMSTRINGELEMENTS, READINTSFROMLIST, &
      & STRINGELEMENT, STRINGELEMENTNUM
    use MLSSTRINGS, only: READNUMSFROMCHARS
-   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE, &
+   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, &
      & RESUMEOUTPUT, SUSPENDOUTPUT
    use PRINTIT_M, only: SET_CONFIG
    
@@ -713,6 +714,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.15  2013/10/18 22:41:15  pwagner
+! Will dump global attribute Ascend(+1)Descend(-1) if present
+!
 ! Revision 1.14  2013/08/23 02:51:48  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
