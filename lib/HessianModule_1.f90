@@ -21,12 +21,13 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
   use HESSIANMODULE_0, only: CLEARBLOCK, COPYBLOCK, CREATEBLOCK, &
     & DESTROYBLOCK, HESSIANELEMENT_T, RH, &
     & H_ABSENT, H_SPARSE, H_FULL, OPTIMIZEBLOCK
-  use Lexer_Core, only: Where_T
+  use HIGHOUTPUT, only: BLANKSTOCOLUMN, OUTPUTNAMEDVALUE
+  use LEXER_CORE, only: WHERE_T
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
   use MATRIXMODULE_1, only: DEFINERCINFO, DESTROYRCINFO, NULLIFYRCINFO, RC_INFO
   use MLSSTRINGLISTS, only: SWITCHDETAIL
-  use OUTPUT_M, only: BLANKSTOCOLUMN, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING
   use TOGGLES, only: SWITCHES
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -905,6 +906,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.35  2014/01/09 00:25:06  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.34  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !
