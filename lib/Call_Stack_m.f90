@@ -63,7 +63,8 @@ contains ! ====     Public Procedures     ==============================
 
     use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS
     use LEXER_CORE, only: PRINT_SOURCE
-    use OUTPUT_M, only: DUMPSIZE, OUTPUT
+    use OUTPUT_M, only: OUTPUT
+    use HIGHOUTPUT, only: DUMPSIZE
     use STRING_TABLE, only: DISPLAY_STRING
     use TREE, only: WHERE_AT=>Where
 
@@ -168,7 +169,8 @@ contains ! ====     Public Procedures     ==============================
     ! Pop the stack.  If Before or Where are present, dump the top frame first.
 
     use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
-    use OUTPUT_M, only: DUMPSIZE, NEWLINE, OUTPUT
+    use OUTPUT_M, only: NEWLINE, OUTPUT
+    use HIGHOUTPUT, only: DUMPSIZE
     use STRING_TABLE, only: DISPLAY_STRING
     use TIME_M, only: TIME_NOW
 
@@ -385,6 +387,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.17  2014/01/09 00:25:06  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.16  2013/11/01 00:03:29  pwagner
 ! Added safeguards limiting stacksize, dumping corrupted stacks, etc.
 !
