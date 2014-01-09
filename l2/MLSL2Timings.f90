@@ -14,6 +14,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use HIGHOUTPUT, only: BANNER, OUTPUTNAMEDVALUE, SETSTAMP
   use INIT_TABLES_MODULE, only: F_DEBUG, F_OPTIONS, F_SILENT, &
     & F_SKIPDIRECTWRITES, F_SKIPDIRECTWRITESIF, &
     & F_SKIPRETRIEVAL, F_SKIPRETRIEVALIF, F_STAMP, F_VERBOSE, &
@@ -33,8 +34,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   use MLSSTRINGLISTS, only: BOOLEANVALUE, CATLISTS, GETSTRINGELEMENT, &
     & NUMSTRINGELEMENTS, STRINGELEMENTNUM, SWITCHDETAIL
   use MORETREE, only: GET_BOOLEAN
-  use OUTPUT_M, only: BANNER, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
-    & RESUMEOUTPUT, SETSTAMP, SUSPENDOUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT, &
+    & RESUMEOUTPUT, SUSPENDOUTPUT
   use STRING_TABLE, only: GET_STRING
   use TIME_M, only: TIME_NOW
   use TOGGLES, only: SWITCHES
@@ -933,6 +934,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.53  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.52  2013/11/20 00:58:08  pwagner
 ! Reduce printing during non-verbose processing
 !
