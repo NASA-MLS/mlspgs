@@ -13,6 +13,7 @@
 MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use MLSCOMMON, only: MLSFILE_T, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
   use MLSFILES, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
@@ -23,7 +24,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
   use OUTPUT_M, only: OUTPUTOPTIONS, &
     & INVALIDPRUNIT, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT, &
-    & OUTPUT, OUTPUTNAMEDVALUE
+    & OUTPUT
   use PRINTIT_M, only: DEFAULTLOGUNIT, GET_CONFIG, STDOUTLOGUNIT
 
   implicit none
@@ -991,6 +992,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.78  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.77  2013/12/12 02:10:07  vsnyder
 ! Change type of do_dump from logical to integer
 !
