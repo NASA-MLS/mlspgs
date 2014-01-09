@@ -36,6 +36,7 @@ contains
     use FORWARDMODELWRAPPERS, only: FORWARDMODEL
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
     use HESSIANMODULE_1, only: HESSIAN_T, INSERTHESSIANPLANE
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     use INIT_TABLES_MODULE, only: F_DESTROYJACOBIAN, F_FORWARDMODEL, &
       & F_FWDMODELEXTRA, F_FWDMODELIN, F_FWDMODELOUT, &
       & F_HESSIAN, F_JACOBIAN, F_MIRRORHESSIAN, &
@@ -53,7 +54,7 @@ contains
     use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
-    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: OUTPUT
     use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE, &
       & DUMPINSTANCEWINDOWS
     use STRING_TABLE, only: GET_STRING
@@ -507,6 +508,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.71  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.70  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
