@@ -15,6 +15,7 @@ module WriteMetadata ! Populate metadata and write it out
 
   use DUMP_0, only: DUMP
   use HDF, only: DFACC_RDWR
+  use HIGHOUTPUT, only: BEVERBOSE, OUTPUTNAMEDVALUE
   use INIT_TABLES_MODULE, only: L_L2DGG, L_L2GP, L_HDF, L_SWATH
   use IO_STUFF, only: READ_TEXTFILE
   use LEXER_CORE, only: PRINT_SOURCE
@@ -30,7 +31,7 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSSTRINGS, only: ISCOMMENT, LOWERCASE, STREQ
   use MLSSTRINGLISTS, only: EXTRACTSUBSTRING, &
     & GETHASHELEMENT, GETSTRINGELEMENT
-  use OUTPUT_M, only: OUTPUT, BEVERBOSE, BLANKS, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: OUTPUT, BLANKS
   use PCFHDR, only: WRITEINPUTPOINTER, WRITEPCF2HDR, GLOBALATTRIBUTES
   use SDPTOOLKIT, only: PGSD_MET_GROUP_NAME_L, &
     & PGSD_MET_NUM_OF_GROUPS, PGSD_PC_FILE_PATH_MAX, PGS_PC_GETREFERENCE, &
@@ -2113,6 +2114,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.77  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.76  2013/12/05 01:42:03  pwagner
 ! Added RunID component to pcf; started using BeVerbose
 !
