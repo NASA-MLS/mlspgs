@@ -389,6 +389,7 @@ contains ! =====     Public Procedures     =============================
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use HDF, only: DFACC_CREATE, DFACC_RDWR
     use HGRIDSDATABASE, only: HGRID_T
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     use INIT_TABLES_MODULE, only: F_CONVERGENCE, F_FILE, &
       & F_HDFVERSION, F_LOWEROVERLAP, F_OPTIONS, F_PRECISION, F_QUALITY, &
       & F_SINGLE, F_SOURCE, F_STATUS, F_TYPE, F_UPPEROVERLAP, F_VECTOR
@@ -412,7 +413,7 @@ contains ! =====     Public Procedures     =============================
       & MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
     use MLSFINDS, only: FINDFIRST, FINDNEXT
     use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
-    use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: BLANKS, OUTPUT
     use OUTPUTANDCLOSE, only: ADD_METADATA
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
     use TIME_M, only: TIME_NOW
@@ -2237,6 +2238,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.158  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.157  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
