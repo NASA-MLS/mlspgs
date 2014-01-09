@@ -15,6 +15,7 @@ module MLSNumerics              ! Some low level numerical stuff
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only : DUMP, SELFDIFF
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use MATRIXMODULE_0, only: CREATEBLOCK, M_ABSENT, MATRIXELEMENT_T, SPARSIFY
   use MLSCOMMON, only : UNDEFINEDVALUE
   use MLSFILLVALUES, only: ISFILLVALUE, REPLACEFILLVALUES, RERANK
@@ -23,7 +24,7 @@ module MLSNumerics              ! Some low level numerical stuff
     & MLSMESSAGE
   use MLSFINDS, only: FINDFIRST, FINDLAST
   use MLSSTRINGS, only: CAPITALIZE, TRIM_SAFE
-  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use SYMM_TRI, only: FACTOR_SYMM_TRI, SOLVE_FACTORED_SYMM_TRI
 
   implicit none
@@ -2618,6 +2619,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.82  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.81  2013/08/13 00:58:43  vsnyder
 ! Move SolveQuadratic into MLSNumerics
 !
