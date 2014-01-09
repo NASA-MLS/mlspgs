@@ -17,6 +17,7 @@ module MLSSignals_M
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
   use EXPR_M, only: EXPR
+  use HIGHOUTPUT, only: HEADLINE
   use INIT_MLSSIGNALS_M ! EVERYTHING
   use INTRINSIC, only: FIELD_FIRST, FIELD_INDICES, LIT_INDICES, &
     & PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, PHYQ_INDICES, S_TIME, L_A, L_EMLS
@@ -24,7 +25,7 @@ module MLSSignals_M
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, PVMERRORMESSAGE
   use MLSSTRINGS, only: LOWERCASE, CAPITALIZE
-  use OUTPUT_M, only: BLANKS, HEADLINE, NEWLINE, OUTPUT
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
 
   implicit none
@@ -1937,6 +1938,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.102  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.101  2013/12/12 02:08:36  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
