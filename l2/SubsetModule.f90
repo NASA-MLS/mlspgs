@@ -55,6 +55,7 @@ contains ! ========= Public Procedures ============================
     use DUMP_0, only: DUMP
     use EXPR_M, only: EXPR, GETINDEXFLAGSFROMLIST
     use FILLUTILS_1, only: BYMANIPULATION
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     use INIT_TABLES_MODULE, only: F_HEIGHT, F_PTANQUANTITY, F_QUANTITY, F_SURFACE
     use INIT_TABLES_MODULE, only: L_NONE, L_PRESSURE, &
       & L_ZETA
@@ -64,7 +65,7 @@ contains ! ========= Public Procedures ============================
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MLSFINDS, only: FINDFIRST, FINDLAST
     use MLSSTRINGS, only: TRUELIST
-    use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+    use OUTPUT_M, only: OUTPUT
     use TOGGLES, only: SWITCHES
     use TREE, only: NSONS, SUBTREE, NODE_ID
     use TREE_TYPES, only: N_COLON_LESS, N_LESS_COLON, &
@@ -1536,6 +1537,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.30  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.29  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
