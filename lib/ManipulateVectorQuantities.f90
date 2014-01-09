@@ -13,11 +13,11 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   ! This modules contains routines needed for manipulating vectors.
 
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMESSAGE
   use MLSKINDS, only: R8, RV
   use MLSNUMERICS, only: HUNT
   use MOLECULES, only: L_RHI
-  use OUTPUT_M, only: OUTPUTNAMEDVALUE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use VECTORSMODULE, only: VECTORVALUE_T, VECTOR_T, DUMP
   use INTRINSIC, only: L_CALSIDEBANDFRACTION, L_CHANNEL, L_COLUMNABUNDANCE, &
@@ -648,6 +648,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.44  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.43  2013/08/31 01:24:53  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !

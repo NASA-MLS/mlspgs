@@ -31,7 +31,7 @@ module Allocate_Deallocate
   use MACHINE, only: MLS_GC_NOW
   use PRINTIT_M, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT, SnipRCSFrom
-  use Track_m, only: TRACKALLOCATE, TRACKDEALLOCATE
+  use TRACK_M, only: TRACKALLOCATE, TRACKDEALLOCATE
 
   implicit NONE
   private
@@ -216,7 +216,8 @@ contains
 
   !-----------------------------------   ReportAllocateDeallocate_real  -----
   subroutine ReportAllocateDeallocate_real ( name, moduleName, noBytes, bounds )
-    use Output_m, only: OUTPUT, DUMPSIZE
+    use OUTPUT_M, only: OUTPUT
+    use HIGHOUTPUT, only: DUMPSIZE
     ! Dummy arguments
     character (len=*), intent(in) :: NAME ! Name of thing allocated
     character (len=*), intent(in) :: MODULENAME ! Module that allocated it
@@ -1501,6 +1502,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.44  2014/01/09 00:25:06  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.43  2013/10/09 01:02:05  vsnyder
 ! Add SnipRCSFromName to MyMessage
 !
