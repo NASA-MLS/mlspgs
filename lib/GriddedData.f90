@@ -14,6 +14,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DATES_MODULE, only: TAI2CCSDS
   use DUMP_0, only: DUMP, DUMPDATES
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INTRINSIC, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
     & L_THETA
   use MLSCOMMON, only: LINELEN, NAMELEN, UNDEFINEDVALUE
@@ -24,7 +25,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     & MLSMSG_WARNING, MLSMESSAGECONFIG, MLSMESSAGE
   use MLSSTRINGLISTS, only: SNIPLIST
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
-  use OUTPUT_M, only: OUTPUTOPTIONS, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, NEWLINE
+  use OUTPUT_M, only: OUTPUTOPTIONS, BLANKS, OUTPUT, NEWLINE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
   implicit none
@@ -1733,6 +1734,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.74  2014/01/09 00:25:06  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.73  2013/08/31 01:24:53  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
