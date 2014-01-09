@@ -14,6 +14,7 @@ module ReadAPriori
 
   use EXPR_M, only: EXPR
   use HDF, only: DFACC_RDONLY
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, &
     & F_DATE, F_DIMLIST, F_DOWNSAMPLE, &
     & F_FIELD, F_FILE, F_GRID, F_HDFVERSION, F_MISSINGVALUE, &
@@ -45,7 +46,7 @@ module ReadAPriori
   use MLSSTRINGLISTS, only: CATLISTS, SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE
   use MORETREE, only: GET_BOOLEAN, GET_SPEC_ID
-  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
+  use OUTPUT_M, only: BLANKS, OUTPUT, &
     & REVERTOUTPUT, SWITCHOUTPUT
   use SDPTOOLKIT, only: PGS_S_SUCCESS
   use STRING_TABLE, only: GET_STRING
@@ -1314,6 +1315,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.102  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.101  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
