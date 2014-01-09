@@ -20,6 +20,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use EXPR_M, only: EXPR, EXPR_CHECK, GETINDEXFLAGSFROMLIST
   use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP, WRAPGRIDDEDDATA
   use HDF5, only: HSIZE_T, H5DOPEN_F, H5DCLOSE_F
+  use HIGHOUTPUT, only: BEVERBOSE, OUTPUTNAMEDVALUE
   use INIT_TABLES_MODULE, only: F_MEASUREMENTS, F_TOTALPOWERVECTOR, &
     & F_WEIGHTSVECTOR, &
     & L_ADDNOISE, L_BASELINE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
@@ -81,7 +82,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & STRINGELEMENT, SWITCHDETAIL
   use MLSSTRINGS, only: INDEXES, LOWERCASE, WRITEINTSTOCHARS
   use MOLECULES, only: L_H2O
-  use OUTPUT_M, only: BEVERBOSE, BLANKS, NEWLINE, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
   use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
   use RHIFROMH2O, only: H2OPRECFROMRHI, RHIFROMH2O_FACTOR, RHIPRECFROMH2O
   use SCANMODELMODULE, only: GETBASISGPH, GET2DHYDROSTATICTANGENTPRESSURE, &
@@ -7379,6 +7380,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.97  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.96  2013/11/22 00:22:49  pwagner
 ! Simpler, hopefully better, too, way to prevent NaNs in ChiSqRatio
 !
