@@ -17,13 +17,14 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
   use DUMP_0, only: DUMP
   use GRIDDEDDATA, only: DESTROYGRIDDEDDATA, GRIDDEDDATA_T, V_IS_PRESSURE, &
     & V_IS_ALTITUDE, V_IS_GPH, V_IS_THETA, RGR
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCOMMON, only: LINELEN, NAMELEN, UNDEFINEDVALUE
   use MLSKINDS, only: R4, R8
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
   use MLSSTRINGS, only: CAPITALIZE, &
     & COUNT_WORDS, READCOMPLETELINEWITHOUTCOMMENTS
-  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: OUTPUT
   use TREE, only: DUMP_TREE_NODE, WHERE
 
   implicit NONE
@@ -865,6 +866,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.38  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.37  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !
