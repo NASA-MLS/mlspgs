@@ -19,6 +19,7 @@ module ChunkDivide_m
     & Dump_CriticalSignals
   use CHUNKS_M, only: MLSCHUNK_T, DUMP
   use DUMP_0, only: DUMP
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INIT_TABLES_MODULE, only: F_CRASHIFPHINOTMONO, &
       & F_CRITICALBANDS, F_CRITICALMODULES, F_CRITICALSIGNALS, &
       & F_EXCLUDEPOSTOVERLAPS, F_EXCLUDEPRIOROVERLAPS, &
@@ -42,7 +43,7 @@ module ChunkDivide_m
   use MLSFINDS, only: FINDFIRST
   use MLSSIGNALS_M, only: MODULES
   use MLSSTRINGLISTS, only: SWITCHDETAIL
-  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
+  use OUTPUT_M, only: BLANKS, OUTPUT, &
       & REVERTOUTPUT, SWITCHOUTPUT
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
@@ -2592,6 +2593,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.110  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.109  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
