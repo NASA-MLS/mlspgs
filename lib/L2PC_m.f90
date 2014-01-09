@@ -2261,7 +2261,7 @@ contains ! ============= Public Procedures ==========================
           call MakeHDF5Attribute ( qID, 'molecule', trim(line) )
           if ( isExtinction(qt%molecule) ) then
             line = 'none'
-            if ( radiometers(qt%radiometer)%prefix /= 0 ) &
+            if ( qt%radiometer /= 0 ) &
               & call get_string ( radiometers(qt%radiometer)%prefix, line )
             call MakeHDF5Attribute ( qID, 'radiometer', trim(line) )
           end if
@@ -2357,6 +2357,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.127  2014/01/09 18:15:42  pwagner
+! Fixed bug in preventing crashes when qt%radiometer is 0
+!
 ! Revision 2.126  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
