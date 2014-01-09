@@ -15,6 +15,7 @@ program MLSL2
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL, &
     & GET_TYPE
   use HDF, only: DFACC_RDONLY
+  use HIGHOUTPUT, only: DUMP, HEADLINE, OUTPUTNAMEDVALUE
   use INIT_TABLES_MODULE, only: INIT_TABLES
   use INTRINSIC, only: L_ASCII, L_TKGEN, LIT_INDICES
   use L2GPDATA, only: AVOIDUNLIMITEDDIMS
@@ -51,8 +52,7 @@ program MLSL2
   use MLSSTRINGS, only: TRIM_SAFE
   use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, &
     & SWITCHDETAIL
-  use OUTPUT_M, only: BLANKS, DUMP, HEADLINE, OUTPUT, &
-    & OUTPUTNAMEDVALUE, &
+  use OUTPUT_M, only: BLANKS, OUTPUT, &
     & INVALIDPRUNIT, MSGLOGPRUNIT, OUTPUTOPTIONS, STAMPOPTIONS, STDOUTPRUNIT
   use PARSER, only: CONFIGURATION
   use PRINTIT_M, only: SET_CONFIG, STDOUTLOGUNIT
@@ -774,6 +774,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.202  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.201  2013/12/12 02:10:58  vsnyder
 ! Add 'debug' to init_lexer, move syntax tree printing into internal subroutine
 !
