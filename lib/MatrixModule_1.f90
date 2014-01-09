@@ -18,7 +18,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DUMP_0, only: DUMP
-  use Lexer_Core, only: Where_T
+  use HIGHOUTPUT, only: BLANKSTOCOLUMN, DUMPSIZE, OUTPUTNAMEDVALUE
+  use LEXER_CORE, only: WHERE_T
   use MATRIXMODULE_0, only: ADD_MATRIX_BLOCKS, ASSIGNMENT(=), CHECKINTEGRITY, &
     & CHOLESKYFACTOR, CLEARLOWER, CLEARROWS, COLUMNSCALE, COL_L1, COPYBLOCK, &
     & CREATEBLOCK, CYCLICJACOBI, DENSECYCLICJACOBI, DENSIFY, &
@@ -32,8 +33,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use MLSKINDS, only: RM, RV, R8, R4
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
-  use OUTPUT_M, only: BLANKS, BLANKSTOCOLUMN, DUMPSIZE, NEWLINE, &
-    & OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
   use SYMBOL_TABLE, only: ENTER_TERMINAL
   use SYMBOL_TYPES, only: T_IDENTIFIER
@@ -2938,6 +2938,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.134  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.133  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !
