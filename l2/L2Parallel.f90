@@ -23,6 +23,7 @@ module L2Parallel
   use CHUNKS_M, only: DUMP, MLSCHUNK_T
   use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
   use DUMP_0, only: DUMP
+  use HIGHOUTPUT, only: BEVERBOSE, BANNER, OUTPUTNAMEDVALUE, TIMESTAMP
   use L2PARINFO, only: MACHINE_T, PARALLEL, &
     & CHUNKTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, MASTERDUMPTAG, PETITIONTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, &
@@ -44,8 +45,7 @@ module L2Parallel
   use MLSSTRINGS, only: LOWERCASE
   use MOREPVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MLSSTRINGS, only: NAPPEARANCES
-  use OUTPUT_M, only: BANNER, BEVERBOSE, BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
-    & TIMESTAMP
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use PVM, only: INFOTAG, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, &
     & PVMF90UNPACK, PVMTASKHOST, &
@@ -1789,6 +1789,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.107  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.106  2013/12/05 01:45:32  pwagner
 ! Pass RunID to l2q if non-blank; started using BeVerbose
 !
