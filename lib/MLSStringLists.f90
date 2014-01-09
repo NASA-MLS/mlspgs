@@ -68,6 +68,7 @@ module MLSStringLists               ! Module to treat string lists
 ! listMatches        Return list of matches for string in a list
 ! LoopOverFormula    Looping while it evaluates a string formula, substituting
 !                      for occurrences like ${arg} with value of arg
+! NCharsInFormat     How many characters in a format spec
 ! NumStringElements  Returns number of elements in string list
 ! OptionDetail       Returns detail or arg of option in list of options
 ! ParseOptions       Parse options from commandline
@@ -123,6 +124,7 @@ module MLSStringLists               ! Module to treat string lists
 !   [char inseparator], [log IgnoreLeadingSpaces])
 ! char* listMatches (strlist stringList, char* string, [char* options] )
 ! LoopOverFormula (char* formula, char* arg, char* values(:), char* results(:))
+! int nCharsinFormat ( char* Format )
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int Longestlen])
 ! char* optionDetail(strlist inList, &
@@ -261,7 +263,8 @@ module MLSStringLists               ! Module to treat string lists
    & GETHASHELEMENT, GETSTRINGELEMENT, &
    & GETUNIQUEINTS, GETUNIQUESTRINGS, GETUNIQUELIST, &
    & INSERTHASHELEMENT, INTERSECTION, ISINLIST, &
-   & LIST2ARRAY, LOOPOVERFORMULA, LISTMATCHES, NUMSTRINGELEMENTS, &
+   & LIST2ARRAY, LOOPOVERFORMULA, LISTMATCHES, &
+   & NCHARSINFORMAT, NUMSTRINGELEMENTS, &
    & OPTIONDETAIL, PARSEOPTIONS, PUTHASHELEMENT, READINTSFROMLIST, &
    & REMOVEELEMFROMLIST, REMOVELISTFROMLIST, REMOVENUMFROMLIST, &
    & REMOVEHASHARRAY, REMOVEHASHELEMENT, REMOVESWITCHFROMLIST, &
@@ -2051,6 +2054,49 @@ contains
         & which='all', no_trim=.true. )
     enddo
   end subroutine LoopOverFormula
+
+  ! .............................................  nCharsinFormat  .....
+  function nCharsinFormat ( Format ) result(nplusm)
+    ! Utility to calculate how many characters in a format spec:         
+    ! [n{xX}][,]{DEFGdefg}m.b                                             
+    ! where n, m, and b are digits (we care only about n and m)           
+    ! return (n+m)
+    ! Tested for specs: sci. format esm.b and eng. format enm.b
+    ! Also for min. width spec: 'f0.b' it will silently return 0
+    ! (It's up to you to handle that correctly)
+    ! Args                                                                
+    character(len=*), intent(in) ::  Format                               
+    integer :: nplusm                                                     
+    ! Local variables                                                     
+    character(len=20) :: kChar, myFormat                                  
+    integer :: n, m
+    ! Executable                                                          
+    nplusm = 0                                                            
+    kChar=lowerCase(Format)
+    call ReplaceSubString(kChar, myFormat, 'es', 'f')                   
+    call ReplaceSubString(myFormat, kChar, 'en', 'f')                   
+    call ReplaceSubString(kChar, myFormat, 'g', 'f')                   
+    call ReplaceSubString(myFormat, kChar, 'e', 'f')                   
+    call ReplaceSubString(kChar, myFormat, 'd', 'f')                   
+    call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')             
+    if ( kChar == '0' ) return ! Special case of e.g. 'f0.3'
+    read (kChar, '(i2)') m                                                
+    if (m < 1) call myMessage ( MLSMSG_Error, ModuleName, &              
+      & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )      
+    if ( index(TRIM(myFormat), 'x' ) == 0 ) then                          
+      n = 0                                                               
+    else                                                                  
+      call ExtractSubString(TRIM(myFormat), kChar, '(', 'x')           
+      read (kChar, '(i2)') n                                              
+      if (n < 1) then                                                     
+        print *, trim(kChar)                                              
+        print *, trim(myFormat)                                           
+        call myMessage ( MLSMSG_Error, ModuleName, &                     
+          & 'Bad conversion to n in OUTPUT_xxxLE (format not "{defg}"' )  
+      end if                                                              
+    end if                                                                 
+    nplusm = n + m                                                        
+  end function nCharsinFormat
 
   ! ---------------------------------------------  NumStringElements  -----
 
@@ -4361,6 +4407,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.64  2014/01/09 00:25:42  pwagner
+! Added nCharsinFormat function
+!
 ! Revision 2.63  2013/09/14 01:20:25  vsnyder
 ! Delete unused use name
 !
