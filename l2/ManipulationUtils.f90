@@ -16,6 +16,7 @@ module ManipulationUtils        ! operations to manipulate quantities
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use DATES_MODULE, only: TAI93S2HID
   use DUMP_0, only: DUMP
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use MLSKINDS, only: RV
   use MLSL2OPTIONS, only: MLSMESSAGE
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
@@ -27,7 +28,7 @@ module ManipulationUtils        ! operations to manipulate quantities
     & LIST2ARRAY, NUMSTRINGELEMENTS, &
     & REPLACESUBSTRING
   use MLSSTRINGS, only: INDEXES, LOWERCASE, NCOPIES, SPLITNEST, STRETCH
-  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: OUTPUT
   use VECTORSMODULE, only: VECTORVALUE_T, M_FILL, RESHAPEVECTORVALUE
   ! This module allows us to do algebraic operations on vector quantities
   ! saving the result in a vector quantity
@@ -1376,6 +1377,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.11  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.10  2013/08/12 23:49:41  pwagner
 ! FindSomethings moved to MLSFinds module
 !
