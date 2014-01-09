@@ -21,6 +21,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     & GDINQGRID, GDNENTRIES, GDINQDIMS, GDINQFLDS
   use HDF, only: DFACC_CREATE, DFACC_RDonly, DFACC_RDWR, &
     & DFNT_FLOAT32, DFNT_FLOAT64
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use L3ASCII, only: L3ASCII_READ_FIELD
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCOMMON, only: LINELEN, NAMELEN, FILENAMELEN, &
@@ -34,7 +35,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use MLSSTRINGS, only: CAPITALIZE, HHMMSS_VALUE, LOWERCASE
   use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & LIST2ARRAY, REPLACESUBSTRING, STRINGELEMENTNUM
-  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: OUTPUT
   use SDPTOOLKIT, only: PGS_S_SUCCESS, &
     & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
     & PGSD_GCT_INVERSE, &
@@ -2612,6 +2613,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.75  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.74  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !
