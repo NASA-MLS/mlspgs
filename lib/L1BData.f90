@@ -19,6 +19,7 @@ module L1BData
     & SFRDATA_F90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use IEEE_ARITHMETIC, only: IEEE_IS_FINITE
   use INTRINSIC, only: L_HDF
   use LEXER_CORE, only: PRINT_SOURCE
@@ -33,7 +34,7 @@ module L1BData
   use MLSSTRINGS, only: INDEXES, STREQ
   use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, SWITCHDETAIL
   use MORETREE, only: GET_FIELD_ID
-  use OUTPUT_M, only: OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: SWITCHES
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -2679,6 +2680,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.99  2014/01/09 00:25:06  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.98  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !

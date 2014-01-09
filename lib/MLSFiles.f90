@@ -18,6 +18,7 @@ module MLSFiles               ! Utility file routines
   use HDFEOS5, only: HE5_SWCLOSE, HE5_SWOPEN, HE5_SWINQSWATH, &
     & HE5_GDOPEN, HE5_GDCLOSE, &
     & HE5F_ACC_TRUNC, HE5F_ACC_RDonly, HE5F_ACC_RDWR
+  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INTRINSIC, only: L_ASCII, L_BINARY, L_HDFEOS, L_HDF, L_OPEN, &
     & L_SWATH, L_TKGEN, L_ZONALAVG, LIT_INDICES
   use IO_STUFF, only: GET_LUN
@@ -30,7 +31,7 @@ module MLSFiles               ! Utility file routines
   use MLSSTRINGS, only: CAPITALIZE, LOWERCASE
   use MLSSTRINGLISTS, only: EXTRACTSUBSTRING, &
     & REPLACESUBSTRING, SORTARRAY
-  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPTOOLKIT, only: &
     & PGS_PC_GETREFERENCE, PGS_S_SUCCESS, &
     & PGSD_IO_GEN_RSEQFRM, PGSD_IO_GEN_RSEQUNF, & 
@@ -2750,6 +2751,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.99  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.98  2013/09/24 23:27:14  vsnyder
 ! Use Get_Where or Print_Source to start error messages
 !
