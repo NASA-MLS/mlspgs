@@ -25,6 +25,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! so instead write them out chunk-by-chunk
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+  use HIGHOUTPUT, only: BEVERBOSE, OUTPUTNAMEDVALUE
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, &
     & L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM
   use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE, MLSFILE_T
@@ -33,7 +34,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: SWITCHDETAIL
-  use OUTPUT_M, only: BEVERBOSE, BLANKS, OUTPUT, OUTPUTNAMEDVALUE
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: SWITCHES
   use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, DUMP
@@ -1232,6 +1233,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.59  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.58  2013/11/20 00:56:19  pwagner
 ! Reduce default dump of directWriteDB to just file names
 !
