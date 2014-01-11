@@ -110,8 +110,7 @@ contains
     use TOGGLES, only: GEN, SWITCHES, TOGGLE, LEVELS
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TRACK_M, only: REPORTLEAKS
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, Where, SUB_ROSA, &
-      & SUBTREE
+    use TREE, only: DECORATE, DECORATION, NSONS, Where, SUB_ROSA, SUBTREE
     use VECTORSMODULE, only: CLEARMASK, CLEARUNDERMASK, &
       & CLEARVECTOR, CLONEVECTOR, COPYVECTOR, COPYVECTORMASK, CREATEMASK, &
       & DESTROYVECTORINFO, DUMPVECTORNORMS, GETVECTORQUANTITYBYTYPE, M_LINALG, &
@@ -1189,7 +1188,6 @@ repeat_loop: do ! RepeatLoop
 
     ! --------------------------------------  DumpStateQuantities  -----
     subroutine DumpStateQuantities ( State, DumpQuantitiesNode, Title )
-      use MoreTree, only: StartErrorMessage
       use Tree, only: DECORATION, NSONS, SUBTREE
       use VectorsModule, only: DUMP, GETVECTORQTYBYTEMPLATEINDEX, &
         & VECTOR_T, VECTORVALUE_T
@@ -2947,6 +2945,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.347  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.346  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
