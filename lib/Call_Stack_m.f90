@@ -249,7 +249,7 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), intent(in), optional :: Advance
 
     if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
-    call push_stack ( name_i, Root, Index, String, Before, Where )
+    call push_stack ( name_i, Root, Index, String, Before, Where, Advance )
 
   end subroutine Push_Stack_B
 
@@ -267,7 +267,7 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), intent(in), optional :: Advance
 
     call push_stack ( create_string ( trim(name) ), Root, Index, String, &
-      & Before, Where )
+      & Before, Where, Advance )
 
   end subroutine Push_Stack_C
 
@@ -387,6 +387,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.18  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
 ! Revision 2.17  2014/01/09 00:25:06  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
