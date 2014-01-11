@@ -244,7 +244,6 @@ contains
     integer :: logFileUnit  ! Where we will log
     integer :: LogThreshold ! Severity at which we will log
     logical :: mustRepeat   ! if we will repeat via output
-    character(len=16) :: myChars
     character(len=256) :: myMessage
     integer :: myStatus
     logical :: outputInstead   ! if we will call output instead
@@ -992,6 +991,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.79  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.78  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
