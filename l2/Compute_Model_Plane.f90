@@ -62,7 +62,6 @@ contains ! ============= Public Procedures =============================
       ! model plane is rotated counterclockwise from the spacecraft
       ! velocity direction about the spacecraft position vector
     real(rv) :: Caz, Saz  ! Cos(azimuth), Sin(azimuth)
-    integer :: MIF        ! about which model plane is rotated
     real(rv) :: P(3)      ! Normal to orbit plane
     real(rt) :: S(3)      ! Vector to the SC
     real(rt) :: V(3)      ! Unit normal parallel to SC velocity
@@ -107,8 +106,8 @@ contains ! ============= Public Procedures =============================
     velocity => &
               & GetQuantityForForwardModel ( fwdModelExtra, noError=.false., &
               & quantityType=l_scVelECR, config=config ) ! )
-      call to_cart ( (/ velocity%template%geodLat(MIF,MAF), &
-                     &  velocity%template%lon(MIF,MAF), 0.0_rt /), s )
+      call to_cart ( (/ velocity%template%geodLat(config%referenceMIF,MAF), &
+                     &  velocity%template%lon(config%referenceMIF,MAF), 0.0_rt /), s )
       v = velocity%value3(1:3,MIF,MAF)   ! V
 !a    end associate
     s = s / sqrt(dot_product(s,s)) ! Unit S
@@ -133,6 +132,9 @@ contains ! ============= Public Procedures =============================
 end module Compute_Model_Plane_m
 
 ! $Log$
+! Revision 2.4  2014/01/11 02:22:16  vsnyder
+! Get the MIF from Config instead of an undefined local variable
+!
 ! Revision 2.3  2013/08/16 02:35:34  vsnyder
 ! Get all geolocation from SCVelECR quantity
 !
