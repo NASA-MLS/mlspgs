@@ -42,7 +42,7 @@ contains ! ====     Public Procedures     ==============================
       Type_Names, Type_Name_Indices, UNDECLARED, UNITS_NAME, Variable
     use Functions, only: F_Difference, F_Exp, F_Ln, F_Log, F_Log10, &
       F_Intersection, F_Sqrt, F_Union, F_Without
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_Indices, PHYQ_INVALID, T_Unknown
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_Indices, PHYQ_INVALID
     use Output_m, only: NewLine, Output
     use StartErrorMessage_m, only: StartErrorMessage
     use STRING_TABLE, only: Display_String, FLOAT_VALUE
@@ -511,8 +511,8 @@ contains ! ====     Public Procedures     ==============================
     subroutine AnnounceError ( where, what )
       use Output_m, only: Output
       use String_Table, only: Display_String
-      use Tree, only: Dump_Tree_Node, Dump_Tree_Node_Name, Internal, &
-        & Node_Kind, Pseudo, Sub_Rosa
+      use Tree, only: Dump_Tree_Node, Dump_Tree_Node_Name, Node_Kind, &
+        & Pseudo, Sub_Rosa
       integer, intent(in) :: Where ! Tree index
       integer, intent(in) :: What  ! Error index
       integer :: NodeIs
@@ -642,9 +642,6 @@ contains ! ====     Public Procedures     ==============================
       ! Values1 and Values2.
       integer, intent(in) :: Type1
       integer, intent(in), optional :: Type2
-      integer :: Type
-      type = type1
-      if ( present(type2) ) type = the_type ( type1, type2 )
       if ( allocated(values1) ) then
         if ( present(values) ) then
           call move_alloc ( values1, values )
@@ -795,6 +792,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.31  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
 ! Revision 2.30  2014/01/08 21:11:22  vsnyder
 ! More type checking.  Better handling of arrays.  Allow == and /= for
 ! types other than numeric.
