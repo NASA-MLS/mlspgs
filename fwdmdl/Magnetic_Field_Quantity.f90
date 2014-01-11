@@ -93,7 +93,7 @@ contains
   ! Compute the magnetic field at the geolocations given by XYZ, and
   ! put the values in Qty%Value3.
 
-    use Geometry, only: SecPerYear, To_Cart
+    use Geometry, only: SecPerYear
     use IGRF_INT, only: FELDC, FELDCOF
     use MLSStringLists, only: SwitchDetail
     use QuantityTemplates, only: Epoch
@@ -152,6 +152,9 @@ contains
 end module Magnetic_Field_Quantity
 
 ! $Log$
+! Revision 2.3  2014/01/11 01:28:53  vsnyder
+! Decruftification
+!
 ! Revision 2.2  2013/08/16 02:31:25  vsnyder
 ! Add MAF argument, get To_Cart from Geometry
 !
