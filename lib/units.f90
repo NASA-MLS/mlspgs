@@ -148,7 +148,7 @@ contains ! =====     Public procedures     =============================
     ! Get the base unit corresponding to a physical unit.
     ! The base unit is one with scale == 1.0.
     use Declaration_Table, only: Decls, Get_Decl, Phys_Unit_Name, Prior_Decl
-    use Intrinsic, only: L_Dimensionless, PHYQ_Indices, PHYQ_Invalid
+    use Intrinsic, only: L_Dimensionless, PHYQ_Indices
     integer, intent(in) :: PHYS_Unit
     type(decls) :: Decl
     base_unit = l_dimensionless ! for want of a better default
@@ -175,6 +175,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.41  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
 ! Revision 2.40  2013/10/09 23:39:23  vsnyder
 ! Put lit index in 'tree' field of unit declaration
 !
