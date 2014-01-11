@@ -85,7 +85,6 @@ contains
     type (VectorValue_T), pointer :: TEMP   ! Temperature component of state vector
     integer :: Dump_Conf        ! for debugging, from -Sfmconf
     integer :: K                ! Loop inductor and subscript
-    integer :: Mol              ! A molecule's lit index
     integer :: No_Mol           ! Number of molecules
     integer :: NoUsedChannels   ! Number of channels used
     integer :: No_sv_p_T        ! number of phi basis for temperature
@@ -190,7 +189,7 @@ contains
               & 'With config(%S): ' // &
               & '%S derivative requested but %S is not in "first" state vector, ' // &
               & 'or ExtraJacobian is not present', &
-              & datum=(/ fwdModelConf%name, lit_indices(mol), lit_indices(mol) /) )
+              & datum=(/ fwdModelConf%name, lit_indices(k), lit_indices(k) /) )
           end if
         else
           ! Turn off deriv_flags where we don't want molecule derivatives,
@@ -4706,6 +4705,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.348  2013/08/31 02:30:03  vsnyder
+! Improve tracing
+!
 ! Revision 2.347  2013/08/30 03:56:23  vsnyder
 ! Revise use of trace_begin and trace_end
 !
