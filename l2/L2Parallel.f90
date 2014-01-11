@@ -52,12 +52,10 @@ module L2Parallel
     & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
     & GETMACHINENAMEFROMTID, PVMFFREEBUF, SIG_ABOUTTODIE
   use PVMIDL, only: PVMIDLUNPACK
-  use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
   use STRING_TABLE, only: DISPLAY_STRING
   use TIME_M, only: TIME_NOW
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use VECTORSMODULE, only: VECTOR_T, VECTORTEMPLATE_T
   use WRITEMETADATA, only: L2PCF
 
   implicit none
@@ -243,7 +241,6 @@ contains
     integer :: SIGNAL                   ! From slave
     integer :: SLAVETID                 ! One slave
     ! integer :: STAGEFILEID              ! From HDF5
-    integer :: STATUS                   ! From deallocate etc.
     integer :: TIDARR(1)                ! One tid
 
     integer, dimension(size(chunks)) :: CHUNKMACHINES ! Machine indices for chunks
@@ -1789,6 +1786,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.108  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.107  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
