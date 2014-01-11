@@ -264,7 +264,7 @@ contains
     use PCFHDR, only: GLOBALATTRIBUTES, FILLTAI93ATTRIBUTE
     use READAPRIORI, only: APRIORIFILES
     use SDPTOOLKIT, only: MAX_ORBITS, MLS_UTCTOTAI, &
-      & PGSd_DEM_3ARC, PGSd_DEM_30ARC, PGSd_DEM_90ARC, &
+      & PGSd_DEM_30ARC, PGSd_DEM_90ARC, &
       & PGSd_DEM_ELEV, PGSd_DEM_WATER_LAND, &
       & PGS_DEM_OPEN
     use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
@@ -273,7 +273,7 @@ contains
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
       & DUMP_TREE_NODE
-    use TREE_TYPES, only: N_EQUAL, N_IF, N_NAMED, N_Select, N_Variable
+    use TREE_TYPES, only: N_EQUAL
     use VGRID, only: CREATEVGRIDFROMMLSCFINFO
     use VGRIDSDATABASE, only: ADDVGRIDTODATABASE, VGRIDS
     use WRITEMETADATA, only: L2PCF
@@ -335,7 +335,6 @@ contains
     character(len=NameLen) :: End_time_string, Start_time_string
     character(len=FileNameLen) :: FilenameString
     character (len=name_len) :: QUANTITY
-    character(len=*), parameter :: Time_conversion='(F32.0)'
 
     integer, parameter :: Param_restricted = 1 ! Parameter not allowed
     integer, parameter :: Spec_restricted = param_restricted + 1 ! Spec not allowed
@@ -1280,6 +1279,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.152  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.151  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
