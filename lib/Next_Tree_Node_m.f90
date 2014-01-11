@@ -55,7 +55,6 @@ contains ! ====     Procedures     =====================================
       & Value_T
     use Evaluate_Variable_m, only: Evaluate_Variable
     use Expr_M, only: Expr
-    use Intrinsic, only: PHYQ_Invalid
     use Toggles, only: Gen, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     use Tree, only: Node_ID, Nsons, Subtree
@@ -217,7 +216,6 @@ contains ! ====     Procedures     =====================================
       & Value_T
     use Evaluate_Variable_m, only: Evaluate_Variable
     use Expr_M, only: Expr
-    use Intrinsic, only: PHYQ_Invalid
     use Toggles, only: Gen, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     use Tree, only: Node_ID, Nsons, Subtree
@@ -334,7 +332,6 @@ contains ! ====     Procedures     =====================================
 
   subroutine Announce_Error ( Loc, What )
     use Lexer_Core, only: Print_Source
-    use Output_m, only: Output
     use PrintIt_m, only: MLSMSG_Error, PrintItOut
     use Tree, only: Where
     integer, intent(in) :: Loc ! Tree node index
@@ -357,6 +354,9 @@ contains ! ====     Procedures     =====================================
 end module Next_Tree_Node_m
 
 ! $Log$
+! Revision 2.2  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
 ! Revision 2.1  2013/12/12 02:12:07  vsnyder
 ! Initial commit
 !
