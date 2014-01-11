@@ -31,7 +31,7 @@ contains
 ! This routine automatically makes an appropriate z_grid for the
 ! users specified input
 
-    use Allocate_deallocate, only: Allocate_test, Bytes, Test_Allocate
+    use Allocate_deallocate, only: Bytes, Test_Allocate
     use MLSCommon, only: rp, ip
     use Sort_m, only: Sort
 
@@ -128,6 +128,9 @@ contains
 end module Make_Z_Grid_m
 
 ! $Log$
+! Revision 2.12  2014/01/11 01:28:53  vsnyder
+! Decruftification
+!
 ! Revision 2.11  2013/06/14 20:23:02  vsnyder
 ! Eliminate tan_press -- nobody used it
 !
