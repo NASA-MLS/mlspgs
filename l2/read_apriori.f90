@@ -45,14 +45,13 @@ module ReadAPriori
     & MLSPCF_SURFACEHEIGHT_START, MLSPCF_SURFACEHEIGHT_END
   use MLSSTRINGLISTS, only: CATLISTS, SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE
-  use MORETREE, only: GET_BOOLEAN, GET_SPEC_ID
-  use OUTPUT_M, only: BLANKS, OUTPUT, &
+  use MORETREE, only: GET_BOOLEAN
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
     & REVERTOUTPUT, SWITCHOUTPUT
   use SDPTOOLKIT, only: PGS_S_SUCCESS
   use STRING_TABLE, only: GET_STRING
-  use TIME_M, only: TIME_NOW
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
-  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
+  use TREE, only: DECORATE, DECORATION, NSONS, &
     &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, Where
 
   implicit none
@@ -154,7 +153,7 @@ contains ! =====     Public Procedures     =============================
     use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, NSONS, SUBTREE
+    use TREE, only: DECORATE
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -163,7 +162,6 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     ! Local variables
     integer :: Details             ! How much info about the files to dump
-    integer :: I
     integer :: KEY
     integer :: LastAprioriPCF      ! l2gp or l2aux  apriori
     integer :: LastClimPCF         ! l3ascii or gloria format
@@ -342,7 +340,6 @@ contains ! =====     Public Procedures     =============================
     logical :: sumDelp          ! sum up the DELP field values to get PL?
     integer :: SwathName        ! sub-rosa index of name in swath='name'
     character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
-    logical :: TIMING
     integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
     double precision :: Value(2)        ! Value returned by EXPR
@@ -1315,6 +1312,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.103  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.102  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !

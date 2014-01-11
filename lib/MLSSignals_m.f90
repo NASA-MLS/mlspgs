@@ -224,8 +224,7 @@ contains
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
-      & SUB_ROSA, SUBTREE
+    use TREE, only: DECORATE, DECORATION, NSONS, SUB_ROSA, SUBTREE
 
     integer, intent(in) :: ROOT         ! The "cf" vertex for the section
 
@@ -238,7 +237,7 @@ contains
     integer :: First                    ! "first" field of "spectrometer"
     logical :: Got(field_first:last_Signal_Field)   ! "Got this field already"
     integer :: Gson                     ! Son of Son.
-    integer :: I, J, K                  ! Subscript and loop inductor.
+    integer :: J, K                     ! Subscript and loop inductor.
     integer :: Key                      ! Indexes the spec_args vertex.
     integer :: Last                     ! "last" field of "spectrometer"
     integer :: Me = -1                  ! Signal index for trace
@@ -303,7 +302,7 @@ contains
           case default
             ! Shouldn't get here if the type checker worked
           end select
-        end do ! i = 2, nsons(key)
+        end do ! j = 2, nsons(key)
         call decorate ( key, addBandToDatabase ( bands, band ) )
 
       case ( s_module ) ! ............................  MODULE  ........
@@ -357,7 +356,7 @@ contains
           case default
             ! Shouldn't get here if the type checker worked
           end select
-        end do ! i = 2, nsons(key)
+        end do ! j = 2, nsons(key)
         call decorate ( key, addRadiometerToDatabase ( radiometers, radiometer ) )
 
       case ( s_signal ) ! ..........................  VALIDSIGNAL  .....
@@ -390,7 +389,7 @@ contains
           case default
             ! Shouldn't get here if the type checker worked
           end select
-        end do ! i = 2, nsons(key)
+        end do ! j = 2, nsons(key)
         signal%name = name
         ! Did this band have a radiometer spec deferred to this point?
         if ( bands(signal%band)%radiometer == 0 ) then
@@ -482,7 +481,7 @@ contains
           case default
             ! Shouldn't get here if the type checker worked
           end select
-        end do ! i = 2, nsons(key)
+        end do ! j = 2, nsons(key)
         if ( got(f_channels) ) then
           if ( any(got( (/ f_last, f_start, f_step, f_width /) )) ) &
             & call announceError ( badMix, f_channels, &
@@ -1938,6 +1937,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.103  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
 ! Revision 2.102  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
