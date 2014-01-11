@@ -82,7 +82,7 @@ contains ! ====     Public Procedures     ==============================
     if ( Verbose ) &
       & call output( 'Trace_Begin ' // trim(Name_c), advance='yes' )
 
-    call trace_begin ( name_i, root, index, string, cond )
+    call trace_begin ( name_i, root, index, string, cond, advance )
 
   end subroutine TRACE_BEGIN_C
 
@@ -92,12 +92,12 @@ contains ! ====     Public Procedures     ==============================
   ! front.  Increment DEPTH.
 
     use CALL_STACK_M, only: STACK_T, PUSH_STACK, TOP_STACK
-    use MLSCommon, only: MLSFile_T, MLSDebug, MLSVerbose, &
+    use MLSCommon, only: MLSDebug, MLSVerbose, &
       & MLSDebugSticky, MLSVerboseSticky, MLSNamesAreVerbose, MLSNamesAreDebug
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: OUTPUTOPTIONS
-    use STRING_TABLE, only: CREATE_STRING, GET_STRING, HOW_MANY_STRINGS
+    use STRING_TABLE, only: GET_STRING, HOW_MANY_STRINGS
 
     integer, intent(in) :: NAME
     integer, intent(in), optional :: ROOT
@@ -149,11 +149,11 @@ contains ! ====     Public Procedures     ==============================
   ! bother with this if you can see both Trace_Begin and Trace_end, and
   ! they're invoked with the same condition.
 
-    use CALL_STACK_M, only: POP_STACK, STACK_T, STACK_DEPTH, TOP_STACK
+    use CALL_STACK_M, only: POP_STACK, STACK_T, STACK_DEPTH ! , TOP_STACK
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTOPTIONS
-    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS, GET_STRING
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS
     use TOGGLES, only: SWITCHES
 
     character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
@@ -163,7 +163,6 @@ contains ! ====     Public Procedures     ==============================
 
     integer :: Check = -2
     type(stack_t) :: Frame
-    character(32) :: PARENTNAME
 
     logical :: MyCond
 
@@ -261,6 +260,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.38  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
 ! Revision 2.37  2013/11/18 22:24:03  pwagner
 ! Sticky versions of verbose, debug available
 !
