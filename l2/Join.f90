@@ -74,7 +74,7 @@ contains ! =====     Public Procedures     =============================
       & Next_Tree_Node_State
     use OUTPUT_M, only: OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
-    use TREE, only: SUBTREE, NSONS, Where_At => Where
+    use TREE, only: Where_At => Where
     use TIME_M, only: TIME_NOW
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: VECTOR_T
@@ -2238,6 +2238,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.159  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.158  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
