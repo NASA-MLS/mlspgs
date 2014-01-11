@@ -621,7 +621,6 @@ contains ! =====     Public Procedures     =============================
   integer function Process_PFA_File_datum ( PFAFileDatum, Where )
 
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
-    use Lexer_Core, only: Get_Where
     use MLSHDF5, only: LOADPTRFROMHDF5DS
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
       & MLSMSG_SEVERITY_TO_QUIT, MLSMSG_WARNING
@@ -890,7 +889,7 @@ contains ! =====     Public Procedures     =============================
         g = groups(i)
         call openPFAGroup ( PFAFiles(f), PFAData(PFAFiles(f)%ix(g)), where )
         call read_PFADatum_H5 ( PFAData(PFAFiles(f)%ix(g))%HDF5_groupID, &
-          & PFAData(PFAFiles(f)%ix(g)), .true., f=f, g=g )
+          & PFAData(PFAFiles(f)%ix(g)), .true. )
         call h5gClose_f ( PFAData(PFAFiles(f)%ix(g))%HDF5_groupID, iostat )
         if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Unable to close HDF5 PFA group %s%%s in %s at %w.', &
@@ -1224,7 +1223,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine OpenPFAGroup
 
   ! -------------------------------------------  Read_PFADatum_H5  -----
-  subroutine Read_PFADatum_H5 ( GroupID, PFADatum, Derivs, Data, F, G )
+  subroutine Read_PFADatum_H5 ( GroupID, PFADatum, Derivs, Data )
   ! Read the PFA Datum from HDF5 group GroupId into PFADatum.
   ! Read dAbsDwc and dAbsDnc if and only if Derivs is true.  Add any
   ! grids that aren't already in VGrids.
@@ -1238,19 +1237,18 @@ contains ! =====     Public Procedures     =============================
     use MOREMESSAGE, only: MLSMESSAGE
     use MORETREE, only: GETSTRINGINDEXFROMSTRING
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use VGRIDSDATABASE, only: ADDVGRIDIFNECESSARY, RS, VGRIDS ! RS=KIND FOR SURFS
+!     use VGRIDSDATABASE, only: ADDVGRIDIFNECESSARY, VGRIDS ! RS=KIND FOR SURFS
+    use VGRIDSDATABASE, only: RS ! RS=KIND FOR SURFS
 
     integer(hid_t), intent(in) :: GroupId
     type(PFAData_T), target :: PFADatum
     logical, intent(in) :: Derivs
     logical, intent(in), optional :: Data ! "Read the data -- default true"
-    integer, intent(in), optional :: F, G ! Where to hook into PFAFiles,
 
     logical, pointer :: Channels(:) ! output from Parse_Signal
     integer :: J, K
     character(1023) :: Line ! Text, e.g. filter file name
     logical :: MyData
-    integer :: MyF, MyG
     integer, pointer :: SignalIndices(:) ! output from Parse_Signal
     character(len=maxSigLen) :: SignalText
     real(rs) :: SurfStep ! for temperature and pressure grids
@@ -1260,10 +1258,6 @@ contains ! =====     Public Procedures     =============================
 
     myData = .true.
     if ( present(data) ) myData = data
-
-    myF = 0; myG = 0
-    if ( present(f) ) myF = f
-    if ( present(g) ) myG = g
 
     nullify ( channels, signalIndices )
     if ( isHDF5AttributePresent(groupID, 'filterFile') ) then
@@ -1363,6 +1357,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.48  2014/01/11 01:28:53  vsnyder
+! Decruftification
+!
 ! Revision 2.47  2013/09/24 23:28:17  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
