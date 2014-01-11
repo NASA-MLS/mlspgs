@@ -391,7 +391,6 @@ contains
   subroutine ReadVector ( Unit, Vector, Status )
     ! Read a vector from Unit, while verifying its properties are the same
     ! as the one on Unit
-    use Allocate_Deallocate, only: Allocate_Test
     use VectorsModule, only: CreateMask, CreateVectorValue, Vector_T
     integer, intent(in) :: Unit    ! Fortran I/O unit, already open
     type (vector_t), intent(inout) :: Vector
@@ -652,6 +651,9 @@ contains
 end module Checkpoint
 
 ! $Log$
+! Revision 2.5  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.4  2012/07/31 00:47:00  vsnyder
 ! Use CreateVectorValue and CreateMask abstractions in ReadVector
 !
