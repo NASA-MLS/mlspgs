@@ -21,8 +21,7 @@ module IGRF_INT
 !               GSFC, NSSDC, Code 933, Greenbelt, MD 20771, USA.
 !               BILITZA%NSSDCA.SPAN@DFTNIC.BITNET
 
-  use Constants, only: Rad2Deg, Deg2Rad
-  use GEOMETRY, only: EarthRadA, EarthRadB
+  use Constants, only: Rad2Deg
 
   implicit NONE
   private
@@ -976,6 +975,9 @@ o:  do n = 3, size(p,2)-1
 end module IGRF_INT
 
 ! $Log$
+! Revision 2.9  2014/01/11 01:28:53  vsnyder
+! Decruftification
+!
 ! Revision 2.8  2013/08/16 02:29:46  vsnyder
 ! Move To_Cart to Geometry
 !
