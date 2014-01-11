@@ -24,9 +24,9 @@ module OUTPUT_M
     & READINTSFROMCHARS, TRIM_SAFE
   use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, &
     & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_INFO, MLSMSG_ERROR, &
-    & MLSMSG_SEVERITY_TO_QUIT, &
-    & MLSMSG_WARNING, &
-    & PRINTITOUT, MLSMESSAGECONFIG
+    & MLSMSG_SEVERITY_TO_QUIT, MLSMSG_WARNING, PRINTITOUT, &
+    & MLSMESSAGECONFIG
+
   implicit none
   private
 
@@ -1376,6 +1376,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.111  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
 ! Revision 2.110  2014/01/09 00:22:18  pwagner
 ! Split output module procedures between it and new highOutput
 !

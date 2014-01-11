@@ -2085,7 +2085,7 @@ contains ! =====     Public Procedures     =============================
     use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
     use TOGGLES, only: GEN, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: SUBTREE, NSONS, NODE_ID, DECORATION
+    use TREE, only: SUBTREE, NODE_ID, DECORATION
     use TREE_TYPES, only: N_NAMED
     ! Dummy arguments
     integer, intent(in) :: Root         ! of the entire tree
@@ -2095,7 +2095,6 @@ contains ! =====     Public Procedures     =============================
     type(L2GPData_T), dimension(:), pointer :: L2GPDatabase
     type(TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     ! Local variables
-    integer :: LINE                     ! Line in l2cf
     integer :: CHUNK                    ! Loop counter
     integer :: C                        ! Inner loop counter
     integer :: HGRID                    ! Loop counter
@@ -2422,6 +2421,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.111  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.110  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !

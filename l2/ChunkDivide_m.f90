@@ -31,7 +31,7 @@ module ChunkDivide_m
       & FIELD_FIRST, FIELD_LAST, L_BOTH, L_EITHER, L_EVEN, &
       & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, S_Dump
   use INTRINSIC, only: L_NONE, FIELD_INDICES, LIT_INDICES, PHYQ_ANGLE, &
-      & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
+      & PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
   use L1BDATA, only: L1BDATA_T, READL1BDATA, GETL1BFILE, NAME_LEN, &
       & ASSEMBLEL1BQTYNAME, PRECISIONSUFFIX, DEALLOCATEL1BDATA
   use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T
@@ -166,14 +166,13 @@ contains ! ===================================== Public Procedures =====
   subroutine ChunkDivide ( root, processingRange, filedatabase, chunks )
 
     use DumpCommand_m, only: DumpCommand
-    use Evaluate_Variable_m, only: Evaluate_Variable
     use EXPR_M, only: EXPR
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSCOMMON, only: TAI93_RANGE_T
     use MLSHDF5, only: GETHDF5ATTRIBUTE
     use MLSL2OPTIONS, only: NEED_L1BFILES, SPECIALDUMPFILE
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
-    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
+    use MORETREE, only: GET_FIELD_ID, GET_SPEC_ID
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use TIME_M, only: TIME_NOW
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -188,7 +187,6 @@ contains ! ===================================== Public Procedures =====
 
     ! Local variables
     type (MLSFile_T), pointer :: DACSFile
-    integer :: I                        ! Loop inductor
     type (MAFRange_T) :: MAFRange
     integer :: Me = -1                  ! String index for trace
     integer :: Son                      ! of section root
@@ -2593,6 +2591,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.111  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.110  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
