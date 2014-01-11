@@ -46,8 +46,7 @@ module ReadAPriori
   use MLSSTRINGLISTS, only: CATLISTS, SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE
   use MORETREE, only: GET_BOOLEAN
-  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUTNAMEDVALUE, &
-    & REVERTOUTPUT, SWITCHOUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
   use SDPTOOLKIT, only: PGS_S_SUCCESS
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: GEN, SWITCHES, TOGGLE
@@ -1312,6 +1311,10 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.104  2014/01/11 01:52:15  vsnyder
+! Get OutputNamedValue from HighOutput, not Output_m.  Getting it from
+! Output_m crept back in during CVS conflict resolution.
+!
 ! Revision 2.103  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
