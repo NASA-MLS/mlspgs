@@ -114,7 +114,7 @@ contains ! =====     Public Procedures     =============================
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
+    use TREE, only: DECORATE
     use VECTORSMODULE, only: ADDVECTORTEMPLATETODATABASE, &
       & VECTOR_T, VECTORTEMPLATE_T
 
@@ -135,7 +135,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
 
-    integer :: I                ! Loop counter
     integer :: KEY              ! S_... from Init_Tables_Module.
     integer :: Me = -1          ! String index for trace
     integer :: Me_Spec = -1     ! String index for trace
@@ -291,6 +290,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.72  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.71  2013/12/12 02:11:26  vsnyder
 ! Use iterator to handle variables, and IF and SELECT constructs
 !
