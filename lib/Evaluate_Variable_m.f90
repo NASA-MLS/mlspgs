@@ -40,7 +40,6 @@ contains ! ====     Public Procedures     ==============================
     integer :: Details           ! Dump expression values
     integer :: I
     integer :: Me = -1           ! String index for trace cacheing
-    integer :: N                 ! For allocation
     integer :: Type
     integer :: Units(2)          ! From expr
     double precision :: Value(2) ! From expr
@@ -91,6 +90,9 @@ contains ! ====     Public Procedures     ==============================
 end module Evaluate_Variable_m
 
 ! $Log$
+! Revision 2.3  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
 ! Revision 2.2  2014/01/08 21:09:06  vsnyder
 ! Add more type checking and tracing
 !

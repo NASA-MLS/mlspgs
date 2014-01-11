@@ -91,10 +91,7 @@ contains ! ===================================  Public Procedures  =====
     ! Args
     type(ChunkDivideConfig_T), intent(in) :: Config
 
-    integer :: swLevel ! How much extra debugging info to print (-1 means none)
-
     ! Executable code
-    swlevel = switchDetail(switches, 'chu' )
     call print_source ( where(config%where), &
       & before='ChunkDivide configuration at ', advance='yes' )
     call display_string ( lit_indices(Config%method), &
@@ -160,10 +157,8 @@ contains ! ===================================  Public Procedures  =====
 
     ! Local variables
     integer :: i                        ! Loop counter
-    integer :: swLevel ! How much extra debugging info to print (-1 means none)
 
     ! Executable code
-    swlevel = switchDetail(switches, 'chu' )
     if ( associated ( criticalSignals ) ) then
       if ( size(criticalSignals) == 0 ) then
         call output ( 'criticalSignals is a zero size array.', advance='yes' )
@@ -197,6 +192,9 @@ contains ! ===================================  Public Procedures  =====
 end module ChunkDivideConfig_m
 
 ! $Log$
+! Revision 2.3  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.2  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
