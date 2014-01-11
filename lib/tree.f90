@@ -17,8 +17,8 @@ module TREE
   use OUTPUT_M, only: NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, LOOKUP_AND_INSERT
   use SYMBOL_TABLE, only: SET_SYMBOL, SYMBOL
-  use SYMBOL_TYPES, only: TREENODE, T_NULL
-  use TOGGLES, only: CON, Switches, TOGGLE
+  use SYMBOL_TYPES, only: TREENODE
+  use TOGGLES, only: CON, TOGGLE
   use TREE_TYPES, only: LAST_TREE_NODE, N_EOF, N_NULL, TREE_INIT, TREE_MAP
   implicit NONE
   private
@@ -1028,6 +1028,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.28  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
 ! Revision 2.27  2014/01/08 21:07:58  vsnyder
 ! Get_Tree_Node_Name_TX ought to get the name, not display it
 !
