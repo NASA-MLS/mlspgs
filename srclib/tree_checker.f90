@@ -32,7 +32,7 @@ module TREE_CHECKER
     &                           FIELD_LAST, LIT_INDICES, PHYQ_DIMENSIONLESS, &
     &                           SECTION_FIRST,SECTION_INDICES, SECTION_LAST, &
     &                           SECTION_ORDERING, T_BOOLEAN
-  use INTRINSIC, only: ALL_FIELDS, DU, EMPTY_OK, EXPR_OK, NO_ARRAY,&
+  use INTRINSIC, only: ALL_FIELDS, EMPTY_OK, EXPR_OK, NO_ARRAY,&
     &                  NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, PHYQ_INVALID, &
     &                  REQ_FLD, U
   use LEXER_CORE, only: PRINT_SOURCE
@@ -43,7 +43,7 @@ module TREE_CHECKER
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, &
                   NODE_ID, NODE_KIND, NSONS, NULL_TREE, PSEUDO, SUB_ROSA, &
-                  SUBTREE, THE_FILE
+                  SUBTREE
   use TREE_TYPES ! Everything, especially everything beginning with N_
   implicit NONE
   private
@@ -138,8 +138,8 @@ contains ! ====     Public Procedures     ==============================
       case ( n_spec_def );  call def_spec ( son )
       case ( n_select );    call select_construct ( son )
                             if ( myFirst < 0 ) myFirst = i
-      case ( n_variable )
-        call variable_def ( son )
+      case ( n_variable );  call variable_def ( son )
+                            if ( myFirst < 0 ) myFirst = i
       case default ;        call announce_error ( son, no_code_for )
       end select
     end do
@@ -1030,8 +1030,8 @@ contains ! ====     Public Procedures     ==============================
   end subroutine EQUAL
 
 ! ---------------------------------------------------------  EXPR  -----
-  recursive integer function EXPR ( ROOT, TYPE, UNITS, VALUE, &
-    &                               FIELD, START, FIELD_LOOK, FIELD_TEST ) &
+  recursive integer function EXPR ( ROOT, TYPE, UNITS, VALUE, FIELD, &
+    &                               START, FIELD_LOOK, FIELD_TEST, Tree ) &
     & result ( Stat )
 
   ! Analyze an expression, check units of everything in it, return its
@@ -1045,6 +1045,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: START    ! of sons of FIELD
     integer, intent(out), optional :: Field_Look ! Last name of x.y, for error message
     integer, intent(out), optional :: Field_Test ! Allowed field name, for error message
+    integer, intent(out), optional :: Tree    ! Decl%Tree if identifier
 
     ! Stat is zero unless TO_CHECK, FIELD, and START are present,
     ! node_id(ROOT) == n_dot, and the operands of n_dot are wrong for
@@ -1058,6 +1059,7 @@ contains ! ====     Public Procedures     ==============================
     integer :: SON1, SON2, SON3    ! Sons of "root"
     integer :: STRING              ! sub_rosa(root)
     integer :: Trace = -1          ! String index for trace
+    integer :: Tree2
     integer :: TYPE2, TYPE3        ! Types for sons of "root"
     integer :: UNITS2, UNITS3      ! Units for sons of "root"
     double precision :: VALUE2, VALUE3 ! Values for sons of "root"
@@ -1066,6 +1068,7 @@ contains ! ====     Public Procedures     ==============================
     stat = 0 ! Assume status is OK
     units = phyq_dimensionless     ! default
     value = 0.0d0                  ! default
+    if ( present(tree) ) tree = -1 ! default
     me = node_id(root)
     select case ( me )
     case ( n_identifier, n_number, n_string ) ! ----------------------------
@@ -1086,13 +1089,15 @@ contains ! ====     Public Procedures     ==============================
         end select
       end if
       decl = get_decl(string, named_value)
-      do while ( decl%type /= null_decl .and. decl%type /= variable )
+      do while ( decl%type /= null_decl .and. decl%type /= variable .and. &
+        decl%type /= label )
         decl = prior_decl(decl)
       end do
       if ( decl%type == null_decl ) decl = declaration(string)
       type = decl%type
       units = decl%units
       value = decl%value
+      if ( present(tree) ) tree=decl%tree
     case ( n_unit ) ! ------------------------------------------------------
       son1 = subtree(1,root)
       stat = expr (son1, type, units, value, field, start, field_look, field_test)
@@ -1389,16 +1394,20 @@ contains ! ====     Public Procedures     ==============================
       if ( stat /= 3 ) type = dot
     case ( n_array )
       son1 = subtree(1,root)
-      stat = expr ( son1, type, units, value )
+      stat = expr ( son1, type, units, value, tree=tree )
       if ( stat /= 0 ) &
   go to 9
       do i = 2, nsons(root)
         son2 = subtree(i,root)
-        stat = expr ( son2, type2, units2, value2 )
+        stat = expr ( son2, type2, units2, value2, tree=tree2 )
         if ( stat /= 0 ) &
   go to 9
-        if ( type /= type2 ) &
+        if ( type /= type2 ) then
           call local_error ( son2, inconsistent_types, (/ son1, son2 /) )
+        else if ( (type == enum_value .or. type == label) .and. &
+                & tree /= tree2 ) then
+          call local_error ( son2, inconsistent_types, (/ son1, son2 /) )
+        end if
       end do
     case default ! ---------------------------------------------------------
       call local_error ( root, no_code_for )
@@ -1491,7 +1500,6 @@ contains ! ====     Public Procedures     ==============================
 ! -------------------------------------------------------  ONE_CF  -----
   recursive subroutine ONE_CF ( ROOT, SON1, Decl )
   ! Analyze one configuration, with abstract syntax tree rooted at ROOT.
-    use Tree, Only: Where
     integer, intent(in) :: ROOT
     integer, intent(in) :: SON1    ! First son of CF
     type(decls), intent(in) :: DECL ! Declaration of "name" on "begin name"
@@ -1545,7 +1553,6 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: ROOT
 
     type(decls) :: DECL            ! Declaration of "name" on "begin name"
-    integer :: GSON1, GSON2        ! Grandsons of ROOT being analyzed
     integer :: I, N                ! Loop inductor, number of sons
     integer :: Me = -1             ! String index for trace
     integer :: SON1, SONN          ! Sons of ROOT being analyzed
@@ -1735,57 +1742,19 @@ contains ! ====     Public Procedures     ==============================
 
     integer, intent(in) :: Root ! Tree index of n_variable from := operator
     type(decls) :: Decl
-    integer :: I, J
     integer :: Me = -1          ! String index for trace cacheing
-    logical :: Numeric
-    integer :: Son1, Son2, Sonn ! Left son, right sons
+    integer :: Son1             ! Left son
     integer :: String           ! String index of variable at Son1
-    integer :: Units1, Units2   ! Of right sons
-    integer :: Type1, Type2     ! Types of right sons
-    type(decls) :: Type_Decl    ! For an enumerator
-    double precision :: Value
+    integer :: Units1           ! Of right sons
+    integer :: Type1            ! Types of right sons
     type(value_t), allocatable :: Values(:)
-    integer :: What, What2
+    integer :: What1
 
     call trace_begin ( me, 'Variable_Def', root, cond=toggle(con) )
-    son2 = subtree(2,root)
-    j = expr ( son2, type1, units1, value )
-    what = type1
-    units2 = units1 ! In case of scalar value
-    numeric = type1 == num_value
-    select case ( type1 )
-    case ( enum_value, label )
-      string = sub_rosa(son2)
-      decl = get_decl ( string, type1 )
-      type1 = decl%tree ! dt_def node if enum_value, first son is type name
-                        ! spec_args node if label, first son is spec name,
-                        ! decoration of first son is spec_def node
-      if ( what == label ) type1 = decoration(subtree(1,type1))
-    end select
-
-    do i = 3, nsons(root)
-      sonn = subtree(i,root)
-      j = expr ( sonn, type2, units2, value )
-      what2 = type2
-      select case ( type2 )
-      case ( enum_value, label )
-        string = sub_rosa(sonn)
-        decl = get_decl ( string, type2 )
-        type2 = decl%tree ! dt_def node if enum_value, first son is type name
-                          ! spec_args node if label, first son is spec name,
-                          ! decoration of first son is spec_def node
-        if ( what2 == label ) type2 = decoration(subtree(1,type2))
-      end select
-      if ( type1 /= type2 .or. what /= what2 ) then
-        call announce_error ( sonn, inconsistent_data_types, expect=type1, &
-          & got=type2 )
-      end if
-      if ( numeric .and. units1 /= units2 ) then
-        call announce_error ( sonn, inconsistent_units, expect=units1, &
-          & got=units2 )
-      end if
-    end do
-
+    type1 = -1
+    what1 = -1
+    units1 = -1
+    call check_type ( root, 2, what1, units1, type1 )
     son1 = subtree(1,root)
     string = sub_rosa(son1)
     decl = get_decl ( string, [ enum_value, label, named_value, variable ] )
@@ -1793,32 +1762,32 @@ contains ! ====     Public Procedures     ==============================
     case ( enum_value, label, named_value )
       call announce_error ( son1, variable_conflict, got=string )
     case ( variable )
-      select case ( what )
+      select case ( what1 )
       case ( enum_value, label )
-        if ( values(1)%type /= type1 ) then
+        if ( decl%values(1)%type /= type1 ) then
           call announce_error ( root, inconsistent_data_types, &
-            & expect=values(1)%type, got=type1 )
+            & expect=decl%values(1)%type, got=type1 )
         end if
       case default
-        if ( decl%units /= what ) then
+        if ( decl%units /= what1 ) then
           call announce_error ( root, inconsistent_types, expect=decl%units, &
-            & got=what )
+            & got=what1 )
         end if
       end select
     case default
       allocate ( values(1) )
-                   !   what      type   value                        units
-      values = value_t(what, type1, [string+0.0d0,string+0.0d0], [units1,units2] )
+                   !   what1  type   value                        units
+      values = value_t(what1, type1, [string+0.0d0,string+0.0d0], [units1,units1] )
                    ! String  Value         Type      Units Tree
-      call declare ( string, string+0.0d0, variable, what, son1, values )
-      if ( toggle(con) ) decl = get_decl ( string, variable )
+      call declare ( string, string+0.0d0, variable, what1, son1, values )
+      decl = get_decl ( string, variable )
     end select
 
-    select case ( what )
+    select case ( what1 )
     case ( enum_value, label )
       call decorate ( son1, type1 ) ! Type def tree of enums
     case default
-      call decorate ( son1, son2 )
+      call decorate ( son1, subtree(2,root) )
     end select
 
     if ( decl%type /= variable ) then
@@ -1827,6 +1796,69 @@ contains ! ====     Public Procedures     ==============================
       call trace_end ( 'Variable_Def', string=trim(type_names(decl%units)), &
         & cond=toggle(con) )
     end if
+
+  contains
+
+    recursive subroutine Check_Type ( Root, Start, What, Units, Type )
+      integer, intent(in) :: Root   ! of subtree to check
+      integer, intent(in) :: Start  ! First son of Root to check
+      integer, intent(inout) :: What, Units ! the sons need to agree
+      integer, intent(inout) :: Type ! -1 if not yet set, the sons need to agree
+      type(decls) :: Decl ! of Sonn
+      integer :: I, J
+      integer :: Me = -1  ! String index for tracing
+      logical :: Numeric
+      integer :: Sonn     ! of Root
+      integer :: Tree     ! Decl%Tree if sonn is identifier
+      integer :: Type2    ! of Sonn
+      integer :: Units2   ! of Sonn
+      double precision :: Value
+      integer :: What2    ! of Sonn
+
+      call trace_begin ( me, 'Check_Type', root, cond=toggle(con) )
+      do i = start, nsons(root)
+        sonn = subtree(i,root)
+        if ( node_id(sonn) == n_array ) then
+          call check_type ( sonn, 1, what, units, type )
+        else
+          j = expr ( sonn, type2, units2, value, tree=tree )
+          numeric = type2 == num_value
+          what2 = type2
+          if ( type < 0 ) then
+            units = units2
+            what = what2
+            type = type2
+            select case ( type )
+            case ( enum_value, label, variable )
+              if ( tree > 0 ) then
+                type = tree
+                if ( what == label ) type = decoration(subtree(1,type))
+              end if
+            end select
+          end if
+          select case ( type2 )
+          case ( enum_value, label )
+            decl = get_decl ( sub_rosa(sonn), type2 )
+            type2 = tree ! dt_def node if enum_value, first son is type name
+                         ! spec_args node if label, first son is spec name,
+                         ! decoration of first son is spec_def node
+            if ( what2 == label ) type2 = decoration(subtree(1,type2))
+            call decorate ( sonn, decl%units )
+          end select
+          if ( type /= type2 .or. what /= what2 ) then
+            call announce_error ( sonn, inconsistent_data_types, expect=type, &
+              & got=type2 )
+          end if
+          if ( numeric .and. units /= units2 ) then
+            call announce_error ( sonn, inconsistent_units, expect=units, &
+              & got=units2 )
+          end if
+        end if
+      end do
+      call trace_end ( 'Check_Type', cond=toggle(con) )
+
+    end subroutine Check_Type
+
   end subroutine Variable_Def
 
   logical function not_used_here()
@@ -1841,6 +1873,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.45  2013/12/12 01:54:53  vsnyder
+! Provide variable assignment, and IF, and SELECT constructs
+!
 ! Revision 1.44  2013/10/16 01:06:45  vsnyder
 ! Correct typo in first call to Declare in Def_Spec
 !
