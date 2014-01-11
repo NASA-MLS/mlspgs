@@ -110,7 +110,7 @@ contains ! =====     Public Procedures     =============================
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
+    use TREE, only: DECORATE, DECORATION, NSONS, SUBTREE, SUB_ROSA
     use VECTORSMODULE, only: VECTOR_T
     use WRITEMETADATA, only: L2PCF, WRITEMETALOG
 
@@ -159,7 +159,6 @@ contains ! =====     Public Procedures     =============================
     integer :: QUANTITIESNODE           ! A tree node
     integer :: SECONDDERIVNODE
     integer :: SON                      ! Of Root -- spec_args or named node
-    integer :: SPEC_NO                  ! Index of son of Root
     type(next_tree_node_state) :: State ! of tree traverser
     real :: T1, T2     ! for timing
     integer :: Type                     ! Type of value returned by EXPR
@@ -439,7 +438,7 @@ contains ! =====     Public Procedures     =============================
 
       end select
 
-    end do  ! spec_no
+    end do
     
     ! Write the log file metadata
     if ( LOGFILEGETSMETADATA .and. .not. checkPaths ) then
@@ -1849,6 +1848,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.178  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.177  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
