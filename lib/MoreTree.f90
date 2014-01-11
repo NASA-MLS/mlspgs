@@ -292,7 +292,7 @@ contains ! ====     Public Procedures     ==============================
   integer function Get_Field_Id_TX ( Root ) result ( Get_Field_Id )
   ! Assume that node_id(root) is either n_asg or n_set_one.
   ! Return the field ID.
-    use Tree, only: TX, Decoration_TX_TX
+    use Tree, only: TX
     type(tx), intent(in) :: Root
     get_field_id = decoration(subtree(1,root))
   end function Get_Field_Id_TX
@@ -429,6 +429,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.22  2014/01/11 01:41:02  vsnyder
+! Decruftification
+!
 ! Revision 2.21  2013/12/12 01:56:44  vsnyder
 ! Add Get_Label_And_Spec
 !
