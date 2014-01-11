@@ -54,8 +54,7 @@ contains ! ===================================  Public procedures  =====
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use ReadAPriori, only: PROCESSONEAPRIORIFILE
     use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION, NODE_ID, SUB_ROSA
-    use Tree_Types, only: N_NAMED
+    use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION
     use Toggles, only: GEN, SWITCHES, TOGGLE
 
     integer, intent(in) :: ROOT         ! Tree root
@@ -67,7 +66,6 @@ contains ! ===================================  Public procedures  =====
     ! Local variables
     type (GriddedData_T), pointer :: Grid
     integer :: GSON
-    integer :: I                        ! Loop counter
     integer :: J                        ! Loop counter
     integer :: KEY                      ! Another node
     integer :: LastAprioriPCF = 1
@@ -1082,6 +1080,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.53  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.52  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
