@@ -108,7 +108,7 @@ contains ! ============= Public Procedures =============================
               & quantityType=l_scVelECR, config=config ) ! )
       call to_cart ( (/ velocity%template%geodLat(config%referenceMIF,MAF), &
                      &  velocity%template%lon(config%referenceMIF,MAF), 0.0_rt /), s )
-      v = velocity%value3(1:3,MIF,MAF)   ! V
+      v = velocity%value3(1:3,config%referenceMIF,MAF)   ! V
 !a    end associate
     s = s / sqrt(dot_product(s,s)) ! Unit S
     v = v / sqrt(dot_product(v,v)) ! Unit V
@@ -132,6 +132,9 @@ contains ! ============= Public Procedures =============================
 end module Compute_Model_Plane_m
 
 ! $Log$
+! Revision 2.5  2014/01/11 02:23:28  vsnyder
+! Get the MIF from Config everywhere instead of an undefined local variable
+!
 ! Revision 2.4  2014/01/11 02:22:16  vsnyder
 ! Get the MIF from Config instead of an undefined local variable
 !
