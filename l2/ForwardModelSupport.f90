@@ -380,6 +380,7 @@ contains ! =====     Public Procedures     =============================
     ! add to the database
 
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Declaration_Table, only: Value_t
     use EXPR_M, only: EXPR
     use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T, &
       & LINECENTER, LINEWIDTH, LINEWIDTH_TDEP, &
@@ -460,6 +461,7 @@ contains ! =====     Public Procedures     =============================
     integer :: THISMOLECULE             ! Tree index.
     integer :: type                     ! Type of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
+    type(value_t), allocatable :: Values(:) ! returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
 
     ! Nullify some pointers so allocate_test doesn't try to deallocate them.
@@ -748,6 +750,7 @@ contains ! =====     Public Procedures     =============================
       if ( status /= 0 ) call announceError( AllocateError, moleculeTree )
       do b = 1, nsons(moleculeTree) - 1
         son = subtree(b+1,moleculeTree)
+        call expr ( son, expr_units, value, type, values=values )
         info%beta_group(b)%group = node_id(son) == n_array
         if ( info%beta_group(b)%group ) then
           if ( info%fwmType /= l_full ) &
@@ -1463,6 +1466,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.174  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.173  2013/08/30 02:45:39  vsnyder
 ! Revise calls to trace_begin and trace_end
 !
