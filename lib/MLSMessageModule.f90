@@ -13,7 +13,9 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  use CALL_STACK_M, only: DUMP_STACK
+  use CALL_STACK_M, only: DUMP_STACK ! Used in MLSMessage.f9h, but not here
+                                     ! but... the makefile maker can't see it
+                                     ! in MLSMessage.f9h
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCOMMON, only: MLSFILE_T, MLSDEBUG, MLSVERBOSE, &
     & MLSDEBUGSTICKY, MLSVERBOSESTICKY
@@ -192,6 +194,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.48  2014/01/11 01:40:14  vsnyder
+! Add comment about Dump_Stack being needed in MLSMessage.f9h
+!
 ! Revision 2.47  2013/11/18 22:23:11  pwagner
 ! Sticky versions of verbose, debug available
 !
