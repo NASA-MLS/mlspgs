@@ -45,7 +45,6 @@ contains ! ====     Procedures     =====================================
       & ENT, FRED, FTRN, TRAN, NSET, PROD, LSET, LS, LENS, LHS, &
       & ACT, VAL, Text, Prod_Ind, Productions, Indbas, BasProds, Dots, &
       & Init_Vocabulary_Names
-    use Processor_Dependent, only: NewPage
     use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
     use SYMBOL_TYPES, only: T_End_Of_Input, T_Last_Terminal, T_Null
     use TOGGLES, only: LEVELS, PAR, TOGGLE
@@ -162,7 +161,6 @@ contains ! ====     Procedures     =====================================
       if ( toggle(par) ) then
       call output ( 'Finished parsing and built ' )
       call dump_top_stack ( 0, advance='yes' )
-        call output ( newPage, dont_asciify=.true. )
       end if
       call build_tree ( n_null, 1 )          ! pop the n_cfs, leave the n_null
       root = stack_subtree(1)
@@ -617,6 +615,9 @@ contains ! ====     Procedures     =====================================
 end module PARSER
 
 ! $Log$
+! Revision 2.32  2014/01/14 00:59:40  vsnyder
+! Remove dependence of Processor_Dependent, which was only for debugging
+!
 ! Revision 2.31  2014/01/14 00:48:59  vsnyder
 ! Revised LR needs revised parser
 !
