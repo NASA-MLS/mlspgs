@@ -16,7 +16,7 @@ module PARSER
   implicit NONE
   private
 
-  public :: CONFIGURATION
+  public :: CONFIGURATION, LR_Parser, LR_Parser_TX
 
   interface Configuration
     module procedure LR_Parser, LR_Parser_TX
@@ -40,9 +40,14 @@ contains ! ====     Procedures     =====================================
 
     use LEXER_CORE, only: PRINT_SOURCE, TOKEN
     use LEXER_M, only: LEXER
-    use OUTPUT_M, only: NEWLINE, OUTPUT
+    use OUTPUT_M, only: Blanks, NEWLINE, OUTPUT
+    use Parser_Tables, only: IFinal, NState, NTerms, NumPrd, NVoc, &
+      & ENT, FRED, FTRN, TRAN, NSET, PROD, LSET, LS, LENS, LHS, &
+      & ACT, VAL, Text, Prod_Ind, Productions, Indbas, BasProds, Dots, &
+      & Init_Vocabulary_Names
+    use Processor_Dependent, only: NewPage
     use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
-    use SYMBOL_TYPES, only: T_End_Of_Input, T_Include, T_Last_Terminal, T_Null
+    use SYMBOL_TYPES, only: T_End_Of_Input, T_Last_Terminal, T_Null
     use TOGGLES, only: LEVELS, PAR, TOGGLE
     use TREE, only: BUILD_TREE, Dump_Top_Stack, N_TREE_STACK,&
                     PUSH_PSEUDO_TERMINAL,  STACK_SUBTREE
@@ -55,46 +60,60 @@ contains ! ====     Procedures     =====================================
       integer :: Tree_Index    ! Tree stack pointer of state's LHS
     end type Stack_Frame
 
-    type(stack_frame), allocatable :: Stack(:)
-    integer :: SP              ! Stack pointer
-
+    logical, save :: First = .true.
     logical :: Need            ! Need to get a token from the lexer
     integer :: Prev_Error
-
-    include "parser.f9h"
 
     integer :: LR_0(nstate)    ! If LR_0(I) /= 0, state I is an LR(0) state,
                                ! i.e., one reduction and no productions.
                                ! LR_0(I) is the production number to reduce.
+    logical, save :: Machine = .false. ! Dump the grammar and parsing machine
     integer :: Map(t_null:t_last_terminal) ! Map token classes to parser
                                ! vocabulary indices
-    integer :: Work(nstate,nvoc)
-
     integer :: Newsta, Nowsta  ! Next state, Current state
-    integer :: Voc             ! Vocabulary index of token or LHS
-    type(token) :: The_Token   ! From the lexer
+    logical, save :: Show_stack = .false. ! stack too
+    logical, save :: Show_state = .false. ! automaton state too
+    logical, save :: Show_work = .false. ! dump work table
+    integer :: SP              ! stack pointer
+    type(stack_frame), allocatable :: Stack(:)
+    type(token) :: The_Token   ! from the lexer
+    integer :: Voc             ! vocabulary index of token or LHS
+    integer, save :: Work(nstate,nvoc)
 
-    ! Convert the lists to search for transitions and reductions to the
-    ! array WORK(nstate:nvoc).
-    ! If Work(i,j) > 0 the next state is Work(i,j)
-    ! If Work(i,j) < 0 reduce production -Work(i,j)
-    ! If Work(i,j) == 0 a syntax error has occurred
-    call make_work ( FTRN, TRAN, ENT, FRED, NSET, LSET, LS, PROD, VAL, &
-                   & Work, LR_0, map )
+    ! Put names of symbols not defined by the grammar into the string
+    ! table
+    if ( first ) then
+      first = .false.
+      call init_vocabulary_names ! put them in the string table so they can
+                                 ! be output in messages
 
-    prev_error = 0             ! Line number of previous error
+      show_stack = mod(levels(par),2) /= 0
+      show_state = mod(levels(par)/2,2) /= 0
+      machine = mod(levels(par)/4,2) /= 0
+      show_work = mod(levels(par)/8,2) /= 0
+
+      ! Convert the lists to search for transitions and reductions to the
+      ! array WORK(nstate:nvoc).
+      ! If Work(i,j) > 0 the next state is Work(i,j)
+      ! If Work(i,j) < 0 reduce production -Work(i,j)
+      ! If Work(i,j) == 0 a syntax error has occurred
+      call make_work ( FTRN, TRAN, ENT, FRED, NSET, LSET, LS, PROD, VAL, &
+                     & Work, LR_0, map )
+    end if
+
+    prev_error = 0              ! Line number of previous error
     sp = 0
-    newsta = abs(tran(1))      ! The LR generator likes to put the <SOG>
-                               ! symbol before the goal symbol.  The lexer
-                               ! doesn't produce this symbol before the first
-                               ! input.  Putting the parser in the state
-                               ! adjacent to state 1 skips that symbol.
-    voc = 0                    ! Don't display symbol in Transition routine
+    newsta = abs(tran(1))       ! The LR generator likes to put the <SOG>
+                                ! symbol before the goal symbol.  The lexer
+                                ! doesn't produce this symbol before the first
+                                ! input.  Putting the parser in the state
+                                ! adjacent to state 1 skips that symbol.
+    voc = 0                     ! Don't display symbol in Transition routine
 
-    call transition            ! push Newsta onto the parser stack and
-                               ! make it Nowsta.
+    call transition ( .false. ) ! push Newsta onto the parser stack and
+                                ! make it Nowsta.
 
-    need = .true.              ! Indicate a token is necessary
+    need = .true.               ! Indicate a token is necessary
 
     do while ( nowsta /= ifinal )
       if ( lr_0(nowsta) > 0 ) then
@@ -116,7 +135,7 @@ contains ! ====     Procedures     =====================================
           if ( the_token%pseudo ) then
             call push_pseudo_terminal ( the_token%string_index, &
                                       & the_token%where, class=the_token%class )
-            if ( toggle(par) .and. levels(par) > 1 ) then
+            if ( show_stack ) then
               call output ( 'Push pseudo terminal ' )
               call dump_1_symbol ( the_token%string_index )
               call print_source ( the_token%where, before=' at ' )
@@ -124,7 +143,7 @@ contains ! ====     Procedures     =====================================
                 & advance='yes' )
             end if
           end if
-          call transition
+          call transition ( .false. )
           need = .true.        ! Consume the token
         else if ( voc < 0 ) then
           call reduce_production ( -voc )
@@ -135,18 +154,17 @@ contains ! ====     Procedures     =====================================
     end do
 
     call build_tree ( n_cfs, n_tree_stack )  ! glue together everything on the
-                                             ! stack
-    if ( toggle(par) ) then
-      call output ( 'Finished parsing and built ' )
-      call dump_top_stack ( 0, advance='yes' )
-    end if
-
-    call build_tree ( n_null, 1 )            ! pop the n_cfs, leave the n_null
 
     if ( prev_error > 0 ) then
       call output ( prev_error, before='Last error at line ', advance='yes' )
       root = -1
     else
+      if ( toggle(par) ) then
+      call output ( 'Finished parsing and built ' )
+      call dump_top_stack ( 0, advance='yes' )
+        call output ( newPage, dont_asciify=.true. )
+      end if
+      call build_tree ( n_null, 1 )          ! pop the n_cfs, leave the n_null
       root = stack_subtree(1)
     end if
 
@@ -286,7 +304,7 @@ contains ! ====     Procedures     =====================================
         if ( val(i) > 0 .and. val(i) < ubound(map,1) ) map(val(i)) = i
       end do
 
-      if ( levels(par) > 1 ) then
+      if ( show_work ) then
         call output ( "Parser's WORK array:", advance='yes' )
         do i = 1, size(work,2), 20
           call output ( '      ' )
@@ -305,8 +323,19 @@ contains ! ====     Procedures     =====================================
       end if
 
       if ( error ) then
-        write ( *, '(a)' ) 'Make_Work_m.Make_Work%E%- Grammar is not LR'
-        stop
+        write ( *, '(a)' ) 'Error: Make_Work_m.Make_Work%E%- Grammar is not LR(1)'
+        stop 1
+      end if
+
+      if ( machine ) then
+        call print_grammar
+        call output ( 'The parsing automaton (sans context sets for reductions):', &
+          & advance='yes' )
+        do i = 1, nstate
+          call newLine
+          call print_state ( i, number=.true. )
+        end do
+        call output ( 'End of the parsing automaton', advance='yes' )
       end if
 
     end subroutine Make_Work
@@ -323,6 +352,7 @@ contains ! ====     Procedures     =====================================
         call print_source ( the_token%where, before=' at ' )
         call output (' in parser state ' )
         call output ( nowsta, advance='yes' )
+        call print_state ( nowsta )
         if ( present(expected) ) then
           call output ( 'Expected ', advance='no' )
           call dump_symbol_class ( expected, advance='yes' )
@@ -338,6 +368,7 @@ contains ! ====     Procedures     =====================================
       else
         call output (' in parser state ' )
         call output ( nowsta, advance='yes' )
+        call print_state ( nowsta )
         if ( present(expected) ) then
           call output ( 'Expected ', advance='no' )
           call dump_symbol_class ( expected, advance='yes' )
@@ -353,7 +384,112 @@ contains ! ====     Procedures     =====================================
         if ( sp <= 0 ) call catastrophic_error ( 'Parser stack underflow' )
         nowsta = stack(sp)%state
       end if
-    end subroutine
+    end subroutine No_Transition
+
+! -------------------------------------------------  Print_Action  -----
+    subroutine Print_Action ( P )
+    ! Print the action for production P
+      use String_Table, only: Display_String
+      use Tree, only: Tree_Text
+      integer, intent(in) :: P ! The production number
+      integer :: A
+      a = act(p)
+      if ( a /= 0 ) then
+        select case ( mod(a,10) )
+        case ( 1 )
+          call display_string ( tree_text(a / 10), before=' => ' )
+        case ( 2 )
+          call display_string ( tree_text(a / 10), before=' => ' )
+          call output ( ' ?' )
+        case default
+          call output ( a, before=' => ' )
+        end select
+      end if
+    end subroutine Print_Action
+
+! ------------------------------------------------  Print_Grammar  -----
+    subroutine Print_Grammar
+    ! Print the entire grammar, with actions.
+      use String_Table, only: Get_String, String_Length
+      integer :: J, K, LHS, P, PrevLHS
+      character(120) :: Work ! To strip underscore off nonterminal names
+      call output ( 'The grammar:', advance='yes' )
+      prevLHS = -1
+      do p = 1, numprd
+        j = prod_ind(p)
+        lhs = productions(j)
+        if ( lhs /= prevLHS .and. p /= 1 ) call newLine
+        call output ( p, 3 )
+        call get_string ( text(lhs), work )
+        k = merge(2,1,work(1:1)=='_')
+        if ( lhs /= prevLHS ) then
+          call output ( ' ' // trim(work(k:)) )
+        else
+          call blanks ( string_length(text(lhs)) + 2 - k )
+        end if
+        prevLHS = lhs
+        call output ( ' ->' )
+        do j = prod_ind(p)+1, prod_ind(p+1)-1
+          call get_string ( text(productions(j)), work )
+          k = merge(2,1,work(1:1)=='_')
+          call output ( ' ' // trim(work(k:)) )
+        end do
+        call print_action ( p )
+        call newLine
+      end do
+      call output ( 'End of the grammar', advance='yes' )
+    end subroutine Print_Grammar
+
+! --------------------------------------------------  Print_State  -----
+    subroutine Print_State ( State, Number )
+    ! Print the parser configuration in state STATE, i.e., the list of
+    ! productions, with dots in them.
+      use String_Table, only: Get_String
+      integer, intent(in) :: State
+      logical, intent(in), optional :: Number ! Print state number
+      integer :: I, J, K, JDOT, P
+      logical :: Num
+      character(120) :: Work ! To strip underscore off nonterminal names
+      num = .false.
+      if ( present(number) ) num = number
+      do i = indbas(state), indbas(state+1)-1
+        p = basprods(i)
+        if ( num ) then
+          if ( i == indbas(state) ) then
+            call output ( state, 5 )
+          else
+            call blanks ( 5 )
+          end if
+        end if
+        call output ( p, 5 )
+        j = prod_ind(p) ! p = production number
+        call get_string ( text(productions(j)), work )
+        k = merge(2,1,work(1:1)=='_')
+        call output ( ' ' // trim(work(k:)) )
+        call output ( ' ->' )
+        jdot = 1
+        do j = prod_ind(p)+1, prod_ind(p+1)-1
+          if ( dots(i) == jdot ) call output ( ' .' )
+          jdot = jdot + 1
+          call get_string ( text(productions(j)), work )
+          k = merge(2,1,work(1:1)=='_')
+          call output ( ' ' // trim(work(k:)) )
+        end do
+        if ( dots(i) == jdot ) call output ( ' .' )
+        call print_action ( p )
+        call newLine
+      end do
+      if ( num ) then ! Print transitions if any
+        if ( ftrn(state) > ftrn(state-1) ) then
+          call blanks ( 11 )
+          call output ( 'Transitions: ' )
+          do i = ftrn(state-1)+1, ftrn(state)
+            call output ( tran(i), 5 )
+          end do
+          call newLine
+        end if
+      end if
+    end subroutine Print_State
 
 ! --------------------------------------------  Reduce_Production  -----
     subroutine Reduce_Production ( Prod )
@@ -378,26 +514,24 @@ contains ! ====     Procedures     =====================================
         call output ( prod, before='Reduce production ' )
         call output ( lens(prod), before=' consuming ' )
         call output ( trim(merge(' symbol ', ' symbols', lens(prod)==1)) )
-        if ( action /= 0 ) call output ( new_node, before=' building ' )
-        if ( levels(par) > 0 ) &
-          & call output ( nowsta, before=', returning to state ' )
       end if
       if ( i /= 0 ) then
         if ( action==1 .or. action==2 .and. nsons>1 ) then
           call build_tree ( new_node, nsons )
           if ( toggle(par) ) then
-            call output ( ' and build ' )
+            call output ( ', building ' )
             call dump_top_stack ( 0 )
           end if
         else if ( action == 9 ) then
           call do_include
         end if
       else if ( toggle(par) .and. nsons>0 ) then
-          call output ( nsons, before=' subsuming ' )
-          call output ( trim(merge(' tree node ', ' tree nodes', nsons==1)) )
+        call output ( nsons, before=', subsuming ' )
+        call output ( trim(merge(' tree node ', ' tree nodes', nsons==1)) )
       end if
       if ( toggle(par) ) then
-        if ( levels(par) > 2 ) then
+        call output ( nowsta, before=', returning to state ' )
+        if ( show_stack ) then
           call output ( sp, before=', stack(' )
           call output ( stack(sp)%state, before=') = (' )
           call output ( stack(sp)%tree_index, before=',' )
@@ -410,16 +544,18 @@ contains ! ====     Procedures     =====================================
       if ( newsta == 0 ) &
         & call catastrophic_error ( 'There is no state transition', &
           & state=nowsta, nonterminal=lhs(prod) )
-      voc = val(lhs(prod))
-      call transition
+      voc = text(lhs(prod))
+      call transition ( .true. )
 
     end subroutine Reduce_Production
 
 ! ---------------------------------------------------  Transition  -----
-    subroutine Transition
+    subroutine Transition ( LHS )
       ! Set the current state (Nowsta) to the new state (Newsta)
       ! and push it on the stack with N_Tree_Stack.
-      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+      use Allocate_Deallocate, only: Test_Allocate
+      use String_Table, only: Display_String
+      logical, intent(in) :: LHS ! VOC is index of LHS symbol of production
       integer :: N, S
       integer :: Stat
       type(stack_frame), allocatable :: TempStack(:)
@@ -445,20 +581,23 @@ contains ! ====     Procedures     =====================================
         if ( voc /= 0 ) then
           call output ( ' with ' )
           if ( voc < 0 ) then
-            call output ( ent(nowsta), before='nonterminal symbol number ' )
+            call output ( ent(nowsta), before='symbol number ' )
+          else if ( lhs ) then
+            call display_string ( voc, before='nonterminal symbol ' )
           else
             call dump_1_symbol ( the_token%string_index )
             call print_source ( the_token%where, before=' at ' )
           end if
         end if
         call output ( n_tree_stack, before=', n_tree_stack = ' )
-        if ( levels(par) > 2 ) then
+        if ( show_stack ) then
           call output ( sp, before=', stack(' )
           call output ( stack(sp)%state, before=') = (' )
           call output ( stack(sp)%tree_index, before=',' )
           call output ( ')' )
         end if
         call newLine
+        if ( show_state ) call print_state ( nowsta )
       end if
 
     end subroutine Transition
@@ -478,6 +617,12 @@ contains ! ====     Procedures     =====================================
 end module PARSER
 
 ! $Log$
+! Revision 2.31  2014/01/14 00:48:59  vsnyder
+! Revised LR needs revised parser
+!
+! Revision 1.1  2014/01/14 00:15:02  vsnyder
+! Initial commit of new module for new LR
+!
 ! Revision 2.30  2013/12/12 02:01:54  vsnyder
 ! Entirely replaced with LR parser
 !
