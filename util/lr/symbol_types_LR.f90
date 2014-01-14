@@ -172,3 +172,6 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 1.1  2014/01/14 00:15:08  vsnyder
+! Initial commit of new module for new LR
+!
