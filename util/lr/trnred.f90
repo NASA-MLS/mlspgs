@@ -15,6 +15,25 @@ module Transitions_And_Reductions
   private
   public :: TRNRED
 
+  ! Red_t is the type of object used to keep track of reductions
+  type :: Red_t
+    integer :: Prod   ! Production number
+    integer :: Set    ! Context set index
+  end type Red_t
+
+  ! Red(state) keeps track of reductions for "state"
+  type(red_t), allocatable, save, public :: Red(:)
+  integer, parameter :: Red_Init = 1000
+  integer, save :: Red_Size = 0 
+
+  ! Tran(state) keeps track of transitions for "state".  The values are
+  ! other state numbers.
+  integer, allocatable, save, public :: Tran(:)
+  integer, parameter :: Tran_Init = 1000
+  integer, save :: Tran_Size = 0 
+
+  integer, public :: NXTRED = 1, NXTTRN = 1
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -23,14 +42,15 @@ module Transitions_And_Reductions
 
 contains
 
-  subroutine TRNRED (IBASIS, JMAX)
+  subroutine TRNRED ( IBASIS, JMAX )
 
-    use ANACOM, only: NXTRED, NXTTRN
-    use Error_Handler, only: Error
+    use Basis_m, only: ADDBAS, BASIS, ENQUE, NEWBAS
+    use Complete, only: Scrtch
+    use Tables, only: PRDIND => Prod_Ind, PRODCN => Productions
     use Merge_Sets, only: Merge
-    use SCRCOM
-    use S3, only: PRDIND, PRODCN
-    use S5, only: ADDBAS, BASIS, ENQUE, NEWBAS, RED, TRAN
+    use Toggles, only: Gen, Levels
+    use Trace, only: Trace_Begin, Trace_End
+
     implicit NONE
 
   ! Attach lists of transitions and reductions to the state in SCRTCH.
@@ -46,27 +66,29 @@ contains
   ! ADDBAS  adds an element to the BASIS array.
   ! ENDBAS  cleans up after adding a new element to the BASIS array.
   ! ENQUE   adds a basis to the queue for processing by ANALYZ.
-  ! ERROR   prints error messages.
   ! NEWBAS  gets ready to add new elements to the BASIS array.
 
   ! *****     Local Variables     ************************************
 
+  ! CHANGE  "MERGE made a change."
   ! I       is a loop induction variable and subscript.
-  ! ICH     indicates whether MERGE made a change.
   ! IPATH   indicates whether a path is found to a new configuration.
   ! IRED    is the pointer to the next place a reduction may be stored in
   !         RED.
   ! ITRAN   is the pointer to the next place a transition may be stored in
   !         TRAN.
   ! LHS     is the left side of a production.
-  ! MAXR    indicates the amount of space remaining in RED.
-  ! MAXT    indicates the amount of space remaining in TRAN.
   ! NB      is the position in BASIS of a new state added by MERGE.
   ! NBASIS  is the position in BASIS of a newly constructed basis, to be
   !         merged into or added onto the existing set of configurations
   !         by MERGE.
+  ! Temp_Red  is used to allocate a new Red array
+  ! Temp_Tran is used to allocater a new Tran array
 
-    integer I, ICH, IPATH, IRED, ITRAN, LHS, MAXR, MAXT, NB, NBASIS
+    logical :: CHANGE
+    integer I, IPATH, IRED, ITRAN, LHS, NB, NBASIS
+    type(red_t), allocatable :: Temp_Red(:)
+    integer, allocatable :: Temp_Tran(:)
 
   ! *****     Procedures     *****************************************
 
@@ -76,34 +98,45 @@ contains
   ! change since the transitions depend only on the completed basis.
   ! The completed basis is never changed, but its contexts are.
 
-    maxt = basis(ibasis+8)
-    itran = basis(ibasis+3)
+    if ( levels(gen) > 1 ) call trace_begin ( 'TRNRED' )
+
+    itran = basis(ibasis)%tran   ! Start of transitions from this basis
 
     i = 1
-    if (scrtch(2) < prdind(scrtch(1)+1) - prdind(scrtch(1))) then
+    if (scrtch(1)%dot < prdind(scrtch(1)%prod+1) - prdind(scrtch(1)%prod)) then
       ipath = 1
       do while (ipath /= 0)
-        lhs = prodcn(prdind(scrtch(i))+scrtch(i+1))
-        call newbas (nbasis)
-        do while (lhs == prodcn(prdind(scrtch(i))+scrtch(i+1)))
-          call addbas (nbasis,scrtch(i),scrtch(i+1)+1,scrtch(i+2))
-          i = i + 3
+        lhs = prodcn(prdind(scrtch(i)%prod)+scrtch(i)%dot)
+        call newbas ( nbasis )
+        do while ( lhs == prodcn(prdind(scrtch(i)%prod)+scrtch(i)%dot) )
+          call addbas ( nbasis, scrtch(i)%prod, scrtch(i)%dot+1, scrtch(i)%set )
+          i = i + 1
           ipath = 0
-          if (i > jmax) go to 10
-          if (scrtch(i+1) >= prdind(scrtch(i)+1) - prdind(scrtch(i))) go to 10
+          if ( i > jmax ) go to 10
+          if ( scrtch(i)%dot >= &
+               prdind(scrtch(i)%prod+1) - prdind(scrtch(i)%prod) ) go to 10
         end do
         ipath = 1
   10    continue
-        call merge (nbasis, nb, ich)
-        if (ich /= 0) call enque (nb)
+        call merge ( nbasis, nb, change )
+        if ( change ) call enque (nb)
         ! Add a transition to NB to the basis at IBASIS.
-        if (itran >= maxt) call error ('Transition area (TRAN) overflow',2)
+        if ( itran > tran_size ) then
+          if ( .not. allocated(tran) ) then
+            allocate ( tran(tran_init) )
+          else
+            allocate ( temp_tran(2*tran_size) )
+            temp_tran(:tran_size) = tran
+            call move_alloc ( temp_tran, tran )
+          end if
+          tran_size = size(tran)
+        end if
         tran(itran) = nb
         itran = itran + 1
       end do
     end if
     nxttrn = max(nxttrn, itran)
-    basis(ibasis+8) = itran
+    basis(ibasis+1)%tran = itran
 
     ! Calculate how much space remains in RED.
     ! If space was previously allocated for the reductions from IBASIS
@@ -111,22 +144,32 @@ contains
     ! change since the reductions depend only on the completed basis.
     ! The completed basis is never changed, but its contexts are.
 
-    maxr = basis(ibasis+9)
-    ired = basis(ibasis+4)
+    ired = basis(ibasis)%red   ! Start of reductions for this basis
 
     ! Construct or reconstruct reductions.
 
     do while (i <= jmax)
-    ! Add the reduction of production SCRTCH(I) for context
-    ! SCRTCH(I+2) to the state at IBASIS.
-      if (ired >= maxr) call error ('Reduction area (RED) overflow',2)
-      red(ired) = scrtch(i)
-      red(ired+1) = scrtch(i+2)
-      ired = ired + 2
-      i = i + 3
+    ! Add the reduction of production SCRTCH(I)%prod for context
+    ! SCRTCH(I)%set to the state at IBASIS.
+      if ( ired >= red_size ) then
+        if ( .not. allocated(red) ) then
+          allocate ( red(red_init) )
+        else
+          allocate ( temp_red(2*red_size) )
+          temp_red(:red_size) = red
+          call move_alloc ( temp_red, red )
+        end if
+        red_size = size(red)
+      end if
+      red(ired)%prod = scrtch(i)%prod
+      red(ired)%set = scrtch(i)%set
+      ired = ired + 1
+      i = i + 1
     end do
     nxtred = max(nxtred, ired)
-    basis(ibasis+9) = ired
+    basis(ibasis+1)%red = ired
+
+    if ( levels(gen) > 1 ) call trace_end ( 'TRNRED' )
 
   end subroutine TRNRED
 
@@ -143,3 +186,6 @@ contains
 end module Transitions_And_Reductions
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

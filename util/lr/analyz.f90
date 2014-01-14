@@ -25,15 +25,17 @@ contains
 
   subroutine ANALYZ
 
+    use Basis_m, only: ADDBAS, DEQUE, NEWBAS
     use Complete, only: COMPLT
     use FIRST_SETS, only: FIND_FIRST      ! Find FIRST sets
-    use LISTS, only: ITEM, NEW
+    use LISTS, only: LIST, NEW
     use New_Context_Set, only: NEWCS
     use NULLABLE_M, only: FIND_NULLABLE   ! Find nullable nonterminals
     use Sort_Configurations, only: SORTCG
-    use S3, only: HEADCS, HEADEN, PRDIND, PRODCN
-    use S5, only: ADDBAS, DEQUE, NEWBAS
-    use TABCOM, only: NTERMS, NVOC
+    use Tables, only: HEADCS, HEADEN, NTERMS, NVOC, PRDIND => Prod_Ind, &
+      & PRODCN => Productions
+    use Toggles, only: GEN, Toggle
+    use Trace, only: Trace_Begin, Trace_End
     use Transitions_And_Reductions, only: TRNRED
 
     implicit NONE
@@ -68,16 +70,20 @@ contains
 
     ! *****     Procedures     *****************************************
 
+    if ( toggle(gen) ) call trace_begin ( 'Analysis' )
     call find_nullable
     call find_first
 
-    headcs(1:nterms) = 0
-    headen(1:nvoc) = 0
+    allocate ( headcs(1:nterms), source = 0 )
+    allocate ( headen(1:nvoc), source = 0 )
 
     call newbas ( i )
     call new ( nptr ) ! Initial context list for production 1.
-    item(nptr) = prodcn(prdind(1) + 1) ! <SOG>
+    list(nptr)%item = prodcn(prdind(1) + 1) ! <SOG>
     call newcs ( nptr, n )
+
+    !           iptr   ndot
+    !               npr   nset
     call addbas ( i, 1, 1, n )         ! <GOAL> ::= . <SOG> start <EOG>
 
     do while ( i > 0 )
@@ -86,6 +92,7 @@ contains
        call trnred ( i, jmax )
        call deque ( i )
     end do
+    if ( toggle(gen) ) call trace_end ( 'Analysis' )
 
   end subroutine ANALYZ
 
@@ -102,6 +109,9 @@ contains
 end module Analysis
 
 ! $Log$
+! Revision 1.2  2013/12/12 01:53:00  vsnyder
+! Remove unused cruft
+!
 ! Revision 1.1  2013/10/24 22:41:13  vsnyder
 ! Initial commit
 !

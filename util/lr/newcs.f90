@@ -25,11 +25,11 @@ contains
 
   subroutine NEWCS (IS, IPTR)
 
-    use IO, only: OUTPUT
-    use LISTS, only: ITEM, LCOMPR, NEW, NEXT, REL
+    use LISTS, only: LCOMPR, LIST, NEW, REL
+    use Output_m, only: OUTPUT
     use Print_List, only: PNTLST
-    use S3, only: HEADCS
-    use TOGGLES
+    use Tables, only: HEADCS
+    use TOGGLES_LR
 
     implicit NONE
 
@@ -47,44 +47,41 @@ contains
   ! *****     Local Variables     ************************************
 
   ! I       is a list pointer subscript.
-  ! IHEAD   is HEADCS(ITEM(IS)).
-  ! IIS     is ITEM(IS).
-  ! LINE    Is used for message assembly.
+  ! IHEAD   is HEADCS(list(IS)%item).
+  ! IIS     is list(IS)%item.
 
     integer I, IHEAD, IIS
-    character(len=120) :: LINE
 
   ! *****     Procedures     *****************************************
 
-    iis = item(is)
+    iis = list(is)%item
     ihead = headcs(iis)
     i = ihead
     do while (i /= 0)
-      iptr=item(i)
-      if ( lcompr(next(iptr), is) ) then
+      iptr=list(i)%item
+      if ( lcompr(list(iptr)%next, is) ) then
         ! Use the list at I, increase its reference count.
-        item(iptr) = item(iptr) + 1
-        if (toggle(ichar('3')) /= 0) then
-          write ( line(1:44), '(a,i5,a,i4)' ) &
-            ' Use context set at', next(iptr), ', destroy set at', is
-          call output (line(1:44))
+        list(iptr)%item = list(iptr)%item + 1
+        if (toggle(iachar('3')) /= 0) then
+          call output ( list(iptr)%next, before=' Use context set at ' )
+          call output ( is, before=', destroy set at ', advance='yes' )
         end if
         call rel (is)
         return
       end if
-      i = next(i)
+      i = list(i)%next
     end do
     call new (iptr)
-    item(iptr) = 1
-    next(iptr) = is
+    list(iptr)%item = 1
+    list(iptr)%next = is
     call new (i)
-    item(i) = iptr
-    next(i) = ihead
+    list(i)%item = iptr
+    list(i)%next = ihead
     headcs(iis) = i
-    if (toggle(ichar('3')) /= 0) then
-      line=' Create a context set at      ='
-      write ( line(25:29), '(i5)' ) is
-      call pntlst (is,line,33,3)
+    if (toggle(iachar('3')) /= 0) then
+      call output ( is, before=' Create a context set at ' )
+      call output ( ' = ' )
+      call pntlst ( is, 33, 3 )
     end if
 
   end subroutine NEWCS
@@ -102,3 +99,6 @@ contains
 end module New_Context_Set
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

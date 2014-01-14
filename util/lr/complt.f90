@@ -11,9 +11,13 @@
 
 module Complete
 
+  use Basis_m, only: Item_t
+
   implicit NONE
   private
   public :: COMPLT
+
+  type(item_t), public, allocatable, save :: SCRTCH(:)
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -23,15 +27,13 @@ module Complete
 
 contains
 
-  subroutine COMPLT (ISTATE, MAXSET)
+  subroutine COMPLT ( ISTATE, MAXSET )
 
+    use Basis_m, only: BASIS, Increase_Items, Item_T, Items
     use Delete, only: DELCS
-    use Immediate_Transitions, only: IMTRCS
-    use LISTS, only: ITEM
-    use SCRCOM
-    use S3, only: FRSPRD, PRDIND, PRODCN
-    use S5, only: BASIS
-    use TABCOM, only: NTERMS, NUMPRD
+    use LISTS, only: LIST
+    use Tables, only: FRSPRD => First_Production, NTERMS, NUMPRD, &
+      & PRDIND => Prod_Ind, PRODCN => Productions
     use Union, only: CSUN
 
     implicit NONE
@@ -49,9 +51,9 @@ contains
 
     ! *****     Local Variables     ****************************************
 
+    ! CHANGE  indicates whether a change to the configuration occurred
+    ! CHU     is a value of CHANGE returned by CSUN.
     ! I       is a loop inductor and subscript for BASIS.
-    ! ICH     is a value of ICHANG returned by CSUN.
-    ! ICHANG  indicates whether a change to the configuration occurred
     !         during a loop iteration.
     ! IEND    is the upper limit for I.
     ! IPTR    is a pointer to a context set list.
@@ -63,25 +65,26 @@ contains
     !         it is a nonterminal symbol.
     ! MARK    is an array used to indicate whether a production has already
     !         been added to the closure.
+    ! SCRSIZ  size of scratch array.
 
-    integer I,ICH,ICHANG,IEND,IPTR,ISTART,J,K,LHS
+    logical :: Change, CHU
+    integer I, IEND, IPTR, ISTART, J, K, LHS
     integer MARK(NUMPRD)
+    integer :: SCRSIZ = 0  ! SRCTCH starts out not allocated
 
     !     *****     Procedures     *****************************************
 
-    ! First move the basis to scratch.
+    ! First move the set's configuration items to scratch.
 
-    istart = basis(istate)
-    iend = basis(istate+5) + 3
-    if (iend - istart + 1 > scrsiz) call scratch_overflow
+    istart = basis(istate)%item      ! First item of the configuration set
+    iend = basis(istate+1)%item - 1  ! Last item of the configuration set
+    if ( iend - istart + 1 > scrsiz ) call increase_items ( scrtch, scrsiz )
     j = 0
-    do i = istart, iend, -3
-      scrtch(j+1) = basis(i)
-      scrtch(j+2) = basis(i+1)
-      iptr = basis(i+2)
-      scrtch(j+3) = iptr
-      item(iptr) = item(iptr) + 1
-      j = j + 3
+    do i = istart, iend
+      j = j + 1
+      scrtch(j) = items(i)
+      iptr = items(i)%set
+      list(iptr)%item = list(iptr)%item + 1
     end do
 
     ! Unmark all productions.
@@ -91,20 +94,21 @@ contains
     ! Complete the configuration set by adding all the immediate
     ! transitions to scratch.
 
-    do ! until (ichang == 0)
-      ichang = 0
+    change = .true.
+    do while ( change )
+      change = .false.
       i = 1
-      do ! until (i >= j)
-      if (scrtch(i+1) < prdind(scrtch(i)+1)-prdind(scrtch(i))) then
-         lhs = prodcn(prdind(scrtch(i)) + scrtch(i+1))
+      do ! until ( i >= j )
+         if ( scrtch(i)%dot < prdind(scrtch(i)%prod+1)-prdind(scrtch(i)%prod)) then
+           lhs = prodcn(prdind(scrtch(i)%prod) + scrtch(i)%dot)
 
-         ! If the dot is before a nonterminal symbol then there is an
-         ! immediate transition from the production.
+           ! If the dot is before a nonterminal symbol then there is an
+           ! immediate transition from the production.
 
            if (lhs > nterms) then
 
-           ! Generate the context set which is the same for all the
-           ! immediate transitions from this production.
+             ! Generate the context set which is the same for all the
+             ! immediate transitions from this production.
 
              call imtrcs (i, iptr)
 
@@ -114,20 +118,20 @@ contains
              ! been included.
 
              k = frsprd(lhs)
-             if ( k > 0 ) then   ! Otherwise it an unused symbol defined by &V
+             if ( k > 0 ) then   ! Otherwise it an unused symbol defined by
+                                 ! symbol = name in the grammar
                do while (prodcn(prdind(k)) == lhs)
-                 if (mark(k).eq.0) then
-                   if (j+3 .gt. scrsiz) call scratch_overflow
-                   mark(k) = j + 3
-                   scrtch(j+1) = k
-                   scrtch(j+2) = 1
-                   scrtch(j+3) = iptr
-                   item(iptr) = item(iptr) + 1
-                   j = j + 3
-                   ichang = 1
+                 if ( mark(k) == 0 ) then
+                   if ( j >= scrsiz ) call increase_items ( scrtch, scrsiz )
+                   j = j + 1
+                   mark(k) = j
+                                    ! prod dot set
+                   scrtch(j) = item_t(k, 1, iptr)
+                   list(iptr)%item = list(iptr)%item + 1
+                   change = .true.
                  else
-                   call csun (iptr, scrtch(mark(k)), ich)
-                   if (ich /= 0) ichang = 1
+                   call csun ( iptr, scrtch(mark(k))%set, chu )
+                   if ( chu ) change = .true.
                  end if
                  k = k + 1
                end do
@@ -141,21 +145,90 @@ contains
              call delcs (iptr)
            end if
          end if
-         i = i + 3
-         if (i >= j) exit
+         i = i + 1
+         if ( i > j ) exit
        end do
-       if (ichang == 0) exit
     end do
     maxset = j
 
-  contains
-
-    subroutine scratch_overflow
-      use Error_Handler, only: Error
-      call error ('Configuration set too large',2)
-    end subroutine scratch_overflow
-
   end subroutine COMPLT
+
+  ! IMTRCS is private, called only by COMPLT.
+
+  subroutine IMTRCS (IBASIS, IPTR)
+
+    use FIRST_SETS, only: FIRST_PT        ! heads of first sets
+    use LISTS, only: ADDLTL, COPYL, LIST
+    use New_Context_Set, only: NEWCS
+    use NULLABLE_M, only: NULLABLE        ! nullable nonterminals
+    use Tables, only: PRDIND => Prod_Ind, PRODCN => Productions
+
+  ! Construct the immediate transition context set for the
+  ! configuration at SCRTCH(IBASIS).  Return the pointer to it in
+  ! IPTR.
+
+  ! The immediate transition context set is the set consisting of the
+  ! THEADS of the substring of symbols in the production following the
+  ! symbol after the dot, unioned with the context set of the
+  ! production if that string is null or potentially null.
+
+    integer IBASIS, IPTR
+
+  ! *****     External References     ********************************
+
+  ! ADDLTL  adds a list to a list (Set Union operation).
+  ! COPYL   copies a list.
+  ! NEWCS   prepares a new context set.
+
+  ! *****     Local Variables     ************************************
+
+  ! CHANGE  "ADDLTL changed a list."
+  ! I       is a loop induction variable and subscript.
+  ! IEND    is the upper limit for I.
+  ! IP      is the pointer to the list being constructed.
+  ! ISTART  is the lower limit for I.
+
+    logical :: CHANGE
+    integer :: I, IEND, IP, ISTART
+
+  ! *****     Procedures     *****************************************
+
+    i = scrtch(ibasis)%prod
+
+  ! If there is no substring just return the context set for the
+  ! production.
+
+    if (scrtch(ibasis)%dot >= prdind(i+1)-prdind(i)-1) then
+      iptr = scrtch(ibasis)%set
+      list(iptr)%item = list(iptr)%item + 1
+      return
+    end if
+
+  ! The set consists of the THEAD set of the symbol unioned with the
+  ! THEAD set of the following substring if the symbol is nullable.
+  ! If the rest of the RHS is nullable, the set includes the context
+  ! set of the production.
+
+    istart = scrtch(ibasis)%dot + prdind(i) + 1
+    iend = prdind(i+1) - 1
+    call copyl (first_pt(prodcn(istart)), ip)
+    if ( nullable(prodcn(istart)) ) then
+      do i = istart+1, iend
+        call addltl ( first_pt(prodcn(i)), ip, change )
+        if ( .not. nullable(prodcn(i)) ) go to 9
+      end do
+
+      ! Add the context set of the production.
+
+      call addltl ( list(scrtch(ibasis)%set)%next, ip, change )
+    end if
+
+  ! Create a new reference to the context set with IP elements.
+
+  9 continue
+    call newcs ( IP, IPTR )
+
+  end subroutine IMTRCS
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -170,3 +243,6 @@ contains
 end module Complete
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:13  vsnyder
+! Initial commit
+!

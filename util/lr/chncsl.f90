@@ -14,6 +14,7 @@ module Chain_Context_Lists
   implicit NONE
   private
   public :: CHNCSL
+  integer,public :: LENCSL, LISTCS, LSETS, NCSETS = 0
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -25,11 +26,9 @@ contains
 
   subroutine CHNCSL
 
-    use ANACOM, only: LENCSL, LISTCS, LSETS, NCSETS
-    use Error_Handler, only: Error
-    use LISTS, only: ITEM, NEW, NEXT, REL
-    use S3, only: HEADCS
-    use TABCOM, only: NTERMS
+    use Error_m, only: Error
+    use LISTS, only: LIST, NEW, REL
+    use Tables, only: HEADCS, NTERMS
 
     implicit NONE
 
@@ -74,20 +73,20 @@ contains
       iptr = headcs(i)
       do while (iptr /= 0)
         ncsets = ncsets + 1
-        item(item(iptr)) = ncsets
-        ! Store the list length in item(nptr).
-        item(nptr) = 0
-        lptr = next(item(iptr))
+        list(list(iptr)%item)%item = ncsets
+        ! Store the list length in list(nptr)%item.
+        list(nptr)%item = 0
+        lptr = list(list(iptr)%item)%next
         do while (lptr > 0)
-          item(nptr) = item(nptr) + 1
-          lptr = next(lptr)
+          list(nptr)%item = list(nptr)%item + 1
+          lptr = list(lptr)%next
         end do
-        lsets = lsets + item(nptr)
+        lsets = lsets + list(nptr)%item
         lptr = nptr
-        call new (next(nptr))
-        nptr = next(nptr)
+        call new ( list(nptr)%next )
+        nptr = list(nptr)%next
         last = iptr
-        iptr = next(iptr)
+        iptr = list(iptr)%next
       end do
 
       ! Search for the next context set chain.  Link it into the previous
@@ -96,13 +95,13 @@ contains
       do while (i < nterms)
         i = i + 1
         if (headcs(i) /= 0) then
-          next(last) = headcs(i)
+          list(last)%next = headcs(i)
           cycle o
         end if
       end do
       exit o
     end do o
-    next(lptr) = 0
+    list(lptr)%next = 0
     call rel (nptr)
 
   end subroutine CHNCSL
@@ -120,3 +119,6 @@ contains
 end module Chain_Context_Lists
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:13  vsnyder
+! Initial commit
+!

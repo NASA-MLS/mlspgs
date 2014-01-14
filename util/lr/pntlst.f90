@@ -23,24 +23,18 @@ module Print_List
 
 contains
 
-  subroutine PNTLST (IPTR, LINE, LSTART, LCONT)
-    use IO, only: OUTPUT
-    use LISTS, only: ITEM, NEXT
-    use S1, only: LENGTH, MOVSTR
-    use S3, only: VOCAB
+  subroutine PNTLST (IPTR, LSTART, LCONT)
+    use LISTS, only: LIST
+    use Output_m, only: Blanks, NewLine
+    use String_Table, only: Display_String, String_Length
+    use Tables, only: VOCAB
     implicit NONE
 
   ! Print the context set pointed to by IPTR.
   ! Start printing the list at position LSTART in LINE.
   ! If LINE becomes filled, print it and continue printing in LCONT.
 
-    integer IPTR, LSTART, LCONT
-    character(len=*) :: LINE
-
-  ! *****     External References     ********************************
-
-  ! LENGTH  calculates the length of a vocabulary item.
-  ! MOVSTR  moves a vocabulary item from the symbol table.
+    integer, intent(in) :: IPTR, LSTART, LCONT
 
   ! *****     Local Variables     ************************************
 
@@ -54,15 +48,16 @@ contains
     ip = iptr
     l = lstart
     do while (ip /= 0)
-      if (length(vocab(item(ip)))+l >= 114) then
-        call output (line(1:l-1))
+      if (string_length(vocab(list(ip)%item))+l >= 114) then
+        call newLine
+        call blanks ( lcont )
         l = lcont
       end if
-      call movstr (vocab(item(ip)), line, l, 120)
-      l = l + 1
-      ip = next(ip)
+      call display_string (vocab(list(ip)%item) , before=' ')
+      l = l + string_length(vocab(list(ip)%item)) + 1
+      ip = list(ip)%next
     end do
-    call output (line(1:l-1))
+    call newLine
 
     return
 
@@ -81,3 +76,6 @@ contains
 end module Print_List
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

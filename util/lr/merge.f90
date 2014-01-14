@@ -23,24 +23,24 @@ module Merge_Sets
 
 contains
 
-  subroutine MERGE (IBASIS, IRES, ICHNG)
+  subroutine MERGE ( IBASIS, IRES, CHANGE )
 
-    use ANACOM, only: INDBAS
+    use Basis_m, only: BASIS, INDBAS, Items
     use Delete, only: DELCS
-    use LISTS, only: LINT, NEXT
-    use S3, only: HEADEN, PRDIND, PRODCN
-    use S5, only: BASIS
+    use LISTS, only: LINT, LIST
+    use Tables, only: HEADEN, PRDIND => Prod_Ind, PRODCN => Productions
     use Union, only: CSUN
 
     implicit NONE
 
     ! Merge the configuration set at BASIS(IBASIS) into the set of
     ! configuration sets.  Set IRES to the resulting configuration set
-    ! corresponding to IBASIS.  Set ICHNG zero if a compatible set was
-    ! found.  Set ICHNG 1 if no compatible sets were found.
+    ! corresponding to IBASIS.  Set CHANGE false if a compatible set was
+    ! found.  Set CHANGE true if no compatible sets were found.
 
     integer, intent(in) :: IBASIS
-    integer, intent(out) :: IRES, ICHNG
+    integer, intent(out) :: IRES
+    logical, intent(out) :: CHANGE
 
     ! *****     External References     ************************************
 
@@ -51,8 +51,8 @@ contains
     ! *****     Local Variables     ****************************************
 
     ! BPR     is the pointer to productions for the state at IBASIS.
+    ! CHU     "CSUN(A,B) says A added something to B."
     ! I       is a loop induction variable and subscript.
-    ! ICH     is the value of ICHNGE reported by CSUN.
     ! IEND    is the upper limit for I.
     ! IENT    is the entry symbol for IBASIS.
     ! II      is a temporary variable.
@@ -65,7 +65,8 @@ contains
     ! PPR     is the pointer to productions for the state at IPTR.
     ! SAME    indicates two configuration sets are identical.
 
-    integer BPR, I, ICH, IEND, IENT, II, IPTR, J, JJ, KK, LL, NIPTR, PPR
+    logical :: CHU
+    integer BPR, I, IEND, IENT, II, IPTR, J, JJ, KK, LL, NIPTR, PPR
     logical SAME
 
     ! *****     Procedures     *********************************************
@@ -73,47 +74,47 @@ contains
     ! Search the list of configuration sets having the same entrance
     ! symbol as IBASIS.
 
-    bpr = basis(ibasis)
-    ient = prodcn(prdind(basis(bpr))+basis(bpr+1)-1)
+    bpr = basis(ibasis)%item     ! Context set
+    ient = prodcn(prdind(items(bpr)%prod)+items(bpr)%dot-1)
     niptr = headen(ient)
   o:do
       iptr = niptr
       if ( iptr == 0 ) exit
-      niptr = basis(iptr+2)
-      ppr = basis(iptr)
+      niptr = basis(iptr)%same ! Same entrance symbol
+      ppr = basis(iptr)%item   ! Context set
 
       ! Does config IPTR have the same number of basis productions as
       ! config IBASIS?
 
-      iend = ppr - basis(iptr+5)
-      if (iend == bpr - basis(ibasis+5)) then
+      iend = basis(iptr+1)%item - ppr
+      if ( iend == basis(ibasis+1)%item - bpr ) then
 
         ! Compare the basis configurations.
 
         same = .true.
         j = bpr
-        do i = ppr, basis(iptr+5)+3, -3
-          if (basis(i) /= basis(j)) cycle o
-          if (basis(i+1) /= basis(j+1)) cycle o
-          if (basis(i+2) /= basis(j+2)) same = .false.
-          j = j - 3
+        do i = ppr, basis(iptr+1)%item - 1
+          if ( items(i)%prod /= items(j)%prod ) cycle o
+          if ( items(i)%dot /= items(j)%dot ) cycle o
+          if ( items(i)%set /= items(j)%set ) same = .false.
+          j = j + 1
         end do
 
         ! Are the config sets compatible?  They are not if there would be
         ! two intersecting context sets created by the merge where there
         ! was no intersection before.
 
-        if (.not. same) then
-          do i = 1, iend-3, 3
-            do j = i+3, iend, 3
-              ii = basis(ppr-i+3)
-              jj = basis(bpr-j+3)
-              kk = basis(ppr-j+3)
-              ll = basis(bpr-i+3)
-              if (  .not. lint(next(ii),next(jj)) &
-              .and. .not. lint(next(kk),next(ll)) ) cycle
-              if ( lint(next(ii),next(kk))  ) cycle
-              if ( .not. lint(next(ll),next(jj)) ) cycle o
+        if ( .not. same ) then
+          do i = 1, iend-1
+            do j = i+1, iend
+              ii = items(ppr+i-1)%set
+              jj = items(bpr+j-1)%set
+              kk = items(ppr+j-1)%set
+              ll = items(bpr+i-1)%set
+              if (  .not. lint(list(ii)%next,list(jj)%next) &
+              .and. .not. lint(list(kk)%next,list(ll)%next) ) cycle
+              if ( lint(list(ii)%next,list(kk)%next)  ) cycle
+              if ( .not. lint(list(ll)%next,list(jj)%next) ) cycle o
             end do
           end do
         end if
@@ -124,11 +125,11 @@ contains
         ! and delete the trial basis.  Then delete the context sets in the
         ! trial basis
 
-        ichng = 0
-        do i = 1, iend, 3
-          call csun (basis(bpr-i+3), basis(ppr-i+3), ich)
-          if (ich /= 0) ichng = 1
-          call delcs (basis(bpr-i+3))
+        change = .false.
+        do i = 1, iend
+          call csun ( items(bpr+i-1)%set, items(ppr+i-1)%set, chu )
+          if ( chu ) change = .true.
+          call delcs (items(bpr+i-1)%set)
         end do
 
         ! The trial basis is always constructed as the last basis in the
@@ -150,9 +151,9 @@ contains
     ! Link the trial set into the entrance symbol chain and return it
     ! as the resulting set.
 
-    ichng = 1
+    change = .true.
     ires = ibasis
-    basis(ibasis+2) = headen(ient)
+    basis(ibasis)%same = headen(ient)
     headen(ient) = ibasis
 
   end subroutine MERGE
@@ -170,3 +171,6 @@ contains
 end module Merge_Sets
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

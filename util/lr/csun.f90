@@ -23,21 +23,21 @@ module Union
 
 contains
 
-  subroutine CSUN (IPTR1, IPTR2, ICH)
+  subroutine CSUN ( IPTR1, IPTR2, CHANGE )
 
     use Delete, only: DELCS
-    use LISTS, only: ADDLTL, COPYL, NEXT
+    use LISTS, only: ADDLTL, COPYL, LIST
     use New_Context_Set, only: NEWCS
 
     implicit NONE
 
   ! Union the contexts sets pointed to by IPTR1 and IPTR2, leaving the
-  ! result in IPTR2.   ICH is returned non-zero iff there are any
+  ! result in IPTR2.   CHANGE is returned true iff there are any
   ! elements of IPTR1 that are not members of IPTR2.
 
     integer, intent(in) :: IPTR1
     integer, intent(inout) :: IPTR2
-    integer, intent(out) :: ICH
+    logical, intent(out) :: CHANGE
 
   ! *****     External References     ********************************
 
@@ -55,12 +55,12 @@ contains
 
   !     *****     Procedures     *****************************************
 
-    ich = 0
+    change = .false.
     if (iptr1 /= iptr2) then
-      call copyl (next(iptr2), head)
-      call addltl (next(iptr1), head, ich)
-      call delcs (iptr2)
-      call newcs (head, iptr2)
+      call copyl ( list(iptr2)%next, head )
+      call addltl ( list(iptr1)%next, head, change )
+      call delcs ( iptr2 )
+      call newcs ( head, iptr2 )
     end if
 
     return
@@ -80,3 +80,6 @@ contains
 end module Union
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

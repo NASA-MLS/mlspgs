@@ -24,10 +24,10 @@ module Delete
 contains
 
   subroutine DELCS (IPTR)
-    use IO, only: OUTPUT
-    use LISTS, only: ITEM, NEXT, REL
-    use S3, only: HEADCS
-    use TOGGLES
+    use Output_m, only: OUTPUT
+    use LISTS, only: LIST, REL
+    use Tables, only: HEADCS
+    use TOGGLES_LR
     implicit NONE
 
   ! Delete the context set pointed to by IPTR.  The first cell of the
@@ -40,36 +40,32 @@ contains
 
   ! I       Points to the node being examined.
   ! LAST    Points to the last node examined.
-  ! LINE    Is used for message assembly.
 
     integer :: I, LAST
-    character(len=120) :: LINE
 
   !     *****     Procedures     *****************************************
 
-    if (item(iptr) > 1) then
-      item(iptr) = item(iptr) - 1
+    if (list(iptr)%item > 1) then
+      list(iptr)%item = list(iptr)%item - 1
     else
-      if (toggle(ichar('3')) /= 0) then
-        line=' Destroy context set at'
-        write ( line(24:28), '(i5)' ) iptr
-        call output (line(1:28))
+      if (toggle(iachar('3')) /= 0) then
+        call output ( iptr, before=' Destroy context set at ', advance='yes')
       end if
-      i = headcs(item(next(iptr)))
+      i = headcs(list(list(iptr)%next)%item)
       last = 0
       do while (i /= 0)
-        if (item(i) .eq. iptr) then
+        if (list(i)%item == iptr) then
           if (last  /=  0) then
-            next(last) = next(i)
+            list(last)%next = list(i)%next
           else
-            headcs(item(next(iptr))) = next(i)
+            headcs(list(list(iptr)%next)%item) = list(i)%next
           end if
-          next(i) = 0
+          list(i)%next = 0
           call rel (i)
           exit
         end if
         last = i
-        i = next(i)
+        i = list(i)%next
       end do
       call rel (iptr)
     end if
@@ -89,3 +85,6 @@ contains
 end module Delete
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

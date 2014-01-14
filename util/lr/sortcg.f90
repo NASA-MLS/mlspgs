@@ -23,16 +23,18 @@ module Sort_Configurations
 
 contains
 
-  subroutine SORTCG (NSETS)
-    use SIZES, only: MAXSHD
-    use SCRCOM
-    use S3, only: PRDIND, PRODCN
-    implicit NONE
+  subroutine SORTCG ( NSETS )
+
+    use Basis_m, only: Item_t
+    use Complete, only: SCRTCH
+    use Tables, only: PRDIND => Prod_Ind, PRODCN => Productions
+    use Toggles, only: Gen, Levels
+    use Trace, only: Trace_Begin, Trace_End
 
     ! Sort the NSETS configurations in the scratch array.  Put reducing
-    ! configurations after transiting configurations.  Order transiting
+    ! configurations after transitioning configurations.  Order transitioning
     ! configurations according to the symbol after the dot.  For
-    ! reducing configurations, or transiting configurations having the
+    ! reducing configurations, or transitioning configurations having the
     ! same symbol after the dot, order according to production number.
 
     integer, intent(in) :: NSETS
@@ -40,75 +42,68 @@ contains
     !     *****     Local Variables     ************************************
 
     ! H       is the increment separating sorted elements.
-    ! H3      is 3*H.
     ! I       is a loop induction variable and subscript.
     ! IP      is the pointer to the symbol the I iterator is examining.
     !         IP is also used as a temporary variable while exchanging
     !         configurations.
-    ! IS      is SCRTCH(I) (the production number).
     ! ISYM    is the symbol after the dot in the production at SCRTCH(I).
-    ! IS1     is SCRTCH(I+1) (the dot position).
-    ! IS2     is SCRTCH(I+2) (the context list pointer).
     ! J       is a loop induction variable and subscript.
     ! JP      is the pointer to the symbol the J iterator is examining.
-    ! JS      is SCRTCH(J) (the production number).
     ! JSYM    is the symbol after the dot in the production at SCRTCH(J).
-    ! JS1     is SCRTCH(J+1) (the dot position).
+    ! V       is the I'th item during sorting
+    ! W       is the (J-H)'th item during sorting
 
-    integer H, H3, I, IP, IS, ISYM, IS1, IS2, J, JP, JS, JSYM, JS1
+    integer H, I, IP, ISym, J, JP, JSym
+    type(item_t) :: V, W
 
     ! *****     Procedures     *********************************************
 
     ! Use a shellsort algorithm.
 
-    if (nsets <= 3) return
+    if ( levels(gen) > 1 ) call trace_begin ( 'SORTCG' )
+
+    if ( nsets <= 1 ) go to 9
     h = 1
-    do while (h <= nsets)
+    do while ( h <= nsets )
       h = 3*h + 1
     end do
     do while (h > 1)
       h = h/3
-      h3 = 3*h
-      do i = h3+1, nsets, 3
-        is = scrtch(i)
-        is1 = scrtch(i+1)
-        is2 = scrtch(i+2)
-        ip = prdind(is)
-        if (is1 .ge. prdind(is+1) - ip) then
+      do i = h+1, nsets
+        v = scrtch(i)
+        ip = prdind(v%prod)
+        if ( v%dot >= prdind(v%prod+1) - ip) then
         ! The I'th configuration is a reducing configuration.
-        ! Pretend the symbol after the dot is MAXSHD+1.
-          isym = maxshd + 1
+        ! Pretend the symbol after the dot is HUGE.
+          isym = huge(1)
         else
-          isym = prodcn(ip+is1)
+          isym = prodcn(ip+v%dot)
         end if
         j = i
-        do while (j > h3)
-          js = scrtch(j-h3)
-          js1 = scrtch(j-h3+1)
-          jp = prdind(js)
-          if (js1 .ge. prdind(js+1) - jp) then
+        do while ( j > h )
+          w = scrtch(j-h)
+          jp = prdind(w%prod)
+          if ( w%dot >= prdind(w%prod+1) - jp ) then
           ! The J'th configuration is a reducing configuration.
-          ! Pretend the symbol after the dot is MAXSHD+1.
-            jsym = maxshd + 1
+          ! Pretend the symbol after the dot is HUGE.
+            jsym = huge(1)
           else
-            jsym = prodcn(jp+js1)
+            jsym = prodcn(jp+w%dot)
           end if
-          if (jsym .lt. isym) exit
-          if (jsym .eq. isym) then
+          if ( jsym < isym ) exit
+          if ( jsym == isym ) then
           ! The symbols after the dot are equal.  Order the
           ! configurations according to the production number.
-            if (js .le. is) exit
+            if ( w%prod <= v%prod ) exit
           end if
-          scrtch(j) = scrtch(j-h3)
-          scrtch(j+1) = scrtch(j-h3+1)
-          scrtch(j+2) = scrtch(j-h3+2)
-          j = j - h3
+          scrtch(j) = w
+          j = j - h
         end do
-        scrtch(j) = is
-        scrtch(j+1) = is1
-        scrtch(j+2) = is2
+        scrtch(j) = v
       end do
     end do
+
+  9 if ( levels(gen) > 1 ) call trace_end ( 'SORTCG' )
 
   end subroutine SORTCG
 
@@ -125,3 +120,6 @@ contains
 end module Sort_Configurations
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

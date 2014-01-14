@@ -27,19 +27,23 @@ contains
 
   subroutine FIND_NULLABLE    ! find nullable nonterminals
 
-    use Error_Handler, only: Error
-    use S3, only: FRSPRD, PRDIND, PRODCN
-    use TABCOM, only: NTERMS, NVOC
+    use Error_m, only: Error
+    use Tables, only: First_Nonterminal, FRSPRD => First_Production, &
+      & Last_Nonterminal, PRDIND => Prod_Ind, PRODCN => Productions
+    use Toggles, only: GEN, Toggle
+    use Trace, only: Trace_Begin, Trace_End
 
     logical :: CHANGE         ! "Something changed in NULLABLE"
     integer :: I, K           ! Subscripts, loop inductors
-    allocate ( nullable(nvoc), stat=i )
+
+    if ( toggle(gen) ) call trace_begin ( 'Find_Nullable' )
+    allocate ( nullable(last_nonterminal), stat=i )
     if ( i /= 0 ) call error &
       ( 'FIND_NULLABLE-E- Unable to allocate NULLABLE, STAT =', 2 )
     nullable = .false.        ! nothing nullable yet, esp. terminals
     do ! until .not. ichange
       change = .false.
-      do k = nterms+1, nvoc   ! all the nonterminals
+      do k = First_Nonterminal, Last_Nonterminal   ! all the nonterminals
         if ( .not. nullable(k) ) then ! k is not yet known to be nullable
           i = frsprd(k)       ! First production with LHS = k
           if ( i > 0 ) then   ! Otherwise it an unused symbol defined by &V
@@ -57,33 +61,35 @@ contains
       if ( .not. change ) exit
     end do
     call print_nullable
+    if ( toggle(gen) ) call trace_end ( 'Find_Nullable' )
 
   end subroutine FIND_NULLABLE
 
   subroutine PRINT_NULLABLE
-    use IO, only: OUTPUT
-    use S1, only: LENGTH, MOVSTR
-    use S3, only: VOCAB
-    use TABCOM, only: NTERMS, NVOC
-    use TOGGLES
-    integer :: I, K           ! Subscripts, loop inductors
-    character(len=120) LINE
-    if (toggle(ichar('2')) /= 0) then
+    use Output_m, only: Blanks, NewLine, OUTPUT
+    use Processor_Dependent, only: NewPage
+    use String_Table, only: Display_String, String_Length
+    use Tables, only: First_Nonterminal, Last_Nonterminal, VOCAB
+    use TOGGLES_LR
+    integer :: I, K, L           ! Subscripts, loop inductors
+    if (toggle(iachar('2')) /= 0) then
     ! Print the list of nullable nonterminals.
-      line = '1POTENTIALLY NULL NON-TERMINALS:'
-      call output (line(1:33))
+      call output ( newPage, dont_asciify=.true. )
+      call output ( 'POTENTIALLY NULL NON-TERMINALS: ', advance='yes' )
+      call blanks ( 4 )
       i = 4
-      do k = nterms+1, nvoc   ! all the nonterminals
+      do k = First_Nonterminal, Last_Nonterminal   ! all the nonterminals
         if ( nullable(k) ) then
-          if (length(vocab(k))+i > len(line)) then
-            call output (line(1:i-1))
-            i = 4
+          l = string_length(vocab(k))
+          if ( l+i > 120 ) then
+            call newLine
+            call blanks ( 4 )
           end if
-          call movstr (vocab(k), line, i, len(line))
-          i = i + 1
+          call display_string ( vocab(k), before=' ' )
+          i = i + 1 + l
         end if
       end do
-      call output (line(1:i-1))
+      call newLine
     end if
 
   end subroutine PRINT_NULLABLE
@@ -101,3 +107,6 @@ contains
 end module NULLABLE_M
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!

@@ -27,15 +27,15 @@ contains
 
   subroutine FIND_FIRST            ! find FIRST sets for nonterminal symbols
 
-    use Error_Handler, only: Error
-    use LISTS, only: ADDLTL, ITEM, LCOMPR, NEW, REL
+    use Error_m, only: Error
+    use LISTS, only: ADDLTL, LCOMPR, LIST, NEW, REL
     use NULLABLE_M, only: NULLABLE
-    use S3, only: PRDIND, PRODCN
-    use TABCOM, only: NTERMS, NUMPRD, NVOC
+    use Tables, only: NTERMS, NUMPRD, NVOC, PRDIND => Prod_Ind, &
+      & PRODCN => Productions
 
+    logical :: ADD_CHANGE          ! "ADDLTL changed a list"
     logical :: CHANGE              ! "a first set changed"
     integer :: I, J, K             ! subscripts and loop inductors
-    integer :: ICHN                ! /=0 => ADDLTL changed a list
     logical :: RESET(NTERMS+1:NVOC) ! "FIRST_PT(i) has been destroyed"
 
     allocate ( first_pt (nvoc) , stat=i )
@@ -46,22 +46,22 @@ contains
     first_pt(nterms+1:nvoc) = 0    ! nonterminal first sets start empty
     do i = 1, nterms
       call new ( first_pt(i) )
-      item(first_pt(i)) = i        ! terminal first set is the terminal
+      list(first_pt(i))%item = i        ! terminal first set is the terminal
     end do
 
-    do ! until ( .not. change )
+    change = .true.
+    do while ( change )
       change = .false.
       do i = 1, numprd             ! all the productions
         j = prdind(i)              ! beginning of i'th production
         do k = j+1, prdind(i+1)-1  ! all of i'th production's RHS
           if ( prodcn(k) /= prodcn(j) ) then ! j'th RHS symbol /= LHS
-            call addltl ( first_pt(prodcn(k)), first_pt(prodcn(j)), ichn )
-            if ( ichn /= 0 ) change = .true.
+            call addltl ( first_pt(prodcn(k)), first_pt(prodcn(j)), add_change )
+            if ( add_change ) change = .true.
           end if
           if ( .not. nullable(prodcn(k)) ) exit
         end do
       end do
-      if ( .not. change ) exit     ! no change after checking all productions
     end do
 
     ! Now pack up the sets.  If two sets are identical they will be
@@ -89,27 +89,25 @@ contains
 
   subroutine PRINT_FIRST
 
-    use IO, only: OUTPUT
+    use Output_m, only: OUTPUT
     use Print_List, only: PNTLST
-    use S1, only: MOVSTR
-    use S3, only: VOCAB
-    use TABCOM, only: NTERMS, NVOC
-    use TOGGLES
+    use Processor_Dependent, only: NewPage
+    use String_Table, only: Display_String, String_Length
+    use Tables, only: First_Nonterminal, Last_Nonterminal, Vocab
+    use TOGGLES_LR
 
     integer :: I, K                ! subscripts, loop inductors
-    character(len=120) :: LINE
 
-    if (toggle(ichar('2')) /= 0) then
+    if (toggle(iachar('2')) /= 0) then
     ! Print the FIRST sets.
-      line = '1FIRST SETS:'
-      call output (line(1:12))
-      do k = nterms+1, nvoc
+      call output ( newPage, dont_asciify=.true. )
+      call output ( 'FIRST SETS:', advance='yes' )
+      do k = First_Nonterminal, Last_Nonterminal
         if (first_pt(k) /= 0) then
-          i = 4
-          call movstr (vocab(k), line, i, 120)
-          line(i:i)=':'
-          i = i + 2
-          call pntlst (first_pt(k), line, i, 10)
+          call display_string ( vocab(k), before='    ' )
+          call output ( ': ' )
+          i = string_length(vocab(k)) + 6
+          call pntlst (first_pt(k), i, 10)
         end if
       end do
     end if
@@ -129,3 +127,6 @@ contains
 end module FIRST_SETS
 
 ! $Log$
+! Revision 1.1  2013/10/24 22:41:14  vsnyder
+! Initial commit
+!
