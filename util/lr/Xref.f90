@@ -108,9 +108,11 @@ contains ! ====     Procedures     =====================================
       if ( associated(item%prev) ) call print_the_refs ( item%prev )
       if ( item%prod /= 0 ) then
         write ( text, '(i5)' ) item%prod
+        l = l + 5
         if ( l > 115 ) then
           call newLine
-          call blanks ( lstart )
+          call blanks ( lstart+1 )
+          l = lstart + 1
         end if
         call output ( text )
         deallocate ( item )
@@ -133,3 +135,6 @@ contains ! ====     Procedures     =====================================
 end module Xref
 
 ! $Log$
+! Revision 1.1  2014/01/14 00:15:14  vsnyder
+! Initial commit of new module for new LR
+!
