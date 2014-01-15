@@ -803,10 +803,6 @@ CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
-#convert_spectroscopy: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert_spectroscopy.f90
-#	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-#   -m lib -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
-
 dateconverter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/dateconverter.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
@@ -933,10 +929,20 @@ l2q: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2q.f90 l2
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
-lr: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/lr/*.f90
+lr: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/lr/*.f90 utctotai
+# First, we must hide parser.f90, then rebuild lib
+	if [ -f lib/parser.f90 ] ; then \
+	mv lib/parser.f90 lib/parser.f90.hideme; \
+        $(MAKE) -f $(MakeFName) -C lib update; \
+        $(MAKE) -f $(MakeFName) -C lib; \
+        fi
+# Second build lr with the truncated lib
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=lr -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/lr/*.f90
+# Third, undo the damage to lib
+	mv lib/parser.f90.hideme lib/parser.f90; \
+        $(MAKE) -f $(MakeFName) -C lib update
 
 machineok: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/machineok.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -980,6 +986,11 @@ UnwrapList: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/UnwrapList.f90
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
 utctotai: $(CONFDIR)/$(MLSCFILE) $(utctotai_sources)
+	@echo "Installing universal time library into $(INSTALLDIR)"; \
+	if [ ! -d $(INSTALLDIR) ] ; then \
+	   pwd; echo $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
+	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
+	fi
 		$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
 		-c $(MLSCONFG) -p $@ -M $(MAKE) -T lib -ni\
 		-C $(MLSCFILE) $(utctotai_sources)
@@ -1327,6 +1338,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.139  2013/10/28 23:15:00  pwagner
+# May build lr
+#
 # Revision 1.138  2013/09/09 23:18:32  pwagner
 # Compute dependencies in srclib according to .mod-style
 #

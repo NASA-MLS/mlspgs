@@ -23,10 +23,20 @@ $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
    $(UTILDIR)/init_gen.f90
 $(INSTALLDIR)/lr: $(UTILDIR)/lr/*.f90
+# First, we must hide parser.f90, then rebuild lib
+	pwd; echo $(CONFDIR); echo $(UTILDIR); if [ -f $(CONFDIR)/lib/parser.f90 ] ; then \
+	mv $(CONFDIR)/lib/parser.f90 $(CONFDIR)/lib/parser.f90.hideme; \
+        $(MAKE) -C $(CONFDIR)/lib update; \
+        $(MAKE) -C $(CONFDIR)/lib; \
+        fi
+# Second build lr with the truncated lib
 	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
-   -p lr -M $(MAKE) \
+   -p lr -M $(MAKE) -O short_name=lr -m lib \
 	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
         $(UTILDIR)/lr/*.f90
+# Third, undo the damage to lib
+	mv $(CONFDIR)/lib/parser.f90.hideme $(CONFDIR)/lib/parser.f90; \
+        $(MAKE) -C $(CONFDIR)/lib update
 
 ifneq ($(short_name),doc)
 ifndef CASCADE
@@ -186,10 +196,13 @@ ieee_arithmetic.mod: ieee_arithmetic.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-$(S)/parser.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+parser.o parser.mod: $(S)/Parser_Tables.f90
+
+$(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
-          $(S)/parser.f9h $(LRAFTER)
+          $(S)/Parser_Tables.f90 $(LRAFTER); \
+          cd $(S); $(MAKE) -f MakeFC depends
 
 endif
 
@@ -218,7 +231,7 @@ ncep_dao.o: ncep_dao.mod
    -T ncep_dao.o ncep_dao.mod 
 
 # Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
-# unless treated vry carefully
+# unless treated very carefully
 #MLSStringLists.o:
 #	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStringLists.o mlsstringlists.mod 
 #mlsstringlists.mod: MLSStringLists.f90 mlscommon.mod mlsmessagemodule.mod \
@@ -340,10 +353,13 @@ machine.o: $(MACH_DIR)/machine.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-$(S)/parser.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+parser.o: $(S)/Parser_Tables.f90
+
+$(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
-          $(S)/parser.f9h $(LRAFTER)
+          $(S)/Parser_Tables.f90 $(LRAFTER); \
+          cd $(S); $(MAKE) -f MakeFC depends
 
 endif
 
@@ -451,6 +467,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.6  2013/12/03 00:03:29  pwagner
+# Fixed bugs in building lr; added LRAFTER
+#
 # Revision 1.5  2013/10/28 23:12:17  pwagner
 # May build parser.f9h
 #
