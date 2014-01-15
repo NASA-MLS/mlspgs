@@ -623,9 +623,6 @@ help--toolkit:
 # install the mls programs from $(LEVELS) into $(INSTALLDIR)
 install: $(LEVELS)
 	@echo "Installing programs from $(LEVELS) into $(INSTALLDIR)"; \
-	if [ ! -d $(INSTALLDIR) ] ; then \
-	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
-	fi ; \
 	if [ -f license.txt ] ; then \
 	   cp license.txt $(INSTALLDIR) ; \
 	fi ; \
@@ -988,13 +985,12 @@ UnwrapList: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/UnwrapList.f90
 utctotai: $(CONFDIR)/$(MLSCFILE) $(utctotai_sources)
 	@echo "Installing universal time library into $(INSTALLDIR)"; \
 	if [ ! -d $(INSTALLDIR) ] ; then \
-	   pwd; echo $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
 	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
 	fi
-		$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-		-c $(MLSCONFG) -p $@ -M $(MAKE) -T lib -ni\
-		-C $(MLSCFILE) $(utctotai_sources)
-		mv ./tests/misc/$(MLSCONFG)/libmisc.a $(INSTALLDIR)/libutctotai.a
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+	-c $(MLSCONFG) -p $@ -M $(MAKE) -T lib -ni\
+	-C $(MLSCFILE) $(utctotai_sources)
+	mv ./tests/misc/$(MLSCONFG)/libmisc.a $(INSTALLDIR)/libutctotai.a
 
 WordSplit: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/WordSplit.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -1032,6 +1028,12 @@ update:
 	@$(MAKE) -f $(MakeFName) internaldepends
 	@$(MAKE) -f $(MakeFName) internalmftests
 	@$(MAKE) -f $(MakeFName) REVERSE=-reverse internalupdate
+	if [ ! -x $(MLSBIN)/mkpath.sh ] ; then \
+	   chmod a+x $(MLSBIN)/mkpath.sh; \
+	fi
+	if [ ! -d $(INSTALLDIR) ] ; then \
+	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
+	fi
 
 # Useful for cleaning multiple configurations
 
@@ -1338,6 +1340,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.140  2014/01/15 19:12:52  pwagner
+# Compatible with new lr
+#
 # Revision 1.139  2013/10/28 23:15:00  pwagner
 # May build lr
 #
