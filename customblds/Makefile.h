@@ -201,7 +201,7 @@ parser.o parser.mod: $(S)/Parser_Tables.f90
 $(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
-          $(S)/Parser_Tables.f90 $(LRAFTER); \
+          $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
           cd $(S); $(MAKE) -f MakeFC depends
 
 endif
@@ -358,7 +358,7 @@ parser.o: $(S)/Parser_Tables.f90
 $(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
-          $(S)/Parser_Tables.f90 $(LRAFTER); \
+          $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
           cd $(S); $(MAKE) -f MakeFC depends
 
 endif
@@ -467,6 +467,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.7  2014/01/15 19:12:19  pwagner
+# Compatible with new lr
+#
 # Revision 1.6  2013/12/03 00:03:29  pwagner
 # Fixed bugs in building lr; added LRAFTER
 #
