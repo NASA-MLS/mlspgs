@@ -85,6 +85,14 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi 
+	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) Parser_Tables.o
+	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o
+
+parser.o: Parser_Tables
+	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o
+
+Parser_Tables.o:
+	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) Parser_Tables.o
 
 hdfeos5.f9h: $(IHDFEOS5INC)
 	@sed 's/^C/!/' $(IHDFEOS5INC) > hdfeos5.f9h
@@ -180,6 +188,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.62  2014/01/18 00:55:40  pwagner
+# Could this be the fix to building Parser_Tables we sought?
+#
 # Revision 2.61  2013/08/28 00:39:15  pwagner
 # Lifted custom builds from MLSStrings.f90 MLSStringLists.f90
 #
