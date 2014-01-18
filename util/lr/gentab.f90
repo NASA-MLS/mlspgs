@@ -215,12 +215,12 @@ contains
 
   ! Output the pointers to lookahead vectors (NSET).
 
-    call output_work ( list(red(1:nxtred)%set)%item, &
+    call output_work ( list(red(1:nlooks)%set)%item, &
                      & 'NSET', '(nlooks)', 1, nlooks )
 
   ! Output the production index vector (PROD).
 
-    call output_work ( red(1:nxtred)%prod, 'PROD', '(nlooks)', 1, nlooks )
+    call output_work ( red(1:nlooks)%prod, 'PROD', '(nlooks)', 1, nlooks )
 
   ! Output the lookahead sets (LS and LSET).
 
@@ -503,6 +503,9 @@ contains
 end module Generate_Table
 
 ! $Log$
+! Revision 1.3  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
 ! Revision 1.2  2013/12/12 01:53:00  vsnyder
 ! Remove unused cruft
 !
