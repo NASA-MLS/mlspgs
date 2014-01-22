@@ -20,7 +20,7 @@
 $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
 	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+	-C $(MLSCFILE) \
    $(UTILDIR)/init_gen.f90
 $(INSTALLDIR)/lr: $(UTILDIR)/lr/*.f90
 # First, we must hide parser.f90, then rebuild lib
@@ -30,13 +30,19 @@ $(INSTALLDIR)/lr: $(UTILDIR)/lr/*.f90
         $(MAKE) -C $(CONFDIR)/lib; \
         fi
 # Second build lr with the truncated lib
+#	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
+#        -p lr -M $(MAKE) -O short_name=lr_custom -m lib \
+#	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
+#        $(UTILDIR)/lr/*.f90
 	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
-   -p lr -M $(MAKE) -O short_name=lr -m lib \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
-        $(UTILDIR)/lr/*.f90
+	-c $(MLSCONFG) -p lr -M $(MAKE) -O short_name=lr_custom -m lib \
+	-C $(MLSCFILE) \
+	$(UTILDIR)/lr/*.f90
 # Third, undo the damage to lib
+	if [ -f $(CONFDIR)/lib/parser.f90.hideme ] ; then \
 	mv $(CONFDIR)/lib/parser.f90.hideme $(CONFDIR)/lib/parser.f90; \
-        $(MAKE) -C $(CONFDIR)/lib update
+        $(MAKE) -C $(CONFDIR)/lib update; \
+        fi
 
 ifneq ($(short_name),doc)
 ifndef CASCADE
@@ -467,6 +473,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.8  2014/01/18 00:56:45  pwagner
+# Redirect lr stdout
+#
 # Revision 1.7  2014/01/15 19:12:19  pwagner
 # Compatible with new lr
 #

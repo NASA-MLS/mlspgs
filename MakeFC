@@ -479,6 +479,8 @@ lib:
 blas:
 	$(MAKE) -f $(MakeFName) -C $@
 
+# l1, l2, etc. require Parser_tables
+#l1 l2 $(tools): lib/$(MLSCONFG)/parser.o
 l1--itm: l1
 	$(MAKE) -f $(MakeFName) -C l1 PROG=init_tables_module.o MARK_ALL_AS_UPTODATE=no
 
@@ -930,16 +932,18 @@ lr: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/lr/*.f90 utctotai
 # First, we must hide parser.f90, then rebuild lib
 	if [ -f lib/parser.f90 ] ; then \
 	mv lib/parser.f90 lib/parser.f90.hideme; \
-        $(MAKE) -f $(MakeFName) -C lib update; \
-        $(MAKE) -f $(MakeFName) -C lib; \
         fi
+	$(MAKE) -f $(MakeFName) -C lib update
+	$(MAKE) -f $(MakeFName) -C lib
 # Second build lr with the truncated lib
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=lr -m lib \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=lr_main -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/lr/*.f90
 # Third, undo the damage to lib
+	if [ -f lib/parser.f90.hideme ] ; then \
 	mv lib/parser.f90.hideme lib/parser.f90; \
-        $(MAKE) -f $(MakeFName) -C lib update
+	$(MAKE) -f $(MakeFName) -C lib update; \
+        fi
 
 machineok: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/machineok.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -961,6 +965,9 @@ MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+#lib/$(MLSCONFG)/parser.o: lr
+#	$(MAKE) -C lib parser.o
 
 remake_gh: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/remake_gh.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -1340,6 +1347,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.141  2014/01/15 19:51:28  pwagner
+# Fixed bug where repository copy of mkpath.sh not executable
+#
 # Revision 1.140  2014/01/15 19:12:52  pwagner
 # Compatible with new lr
 #

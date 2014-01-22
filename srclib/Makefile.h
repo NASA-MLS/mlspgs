@@ -209,7 +209,7 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs) $(INSTALLDIR)/lr
 	echo Makefile.h $(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) $(UPTODATEMARKS)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) $(UPTODATEMARKS)
 
-$(INSTALLDIR)/lr: $(lr_f90) 
+$(INSTALLDIR)/lr: $(lr_f90) $(INSTALLDIR)/libutctotai.a
 	echo Makefile.h $(MAKE) -f $(MakeFName) lr -C $(CONFDIR) $(UPTODATEMARKS)
 	$(MAKE) -f $(MakeFName) lr -C $(CONFDIR) $(UPTODATEMARKS)
 
@@ -235,6 +235,9 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR) $(UPTODATEMARKS)
 
 # $Log$
+# Revision 1.9  2013/12/03 00:21:35  pwagner
+# Now depends on l2cf.grm, too
+#
 # Revision 1.8  2013/12/03 00:04:53  pwagner
 # Should now build lr automatically
 #
