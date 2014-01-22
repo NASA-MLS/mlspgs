@@ -85,8 +85,12 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi 
-	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) Parser_Tables.o
-	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o
+	@if [ -f Parser_Tables.f90 ]; then \
+        cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) Parser_Tables.o ;\
+        fi
+	@if [ -f Parser_Tables.f90 ]; then \
+        cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o ;\
+        fi
 
 parser.o: Parser_Tables
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o
@@ -188,6 +192,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.63  2014/01/22 18:22:44  pwagner
+# More changes, bug fixes
+#
 # Revision 2.62  2014/01/18 00:55:40  pwagner
 # Could this be the fix to building Parser_Tables we sought?
 #
