@@ -899,6 +899,12 @@ repeat_loop: do ! RepeatLoop
       !  x} \simeq {\bf R} ( {\bf a - x}_n)$.
       !
       !  If {\tt After} is true, apply column scaling.
+      !
+      !  If requesting a posteriori covariance, a posteriori standard
+      !  deviation, or an averaging kernel, without Tikhonov regularization,
+      !  becomes common, this routine should be used to back out its effect
+      !  by subtracting from the normal equations.  This would require adding
+      !  a flag to the FormNormalEquations routine to subtract instead of add.
 
       use DNWT_Module, only: NWT_T
       use MatrixModule_1, only: CLEARMATRIX, COLUMNSCALE, DUMP, DUMP_STRUCT, &
@@ -1494,6 +1500,7 @@ repeat_loop: do ! RepeatLoop
                                         ! Only used when computing solution covariance/sd
                                         ! and needing to set values negative, or when
                                         ! computing the apriori fraction.
+      logical :: AtBest                 ! Current state is the best one so far.
       type(nwt_T) :: BestAJ             ! AJ at Best Fnorm so far.
       real(r8) :: Cosine                ! Of an angle between two vectors
       ! Dump switches
@@ -1708,6 +1715,7 @@ repeat_loop: do ! RepeatLoop
       prev_nwt_flag = huge(0)
       loopCounter = 0
       aj%sqmin = lambdaMin
+      atBest = .false.
 NEWT: do ! Newton iteration
         loopCounter = loopCounter + 1
         if ( loopCounter > max(50, 50 * maxJacobians) ) then
@@ -1830,21 +1838,33 @@ NEWT: do ! Newton iteration
                 call time_now ( t3 )
                 call output ( t3-t0, before=' at ', after=' seconds', advance='yes' )
               end if
-            if ( .not. foundBetterState ) exit NEWT
-            ! Restore BestX, run the forward model one more time to get a new
-            ! Jacobian, and form normal equations -- the last two so that the
-            ! a posteriori covariance is consistent with BestX.
-            aj = bestAJ
-            call copyVector ( v(x), v(bestX) ) ! x = bestX
-            ! Do we need to get a fresh Jacobian, uncontaminated by Tikhonov
-            ! regularization and Levenberg-Marquardt stabilization, in order
-            ! to compute a posteriori covariance or standard deviation, or
-            ! an averaging kernel?
-            nwt_flag = nf_getJ
+            ! Decide whether we need a special iteration just to get a new
+            ! Jacobian.
+            if ( foundBetterState .and. .not. atBest ) then
+              ! Restore BestX, run the forward model one more time to get a new
+              ! Jacobian, and form normal equations -- the last two so that the
+              ! a posteriori covariance is consistent with BestX.
+              aj = bestAJ
+              call copyVector ( v(x), v(bestX) ) ! x = bestX
+              nwt_flag = nf_getJ
+              cycle NEWT
+            end if
             if ( ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
-              &    got(f_average) ) .and. &
-              &  tikhonovNeeded .and. covSansReg ) cycle NEWT ! yes
-            exit NEWT ! no
+              &    got(f_average) ) .and. tikhonovNeeded .and. covSansReg ) then
+              ! Get a fresh Jacobian, uncontaminated by Tikhonov regularization,
+              ! to compute a posteriori covariance, standard deviation, or an
+              ! averaging kernel.  This is hopefully an unusual request.  If it
+              ! becomes usual, this should be done by calculating the
+              ! Tikhonov regularization matrix, multiplying it (on the left) by
+              ! its transpose, and subtracting the result from the normal
+              ! equations, rather than by getting a new Jacobian, adding the
+              ! a priori covariance, and forming normal equations.  Care will
+              ! be needed to handle the cases of column scaling before and after
+              ! applying Tikhonov regularization correctly.
+              nwt_flag = nf_getJ
+              cycle NEWT
+            end if
+            exit Newt
           end if
 
           lambda = 0.0
@@ -2219,22 +2239,22 @@ NEWT: do ! Newton iteration
               &   countBits(measurements%quantities(j)%mask, what=m_linAlg )
           end do
 
-          ! Correct for apriori information.  Note that there is an
-          ! approximation here: We don't take any account of whether the a
-          ! priori is used on an element by element basis.
-          if ( got(f_apriori) ) &
-            & jacobian_rows = jacobian_rows + jacobian_cols
-          ! Correct for Tikhonov information.
-          if ( nwt_flag == nf_getJ ) then ! taking a special iteration to get J
-            dof = max ( jacobian_rows - jacobian_cols, 1 )
-            aj%chiSqNorm = aj%fnorm / dof
-            aj%fnorm = sqrt(aj%fnorm)
-              if ( d_sca ) &
-                & call dump ( (/ aj%fnorm, aj%chiSqNorm, dof /) , &
-                & '     | F |    chi^2/DOF           DOF ', options='c' )
-            exit NEWT
+          ! Correct the number of rows for apriori information.  Note that
+          ! there is an approximation here: We don't take any account of
+          ! whether the a priori is used on an element by element basis.
+          if ( got(f_apriori) ) jacobian_rows = jacobian_rows + jacobian_cols
+
+          if ( tikhonovNeeded ) then
+            ! Correct the number of rows for Tikhonov information, unless
+            ! we're taking a special iteration to get a Jacobian without
+            ! Tikhonov regularization.
+            if ( nwt_flag /= nf_getJ .or. .not. covSansReg ) &
+              & jacobian_rows = jacobian_rows + tikhonovRows
           end if
-          if ( tikhonovNeeded ) jacobian_rows = jacobian_rows + tikhonovRows
+
+          ! Exit if we are taking a special iteration to get J.
+          if ( nwt_flag == nf_getJ ) exit NEWT
+
           aj%diag = minDiag ( factored ) ! element on diagonal with
             !       smallest absolute value, after triangularization
           aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
@@ -2327,7 +2347,9 @@ NEWT: do ! Newton iteration
         ! $\lambda =$ {\bf AJ\%SQ}.  I.e., form $({\bf \Sigma}^T {\bf J}^T
         ! {\bf W}^T {\bf W J \Sigma + \lambda^2 I}) {\bf \Sigma}^{-1}
         ! {\bf \delta \hat x = \Sigma}^T {\bf J}^T {\bf W}^T {\bf f}$ for
-        ! ${\bf \Sigma}^{-1} {\bf \delta \hat x}$.  Set
+        ! ${\bf \Sigma}^{-1} {\bf \delta \hat x}$.  The update is
+        ! aj\%sq$^2 - \lambda^2$ to remove the previous Levenberg-Marquardt
+        ! parameter.  Then set
         ! \begin{description}
         !   \item[AJ\%FNMIN] as for NWT\_FLAG = NF\_EVALJ, but taking
         !     account of Levenberg-Marquardt stabilization;
@@ -2509,9 +2531,10 @@ NEWT: do ! Newton iteration
               end if
             end if
         case ( nf_newx ) ! ................................  NEWX  .....
-        ! Set X = X + DX
-        !     AJ%AXMAX = MAXVAL(ABS(X)),
-        !     AJ%BIG = ANY ( DX > 10.0 * epsilon(X) * X )
+          ! Set X = X + DX
+          !     AJ%AXMAX = MAXVAL(ABS(X)),
+          !     AJ%BIG = ANY ( DX > 10.0 * epsilon(X) * X )
+
           !{Set $\delta {\bf x} := \delta {\bf \hat x}$ and then ${\bf x} :=
           ! {\bf x} + \delta {\bf x}$.  We already accounted for column scaling
           ! when a candidate Newton move or gradient move was put into {\tt
@@ -2529,6 +2552,7 @@ NEWT: do ! Newton iteration
             & call boundMove ( mu, highBound, v(x), v(dxUnscaled), 'high', muMin )
           if ( mu < 1.0_rv ) call scaleVector ( v(dxUnscaled), mu )
           call addToVector ( v(x), v(dxUnScaled) ) ! x = x + dxUnScaled
+          atBest = .false.
             if ( d_dvec ) call dump ( v(dxUnScaled), name='dX Unscaled' )
             if ( d_dxn > -1 ) &
               & call dumpVectorNorms ( v(dxUnScaled), d_dxn, &
@@ -2598,6 +2622,7 @@ NEWT: do ! Newton iteration
             if ( d_gvec ) call dump ( v(dxUnscaled), name='Gradient move from best X' )
         case ( nf_best ) ! ................................  BEST  .....
         ! Set "Best X" = X, "Best Gradient" = Gradient
+          atBest = .true.
           foundBetterState = .true.
           bestAJ = aj
           call copyVector ( v(bestX), v(x) ) ! bestX = x
@@ -2664,6 +2689,7 @@ NEWT: do ! Newton iteration
           if ( nwt_flag == nf_tolx_best ) then
             call copyVector ( v(x), v(bestX) )
             aj = bestAJ
+            atBest = .false.
           end if
           if ( .not. diagonal ) then
               if ( d_nwt ) then
@@ -2704,6 +2730,13 @@ NEWT: do ! Newton iteration
           if ( d_ndb >= 2 ) call my_nwtdb ( aj, width=9 )
         prev_nwt_flag = nwt_flag
       end do NEWT ! Newton iteration
+
+      dof = max ( jacobian_rows - jacobian_cols, 1 )
+      aj%chiSqNorm = aj%fnorm / dof
+      aj%fnorm = sqrt(aj%fnorm)
+        if ( d_sca ) &
+          & call dump ( (/ aj%fnorm, aj%chiSqNorm, dof /) , &
+          & '     | F |    chi^2/DOF           DOF ', options='c' )
 
         if ( d_ndb >= 1 ) then
           if ( d_sca .or. d_ndb >= 2 ) then
@@ -2755,8 +2788,8 @@ NEWT: do ! Newton iteration
       ! \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf J \Sigma}^T)^{-1}$. Then
       ! unscale it to ${\bf \Sigma}^T ({\bf \Sigma}^T {\bf J}^T {\bf
       ! S}_m^{-1} {\bf J \Sigma}^T)^{-1} {\bf \Sigma}^T$.
-      if ( foundBetterState .and. ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
-        &  got(f_average) .or. got(f_aprioriFraction) ) ) then
+      if ( foundBetterState .and. ( got(f_outputCovariance) .or. got(f_outputSD) &
+        & .or. got(f_average) .or. got(f_aprioriFraction) ) ) then
         if ( nwt_flag /= nf_getJ ) then
           print *, 'BUG in Retrieval module -- should need to getJ to quit'
           stop
@@ -2772,6 +2805,17 @@ NEWT: do ! Newton iteration
               & after=' seconds', advance='yes' )
           end if
           call time_now ( t1 )
+        if ( lambda /= 0 ) then
+          ! Need to remove the Levenberg-Marquardt parameter from the diagonal
+          ! of the normal equations.  Lambda is the last-used value.
+          call updateDiagonal ( normalEquations, -lambda**2 )
+          call choleskyFactor ( factored, normalEquations, status=matrixStatus )
+            call add_to_retrieval_timing( 'cholesky_factor', t1 )
+        end if
+        ! We now have factored normal equations without the Levenberg-Marquardt
+        ! parameter, and without Tiknonov regularization if CovSansReg was set.
+        ! Invert the Cholesky factor to compute the a posteriori covariance
+        ! matrix.
         call createEmptyMatrix ( tempU, 0, state, state )
         call invertCholesky ( factored, tempU ) ! U^{-1}
           if ( d_cov ) then
@@ -2790,6 +2834,9 @@ NEWT: do ! Newton iteration
             end if
         end if
         preserveMatrixName = outputCovariance%m%name
+        ! TempU is the inverse of the Cholesky factor of the normal equations,
+        ! which is now the Cholesky factor of the covariance matrix.  Compute
+        ! the covariance matrix from its Cholesky factor.
         call multiplyMatrix_XY_T ( tempU, tempU, outputCovariance%m, &
           & diagonalOnly = .not. any ( got ( (/ f_outputCovariance, f_average/) ) ) ) ! U^{-1} U^{-T}
           if ( d_cov ) then
@@ -2945,6 +2992,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.348  2014/01/23 23:16:37  vsnyder
+! Back out Levenberg-Marquardt without getting a new Jacobiab
+!
 ! Revision 2.347  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
