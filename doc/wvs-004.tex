@@ -8,8 +8,12 @@
 %tgif -print -pdf -page 3 tree.obj ; mv -f tree.pdf tree-3.pdf
 %tgif -print -epsi -page 3 tree.obj ; mv -f tree.eps tree-3.eps
 %tgif -print -jpeg -page 3 tree.obj ; mv -f tree.jpeg tree-3.jpg
+%tgif -print -epsi -page 4 tree.obj ; mv -f tree.eps tree-4.eps
+%tgif -print -jpeg -page 4 tree.obj ; mv -f tree.jpeg tree-4.jpg
 
 \documentclass[twoside,11pt]{report}
+\usepackage{alltt}
+\usepackage{color}
 \usepackage{newlargemls}
 %\usepackage[mtbold,mtplusscr,mtpluscal]{mathtime}
 \usepackage{times}
@@ -66,7 +70,7 @@
 \begin{document}
 \rcsParseName $Name$
 \renewcommand{\rcsInfoFile}{wvs-004}
-\renewcommand{\rcsInfoRevision}{1.12}
+\renewcommand{\rcsInfoRevision}{2.0}
 %
 % Do the title page etc.
 %
@@ -103,7 +107,8 @@ superficially with the terminology and concepts of language analysis.
 \item[Syntax of configuration files:] Describes the syntax of the
 configuration file, using the formal notation developed earlier.
 
-\item[The parser:] Describes how the parser works.
+\item[The parser:] Describes how the parser works, and how it is
+constructed.
 
 \item[Output of the parser:] Describes the data structures output by the
 parser.
@@ -123,27 +128,29 @@ help to clarify the text.
 \chapter{Crash course in language analysis}
 \count0=1 \pagenumbering{arabic}
 
-An \emph{alphabet} is a set of symbols.  We will use upper-case letters
-from the second half of the Latin alphabet, e.g. $T$, to denote these sets.
+An \emph{alphabet} is a set of symbols.  Upper-case letters from the
+second half of the Latin alphabet, e.g. $T$, are used to denote these
+sets.
 
 A \emph{language over an alphabet}, or more simply a \emph{language} is a
 set of sequences of symbols from that alphabet.  A \emph{sentence} is a
 sequence in the language.  A language may or may not contain the sequence
 consisting of zero symbols -- the empty sequence -- which is variously
-denoted by $\lambda$ and $\epsilon$.  We will use $\lambda$.  If a
-language contains $\lambda$, it is said to be \emph{nullable}.
+denoted by $\lambda$ and $\epsilon$.  We use $\lambda$.  If a language
+contains $\lambda$, it is said to be \emph{nullable}.
 
 The \emph{concatenation} $xy$ of two sequences $x$ and $y$ is a sequence
 that consists of the first sequence $x$ followed immediately by the
 second sequence $y$.  The empty sequence $\lambda$ is the identity element
 for concatenation, i.e. $x\lambda = x = {\lambda}x$ for all $x$.
 
-We will be using some notations from set theory and symbolic logic.  To
-refresh your memory, a constructor for a set is surrounded by \{ and \}. 
-The constructor may be nothing more than a list, or it may be a recipe of
-the form ``abstract entities $E$ that satisfy propositions $P$'', written
-$\{ E \mid P \}$. Here are some operators from set theory and logic that
-are used below, arranged from strongest to weakest precedence:
+We use some notations from set theory and symbolic logic.  To refresh your
+memory, a constructor for a set is surrounded by \{ and \}.  The
+constructor may be nothing more than a list, or it may be a recipe of the
+form ``abstract entities $E$ that satisfy propositions $P$'', written $\{
+E \mid P \}$. Here are some operators from language analysis, set theory,
+and logic that are used below, arranged from strongest to weakest
+precedence:
 
 \begin{tabular}{clll}
 {\bf Operator} & {\bf Pronunciation} & {\bf Operands} & {\bf Meaning} \\
@@ -182,18 +189,25 @@ and $N$ are disjoint alphabets called \emph{terminal} and
 \emph{productions} (to be described below) and $S \in N$ is a
 distinguished symbol called the \emph{starting symbol}.
 
-We will use the following notational conventions:
+We use the following notational conventions:
+
 \begin{itemize}
-\item Upper-case letters from the beginning of the Latin alphabet
- (and $S$\,) denote symbols from $N$.
-\item Lower-case letters from the beginning of the Latin alphabet denote
-  symbols from $T$.
-\item Lower-case letters from the end of the Latin alphabet denote
-  sequences from $T^*$.
-\item Lower-case letters from the Greek alphabet denote
-  sequences from $(T \cup N)^*$.
-\item Upper-case letters from the end of the Latin alphabet (except
- $S$\,) denote symbols from $T \cup N$.
+
+  \item Upper-case letters from the beginning of the Latin alphabet
+    (and $S$\,) denote symbols from $N$.
+
+  \item Lower-case letters from the beginning of the Latin alphabet denote
+    symbols from $T$.
+
+  \item Lower-case letters from the end of the Latin alphabet denote
+    sequences from $T^*$.
+
+  \item Lower-case letters from the Greek alphabet denote
+    sequences from $(T \cup N)^*$.
+
+  \item Upper-case letters from the end of the Latin alphabet (except
+    $S$\,) denote symbols from $T \cup N$.
+
 \end{itemize}
 
 A \emph{production} is a statement of the form $A \rightarrow \alpha$. If
@@ -205,7 +219,7 @@ A \emph{derivation} consists of this replacement.  It is denoted by the
 $\Rightarrow$ symbol.  Thus the definition of a production is ``If $A
 \rightarrow \alpha \in P$ then $\beta A \gamma \Rightarrow \beta \alpha
 \gamma$ is a derivation permitted by the grammar.''  That is, in this
-derivation step, $A$ produces $\alpha$.
+derivation step, $A$ \emph{produces} $\alpha$.
 
 A \emph{derivation sequence} consists of a sequence of zero or more
 derivations.  It is denoted by $\Rightarrow^*$.
@@ -346,73 +360,6 @@ indicated by a double quote.
 These symbols are called \emph{pseudo-terminal} because they have an
 internal structure, but one determined by the lexicon, not the grammar.
 
-\section{The grammar}\label{gram}
-
-\vskip -12pt
-
-This grammar is organized in a form that is nearly suitable to design a
-parser, as described in following sections.  The grammar in section
-\ref{alt} is not suitable for construction of a parser using the methods
-discussed here, but it may be easier to read.
-
-$T$ = \{ 'and' `begin' `EOF' `EOS' `end' `name' `number' 'or' `string'
-         `unit' `(' `)' '[' ']' `+' `$-$' `*' `/' `.' `:' `$<$:' `:$<$'
-         `$<$:$<$' `=' \}
-
-$N$ = \{ cf one\_cf spec spec\_rest field\_list expr value limit lterm
-         lfactor term factor primary \}
-
-\begin{tabular}{|l|}
-     \hline
-{\bf Productions} $P$ \\
-     \hline
-     \hline
-cf $\rightarrow$ one\_cf + `EOF' \\
-     \hline
-one\_cf $\rightarrow$ ( `begin' `name' `EOS' spec + `end' `name' ) ? `EOS' \\
-     \hline
-spec $\rightarrow$ ( `name' spec\_rest ) ? `EOS' \\
-     \hline
-spec\_rest $\rightarrow \lambda$ \\
-     \phantom{spec\_rest}
-          $\rightarrow$ `=' value \\
-     \phantom{spec\_rest}
-          $\rightarrow$ ( `:' `name' ) ? ( `,' field\_list ) + \\
-     \hline
-field\_list $\rightarrow$ expr ( `=' ( value ) ? ) ? \\
-     \phantom{field\_list}
-          $\rightarrow$ `/' `name' \\
-     \hline
-value $\rightarrow$ expr \\
-     \phantom{value}
-          $\rightarrow$ `[' ( value ( `,' value ) * ) ? `]' \\
-     \hline
-expr $\rightarrow$ limit ( (`:'$\mid$`$<$:'$\mid$`:$<$'$\mid$`$<$:$<$') limit ) ? \\
-     \hline
-limit $\rightarrow$ lterm ( `or' lterm ) * \\
-     \hline
-lterm $\rightarrow$ lfactor ( `and' lfactor ) * \\
-     \hline
-lfactor $\rightarrow$ term ( ( `+' $\mid$ `$-$' ) term ) * \\
-     \hline
-term $\rightarrow$ factor ( ( `*' $\mid$ `/' ) factor ) * \\
-     \hline
-factor $\rightarrow$ ( `+' $\mid$ `$-$' ) ? primary \\
-     \hline
-primary $\rightarrow$ `name' ( `.' `name' ) ? \\
-     \phantom{primary}
-        $\rightarrow$ `number' `unit' ? \\
-     \phantom{primary}
-        $\rightarrow$ `string' \\
-     \phantom{primary}
-        $\rightarrow$ `(' expr `)' \\
-     \hline
-\end{tabular}
-
-\vskip 2pt
-
-$S$ = cf.
-
 It is customary to put the production having the starting symbol on its
 left-hand side as the first production.  We put quotation marks around
 terminal symbols.  Thus, it isn't necessary explicitly to give $T$, $N$
@@ -442,8 +389,247 @@ the part of speech, \emph{viz.}~`name(a)'.  There is more about this in
 sections \ref{gramBased} and \ref{tree}.
 
 In abstract terms, parsing consists of running such a process backward,
-i.e.~we start with an input sequence, and deduce whether it is a
+i.e.\ we start with an input sequence, and deduce whether it is a
 sentence, and if so what is its phrase structure.
+
+\section{The grammar}\label{gram}
+
+\subsection{Informal introduction}
+
+The general outline of the MLS configuration file syntax is that it is
+divided into sections.  Each section begins with the word \emph{begin}
+followed by the section name, and ends with  the word \emph{end} followed
+by the same section name.  The section names are not arbitrary; they are
+specified by the program.  There are restrictions on their order, imposed
+by each program, as well.
+
+Within a section, there are three kinds of specifications:
+
+\begin{itemize}
+
+  \item A parameter definition of the form \emph{name = expression}.  The
+    set of valid parameter definition names, and the types of their
+    values, are specified by the program.
+
+  \item A variable definition of the form \emph{name := expression}.  The
+    set of valid parameter names is not specified by the program. Once a
+    variable has been assigned a value, a subsequent assignment cannot
+    change its type.
+
+  \item A specification of the form \emph{[ label: ] name [, fields] },
+    where the label and fields are optional.  Each field is of the form
+    \emph{name = expression} or \emph{/name}.  The set of valid
+    specification names for each section, the set of valid field names for
+    each specification, and the type of value for each field, are
+    specified by the program.  The form \emph{/name} is only valid for
+    fields that can have logical or boolean values, and is equivalent to
+    \emph{name=true}.
+
+    The type of the value of a field or parameter can be numeric, a
+    string, an enumerator, or the label of a specification.  The set of
+    enumeration types, and the enumerators of each type, are specified by
+    the program.
+
+\end{itemize}
+
+Variable definitions can occur outside sections.
+
+Either surrounding sections and variable definitions, or within sections,
+\emph{case}, \emph{if}, \emph{do}, and \emph{do while} constructs, having
+the same syntax and semantics as in Fortran (except that the ``=" sign in
+the \emph{do} construct is replaced by ``:="), may appear.  An additional
+\emph{do} construct, with only one expression, may appear.  The type of
+the expression may be any type, and it is assumed to be an array (a scalar
+is considered to be an array of length one in this context); the body of
+the construct is invoked once for each element of the expression. 
+Constructs must be correctly nested.
+
+An \emph{exit} or \emph{cycle} statement may appear within a \emph{do}
+construct, with the same semantics as in Fortran, except that if the
+statement is within a section, the label referenced in the statement may
+not refer to a \emph{do} construct enclosing a section.
+
+The methods by which requirements are imposed by the program are described
+in chapter \ref{typeCheck}.
+
+\subsection{Complete formal definition}
+
+The parser for configuration files is built automatically from a grammar
+by a program called {\tt lr}, about which more follows in section
+\ref{building}.  Input to that program, in part, is shown here, where
+$\rightarrow$ above is rendered as {\tt -$>$}.  The $\Rightarrow$ symbol
+is rendered as {\tt =$>$}, and is repurposed here to mean ``generates a
+tree node,'' not ``derives,'' as it does above.  There is more about this
+in Chapter \ref{parserOutput}.  Text following a semicolon is a comment. 
+Productions printed in red implement syntax for DO, IF and SELECT CASE
+constructs, and CYCLE and EXIT statements.  These would have been tedious
+and error-prone to implement using the technology described in versions
+1.12 and earlier versions of this monograph.
+
+{\footnotesize\tt\begin{alltt}
+cf -> cfs
+
+cfs -> one_cf
+    \textcolor{red}{-> include}
+    -> cfs one_cf
+
+one_cf -> EOS ; blank lines are OK
+       \textcolor{red}{-> select case '(' expr ')' 'EOS+' cases_outer end select EOS => n_select
+       -> construct_label do do_header EOS cfs end do EOS => n_do
+       -> construct_label do while '(' expr ')' EOS cfs end do EOS => n_while
+       -> if_stmt_outer more_if_outer end if EOS => n_if
+       -> cycle_stmt
+       -> exit_stmt}
+       -> name ':=' value EOS => n_variable
+       -> begin name EOS specs end name EOS => n_cf
+
+\textcolor{red}{cases_outer -> case_test_outer
+            -> case_test_outer cases_outer
+            -> case default EOS cfs => n_default
+
+case_test_outer -> case '(' expr ')' EOS cfs => n_test
+
+construct_label ->
+                -> name ':' => n_named
+
+do_header -> name ':=' expr_array => n_do_head
+          -> name ':=' expr ',' expr => n_do_head
+          -> name ':=' expr ',' expr ',' expr => n_do_head
+
+expr_array -> expr => n_array
+
+if_stmt_outer -> if '(' expr ')' then EOS cfs => n_test
+
+more_if_outer ->
+              -> else if_stmt_outer more_if_outer
+              -> else EOS cfs => n_else
+
+cycle_stmt -> cycle EOS => n_cycle
+           -> cycle name EOS => n_cycle
+
+exit_stmt -> exit EOS => n_exit
+          -> exit name EOS => n_exit}
+
+'EOS+' -> EOS
+       -> 'EOS+' EOS
+
+specs ->
+      -> specs spec
+
+spec -> one_spec EOS
+     -> include
+
+; "value" is either a scalar or an array enclosed in brackets
+
+one_spec -> ; blank lines are OK
+         \textcolor{red}{-> select case '(' expr ')' 'EOS+' cases end select EOS => n_select
+         -> construct_label do while '(' expr ')' EOS specs end do EOS => n_while
+         -> construct_label do do_header EOS specs end do EOS => n_do
+         -> if_stmt more_if end if => n_if
+         -> cycle_stmt
+         -> exit_stmt
+         -> name ':=' value => n_variable}
+         -> name ':' spec_rest => n_named
+         -> spec_rest
+         -> name '=' value => n_equal
+
+; We need to consume the EOS here so it won't be the first
+; token we see after closing the include file.
+
+\textcolor{red}{include -> '#include' string EOS => 9                         ; include file
+
+cases -> case_test
+      -> case_test cases
+      -> case default EOS specs => n_default
+
+; "expr" is a scalar
+
+case_test -> case '(' expr ')' EOS specs => n_test
+
+if_stmt -> if '(' expr ')' then EOS specs => n_test
+
+more_if ->
+        -> else if_stmt more_if
+        -> else EOS specs => n_else}
+
+spec_rest -> name fields => n_spec_args
+
+fields ->
+       -> ',' field fields
+
+field -> name '=' value => n_asg
+      -> '/' name => n_set_one
+
+; "value" can be an array enclosed in brackets, or an array of
+; arrays, but not any deeper nesting of arrays.
+
+value -> expr
+      -> '[' value2_list ']'
+
+value2_list -> value2
+            -> value2_list ',' value2
+
+value2 -> expr
+       -> '[' exprs ']' => n_array
+
+exprs -> expr
+      -> exprs ',' expr
+
+expr -> cond
+     -> test '?' expr '!' expr => n_cond
+
+cond -> limit
+     -> limit ':'   limit => n_colon
+     -> limit ':<'  limit => n_less
+     -> limit '<:'  limit => n_less_colon
+     -> limit '<:<' limit => n_less
+
+limit -> lterm
+      -> limit or lterm => n_or
+
+lterm -> lnot
+      -> lterm and lnot => n_and
+
+lnot -> test
+     -> not test => n_not
+
+test -> lfactor
+     -> lfactor '<'  lfactor => n_less
+     -> lfactor '<=' lfactor => n_less_eq
+     -> lfactor '>'  lfactor => n_greater
+     -> lfactor '>='lfactor => n_greater_eq
+     -> lfactor '==' lfactor => n_equal_equal
+     -> lfactor '/=' lfactor => n_not_equal
+
+lfactor -> term
+        -> '+' term => n_plus
+        -> '-' term => n_minus
+        -> lfactor '+' term => n_plus
+        -> lfactor '-' term => n_minus
+
+term -> factor
+     -> term '*' factor => n_mult
+     -> term '/' factor => n_div
+     -> term '\' factor => n_into
+
+factor -> primary
+       -> primary '^' factor => n_pow
+
+primary -> name dots => n_dot?
+        -> number
+        -> number name => n_unit
+        -> string
+        -> '(' expr ')'
+        -> '(' expr ')' name => n_unit
+        -> name '[' expr ']' => n_subscript
+        -> func_ref
+        -> func_ref name => n_unit
+
+func_ref -> name '(' value2_list ')' => n_func_ref
+
+dots ->
+     -> dot name dots
+\end{alltt}}
 
 \chapter{The Parser}
 \section{Organization of the Parser}
@@ -453,328 +639,127 @@ sentence in the language, and produces a (perhaps preliminary) translation
 of the sequence of tokens into a form more suitable for subsequent
 analysis.
 
-The parser described here consists of a collection of potentially
-recursive procedures.  There are other parsing strategies.  One is
-discussed superficially in section \ref{alt}.
+The parser uses a method originally proposed by Donald Knuth, called
+\emph{LR(1)}.  The \emph{L} means that it looks at the input from
+left-to-right.  The \emph{R} means that it builds the reverse of a
+rightmost derivation.  The \emph{(1)} means that the parser looks ahead,
+beyond what it's already working on, only one symbol (and sometimes zero).
 
-There is one procedure for each nonterminal symbol in the grammar shown
-in section \ref{gram}.
+The method originally proposed by Knuth could result in a parser that has
+a size that is exponential in the length of the grammar.  Frank de Remer
+proposed two simplifications, called \emph{SLR(1)} and \emph{LALR(1)},
+meaning \emph{Simplified LR(1)} and \emph{Look-Ahead LR(1)}.  Both have
+the same maximum size as an \emph{LR(0)} parser, with lookahead sets
+computed by an algorithm different from the one originally proposed by
+Knuth.  Taking the liberty to denote the set of languages that can be
+described by a parsing method by the name of the parsing method, we have
+$LR(0) \subset SLR(1) \subset LALR(1) \subset LR(1)$.
 
-Within each procedure, there is a selection process:  If the next token
-is within the selection set (described below) for a production with a
-left-hand side nonterminal symbol that corresponds to that procedure,
-that production is applied.  If the next token is not within the
-selection set for any production with a left-hand side symbol that
-corresponds to that procedure, an error is announced.
+David Pager later developed an algorithm that has the best of both worlds:
+The parser is as simple as \emph{LR(0)} where possible, and as complicated
+as \emph{LR(1)} where necessary.  In the best case, an \emph{LR(0)},
+\emph{SLR(1)}, or \emph{LALR(1)} parser (all of which are the same size)
+is produced.  In the worst case, an \emph{LR(1)} parser is produced. 
+Therefore, the set of languages that can be described by grammars from
+which parsers can be developed by Pager's algorithm is the same as the set
+of languages that can be parsed by Knuth's algorithm.
 
-``Applying'' a production consists of executing the procedures that
-correspond to nonterminal symbols encountered in the right-hand side, or
-``consuming'' the next token if the next symbol in the right-hand side is
-a terminal symbol, in the order these entities appear.
+\vspace{-8pt}
+\section{Building the parser}\label{building}
+\vspace{-2pt}
 
-``Consuming'' a token consists of testing whether it represents the next
-terminal symbol, fetching a new token if so, and announcing an error
-otherwise.
+The parser is built from a grammar automatically by a program called {\tt
+lr}, which implements Pager's algorithm.
 
-A grammar that permits a parser to be implemented in this way is called
-$LL(1)$.  The first $L$ means that the input is examined left-to-right. 
-The second $L$ means that a leftmost derivation sequence is traced out. 
-The $(1)$ means that one can decide what to do by looking at one symbol
-from the unconsumed input.
+In addition to the productions shown in section \ref{gram}, the {\tt lr}
+program needs to know the correspondence between terminal symbols and
+their names in the program.  This is provided by input of the form
+\emph{terminal-symbol = symbol-name}.  In the description of the grammar
+for configuration files, this consists of the following lines:
 
-The \emph{selection set} for a production is the set of symbols that
-unambiguously indicates that the production should be applied at a
-certain instant during the analysis.  We need to define two functions in
-order to proceed:
+{\tt\small\begin{verbatim}
+'('        = t_left_parenthesis
+')'        = t_right_parenthesis
+'['        = t_left_bracket
+']'        = t_right_bracket
+'+'        = t_plus
+'-'        = t_minus
+'*'        = t_star
+'/'        = t_slash
+':='       = t_assign
+'\'        = t_backslash
+'!'        = t_bang
+'?'        = t_cond
+dot        = t_dot
+':'        = t_colon
+':<'       = t_colon_less
+'<:'       = t_less_colon
+'<:<'      = t_less_colon_less
+'='        = t_equal
+'=='       = t_equal_equal
+'/='       = t_not_equal
+'<'        = t_less
+'<='       = t_less_eq
+'>'        = t_greater
+'>='       = t_greater_eq
+','        = t_comma
+'^'        = t_hat
+begin      = t_begin
+cycle      = t_cycle
+do         = t_do
+end        = t_end
+exit       = t_exit
+and        = t_and
+or         = t_or
+not        = t_not
+case       = t_case
+default    = t_default
+else       = t_else
+if         = t_if
+select     = t_select
+then       = t_then
+while      = t_while
+EOG        = t_end_of_input ; LR generates EOG; the parser assumes it is defined
+EOS        = t_end_of_stmt
+name       = t_identifier
+number     = t_number
+string     = t_string
+'#include' = t_include
+\end{verbatim}}
 
-The \emph{first set} of a sequence is the set of terminal symbols that
-can appear as the first symbol of a sequence derivable from that
-sequence.  Mathematically, $\text{First}(\alpha) = \{ a \mid \alpha
-\Rightarrow^* ax \}.$  For a set $P$, $\text{First}(P) = \cup_{x \in P}
-\text{First}(x)$.
+The symbol names must be those given in the module {\tt symbol_types}.
 
-The \emph{follow set} of a nonterminal symbol is the set of terminal
-symbols that can appear immediately after that symbol in a sentential
-form.  Mathematically, $\text{Follow}(A) = \{ a \mid S \Rightarrow^* \beta
-A a \gamma \}$.
+The tree node names that appear after {\tt =$>$} in the grammar must be
+those given in the module {\tt tree_types}.
 
-Taking the liberty of concatenating a set with a sequence to generate a
-set of sequences, we have $\text{Select}( A \rightarrow \alpha) =
-\text{First}( \alpha \text{Follow}( A ) )$.  If the selection sets for
-all the productions with a given left-hand side are disjoint, the grammar
-ls LL(1).  The $\text{Follow}(A)$ part comes from wanting to apply $A
-\rightarrow \alpha$ if $\alpha \Rightarrow^* \lambda$.  The
-$\text{First}(\alpha)$ part comes from wanting to apply $A \rightarrow
-\alpha$ otherwise.
+The {\tt lr} program is invoked using a Linux command line of the form
 
-Algorithms for computing First, Follow and Select are given in section
-\ref{computing}.
+{\tt\begin{verbatim}
+lr [ options ] grammar-file [ parser-file [ listing-file ] ]
+\end{verbatim}}
 
-\section{Extended form of the grammar}\label{extend}
+where text in brackets is optional.  The {\tt parser-file} is a Fortran
+module, and therefore ought to have an appropriate extension, e.g.\ {\tt
+.f90}.
 
-In the abbreviated form of the grammar in section \ref{gram}, the * turns
-into {\tt do while}, the + turns into {\tt do until}, and the ? and
-$\mid$ turn into {\tt if}.
+There are numerous options, mostly for debugging or controlling the amount
+of output.  Two that might be of interest operationally are
 
-It is necessary to have a selection process for these optional or
-repeated parts within the right-hand side.  These selection sets are
-derived by transforming the grammar so as not to include regular right
-parts.
+{\tt -o[ ]parser-file}
 
-The selection sets for the transformed grammar are tabulated below.  The
-correspondence between selection sets for productions here and the
-selection sets for optional or repeated parts within the right-hand sides
-of the grammar in section \ref{gram} should be obvious.
+which is an alternative to the {\tt parser-file} specification in the
+first description, and
 
-\begin{longtable}{|l|l|}
-     \hline
-{\bf Productions} $P$ & {\bf Selection Sets} \\
-     \hline
-\endfirsthead
-     \hline
-{\bf Productions} $P$ (cont.)                   & {\bf Selection Sets} (cont.) \\
-     \hline
-\endhead
-     \hline
-     \multicolumn{2}{|l|}{(cont.)} \\
-     \hline
-\endfoot
-     \hline
-\endlastfoot
-     \hline
-cf $\rightarrow$ one\_cf more\_cfs `EOF'         & `begin' \\
-     \hline
-more\_cfs $\rightarrow \lambda$                  & `EOF' \\
-     \phantom{more\_cfs}
-         $\rightarrow$ one\_cf                   & `begin' \\
-     \hline
-one\_cf $\rightarrow$ `EOS'                      & `EOS' \\
-      \phantom{one\_cf}
-        $\rightarrow$ `begin' `name' `EOS'       & \\
-      \phantom{one\_cf $\rightarrow$ }
-                      spec specs
-                      `end' `name' `EOS'         & `begin' \\
-     \hline
-specs $\rightarrow \lambda$                      & `end' \\
-     \phantom{specs}
-      $\rightarrow$ spec specs                   & `name' \\
-     \hline
-spec $\rightarrow$ 'EOS'                         & `EOS'  \\
-     \phantom{spec}
-     $\rightarrow$ `name' spec\_rest `EOS'       & `name' \\
-     \hline
-spec\_rest $\rightarrow \lambda$                 & `EOS' \\
-     \phantom{spec\_rest}
-          $\rightarrow$ `=' value                & `=' \\
-     \phantom{spec\_rest}
-          $\rightarrow$ `:' `name' `,' field\_list more\_specs     & `:' \\
-     \phantom{spec\_rest}
-          $\rightarrow$ `,' field\_list more\_specs     & `,' \\
-     \hline
-more\_specs $\rightarrow \lambda$                & `EOS' \\
-     \phantom{more\_specs}
-            $\rightarrow$ `,' field\_list more\_specs     & `,' \\
-     \hline
-field\_list $\rightarrow$ `name' more\_field\_list & `name' \\
-     \phantom{field\_list}
-          $\rightarrow$ `/' `name'               & `/' \\
-     \hline
-more\_field\_list $\rightarrow \lambda$          & \{ `,' `EOS' \} \\
-     \phantom{more\_field\_list}
-          $\rightarrow$ `=' field\_value         & `=' \\
-     \hline
-field\_value $\rightarrow \lambda$               & \{ `,' `EOS' \} \\
-     \phantom{field\_value}
-          $\rightarrow$ value                    & \{ `name' `number' `(' `.'
-                                                      `+' `$-$' `string' '[' \} \\
-     \hline
-value $\rightarrow$ expr                         & \{ `name' `number' `(' `.'
-                                                      `+' `$-$' `string' \} \\
-     \phantom{value}
-          $\rightarrow$ `[' value values ']'     & `[' \\
-     \hline
-array $\rightarrow \lambda$                      & `]' \\
-     \phantom{array}
-          $\rightarrow$ value values             & \{ `name' `number' `(' `.'
-                                                      `+' `$-$' \} \\
-     \hline
-values $\rightarrow \lambda$                     & `]' \\
-     \phantom{values}
-        $\rightarrow$ , value values             & `,' \\
-     \hline
-expr $\rightarrow$ `string'                      & `string' \\
-     \phantom{expr}
-     $\rightarrow$ item                          & \{ `name' `number' `(' `.'
-                                                      `+' `$-$' \} \\
-     \hline
-item $\rightarrow$ limit range                   & \{ `name', `number', `(' `.'
-                                                      `+' `$-$' \}\\
-     \hline
-range $\rightarrow \lambda$                      & \{ `,' `EOS' ')' \} \\
-     \phantom{range}
-      $\rightarrow$ `:' limit                    & \{ `:' \} \\
-     \phantom{range}
-      $\rightarrow$ `$<$:' limit                 & \{ `$<$:' \} \\
-     \phantom{range}
-      $\rightarrow$ `:$<$' limit                 & \{ `:$<$' \} \\
-     \phantom{range}
-      $\rightarrow$ `$<$:$<$' limit              & \{ `$<$:$<$' \} \\
-     \hline
-limit $\rightarrow$ lterm lterm\_list            & \{ `name', `number', `(' `.'
-                                                      `+' `$-$' \} \\
-     \hline
-lterm\_list $\rightarrow \lambda$                & \{ `:' `,' `EOS' ')' \} \\
-     \phantom{lterm\_list}
-           $\rightarrow$ `or' lterm lterm\_list  & `or' \\
-     \hline
-lterm $\rightarrow$ lfactor lfactor\_list        & \{ `name', `number', `('
-                                                     `+' `$-$'  `.'\} \\
-     \hline
-lfactor\_list $\rightarrow \lambda$              & \{ `+' `$-$' `:' `,'
-                                                      `EOS' ')' \}\\
-     \phantom{lfactor\_list}
-              $\rightarrow$ `and' lfactor lfactor\_list & `and' \\
-     \hline
-lfactor $\rightarrow$ term term\_list            & \{ `name', `number', `(' `.'
-                                                      `+' `$-$' \} \\
-     \hline
-term\_list $\rightarrow \lambda$                 & \{ `:' `,' `EOS' ')' \} \\
-     \phantom{term\_list}
-           $\rightarrow$ ( `+' $\mid$ `$-$' ) term term\_list & \{ `+' `$-$' \} \\
-     \hline
-term $\rightarrow$ factor factor\_list           & \{ `name', `number', `('
-                                                     `+' `$-$'  `.'\} \\
-     \hline
-factor\_list $\rightarrow \lambda$               & \{ `+' `$-$' `:' `,'
-                                                      `EOS' ')' \}\\
-     \phantom{factor\_list}
-              $\rightarrow$ ( `*' $\mid$ `/' ) factor & \{ `*' `/' \} \\
-     \hline
-factor $\rightarrow$ ( `+' $\mid$ `$-$' ) ? primary & \{ `name', `number', `('
-                                                     `+' `$-$'  `.'\} \\
-     \hline
-primary $\rightarrow$ `name' field               & `name' \\
-     \phantom{primary}
-        $\rightarrow$ `number' `unit' ?          & `number' \\
-     \phantom{primary}
-        $\rightarrow$ `(' expr `)'               & `(' \\
-     \hline
-field $\rightarrow \lambda$                      & \{  `*' `/' `+' `$-$' `:'
-                                                       `,' `EOS' ')'\} \\
-     \phantom{field}
-      $\rightarrow$ `.' `name'                   & `.' \\
-     \hline
-\end{longtable}
+{\tt -l[ ]listing-file}
 
-\section{Computing First, Follow and Select}\label{computing}
+which is an alternative to the {\tt listing-file} specification in the
+first description.
 
-The casual reader can skip this section without losing anything.  In
-fact, all but the intensely interested reader can skip this section
-without losing anything.
+If {\tt parser-file} is not specified, it is not produced.  If the {\tt
+listing-file} is not specified, the listing is displayed on standard
+output.
 
-This section describes how to compute the First, Follow and Select
-functions.  The functions are represented by arrays in which the argument
-serves as the subscript.  That is, we show how to calculate the answer in
-advance, and write it down.  In order to calculate First and Follow we
-need an auxiliary function Nullable.  $\text{Nullable}(A)$ means $A
-\Rightarrow^* \lambda$.
-
-\subsection{Algorithm: Compute Nullable}
-
-\begin{enumerate}
-\item Construct an array Nullable indexed by the symbols in $T \cup N$;
-  Initialize its elements to {\tt false}.
-\item Repeat
-    \begin{quote}For each production $A \rightarrow \alpha \in P$, if
-    $\alpha \Rightarrow^* \lambda$, replace Nullable($A$) by {\tt
-    true}.\end{quote}
-  until nothing in Nullable changes.
-\end{enumerate}  
-
-This category of algorithm is called a ``fixed point iteration.'' It is a
-commonly used method to solve equations on sets.
-
-\subsubsection{Subalgorithm: Compute whether a sequence is nullable}
-
-\begin{enumerate}
-\item Suppose $\alpha = Z_1 Z_2, ... Z_n$ and initialize ``$\alpha$ is
-  nullable'' to {\tt true}
-\item Repeat for $i = 1, n$
-  \begin{quote}If not Nullable($Z_i$) then set ``$\alpha$ is nullable''
-  to {\tt false} and exit from the loop.\end{quote}
-\end{enumerate}
-
-Notice that this algorithm returns {\tt true} if $\alpha = \lambda$, or
-equivalently, $n = 0$.
-
-\subsection{Algorithm: Compute First}
-
-\begin{enumerate}
-\item Construct an array of sets First indexed by the symbols in $T \cup N$.
-\item For each $A \in N$ initialize First($A$) to the empty set $\emptyset$;
-  For each $a \in T$ initialize First($a$) to $\{a\}$.
-\item Repeat
-    \begin{quote}For each production $A \rightarrow \alpha \in P$
-    replace First($A$) by First($A$) $\cup$ First($\alpha$).\end{quote}
-  until nothing in First changes.
-\end{enumerate}  
-
-\subsubsection{Subalgorithm: Compute First set of a sequence}
-
-Suppose $\alpha = Z_1 Z_2 ... Z_n$ and if $n > 0$ define $\beta$ by
-$\alpha = Z_1 \beta$.  Then if $n > 0$, First($\alpha$) =
-First($Z_1\beta$) = First($Z_1$) $\cup$ ( If Nullable($Z_1$) then
-First($\beta$) else $\emptyset$ ).  Written in an iterative instead of
-recursive form, and fully taking into account the possibility that $n$
-might be zero, this becomes:
-
-\begin{enumerate}
-\item Set ``First($\alpha$)'' = $\emptyset$
-\item Repeat for $i = 1, n$
-  \begin{enumerate}
-  \item Replace ``First($\alpha$)'' by ``First($\alpha$)'' $\cup$ First($Z_i$).
-  \item If not Nullable($Z_i$) exit from the loop
-  \end{enumerate}
-\end{enumerate}
-
-Notice that this gives First$(\lambda) = \emptyset$
-\subsection{Algorithm: Compute Follow}
-
-\begin{enumerate}
-\item Construct an array of sets Follow indexed by the symbols in $N$;
-initialize its elements to the empty set $\emptyset$.
-\item Repeat
-  \begin{quote}
-    Repeat for each production $A \rightarrow \alpha \in P$
-    \begin{enumerate}
-      \item Suppose $\alpha = Z_1 Z_2 ... Z_n$.
-      \item Repeat for $i = 1, n$
-        \begin{quote}Think of $\alpha$ as $\beta Z_i \gamma$.  If $Z_i$
-        is nonterminal replace Follow($Z_i$) by\\
-          Follow($Z_i$) $\cup$ First($\gamma$) $\cup$ ( If $\gamma
-          \Rightarrow^* \lambda$ then Follow($A$) else $\emptyset$ ). 
-          (To see why Follow($A$) is needed if $\gamma \Rightarrow^*
-          \lambda$, consider $S \Rightarrow^* \xi A \eta \Rightarrow \xi
-          \alpha \eta \Rightarrow \xi \beta Z_i \gamma \eta \Rightarrow^*
-          \xi \beta Z_i \eta$.  Thus First($\eta$) $\in$ Follow($Z_i$),
-          but we might also have $S \Rightarrow^* \hat{\xi} A
-          \hat{\eta}$, so Follow($A$) $\in$ Follow($Z_i$) if $\gamma
-          \Rightarrow^* \lambda$.)\end{quote}
-    \end{enumerate}
-  \end{quote}
-  until nothing in Follow changes.
-\end{enumerate}  
-
-\subsection{Algorithm: Compute Select}
-\begin{enumerate}
-\item Construct an array of sets Select indexed by the productions in $P$.
-\item For each production $A \rightarrow \alpha \in P$ compute
-  \begin{quote}Select($A \rightarrow \alpha$) = First($\alpha$) $\cup$ (
-  If $\alpha \Rightarrow^* \lambda$ then Follow($A$) else $\emptyset$
-  ).\end{quote}
-\end{enumerate}
-
-\chapter{Output of the Parser}
+\chapter{Output of the Parser}\label{parserOutput}
 
 \vskip -30pt
 \section{Grammar-based description}\label{gramBased}
@@ -785,340 +770,19 @@ input and is related to the syntax, but it does not include all the
 details of the spelling of the input (hence the \emph{abstract} part).
 
 The grammar in section \ref{gram} is augmented with \emph{tree generation
-rules} in order to produce the abstract syntax tree. This form of grammar
-is called an \emph{attribute grammar}.  The subscripts of the grammar
-symbols are \emph{attributes}.  Attributes are the results of
-extra-grammatical computations carried out during the parsing process,
-and thence associated with a symbol.  Unless otherwise specified,
-subscripts that have the same name are copied from left-to-right.  Parts
-within \{ and \} are actions that compute attributes.  The $\leftarrow$
-symbol is the assignment operator.  The notation $< \ x \ y \ z $ ... $>$
-means ``make a subtree with $x$ at the root, and sons $y$, $z$, ..., in
-that order.''
-
-This grammar reasonably faithfully represents the actual workings of the
-parser.  The one in section \ref{alt} produces the same translation, and
-may be easier to read.  It is based on a different parser construction
-methodology, so it does not faithfully represent the actual parser
-design.
-
-\begin{longtable}{|l|}
-     \hline
-{\bf Productions} $P$ \\
-     \hline
-\endfirsthead
-     \hline
-{\bf Productions} $P$ (cont.) \\
-     \hline
-\endhead
-     \hline
-     (cont.) \\
-     \hline
-\endfoot
-     \hline
-\endlastfoot
-     \hline
-cf$_x$ $\rightarrow$ one\_cf$_z$ + `EOF'
-       \{ $x \leftarrow < \text{n\_cfs} $ list of $z$'s $>$ \} \\
-     \hline
-one\_cf$_x$ $\rightarrow$ block$_y$ \{ $x \leftarrow y$ \} \\
-     \phantom{one\_cf$_x$} $\rightarrow$ `EOS` \{ $x \leftarrow \lambda$ \} \\
-     \hline
-block$_x$ $\rightarrow$ `begin' `name'$_y$ `EOS' spec$_z$ + `end' `name'$_w$
-     `EOS` \\
-     \phantom{block$_x$} \{ $x \leftarrow < \text{n\_cf} \ y $ list of $z$'s $w \ >$ \} \\
-     \hline
-spec$_x$ $\rightarrow$ one\_spec$_{y}$ `EOS' \{ $x \leftarrow y$ \} \\
-     \phantom{spec$_x$} $\rightarrow$ `EOS' \{ $x \leftarrow \lambda$ \} \\
-     \hline
-one\_spec$_x$ $\rightarrow$ 
-     `name'$_y$ spec\_rest$_{yz}$ \{ $x \leftarrow z$ \} `EOS' \\
-     \hline
-spec\_rest$_{xy}$ $\rightarrow \lambda$ \{ $ y \leftarrow x$ \} \\
-     \phantom{spec\_rest}
-          $\rightarrow$ `=' value$_z$
-            \{ $y \leftarrow < \ \text{n\_asg} \ x \; z$ \}\\
-     \phantom{spec\_rest}
-          $\rightarrow$ `:' `name'$_v$ spec\_list$_{xw}$
-            \{$y \leftarrow < \ \text{n\_named} \ v \ w \ >$ \} \\
-     \phantom{spec\_rest}
-          $\rightarrow$ spec\_list$_{xw}$ \{ $y \leftarrow w $ \} \\
-     \hline
-spec\_list$_{xy}$ $\rightarrow$ ( `,' field\_list$_z$ ) + 
-            \{ $y \leftarrow < \ \text{n\_spec\_args} \ x $ list of $z$'s $>$ \}\\
-     \hline
-field\_list$_x$ $\rightarrow$ expr$_y$ spec\_value$_{yz}$
-      \{ $x \leftarrow z$ \} \\
-     \phantom{field\_list}
-          $\rightarrow$ `/' `name'$_z$
-          \{ $x \leftarrow < \ \text{n\_set\_one} \ z \ >$ \} \\
-     \hline
-spec\_value$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
-     \phantom{spec\_value$_{xy}$} $\rightarrow$
-       `=' ( value$_z$ ) ? \{ $y \leftarrow < \text{n\_equal} \ x \; z$ \}
-       $>$ \} \\
-     \hline
-value$_x$ $\rightarrow$ expr$_z$ \{ $x \leftarrow z$ \} \\
-     \phantom{value$_x$}
-       $\rightarrow$ `[' ( expr$_z$ ( `,' expr$_z$ ) * ) ? `]'
-         \{ $x \leftarrow$ list of $z$'s \} \\
-     \hline
-expr$_x$ $\rightarrow$ `string'$_z$ \{ $x \leftarrow z$ \} \\
-     \phantom{expr$_x$}
-     $\rightarrow$ item$_z$ \{ $x \leftarrow z$ \} \\
-     \phantom{expr$_x$}
-     $\rightarrow$ `[' expr$_z$ ( `,' expr$_z$ ) * `]'
-         \{ $x \leftarrow$ $< \text{n\_array list of } z's >$ \} \\
-     \hline
-item$_z$ $\rightarrow$ limit$_x$ range$_{xy}$ \{ $ z \leftarrow y$ \} \\
-     \hline
-range$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
-     \phantom{range$_{xy}$} $\rightarrow$ `:' limit$_z$ ;
-        $ y \leftarrow < \ \text{n\_colon} \ x \ z \ > $ \\
-     \phantom{range$_{xy}$} $\rightarrow$ `$<$:' limit$_z$ ;
-        $ y \leftarrow < \ \text{n\_less\_colon} \ x \ z \ > $ \\
-     \phantom{range$_{xy}$} $\rightarrow$ `:$<$' limit$_z$ ;
-        $ y \leftarrow < \ \text{n\_colon\_less} \ x \ z \ > $ \\
-     \phantom{range$_{xy}$} $\rightarrow$ `$<$:$<$' limit$_z$ ;
-        $ y \leftarrow < \ \text{n\_less\_colon\_less} \ x \ z \ > $ \\
-     \hline
-limit$_z$ $\rightarrow$ lterm$_x$ lterm\_list$_{xy}$ \{
-                        $z \leftarrow y$ \} \\
-     \hline
-cont... \\
-     \hline
-lterm\_list$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
-     \phantom{lterm\_list$_{xy}$}
-            $\rightarrow$ `or' lterm$_z$
-              \{ $v \leftarrow < \ \text{n\_or} \ x \ z \ >$ \}
-            lterm\_list $_{vw}$ \{ $y \leftarrow w$ \} \\
-     \hline
-lterm$_z$ $\rightarrow$ lfactor$_x$ lfactor\_list$_{xy}$ \{
-                        $z \leftarrow y$ \} \\
-     \hline
-lfactor\_list$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
-     \phantom{lfactor\_list$_{xy}$}
-            $\rightarrow$ `and' lfactor$_z$
-              \{ $v \leftarrow < \ \text{n\_and} \ x \ z \ >$ \}
-            lfactor\_list $_{vw}$ \{ $y \leftarrow w$ \} \\
-     \hline
-lfactor$_z$ $\rightarrow$ term$_x$ ( pterm\_list$_{xy}$ $\mid$
-                                   mterm\_list$_{xy}$ ) \{
-                        $z \leftarrow y$ \} \\
-     \hline
-pterm\_list$_{xy}$ $\rightarrow$ $\lambda$ \{ $y \leftarrow x$ \} \\
-     \phantom{pterm\_list$_{xy}$}
-            $\rightarrow$ `+' term$_z$
-              \{ $v \leftarrow < \ \text{n\_plus} \ x \ z \ >$ \}
-            ( pterm\_list$_{vw}$ $\mid$ pterm\_list$_{vw}$ ) \\
-     \phantom{pterm\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
-     \hline
-mterm\_list$_{xy}$ $\rightarrow$ $\lambda$ \{ $y \leftarrow x$ \} \\
-     \phantom{mterm\_list$_{xy}$}
-            $\rightarrow$ `$-$' term$_z$
-              \{ $v \leftarrow < \ \text{n\_minus} \ x \ z \ >$ \}
-            ( mterm\_list$_{vw}$ $\mid$ mterm\_list$_{vw}$ ) \\
-     \phantom{mterm\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
-     \hline
-term$_z$ $\rightarrow$ factor$_x$ ( mpri\_list$_{xy}$ $\mid$
-                                     dpri\_list$_{xy}$ ) \{
-                                     $z \leftarrow y$ \} \\
-     \hline
-mpri\_list$_{xy}$  $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
-     \phantom{mpri\_list$_{xy}$} $\rightarrow$ `*` factor$_z$
-        \{ $v \leftarrow < \ \text{n\_mult} \ x \ z \ >$ \}
-        ( mpri\_list$_{vw}$ $\mid$ dpri\_list$_{vw}$ ) \\
-      \phantom{mpri\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
-     \hline
-dpri\_list$_{xy}$  $\rightarrow$ $\lambda$ \{ $y \leftarrow x$ \} \\
-     \phantom{dpri\_list$_{xy}$} $\rightarrow$ `/` factor$_z$
-        \{ $v \leftarrow < \ \text{n\_div} \ x \ z \ >$ \}
-        ( dpri\_list$_{vw}$ $\mid$ dpri\_list$_{vw}$ ) \\
-     \phantom{dpri\_list$_{xy}$} \{ $y \leftarrow w$ \} \\
-     \hline
-factor$_z$ $\rightarrow$ `+' primary$_x$
-           \{ $z \leftarrow < \ \text{n\_plus} \ x \ >$ \} \\
-     \phantom{factor$_z$}
-       $\rightarrow$ `$-$' primary$_x$
-           \{ $z \leftarrow < \ \text{n\_minus} \ x \ >$ \} \\
-     \phantom{factor$_z$}
-       $\rightarrow$ primary$_x$ \{ $z \leftarrow x$ \} \\
-     \hline
-primary$_z$ $\rightarrow$ `name'$_x$ stru\_comp$_{xy}$
-            \{ $ z \leftarrow y$ \}\\
-     \phantom{primary$_z$}
-        $\rightarrow$ `number'$_x$ unit$_{xy}$ \{ $ z \leftarrow y$ \} \\
-     \phantom{primary$_z$}
-        $\rightarrow$ `(' item$_x$ `)' \{ $ z \leftarrow x$ \} \\
-     \hline
-stru\_comp$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
-     \phantom{stru\_comp$_{xy}$} $\rightarrow$ `.' `name'$_z$
-     \{ $y \leftarrow < \ \text{n\_dot} \ x \ z \ > $ \}\\
-     \hline
-unit$_{xy}$ $\rightarrow \lambda$ \{ $y \leftarrow x$ \} \\
-     \phantom{unit$_{xy}$} $\rightarrow$ `unit'$_z$
-     \{ $y \leftarrow < \ \text{n\_unit} \ x \ z \ > $ \} \\
-     \hline
-\end{longtable}
-
-\section{An alternative parsing method}\label{alt}
-
-The disinterested reader can skip this section without missing anything
-important.
-
-There is a more powerful class of grammars and their associated parsers,
-known as $LR(1)$.  The $L$ means that the input is examined
-left-to-right.  The $R$ means that the reverse of a rightmost derivation
-is traced out.  The $(1)$ means that at most one symbol of lookahead~--
-beyond the current point of analysis~-- is used.  When parsing using
-$LL(1)$, one must decide which production to apply by looking at the
-first terminal symbol in its selection set.  $LR(1)$ parsers are more
-powerful because one can postpone deciding which production to apply
-until the entire right-hand side, plus one more symbol, have been input.
-
-If the MLS configuration file parser were to be an $LR$ parser, the
-grammar would be organized somewhat differently.  The notation is
-augmented by allowing actions at the end of a production.  An action
-consisting of a \emph{node\_id} means ``build a tree vertex
-\emph{node\_id} subsuming the trees associated with every symbol in the
-right-hand side of the production, and associate the resulting tree with
-the left-hand side of the production.''  If the \emph{node\_id} is
-followed by a question mark it means ``do it only if the tree vertex
-would have more than one son.''  Pseudo-terminal symbols create tree
-vertices consisting of themselves.  Other (non-pseudo) terminal symbols
-do not create tree vertices.  If there is no action, the list of trees
-associated with or implied by symbols in the right-hand side becomes
-associated with the left-hand side.
-
-\begin{longtable}{|l|l|}
-     \hline
-{\bf Productions} $P$                           & {\bf Actions}\\
-     \hline
-\endfirsthead
-     \hline
-{\bf Productions} $P$ (cont.)                   & {\bf Actions} (cont.) \\
-     \hline
-\endhead
-     \hline
-     \multicolumn{2}{|l|}{(cont.)} \\
-     \hline
-\endfoot
-     \hline
-\endlastfoot
-     \hline
-cf $\rightarrow$ one\_cf + `EOF'                & n\_cfs \\
-     \hline
-one\_cf $\rightarrow$ ( `begin' `name' `EOS' spec + `end' `name' ) ? `EOS'
-                                                & n\_cf \\
-     \hline
-spec $\rightarrow$ `name' = value               & n\_equal \\
-     \phantom{spec $\rightarrow$} (`name' `:') ? spec\_rest & n\_named ? \\
-     \hline
-spec\_rest $\rightarrow$ 
-       `name' (`,' field\_list ) +  & n\_spec\_args \\
-     \hline
-field\_list $\rightarrow$ `name' `=' value ?    & n\_asg \\
-     \phantom{field\_list}
-          $\rightarrow$ `/' `name'              & n\_set\_one \\
-     \hline
-value $\rightarrow$ expr                        & \\
-     \phantom{value}
-       $\rightarrow$ `[' ( expr ( `,' expr ) * ) ? `]' & \\
-     \hline
-expr $\rightarrow$ limit                        & \\
-     \phantom{expr}
-     $\rightarrow$ limit `:' limit              & n\_colon \\
-     \phantom{expr}
-     $\rightarrow$ limit `$<$:' limit           & n\_less\_colon \\
-     \phantom{expr}
-     $\rightarrow$ limit `:$<$' limit           & n\_colon\_less \\
-     \phantom{expr}
-     $\rightarrow$ limit `$<$:$<$' limit        & n\_less\_colon\_less \\
-     \phantom{expr}
-     $\rightarrow$ `[' expr ( `,' expr ) * `]'  & n\_array \\
-     \hline
-limit $\rightarrow$ lterm                       & \\
-     \phantom{limit}
-     $\rightarrow$ limit `or' lterm             & n\_or \\
-     \hline
-lterm $\rightarrow$ lfactor                     & \\
-     \phantom{lterm}
-      $\rightarrow$ lterm `and' lfactor         & n\_and \\
-     \hline
-lfactor $\rightarrow$ term                      & \\
-     \phantom{lfactor}
-     $\rightarrow$ lfactor `+' term             & n\_plus \\
-     \phantom{lfactor}
-     $\rightarrow$ lfactor `$-$' term           & n\_minus \\
-     \hline
-term $\rightarrow$ factor                       & \\
-     \phantom{term}
-     $\rightarrow$ term `*' factor              & n\_mult \\
-     \phantom{term}
-     $\rightarrow$ term `/' factor              & n\_div \\
-     \hline
-factor $\rightarrow$ `+' primary                & n\_plus \\
-     \phantom{factor}
-     $\rightarrow$ `$-$' primary                & n\_minus \\
-     \phantom{factor}
-     $\rightarrow$ primary                      & \\
-     \hline
-primary $\rightarrow$ `name' ( `.' `name' ) ?   & n\_dot? \\
-     \phantom{primary}
-        $\rightarrow$ `number' `unit' ?         & n\_unit?\\
-     \phantom{primary}
-        $\rightarrow$ `string'                  & \\
-     \phantom{primary}
-        $\rightarrow$ `(' expr `)'              & \\
-     \hline
-\end{longtable}
-
-Notice that some nonterminal symbols have sets of productions beginning
-with the same terminal symbol, and some productions are \emph{left
-recursive}~-- meaning that the right-hand side begins with the
-nonterminal symbol that appears on the left-hand side.  This makes the
-grammar easier to read, but a quick calculation shows that the selection
-sets used for decision-making in an $LL$ parser would intersect.
-
-Determining the decisions that an $LR$ parser is to take requires a
-tedious and error-prone calculation.  It is therefore usually carried out
-by a program called a \emph{parser generator}.  If we were to use an $LR$
-parser for MLS, it would be necessary to include the parser generator as
-part of the program set.  The author has an $LR$ parser generator,
-written in Fortran.  It is partly converted to Fortran 90, but the
-project was set aside before completion.  At least two work weeks would
-be required to complete it.
-
-There are several advantages of using an $LR$ grammar and parser.  First,
-the set of languages representable by $LR$ grammars is a strict superset
-of the set of languages representable by $LL$ grammars.  Second, by using
-a parser generator, modifications are somewhat easier~-- one needs only
-to change the grammar and re-run the parser generator, rather than
-changing the grammar, and then changing the parser procedure.  The latter
-is tedious and error-prone.  Third, some of the burden of checking for
-correct structure is put back into the parser, instead of the subsequent
-analysis.  Notice, for example, that the field\_list production in
-section \ref{gram} allows \emph{expr~= expr}.  This is not the
-grammatical generality we want, but allowing it to pass through the
-parser and catching it in subsequent analysis greatly simplifies the
-grammar, and therefore the parser.  When using an automatically generated
-$LR$ parser, the parser procedure is a table interpreter that is
-independent of the grammar.  The structure of the grammar is encoded by
-tables produced by the parser generator.  A more complex grammar results
-in a bigger (but still automatically generated) table, not a more complex
-parser procedure.
-
-The disadvantages are that one needs a parser generator, and that error
-messages and error recovery are generally not as good as one gets with
-$LL$ parsers, unless substantial effort is invested.  (Tom Pennello's
-master's degree thesis at UC Santa Cruz dealt with automatic error
-recovery for $LR$ parsers, so at least the solution to the problem of
-$LR$ error recovery is known.  Even so, the procedure that interprets the
-tables produced by the parser generator becomes quite a bit larger in
-order to carry out the error recovery.)
+rules} in order to produce the abstract syntax tree.  A tree generation
+rule consists of the $\Rightarrow$ symbol (rendered in plain ASCII text as
+{\tt =$>$}), followed by a tree node identifier, optionally followed by a
+question mark.  Pseudo-terminal symbols result in a tree consisting of
+themselves.  The right-hand side of a production has a correspond orchard
+(an ordered forest) consisting of trees corresponding to all of its
+symbols.  When a tree node is added, it subsumes all of the trees
+corresponding to the symbols in the right-hand side of the production.  If
+a question mark appears, a new tree node is built only if it would have
+more than one subtree.
 
 \vspace{-8pt}
-\section{Access to the parser's output data structure}
+\section{Access to the parser's output data structure}\label{tree}
 \vspace{-2pt}
 
 A design goal of the parsing subsystem is that there is only one search
@@ -1134,63 +798,8 @@ sensitive.  Otherwise, it is caseless.  Subject to this definition of
 equality, no duplicates appear in the symbol table.  For all subsequent
 processing, each symbol is denoted by its index in the string table.
 
-\vspace{-3pt}
-\subsection{Procedures to access symbols}
-
-Procedures are provided by the {\tt string\_table} module to access the
-string and character tables.
-
-Given a string index, the procedure {\tt string\_length} returns the
-length of the symbol and the procedure {\tt get\_string} returns the text
-of the symbol.  If its {\tt CAP} argument is absent or false, the {\tt
-get\_\-string} procedure returns the string with letters in the case of the
-first appearance of the symbol.  Otherwise, it capitalizes all letters. 
-The procedure {\tt float\_value} returns the numerical value represented
-by the symbol.  One is urged to ensure that the symbol represents a
-numerical value (probably by looking at a node id as described in the
-next section) before invoking {\tt float\_value}!  The procedure {\tt
-display\_string} displays the symbol on standard output if the variable
-{\tt prunit} in the module {\tt output\_m} is negative (the default), or
-on the unit given by {\tt prunit} otherwise.
-
-The interfaces of these procedures are summarized below, in alphabetical
-order.
-
-\vspace{-8pt}
-{\tt\small\begin{verbatim}
-  subroutine DISPLAY_STRING ( STRING, ADVANCE )
-  ! Write the string indexed by STRING.
-    integer, intent(in) :: STRING
-    character(len=*), intent(in), optional :: ADVANCE ! "yes" or "no"
-    return
-  end subroutine DISPLAY_STRING
-
-  double precision function FLOAT_VALUE ( STRING )
-  ! Return the FLOAT value of a string indexed by STRING
-    integer, intent(in) :: STRING
-  end function FLOAT_VALUE
-
-  subroutine GET_STRING ( STRING, STRING_TEXT, CAP )
-  ! Put as much as will fit of the string indexed by STRING
-  ! into STRING_TEXT.
-  ! If CAP is present and .TRUE., capitalize STRING_TEXT.
-    integer, intent(in) :: STRING
-    character(len=*), intent(out) :: STRING_TEXT
-    logical, intent(in), optional :: CAP
-  end subroutine GET_STRING
-
-  integer function STRING_LENGTH ( STRING )
-  ! Return the length of the string indexed by STRING
-    integer, intent(in) :: STRING
-  end function STRING_LENGTH
-\end{verbatim}}
-
-There are numerous other procedures in the {\tt string\_tab\-le} module,
-in addition to the procedures described above.  The curious reader is
-urged to study that module.
-
-\vspace{-3pt}
-\subsection{Procedures to access the tree}\label{tree}
+There are procedures provided by the {\tt string\_table} module to access
+the string and character tables.
 
 The tree output by the parser is stored in a private data structure in
 the {\tt tree} module, which provides procedures to access it.  Every
@@ -1203,12 +812,13 @@ property, a \emph{source reference} property, and a \emph{node id}
 property.  The kind, decoration and source reference are described
 below.  The node id is a number that represents the output described in
 section \ref{gramBased}.  The names of these numbers are given by public
-parameters provided by the {\tt tree\_types} module.
+named constants provided by the {\tt tree\_types} module.
 
 The kind of vertex may be determined by the {\tt node\_kind} function. 
-There are several result values of the {\tt node\_kind} function, given
-by public parameters of the {\tt tree} module.  The only ones used by MLS
-software are {\tt pseudo} and {\tt internal}, as described below.
+There are several result values of the {\tt node\_kind} function, given by
+public named constants provided by the {\tt tree} module.  The only ones
+used by MLS software are {\tt pseudo} and {\tt internal}, as described
+below.
 
 The decoration consists of a single integer.  When the parser produces
 the tree, the decoration is zero.  It can be used for anything one
@@ -1249,58 +859,6 @@ index in the tree of the $k$'th son of the vertex at $v$.  There is no
 procedure to return the parent of a vertex.  If this is interesting, one
 can use the decoration to record it.
 
-The interfaces of these procedures are summarized below, in alphabetical
-order.
-
-{\tt\small\begin{verbatim}
-  subroutine DECORATE ( WHERE, DECORATION )
-  ! Decorate tree WHERE with DECORATION
-    integer, intent(in) :: WHERE
-    integer, intent(in) :: DECORATION
-  end subroutine DECORATE
-
-  integer function DECORATION ( WHERE )
-  ! Return the decoration of the tree WHERE
-    integer, intent(in) :: WHERE
-  end function DECORATION
-
-  integer function NODE_ID ( WHERE )
-  ! Return the node id of the tree node at WHERE
-    integer, intent(in) :: WHERE
-  end function NODE_ID
-
-  integer function NODE_KIND ( WHERE )
-  ! Return the kind of tree(where).
-    integer, intent(in) :: WHERE
-  end function NODE_KIND
-
-  integer function NSONS ( WHERE )
-  ! Return the node id of the tree node at WHERE
-    integer, intent(in) :: WHERE
-  end function NSONS
-
-  integer function SOURCE_REF ( WHERE )
-  ! Return the SOURCE field of the tree node at WHERE
-    integer, intent(in) :: WHERE
-  end function SOURCE_REF
-
-  integer function SUB_ROSA ( WHERE )
-  ! Return the sub_rosa string pointer from the tree node at WHERE
-    integer, intent(in) :: WHERE
-  end function SUB_ROSA
-
-  integer function SUBTREE ( WHICH, WHERE )
-  ! Return the root of the WHICH'th subtree of the tree node
-  ! at WHERE.  The zero'th subtree of WHERE is WHERE
-    integer, intent(in) :: WHICH
-    integer, intent(in) :: WHERE
-  end function SUBTREE
-\end{verbatim}}
-
-In addition to the procedures described above, there are numerous other
-procedures in the {\tt tree} module.  The curious reader is urged to
-study that module.
-
 \chapter{Type checking}\label{typeCheck}
 
 Type checking is performed by a depth-first left-to-right traversal of
@@ -1311,33 +869,39 @@ more details is urged to read the {\tt type\_checker} module.
 \section{The Declaration table}\label{declTable}
 
 There is a table, indexed by the string index given by the sub-rosa
-information of a pseudo-terminal tree vertex, that contains
-declarations.  It is used to find things in the tree.  It is especially
-useful to find the declaration of an object to which there is a
-reference.  The declaration table has several fields.  The uses of the
-fields other than the {\tt type} field depend on the value of the {\tt
-type} field.  The node index values of the {\tt units} field are defined
-in the {\tt tree\_types} module.  All other values of the {\tt units}
-field are defined in {\tt init\_tables\_module}.
+information of a pseudo-terminal tree vertex, that contains declarations.
+It is used to find things in the tree.  It is especially useful to find
+the declaration of an object to which there is a reference.  The
+declaration table has several fields.  The uses of the fields other than
+the {\tt type} field depend on the value of the {\tt type} field.  The
+node index values of the {\tt units} field are defined in the {\tt
+tree\_types} module.  All other values of the {\tt units} field are
+defined in either the {\tt intrinsic} module or {\tt init\_tables\_module}.
 
 \begin{tabular}{|l|l|l|l|}
 \hline
-Type field   & Units field     & Value field & Tree field \\
+Type field   & Units field       & Value field    & Tree field \\
 \hline
 \hline
-{\tt enum\_value} & enum index &           & son of {\tt dt\_def}\\
-{\tt exprn}  &                 &           & unevaluated expr \\
-{\tt field}  & field index     &           & {\tt spec\_def} node \\
-{\tt label}  &                 &           & {\tt named node} \\
-{\tt log\_value} &             & 0 = false & \\
-{\tt num\_value} & units index & value     & \\
-{\tt section}    & section index &         & {\tt section node} \\
-{\tt section\_node} & section index &      & {\tt one\_cf node} \\
-{\tt str\_value} &             &           & {\tt string} node \\
-{\tt spec}   & spec index      &           & {\tt spec\_def} node \\
-{\tt tree\_node} & node index  &           & \\
-{\tt undeclared} &             &           & \\
-{\tt units\_name} & units index & scale    & \\
+{\tt enum_value} & enum index    & string index   & {\tt dt_def} node\\
+{\tt exprn}    &                 &                & unevaluated expr \\
+{\tt field}    & field index     &                & {\tt spec_def} node \\
+{\tt function} & function index  & string index   & {\tt func_def} node \\
+{\tt label}    &                 &                & {\tt named} node \\
+{\tt log_value} &                & 0 = false      & \\
+{\tt named_value} & param index  & string index   & {\tt name_def} node \\
+{\tt num_value} & units index    & value          & {\tt number} node \\
+{\tt phys_unit_name} & lit index & value          & string index \\
+{\tt section}    & section index & string index   & {\tt section} node \\
+{\tt section_node} & section index & string index & {\tt one_cf} node \\
+{\tt str_value} & PHYQ_Invalid   & 0.0d0          & {\tt string} node \\
+{\tt spec}   & spec index        & string index   & {\tt spec_def} node \\
+{\tt tree_node} & node index     &                & \\
+{\tt type_name} & type index     & string index   & {\tt dt_def} node \\
+{\tt undeclared} &               &                & \\
+{\tt units_name} & PHYQ_\dots    & value          & string index \\
+{\tt variable} & type of first   & string index   & {\tt identifier} node\\
+               & element value   &                & \\
 \hline
 \end{tabular}
 
@@ -1567,7 +1131,7 @@ the form \emph{/name}.
 Suppose one has a variable, say {\tt root}, that indexes the {\tt
 n\_spec\_args} vertex in the tree.  The identity of the specification is
 the first son.  Its decoration is the root of the specification
-definition tree {having root {\tt n\_spec\_def}.  The first son of that
+definition tree having root {\tt n\_spec\_def}.  The first son of that
 tree is the definition of the specification name.  Its decoration is the
 index of the specification that is given by a Fortran parameter beginning
 with {\tt s\_} from {\tt init\_tables\_module}, which can be gotten by
@@ -1788,17 +1352,24 @@ different type declarations.)
 \hspace*{2in}
 \label{bigtree}\includegraphics[bb=17 71 466 716,scale=0.90,angle=180]{tree-1}\newpage
 \vspace*{-1in}
-\label{dottree}\includegraphics[bb=106 70 721 777,scale=0.90,angle=90]{tree-3}
+\label{dottree}\includegraphics[bb=106 70 721 777,
+  scale=0.90,angle=90]{tree-3}\newpage
+\vspace*{5in}\hspace*{1in}
+\includegraphics[bb=19 50 463 697,angle=90,scale=0.5]{tree-4}
 \else
 \label{toptree}\includegraphics[angle=270]{tree-2}\newpage
 \label{bigtree}\includegraphics{tree-1}\newpage
-\label{dottree}\includegraphics[angle=270]{tree-3}
+\label{dottree}\includegraphics[angle=270]{tree-3}\newpage
+\hspace*{0.25in}\includegraphics[scale=0.95,angle=0]{tree-4}
 \fi
 
 \label{lastpage}
 \end{document}
 
 % $Log$
+% Revision 1.6  2013/06/15 01:51:45  vsnyder
+% More on instructions to make graphics
+%
 % Revision 1.5  2013/06/15 01:49:47  vsnyder
 % Add instructions to make graphics, position and scale graphics
 %
