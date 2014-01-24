@@ -202,13 +202,18 @@ ieee_arithmetic.mod: ieee_arithmetic.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-parser.o parser.mod: $(S)/Parser_Tables.f90
+parser.o parser.mod: parser_tables.mod
 
 $(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
           $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
-          cd $(S); $(MAKE) -f MakeFC depends
+          cd $(S); $(MAKE) -f MakeFC update
+
+Parser_Tables.o: 
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T Parser_Tables.o parser_tables.mod
+parser_tables.mod: Parser_Tables.f90
+	$(UTILDIR)/newAifBdiff.sh -a parser_tables.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/Parser_Tables.f90 $(FAFTER)
 
 endif
 
@@ -359,13 +364,16 @@ machine.o: $(MACH_DIR)/machine.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-parser.o: $(S)/Parser_Tables.f90
+parser.o: Parser_Tables.o
 
 $(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
           $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
-          cd $(S); $(MAKE) -f MakeFC depends
+          cd $(S); $(MAKE) -f MakeFC update
+
+Parser_Tables.o: $(S)/Parser_Tables.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/Parser_Tables.f90 $(FAFTER)
 
 endif
 
@@ -473,6 +481,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.9  2014/01/22 18:22:15  pwagner
+# More changes, bug fixes
+#
 # Revision 1.8  2014/01/18 00:56:45  pwagner
 # Redirect lr stdout
 #
