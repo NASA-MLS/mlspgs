@@ -65,27 +65,24 @@ begin Fill
   !makeQualityForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
   !makeStatusForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
 
+  ;; ------------------------------------ CH3OH-640
+  !define(flaggingBands,{10,11,14,28,29,30,31})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=CH3OH,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=CH3OH,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+
   ;; ------------------------------------ SO2-640
   !define(flaggingBands,{10,11,14})
   !define(flaggingRadiometers,{R4})!dnl
   !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
   !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
 
-  ;;   ;; ------------------------------------- Temperature-CorePlusR4AB14
-  ;;   !define(flaggingBands,{1})
-  ;;   !define(flaggingRadiometers,{R1A,R1B})!dnl
-  ;;   !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
-  ;;   !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
-  ;; 
-  ;;   ;; ------------------------------------- GPH-CorePlusR4AB14
-  ;;   !define(flaggingBands,{1})
-  ;;   !define(flaggingRadiometers,{R1A,R1B})!dnl
-  ;;   !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
-  ;;   !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=800,cloudMax=30K,cloudMin= -4K)
-
 end Fill
 
 ; $Log$
+; Revision 1.12  2009/11/20 01:37:25  pwagner
+; Removed Band12, because its radaince count is left at 0
+;
 ; Revision 1.11  2009/07/24 17:43:58  pwagner
 ; Added quality flagging for CH3Cl
 ;
