@@ -43,7 +43,7 @@ endif
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #These modules require custom builds, so omit build commands from dependencies
-CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90 
+CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90 Parser_Tables.f90
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 
 ifdef HDFINC
@@ -91,8 +91,12 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	@if [ -f Parser_Tables.f90 ]; then \
         cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o ;\
         fi
+	@if [ -f Parser_Tables.f90 ]; then \
+        rm -f $(PLATFORMS)/$(MLSCONFG)/libmls.a ;\
+        cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ;\
+        fi
 
-parser.o: Parser_Tables
+parser.o: Parser_Tables.o
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o
 
 Parser_Tables.o:
@@ -192,6 +196,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.64  2014/01/24 00:58:47  pwagner
+# Removed certain amount of clumsiness
+#
 # Revision 2.63  2014/01/22 18:22:44  pwagner
 # More changes, bug fixes
 #
