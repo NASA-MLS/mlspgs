@@ -94,13 +94,20 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	@if [ -f Parser_Tables.f90 ]; then \
         rm -f $(PLATFORMS)/$(MLSCONFG)/libmls.a ;\
         cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ;\
+        return_status=`expr $$?` ; \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     $(MAKE) mark_all_as_uptodate \
+           UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
+         fi; \
         fi
 
 parser.o: Parser_Tables.o
-	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o
+	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o UNPREFXDPTHS="$(ADD2PATHS)"
 
 Parser_Tables.o:
-	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) Parser_Tables.o
+	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) Parser_Tables.o UNPREFXDPTHS="$(ADD2PATHS)"
 
 hdfeos5.f9h: $(IHDFEOS5INC)
 	@sed 's/^C/!/' $(IHDFEOS5INC) > hdfeos5.f9h
@@ -196,6 +203,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.65  2014/01/28 19:49:20  pwagner
+# set UNPREFXDPTHS when building parser and Parser_Tables
+#
 # Revision 2.64  2014/01/24 00:58:47  pwagner
 # Removed certain amount of clumsiness
 #
