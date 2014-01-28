@@ -141,7 +141,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine TRACE_BEGIN_I
 
 ! --------------------------------------------------    TRACE_END  -----
-  subroutine TRACE_END ( NAME, INDEX, String, Cond )
+  subroutine TRACE_END ( NAME, INDEX, String, StringIndex, Cond )
   ! Decrement DEPTH.  Print "EXIT NAME" with DEPTH dots in front.
 
   ! The only reason to provide Name is if you want to check whether stack
@@ -158,7 +158,8 @@ contains ! ====     Public Procedures     ==============================
 
     character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
     integer, intent(in), optional :: INDEX ! Use value from stack if not present
-    character(len=*), optional, intent(in) :: String
+    character(len=*), intent(in), optional :: String
+    integer, intent(in), optional :: StringIndex
     logical, intent(in), optional :: Cond  ! Print if true, default true
 
     integer :: Check = -2
@@ -180,7 +181,8 @@ contains ! ====     Public Procedures     ==============================
     myCond = merge(.true., .false., present(name))
     if ( present(cond) ) myCond = cond
     if ( myCond ) then
-      call pop_stack ( 'Exit ', .true., frame=frame, index=index, string=string )
+      call pop_stack ( 'Exit ', .true., frame=frame, index=index, string=string, &
+        & stringIndex=stringIndex )
     else
       call pop_stack ( frame=frame, index=index, Silent = .true. )
     end if
@@ -260,6 +262,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.39  2014/01/28 02:59:50  vsnyder
+! Add StringIndex argument to Trace_End
+!
 ! Revision 2.38  2014/01/11 01:41:02  vsnyder
 ! Decruftification
 !
