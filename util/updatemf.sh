@@ -198,6 +198,8 @@ then
   fi
   exit 0
 fi
+echo "Re-create object-file directory for this $MLSCONFG"
+echo "del_exist_dir $del_exist_dir"
 #Re-create object-file directory for this MLSCONFG
 #unless $del_exist_dir reset to false
 #(Because mlsconfigure may be called simply to update $MLSCONFG/Makefile)
@@ -208,15 +210,25 @@ if [ "$MLSCONFG" = "." -o "$MLSCONFG" = "" ] ; then
 	echo "To repair this, enter 'make configure'"
    exit 1
 elif [ "$del_exist_dir" != "true" ] ; then
-	if [ ! -d $mcfg_dir/$MLSCONFG ] ; then
+  if [ ! -d $mcfg_dir/$MLSCONFG ] ; then
       mkdir $mcfg_dir/$MLSCONFG
 		made_new_dir="true"
-   else
-      rm -f $mcfg_dir/$MLSCONFG/Makefile
-	fi
+   #else
+      #rm -f $mcfg_dir/$MLSCONFG/Makefile
+  fi
 elif [ -d $mcfg_dir/$MLSCONFG ] ; then
 	chmod u+w $mcfg_dir/$MLSCONFG/*
-	rm -f $mcfg_dir/$MLSCONFG/*
+        if [ -f $mcfg_dir/$MLSCONFG/Makefile ]
+        then
+          echo "Preserving Makefile"
+          ls -l $mcfg_dir/$MLSCONFG/Makefile
+          mv $mcfg_dir/$MLSCONFG/Makefile $mcfg_dir/$MLSCONFG/.Makefile
+	  rm -f $mcfg_dir/$MLSCONFG/*
+          mv $mcfg_dir/$MLSCONFG/.Makefile $mcfg_dir/$MLSCONFG/Makefile
+        else
+          echo "Makefile not found; so creating it"
+	  rm -f $mcfg_dir/$MLSCONFG/*
+        fi
 else
    mkdir $mcfg_dir/$MLSCONFG   
 	made_new_dir="true"        
@@ -240,7 +252,19 @@ fi
 # cat $confg_file $plat_dir/platforms/common \
 #   $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
 
-cat $confg_file $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
+if [ -f $mcfg_dir/$MLSCONFG/Makefile ]
+then
+  mv $mcfg_dir/$MLSCONFG/Makefile $mcfg_dir/$MLSCONFG/Makefile.1
+  cat $confg_file $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
+  n=`diff $mcfg_dir/$MLSCONFG/Makefile $mcfg_dir/$MLSCONFG/Makefile.1 | wc -w`
+  echo "n $n"
+  if [ "$n" -lt 1 ]
+  then
+    mv $mcfg_dir/$MLSCONFG/Makefile.1 $mcfg_dir/$MLSCONFG/Makefile
+  fi
+else
+  cat $confg_file $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
+fi
 
 if [ "$made_new_dir" = "true" ] ; then
 	echo "Configured mls to use $mcfg_dir/$MLSCONFG "
@@ -309,6 +333,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.8  2013/06/05 18:42:40  pwagner
+# Added ability to reverse hiding of Excluded files
+#
 # Revision 1.7  2009/12/01 21:32:47  pwagner
 # May use the REECHOMACHOPTS mechanism to exclude certain files from machines
 #
