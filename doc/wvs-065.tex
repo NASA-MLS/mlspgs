@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-065r1}
-\newcommand{\docdate}{15 July 2013}
+\newcommand{\docname}{\bf wvs-065r2}
+\newcommand{\docdate}{28 January 2014}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -124,7 +124,7 @@ the complex dielectric constant.
 
 Let $D = 2r$.  Then the particle number distribution as a function of
 particle size $r$ ($\mu$m) is
-\begin{equation}\begin{split}
+\begin{equation}\begin{split}\label{five}
  n(D) =\,& \frac1{\rho_{\text{ice}}} \left\{
            N_1 D \exp(-\alpha D) +
             \frac{N_2}D \exp \left[ -\frac12 \left(
@@ -134,24 +134,33 @@ particle size $r$ ($\mu$m) is
  \text{ and }
  N_2 = \frac6{\sqrt{2 \pi^3}}
        \frac{\text{IWC}_{>100}}
-            {D_0 \sigma \exp( 3 \mu + 4.5 \sigma^2)}\,,
+            {D_0^3 \rho_{\text{ice}} \sigma \exp( 3 \mu + 4.5 \sigma^2)}\,,
 \end{split}\end{equation}
 %
-\begin{equation}\begin{split}
+\begin{equation}\begin{split}\label{six}
  & \text{IWC}_{<100} = \min[\text{IWC},
                             0.252(\text{IWC}/\text{IWC}_0)^{0.837}]\,, \\
  & \text{IWC}_{>100} = \text{IWC} - \text{IWC}_{<100}\,, \\
- & \alpha = -4.99\times 10^{-3} + 0.0494
+ & \alpha = -4.99\times 10^{-3} - 0.0494
               \log_{10} (\text{IWC}_{<100}/\text{IWC}_0)\,, \\
  & \mu = (5.2 + 0.0013 T) + (0.026 - 1.2 \times 10^{-3}T)
           \log_{10} (\text{IWC}_{>100}/\text{IWC}_0)\,, \\
  & \sigma = (0.47 + 2.1 \times 10^{-3}T) + (0.018 - 2.1 \times 10^{-4} T)
-             \log_{10} (\text{IWC}_{<100}/\text{IWC}_0)\,,
+             \log_{10} (\text{IWC}_{>100}/\text{IWC}_0)\,,
 \end{split}\end{equation}
 %
-IWC is the ice water content of the atmosphere in g/m$^3$, IWC$_0$ = 1 g/m$^3$,
-$D_0 = 1 \mu$m, $\rho_{\text{ice}} = 0.91$ g/m$^3$, and $T$ is the atmospheric
-temperature in Kelvins.
+IWC is the ice water content of the atmosphere in g/m$^3$, IWC$_0$ = 1
+g/m$^3$, $D_0 = 1 \mu$m, $\rho_{\text{ice}} = 0.91$ g/m$^3$, and $T$ is
+the atmospheric temperature in degrees Celsius.\footnote{Equation (5.3) in
+the ATBD has an exponent of 1, not 3, for $D_0$ in the denominator of the
+expression for $N_2$ in Equation (\ref{five}).  In Equation (4) in
+McFarquhar, Andrew J. Heymsfield, \emph{Parameterization of Tropical
+Cirrus Ice Crystal Size Distributions and Implications for Radiative
+Transfer: Results from CEPEX}, {\bf Journal of the Atmospheric Sciences
+54}, 1 (Sep 1997) pp.\ 2187-2200 (MH hereafter), the exponent is 3. 
+Equation (5.6) in the ATBD has +0.0494 in the expression for $\alpha$ in
+Equation (\ref{six}).  Equation (5) in MH has $-$0.0494.  Tables 1 and 2
+on page 2193 in MH give coefficients as a function of degrees Celsius.}
 
 \section{Phase function}
 
@@ -178,7 +187,7 @@ C(r) =\,& \frac12 \int_0^\pi p_0(\theta,r) \sin\theta \, \d \theta \,. \\
 
 The integrated phase function is
 
-\begin{equation}\label{six}
+\begin{equation}\label{nine}
 P(\theta) = 
  \frac\pi{\beta_{c\_s}} \int_0^\infty
  r^2 n(r) \xi_s(r)
@@ -213,3 +222,6 @@ and its derivatives correspondingly simplify to
 % $Id$
 
 % $Log$
+% Revision 1.2  2013/07/17 02:13:15  vsnyder
+% Add phase function section
+%
