@@ -5,13 +5,15 @@
 # Called by make as a subtask of the update target
 #
 #        O p t i o n s
-#  -h[elp]              (if present) Help (a work in progress)
+#  -h[elp]              Help (a work in progress)
 #  -cf confg_file       configuration file (with path if needed)
 #                        (defaults to ../.configure)
 #  -pc plat_dir         Directory where platforms directory to be found
 #                        (defaults to ./)
-#  -machine             (if present) Check that machine files up-to-date
-#  -reverse             (if present) Reverse hiding the file
+#  -machine             Check that machine files up-to-date
+#  -reverse             Reverse hiding the file
+#  -d                   Turn on debugging
+#  -v                   Verbose
 #
 # --------------- End updatemf.sh help
 #
@@ -27,6 +29,19 @@
 # foreign countries or providing access to foreign persons.
 
 # "$Id$"
+#----------------------- EchoVerb -----------------------
+
+# Function to echo its argument only if $verbose is true
+#
+
+EchoVerb()
+{
+   if [ "$verbose" = "true" -o "$debugging" = "true" ]
+   then
+     echo  "$1"
+   fi
+}
+
 #----------------------- Exclude -----------------------
 
 # Function to temporarily hide a file to exclude it from calculations
@@ -134,6 +149,7 @@ plat_dir="./"
 conf_dir="$MYPATH/.."
 m_update="false"
 reverse="false"
+verbose="false"
 
 while [ "$1" != "" ] ; do
 
@@ -149,6 +165,9 @@ while [ "$1" != "" ] ; do
 	    confg_file=$2
 	    shift
 	;;
+	-d )
+	    debugging="true"
+	;;
 	-pc )
 	    plat_dir=$2
 	    shift
@@ -158,6 +177,9 @@ while [ "$1" != "" ] ; do
 	;;
 	-reverse )
 	    reverse="true"
+	;;
+	-v )
+	    verbose="true"
 	;;
     esac
     shift
@@ -187,8 +209,8 @@ then
     then
       exit 0
     fi
-    echo "About to restore $the_files"
-    echo "in $machines_root/$MLSCONFG"
+    EchoVerb "About to restore $the_files"
+    EchoVerb "in $machines_root/$MLSCONFG"
     for file in $the_files
     do
       argmx=`echo $file | sed 's/-x$//'`
@@ -198,8 +220,8 @@ then
   fi
   exit 0
 fi
-echo "Re-create object-file directory for this $MLSCONFG"
-echo "del_exist_dir $del_exist_dir"
+EchoVerb "Re-create object-file directory for this $MLSCONFG"
+EchoVerb "del_exist_dir $del_exist_dir"
 #Re-create object-file directory for this MLSCONFG
 #unless $del_exist_dir reset to false
 #(Because mlsconfigure may be called simply to update $MLSCONFG/Makefile)
@@ -220,13 +242,13 @@ elif [ -d $mcfg_dir/$MLSCONFG ] ; then
 	chmod u+w $mcfg_dir/$MLSCONFG/*
         if [ -f $mcfg_dir/$MLSCONFG/Makefile ]
         then
-          echo "Preserving Makefile"
+          EchoVerb "Preserving Makefile"
           ls -l $mcfg_dir/$MLSCONFG/Makefile
           mv $mcfg_dir/$MLSCONFG/Makefile $mcfg_dir/$MLSCONFG/.Makefile
 	  rm -f $mcfg_dir/$MLSCONFG/*
           mv $mcfg_dir/$MLSCONFG/.Makefile $mcfg_dir/$MLSCONFG/Makefile
         else
-          echo "Makefile not found; so creating it"
+          EchoVerb "Makefile not found; so creating it"
 	  rm -f $mcfg_dir/$MLSCONFG/*
         fi
 else
@@ -238,11 +260,6 @@ if [ ! -f $conf_dir/srclib/$MLSF95.$MLSPLAT ] ; then
 	echo "File $MLSF95.$MLSPLAT not found in $conf_dir/srclib"
 	exit
 fi
-
-# if [ ! -f $plat_dir/platforms/common ] ; then
-# 	echo "File common not found in $plat_dir/platforms"
-# 	exit
-# fi
 
 if [ ! -f $plat_dir/platforms/targets ] ; then
  echo "File targets not found in $plat_dir/platforms"
@@ -257,7 +274,7 @@ then
   mv $mcfg_dir/$MLSCONFG/Makefile $mcfg_dir/$MLSCONFG/Makefile.1
   cat $confg_file $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
   n=`diff $mcfg_dir/$MLSCONFG/Makefile $mcfg_dir/$MLSCONFG/Makefile.1 | wc -w`
-  echo "n $n"
+  EchoVerb "n $n"
   if [ "$n" -lt 1 ]
   then
     mv $mcfg_dir/$MLSCONFG/Makefile.1 $mcfg_dir/$MLSCONFG/Makefile
@@ -300,8 +317,8 @@ machines_base=$machines_root/$MLSF95.$MLSPLAT
 if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" -a "$m_update" = "true" ] ; then
 # In case of a custom configuration name, make sure machine files are up-to-date
   the_files=`$REECHO -dirn $machines_root/"$MLSF95.$MLSPLAT"`
-  echo "About to make sure $the_files"
-  echo "are up-to-date in $machines_root/$MLSCONFG"
+  EchoVerb "About to make sure $the_files"
+  EchoVerb "are up-to-date in $machines_root/$MLSCONFG"
   for file in $the_files
   do
     make -f $MYPATH/uptodate.make \
@@ -320,8 +337,8 @@ if [ "$m_update" = "true" -a "$REECHOMACHOPTS" != "" ] ; then
   then
     exit 0
   fi
-  echo "About to rename $the_files"
-  echo "in $machines_root/$MLSCONFG"
+  EchoVerb "About to rename $the_files"
+  EchoVerb "in $machines_root/$MLSCONFG"
   for file in $the_files
   do
     var=`Exclude $machines_root/$MLSCONFG/$file`
@@ -333,6 +350,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.9  2014/01/28 19:39:00  pwagner
+# Create new Makefile only if different
+#
 # Revision 1.8  2013/06/05 18:42:40  pwagner
 # Added ability to reverse hiding of Excluded files
 #
