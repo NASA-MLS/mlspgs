@@ -105,7 +105,7 @@ ghostbuster:
 
 update:
 	@cd .. ; \
-   $(MAKE) update SUBDIRS="blas lib fwdmdl cloudfwdm l2" tests_sub_dirs=
+   $(MAKE) update SUBDIRS="blas lib fwdmdl cloudfwdm l2" tests_sub_dirs= JUSTSUBDIRS=yes
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -157,6 +157,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.76  2014/01/29 21:00:27  pwagner
+# Shorten make update
+#
 # Revision 2.75  2011/11/18 23:39:31  pwagner
 # Removed double-link for mlsl2; corrected spelling error
 #
