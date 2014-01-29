@@ -208,7 +208,7 @@ $(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
           $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
-          cd $(S); $(MAKE) -f MakeFC update
+          cd $(S); $(MAKE) -f MakeFC update JUSTSUBDIRS=yes
 
 Parser_Tables.o: 
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T Parser_Tables.o parser_tables.mod
@@ -370,7 +370,7 @@ $(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
           $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
-          cd $(S); $(MAKE) -f MakeFC update
+          cd $(S); $(MAKE) -f MakeFC update JUSTSUBDIRS=yes
 
 Parser_Tables.o: $(S)/Parser_Tables.f90
 	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/Parser_Tables.f90 $(FAFTER)
@@ -481,6 +481,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.10  2014/01/24 00:58:08  pwagner
+# Removed certain amount of clumsiness
+#
 # Revision 1.9  2014/01/22 18:22:15  pwagner
 # More changes, bug fixes
 #

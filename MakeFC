@@ -1205,7 +1205,8 @@ internaldepends:
    echo "Making dependencies for $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir $(SUBDIRS_UPDATE); \
-	done; \
+	done
+	@if [ "$(JUSTSUBDIRS)" = "" ]; then \
 	echo "Making dependencies for srclib"; \
         cd srclib; \
         temp_name_1=`../${UNIQUE_NAME} 1` ;\
@@ -1217,7 +1218,8 @@ internaldepends:
         mv $$temp_name_2 Makefile.dep; \
 	echo "Making dependencies for doc"; \
         cd ../doc; \
-        $(MAKE) -f $(MakeFName) depends
+        $(MAKE) -f $(MakeFName) depends; \
+	fi
 
 internalsaymake:
 	@if [ "$(SUBDIRS)" = "" ] ; then \
@@ -1263,7 +1265,7 @@ internalreset_copy:
 	@echo "MakeFC copy number reset from $(COPY_NUMBER) to 0"
 
 internalmftests:
-	@if [ "$(tests_sub_dirs)" = "" ] ; then \
+	@if [ "$(tests_sub_dirs)" = "" -o "$(JUSTSUBDIRS)" != "" ] ; then \
      exit 0 ; \
    fi ; \
    echo "Copying or linking MakeFC to Makefile in $(tests_sub_dirs)"; \
@@ -1347,6 +1349,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.142  2014/01/22 18:21:41  pwagner
+# More changes, bug fixes
+#
 # Revision 1.141  2014/01/15 19:51:28  pwagner
 # Fixed bug where repository copy of mkpath.sh not executable
 #
