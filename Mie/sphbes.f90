@@ -94,11 +94,9 @@ contains
 !  and JR(X)
 !
 !  {\tt acapw(n-1)} = $A_{n-1}(m \chi) =
-!    -\frac{n}{m \chi} + \frac{j_{n-2}(m \chi)}{j_{n-1}(m \chi)} =
 !    \frac{n}{m \chi} - \left( \frac{n}{m \chi} + A_n(m \chi) \right)^{-1}$
 !
 !  {\tt Acapr(n-1)} = $A_{n-1}(\chi) =
-!    -\frac{n}{\chi} + \frac{j_{n-2}(\chi)}{j_{n-1}(\chi)} =
 !    \frac{n}{\chi} - \left( \frac{n}{\chi} + A_n(\chi) \right)^{-1}$
 !
 !  Start with the asymptotic approximation for fixed $z$ as $n$ increases:
@@ -167,3 +165,6 @@ contains
 end module SPHBESS
 
 ! $Log$
+! Revision 1.1  2008/04/19 01:15:27  vsnyder
+! Initial commit
+!
