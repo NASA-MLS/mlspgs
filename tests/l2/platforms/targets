@@ -65,7 +65,7 @@ REECHO=$(UTILDIR)/reecho.sh
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
 vpath %.f9h ../ $(srclib) $(libl2_sources)
-vpath %.f ../
+vpath %.f ../ $(PGSINC)
 vpath %.c ../
 
 include $(srclib)/$(MLSF95).$(MLSPLAT)
@@ -210,6 +210,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.29  2010/08/27 20:57:16  pwagner
+# Uses optional HDF*INC Makefile variables
+#
 # Revision 1.28  2009/09/22 16:54:43  pwagner
 # Fixed bug concrning include files from l2 home directory
 #
