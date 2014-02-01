@@ -2557,7 +2557,7 @@ contains ! =====     Public Procedures     =============================
         call GetSignalName ( signal, msg(len_trim(msg)+2:), sideband=sideband )
       end if
 
-      call dump( vector, details=1 )
+      call dump( vector, details=0 ) ! It's not the values cuasing us to crash
       call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
     end if
 
@@ -3281,6 +3281,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.187  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.186  2013/10/25 23:05:42  pwagner
 ! Fixed error that caused dumping hyperslab to segment fault if rank /= 2
 !
