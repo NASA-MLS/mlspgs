@@ -5,8 +5,8 @@
 \topmargin -0.25in
 \textheight 9in
 
-\newcommand{\docname}{\bf wvs-066r7}
-\newcommand{\docdate}{29 January 2014}
+\newcommand{\docname}{\bf wvs-066r8}
+\newcommand{\docdate}{5 February 2014}
 
 \begin{document}
 
@@ -73,20 +73,23 @@ $D_0 = 1 \mu$m, $\rho_{\text{ice}} = 0.91$ g/cm$^3$.
 where IWC$_0$ = 1 g/m$^3$ and $T$ is the atmospheric temperature in
 Celsius.\footnote{Equation (5.3) in the ATBD has an exponent of 1, not 3,
 for $D_0$ in the denominator of the expression for $N_2$.  In Equation (4)
-in McFarquhar, Andrew J. Heymsfield, \emph{Parameterization of Tropical
-Cirrus Ice Crystal Size Distributions and Implications for Radiative
-Transfer: Results from CEPEX}, {\bf Journal of the Atmospheric Sciences
-54}, 1 (Sep 1997) pp.\ 2187-2200 (MH hereafter), the exponent is 3. 
-Equation (5.6) in the ATBD has +0.0494 in the expression for $\alpha$. 
-Equation (6) in MH has $-$0.0494.  Tables 1 and 2 on page 2193 in MH give
-coefficients as a function of degrees Celsius.}
+in Greg M. McFarquhar, Andrew J. Heymsfield, \emph{Parameterization of
+Tropical Cirrus Ice Crystal Size Distributions and Implications for
+Radiative Transfer: Results from CEPEX}, {\bf Journal of the Atmospheric
+Sciences 54}, 1 (Sep 1997) pp.\ 2187-2200 (MH hereafter), the exponent is
+3.  Equation (5.6) in the ATBD has +0.0494 in the expression for
+$\alpha$.  Equation (6) in MH has $-$0.0494.  Tables 1 and 2 on page 2193
+in MH give coefficients as a function of degrees Celsius.}
 
 \subsection{IWC derivatives}
 
 There are two cases for the derivatives w.r.t. IWC
 
-\subsubsection{$\I \leq 0.252\, (\I/\I_0)^{0.837} \equiv \I< 2.126232151 \times
-10^{-4}$}
+\subsubsection{$\I \leq 0.252\, (\I/\I_0)^{0.837} \equiv \I < 2.126232145
+\times 10^{-4}$}
+
+The constant $2.126232145 \times 10^{-4}$ is the nonzero solution of $\I =
+0.252\, (\I/\I_0)^{0.837}$ with $\I_0 = 1$ gm/cm$^3$.
 
 In this case $\I_{<100} = \I$ and $\I_{>100} = 0$.
 
@@ -103,7 +106,7 @@ In this case $\I_{<100} = \I$ and $\I_{>100} = 0$.
  \frac{\partial n_2}{\partial\I} =\, 0\\
 \end{split}\end{equation*}
 
-\subsubsection{$\I > 0.252\, (\I/\I_0)^{0.837} \equiv \I< 2.126232151 \times
+\subsubsection{$\I > 0.252\, (\I/\I_0)^{0.837} \equiv \I > 2.126232145 \times
 10^{-4}$}
 
 In this case $\I_{<100} = 0.252(\I/\I_0)^{0.837}$, $\I_{>100} = \I -
@@ -337,6 +340,9 @@ I_2 =\,&
 % $Id$
 
 % $Log$
+% Revision 1.5  2014/01/29 23:16:20  vsnyder
+% Correct Equation number in MH footnote
+%
 % Revision 1.4  2014/01/29 01:35:37  vsnyder
 % Add footnote about differences between ATBD and McFarquhar-Heymsfield
 %
