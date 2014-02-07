@@ -222,7 +222,7 @@ contains
     use MORETREE, only: GET_BOOLEAN, Get_Label_And_Spec, STARTERRORMESSAGE
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
+    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NSONS, SUB_ROSA, SUBTREE
 
@@ -240,7 +240,12 @@ contains
     integer :: J, K                     ! Subscript and loop inductor.
     integer :: Key                      ! Indexes the spec_args vertex.
     integer :: Last                     ! "last" field of "spectrometer"
-    integer :: Me = -1                  ! Signal index for trace
+    integer :: Me = -1                  ! String index for trace
+    integer :: Me_Band = -1             ! String index for trace
+    integer :: Me_Module = -1           ! String index for trace
+    integer :: Me_Radiometer = -1       ! String index for trace
+    integer :: Me_Signal = -1           ! String index for trace
+    integer :: Me_SpectrometerType = -1 ! String index for trace
     integer :: Name                     ! sub_rosa of label of specification,
                                         ! if any, else zero.
     type(radiometer_T) :: Radiometer    ! To be added to the database
@@ -266,6 +271,7 @@ contains
     integer, parameter :: WrongUnits = badMix + 1 ! Field has wrong units
     integer, parameter :: UnneededRadiometer = WrongUnits + 1 ! Radiomter spec in wrong place
     integer, parameter :: NoDeferredRadiometer = UnneededRadiometer + 1 ! Radiometer spec needed
+    integer, parameter :: PriorTrouble = NoDeferredRadiometer + 1
 
     error = 0
     timing = .false.
@@ -280,6 +286,8 @@ contains
       select case ( decoration(subtree(1,decoration(subtree(1,key)))) )
 
       case ( s_band ) ! ...................................  BAND  .....
+        call trace_begin ( me_band, "MLSSignals.band", son, &
+          & cond=toggle(gen) .and. levels(gen) > 0 )
         band%prefix = name
         band%centerFrequency = 0.0_r8 ! "The 'frequency' field is absent"
         band%radiometer = 0             ! No radiometer defined at first.
@@ -304,8 +312,12 @@ contains
           end select
         end do ! j = 2, nsons(key)
         call decorate ( key, addBandToDatabase ( bands, band ) )
+        call trace_end ( "MLSSignals.band", &
+          & cond=toggle(gen) .and. levels(gen) > 0 )
 
       case ( s_module ) ! ............................  MODULE  ........
+        call trace_begin ( me_module, "MLSSignals.module", son, &
+          & cond=toggle(gen) .and. levels(gen) > 0 )
         thisModule%name = name
         thisModule%spaceCraft = .false.
         thisModule%node = decoration(name)
@@ -330,8 +342,12 @@ contains
           end select
         end do
         call decorate ( key, AddModuleToDatabase (modules, thisModule ) )
+        call trace_end ( "MLSSignals.module", &
+          & cond=toggle(gen) .and. levels(gen) > 0 )
 
       case ( s_radiometer ) ! .......................  RADIOMETER  .....
+        call trace_begin ( me_radiometer, "MLSSignals.radiometer", son, &
+          & cond=toggle(gen) .and. levels(gen) > 0 )
         radiometer%polarization = l_a
         radiometer%prefix = name
         do j = 2, nsons(key)
@@ -358,8 +374,12 @@ contains
           end select
         end do ! j = 2, nsons(key)
         call decorate ( key, addRadiometerToDatabase ( radiometers, radiometer ) )
+        call trace_end ( "MLSSignals.radiometer", &
+          & cond=toggle(gen) .and. levels(gen) > 0 )
 
       case ( s_signal ) ! ..........................  VALIDSIGNAL  .....
+        call trace_begin ( me_signal, "MLSSignals.signal", son, &
+          & cond=toggle(gen) .and. levels(gen) > 0 )
         signal%sideband = 0
         signal%radiometer = 0
         do j = 2, nsons(key)
@@ -400,44 +420,53 @@ contains
           if ( got(f_radiometer) ) call announceError ( unneededRadiometer )
           signal%radiometer = bands(signal%band)%radiometer
         end if
-        signal%lo = radiometers(signal%radiometer)%lo
-        signal%instrumentModule = radiometers(signal%radiometer)%instrumentModule
-        signal%spectrometerType = bands(signal%band)%spectrometerType
-        signal%singleSideband = radiometers(signal%radiometer)%singleSideband
-        signal%centerFrequency = bands(signal%band)%centerFrequency
-        signal%deferred = spectrometerTypes(signal%spectrometerType)%deferred
-        signal%dacs = spectrometerTypes(signal%spectrometerType)%dacs
-        if ( signal%deferred .neqv. got(f_channels) ) &
-          & call announceError ( deferredChannels )
-        ! For the wide filters, we specify frequency etc. here.
-        if ( got(f_channels) ) then
-          if ( error == 0 ) then
-            call allocate_Test ( signal%frequencies, nsons(channels)-1, &
-              & 'signal%frequencies', moduleName )
-            call allocate_Test ( signal%widths, nsons(channels)-1, &
-              & 'signal%widths', moduleName)
-            do k = 2, nsons(channels)
-              call expr ( subtree(k,channels), units, value )
-              signal%frequencies(k-1) = value(1)
-              signal%widths(k-1) = value(2)
-            end do
-            if ( any(units /= phyq_frequency) ) &
-              ! Front end should be checking units now, but just in case....
-              & call announceError ( wrongUnits, f_channels, &
-                & (/ phyq_frequency /) )
+        if ( associated(radiometers) .and. associated(bands) .and. &
+           & associated(spectrometerTypes) ) then
+          signal%lo = radiometers(signal%radiometer)%lo
+          signal%instrumentModule = radiometers(signal%radiometer)%instrumentModule
+          signal%spectrometerType = bands(signal%band)%spectrometerType
+          signal%singleSideband = radiometers(signal%radiometer)%singleSideband
+          signal%centerFrequency = bands(signal%band)%centerFrequency
+          signal%deferred = spectrometerTypes(signal%spectrometerType)%deferred
+          signal%dacs = spectrometerTypes(signal%spectrometerType)%dacs
+          if ( signal%deferred .neqv. got(f_channels) ) &
+            & call announceError ( deferredChannels )
+          ! For the wide filters, we specify frequency etc. here.
+          if ( got(f_channels) ) then
+            if ( error == 0 ) then
+              call allocate_Test ( signal%frequencies, nsons(channels)-1, &
+                & 'signal%frequencies', moduleName )
+              call allocate_Test ( signal%widths, nsons(channels)-1, &
+                & 'signal%widths', moduleName)
+              do k = 2, nsons(channels)
+                call expr ( subtree(k,channels), units, value )
+                signal%frequencies(k-1) = value(1)
+                signal%widths(k-1) = value(2)
+              end do
+              if ( any(units /= phyq_frequency) ) &
+                ! Front end should be checking units now, but just in case....
+                & call announceError ( wrongUnits, f_channels, &
+                  & (/ phyq_frequency /) )
+            end if
+          else
+            signal%frequencies => spectrometerTypes(signal%spectrometerType)% &
+              & frequencies
+            signal%widths => spectrometerTypes(signal%spectrometerType)%widths
           end if
+          call decorate ( key, addSignalToDatabase ( signals, signal ) )
+          signals(size(signals))%index = size(signals)
         else
-          signal%frequencies => spectrometerTypes(signal%spectrometerType)% &
-            & frequencies
-          signal%widths => spectrometerTypes(signal%spectrometerType)%widths
+          call announceError ( priorTrouble )
         end if
-        call decorate ( key, addSignalToDatabase ( signals, signal ) )
-        signals(size(signals))%index = size(signals)
         ! Now nullify pointers so they don't get hosed later by allocate_test
         nullify ( signal%frequencies )
         nullify ( signal%widths )
+        call trace_end ( "MLSSignals.signal", &
+          & cond=toggle(gen) .and. levels(gen) > 0 )
 
       case ( s_spectrometerType ) ! ...........  SPECTROMETERTYPE  .....
+        call trace_begin ( me_spectrometertype, "MLSSignals.spectrometerType", &
+          & son, cond=toggle(gen) .and. levels(gen) > 0 )
         spectrometerType%name = name
         deferred = .false.
         dacs = .false.
@@ -539,6 +568,8 @@ contains
         ! Nullify pointers to temporary stuff so it doesn't get hosed later
         nullify ( spectrometerType%frequencies )
         nullify ( spectrometerType%widths )
+        call trace_end ( "MLSSignals.spectrometerType", &
+          & cond=toggle(gen) .and. levels(gen) > 0 )
 
       case ( s_time ) ! ...................................  TIME  .....
         if ( timing ) then
@@ -618,6 +649,9 @@ contains
       case ( deferredChannels )
         call output ( "Channels shall be specified if and only if the band's" )
         call output ( ' radiometer has deferred channels', advance='yes' )
+      case ( priorTrouble )
+        call output ( 'Unable to finish Signals because of prior trouble', &
+          & advance='yes' )
       case ( wrongUnits )
         call output ( 'The values of the ' )
         call display_string ( field_indices(fieldIndex) )
@@ -1937,6 +1971,10 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.104  2014/02/07 02:28:06  vsnyder
+! Fail gracefully in case a database didn't get allocated due to prior
+! trouble.  Add more tracing at -g1 level.
+!
 ! Revision 2.103  2014/01/11 01:41:02  vsnyder
 ! Decruftification
 !
