@@ -49,6 +49,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Indexes            Indexes an array of substrings of a string into an array
 ! Ints2Strings       Converts an array of integers to strings using "char" ftn
 ! IsAllAscii         Is a string composed entirely of ascii, i.e. non-binary
+! isAlphabet         Is the arg an alphabetical character?
 ! IsAscii            Is each array element ascii, i.e. non-binary
 ! IsComment          Does the string begin with a Comment character?
 ! IsRepeat           Is a string composed entirely of one substring repeated?
@@ -102,6 +103,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! int(:) indexes (char* string, char* substrings, [char* mode])
 ! ints2Strings (int ints(:,:), char* strs(:))
 ! log(:) isAllAscii( char* arg(:) )
+! log isAlphabet( char arg )
 ! log(:) isAscii( char arg(:) )
 ! log(:) isComment( char* arg(:), [char Comment] )
 ! log IsRepeat ( char* str, [char* subtring] )
@@ -193,7 +195,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
   public :: ASCIIFY, &
     & CAPITALIZE, CATSTRINGS, COMPRESSSTRING, COUNT_WORDS, &
     & DELETE, DEPUNCTUATE, FLUSHARRAYLEFT, HHMMSS_VALUE, &
-    & INDEXES, INTS2STRINGS, ISALLASCII, ISCOMMENT, ISREPEAT, &
+    & INDEXES, INTS2STRINGS, ISALLASCII, ISALPHABET, ISCOMMENT, ISREPEAT, &
     & LENTRIMTOASCII, LINEARSEARCHSTRINGARRAY, LOWERCASE, &
     & NAPPEARANCES, NCOPIES, &
     & READCOMPLETELINEWITHOUTCOMMENTS, READINTFROMBASEN, READINTSFROMCHARS, &
@@ -2887,7 +2889,7 @@ contains
   end subroutine prepOptions
   !
   ! ---------------------------------------------------  isAlphabet  -----
-  function isAlphabet(arg, inputcase) result(itIs)
+  elemental function isAlphabet(arg, inputcase) result(itIs)
     ! Returns TRUE if arg alphabetical; 
     ! i.e.is one of {'a', 'b', ..}
     ! Note: to check if input is UPPER  lower, either, set
@@ -3151,6 +3153,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.97  2014/02/12 23:59:34  pwagner
+! isAlphabet now public
+!
 ! Revision 2.96  2013/08/12 23:47:25  pwagner
 ! FindSomethings moved to MLSFinds module
 !
