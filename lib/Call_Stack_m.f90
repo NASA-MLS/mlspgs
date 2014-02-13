@@ -34,6 +34,7 @@ module Call_Stack_m
   end interface
 
   ! Display date and time during push and pop displays
+  logical, save :: Say_Date = .false.
   logical, save :: Say_When = .false.
 
   logical, save, private :: StaySilent = .false. ! E.g., in case it becomes corrupted
@@ -54,7 +55,7 @@ contains ! ====     Public Procedures     ==============================
 
 ! ---------------------------------------------------  Dump_Stack  -----
   subroutine Dump_Stack ( Top, Before, Where, Size, CPU, DoDepth, Rev, Index, &
-                        & String, StringIndex, Advance )
+                        & String, StringIndex, ShowTime, Used, Advance )
     ! Dump the call stack.  If Top is present and true, dump only the top
     ! frame.  If Before is present, print it after "depth" dots and before
     ! anything else.  If Where is present and true, and the Tree component
@@ -78,17 +79,23 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: Index ! Print this instead of from stack
     character(len=*), optional, intent(in) :: String
     integer, optional, intent(in) :: StringIndex
+    logical, intent(in), optional :: ShowTime   ! Show time when we dumped
+    character(len=*), optional :: Used
     character(len=*), intent(in), optional :: Advance ! Default 'yes'
 
     character(len=3) :: MyAdvance
     integer :: Depth, First, I, Inc, Last
     logical :: Error
-    logical :: MyCPU, MyDoDepth, MyRev, MySize, MyTop, MyWhere
+    logical :: MyCPU, MyDoDepth, MyRev, MySize, MyTop, MyWhere, myShowTime
+    character(len=10) :: Now  ! For Date_and_time
+    integer :: Values(8)      ! For Date_and_time
     ! Executable
     if ( StaySilent ) return
     myAdvance = 'yes'
     myCPU = .false.; myDoDepth = .true.; myRev = .false.; mySize = .true.
     myTop = .false.; myWhere = .false.
+    myShowTime = .false.
+    if ( present(showTime) ) myShowTime = showTime
 
     if ( present(top) ) myTop = top
     if ( present(advance) ) myAdvance = advance
@@ -126,6 +133,10 @@ contains ! ====     Public Procedures     ==============================
       if ( stack(depth)%text > 0 ) call display_string ( stack(depth)%text )
       if ( stack(depth)%string > 0 ) &
         & call display_string ( stack(depth)%string, before=' ' )
+      if ( say_when .or. myShowTime ) then
+        call show_when
+        if ( present(used) ) call output ( ' used ' // trim(adjustl(used)) //  ' cpu' )
+      endif
       if ( present(index) ) then
         call output ( index, before=' ' )
       else if ( stack(depth)%index >= 0 ) then
@@ -139,7 +150,6 @@ contains ! ====     Public Procedures     ==============================
         call output ( stack(depth)%tree, before=', tree at ' )
         call print_source ( where_at(stack(depth)%tree), before=', ' )
       end if
-      if ( say_when ) call show_when
       if ( mySize ) call dumpSize ( memory_units * stack(depth)%memory, &
         & before = ' Memory: ' )
       if ( myCPU ) call output ( stack(depth)%clock, format='(g10.3)', &
@@ -170,7 +180,7 @@ contains ! ====     Public Procedures     ==============================
 
 ! ----------------------------------------------------  Pop_Stack  -----
   subroutine Pop_Stack ( Before, Where, Frame, Index, String, StringIndex, &
-    & Silent )
+    & Silent, ShowTime )
     ! Pop the stack.  If Before or Where are present, dump the top frame first.
 
     use ALLOCATE_DEALLOCATE, only: MEMORY_UNITS, NOBYTESALLOCATED
@@ -186,6 +196,7 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), optional, intent(in) :: String
     integer, optional, intent(in) :: StringIndex
     logical, intent(in), optional :: Silent
+    logical, intent(in), optional :: ShowTime   ! Show time when we dumped
 
     double precision :: Delta
     logical :: HaveStack
@@ -209,15 +220,15 @@ contains ! ====     Public Procedures     ==============================
     if ( haveStack ) haveStack = stack_ptr >= lbound(stack,1)
 
     if ( .not. mySilent .and. (present(before) .or. present(where)) ) then
-      ! We call dump_stack even without haveStack because it prints
-      ! an error message if we don't have a stack.
-      call dump_stack ( .true., before, where, size=.false., index=index, &
-        & string=string, stringIndex=stringIndex, advance='no' )
-      if ( .not. haveStack ) return
       call time_now ( t )
       t = t - stack(stack_ptr)%clock
       write ( used, '(g10.3)' ) t
-      call output ( ' used ' // trim(adjustl(used)) //  ' cpu' )
+      ! We call dump_stack even without haveStack because it prints
+      ! an error message if we don't have a stack.
+      call dump_stack ( .true., before, where, size=.false., index=index, &
+        & string=string, stringIndex=stringIndex, showTime=showTime, &
+        & used=used, advance='no' )
+      if ( .not. haveStack ) return
       if ( stack(stack_ptr)%memory /= noBytesAllocated ) then
         delta = memory_units * (noBytesAllocated - stack(stack_ptr)%memory)
         if ( abs(delta) < huge(1) ) then
@@ -377,7 +388,9 @@ contains ! ====     Public Procedures     ==============================
     character(10) :: Time
     call date_and_time ( date=date, time=time )
     call output ( ' at ' // time(1:2) // ':' // time(3:4) // ':' // &
-      & time(5:) // ' on ' // date(1:4) // '/' // date(5:6) // '/' // date(7:8) )
+      & time(5:) )
+    if ( say_date ) call output( ' on ' // date(1:4) // '/' // date(5:6) &
+      & // '/' // date(7:8) )
   end subroutine Show_When
 
 !--------------------------- end bloc --------------------------------------
@@ -393,6 +406,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.20  2014/02/13 00:04:01  pwagner
+! Revert to older appearance on Exit WALK_TREE..
+!
 ! Revision 2.19  2014/01/28 02:59:18  vsnyder
 ! Add StringIndex argument to PopStack and DumpStack
 !
