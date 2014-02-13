@@ -182,7 +182,7 @@ contains ! ====     Public Procedures     ==============================
     if ( present(cond) ) myCond = cond
     if ( myCond ) then
       call pop_stack ( 'Exit ', .true., frame=frame, index=index, string=string, &
-        & stringIndex=stringIndex )
+        & stringIndex=stringIndex, showTime=.true. )
     else
       call pop_stack ( frame=frame, index=index, Silent = .true. )
     end if
@@ -262,6 +262,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.40  2014/02/13 00:04:29  pwagner
+! Revert to older appearance on Exit WALK_TREE..
+!
 ! Revision 2.39  2014/01/28 02:59:50  vsnyder
 ! Add StringIndex argument to Trace_End
 !
