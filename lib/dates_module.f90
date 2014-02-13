@@ -19,10 +19,11 @@ module dates_module
   ! an attitude of studied indifference to leap seconds.
 
   use MLSCOMMON,        only: NAMELEN
+  use MLSFINDS,         only: FINDFIRST
   use MLSSTRINGLISTS,   only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
-  use MLSSTRINGS,       only: CAPITALIZE, DEPUNCTUATE, INDEXES, LOWERCASE, &
-    &                         WRITEINTSTOCHARS
-  use PRINTIT_M, only: MLSMSG_WARNING, PrintItOut
+  use MLSSTRINGS,       only: CAPITALIZE, DEPUNCTUATE, INDEXES, ISALPHABET, &
+    &                         LOWERCASE, WRITEINTSTOCHARS
+  use PRINTIT_M, only: MLSMSG_INFO, MLSMSG_WARNING, PRINTITOUT
 
   implicit none
   private
@@ -304,6 +305,48 @@ module dates_module
   integer, public, parameter :: MAXUTCSTRLENGTH = 32
 
   integer, private, parameter :: SECONDSINADAY = 24*60*60
+  
+  character(len=*), dimension(39), parameter :: leapSecDates = (/ &
+    '1961 JAN 1', & 
+    '1961 AUG 1', & 
+    '1962 JAN 1', & 
+    '1963 NOV 1', & 
+    '1964 JAN 1', & 
+    '1964 APR 1', & 
+    '1964 SEP 1', & 
+    '1965 JAN 1', & 
+    '1965 MAR 1', & 
+    '1965 JUL 1', & 
+    '1965 SEP 1', & 
+    '1966 JAN 1', & 
+    '1968 FEB 1', & 
+    '1972 JAN 1', & 
+    '1972 JUL 1', & 
+    '1973 JAN 1', & 
+    '1974 JAN 1', & 
+    '1975 JAN 1', & 
+    '1976 JAN 1', & 
+    '1977 JAN 1', & 
+    '1978 JAN 1', & 
+    '1979 JAN 1', & 
+    '1980 JAN 1', & 
+    '1981 JUL 1', & 
+    '1982 JUL 1', & 
+    '1983 JUL 1', & 
+    '1985 JUL 1', & 
+    '1988 JAN 1', & 
+    '1990 JAN 1', & 
+    '1991 JAN 1', & 
+    '1992 JUL 1', & 
+    '1993 JUL 1', & 
+    '1994 JUL 1', & 
+    '1996 JAN 1', & 
+    '1997 JUL 1', & 
+    '1999 JAN 1', & 
+    '2006 JAN 1', & 
+    '2009 JAN 1', & 
+    '2012 JUL 1'  & 
+    /) 
 
   ! These somewhat similar parameters are used in the separately-coded
   ! but redundant functions and procedures moved here from their
@@ -1383,7 +1426,7 @@ contains
   end subroutine reducedatetime
 
   ! --------------------------------------------------  reFormatDate  -----
-  function reFormatDate(date, fromForm, toForm) result(reFormat)
+  function reFormatDate(date, fromForm, toForm, options) result(reFormat)
     ! Reformat yyyymmdd as yyyy-mm-dd
     ! Allows an optional string toForm defining
     ! the output format; E.g. 'dd M yyyy' for '03 September 2005'
@@ -1397,21 +1440,29 @@ contains
     character(len=len(date)+24)             :: reFormat
     character(len=*), optional, intent(in)  :: fromform ! input format
     character(len=*), optional, intent(in)  :: toform   ! output format
+    character(len=*), optional, intent(in)  :: options
     ! Internal variables
+    character(len=1), dimension(len(date))  :: dateChars
     character(len=1), parameter             :: ymSpacer = '-'
     character(len=1), parameter             :: mdSpacer = '-'
     integer                                 :: i ! format string index
     integer                                 :: j ! date string index
+    integer                                 :: k ! aux date string index
     integer                                 :: doy
     character(len=4)                        :: doyString
     character(len=4)                        :: yyyyString
     integer                                 :: month
+    character(len=8)                        :: myOptions
     character(len=16)                       :: myFromForm
     character(len=len(date)+24)             :: tempFormat
     logical                                 :: inputWasDoy
     character(len=1), parameter             :: SPACESUBSTITUTE = '?'
+    logical                                 :: verbose
     ! Executable
     ! print *, 'date: ', trim(date)
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    verbose = index( myOptions, 'v' ) > 0
     tempFormat = date
     if ( present(fromform) ) then
       ! print *, 'fromForm: ', trim(fromForm)
@@ -1431,6 +1482,7 @@ contains
           i = i + 1
           j = j + 1
           ! print *, myFromForm(i:i)
+          ! print *, 'i, j', i, j
           select case (myFromForm(i:i))
           case ('y')
             tempFormat(1:4) = date(j:j+3)
@@ -1441,12 +1493,20 @@ contains
             i = i + 1
             j = j + 1
           case ('M')
-            month = monthNameToNumber(date(j:))
+            month = monthNameToNumber( date(j:), abbrev=.true. )
             if ( month < 1 .or. month > 12 ) then
               reFormat = 'month name uncrecognized'
+              ! print *, 'month name uncrecognized'
               return
             endif
-            j = j + len_trim(MONTHNAME(month)) - 1
+            ! print *, 'date(j:) ', date(j:)
+            ! print *, 'month ', month
+            ! No, this next is wrong if we abbreviate the month's name
+            ! Instead we need to find the next non-alphabetical char number
+            dateChars = transfer( date, dateChars )
+            k = FindFirst( .not. isAlphabet( dateChars(j:) ) )
+            j = j + k - 2
+            ! print *, 'k ', k
             write(tempFormat(5:6),'(i2.2)') month
           case ('D')
             inputWasDoy = .true.
@@ -1456,6 +1516,8 @@ contains
           case ('d')
             if ( myFromForm(i:i+1) == 'dd' ) then
               tempFormat(7:8) = date(j:j+1)
+              if ( date(j+1:j+1) == ' ' ) tempFormat(7:8) = ' ' // date(j:j)
+              ! print *, 'date(j:j+1) ', date(j:j+1)
               i = i + 1
               j = j + 1
             else
@@ -1479,6 +1541,11 @@ contains
     endif
     ! print *, 'tempFormat: ', tempFormat
     reFormat = tempFormat(1:4) // ymSpacer // tempFormat(5:6) // mdSpacer // tempFormat(7:8)
+    if ( verbose ) then
+      print *,  'tempFormat: ' // trim(tempFormat)
+      print *, ymSpacer
+      print *, mdSpacer
+    endif
     if ( .not. present(toform) ) return
     if ( len_trim(toform) < 1 ) return
     reFormat = ' '
@@ -2365,18 +2432,29 @@ contains
   end function leapyear
 
   ! ------------------------------------------  monthNameToNumber  -----
-  function monthNameToNumber(name) result(number)
+  function monthNameToNumber( name, abbrev ) result(number)
     ! Convert month name to corresponding number
     ! E.g., given 'March', returns 3
     ! As a courtesy, name may be case-insensitive
     ! As a further courtesy, name may be followed by any junk you like
     ! Thus 'March 23, 2004 01:59:59.999' still returns 3
     ! If no such month is found, returns -1
+    ! Options:
+    ! If abbrev is present and TRUE, check just the first 3 characters of name
+    ! for a match
     ! Args
     character(len=*), intent(in)             :: name
     integer                                  :: number
+    logical, optional :: abbrev
+    ! Local variables
+    logical :: myAbbrev
+    ! Executable
+    myAbbrev = .false.
+    if ( present(abbrev) ) myAbbrev = abbrev
     do number=1, size(MONTHNAME)
       if ( index(lowerCase(name), lowercase(trim(MONTHNAME(number)))) > 0 ) return
+      if ( myAbbrev .and. &
+        & index(lowerCase(name), lowercase(trim(MONTHNAME(number)(1:3)))) > 0 ) return
     enddo
     number = -1
   end function monthNameToNumber
@@ -2506,6 +2584,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.30  2013/08/28 00:38:17  pwagner
+! Added a local version of MyMessage to evade possible circular dependency
+!
 ! Revision 2.29  2013/08/21 00:21:58  pwagner
 ! Added a function to tell whether one utcdate precedes another
 !
