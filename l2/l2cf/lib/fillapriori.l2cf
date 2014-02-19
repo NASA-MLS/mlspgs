@@ -213,7 +213,7 @@ Fill, quantity=apriori.refGPH,$
   Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 3 ppbv
 ;; CH3CL
   Fill, quantity=aprioriPrecision.ch3cl,method=explicit, /spread, explicitValues= 500 pptv
-  Fill, quantity=aprioriPrecision.ch3oh,method=explicit, /spread, explicitValues= 1 ppbv
+  Fill, quantity=aprioriPrecision.ch3oh,method=explicit, /spread, explicitValues= 5 ppbv
   Fill, quantity=aprioriPrecision.ch3ch2oh,method=explicit, /spread, explicitValues= 1 ppbv
   Fill, quantity=aprioriPrecision.ch3coch3,method=explicit, /spread, explicitValues= 500 pptv
 
@@ -770,6 +770,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.157  2013/11/20 00:54:40  pwagner
+;Comment-out a lot of debugging dumps
+;
 ;Revision 1.156  2013/10/29 18:18:27  pwagner
 ;Now scale aprioriPrecision.oh automatically
 ;
