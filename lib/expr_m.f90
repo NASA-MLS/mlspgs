@@ -36,13 +36,15 @@ contains ! ====     Public Procedures     ==============================
   ! Analyze an expression, return its type, units and value.
   ! If its result is an array, return the values in VALUES.
 
+    use Call_Stack_m, only: Stack_Depth
     use DECLARATION_TABLE, only: Allocate_Test, Deallocate_Test, DECLARED, &
       DECLS, Dump_Values, EMPTY, ENUM_VALUE, FUNCTION, LABEL, LOG_VALUE, &
       NAMED_VALUE, NUM_VALUE, GET_DECL, RANGE, STR_RANGE, STR_VALUE, &
       Type_Names, Type_Name_Indices, UNDECLARED, UNITS_NAME, Variable
     use Functions, only: F_Difference, F_Exp, F_Ln, F_Log, F_Log10, &
       F_Intersection, F_Sqrt, F_Union, F_Without
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_Indices, PHYQ_INVALID
+    use INTRINSIC, only: DATA_TYPE_INDICES, Lit_Indices, PHYQ_DIMENSIONLESS, &
+      & PHYQ_Indices, PHYQ_INVALID, L_False, L_True, T_Boolean
     use Output_m, only: NewLine, Output
     use StartErrorMessage_m, only: StartErrorMessage
     use STRING_TABLE, only: Display_String, FLOAT_VALUE
@@ -52,18 +54,25 @@ contains ! ====     Public Procedures     ==============================
     use TREE_TYPES ! Everything, especially everything beginning with N_
 
     integer, intent(in) :: ROOT         ! Root of expression subtree
-    integer, intent(out) :: UNITS(2)    ! Units of expression value -- UNITS(2)
-                                        ! is PHYQ_INVALID if ROOT is not a
-                                        ! range (:) operator.
+    integer, intent(out) :: UNITS(2)    ! Units of expression value if type ==
+                                        ! num_value -- UNITS(2) is
+                                        ! PHYQ_INVALID if ROOT is not a range
+                                        ! (:) operator.  Type of expression
+                                        ! value if type == enum_value
     double precision, intent(out) :: VALUE(2) ! Expression value, if any.  If
                                         ! TYPE == Log_Value, zero means false.
+                                        ! Lit index if type is enum_value.
     integer, intent(out), optional :: TYPE    ! Expression type
     double precision, optional, intent(out) :: SCALE(2) ! Scale for units
     type(value_t), allocatable, intent(out), optional :: Values(:)
 
     type(decls) :: DECL            ! Declaration record for "root"
+    integer :: EnumType            ! Enum data type index if MyType == enum_type
+                                   ! or MyType == variable and VarType ==
+                                   ! enum_type
     integer :: I, J
     integer :: ME                  ! node_id(root)
+    integer :: MyType              ! Expression type as in Declaration_Table
     integer :: N                   ! Size for allocating
     logical :: OK                  ! No errors reported
     integer :: Son1                ! First son of "root"
@@ -72,6 +81,7 @@ contains ! ====     Public Procedures     ==============================
     integer :: TYPE1, TYPE2        ! Type of son of "root"
     integer :: UNITS2(2)           ! Units of an expression
     double precision :: VALUE2(2)  ! Value of an expression
+    integer :: VarType             ! Variable type if MyType == variable
     double precision :: SCALE2(2)  ! Units scale
     type(value_t), allocatable :: Values1(:), Values2(:), Values3(:)
 
@@ -107,33 +117,41 @@ contains ! ====     Public Procedures     ==============================
       else
         decl = decls(0.0d0, undeclared, phyq_invalid, 0, 0, null() )
       end if
-      if ( present(type) ) type = decl%type
-      units = decl%units
-      value = decl%value
+      myType = decl%type
+      if ( myType /= variable ) &
+        & call allocate_test ( values1, 1, 'Values1', moduleName )
+      select case ( myType )
+      case ( enum_value )
+        enumType = decoration(subtree(1,decl%tree)) ! data type index
+        units = enumType
+        value = decl%units                          ! lit index
+                         ! What      Type     Value Units Decor
+        values1 = value_t(enum_value,enumType,value,0,    0)
+      case ( variable )
+        call allocate_test ( values1, size(decl%values), 'Values1', moduleName )
+        values1 = decl%values
+        if ( decl%units == enum_value ) then
+          varType = enum_value
+          myType = varType
+          enumType = decl%values(1)%type
+          units = enumType
+          value = decl%values(1)%value ! It's in values1
+        else
+          myType = decl%values(1)%type
+          varType = decl%values(1)%units(1)
+          units = varType
+          value = decl%values(1)%value ! It's in values1
+        end if
+      case default
+        units = decl%units
+        value = decl%value
+                         ! What  Type   value units decor
+        values1 = value_t(myType,myType,value,units,0)
+      end select
       if ( present(values) ) then
         ! Make sure values is allocated so we don't need to test for it
         ! after calling EXPR recursively.
-        if ( decl%type == variable .and. allocated(decl%values) ) then
-          n = size(decl%values)
-          call allocate_test ( values, size(decl%values), 'Values', moduleName )
-          values = decl%values
-        else
-          call allocate_test ( values, 1, 'Values', moduleName )
-          type1 = decl%type
-          values = value_t(decl%type,decl%type,value,units,decoration(root))
-          select case ( decl%type )
-          case ( enum_value, label )
-            type1 = decl%tree ! dt_def node if enum_value, first son is type name
-                              ! spec_args node if label, first son is spec name,
-                              ! decoration of first son is spec_def node
-            if ( decl%type == label ) then
-              type1 = decoration(subtree(1,type1))
-            else
-              values(1)%type = type1
-            end if
-          end select
-          values(1)%decor = decoration(root)
-        end if
+        call allocate_test ( values, size(values1), 'Values', moduleName )
       else if ( decl%type == variable ) then
         if ( size(decl%values) > 1 ) call announceError ( root, noArray )
       end if
@@ -141,11 +159,11 @@ contains ! ====     Public Procedures     ==============================
       string = sub_rosa(root)
       units = phyq_dimensionless
       value = float_value(string)
-      if ( present(type) ) type = num_value
+      myType = num_value
     case ( n_string ) ! ----------------------------------------------------
-      if ( present(type) ) type = str_value
       units = phyq_dimensionless
       value = sub_rosa(root)
+      myType = str_value
     case ( n_func_ref ) ! --------------------------------------------------
       son1 = subtree(1,root)
       ! Look up the function name
@@ -155,7 +173,8 @@ contains ! ====     Public Procedures     ==============================
       if ( nsons(root) < 2 ) call announceError ( root, wrongNumArgs )
       if ( OK ) then
         call expr ( subtree(2,root), units, value, type1, values=values1 )
-        if ( present(type) ) type = type1
+        myType = type1
+        if ( myType == enum_value ) enumType = units(1)
         select case ( decl%units ) ! the function index in this case
         case ( f_exp, f_ln, f_log, f_log10, f_sqrt ) ! One-argument numeric
           if ( nsons(root) /= 2 ) call announceError ( root, wrongNumArgs )
@@ -196,7 +215,6 @@ contains ! ====     Public Procedures     ==============================
                 end if
               end select
               call set_values ( num_value )
-              if ( present(type) ) type = type1
             end if
           end if
         case ( f_difference )
@@ -205,6 +223,7 @@ contains ! ====     Public Procedures     ==============================
           else
             call allocate_test ( values3, 0, 'Values3', moduleName )
             call expr ( subtree(3,root), units2, value2, type2, values=values2 )
+            myType = type2
             call difference ( values1, values2 )
             call move_value ( values3 )
           end if
@@ -214,6 +233,7 @@ contains ! ====     Public Procedures     ==============================
           else
             call allocate_test ( values3, 0, 'Values3', moduleName )
             call expr ( subtree(3,root), units2, value2, type2, values=values2 )
+            myType = type2
             call intersection ( values1, values2 )
             call move_value ( values3 )
           end if
@@ -228,6 +248,7 @@ contains ! ====     Public Procedures     ==============================
               call add_to_set ( values2(j) )
             end do
           end do
+          myType = type2
           call move_value ( values3 )
         case ( f_without )
           if ( nsons(root) /= 3 ) then
@@ -235,6 +256,7 @@ contains ! ====     Public Procedures     ==============================
           else
             call allocate_test ( values3, 0, 'Values3', moduleName )
             call expr ( subtree(3,root), units2, value2, type2, values=values2 )
+            myType = type2
             call without ( values1, values2 )
             call move_value ( values3 )
           end if
@@ -244,6 +266,7 @@ contains ! ====     Public Procedures     ==============================
       end if
     case ( n_pow ) ! -------------------------------------------------------
       call expr ( subtree(1,root), units, value, type1, scale, values1 )
+      myType = num_value
       do i = nsons(root)-1, 1, -1 ! Power operator is right associative
         call expr ( subtree(i,root), units, value2, type2, scale, values2 )
         if ( size(values1) /= size(values2) ) then
@@ -270,19 +293,23 @@ contains ! ====     Public Procedures     ==============================
       if ( size(values1) /= 1 ) &
         & call announceError ( subtree(1,root), notScalar )
       if ( value(1) /= 0 ) then ! subtree 1 is true
-        call expr ( subtree(2,root), units, value, type, scale, values1 )
+        call expr ( subtree(2,root), units, value, myType, scale, values1 )
       else
-        call expr ( subtree(3,root), units, value, type, scale, values1 )
+        call expr ( subtree(3,root), units, value, myType, scale, values1 )
       end if
+      if ( myType == enum_value ) enumType = units(1)
     case ( n_array ) ! -------------------------------------------------
       if ( .not. present(values) ) then
         if ( nsons(root) > 1 ) then
           call announceError ( root, noArray )
         else
-          call expr ( subtree(i,root), units, value, type, scale )
+          call expr ( subtree(i,root), units, value, myType, scale )
+          if ( myType == enum_value ) enumType = units(1)
         end if
       else
         call expr ( subtree(1,root), units, value2, type1, scale, values1 )
+        myType = type1
+        if ( myType == enum_value ) enumType = units(1)
         do i = 2, nsons(root)
           call expr ( subtree(i,root), units, value2, type2, scale, values2 )
           call allocate_test ( values3, size(values1) + size(values2), &
@@ -296,10 +323,13 @@ contains ! ====     Public Procedures     ==============================
       end if
     case default
       call expr ( subtree(1,root), units, value, type1, scale, values1 )
-      if ( present(type) ) type = type1
+      myType = type1
+      if ( myType == enum_value ) enumType = units(1)
       if ( me == n_unit ) then
         decl = get_decl(sub_rosa(subtree(2,root)), units_name)
         units = decl%units
+        values1%units(1) = units
+        values1%units(2) = units
         if ( decl%value > 0.0 ) then
           value(1) = value(1) * decl%value
         else
@@ -314,11 +344,10 @@ contains ! ====     Public Procedures     ==============================
           if ( size(values1) /= size(values2) ) &
             & call announceError ( root, differentShapes )
           units(2) = units2(1); value(2) = value2(1)
+          values1%units(2) = units(2)
           if ( present(scale) ) scale(2) = scale2(1)
-          if ( present(type) ) then
-            if ( type == num_value ) type = range
-            if ( type == str_value ) type = str_range
-          end if
+          if ( myType == num_value ) myType = range
+          if ( myType == str_value ) myType = str_range
         case ( n_plus, n_minus ) ! -----------------------------------------
           if ( nsons(root) > 1 ) then
             if ( .not. check_units ( values1, values2 ) ) &
@@ -356,7 +385,7 @@ contains ! ====     Public Procedures     ==============================
             values1%units(j) = values2%units(j)
           end do
         case ( n_equal_equal, n_not_equal )
-          if ( present(type) ) type = log_value
+          myType = log_value
           if ( type1 /= type2 ) &
             & call announceError ( root, differentTypes )
           if ( type1 == num_value ) then
@@ -367,17 +396,14 @@ contains ! ====     Public Procedures     ==============================
             do j = 1, 2
               select case ( me )
               case ( n_equal_equal ) ! -------------------------------------
-                values1%value(j) = merge(1.0,0.0,values1%value(j) == values2%value(j))
+                values1%value(j) = merge(l_true,l_false,values1%value(j) == values2%value(j))
               case ( n_not_equal ) ! ---------------------------------------
-                values1%value(j) = merge(1.0,0.0,values1%value(j) /= values2%value(j))
+                values1%value(j) = merge(l_true,l_false,values1%value(j) /= values2%value(j))
               end select
             end do
-            values1%type = log_value
-            values1%what = log_value
-            call set_values ( log_value )
           end if
         case ( n_less, n_less_eq, n_greater, n_greater_eq )
-          if ( present(type) ) type = log_value
+          myType = log_value
           if ( type1 /= num_value ) &
              & call announceError ( subtree(1,root), nonNumeric )
           if ( type2 /= num_value ) &
@@ -388,40 +414,41 @@ contains ! ====     Public Procedures     ==============================
             do j = 1, 2
               select case ( me )
               case ( n_less ) ! --------------------------------------------
-                values1%value(j) = merge(1.0,0.0,values1%value(j) < values2%value(j))
+                values1%value(j) = merge(l_true,l_false, &
+                  & values1%value(j) < values2%value(j))
               case ( n_less_eq ) ! -----------------------------------------
-                values1%value(j) = merge(1.0,0.0,values1%value(j) <= values2%value(j))
+                values1%value(j) = merge(l_true,l_false, &
+                  & values1%value(j) <= values2%value(j))
               case ( n_greater ) ! -----------------------------------------
-                values1%value(j) = merge(1.0,0.0,values1%value(j) > values2%value(j))
+                values1%value(j) = merge(l_true,l_false, &
+                  & values1%value(j) > values2%value(j))
               case ( n_greater_eq ) ! --------------------------------------
-                values1%value(j) = merge(1.0,0.0,values1%value(j) >= values2%value(j))
+                values1%value(j) = merge(l_true,l_false, &
+                  & values1%value(j) >= values2%value(j))
               end select
             end do
-            values1%type = log_value
-            values1%what = log_value
-            call set_values ( log_value )
           end if
         case ( n_and, n_or ) ! ---------------------------------------------
-          if ( present(type) ) type = log_value
-          if ( type1 /= log_value ) &
+          myType = log_value
+          if ( .not. is_boolean(values1(1)) ) &
              & call announceError ( subtree(1,root), notLogical )
-          if ( type2 /= log_value ) &
+          if ( .not. is_boolean(values2(1)) ) &
              &  call announceError ( subtree(2,root), notLogical )
           if ( OK ) then
             if ( me == n_and ) then
-              values1%value(1) = values1%value(1) * values2%value(1)
+              values1%value(1) = merge(l_true,l_false, &
+                & values1%value(1)==l_true .and. values2%value(1)==l_true)
             else if ( me == n_or ) then
-              values1%value(1) = max(values1%value(1), values2%value(1))
+              values1%value(1) = merge(l_true,l_false, &
+                & values1%value(1)==l_true .or. values2%value(1)==l_true)
             end if
-            call set_values ( log_value )
           end if
         case ( n_not ) ! ---------------------------------------------------
-          if ( present(type) ) type = log_value
-          if ( type1 /= log_value ) then
+          myType = log_value
+          if ( .not. is_boolean(values1(1)) ) then
             call announceError ( subtree(1,root), notLogical )
           else
-            values1%value(1) = 1 - nint(values1%value(1))
-            call set_values ( log_value )
+            values1%value(1) = merge(l_true,l_false,values1%value(1)==l_false)
           end if
         case default
           call announceError ( root, badNode )
@@ -429,24 +456,62 @@ contains ! ====     Public Procedures     ==============================
       end if
     end select
 
+    if ( myType == log_value ) then
+      myType = enum_value
+      enumType = t_boolean
+      values1%what = enum_value
+      values1%type = t_boolean
+      value = values1%value(1)
+    end if
+
+! This doesn't work.  It demonstrates that I ought to write an expr that
+! always puts its results in values, and a wrapper that takes the old
+! [value,type,units] from that.
+!    if ( allocated(values1) ) value = values1(1)%value
+
     n = 1
     if ( present(values) ) then
       if ( allocated(values) ) then
         n = size(values)
-        if ( n == 0 ) &
+        if ( n == 0 ) then
           call deallocate_test ( values, 'Values', moduleName )
+        else if ( allocated(values1) ) then
+          if ( n /= size(values1) ) &
+            & call deallocate_test ( values, 'Values', moduleName )
+        end if
       end if
       if ( .not. allocated(values) ) then
         ! Make sure values is allocated so we don't need to test for it
         ! after calling EXPR recursively.
-        call allocate_test ( values, 1, 'Values', moduleName )
-        values = value_t(empty,type,value,units,0)
+        if ( allocated(values1) ) then
+          call allocate_test ( values, size(values1), 'Values', moduleName )
+          values = values1
+        else
+          call allocate_test ( values, 1, 'Values', moduleName )
+          select case ( myType )
+          case ( variable )
+                            ! What    Type    Value Units Decor
+            values = value_t(variable,varType,units,0,    0)
+          case ( enum_value )
+                            ! What      Type     Value Units Decor
+            values = value_t(enum_value,enumType,value,0,    0)
+          case default
+                            ! What  Type   Value Units Decor
+            values = value_t(myType,myType,value,units,0)
+          end select
+        end if
       end if
       if ( present(type) ) then
         type = values(1)%type
-        if ( values(1)%what == enum_value ) type = values(1)%what
+        if ( type == empty ) type = myType
+        if ( values(1)%what == enum_value ) then
+          type = enum_value
+          units = values(1)%type
+        end if
       end if
-      if ( me /= n_identifier .and. me /= n_array ) then
+      if ( allocated(values1) ) then
+        values = values1
+      else if ( me /= n_identifier .and. me /= n_array ) then
         select case ( values(1)%what )
         case ( enum_value, label )
           values%type = type1
@@ -456,41 +521,53 @@ contains ! ====     Public Procedures     ==============================
       end if
       value = values(1)%value
       units = values(1)%units
+    else if ( present(type) ) then
+      type = myType
     end if
+    if ( myType == enum_value ) units = enumType
 
     if ( toggle(con) .and. levels(con) > 1 ) then
-      if ( node_id(root) == n_identifier ) then
-        call display_string ( string, before='Value = ' )
-      else
-        call output ( value(1), before='Value = ' )
-        if ( units(1) /= 0 ) then
-          call display_string ( phyq_indices(units(1)), before=' ' )
-        else
-          call output ( units(1), before=' unit ' )
-        end if
-        call output ( value(2), before=' ' )
-        if ( units(2) /= 0 ) then
-          call display_string ( phyq_indices(units(2)), before=' ' )
-        else
-          call output ( units(2), before=' unit ' )
-        end if
+      do i = 0, stack_depth()
+        call output ( '_' )
+      end do
+      if ( me == n_identifier ) then
+        call display_string ( string, before='Identifier ' )
+        call output ( ' ' )
       end if
-      if ( present(type) ) &
-        & call display_string ( type_name_indices(type), before=' Type = ' )
-      if ( present(scale) ) then
-        call output ( scale(1), before=' Scale = ' )
-        call output ( scale(2), before=' ' )
-      end if
+      select case ( myType )
+      case ( enum_value )
+        call display_string ( data_type_indices(enumType), before=' enum Type = ' )
+        if ( me /= n_array ) &
+          & call display_string ( lit_indices(nint(value(1))), before=' Value = ' )
+      case ( variable )
+        if ( varType == enum_value ) then
+          call display_string ( data_type_indices(enumType), &
+            & before=' variable enum Type = ' )
+          if ( size(decl%values) == 1 ) then
+            call display_string ( lit_indices(nint(decl%values(1)%value(1))), &
+              & before=' Value = ' )
+          end if
+        else
+          call display_string ( type_name_indices(varType), &
+            & before=' variable Type = ' ) 
+          if ( size(decl%values) == 1 ) &
+            & call display_value ( decl%values(1)%value )
+        end if
+      case default
+        call display_string ( type_name_indices(myType), before=' Type = ' )
+        call display_value ( value )
+      end select
       call newLine
       if ( present(values) ) then
         if ( size(values) > 1 ) call dump_values ( values )
       end if
     end if
-    if ( present(type) ) then
-      call trace_end ( 'EXPR', index=n, string='Type=' //trim(type_names(type)), &
+    if ( myType /= enum_value ) then
+      call trace_end ( 'EXPR', index=n, string='Type=' //trim(type_names(myType)), &
         & cond=toggle(con) )
     else
-      call trace_end ( 'EXPR', index=n, cond=toggle(con) )
+      call trace_end ( 'EXPR', index=n, string='Type=', &
+        & stringIndex=data_type_indices(enumType), cond=toggle(con) )
     end if
 
   contains
@@ -544,7 +621,7 @@ contains ! ====     Public Procedures     ==============================
         call display_string ( string )
         call output ( ' is not a valid function.', advance='yes' )
       case ( notLogical )
-        call display_string ( string, before='Argument of ' )
+        call dump_tree_node_name ( where, before='Argument of ' )
         call output ( ' is not logical.', advance='yes' )
       case ( notScalar )
         call dump_tree_node ( where, 0 )
@@ -619,6 +696,39 @@ contains ! ====     Public Procedures     ==============================
       end do
     end subroutine Difference
 
+    subroutine Display_Units ( Index )
+      ! Display the units and scale of a numeric value
+      integer, intent(in) :: Index
+      if ( units(index) /= 0 ) then
+        call display_string ( phyq_indices(units(index)), before=' ' )
+      else
+        call output ( units(index), before=' unit ' )
+      end if
+      if ( present(scale) ) call output ( scale(index), before=' Scale = ' )
+    end subroutine Display_Units
+
+    subroutine Display_Value ( Value )
+      ! Display the value as a number, a number range, a string, or a
+      ! string range
+      double precision, intent(in) :: Value(2)
+      call output ( ' Value = ' )
+      select case ( myType )
+      case ( num_value )
+        call output ( value(1) )
+        call display_units ( 1 )
+      case ( range )
+        call output ( value(1) )
+        call display_units ( 1 )
+        call output ( value(2), before=' : ' )
+        call display_units ( 2 )
+      case ( str_range )
+        call display_string ( nint(value(1)), strip=.false. )
+      case ( str_value )
+        call display_string ( nint(value(1)), strip=.false. )
+        call display_string ( nint(value(2)), strip=.false., before=' : ' )
+      end select
+    end subroutine Display_Value
+
     subroutine Intersection ( V1, V2 )
       ! Add elements that are both V1 and V2 to Values3
       ! Add elements of V2 that are not in V1 to Values3
@@ -628,6 +738,11 @@ contains ! ====     Public Procedures     ==============================
         if ( any(v1(i) == v2) ) call add_to_set ( v1(i) )
       end do
     end subroutine Intersection
+
+    logical function Is_Boolean ( Value )
+      type(value_t), intent(in) :: Value
+      is_boolean = value%what == enum_value .and. value%type == t_boolean
+    end function Is_Boolean
 
     subroutine Move_Value ( Value )
       ! Move Value to Values
@@ -792,6 +907,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.32  2014/02/21 19:26:03  vsnyder
+! Extensive work for variables and enumeration-type results
+!
 ! Revision 2.31  2014/01/11 01:41:02  vsnyder
 ! Decruftification
 !
