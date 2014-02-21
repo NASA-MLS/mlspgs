@@ -17,8 +17,9 @@ module DECLARATION_TABLE
 ! for initializing the representation of intrinsic types accessed from
 ! the INTRINSIC module.
 
-  use INTRINSIC, only: LIT_INDICES, PARM_INDICES, PHYQ_INDICES, PHYQ_INVALID, &
-    &                  T_A_DOT_B, T_BOOLEAN, T_NUMERIC, T_NUMERIC_RANGE, T_STRING
+  use INTRINSIC, only: DATA_TYPE_INDICES, LIT_INDICES, PARM_INDICES, &
+    &                  PHYQ_INDICES, PHYQ_INVALID, SPEC_INDICES, T_A_DOT_B, &
+    &                  T_BOOLEAN, T_NUMERIC, T_NUMERIC_RANGE, T_STRING
   use MACHINE, only: IO_ERROR
   use OUTPUT_M, only: NewLine, OUTPUT
   use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS, &
@@ -31,10 +32,10 @@ module DECLARATION_TABLE
 
   public :: ALLOCATE_DECL, Allocate_Test, Value_Allocate, DEALLOCATE_DECL
   public :: Deallocate_Test, DECLARATION, DECLARE, DECLARED, DECLS, DOT
-  public :: DUMP_DECL, DUMP_A_DECL, DUMP_1_DECL, DUMP_VALUES, EMPTY, ENUM_VALUE
-  public :: EXPRN, EXPRN_M, EXPRN_V, FIELD, FUNCTION, GET_DECL, GET_TYPE
-  public :: INIT_DECL, LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, NUM_VALUE
-  public :: PHYS_UNIT_NAME, PRIOR_DECL, RANGE, REDECLARE, SECTION
+  public :: DO_LABEL, DUMP_DECL, DUMP_A_DECL, DUMP_1_DECL, DUMP_VALUES, EMPTY
+  public :: ENUM_VALUE, EXPRN, EXPRN_M, EXPRN_V, FIELD, FUNCTION, GET_DECL
+  public :: GET_TYPE, INIT_DECL, LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL
+  public :: NUM_VALUE, PHYS_UNIT_NAME, PRIOR_DECL, RANGE, REDECLARE, SECTION
   public :: SECTION_NODE, STR_RANGE, STR_VALUE, SPEC, TREE_NODE, TYPE_MAP
   public :: TYPE_NAME, TYPE_NAMES, TYPE_NAME_INDICES, UNDECLARED, UNITS_NAME
   public :: Value_Add, Value_Deallocate, Value_Diff, Value_Div, Value_Equal
@@ -57,82 +58,90 @@ module DECLARATION_TABLE
     module procedure Get_Decl_Array, Get_Decl_Scalar
   end interface
 
+  interface Prior_Decl
+    module procedure Prior_Decl_Array, Prior_Decl_Scalar
+  end interface
+
   integer, parameter :: NULL_DECL = 0   ! Index and type of the null
                                         ! declaration
 
 ! Values of the "type" field of "decls":
   integer, parameter :: EMPTY = 0       ! The "type" field of the sentinel
   integer, parameter :: DOT = 1         ! A.B -- not used in decl table
-  integer, parameter :: ENUM_VALUE = 2  ! An enumerator
-  integer, parameter :: EXPRN = 3       ! The "tree" field points to a
+  integer, parameter :: DO_LABEL = 2    ! Label of a DO construct
+  integer, parameter :: ENUM_VALUE = 3  ! An enumerator
+  integer, parameter :: EXPRN = 4       ! The "tree" field points to a
                                         ! scalar expression
-  integer, parameter :: EXPRN_M = 4     ! The "tree" field points to a
+  integer, parameter :: EXPRN_M = 5     ! The "tree" field points to a
                                         ! matrix expression
-  integer, parameter :: EXPRN_V = 5     ! The "tree" field points to a
+  integer, parameter :: EXPRN_V = 6     ! The "tree" field points to a
                                         ! vector expression
-  integer, parameter :: FIELD = 6       ! Field of a structure definition
-  integer, parameter :: FUNCTION = 7    ! Name is a built-in function
-  integer, parameter :: LABEL = 8       ! A "name:" label for a stru
-  integer, parameter :: LOG_VALUE = 9   ! Entity is a logical value, value is
+  integer, parameter :: FIELD = 7       ! Field of a structure definition
+  integer, parameter :: FUNCTION = 8    ! Name is a built-in function
+  integer, parameter :: LABEL = 9       ! A "name:" label for a stru
+  integer, parameter :: LOG_VALUE = 10  ! Entity is a logical value, value is
                                         ! .false. if the "value" field is zero.
-  integer, parameter :: NAMED_VALUE = 10! X = expr
-  integer, parameter :: NUM_VALUE = 11  ! Entity is a numeric value, value is
+  integer, parameter :: NAMED_VALUE = 11! X = expr
+  integer, parameter :: NUM_VALUE = 12  ! Entity is a numeric value, value is
                                         ! in the "value" field"
-  integer, parameter :: PHYS_UNIT_NAME = 12 ! PHYQ_....
-  integer, parameter :: RANGE = 13      ! A range -- not used in decl table
-  integer, parameter :: SECTION = 14    ! Name of a section
-  integer, parameter :: SECTION_NODE = 15 ! Tree node of a section
-  integer, parameter :: STR_RANGE = 16  ! String range -- for dates
-  integer, parameter :: STR_VALUE = 17  ! The string is the value
-  integer, parameter :: SPEC = 18       ! Name of a specification, e.g. vGrid
-  integer, parameter :: TREE_NODE = 19  ! Name of a tree node, e.g. n_plus
-  integer, parameter :: TYPE_NAME = 20  ! Name of a data type
-  integer, parameter :: UNDECLARED = 21 ! Entity is undeclared
-  integer, parameter :: UNITS_NAME = 22 ! Name is a units name, e.g. km, hPa
+  integer, parameter :: PHYS_UNIT_NAME = 13 ! PHYQ_....
+  integer, parameter :: RANGE = 14      ! A range -- not used in decl table
+  integer, parameter :: SECTION = 15    ! Name of a section
+  integer, parameter :: SECTION_NODE = 16 ! Tree node of a section
+  integer, parameter :: STR_RANGE = 17  ! String range -- for dates
+  integer, parameter :: STR_VALUE = 18  ! The string is the value
+  integer, parameter :: SPEC = 19       ! Name of a specification, e.g. vGrid
+  integer, parameter :: TREE_NODE = 20  ! Name of a tree node, e.g. n_plus
+  integer, parameter :: TYPE_NAME = 21  ! Name of a data type
+  integer, parameter :: UNDECLARED = 22 ! Entity is undeclared
+  integer, parameter :: UNITS_NAME = 23 ! Name is a units name, e.g. km, hPa
                                         ! Scale to "canonical" units of the
                                         ! name is in "value", e.g. km = 1000.0
-  integer, parameter :: VARIABLE = 23   ! Name is a variable, e.g. A := <expr>
+  integer, parameter :: VARIABLE = 24   ! Name is a variable, e.g. A := <expr>
 
   integer, parameter :: LAST_TYPE = VARIABLE
 
   type :: Value_t             ! Used if decls%type == variable or named_value,
                               ! or as the value of an array-valued expression
-    integer :: What = empty   ! Variable or Named_Value, or Empty if it's
-                              ! an expression result value
-    integer :: Type           ! type index
+    integer :: What = empty   ! Type index (above)
+    integer :: Type           ! Type index (again), or data type index (t_...)
+                              ! if WHAT ==  Enum_Value, or variable value
+                              ! type if WHAT == Variable.
     double precision :: Value(2) = 0.0d0 ! Numeric value if type is numeric
                                          ! String index if type is string
+                                         ! or label
                                          ! Lit index otherwise
     integer :: Units(2) = 0   ! PHYQ_...
     integer :: Decor = 0      ! Decoration if expr was identifier
   end type Value_t
 
-  ! Type            Units                Value           Tree
-  ! EMPTY           0                    0.0d0           null_tree
+  ! Type            Units                  Value           Tree
+  ! EMPTY           0                      0.0d0           null_tree
   ! DOT
-  ! ENUM_VALUE      lit index            string index    DT_Def
+  ! DO_LABEL        PHYQ_Invalid           string index    DO Construct root
+  ! ENUM_VALUE      lit index              string index    DT_Def
   ! EXPRN
   ! EXPRN_M
   ! EXPRN_V
-  ! FIELD           field index          0.0d0           Field_type
-  !                                      0.0d0           Field_Spec
-  ! FUNCTION        function index       string index    Func_def
-  ! LABEL           PHYQ_Invalid         string index    Spec_Args
+  ! FIELD           field index            0.0d0           Field_type
+  !                                        0.0d0           Field_Spec
+  ! FUNCTION        function index         string index    Func_def
+  ! LABEL           Spec_Index             string index    Spec_Args
   ! LOG_VALUE
-  ! NAMED_VALUE     param index          string index    Name_Def
-  ! NUM_VALUE       PHYQ_Dimensionless   its value       Number
-  ! PHYS_UNIT_NAME  its lit index        value           string index
+  ! NAMED_VALUE     param index            string index    Name_Def
+  ! NUM_VALUE       PHYQ_Dimensionless     its value       Number
+  ! PHYS_UNIT_NAME  its lit index          value           string index
   ! RANGE
-  ! SECTION         section index        string index    Section
+  ! SECTION         section index          string index    Section
   ! SECTION_NODE
   ! STR_RANGE
-  ! STR_VALUE       PHYQ_Invalid         string index    String
-  ! SPEC            spec index           string index    Spec_def
+  ! STR_VALUE       PHYQ_Invalid           string index    String
+  ! SPEC            spec index             string index    Spec_def
   ! TREE_NODE
-  ! TYPE_NAME       type index           string index    DT_Def
-  ! UNDECLARED      PHYQ_Invalid         0.0d0           Identifier
-  ! UNITS_NAME      PHYQ_...             Value           string index
-  ! VARIABLE        Type of first        string index    Identifier
+  ! TYPE_NAME       type index             string index    DT_Def
+  ! UNDECLARED      PHYQ_Invalid           0.0d0           Identifier
+  ! UNITS_NAME      PHYQ_...               Value           string index
+  ! VARIABLE        Type of first          string index    Identifier
   !                 element of value
 
   type :: DECLS
@@ -158,24 +167,25 @@ module DECLARATION_TABLE
   end type DECLS
 
   character(len=*), parameter :: TYPE_NAMES(empty:variable) = &
-  (/ 'empty         ', 'dot           ', 'enum_value    ', 'exprn         ', &
-     'exprn_m       ', 'exprn_v       ', 'field         ', 'function      ', &
-     'label         ', 'log_value     ', 'nam_value     ', 'num_value     ', &
-     'phys_unit_name', 'range         ', 'section       ', 'section_n     ', &
-     'str_range     ', 'str_value     ', 'spec          ', 'tree          ', &
-     'type_name     ', 'undeclared    ', 'units         ', 'variable      ' /)
+  (/ 'empty         ', 'dot           ', 'do_label      ', 'enum_value    ', &
+     'exprn         ', 'exprn_m       ', 'exprn_v       ', 'field         ', &
+     'function      ', 'label         ', 'log_value     ', 'nam_value     ', &
+     'num_value     ', 'phys_unit_name', 'range         ', 'section       ', &
+     'section_n     ', 'str_range     ', 'str_value     ', 'spec          ', &
+     'tree          ', 'type_name     ', 'undeclared    ', 'units         ', &
+     'variable      ' /)
 
   ! String indices of type names, filled on first call to Get_Type or
   ! Init_Decl
   integer :: TYPE_NAME_INDICES(empty:variable) = -1
 
 ! Mapping from declaration table types to data types:
-  integer, parameter :: TYPE_MAP(empty:variable) =        &
-  (/ 0, t_a_dot_b, 0,         0,               0,         &
-     0, 0,         0,         0,               t_boolean, &
-     0, t_numeric, 0,         t_numeric_range, 0,         &
-     0, 0,         t_string,  0,               0,         &
-     0, 0,         0,         0 /)
+  integer, parameter :: TYPE_MAP(empty:variable) =                   &
+  (/ 0,         t_a_dot_b,    0,         0,         0,               &
+     0,         0,            0,         0,         0,               &
+     t_boolean, 0,            t_numeric, 0,         t_numeric_range, &
+     0,         0,            0,         t_string,  0,               &
+     0,         0,            0,         0,         0 /)
 
 ! -----     Private declarations     -----------------------------------
   type(decls), save, allocatable :: DECL_TABLE(:)
@@ -319,19 +329,28 @@ contains ! =====     Public Procedures     =============================
     if ( myDetails > 0 ) then
       call output ( ' type=' )
       call output ( trim(type_names(decl%type)) )
+      if ( myDetails > 1 ) then
+        call output ( decl%type, before='=' )
+        call output ( decl%units, before=' units=' )
+      end if
     end if
     if ( .not. allocated(decl%values) ) &
       & call output ( decl%value, before=' value=' )
     select case ( decl%type )
+    case ( do_label )
+      call output ( ' DO label' )
     case ( enum_value )
       call display_string ( sub_rosa(subtree(1,decl%tree)), before=' of type ' )
       call display_string ( lit_indices(decl%units), before=' lit ' )
       call output ( decl%units, before=' ' )
+    case ( label )
+      call display_string ( sub_rosa(subtree(1,decl%tree)), before=' of ' )
+      call output ( ' spec ' )
     case ( phys_unit_name )
       call display_string ( lit_indices(decl%units), before=' units=' )
     case ( variable )
       if ( decl%units >= empty .and. decl%units <= last_type ) then
-        call output ( ' ' // trim(type_names(decl%units)) )
+        call output ( ' type ' // trim(type_names(decl%units)) )
       else
         call output ( decl%units, before=' What is ' )
         call output ( '?' )
@@ -358,7 +377,9 @@ contains ! =====     Public Procedures     =============================
       enum_type = 0
       if ( decl%type == variable ) then
         select case ( decl%units ) ! Type of first element of value
-        case ( enum_value, label )
+        case ( enum_value )
+          enum_type = decoration(decl%tree)
+        case ( label )
           enum_type = decoration(decl%tree)
         end select
       end if 
@@ -387,7 +408,7 @@ contains ! =====     Public Procedures     =============================
 
 ! --------------------------------------------------  DUMP_VALUES  -----
   subroutine DUMP_VALUES ( VALUES, BEFORE, ADVANCE, Type_Tree, Details )
-    use Tree, only: Subtree, Sub_Rosa
+    use Tree, only: Decoration, Subtree, Sub_Rosa
     type(value_t), intent(in) :: Values(:)
     character(len=*), intent(in), optional :: BEFORE, ADVANCE
     integer, intent(in), optional :: Type_Tree ! Root of type def if enum_value
@@ -405,14 +426,20 @@ contains ! =====     Public Procedures     =============================
       call output ( i, places=3 )
       call output ( ': ' )
       select case ( values(i)%what )
-      case ( enum_value, label )  ! values%value(1) is a string index
-        call display_string ( nint(values(i)%value(1)) )
-        if ( the_type /= 0 ) &
-          & call display_string ( sub_rosa(subtree(1,the_type)), before=' ' )
+      case ( do_label )
+        call display_string ( nint(values(i)%value(1)), before='DO label ' )
+      case ( enum_value )  ! values%value(1) is a lit index
+        call display_string ( lit_indices(nint(values(i)%value(1))) )
+        if ( values(i)%what /= 0 ) call display_string ( &
+          & data_type_indices(values(i)%type), before=' ' )
         call output ( values(i)%decor, before=' decor=' )
+      case ( label )       ! values%value(1) is a string index
+        call display_string ( nint(values(i)%value(1)), before=' ' )
+        if ( values(i)%units(1) /= 0 ) call display_string ( &
+           & spec_indices(values(i)%units(1)), before=': ' )
       case ( log_value )   ! values%value(1) 0= 0 => false, else true
         call output ( trim(merge('true ','false',values(i)%value(1)/=0.0d0)) )
-        call output ( 'log_value' )
+        call output ( ' log_value' )
       case ( named_value )  ! values%value(1) is a string index
         call display_string ( nint(values(i)%value(1)) )
         if ( the_type /= 0 ) &
@@ -441,6 +468,11 @@ contains ! =====     Public Procedures     =============================
       if ( doWhat ) then
         call output ( values(i)%what, before=' %what=' )
         call output ( values(i)%type, before=' %type=' )
+        call output ( values(i)%value(1), before=' %value=' )
+        call output ( values(i)%value(2), before=' ' )
+        call output ( values(i)%units(1), before=' %units=' )
+        call output ( values(i)%units(2), before=' ' )
+        call output ( values(i)%decor, before=' %decor=' )
       end if
       call newline
     end do
@@ -503,8 +535,33 @@ contains ! =====     Public Procedures     =============================
     if ( type_name_indices(empty) < 0 ) call init_type_indices
   end subroutine INIT_DECL
 
-! ---------------------------------------------------  PRIOR_DECL  -----
-  type(decls) function PRIOR_DECL ( THE_DECL, TYPE, UNITS )
+! ---------------------------------------------  PRIOR_DECL_ARRAY  -----
+  type(decls) function PRIOR_DECL_ARRAY ( THE_DECL, TYPE, UNITS ) &
+    result ( PRIOR_DECL )
+  ! Return the prior declaration of "the_decl" with specified values of
+  ! "type" and "units" (if they're specified).
+    type(decls), intent(in) :: THE_DECL
+    integer, intent(in) :: TYPE(:)
+    integer, intent(in), optional :: UNITS
+    integer :: PRIOR
+    prior = the_decl%prior
+    do
+      prior_decl = decl_table(prior)
+      if ( prior_decl%type == empty ) return
+      if ( any(prior_decl%type == type) ) then
+        if ( .not. present(units) ) return
+        if ( prior_decl%units == units ) return
+      else
+        if ( .not. present(units) ) return
+        if ( prior_decl%units == units ) return
+      end if
+      prior = prior_decl%prior
+    end do
+  end function PRIOR_DECL_ARRAY
+
+! --------------------------------------------  PRIOR_DECL_SCALAR  -----
+  type(decls) function PRIOR_DECL_SCALAR ( THE_DECL, TYPE, UNITS ) &
+    result ( PRIOR_DECL )
   ! Return the prior declaration of "the_decl" with specified values of
   ! "type" and "units" (if they're specified).
     type(decls), intent(in) :: THE_DECL
@@ -525,7 +582,7 @@ contains ! =====     Public Procedures     =============================
       end if
       prior = prior_decl%prior
     end do
-  end function PRIOR_DECL
+  end function PRIOR_DECL_SCALAR
 
 ! ----------------------------------------------------  REDECLARE  -----
   subroutine REDECLARE ( STRING, VALUE, TYPE, UNITS, TREE, VALUES )
@@ -647,6 +704,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.19  2014/02/21 19:24:32  vsnyder
+! Add Do_Label, Prior_Decl_Array, polish some dumps
+!
 ! Revision 2.18  2014/01/08 21:09:43  vsnyder
 ! Add more tracing info
 !
