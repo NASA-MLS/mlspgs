@@ -24,7 +24,7 @@ module SYMBOL_TYPES
   ! Terminal symbol class numbers.  These depend on the language. If this
   ! list changes, you need to change the array TERM_TYPES below, and might
   ! need to change the table GEN, indexed by them, in parser.
-  integer, parameter :: T_NULL = 0                ! MUST be present and first
+  integer, parameter :: T_NULL             = 0    ! MUST be present and first
   integer, parameter :: T_LEFT_PARENTHESIS = T_NULL + 1
   integer, parameter :: T_RIGHT_PARENTHESIS = T_LEFT_PARENTHESIS + 1
   integer, parameter :: T_LEFT_BRACKET =     T_RIGHT_PARENTHESIS + 1
@@ -52,8 +52,11 @@ module SYMBOL_TYPES
   integer, parameter :: T_COMMA =            T_GREATER_EQ + 1
   integer, parameter :: T_HAT =              T_COMMA + 1
   integer, parameter :: T_BEGIN =            T_HAT + 1           ! BEGIN
-  integer, parameter :: T_END =              T_BEGIN + 1         ! END
-  integer, parameter :: T_AND =              T_END + 1           ! AND
+  integer, parameter :: T_CYCLE =            T_BEGIN + 1         ! CYCLE
+  integer, parameter :: T_DO =               T_CYCLE + 1         ! DO
+  integer, parameter :: T_END =              T_DO + 1            ! END
+  integer, parameter :: T_EXIT =             T_END + 1           ! EXIT
+  integer, parameter :: T_AND =              T_EXIT + 1          ! AND
   integer, parameter :: T_OR =               T_AND + 1           ! OR
   integer, parameter :: T_NOT =              T_OR + 1            ! NOT
   integer, parameter :: T_CASE =             T_NOT + 1           ! CASE
@@ -61,8 +64,9 @@ module SYMBOL_TYPES
   integer, parameter :: T_ELSE =             T_DEFAULT + 1       ! ELSE
   integer, parameter :: T_IF =               T_ELSE + 1          ! IF
   integer, parameter :: T_SELECT =           T_IF + 1            ! SELECT
-  integer, parameter :: T_THEN =             T_SELECT + 1        ! THRN
-  integer, parameter :: T_END_OF_INPUT =     T_THEN + 1          ! <EOF>
+  integer, parameter :: T_THEN =             T_SELECT + 1        ! THEN
+  integer, parameter :: T_WHILE =            T_THEN + 1          ! WHILE
+  integer, parameter :: T_END_OF_INPUT =     T_WHILE + 1         ! <EOF>
   integer, parameter :: T_END_OF_STMT =      T_END_OF_INPUT + 1  ! <EOS>
   ! T_IDENTIFIER, T_NUMBER, T_STRING must be consecutive
   integer, parameter :: T_IDENTIFIER =       T_END_OF_STMT + 1   ! <IDENTIFIER>
@@ -116,22 +120,61 @@ module SYMBOL_TYPES
 ! The array TERM_TYPES gives the terminal type of each class of terminal.
 ! It must be defined.
   integer, parameter :: TERM_TYPES(t_null: t_last_terminal) = &
-  !  t_null    (         )         [         ]         +         -
-  (/ object,   def_pun,  def_pun,  def_pun,  def_pun,  def_op,   def_op,   &
-  !  *         /         :=        \         !         ?         .         
-     def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
-  !  :         :<        <:        <:<       =         ==        /=        
-     def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
-  !  <         <=        >         >=        ,         ^         begin     
-     def_op,   def_op,   def_op,   def_op,   def_pun,  def_op,   res_word, &
-  !  end       and       or        not       case      default   else      
-     res_word, res_word, res_word, res_word, res_word, res_word, res_word, &
-  !  if        select    then      <eof>     <eos>     <ident>   <numcon>  
-     res_word, res_word, res_word, object,   object,   ident,    numcon,   &
-  !  <string>  include   unk_op    unk_pun   unk_ch    inc_num   inc_str   
-     string,   def_op,   unk_op,   unk_pun,  unk_ch,   inc_num,  inc_str,  &
-  !  junk
-     aft_cont  /)
+  !                                          
+  (/ object,   &  ! t_null     T_NULL
+     def_pun,  &  ! (          T_LEFT_PARENTHESIS
+     def_pun,  &  ! )          T_RIGHT_PARENTHESIS
+     def_pun,  &  ! [          T_LEFT_BRACKET
+     def_pun,  &  ! ]          T_RIGHT_BRACKET
+     def_op,   &  ! +          T_PLUS
+     def_op,   &  ! -          T_MINUS
+     def_op,   &  ! *          T_STAR
+     def_op,   &  ! /          T_SLASH
+     def_op,   &  ! :=         T_ASSIGN
+     def_op,   &  ! \          T_BACKSLASH
+     def_op,   &  ! !          T_BANG
+     def_op,   &  ! ?          T_COND
+     def_op,   &  ! .          T_DOT
+     def_op,   &  ! :          T_COLON
+     def_op,   &  ! :<         T_COLON_LESS
+     def_op,   &  ! <:         T_LESS_COLON
+     def_op,   &  ! <:<        T_LESS_COLON_LESS
+     def_op,   &  ! =          T_EQUAL
+     def_op,   &  ! ==         T_EQUAL_EQUAL
+     def_op,   &  ! /=         T_NOT_EQUAL
+     def_op,   &  ! <          T_LESS
+     def_op,   &  ! <=         T_LESS_EQ
+     def_op,   &  ! >          T_GREATER
+     def_op,   &  ! >=         T_GREATER_EQ
+     def_pun,  &  ! ,          T_COMMA
+     def_op,   &  ! ^          T_HAT
+     res_word, &  ! begin      T_BEGIN
+     res_word, &  ! cycle      T_CYCLE
+     res_word, &  ! do         T_DO
+     res_word, &  ! end        T_END
+     res_word, &  ! exit       T_EXIT
+     res_word, &  ! and        T_AND
+     res_word, &  ! or         T_OR
+     res_word, &  ! not        T_NOT
+     res_word, &  ! case       T_CASE
+     res_word, &  ! default    T_DEFAULT
+     res_word, &  ! else       T_ELSE
+     res_word, &  ! if         T_IF
+     res_word, &  ! select     T_SELECT
+     res_word, &  ! then       T_THEN
+     res_word, &  ! while      T_WHILE
+     object,   &  ! <eof>      T_END_OF_INPUT
+     object,   &  ! <eos>      T_END_OF_STMT
+     ident,    &  ! <ident>    T_IDENTIFIER
+     numcon,   &  ! <numcon>   T_NUMBER
+     string,   &  ! <string>   T_STRING
+     def_op,   &  ! include    T_INCLUDE
+     unk_op,   &  ! unk_op     T_UNK_OP
+     unk_pun,  &  ! unk_pun    T_UNK_PUN
+     unk_ch,   &  ! unk_ch     T_UNK_CH
+     inc_num,  &  ! inc_num    T_INC_NUM
+     inc_str,  &  ! inc_str    T_INC_STR
+     aft_cont  /) ! junk       T_AFT_CONT
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -176,7 +219,10 @@ contains
     case ( t_comma );             call add_char ( ',' )
     case ( t_hat );               call add_char ( '^' )
     case ( t_begin );             call add_char ( 'BEGIN' )
+    case ( t_cycle );             call add_char ( 'CYCLE' )
+    case ( t_do );                call add_char ( 'DO' )
     case ( t_end );               call add_char ( 'END' )
+    case ( t_exit );              call add_char ( 'EXIT' )
     case ( t_and );               call add_char ( 'AND' )
     case ( t_or );                call add_char ( 'OR' )
     case ( t_not );               call add_char ( 'NOT' )
@@ -186,6 +232,7 @@ contains
     case ( t_if );                call add_char ( 'IF' )
     case ( t_select );            call add_char ( 'SELECT' )
     case ( t_then );              call add_char ( 'THEN' )
+    case ( t_while );             call add_char ( 'WHILE' )
     case ( t_end_of_input );      call add_char ( '<eof>' )
     case ( t_end_of_stmt );       call add_char ( '<eos>' )
     case ( t_identifier );        call add_char ( '<identifier>' )
@@ -247,6 +294,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.20  2014/02/21 19:22:15  vsnyder
+! Add CYCLE, DO, EXIT, WHILE
+!
 ! Revision 2.19  2013/12/12 01:58:00  vsnyder
 ! Add variable definition, and IF and SELECT constructs
 !
