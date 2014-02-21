@@ -37,6 +37,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !                      (no binary) (see also ReplaceNonAscii, unasciify)
 ! Capitalize         tr[a-z] -> [A-Z]
 ! CatStrings         Concatenate strings with a specified separator
+! CharToInt          Convert a single char to its corresponding integer
+!                      tr['1'-'9'] -> [1-9]
 ! ShiftLRC           Shift string to left, center, or right
 ! CompressString     Removes all leading and embedded blanks
 ! Count_quotes       Counts the number of quotes-surrounded phrases in a string
@@ -94,6 +96,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! char* asciify ( char* str, [char* how] )
 ! char* Capitalize (char* str)
 ! CatStrings ( char* strings(:), char* sep, char* stringsCat, int L )
+! int charToInt (char str)
 ! char* CompressString (char* str)
 ! int count_quotes (char* str, char lquote, char rquote)
 ! int count_words (char* str)
@@ -193,7 +196,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! === (end of api) ===
 
   public :: ASCIIFY, &
-    & CAPITALIZE, CATSTRINGS, COMPRESSSTRING, COUNT_WORDS, &
+    & CAPITALIZE, CATSTRINGS, CHARTOINT, COMPRESSSTRING, COUNT_WORDS, &
     & DELETE, DEPUNCTUATE, FLUSHARRAYLEFT, HHMMSS_VALUE, &
     & INDEXES, INTS2STRINGS, ISALLASCII, ISALPHABET, ISCOMMENT, ISREPEAT, &
     & LENTRIMTOASCII, LINEARSEARCHSTRINGARRAY, LOWERCASE, &
@@ -425,6 +428,23 @@ contains
       l = n
     end do
   end subroutine CatStrings
+
+  ! ------------------------------------------------  CHARTOINT  -----
+  elemental function CHARTOINT (str) result (int)
+    ! This converts the input character to its integer value, if
+    ! it has one
+    ! e.g., '9' returns 9
+    ! 'a' or '0' or ' ' all return 0
+    !--------Argument--------!
+    character (len=1), intent(in) :: str
+    !---------result---------!
+    integer :: int
+    !-----local-variables------!
+    character(len=9), parameter :: allChars = &
+      & '123456789'
+    !-------executable-code----!
+    int = index( allChars, str )
+  end function CHARTOINT
 
   ! ---------------------------------------------  CompressString  -----
   FUNCTION CompressString (str) RESULT (outstr)
@@ -1870,7 +1890,7 @@ contains
   ! the word "separator" in a global manner, excepting only
   ! the optional last arg to this subroutine
 
-  SUBROUTINE SplitWords(line,first,rest,last,&
+  elemental SUBROUTINE SplitWords(line,first,rest,last,&
        & threeWay,delimiter)
 
     ! Dummy arguments
@@ -3153,6 +3173,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.98  2014/02/21 01:24:54  pwagner
+! Added CharToInt; made SplitWords elemental
+!
 ! Revision 2.97  2014/02/12 23:59:34  pwagner
 ! isAlphabet now public
 !
