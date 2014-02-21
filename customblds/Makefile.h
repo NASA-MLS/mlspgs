@@ -204,10 +204,16 @@ intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 parser.o parser.mod: parser_tables.mod
 
+# The extra file $(S)/Parser_Tables.wc is part of some hackery-quackery
+# aimed at forcing libmls.a to be built twice:
+# the first time without parser.o, 
+# the second time with
+# see lib/MakeFC for how $(S)/Parser_Tables.wc acts to trigger the sequence
 $(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
           $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
+          wc $(S)/Parser_Tables.f90 > $(S)/Parser_Tables.wc; \
           cd $(S); $(MAKE) -f MakeFC update JUSTSUBDIRS=yes
 
 Parser_Tables.o: 
@@ -366,10 +372,16 @@ intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 parser.o: Parser_Tables.o
 
+# The extra file $(S)/Parser_Tables.wc is part of some hackery-quackery
+# aimed at forcing libmls.a to be built twice:
+# the first time without parser.o, 
+# the second time with
+# see lib/MakeFC for how $(S)/Parser_Tables.wc acts to trigger the sequence
 $(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
           $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
+          wc $(S)/Parser_Tables.f90 > $(S)/Parser_Tables.wc; \
           cd $(S); $(MAKE) -f MakeFC update JUSTSUBDIRS=yes
 
 Parser_Tables.o: $(S)/Parser_Tables.f90
@@ -481,6 +493,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.11  2014/01/29 21:03:41  pwagner
+# Shorten make update
+#
 # Revision 1.10  2014/01/24 00:58:08  pwagner
 # Removed certain amount of clumsiness
 #
