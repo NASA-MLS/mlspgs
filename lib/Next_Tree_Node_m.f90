@@ -17,15 +17,24 @@ module Next_Tree_Node_m
   public :: Init_Next_Tree_Node
   public :: Next_Tree_Node, Next_Tree_Node_State, Traverse_Tree
 
+  ! Values of Ancestors%what
+  integer, parameter :: Go = 0            ! Not immediately within a DO or WHILE
+  integer, parameter :: Do_Steps = go + 1 ! Within Do Var := expr, expr [, expr]
+  integer, parameter :: Do_Vals = do_Steps + 1 ! Within Do Var := expr
+  integer, parameter :: Do_While = do_vals + 1 ! Within Do While ( expr )
+
   type :: Ancestors_t
     integer :: Root = 0    ! of a subtree under consideration
-    integer :: Subtree = 0 ! last, not next, subtree of Root that was processed
+    integer :: Subtree = 0 ! last subtree of Root that was processed (not the next one)
+    integer :: What = go   ! What kind of construct (see parameters above)?
+    integer :: Current     ! Current variable value in DO construct
+    integer :: Last, Step  ! for DO construct with 2-3 exprs
   end type Ancestors_t
 
   type :: Next_Tree_Node_State
     type(ancestors_t), allocatable :: Ancestors(:)
   end type Next_Tree_Node_State
-
+  
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -40,8 +49,8 @@ contains ! ====     Procedures     =====================================
 
   integer function Next_Tree_Node ( Root, State, Start, NoVariable, TraceLevel )
 
-  ! Get the next tree node, taking IF and CASE constructs into account,
-  ! i.e., process them here and select which tree node to return.
+  ! Get the next tree node, taking IF, SELECT CASE, DO, and WHOLE constructs
+  ! into account, i.e., process them here and select which tree node to return.
   ! To use this:
   !   call Init_Next_Tree_Node ( State )
   !   DO
@@ -51,15 +60,19 @@ contains ! ====     Procedures     =====================================
   !   END DO
 
     use Allocate_Deallocate, only: Memory_Units , Test_Allocate, Test_Deallocate
-    use Declaration_Table, only: Log_Value, Operator(==), Range, Str_Range, &
-      & Value_T
+    use Declaration_Table, only: Enum_Value, Operator(==), Range, Redeclare, &
+      & Str_Range, Value_T, Variable
+use Declaration_Table, only: Dump_Values
     use Evaluate_Variable_m, only: Evaluate_Variable
     use Expr_M, only: Expr
-    use Toggles, only: Gen, Levels, Toggle
+    use Intrinsic, only: L_True, T_Boolean  
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSStringLists, only: SwitchDetail
+    use Toggles, only: Switches
     use Trace_m, only: Trace_Begin, Trace_End
-    use Tree, only: Node_ID, Nsons, Subtree
-    use Tree_Types, only: N_CF, N_Default, N_Else, N_If, N_Select, N_Test, &
-      & N_Variable
+    use Tree, only: Node_ID, Nsons, Subtree, Sub_Rosa
+    use Tree_Types, only: N_CF, N_Cycle, N_Default, N_Do, N_Else, N_Exit, &
+      & N_If, N_Named, N_Select, N_Test, N_Variable, N_While
 
     integer, intent(in) :: Root    ! Tree index
     type(next_Tree_Node_State), intent(inout) :: State
@@ -68,15 +81,17 @@ contains ! ====     Procedures     =====================================
     integer, intent(in), optional :: TraceLevel
 
     logical :: DoVariable          ! Evaluate variables
-    integer :: I                   ! Loop inductor
+    integer :: I                   ! Loop inductor or subtree index (1 or 2)
     integer :: Last                ! Last son of Root to process
     integer :: Me = -1             ! String index for trace
-    integer :: MyLevel
+    integer :: MyLevel             ! Trace level requested by -Snode
     integer :: R                   ! Root of subtree of Root
     integer :: Stat                ! From Allocate or Deallocate
+    integer :: SwitchLevel = -2    ! Trace level requested by -Snode
     type(ancestors_t), allocatable :: Temp(:)
     integer :: Test_Type, Type
     integer :: Test_Units(2), Units(2)
+    integer :: V                   ! Values subtree of DO expr := values
     double precision :: Test_Value(2), Value(2)
     type(value_t), allocatable :: Test_Values(:), Values(:)
 
@@ -93,6 +108,7 @@ contains ! ====     Procedures     =====================================
       end if
     end if
 
+    if ( switchLevel < -1 ) switchLevel = switchDetail ( switches, 'node' )
     doVariable = .true.
     if ( present(noVariable) ) doVariable = .not. noVariable
     myLevel = 0
@@ -100,46 +116,116 @@ contains ! ====     Procedures     =====================================
 
     call trace_begin ( me, 'Next_Tree_Node', state%ancestors(1)%root, &
       & index=state%ancestors(1)%subtree+1, &
-      & cond=toggle(gen) .and. levels(gen) >= myLevel )
+      & cond=switchLevel >= myLevel )
  o: do
       state%ancestors(1)%subtree = state%ancestors(1)%subtree + 1
-      last = nsons(state%ancestors(1)%root)
-      if ( node_id(state%ancestors(1)%root) == n_cf ) &
-        & last = last - 1 ! Skip name at end of section
+      r = state%ancestors(1)%root
+      last = nsons(r)
+      if ( node_id(r) == n_cf ) last = last - 1 ! Skip name at end of section
       if ( state%ancestors(1)%subtree > last ) then
-        if ( size(state%ancestors) == 1 ) then
-          deallocate ( state%ancestors, stat=stat )
-          call test_deallocate ( stat, moduleName, 'state%ancestors', &
-            & real(storage_size(state%ancestors)) / memory_units )
-          next_Tree_Node = 0
-          exit
-        end if
-        ! Pop the ancestors stack; ascend in the syntax tree.
-        allocate ( temp(size(state%ancestors)-1), stat=stat )
-        call test_allocate ( stat, moduleName, 'temp', [1], [1], &
-          & storage_size(temp) )
-        temp = state%ancestors(2:)
-        call move_alloc ( temp, state%ancestors )
+        select case ( state%ancestors(1)%what )
+        case ( go ) ! Not a looping construct, just finish it
+          if ( pop() ) exit o
+        case ( do_steps ) ! Check whether we've done all the steps
+          state%ancestors(1)%current = state%ancestors(1)%current + &
+                                       state%ancestors(1)%step
+          if ( ( state%ancestors(1)%current - state%ancestors(1)%last ) * &
+               & sign(1,state%ancestors(1)%step) > 0 ) then
+          if ( pop() ) exit o
+          else
+            i = 1
+            if ( node_id(subtree(1,state%ancestors(1)%root)) == n_named ) i = 2
+            call set_variable_numeric ( subtree(1,subtree(i,state%ancestors(1)%root)), &
+              & dble(state%ancestors(1)%current) )
+            state%ancestors(1)%subtree = i ! Do the block again
+          end if
+        case ( do_vals ) ! Check whether we've used all the values
+          i = 1
+          if ( node_id(subtree(1,state%ancestors(1)%root)) == n_named ) i = 2
+          ! node_id(v) == n_array, because it has to be something, but
+          ! who cares?
+          v = subtree(2,subtree(i,r))
+          ! %Current is the index of the last expression evaluated
+          state%ancestors(1)%current = state%ancestors(1)%current + 1
+          if ( state%ancestors(1)%current > nsons(v) ) then ! Used them all
+          if ( pop() ) exit o
+          else ! Use the next one
+            call expr ( subtree(state%ancestors(1)%current,v), units, value, &
+              & type, values=values )
+            call redeclare ( sub_rosa(subtree(1,subtree(i,r))), value(1), &
+              & variable, type, values=values )
+            state%ancestors(1)%subtree = i ! Do the block again
+          end if
+        case ( do_while ) ! Check whether the expr is true
+          i = 1
+          if ( node_id(subtree(1,r)) == n_named ) i = 2
+          ! Type checker has verified that expression type is boolean
+          call expr ( subtree(i,r), units, value, type )
+          if ( nint(value(1)) /= l_true ) then ! Value is false, finish the construct
+          if ( pop() ) exit o
+          else
+            state%ancestors(1)%subtree = i ! Do the block again
+          end if
+        end select
       else
         next_Tree_Node = subtree(state%ancestors(1)%subtree,state%ancestors(1)%root)
         select case ( node_id(next_tree_node) )
+        case ( n_cycle )
+          if ( cycle_or_exit () ) exit o
+        case ( n_do )
+          call push ( next_tree_node )
+          i = 1
+          if ( node_id(subtree(1,next_tree_node)) == n_named ) i = 2
+          r = subtree(i,next_tree_node) ! N_Do_Head vertex
+          if ( nsons(r) == 2 ) then
+            ! Variable := value (maybe an array)
+            state%ancestors(1)%what = do_vals
+            ! Pretend we've done its block once, so we check the count at the top
+            state%ancestors(1)%subtree = nsons(next_tree_node)
+            state%ancestors(1)%current = 0 ! Which value we just finished
+          else
+            ! Variable := expr, expr [, expr]
+            state%ancestors(1)%what = do_steps
+            ! Type checker has verified that exprs are numeric
+            call expr ( subtree(2,r), units, value, type, values=values )
+            state%ancestors(1)%current = nint(value(1))
+            call set_variable_numeric ( subtree(1,r), value(1) )
+            call expr ( subtree(3,r), units, value, type, values=values )
+            state%ancestors(1)%last = nint(value(1))
+            value(1) = 1
+            if ( nsons(r) > 3 ) &
+              & call expr ( subtree(4,r), units, value, type, values=values )
+            state%ancestors(1)%step = nint(value(1))
+            if ( state%ancestors(1)%step == 0 ) call MLSMessage ( MLSMSG_Error, &
+              & moduleName, 'STEP in a DO construct is zero' )
+            ! Pretend we've done its block once, so we check the count at the top
+            state%ancestors(1)%subtree = nsons(next_tree_node)
+            ! Current will be bumped at the top
+            state%ancestors(1)%current = state%ancestors(1)%current - &
+              state%ancestors(1)%step
+          end if
+        case ( n_exit )
+          if ( cycle_or_exit () ) exit o
+          if ( pop() ) exit o
         case ( n_if )
           do i = 1, nsons(next_Tree_Node)
             r = subtree(i,next_Tree_Node)
             select case ( node_id(r) )
             case ( n_test )
+              ! Type checked in tree_checker
               call expr ( subtree(1,r), units, value, type, values=values )
-              if ( type /= log_value ) call announce_error ( &
-                & subtree(1,r), 'Predicate of IF is not logical type' )
+              if ( values(1)%what /= enum_value .or. &
+                 & values(1)%type /= t_boolean ) call announce_error ( &
+                & subtree(1,r), 'Predicate of IF is not logical' )
               if ( size(values) /= 1 ) call announce_error ( &
                 & subtree(1,r), 'Predicate of IF is not scalar' )
-              if ( value(1) /= 0 ) then
-                call push
+              if ( nint(value(1)) == l_true ) then
+                call push ( r )
                 state%ancestors(1)%subtree=1 ! Start with subtree(2,r)
                 cycle o
               end if
             case ( n_else )
-              call push
+              call push ( r )
               cycle o
             end select
           end do
@@ -161,15 +247,13 @@ contains ! ====     Procedures     =====================================
               if ( test_values(1)%units(1) == range .or. &
                  & test_values(1)%units(1) == str_range) call announce_error ( &
                    & subtree(1,r), 'Expression in CASE is a range' )
-              if ( type /= test_type ) call announce_error ( &
-                & subtree(1,r), 'Expressions in SELECT and CASE are not the same type' )
               if ( test_values(1) == values(1) ) then
-                call push
+                call push ( r )
                 state%ancestors(1)%subtree=1 ! Start with subtree(2,r)
                 cycle o
               end if
             case ( n_default )
-              call push
+              call push ( r )
               cycle o
             end select
           end do
@@ -179,20 +263,65 @@ contains ! ====     Procedures     =====================================
           else
             exit
           end if
-        case default ! Not IF or SELECT or VARIABLE
+        case ( n_while )
+          call push ( next_tree_node )
+          state%ancestors(1)%what = do_while
+          ! Pretend we've done its block once, so we check the expr at the top
+          state%ancestors(1)%subtree = nsons(next_tree_node)
+        case default ! Not DO, IF, SELECT, VARIABLE, or WHILE
           exit
         end select
       end if
     end do o
 
     call trace_end ( 'Next_Tree_Node', &
-      & cond=toggle(gen) .and. levels(gen) >= myLevel )
+      & cond=switchLevel >= myLevel )
 
   contains
 
-    subroutine Push
+    logical function Cycle_Or_Exit ()
+      ! Find the referenced construct.  If the ancestors stack goes empty,
+      ! the result variable is true.
+      cycle_or_exit = .false.
+      do
+        if ( state%ancestors(1)%what /= go ) then
+          r = state%ancestors(1)%root
+          state%ancestors(1)%subtree = nsons(r) ! Done with the block
+          if ( nsons(next_tree_node) == 0 ) exit ! bare cycle
+          if ( node_id(subtree(1,r)) == n_named ) then
+            if ( sub_rosa(subtree(1,next_tree_node)) == &
+               & sub_rosa(subtree(1,subtree(1,r))) ) exit ! labels match
+          end if
+        end if
+        cycle_or_exit = pop()
+        if ( cycle_or_exit ) exit
+      end do
+    end function Cycle_Or_Exit
+
+    logical function Pop ()
+      ! Pop the ancestors stack.  The result variable is true, and
+      ! next_tree_node = 0, if it goes empty.
+      pop = .false.
+      if ( size(state%ancestors) == 1 ) then
+        deallocate ( state%ancestors, stat=stat )
+        call test_deallocate ( stat, moduleName, 'state%ancestors', &
+          & real(storage_size(state%ancestors)) / memory_units )
+        next_tree_node = 0
+        pop = .true.
+      else
+        ! Pop the ancestors stack; ascend in the syntax tree.
+        allocate ( temp(size(state%ancestors)-1), stat=stat )
+        call test_allocate ( stat, moduleName, 'temp', [1], [1], &
+          & storage_size(temp) )
+        temp = state%ancestors(2:)
+        call move_alloc ( temp, state%ancestors )
+      end if
+    end function Pop
+
+    subroutine Push ( Root )
       ! Encountered IF with true predicate, ELSE, CASE equal to SELECT,
       ! or CASE DEFAULT; descend into its subtree.
+      integer, intent(in) :: Root
       integer :: N
       n = size(state%ancestors)+1
       allocate ( temp(n), stat=stat )
@@ -200,11 +329,42 @@ contains ! ====     Procedures     =====================================
         & storage_size(temp) )
       temp(2:) = state%ancestors
       call move_alloc ( temp, state%ancestors )
-      state%ancestors(1)%root = r
+      state%ancestors(1)%root = root
     ! state%ancestors(1)%subtree = 0 ! The default, so we don't need to do it
+    ! state%ancestors(1)%what = go   ! The default, so we don't need to do it
     end subroutine Push
 
   end function Next_Tree_Node
+
+  subroutine Set_Variable_Numeric ( Root, Value )
+
+    use Declaration_Table, only: Num_Value, Redeclare, Value_Allocate, &
+      & Value_T, Variable
+    use Intrinsic, only: PHYQ_Dimensionless
+    use Tree, only: Sub_Rosa
+
+    integer, intent(in) :: Root ! Name node of the variable
+    double precision, intent(in) :: Value
+    type(value_t), allocatable :: Values(:)
+    call value_allocate ( values, 1, 'Values', moduleName )
+    values(1) = value_t(num_value,num_value,[value,0.0d0], &
+                       &[PHYQ_Dimensionless,PHYQ_Dimensionless],0)
+    call redeclare ( sub_rosa(root), value, variable, num_value, root, &
+      & values=values )
+
+  end subroutine Set_Variable_Numeric
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!                                                                !!!!!
+!!!!!  The recursive iterator is obsolete!  It doesn't handle DO     !!!!!
+!!!!!  constructs, WHILE constructs, CYCLE statements, or EXIT       !!!!!
+!!!!!  statements!  It handles boolean type the old way (log_value)! !!!!!
+!!!!!                                                                !!!!!
+!!!!!  Fortunately, it's not used.  Its purpose is to outline how    !!!!!
+!!!!!  it might be done if we ever want to pass the subtree          !!!!!
+!!!!!  handler as a dummy procedure.                                 !!!!!
+!!!!!                                                                !!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   recursive subroutine Traverse_Tree ( Root, Body, Start, NoVariable, &
     & TraceLevel )
@@ -216,7 +376,8 @@ contains ! ====     Procedures     =====================================
       & Value_T
     use Evaluate_Variable_m, only: Evaluate_Variable
     use Expr_M, only: Expr
-    use Toggles, only: Gen, Levels, Toggle
+    use MLSStringLists, only: SwitchDetail
+    use Toggles, only: Switches
     use Trace_m, only: Trace_Begin, Trace_End
     use Tree, only: Node_ID, Nsons, Subtree
     use Tree_Types, only: N_CF, N_Default, N_Else, N_If, N_Select, N_Test, &
@@ -239,18 +400,20 @@ contains ! ====     Procedures     =====================================
     integer :: Me = -1             ! String index for trace
     integer :: MyLevel
     integer :: R                   ! Root of subtree of Root
+    integer :: SwitchLevel = -2    ! Trace level requested by -Snode
     integer :: Test_Type, Type
     integer :: Test_Units(2), Units(2)
     double precision :: Test_Value(2), Value(2)
     type(value_t), allocatable :: Test_Values(:), Values(:)
 
+    if ( switchLevel < -1 ) switchLevel = switchDetail ( switches, 'node' )
     doVariable = .true.
     if ( present(noVariable) ) doVariable = .not. noVariable
     myLevel = 0
     if ( present(traceLevel) ) myLevel = traceLevel
 
     call trace_begin ( me, 'Traverse_Tree', root, &
-      & cond=toggle(gen) .and. levels(gen) >= myLevel )
+      & cond=switchLevel >= myLevel )
 
     if ( present(start) ) then
       first = start
@@ -324,7 +487,7 @@ contains ! ====     Procedures     =====================================
     end do o
 
     call trace_end ( 'Traverse_Tree', &
-      & cond=toggle(gen) .and. levels(gen) >= myLevel )
+      & cond=switchLevel >= myLevel )
 
   end subroutine Traverse_Tree
 
@@ -354,6 +517,9 @@ contains ! ====     Procedures     =====================================
 end module Next_Tree_Node_m
 
 ! $Log$
+! Revision 2.3  2014/02/21 19:26:30  vsnyder
+! Add CYCLE, DO, EXIT, WHILE
+!
 ! Revision 2.2  2014/01/11 01:41:02  vsnyder
 ! Decruftification
 !
