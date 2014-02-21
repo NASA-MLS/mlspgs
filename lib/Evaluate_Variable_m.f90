@@ -23,55 +23,66 @@ module Evaluate_Variable_m
 
 contains ! ====     Public Procedures     ==============================
 
-  subroutine Evaluate_Variable ( Root )
+  subroutine Evaluate_Variable ( Root, Son )
 
 ! Evaluate a variable defined by <name> := <expr>.
 ! Put its value in the Values component of its declaration.
 
     use Declaration_Table, only: Allocate_Test, Deallocate_Test, Dump_Values, &
-      & Redeclare, Value_t, Variable
+      & Enum_Value, Redeclare, Value_t, Variable
     use Expr_m, only: Expr
     use Output_m, only: Output
+    use String_Table, only: Display_String
     use Toggles, only: Gen, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     use Tree, only: Nsons, Subtree, Sub_Rosa
+
     integer, intent(in) :: Root  ! The := tree node of the definition
+    integer, intent(in), optional :: Son  ! Do only this son
 
     integer :: Details           ! Dump expression values
+    integer :: First             ! First son to do, or only if present(son)
     integer :: I
     integer :: Me = -1           ! String index for trace cacheing
+    integer :: Name              ! String index  of name of variable
     integer :: Type
-    integer :: Units(2)          ! From expr
+    integer :: Units(2), Units2(2) ! From expr
     double precision :: Value(2) ! From expr
     type(value_t), allocatable :: Values1(:), Values2(:), Values3(:)
 
     call trace_begin ( me, 'Evaluate_Variable', root, cond=toggle(gen) )
     details = merge(levels(gen),0,toggle(gen))
-    call expr ( subtree(2,root), units, value, type, values=values1 )
+    name = sub_rosa(subtree(1,root))
+    first = 2
+    if ( present(son) ) first = son
+    call expr ( subtree(first,root), units, value, type, values=values1 )
     if ( details > 1 ) then
-      call output ( 1, before='Element ' )
-      call output ( ' of value', advance='yes' )
+      call output ( first-1, before='Element ' )
+      call display_string ( name, before=' of value of ', advance='yes' )
       call dump_values ( values1, details=9 )
     end if
-    do i = 3, nsons(root)
-      call expr ( subtree(i,root), units, value,  type, values=values2 )
-      if ( details > 1 ) then
-        call output ( i-1, before='Element ' )
-        call output ( ' of value', advance='yes' )
-        call dump_values ( values2, details=9 )
-      end if
-      call allocate_test ( values3, size(values1)+size(values2), &
-        & 'Values3', moduleName )
-      values3 = [ values1, values2 ]
-      call deallocate_test ( values1, 'Values1', moduleName )
-      call deallocate_test ( values2, 'Values2', moduleName )
-      call move_alloc ( values3, values1 )
-    end do
+    if ( .not. present(son) ) then
+      do i = 3, nsons(root)
+        call expr ( subtree(i,root), units2, value,  type, values=values2 )
+        if ( details > 1 ) then
+          call output ( i-1, before='Element ' )
+          call display_string ( name, before=' of value of ', advance='yes' )
+          call dump_values ( values2, details=9 )
+        end if
+        call allocate_test ( values3, size(values1)+size(values2), &
+          & 'Values3', moduleName )
+        values3 = [ values1, values2 ]
+        call deallocate_test ( values1, 'Values1', moduleName )
+        call deallocate_test ( values2, 'Values2', moduleName )
+        call move_alloc ( values3, values1 )
+      end do
+    end if
     if ( details > 0 ) then
-      call output ( 'Final value of variable', advance='yes' )
+      call display_string ( name, before='Final value of ', advance='yes' )
       call dump_values ( values1, details=9 )
     end if
-    call redeclare ( sub_rosa(subtree(1,root)), value(1), variable, &
+    !              string  value     type     units  tree
+    call redeclare ( name, value(1), variable, type, root, &
       & values=values1 ) ! Declares it if it wasn't already declared
     call trace_end ( 'Evaluate_Variable', cond=toggle(gen) )
 
@@ -90,6 +101,9 @@ contains ! ====     Public Procedures     ==============================
 end module Evaluate_Variable_m
 
 ! $Log$
+! Revision 2.4  2014/02/21 19:27:16  vsnyder
+! More work on type checking, especially for enumeration-typed variables
+!
 ! Revision 2.3  2014/01/11 01:41:02  vsnyder
 ! Decruftification
 !
