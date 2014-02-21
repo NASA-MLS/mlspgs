@@ -16,14 +16,14 @@ module dates_module
   ! toolkit-supplied functions because the toolkit compulsively
   ! consults a leap-second file before converting to internal
   ! time representations (TAI93) while this module maintains
-  ! an attitude of studied indifference to leap seconds.
+  ! its own internal database of leap seconds.
 
   use MLSCOMMON,        only: NAMELEN
   use MLSFINDS,         only: FINDFIRST
   use MLSSTRINGLISTS,   only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
-  use MLSSTRINGS,       only: CAPITALIZE, DEPUNCTUATE, INDEXES, ISALPHABET, &
-    &                         LOWERCASE, WRITEINTSTOCHARS
-  use PRINTIT_M, only: MLSMSG_INFO, MLSMSG_WARNING, PRINTITOUT
+  use MLSSTRINGS,       only: CAPITALIZE, CHARTOINT, DEPUNCTUATE, &
+    & INDEXES, ISALPHABET, LOWERCASE, SPLITWORDS, WRITEINTSTOCHARS
+  use PRINTIT_M, only: MLSMSG_WARNING, PRINTITOUT
 
   implicit none
   private
@@ -113,6 +113,9 @@ module dates_module
 ! These procedures are valid only for dates on or after the tai starting date,
 ! by default Jan 1 1993. For dates prior to that date, you must first call
 ! ResetStartingDate.
+! An internal database is created of leap seconds (leapSecDates below). 
+! You must extend it for use after the last date shown if any subsequent
+! leap seconds are declared.
 
 ! === (end of toc) ===
 
@@ -135,17 +138,17 @@ module dates_module
 ! char* ReformatTime (char* time, [char* form])
 ! resetStartingDate ( char* newDate )
 ! restoreStartingDate
-! dble secondsbetween2utcs (char* utc1, char* utc2)
+! dble secondsbetween2utcs ( char* utc1, char* utc2, [log leapsec] )
 ! dble secondsinday (char* utc1)
 ! splitDateTime(char* utc, int ErrTyp, char* date, char* time, [log strict])
 ! char* tai2ccsds( int tai )
-! dble tai93s2hid( dble tai )
-! char* tai93s2utc( dble tai )
+! dble tai93s2hid( dble tai, [log leapsec] )
+! char* tai93s2utc( dble tai, [log leapsec] )
 ! char* timeForm( char* time )
 ! char utcForm (char* utc)
 ! utc_to_date(char* utc, int ErrTyp, char* date, [log strict], [char* utcAt0z])
 ! utc_to_time(char* utc, int ErrTyp, char* time, [log strict])
-! dble utc2tai93s( char*  utc )
+! dble utc2tai93s( char*  utc, [log leapsec] )
 ! yyyyDoy_to_mmdd (int yyyy, int mm, int dd, int Doy)
 ! yyyymmdd_to_dai (int yyyy, int mm, int dd, int dai, [char* startingDate])
 ! yyyymmdd_to_dai (char* str, int dai, [char* startingDate])
@@ -239,13 +242,17 @@ module dates_module
   !   tai93s (toolkit) = SECONDSINADAY*tai93 (in days)
   !
   ! It would not be that difficult to enable us to take advantage
-  ! of a leapsec file, or, after having read it, a leapsec database
+  ! of a leapsec file, and, after having read it, fill out our leapsec database.
+  ! Difficult or easy, we have not yet bestirred ourselves.
 ! === (end of api) ===
 
-! Further note:
-! We maintain a private datatype, MLSDATE_TIME_T
+! Further notes:
+! (1) We maintain a private datatype, MLSDATE_TIME_T
 ! it is an intermediary in various operations and conversions
 ! Would it be useful to uncloak it so callers might access it directly?
+! 92) This module has grown rather long. Should w consider
+! Splitting into two, and if so, what would be the criteria for
+! grouping procedures into a common module?
 
   !Here are the provided functions 
   public :: ADDDAYSTOUTC, ADDHOURSTOUTC, ADDSECONDSTOUTC, BUILDCALENDAR, &
@@ -384,8 +391,8 @@ module dates_module
   double precision, parameter :: LUNARPERIOD = 60.d0*(44 + 60.d0*( &
     & 12 + 24.d0*29 ) ) ! 29d 12h 44m
 
-  character (len=1), parameter    :: COMMA = ','
-  character (len=1), parameter    :: BLANK = ' '   ! Returned for any element empty
+  ! character (len=1), parameter    :: COMMA = ','
+  ! character (len=1), parameter    :: BLANK = ' '   ! Returned for any element empty
 
   ! These are the starting dates for the two date formats we drag around:
   ! the first is for the tai format
@@ -401,6 +408,7 @@ module dates_module
   type MLSDATE_TIME_T
     integer :: dai = 0                  ! days after 1 Jan 2001
     double precision :: seconds = 0.00  ! seconds after midnight
+    integer :: LeapSeconds = 0        ! optional leap seconds to be added
   end type MLSDATE_TIME_T
   
   ! This accounts for the number of days between the dates
@@ -526,39 +534,46 @@ contains
   end function tai2ccsds
 
   ! Converts TAI in seconds to hours-in-day.
-  ! We ignore leap seconds 
-  elemental function tai93s2hid(tai93s) result (hid)
+  ! Unless, option leapsec is present and TRUE, ignore leap seconds 
+  elemental function tai93s2hid( tai93s, leapsec ) result (hid)
     double precision, intent(in)   :: tai93s
+    logical, optional, intent(in) :: leapsec
     !---function--result---!
     double precision :: hid
     !----local -----!
     type(MLSDATE_TIME_T)           :: datetime
     ! integer :: THEDAY
     ! Executable
-    dateTime = tai93s2datetime( tai93s )
+    dateTime = tai93s2datetime( tai93s, leapsec )
     hid = dateTime%seconds/3600
+    if ( .not. present(leapsec) ) return
+    if ( .not. leapsec ) return
+    hid = (dateTime%seconds - datetime%leapseconds)/3600
     ! theDay = (tai93s+10.d0) / (24*3600.d0)
     ! hid = (tai93s - theDay*24*3600.d0) / 3600
   end function tai93s2hid
 
   ! Converts TAI in seconds to utc Date.
-  ! We ignore leap seconds 
-  function tai93s2utc(tai93s) result (utc)
+  ! Unless, option leapsec is present and TRUE, ignore leap seconds 
+  function tai93s2utc( tai93s, leapsec ) result (utc)
     double precision, intent(in)   :: tai93s
+    logical, optional, intent(in) :: leapsec
     !---function--result---!
     character(len=MAXUTCSTRLENGTH) :: utc
     !----local -----!
     type(MLSDATE_TIME_T)           :: datetime
     ! Executable
-    dateTime = tai93s2datetime( tai93s )
-    utc = datetime2utc( datetime )
+    dateTime = tai93s2datetime( tai93s, leapsec )
+    print *, 'dateTime&seconds, leap ', dateTime%seconds, dateTime%leapseconds
+    utc = datetime2utc( datetime, leapsec )
   end function tai93s2utc
 
   ! ---------------------------------------------  datetime2utc  -----
-  function datetime2utc(datetime) result(utc)
+  function datetime2utc( datetime, leapsec ) result(utc)
     ! Given an mlsDate_Time_T return a utc
     ! Args
     type(MLSDATE_TIME_T), intent(in)  :: datetime
+    logical, optional, intent(in) :: leapsec
     character(len=MAXUTCSTRLENGTH)    :: utc
     ! Internal
     type(MLSDATE_TIME_T)         :: datetimeRdcd ! So we don't clobber datetime
@@ -567,7 +582,8 @@ contains
     character(len=16)            :: yyyymmdd
     ! Executable
     datetimeRdcd = datetime
-    call reducedatetime(datetimeRdcd)
+    call reducedatetime( datetimeRdcd, leapsec )
+    print *, 'After reduction, dateTime&seconds, leap ', dateTime%seconds, dateTime%leapseconds
     ! call dump ( datetimeRdcd )
     ! Now convert to our internal representations
     if ( datetimeRdcd%dai < 0 ) then
@@ -603,16 +619,26 @@ contains
   end subroutine RestoreStartingDate
 
   ! Converts TAI93 in seconds to an MLS DateTime datatype
-  elemental function tai93s2datetime(tai93s) result (datetime)
-    double precision, intent(in)   :: tai93s
+  elemental function tai93s2datetime( tai93s, leapsec ) &
+    & result ( datetime )
+    double precision, intent(in)           :: tai93s
+    logical, optional, intent(in)          :: leapsec
     !---function--result---!
     type(MLSDATE_TIME_T)           :: datetime
     !----local -----!
     integer          :: dai93         ! Number of days after 1 Jan 1993
+    logical :: myLeapSec
     ! Executable
+    myLeapSec = .false.
+    if ( present(leapsec) ) myLeapSec = leapsec
     dai93 = int(tai93s / 86400 + 0.5d-8)
-    datetime%seconds = tai93s - 86400*dai93
-    ! Now apply offset convert it to dai (2001)
+    if ( myLeapSec ) then
+      dateTime%leapSeconds = HowManyleapSeconds( dai93, start='19930101' )
+      datetime%seconds = tai93s - 86400*dai93 !  - dateTime%leapSeconds
+    else
+      datetime%seconds = tai93s - 86400*dai93
+    endif
+    ! Now apply offset converting dai93 to dai (2001)
     datetime%dai = dai93 - DAI93TODAI01 ! daysbetween2utcs( '1993-01-01', '2001-01-01' )
   end function tai93s2datetime
 
@@ -805,7 +831,7 @@ contains
     endif
   end function lastday
 
-  function days_in_year(year) result(days) 
+  elemental function days_in_year(year) result(days) 
     !Public function returns no. of days in a year
     integer,intent(in)::year
     integer::days
@@ -1396,18 +1422,28 @@ contains
   end function precedesutc
 
   ! ---------------------------------------------  reducedatetime  -----
-  subroutine reducedatetime(datetime)
+  subroutine reducedatetime( datetime, leapsec )
     ! Reduces the seconds field of a datetime to a permissible value
     ! possibly adjusting the dai field in compensation
+    ! If leapsec is present, and TRUE, account for leapseconds
     ! Args
-    type(MLSDate_time_t)         :: datetime
+    type(MLSDate_time_t)          :: datetime
+    logical, optional, intent(in) :: leapsec
     ! Internal
     integer                      :: dai
     integer                      :: extra  ! Extra days adjustment to dai
+    logical :: myLeapSeconds
     real                         :: seconds
     ! Executable
     seconds = datetime%seconds
     dai = datetime%dai
+    myLeapSeconds = .false.
+    if ( present(leapsec) ) myLeapSeconds = leapsec
+    ! Leap seconds?
+    if ( myLeapSeconds ) then
+      datetime%seconds = datetime%seconds - datetime%leapseconds
+      datetime%leapseconds = 0 ! (Lest we accidentally do this again)
+    endif
     if ( seconds < 0. ) then
       extra = -1 + seconds/SECONDSINADAY
       dai = dai + extra
@@ -1734,23 +1770,27 @@ contains
   end function timeForm
 
   ! ---------------------------------------------  secondsbetween2utcs  -----
-  function secondsbetween2utcs( utc1, utc2 ) result(seconds)
+  function secondsbetween2utcs( utc1, utc2, leapsec ) result(seconds)
     ! Find how many seconds separate two utcs
+    ! Optionally accound for leap seconds
     ! Args
     character(len=*), intent(in) :: utc1, utc2
+    logical, optional, intent(in) :: leapsec
     double precision             :: seconds
     ! Internal
     type(MLSDate_time_T)         :: datetime1, datetime2
     integer                      :: days
     ! Executable
-    datetime1 = utc2datetime(utc1)
-    datetime2 = utc2datetime(utc2)
+    datetime1 = utc2datetime( utc1 )
+    datetime2 = utc2datetime( utc2 )
     ! print *, 'utc1, utc2 ', utc1, ' ', utc2
     ! call dump (datetime1)
     ! call dump (datetime2)
     days = datetime2%dai - datetime1%dai
     ! print *, 'days ', days
     seconds = 24.d0*60*60*days + ( datetime2%seconds - datetime1%seconds )
+    if ( .not. present(leapsec) ) return
+    if ( leapsec ) seconds = seconds + ( datetime2%leapseconds - datetime1%leapseconds )
   end function secondsbetween2utcs
 
   ! ---------------------------------------------  secondsindaydble  -----
@@ -2062,9 +2102,11 @@ contains
 
   ! ------------ utc2tai93s ------
   ! Function returns time since midnight Jan 1 1993 in s
+  ! Optionally accounts for leap seconds
   ! (see also secondsbetween2utcs)
-  function utc2tai93s ( utc ) result ( tai93s )
+  function utc2tai93s ( utc, leapsec ) result ( tai93s )
     character(len=*), intent(in) :: utc
+    logical, optional, intent(in) :: leapsec
     double precision             :: tai93s
     type(MLSDATE_TIME_T)         :: datetime
     integer :: eudtf
@@ -2074,6 +2116,11 @@ contains
     ! so we need to offset it
     eudtf = daysince2eudtf( datetime%dai, 2001001 )
     tai93s = datetime%seconds + 24*3600*eudtf2daysince( eudtf, 1993001 )
+    if ( .not. present(leapsec) ) return
+    if ( leapsec ) &
+      & tai93s = tai93s + HowManyleapSeconds( &
+      & eudtf2daysince( eudtf, 1993001 ), start='19930101' &
+      & )
   end function utc2tai93s
   
   ! ---------------------------------------------  utc_to_yyyymmdd_strs  -----
@@ -2170,6 +2217,59 @@ contains
     end select
   end function utcForm
 
+  ! ---------------------------------------------  yyyymmdd_to_dai_pure  -----
+  elemental subroutine yyyymmdd_to_dai_pure( yyyymmdd, dai, startingDate )
+    ! Routine that returns the number of days after a starting date
+    ! from yyyymmdd taking great pains to be elemental
+    !--------Argument--------!
+    character(len=*), intent(in) :: yyyymmdd
+    integer,intent(out) :: dai
+    character(len=*),intent(in), optional :: startingDate  ! If not Jan 1 2001
+    !----------Local vars----------!
+    character(len=16) :: mystartingDate
+    integer :: yyyy1, mm1, dd1, doy1 ! Based on input yyyymmdd
+    integer :: yyyy2 !, doy2
+    integer :: yr
+    !----------Executable part----------!
+   if(present(startingDate)) then
+      mystartingDate=startingDate
+   else
+      mystartingDate=MLSStartingDate
+   endif
+   yyyy1 = 1000*chartoint(yyyymmdd(1:1)) + 100*chartoint(yyyymmdd(2:2)) + &
+     & 10*chartoint(yyyymmdd(3:3)) + chartoint(yyyymmdd(4:4))
+   mm1 = 10*chartoint(yyyymmdd(5:5)) + chartoint(yyyymmdd(6:6))
+   if ( len_trim(yyyymmdd) > 7 ) then
+     dd1 = 10*chartoint(yyyymmdd(7:7)) + chartoint(yyyymmdd(8:8))
+   else
+     dd1 = chartoint(yyyymmdd(7:7))
+   endif
+   doy1 = DayOfYear( yyyy1, mm1, dd1 )
+
+   yyyy2 = 1000*chartoint(mystartingDate(1:1)) + 100*chartoint(mystartingDate(2:2)) + &
+     & 10*chartoint(mystartingDate(3:3)) + chartoint(mystartingDate(4:4))
+   mm1 = 10*chartoint(mystartingDate(5:5)) + chartoint(mystartingDate(6:6))
+   if ( len_trim(mystartingDate) > 7 ) then
+     dd1 = 10*chartoint(mystartingDate(7:7)) + chartoint(mystartingDate(8:8))
+   else
+     dd1 = chartoint(mystartingDate(7:7))
+   endif
+   ! doy2 = DayOfYear( yyyy2, mm1, dd1 )
+   dai = doy1
+   if ( yyyy2 < yyyy1 ) then
+    do yr = yyyy2, yyyy1 - 1
+      dai = dai + days_in_year ( yr )
+    enddo
+   elseif ( yyyy2 > yyyy1 ) then
+     ! Uh-oh, looks like dai will have to be negative
+    do yr = yyyy1 - 1, yyyy2
+      dai = dai - days_in_year ( yr )
+    enddo
+   ! elseif ( yyyy2 == yyyy1 ) then
+   !   dai = doy1 
+   endif
+  end subroutine yyyymmdd_to_dai_pure
+
   ! ---------------------------------------------  yyyymmdd_to_dai_ints  -----
   subroutine yyyymmdd_to_dai_ints(yyyy, mm, dd, dai, startingDate)
     ! Routine that returns the number of days after a starting date
@@ -2262,6 +2362,53 @@ contains
   end subroutine yyyymmdd_to_dai_str
 
   ! Private procedures
+  elemental subroutine yyyyMondd_yyyymmdd_str( yyyyMondd, yyyymmdd )
+    ! Routine that returns the string yyyymmdd
+    ! from a string of the form yyyyMondd
+    !--------Argument--------!
+    character(len=*), intent(in)  :: yyyyMondd
+    character(len=*), intent(out) :: yyyymmdd
+    !----------Local vars----------!
+    character(len=16) :: yyyy, Mon, dd, mm
+    !----------Executable part----------!
+    call SplitWords( yyyyMondd, yyyy, Mon, dd, &
+       & threeWay=.true., delimiter=' ' )
+    if ( len_trim(dd) < 2 ) then
+      dd = '0' // dd
+    elseif ( len_trim(dd) < 1 ) then
+      dd = '01'
+    endif
+    select case ( lowercase(Mon(1:3)) )
+    case ( 'jan' )
+      mm = '01'
+    case ( 'feb' )
+      mm = '02'
+    case ( 'mar' )
+      mm = '03'
+    case ( 'apr' )
+      mm = '04'
+    case ( 'may' )
+      mm = '05'
+    case ( 'jun' )
+      mm = '06'
+    case ( 'jul' )
+      mm = '07'
+    case ( 'aug' )
+      mm = '08'
+    case ( 'sep' )
+      mm = '09'
+    case ( 'oct' )
+      mm = '10'
+    case ( 'nov' )
+      mm = '11'
+    case ( 'dec' )
+      mm = '12'
+    case default
+      mm = '01'
+    end select
+    yyyymmdd = yyyy(1:4) // mm(1:2) // dd(1:2)
+  end subroutine yyyyMondd_yyyymmdd_str
+
   ! ---------------------------------------------  yyyymmdd_to_doy_ints  -----
   subroutine yyyymmdd_to_doy_ints(year, month, day, doy)
     ! Routine that returns the number of days after the year's start
@@ -2421,6 +2568,59 @@ contains
      DayNumberOfWeek = mod( STARTINGDAYOFWEEK + dai - 1, 7 ) + 1
   end function DayNumberOfWeek
 
+  ! ---------------------------------------------------  DayOfYear  -----
+  elemental integer function DayOfYear( year, month, day )
+    integer, intent(in) :: year, month, day
+     ! Given year, month, and day return day-of-year
+     integer :: mon
+     DayOfYear = day
+     do mon = 1, 12
+       if ( mon >= month ) return
+       DayOfYear = DayOfYear + daysInMonth( mon, year )
+     enddo
+  end function DayOfYear
+
+  ! ---------------------------------------------------  HowManyleapSeconds  -----
+  elemental integer function HowManyleapSeconds( dai, Start )
+    integer,intent(in) :: dai
+    character(len=*), optional, intent(in) :: Start
+    ! How many leap seconds have been added since January 1 2001 until dai
+    ! If Start present, use it instead of January 1 2001
+    
+    ! Bugs and limitations:
+    ! If dai is before January 1 2001 (or whatever starting date we use) returns 0
+    ! If Start is present, we don't check for its validity
+    ! If there are more leap second dates declared after the last leapSecDates
+    ! you must add it to the array and recompile
+    ! Variables
+    integer :: i
+    integer, dimension(size(leapSecDates)) :: leapSecDais
+    character(len=16) :: yyyymmdd
+    ! First, calculate dai for each leap second date
+    do i =1, size(leapSecDates)
+      ! Note that reFormatDate can't be made elemental due to its use of 
+      ! read/write to internal files
+      ! Someday we must repair that
+      ! yyyymmdd = reFormatDate( leapSecDates(i), &
+      ! & fromForm='yyyy MMM dd', toForm='yyyymmdd' )
+     call yyyyMondd_yyyymmdd_str( leapSecDates(i), yyyymmdd )
+     ! For the same reason, yyyymmdd_to_dai can't be made elemental, either
+     !  (Sigh--all this hackery-quackery because of something so simple?)
+     call yyyymmdd_to_dai_pure( yyyymmdd, leapSecDais(i), start )
+    enddo
+    ! Method: for each +tive leap second date, compare it with dai
+    ! If it was prior to dai, add another leap second
+    ! If it was after, the current leap second total is the final value
+    ! If the leap second date is < 0, then it occurred before January 1 2001
+    ! (or whatever starting time we are using), so we must not add
+    ! another leap second
+    HowManyleapSeconds = 0
+    do i =1, size(leapSecDates)
+      if ( leapSecDais(i) > dai ) return
+      if ( leapSecDais(i) > 0 ) HowManyleapSeconds = HowManyleapSeconds + 1
+    enddo
+  end function HowManyleapSeconds
+
   ! ---------------------------------------------------  Leapyear  -----
   elemental logical function leapyear(year)
     integer,intent(in) :: year
@@ -2544,6 +2744,7 @@ contains
     call yyyymmdd_to_dai_ints( year, month, day, datetime%dai )
     datetime%seconds = hhmmss2seconds(hhmmss)
     ! call dumpDateTime(datetime, 'From utc2datetime')
+    dateTime%leapSeconds = HowManyleapSeconds ( datetime%dai )
   end function utc2datetime
 
   ! ------------------------------------  myMessage  -----
@@ -2584,6 +2785,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.31  2014/02/13 00:01:24  pwagner
+! Repaired bugs in Reformatting dates containing month names
+!
 ! Revision 2.30  2013/08/28 00:38:17  pwagner
 ! Added a local version of MyMessage to evade possible circular dependency
 !
