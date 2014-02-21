@@ -27,8 +27,7 @@ module ForwardModelSupport
 
   ! Error codes
 
-  integer, parameter :: AllocateError          = 1
-  integer, parameter :: BadBinSelectors        = AllocateError + 1
+  integer, parameter :: BadBinSelectors        = 1
   integer, parameter :: BadHeightUnit          = BadBinSelectors + 1
   integer, parameter :: BadMoleculeGroup       = BadHeightUnit + 1
   integer, parameter :: BadQuantityType        = BadMoleculeGroup + 1
@@ -379,7 +378,8 @@ contains ! =====     Public Procedures     =============================
     ! Process the forwardModel specification to produce ForwardModelConfig to
     ! add to the database
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & Test_Allocate
     use Declaration_Table, only: Value_t
     use EXPR_M, only: EXPR
     use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T, &
@@ -436,7 +436,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Found                    ! Where something is found in a list
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: GSON                     ! Son of son
-    integer :: I, J, K                  ! Subscript and loop inductor.
+    integer :: I, J, K, M               ! Subscript and loop inductor.
     integer :: LBLTrees(2)              ! Tree indices of f_[lu]sbLBLMolecules
     type(spectroParam_t), pointer :: LineStru(:)
     integer :: LineTrees(3)             ! Tree indices of f_line...
@@ -444,6 +444,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MoleculeTree             ! Tree index of f_Molecules
     integer, dimension(:), pointer :: MyMolecules ! In a LineTree
     integer :: NELTS                    ! Number of elements of an array tree
+    integer :: NGroup                   ! Number of beta groups
     logical :: No_Dup_Mol               ! Duplicate molecules => error
     integer :: NumPFA, NumLBL           ! Numbers of such molecules in a beta group
     integer :: PFATrees(2)              ! Tree indices of f_[lu]sbPFAMolecules
@@ -570,9 +571,9 @@ contains ! =====     Public Procedures     =============================
         info%forceSidebandFraction = get_boolean(son)
       case ( f_frqTol )
         call expr ( subtree(2,son), expr_units, value, type )
-        info%frqTol = value(1)
       case ( f_i_saturation )
-        info%i_saturation = decoration(subtree(2,son))
+        call expr ( subtree(2,son), expr_units, value, type )
+        info%i_saturation = nint(value(1))
       case ( f_ignoreHessian )
         info%ignoreHessian = get_boolean(son)
       case ( f_incl_cld )
@@ -642,7 +643,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_signals )
         info%noUsedChannels = 0
         allocate ( info%signals (nsons(son)-1), stat = status )
-        if ( status /= 0 ) call announceError( AllocateError, root )
+        call test_allocate ( status, moduleName, 'info%signals' )
         info%signals%index = -1 ! Indicate error, covered up if successful
         call allocate_test ( info%signalIndices, nsons(son)-1, &
           & 'Info%SignalIndices', moduleName )
@@ -741,46 +742,71 @@ contains ! =====     Public Procedures     =============================
     s1 = (info%sidebandStart+3)/2; s2 = (info%sidebandStop+3)/2
 
     ! Now the molecule lists.
-    nelts = 0    ! Total number of molecules, not counting group names
+    nGroup = 0   ! Number of beta groups
     if ( got(f_molecules) ) then
       ! Create the Beta_Group structure.  Temporarily assume all the
       ! molecules are LBL.  We'll separate them later, when processing
-      ! the LBL or PFA Molecules trees.
-      allocate ( info%beta_group(nsons(moleculeTree)-1), stat = status )
-      if ( status /= 0 ) call announceError( AllocateError, moleculeTree )
+      ! the LBL or PFA Molecules trees.  Type checker guarantees molecules.
+      ! First, count the groups.  This isn't just the number of sons, because
+      ! they might be array-valued variables.  So it's the sum of the number
+      ! of elements of the sons, with each array, i.e., [...], son counted as
+      ! one beta group.
+      do m = 2, nsons(moleculeTree)
+        son = subtree(m,moleculeTree)
+        if ( node_id(son) == n_array ) then
+          nGroup = nGroup + 1
+        else
+          call expr ( son, expr_units, value, type, values=values )
+          nGroup = nGroup + size(values)
+        end if
+      end do
+      allocate ( info%beta_group(nGroup), stat = status )
+      call test_allocate ( status, moduleName, 'info%beta_group' )
       do b = 1, nsons(moleculeTree) - 1
         son = subtree(b+1,moleculeTree)
-        call expr ( son, expr_units, value, type, values=values )
         info%beta_group(b)%group = node_id(son) == n_array
         if ( info%beta_group(b)%group ) then
           if ( info%fwmType /= l_full ) &
             & call announceError ( noBetaGroup, son )
-          call allocate_test ( info%beta_group(b)%lbl(1)%molecules, nsons(son)-1, &
-            & 'info%beta_group(b)%lbl(1)%molecules', moduleName )
-          call allocate_test ( info%beta_group(b)%lbl(2)%molecules, nsons(son)-1, &
-            & 'info%beta_group(b)%lbl(2)%molecules', moduleName )
-          info%beta_group(b)%molecule = decoration(subtree(1,son)) ! group name
-          j = nsons(son)
-          if ( j < 2 ) call announceError ( badMoleculeGroup, son )
-          nelts = nelts + j - 1
-          do j = 2, j
+          ! Count the number of elements in the beta group.  It's not just
+          ! the number of sons because elements might be array-valued
+          ! variables.  The first element of the first variable is the
+          ! group name.
+          nelts = 0
+          do j = 1, nsons(son)
             gson = subtree(j,son)
-            if ( node_id(gson) == n_array ) then
-              call announceError ( nested, gson )
-            else
-              info%beta_group(b)%lbl(1)%molecules(j-1) = decoration(gson)
-            end if
+            call expr ( gson, expr_units, value, type, values=values )
+            nelts = nelts + size(values) - merge(1,0,j==1)
           end do
-          info%beta_group(b)%lbl(2)%molecules = info%beta_group(b)%lbl(1)%molecules
-        else ! type checker guarantees a molecule name here
-          nelts = nelts + 1
-          info%beta_group(b)%molecule = decoration(son)
-          call allocate_test ( info%beta_group(b)%lbl(1)%molecules, 1, &
-            & 'info%beta_group(b)%lbl(1)%molecules', moduleName )
-          call allocate_test ( info%beta_group(b)%lbl(2)%molecules, 1, &
-            & 'info%beta_group(b)%lbl(2)%molecules', moduleName )
-          info%beta_group(b)%lbl(1)%molecules(1) = info%beta_group(b)%molecule
-          info%beta_group(b)%lbl(2)%molecules(1) = info%beta_group(b)%molecule
+          if ( nelts < 1 ) call announceError ( badMoleculeGroup, son )
+          do s = 1, 2 ! Both sidebands
+            call allocate_test ( info%beta_group(b)%lbl(s)%molecules, nelts, &
+              & 'info%beta_group(b)%lbl(s)%molecules', moduleName )
+          end do
+          nelts = 1
+          do j = 1, nsons(son)
+            gson = subtree(j,son)
+            call expr ( gson, expr_units, value, type, values=values )
+            if ( j == 1 ) & ! group name
+              & info%beta_group(b)%molecule = nint(values(1)%value(1))
+            m = size(values) - merge(1,0,j==1)
+            do s = 1, 2 ! Both sidebands
+              info%beta_group(b)%lbl(s)%molecules(nelts:nelts+m-1) = &
+                & nint(values(merge(2,1,j==1):)%value(1))
+            end do
+            nelts = nelts + m
+          end do ! j = 1, nsons(son)
+        else
+          call expr ( son, expr_units, value, type, values=values )
+          ! Each element is a separate beta group
+          do m = 1, size(values)
+            info%beta_group(b)%molecule = nint(values(m)%value(1)) ! group name
+            do s = 1, 2 ! Both sidebands
+              call allocate_test ( info%beta_group(b)%lbl(s)%molecules, 1, &
+                & 'info%beta_group(b)%lbl(s)%molecules', moduleName )
+              info%beta_group(b)%lbl(s)%molecules(1) = info%beta_group(b)%molecule
+            end do
+          end do
         end if
         do s = s1, s2 ! both sidebands
           if ( max(pfaTrees(s),lblTrees(s)) /= null_tree ) then
@@ -797,7 +823,7 @@ contains ! =====     Public Procedures     =============================
       end do ! b = 1, nsons(moleculeTree) - 1
     else
       allocate ( info%beta_group(0), stat = status )
-      if ( status /= 0 ) call announceError( AllocateError, moleculeTree )
+      call test_allocate ( status, moduleName, 'info%beta_group', [1], [0] )
     end if
     info%molecules => info%beta_group%molecule
 
@@ -842,18 +868,21 @@ op:     do j = 2, nsons(theTree)
             call announceError ( NoArray, son )
             cycle
           end if
-          thisMolecule = decoration( son )
-          do b = 1, size(info%beta_group)
-            do k = 1, size(info%beta_group(b)%lbl(s)%molecules)
-              if ( thisMolecule == info%beta_group(b)%lbl(s)%molecules(k) ) then
-                ! Duplicate in list is warning, not error.
-!                 if ( info%beta_group(b)%pfa(s)%molecules(k) /= 0 ) &
-!                   & call announceError ( PFATwice, son, warn=.true. )
-                info%beta_group(b)%pfa(s)%molecules(k) = -1
-                cycle op
-              end if
-            end do ! k = 1, size(info%beta_group(b)%lbl(s)%molecules)
-          end do ! b = 1, size(info%beta_group)
+          call expr ( son, expr_units, value, type, values=values )
+          do m = 1, size(values)
+            thisMolecule = nint(values(m)%value(1))
+            do b = 1, size(info%beta_group)
+              do k = 1, size(info%beta_group(b)%lbl(s)%molecules)
+                if ( thisMolecule == info%beta_group(b)%lbl(s)%molecules(k) ) then
+                  ! Duplicate in list is warning, not error.
+!                   if ( info%beta_group(b)%pfa(s)%molecules(k) /= 0 ) &
+!                     & call announceError ( PFATwice, son, warn=.true. )
+                  info%beta_group(b)%pfa(s)%molecules(k) = -1
+                  cycle op
+                end if
+              end do ! k = 1, size(info%beta_group(b)%lbl(s)%molecules)
+            end do ! b = 1, size(info%beta_group)
+          end do
           call announceError ( PFANotMolecule, son )
         end do op ! j = 2, nsons(theTree)
         ! Divide the LBL and PFA molecules into separate lists
@@ -911,8 +940,14 @@ op:     do j = 2, nsons(theTree)
     ! Now the spectroscopy parameters.  They only make sense for LBL.
     do i = lineCenter, lineWidth_TDep
       ! Make a list of the molecules
-      allocate ( lineStru(max(nsons(lineTrees(i))-1,0)), stat=status )
-      if ( status /= 0 ) call announceError( AllocateError, lineTrees(i) )
+      nelts = 0
+      do j = 2, nsons(LineTrees(i))
+        son = subtree( j, LineTrees(i) )
+        call expr ( son, expr_units, value, type, values=values )
+        nelts = nelts + size(values)
+      end do
+      allocate ( lineStru(nelts), stat=status )
+      call test_allocate ( status, moduleName, 'LineStru' )
       select case ( i )
       case ( lineCenter )
         info%lineCenter => lineStru
@@ -923,18 +958,23 @@ op:     do j = 2, nsons(theTree)
       end select
       if ( lineTrees(i) == null_tree ) cycle
       myMolecules => lineStru%molecule
+      nelts = 0
       do j = 2, nsons(LineTrees(i))
         son = subtree( j, LineTrees(i) )
         if ( node_id(son) == n_array ) then
           call announceError ( NoArray, son )
           cycle
         end if
-        myMolecules(j-1) = decoration( son )
-        ! Look for duplicates
-        do k = 2, j-1
-          if ( myMolecules(k-1) == thisMolecule ) &
-            & call announceError ( lineParamTwice, son )
-        end do  ! k = 2, j-1
+        call expr ( son, expr_units, value, type, values=values )
+        do m = 1, size(values)
+          nelts = nelts + 1
+          myMolecules(nelts) = nint(values(m)%value(1))
+          ! Look for duplicates
+          do k = 2, nelts-1
+            if ( myMolecules(k-1) == thisMolecule ) &
+              & call announceError ( lineParamTwice, son )
+          end do  ! k = 2, nelts-1
+        end do ! m = 1, size(values)
       end do ! j = 2, nsons(LineTrees(i))
       ! Check that molecules are in some LBL's molecule list
       do s = s1, s2 ! Sideband
@@ -974,11 +1014,15 @@ op:     do j = 2, nsons(theTree)
         & call announceError ( firstSansFirst1, derivTree )
 
       do j = 2, nsons(derivTree)
-        thisMolecule = decoration( subtree( j, derivTree ) )
-        if ( .not. any(info%molecules == thisMolecule) ) &
-          & call announceError ( derivSansMolecules, subtree(j,derivTree) )
-        if ( got(f_molecules) ) where ( info%molecules == thisMolecule ) &
-          & info%moleculeDerivatives = .true.
+        son = subtree( j, derivTree )
+        call expr ( son, expr_units, value, type, values=values )
+        do m = 1, size(values)
+          thisMolecule = nint(values(m)%value(1))
+          if ( .not. any(info%molecules == thisMolecule) ) &
+              & call announceError ( derivSansMolecules, subtree(j,derivTree) )
+          if ( got(f_molecules) ) where ( info%molecules == thisMolecule ) &
+              & info%moleculeDerivatives = .true.
+        end do ! m = 1, size(values)
       end do                          ! End loop over listed species
     else if ( info%atmos_der ) then
       call announceError ( firstSansFirst2, derivTree )
@@ -993,11 +1037,15 @@ op:     do j = 2, nsons(theTree)
         & call announceError ( secondSansSecond1, secondDerivTree )
 
       do j = 2, nsons(secondDerivTree)
-        thisMolecule = decoration( subtree( j, secondDerivTree ) )
-        if ( .not. any(info%molecules == thisMolecule) ) &
-          & call announceError ( derivSansMolecules, subtree(j,secondDerivTree) )
-        if ( got(f_molecules) ) where ( info%molecules == thisMolecule ) &
-          & info%moleculeSecondDerivatives = .true.
+        son = subtree( j, secondDerivTree )
+        call expr ( son, expr_units, value, type, values=values )
+        do m = 1, size(values)
+          thisMolecule = nint(values(m)%value(1))
+          if ( .not. any(info%molecules == thisMolecule) ) &
+            & call announceError ( derivSansMolecules, subtree(j,secondDerivTree) )
+          if ( got(f_molecules) ) where ( info%molecules == thisMolecule ) &
+            & info%moleculeSecondDerivatives = .true.
+        end do ! m = 1, size(values)
       end do                          ! End loop over listed species
     else if ( info%atmos_second_der ) then
        call announceError ( secondSansSecond2, secondDerivTree )
@@ -1332,8 +1380,6 @@ op:     do j = 2, nsons(theTree)
     call startErrorMessage ( where )
     call output ( ' ForwardModelSupport complained: ' )
     select case ( code )
-    case ( AllocateError )
-      call output ( 'Allocation error.', advance='yes' )
     case ( BadBinSelectors )
       call output ('Cannot have a fieldAzimuth binSelector for polarlinear model', &
         & advance='yes' )
@@ -1466,6 +1512,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.175  2014/02/21 20:29:21  vsnyder
+! Process variables where molecules are expected
+!
 ! Revision 2.174  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
