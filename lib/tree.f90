@@ -19,7 +19,8 @@ module TREE
   use SYMBOL_TABLE, only: SET_SYMBOL, SYMBOL
   use SYMBOL_TYPES, only: TREENODE
   use TOGGLES, only: CON, TOGGLE
-  use TREE_TYPES, only: LAST_TREE_NODE, N_EOF, N_NULL, TREE_INIT, TREE_MAP
+  use TREE_TYPES, only: FIRST_TREE_NODE, LAST_TREE_NODE, N_NULL, TREE_INIT, &
+    & TREE_MAP
   implicit NONE
   private
 
@@ -154,7 +155,7 @@ module TREE
   integer, parameter :: NO_TREE_SPACE = NOT_PSEUDO + 1
   integer, parameter :: UNDERFLOW = NO_TREE_SPACE + 1
 
-  integer, save, private :: TREE_TEXTS(N_EOF:LAST_TREE_NODE)
+  integer, save, private :: TREE_TEXTS(FIRST_TREE_NODE:LAST_TREE_NODE)
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -238,7 +239,7 @@ contains
     integer, intent(in) :: N_TREE
     integer, intent(out), optional :: STATUS ! from ALLOCATE
     integer :: STAT
-    if ( allocated(the_tree) ) then; deallocate ( the_tree ); end if
+    if ( allocated(the_tree) ) deallocate ( the_tree )
     allocate ( the_tree(0:n_tree), stat=stat )
     if ( stat /= 0 ) then
       if ( present(status) ) then
@@ -520,11 +521,11 @@ contains
     logical :: FOUND     ! Did lookup_and_insert find it?
     integer :: I         ! Loop inductor
     integer :: WHERE     ! Where did lookup_and_insert find it?
-    do i = n_eof, last_tree_node
+    do i = first_tree_node, last_tree_node
       call tree_init (i)
       call lookup_and_insert ( where, found, .false. )
       ! It's OK if it found one -- maybe it's a terminal text, too.
-      if ( .not. found ) then; call set_symbol(where, treeNode); end if
+      if ( .not. found ) call set_symbol ( where, treeNode )
       tree_texts(i) = where
     end do
     tree_point = null_tree
@@ -1028,6 +1029,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.29  2014/02/21 19:21:31  vsnyder
+! Use First_Tree_Node instead of N_Eof as the first tree node
+!
 ! Revision 2.28  2014/01/11 01:41:02  vsnyder
 ! Decruftification
 !
