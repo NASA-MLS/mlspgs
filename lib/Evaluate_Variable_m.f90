@@ -79,10 +79,10 @@ contains ! ====     Public Procedures     ==============================
     end if
     if ( details > 0 ) then
       call display_string ( name, before='Final value of ', advance='yes' )
-      call dump_values ( values1, details=9 )
+      call dump_values ( values1, details=details )
     end if
-    !              string  value     type     units  tree
-    call redeclare ( name, value(1), variable, type, root, &
+    !              string  value       type     units  tree
+    call redeclare ( name, name+0.0d0, variable, type, root, &
       & values=values1 ) ! Declares it if it wasn't already declared
     call trace_end ( 'Evaluate_Variable', cond=toggle(gen) )
 
@@ -101,6 +101,9 @@ contains ! ====     Public Procedures     ==============================
 end module Evaluate_Variable_m
 
 ! $Log$
+! Revision 2.5  2014/02/27 02:24:44  vsnyder
+! Redeclare variable consistently with Declare in tree_checker
+!
 ! Revision 2.4  2014/02/21 19:27:16  vsnyder
 ! More work on type checking, especially for enumeration-typed variables
 !
