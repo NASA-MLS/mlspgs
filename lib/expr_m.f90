@@ -328,13 +328,14 @@ contains ! ====     Public Procedures     ==============================
       if ( me == n_unit ) then
         decl = get_decl(sub_rosa(subtree(2,root)), units_name)
         units = decl%units
-        values1%units(1) = units
-        values1%units(2) = units
+        values1%units(1) = units(1)
+        values1%units(2) = units(2)
         if ( decl%value > 0.0 ) then
           value(1) = value(1) * decl%value
         else
           value(1) = value(1) - decl%value
         end if
+        values1(1)%value(1) = value(1)
         if ( present(scale) ) scale(1) = decl%value
       else
         if ( nsons(root) > 1 ) &
@@ -348,6 +349,8 @@ contains ! ====     Public Procedures     ==============================
           if ( present(scale) ) scale(2) = scale2(1)
           if ( myType == num_value ) myType = range
           if ( myType == str_value ) myType = str_range
+          values1%what = myType
+          values1%decor = me
         case ( n_plus, n_minus ) ! -----------------------------------------
           if ( nsons(root) > 1 ) then
             if ( .not. check_units ( values1, values2 ) ) &
@@ -907,6 +910,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.33  2014/02/27 02:27:40  vsnyder
+! Corrections to units and ranges
+!
 ! Revision 2.32  2014/02/21 19:26:03  vsnyder
 ! Extensive work for variables and enumeration-type results
 !
