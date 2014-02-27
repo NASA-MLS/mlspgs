@@ -58,7 +58,8 @@ module TREE_CHECKER
   integer, private, parameter :: ALREADY_DECLARED = 1
   integer, private, parameter :: ARRAY_NOT_ALLOWED = ALREADY_DECLARED + 1
   integer, private, parameter :: EMPTY_NOT_ALLOWED = ARRAY_NOT_ALLOWED + 1
-  integer, private, parameter :: IMPROPER_CYCLE_EXIT = EMPTY_NOT_ALLOWED + 1
+  integer, private, parameter :: IMPROPER_CYCLE = EMPTY_NOT_ALLOWED + 1
+  integer, private, parameter :: IMPROPER_CYCLE_EXIT = IMPROPER_CYCLE + 1
   integer, private, parameter :: INCONSISTENT_DATA_TYPES = IMPROPER_CYCLE_EXIT + 1
   integer, private, parameter :: INCONSISTENT_TYPES = INCONSISTENT_DATA_TYPES + 1
   integer, private, parameter :: INCONSISTENT_UNITS = INCONSISTENT_TYPES + 1
@@ -223,9 +224,12 @@ contains ! ====     Public Procedures     ==============================
       call display_string ( field_indices(fields(1)), &
         & before='an empty value is not allowed for the "' )
       call output ( '" field.', advance='yes' )
+    case ( improper_cycle )
+      call output ( 'CYCLE does not refer to a DO or WHILE construct.', &
+        & advance='yes' )
     case ( improper_cycle_exit )
       call output ( 'CYCLE or EXIT within a section cannot refer to' )
-      call output ( ' a DO construct enclosing a section.', advance='yes' )
+      call output ( ' a construct enclosing a section.', advance='yes' )
     case ( inconsistent_data_types )
       call output ( 'data types are not consistent' )
       if ( present(expect) ) then
@@ -879,7 +883,15 @@ contains ! ====     Public Procedures     ==============================
       call announce_error ( root, no_cycle_exit_target )
     else
       if ( nsons(root) == 0 ) then ! EXIT or CYCLE that doesn't name a construct
-        do_tree = do_construct_stack(do_stack_top)
+        do_tree = 0
+        ! Hunt for DO or WHILE construct
+        do i = do_stack_top, 1, -1
+          if ( node_id(do_construct_stack(i)) == n_do .or. &
+             & node_id(do_construct_stack(i)) == n_while ) then
+            do_tree = do_construct_stack(i)
+            exit
+          end if
+        end do
       else                         ! EXIT or CYCLE that does name a construct
         do_tree = 0
         ! Hunt for the label on DO constructs in the stack
@@ -896,10 +908,13 @@ contains ! ====     Public Procedures     ==============================
       if ( do_tree == 0 ) then
         call announce_error ( root, no_cycle_exit_target )
       else
-        if ( decoration(do_tree) == in_or_out ) then
-          call decorate ( root, do_tree )
-        else
+        if ( node_id(root) == n_cycle .and. node_id(do_tree) /= n_do .and. &
+             node_id(do_tree) /= n_while ) then
+          call announce_error ( root, improper_cycle )
+        else if ( decoration(do_tree) /= in_or_out ) then
           call announce_error ( root, improper_cycle_exit )
+        else
+          call decorate ( root, do_tree )
         end if
       end if
     end if
@@ -1353,6 +1368,7 @@ contains ! ====     Public Procedures     ==============================
 !         call local_error ( root, inconsistent_units, (/ son1, son2 /) )
 !       end if
       if ( type == num_value ) type = range
+      if ( type == str_value ) type = str_range
     case ( n_less, n_less_eq, n_greater, n_greater_eq, n_equal_equal, n_not_equal )
       ! Value is zero if expression is false, or if either operand is not numeric
       son1 = subtree(1,root); son2 = subtree(2,root)
@@ -1694,20 +1710,30 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: Root ! N_If node
     integer, intent(in), optional :: Son1 ! First son of parent CF
     type(decls), intent(in), optional :: DECL ! Declaration of "name" on "begin name"
-    integer :: Gson, I, J, Son, Start
+    integer :: Begin, Gson, I, J
     integer :: Me = -1             ! String index for trace
-    integer :: Stat, Type, Units
+    integer :: Son, Start, Stat, String, Type, Units
     double precision :: Value      ! not used
 
     call trace_begin ( me, 'IF_Construct', root, cond=toggle(con) )
-    do i = 1, nsons(root)
+    begin = 1 ! Assume first son is not n_named
+    son = subtree(1,root)
+    if ( node_id(son) == n_named ) then
+      gson = subtree(1,son)
+      if ( check_label(gson) ) then
+        string = sub_rosa(gson)
+        call declare ( string, 0.0d0+string, do_label, phyq_invalid, root )
+      end if
+      begin = 2
+    end if
+    do i = begin, nsons(root)
       son = subtree(i,root)
-      start = 1   ! Assume ELSE
+      start = begin   ! Assume ELSE
       if ( node_id(son) == n_test ) then ! if ( expr ) or else if ( expr )
         stat = expr(subtree(1,son),type,units,value)
         if ( type /= enum_value .or. units /= t_boolean ) call announce_error ( &
           & subtree(1,son), wrong_expr_type, expect=log_value )
-        start = 2 ! ELSE IF, skip the EXPR we just processed
+        start = begin+1 ! ELSE IF, skip the EXPR we just processed
       end if
       if ( present(son1) ) then
         do j = start, nsons(son)
@@ -1857,17 +1883,27 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: Root ! N_Select node
     integer, intent(in), optional :: Son1 ! First son of parent CF
     type(decls), intent(in), optional :: DECL ! Declaration of "name" on "begin name"
-    integer :: Gson, I, J, Son, Start
+    integer :: Begin, Gson, I, J
     integer :: Me = -1        ! String index for trace
-    integer :: Stat, Type1, Type2, Units
+    integer :: Son, Start, Stat, String, Type1, Type2, Units
     double precision :: Value ! not used
     call trace_begin ( me, 'Select_Construct', root, cond=toggle(con) )
-    stat = expr(subtree(1,root),type1,units,value)
-    do i = 2, nsons(root)
+    begin = 1 ! Assume first son is not n_named
+    son = subtree(1,root)
+    if ( node_id(son) == n_named ) then
+      gson = subtree(1,son)
+      if ( check_label(gson) ) then
+        string = sub_rosa(gson)
+        call declare ( string, 0.0d0+string, do_label, phyq_invalid, root )
+      end if
+      begin = 2
+    end if
+    stat = expr(subtree(begin,root),type1,units,value)
+    do i = begin+1, nsons(root)
       son = subtree(i,root)
-      start = 1    ! Assume CASE DEFAULT
+      start = begin    ! Assume CASE DEFAULT
       if ( node_id(son) == n_test ) then
-        stat = expr(subtree(1,root),type2,units,value)
+        stat = expr(subtree(1,son),type2,units,value)
         if ( type1 /= type2 ) call announce_error ( &
           & subtree(1,son), wrong_expr_type, expect=type1 )
         start = 2  ! CASE ( expr ), skip the expr we just processed 
@@ -2210,6 +2246,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.47  2014/02/21 19:19:01  vsnyder
+! More work on variables, especially those with enumerator values
+!
 ! Revision 1.46  2014/01/11 01:42:25  vsnyder
 ! Stuff for variables, some decruftification
 !
