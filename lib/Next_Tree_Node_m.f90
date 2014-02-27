@@ -20,8 +20,8 @@ module Next_Tree_Node_m
   ! Values of Ancestors%what
   integer, parameter :: Go = 0            ! Not immediately within a DO or WHILE
   integer, parameter :: Do_Steps = go + 1 ! Within Do Var := expr, expr [, expr]
-  integer, parameter :: Do_Vals = do_Steps + 1 ! Within Do Var := expr
-  integer, parameter :: Do_While = do_vals + 1 ! Within Do While ( expr )
+  integer, parameter :: Do_Vals = do_Steps + 1 ! Within DO Var := expr
+  integer, parameter :: Do_While = do_vals + 1 ! Within DO WHILE ( expr )
 
   type :: Ancestors_t
     integer :: Root = 0    ! of a subtree under consideration
@@ -62,7 +62,6 @@ contains ! ====     Procedures     =====================================
     use Allocate_Deallocate, only: Memory_Units , Test_Allocate, Test_Deallocate
     use Declaration_Table, only: Enum_Value, Operator(==), Range, Redeclare, &
       & Str_Range, Value_T, Variable
-use Declaration_Table, only: Dump_Values
     use Evaluate_Variable_m, only: Evaluate_Variable
     use Expr_M, only: Expr
     use Intrinsic, only: L_True, T_Boolean  
@@ -80,6 +79,8 @@ use Declaration_Table, only: Dump_Values
     logical, intent(in), optional :: NoVariable ! Don't evaluate variables
     integer, intent(in), optional :: TraceLevel
 
+    integer :: Begin               ! Where to begin on a construct, for
+                                   ! skipping construct labels
     logical :: DoVariable          ! Evaluate variables
     integer :: I                   ! Loop inductor or subtree index (1 or 2)
     integer :: Last                ! Last son of Root to process
@@ -174,9 +175,9 @@ use Declaration_Table, only: Dump_Values
           if ( cycle_or_exit () ) exit o
         case ( n_do )
           call push ( next_tree_node )
-          i = 1
-          if ( node_id(subtree(1,next_tree_node)) == n_named ) i = 2
-          r = subtree(i,next_tree_node) ! N_Do_Head vertex
+          begin = 1
+          if ( node_id(subtree(1,next_tree_node)) == n_named ) begin = 2
+          r = subtree(begin,next_tree_node) ! N_Do_Head vertex
           if ( nsons(r) == 2 ) then
             ! Variable := value (maybe an array)
             state%ancestors(1)%what = do_vals
@@ -208,7 +209,9 @@ use Declaration_Table, only: Dump_Values
           if ( cycle_or_exit () ) exit o
           if ( pop() ) exit o
         case ( n_if )
-          do i = 1, nsons(next_Tree_Node)
+          begin = 1
+          if ( node_id(subtree(1,next_tree_node)) == n_named ) begin = 2
+          do i = begin, nsons(next_Tree_Node)
             r = subtree(i,next_Tree_Node)
             select case ( node_id(r) )
             case ( n_test )
@@ -230,13 +233,15 @@ use Declaration_Table, only: Dump_Values
             end select
           end do
         case ( n_select )
-          call expr ( subtree(1,next_Tree_Node), units, value, type, values=values )
+          begin = 1
+          if ( node_id(subtree(1,next_tree_node)) == n_named ) begin = 2
+          call expr ( subtree(begin,next_Tree_Node), units, value, type, values=values )
           if ( size(values) /= 1 ) call announce_error ( &
-            & subtree(1,next_Tree_Node), 'Expression in SELECT is not scalar' )
+            & subtree(begin,next_Tree_Node), 'Expression in SELECT is not scalar' )
           if ( values(1)%units(1) == range .or. &
              & values(1)%units(1) == str_range) call announce_error ( &
-               & subtree(1,next_Tree_Node), 'Expression in SELECT is a range' )
-          do i = 2, nsons(next_Tree_Node)
+               & subtree(begin,next_Tree_Node), 'Expression in SELECT is a range' )
+          do i = begin+1, nsons(next_Tree_Node)
             r = subtree(i,next_Tree_Node)
             select case ( node_id(r) )
             case ( n_test )
@@ -274,7 +279,7 @@ use Declaration_Table, only: Dump_Values
       end if
     end do o
 
-    call trace_end ( 'Next_Tree_Node', &
+    call trace_end ( 'Next_Tree_Node', index=next_tree_node, &
       & cond=switchLevel >= myLevel )
 
   contains
@@ -517,6 +522,9 @@ use Declaration_Table, only: Dump_Values
 end module Next_Tree_Node_m
 
 ! $Log$
+! Revision 2.4  2014/02/27 02:25:57  vsnyder
+! Handle labels on IF, and SELECT CASE constructs
+!
 ! Revision 2.3  2014/02/21 19:26:30  vsnyder
 ! Add CYCLE, DO, EXIT, WHILE
 !
