@@ -112,7 +112,8 @@ module DECLARATION_TABLE
                                          ! or label
                                          ! Lit index otherwise
     integer :: Units(2) = 0   ! PHYQ_...
-    integer :: Decor = 0      ! Decoration if expr was identifier
+    integer :: Decor = 0      ! Decoration if expr was identifier, or tree
+                              ! node index if type == range or str_range
   end type Value_t
 
   ! Type            Units                  Value           Tree
@@ -315,7 +316,7 @@ contains ! =====     Public Procedures     =============================
 ! --------------------------------------------------  DUMP_A_DECL  -----
   subroutine DUMP_A_DECL ( Decl, Before, Details )
     use Lexer_Core, only: Print_Source
-    use Tree, only: Decoration, Subtree, Sub_Rosa
+    use Tree, only: Decoration, Source_Ref, Subtree, Sub_Rosa
     type(decls), intent(in) :: Decl
     character(len=*), intent(in), optional :: Before
     integer, intent(in), optional :: Details ! 0 -> no tree or source location
@@ -370,7 +371,7 @@ contains ! =====     Public Procedures     =============================
     end select
     if ( myDetails > 0 ) then
       call output ( decl%tree, before=' tree=' )
-      call print_source ( decl%tree, before=' ' )
+      call print_source ( source_ref(decl%tree), before=' ' )
     end if
     if ( allocated(decl%values) ) then
       call output ( ' values:', advance='yes' )
@@ -408,7 +409,7 @@ contains ! =====     Public Procedures     =============================
 
 ! --------------------------------------------------  DUMP_VALUES  -----
   subroutine DUMP_VALUES ( VALUES, BEFORE, ADVANCE, Type_Tree, Details )
-    use Tree, only: Decoration, Subtree, Sub_Rosa
+    use Tree, only: Decoration, Subtree, Sub_Rosa, Tree_Text
     type(value_t), intent(in) :: Values(:)
     character(len=*), intent(in), optional :: BEFORE, ADVANCE
     integer, intent(in), optional :: Type_Tree ! Root of type def if enum_value
@@ -423,6 +424,11 @@ contains ! =====     Public Procedures     =============================
     if ( present(details) ) myDetails = details
     do i = 1, size(values)
       doWhat = myDetails > 1
+      if ( myDetails > 8 ) then
+        call the_numbers
+        call newline
+        doWhat = .false.
+      end if
       call output ( i, places=3 )
       call output ( ': ' )
       select case ( values(i)%what )
@@ -450,11 +456,16 @@ contains ! =====     Public Procedures     =============================
       case ( range )       ! values%value(1:2) are numbers
         call output ( values(i)%value(1) )
         call display_string ( phyq_indices(values(i)%units(1)), before=' ' )
-        call output ( values(i)%value(2), before=' : ', advance='yes' )
+        call output ( values(i)%value(2), before=' : ' )
         call display_string ( phyq_indices(values(i)%units(2)), before=' ' )
+        if ( values(i)%decor /= 0 ) call display_string ( &
+          & tree_text(values(i)%decor), before=' ' )
       case ( str_range )   ! values%value(1:2) are string indices
         call display_string ( nint(values(i)%value(1)) )
         call display_string ( nint(values(i)%value(2)), before=' : ' )
+        if ( values(i)%decor /= 0 ) call display_string ( values(i)%decor, before=' ' )
+        if ( values(i)%decor /= 0 ) call display_string ( &
+          & tree_text(values(i)%decor), before=' ' )
       case ( str_value )   ! values%value(1) is a string index
         n = nint(values(i)%value(1))
         if ( n > 0 ) then
@@ -465,17 +476,22 @@ contains ! =====     Public Procedures     =============================
       case default
         doWhat = .true.
       end select
-      if ( doWhat ) then
-        call output ( values(i)%what, before=' %what=' )
-        call output ( values(i)%type, before=' %type=' )
-        call output ( values(i)%value(1), before=' %value=' )
-        call output ( values(i)%value(2), before=' ' )
-        call output ( values(i)%units(1), before=' %units=' )
-        call output ( values(i)%units(2), before=' ' )
-        call output ( values(i)%decor, before=' %decor=' )
-      end if
+      if ( doWhat ) call the_numbers
       call newline
     end do
+
+  contains
+
+    subroutine The_Numbers
+      call output ( values(i)%what, before=' %what=' )
+      call output ( values(i)%type, before=' %type=' )
+      call output ( values(i)%value(1), before=' %value=' )
+      call output ( values(i)%value(2), before=' ' )
+      call output ( values(i)%units(1), before=' %units=' )
+      call output ( values(i)%units(2), before=' ' )
+      call output ( values(i)%decor, before=' %decor=' )
+    end subroutine The_Numbers
+
   end subroutine DUMP_VALUES
 
 ! -----------------------------------------------  GET_DECL_ARRAY  -----
@@ -612,7 +628,7 @@ contains ! =====     Public Procedures     =============================
           & call move_alloc ( values, decl_table(prior)%values )
         if ( toggle(tab) ) then
           call display_string ( string, before='Redeclare ' )
-          call dump_a_decl ( decl_table(prior), before=' with' )
+          call dump_a_decl ( decl_table(prior), before=' with', details=levels(tab) )
         end if
         return
       end if
@@ -704,6 +720,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.20  2014/02/27 02:27:09  vsnyder
+! More fiddling with the dumps
+!
 ! Revision 2.19  2014/02/21 19:24:32  vsnyder
 ! Add Do_Label, Prior_Decl_Array, polish some dumps
 !
