@@ -571,6 +571,7 @@ contains ! =====     Public Procedures     =============================
         info%forceSidebandFraction = get_boolean(son)
       case ( f_frqTol )
         call expr ( subtree(2,son), expr_units, value, type )
+        info%frqTol = value(1)
       case ( f_i_saturation )
         call expr ( subtree(2,son), expr_units, value, type )
         info%i_saturation = nint(value(1))
@@ -1512,6 +1513,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.176  2014/02/27 02:36:07  vsnyder
+! Restore accidentally removed assignment of FrqTol
+!
 ! Revision 2.175  2014/02/21 20:29:21  vsnyder
 ! Process variables where molecules are expected
 !
