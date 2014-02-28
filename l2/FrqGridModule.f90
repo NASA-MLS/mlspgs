@@ -70,7 +70,6 @@ contains
     integer :: Son                      ! of Root
     real(rk), pointer :: TheFrequencies(:) ! from the Frequencies field
     integer :: TheUnits                 ! of the Frequencies field
-    integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
     double precision :: Value(2)        ! Value returned by EXPR
 
@@ -90,7 +89,7 @@ contains
         call allocate_test ( theFrequencies, nsons(root)-1, 'TheFrequencies', &
           & moduleName )
         do j = 2, nsons(root)
-          call expr ( subtree(j,son), units, value, type )
+          call expr ( subtree(j,son), units, value )
           ! Make sure the value has frequency units.  Dimensionless is OK,
           ! so long as at least one has frequency units.
           if ( units(1) == phyq_frequency ) then
@@ -154,6 +153,9 @@ contains
 end module FrqGridModule
 
 ! $Log$
+! Revision 2.5  2014/02/28 00:20:01  vsnyder
+! Remove TYPE field from call to EXPR because value was never used
+!
 ! Revision 2.4  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
