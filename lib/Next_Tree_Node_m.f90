@@ -161,7 +161,7 @@ contains ! ====     Procedures     =====================================
           i = 1
           if ( node_id(subtree(1,r)) == n_named ) i = 2
           ! Type checker has verified that expression type is boolean
-          call expr ( subtree(i,r), units, value, type )
+          call expr ( subtree(i,r), units, value )
           if ( nint(value(1)) /= l_true ) then ! Value is false, finish the construct
           if ( pop() ) exit o
           else
@@ -188,14 +188,14 @@ contains ! ====     Procedures     =====================================
             ! Variable := expr, expr [, expr]
             state%ancestors(1)%what = do_steps
             ! Type checker has verified that exprs are numeric
-            call expr ( subtree(2,r), units, value, type, values=values )
+            call expr ( subtree(2,r), units, value, values=values )
             state%ancestors(1)%current = nint(value(1))
             call set_variable_numeric ( subtree(1,r), value(1) )
-            call expr ( subtree(3,r), units, value, type, values=values )
+            call expr ( subtree(3,r), units, value, values=values )
             state%ancestors(1)%last = nint(value(1))
             value(1) = 1
             if ( nsons(r) > 3 ) &
-              & call expr ( subtree(4,r), units, value, type, values=values )
+              & call expr ( subtree(4,r), units, value, values=values )
             state%ancestors(1)%step = nint(value(1))
             if ( state%ancestors(1)%step == 0 ) call MLSMessage ( MLSMSG_Error, &
               & moduleName, 'STEP in a DO construct is zero' )
@@ -216,7 +216,7 @@ contains ! ====     Procedures     =====================================
             select case ( node_id(r) )
             case ( n_test )
               ! Type checked in tree_checker
-              call expr ( subtree(1,r), units, value, type, values=values )
+              call expr ( subtree(1,r), units, value, values=values )
               if ( values(1)%what /= enum_value .or. &
                  & values(1)%type /= t_boolean ) call announce_error ( &
                 & subtree(1,r), 'Predicate of IF is not logical' )
@@ -249,6 +249,8 @@ contains ! ====     Procedures     =====================================
                 & values=test_values )
               if ( size(test_values) /= 1 ) call announce_error ( &
                 & subtree(1,r), 'Expression in CASE is not scalar' )
+              if ( test_type /= type ) call announce_error ( subtree(1,r), &
+                & 'Type of expression in CASE is not the same as in SELECT' )
               if ( test_values(1)%units(1) == range .or. &
                  & test_values(1)%units(1) == str_range) call announce_error ( &
                    & subtree(1,r), 'Expression in CASE is a range' )
@@ -522,6 +524,10 @@ contains ! ====     Procedures     =====================================
 end module Next_Tree_Node_m
 
 ! $Log$
+! Revision 2.5  2014/02/28 00:02:11  vsnyder
+! Turn off type checking already done by type checker.  Check that expr
+! in CASE is the same type as in SELECT (which the type checker can't do).
+!
 ! Revision 2.4  2014/02/27 02:25:57  vsnyder
 ! Handle labels on IF, and SELECT CASE constructs
 !
