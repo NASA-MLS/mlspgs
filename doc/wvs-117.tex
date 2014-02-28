@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-117r1}
-\newcommand{\docdate}{21 February 2014}
+\newcommand{\docname}{wvs-117r2}
+\newcommand{\docdate}{26 February 2014}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -100,10 +100,11 @@ Several new facilities have been added to the configuration file.
   either within or outwith sections.  The \emph{expr} can be a scalar or
   an array.  As is the case with a Fortran array constructor, if the value
   is an array, it is always a one-dimensional array, even if an array
-  element is a variable that has an array value. Once a variable has a
-  type, it cannot be assigned a different type, and if it is numeric its
-  units cannot change, but it can change between array and scalar.
-  
+  element is a variable that has an array value. A variable gets a type by
+  the first assignment of a value.  Once it has a type, it cannot be
+  assigned a different type, and if it is numeric its units cannot change,
+  but it can change between array and scalar.
+
   Except that a variable name cannot be the same as an enumeration
   literal, a parameter, or the label of a specification, unlike a
   parameter defined by \emph{name} = \emph{expr}, there are no
@@ -116,14 +117,14 @@ Several new facilities have been added to the configuration file.
   either within or outwith sections.  Thus, it can either control which
   sections are processed, or which specifications within a section are
   processed.  The predicate in IF or ELSE IF must be a scalar with a
-  logical value; it can depend upon the value of a variable.
+  boolean value; it can depend upon the value of a variable.
 
 \item A SELECT CASE construct, with the same syntax as in Fortran (except
   that CASE DEFAULT must be last if it appears), can appear either within
   or outwith sections.  Thus, it can either control which sections are
   processed, or which specifications within a section are processed.  The
-  expressions in the SELECT CASE and CASE statements must be scalars; they
-  can depend upon the values of variables.
+  expressions in the SELECT CASE and CASE statements must be scalars of
+  the same type; they can depend upon the values of variables.
 
 \item A DO construct, of two forms.  The syntax is {\tt DO}
   \emph{variable} {\tt :=} \emph{expr} [ , \emph{expr} [, \emph{expr} ]]
@@ -132,10 +133,10 @@ Several new facilities have been added to the configuration file.
   The DO construct can either enclose sections or appear within them.
 
   If there are two or three expressions, they have to be scalars of
-  integer type, and the semantics are the same as for the Fortran DO
-  construct.  If there is only one expression, it can be of any type, and
-  must be an array.  The \emph{variable} is assigned elements of the
-  value of \emph{expr}.
+  numeric type, with the nearest integer being used; the semantics are
+  otherwise the same as for the Fortran DO construct.  If there is only
+  one expression, it can be of any type, and must be an array.  The
+  \emph{variable} is assigned elements of the value of \emph{expr}.
 
 \item A WHILE construct.  The syntax is {\tt DO WHILE (} \emph{expr} )
   \dots\ {\tt END DO}.
@@ -144,40 +145,50 @@ Several new facilities have been added to the configuration file.
 
   The expression must be of boolean type.
 
-\item A CYCLE statement of the form {\tt CYCLE} \emph{do-label}, where
-  \emph{do-label} is the label of a DO or WHILE construct.
+\item A CYCLE statement of the form {\tt CYCLE} \emph{label}, where
+  \emph{label} is the label of a DO or WHILE construct that contains the
+  CYCLE statement.
 
-\item An EXIT statement of the form {\tt EXIT} \emph{do-label}, where
-  \emph{do-label} is the label of a DO, IF, SELECT CASE, or WHILE
-  construct.
+\item An EXIT statement of the form {\tt EXIT} \emph{label}, where
+  \emph{label} is the label of a DO, IF, SELECT CASE, or WHILE
+  construct that contains the EXIT statement.
 
 \end{itemize}
 
 DO, IF, SELECT CASE, and WHILE constructs can have labels on their initial
 statement, followed by a colon.  Unlike the case with Fortran syntax, the
 label is not required, nor even allowed, on the END statement that
-completes the construct.
+completes the construct, or on any of the CASE statements of a SELECT CASE
+construct.
 
 New intrinsic functions to perform computations on sets represented as
-arrays have been added:
+arrays of any type have been added:
 
 \begin{itemize}
 
 \item {\tt union ( a, b )} computes the union of the sets represented by
-  the arrays {\tt a} and {\tt b}.
+  the arrays {\tt a} and {\tt b}.  This is different from the expression
+  {\tt [ a, b ] } in that duplicates are eliminated.
 
 \item {\tt intersection ( a, b )} computes the intersection of the sets
   represented by the arrays {\tt a} and {\tt b}.
 
-\item {\tt without ( a, b )} computes a the set consisting of elements of
+\item {\tt without ( a, b )} computes the set consisting of elements of
   {\tt a} that are not elements of {\tt b}.  Think of this as ``{\tt a}
-  without {\tt b}.''
+  without {\tt b}.''  This is different from the expression {\tt a - b} in
+  that the latter is an element-by-element subtraction, in which the types
+  of {\tt a} and {\tt b} are required to be numeric.
 
 \item {\tt difference ( a, b )} computes the symmetric difference of the
   sets represented by the arrays {\tt a} and {\tt b}.  This is the same as
-  {\tt union ( without ( a, b ), without ( b, a ) )}.
+  {\tt union ( without ( a, b ), without ( b, a ) )}.  This is different
+  from the expression {\tt a - b} in that the latter is an
+  element-by-element subtraction, in which the types of {\tt a} and {\tt
+  b} are required to be numeric.
 
 \end{itemize}
+
+In all cases, the arguments must be of the same type.
 
 A potential knock-on effect of the changes to the expression evaluator to
 handle variables is that the result of a boolean expression is now either
@@ -193,11 +204,11 @@ get_boolean} function from the {\tt MoreTree} module, it is necessary to
 use {\tt l_false} or {\tt l_true} as the result value, not zero or
 nonzero.  Better would be to replace {\tt expr} with {\tt get_boolean}.
 
-I have not changed {\tt mlsl1} or {\tt mlsl3} to handle the IF and SELECT
-case constructs.  Changes to {\tt mlsl1} should be simple, but since {\tt
-mlsl3} does not use the abstract syntax tree directly, it would be
-necessary also to change the alternative representation used in {\tt
-mlsl3}.
+I have not changed {\tt mlsl1} or {\tt mlsl3} to handle the IF, DO, SELECT
+CASE, and WHILE constructs, or the CYCLE and EXIT statements.  Changes to
+{\tt mlsl1} should be simple, but since {\tt mlsl3} does not use the
+abstract syntax tree directly, it would be necessary also to change the
+alternative representation used in {\tt mlsl3}.
 
 A revision of {\tt wvs-004} that reflects these changes in syntax has been
 checked in.
@@ -208,3 +219,6 @@ checked in.
 % $Id$
 
 % $Log$
+% Revision 1.3  2014/02/22 01:14:28  vsnyder
+% Add Log CVS line
+%
