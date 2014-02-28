@@ -60,7 +60,6 @@ contains ! =====  Public procedures  ===================================
       & F_Details, F_Diagonal, F_Hessian, F_MATRIX, F_NOABSENT, &
       & F_ROWCHANNELS, F_ROWINSTANCES, F_ROWQUANTITY, F_ROWSURFACES, &
       & F_Structure
-    use Intrinsic, only: PHYQ_Dimensionless
     use Lexer_Core, only: Print_Source
     use MatrixModule_1, only: Dump, Dump_Struct, GETFROMMATRIXDATABASE, &
       & MATRIX_DATABASE_T
@@ -112,7 +111,7 @@ contains ! =====  Public procedures  ===================================
     integer :: ROWQuantityNode          ! Tree node
     integer :: ROWSURFACESNODE          ! Tree node
     integer :: SON                      ! Tree node
-    integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
+    integer :: Units(2) ! of the Details expr -- known to be phyq_dimensionless
     double precision :: Values(2) ! of the Details expr
 
     integer, dimension(:), pointer :: ColInds  ! Which column instances?
@@ -945,6 +944,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.40  2014/02/28 00:21:12  vsnyder
+! Move type and units checking to type checker
+!
 ! Revision 1.39  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
