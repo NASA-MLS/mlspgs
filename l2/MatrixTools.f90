@@ -112,7 +112,6 @@ contains ! =====  Public procedures  ===================================
     integer :: ROWQuantityNode          ! Tree node
     integer :: ROWSURFACESNODE          ! Tree node
     integer :: SON                      ! Tree node
-    integer :: Type     ! of the Details expr -- has to be num_value
     integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
     double precision :: Values(2) ! of the Details expr
 
@@ -134,14 +133,12 @@ contains ! =====  Public procedures  ===================================
     type (HessianElement_T), pointer :: HB  ! A block from the Hessian
 
     ! Error codes for Announce_Error
-    integer, parameter :: Dimless = 1     ! Details has to be dimensionless
-    integer, parameter :: Duplicate = dimless + 1     ! Duplicate quantity name specified
+    integer, parameter :: Duplicate = 1     ! Duplicate quantity name specified
     integer, parameter :: NeedHessianDatabase = duplicate + 1 ! Need some matrix!
     integer, parameter :: NeedMatrixDatabase = NeedHessianDatabase + 1 ! Need some matrix!
     integer, parameter :: NeedSomething = NeedMatrixDatabase + 1  ! Need /all or matrix
     integer, parameter :: NoSuchQuantity = NeedSomething + 1  ! for row or column selection
-    integer, parameter :: Numeric = NoSuchQuantity + 1 ! Details can't be range
-    integer, parameter :: OutOfRange = numeric + 1     ! Index out of range
+    integer, parameter :: OutOfRange = NoSuchQuantity + 1     ! Index out of range
     integer, parameter :: QuantAndMol = outOfRange + 1 ! Both quantity and molecule
     integer, parameter :: Redundant = quantAndMol + 1  ! Both /all and matrix
 
@@ -202,9 +199,7 @@ contains ! =====  Public procedures  ===================================
         end if
         allMatrices = get_Boolean ( son )
       case ( f_details )
-        call expr ( subtree(2,son), units, values, type )
-        if ( units(1) /= phyq_dimensionless ) call announce_error ( son, dimless )
-        if ( type /= num_value ) call announce_error ( son, numeric )
+        call expr ( subtree(2,son), units, values )
         details = nint(values(1)) - detailReduction
       case ( f_diagonal )
         diagonal = get_Boolean ( son )
@@ -439,8 +434,6 @@ contains ! =====  Public procedures  ===================================
 
       call startErrorMessage ( where )
       select case ( what )
-      case ( dimless )
-        call output ( "The field is not unitless." )
       case ( duplicate )
         call display_string ( sub_rosa(where), before=': Duplicate quantity ' )
         call output ( ' not used.', advance='yes' )
@@ -455,8 +448,6 @@ contains ! =====  Public procedures  ===================================
       case ( noSuchQuantity )
         call display_string ( sub_rosa(where) )
         call output ( ' is not a '//text//' quantity.', advance='yes' )
-      case ( numeric )
-        call output ( "The field is not numeric." )
       case ( outOfRange )
         call output ( number, before=': Index ', after=' is out of range.', &
           & advance='yes' )
@@ -954,6 +945,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.39  2013/09/24 23:47:22  vsnyder
+! Use Where instead of Source_Ref for messages
+!
 ! Revision 1.38  2013/06/12 02:38:02  vsnyder
 ! Cruft removal
 !
