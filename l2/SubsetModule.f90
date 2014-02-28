@@ -127,7 +127,6 @@ contains ! ========= Public Procedures ============================
     logical :: SPREADFLAG
     integer :: STATUS
     real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
-    integer :: TYPE                   ! Type of value returned by expr
     integer :: UNITS(2)               ! Units returned by expr
     real(r8) :: VALUE(2)              ! Value returned by expr
     logical :: VERBOSE
@@ -200,7 +199,7 @@ contains ! ========= Public Procedures ============================
     heightUnit = phyq_dimensionless
     if ( heightNode > 0 ) then
       do j = 2, nsons(heightNode)
-        call expr ( subtree(j,heightNode), units, value, type )
+        call expr ( subtree(j,heightNode), units, value )
         ! Make sure the range has non-dimensionless units -- the type
         ! checker only verifies that they're consistent.  We need to
         ! check each range separately, because the units determine the
@@ -423,7 +422,7 @@ contains ! ========= Public Procedures ============================
           rangeId = node_id ( son )
           if ( heightNode > 0 ) then
             ! Get values for this range
-            call expr ( son, units, value, type )
+            call expr ( son, units, value )
             if ( DEEBUG ) call outputNamedValue( 'value', value(1) )
             ! Now maybe do something nasty to value to get in right units.
             if ( coordinate == l_zeta .and. heightUnit == phyq_pressure ) then
@@ -446,7 +445,7 @@ contains ! ========= Public Procedures ============================
             end if
           else
             ! Subset by surface (i.e. MIF) instead, much easier
-            call expr ( son, units, value, type )
+            call expr ( son, units, value )
             if ( .not. all ( units == phyq_dimensionless .or. units == phyq_mifs ) ) &
               & call AnnounceError ( son, 'surface must be MIFs', f_surface )
             s1(1) = max ( min ( value(1), real(qty%template%noSurfs, r8) ), 1._r8 )
@@ -867,7 +866,6 @@ contains ! ========= Public Procedures ============================
     integer :: SON                    ! Tree node
     integer :: SURFNODE               ! Tree node
     integer :: TESTUNIT               ! Either vector%globalUnit or qty tmplt unit
-    integer :: TYPE                   ! Type of value returned by expr
     integer :: UNITS(2)               ! Units returned by expr
     integer :: VECTORINDEX            ! Index
     integer :: WHERERANGE             ! E.g., 'a > 100'
@@ -963,17 +961,17 @@ contains ! ========= Public Procedures ============================
         quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         opticalDepth => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
       case ( f_opticalDepthCutoff )
-        call expr ( subtree (2, son), units, value, type )
+        call expr ( subtree (2, son), units, value )
         if ( units(1) /= phyq_dimensionless ) &
           & call announceError ( subtree (2, son), WrongUnits, &
           & f_opticalDepthCutoff )
         opticalDepthCutoff = value(1)
       case ( f_maxValue )
-        call expr ( subtree (2, son), units, value, type )
+        call expr ( subtree (2, son), units, value )
         maxUnit = units(1)
         maxValue = value(1)
       case ( f_minValue )
-        call expr ( subtree (2, son), units, value, type )
+        call expr ( subtree (2, son), units, value )
         minUnit = units(1)
         minValue = value(1)
       case ( f_ignore )
@@ -1114,7 +1112,6 @@ contains ! ========= Public Procedures ============================
     integer :: QUANTITYINDEX          ! Index
     integer :: SON                    ! Tree node
     integer :: STATUS                 ! Flag
-    integer :: TYPE                   ! Type of value returned by expr
     integer :: UNITS(2)               ! Units returned by expr
     integer :: VECTORINDEX            ! Index
     integer :: USETHISCHANNEL         ! cloud radiance channel
@@ -1200,7 +1197,7 @@ contains ! ========= Public Procedures ============================
       if (nsons(heightNode) .gt. 2) call AnnounceError ( key, &
         & 'Only one height range allowed', f_height )
 
-      call expr ( subtree(2,heightNode), units, value, type )
+      call expr ( subtree(2,heightNode), units, value )
       ! Make sure the range has non-dimensionless units -- the type
       ! checker only verifies that they're consistent.  We need to
       ! check each range separately, because the units determine the
@@ -1230,7 +1227,7 @@ contains ! ========= Public Procedures ============================
       if (nsons(cloudheightNode) .gt. 2) call AnnounceError ( key, &
         & 'Can only supply one height range' ) 
 
-      call expr ( subtree(2,cloudheightNode), units, value, type )
+      call expr ( subtree(2,cloudheightNode), units, value )
       if ( all(units == phyq_dimensionless) ) call announceError ( &
         & subtree(2,cloudheightNode), WrongUnits, f_cloudheight )
       do i = 1, 2
@@ -1537,6 +1534,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.31  2014/02/28 01:15:27  vsnyder
+! Remove TYPE argument from calls to EXPR because the value wasn't used
+!
 ! Revision 2.30  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
