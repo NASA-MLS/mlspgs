@@ -115,8 +115,7 @@ module DumpCommand_M
   character(len=MAXRESULTLEN), save :: selectLabel  = ' '
 
   ! Error codes
-  integer, parameter :: Dimless = 1
-  integer, parameter :: NoFile = dimless + 1
+  integer, parameter :: NoFile = + 1
   integer, parameter :: NoFileDatabase = noFile + 1
   integer, parameter :: NoFWM = noFileDatabase + 1
   integer, parameter :: noGriddedData = NoFWM + 1
@@ -128,8 +127,7 @@ module DumpCommand_M
   integer, parameter :: NoTG = noSignals + 1
   integer, parameter :: NoVectors = noTG + 1
   integer, parameter :: NoVT = noVectors + 1
-  integer, parameter :: Numeric = noVT + 1
-  integer, parameter :: Stop = numeric + 1
+  integer, parameter :: Stop = noVT + 1
   integer, parameter :: Unknown = stop + 1 ! Unknown template
 
 contains
@@ -883,7 +881,6 @@ contains
     character(len=32) :: cnameString
     character(len=32) :: cvalue
     logical :: evaluate
-    integer :: exprType
     integer :: field
     integer :: field_index
     integer :: fieldValue
@@ -945,8 +942,8 @@ contains
         bQuantity => GetVectorQtyByTemplateIndex( &
           & vectors(VectorIndex), QuantityIndex )
         call dump( bQuantity )
-      case(f_c)
-        call expr ( source, unitAsArray, valueAsArray, exprType )
+      case ( f_c )
+        call expr ( source, unitAsArray, valueAsArray )
         ! c is a numeric value
         c = valueAsArray(1)
         if ( verbose ) call outputNamedValue( 'c', c )
@@ -1134,7 +1131,7 @@ contains
       & F_CALLSTACK, F_CHUNKDIVIDE, F_CHUNKNUMBER, F_CLEAN, &
       & F_COMMANDLINE, F_COUNT, F_CRASHBURN, &
       & F_DETAILS, F_DACSFILTERSHAPES, &
-      & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HEIGHT, F_HESSIAN, &
+      & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HESSIAN, &
       & F_HGRID, F_IGRF, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, &
       & F_MIETABLES, F_OPTIONS, F_PFADATA, F_PFAFILES, F_PFANUM, F_PFASTRU, &
       & F_PHASENAME, F_POINTINGGRIDS, F_QUANTITY, &
@@ -1243,7 +1240,6 @@ contains
     character :: TempText*20, Text*255
     type(time_t) :: Time
     character(10) :: TimeOfDay
-    integer :: Type     ! of the Details expr -- has to be num_value
     type (vector_T), pointer  :: Vector
     integer :: VectorIndex
     integer :: VectorIndex2
@@ -1549,9 +1545,7 @@ contains
         clean = get_boolean(son)
         if ( clean ) optionsString = trim(optionsString) // 'c'
       case ( f_details )
-        call expr ( gson, units, values, type )
-        if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
-        if ( type /= num_value ) call announceError ( gson, numeric )
+        call expr ( gson, units, values )
         details = nint(values(1)) - DetailReduction
         ! call outputnamedValue( 'DetailReduction', DetailReduction )
         ! call outputnamedValue( 'Details', details )
@@ -1637,11 +1631,9 @@ contains
           call announceError ( gson, noGriddedData )
         end if
         gotFirst = DiffOrDump == s_diff
-      case ( f_height, f_surface )
+      case ( f_surface )
         do i = 2, nsons(son)
-          call expr ( subtree(i,son), units, values, type )
-          if ( units(1) /= phyq_dimensionless ) call AnnounceError ( subtree(i,son), dimless )
-          if ( type /= num_value ) call announceError ( subtree(i,son), numeric )
+          call expr ( subtree(i,son), units, values )
           height = values(1)
         end do
       case ( f_hessian ) ! Diff or Dump hessians
@@ -1830,9 +1822,7 @@ contains
         end do
       case ( f_pfaNum )
         do i = 2, nsons(son)
-          call expr ( subtree(i,son), units, values, type )
-          if ( units(1) /= phyq_dimensionless ) call AnnounceError ( subtree(i,son), dimless )
-          if ( type /= num_value ) call announceError ( subtree(i,son), numeric )
+          call expr ( subtree(i,son), units, values )
           call dump ( pfaData(nint(values(1))), details, nint(values(1)) )
         end do
       case ( f_signals )
@@ -2357,8 +2347,6 @@ contains
     call StartErrorMessage ( where )
 
     select case ( what )
-    case ( dimless )
-      call output ( "The field is not unitless." )
     case ( noFile )
       call output ( "File " // string // " not in database." )
     case ( noFileDatabase )
@@ -2383,8 +2371,6 @@ contains
       call output ( "Can't dump Vectors here." )
     case ( noVT )
       call output ( "Can't dump Vector Templates here." )
-    case ( numeric )
-      call output ( "The field is not numeric." )
     case ( stop )
       call output ( "Program stopped by /stop field on DUMP statement." )
     case ( unknown )
@@ -2646,6 +2632,11 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.109  2014/02/28 00:17:05  vsnyder
+! Don't re-check types already checked by type checker.  Move units checking
+! to type checker.  Don't handle Height field, since there isn't one allowed
+! in init_tables_module.
+!
 ! Revision 2.108  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
