@@ -1143,7 +1143,6 @@ contains
     use L2PARINFO, only: PARALLEL, CLOSEPARALLEL
     use L2PC_M, only: L2PCDATABASE, DUMPL2PC => DUMP
     use LEXER_CORE, only: GET_WHERE, WHERE_T
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use MACHINE, only: NEVERCRASH
     use MATRIXMODULE_1, only: MATRIX_T, MATRIX_DATABASE_T, &
       & DIFF, DUMP, GETFROMMATRIXDATABASE
@@ -1244,7 +1243,7 @@ contains
     integer :: VectorIndex
     integer :: VectorIndex2
     logical :: verbose
-    integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
+    integer :: Units(2) ! of the Details expr -- known to be phyq_dimensionless
     double precision :: Values(2) ! of the Details expr
     integer, dimension(3) :: UNITASARRAY ! From expr
     real(r8), dimension(3) :: VALUEASARRAY ! From expr
@@ -2632,6 +2631,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.110  2014/02/28 01:10:44  vsnyder
+! Remove unused names
+!
 ! Revision 2.109  2014/02/28 00:17:05  vsnyder
 ! Don't re-check types already checked by type checker.  Move units checking
 ! to type checker.  Don't handle Height field, since there isn't one allowed
