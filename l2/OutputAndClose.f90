@@ -76,20 +76,17 @@ contains ! =====     Public Procedures     =============================
     use HGRID, only: CREATEHGRIDFROMMLSCFINFO, DEALWITHOBSTRUCTIONS
     use HGRIDSDATABASE, only: HGRID_T, &
       & ADDHGRIDTODATABASE, DUMP
-    use INIT_TABLES_MODULE, only: F_CREATE, F_DESTROY, F_DONTPACK, &
-      & F_FILE, F_HDFVERSION, &
-      & F_METADATAONLY, F_METANAME, F_MOLECULESECONDDERIVATIVES, &
-      & F_OVERLAPS, F_PACKED, &
-      & F_QUANTITIES, &
-      & F_TYPE, F_WRITECOUNTERMAF, &
+    use INIT_TABLES_MODULE, only: F_DESTROY, F_DONTPACK, F_FILE, &
+      & F_HDFVERSION, F_METADATAONLY, F_METANAME, &
+      & F_MOLECULESECONDDERIVATIVES, F_OVERLAPS, F_PACKED, &
+      & F_QUANTITIES, F_Time, F_TYPE, F_WRITECOUNTERMAF, &
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP, L_L2PC, &
       & S_BOOLEAN, S_CASE, S_CATENATE, S_COPY, &
       & S_DESTROY, S_DIFF, S_DUMP, S_DUMPBLOCKS, &
       & S_ENDSELECT, S_HGRID, S_ISSWATHEMPTY, &
       & S_OUTPUT, S_REEVALUATE, S_SELECT, S_SKIP, S_SLEEP, S_TIME
-    use INTRINSIC, only: LIT_INDICES, &
-      & PHYQ_DIMENSIONLESS, PHYQ_TIME
+    use INTRINSIC, only: LIT_INDICES
     use L2AUXDATA, only: L2AUXDATA_T
     use L2GPDATA, only: L2GPDATA_T, WRITEMASTERSFILEATTRIBUTES
     use L2PC_M, only: OUTPUTHDF5L2PC
@@ -161,7 +158,6 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Of Root -- spec_args or named node
     type(next_tree_node_state) :: State ! of tree traverser
     real :: T1, T2     ! for timing
-    integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
     logical :: USINGL2Q                 ! Set if using the l2q queue manager
     logical :: USINGOLDSUBMIT              ! Set if using the submit mechanism
@@ -230,20 +226,12 @@ contains ! =====     Public Procedures     =============================
         delay = 1000 ! defaults to 1000 microseconds
         do field_no = 2, nsons(key)       ! Skip the command name
           gson = subtree(field_no, key)   ! An assign node
-          if ( nsons(gson) > 1 ) then
-            fieldValue = decoration(subtree(2,gson)) ! The field's value
-          else
-            fieldValue = gson
-          end if
           field_index = decoration(subtree(1,gson))
           got(field_index) = .true.
           select case ( field_index )   ! Field name
-          case ( f_create )
+          case ( f_time )
             ! Did we say for how long?
-            call expr ( subtree(2,gson), units, value, type )
-            if ( units(1) /= phyq_time ) &
-              & call Announce_error ( gson, &
-              & 'Wrong units for sleep time')
+            call expr ( subtree(2,gson), units, value )
             delay = value(1)*1.d6  ! Converted to microseconds
           case default
           end select 
@@ -322,11 +310,10 @@ contains ! =====     Public Procedures     =============================
           case ( f_MetaDataOnly )
             writeMetaDataOnly = get_boolean ( fieldValue )
           case ( f_hdfVersion )
-            call expr ( subtree(2,gson), units, value, type )
-            if ( units(1) /= phyq_dimensionless ) &
-              & call Announce_error ( gson, &
-              & 'No units allowed for hdfVersion: just integer 4 or 5')
+            call expr ( subtree(2,gson), units, value )
             hdfVersion = nint(value(1))
+            if ( hdfVersion /= 4 .and. hdfVersion /= 5 ) &
+              & call Announce_error ( gson, 'hdfVersion must be 4 or 5')
           case default                  ! Everything else processed later
           end select
         end do
@@ -768,8 +755,7 @@ contains ! =====     Public Procedures     =============================
       & F_SWATH, F_TOATTRIBUTE, F_TYPE, &
       & FIELD_FIRST, FIELD_LAST, &
       & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP
-    use INTRINSIC, only: L_ASCII, L_SWATH, L_HDF, LIT_INDICES, &
-      & PHYQ_DIMENSIONLESS
+    use INTRINSIC, only: L_ASCII, L_SWATH, L_HDF, LIT_INDICES
     use L2AUXDATA, only: CPL2AUXDATA
     use L2GPDATA, only: AVOIDUNLIMITEDDIMS, &
       & MAXSWATHNAMESBUFSIZE, CPL2GPDATA, CPL2GPDATATOATTRIBUTE
@@ -826,7 +812,6 @@ contains ! =====     Public Procedures     =============================
     logical :: skipCopy
     integer :: SON                      ! Of Root -- spec_args or named node
     logical :: toAttribute
-    integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
     double precision :: Value(2)        ! Value returned by EXPR
     ! Executable
@@ -859,11 +844,10 @@ contains ! =====     Public Procedures     =============================
         call get_string ( sub_rosa(subtree(2,gson)), file_base, strip=.true. )
         if ( DEBUG ) print *, 'file_base: ', trim(file_base)
       case ( f_hdfVersion )
-        call expr ( subtree(2,gson), units, value, type )
-        if ( units(1) /= phyq_dimensionless ) &
-          & call Announce_error ( gson, &
-          & 'No units allowed for hdfVersion: just integer 4 or 5')
+        call expr ( subtree(2,gson), units, value )
         hdfVersion = value(1)
+        if ( hdfVersion /= 4 .and. hdfVersion /= 5 ) &
+          & call Announce_error ( gson, 'hdfVersion must be 4 or 5')
       case ( f_hgrid )
         HGridIndex = decoration(fieldValue)
         if ( DEBUG ) print *, 'HGridIndex: ', HGridIndex
@@ -1848,6 +1832,10 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.179  2014/02/28 01:06:44  vsnyder
+! Move units checking to type checker.  Check value of hdfVersion.  Look
+! for TIME field on SLEEP command, not CREATE field.
+!
 ! Revision 2.178  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
