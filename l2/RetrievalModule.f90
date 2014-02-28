@@ -78,7 +78,6 @@ contains
       & S_DIFF, S_DUMP, S_DUMPBLOCKS, S_FLAGCLOUD, S_FLUSHPFA, S_LEAKCHECK, &
       & S_ENDSELECT, S_REEVALUATE, S_REPEAT, S_RESTRICTRANGE, S_RETRIEVE, &
       & S_SELECT, S_SIDS, S_SKIP, S_SNOOP, S_SUBSET, S_TIME, S_UPDATEMASK
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use L2PARINFO, only: PARALLEL
     use MATRIXMODULE_1, only: ADDTOMATRIXDATABASE, COPYMATRIX, CREATEEMPTYMATRIX, &
       & DESTROYMATRIX, GETFROMMATRIXDATABASE, MATRIX_T, MATRIX_DATABASE_T, &
@@ -233,7 +232,6 @@ contains
                                         ! norm of F
     double precision :: ToleranceR      ! convergence tolerance for NWT,
                                         ! (norm of move) / (norm of X)
-    integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
     logical :: Update                   ! "We are updating normal equations"
     double precision :: Value(2)        ! Value returned by EXPR
@@ -286,7 +284,6 @@ contains
     integer, parameter :: Inconsistent = IfAThenB + 1   ! Inconsistent fields
     integer, parameter :: NotGeneral = Inconsistent + 1 ! Not a general matrix
     integer, parameter :: NotSPD = notGeneral + 1       ! Not symmetric pos. definite
-    integer, parameter :: WrongUnits = NotSPD + 1
 
     dumpQuantitiesNode = 0
     error = 0
@@ -508,9 +505,7 @@ repeat_loop: do ! RepeatLoop
               switches(switchLenCur+1:) = ''
             case ( f_aprioriScale, f_fuzz, f_lambda, f_lambdamin, f_maxJ, &
               &    f_muMin, f_toleranceA, f_toleranceF, f_toleranceR )
-              call expr ( subtree(2,son), units, value, type )
-              if ( units(1) /= phyq_dimensionless ) &
-                & call announceError ( wrongUnits, field, string='no' )
+              call expr ( subtree(2,son), units, value )
               select case ( field )
               case ( f_aprioriScale )
                 aprioriScale = value(1)
@@ -787,9 +782,7 @@ repeat_loop: do ! RepeatLoop
             case ( f_phaseName )
               call get_string ( sub_rosa(subtree(2,son)), phaseName, strip=.true. )
             case ( f_level )
-              call expr ( subtree(2,son), units, value, type )
-              if ( units(1) /= phyq_dimensionless ) &
-                & call announceError ( wrongUnits, field, string='no' )
+              call expr ( subtree(2,son), units, value )
               snoopLevel = nint(value(1))
             end select
           end do
@@ -878,12 +871,6 @@ repeat_loop: do ! RepeatLoop
           call output ( ' is not a symmetric positive-definite matrix.', &
             & advance='yes' )
         end select
-      case ( wrongUnits )
-        call output ( 'The value(s) of the "' )
-        call display_string ( field_indices(fieldIndex) )
-        call output ( '" field shall have ' )
-        call output ( trim(string) )
-        call output ( ' units.', advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -2992,6 +2979,10 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.349  2014/02/28 01:14:04  vsnyder
+! Remove TYPE argument from calls to EXPR because the value wasn't used.
+! Move units checking to type checker.
+!
 ! Revision 2.348  2014/01/23 23:16:37  vsnyder
 ! Back out Levenberg-Marquardt without getting a new Jacobiab
 !
