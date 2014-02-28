@@ -297,7 +297,6 @@ contains ! =====     Public Procedures     =============================
     integer :: I                        ! Loop counters
     integer :: FIELD                    ! Field identifier
     logical :: GOT(field_first:field_last) ! "Got this field already"
-    integer :: TYPE                     ! Type of value returned by expr
     integer :: EXPR_UNITS(2)            ! Units from expr
     real(r8) :: VALUE(2)                ! Value from expr
     integer :: COSTUNIT                 ! Units for cost
@@ -332,19 +331,15 @@ contains ! =====     Public Procedures     =============================
         binSelector%exact = get_boolean(gson)
       case ( f_height )
         if ( nsons(son) > 2 ) call AnnounceError ( TooManyHeights, son )
-        call expr ( gson, expr_units, value, type )
-        if ( type /= t_numeric_range ) call AnnounceError ( 0, son, &
-          & extraMessage='Height range expected' )
+        call expr ( gson, expr_units, value )
         if ( any ( expr_units /= phyq_pressure .and. expr_units /= phyq_dimensionless ) .or. &
           & all ( expr_units /= phyq_pressure ) ) &
           & call AnnounceError ( BadHeightUnit, son )
         binSelector%heightRange = value
       case ( f_cost )
         if ( nsons(son) > 2 ) call AnnounceError ( TooManyCosts, son )
-        call expr ( gson, expr_units, value, type )
-        if ( type == t_numeric_range ) call AnnounceError ( 0, son, &
-          & extraMessage='Cost must not be a range' )
-        ! Some units checking should probably go here in the long run !???? NJL
+        call expr ( gson, expr_units, value )
+        ! Units checking is below
         binSelector%cost = value(1)
         costUnit = expr_units(1)
       end select
@@ -460,7 +455,6 @@ contains ! =====     Public Procedures     =============================
     integer, pointer :: TempLBL(:), TempPFA(:) ! Used to separate LBL and PFA
     integer :: TheTree                  ! Either pfaTrees(s) or lblTrees(s)
     integer :: THISMOLECULE             ! Tree index.
-    integer :: type                     ! Type of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
     type(value_t), allocatable :: Values(:) ! returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
@@ -570,10 +564,10 @@ contains ! =====     Public Procedures     =============================
       case ( f_forceSidebandFraction )
         info%forceSidebandFraction = get_boolean(son)
       case ( f_frqTol )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%frqTol = value(1)
       case ( f_i_saturation )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%i_saturation = nint(value(1))
       case ( f_ignoreHessian )
         info%ignoreHessian = get_boolean(son)
@@ -582,7 +576,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_integrationGrid )
         info%integrationGrid => vGrids(decoration(decoration(subtree(2,son))))
       case ( f_linearSideband )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%linearSideband = nint ( value(1) )
       case ( f_lineCenter )
         lineTrees(lineCenter) = son
@@ -603,29 +597,29 @@ contains ! =====     Public Procedures     =============================
       case ( f_molecules )
         moleculeTree = son
       case ( f_nabterms )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%NUM_AB_TERMS = nint( value(1) )
       case ( f_nazimuthangles )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
       case ( f_ncloudspecies )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%no_cloud_species = nint( value(1) )
       case ( f_nmodelsurfs )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%no_model_surfs = nint( value(1) )
       case ( f_no_dup_mol )
         no_dup_mol = get_boolean(son)
       case ( f_nscatteringangles )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%NUM_SCATTERING_ANGLES = nint( value(1) )
         info%NUM_AZIMUTH_ANGLES = nint( value(1) )
       case ( f_nsizebins )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%NUM_SIZE_BINS = nint( value(1) )
       case ( f_pathNorm )
         info%do_path_norm = get_boolean(son)
       case ( f_phiWindow )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%phiWindow = value(1)
         if ( all ( expr_units(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
           & call AnnounceError ( WrongUnitsForWindow, son )
@@ -633,7 +627,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_polarized )
         info%polarized = get_boolean(son)
       case ( f_referenceMIF )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%referenceMIF = nint(value(1))
       case ( f_refract )
         info%refract = get_boolean(son)
@@ -702,14 +696,14 @@ contains ! =====     Public Procedures     =============================
       case ( f_temp_der )
         info%temp_der = get_boolean(son)
       case ( f_tolerance )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%tolerance = value(1)
       case ( f_transformMIFextinction )
         info%transformMIFextinction = get_Boolean(son)
       case ( f_transformMIFRHI )
         info%transformMIFRHI = get_Boolean(son)
       case ( f_TScatMIF )
-        call expr ( subtree(2,son), expr_units, value, type )
+        call expr ( subtree(2,son), expr_units, value )
         info%TScatMIF = nint(value(1))
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
@@ -757,7 +751,7 @@ contains ! =====     Public Procedures     =============================
         if ( node_id(son) == n_array ) then
           nGroup = nGroup + 1
         else
-          call expr ( son, expr_units, value, type, values=values )
+          call expr ( son, expr_units, value, values=values )
           nGroup = nGroup + size(values)
         end if
       end do
@@ -776,7 +770,7 @@ contains ! =====     Public Procedures     =============================
           nelts = 0
           do j = 1, nsons(son)
             gson = subtree(j,son)
-            call expr ( gson, expr_units, value, type, values=values )
+            call expr ( gson, expr_units, value, values=values )
             nelts = nelts + size(values) - merge(1,0,j==1)
           end do
           if ( nelts < 1 ) call announceError ( badMoleculeGroup, son )
@@ -787,7 +781,7 @@ contains ! =====     Public Procedures     =============================
           nelts = 1
           do j = 1, nsons(son)
             gson = subtree(j,son)
-            call expr ( gson, expr_units, value, type, values=values )
+            call expr ( gson, expr_units, value, values=values )
             if ( j == 1 ) & ! group name
               & info%beta_group(b)%molecule = nint(values(1)%value(1))
             m = size(values) - merge(1,0,j==1)
@@ -798,7 +792,7 @@ contains ! =====     Public Procedures     =============================
             nelts = nelts + m
           end do ! j = 1, nsons(son)
         else
-          call expr ( son, expr_units, value, type, values=values )
+          call expr ( son, expr_units, value, values=values )
           ! Each element is a separate beta group
           do m = 1, size(values)
             info%beta_group(b)%molecule = nint(values(m)%value(1)) ! group name
@@ -869,7 +863,7 @@ op:     do j = 2, nsons(theTree)
             call announceError ( NoArray, son )
             cycle
           end if
-          call expr ( son, expr_units, value, type, values=values )
+          call expr ( son, expr_units, value, values=values )
           do m = 1, size(values)
             thisMolecule = nint(values(m)%value(1))
             do b = 1, size(info%beta_group)
@@ -944,7 +938,7 @@ op:     do j = 2, nsons(theTree)
       nelts = 0
       do j = 2, nsons(LineTrees(i))
         son = subtree( j, LineTrees(i) )
-        call expr ( son, expr_units, value, type, values=values )
+        call expr ( son, expr_units, value, values=values )
         nelts = nelts + size(values)
       end do
       allocate ( lineStru(nelts), stat=status )
@@ -966,7 +960,7 @@ op:     do j = 2, nsons(theTree)
           call announceError ( NoArray, son )
           cycle
         end if
-        call expr ( son, expr_units, value, type, values=values )
+        call expr ( son, expr_units, value, values=values )
         do m = 1, size(values)
           nelts = nelts + 1
           myMolecules(nelts) = nint(values(m)%value(1))
@@ -1016,7 +1010,7 @@ op:     do j = 2, nsons(theTree)
 
       do j = 2, nsons(derivTree)
         son = subtree( j, derivTree )
-        call expr ( son, expr_units, value, type, values=values )
+        call expr ( son, expr_units, value, values=values )
         do m = 1, size(values)
           thisMolecule = nint(values(m)%value(1))
           if ( .not. any(info%molecules == thisMolecule) ) &
@@ -1039,7 +1033,7 @@ op:     do j = 2, nsons(theTree)
 
       do j = 2, nsons(secondDerivTree)
         son = subtree( j, secondDerivTree )
-        call expr ( son, expr_units, value, type, values=values )
+        call expr ( son, expr_units, value, values=values )
         do m = 1, size(values)
           thisMolecule = nint(values(m)%value(1))
           if ( .not. any(info%molecules == thisMolecule) ) &
@@ -1513,6 +1507,10 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.177  2014/02/28 00:18:57  vsnyder
+! Don't re-check types already checked by type checker.  Remove TYPE
+! argument from calls to EXPR where it wasn't subsequently used.
+!
 ! Revision 2.176  2014/02/27 02:36:07  vsnyder
 ! Restore accidentally removed assignment of FrqTol
 !
