@@ -183,8 +183,8 @@ contains ! =====     Public Procedures     =============================
       & S_TIME, S_TRANSFER, S_UPDATEMASK, S_VECTOR
     ! Now some arrays
     use INTRINSIC, only: LIT_INDICES, &
-      & PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_TEMPERATURE, &
-      & PHYQ_TIME, PHYQ_LENGTH, PHYQ_ANGLE, PHYQ_PROFILES
+      & PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_LENGTH, &
+      & PHYQ_PROFILES
     use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA
     use L2GPDATA, only: L2GPDATA_T, COL_SPECIES_HASH, COL_SPECIES_KEYS
     use L2AUXDATA, only: L2AUXDATA_T
@@ -999,10 +999,7 @@ contains ! =====     Public Procedures     =============================
           case ( f_aprioriPrecision )
             aprPrecVctrIndex =  decoration(fieldValue)
           case ( f_precisionFactor )
-            call expr_check ( gson , unitAsArray, valueAsArray, &
-              & (/PHYQ_Dimensionless/), unitsError )
-            if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-              & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+            call expr ( gson , unitAsArray, valueAsArray )
             precisionFactor = valueAsArray(1)
           case default ! Can't get here if type checker worked
           end select
@@ -1050,7 +1047,7 @@ contains ! =====     Public Procedures     =============================
           case ( f_b )
             bVecIndex = decoration(fieldValue)
           case(f_c)
-            call expr ( gson , unitAsArray, valueAsArray )
+            call expr ( gson, unitAsArray, valueAsArray )
             c = valueAsArray(1)
           case ( f_source )
             sourceVectorIndex = decoration(fieldValue)
@@ -1204,30 +1201,18 @@ contains ! =====     Public Procedures     =============================
         fieldIndex = get_field_id(gson)
         select case ( fieldIndex )
         case ( f_geodAngle )
-          call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
-            & (/PHYQ_Angle/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
+          call expr ( subtree(2,gson), unitAsArray, valueAsArray )
           geodAngle = valueAsArray(1)
         case ( f_hessian )
           hessianIndex = -decoration(decoration(subtree(2,gson)))
         case ( f_scaleHeight )
-          call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          call expr ( subtree(2,gson), unitAsArray, valueAsArray )
           scaleHeight = valueAsArray(1)
         case ( f_surface )
-          call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          call expr ( subtree(2,gson), unitAsArray, valueAsArray )
           surface = valueAsArray(1)
         case ( f_threshold )
-          call expr_check ( subtree(2,gson), unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          call expr ( subtree(2,gson), unitAsArray, valueAsArray )
           threshold = valueAsArray(1)
         end select
       end do
@@ -1429,10 +1414,7 @@ contains ! =====     Public Procedures     =============================
           call expr ( gson , unitAsArray, valueAsArray )
           c = valueAsArray(1)
         case ( f_channel )
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          call expr ( gson , unitAsArray, valueAsArray )
           channel = valueAsArray(1)
         case ( f_channels )
           channelsNode = son
@@ -1544,10 +1526,7 @@ contains ! =====     Public Procedures     =============================
         case ( f_instances )
           instancesNode = subtree(j,key)
         case ( f_integrationTime )
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Time/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Time/) )
+          call expr ( gson , unitAsArray, valueAsArray )
           integrationTime = valueAsArray(1)
         case ( f_internalVGrid )
           internalVGridIndex=decoration(decoration(gson))
@@ -1573,10 +1552,7 @@ contains ! =====     Public Procedures     =============================
         case ( f_manipulation )
           manipulation = sub_rosa ( gson )
         case ( f_maxIterations )      ! For hydrostatic fill
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          call expr ( gson , unitAsArray, valueAsArray )
           maxIterations = valueAsArray(1)
         case ( f_maxValue )      ! For status fill
           call expr ( gson, unitAsArray, valueAsArray )
@@ -1609,11 +1585,8 @@ contains ! =====     Public Procedures     =============================
             call output('Using multipliers: ', advance='no')
             call output(multiplier, advance='yes')
           end if
-        case ( f_noFineGrid )      ! For cloud extinction fill
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+        case ( f_noFineGrid )       ! For cloud extinction fill
+          call expr ( gson , unitAsArray, valueAsArray )
           noFineGrid = valueAsArray(1)
         case ( f_noise )   ! Only used for chi^2 special fills or addnoise
           noiseVectorIndex = decoration(decoration(subtree(1,gson)))
@@ -1621,41 +1594,32 @@ contains ! =====     Public Procedures     =============================
         case ( f_noiseBandwidth )
           nbwVectorIndex = decoration(decoration(subtree(1,gson)))
           nbwQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_normQty )   ! Only used for chi^2 ratio fills
+        case ( f_normQty )          ! Only used for chi^2 ratio fills
           normVectorIndex = decoration(decoration(subtree(1,gson)))
           normQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_offsetAmount )    ! For marking unused radiances
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Temperature/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Temperature/) )
+        case ( f_offsetAmount )     ! For marking unused radiances
+          call expr ( gson , unitAsArray, valueAsArray )
           offsetAmount = valueAsArray(1)
         case ( f_orbitInclination ) ! For hydrostatic fill
           orbitinclInationVectorIndex = &
             & decoration(decoration(subtree(1,gson)))
           orbitinclInationQuantityIndex = &
             & decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_precision )      ! For masking l1b radiances
+        case ( f_precision )        ! For masking l1b radiances
           precisionVectorIndex = decoration(decoration(subtree(1,gson)))
           precisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_precisionFactor )    ! For setting negative errors
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+        case ( f_precisionFactor )  ! For setting negative errors
+          call expr ( gson, unitAsArray, valueAsArray )
           precisionFactor = valueAsArray(1)
         case ( f_profile )
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          call expr ( gson , unitAsArray, valueAsArray )
           profile = valueAsArray(1)
         case ( f_profileValues )
           valuesNode = subtree(j,key)
-        case ( f_PtanQuantity ) ! For minorframe qty
+        case ( f_PtanQuantity )     ! For minorframe qty
           PtanVectorIndex = decoration(decoration(subtree(1,gson)))
           PtanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_Phitan ) ! For losGrid fill
+        case ( f_Phitan )           ! For losGrid fill
           PhitanVectorIndex = decoration(decoration(subtree(1,gson)))
           PhitanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_phiWindow )
@@ -1666,25 +1630,22 @@ contains ! =====     Public Procedures     =============================
           phiWindow = valueAsArray(1)
           phiWindowUnits = unitAsArray(1)
         case ( f_phiZero )
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Angle/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Angle/) )
+          call expr ( gson , unitAsArray, valueAsArray )
           phiZero = valueAsArray(1)
         case ( f_quadrature )
           quadrature = get_boolean ( gson )
         case ( f_quantity )   ! What quantity are we filling quantity=vector.quantity
           vectorIndex = decoration(decoration(subtree(1,gson)))
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_radianceQuantity )      ! For estimated noise
+        case ( f_radianceQuantity  ) ! For estimated noise
           radianceVectorIndex = decoration(decoration(subtree(1,gson)))
           radianceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_ratioQuantity )      ! For isotope ratio
+        case ( f_ratioQuantity )    ! For isotope ratio
           ratioVectorIndex = decoration(decoration(subtree(1,gson)))
           ratioQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_refract )
           refract = get_boolean ( gson )
-        case ( f_refGPHQuantity ) ! For hydrostatic or rhi
+        case ( f_refGPHQuantity )   ! For hydrostatic or rhi
           refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
           refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_refGPHPrecisionQuantity ) ! For GPH precision
@@ -1699,10 +1660,7 @@ contains ! =====     Public Procedures     =============================
           sourceVectorIndex = decoration(decoration(subtree(1,gson)))
           sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_scale, f_scaleInsts, f_scaleRatio, f_scaleSurfs )
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          call expr ( gson , unitAsArray, valueAsArray )
           select case ( fieldIndex )
           case ( f_scale )
             scale = valueAsArray(1)
@@ -1744,7 +1702,7 @@ contains ! =====     Public Procedures     =============================
           multiplierNode = subtree(j,key)
           ! Either start = [a, b] or start = b are possible
           do jj=1, min(nsons(multiplierNode)-1, 2)
-            call expr(subtree(jj+1,multiplierNode),unitAsArray,valueAsArray)
+            call expr( subtree(jj+1,multiplierNode), unitAsArray, valueAsArray )
             mul = valueAsArray(1)
             select case ( fieldIndex )
             case ( f_start )
@@ -1763,10 +1721,7 @@ contains ! =====     Public Procedures     =============================
           end if
         case ( f_status )
           valuesNode = subtree(j,key)
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( valuesNode, wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          call expr ( gson , unitAsArray, valueAsArray )
           statusValue = nint ( valueAsArray(1) )
         ! case ( f_strict )
         !   strict = get_boolean ( gson )
@@ -1807,10 +1762,7 @@ contains ! =====     Public Procedures     =============================
         case ( f_whereNotFill )
           whereNotFill = get_boolean ( gson )
         case ( f_width )
-          call expr_check ( gson , unitAsArray, valueAsArray, &
-            & (/PHYQ_Dimensionless/), unitsError )
-          if ( unitsError ) call Announce_error ( subtree(j,key), wrongUnits, &
-            & extraInfo=(/unitAsArray(1), PHYQ_Dimensionless/) )
+          call expr ( gson, unitAsArray, valueAsArray )
           width = valueAsArray(1)
         end select
       end do                  ! Loop over arguments to fill instruction
@@ -3142,6 +3094,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.439  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
 ! Revision 2.438  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
