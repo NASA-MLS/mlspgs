@@ -687,13 +687,9 @@ contains ! ========= Public Procedures ============================
         ptan => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
       case ( f_minChannels )
         call expr ( gson, exprUnit, exprValue )
-        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( gson, &
-          WrongUnits, f_minChannels )
         minChannels = nint ( exprValue(1) )
       case ( f_basisFraction )
         call expr ( gson, exprUnit, exprValue )
-        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( gson, &
-          WrongUnits, f_basisFraction )
         basisFraction = exprValue(1)
       case ( f_measurements )
         vectorIndex = decoration(decoration(gson))
@@ -1084,8 +1080,7 @@ contains ! ========= Public Procedures ============================
       & F_HEIGHT, F_CLOUDHEIGHT, F_CHANNELS, F_CLOUDCHANNELS, F_CLOUDRADIANCE, &
       & F_CLOUDRADIANCECUTOFF, F_MASK
     use INIT_TABLES_MODULE, only: L_RADIANCE, L_CLOUDINDUCEDRADIANCE
-    use INTRINSIC, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE, &
-      & PHYQ_DIMENSIONLESS
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_PRESSURE
     use MORETREE, only: GET_FIELD_ID
     use VECTORSMODULE, only: CREATEMASK, &
       & GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, VECTOR_T, &
@@ -1167,8 +1162,6 @@ contains ! ========= Public Procedures ============================
         cloudRadiance => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
       case ( f_cloudRadianceCutoff )
         call expr ( subtree (2, son), units, Value )
-        if ( units(1) /= PHYQ_temperature ) &
-          & call announceError ( subtree (2, son), WrongUnits, f_cloudRadianceCutoff )
         cloudRadianceCutoff = value(1)
       case ( f_mask )
         maskBit = GetMaskBit ( son )
@@ -1534,6 +1527,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.32  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
 ! Revision 2.31  2014/02/28 01:15:27  vsnyder
 ! Remove TYPE argument from calls to EXPR because the value wasn't used
 !
