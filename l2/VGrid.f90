@@ -134,8 +134,6 @@ contains ! =====     Public Procedures     =============================
       case ( f_number )
         numberNode = son
         call expr ( value, units, values )
-        if ( units(1) /= phyq_dimensionless ) &
-          & call announce_error ( field, unitless, f_number )
         number = nint(values(1))
 !       if ( number < 2 ) call announce_error ( root, tooFew )
       case ( f_start )
@@ -519,6 +517,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.29  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
 ! Revision 2.28  2011/03/23 19:56:11  honghanh
 ! Make l2gpdatabase an optional argument
 !

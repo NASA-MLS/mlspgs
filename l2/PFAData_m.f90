@@ -104,7 +104,6 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: WrongFields = tooManySignals + 1
     integer, parameter :: WrongSignal = wrongFields + 1
     integer, parameter :: WrongSize = wrongSignal + 1
-    integer, parameter :: WrongUnits = wrongSize + 1
 
     integer :: AbsTree
     integer, parameter :: CK = kind(speedOfLight)
@@ -164,8 +163,6 @@ contains ! =====     Public Procedures     =============================
         pfaDatum%tGrid = vGrids(decoration(decoration(subtree(2,son))))
       case ( f_velLin )
         call expr ( subtree(2,son), units, value )
-        if ( units(1) /= phyq_velocity ) &
-          & call announce_error ( subtree(1,son), wrongUnits, 'Velocity' )
         velLin = value(1) / 1000.0 ! fundamental unit is m/s, fwdmdl wants km/s
       case ( f_vGrid )
         pfaDatum%vGrid = vGrids(decoration(decoration(subtree(2,son))))
@@ -269,10 +266,6 @@ contains ! =====     Public Procedures     =============================
         call output ( 'Incorrect size for ' )
         call output ( trim(string) )
         call output ( more, before=' -- should be ', after='.', advance='yes' )
-      case ( wrongUnits )
-        call output ( 'Incorrect units -- should be ' )
-        call output ( trim(string) )
-        call output ( '.', advance='yes' )
       end select
       if ( present(stop) ) then
         if ( stop ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -294,9 +287,6 @@ contains ! =====     Public Procedures     =============================
       k = 1
       do i = 2, nsons(where)
         call expr ( subtree(i,where), units, value )
-        if ( units(1) /= phyq_dimensionless ) &
-          & call announce_error ( subtree(i,where), wrongUnits, &
-            & 'Dimensionless' )
         j = j + 1
         if ( j > nTemps ) then
           j = 1
@@ -356,7 +346,6 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: NoGroup = noFolded + 1
     integer, parameter :: NotZeta = noGroup + 1
     integer, parameter :: SignalParse = notZeta + 1
-    integer, parameter :: WrongDimensions = signalParse + 1
 
     ! Gather the data from the command
     error = 0
@@ -376,8 +365,6 @@ contains ! =====     Public Procedures     =============================
         if ( get_boolean(son) ) lines = 2
       case ( f_losvel )
         call expr ( subtree(2,son), units, values ) ! can't be a range
-        if ( units(1) /= phyq_velocity ) &
-          & call announce_error ( son, wrongDimensions, 'velocity' )
         losVel = values(1)
       case ( f_molecules )
         nullify ( molecules )
@@ -391,8 +378,6 @@ contains ! =====     Public Procedures     =============================
         end do
       case ( f_oversample )
         call expr ( subtree(2,son), units, values ) ! can't be a range
-        if ( units(1) /= phyq_dimensionless ) &
-          & call announce_error ( son, wrongDimensions, 'dimensionless' )
         oversample = max(nint(values(1)),1)
       case ( f_signals )
         nullify ( channels )
@@ -480,8 +465,6 @@ contains ! =====     Public Procedures     =============================
       case ( signalParse )
         call output ( 'Unable to parse signal ' )
         call output ( trim(string), advance='yes' )
-      case ( wrongDimensions )
-        call output ( 'Units are not '//trim(string)//'.', advance='yes' )
       end select
     end subroutine Announce_Error
 
@@ -674,6 +657,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.29  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
 ! Revision 2.28  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
