@@ -448,7 +448,6 @@ contains ! ===================================  Public procedures  =====
       & SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, WRAPGRIDDEDDATA
     use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, &
       & F_OPERATIONAL, F_SCALE
-    use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE
     use MLSKINDS, only: R8
     use MLSFillValues, only: ESSENTIALLYEQUAL
     use Toggles, only: GEN, TOGGLE
@@ -532,15 +531,9 @@ contains ! ===================================  Public procedures  =====
         climatology => griddedDataBase ( decoration ( decoration ( value ) ) )
       case ( f_height )
         call expr ( value, exprUnits, exprValues )
-        if ( exprUnits(1) /= phyq_pressure ) call MLSMessage ( &
-          & MLSMSG_Error, ModuleName, &
-          & 'Only pressure is allowed for the height field' )
         height = exprValues(1)
       case ( f_scale )
         call expr ( value, exprUnits, exprValues )
-        if ( exprUnits(1) /= phyq_length ) call MLSMessage ( &
-          & MLSMSG_Error, ModuleName, &
-          & 'Only altitude is allowed for the scale field' )
         scale = exprValues(1)
       end select
     end do
@@ -1080,6 +1073,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.54  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
 ! Revision 2.53  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
