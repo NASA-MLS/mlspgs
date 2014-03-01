@@ -170,8 +170,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_FORGE              = s_flushPFA + 1
   integer, parameter :: S_FORWARDMODEL       = s_forge + 1
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
-  integer, parameter :: S_FREQUENCYGRID      = s_forwardModelGlobal + 1
-  integer, parameter :: S_GRIDDED            = s_frequencyGrid + 1
+  integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
   integer, parameter :: S_HESSIAN            = s_gridded + 1
   integer, parameter :: S_HGRID              = s_hessian + 1
   integer, parameter :: S_ISGRIDEMPTY        = s_hgrid + 1
@@ -385,7 +384,6 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_forge) =                  add_ident ( 'forge' )
     spec_indices(s_forwardModel) =           add_ident ( 'forwardModel' )
     spec_indices(s_forwardModelGlobal) =     add_ident ( 'forwardModelGlobal' )
-    spec_indices(s_frequencyGrid) =          add_ident ( 'frequencyGrid' )
     spec_indices(s_gridded) =                add_ident ( 'gridded' )
     spec_indices(s_hessian) =                add_ident ( 'hessian' )
     spec_indices(s_hgrid) =                  add_ident ( 'hgrid' )
@@ -634,29 +632,28 @@ contains ! =====     Public procedures     =============================
       begin, s+s_hGrid, &
              begin, f+f_date, string(), &
              begin, f+f_extendible, boolean(), &
-             begin, f+f_fraction, numeric(), &
+             begin, f+f_fraction, numeric(phyq_dimensionless), &
              begin, f+f_forbidOverspill, boolean(), &
-             begin, f+f_geodAngle, numeric(), &
-             begin, f+f_geodLat, numeric(), &
-             begin, f+f_height, numeric(), &
+             begin, f+f_geodAngle, numeric(phyq_angle), &
+             begin, f+f_geodLat, numeric(phyq_angle), &
+             begin, f+f_height, numeric(phyq_length), &
              begin, f+f_insetOverlaps, boolean(), &
-             begin, f+f_interpolationfactor, numeric(), &
-             begin, f+f_inclination, numeric(), &
-             begin, f+f_lon, numeric(), &
-             begin, f+f_losAngle, numeric(), &
-             begin, f+f_maxLowerOverlap, numeric(), &
-             begin, f+f_maxLowerOverlap, numeric(), &
-             begin, f+f_maxUpperOverlap, numeric(), &
-             begin, f+f_mif, numeric(), &
+             begin, f+f_interpolationfactor, numeric(phyq_dimensionless), &
+             begin, f+f_inclination, numeric(phyq_angle), &
+             begin, f+f_lon, numeric(phyq_angle), &
+             begin, f+f_losAngle, numeric(phyq_angle), &
+             begin, f+f_maxLowerOverlap, numeric(phyq_dimensionless), &
+             begin, f+f_maxUpperOverlap, numeric(phyq_dimensionless), &
+             begin, f+f_mif, numeric(phyq_dimensionless), &
              begin, f+f_module, field_spec(s_module), &
-             begin, f+f_origin, numeric(), &
+             begin, f+f_origin, numeric(phyq_angle), &
              begin, f+f_single, boolean(), &
-             begin, f+f_solarTime, numeric(), &
-             begin, f+f_solarZenith, numeric(), &
-             begin, f+f_spacing, numeric(), &
+             begin, f+f_solarTime, numeric(phyq_time), &
+             begin, f+f_solarZenith, numeric(phyq_angle), &
+             begin, f+f_spacing, numeric(phyq_angle), &
              begin, f+f_sourceL2GP, field_spec(s_l2gp), &
              begin, f+f_Time, numeric(), &
-             begin, f+f_type, field_type(t_hGridType,req=req), &
+             begin, f+f_type, field_type(t_hgridtype,req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_readgriddedData, &
@@ -680,8 +677,8 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_empiricalGeometry, &
-             begin, f+f_terms, numeric(req=req), &
-             begin, f+f_iterations, numeric(), &
+             begin, f+f_terms, numeric(phyq_dimensionless,req=req), &
+             begin, f+f_iterations, numeric(phyq_dimensionless), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_ConvertEtaToP, &  ! Must be AFTER S_Gridded, V_Gridded
@@ -714,23 +711,23 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_chunkDivide, &
              begin, f+f_method, field_type(t_chunkDivideMethod,req=req), &
-             begin, f+f_noChunks, numeric(), &
-             begin, f+f_overlap, numeric(), &
-             begin, f+f_lowerOverlap, numeric(), &
-             begin, f+f_upperOverlap, numeric(), &
-             begin, f+f_maxLength, numeric(), &
-             begin, f+f_maxOrbY, numeric(), &
+             begin, f+f_noChunks, numeric(phyq_dimensionless), &
+             begin, f+f_overlap, numeric(), & ! PHYQ_MAFs, PHYQ_Angle, PHYQ_Time
+             begin, f+f_lowerOverlap, numeric(), & ! PHYQ_MAFs, PHYQ_Angle, PHYQ_Time
+             begin, f+f_upperOverlap, numeric(), & ! PHYQ_MAFs, PHYQ_Angle, PHYQ_Time
+             begin, f+f_maxLength, numeric(), & ! PHYQ_MAFs, PHYQ_Angle, PHYQ_Time
+             begin, f+f_maxOrbY, numeric(phyq_length), &
              begin, f+f_excludePostOverlaps, boolean(), &
              begin, f+f_excludePriorOverlaps, boolean(), &
-             begin, f+f_noSlaves, numeric(), &
+             begin, f+f_noSlaves, numeric(phyq_dimensionless), &
              begin, f+f_homeModule, field_type(t_module), &
-             begin, f+f_homeGeodAngle, numeric(), &
+             begin, f+f_homeGeodAngle, numeric(phyq_angle), &
              begin, f+f_scanLowerLimit, numeric_range(), &
              begin, f+f_scanUpperLimit, numeric_range(), &
              begin, f+f_criticalBands, string(), &
              begin, f+f_criticalModules, field_type(t_criticalModule), &
              begin, f+f_criticalSignals, string(), &
-             begin, f+f_maxGap, numeric(), &
+             begin, f+f_maxGap, numeric(), & ! PHYQ_MAFs, PHYQ_Angle, PHYQ_Time
              begin, f+f_saveObstructions, boolean(), &
              begin, f+f_skipL1BCheck, boolean(), &
              begin, f+f_crashIfPhiNotMono, boolean(), &
@@ -745,12 +742,12 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_fGrid, &
              begin, f+f_coordinate, field_type(t_fGridCoord), &
-             begin, f+f_values, numeric(), &
+             begin, f+f_values, numeric(), & ! phyq_frequency, phyq_dimensionless
              nadp+n_spec_def, &
       begin, s+s_tGrid, &
              begin, f+f_formula, numeric_range(), &
-             begin, f+f_number, numeric(), &
-             begin, f+f_start, numeric(req=req), &
+             begin, f+f_number, numeric(phyq_dimensionless), &
+             begin, f+f_start, numeric(phyq_temperature,req=req), &
              begin, f+f_stop, numeric(), &
              begin, f+f_type, field_type(t_vGridType,req=req), &
              ndp+n_spec_def /) )
@@ -759,8 +756,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, field_type(t_vGridType,req=req), &
              begin, f+f_coordinate, field_type(t_vGridCoord), &
              begin, f+f_formula, numeric_range(), &
-             begin, f+f_number, numeric(), &
-             begin, f+f_resolution, numeric(), &
+             begin, f+f_number, numeric(phyq_dimensionless), &
+             begin, f+f_resolution, numeric(phyq_dimensionless), &
              begin, f+f_start, numeric(), &
              begin, f+f_stop, numeric(), &
              begin, f+f_values, numeric(), &
@@ -779,8 +776,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_operational, field_spec(s_gridded,s_concatenate, &
                     s_convertetatop), &
              begin, f+f_climatology, field_spec(s_gridded,s_concatenate), &
-             begin, f+f_height, numeric(), &
-             begin, f+f_scale, numeric(), &
+             begin, f+f_height, numeric(phyq_pressure), &
+             begin, f+f_scale, numeric(phyq_length), &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_mergeGrids, &  ! Must be AFTER S_Gridded and S_VGrid
@@ -796,22 +793,22 @@ contains ! =====     Public procedures     =============================
       begin, s+s_makePFA, & ! Must be AFTER s_vGrid and s_tGrid
              begin, f+f_allLinesForRadiometer, boolean(), &
              begin, f+f_allLinesInCatalog, boolean(), &
-             begin, f+f_losvel, numeric(req=req,scalar=scalar), &
+             begin, f+f_losvel, numeric(phyq_velocity,req=req,scalar=scalar), &
              begin, f+f_molecules, field_type(t_molecule,req=req), &
-             begin, f+f_oversample, numeric(scalar=scalar), &
+             begin, f+f_oversample, numeric(phyq_dimensionless,scalar=scalar), &
              begin, f+f_signals, string(req), &
              begin, f+f_temperatures, field_spec(s_tGrid,req=req,scalar=scalar), &
              begin, f+f_vGrid, field_spec(s_vGrid,req=req,scalar=scalar), &
              ndp+n_spec_def, &
       begin, s+s_pfaData, & ! Must be AFTER s_vGrid and s_tGrid
-             begin, f+f_absorption, numeric(), &
-             begin, f+f_dAbsDnc, numeric(), &
-             begin, f+f_dAbsDnu, numeric(), &
-             begin, f+f_dAbsDwc, numeric(), &
+             begin, f+f_absorption, numeric(phyq_dimensionless), &
+             begin, f+f_dAbsDnc, numeric(phyq_dimensionless), &
+             begin, f+f_dAbsDnu, numeric(phyq_dimensionless), &
+             begin, f+f_dAbsDwc, numeric(phyq_dimensionless), &
              begin, f+f_molecules, field_type(t_molecule), &
              begin, f+f_signal, string(req), &
              begin, f+f_temperatures, field_spec(s_tGrid,req=req), &
-             begin, f+f_velLin, numeric(), &
+             begin, f+f_velLin, numeric(phyq_velocity), &
              begin, f+f_vGrid, field_spec(s_vGrid,req=req), &
              ndp+n_spec_def, &
       begin, s+s_readPFA, &
@@ -887,7 +884,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_precision, vectorQuantity(), &
              begin, f+f_prefixSignal, boolean(), &
              begin, f+f_swath, string(), &
-             begin, f+f_hdfVersion, numeric(), &
+             begin, f+f_hdfVersion, numeric(phyq_dimensionless), &
              begin, f+f_AuraInstrument, string(), &
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
@@ -898,7 +895,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, string(), &
              begin, f+f_quantityType, field_type(t_quantityType), &
              begin, f+f_sdname, string(), &
-             begin, f+f_hdfVersion, numeric(), &
+             begin, f+f_hdfVersion, numeric(phyq_dimensionless), &
              ndp+n_spec_def, &
       begin, s+s_matrix, &  ! Must be AFTER s_vector
              begin, f+f_rows, field_spec(s_vector), &
@@ -917,15 +914,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_b, vectorQuantity(), &
              begin, f+f_badRange, numeric_range(), &
              begin, f+f_baselineQuantity, vectorQuantity(), &
-             begin, f+f_block, numeric(), &
+             begin, f+f_block, numeric(phyq_dimensionless), &
              begin, f+f_boundaryPressure, vectorQuantity(), &
              begin, f+f_boxCarMethod, field_type(t_boxCarMethod), &
-             begin, f+f_c, numeric(), &
-             begin, f+f_channel, numeric(), &
+             begin, f+f_c, numeric(phyq_dimensionless), &
+             begin, f+f_channel, numeric(phyq_dimensionless), &
              begin, f+f_channels, numeric_or_range(), &
              begin, f+f_centerVertically, boolean()/) )
     call make_tree ( (/ & ! Continuing for s_fill...
-             begin, f+f_count, numeric(), &
+             begin, f+f_count, numeric(phyq_dimensionless), &
              begin, f+f_dimList, string(), &
              begin, f+f_dontLatch, boolean(), &
              begin, f+f_dontMask, boolean(), &
@@ -933,7 +930,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_ECRtoFOV, vectorQuantity(), &
              begin, f+f_exact, boolean(), &
              begin, f+f_excludeBelowBottom, boolean(), &
-             begin, f+f_explicitValues, numeric(), &
+             begin, f+f_explicitValues, numeric(), & ! quantity%template%unit, phyq_dimensionless
              begin, f+f_expr, &
                     begin, numeric(), &
                     begin, boolean(), &
@@ -962,7 +959,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_ignoreZero, boolean(), &
              begin, f+f_instances, numeric_or_range(), &
              begin, f+f_internalVGrid, field_spec(s_vGrid), &
-             begin, f+f_integrationTime, numeric(), &
+             begin, f+f_integrationTime, numeric(phyq_time), &
              begin, f+f_interpolate, boolean(), &
              begin, f+f_intrinsic, boolean(), &
              begin, f+f_isPrecision, boolean(), &
@@ -971,29 +968,29 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lsb, vectorQuantity(), &
              begin, f+f_lsbFraction, vectorQuantity(), &
              begin, f+f_manipulation, string(), &
-             begin, f+f_maxIterations, numeric(), &
-             begin, f+f_maxValue, numeric(), &
+             begin, f+f_maxIterations, numeric(phyq_dimensionless), &
+             begin, f+f_maxValue, numeric(), & ! sourcequantity%template%unit, phyq_dimensionless
              begin, f+f_minNormQty, vectorQuantity(), &
-             begin, f+f_minValue, numeric(), &
+             begin, f+f_minValue, numeric(), & ! sourcequantity%template%unit, phyq_dimensionless
              begin, f+f_measurements, vectorQuantity() /), &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_method, field_type(t_fillmethod,req=req), &
              begin, f+f_model, vectorQuantity(), &
              begin, f+f_multiplier, numeric(), &
-             begin, f+f_noFineGrid, numeric(), &
+             begin, f+f_noFineGrid, numeric(phyq_dimensionless), &
              begin, f+f_noise, vectorQuantity(), &
              begin, f+f_noiseBandwidth, vectorQuantity(), &
              begin, f+f_normQty, vectorQuantity(), &
-             begin, f+f_offsetAmount, numeric(), &
+             begin, f+f_offsetAmount, numeric(phyq_temperature), &
              begin, f+f_orbitInclination, vectorQuantity() /), &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_fill...
-             begin, f+f_phiWindow, numeric(), &
-             begin, f+f_phiZero, numeric(), &
+             begin, f+f_phiWindow, numeric(), & ! phyq_profiles, phyq_angle
+             begin, f+f_phiZero, numeric(phyq_angle), &
              begin, f+f_precision, vectorQuantity(), &
-             begin, f+f_precisionFactor, numeric(), &
-             begin, f+f_profile, numeric(), &
+             begin, f+f_precisionFactor, numeric(phyq_dimensionless), &
+             begin, f+f_profile, numeric(phyq_dimensionless), &
              begin, f+f_profileValues, numeric_range(), &
              begin, f+f_ptanQuantity, vectorQuantity(), &
              begin, f+f_phitan, vectorQuantity(), &
@@ -1009,15 +1006,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_rhiQuantity, vectorQuantity() /), &
              continue = .true. )
     call make_tree ( (/ & ! STILL Continuing for s_fill...
-             begin, f+f_scale, numeric(), &
-             begin, f+f_scaleInsts, numeric(), &
-             begin, f+f_scaleRatio, numeric(), &
-             begin, f+f_scaleSurfs, numeric(), &
+             begin, f+f_scale, numeric(phyq_dimensionless), &
+             begin, f+f_scaleInsts, numeric(phyq_dimensionless), &
+             begin, f+f_scaleRatio, numeric(phyq_dimensionless), &
+             begin, f+f_scaleSurfs, numeric(phyq_dimensionless), &
              begin, f+f_scVel, vectorQuantity(), &
              begin, f+f_scVelECI, vectorQuantity(), &
              begin, f+f_scVelECR, vectorQuantity(), &
              begin, f+f_scECI, vectorQuantity(), &
-             begin, f+f_seed, numeric(), &
+             begin, f+f_seed, numeric(phyq_dimensionless), &
              begin, f+f_shape, numeric(), &
              begin, f+f_sourceQuantities, field_spec(s_quantity), &
              begin, f+f_sourceQuantity, vectorQuantity(), &
@@ -1027,9 +1024,9 @@ contains ! =====     Public procedures     =============================
                                              &  s_ConvertEtaToP,s_WMOTrop /) ), &
              begin, f+f_sourceVGrid, field_spec(s_vGrid), &
              begin, f+f_spread, boolean(), &
-             begin, f+f_start, numeric(), &
-             begin, f+f_status, numeric(), &
-             begin, f+f_stride, numeric(), &
+             begin, f+f_start, numeric(phyq_dimensionless), &
+             begin, f+f_status, numeric(phyq_dimensionless), &
+             begin, f+f_stride, numeric(phyq_dimensionless), &
              begin, f+f_suffix, string() , &
              begin, f+f_surface, numeric_range(), &
              begin, f+f_systemTemperature, vectorQuantity() /), &
@@ -1037,7 +1034,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ & ! STILL Continuing for s_fill...
              begin, f+f_temperatureQuantity, vectorQuantity(), &
              begin, f+f_tempPrecisionQuantity, vectorQuantity(), &
-             begin, f+f_terms, numeric(), &
+             begin, f+f_terms, numeric(phyq_dimensionless), &
              begin, f+f_totalPowerQuantity, vectorQuantity(), &
              begin, f+f_tngtECI, vectorQuantity(), &
              begin, f+f_unit, field_type(t_units), &
@@ -1046,7 +1043,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_vmrQuantity, vectorQuantity(), &
              begin, f+f_whereFill, boolean(), &
              begin, f+f_whereNotFill, boolean(), &
-             begin, f+f_width, numeric(), &
+             begin, f+f_width, numeric(phyq_dimensionless), &
              ndp+n_spec_def /), &
              continue = .true. ) ! WHEW! Finally done for s_fill
 
@@ -1077,7 +1074,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_a, vectorQuantity(), &
              begin, f+f_b, vectorQuantity(), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
-             begin, f+f_c, numeric(), &
+             begin, f+f_c, numeric(phyq_dimensionless), &
              begin, f+f_evaluate, boolean(), &
              begin, f+f_expr, &
                     begin, numeric(), &
@@ -1102,7 +1099,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_compare, &
              begin, f+f_a, vectorQuantity(), &
              begin, f+f_b, vectorQuantity(), &
-             begin, f+f_c, numeric(), &
+             begin, f+f_c, numeric(phyq_dimensionless), &
              begin, f+f_formula, string(req), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
@@ -1160,7 +1157,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_transfer, &
              begin, f+f_a, field_spec(s_vector), &
              begin, f+f_b, field_spec(s_vector), &
-             begin, f+f_c, numeric(), &
+             begin, f+f_c, numeric(phyq_dimensionless), &
              begin, f+f_method, field_type(t_fillmethod), &
              begin, f+f_source, field_spec(s_vector), &
              begin, f+f_destination, field_spec(s_vector,req=req), &
@@ -1180,7 +1177,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_negativePrecision, &
              begin, f+f_precision, field_spec(s_vector,req=req), &
              begin, f+f_aprioriPrecision, field_spec(s_vector,req=req), &
-             begin, f+f_precisionFactor, numeric(), &
+             begin, f+f_precisionFactor, numeric(phyq_dimensionless), &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
@@ -1219,7 +1216,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_directRead, &
              begin, f+f_bin, string(), &
              begin, f+f_file, string(), &
-             begin, f+f_hdfVersion, numeric(req=req), &
+             begin, f+f_hdfVersion, numeric(phyq_dimensionless,req=req), &
              begin, f+f_interpolate, boolean(), &
              begin, f+f_options, string(), &
              begin, f+f_quantity, vectorQuantity(), &
@@ -1234,7 +1231,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_directWrite, &
              begin, f+f_convergence, vectorQuantity(), &
              begin, f+f_file, string(), &
-             begin, f+f_hdfVersion, numeric(req=req), &
+             begin, f+f_hdfVersion, numeric(phyq_dimensionless,req=req), &
              begin, f+f_lowerOverlap, boolean(), &
              begin, f+f_options, string(), &
              begin, f+f_precision, vectorQuantity(), &
@@ -1251,7 +1248,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_create, boolean(), &
              begin, f+f_exclude, string(), &
              begin, f+f_file, string(req), &
-             begin, f+f_hdfVersion, numeric(), &
+             begin, f+f_hdfVersion, numeric(phyq_dimensionless), &
              begin, f+f_hGrid, field_spec(s_hgrid), &
              begin, f+f_ifAnyCrashedChunks, boolean(), &
              begin, f+f_inputFile, string(req), &
@@ -1270,7 +1267,7 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_sleep, &  ! Must be AFTER s_l2aux and s_l2gp
-             begin, f+f_time, numeric(), &
+             begin, f+f_time, numeric(phyq_time), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
@@ -1278,7 +1275,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_destroy, boolean(), &
              begin, f+f_dontPack, field_spec(s_quantity), &
              begin, f+f_file, string(req), &
-             begin, f+f_hdfVersion, numeric(), &
+             begin, f+f_hdfVersion, numeric(phyq_dimensionless), &
              begin, f+f_metaDataOnly, boolean(), &
              begin, f+f_metaName, string(), &
              begin, f+f_moleculeSecondDerivatives, field_type(t_molecule), &
@@ -1298,7 +1295,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourcequantity, vectorQuantity(), &
              begin, f+f_additional, boolean(), &
              begin, f+f_channels, numeric_or_range(), &
-             begin, f+f_height, t+t_numeric_range, numeric(), &
+             begin, f+f_height, numeric_or_range(), &
              begin, f+f_heightRange, string(), &
              begin, f+f_ignore, boolean(), &
              begin, f+f_instances, numeric_or_range(), &
@@ -1307,7 +1304,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_minValue, numeric(), &
              begin, f+f_surface, numeric_range(), &
              begin, f+f_opticalDepth, vectorQuantity(), &
-             begin, f+f_opticalDepthCutoff, numeric(), &
+             begin, f+f_opticalDepthCutoff, numeric(phyq_dimensionless), &
              begin, f+f_reverse, boolean(), &
              begin, f+f_where, string(), &
              begin, f+f_reset, boolean(), ndp+n_spec_def /) )
@@ -1318,8 +1315,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mask, field_type(t_masks), &
              begin, f+f_measurements, field_spec(s_vector,req=req), &
              begin, f+f_signals, string(req), &
-             begin, f+f_basisFraction, numeric(), &
-             begin, f+f_minChannels, numeric(), &
+             begin, f+f_basisFraction, numeric(phyq_dimensionless), &
+             begin, f+f_minChannels, numeric(phyq_dimensionless), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_flagcloud, &  ! Must be AFTER s_vector
@@ -1331,7 +1328,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_cloudchannels, numeric(req=req), &
              begin, f+f_height, numeric_range(req=req), &
              begin, f+f_cloudHeight, numeric_range(), &
-             begin, f+f_cloudRadianceCutoff, numeric(req=req), &
+             begin, f+f_cloudRadianceCutoff, numeric(phyq_temperature,req=req), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_updateMask, &
@@ -1382,7 +1379,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nsizebins, numeric(phyq_dimensionless) /) )
     call make_tree ( (/ &
              begin, f+f_pathNorm, boolean(), &
-             begin, f+f_phiWindow, numeric(), & ! either phyq_angle or phyq_profiles
+             begin, f+f_phiWindow, numeric(), & ! [phyq_angle, phyq_profiles]
              begin, f+f_polarized, boolean(), &
              begin, f+f_referenceMIF, numeric(phyq_dimensionless), &
              begin, f+f_refract, boolean(), &
@@ -1448,7 +1445,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_diff, &
              begin, f+f_Clean, boolean(), &
              begin, f+f_crashBurn, boolean(), &
-             begin, f+f_details, numeric(), &
+             begin, f+f_details, numeric(phyq_dimensionless), &
              begin, f+f_hessian, field_spec(s_hessian), &
              begin, f+f_matrix, field_spec(s_matrix), &
              begin, f+f_options, string(), &
@@ -1490,7 +1487,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_count, numeric(), &
              begin, f+f_crashBurn, boolean(), &
              begin, f+f_DACSfilterShapes, boolean(), &
-             begin, f+f_details, numeric(), &
+             begin, f+f_details, numeric(phyq_dimensionless), &
              begin, f+f_file, string(), &
              begin, f+f_filterShapes, boolean(), &
              begin, f+f_forwardModel, field_spec(s_forwardModel), &
@@ -1510,7 +1507,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_options, string(), &
              begin, f+f_pfaData, field_spec(s_makePFA,s_pfaData,s_readPFA), &
              begin, f+f_pfaFiles, boolean(), &
-             begin, f+f_pfaNum, numeric(), &
+             begin, f+f_pfaNum, numeric(phyq_dimensionless), &
              begin, f+f_pfaStru, boolean(), &
              begin, f+f_phaseName, boolean(), &
              begin, f+f_pointingGrids, boolean() /), &
@@ -1559,7 +1556,7 @@ contains ! =====     Public procedures     =============================
                              !               s_vector and s_matrix
              begin, f+f_apriori, field_spec(s_vector), &
              begin, f+f_aprioriFraction, field_spec(s_vector), &
-             begin, f+f_aprioriScale, numeric(), &
+             begin, f+f_aprioriScale, numeric(phyq_dimensionless), &
              begin, f+f_average, field_spec(s_matrix), &
              begin, f+f_checkpoint, boolean(), &
              begin, f+f_columnScale, field_type(t_scale), &
@@ -1570,28 +1567,28 @@ contains ! =====     Public procedures     =============================
              begin, f+f_dumpQuantities, vectorQuantity(), &
              begin, f+f_extendedAverage, boolean(), &
              begin, f+f_forwardModel, field_spec(s_forwardModel,req=req), &
-             begin, f+f_fuzz, numeric(), & ! Secret
+             begin, f+f_fuzz, numeric(phyq_dimensionless), & ! Secret
              begin, f+f_fwdModelExtra, field_spec(s_vector,req=req), &
              begin, f+f_fwdModelOut, field_spec(s_vector), &
              begin, f+f_highBound, field_spec(s_vector), &
-             begin, f+f_hRegOrders, numeric(), &
+             begin, f+f_hRegOrders, numeric(phyq_dimensionless), &
              begin, f+f_hRegQuants, field_spec(s_quantity), &
-             begin, f+f_hRegWeights, numeric(), &
+             begin, f+f_hRegWeights, numeric(phyq_dimensionless), &
              begin, f+f_hRegWeightVec, field_spec(s_vector), &
              begin, f+f_jacobian, field_spec(s_matrix), &
-             begin, f+f_lambda, numeric(), &
-             begin, f+f_lambdaMin, numeric(), &
+             begin, f+f_lambda, numeric(phyq_dimensionless), &
+             begin, f+f_lambdaMin, numeric(phyq_dimensionless), &
              begin, f+f_lowBound, field_spec(s_vector), &
-             begin, f+f_maxJ, numeric(), &
+             begin, f+f_maxJ, numeric(phyq_dimensionless), &
              begin, f+f_measurements, field_spec(s_vector,req=req), &
              begin, f+f_measurementSD, field_spec(s_vector), &
              begin, f+f_method, field_type(t_method), &
-             begin, f+f_muMin, numeric() /) )
+             begin, f+f_muMin, numeric(phyq_dimensionless) /) )
     call make_tree ( (/ & ! Continuting for s_retrieve
              begin, f+f_negateSD, boolean(), &
              begin, f+f_outputCovariance, field_spec(s_matrix), &
              begin, f+f_outputSD, field_spec(s_vector), &
-             begin, f+f_precisionFactor, numeric(), &
+             begin, f+f_precisionFactor, numeric(phyq_dimensionless), &
              begin, f+f_regAfter, boolean(), &
              begin, f+f_regApriori, boolean(), &
              begin, f+f_serial, boolean(), &
@@ -1601,12 +1598,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_stateMin, field_spec(s_vector), &
              begin, f+f_switches, string(), &
              begin, f+f_toggles, string(), &
-             begin, f+f_toleranceA, numeric(), &
-             begin, f+f_toleranceF, numeric(), &
-             begin, f+f_toleranceR, numeric(), &
-             begin, f+f_vRegOrders, numeric(), &
+             begin, f+f_toleranceA, numeric(phyq_dimensionless), &
+             begin, f+f_toleranceF, numeric(phyq_dimensionless), &
+             begin, f+f_toleranceR, numeric(phyq_dimensionless), &
+             begin, f+f_vRegOrders, numeric(phyq_dimensionless), &
              begin, f+f_vRegQuants, field_spec(s_quantity), &
-             begin, f+f_vRegWeights, numeric(), &
+             begin, f+f_vRegWeights, numeric(phyq_dimensionless), &
              begin, f+f_vRegWeightVec, field_spec(s_vector), &
              ndp+n_spec_def /), &
              continue = .true. )
@@ -1621,7 +1618,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_hessian, field_spec(s_hessian), &
              begin, f+f_mirrorHessian, boolean(), &
              begin, f+f_perturbation, field_spec(s_vector), &
-             begin, f+f_singleMAF, numeric(), &
+             begin, f+f_singleMAF, numeric(phyq_dimensionless), &
              begin, f+f_switches, string(), &
              begin, f+f_TScat, boolean(), &
              ndp+n_spec_def /) )
@@ -1658,28 +1655,23 @@ contains ! =====     Public procedures     =============================
                                    !               s_vector
              begin, f+f_horizontal, boolean(), &
              begin, f+f_matrix, field_spec(s_matrix,req=req), &
-             begin, f+f_regOrders, numeric(), &
+             begin, f+f_regOrders, numeric(phyq_dimensionless), &
              begin, f+f_regQuants, field_spec(s_quantity), &
              begin, f+f_regWeightVec, field_spec(s_vector), &
-             begin, f+f_regWeights, numeric(), &
-             ndp+n_spec_def /) )
-    call make_tree ( (/ &
-      begin, s+s_frequencyGrid, & ! Must be AFTER s_vector
-             begin, f+f_atmos, field_spec(s_vector,req=req), &
-             begin, f+f_frequencies, numeric(req=req), &
+             begin, f+f_regWeights, numeric(phyq_dimensionless), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_streamlineHessian, & ! Must be AFTER s_hessian
-             begin, f+f_geodAngle, numeric(), &
+             begin, f+f_geodAngle, numeric(phyq_angle), &
              begin, f+f_hessian, field_spec(s_hessian,req=req), &
-             begin, f+f_scaleHeight, numeric(), &
-             begin, f+f_surface, numeric(), &
-             begin, f+f_threshold, numeric(), &
+             begin, f+f_scaleHeight, numeric(phyq_dimensionless), &
+             begin, f+f_surface, numeric(phyq_dimensionless), &
+             begin, f+f_threshold, numeric(phyq_dimensionless), &
              ndp+n_spec_def, &
       begin, s+s_snoop, &
              begin, f+f_comment, string(), &
              begin, f+f_phaseName, string(), &
-             begin, f+f_level, numeric(), &
+             begin, f+f_level, numeric(phyq_dimensionless), &
              begin, f+f_silent, boolean(), &
              begin, f+f_skipDirectWrites, boolean(), &
              begin, f+f_skipRetrieval, boolean(), &
@@ -1693,7 +1685,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_colInstances, numeric_or_range(), &
              begin, f+f_colQuantity, field_spec(s_quantity), &
              begin, f+f_colSurfaces, numeric_or_range(), &
-             begin, f+f_details, numeric(), &
+             begin, f+f_details, numeric(phyq_dimensionless), &
              begin, f+f_diagonal, boolean(), &
              begin, f+f_hessian, field_spec(s_hessian), &
              begin, f+f_matrix, field_spec(s_matrix), &
@@ -1960,6 +1952,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.596  2014/03/01 03:10:33  vsnyder
+! Delete FrequencyGrid, specify units for many numeric fields
+!
 ! Revision 2.595  2013/11/18 22:26:30  pwagner
 ! phase spec takes optional /debug /verbose fields
 !
