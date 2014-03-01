@@ -131,8 +131,7 @@ contains
     real (r8) :: THISPTB                ! A scalar perturbation
 
     ! Error message codes
-    integer, parameter :: BadSingleMAF = 1 ! Bad units for singleMAF
-    integer, parameter :: HessianNotJacobian = BadSingleMAF + 1 ! Column vectors different
+    integer, parameter :: HessianNotJacobian = 1 ! Column vectors different
     integer, parameter :: NeedJacobian = HessianNotJacobian + 1 ! Needed if derivatives requested
     integer, parameter :: NotPlain = needJacobian + 1  ! Not a "plain" matrix
     integer, parameter :: PerturbationNotState = NotPlain + 1 ! Ptb. not same as state
@@ -182,7 +181,6 @@ contains
         perturbation => vectorDatabase(decoration(decoration(subtree(2,son))))
       case ( f_singleMAF ) 
         call expr ( subtree(2,son), exprUnits, exprValue )
-        if ( exprUnits(1) /= phyq_dimensionless ) call AnnounceError ( BadSingleMAF )
         singleMAF = exprValue(1)
       case ( f_switches )
         call get_string ( sub_rosa(subtree(2,son)), switches(switchLenCur+1:), strip=.true. )
@@ -455,8 +453,6 @@ contains
       call print_source ( where(root) )
       call output ( ' SidsModule complained: ' )
       select case ( code )
-      case ( badSingleMAF )
-        call output ( 'The singleMAF argument must be dimensionless', advance='yes' )
       case ( HessianNotJacobian )
         call output ( 'Hessian and Jacobian are not compatible.', advance='yes' )
       case ( needJacobian )
@@ -508,6 +504,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.72  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
 ! Revision 2.71  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
