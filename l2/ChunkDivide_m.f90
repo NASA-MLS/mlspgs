@@ -670,14 +670,10 @@ contains ! ===================================== Public Procedures =====
           ChunkDivideConfig%upperOverlapFamily = units(1)
         case ( f_noSlaves )
           ChunkDivideConfig%noSlaves = value(1)
-          if ( units(1) /= PHYQ_DimensionLess ) &
-            & call AnnounceError ( root, BadUnits, fieldIndex )
         case ( f_homeModule )
           ChunkDivideConfig%homeModule = decoration ( gson )
         case ( f_homeGeodAngle )
           ChunkDivideConfig%homeGeodAngle = value(1)
-          if ( units(1) /= PHYQ_Angle ) &
-            & call AnnounceError ( root, BadUnits, fieldIndex )
         case ( f_scanLowerLimit )
           if ( any ( units /= PHYQ_Dimensionless .and. units /= PHYQ_Length ) &
             & .or. .not. any ( units == PHYQ_Length ) ) &
@@ -2591,6 +2587,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.112  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
 ! Revision 2.111  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !

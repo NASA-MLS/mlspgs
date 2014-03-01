@@ -36,12 +36,9 @@ module HGrid                    ! Horizontal grid information
   end interface
 
 ! Error codes for "announce_error"
-  integer, private, parameter :: AngleUnitMessage = 1
-  integer, private, parameter :: LengthUnitMessage = AngleUnitMessage + 1
-  integer, private, parameter :: NoFraction = LengthUnitMessage + 1
+  integer, private, parameter :: NoFraction = 1
   integer, private, parameter :: NoHeight = NoFraction + 1
-  integer, private, parameter :: UnitlessMessage = NoHeight + 1
-  integer, private, parameter :: NoL1Bfiles = UnitlessMessage + 1
+  integer, private, parameter :: NoL1Bfiles = NoHeight + 1
   integer, private, parameter :: NoModule = NoL1Bfiles + 1
   integer, private, parameter :: NoMIF = NoModule + 1
   integer, private, parameter :: NoSpacingOrigin = NoMIF + 1
@@ -66,7 +63,7 @@ contains ! =====     Public Procedures     =============================
       & F_TIME, F_TYPE, &
       & FIELD_FIRST, FIELD_LAST, &
       & L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, &
-      & L_L2GP, L_REGULAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_LENGTH
+      & L_L2GP, L_REGULAR
     use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
       & ASSEMBLEL1BQTYNAME
     use L2GPDATA, only: L2GPDATA_T
@@ -205,45 +202,29 @@ contains ! =====     Public Procedures     =============================
       case ( f_height )
         call expr ( subtree(2,son), expr_units, expr_value )
         height = expr_value(1)
-        if ( expr_units(1) /= PHYQ_Length) &
-          & call announce_error ( field, lengthUnitMessage )
       case ( f_mif )
         call expr ( subtree(2,son), expr_units, expr_value )
-        mif = expr_value(1)
-        if ( expr_units(1) /= PHYQ_Dimensionless) &
-          & call announce_error ( field, lengthUnitMessage )
+        mif = nint(expr_value(1))
       case ( f_maxLowerOverlap )
         call expr ( subtree(2,son), expr_units, expr_value )
-        maxLowerOverlap = expr_value(1)
-        if ( expr_units(1) /= PHYQ_Dimensionless) &
-          & call announce_error ( field, unitlessMessage )
+        maxLowerOverlap = nint(expr_value(1))
       case ( f_maxUpperOverlap )
         call expr ( subtree(2,son), expr_units, expr_value )
-        maxUpperOverlap = expr_value(1)
-        if ( expr_units(1) /= PHYQ_Dimensionless) &
-          & call announce_error ( field, unitlessMessage )
+        maxUpperOverlap = nint(expr_value(1))
       case ( f_fraction )
         call expr ( subtree(2,son), expr_units, expr_value )
         fraction = expr_value(1)
-        if ( expr_units(1) /= PHYQ_Dimensionless) &
-          & call announce_error ( field, unitlessMessage )
       case ( f_insetOverlaps )
         insetOverlaps = get_boolean ( fieldValue )
       case ( f_interpolationFactor )
         call expr ( subtree(2,son), expr_units, expr_value )
         interpolationFactor = expr_value(1)
-        if ( expr_units(1) /= PHYQ_Dimensionless) &
-          & call announce_error ( field, unitlessMessage )
       case ( f_spacing )
         call expr ( subtree(2,son), expr_units, expr_value )
         spacing = expr_value(1)
-        if ( expr_units(1) /= PHYQ_Angle) &
-          & call announce_error ( field, angleUnitMessage )
       case ( f_origin )
         call expr ( subtree(2,son), expr_units, expr_value )
         origin = expr_value(1)
-        if ( expr_units(1) /= PHYQ_Angle) &
-          & call announce_error ( field, angleUnitMessage )
       case ( f_geodAngle )
         geodAngleNode = son
       case ( f_geodLat )
@@ -2329,16 +2310,6 @@ contains ! =====     Public Procedures     =============================
     call print_source ( where_at(where) )
     call output ( ': ' )
     select case ( code )
-    case ( angleUnitMessage )
-      call output ( "Value for the " )
-      call dump_tree_node ( where, 0 )
-      call output ( " field is required to be an angle, e.g. degrees", &
-        advance='yes' )
-    case ( lengthUnitMessage )
-      call output ( "Value for the " )
-      call dump_tree_node ( where, 0 )
-      call output ( " field is required to be a length, e.g. km", &
-        advance='yes' )
     case ( noFraction )
       call output ( "TYPE = FRACTIONAL but no fraction is specified", &
         & advance='yes' )
@@ -2356,10 +2327,6 @@ contains ! =====     Public Procedures     =============================
     case ( badTime )
       call output ( "Bad information given for date in explicit hGrid", &
         & advance='yes' )
-    case ( unitlessMessage )
-      call output ( "Value for the " )
-      call dump_tree_node ( where, 0 )
-      call output ( " field is required to be dimensionless", advance='yes' )
     end select
     end subroutine ANNOUNCE_ERROR
     
@@ -2421,6 +2388,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.112  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
 ! Revision 2.111  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
