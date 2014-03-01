@@ -81,7 +81,6 @@ contains ! ========================= Public Procedures ====================
     use Allocate_Deallocate, only: Allocate_test
     use Expr_M, only: EXPR
     use Init_Tables_Module, only: F_ITERATIONS, F_TERMS
-    use Intrinsic, only: PHYQ_DimensionLess
     use MoreTree, only: Get_Field_ID
     use Tree, only: NSONS, SUBTREE
 
@@ -113,15 +112,11 @@ contains ! ========================= Public Procedures ====================
           & ModuleName )
         do j = 2, noTerms + 1
           call expr ( subtree(j,son), theUnits, value )
-          if ( theUnits(1) /= PHYQ_Dimensionless ) call MLSMessage ( MLSMSG_Error, &
-            & ModuleName, "No units expected for empirical terms" )
-          empiricalTerms(j-1) = value(1)
+          empiricalTerms(j-1) = nint(value(1))
         end do
       case ( f_iterations )
         call expr ( subtree(2,son), theUnits, value )
-        if ( theUnits(1) /= PHYQ_Dimensionless ) call MLSMessage ( MLSMSG_Error, &
-          & ModuleName, "No units expected for iterations" )
-        noIterations = value(1)
+        noIterations = nint(value(1))
       end select
     end do
 
@@ -249,6 +244,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.18  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
 ! Revision 2.17  2010/09/17 16:47:08  honghanh
 ! Add subroutine to deallocate empiricalTerms
 !
