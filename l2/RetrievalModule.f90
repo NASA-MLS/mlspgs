@@ -475,8 +475,6 @@ repeat_loop: do ! RepeatLoop
               ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
             case ( f_outputSD )
               outputSD => vectorDatabase(decoration(decoration(subtree(2,son))))
-            case ( f_precisionFactor )
-              precisionFactor = value(1)
             case ( f_sparseQuantities )
               call Allocate_Test ( sparseQuantities, nsons(son)-1, &
                 & 'sparseQuantities', ModuleName )
@@ -504,7 +502,8 @@ repeat_loop: do ! RepeatLoop
               call set_toggles ( switches(switchLenCur+1:) )
               switches(switchLenCur+1:) = ''
             case ( f_aprioriScale, f_fuzz, f_lambda, f_lambdamin, f_maxJ, &
-              &    f_muMin, f_toleranceA, f_toleranceF, f_toleranceR )
+              &    f_muMin, f_precisionFactor, f_toleranceA, f_toleranceF, &
+              &    f_toleranceR )
               call expr ( subtree(2,son), units, value )
               select case ( field )
               case ( f_aprioriScale )
@@ -519,6 +518,8 @@ repeat_loop: do ! RepeatLoop
                 maxJacobians = nint(value(1))
               case ( f_muMin )
                 muMin = value(1)
+              case ( f_precisionFactor )
+                precisionFactor = value(1)
               case ( f_toleranceA )
                 toleranceA = value(1)
               case ( f_toleranceF )
@@ -2979,6 +2980,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.350  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
 ! Revision 2.349  2014/02/28 01:14:04  vsnyder
 ! Remove TYPE argument from calls to EXPR because the value wasn't used.
 ! Move units checking to type checker.
