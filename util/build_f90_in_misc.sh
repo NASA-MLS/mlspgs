@@ -357,7 +357,7 @@ if [ $DEEBUG = "on" ]
 then
    echo "Hiding any pre-existing source files"
 fi
-for source_suffix in c f f90 h f9h
+for source_suffix in c f f90 h f9h g90 .F .F90
 do
    pre_files=*.$source_suffix
    for file in $pre_files
@@ -519,6 +519,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.17  2013/01/09 18:47:10  pwagner
+# Add verbose, silent options; unless silent announce where installing
+#
 # Revision 1.16  2008/06/27 16:59:15  pwagner
 # Worked around Intel refusal to link when main program in c
 #
