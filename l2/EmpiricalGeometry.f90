@@ -112,7 +112,7 @@ contains ! ========================= Public Procedures ====================
           & ModuleName )
         do j = 2, noTerms + 1
           call expr ( subtree(j,son), theUnits, value )
-          empiricalTerms(j-1) = nint(value(1))
+          empiricalTerms(j-1) = value(1)
         end do
       case ( f_iterations )
         call expr ( subtree(2,son), theUnits, value )
@@ -244,6 +244,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.19  2014/03/04 17:37:48  pwagner
+! Must not truncate f.p. terms
+!
 ! Revision 2.18  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
 !
