@@ -140,8 +140,8 @@ program Spartacus
   integer, parameter :: FIXDELAYFORSLAVETOFINISH   = 1500000 ! 15000000 ! 15 sec
   integer, parameter :: MAXCMDLEN                  = 51200 ! was 4096
   integer, parameter :: MAXLINELEN                 = 512
-  integer, parameter :: MAXNUMCMDS                 = 600
-  integer, parameter :: MAXNUMLINES                = 2000
+  integer, parameter :: MAXNUMCMDS                 = 6000
+  integer, parameter :: MAXNUMLINES                = 20000
   integer :: BUFFERIDRCV              ! From PVM
   integer, dimension(:), pointer :: CmdMACHINES ! Machine indices for Cmds
   integer, dimension(:), pointer :: CmdTIDS ! Tids for Cmds
@@ -1218,6 +1218,9 @@ contains
 end module BOGUS_MODULE
 
 ! $Log$
+! Revision 1.10  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 1.9  2013/08/23 02:51:47  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
