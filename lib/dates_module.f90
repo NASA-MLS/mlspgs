@@ -229,7 +229,10 @@ module dates_module
   
   ! There are two internal date formats:
   ! eudtf          -  yyyddd expressed as an integer, e.g. 1993001 is '1993-001'
-  ! MLSDATE_TIME_T - a user-defined type containing 2 fields: dai and seconds
+  ! MLSDATE_TIME_T - a user-defined type containing 3 fields: 
+  ! dai and 
+  ! seconds
+  ! leapseconds
   
   ! Further notes and Limitations:
   ! It would be useful for this module to supply functions converting among
@@ -244,13 +247,18 @@ module dates_module
   ! It would not be that difficult to enable us to take advantage
   ! of a leapsec file, and, after having read it, fill out our leapsec database.
   ! Difficult or easy, we have not yet bestirred ourselves.
+  
+  ! Our implementation of leapseconds is not strictly accurate:
+  ! (a) Our database includes dates prior to 1972, contrary to the usual definition
+  ! (b) Our implementation assumes that each leapsecond adds exactly 1 second
+  !     the definition allows for possible negative leap seconds
 ! === (end of api) ===
 
 ! Further notes:
 ! (1) We maintain a private datatype, MLSDATE_TIME_T
 ! it is an intermediary in various operations and conversions
 ! Would it be useful to uncloak it so callers might access it directly?
-! 92) This module has grown rather long. Should w consider
+! (2) This module has grown rather long. Should we consider
 ! Splitting into two, and if so, what would be the criteria for
 ! grouping procedures into a common module?
 
@@ -564,7 +572,7 @@ contains
     type(MLSDATE_TIME_T)           :: datetime
     ! Executable
     dateTime = tai93s2datetime( tai93s, leapsec )
-    print *, 'dateTime&seconds, leap ', dateTime%seconds, dateTime%leapseconds
+    ! print *, 'dateTime&seconds, leap ', dateTime%seconds, dateTime%leapseconds
     utc = datetime2utc( datetime, leapsec )
   end function tai93s2utc
 
@@ -583,7 +591,7 @@ contains
     ! Executable
     datetimeRdcd = datetime
     call reducedatetime( datetimeRdcd, leapsec )
-    print *, 'After reduction, dateTime&seconds, leap ', dateTime%seconds, dateTime%leapseconds
+    ! print *, 'After reduction, dateTime&seconds, leap ', dateTime%seconds, dateTime%leapseconds
     ! call dump ( datetimeRdcd )
     ! Now convert to our internal representations
     if ( datetimeRdcd%dai < 0 ) then
@@ -2785,6 +2793,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.32  2014/02/21 01:26:54  pwagner
+! Added leapseconds; corrected bugs
+!
 ! Revision 2.31  2014/02/13 00:01:24  pwagner
 ! Repaired bugs in Reformatting dates containing month names
 !
