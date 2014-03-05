@@ -265,7 +265,7 @@ contains ! ====     Public Procedures     ==============================
         end select
       end if
     case ( n_pow ) ! -------------------------------------------------------
-      call expr ( subtree(1,root), units, value, type1, scale, values1 )
+      call expr ( subtree(nsons(root),root), units, value, type1, scale, values1 )
       myType = num_value
       do i = nsons(root)-1, 1, -1 ! Power operator is right associative
         call expr ( subtree(i,root), units, value2, type2, scale, values2 )
@@ -910,6 +910,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.34  2014/03/05 01:06:50  vsnyder
+! Repair blunder that caused a^b^c...x^y^z to be evaluated as a^b^c...x^y^a.
+!
 ! Revision 2.33  2014/02/27 02:27:40  vsnyder
 ! Corrections to units and ranges
 !
