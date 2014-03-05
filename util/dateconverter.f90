@@ -16,7 +16,7 @@ program dateconverter
    use DATES_MODULE, only: ADDDAYSTOUTC, ADDHOURSTOUTC, ADDSECONDSTOUTC, &
      & DATEFORM, DAYOFWEEK, HOURSINDAY, &
      & REFORMATDATE, RESETSTARTINGDATE, SECONDSINDAY, SPLITDATETIME, &
-     & YYYYMMDD_TO_DAI
+     & TAI93S2UTC, YYYYMMDD_TO_DAI
    use MACHINE, only: HP, GETARG
    use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE
    use MLSSTRINGS, only: LOWERCASE, NCOPIES, READNUMSFROMCHARS
@@ -42,6 +42,7 @@ program dateconverter
     integer     :: hoursOffset = 0             ! How many hours to add/subtract
     integer :: weekdayLength= 0     ! how many chars to output day-of-week
     double precision :: secondsOffset = 0.d0   ! How many seconds to add/subtract
+    logical     :: leapsec = .false.           ! account for leap seconds?
     logical     :: utcFormat = .false.         ! output date+time?
     logical     :: debug = .false.
     logical     :: verbose = .false.
@@ -113,15 +114,19 @@ program dateconverter
     if ( options%inputFormat == 'tai' ) then
       call readNumsFromChars ( date, tai )
       ! print *, 'tai: ', tai
-      call yyyymmdd_to_dai( 2001, 1, 1, nDaysOffset, startingDate='19930101' )
-      ! print *, 'nDaysOffset: ', nDaysOffset
-      nDays = tai/secondsperday - nDaysOffset
-      ! print *, 'nDays: ', nDays
-      intermediate_date = adddaystoutc( '2001-01-01T00:00:00', nDays )
-      ! print *, 'date (no seconds): ', intermediate_date
-      tai = tai - (nDays+nDaysOffset)*secondsperday
-      ! print *, '(+ seconds): ', tai
-      date = addsecondstoutc( intermediate_date, tai )
+      !if ( options%leapsec ) then
+      date = tai93s2utc( tai, options%leapsec )
+      !else
+      ! call yyyymmdd_to_dai( 2001, 1, 1, nDaysOffset, startingDate='19930101' )
+      ! ! print *, 'nDaysOffset: ', nDaysOffset
+      ! nDays = tai/secondsperday - nDaysOffset
+      ! ! print *, 'nDays: ', nDays
+      ! intermediate_date = adddaystoutc( '2001-01-01T00:00:00', nDays )
+      ! ! print *, 'date (no seconds): ', intermediate_date
+      ! tai = tai - (nDays+nDaysOffset)*secondsperday
+      ! ! print *, '(+ seconds): ', tai
+      ! date = addsecondstoutc( intermediate_date, tai )
+      !endif
       ! print *, 'date (+ seconds): ', date
       fromForm = 'yyyy-mm-dd'
       options%utcFormat = .true.
@@ -285,6 +290,9 @@ contains
         call getarg ( i+1+hp, options%outputFormat )
         i = i + 1
         exit
+      elseif ( date(1:5) == '-leap' ) then
+        options%leapsec = .true.
+        exit
       elseif ( date(1:3) == '-d ' ) then
         options%debug = .true.
         options%verbose = .true.
@@ -359,6 +367,7 @@ contains
       write (*,*) '       Run just the dates indexed by the expression range'
       write (*,*) '       e.g., 7 means run only the 7th of the dates, '
       write (*,*) '           1,3-9+2,12 means run dates 1,3,5,7,9,12'
+      write (*,*) ' -leapsec    => account for leap seconds; e.g. for "tai"'
       write (*,*) ' -d          => switch on debug mode'
       write (*,*) ' -v          => switch on verbose mode'
       write (*,*) ' -w          => print day-of-week in 2 characters'
@@ -378,6 +387,9 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.7  2013/08/14 17:26:38  pwagner
+! Added -R comdline option to handle dates before Jan 1 1993
+!
 ! Revision 1.6  2011/01/04 00:53:04  pwagner
 ! Among other improvements, can now convert times to {hours,seconds}-in-day
 !
