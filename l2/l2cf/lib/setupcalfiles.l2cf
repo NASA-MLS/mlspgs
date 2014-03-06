@@ -72,7 +72,7 @@
 !define(filterPath,{!calpath})
 })
 !ifelse(!pfaPath, {}, {
-!define(pfaPath,{!calpath})
+!define(pfaPath,{!calpath/PFA})
 })
 !ifelse(!pfgPath, {}, {
 !define(pfgPath,{!calpath})
@@ -177,6 +177,9 @@
 !ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
 !ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
 ;$Log$
+;Revision 1.47  2012/05/02 16:49:02  pwagner
+;Corrected typo
+;
 ;Revision 1.46  2012/04/05 19:14:56  pwagner
 ;6 new cal files for filling lesser state qties
 ;
