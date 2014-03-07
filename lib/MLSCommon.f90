@@ -31,14 +31,15 @@ module MLSCommon                ! Common definitions for the MLS software
 ! rv            floating point type used in vector quantity values
 ! rm            floating point type used in matrix values
 ! rt            floating point type used in topo-set values
-! NameLen       character-length of quantity names
 ! LineLen       character-length of most input
 ! FileNameLen   character-length of path/filenames
 ! BareFNLen     character-length of filenames
+! namelen       Max length of hdf sds array name
 ! fill_signal   signal to is_what_ieee to check for undefined (fill) values
 ! finite_signal signal to is_what_ieee to check for finite
 ! inf_signal    signal to is_what_ieee to check for inf
 ! nan_signal    signal to is_what_ieee to check for NaN
+! ShortNameLen  character-length of short names (e.g., 'H2O')
 ! DEFAULTUNDEFINEDVALUE 
 !               default fill values, e.g. when creating hdf arrays
 ! UNDEFINEDVALUE 
@@ -79,17 +80,17 @@ module MLSCommon                ! Common definitions for the MLS software
   ! This module contains simple definitions that are common to all the MLS PGS
   ! f90 software.
 
-  public :: InRange
-  public :: is_what_ieee
+  public :: INRANGE
+  public :: IS_WHAT_IEEE
 
-  public :: FileIDs_T
-  public :: MLSFile_T
-  public :: MLSFill_T
-  public :: L1BInfo_T
-  public :: Range_T
-  public :: TAI93_Range_T
-  public :: L2Metadata_T
-  public :: Interval_T
+  public :: FILEIDS_T
+  public :: MLSFILE_T
+  public :: MLSFILL_T
+  public :: L1BINFO_T
+  public :: RANGE_T
+  public :: TAI93_RANGE_T
+  public :: L2METADATA_T
+  public :: INTERVAL_T
 
   ! Make parameters gotten from MLSKinds public
 
@@ -149,10 +150,11 @@ module MLSCommon                ! Common definitions for the MLS software
 
   ! Now we have the lengths for various strings
 
-  integer, public, parameter :: NameLen=32
-  integer, public, parameter :: LineLen=132
-  integer, public, parameter :: FileNameLen=max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
-  integer, public, parameter :: BareFNLen=64      ! Bare file name length (w/o path)
+  integer, public, parameter :: ShortNameLen = 32
+  integer, public, parameter :: namelen      = 64  ! Max len of SDS array name
+  integer, public, parameter :: LineLen      = 132
+  integer, public, parameter :: FileNameLen  = max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
+  integer, public, parameter :: BareFNLen    = 64  ! Bare file name length (w/o path)
 
   !----------------------------------------------------------------------
   !         Undefined value
@@ -206,7 +208,7 @@ module MLSCommon                ! Common definitions for the MLS software
     character (LEN=16) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux', ..
     character (LEN=8) :: lastOperation=""  ! 'open','close','read','write'
     character (LEN=FileNameLen) :: Name=""  ! its name (usu. w/path)
-    character (LEN=NameLen) :: ShortName=""  ! its short name; e.g. 'H2O'
+    character (LEN=ShortNameLen) :: ShortName=""  ! its short name; e.g. 'H2O'
     character (LEN=8) :: typeStr=""  ! one of {'swath', 'hdf', ..}
     integer :: type=0  ! one of {l_swath, l_hdf, ..}
     integer :: access=0  ! one of {DFACC_RDONLY, DFACC_CREATE, ..}
@@ -479,6 +481,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.40  2014/03/07 19:11:33  pwagner
+! Distinguish between ShortNameLen and NameLen
+!
 ! Revision 2.39  2013/11/18 21:41:51  pwagner
 ! Sticky versions of verbose, debug available
 !
