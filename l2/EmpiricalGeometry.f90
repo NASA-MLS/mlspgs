@@ -155,12 +155,12 @@ contains ! ========================= Public Procedures ====================
   ! subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
   subroutine ChooseOptimumLon0 ( filedatabase, chunk )
 
-    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-    use Chunks_m, only: MLSChunk_T
-    use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData, Name_Len, &
-      & AssembleL1BQtyName
-    use MLSCommon, only: MLSFile_T
-    use MLSFiles, only: GetMLSFileByType
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Chunks_m, only: MLSCHUNK_T
+    use L1BData, only: L1BDATA_T, READL1BDATA, DEALLOCATEL1BDATA, &
+      & ASSEMBLEL1BQTYNAME
+    use MLSCommon, only: MLSFILE_T, NAMELEN
+    use MLSFiles, only: GETMLSFILEBYTYPE
 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     ! type (L1BInfo_T), intent(in) :: L1BINFO
@@ -175,7 +175,7 @@ contains ! ========================= Public Procedures ====================
     real(r8), dimension(:), pointer :: TESTLON ! Longitude to match
     real(r8), dimension(:), pointer :: GUESSLON ! Attempt at match
     integer ::  hdfVersion
-    character(len=Name_Len) :: l1bItemName
+    character(len=namelen) :: l1bItemName
     type (MLSFile_T), pointer             :: L1BFile
 
     ! Executable code
@@ -244,6 +244,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.20  2014/03/07 19:21:44  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 2.19  2014/03/04 17:37:48  pwagner
 ! Must not truncate f.p. terms
 !
