@@ -16,7 +16,7 @@ module Open_Init
   ! Creates and destroys the L1BInfo database
 
   use HIGHOUTPUT, only: BEVERBOSE
-  use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, TAI93_RANGE_T
+  use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, NAMELEN, TAI93_RANGE_T
   use MLSL2OPTIONS, only: SPECIALDUMPFILE, TOOLKIT
   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
     & SWITCHDETAIL
@@ -430,7 +430,7 @@ contains ! =====     Public Procedures     =============================
     ! cycle number
     ! logfile name
   
-    use L1BDATA, only: L1BDATA_T, NAME_LEN, &
+    use L1BDATA, only: L1BDATA_T, &
       & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, READL1BDATA
     use L2AUXDATA, only: MAXSDNAMESBUFSIZE
     use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
@@ -456,7 +456,7 @@ contains ! =====     Public Procedures     =============================
     integer ::  hdfVersion
     integer :: ifl1
     integer :: item
-    character(len=Name_Len) :: l1bItemName
+    character(len=namelen) :: l1bItemName
     character(len=MAXSDNAMESBUFSIZE) :: l1bitemlist
     integer :: nL1bItems
     logical, parameter :: countEmpty = .true.
@@ -642,6 +642,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.106  2014/03/07 19:24:48  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 2.105  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
