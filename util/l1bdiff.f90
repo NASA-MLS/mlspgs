@@ -17,22 +17,22 @@ program l1bdiff ! diffs two l1b or L2AUX files
    use Dump_0, only: DIFFRMSMEANSRMS, RMSFORMAT, DIFF, DUMP, SELFDIFF
    use Hdf, only: DFACC_CREATE, DFACC_READ
    use HDF5, only: H5FIS_HDF5_F, &
-     & H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F, H5GCREATE_F
+     & H5GCLOSE_F, H5GOPEN_F, H5GCREATE_F
    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-   use L1BData, only: L1BData_T, NAME_LEN, &
+   use L1BData, only: L1BDATA_T, NAMELEN, &
      & CONTRACTL1BDATA, DEALLOCATEL1BDATA, DIFF, READL1BDATA
-   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
+   use MACHINE, only: HP, GETARG
    use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
      & MLS_EXISTS, MLS_HDF_VERSION, MLS_SFSTART, MLS_SFEND, &
-     & HDFVERSION_4, HDFVERSION_5
+     & HDFVERSION_5
    use MLSHDF5, only: GETALLHDF5DSNAMES, MLS_H5OPEN, MLS_H5CLOSE
    use MLSKinds, only: R8
-   use MLSMessageModule, only: MLSMESSAGECONFIG, MLSMSG_ERROR, MLSMSG_WARNING, &
+   use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_WARNING, &
      & MLSMESSAGE
    use MLSStringLists, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
    use MLSStrings, only: REPLACE, STREQ, WRITEINTSTOCHARS
    use output_m, only: RESUMEOUTPUT, SUSPENDOUTPUT, OUTPUT
-   use PrintIt_m, only: Set_Config
+   use PrintIt_m, only: SET_CONFIG
    use Time_M, only: TIME_NOW, TIME_CONFIG
 
    implicit none
@@ -84,7 +84,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
 
   type ( options_T ) ::          options
   integer, parameter ::          MAXDS = 300
-  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
+  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*namelen
   integer, parameter ::          MAXFILES = 100
   logical ::                     columnsOnly
   ! character(len=8)   ::          options%dumpOptions
@@ -162,7 +162,7 @@ program l1bdiff ! diffs two l1b or L2AUX files
         print *, 'diffing from: ', trim(filenames(i))
       endif
       call myDiff(trim(filenames(i)), &
-      & trim(options%referenceFileName), (i==1), &
+      & trim(options%referenceFileName), &
       & options%hdfVersion, options)
       if ( options%timing ) call sayTime('diffing this file', tFile)
     endif
@@ -336,7 +336,7 @@ contains
   end subroutine SayTime
 
   ! ---------------------- myDiff  ---------------------------
-  subroutine myDiff( file1, file2, create2, hdfVersion, options )
+  subroutine myDiff( file1, file2, hdfVersion, options )
   !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -346,7 +346,6 @@ contains
 
     character (len=*), intent(in) :: file1 ! Name of file 1
     character (len=*), intent(in) :: file2 ! Name of file 2
-    logical, intent(in)           :: create2
     integer, intent(in)           :: hdfVersion
     type ( options_T )            :: options
 
@@ -724,10 +723,8 @@ contains
     ! Local
     logical, parameter            :: countEmpty = .true.
     logical :: file_exists
-    integer :: file_access
     integer :: grpid
     integer :: i
-    logical :: isl1boa
     type(l1bdata_t) :: L1BDATA  ! Result
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
     integer :: NoMAFs
@@ -773,8 +770,6 @@ contains
       call dump(mysdList, 'DS names')
     endif
 
-    isl1boa = (index(trim(mysdList), '/GHz') > 0)
-    file_access = DFACC_READ
     sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
     if (sdfid1 == -1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -856,6 +851,9 @@ end program l1bdiff
 !==================
 
 ! $Log$
+! Revision 1.29  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 1.28  2013/08/23 02:51:47  vsnyder
 ! Move PrintItOut to PrintIt_m
 !

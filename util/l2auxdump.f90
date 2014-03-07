@@ -18,18 +18,18 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
    use HDF, only: DFACC_READ
    use HDF5, only: H5FIS_HDF5_F, H5GCLOSE_F, H5GOPEN_F
    use HIGHOUTPUT, only: DUMP
-   use L1BDATA, only: L1BDATA_T, NAME_LEN, PRECISIONSUFFIX, &
+   use L1BDATA, only: L1BDATA_T, namelen, PRECISIONSUFFIX, &
      & DEALLOCATEL1BDATA, READL1BDATA
    use MACHINE, only: HP, GETARG
    use MLSCOMMON, only: R8
    use MLSFILES, only: FILENOTFOUND, &
      & MLS_EXISTS, MLS_SFSTART, MLS_SFEND, &
      & HDFVERSION_5, MLS_HDF_VERSION, WILDCARDHDFVERSION
-   use MLSHDF5, only: DUMPHDF5ATTRIBUTES, DUMPHDF5DS, &
+   use MLSHDF5, only: MAXNDSNAMES, DUMPHDF5ATTRIBUTES, DUMPHDF5DS, &
      & GETALLHDF5ATTRNAMES, GETALLHDF5DSNAMES, &
      & MLS_H5OPEN, MLS_H5CLOSE
    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-     & MLSMESSAGECONFIG, MLSMESSAGE
+     & MLSMESSAGE
    use MLSSTATS1, only: FILLVALUERELATION, STAT_T, DUMP, STATISTICS
    use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, &
      & NUMSTRINGELEMENTS, STRINGELEMENTNUM
@@ -76,8 +76,8 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   end type options_T
   
   type ( options_T ) :: options
-  integer, parameter ::          MAXDS = 1024 ! 500
-  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
+  integer, parameter ::          MAXDS = MAXNDSNAMES
+  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*namelen
   integer, parameter ::          MAXFILES = 100
   integer, parameter ::          hdfVersion = HDFVERSION_5
   character(len=255) ::          filename          ! input filename
@@ -383,7 +383,6 @@ contains
     ! Local
     logical, parameter            :: countEmpty = .true.
     logical :: file_exists
-    integer :: file_access
     integer :: grpid
     integer :: i
     integer :: iPrec
@@ -443,7 +442,6 @@ contains
         & 'l1boa file contains no radiances ' // trim(File1) )
       return
     endif
-    file_access = DFACC_READ
     sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
     if (sdfid1 == -1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -558,6 +556,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.16  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 1.15  2013/08/23 02:51:47  vsnyder
 ! Move PrintItOut to PrintIt_m
 !

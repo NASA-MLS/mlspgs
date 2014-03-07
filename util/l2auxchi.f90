@@ -15,25 +15,26 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
 
    use Dump_0, only: DUMP
    use Hdf, only: DFACC_READ
-   use HDF5, only: h5fis_hdf5_f, &
+   use HDF5, only: H5FIS_HDF5_F, &
      & H5GCLOSE_F, H5GOPEN_F
-   use L1BData, only: L1BData_T, NAME_LEN, &
-     & DeallocateL1BData, ReadL1BData
+   use L1BData, only: L1BDATA_T, &
+     & DEALLOCATEL1BDATA, READL1BDATA
    use MACHINE, only: HP, GETARG
-   use MLSCommon, only: R8
+   use MLSCommon, only: NAMELEN
+   use MLSKINDS, only: R8
    use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
-     & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend, &
+     & MLS_EXISTS, MLS_HDF_VERSION, MLS_SFSTART, MLS_SFEND, &
      & HDFVERSION_5
-   use MLSHDF5, only: GetAllHDF5DSNames, &
-     & mls_h5open, mls_h5close
-   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
-     & MLSMessage
-   use MLSStats1, only: FILLVALUERELATION, Stat_T, STATISTICS
-   use MLSStringLists, only: catLists, GetStringElement, NumStringElements
-   use MLSStrings, only: LOWERCASE, WriteIntsToChars
-   use output_m, only: blanks, newline, output, resumeOutput, suspendOutput
-   use PrintIt_m, only: Set_Config
-   use Time_M, only: Time_Now, time_config
+   use MLSHDF5, only: GETALLHDF5DSNAMES, &
+     & MLS_H5OPEN, MLS_H5CLOSE
+   use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_WARNING, &
+     & MLSMESSAGE
+   use MLSStats1, only: FILLVALUERELATION, STAT_T, STATISTICS
+   use MLSStringLists, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS
+   use MLSStrings, only: LOWERCASE, WRITEINTSTOCHARS
+   use output_m, only: BLANKS, NEWLINE, OUTPUT, RESUMEOUTPUT, SUSPENDOUTPUT
+   use PrintIt_m, only: SET_CONFIG
+   use Time_M, only: TIME_NOW, TIME_CONFIG
    
    implicit none
 
@@ -69,7 +70,7 @@ program l2auxchi ! dumps chi^sq read from L2AUX files
 
 
   integer, parameter ::          MAXDS = 500
-  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
+  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*namelen
   integer, parameter ::          MAXFILES = 100
   character(len=255) :: filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
@@ -274,10 +275,8 @@ contains
     ! Local
     logical, parameter            :: countEmpty = .true.
     logical :: file_exists
-    integer :: file_access
     integer :: grpid
     integer :: i
-    logical :: isl1boa
     type(l1bdata_t) :: L1BDATA  ! Result
     type(Stat_T) :: L1BStat
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
@@ -318,8 +317,6 @@ contains
       if ( options%verbose ) call dump(mysdList, 'DS names')
     endif
 
-    isl1boa = (index(trim(mysdList), '/GHz') > 0)
-    file_access = DFACC_READ
     sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
     if (sdfid1 == -1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -420,6 +417,9 @@ end program l2auxchi
 !==================
 
 ! $Log$
+! Revision 1.6  2013/08/23 02:51:47  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.5  2010/06/09 18:14:14  pwagner
 ! Made compatible with new dump api
 !

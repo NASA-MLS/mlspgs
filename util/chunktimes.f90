@@ -17,7 +17,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
    use HDF, only: DFACC_RDONLY
    use HDF5, only: HSIZE_T, H5FIS_HDF5_F, H5GCLOSE_F, H5GOPEN_F
     use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME
-   use L1BDATA, only: NAME_LEN
+   use L1BDATA, only: namelen
    use MACHINE, only: HP, GETARG
    use MLSKINDS, only: R4, R8
    use MLSFILES, only: MLS_EXISTS, MLS_SFSTART, MLS_SFEND, &
@@ -430,8 +430,8 @@ contains
     integer :: which
     real(r4), dimension(:,:,:), pointer   :: l2auxValue => NULL()
     integer, parameter ::          MAXDS = 1024 ! 500
-    integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
-    character(len=NAME_LEN) :: DSName
+    integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*namelen
+    character(len=namelen) :: DSName
     character (len=MAXSDNAMESBUFSIZE) :: mySdList
     character (len=MAXSDNAMESBUFSIZE) :: subList
     real(r4), dimension(MAXCHUNKS, MAXPHASES) :: dcsr
@@ -817,6 +817,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.28  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 1.27  2013/08/23 02:51:47  vsnyder
 ! Move PrintItOut to PrintIt_m
 !

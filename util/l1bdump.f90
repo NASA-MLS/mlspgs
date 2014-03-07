@@ -17,14 +17,14 @@ program l1bdump ! dumps an l1b or L2AUX file
    use Hdf, only: DFACC_READ
    use HDF5, only: H5FIS_HDF5_F, &
      & H5GCLOSE_F, H5GOPEN_F
-   use L1BData, only: L1BData_T, NAME_LEN, &
+   use L1BData, only: L1BData_T, namelen, &
      & DEALLOCATEL1BDATA, dump, READL1BDATA
    use MACHINE, only: HP, GETARG
    use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
      & MLS_EXISTS, MLS_HDF_VERSION, MLS_SFSTART, MLS_SFEND, &
      & HDFVERSION_5
    use MLSHDF5, only: GETALLHDF5DSNAMES, MLS_H5OPEN, MLS_H5CLOSE
-   use MLSMessageModule, only: MLSMESSAGECONFIG, MLSMSG_ERROR, MLSMSG_WARNING, &
+   use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_WARNING, &
      & MLSMESSAGE
    use MLSStringLists, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
    use MLSStrings, only: REPLACE, STREQ
@@ -76,7 +76,7 @@ program l1bdump ! dumps an l1b or L2AUX file
   
   type ( options_T ) ::          options
   integer, parameter ::          MAXDS = 300
-  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAME_LEN
+  integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*namelen
   integer, parameter ::          MAXFILES = 100
   ! character(len=8)   ::          options%dumpOptions
   character(len=255) ::          filename          ! input filename
@@ -306,10 +306,8 @@ contains
     integer :: data_type
     integer, dimension(7) :: dimsizes
     logical :: file_exists
-    integer :: file_access
     integer :: grpid
     integer :: i
-    logical :: isl1boa
     type(l1bdata_t) :: L1BDATA  ! Result
     logical :: mustdump
     character(len=8) :: myOptions
@@ -370,8 +368,6 @@ contains
         call dump(mysdList, 'DS names')
       endif
 
-      isl1boa = (index(trim(mysdList), '/GHz') > 0)
-      file_access = DFACC_READ
       sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
       if (sdfid1 == -1 ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -476,6 +472,9 @@ end program l1bdump
 !==================
 
 ! $Log$
+! Revision 1.2  2013/08/23 02:51:47  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.1  2013/06/01 00:40:26  pwagner
 ! First commit
 !
