@@ -66,12 +66,12 @@ contains
   ! Return -1 if something goes wrong
   ! Remember--MAFs start at 0, not 1
   function L1MAFToL2Profile ( MAF, fileDatabase ) result( profile )
-    use L1BDATA, only: L1BDATA_T, NAME_LEN, &
+    use L1BDATA, only: L1BDATA_T, &
       & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, &
       & READL1BDATA 
     use L2GPData, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, &
       & READL2GPDATA, DESTROYL2GPCONTENTS
-    use MLSCOMMON, only: MLSFILE_T
+    use MLSCOMMON, only: MLSFILE_T, NAMELEN
     use MLSFILES, only: HDFVERSION_5, &
       & MLS_INQSWATH, GETMLSFILEBYTYPE
     use MLSKINDS, only: R8
@@ -87,12 +87,12 @@ contains
     logical, parameter            :: countEmpty = .true.
     integer, dimension(1) :: indices
     integer :: L1BFLAG
-    character(len=Name_Len) :: l1bItemName
+    character(len=namelen) :: l1bItemName
     type (L1BData_T) :: l1bField   ! L1B data
     type(MLSFile_T), pointer :: L1BFile, L2GPFile
     type (L2GPData_T) :: l2gp
     integer :: LISTSIZE, NOMAFS, NOSWATHS
-    character (len=name_len) :: QUANTITY
+    character (len=namelen) :: QUANTITY
     character (len=L2GPNameLen) :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     ! Executable
@@ -131,7 +131,7 @@ contains
   ! Remember--MAFs start at 0, not 1
   function L2ProfileToL1MAF ( profile, fileDatabase ) result( MAF )
     use DUMP_0, only: DUMP
-    use L1BDATA, only: L1BDATA_T, NAME_LEN, &
+    use L1BDATA, only: L1BDATA_T, namelen, &
       & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, &
       & READL1BDATA 
     use L2GPData, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, &
@@ -152,12 +152,12 @@ contains
     logical, parameter            :: countEmpty = .true.
     integer, dimension(1) :: indices
     integer :: L1BFLAG
-    character(len=Name_Len) :: l1bItemName
+    character(len=namelen) :: l1bItemName
     type (L1BData_T) :: l1bField   ! L1B data
     type(MLSFile_T), pointer :: L1BFile, L2GPFile
     type (L2GPData_T) :: l2gp
     integer :: LISTSIZE, NOMAFS, NOSWATHS
-    character (len=name_len) :: QUANTITY
+    character (len=namelen) :: QUANTITY
     character (len=L2GPNameLen) :: swath
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     ! Executable
@@ -229,7 +229,7 @@ contains
       & S_L1BOA, S_L1BRAD, S_L2PARSF, S_MAKEPFA, S_PFADATA, S_READPFA, &
       & S_TGRID, S_TIME, S_VGRID, S_WRITEPFA
     use INTRINSIC, only: L_HDF, L_SWATH, SPEC_INDICES
-    use L1BDATA, only: L1BDATA_T, NAME_LEN, PRECISIONSUFFIX, &
+    use L1BDATA, only: L1BDATA_T, namelen, PRECISIONSUFFIX, &
       & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, FINDMAXMAF, &
       & L1BRADSETUP, L1BOASETUP, READL1BATTRIBUTE, READL1BDATA 
     use L2GPDATA, only: L2GPDATA_T
@@ -305,7 +305,7 @@ contains
     logical ::  ItExists
     type (L1BData_T) :: L1bField   ! L1B data
     type(MLSFile_T), pointer :: L1BFile
-    character(len=Name_Len) :: L1bItemName
+    character(len=namelen) :: L1bItemName
     integer :: L1BFLAG
     integer :: Me = -1             ! String index for trace
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
@@ -334,7 +334,7 @@ contains
     character(len=NameLen) :: Name_string
     character(len=NameLen) :: End_time_string, Start_time_string
     character(len=FileNameLen) :: FilenameString
-    character (len=name_len) :: QUANTITY
+    character (len=namelen) :: QUANTITY
 
     integer, parameter :: Param_restricted = 1 ! Parameter not allowed
     integer, parameter :: Spec_restricted = param_restricted + 1 ! Spec not allowed
@@ -981,16 +981,16 @@ contains
       ! Local
       logical, parameter :: countEmpty = .true.
       type (L1BData_T) :: l1bData   ! L1B dataset
-      integer ::                              i, version, NoMAFs, IERR
+      integer ::                              i, NoMAFs, IERR
       character (len=*), parameter ::         TIME_FORMAT = '(1pD18.12)'
       ! This next is in case we're to dump at greatest possible detail
-      character (len=NAME_LEN), parameter ::  BASE_QUANT_NAME = &
+      character (len=namelen), parameter ::  BASE_QUANT_NAME = &
                                       &       'R2:190.B3F:N2O.S2.FB25-3'
   !                                    &       'R1A:118.B1F:PT.S0.FB25-1'
       character (len=LEN(BASE_QUANT_NAME)) :: l1b_quant_name
       logical, parameter ::                   DUMPPRECISIONTOO = .true.
       integer ::  hdfVersion
-      character(len=Name_Len) :: l1bItemName
+      character(len=namelen) :: l1bItemName
       type(MLSFile_T), pointer :: L1BFile
 
       ! Begin
@@ -999,7 +999,7 @@ contains
       if ( hdfversion <= 0 ) &                                          
         & call MLSMessage ( MLSMSG_Error, ModuleName, &                    
         & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )  
-      version = 1
+      ! version = 1
 
       call output ( '============ Global Settings ============', advance='yes' )
       call output ( ' ', advance='yes' )
@@ -1279,6 +1279,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.153  2014/01/11 01:44:18  vsnyder
+! Decruftification
+!
 ! Revision 2.152  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
