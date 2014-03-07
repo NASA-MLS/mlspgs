@@ -24,7 +24,7 @@ module L1BData
   use INTRINSIC, only: L_HDF
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCOMMON, only: MLSFILE_T, &
-    & UNDEFINEDVALUE, FILENAMELEN
+    & UNDEFINEDVALUE, FILENAMELEN, namelen
   use MLSFILES, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
     & ADDFILETODATABASE, INITIALIZEMLSFILE, &
     & MLS_OPENFILE, MLS_CLOSEFILE
@@ -48,7 +48,6 @@ module L1BData
 
 !     (data types and parameters)
 ! L1BData_T                       Quantities from an L1B data file
-! NAME_LEN                        Max length of l1b sds array name
 ! PRECISIONSUFFIX                 Suffix stuck on end of array name if precision
 ! NOERROR                         ReadL1BData had no error
 ! NOCOUNTERMAFINDX                ReadL1BData unable to find counterMAF index
@@ -108,7 +107,7 @@ module L1BData
 
   private
 
-  public :: L1BData_T, NAME_LEN, PRECISIONSUFFIX, &
+  public :: L1BData_T, namelen, PRECISIONSUFFIX, &
     & allocateL1BData, AssembleL1BQtyName, ContractL1BData, cpL1bData, &
     & DeallocateL1BData, DIFF, DUMP, GetL1BFile, &
     & FINDL1BDATA, FindMaxMAF, &
@@ -140,7 +139,6 @@ module L1BData
   end interface
 
   ! Parameters
-  integer, parameter :: NAME_LEN = 64  ! Max len of SDS array name
   ! suffix of sd precision; check against 'grep -i precision l1/OutputL1B.f90'
   character  (len=*), parameter :: PRECISIONSUFFIX = ' precision'
 
@@ -166,7 +164,7 @@ module L1BData
   integer, parameter :: MaxCharFieldLen = 128  ! max char field length
 
   type L1BData_T
-    character (len=name_len) :: L1BName ! Name of field in file
+    character (len=namelen) :: L1BName ! Name of field in file
     character (len=16) :: data_type     ! 'character', 'double', or 'integer'
     integer :: FirstMAF                 ! First major frame read (usu. 0)
     integer :: FirstMAFCtr              ! depends on date
@@ -312,7 +310,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     logical, intent(in)          :: isTngtQty   ! T or F
     character(len=*), intent(in), optional :: InstrumentName ! e.g. THz
     logical, intent(in), optional :: dont_compress_name
-    character(len=NAME_LEN)      :: QtyName
+    character(len=namelen)      :: QtyName
     logical, parameter           :: DEEBUG = .FALSE.
 
     ! Private
@@ -324,7 +322,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     character(len=1) :: instr_tail
     character(len=1) :: tp_tail
     character(len=4) :: my_instrument
-    character(len=NAME_LEN) :: the_rest
+    character(len=namelen) :: the_rest
     logical          :: is_a_signal
     logical          :: compress
     ! Executable code
@@ -907,7 +905,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     character (len=*), optional, intent(in) :: options ! E.g., -a
     character (len=*), optional, intent(in) :: object  ! If we need to open
     type(MLSFile_T), pointer                :: item
-    logical, parameter :: TRUSTDATABASE = .true.
     logical, parameter :: DEEBUG = .false.
 
     ! Externals
@@ -2012,9 +2009,6 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     ! Local Parameters
     character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
-    ! integer, parameter :: MAX_NOMAFS = 7000     ! Expect ~3500 in one day
-    integer, parameter :: SD_NO_COUNTERMAF = -2
-    ! integer, dimension(:), pointer :: cm_array
 
     ! Local Variables
 
@@ -2680,6 +2674,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.100  2014/03/07 19:12:49  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 2.99  2014/01/09 00:25:06  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
