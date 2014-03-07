@@ -12,23 +12,24 @@
 module MLSAuxData
 
   ! Reading and interacting with Level 1B data (HDF5)
-  use MLS_DataProducts, only: DataProducts_T
-  use HDF5, only: hid_t, hsize_t, H5T_NATIVE_CHARACTER, H5T_NATIVE_DOUBLE, &
+  use MLS_DataProducts, only: DATAPRODUCTS_T
+  use HDF5, only: HID_T, HSIZE_T, H5T_NATIVE_CHARACTER, H5T_NATIVE_DOUBLE, &
        H5T_NATIVE_INTEGER, H5T_IEEE_F32LE, H5S_UNLIMITED_F, H5T_STD_I32LE, & 
        H5T_NATIVE_REAL,H5T_IEEE_F64LE,H5P_DATASET_CREATE_F, H5S_SELECT_SET_F, &
-       h5dopen_f, h5dclose_f, h5screate_simple_f, h5pcreate_f, h5dcreate_f, &
-       h5pset_chunk_f, h5sclose_f, h5dget_space_f, h5pclose_f, & 
-       h5sget_simple_extent_ndims_f, h5sget_simple_extent_dims_f, &
-       h5dget_create_plist_f, h5pget_chunk_f, h5dget_type_f, & 
-       h5sselect_hyperslab_f, h5dread_f, h5dwrite_f, h5dextend_f, &
-       h5acreate_f, h5awrite_f, h5aread_f, h5aclose_f, h5tcopy_f, &
-       h5tset_size_f, h5aopen_name_f, h5aget_space_f, &
-       h5tequal_f, h5eset_auto_f, h5gcreate_f, h5gclose_f, &
-       h5gopen_f, h5pset_fill_value_f, size_t
-  use MLSCommon, only: r4, r8
-  use MLSStrings, only: Lowercase
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error, MLSMSG_deallocate, &
-       MLSMSG_allocate
+       H5DOPEN_F, H5DCLOSE_F, H5SCREATE_SIMPLE_F, H5PCREATE_F, H5DCREATE_F, &
+       H5PSET_CHUNK_F, H5SCLOSE_F, H5DGET_SPACE_F, H5PCLOSE_F, & 
+       H5SGET_SIMPLE_EXTENT_NDIMS_F, H5SGET_SIMPLE_EXTENT_DIMS_F, &
+       H5DGET_CREATE_PLIST_F, H5PGET_CHUNK_F, H5DGET_TYPE_F, & 
+       H5SSELECT_HYPERSLAB_F, H5DREAD_F, H5DWRITE_F, H5DEXTEND_F, &
+       H5ACREATE_F, H5AWRITE_F, H5AREAD_F, H5ACLOSE_F, H5TCOPY_F, &
+       H5TSET_SIZE_F, H5AOPEN_NAME_F, H5AGET_SPACE_F, &
+       H5TEQUAL_F, H5ESET_AUTO_F, H5GCREATE_F, H5GCLOSE_F, &
+       H5GOPEN_F, H5PSET_FILL_VALUE_F, SIZE_T
+  use MLSCommon, only: NAMELEN
+  use MLSKINDS, only: R4, R8
+  use MLSStrings, only: LOWERCASE
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_DEALLOCATE, &
+       MLSMSG_ALLOCATE
   
   implicit NONE
 
@@ -37,7 +38,6 @@ module MLSAuxData
 !     - - - - - - - -
 !     (data types and parameters)
 ! MLSAuxData_T                   Quantities from an L1B/L2 data file
-! NAME_LEN                       Max length of l1b/l2 sds array name
 !
 !                 (subroutines and functions)
 !
@@ -79,7 +79,7 @@ module MLSAuxData
 !
 ! === (end of toc) ===
   private
-  public :: name_len, MLSAuxData_T, Create_MLSAuxData, Read_MLSAuxData, & 
+  public :: MLSAuxData_T, Create_MLSAuxData, Read_MLSAuxData, & 
    & Deallocate_MLSAuxData, Write_MLSAuxData, Read_MLSAuxAttributes, &
    & Write_MLSAuxAttributes, CreateGroup_MLSAuxData, Allocate_MLSAuxData, &
    & Build_MLSAuxData, AddMLSAuxDataToDatabase, DestroyMLSAuxDataDatabase, &
@@ -91,11 +91,10 @@ module MLSAuxData
 !---------------------------------------------------------------------------
   !
   ! Parameters
-  integer, parameter :: name_len = 64  ! Max len of SDS array name
   INTEGER, PARAMETER :: MaxCharFieldLen = 100000  ! max char field length
   !
   type MLSAuxData_T
-    character (len=name_len) :: name, type_name  
+    character (len=namelen) :: name, type_name  
     character(len=20),  dimension(:), pointer :: Dimensions => NULL()
     !
     character(len=MaxCharFieldLen), dimension(:,:,:), pointer :: CharField => &
@@ -1759,7 +1758,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 ! Internal variables
 !
     character(len=480) :: msr
-    character(len=name_len) :: aname
+    character(len=namelen) :: aname
     real, dimension(:), pointer :: attr_data => NULL()
     integer(hsize_t), dimension(7) :: adims
     integer(hsize_t), dimension(3) :: chunk_dims, dims, maxdims
@@ -2728,7 +2727,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 !
     character(len=1), dimension(:), pointer :: char_data => NULL()
     real, dimension(:), pointer :: attr_data => NULL()
-    integer(hsize_t), dimension(7) :: adims, dims
+    integer(hsize_t), dimension(7) :: dims
     integer(hsize_t), dimension(3) :: chunk_dims, dims_create, maxdims, start
     integer(hsize_t), dimension(3) :: dims_file
     integer(hid_t) :: cparms,dspace_id,dset_id,type_id, &
@@ -2742,7 +2741,6 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     nullify (char_data, attr_data)
     dims = 1
-    adims = 1
     if ( MLSAuxData%name == 'R1A:118.B22D:PT.S0.DACS-4 precision'  .and. DEBUG ) then
       print *, 'Write_MLSAuxData: ', trim(MLSAuxData%type_name)
       write(*, '(a12, 8I8)') 'rank: ', MLSAuxData%rank
@@ -3268,6 +3266,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.32  2014/03/07 19:19:24  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 2.31  2010/03/25 18:41:02  pwagner
 ! args to max function now the same integer type
 !
