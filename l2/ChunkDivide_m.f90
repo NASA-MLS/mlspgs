@@ -32,7 +32,7 @@ module ChunkDivide_m
       & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, S_Dump
   use INTRINSIC, only: L_NONE, FIELD_INDICES, LIT_INDICES, PHYQ_ANGLE, &
       & PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
-  use L1BDATA, only: L1BDATA_T, READL1BDATA, GETL1BFILE, NAME_LEN, &
+  use L1BDATA, only: L1BDATA_T, READL1BDATA, GETL1BFILE, namelen, &
       & ASSEMBLEL1BQTYNAME, PRECISIONSUFFIX, DEALLOCATEL1BDATA
   use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T
   use MLSFILES, only: DUMP, GETMLSFILEBYTYPE, MLS_OPENFILE
@@ -473,7 +473,7 @@ contains ! ===================================== Public Procedures =====
       real(r8) :: TESTANGLE               ! Angle to check for
 
       integer   ::                       l1b_hdf_version
-      character(len=NAME_LEN) ::         MAF_start, tp_angle
+      character(len=namelen) ::         MAF_start, tp_angle
       type (MLSFile_T), pointer             :: L1BFile
 
       ! Executable code
@@ -1754,7 +1754,7 @@ contains ! ===================================== Public Procedures =====
       real(r8) :: ORBYMAX                 ! Maximum value of orbY each maf
 
       integer   ::                       l1b_hdf_version
-      character(len=NAME_LEN) ::         MAF_start, tp_alt, tp_orbY, tp_angle
+      character(len=namelen) ::         MAF_start, tp_alt, tp_orbY, tp_angle
       type (MLSFile_T), pointer             :: L1BFile
       ! Executable code
       swlevel = switchDetail(switches, 'chu' )
@@ -2059,7 +2059,7 @@ contains ! ===================================== Public Procedures =====
       real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
 
       integer   ::                       l1b_hdf_version
-      character(len=NAME_LEN) ::         MAF_start, tp_angle
+      character(len=namelen) ::         MAF_start, tp_angle
       type (MLSFile_T), pointer             :: L1BFile
 
       ! Executable code
@@ -2587,6 +2587,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.113  2014/03/07 19:20:05  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 2.112  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
 !
