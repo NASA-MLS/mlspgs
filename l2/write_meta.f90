@@ -36,7 +36,6 @@ module WriteMetadata ! Populate metadata and write it out
   use SDPTOOLKIT, only: PGSD_MET_GROUP_NAME_L, &
     & PGSD_MET_NUM_OF_GROUPS, PGSD_PC_FILE_PATH_MAX, PGS_PC_GETREFERENCE, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET
-  use TOGGLES, only: SWITCHES
   use TREE, only: WHERE
 
   implicit none
@@ -115,7 +114,8 @@ module WriteMetadata ! Populate metadata and write it out
 
 ! This data type is used to store User-defined Runtime Parameters and other
 ! information taken from the PCF.
-
+! Why are these len=80 instead of, say, len=NameLen?
+! If they need to be 80, then shouldn't NameLen be 80, too?
   type, public :: MCGROUP_T
     character (len=80) :: name = ' '
     character (len=80) :: class         = ' '
@@ -1035,11 +1035,9 @@ contains
     integer, parameter :: MAXLINELENGTH  = 256
     integer, parameter :: MAXARRAYLENGTH = 512
     character(len=MAXLINELENGTH), dimension(MAXARRAYLENGTH) :: list
-    ! integer :: swLevel ! How much extra debugging info to print (-1 means none)
     logical :: verbose
 
     ! Executable code
-    ! swlevel = switchDetail(switches, 'mcf' )
     verbose = BeVerbose( 'mcf', -1 )
     list = ' '
     call read_textfile( MLSFILE%Name, list, nLines=list_len )
@@ -1415,10 +1413,8 @@ contains
     integer            :: newsize
     type (MCPARAM_T)   :: param
     character(len=128) :: value
-    ! integer :: swLevel ! How much extra debugging info to print (-1 means none)
     logical :: verbose
     ! Executable
-    ! swlevel = switchDetail(switches, 'mcf' )
     verbose = BeVerbose( 'mcf', -1 )
     group%name = name
     if ( verbose ) call output( 'Inserting group named '// trim(name), advance='yes' )
@@ -1477,10 +1473,8 @@ contains
     character(len=64)  :: key
     type (MCParam_T)   :: param
     character(len=128) :: value
-    ! integer :: swLevel ! How much extra debugging info to print (-1 means none)
     logical :: verbose
     ! Executable
-    ! swlevel = switchDetail(switches, 'mcf' )
     verbose = BeVerbose( 'mcf', -1 )
     if ( verbose ) call output( 'Inserting parameter named '// trim(name), advance='yes' )
     param%name = name
@@ -2031,7 +2025,7 @@ contains
     if ( len_trim(MCGroup%name) < 1 ) return
     nest_degree = nest_degree + 1
     indent = nest_degree*3
-    ! write( MLSFile%fileID%f_id, * ) spaces(:indent), '#GROUP_NAME_LEN = ', len_trim(MCGroup%name)
+    ! write( MLSFile%fileID%f_id, * ) spaces(:indent), '#GROUP_namelen = ', len_trim(MCGroup%name)
     write( MLSFile%fileID%f_id, * ) spaces(:indent), 'GROUP = ' // trim(adjustl(MCGroup%name))
     indent = indent + 3
     if ( len_trim(MCGroup%class) > 0 ) &
@@ -2114,6 +2108,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.78  2014/03/07 19:30:30  pwagner
+! Housekeeping; insert comments suggesting use of NameLen instead of hard-coded charlens
+!
 ! Revision 2.77  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
