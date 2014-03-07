@@ -312,6 +312,7 @@ module MLSHDF5
 
   integer, public, parameter :: MAXCHFIELDLENGTH = 2000000 ! max number of chars in l2cf
   integer, public, parameter :: MAXCHATTRLENGTH  =   40000 ! max number in attr
+  integer, public, parameter :: MAXNDSNAMES = 20000   ! max number of DS names in a file
 
   ! Local parameters
   character, parameter :: Digits(7) = (/ '1', '2', '3', '4', '5', '6', '7' /)
@@ -321,9 +322,9 @@ module MLSHDF5
   integer, save      :: cantGetDataspaceDims = 0
   integer, parameter :: DFLTMAXLINELENGTH = 1024
   integer, parameter :: MAXNUMWARNS = 40
-  integer, parameter :: MAXNDSNAMES = 1000   ! max number of DS names in a file
   integer, parameter :: MAXATTRIBUTESIZE =   40000
   integer, parameter :: MAXTEXTSIZE      = 2000000
+  integer, parameter :: MAXNAMELEN = 64
   character(len=*), dimension(2), parameter :: DONTDUMPTHESEDSNAMES = (/ &
     & 'wtfcoremetadata', 'wtfxmlmetadata ' /)
   ! Local variables
@@ -435,7 +436,7 @@ contains ! ======================= Public Procedures =========================
     integer, dimension(1024) :: iValue
     integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
     integer :: Me = -1                  ! String index for trace cacheing
-    character(len=MAXNDSNAMES*32) :: myNames
+    character(len=MAXNDSNAMES*MAXNAMELEN) :: myNames
     character(len=128) :: name
     integer :: numAttrs
     character(len=16) :: Qtype
@@ -584,7 +585,7 @@ contains ! ======================= Public Procedures =========================
     integer :: k
     integer :: m
     integer :: Me = -1                  ! String index for trace cacheing
-    character(len=MAXNDSNAMES*32) :: myNames
+    character(len=MAXNDSNAMES*MAXNAMELEN) :: myNames
     character(len=128) :: name
     character(len=128) :: namePrinted
     integer :: Np1
@@ -2564,7 +2565,7 @@ contains ! ======================= Public Procedures =========================
     character(len=MAXATTRNAMELEN) :: AttrName
     integer :: ds
     character(len=MAXATTRNAMELEN) :: DSName
-    character(len=32*MAXNDSNAMES) :: DSNames
+    character(len=MAXNAMELEN*MAXNDSNAMES) :: DSNames
     integer :: error
     integer :: numattrs
     character(len=MAXATTRNAMELEN) :: status
@@ -3262,7 +3263,7 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: NAME ! Name for the dataset
     character (len=*), optional, intent(in) :: options ! E.g., -c
     ! Local variables
-    character (len=MAXNDSNAMES*32) :: DSNames ! Names of DS in file (,-separated)
+    character (len=MAXNDSNAMES*MAXNAMELEN) :: DSNames ! Names of DS in file (,-separated)
     character(len=8) :: myOptions
 
     ! Local variables
@@ -3330,7 +3331,7 @@ contains ! ======================= Public Procedures =========================
     character (len=*), optional, intent(in) :: options ! E.g., -c
 
     ! Local variables
-    character (len=MAXNDSNAMES*32) :: DSNames ! Names of DS in file (,-separated)
+    character (len=MAXNDSNAMES*MAXNAMELEN) :: DSNames ! Names of DS in file (,-separated)
     integer :: Me = -1                  ! String index for trace cacheing
     character(len=8) :: myOptions
     integer :: SETID                    ! ID for DS if present
@@ -5522,7 +5523,6 @@ contains ! ======================= Public Procedures =========================
     double precision, dimension(:), optional, intent(in) :: doubles
     logical, optional, intent(in)                        :: no_pairs
     ! Local variables
-    logical, parameter          :: clean=.false.
     character(len=*), parameter :: int_format = '(i12)'
     character(len=*), parameter :: dbl_format = '(1pd12.2)'
     character(len=*), parameter :: real_format = '(1pe12.2)'
@@ -5692,6 +5692,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.126  2014/03/07 19:13:47  pwagner
+! Increased MAXNDSNAMES; should there even be a limit?
+!
 ! Revision 2.125  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
