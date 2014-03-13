@@ -20,7 +20,7 @@ end Join
 ;; What if we wish to Copy APriori?
 !define(copyAscDescToAttributei, {Copy, $
   type=l2gp, hdfVersion=5, $
-    inputFile='DGG', swath='Ascend(+1)Descend(-1)', inputtype=l2dgg, $
+    inputFile='!DGGFileName', swath='Ascend(+1)Descend(-1)', inputtype=l2dgg, $
     file='!l2gpFileName($1)', $
     /toAttribute
 })
@@ -179,4 +179,7 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.1  2013/10/18 22:49:38  pwagner
+; Split outputstate.l2cf into 3 files
+;
 !divert!dnl
