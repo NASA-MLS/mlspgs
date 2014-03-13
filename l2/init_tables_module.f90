@@ -917,7 +917,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_block, numeric(phyq_dimensionless), &
              begin, f+f_boundaryPressure, vectorQuantity(), &
              begin, f+f_boxCarMethod, field_type(t_boxCarMethod), &
-             begin, f+f_c, numeric(phyq_dimensionless), &
+             begin, f+f_c, numeric(), &
              begin, f+f_channel, numeric(phyq_dimensionless), &
              begin, f+f_channels, numeric_or_range(), &
              begin, f+f_centerVertically, boolean()/) )
@@ -1074,7 +1074,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_a, vectorQuantity(), &
              begin, f+f_b, vectorQuantity(), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
-             begin, f+f_c, numeric(phyq_dimensionless), &
+             begin, f+f_c, numeric(), &
              begin, f+f_evaluate, boolean(), &
              begin, f+f_expr, &
                     begin, numeric(), &
@@ -1099,7 +1099,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_compare, &
              begin, f+f_a, vectorQuantity(), &
              begin, f+f_b, vectorQuantity(), &
-             begin, f+f_c, numeric(phyq_dimensionless), &
+             begin, f+f_c, numeric(), &
              begin, f+f_formula, string(req), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
              np+n_spec_def /) )
@@ -1157,7 +1157,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_transfer, &
              begin, f+f_a, field_spec(s_vector), &
              begin, f+f_b, field_spec(s_vector), &
-             begin, f+f_c, numeric(phyq_dimensionless), &
+             begin, f+f_c, numeric(), &
              begin, f+f_method, field_type(t_fillmethod), &
              begin, f+f_source, field_spec(s_vector), &
              begin, f+f_destination, field_spec(s_vector,req=req), &
@@ -1952,6 +1952,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.597  2014/03/13 18:11:29  pwagner
+! c= field may contain units
+!
 ! Revision 2.596  2014/03/01 03:10:33  vsnyder
 ! Delete FrequencyGrid, specify units for many numeric fields
 !
