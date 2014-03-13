@@ -71,7 +71,7 @@ module FillUtils_1                     ! Procedures used by Fill
   use MLSFILLVALUES, only: ISFILLVALUE, ISFINITE, ISMONOTONIC, &
     & MONOTONIZE, REMOVEFILLVALUES
   use MLSKINDS, only: R4, R8, RM, RP, RV
-  use MLSL2OPTIONS, only: AURA_L1BFILES, L2CFNODE, MLSMESSAGE
+  use MLSL2OPTIONS, only: AURA_L1BFILES, L2CFNODE, MLSMESSAGE, TOOLKIT
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
   use MLSNUMERICS, only: COEFFICIENTS_R8, INTERPOLATEARRAYSETUP, &
     & INTERPOLATEARRAYTEARDOWN, INTERPOLATEVALUES, HUNT
@@ -2429,6 +2429,14 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       call trace_begin ( me, 'FillUtils_1.GeoidData', 0, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
+      if ( .not. toolkit ) then
+        ! Without the sdp toolkit, we're unable to apply the geoid offsets
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Without the sdp toolkit, we are unable to apply the geoid offsets' )
+        call trace_end ( 'FillUtils_1.GeoidData', &
+          & cond=toggle(gen) .and. levels(gen) > 1 )
+        return
+      endif
       myResolution = PGSd_DEM_90ARC
       if ( present(resolution) ) myResolution = resolution
       numResolutions = 2
@@ -7380,6 +7388,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.98  2014/03/13 18:12:26  pwagner
+! GeoidData Fills will warn instead of bomb if running toolkitless
+!
 ! Revision 2.97  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
