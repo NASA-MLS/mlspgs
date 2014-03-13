@@ -81,7 +81,7 @@
   CH3COCH3, CH3OH, CH3OOH, EXTINCTION, EXTINCTIONV2, H2O, HNO3, N2, O2, O3, SO2 ]})
 
 !define(moleculesForR4L,{[ [ BRO, BR_81_O ], [ CH3CL, CH3CL_35, CH3CL_37 ], $
-  [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], EXTINCTION, EXTINCTIONV2, $
+  [ CH3CN, CH3CN, CH3CN_V8 ], [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], EXTINCTION, EXTINCTIONV2, $
   [ H2O, H2O, H2O_R4 ], [ H2O2, H2O2 ], [ H2S, H2S_32 ], [ HCL, HCL_35, $
     HCL_37 ], [ HNO3, HNO3, HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9 ], $
   [ HO2, HO2 ], [ HOCL, HOCL_35, HOCL_37 ], [ N2, N2 ], [ O2, O2 ], [ O3, O3_R4, $
@@ -91,7 +91,7 @@
 !define(moleculeFamiliesForR4L,{[ BRO, CH3CL, CH3CN, CH3COCH3, CH3OH, $
   EXTINCTION, EXTINCTIONV2, H2O, H2O2, H2S, HCL, HNO3, HO2, HOCL, N2, O2, O3, SO2 ]})
 !define(moleculesForR4,{[ [ BRO, BR_79_O, BR_81_O ], [ CH3CL, CH3CL_35, $
-    CH3CL_37 ], [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], $
+    CH3CL_37 ], [ CH3CN, CH3CN, CH3CN_V8 ], [ CH3COCH3, CH3COCH3 ], [ CH3OH, CH3OH ], $
   [ CLO, CL_35_O ], [ CO, C_13_O ], EXTINCTION, EXTINCTIONV2, [ H2CO, H2CO ], [ H2O, $
     H2O, H2O_R4 ], [ H2O2, H2O2 ], [ H2S, H2S_32 ], [ HCL, HCL_35, $
     HCL_37 ], [ HNO3, HNO3, HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9 ], $
@@ -104,7 +104,7 @@
   CO, EXTINCTION, EXTINCTIONV2, H2CO, H2O, H2O2, H2S, HCL, HNO3, HO2, HOCL, N2, N2O, $
   NO, NO2, O2, O3, SO2 ]})
 !define(moleculesForR4U,{[ [ BRO, BR_79_O, BR_81_O ], [ CH3CL, CH3CL_37 ], $
-  [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], [ CLO, CL_35_O ], [ CO, $
+  [ CH3CN, CH3CN, CH3CN_V8 ], [ CH3COCH3, CH3COCH3 ], [ CLO, CL_35_O ], [ CO, $
     C_13_O ], EXTINCTION, EXTINCTIONV2, [ H2CO, H2CO ], [ H2O, H2O, H2O_R4 ], [ H2O2, $
     H2O2 ], [ H2S, H2S_32 ], [ HNO3, HNO3, HNO3_V6, HNO3_V7, $
     HNO3_V8, HNO3_V9 ], [ HO2, HO2 ], [ HOCL, HOCL_35, HOCL_37 ], [ N2, $
@@ -196,6 +196,9 @@
 !define(molFamiliesFor2ndDerR5H,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
 !define(molFamiliesFor2ndDerR5V,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
 ; $Log$
+; Revision 1.2  2014/02/27 18:52:28  pwagner
+; Restored all the radiometer-specific ozone molecules
+;
 ; Revision 1.1  2014/02/21 01:33:42  pwagner
 ; First commit
 ;
