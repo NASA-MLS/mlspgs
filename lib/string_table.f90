@@ -115,13 +115,12 @@ contains
       if ( strings(nstring+1) >= ubound(char_table,1) ) then
         call double_char_table ( stat )
         if ( present(stat) ) then
-          if ( stat /= 0 ) then; return; end if
+          if ( stat /= 0 ) return
         end if
       end if
       strings(nstring+1) = strings(nstring+1) + 1
       char_table(strings(nstring+1)) = chars(i:i)
     end do
-    return
   end subroutine ADD_CHAR
   ! ================================     ADD_INCLUDE_DIRECTORY     =====
   subroutine ADD_INCLUDE_DIRECTORY ( Directory, Stat )
@@ -160,7 +159,7 @@ contains
       status = stat
       return
     end if
-    if ( stat == 0 ) then; return; end if
+    if ( stat == 0 ) return
     call io_error &
       ( 'STRING_TABLE%ALLOCATE_CHAR_TABLE-E- Unable to allocate storage', &
       stat )
@@ -199,7 +198,7 @@ contains
       end if
       return
     end if
-    if ( stat == 0 ) then; return; end if
+    if ( stat == 0 ) return
     call io_error &
       ( 'STRING_TABLE%ALLOCATE_HASH_TABLE-E- Unable to allocate storage', &
       stat )
@@ -212,7 +211,7 @@ contains
 
     integer :: STAT
 
-    if ( allocated( strings ) ) then; deallocate ( strings ); end if
+    if ( allocated( strings ) ) deallocate ( strings )
     allocate ( strings(0:amount), stat = stat )
     strings(0:1) = 0
     nstring = 0
@@ -220,7 +219,7 @@ contains
       status = stat
       return
     end if
-    if ( stat == 0 ) then; return; end if
+    if ( stat == 0 ) return
     call io_error &
       ( 'STRING_TABLE%ALLOCATE_STRING_TABLE-E- Unable to allocate storage', &
       stat )
@@ -231,7 +230,6 @@ contains
   ! Restart the last string in the string table.  Usually used after
   ! doing a lookup and finding the string is already there.
     strings(nstring+1) = strings(nstring)
-    return
   end subroutine CLEAR_STRING
   ! ======================================     COMPARE_STRINGS     =====
   integer function COMPARE_STRINGS ( FIRST, SECOND, CASELESS )
@@ -275,7 +273,6 @@ contains
     if ( j < strings(second) ) compare_strings = -1 ! FIRST string is shorter
 10  continue
 !   print *, 'COMPARE_STRINGS = ', compare_strings
-    return
   end function COMPARE_STRINGS
   ! ========================================     CREATE_STRING     =====
   integer function CREATE_STRING ( TEXT, CASELESS, DEBUG ) result ( STRING )
@@ -362,7 +359,6 @@ contains
 
     call output ( char_table(strings(string-1)+1+offset: strings(string)-offset), &
                         advance=advance )
-    return
   end subroutine DISPLAY_STRING
   ! ==================================     DISPLAY_STRING_LIST     =====
   subroutine DISPLAY_STRING_LIST ( STRING, ADVANCE, STRIP, IERR, BEFORE )
@@ -422,7 +418,6 @@ contains
     if ( nstring > ubound(strings,1) ) then; call double_strings; end if
     strings(nstring+1) = strings(nstring)
     enter_string = nstring
-    return
   end function ENTER_STRING
   ! ============================================     Find_File     =====
   subroutine Find_File ( Directories, File_Name, Exist, Full_Text )
@@ -650,7 +645,6 @@ contains
   integer function HOW_MANY_STRINGS ()
   ! Returns the number of strings in the string table
     how_many_strings = nstring
-    return
   end function HOW_MANY_STRINGS
   ! ====================================     INCLUDE_STACK_TOP     =====
   subroutine INCLUDE_STACK_TOP ( File )
@@ -758,7 +752,6 @@ contains
   ! Skip the rest of the current line, set up so that get_char will
   ! read a new one.
     cur_pos = cur_end + 1
-    return
   end subroutine NEW_LINE
  ! =======================================     NUMERICAL_VALUE     =====
   integer function NUMERICAL_VALUE ( STRING )
@@ -850,7 +843,6 @@ contains
       if ( inFile /= 0 ) call display_string ( inFile, before = ' in ' )
       call output ( '', advance='yes' )
       call crash_burn
-      return
     end subroutine Loop
   end subroutine Open_Include
   ! ===========================================     OPEN_INPUT     =====
@@ -906,19 +898,20 @@ contains
     integer, intent(in) :: STRING
     call test_string ( string, 'STRING_LENGTH' )
     string_length = strings(string) - strings(string-1)
-    return
   end function STRING_LENGTH
   ! ====================================     STRING_TABLE_SIZE     =====
   pure integer function STRING_TABLE_SIZE ()
-  ! Return the allocated size of the string table.
-    string_table_size = ubound(strings, 1)
-    return
+  ! Return the allocated upper bound of the string table, or -1 if not allocated.
+    if ( allocated(strings) ) then
+      string_table_size = ubound(strings, 1)
+    else
+      string_table_size = -1
+    end if
   end function STRING_TABLE_SIZE
  ! ============================================     UNGET_CHAR     =====
   subroutine UNGET_CHAR
   ! Back up the input, but not before the beginning of the current line
     cur_pos = max( cur_pos-1, strings(nstring+1) )
-    return
   end subroutine UNGET_CHAR
 
 ! =====     Private procedures    ======================================
@@ -927,8 +920,8 @@ contains
   ! Double the space for the character table
     integer, optional, intent(out) :: STAT
     integer :: MY_STAT
-    character, allocatable :: OLD_CHAR(:)
-    allocate ( old_char(ubound(char_table,1)), stat=my_stat )
+    character, allocatable :: NEW_CHAR(:)
+    allocate ( new_char(2*ubound(char_table,1)), stat=my_stat )
     if ( my_stat /= 0 ) then
       if ( present(stat) ) then
         stat = my_stat
@@ -938,29 +931,16 @@ contains
       ( 'stat_TABLE%DOUBLE_CHARS-E- Unable to allocate storage', stat )
       call crash_burn
     end if
-    old_char = char_table
-    deallocate ( char_table )
-    allocate( char_table(2*ubound(old_char,1)), stat=my_stat )
-    if ( my_stat /= 0 ) then
-      if ( present(stat) ) then
-        stat = my_stat
-        return
-      end if
-      call io_error &
-      ( 'stat_TABLE%DOUBLE_CHARS-E- Unable to allocate storage', stat )
-      call crash_burn
-    end if
-    char_table(:ubound(old_char,1)) = old_char
-    deallocate ( old_char )
-    return
+    new_char(:ubound(char_table,1)) = char_table
+    call move_alloc ( new_char, char_table )
   end subroutine DOUBLE_CHAR_TABLE
   ! ---------------------------------------     DOUBLE_STRINGS     -----
   subroutine DOUBLE_STRINGS ( STAT )
   ! Double the space for the string table
     integer, optional, intent(out) :: STAT
     integer :: MY_STAT
-    integer, allocatable :: OLD_STRING(:)
-    allocate ( old_string(0:ubound(strings,1)), stat=my_stat )
+    integer, allocatable :: NEW_STRING(:)
+    allocate ( new_string(0:2*ubound(strings,1)), stat=my_stat )
     if ( my_stat /= 0 ) then
       if ( present(stat) ) then
         stat = my_stat
@@ -970,21 +950,8 @@ contains
       ( 'STRING_TABLE%DOUBLE_STRINGS-E- Unable to allocate storage', stat )
       call crash_burn
     end if
-    old_string = strings
-    deallocate ( strings )
-    allocate( strings(0:2*ubound(old_string,1)), stat=my_stat )
-    if ( my_stat /= 0 ) then
-      if ( present(stat) ) then
-        stat = my_stat
-        return
-      end if
-      call io_error &
-      ( 'STRING_TABLE%DOUBLE_STRINGS-E- Unable to allocate storage', stat )
-      call crash_burn
-    end if
-    strings(0:ubound(old_string,1)) = old_string
-    deallocate ( old_string )
-    return
+    new_string(0:ubound(strings,1)) = strings
+    call move_alloc ( new_string, strings )
   end subroutine DOUBLE_STRINGS
  ! -------------------------------------------------     IACAP     -----
   integer function IACAP ( CHAR )
@@ -1277,6 +1244,11 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.44  2014/03/15 00:08:03  vsnyder
+! Return the allocated upper bound from string_table_size, unless if it's
+! not allocated return -1.  Simplify routines to double the character and
+! string tables.  Some cannonball polishing.
+!
 ! Revision 2.43  2013/12/12 02:00:15  vsnyder
 ! Change type of debug from logical to integer
 !
