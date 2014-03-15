@@ -314,7 +314,7 @@ contains ! ====     Public Procedures     ==============================
       ! If you allocate with lbound < 0, other stuff won't work.
       allocate ( stack(startingStackSize), stat=stat )
       if ( stat /= 0 ) then
-        call output ( 'Unable to alloxate temp_stack', advance='yes' )
+        call output ( 'Unable to allocate temp_stack', advance='yes' )
         StaySilent = .true.
         return
       endif
@@ -334,7 +334,7 @@ contains ! ====     Public Procedures     ==============================
       endif
       allocate ( temp_stack(2*stack_ptr), stat=stat )
       if ( stat /= 0 ) then
-        call output ( 'Unable to alloxate temp_stack', advance='yes' )
+        call output ( 'Unable to allocate temp_stack', advance='yes' )
         StaySilent = .true.
         return
       endif
@@ -406,6 +406,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.21  2014/03/15 00:04:40  vsnyder
+! Correct misspallig in two ertor masseges
+!
 ! Revision 2.20  2014/02/13 00:04:01  pwagner
 ! Revert to older appearance on Exit WALK_TREE..
 !
