@@ -12,7 +12,7 @@
 module GLOBAL_SETTINGS
 
   use MLSCOMMON, only: FILENAMELEN
-  use HIGHOUTPUT, only: OUTPUTCALENDAR, OUTPUTNAMEDVALUE
+  use HIGHOUTPUT, only: BEVERBOSE, OUTPUTCALENDAR, OUTPUTNAMEDVALUE
 
   implicit none
 
@@ -51,6 +51,8 @@ module GLOBAL_SETTINGS
   logical, parameter :: CHECKL2PCMONTHCORRECT = .true.
   ! Do we output this month's calendar
   logical, parameter :: OUTPUTTHISMONTHSCAL = .true.
+  ! Consult dates_module for leap seconds
+  logical, parameter :: LEAPSINDATESMODULE = .true.
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -205,8 +207,8 @@ contains
 
     use BITSTUFF, only: ISBITSET
     use DATES_MODULE, only: PRECEDESUTC, RESETSTARTINGDATE, SECONDSBETWEEN2UTCS, &
-      & UTC_TO_YYYYMMDD
-    use Declaration_Table, only: Named_Value, Redeclare, Str_Value
+      & UTC2TAI93S, UTC_TO_YYYYMMDD
+    use Declaration_Table, only: NAMED_VALUE, REDECLARE, STR_VALUE
     use DIRECTWRITE_M, only: DIRECTDATA_T, &
       & ADDDIRECTTODATABASE, DUMP, SETUPNEWDIRECT
     use DUMPCOMMAND_M, only: DUMPCOMMAND
@@ -221,7 +223,7 @@ contains
     use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
       & L_L2GP, L_L2DGG, L_L2FWM, &
       & PARM_INDICES, &
-      & P_BRIGHTOBJECTS, &
+      & FIRST_PARM, LAST_PARM, P_BRIGHTOBJECTS, &
       & P_CYCLE, P_ENDTIME, P_IGRF_FILE, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_PFAFILE, P_STARTTIME, &
       & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, &
@@ -229,7 +231,7 @@ contains
       & S_L1BOA, S_L1BRAD, S_L2PARSF, S_MAKEPFA, S_PFADATA, S_READPFA, &
       & S_TGRID, S_TIME, S_VGRID, S_WRITEPFA
     use INTRINSIC, only: L_HDF, L_SWATH, SPEC_INDICES
-    use L1BDATA, only: L1BDATA_T, namelen, PRECISIONSUFFIX, &
+    use L1BDATA, only: L1BDATA_T, NAMELEN, PRECISIONSUFFIX, &
       & ASSEMBLEL1BQTYNAME, DEALLOCATEL1BDATA, DUMP, FINDMAXMAF, &
       & L1BRADSETUP, L1BOASETUP, READL1BATTRIBUTE, READL1BDATA 
     use L2GPDATA, only: L2GPDATA_T
@@ -255,7 +257,7 @@ contains
     use MLSSIGNALS_M, only: INSTRUMENT
     use MORETREE, only: GET_FIELD_ID, GET_LABEL_AND_SPEC, GET_SPEC_ID, &
       & STARTERRORMESSAGE
-    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
+    use Next_Tree_Node_m, only: NEXT_TREE_NODE, NEXT_TREE_NODE_STATE
     use OUTPUT_M, only: BLANKS, OUTPUT, &
       & REVERTOUTPUT, SWITCHOUTPUT
     use PFADATA_M, only: GET_PFADATA_FROM_L2CF, FLUSH_PFADATA, MAKE_PFADATA, &
@@ -299,9 +301,10 @@ contains
     integer :: DetailReduction
     integer :: Details             ! How much info about l1b files to dump
     type (MLSFile_T) :: DirectFile
-    logical :: GOT(3)              ! Used non-canonically--a bad practice
+    character(len=NameLen) :: End_time_string, Start_time_string
+    character(len=FileNameLen) :: FilenameString
+    logical :: GOT(FIRST_PARM:LAST_PARM)
     integer :: I, J                ! Index of son, grandson of root
-    ! integer :: INPUT_VERSION_STRING  ! Sub_rosa index
     logical ::  ItExists
     type (L1BData_T) :: L1bField   ! L1B data
     type(MLSFile_T), pointer :: L1BFile
@@ -310,6 +313,7 @@ contains
     integer :: Me = -1             ! String index for trace
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
     integer :: NAME                ! Sub-rosa index of name of vGrid or hGrid
+    character(len=NameLen) :: Name_string
     integer :: NOMAFS              ! Number of MAFs of L1B data read
     integer :: NUMFILES
     integer :: OrbNum(max_orbits)
@@ -317,6 +321,7 @@ contains
     integer :: OUTPUT_VERSION_STRING ! Sub_rosa index
     integer :: Param               ! Tree index of param i.e., name before =
     integer :: Param_id            ! e.g., p_brightObjects
+    character (len=namelen) :: QUANTITY
     logical :: Restricted          ! Some commands not available
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
@@ -330,11 +335,8 @@ contains
     integer :: Status
     real :: T1, T2                 ! For S_Time
     real(r8) :: Start_time_from_1stMAF, End_time_from_1stMAF
+    logical :: verbose
     logical :: wasAlreadyOpen
-    character(len=NameLen) :: Name_string
-    character(len=NameLen) :: End_time_string, Start_time_string
-    character(len=FileNameLen) :: FilenameString
-    character (len=namelen) :: QUANTITY
 
     integer, parameter :: Param_restricted = 1 ! Parameter not allowed
     integer, parameter :: Spec_restricted = param_restricted + 1 ! Spec not allowed
@@ -370,6 +372,7 @@ contains
     elseif ( DetailReduction == 0 ) then ! By default, reduce details level by 2
       DetailReduction = 2
     end if
+    verbose = BeVerbose( 'glo', -1 )
     
     ! Start Digital Elevation Model
     if ( Toolkit ) then
@@ -382,7 +385,7 @@ contains
       layerList(2) = PGSd_DEM_WATER_LAND
       status = PGS_DEM_Open ( resolutionList, numResolutions, &
         & layerList, numLayers )
-      call outputNamedValue( 'PGS_DEM_Open status', status )
+      if ( verbose ) call outputNamedValue( 'PGS_DEM_Open status', status )
     end if
 
     do
@@ -399,23 +402,23 @@ contains
           & any( param_id == &
           & (/ p_output_version_string, p_cycle, p_starttime, p_endtime, &
           & p_leapsecfile /) ) ) then
-          call announce_error(0, &
+          if ( verbose ) call announce_error(0, &
             & '*** l2cf parameter global setting ignored ***', &
             & just_a_warning = .true.)
           cycle
         end if
+        if ( param_id < first_parm .or. param_id > last_parm ) cycle ! how?
+        got(param_id) = .true.
         if ( DEEBUG ) call display_string( parm_indices(param_id), advance='yes' )
         select case ( param_id )
         ! This will allow us to use different names from the toolkit
         ! (Now why would you want to do that?)
         case ( p_brightObjects )
           call get_string ( sub_rosa_index, brightObjects, strip=.true. )
-          got(3) = .true.
         case ( p_cycle )
           call get_string ( sub_rosa_index, l2pcf%cycle, strip=.true. )
         case ( p_endtime )
           if ( restricted ) call NotAllowed ( son, param_restricted )
-          got(2) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
           end_time_string = name_string
           if ( index(name_string, ':') > 0 ) then
@@ -455,7 +458,6 @@ contains
           end do
         case ( p_starttime )
           if ( restricted ) call NotAllowed ( son, param_restricted )
-          got(1) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
           start_time_string = name_string
           if ( index(name_string, ':') > 0 ) then
@@ -477,7 +479,7 @@ contains
         if ( TOOLKIT .and. &
           & any( spec_id == &
           & (/ s_l1boa, s_l1brad, s_l2parsf /) ) ) then
-          call announce_error(0, &
+          if ( verbose ) call announce_error(0, &
             & '*** l2cf spec global setting ignored ***', &
             & just_a_warning = .true.)
           cycle
@@ -620,30 +622,19 @@ contains
 
     if ( DEEBUG ) call output( 'done with statements', advance='yes' )
 
+    ! Any time conversions?
     if ( restricted ) then
+      ! Not if we're a callable forward model server
       call FinishUp
       return
     elseif( .not. NEED_L1BFILES ) then
       ! w/o an l1boa file we'll trust the user to have supplied start, end times
+      ! (Shouldn't we check that she did?)
       if ( LeapSecFileName /= '' ) then
-        if ( DEEBUG ) call output( 'About to read leapsec file' // &
-          & trim(LeapSecFileName), advance='yes' )
-        if ( precedesUTC ( '1993-01-01', start_time_string ) ) then
-          returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
-            & processingrange%starttime)
-          if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
-          if ( returnStatus /= 0 ) then
-            call announce_error(0, &
-            & 'Error converting start time in mls_utctotai; code number: ')
-            call output(returnStatus, advance='yes')
-          end if
-        else
-          ! The starting time is before our nominal 1993 start date
-          ! We'll use the dates_module as a fallback
-          call ResetStartingDate( '1961-01-01' )
-          processingrange%starttime = &
-            & secondsbetween2utcs ( '1961-01-01', start_time_string )
-        endif
+        call ToolkitTimeConversion
+      elseif ( LEAPSINDATESMODULE ) then
+        ! Without a leapsec file, let's use date_module's built-in feature
+        call datesModuleTimeConversion
       endif
       call FinishUp
       return
@@ -666,94 +657,22 @@ contains
       call MLSMessage ( MLSMSG_Error, ModuleName, &                      
       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     end if
-    ! add maf offsets to start, end times
-    ! or convert them to tai93
-    ! This is optional way to define processingRange if using PCF
-    ! It becomes mandatory if not using PCF
-    if ( LeapSecFileName == '' &
+
+    if ( LeapSecFileName == '' .and. .not. LEAPSINDATESMODULE &
      & .and. &
-     & (got(1) .or. got(2) .or. .not. TOOLKIT) &
+     & (got(p_starttime) .or. got(p_endtime) .or. .not. TOOLKIT) &
      & ) then
-
-      ! 1st--check that have L1BOA
-      if ( L1BFile%FileID%f_id < 1 ) then
-        call announce_error(son, &
-          & 'L1BOA file required by global data--but not set')
-      end if
-
-      quantity = 'MAFStartTimeTAI'
-      l1bItemName = AssembleL1BQtyName ( quantity, the_hdf_version, .false. )
-      if ( DEEBUG ) call output( 'About to read L1B file', advance='yes' )
-      call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
-        & l1bFlag, dontPad=.true.)
-      if ( l1bFlag==-1 ) then
-        call announce_error(son, &
-          & 'unrecognized MAFStarttimeTAI in L1BOA file')
-        minTime = 0.
-        maxTime = 0.
-      else
-        minTime = l1bField%dpField(1,1,1)
-        maxTime = l1bField%dpField(1,1,noMAFs) ! This is start time of last MAF
-      end if
-      call DeallocateL1BData ( l1bField )
-    end if
-
-    if ( startTimeIsAbsolute ) then
-      processingRange%startTime = start_time_from_1stMAF
+      ! add maf offsets to start, end times
+      ! or convert them to tai93
+      ! This is optional way to define processingRange if using PCF
+      ! It becomes mandatory if not using PCF
+       call timesFromMafOffsets
+    elseif ( len_trim(LeapSecFileName) > 0 ) then
+      call ToolkitTimeConversion
     else
-      if ( LeapSecFileName /= '' ) then
-        if ( DEEBUG ) call output( 'About to read leapsec file' // &
-          & trim(LeapSecFileName), advance='yes' )
-        if ( precedesUTC ( '1993-01-01', start_time_string ) ) then
-          returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
-          & processingrange%starttime)
-          if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
-          if ( returnStatus /= 0 ) then
-            call announce_error(0, &
-            & 'Error converting start time in mls_utctotai; code number: ')
-            call output(returnStatus, advance='yes')
-          end if
-        else
-          ! The starting time is before our nominal 1993 start date
-          ! We'll use the dates_module as a fallback
-          call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
-          call ResetStartingDate( '1961-01-01' )
-          processingrange%starttime = &
-            & secondsbetween2utcs ( '1961-01-01', start_time_string )
-        endif
-      else if ( got(1) ) then
-        processingrange%starttime = minTime + start_time_from_1stMAF
-      else if ( .not. TOOLKIT ) then
-        processingrange%starttime = minTime
-      end if
+      call datesModuleTimeConversion
     end if
 
-    if ( stopTimeIsAbsolute ) then
-      processingRange%endTime = end_time_from_1stMAF
-    else
-      if ( LeapSecFileName /= '' ) then
-        if ( precedesUTC ( '1993-01-01', end_time_string ) ) then
-          returnStatus = mls_utctotai(trim(LeapSecFileName), end_time_string, &
-          & processingrange%endtime)
-          if ( returnStatus /= 0 ) then
-            call announce_error(0, &
-            & 'Error converting end time in mls_utctotai; code number: ')
-            call output(returnStatus, advance='yes')
-          end if
-        else
-          ! The starting time is before our nominal 1993 start date
-          ! We'll use the dates_module as a fallback
-          call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
-          call ResetStartingDate( '1961-01-01' )
-          processingrange%endtime = &
-            & secondsbetween2utcs ( '1961-01-01', end_time_string )
-        endif
-      else if ( got(2) ) then
-        processingrange%endtime = minTime + end_time_from_1stMAF
-      else if ( .not. TOOLKIT ) then
-        processingrange%endtime = maxTime + 1.0
-      end if
-    end if
 
     if ( .not. TOOLKIT ) then
       ! Store appropriate user input as global attributes
@@ -774,7 +693,7 @@ contains
     end if
 
     ! Have we overridden the Bright Object names? Can we find them in l1boa?
-    if ( got(3) ) then
+    if ( got(p_brightObjects) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &                      
       & 'You overrode names of Bright objects found in l1boa file' )    
     elseif( L1BFile%hdfVersion /= HDFVERSION_5 ) then
@@ -876,6 +795,129 @@ contains
       if ( timing ) call sayTime
 
     end subroutine FinishUp
+
+    ! ---------------------------------------  datesModuleTimeConversion  -----
+    ! Convert utc time strings to tai93 using dates module
+    subroutine datesModuleTimeConversion
+        processingrange%starttime = utc2tai93s ( start_time_string, leapsec=.true. )
+        processingrange%endtime = utc2tai93s ( end_time_string, leapsec=.true. )
+
+    end subroutine datesModuleTimeConversion
+
+    ! ---------------------------------------  timesFromMafOffsets  -----
+    ! add maf offsets to start, end times
+    subroutine timesFromMafOffsets
+
+      ! 1st--check that have L1BOA
+      if ( L1BFile%FileID%f_id < 1 ) then
+        call announce_error(son, &
+          & 'L1BOA file required by global data--but not set')
+      end if
+
+      quantity = 'MAFStartTimeTAI'
+      l1bItemName = AssembleL1BQtyName ( quantity, the_hdf_version, .false. )
+      if ( DEEBUG ) call output( 'About to read L1B file', advance='yes' )
+      call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+        & l1bFlag, dontPad=.true.)
+      if ( l1bFlag==-1 ) then
+        call announce_error(son, &
+          & 'unrecognized MAFStarttimeTAI in L1BOA file')
+        minTime = 0.
+        maxTime = 0.
+      else
+        minTime = l1bField%dpField(1,1,1)
+        maxTime = l1bField%dpField(1,1,noMAFs) ! This is start time of last MAF
+      end if
+      call DeallocateL1BData ( l1bField )
+
+    if ( startTimeIsAbsolute ) then
+      processingRange%startTime = start_time_from_1stMAF
+    else
+      if ( LeapSecFileName /= '' ) then
+        if ( DEEBUG ) call output( 'About to read leapsec file' // &
+          & trim(LeapSecFileName), advance='yes' )
+        if ( precedesUTC ( '1993-01-01', start_time_string ) ) then
+          returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
+          & processingrange%starttime)
+          if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
+          if ( returnStatus /= 0 ) then
+            call announce_error(0, &
+            & 'Error converting start time in mls_utctotai; code number: ')
+            call output(returnStatus, advance='yes')
+          end if
+        else
+          ! The starting time is before our nominal 1993 start date
+          ! We'll use the dates_module as a fallback
+          call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
+          call ResetStartingDate( '1961-01-01' )
+          processingrange%starttime = &
+            & secondsbetween2utcs ( '1961-01-01', start_time_string )
+        endif
+      else if ( got(1) ) then
+        processingrange%starttime = minTime + start_time_from_1stMAF
+      else if ( .not. TOOLKIT ) then
+        processingrange%starttime = minTime
+      end if
+    end if
+
+    if ( stopTimeIsAbsolute ) then
+      processingRange%endTime = end_time_from_1stMAF
+    else
+      if ( LeapSecFileName /= '' ) then
+        if ( precedesUTC ( '1993-01-01', end_time_string ) ) then
+          returnStatus = mls_utctotai(trim(LeapSecFileName), end_time_string, &
+          & processingrange%endtime)
+          if ( returnStatus /= 0 ) then
+            call announce_error(0, &
+            & 'Error converting end time in mls_utctotai; code number: ')
+            call output(returnStatus, advance='yes')
+          end if
+        else
+          ! The starting time is before our nominal 1993 start date
+          ! We'll use the dates_module as a fallback
+          call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
+          call ResetStartingDate( '1961-01-01' )
+          processingrange%endtime = &
+            & secondsbetween2utcs ( '1961-01-01', end_time_string )
+        endif
+      else if ( LEAPSINDATESMODULE ) then
+        ! Without a leapsec file, let's use date_module's built-in feature
+        processingrange%endtime = utc2tai93s ( end_time_string, leapsec=.true. )
+      else if ( got(2) ) then
+        processingrange%endtime = minTime + end_time_from_1stMAF
+      else if ( .not. TOOLKIT ) then
+        processingrange%endtime = maxTime + 1.0
+      end if
+    end if
+    end subroutine timesFromMafOffsets
+
+    ! ------------------------------------------  ToolkitTimeConversion  -----
+    ! Convert utc time strings to tai93 using toolkit procedures
+    subroutine ToolkitTimeConversion
+
+        if ( DEEBUG ) call output( 'About to read leapsec file' // &
+          & trim(LeapSecFileName), advance='yes' )
+        if ( precedesUTC ( '1993-01-01', start_time_string ) ) then
+          returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
+            & processingrange%starttime)
+          returnStatus = mls_utctotai(trim(LeapSecFileName), end_time_string, &
+            & processingrange%endtime)
+          if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
+          if ( returnStatus /= 0 ) then
+            call announce_error(0, &
+            & 'Error converting start, end time in mls_utctotai; code number: ')
+            call output(returnStatus, advance='yes')
+          end if
+        else
+          ! The starting time is before our nominal 1993 start date
+          ! We'll use the dates_module as a fallback
+          call ResetStartingDate( '1961-01-01' )
+          processingrange%starttime = &
+            & secondsbetween2utcs ( '1961-01-01', start_time_string )
+          processingrange%endtime = &
+            & secondsbetween2utcs ( '1961-01-01', end_time_string )
+        endif
+    end subroutine ToolkitTimeConversion
 
     ! ---------------------------------------------  Announce_Error  -----
     subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
@@ -1279,6 +1321,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.154  2014/03/07 19:23:17  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 2.153  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
