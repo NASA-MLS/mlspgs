@@ -350,15 +350,17 @@ contains ! =====     Public Procedures     =============================
         & solarTimeNode, solarZenithNode, lonNode, losAngleNode, &
         & Time, timeNode, hGrid )
 
-    use SDPTOOLKIT, only: MLS_UTCTOTAI
+    use DATES_MODULE, only: UTC2TAI93S
     use EXPR_M, only: EXPR
+    use HIGHOUTPUT, only: BEVERBOSE, OUTPUTNAMEDVALUE
+    use GLOBAL_SETTINGS, only: LEAPSECFILENAME
     use HGRIDSDATABASE, only: CREATEEMPTYHGRID, HGRID_T
     use INIT_TABLES_MODULE, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_TIME
     use MLSKINDS, only: RK => R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use TREE, only: NSONS, SUBTREE
+    use SDPTOOLKIT, only: MLS_UTCTOTAI
     use STRING_TABLE, only: GET_STRING
-    use GLOBAL_SETTINGS, only: LEAPSECFILENAME
+    use TREE, only: NSONS, SUBTREE
 
     ! dummy arguments
     integer, intent(in) :: KEY          ! Tree node
@@ -373,16 +375,17 @@ contains ! =====     Public Procedures     =============================
     real(rk), intent(in) :: TIME        ! Time for HGrid
     type (HGrid_T), intent(inout) :: HGRID
     ! Local variables
-    integer :: PROF                     ! Loop counter
-    integer :: NOPROFS                  ! Number of profiles
-    integer :: PARAM                    ! Loop counter
-    integer :: NODE                     ! A tree node
-    integer :: UNITS                    ! Units
-    real(rk), dimension(:,:), pointer :: VALUES
+    character(len=80) :: DATESTRING
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
     real(rk) :: EXPR_VALUE(2)   ! Output from Expr subroutine
+    integer :: NOPROFS                  ! Number of profiles
+    integer :: NODE                     ! A tree node
+    integer :: PARAM                    ! Loop counter
+    integer :: PROF                     ! Loop counter
     integer :: RETURNSTATUS             ! Flag
-    character(len=80) :: DATESTRING
+    integer :: UNITS                    ! Units
+    real(rk), dimension(:,:), pointer :: VALUES
+    logical :: verbose
     ! The following mysterious integers allow us
     ! to engage in some contemptible trickery to fill
     ! the HGrid's geolocation fields--a better
@@ -400,6 +403,7 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: GEODLATPARAM = LOSANGLEPARAM + 1
 
     ! Executable code
+    verbose = BeVerbose( 'hgrid', -1 )
     ! 1st--try to get the number of instances by rude count
     noProfs = 0
     if ( geodAngleNode /= 0 ) then
@@ -427,7 +431,15 @@ contains ! =====     Public Procedures     =============================
     hGrid%losAngle = 0.0_rk
     if ( date /= 0 ) then
       call get_string ( date, dateString, strip=.true. )
-      returnStatus = mls_utctotai ( trim(LeapSecFileName), trim(dateString), hGrid%time(1,1) )
+      if ( verbose ) call outputNamedValue( 'dateString', dateString )
+      if ( verbose ) call outputNamedValue( 'LeapSecFileName', LeapSecFileName )
+      if ( len_trim(LeapSecFileName) > 1 ) then
+        returnStatus = mls_utctotai &
+          & ( trim(LeapSecFileName), trim(dateString), hGrid%time(1,1) )
+      else
+        ! Without a leapsec file, let's use date_module's built-in feature
+        hGrid%time(1,1) = utc2tai93s ( dateString, leapsec=.true. )
+      endif
       if ( returnStatus /= 0 ) call announce_error( key, badTime )
       hGrid%time = hGrid%time(1,1)
     else
@@ -2388,6 +2400,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.113  2014/03/18 17:15:09  pwagner
+! Can get leapseconds from dates module if run sans toolkit
+!
 ! Revision 2.112  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
 !
