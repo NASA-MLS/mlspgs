@@ -853,7 +853,7 @@ contains
           processingrange%starttime = &
             & secondsbetween2utcs ( '1961-01-01', start_time_string )
         endif
-      else if ( got(1) ) then
+      else if ( got(p_starttime) ) then
         processingrange%starttime = minTime + start_time_from_1stMAF
       else if ( .not. TOOLKIT ) then
         processingrange%starttime = minTime
@@ -883,7 +883,7 @@ contains
       else if ( LEAPSINDATESMODULE ) then
         ! Without a leapsec file, let's use date_module's built-in feature
         processingrange%endtime = utc2tai93s ( end_time_string, leapsec=.true. )
-      else if ( got(2) ) then
+      else if ( got(p_endtime) ) then
         processingrange%endtime = minTime + end_time_from_1stMAF
       else if ( .not. TOOLKIT ) then
         processingrange%endtime = maxTime + 1.0
@@ -1321,6 +1321,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.155  2014/03/18 17:15:24  pwagner
+! Can get leapseconds from dates module if run sans toolkit
+!
 ! Revision 2.154  2014/03/07 19:23:17  pwagner
 ! Name_Len changed to nameLen; got from MLSCommon
 !
