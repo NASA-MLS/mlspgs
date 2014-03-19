@@ -658,10 +658,9 @@ contains
       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     end if
 
-    if ( LeapSecFileName == '' .and. .not. LEAPSINDATESMODULE &
-     & .and. &
-     & (got(p_starttime) .or. got(p_endtime) .or. .not. TOOLKIT) &
-     & ) then
+    if ( LeapSecFileName == '' .and. ( &
+      &  .not. (got(p_starttime) .or. got(p_endtime) ) &
+      &  .or. .not. LEAPSINDATESMODULE ) ) then
       ! add maf offsets to start, end times
       ! or convert them to tai93
       ! This is optional way to define processingRange if using PCF
@@ -1321,6 +1320,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.156  2014/03/18 17:46:09  pwagner
+! Fixed bug in use of got(:) array
+!
 ! Revision 2.155  2014/03/18 17:15:24  pwagner
 ! Can get leapseconds from dates module if run sans toolkit
 !
