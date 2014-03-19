@@ -658,7 +658,9 @@ contains
       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     end if
 
-    if ( LeapSecFileName == '' .and. ( &
+    if ( TOOLKIT ) then
+      if ( DEEBUG ) call output( 'Using toolkit', advance='yes' )
+    elseif ( LeapSecFileName == '' .and. ( &
       &  .not. (got(p_starttime) .or. got(p_endtime) ) &
       &  .or. .not. LEAPSINDATESMODULE ) ) then
       ! add maf offsets to start, end times
@@ -1320,6 +1322,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.157  2014/03/19 17:37:07  pwagner
+! Repaired bug breaking gold brick
+!
 ! Revision 2.156  2014/03/18 17:46:09  pwagner
 ! Fixed bug in use of got(:) array
 !
