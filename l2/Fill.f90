@@ -1340,12 +1340,12 @@ contains ! =====     Public Procedures     =============================
     ! ----------------------------------------------  FillCommand  -----
     subroutine FillCommand
     ! Now we're on actual Fill instructions.
-      use INIT_TABLES_MODULE, only: L_NONE
+      use Declaration_Table, only: BASE_UNIT
       use DUMP_0, only: DUMP
-      use INTRINSIC, only: LIT_INDICES
+      use INIT_TABLES_MODULE, only: L_NONE
+      use INTRINSIC, only: LIT_INDICES, T_Boolean, T_Numeric
       use STRING_TABLE, only: DISPLAY_STRING
-      use UNITS, only: BASE_UNIT
-      use VECTOR_QTY_EXPR_M, only: DOT, LOG_VALUE, NUM_VALUE, VECTOR_QTY_EXPR
+      use VECTOR_QTY_EXPR_M, only: DOT, VECTOR_QTY_EXPR
       use VECTORSMODULE, only: DESTROYVECTORQUANTITYMASK, DESTROYVECTORQUANTITYVALUE, &
       Dump_Vector_Quantity
       double precision :: Number
@@ -1442,11 +1442,14 @@ contains ! =====     Public Procedures     =============================
           stat = vector_qty_expr ( subtree(jj,subtree(j,key)), vectors, tempQuantity, &
           number, theUnits, 'Fill' )
           select case ( stat )
-          case ( log_value, num_value )
+          case ( t_numeric )
             call output ( number, before='Numeric value of "expr" field = ' )
             if ( theUnits /= phyq_dimensionless ) &
-            call display_string ( lit_indices(base_unit(theUnits)), before=' ' )
-            call output ( '', advance='yes' )
+            call display_string ( lit_indices(base_unit(theUnits)), &
+              & before=' ', advance='yes' )
+          case ( t_boolean )
+            call display_string ( lit_indices(nint(number)), &
+              & before='Value of "expr" field = ', advance='yes' )
           case ( dot )
             call output ( 'Got vector qty result', advance='yes' )
             call dump_vector_quantity ( tempQuantity, details=1, name='Quantity value of "expr" field' )
@@ -3094,6 +3097,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.440  2014/03/20 01:41:48  vsnyder
+! Get Base_Unit from Declaration_Table, improve some tracing
+!
 ! Revision 2.439  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
 !
