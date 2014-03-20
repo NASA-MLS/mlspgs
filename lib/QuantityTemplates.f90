@@ -469,7 +469,7 @@ contains
     call output ( quantity_template%badValue )
     if ( .not. myNoL2CF ) then
       call output ( ' Unit = ' )
-      call myDisplayString ( phyq_indices(quantity_template%unit) )
+      call myDisplayString ( lit_indices(quantity_template%unit) )
     end if
     call output ( ' InstanceLen = ' )
     call output ( quantity_template%InstanceLen, advance='yes' )
@@ -893,7 +893,8 @@ contains
     ! Most or all of the character-valued attributes are to be stored in the 
     ! quantity template as string table indexes or other indexes, e.g. signals
     ! Therefore we must do a bit of table lookups
-    use INTRINSIC, only: GET_PHYQ
+    use Declaration_Table, only: Decls, Get_Decl, Units_Name
+    use Intrinsic, only: L_Dimensionless
     use MLSHDF5, only: GETHDF5ATTRIBUTE
     use MLSSIGNALS_M, only: GETRADIOMETERINDEX, GETMODULEINDEX, &
       & GETSIGNALINDEX
@@ -901,6 +902,8 @@ contains
     ! Arguments
     integer, intent(in) :: dsID
     type(QuantityTemplate_T), intent(inout) :: qt
+
+    type(decls) :: Decl
     character (len=80) :: Str
     ! Executable
     call GetHDF5AttrAsStrID ( dsID, 'TemplateName', qt%name )
@@ -915,7 +918,12 @@ contains
     call GetHDF5Attribute ( dsID, 'minorFrame    ', qt%minorFrame     )
     call GetHDF5Attribute ( dsID, 'badValue    ', qt%badValue     )
     call GetHDF5Attribute ( dsID, 'tempQtyUnit', str )
-    qt%unit = get_phyq( str )
+    decl = get_decl ( str, units_name )
+    if ( decl%type == units_name ) then
+      qt%unit = decl%tree
+    else ! ??? Should we emit an error message here ???
+      qt%unit = l_dimensionless
+    end if
     call GetHDF5Attribute ( dsID, 'instanceLen    ', qt%instanceLen     )
     call GetHDF5AttrAsLitID ( dsID, 'verticalCoordinate', qt%verticalCoordinate )
     call GetHDF5Attribute ( dsID, 'radiometer', str )
@@ -1129,7 +1137,7 @@ contains
     call MakeHDF5Attribute ( dsID, name, 'minorFrame    ', qt%minorFrame     )
     call MakeHDF5Attribute ( dsID, name, 'badValue    ', qt%badValue     )
     if ( .not. myNoL2CF ) then
-      call myGetString ( phyq_indices(qt%unit), str, strip=.true. )
+      call myGetString ( lit_indices(qt%unit), str, strip=.true. )
       call MakeHDF5Attribute ( dsID, name, 'tempQtyUnit', str )
     end if
     call MakeHDF5Attribute ( dsID, name, 'instanceLen    ', qt%instanceLen     )
@@ -1628,6 +1636,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.80  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.79  2013/12/12 01:57:17  vsnyder
 ! Change type of debug from logical to integer
 !
