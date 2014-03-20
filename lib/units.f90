@@ -42,6 +42,12 @@ contains ! =====     Public procedures     =============================
     use Constants, only: Rad2Deg
     use Intrinsic ! "units" type literals, beginning with L_,
                   ! Abstract physical quantities beginning with PHYQ_
+    use Toggles, only: Con, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+
+    integer :: Me = -1 ! String index for tracing
+
+    call trace_begin ( me, 'INIT_UNITS', cond=toggle(con) .and. levels(con) > 1 )
 
     call declare_unit ( l_dl, 1.0d0, phyq_dimensionless )
     call declare_unit ( l_dimless, 1.0d0, phyq_dimensionless )
@@ -121,6 +127,8 @@ contains ! =====     Public procedures     =============================
 
     call declare_unit ( l_profiles, 1.0d0, phyq_profiles )
 
+    call trace_end ( 'INIT_UNITS', cond=toggle(con) .and. levels(con) > 1 )
+
   contains
 
     subroutine DECLARE_UNIT ( NAME, VALUE, PHYS_UNIT )
@@ -129,16 +137,21 @@ contains ! =====     Public procedures     =============================
       integer, intent(in) :: NAME
       integer, intent(in) :: PHYS_UNIT
       double precision, intent(in) :: VALUE
+      integer :: Me = -1 ! String index for tracing
+
+      call trace_begin ( me, 'DECLARE_UNIT', cond=toggle(con) .and. levels(con) > 8 )
     ! Declare "name" to be a unit of abstract kind "phys_unit" (e.g. length)
     ! and a scale to that kind of "value"
       !              string             value  type        units
       call declare ( lit_indices(name), value, units_name, phys_unit, &
       !              tree
-                     lit_indices(name) )
+                     name )
       !              string                   value  type
       call declare ( phyq_indices(phys_unit), value, phys_unit_name, &
-      !              units tree
-                     name, lit_indices(name) )
+      !              units      tree
+                     phys_unit, name )
+      call trace_end ( 'DECLARE_UNIT', stringIndex=lit_indices(name), &
+        & cond=toggle(con) .and. levels(con) > 8 )
     end subroutine DECLARE_UNIT
 
   end subroutine INIT_UNITS
@@ -147,19 +160,14 @@ contains ! =====     Public procedures     =============================
   integer function Base_Unit ( PHYS_Unit )
     ! Get the base unit corresponding to a physical unit.
     ! The base unit is one with scale == 1.0.
-    use Declaration_Table, only: Decls, Get_Decl, Phys_Unit_Name, Prior_Decl
+    ! The result is the base unit's lit index, not it's string index.
+    use Declaration_Table, only: Decls, Get_Decl, Null_Decl, Phys_Unit_Name
     use Intrinsic, only: L_Dimensionless, PHYQ_Indices
     integer, intent(in) :: PHYS_Unit
     type(decls) :: Decl
     base_unit = l_dimensionless ! for want of a better default
-    decl = get_decl ( phyq_indices(phys_unit), type=phys_unit_name )
-    do while ( decl%type == phys_unit_name )
-      if ( decl%value == 1.0d0 ) then
-        base_unit = decl%units
-        exit
-      end if
-      decl = prior_decl(decl)
-    end do
+    decl = get_decl ( phyq_indices(phys_unit), type=phys_unit_name, value=1.0d0 )
+    if ( decl%type == phys_unit_name ) base_unit = decl%tree
   end function Base_Unit
 
 !--------------------------- end bloc --------------------------------------
@@ -175,6 +183,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.42  2014/03/20 01:39:08  vsnyder
+! Add some tracing, use Value argument to search decl for base unit
+!
 ! Revision 2.41  2014/01/11 01:41:02  vsnyder
 ! Decruftification
 !
