@@ -1112,7 +1112,7 @@ contains
     use CALENDAR, only: DURATION_FORMATTED, TIME_T, TK
     use CALL_STACK_M, only: DUMP_STACK
     use CHUNKDIVIDECONFIG_M, only: CHUNKDIVIDECONFIG, DUMP
-    use DECLARATION_TABLE, only: Dump_A_Decl, Decls, Get_Decl, NUM_VALUE, Variable
+    use DECLARATION_TABLE, only: Dump_A_Decl, Decls, Get_Decl, Variable
     use DUMP_0, only: DIFF, DUMP, RMSFORMAT
     use EXPR_M, only: EXPR
     use FILTERSHAPES_M, only: DUMP_FILTER_SHAPES_DATABASE, &
@@ -2631,6 +2631,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.111  2014/03/20 01:32:11  vsnyder
+! Remove unreferenced USE name
+!
 ! Revision 2.110  2014/02/28 01:10:44  vsnyder
 ! Remove unused names
 !
