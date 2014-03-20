@@ -24,10 +24,6 @@ module INTRINSIC
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  interface get_phyq
-    module procedure get_phyq_lit, get_phyq_str
-  end interface
-
 ! A "spec_def" vertex may be decorated with (sums of) the following flags:
   integer, parameter :: NO_DUP = 1        ! Duplicate fields prohibited
   integer, parameter :: ALL_FIELDS = 2    ! All fields required
@@ -43,15 +39,36 @@ module INTRINSIC
   integer, parameter :: NO_CHECK_EQ = 1   ! Don't check whether the section's
                                           ! A=B contents are allowed.
 
-! Data types that don't have enumerated literals:
   integer, parameter :: T_FIRST             = 1
+! Types of entities in the declaration table:
   integer, parameter :: T_UNKNOWN           = t_first
-  integer, parameter :: T_A_DOT_B           = t_unknown + 1
-  integer, parameter :: T_NUMERIC           = t_a_dot_b + 1
+  integer, parameter :: T_EMPTY             = t_unknown + 1
+  integer, parameter :: T_DO_LABEL          = t_empty + 1 ! DO, CASE or IF
+  integer, parameter :: T_ENUM_NAME         = t_do_label + 1
+  integer, parameter :: T_FIELD_NAME        = t_enum_name + 1
+  integer, parameter :: T_FUNCTION_NAME     = t_field_name + 1
+  integer, parameter :: T_LABEL             = t_function_name + 1 ! of a spec
+  integer, parameter :: T_PARAM_NAME        = t_label + 1 
+  integer, parameter :: T_PHYS_UNIT_NAME    = t_param_name + 1    ! PHYS_....
+  integer, parameter :: T_SECTION_NAME      = t_phys_unit_name + 1
+  integer, parameter :: T_SPEC_NAME         = t_section_name + 1
+  integer, parameter :: T_TREE_NAME         = t_spec_name + 1     ! e.g. n_plus
+  integer, parameter :: T_TYPE_NAME         = t_tree_name + 1
+  integer, parameter :: T_UNIT_NAME         = t_type_name + 1
+  integer, parameter :: T_VARIABLE_NAME     = t_unit_name + 1
+! Result type from Vector_Qty_Expr
+  integer, parameter :: T_A_DOT_B           = t_variable_name + 1
+! Declaration table types of names of LHS entities in Algebra_m
+  integer, parameter :: T_EXPRN             = t_a_dot_b + 1 ! Scalar
+  integer, parameter :: T_EXPRN_M           = t_exprn + 1         ! Matrix
+  integer, parameter :: T_EXPRN_V           = t_exprn_m + 1       ! Vector
+! Data types that don't have enumerated literals:
+  integer, parameter :: T_NUMERIC           = t_exprn_v + 1
   integer, parameter :: T_NUMERIC_RANGE     = t_numeric + 1
   integer, parameter :: T_STRING            = t_numeric_range + 1
+  integer, parameter :: T_STRING_RANGE      = t_string + 1
 ! Enumeration types:
-  integer, parameter :: T_BOOLEAN           = t_string + 1
+  integer, parameter :: T_BOOLEAN           = t_string_range + 1
   integer, parameter :: T_INSTRUMENT        = t_boolean + 1
   integer, parameter :: T_POLARIZATION      = t_instrument + 1
   integer, parameter :: LAST_INTRINSIC_TYPE = t_polarization
@@ -170,12 +187,33 @@ contains ! =====     Public procedures     =============================
 
     ! Put intrinsic predefined identifiers into the symbol table.
 
-    ! Put intrinsic non-enumeration type names into symbol table
+    ! Put declaration-table names into symbol table
     data_type_indices(t_unknown) =         add_ident ( 'unknown' )
+    data_type_indices(t_empty) =           add_ident ( 'empty' )
+    data_type_indices(t_do_label) =        add_ident ( 'do label' )
+    data_type_indices(t_enum_name) =       add_ident ( 'enum name' )
+    data_type_indices(t_field_name) =      add_ident ( 'field name' )
+    data_type_indices(t_function_name) =   add_ident ( 'function name' )
+    data_type_indices(t_label) =           add_ident ( 'label' )
+    data_type_indices(t_param_name) =      add_ident ( 'param name' )
+    data_type_indices(t_phys_unit_name) =  add_ident ( 'phys unit name' )
+    data_type_indices(t_section_name) =    add_ident ( 'section name' )
+    data_type_indices(t_spec_name) =       add_ident ( 'spec name' )
+    data_type_indices(t_tree_name) =       add_ident ( 'tree name' )
+    data_type_indices(t_type_name) =       add_ident ( 'type name' )
+    data_type_indices(t_unit_name) =       add_ident ( 'unit name' )
+    data_type_indices(t_variable_name) =   add_ident ( 'variable name' )
+    ! Put result type from Vector_Qty_Expr into the symbol table
     data_type_indices(t_a_dot_b) =         add_ident ( 'a.b' )
+    ! Put type names of declarations of Algebra_m LHS's into the symbol table
+    data_type_indices(t_exprn) =           add_ident ( 'exprn' )
+    data_type_indices(t_exprn_m) =         add_ident ( 'exprn_m' )
+    data_type_indices(t_exprn_v) =         add_ident ( 'exprn_v' )
+    ! Put intrinsic non-enumeration type names into the symbol table
     data_type_indices(t_numeric) =         add_ident ( 'numeric' )
     data_type_indices(t_numeric_range) =   add_ident ( 'numeric_range' )
     data_type_indices(t_string) =          add_ident ( 'string' )
+    data_type_indices(t_string_range) =    add_ident ( 'string_range' )
     ! Put intrinsic enumeration type names into the symbol table
     data_type_indices(t_boolean) =         add_ident ( 'boolean' )
     data_type_indices(t_instrument) =      add_ident ( 'instrument' )
@@ -231,7 +269,8 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, t+t_numeric, n+n_dt_def, &
       begin, t+t_numeric_range, n+n_dt_def, &
-      begin, t+t_string, n+n_dt_def /) )
+      begin, t+t_string, n+n_dt_def, &
+      begin, t+t_string_range, n+n_dt_def /) )
     ! Define the enumerated types
     call make_tree ( (/ &
       begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def,   &
@@ -263,34 +302,15 @@ contains ! =====     Public procedures     =============================
     call deallocate_test ( spec_indices,      'SPEC_INDICES',      moduleName )
   end subroutine
 
-  ! --------------------------------------------------  Get_Phyq  -----
-  ! Returns the phyq_index for a given string or its lit_index
-  function get_phyq_lit( lit_index ) result( phyq_index )
-    ! Args
-    integer, intent(in) :: lit_index
-    integer :: phyq_index
-    ! Executable
-    do phyq_index = first_phyq, last_phyq
-      if ( lit_indices(phyq_index) == lit_index ) return
-    enddo
-    phyq_index = -1 ! Not found
-  end function get_phyq_lit
+  ! ---------------------------------------------------  Get_Type  -----
+  integer function Get_Type ( Type_Index )
+    ! Return the string index for a type name.  The reason for the
+    ! existence of this function is to pass it to procedures that otherwise
+    ! do not need to access this module by use association.
+    integer, intent(in) :: Type_Index
+    get_type = data_type_indices ( type_index )
+  end function Get_Type
 
-  function get_phyq_str( str ) result( phyq_index )
-    use STRING_TABLE, only: ADD_CHAR, LOOKUP
-    ! Args
-    character(len=*), intent(in) :: str
-    integer :: phyq_index
-    ! Internal variables
-    logical :: found
-    integer :: strID
-    ! Executable
-    phyq_index= -1 ! Not found
-    call add_char( trim(str) )
-    call lookup ( strID, found, caseless=.true., debug=0 )
-    if ( found ) phyq_index = get_phyq_lit( strID )
-  end function get_phyq_str
-    
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -304,6 +324,10 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.72  2014/03/20 01:38:29  vsnyder
+! Unify types in Intrinsic instead of having a separate system in
+! Declaration_Table.
+!
 ! Revision 2.71  2013/12/12 01:59:44  vsnyder
 ! Change type of debug from logical to integer, add 'unknown' type
 !
