@@ -40,11 +40,11 @@ contains ! ====     Public Procedures     ==============================
     use DECLARATION_TABLE, only: Allocate_Test, Deallocate_Test, DECLARED, &
       DECLS, Dump_Values, EMPTY, ENUM_VALUE, FUNCTION, LABEL, LOG_VALUE, &
       NAMED_VALUE, NUM_VALUE, GET_DECL, RANGE, STR_RANGE, STR_VALUE, &
-      Type_Names, Type_Name_Indices, UNDECLARED, UNITS_NAME, Variable
+      UNITS_NAME, Variable
     use Functions, only: F_Difference, F_Exp, F_Ln, F_Log, F_Log10, &
       F_Intersection, F_Sqrt, F_Union, F_Without
-    use INTRINSIC, only: DATA_TYPE_INDICES, Lit_Indices, PHYQ_DIMENSIONLESS, &
-      & PHYQ_Indices, PHYQ_INVALID, L_False, L_True, T_Boolean
+    use INTRINSIC, only: Data_Type_Indices, Lit_Indices, PHYQ_Dimensionless, &
+      & PHYQ_Indices, PHYQ_Invalid, L_False, L_True, T_Boolean
     use Output_m, only: NewLine, Output
     use StartErrorMessage_m, only: StartErrorMessage
     use STRING_TABLE, only: Display_String, FLOAT_VALUE
@@ -115,7 +115,7 @@ contains ! ====     Public Procedures     ==============================
       if ( declared(string) ) then
         decl = get_decl ( string, [ named_value, variable, enum_value, label ] )
       else
-        decl = decls(0.0d0, undeclared, phyq_invalid, 0, 0, null() )
+        decl = decls(0.0d0, empty, phyq_invalid, 0, 0, null() )
       end if
       myType = decl%type
       if ( myType /= variable ) &
@@ -479,8 +479,11 @@ contains ! ====     Public Procedures     ==============================
         if ( n == 0 ) then
           call deallocate_test ( values, 'Values', moduleName )
         else if ( allocated(values1) ) then
-          if ( n /= size(values1) ) &
-            & call deallocate_test ( values, 'Values', moduleName )
+          if ( n /= size(values1) ) then
+            call deallocate_test ( values, 'Values', moduleName )
+          else
+            values = values1
+          end if
         end if
       end if
       if ( .not. allocated(values) ) then
@@ -533,10 +536,8 @@ contains ! ====     Public Procedures     ==============================
       do i = 0, stack_depth()
         call output ( '_' )
       end do
-      if ( me == n_identifier ) then
-        call display_string ( string, before='Identifier ' )
-        call output ( ' ' )
-      end if
+      if ( me == n_identifier ) &
+        & call display_string ( string, before=' Identifier ' )
       select case ( myType )
       case ( enum_value )
         call display_string ( data_type_indices(enumType), before=' enum Type = ' )
@@ -551,13 +552,13 @@ contains ! ====     Public Procedures     ==============================
               & before=' Value = ' )
           end if
         else
-          call display_string ( type_name_indices(varType), &
+          call display_string ( data_type_indices(varType), &
             & before=' variable Type = ' ) 
           if ( size(decl%values) == 1 ) &
             & call display_value ( decl%values(1)%value )
         end if
       case default
-        call display_string ( type_name_indices(myType), before=' Type = ' )
+        call display_string ( data_type_indices(myType), before=' Type = ' )
         call display_value ( value )
       end select
       call newLine
@@ -566,8 +567,8 @@ contains ! ====     Public Procedures     ==============================
       end if
     end if
     if ( myType /= enum_value ) then
-      call trace_end ( 'EXPR', index=n, string='Type=' //trim(type_names(myType)), &
-        & cond=toggle(con) )
+      call trace_end ( 'EXPR', index=n, string='Type=', &
+        & stringIndex=data_type_indices(myType), cond=toggle(con) )
     else
       call trace_end ( 'EXPR', index=n, string='Type=', &
         & stringIndex=data_type_indices(enumType), cond=toggle(con) )
@@ -910,6 +911,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.35  2014/03/20 01:40:16  vsnyder
+! Unified types in Intrinsic, repair some tracing
+!
 ! Revision 2.34  2014/03/05 01:06:50  vsnyder
 ! Repair blunder that caused a^b^c...x^y^z to be evaluated as a^b^c...x^y^a.
 !
