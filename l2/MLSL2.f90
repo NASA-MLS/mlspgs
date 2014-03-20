@@ -12,11 +12,11 @@
 program MLSL2
   use ALLOCATE_DEALLOCATE, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES
   use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
-  use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL, &
-    & GET_TYPE
+  use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use HDF, only: DFACC_RDONLY
   use HIGHOUTPUT, only: DUMP, HEADLINE, OUTPUTNAMEDVALUE
   use INIT_TABLES_MODULE, only: INIT_TABLES
+  use Intrinsic, only: Get_Type
   use INTRINSIC, only: L_ASCII, L_TKGEN, LIT_INDICES
   use L2GPDATA, only: AVOIDUNLIMITEDDIMS
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
@@ -186,7 +186,7 @@ program MLSL2
     & DEBUG=0 )
   call allocate_decl ( ndecls=8000 )
   call allocate_tree ( n_tree=2000000 )
-  call init_tables
+! call init_tables ! Postpone this until after toggles get set
   FILESTRINGTABLE = .true.
   !---------------- Task (2) ------------------
 ! Where to send output, how severe an error to quit
@@ -327,6 +327,8 @@ program MLSL2
   end if
   !---------------- Task (4) ------------------
   ! Open the L2CF
+  ! First, set up type checking for it
+  call init_tables
   status = 0
   status = InitializeMLSFile(MLSL2CF, content = 'l2cf', name='<STDIN>', &
       & type=l_ascii, access=DFACC_RDONLY, recordLength=recl, &
@@ -774,6 +776,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.204  2014/03/20 01:42:32  vsnyder
+! Get Get_Type from Intrinsic, do init_tables later
+!
 ! Revision 2.203  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
