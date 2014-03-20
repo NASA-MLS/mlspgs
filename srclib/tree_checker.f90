@@ -22,19 +22,20 @@ module TREE_CHECKER
 ! result type from Declaration_Table.
 
   use DECLARATION_TABLE, only: DECLARATION, DECLARE, DECLARED, DECLS, &
-    &                          DOT, DO_LABEL, DUMP_1_DECL, EMPTY, ENUM_VALUE, &
+    &                          DO_LABEL, DUMP_1_DECL, EMPTY, ENUM_VALUE, &
     &                          FIELD, FUNCTION, GET_DECL, LABEL, LOG_VALUE, &
     &                          NAMED_VALUE, NULL_DECL, NUM_VALUE, PRIOR_DECL, &
     &                          RANGE, REDECLARE, SECTION, SPEC, STR_Range, &
-    &                          STR_VALUE, TYPE_NAMES, UNDECLARED, TYPE_MAP, &
-    &                          TYPE_NAME, UNITS_NAME, VALUE_T, VARIABLE
+    &                          STR_VALUE, TYPE_NAME, UNITS_NAME, VALUE_T, &
+    &                          VARIABLE
   use INIT_TABLES_MODULE, only: DATA_TYPE_INDICES, FIELD_FIRST, FIELD_INDICES, &
     &                           FIELD_LAST, LIT_INDICES, PHYQ_DIMENSIONLESS, &
     &                           SECTION_FIRST, SECTION_INDICES, SECTION_LAST, &
     &                           SECTION_ORDERING
-  use INTRINSIC, only: ALL_FIELDS, EMPTY_OK, EXPR_OK, L_True, L_False,&
-    &                  NO_ARRAY, NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, &
-    &                  PHYQ_INVALID, REQ_FLD, SPEC_INDICES, T_BOOLEAN, U
+  use INTRINSIC, only: ALL_FIELDS, DOT => T_A_dot_B, EMPTY_OK, EXPR_OK, L_True, &
+    &                  L_True, L_False, NO_ARRAY, NO_CHECK_EQ, NO_DUP, &
+    &                  NO_POSITIONAL, PHYQ_INVALID, REQ_FLD, SPEC_INDICES, &
+    &                  T_BOOLEAN, U
   use LEXER_CORE, only: PRINT_SOURCE
   use MoreTree, only: Scalar, StartErrorMessage
   use OUTPUT_M, only: NEWLINE, OUTPUT
@@ -232,34 +233,24 @@ contains ! ====     Public Procedures     ==============================
       call output ( ' a construct enclosing a section.', advance='yes' )
     case ( inconsistent_data_types )
       call output ( 'data types are not consistent' )
-      if ( present(expect) ) then
-        call output ( ', expected ' )
-        call display_string ( data_type_indices(expect) )
-      end if
-      if ( present(got) ) then
-        call output ( ', got ' )
-        call display_string ( data_type_indices(got) )
-      end if
+      if ( present(expect) ) &
+        & call display_string ( data_type_indices(expect), before=', expected ' )
+      if ( present(got) ) &
+        & call display_string ( data_type_indices(got), before=', got ' )
       call output ( '.', advance='yes' )
     case ( inconsistent_types )
       call output ( 'types are not consistent' )
-      if ( present(expect) ) then
-        call output ( ', expected ' )
-        call output ( trim(type_names(expect)) )
-      end if
-      if ( present(got) ) then
-        call output ( ', got ' )
-        call output ( trim(type_names(got)) )
-      end if
+      if ( present(expect) ) &
+        & call display_string ( data_type_indices(expect), before=', expected ' )
+      if ( present(got) ) &
+        & call display_string ( data_type_indices(got), before=', got ' )
       call output ( '.', advance='yes' )
     case ( inconsistent_units )
       call output ( 'units are not consistent.', advance = 'yes' )
-      if ( present(expect) ) then
-        call display_string ( phyq_indices(expect), before=', expected ' )
-      end if
-      if ( present(got) ) then
-        call display_string ( phyq_indices(got), before=', expected ' )
-      end if
+      if ( present(expect) ) &
+        & call display_string ( phyq_indices(expect), before=', expected ' )
+      if ( present(got) )&
+        & call display_string ( phyq_indices(got), before=', expected ' )
     case ( label_conflict )
       call display_string ( got, before='A label ' )
       call output ( ' shall not be the same as an enumeration literal,' )
@@ -359,8 +350,8 @@ contains ! ====     Public Procedures     ==============================
         & call display_string ( sub_rosa(expect), before=', expected ' )
       call output ( '.', advance='yes' )
     case ( wrong_expr_type )
-      call output ( 'Expression type is not correct.  Expected "' )
-      call output ( trim(type_names(expect)) )
+      call display_string ( data_type_indices(expect), &
+        & before='Expression type is not correct.  Expected "' )
       call output ( '"', advance='yes' )
     case ( wrong_num_args )
       call display_string ( fields(1), before='Incorrect number of arguments for ', &
@@ -591,6 +582,17 @@ contains ! ====     Public Procedures     ==============================
             do while ( decl%tree /= null_tree )
               if ( node_id(type_decl) == n_spec_def ) then
                 test_type = decoration(subtree(1,decl%tree))
+              else if ( decl%type==variable ) then
+                ! Type of variable is not the tree that represents the type,
+                ! so check for the type, not the tree that represents it.
+                if ( node_id(type_decl) == n_dt_def ) &
+                  & type_decl = decoration(subtree(1,type_decl))
+                stat = expr (root, type, units, value, field, start, field_look, field_test)
+                if ( type == enum_value ) then
+                  test_type = units ! The enumeration type
+                else
+                  test_type = type
+                end if
               else
                 test_type = decl%tree
               end if
@@ -623,7 +625,7 @@ contains ! ====     Public Procedures     ==============================
           if ( type == enum_value ) then
             test_type = units ! The enumeration type
           else
-            test_type = type_map(type) ! from declaration table type
+            test_type = type
           end if
           stat = check_field_type(field, test_type, units, start)
         end if
@@ -1207,7 +1209,7 @@ contains ! ====     Public Procedures     ==============================
           end do
         else
           stat = expr( son2, type, units, value )
-          stat = check_field_type(check,type_map(type),units)
+          stat = check_field_type(check,type,units)
           if ( stat == wrong_type ) then
             call announce_error ( son2, wrong_type, fields=(/son1/), expect=check )
           else if ( stat > 1 ) then
@@ -1271,8 +1273,8 @@ contains ! ====     Public Procedures     ==============================
       if ( .not. declared(string) ) then
         select case ( me )
         case ( n_identifier )
-                       ! String  Value  Type        Units         Tree
-          call declare ( string, 0.0d0, undeclared, phyq_invalid, root )
+                       ! String  Value  Type   Units         Tree
+          call declare ( string, 0.0d0, empty, phyq_invalid, root )
         case ( n_number )
                        ! String  Value                Type
           call declare ( string, float_value(string), num_value, &
@@ -1283,7 +1285,8 @@ contains ! ====     Public Procedures     ==============================
           call declare ( string, 0.0d0+string, str_value, phyq_invalid, root )
         end select
       end if
-      decl = get_decl(string, [enum_value,named_value,variable,label,do_label] )
+      decl = get_decl(string, [do_label,enum_value,label,named_value,num_value, &
+                            &  str_value,variable] )
       if ( decl%type == null_decl ) decl = declaration(string)
       type = decl%type
       select case ( type )
@@ -1310,7 +1313,7 @@ contains ! ====     Public Procedures     ==============================
       if ( type == log_value ) then
         type = enum_value
         units = t_boolean
-        typeString = 0
+        typeString = units
       end if
       if ( present(tree) ) tree=decl%tree
     case ( n_unit ) ! ------------------------------------------------------
@@ -1593,14 +1596,14 @@ contains ! ====     Public Procedures     ==============================
                 son2 = subtree(i,arg_tree)
                 if ( node_id(subtree(i,arg_tree)) == n_or ) then
                   do j = 1, nsons(son2)
-                    if ( type_map(type) == decoration(subtree(j,son2)) ) then
+                    if ( type == decoration(subtree(j,son2)) ) then
                       if ( type == num_value .and. units /= phyq_dimensionless ) &
                         & call local_error ( subtree(i+1,root), not_unitless, fields=(/string/) )
   go to 9
                     end if
                   end do
                 else
-                  if ( type_map(type) /= decoration(son2) ) then
+                  if ( type /= decoration(son2) ) then
                     call local_error ( subtree(i+1,root), wrong_arg_type, &
                       & fields=(/string/), expect=subtree(i,arg_tree) )
                   else if ( units /= phyq_dimensionless ) then
@@ -1617,7 +1620,7 @@ contains ! ====     Public Procedures     ==============================
       call local_error ( son1, not_func, fields=(/string/) )
     case ( n_dot ) ! -------------------------------------------------------
       stat = check_dot ( root, field, start, field_look, field_test )
-      type = undeclared
+      type = empty
       if ( stat /= 3 ) type = dot
     case ( n_array )
       son1 = subtree(1,root)
@@ -1650,7 +1653,7 @@ contains ! ====     Public Procedures     ==============================
       do i = 0, stack_depth()
         call output ( '_' )
       end do
-      call output ( trim(type_names(type)) )
+      call display_string ( data_type_indices(type) )
       select case ( type )
       case ( enum_value )
         call display_string ( data_type_indices(units), before=' ' )
@@ -1664,7 +1667,8 @@ contains ! ====     Public Procedures     ==============================
       end select
       call newLine
     end if
-    call trace_end ( 'EXPR', index=stat, string=trim(type_names(type)), &
+    if ( typeString == 0 ) typeString = data_type_indices(type)
+    call trace_end ( 'EXPR', index=stat, & ! string=trim(type_names(type)), 
       & stringIndex=typeString, cond=toggle(con) )
 
   contains
@@ -2113,8 +2117,8 @@ contains ! ====     Public Procedures     ==============================
     if ( decl%type /= variable ) then
       call trace_end ( 'Variable_Def', cond=toggle(con) )
     else
-      call trace_end ( 'Variable_Def', string=trim(type_names(decl%units)), &
-        & cond=toggle(con) )
+      call trace_end ( 'Variable_Def', &
+        & stringIndex=data_type_indices(decl%units), cond=toggle(con) )
     end if
 
   contains
@@ -2246,6 +2250,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.48  2014/02/27 02:37:18  vsnyder
+! EXIT referring to IF and SELECT CASE constructs
+!
 ! Revision 1.47  2014/02/21 19:19:01  vsnyder
 ! More work on variables, especially those with enumerator values
 !
