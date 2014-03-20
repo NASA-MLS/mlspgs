@@ -43,7 +43,7 @@ contains ! ====     Public Procedures     ==============================
   ! front.  Increment DEPTH.
 
     use OUTPUT_M, only: OUTPUT
-    use STRING_TABLE, only: CREATE_STRING, HOW_MANY_STRINGS
+    use STRING_TABLE, only: CREATE_STRING, STRING_TABLE_SIZE
 
     integer, intent(inout) :: NAME_I
     character(len=*), intent(in) :: NAME_C
@@ -52,10 +52,11 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: String ! To display after Name_I
     logical, intent(in), optional :: Cond   ! Print if true, default true
     character(len=*), intent(in), optional :: Advance
-    if ( how_many_strings() < 1 ) return
-    if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
     if ( Verbose ) &
-      & call output( 'Trace_Begin ' // trim(Name_c), advance='yes' )
+      & call output( string_table_size(), &
+        & before='Trace_Begin_B ' // trim(Name_c) // ' ', advance='yes' )
+    if ( string_table_size() < 1 ) return
+    if ( name_i <= 0 ) name_i = create_string ( trim(name_c) )
     call trace_begin ( name_i, root, index, string, cond, advance )
 
   end subroutine TRACE_BEGIN_B
@@ -66,7 +67,7 @@ contains ! ====     Public Procedures     ==============================
   ! front.  Increment DEPTH.
 
     use OUTPUT_M, only: OUTPUT
-    use STRING_TABLE, only: CREATE_STRING, HOW_MANY_STRINGS
+    use STRING_TABLE, only: CREATE_STRING, STRING_TABLE_SIZE
 
     character(len=*), intent(in) :: NAME_C
     integer, intent(in), optional :: ROOT
@@ -77,10 +78,11 @@ contains ! ====     Public Procedures     ==============================
 
     integer :: Name_I
 
-    if ( how_many_strings() < 1 ) return
-    name_i = create_string ( trim(name_c) )
     if ( Verbose ) &
-      & call output( 'Trace_Begin ' // trim(Name_c), advance='yes' )
+      & call output( string_table_size(), &
+        & before='Trace_Begin_C ' // trim(Name_c) // ' ', advance='yes' )
+    if ( string_table_size() < 1 ) return
+    name_i = create_string ( trim(name_c) )
 
     call trace_begin ( name_i, root, index, string, cond, advance )
 
@@ -96,8 +98,8 @@ contains ! ====     Public Procedures     ==============================
       & MLSDebugSticky, MLSVerboseSticky, MLSNamesAreVerbose, MLSNamesAreDebug
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use OUTPUT_M, only: OUTPUTOPTIONS
-    use STRING_TABLE, only: GET_STRING, HOW_MANY_STRINGS
+    use OUTPUT_M, only: Output, OUTPUTOPTIONS
+    use STRING_TABLE, only: GET_STRING, STRING_TABLE_SIZE
 
     integer, intent(in) :: NAME
     integer, intent(in), optional :: ROOT
@@ -111,7 +113,11 @@ contains ! ====     Public Procedures     ==============================
     character(32) :: PARENTNAME
 
     ! Executable
-    if ( how_many_strings() < 1 ) return
+    if ( Verbose ) &
+      & call output( string_table_size(), &
+        & before='Trace_Begin_I ', advance='yes' )
+
+    if ( string_table_size() < 1 ) return
     call Checkdate
     myCond = .true.
     if ( present(cond) ) myCond = cond
@@ -153,7 +159,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSMESSAGEMODULE, only: MLSMESSAGECALLS
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: NEWLINE, OUTPUT, OUTPUTOPTIONS
-    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, HOW_MANY_STRINGS
+    use STRING_TABLE, only: CREATE_STRING, DISPLAY_STRING, STRING_TABLE_SIZE
     use TOGGLES, only: SWITCHES
 
     character(len=*), optional, intent(in) :: NAME ! Checked but taken from stack
@@ -168,7 +174,7 @@ contains ! ====     Public Procedures     ==============================
     logical :: MyCond
 
     ! Executable
-    if ( how_many_strings() < 1 ) return
+    if ( string_table_size() < 1 ) return
     call Checkdate
     if ( Verbose ) then
       call output( 'Trace_End ', advance='no' )
@@ -262,6 +268,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.41  2014/03/20 01:30:23  vsnyder
+! Check String_Table_Size, not How_Many_Strings, some cannonball polishing
+!
 ! Revision 2.40  2014/02/13 00:04:29  pwagner
 ! Revert to older appearance on Exit WALK_TREE..
 !
