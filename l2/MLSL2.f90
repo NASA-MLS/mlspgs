@@ -315,6 +315,8 @@ program MLSL2
   if ( parallel%fwmParallel ) &
     & call MLSMessage ( MLSMSG_Error, ModuleName, &
     & 'The fwmParallel option is currently inoperative, it needs significant work to fix - NJL' )
+  call init_tables
+  status = 0
   if ( parallel%slave ) then
     if ( parallel%masterTid <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -328,8 +330,6 @@ program MLSL2
   !---------------- Task (4) ------------------
   ! Open the L2CF
   ! First, set up type checking for it
-  call init_tables
-  status = 0
   status = InitializeMLSFile(MLSL2CF, content = 'l2cf', name='<STDIN>', &
       & type=l_ascii, access=DFACC_RDONLY, recordLength=recl, &
       & PCBottom=MLSPCF_L2CF_Start, PCTop=MLSPCF_L2CF_Start)
@@ -776,6 +776,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.205  2014/03/25 18:19:00  pwagner
+! Moved init_tables before dump_settings to avoid crash
+!
 ! Revision 2.204  2014/03/20 01:42:32  vsnyder
 ! Get Get_Type from Intrinsic, do init_tables later
 !
