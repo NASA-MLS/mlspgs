@@ -25,10 +25,11 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2_param_CCSDSStartId = 2003
    INTEGER, PARAMETER :: mlspcf_l2_param_CCSDSEndId = 2004
    INTEGER, PARAMETER :: mlspcf_l2_param_spec_keys = 2005
-   INTEGER, PARAMETER :: mlspcf_l2_param_spec_hash = 2006
+   INTEGER, PARAMETER :: mlspcf_l2_param_spec_mcfnames = 2006
    INTEGER, PARAMETER :: mlspcf_l2_param_switches = 2007
    INTEGER, PARAMETER :: mlspcf_l2_param_col_spec_keys = 2008
-   INTEGER, PARAMETER :: mlspcf_l2_param_col_spec_hash = 2009
+   INTEGER, PARAMETER :: mlspcf_l2_param_col_spec_mcfnames = 2009
+   INTEGER, PARAMETER :: mlspcf_l2_param_col_spec_doinames = 2010
    !
    INTEGER, PARAMETER :: mlspcf_pcf_start = 900
    INTEGER, PARAMETER :: mlspcf_pcf_end = 900
@@ -147,6 +148,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.26  2014/03/26 17:45:49  pwagner
+! Added ProductionLocation, identifier_product_DOI to attributes
+!
 ! Revision 2.25  2012/04/05 20:13:01  pwagner
 ! Added ids for igrf and other parameter files
 !
