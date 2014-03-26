@@ -71,6 +71,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --lac degree: Do [not] reduce output by degree; higher degree means less output
      if degree is absent or 0, abbreviate module names and severity
   --nlac restore printing full module names and severity
+  --loc <PL>: Set ProductionLocation to PL, write to metadata, file attributes
   --leak:    Check parse tree for potential leaks
   --master <filename>[:a:b]: This is the master task in a PVM setup
     filename contains simply ascii list of slave host names
@@ -152,6 +153,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.63  2013/11/01 21:09:31  pwagner
+ Mention -D, -V options to set debug, verboseness by module
+
  Revision 1.62  2013/09/14 01:11:14  vsnyder
  Add MSGConf
 
