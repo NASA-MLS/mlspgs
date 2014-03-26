@@ -242,13 +242,13 @@ module MLSCommon                ! Common definitions for the MLS software
   end type TAI93_Range_T
   ! --------------------------------------------------------------------------
 
-  ! Datatype for the metadata files
-
+  ! Datatype for the metadata files supplemental data
   type L2Metadata_T
     real :: minLat = -90.0       ! min Latitude
     real :: maxLat = 90.0      ! max Latitude
     real :: minLon = -180.0      ! min Longitude
     real :: maxLon = 180.0     ! max Longitude
+    character(len=NameLen) :: doiIdentifier = ' '
   end type L2Metadata_T
 
   ! --------------------------------------------------------------------------
@@ -481,6 +481,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.41  2014/03/26 17:42:52  pwagner
+! Added ProductionLocation, identifier_product_DOI to metadata
+!
 ! Revision 2.40  2014/03/07 19:11:33  pwagner
 ! Distinguish between ShortNameLen and NameLen
 !
