@@ -156,32 +156,9 @@ module WriteMetadata ! Populate metadata and write it out
 
     character (len=1), pointer :: AnText(:) => null()
 
-    ! The correspondence between MCF and l2gp files is determined by
-    ! the value of        MCFFORL2GPOPTION
-    ! One of three possible options:
-    !                          (1)
-    ! The PCF numbers for the mcf corresponding to each
-    ! of the l2gp files begin with mlspcf_mcf_l2gp_start
-    ! and increase 1 by 1 with each succeeding species.
-    ! Then, after the last single-species l2gp, the very next pcf number
-    ! is for the one called 'other' ML2OTH.001.MCF
-    ! This inconvenient inflexibility is relieved in option (2) or (3)
-
-    !                          (2)
-    ! Each l2gp file name, stripped of their paths, fits the pattern like
-    !  *_l2gp_species_*
-    ! and the corresponding MCF files fit the pattern
-    !  *SPECIES.*
-    ! where species and SPECIES are case-insensitive "species" name
-    ! i.e., BrO, ClO, etc.
-    ! Warning:
-    ! You therefore must use exactly the same abbreviation for the l2gp and the
-    ! corresponding MCF: if the MCF is ML2T.001.MCF, don't use "temp"
-    ! in the l2gp name
-    ! This inflexibility replaces the different kind in option (1)
-
+    !     How to choose the mcf file to be used in writing metadata
     !                          (3)
-    ! Similar to (2), but now the SPECIES of the corresponding
+    ! The SPECIES of the corresponding
     ! MCF file names are chosen from an associative array structure
     ! or hash table, where the keys are the possible species and
     ! the hash
@@ -198,21 +175,20 @@ module WriteMetadata ! Populate metadata and write it out
     ! Finally, you can avoid any of this trickery by using the metaName=
     ! field for each file. For example, if you set metaName='o3', the
     ! mcf matching o3 will be selected, no matter what you named the l2gp file.
-
     character (len=fileNameLen) :: spec_keys
 
     ! the following is a comma-delimited list of possible
-    ! mcf file name parts that may be the corresponding hash
+    ! mcf file name parts that may be the corresponding hash values
+    character (len=fileNameLen) :: spec_mcfnames      
 
-    character (len=fileNameLen) :: spec_hash
+    ! DOIs
+    character (len=20*NameLen) :: spec_doinames   
 
     ! name of the log file (without the path)
-
     character (len=fileNameLen) :: logGranID
 
-    ! Parts of the input pointer
-    ! INTEGER :: L1BOAPCFId=0  ! The PCF ID for the L1BOA file
-    ! INTEGER, DIMENSION(:), POINTER :: L1BRADPCFIds => NULL()
+    ! identifier_product_DOI
+    character (len=32) :: DOI     ! unique for each type
 
   end type PCFData_T
 
@@ -547,16 +523,16 @@ contains
 
   ! -----------------------------------------------  Get_l2gp_mcf  -----
 
-  subroutine Get_l2gp_mcf ( File_base, meta_name, Mcf, Version )
+  subroutine Get_l2gp_mcf ( File_base, meta_name, Mcf, doiIdentifier )
 
   ! metadata configuration file (mcf) PCF number corresponding to l2gp number
   ! sdid
   ! Arguments
     character(len=*), intent(in) ::  File_base
     character(len=*), intent(in) ::  meta_name
-    integer, intent(in), optional :: Version
     integer, intent(inout) ::        Mcf
-    ! type(PCFData_T) :: l2pcf
+    ! integer, intent(in), optional :: Version
+    character(len=*), intent(out) ::  doiIdentifier
 
     ! Local
     character (len=PGSd_PC_FILE_PATH_MAX) :: Sd_full
@@ -571,7 +547,7 @@ contains
     character (len=1), parameter :: COMMA = ','
 
     ! Find species name
-    ! assume sd_name is "*l2gp_species_"
+    ! assume sd_name is "*l2gp-species_"
     ! hence enclosed between "_" chars after an l2gp
 
     logical, parameter :: DEBUG = .false.
@@ -583,10 +559,10 @@ contains
       return
    endif
 
-    if ( MCFFORL2GPOPTION == 1 ) then
-      mcf = mcf+1
-      return
-    end if
+    ! if ( MCFFORL2GPOPTION == 1 ) then
+    !  mcf = mcf+1
+    !  return
+    ! end if
 
     if ( DEBUG ) then
       call output('file_base: ', advance='no')
@@ -608,13 +584,9 @@ contains
       ! Get full file name for typical MCF file
       do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
 
-        if ( present(version) ) then
-          myVersion=version
-        else
-          myVersion = 1
-        end if
+        myVersion = 1
 
-        returnStatus = PGS_PC_GetReference(i, myVersion , mcf_full)
+        returnStatus = PGS_PC_GetReference(i, myVersion, mcf_full)
 
         if ( returnStatus == PGS_S_SUCCESS ) then 
           exit
@@ -653,7 +625,7 @@ contains
         call output(trim(mcf_name), advance='yes')
       end if
 
-      ! Either we were given a short version of the sd_full
+      ! Either we were given a short form of the sd_full
       ! e.g., 'h2o', or else a much longer one like 'mls-aura_...'
       if ( index(sd_full, 'mls-aura_') > 0 ) then
         ! Get species name assuming e.g. 'mls-aura_l2gp-h2O_'
@@ -674,18 +646,20 @@ contains
         return
       end if
 
-      if ( MCFFORL2GPOPTION == 3 ) then
+      ! if ( MCFFORL2GPOPTION == 3 ) then
 
         ! get mcfspecies name from associative array
         ! if the species name not found in spec_keys, it will return ','
-        call GetHashElement ( l2pcf%spec_keys, l2pcf%spec_hash, &
+        call GetHashElement ( l2pcf%spec_keys, l2pcf%spec_mcfnames      , &
           & trim(sd_name), sd_full, .TRUE. )
+        call GetHashElement ( l2pcf%spec_keys, l2pcf%spec_doinames      , &
+          & trim(sd_name), doiIdentifier, .TRUE. )
 
         if ( DEBUG ) then
           call output('keys: ', advance='no')
           call output(trim(l2pcf%spec_keys), advance='yes')
           call output('hash: ', advance='no')
-          call output(trim(l2pcf%spec_hash), advance='yes')
+          call output(trim(l2pcf%spec_mcfnames      ), advance='yes')
           call output('hash for species name: ', advance='no')
           call output(trim(sd_full), advance='yes')
         end if
@@ -697,7 +671,7 @@ contains
 
         sd_name = trim(sd_full)
 
-      end if
+      ! end if
    elseif ( .NOT. MCFCASESENSITIVE ) then
      sd_name = Lowercase(meta_name)
    else
@@ -1970,6 +1944,27 @@ contains
       & "Error in setting PGEVersion attribute.") 
     end if
 
+    ! Production Location
+
+    attrName = 'ProductionLocation'
+    sval = GlobalAttributes%productionLoc
+    returnStatus = pgs_met_setAttr_s ( groups(INVENTORY), attrName, sval )
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "Error in setting ProductionLocation attribute.") 
+    end if
+
+    ! DOI
+    ! This should be in the MCF
+    attrName = 'identifier_product_DOI'
+    sval = l2metaData%doiIdentifier
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "Error in setting DOI attribute.") 
+    end if
+
+    ! All done
     hdf_sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
       & hdfVersion=hdfVersion, addingMetaData=.true.) 
 
@@ -2108,6 +2103,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.79  2014/03/26 17:47:44  pwagner
+! Added ProductionLocation, identifier_product_DOI metadata
+!
 ! Revision 2.78  2014/03/07 19:30:30  pwagner
 ! Housekeeping; insert comments suggesting use of NameLen instead of hard-coded charlens
 !
