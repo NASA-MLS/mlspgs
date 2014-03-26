@@ -660,9 +660,9 @@ contains
 
     if ( TOOLKIT ) then
       if ( DEEBUG ) call output( 'Using toolkit', advance='yes' )
-    elseif ( LeapSecFileName == '' .and. ( &
-      &  .not. (got(p_starttime) .or. got(p_endtime) ) &
-      &  .or. .not. LEAPSINDATESMODULE ) ) then
+    elseif ( .not. (got(p_starttime) .or. got(p_endtime) ) ) then
+       call timesFromMafOffsets
+    elseif ( LeapSecFileName == '' .and. .not. LEAPSINDATESMODULE ) then
       ! add maf offsets to start, end times
       ! or convert them to tai93
       ! This is optional way to define processingRange if using PCF
@@ -670,7 +670,7 @@ contains
        call timesFromMafOffsets
     elseif ( len_trim(LeapSecFileName) > 0 ) then
       call ToolkitTimeConversion
-    else
+    elseif ( got(p_starttime) .and. got(p_endtime) ) then
       call datesModuleTimeConversion
     end if
 
@@ -800,15 +800,16 @@ contains
     ! ---------------------------------------  datesModuleTimeConversion  -----
     ! Convert utc time strings to tai93 using dates module
     subroutine datesModuleTimeConversion
-        processingrange%starttime = utc2tai93s ( start_time_string, leapsec=.true. )
-        processingrange%endtime = utc2tai93s ( end_time_string, leapsec=.true. )
-
+      call output( 'Using datesModule to convert times', advance='yes' )
+      processingrange%starttime = utc2tai93s ( start_time_string, leapsec=.true. )
+      processingrange%endtime = utc2tai93s ( end_time_string, leapsec=.true. )
     end subroutine datesModuleTimeConversion
 
     ! ---------------------------------------  timesFromMafOffsets  -----
     ! add maf offsets to start, end times
+    ! (unless you didn't input start, end times)
     subroutine timesFromMafOffsets
-
+      call output( 'Using mafOffsts to convert times', advance='yes' )
       ! 1st--check that have L1BOA
       if ( L1BFile%FileID%f_id < 1 ) then
         call announce_error(son, &
@@ -831,7 +832,9 @@ contains
       end if
       call DeallocateL1BData ( l1bField )
 
-    if ( startTimeIsAbsolute ) then
+    if ( .not. got(p_starttime) ) then
+      processingRange%startTime = minTime
+    elseif ( startTimeIsAbsolute ) then
       processingRange%startTime = start_time_from_1stMAF
     else
       if ( LeapSecFileName /= '' ) then
@@ -861,7 +864,9 @@ contains
       end if
     end if
 
-    if ( stopTimeIsAbsolute ) then
+    if ( .not. got(p_starttime) ) then
+      processingRange%endTime = maxTime
+    elseif ( stopTimeIsAbsolute ) then
       processingRange%endTime = end_time_from_1stMAF
     else
       if ( LeapSecFileName /= '' ) then
@@ -895,29 +900,29 @@ contains
     ! ------------------------------------------  ToolkitTimeConversion  -----
     ! Convert utc time strings to tai93 using toolkit procedures
     subroutine ToolkitTimeConversion
-
-        if ( DEEBUG ) call output( 'About to read leapsec file' // &
-          & trim(LeapSecFileName), advance='yes' )
-        if ( precedesUTC ( '1993-01-01', start_time_string ) ) then
-          returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
-            & processingrange%starttime)
-          returnStatus = mls_utctotai(trim(LeapSecFileName), end_time_string, &
-            & processingrange%endtime)
-          if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
-          if ( returnStatus /= 0 ) then
-            call announce_error(0, &
-            & 'Error converting start, end time in mls_utctotai; code number: ')
-            call output(returnStatus, advance='yes')
-          end if
-        else
-          ! The starting time is before our nominal 1993 start date
-          ! We'll use the dates_module as a fallback
-          call ResetStartingDate( '1961-01-01' )
-          processingrange%starttime = &
-            & secondsbetween2utcs ( '1961-01-01', start_time_string )
-          processingrange%endtime = &
-            & secondsbetween2utcs ( '1961-01-01', end_time_string )
-        endif
+      call output( 'Using toolkit to convert times', advance='yes' )
+      if ( DEEBUG ) call output( 'About to read leapsec file' // &
+        & trim(LeapSecFileName), advance='yes' )
+      if ( precedesUTC ( '1993-01-01', start_time_string ) ) then
+        returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
+          & processingrange%starttime)
+        returnStatus = mls_utctotai(trim(LeapSecFileName), end_time_string, &
+          & processingrange%endtime)
+        if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
+        if ( returnStatus /= 0 ) then
+          call announce_error(0, &
+          & 'Error converting start, end time in mls_utctotai; code number: ')
+          call output(returnStatus, advance='yes')
+        end if
+      else
+        ! The starting time is before our nominal 1993 start date
+        ! We'll use the dates_module as a fallback
+        call ResetStartingDate( '1961-01-01' )
+        processingrange%starttime = &
+          & secondsbetween2utcs ( '1961-01-01', start_time_string )
+        processingrange%endtime = &
+          & secondsbetween2utcs ( '1961-01-01', end_time_string )
+      endif
     end subroutine ToolkitTimeConversion
 
     ! ---------------------------------------------  Announce_Error  -----
@@ -1136,8 +1141,8 @@ contains
       call output ( 'l2gp species name keys:   ' )
       call output ( TRIM(l2pcf%spec_keys), advance='yes' )
 
-      call output ( 'corresponding mcf hash:   ' )
-      call output ( TRIM(l2pcf%spec_hash), advance='yes' )
+      call output ( 'corresponding mcf names:   ' )
+      call output ( TRIM(l2pcf%spec_mcfnames), advance='yes' )
 
       call output ( 'Bright Objects:   ', advance='yes' )
       call output ( 'bit #             Cause   ', advance='yes' )
@@ -1322,6 +1327,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.158  2014/03/19 19:54:47  pwagner
+! Fixed a gold-bick breaking bug introduced with last fix
+!
 ! Revision 2.157  2014/03/19 17:37:07  pwagner
 ! Repaired bug breaking gold brick
 !
