@@ -22,6 +22,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
     & MLSMSG_SEVERITY_TO_WALKBACK, MLSMSG_WARNING, &
     & SAYMESSAGE => MLSMESSAGE
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
+  use PCFHDR, only: GLOBALATTRIBUTES
   use OUTPUT_M, only: OUTPUTOPTIONS, &
     & INVALIDPRUNIT, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT, &
     & OUTPUT
@@ -545,6 +546,12 @@ contains
           endif
         else if ( line(3+n:7+n) == 'leak' ) then
           checkLeak = .true.
+        else if ( line(3+n:5+n) == 'loc' ) then
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          i = i + 1
+          call getNextArg ( i, line )
+          call SnipLastSlaveArgument ! Don't want slaves to see this
+          GlobalAttributes%productionLoc = trim(line)
         else if ( line(3+n:9+n) == 'master ' ) then
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%master = .true.
@@ -991,6 +998,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.80  2014/03/26 17:45:07  pwagner
+! added cmdline option --loc to set ProductionLocation
+!
 ! Revision 2.79  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
