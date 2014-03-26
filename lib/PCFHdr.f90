@@ -24,7 +24,7 @@ module PCFHdr
    use INTRINSIC, only: L_HDFEOS, L_HDF, L_SWATH
    use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, NAMELEN
    use MLSFILES, only: GETPCFROMREF, HDFVERSION_4, HDFVERSION_5, &
-     & INITIALIZEMLSFILE, OPEN_MLSFILE, CLOSE_MLSFILE
+     & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, OPEN_MLSFILE, CLOSE_MLSFILE
    use MLSKINDS, only: R8
    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
      & MLSMSG_WARNING, MLSMSG_DEALLOCATE, MLSMSG_FILEOPEN
@@ -123,6 +123,8 @@ module PCFHdr
     character(len=MiscNotesLENGTH) :: MiscNotes = ''
     character(len=GA_VALUE_LENGTH) :: StartUTC = ''
     character(len=GA_VALUE_LENGTH) :: EndUTC = ''
+    character(len=GA_VALUE_LENGTH) :: DOI = '' ! E.g., '10.5083/AURA/MLS/DATA201'
+    character(len=GA_VALUE_LENGTH) :: productionLoc = ' '
     integer :: GranuleMonth                  = 0
     integer :: GranuleDay                    = 0
     integer :: GranuleYear                   = 0
@@ -138,7 +140,11 @@ module PCFHdr
   integer, public, save            :: PCFHDR_DEFAULT_HDFVERSION = HDFVERSION_5
   logical, parameter :: DEBUG = .false.
 
-CONTAINS
+  interface h5_writeglobalattr
+    module procedure h5_writeglobalattr_fileID, h5_writeglobalattr_MLSFile
+  end interface
+  
+contains
 
 !------------------------------------------------------------
    SUBROUTINE CreatePCFAnnotation (mlspcfN_pcf_start, anText)
@@ -212,13 +218,14 @@ CONTAINS
       DayOfYear = GranuleDayOfYear_fun()
       call outputNamedValue('Orbit numbers', GlobalAttributes%orbNum)
       call outputNamedValue('Orbit Periods', GlobalAttributes%orbPeriod)
+      call output ('ProductionLocation: '  // trim( GlobalAttributes%productionLoc          ))
       call output ('InstrumentName: ' // trim( GlobalAttributes%InstrumentName  ))
       call output ('Process level: ' // trim(  GlobalAttributes%ProcessLevel    ))
-      ! call output ('Input version: ' // trim(  GlobalAttributes%inputVersion    ))
       call output ('PGE version: ' // trim(    GlobalAttributes%PGEVersion      ))
       call output ('Misc Notes: ' // trim(     GlobalAttributes%MiscNotes      ))
       call output ('Start UTC: ' // trim(      GlobalAttributes%StartUTC        ))
       call output ('End UTC: ' // trim(        GlobalAttributes%EndUTC          ))
+      call output ('DOI: '    // trim(         GlobalAttributes%DOI          ))
       call outputNamedValue ( 'Granule month:', GlobalAttributes%GranuleMonth )
       call outputNamedValue ( 'Granule day:' , GlobalAttributes%GranuleDay  )
       call outputNamedValue ( 'Granule year:' ,GlobalAttributes%GranuleYear )
@@ -392,20 +399,20 @@ CONTAINS
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE h5_writeglobalattr (fileID, skip_if_already_there)
+   SUBROUTINE h5_writeglobalattr_fileID (fileID, skip_if_already_there)
 !------------------------------------------------------------
 
       use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
       use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
-! Brief description of subroutine
-! This subroutine writes the global attributes for an hdf5-formatted file
-! It does so at the root '/' group level
+      ! Brief description of subroutine
+      ! This subroutine writes the global attributes for an hdf5-formatted file
+      ! It does so at the root '/' group level
 
-! Arguments
+      ! Arguments
 
       integer, intent(in) :: fileID
       logical, intent(in), optional :: skip_if_already_there
-! Local variables
+      ! Local variables
       integer :: grp_id
       integer :: status
       logical :: my_skip
@@ -458,11 +465,47 @@ CONTAINS
       endif
       call MakeHDF5Attribute(grp_id, &
        & 'MiscNotes', GlobalAttributes%MiscNotes, .true.)
+      call MakeHDF5Attribute(grp_id, &
+      & 'identifier_product_DOI', GlobalAttributes%DOI, .true.)
+      call MakeHDF5Attribute(grp_id, &
+      & 'ProductionLocation', GlobalAttributes%productionLoc, .true.)
       call h5gclose_f(grp_id, status)
 
 !------------------------------------------------------------
-   END SUBROUTINE h5_writeglobalattr
+   END SUBROUTINE h5_writeglobalattr_fileID
 !------------------------------------------------------------
+
+!------------------------------------------------------------
+   SUBROUTINE h5_writeglobalattr_MLSFile ( MLSFile, skip_if_already_there )
+!------------------------------------------------------------
+
+      use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
+      use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
+      ! Brief description of subroutine
+      ! This subroutine writes the global attributes for an hdf5-formatted file
+      ! It does so at the root '/' group level
+
+      ! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+      logical, intent(in), optional :: skip_if_already_there
+      ! Local variables
+      logical :: alreadyOpen
+      integer :: returnStatus
+      logical :: grp_id
+      integer :: status
+      ! Executable
+      alreadyOpen = MLSFile%stillOpen
+      if ( .not. alreadyOpen ) then
+        call mls_openFile( MLSFile, returnStatus )
+        if ( returnStatus /= 0 ) &
+          call MLSMessage( MLSMSG_Error, ModuleName, &
+          & 'Unable to open hdf file', MLSFile=MLSFile )
+      endif
+      call h5_writeglobalattr_fileID ( MLSFile%fileID%f_id, &
+        & skip_if_already_there )
+      if ( .not. alreadyOpen ) call mls_closeFile( MLSFile, returnStatus )
+   end SUBROUTINE h5_writeglobalattr_MLSFile
 
 !------------------------------------------------------------
    SUBROUTINE h5_writeMLSFileAttr (MLSFile, skip_if_already_there)
@@ -470,16 +513,19 @@ CONTAINS
 
       use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
       use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
-! Brief description of subroutine
-! This subroutine writes the components of an MLSFile_t 
-! as attributes for an hdf5-formatted file
-! It does so at the root '/' group level
+      ! Brief description of subroutine
+      ! This subroutine writes the components of an MLSFile_t 
+      ! as attributes for an hdf5-formatted file
+      ! It does so at the root '/' group level
 
-! Arguments
+      ! Warning: Don't confuse this with h5_writeGlobalAttr
+      ! which writes the run's global attributes (StartUTC, PGEVersion, etc.)
+
+      ! Arguments
 
       type(MLSFile_T)       :: MLSFile
       logical, intent(in), optional :: skip_if_already_there
-! Local variables
+      ! Local variables
       integer :: fileID
       integer :: grp_id
       integer :: status
@@ -618,6 +664,12 @@ CONTAINS
       status = mls_EHwrglatt(fileID, &
        & 'MiscNotes', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%MiscNotes)
+      status = mls_EHwrglatt(fileID, &
+       & 'identifier_product_DOI', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%DOI)
+      status = mls_EHwrglatt(fileID, &
+       & 'ProductionLocation', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%productionLoc)
 !------------------------------------------------------------
    END SUBROUTINE he5_writeglobalattr
 !------------------------------------------------------------
@@ -1526,6 +1578,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.59  2014/03/26 17:43:38  pwagner
+!# Added ProductionLocation, identifier_product_DOI to attributes
+!#
 !# Revision 2.58  2014/01/09 00:24:29  pwagner
 !# Some procedures formerly in output_m now got from highOutput
 !#
