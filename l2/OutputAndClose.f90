@@ -495,6 +495,7 @@ contains ! =====     Public Procedures     =============================
       & MLSPCF_MCF_L2GP_START
     use MLSSTRINGLISTS, only: LIST2ARRAY, NUMSTRINGELEMENTS
     use OUTPUT_M, only: OUTPUT
+    use PCFHDR, only: GLOBALATTRIBUTES, H5_WRITEGLOBALATTR
     use WRITEMETADATA, only: POPULATE_METADATA_STD, &
       & POPULATE_METADATA_OTH, GET_L2GP_MCF
   ! Deal with metadata--1st for direct write, but later for all cases
@@ -512,6 +513,7 @@ contains ! =====     Public Procedures     =============================
   logical, parameter :: countEmpty = .true.
   logical, parameter :: DEBUG = .false.
   character(len=*), parameter :: L2GPHEAD = 'L2GP-'
+  character (len=32) :: doiIdentier=' '
   integer :: field_no
   character (len=132) :: FILE_BASE
   integer :: fileHandle
@@ -547,12 +549,14 @@ contains ! =====     Public Procedures     =============================
          & .true., returnStatus, Version, DEBUG, &
          & exactName=PhysicalFilename)
        l2gp_mcf = l2dgg_mcf
+       l2metaData%doiIdentifier = '10.5067/AURA/MLS/BOGUSDATA204'
      else
        FileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
          & mlspcf_l2gp_end, &
          & .true., returnStatus, Version, DEBUG, &
          & exactName=PhysicalFilename)
-       call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
+       call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, &
+         & l2metaData%doiIdentifier )
      end if
      if (returnStatus /= 0) then
          call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -770,7 +774,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_BOOLEAN
     use OUTPUT_M, only: OUTPUT
-    use PCFHDR, only: HE5_WRITEMLSFILEATTR
+    use PCFHDR, only: GLOBALATTRIBUTES, H5_WRITEGLOBALATTR, HE5_WRITEMLSFILEATTR
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUBTREE, SUB_ROSA
     ! Args
@@ -1025,9 +1029,9 @@ contains ! =====     Public Procedures     =============================
         endif
         call CopyTextFileToHDF ( file_base, DEBUG, filedatabase, inputFile )
       else
-        call cpL2AUXData(inputFile, &
+        call cpL2AUXData( inputFile, &
           & outputFile, create2=create, &
-          & sdList=trim(sdList))
+          & sdList=trim(sdList) )
       endif
     case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
       formattype = l_swath
@@ -1079,7 +1083,22 @@ contains ! =====     Public Procedures     =============================
 
     if ( TOOLKIT .and. newFile ) then
       call add_metadata ( son, file_base, l2metaData, &
-      & outputfile%hdfVersion, formattype, metadata_error )
+        & outputfile%hdfVersion, formattype, metadata_error )
+      if ( len_trim(l2metaData%doiIdentifier) < 1 ) then
+        call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'empty doiIdentidier for ' // trim(PhysicalFilename) )
+        return
+      endif
+      ! Set the file-level attribute DOI to its metadata value
+      GlobalAttributes%DOI = l2metaData%doiIdentifier
+      select case ( output_type )
+      case ( l_l2aux ) ! --------------------- Copying to l2aux files -----
+        call h5_writeGlobalAttr ( outputFile, skip_if_already_there=.false. )
+      case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
+        call output( 'Writing file level attributes to ' // &
+          & trim(PhysicalFilename), advance='yes' )
+        call he5_writeMLSFileAttr( outputFile )
+      end select
     endif
   end subroutine CopyQuantity
 
@@ -1832,6 +1851,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.180  2014/03/26 17:46:59  pwagner
+! Added ProductionLocation, identifier_product_DOI to attributes
+!
 ! Revision 2.179  2014/02/28 01:06:44  vsnyder
 ! Move units checking to type checker.  Check value of hdfVersion.  Look
 ! for TIME field on SLEEP command, not CREATE field.
