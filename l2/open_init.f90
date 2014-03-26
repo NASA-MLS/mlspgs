@@ -12,14 +12,19 @@
 !=============================================================================
 module Open_Init
 
-  ! Opens and closes several files
-  ! Creates and destroys the L1BInfo database
+  !     For level 2 runs that use the PCF
+  ! -----------------------------------------------
+  ! Opens and closes several files                 |
+  ! Creates and destroys the L1BInfo database      |
+  ! Reads user params as PCF-supplied config data  |
+  ! -----------------------------------------------
 
+  use DUMP_0, only: DUMP
   use HIGHOUTPUT, only: BEVERBOSE
   use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, NAMELEN, TAI93_RANGE_T
   use MLSL2OPTIONS, only: SPECIALDUMPFILE, TOOLKIT
-  use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
-    & SWITCHDETAIL
+  use MLSSTRINGLISTS, only: ARRAY2LIST, CATLISTS, GETSTRINGELEMENT, &
+    & NUMSTRINGELEMENTS, SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, OUTPUT
 
   implicit none
@@ -44,7 +49,8 @@ module Open_Init
 !---------------------------------------------------------------------------
 
   integer, parameter :: MLSPCF_LOG = 10101 ! This seems to be hard-wired into PCF
-  integer, parameter :: CCSDSLen=27
+  integer, parameter :: CCSDSLen   = 27
+  integer, parameter :: NUMDOIs    = 27
   logical, parameter :: ALWAYSGETSWITCHESCONFIG = .false.
   integer, private ::   ERROR
   
@@ -64,6 +70,7 @@ contains ! =====     Public Procedures     =============================
 
     use DATES_MODULE, only: UTC_TO_YYYYMMDD
     use HDF, only: DFACC_RDONLY
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     use INTRINSIC, only: L_HDF
     use L1BDATA, only: FINDMAXMAF, READL1BATTRIBUTE
     use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
@@ -79,9 +86,10 @@ contains ! =====     Public Procedures     =============================
       &                MLSPCF_L2_PARAM_CCSDSSTARTID, &
       &                MLSPCF_L2_PARAM_CCSDSENDID, &
       &                MLSPCF_L2_PARAM_COL_SPEC_KEYS, &
-      &                MLSPCF_L2_PARAM_COL_SPEC_HASH, &
+      &                MLSPCF_L2_PARAM_COL_SPEC_MCFNAMES      , &
+      &                MLSPCF_L2_PARAM_COL_SPEC_DOINAMES      , &
       &                MLSPCF_L2_PARAM_SPEC_KEYS, &
-      &                MLSPCF_L2_PARAM_SPEC_HASH, &
+      &                MLSPCF_L2_PARAM_SPEC_MCFNAMES      , &
       &                MLSPCF_L2_PARAM_SWITCHES, &
       &                MLSPCF_PCF_START
     use MLSSTRINGS, only: LOWERCASE
@@ -110,11 +118,11 @@ contains ! =====     Public Procedures     =============================
       & 'PCF file number missing from PCF--add this line'
 
     integer                      :: Details   ! How much info about l1b files to dump
+    character(len=NameLen), dimension(NumDOIs) :: doiArray
     character(len=len(switches)) :: extra_switches
-
+    integer :: i
     integer                      :: Ifl1
     integer                      :: Indx, Version                            
-
     integer                      :: l1bFlag
     type (MLSFile_T)             :: L1BFile
     integer                      :: L1FileHandle
@@ -171,8 +179,35 @@ contains ! =====     Public Procedures     =============================
    l2pcf%PGEVersion = ' '
    l2pcf%logGranID = '(not applicable)'      ! will not create a Log file
    l2pcf%spec_keys = '(not applicable)'      ! will not create metadata
-   l2pcf%spec_hash = '(not applicable)'      ! will not create metadata
-
+   l2pcf%spec_mcfnames       = '(not applicable)'      ! will not create metadata
+   l2pcf%spec_doinames       = &
+     & '10.5067/AURA/MLS/BOGUSDATA201,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA202,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA203,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA204,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA205,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA206,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA207,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA208,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA209,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA210,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA211,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA212,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA213,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA214,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA215,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA216,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA217,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA218,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA219,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA220,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA222,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA223,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA224,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA225,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA226,' // &
+     & '10.5067/AURA/MLS/BOGUSDATA227'
+     
    if( .not. TOOLKIT ) then
      if ( levels(gen) > 0 .or. switchDetail(switches,'pcf') > -1 ) then
        call output('====== No parameters or radiances read :: no pcf ======', &
@@ -307,10 +342,10 @@ contains ! =====     Public Procedures     =============================
         & forgiveable=.true. )
     end if
 
-    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_col_spec_hash, col_species_hash)
+    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_col_spec_mcfnames      , col_species_hash)
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
-      call announce_error ( "Missing pcf param: col_spec_hash", &
+      call announce_error ( "Missing pcf param: col_spec_mcfnames      ", &
         & forgiveable=.true. )
     end if
 
@@ -320,14 +355,14 @@ contains ! =====     Public Procedures     =============================
       call announce_error ( "Missing pcf param: spec_keys" )
     end if
 
-    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_hash, l2pcf%spec_hash)
+    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_spec_mcfnames      , l2pcf%spec_mcfnames      )
 
     if ( returnstatus /= PGS_S_SUCCESS ) then
-      call announce_error ( "Missing pcf param: spec_hash" )
+      call announce_error ( "Missing pcf param: spec_mcfnames      " )
     end if
 
     if ( .NOT. MCFCASESENSITIVE ) then
-      l2pcf%spec_hash = LowerCase(l2pcf%spec_hash)
+      l2pcf%spec_mcfnames       = LowerCase(l2pcf%spec_mcfnames      )
       l2pcf%spec_keys = LowerCase(l2pcf%spec_keys)
     end if
 
@@ -341,6 +376,29 @@ contains ! =====     Public Procedures     =============================
       if ( returnstatus == PGS_S_SUCCESS .and. extra_switches /= ' ' ) &
         & switches = catLists(trim(switches), trim(extra_switches))
     end if
+
+    ! This hackery-quackery allows us to use the PCF to
+    ! input elements of a string array without using up
+    ! a bunch of PCFids
+    ! So we accept that the strings are file names
+    ! and use Pgs_pc_getReference with the version mechanism
+    do i=1, NumDOIs
+      version = i
+      returnStatus = Pgs_pc_getReference( mlspcf_l2_param_col_spec_doinames, &
+        & version, doiArray(NumDOIs-i+1) )
+      ! call outputnamedValue( 'returnStatus', returnStatus )
+      if ( returnStatus /= PGS_S_SUCCESS ) exit
+    enddo
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Could not find DOIs in PCF file' )
+    else
+      call Array2List ( doiArray, l2pcf%spec_doinames )
+      if ( levels(gen) > 0 .or. BeVerbose('pcf', -1) ) then
+        call dump( doiArray, 'doiArray' )
+        call dump( l2pcf%spec_doinames, 'doi list' )
+      endif
+    endif
 
 ! Get the name of the log file from the PCF
 
@@ -573,8 +631,11 @@ contains ! =====     Public Procedures     =============================
     call output ( 'l2gp species name keys:   ' )
     call output ( TRIM(l2pcf%spec_keys), advance='yes' )
 
-    call output ( 'corresponding mcf hash:   ' )
-    call output ( TRIM(l2pcf%spec_hash), advance='yes' )
+    call output ( 'corresponding mcf names:   ' )
+    call output ( TRIM(l2pcf%spec_mcfnames      ), advance='yes' )
+
+    call output ( 'corresponding doi names:   ' )
+    call output ( TRIM(l2pcf%spec_doinames      ), advance='yes' )
 
   end subroutine Dump_open_init
 
@@ -642,6 +703,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.107  2014/03/26 17:46:25  pwagner
+! Added ProductionLocation, identifier_product_DOI to attributes
+!
 ! Revision 2.106  2014/03/07 19:24:48  pwagner
 ! Name_Len changed to nameLen; got from MLSCommon
 !
