@@ -107,6 +107,7 @@ module PCFHdr
   character(len=*), parameter, private :: HDFINPTPTRVALUE = 'Found at ' // &
     & '/PCF'
   character(len=*), parameter, private :: DEFAULTPROCESSLEVEL = 'L2'
+  ! logical, parameter, private          :: SKIPDOIPRODLOC      = .false.
   ! No MAF number can ever be this big (as in L1BData module)
   integer, parameter :: BIGGESTMAFCTR = huge(0)/2
 
@@ -138,10 +139,14 @@ module PCFHdr
   ! use this in case hdfVersion omitted from call to WritePCF2Hdr
   ! E.g., in level 3 prior to conversion
   integer, public, save            :: PCFHDR_DEFAULT_HDFVERSION = HDFVERSION_5
-  logical, parameter :: DEBUG = .false.
+  logical, parameter               :: DEBUG = .false.
 
   interface h5_writeglobalattr
     module procedure h5_writeglobalattr_fileID, h5_writeglobalattr_MLSFile
+  end interface
+  
+  interface he5_writeglobalattr
+    module procedure he5_writeglobalattr_fileID, he5_writeglobalattr_MLSFile
   end interface
   
 contains
@@ -399,7 +404,7 @@ contains
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE h5_writeglobalattr_fileID (fileID, skip_if_already_there)
+   SUBROUTINE h5_writeglobalattr_fileID ( fileID, skip_if_already_there, DOI )
 !------------------------------------------------------------
 
       use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
@@ -412,14 +417,18 @@ contains
 
       integer, intent(in) :: fileID
       logical, intent(in), optional :: skip_if_already_there
+      logical, intent(in), optional :: doi
       ! Local variables
       integer :: grp_id
       integer :: status
       logical :: my_skip
+      logical :: myDOI
       logical, parameter :: WRITE_ORBIT = .false.
       character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 
       ! Executable code
+      myDOI = .false.
+      if ( present(DOI) ) myDOI=DOI
       my_skip = .false.
       if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
       if ( my_skip ) then
@@ -465,10 +474,12 @@ contains
       endif
       call MakeHDF5Attribute(grp_id, &
        & 'MiscNotes', GlobalAttributes%MiscNotes, .true.)
-      call MakeHDF5Attribute(grp_id, &
-      & 'identifier_product_DOI', GlobalAttributes%DOI, .true.)
-      call MakeHDF5Attribute(grp_id, &
-      & 'ProductionLocation', GlobalAttributes%productionLoc, .true.)
+      if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
+        & call MakeHDF5Attribute(grp_id, &
+        & 'identifier_product_DOI', GlobalAttributes%DOI, .false.)
+      if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
+        & call MakeHDF5Attribute(grp_id, &
+        & 'ProductionLocation', GlobalAttributes%productionLoc, .false.)
       call h5gclose_f(grp_id, status)
 
 !------------------------------------------------------------
@@ -476,7 +487,7 @@ contains
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE h5_writeglobalattr_MLSFile ( MLSFile, skip_if_already_there )
+   SUBROUTINE h5_writeglobalattr_MLSFile ( MLSFile, skip_if_already_there, DOI )
 !------------------------------------------------------------
 
       use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
@@ -489,11 +500,10 @@ contains
 
       type(MLSFile_T)       :: MLSFile
       logical, intent(in), optional :: skip_if_already_there
+      logical, intent(in), optional :: doi
       ! Local variables
       logical :: alreadyOpen
       integer :: returnStatus
-      logical :: grp_id
-      integer :: status
       ! Executable
       alreadyOpen = MLSFile%stillOpen
       if ( .not. alreadyOpen ) then
@@ -503,7 +513,7 @@ contains
           & 'Unable to open hdf file', MLSFile=MLSFile )
       endif
       call h5_writeglobalattr_fileID ( MLSFile%fileID%f_id, &
-        & skip_if_already_there )
+        & skip_if_already_there, DOI )
       if ( .not. alreadyOpen ) call mls_closeFile( MLSFile, returnStatus )
    end SUBROUTINE h5_writeglobalattr_MLSFile
 
@@ -579,7 +589,37 @@ contains
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE he5_writeglobalattr ( fileID, dayNum )
+   SUBROUTINE he5_writeglobalattr_MLSFile ( MLSFile, dayNum, DOI )
+!------------------------------------------------------------
+
+    use HDFEOS5, only: HE5T_NATIVE_INT, &
+      & HE5T_NATIVE_DOUBLE, MLS_CHARTYPE
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT
+! Brief description of subroutine
+! This subroutine writes the global attributes for an hdfeos5 file
+
+! Arguments
+
+      type(MLSFile_T)       :: MLSFile
+      integer, intent(in), optional :: dayNum
+      logical, intent(in), optional :: doi
+      ! Local variables
+      logical :: alreadyOpen
+      integer :: returnStatus
+      ! Executable
+      alreadyOpen = MLSFile%stillOpen
+      if ( .not. alreadyOpen ) then
+        call mls_openFile( MLSFile, returnStatus )
+        if ( returnStatus /= 0 ) &
+          call MLSMessage( MLSMSG_Error, ModuleName, &
+          & 'Unable to open hdfeos file', MLSFile=MLSFile )
+      endif
+      call he5_writeglobalattr_FileID ( MLSFile%fileID%f_id, dayNum, DOI )
+      if ( .not. alreadyOpen ) call mls_closeFile( MLSFile, returnStatus )
+   end SUBROUTINE he5_writeglobalattr_MLSFile
+
+!------------------------------------------------------------
+   SUBROUTINE he5_writeglobalattr_FileID ( fileID, dayNum, DOI )
 !------------------------------------------------------------
 
     use HDFEOS5, only: HE5T_NATIVE_INT, &
@@ -592,10 +632,14 @@ contains
 
       integer, intent(in) :: fileID
       integer, intent(in), optional :: dayNum
+      logical, intent(in), optional :: doi
 ! Internal variables
       integer :: status
       character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
+      logical :: myDOI
 ! Executable
+      myDOI = .false.
+      if ( present(DOI) ) myDOI=DOI
       if ( DEBUG ) then
         call output( 'Writing global attributes', advance='yes' )
         call dumpGlobalAttributes
@@ -664,18 +708,20 @@ contains
       status = mls_EHwrglatt(fileID, &
        & 'MiscNotes', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%MiscNotes)
-      status = mls_EHwrglatt(fileID, &
+      if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
+       & status = mls_EHwrglatt(fileID, &
        & 'identifier_product_DOI', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%DOI)
-      status = mls_EHwrglatt(fileID, &
+      if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
+       & status = mls_EHwrglatt(fileID, &
        & 'ProductionLocation', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%productionLoc)
 !------------------------------------------------------------
-   END SUBROUTINE he5_writeglobalattr
+   END SUBROUTINE he5_writeglobalattr_FileID
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE he5_writeMLSFileAttr (MLSFile)
+   SUBROUTINE he5_writeMLSFileAttr ( MLSFile )
 !------------------------------------------------------------
 
     use HDFEOS5, only: HE5T_NATIVE_INT, &
@@ -1578,6 +1624,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.60  2014/03/27 23:59:16  pwagner
+!# he5_writeglobalattr now generic; DOI optional arg controls wwhether to write DOI, prodLoc
+!#
 !# Revision 2.59  2014/03/26 17:43:38  pwagner
 !# Added ProductionLocation, identifier_product_DOI to attributes
 !#
