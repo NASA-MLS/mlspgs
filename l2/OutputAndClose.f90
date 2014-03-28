@@ -661,6 +661,7 @@ contains ! =====     Public Procedures     =============================
        & numquantitiesperfile, QuantityNames, l2metaData, &
        & hdfVersion=hdfVersion, metadata_error=metadata_error, &
        & filetype=filetype  )
+       l2metaData%doiIdentifier = '10.5067/AURA/MLS/BOGUSDATA205'
   case default
     call announce_error ( node, &
       &  "Error--filetype unrecognized", filetype)
@@ -774,7 +775,8 @@ contains ! =====     Public Procedures     =============================
     use MLSSTRINGS, only: LOWERCASE
     use MORETREE, only: GET_BOOLEAN
     use OUTPUT_M, only: OUTPUT
-    use PCFHDR, only: GLOBALATTRIBUTES, H5_WRITEGLOBALATTR, HE5_WRITEMLSFILEATTR
+    use PCFHDR, only: GLOBALATTRIBUTES, &
+      & H5_WRITEGLOBALATTR, HE5_WRITEMLSFILEATTR, HE5_WRITEGLOBALATTR
     use TOGGLES, only: SWITCHES
     use TREE, only: DECORATION, NSONS, SUBTREE, SUB_ROSA
     ! Args
@@ -1093,11 +1095,18 @@ contains ! =====     Public Procedures     =============================
       GlobalAttributes%DOI = l2metaData%doiIdentifier
       select case ( output_type )
       case ( l_l2aux ) ! --------------------- Copying to l2aux files -----
-        call h5_writeGlobalAttr ( outputFile, skip_if_already_there=.false. )
-      case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
-        call output( 'Writing file level attributes to ' // &
+        call output( 'Writing file level attributes to h5 ' // &
           & trim(PhysicalFilename), advance='yes' )
-        call he5_writeMLSFileAttr( outputFile )
+        call outputNamedValue( 'identifier_product_DOI', trim(GlobalAttributes%DOI) )
+        call outputNamedValue( 'ProductionLocation', trim(GlobalAttributes%productionLoc) )
+        call h5_writeGlobalAttr ( outputFile, &
+          & skip_if_already_there=.false., doi=.true. )
+      case ( l_l2gp, l_l2dgg ) ! --------------------- Copying l2gp files -----
+        call output( 'Writing file level attributes to he5 ' // &
+          & trim(PhysicalFilename), advance='yes' )
+        call outputNamedValue( 'identifier_product_DOI', trim(GlobalAttributes%DOI) )
+        call outputNamedValue( 'ProductionLocation', trim(GlobalAttributes%productionLoc) )
+        call he5_writeglobalattr( outputFile, doi=.true. )
       end select
     endif
   end subroutine CopyQuantity
@@ -1519,6 +1528,7 @@ contains ! =====     Public Procedures     =============================
     use CHUNKDIVIDE_M, only: OBSTRUCTIONS
     use DIRECTWRITE_M, only: DIRECTDATA_T, DUMP
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     use INIT_TABLES_MODULE, only: L_L2AUX, L_L2DGG
     use INTRINSIC, only: L_SWATH, L_HDF
     use L2AUXDATA, only: CPL2AUXDATA, PHASENAMEATTRIBUTES
@@ -1538,7 +1548,8 @@ contains ! =====     Public Procedures     =============================
     use MLSSTRINGLISTS, only: ARRAY2LIST, SWITCHDETAIL
     use MLSSTRINGS, only: TRIM_SAFE
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use PCFHDR, only: H5_WRITEMLSFILEATTR, HE5_WRITEMLSFILEATTR, &
+    use PCFHDR, only: GLOBALATTRIBUTES, &
+      & H5_WRITEMLSFILEATTR, H5_WRITEGLOBALATTR, HE5_WRITEMLSFILEATTR, &
       & WRITELEAPSECHDFEOSATTR, WRITELEAPSECHDF5DS, &
       & WRITEUTCPOLEHDFEOSATTR, WRITEUTCPOLEHDF5DS
     use READAPRIORI, only: READAPRIORIATTRIBUTES, WRITEAPRIORIATTRIBUTES
@@ -1782,8 +1793,15 @@ contains ! =====     Public Procedures     =============================
       if ( TOOLKIT .and. madeFile ) then
         call add_metadata ( 0, trim(l2auxPhysicalFilename), l2metaData, &
           & HDFVERSION_5, l_hdf, returnStatus, 1, (/'dgm'/) )
+        GlobalAttributes%DOI = l2metaData%doiIdentifier
         if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
+        call output( 'Writing file level attributes to h5 ' // &
+          & trim(l2auxPhysicalFilename), advance='yes' )
+        call outputNamedValue( 'identifier_product_DOI', trim(GlobalAttributes%DOI) )
+        call outputNamedValue( 'ProductionLocation', trim(GlobalAttributes%productionLoc) )
+        call h5_writeGlobalAttr ( outputFile, &
+          & skip_if_already_there=.false., doi=.true. )
       end if
       
       ! Now we can write any last-minute attributes or datasets to the l2aux
@@ -1851,6 +1869,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.181  2014/03/28 00:01:10  pwagner
+! repaired some bugs in writing DOI, ProdLoc attributes
+!
 ! Revision 2.180  2014/03/26 17:46:59  pwagner
 ! Added ProductionLocation, identifier_product_DOI to attributes
 !
