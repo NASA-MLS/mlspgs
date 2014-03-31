@@ -52,7 +52,9 @@ module GLOBAL_SETTINGS
   ! Do we output this month's calendar
   logical, parameter :: OUTPUTTHISMONTHSCAL = .true.
   ! Consult dates_module for leap seconds
-  logical, parameter :: LEAPSINDATESMODULE = .true.
+  logical, parameter :: LEAPSINDATESMODULE  = .true.
+  ! Can tai93 times be < 0?
+  logical, parameter :: NEGATIVETAI93OK     = .true.
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -836,64 +838,74 @@ contains
       processingRange%startTime = minTime
     elseif ( startTimeIsAbsolute ) then
       processingRange%startTime = start_time_from_1stMAF
-    else
-      if ( LeapSecFileName /= '' ) then
-        if ( DEEBUG ) call output( 'About to read leapsec file' // &
-          & trim(LeapSecFileName), advance='yes' )
-        if ( precedesUTC ( '1993-01-01', start_time_string ) ) then
-          returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
-          & processingrange%starttime)
-          if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
-          if ( returnStatus /= 0 ) then
-            call announce_error(0, &
-            & 'Error converting start time in mls_utctotai; code number: ')
-            call output(returnStatus, advance='yes')
-          end if
-        else
-          ! The starting time is before our nominal 1993 start date
-          ! We'll use the dates_module as a fallback
-          call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
-          call ResetStartingDate( '1961-01-01' )
-          processingrange%starttime = &
-            & secondsbetween2utcs ( '1961-01-01', start_time_string )
-        endif
-      else if ( got(p_starttime) ) then
-        processingrange%starttime = minTime + start_time_from_1stMAF
-      else if ( .not. TOOLKIT ) then
-        processingrange%starttime = minTime
-      end if
+    elseif ( LeapSecFileName /= '' ) then
+      if ( DEEBUG ) call output( 'About to read leapsec file' // &
+        & trim(LeapSecFileName), advance='yes' )
+      if ( precedesUTC ( '1993-01-01', start_time_string )  ) then
+        returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
+        & processingrange%starttime)
+        if ( DEEBUG ) call output( 'Read leapsec file', advance='yes' )
+        if ( returnStatus /= 0 ) then
+          call announce_error(0, &
+          & 'Error converting start time in mls_utctotai; code number: ')
+          call output(returnStatus, advance='yes')
+        end if
+      elseif ( NEGATIVETAI93OK ) then
+        call ResetStartingDate( '1961-01-01' )
+        call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
+        call output( '(but we allow it to go negative)', advance='yes' )
+        processingrange%starttime = &
+          & -secondsbetween2utcs ( start_time_string, '1993-01-01' )
+        call ResetStartingDate( '1993-01-01' )
+      else
+        ! The starting time is before our nominal 1993 start date
+        ! We'll use the dates_module as a fallback
+        call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
+        call ResetStartingDate( '1961-01-01' )
+        processingrange%starttime = &
+          & secondsbetween2utcs ( '1961-01-01', start_time_string )
+      endif
+    else if ( got(p_starttime) ) then
+      processingrange%starttime = minTime + start_time_from_1stMAF
+    else if ( .not. TOOLKIT ) then
+      processingrange%starttime = minTime
     end if
 
     if ( .not. got(p_starttime) ) then
       processingRange%endTime = maxTime
     elseif ( stopTimeIsAbsolute ) then
       processingRange%endTime = end_time_from_1stMAF
-    else
-      if ( LeapSecFileName /= '' ) then
-        if ( precedesUTC ( '1993-01-01', end_time_string ) ) then
-          returnStatus = mls_utctotai(trim(LeapSecFileName), end_time_string, &
-          & processingrange%endtime)
-          if ( returnStatus /= 0 ) then
-            call announce_error(0, &
-            & 'Error converting end time in mls_utctotai; code number: ')
-            call output(returnStatus, advance='yes')
-          end if
-        else
-          ! The starting time is before our nominal 1993 start date
-          ! We'll use the dates_module as a fallback
-          call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
-          call ResetStartingDate( '1961-01-01' )
-          processingrange%endtime = &
-            & secondsbetween2utcs ( '1961-01-01', end_time_string )
-        endif
-      else if ( LEAPSINDATESMODULE ) then
-        ! Without a leapsec file, let's use date_module's built-in feature
-        processingrange%endtime = utc2tai93s ( end_time_string, leapsec=.true. )
-      else if ( got(p_endtime) ) then
-        processingrange%endtime = minTime + end_time_from_1stMAF
-      else if ( .not. TOOLKIT ) then
-        processingrange%endtime = maxTime + 1.0
-      end if
+    elseif ( LeapSecFileName /= '' ) then
+      if ( precedesUTC ( '1993-01-01', end_time_string ) ) then
+        returnStatus = mls_utctotai(trim(LeapSecFileName), end_time_string, &
+        & processingrange%endtime)
+        if ( returnStatus /= 0 ) then
+          call announce_error(0, &
+          & 'Error converting end time in mls_utctotai; code number: ')
+          call output(returnStatus, advance='yes')
+        end if
+      elseif ( NEGATIVETAI93OK ) then
+        call ResetStartingDate( '1961-01-01' )
+        call output( 'The ending time is before our nominal 1993 start date', advance='yes' )
+        call output( '(but we allow it to go negative)', advance='yes' )
+        processingrange%endtime = &
+          & -secondsbetween2utcs ( end_time_string, '1993-01-01' )
+        call ResetStartingDate( '1993-01-01' )
+      else
+        ! The starting time is before our nominal 1993 start date
+        ! We'll use the dates_module as a fallback
+        call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
+        call ResetStartingDate( '1961-01-01' )
+        processingrange%endtime = &
+          & secondsbetween2utcs ( '1961-01-01', end_time_string )
+      endif
+    else if ( LEAPSINDATESMODULE ) then
+      ! Without a leapsec file, let's use date_module's built-in feature
+      processingrange%endtime = utc2tai93s ( end_time_string, leapsec=.true. )
+    else if ( got(p_endtime) ) then
+      processingrange%endtime = minTime + end_time_from_1stMAF
+    else if ( .not. TOOLKIT ) then
+      processingrange%endtime = maxTime + 1.0
     end if
     end subroutine timesFromMafOffsets
 
@@ -914,6 +926,17 @@ contains
           & 'Error converting start, end time in mls_utctotai; code number: ')
           call output(returnStatus, advance='yes')
         end if
+      elseif ( NEGATIVETAI93OK ) then
+        call ResetStartingDate( '1961-01-01' )
+        call output( 'The starting time is before our nominal 1993 start date', advance='yes' )
+        call output( '(but we allow it to go negative)', advance='yes' )
+        call outputNamedValue( 'start_time_string', trim(start_time_string) )
+        call outputNamedValue( 'end_time_string', trim(end_time_string) )
+        processingrange%starttime = &
+          & -secondsbetween2utcs ( start_time_string, '1993-01-01' )
+        processingrange%endtime = &
+          & -secondsbetween2utcs ( end_time_string, '1993-01-01' )
+        call ResetStartingDate( '1993-01-01' )
       else
         ! The starting time is before our nominal 1993 start date
         ! We'll use the dates_module as a fallback
@@ -1327,6 +1350,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.159  2014/03/26 17:49:05  pwagner
+! Fixed old bugs when startTime, endTime omitted
+!
 ! Revision 2.158  2014/03/19 19:54:47  pwagner
 ! Fixed a gold-bick breaking bug introduced with last fix
 !
