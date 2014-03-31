@@ -26,7 +26,7 @@ module Join                     ! Join together chunk based data.
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  logical, parameter, private :: FORCEDIRWRITEREOPEN = .false. ! Usually FALSE
+  ! logical, parameter, private :: FORCEDIRWRITEREOPEN = .false. ! Usually FALSE
   logical, parameter, private :: SKIPMETADATA = .false. ! Usually FALSE
   real, parameter             :: timeReasonable = 500.
 
@@ -93,7 +93,7 @@ contains ! =====     Public Procedures     =============================
     type (Hessian_T), dimension(:), pointer :: Hessians
 
     ! Local parameters
-    integer, parameter :: DELAY = 500000  ! For Usleep, no. microsecs
+    ! integer, parameter :: DELAY = 500000  ! For Usleep, no. microsecs
     ! External (C) function
     external :: Usleep
     ! Local variables
@@ -475,7 +475,7 @@ contains ! =====     Public Procedures     =============================
     integer :: KEYNO                    ! Loop counter, field in l2cf line
     integer :: l2gp_Version
     logical :: lowerOverlap
-    integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
+    ! integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
     integer :: Me = -1                  ! String index for trace
     integer :: MYFILE                   ! File permission granted for
     logical :: MYMAKEREQUEST            ! Copy of makeRequest
@@ -540,7 +540,7 @@ contains ! =====     Public Procedures     =============================
     if ( present ( theFile ) ) myTheFile = theFile
     if ( present(noExtraWrites) ) noExtraWrites = 0
 
-    lastFieldIndex = 0
+    ! lastFieldIndex = 0
     noSources = 0
     hdfVersion = DEFAULT_HDFVERSION_WRITE
     error = 0
@@ -556,7 +556,7 @@ contains ! =====     Public Procedures     =============================
     gotsource = .false.
     do keyNo = 2, nsons(node)           ! Skip DirectWrite command
       son = subtree ( keyNo, node )
-      if ( keyNo > 2 ) lastFieldIndex = fieldIndex
+      ! if ( keyNo > 2 ) lastFieldIndex = fieldIndex
       fieldIndex = get_field_id ( son )
       select case ( fieldIndex )
       case ( f_source, f_vector )
@@ -1460,7 +1460,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------ LabelVectorQuantity -----
   subroutine LabelVectorQuantity ( node, vectors )
     use INIT_TABLES_MODULE, only: F_LABEL, F_PREFIXSIGNAL, &
-      & F_QUANTITY, F_SUFFIXLABEL, F_VECTOR
+      & F_QUANTITY, F_VECTOR
     use MLSSIGNALS_M, only: GETSIGNALNAME
     use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
     use SYMBOL_TABLE, only: ENTER_TERMINAL
@@ -1481,7 +1481,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SOURCE                   ! Tree node
     integer :: VECTORINDEX              ! Index into database
     logical :: PREFIXSIGNAL             ! From l2cf
-    logical :: SUFFIXLABEL              ! From l2cf
+    ! logical :: SUFFIXLABEL              ! From l2cf
     integer :: VLABEL                   ! String index
     character(len=8) :: whatToLabel     ! 'quantity' or 'vector'
     ! Executable code
@@ -1505,8 +1505,8 @@ contains ! =====     Public Procedures     =============================
         whatToLabel = 'vector'
       case ( f_prefixSignal )
         prefixSignal = get_boolean ( son )
-      case ( f_suffixLabel )
-        suffixLabel = get_boolean ( son )
+      ! case ( f_suffixLabel )
+        ! suffixLabel = get_boolean ( son )
       case ( f_label )
         label = sub_rosa(subtree(2,son))
       case default ! Can't get here if tree_checker worked properly
@@ -1563,17 +1563,16 @@ contains ! =====     Public Procedures     =============================
     & chunkNo, chunks )
 
     use CHUNKS_M, only: MLSCHUNK_T
-    use EXPR_M, only: EXPR
+    ! use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: &
-      & F_COMPAREOVERLAPS, F_FILE, F_HDFVERSION, F_OUTPUTOVERLAPS, &
       & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
       & FIELD_LAST
     use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, S_L2AUX, S_L2GP
-    use INTRINSIC, only: L_NONE, PHYQ_DIMENSIONLESS
+    use INTRINSIC, only: L_NONE! , PHYQ_DIMENSIONLESS
     use L2AUXDATA, only: L2AUXDATA_T
     use L2GPDATA, only: L2GPDATA_T
     use L2PARINFO, only: PARALLEL, SLAVEJOIN
-    use MLSKINDS, only: R8
+    ! use MLSKINDS, only: R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSIGNALS_M, only: GETSIGNALNAME
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
@@ -1593,11 +1592,11 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
 
     ! Local variables
-    integer :: EXPRUNITS(2)                 ! From expr
+    ! integer :: EXPRUNITS(2)                 ! From expr
     integer :: FIELDINDEX               ! F_..., see Init_Tables_Module
-    integer :: FILE                     ! Name of output file for direct write
+    ! integer :: FILE                     ! Name of output file for direct write
     integer :: HDFNAMEINDEX             ! Name of swath/sd
-    integer :: HDFVERSION               ! Version of hdf for directwrite
+    ! integer :: HDFVERSION               ! Version of hdf for directwrite
     integer :: KEY                      ! Index of an L2GP or L2AUX tree
     integer :: KEYNO                    ! Index of subtree of KEY
     integer :: NAME                     ! Sub-rosa index of name of L2GP or L2AUX
@@ -1607,10 +1606,10 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Son of Key
     integer :: SOURCE                   ! Index in AST
     integer :: VECTORINDEX              ! Index for vector to join
-    logical :: COMPAREOVERLAPS
-    logical :: OutputOverlaps
+    ! logical :: COMPAREOVERLAPS
+    ! logical :: OutputOverlaps
     logical :: PREFIXSIGNAL             ! Prefix (i.e. make) the sd name the signal
-    real (r8) :: EXPRVALUE(2)               ! From expr
+    ! real (r8) :: EXPRVALUE(2)               ! From expr
 
     character(len=132) :: HDFNAME          ! Name for swath/sd
     logical :: GOT(field_first:field_last)
@@ -1623,11 +1622,11 @@ contains ! =====     Public Procedures     =============================
 
     got = .false.
     source = null_tree
-    compareOverlaps = .false.
-    outputOverlaps = .false.
+    ! compareOverlaps = .false.
+    ! outputOverlaps = .false.
     hdfNameIndex=name
     prefixSignal = .false.
-    hdfVersion = 4
+    ! hdfVersion = 4
 
     ! Loop over the fields of the mlscf line
     do keyNo = 2, nsons(key) ! Skip spec name
@@ -1643,32 +1642,32 @@ contains ! =====     Public Procedures     =============================
         source = subtree(2,son) ! required to be an n_dot vertex
         precVectorIndex = decoration(decoration(subtree(1,source)))
         precQtyIndex = decoration(decoration(decoration(subtree(2,source))))
-      case ( f_hdfVersion )
-        call expr ( subtree(2,son), exprUnits, exprValue )
-        if ( exprUnits(1) /= phyq_dimensionless ) &
-          & call Announce_error ( son, NO_ERROR_CODE, &
-          & 'No units allowed for hdfVersion: just integer 4 or 5')
-        hdfVersion = exprValue(1)
+      ! case ( f_hdfVersion )
+        ! call expr ( subtree(2,son), exprUnits, exprValue )
+        ! if ( exprUnits(1) /= phyq_dimensionless ) &
+        !   & call Announce_error ( son, NO_ERROR_CODE, &
+        !  & 'No units allowed for hdfVersion: just integer 4 or 5')
+        ! hdfVersion = exprValue(1)
       case ( f_prefixSignal )
         prefixSignal = get_boolean(son)
-      case ( f_compareoverlaps )
-        compareOverlaps = get_boolean(son)
-      case ( f_outputoverlaps )
-        outputOverlaps = get_boolean(son)
+      ! case ( f_compareoverlaps )
+        ! compareOverlaps = get_boolean(son)
+      ! case ( f_outputoverlaps )
+        ! outputOverlaps = get_boolean(son)
       case ( f_swath )
         hdfNameIndex = sub_rosa(subtree(2,son))
       case ( f_sdName )
         hdfNameIndex = sub_rosa(subtree(2,son))
-      case ( f_file )
-        file = sub_rosa(subtree(2,son))
+      ! case ( f_file )
+      !   file = sub_rosa(subtree(2,son))
       case default ! Can't get here if tree_checker worked properly
       end select
     end do
     
       ! Some final checks
-    if ( any ( got ( (/ f_file, f_hdfVersion /) ) ) ) &
-      & call Announce_Error ( key, NO_ERROR_CODE, &
-      & 'File or hdfVersion not appropriate arguments for output l2aux/l2gp' )
+    ! if ( any ( got ( (/ f_file, f_hdfVersion /) ) ) ) &
+    !   & call Announce_Error ( key, NO_ERROR_CODE, &
+    !  & 'File or hdfVersion not appropriate arguments for output l2aux/l2gp' )
 
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, "Errors in configuration prevent proceeding" )
@@ -1923,7 +1922,7 @@ contains ! =====     Public Procedures     =============================
 
     use CHUNKS_M, only: MLSCHUNK_T
     use INTRINSIC, only: L_GEODANGLE, L_MAF
-    use L2AUXDATA, only: ADDL2AUXTODATABASE, EXPANDL2AUXDATAINPLACE, &
+    use L2AUXDATA, only: ADDL2AUXTODATABASE, RESIZEL2AUXDATA, &
       & L2AUXDATA_T, L2AUXRANK, SETUPNEWL2AUXRECORD
     use MLSKINDS, only: R4, R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
@@ -2059,7 +2058,7 @@ contains ! =====     Public Procedures     =============================
     ! First, do we need to expand this?
     if ( .not. any ((/ quantity%template%minorFrame, quantity%template%majorFrame /)) ) then
       ! We need to expand this L2AUX to fit in the latest data.
-      call ExpandL2AUXDataInPlace ( thisL2AUX, noOutputInstances )
+      call ResizeL2AUXData ( thisL2AUX, noOutputInstances )
     end if
 
     if ( quantity%template%minorFrame .or. quantity%template%majorFrame ) then
@@ -2238,6 +2237,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.160  2014/03/31 23:43:49  pwagner
+! Commented-out unused stuff; renamed procedure ResizeL2AUXData, generalizing it to expand or contract
+!
 ! Revision 2.159  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
