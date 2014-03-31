@@ -68,7 +68,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 ! DestroyL2AUXContents            Deallocates all the arrays for one l2aux
 ! DestroyL2AUXDatabase            Deallocates all the arrays for entire database
 ! Dump                            Prints info on one quantity or entire database
-! ExpandL2AUXDataInPlace          Expands an l2aux quantity to take more profiles
+! ResizeL2AUXData          Expands an l2aux quantity to take more profiles
 ! ReadL2AUXData                   Reads an l2aux quantity from a file
 ! SetupNewL2AUXRecord             Allocates the arrays for an l2aux quantity
 ! WriteL2AUXData                  Writes an l2aux quantity to a file
@@ -87,7 +87,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 ! SetupNewL2AUXRecord ( int dimensionFamilies(L2AUXRANK), 
 !    int dimSizes(L2AUXRANK), int dimStarts(L2AUXRANK), L2AUXData_T l2aux )
 ! DestroyL2AUXContents ( L2AUXData_T l2aux )
-! ExpandL2AUXDataInPlace ( L2AUXData_T l2aux, int newSize )
+! ResizeL2AUXData ( L2AUXData_T l2aux, int newSize )
 ! int AddL2AUXToDatabase ( *L2AUXData_T DATABASE(:), L2AUXData_T ITEM )
 ! DestroyL2AUXDatabase ( *L2AUXData_T DATABASE(:) )
 ! Dump ( l2auxData_T L2aux(:), [char* Name], [int Details], [char* options] )
@@ -101,7 +101,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   private
   public :: L2AUX_Dimension_T, L2AUXData_T, L2AUXRANK
   public :: AddL2AUXToDatabase, cpL2AUXData, DestroyL2AUXDatabase, Dump
-  public :: SetupNewL2AUXRecord, DestroyL2AUXContents, ExpandL2AUXDataInPlace
+  public :: SetupNewL2AUXRecord, DestroyL2AUXContents, ResizeL2AUXData
   public :: ReadL2AUXData, WriteL2AUXData, WriteL2AUXAttributes
 
   interface cpL2AUXData
@@ -493,14 +493,14 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(3        )   :: dim_names
     character(len=16), dimension(3) :: extra_name
     character(len=16)               :: framing
-    integer                         :: option_number   ! (1 or 2; see above)
+    ! integer                         :: option_number   ! (1 or 2; see above)
 
     ! Executable
     if ( present(quantityTemplate) ) then
-      option_number = 1
+      ! option_number = 1
       quantityType = quantityTemplate%quantityType
     else if ( present(inputQuantityType) ) then
-      option_number = 1
+      ! option_number = 1
       quantityType = inputQuantityType
       dimSizes = inputDimSizes
       dimStarts = inputdimStarts
@@ -592,12 +592,15 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test(l2aux%values,"l2aux%values",ModuleName ) 
   end subroutine DestroyL2AUXContents
 
-  !--------------------------------------  ExpandL2AUXDataInPlace  -----
-  subroutine ExpandL2AUXDataInPlace ( l2aux, newSize )
+  !--------------------------------------  ResizeL2AUXData  -----
+  subroutine ResizeL2AUXData ( l2aux, newSize )
 
-  ! This subroutine expands an L2AUXData_T in place, allowing the user to
+  ! This subroutine resizes an L2AUXData_T in place, allowing the user to
   ! add more `profiles' to it.  Note that the `profile' dimension is the last
   ! one.
+  
+  ! New feature: if newSize is < old size
+  ! we effectively contract the l2AUXData_T
 
     ! Dummy arguments
     type (L2AUXData_T), intent(inout) :: L2aux
@@ -613,14 +616,14 @@ contains ! =====     Public Procedures     =============================
 
     nullify ( temp1D, temp3D )
 
-    if (l2aux%dimensions(3)%dimensionFamily==L_None) &
+    if ( l2aux%dimensions(3)%dimensionFamily == L_None ) &
       call MLSMessage (MLSMSG_Error, ModuleName, &
-        & "This l2aux is not expandable")
+        & "This l2aux is not expandable") ! Why not?
 
     ! Now see how long this is
     oldSize = l2aux%dimensions(3)%noValues
-    ! Do a sanity check
-    if ( newSize<oldSize ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    ! Do a usage check
+    if ( newSize < oldSize ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & "This l2aux is getting smaller not bigger" )
 
     ! Now expand this dimension
@@ -630,7 +633,11 @@ contains ! =====     Public Procedures     =============================
     call allocate_test(l2aux%dimensions(3)%values,newSize, &
       & 'New l2aux%dimensions(3)%values', ModuleName)
     l2aux%dimensions(3)%noValues = newSize
-    l2aux%dimensions(3)%values(1:oldSize)=temp1D
+    if ( oldSize < newSize ) then
+      l2aux%dimensions(3)%values(1:oldSize) = temp1D
+    else
+      l2aux%dimensions(3)%values = temp1D(1:newSize)
+    endif
     ! Now we can loose the old values
     call deallocate_test ( temp1D, "temp1D", ModuleName )
 
@@ -643,12 +650,16 @@ contains ! =====     Public Procedures     =============================
       & max(1, l2aux%dimensions(1)%noValues), &
       & max(1, l2aux%dimensions(2)%noValues), &
       & newSize, "l2aux%values", ModuleName )
-    l2aux%values(:,:,1:oldSize) = temp3d
+    if ( oldSize < newSize ) then
+      l2aux%values(:,:,1:oldSize) = temp3d
+    else
+      l2aux%values = temp3d(:,:,1:newSize)
+    endif
 
-    ! Now we can loose temp3d
+    ! Now we can set temp3d loose
     call deallocate_test ( temp3d, "temp3d", ModuleName )
 
-  end subroutine ExpandL2AUXDataInPlace
+  end subroutine ResizeL2AUXData
 
   !------------------------------------------  AddL2AUXToDatabase  -----
   integer function AddL2AUXToDatabase ( DATABASE, ITEM )
@@ -891,13 +902,13 @@ contains ! =====     Public Procedures     =============================
 
     ! Parameters
 
-    character (LEN=*), parameter :: SZ_ERR = 'Failed to get size of &
-      &dimension '
-    character (LEN=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
-    character (LEN=*), parameter :: MLSMSG_l2auxRead = 'Unable to read l2aux &
-      &field:'
+    ! character (LEN=*), parameter :: SZ_ERR = 'Failed to get size of &
+    !  &dimension '
+    ! character (LEN=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
+    ! character (LEN=*), parameter :: MLSMSG_l2auxRead = 'Unable to read l2aux &
+    !  &field:'
     integer, parameter :: MAXRANK = 3
-    integer, parameter :: MAXDIMSIZES = 300
+    ! integer, parameter :: MAXDIMSIZES = 300
     logical            :: myCHECKDIMNAMES ! .TRUE. only for actual l2auxfiles
 
     ! Functions
@@ -918,7 +929,7 @@ contains ! =====     Public Procedures     =============================
     integer :: status
     integer :: start(3), stride(3)
 
-    logical :: firstCheck, lastCheck
+    ! logical :: firstCheck, lastCheck
     real (r4), dimension(:,:,:), pointer :: TMPVALUES
 
     myCHECKDIMNAMES = .false.
@@ -946,8 +957,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Check optional input arguments
 
-    firstCheck = present(firstProf)
-    lastCheck = present(lastProf)
+    ! firstCheck = present(firstProf)
+    ! lastCheck = present(lastProf)
 
     ! Uncertain what to do with those just yet
     ! Now find dimension family of dimension; e.g., MAF
@@ -1206,10 +1217,10 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: grp_id
     integer :: myNoMAFS, MAF
-    integer, dimension(3) :: dims
+    ! integer, dimension(3) :: dims
     type(DataProducts_T) :: dataProduct
     logical :: myWriteCounterMAF
-    logical :: myReuse_dimNames
+    ! logical :: myReuse_dimNames
     integer, dimension(:), pointer :: CounterMAF ! bogus array
     logical, parameter             :: ALWAYSWRITEAS32BITS = .true.
 
@@ -1217,8 +1228,8 @@ contains ! =====     Public Procedures     =============================
     returnStatus = 0
     myWriteCounterMAF = .false.
     if ( present(WriteCounterMAF) ) myWriteCounterMAF = WriteCounterMAF
-    myReuse_dimNames = .false.
-    if ( present(Reuse_dimNames) ) myReuse_dimNames = Reuse_dimNames
+    ! myReuse_dimNames = .false.
+    ! if ( present(Reuse_dimNames) ) myReuse_dimNames = Reuse_dimNames
     myNoMAFS = 1
     if ( any(l2aux%dimensions%dimensionFamily == L_MAF) ) &
      & myNoMAFS = l2aux%dimensions(3)%noValues
@@ -1243,9 +1254,9 @@ contains ! =====     Public Procedures     =============================
       else
         dataProduct%data_type = 'double'  ! type of L2AUXData_T%values
       end if
-      dims(1) = size(l2aux%values, 1)
-      dims(2) = size(l2aux%values, 2)
-      dims(3) = size(l2aux%values, 3)
+      ! dims(1) = size(l2aux%values, 1)
+      ! dims(2) = size(l2aux%values, 2)
+      ! dims(3) = size(l2aux%values, 3)
       ! call Dump_L2AUX(l2AUX)
       if ( myWriteCounterMAF .or. ALWAYSWRITEAS32BITS ) then
         call SaveAsHDF5DS (L2AUXFile%FileID%f_id, trim(dataProduct%name), &
@@ -1281,7 +1292,7 @@ contains ! =====     Public Procedures     =============================
       end if
       nullify (CounterMAF)
       call allocate_test(CounterMAF,myNoMAFS,'counterMAF',ModuleName)
-      dims(1) = myNoMAFS
+      ! dims(1) = myNoMAFS
       dataProduct%name = 'counterMAF'
       dataProduct%data_type = 'integer'
       do MAF=0, myNoMAFS-1
@@ -1941,6 +1952,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.91  2014/03/31 23:43:29  pwagner
+! Commented-out unused stuff; renamed procedure ResizeL2AUXData, generalizing it to expand or contract
+!
 ! Revision 2.90  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
