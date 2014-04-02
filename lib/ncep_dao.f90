@@ -27,7 +27,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use MLSCOMMON, only: LINELEN, NAMELEN, FILENAMELEN, &
     & UNDEFINEDVALUE, MLSFILE_T
   use MLSFILES, only: FILENOTFOUND, HDFVERSION_5, &
-    & DUMP, GETPCFROMREF, MLS_HDF_VERSION, OPEN_MLSFILE, CLOSE_MLSFILE, &
+    & DUMP, GETPCFROMREF, MLS_HDF_VERSION, MLS_OpenFile, MLS_CloseFile, &
     & SPLIT_PATH_NAME, MLS_OPENFILE, MLS_CLOSEFILE
   use MLSKINDS, only: R4, R8
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_WARNING, &
@@ -2159,7 +2159,7 @@ contains
       fname = climFile%name
       ! use Fortran open
       if(debug) call output('opening ' // fname, advance = 'yes')
-      call open_MLSFile( ClimFile )
+      call MLS_OpenFile( ClimFile )
       CliUnit = ClimFile%FileID%f_id
       
     endif
@@ -2228,7 +2228,7 @@ contains
         ! use Fortran close
       else
         if(debug) call output('closing ' // fname, advance = 'yes')
-        call close_MLSFile( ClimFile )
+        call MLS_CloseFile( ClimFile )
         ErrType = 0
       endif
       if(ErrType /= 0) then
@@ -2613,6 +2613,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.76  2014/04/02 23:02:52  pwagner
+! Removed redundant open_ and close_MLSFile
+!
 ! Revision 2.75  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
