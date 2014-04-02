@@ -30,8 +30,8 @@ module ReadAPriori
   use MLSCOMMON, only: FILENAMELEN, MLSFILE_T
   use MLSFILES, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
-    & ADDFILETODATABASE, CLOSE_MLSFILE, DUMP, GETPCFROMREF, INITIALIZEMLSFILE, &
-    & MLS_HDF_VERSION, MLS_INQSWATH, OPEN_MLSFILE, SPLIT_PATH_NAME
+    & ADDFILETODATABASE, MLS_CloseFile, DUMP, GETPCFROMREF, INITIALIZEMLSFILE, &
+    & MLS_HDF_VERSION, MLS_INQSWATH, MLS_OpenFile, SPLIT_PATH_NAME
   use MLSL2OPTIONS, only: CHECKPATHS, DEFAULT_HDFVERSION_READ, L2CFNODE, &
     & SPECIALDUMPFILE, TOOLKIT, &
     & MLSMESSAGE
@@ -1038,13 +1038,13 @@ contains ! =====     Public Procedures     =============================
       if ( verbose ) call output( 'About to read file attributes for a priori', advance='yes' )
       call readAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
     else
-      call open_MLSFile( MLSFile )
+      call MLS_OpenFile( MLSFile )
       if ( verbose ) then
         call dump( MLSFile )
         call output( 'About to read file attributes for a priori', advance='yes' )
       endif
       call readAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
-      call close_MLSFile( MLSFile )
+      call MLS_CloseFile( MLSFile )
     endif
   end subroutine readAPrioriAttributes_MF
 
@@ -1119,10 +1119,10 @@ contains ! =====     Public Procedures     =============================
     elseif ( MLSFile%StillOpen ) then
       call writeAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
     else
-      call open_MLSFile( MLSFile )
+      call MLS_OpenFile( MLSFile )
       ! call writeAPrioriAttributes_name(MLSFile%name, HDFVERSION_5)
       call writeAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
-      call close_MLSFile( MLSFile )
+      call MLS_CloseFile( MLSFile )
     endif
   end subroutine writeAPrioriAttributes_MF
 
@@ -1311,6 +1311,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.105  2014/04/02 23:05:11  pwagner
+! Removed redundant open_ and close_MLSFile
+!
 ! Revision 2.104  2014/01/11 01:52:15  vsnyder
 ! Get OutputNamedValue from HighOutput, not Output_m.  Getting it from
 ! Output_m crept back in during CVS conflict resolution.
