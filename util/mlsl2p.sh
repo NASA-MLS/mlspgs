@@ -240,9 +240,17 @@ else
   IDENTFILE="none"
 fi
 
+# HOSTNAME will be stored in metadata as ProductionLocation
+# to trace provenance
+if [ "$HOSTNAME" = "" ]
+then
+  echo "Need HOSTNAME to trace provenance as ProductionLocation"
+  exit 1
+fi
+
 # Now we launch the master task itself to set everything in motion
 $PGE_BINARY --pge $slave_script --tk --master $PVM_HOSTS_INFO \
-  --idents "$IDENTFILE" $otheropts
+  --idents "$IDENTFILE" --loc "$HOSTNAME" $otheropts
 
 # Save return status
 return_status=`expr $?`
@@ -357,6 +365,9 @@ else
 fi
 
 # $Log$
+# Revision 1.27  2013/12/05 00:25:24  pwagner
+# Fix latest problems with creating JOBSTATSFILE
+#
 # Revision 1.26  2013/10/29 16:58:20  pwagner
 # May set environment variable PGE_BINARY
 #
