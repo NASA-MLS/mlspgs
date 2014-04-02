@@ -23,7 +23,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSFILES, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & DUMP, INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_EXISTS, MLS_OPENFILE, &
-    & MLS_HDF_VERSION, MLS_INQSWATH, OPEN_MLSFILE, CLOSE_MLSFILE
+    & MLS_HDF_VERSION, MLS_INQSWATH, MLS_OpenFile, MLS_CloseFile
   use MLSKINDS, only: R4, R8
   use MLSFILLVALUES, only: EXTRACTARRAY, GATHERARRAY, &
     & ISFILLVALUE, REPLACEFILLVALUES
@@ -402,13 +402,13 @@ contains ! =====     Public Procedures     =============================
     endif
     status = InitializeMLSFile ( MLSFile, type=l_swath, access=file_access, &
      & name=trim(fileName), HDFVersion=the_hdfVersion )
-    ! call open_MLSFile( MLSFile )
+    ! call MLS_OpenFile( MLSFile )
     ! L2FileHandle = MLSFile%FileID%f_id
     call AppendL2GPData_MLSfile( l2gp, MLSFile, swathname, &
       & offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
       & createSwath=createSwath, &
       & maxchunksize=maxchunksize )
-    ! call close_MLSFile( MLSFile )
+    ! call MLS_CloseFile( MLSFile )
   end subroutine AppendL2GPData_fileName
   ! ---------------------- AppendL2GPData_MLSFile  ---------------------------
 
@@ -1085,7 +1085,7 @@ contains ! =====     Public Procedures     =============================
     endif
     status = InitializeMLSFile ( MLSFile1, type=l_swath, access=DFACC_READ, &
      & name=trim(file1), HDFVersion=the_hdfVersion1 )
-    call open_MLSFile( MLSFile1 )
+    call MLS_OpenFile( MLSFile1 )
     File1Handle = MLSFile1%FileID%f_id
 
     file_exists = ( mls_exists(trim(File2)) == 0 )
@@ -1117,7 +1117,7 @@ contains ! =====     Public Procedures     =============================
       & (the_hdfVersion1 == HDFVERSION_5) .and. (the_hdfVersion2 == HDFVERSION_5)
     status = InitializeMLSFile ( MLSFile2, type=l_swath, access=file_access, &
      & name=trim(file2), HDFVersion=the_hdfVersion2 )
-    call open_MLSFile( MLSFile2 )
+    call MLS_OpenFile( MLSFile2 )
     File2Handle = MLSFile2%FileID%f_id
     if ( DEEBUG ) then
       print *, 'About to cp from file1 to file2: ', trim(file1), trim(file2)
@@ -1166,8 +1166,8 @@ contains ! =====     Public Procedures     =============================
               & 'No swaths after excluding ' )
         call outputNamedValue( 'exclude', trim(exclude) )
         call outputNamedValue( 'mySwathList', trim(mySwathList) )
-        call close_MLSFile( MLSFile1 )
-        call close_MLSFile( MLSFile2 )
+        call MLS_CloseFile( MLSFile1 )
+        call MLS_CloseFile( MLSFile2 )
         return
       endif
       mySwathList = myrename
@@ -1178,9 +1178,9 @@ contains ! =====     Public Procedures     =============================
       & ReadData=ReadData, HGrid=HGrid, &
       & rFreqs=rFreqs, rLevels=rlevels, rTimes=rTimes, options=options )
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
-    call close_MLSFile( MLSFile1 )
+    call MLS_CloseFile( MLSFile1 )
     if ( DEEBUG ) print *, 'About to close File2Handle: ', File2Handle
-    call close_MLSFile( MLSFile2 )
+    call MLS_CloseFile( MLSFile2 )
   end subroutine cpL2GPData_fileName
 
   ! ---------------------- cpL2GPData_MLSFile  ---------------------------
@@ -1286,11 +1286,11 @@ contains ! =====     Public Procedures     =============================
     integer :: status
     !
     call ReadL2GPData ( L2GPfile1, trim(swathname), l2gp )
-    if ( .not. L2GPfile2%stillOpen ) call open_MLSFile( L2GPfile2 )
+    if ( .not. L2GPfile2%stillOpen ) call MLS_OpenFile( L2GPfile2 )
     status = he5_ehwrglatt( L2GPfile2%fileID%f_id, &
             & trim(attrname), HE5T_NATIVE_REAL, hsize(l2gp%nTimes), &
             &  l2gp%l2gpValue(1,1,:) )
-    call close_MLSFile( L2GPfile2 )
+    call MLS_CloseFile( L2GPfile2 )
   end subroutine cpL2GPDataToAttribute
 
   ! ------------------------------------------ DiffL2GPData_CHUNKS ------------
@@ -2161,11 +2161,11 @@ contains ! =====     Public Procedures     =============================
     endif
     status = InitializeMLSFile ( MLSFile1, type=l_swath, access=DFACC_READ, &
      & name=trim(file1), HDFVersion=the_hdfVersion1 )
-    call open_MLSFile( MLSFile1 )
+    call MLS_OpenFile( MLSFile1 )
     File1Handle = MLSFile1%FileID%f_id
     status = InitializeMLSFile ( MLSFile2, type=l_swath, access=DFACC_READ, &
      & name=trim(file2), HDFVersion=the_hdfVersion2 )
-    call open_MLSFile( MLSFile2 )
+    call MLS_OpenFile( MLSFile2 )
     File2Handle = MLSFile2%FileID%f_id
 
     ! Loop over swaths in file 1
@@ -2232,8 +2232,8 @@ contains ! =====     Public Procedures     =============================
       call DestroyL2GPContents ( l2gp1 )
       call DestroyL2GPContents ( l2gp2 )
     enddo
-    call close_MLSFile( MLSFile1 )
-    call close_MLSFile( MLSFile2 )
+    call MLS_CloseFile( MLSFile1 )
+    call MLS_CloseFile( MLSFile2 )
     if ( present(numDiffs) ) numDiffs = myNumDiffs
   end subroutine DiffL2GPFiles_Name
     
@@ -3460,12 +3460,12 @@ contains ! =====     Public Procedures     =============================
 
     status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_READ, &
      & name=trim(fileName), HDFVersion=the_hdfVersion )
-    call open_MLSFile( MLSFile )
+    call MLS_OpenFile( MLSFile )
     L2FileHandle = MLSFile%FileID%f_id
     call ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs=numProfs, &
        & firstProf=firstProf, lastProf=lastProf, hdfVersion=the_hdfVersion, &
        & hmot=hmot, ReadData=ReadData)
-    call close_MLSFile( MLSFile )
+    call MLS_CloseFile( MLSFile )
   end subroutine ReadL2GPData_fileName
 
   ! ---------------------- ReadL2GPData_MLSFile  -----------------------------
@@ -5169,6 +5169,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.199  2014/01/09 00:24:29  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.198  2013/10/15 23:53:40  pwagner
 ! May copy quantity values to a file global attribute
 !

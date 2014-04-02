@@ -26,7 +26,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MACHINE, only: HP, GETARG
    use MLSCOMMON, only: MLSFILE_T
    use MLSFILES, only: HDFVERSION_5, INITIALIZEMLSFILE, MLS_INQSWATH, &
-     & CLOSE_MLSFILE, OPEN_MLSFILE, SPLIT_PATH_NAME
+     & MLS_CloseFile, MLS_OpenFile, SPLIT_PATH_NAME
    use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
    use MLSHDFEOS, only: MLS_ISGLATT, HE5_EHRDGLATT
    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
@@ -454,7 +454,7 @@ contains
            & hdfVersion=HDFVERSION_5 )
       ! Dump the swath- and file-level attributes
       if ( options%attributesToo ) then
-        call open_MLSFile( MLSFile )
+        call MLS_OpenFile( MLSFile )
         file1 = MLSFile%FileID%f_id
         call dump(file1, l2gp)
         ! call output( 'Trying to find Ascend(+1)Descend(-1) attribute', advance='yes' )
@@ -467,7 +467,7 @@ contains
           call dump( values, 'Ascend(+1)Descend(-1)' )
           call DeAllocate_test ( values, 'asc/desc values', ModuleName )
         endif
-        call close_MLSFile ( MLSFile )
+        call MLS_CloseFile ( MLSFile )
       endif
       if ( options%ConvergenceCutOff > -1. .or. options%QualityCutOff > -1. .or. &
         & options%PrecisionCutOff > -1. .or. options%statusBits ) then
@@ -714,6 +714,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.16  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 1.15  2013/10/18 22:41:15  pwagner
 ! Will dump global attribute Ascend(+1)Descend(-1) if present
 !

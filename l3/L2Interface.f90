@@ -18,7 +18,7 @@ MODULE L2Interface
        & DestroyL2GPContents
   USE MLSCommon, ONLY: r8, MLSFile_T
   USE MLSFiles, ONLY: InitializeMLSFile, mls_openFile, mls_closeFile, & 
-       & mls_hdf_version, mls_inqswath, close_MLSFile, open_MLSFile
+       & mls_hdf_version, mls_inqswath, MLS_CloseFile, MLS_OpenFile
   USE MLSL3Common, ONLY: DATE_LEN, CCSDS_LEN, FILENAMELEN, maxWindow, & 
        & GRIDNAMELEN, maxMisDays
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
@@ -258,7 +258,7 @@ CONTAINS
            the_hdfVersion = mls_hdf_version(trim(pcfNames(i)))
            status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_READ, &
             & name=trim(pcfNames(i)), HDFVersion=the_hdfVersion )
-           call open_MLSFile( MLSFile )
+           call MLS_OpenFile( MLSFile )
            file_ID = MLSFile%FileID%f_id
            ! file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
            !   & record_length, DFACC_READ, pcfNames(i), &
@@ -332,7 +332,7 @@ CONTAINS
 
            status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_READ, &
             & name=trim(pcfNames(i)), HDFVersion=the_hdfVersion )
-           call open_MLSFile( MLSFile )
+           call MLS_OpenFile( MLSFile )
            file_ID = MLSFile%FileID%f_id
           ! file_id = mls_io_gen_openF('swopen', .TRUE., status, &
           ! file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
@@ -391,7 +391,7 @@ CONTAINS
             end if
             call output(GlobalAttributes%LastMAFCtr, advance='yes')
 
-            call close_MLSFile( MLSFile )
+            call MLS_CloseFile( MLSFile )
             ! status = mls_io_gen_closeF('swclose', file_id, pcfNames(i), & 
             ! status = mls_io_gen_closeF(l_swath, file_id, pcfNames(i), & 
            	!& hdfVersion=the_hdfVersion)
@@ -622,7 +622,7 @@ CONTAINS
 
       status = InitializeMLSFile ( MLSFile, type=l_swath, access=DFACC_RDWR, &
        & name=l3File, HDFVersion=hdfVersion )
-      call open_MLSFile( MLSFile )
+      call MLS_OpenFile( MLSFile )
       file_ID = MLSFile%FileID%f_id
       ! file_id = mls_io_gen_openF('swopen', .TRUE., status, &
       ! file_id = mls_io_gen_openF(l_swath, .TRUE., status, &
@@ -635,7 +635,7 @@ CONTAINS
 
       ! status = mls_io_gen_closeF(l_swath, file_id, l3File, & 
       !     & hdfVersion=hdfVersion)
-      call close_MLSFile ( MLSFile )
+      call MLS_CloseFile ( MLSFile )
 
    ENDDO
       
@@ -760,6 +760,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.24  2008/12/02 23:13:56  pwagner
+!# mls_io_gen_[openF,closeF] functions now private; use MLSFile_T interfaces instead
+!#
 !# Revision 1.23  2007/06/26 19:06:26  cvuu
 !# fix bug
 !#
