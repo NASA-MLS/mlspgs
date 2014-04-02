@@ -1537,10 +1537,10 @@ contains ! =====     Public Procedures     =============================
     use L2PARINFO, only: PARALLEL
     use MLSCOMMON, only: MLSFILE_T, FILENAMELEN, L2METADATA_T
     use MLSFILES, only: HDFVERSION_5, &
-      & ADDINITIALIZEMLSFILE, CLOSE_MLSFILE, DUMP, &
+      & ADDINITIALIZEMLSFILE, MLS_CloseFile, DUMP, &
       & GETMLSFILEBYNAME, GETPCFROMREF, &
       & MLS_EXISTS, MLS_INQSWATH, MLS_SFSTART, MLS_SFEND, &
-      & OPEN_MLSFILE, UNSPLITNAME
+      & MLS_OpenFile, UNSPLITNAME
     use MLSHDF5, only: CPHDF5GLATTRIBUTE, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, &
       & MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
@@ -1677,7 +1677,7 @@ contains ! =====     Public Procedures     =============================
         if ( inputFile%stillOpen ) then
           call output( 'Closing input file before reading apriori attributes', &
             & advance='yes' )
-          call close_MLSFile ( inputFile )
+          call MLS_CloseFile ( inputFile )
         endif
         call readAPrioriAttributes( inputFile )
         call writeAPrioriAttributes( outputFile )
@@ -1686,11 +1686,11 @@ contains ! =====     Public Procedures     =============================
         ! (3) leapsec and utcpole contents
         if (switchDetail( switches, 'pro') > 0 ) &
           call output ( 'About to open ' // trim(l2gpPhysicalFilename) , advance='yes' )
-        call open_MLSFile( outputFile )
+        call MLS_OpenFile( outputFile )
         call WriteLeapSecHDFEOSAttr ( outputFile%fileID%f_id )
         if ( .not. DGGFILEISHYBRID ) &
           & call WriteutcPoleHDFEOSAttr ( outputFile%fileID%f_id )
-        call close_MLSFile ( outputFile )
+        call MLS_CloseFile ( outputFile )
         if ( DGGFILEISHYBRID ) then
           ! The utcpole is too large to be stored as an HDFEOS attribute
           ! Note:
@@ -1869,6 +1869,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.182  2014/04/02 23:04:34  pwagner
+! Removed redundant open_ and close_MLSFile
+!
 ! Revision 2.181  2014/03/28 00:01:10  pwagner
 ! repaired some bugs in writing DOI, ProdLoc attributes
 !
