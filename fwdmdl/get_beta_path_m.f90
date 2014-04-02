@@ -399,6 +399,7 @@ contains
     use O2_ABS_CS_M, only: O2_ABS_CS, D_O2_ABS_CS_DT
     use OUTPUT_M, only: OUTPUT
     use SLABS_SW_M, only: SLABS_STRUCT
+    use Spectroscopy_Types, only: Lines ! The lines database
     use STRING_TABLE, only: DISPLAY_STRING
     use TOGGLES, only: SWITCHES
 
@@ -426,7 +427,8 @@ contains
 
 ! Local variables..
 
-    integer(ip) :: I, IB, J, K, M, N, N_PATH
+    integer(ip) :: I, IB, J, K, L, M, N, N_PATH
+    integer :: QN(max_lines(beta_group,GL_slabs))
     real(rp) :: RATIO ! Isotope ratio, not mixing ratio
     complex(rp) :: Sigma_m, Pi, Sigma_p
     complex(rp) :: dSigma_m_dT, dPi_dT, dSigma_p_dT
@@ -455,16 +457,36 @@ contains
         ratio = beta_group(i)%ratio(n)
         ib = beta_group(i)%cat_index(n)
 
+        ! Compute the quantum numbers.  Lines(l)%qn(1) is the format, where L
+        ! is the index in the Lines database from gl_slabs%catalog%lines.  The
+        ! number of elements is twice the low-order digit of the format, plus
+        ! one.  We assume that the set of lines is the same at every point on
+        ! the path, so we can hoist this computation out of the path loop.
+        m = size(gl_slabs(1,ib)%catalog%lines) ! Number of lines
+        do j = 1, m
+          ! QN(j) needs to be the second element, with the sign being
+          ! the difference between the last pair of quantum numbers, which
+          ! are at the middle and end of the list.
+          l = gl_slabs(1,ib)%catalog%lines(j)    ! Index in Lines database
+          if ( associated(lines(l)%qn) ) then
+            k = size(lines(l)%qn)
+            qn(j) = sign(lines(l)%qn(2), lines(l)%qn(k) - lines(l)%qn((k+1)/2) )
+          else ! No QN field in the spectroscopy catalog, so use -1.
+            qn(j) = -1
+          end if
+        end do
+
+        ! Get beta everywhere on the path
         do j = 1, n_path
           k = path_inds(j)
 
           if ( size(dBeta_path_dT) == 0 ) then
-            call o2_abs_cs ( frq, (/ ( -1, m=1,size(gl_slabs(k,ib)%catalog%lines) ) /),   &
-              & h(k), gl_slabs(k,ib), sigma_p, pi, sigma_m )
+            call o2_abs_cs ( frq, qn(1:m), h(k), gl_slabs(k,ib), &
+                           & sigma_p, pi, sigma_m )
           else
-            call d_o2_abs_cs_dT ( frq, (/ ( -1, m=1,size(gl_slabs(k,ib)%catalog%lines) ) /),   &
-              & h(k), gl_slabs(k,ib), sigma_p, pi, sigma_m, &
-              & dSigma_p_dT, dPi_dT, dSigma_m_dT )
+            call d_o2_abs_cs_dT ( frq, qn(1:m), h(k), gl_slabs(k,ib),   &
+                                & sigma_p,     pi,     sigma_m, &
+                                & dSigma_p_dT, dPi_dT, dSigma_m_dT )
             dBeta_path_dT(-1,j,i) = dBeta_path_dT(-1,j,i) + ratio * dSigma_m_dT
             dBeta_path_dT( 0,j,i) = dBeta_path_dT( 0,j,i) + ratio * dPi_dT
             dBeta_path_dT(+1,j,i) = dBeta_path_dT(+1,j,i) + ratio * dSigma_p_dT
@@ -1581,6 +1603,24 @@ contains
 
   end subroutine Abs_CS_O2_Cont_dT
 
+  ! --------------------------------------------------  Max_Lines  -----
+  pure integer function Max_Lines ( Beta_Group, GL_Slabs )
+    ! Compute the maximum number of lines in any catalog for any molecule
+    ! in the beta group
+    use FORWARDMODELCONFIG, only: LBL_T
+    use SLABS_SW_M, only: SLABS_STRUCT
+    type(LBL_T), intent(in) :: Beta_Group(:)
+    type(slabs_struct), intent(in) :: GL_Slabs(:,:)
+    integer :: I, IB, N
+    max_lines = 0
+    do i = 1, size(beta_group)
+      do n = 1, size(beta_group(i)%cat_index)
+        ib = beta_group(i)%cat_index(n)
+        max_lines = max(max_lines,size(gl_slabs(1,ib)%catalog%lines))
+      end do
+    end do
+  end function Max_Lines
+    
 !-----------------------------------------------------------------------
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -1595,6 +1635,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.117  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.116  2013/07/26 22:19:05  vsnyder
 ! Fiddle with dump switches
 !
