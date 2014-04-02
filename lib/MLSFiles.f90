@@ -54,14 +54,12 @@ module MLSFiles               ! Utility file routines
 
   public :: ACCESSTYPE, ADDFILETODATABASE, &
   & ADDINITIALIZEMLSFILE, ARETHESAMEFILE, &
-  & CLOSE_MLSFILE, &
   & DEALLOCATE_FILEDATABASE, DUMP, &
   & GETMLSFILEBYNAME, GETMLSFILEBYTYPE, GETPCFROMREF, &
   & INITIALIZEMLSFILE, &
   & MASKNAME, &
   & MLS_CLOSEFILE, MLS_EXISTS, MLS_HDF_VERSION, MLS_INQSWATH, &
   & MLS_OPENFILE, MLS_SFSTART, MLS_SFEND, &
-  & OPEN_MLSFILE, &
   & READNCHARS, RELEASE_MLSFILE, RESERVE_MLSFILE, &
   & RMFILEFROMDATABASE, SPLIT_PATH_NAME, &
   & TRANSFER_MLSFILE, UNMASKNAME, UNSPLITNAME
@@ -101,7 +99,6 @@ module MLSFiles               ! Utility file routines
 ! AddFileToDataBase  Enters an MLSFile {FileName, id, ..} into the database
 ! AddInitializeMLSFile  AddFileToDataBase, initializes, and returns pointer to it
 ! AreTheSameFile     Returns TRUE if the two args are the same file
-! close_MLSFile      Closes an mls file (of any type)
 ! Deallocate_filedatabase
 !                    Deallocates file database, closing any still-open files
 ! Dump               Dumps file info: type, access, name, etc.
@@ -116,7 +113,6 @@ module MLSFiles               ! Utility file routines
 ! mls_openFile       Opens an MLSFile_T file
 ! mls_sfend          Closes a file opened by mls_sfstart
 ! mls_sfstart        Opens an hdf file for writing metadata
-! open_MLSFile       Opens an mls file (of any type)
 ! release_MLSFile    undoes what reserve_MLSFile does
 ! reserve_MLSFile    initializes an mls file 
 !                      (to be operated on by single-argument functions)
@@ -167,7 +163,6 @@ module MLSFiles               ! Utility file routines
 !   [int HDFVersion], [int recordLength], 
 !   [Range PCFIdRange], [int PCFBottom], [int PCFTop])
 ! log AreTheSameFile (MLSFile File1, MLSFile File2 )
-! close_MLSFile ( MLSFile_T MLSFile )
 ! Deallocate_filedatabase(MLSFile *dataBase(:))
 ! Dump ( MLSFile *dataBase(:), [char* Name], [int details] )
 ! Dump ( MLSFile MLSFile, [int details] )
@@ -180,7 +175,6 @@ module MLSFiles               ! Utility file routines
 !   [Range PCFIdRange], [int PCFBottom], [int PCFTop])
 ! mls_CloseFile( MLSFile MLSFile, [int error] )
 ! mls_OpenFile( MLSFile MLSFile, [int error] )
-! open_MLSFile ( MLSFile_T MLSFile )
 
 ! A long-term plan is for almost all calls from outside this module to
 ! be made to one of the above procedures and removing the public attribute
@@ -724,280 +718,6 @@ contains
   endif
   end function maskName
 
-  ! ----------------------------------------------  open_MLSFile  -----
-
-  ! This routine opens an mls file using either the toolbox
-  ! or else a Fortran OPEN statement
-  ! as appropriate, filling the fields of the MLSFile as needed
-  
-  ! It must be supplied an MLSFile_t for its arg
-
-  ! Naturally, at least one of the arg's fields must be non-default values:
-  ! MLSFile%{Name, PC_Id}
-
-  ! It generates an error if unsuccessful
-
-  subroutine open_MLSFile(MLSFile, PCBottom, PCTop, inp_rec_length, unknown)
-
-    use IO_Stuff, only: GET_LUN
-
-    ! Dummy arguments
-    type (MLSFile_T)          :: MLSFile
-    integer,  optional, intent(IN)   :: PCBottom, PCTop
-    logical, optional, intent(in) :: unknown
-    integer, optional, intent(in) :: inp_rec_length
-
-    ! Local
-    integer  :: ErrType
-    logical,  parameter      :: caseSensitive = .true.
-    ! integer       :: FileAccessType
-
-    logical, parameter :: DEFAULT_PRINT_EVERY_OPEN=.false.
-    integer, parameter :: FH_ON_ERROR=-99
-    integer, parameter :: DEFAULTRECLEN=0
-    integer, parameter :: KEYWORDLEN=12   ! Max length of keywords in OPEN(...)
-    integer                       :: version, returnStatus
-    character (LEN=KEYWORDLEN) :: access, action, form, position, status
-    integer                       :: record_length
-    integer                       :: unit
-
-    ! begin
-    ErrType = 0
-    version = 1
-    if ( present(PCBottom) .and. present(PCTop) ) then
-      if ( MLSFile%PCFId > 0 ) then
-        returnStatus = Pgs_pc_getReference(MLSFile%PCFId, version, &
-          & MLSFile%Name)
-      else if ( MLSFile%Name /= '' ) then
-        MLSFile%PCFId = GetPCFromRef(trim(MLSFile%Name), PCBottom, PCTop, &
-          & caseSensitive, returnStatus, version, &
-          & debugOption=.false.)
-      else
-        call MLSMessage ( MLSMSG_Error, moduleName,  &
-         & 'You must supply either a name or a PCFid to open a file' )
-      end if
-    end if
-
-    select case (MLSFile%Type)
-
-    ! case('asc-tk', 'bin-tk')
-    case(l_tkgen)
-     ! Using Toolkit
-      if ( MLSFile%PCFId > 0 ) then
-        returnStatus = Pgs_pc_getReference(MLSFile%PCFId, version, &
-          & MLSFile%Name)
-      elseif ( MLSFile%Name /= '' ) then
-          MLSFile%PCFId = GetPCFromRef(trim(MLSFile%Name), PCBottom, PCTop, &
-            &  caseSensitive, returnStatus, version, &
-            & debugOption=.false.)
-
-      else
-        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-         & 'You must supply either a name or a PCFid to open a file' )
-      endif
-      ErrType = PGS_IO_Gen_OpenF(MLSFile%PCFId, MLSFile%access, record_length, &
-          & MLSFile%FileId%f_id, version)
-
-    case(l_swath)
-      if(MLSFile%HDFVersion == HDFVERSION_5) then
-        ! call output( 'About to attempt to mls_open a swath file: ' // trim(MLSFile%Name), &
-        !  & advance='yes' )
-        ! print *, 'access: ', MLSFile%access
-        ! print *, 'access(hdf5): ', he2he5_fileaccess(MLSFile%access)
-        MLSFile%FileId%f_id = he5_swopen(trim(MLSFile%Name), &
-          & he2he5_fileaccess(MLSFile%access))
-      elseif(MLSFile%HDFVersion == HDFVERSION_4) then
-         MLSFile%FileId%f_id = swopen(trim(MLSFile%Name), MLSFile%access)
-      else
-        ErrType = NOSUCHHDFVERSION
-      endif
-
-    case(l_hdfeos)
-      if(MLSFile%HDFVersion == HDFVERSION_5) then
-        MLSFile%FileId%f_id = he5_gdopen(trim(MLSFile%Name), &
-          & he2he5_fileaccess(MLSFile%access))
-      elseif(MLSFile%HDFVersion == HDFVERSION_4) then
-        MLSFile%FileId%f_id = gdopen(trim(MLSFile%Name), MLSFile%access)
-      else
-        ErrType = NOSUCHHDFVERSION
-      endif
-
-    case(l_hdf)
-      if(MLSFile%HDFVersion == HDFVERSION_5) then
-        MLSFile%FileId%f_id = mls_sfstart(trim(MLSFile%Name), &
-          & MLSFile%access, HDFVERSION_5)
-      elseif(MLSFile%HDFVersion == HDFVERSION_4) then
-        MLSFile%FileId%f_id = sfstart(trim(MLSFile%Name), MLSFile%access)
-      else
-        ErrType = NOSUCHHDFVERSION
-      endif
-
-    case(l_ascii, l_binary)
-      if(MLSFile%access == DFACC_RDONLY) then
-        status = 'old'
-        access = 'sequential'
-        form = 'formatted'
-        action = 'read'
-        position = 'rewind'
-      elseif(MLSFile%access == DFACC_CREATE) then
-        status = 'new'
-        access = 'sequential'
-        form = 'formatted'
-        action = 'write'
-        position = 'rewind'
-      elseif(MLSFile%access == DFACC_RDWR) then
-        status = 'old'
-        access = 'sequential'
-        form = 'formatted'
-        action = 'readwrite'
-        position = 'rewind'
-      else
-        ErrType = UNKNOWNFILEACCESSTYPE
-      endif
-      
-      if ( MLSFile%Type == l_binary ) then
-        access = 'direct'
-        form = 'unformatted'
-      endif
-
-      call get_lun ( unit, msg=.false. )
-      if ( unit < 0 ) then
-        ErrType = NOFREEUNITS
-      end if
-
-      if (present(unknown)) then
-        if (unknown) status = 'unknown'
-      end if
-
-      if ( present(inp_rec_length) ) then
-        if ( access /= 'direct' ) then
-          open ( unit=unit, access=access, action=action, form=form, &
-            & status=status, file=trim(MLSFile%Name), iostat=ErrType, &
-            & recl=inp_rec_length, position=position )
-        else
-          open ( unit=unit, access=access, action=action, form=form, &
-            & status=status, file=trim(MLSFile%Name), iostat=ErrType, &
-            & recl=inp_rec_length )
-        end if
-      else if ( access /= 'direct' ) then
-        open ( unit=unit, access=access, action=action, form=form, &
-          & status=status, file=trim(MLSFile%Name), iostat=ErrType, &
-          & position=position )
-      else
-        open ( unit=unit, access=access, action=action, form=form, &
-          & status=status, file=trim(MLSFile%Name), iostat=ErrType )
-      end if
-
-      if(ErrType /= 0) then
-        call output( 'Fortran opening unit ', advance='no')
-        call output(  unit, advance='yes')
-        call output( 'access ' // access, advance='yes')
-        call output( 'action ' // action, advance='yes')
-        call output( 'form ' // form, advance='yes')
-        call output( 'position ' // position, advance='yes')
-        call output( 'status ' // status, advance='yes')
-        call output( 'file ' // trim(MLSFile%Name), advance='yes')
-        call output( 'iostat ', advance='no')
-        call output(  ErrType, advance='yes')
-        call io_error('io error in MLSFiles: open_MLSFile' // &
-          & ' Fortran open', ErrType, trim(MLSFile%Name))
-      else
-        MLSFile%FileId%f_id = unit
-      endif
-
-    case default
-      ErrType = UNKNOWNTOOLBOXMODE
-
-    end select
-
-    if(ErrType /= 0) then
-      call MLSMessage ( MLSMSG_Error, &
-        & ModuleName // 'open_MLSFile', &
-        & "Cannot open file " // trim(MLSFile%Name), MLSFile=MLSFile )
-    endif
-    
-  end subroutine open_MLSFile
-
-  ! ----------------------------------------------  close_MLSFile  -----
-
-  ! This subroutine closes an mls file using either the toolbox
-  ! or else a Fortran CLOSE statement
-  ! as appropriate
-
-  ! It generates an error if unsuccessful
-
-  ! It must be supplied an MLSFile_t for its arg
-  subroutine close_MLSFile(MLSFile)
-
-    use HDF5, only: H5FCLOSE_F
-    ! Dummy arguments
-    type (MLSFile_T) ::            MLSFile
-
-    ! Local
-    integer :: ErrType
-
-    ! begin
-    ErrType = 0
-
-    select case (MLSFile%Type)
-
-    ! case('asc-tk', 'bin-tk', 'tkgen')
-    case(l_tkgen)
-      ErrType = PGS_IO_Gen_CLoseF(MLSFile%FileId%f_id)
-
-    ! case('swath')
-    case(l_swath)
-      if(MLSFile%HDFVersion == HDFVERSION_5) then
-        ErrType = he5_swclose(MLSFile%FileId%f_id)
-      elseif(MLSFile%HDFVersion == HDFVERSION_4) then
-        ErrType = swclose(MLSFile%FileId%f_id)
-      else
-        ErrType = NOSUCHHDFVERSION
-      endif
-
-    ! case('grid')
-    case(l_hdfeos)
-      if(MLSFile%HDFVersion == HDFVERSION_5) then
-        ErrType = he5_gdclose(MLSFile%FileId%f_id)
-      elseif(MLSFile%HDFVersion == HDFVERSION_4) then
-        ErrType = gdclose(MLSFile%FileId%f_id)
-      else
-        ErrType = NOSUCHHDFVERSION
-      endif
-
-    ! case('hdf')
-    case(l_hdf)
-      if(MLSFile%HDFVersion == HDFVERSION_5) then
-        call h5fclose_f(MLSFile%FileId%f_id, ErrType)
-      elseif(MLSFile%HDFVersion == HDFVERSION_4) then
-        ErrType = sfend(MLSFile%FileId%f_id)
-      else
-        ErrType = NOSUCHHDFVERSION
-      endif
-
-    ! case('ascii', 'binary')
-    case(l_ascii, l_binary)
-      close(unit=MLSFile%FileId%f_id, iostat=ErrType)
-
-      if(ErrType /= 0) then
-        call output( 'Fortran closing unit ', advance='no')
-        call output(  MLSFile%FileId%f_id, advance='yes')
-        call output( 'iostat ', advance='no')
-        call output(  ErrType, advance='yes')
-        call io_error('io error in MLSFiles: close_MLSFile' // &
-          & ' Fortran close', ErrType, 'unknown')
-      endif
-
-    case default
-      ErrType = UNKNOWNTOOLBOXMODE
-
-    end select
-    if ( ErrType /= 0 ) &
-      &  CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-      & "Unable to close file " // trim(MLSFile%Name) )
-
-  end subroutine close_MLSFile
-
   !------------------------------------------  RmFileFromDatabase  -----
   integer function RmFileFromDatabase ( DATABASE, ITEM )
 
@@ -1034,7 +754,7 @@ contains
     ! Executable
     if ( .not. associated(database) ) return
     do i=1, size(database)
-      if ( database(i)%StillOpen ) call close_MLSFile(database(i))
+      if ( database(i)%StillOpen ) call MLS_CloseFile(database(i))
     enddo
     Deallocate ( database, stat=error )
     if ( error /= 0 ) &
@@ -2751,6 +2471,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.100  2014/04/02 23:02:10  pwagner
+! Removed redundant open_ and close_MLSFile
+!
 ! Revision 2.99  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
