@@ -24,7 +24,7 @@ module PCFHdr
    use INTRINSIC, only: L_HDFEOS, L_HDF, L_SWATH
    use MLSCOMMON, only: FILENAMELEN, MLSFILE_T, NAMELEN
    use MLSFILES, only: GETPCFROMREF, HDFVERSION_4, HDFVERSION_5, &
-     & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, OPEN_MLSFILE, CLOSE_MLSFILE
+     & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, MLS_OpenFile, MLS_CloseFile
    use MLSKINDS, only: R8
    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
      & MLSMSG_WARNING, MLSMSG_DEALLOCATE, MLSMSG_FILEOPEN
@@ -306,7 +306,7 @@ contains
 
       ! Executable code
       if ( .not. MLSFile%stillOpen ) then
-        call open_MLSFile( MLSFile )
+        call MLS_OpenFile( MLSFile )
       endif
       fileID = MLSFile%FileID%f_id
       if ( IsHDF5AttributePresent('/', fileID, 'ShortName') ) &
@@ -364,7 +364,7 @@ contains
 
       ! Executable code
       if ( .not. MLSFile%stillOpen ) then
-        call open_MLSFile( MLSFile )
+        call MLS_OpenFile( MLSFile )
       endif
       fileID = MLSFile%FileID%f_id
       status = HE5_EHRDGLATT( fileID, &
@@ -544,7 +544,7 @@ contains
 
       ! Executable code
       if ( .not. MLSFile%stillOpen ) then
-        call open_MLSFile( MLSFile )
+        call MLS_OpenFile( MLSFile )
       endif
       my_skip = .false.
       if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
@@ -742,7 +742,7 @@ contains
 
       ! Executable code
       if ( .not. MLSFile%stillOpen ) then
-        call open_MLSFile( MLSFile )
+        call MLS_OpenFile( MLSFile )
       endif
       fileID = MLSFile%FileID%f_id
       status = mls_EHwrglatt(fileID, &
@@ -1188,7 +1188,7 @@ contains
           ! fileID = mls_io_gen_openF(l_swath, .TRUE., status, &
           ! & record_length, DFACC_RDWR, FileName=trim(file), &
           ! & hdfVersion=hdfVersion, debugOption=.false. )
-          call open_MLSFile( MLSFile )
+          call MLS_OpenFile( MLSFile )
           fileID = MLSFile%FileID%f_id
           ! if ( status /= PGS_S_SUCCESS) &
           !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1196,7 +1196,7 @@ contains
           call WritePCF2Hdr_hdfeos5 (fileID, anText)
           ! status = mls_io_gen_closeF(l_swath, fileID, &
           !  & hdfVersion=hdfVersion)
-          call close_MLSFile( MLSFile )
+          call MLS_CloseFile( MLSFile )
           ! if ( status /= PGS_S_SUCCESS) &
           !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
           !  & 'Error closing hdfeos5 swath file for annotating with PCF' )
@@ -1204,7 +1204,7 @@ contains
           ! fileID = mls_io_gen_openF(l_grid, .TRUE., status, &
           !  & record_length, DFACC_RDWR, FileName=trim(file), &
           !  & hdfVersion=hdfVersion, debugOption=.false. )
-          call open_MLSFile( MLSFile )
+          call MLS_OpenFile( MLSFile )
           fileID = MLSFile%FileID%f_id
           ! if ( status /= PGS_S_SUCCESS) &
           !   & CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1212,7 +1212,7 @@ contains
           call WritePCF2Hdr_hdfeos5 (fileID, anText)
           ! status = mls_io_gen_closeF(l_grid, fileID, &
           !  & hdfVersion=hdfVersion)
-          call close_MLSFile ( MLSFile )
+          call MLS_CloseFile ( MLSFile )
           ! if ( status /= PGS_S_SUCCESS) &
           !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
           !  & 'Error closing hdfeos5 grid file for annotating with PCF' )
@@ -1624,6 +1624,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.61  2014/04/02 23:04:06  pwagner
+!# Removed redundant open_ and close_MLSFile
+!#
 !# Revision 2.60  2014/03/27 23:59:16  pwagner
 !# he5_writeglobalattr now generic; DOI optional arg controls wwhether to write DOI, prodLoc
 !#
