@@ -13,7 +13,7 @@ module O2_Abs_CS_M
 
   implicit NONE
   private
-  public :: O2_Abs_CS, D_O2_Abs_CS_dT, Get_QN_By_Frequency
+  public :: O2_Abs_CS, D_O2_Abs_CS_dT
 
   integer :: O2_in_catalog = -1   ! Index in Spectroscopy catalog of O2 line.
 
@@ -866,43 +866,6 @@ contains
     o2_in_catalog = -1 ! Not found
   end subroutine Find_O2
 
-! ------------------------------------------  Get_QN_By_Frequency  -----
-  subroutine Get_QN_By_Frequency ( V0, N )
-
-    ! Get the quantum number for the O2 line that has a center frequency
-    ! nearest to V0.  The quantum number of interest is given by the
-    ! difference between the fourth and second numbers in the QN field
-    ! of the line specification of the spectroscopy database.
-
-    use MLSCommon, only: IP, R8, Rk => RP
-    use SpectroscopyCatalog_M, only: Catalog, Lines
-
-    real(r8), intent(in) :: V0
-    integer(ip), intent(out) :: N
-
-    integer(ip) :: I, J, K
-    real(rk) :: Q, R
-
-    ! Find O2 line the spectroscopy catalog
-    if ( o2_in_catalog < 0 ) call find_o2
-    n = -1
-    ! Find the O2 line that has a center frequency nearest to V0
-    j = catalog(o2_in_catalog)%lines(1)
-    r = abs(v0-lines(j)%v0)
-    do i = 2, size(catalog(o2_in_catalog)%lines)
-      k = catalog(o2_in_catalog)%lines(i)
-      q = abs(v0-lines(k)%v0)
-      if ( q < r ) then
-        r = q
-        j = k
-      end if
-    end do
-    if ( associated(lines(j)%qn) ) then
-      if ( size(lines(j)%qn) >= 4 ) n = lines(j)%qn(4) - lines(j)%qn(2)
-    end if
-  end subroutine Get_QN_By_Frequency
-
-
 ! ------------------------------------------------  not_used_here  -----
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -917,6 +880,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.22  2014/04/02 17:05:59  wgread
+! deleted unused subroutine-wgr
+!
 ! Revision 2.21  2013/06/12 02:33:02  vsnyder
 ! Cruft removal
 !
