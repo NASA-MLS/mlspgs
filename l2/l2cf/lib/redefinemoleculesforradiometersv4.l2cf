@@ -30,14 +30,14 @@
   [ O2, O2 ], [ O3, O3, O3_R1B ] ]})
 !define(moleculeFamiliesForR1BU,{[ EXTINCTION, EXTINCTIONV2, H2O, N2, O2, O3 ]})
 
-!define(moleculesForR2L,{[ [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], $
+!define(moleculesForR2L,{[ [ CH3CN, CH3CN, CH3CN_V8 ], [ CH3COCH3, CH3COCH3 ], $
   [ CH3OH, CH3OH ], EXTINCTION, EXTINCTIONV2, [ H2O, H2O, H2O_R2 ], [ HCN, HCN ], $
   [ HNO3, HNO3, HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9 ], [ N2, N2 ], $
   [ O2, O2 ], [ O3, O3, O3_V1_3, O3_V2, O3_2V2, O3_ASYM_O_18, $
     O3_SYM_O_18, O3_R2 ], [ OCS, OCS_32 ], [ SO2, S_32_O2, S_32_O2_V2, S_34_O2 ] ]})
 !define(moleculeFamiliesForR2L,{[ CH3CN, CH3COCH3, CH3OH, EXTINCTION, EXTINCTIONV2, $
   H2O, HCN, HNO3, N2, O2, O3, OCS, SO2 ]})
-!define(moleculesForR2,{[ [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], $
+!define(moleculesForR2,{[ [ CH3CN, CH3CN, CH3CN_V8 ], [ CH3COCH3, CH3COCH3 ], $
   [ CH3OH, CH3OH ], [ CLO, CL_35_O, CL_37_O ], EXTINCTION, EXTINCTIONV2, [ H2O, H2O, $
     H2O_R2, H2O_18 ], [ H2O2, H2O2 ], [ HCN, HCN ], [ HNO3, HNO3, $
     HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9 ], [ HO2, HO2 ], [ N2, $
@@ -46,7 +46,7 @@
     S_32_O2, S_32_O2_V2, S_34_O2 ] ]})
 !define(moleculeFamiliesForR2,{[ CH3CN, CH3COCH3, CH3OH, CLO, EXTINCTION, EXTINCTIONV2, $
   H2O, H2O2, HCN, HNO3, HO2, N2, N2O, O2, O3, OCS, SO2 ]})
-!define(moleculesForR2U,{[ [ CH3CN, CH3CN ], [ CH3COCH3, CH3COCH3 ], $
+!define(moleculesForR2U,{[ [ CH3CN, CH3CN, CH3CN_V8 ], [ CH3COCH3, CH3COCH3 ], $
   [ CH3OH, CH3OH ], [ CLO, CL_35_O, CL_37_O ], EXTINCTION, EXTINCTIONV2, [ H2O, H2O, $
     H2O_R2, H2O_18 ], [ H2O2, H2O2 ], [ HNO3, HNO3, HNO3_V6, $
     HNO3_V7, HNO3_V8, HNO3_V9 ], [ HO2, HO2 ], [ N2, N2 ], [ N2O, N2O, $
@@ -196,6 +196,9 @@
 !define(molFamiliesFor2ndDerR5H,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
 !define(molFamiliesFor2ndDerR5V,{[ EXTINCTION, EXTINCTIONV2, H2O, O3 ]})
 ; $Log$
+; Revision 1.3  2014/03/13 16:37:44  pwagner
+; Restored CH3CN_V8 to its family for R4
+;
 ; Revision 1.2  2014/02/27 18:52:28  pwagner
 ; Restored all the radiometer-specific ozone molecules
 ;
