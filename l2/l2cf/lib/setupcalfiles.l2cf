@@ -166,8 +166,12 @@
   !define(SystemTemperatureHDF,{!calpath/MLS-Aura_L2Cal-SystemTemperatures_v3-0-5_0000d000.h5})
   !define(NoiseBandwidthHDF,{!calpath/MLS-Aura_L2Cal-NoiseBandwidths_v3-0-5_0000d000.h5})
   !define(MiscHDF,{!calpath/MLS-Aura_L2Cal-Misc_v3-0-5_0000d000.h5})
+  !ifdef(spectroscopyHDF, {}, {
   !define(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.h5})
+  })
+  !ifdef(spectroscopyHDF, {}, {
   !define(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.h5})
+  })
   !define(spectroscopyRtvlHDF,{!spectroscopyHDF})
 })
 ;; output paths
@@ -177,6 +181,9 @@
 !ifdef(outpathl1brad,{},{!define(outpathl1brad,!getdir(outpathl1brad))})
 !ifdef(outpathtmp,{},{!define(outpathtmp,!getdir(outpathtmp))})
 ;$Log$
+;Revision 1.48  2014/03/06 18:39:34  pwagner
+;Change default location for PFA files
+;
 ;Revision 1.47  2012/05/02 16:49:02  pwagner
 ;Corrected typo
 ;
