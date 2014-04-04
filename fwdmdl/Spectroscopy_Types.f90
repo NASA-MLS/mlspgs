@@ -39,8 +39,16 @@ module Spectroscopy_Types
     real(r8) :: W                  ! Collision broadening parameter
                                    ! MHz/mbar at 300 K
     logical :: UseYi               ! Delta /= 0 .or. Gamma /= 0
-    integer, dimension(:), pointer :: QN=>NULL()      ! Optional quantum numbers
-    integer, dimension(:), pointer :: Signals=>NULL() ! List of signal indices for line
+    integer, dimension(:), pointer :: QN=>NULL()  ! Optional quantum numbers.
+                                   ! The first element is assumed to be the
+                                   ! quantum number format;  The low-order digit
+                                   ! of the quantum number format is the number
+                                   ! of quantum number pairs.  The rest,
+                                   ! necessarily an even number, are the actual
+                                   ! quantum numbers.  The extent of this array
+                                   ! is twice the low-order digit of the format,
+                                   ! plus one.
+    integer, dimension(:), pointer :: Signals=>NULL()   ! List of signal indices for line
     integer, dimension(:), pointer :: Sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
     logical, dimension(:), pointer :: Polarized=>NULL() ! Process this signal and
                                    ! sideband using the polarized model
@@ -106,6 +114,9 @@ contains
 end module Spectroscopy_Types
 
 ! $Log$
+! Revision 2.4  2014/04/04 19:22:33  vsnyder
+! More comments about QN component of Lines_t
+!
 ! Revision 2.3  2011/11/08 19:49:25  vsnyder
 ! Get L_None from Intrinsic module
 !
