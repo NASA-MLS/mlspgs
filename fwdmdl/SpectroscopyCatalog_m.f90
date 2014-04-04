@@ -138,7 +138,11 @@ contains ! =====  Public Procedures  ===================================
     integer, parameter :: NotInt = no_mass + 1         ! QN not an integer
     integer, parameter :: NotListedSignal = NotInt + 1 ! Polarized signal is not
                                         ! listed as emlsSignal
-    integer, parameter :: TooBig = NotListedSignal + 1 ! Too many elements
+    integer, parameter :: QN_wrong_size = NotListedSignal + 1  ! The number of
+                                        ! elements of the QN field is not equal
+                                        ! to twice the low-order decimal digit
+                                        ! of the first element, plus 1.
+    integer, parameter :: TooBig = QN_wrong_size + 1   ! Too many elements
     integer, parameter :: WrongSize = TooBig + 1       ! Wrong number of elements
     integer, parameter :: WrongUnits = wrongSize + 1   ! Wrong physical units
 
@@ -214,13 +218,20 @@ contains ! =====  Public Procedures  ===================================
           case ( f_ps )
             call expr_check ( subtree(2,son), lines(numLines)%ps, phyq_dimless )
           case ( f_qn )
-            call allocate_test ( lines(numLines)%qn, nsons(son)-1, 'qn', ModuleName )
-            do k = 2, nsons(son)
+            l = nsons(son)
+            call allocate_test ( lines(numLines)%qn, l-1, 'qn', ModuleName )
+            ! Collect the elements of the QN field.  The first one is the
+            ! format, from the JPL catalog.  The low-order decimal digit of the
+            ! format is the number of pairs.  So the total number of elements
+            ! must be twice the low-order digit of the format, plus 1.
+            do k = 2, l
               call expr_check ( subtree(k,son), qn, phyq_dimless )
               lines(numLines)%qn(k-1) = nint(qn)
               if ( abs(qn - lines(numLines)%qn(k-1)) > 0.1_r8 ) &
                 & call announce_error ( subtree(k,son), notInt )
             end do
+            if ( l-1 /= 2*mod(lines(numLines)%qn(1),10)+1 ) &
+              & call announce_error ( son, QN_wrong_size )
           case ( f_str )
             call expr_check ( subtree(2,son), lines(numLines)%str, phyq_dimless )
           case ( f_umlsSignals )
@@ -440,6 +451,11 @@ contains ! =====  Public Procedures  ===================================
           & advance='yes' )
       case ( notListedSignal )
         call output ( 'The Polarized signal is not listed as an EMLS signal.', &
+          & advance='yes' )
+      case ( QN_wrong_size )
+        call output ( 'The number of elements of the QN field is not twice the', &
+          & advance='yes' )
+        call output ( 'low-order digit of the first element, plus one.', &
           & advance='yes' )
       case ( tooBig )
         call output ( 'The field cannot have more than ' )
@@ -1506,6 +1522,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.59  2013/11/06 22:15:08  pwagner
+! Read/Write the instrument name as a file-level attribute
+!
 ! Revision 2.58  2013/10/16 01:14:39  vsnyder
 ! Add Evaluate_Variable
 !
