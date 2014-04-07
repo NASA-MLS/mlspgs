@@ -1096,10 +1096,11 @@ contains ! ============= Public procedures ===================================
       L_LINECENTER, L_LINEWIDTH, L_LINEWIDTH_TDEP, &
       L_LOSTRANSFUNC, L_LOSVEL, L_LOWESTRETRIEVEDPRESSURE, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
-      L_MIFDEADTIME, L_MIFEXTINCTION, L_MIFExtinctionExtrapolation, &
-      L_MIFExtinctionForm, L_MIFEXTINCTIONV2, L_MIFRHI, &
+      L_MIFDEADTIME, L_MIFEXTINCTION, L_MIFEXTINCTIONEXTRAPOLATION, &
+      L_MIFEXTINCTIONFORM, L_MIFEXTINCTIONV2, L_MIFRHI, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
-      L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_OPTICALDEPTH, L_ORBITINCLINATION, &
+      L_NUMGRAD, L_NUMJ, L_NUMNEWT, &
+      L_OPTICALDEPTH, L_ORBITINCLINATION, L_AscDescMode, &
       L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
       L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
       L_RHI, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
@@ -1240,6 +1241,7 @@ contains ! ============= Public procedures ===================================
     call DefineQtyTypes ( (/ &
       l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
       l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
+      l_AscDescMode, phyq_dimensionless, p_hGrid, next, & 
       l_phaseTiming, phyq_dimensionless, p_vGrid, next, &
       l_phiTan, phyq_angle, p_minorFrame, p_module, next, &
       l_ptan, phyq_zeta, p_minorFrame, p_module, next, &
@@ -1394,6 +1396,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.175  2014/04/07 18:01:12  pwagner
+! Added new quantity type AscDescMode
+!
 ! Revision 2.174  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
