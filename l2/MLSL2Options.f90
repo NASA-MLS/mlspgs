@@ -130,6 +130,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: CHECKPATHS                    = .false.         
 
   logical            :: TOOLKIT                       =  .true. ! SIPS_VERSION
+  logical, parameter :: WRITEFILEATTRIBUTES           = .false.
   logical            :: MLSL2DEBUG                    =  .false.
   ! --------------------------------------------------------------------------
 
@@ -998,6 +999,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.81  2014/04/07 18:08:57  pwagner
+! Stop Writing MLSFile_T attributes by default; they confuse users
+!
 ! Revision 2.80  2014/03/26 17:45:07  pwagner
 ! added cmdline option --loc to set ProductionLocation
 !
