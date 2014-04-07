@@ -548,7 +548,7 @@ contains ! =====     Public procedures     =============================
              l+l_MIFExtinctionExtrapolation, l+l_MIFExtinctionForm, &
              l+l_MIFExtinctionv2, l+l_mifRHI, l+l_noiseBandwidth, &
              l+l_noRadsBinned, l+l_noRadsPerMIF, l+l_numGrad, l+l_numJ, &
-             l+l_numNewt, l+l_opticalDepth, l+l_orbitInclination, &
+             l+l_numNewt, l+l_opticalDepth, l+l_orbitInclination, l+l_AscDescMode, &
              l+l_phaseTiming, l+l_phiTan, l+l_ptan, l+l_quality, l+l_radiance, &
              l+l_reflrefl, l+l_reflspill, l+l_refltemp, l+l_refltrans, &
              l+l_refGPH, l+l_rhi, l+l_scanResidual, l+l_scatteringAngle, &
@@ -1234,6 +1234,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_hdfVersion, numeric(phyq_dimensionless,req=req), &
              begin, f+f_lowerOverlap, boolean(), &
              begin, f+f_options, string(), &
+             begin, f+f_AscDescMode, vectorQuantity(), &
              begin, f+f_precision, vectorQuantity(), &
              begin, f+f_quality, vectorQuantity(), &
              begin, f+f_single, boolean(), &
@@ -1952,6 +1953,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.598  2014/04/07 18:03:55  pwagner
+! May specify AscDescMode when DirectWrite-ing swaths
+!
 ! Revision 2.597  2014/03/13 18:11:29  pwagner
 ! c= field may contain units
 !
