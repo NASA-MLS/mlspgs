@@ -31,27 +31,30 @@ $1,{O3_HR}, {
    {  source=aPriori.$1, precision=aPrioriPrecision.$1})})
   
 !divert!dnl
+
+;; Ascend/Descend Mode will be used in all l2gp and dgg DirectWrites
+begin Fill
+  Fill, quantity=ADModeVector.AscDescMode, method=ascenddescend
+end Fill
+
   !ifdef(flagWriteAPrioriToDGG,{
 begin Join
   !forall(LabelOneAPQuantity,!allStandardProducts)
-  DirectWrite, hdfVersion=!hdfVersion, $
+  DirectWrite, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
   type=l2dgg !forall(DirectWriteOneAPQuantity,!allStandardProducts)
   
 end Join
-
-;; We ought to have a different quantity type for ascend/descend instead of
-;; resorting to this trickery
-begin Fill
-  Fill, quantity=aPriori.surfaceType, method=ascenddescend
-end Fill
-begin Join
-  Label, quantity=aPriori.surfaceType, label='Ascend(+1)Descend(-1)'
-  DirectWrite, hdfVersion=!hdfVersion, $
-  type=l2dgg, source=aPriori.surfaceType
-end Join
+;begin Join
+;  Label, quantity=aPriori.surfaceType, label='Ascend(+1)Descend(-1)'
+;  DirectWrite, hdfVersion=!hdfVersion, $
+;  type=l2dgg, source=aPriori.surfaceType
+;end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.2  2013/10/15 17:57:25  pwagner
+;Spacecraft ascend/descend mode now written to dgg
+;
 ;Revision 1.1  2013/01/25 21:26:18  pwagner
 ;First commit
 ;

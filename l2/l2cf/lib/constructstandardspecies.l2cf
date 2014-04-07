@@ -373,6 +373,9 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
                         fGrid=fGridSpecBaselineBand9
   baselineSpecMIFBand33: Quantity, type=baseline,radiometer=R3, $
                         fGrid=fGridSpecBaselineBand33
+  baselineMIFBand17: Quantity, type=baseline, radiometer=R5H, $
+                      fGrid=fGridBaselineR5H
+
   !define(allMIFSpecBaselines, {!makelist({baselineSpecMIF},{},!allspecFBs)})
   
   ;; ----------------------------------------- Extinctions
@@ -745,6 +748,20 @@ end Construct
 
 begin Fill
   iwcMeasNoise : Vector, template=iwcMeasNoiseTemplate
+end Fill
+
+; The next template is for the Ascending/Descending Mode flags
+begin Construct
+  ;; ----------------------------------------- Ascending/Descending Mode
+  AscDescMode: Quantity, hGrid=hGridStandard, type=AscDescMode
+
+  ADModeTemplate: VectorTemplate, quantities = [ $
+    AscDescMode $
+    ]
+end Construct
+
+begin Fill
+  ADModeVector : Vector, template=ADModeTemplate
 end Fill
 
 ; These will be used after all the chunks have been processed.

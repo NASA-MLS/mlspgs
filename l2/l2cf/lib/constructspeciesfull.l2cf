@@ -759,6 +759,20 @@ begin Fill
   iwcMeasNoise : Vector, template=iwcMeasNoiseTemplate
 end Fill
 
+; The next template is for the Ascending/Descending Mode flags
+begin Construct
+  ;; ----------------------------------------- Ascending/Descending Mode
+  AscDescMode: Quantity, hGrid=hGridStandard, type=AscDescMode
+
+  ADModeTemplate: VectorTemplate, quantities = [ $
+    AscDescMode $
+    ]
+end Construct
+
+begin Fill
+  ADModeVector : Vector, template=ADModeTemplate
+end Fill
+
 ; These will be used after all the chunks have been processed.
 ; Still we are trying to get all the standard species constructed early.
 begin Construct
@@ -785,6 +799,9 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.3  2013/12/04 18:04:44  pwagner
+;Must not remove CO from List
+;
 ;Revision 1.2  2013/12/04 17:27:08  pwagner
 ;Forgot macros require bang sigil; fixed
 ;
