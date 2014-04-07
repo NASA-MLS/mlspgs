@@ -54,6 +54,7 @@ apriori
 aprioriFraction # how much of result is apriori, in [0..1]
 aprioriPrecision
 aprioriScale
+AscDescMode
 ascii
 asPercentage
 atmos
@@ -519,6 +520,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.245  2014/04/07 18:02:36  pwagner
+# May specify AscDescMode when DirectWrite-ing swaths
+#
 # Revision 2.244  2013/11/18 22:25:36  pwagner
 # phase spec takes optional /debug /verbose fields
 #
