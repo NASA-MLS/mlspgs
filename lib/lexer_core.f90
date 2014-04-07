@@ -12,6 +12,7 @@
 module LEXER_CORE
 ! Provides the token type and the initialization routine used by all
 ! lexers, and a routine to print the source text line and column number.
+  use MLSStrings, only: writeIntsToChars
 
   implicit NONE
   private
@@ -83,11 +84,16 @@ contains
     integer, intent(in), optional :: File
     character(len=*), intent(in), optional :: Before, After
     integer :: L
+    character(len=256) :: str
     if ( present(before) ) then
       text = before
       l = len(before) + 1
     end if
-    write ( text(l:), 1 ) where/256, mod(where,256)
+    ! write ( text(l:), 1 ) where/256, mod(where,256)
+    call writeIntsToChars( where/256, str )
+    text = 'line ' // adjustl(str)
+    call writeIntsToChars( mod(where,256), str )
+    text = trim(text) // ', column ' // adjustl(str)
   1 format ( 'line ', i0, ', column ', i0 )
     if ( present(file) ) then
       if ( file > 0 ) then
@@ -155,6 +161,9 @@ contains
 end module LEXER_CORE
 
 ! $Log$
+! Revision 2.11  2014/04/07 17:35:33  pwagner
+! Workaround apparent Intel bug afflicting get_where
+!
 ! Revision 2.10  2013/12/12 02:02:19  vsnyder
 ! Change type of debug from logical to integer
 !
