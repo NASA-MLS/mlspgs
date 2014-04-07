@@ -21,6 +21,7 @@
 a                # polarization
 adopted
 angle
+AscDescMode
 ascii
 azimuth
 
@@ -241,6 +242,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.66  2014/04/07 17:23:55  pwagner
+# Added new l2gp data field AscDescMode
+#
 # Revision 2.65  2013/09/03 23:59:16  pwagner
 # Added us (microsecond)
 #
