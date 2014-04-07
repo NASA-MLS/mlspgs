@@ -33,6 +33,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSFINDS, only: FINDFIRST
+  use MLSL2OPTIONS, only: WRITEFILEATTRIBUTES
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, OUTPUT
   use STRING_TABLE, only: GET_STRING
@@ -138,9 +139,10 @@ contains ! ======================= Public Procedures =========================
     & chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap )
 
     ! Purpose:
-    ! Write standard hdfeos-formatted files ala l2gp for datasets that
-    ! are too big to keep all chunks stored in memory
-    ! so instead write them out profile-by-profile
+    ! Write out all the quantities in a vector as swaths to an hdfeos file
+    ! Notes and limitations:
+    ! Why don't you also supply an entire vector's worth of
+    ! precision, quality, etc.?
     use HGRIDSDATABASE, only: HGRID_T
     ! Args:
     type(MLSFile_T)               :: L2GPFile
@@ -157,27 +159,33 @@ contains ! ======================= Public Procedures =========================
     type (VectorValue_T), pointer :: quality
     type (VectorValue_T), pointer :: status
     type (VectorValue_T), pointer :: Convergence
+    type (VectorValue_T), pointer :: AscDescMode
     character(len=32)             :: SDNAME       ! Name of sd in output file
     ! Executable
-    nullify(precision, quality, status, convergence)
+    nullify(precision, quality, status, convergence, AscDescMode)
     do j = 1, size(vector%quantities)
       quantity => vector%quantities(j)
       call get_string( quantity%template%name, sdname )
       call DirectWrite_L2GP_MF ( L2gpFile, &
-        & quantity, precision, quality, status, Convergence, &
+        & quantity, precision, quality, status, Convergence, AscDescMode, &
         & sdName, chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap )
     enddo
   end subroutine DirectWriteVector_L2GP_MF
 
   ! ------------------------------------------ DirectWrite_L2GP_MF --------
   subroutine DirectWrite_L2GP_MF ( L2gpFile, &
-    & quantity, precision, quality, status, Convergence, &
+    & quantity, precision, quality, status, Convergence, AscDescMode, &
     & sdName, chunkNo, HGrids, createSwath, lowerOverlap, upperOverlap )
 
     ! Purpose:
-    ! Write standard hdfeos-formatted files ala l2gp for datasets that
-    ! are too big to keep all chunks stored in memory
-    ! so instead write them out profile-by-profile
+    ! Write a swath to an hdfeos file composed of 
+    ! what              supplied by
+    ! l2gpvalues        quantity
+    ! l2gpprecision     precision
+    ! quality           quality
+    ! status            status
+    ! Convergence       Convergence
+    ! AscDescMode       AscDescMode
     use HDF, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
     use HGRIDSDATABASE, only: HGRID_T
     use L2GPDATA, only: L2GPDATA_T, &
@@ -190,6 +198,7 @@ contains ! ======================= Public Procedures =========================
     type (VectorValue_T), pointer :: quality
     type (VectorValue_T), pointer :: status
     type (VectorValue_T), pointer :: Convergence
+    type (VectorValue_T), pointer :: AscDescMode
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in)              :: chunkNo
     type (HGrid_T), dimension(:), pointer ::     HGrids
@@ -262,7 +271,8 @@ contains ! ======================= Public Procedures =========================
       & 'l2gp file is rdonly', MLSFile=L2GPFile)
     ! Convert vector quantity to l2gp
     call vectorValue_to_l2gp( quantity, &
-      & precision, quality, status, convergence, l2gp, &
+      & precision, quality, status, convergence, AscDescMode, &
+      & l2gp, &
       & sdname, chunkNo, HGrids, offset=0, &
       & firstInstance=firstInstance, lastInstance=lastInstance)
     ! Output the l2gp into the file
@@ -818,7 +828,7 @@ contains ! ======================= Public Procedures =========================
         & 'Section Names', trim(showTimingNames('sections', .true.)), .true.)
       call h5gclose_f(grp_id, returnstatus)
     endif
-    call h5_writeMLSFileAttr(L2AUXFile, skip_if_already_there=.true.)
+    if ( WRITEFILEATTRIBUTES ) call h5_writeMLSFileAttr(L2AUXFile, skip_if_already_there=.true.)
 
   end subroutine DirectWrite_L2Aux_MF_hdf5
 
@@ -1038,9 +1048,10 @@ contains ! ======================= Public Procedures =========================
 
 ! =====     Private Procedures     =====================================
   ! ---------------------------------------------  vectorValue_to_l2gp  -----
-  subroutine vectorValue_to_l2gp (QUANTITY, &
-    & precision, quality, status, convergence,  l2gp, &
-    & name, chunkNo, HGrids, offset, firstInstance, lastInstance)
+  subroutine vectorValue_to_l2gp ( QUANTITY, &
+    & precision, quality, status, convergence, AscDescMode, &
+    & l2gp, &
+    & name, chunkNo, HGrids, offset, firstInstance, lastInstance )
     use HGRIDSDATABASE, only: HGRID_T
     use INTRINSIC, only: L_NONE
     use L2GPDATA, only: L2GPDATA_T, RGP, &
@@ -1051,6 +1062,7 @@ contains ! ======================= Public Procedures =========================
     type (VectorValue_T), pointer :: quality
     type (VectorValue_T), pointer :: status
     type (VectorValue_T), pointer :: convergence
+    type (VectorValue_T), pointer :: AscDescMode
     type (L2GPData_T)                :: l2gp
     character(len=*), intent(in)     :: name
     integer, intent(in)              :: chunkNo
@@ -1182,6 +1194,17 @@ contains ! ======================= Public Procedures =========================
     else
       l2gp%convergence(firstProfile:lastProfile) = 0.0
     endif
+    if (associated(AscDescMode)) then
+      ! This sets the AscDescMode field to 
+      ! +1 for values of +1
+      ! -1 for values of -1
+      l2gp%AscDescMode(firstProfile:lastProfile) = &
+        & merge( 1, -1, &
+        & (AscDescMode%values(1,useFirstInstance:useLastInstance) > 0._rv) &
+        & )
+    else
+      l2gp%AscDescMode(firstProfile:lastProfile) = 0
+    endif
     if ( DEEBUG ) print *, 'Vector converted to l2gp; name: ', trim(name)
     if ( DEEBUG ) print *, 'firstProfile, lastProfile: ', firstProfile, lastProfile
     if ( DEEBUG ) print *, 'useFirstInstance, useLastInstance: ', useFirstInstance, useLastInstance
@@ -1233,6 +1256,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.60  2014/04/07 18:03:03  pwagner
+! May specify AscDescMode when DirectWrite-ing swaths
+!
 ! Revision 2.59  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
