@@ -1954,6 +1954,14 @@ contains
       & "Error in setting ProductionLocation attribute.") 
     end if
 
+    attrName = 'DataProducer'
+    sval = 'MLS_SIPS'
+    returnStatus = pgs_met_setAttr_s ( groups(INVENTORY), attrName, sval )
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "Error in setting DataProducer attribute.") 
+    end if
+
     ! DOI
     ! This should be in the MCF
     attrName = 'identifier_product_DOI'
@@ -2103,6 +2111,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.80  2014/04/07 18:10:09  pwagner
+! Added new metadata attribute: DataProducer
+!
 ! Revision 2.79  2014/03/26 17:47:44  pwagner
 ! Added ProductionLocation, identifier_product_DOI metadata
 !
