@@ -19,7 +19,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use HDF, only: DFACC_RDONLY, DFACC_RDWR
   use MLSL2OPTIONS, only: CHECKPATHS, &
     & DEFAULT_HDFVERSION_WRITE, L2CFNODE, &
-    & SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT, MLSMESSAGE
+    & SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT, MLSMESSAGE, WRITEFILEATTRIBUTES
   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_WARNING
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
 
@@ -36,7 +36,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   ! -----     Private declarations     ---------------------------------
 
   ! Should we get any of this from MLSL2Options?
-  logical, parameter :: COPYFILEATTRIBUTES = .true.
+  logical, parameter :: COPYGLOBALATTRIBUTES = .true.
   logical, parameter :: DGGFILEISHYBRID = .false.      ! may write PCF as DS?
   logical, parameter :: LOGFILEGETSMETADATA = .false.  ! metadata to log file?
   logical, parameter :: FAKEPARALLELMASTER =  .false.  ! make up fake stuff?
@@ -1052,7 +1052,7 @@ contains ! =====     Public Procedures     =============================
           & outputfile, create2=create, &
           & exclude=trim(exclude), &
           & notUnlimited=avoidUnlimitedDims, &
-          & andGlAttributes=copyFileAttributes, options=optionsString )
+          & andGlAttributes=COPYGLOBALATTRIBUTES, options=optionsString )
       elseif ( .not. got(f_exclude) .and. repairGeoLocations ) then
         if ( DEBUG ) print *,' size(filedatabse) ', size(filedatabase)
         if ( DEBUG ) print *, 'input file: ', trim(inputPhysicalFilename)
@@ -1060,21 +1060,21 @@ contains ! =====     Public Procedures     =============================
         call cpL2GPData( l2metaData, inputfile, &
           & outputfile, create2=create, &
           & swathList=trim(sdList), rename=rename, &
-          & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes, &
+          & notUnlimited=avoidUnlimitedDims, andGlAttributes=COPYGLOBALATTRIBUTES, &
           & HGrid=HGrids(HGridIndex), options=optionsString )
       elseif ( got(f_exclude) .and. repairGeoLocations ) then
         call cpL2GPData( l2metaData, inputfile, &
           & outputfile, create2=create, &
           & swathList=trim(sdList), rename=rename, &
           & exclude=trim(exclude), &
-          & notUnlimited=avoidUnlimitedDims, andGlAttributes=copyFileAttributes, &
+          & notUnlimited=avoidUnlimitedDims, andGlAttributes=COPYGLOBALATTRIBUTES, &
           & HGrid=HGrids(HGridIndex), options=optionsString )
       else
         call cpL2GPData( l2metaData, inputfile, &
           & outputfile, create2=create, &
           & swathList=trim(sdList), rename=rename, &
           & notUnlimited=avoidUnlimitedDims, &
-          & andGlAttributes=copyFileAttributes, options=optionsString )
+          & andGlAttributes=COPYGLOBALATTRIBUTES, options=optionsString )
       endif
       call he5_writeMLSFileAttr( outputFile )
       if ( noGapsHGIndex > 0 ) &
@@ -1648,13 +1648,13 @@ contains ! =====     Public Procedures     =============================
           call cpL2GPData( l2metaData, inputFile, &
             & outputFile, exclude=outsdList, create2=create2, &
             & notUnlimited=avoidUnlimitedDims, &
-            & andGlAttributes=copyFileAttributes, &
+            & andGlAttributes=COPYGLOBALATTRIBUTES, &
             & options=options )
         else
           call cpL2GPData( l2metaData, inputFile, &
             & outputFile, create2=create2, &
             & notUnlimited=avoidUnlimitedDims, &
-            & andGlAttributes=copyFileAttributes, &
+            & andGlAttributes=COPYGLOBALATTRIBUTES, &
             & options=options )
         endif
         create2 = .false.
@@ -1672,7 +1672,7 @@ contains ! =====     Public Procedures     =============================
       end if
       if ( madeFile ) then
         ! (2) File level attributes
-        call he5_writeMLSFileAttr( outputFile )
+        if ( WRITEFILEATTRIBUTES ) call he5_writeMLSFileAttr( outputFile )
         ! Is the next line necessary?
         if ( inputFile%stillOpen ) then
           call output( 'Closing input file before reading apriori attributes', &
@@ -1805,7 +1805,8 @@ contains ! =====     Public Procedures     =============================
       end if
       
       ! Now we can write any last-minute attributes or datasets to the l2aux
-      if ( madeFile ) call h5_writeMLSFileAttr ( outputFile )
+      if ( madeFile .and. WRITEFILEATTRIBUTES ) &
+        & call h5_writeMLSFileAttr ( outputFile )
       ! E.g., parallel stuff
       if ( (parallel%master .or. switchDetail(switches, 'chu') > -1 ) &
         & .and. .not. (checkPaths .or. SKIPDIRECTWRITES) .and. &
@@ -1869,6 +1870,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.183  2014/04/07 18:09:27  pwagner
+! Stop Writing MLSFile_T attributes by default; they confuse users
+!
 ! Revision 2.182  2014/04/02 23:04:34  pwagner
 ! Removed redundant open_ and close_MLSFile
 !
