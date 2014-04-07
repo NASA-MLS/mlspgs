@@ -40,13 +40,13 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_MAGNETICFIELD, &
     & L_MAX, L_MEAN, L_MIN, L_MOLCM2, &
     & L_NOISEBANDWIDTH, L_NONE, L_NORADSPERMIF, L_NORADSBINNED, &
-    & L_ORBITINCLINATION, &
+    & L_ORBITINCLINATION, L_ASCDESCMODE, &
     & L_PRESSURE, L_PTAN,  L_QUALITY, &
     & L_RADIANCE, L_REFGPH, &
     & L_REFLTEMP, &
     & L_SCECI, L_SCGEOCALT, L_SCVELECI, L_SCVELECR, &
     & L_SINGLECHANNELRADIANCE, &
-    & L_STATUS, L_SYSTEMTEMPERATURE, &
+    & L_STATUS, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
     & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TOTALPOWERWEIGHT, L_VMR, &
     & L_XYZ, L_ZETA
@@ -4726,7 +4726,7 @@ contains ! =====     Public Procedures     =============================
       endif
     end subroutine Scatter
 
-    ! --------------------------------------------  WithEstdNoise  -----
+    ! --------------------------------------------  WithAscOrDesc  -----
     ! Fills a quantity with values determined by whether the s/c
     ! is in ascending or descending mode: +1 is ascending, -1 is descending
     ! method:
@@ -4747,6 +4747,11 @@ contains ! =====     Public Procedures     =============================
       integer                                    :: noMAFs
       integer                                    :: noSurfs
       ! Executable
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & quantityType=(/l_surfaceType, l_AscDescMode/) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Invalid quantity for Ascend/Descend fill.")
+
       L1BOAFile => GetMLSFileByType(filedatabase, content='l1boa')
       call ReadL1BData ( L1BOAFile, 'sc/VelECI', L1BDATA, noMAFs, &
         & flag=l1bError, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
@@ -7388,6 +7393,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.99  2014/04/07 18:06:10  pwagner
+! Added check on quantityTypes when Filling WithAscOrDesc
+!
 ! Revision 2.98  2014/03/13 18:12:26  pwagner
 ! GeoidData Fills will warn instead of bomb if running toolkitless
 !
