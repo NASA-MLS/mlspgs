@@ -390,9 +390,10 @@ contains ! =====     Public Procedures     =============================
     use HDF, only: DFACC_CREATE, DFACC_RDWR
     use HGRIDSDATABASE, only: HGRID_T
     use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-    use INIT_TABLES_MODULE, only: F_CONVERGENCE, F_FILE, &
-      & F_HDFVERSION, F_LOWEROVERLAP, F_OPTIONS, F_PRECISION, F_QUALITY, &
-      & F_SINGLE, F_SOURCE, F_STATUS, F_TYPE, F_UPPEROVERLAP, F_VECTOR
+    use INIT_TABLES_MODULE, only: F_CONVERGENCE, F_FILE, F_HDFVERSION, &
+      & F_LOWEROVERLAP, F_OPTIONS, F_AscDescMode, F_PRECISION, F_QUALITY, &
+      & F_SINGLE, F_SOURCE, F_STATUS, F_TYPE, F_UPPEROVERLAP, F_VECTOR, &
+      & FIELD_FIRST, FIELD_LAST
     use INIT_TABLES_MODULE, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
       & L_PRESSURE, L_ZETA
     use INTRINSIC, only: L_NONE, L_HDF, L_SWATH, LIT_INDICES, PHYQ_DIMENSIONLESS
@@ -465,6 +466,7 @@ contains ! =====     Public Procedures     =============================
     character(len=1024) :: FILENAME     ! Output full filename
     character(len=1024) :: FILE_BASE    ! made up of
     integer :: FILETYPE
+    logical, dimension(field_first:field_last) :: GOT
     logical :: GOTSOURCE                ! TRUE if already had a source field
     integer :: GSON                     ! Son of son
     integer :: HANDLE                   ! File handle from hdf/hdf-eos
@@ -487,6 +489,8 @@ contains ! =====     Public Procedures     =============================
     integer :: NumOutput                ! No. things actually output
     logical, parameter :: OPENHERE = .false.
     character(len=16) :: OPTIONS
+    integer :: AscDescModeVECTOR
+    integer :: AscDescModeQTYINDX
     integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2fwm, l_l2dgg
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     character(len=1024) :: PATH         ! path/file_base
@@ -516,6 +520,7 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
     type(VectorValue_T), pointer :: QUALITYQTY ! The quantities quality
     type(VectorValue_T), pointer :: STATUSQTY ! The quantities status
+    type(VectorValue_T), pointer :: AscDescModeQTY ! The shared quantity AscDescMode
     type(DirectData_T), pointer  :: thisDirect ! => null()
     type(Vector_T), pointer      :: Vector ! => null()
     real :: TimeIn, TimeSetUp, TimeWriting, timeToClose, TimeOut
@@ -547,6 +552,7 @@ contains ! =====     Public Procedures     =============================
     file = 0
     filename = 'undefined'
     lowerOverlap = .false.
+    got = .false.
     options = ' '
     outputType=0
     outputtypestr = 'unknown'
@@ -558,10 +564,15 @@ contains ! =====     Public Procedures     =============================
       son = subtree ( keyNo, node )
       ! if ( keyNo > 2 ) lastFieldIndex = fieldIndex
       fieldIndex = get_field_id ( son )
+      got ( fieldIndex ) = .true.
       select case ( fieldIndex )
       case ( f_source, f_vector )
         noSources = noSources + 1
         gotsource = .true.
+      case ( f_AscDescMode )
+        gson = subtree(2,son)
+        AscDescModeVector = decoration(decoration(subtree(1,gson)))
+        AscDescModeQtyIndx = decoration(decoration(decoration(subtree(2,gson))))
       case ( f_precision )
         if ( .not. gotsource ) &
           & call Announce_Error ( son, no_error_code, &
@@ -682,6 +693,9 @@ contains ! =====     Public Procedures     =============================
     ! if ( .not. (SKIPDIRECTWRITES .or. checkpaths) ) then
     if ( .not. checkpaths ) then
     ! Now go through and do some sanity checking
+    nullify ( AscDescModeQty )
+    if ( got(f_AscDescMode) ) AscDescModeQty => GetVectorQtyByTemplateIndex ( vectors(AscDescModevector), &
+    & AscDescModeQtyIndx )
     do source = 1, noSources
       if ( sourceQuantities(source) < 1 ) cycle
       qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
@@ -1205,7 +1219,7 @@ contains ! =====     Public Procedures     =============================
           ! and reset its access to read/write--could be that it was confused 
           ! by the DFACC_CREATE
           call DirectWrite ( directFile, &
-            & qty, precQty, qualityQty, statusQty, convergQty, &
+            & qty, precQty, qualityQty, statusQty, convergQty, AscDescModeQty, &
             & hdfName, chunkNo, HGrids, &
             & createSwath=createthisswath, &
             & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
@@ -1217,7 +1231,7 @@ contains ! =====     Public Procedures     =============================
           if ( fileaccess == DFACC_CREATE ) then
             ! OK, because the bug is still there (!), we'll repeat
             call DirectWrite ( directFile, &
-              & qty, precQty, qualityQty, statusQty, convergQty, &
+              & qty, precQty, qualityQty, statusQty, convergQty, AscDescModeQty, &
               & hdfName, chunkNo, HGrids, &
               & createSwath=createthisswath, &
               & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
@@ -2237,6 +2251,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.161  2014/04/07 18:03:28  pwagner
+! May specify AscDescMode when DirectWrite-ing swaths
+!
 ! Revision 2.160  2014/03/31 23:43:49  pwagner
 ! Commented-out unused stuff; renamed procedure ResizeL2AUXData, generalizing it to expand or contract
 !
