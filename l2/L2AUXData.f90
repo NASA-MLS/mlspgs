@@ -29,7 +29,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     & L_LOSTRANSFUNC, L_LOSVEL, L_LSBFREQUENCY, L_MAF, &
     & L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
     & L_MIFEXTINCTION, L_MIFEXTINCTIONV2, L_NOISEBANDWIDTH, L_NONE, &
-    & L_NORADSPERMIF, L_NUMJ, L_OPTICALDEPTH, L_ORBITINCLINATION, &
+    & L_NORADSPERMIF, L_NUMJ, L_OPTICALDEPTH, L_ORBITINCLINATION, L_AscDescMode, &
     & L_PHASETIMING, L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, &
     & L_REFLSPILL, L_REFLTEMP, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, &
     & L_SCVELECI, L_SCVELECR, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
@@ -1815,6 +1815,7 @@ contains ! =====     Public Procedures     =============================
       attrib(l_numJ)                       = attrib_t('neither', 'iteration ', (/ l_none, l_iteration, l_chunk /) )
       attrib(l_opticalDepth)               = attrib_t('minor  ', 'NoUnits   ', (/ l_channel, l_MIF, l_MAF /) )
       attrib(l_orbitInclination)           = attrib_t('minor  ', 'deg       ', (/ l_none, l_none, l_none /) )
+      attrib(l_AscDescMode)                  = attrib_t('neither', 'NoUnits   ', (/ l_none, l_none, l_none /) )
       attrib(l_phaseTiming)                = attrib_t('minor  ', 's         ', (/ l_none, l_MIF, l_MAF /) )
       attrib(l_phiTan)                     = attrib_t('minor  ', 'deg       ', (/ l_none, l_MIF, l_MAF /) )
       attrib(l_ptan)                       = attrib_t('minor  ', 'log10(hPa)', (/ l_none, l_MIF, l_MAF /) )
@@ -1952,6 +1953,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.92  2014/04/07 18:06:58  pwagner
+! May specify AscDescMode when DirectWrite-ing swaths
+!
 ! Revision 2.91  2014/03/31 23:43:29  pwagner
 ! Commented-out unused stuff; renamed procedure ResizeL2AUXData, generalizing it to expand or contract
 !
