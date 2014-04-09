@@ -324,7 +324,9 @@ contains ! =====     Public Procedures     =============================
     myDetails = 1
     if ( present(details) ) myDetails = details
     if ( myDetails > 0 ) then
-      call display_string ( data_type_indices(decl%type), before=' type=' )
+      if ( associated(data_type_indices) ) & ! Might not be if called from
+                                             ! command line processing
+        & call display_string ( data_type_indices(decl%type), before=' type=' )
       if ( myDetails > 1 ) then
         call output ( decl%type, before='=' )
         call output ( decl%units, before=' units=' )
@@ -345,7 +347,7 @@ contains ! =====     Public Procedures     =============================
     case ( phys_unit_name )
       call display_string ( lit_indices(decl%tree), before=' units=' )
     case ( variable )
-      if ( decl%units /= 0 ) then
+      if ( decl%units /= 0 .and. associated(data_type_indices) ) then
         call display_string ( data_type_indices(decl%units), before=' type ' )
       else
         call output ( decl%units, before=' What is ' )
@@ -381,7 +383,7 @@ contains ! =====     Public Procedures     =============================
       end if 
       call dump_values ( decl%values, type_tree=enum_type, details=details )
     else
-      call newLine
+      call output ( ' No values', advance='yes' )
     end if
   end subroutine DUMP_A_DECL
 
@@ -430,32 +432,36 @@ contains ! =====     Public Procedures     =============================
       case ( do_label )
         call display_string ( nint(values(i)%value(1)), before='DO label ' )
       case ( enum_value )  ! values%value(1) is a lit index
-        call display_string ( lit_indices(nint(values(i)%value(1))) )
-        if ( values(i)%what /= 0 ) call display_string ( &
-          & data_type_indices(values(i)%type), before=' ' )
+        if ( associated(lit_indices) ) &
+          & call display_string ( lit_indices(nint(values(i)%value(1))) )
+        if ( values(i)%what /= 0 .and. associated(data_type_indices) ) &
+          & call display_string ( data_type_indices(values(i)%type), before=' ' )
         call output ( values(i)%decor, before=' decor=' )
       case ( label )       ! values%value(1) is a string index
         call display_string ( nint(values(i)%value(1)), before=' ' )
-        if ( values(i)%units(1) /= 0 ) call display_string ( &
-           & spec_indices(values(i)%units(1)), before=': ' )
+        if ( values(i)%units(1) /= 0 .and. associated(spec_indices) ) &
+          & call display_string ( spec_indices(values(i)%units(1)), before=': ' )
       case ( log_value )   ! values%value(1) 0= 0 => false, else true
         call output ( trim(merge('true ','false',values(i)%value(1)/=0.0d0)) )
         call output ( ' log_value' )
       case ( named_value )  ! values%value(1) is a string index
         call display_string ( nint(values(i)%value(1)) )
-        if ( the_type /= 0 ) &
+        if ( the_type /= 0 .and. associated(parm_indices) ) &
           & call display_string ( parm_indices(the_type), before=' ' )
       case ( num_value )   ! values%value(1) is a number
         call output ( values(i)%value(1) )
-        call display_string ( lit_indices(base_unit(values(i)%units(1))), &
-          & before=' ' )
+        if ( associated(lit_indices) ) &
+          & call display_string ( lit_indices(base_unit(values(i)%units(1))), &
+            & before=' ' )
       case ( range )       ! values%value(1:2) are numbers
         call output ( values(i)%value(1) )
-        call display_string ( lit_indices(base_unit(values(i)%units(1))), &
-          & before=' ' )
+        if ( associated(lit_indices) ) &
+          & call display_string ( lit_indices(base_unit(values(i)%units(1))), &
+            & before=' ' )
         call show_range ( values(i)%decor ) ! Tree node id
-        call display_string ( lit_indices(base_unit(values(i)%units(2))), &
-          & before=' ' )
+        if ( associated(lit_indices) ) &
+          & call display_string ( lit_indices(base_unit(values(i)%units(2))), &
+            & before=' ' )
       case ( str_range )   ! values%value(1:2) are string indices
         call display_string ( nint(values(i)%value(1)) )
         call show_range ( values(i)%decor ) ! Tree node id
@@ -646,7 +652,7 @@ contains ! =====     Public Procedures     =============================
     prior = symbol_decl(string)
     do
       if ( prior == null_decl ) then
-        call declare ( string, value, type, units, tree )
+        call declare ( string, value, type, units, tree, values )
         return
       end if
       if ( decl_table(prior)%type == type ) then
@@ -742,6 +748,11 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.22  2014/04/09 00:43:18  vsnyder
+! Don't try to use data_type_indices or lit_indices if they're not yet
+! associated.  Pass "values" through from redeclare to declare.  Print
+! "No values" instead of simply a new line if a variable has no values.
+!
 ! Revision 2.21  2014/03/20 01:38:29  vsnyder
 ! Unify types in Intrinsic instead of having a separate system in
 ! Declaration_Table.
