@@ -194,26 +194,29 @@ program LR
     call dump_decl
   end if
 
-  call print_the_grammar ( prod_ind, productions, actions, vocab )
+  if ( .not. error ) then
 
-  ! Print the vocabulary cross reference
-  call cross_reference ( productions, prod_ind, vocab )
+    call print_the_grammar ( prod_ind, productions, actions, vocab )
 
-  ! Set up to use the guts of the original LR from Shannon and Wetherell
-  call lists_init
-  call analyz
-  call pntset ( lnadqt )
+    ! Print the vocabulary cross reference
+    call cross_reference ( productions, prod_ind, vocab )
 
-  if ( lnadqt /= 0 ) then
-    call output ( lnadqt, &
-      & before='Error: Grammar is not LR(1).  Last inadequate state is ', &
-      & advance='yes' )
-    stop 1
-  end if
+    ! Set up to use the guts of the original LR from Shannon and Wetherell
+    call lists_init
+    call analyz
+    call pntset ( lnadqt )
 
-  if ( table_unit > 0 ) then ! -o option or table_file field was specified
-    call chncsl
-    call gentab ( table_unit, vocab )
+    if ( lnadqt /= 0 ) then
+      call output ( lnadqt, &
+        & before='Error: Grammar is not LR(1).  Last inadequate state is ', &
+        & advance='yes' )
+      stop 1
+    end if
+
+    if ( table_unit > 0 ) then ! -o option or table_file field was specified
+      call chncsl
+      call gentab ( table_unit, vocab )
+    end if
   end if
 
 contains
@@ -271,3 +274,6 @@ contains
 end program LR
 
 ! $Log$
+! Revision 1.4  2014/01/14 00:11:42  vsnyder
+! Revised LR completely
+!
