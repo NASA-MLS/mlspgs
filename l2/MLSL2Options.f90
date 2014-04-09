@@ -262,7 +262,7 @@ contains
     if ( LogThreshold > -1 .and. LogThreshold < 6 ) then
       outputInstead = ( severity < LogThreshold .and. &
         & mustRepeat )
-    endif
+    end if
     if ( MLSL2DEBUG ) then
       print *, 'mustRepeat ', mustRepeat
       print *, 'outputInstead ', outputInstead
@@ -270,20 +270,20 @@ contains
       print *, 'OutputOptions%PrUnit ', OutputOptions%PrUnit
       print *, 'DEFAULTLOGUNIT ', DEFAULTLOGUNIT
       print *, 'Config%logFileUnit ', logFileUnit
-    endif
+    end if
     ! For severity "info" just do the call and return
     ! For severity "warn" do the call and 
     ! check status to see if we need to skip printing
     if ( severity == MLSMSG_INFO ) then
       call SayIt ( Message )
       return
-    elseif ( severity == MLSMSG_Warning ) then
+    else if ( severity == MLSMSG_Warning ) then
       ! This trickery is to determine whether this warning would be suppressed
       call SAYMESSAGE ( MLSMSG_TestWarning, ModuleNameIn, MyMessage, &
         & Advance, MLSFile, myStatus )
       if ( present(status) ) status = myStatus
       if ( myStatus /= 0 ) return
-    endif
+    end if
     ! Do we have an l2cf node we were processing?
     if ( L2CFNode /= 0 ) then
       call get_where ( where(L2CFNode), myMessage, &
@@ -311,7 +311,7 @@ contains
       case ( DB_VectorTemplate     )
       case default
       end select
-    endif
+    end if
     call SayIt ( myMessage )
   contains
     subroutine SayIt ( It )
@@ -332,6 +332,7 @@ contains
   function ProcessOptions ( cmdLine ) result ( fileName )
     use ALLOCATE_DEALLOCATE, only: TRACKALLOCATES, &
       & CLEARONALLOCATE
+    use Evaluate_Variable_m, only: Define_Variable_As_String
     use IO_STUFF, only: GET_LUN
     use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
       & SNIPLASTSLAVEARGUMENT
@@ -380,7 +381,7 @@ contains
     filename = 'help' ! This means abnormal options--should dump help mesg
     if ( present( cmdline ) .and. DEEBUG ) then
       print *, 'cmdline: ', trim(cmdline)
-    endif
+    end if
   ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
   ! So here's a good place to put any SIPS-specific settings overriding defaults
   if ( .true.  ) then ! SIPS_VERSION
@@ -397,25 +398,25 @@ contains
     switches='0sl'
     time_config%use_wall_clock = .false. ! SIPS_VERSION
   end if
-    i = 1+hp
+    i = 1 + hp
     do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
       call getNextArg ( i, line )
       if ( line(1:4) /= '-Wl,' ) then
         call SnipLastSlaveArgument ! Don't want slaves to see this
         exit
-      endif
+      end if
       call AccumulateSlaveArguments(line) ! pass them to slave processes
       i = i + 1
     end do
     ! Now process the other options
     command_line = ' '
     field_is_include = .false.
-    cmds:    do
+cmds: do
       call getNextArg ( i, line )
       if ( DEEBUG ) print *, i, trim(line)
       if ( len_trim( line ) < 1 ) then
         exit
-      endif
+      end if
       if ( line(1:2) == '--' ) then       ! "word" options
         line = lowercase(line)
         n = 0
@@ -521,7 +522,7 @@ contains
             MLSMessageConfig%MaxModuleNameLength     = 10
             MLSMessageConfig%MaxSeverityNameLength   = 8
             cycle
-          endif
+          end if
           call getNextArg ( i, line )
           read ( line, *, iostat=status ) degree
           if ( status /= 0 ) then
@@ -533,10 +534,10 @@ contains
           if ( degree == 0 ) then
             MLSMessageConfig%MaxModuleNameLength     = 3
             MLSMessageConfig%MaxSeverityNameLength   = 1
-          elseif ( degree == 3 ) then
+          else if ( degree == 3 ) then
             MLSMessageConfig%MaxModuleNameLength     = 0
             MLSMessageConfig%MaxSeverityNameLength   = 0
-          endif
+          end if
           MLSMessageConfig%skipModuleNamesThr = mod(degree, 10) + 2
           MLSMessageConfig%skipSeverityThr = mod(degree, 10) + 2
           MLSMessageConfig%skipMessageThr = degree - 10 + 2
@@ -544,7 +545,7 @@ contains
           if ( degree > 9 ) then
             removeSwitches = catLists(trim(removeSwitches), 'log' )
             outputOptions%prunit = INVALIDPRUNIT
-          endif
+          end if
         else if ( line(3+n:7+n) == 'leak' ) then
           checkLeak = .true.
         else if ( line(3+n:5+n) == 'loc' ) then
@@ -698,8 +699,8 @@ contains
         else if ( line(3+n:9+n) == 'stdout ' ) then
           if ( .not. switch ) then
             OUTPUT_PRINT_UNIT = INVALIDPRUNIT
-            return
-          endif
+            cycle
+          end if
           i = i + 1
           call getNextArg ( i, line )
           select case ( lowercase(line) )
@@ -723,6 +724,8 @@ contains
             inquire( unit=OutputOptions%prUnit, exist=exist, opened=opened )
             OUTPUT_PRINT_UNIT = OutputOptions%prUnit
           end select
+          if ( outputOptions%prunit /= INVALIDPRUNIT ) &
+            & outputOptions%prunit = OUTPUT_PRINT_UNIT
         else if ( line(3+n:12+n) ==  'stopafter ' ) then
           i = i + 1
           call getNextArg ( i, stopAfterSection )
@@ -743,7 +746,13 @@ contains
         else if ( line(3+n:5+n) == 'tk ' ) then
           toolkit = switch
           call set_config ( useToolkit = switch )
-        else if ( line(3+n:9+n) == 'verbose' ) then
+        else if ( line(3+n:6+n) == 'var ' ) then
+          i = i + 1
+          call getNextArg ( i, line ) ! The variable
+          i = i + 1
+          call getNextArg ( i, word ) ! Its value as a string
+          call define_variable_as_string ( line, word )
+        else if ( line(3+n:10+n) == 'verbose ' ) then
           switches = catLists( trim(switches), &
             & 'l2q,glob,mas,bool,opt1,log,pro1,time,apr,phase' )
         else if ( line(3+n:10+n) == 'version ' ) then
@@ -863,7 +872,7 @@ jloop:do while ( j < len_trim(line) )
       i = i + 1
       call getNextArg ( i, line )
       filename = line
-    endif
+    end if
   ! Are any switches inappropriate for master or for slave?
     if ( parallel%master ) &
       & removeSwitches = catLists( trim(removeSwitches), 'bool,walk' )
@@ -909,7 +918,7 @@ jloop:do while ( j < len_trim(line) )
         line = StringElement ( cmdline, i, countEmpty, inseparator=' ' )
       else
         call getArg ( i, line )
-      endif
+      end if
       command_line = trim(command_line) // ' ' // trim(line)
       call AccumulateSlaveArguments(line) ! pass them to slave processes
     end subroutine getNextArg
@@ -981,7 +990,7 @@ jloop:do while ( j < len_trim(line) )
       ! Yes, it is scalar-valued; remove it
       call RemoveHashElement( runTimeValues%lkeys, runTimeValues%lvalues, name, &
         & countEmpty, runTimeValues%sep )
-    endif
+    end if
   end subroutine removeRuntimeBoolean
 
 !--------------------------- end bloc --------------------------------------
@@ -999,6 +1008,10 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.82  2014/04/09 00:44:49  vsnyder
+! Add --var variable value option.  Cycle instead of returning with
+! --nstdout option.  Set print unit immediately at --stdout option.
+!
 ! Revision 2.81  2014/04/07 18:08:57  pwagner
 ! Stop Writing MLSFile_T attributes by default; they confuse users
 !
