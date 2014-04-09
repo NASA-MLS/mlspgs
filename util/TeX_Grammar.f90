@@ -26,6 +26,7 @@ program TeX_Grammar
   character(*), parameter :: BS1 = '\\'
   character, parameter :: BS = BS1(1:1)
 
+  call output ( '% LR output converted to TeX by TeX_Grammar program', advance='yes' )
   do
     read ( *, '(a)', end=9 ) line
     select case ( state )
@@ -135,3 +136,6 @@ end program TeX_Grammar
 ! $Id$
 
 ! $Log$
+! Revision 1.1  2014/02/28 22:01:25  vsnyder
+! Initial commit
+!
