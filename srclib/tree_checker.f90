@@ -573,7 +573,7 @@ contains ! ====     Public Procedures     ==============================
       case ( n_identifier )
         if ( node_id(field) == n_variable_ref ) then
           decl = get_decl(sub_rosa(root),look_for)
-          if  ( decl%tree /= null_tree ) &
+          if  ( decl%type /= null_decl ) &
     go to 9
         else if ( node_id(field) /= n_dot ) then ! Field doesn't need x.y
           do j = start, nsons(field)             ! Try all of the types
@@ -2250,6 +2250,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.49  2014/03/20 18:36:11  vsnyder
+! Unified type system instead of one in Intrinsic and one in Declaration_Table
+!
 ! Revision 1.48  2014/02/27 02:37:18  vsnyder
 ! EXIT referring to IF and SELECT CASE constructs
 !
