@@ -13,7 +13,7 @@ module Evaluate_Variable_m
 
   implicit NONE
   private
-  public :: Evaluate_Variable
+  public :: Define_Variable_As_String, Evaluate_Variable
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -22,6 +22,25 @@ module Evaluate_Variable_m
 !---------------------------------------------------------------------------
 
 contains ! ====     Public Procedures     ==============================
+
+  subroutine Define_Variable_As_String ( Variable_Name, String )
+    use Declaration_Table, only: Allocate_Test, Redeclare, Str_Value, Value_t, &
+      & Variable
+    use Symbol_Table, only: Enter_Terminal
+    use Symbol_Types, only: T_Identifier, T_String
+    character(*), intent(in) :: Variable_Name, String
+    integer :: Name, Value
+    type(value_t), allocatable :: The_Value(:)
+
+    name = enter_terminal ( trim(adjustl(variable_name)), t_identifier )
+    value = enter_terminal ( trim(adjustl(string)), t_string )
+    call allocate_test ( the_value, 1, 'The_Value', moduleName )
+    ! Don't use T_String for the type here; it's a token index here.
+    the_value(:) = value_t(str_value,str_value,dble(value))
+    !              string  value       type      units     tree
+    call redeclare ( name, name+0.0d0, variable, str_value, 0, &
+      & values=the_value ) ! Declares it if it's not declared
+  end subroutine Define_Variable_As_String
 
   subroutine Evaluate_Variable ( Root, Son )
 
@@ -101,6 +120,9 @@ contains ! ====     Public Procedures     ==============================
 end module Evaluate_Variable_m
 
 ! $Log$
+! Revision 2.6  2014/04/09 00:43:43  vsnyder
+! Add Define_Variable_As_String
+!
 ! Revision 2.5  2014/02/27 02:24:44  vsnyder
 ! Redeclare variable consistently with Declare in tree_checker
 !
