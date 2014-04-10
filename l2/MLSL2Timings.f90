@@ -23,7 +23,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   use L2PARINFO, only: PARALLEL
   use MLSCommon, only: MLSDebug, MLSVerbose, &
     & MLSDebugSticky, MLSVerboseSticky
-  use MLSL2OPTIONS, only: COMMAND_LINE, DUMPMACROS, ORIGINALCMDS, &
+  use MLSL2OPTIONS, only: COMMAND_LINE, currentPhaseName, currentChunkNumber, &
+    & DUMPMACROS, ORIGINALCMDS, &
     & PROCESSOPTIONS, RESTARTWARNINGS, RESTOREDEFAULTS, RUNTIMEVALUES, &
     & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
     & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
@@ -49,7 +50,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
     &       ADDPHASETOPHASENAMES, &
     &       DUMP_SECTION_TIMINGS, RUN_START_TIME
   public :: FINISHTIMINGS, FILLTIMINGS, RESTARTTIMINGS
-  public :: SHOWTIMINGNAMES, CURRENTCHUNKNUMBER, CURRENTPHASENAME
+  public :: SHOWTIMINGNAMES
   private
 
 !---------------------------- RCS Module Info ------------------------------
@@ -100,8 +101,6 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   integer, parameter                 :: num_directwrite_times = 2  ! <--|
   real, dimension(MAXNUMSECTIONTIMES), &
     & save                           :: section_timings = 0.
-  character(len=SECTIONNAMELEN), save :: currentPhaseName = ' '
-  integer, save                       :: currentChunkNumber = 0
   character(len=PHASENAMESLEN), save :: phaseNames = ' '
   integer, save :: num_phases = 0
   real, dimension(MAXNUMPHASES), save :: phase_timings = 0.
@@ -934,6 +933,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.55  2014/04/10 00:44:21  pwagner
+! Moved currentChunkNumber, currentPhaseName from MLSL2Timings to MLSL2Options
+!
 ! Revision 2.54  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
