@@ -104,6 +104,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: RESTARTWARNINGS               = .true.
   ! What units to use in summarizing timings at end of run
   integer            :: SECTIONTIMINGUNITS            = L_SECONDS
+  character(len=32)  :: currentPhaseName              = ' '
+  integer            :: currentChunkNumber            = 0
+  
   ! Whether to skip doing the direct writes--quicker when snooping
   logical            :: SKIPDIRECTWRITES              = .false.    
   logical            :: SKIPDIRECTWRITESORIGINAL      = .false.    
@@ -117,6 +120,11 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! may not find enough available and therefore crash
   ! FALSE means let operating system do it automatically
   logical            :: SLAVESDOOWNCLEANUP            = .true.
+  ! Will we be using a pvm channel to pipe data to an
+  ! external running process, e.g. idl?
+  logical            :: SNOOPINGACTIVE                = .false.
+  character(len=132) :: SNOOPNAME                     = ''
+
   ! In case special dumps are to go to a special dumpfile
   character(len=255) :: SPECIALDUMPFILE               = ' '
   ! What to fill state, outputSD with if skipping retrieval
@@ -129,9 +137,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Whether to do only a pre-flight checkout of paths
   logical            :: CHECKPATHS                    = .false.         
 
-  logical            :: TOOLKIT                       =  .true. ! SIPS_VERSION
-  logical, parameter :: WRITEFILEATTRIBUTES           = .false.
-  logical            :: MLSL2DEBUG                    =  .false.
+  logical            :: TOOLKIT                       = .true. ! SIPS_VERSION 
+  logical, parameter :: WRITEFILEATTRIBUTES           = .false.               
+  logical            :: MLSL2DEBUG                    = .false.               
   ! --------------------------------------------------------------------------
 
   ! This is the type to store runtime Booleans set and used by the l2cf
@@ -349,7 +357,6 @@ contains
     use PCFHDR, only: GLOBALATTRIBUTES
     use PRINTIT_M, only: SET_CONFIG
     use SET_TOGGLES_M, only: SET_TOGGLES
-    use SNOOPMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
     use STRING_TABLE, only: ADD_INCLUDE_DIRECTORY, DO_LISTING
     use TIME_M, only: TIME_CONFIG
     use TOGGLES, only: SWITCHES
@@ -1008,6 +1015,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.83  2014/04/10 00:44:58  pwagner
+! Moved more stuff here
+!
 ! Revision 2.82  2014/04/09 00:44:49  vsnyder
 ! Add --var variable value option.  Cycle instead of returning with
 ! --nstdout option.  Set print unit immediately at --stdout option.
