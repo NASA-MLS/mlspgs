@@ -1952,12 +1952,12 @@ contains
         end do
       case ( f_variable )
         do i = 2, nsons(son)
-          call display_string ( sub_rosa(subtree(i,son)) )
           decl = get_decl ( sub_rosa(subtree(i,son)), type=variable )
           if ( decl%type /= variable ) then
-            call display_string ( sub_rosa(subtree(i,son)), before='The symbol ' )
-            call output ( ' is not a variable.', advance='yes' )
+            call display_string ( sub_rosa(subtree(i,son)), before='The symbol "' )
+            call output ( '" has not been given a value.', advance='yes' )
           else
+            call display_string ( sub_rosa(subtree(i,son)) )
             call dump_a_decl ( decl, before=' is', details=details )
           end if
         end do
@@ -2630,6 +2630,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.113  2014/04/10 02:02:22  vsnyder
+! Improve message for nonexistent variable
+!
 ! Revision 2.112  2014/04/10 00:45:41  pwagner
 ! Moved currentChunkNumber, currentPhaseName from MLSL2Timings to MLSL2Options
 !
