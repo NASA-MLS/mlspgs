@@ -71,9 +71,11 @@ contains ! ====     Public Procedures     ==============================
     use MATRIXMODULE_1, only: DESTROYMATRIXDATABASE, MATRIX_DATABASE_T
     use MERGEGRIDSMODULE, only: MERGEGRIDS
     use MLSCOMMON, only: TAI93_RANGE_T, MLSFILE_T
-    use MLSL2OPTIONS, only: AURA_L1BFILES, CHECKPATHS, NEED_L1BFILES, &
+    use MLSL2OPTIONS, only: AURA_L1BFILES, CHECKPATHS, currentChunkNumber, &
+      & L2CFNODE, NEED_L1BFILES, &
+      & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
       & SKIPRETRIEVAL, SLAVESDOOWNCLEANUP, SPECIALDUMPFILE, STOPAFTERSECTION, &
-      & MLSMESSAGE
+      & MLSMESSAGE, TOOLKIT
     use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_INFO, &
       & MLSMSG_ERROR, SUMMARIZEWARNINGS
     use MLSPCF2, only: MLSPCF_SPECTROSCOPY_END
@@ -85,10 +87,7 @@ contains ! ====     Public Procedures     ==============================
       & SIGNALS, SPECTROMETERTYPES
     use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, ISINLIST, SWITCHDETAIL
     use MLSSTRINGS, only: LOWERCASE
-    use MLSL2OPTIONS, only: L2CFNODE, &
-      & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, TOOLKIT
-    use MLSL2TIMINGS, only: ADD_TO_SECTION_TIMING, TOTAL_TIMES, &
-      & CURRENTCHUNKNUMBER
+    use MLSL2TIMINGS, only: ADD_TO_SECTION_TIMING, TOTAL_TIMES
     use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
     use OPEN_INIT, only: OPENANDINITIALIZE
     use OUTPUTANDCLOSE, only: OUTPUT_CLOSE
@@ -694,6 +693,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.192  2014/01/09 00:30:24  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.191  2014/01/08 21:04:16  vsnyder
 ! Add more info to entry trace
 !
