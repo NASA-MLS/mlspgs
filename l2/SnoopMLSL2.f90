@@ -25,13 +25,16 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   ! Also note that multiple IDL snoopers can talk to one or many f90 procedures,
   ! the little extra book keeping this involves is worth it.
 
+  use HIGHOUTPUT, only: BANNER
   use INIT_TABLES_MODULE, only: F_COMMENT, F_PHASENAME
   use MATRIXMODULE_0, only: MATRIXELEMENT_T
   use MATRIXMODULE_1, only: MATRIX_T, RC_INFO
+  use MLSL2Options, only: currentPhaseName
   use MLSKINDS, only: R8
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, PVMERRORMESSAGE
   use MLSFINDS, only: FINDFIRST
+  use MLSL2Options, only: SNOOPINGACTIVE, SNOOPNAME
   use MORETREE, only: GET_FIELD_ID
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFMYTID, &
@@ -88,9 +91,6 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
     integer :: tid                      ! Task ID of snooper
     integer :: mode                     ! Mode of the snooper
   end type SnooperInfo_T
-
-  logical, save :: SNOOPINGACTIVE = .false.
-  character (len=132), save :: SNOOPNAME = ''
 
   public :: SNOOPINGACTIVE, SNOOP, SNOOPNAME
 
@@ -496,15 +496,16 @@ contains ! ========  Public Procedures =========================================
     integer :: STATUS                   ! Status from allocate/deallocate
     logical :: KEEPWAITING                ! First time snoop called
     logical :: GOTSOMETHING             ! Set if we got a message
+    character (len=1024) :: TEMPLOCATION
 
     ! Executable code
-    if ( .not. snoopingActive ) return
+    ! if ( .not. snoopingActive ) return
 
-    location = '????'
+    templocation = '????'
     comment = 'Unknown'
     phaseName = ''
     if ( present(key) ) then
-      call get_where ( where(key), location )
+      call get_where ( where(key), templocation )
       do i = 2, nsons(key)
         son = subtree(i,key)
         select case ( get_field_id(son) )
@@ -515,8 +516,20 @@ contains ! ========  Public Procedures =========================================
         end select
       end do
     end if
+    location = templocation
     if ( present(anotherComment) ) comment = anotherComment
     if ( present(anotherPhaseName) ) phaseName = anotherPhaseName
+    if ( .not. snoopingActive ) then
+    select case ( switchDetail(switches, 'snoop') )
+      case ( 0 )
+        call output( 'Snoop in ' // trim(location) // ' (' // &
+          & trim(currentPhaseName) // ')', advance='yes' )
+      case ( 1: )
+        call banner( 'Snoop in ' // trim(location) // ' (' // &
+          & trim(currentPhaseName) // ')' )
+      end select
+      return
+    endif
 
     ! If this is the very first call enroll in PVM for the first time, allocate
     ! 0 snoopers to start with.
@@ -1006,6 +1019,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.47  2014/04/10 00:43:58  pwagner
+! Moved SNOOPINGACTIVE, SNOOPNAME to MLSL2Options
+!
 ! Revision 2.46  2013/09/24 23:47:22  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
