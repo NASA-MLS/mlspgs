@@ -32,7 +32,10 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use MLSKINDS, only: RV
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSFILES, only: HDFVERSION_4, HDFVERSION_5, DUMP, mls_exists, &
+    & MLS_CLOSEFILE, MLS_OPENFILE
   use MLSFINDS, only: FINDFIRST
+  use MLSHDFEOS, only: MLS_SWATH_IN_FILE
   use MLSL2OPTIONS, only: WRITEFILEATTRIBUTES
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -207,6 +210,7 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: upperOverlap
     ! Local variables
     ! logical :: DeeBug
+    logical :: alreadyThere
     integer :: FIRSTINSTANCE
     integer :: GRANDTOTALINSTANCES
     type (L2GPData_T) :: l2gp
@@ -219,8 +223,18 @@ contains ! ======================= Public Procedures =========================
     ! Executable
     verbose = BeVerbose ( 'direct', -1 )
     if ( present(createSwath) ) then
-      if ( createSwath ) then
+      alreadyThere = mls_exists( L2GPFile%name ) == 0
+      if ( .not. alreadyThere ) &
+        & call outputNamedValue( '  creating file', trim(L2GPFile%name) )
+      if ( alreadyThere ) &
+        & alreadyThere = mls_swath_in_file ( L2GPFile%name, trim(sdname), &
+        & L2GPFile%hdfVersion )
+      if ( createSwath .and. alreadyThere ) then
+        call outputNamedValue( '  recreating swath', trim(sdname) )
+      elseif ( createSwath ) then
         call outputNamedValue( '  creating swath', trim(sdname) )
+      elseif ( .not. alreadyThere ) then
+        call outputNamedValue( '  How can we add to a nonexistent swath?', trim(sdname) )
       elseif ( verbose ) then
         call outputNamedValue( '  adding to swath', trim(sdname) )
       endif
@@ -374,8 +388,6 @@ contains ! ======================= Public Procedures =========================
     use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
     use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
     use HDF, only: DFACC_RDonly
-    use MLSFILES, only: HDFVERSION_4, HDFVERSION_5, &
-      & MLS_CLOSEFILE, MLS_OPENFILE
 
     ! Args:
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
@@ -391,17 +403,19 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in), optional :: options
     ! Local parameters
     logical :: alreadyOpen
+    logical :: already_there
     logical, parameter :: DEEBUG = .false.
     logical :: deebughere
     integer :: lastMAF
-    integer, parameter :: MAXFILES = 100             ! Set for an internal array
     integer :: returnStatus
     character(len=*), parameter :: sdDebug = "R1A:118.B1F:PT.S0.FB25-1 Core"
     logical :: verbose
     ! Executable
-    verbose = BeVerbose ( 'direct', -1 )
-
+    verbose = BeVerbose ( 'direct', 0 )
     alreadyOpen = L2AUXFile%stillOpen
+    already_There = mls_exists( L2AUXFile%name ) == 0
+    if ( .not. already_There ) &
+      & call outputNamedValue( '  creating file', trim(L2AUXFile%name) )
     deebughere = ( deebug .or. sdname == sdDebug ) .and. .false.
     lastMAF = (quantity%template%instanceOffset+quantity%template%noInstances - &
         & quantity%template%noInstancesLowerOverlap - &
@@ -505,7 +519,6 @@ contains ! ======================= Public Procedures =========================
       & SFENDACC, DFNT_FLOAT32, SFWDATA_F90
     use INTRINSIC, only: L_NONE
     use MLSKINDS, only: R4, R8
-    use MLSFILES, only: HDFVERSION_4
 
     ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -516,10 +529,6 @@ contains ! ======================= Public Procedures =========================
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
-
-    ! Local parameters
-    integer, parameter :: MAXFILES = 100             ! Set for an internal array
-    integer, parameter :: HDFVERSION = HDFVERSION_4
 
     ! Local variables
     integer :: SDINDEX                  ! Index of sd
@@ -621,7 +630,6 @@ contains ! ======================= Public Procedures =========================
     use L2AUXDATA, only:  L2AUXDATA_T, PHASENAMEATTRIBUTES, &
       & DESTROYL2AUXCONTENTS, &
       & SETUPNEWL2AUXRECORD, WRITEL2AUXATTRIBUTES
-    use MLSFILES, only: HDFVERSION_5, DUMP
     use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, ISHDF5DSPRESENT, &
       & MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
     use MLSL2TIMINGS, only: SHOWTIMINGNAMES
@@ -639,10 +647,6 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: upperOverlap
     logical, intent(in), optional :: single       ! Write 1st instance only
     character(len=*), intent(in), optional :: options
-
-    ! Local parameters
-    integer, parameter :: MAXFILES = 100             ! Set for an internal array
-    integer, parameter :: HDFVERSION = HDFVERSION_5
 
     ! Local variables
     logical :: addQtyAttributes
@@ -664,8 +668,10 @@ contains ! ======================= Public Procedures =========================
     integer :: total_DS_size
     logical, parameter :: MAYCOLLAPSEDIMS = .false.
     ! logical, parameter :: DEEBUG = .true.
+    logical :: verbose
 
     ! executable code
+    verbose = BeVerbose ( 'direct', -1 )
     Num_qty_values = size(quantity%values, 1)*size(quantity%values, 2)
     addQtyAttributes = .false.
     if ( present(options) ) addQtyAttributes = ( index(options, 'A') > 0 )
@@ -688,14 +694,20 @@ contains ! ======================= Public Procedures =========================
     if ( present(single) ) mySingle = single
 
     ! Create or access the SD
+    already_There = mls_exists( L2AUXFile%name ) == 0
+    if ( .not. already_There ) &
+      & call outputNamedValue( '  creating file', trim(L2AUXFile%name) )
     already_there = IsHDF5DSPresent(L2AUXFile%fileID%f_id, trim(sdName))
     if ( .not. already_there ) then
+      call outputNamedValue( '  creating sd', trim(sdname) )
       lastChunk = chunks(size(chunks))
       sizes(noDims) = lastChunk%lastMAFIndex - lastChunk%noMAFSUpperOverlap + 1
       if ( MAYWRITEPOSTOVERLAPS .and. ChunkDivideConfig%allowPostOverlaps ) &
         & sizes(noDims) = lastChunk%lastMAFIndex + 1
       sizes(noDims-1) = quantity%template%noSurfs
       if ( noDims == 3 ) sizes(1) = quantity%template%noChans
+    elseif ( verbose )then
+      call outputNamedValue( '  adding to sd', trim(sdname) )
     end if
 
     ! What exactly will be our contribution
@@ -1256,6 +1268,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.61  2014/04/10 00:47:18  pwagner
+! More consistent in when to announce creating files, datasets
+!
 ! Revision 2.60  2014/04/07 18:03:03  pwagner
 ! May specify AscDescMode when DirectWrite-ing swaths
 !
