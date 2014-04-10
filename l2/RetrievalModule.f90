@@ -88,9 +88,9 @@ contains
     use MLSCOMMON, only: MLSFILE_T
     use MLSL2OPTIONS, only: L2CFNODE, SKIPRETRIEVAL, SPECIALDUMPFILE, &
       & STATEFILLEDBYSKIPPEDRETRIEVALS, &
-      & MLSMESSAGE
-    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING, &
-      & CURRENTCHUNKNUMBER, CURRENTPHASENAME
+      & MLSMESSAGE, &
+      & currentChunkNumber, CurrentPhaseName
+    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGERESET
     use MORETREE, only: GET_BOOLEAN, Get_Label_And_Spec, GET_FIELD_ID, &
       & GET_SPEC_ID
@@ -2980,6 +2980,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.351  2014/04/10 00:45:24  pwagner
+! Moved currentChunkNumber, currentPhaseName from MLSL2Timings to MLSL2Options
+!
 ! Revision 2.350  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
 !
