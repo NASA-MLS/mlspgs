@@ -15,9 +15,10 @@ MODULE WriteMetaL1 ! Populate metadata and write it out
 
   USE Hdf, ONLY: DFACC_RDWR
   USE Intrinsic, ONLY: L_HDF
-  USE MLSCommon, ONLY: R8
-  USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMSG_Warning, MLSMessage
-  USE PCFHdr, ONLY: WriteInputPointer, h5_writeglobalattr
+  USE MLSCommon, ONLY: R8, L2METADATA_T, NameLen
+  USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMSG_Info, MLSMSG_Warning, &
+    & MLSMessage
+  USE PCFHdr, ONLY: GlobalAttributes, WriteInputPointer, h5_writeglobalattr
   USE SDPToolkit, only: PGSD_PC_FILE_PATH_MAX, PGSD_MET_GROUP_NAME_L, &
     & PGSD_MET_NUM_OF_GROUPS, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
     & PGS_PC_GETREFERENCE
@@ -29,6 +30,7 @@ MODULE WriteMetaL1 ! Populate metadata and write it out
   PRIVATE
 
   PUBLIC :: WriteMetadata
+  integer, parameter :: NUMDOIs    = 6
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -53,14 +55,16 @@ CONTAINS
     INTEGER :: returnStatus
     INTEGER :: sdid
 
-    REAL(r8) dval
+    character(len=NameLen), dimension(NumDOIs) :: doiArray
+    REAL(r8) :: dval
     INTEGER, PARAMETER :: INVENTORY=2, ARCHIVE=1
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
     CHARACTER (LEN=132) :: attrname, errmsg
-    INTEGER :: version, ival, indx
+    INTEGER :: version, ival, indx, i
     CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = &
          'Error writing metadata attribute '
+    type ( L2METADATA_T ) :: L2METADATA
 
     ! the group have to be defined as 49 characters long. The C interface is 50.
     ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
@@ -76,6 +80,24 @@ CONTAINS
          pgs_met_write, pgs_met_remove
 
     !Executable code
+    doiArray(1) = '10.5067/AURA/MLS/BOGUSDATA101'
+    doiArray(2) = '10.5067/AURA/MLS/BOGUSDATA102'
+    doiArray(3) = '10.5067/AURA/MLS/BOGUSDATA103'
+    doiArray(4) = '10.5067/AURA/MLS/BOGUSDATA104'
+    doiArray(5) = '10.5067/AURA/MLS/BOGUSDATA105'
+    doiArray(6) = '10.5067/AURA/MLS/BOGUSDATA106'
+    ! This hackery-quackery allows us to use the PCF to
+    ! input elements of a string array without using up
+    ! a bunch of PCFids
+    ! So we accept that the strings are file names
+    ! and use Pgs_pc_getReference with the version mechanism
+    do i=1, NumDOIs
+      version = i
+      returnStatus = Pgs_pc_getReference( mlspcf_l1_param_doinames, &
+        & version, sval )
+      if ( returnStatus /= PGS_S_SUCCESS ) exit
+      doiArray(NumDOIs-i+1) = sval
+    enddo
 
     version = 1
 
@@ -86,6 +108,9 @@ CONTAINS
     IF (returnStatus /= PGS_S_SUCCESS) THEN 
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             "Initialization error.  See LogStatus for details.") 
+    ELSE
+      CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            "Beginning metadata write to " // trim(physical_filename)) 
     ENDIF
 
     ! Set PGE values 
@@ -132,14 +157,19 @@ CONTAINS
 
     IF (hdf_file == mlspcf_l1b_radf_start) THEN
        sval = "Filter bank radiances"
+       l2metaData%doiIdentifier = doiArray(2)
     ELSE IF (hdf_file == mlspcf_l1b_radd_start) THEN
        sval = "DACS radiances"
+       l2metaData%doiIdentifier = doiArray(1)
     ELSE IF (hdf_file == mlspcf_l1b_radt_start) THEN
        sval = "THz radiances"
+       l2metaData%doiIdentifier = doiArray(3)
     ELSE IF (hdf_file == mlspcf_l1b_oa_start) THEN
        sval = "Orbit/attitude and tangent point"
+       l2metaData%doiIdentifier = doiArray(4)
     ELSE IF (hdf_file == mlspcf_l1b_eng_start) THEN
        sval = "MLS Instrument Engineering"
+       l2metaData%doiIdentifier = doiArray(6)
     ENDIF
     attrName = 'ParameterName' // '.1'
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
@@ -358,6 +388,36 @@ CONTAINS
        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
     ENDIF
 
+    ! Production Location
+
+    attrName = 'ProductionLocation'
+    sval = 'MLS_SIPS' ! GlobalAttributes%productionLoc
+    GlobalAttributes%productionLoc = sval
+    returnStatus = pgs_met_setAttr_s ( groups(INVENTORY), attrName, sval )
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, errmsg)
+    end if
+
+    attrName = 'DataProducer'
+    sval = 'MLS_SIPS'
+    returnStatus = pgs_met_setAttr_s ( groups(INVENTORY), attrName, sval )
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, errmsg)
+    end if
+
+    ! DOI
+    ! This should be in the MCF
+    attrName = 'identifier_product_DOI'
+    sval = l2metaData%doiIdentifier
+    GlobalAttributes%DOI = sval
+    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+       errmsg = METAWR_ERR // attrName
+       CALL MLSMessage(MLSMSG_Warning, ModuleName, errmsg)
+    end if
+
     sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion, .TRUE.)
 
     returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
@@ -382,20 +442,17 @@ CONTAINS
     ENDIF          
 
     returnStatus = pgs_met_remove()
-    ! Don't check for this--it's left unset by toolkit
-    ! IF (returnStatus /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
-      ! CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
-      !      "Calling pgs_met_remove() failed." )
-    !  write(errmsg, *) returnStatus
-    !  CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-    !        "Calling pgs_met_remove() failed with value " // trim(errmsg) )
-    !ENDIF          
+    if ( returnStatus /= PGS_S_SUCCESS ) sdid = sdid + 1 ! For no reason
 
     ! Write global attributes
 
     sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion, .FALSE.)
-    call h5_writeglobalattr(sdid, skip_if_already_there=.false.)
+    call h5_writeglobalattr( sdid, skip_if_already_there=.false., doi=.true. )
     returnStatus = mls_sfend (sdid, hdfVersion, .FALSE.)
+    IF (returnStatus /= 0) THEN 
+       CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+            "Calling mls_sfend failed for file "//physical_fileName ) 
+    ENDIF          
 
   END SUBROUTINE populate_metadata_l1
 
@@ -435,6 +492,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.20  2014/04/11 16:51:46  pwagner
+! Added ProductionLocation, DataProducer, DOI metadata
+!
 ! Revision 2.19  2007/06/21 21:06:20  perun
 ! Only output to RADD file if DACS calibration is enabled
 !
