@@ -549,7 +549,7 @@ contains ! =====     Public Procedures     =============================
          & .true., returnStatus, Version, DEBUG, &
          & exactName=PhysicalFilename)
        l2gp_mcf = l2dgg_mcf
-       l2metaData%doiIdentifier = '10.5067/AURA/MLS/BOGUSDATA204'
+       l2metaData%doiIdentifier = '10.5067/AURA/MLS/DATA2006'
      else
        FileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
          & mlspcf_l2gp_end, &
@@ -661,7 +661,7 @@ contains ! =====     Public Procedures     =============================
        & numquantitiesperfile, QuantityNames, l2metaData, &
        & hdfVersion=hdfVersion, metadata_error=metadata_error, &
        & filetype=filetype  )
-       l2metaData%doiIdentifier = '10.5067/AURA/MLS/BOGUSDATA205'
+       l2metaData%doiIdentifier = '10.5067/AURA/MLS/DATA2007'
   case default
     call announce_error ( node, &
       &  "Error--filetype unrecognized", filetype)
@@ -1076,7 +1076,7 @@ contains ! =====     Public Procedures     =============================
           & notUnlimited=avoidUnlimitedDims, &
           & andGlAttributes=COPYGLOBALATTRIBUTES, options=optionsString )
       endif
-      call he5_writeMLSFileAttr( outputFile )
+      if ( WRITEFILEATTRIBUTES ) call he5_writeMLSFileAttr( outputFile )
       if ( noGapsHGIndex > 0 ) &
         & call writeHGridComponents( trim(PhysicalFilename), &
         & HGrids(noGapsHGIndex) )
@@ -1087,7 +1087,7 @@ contains ! =====     Public Procedures     =============================
       call add_metadata ( son, file_base, l2metaData, &
         & outputfile%hdfVersion, formattype, metadata_error )
       if ( len_trim(l2metaData%doiIdentifier) < 1 ) then
-        call MLSMessage(MLSMSG_Warning, ModuleName, &
+        call MLSMessage( MLSMSG_Warning, ModuleName, &
           & 'empty doiIdentidier for ' // trim(PhysicalFilename) )
         return
       endif
@@ -1549,7 +1549,8 @@ contains ! =====     Public Procedures     =============================
     use MLSSTRINGS, only: TRIM_SAFE
     use OUTPUT_M, only: BLANKS, OUTPUT
     use PCFHDR, only: GLOBALATTRIBUTES, &
-      & H5_WRITEMLSFILEATTR, H5_WRITEGLOBALATTR, HE5_WRITEMLSFILEATTR, &
+      & H5_WRITEMLSFILEATTR, H5_WRITEGLOBALATTR, &
+      & HE5_WRITEGLOBALATTR, HE5_WRITEMLSFILEATTR, &
       & WRITELEAPSECHDFEOSATTR, WRITELEAPSECHDF5DS, &
       & WRITEUTCPOLEHDFEOSATTR, WRITEUTCPOLEHDF5DS
     use READAPRIORI, only: READAPRIORIATTRIBUTES, WRITEAPRIORIATTRIBUTES
@@ -1669,9 +1670,21 @@ contains ! =====     Public Procedures     =============================
           & HDFVERSION_5, l_l2dgg, returnStatus, 1, (/'dgg'/) )
         if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
+        if ( len_trim(l2metaData%doiIdentifier) < 1 ) then
+          call MLSMessage( MLSMSG_Warning, ModuleName, &
+            & 'empty doiIdentidier for ' // trim(l2gpPhysicalFilename) )
+        endif
+        ! Set the file-level attribute DOI to its metadata value
+        GlobalAttributes%DOI = l2metaData%doiIdentifier
       end if
       if ( madeFile ) then
-        ! (2) File level attributes
+         call output( 'Writing file level attributes to he5 ' // &
+          & trim(l2gpPhysicalFilename), advance='yes' )
+         call outputNamedValue( 'identifier_product_DOI', trim(GlobalAttributes%DOI) )
+         call outputNamedValue( 'ProductionLocation', trim(GlobalAttributes%productionLoc) )
+         call he5_writeglobalattr( outputFile, &
+           & doi=.true., skip_if_already_there=.true. )
+       ! (2) File level attributes
         if ( WRITEFILEATTRIBUTES ) call he5_writeMLSFileAttr( outputFile )
         ! Is the next line necessary?
         if ( inputFile%stillOpen ) then
@@ -1870,6 +1883,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.184  2014/04/14 17:39:48  pwagner
+! Fixed bugs in writing DOIs for dgg, dgm files; still hard-wired, though
+!
 ! Revision 2.183  2014/04/07 18:09:27  pwagner
 ! Stop Writing MLSFile_T attributes by default; they confuse users
 !
