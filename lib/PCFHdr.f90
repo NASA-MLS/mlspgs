@@ -518,7 +518,7 @@ contains
    end SUBROUTINE h5_writeglobalattr_MLSFile
 
 !------------------------------------------------------------
-   SUBROUTINE h5_writeMLSFileAttr (MLSFile, skip_if_already_there)
+   SUBROUTINE h5_writeMLSFileAttr ( MLSFile, skip_if_already_there )
 !------------------------------------------------------------
 
       use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
@@ -589,7 +589,7 @@ contains
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE he5_writeglobalattr_MLSFile ( MLSFile, dayNum, DOI )
+   SUBROUTINE he5_writeglobalattr_MLSFile ( MLSFile, dayNum, DOI, skip_if_already_there )
 !------------------------------------------------------------
 
     use HDFEOS5, only: HE5T_NATIVE_INT, &
@@ -603,6 +603,7 @@ contains
       type(MLSFile_T)       :: MLSFile
       integer, intent(in), optional :: dayNum
       logical, intent(in), optional :: doi
+      logical, intent(in), optional :: skip_if_already_there
       ! Local variables
       logical :: alreadyOpen
       integer :: returnStatus
@@ -614,17 +615,18 @@ contains
           call MLSMessage( MLSMSG_Error, ModuleName, &
           & 'Unable to open hdfeos file', MLSFile=MLSFile )
       endif
-      call he5_writeglobalattr_FileID ( MLSFile%fileID%f_id, dayNum, DOI )
+      call he5_writeglobalattr_FileID ( MLSFile%fileID%f_id, &
+        & dayNum, DOI, skip_if_already_there )
       if ( .not. alreadyOpen ) call mls_closeFile( MLSFile, returnStatus )
    end SUBROUTINE he5_writeglobalattr_MLSFile
 
 !------------------------------------------------------------
-   SUBROUTINE he5_writeglobalattr_FileID ( fileID, dayNum, DOI )
+   SUBROUTINE he5_writeglobalattr_FileID ( fileID, dayNum, DOI, skip_if_already_there )
 !------------------------------------------------------------
 
     use HDFEOS5, only: HE5T_NATIVE_INT, &
       & HE5T_NATIVE_DOUBLE, MLS_CHARTYPE
-    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT, mls_isglatt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdfeos5 file
 
@@ -633,16 +635,32 @@ contains
       integer, intent(in) :: fileID
       integer, intent(in), optional :: dayNum
       logical, intent(in), optional :: doi
+      logical, intent(in), optional :: skip_if_already_there
 ! Internal variables
       integer :: status
       character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
       logical :: myDOI
+      logical :: my_skip
 ! Executable
       myDOI = .false.
       if ( present(DOI) ) myDOI=DOI
+      my_skip = .false.
+      if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
       if ( DEBUG ) then
         call output( 'Writing global attributes', advance='yes' )
         call dumpGlobalAttributes
+      endif
+      if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
+       & status = mls_EHwrglatt(fileID, &
+       & 'identifier_product_DOI', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%DOI)
+      if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
+       & status = mls_EHwrglatt(fileID, &
+       & 'ProductionLocation', MLS_CHARTYPE, 1, &
+       &  GlobalAttributes%productionLoc)
+      if ( my_skip ) then
+        if ( mls_isglatt ( fileID, 'OrbitNumber' ) ) &
+          & return
       endif
       if (present(dayNum)) then
          status = he5_EHwrglatt(fileID, &
@@ -708,14 +726,6 @@ contains
       status = mls_EHwrglatt(fileID, &
        & 'MiscNotes', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%MiscNotes)
-      if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
-       & status = mls_EHwrglatt(fileID, &
-       & 'identifier_product_DOI', MLS_CHARTYPE, 1, &
-       &  GlobalAttributes%DOI)
-      if ( len_trim(GlobalAttributes%productionLoc) > 0 .and. myDOI ) &
-       & status = mls_EHwrglatt(fileID, &
-       & 'ProductionLocation', MLS_CHARTYPE, 1, &
-       &  GlobalAttributes%productionLoc)
 !------------------------------------------------------------
    END SUBROUTINE he5_writeglobalattr_FileID
 !------------------------------------------------------------
@@ -1624,6 +1634,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.62  2014/04/14 16:59:02  pwagner
+!# he5_writeglobalattr may skip writing if already there
+!#
 !# Revision 2.61  2014/04/02 23:04:06  pwagner
 !# Removed redundant open_ and close_MLSFile
 !#
