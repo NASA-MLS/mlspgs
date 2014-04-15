@@ -65,6 +65,11 @@ CONTAINS
     CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = &
          'Error writing metadata attribute '
     type ( L2METADATA_T ) :: L2METADATA
+    integer, parameter :: OADOIIndx   = 1
+    integer, parameter :: radDDOIIndx = OADOIIndx + 1
+    integer, parameter :: radGDOIIndx = radDDOIIndx + 1
+    integer, parameter :: radTDOIIndx = radGDOIIndx + 1
+    integer, parameter :: engDOIIndx  = radTDOIIndx + 1
 
     ! the group have to be defined as 49 characters long. The C interface is 50.
     ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
@@ -80,12 +85,12 @@ CONTAINS
          pgs_met_write, pgs_met_remove
 
     !Executable code
-    doiArray(1) = '10.5067/AURA/MLS/BOGUSDATA101'
-    doiArray(2) = '10.5067/AURA/MLS/BOGUSDATA102'
-    doiArray(3) = '10.5067/AURA/MLS/BOGUSDATA103'
-    doiArray(4) = '10.5067/AURA/MLS/BOGUSDATA104'
-    doiArray(5) = '10.5067/AURA/MLS/BOGUSDATA105'
-    doiArray(6) = '10.5067/AURA/MLS/BOGUSDATA106'
+    doiArray(1) = '10.5067/AURA/MLS/DATA1001'
+    doiArray(2) = '10.5067/AURA/MLS/DATA1002'
+    doiArray(3) = '10.5067/AURA/MLS/DATA1003'
+    doiArray(4) = '10.5067/AURA/MLS/DATA1004'
+    doiArray(5) = '10.5067/AURA/MLS/DATA1005'
+    doiArray(6) = '10.5067/AURA/MLS/DATA1006'
     ! This hackery-quackery allows us to use the PCF to
     ! input elements of a string array without using up
     ! a bunch of PCFids
@@ -157,19 +162,19 @@ CONTAINS
 
     IF (hdf_file == mlspcf_l1b_radf_start) THEN
        sval = "Filter bank radiances"
-       l2metaData%doiIdentifier = doiArray(2)
+       l2metaData%doiIdentifier = doiArray(radGDOIIndx)
     ELSE IF (hdf_file == mlspcf_l1b_radd_start) THEN
        sval = "DACS radiances"
-       l2metaData%doiIdentifier = doiArray(1)
+       l2metaData%doiIdentifier = doiArray(radDDOIIndx)
     ELSE IF (hdf_file == mlspcf_l1b_radt_start) THEN
        sval = "THz radiances"
-       l2metaData%doiIdentifier = doiArray(3)
+       l2metaData%doiIdentifier = doiArray(radTDOIIndx)
     ELSE IF (hdf_file == mlspcf_l1b_oa_start) THEN
        sval = "Orbit/attitude and tangent point"
-       l2metaData%doiIdentifier = doiArray(4)
+       l2metaData%doiIdentifier = doiArray(OADOIIndx)
     ELSE IF (hdf_file == mlspcf_l1b_eng_start) THEN
        sval = "MLS Instrument Engineering"
-       l2metaData%doiIdentifier = doiArray(6)
+       l2metaData%doiIdentifier = doiArray(engDOIIndx)
     ENDIF
     attrName = 'ParameterName' // '.1'
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
@@ -492,6 +497,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.21  2014/04/15 23:02:17  pwagner
+! Corrected DOIs based on ESDIS info
+!
 ! Revision 2.20  2014/04/11 16:51:46  pwagner
 ! Added ProductionLocation, DataProducer, DOI metadata
 !
