@@ -87,10 +87,17 @@ contains ! ====     Public Procedures     ==============================
     integer :: Depth, First, I, Inc, Last
     logical :: Error
     logical :: MyCPU, MyDoDepth, MyRev, MySize, MyTop, MyWhere, myShowTime
-    character(len=10) :: Now  ! For Date_and_time
-    integer :: Values(8)      ! For Date_and_time
     ! Executable
     if ( StaySilent ) return
+    error = .not. allocated(stack)
+    if ( .not. error ) error = stack_ptr < lbound(stack,1)
+    if ( error ) then
+      call output ( "*****" )
+      if ( present(before) ) call output ( " " // before )
+      call output ( " There is no stack to dump *****", advance='yes' )
+      return
+    end if
+
     myAdvance = 'yes'
     myCPU = .false.; myDoDepth = .true.; myRev = .false.; mySize = .true.
     myTop = .false.; myWhere = .false.
@@ -105,15 +112,6 @@ contains ! ====     Public Procedures     ==============================
     if ( present(rev) ) myRev = rev
     if ( present(size) ) mySize = size
     if ( present(where) ) myWhere = Where
-
-    error = .not. allocated(stack)
-    if ( .not. error ) error = stack_ptr < lbound(stack,1)
-    if ( error ) then
-      call output ( "*****" )
-      if ( present(before) ) call output ( " " // before )
-      call output ( " There is no stack to dump *****", advance='yes' )
-      return
-    end if
 
     if ( myRev ) then ! Dump stack bottop-up
       first = merge(stack_ptr,lbound(stack,1),myTop)
@@ -406,6 +404,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.22  2014/04/21 16:57:26  pwagner
+! Tries harder not reference stack if not allocated
+!
 ! Revision 2.21  2014/03/15 00:04:40  vsnyder
 ! Correct misspallig in two ertor masseges
 !
