@@ -399,7 +399,6 @@ contains
     use O2_ABS_CS_M, only: O2_ABS_CS, D_O2_ABS_CS_DT
     use OUTPUT_M, only: OUTPUT
     use SLABS_SW_M, only: SLABS_STRUCT
-    use Spectroscopy_Types, only: Lines ! The lines database
     use STRING_TABLE, only: DISPLAY_STRING
     use TOGGLES, only: SWITCHES
 
@@ -427,7 +426,7 @@ contains
 
 ! Local variables..
 
-    integer(ip) :: I, IB, J, K, L, N, N_PATH
+    integer(ip) :: I, IB, J, K, N, N_PATH
     real(rp) :: RATIO ! Isotope ratio, not mixing ratio
     complex(rp) :: Sigma_m, Pi, Sigma_p
     complex(rp) :: dSigma_m_dT, dPi_dT, dSigma_p_dT
@@ -1597,6 +1596,10 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.119  2014/04/04 19:43:10  vsnyder
+! Move computation of QN from get_beta_path to o2_abs_cs.  This avoids the
+! need for an array temp.
+!
 ! Revision 2.118  2014/04/02 17:04:53  wgread
 ! added line dependent qn capability for o2-wgr
 !
