@@ -31,6 +31,8 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
     use Make_Z_Grid_M, only: Make_Z_Grid
     use MLSCommon, only: RP
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: VectorValue_T
 
   ! Inputs:
@@ -45,11 +47,15 @@ contains
     type (vectorValue_T), optional, intent(in) :: Observer ! Zetas for observers-in-atmosphere
 
   ! Local variables:
+    integer :: Me = -1             ! String index cache for tracing
     type (qtyStuff_t), pointer :: Qtys(:)         ! Array of pointers to Qty's.
     integer :: SPS_I
     integer :: Z_All_Prev, Z_All_Size
     real(rp), pointer :: Z_all(:)  ! consolidated storage of representation
       !                              bases for z_grid determination
+
+    call trace_begin ( me, 'Compute_Z_PSIG', &
+      & cond=toggle(emit) .and. levels(emit) > 2 ) ! set by -f command-line switch
 
     nullify ( z_all )
     qtys => fwdModelConf%beta_group%qty
@@ -112,6 +118,9 @@ contains
     call make_z_grid ( z_all, z_psig )
     call deallocate_test ( z_all, 'z_all', moduleName )
 
+    call trace_end ( 'Compute_Z_PSIG', &
+      & cond=toggle(emit) .and. levels(emit) > 2 )
+
   end subroutine Compute_Z_PSIG
 
 !--------------------------- end bloc --------------------------------------
@@ -127,6 +136,9 @@ contains
 end module Compute_Z_PSIG_m
 
 ! $Log$
+! Revision 2.11  2014/04/22 00:36:54  vsnyder
+! Add tracing
+!
 ! Revision 2.10  2013/07/13 00:04:58  vsnyder
 ! Move computation of tangent pressures to Tangent_Pressures
 !
