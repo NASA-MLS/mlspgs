@@ -37,6 +37,7 @@
 ! MLSMessageConfig         configuration controlling where to print, etc.
 
 !     (subroutines and functions)
+! bummer                   print error message with eye-catching effects
 ! dumpConfig               dump configuration
 ! restoreConfig            restore configuration to its default state
 ! MLSMessage               main messaging routine
@@ -55,6 +56,9 @@
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! bummer ( char* chars, &
+!  [int columnRange(2)], [char alignment], [int skips], &
+!  [int severity] )
 ! dumpConfig ( [MLSMessageConfig_T config] )
 ! restoreConfig
 ! MLSMessage ( int Severity, char* ModuleNameIn, char* Message, 
@@ -154,7 +158,7 @@
   type(MLSCallStack_t), public, save :: MLSCALLSTACK
   
   ! Public procedures
-  public :: DUMPCONFIG, RESTORECONFIG, SETCONFIG
+  public :: BUMMER, DUMPCONFIG, RESTORECONFIG, SETCONFIG
   public :: MLSMESSAGE, MLSMESSAGE_, MLSMESSAGESETUP
   public :: MLSMESSAGEEXIT, MLSMESSAGEINQUIRE, MLSMESSAGEINTERNALFILE
   public :: MLSMESSAGECLOSE, MLSMESSAGERESET, PVMERRORMESSAGE
@@ -165,7 +169,53 @@
     module procedure MLSMESSAGE_
   end interface
 
+  interface bummer
+    module procedure bummer_chars
+    module procedure bummer_chararray
+  end interface
+
 contains
+
+  ! -----------------------------------------------------  bummer  -----
+  ! Call banner to print your error message, then call MLSMessage to stop
+  subroutine bummer_chars ( chars, &
+    & columnRange, alignment, skips, lineLength, severity )
+    character(len=*), intent(in)                :: CHARS
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
+    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
+    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    integer, optional, intent(in)               :: LINELENGTH
+    integer, optional, intent(in)               :: severity
+    !
+    ! Internal variables
+    integer :: mySeverity
+    ! Executable
+    mySeverity = MLSMSG_Error
+    if ( present(severity) ) mySeverity = severity
+    call banner(  chars, columnrange, alignment, skips, linelength, mode='s' )
+    call MLSMessage ( mySeverity, ModuleName, &
+                  & '(See error message above)' )
+  end subroutine bummer_chars
+
+  subroutine bummer_chararray ( charArray, &
+    & columnRange, alignment, skips, severity )
+    character(len=*), dimension(:), intent(in)  :: CHARARRAY
+    ! If columnRange(1) < 1, just use starting columns; otherwise move to
+    integer, dimension(2), optional, intent(in) :: COLUMNRANGE
+    character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
+    integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
+    integer, optional, intent(in)               :: severity
+    !
+    ! Internal variables
+    integer :: mySeverity
+    ! Executable
+    mySeverity = MLSMSG_Error
+    if ( present(severity) ) mySeverity = severity
+    call banner(  charArray, columnrange, alignment, skips )
+    call MLSMessage ( mySeverity, ModuleName, &
+                  & '(See error message above)' )
+  end subroutine bummer_chararray
 
   ! ------------------------------------------------  DumpConfig  -----
 
@@ -1164,6 +1214,9 @@ contains
 
 !
 ! $Log$
+! Revision 2.34  2014/04/22 16:28:59  pwagner
+! Added bummer--writes error message as an eye-catching banner
+!
 ! Revision 2.33  2013/11/18 22:22:48  pwagner
 ! Sticky versions of verbose, debug available
 !
