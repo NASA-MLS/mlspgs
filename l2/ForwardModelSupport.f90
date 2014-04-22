@@ -283,8 +283,8 @@ contains ! =====     Public Procedures     =============================
       & L_LATITUDE, L_SZA
     use INIT_TABLES_MODULE, only: F_COST, F_HEIGHT, F_MOLECULE, F_TYPE, &
       & F_NAMEFRAGMENT, F_EXACT
-    use INTRINSIC, only: T_NUMERIC_RANGE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
-      & PHYQ_INVALID, PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VMR
+    use INTRINSIC, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_INVALID, &
+      & PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VMR
     use L2PC_M, only: BINSELECTOR_T, BINSELECTORS, CREATEDEFAULTBINSELECTORS
     use MLSKINDS, only: R8
     use MORETREE, only: GET_FIELD_ID, GET_BOOLEAN
@@ -1507,6 +1507,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.178  2014/04/22 00:49:03  vsnyder
+! Remove unused sumbols
+!
 ! Revision 2.177  2014/02/28 00:18:57  vsnyder
 ! Don't re-check types already checked by type checker.  Remove TYPE
 ! argument from calls to EXPR where it wasn't subsequently used.
