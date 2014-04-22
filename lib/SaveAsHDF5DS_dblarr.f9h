@@ -32,7 +32,7 @@
     ! Executable code
     rank = size(shp)
 
-    call trace_begin ( 'SaveAsHDF5DS_dblarr'//digits(rank), cond=.false. )
+    call trace_begin ( me, 'SaveAsHDF5DS_dblarr'//digits(rank), cond=.false. )
     shp = shape(value)
     maxdims = shp
     if ( present(finalShape) ) maxdims = finalShape
@@ -49,6 +49,9 @@
 !   end subroutine SaveAsHDF5DS_dblarr*
 
 ! $Log$
+! Revision 2.3  2014/04/22 00:06:31  vsnyder
+! Use the cached trace version
+!
 ! Revision 2.2  2013/08/31 01:24:53  vsnyder
 ! Replace MLSMessageCalls with trace_begin and trace_end
 !
