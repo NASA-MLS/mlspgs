@@ -37,7 +37,8 @@ module L2Parallel
     & ADDMACHINETODATABASE
   use MACHINE, only: SHELL_COMMAND
   use MLSKINDS, only: R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+  use MLSL2Options, only: MLSMessage
+  use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_DEALLOCATE, MLSMSG_WARNING, PVMERRORMESSAGE
   use MLSFINDS, only: FINDALL, FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, REMOVENUMFROMLIST, &
@@ -231,7 +232,6 @@ contains
     integer :: NODIRECTWRITEFILES       ! Need to keep track of filenames
     integer :: NODIRECTWRITEREQUESTS    ! Number of (relevantish) directWrite requests
     integer :: NOMACHINES               ! Number of slaves
-    integer :: NOQUANTITIESACCUMULATED  ! Running counter / index
     integer :: REQUESTEDFILE            ! String index from slave
     integer :: REQUESTINDEX             ! Index of direct write request
     integer :: REQUESTINDEXA(1)         ! Result of minloc
@@ -294,7 +294,6 @@ contains
     maxTimeChunkSpentWriting = 0.d0
     noDirectWriteFiles = 0
     nextTicket = 1
-    noQuantitiesAccumulated = 0
 
     ! Setup the directWrite request database with a default size.
     dummy = InflateDirectWriteRequestDB ( directWriteRequests, DatabaseInflation )
@@ -1786,6 +1785,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.109  2014/04/22 18:17:22  pwagner
+! Uses MLSMessage from MLSL2Options module
+!
 ! Revision 2.108  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
