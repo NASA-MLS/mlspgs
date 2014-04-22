@@ -128,7 +128,8 @@ module HIGHOUTPUT
 !
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
-  public :: ALIGNTOFIT, BANNER, BEVERBOSE, BLANKSTOCOLUMN, BLANKSTOTAB, &
+  public :: ALIGNTOFIT, &
+    & BANNER, BEVERBOSE, BLANKSTOCOLUMN, BLANKSTOTAB, &
     & DUMP, DUMPSIZE, DUMPTABS, GETSTAMP, HEADLINE, &
     & LETSDEBUG, NEXTCOLUMN, NEXTTAB, NUMNEEDSFORMAT, NUMTOCHARS, &
     & OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTLIST, &
@@ -346,13 +347,15 @@ contains
   ! For multiline messages, you may divide them into elements of
   ! a character array, or else a longer character scalar and
   ! supply LineLength for the routine to wrap at word boundaries
-  subroutine BANNER_CHARS ( CHARS, COLUMNRANGE, ALIGNMENT, SKIPS, LINELENGTH )
+  subroutine BANNER_CHARS ( chars, &
+    & columnRange, alignment, skips, lineLength, mode )
     character(len=*), intent(in)                :: CHARS
     ! If columnRange(1) < 1, just use starting columns; otherwise move to
     integer, dimension(2), optional, intent(in) :: COLUMNRANGE
     character(len=1), intent(in), optional      :: ALIGNMENT ! L, R, C, or J
     integer, optional, intent(in)               :: SKIPS ! How many spaces between chars
     integer, optional, intent(in)               :: LINELENGTH
+    character (len=*), optional, intent(in)     :: mode ! if not 'hard'
     !
     ! Internal variables
     integer :: addedLines
@@ -371,7 +374,7 @@ contains
       ! We will wrap the input to fit within LineLength, but remembering
       ! the stars and padding
       call wrap( chars, wrappedChars, width=LineLength-4, &
-        & inseparator=achar(0), addedLines=addedLines )
+        & inseparator=achar(0), addedLines=addedLines, mode=mode )
       addedLines = addedLines + 1
       allocate(lines(addedLines))
       lines = ' '
@@ -1860,6 +1863,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.2  2014/04/22 16:30:57  pwagner
+! Banner accepts mode as optional arg
+!
 ! Revision 2.1  2014/01/09 00:22:32  pwagner
 ! Split output module procedures between it and new highOutput
 !
