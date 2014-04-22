@@ -77,6 +77,8 @@ contains
     & Grids_x, QtyStuffIn )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: VectorValue_T
 
     type (forwardModelConfig_T), intent(in) :: fwdModelConf
@@ -89,11 +91,15 @@ contains
 
     ! Local variables:
 
+    integer :: Me = -1   ! String index cache for tracing
     integer :: mol, no_mol
 
     type (qtyStuff_t), pointer :: QtyStuff(:)
 
     ! Begin code:
+
+    call trace_begin ( me, 'Load_Sps_Data', &
+      & cond=toggle(emit) .and. levels(emit) > 2 ) ! set by -f command-line switch
 
     qtyStuff => fwdModelConf%beta_group%qty
     if ( present(qtyStuffIn) ) qtyStuff => qtyStuffIn
@@ -137,6 +143,9 @@ contains
 ! ** ZEBUG - Simulate qty%values for EXTINCTION, using the N2 function
 !  (Some code here ...)
 ! ** END ZEBUG
+
+    call trace_end ( 'Load_Species_Data', &
+      & cond=toggle(emit) .and. levels(emit) > 2 )
 
   end subroutine Load_Sps_Data
 
@@ -782,6 +791,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.89  2013/08/08 02:36:03  vsnyder
+! Use derivOK instead of foundInFirst to set deriv_flags
+!
 ! Revision 2.88  2012/08/08 20:08:43  vsnyder
 ! Insert some comments about potential problems in Load_One_Item_Grid
 !
