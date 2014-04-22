@@ -76,10 +76,11 @@ contains ! =====  Public Procedures  ===================================
     use INIT_SPECTROSCOPY_M, only: S_LINE, S_SPECTRA, S_READSPECTROSCOPY, &
       & S_READISOTOPERATIOS, S_WRITESPECTROSCOPY, &
     ! NOW THE FIELDS:
+      & First_Spectroscopy_Field, Last_Spectroscopy_Field, &
       & F_CONTINUUM, F_DELTA, F_DEFAULTISOTOPERATIO, &
       & F_EL, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_GAMMA, F_LINES, F_MASS, &
       & F_MOLECULE, F_XPTL1SIGNALS, F_N, F_N1, F_N2, F_NS, F_PS, F_QLOG, F_QN, &
-      & F_STR, F_UMLSSIGNALS, F_V0, F_W
+      & F_Signals, F_SignalsPol, F_STR, F_UMLSSIGNALS, F_V0, F_W
     use INTRINSIC, only: L_EMLS, L_UMLS, L_XPTL1, &
       & PHYQ_DIMLESS => PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, S_TIME
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
@@ -104,6 +105,7 @@ contains ! =====  Public Procedures  ===================================
     integer :: Error                    ! /= 0 => An error occured
     ! character(len=1023) :: FileName     ! For WriteSpectroscopy
     character(len=31) :: FileType
+    logical :: Got(first_Spectroscopy_Field:last_Spectroscopy_Field)
     logical :: GotLines, GotMass        ! Got a "lines" or "mass" field
     integer :: I, J, K, L               ! Loop inductors, Subscripts
     integer :: IsotopeRatiosFile = 0
@@ -132,7 +134,11 @@ contains ! =====  Public Procedures  ===================================
     real(r8) :: VALUE                   ! From Expr_Check
 
     ! Error message codes
-    integer, parameter :: DupSpectra = 1               ! Duplicate s_spectra
+    integer, parameter :: ConflictingSignals = 1       ! more than one of
+                                        ! signals, emlsSignals, and umlsSignals,
+                                        ! or more than one of signalsPol and
+                                        ! emlsSignalsPol
+    integer, parameter :: DupSpectra = conflictingSignals + 1 ! Duplicate s_spectra
     integer, parameter :: Negative = dupSpectra + 1    ! Parameter is negative
     integer, parameter :: No_Mass = negative + 1       ! Lines field but no mass field
     integer, parameter :: NotInt = no_mass + 1         ! QN not an integer
@@ -187,6 +193,7 @@ contains ! =====  Public Procedures  ===================================
       end if
       select case ( get_spec_id(key) )
       case ( s_line ) ! ...................................  LINE  .....
+        got = .false. ! "Got a field?"
         numLines = numLines + 1
         lines(numLines)%line_Name = name
         signalsNode = 0
@@ -205,8 +212,6 @@ contains ! =====  Public Procedures  ===================================
             if ( instrument == l_emls ) signalsNodePol = son
           case ( f_gamma )
             call expr_check ( subtree(2,son), lines(numLines)%gamma, phyq_dimless )
-          case ( f_xptl1Signals )
-            if ( instrument == l_xptl1 ) signalsNode = son
           case ( f_n )
             call expr_check ( subtree(2,son), lines(numLines)%n, phyq_dimless )
           case ( f_n1 )
@@ -232,6 +237,10 @@ contains ! =====  Public Procedures  ===================================
             end do
             if ( l-1 /= 2*mod(lines(numLines)%qn(1),10)+1 ) &
               & call announce_error ( son, QN_wrong_size )
+          case ( f_signals )
+            signalsNode = son
+          case ( f_signalsPol )
+            signalsNodePol = son
           case ( f_str )
             call expr_check ( subtree(2,son), lines(numLines)%str, phyq_dimless )
           case ( f_umlsSignals )
@@ -240,10 +249,22 @@ contains ! =====  Public Procedures  ===================================
             call expr_check ( subtree(2,son), lines(numLines)%v0, phyq_frequency )
           case ( f_w )
             call expr_check ( subtree(2,son), lines(numLines)%w, phyq_dimless )
+          case ( f_xptl1Signals )
+            if ( instrument == l_xptl1 ) signalsNode = son
           case default
             ! Can't get here if the type checker worked
           end select
         end do
+
+        if ( instrument == l_emls .and. &
+           &   ( got(f_signals) .and. got(f_emlsSignals) .or. &
+           &     got(f_signalsPol) .and. got(f_emlsSignalsPol) ) .or. &
+           & instrument == l_umls .and. &
+           &   got(f_signals) .and. got(f_umlsSignals) .or. &
+           & instrument == l_xptl1 .and. &
+           &   got(f_signals) .and. got(f_xptl1Signals) ) &
+             & call announce_error ( key, conflictingSignals )
+
         lines(numLines)%useYi = abs(lines(numLines)%delta) > 0.0 .or. &
           &                     abs(lines(numLines)%gamma) > 0.0
         if ( signalsNode /= 0 ) then
@@ -436,6 +457,9 @@ contains ! =====  Public Procedures  ===================================
       if ( where > 0 ) call startErrorMessage ( where )
       call output ( ' Spectroscopy complained: ' )
       select case ( code )
+      case ( conflictingSignals )
+        call output ( 'Both a generic signals field and instrument specific signals field' )
+        call output ( ' are specified, and an instrument is specified.', advance='yes' )
       case ( dupSpectra )
         call display_string ( lit_indices(more), &
           & before='Duplicate SPECTRA specification for ', advance='yes' )
@@ -1522,6 +1546,11 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.60  2014/04/04 19:36:54  vsnyder
+! Check that the number of elements of the QN field is twice the low-order
+! decimal digit of the first one (which is the JPL catalog format indicator),
+! plus one.
+!
 ! Revision 2.59  2013/11/06 22:15:08  pwagner
 ! Read/Write the instrument name as a file-level attribute
 !

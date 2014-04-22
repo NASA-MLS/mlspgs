@@ -31,7 +31,8 @@ module Init_Spectroscopy_m
   integer, parameter :: Last_Spectroscopy_Lit = last_Signal_Lit
 
   ! Fields used in spectroscopy specifications:
-  integer, parameter :: F_continuum  = last_signal_field + 1
+  integer, parameter :: First_Spectroscopy_Field = last_signal_field + 1
+  integer, parameter :: F_continuum  = first_Spectroscopy_Field
   integer, parameter :: F_defaultIsotopeRatio = f_continuum + 1
   integer, parameter :: F_delta      = f_defaultIsotopeRatio + 1
   integer, parameter :: F_el         = f_delta + 1
@@ -49,7 +50,9 @@ module Init_Spectroscopy_m
   integer, parameter :: F_ps         = f_ns + 1
   integer, parameter :: F_qlog       = f_ps + 1
   integer, parameter :: F_qn         = f_qlog + 1
-  integer, parameter :: F_str        = f_qn + 1
+  integer, parameter :: F_signals    = f_qn + 1
+  integer, parameter :: F_signalsPol = f_signals + 1
+  integer, parameter :: F_str        = f_signalsPol + 1
   integer, parameter :: F_umlsSignals  = f_str + 1
   integer, parameter :: F_v0         = f_umlsSignals + 1
   integer, parameter :: F_w          = f_v0 + 1
@@ -112,6 +115,8 @@ contains
     field_indices(f_ps)         = add_ident ( 'ps' )
     field_indices(f_qlog)       = add_ident ( 'qlog' )
     field_indices(f_qn)         = add_ident ( 'qn' )
+    field_indices(f_signals)    = add_ident ( 'signals' )
+    field_indices(f_signalsPol) = add_ident ( 'signalsPol' )
     field_indices(f_str)        = add_ident ( 'str' )
     field_indices(f_umlsSignals)  = add_ident ( 'umlsSignals' )
     field_indices(f_v0)         = add_ident ( 'v0' )
@@ -174,6 +179,8 @@ contains
              begin, f+f_n, t+t_numeric, nr+n_field_type, &
              begin, f+f_ps, t+t_numeric, nr+n_field_type, &
              begin, f+f_qn, t+t_numeric, n+n_field_type, &
+             begin, f+f_signals, t+t_string, n+n_field_type, &
+             begin, f+f_signalsPol, t+t_string, n+n_field_type, &
              begin, f+f_str, t+t_numeric, nr+n_field_type, &
              begin, f+f_umlsSignals, t+t_string, n+n_field_type, &
              begin, f+f_v0, t+t_numeric, nr+n_field_type, &
@@ -215,6 +222,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.19  2011/10/25 22:14:13  pwagner
+! added readIsotopeRatios
+!
 ! Revision 2.18  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
