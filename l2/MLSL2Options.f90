@@ -13,14 +13,14 @@
 MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+  use HighOutput, only: Banner, OutputNamedValue
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use MLSCOMMON, only: MLSFILE_T, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
-  use MLSFILES, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
-  use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, &
-    & MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_TESTWARNING, &
-    & MLSMSG_SEVERITY_TO_WALKBACK, MLSMSG_WARNING, &
-    & SAYMESSAGE => MLSMESSAGE
+  use MLSFiles, only: WildCardHDFVersion, HDFVersion_4, HDFVersion_5, Dump
+  use MLSMESSAGEMODULE, only: MLSMessageConfig, &
+    & MLSMsg_error, MLSMsg_info, MLSMsg_testWarning, &
+    & MLSMsg_severity_to_walkback, MLSMsg_warning, &
+    & Bummer, sayMessage => MLSMessage
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
   use PCFHDR, only: GLOBALATTRIBUTES
   use OUTPUT_M, only: OUTPUTOPTIONS, &
@@ -326,9 +326,19 @@ contains
       ! Say it with MLSMessage
       ! and possibly rpeat it with output
       character (len=*), intent(in) :: It
-      if ( .not. outputInstead ) call SAYMESSAGE ( severity, ModuleNameIn, It, &
-        & Advance, MLSFile, status )
-      if ( mustRepeat ) call output( trim(It), advance='yes' )
+      character(len=256)            :: mesg
+      integer, parameter            :: LineLength = 40
+      if ( Severity > MLSMSG_Warning ) then
+        mesg = trim(it) // ' (in) ' // trim(ModuleNameIn)
+        if ( present(MLSFile) ) call dump( MLSFile )
+        if ( mustRepeat ) call banner( trim(mesg), LineLength=LineLength )
+        if ( .not. outputInstead ) call Bummer ( mesg, &
+          & LineLength=LineLength, severity=severity )
+      else
+        if ( .not. outputInstead ) call SAYMESSAGE ( severity, ModuleNameIn, It, &
+          & Advance, MLSFile, status )
+        if ( mustRepeat ) call output( trim(It), advance='yes' )
+      endif
     end subroutine SayIt
   end subroutine MLSMessage
 
@@ -1015,6 +1025,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.84  2014/04/22 16:33:36  pwagner
+! MLSMessage now prints error message as eye-catching banner
+!
 ! Revision 2.83  2014/04/10 00:44:58  pwagner
 ! Moved more stuff here
 !
