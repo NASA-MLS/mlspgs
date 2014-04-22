@@ -38,7 +38,8 @@ contains
       & L_LINEWIDTH_TDEP, L_VMR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use SPECTROSCOPYCATALOG_M, only: Catalog, DUMP
-    use TOGGLES, only: SWITCHES
+    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use VECTORSMODULE, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
 
     type(forwardModelConfig_t), intent(inout) :: FwdModelConf ! Fills Beta_Group
@@ -51,9 +52,13 @@ contains
     type (VectorValue_T), pointer :: F  ! An arbitrary species
     integer :: L         ! Index in spectral parameter data structure
     integer :: M         ! Index for molecules in beta groups, or size thereof
+    integer :: Me = -1   ! String index cache for tracing
     integer :: Mol       ! Molecule in a beta group
     integer :: S         ! Sideband index, 1 = LSB, 2 = USB
     integer :: S1, S2    ! Bounds for sideband index S
+
+    call trace_begin ( me, 'Get_Species_Data', &
+      & cond=toggle(emit) .and. levels(emit) > 1 ) ! set by -f command-line switch
 
     if ( dumpFWM < -1 ) dumpFwm = switchDetail(switches,'fwmd')
 
@@ -138,6 +143,9 @@ contains
       if ( dumpFWM > 9 ) stop
     end if
 
+    call trace_end ( 'Get_Species_Data', &
+      & cond=toggle(emit) .and. levels(emit) > 1 )
+
   contains
 
     subroutine Check_No_Frq_Coord ( Qty )
@@ -166,6 +174,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.37  2013/08/02 01:23:33  vsnyder
+! Use GetQtyStuffForForwardModel
+!
 ! Revision 2.36  2013/05/15 03:08:54  vsnyder
 ! Revise processing of dump switch
 !
