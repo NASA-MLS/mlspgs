@@ -32,9 +32,6 @@ module Init_MLSSignals_m
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  ! Types used in signal specifications:
-  integer, parameter :: Last_signal_type = last_molecule_type
-
   ! Fields used in signal specifications:
   integer, parameter :: F_Aura              = field_First
   integer, parameter :: F_band              = f_Aura + 1
@@ -64,23 +61,25 @@ module Init_MLSSignals_m
   integer, parameter :: Last_Signal_Field   = f_width
 
   ! Literals used in signal specifications:
-  integer, parameter :: Last_Signal_Lit    = last_molecule
+  integer, parameter :: Last_Signal_Lit     = last_molecule
 
   ! Enumeration types:
-  integer, parameter :: T_INSTRUMENTTYPE   = last_intrinsic_spec+1
+  integer, parameter :: T_InstrumentType    = last_molecule_type+1
+  integer, parameter :: Last_signal_type    = t_instrumenttype
 
   ! Signal specifications:
-  integer, parameter :: S_band             = t_instrumenttype + 1
-  integer, parameter :: S_module           = s_band + 1
-  integer, parameter :: S_radiometer       = s_module + 1
-  integer, parameter :: S_signal           = s_radiometer + 1
-  integer, parameter :: S_spectrometerType = s_signal + 1
-  integer, parameter :: Last_Signal_Spec = s_spectrometerType
+  integer, parameter :: S_band              = t_instrumenttype + 1
+  integer, parameter :: S_module            = s_band + 1
+  integer, parameter :: S_radiometer        = s_module + 1
+  integer, parameter :: S_signal            = s_radiometer + 1
+  integer, parameter :: S_spectrometerType  = s_signal + 1
+  integer, parameter :: Last_Signal_Spec    = s_spectrometerType
 
   ! The MLSSignals section is NOT defined here, because it appears
   ! in the section ordering requirements array in init_tables_module.
 
 contains
+
   ! --------------------------------------------  Init_MLSSignals  -----
   subroutine Init_MLSSignals ( N_DATA_TYPE_INDICES, N_FIELD_INDICES, &
     & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
@@ -233,6 +232,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.32  2014/04/22 00:07:48  vsnyder
+! Put InstrumentType's index in the range of type indices
+!
 ! Revision 2.31  2013/11/06 01:46:30  pwagner
 ! May read instrument field of module; e.g. emls
 !
