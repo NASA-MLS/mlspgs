@@ -14,6 +14,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
   use CALL_STACK_M, only: DUMP_STACK
+  use HighOutput, only: Banner
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCOMMON, only: MLSFILE_T, MLSDEBUG, MLSVERBOSE, &
     & MLSDEBUGSTICKY, MLSVERBOSESTICKY
@@ -141,6 +142,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.16  2014/04/22 16:29:33  pwagner
+! Added bummer--writes error message as an eye-catching banner
+!
 ! Revision 2.15  2013/11/18 22:23:34  pwagner
 ! Sticky versions of verbose, debug available
 !
