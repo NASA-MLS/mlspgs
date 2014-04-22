@@ -406,7 +406,6 @@ serial
 sgrid
 shape
 signal
-signals
 silent
 single
 singleMAF
@@ -520,6 +519,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.246  2014/04/22 00:47:37  vsnyder
+# Move signals field to Init_Spectroscopy
+#
 # Revision 2.245  2014/04/07 18:02:36  pwagner
 # May specify AscDescMode when DirectWrite-ing swaths
 #
