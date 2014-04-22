@@ -1438,27 +1438,27 @@ contains ! =====     Public Procedures     =============================
           valuesNode = subtree(j,key)
         case ( f_expr )
 !         valuesNode = subtree(j,key)
-        do jj = 2, nsons(subtree(j,key))
-          stat = vector_qty_expr ( subtree(jj,subtree(j,key)), vectors, tempQuantity, &
-          number, theUnits, 'Fill' )
-          select case ( stat )
-          case ( t_numeric )
-            call output ( number, before='Numeric value of "expr" field = ' )
-            if ( theUnits /= phyq_dimensionless ) &
-            call display_string ( lit_indices(base_unit(theUnits)), &
-              & before=' ', advance='yes' )
-          case ( t_boolean )
-            call display_string ( lit_indices(nint(number)), &
-              & before='Value of "expr" field = ', advance='yes' )
-          case ( dot )
-            call output ( 'Got vector qty result', advance='yes' )
-            call dump_vector_quantity ( tempQuantity, details=1, name='Quantity value of "expr" field' )
-            call destroyVectorQuantityMask ( tempQuantity )
-            call destroyVectorQuantityValue ( tempQuantity )
-          case default
-            call output ( 'Got Vector_Qty_Expr_Error', advance='yes' )
-          end select
-        end do
+          do jj = 2, nsons(subtree(j,key))
+            stat = vector_qty_expr ( subtree(jj,subtree(j,key)), vectors, tempQuantity, &
+            number, theUnits, 'Fill' )
+            select case ( stat )
+            case ( t_numeric )
+              call output ( number, before='Numeric value of "expr" field = ' )
+              if ( theUnits /= phyq_dimensionless ) &
+              call display_string ( lit_indices(base_unit(theUnits)), &
+                & before=' ', advance='yes' )
+            case ( t_boolean )
+              call display_string ( lit_indices(nint(number)), &
+                & before='Value of "expr" field = ', advance='yes' )
+            case ( dot )
+              call output ( 'Got vector qty result', advance='yes' )
+              call dump_vector_quantity ( tempQuantity, details=1, name='Quantity value of "expr" field' )
+              call destroyVectorQuantityMask ( tempQuantity )
+              call destroyVectorQuantityValue ( tempQuantity )
+            case default
+              call output ( 'Got Vector_Qty_Expr_Error', advance='yes' )
+            end select
+          end do
           call Announce_Error ( gson, noCodeFor, extraInfo=(/ f_expr /) )
         case ( f_extinction ) ! For cloud extinction fill
           extinction = get_boolean ( gson )
@@ -3097,6 +3097,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.441  2014/04/22 00:45:36  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.440  2014/03/20 01:41:48  vsnyder
 ! Get Base_Unit from Declaration_Table, improve some tracing
 !
