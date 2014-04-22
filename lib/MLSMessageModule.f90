@@ -16,6 +16,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   use CALL_STACK_M, only: DUMP_STACK ! Used in MLSMessage.f9h, but not here
                                      ! but... the makefile maker can't see it
                                      ! in MLSMessage.f9h
+  use HighOutput, only: Banner
   use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
   use MLSCOMMON, only: MLSFILE_T, MLSDEBUG, MLSVERBOSE, &
     & MLSDEBUGSTICKY, MLSVERBOSESTICKY
@@ -194,6 +195,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.49  2014/04/22 16:29:16  pwagner
+! Added bummer--writes error message as an eye-catching banner
+!
 ! Revision 2.48  2014/01/11 01:40:14  vsnyder
 ! Add comment about Dump_Stack being needed in MLSMessage.f9h
 !
