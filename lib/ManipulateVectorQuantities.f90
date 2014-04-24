@@ -149,7 +149,8 @@ contains
   ! ---------------------------------------- FindOneClosestInstance -----
   integer function FindOneClosestInstance ( referenceQuantity, &
     soughtQuantity, instance, useValue )
-    use HGRIDSDATABASE, only: FINDCLOSESTMATCH
+    use hGridsDatabase, only: findClosestMatch
+    use Intrinsic, only: l_time
     ! This returns the instance index into a stacked quantity for the
     ! instance 'closest' to the given instance in an unstacked one
     type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
@@ -158,10 +159,12 @@ contains
     logical, intent(in), optional :: USEVALUE ! For phiTan as sought quantity
 
     ! Local variables
-    logical :: MYUSEVALUE
+    integer :: horizontalCoordinate
+    logical :: myUseValue
     real (r8), dimension(:,:), pointer :: SEEK ! The thing to look for
 
     ! Executable:
+    horizontalCoordinate = referenceQuantity%template%horizontalCoordinate
     ! We'll skip the error checking we could do at this point, for speed.
 
     ! First we'll do a hunt to get ourselves in the right area.  Might as
@@ -176,12 +179,21 @@ contains
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Cannot use useValue option for non phiTan quantities' )
       end if
+    elseif ( horizontalCoordinate == l_time ) then
+      seek => soughtQuantity%template%time
     else
       seek => soughtQuantity%template%phi
     end if
     ! Call FindClosestMatch to do the work
-    FindOneClosestInstance = FindClosestMatch ( referenceQuantity%template%phi(1,:), &
-      & seek, instance )
+    if ( horizontalCoordinate == l_time ) then
+      FindOneClosestInstance = FindClosestMatch ( &
+        & referenceQuantity%template%time(1,:), &
+        & seek, instance )
+    else
+      FindOneClosestInstance = FindClosestMatch ( &
+        & referenceQuantity%template%phi(1,:), &
+        & seek, instance )
+    endif
   end function FindOneClosestInstance
 
   ! --------------------------------------- FindInstanceWindow ---------
@@ -648,6 +660,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.45  2014/04/24 23:51:59  pwagner
+! Depending on horizontalCoordinate of reference quantity, may FindOneClosestInstance in time, not phi
+!
 ! Revision 2.44  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
