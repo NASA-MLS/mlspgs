@@ -35,6 +35,7 @@ module HGridsDatabase                   ! Horizontal grid information
 
   type HGrid_T
     integer :: Name = 0                ! String index of name.            
+    integer :: masterCoordinate = 0    ! Its string index; e.g. l_phiTan
     integer :: noProfs                 ! Number of profiles in this grid  
     integer :: noProfsLowerOverlap = 0 ! Number of profiles in the lower overlap
     integer :: noProfsUpperOverlap = 0 ! Number of profiles in the upper overlap
@@ -219,8 +220,9 @@ contains ! =========== Public procedures ===================================
 
   ! ------------------------------------------------  DUMP_A_HGRID  -----
   subroutine DUMP_a_HGRID ( aHGRID )
-    use OUTPUT_M, only: OUTPUT
-    use STRING_TABLE, only: DISPLAY_STRING
+    use Intrinsic, only: lit_indices
+    use output_m, only: newLine, output
+    use string_table, only: display_string
     type(hGrid_T), intent(in) :: aHGRID
     integer :: IERR
     integer :: J
@@ -249,6 +251,11 @@ contains ! =========== Public procedures ===================================
         call output ( aHgrid%losAngle(1,j), '(1x,1pg13.6)', advance='no' )
         call output ( aHgrid%maf(j), places=6, advance='yes' )
       end do
+      if ( aHgrid%masterCoordinate > 0 ) then
+        call output( ' Master coordinate: ', advance='no' )
+        call display_string ( lit_indices(aHgrid%masterCoordinate), ierr=ierr )
+        call newLine
+      endif
   end subroutine DUMP_a_HGRID
 
   ! ------------------------------------------------  DUMP_HGRIDS  -----
@@ -266,9 +273,9 @@ contains ! =========== Public procedures ===================================
   ! ---------------------------------------- FindClosestMatch ---
   integer function FindClosestMatch ( reference, sought, instance )
     use MLSNUMERICS, only: HUNT
-    ! This routine is best explained in context.  Given a 'sought' quantity
-    ! e.g. ptan, radiance, the profile in reference (e.g. temperature) is found
-    ! that is closest to profile 'instance' in reference
+    ! Given a sought quantity, 
+    ! the profile in reference is found
+    ! that is closest to profile 'instance' in sought quantity
     real(r8), dimension(:), intent(in) :: REFERENCE ! e.g. temperature
     real(r8), dimension(:,:), intent(in) :: SOUGHT ! e.g. ptan, radiance
     integer, intent(in) :: INSTANCE
@@ -281,11 +288,12 @@ contains ! =========== Public procedures ===================================
     real(r8) :: COST                    ! A cost for a guess
 
     ! Executable code
+    ! Get starting Guess from Hunt
     call Hunt ( reference, sought(1,instance), firstGuess, &
       & start=max(min(instance,size(reference)),1), &
       & allowTopValue=.true., nearest=.true. )
 
-    ! Now check the ones either side
+    ! Now check for better ones either side
     lowGuess = max ( firstGuess-1, 1 )
     highGuess = min ( firstGuess+1, size(reference) )
     bestCost = 0.0
@@ -324,6 +332,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.13  2014/04/24 23:50:25  pwagner
+! Added masterCoordinate component
+!
 ! Revision 2.12  2013/10/01 22:16:45  pwagner
 ! Added maf component to HGrid_T
 !
