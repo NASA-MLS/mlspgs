@@ -76,11 +76,11 @@ contains ! ============= Public procedures ===================================
     use EXPR_M, only: EXPR
     use FGRID, only: FGRID_T
     use HGRIDSDATABASE, only: HGRID_T
-    use INIT_TABLES_MODULE, only:  F_BADVALUE, F_FGRID, F_HGRID, F_IRREGULAR, &
-      & F_KEEPCHANNELS, F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, &
-      & F_RADIOMETER, F_SGRID, F_SIGNAL, F_TYPE, F_VGRID, F_REFLECTOR, &
-      & FIELD_FIRST, FIELD_LAST, L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, &
-      & L_CHANNEL, L_LOSTRANSFUNC, L_NONE
+    use init_tables_module, only:  f_badValue, f_fGrid, f_hGrid, f_irregular, &
+      & f_keepChannels, f_logBasis, f_minValue, f_module, f_molecule, &
+      & f_radiometer, f_sgrid, f_signal, f_type, f_vgrid, f_reflector, &
+      & field_first, field_last, l_true, l_zeta, l_xyz, l_matrix3x3, &
+      & l_channel, l_lostransfunc, l_none, l_phitan
     use MLSCOMMON, only: MLSFILE_T
     use MLSKINDS, only: RK => R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
@@ -121,6 +121,7 @@ contains ! ============= Public procedures ===================================
     integer :: FGRIDINDEX               ! Index of frequency grid
     integer :: FREQUENCYCOORDINATE      ! Literal
     integer :: HGRIDINDEX               ! Index of horizontal grid
+    integer :: HORIZONTALCOORDINATE     ! Literal
     integer :: I                        ! Loop counter
     integer :: INSTRUMENTMODULE         ! Database index
     integer :: KEY                      ! Field name, F_...
@@ -159,6 +160,7 @@ contains ! ============= Public procedures ===================================
     qty%name = name
     fGridIndex = 0
     hGridIndex = 0
+    horizontalCoordinate = l_phiTan
     instrumentModule = 0
     keepChannels = .false.
     logBasis = .false.
@@ -352,6 +354,10 @@ contains ! ============= Public procedures ===================================
     else
       isMinorFrame = properties(p_minorFrame)
     end if
+    
+    ! horizontalCoordinate?
+    if ( got(f_hGrid) .and. hGridIndex > 0 ) &
+      & horizontalCoordinate = HGrids(hGridIndex)%masterCoordinate
 
     ! Now do the setup for the different families of quantities
     if ( isMinorFrame ) then
@@ -454,6 +460,7 @@ contains ! ============= Public procedures ===================================
     qty%sideband = sideband
     qty%signal = signal
     qty%unit = unitsTable ( quantityType )
+    qty%horizontalCoordinate = horizontalCoordinate
     if ( got(f_badValue) ) qty%badValue = badValue
 
     call deallocate_test ( channels, 'Channels', moduleName )
@@ -1396,6 +1403,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.176  2014/04/24 23:58:21  pwagner
+! If hGrid supplied, use it to set horizontalCoordinate
+!
 ! Revision 2.175  2014/04/07 18:01:12  pwagner
 ! Added new quantity type AscDescMode
 !
