@@ -54,16 +54,16 @@ contains ! =====     Public Procedures     =============================
     use CHUNKS_M, only: MLSCHUNK_T
     use EXPR_M, only: EXPR
     use HGRIDSDATABASE, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
-    use INIT_TABLES_MODULE, only: F_DATE, &
-      & F_EXTENDIBLE, F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, F_GEODLAT, &
-      & F_HEIGHT, F_INCLINATION, F_INSETOVERLAPS, F_INTERPOLATIONFACTOR, &
-      & F_LON, F_LOSANGLE, F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
-      & F_MODULE, F_ORIGIN, &
-      & F_SINGLE, F_SOLARTIME, F_SOLARZENITH, F_SOURCEL2GP, F_SPACING, &
-      & F_TIME, F_TYPE, &
-      & FIELD_FIRST, FIELD_LAST, &
-      & L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, &
-      & L_L2GP, L_REGULAR
+    use init_tables_module, only: f_coordinate, f_date, &
+      & f_extendible, f_forbidOverspill, f_fraction, f_geodAngle, f_geodLat, &
+      & f_height, f_inclination, f_insetOverlaps, f_interpolationFactor, &
+      & f_lon, f_losAngle, f_maxLowerOverlap, f_maxUpperOverlap, f_mif, &
+      & f_module, f_origin, &
+      & f_single, f_solarTime, f_solarZenith, f_sourceL2gp, f_spacing, &
+      & f_time, f_type, &
+      & field_first, field_last, &
+      & l_explicit, l_fixed, l_fractional, l_height, &
+      & l_l2gp, l_regular
     use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
       & ASSEMBLEL1BQTYNAME
     use L2GPDATA, only: L2GPDATA_T
@@ -93,6 +93,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
 
     ! Local variables
+    integer :: coordIndex               ! Tree node
     integer :: DATE                     ! Tree node
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
     double precision :: EXPR_VALUE(2)   ! Output from Expr subroutine
@@ -192,6 +193,9 @@ contains ! =====     Public Procedures     =============================
       select case ( field_index )
       case ( f_type )
         hGridType = decoration(subtree(2,son))
+      case ( f_coordinate )
+        coordIndex = field
+        hGrid%masterCoordinate = decoration(subtree(2,son))
       case ( f_module )
         instrumentModule = sub_rosa(subtree(2,son))
         call get_string ( instrumentModule , instrumentModuleName )
@@ -689,7 +693,7 @@ contains ! =====     Public Procedures     =============================
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
       call ReadL1BData ( L1BFile, l1bItemName, l1bField,noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
-        & neverfail=MissingOK, dontPad=.true. )
+        & neverfail=(MissingOK .or. l1bItem == l1b_tplosangle), dontPad=.true. )
       if ( l1bFlag==-1 .and. .not. MissingOK) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
       if ( deebug .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
@@ -807,9 +811,10 @@ contains ! =====     Public Procedures     =============================
     use CHUNKS_M, only: MLSCHUNK_T, DUMP
     use CONSTANTS, only: DEG2RAD, RAD2DEG
     use DATES_MODULE, only: UTC_TO_TIME
-    use DUMP_0, only: DIFF, DUMP
+    use DUMP_0, only: DIFF, DUMP, selfdiff
     use EMPIRICALGEOMETRY, only: EMPIRICALLONGITUDE, CHOOSEOPTIMUMLON0
     use HGRIDSDATABASE, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID, FINDCLOSESTMATCH
+    use HIGHOUTPUT, only: BEVERBOSE, OUTPUTNAMEDVALUE
     use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
       & ASSEMBLEL1BQTYNAME
     use MLSCOMMON, only: MLSFILE_T, NAMELEN, TAI93_RANGE_T
@@ -895,6 +900,7 @@ contains ! =====     Public Procedures     =============================
       verbose = .not. onlyComputingOffsets
       warnIfNoProfs = onlyComputingOffsets
       deebughere = deebug .or. ( switchDetail(switches, 'hgrid') > 1 ) ! e.g., 'hgrid2' 
+      verbose = verbose .or. deebughere
     endif
     if ( deebughere .and. .false.) then
       print *, 'Checking quadratic solution'
@@ -1138,9 +1144,12 @@ contains ! =====     Public Procedures     =============================
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & dontPad=.true. )
     if ( deebughere ) then
-      call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
+      call dump( l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
+      call selfdiff( l1bField%DpField(1,1,:), trim(l1bItemName)  )
     end if
     if ( chunk%firstMAFIndex /= chunk%lastMAFIndex ) then
+      if ( deebughere ) call outputNamedValue( 'shape(hGrid%phi)', size(hGrid%phi) )
+      if ( deebughere ) call outputNamedValue( 'noProfs', hGrid%noProfs )
       call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
         & hGrid%phi(1,:), hGrid%time(1,:), &
         & method='Linear', extrapolate='Allow' )
@@ -2400,6 +2409,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.114  2014/04/24 23:56:43  pwagner
+! May set master coordinate in hGrid specification
+!
 ! Revision 2.113  2014/03/18 17:15:09  pwagner
 ! Can get leapseconds from dates module if run sans toolkit
 !
