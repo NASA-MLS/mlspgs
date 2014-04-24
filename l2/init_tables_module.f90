@@ -82,7 +82,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_FWMTYPE        = t_fillmethod+1
   integer, parameter :: T_GEOLOCATION    = t_fwmType+1
   integer, parameter :: T_GRIDDEDORIGIN  = t_geolocation+1
-  integer, parameter :: T_HGRIDTYPE      = t_griddedOrigin+1
+  integer, parameter :: T_HGRIDCOORD     = t_griddedOrigin+1
+  integer, parameter :: T_HGRIDTYPE      = t_hGridCoord+1
   integer, parameter :: T_I_SATURATION   = t_hgridtype+1
   integer, parameter :: T_MASKS          = t_i_saturation+1
   integer, parameter :: T_MASKUPDATES    = t_masks+1
@@ -291,6 +292,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_fwmType) =           add_ident ( 'fwmType' )
     data_type_indices(t_geolocation) =       add_ident ( 'geolocation' )
     data_type_indices(t_griddedOrigin) =     add_ident ( 'griddedOrigin' )
+    data_type_indices(t_hgridcoord) =        add_ident ( 'hGridCoord' )
     data_type_indices(t_hgridtype) =         add_ident ( 'hGridType' )
     data_type_indices(t_i_saturation) =      add_ident ( 'i_saturation' )
     data_type_indices(t_masks) =             add_ident ( 'masks' )
@@ -310,7 +312,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_vgridcoord) =        add_ident ( 'vGridCoord' )
     data_type_indices(t_vgridtype) =         add_ident ( 'vGridType' )
     ! Put field names into the symbol table.  Don't add ones that are
-    ! put in by init_MLSSignals.
+    ! put in by init_MLSSignals. 
     ! Don't edit the following file directly--it is generated automatically
     ! based on the file field_names.txt
     include 'field_add.f9h'
@@ -579,6 +581,7 @@ contains ! =====     Public procedures     =============================
              l+l_pa, l+l_ppbv, l+l_ppmv, l+l_pptv, l+l_rad, l+l_radians, &
              l+l_s, l+l_seconds, l+l_thz, l+l_vmr, l+l_zeta, &
              n+n_dt_def, &
+      begin, t+t_hgridcoord, l+l_phiTan, l+l_time, n+n_dt_def, &
       begin, t+t_vgridcoord, l+l_angle, l+l_dimensionless, l+l_dimless, &
              l+l_geocAltitude, l+l_geodAltitude, l+l_gph, l+l_icedensity, &
              l+l_integer, l+l_none, l+l_pressure, l+l_theta, l+l_zeta, &
@@ -630,6 +633,7 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def, &
 !      begin, s+s_l2gp, np+n_spec_def, & ! To avoid forward reference in h/vGrid
       begin, s+s_hGrid, &
+             begin, f+f_coordinate, field_type(t_hgridcoord), & ! PHYQ_Time, PHYQ_PhiTan
              begin, f+f_date, string(), &
              begin, f+f_extendible, boolean(), &
              begin, f+f_fraction, numeric(phyq_dimensionless), &
@@ -1953,6 +1957,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.599  2014/04/24 23:55:32  pwagner
+! May set master coordinate in hGrid specification
+!
 ! Revision 2.598  2014/04/07 18:03:55  pwagner
 ! May specify AscDescMode when DirectWrite-ing swaths
 !
