@@ -20,8 +20,8 @@ module QuantityTemplates         ! Quantities within vectors
   use DUMP_0, only: DUMP
   use EXPR_M, only: EXPR_CHECK
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INTRINSIC, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
-    & PHYQ_TIME
+  use INTRINSIC, only: phyq_angle, phyq_dimensionless, phyq_frequency, &
+    & phyq_time, l_phiTan
   use MLSFILLVALUES, only: RERANK
   use MLSKINDS, only: RT => R8 ! RT is "kind of Real components of template"
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
@@ -116,6 +116,8 @@ module QuantityTemplates         ! Quantities within vectors
     ! surfs(i,j) for an incoherent one.
 
     ! Horizontal coordinates
+    integer :: horizontalCoordinate     ! The horizontal coordinate used. Either
+                                        ! l_phiTan or l_time
     logical :: sharedHGrid              ! Set if horiz coord is a pointer not a copy
     integer :: hGridIndex               ! Index of any hGrid used
     integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
@@ -299,6 +301,7 @@ contains
     z%sharedVGrid                  = a%sharedVGrid            
     z%vGridIndex                   = a%vGridIndex             
     z%sharedHGrid                  = a%sharedHGrid             
+    z%horizontalCoordinate         = a%horizontalCoordinate             
     z%hGridIndex                   = a%hGridIndex              
     z%instanceOffset               = a%instanceOffset                    
     z%grandTotalInstances          = a%grandTotalInstances               
@@ -473,6 +476,9 @@ contains
     end if
     call output ( ' InstanceLen = ' )
     call output ( quantity_template%InstanceLen, advance='yes' )
+    if ( .not. myNoL2CF ) &
+      & call myDisplayString ( lit_indices(quantity_template%horizontalCoordinate), &
+      & before=   '      horizontal coordinate = ', advance='yes' )
     call output ( '      sharedHGrid = ' )
     call output ( quantity_template%sharedHGrid, advance='no' )
     if ( quantity_template%sharedHGrid ) then
@@ -487,7 +493,8 @@ contains
       call output ( ' vGridIndex = ' )
       call output ( quantity_template%vGridIndex )
     end if
-    if ( .not. myNoL2CF ) call myDisplayString ( lit_indices(quantity_template%verticalCoordinate), &
+    if ( .not. myNoL2CF ) &
+      & call myDisplayString ( lit_indices(quantity_template%verticalCoordinate), &
       & before=' vertical coordinate = ', advance='yes' )
     call output ( '      sharedFGrid = ' )
     call output ( quantity_template%sharedFGrid, advance='no' )
@@ -995,6 +1002,7 @@ contains
     qty%sharedVGrid = .false.
     qty%vGridIndex = 0
     qty%sharedHGrid = .false.
+    qty%horizontalCoordinate = l_phiTan
     qty%hGridIndex = 0
     qty%instanceOffset = 0
     qty%frequencyCoordinate = l_none
@@ -1636,6 +1644,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.81  2014/03/20 01:39:47  vsnyder
+! Unified types in Intrinsic
+!
 ! Revision 2.80  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
