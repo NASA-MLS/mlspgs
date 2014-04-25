@@ -42,22 +42,37 @@
 #  >    VALUE                = "myVALUE"
 #   END_OBJECT             = myOBJECT
 #(where only the changed line has been marked with the ">")
+#
+#Use(4)
+#Bloc replacement; given myOBJECT and myFILE
+#The fix involves replacing the bloc of lines in each file 
+#with the contents of myFILE as the following illustrates:
+# <<  OBJECT                 = myOBJECT
+# <<   .  .  .
+# <<  END_OBJECT             = myOBJECT
+# >> 1st line of myFILE
+# >> .   .   .
+# >> last line of myFILE
 #Usage:
 #edit_metfiles.sh [opt1 [arg1]] [opt2 [arg2]] .. [optm [argm]] [filelist]
 #
 #    O p t i o n s
 # -1            use(1)
 # -2            use(2)
+# -3            use(3)
+# -4            use(4)
 # -obj myOBJECT instead of INPUTPOINTER, change value of myOBJECT
 # -val myVALUE  instead of use(1) or (2), change value of OBJECT to myVALUE
+# -f myFILE     for use (4)
 # -print        instead of creating new file(s), print results of sed to stdout
 # -test         instead of creating new file(s), confirm that files already 
 #                  match output of running script; i.e., diff would be null
 # -h[elp]       print brief help message; exit
 #Notes:
-#(1)Options -1, -2, -val are mutually exclusive
-#(2)If -obj is supplied, then -val should be, too
-#(3)The default use is Use(1)
+#(1) Options -1, -2, -val are mutually exclusive
+#(2) If -obj is supplied, then -val should be, too
+#(3) The default use is Use(1)
+#(4) usage (4) requires that replacetext.sh exist, be executable, and in your PATH
 # --------------- End edit_metfiles.sh help
 #Another example of my regrettable tendency to bundle a number of
 #different functionalities within a single multi-use file
@@ -116,6 +131,7 @@ resed="`echo $0 | sed 's/'$I'/resed/'`"
 print_to_stdout="no"
 more_opts="yes"
 usage="1"
+myFILE=""
 myOBJECT=""
 myVALUE=""
 
@@ -135,6 +151,19 @@ while [ "$more_opts" = "yes" ] ; do
        usage="2"
        shift
        ;;
+    -3 )
+       usage="3"
+       shift
+       ;;
+    -4 )
+       usage="4"
+       shift
+       ;;
+    -f )
+       myFILE="$2"
+       shift
+       shift
+       ;;
     -obj )
        myOBJECT="$2"
        shift
@@ -142,6 +171,7 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -val )
        myVALUE="$2"
+       usage="3"
        shift
        shift
        ;;
@@ -166,15 +196,11 @@ done
 # Check for constraints on options
 if [ "$myOBJECT" != "" ]
 then
-  if [ "$myVALUE" = "" ]
+  if [ "$myVALUE" = "" -a "$usage" != "4" ]
   then
     echo "You must supply -val myVALUE to go with -obj myOBJECT"
     exit 1
   fi
-fi
-if [ "$myVALUE" != "" ]
-then
-  usage="3"
 fi
 case "$usage" in
    1)
@@ -185,20 +211,30 @@ case "$usage" in
      myOBJECT="INPUTPOINTER"
      myVALUE="Found at /HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/PCF"
      ;;
+   4)
+     if [ ! -r "$myFILE" ]
+     then
+       echo "Sorry, could not find $myFILE"
+       exit 1
+     fi
+     ;;
    *)
      ;;
 esac
 # Prepare a file containing sed instructions to carry out
 # the editing task
-example_file="$1"
-rm -f temp.sed
-echo '/OBJECT * = *'$myOBJECT'/,/END_OBJECT * = *'$myOBJECT'/ c \' > temp.sed
-print_the_lines "$myOBJECT" "$example_file" "yes" >> temp.sed
-rm -f temp1.sed
-sed '/VALUE/ s^".*"^"'"$myVALUE"'"^' temp.sed > temp1.sed
-mv temp1.sed temp.sed
-diff_list=""
-nodiff_list=""
+if [ "$usage" != "4" ]
+then
+  example_file="$1"
+  rm -f temp.sed
+  echo '/OBJECT * = *'$myOBJECT'/,/END_OBJECT * = *'$myOBJECT'/ c \' > temp.sed
+  print_the_lines "$myOBJECT" "$example_file" "yes" >> temp.sed
+  rm -f temp1.sed
+  sed '/VALUE/ s^".*"^"'"$myVALUE"'"^' temp.sed > temp1.sed
+  mv temp1.sed temp.sed
+  diff_list=""
+  nodiff_list=""
+fi
 # Now use the file of sed instructions plus our resed script
 # to act upon the args (which we hope are the filenames)
 #if [ ! -x "$resed" ]
@@ -215,7 +251,17 @@ nodiff_list=""
 #fi
 for the_file
 do
-  if [ "$print_to_stdout" = "yes" ]
+  if [ "$usage" = "4" ]
+  then
+    replacetext.sh "OBJECT = $myOBJECT" "END_OBJECT = $myOBJECT" "$the_file" "$myFILE" > temp1.rep.txt
+    if [ "$print_to_stdout" = "yes" ]
+    then
+      cat temp1.rep.txt
+    else
+      mv temp1.rep.txt "$the_file"
+    fi
+    /bin/rm -f temp1.rep.txt
+  elif [ "$print_to_stdout" = "yes" ]
   then
     sed -f temp.sed "$the_file"
   elif [ "$print_to_stdout" = "diff" ]
@@ -234,7 +280,11 @@ do
     mv temp1.sed "$the_file"
   fi
 done
-rm temp.sed
+/bin/rm -f temp.sed
+if [ "$usage" = "4" ]
+then
+  exit 0
+fi
 if [ "$print_to_stdout" = "diff" ]
 then
   if [ "$diff_list" = "" ]
@@ -252,6 +302,9 @@ then
 fi
 exit 0
 # $Log$
+# Revision 1.5  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
 # Revision 1.4  2003/05/29 22:30:55  pwagner
 # Changed default value for usage(1); added -test option
 #
