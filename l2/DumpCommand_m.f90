@@ -15,8 +15,9 @@ module DumpCommand_M
 ! Or functions to set a run-time Boolean flag.
 ! (Should these latter functions be moved into a special Boolean module?)
 
-  use HIGHOUTPUT, only: BEVERBOSE, HEADLINE, NUMTOCHARS, OUTPUTNAMEDVALUE
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
+  use highOutput, only: banner, beVerbose, headLine, &
+    & numToChars, outputNamedValue
+  use output_m, only: blanks, newLine, output
   implicit none
   private
 
@@ -1158,8 +1159,9 @@ contains
     use MLSFINDS, only: FINDFIRST
     use MLSSIGNALS_M, only: RADIOMETERS, SIGNALS, &
       & DUMP, DUMP_ALL, GETRADIOMETERINDEX
-    use MLSSTRINGS, only: INDEXES, LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
-    use MLSSTRINGLISTS, only: GETHASHELEMENT, SWITCHDETAIL
+    use MLSStrings, only: indexes, lowerCase, &
+      & readIntsFromChars, stretch, writeIntsToChars
+    use MLSStringLists, only: getHashElement, optionDetail, switchDetail
     use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
     use PFADATABASE_M, only: DUMP, DUMP_PFADATABASE, DUMP_PFAFILEDATABASE, &
       & DUMP_PFASTRUCTURE, PFADATA
@@ -1191,6 +1193,8 @@ contains
     type (Matrix_Database_T), dimension(:), pointer, optional    :: MatrixDataBase
     type (Hessian_T), dimension(:), pointer, optional            :: HessianDataBase
 
+    logical :: asBanner
+    logical :: asHeadLine
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     logical :: Clean
     real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
@@ -1199,6 +1203,8 @@ contains
     integer :: DetailReduction
     integer :: Details
     integer :: DiffOrDump
+    logical :: doStretch
+    logical :: doStretchier
     character(len=255) :: Farewell
     integer :: FieldIndex
     integer :: FileIndex
@@ -1217,6 +1223,8 @@ contains
     integer :: JJ
     character(len=80) :: KEYSTRING  ! E.g., 'BAND13_OK'
     character(len=80) :: Label  ! E.g., 'BAND8'
+    character(len=8) :: lineLenChars
+    integer :: lineLength
     type (Matrix_T), pointer :: matrix
     type (Matrix_T), pointer :: matrix2
     integer :: MatrixIndex
@@ -1299,6 +1307,11 @@ contains
     details = 0 - DetailReduction
     OPTIONSSTRING = '-'
     got= .false.
+    asBanner = .false.
+    asHeadLine = .false.
+    doStretch = .false.
+    doStretchier = .false.
+    lineLength = 40
 
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -1862,6 +1875,23 @@ contains
           end select
         end do
       case ( f_text )
+        ! Special use of options string
+        !   option         meaning
+        ! ---------        -------
+        !     B            print as a banner
+        !     H            print as a headine
+        !     s            s-t-r-e-t-c-h
+        !     S            s t r e t c h
+        !   L[nn]          use nn for line length
+        if ( len_trim(optionsString) > 0 ) then
+          asBanner = optionDetail( optionsString, 'B', 'Banner' ) == 'yes'
+          asHeadline = optionDetail( optionsString, 'H', 'Headline' ) == 'yes'
+          doStretch = optionDetail( optionsString, 's', 'stretch' ) == 'yes'
+          doStretchier = optionDetail( optionsString, 'S', 'stretch' ) == 'yes'
+          lineLenChars = optionDetail( optionsString, 'L', 'Linelength' )
+        endif
+        if ( lineLenChars /= 'no' ) &
+          & call readIntsFromChars ( lineLenChars, lineLength )
         do k = 2, nsons(son)
           call get_string ( sub_rosa(subtree(k,son)), text, strip=.true. )
           ! Special text causing intentional error (this is a dubious hack)
@@ -1942,7 +1972,19 @@ contains
             end if
             exit ! Didn't find a format trigger
           end do
-          call output ( trim(text), advance='yes' )
+          if ( doStretchier ) text = stretch( text, options='-a' )
+          if ( doStretch ) text = stretch( text )
+          if ( asHeadLine ) then
+            call headLine( trim(text), Before='*', After='*', fillChar='-' )
+          elseif ( asBanner ) then
+            if ( lineLength > 0 ) then
+              call banner( trim(text), linelength=lineLength ) 
+            else
+              call banner( trim(text) ) 
+            endif
+          else
+            call output ( trim(text), advance='yes' )
+          endif
         end do ! k
       case ( f_tGrid )
         if ( details < -1 ) cycle
@@ -2630,6 +2672,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.114  2014/04/25 18:53:45  pwagner
+! options string to Dump text as headLine or Banner
+!
 ! Revision 2.113  2014/04/10 02:02:22  vsnyder
 ! Improve message for nonexistent variable
 !
