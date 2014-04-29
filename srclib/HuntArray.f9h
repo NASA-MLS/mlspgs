@@ -176,7 +176,9 @@
         if ( (.not. lowerBelow) .and. (.not. upperAbove) ) then
           ! The list is really screwey
           call dump(values, 'values')
+          call selfDiff(values, 'values increment')
           call dump(list, 'list')
+          call selfDiff(list, 'list increment')
 
           if ( any(ieee_is_NaN(values)) .or. any(ieee_is_NaN(list)) ) then
             call MLSMessage ( merge(MLSMSG_Warning, MLSMSG_Error, present(fail)), &
@@ -287,6 +289,9 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.13  2011/08/20 00:47:59  vsnyder
+! Check for NaN if it looks like lists are screwy
+!
 ! Revision 1.12  2006/08/03 18:48:46  pwagner
 ! Fixed thing Lahey hated but NAG tolerated
 !
