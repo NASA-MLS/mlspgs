@@ -17,7 +17,8 @@ format = '(a24,1x,a24,1x,a24,1x,i3)'
 CH$_{3}$CH$_{2}$CH$_{3}$                CH3CH2CH3                CH3CH2CH3   0
       CH$_{3}$CH$_{2}$CN                 CH3CH2CN                 CH3CH2CN   0
       CH$_{3}$CH$_{2}$OH                 CH3CH2OH                 CH3CH2OH   0
-              CH$_{3}$CN                    CH3CN                    CH3CN  -3
+              CH$_{3}$CN                    CH3CN                    CH3CN  -4
+   CH$_{3}$CN$(\nu_{8})$                 CH3CN_V8                 CH3CN-v8   0
          CH$_{3}^{13}$CN                CH3C_13_N                CH3C-13-N   0
        $^{13}$CH$_{3}$CN                C_13_H3CN                C-13-H3CN   0 
        CH$_{3}$C$^{15}$N                 CH3CN_15                 CH3CN-15   0
@@ -147,8 +148,9 @@ H$_{2}^{18}$O$(\nu_{2})$                H2O_18_V2                H2O-18-v2   0
               OC$^{32}$S                   OCS_32                   OCS-32   0
               OC$^{34}$S                   OCS_34                   OCS-34   0
        O$^{13}$C$^{32}$S               OC_13_S_32               OC-13-S-34   0
-                      OH                       OH                       OH  -3
+                      OH                       OH                       OH  -4
          OH$(\nu_{1,2})$                  OH_V1_2                  OH-v1-2   0
+               $^{17}$OH                   O_17_H                   O-17-H   0
                $^{18}$OH                   O_18_H                   O-18-H   0
                       OD                       OD                       OD   0
                  O$_{2}$                       O2                       O2  -4
