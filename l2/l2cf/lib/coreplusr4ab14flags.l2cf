@@ -66,8 +66,8 @@ begin Fill
   !makeStatusForOneProduct(product=CH3CN,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ CH3OH-640
-  !define(flaggingBands,{10,11,14,28,29,30,31})
-  !define(flaggingRadiometers,{R4})!dnl
+  !define(flaggingBands,{5,10,11})
+  !define(flaggingRadiometers,{R2,R4})!dnl
   !makeQualityForOneProduct(product=CH3OH,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
   !makeStatusForOneProduct(product=CH3OH,chisqScale=1.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
 
@@ -80,6 +80,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.13  2014/01/24 21:43:35  pwagner
+; Added CH3OH
+;
 ; Revision 1.12  2009/11/20 01:37:25  pwagner
 ; Removed Band12, because its radaince count is left at 0
 ;
