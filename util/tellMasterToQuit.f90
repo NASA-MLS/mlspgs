@@ -12,7 +12,8 @@
 program tellMasterToQuit
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use dates_module, only: DATEFORM, REFORMATDATE
-  use highOutput, only: OUTPUT_DATE_AND_TIME, outputNamedValue, 
+  use highOutput, only: OUTPUT_DATE_AND_TIME, outputNamedValue, &
+    & TIMESTAMP
   use L2PARINFO, only: PARALLEL, INITPARALLEL
   use L2ParInfo, only: MACHINE_T, PARALLEL, &
     & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, &
@@ -31,8 +32,7 @@ program tellMasterToQuit
     & STRINGELEMENTNUM
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
   use OUTPUT_M, only: BLANKS, NEWLINE, &
-    & OUTPUT, OutputOptions, &
-    & TIMESTAMP
+    & OUTPUT, OutputOptions
   use PrintIt_m, only: Set_Config
   use PVM, only: PVMOK, &
     & ClearPVMArgs, GETMACHINENAMEFROMTID, &
@@ -160,6 +160,9 @@ program tellMasterToQuit
 end program tellMasterToQuit
 
 ! $Log$
+! Revision 1.4  2014/04/29 23:15:16  pwagner
+! Builds successfully with highOutput module
+!
 ! Revision 1.3  2013/08/23 02:51:48  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
