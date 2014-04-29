@@ -12,6 +12,7 @@
 program tellMasterToQuit
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use dates_module, only: DATEFORM, REFORMATDATE
+  use highOutput, only: OUTPUT_DATE_AND_TIME, outputNamedValue, 
   use L2PARINFO, only: PARALLEL, INITPARALLEL
   use L2ParInfo, only: MACHINE_T, PARALLEL, &
     & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, NOTIFYTAG, &
@@ -30,7 +31,7 @@ program tellMasterToQuit
     & STRINGELEMENTNUM
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
   use OUTPUT_M, only: BLANKS, NEWLINE, &
-    & OUTPUT, OUTPUT_DATE_AND_TIME, outputNamedValue, OutputOptions, &
+    & OUTPUT, OutputOptions, &
     & TIMESTAMP
   use PrintIt_m, only: Set_Config
   use PVM, only: PVMOK, &
@@ -159,6 +160,9 @@ program tellMasterToQuit
 end program tellMasterToQuit
 
 ! $Log$
+! Revision 1.3  2013/08/23 02:51:48  vsnyder
+! Move PrintItOut to PrintIt_m
+!
 ! Revision 1.2  2013/08/12 23:50:59  pwagner
 ! FindSomethings moved to MLSFinds module
 !
