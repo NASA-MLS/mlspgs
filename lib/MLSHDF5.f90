@@ -37,7 +37,7 @@ module MLSHDF5
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, ISINLIST, &
     & GETSTRINGELEMENT, NUMSTRINGELEMENTS, STRINGELEMENT
-  use MLSSTRINGS, only: INDEXES, LOWERCASE, REPLACE
+  use MLSStrings, only: indexes, lowerCase, replace, trim_safe
   use OUTPUT_M, only: NEWLINE, OUTPUT
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   ! LETS BREAK DOWN OUR use, PARAMETERS FIRST
@@ -1175,7 +1175,7 @@ contains ! ======================= Public Procedures =========================
     if ( my_dont_trim) then
       call h5tset_size_f(stringtype, int(max(len(value), 1), size_t), status )
     else
-      call h5tset_size_f(stringtype, int(max(len(value), 1), size_t), status )
+      call h5tset_size_f(stringtype, int(max(len_trim(value), 1), size_t), status )
     endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype ' // trim(name) )
@@ -1210,7 +1210,11 @@ contains ! ======================= Public Procedures =========================
     ! print *, 'attrID: ', attrID
     ! print *, 'status: ', status
     ! Write
-    call h5aWrite_f ( attrID, stringtype, value, ones, status )
+    if ( my_dont_trim) then
+      call h5aWrite_f ( attrID, stringtype, value, ones, status )
+    else
+      call h5aWrite_f ( attrID, stringtype, trim_safe(value), ones, status )
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to write attribute ' // trim(name) )
     ! Finish off
@@ -5692,6 +5696,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.127  2014/04/29 17:10:12  pwagner
+! UFixed bugs regarding my_dont_trim in MakeHDF5Attribute_string
+!
 ! Revision 2.126  2014/03/07 19:13:47  pwagner
 ! Increased MAXNDSNAMES; should there even be a limit?
 !
