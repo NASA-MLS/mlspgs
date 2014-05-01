@@ -533,12 +533,12 @@ CONTAINS
 
        IF (.NOT. IsHDF5DSPresent (sd_id, TRIM(DACS_Name(bno)))) CYCLE
 
-       DEALLOCATE (rad, stat=status)
-       DEALLOCATE (rad_prec, stat=status)
        CALL ReadL1BData (sd_id, DACS_Name(bno), L1BData, noMAFs, Flag, &
             NeverFail=.TRUE., HDFversion=5)
        ALLOCATE (rad(DACSchans,MIFsGHz,noMAFs))
        rad = L1BData%DpField(:,:,:)
+       CALL DeallocateL1BData (L1BData)
+
        CALL ReadL1BData (sd_id, TRIM(DACS_Name(bno))//' precision', L1BData, &
             noMAFs, Flag, NeverFail=.TRUE., HDFversion=5)
        ALLOCATE (rad_prec(DACSchans,MIFsGHz,noMAFs))
@@ -638,10 +638,12 @@ CONTAINS
                lastIndex=maf, disable_attrib=.TRUE.)
        ENDDO
 
+       DEALLOCATE (rad, stat=status)
+       DEALLOCATE (rad_prec, stat=status)
     ENDDO
 
-    DEALLOCATE (rad, stat=status)
-    DEALLOCATE (rad_prec, stat=status)
+    ! DEALLOCATE (rad, stat=status)
+    ! DEALLOCATE (rad_prec, stat=status)
 
 ! Output attribute vectors:
 
@@ -714,6 +716,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.17  2014/05/01 15:09:16  pwagner
+! Fixed problem causing hangs with ifort v14
+!
 ! Revision 2.16  2009/05/13 20:33:05  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !
