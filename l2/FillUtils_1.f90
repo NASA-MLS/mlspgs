@@ -37,8 +37,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_L1BMAFBASELINE, L_L1BMIF_TAI, &
     & L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
     & L_LSLOCAL, L_LSGLOBAL, L_LSWEIGHTED, &
-    & L_MAGNETICFIELD, &
-    & L_MAX, L_MEAN, L_MIN, L_MOLCM2, &
+    & L_MAGNETICFIELD, L_MAX, L_MEAN, L_MIN, L_MOLCM2, &
     & L_NOISEBANDWIDTH, L_NONE, L_NORADSPERMIF, L_NORADSBINNED, &
     & L_ORBITINCLINATION, L_ASCDESCMODE, &
     & L_PRESSURE, L_PTAN,  L_QUALITY, &
@@ -47,7 +46,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_SCECI, L_SCGEOCALT, L_SCVELECI, L_SCVELECR, &
     & L_SINGLECHANNELRADIANCE, &
     & L_STATUS, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
-    & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
+    & L_TEMPERATURE, L_TIME, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TOTALPOWERWEIGHT, L_VMR, &
     & L_XYZ, L_ZETA
   use INTRINSIC, only: FIELD_INDICES, LIT_INDICES, &
@@ -5638,7 +5637,15 @@ contains ! =====     Public Procedures     =============================
       lastProfile=firstProfile+quantity%template%noInstances-1
       if ( (profile == -1) .and. (.not. ignoreGeolocation) ) then
         ! Attempt to match up the first location
-        firstProfileAsArray=minloc(abs(quantity%template%phi(1,1)-l2gp%geodAngle))
+        if ( quantity%template%horizontalCoordinate == l_time ) then
+          firstProfileAsArray = minloc( &
+            & abs(quantity%template%time(1,1)-l2gp%time) &
+            & )
+        else
+          firstProfileAsArray = minloc( &
+            & abs(quantity%template%phi(1,1)-l2gp%geodAngle) &
+            & )
+        endif
         firstProfile=firstProfileAsArray(1)
 
         ! Well, the last profile has to be noInstances later, check this would be OK
@@ -5649,7 +5656,8 @@ contains ! =====     Public Procedures     =============================
 
         ! Now check that geodAngle's are a sufficient match
         if ( any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
-          &         quantity%template%phi(1,:)) > tolerance) ) then
+          &         quantity%template%phi(1,:)) > tolerance) .and. &
+          & quantity%template%horizontalCoordinate /= l_time ) then
           if ( BeVerbose( 'l2gp', -1 ) ) then
             call dump ( l2gp%geodAngle(firstProfile:lastProfile), 'L2GP geodetic angle' )
             call dump ( quantity%template%phi(1,:), 'Quantity Geodetic angle' )
@@ -7393,6 +7401,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.100  2014/05/13 00:13:22  pwagner
+! FromL2GP may inerpolate in time, instead of phi
+!
 ! Revision 2.99  2014/04/07 18:06:10  pwagner
 ! Added check on quantityTypes when Filling WithAscOrDesc
 !
