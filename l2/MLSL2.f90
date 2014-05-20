@@ -54,7 +54,9 @@ program MLSL2
     & SWITCHDETAIL
   use OUTPUT_M, only: BLANKS, OUTPUT, &
     & INVALIDPRUNIT, MSGLOGPRUNIT, OUTPUTOPTIONS, STAMPOPTIONS, STDOUTPRUNIT
-  use PARSER, only: CONFIGURATION
+  use Parser, only: Clean_Up_Parser, Configuration
+  use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
+  use Parser_Tables_L2CF, only: Init_Parser_Table
   use PRINTIT_M, only: SET_CONFIG, STDOUTLOGUNIT
   use PVM, only: CLEARPVMARGS, FREEPVMARGS
   use SDPTOOLKIT, only: PGSd_DEM_30ARC, PGSd_DEM_90ARC, &
@@ -151,6 +153,7 @@ program MLSL2
   ! integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
   integer :: NUMFILES
+  type(Parser_Table_t) :: Parser_Table
   ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: STATUS                ! From OPEN
@@ -388,7 +391,10 @@ program MLSL2
   !---------------- Task (5) ------------------
   if (error == 0) then
     ! Parse the L2CF, producing an abstract syntax tree
-    call configuration ( root )
+    call init_parser_table ( parser_table )
+    call configuration ( root, parser_table )
+    call destroy_parser_table ( parser_table )
+    call clean_up_parser
   else
     root = -1
   end if
@@ -615,6 +621,7 @@ contains
   subroutine Dump_settings
   ! Show current run-time settings resulting from
   ! command-line, MLSL2Options, etc.
+!     use, intrinsic :: ISO_FORTRAN_ENV, only: Compiler_Options, Compiler_Version
     use PRINTIT_M, only: GET_CONFIG
     character(len=1), parameter :: fillChar = '1' ! fill blanks with '. .'
     character(len=255) :: Command ! Command that executed the program
@@ -630,6 +637,10 @@ contains
     call output ( ' l2cf file:', advance='no' )
     call blanks ( 4, advance='no' )
     call output ( trim(MLSL2CF%name), advance='yes' )
+!     call output ( 'Compiler options ' )
+!     call output ( compiler_options(), advance='yes' )
+!     call output ( 'Compiler version ' )
+!     call output ( compiler_version(), advance='yes' )
     if( SwitchDetail(switches, 'opt') > 0 .or. showDefaults ) then
       call blanks(80, fillChar='-', advance='yes')
       call headline( 'Summary of run time options', fillChar='-', before='*', after='*' )
@@ -776,6 +787,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.206  2014/05/20 23:56:53  vsnyder
+! New parser gets its tables from an argument instead of an include
+!
 ! Revision 2.205  2014/03/25 18:19:00  pwagner
 ! Moved init_tables before dump_settings to avoid crash
 !
