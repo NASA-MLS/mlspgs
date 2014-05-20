@@ -43,7 +43,7 @@ endif
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #These modules require custom builds, so omit build commands from dependencies
-CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90 Parser_Tables.f90
+CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 
 ifdef HDFINC
@@ -85,32 +85,6 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi 
-	@if [ -f Parser_Tables.wc ]; then \
-        cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) Parser_Tables.o UNPREFXDPTHS="$(ADD2PATHS)" ;\
-        fi
-	@if [ -f Parser_Tables.wc ]; then \
-        cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o UNPREFXDPTHS="$(ADD2PATHS)" ;\
-        fi
-	@if [ -f Parser_Tables.wc ]; then \
-        rm -f $(PLATFORMS)/$(MLSCONFG)/libmls.a ;\
-        cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) UNPREFXDPTHS="$(ADD2PATHS)" ;\
-        return_status=`expr $$?` ; \
-        if [ $$return_status != "0" ]; then \
-		     exit 2 ; \
-        elif [ "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
-		     $(MAKE) mark_all_as_uptodate \
-           UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
-         fi; \
-         cd ..; rm -f Parser_Tables.wc; \
-        fi
-
-parser.o: Parser_Tables.o
-	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) parser.o UNPREFXDPTHS="$(ADD2PATHS)" ;\
-        
-
-Parser_Tables.o:
-	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) Parser_Tables.o UNPREFXDPTHS="$(ADD2PATHS)" ;\
-        
 
 hdfeos5.f9h: $(IHDFEOS5INC)
 	@sed 's/^C/!/' $(IHDFEOS5INC) > hdfeos5.f9h
@@ -206,6 +180,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.68  2014/05/20 23:54:17  vsnyder
+# parser.f90 no longer needs a custom build
+#
 # Revision 2.67  2014/02/21 22:32:00  pwagner
 # Uses Parser_Tables.wc to trigger two-phase build
 #
