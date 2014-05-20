@@ -29,9 +29,9 @@ module TREE
   public :: DELETE_TREE_STACK, DUMP_STACK, DUMP_TOP_STACK, DUMP_TOP_STACK_NAME
   public :: DUMP_TREE_NODE, DUMP_TREE_NODE_NAME, GET_TREE_NODE_NAME, INIT_TREE
   public :: INSERT_NODE, NODE_ID, NODE_KIND, NSONS, POP, PRINT_SUBTREE
-  public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_SUB_ROSA
-  public :: STACK_SUBTREE, STACK_SUBTREE_TX, SUB_ROSA, SUBTREE, THE_FILE
-  public :: TREE_NODE_NAME,TREE_TEXT, TX, WHERE
+  public :: PUSH_PSEUDO_TERMINAL, REPLACE_SONS, SOURCE_REF, STACK_FILE
+  public :: STACK_SOURCE_REF,STACK_SUB_ROSA, STACK_SUBTREE, STACK_SUBTREE_TX
+  public :: SUB_ROSA, SUBTREE, THE_FILE, TREE_NODE_NAME,TREE_TEXT, TX, WHERE
 
   ! Tree node kinds:
   integer, public, parameter :: PSEUDO = 0   ! Tree node is pseudo terminal
@@ -782,6 +782,16 @@ contains
     source_ref = the_tree(where%i) % source
   end function SOURCE_REF_TX
 
+  pure integer function STACK_FILE ( ) result ( The_File )
+  ! Return the SOURCE field of the top stack frame
+    the_file = the_tree(tree_sp+1) % file
+  end function STACK_FILE
+
+  pure integer function STACK_SOURCE_REF ( ) result ( Source_Ref )
+  ! Return the SOURCE field of the top stack frame
+    source_ref = the_tree(tree_sp+1) % source
+  end function STACK_SOURCE_REF
+
   integer function STACK_SUBTREE ( WHICH )
   ! Return the root of the WHICH'th subtree of the node atop the stack
     integer, intent(in) :: WHICH
@@ -794,7 +804,7 @@ contains
     stack_subtree_tx%i = subtree(which, tree_sp+1)
   end function STACK_SUBTREE_TX
 
-  integer function STACK_SUB_ROSA ()
+  integer function STACK_SUB_ROSA ( )
   ! Return the sub_rosa index of the top stack frame
     stack_sub_rosa = the_tree(tree_sp+1) % link
   end function STACK_SUB_ROSA
@@ -1029,6 +1039,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.30  2014/05/20 22:16:57  vsnyder
+! More functions to access the stack
+!
 ! Revision 2.29  2014/02/21 19:21:31  vsnyder
 ! Use First_Tree_Node instead of N_Eof as the first tree node
 !
