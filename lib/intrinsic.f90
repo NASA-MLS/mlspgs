@@ -308,7 +308,12 @@ contains ! =====     Public procedures     =============================
     ! existence of this function is to pass it to procedures that otherwise
     ! do not need to access this module by use association.
     integer, intent(in) :: Type_Index
-    get_type = data_type_indices ( type_index )
+    if ( type_index >= lbound(data_type_indices,1) .and. &
+       & type_index <= ubound(data_type_indices,1) ) then
+      get_type = data_type_indices ( type_index )
+    else
+      get_type = 0
+    end if
   end function Get_Type
 
 !--------------------------- end bloc --------------------------------------
@@ -324,6 +329,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.73  2014/05/20 22:16:24  vsnyder
+! Don't go out of bounds in Get_Type
+!
 ! Revision 2.72  2014/03/20 01:38:29  vsnyder
 ! Unify types in Intrinsic instead of having a separate system in
 ! Declaration_Table.
