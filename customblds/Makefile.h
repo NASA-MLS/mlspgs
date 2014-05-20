@@ -23,26 +23,9 @@ $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	-C $(MLSCFILE) \
    $(UTILDIR)/init_gen.f90
 $(INSTALLDIR)/lr: $(UTILDIR)/lr/*.f90
-# First, we must hide parser.f90, then rebuild lib
-	pwd; echo $(CONFDIR); echo $(UTILDIR); if [ -f $(CONFDIR)/lib/parser.f90 ] ; then \
-	mv $(CONFDIR)/lib/parser.f90 $(CONFDIR)/lib/parser.f90.hideme; \
-        $(MAKE) -C $(CONFDIR)/lib update; \
-        $(MAKE) -C $(CONFDIR)/lib; \
-        fi
-# Second build lr with the truncated lib
-#	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
-#        -p lr -M $(MAKE) -O short_name=lr_custom -m lib \
-#	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
-#        $(UTILDIR)/lr/*.f90
 	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
 	-c $(MLSCONFG) -p lr -M $(MAKE) -O short_name=lr_custom -m lib \
-	-C $(MLSCFILE) \
-	$(UTILDIR)/lr/*.f90
-# Third, undo the damage to lib
-	if [ -f $(CONFDIR)/lib/parser.f90.hideme ] ; then \
-	mv $(CONFDIR)/lib/parser.f90.hideme $(CONFDIR)/lib/parser.f90; \
-        $(MAKE) -C $(CONFDIR)/lib update; \
-        fi
+	-C $(MLSCFILE) $(UTILDIR)/lr/*.f90
 
 ifneq ($(short_name),doc)
 ifndef CASCADE
@@ -202,24 +185,10 @@ ieee_arithmetic.mod: ieee_arithmetic.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-parser.o parser.mod: parser_tables.mod
-
-# The extra file $(S)/Parser_Tables.wc is part of some hackery-quackery
-# aimed at forcing libmls.a to be built twice:
-# the first time without parser.o, 
-# the second time with
-# see lib/MakeFC for how $(S)/Parser_Tables.wc acts to trigger the sequence
-$(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+$(S)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
-          $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
-          wc $(S)/Parser_Tables.f90 > $(S)/Parser_Tables.wc; \
-          cd $(S); $(MAKE) -f MakeFC update JUSTSUBDIRS=yes
-
-Parser_Tables.o: 
-	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T Parser_Tables.o parser_tables.mod
-parser_tables.mod: Parser_Tables.f90
-	$(UTILDIR)/newAifBdiff.sh -a parser_tables.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/Parser_Tables.f90 $(FAFTER)
+          $(S)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
 
 endif
 
@@ -370,22 +339,10 @@ machine.o: $(MACH_DIR)/machine.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-parser.o: Parser_Tables.o
-
-# The extra file $(S)/Parser_Tables.wc is part of some hackery-quackery
-# aimed at forcing libmls.a to be built twice:
-# the first time without parser.o, 
-# the second time with
-# see lib/MakeFC for how $(S)/Parser_Tables.wc acts to trigger the sequence
-$(S)/Parser_Tables.f90: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+$(S)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
-          $(S)/Parser_Tables.f90 $(UTILDIR)/lr/l2cf.lls $(LRAFTER); \
-          wc $(S)/Parser_Tables.f90 > $(S)/Parser_Tables.wc; \
-          cd $(S); $(MAKE) -f MakeFC update JUSTSUBDIRS=yes
-
-Parser_Tables.o: $(S)/Parser_Tables.f90
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/Parser_Tables.f90 $(FAFTER)
+          $(S)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
 
 endif
 
@@ -493,6 +450,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.12  2014/02/21 22:32:28  pwagner
+# Uses Parser_Tables.wc to trigger two-phase build
+#
 # Revision 1.11  2014/01/29 21:03:41  pwagner
 # Shorten make update
 #
