@@ -2820,7 +2820,7 @@ contains ! =====     Public Procedures     =============================
       &    value%template%noInstances /) )
   end subroutine RemapVectorValue
 
-  ! ------------------------------------------------  ReshapeVectorValue  -----
+  ! -----------------------------------------  ReshapeVectorValue  -----
   ! Reshape source values to fit destination loosely
   ! destination must already be allocated
   ! Source values will come from either of
@@ -2828,9 +2828,9 @@ contains ! =====     Public Procedures     =============================
   ! (b) an array of sourceValues
   ! If neither is present, we silently return an unchanged destination
   subroutine ReshapeVectorValue ( DESTINATION, SOURCE, SOURCEVALUES )
-    type ( VectorValue_T), optional, intent(in)    :: SOURCE
-    type ( VectorValue_T), intent(out)             :: DESTINATION
-    real(rv), dimension(:,:), optional, intent(in) :: SOURCEVALUES
+    type ( VectorValue_T), intent(out)                      :: DESTINATION
+    type ( VectorValue_T), optional, pointer, intent(in)    :: SOURCE
+    real(rv), dimension(:,:), optional, pointer, intent(in) :: SOURCEVALUES
     ! Internal variables
     integer :: i, j, k, n
     ! Executable
@@ -2838,17 +2838,17 @@ contains ! =====     Public Procedures     =============================
     if ( present(source) ) then
       n = min( size(source%values), size(destination%values) )
       destination%value1(:n) = source%value1(:n)
-    elseif ( present(sourcevalues) ) then
+    else if ( present(sourcevalues) ) then
       n = min( size(sourceValues), size(destination%values) )
       k = 0
-      do j=1, size(sourcevalues, 2)
-        do i=1, size(sourcevalues, 1)
+      do j = 1, size(sourcevalues, 2)
+        do i = 1, size(sourcevalues, 1)
           k = k + 1
           if ( k > n ) exit
           destination%value1(k) = sourcevalues(i, j)
-        enddo
-      enddo
-    endif
+        end do
+      end do
+    end if
   end subroutine ReshapeVectorValue
 
   ! ------------------------------------------------  ReverseMask  -----
@@ -3281,6 +3281,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.188  2014/02/01 00:16:43  pwagner
+! Don't dump values for every quantity when failed to find one in GetVectorQuantityIndexByType
+!
 ! Revision 2.187  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
