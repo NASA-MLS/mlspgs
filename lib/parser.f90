@@ -16,11 +16,18 @@ module PARSER
   implicit NONE
   private
 
-  public :: CONFIGURATION, LR_Parser, LR_Parser_TX
+  public :: Clean_Up_Parser, Configuration, LR_Parser, LR_Parser_TX
 
   interface Configuration
     module procedure LR_Parser, LR_Parser_TX
   end interface
+
+  ! Derived from lists in parser tables, to make the parser run faster:
+
+  integer, save, allocatable :: LR_0(:) ! If LR_0(I) /= 0, state I is an LR(0)
+                             ! state, i.e., one reduction and no productions.
+                             ! LR_0(I) is the production number to reduce.
+  integer, save, allocatable :: Work(:,:)
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -30,21 +37,20 @@ module PARSER
 
 contains ! ====     Procedures     =====================================
 
-  subroutine LR_Parser_TX ( Root )
+  subroutine LR_Parser_TX ( Root, T )
+    use Parser_Table_m, only: Parser_Table_t
     use Tree, only: TX
     type(tx), intent(out) :: ROOT   ! Root of the abstract syntax tree
-    call lr_parser ( root%i )
+    type(parser_table_t), intent(in) :: T
+    call lr_parser ( root%i, T )
   end subroutine LR_Parser_TX
 
-  subroutine LR_Parser ( Root )
+  subroutine LR_Parser ( Root, T )
 
     use LEXER_CORE, only: PRINT_SOURCE, TOKEN
     use LEXER_M, only: LEXER
     use OUTPUT_M, only: Blanks, NEWLINE, OUTPUT
-    use Parser_Tables, only: IFinal, NState, NTerms, NumPrd, NVoc, &
-      & ENT, FRED, FTRN, TRAN, NSET, PROD, LSET, LS, LENS, LHS, &
-      & ACT, VAL, Text, Prod_Ind, Productions, Indbas, BasProds, Dots, &
-      & Init_Vocabulary_Names
+    use Parser_Table_m, only: Parser_Table_t
     use SYMBOL_TABLE, only: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS
     use SYMBOL_TYPES, only: T_End_Of_Input, T_Last_Terminal, T_Null
     use TOGGLES, only: LEVELS, PAR, TOGGLE
@@ -53,19 +59,16 @@ contains ! ====     Procedures     =====================================
     use TREE_TYPES, only: N_CFS, N_Null
 
     integer, intent(out) :: Root   ! Index in tree of root of the parsed tree
+    type(parser_table_t), intent(in) :: T
 
     type :: Stack_Frame
       integer :: State         ! The parser state
-      integer :: Tree_Index    ! Tree stack pointer of state's LHS
+      integer :: Tree_Index    ! Tree stack pointer of state's t%lhs
     end type Stack_Frame
 
-    logical, save :: First = .true.
     logical :: Need            ! Need to get a token from the lexer
     integer :: Prev_Error
 
-    integer :: LR_0(nstate)    ! If LR_0(I) /= 0, state I is an LR(0) state,
-                               ! i.e., one reduction and no productions.
-                               ! LR_0(I) is the production number to reduce.
     logical, save :: Machine = .false. ! Dump the grammar and parsing machine
     integer :: Map(t_null:t_last_terminal) ! Map token classes to parser
                                ! vocabulary indices
@@ -76,15 +79,11 @@ contains ! ====     Procedures     =====================================
     integer :: SP              ! stack pointer
     type(stack_frame), allocatable :: Stack(:)
     type(token) :: The_Token   ! from the lexer
-    integer :: Voc             ! vocabulary index of token or LHS
-    integer, save :: Work(nstate,nvoc)
+    integer :: Voc             ! vocabulary index of token or t%lhs
 
     ! Put names of symbols not defined by the grammar into the string
     ! table
-    if ( first ) then
-      first = .false.
-      call init_vocabulary_names ! put them in the string table so they can
-                                 ! be output in messages
+    if ( .not. allocated(work) ) then
 
       show_stack = mod(levels(par),2) /= 0
       show_state = mod(levels(par)/2,2) /= 0
@@ -92,17 +91,18 @@ contains ! ====     Procedures     =====================================
       show_work = mod(levels(par)/8,2) /= 0
 
       ! Convert the lists to search for transitions and reductions to the
-      ! array WORK(nstate:nvoc).
+      ! array WORK(t%nstate:t%nvoc).
       ! If Work(i,j) > 0 the next state is Work(i,j)
       ! If Work(i,j) < 0 reduce production -Work(i,j)
       ! If Work(i,j) == 0 a syntax error has occurred
-      call make_work ( FTRN, TRAN, ENT, FRED, NSET, LSET, LS, PROD, VAL, &
-                     & Work, LR_0, map )
+      allocate ( work(t%nstate,t%nvoc), LR_0(t%nstate) )
+      call make_work ( t%ftrn, t%tran, t%ent, t%fred, t%nset, t%lset, t%ls, &
+                     & t%prod, t%val, Work, LR_0, map )
     end if
 
     prev_error = 0              ! Line number of previous error
     sp = 0
-    newsta = abs(tran(1))       ! The LR generator likes to put the <SOG>
+    newsta = abs(t%tran(1))       ! The LR generator likes to put the <SOG>
                                 ! symbol before the goal symbol.  The lexer
                                 ! doesn't produce this symbol before the first
                                 ! input.  Putting the parser in the state
@@ -114,7 +114,7 @@ contains ! ====     Procedures     =====================================
 
     need = .true.               ! Indicate a token is necessary
 
-    do while ( nowsta /= ifinal )
+    do while ( nowsta /= t%ifinal )
       if ( lr_0(nowsta) > 0 ) then
         ! The current state is an LR(0) state, meaning it does one reduction
         ! and no transitions.  The production in lr_0(nowsta) can be
@@ -126,7 +126,7 @@ contains ! ====     Procedures     =====================================
           need = .false.
         end if
         ! Decide what to do
-        if ( map(the_token%class) <= 0 .or. map(the_token%class) > nterms ) &
+        if ( map(the_token%class) <= 0 .or. map(the_token%class) > t%nterms ) &
           & call catastrophic_error ( 'No vocabulary index mapping for', the_token )
         voc = work(nowsta,map(the_token%class))
         if ( voc > 0 ) then
@@ -169,9 +169,9 @@ contains ! ====     Procedures     =====================================
   contains
 
 ! -------------------------------------------  Catastrophic_Error  -----
-    subroutine Catastrophic_Error ( Text, The_Token, State, Nonterminal )
+    subroutine Catastrophic_Error ( text, The_Token, State, Nonterminal )
       use MLSMessageModule, only: MLSMessage, MLSMSG_Crash
-      character(len=*), intent(in):: Text
+      character(len=*), intent(in):: text
       type(token), intent(in), optional  :: The_Token
       integer, intent(in), optional :: State, Nonterminal
       call output ( '***** Catastrophic Error *****', advance='yes' )
@@ -190,18 +190,16 @@ contains ! ====     Procedures     =====================================
 
 ! ---------------------------------------------------  Do_Include  -----
     subroutine Do_Include
-      ! Assuming "#include string" is reduced as an LR(0) production,
-      ! both the top stack frame and the current token are "string".
       ! We don't want "string" in the tree, so pop it off the stack.
       use String_Table, only: Display_String, Open_Include
-      use Tree, only: Pop
-      call open_include ( the_token%string_index, the_token%where%source, &
-                        & the_token%where%file )
-      call pop ( 1 )
+      use Tree, only: Pop, Stack_File, Stack_Source_Ref, Stack_Sub_Rosa
+      call open_include ( Stack_Sub_Rosa(), Stack_Source_Ref(), &
+                        & Stack_File() )
       if ( toggle(par) ) &
-        & call display_string ( the_token%string_index, &
+        & call display_string ( Stack_Sub_Rosa(), &
           & before='Opened include file ', advance='yes' )
-    end subroutine Do_Include
+      call pop ( 1 )
+   end subroutine Do_Include
 
 ! -----------------------------------------------  Error_Walkback  -----
     subroutine Error_Walkback ( Line )
@@ -212,48 +210,48 @@ contains ! ====     Procedures     =====================================
     end subroutine Error_Walkback
 
 ! ----------------------------------------------------  Make_Work  -----
-    subroutine Make_Work ( FTRN, TRAN, ENT, FRED, NSET, LSET, LS, PROD, VAL, &
+    subroutine Make_Work ( ftrn, tran, ent, fred, nset, lset, ls, prod, val, &
                          & Work, LR_0, Map )
 
-    ! Make the Work, LR_0 and Map arrays, to avoid searching FTRN, TRAN,
-    ! FRED, NSET, LSET, and LS to determine whether to reduce a production
+    ! Make the Work, LR_0 and Map arrays, to avoid searching ftrn, tran,
+    ! fred, nset, lset, and ls to determine whether to reduce a production
     ! or make a transition.
 
     ! Positive elements of WORK are new state numbers and indicate transitions.
     ! Negative elements of WORK are indices of productions to reduce.
     ! Zero elements of WORK indicate syntax errors.
 
-    ! Columns 1:NTERMS are indexed by terminal symbol vocabulary indices. 
-    ! Columns NTERMS+1:NVOC are indexed by nonterminal symbol vocabulary
+    ! Columns 1:nterms are indexed by terminal symbol vocabulary indices. 
+    ! Columns nterms+1:nvoc are indexed by nonterminal symbol vocabulary
     ! indices, never indicate reductions, and errors are not possible.
 
-      integer, intent(in) :: FTRN(0:), TRAN(:), ENT(:)
-      integer, intent(in) :: FRED(0:), NSET(:), LSET(0:), LS(:)
-      integer, intent(in) :: PROD(:), VAL(:)
-      integer, intent(out) :: WORK(:,:) ! ( NSTATE : NVOC )
-      integer, intent(out) :: LR_0(:)   ! ( NSTATE ), "state is an LR(0) state"
-      integer, intent(out) :: Map(t_null:) ! Inverse of VAL
+      integer, intent(in) :: ftrn(0:), tran(:), ent(:)
+      integer, intent(in) :: fred(0:), nset(:), lset(0:), ls(:)
+      integer, intent(in) :: prod(:), val(:)
+      integer, intent(out) :: WORK(:,:) ! ( nstate : nvoc )
+      integer, intent(out) :: LR_0(:)   ! ( nstate ), "state is an LR(0) state"
+      integer, intent(out) :: Map(t_null:) ! Inverse of val
 
-      ! FTRN(0:nstate): Indexed by state number.  First (actually last)
-      ! transitions.  Transitions for state S are in TRAN(FTRN(S-1)+1:FTRN(S)).
+      ! ftrn(0:nstate): Indexed by state number.  First (actually last)
+      ! transitions.  Transitions for state S are in tran(ftrn(S-1)+1:ftrn(S)).
 
-      ! TRAN(1:ntrans): New state indices, indexed by FTRN, q.v.
+      ! tran(1:ntrans): New state indices, indexed by ftrn, q.v.
 
-      ! ENT(1:nstate): Indexed by state number.  Index of vocabulary symbol
+      ! ent(1:nstate): Indexed by state number.  Index of vocabulary symbol
       ! used to enter a state.
 
-      ! FRED(0:nstate): Indexed by state number.  First (actually last)
-      ! reductions.  Lookahead sets for state S are NSET(FRED(S-1)+1:FRED(S)).
+      ! fred(0:nstate): Indexed by state number.  First (actually last)
+      ! reductions.  Lookahead sets for state S are nset(fred(S-1)+1:fred(S)).
 
-      ! NSET(1:nlooks): Lookahead set indices, indexed by FRED, q.v.
+      ! nset(1:nlooks): Lookahead set indices, indexed by fred, q.v.
 
-      ! LSET(0:ncsets): Last elements of lookahead sets, indexed by NSET, q.v.
-      ! For lookahead set L, elements are LS(LSET(L-1)+1:LSET(L)).
+      ! lset(0:ncsets): Last elements of lookahead sets, indexed by nset, q.v.
+      ! For lookahead set L, elements are ls(lset(L-1)+1:lset(L)).
 
-      ! LS(1:lsets): Elements of lookahead sets.
+      ! ls(1:lsets): Elements of lookahead sets.
 
-      ! PROD(1:nlooks): Production numbers to reduce if lookahead is in the
-      ! set, indexed by FRED, q.v.
+      ! prod(1:nlooks): Production numbers to reduce if lookahead is in the
+      ! set, indexed by fred, q.v.
 
       logical :: Error
       integer :: I, J, L
@@ -329,7 +327,7 @@ contains ! ====     Procedures     =====================================
         call print_grammar
         call output ( 'The parsing automaton (sans context sets for reductions):', &
           & advance='yes' )
-        do i = 1, nstate
+        do i = 1, t%nstate
           call newLine
           call print_state ( i, number=.true. )
         end do
@@ -356,7 +354,7 @@ contains ! ====     Procedures     =====================================
           call dump_symbol_class ( expected, advance='yes' )
         else
           call output ( 'Expected one of: ', advance='yes' )
-          do i = 1, nterms
+          do i = 1, t%nterms
             if ( work(nowsta,i) > 0 ) &
               & call dump_symbol_class ( map(i), advance='yes' )
           end do
@@ -372,7 +370,7 @@ contains ! ====     Procedures     =====================================
           call dump_symbol_class ( expected, advance='yes' )
         else
           call output ( 'Expected one of: ', advance='yes' )
-          do i = 1, nterms
+          do i = 1, t%nterms
             if ( work(nowsta,i) > 0 ) &
               & call dump_symbol_class ( map(i), advance='yes' )
           end do
@@ -391,7 +389,7 @@ contains ! ====     Procedures     =====================================
       use Tree, only: Tree_Text
       integer, intent(in) :: P ! The production number
       integer :: A
-      a = act(p)
+      a = t%act(p)
       if ( a /= 0 ) then
         select case ( mod(a,10) )
         case ( 1 )
@@ -413,22 +411,22 @@ contains ! ====     Procedures     =====================================
       character(120) :: Work ! To strip underscore off nonterminal names
       call output ( 'The grammar:', advance='yes' )
       prevLHS = -1
-      do p = 1, numprd
-        j = prod_ind(p)
-        lhs = productions(j)
+      do p = 1, t%numprd
+        j = t%prod_ind(p)
+        lhs = t%productions(j)
         if ( lhs /= prevLHS .and. p /= 1 ) call newLine
         call output ( p, 3 )
-        call get_string ( text(lhs), work )
+        call get_string ( t%text(lhs), work )
         k = merge(2,1,work(1:1)=='_')
         if ( lhs /= prevLHS ) then
           call output ( ' ' // trim(work(k:)) )
         else
-          call blanks ( string_length(text(lhs)) + 2 - k )
+          call blanks ( string_length(t%text(lhs)) + 2 - k )
         end if
         prevLHS = lhs
         call output ( ' ->' )
-        do j = prod_ind(p)+1, prod_ind(p+1)-1
-          call get_string ( text(productions(j)), work )
+        do j = t%prod_ind(p)+1, t%prod_ind(p+1)-1
+          call get_string ( t%text(t%productions(j)), work )
           k = merge(2,1,work(1:1)=='_')
           call output ( ' ' // trim(work(k:)) )
         end do
@@ -441,7 +439,7 @@ contains ! ====     Procedures     =====================================
 ! --------------------------------------------------  Print_State  -----
     subroutine Print_State ( State, Number )
     ! Print the parser configuration in state STATE, i.e., the list of
-    ! productions, with dots in them.
+    ! t%productions, with t%dots in them.
       use String_Table, only: Get_String
       integer, intent(in) :: State
       logical, intent(in), optional :: Number ! Print state number
@@ -450,39 +448,39 @@ contains ! ====     Procedures     =====================================
       character(120) :: Work ! To strip underscore off nonterminal names
       num = .false.
       if ( present(number) ) num = number
-      do i = indbas(state), indbas(state+1)-1
-        p = basprods(i)
+      do i = t%indbas(state), t%indbas(state+1)-1
+        p = t%basProds(i)
         if ( num ) then
-          if ( i == indbas(state) ) then
+          if ( i == t%indbas(state) ) then
             call output ( state, 5 )
           else
             call blanks ( 5 )
           end if
         end if
         call output ( p, 5 )
-        j = prod_ind(p) ! p = production number
-        call get_string ( text(productions(j)), work )
+        j = t%prod_ind(p) ! p = production number
+        call get_string ( t%text(t%productions(j)), work )
         k = merge(2,1,work(1:1)=='_')
         call output ( ' ' // trim(work(k:)) )
         call output ( ' ->' )
         jdot = 1
-        do j = prod_ind(p)+1, prod_ind(p+1)-1
-          if ( dots(i) == jdot ) call output ( ' .' )
+        do j = t%prod_ind(p)+1, t%prod_ind(p+1)-1
+          if ( t%dots(i) == jdot ) call output ( ' .' )
           jdot = jdot + 1
-          call get_string ( text(productions(j)), work )
+          call get_string ( t%text(t%productions(j)), work )
           k = merge(2,1,work(1:1)=='_')
           call output ( ' ' // trim(work(k:)) )
         end do
-        if ( dots(i) == jdot ) call output ( ' .' )
+        if ( t%dots(i) == jdot ) call output ( ' .' )
         call print_action ( p )
         call newLine
       end do
       if ( num ) then ! Print transitions if any
-        if ( ftrn(state) > ftrn(state-1) ) then
+        if ( t%ftrn(state) > t%ftrn(state-1) ) then
           call blanks ( 11 )
           call output ( 'Transitions: ' )
-          do i = ftrn(state-1)+1, ftrn(state)
-            call output ( tran(i), 5 )
+          do i = t%ftrn(state-1)+1, t%ftrn(state)
+            call output ( t%tran(i), 5 )
           end do
           call newLine
         end if
@@ -496,22 +494,22 @@ contains ! ====     Procedures     =====================================
                               !      1 = produce a node
                               !      2 = produce a node iff > 1 sons
       integer :: I            ! temporary variable
-      integer :: LHS_TREE     ! tree stack index for lhs
+      integer :: LHS_TREE     ! tree stack index for t%lhs
       integer :: NEW_NODE     ! tree node to make
       integer :: NSONS        ! number of tree parts associated with rhs
 
-      sp = sp - lens(prod)    ! Pop RHS-length frames from the stack
+      sp = sp - t%lens(prod)    ! Pop RHS-length frames from the stack
       nowsta = stack(sp)%state
       lhs_tree = stack(sp)%tree_index
       nsons = n_tree_stack - lhs_tree
-      i = act(prod)           ! use i for temp while getting action
+      i = t%act(prod)           ! use i for temp while getting action
       new_node = i / 10
       action = mod(i, 10)
 
       if ( toggle(par) ) then
         call output ( prod, before='Reduce production ' )
-        call output ( lens(prod), before=' consuming ' )
-        call output ( trim(merge(' symbol ', ' symbols', lens(prod)==1)) )
+        call output ( t%lens(prod), before=' consuming ' )
+        call output ( trim(merge(' symbol ', ' symbols', t%lens(prod)==1)) )
       end if
       if ( i /= 0 ) then
         if ( action==1 .or. action==2 .and. nsons>1 ) then
@@ -538,11 +536,11 @@ contains ! ====     Procedures     =====================================
         call output ( '.', advance='yes' )
       end if
 
-      newsta = work(nowsta,lhs(prod))
+      newsta = work(nowsta,t%lhs(prod))
       if ( newsta == 0 ) &
         & call catastrophic_error ( 'There is no state transition', &
-          & state=nowsta, nonterminal=lhs(prod) )
-      voc = text(lhs(prod))
+          & state=nowsta, nonterminal=t%lhs(prod) )
+      voc = t%text(t%lhs(prod))
       call transition ( .true. )
 
     end subroutine Reduce_Production
@@ -579,7 +577,7 @@ contains ! ====     Procedures     =====================================
         if ( voc /= 0 ) then
           call output ( ' with ' )
           if ( voc < 0 ) then
-            call output ( ent(nowsta), before='symbol number ' )
+            call output ( t%ent(nowsta), before='symbol number ' )
           else if ( lhs ) then
             call display_string ( voc, before='nonterminal symbol ' )
           else
@@ -602,6 +600,11 @@ contains ! ====     Procedures     =====================================
 
   end subroutine LR_Parser
 
+! ----------------------------------------------  Clean_Up_Parser  -----
+  subroutine Clean_Up_Parser
+    deallocate ( work, LR_0 )
+  end subroutine Clean_Up_Parser
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -615,6 +618,9 @@ contains ! ====     Procedures     =====================================
 end module PARSER
 
 ! $Log$
+! Revision 2.33  2014/05/20 23:54:38  vsnyder
+! New parser gets its tables from an argument instead of an include
+!
 ! Revision 2.32  2014/01/14 00:59:40  vsnyder
 ! Remove dependence of Processor_Dependent, which was only for debugging
 !

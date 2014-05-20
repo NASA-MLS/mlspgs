@@ -99,7 +99,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
            z_calibration, z_output
       USE Lexer_Core, ONLY: Init_Lexer
       USE MLSPCF1, ONLY: mlspcf_l1cf_start
-      USE Parser, ONLY: Configuration
+      USE Parser, ONLY: Clean_Up_Parser, Configuration
+      USE Parser_Table_m, ONLY:  Destroy_Parser_Table, Parser_Table_t
+      USE Parser_Tables_L2CF, ONLY: Init_Parser_Table
       USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS, &
            PGSd_IO_Gen_RSeqFrm, PGS_IO_Gen_openF, PGS_IO_Gen_closeF
       USE STRING_TABLE, ONLY: AddInUnit
@@ -113,6 +115,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
       INTEGER :: root            ! of the abstract syntax tree
       INTEGER :: son             ! of root
       integer :: l1cf_unit
+      type(Parser_Table_t) :: Parser_Table
 
 !! Open config file:
 
@@ -141,7 +144,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
 !! Produce the abstract syntax tree
 
-      CALL Configuration (root)
+      CALL init_parser_table ( parser_table )
+      CALL Configuration (root, parser_table)
+      CALL destroy_parser_table ( parser_table )
+      CALL clean_up_parser
 
       IF (root <= 0) THEN
 
@@ -832,6 +838,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.33  2014/05/20 23:57:14  vsnyder
+! New parser gets its tables from an argument instead of an include
+!
 ! Revision 2.32  2010/08/06 17:53:43  pwagner
 ! Moved call to AddInUnit after init_lexer
 !
