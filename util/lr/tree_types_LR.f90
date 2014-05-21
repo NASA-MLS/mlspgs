@@ -15,8 +15,8 @@ module TREE_TYPES
   public
 
   ! Parameters giving tree node indices.  The first two are required.
-  integer, parameter :: N_EOF = 0       ! Root of the parse tree.
-  integer, parameter :: N_NULL = 1      ! Used in InitTree.
+  integer, parameter :: FIRST_TREE_NODE = 1
+  integer, parameter :: N_NULL = FIRST_TREE_NODE ! Used in InitTree and Parser.
     ! Pseudo-terminals must be contiguous
   integer, parameter :: N_IDENTIFIER = n_null + 1
   integer, parameter :: N_NUMBER =     n_identifier + 1
@@ -51,7 +51,6 @@ contains
     integer, intent(in) :: TREE_NODE    ! One of the parameters above
 
     select case ( tree_node )
-    case ( n_Eof );             call add_char ( '<eof>' )
     case ( n_Null );            call add_char ( '<null>' )
     case ( n_Identifier );      call add_char ( '<identifier>' )
     case ( n_Number );          call add_char ( '<number>' )
@@ -83,6 +82,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 1.1  2014/01/14 01:36:18  vsnyder
+! Renamed with _LR suffix
+!
 ! Revision 1.1  2014/01/14 00:15:13  vsnyder
 ! Initial commit of new module for new LR
 !
