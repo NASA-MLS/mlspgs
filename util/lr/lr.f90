@@ -23,7 +23,9 @@ program LR
   use Lexer_Core, only: Init_Lexer
   use Lists, only: Lists_Init
   use Output_m, only: Output, OutputOptions
-  use Parser, only: LR_Parser
+  use Parser, only: Clean_Up_Parser, LR_Parser
+  use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
+  use Parser_Tables_LR, only: Init_Parser_Table
   use Print_Set, only: PNTSET
   use Print_The_Grammar_m, only: Print_The_Grammar
   use Print_The_Vocabulary_m, only: Print_The_Vocabulary ! Also sorts it
@@ -46,6 +48,7 @@ program LR
   character(1023) :: Listing = '' ! list file name
   integer :: LNADQT = 1    ! Last inadequate state number, zero if grammar is LR.
                            ! Initially nonzero in case the grammar isn't analyzed.
+  type(Parser_Table_t) :: Parser_Table
   integer :: Root          ! Of the abstract syntax tree
   character(1023) :: Table = '' ! table file name
 
@@ -155,12 +158,15 @@ program LR
   outputOptions%prUnit = list_unit
 
   ! Parse the grammar, producing an abstract syntax tree
-  call lr_parser ( root )
+  call init_parser_table ( parser_table )
+  call lr_parser ( root, parser_table )
+  call destroy_parser_table ( parser_table )
+  call clean_up_parser
 
   if ( dump_symbols ) call dump_symbol_table
 
   if ( root < 0 ) then
-    call output ( 'A syntax error occurred; there is no abstract syntax tree', &
+    call output ( 'A syntax error occurred; there is no abstract syntax tree.', &
       & advance='yes' )
     stop
   end if
@@ -175,7 +181,7 @@ program LR
   ! terminals, nonterminals, vocabulary names, or actions
   call declare_vocabulary ( root, error )
 
-  ! Sort the vocabulary symbols first  according to whether they are
+  ! Sort the vocabulary symbols first according to whether they are
   ! terminals, nonterminals, vocabulary names, or actions, then according
   ! to their text.  Then print the vocabulary.  The variable VOCAB
   ! is the permutation vector for the sort; its values are string indices.
@@ -217,6 +223,7 @@ program LR
       call chncsl
       call gentab ( table_unit, vocab )
     end if
+
   end if
 
 contains
@@ -274,6 +281,9 @@ contains
 end program LR
 
 ! $Log$
+! Revision 1.5  2014/04/09 23:54:01  vsnyder
+! Don't try to make the parser if there's a syntax error
+!
 ! Revision 1.4  2014/01/14 00:11:42  vsnyder
 ! Revised LR completely
 !

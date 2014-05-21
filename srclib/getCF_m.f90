@@ -74,6 +74,9 @@ contains ! =====     Public Procedures     =============================
 
   subroutine GetCF ( CF_Data, Status, InUnit, Listing, &
     &                Dump, DumpEarly, DumpTree, DumpTables )
+    use Parser, only: Clean_Up_Parser, Configuration
+    use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
+    use Parser_Tables_L2CF, only: Init_Parser_Table
     type(mlscf_t), intent(out) :: CF_DATA    ! The CF data
     integer, optional, intent(out) :: STATUS ! 0 => OK, -1 => Parser error,
       ! >0 => type checking error.
@@ -96,6 +99,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ERROR                 ! Error flag from check_tree
     integer :: HOW_MANY_SECTIONS     ! Set by Check_Tree
     integer :: ROOT                  ! of the abstract syntax tree
+    type(Parser_Table_t) :: Parser_Table
 
     if ( present(inUnit) ) call AddInUnit(inunit)
     do_dump = .false.
@@ -109,7 +113,13 @@ contains ! =====     Public Procedures     =============================
     do_listing = .false.
     if ( present(listing) ) do_listing = listing
 
-    call configuration ( root )
+    ! Parse the L2CF
+    call init_parser_table ( parser_table )
+    call configuration ( root, parser_table )
+    call destroy_parser_table ( parser_table )
+    call clean_up_parser
+
+    ! Type-check the abstract syntax tree.
     if ( root > 0 ) then
       if ( do_dump_tree ) call print_subtree ( root, 0 )
       if ( do_dump_early ) call dump_decl
@@ -131,6 +141,7 @@ contains ! =====     Public Procedures     =============================
         advance='yes' )
     end if
     if ( present(status) ) status = error
+
   end subroutine GetCF
 
   logical function not_used_here()
@@ -144,6 +155,9 @@ contains ! =====     Public Procedures     =============================
 end module GetCF_M
 
 ! $Log$
+! Revision 1.4  2010/05/24 17:12:31  honghanh
+! Change to use AddInUnit instead of inunit
+!
 ! Revision 1.3  2005/06/22 20:03:55  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
