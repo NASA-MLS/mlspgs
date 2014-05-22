@@ -25,7 +25,7 @@ $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 $(INSTALLDIR)/lr: $(UTILDIR)/lr/*.f90
 	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
 	-c $(MLSCONFG) -p lr -M $(MAKE) -O short_name=lr_custom -m lib \
-	-C $(MLSCFILE) $(UTILDIR)/lr/*.f90
+	-C $(MLSCFILE) $(UTILDIR)/lr/*.[Ff]9[0h]
 
 ifneq ($(short_name),doc)
 ifndef CASCADE
@@ -33,37 +33,42 @@ ifndef CASCADE
 
 CalibWeightsFlags.o: calibweightsflags.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T CalibWeightsFlags.o calibweightsflags.mod
+          -T CalibWeightsFlags.o calibweightsflags.mod
 calibweightsflags.mod:
 	$(UTILDIR)/newAifBdiff.sh -a calibweightsflags.mod $(FC) -c $(BUGGY) \
-   $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
+          $(INC_PATHS) $(S)/CalibWeightsFlags.f90 $(FAFTER)
 EngTbls.o: engtbls.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T EngTbls.o engtbls.mod 
+          -T EngTbls.o engtbls.mod 
 engtbls.mod:
 	$(UTILDIR)/newAifBdiff.sh -a engtbls.mod $(FC) -c $(DUSTIER) \
-   $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
+          $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
 L1LogUtils.o: l1logutils.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T L1LogUtils.o l1logutils.mod
+          -T L1LogUtils.o l1logutils.mod
 l1logutils.mod:
 	$(UTILDIR)/newAifBdiff.sh -a l1logutils.mod $(FC) -c $(BUGGY) \
-   $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
+          $(INC_PATHS) $(S)/L1LogUtils.f90 $(FAFTER)
 OutputL1B.o: outputl1b.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T OutputL1B.o outputl1b.mod 
+          -T OutputL1B.o outputl1b.mod 
 outputl1b.mod:
 	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
 OutputL1B_HDF4.o: outputl1b_hdf4.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T OutputL1B_HDF4.o outputl1b_hdf4.mod 
+          -T OutputL1B_HDF4.o outputl1b_hdf4.mod 
 outputl1b_hdf4.mod:
 	$(UTILDIR)/newAifBdiff.sh -a outputl1b_hdf4.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
+parser_tables_l2cf.mod: Parser_Tables_L2CF.f90 Parser_L2CF.f9h
+	$(UTILDIR)/newAifBdiff.sh -a parser_tables_l2cf.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/Parser_Tables_L2CF.f90 $(FAFTER)
+Parser_Tables_L2CF.o: Parser_Tables_L2CF.f90 Parser_L2CF.f9h
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+          -T Parser_Tables_L2CF.o parser_tables_l2cf.mod 
 tree_checker.mod: tree_checker.f90 init_tables_module.mod
 	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
 tree_checker.o: tree_checker.mod tree_checker.f90
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T tree_checker.o tree_checker.mod 
+          -T tree_checker.o tree_checker.mod 
 
 # l2
 # This keeps switch_usage up-to-date with notes/switches
@@ -185,10 +190,10 @@ ieee_arithmetic.mod: ieee_arithmetic.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-$(S)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+$(srclib)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
-          $(S)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
+          $(srclib)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
 
 endif
 
@@ -339,10 +344,10 @@ machine.o: $(MACH_DIR)/machine.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-$(S)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+$(srclib)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
 	$(INSTALLDIR)/lr \
           $(UTILDIR)/lr/l2cf.grm \
-          $(S)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
+          $(srclib)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
 
 endif
 
@@ -450,6 +455,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.13  2014/05/20 23:41:29  vsnyder
+# New parser, simplified build
+#
 # Revision 1.12  2014/02/21 22:32:28  pwagner
 # Uses Parser_Tables.wc to trigger two-phase build
 #
