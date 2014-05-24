@@ -928,22 +928,11 @@ l2q: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2q.f90 l2
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
-lr: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/lr/*.f90 utctotai
-# First, we must hide parser.f90, then rebuild lib
-	if [ -f lib/parser.f90 ] ; then \
-	mv lib/parser.f90 lib/parser.f90.hideme; \
-        fi
-	$(MAKE) -f $(MakeFName) -C lib update
-	$(MAKE) -f $(MakeFName) -C lib
-# Second build lr with the truncated lib
+lr: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/lr/*.f9[0h] utctotai
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
-   -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=lr_main -m lib \
-	-C $(MLSCFILE) $(MLSBIN)/lr/*.f90
-# Third, undo the damage to lib
-	if [ -f lib/parser.f90.hideme ] ; then \
-	mv lib/parser.f90.hideme lib/parser.f90; \
-	$(MAKE) -f $(MakeFName) -C lib update; \
-        fi
+          -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=lr_main -m lib \
+          -C $(MLSCFILE) $(MLSBIN)/lr/*.f9[0h] $(MLSBIN)/lr/*.grm \
+          lib/symbol_table.f90 lib/tree.f90
 
 machineok: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/machineok.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -1349,6 +1338,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.143  2014/01/29 21:01:56  pwagner
+# Shorten make update
+#
 # Revision 1.142  2014/01/22 18:21:41  pwagner
 # More changes, bug fixes
 #
