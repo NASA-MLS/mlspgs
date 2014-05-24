@@ -61,6 +61,11 @@ outputl1b_hdf4.mod:
 	$(UTILDIR)/newAifBdiff.sh -a outputl1b_hdf4.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B_HDF4.f90 $(FAFTER)
 parser_tables_l2cf.mod: Parser_Tables_L2CF.f90 Parser_L2CF.f9h
 	$(UTILDIR)/newAifBdiff.sh -a parser_tables_l2cf.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/Parser_Tables_L2CF.f90 $(FAFTER)
+
+Parser_L2CF.f9h $(srclib)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
+	$(INSTALLDIR)/lr \
+          $(UTILDIR)/lr/l2cf.grm \
+          $(srclib)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
 Parser_Tables_L2CF.o: Parser_Tables_L2CF.f90 Parser_L2CF.f9h
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
           -T Parser_Tables_L2CF.o parser_tables_l2cf.mod 
@@ -189,11 +194,6 @@ ieee_arithmetic.mod: ieee_arithmetic.f90
 
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
-
-$(srclib)/Parser_L2CF.f9h: $(UTILDIR)/lr/l2cf.grm $(INSTALLDIR)/lr
-	$(INSTALLDIR)/lr \
-          $(UTILDIR)/lr/l2cf.grm \
-          $(srclib)/Parser_L2CF.f9h $(UTILDIR)/lr/l2cf.lls $(LRAFTER)
 
 endif
 
@@ -455,6 +455,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.14  2014/05/22 01:18:44  vsnyder
+# Moved Parser_Tables_L2CF.f90 from lib to srclib
+#
 # Revision 1.13  2014/05/20 23:41:29  vsnyder
 # New parser, simplified build
 #
