@@ -517,10 +517,10 @@ contains
             & (/ f_last, f_start, f_step, f_width /) )
           if ( error == 0 ) then
             call allocate_Test ( spectrometerType%frequencies, &
-              & nsons(channels)-first, 'spectrometerType%frequencies', &
+              & nsons(channels)-2+first, 'spectrometerType%frequencies', &
               & moduleName, lowBound = first )
             call allocate_Test ( spectrometerType%widths, &
-              & nsons(channels)-first, 'spectrometerType%widths', &
+              & nsons(channels)-2+first, 'spectrometerType%widths', &
               & moduleName, lowBound = first )
             do k = 2, nsons(channels)
               call expr ( subtree(k,channels), units, value )
@@ -1971,6 +1971,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.105  2014/05/24 01:30:17  vsnyder
+! Calculate upper bound of frequencies and widths correctly
+!
 ! Revision 2.104  2014/02/07 02:28:06  vsnyder
 ! Fail gracefully in case a database didn't get allocated due to prior
 ! trouble.  Add more tracing at -g1 level.
