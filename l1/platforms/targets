@@ -31,6 +31,8 @@ MODPATHS = $(dir1) $(blaslib)
 
 UTILDIR=$(CONFDIR)/util
 
+TESTSDIR=$(CONFDIR)/tests
+
 # reecho.sh can filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
 # However we will be using it just to prefix any unprefixed preset paths
@@ -190,6 +192,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.40  2010/08/27 20:57:16  pwagner
+# Uses optional HDF*INC Makefile variables
+#
 # Revision 1.39  2009/07/17 20:27:32  pwagner
 # Added COPTS as cc options
 #
