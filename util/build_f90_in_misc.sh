@@ -329,7 +329,7 @@ then
    exit 1
 elif [ -d "$prog_path" -a ! -w "$prog_path" ]
 then
-   echo "Sorry--you must have write permission to $test_dir_path/$test_dir_name"
+   echo "Sorry--you must have write permission to $prog_path"
    exit 1
 elif [ "$arglist" = "" ]
 then
@@ -519,6 +519,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.18  2014/03/04 18:51:59  pwagner
+# Allow more source source file suffixes
+#
 # Revision 1.17  2013/01/09 18:47:10  pwagner
 # Add verbose, silent options; unless silent announce where installing
 #
