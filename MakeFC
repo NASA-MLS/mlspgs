@@ -415,7 +415,7 @@ endif
 # We have custom build commands for the srclib .f90 source files
 # in custmblds, so omit build commands from the Makefile.dep
 # automatcially created in srclib
-CUSTOM_BUILDS=tree_checker.f90 getCF_m.f90
+CUSTOM_BUILDS=tree_checker.f90 getCF_m.f90 Parser_Tables_L2CF.f90
 CUSTOM_PREFXD := $(shell ${REECHO} -dir srclib -prefix=-db $(CUSTOM_BUILDS))
 
 # Here are some miscellaneous variables for special tools
@@ -1338,6 +1338,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.144  2014/05/24 00:24:35  vsnyder
+# No longer need to make lib twice to make LR
+#
 # Revision 1.143  2014/01/29 21:01:56  pwagner
 # Shorten make update
 #
