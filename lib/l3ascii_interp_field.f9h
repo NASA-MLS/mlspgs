@@ -179,7 +179,7 @@ endif
 allocate ( hcube(1:hcshape(1),1:hcshape(2),1:hcshape(3), &
   & 1:hcshape(4),1:hcshape(5),1:hcshape(6)) )
 ! Copy data into hypercube
-if ( seasonalCycle ) then
+if ( seasonalCycle .and. idate1 /= idate2 ) then
   ! We need the following trickery:
   !   idate     1   2   3  .. 14
   ! grid date   12  1   2  ..  1
@@ -266,6 +266,9 @@ call deallocate_test ( tmpdate, 'tmpdate', moduleName )
 call deallocate_test ( tmpalt, 'tmpalt', moduleName )
 deallocate ( hcube )
 ! $Log$
+! Revision 2.8  2014/05/28 21:57:19  pwagner
+! Prevent defining hcube for index 2 when idate1 == idate2
+!
 ! Revision 2.7  2012/03/06 19:31:22  pwagner
 ! Fix bug affecting seasonal cyclic symmetric grids
 !
