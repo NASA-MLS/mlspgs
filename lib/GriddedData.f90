@@ -11,7 +11,9 @@
 
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use allocate_deallocate, only: allocate_test, byte_size, bytes, &
+    & deallocate_test, memory_units, NoBytesAllocated, &
+    & test_allocate, test_deallocate
   use DATES_MODULE, only: TAI2CCSDS
   use DUMP_0, only: DUMP, DUMPDATES
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
@@ -23,9 +25,10 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   use MLSKINDS, only: RGR=>R4, R8
   use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_WARNING, MLSMESSAGECONFIG, MLSMESSAGE
-  use MLSSTRINGLISTS, only: SNIPLIST
+  use MLSSTRINGLISTS, only: SNIPLIST, SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
   use OUTPUT_M, only: OUTPUTOPTIONS, BLANKS, OUTPUT, NEWLINE
+  use TOGGLES, only: SWITCHES
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
   implicit none
@@ -113,6 +116,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 
     ! First the comment line(s) from the relevant input file
     logical :: EMPTY                    ! Set for example when file read failed
+    logical :: deferReading             ! Set when to be read later
     character (LEN=LineLen), pointer, dimension(:) :: fileComments => NULL()
 
     ! Now the name, description and units information
@@ -120,6 +124,8 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     character (LEN=LineLen) :: sourceFileName ! Input file name
     character (LEN=NameLen) :: quantityName ! From input file
     character (LEN=LineLen) :: description ! Quantity description
+    character (LEN=LineLen) :: dimList
+    character (LEN=LineLen) :: fieldNames
     character (LEN=NameLen) :: units ! Units for quantity
 
     ! Now define the various coordinate systems, first vertical
@@ -191,10 +197,28 @@ contains
     ! Executable code
     call trace_begin ( me, 'ConcatenateGriddedData_2' , cond=.false. )
     ! First, check that the grids A and B are conformable.
-    if ( a%verticalCoordinate /= b%verticalCoordinate .or. &
-      & a%equivalentLatitude .neqv. b%equivalentLatitude .or. &
-      & a%noYear .neqv. b%noYear ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Grids for Concatenate are not compatible' )
+    if ( (a%verticalCoordinate /= b%verticalCoordinate) .or. &
+      & (a%equivalentLatitude .neqv. b%equivalentLatitude) .or. &
+      & (a%noYear .neqv. b%noYear) ) then
+        call output( 'Gridded Data a', advance='yes' )
+        call dump( a )
+        call output( 'Gridded Data b', advance='yes' )
+        call dump( b )
+        call outputNamedValue ( 'a%verticalCoordinate', a%verticalCoordinate )
+        call outputNamedValue ( 'b%verticalCoordinate', b%verticalCoordinate )
+        call outputNamedValue ( '=?', &
+          & a%verticalCoordinate == b%verticalCoordinate )
+        call outputNamedValue ( 'a%equivalentLatitude', a%equivalentLatitude )
+        call outputNamedValue ( 'b%equivalentLatitude', b%equivalentLatitude )
+        call outputNamedValue ( '=?', &
+          & a%equivalentLatitude .eqv. b%equivalentLatitude )
+        call outputNamedValue ( 'a%noYear', a%noYear )
+        call outputNamedValue ( 'b%noYear', b%noYear )
+        call outputNamedValue ( '=?', &
+          & a%noYear .eqv. b%noYear )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Grids for Concatenate are not compatible' )
+    endif
     if ( .not. all ( EssentiallyEqual ( a%heights, b%heights ) ) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Grids for Concatenate do not share heights' )
@@ -466,9 +490,12 @@ contains
     type (GriddedData_T), intent(INOUT) :: Qty
 
     ! Local variables
+    real :: S ! Size in bytes of a deallocated field
     integer :: STATUS
+    logical :: verbose
 
     ! Executable code
+    verbose = switchDetail(switches, 'grid') > -1
     call Deallocate_test ( qty%heights, "qty%heights", ModuleName )
     call Deallocate_test ( qty%lats, "qty%lats", ModuleName )
     call Deallocate_test ( qty%lons, "qty%lons", ModuleName )
@@ -481,10 +508,12 @@ contains
 
     ! Now the data itself
     if ( associated(qty%field) ) then
+      s = byte_size(qty%field) / MEMORY_UNITS
+      if ( verbose ) call outputnamedValue ( 'Grid size to be destroyed', shape(qty%field) )
       deallocate(qty%field, STAT=status)
-
-      if (status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//"qty%field")
+      call test_deallocate ( status, moduleName, 'grid%field', s )
+    elseif ( verbose ) then
+      call output( 'This grid not allocated', advance='true' )
     end if
     qty%empty = .true.
 
@@ -713,6 +742,7 @@ contains
     
     ! Local Variables
     integer            :: i
+    real               :: total
 
     if ( .not. associated(GriddedData)) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Gridded database still null')
@@ -722,21 +752,27 @@ contains
     call output ( 'database: a priori grids: SIZE = ' )
     call output ( size(GriddedData), advance='yes' )
     if ( size(GriddedData) < 1 ) return
+    total = 0.
     do i = 1, size(GriddedData)
 
       call output ( 'item number ' )
-      call output ( i, advance='yes' )
+      call output ( i, advance='no' )
 
       call DumpGriddedData( GriddedData(i), Details, Options )
+      if ( .not. associated(GriddedData(i)%field) ) cycle
+      total = total + &
+        & product(shape(GriddedData(i)%field))/MEMORY_UNITS
     end do ! i
+    call outputNamedValue( 'Database Total Memory Footprint', &
+      & bytes(GriddedData(1)%field) * total )
   end subroutine DumpGriddedDatabase
 
   ! --------------------------------------------  DumpGriddedData  -----
   subroutine DumpGriddedData ( GriddedData, Details, options )
-    use Dump_0, only: DUMP
-    use ieee_arithmetic, only: IEEE_IS_FINITE, IEEE_IS_NAN
-    use Intrinsic, only: LIT_INDICES, SPEC_INDICES
-    use String_Table, only: DISPLAY_STRING
+    use Dump_0, only: dump
+    use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
+    use Intrinsic, only: lit_indices, spec_indices
+    use String_Table, only: display_string
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
@@ -778,11 +814,11 @@ contains
     if ( present(options) ) myOptions = lowerCase(options)
     if ( myOptions == '-' ) myOptions = ' '
     if ( GriddedData%empty ) then
-      call output('This Gridded quantity was empty (perhaps the file name' &
-        & // ' was wrong)', advance='yes')
+      call output('This Gridded quantity was empty', advance='yes')
       return
     endif
     if ( lookLikeClimatologyTxtfile ) then
+      call newLine
       ! Format dump to look like Climatology text file
       call output('Field ' // trim(GriddedData%quantityName), advance='no')
       call blanks (3)
@@ -850,6 +886,11 @@ contains
       return
     endif
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
+    if ( associated(GriddedData%field)) &
+      &  call outputnamedvalue( 'Grid Memory Footprint', &
+      &  bytes(GriddedData%field) * &
+      & (product(shape(GriddedData%field))/MEMORY_UNITS) &
+      & )
     if ( myDetails < -1 ) return
     oldInfo = MLSMessageConfig%Info
     MLSMessageConfig%Info = GriddedData%quantityName
@@ -1049,7 +1090,6 @@ contains
   ! This first routine sets up a new grid according to the user
   ! input.  This may be based partly on an already-defined source
   ! or created from scratch.
-    use Allocate_Deallocate, only: BYTE_SIZE, TEST_ALLOCATE
     ! Dummy arguments
     type (GriddedData_T) :: QTY ! Result
     type (GriddedData_T), optional, intent(in) :: SOURCE ! Template
@@ -1064,13 +1104,17 @@ contains
     ! Local variables
     integer :: status                   ! Status from allocates etc.
     logical :: myEmpty                  ! Copy of empty possibly
+    logical :: verbose
 
     ! Executable code
+    verbose = switchDetail(switches, 'grid') > -1
     qty%description    = '(unknown)'
     qty%sourceFileName = '(unknown)'
     qty%quantityName   = '(unknown)'
     qty%units          = '(unknown)'
     qty%heightsUnits   = '(unknown)'
+    qty%dimList        = '(unknown)'
+    qty%deferReading   = .false.
 
     myEmpty = .false.
     if ( present ( empty ) ) myEmpty = empty
@@ -1130,6 +1174,16 @@ contains
     end if
 
     ! First the vertical/horizontal coordinates
+    if ( verbose ) then
+      call outputNamedValue( 'qty%noHeights', qty%noHeights )
+      call outputNamedValue( 'qty%noLats', qty%noLats )
+      call outputNamedValue( 'qty%noLons', qty%noLons )
+      call outputNamedValue( 'qty%noLsts', qty%noLsts )
+      call outputNamedValue( 'qty%noSzas', qty%noSzas )
+      call outputNamedValue( 'qty%noDates', qty%noDates )
+      call outputNamedValue( 'Bytes before allocating vertical/horizontal coordinates', &
+        & NoBytesAllocated/MEMORY_UNITS )
+    endif
     call Allocate_test ( qty%heights, qty%noHeights, "qty%heights", ModuleName )
     call Allocate_test ( qty%lats, qty%noLats, "qty%lats", ModuleName )
     call Allocate_test ( qty%lons, qty%noLons, "qty%lons", ModuleName )
@@ -1141,11 +1195,17 @@ contains
     call Allocate_test ( qty%dateEnds, qty%noDates, "qty%dateEnds", ModuleName )
 
     ! Now the data itself
+    if ( verbose ) call outputNamedValue( 'Bytes before allocating grid%field', NoBytesAllocated/memory_units )
     allocate(qty%field(qty%noHeights, qty%noLats, qty%noLons,  &
       qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
     call test_allocate ( status, moduleName, 'qty%field', (/1,1,1,1,1,1/), &
       & (/ qty%noHeights, qty%noLats, qty%noLons, qty%noLsts, qty%noSzas, &
-      &    qty%noDates /), byte_size(qty%field) )
+      &    qty%noDates /), bytes(qty%field) )
+    if ( verbose ) then
+      call outputNamedValue( 'Bytes after allocating grid%field', NoBytesAllocated/memory_units )
+      call outputNamedValue( 'Size of field (elements)', product(shape(qty%field)) )
+      call outputNamedValue( 'Byte Size of field', byte_size(qty%field)/memory_units )
+    endif
   
   end subroutine SetupNewGriddedData
 
@@ -1571,8 +1631,6 @@ contains
     ! Given a grid, possibly add extra points in longitude beyond +/-180
     ! and in solar time beyond 0..24 to aid in interpolations.
     ! Dummy arguments
-    use Allocate_Deallocate, only: BYTE_SIZE, BYTES, MEMORY_UNITS, &
-      & TEST_ALLOCATE, TEST_DEALLOCATE
     type ( GriddedData_T ), intent(inout) :: GRID
 
     ! Local variables
@@ -1734,6 +1792,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.75  2014/05/29 18:28:26  pwagner
+! Correctly compute memory usage
+!
 ! Revision 2.74  2014/01/09 00:25:06  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
