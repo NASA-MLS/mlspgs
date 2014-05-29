@@ -182,7 +182,8 @@ module Allocate_Deallocate
   ! (The 1st is public to enable reporting finer or coarser grains)
   real, save, public  :: MEMORY_UNITS = 1024. ! Report nothing smaller than KB
   double precision, save, public :: NoBytesAllocated=0.0d0 ! Number of MEMORY_UNITS allocated.
-
+  double precision, parameter  :: OUTPUT_UNITS = 1.d6 ! output in MB
+  logical, parameter :: DEEBUG = .false.
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter, private :: ModuleName = &
@@ -258,6 +259,7 @@ contains
   ! ----------------------------------------------  Test_Allocate  -----
   subroutine Test_Allocate ( Status, ModuleNameIn, ItsName, lBounds, uBounds, &
     & ElementSize )
+    use HIGHOUTPUT, only: outputNamedValue
   ! Test the status from an allocate.  If it's nonzero, issue a message.
   ! Track allocations if TrackAllocates is >= 2 and ElementSize is present
   ! and > 0.  
@@ -296,6 +298,9 @@ contains
           call ReportAllocateDeallocate ( itsName, moduleNameIn, amount, bounds )
         else
           noBytesAllocated = noBytesAllocated + amount
+          if ( DEEBUG ) &
+            & call outputNamedValue( itsname, &
+            & (/noBytesAllocated, amount*1.d0/)/OUTPUT_UNITS )
         end if
       end if
     end if
@@ -316,6 +321,7 @@ contains
   ! Test the status from a deallocate.  If it's nonzero, issue a message.
   ! Do garbage collection if Collect_garbage_each_time is true.
   ! Track deallocations if TrackAllocates >= 2 and Size is present and > 0.
+    use HIGHOUTPUT, only: outputNamedValue
     integer, intent(in) :: Status
     character(len=*), intent(in) :: ModuleNameIn, ItsName
     real, intent(in), optional :: Size ! in MEMORY_UNITS, <= 0 for no tracking
@@ -336,6 +342,9 @@ contains
           call ReportAllocateDeallocate ( itsName, moduleNameIn, -size )
         else
           noBytesAllocated = noBytesAllocated - size
+          if ( DEEBUG ) &
+            & call outputNamedValue( itsname, &
+            & (/noBytesAllocated, size*1.d0/)/OUTPUT_UNITS )
         end if
       end if
     end if
@@ -1502,6 +1511,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.45  2014/05/29 18:20:27  pwagner
+! Extra debugging possibility
+!
 ! Revision 2.44  2014/01/09 00:25:06  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
