@@ -837,7 +837,7 @@ contains
       return
     end if
     if ( which < 0 .or. which > the_tree(where) % nsons ) then
-      call tree_error ( no_more_sons, where )
+      call tree_error ( no_more_sons, where, which, the_tree(where) % nsons )
     end if
     subtree = the_tree(where) % link + which - 1
   end function SUBTREE_I
@@ -985,26 +985,27 @@ contains
     end do
   end subroutine SET_NSONS
 
-  subroutine TREE_ERROR ( WHY, WHERE )
+  subroutine TREE_ERROR ( WHY, WHERE, Which, How_Many )
   ! Print a message WHY there's an error at WHERE in the tree.
     integer, intent(in) :: WHY
     integer, intent(in) :: WHERE
+    integer, intent(in), optional :: Which
+    integer, intent(in), optional :: How_Many
     if ( where == null_tree ) then
       call error_intro ( compiler, 0 )
     else
       call error_intro ( compiler, source_ref(where) )
     end if
     if ( why == is_pseudo .or. why == no_more_sons .or. why == not_pseudo ) &
-    then
-      ! write ( prunit, '(a,i0)', advance="no" ) where ! in Fortran 2000
-      call output ( "Tree node at ")
-      call output ( where )
-    end if
+      & call output ( where, before="Tree node at ")
     select case ( why )
     case ( is_pseudo );     call output ( " is pseudo-terminal.", &
                                           advance="yes" )
-    case ( no_more_sons);   call output ( " has too few sons.", &
-                                          advance="yes" )
+    case ( no_more_sons);
+      call output ( " has too few sons" )
+      if ( present(which) ) call output ( which, before=".  Asking for subtree " )
+      if ( present(how_Many) ) call output ( how_Many, before=" out of " )
+      call output ( '.', advance="yes" )
     case ( not_pseudo );    call output ( " is not pseudo-terminal.", &
                                           advance="yes" )
     case ( no_tree_space )
@@ -1039,6 +1040,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.31  2014/05/30 02:43:38  vsnyder
+! Improve no_more_sons error message
+!
 ! Revision 2.30  2014/05/20 22:16:57  vsnyder
 ! More functions to access the stack
 !
