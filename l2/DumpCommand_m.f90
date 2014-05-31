@@ -1350,7 +1350,7 @@ contains
               call announceError ( son, noFWM )
             end if
           case ( f_allGriddedData )
-            if ( details < -1 ) cycle
+            if ( details < -2 ) cycle
             if ( haveGriddedData ) then
               call dump ( griddedDataBase, details , options=optionsString )
             else
@@ -2394,7 +2394,7 @@ contains
     case ( noFWM )
       call output ( "Can't dump Forward Model Configs here." )
     case ( noGriddedData )
-      call output ( "Can't dump GriddedData here." )
+      call output ( "Can't dump GriddedData here, or GriddedDatabase empty. " )
     case ( noHGrid )
       call output ( "Can't dump HGrids here." )
     case ( noLines )
@@ -2672,6 +2672,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.115  2014/05/31 00:24:55  pwagner
+! Small corrections; details should now be -3 to skipAllDumps
+!
 ! Revision 2.114  2014/04/25 18:53:45  pwagner
 ! options string to Dump text as headLine or Banner
 !
