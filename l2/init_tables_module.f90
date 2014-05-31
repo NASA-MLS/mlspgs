@@ -653,7 +653,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_origin, numeric(phyq_angle), &
              begin, f+f_single, boolean(), &
              begin, f+f_solarTime, numeric(phyq_time), &
-             begin, f+f_solarZenith, numeric(phyq_angle), &
+             begin, f+f_solarZenith, numeric(), &
              begin, f+f_spacing, numeric(phyq_angle), &
              begin, f+f_sourceL2GP, field_spec(s_l2gp), &
              begin, f+f_Time, numeric(), &
@@ -662,6 +662,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_readgriddedData, &
              begin, f+f_date, string(), &
+             begin, f+f_deferReading, boolean(), &
              begin, f+f_dimList, string(), &
              begin, f+f_downsample, boolean(), &
              begin, f+f_file, string(), &
@@ -695,6 +696,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_a, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_b, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_grid, field_spec(s_gridded,s_convertetatop), &
+             begin, f+f_deleteGrids, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded
@@ -1957,6 +1959,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.600  2014/05/31 00:22:18  pwagner
+! We wont always have units for solarZenith field
+!
 ! Revision 2.599  2014/04/24 23:55:32  pwagner
 ! May set master coordinate in hGrid specification
 !
