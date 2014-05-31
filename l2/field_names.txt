@@ -122,6 +122,8 @@ DACSfilterShapes
 date
 debug
 default_spectroscopy
+deferReading
+deleteGrids
 destination
 destroy
 destroyJacobian
@@ -519,6 +521,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.247  2014/05/31 00:20:41  pwagner
+# Ideas which may shrink memory footprint of griddedData
+#
 # Revision 2.246  2014/04/22 00:47:37  vsnyder
 # Move signals field to Init_Spectroscopy
 #
