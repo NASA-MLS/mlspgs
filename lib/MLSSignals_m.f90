@@ -350,6 +350,7 @@ contains
           & cond=toggle(gen) .and. levels(gen) > 0 )
         radiometer%polarization = l_a
         radiometer%prefix = name
+        radiometer%singleSideband = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -1971,6 +1972,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.106  2014/06/02 23:15:35  livesey
+! Fix bug with radiometer%singleSideband not being initialized
+!
 ! Revision 2.105  2014/05/24 01:30:17  vsnyder
 ! Calculate upper bound of frequencies and widths correctly
 !
