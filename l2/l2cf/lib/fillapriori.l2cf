@@ -124,6 +124,7 @@ begin Fill
   ;; Possibly overwrite temperature with the merged product
   !ifdef(flagIgnoreMeteorology,{},{Fill, quantity=apriori.temperature_hr,$
     method=gridded, sourceGrid=mergedTemperature})
+  !ifdef(flagDestroyMeteorology,{Destroy, grid=mergedTemperature})
 end Fill
 
 ;; ----------------------------------- Lesser state
@@ -770,6 +771,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.158  2014/02/19 19:22:38  pwagner
+;Increase methanol precision to 5ppbv
+;
 ;Revision 1.157  2013/11/20 00:54:40  pwagner
 ;Comment-out a lot of debugging dumps
 ;
