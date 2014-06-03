@@ -726,7 +726,8 @@ contains ! =====     Public Procedures     =============================
         if ( .not. associated(vectors) ) allocate ( vectors(0), stat=status )
         call test_allocate ( status, moduleName, 'Vectors', (/0/), (/0/) )
         call dumpCommand ( key, qtyTemplates, vectorTemplates, vectors, &
-          & GriddedDataBase=GriddedDataBase, FileDataBase=FileDataBase, &
+          & GriddedDataBase=GriddedDataBase, hGrids=hGrids, &
+          & FileDataBase=FileDataBase, &
           & MatrixDatabase=Matrices, HessianDatabase=Hessians )
       case ( s_hessian ) ! ===============================  Hessian  =====
         got = .false.
@@ -3097,6 +3098,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.442  2014/06/03 22:42:54  pwagner
+! Pass hGrids to Dump so we may Dump them
+!
 ! Revision 2.441  2014/04/22 00:45:36  vsnyder
 ! Cannonball polishing
 !
