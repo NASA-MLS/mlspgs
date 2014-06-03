@@ -14,15 +14,16 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
   use HighOutput, only: Banner, OutputNamedValue
-  use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
-  use MLSCOMMON, only: MLSFILE_T, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
+  use intrinsic, only: l_hours, l_minutes, l_seconds
+  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
   use MLSFiles, only: WildCardHDFVersion, HDFVersion_4, HDFVersion_5, Dump
   use MLSMESSAGEMODULE, only: MLSMessageConfig, &
     & MLSMsg_error, MLSMsg_info, MLSMsg_testWarning, &
-    & MLSMsg_severity_to_walkback, MLSMsg_warning, &
+    & MLSMSG_Severity_to_quit, MLSMsg_severity_to_walkback, MLSMsg_warning, &
     & Bummer, sayMessage => MLSMessage
-  use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
-  use PCFHDR, only: GLOBALATTRIBUTES
+  use MLSPCF2, only: MLSPCF_l1b_rad_end, MLSPCF_l1b_rad_start
+  use MLSStrings, only: lowerCase, readIntsFromChars, writeIntsToChars
+  use PCFHdr, only: globalAttributes
   use OUTPUT_M, only: OUTPUTOPTIONS, &
     & INVALIDPRUNIT, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT, &
     & OUTPUT
@@ -251,6 +252,7 @@ contains
     integer, intent(out), optional :: status ! 0 if msg printed, 1 if suppressed
     type(dbItem_T), intent(in), optional  :: item
     ! Internal variables
+    character(len=16) :: chunkChars
     integer :: logFileUnit  ! Where we will log
     integer :: LogThreshold ! Severity at which we will log
     logical :: mustRepeat   ! if we will repeat via output
@@ -292,12 +294,26 @@ contains
       if ( present(status) ) status = myStatus
       if ( myStatus /= 0 ) return
     end if
+    ! If severe enough an error, we will want to know more
+    ! in hopes of figuring out what went wrong, where, and why
+    myMessage = message
+    ! Do we have a current phase name?
+    if ( len_trim(currentPhaseName) > 0 &
+      & .and. severity >= MLSMSG_Severity_to_quit ) then
+      myMessage = ' (' // trim(currentPhaseName) // ') ' // myMessage
+    end if
+    ! Do we have a current chunk number?
+    if ( currentChunkNumber > 0 &
+      & .and. severity >= MLSMSG_Severity_to_quit ) then
+      call writeIntsToChars( currentChunkNumber, chunkChars )
+      myMessage = ' (chunk' // trim(chunkChars) // ') ' // myMessage
+    end if
     ! Do we have an l2cf node we were processing?
     if ( L2CFNode /= 0 ) then
       call get_where ( where(L2CFNode), myMessage, &
-        & before='***** At ', after=': ' // Message )
+        & before='***** At ', after=': ' // myMessage )
     else
-      myMessage = '(no tree node): ' // message
+      myMessage = '(no tree node): ' // myMessage
     end if
     if ( present(item) ) then
       call output ( '(Not ready to dump arbitrary datatypes yet) ', advance='yes' )
@@ -363,7 +379,6 @@ contains
       & GETSTRINGELEMENT, GETUNIQUELIST, &
       & NUMSTRINGELEMENTS, REMOVESWITCHFROMLIST, &
       & SORTLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
-    use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
     use PCFHDR, only: GLOBALATTRIBUTES
     use PRINTIT_M, only: SET_CONFIG
     use SET_TOGGLES_M, only: SET_TOGGLES
@@ -1025,6 +1040,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.85  2014/06/03 22:41:33  pwagner
+! Prints phaseName, chunkNum on severe error mesgs
+!
 ! Revision 2.84  2014/04/22 16:33:36  pwagner
 ! MLSMessage now prints error message as eye-catching banner
 !
