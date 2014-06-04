@@ -12,46 +12,46 @@
 !=============================================================================
 module ReadAPriori
 
-  use EXPR_M, only: EXPR
-  use HDF, only: DFACC_RDONLY
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, &
-    & F_DATE, F_DIMLIST, F_DOWNSAMPLE, &
-    & F_FIELD, F_FILE, F_GRID, F_HDFVERSION, F_MISSINGVALUE, &
-    & F_ORIGIN, F_QUANTITYTYPE, F_SDNAME, F_SUM, F_SWATH, &
-    & FIELD_FIRST, FIELD_LAST, &
-    & L_CLIMATOLOGY, L_DAO, L_GEOS5, L_GEOS5_7, L_GLORIA, &
-    & L_MERRA, L_NCEP, L_NONE, L_STRAT, L_SURFACEHEIGHT, &
-    & S_DIFF, S_DUMP, S_GRIDDED, S_L2AUX, S_L2GP, S_READGRIDDEDDATA
-  use Intrinsic, only: L_ASCII, L_BINARY, L_HDFEOS, L_HDF, L_SWATH, &
-    & PHYQ_DIMENSIONLESS
-  use L2GPDATA, only: MAXSWATHNAMESBUFSIZE
-  use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCOMMON, only: FILENAMELEN, MLSFILE_T
-  use MLSFILES, only: FILENOTFOUND, &
-    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
-    & ADDFILETODATABASE, MLS_CloseFile, DUMP, GETPCFROMREF, INITIALIZEMLSFILE, &
-    & MLS_HDF_VERSION, MLS_INQSWATH, MLS_OpenFile, SPLIT_PATH_NAME
-  use MLSL2OPTIONS, only: CHECKPATHS, DEFAULT_HDFVERSION_READ, L2CFNODE, &
-    & SPECIALDUMPFILE, TOOLKIT, &
-    & MLSMESSAGE
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSPCF2, only: &
-    & MLSPCF_L2APRIORI_START, MLSPCF_L2APRIORI_END, &
-    & MLSPCF_L2CLIM_START, MLSPCF_L2CLIM_END, &
-    & MLSPCF_L2DAO_START, MLSPCF_L2DAO_END, &
-    & MLSPCF_L2GEOS5_START, MLSPCF_L2GEOS5_END, &
-    & MLSPCF_L2NCEP_START, MLSPCF_L2NCEP_END, &
-    & MLSPCF_SURFACEHEIGHT_START, MLSPCF_SURFACEHEIGHT_END
-  use MLSSTRINGLISTS, only: CATLISTS, SWITCHDETAIL
-  use MLSSTRINGS, only: LOWERCASE
-  use MORETREE, only: GET_BOOLEAN
-  use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
-  use SDPTOOLKIT, only: PGS_S_SUCCESS
-  use STRING_TABLE, only: GET_STRING
-  use TOGGLES, only: GEN, SWITCHES, TOGGLE
-  use TREE, only: DECORATE, DECORATION, NSONS, &
-    &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, Where
+  use expr_m, only: expr
+  use hdf, only: dfacc_rdonly
+  use highoutput, only: outputnamedvalue
+  use init_tables_module, only: f_aurainstrument, &
+    & f_date, f_dimlist, f_downsample, &
+    & f_field, f_file, f_grid, f_hdfversion, f_missingvalue, &
+    & f_origin, f_quantitytype, f_sdname, f_deferReading, f_sum, f_swath, &
+    & field_first, field_last, &
+    & l_climatology, l_dao, l_geos5, l_geos5_7, l_gloria, &
+    & l_merra, l_ncep, l_none, l_strat, l_surfaceheight, &
+    & s_diff, s_dump, s_gridded, s_l2aux, s_l2gp, s_readgriddeddata
+  use intrinsic, only: l_ascii, l_binary, l_hdfeos, l_hdf, l_swath, &
+    & phyq_dimensionless
+  use l2gpdata, only: maxswathnamesbufsize
+  use lexer_core, only: print_source
+  use MLScommon, only: filenamelen, MLSfile_t
+  use MLSfiles, only: filenotfound, &
+    & hdfversion_4, hdfversion_5, wildcardhdfversion, &
+    & addfiletodatabase, MLS_closefile, dump, getpcfromref, initializeMLSfile, &
+    & MLS_hdf_version, MLS_inqswath, MLS_openfile, split_path_name
+  use MLSl2Options, only: checkPaths, default_hdfversion_read, l2cfnode, &
+    & runtimeValues, specialDumpFile, toolkit, &
+    & dumpMacros, MLSMessage
+  use MLSmessagemodule, only: MLSmsg_error, MLSmsg_warning
+  use MLSpcf2, only: &
+    & MLSpcf_l2apriori_start, MLSpcf_l2apriori_end, &
+    & MLSpcf_l2clim_start, MLSpcf_l2clim_end, &
+    & MLSpcf_l2dao_start, MLSpcf_l2dao_end, &
+    & MLSpcf_l2geos5_start, MLSpcf_l2geos5_end, &
+    & MLSpcf_l2ncep_start, MLSpcf_l2ncep_end, &
+    & MLSpcf_surfaceheight_start, MLSpcf_surfaceheight_end
+  use MLSStringlists, only: catLists, GetHashElement, switchDetail
+  use MLSStrings, only: lowercase
+  use moreTree, only: get_boolean
+  use output_m, only: blanks, output, revertOutput, switchOutput
+  use SDPToolkit, only: pgs_s_success
+  use string_table, only: get_string
+  use toggles, only: gen, switches, toggle
+  use tree, only: decorate, decoration, nsons, &
+    &             sub_rosa, subtree, dump_tree_node, where
 
   implicit none
   private
@@ -85,6 +85,7 @@ module ReadAPriori
     & READ_APRIORI, READAPRIORIATTRIBUTES, &
     & WRITEAPRIORIATTRIBUTES
   private ::  announce_error
+  logical, parameter :: countEmpty = .true. ! Except where overriden locally
   integer, private :: ERROR
   integer, private, parameter :: MAXNUMFILES = 20
 
@@ -160,14 +161,16 @@ contains ! =====     Public Procedures     =============================
     type (GriddedData_T), dimension(:), pointer :: GriddedDatabase 
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
     ! Local variables
+    logical :: carryover
+    character(len=32) :: cvalue
     integer :: Details             ! How much info about the files to dump
     integer :: KEY
-    integer :: LastAprioriPCF      ! l2gp or l2aux  apriori
-    integer :: LastClimPCF         ! l3ascii or gloria format
-    integer :: LastDAOPCF
-    integer :: LastGEOS5PCF
-    integer :: LastHeightPCF
-    integer :: LastNCEPPCF
+    integer, save :: LastAprioriPCF      ! l2gp or l2aux  apriori
+    integer, save :: LastClimPCF         ! l3ascii or gloria format
+    integer, save :: LastDAOPCF
+    integer, save :: LastGEOS5PCF
+    integer, save :: LastHeightPCF
+    integer, save :: LastNCEPPCF
     integer :: Me = -1             ! String index for trace
     integer :: NAME                ! Index into string table
     integer :: SON                 ! Of root, an n_spec_args or a n_named
@@ -180,15 +183,25 @@ contains ! =====     Public Procedures     =============================
     ! Will we be dumping info? To what level of detail?
     Details = switchDetail(switches, 'apr') - 2
     if( Details > -3 ) &     
-    & call output ( '============ Read APriori ============', advance='yes' )    
-    LastAprioriPCF = mlspcf_l2apriori_start - 1
-    lastClimPCF = mlspcf_l2clim_start - 1
-    lastDAOPCF = mlspcf_l2dao_start - 1
-    lastNCEPPCF = mlspcf_l2ncep_start - 1
-    lastGEOS5PCF = mlspcf_l2geos5_start - 1
-    LastHeightPCF = mlspcf_surfaceHeight_start - 1
-    ! call outputNamedValue ( 'mlspcf_l2geos5_start', mlspcf_l2geos5_start )
-    ! call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
+    & call output ( '============ Read APriori ============', advance='yes' )  
+    ! Are we picking up again where we left off in the last
+    ! readAPriori section?
+    call GetHashElement( runTimeValues%lkeys, runTimeValues%lvalues, &
+      & 'carryover', cvalue, countEmpty=countEmpty, &
+      & inseparator=runTimeValues%sep )
+    carryover = ( index(lowercase(cvalue), 't') > 0 )
+    call dumpMacros
+    call outputNamedValue( 'carryover', carryover )
+    if ( .not. carryover ) then
+      LastAprioriPCF = mlspcf_l2apriori_start - 1
+      lastClimPCF = mlspcf_l2clim_start - 1
+      lastDAOPCF = mlspcf_l2dao_start - 1
+      lastNCEPPCF = mlspcf_l2ncep_start - 1
+      lastGEOS5PCF = mlspcf_l2geos5_start - 1
+      LastHeightPCF = mlspcf_surfaceHeight_start - 1
+    endif
+    call outputNamedValue ( 'mlspcf_l2geos5_start', mlspcf_l2geos5_start )
+    call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
 
     do 
       son = next_tree_node ( root, state )
@@ -336,6 +349,7 @@ contains ! =====     Public Procedures     =============================
     character(len=FileNameLen) :: ShortFileName
     integer :: SON              ! Of root, an n_spec_args or a n_named
     character(len=FileNameLen) :: subString   ! file name w/o path
+    logical :: deferReading      ! skip reading the data; just note file name?
     logical :: sumDelp          ! sum up the DELP field values to get PL?
     integer :: SwathName        ! sub-rosa index of name in swath='name'
     character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
@@ -368,6 +382,7 @@ contains ! =====     Public Procedures     =============================
     Details = switchDetail(switches, 'apr') - 2
     Debug = ( Details > -3 )
     downsample = .false.
+    deferReading = .false.
     sumDelp = .false.
     fileName = 0
     gridIndex = 0
@@ -383,6 +398,8 @@ contains ! =====     Public Procedures     =============================
         AuraInst = sub_rosa(subtree(2,field))
       case ( f_date )
         date = sub_rosa(subtree(2,field))
+      case ( f_deferReading )
+        deferReading = get_boolean(field)
       case ( f_dimList )
         dimList = sub_rosa(subtree(2,field))
       case ( f_downsample )
@@ -438,6 +455,10 @@ contains ! =====     Public Procedures     =============================
     end if
     shortFileName = fileNameString
     
+    ! So, grid is associated only if the command held a grid field, e.g.
+    ! readGriddedData, grid=gmaoTemperatureInput5, origin=...
+    ! and not a mere declaration like
+    ! gmaoTemperatureInput5: gridded, origin=none
     if ( got(f_grid) ) grid => griddedDataBase(gridIndex)
 
     if ( FileType == s_readGriddedData ) then
@@ -632,7 +653,7 @@ contains ! =====     Public Procedures     =============================
         GriddedFile%PCFId = LastNCEPPCF
         FileIndex = AddFileToDataBase(filedatabase, GriddedFile)
         if ( .not. associated(grid) ) then
-          ! The gridded data needs to part of the database, even if the file
+          ! The gridded data needs to be part of the database, even if the file
           ! won't be found and the gridded data empty,
           ! so it can be merged w/o segment faulting
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, tempGrid )
@@ -641,7 +662,7 @@ contains ! =====     Public Procedures     =============================
             call readGriddedData ( GriddedFile, son, description, &
               & v_is_pressure, GriddedDatabase(gridIndex), returnStatus, &
               & dimListString, TRIM(fieldNameString), missingValue, &
-              & verbose=( Details > -3 ) )
+              & verbose=( Details > -3 ), deferReading=deferReading )
           else
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
           endif
@@ -650,10 +671,10 @@ contains ! =====     Public Procedures     =============================
           call readGriddedData ( GriddedFile, son, description, &
             & v_is_pressure, tempGrid, returnStatus, &
             & dimListString, TRIM(fieldNameString), missingValue, &
-            & verbose=( Details > -3 ) )
+            & verbose=( Details > -3 ), deferReading=deferReading )
           ! If we succeeded in reading values, insert them into the db
           ! but only if we succeeded; otherwise protect the current values
-          if ( .not. tempGrid%empty ) then
+          if ( .not. tempGrid%empty .or. deferReading ) then
             call DestroyGriddedData( grid )
             call copyGrid( grid, tempGrid )
           endif
@@ -703,7 +724,7 @@ contains ! =====     Public Procedures     =============================
               & GriddedDatabase(gridIndex), returnStatus, &
               & dimListString, TRIM(fieldNameString), &
               & missingValue, litDescription=litDescription, &
-              & verbose=( Details > -3 ) )
+              & verbose=( Details > -3 ), deferReading=deferReading )
           else
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
           endif
@@ -713,10 +734,10 @@ contains ! =====     Public Procedures     =============================
             & tempGrid, returnStatus, &
             & dimListString, TRIM(fieldNameString), &
             & missingValue, litDescription=litDescription, &
-            & verbose=( Details > -3 ) )
+            & verbose=( Details > -3 ), deferReading=deferReading )
           ! If we succeeded in reading values, insert them into the db
           ! but only if we succeeded; otherwise protect the current values
-          if ( .not. tempGrid%empty ) then
+          if ( .not. tempGrid%empty .or. deferReading ) then
             tempGrid%description = litDescription
             call DestroyGriddedData( grid )
             call copyGrid( grid, tempGrid )
@@ -798,7 +819,8 @@ contains ! =====     Public Procedures     =============================
               & GriddedDatabase(gridIndex), returnStatus, &
               & dimListString, TRIM(fieldNameString), &
               & missingValue, dateString, sumDelp, &
-              & litDescription=litDescription, verbose=( Details > -3 ) )
+              & litDescription=litDescription, &
+              & verbose=( Details > -3 ), deferReading=deferReading )
           else
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
           endif
@@ -808,10 +830,10 @@ contains ! =====     Public Procedures     =============================
             & tempGrid, returnStatus, &
             & dimListString, TRIM(fieldNameString), &
             & missingValue, dateString, sumDelp, litDescription=litDescription, &
-            & verbose=( Details > -3 ) )
+            & verbose=( Details > -3 ), deferReading=deferReading )
           ! If we succeeded in reading values, insert them into the db
           ! but only if we succeeded; otherwise protect the current values
-          if ( .not. tempGrid%empty ) then
+          if ( .not. tempGrid%empty .or. deferReading ) then
             tempGrid%description = litDescription
             call DestroyGriddedData( grid )
             call copyGrid( grid, tempGrid )
@@ -1311,6 +1333,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.106  2014/06/04 18:34:37  pwagner
+! runtime carryover flag starts PCFids at value from last readApriori section; may deferReading
+!
 ! Revision 2.105  2014/04/02 23:05:11  pwagner
 ! Removed redundant open_ and close_MLSFile
 !
