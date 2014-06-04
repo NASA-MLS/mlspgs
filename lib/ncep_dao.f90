@@ -11,36 +11,37 @@
 
 module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only : DUMP
-  use GRIDDEDDATA, only: GRIDDEDDATA_T, RGR, V_IS_ALTITUDE, V_IS_GPH, &
-    & V_IS_PRESSURE, V_IS_THETA, &
-    & ADDGRIDDEDDATATODATABASE, DUMP, SETUPNEWGRIDDEDDATA, NULLIFYGRIDDEDDATA
-  use HDFEOS, only: HDFE_NENTDIM, &
-    & GDOPEN, GDATTACH, GDDETACH, GDCLOSE, GDFLDINFO, &
-    & GDINQGRID, GDNENTRIES, GDINQDIMS, GDINQFLDS
-  use HDF, only: DFACC_CREATE, DFACC_RDonly, DFACC_RDWR, &
-    & DFNT_FLOAT32, DFNT_FLOAT64
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use L3ASCII, only: L3ASCII_READ_FIELD
-  use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCOMMON, only: LINELEN, NAMELEN, FILENAMELEN, &
-    & UNDEFINEDVALUE, MLSFILE_T
-  use MLSFILES, only: FILENOTFOUND, HDFVERSION_5, &
-    & DUMP, GETPCFROMREF, MLS_HDF_VERSION, MLS_OpenFile, MLS_CloseFile, &
-    & SPLIT_PATH_NAME, MLS_OPENFILE, MLS_CLOSEFILE
-  use MLSKINDS, only: R4, R8
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_WARNING, &
-    & MLSMESSAGE
-  use MLSSTRINGS, only: CAPITALIZE, HHMMSS_VALUE, LOWERCASE
-  use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
-    & LIST2ARRAY, REPLACESUBSTRING, STRINGELEMENTNUM
-  use OUTPUT_M, only: OUTPUT
-  use SDPTOOLKIT, only: PGS_S_SUCCESS, &
-    & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
-    & PGSD_GCT_INVERSE, &
-    & USESDPTOOLKIT
-  use TREE, only: DUMP_TREE_NODE, WHERE
+  use allocate_deallocate, only: allocate_test, deallocate_test, bytes, &
+    & test_allocate
+  use dump_0, only : dump
+  use griddeddata, only: griddeddata_t, rgr, v_is_altitude, v_is_gph, &
+    & v_is_pressure, v_is_theta, &
+    & addgriddeddatatodatabase, dump, setupnewgriddeddata, nullifygriddeddata
+  use HDFeos, only: HDFe_nentdim, &
+    & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
+    & gdinqgrid, gdnentries, gdinqdims, gdinqflds
+  use HDF, only: dfacc_create, dfacc_rdonly, dfacc_rdwr, &
+    & dfnt_float32, dfnt_float64
+  use highoutput, only: outputnamedvalue
+  use l3ascii, only: l3ascii_read_field
+  use lexer_core, only: print_source
+  use MLScommon, only: linelen, namelen, filenamelen, &
+    & undefinedvalue, MLSfile_t
+  use MLSfiles, only: filenotfound, HDFversion_5, &
+    & dump, getpcfromref, MLS_HDF_version, MLS_openfile, MLS_closefile, &
+    & split_path_name, MLS_openfile, MLS_closefile
+  use MLSkinds, only: r4, r8
+  use MLSmessagemodule, only: MLSmsg_error, MLSmsg_info, MLSmsg_warning, &
+    & MLSmessage
+  use MLSstrings, only: capitalize, hhmmss_value, lowercase
+  use MLSstringlists, only: getstringelement, numstringelements, &
+    & list2array, replacesubstring, stringelementnum
+  use output_m, only: output
+  use SDPtoolkit, only: PGS_s_success, &
+    & PGS_io_gen_closef, PGS_io_gen_openf, PGSd_io_gen_rseqfrm, &
+    & PGSd_gct_inverse, &
+    & useSDPtoolkit
+  use tree, only: dump_tree_node, where
 
   implicit none
   private
@@ -70,7 +71,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 ! strat           STRAT      ncep combined in hdfeos5/hdf5 format
 ! === (end of toc) ===
 
-  public:: READ_CLIMATOLOGY
+  public:: read_climatology
   public:: ReadGriddedData, ReadGloriaFile
   public:: WriteGriddedData
 
@@ -102,30 +103,35 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   integer, parameter ::          MAXDS = 1024 ! 500
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*NAMELEN
 
+  interface ReadGRIDDEDDATA
+    module procedure ReadGriddedData_MLSFile
+    module procedure ReadGriddedData_Name
+  end interface
+
 contains
 
   ! ----------------------------------------------- ReadGriddedData
-  subroutine ReadGriddedData( GriddedFile, lcf_where, description, v_type, &
+  ! This family of routines reads a Gridded Data file, returning a filled data
+  ! structure and the  appropriate for the description
+  ! which may be one of 'geos5_7', 'geos5', 'gmao', 'dao', 'merra', 'ncep', 'strat'
+
+  ! FileName and the_g_data are required args
+  ! GeoDimList should be the Dimensions' short names
+  ! as a comma-delimited character string in the order:
+  ! longitude, latitude, vertical level, time
+
+  ! fieldName should name the rank 3 or higher object
+  ! like temperature
+
+  ! date is needed only for background files
+  ! or any other case in which different files come with the date geolocations
+  ! unset
+  subroutine ReadGriddedData_MLSFile( GriddedFile, lcf_where, description, v_type, &
     & the_g_data, returnStatus, &
     & GeoDimList, fieldNames, missingValue, &
-    & date, sumDelp, litDescription, verbose )
+    & date, sumDelp, deferReading, litDescription, verbose )
 
     use MLSStats1, only: MLSMIN, MLSMAX, MLSMEAN
-    ! This routine reads a Gridded Data file, returning a filled data
-    ! structure and the  appropriate for the description
-    ! which may be one of 'geos5_7', 'geos5', 'gmao', 'dao', 'merra', 'ncep', 'strat'
-
-    ! FileName and the_g_data are required args
-    ! GeoDimList should be the Dimensions' short names
-    ! as a comma-delimited character string in the order:
-    ! longitude, latitude, vertical level, time
-
-    ! fieldName should name the rank 3 or higher object
-    ! like temperature
-    
-    ! date is needed only for background files
-    ! or any other case in which different files come with the date geolocations
-    ! unset
 
     ! Arguments
     type(MLSFile_T)                         :: GriddedFile
@@ -139,14 +145,18 @@ contains
     real(rgr), optional, intent(IN)         :: missingValue
     character (LEN=*), optional, intent(IN) :: date ! offset
     logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
+    logical, optional, intent(IN)           :: deferReading ! don't read yet
     character(len=*), optional, intent(out) :: litDescription
     logical, optional, intent(IN)           :: verbose
 
     ! Local Variables
     character ( len=len(fieldNames)) :: fieldName   ! In case we supply two
     logical, parameter :: DEEBUG = .false.
+    logical            :: myDefer
     logical            :: myVerbose
     ! Executable code
+    myDefer = .false.
+    if ( present(deferReading) ) myDefer = deferReading
     myVerbose = deebug
     if ( present(verbose) ) myVerbose = verbose .or. deebug
     
@@ -165,6 +175,7 @@ contains
     the_g_data%QuantityName = '(none)'
     the_g_data%description  = '(none)'
     the_g_data%units        = '(none)'
+    the_g_data%equivalentLatitude = .false.
     returnStatus = mls_hdf_version(GriddedFile%Name)
     if ( returnStatus == FILENOTFOUND ) then
       call SetupNewGriddedData ( the_g_data, empty=.true. )
@@ -172,6 +183,20 @@ contains
     else
       returnStatus = 0
     endif
+    ! Are we deferring the actual reading until later?
+    ! If so, we'll store the dummy args for use later
+    if ( myDefer ) then
+      the_g_data%sourceFileName     = GriddedFile%Name
+      the_g_data%description        = description
+      the_g_data%dimList            = GeoDimList
+      the_g_data%fieldNames         = fieldNames
+      the_g_data%verticalCoordinate = v_type
+      the_g_data%empty              = .true.
+      the_g_data%equivalentLatitude = .false.
+      return
+    endif
+    
+    ! Nope, let's read it!
     call getStringElement(fieldNames, fieldName, 1, COUNTEMPTY)
     ! According to the kinds of gridded data files we can read
     select case ( trim(LIT_DESCRIPTION) )
@@ -313,12 +338,33 @@ contains
         call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       endif
     case default
-      call announce_error(lcf_where, 'READGriddedData called with unknown' &
+      call announce_error(lcf_where, 'ReadGriddedData_MLSFile called with unknown' &
         & // ' description: ' // trim(LIT_DESCRIPTION))
     end select
     if ( present(litDescription) ) litDescription = LIT_DESCRIPTION
 
-  end subroutine ReadGriddedData
+  end subroutine ReadGriddedData_MLSFile
+
+  subroutine ReadGriddedData_Name( FileName, lcf_where, description, v_type, &
+    & the_g_data, returnStatus, &
+    & GeoDimList, fieldNames, missingValue, &
+    & date, sumDelp, deferReading, litDescription, verbose )
+    ! Arguments
+    character (LEN=*), intent(IN)           :: FileName
+    integer, intent(IN)                     :: lcf_where    ! node of the lcf that provoked me         
+    integer, intent(IN)                     :: v_type       ! vertical coordinate; an 'enumerated' type
+    type( GriddedData_T )                   :: the_g_data ! Result
+    character (LEN=*), intent(IN)           :: description ! e.g., 'dao'
+    integer, intent(out)                    :: returnStatus ! E.g., FILENOTFOUND
+    character (LEN=*), intent(IN)           :: GeoDimList ! Comma-delimited dim names
+    character (LEN=*), intent(IN)           :: fieldNames ! Name of gridded field
+    real(rgr), optional, intent(IN)         :: missingValue
+    character (LEN=*), optional, intent(IN) :: date ! offset
+    logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
+    logical, optional, intent(IN)           :: deferReading ! don't read yet
+    character(len=*), optional, intent(out) :: litDescription
+    logical, optional, intent(IN)           :: verbose
+  end subroutine ReadGriddedData_Name
 
   ! ----------------------------------------------- Read_geos5_7
   subroutine Read_geos5_7( GEOS5File, lcf_where, v_type, &
@@ -351,17 +397,19 @@ contains
     logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
     ! Local variables
     character (len=NAMELEN) :: actual_field_name
+    character(len=19) :: datestring ! will be in the form of yyyy-MM-ddTHH:MM:ss
     logical :: DEEBUG
-    character (len=MAXSDNAMESBUFSIZE) :: mySdList
-    integer :: error, rank
     integer(kind=hsize_t) :: dim1(1), dim4(4)
-    real(r8), dimension(:), pointer :: temp1d
-    real(r8), dimension(:,:,:,:), pointer :: temp4d
+    integer :: error, rank
+    character(len=256) :: errormsg
+    integer :: i1, i2, i3                  ! looping indexes
+    integer, dimension(4) :: idim4
+    character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    real(r8), dimension(:), pointer :: temp1d => null()
+    real(r8), dimension(:,:,:,:), pointer :: temp4d => null()
     character(len=16) :: the_units
     real(r4), parameter :: FILLVALUE = 1.e15 !this value maybe wrong 
     integer :: mydate, mytime, year, month, day, hour, minute, second
-    character(len=256) :: errormsg
-    character(len=19) :: datestring ! will be in the form of yyyy-MM-ddTHH:MM:ss
     logical :: verbose
 
     ! Executable
@@ -370,7 +418,7 @@ contains
     else
       actual_field_name=DEFAULTGEOS5FIELDNAME
     endif
-    
+    nullify( temp1d, temp4d )
     DEEBUG = ( index(lowercase(actual_field_name), 'inq') > 0 )
     verbose = ( switchDetail(switches, 'geos5') > -1 ) .or. DEEBUG
     call GetAllHDF5DSNames ( GEOS5File%Name, '/', mysdList )
@@ -542,17 +590,28 @@ contains
         call announce_error(geos5file%fileid%f_id, &
         "The fourth dimension of " // actual_field_name // " is not 1 in: " // geos5file%name)
     endif
+    idim4 = dim4
 
-    allocate(temp4d(dim4(1), dim4(2), dim4(3), dim4(4)), stat=error)
-    if (error /= 0) call announce_error(lcf_where, "Out of memory")
+    call allocate_test ( temp4d, idim4(1), idim4(2), idim4(3), idim4(4), &
+        & 'temp4d', ModuleName // 'Read_geos57' )
 
     call LoadFromHDF5DS (geos5file%fileid%f_id, capitalize(actual_field_name), temp4d)
 
-    allocate(the_g_data%field(dim4(3), dim4(2), dim4(1), 1,1,1), stat=error)
-    if (error /= 0) call announce_error (lcf_where, "Out of memory")
+    ! call allocate_test ( the_g_data%field(:,:,:,1,1,1), idim4(1:3), &
+    !     & 'the_g_data%field', ModuleName // 'Read_geos57' )
+    allocate ( the_g_data%field(idim4(3), idim4(2), idim4(1), 1, 1, 1), STAT=error)
+    call test_allocate ( error, moduleName, 'the_g_data%field', (/1,1,1,1,1,1/), &
+      & (/ idim4(3), idim4(2), idim4(1), 1, 1, 1 /), bytes(the_g_data%field) )
     the_g_data%field(:,:,:,1,1,1) = reshape(temp4d(:,:,:,1), order=(/3,2,1/), &
     shape=(/the_g_data%noheights, the_g_data%nolats, the_g_data%nolons/))
-    deallocate(temp4d)
+    !  do i1 = 1, idim4(1)
+    !    do i2 = 1, idim4(2)
+    !      do i3 = 1, idim4(3)
+    !        the_g_data%field(i3,i2,i1,1,1,1) = temp4d(i1,i2,i3,1)
+    !      enddo
+    !    enddo
+    !  enddo
+    call deallocate_test ( temp4d, 'temp4d', ModuleName // 'Read_geos57' )
     
     ! Read file successful
     the_g_data%empty = .false.
@@ -2613,6 +2672,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.77  2014/06/04 18:29:45  pwagner
+! Account for memory usage accurately; allow deferReading
+!
 ! Revision 2.76  2014/04/02 23:02:52  pwagner
 ! Removed redundant open_ and close_MLSFile
 !
