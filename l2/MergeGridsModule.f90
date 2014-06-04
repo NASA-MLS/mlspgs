@@ -15,10 +15,14 @@ module MergeGridsModule
   ! information.
   ! Secondary operations may be performed directly on the gridded data--
   ! e.g., calculating wmo tropopause pressures from eta-level temperatures
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use MLSL2OPTIONS, only: MLSMESSAGE, L2CFNODE
-  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
-  use OUTPUT_M, only: BLANKS, OUTPUT
+  use allocate_deallocate, only: allocate_test, byte_size, bytes, &
+    & deallocate_test, memory_units, NoBytesAllocated, &
+    & test_allocate, test_deallocate
+  use highOutput, only: outputNamedValue
+  use MLSL2Options, only: MLSMessage, l2cfNode
+  use MLSMessagemodule, only: MLSMsg_Allocate, MLSMsg_Error, MLSMsg_Warning
+  use ncep_dao, only: readGriddedData
+  use output_m, only: blanks, output
   implicit none
   private
 
@@ -37,25 +41,25 @@ contains ! ===================================  Public procedures  =====
   subroutine MergeGrids ( ROOT, L2GPDATABASE, L2AUXDATABASE, &
     & GRIDDEDDATABASE, FILEDATABASE )
 
-    use DumpCommand_m, only: BOOLEANFROMEMPTYGRID, BOOLEANFROMFORMULA, &
-      & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
-    use GriddedData, only: GRIDDEDDATA_T, &
-      & ADDGRIDDEDDATATODATABASE, DESTROYGRIDDEDDATA
-    use Init_tables_module, only: F_GRID, &
-      & S_BOOLEAN, S_CASE, S_CONCATENATE, S_CONVERTETATOP, &
-      & S_DELETE, S_DIFF, S_DUMP, S_ENDSELECT, S_GRIDDED, S_ISGRIDEMPTY, &
-      & S_MERGE, S_MERGEGRIDS, S_REEVALUATE, S_SELECT, S_SKIP, &
-      & S_WMOTROP, S_WMOTROPFROMGRIDS
-    use L2AUXData, only: L2AUXDATA_T
-    use L2GPData, only: L2GPDATA_T
-    use MLSCommon, only: MLSFILE_T
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MoreTree, only: Get_Label_And_Spec, GET_SPEC_ID
-    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use ReadAPriori, only: PROCESSONEAPRIORIFILE
-    use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: NSONS, SUBTREE, DECORATE, DECORATION
-    use Toggles, only: GEN, SWITCHES, TOGGLE
+    use DumpCommand_m, only: booleanFromEmptyGrid, booleanFromFormula, &
+      & dumpcommand, MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, skip
+    use GriddedData, only: griddedData_T, &
+      & addGriddedDataToDatabase, destroyGriddedData
+    use Init_tables_module, only: f_grid, &
+      & s_boolean, s_case, s_concatenate, s_convertEtaToP, &
+      & s_delete, s_diff, s_dump, s_endSelect, s_gridded, s_isGridEmpty, &
+      & s_merge, s_mergeGrids, s_reevaluate, s_select, s_skip, &
+      & s_wmotrop, s_wmotropfromgrids
+    use L2AUXData, only: l2auxdata_t
+    use L2GPData, only: l2gpdata_t
+    use MLSCommon, only: mlsfile_t
+    use MLSStringlists, only: switchdetail
+    use MoreTree, only: get_label_and_spec, get_spec_id
+    use Next_Tree_Node_m, only: next_tree_node, next_tree_node_state
+    use ReadAPriori, only: processOneAprioriFile
+    use Trace_M, only: trace_begin, trace_end
+    use Tree, only: nsons, subtree, decorate, decoration
+    use Toggles, only: gen, switches, toggle
 
     integer, intent(in) :: ROOT         ! Tree root
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -204,6 +208,7 @@ contains ! ===================================  Public procedures  =====
     integer :: FIELD_INDEX            ! Type of tree node
     integer :: I                      ! Loop counter
     integer :: Me = -1                ! String index for trace
+    integer :: returnStatus
     integer :: SON                    ! Tree node
     integer :: VALUE                  ! Tree node
 
@@ -234,10 +239,28 @@ contains ! ===================================  Public procedures  =====
       select case ( field_index )
       case ( f_a ) 
         a => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading a?
+        if ( a%empty .and. a%deferReading ) then
+          call readGriddedData ( a%sourceFileName, son, a%description, &
+            & a%verticalCoordinate, a, returnStatus, &
+            & a%dimList, TRIM(a%fieldNames), a%missingValue )
+        endif
       case ( f_b )
         b => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading b?
+        if ( b%empty .and. b%deferReading ) then
+          call readGriddedData ( b%sourceFileName, son, b%description, &
+            & b%verticalCoordinate, b, returnStatus, &
+            & b%dimList, TRIM(b%fieldNames), b%missingValue )
+        endif
       case ( f_grid )
         v => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading v?
+        if ( v%empty .and. v%deferReading ) then
+          call readGriddedData ( v%sourceFileName, son, v%description, &
+            & v%verticalCoordinate, v, returnStatus, &
+            & v%dimList, TRIM(v%fieldNames), v%missingValue )
+        endif
 !       case ( f_VGrid )
 !         v => VGrids ( decoration ( decoration ( value ) ) )
       end select
@@ -278,12 +301,13 @@ contains ! ===================================  Public procedures  =====
 
   ! ------------------------------------------------  Concatenate  -----
   function Concatenate ( root, griddedDataBase ) result ( newGrid )
-    use GriddedData, only: GRIDDEDDATA_T, DUMP, &
-      & CONCATENATEGRIDDEDDATA, COPYGRID, DESTROYGRIDDEDDATA, NULLIFYGRIDDEDDATA
-    use Init_tables_module, only: F_A, F_B, F_GRID
-    use Toggles, only: GEN, TOGGLE
-    use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: NSONS, SUBTREE, DECORATION
+    use griddedData, only: griddedData_T, dump, &
+      & concatenateGriddedData, copyGrid, destroyGriddedData, nullifyGriddedData
+    use init_tables_module, only: f_a, f_b, f_deleteGrids, f_grid
+    use moreTree, only: get_boolean, get_field_id
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: nsons, subtree, decoration
     
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
@@ -297,6 +321,7 @@ contains ! ===================================  Public procedures  =====
     type (griddedData_T), pointer :: B
     integer :: db_index
     logical, parameter            :: DEEBUG = .false.
+    logical :: deleteGrids
     integer :: FIELD                  ! Another tree node
     integer :: FIELD_INDEX            ! Type of tree node
     integer :: GRIDS_NODE
@@ -304,6 +329,7 @@ contains ! ===================================  Public procedures  =====
     logical, parameter :: IgnoreEmptyGrids = .false.
     type (griddedData_T), target :: Intermediate
     integer :: Me = -1                ! String index for trace
+    integer :: returnStatus
     integer :: SON                    ! Tree node
     integer :: VALUE                  ! Tree node
     logical :: WEARETHEFIRST
@@ -312,20 +338,43 @@ contains ! ===================================  Public procedures  =====
     call trace_begin ( me, "Concatenate", root, cond=toggle(gen) )
     call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
     call nullifyGriddedData ( Intermediate ) ! for Sun's still useless compiler
+    deleteGrids = .false.
 
     ! Get the information from the l2cf
     grids_node = 0
     do i = 2, nsons(root)
       son = subtree(i,root)
       L2CFNODE = son
-      field = subtree(1,son)
-      value = subtree(2,son)
-      field_index = decoration(field)
+      field_Index = get_field_id(son)
+      if ( nsons(son) > 1 ) then
+        field = subtree(1,son)
+        value = subtree(2,son)
+      else
+        field = son ! Won't actually be used
+        ! fieldValue = son
+      end if
       select case ( field_index )
       case ( f_a ) 
         a => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading a?
+        if ( a%empty .and. a%deferReading ) then
+          call readGriddedData ( a%sourceFileName, son, a%description, &
+            & a%verticalCoordinate, a, returnStatus, &
+            & a%dimList, TRIM(a%fieldNames), a%missingValue )
+        endif
       case ( f_b )
         b => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading b?
+        if ( b%empty .and. b%deferReading ) then
+          call readGriddedData ( b%sourceFileName, son, b%description, &
+            & b%verticalCoordinate, b, returnStatus, &
+            & b%dimList, TRIM(b%fieldNames), b%missingValue )
+        endif
+      case ( f_deleteGrids )
+        call output( 'Now have deleteGrids field', advance='yes' )
+        call outputnamedValue( 'son', son )
+        call outputnamedValue( 'field', field )
+        deleteGrids = get_boolean(son)
       case ( f_Grid )
         grids_node = son
       end select
@@ -347,6 +396,12 @@ contains ! ===================================  Public procedures  =====
       do i=2, nsons(grids_node)
         db_index = decoration(decoration(subtree(i, grids_node )))
         b => griddedDataBase ( db_index )
+        ! Did we defer reading b?
+        if ( b%empty .and. b%deferReading ) then
+          call readGriddedData ( b%sourceFileName, grids_node, b%description, &
+            & b%verticalCoordinate, b, returnStatus, &
+            & b%dimList, TRIM(b%fieldNames), b%missingValue )
+        endif
         if ( b%empty .and. .not. IgnoreEmptyGrids ) then
           call trace_end ( "Concatenate", cond=toggle(gen) )
           return
@@ -365,6 +420,7 @@ contains ! ===================================  Public procedures  =====
           print *, 'db_index: ', db_index
           call dump( b, details=-1 )
         endif
+        call outputnamedValue( 'b%equivalentLatitude', b%equivalentLatitude )
         if ( wearethefirst ) then
           call CopyGrid ( Intermediate, b )
           wearethefirst = .false.
@@ -376,6 +432,7 @@ contains ! ===================================  Public procedures  =====
             call dump( Intermediate, details=-1 )
           endif
         endif
+        if ( deleteGrids ) call DestroyGriddedData ( B )
         call CopyGrid ( newGrid, Intermediate )
         a => newGrid
       enddo
@@ -395,9 +452,13 @@ contains ! ===================================  Public procedures  =====
     newGrid%sourceFileName      = a%sourceFileName
     newGrid%quantityName        = a%quantityName
     newGrid%description         = 'Concatenated grids'
+    newGrid%heightsUnits        = a%heightsUnits
     newGrid%units               = a%units
     newGrid%verticalCoordinate  = a%verticalCoordinate
+    newGrid%equivalentLatitude  = a%equivalentLatitude
     newGrid%missingValue        = a%missingValue
+    call outputnamedValue( 'a%equivalentLatitude', a%equivalentLatitude )
+    call outputnamedValue( 'newGrid%equivalentLatitude', newGrid%equivalentLatitude )
 
     call trace_end ( "Concatenate", cond=toggle(gen) )
 
@@ -440,19 +501,18 @@ contains ! ===================================  Public procedures  =====
   ! ----------------------------------------- MergeOneGrid
   type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
     & result ( newGrid )
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Dump_0, only: DUMP
-    use Expr_m, only: EXPR
-    use GriddedData, only: GRIDDEDDATA_T, RGR, V_IS_PRESSURE, &
-      & COPYGRID, NULLIFYGRIDDEDDATA, &
-      & SETUPNEWGRIDDEDDATA, SLICEGRIDDEDDATA, WRAPGRIDDEDDATA
-    use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, &
-      & F_OPERATIONAL, F_SCALE
-    use MLSKINDS, only: R8
-    use MLSFillValues, only: ESSENTIALLYEQUAL
-    use Toggles, only: GEN, TOGGLE
-    use Trace_M, only: TRACE_BEGIN, TRACE_END
-    use Tree, only: NSONS, SUBTREE, DECORATION
+    use Dump_0, only: dump
+    use Expr_m, only: expr
+    use GriddedData, only: griddeddata_t, rgr, v_is_pressure, &
+      & copygrid, dump, nullifygriddeddata, &
+      & setupnewgriddeddata, slicegriddeddata, wrapgriddeddata
+    use Init_tables_module, only: f_climatology, f_height, &
+      & f_operational, f_scale
+    use MLSKinds, only: r8
+    use MLSFillValues, only: essentiallyequal
+    use Toggles, only: gen, toggle
+    use Trace_M, only: trace_begin, trace_end
+    use Tree, only: nsons, subtree, decoration
 
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
@@ -482,6 +542,7 @@ contains ! ===================================  Public procedures  =====
     integer :: LON                      ! Loop counter
     integer :: LST                      ! Loop counter
     integer :: Me = -1                  ! String index for trace
+    real    :: S                        ! Size in bytes of a deallocated field
     integer :: SON                      ! Tree node
     integer :: STATUS                   ! Flag from allocate
     integer :: SURF                     ! Loop counter
@@ -558,13 +619,22 @@ contains ! ===================================  Public procedures  =====
     if ( climatology%verticalCoordinate /= v_is_pressure ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Climatology grid not on pressure surfaces' )
-    !     if ( climatology%units /= operational%units ) &
-    !       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !       & 'The climatology and operational data describe different physical quantities' )
-    if ( climatology%equivalentLatitude .neqv. operational%equivalentLatitude ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'The climatology and operational data are mixed latitude/equivalent latitude.' )
-
+    !  if ( climatology%units /= operational%units ) &
+    !    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !    & 'The climatology and operational data describe different physical quantities' )
+    if ( climatology%equivalentLatitude .neqv. &
+      & operational%equivalentLatitude ) then
+      call output( 'Climatology', advance='yes' )
+      call dump( climatology )
+      call output( 'Meteorology', advance='yes' )
+      call dump( operational )
+      call outputNamedValue( 'Climatology%equivalentLatitude', Climatology%equivalentLatitude )
+      call outputNamedValue( 'operational%equivalentLatitude', operational%equivalentLatitude )
+      call outputNamedValue( '=?', &
+        & Climatology%equivalentLatitude .eqv. operational%equivalentLatitude )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Climatology, operational data are mixed latitude/equivalent latitude.' )
+    endif
     ! OK, now we're ready to go.
     ! First we're going to 'wrap' the climatology to be sure that we can
     ! interpolate it in longitude.  The chances are that it has no longitudinal
@@ -594,25 +664,31 @@ contains ! ===================================  Public procedures  =====
     call Allocate_test ( meanDates, newGrid%noDates, 'meanDates', ModuleName )
     meanDates = ( newGrid%dateStarts + newGrid%dateEnds ) / 2.0
 
+    call outputNamedValue( 'Bytes before allocating 2 temp arrays', NoBytesAllocated )
     ! Now create two fields the same shape as the new field that contain
     ! the operational and climatological data interpolated to our new locations.
+    ! Whoa! Now you need a total of 3x the size of the merged data set!
+    ! No wonder we are running low on memory!
     allocate ( operMapped ( &
       & newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
-      & newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'operMapped' )
+      & newGrid%noLsts, newGrid%noSzas, 1 ), stat=status )
+      !& newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
+    ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !  & MLSMSG_Allocate//'operMapped' )
+    call test_allocate ( status, moduleName, 'operMapped', (/1,1,1,1,1,1/), &
+      & (/ newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
+      & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(operMapped) )
     allocate ( cliMapped ( &
       & newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
-      & newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'operMapped' )
+      & newGrid%noLsts, newGrid%noSzas, 1 ), stat=status )
+      !& newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
+    ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !   & MLSMSG_Allocate//'operMapped' )
+    call test_allocate ( status, moduleName, 'cliMapped', (/1,1,1,1,1,1/), &
+      & (/ newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
+      & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(cliMapped) )
+    call outputNamedValue( 'Bytes after allocating 2 temp arrays', NoBytesAllocated )
 
-    call SliceGriddedData ( operational, operMapped, &
-      & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
-      & newGrid%szas, meanDates, missingValue=newGrid%missingValue )
-    call SliceGriddedData ( climatology, cliMapped, &
-      & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
-      & newGrid%szas, meanDates, missingValue=newGrid%missingValue )
     if ( DEEBUG ) then
       call dump ( operMapped(:,1:10,1,:,1,1), &
           & '    operational field values (1st longitude) =' , &
@@ -629,14 +705,22 @@ contains ! ===================================  Public procedures  =====
     do day = 1, newGrid%noDates
       numMissingClimatology = 0
       numMissingOperational = 0
+      call SliceGriddedData ( operational, operMapped, &
+        & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
+        & newGrid%szas, meanDates(day:day), missingValue=newGrid%missingValue )
+      call SliceGriddedData ( climatology, cliMapped, &
+        & newGrid%heights, newGrid%lats, newGrid%lons, newGrid%lsts, &
+        & newGrid%szas, meanDates(day:day), missingValue=newGrid%missingValue )
       do sza = 1, newGrid%noSzas
         do lst = 1, newGrid%noLsts
           do lon = 1, newGrid%noLons
             do lat = 1, newGrid%noLats
               do surf = 1, newGrid%noHeights
                 ! Get the values
-                cliVal = cliMapped ( surf, lat, lon, lst, sza, day )
-                opVal = operMapped ( surf, lat, lon, lst, sza, day )
+                ! cliVal = cliMapped ( surf, lat, lon, lst, sza, day )
+                ! opVal = operMapped ( surf, lat, lon, lst, sza, day )
+                cliVal = cliMapped ( surf, lat, lon, lst, sza, 1 )
+                opVal = operMapped ( surf, lat, lon, lst, sza, 1 )
                 ! Weight them by height
                 z = scaleHeight * ( 3.0 - log10 ( newGrid%heights(surf) ) )
                 if ( scale /= 0.0 ) then
@@ -696,10 +780,15 @@ contains ! ===================================  Public procedures  =====
     end do
 
     ! Tidy up
+    ! Oh, sure, you're careful to account for the memory eaten up by meanDates,
+    ! but what about the two biggies???
     call Deallocate_test ( meanDates, 'meanDates', ModuleName )
-    deallocate ( cliMapped, operMapped, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'operMapped or cliMapped' )
+    s = byte_size(cliMapped) / MEMORY_UNITS
+    deallocate ( cliMapped, stat=status )
+    call test_deallocate ( status, moduleName, 'climapped', s )
+    s = byte_size(operMapped) / MEMORY_UNITS
+    deallocate ( operMapped, stat=status )
+    call test_deallocate ( status, moduleName, 'opermapped', s )
     call finishUp ( done = .true. )
 
   contains
@@ -735,7 +824,6 @@ contains ! ===================================  Public procedures  =====
   ! --------------------------------------------  wmoTropFromGrid  -----
   type (griddedData_T) function wmoTropFromGrid ( root, griddedDataBase ) &
     & result ( newGrid )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DUMP_0, only: DUMP
     use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP, V_IS_PRESSURE, V_IS_ETA, &
       & NULLIFYGRIDDEDDATA, &
@@ -791,10 +879,11 @@ contains ! ===================================  Public procedures  =====
     real, parameter :: plimu = 550.*100 ! in Pa
     type (griddedData_T), pointer :: Placeholder    => null()
     type (griddedData_T), pointer :: Pressures    => null()
+    integer :: returnStatus
+    real :: scale
     integer :: son
     real, dimension(:), pointer :: t
     type (griddedData_T), pointer :: Temperatures => null()
-    real :: scale
     real :: trp
     integer :: value
     real, dimension(:), pointer :: xyTemp, xyPress
@@ -819,8 +908,19 @@ contains ! ===================================  Public procedures  =====
       select case ( field_index )
       case ( f_a ) 
         Temperatures => griddedDataBase ( decoration ( decoration ( value ) ) )
+        ! Did we defer reading b?
+        if ( Temperatures%empty .and. Temperatures%deferReading ) then
+          call readGriddedData ( Temperatures%sourceFileName, son, Temperatures%description, &
+            & Temperatures%verticalCoordinate, Temperatures, returnStatus, &
+            & Temperatures%dimList, TRIM(Temperatures%fieldNames), Temperatures%missingValue )
+        endif
       case ( f_b ) 
         Pressures    => griddedDataBase ( decoration ( decoration ( value ) ) )
+        if ( Pressures%empty .and. Pressures%deferReading ) then
+          call readGriddedData ( Pressures%sourceFileName, son, Pressures%description, &
+            & Pressures%verticalCoordinate, Pressures, returnStatus, &
+            & Pressures%dimList, TRIM(Pressures%fieldNames), Pressures%missingValue )
+        endif
       case ( f_grid ) 
         Temperatures => griddedDataBase ( decoration ( decoration ( value ) ) )
       end select
@@ -1073,6 +1173,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.55  2014/06/04 18:38:07  pwagner
+! Many steps to conserve memory; accurately account for its usage
+!
 ! Revision 2.54  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
 !
