@@ -227,7 +227,7 @@ begin MergeGrids
     delete, grid=gmaoPressureInputNext
 
   geos5Concatenate: Concatenate, $
-    grid=[geos5Converted1, geos5Converted2, $
+    sourceGrid=[geos5Converted1, geos5Converted2, $
     geos5Converted3, geos5Converted4, geos5ConvertedNext]
   delete, grid=geos5Converted1
   delete, grid=geos5Converted2
@@ -294,7 +294,7 @@ begin MergeGrids
     delete, grid=gmaoPressureInputNext
 
   merraConcatenate: Concatenate, $
-    grid=[merraConverted1, merraConverted2, $
+    sourceGrid=[merraConverted1, merraConverted2, $
     merraConverted3, merraConverted4, merraConvertedNext]
   delete, grid=merraConverted1
   delete, grid=merraConverted2
@@ -341,38 +341,46 @@ begin MergeGrids
   wmoTropFromGrids, grid=geos5EtaWMOPTrop, $
     a=gmaoTemperatureInput5, b=gmaoPressureInput5
 })  
-  ;; to save memory convert right after reading
+  ;; to save memory Convert, then Merge right after reading
   geos59Converted$1: ConvertEtaToP, $
     a=gmaoTemperatureInput$1, b=gmaoPressureInput$1, Grid=gridTemperature
   Delete, grid=gmaoTemperatureInput$1
   Delete, grid=gmaoPressureInput$1
+  MergeGrids, grid=geos59Merged$1, operational=geos59Converted$1, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  Delete, grid=geos59Converted$1
 end MergeGrids
 })
 begin ReadApriori
   Case, label="geos5_9-nc4" ;;; --------------- "geos5_9-nc4" -----------------
   carryover: Boolean, formula="true"
+  geos59Merged1: gridded, origin=none
+  geos59Merged2: gridded, origin=none
+  geos59Merged3: gridded, origin=none
+  geos59Merged4: gridded, origin=none
+  geos59Merged5: gridded, origin=none
+  geos59Merged6: gridded, origin=none
+  geos59Merged7: gridded, origin=none
+  geos59Merged8: gridded, origin=none
+  geos59Mergednext: gridded, origin=none
 end ReadApriori
   !forall( readgeos59TPAndConvert,1,2,3,4,5,6,7,8,Next)
 
 begin MergeGrids
-  geos59Concatenate: Concatenate, $
-    grid=[geos59Converted1, geos59Converted2, $
-    geos59Converted3, geos59Converted4, geos59Converted5, geos59Converted6, $
-    geos59Converted7, geos59Converted8, $
-    geos59ConvertedNext]
-  Delete, grid=geos59Converted1
-  Delete, grid=geos59Converted2
-  Delete, grid=geos59Converted3
-  Delete, grid=geos59Converted4
-  Delete, grid=geos59Converted5
-  Delete, grid=geos59Converted6
-  Delete, grid=geos59Converted7
-  Delete, grid=geos59Converted8
-  Delete, grid=geos59ConvertedNext
-
-  MergeGrids, grid=mergedTemperature, operational=geos59Concatenate, $
-    climatology=gridTemperature, height=1mb, scale=5km
-  Delete, grid=geos59Concatenate
+  ConcatenateGrids, grid=mergedTemperature, $
+    sourceGrid=[geos59Merged1, geos59Merged2, $
+    geos59Merged3, geos59Merged4, geos59Merged5, geos59Merged6, $
+    geos59Merged7, geos59Merged8, $
+    geos59MergedNext], /deleteGrids
+  Delete, grid=geos59Merged1
+  Delete, grid=geos59Merged2
+  Delete, grid=geos59Merged3
+  Delete, grid=geos59Merged4
+  Delete, grid=geos59Merged5
+  Delete, grid=geos59Merged6
+  Delete, grid=geos59Merged7
+  Delete, grid=geos59Merged8
+  Delete, grid=geos59MergedNext
 end MergeGrids
 
 ; Don't ignore possibility that meteorology files are missing
@@ -399,3 +407,6 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.1  2014/06/04 19:02:04  pwagner
+;First commit
+;
