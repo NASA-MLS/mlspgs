@@ -12,8 +12,8 @@
 module DumpCommand_M
 
 ! Process a "dump" command. Or say whether to "skip" remainder of section.
-! Or functions to set a run-time Boolean flag.
-! (Should these latter functions be moved into a special Boolean module?)
+! Or functions to set a run-time "Boolean" flag.
+! (Should these latter functions be moved into a special run-time module?)
 
   use highOutput, only: banner, beVerbose, headLine, &
     & numToChars, outputNamedValue
@@ -1357,7 +1357,7 @@ contains
               call announceError ( son, noGriddedData )
             end if
           case ( f_allHessians )
-            if ( details < -1 ) cycle
+            if ( details < -2 ) cycle
             if ( haveHessians ) then
               call dump ( HessianDataBase, details, options=optionsString )
             else
@@ -1378,14 +1378,14 @@ contains
               call announceError ( son, noLines )
             end if
           case ( f_allMatrices )
-            if ( details < -1 ) cycle
+            if ( details < -2 ) cycle
             if ( haveMatrices ) then
               call dump ( MatrixDataBase, details )
             else
               call announceError ( son, 0, 'Unable to dump MatrixDB here; empty or absent' )
             end if
           case ( f_allPFA )
-            if ( details < -1 ) cycle
+            if ( details < -2 ) cycle
             call Dump_PFADataBase ( details )
           case ( f_allQuantityTemplates )
             if ( haveQuantityTemplatesDB ) then
@@ -1394,7 +1394,7 @@ contains
               call announceError ( son, noQT )
             end if
           case ( f_allRadiometers )
-            if ( details < -1 ) cycle
+            if ( details < -2 ) cycle
             if ( associated(Radiometers) ) then
               call dump ( Radiometers )
               if ( details > 1 ) then
@@ -1418,7 +1418,7 @@ contains
               call announceError ( son, noRadiometers )
             end if
           case ( f_allSignals )
-            if ( details < -1 ) cycle
+            if ( details < -2 ) cycle
             if ( details > 1 ) then
               call dump_all
             elseif ( associated(signals) ) then
@@ -1427,17 +1427,17 @@ contains
               call announceError ( son, noSignals )
             end if
           case ( f_allSpectra )
-            if ( details < -1 ) cycle
+            if ( details < -2 ) cycle
             call dump ( catalog, details=details )
           case ( f_allVectors )
-            if ( details < -1 ) cycle
+            if ( details < -2 ) cycle
             if ( haveVectors ) then
               call dump ( vectors, details=details )
             else
               call announceError ( son, noVectors )
             end if
           case ( f_allVectorTemplates )
-            if ( details < -1 ) cycle
+            if ( details < -2 ) cycle
             if ( haveVectorTemplates ) then
               call dump ( vectorTemplates, details=details )
             else
@@ -1603,7 +1603,7 @@ contains
           call announceError ( son, noFileDatabase )
         end if
       case ( f_forwardModel ) ! Dump forward model configs
-        if ( details < -1 ) cycle
+        if ( details < -2 ) cycle
         if ( haveForwardModelConfigs ) then
           do i = 2, nsons(son)
             call dump ( & ! has no details switch
@@ -1614,7 +1614,7 @@ contains
           call announceError ( gson, noFWM )
         end if
       case ( f_Grid )    ! Diff or Dump Griddeddata
-        if ( details < -1 ) cycle
+        if ( details < -2 ) cycle
         if ( haveGriddedData ) then
           do i = 2, nsons(son)
             gson = subtree(i,son)
@@ -1648,7 +1648,7 @@ contains
           height = values(1)
         end do
       case ( f_hessian ) ! Diff or Dump hessians
-        if ( details < -1 ) cycle
+        if ( details < -2 ) cycle
         if ( haveHessians ) then
           do i = 2, nsons(son)
             gson = subtree(i,son)
@@ -1674,7 +1674,7 @@ contains
           call announceError ( gson, 0, 'Unable to dump Hessian here; db empty or absent' )
         end if
       case ( f_hGrid )    ! Dump HGrids
-        if ( details < -1 ) cycle
+        if ( details < -2 ) cycle
         if ( haveHGrids ) then
           do i = 2, nsons(son)
             call output ( ' HGrid ' )
@@ -1685,7 +1685,7 @@ contains
           call announceError ( gson, noHGrid )
         end if
       case ( f_L2PC )    ! Dump L2PC
-        if ( details < -1 .or. .not. present(FileDataBase) ) cycle
+        if ( details < -2 .or. .not. present(FileDataBase) ) cycle
         call get_string( sub_rosa(subtree(2,son)), nameString, strip=.true. )
         fileIndex = FindFirst( FileDataBase%ShortName, trim(nameString) )
         ! call outputNamedValue ( 'name string', trim(nameString) )
@@ -1703,7 +1703,7 @@ contains
       case ( f_mark )
         if ( get_boolean(son) ) call cpu_time ( cpuTimeBase )
       case ( f_mask, f_quantity ) ! Diff or Dump vector quantities
-        if ( details < -1 ) cycle
+        if ( details < -2 ) cycle
         do i = 2, nsons(son)
           gson = subtree(i,son)
           if ( gotFirst .and. DiffOrDump == s_diff ) then
@@ -1797,7 +1797,7 @@ contains
         end do
         GotFirst = DiffOrDump == s_diff
       case ( f_matrix ) ! Diff or Dump matrices
-        if ( details < -1 ) cycle
+        if ( details < -2 ) cycle
         if ( haveMatrices ) then
           do i = 2, nsons(son)
             gson = subtree(i,son)
@@ -1851,7 +1851,7 @@ contains
       case ( f_stack )
         call dump_stack( where=.true., CPU=.true., doDepth=details>0 )
       case ( f_template ) ! Dump vector templates or quantity templates
-        if ( details < -1 ) cycle
+        if ( details < -2 ) cycle
         do i = 2, nsons(son)
           gson = subtree(i,son)
           look = decoration(gson)
@@ -1987,7 +1987,7 @@ contains
           endif
         end do ! k
       case ( f_tGrid )
-        if ( details < -1 ) cycle
+        if ( details < -2 ) cycle
         do i = 2, nsons(son)
           call output ( ' TGrid ' )
           call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
@@ -2004,7 +2004,7 @@ contains
           end if
         end do
       case ( f_vectormask, f_vector ) ! Dump entire vectors
-        if ( details < -1 ) cycle
+        if ( details < -2 ) cycle
         if ( haveVectors ) then
           do i = 2, nsons(son)
             vector => vectors(decoration(decoration(subtree(i,son))))
@@ -2019,7 +2019,7 @@ contains
           call announceError ( gson, noVectors )
         end if
       case ( f_vGrid )
-        if ( details < -1 ) cycle
+        if ( details < -2 ) cycle
         do i = 2, nsons(son)
           call output ( ' VGrid ' )
           call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
@@ -2672,6 +2672,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.116  2014/06/11 20:06:33  pwagner
+! details level to skip all Dumps lowered to -3
+!
 ! Revision 2.115  2014/05/31 00:24:55  pwagner
 ! Small corrections; details should now be -3 to skipAllDumps
 !
