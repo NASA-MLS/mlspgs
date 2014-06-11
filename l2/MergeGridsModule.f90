@@ -46,7 +46,7 @@ contains ! ===================================  Public procedures  =====
     use GriddedData, only: griddedData_T, &
       & addGriddedDataToDatabase, destroyGriddedData
     use Init_tables_module, only: f_grid, &
-      & s_boolean, s_case, s_concatenate, s_convertEtaToP, &
+      & s_boolean, s_case, s_concatenate, s_concatenateGrids, s_convertEtaToP, &
       & s_delete, s_diff, s_dump, s_endSelect, s_gridded, s_isGridEmpty, &
       & s_merge, s_mergeGrids, s_reevaluate, s_select, s_skip, &
       & s_wmotrop, s_wmotropfromgrids
@@ -136,7 +136,7 @@ contains ! ===================================  Public procedures  =====
       case ( s_merge )
         call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
           & MergeOneGrid ( key, griddedDataBase ) ) )
-      case ( s_mergeGrids )
+      case ( s_concatenateGrids, s_mergeGrids )
         ! We must get "grid" field from command
         do j = 2, nsons(key)
           gson = subtree(j, key)
@@ -148,7 +148,11 @@ contains ! ===================================  Public procedures  =====
         enddo
         grid => griddedDataBase(value)
         call DestroyGriddedData( grid )
-        grid = MergeOneGrid ( key, griddedDataBase )
+        if ( get_spec_id(key) == s_mergeGrids ) then
+          grid = MergeOneGrid ( key, griddedDataBase )
+        else
+          grid = Concatenate ( key, griddedDataBase )
+        endif
         if ( verbose ) then
           call output( 'The GriddedDatabase, ' )
           call outputNamedValue( 'size(db)', size(griddedDataBase) )
@@ -303,7 +307,7 @@ contains ! ===================================  Public procedures  =====
   function Concatenate ( root, griddedDataBase ) result ( newGrid )
     use griddedData, only: griddedData_T, dump, &
       & concatenateGriddedData, copyGrid, destroyGriddedData, nullifyGriddedData
-    use init_tables_module, only: f_a, f_b, f_deleteGrids, f_grid
+    use init_tables_module, only: f_a, f_b, f_deleteGrids, f_sourceGrid
     use moreTree, only: get_boolean, get_field_id
     use toggles, only: gen, toggle
     use trace_m, only: trace_begin, trace_end
@@ -375,7 +379,7 @@ contains ! ===================================  Public procedures  =====
         call outputnamedValue( 'son', son )
         call outputnamedValue( 'field', field )
         deleteGrids = get_boolean(son)
-      case ( f_Grid )
+      case ( f_sourceGrid )
         grids_node = son
       end select
     end do
@@ -1173,6 +1177,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.56  2014/06/11 20:03:28  pwagner
+! New concatenateGrids command; grid field in Concatenated renamed sourceGrid
+!
 ! Revision 2.55  2014/06/04 18:38:07  pwagner
 ! Many steps to conserve memory; accurately account for its usage
 !
