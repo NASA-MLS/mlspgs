@@ -227,7 +227,7 @@ begin MergeGrids
     delete, grid=gmaoPressureInputNext
 
   geos5Concatenate: Concatenate, $
-    grid=[geos5Converted1, geos5Converted2, $
+    sourceGrid=[geos5Converted1, geos5Converted2, $
     geos5Converted3, geos5Converted4, geos5ConvertedNext]
   delete, grid=geos5Converted1
   delete, grid=geos5Converted2
@@ -294,7 +294,7 @@ begin MergeGrids
     delete, grid=gmaoPressureInputNext
 
   merraConcatenate: Concatenate, $
-    grid=[merraConverted1, merraConverted2, $
+    sourceGrid=[merraConverted1, merraConverted2, $
     merraConverted3, merraConverted4, merraConvertedNext]
   delete, grid=merraConverted1
   delete, grid=merraConverted2
@@ -393,7 +393,7 @@ begin MergeGrids
     delete, grid=gmaoPressureInputNext
 
   geos57Concatenate: Concatenate, $
-    grid=[geos57Converted1, geos57Converted2, $
+    sourceGrid=[geos57Converted1, geos57Converted2, $
     geos57Converted3, geos57Converted4, geos57Converted5, geos57Converted6, $
     geos57Converted7, geos57Converted8, $
     geos57ConvertedNext]
@@ -436,6 +436,9 @@ begin MergeGrids
 end MergeGrids
 
 ;$Log$
+;Revision 1.6  2013/09/13 00:28:48  pwagner
+;Must Delete the trial Pressure grid, not extraneous Temperature grid
+;
 ;Revision 1.5  2012/05/29 21:26:22  pwagner
 ;Fixed bug that prevented geos57Meteorology from ever being true
 ;
