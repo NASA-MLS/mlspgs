@@ -104,6 +104,10 @@ end Fill
 ;; and to set their precisions < 0
 ;; Similarly with Band7OFF with its affected levels
 begin Construct
+  Band12OK: Boolean, formula="true"
+  anyGoodValues, quantity=measurement.band12, precision=measurementNoise.band12, Boolean=Band12OK
+  Band12OFF: Boolean, formula="not Band12OK"
+  
   Band13OK: Boolean, formula="true"
   anyGoodValues, quantity=measurement.band13, precision=measurementNoise.band13, Boolean=Band13OK
   Band13OFF: Boolean, formula="not Band13OK"
@@ -127,6 +131,9 @@ end Construct
 
 
 ; $Log$
+; Revision 1.17  2013/03/14 17:51:52  pwagner
+; Added new stuff about maf-based baselines
+;
 ; Revision 1.16  2012/12/06 17:37:06  pwagner
 ; Added Band4OFF and Band7OFF to use with HNO3 split
 ;
