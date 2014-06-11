@@ -147,7 +147,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_COMPARE            = s_combinechannels + 1
   integer, parameter :: S_COMPUTETOTALPOWER  = s_compare + 1
   integer, parameter :: S_CONCATENATE        = s_computeTotalPower + 1
-  integer, parameter :: S_CONVERTETATOP      = s_concatenate + 1
+  integer, parameter :: S_CONCATENATEGRIDS   = s_concatenate + 1
+  integer, parameter :: S_CONVERTETATOP      = s_concatenateGrids + 1
   integer, parameter :: S_COPY               = s_ConvertEtaToP + 1
   integer, parameter :: S_CYCLICJACOBI       = s_copy + 1
   integer, parameter :: S_DELETE             = s_cyclicJacobi + 1
@@ -362,6 +363,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_compare) =                add_ident ( 'compare' )
     spec_indices(s_computetotalpower) =      add_ident ( 'computeTotalPower' )
     spec_indices(s_concatenate) =            add_ident ( 'concatenate' )
+    spec_indices(s_concatenateGrids) =       add_ident ( 'concatenateGrids' )
     spec_indices(s_ConvertEtaToP) =          add_ident ( 'ConvertEtaToP' )
     spec_indices(s_copy)   =                 add_ident ( 'copy' )
     spec_indices(s_cyclicJacobi) =           add_ident ( 'cyclicJacobi' )
@@ -695,7 +697,16 @@ contains ! =====     Public procedures     =============================
       begin, s+s_concatenate, &  ! Must be AFTER S_Gridded
              begin, f+f_a, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_b, field_spec(s_gridded,s_convertetatop), &
-             begin, f+f_grid, field_spec(s_gridded,s_convertetatop), &
+             begin, f+f_sourceGrid, field_spec(s_gridded,s_convertetatop), &
+             begin, f+f_deleteGrids, boolean(), &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_concatenateGrids, &  ! Must be AFTER S_Gridded and S_VGrid
+             begin, f+f_grid, field_spec(s_gridded,s_concatenate, &
+                               s_convertetatop), &
+             begin, f+f_a, field_spec(s_gridded,s_convertetatop), &
+             begin, f+f_b, field_spec(s_gridded,s_convertetatop), &
+             begin, f+f_sourceGrid, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_deleteGrids, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -1732,7 +1743,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_readapriori, s+s_time, s+s_diff, s+s_dump, s+s_gridded, &
              s+s_l2aux, s+s_l2gp, s+s_readGriddedData, s+s_snoop, &
              s+s_Boolean, s+s_case, s+s_endSelect, s+s_select, n+n_section, &
-      begin, z+z_mergegrids, s+s_Boolean, s+s_case, s+s_concatenate, &
+      begin, z+z_mergegrids, s+s_Boolean, s+s_case, s+s_concatenate, s+s_concatenateGrids, &
              s+s_ConvertEtaToP, s+s_delete, s+s_diff, s+s_dump, s+s_isGridEmpty, &
              s+s_endSelect, s+s_Gridded, s+s_merge, s+s_mergeGrids, &
              s+s_reevaluate, s+s_select, s+s_skip, s+s_time, &
@@ -1959,6 +1970,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.601  2014/06/11 20:04:11  pwagner
+! New concatenateGrids command; grid field in Concatenated renamed sourceGrid
+!
 ! Revision 2.600  2014/05/31 00:22:18  pwagner
 ! We wont always have units for solarZenith field
 !
