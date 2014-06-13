@@ -9,6 +9,10 @@
 !divert!dnl
 begin Output
 
+;; We might make up a bunch of m4 flags to control the next two things
+Sleep, time=10000us
+Catenate
+
 ;; Skip all output if requested to do so
 !ifdef(flagSuppressRegularOutput,{
 !clearDivert(!joinedDGGDivert,!joinedDGMDivert)
@@ -211,4 +215,7 @@ Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.1  2013/05/23 17:49:52  pwagner
+; First commit
+;
 !divert!dnl
