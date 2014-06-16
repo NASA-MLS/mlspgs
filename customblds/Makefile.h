@@ -25,7 +25,9 @@ $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 $(INSTALLDIR)/lr: $(UTILDIR)/lr/*.f90
 	$(UTILDIR)/build_f90_in_misc.sh -d $(INSTALLDIR) -t $(TESTSDIR) \
 	-c $(MLSCONFG) -p lr -M $(MAKE) -O short_name=lr_custom -m lib \
-	-C $(MLSCFILE) $(UTILDIR)/lr/*.[Ff]9[0h]
+	-C $(MLSCFILE) \
+        $(UTILDIR)/lr/*.[Ff]9[0h] $(UTILDIR)/lr/*.grm \
+        $(CONFDIR)/lib/symbol_table.f90 $(CONFDIR)/lib/tree.f90
 
 ifneq ($(short_name),doc)
 ifndef CASCADE
@@ -221,18 +223,6 @@ ncep_dao.o: ncep_dao.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T ncep_dao.o ncep_dao.mod 
 
-# Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
-# unless treated very carefully
-#MLSStringLists.o:
-#	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStringLists.o mlsstringlists.mod 
-#mlsstringlists.mod: MLSStringLists.f90 mlscommon.mod mlsmessagemodule.mod \
-#	mlssets.mod mlsstrings.mod
-#	$(UTILDIR)/newAifBdiff.sh -a mlsstringlists.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
-#MLSStrings.o: mlsstrings.mod MLSStrings.f90 
-#	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t -T MLSStrings.o mlsstrings.mod 
-#mlsstrings.mod: MLSStrings.f90 mlscommon.mod ReadANumFromChars.f9h
-#	$(UTILDIR)/newAifBdiff.sh -a mlsstrings.mod $(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
-
 else
 #	l1
 
@@ -366,13 +356,6 @@ string_table.o:
 ncep_dao.o:
 	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
 
-# Intel's ifort compiler v11.x for 32-bit architecture has a string-handling bug
-# unless treated very carefully
-#MLSStringLists.o:
-#	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStringLists.f90 $(FAFTER)
-#MLSStrings.o:
-#	$(FC) -c $(DONT_OPT) $(PRE) $(INC_PATHS) $(S)/MLSStrings.f90 $(FAFTER)
-
 endif
 endif
 
@@ -455,6 +438,9 @@ wvs-095.pdf: wvs-095.tex wvs-095-eta.pdf
 #	pdflatex wvs-095
 endif
 # $Log$
+# Revision 1.15  2014/05/24 00:23:52  vsnyder
+# Make Parser_L2CF.f9h in the right place
+#
 # Revision 1.14  2014/05/22 01:18:44  vsnyder
 # Moved Parser_Tables_L2CF.f90 from lib to srclib
 #
