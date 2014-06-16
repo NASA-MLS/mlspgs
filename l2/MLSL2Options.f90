@@ -60,7 +60,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &
-    & 'v4.00 swdev team               ' , & 
+    & 'v4.11 swdev team               ' , & 
     & 'See license terms for copyright'/)
      
   ! Set the following to MSGLOGPRUNIT before delivering to sips;
@@ -401,7 +401,7 @@ contains
     integer :: N
     logical :: OPENED
     character(len=2) :: quotes
-    integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
+    ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
     character(len=len(switches)) :: removeSwitches = ''
     integer :: STATUS
     logical :: SWITCH                ! "First letter after -- was not n"
@@ -1040,6 +1040,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.86  2014/06/16 20:29:05  pwagner
+! Updated version vsn id; --recl now affects global setting
+!
 ! Revision 2.85  2014/06/03 22:41:33  pwagner
 ! Prints phaseName, chunkNum on severe error mesgs
 !
