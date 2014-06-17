@@ -802,6 +802,11 @@ CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+conv_uars: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/conv_uars/*.f9[0h] utctotai
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+          -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=conv_uars_main -m lib \
+          -C $(MLSCFILE) $(CONFDIR)/conv_uars/*.f9[0h] 
+
 dateconverter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/dateconverter.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
@@ -1314,7 +1319,7 @@ tools: chunktimes checkpvmup compare dateconverter \
   l2pcdiff l2pcdump l2q \
   machineok Spartacus tellMasterToQuit WordSplit wrapLines
 
-.PHONY: all configure clean clean_config\
+.PHONY: all configure clean clean_config conv_uars\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
   dateconverter depends distclean disttar distarz distarg disthelp \
   doc--api doc--toc \
@@ -1338,6 +1343,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.145  2014/05/27 18:42:58  pwagner
+# Added Parser_Tables_L2CF.f90 to CUSTOM_BUILDS
+#
 # Revision 1.144  2014/05/24 00:24:35  vsnyder
 # No longer need to make lib twice to make LR
 #
