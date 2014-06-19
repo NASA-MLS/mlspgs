@@ -74,7 +74,9 @@ module CFM_MLSSetup_m
         use string_table, only: AddInUnit
         use io_stuff, only: get_lun
         use INIT_TABLES_MODULE, only: INIT_TABLES
-        use PARSER, only: CONFIGURATION
+        use Parser, only: Clean_Up_Parser, Configuration
+        use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
+        use Parser_Tables_L2CF, only: Init_Parser_Table
         use TREE_CHECKER, only: CHECK_TREE
 
         ! The name of the signal database file
@@ -85,6 +87,7 @@ module CFM_MLSSetup_m
         ! the config file.
         ! This argument will be nullified inside this subroutine.
         type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
+        type(Parser_Table_t) :: Parser_Table
 
         integer :: Root
         integer :: First_Section
@@ -122,7 +125,11 @@ module CFM_MLSSetup_m
         call AddInUnit(signalIn)
         call AddInUnit(configIn)
 
-        call configuration(Root)
+        ! Parse the L2CF, producing an abstract syntax tree
+        call init_parser_table ( parser_table )
+        call configuration ( root, parser_table )
+        call destroy_parser_table ( parser_table )
+        call clean_up_parser
         if (Root <= 0) then
             call MLSMessage (MLSMSG_Error, moduleName, &
             'A syntax error occurred -- there is no abstract syntax tree')
@@ -182,7 +189,9 @@ module CFM_MLSSetup_m
         use EmpiricalGeometry, only: CFM_InitEmpiricalGeometry
         use Hdf, only: DFACC_RDONLY
         use INIT_TABLES_MODULE, only: INIT_TABLES, l_ghz, phyq_mafs, l_orbital
-        use PARSER, only: CONFIGURATION
+        use Parser, only: Clean_Up_Parser, Configuration
+        use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
+        use Parser_Tables_L2CF, only: Init_Parser_Table
         use TREE_CHECKER, only: CHECK_TREE
 
         ! The start time of the data to be read in the format
@@ -211,6 +220,7 @@ module CFM_MLSSetup_m
         ! the config file.
         ! This argument will be nullified inside this subroutine.
         type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
+        type(Parser_Table_t) :: Parser_Table
         ! A vector filled with quantities that can be supplied by MLS
         ! and needed for the forward model.
         type (Vector_T), intent(out) :: stateVectorExtra
@@ -256,7 +266,11 @@ module CFM_MLSSetup_m
         call AddInUnit(signalIn)
         call AddInUnit(configIn)
 
-        call configuration(Root)
+        ! Parse the L2CF, producing an abstract syntax tree
+        call init_parser_table ( parser_table )
+        call configuration ( root, parser_table )
+        call destroy_parser_table ( parser_table )
+        call clean_up_parser
         if (Root <= 0) then
             call MLSMessage (MLSMSG_Error, moduleName, &
             'A syntax error occurred -- there is no abstract syntax tree')
@@ -1364,6 +1378,10 @@ module CFM_MLSSetup_m
 end module
 
 ! $Log$
+! Revision 1.34  2011/12/15 18:27:44  honghanh
+! Documentation and code clean up, including removing unused and broken
+! subroutines.
+!
 ! Revision 1.33  2011/12/15 16:53:24  honghanh
 ! Correct the name of CreateMLSValue_EarthReflectivity
 !

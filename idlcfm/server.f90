@@ -98,12 +98,15 @@ program server
         use ConstructQuantityTemplates, only: InitQuantityTemplates
         use string_table, only: AddInUnit
         use io_stuff, only: get_lun
-        use PARSER, only: CONFIGURATION
+        use Parser, only: Clean_Up_Parser, Configuration
+        use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
+        use Parser_Tables_L2CF, only: Init_Parser_Table
         use TREE_CHECKER, only: CHECK_TREE
         use CFM_Tree_Walker_m, only : Walk_Tree
         use INIT_TABLES_MODULE, only: INIT_TABLES
 
         integer, intent(out) :: info
+        type(Parser_Table_t) :: Parser_Table
 
         character(len=128) :: signalfile, configFile, spectroscopy, antennaPatterns, filterShapes
         character(len=128) :: dacsFilterShapes, pointingGrids, pfa, l2pc
@@ -175,7 +178,11 @@ program server
         call AddInUnit(signalIn)
         call AddInUnit(configIn)
 
-        call configuration(Root)
+        ! Parse the L2CF, producing an abstract syntax tree
+        call init_parser_table ( parser_table )
+        call configuration ( root, parser_table )
+        call destroy_parser_table ( parser_table )
+        call clean_up_parser
         if (Root <= 0) then
             call MLSMessage (MLSMSG_Error, moduleName, &
             'A syntax error occurred -- there is no abstract syntax tree')
@@ -594,6 +601,9 @@ program server
 end program
 
 ! $Log$
+! Revision 1.6  2012/01/09 22:57:39  pwagner
+! Worked around ifc 12 bug; workaround a vector template problem
+!
 ! Revision 1.5  2012/01/03 17:21:25  honghanh
 ! Remove unused variables, and incorporate changes from
 ! lit_parm and Molecules_M
