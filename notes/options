@@ -95,6 +95,9 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --recl[ ]<number>: set the max record length size for l2cf to <number>
       (In case the default value, 20000, is too small for some l2cfs).
       This has effect only if the l2cf is not coming from standard input.
+  --set opt=val: Set command-line option opt to value val; may reuse
+     E.g., --set submit=l2q --set verbose=true
+  --setf opts_file: read opt=val pairs from file opts_file
   --[n]shar[edPCF]: Do [not] adjust PCFids so levels 1 and 2 can share same PCF
   --[n]skipDir[ectWrites]: Do [not] skip all the directWrites; speedy snooping
   --[n]skipRetr[ieval]: Do [not] skip all the Retrievals; a pre-flight checkout
@@ -125,6 +128,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --[n]tk: [Do not] Use the panoply of the PGS_toolkit (pcf, metadata, etc.)
   --[n]unlimdims: [Do not] Use unlimited dimensions when defining swaths
   --verbose: set a goodly number of switches to increase output
+  --versId id_string: Set current version id to id_string
   --version: Print current version number
   --[n]wall: Use wall clock instead of CPU_TIME
 
@@ -153,6 +157,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.64  2014/03/26 17:54:01  pwagner
+ added cmdline option --loc to set ProductionLocation
+
  Revision 1.63  2013/11/01 21:09:31  pwagner
  Mention -D, -V options to set debug, verboseness by module
 
