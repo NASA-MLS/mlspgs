@@ -11,38 +11,41 @@
 
 module IO_STUFF
 
-! Useful stuff for I/O
-  use MLSFINDS, only: FINDFIRSTCHARACTER => FINDFIRST, &
-    &                 FINDFIRSTSUBSTRING => FINDFIRST
+! Useful, low-level stuff for I/O
+  use MLSFinds, only: findFirstCharacter => FindFirst, &
+    &                 findFirstSubstring => FindFirst
 
   implicit none
 
   private
-  public :: GET_LUN
-  public :: READ_STDIN
-  public :: READ_TEXTFILE
-  public :: WRITE_TEXTFILE
+  public :: get_lun
+  public :: get_nLines
+  public :: read_stdin
+  public :: read_textFile
+  public :: write_textFile
 
 ! === (start of toc) ===                                                 
 !     c o n t e n t s                                                    
 !     - - - - - - - -                                                    
 
 !     (subroutines and functions)
-! GET_LUN        Find a Fortran logical unit number that's not in use.
+! get_lun        Find a Fortran logical unit number that's not in use.
+! get_nLines     Find how many lines are in a text file
 ! read_stdin     Read standard input into characters scalar or array
 ! read_textfile  Read contents of a textfile into characters scalar or array
 ! write_textfile Write characters scalar or array out to a textfile
 ! === (end of toc) ===
 
 ! === (start of api) ===
-! GET_LUN( int lun, [log msg] )
+! get_lun( int lun, [log msg] )
+! get_nLines( char* File, int nLines, [int maxLineLen] )
 ! read_stdin( str string, [int maxLineLen], [int nLines] )
 ! read_textfile( char* File, str string, [int maxLineLen], [int nLines] )
 ! write_textfile( char* File, str string, [int maxLineLen], [int nLines] )
 ! str can be any of
 ! character(len=*)                 a scalar character string of any length
 ! character(len=*), dimension(:)   a 1d character array of any length
-! character(len=*), dimension(:,:) a 1d character array of any length
+! character(len=*), dimension(:,:) a 2d character array of any length
 ! === (end of api) ===
 
 !---------------------------- RCS Module Info ------------------------------
@@ -65,9 +68,10 @@ module IO_STUFF
 
   ! The only legal unit numbers that files may be assigned
   ! for use by Fortran opens, closes, reads and writes
-  integer, parameter :: bottom_unit_num=1
-  integer, parameter :: top_unit_num=99
+  integer, parameter :: bottom_unit_num = 1
+  integer, parameter :: top_unit_num    = 99
 
+  integer, parameter :: maxStrLen       = 1024
 
 contains
 
@@ -101,6 +105,53 @@ contains
     return
   end subroutine GET_LUN
 
+  !------------------ get_nLines
+  ! Notes and limitations:
+  ! formatted io
+  ! No line should be longer than maxStrLen
+  ! (To get around that limitation supply optional arg maxLineLen)
+  subroutine get_nLines ( File, nLines, maxLineLen )
+  ! read a textfile into string array, one line per element
+    character(len=*), intent(in)  :: File ! its path and name
+    integer, intent(out)          :: nLines ! num lines read
+    integer, optional, intent(in) :: maxLineLen
+    ! Internal variables
+    integer :: lun
+    integer :: status
+    character(len=1), dimension(maxStrLen) :: nullArray
+    character(len=12) :: xfmt
+    character(len=8) :: xlen
+    ! print *, 'Name of textfile: ', trim(File)
+    ! What format do we use for reading each line?
+    xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
+    if ( present(maxLineLen) ) then
+     write( xlen, '(i8)' ) maxLineLen
+     if ( maxStrLen < maxLineLen ) write( xlen, '(i8)' ) maxStrLen
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    else
+     write( xlen, '(i8)' ) maxStrLen
+     if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
+    endif
+    ! Try to read the textfile
+    nLines = 0
+    call GET_LUN ( LUN )
+    open(UNIT=lun, form='formatted', &
+      & file=trim(File), status='old', iostat=status )
+    if ( status /= 0 ) then
+      write(*,*) 'IO_STUFF%get_nLines-E- Unable to open textfile ' // &
+        & trim(File)
+      return
+    endif
+    ! print *, 'xfmt: ', xfmt
+    do
+      status = 0
+      read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) nullArray
+500   status = -1
+50    if ( status /= 0 ) exit
+      nLines = nLines + 1
+    enddo
+    close( UNIT=lun, iostat=status )
+  end subroutine get_nLines
 
   !------------------ read_stdin
   ! Notes and limitations:
@@ -564,6 +615,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.19  2014/06/20 20:25:46  pwagner
+! Added get_nLines
+!
 ! Revision 2.18  2013/08/20 00:29:36  pwagner
 ! Print name of text file that we choke on
 !
