@@ -17,17 +17,18 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   use intrinsic, only: l_hours, l_minutes, l_seconds
   use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
   use MLSFiles, only: WildCardHDFVersion, HDFVersion_4, HDFVersion_5, Dump
-  use MLSMESSAGEMODULE, only: MLSMessageConfig, &
+  use MLSMEssageModule, only: MLSMessageConfig, &
     & MLSMsg_error, MLSMsg_info, MLSMsg_testWarning, &
     & MLSMSG_Severity_to_quit, MLSMsg_severity_to_walkback, MLSMsg_warning, &
     & Bummer, sayMessage => MLSMessage
   use MLSPCF2, only: MLSPCF_l1b_rad_end, MLSPCF_l1b_rad_start
-  use MLSStrings, only: lowerCase, readIntsFromChars, writeIntsToChars
+  use MLSStrings, only: isComment, lowerCase, &
+    & readIntsFromChars, Replace, writeIntsToChars
   use PCFHdr, only: globalAttributes
-  use OUTPUT_M, only: OUTPUTOPTIONS, &
-    & INVALIDPRUNIT, STDOUTPRUNIT, MSGLOGPRUNIT, BOTHPRUNIT, &
-    & OUTPUT
-  use PRINTIT_M, only: DEFAULTLOGUNIT, GET_CONFIG, STDOUTLOGUNIT
+  use output_m, only: outputOptions, &
+    & invalidPrUnit, StdoutPrUnit, MSGLogPrUnit, bothPrUnit, &
+    & output
+  use printit_m, only: defaultLogUnit, get_config, stdoutLogUnit
 
   implicit none
   public
@@ -58,8 +59,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
   ! Update these lines before delivery to sips
-  ! id to print out in response to "--version" command-line option       
-  character(LEN=*), dimension(2), parameter :: CURRENT_VERSION_ID = (/ &
+  ! id to print out in response to "--version" command-line option    
+  integer, parameter                        :: versIDLen = 32
+  character(LEN=versIDLen), dimension(2)    :: current_version_id = (/ &
     & 'v4.11 swdev team               ' , & 
     & 'See license terms for copyright'/)
      
@@ -169,11 +171,11 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
   ! The following list of public procedures is for convenience only
-  public :: DUMPMACROS
-  public :: MLSMESSAGE
-  public :: PROCESSOPTIONS
-  public :: REMOVERUNTIMEBOOLEAN
-  public :: RESTOREDEFAULTS
+  public :: dumpMacros
+  public :: MLSMessage
+  public :: processOptions
+  public :: removeRuntimeBoolean
+  public :: restoreDefaults
   integer, private :: i ! For loop constructor below
 
   type :: runTimeValues_T
@@ -238,10 +240,10 @@ contains
   ! output module's commands
   subroutine MLSMessage ( SEVERITY, MODULENAMEIN, MESSAGE, &
     & ADVANCE, MLSFILE, STATUS, ITEM )
-    use LEXER_CORE, only: GET_WHERE
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use TOGGLES, only: SWITCHES
-    use TREE, only: WHERE
+    use lexer_core, only: get_where
+    use MLSStringlists, only: switchDetail
+    use toggles, only: switches
+    use tree, only: where
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
@@ -364,27 +366,27 @@ contains
   ! (2) parsing cmdline, if supplied as an arg
   ! The return value will be the filename (if any)
   function ProcessOptions ( cmdLine ) result ( fileName )
-    use ALLOCATE_DEALLOCATE, only: TRACKALLOCATES, &
-      & CLEARONALLOCATE
+    use allocate_deallocate, only: trackAllocates, &
+      & clearOnAllocate, allocate_test, deallocate_test
     use Evaluate_Variable_m, only: Define_Variable_As_String
-    use IO_STUFF, only: GET_LUN
-    use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
-      & SNIPLASTSLAVEARGUMENT
-    use LEXER_M, only: CAPIDENTIFIERS
-    use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
-    use MATRIXMODULE_0, only: CHECKBLOCKS, SUBBLOCKLENGTH
-    use MLSCOMMON, only: FILENAMELEN
-    use MLSMESSAGEMODULE, only: SetConfig
-    use MLSSTRINGLISTS, only: CATLISTS, &
-      & GETSTRINGELEMENT, GETUNIQUELIST, &
-      & NUMSTRINGELEMENTS, REMOVESWITCHFROMLIST, &
-      & SORTLIST, STRINGELEMENT, SWITCHDETAIL, UNQUOTE
-    use PCFHDR, only: GLOBALATTRIBUTES
-    use PRINTIT_M, only: SET_CONFIG
-    use SET_TOGGLES_M, only: SET_TOGGLES
-    use STRING_TABLE, only: ADD_INCLUDE_DIRECTORY, DO_LISTING
-    use TIME_M, only: TIME_CONFIG
-    use TOGGLES, only: SWITCHES
+    use io_stuff, only: get_lun, get_nLines, read_textFile
+    use l2ParInfo, only: parallel, initparallel, accumulateslavearguments, &
+      & sniplastslaveargument
+    use lexer_m, only: capidentifiers
+    use machine, only: getarg, hp, io_error, nevercrash
+    use matrixmodule_0, only: checkblocks, subblocklength
+    use MLSCommon, only: filenamelen
+    use MLSMessageModule, only: setconfig
+    use MLSStringlists, only: catlists, &
+      & getstringelement, getuniquelist, &
+      & numstringelements, removeswitchfromlist, &
+      & sortlist, stringelement, switchdetail, unquote
+    use PCFHdr, only: globalattributes
+    use printit_m, only: set_config
+    use set_toggles_m, only: set_toggles
+    use string_table, only: add_include_directory, do_listing
+    use time_m, only: time_config
+    use toggles, only: switches
     ! Args
     character(len=*), intent(in), optional :: cmdLine
     character(len=FileNameLen)             :: fileName
@@ -394,12 +396,16 @@ contains
     integer :: DEGREE                ! index affecting degree of option
     logical, parameter :: DEEBUG = .false.
     logical :: EXIST
+    logical :: exitLoop
     logical :: Field_Is_Include      ! Field is include file path, not L2CF name
     integer, dimension(100)           :: iarray
-    integer :: J
+    integer :: J, K
     character(len=2048) :: LINE      ! Into which is read the command args
     integer :: N
+    integer :: nLines
     logical :: OPENED
+    character(len=FileNameLen)             :: optsFile
+    character(len=FileNameLen), dimension(:), pointer  :: optLines => null()
     character(len=2) :: quotes
     ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
     character(len=len(switches)) :: removeSwitches = ''
@@ -410,7 +416,7 @@ contains
     character(len=2048) :: WORD      ! Some text
     ! Executable
     quotes = char(34) // char(39)   ! {'"}
-    filename = 'help' ! This means abnormal options--should dump help mesg
+    filename = 'helphelphelp' ! This means abnormal options--should dump help mesg
     if ( present( cmdline ) .and. DEEBUG ) then
       print *, 'cmdline: ', trim(cmdline)
     end if
@@ -449,6 +455,84 @@ cmds: do
       if ( len_trim( line ) < 1 ) then
         exit
       end if
+      call processLine( line, filename, exitLoop, entireLine=.false. )
+     if ( DEEBUG ) print *, 'filename: ', trim(filename)
+      if ( exitLoop ) exit
+      i = i + 1
+    enddo cmds
+    ! Did we somehow miss the filename among the args?
+    if ( filename == 'helphelphelp' ) then
+     if ( DEEBUG ) print *, 'did we miss the filename?'
+      i = i + 1
+      call getNextArg ( i, line )
+      filename = line
+     if ( DEEBUG ) print *, 'filename: ', trim(filename)
+    end if
+  ! Are any switches inappropriate for master or for slave?
+    if ( parallel%master ) &
+      & removeSwitches = catLists( trim(removeSwitches), 'bool,walk' )
+    if ( parallel%slave ) &
+      & removeSwitches = catLists( trim(removeSwitches), 'chu,l2q,mas,slv' )
+    ! Remove any quote marks from RemoveSwitches array
+    tempSwitches = unquote(removeSwitches, quotes=quotes, options='-p')
+    call GetUniqueList( tempSwitches, removeSwitches, numSwitches, &
+          & ignoreLeadingSpaces=.true., options='-eSL' )
+    ! Remove any quote marks from switches array
+    tempSwitches = unquote(switches, quotes=quotes, options='-p')
+    ! Now we want to keep only the swich with the highest details level
+    call sortList( tempSwitches, iarray, ',', switches )
+    tempSwitches = switches
+    call GetUniqueList( tempSwitches, Switches, numSwitches, &
+          & ignoreLeadingSpaces=.true., options='-eSL' )
+    ! Remove any switches embedded in the removeSwitches option 'R'
+    ! call outputNamedValue( 'starting List', trim(switches) )
+    ! call outputNamedValue( 'to remove', trim(removeSwitches) )
+    do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
+      call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
+      call RemoveSwitchFromList(switches, tempSwitches, trim(aSwitch))
+      switches = tempSwitches
+    end do
+    ! call outputNamedValue( 'result List', trim(switches) )
+
+    ! If we like, we could move these next few statements to a standalone
+    ! subroutine named something like processSwitches
+    parallel%verbosity = switchDetail(switches, 'mas') + 1
+    if ( switchDetail(switches, 'walk') > -1 ) &
+      & MLSMSG_Severity_to_walkback = MLSMSG_Warning
+    if ( outputOptions%prunit /= INVALIDPRUNIT ) &
+      & outputOptions%prunit = OUTPUT_PRINT_UNIT
+    ! print *, 'Ended processing options'
+    contains
+    subroutine getNextArg( i, line )
+      ! Args
+      integer, intent(in)           :: i
+      character(len=*), intent(out) :: line
+      logical, parameter :: countEmpty = .false.
+      ! Executable
+      if ( present( cmdline ) ) then
+        line = StringElement ( cmdline, i, countEmpty, inseparator=' ' )
+      else
+        call getArg ( i, line )
+      end if
+      command_line = trim(command_line) // ' ' // trim(line)
+      call AccumulateSlaveArguments(line) ! pass them to slave processes
+    end subroutine getNextArg
+
+    ! process the portion of the whole cmdline beginning with the 
+    ! current arg's start
+    ! recursive because some options, --set and --setf,
+    ! provoke more calls to this subroutine
+    recursive subroutine processLine( inLine, filename, exitLoop, entireLine  )
+      character(len=*), intent(in) :: inLine
+      character(len=*)             :: filename
+      logical, intent(out)         :: exitLoop
+      logical, intent(in)          :: entireLine ! is inLine entire cmdline?
+      ! Internal variables
+      integer :: iActual
+      character(len=2048) :: LINE      ! Into which is read the command args
+      ! Executable
+      line = inLine
+      exitLoop = .false.
       if ( line(1:2) == '--' ) then       ! "word" options
         line = lowercase(line)
         n = 0
@@ -466,8 +550,10 @@ cmds: do
           checkPaths = switch
         else if ( line(3+n:7) == 'chunk' ) then
           i = i + 1
-          call getNextArg ( i, line )
+          ! print *, 'About to read chunk num'
+          call myNextArgument( i, inLine, entireLine, line )
           parallel%chunkRange = line
+          ! print *, 'parallel%chunkRange: ', trim(parallel%chunkRange)
         else if ( line(3+n:18+n) == 'clearonallocate ' ) then
           clearonallocate = switch
         else if ( line(3+n:7+n) == 'ckbk ' ) then
@@ -477,6 +563,9 @@ cmds: do
         else if ( line(3+n:7+n) == 'crash' ) then
           MLSMessageConfig%crashOnAnyError = switch
           neverCrash = .not. switch
+        else if ( line(3+n:8+n) == 'curver' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
         else if ( line(3+n:8+n) == 'defaul' ) then
           showDefaults = switch
         else if ( line(3+n:7+n) == 'delay' ) then
@@ -484,7 +573,7 @@ cmds: do
             line(:7+n) = ' '
           else
             i = i + 1
-            call getNextArg ( i, line )
+            call myNextArgument( i, inLine, entireLine, line )
           end if
           read ( line, *, iostat=status ) parallel%Delay
           if ( status /= 0 ) then
@@ -493,19 +582,17 @@ cmds: do
           end if
         else if ( line(3+n:7+n) == 'dump ' ) then
           i = i + 1
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
           specialDumpFile = trim(line)
         else if ( line(3+n:14+n) == 'fwmparallel ' ) then
           parallel%fwmParallel = .true.
         else if ( line(3+n:7+n) == 'host ' ) then
           i = i + 1
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
           GlobalAttributes%hostName = trim(line)
         else if ( line(3+n:9+n) == 'idents ' ) then
           i = i + 1
-          call getNextArg ( i, line )
-        ! else if ( line(3+n:6+n) == 'kit ' ) then
-          ! MLSMessageConfig%useToolkit = switch
+          call myNextArgument( i, inLine, entireLine, line )
         else if ( line(3+n:6+n) == 'l1b=' ) then
           arg_rhs = line(7+n:7+n)
           select case(arg_rhs)
@@ -553,9 +640,9 @@ cmds: do
           if ( .not. switch ) then
             MLSMessageConfig%MaxModuleNameLength     = 10
             MLSMessageConfig%MaxSeverityNameLength   = 8
-            cycle
+            return
           end if
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
           read ( line, *, iostat=status ) degree
           if ( status /= 0 ) then
             call io_error ( "After --lac[onic] option", status, line )
@@ -583,14 +670,14 @@ cmds: do
         else if ( line(3+n:5+n) == 'loc' ) then
           call SnipLastSlaveArgument ! Don't want slaves to see this
           i = i + 1
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
           call SnipLastSlaveArgument ! Don't want slaves to see this
           GlobalAttributes%productionLoc = trim(line)
         else if ( line(3+n:9+n) == 'master ' ) then
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%master = .true.
           i = i + 1
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%slaveFilename = trim ( line )
           call InitParallel ( 0, 0 )
@@ -602,7 +689,7 @@ cmds: do
             line(:21+n) = ' '
           else
             i = i + 1
-            call getNextArg ( i, line )
+            call myNextArgument( i, inLine, entireLine, line )
           end if
           read ( line, *, iostat=status ) parallel%maxFailuresPerChunk
           if ( status /= 0 ) then
@@ -614,7 +701,7 @@ cmds: do
             line(:23+n) = ' '
           else
             i = i + 1
-            call getNextArg ( i, line )
+            call myNextArgument( i, inLine, entireLine, line )
           end if
           read ( line, *, iostat=status ) parallel%maxFailuresPerMachine
           if ( status /= 0 ) then
@@ -630,7 +717,7 @@ cmds: do
               stop
             end if
           else
-            call getNextArg ( i+1, line )
+            call myNextArgument( i, inLine, entireLine, line )
             read ( line, *, iostat=status ) j
             if ( status == 0 ) then
               i = i + 1
@@ -645,7 +732,7 @@ cmds: do
         else if ( line(3+n:9+n) == 'msgconf' ) then
           if ( line(10+n:10+n) /= '=' ) then
             i = i + 1
-            call getNextArg ( i, line(11:) )
+            call myNextArgument( i, inLine, entireLine, line(11:) )
           end if
           call setConfig ( [ line(11:) ] )
         else if ( line(3+n:4+n) == 'oa' ) then
@@ -657,7 +744,7 @@ cmds: do
         else if ( line(3+n:5+n) == 'pge ' ) then
           call SnipLastSlaveArgument ! Don't want slaves to see this
           i = i + 1
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%pgeName = trim(line)
         else if ( line(3+n:6+n) == 'recl' ) then
@@ -665,13 +752,42 @@ cmds: do
             line(:6+n) = ' '
           else
             i = i + 1
-            call getNextArg ( i, line )
+            call myNextArgument( i, inLine, entireLine, line )
           end if
           read ( line, *, iostat=status ) recl
           if ( status /= 0 ) then
             call io_error ( "After --recl option", status, line )
             stop
           end if
+        else if ( line(3+n:6+n) == 'set ' ) then
+          ! While it may seem odd, there may be cases when it is convenient
+          ! e.g., when reading a set of name=value pairs from a file
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          ! Must save i, which will otherwise be incremented
+          iActual = i
+          call parseNameValue ( line )
+        else if ( line(3+n:6+n) == 'setf' ) then
+          i = i + 1
+          call getNextArg ( i, optsFile )
+          call get_nLines ( optsFile, nLines )
+          ! call outputnamedValue( 'nLines', nLines )
+          call allocate_test ( optLines, nLines, 'optLines', &
+            & trim(ModuleName) // 'processLine' )
+          optLines = ' '
+          call read_textFile( optsFile, optLines )
+          ! Must save i, which will otherwise be incremented
+          iActual = i
+          do k=1, nLines
+            ! Ignore comments and blank lines
+            if ( len_trim(optLines(k)) < 1 .or. &
+              & isComment( optLines(k), '#' ) ) cycle
+            ! call outputnamedValue( 'optLines(k)', trim(optLines(k)) )
+            call parseNameValue( optLines(k) )
+          enddo
+          call deallocate_test ( optLines, 'optLines', &
+            & trim(ModuleName) // 'processLine' )
+          i = iActual ! Restore i
         else if ( line(3+n:6+n) == 'shar' ) then
           SHAREDPCF = switch
         else if ( line(3+n:9+n)  == 'skipdir' ) then
@@ -680,14 +796,14 @@ cmds: do
           SKIPRETRIEVAL = switch
         else if ( line(3+n:9+n) == 'skipsec' ) then
           i = i + 1
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
           sectionsToSkip = lowercase(line)
         else if ( line(3+n:10+n) == 'slavemaf' ) then
           if ( line(11+n:) /= ' ' ) then
             line(:10+n) = ' '
           else
             i = i + 1
-            call getNextArg ( i, line )
+            call myNextArgument( i, inLine, entireLine, line )
           end if
           read ( line, *, iostat=status ) slaveMAF
           if ( status /= 0 ) then
@@ -700,7 +816,7 @@ cmds: do
             line(:7+n) = ' '
           else
             i = i + 1
-            call getNextArg ( i, line )
+            call myNextArgument( i, inLine, entireLine, line )
           end if
           read ( line, *, iostat=status ) parallel%masterTid
           if ( status /= 0 ) then
@@ -714,14 +830,14 @@ cmds: do
           snoopingActive = .true.
         else if ( line(3+n:12+n) == 'snoopname' ) then
           i = i + 1
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
           snoopName = line
         else if ( line(3+n:7+n) == 'state' ) then
           if ( line(8+n:) /= ' ' ) then
             line(:7+n) = ' '
           else
             i = i + 1
-            call getNextArg ( i, line )
+            call myNextArgument( i, inLine, entireLine, line )
           end if
           read ( line, *, iostat=status ) stateFilledBySkippedRetrievals
           if ( status /= 0 ) then
@@ -729,12 +845,14 @@ cmds: do
             stop
           end if
         else if ( line(3+n:9+n) == 'stdout ' ) then
+          ! print *, 'Got --stdout option'
           if ( .not. switch ) then
             OUTPUT_PRINT_UNIT = INVALIDPRUNIT
-            cycle
+            return
           end if
           i = i + 1
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
+          ! print *, 'Its arg: ', trim(line)
           select case ( lowercase(line) )
           case ( 'log' )
             OUTPUT_PRINT_UNIT = MSGLOGPRUNIT
@@ -760,12 +878,12 @@ cmds: do
             & outputOptions%prunit = OUTPUT_PRINT_UNIT
         else if ( line(3+n:12+n) ==  'stopafter ' ) then
           i = i + 1
-          call getNextArg ( i, stopAfterSection )
+          call myNextArgument( i, inLine, entireLine, stopAfterSection )
         else if ( line(3+n:12+n) ==  'stopwither' ) then
           stopWithError = switch
         else if ( line(3+n:11+n) == 'subblock ' ) then
           i = i + 1
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
           read ( line, *, iostat=status ) subBlockLength
           if ( status /= 0 ) then
             call io_error ( "After --subblock option", status, line )
@@ -773,20 +891,29 @@ cmds: do
           end if
         else if ( line(3+n:9+n) == 'submit ' ) then
           i = i + 1
-          call getNextArg ( i, line )
+          call myNextArgument( i, inLine, entireLine, line )
           parallel%submit = trim ( line )
         else if ( line(3+n:5+n) == 'tk ' ) then
           toolkit = switch
           call set_config ( useToolkit = switch )
         else if ( line(3+n:6+n) == 'var ' ) then
           i = i + 1
-          call getNextArg ( i, line ) ! The variable
+          call myNextArgument( i, inLine, entireLine, line ) ! The variable
           i = i + 1
-          call getNextArg ( i, word ) ! Its value as a string
+          call myNextArgument( i, inLine, entireLine, word ) ! Its value as a string
           call define_variable_as_string ( line, word )
         else if ( line(3+n:10+n) == 'verbose ' ) then
           switches = catLists( trim(switches), &
             & 'l2q,glob,mas,bool,opt1,log,pro1,time,apr,phase' )
+        else if ( line(3+n:8+n) == 'versid' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, line )
+          ! Undo the substitution of '%' for space done during parseNameValue
+          current_version_id(1) = Replace( trim(line), '%', ' ' )
+          ! print *, 'Changed current version id'
+          ! do j=1, size(current_version_id)
+          !   print *, current_version_id(j)
+          ! end do
         else if ( line(3+n:10+n) == 'version ' ) then
           do j=1, size(current_version_id)
             print *, current_version_id(j)
@@ -796,12 +923,15 @@ cmds: do
           time_config%use_wall_clock = switch
         else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
           i = i + 1
-          call getNextArg ( i, line )
-          exit
+          call myNextArgument( i, inLine, entireLine, line )
+          exitLoop = .true.
+          return
         else
-          print *, 'unrecognized option ', trim(line), ' ignored.'
+          if ( index( line, '-help' ) < 1 ) &
+            & print *, 'unrecognized option ', trim(line), ' ignored.'
           ! call option_usage
           filename = 'help'
+          exitLoop = .true.
           return ! will dump help mesg
         end if
       else if ( line(1:1) == '-' ) then   ! "letter" options
@@ -835,6 +965,7 @@ jloop:do while ( j < len_trim(line) )
           case ( 'h', 'H', '?' )     ! Describe command line usage
             ! call option_usage
             filename = 'help'
+            exitLoop = .true.
             return ! will dump help mesg
           case ( 'I' ); field_is_include = .true. ! Next field is include path
           case ( 'K' ); capIdentifiers = .true.
@@ -895,65 +1026,89 @@ jloop:do while ( j < len_trim(line) )
         field_is_include = .false.
       else
         filename = line
-        exit ! This must be the l2cf filename
+        exitLoop = .true. ! This must be the l2cf filename
+        print *, 'This must be the l2cf filename ' // trim(line)
+        return
       end if
-      i = i + 1
-    enddo cmds
-    ! Did we somehow miss the filename among the args?
-    if ( filename == 'help' ) then
-      i = i + 1
-      call getNextArg ( i, line )
-      filename = line
-    end if
-  ! Are any switches inappropriate for master or for slave?
-    if ( parallel%master ) &
-      & removeSwitches = catLists( trim(removeSwitches), 'bool,walk' )
-    if ( parallel%slave ) &
-      & removeSwitches = catLists( trim(removeSwitches), 'chu,l2q,mas,slv' )
-    ! Remove any quote marks from RemoveSwitches array
-    tempSwitches = unquote(removeSwitches, quotes=quotes, options='-p')
-    call GetUniqueList( tempSwitches, removeSwitches, numSwitches, &
-          & ignoreLeadingSpaces=.true., options='-eSL' )
-    ! Remove any quote marks from switches array
-    tempSwitches = unquote(switches, quotes=quotes, options='-p')
-    ! Now we want to keep only the swich with the highest details level
-    call sortList( tempSwitches, iarray, ',', switches )
-    tempSwitches = switches
-    call GetUniqueList( tempSwitches, Switches, numSwitches, &
-          & ignoreLeadingSpaces=.true., options='-eSL' )
-    ! Remove any switches embedded in the removeSwitches option 'R'
-    ! call outputNamedValue( 'starting List', trim(switches) )
-    ! call outputNamedValue( 'to remove', trim(removeSwitches) )
-    do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
-      call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
-      call RemoveSwitchFromList(switches, tempSwitches, trim(aSwitch))
-      switches = tempSwitches
-    end do
-    ! call outputNamedValue( 'result List', trim(switches) )
+    end subroutine ProcessLine
 
-    ! If we like, we could move these next few statements to a standalone
-    ! subroutine named something like processSwitches
-    parallel%verbosity = switchDetail(switches, 'mas') + 1
-    if ( switchDetail(switches, 'walk') > -1 ) &
-      & MLSMSG_Severity_to_walkback = MLSMSG_Warning
-    if ( outputOptions%prunit /= INVALIDPRUNIT ) &
-      & outputOptions%prunit = OUTPUT_PRINT_UNIT
-    ! print *, 'Ended processing options'
-    contains
-    subroutine getNextArg( i, line )
+    ! Separate lhs from rhs, then treat 
+    ! as cmdline options depending on whether
+    ! lhs is one character in length or two
+    ! rhs is true, false, or a different value
+    recursive subroutine parseNameValue( line )
+      character(len=*), intent(in) :: line
+      ! Local variables
+      logical :: exitLoop
+      character(len=32)  :: filename
+      character(len=32) :: name
+      character(len=32) :: valu
+      logical, parameter :: countEmpty = .true.
+      character(len=1), parameter :: eqls = '='
+      call getStringElement( line, name, 1, countEmpty, eqls )
+      call getStringElement( line, valu, 2, countEmpty, eqls )
+      ! Beware of cases where valu conatins an embedded space
+      ! Replace such spaces with '%'
+      if ( len_trim(name) < 1 .or. name == eqls ) return
+      if ( len_trim(valu) > 0 ) valu = Replace ( trim(valu), ' ', '%' )
+      ! Special cases:
+      ! print *, trim(name) // ' set = to ' // trim(valu)
+      if ( lowercase(name) == 'switches' ) then
+        name = '-S' // valu
+        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+        return
+      elseif ( lowercase(name) == 'remove' ) then
+        name = '-R' // valu
+        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+        return
+      elseif ( lowercase(name) == 'debugging' ) then
+        name = '-D' // valu
+        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+        return
+      elseif ( lowercase(name) == 'verboseness' ) then
+        name = '-V' // valu
+        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+        return
+
+      ! Standard cases: either single-character or multi-character
+      elseif ( len_trim(name ) < 2 ) then
+        ! single-character options
+        name = '-' // name
+      else
+        ! multi-character options
+        name = '--' // name
+      endif
+      if ( valu == 'true' ) then
+        ! print *, 'processing cmdline option ', trim(name)
+        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+      elseif ( valu == 'false' ) then
+        ! print *, 'processing cmdline option ', trim('n' // name)
+        call ProcessLine( trim('n' // name), filename, exitLoop, entireLine=.true. )
+      else
+        ! print *, 'processing cmdline option ', trim(name) // ' ' // trim(valu)
+        call ProcessLine( trim(name) // ' ' // trim(valu), filename, exitLoop, entireLine=.true. )
+      endif
+    end subroutine parseNameValue
+    
+    ! Return either 
+    ! (1) The ith command line argument (if entireLine is false)
+    ! (2) The remainder of inLine       (if entireLine is true)
+    subroutine myNextArgument( i, inLine, entireLine, line )
       ! Args
       integer, intent(in)           :: i
+      character(len=*), intent(in)  :: inLine
+      logical, intent(in)           :: entireLine
       character(len=*), intent(out) :: line
-      logical, parameter :: countEmpty = .false.
       ! Executable
-      if ( present( cmdline ) ) then
-        line = StringElement ( cmdline, i, countEmpty, inseparator=' ' )
+      if ( .not. entireLine ) then
+        call getNextArg ( i, line )
       else
-        call getArg ( i, line )
-      end if
-      command_line = trim(command_line) // ' ' // trim(line)
-      call AccumulateSlaveArguments(line) ! pass them to slave processes
-    end subroutine getNextArg
+        line = stringElement( adjustl( inLine ), 2, &
+          & countEmpty=.false., inseparator=' ' )
+      endif
+      ! print *, 'my next arg: ', trim(line)
+    end subroutine myNextArgument
+    
   end function ProcessOptions
   
   ! --------------------------------------------  RestoreDefaults  -----
@@ -961,8 +1116,8 @@ jloop:do while ( j < len_trim(line) )
   ! Now some things it makes no sense to overwrite, so it makes
   ! no sense to restore them either; e.g., CHECKPATHS, parallel, etc.
   subroutine restoreDefaults
-  use MLSMESSAGEMODULE, only: RESTORECONFIG
-  use TOGGLES, only: INIT_TOGGLE
+  use MLSMessageModule, only: restoreConfig
+  use toggles, only: init_toggle
     OUTPUT_PRINT_UNIT             = -2
     DEFAULT_HDFVERSION_WRITE      = HDFVERSION_5
     DEFAULT_HDFVERSION_READ       = WILDCARDHDFVERSION
@@ -990,7 +1145,7 @@ jloop:do while ( j < len_trim(line) )
   ! -------------------------------------------------  DumpMacros  -----
   ! Dump the runtime macros
   subroutine DUMPMACROS
-  use DUMP_0, only: DUMP
+  use dump_0, only: dump
   call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time macros', separator=runTimeValues%sep )
   end subroutine DumpMacros
@@ -998,8 +1153,8 @@ jloop:do while ( j < len_trim(line) )
   ! ---------------------------------------  RemoveRuntimeBoolean  -----
   ! Dump the runtime macros
   subroutine REMOVERUNTIMEBOOLEAN ( NAME )
-  use MLSSTRINGLISTS, only: GETHASHELEMENT, &
-    & REMOVEHASHARRAY, REMOVEHASHELEMENT
+  use MLSStringLists, only: getHashElement, &
+    & removeHashArray, removeHashElement
     ! Dummy args
     character(len=*), intent(in) :: NAME
     ! Internal variables
@@ -1040,6 +1195,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.87  2014/06/20 20:28:31  pwagner
+! Added --set, --setf, and -versId
+!
 ! Revision 2.86  2014/06/16 20:29:05  pwagner
 ! Updated version vsn id; --recl now affects global setting
 !
