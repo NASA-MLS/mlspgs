@@ -375,9 +375,6 @@ contains ! ===================================  Public procedures  =====
             & b%dimList, TRIM(b%fieldNames), b%missingValue )
         endif
       case ( f_deleteGrids )
-        call output( 'Now have deleteGrids field', advance='yes' )
-        call outputnamedValue( 'son', son )
-        call outputnamedValue( 'field', field )
         deleteGrids = get_boolean(son)
       case ( f_sourceGrid )
         grids_node = son
@@ -423,8 +420,8 @@ contains ! ===================================  Public procedures  =====
           print *, ' '
           print *, 'db_index: ', db_index
           call dump( b, details=-1 )
+          call outputnamedValue( 'b%equivalentLatitude', b%equivalentLatitude )
         endif
-        call outputnamedValue( 'b%equivalentLatitude', b%equivalentLatitude )
         if ( wearethefirst ) then
           call CopyGrid ( Intermediate, b )
           wearethefirst = .false.
@@ -668,7 +665,7 @@ contains ! ===================================  Public procedures  =====
     call Allocate_test ( meanDates, newGrid%noDates, 'meanDates', ModuleName )
     meanDates = ( newGrid%dateStarts + newGrid%dateEnds ) / 2.0
 
-    call outputNamedValue( 'Bytes before allocating 2 temp arrays', NoBytesAllocated )
+    ! call outputNamedValue( 'Bytes before allocating 2 temp arrays', NoBytesAllocated )
     ! Now create two fields the same shape as the new field that contain
     ! the operational and climatological data interpolated to our new locations.
     ! Whoa! Now you need a total of 3x the size of the merged data set!
@@ -691,7 +688,7 @@ contains ! ===================================  Public procedures  =====
     call test_allocate ( status, moduleName, 'cliMapped', (/1,1,1,1,1,1/), &
       & (/ newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
       & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(cliMapped) )
-    call outputNamedValue( 'Bytes after allocating 2 temp arrays', NoBytesAllocated )
+    ! call outputNamedValue( 'Bytes after allocating 2 temp arrays', NoBytesAllocated )
 
     if ( DEEBUG ) then
       call dump ( operMapped(:,1:10,1,:,1,1), &
@@ -1177,6 +1174,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.57  2014/06/20 20:30:24  pwagner
+! Less bebug-type printing
+!
 ! Revision 2.56  2014/06/11 20:03:28  pwagner
 ! New concatenateGrids command; grid field in Concatenated renamed sourceGrid
 !
