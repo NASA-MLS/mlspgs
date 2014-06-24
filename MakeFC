@@ -822,6 +822,11 @@ f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+genmet: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/genmet.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 Goldbrick_More: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/Goldbrick_More.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
@@ -1343,6 +1348,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.146  2014/06/17 17:52:57  pwagner
+# Now builds conv_uars
+#
 # Revision 1.145  2014/05/27 18:42:58  pwagner
 # Added Parser_Tables_L2CF.f90 to CUSTOM_BUILDS
 #
