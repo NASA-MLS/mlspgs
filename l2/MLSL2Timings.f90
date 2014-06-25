@@ -13,44 +13,44 @@
 MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use HIGHOUTPUT, only: BANNER, OUTPUTNAMEDVALUE, SETSTAMP
-  use INIT_TABLES_MODULE, only: F_DEBUG, F_OPTIONS, F_SILENT, &
-    & F_SKIPDIRECTWRITES, F_SKIPDIRECTWRITESIF, &
-    & F_SKIPRETRIEVAL, F_SKIPRETRIEVALIF, F_STAMP, F_VERBOSE, &
-    & FIELD_FIRST, FIELD_LAST
-  use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
-  use L2PARINFO, only: PARALLEL
-  use MLSCommon, only: MLSDebug, MLSVerbose, &
-    & MLSDebugSticky, MLSVerboseSticky
-  use MLSL2OPTIONS, only: COMMAND_LINE, currentPhaseName, currentChunkNumber, &
-    & DUMPMACROS, ORIGINALCMDS, &
-    & PROCESSOPTIONS, RESTARTWARNINGS, RESTOREDEFAULTS, RUNTIMEVALUES, &
-    & SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
-    & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
-    & STOPAFTERSECTION
-  use MLSMESSAGEMODULE, only: MLSMESSAGECONFIG, MLSMESSAGE, MLSMESSAGERESET, &
-    & MLSMSG_ERROR
-  use MLSSTRINGS, only: LOWERCASE 
-  use MLSSTRINGLISTS, only: BOOLEANVALUE, CATLISTS, GETSTRINGELEMENT, &
-    & NUMSTRINGELEMENTS, STRINGELEMENTNUM, SWITCHDETAIL
-  use MORETREE, only: GET_BOOLEAN
-  use OUTPUT_M, only: BLANKS, OUTPUT, &
-    & RESUMEOUTPUT, SUSPENDOUTPUT
-  use STRING_TABLE, only: GET_STRING
-  use TIME_M, only: TIME_NOW
-  use TOGGLES, only: SWITCHES
-  use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use highOutput, only: banner, outputNamedValue, setStamp
+  use init_tables_module, only: f_debug, f_options, f_silent, &
+    & f_skipdirectwrites, f_skipdirectwritesif, &
+    & f_skipretrieval, f_skipretrievalif, f_stamp, f_verbose, &
+    & field_first, field_last
+  use intrinsic, only: l_hours, l_minutes, l_seconds
+  use L2Parinfo, only: parallel
+  use MLScommon, only: MLSdebug, MLSverbose, &
+    & MLSdebugsticky, MLSverbosesticky
+  use MLSl2options, only: command_line, currentphasename, currentchunknumber, &
+    & dumpmacros, originalcmds, &
+    & processoptions, restartwarnings, restoredefaults, runtimevalues, &
+    & sectiontimingunits, skipdirectwrites, skipdirectwritesoriginal, &
+    & skipretrieval, skipretrievaloriginal, &
+    & stopaftersection
+  use MLSMessagemodule, only: MLSmessageconfig, MLSmessage, MLSmessagereset, &
+    & MLSMsg_error
+  use MLSStrings, only: lowercase 
+  use MLSStringlists, only: booleanvalue, catlists, getstringelement, &
+    & numstringelements, stringelementnum, switchdetail
+  use moretree, only: get_boolean
+  use output_m, only: blanks, output, &
+    & resumeOutput, suspendOutput
+  use string_table, only: get_string
+  use time_m, only: time_now
+  use toggles, only: switches
+  use tree, only: decoration, nsons, sub_rosa, subtree
 
   implicit none
 
-  public :: SECTION_TIMES, TOTAL_TIMES, &
-    &       ADD_TO_DIRECTWRITE_TIMING, &
-    &       ADD_TO_RETRIEVAL_TIMING, ADD_TO_SECTION_TIMING, &
-    &       ADDPHASETOPHASENAMES, &
-    &       DUMP_SECTION_TIMINGS, RUN_START_TIME
-  public :: FINISHTIMINGS, FILLTIMINGS, RESTARTTIMINGS
-  public :: SHOWTIMINGNAMES
+  public :: section_times, total_times, &
+    &       add_to_directwrite_timing, &
+    &       add_to_retrieval_timing, add_to_section_timing, &
+    &       addphasetophasenames, &
+    &       dump_section_timings, run_start_time
+  public :: finishtimings, filltimings, restarttimings
+  public :: showtimingnames
   private
 
 !---------------------------- RCS Module Info ------------------------------
@@ -58,6 +58,41 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+!
+!     (Data)
+! section_times          Show times in each section
+! total_times            Show total times from start
+!
+!     (subroutines and functions)
+! add_to_directwrite_timing  
+!                        Contribute latest directwrite times to totals
+! add_to_retrieval_timing 
+!                        Contribute latest retrieval times to totals
+! add_to_section_timing 
+!                        Contribute latest section times to totals
+! addPhaseToPhaseNames   Process the phase specification statement of the l2cf
+! dump_section_timings   dump accumulated elapsed timings with detailed breakdown
+! finishTimings          Finish accumulating timings
+! fillTimings            Return accumulated timings in array
+! restartTimings         Zero out accumulating timings, reinitialize flags
+! showTimingNames        Return list of phase names, section names, or both
+! === (end of toc) ===
+
+! === (start of api) ===
+! add_to_directwrite_timing ( char* section_name, real t1 )
+! add_to_retrieval_timing ( char* section_name, real t1 )
+! add_to_section_timing ( char* section_name, real t1, [log now_stop] )
+! addPhaseToPhaseNames ( int name, int root )
+! dump_section_timings
+! finishTimings ( char* which, [int returnStatus] )
+! fillTimings ( num timings(:), char* which, char* names, [log othersToo] )
+! restartTimings ( char* which )
+! char* showTimingNames ( char* which, [log othersToo] )
+! === (end of api) ===
 
   interface filltimings
     module procedure filltimings_single
@@ -279,6 +314,11 @@ contains ! =====     Public Procedures     =============================
   end subroutine add_to_section_timing
 
   ! -----------------------------------  addPhaseToPhaseNames  -----
+  ! Process the phase specification statement of the l2cf
+  ! In particular, set up an entry in the phase names database
+  ! to hold timing info
+  ! set options controllable by runtime flags, like whther
+  ! to skip retrievals, skip directwrites, verboseness, etc.
   subroutine addPhaseToPhaseNames ( name, root )
     ! Dummy arguments
     integer, intent(in) :: NAME               ! String index of name
@@ -334,25 +374,28 @@ contains ! =====     Public Procedures     =============================
         call get_string( sub_rosa(subtree(2,son)), booleanString )
         if ( stamp ) call output( 'told to skipDirectwrites: ', advance='no' )
         if ( stamp ) call output( BooleanValue ( lowercase(booleanString), &
-          & runTimeValues%lkeys, runTimeValues%lvalues), advance='yes' )
+          & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep ), &
+          advance='yes' )
         skipDirectwrites = skipDirectWritesOriginal .or. &
           & BooleanValue ( lowercase(booleanString), &
-          & runTimeValues%lkeys, runTimeValues%lvalues)
-        ! call output( 'skipDirectwrites: ', advance='no' )
-        ! call output( skipDirectwrites, advance='yes' )
+          & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep )
+        call output( 'skipDirectwrites: ', advance='no' )
+        call output( skipDirectwrites, advance='yes' )
       case ( f_skipRetrieval )
         skipRetrieval = skipRetrievalOriginal .or. &
-          & get_boolean ( fieldValue ) .or. skipRetrievalOriginal
+          & get_boolean ( fieldValue )
       case ( f_skipRetrievalif )
         call get_string( sub_rosa(subtree(2,son)), booleanString )
-        if ( stamp )call output( 'told to skipRetrieval: ', advance='no' )
+        if ( stamp ) call output( 'told to skipRetrieval: ', advance='no' )
         if ( stamp ) call output( BooleanValue ( lowercase(booleanString), &
-          & runTimeValues%lkeys, runTimeValues%lvalues), advance='yes' )
+          & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep ), &
+          & advance='yes' )
         skipRetrieval = skipRetrievalOriginal .or. &
           & BooleanValue ( lowercase(booleanString), &
-          & runTimeValues%lkeys, runTimeValues%lvalues) .or. skipRetrievalOriginal
-        ! call output( 'skipRetrieval: ', advance='no' )
-        ! call output( skipRetrieval, advance='yes' )
+          & runTimeValues%lkeys, runTimeValues%lvalues, runTimeValues%sep )
+        if ( stamp ) call output( 'skipRetrieval: ', advance='no' )
+        if ( stamp ) call output( skipRetrieval, advance='yes' )
+        if ( stamp ) call output( trim(booleanString), advance='yes' )
       case ( f_stamp )
         stamp = stamp .or. get_boolean ( fieldValue )
       case ( f_verbose )
@@ -844,7 +887,7 @@ contains ! =====     Public Procedures     =============================
     
   end subroutine filltimings_single
 
-  ! -----------------------------------------  restart  -----
+  ! -----------------------------------------  restartTimings  -----
   subroutine restartTimings( which )
   ! Zero out accumulating timings
   ! re-initialize some specific flags and parameters
@@ -933,6 +976,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.56  2014/06/25 20:43:25  pwagner
+! Fixed error in evaluating runTimeFlags
+!
 ! Revision 2.55  2014/04/10 00:44:21  pwagner
 ! Moved currentChunkNumber, currentPhaseName from MLSL2Timings to MLSL2Options
 !
