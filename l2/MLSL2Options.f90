@@ -13,6 +13,7 @@
 MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
+  use dump_0, only: dump
   use HighOutput, only: Banner, OutputNamedValue
   use intrinsic, only: l_hours, l_minutes, l_seconds
   use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
@@ -776,6 +777,8 @@ cmds: do
             & trim(ModuleName) // 'processLine' )
           optLines = ' '
           call read_textFile( optsFile, optLines )
+          if ( switchDetail(switches, 'opt') > -1 ) &
+            call dump( optLines, 'options read from ' // trim(optsFile) )
           ! Must save i, which will otherwise be incremented
           iActual = i
           do k=1, nLines
@@ -1145,7 +1148,6 @@ jloop:do while ( j < len_trim(line) )
   ! -------------------------------------------------  DumpMacros  -----
   ! Dump the runtime macros
   subroutine DUMPMACROS
-  use dump_0, only: dump
   call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'Run-time macros', separator=runTimeValues%sep )
   end subroutine DumpMacros
@@ -1195,6 +1197,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.88  2014/06/25 20:45:44  pwagner
+! Show options read from optsFile, if any
+!
 ! Revision 2.87  2014/06/20 20:28:31  pwagner
 ! Added --set, --setf, and -versId
 !
