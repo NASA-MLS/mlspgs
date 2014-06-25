@@ -181,6 +181,7 @@ fi
 masterIdent="none"
 otheropts="-g"
 switches="--stdout out -S'slv,opt1,log,pro,time,glob1'"
+OPTSFILE="${JOBDIR}/slave.opts"
 # otheropts="-g -S'slv,opt1,log,pro,time,glob1'"
 # otheropts="$OTHEROPTS"
 echo "otheropts starting as $otheropts" 2>&1 | tee -a "$LOGFILE"
@@ -303,6 +304,37 @@ while [ "$more_opts" = "yes" ] ; do
        shift
        shift
        ;;
+    --setf* )
+       # Read opts from a file
+       if [ ! -f "$OPTSFILE" ]
+       then
+         sed 's/chunk=/#chunk=/; s/submit=/#submit=/' "$2" > "$OPTSFILE"
+       fi
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" "$OPTSFILE"`
+       echo "Adding arguments to read opts from file: $1 $OPTSFILE" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --set* )
+       # set one cmdline opt
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" $2`
+       echo "Setting one cmdline opt: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
+    --versid* )
+       # set current version id
+       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" $2`
+       echo "Setting current version id: $1 $2" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       shift
+       ;;
     --* )
        otheropts=`add_option "$otheropts" $1`
        echo "Adding unrecognized option: $1" >> $LOGFILE
@@ -395,6 +427,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.28  2013/11/14 23:57:50  pwagner
+# Treats options -D, -V, -R, -S equally
+#
 # Revision 1.27  2013/09/04 17:44:45  pwagner
 # Replaced '--cat' cmdline option; 'Catenate' now an Output section command
 #
