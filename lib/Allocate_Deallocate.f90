@@ -169,6 +169,8 @@ module Allocate_Deallocate
   integer, public :: TRACKALLOCATES = 0 ! <= 0 => No tracking
                                         ! 1    => Track using the Track_m module
                                         ! >= 2 => 1 + report all transactions
+  integer, public :: AllocateLogUnit = -1 ! If > 0, log allocates to this unit
+  real, public ::    AllocateLogLimit = 1. ! Son't log amounts smaller than this
 
   ! Element sizes (bytes)
   integer, parameter, public :: E_Ch = ( storage_size(' ') + 7 ) / 8 ! Character
@@ -288,6 +290,8 @@ contains
         & call myMessage ( MLSMSG_Error, moduleNameIn, &
           & MLSMSG_Allocate // ItsName  // bounds(:l) )
     end if
+    if ( AllocateLogUnit > 0 ) call LogAllocate( ModuleNameIn, ItsName, &
+      & lBounds, uBounds, ElementSize )
 
     if ( .not. present(elementSize) ) return
 
@@ -336,6 +340,7 @@ contains
     else if ( collect_garbage_each_time ) then
       call mls_gc_now
     end if
+    if ( AllocateLogUnit > 0 ) call LogDeallocate( ModuleNameIn, ItsName, Size )
     if ( status == 0 .and. present(size) ) then
       if ( size > 0.0 ) then
         if ( trackAllocates >= 2 ) then
@@ -1484,6 +1489,35 @@ contains
     include "Same_Shape_md_a.f9h"
   end subroutine Same_Shape_RealR4_4d_a
 
+  ! ------------------------------=--- LogAllocate
+  subroutine LogAllocate ( ModuleNameIn, ItsName, lBounds, uBounds, &
+    & ElementSize )
+    character(len=*), intent(in)  :: ModuleNameIn, ItsName
+    integer, intent(in), optional :: Lbounds(:), Ubounds(:)
+    integer, intent(in), optional :: ElementSize
+    real :: Amount
+    amount = 0
+    if ( present(lbounds) .and. present(ubounds) .and. present(elementSize) ) then
+      amount = memproduct(elementSize, ubounds-lbounds+1)
+    endif
+    if ( amount >= AllocateLogLimit ) &
+      & write( AllocateLogUnit, * ) trim(ItsName), ' _a_ ', &
+      & amount, trim(snipRCSfrom(ModuleNameIn))
+  end subroutine LogAllocate
+
+  ! ------------------------------=--- LogDeallocate
+  subroutine LogDeallocate ( ModuleNameIn, ItsName, Size )
+    character(len=*), intent(in) :: ModuleNameIn, ItsName
+    real, intent(in), optional   :: Size
+    real :: mySize
+    ! Executable
+    mySize = 0.
+    if ( present(Size) ) mySize = Size
+    if ( mySize >= AllocateLogLimit ) &
+      write( AllocateLogUnit, * ) trim(ItsName), ' _d_ ', &
+        & mySize, trim(snipRCSfrom(ModuleNameIn))
+  end subroutine LogDeallocate
+
   ! ----------------------------------  memproduct  -----
   function memproduct ( elementSize, dimensions ) result( p )
     ! Find how many multiples of MEMORY_UNITS an array
@@ -1511,6 +1545,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.46  2014/06/30 23:24:17  pwagner
+! Can log allocations/deallocations to separate file
+!
 ! Revision 2.45  2014/05/29 18:20:27  pwagner
 ! Extra debugging possibility
 !
