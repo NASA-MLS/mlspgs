@@ -10,66 +10,66 @@
 ! foreign countries or providing access to foreign persons.
 
 program MLSL2
-  use ALLOCATE_DEALLOCATE, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES
-  use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
-  use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
-  use HDF, only: DFACC_RDONLY
-  use HIGHOUTPUT, only: DUMP, HEADLINE, OUTPUTNAMEDVALUE
-  use INIT_TABLES_MODULE, only: INIT_TABLES
-  use Intrinsic, only: Get_Type
-  use INTRINSIC, only: L_ASCII, L_TKGEN, LIT_INDICES
-  use L2GPDATA, only: AVOIDUNLIMITEDDIMS
-  use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS, &
-    & TRANSMITSLAVEARGUMENTS
-  use LEAKCHECK_M, only: LEAKCHECK
-  use LEXER_CORE, only: INIT_LEXER
-  use MACHINE, only: GETARG, HP, IO_ERROR
-  use MLSCOMMON, only: MLSFILE_T, MLSNAMESAREDEBUG, MLSNAMESAREVERBOSE
-  use MLSFILES, only: FILESTRINGTABLE, &
-    & ADDFILETODATABASE, DEALLOCATE_FILEDATABASE, DUMP, &
-    & INITIALIZEMLSFILE, MLS_OPENFILE, MLS_CLOSEFILE
-  use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
-  use MLSL2OPTIONS, only: CHECKPATHS, CURRENT_VERSION_ID, &
-    & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
-    & LEVEL1_HDFVERSION, AURA_L1BFILES, NEED_L1BFILES, &
-    & NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
-    & PATCH, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
-    & SECTIONTIMES, SECTIONTIMINGUNITS, SHAREDPCF, & ! SIPS_VERSION, &
-    & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, SLAVESDOOWNCLEANUP, &
-    & SKIPRETRIEVAL, SKIPRETRIEVALORIGINAL, &
-    & SPECIALDUMPFILE, STATEFILLEDBYSKIPPEDRETRIEVALS, &
-    & STOPAFTERSECTION, STOPWITHERROR, &
-    & TOOLKIT, TOTALTIMES, PROCESSOPTIONS, &
-    & CHECKL2CF, CHECKLEAK, COUNTCHUNKS, DO_DUMP, DUMP_TREE, L2CF_UNIT, &
-    & NUMSWITCHES, ORIGINALCMDS, RECL, &
-    & SECTIONSTOSKIP, SHOWDEFAULTS, SLAVEMAF, TIMING
-  use MLSL2TIMINGS, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
-    & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_DEBUG, &
-    & MLSMESSAGECONFIG, MLSMSG_ERROR, MLSMSG_SEVERITY_TO_QUIT, &
-    & MLSMSG_SUCCESS, MLSMSG_WARNING, DUMPCONFIG, MLSMESSAGEEXIT
-  use MLSPCF2 ! EVERYTHING
-  use MLSSTRINGS, only: TRIM_SAFE
-  use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, &
-    & SWITCHDETAIL
-  use OUTPUT_M, only: BLANKS, OUTPUT, &
-    & INVALIDPRUNIT, MSGLOGPRUNIT, OUTPUTOPTIONS, STAMPOPTIONS, STDOUTPRUNIT
-  use Parser, only: Clean_Up_Parser, Configuration
-  use Parser_Table_m, only:  Destroy_Parser_Table, Parser_Table_t
-  use Parser_Tables_L2CF, only: Init_Parser_Table
-  use PRINTIT_M, only: SET_CONFIG, STDOUTLOGUNIT
-  use PVM, only: CLEARPVMARGS, FREEPVMARGS
-  use SDPTOOLKIT, only: PGSd_DEM_30ARC, PGSd_DEM_90ARC, &
-    & PGSd_DEM_ELEV, PGSd_DEM_WATER_LAND, USESDPTOOLKIT, PGS_DEM_CLOSE
-  use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
-    & DESTROY_STRING_TABLE, GET_STRING, ADDINUNIT
-  use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
-  use TIME_M, only: BEGIN, FINISH, TIME_NOW, TIME_CONFIG
-  use TOGGLES, only: LEVELS, SYN, SWITCHES, TOGGLE
-  use TRACK_M, only: REPORTLEAKS
-  use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, NSONS, SUBTREE
-  use TREE_CHECKER, only: CHECK_TREE
-  use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
+  use allocate_deallocate, only: allocatelogunit, set_garbage_collection, &
+    & trackallocates
+  use chunkdivide_m, only: chunkdivideconfig
+  use declaration_table, only: allocate_decl, deallocate_decl, dump_decl
+  use hdf, only: dfacc_rdonly
+  use highoutput, only: dump, headline, outputnamedvalue
+  use init_tables_module, only: init_tables
+  use intrinsic, only: get_type, l_ascii, l_tkgen, lit_indices
+  use l2gpdata, only: avoidunlimiteddims
+  use l2parinfo, only: parallel, initparallel, accumulateslavearguments, &
+    & transmitslavearguments
+  use leakcheck_m, only: leakcheck
+  use lexer_core, only: init_lexer
+  use machine, only: getarg, hp, io_error
+  use MLScommon, only: MLSfile_t, MLSnamesaredebug, MLSnamesareverbose
+  use MLSfiles, only: filestringtable, &
+    & addfiletodatabase, deallocate_filedatabase, dump, &
+    & initializeMLSfile, MLS_openfile, MLS_closefile
+  use MLShdf5, only: MLS_h5open, MLS_h5close
+  use MLSl2options, only: allocFile, checkPaths, current_version_id, &
+    & default_hdfversion_read, default_hdfversion_write, &
+    & level1_hdfversion, aura_l1bfiles, need_l1bfiles, &
+    & normal_exit_status, output_print_unit, &
+    & patch, quit_error_threshold, restartWarnings, &
+    & sectionTimes, sectionTimingUnits, sharedPCF, & ! sips_version, &
+    & skipDirectWrites, skipDirectWritesOriginal, slavesCleanUpSelves, &
+    & skipRetrieval, skipretrievaloriginal, &
+    & specialdumpfile, statefilledbyskippedretrievals, &
+    & stopaftersection, stopwitherror, &
+    & toolkit, totaltimes, processoptions, &
+    & checkl2cf, checkleak, countchunks, do_dump, dump_tree, l2cf_unit, &
+    & numswitches, originalcmds, recl, &
+    & sectionstoskip, showdefaults, slavemaf, timing
+  use MLSl2timings, only: run_start_time, section_times, total_times, &
+    & add_to_section_timing, dump_section_timings
+  use MLSmessagemodule, only: MLSmessage, MLSmsg_debug, &
+    & MLSmessageconfig, MLSmsg_error, MLSmsg_severity_to_quit, &
+    & MLSmsg_success, MLSmsg_warning, dumpconfig, MLSmessageexit
+  use MLSpcf2 ! everything
+  use MLSstrings, only: trim_safe
+  use MLSstringlists, only: expandstringrange, &
+    & switchdetail
+  use output_m, only: blanks, output, &
+    & invalidprunit, msglogprunit, outputoptions, stampoptions, stdoutprunit
+  use parser, only: clean_up_parser, configuration
+  use parser_table_m, only:  destroy_parser_table, parser_table_t
+  use parser_tables_l2cf, only: init_parser_table
+  use printit_m, only: set_config, stdoutlogunit
+  use pvm, only: clearpvmargs, freepvmargs
+  use sdptoolkit, only: pgsd_dem_30arc, pgsd_dem_90arc, &
+    & pgsd_dem_elev, pgsd_dem_water_land, usesdptoolkit, pgs_dem_close
+  use string_table, only: destroy_char_table, destroy_hash_table, &
+    & destroy_string_table, get_string, addinunit
+  use symbol_table, only: destroy_symbol_table
+  use time_m, only: begin, finish, time_now, time_config
+  use toggles, only: levels, syn, switches, toggle
+  use track_m, only: reportleaks
+  use tree, only: allocate_tree, deallocate_tree, nsons, subtree
+  use tree_checker, only: check_tree
+  use tree_walker, only: walk_tree_to_do_MLS_l2
 
   ! === (start of toc) ===
   !     c o n t e n t s
@@ -337,6 +337,8 @@ program MLSL2
       & type=l_ascii, access=DFACC_RDONLY, recordLength=recl, &
       & PCBottom=MLSPCF_L2CF_Start, PCTop=MLSPCF_L2CF_Start)
   MLSL2CF%FileID%f_id = l2cf_unit
+  ! print *, 'l2cf from line? ', trim(line)
+  ! print *, 'len_trim(line) ', len_trim(line)
   if ( line /= ' ' ) then
     MLSL2CF%name = line
     call mls_openFile(MLSL2CF, status)
@@ -482,7 +484,7 @@ program MLSL2
     call dump_section_timings
   endif
   !---------------- Task (8) ------------------
-  if ( .not. parallel%slave .or. SLAVESDOOWNCLEANUP ) then
+  if ( .not. parallel%slave .or. slavesCleanUpSelves ) then
     call destroy_char_table
     call output('Destroyed char table', advance='yes')
     call destroy_hash_table
@@ -529,6 +531,7 @@ program MLSL2
       & layerList, numLayers )
     call outputNamedValue( 'PGS_DEM_Close status', status )
   endif
+  if ( AllocateLogUnit > 0 ) close( Unit=AllocateLogUnit )
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
   if ( trackAllocates > 0 ) call ReportLeaks ( "At end of program execution..." )
@@ -673,23 +676,23 @@ contains
       call outputNamedValue ( 'Is this the master task in pvm?', parallel%master, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       if ( parallel%master .or. showDefaults ) then
-      call outputNamedValue ( 'Master task number', parallel%myTid, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Command line sent to slaves', trim_safe(parallel%pgeName), advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Command to queue slave tasks', trim_safe(parallel%submit), advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Maximum failures per chunk', parallel%maxFailuresPerChunk, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Maximum failures per machine', parallel%maxFailuresPerMachine, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Sleep time in masterLoop (mus)', parallel%delay, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+        call outputNamedValue ( 'Master task number', parallel%myTid, advance='yes', &
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+        call outputNamedValue ( 'Command line sent to slaves', trim_safe(parallel%pgeName), advance='yes', &
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+        call outputNamedValue ( 'Command to queue slave tasks', trim_safe(parallel%submit), advance='yes', &
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+        call outputNamedValue ( 'Maximum failures per chunk', parallel%maxFailuresPerChunk, advance='yes', &
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+        call outputNamedValue ( 'Maximum failures per machine', parallel%maxFailuresPerMachine, advance='yes', &
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+        call outputNamedValue ( 'Sleep time in masterLoop (mus)', parallel%delay, advance='yes', &
+          & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
       call outputNamedValue ( 'Is this a slave task in pvm?', parallel%slave, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       if ( parallel%slave ) then
-      call outputNamedValue ( 'Master task number', parallel%masterTid, advance='yes', &
+        call outputNamedValue ( 'Master task number', parallel%masterTid, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
       call outputNamedValue ( 'Preflight check paths?', checkPaths, advance='yes', &
@@ -739,9 +742,13 @@ contains
       call outputNamedValue ( 'Set error before stopping?', StopWithError, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       if ( specialDumpFile /= ' ' ) then
-      call outputNamedValue ( 'Save special dumps to', trim(specialDumpFile), advance='yes', &
+        call outputNamedValue ( 'Save special dumps to', trim(specialDumpFile), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
+      if ( len_trim(AllocFile%Name) > 0 ) then
+        call outputNamedValue ( 'Log Allocates to', trim(AllocFile%Name), advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      endif
       call blanks(80, fillChar='-', advance='yes')
       call dump(outputOptions)
       call dump(stampOptions)
@@ -787,6 +794,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.207  2014/06/30 23:26:58  pwagner
+! Can log allocations/deallocations to separate file
+!
 ! Revision 2.206  2014/05/20 23:56:53  vsnyder
 ! New parser gets its tables from an argument instead of an include
 !
