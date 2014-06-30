@@ -32,81 +32,81 @@ contains ! ====     Public Procedures     ==============================
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
     & COUNTCHUNKS, FILEDATABASE, SECTIONSTOSKIP )
 
-    use ALGEBRA_M, only: ALGEBRA
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use ANTENNAPATTERNS_M, only: DESTROY_ANT_PATTERNS_DATABASE
-    use CHUNKDIVIDE_M, only: CHUNKDIVIDE, DESTROYCHUNKDATABASE
-    use CHUNKS_M, only: DUMP, MLSCHUNK_T
-    use CONSTRUCT, only: MLSL2CONSTRUCT, MLSL2DECONSTRUCT, &
-      & CONSTRUCTMIFGEOLOCATION
-    use DIRECTWRITE_M, only: DIRECTDATA_T, DESTROYDIRECTDATABASE
-    use DUMP_0, only: DUMP
-    use EMPIRICALGEOMETRY, only: FORGETOPTIMUMLON0
-    use FGRID, only: FGRID_T, DESTROYFGRIDDATABASE, DUMP
-    use FILL, only: MLSL2FILL
-    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T, &
-      & DESTROYFWMCONFIGDATABASE, &
-      & STRIPFORWARDMODELCONFIGDATABASE
-    use FORWARDMODELSUPPORT, only: PRINTFORWARDMODELTIMING
-    use GLOBAL_SETTINGS, only: SET_GLOBAL_SETTINGS
-    use GRIDDEDDATA, only: GRIDDEDDATA_T, DESTROYGRIDDEDDATADATABASE, DUMP
-    use HESSIANMODULE_1, only: DESTROYHESSIANDATABASE, HESSIAN_T
-    use HGRIDSDATABASE, only: HGRID_T
-    use HGRID, only: COMPUTEALLHGRIDOFFSETS
-    use HIGHOUTPUT, only: GETSTAMP, SETSTAMP
-    use INIT_TABLES_MODULE, only: L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF,  &
-      & SECTION_FIRST, SECTION_LAST, &
-      & Z_ALGEBRA, Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, &
-      & Z_JOIN, Z_MERGEGRIDS, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI,      &
-      & Z_RETRIEVE, Z_SPECTROSCOPY
-    use INTRINSIC, only: SECTION_INDICES
-    use JOIN, only: MLSL2JOIN
-    use L2AUXDATA, only: DESTROYL2AUXDATABASE, L2AUXDATA_T, DUMP
-    use L2FWMPARALLEL, only: L2FWMSLAVETASK, LAUNCHFWMSLAVES
-    use L2GPDATA, only: DESTROYL2GPDATABASE, L2GPDATA_T, DUMP
-    use L2PARALLEL, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
-    use L2PARINFO, only: PARALLEL, CLOSEPARALLEL
-    use L2PC_M, only: DESTROYL2PCDATABASE, DESTROYBINSELECTORDATABASE
-    use L2PCBINS_M, only: FLUSHLOCKEDBINS
-    use MATRIXMODULE_1, only: DESTROYMATRIXDATABASE, MATRIX_DATABASE_T
-    use MERGEGRIDSMODULE, only: MERGEGRIDS
-    use MLSCOMMON, only: TAI93_RANGE_T, MLSFILE_T
-    use MLSL2OPTIONS, only: AURA_L1BFILES, CHECKPATHS, currentChunkNumber, &
-      & L2CFNODE, NEED_L1BFILES, &
-      & SKIPDIRECTWRITES, SKIPDIRECTWRITESORIGINAL, &
-      & SKIPRETRIEVAL, SLAVESDOOWNCLEANUP, SPECIALDUMPFILE, STOPAFTERSECTION, &
-      & MLSMESSAGE, TOOLKIT
-    use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_INFO, &
-      & MLSMSG_ERROR, SUMMARIZEWARNINGS
-    use MLSPCF2, only: MLSPCF_SPECTROSCOPY_END
-    use MLSFINDS, only: FINDFIRST
-    use MLSSIGNALS_M, only: BANDS, DESTROYBANDDATABASE, DESTROYMODULEDATABASE, &
-      & DESTROYRADIOMETERDATABASE, DESTROYSIGNALDATABASE, &
-      & DESTROYSPECTROMETERTYPEDATABASE, ISSPACECRAFTAURA, &
-      & MLSSIGNALS, MODULES, RADIOMETERS, &
-      & SIGNALS, SPECTROMETERTYPES
-    use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, ISINLIST, SWITCHDETAIL
-    use MLSSTRINGS, only: LOWERCASE
-    use MLSL2TIMINGS, only: ADD_TO_SECTION_TIMING, TOTAL_TIMES
-    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use OPEN_INIT, only: OPENANDINITIALIZE
-    use OUTPUTANDCLOSE, only: OUTPUT_CLOSE
-    use OUTPUT_M, only: BLANKS, OUTPUT, &
-      & RESUMEOUTPUT, REVERTOUTPUT, SWITCHOUTPUT
-    use POINTINGGRID_M, only: DESTROY_POINTING_GRID_DATABASE
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
-    use READAPRIORI, only: READ_APRIORI
-    use RETRIEVALMODULE, only: RETRIEVE
-    use SPECTROSCOPYCATALOG_M, only: DESTROY_LINE_DATABASE, &
-      & DESTROY_SPECTCAT_DATABASE, SPECTROSCOPY
-    use STRING_TABLE, only: GET_STRING
-    use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NSONS, SUBTREE
-    use VECTORSMODULE, only: DESTROYVECTORDATABASE, DUMP_VECTORS, &
-      & VECTOR_T, VECTORTEMPLATE_T
-    use VGRIDSDATABASE, only: DESTROYVGRIDDATABASE, VGRIDS
+    use algebra_m, only: algebra
+    use allocate_deallocate, only: allocate_test, deallocate_test
+    use antennapatterns_m, only: destroy_ant_patterns_database
+    use chunkdivide_m, only: chunkdivide, destroychunkdatabase
+    use chunks_m, only: dump, MLSchunk_t
+    use construct, only: MLSl2construct, MLSl2deconstruct, &
+      & constructmifgeolocation
+    use directwrite_m, only: directdata_t, destroydirectdatabase
+    use dump_0, only: dump
+    use empiricalgeometry, only: forgetoptimumlon0
+    use fgrid, only: fgrid_t, destroyfgriddatabase, dump
+    use fill, only: MLSl2fill
+    use forwardmodelconfig, only: forwardmodelconfig_t, &
+      & destroyfwmconfigdatabase, &
+      & stripforwardmodelconfigdatabase
+    use forwardmodelsupport, only: printforwardmodeltiming
+    use global_settings, only: set_global_settings
+    use griddeddata, only: griddeddata_t, destroygriddeddatadatabase, dump
+    use hessianmodule_1, only: destroyhessiandatabase, hessian_t
+    use hgridsdatabase, only: hgrid_t
+    use hgrid, only: computeallhgridoffsets
+    use highoutput, only: getstamp, outputnamedvalue, setstamp
+    use init_tables_module, only: l_chisqchan, l_chisqmmaf, l_chisqmmif,  &
+      & section_first, section_last, &
+      & z_algebra, z_chunkdivide,  z_construct, z_fill, z_globalsettings, &
+      & z_join, z_mergegrids, z_MLSsignals, z_output, z_readapriori,      &
+      & z_retrieve, z_spectroscopy
+    use intrinsic, only: section_indices
+    use join, only: MLSl2join
+    use l2auxdata, only: destroyl2auxdatabase, l2auxdata_t, dump
+    use l2fwmparallel, only: l2fwmslavetask, launchfwmslaves
+    use l2gpdata, only: destroyl2gpdatabase, l2gpdata_t, dump
+    use l2parallel, only: getchunkinfofrommaster, l2mastertask
+    use l2parinfo, only: parallel, closeparallel
+    use l2pc_m, only: destroyl2pcdatabase, destroybinselectordatabase
+    use l2pcbins_m, only: flushlockedbins
+    use matrixmodule_1, only: destroymatrixdatabase, matrix_database_t
+    use mergegridsmodule, only: mergegrids
+    use MLScommon, only: tai93_range_t, MLSfile_t
+    use MLSl2options, only: aura_l1bfiles, checkpaths, currentchunknumber, &
+      & l2cfnode, need_l1bfiles, &
+      & skipdirectwrites, skipdirectwritesoriginal, &
+      & skipretrieval, slavescleanupselves, specialdumpfile, stopaftersection, &
+      & MLSmessage, toolkit
+    use MLSmessagemodule, only: MLSmsg_allocate, MLSmsg_info, &
+      & MLSmsg_error, summarizewarnings
+    use MLSpcf2, only: MLSpcf_spectroscopy_end
+    use MLSfinds, only: findfirst
+    use MLSsignals_m, only: bands, destroybanddatabase, destroymoduledatabase, &
+      & destroyradiometerdatabase, destroysignaldatabase, &
+      & destroyspectrometertypedatabase, isspacecraftaura, &
+      & MLSsignals, modules, radiometers, &
+      & signals, spectrometertypes
+    use MLSstringlists, only: expandstringrange, isinlist, switchdetail
+    use MLSstrings, only: lowercase
+    use MLSl2timings, only: add_to_section_timing, total_times
+    use next_tree_node_m, only: next_tree_node, next_tree_node_state
+    use open_init, only: openandinitialize
+    use outputandclose, only: output_close
+    use output_m, only: blanks, output, &
+      & resumeoutput, revertoutput, switchoutput
+    use pointinggrid_m, only: destroy_pointing_grid_database
+    use quantitytemplates, only: quantitytemplate_t
+    use readapriori, only: read_apriori
+    use retrievalmodule, only: retrieve
+    use spectroscopycatalog_m, only: destroy_line_database, &
+      & destroy_spectcat_database, spectroscopy
+    use string_table, only: get_string
+    use time_m, only: time_now
+    use toggles, only: gen, levels, switches, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decoration, nsons, subtree
+    use vectorsmodule, only: destroyvectordatabase, dump_vectors, &
+      & vector_t, vectortemplate_t
+    use vgridsdatabase, only: destroyvgriddatabase, vgrids
 
     integer, intent(in) ::     ROOT        ! Root of the abstract syntax tree
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
@@ -520,7 +520,7 @@ subtrees:   do
         ! ------------------------------------------- Output section
       case ( z_output ) ! Write out the data
         call resumeOutput ! In case the last phase was  silent
-        if ( parallel%slave .and. .not. SLAVESDOOWNCLEANUP ) then
+        if ( parallel%slave .and. .not. slavesCleanUpSelves ) then
           exit
         else if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
@@ -547,8 +547,8 @@ subtrees:   do
 
     subroutine FinishUp ( Early )
       ! Deallocate and utterly destroy all the arrays we allocated
-      use FILTERSHAPES_M, only: DESTROY_FILTER_SHAPES_DATABASE, &
-        & DESTROY_DACS_FILTER_DATABASE
+      use filtershapes_m, only: destroy_filter_shapes_database, &
+        & destroy_dacs_filter_database
       logical, intent(in), optional :: Early
       ! Local variables
       logical :: myEarly
@@ -613,7 +613,7 @@ subtrees:   do
 
       call SummarizeWarnings
       call CloseParallel(numChunks, early)
-      if ( parallel%slave .and. .not. SLAVESDOOWNCLEANUP ) return
+      if ( parallel%slave .and. .not. slavesCleanUpSelves ) return
       if ( .not. (myEarly .or. skipRetrieval .or. checkPaths) ) then
         if ( parallel%slave ) then
           call destroyChunkDatabase ( chunks )
@@ -693,6 +693,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.193  2014/04/10 00:43:11  pwagner
+! Moved currentChunkNumber, currentPhaseName from MLSL2Timings to MLSL2Options
+!
 ! Revision 2.192  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
