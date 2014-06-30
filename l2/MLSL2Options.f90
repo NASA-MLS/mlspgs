@@ -14,8 +14,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
   use dump_0, only: dump
+  use HDF, only: dfacc_rdwr
   use HighOutput, only: Banner, OutputNamedValue
-  use intrinsic, only: l_hours, l_minutes, l_seconds
+  use intrinsic, only: l_ascii, l_hours, l_minutes, l_seconds
   use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
   use MLSFiles, only: WildCardHDFVersion, HDFVersion_4, HDFVersion_5, Dump
   use MLSMEssageModule, only: MLSMessageConfig, &
@@ -123,7 +124,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! But if system fails to reclaim memory properly, subsequent slaves
   ! may not find enough available and therefore crash
   ! FALSE means let operating system do it automatically
-  logical            :: SLAVESDOOWNCLEANUP            = .true.
+  logical            :: slavesCleanUpSelves           = .true.
   ! Will we be using a pvm channel to pipe data to an
   ! external running process, e.g. idl?
   logical            :: SNOOPINGACTIVE                = .false.
@@ -189,6 +190,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   end type runTimeValues_T
     
   type(runTimeValues_T), save :: runTimeValues
+  type (MLSFile_T)            :: AllocFile
 
   type :: dbItem_T
     ! This stores a generic level 2 datatype indexed by the database indx
@@ -367,7 +369,7 @@ contains
   ! (2) parsing cmdline, if supplied as an arg
   ! The return value will be the filename (if any)
   function ProcessOptions ( cmdLine ) result ( fileName )
-    use allocate_deallocate, only: trackAllocates, &
+    use allocate_deallocate, only: AllocateLogUnit, trackAllocates, &
       & clearOnAllocate, allocate_test, deallocate_test
     use Evaluate_Variable_m, only: Define_Variable_As_String
     use io_stuff, only: get_lun, get_nLines, read_textFile
@@ -377,6 +379,7 @@ contains
     use machine, only: getarg, hp, io_error, nevercrash
     use matrixmodule_0, only: checkblocks, subblocklength
     use MLSCommon, only: filenamelen
+    use MLSfiles, only: initializeMLSfile, MLS_openfile, MLS_closefile
     use MLSMessageModule, only: setconfig
     use MLSStringlists, only: catlists, &
       & getstringelement, getuniquelist, &
@@ -674,6 +677,32 @@ cmds: do
           call myNextArgument( i, inLine, entireLine, line )
           call SnipLastSlaveArgument ! Don't want slaves to see this
           GlobalAttributes%productionLoc = trim(line)
+        else if ( line(3+n:10+n) ==  'logalloc' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, filename )
+          call get_lun ( AllocateLogUnit, msg=.true. )
+          ! We can't call InitializeMLSFile yet because
+          ! the (string, character) tables are still empty and we would seg fault
+          ! status = InitializeMLSFile( AllocFile, content = 'logAlloc', &
+          !  &  name=trim(filename), &
+          !  & type=l_ascii, access=DFACC_RDWR )
+          ! call mls_openFile( AllocFile, status )
+          
+          ! So instead let's do all that "by hand"
+          AllocFile%name          = filename
+          ! AllocFile%type = l_ascii
+          AllocFile%content       = 'logAlloc'
+          AllocFile%access        = DFACC_RDWR
+          AllocFile%FileId%f_id  = AllocateLogUnit
+          open ( unit=AllocateLogUnit, access='sequential', action='readwrite', form='formatted', &
+            & status='unknown', file=trim(fileName), iostat=status )
+          if ( status /= 0 ) then
+            call io_error ( "Failed to open file to log allocates", status, filename )
+            stop
+          else
+            print *, 'opened allocations log file ' // trim(fileName) &
+              &  // ' unit ', AllocateLogUnit
+          endif
         else if ( line(3+n:9+n) == 'master ' ) then
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%master = .true.
@@ -777,8 +806,10 @@ cmds: do
             & trim(ModuleName) // 'processLine' )
           optLines = ' '
           call read_textFile( optsFile, optLines )
-          if ( switchDetail(switches, 'opt') > -1 ) &
-            call dump( optLines, 'options read from ' // trim(optsFile) )
+          print *, 'options read from ' // trim(optsFile)
+          do k=1, nLines
+            print *,  trim(optLines(k))
+          enddo
           ! Must save i, which will otherwise be incremented
           iActual = i
           do k=1, nLines
@@ -1043,9 +1074,9 @@ jloop:do while ( j < len_trim(line) )
       character(len=*), intent(in) :: line
       ! Local variables
       logical :: exitLoop
-      character(len=32)  :: filename
-      character(len=32) :: name
-      character(len=32) :: valu
+      character(len=fileNameLen) :: filename
+      character(len=32)          :: name
+      character(len=fileNameLen) :: valu
       logical, parameter :: countEmpty = .true.
       character(len=1), parameter :: eqls = '='
       call getStringElement( line, name, 1, countEmpty, eqls )
@@ -1134,7 +1165,7 @@ jloop:do while ( j < len_trim(line) )
     SKIPDIRECTWRITESORIGINAL      = .false.    
     SKIPRETRIEVAL                 = .false.        
     SKIPRETRIEVALORIGINAL         = .false. 
-    SLAVESDOOWNCLEANUP            = .false.
+    slavesCleanUpSelves            = .false.
     SPECIALDUMPFILE               = ' '
     STATEFILLEDBYSKIPPEDRETRIEVALS = 0.
     STOPAFTERSECTION              = ' ' ! Blank means 
@@ -1153,7 +1184,7 @@ jloop:do while ( j < len_trim(line) )
   end subroutine DumpMacros
 
   ! ---------------------------------------  RemoveRuntimeBoolean  -----
-  ! Dump the runtime macros
+  ! Remove the named runtime macros
   subroutine REMOVERUNTIMEBOOLEAN ( NAME )
   use MLSStringLists, only: getHashElement, &
     & removeHashArray, removeHashElement
@@ -1197,6 +1228,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.89  2014/06/30 23:27:47  pwagner
+! Can log allocations/deallocations to separate file
+!
 ! Revision 2.88  2014/06/25 20:45:44  pwagner
 ! Show options read from optsFile, if any
 !
@@ -1338,7 +1372,7 @@ END MODULE MLSL2Options
 ! Added SHAREDPCF so levels 1 and 2 can use same PCF
 !
 ! Revision 2.42  2007/09/06 22:42:28  pwagner
-! Added SLAVESDOOWNCLEANUP
+! Added slavesCleanUpSelves
 !
 ! Revision 2.41  2007/06/21 22:35:22  pwagner
 ! Updated version string to v2.22
