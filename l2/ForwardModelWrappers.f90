@@ -436,7 +436,7 @@ contains ! ============= Public Procedures ==========================
       use Init_Tables_Module, only: L_PTan, L_ScVelECR
       use Intrinsic, only: L_MagneticField, L_RefGPH
       use QuantityTemplates, only: RT
-      use VectorsModule, only: CreateVectorValue, VectorValue_t
+      use VectorsModule, only: CreateVectorValue, Dump, VectorValue_t
 
       type(forwardModelConfig_T), intent(inout) :: CONFIG
       type(vector_t), intent(inout), target :: FWDMODELIN ! The state
@@ -446,6 +446,7 @@ contains ! ============= Public Procedures ==========================
       real(rt) :: Angle    ! Between PTan and SC in degrees
       real(rt) :: H        ! magQty%template%phi(.,.) / Angle
       integer :: I, J
+      integer :: MagDump   ! Switch level for "mag" switch
       type(vectorValue_t), pointer :: MagQty   ! Magnetic field quantity
       integer :: Me = -1   ! String index for trace cacheing
       type(vectorValue_t), pointer :: PTan     ! Tangent pressure
@@ -502,6 +503,9 @@ contains ! ============= Public Procedures ==========================
       refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_refGPH, config=config )
       call usingMagneticModel ( magQty, refGPH, config%where, MAF=MAF )
+      magDump = switchDetail(switches,'mag')
+      if ( magDump > -1 ) &
+        & call dump ( magQty, name='Magnetic field', details=magDump )
       call trace_end ( 'Fill_Magnetic_Field', &
         & cond=toggle(emit) .and. levels(emit) > 1 )
 
@@ -878,6 +882,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.72  2014/07/01 23:05:58  vsnyder
+! Add switch to dump magnetic field if it's computed for each MAF
+!
 ! Revision 2.71  2014/07/01 01:24:37  vsnyder
 ! Unitize XYZ correctly, add comments
 !
