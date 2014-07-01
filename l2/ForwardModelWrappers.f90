@@ -443,8 +443,8 @@ contains ! ============= Public Procedures ==========================
       type(vector_t), intent(in) :: FwdModelExtra
       integer, intent(in) :: MAF
 
-      real(rt) :: Angle    ! Between PTan and SC
-      real(rt) :: H        ! magQty%template%phi(.) / Angle
+      real(rt) :: Angle    ! Between PTan and SC in degrees
+      real(rt) :: H        ! magQty%template%phi(.,.) / Angle
       integer :: I, J
       type(vectorValue_t), pointer :: MagQty   ! Magnetic field quantity
       integer :: Me = -1   ! String index for trace cacheing
@@ -464,6 +464,8 @@ contains ! ============= Public Procedures ==========================
         & cond=toggle(emit) .and. levels(emit) > 0 )
       magQty => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
               & quantityType=l_magneticField, config=config )
+
+      ! Get XYZ vectors for pTan and spacecraft position.
       pTan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
               & quantityType=l_ptan, config=config, &
               & instrumentModule=config%signals(1)%instrumentModule )
@@ -475,13 +477,17 @@ contains ! ============= Public Procedures ==========================
       call to_cart ( (/ scVelECR%template%geodLat(config%referenceMIF,MAF), &
                      &  scVelECR%template%lon(config%referenceMIF,MAF), 0.0_rt /), &
                      &  xyz(:,2) )
+      ! Make XYZ vectors unit length.
       forall ( i = 1:2 ) &
-        & xyz(:,i) = xyz(:,i) / dot_product ( xyz(:,i),xyz(:,i) )
+        & xyz(:,i) = xyz(:,i) / sqrt ( dot_product ( xyz(:,i),xyz(:,i) ) )
+      ! Get the angle between pTan and spacecraft position.
       angle = rad2deg * acos ( dot_product ( xyz(:,1),xyz(:,2) ) )
+      ! Make sure geolocation fields are the same shapes.
       call same_shape ( magQty%template%phi, magQty%template%geodLat, &
         & "magQty%template%GeodLat", moduleName )
       call same_shape ( magQty%template%phi, magQty%template%lon, &
         & "magQty%template%Lon", moduleName )
+      ! Compute magQty geodLat and Lon.
       do i = 1, size(magQty%template%phi,1)
         do j = 1, size(magQty%template%phi,2)
           h = magQty%template%phi(i,j) / angle
@@ -491,6 +497,7 @@ contains ! ============= Public Procedures ==========================
             & h * ( scVelECR%template%lon(i,j) - pTan%template%lon(i,j) )
         end do
       end do
+      ! Compute the magnetic field at geolocations in magQty.
       call createVectorValue ( magQty, "MagQty", moduleName )
       refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_refGPH, config=config )
@@ -871,6 +878,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.71  2014/07/01 01:24:37  vsnyder
+! Unitize XYZ correctly, add comments
+!
 ! Revision 2.70  2013/09/06 20:44:34  pwagner
 ! Fixed bugs in Transform_MIF_Qty
 !
