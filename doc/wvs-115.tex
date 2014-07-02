@@ -12,8 +12,8 @@
 \topmargin -0.5in
 \textheight 9in
 
-\newcommand{\docname}{wvs-115}
-\newcommand{\docdate}{13 August 2013}
+\newcommand{\docname}{wvs-115r1}
+\newcommand{\docdate}{1 July 2014}
 
 \ifx\pdfoutput\undefined
   \pdfoutput=0
@@ -138,12 +138,46 @@ hGridMag: hGrid, type=explicit, geodAngle=[-3.0, -1.5, 0, 1.5, 3.0]
 magQ: Quantity, type=magneticField, hGrid=hGridMag, vGrid=vGridStandard
 \end{verbatim}}
 
+\newpage
+
+If/when we decide to use {\tt azimuth} to compute the model plane, here's
+how the computation of a vertical model plane is done in {\tt
+Compute_Model_Plane}:
+
+Given $\mathbf{S}$, the spacecraft position and $\mathbf{V}$, the
+spacecraft velocity, the vector $\mathbf{P} = \mathbf{S} \times
+\mathbf{V}$ is normal to the orbit plane.  The vector $\mathbf{T}$
+that is in the orbit plane and perpendicular to $\mathbf{S}$ and
+$\mathbf{P}$ is given by $\mathbf{T} = \mathbf{S} \times \mathbf{P}
+= ( \mathbf{S} \cdot \mathbf{V}) \mathbf{S} - ( \mathbf{S} \cdot
+\mathbf{S} ) \mathbf{V} = ( \mathbf{S} \cdot \mathbf{V}) \mathbf{S}
+-  \mathbf{V}$ (because $|\mathbf{S}| = 1$). ($\mathbf{T}$ would be
+$-\mathbf{V}$ if the orbit were circular.) We want a vector in the
+$\mathbf{P} - \mathbf{T}$ plane, at an angle $\alpha$ ({\tt
+Azimuth}) from $\mathbf{P}$.  This vector $\mathbf{N}$ ({\tt
+Normal}) is given by $\mathbf{N} = \sin(\alpha) \mathbf{T} +
+\cos(\alpha) \mathbf{P}$.  If $\alpha = 0$, $\mathbf{N} =
+\mathbf{P}$, the normal to the orbit plane.  If $\alpha =
+\frac\pi2$, $\mathbf{N} = \mathbf{T} \approx -\mathbf{V}$, i.e.,
+$\alpha$ is an anti-clockwise rotation, from the spacecraft velocity
+vector, about the spacecraft position vector.
+
+An alternative to a vertical  model plane defined either by {\tt azimuth}
+or by the relationship of spacecraft geolocation and {\tt PTan}
+geolocation at a particular MIF, is a model surface defined by lines of
+sight between spacecraft positions and {\tt PTan} positions at
+corresponding MIFs.  Lines along which the model would be evaluated would
+be interpolated in the {\tt PTan}s to the specified $\zeta$'s, and the
+same interpolation factors would be used to interpolate in the spacecraft
+position.  This would be a more accurate sampling of the atmosphere, but
+wouldn't give a vertical solution profile; rather, the solution would be
+reported on an interpolation of the {\tt PTan}s.
+
 \label{lastpage}
 \end{document}
 
 % $Id$
 
 % $Log$
-% Revision 1.1  2013/07/25 00:30:52  vsnyder
+% Revision 1.1  2013/08/16 02:59:12  vsnyder
 % Initial commit
-%
