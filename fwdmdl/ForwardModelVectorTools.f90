@@ -305,8 +305,8 @@ contains
       call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
     end if
 
-    call Deallocate_test ( stuff(1)%match, 'matchV', ModuleName )
-    call Deallocate_test ( stuff(2)%match, 'matchOV', ModuleName )
+    call Deallocate_test ( stuff(1)%match, 'stuff%match(vectorIndex)', ModuleName )
+    call Deallocate_test ( stuff(2)%match, 'stuff%match(vectorIndex)', ModuleName )
 
   end function GetQuantityForForwardModel
 
@@ -363,6 +363,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.27  2014/07/18 23:14:29  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
 ! Revision 2.26  2013/08/12 23:48:09  pwagner
 ! FindSomethings moved to MLSFinds module
 !
