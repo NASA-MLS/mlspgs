@@ -188,7 +188,7 @@ contains
     type(tau_t), intent(inout) :: Tau
     character(len=*), intent(in) :: What, Where
     call deallocate_test ( tau%tau, what//"%Tau", where )
-    call deallocate_test ( tau%i_stop, what//"%I_stop", where )
+    call deallocate_test ( tau%i_stop, what//"%I_Stop", where )
   end subroutine Destroy_Tau
 
 ! -----------------------------------------------------  Dump_Tau  -----
@@ -226,6 +226,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.15  2014/07/18 23:16:08  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
 ! Revision 2.14  2011/09/30 01:53:43  vsnyder
 ! Correct a comment
 !
