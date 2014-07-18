@@ -282,7 +282,7 @@ contains ! =====  Public Procedures  ===================================
           call Allocate_test ( lines(numLines)%signals, noSignals, 'signals', ModuleName )
           call Allocate_test ( lines(numLines)%sidebands, noSignals, 'sidebands', ModuleName )
           if ( signalsNodePol /= 0 ) then
-            call allocate_test ( lines(numLines)%polarized, noSignals, 'Polarized', moduleName )
+            call allocate_test ( lines(numLines)%polarized, noSignals, 'catalog(molecule)%polarized', moduleName )
             lines(numLines)%polarized = .false.
           end if
           nullify ( sigInds )
@@ -546,8 +546,8 @@ contains ! =====  Public Procedures  ===================================
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     integer :: I
     do i = first_molecule, last_molecule
-      call deallocate_test ( catalog(i)%lines, "Catalog(i)%lines", moduleName )
-      call deallocate_test ( catalog(i)%polarized, "Catalog(i)%polarized", moduleName )
+      call deallocate_test ( catalog(i)%lines, "catalog(molecule)%Lines", moduleName )
+      call deallocate_test ( catalog(i)%polarized, "catalog(molecule)%polarized", moduleName )
     end do ! i
     mostLines = 0
     catalog%molecule = l_none ! Clobber them all
@@ -1546,6 +1546,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.61  2014/04/22 00:37:51  vsnyder
+! Add Signals and SignalsPol fields, and sanity checks
+!
 ! Revision 2.60  2014/04/04 19:36:54  vsnyder
 ! Check that the number of elements of the QN field is twice the low-order
 ! decimal digit of the first one (which is the JPL catalog format indicator),

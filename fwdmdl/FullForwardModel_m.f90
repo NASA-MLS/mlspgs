@@ -2225,10 +2225,10 @@ contains
       call allocate_test ( dAlpha_dT_path_c, max_c, maxNoPtgFreqs, &
         & 'dAlpha_dT_path_c', moduleName )
       call allocate_test ( beta_path_c, max_c, no_mol, maxNoPtgFreqs, &
-        & 'Beta_Path_c', moduleName )
+        & 'Beta_Path_C', moduleName )
 
       call allocate_test ( inc_rad_path, max_c, &
-        & max(maxNoPtgFreqs,noUsedChannels), 'Inc_Rad_path', moduleName )
+        & max(maxNoPtgFreqs,noUsedChannels), 'Inc_Rad_Path', moduleName )
 
       call allocate_test ( k_temp_frq, max(maxNoPtgFreqs,noUsedChannels), &
                          & merge(sv_t_len,0,temp_der), 'k_temp_frq', &
@@ -4705,6 +4705,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.349  2014/01/11 01:28:53  vsnyder
+! Decruftification
+!
 ! Revision 2.348  2013/08/31 02:30:03  vsnyder
 ! Improve tracing
 !

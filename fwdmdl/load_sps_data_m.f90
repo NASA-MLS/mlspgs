@@ -677,24 +677,24 @@ contains
     type (Grids_T), intent(inout) :: Grids_x
 
     grids_x%p_len = 0
-    call deallocate_test(Grids_x%names,'grids_x%names',modulename)
-    call deallocate_test(grids_x%l_f,'grids_x%l_f',modulename)
-    call deallocate_test(grids_x%l_z,'grids_x%l_z',modulename)
-    call deallocate_test(grids_x%l_p,'grids_x%l_p',modulename)
-    call deallocate_test(grids_x%l_v,'grids_x%l_v',modulename)
-    call deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
-    call deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
-    call deallocate_test(Grids_x%mol,'grids_x%mol',modulename)
-    call deallocate_test(Grids_x%where_dBeta_df,'grids_x%where_dBeta_df',modulename)
-    call deallocate_test(Grids_x%qty,'grids_x%qty',modulename)
-    call deallocate_test(Grids_x%s_ind,'grids_x%s_ind',modulename)
-    call deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
-    call deallocate_test(grids_x%min_val,'grids_x%min_val',modulename)
-    call deallocate_test(grids_x%frq_basis,'grids_x%frq_basis',modulename)
-    call deallocate_test(grids_x%zet_basis,'grids_x%zet_basis',modulename)
-    call deallocate_test(grids_x%phi_basis,'grids_x%phi_basis',modulename)
-    call deallocate_test(grids_x%values,'grids_x%values',modulename)
-    call deallocate_test(grids_x%deriv_flags,'grids_x%deriv_flags',modulename)
+    call deallocate_test(Grids_x%names,'Grids_x%names',modulename)
+    call deallocate_test(grids_x%l_f,'Grids_x%l_f',modulename)
+    call deallocate_test(grids_x%l_z,'Grids_x%l_z',modulename)
+    call deallocate_test(grids_x%l_p,'Grids_x%l_p',modulename)
+    call deallocate_test(grids_x%l_v,'Grids_x%l_v',modulename)
+    call deallocate_test(grids_x%windowstart,'Grids_x%windowstart',modulename)
+    call deallocate_test(grids_x%windowfinish,'Grids_x%windowfinish',modulename)
+    call deallocate_test(Grids_x%mol,'Grids_x%mol',modulename)
+    call deallocate_test(Grids_x%where_dBeta_df,'Grids_x%where_dBeta_df',modulename)
+    call deallocate_test(Grids_x%qty,'Grids_x%qty',modulename)
+    call deallocate_test(Grids_x%s_ind,'Grids_x%s_ind',modulename)
+    call deallocate_test(grids_x%lin_log,'Grids_x%lin_log',modulename)
+    call deallocate_test(grids_x%min_val,'Grids_x%min_val',modulename)
+    call deallocate_test(grids_x%frq_basis,'Grids_x%frq_basis',modulename)
+    call deallocate_test(grids_x%zet_basis,'Grids_x%zet_basis',modulename)
+    call deallocate_test(grids_x%phi_basis,'Grids_x%phi_basis',modulename)
+    call deallocate_test(grids_x%values,'Grids_x%values',modulename)
+    call deallocate_test(grids_x%deriv_flags,'Grids_x%deriv_flags',modulename)
 
   end subroutine DestroyGrids_t
 
@@ -791,6 +791,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.90  2014/04/22 00:08:27  vsnyder
+! Add tracing
+!
 ! Revision 2.89  2013/08/08 02:36:03  vsnyder
 ! Use derivOK instead of foundInFirst to set deriv_flags
 !
