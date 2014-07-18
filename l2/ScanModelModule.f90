@@ -1724,7 +1724,7 @@ contains ! =============== Subroutines and functions ==========================
     call time_now ( t1 )
   ! construct piq integral
     CALL ALLOCATE_TEST(piq,ptan%template%nosurfs,temp%template%nosurfs, &
-      & 'tan_refr_indx', modulename)
+      & 'piq', modulename)
     CALL piq_int(ptan%values(:,fmStat%maf),temp%template%surfs(:,1), &
       & refGPH%template%surfs(1,1), piq, Z_MASS = 2.5_rp, C_MASS = 0.02_rp)
     if ( timing ) call sayTime ( 'constructing piq integral' )
@@ -2116,6 +2116,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.81  2014/07/18 23:17:59  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
 ! Revision 2.80  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
