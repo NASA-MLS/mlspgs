@@ -558,19 +558,16 @@ contains ! =====     Public Procedures     =============================
 
     ! Allocate the values for the data itself
 
-    allocate ( l2aux%values( &
-      & dimStarts(1):dimEnds(1), &
-      & dimStarts(2):dimEnds(2), &
-      & dimStarts(3):dimEnds(3)), STAT=status )
-    if ( status/=0 .or. DEEBUG ) then
-      print *, 'status: ', status
-      print *, 'dimStarts: ', dimStarts
-      print *, 'dimEnds: ', dimEnds
-    end if
-    if ( status/=0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate// "l2aux values" )
-    end if
+    nullify ( l2aux%values )
+    call allocate_test( l2aux% values, &
+      & dimEnds(1), &
+      & dimEnds(2), &
+      & dimEnds(3), &
+      & 'l2aux%values', ModuleName, &
+      & dimStarts(1), &
+      & dimStarts(2), &
+      & dimStarts(3) &
+      )
   end subroutine SetupNewL2AUXRecord
     
   !----------------------------------------  DestroyL2AUXContents  -----
@@ -1953,6 +1950,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.93  2014/07/18 23:17:11  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
 ! Revision 2.92  2014/04/07 18:06:58  pwagner
 ! May specify AscDescMode when DirectWrite-ing swaths
 !
