@@ -496,22 +496,22 @@ contains
 
     ! Executable code
     verbose = switchDetail(switches, 'grid') > -1
-    call Deallocate_test ( qty%heights, "qty%heights", ModuleName )
-    call Deallocate_test ( qty%lats, "qty%lats", ModuleName )
-    call Deallocate_test ( qty%lons, "qty%lons", ModuleName )
-    call Deallocate_test ( qty%lsts, "qty%lsts", ModuleName )
-    call Deallocate_test ( qty%szas, "qty%szas", ModuleName )
+    call Deallocate_test ( qty%heights, "griddedQty%heights", ModuleName )
+    call Deallocate_test ( qty%lats, "griddedQty%lats", ModuleName )
+    call Deallocate_test ( qty%lons, "griddedQty%lons", ModuleName )
+    call Deallocate_test ( qty%lsts, "griddedQty%lsts", ModuleName )
+    call Deallocate_test ( qty%szas, "griddedQty%szas", ModuleName )
 
     ! Now the temporal coordinates
-    call Deallocate_test ( qty%dateStarts, "qty%dateStarts", ModuleName )
-    call Deallocate_test ( qty%dateEnds, "qty%dateEnds", ModuleName )
+    call Deallocate_test ( qty%dateStarts, "griddedQty%dateStarts", ModuleName )
+    call Deallocate_test ( qty%dateEnds, "griddedQty%dateEnds", ModuleName )
 
     ! Now the data itself
     if ( associated(qty%field) ) then
       s = byte_size(qty%field) / MEMORY_UNITS
       if ( verbose ) call outputnamedValue ( 'Grid size to be destroyed', shape(qty%field) )
       deallocate(qty%field, STAT=status)
-      call test_deallocate ( status, moduleName, 'grid%field', s )
+      call test_deallocate ( status, moduleName, "griddedQty%field", s )
     elseif ( verbose ) then
       call output( 'This grid not allocated', advance='true' )
     end if
@@ -1184,21 +1184,21 @@ contains
       call outputNamedValue( 'Bytes before allocating vertical/horizontal coordinates', &
         & NoBytesAllocated/MEMORY_UNITS )
     endif
-    call Allocate_test ( qty%heights, qty%noHeights, "qty%heights", ModuleName )
-    call Allocate_test ( qty%lats, qty%noLats, "qty%lats", ModuleName )
-    call Allocate_test ( qty%lons, qty%noLons, "qty%lons", ModuleName )
-    call Allocate_test ( qty%lsts, qty%noLsts, "qty%lsts", ModuleName )
-    call Allocate_test ( qty%szas, qty%noSzas, "qty%szas", ModuleName )
+    call Allocate_test ( qty%heights, qty%noHeights, "griddedQty%heights", ModuleName )
+    call Allocate_test ( qty%lats, qty%noLats, "griddedQty%lats", ModuleName )
+    call Allocate_test ( qty%lons, qty%noLons, "griddedQty%lons", ModuleName )
+    call Allocate_test ( qty%lsts, qty%noLsts, "griddedQty%lsts", ModuleName )
+    call Allocate_test ( qty%szas, qty%noSzas, "griddedQty%szas", ModuleName )
 
     ! Now the temporal coordinates
-    call Allocate_test ( qty%dateStarts, qty%noDates, "qty%dateStarts", ModuleName )
-    call Allocate_test ( qty%dateEnds, qty%noDates, "qty%dateEnds", ModuleName )
+    call Allocate_test ( qty%dateStarts, qty%noDates, "griddedQty%dateStarts", ModuleName )
+    call Allocate_test ( qty%dateEnds, qty%noDates, "griddedQty%dateEnds", ModuleName )
 
     ! Now the data itself
     if ( verbose ) call outputNamedValue( 'Bytes before allocating grid%field', NoBytesAllocated/memory_units )
     allocate(qty%field(qty%noHeights, qty%noLats, qty%noLons,  &
       qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
-    call test_allocate ( status, moduleName, 'qty%field', (/1,1,1,1,1,1/), &
+    call test_allocate ( status, moduleName, "griddedQty%field", (/1,1,1,1,1,1/), &
       & (/ qty%noHeights, qty%noLats, qty%noLons, qty%noLsts, qty%noSzas, &
       &    qty%noDates /), bytes(qty%field) )
     if ( verbose ) then
@@ -1792,6 +1792,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.76  2014/07/18 22:00:24  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
 ! Revision 2.75  2014/05/29 18:28:26  pwagner
 ! Correctly compute memory usage
 !
