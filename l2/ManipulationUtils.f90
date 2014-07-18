@@ -657,9 +657,9 @@ contains ! =====     Public Procedures     =============================
     if ( average(ii) ) avg = trim(avg) // 'i'
     shp = shape(a%values)
     call allocate_test( newone%values, shp(1), shp(2), &
-      & 'newone', ModuleName // '/evaluatePrimitive' )
+      & 'values', ModuleName // '/evaluatePrimitive(newone)' )
     call allocate_test( part%values, shp(1), shp(2), &
-      & 'part', ModuleName // '/evaluatePrimitive' )
+      & 'part%values', ModuleName // '/evaluatePrimitive(part)' )
 
     if ( deeBug ) then
       print *, 'Complete dump of database'
@@ -1121,7 +1121,7 @@ contains ! =====     Public Procedures     =============================
     enddo
     value = AddPrimitiveToDatabase( primitives, newone )
     call deallocate_test( part%values, &
-      & 'part', ModuleName // '/evaluatePrimitive' )
+      & 'part%values', ModuleName // '/evaluatePrimitive' )
     if ( .not. DEEBUG ) return
     print *, 'value ', value
     print *, 'newone"s values ' // trim(str)
@@ -1377,6 +1377,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.12  2014/07/18 23:17:32  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
 ! Revision 2.11  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
