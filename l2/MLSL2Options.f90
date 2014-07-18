@@ -411,7 +411,7 @@ contains
     character(len=FileNameLen)             :: optsFile
     character(len=FileNameLen), dimension(:), pointer  :: optLines => null()
     character(len=2) :: quotes
-    ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
+    integer :: RECL = 256          ! Record length for allocation log
     character(len=len(switches)) :: removeSwitches = ''
     integer :: STATUS
     logical :: SWITCH                ! "First letter after -- was not n"
@@ -695,7 +695,7 @@ cmds: do
           AllocFile%access        = DFACC_RDWR
           AllocFile%FileId%f_id  = AllocateLogUnit
           open ( unit=AllocateLogUnit, access='sequential', action='readwrite', form='formatted', &
-            & status='unknown', file=trim(fileName), iostat=status )
+            & status='unknown', file=trim(fileName), recl=recl, iostat=status )
           if ( status /= 0 ) then
             call io_error ( "Failed to open file to log allocates", status, filename )
             stop
@@ -1228,6 +1228,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.90  2014/07/18 23:19:19  pwagner
+! Added record length for allocation log
+!
 ! Revision 2.89  2014/06/30 23:27:47  pwagner
 ! Can log allocations/deallocations to separate file
 !
