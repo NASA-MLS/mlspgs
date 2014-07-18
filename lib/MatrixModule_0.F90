@@ -255,6 +255,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
       ! matrix elements.  This is a remapping of VALUE1.  If KIND = M_Full,
       ! the first dimension is indexed by channel, the second by MIF, and
       ! the third by state vector element.  This is a rank remapping of VALUE1.
+    character(len=40)                   :: AllocationName = 'None'
   end type MatrixElement_T
 
   ! - - -  Private data     - - - - - - - - - - - - - - - - - - - - - -
@@ -336,7 +337,7 @@ contains ! =====     Public Procedures     =============================
           call densify ( w, y ) ! w := y
           z = z + s * w
           call sparsify ( z, zb, & ! zb := z
-            & 'Z in Add_matrix_block', ModuleName )
+            & 'Z in Add_Matrix_Blocks', ModuleName )
           call Deallocate_test ( w, 'W in Add_Matrix_Blocks', ModuleName )
         end if
         
@@ -997,14 +998,15 @@ contains ! =====     Public Procedures     =============================
     z%nChan = x%nChan; z%nVert = x%nVert
     if ( x%kind == M_absent ) then
       call CreateEmptyBlock ( z )
+      z%AllocationName = x%AllocationName
     else
       z%kind = x%kind
       call deepCopy ( z%r1, x%r1 )
       call deepCopy ( z%r2, x%r2 )
       if ( z%kind == m_full ) then                                  
-        call createValues ( z, "z%values for " // trim(forWhom) )   
+        call createValues ( z, trim(x%AllocationName) )   
       else                                                          
-        call createValues ( z, "z%values for " // trim(forWhom), &  
+        call createValues ( z, trim(x%AllocationName), &  
           & size(x%values) )                                        
       end if                                                        
     end if
@@ -1127,11 +1129,11 @@ contains ! =====     Public Procedures     =============================
     if ( present(noValues) ) values = .not. noValues
     nNonZero = 0
     if ( present(numberNonzero) ) nNonZero = numberNonzero
-    what = "z%values"
-    if ( present(forWhom) ) what = "z%values for " // forWhom
     myChan = 1
     if ( present(nChan) ) myChan = max(nChan,1)
     call destroyBlock ( z )
+    what = 'B' ! to match DestroyValues"z%values"
+    if ( present(forWhom) ) what = forWhom
     z%nRows = nRows
     z%nCols = nCols
     z%nChan = myChan
@@ -1181,13 +1183,20 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(inout) :: Z
     character(len=*), intent(in) :: What
     integer, intent(in), optional :: NumberNonzero
+    ! Executable
+    ! In case Z is already allocated, must deallocate it 
+    ! before changing allocation name
+    call deallocate_test ( z%value1, trim(Z%AllocationName), moduleName )
+    Z%AllocationName = What
 
     if ( present(numberNonzero) ) then
-      call allocate_test ( z%value1, numberNonzero, what, moduleName )
+      call allocate_test ( z%value1, numberNonzero, trim(Z%AllocationName), &
+        & moduleName )
       call remap ( z%value1, z%values, (/ numberNonzero, 1 /) )
       nullify ( z%value3 )
     else
-      call allocate_test ( z%value1, z%nRows * z%nCols, what, moduleName )
+      call allocate_test ( z%value1, z%nRows * z%nCols, trim(Z%AllocationName), &
+        & moduleName )
       call remap ( z%value1, z%values, (/ z%nRows, z%nCols /) )
       call remap ( z%value1, z%value3, (/ z%nChan, z%nVert, z%nCols /) )
     end if
@@ -1451,7 +1460,7 @@ contains ! =====     Public Procedures     =============================
     ! Destroy the VALUE1, VALUES and VALUE3 components of B
     type(MatrixElement_T), intent(inout) :: B
     character(len=*), intent(in) :: What
-    call deallocate_test ( b%value1, trim(what) // 'VALUE1', ModuleName )
+    call deallocate_test ( b%value1, trim(B%AllocationName), ModuleName )
     nullify ( b%values, b%value3 )
   end subroutine DestroyValues
 
@@ -1962,7 +1971,7 @@ contains ! =====     Public Procedures     =============================
       & x, xb%nRows, y, yb%nRows, beta, z%values, xb%nRows )
 
     if ( myX .and. myY ) then
-      call sparsify ( z%values, zb, 'Z in MultiplyMatrix_XY_0', moduleName ) ! Zb := Z
+      call sparsify ( z%values, zb, trim(Z%AllocationName), moduleName ) ! Zb := Z
     else
       zb = z ! destroy zb, then shallow copy
     end if
@@ -2040,7 +2049,7 @@ contains ! =====     Public Procedures     =============================
       & x, xb%nRows, y, yb%nRows, beta, z%values, xb%nRows )
 
     if ( myX .and. myY ) then
-      call sparsify ( z%values, zb, 'Z in MultiplyMatrix_XY_T_0', moduleName ) ! Zb := Z
+      call sparsify ( z%values, zb, trim(Z%allocationName), moduleName ) ! Zb := Z
     else
       zb = z ! destroy zb, then shallow copy
     end if
@@ -2208,7 +2217,7 @@ contains ! =====     Public Procedures     =============================
 !$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z%values, zb, & ! Zb := Z
-          & "Z for banded X banded in MultiplyMatrix_XTY_0", ModuleName )
+          & trim(Z%allocationName), ModuleName )
       case ( M_Column_sparse ) ! XB banded, YB column-sparse
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
@@ -2257,7 +2266,7 @@ contains ! =====     Public Procedures     =============================
 !$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z%values, zb, & ! Zb := Z
-          & "Z for banded X banded in MultiplyMatrix_XTY_0", ModuleName )
+          & trim(Z%AllocationName), ModuleName )
       case ( M_Full )         ! XB banded, YB full
         if ( zb%kind /= m_full ) then
           call createBlock ( z, xb%nCols, yb%nCols, m_full, nChan=1, &
@@ -2345,7 +2354,7 @@ contains ! =====     Public Procedures     =============================
 !$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z%values, zb, & ! Zb := Z
-          & "Z for banded X banded in MultiplyMatrix_XTY_0", ModuleName )
+          & trim(Z%AllocationName), ModuleName )
       case ( M_Column_sparse ) ! XB column-sparse, YB column-sparse
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
@@ -2398,7 +2407,7 @@ contains ! =====     Public Procedures     =============================
 !$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z%values, zb, & ! Zb := Z
-          & "Z for banded X banded in MultiplyMatrix_XTY_0", ModuleName )
+          & trim(Z%AllocationName), ModuleName )
       case ( M_Full )         ! XB column-sparse, YB full
         if ( zb%kind /= m_full ) then
           call createBlock ( z, xb%nCols, yb%nCols, m_full, nChan=1, &
@@ -3246,7 +3255,7 @@ contains ! =====     Public Procedures     =============================
     z => b%values
     nullify ( b%values )
     nullify ( b%value1, b%value3 )
-    call Sparsify ( z, b, 'z', ModuleName )
+    call Sparsify ( z, b, trim(B%AllocationName), ModuleName )
   end subroutine SparsifyB
 
   ! ----------------------------------------------------  Spill_0  -----
@@ -3707,6 +3716,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.19  2014/07/18 23:13:44  pwagner
+! Aimed for consistency in names passed to allocate_test; added allocationName field to datatype
+!
 ! Revision 2.18  2013/06/12 02:12:44  vsnyder
 ! Cruft removal
 !
