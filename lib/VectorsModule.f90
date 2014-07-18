@@ -324,6 +324,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     integer :: label = 0        ! An optional label for this to be used as for
     ! example a swath name.  Often used in conjunction with the 'batch'
     ! approach to direct writes.
+    character(len=40)                   :: AllocationName = 'None'
   end type VectorValue_T
 
   ! Bit of MASK field of VectorValue_T
@@ -1142,6 +1143,11 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in), optional :: Where
     ! Local variables
     integer :: valueSize
+    ! Executable
+    ! In case it is already allocated, must deallocate Value
+    ! before changing its allocation name
+    call deallocate_test ( value%value1, &
+      & trim(value%AllocationName), moduleName )
     valueSize = max( 1, value%template%noChans * &
         & value%template%noSurfs * &
         & value%template%noInstances )
@@ -1160,14 +1166,13 @@ contains ! =====     Public Procedures     =============================
           & size(value%value3,3) == value%template%noInstances ) return
     end if
     if ( present(where) ) then
-      call allocate_test ( value%value1, &
-        & valueSize, &
-        & trim(what) // "%values", where )
+      value%AllocationName = trim(what) // "%values"
     else
-      call allocate_test ( value%value1, &
-        & valueSize, &
-        & trim(what) // "%values", moduleName )
+      value%AllocationName = 'VALUE1'
     end if
+    call allocate_test ( value%value1, &
+      & valueSize, &
+      & trim(value%AllocationName), moduleName )
     call remapVectorValue ( value )
   end subroutine CreateVectorValue
 
@@ -1258,11 +1263,8 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional          :: DESTROYMASK
     logical, intent(in), optional          :: DESTROYTEMPLATE
     character(len=*), intent(in), optional :: FORWHOM
-    if ( present(forWhom) ) then
-      call deallocate_test ( value%value1, trim(forWhom) // "%VALUE1", moduleName )
-    else
-      call deallocate_test ( value%value1, 'VALUE1', moduleName )
-    end if
+    ! Executable
+    call deallocate_test ( value%value1, trim(value%allocationName), moduleName )
     nullify ( value%values, value%value3 )
     if ( present(destroyMask) ) then
       if ( destroyMask ) call destroyVectorQuantityMask ( value, forWhom )
@@ -3281,6 +3283,12 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.189  2014/05/20 23:53:19  vsnyder
+! Add the POINTER attribute to the SourceValues argument to ReshapeVectorValue
+! to work around bugs in compilers that have not properly implemented the
+! feature that disassociated pointer actual arguments corresponding to
+! optional non-pointer dummy arguments are absent.
+!
 ! Revision 2.188  2014/02/01 00:16:43  pwagner
 ! Don't dump values for every quantity when failed to find one in GetVectorQuantityIndexByType
 !
