@@ -659,7 +659,7 @@ contains ! ======================= Public Procedures =========================
       case ( 'integer' )
         select case ( rank )
         case ( 3 )
-          call allocate_test( iValue, dims(1), dims(2), dims(3), 'iValue', ModuleName )
+          call allocate_test( iValue, dims(1), dims(2), dims(3), name, ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue )
           if ( present(fillvalue) ) then
             call dump ( iValue, trim(namePrinted), fillValue=int(fillvalue), &
@@ -667,9 +667,9 @@ contains ! ======================= Public Procedures =========================
           else
             call dump ( iValue, trim(namePrinted), options=options )
           endif
-          call deallocate_test( iValue, 'iValue', ModuleName )
+          call deallocate_test( iValue, name, ModuleName )
         case ( 2 )
-          call allocate_test( iValue, dims(1), dims(2), 1, 'iValue', ModuleName )
+          call allocate_test( iValue, dims(1), dims(2), 1, name, ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue(:,:,1) )
           if ( present(fillvalue) ) then
             call dump ( iValue(:,:,1), trim(namePrinted), fillValue=int(fillvalue), &
@@ -677,9 +677,9 @@ contains ! ======================= Public Procedures =========================
           else
             call dump ( iValue(:,:,1), trim(namePrinted), options=options )
           endif
-          call deallocate_test( iValue, 'iValue', ModuleName )
+          call deallocate_test( iValue, name, ModuleName )
         case default
-          call allocate_test( iValue, dims(1), 1, 1, 'iValue', ModuleName )
+          call allocate_test( iValue, dims(1), 1, 1, name, ModuleName )
           call LoadFromHDF5DS ( groupID, name, iValue(:,1,1) )
           if ( present(fillvalue) ) then
             call dump ( iValue(:,1,1), trim(namePrinted), fillValue=int(fillvalue), &
@@ -687,7 +687,7 @@ contains ! ======================= Public Procedures =========================
           else
             call dump ( iValue(:,1,1), trim(namePrinted), options=options )
           endif
-          call deallocate_test( iValue, 'iValue', ModuleName )
+          call deallocate_test( iValue, name, ModuleName )
          end select
       case ( 'double', 'real' )
         select case ( rank )
@@ -696,7 +696,7 @@ contains ! ======================= Public Procedures =========================
           call output( '(Presently we only dump a 3-d slice of 4-d arrays)', &
             & advance='yes' )
           call allocate_test( d4Value, dims(1), dims(2), dims(3), dims(4), &
-            & 'd4Value', ModuleName )
+            & name, ModuleName )
           call LoadFromHDF5DS ( groupID, name, d4Value )
           if ( present(fillvalue) ) then
             if ( present(options) .and. DEEBUG ) &
@@ -708,9 +708,9 @@ contains ! ======================= Public Procedures =========================
               & call outputNamedValue( 'options', options )
             call dump ( d4Value(:,:,:,:), trim(namePrinted), options=options )
           endif
-          call deallocate_test( d4Value, 'd4Value', ModuleName )
+          call deallocate_test( d4Value, name, ModuleName )
         case ( 3 )
-          call allocate_test( dValue, dims(1), dims(2), dims(3), 'dValue', ModuleName )
+          call allocate_test( dValue, dims(1), dims(2), dims(3), name, ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue )
           if ( present(fillvalue) ) then
             if ( present(options) .and. DEEBUG ) &
@@ -722,9 +722,9 @@ contains ! ======================= Public Procedures =========================
               & call outputNamedValue( 'options', options )
             call dump ( dValue, trim(namePrinted), options=options )
           endif
-          call deallocate_test( dValue, 'dValue', ModuleName )
+          call deallocate_test( dValue, name, ModuleName )
         case ( 2 )
-          call allocate_test( dValue, dims(1), dims(2), 1, 'dValue', ModuleName )
+          call allocate_test( dValue, dims(1), dims(2), 1, name, ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue(:,:,1) )
           if ( present(fillvalue) ) then
             call dump ( dValue(:,:,1), trim(namePrinted), &
@@ -732,9 +732,9 @@ contains ! ======================= Public Procedures =========================
           else
             call dump ( dValue(:,:,1), trim(namePrinted), options=options )
           endif
-          call deallocate_test( dValue, 'dValue', ModuleName )
+          call deallocate_test( dValue, name, ModuleName )
         case default
-          call allocate_test( dValue, dims(1), 1, 1, 'dValue', ModuleName )
+          call allocate_test( dValue, dims(1), 1, 1, name, ModuleName )
           call LoadFromHDF5DS ( groupID, name, dValue(:,1,1) )
           if ( present(fillvalue) ) then
             call dump ( dValue(:,1,1), trim(namePrinted), fillValue=real(fillvalue, r8), &
@@ -742,7 +742,7 @@ contains ! ======================= Public Procedures =========================
           else
             call dump ( dValue(:,1,1), trim(namePrinted), options=options )
           endif
-          call deallocate_test( dValue, 'dValue', ModuleName )
+          call deallocate_test( dValue, name, ModuleName )
          end select
       case ( 'character' )
         ! call outputNamedValue( 'type', QType )
@@ -2390,7 +2390,7 @@ contains ! ======================= Public Procedures =========================
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
-    call allocate_test ( value, int(lb-1+maxShp(1)), 'Value', moduleName )
+    call allocate_test ( value, int(lb-1+maxShp(1)), name, moduleName )
     call h5aOpen_name_f ( itemID, name, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name) )
@@ -2430,7 +2430,7 @@ contains ! ======================= Public Procedures =========================
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
-    call allocate_test ( value, int(lb-1+maxShp(1)), 'Value', moduleName )
+    call allocate_test ( value, int(lb-1+maxShp(1)), name, moduleName )
     call h5aOpen_name_f ( itemID, name, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name) )
@@ -2475,7 +2475,7 @@ contains ! ======================= Public Procedures =========================
     nullify ( ivalue )
     call GetHDF5AttributePtr ( itemID, name, iValue, lowBound )
     value = ( iValue == 1 )
-    call deallocate_test ( ivalue, 'IValue', moduleName )
+    call deallocate_test ( ivalue, name, moduleName )
     call trace_end ( cond=.false. )
   end subroutine GetHDF5AttributePtr_logicalarr1
 
@@ -2500,7 +2500,7 @@ contains ! ======================= Public Procedures =========================
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
-    call allocate_test ( value, int(lb-1+maxShp(1)), 'Value', moduleName )
+    call allocate_test ( value, int(lb-1+maxShp(1)), name, moduleName )
     call h5aOpen_name_f ( itemID, name, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name) )
@@ -2538,7 +2538,7 @@ contains ! ======================= Public Procedures =========================
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     call GetHDF5AttrDims ( itemID, trim(name), shp, maxShp )
-    call allocate_test ( value, int(lb-1+maxShp(1)), 'Value', moduleName )
+    call allocate_test ( value, int(lb-1+maxShp(1)), name, moduleName )
     call h5aOpen_name_f ( itemID, name, attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open attribute ' // trim(name) )
@@ -4593,7 +4593,7 @@ contains ! ======================= Public Procedures =========================
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     ub = lb - 1 + shp(1)
-    call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
+    call allocate_test ( value, ub, name, moduleName, lowBound=lb )
     call h5dread_f ( setID, stringtype, value, (/ shp(1), ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID, stringType=stringType )
     call trace_end ( cond=.false. )
@@ -4633,7 +4633,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataspace for dataset ' // trim(name) )
     call get_DS_shape ( spaceID, shp, name )
-    call allocate_test ( value, int(shp(1)), int(shp(2)), 'Value', moduleName )
+    call allocate_test ( value, int(shp(1)), int(shp(2)), name, moduleName )
     call h5dread_f ( setID, stringtype, value, (/ shp, ones(1:5) /), status )
     call finishLoad ( name, status, spaceID, setID, stringType=stringType )
     call trace_end ( cond=.false. )
@@ -4668,7 +4668,7 @@ contains ! ======================= Public Procedures =========================
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     ub = lb - 1 + shp(1)
-    call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
+    call allocate_test ( value, ub, name, moduleName, lowBound=lb )
     call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
       & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
@@ -4738,9 +4738,9 @@ contains ! ======================= Public Procedures =========================
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     ub = lb - 1 + size(myValue)
-    call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
+    call allocate_test ( value, ub, name, moduleName, lowBound=lb )
     value = myValue == 'T'
-    call deallocate_test ( myValue, 'myValue', moduleName )
+    call deallocate_test ( myValue, name, moduleName )
     call trace_end ( cond=.false. )
   end subroutine LoadPtrFromHDF5DS_logarr1
 
@@ -4773,7 +4773,7 @@ contains ! ======================= Public Procedures =========================
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     ub = lb - 1 + shp(1)
-    call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
+    call allocate_test ( value, ub, name, moduleName, lowBound=lb )
     call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
       & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
@@ -4851,7 +4851,7 @@ contains ! ======================= Public Procedures =========================
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     ub = lb - 1 + shp(1)
-    call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
+    call allocate_test ( value, ub, name, moduleName, lowBound=lb )
     call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
       & (/ shp, ones(1:6) /), status )
     call finishLoad ( name, status, spaceID, setID )
@@ -5696,6 +5696,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.128  2014/07/18 21:59:17  pwagner
+! Pass item name to allocate_test
+!
 ! Revision 2.127  2014/04/29 17:10:12  pwagner
 ! UFixed bugs regarding my_dont_trim in MakeHDF5Attribute_string
 !
