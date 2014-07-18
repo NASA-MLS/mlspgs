@@ -14,13 +14,17 @@ module PFADataBase_m
   ! Read PFA data.  Build a database.  Provide for access to it.
   ! Write PFA data.
 
-  use MLSKINDS, only: R4
-  use MLSCOMMON, only: FILENAMELEN
-  use MLSSIGNALS_M, only: MAXSIGLEN, SIGNAL_T
-  use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE
-  use VGRIDSDATABASE, only: VGRID_T
+  use allocate_deallocate, only: allocate_test, bytes, &
+    & deallocate_test, memory_units, &
+    & test_allocate
+  use highOutput, only: outputNamedValue
+  use MLSkinds, only: r4
+  use MLScommon, only: fileNameLen
+  use MLSsignals_m, only: maxSigLen, signal_t
+  use molecules, only: first_molecule, last_molecule
+  use vgridsdatabase, only: vgrid_t
   ! use FOR HDF5 INTENTIONALLY LAST TO AVOID LONG LF95 COMPILE TIMES
-  use HDF5, only: HID_T
+  use HDF5, only: hid_t
 
   implicit NONE
   private
@@ -148,7 +152,6 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------  Destroy_PFADataBase  -----
   subroutine Destroy_PFADataBase
-    use Allocate_Deallocate, only: Deallocate_Test
     use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
     integer :: I, M, S, SB
     if ( .not. associated(pfaData) ) return
@@ -176,7 +179,6 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------  Destroy_PFADatum  -----
   subroutine Destroy_PFADatum ( PFADatum )
-    use Allocate_Deallocate, only: Deallocate_Test
     type(PFAData_T), intent(inout) :: PFADatum
     call deallocate_test ( PFADatum%theSignal%channels, 'PFADatum...Channels', &
       & moduleName )
@@ -185,18 +187,16 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  Destroy_PFADatum_Arrays  -----
   subroutine Destroy_PFADatum_Arrays ( PFADatum )
-    use Allocate_Deallocate, only: Deallocate_Test
     type(PFAData_T), intent(inout) :: PFADatum
-    call deallocate_test ( PFADatum%absorption, 'PFADatum%absorption', moduleName )
-    call deallocate_test ( PFADatum%dAbsDwc, 'PFADatum%dAbsDwc', moduleName )
-    call deallocate_test ( PFADatum%dAbsDnc, 'PFADatum%dAbsDnc', moduleName )
-    call deallocate_test ( PFADatum%dAbsDnu, 'PFADatum%dAbsDnu', moduleName )
+    call deallocate_test ( PFADatum%absorption, 'absorption', moduleName )
+    call deallocate_test ( PFADatum%dAbsDwc, 'dAbsDwc', moduleName )
+    call deallocate_test ( PFADatum%dAbsDnc, 'dAbsDnc', moduleName )
+    call deallocate_test ( PFADatum%dAbsDnu, 'dAbsDnu', moduleName )
   end subroutine Destroy_PFADatum_Arrays
 
   ! --------------------------------------------  Destroy_PFAFile  -----
   subroutine Destroy_PFAFile ( PFAFile )
   ! Destroy one PFAFile_t object
-    use Allocate_Deallocate, only: DeAllocate_Test
     type(PFAFile_t), intent(inout) :: PFAFile
     integer :: I
     if ( associated(PFAFile%ix) ) then
@@ -226,14 +226,31 @@ contains ! =====     Public Procedures     =============================
   subroutine Dump_PFADataBase ( Details )
     use Output_m, only: Output
     integer, intent(in), optional :: Details
-    integer :: I
+    ! Local Variables
+    integer            :: I
+    real               :: total
     if ( .not. associated(pfaData) ) then
       call output ( 'No PFA Database to dump', advance='yes' )
       return
     end if
+    total = 0.
     do i = 1, ubound(PFAData,1)
       call dump_PFADatum ( pfaData(i), details, i )
+      if (   associated(pfaData(i)%absorption) ) &
+        & total = total + &
+        & product(shape(pfaData(i)%absorption))/MEMORY_UNITS
+      if (   associated(pfaData(i)%dAbsDwc) ) &
+        & total = total + &
+        & product(shape(pfaData(i)%dAbsDwc))/MEMORY_UNITS
+      if (   associated(pfaData(i)%dAbsDnc) ) &
+        & total = total + &
+        & product(shape(pfaData(i)%dAbsDnc))/MEMORY_UNITS
+      if (   associated(pfaData(i)%dAbsDnu) ) &
+        & total = total + &
+        & product(shape(pfaData(i)%dAbsDnu))/MEMORY_UNITS
     end do
+    call outputNamedValue( 'PFA Database Total Memory Footprint', &
+      & storage_size(PFAData(1)%Vel_Rel) * total )
   end subroutine Dump_PFADataBase
 
   ! ----------------------------------------------  Dump_PFADatum  -----
@@ -257,9 +274,10 @@ contains ! =====     Public Procedures     =============================
                                              ! >3 -> Betas, grids and derivatives
     integer, intent(in), optional :: Index   ! In PFA Database
 
-    integer, parameter :: CK = kind(speedOfLight)
-    real(ck) :: C = speedOfLight / 1000.0_ck ! km/s
-    integer :: MyDetails
+    integer, parameter          :: CK = kind(speedOfLight)
+    real(ck)                    :: C = speedOfLight / 1000.0_ck ! km/s
+    integer                     :: MyDetails                          
+    real                        :: total
     character(len=*), parameter :: WhichLines(0:2) = &
       (/ 'Channel   ', &
        & 'Radiometer', &
@@ -269,6 +287,21 @@ contains ! =====     Public Procedures     =============================
     if ( present(details) ) myDetails = details
 
     if ( myDetails < 0 .and. .not. associated(pfaDatum%absorption) ) return
+    total = 0.
+    if (   associated(PFADatum%absorption) ) &
+      & total = total + &
+      & product(shape(PFADatum%absorption))/MEMORY_UNITS
+    if (   associated(PFADatum%dAbsDwc) ) &
+      & total = total + &
+      & product(shape(PFADatum%dAbsDwc))/MEMORY_UNITS
+    if (   associated(PFADatum%dAbsDnc) ) &
+      & total = total + &
+      & product(shape(PFADatum%dAbsDnc))/MEMORY_UNITS
+    if (   associated(PFADatum%dAbsDnu) ) &
+      & total = total + &
+      & product(shape(PFADatum%dAbsDnu))/MEMORY_UNITS
+    call outputNamedValue( 'PFA Datum Total Memory Footprint', &
+      & storage_size(PFADatum%Vel_Rel) * total )
 
     call output ( 'PFA Datum' )
     if ( present(index) ) call output ( index, before=' ' )
@@ -503,7 +536,6 @@ contains ! =====     Public Procedures     =============================
   ! quickly given its molecule index, signal index, sideband and channel.
   ! Return index of one found one in the table already (if replace is present
   ! and true).  See Test_And_Fetch_PFA.
-    use Allocate_Deallocate, only: Allocate_Test, Test_Allocate
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
       & MLSMSG_Warning
     use MLSSignals_m, only: Signals
@@ -620,7 +652,6 @@ contains ! =====     Public Procedures     =============================
 
   integer function Process_PFA_File_datum ( PFAFileDatum, Where )
 
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     use MLSHDF5, only: LOADPTRFROMHDF5DS
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
       & MLSMSG_SEVERITY_TO_QUIT, MLSMSG_WARNING
@@ -790,7 +821,6 @@ contains ! =====     Public Procedures     =============================
   ! from FileName. Otherwise the PFA data for the Cartesian product of
   ! TheMolecules and TheSignals are read from FileName.
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use INTRINSIC, only: LIT_INDICES
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MOREMESSAGE, only: MLSMESSAGE
@@ -1140,7 +1170,6 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------  Create_or_Expand_PFADatabase  -----
   subroutine Create_or_Expand_PFADatabase ( ToAdd, PrevSize )
-    use Allocate_Deallocate, only: Test_Allocate
     use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, &
       & MLSMSG_Error
     integer, intent(in) :: ToAdd
@@ -1228,7 +1257,6 @@ contains ! =====     Public Procedures     =============================
   ! Read dAbsDwc and dAbsDnc if and only if Derivs is true.  Add any
   ! grids that aren't already in VGrids.
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use INTRINSIC, only: L_THETA, L_ZETA, LIT_INDICES
     use MLSHDF5, only: GETHDF5ATTRIBUTE, ISHDF5ATTRIBUTEPRESENT, LOADPTRFROMHDF5DS, &
       & READLITINDEXFROMHDF5ATTR
@@ -1357,6 +1385,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.49  2014/07/18 23:15:03  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
 ! Revision 2.48  2014/01/11 01:28:53  vsnyder
 ! Decruftification
 !
