@@ -2596,7 +2596,8 @@ contains ! =====     Public Procedures     =============================
         & FillValue=FillValueGP, options=options )
       
     if ( showMe(myDetails > 0, myFields, 'AscDescMode ') ) &
-      & call dump ( l2gp%AscDescMode, 'AscDescMode :' )
+      & call dump ( l2gp%AscDescMode, 'AscDescMode :', &
+        & width=width, options=options )
       
   contains
     logical function showMe(detailsOK, fields, field)
@@ -5219,6 +5220,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.201  2014/04/07 17:24:33  pwagner
+! Added new l2gp data field AscDescMode
+!
 ! Revision 2.200  2014/04/02 23:03:11  pwagner
 ! Removed redundant open_ and close_MLSFile
 !
