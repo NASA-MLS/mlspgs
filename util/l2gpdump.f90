@@ -15,7 +15,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
 
    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
    use BITSTUFF, only: ISBITSET
-   use DUMP_0, only: DUMP, SDFORMATDEFAULT
+   use DUMP_0, only: DUMP, DUMPDUMPOPTIONS, SDFORMATDEFAULT
    use HDF, only: DFACC_READ
    use HDF5, only: H5FCLOSE_F, H5GOPEN_F, H5GCLOSE_F, H5FIS_HDF5_F   
    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
@@ -213,6 +213,10 @@ contains
         i = i + 1
       else if ( filename(1:3) == '-d ' ) then
         call getarg ( i+1+hp, options%dumpOptions )
+        if ( index( options%dumpOptions, '?' ) > 0 ) then
+          call DumpDumpOptions( "?" )
+          stop
+        endif
         i = i + 1
       else if ( filename(1:4) == '-geo' ) then
         call getarg ( i+1+hp, filename )
@@ -301,6 +305,7 @@ contains
       write (*,*) '                      if hi < lo then dump is outside geobox'
       write (*,*) '          -d opts     => pass opts to dump routines'
       write (*,*) '                          e.g., "-rs" to dump only rms, stats'
+      write (*,*) '                          e.g., "?" to list available ones'
       write (*,*) '          -format form=> format output using form'
       write (*,*) '          -[n]inqattr attr'
       write (*,*) '                      => print only if attribute attr [not] present'
@@ -714,6 +719,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.17  2014/04/02 23:05:57  pwagner
+! Removed redundant open_ and close_MLSFile
+!
 ! Revision 1.16  2014/01/09 00:31:26  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
