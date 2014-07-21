@@ -771,6 +771,7 @@ contains
     logical :: My_Fill
     integer :: I, J
     character(len=12) :: LINE
+    character(len=12) :: myFormat
     integer :: MY_PLACES
     logical :: formatEncodesPlaces ! Have we used format to encode places?
     my_places = 0
@@ -786,7 +787,9 @@ contains
     endif
     if ( present(format) .and. .not. formatEncodesPlaces ) then
       line = ' '
-      write ( line, format ) int
+      myFormat = '(i7)'
+      if ( len_trim(format) > 1 ) myFormat = format
+      write ( line, myFormat ) int
       i = 1
       j = len_trim(line)
     else if ( my_fill  ) then
@@ -1376,6 +1379,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.112  2014/07/21 20:56:47  pwagner
+! Should not bomb so easily
+!
 ! Revision 2.111  2014/01/11 01:41:02  vsnyder
 ! Decruftification
 !
