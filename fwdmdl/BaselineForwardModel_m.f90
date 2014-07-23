@@ -28,23 +28,23 @@ contains ! ======================================== BaselineForwardModel ======
   subroutine BaselineForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
     & FwdModelOut, fmStat, jacobian )
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-    use Intrinsic, only: L_BASELINE, L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_NONE, &
-     &  L_PTAN, L_RADIANCE
-    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
-    use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED, DENSIFY, &
-      & CHECKFORSIMPLEBANDEDLAYOUT
-    use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
-    use MLSCommon, only: RP, RM
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
-      & MLSMSG_ALLOCATE
-    use MLSSignals_m, only: SIGNAL_T
-    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE, &
-      & VALIDATEVECTORQUANTITY
-    use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
-    use MLSNumerics, only: HUNT
+    use Allocate_Deallocate, only: allocate_test, deallocate_test
+    use ForwardModelConfig, only: forwardModelConfig_t
+    use ForwardModelIntermediate, only: forwardModelStatus_t
+    use Intrinsic, only: l_baseline, l_channel, l_intermediateFrequency, l_none, &
+     &  l_ptan, l_radiance
+    use ManipulateVectorQuantities, only: findoneclosestinstance
+    use MatrixModule_0, only: sparsify, matrixelement_t, m_absent, m_banded, densify, &
+      & checkforsimplebandedlayout
+    use MatrixModule_1, only: matrix_t, findblock, createblock
+    use MLSCommon, only: rp, rm
+    use MLSMessageModule, only: mlsmessage, mlsmsg_error, &
+      & mlsmsg_allocate
+    use MLSSignals_m, only: signal_t
+    use VectorsModule, only: vector_t, vectorValue_t, getVectorQuantityByType, &
+      & validatevectorquantity
+    use ForwardModelVectorTools, only: getQuantityForForwardmodel
+    use MLSNumerics, only: hunt
 
     ! Dummy arguments
     type(forwardModelConfig_T), intent(inout) :: fwdModelConf
@@ -373,9 +373,14 @@ contains ! ======================================== BaselineForwardModel ======
       if (present(jacobian) .and. bslInFirst ) then
         instLow = minval(inst0)
         instHi = maxval(inst1)
-        allocate ( kBit(radiance%template%instanceLen, &
+        ! allocate ( kBit(radiance%template%instanceLen, &
+        !  & baseline%template%instanceLen, &
+        !  & instLow:instHi), stat=status ) ! Notice the explicit low bound
+        call Allocate_test ( kBit, &
+          & radiance%template%instanceLen, &
           & baseline%template%instanceLen, &
-          & instLow:instHi), stat=status ) ! Notice the explicit low bound
+          & instHi, 'kBit', ModuleName, &
+          & 1, 1, instLow )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Allocate//'kBit' )
         ! Now densify any existing blocks
@@ -528,6 +533,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.32  2014/07/23 23:14:24  pwagner
+! Use allocate_test for kBit
+!
 ! Revision 2.31  2009/06/23 18:26:10  pwagner
 ! Prevent Intel from optimizing ident string away
 !
