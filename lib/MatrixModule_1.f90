@@ -16,29 +16,29 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 ! This module provides a block matrix type including operations for matrix
 ! quantities in MLS Level 2 software, and related programs.
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DUMP
-  use HIGHOUTPUT, only: BLANKSTOCOLUMN, DUMPSIZE, OUTPUTNAMEDVALUE
-  use LEXER_CORE, only: WHERE_T
-  use MATRIXMODULE_0, only: ADD_MATRIX_BLOCKS, ASSIGNMENT(=), CHECKINTEGRITY, &
-    & CHOLESKYFACTOR, CLEARLOWER, CLEARROWS, COLUMNSCALE, COL_L1, COPYBLOCK, &
-    & CREATEBLOCK, CYCLICJACOBI, DENSECYCLICJACOBI, DENSIFY, &
-    & DESTROYBLOCK, DIFF, DUMP, FROBENIUSNORM, &
-    & GETDIAGONAL, GETMATRIXELEMENT, GETMATRIXKINDSTRING, GETVECTORFROMCOLUMN, &
-    & INVERTCHOLESKY, M_ABSENT, M_COLUMN_SPARSE, M_BANDED, M_FULL, M_UNKNOWN, &
-    & MATRIXELEMENT_T, MAXABSVAL, MINDIAG, MULTIPLY, MULTIPLYMATRIX_XTY, MULTIPLYMATRIX_XY, &
-    & MULTIPLYMATRIX_XY_T, MULTIPLYMATRIXVECTORNOT, NULLIFYMATRIX, OPERATOR(+), &
-    & REFLECTMATRIX, ROWSCALE, SCALEBLOCK, SOLVECHOLESKY, &
-    & SPARSIFY, SPILL, TRANSPOSEMATRIX, UPDATEDIAGONAL
-  use MLSKINDS, only: RM, RV, R8, R4
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
-    & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
-  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
-  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
-  use SYMBOL_TABLE, only: ENTER_TERMINAL
-  use SYMBOL_TYPES, only: T_IDENTIFIER
-  use VECTORSMODULE, only: CLEARUNDERMASK, CLONEVECTOR, COPYVECTOR, VECTOR_T, &
-    & CHECKINTEGRITY, NULLIFYVECTOR
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use dump_0, only: dump
+  use highoutput, only: blankstocolumn, dumpsize, outputnamedvalue
+  use lexer_core, only: where_t
+  use matrixmodule_0, only: add_matrix_blocks, assignment(=), checkintegrity, &
+    & choleskyfactor, clearlower, clearrows, columnscale, col_l1, copyblock, &
+    & createblock, cyclicjacobi, densecyclicjacobi, densify, &
+    & destroyblock, diff, dump, frobeniusnorm, &
+    & getdiagonal, getmatrixelement, getmatrixkindstring, getvectorfromcolumn, &
+    & invertcholesky, m_absent, m_column_sparse, m_banded, m_full, m_unknown, &
+    & matrixelement_t, maxabsval, mindiag, multiply, multiplymatrix_xty, multiplymatrix_xy, &
+    & multiplymatrix_xy_t, multiplymatrixvectornot, nullifymatrix, operator(+), &
+    & reflectmatrix, rowscale, scaleblock, solvecholesky, &
+    & sparsify, spill, transposematrix, updatediagonal
+  use MLSkinds, only: rm, rv, r8, r4
+  use MLSmessagemodule, only: MLSmessage, MLSmsg_allocate, &
+    & MLSmsg_deallocate, MLSmsg_error, MLSmsg_warning
+  use output_m, only: blanks, newline, output
+  use string_table, only: display_string, get_string
+  use symbol_table, only: enter_terminal
+  use symbol_types, only: t_identifier
+  use vectorsmodule, only: clearundermask, clonevector, copyvector, vector_t, &
+    & checkintegrity, nullifyvector
 
   implicit none
   private
@@ -1073,11 +1073,11 @@ contains ! =====     Public Procedures     =============================
     if ( present(quanFirst) ) rc%instFirst = .not. quanFirst
     rc%nb = vec%template%totalInstances
     call allocate_test ( rc%nelts, rc%nb, &
-      & "rc%nelts in CreateEmptyMatrix", ModuleName )
-    call allocate_test ( rc%inst, rc%nb, "rc%inst in CreateEmptyMatrix", &
-      & ModuleName )
-    call allocate_test ( rc%quant, rc%nb, "rc%quant in CreateEmptyMatrix", &
-      & ModuleName )
+      & "rc%nelts", ModuleName // '%CreateEmptyMatrix' )
+    call allocate_test ( rc%inst, rc%nb, "rc%inst", &
+      & ModuleName // '%CreateEmptyMatrix' )
+    call allocate_test ( rc%quant, rc%nb, "rc%quant", &
+      & ModuleName // '%CreateEmptyMatrix' )
     if ( rc%instFirst ) then
       !??? Are rc%nelts etc. different if the vector is not regular?
       n = 0
@@ -2458,23 +2458,23 @@ contains ! =====     Public Procedures     =============================
     a%vec = b%vec
     a%nb = b%nb
     a%instFirst = b%instFirst
-    call allocate_test ( a%nelts, size(b%nelts), "a%nelts in CopyRCInfo", &
-      & moduleName )
+    call allocate_test ( a%nelts, size(b%nelts), "a%nelts", &
+      & ModuleName // '%CopyRCInfo' )
     a%nelts = b%nelts
-    call allocate_test ( a%inst, size(b%inst), "a%inst in CopyRCInfo", &
-      & moduleName )
+    call allocate_test ( a%inst, size(b%inst), "a%inst", &
+      & ModuleName // '%CopyRCInfo' )
     a%inst = b%inst
-    call allocate_test ( a%quant, size(b%quant), "a%quant in CopyRCInfo", &
-      & moduleName )
+    call allocate_test ( a%quant, size(b%quant), "a%quant", &
+      & ModuleName // '%CopyRCInfo' )
     a%quant = b%quant
   end subroutine CopyRCInfo
 
   ! ----------------------------------------------  DestroyRCInfo  -----
   subroutine DestroyRCInfo ( RC )
     type(RC_Info), intent(inout) :: RC
-    call deallocate_test ( rc%nelts, "rc%nelts in DestroyRCInfo", moduleName )
-    call deallocate_test ( rc%inst, "rc%inst in DestroyRCInfo", moduleName )
-    call deallocate_test ( rc%quant, "rc%quant in DestroyRCInfo", moduleName )
+    call deallocate_test ( rc%nelts, "rc%nelts", ModuleName // '%DestroyRCInfo' )
+    call deallocate_test ( rc%inst,  "rc%inst" , ModuleName // '%DestroyRCInfo' )
+    call deallocate_test ( rc%quant, "rc%quant", ModuleName // '%DestroyRCInfo' )
   end subroutine DestroyRCInfo
 
   ! ------------------------------------------------  Diff_Matrices  -----
@@ -2938,6 +2938,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.135  2014/07/23 21:58:28  pwagner
+! Attempted to match names passed to allocate/deallocate
+!
 ! Revision 2.134  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
