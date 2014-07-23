@@ -13,32 +13,32 @@ module L1BData
 
   ! Reading and interacting with Level 1B data (HDF4 or HDF5)
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DUMP_0, only: DIFF, DIFF_FUN, DUMP
-  use HDF, only: DFACC_RDonly, SFGINFO, SFN2INDEX, SFSELECT, &
-    & SFRDATA_F90, &
-    & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
-    & DFNT_FLOAT32
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use IEEE_ARITHMETIC, only: IEEE_IS_FINITE
-  use INTRINSIC, only: L_HDF
-  use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCOMMON, only: MLSFILE_T, &
-    & UNDEFINEDVALUE, FILENAMELEN, namelen
-  use MLSFILES, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
-    & ADDFILETODATABASE, INITIALIZEMLSFILE, &
-    & MLS_OPENFILE, MLS_CLOSEFILE
-  use MLSKINDS, only: R4, R8
-  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-    & MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMESSAGE
-  use MLSSTRINGS, only: INDEXES, STREQ
-  use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, SWITCHDETAIL
-  use MORETREE, only: GET_FIELD_ID
-  use OUTPUT_M, only: OUTPUT
-  use STRING_TABLE, only: GET_STRING
-  use TOGGLES, only: SWITCHES
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, WHERE
+  use allocate_deallocate, only: allocate_test, deallocate_test
+  use dump_0, only: diff, diff_fun, dump
+  use HDF, only: dfacc_rdonly, sfginfo, sfn2index, sfselect, &
+    & sfrdata_f90, &
+    & sfrcdata, sfendacc, dfnt_char8, dfnt_int32, dfnt_float64, &
+    & dfnt_float32
+  use highoutput, only: outputnamedvalue
+  use ieee_arithmetic, only: ieee_is_finite
+  use intrinsic, only: l_HDF
+  use lexer_core, only: print_source
+  use MLScommon, only: MLSfile_t, &
+    & undefinedValue, fileNameLen, nameLen
+  use MLSfiles, only: filenotfound, HDFversion_4, HDFversion_5, &
+    & addFileToDatabase, initializeMLSfile, &
+    & MLS_openFile, MLS_closeFile
+  use MLSkinds, only: r4, r8
+  use MLSmessagemodule, only: MLSmsg_allocate, MLSmsg_error, &
+    & MLSmsg_l1bread, MLSmsg_warning, MLSmessage
+  use MLSstrings, only: indexes, streq
+  use MLSstringLists, only: numStringElements, switchDetail
+  use moretree, only: get_field_id
+  use output_m, only: output
+  use string_table, only: get_string
+  use toggles, only: switches
+  use trace_m, only: trace_begin, trace_end
+  use tree, only: nsons, sub_rosa, subtree, dump_tree_node, where
 
   implicit NONE
 
@@ -1873,7 +1873,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     ! allocate, read counterMAF
     call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
-      & 'counterMAF', ModuleName )
+      & 'l1bData%counterMAF', ModuleName )
     if ( sds1_id /= SD_NO_COUNTERMAF ) then
       status = sfrdata_f90(sds1_id,  (/ l1bData%firstMAF /) , (/1/), &
         & (/l1bData%noMAFs/), l1bData%counterMAF )
@@ -2116,7 +2116,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( DEEBug ) print *, 'noMAFs ', noMAFs
 
     call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
-      & 'counterMAF', ModuleName )
+      & 'l1bData%counterMAF', ModuleName )
     ! Find data sets for counterMAF & quantity by name
 
     if ( .not. IsHDF5DSPresent(L1FileHandle, '/counterMAF') ) then
@@ -2674,6 +2674,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.101  2014/07/23 21:57:59  pwagner
+! Attempted to match names passed to allocate/deallocate
+!
 ! Revision 2.100  2014/03/07 19:12:49  pwagner
 ! Name_Len changed to nameLen; got from MLSCommon
 !
