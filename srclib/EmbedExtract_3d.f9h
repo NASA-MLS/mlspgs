@@ -34,7 +34,7 @@
           do II=1, count(1)
             do k=1, block(3)
               n3 = start(3) - 1 + (KK-1)*stride(3) + k
-              m3 = (KK-1)*block(2) + k
+              m3 = (KK-1)*block(3) + k
               do j=1, block(2)
                 n2 = start(2) - 1 + (JJ-1)*stride(2) + j
                 m2 = (JJ-1)*block(2) + j
@@ -60,7 +60,7 @@
           do II=1, count(1)
             do k=1, block(3)
               n3 = start(3) - 1 + (KK-1)*stride(3) + k
-              m3 = (KK-1)*block(2) + k
+              m3 = (KK-1)*block(3) + k
               do j=1, block(2)
                 n2 = start(2) - 1 + (JJ-1)*stride(2) + j
                 m2 = (JJ-1)*block(2) + j
@@ -79,6 +79,9 @@
       & ModuleName, "direction neither embedding nor extracting" )
     end select
 ! $Log$
+! Revision 1.3  2013/11/06 22:13:29  pwagner
+! Fixed error in 3rd index of array
+!
 ! Revision 1.2  2013/09/18 16:22:01  pwagner
 ! Changed api for Embed, ExtractArray procedures--now select hyperslabs
 !
