@@ -12,7 +12,7 @@
 !=============================================================================
 MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
-  use MLSFINDS, only: FINDFIRST, FINDNEXT
+  use MLSFinds, only: findFirst, findNext
   implicit none
   private
 
@@ -63,11 +63,13 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! NCopies            How many copies of a substring in a string
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
+! readNumFromBaseN   Interprets a string as base n representation; returns float
 ! ReadIntFromBaseN   Interprets a string as base n representation
 ! ReadIntsFromChars  Converts an [array of] strings to int[s] using Fortran read
 ! ReadNumsFromChars  Converts an [array of] strings to num[s] using Fortran read
 ! ReadRomanNumerals  Converts a Roman numeral (e.g. 'ix') to its integer value
 ! Replace            Replaces every instance of oldChar with newChar
+! remap              Replaces every instance of char in old with corresponding nw
 ! ReplaceNonAscii    Replaces every non-ascii char with newChar (see also asciify)
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! Reverse_trim       (Reverses after trimming its argument)
@@ -118,14 +120,16 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! int NCopies (char* str, char* substring, [log overlap])
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
+! readNumFromBaseN (char* strs, real float, int N, [char* options])
 ! readIntFromBaseN (char* strs, int int, int N, [char* options])
 ! readIntsFromChars (char* strs[(:)], int ints[(:)], char* forbiddens)
 ! readNumsFromChars (char* strs[(:)], num num[(:)], char* forbiddens)
 ! readRomanNumerals (char* strs, int int)
-! char* Replace (char* str, char oldChar, char newChar, [int max])
+! char* remap ( char* str, char* old, char* new )
+! char* Replace ( char* str, char oldChar, char newChar, [int max] )
 ! char* ReplaceNonAscii ( char* str, char newChar, [char* exceptions] )
-! char* Reverse (char* str)
-! char* Reverse_trim (char* str)
+! char* Reverse ( char* str )
+! char* Reverse_trim ( char* str )
 ! char* Rot13 ( char* str, [int nn], [char* otp], [log inverse] )
 ! char* shiftLRC (char* str, [char* position], [char fillChar])
 ! int size_trim ( char* str(:) )
@@ -195,20 +199,20 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! streq                     
 ! === (end of api) ===
 
-  public :: ASCIIFY, &
-    & CAPITALIZE, CATSTRINGS, CHARTOINT, COMPRESSSTRING, COUNT_WORDS, &
-    & DELETE, DEPUNCTUATE, FLUSHARRAYLEFT, HHMMSS_VALUE, &
-    & INDEXES, INTS2STRINGS, ISALLASCII, ISALPHABET, ISCOMMENT, ISREPEAT, &
-    & LENTRIMTOASCII, LINEARSEARCHSTRINGARRAY, LOWERCASE, &
-    & NAPPEARANCES, NCOPIES, &
-    & READCOMPLETELINEWITHOUTCOMMENTS, READINTFROMBASEN, READINTSFROMCHARS, &
-    & READNUMSFROMCHARS, READROMANNUMERALS, &
-    & REPLACE, REPLACENONASCII, REVERSE, REVERSE_TRIM, &
-    & ROT13, &
-    & SHIFTLRC, SIZE_TRIM, SPLITDETAILS, SPLITNEST, SPLITWORDS, SQUEEZE, &
-    & STARTCASE, STREQ, STRETCH, STRINGS2INTS, &
-    & TRIM_SAFE, TRUELIST, UNASCIIFY, UNWRAPLINES, &
-    & WRITEINTASBASEN, WRITEINTSTOCHARS, WRITEROMANNUMERALS
+  public :: asciify, &
+    & capitalize, catStrings, charToInt, compressString, count_words, &
+    & delete, depunctuate, flushArrayLeft, hhmmss_value, &
+    & indexes, ints2Strings, isAllAscii, isAlphabet, isComment, isRepeat, &
+    & lenTrimToAscii, linearSearchStringArray, lowercase, &
+    & nAppearances, nCopies, &
+    & readCompleteLineWithoutComments, readIntFromBaseN, readIntsFromChars, &
+    & readNumFromBaseN, readNumsFromChars, readRomanNumerals, &
+    & remap, replace, replaceNonAscii, reverse, reverse_trim, &
+    & rot13, &
+    & shiftlrc, size_trim, splitDetails, splitNest, splitWords, squeeze, &
+    & startCase, streq, stretch, strings2Ints, &
+    & trim_safe, trueList, unAsciify, unWrapLines, &
+    & writeIntasBaseN, writeIntsToChars, writeRomanNumerals
 
   interface asciify
     module procedure asciify_scalar, asciify_1d, asciify_2d, asciify_3d
@@ -216,6 +220,10 @@ MODULE MLSStrings               ! Some low level string handling stuff
 
   interface readIntsFromChars
     module procedure readAnIntFromChars, readIntArrayFromChars
+  end interface
+
+  interface readNumFromBaseN
+    module procedure readFloatFromBaseN, readIntFromBaseN
   end interface
 
   interface readNumsFromChars
@@ -1207,92 +1215,71 @@ contains
 
   END SUBROUTINE ReadCompleteLineWithoutComments
 
-  ! ----------------  readIntFromBaseN  -----
-  ! read an integer which had been reexpressed in base n from a string
+  ! ----------------  readNumFromBaseN  -----
+  ! read a number which had been reexpressed in base n from a string
   
   ! Use:
-  ! Return e.g. the number 1989 in base 5 from str='30424'
+  ! Return e.g. the number 1989 in base 5 from str='3 0 4 2 4'
   ! i.e., 4 + 5*(2 + 5*(4 + 5*(0 + 5*3)))
-  subroutine readIntFromBaseN ( STR, K, N, OPTIONS )
-    ! returns an integer and from a string
-    ! using poorly-tested but hopefully non-critical code
+  ! According to the options string, the intermediate integer coefficients
+  ! will be based on
+  !  options contain            coefficient string
+  !    ---                      ------------------
+  !   (default)                 decimal integers, separated by spaces
+  !                              e.g., ''13 4 29 6''
+  !      x                      "Extended" hexadecimal-style (hex if N = 16)
+  !                               e.g., '9 b d 2 f 0 0 0'
+  !      c                      compressed str; otherwise like 'x'
+  !                               i.e. no spaces separate each digit
+  !                               e.g., '9bd2f000'
+  ! 0123456789012345678901234567890123456789012345678901234567890123456789
+  ! 0123456789abcdefghijklmnopqrstuvwxyz;'[]ABCDEFGHIJKLMNOPQRSTUVWXYZ:"{}
+  !                              (good only up to base 70)
+  !
+  ! The default representation can handle arbitrarily large moduli
+  ! a or A is limited to the unique range of achar
+  ! x is good only up to a modulus of 70.
 
-    ! According to the options string, the intermediate integer coefficients
-    ! will be based on
-    !  options contain            coefficient string
-    !    ---                      ------------------
-    !   (default)                 decimal integers, separated by spaces
-    !                              e.g., ''13 4 29 6''
-    !      a                      achar(c[m]) in the same order
-    !                              e.g., CR // EOT // GS // ACR   
-    !      A                      like a but converted to ascii
-    !                              e.g., '<CR>' // '<EOT>' // '<GS>' // <ACR>   
-    !      x                      "Extended" hexadecimal
-    ! 0123456789012345678901234567890123456789012345678901234567890123456789
-    ! 0123456789abcdefghijklmnopqrstuvwxyz;'[]ABCDEFGHIJKLMNOPQRSTUVWXYZ:"{}
-    !                              (good only up to base 70)
-    !
-    ! The default representation can handle arbitrarily large moduli
-    ! a or A is limited to the unique range of achar
-    ! x is good only up to a modulus of 70.
+  ! Notes
+  ! (1) we do not check that the str is a valid number in base N
+  !     E.g., you can enter '10 0 1' in base 5 and get back a numerical
+  !     result of 251 instead of an error message
+  ! (2) we do not check that str would be converted to an integer
+  !     outside the largest representable
+  ! (3) At first we intended to include the following options; however
+  !     it never became clear that there was an urgent need they satisfied
+  !      a                      achar(c[m]) in the same order
+  !                              e.g., CR // EOT // GS // ACR   
+  !      A                      like a but converted to ascii
+  !                              e.g., '<CR>' // '<EOT>' // '<GS>' // <ACR>   
+
+  subroutine readIntFromBaseN ( STR, K, N, OPTIONS )
+    ! reads an integer from a string
+    ! using poorly-tested but hopefully non-critical code
     
-    ! Note that we do not check that the str is a valid number in base N
-    ! E.g., you can enter '10 0 1' in base 5 and get back a numerical
-    ! result of 251 instead of an error message
+    ! Note: beware of integer overflow; if str would be converted
+    ! to an int > max integer representable, you must
+    ! use the api which reads a float from str instead
 
     !--------Argument--------!
     character (len=*), intent(in)           ::   str
     integer, intent(out)                    ::   k ! integer result
     integer, intent(in)                     ::   N ! the base
     character(len=*), optional, intent(in)  ::   options
-    ! Internal variables
-    integer, dimension(:), pointer          :: C => null()
-    integer                                 :: i
-    integer                                 :: i1
-    integer                                 :: i2
-    integer                                 :: j
-    integer                                 :: m
-    character(len=8)                        :: myOptions
-    integer                                 :: status
-    character(len=8)                        :: substr
-    character(len=1)                        :: subsub
-    character(len=*), parameter             :: xtended = &
-      & '0123456789abcdefghijklmnopqrstuvwxyz;''[]ABCDEFGHIJKLMNOPQRSTUVWXYZ:"{}'
-    ! Executable
-    k = 0
-    if ( N < 2 .or. len_trim(str) < 1 ) return
-    myOptions = ' '
-    if ( present(options) ) myOptions = options
-    ! First we must obtain m
-    m = ncopies( trim(str), ' ' )
-    allocate( C(0:m), stat=status )
-    i2 = 1
-    do j=m, 0, -1
-      i1 = i2
-      i2 = FindNext( str, ' ', i1 )
-      substr = str(i1:i2)
-      i1 = i2
-      ! Read each substr as an integer
-      if ( index(myOptions, 'a') > 0 .or. index(myOptions, 'A') > 0 ) then
-        ! We won't bother coding this case--it would be ridiculous anyway
-        stop
-      elseif ( index(myOptions, 'x') > 0 ) then
-        ! 'Extended' hexadecimal
-        subsub = adjustl(substr)
-        C(j) = FindFirst( (/ (xtended(i:i), i=1, len(xtended)) /) == subsub )
-        C(j) = max(0, C(j) - 1)
-      else
-        ! Plain vanilla decimal integers
-        call readIntsFromChars( substr, C(j) )
-      endif
-    enddo
-    ! call dump(C, 'coefficients')
-    k = 0
-    do j=m, 0, -1
-      k = N*k + C(j)
-    enddo
-    deallocate( C, stat=status )
+    include "ReadNumFromBaseN.f9h"
   end subroutine readIntFromBaseN
+
+  subroutine readFloatFromBaseN ( STR, k, N, OPTIONS )
+    ! reads an f.p. number from a string
+    ! using poorly-tested but hopefully non-critical code
+
+    !--------Argument--------!
+    character (len=*), intent(in)           ::   str
+    real, intent(out)                       ::   k ! integer result
+    integer, intent(in)                     ::   N ! the base
+    character(len=*), optional, intent(in)  ::   options
+    include "ReadNumFromBaseN.f9h"
+  end subroutine readFloatFromBaseN
 
   ! ----------------  readIntsFromChars  ----- readNumsFromChars  -----
   ! This family of routines reads either a single number or an array
@@ -1481,6 +1468,40 @@ contains
       enddo
     enddo
   end subroutine readRomanNumerals
+
+   ! --------------------------------------------------  remap  -----
+  function remap ( str, old, new ) result (outstr)
+    ! Replaces every old in the input str with the corresponding new char
+    ! E.g., given 
+    ! str = 'Four score and seven years' and
+    ! old = 'osa' and new = '0$9', then the result will be
+    ! result = 'F0ur $c0re 9nd $even year$'
+    ! Notes
+    ! (1) characters in str not found in old will be left unchanged
+    ! (2) if new is shorter than old, some old characters may be replaced by blanks
+    ! (3) See also Rot13 and Replace
+    !--------Argument--------!
+    character (len=*), intent(in) :: str
+    character (len=*), intent(in) :: old
+    character (len=*), intent(in) :: new
+    character (len=max(len_trim(str), 1)) :: outstr
+
+    !----------local vars----------!
+    integer :: i
+    integer :: it
+    !----------executable part----------!
+    outstr = str
+    if( len_trim(str) < 1 .or. len(old) < 1 ) return
+    do i = 1, len_trim(str)
+       it = index( old, str(i:i) )
+       if ( it > 0 .and. it < len_trim(new)+1 ) then
+         outstr(i:i) = new(it:it)
+       elseif ( it > len_trim(new) ) then
+         outstr(i:i) = ' '
+       endif
+    end do
+
+  end function remap
 
    ! --------------------------------------------------  Replace  -----
   function Replace (str, oldChar, newchar, max) RESULT (outstr)
@@ -3002,8 +3023,8 @@ contains
     itIs = ( index(list, arg) > 0 )
   end function isDigit
 
-  ! ---------------------------------------------------  lastchar  -----
-  character function lastchar(str)
+  ! ---------------------------------------------------  lastChar  -----
+  character function lastChar(str)
     character(len=*), intent(in) :: str
      ! Returns the last non-blank character of str (unless str itself is blank)
      integer :: strlen
@@ -3011,7 +3032,7 @@ contains
      strlen = len_trim(str)
      if ( strlen < 1 ) return
      lastchar = str(strlen:strlen)
-  end function lastchar
+  end function lastChar
 
   ! ---------------------------------------------------  decoder  -----
   function decoder( said, how ) result ( meant )
@@ -3173,6 +3194,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.99  2014/07/25 21:42:37  pwagner
+! Fixed bugs in readIntFromBaseN; now generic as readNumFromBaseN; added remap
+!
 ! Revision 2.98  2014/02/21 01:24:54  pwagner
 ! Added CharToInt; made SplitWords elemental
 !
