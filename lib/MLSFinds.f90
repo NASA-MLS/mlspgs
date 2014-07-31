@@ -311,15 +311,42 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------  FindFirstCharacter  -----
   integer function FindFirstCharacter ( Set, Probe, Tol )
-    ! Find the first element in the array Set that is equal to Probe
-    ! (case-sensitive, ignores trailing blanks, but alert to leading blanks)
+    ! Find the first element in the array Set that matches Probe
+    ! By default
+    ! case-sensitive, ignores trailing blanks, but alert to leading blanks
+    ! These can be overridden by Tol string
+    !           If Tol
+    !   contains      effect
+    !   --------      ------
+    !      c          case-insensitive
+    !      p          partial match OK, if probe contained entirely in  set
+    !      s          partial match OK, if set entirely contained in  probe
     character(len=*), dimension(:), intent(in) :: Set
     character(len=*), intent(in) :: Probe
-    character(len=*), optional, intent(in) :: Tol ! Ignored; generic consistency
+    character(len=*), optional, intent(in) :: Tol ! 
+    ! Internal variables
+    character(len=8)          :: options
+    character(len=len(probe)) :: p
+    character(len=len(set))   :: test
 
     ! Executable code
+    options = ' '
+    if ( present(Tol) ) options = Tol
     do FindFirstCharacter = 1, size(set)
-      if ( trim(set(FindFirstCharacter)) == trim(probe) ) return
+      if ( index( options, 'c' ) > 0 ) then
+        test = lowercase(set(FindFirstCharacter))
+        p = lowercase(probe)
+      else
+        test = set(FindFirstCharacter)
+        p = probe
+      endif
+      if ( index( options, 'p' ) > 0 ) then
+        if ( index( test, trim(p)) > 0 ) return
+      elseif ( index( options, 's' ) > 0 ) then
+        if ( index( p, trim(test)) > 0 ) return
+      elseif ( trim(test) == trim(p) ) then
+        return
+      endif
     end do
     FindFirstCharacter = 0
   end function FindFirstCharacter
@@ -1214,6 +1241,30 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine FindLongestStretch
 
+  ! --------------------------------------------------  LowerCase  -----
+  ! Needed here because MLSStrings uses MLSFinds
+  elemental function LowerCase (str) result (outstr)
+    ! takes A-Z  and replaces with a-z
+    ! leaving other chars alone
+    !--------Argument--------!
+    character (len=*), intent(in) :: STR
+    character (len=len(str))      :: OUTSTR
+
+    !----------Local vars----------!
+    integer            :: i, icode
+    integer, parameter :: offset=IACHAR("a")-IACHAR("A")
+    !----------Executable part----------!
+    outstr=str
+
+    DO i = 1, LEN(str)
+       icode=IACHAR(outstr(i:i))
+       IF ( icode >=IACHAR("A") .AND. icode <= IACHAR("Z")) THEN
+          outstr(i:i)=achar(icode+offset)
+       END IF
+    END DO
+
+  END FUNCTION LowerCase
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -1227,6 +1278,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSFinds
 
 ! $Log$
+! Revision 2.2  2014/07/31 20:20:23  pwagner
+! FindFirstCharacter can now find partial match
+!
 ! Revision 2.1  2013/08/12 23:44:05  pwagner
 ! First commit
 !
