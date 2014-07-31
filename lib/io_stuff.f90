@@ -11,7 +11,7 @@
 
 module IO_STUFF
 
-! Useful, low-level stuff for I/O
+! Useful, low-level stuff for mostly formatted I/O
   use MLSFinds, only: findFirstCharacter => FindFirst, &
     &                 findFirstSubstring => FindFirst
 
@@ -46,6 +46,16 @@ module IO_STUFF
 ! character(len=*)                 a scalar character string of any length
 ! character(len=*), dimension(:)   a 1d character array of any length
 ! character(len=*), dimension(:,:) a 2d character array of any length
+!
+! Notes:
+! (1) Before reading a textfile into an array, make sure the array is allocated
+! and of sufficient size
+! (2) You could do this by first using get_nLines to discover the size you need, 
+! and then allocating the array
+! (3) By design, reading a textfile into a string will not change any unread
+! elements (so you can prefill with nulls
+! (4) get_nLines returns 0 for an empty file, and -1 if the file doesn't exist
+! or can't be opened
 ! === (end of api) ===
 
 !---------------------------- RCS Module Info ------------------------------
@@ -109,6 +119,8 @@ contains
   ! Notes and limitations:
   ! formatted io
   ! No line should be longer than maxStrLen
+  ! Returns 0 if file is of zero length
+  ! Returns -1 if file doesn't exist or can't be opened
   ! (To get around that limitation supply optional arg maxLineLen)
   subroutine get_nLines ( File, nLines, maxLineLen )
   ! read a textfile into string array, one line per element
@@ -121,6 +133,8 @@ contains
     character(len=1), dimension(maxStrLen) :: nullArray
     character(len=12) :: xfmt
     character(len=8) :: xlen
+    ! Executable
+    nLines = -1 ! The value returned if the file doesn't exist
     ! print *, 'Name of textfile: ', trim(File)
     ! What format do we use for reading each line?
     xfmt = '(128a1)' ! This is the default; if lines are larger supply maxLineLen
@@ -133,16 +147,16 @@ contains
      if ( index(xlen, '*') < 1 ) xfmt = '(' // trim(adjustl(xlen)) // 'a1)'
     endif
     ! Try to read the textfile
-    nLines = 0
     call GET_LUN ( LUN )
     open(UNIT=lun, form='formatted', &
       & file=trim(File), status='old', iostat=status )
     if ( status /= 0 ) then
-      write(*,*) 'IO_STUFF%get_nLines-E- Unable to open textfile ' // &
-        & trim(File)
+      ! write(*,*) 'IO_STUFF%get_nLines-E- Unable to open textfile ' // &
+      !  & trim(File)
       return
     endif
     ! print *, 'xfmt: ', xfmt
+    nLines = 0
     do
       status = 0
       read( UNIT=lun, fmt=xfmt, eor=50, end=500, err=50, advance='no' ) nullArray
@@ -615,6 +629,9 @@ contains
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.20  2014/07/31 20:19:08  pwagner
+! Improved comments; get_nLines returns 0 for an empty file, and -1 if cant open
+!
 ! Revision 2.19  2014/06/20 20:25:46  pwagner
 ! Added get_nLines
 !
