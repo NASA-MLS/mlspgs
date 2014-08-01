@@ -643,7 +643,7 @@ contains
                 & 'fwdModelConf%catalog(?,?)%lines(0)', moduleName )
               call allocate_test ( fwdModelConf%catalog(s,c)%polarized, 0, &
                 & 'fwdModelConf%catalog(?,?)%polarized(0)', moduleName )
-              if ( all(catalog(n)%continuum == 0.0) .and. noLinesMsg > 0 ) then
+              if ( all(catalog(n)%continuum == 0.0) .and. noLinesMsg >= 0 ) then
                 sawNoLines = .true.
                 call startErrorMessage ( fwdModelConf%where )
                 call display_string ( lit_indices(n), &
@@ -659,7 +659,7 @@ contains
         end do ! b Beta groups
       end do ! s Sidebands
 
-      if ( sawNoLines .and. noLinesMsg > 0 ) &
+      if ( sawNoLines .and. noLinesMsg >= 0 ) &
         & call MLSMessage ( MLSMSG_Warning, moduleName, &
         & 'At least one species has no lines or continuum' )
 
@@ -1464,6 +1464,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.130  2014/01/09 00:26:39  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 2.129  2013/09/24 23:28:17  vsnyder
 ! Use Where instead of Source_Ref for messages
 !
