@@ -23,10 +23,13 @@ module FullForwardModel_m
     & "$RCSfile$"
 !------------------------------------------------------------------------------
 
-  integer, private, parameter :: Max_New = NGP1 ! Maximum new points in
-    ! coarse path in addition to ones derived from the preselected zeta grid:
-    ! the minimum zeta point plus NG H_Glgrid intersections below the
-    ! tangent zeta.
+  ! Private parameters:
+
+  integer, parameter :: Max_New = NGP1 ! Maximum new points in coarse path in
+    ! addition to ones derived from the preselected zeta grid: the minimum
+    ! zeta point plus NG H_Glgrid intersections below the tangent zeta.
+
+  logical, parameter :: NaN_Fill = .false. ! Fill automatic arrays with NaN
 
 contains
 
@@ -384,6 +387,7 @@ contains
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
     use GEOMETRY, only: GET_R_EQ
     use GET_ETA_MATRIX_M, only: ETA_D_T ! TYPE FOR ETA STRUCT
+    use Get_IEEE_NaN_m, only: Fill_IEEE_NaN
     use HESSIANMODULE_1, only: HESSIAN_T
     use INTRINSIC, only: L_A, L_RADIANCE, L_TSCAT, L_VMR
     use LOAD_SPS_DATA_M, only: DESTROYGRIDS_T, DUMP, GRIDS_T
@@ -533,7 +537,7 @@ contains
     logical :: Print_More_Points  ! Print if Do_More_Points finds more, from -SZMOR
     integer :: Print_Path         ! Nicer format than Print_Incopt, for few molecules
     logical :: Print_Ptg          ! For debugging, from -Sptg
-    logical :: Print_Rad          ! For debugging, from -Srad
+    integer :: Print_Rad          ! For debugging, from -Srad
     logical :: Print_Seez         ! For debugging, from -Sseez
     logical :: Print_TauL         ! For debugging, from -Staul
     logical :: Print_TauP         ! For debugging, from -Staup
@@ -680,9 +684,9 @@ contains
     real(rp) :: SPECT_N_PATH(max_f,size(fwdModelConf%lineWidth_TDep)) ! Line Width Temperature Dependence
     real(rp) :: SPECT_V_PATH(max_f,size(fwdModelConf%lineCenter)) ! Line Center
     real(rp) :: SPECT_W_PATH(max_f,size(fwdModelConf%lineWidth)) ! Line Width
+    real(rp) :: SPS_PATH(max_f,no_mol)             ! species on path
     real(rp) :: SPS_PATH_C(max_c,no_mol)           ! species on coarse path
     real(rp) :: SPS_PATH_F(max_f,no_mol)           ! species on GL path
-    real(rp) :: SPS_PATH(max_f,no_mol)             ! species on path
     real(rp) :: TT_PATH(max_f,max(s_i,s_ts))       ! TScat on path along the LOS
     real(rp) :: T_GLGRID(maxVert,no_sv_p_t)        ! Temp on glGrid surfs
     real(rp) :: T_SCRIPT_PFA(max_c,s_pfa*noUsedChannels) ! Delta_B in some notes
@@ -888,6 +892,60 @@ contains
     call trace_begin ( me, 'FullForwardModelAuto, MAF=', index=fmstat%maf, &
       & cond=toggle(emit) )
 
+    ! Fill REAL local variables with NaN if requested
+    if ( NaN_Fill ) then
+      ! Scalar RP:
+      call fill_IEEE_NaN ( e_rflty, h_surf, min_zeta, min_phi, vel_rel, &
+        & earthradc_sq, max_ch_freq_grid, min_ch_freq_grid )
+      ! Rank 1 RP:
+      call fill_IEEE_NaN ( alpha_path_c, alpha_path_f, b, &
+        & beta_path_cloud_c, beta_c_e_path_c, beta_c_s_path_c, &
+        & dAlpha_dT_path_f, del_s, del_zeta, dBeta_c_a_dIWC_path_C, &
+        & dBeta_c_s_dIWC_path_C, dBeta_c_a_dT_path_C, dBeta_c_s_dT_path_C, &
+        & dhdz_path, dhdz_gw_path, dsdh_path, dsdz_c, dsdz_gw_path, dTanh_dT_c, &
+        & dTanh_dT_f, h_path, h_path_c, n_path_f, phi_path, ptg_angles, &
+        & ref_corr )
+      call fill_IEEE_NaN ( tan_dh_dT, tanh1_c, tanh1_f, t_path, t_path_c, &
+        & t_path_f, tt_path_c, w0_path_c, z_coarse, z_glgrid, z_path )
+      call fill_IEEE_NaN ( est_scgeocalt, est_los_vel, tan_d2h_dhdT, &
+        & tan_phi )
+      call fill_IEEE_NaN ( dh_dz_out, dx_dh_out )
+      call fill_IEEE_NaN ( dB_df, surf_angle, tan_chi_out )
+      ! Rank 1 R4:
+      ! Rank 1 R8:
+      call fill_IEEE_NaN ( Scat_ang, channelCenters )
+      ! Rank 2 RP:
+      call fill_IEEE_NaN ( dTScat_df, dTScat_dT, beta_path_f, d_delta_df, &
+        & d_t_scr_dT, d2x_dxdT, dalpha_df_path_c, dalpha_df_path_f, &
+        & d2alpha_df2_path_c, d2alpha_df2_path_f, dbeta_df_path_c, &
+        & dbeta_df_path_f, dbeta_dIWC_path_c, dbeta_dIWC_path_f, &
+        & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dT_path_c, dbeta_dT_path_f, &
+        & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
+        & dh_dT_path, dh_dT_path_c, dh_dT_path_f )
+      call fill_IEEE_NaN ( dhdz_glgrid, dx_dT, eta_fzp, eta_IWC_zp, eta_mag_zp, &
+        & eta_zp, eta_zxp_n, eta_zxp_T, eta_zxp_T_c, eta_zxp_T, eta_zxp_v, &
+        & eta_zxp_w, h_glgrid, IWC_path, mag_path, rad_avg_path, radiances, &
+        & spect_n_path, spect_v_path, spect_w_path, sps_path, sps_path_c, &
+        & sps_path_f )
+      call fill_IEEE_NaN ( tt_path, t_glgrid, t_script_PFA, rot )
+      call fill_IEEE_NaN ( eta_TScat, eta_TScat_zp, eta_salb, eta_salb_zp, &
+        & eta_cext, cext_path, salb_path, TScat_path )
+      call fill_IEEE_NaN ( dxdT_surface, dxdT_tan )
+      ! Rank 2 R8:
+      call fill_IEEE_NaN ( wc, vmrArray )
+      ! Rank 3 RP:
+      call fill_IEEE_NaN ( d2_delta_df2, DACsStaging2, dh_dT_glgrid, &
+        & ddhidhidTl0 ) 
+      ! Rank 3 R4:
+      call fill_IEEE_NaN ( k_atmos, k_spect_dn, k_spect_dv, k_spect_dw, &
+        & k_temp )
+      ! Rank 3 R8:
+      ! Rank 4 RP:
+      call fill_IEEE_NaN ( DACsStaging3 )
+      ! Rank 4 R4:
+      call fill_IEEE_NaN ( h_atmos )
+      ! Rank 4 R8:
+    end if
     ! Set flags from command-line switches
     clean = ' '
     if ( switchDetail(switches, 'clean') > -1 ) clean = 'c'
@@ -904,7 +962,7 @@ contains
     print_Mag = switchDetail(switches, 'mag') > -1
     print_Ptg = switchDetail(switches, 'ptg') > -1
     print_path = switchDetail(switches, 'path')
-    print_Rad = switchDetail(switches, 'rad') > -1
+    print_Rad = switchDetail(switches, 'rad')
     print_Seez = switchDetail(switches, 'seez') > -1
     print_TauL = switchDetail(switches, 'taul') > -1
     print_TauP = switchDetail(switches, 'taup') > -1
@@ -1125,7 +1183,7 @@ contains
     j = index(sigName(i+2:), '.' )
     if ( j /= 0 ) sigName(i+j+1:) = ''
 
-    if ( print_Rad ) then
+    if ( print_Rad > -1 ) then
       if ( FwdModelConf%do_conv ) then
         print *, 'Convolution: ON'
       else
@@ -4060,6 +4118,7 @@ contains
       ! Compute Gauss Legendre (GL) grid ----------------------------------
       call compute_GL_grid ( z_coarse(:tan_pt_c), z_path(:tan_pt_f), &
         &                    p_path(:tan_pt_f) )
+      p_path(tan_pt_f+1:tan_pt_f+ng) = 0.0 ! So they're not undefined
       ! z_path and t_path all the same within the zero-thickness tangent layer
       call compute_GL_grid ( z_coarse(tan_pt_c+1:npc), z_path(tan_pt_f+ngp1:npf), &
         &                    p_path(tan_pt_f+ngp1:npf) )
@@ -4526,6 +4585,12 @@ contains
 
       end if ! FwdModelConf%anyPFA(sx)
 
+      if ( print_Rad > 0 ) then
+        print '("Pointing ", i0)', ptg_i
+        call dump ( frequencies, name='frequencies', options='c' )
+        call dump ( radV, name='radV', options='c' )
+      end if
+
       ! Frequency average, or store, or combine LBL and PFA
       call frequency_average ( ptg_i )
 
@@ -4705,6 +4770,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.350  2014/07/18 23:15:44  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
 ! Revision 2.349  2014/01/11 01:28:53  vsnyder
 ! Decruftification
 !
