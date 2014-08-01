@@ -58,7 +58,9 @@ contains
 
 ! Output:
 
-    real(rp), intent(out) :: eta_zp(:,:) ! Eta_z * Eta_phi for each state
+    ! Marked inout so that we can clear only the nonzeros without making
+    ! the rest of it undefined.
+    real(rp), intent(inout) :: eta_zp(:,:) ! Eta_z * Eta_phi for each state
 !                           vector element. This is the same length as values.
 ! Notes:
 ! units of z_basis must be same as zeta_path (usually -log(P)) and units of
@@ -87,8 +89,12 @@ contains
       eta_zp = 0.0
       if ( present(do_calc_zp) ) do_calc_zp = .false.
       my_nnz_zp = 0
+    else ! Replace previously calculated nonzeros with zeros.
+      do n_p = 1, size(nnz_zp)
+        eta_zp(nz_zp(:nnz_zp(n_p),n_p),n_p) = 0.0
+        nnz_zp(n_p) = 0
+      end do
     end if
-
     nnz_z = 0
     nnz_p = 0
 
@@ -243,6 +249,9 @@ contains
 end module Comp_Eta_Docalc_No_Frq_m
 
 ! $Log$
+! Revision 2.18  2014/08/01 01:03:19  vsnyder
+! Clear only nonzeros, change Eta_ZP from out to inout
+!
 ! Revision 2.17  2013/05/18 00:34:44  vsnyder
 ! Insert NG fine-grid (GL) points between tangent points, thereby
 ! regularizing coarse-grid spacing, and reducing significantly the need
