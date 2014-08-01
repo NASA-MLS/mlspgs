@@ -77,7 +77,7 @@ contains
     & Grids_x, QtyStuffIn )
 
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
-    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Toggles, only: Emit, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: VectorValue_T
 
@@ -791,6 +791,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.91  2014/07/18 23:16:28  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
 ! Revision 2.90  2014/04/22 00:08:27  vsnyder
 ! Add tracing
 !
