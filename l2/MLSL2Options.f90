@@ -190,7 +190,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   end type runTimeValues_T
     
   type(runTimeValues_T), save :: runTimeValues
-  type (MLSFile_T)            :: AllocFile
+  type (MLSFile_T), save      :: AllocFile
 
   type :: dbItem_T
     ! This stores a generic level 2 datatype indexed by the database indx
@@ -1228,6 +1228,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.91  2014/08/01 01:46:23  vsnyder
+! AllocFile needs SAVE attribute because it has default initialization
+!
 ! Revision 2.90  2014/07/18 23:19:19  pwagner
 ! Added record length for allocation log
 !
