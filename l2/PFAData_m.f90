@@ -78,7 +78,6 @@ contains ! =====     Public Procedures     =============================
     use Init_Tables_Module, only: F_Absorption, F_dAbsDnc, F_dAbsDnu, &
       & F_dAbsDwc, F_Molecules, F_Signal, F_Temperatures, F_VelLin, &
       & F_VGrid, Field_First, Field_Last, L_Zeta
-    use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Velocity
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: MaxSigLen, Signals
     use MoreTree, only: Get_Field_ID
@@ -308,7 +307,6 @@ contains ! =====     Public Procedures     =============================
     use Init_Tables_Module, only: F_AllLinesForRadiometer, F_AllLinesInCatalog, &
       & F_LOSVEL, F_Molecules, F_Oversample, F_Signals, F_Temperatures, &
       & F_VGrid, L_Zeta
-    use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Velocity
     use MLSCommon, only: RP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
       & MLSMSG_Error
@@ -657,6 +655,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.30  2014/08/01 01:45:30  vsnyder
+! Remove unreferenced USE names
+!
 ! Revision 2.29  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
 !
