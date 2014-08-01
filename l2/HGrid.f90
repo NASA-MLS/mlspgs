@@ -814,7 +814,7 @@ contains ! =====     Public Procedures     =============================
     use DUMP_0, only: DIFF, DUMP, selfdiff
     use EMPIRICALGEOMETRY, only: EMPIRICALLONGITUDE, CHOOSEOPTIMUMLON0
     use HGRIDSDATABASE, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID, FINDCLOSESTMATCH
-    use HIGHOUTPUT, only: BEVERBOSE, OUTPUTNAMEDVALUE
+    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA, &
       & ASSEMBLEL1BQTYNAME
     use MLSCOMMON, only: MLSFILE_T, NAMELEN, TAI93_RANGE_T
@@ -2321,7 +2321,7 @@ contains ! =====     Public Procedures     =============================
 
     use LEXER_CORE, only: PRINT_SOURCE
     use OUTPUT_M, only: OUTPUT
-    use TREE, only: DUMP_TREE_NODE, WHERE_AT => WHERE
+    use TREE, only: WHERE_AT => WHERE
 
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
@@ -2409,6 +2409,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.115  2014/08/01 01:45:52  vsnyder
+! Remove unreferenced USE names
+!
 ! Revision 2.114  2014/04/24 23:56:43  pwagner
 ! May set master coordinate in hGrid specification
 !
