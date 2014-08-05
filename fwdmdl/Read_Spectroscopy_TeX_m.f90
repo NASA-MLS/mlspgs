@@ -32,7 +32,6 @@ contains
     ! Signals, Sidebands, and Polarized fields of catalog%line are
     ! not filled.
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use IO_Stuff, only: Get_LUN
     use, intrinsic :: ISO_Fortran_env, only: IOSTAT_END
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, GetMoleculeIndex
@@ -66,9 +65,8 @@ contains
     if ( present(warn) ) myWarn = warn
 
     ! Open the cross-reference file
-    call get_lun ( u )
-    open ( u, file=cross_reference_file, form='formatted', status='old', &
-      & iostat=iostat, iomsg=text )
+    open ( newunit=u, file=cross_reference_file, form='formatted', &
+      & status='old', iostat=iostat, iomsg=text )
     if ( iostat /= 0 ) then
       call MLSMessage ( MLSMSG_Error, moduleName, &
         'Opening ' // trim(cross_reference_file) // ' failed: ' // trim(text) )
@@ -156,7 +154,8 @@ contains
       end do
       read ( text(:l), * ) catalog(mol)%defaultIsotopeRatio, catalog(mol)%mass, &
         & catalog(mol)%Qlog, catalog(mol)%continuum
-      catalog(mol)%Qlog = log10(catalog(mol)%Qlog)
+      where ( catalog(mol)%Qlog > 0 ) &
+        & catalog(mol)%Qlog = log10(catalog(mol)%Qlog)
     end do
   4 continue
     close ( u )
@@ -254,6 +253,16 @@ contains
   8 continue
     close ( u )
 
+    ! If there are no lines, allocate the lines component with zero size.
+    ! Otherwise, when somebody looks at it, it will go bang.
+    do mol = 1, size(catalog)
+      if ( .not. associated(catalog(mol)%lines) ) then
+        allocate ( catalog(mol)%lines(0), stat=stat )
+        call test_allocate ( stat, moduleName, 'catalog(mol)%lines', (/ 1 /), &
+          &  (/ 0 /) )
+      end if
+    end do
+
     ! Destroy the cross-reference table
   9 deallocate ( TeX_name, xref_name )
     call test_deallocate ( stat, moduleName, 'TeX_name or XRef_name', 0 )
@@ -301,6 +310,13 @@ contains
 end module Read_Spectroscopy_TeX_m
 
 ! $Log$
+! Revision 2.4  2014/08/05 01:16:43  vsnyder
+! Use NEWUNIT= in OPEN statements instead of get_lun.  Eliminate dependence
+! upon io_stuff.  Check for iostat == iostat_end instead of iostat /= 0.
+! If there are no lines, allocate the lines component with zero size.
+! Otherwise, when somebody looks at it, it will go bang.  Only calculate
+! the base-10 logarithm of QLOG where it's > 0.
+!
 ! Revision 2.3  2011/11/09 00:14:54  vsnyder
 ! Take base-10 logarithm of Qlog because that's what Create_Beta wants
 !
