@@ -25,6 +25,7 @@ module MLSCommon                ! Common definitions for the MLS software
 
 !     (data types and parameters)
 
+! processID     our own process id (used in discovering how much memory we use)
 ! i1, i2, i4    integer types
 ! r4, r8        floating point types
 ! ip, rp        integer, floating point types used in forward model
@@ -83,6 +84,10 @@ module MLSCommon                ! Common definitions for the MLS software
   public :: INRANGE
   public :: IS_WHAT_IEEE
 
+  ! Do we know our own process id?
+  character(len=32), public    :: processID                   = ' '
+  
+  ! User-defined datatypes
   public :: FILEIDS_T
   public :: MLSFILE_T
   public :: MLSFILL_T
@@ -175,7 +180,7 @@ module MLSCommon                ! Common definitions for the MLS software
 
   real(r4), public, save      ::    UNDEFINEDVALUE = DEFAULTUNDEFINEDVALUE
   ! --------------------------------------------------------------------------
-  
+
   ! A type to hold the hdf file ids
   ! (Should make it recursive in case dataset path something like
   ! "/grp_1/grp_2/../grp_n/sd")
@@ -481,6 +486,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.42  2014/08/05 00:17:07  pwagner
+! Add --pId and --uId to set id_strings for slave task
+!
 ! Revision 2.41  2014/03/26 17:42:52  pwagner
 ! Added ProductionLocation, identifier_product_DOI to metadata
 !
