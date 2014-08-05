@@ -17,13 +17,15 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   use HDF, only: dfacc_rdwr
   use HighOutput, only: Banner, OutputNamedValue
   use intrinsic, only: l_ascii, l_hours, l_minutes, l_seconds
-  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
+  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose, &
+    & processID
   use MLSFiles, only: WildCardHDFVersion, HDFVersion_4, HDFVersion_5, Dump
   use MLSMEssageModule, only: MLSMessageConfig, &
     & MLSMsg_error, MLSMsg_info, MLSMsg_testWarning, &
     & MLSMSG_Severity_to_quit, MLSMsg_severity_to_walkback, MLSMsg_warning, &
     & Bummer, sayMessage => MLSMessage
   use MLSPCF2, only: MLSPCF_l1b_rad_end, MLSPCF_l1b_rad_start
+  use MLSStringLists, only: EvaluateFormula
   use MLSStrings, only: isComment, lowerCase, &
     & readIntsFromChars, Replace, writeIntsToChars
   use PCFHdr, only: globalAttributes
@@ -66,6 +68,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   character(LEN=versIDLen), dimension(2)    :: current_version_id = (/ &
     & 'v4.11 swdev team               ' , & 
     & 'See license terms for copyright'/)
+  character(LEN=32)    :: uniqueID                    = ' '
      
   ! Set the following to MSGLOGPRUNIT before delivering to sips;
   ! (its possible values and their effects on normal output:
@@ -777,6 +780,9 @@ cmds: do
           call myNextArgument( i, inLine, entireLine, line )
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%pgeName = trim(line)
+        else if ( line(3+n:5+n) == 'pid' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, processId )
         else if ( line(3+n:6+n) == 'recl' ) then
           if ( line(7+n:) /= ' ' ) then
             line(:6+n) = ' '
@@ -930,6 +936,9 @@ cmds: do
         else if ( line(3+n:5+n) == 'tk ' ) then
           toolkit = switch
           call set_config ( useToolkit = switch )
+        else if ( line(3+n:5+n) == 'uid' ) then
+          i = i + 1
+          call myNextArgument( i, inLine, entireLine, uniqueId )
         else if ( line(3+n:6+n) == 'var ' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, line ) ! The variable
@@ -1070,15 +1079,18 @@ jloop:do while ( j < len_trim(line) )
     ! as cmdline options depending on whether
     ! lhs is one character in length or two
     ! rhs is true, false, or a different value
-    recursive subroutine parseNameValue( line )
-      character(len=*), intent(in) :: line
+    recursive subroutine parseNameValue( inLine )
+      character(len=*), intent(in) :: inLine
       ! Local variables
       logical :: exitLoop
-      character(len=fileNameLen) :: filename
-      character(len=32)          :: name
-      character(len=fileNameLen) :: valu
-      logical, parameter :: countEmpty = .true.
-      character(len=1), parameter :: eqls = '='
+      character(len=fileNameLen)      :: filename
+      character(len=len(inLine)+32)   :: line
+      character(len=32)               :: name
+      character(len=fileNameLen)      :: valu
+      logical, parameter              :: countEmpty = .true.
+      character(len=1), parameter     :: eqls = '='
+      ! Executable
+      call SubstituteRuntimeBoolean ( inLine, line )
       call getStringElement( line, name, 1, countEmpty, eqls )
       call getStringElement( line, valu, 2, countEmpty, eqls )
       ! Beware of cases where valu conatins an embedded space
@@ -1183,6 +1195,17 @@ jloop:do while ( j < len_trim(line) )
       & 'Run-time macros', separator=runTimeValues%sep )
   end subroutine DumpMacros
 
+  ! ---------------------------------------  SubstituteRuntimeBoolean  -----
+  ! Substitute values for named runtime macros in the original
+  subroutine SubstituteRuntimeBoolean ( original, substitute )
+    ! Args:
+    character(len=*), intent(in)  :: original
+    character(len=*), intent(out) :: substitute
+    ! Internal variables
+    substitute = EvaluateFormula ( original, &
+      & runTimeValues%lvalues, runTimeValues%lkeys, runTimeValues%sep )
+  end subroutine SubstituteRuntimeboolean
+
   ! ---------------------------------------  RemoveRuntimeBoolean  -----
   ! Remove the named runtime macros
   subroutine REMOVERUNTIMEBOOLEAN ( NAME )
@@ -1228,6 +1251,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.92  2014/08/05 00:21:29  pwagner
+! Add --pId and --uId to set id_strings for slave task
+!
 ! Revision 2.91  2014/08/01 01:46:23  vsnyder
 ! AllocFile needs SAVE attribute because it has default initialization
 !
