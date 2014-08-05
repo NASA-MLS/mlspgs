@@ -11,7 +11,7 @@
 
 program LR
 
-  use, intrinsic :: ISO_Fortran_Env, only: Error_Unit
+  use, intrinsic :: ISO_Fortran_Env, only: Error_Unit, Output_Unit
 
   use Analysis, only: Analyz
   use Chain_Context_Lists, only: CHNCSL
@@ -19,7 +19,6 @@ program LR
   use Declare_Vocabulary_m, only: Declare_Vocabulary
   use Flatten_m, only: Flatten
   use Generate_Table, only: GENTAB
-  use IO_Stuff, only: Get_Lun, List_Unit, Table_Unit
   use Lexer_Core, only: Init_Lexer
   use Lists, only: Lists_Init
   use Output_m, only: Output, OutputOptions
@@ -36,6 +35,9 @@ program LR
   use Toggles_LR, only: Toggle_LR => Toggle
   use Tree, only: Allocate_tree, Print_subtree
   use Xref, only: Cross_Reference
+
+  integer :: List_Unit = Output_Unit ! Defaults to standard output
+  integer :: Table_Unit = -1         ! Defaults to no table output
 
   logical :: Dump_Symbols = .false.
   logical :: Dump_Tree = .false.
@@ -129,8 +131,7 @@ program LR
   call get_command_argument ( i+1, line )
   if ( line /= '' ) table = line
   if ( table /= '' ) then
-    call get_lun ( table_unit )
-    open ( table_unit, file=table, form='formatted', iostat=iostat, &
+    open ( newunit=table_unit, file=table, form='formatted', iostat=iostat, &
       & iomsg=iomsg )
     if ( iostat /= 0 ) then
       write ( error_unit, '(3a,i0)' ) 'Error: Unable to open table output file "', &
@@ -144,8 +145,7 @@ program LR
   call get_command_argument ( i+2, line )
   if ( line /= '' ) listing = line
   if ( listing /= '' ) then
-    call get_lun ( list_unit )
-    open ( list_unit, file=listing, form='formatted', iostat=iostat, &
+    open ( newunit=list_unit, file=listing, form='formatted', iostat=iostat, &
       & iomsg=iomsg )
     if ( iostat /= 0 ) then
       write ( error_unit, '(3a,i0)' ) 'Error: Unable to open list file "', &
@@ -281,6 +281,9 @@ contains
 end program LR
 
 ! $Log$
+! Revision 1.6  2014/05/21 00:00:57  vsnyder
+! New parser gets its tables from an argument instead of an include
+!
 ! Revision 1.5  2014/04/09 23:54:01  vsnyder
 ! Don't try to make the parser if there's a syntax error
 !
