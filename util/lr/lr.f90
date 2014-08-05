@@ -156,6 +156,7 @@ program LR
   end if
 
   outputOptions%prUnit = list_unit
+  outputOptions%prUnitLiteral = .true.
 
   ! Parse the grammar, producing an abstract syntax tree
   call init_parser_table ( parser_table )
@@ -281,6 +282,10 @@ contains
 end program LR
 
 ! $Log$
+! Revision 1.7  2014/08/05 00:48:32  vsnyder
+! Use NEWUNIT= in OPEN statements to get a new unit number.  Move List_Unit
+! and Table_Unit here from IO_Stuff.  Eliminate dependence on IO_Stuff.
+!
 ! Revision 1.6  2014/05/21 00:00:57  vsnyder
 ! New parser gets its tables from an argument instead of an include
 !
