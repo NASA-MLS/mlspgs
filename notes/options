@@ -93,6 +93,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
     turning this option on will let you merely patch it instead
   --pge <commandname>: What to put on slaves' commandline instead of mlsl2
     when giving slaves their tasks (useful when using toolkit)
+  --pId id_string: Set the process id to id_string for the slave task
   --recl[ ]<number>: set the max record length size for l2cf to <number>
       (In case the default value, 20000, is too small for some l2cfs).
       This has effect only if the l2cf is not coming from standard input.
@@ -127,6 +128,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --submit "command": In conjunction with --master, use the command
     to submit the slave task to a batch queue system.
   --[n]tk: [Do not] Use the panoply of the PGS_toolkit (pcf, metadata, etc.)
+  --uId id_string: Set the unique id to id_string for the slave task
   --[n]unlimdims: [Do not] Use unlimited dimensions when defining swaths
   --verbose: set a goodly number of switches to increase output
   --versId id_string: Set current version id to id_string
@@ -158,6 +160,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.66  2014/06/30 23:25:54  pwagner
+ Added --logAlloc
+
  Revision 1.65  2014/06/20 20:24:59  pwagner
  Added --set, --setf, and -versId
 
