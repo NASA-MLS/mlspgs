@@ -11,7 +11,9 @@
 
 module Call_Stack_m
 
-  implicit NONE
+  use Memory_m, only: memory_used
+  use MLSCommon, only: processID
+  implicit none
   private
 
   public :: STACK_T
@@ -34,8 +36,10 @@ module Call_Stack_m
   end interface
 
   ! Display date and time during push and pop displays
-  logical, save :: Say_Date = .false.
-  logical, save :: Say_When = .false.
+  logical, save :: Say_Date         = .false.
+  logical, save :: Say_When         = .false.
+  logical, save :: Say_memory_used  = .false.
+  real, save    :: last_memory_used = 0.
 
   logical, save, private :: StaySilent = .false. ! E.g., in case it becomes corrupted
   logical, save, private :: Verbose = .false. ! Print each push, pop
@@ -200,6 +204,7 @@ contains ! ====     Public Procedures     ==============================
     logical :: HaveStack
     logical :: MySilent
     real :: T
+    real :: Total_used            ! Memory used in bytes
     character(len=10) :: Used
 
     ! Executable
@@ -227,7 +232,13 @@ contains ! ====     Public Procedures     ==============================
         & string=string, stringIndex=stringIndex, showTime=showTime, &
         & used=used, advance='no' )
       if ( .not. haveStack ) return
-      if ( stack(stack_ptr)%memory /= noBytesAllocated ) then
+      if ( Say_memory_used .and. len_trim(processID) > 0 ) then
+        call memory_used ( processID, total=total_used )
+        delta = total_used - last_memory_used
+        call dumpSize ( delta, before=', Memory changed by ' )
+        call dumpSize ( total_used, before = ' to ' )
+        last_memory_used = total_used
+      elseif ( stack(stack_ptr)%memory /= noBytesAllocated ) then
         delta = memory_units * (noBytesAllocated - stack(stack_ptr)%memory)
         if ( abs(delta) < huge(1) ) then
           call dumpSize ( int(delta), before=', Memory changed by ' )
@@ -404,6 +415,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.23  2014/08/05 00:18:30  pwagner
+! May print memory_used instead of noBytesAllocated
+!
 ! Revision 2.22  2014/04/21 16:57:26  pwagner
 ! Tries harder not reference stack if not allocated
 !
