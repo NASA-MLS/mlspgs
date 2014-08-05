@@ -148,14 +148,15 @@ module OUTPUT_M
   ! This is the type for configuring how to automatically format
   ! lines and whether they should be sent to stdout or elsewhere
   type outputOptions_T
-    integer :: PRUNIT = STDOUTPRUNIT    ! Unit for output (see comments above).  
+    integer :: prUnit = STDOUTPRUNIT    ! Unit for output (see comments above).  
     integer :: MLSMSG_Level        = MLSMSG_Info ! What level if logging
     integer :: newLineVal          = 10 ! 13 means <cr> becomes new line; -999 means ignore
     integer :: nArrayElmntsPerLine = 7
     integer :: nBlanksBtwnElmnts   = 3
-    logical :: BUFFERED            = .true.
-    logical :: LOGPARENT           = .false. ! Show who called output, not output
-    logical :: SKIPMLSMSGLOGGING   = .false.
+    logical :: buffered            = .true.
+    logical :: logParent           = .false. ! Show who called output, not output
+    logical :: prUnitLiteral       = .false. ! output to prUnit even if < 0
+    logical :: skipMLSMsgLogging   = .false.
     logical :: usePatternedBlanks  = .true. ! Use patterns for special fillChars
     character(len=9) :: specialFillChars = '123456789'
     character(len=9) :: lineupFillChars =  'ynnnnynnn' ! whether they line up
@@ -464,7 +465,7 @@ contains
     stamp_header = .false.
     stamped_chars = chars
     theUnit = 0
-    if ( outputOptions%prUnit > 0 ) then
+    if ( outputOptions%prUnit > 0 .or. outputOptions%prUnitLiteral ) then
       theUnit = outputOptions%prUnit
     else if ( useStdout(outputOptions%prUnit) ) then
       theUnit = output_unit
@@ -1379,6 +1380,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.113  2014/08/05 18:23:24  pwagner
+! prUnitLiteral field lets prUnit go negative
+!
 ! Revision 2.112  2014/07/21 20:56:47  pwagner
 ! Should not bomb so easily
 !
