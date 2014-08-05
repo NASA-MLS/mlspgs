@@ -281,6 +281,10 @@ module MLSStringLists               ! Module to treat string lists
     module procedure catLists_str, catLists_int, catLists_intarray
   end interface
 
+  interface EvaluateFormula
+    module procedure EvaluateFormula_string, EvaluateFormula_array
+  end interface
+
   interface GetHashElement
     module procedure GetHashElement_str
     module procedure GetHashElement_strarray
@@ -753,16 +757,16 @@ contains
   end function catLists_str
 
   ! -------------------------------------------------  EvaluateFormula  -----
-  function EvaluateFormula ( FORMULA, VALUES, KEYS ) result (OUTSTR)
-    ! Evaluates a string formula, plugging in the nth value for
-    ! each occurrence of the nth arg appearing as '${n}'
-    ! E.g., if strFun is 
-    ! "x${1}: vector, template=state"
-    ! and the first arg is "InitPtan" then outStr will be
-    ! "xInitPtan: vector, template=state"
-    ! 
-    ! If keys is present, then instead of '${n}' substitute for
-    ! each occurrence of the nth arg appearing as '${key(n)}'
+  ! Evaluates a string formula, plugging in the nth value for
+  ! each occurrence of the nth arg appearing as '${n}'
+  ! E.g., if strFun is 
+  ! "x${1}: vector, template=state"
+  ! and the first arg is "InitPtan" then outStr will be
+  ! "xInitPtan: vector, template=state"
+  ! 
+  ! If keys is present, then instead of '${n}' substitute for
+  ! each occurrence of the nth arg appearing as '${key(n)}'
+  function EvaluateFormula_array ( FORMULA, VALUES, KEYS ) result (OUTSTR)
     !--------Argument--------!
     character (len=*), intent(in)                         :: FORMULA
     character (len=*), dimension(:), intent(in)           :: VALUES
@@ -791,7 +795,39 @@ contains
       call ReplaceSubString( tmpStr, outstr, trim(variable), trim(value), &
         & which='all', no_trim=.true. )
     enddo
-  end function EvaluateFormula
+  end function EvaluateFormula_array
+
+  function EvaluateFormula_string ( formula, values, keys, separator ) &
+    & result (outstr)
+    !--------Argument--------!
+    character (len=*), intent(in)                     :: formula
+    character (len=*), intent(in)                     :: values
+    character (len=*), optional, intent(in)           :: keys
+    character (len=1), optional, intent(in)           :: separator
+    character (len=len(formula)+len(values))          :: outstr
+
+    !----------Local vars----------!
+    integer :: status, n
+    character (len(values)), dimension(:), pointer    :: valuesArray              
+    character (len(values)), dimension(:), pointer    :: keysArray                
+    logical, parameter                                :: countEmpty = .true.
+    !----------executable part----------!
+    outstr = formula
+    ! Check whether we have any work to do
+    if ( len_trim(values) < 1 .or. index( formula, '${' ) < 1 ) return
+    n = NumStringElements( values, countEmpty, separator )
+    allocate ( valuesArray(n), STAT=status )
+    call list2Array( values, valuesArray, countEmpty, inseparator=separator )
+    if ( present(keys) ) then
+      allocate ( keysArray(n), STAT=status )
+      call list2Array( keys, keysArray, countEmpty, inseparator=separator )
+      outstr = EvaluateFormula_array ( formula, valuesArray, keysArray )
+      deallocate( keysArray, stat=status )
+    else
+      outstr = EvaluateFormula_array ( formula, valuesArray )
+    endif
+    deallocate( valuesArray, stat=status )
+  end function EvaluateFormula_string
 
   ! ----------------------------------------  ExpandStringRange_ints  -----
   subroutine ExpandStringRange_ints (instr, ints, LENGTH)
@@ -4407,6 +4443,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.65  2014/08/05 00:16:28  pwagner
+! EvaluateFormula geberic: can work with Lists or Arrays
+!
 ! Revision 2.64  2014/01/09 00:25:42  pwagner
 ! Added nCharsinFormat function
 !
