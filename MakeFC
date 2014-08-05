@@ -938,7 +938,7 @@ l2q: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2q.f90 l2
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
-lr: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/lr/*.f9[0h] utctotai
+lr: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/lr/*.f9[0h] utctotai lib
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
           -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=lr_main -m lib \
           -C $(MLSCFILE) $(MLSBIN)/lr/*.f9[0h] $(MLSBIN)/lr/*.grm \
@@ -1321,7 +1321,7 @@ tools: chunktimes checkpvmup compare dateconverter \
   killmaster \
   l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump \
-  l2pcdiff l2pcdump l2q \
+  l2pcdiff l2pcdump l2q lr \
   machineok Spartacus tellMasterToQuit WordSplit wrapLines
 
 .PHONY: all configure clean clean_config conv_uars\
@@ -1348,6 +1348,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.147  2014/06/24 22:45:50  quyen
+# Add build command for genmet
+#
 # Revision 1.146  2014/06/17 17:52:57  pwagner
 # Now builds conv_uars
 #
