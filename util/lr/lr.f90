@@ -139,6 +139,8 @@ program LR
       write ( error_unit,  '(a)') trim(iomsg)
       stop 1
     end if
+    ! print *, 'table_unit: ', table_unit
+    ! print *, table
   end if
 
   ! Open output listing file
@@ -153,10 +155,11 @@ program LR
       write ( error_unit,  '(a)') trim(iomsg)
       stop 1
     end if
+    outputOptions%prUnit = list_unit
+    outputOptions%prUnitLiteral = .true.
+    ! print *, 'list_unit: ', list_unit
+    ! print *, listing
   end if
-
-  outputOptions%prUnit = list_unit
-  outputOptions%prUnitLiteral = .true.
 
   ! Parse the grammar, producing an abstract syntax tree
   call init_parser_table ( parser_table )
@@ -220,7 +223,10 @@ program LR
       stop 1
     end if
 
-    if ( table_unit > 0 ) then ! -o option or table_file field was specified
+    if ( len_trim(table) > 0 ) then ! -o option or table_file field was specified
+      outputOptions%prUnit = table_unit
+      outputOptions%prUnitLiteral = .true.
+
       call chncsl
       call gentab ( table_unit, vocab )
     end if
@@ -282,6 +288,9 @@ contains
 end program LR
 
 ! $Log$
+! Revision 1.8  2014/08/05 18:24:06  pwagner
+! Sets prUnitLiteral to TRUE
+!
 ! Revision 1.7  2014/08/05 00:48:32  vsnyder
 ! Use NEWUNIT= in OPEN statements to get a new unit number.  Move List_Unit
 ! and Table_Unit here from IO_Stuff.  Eliminate dependence on IO_Stuff.
