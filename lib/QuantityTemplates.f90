@@ -20,13 +20,13 @@ module QuantityTemplates         ! Quantities within vectors
   use DUMP_0, only: DUMP
   use EXPR_M, only: EXPR_CHECK
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INTRINSIC, only: phyq_angle, phyq_dimensionless, phyq_frequency, &
-    & phyq_time, l_phiTan
+  use INTRINSIC, only: L_NONE, L_VMR, L_PhiTan, LIT_INDICES, PHYQ_Angle, &
+    & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Time
+  use INTRINSIC, only: 
   use MLSFILLVALUES, only: RERANK
   use MLSKINDS, only: RT => R8 ! RT is "kind of Real components of template"
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
-  use INTRINSIC, only: L_NONE, L_VMR, LIT_INDICES, PHYQ_INDICES
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
@@ -42,8 +42,6 @@ module QuantityTemplates         ! Quantities within vectors
        "$RCSfile$"
   private :: not_used_here
 !---------------------------------------------------------------------------
-
-  logical, parameter, private :: DEEBUG = .FALSE.           ! Usually FALSE
 
   ! Define some global parameters and data types.
 
@@ -1644,6 +1642,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.82  2014/04/24 23:49:25  pwagner
+! Added horizontalCoordinate component
+!
 ! Revision 2.81  2014/03/20 01:39:47  vsnyder
 ! Unified types in Intrinsic
 !
