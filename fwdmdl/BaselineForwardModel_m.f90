@@ -38,8 +38,7 @@ contains ! ======================================== BaselineForwardModel ======
       & checkforsimplebandedlayout
     use MatrixModule_1, only: matrix_t, findblock, createblock
     use MLSCommon, only: rp, rm
-    use MLSMessageModule, only: mlsmessage, mlsmsg_error, &
-      & mlsmsg_allocate
+    use MLSMessageModule, only: mlsmessage, mlsmsg_error
     use MLSSignals_m, only: signal_t
     use VectorsModule, only: vector_t, vectorValue_t, getVectorQuantityByType, &
       & validatevectorquantity
@@ -83,7 +82,6 @@ contains ! ======================================== BaselineForwardModel ======
     integer :: INSTLOW                  ! Array limit
     integer :: INSTHI                   ! Array limit
     integer :: MM1                      ! MIF-1
-    integer :: STATUS                   ! From allocates etc.
 
     real(rp) :: RAD                     ! One radiance
     real(rp) :: GRADIENT                ! A gradient
@@ -373,16 +371,11 @@ contains ! ======================================== BaselineForwardModel ======
       if (present(jacobian) .and. bslInFirst ) then
         instLow = minval(inst0)
         instHi = maxval(inst1)
-        ! allocate ( kBit(radiance%template%instanceLen, &
-        !  & baseline%template%instanceLen, &
-        !  & instLow:instHi), stat=status ) ! Notice the explicit low bound
         call Allocate_test ( kBit, &
           & radiance%template%instanceLen, &
           & baseline%template%instanceLen, &
           & instHi, 'kBit', ModuleName, &
           & 1, 1, instLow )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate//'kBit' )
         ! Now densify any existing blocks
         do instance = lbound(kBit,3), ubound(kBit,3)
           colBlock = FindBlock ( jacobian%col, baseline%index, instance )
@@ -533,6 +526,10 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.33  2014/08/06 23:24:20  vsnyder
+! Remove USE for MLSMSG_Allocate, which was not used.  Remove declaration
+! of unused local variable.
+!
 ! Revision 2.32  2014/07/23 23:14:24  pwagner
 ! Use allocate_test for kBit
 !
