@@ -93,7 +93,6 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
 
     ! Local variables
-    integer :: coordIndex               ! Tree node
     integer :: DATE                     ! Tree node
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
     double precision :: EXPR_VALUE(2)   ! Output from Expr subroutine
@@ -194,7 +193,6 @@ contains ! =====     Public Procedures     =============================
       case ( f_type )
         hGridType = decoration(subtree(2,son))
       case ( f_coordinate )
-        coordIndex = field
         hGrid%masterCoordinate = decoration(subtree(2,son))
       case ( f_module )
         instrumentModule = sub_rosa(subtree(2,son))
@@ -2409,6 +2407,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.116  2014/08/06 23:30:29  vsnyder
+! Remove CoordIndex, which is set but not referenced
+!
 ! Revision 2.115  2014/08/01 01:45:52  vsnyder
 ! Remove unreferenced USE names
 !
