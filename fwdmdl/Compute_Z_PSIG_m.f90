@@ -31,7 +31,7 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
     use Make_Z_Grid_M, only: Make_Z_Grid
     use MLSCommon, only: RP
-    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Toggles, only: Emit, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: VectorValue_T
 
@@ -136,6 +136,9 @@ contains
 end module Compute_Z_PSIG_m
 
 ! $Log$
+! Revision 2.12  2014/08/06 23:24:51  vsnyder
+! Remove USE for Switches, which is not referenced
+!
 ! Revision 2.11  2014/04/22 00:36:54  vsnyder
 ! Add tracing
 !
