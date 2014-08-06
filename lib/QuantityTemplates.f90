@@ -22,7 +22,6 @@ module QuantityTemplates         ! Quantities within vectors
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INTRINSIC, only: L_NONE, L_VMR, L_PhiTan, LIT_INDICES, PHYQ_Angle, &
     & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Time
-  use INTRINSIC, only: 
   use MLSFILLVALUES, only: RERANK
   use MLSKINDS, only: RT => R8 ! RT is "kind of Real components of template"
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
@@ -1642,6 +1641,10 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.83  2014/08/06 23:22:28  vsnyder
+! Combine several USE statements for the same module.  Remove declaration
+! of unused parameter DEEBUG.
+!
 ! Revision 2.82  2014/04/24 23:49:25  pwagner
 ! Added horizontalCoordinate component
 !
