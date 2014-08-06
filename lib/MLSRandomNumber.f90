@@ -213,7 +213,6 @@ contains
       integer                :: ind
       integer                :: i
       integer                :: N
-      character(len=16)      :: strs
       ! Executable
       N = size(array_arg)
       if ( N <= 1 ) then
@@ -1122,6 +1121,9 @@ end module MLSRandomNumber
 
 !
 ! $Log$
+! Revision 2.13  2014/08/06 23:18:34  vsnyder
+! Remove declaration of unused local variable
+!
 ! Revision 2.12  2013/08/01 20:18:38  pwagner
 ! Added mls_scramble and mls_lottery for randomized permutation and integer sequence
 !

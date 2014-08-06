@@ -12,7 +12,6 @@
 module LEXER_CORE
 ! Provides the token type and the initialization routine used by all
 ! lexers, and a routine to print the source text line and column number.
-  use MLSStrings, only: writeIntsToChars
 
   implicit NONE
   private
@@ -84,7 +83,6 @@ contains
     integer, intent(in), optional :: File
     character(len=*), intent(in), optional :: Before, After
     integer :: L
-    character(len=256) :: str
     l = 1
     if ( present(before) ) then
       text = before
@@ -158,6 +156,10 @@ contains
 end module LEXER_CORE
 
 ! $Log$
+! Revision 2.13  2014/08/06 23:20:21  vsnyder
+! Remove USE for unreferenced identifier WriteIntsToChars.  Remove
+! declaration of unreferenced local variable.
+!
 ! Revision 2.12  2014/04/09 00:40:31  vsnyder
 ! Make sure L is defined in Get_Where_Integer
 !
