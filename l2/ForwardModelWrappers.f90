@@ -44,7 +44,7 @@ contains ! ============= Public Procedures ==========================
     use FULLFORWARDMODEL_M, only: FULLFORWARDMODEL
     use HESSIANMODULE_1, only: HESSIAN_T
     use HYBRIDFORWARDMODEL_M, only: HYBRIDFORWARDMODEL
-    use INIT_TABLES_MODULE, only: L_Azimuth, L_BASELINE, L_CLOUDFULL, &
+    use INIT_TABLES_MODULE, only: L_BASELINE, L_CLOUDFULL, &
       & L_EXTINCTION, L_EXTINCTIONV2, L_FULL, L_HYBRID, L_LINEAR, &
       & L_MIFEXTINCTION, L_MIFExtinctionExtrapolation, L_MIFExtinctionForm, &
       & L_MIFEXTINCTIONV2, L_MIFRHI, L_POLARLINEAR, L_PTAN, L_SCAN, L_SCAN2D, &
@@ -61,7 +61,7 @@ contains ! ============= Public Procedures ==========================
     use MoreMessage, only: MLSMessage
     use POLARLINEARMODEL_M, only: POLARLINEARMODEL
     use SCANMODELMODULE, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
-    use STRING_TABLE, only: Create_String, DISPLAY_STRING, GET_STRING
+    use STRING_TABLE, only: Create_String, DISPLAY_STRING
     use SWITCHINGMIRRORMODEL_M, only: SWITCHINGMIRRORMODEL
     use TIME_M, only: TIME_NOW
     use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
@@ -87,9 +87,6 @@ contains ! ============= Public Procedures ==========================
     integer, parameter :: E1 = 1, E2 = 2   ! Limits for MIF extinction, see NT
     integer, parameter :: R1 = 3, R2 = 3   ! Limits for MIF RHI, see NT
 
-    type(vectorValue_t), pointer :: Azimuth ! of profile plane, positive being
-                                           ! counterclockwise from the
-                                           ! spacecraft velocity vector
     logical :: Clean                       ! Dumps are clean, from switch dxfc
     real :: DeltaTime
     logical :: Derivs(nt)                  ! Derivatives requested in config
@@ -116,14 +113,12 @@ contains ! ============= Public Procedures ==========================
     ! MIF (quantity) types:
     integer, parameter :: MTypes(nt) = &
       & (/ l_MIFExtinction, l_MIFExtinctionv2, l_MIFRHI /)
-    type(matrix_t), pointer :: MyJacobian  ! Either Jacobian or ExtraJacobian
     integer :: Nobody = -1                 ! String index for trace
     real(rv) :: Normal(3)                  ! to the profile plane, XYZ
     type(vectorValue_t), pointer :: Ptan   ! Tangent pressure
     ! Profile (molecule) types corresponding to mTypes:
     integer, parameter :: PTypes(nt) = &
       & (/ l_Extinction, l_Extinctionv2, l_RHI /)
-    character(len=132) :: ThisName
     real :: Time_start, Time_end
     integer :: T1, T2 ! Bounds for transform indices, 1:2, 3:3, or 1:3.  see NT.
     integer :: Who    ! Either config%name or Nobody
@@ -557,7 +552,6 @@ contains ! ============= Public Procedures ==========================
     integer :: JCol    ! of Jacobian
     integer :: JCols(s_qty%template%noInstances) ! of Jacobian, n in wvs-107
     integer :: JRow    ! of Jacobian, n in wvs-107
-    type(matrix_t), pointer :: FWMJacobian   ! Either Jacobian or ExtraJacobian
     integer :: Me = -1 ! String index for trace cacheing
     integer :: NVecChans ! Number of channels in radiance
     type(vectorValue_t), pointer :: O_Qty    ! Qty of output vector
@@ -882,6 +876,11 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.73  2014/08/06 23:29:19  vsnyder
+! Remove USE for L_Azimuth and Get_String, which are not referenced.
+! Remove declaration of Azimuth, MyJacobian, FWMJacobian, and ThisName,
+! which are not referenced.
+!
 ! Revision 2.72  2014/07/01 23:05:58  vsnyder
 ! Add switch to dump magnetic field if it's computed for each MAF
 !
