@@ -14,9 +14,8 @@ module PFADataBase_m
   ! Read PFA data.  Build a database.  Provide for access to it.
   ! Write PFA data.
 
-  use allocate_deallocate, only: allocate_test, bytes, &
-    & deallocate_test, memory_units, &
-    & test_allocate
+  use allocate_deallocate, only: allocate_test, deallocate_test, &
+    & memory_units, test_allocate
   use highOutput, only: outputNamedValue
   use MLSkinds, only: r4
   use MLScommon, only: fileNameLen
@@ -1281,7 +1280,7 @@ contains ! =====     Public Procedures     =============================
     character(len=maxSigLen) :: SignalText
     real(rs) :: SurfStep ! for temperature and pressure grids
     type(vGrid_t) :: TGrid, VGrid
-    integer :: GRIDINDEX
+!     integer :: GRIDINDEX
     integer :: SB  ! Sideband from input
 
     myData = .true.
@@ -1385,6 +1384,10 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.50  2014/08/06 23:25:48  vsnyder
+! Remove USE for BYTES, which is not reference.  Comment out declaration of
+! GRIDINDEX, which is only referenced in commented-out code.
+!
 ! Revision 2.49  2014/07/18 23:15:03  pwagner
 ! Aimed for consistency in names passed to allocate_test
 !
