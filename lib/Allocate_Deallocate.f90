@@ -28,6 +28,8 @@ module Allocate_Deallocate
 ! *****     nullified before its first use     *****
 ! **************************************************
 
+  use, intrinsic :: IEEE_Arithmetic, only: IEEE_Signaling_NaN, IEEE_Value, &
+    IEEE_Support_DataType
   use MACHINE, only: MLS_GC_NOW
   use PRINTIT_M, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT, SnipRCSFrom
@@ -166,6 +168,9 @@ module Allocate_Deallocate
   integer, save :: DEALLOC_STATUS = 0
 
   logical, public :: CLEARONALLOCATE = .false. ! If true, zero all allocated stuff
+  logical, public :: InitRealNaN = .false.     ! If true, and FILL is not present,
+                                               ! and IEEE_SupportDataType is true,
+                                               ! fill real with signaling NaN.
   integer, public :: TRACKALLOCATES = 0 ! <= 0 => No tracking
                                         ! 1    => Track using the Track_m module
                                         ! >= 2 => 1 + report all transactions
@@ -541,6 +546,9 @@ contains
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
     include "Allocate_Test_1D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR8_1d
   ! ------------------------------------  Allocate_Test_RealR8_2d  -----
   subroutine Allocate_Test_RealR8_2d ( To_Allocate, Dim1, Dim2, &
@@ -553,6 +561,9 @@ contains
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
     include "Allocate_Test_2D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR8_2d
   ! ----------------------------------  Allocate_Test_RealR8_2d_a  -----
   subroutine Allocate_Test_RealR8_2d_a ( To_Allocate, Dim, &
@@ -564,6 +575,9 @@ contains
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
     include "Allocate_Test_2D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR8_2d_a
   ! ------------------------------------  Allocate_Test_RealR8_3d  -----
   subroutine Allocate_Test_RealR8_3d ( To_Allocate, Dim1, Dim2, Dim3, &
@@ -577,6 +591,9 @@ contains
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
     include "Allocate_Test_3D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR8_3d
   ! ----------------------------------  Allocate_Test_RealR8_3d_a  -----
   subroutine Allocate_Test_RealR8_3d_a ( To_Allocate, Dim, &
@@ -588,6 +605,9 @@ contains
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
     include "Allocate_Test_3D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR8_3d_a
   ! ------------------------------------  Allocate_Test_RealR8_4d  -----
   subroutine Allocate_Test_RealR8_4d ( To_Allocate, Dim1, Dim2, Dim3, Dim4, &
@@ -602,6 +622,9 @@ contains
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
     include "Allocate_Test_4D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR8_4d
   ! ----------------------------------  Allocate_Test_RealR8_4d_a  -----
   subroutine Allocate_Test_RealR8_4d_a ( To_Allocate, Dim, &
@@ -613,6 +636,9 @@ contains
     double precision, intent(in), optional :: Fill
     double precision, parameter :: Default = 0.0d0
     include "Allocate_Test_4D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR8_4d_a
   ! -----------------------------------  Allocate_Test_Integer_1d  -----
   subroutine Allocate_Test_Integer_1d ( To_Allocate, Dim1, &
@@ -765,6 +791,9 @@ contains
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
     include "Allocate_Test_1D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR4_1d
   ! --------------------------------------  Allocate_Test_RealR4_2d  -----
   subroutine Allocate_Test_RealR4_2d ( To_Allocate, Dim1, Dim2, &
@@ -777,6 +806,9 @@ contains
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
     include "Allocate_Test_2D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR4_2d
   ! ------------------------------------  Allocate_Test_RealR4_2d_a  -----
   subroutine Allocate_Test_RealR4_2d_a ( To_Allocate, Dim, &
@@ -788,6 +820,9 @@ contains
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
     include "Allocate_Test_2D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR4_2d_a
   ! ------------------------------------  Allocate_Test_RealR4_3d  -----
   subroutine Allocate_Test_RealR4_3d ( To_Allocate, Dim1, Dim2, Dim3, &
@@ -801,6 +836,9 @@ contains
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
     include "Allocate_Test_3D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR4_3d
   ! ------------------------------------  Allocate_Test_RealR4_3d_a  -----
   subroutine Allocate_Test_RealR4_3d_a ( To_Allocate, Dim, &
@@ -812,6 +850,9 @@ contains
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
     include "Allocate_Test_3D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR4_3d_a
   ! ------------------------------------  Allocate_Test_RealR4_4d  -----
   subroutine Allocate_Test_RealR4_4d ( To_Allocate, Dim1, Dim2, Dim3, Dim4, &
@@ -826,6 +867,9 @@ contains
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
     include "Allocate_Test_4D.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR4_4d
   ! ------------------------------------  Allocate_Test_RealR4_4d_a  -----
   subroutine Allocate_Test_RealR4_4d_a ( To_Allocate, Dim, &
@@ -837,6 +881,9 @@ contains
     real, intent(in), optional :: Fill
     real, parameter :: Default = 0.0
     include "Allocate_Test_4D_a.f9h"
+    if ( InitRealNaN .and. IEEE_Support_DataType(to_allocate) .and. &
+       & .not. present(fill) ) &
+         & to_allocate = IEEE_Value ( to_allocate, IEEE_Signaling_NaN )
   end subroutine Allocate_Test_RealR4_4d_a
   ! -------------------------------  Deallocate_Test_Character_1d  -----
   subroutine Deallocate_Test_Character_1d ( To_Deallocate, ItsName, ModuleName )
@@ -1545,6 +1592,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.47  2014/08/06 23:18:04  vsnyder
+! Add option controlled by private parameter to fill REAL arrays with sNaN
+!
 ! Revision 2.46  2014/06/30 23:24:17  pwagner
 ! Can log allocations/deallocations to separate file
 !
