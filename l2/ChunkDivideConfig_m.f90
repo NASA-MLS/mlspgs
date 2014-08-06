@@ -18,8 +18,6 @@ module ChunkDivideConfig_m
 
   use INTRINSIC, only: L_NONE, PHYQ_INVALID
   use MLSKinds, only: RP
-  use MLSSTRINGLISTS, only: SWITCHDETAIL
-  use TOGGLES, only: SWITCHES
 
   implicit NONE
   private
@@ -192,6 +190,9 @@ contains ! ===================================  Public Procedures  =====
 end module ChunkDivideConfig_m
 
 ! $Log$
+! Revision 2.4  2014/08/06 23:26:45  vsnyder
+! Remove USE for Switches and SwitchDetail, which are not referenced
+!
 ! Revision 2.3  2014/01/11 01:44:18  vsnyder
 ! Decruftification
 !
