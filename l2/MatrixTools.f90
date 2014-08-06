@@ -50,7 +50,6 @@ contains ! =====  Public procedures  ===================================
     ! not dump absent blocks.
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Declaration_table, only: Num_Value
     use DUMP_0, only: DUMP
     use Expr_m, only: Expr
     use HessianModule_0, only: H_Absent, HessianElement_T
@@ -944,6 +943,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.41  2014/02/28 01:08:20  vsnyder
+! Remove unused names
+!
 ! Revision 1.40  2014/02/28 00:21:12  vsnyder
 ! Move type and units checking to type checker
 !
