@@ -23,7 +23,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   use L2Parinfo, only: parallel
   use MLScommon, only: MLSdebug, MLSverbose, &
     & MLSdebugsticky, MLSverbosesticky
-  use MLSl2options, only: command_line, currentphasename, currentchunknumber, &
+  use MLSl2options, only: command_line, currentphasename, &
     & dumpmacros, originalcmds, &
     & processoptions, restartwarnings, restoredefaults, runtimevalues, &
     & sectiontimingunits, skipdirectwrites, skipdirectwritesoriginal, &
@@ -976,6 +976,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.57  2014/08/06 23:33:18  vsnyder
+! Remove USE for CurrentChunkNumber, which is not referenced
+!
 ! Revision 2.56  2014/06/25 20:43:25  pwagner
 ! Fixed error in evaluating runTimeFlags
 !
