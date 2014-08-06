@@ -382,7 +382,8 @@ contains
     use machine, only: getarg, hp, io_error, nevercrash
     use matrixmodule_0, only: checkblocks, subblocklength
     use MLSCommon, only: filenamelen
-    use MLSfiles, only: initializeMLSfile, MLS_openfile, MLS_closefile
+!   use MLSfiles, only: initializeMLSfile
+!   use MLSfiles, only: MLS_openfile
     use MLSMessageModule, only: setconfig
     use MLSStringlists, only: catlists, &
       & getstringelement, getuniquelist, &
@@ -1251,6 +1252,11 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.93  2014/08/06 23:32:34  vsnyder
+! Comment out USE for InitializeMLSFile MLS_Openfile, which are referenced
+! only in commented-out code.  Remove USE for MLS_CloseFile, which is not
+! referenced.
+!
 ! Revision 2.92  2014/08/05 00:21:29  pwagner
 ! Add --pId and --uId to set id_strings for slave task
 !
