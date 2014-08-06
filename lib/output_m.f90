@@ -455,6 +455,13 @@ contains
     alreadyLogged = .false.
     if ( SILENTRUNNING ) return
     my_adv = Advance_is_yes_or_no(advance)
+    ! print *, 'outputOptions%prUnit: ', outputOptions%prUnit
+    ! print *, 'outputOptions%prUnitLiteral: ', outputOptions%prUnitLiteral
+    if ( outputOptions%prUnitLiteral ) then
+      write( outputOptions%prUnit, '(a)', advance=my_adv ) trim_safe(chars)
+      ! print *, chars
+      return
+    endif
     ! If we're not advancing and we've been a string of length 0 to print ..
     if ( my_adv == 'no' .and. len(chars) < 1 ) return
     my_dont_stamp = stampOptions%neverStamp ! .false.
@@ -504,6 +511,8 @@ contains
     ! Special case: if chars is blank (chars are blank?)
     ! we'll want to print anyway
     if ( len_trim(chars) < 1 ) n_stamp = max(n_stamp, 1)
+    ! print *, 'n_stamp: ', n_stamp
+    ! print *, 'len(chars): ', len(chars)
     alreadyLogged = .true.
     if ( theUnit /= 0 .and. n_stamp > RECLMAX ) then
       nIOBlocs = 1 + (n_stamp-1)/RECLMAX
@@ -516,13 +525,15 @@ contains
       if ( my_adv == 'yes' ) write ( theUnit, '(a)' )
     elseif ( theUnit /= 0 .and. len(chars) < 1 .and. my_adv == 'yes' ) then
       write ( theUnit, '(a)', advance=my_adv )
+      ! print *, 'wrote: ', stamped_chars(1:n_stamp), ' to ', theUnit
     elseif ( theUnit /= 0 .and. n_stamp > 0 ) then
       write ( theUnit, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
+      ! print *, 'wrote: ', stamped_chars(1:n_stamp), ' to ', theUnit
     else
       alreadyLogged = .false.
     endif
     if ( any(outputOptions%prunit == (/MSGLOGPRUNIT, BOTHPRUNIT/)) .and. &
-      & .not. my_dont_log  ) then
+      & .not. my_dont_log .and. .not. outputOptions%prUnitLiteral ) then
       ! We must use MLSMessage to log the chars
       the_chars = chars // ' '
       if (LOGEXTRABLANKS) n_chars = max(len(chars), 1)
@@ -572,7 +583,10 @@ contains
       ! endif
     end if
     
-    if ( outputOptions%prunit <= 0 .or. alreadyLogged ) then
+    ! print *, 'alreadyLogged: ', alreadyLogged
+    ! print *, 'theUnit: ', theUnit
+    if ( (outputOptions%prunit <= 0 .and. .not. outputOptions%prunitLiteral) &
+      & .or. alreadyLogged ) then
       ! Already logged; no output to stdout
     else if ( stamped_chars == ' ' .and. present(insteadofblank)  ) then
       write ( outputOptions%prunit, '(a)', advance=my_adv ) trim_safe(insteadofblank)
@@ -583,6 +597,8 @@ contains
     else
       write ( outputOptions%prunit, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
     end if
+    if ( alreadyLogged .and. outputOptions%prunitLiteral ) &
+      & flush ( theUnit, iostat=status )
     atLineStart = (my_adv == 'yes')
     if ( atLineStart ) then
       ! Are we trying to avoid buffered output?
@@ -960,7 +976,8 @@ contains
   ! optionally set to use or ignore Toolkit
     use PrintIt_m, only: DefaultLogUnit, Set_Config, StdoutLogUnit
     logical, optional, intent(in) :: useToolkit
-    outputOptions%PRUNIT               = STDOUTPRUNIT
+    outputOptions%prunit               = stdoutprunit
+    outputOptions%prunitLiteral        = .false.
     outputOptions%MLSMSG_Level         = MLSMSG_Info
     outputOptions%newLineVal           = 10 ! 13
     outputOptions%nArrayElmntsPerLine  = 7
@@ -1380,6 +1397,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.114  2014/08/06 19:26:49  pwagner
+! Bugfixes plus one workaround for an ifort v13 bug
+!
 ! Revision 2.113  2014/08/05 18:23:24  pwagner
 ! prUnitLiteral field lets prUnit go negative
 !
