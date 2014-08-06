@@ -114,6 +114,9 @@ program LR
         if ( line(j+1:j+1) == '?' ) call Switch_Usage
         switches(len_trim(switches)+1:) = ',' // trim(line(j+1:))
         j = len(line) + 1
+      case ( 'V' ) ! Print version and stop
+        call print_version
+        stop
       case ( '2' : '4', 'M', 'X' )
         toggle_lr(iachar(line(j:j))) = 1
       case default
@@ -128,20 +131,7 @@ program LR
   call open_input ( line )
 
   ! Open output table file
-  call get_command_argument ( i+1, line )
-  if ( line /= '' ) table = line
-  if ( table /= '' ) then
-    open ( newunit=table_unit, file=table, form='formatted', iostat=iostat, &
-      & iomsg=iomsg )
-    if ( iostat /= 0 ) then
-      write ( error_unit, '(3a,i0)' ) 'Error: Unable to open table output file "', &
-        & trim(table), '", IOSTAT = ', iostat
-      write ( error_unit,  '(a)') trim(iomsg)
-      stop 1
-    end if
-    ! print *, 'table_unit: ', table_unit
-    ! print *, table
-  end if
+  call get_command_argument ( i+1, table )
 
   ! Open output listing file
   call get_command_argument ( i+2, line )
@@ -156,9 +146,7 @@ program LR
       stop 1
     end if
     outputOptions%prUnit = list_unit
-    outputOptions%prUnitLiteral = .true.
-    ! print *, 'list_unit: ', list_unit
-    ! print *, listing
+    outputOptions%prUnitLiteral = .true. ! Do output even if list_unit < 0
   end if
 
   ! Parse the grammar, producing an abstract syntax tree
@@ -217,18 +205,25 @@ program LR
     call pntset ( lnadqt )
 
     if ( lnadqt /= 0 ) then
+      iomsg = 'Error: Grammar is not LR(1).  Last inadequate state is '
       call output ( lnadqt, &
-        & before='Error: Grammar is not LR(1).  Last inadequate state is ', &
-        & advance='yes' )
+        & before=trim(iomsg) // ' ', advance='yes' )
+      write ( error_unit,  '(a,1x,i0)') trim(iomsg), lnadqt
       stop 1
     end if
 
-    if ( len_trim(table) > 0 ) then ! -o option or table_file field was specified
-      outputOptions%prUnit = table_unit
-      outputOptions%prUnitLiteral = .true.
+    if ( table /= '' ) then
+      open ( newunit=table_unit, file=table, form='formatted', iostat=iostat, &
+        & iomsg=iomsg )
+      if ( iostat /= 0 ) then
+        write ( error_unit, '(3a,i0)' ) 'Error: Unable to open table output file "', &
+          & trim(table), '", IOSTAT = ', iostat
+        write ( error_unit,  '(a)') trim(iomsg)
+        stop 1
+      end if
 
-      call chncsl
-      call gentab ( table_unit, vocab )
+      call chncsl ! Chain context set lists
+      call gentab ( table_unit, vocab ) ! Generate parser tables
     end if
 
   end if
@@ -249,6 +244,19 @@ contains
       read ( line(k:i-1), * ) levels(tog)
     end if
   end subroutine Digit_After_Option
+
+  subroutine Print_Version
+    character (len=*), parameter :: IdParm = &
+      "$Id$"
+    character (len=len(idParm)) :: Id = idParm
+    integer :: I, J
+    i = index(idParm,",v")
+    if ( i == 0 ) i = -1
+    i = i + 2
+    j = index(idParm,":",back=.true.)
+    j = min(j+2,len(idParm))
+    print '(2a)', 'Version ', trim(adjustl(idParm(i:j)))
+  end subroutine Print_Version
 
   subroutine Switch_Usage
     print '(a)', 'Switch_Usage:'
@@ -277,17 +285,22 @@ contains
     print '(a)', '           8 -> Show work table when starting'
     print '(a)', '  -s => Dump symbol table'
     print '(a)', '  -S[ ]string => Add string to debugging switches, see -S? for more'
+    print '(a)', '  -V => Print version and stop'
     print '(a)', '  -X => Turn off printing the cross reference of the parsing automaton'
     print '(a)', '  -2 => Print nullable and first sets'
     print '(a)', '  -3 => Trace context set creation and destruction'
     print '(a)', '  -4 => Trace list element creation and destruction'
     print '(a)', '  -anything else => this output'
+    call print_version
     stop
   end subroutine Usage
 
 end program LR
 
 ! $Log$
+! Revision 1.9  2014/08/06 19:37:04  pwagner
+! Fixed some of the bugs added in last revision
+!
 ! Revision 1.8  2014/08/05 18:24:06  pwagner
 ! Sets prUnitLiteral to TRUE
 !
