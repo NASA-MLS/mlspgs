@@ -43,7 +43,7 @@ module MLSSets
 ! while a sequence's elements are necessarily homogeneous. From this
 ! standpoint, we might say that all the procedures in this module
 ! treat sequences, not sets
-  use MLSFINDS, only: FINDALL, FINDFIRST, FINDUNIQUE
+  use MLSFINDS, only: FINDFIRST, FINDUNIQUE
 
   implicit none
   private
@@ -671,6 +671,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.32  2014/08/06 23:19:11  vsnyder
+! Remove USE for unreferenced identifier FINDALL
+!
 ! Revision 2.31  2013/08/12 23:46:20  pwagner
 ! FindSomethings moved to MLSFinds module
 !
