@@ -985,7 +985,8 @@ contains
   ! --------------------------------------------  DUMP_1D_INTEGER_2B  -----
   subroutine DUMP_1D_INTEGER_2B ( ARRAY, NAME, &
     & FILLVALUE, FORMAT, WIDTH, LBOUND, OPTIONS, TheShape )
-    integer*2, intent(in) :: ARRAY(:)
+    use ISO_C_BINDING, only: C_int16_t
+    integer(C_int16_t), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: FILLVALUE
     character(len=*), intent(in), optional :: FORMAT
@@ -1327,7 +1328,8 @@ contains
   ! --------------------------------------------  DUMP_2D_INTEGER_2B  -----
   recursive subroutine DUMP_2D_INTEGER_2B ( ARRAY, NAME, &
     & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS, TheShape )
-    integer*2, intent(in) :: ARRAY(:,:)
+    use ISO_C_BINDING, only: C_int16_t
+    integer(C_int16_t), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     integer, intent(in), optional :: FILLVALUE
     character(len=*), intent(in), optional :: FORMAT
@@ -3394,6 +3396,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.131  2014/08/06 23:02:21  vsnyder
+! Use kind C_Int16_t from ISO_C_Bindings instead of INTEGER*2
+!
 ! Revision 2.130  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
