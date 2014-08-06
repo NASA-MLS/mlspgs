@@ -115,17 +115,17 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
       END FUNCTION PGS_PC_GetFileSize
 
       INTEGER FUNCTION pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
-        character(len = *), INTENT(IN) :: asciiutc_a  ! Should be <= 27 chars
-        character(len = *), INTENT(out) :: asciiutc_b ! Should be <= 25 chars
+        character(len=*), INTENT(IN) :: asciiutc_a  ! Should be <= 27 chars
+        character(len=*), INTENT(out) :: asciiutc_b ! Should be <= 25 chars
       END FUNCTION pgs_td_asciitime_atob
 
       INTEGER FUNCTION pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
-        character(len = *), INTENT(IN) :: asciiutc_b  ! Should be <= 25 chars
-        character(len = *), INTENT(out) :: asciiutc_a ! Should be <= 27 chars
+        character(len=*), INTENT(IN) :: asciiutc_b  ! Should be <= 25 chars
+        character(len=*), INTENT(out) :: asciiutc_a ! Should be <= 27 chars
       END FUNCTION pgs_td_asciitime_btoa
 
       INTEGER FUNCTION pgs_td_utctotai(time, dtime)
-        character(len = *), INTENT(IN) :: time
+        character(len=*), INTENT(IN) :: time
         DOUBLE PRECISION, INTENT(out) :: dtime
       END FUNCTION pgs_td_utctotai
 
@@ -134,8 +134,8 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
       ! (Should we make a separate module to hold
       ! miscellaneous f90 interfaces such as this?)
       INTEGER FUNCTION mls_utctotai(leapsec_file, time, dtime)
-        character(len = *), INTENT(IN) :: leapsec_file
-        character(len = *), INTENT(IN) :: time
+        character(len=*), INTENT(IN) :: leapsec_file
+        character(len=*), INTENT(IN) :: time
         DOUBLE PRECISION, INTENT(out) :: dtime
       END FUNCTION mls_utctotai
 
@@ -159,14 +159,15 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
       integer function PGS_DEM_GetPoint( resolutionList, numResolutions, &
         & layer, positionCode, &
         & pntlatitude, pntLongitude, numPoints, interpolation, interpValue )
+        use ISO_C_BINDING, only: C_int16_t
         integer, dimension(2) :: resolutionList
         integer, intent(in)   :: numResolutions
         integer, intent(in)   :: positionCode
-        double precision, dimension(:) :: pntlatitude
-        double precision, dimension(:) :: pntlongitude
+        double precision, dimension(*) :: pntlatitude
+        double precision, dimension(*) :: pntlongitude
         integer, intent(in)   :: numPoints
         integer, intent(in)   :: interpolation
-        integer*2, dimension(:)   :: interpValue
+        integer(C_int16_t), dimension(*)   :: interpValue
       end function PGS_DEM_GetPoint
 
       integer function PGS_DEM_GetSize( resolution, qualityField, &
@@ -183,12 +184,13 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 
       integer function PGS_DEM_GetQualityData( resolution, qualityField, &
         & positionCode, latitude, longitude, qualityData )
+        use ISO_C_BINDING, only: C_int16_t
         integer, intent(in)   :: resolution
         integer, intent(in)   :: qualityField
         integer, intent(in)   :: positionCode
         double precision, dimension(2) :: latitude
         double precision, dimension(2) :: longitude
-        integer*2, dimension(:)   :: qualityData
+        integer(C_int16_t), dimension(*)   :: qualityData
       end function PGS_DEM_GetQualityData
 
       integer function PGS_DEM_SortModels( resolutionList, numResolutions, &
@@ -217,37 +219,37 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 ! Better declare them as externals
       INTEGER FUNCTION tk_PGS_MET_Init(file_id,groups)
         INTEGER, INTENT(IN) :: file_id
-         character (len = *), dimension(:) :: Groups
+        character (len=*), dimension(*) :: Groups
       END FUNCTION tk_PGS_MET_Init
 
       INTEGER FUNCTION tk_PGS_MET_Setattr_d(imd_group, attr_name, dval)
-         character (len = *) :: imd_group
-         character (len=*), intent(in) :: attr_name
+        character (len=*) :: imd_group
+        character (len=*), intent(in) :: attr_name
         DOUBLE PRECISION, INTENT(IN) :: dval
       END FUNCTION tk_PGS_MET_Setattr_d
 
       INTEGER FUNCTION tk_PGS_MET_Setattr_s(imd_group, attr_name, attr_value)
-         character (len = *) :: imd_group
-         character (len=*), intent(in) :: attr_name
-         character (len=*), intent(in) :: attr_value
+        character (len=*) :: imd_group
+        character (len=*), intent(in) :: attr_name
+        character (len=*), intent(in) :: attr_value
       END FUNCTION tk_PGS_MET_Setattr_s
 
       INTEGER FUNCTION tk_PGS_MET_Getsetattr_d(imd_group, attr_name, dval_array)
-         character (len = *) :: imd_group
-         character (len=*), intent(in) :: attr_name
-        DOUBLE PRECISION, INTENT(OUT), DIMENSION(:) :: dval_array
+        character (len=*) :: imd_group
+        character (len=*), intent(in) :: attr_name
+        DOUBLE PRECISION, INTENT(OUT), DIMENSION(*) :: dval_array
       END FUNCTION tk_PGS_MET_Getsetattr_d
 
       INTEGER FUNCTION tk_PGS_MET_Setattr_i(imd_group, attr_name, attr_value)
-         character (len = *) :: imd_group
-         character (len=*), intent(in) :: attr_name
-         integer, intent(in) :: attr_value
+        character (len=*) :: imd_group
+        character (len=*), intent(in) :: attr_name
+        integer, intent(in) :: attr_value
       END FUNCTION tk_PGS_MET_Setattr_i
 
       INTEGER FUNCTION tk_PGS_MET_Write(imd_group, hdf_attr_name, sd_id)
-         character (len = *) :: imd_group
-         character (len=*), intent(in) :: hdf_attr_name
-         integer, intent(in) :: sd_id
+        character (len=*) :: imd_group
+        character (len=*), intent(in) :: hdf_attr_name
+        integer, intent(in) :: sd_id
       END FUNCTION tk_PGS_MET_Write
 
       INTEGER FUNCTION tk_PGS_MET_Remove( )
@@ -299,6 +301,10 @@ end module SDPToolkit
 
 !
 ! $Log$
+! Revision 2.22  2014/08/06 23:04:14  vsnyder
+! Use kind C_Int16_t from ISO_C_Bindings instead of INTEGER*2.  Use
+! dimension(*) instead of dimension(:), the latter not being interoperable.
+!
 ! Revision 2.21  2013/09/25 00:46:27  pwagner
 ! Added 2 more DEM interfaces
 !
