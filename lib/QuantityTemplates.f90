@@ -113,8 +113,8 @@ module QuantityTemplates         ! Quantities within vectors
     ! surfs(i,j) for an incoherent one.
 
     ! Horizontal coordinates
-    integer :: horizontalCoordinate     ! The horizontal coordinate used. Either
-                                        ! l_phiTan or l_time
+    integer :: horizontalCoordinate = l_phiTan ! The horizontal coordinate used.
+                                        ! Either l_phiTan or l_time
     logical :: sharedHGrid              ! Set if horiz coord is a pointer not a copy
     integer :: hGridIndex               ! Index of any hGrid used
     integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
@@ -1641,6 +1641,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.84  2014/08/06 23:23:02  vsnyder
+! Forgot to save from editor before commiting last time
+!
 ! Revision 2.83  2014/08/06 23:22:28  vsnyder
 ! Combine several USE statements for the same module.  Remove declaration
 ! of unused parameter DEEBUG.
