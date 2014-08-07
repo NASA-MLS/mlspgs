@@ -10,13 +10,14 @@
 ! foreign countries or providing access to foreign persons.
 
 module HGridsDatabase                   ! Horizontal grid information
-  
-  use MLSKINDS, only: R8
+
+  use Intrinsic, only: L_GeodAngle
+  use MLSKinds, only: R8
 
   implicit none
   private
 
-  public :: HGRID_T
+  public :: HGrid_T
   public :: ADDHGRIDTODATABASE, CREATEEMPTYHGRID, DESTROYHGRIDCONTENTS, &
     & DESTROYHGRIDDATABASE, DUMP, FINDCLOSESTMATCH, NULLIFYHGRID, &
     & TRIMHGRID
@@ -35,7 +36,7 @@ module HGridsDatabase                   ! Horizontal grid information
 
   type HGrid_T
     integer :: Name = 0                ! String index of name.            
-    integer :: masterCoordinate = 0    ! Its string index; e.g. l_phiTan
+    integer :: masterCoordinate = l_GeodAngle ! Its lit index;
     integer :: noProfs                 ! Number of profiles in this grid  
     integer :: noProfsLowerOverlap = 0 ! Number of profiles in the lower overlap
     integer :: noProfsUpperOverlap = 0 ! Number of profiles in the upper overlap
@@ -230,13 +231,20 @@ contains ! =========== Public procedures ===================================
       call output ( 'Name = ', advance='no' )
       if ( aHgrid%name > 0 ) then
         call display_string ( aHgrid%name, ierr=ierr )
-        if ( ierr /= 0 ) call output ( '(not found in string table)', advance='no' )
+        if ( ierr /= 0 ) call output ( ' (not found in string table)' )
       else
-        call output('(unknown)', advance='no' )
-      endif
+        call output('(unknown)' )
+      end if
+      call newLine
       call output ( aHgrid%noProfs, before=' noProfs = ', advance='no' )
       call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ', advance='no' )
-      call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='yes' )
+      call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='no' )
+      call output ( ' masterCoordinate = ' )
+      if ( aHgrid%masterCoordinate == 0 ) then
+        call output ( '0', advance='yes' )
+      else
+        call display_string ( lit_indices(aHgrid%masterCoordinate), advance='yes' )
+      end if
       call output ( ' prof       phi       geodLat           lon', advance='no' )
       call output ( '          time     solarTime   solarZenith', advance='no' )
       call output ( '      losAngle  nearest maf', advance='yes' )
@@ -332,6 +340,10 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.14  2014/08/07 22:44:28  vsnyder
+! Set default initialization of MasterCoordinate to L_GeodAngle instead
+! of zero.  Spiff up the dump a little bit.
+!
 ! Revision 2.13  2014/04/24 23:50:25  pwagner
 ! Added masterCoordinate component
 !
