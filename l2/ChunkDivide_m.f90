@@ -2534,7 +2534,6 @@ contains ! ===================================== Public Procedures =====
         type(ChunkDivideConfig_T), intent(in) :: config
 
         type (MAFRange_T) :: MAFRange
-        type(Obstruction_T), dimension(:), pointer :: obstructions
         type(MLSChunk_T), dimension(:), pointer :: chunks => null()
 
         ! Executables
@@ -2587,6 +2586,11 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.114  2014/08/07 22:47:12  vsnyder
+! Delete local declaration of Obstructions from AddChunkToDatabase so that
+! when it's nullified the one at module scope gets nullified.  It was
+! not otherwise used in AddChunkToDatabase.
+!
 ! Revision 2.113  2014/03/07 19:20:05  pwagner
 ! Name_Len changed to nameLen; got from MLSCommon
 !
