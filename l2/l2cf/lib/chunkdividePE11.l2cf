@@ -1,0 +1,6 @@
+; ------------------------------------------ Chunk divide  ----
+; for Precision Estimates
+begin ChunkDivide
+  ChunkDivide, method=PE, maxLength=11 MAFs, homeGeodAngle= !phi degrees, homeModule=GHz,/skipL1BCheck,/excludePriorOverlaps,/excludePostOverlaps
+end ChunkDivide
+; ------------------------------------------ Chunk divide  ----
