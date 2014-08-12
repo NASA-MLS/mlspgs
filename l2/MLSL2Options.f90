@@ -110,6 +110,13 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: PATCH                         = .false. 
   ! Whether to restart printing identical warnings at each new phase
   logical            :: RESTARTWARNINGS               = .true.
+  ! Whether to run slave tasks in the background
+  ! (needed if they are to read their own processID
+  ! and allow the wrapper script to forcibly terminate hanging slave tasks)
+  logical            :: RUNINBACKGROUND               = .false.
+  ! File name from which to read pge's own pid and to which to write
+  ! "Finished" after slave sends sig_finished
+  character(len=255) :: NOTEFILE                      = ' '
   ! What units to use in summarizing timings at end of run
   integer            :: SECTIONTIMINGUNITS            = L_SECONDS
   character(len=32)  :: currentPhaseName              = ' '
@@ -556,6 +563,8 @@ cmds: do
         ! (single-letter options are case-sensitive)
         else if ( line(3+n:8+n) == 'checkp' ) then
           checkPaths = switch
+        else if ( line(3+n:7+n) == 'backg' ) then
+          runinbackground = switch
         else if ( line(3+n:7) == 'chunk' ) then
           i = i + 1
           ! print *, 'About to read chunk num'
@@ -784,6 +793,10 @@ cmds: do
         else if ( line(3+n:5+n) == 'pid' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, processId )
+        else if ( line(3+n:6) == 'pidf' ) then
+          i = i + 1
+          ! print *, 'About to read chunk num'
+          call myNextArgument( i, inLine, entireLine, noteFile )
         else if ( line(3+n:6+n) == 'recl' ) then
           if ( line(7+n:) /= ' ' ) then
             line(:6+n) = ' '
@@ -1252,6 +1265,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.94  2014/08/12 23:31:35  pwagner
+! commandline options --backg and --pidf noteFile added
+!
 ! Revision 2.93  2014/08/06 23:32:34  vsnyder
 ! Comment out USE for InitializeMLSFile MLS_Openfile, which are referenced
 ! only in commented-out code.  Remove USE for MLS_CloseFile, which is not
