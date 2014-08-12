@@ -15,7 +15,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   use allocate_deallocate, only: allocate_test, deallocate_test
   use highOutput, only: banner, outputNamedValue, setStamp
-  use init_tables_module, only: f_debug, f_options, f_silent, &
+  use init_tables_module, only: f_additional, f_debug, f_options, f_silent, &
     & f_skipdirectwrites, f_skipdirectwritesif, &
     & f_skipretrieval, f_skipretrievalif, f_stamp, f_verbose, &
     & field_first, field_last
@@ -324,6 +324,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NAME               ! String index of name
     integer, intent(in) :: ROOT               ! Root of phase subtree
     ! Local variables
+    logical :: additional
     logical :: debug
     integer :: detail
     integer :: field
@@ -342,6 +343,7 @@ contains ! =====     Public Procedures     =============================
     logical :: stamp
     logical :: verbose
     ! Executable
+    additional = .false.
     detail = switchDetail( switches, 'phase' )
     silent = .false.
     stamp = detail > 1 ! E.g., -Sphase2; was .false.
@@ -360,6 +362,8 @@ contains ! =====     Public Procedures     =============================
       field_index = decoration(field)
       got(field_Index) = .true.
       select case ( field_index )
+      case ( f_additional )
+        additional = get_boolean ( fieldValue )
       case ( f_debug )
         debug = get_boolean ( fieldValue )
         if ( stamp ) call output( 'Processing debug field', advance='yes' )
@@ -429,6 +433,9 @@ contains ! =====     Public Procedures     =============================
       MLSDebug = debug
       MLSDebugSticky = .true.
       LASTPHASEOVERWROTEOPTS = .true.
+    endif
+    if( got(f_additional) ) then
+      LASTPHASEOVERWROTEOPTS = .false.
     endif
     if( got(f_verbose) ) then
       MLSVerbose = verbose
@@ -976,6 +983,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.58  2014/08/12 23:29:40  pwagner
+! /additional flag added to phase commands applies to options field
+!
 ! Revision 2.57  2014/08/06 23:33:18  vsnyder
 ! Remove USE for CurrentChunkNumber, which is not referenced
 !
