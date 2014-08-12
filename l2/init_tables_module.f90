@@ -1088,6 +1088,7 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_reevaluate, &
+             begin, f+f_additional, boolean(), &
              begin, f+f_a, vectorQuantity(), &
              begin, f+f_b, vectorQuantity(), &
              begin, f+f_Boolean, field_spec(s_Boolean,req=req), &
@@ -1970,6 +1971,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.602  2014/08/12 23:09:53  pwagner
+! /additional flag added to phase commands applies to options field
+!
 ! Revision 2.601  2014/06/11 20:04:11  pwagner
 ! New concatenateGrids command; grid field in Concatenated renamed sourceGrid
 !
