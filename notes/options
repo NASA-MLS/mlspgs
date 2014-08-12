@@ -47,6 +47,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   The above options cannot be concatenated after one hyphen,
   because -D, -S, -R, -V, and -w take the rest of the option as its "string"
   --[n]aura: The level 1 input files are [not] MLS-Aura (defaults to aura)
+  --backg[round]: run slaves in background
   --check: Just check l2cf and quit
   --chunk 'range': Run just the range defined by the expression 'range'
      e.g., '7' means run only chunk '7', '1,3-9+2,12' means run chunks '1,3,5,7,9,12'
@@ -94,6 +95,8 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --pge <commandname>: What to put on slaves' commandline instead of mlsl2
     when giving slaves their tasks (useful when using toolkit)
   --pId id_string: Set the process id to id_string for the slave task
+  --pidf <filename>: slave reads its own processID from filename; 
+      writes "Finished" to the same file when done
   --recl[ ]<number>: set the max record length size for l2cf to <number>
       (In case the default value, 20000, is too small for some l2cfs).
       This has effect only if the l2cf is not coming from standard input.
@@ -160,6 +163,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.67  2014/08/05 00:15:22  pwagner
+ Add --pId and --uId to set id_strings for slave task
+
  Revision 1.66  2014/06/30 23:25:54  pwagner
  Added --logAlloc
 
