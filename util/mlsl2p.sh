@@ -84,6 +84,9 @@ CHECKIDENTS="yes"
 GZIPLEVEL="1"
 #          ^^^---- compression level ("" means none)
 
+MLSL2PLOG="$JOBDIR/mlsl2p.log"
+#             ^^^---- "yes" if progress of chunks thru phases recorded
+
 SAVEJOBSTATS="yes"
 #             ^^^---- "yes" if progress of chunks thru phases recorded
 
@@ -163,6 +166,14 @@ if [ ! -x "$NETCDFAUGMENT" ]
 then
   NETCDFAUGMENT=$MLSTOOLS/aug_eos5
 fi
+if [ -f "$MLSL2PLOG" ]
+then
+  mv $MLSL2PLOG $MLSL2PLOG.1
+fi
+
+echo "$MLSL2PLOG"
+echo "$MLSL2PLOG" > "$MLSL2PLOG"
+
 masterlog="${JOBDIR}/exec_log/process.stdout"
 if [ "$MASTERLOG" != "" ]
 then
@@ -173,6 +184,7 @@ fi
 if [ -f $PGE_BINARY_DIR/license.txt ]
 then
   cat $PGE_BINARY_DIR/license.txt
+  cat $PGE_BINARY_DIR/license.txt >> "$MLSL2PLOG"
 fi
 
 # The logs will be written as separate files into ${JOBDIR}/pvmlog
@@ -212,7 +224,7 @@ chmod a+x $slave_script
 NORMAL_STATUS=2
 
 env
-#env | sort > ${JOBDIR}/mlsl2p.env
+env | sort >> "$MLSL2PLOG"
 ulimit -s unlimited
 ulimit -a
 #ulimit -a >> ${JOBDIR}/mlsl2p.env
@@ -226,6 +238,8 @@ then
   then
      echo "Preflight checkPaths run ended badly"
      echo "Possibly an error in pathnames; please check your PCF"
+     echo "Preflight checkPaths run ended badly" >> "$MLSL2PLOG"
+     echo "Possibly an error in pathnames; please check your PCF" >> "$MLSL2PLOG"
      exit 1
   fi
 fi
@@ -245,6 +259,7 @@ fi
 if [ "$HOSTNAME" = "" ]
 then
   echo "Need HOSTNAME to trace provenance as ProductionLocation"
+  echo "Need HOSTNAME to trace provenance as ProductionLocation" >> "$MLSL2PLOG"
   exit 1
 fi
 
@@ -259,7 +274,6 @@ echo SAVEJOBSTATS $SAVEJOBSTATS
 echo masterlog $masterlog
 echo PGE_SCRIPT_DIR/jobstat-sips.sh $PGE_SCRIPT_DIR/jobstat-sips.sh
 # Save record of progress thru phases
-#l2cf=`grep -i l2cf $masterlog | head -1 | awk '{print $9}'`
 l2cf=`grep -i 'Level 2 configuration file' $masterlog | head -1 | awk '{print $13}'`
 if [ "$SAVEJOBSTATS" = "yes" -a -x "$PGE_SCRIPT_DIR/jobstat-sips.sh" -a -f "$l2cf" ]
 then
@@ -282,6 +296,7 @@ LOGFILE="${JOBDIR}/pvmlog/mlsl2.log"
 if [ ! -w "$LOGFILE"  ]
 then
   echo "catenating slave logs in $LOGFILE"
+  echo "catenating slave logs in $LOGFILE" >> "$MLSL2PLOG"
   echo "catenating slave logs in $LOGFILE" > "$LOGFILE".1
   # This sleep is to give slave tasks extra time to complete stdout
   sleep 20
@@ -326,7 +341,9 @@ then
         filter=""
       fi
       echo "Packing $file into $packed"
+      echo "Packing $file into $packed" >> "$MLSL2PLOG"
       echo $H5REPACK -i "$file" -o "$packed" $filter
+      echo $H5REPACK -i "$file" -o "$packed" $filter >> "$MLSL2PLOG"
       $H5REPACK -i "$file" -o "$packed" $filter
       # Here we could insert some check involving h5diff if we were dubious
       mv "$packed" "$file"
@@ -352,6 +369,7 @@ then
     if [ -w "$file" ]
     then
       echo $NETCDFAUGMENT $file
+      echo $NETCDFAUGMENT $file >> "$MLSL2PLOG"
       $NETCDFAUGMENT $file
     fi
   done
@@ -365,6 +383,9 @@ else
 fi
 
 # $Log$
+# Revision 1.28  2014/04/02 23:07:10  pwagner
+# Pass HOSTNAME on commandline to use in metadata
+#
 # Revision 1.27  2013/12/05 00:25:24  pwagner
 # Fix latest problems with creating JOBSTATSFILE
 #
