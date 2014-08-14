@@ -159,6 +159,7 @@ temp_file_name=`get_unique_name log -reverse`
 #OLDLOGFILE=$LOGFILE
 LOGFILE="${JOBDIR}/pvmlog/$temp_file_name"
 UNBUFFERED="${LOGFILE}.u"
+pid="$$"
 #ENVSETTINGS="${LOGFILE}.env"
 #echo $LOGFILE >> $OLDLOGFILE
 
@@ -179,7 +180,8 @@ then
 fi
 
 masterIdent="none"
-otheropts="-g"
+runinbackground="no"
+otheropts="-g --uid $pid"
 switches="--stdout out -S'slv,opt1,log,pro,time,glob1'"
 OPTSFILE="${JOBDIR}/slave.opts"
 # otheropts="-g -S'slv,opt1,log,pro,time,glob1'"
@@ -212,7 +214,7 @@ while [ "$more_opts" = "yes" ] ; do
        shift
        ;;
     --skipDir* )
-       otheropts=`add_option "$otheropts" --skipRetrieval`
+       otheropts=`add_option "$otheropts" --skipDirect`
        echo "Adding argument to skip direct writes: $1" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        shift
@@ -262,6 +264,12 @@ while [ "$more_opts" = "yes" ] ; do
        echo "Skipping argument to submit to a special l2 queue manager: $1 $2" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        shift
+       shift
+       ;;
+    --backg* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Skipping argument to run slave pge in background" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
        shift
        ;;
     --tk )
@@ -405,8 +413,37 @@ ulimit -s unlimited
 #ulimit -a >> "$ENVSETTINGS"
 
 echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
-$PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
+if [ "$runinbackground" != "yes" ]
+then
+  # Run pge in foreground
+  $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
+  echo "Returned from $PGE_BINARY with status $?" 2>&1 | tee -a "$LOGFILE"
+  exit 0
+fi
+
+# Run pge in background
+NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
+notdone="true"
+
+$PGE_BINARY --tk -m --slave $masterTid --note "$NOTEFILE" $otheropts 2>&1 \
+  | tee -a "$LOGFILE" &
+sleep 20
+# Find the pge's pid; call it pgepid
+pgepid=`ps aux | grep "uid $pid" | awk '{print $2}' | grep -v grep`
+# Write this pid to a uniquely-named file
+echo "$pgepid" > "$NOTEFILE"
+while [ "$notdone" = "true" ]
+do
+  sleep 120
+  a=`grep Finished "$NOTEFILE"`
+  if [ "$a" != "" ]
+  then
+    notdone=false
+  fi
+done
 echo "Returned from $PGE_BINARY with status $?" 2>&1 | tee -a "$LOGFILE"
+# For good measure, we alo kill the pge's own pid (n case it was left hanging)
+kill -9 "$pgepid"
 
 }
       
@@ -427,6 +464,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.29  2014/06/25 23:08:27  pwagner
+# Handle --set, --setf, --versid
+#
 # Revision 1.28  2013/11/14 23:57:50  pwagner
 # Treats options -D, -V, -R, -S equally
 #
