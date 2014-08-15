@@ -52,13 +52,14 @@ module memory_m
 
 contains
 
-  subroutine memory_used ( process_id, stack, heap, total )
+  subroutine memory_used ( process_id, stack, heap, total, error )
     ! Calculate memory used the running process_id
     ! Args
     character(len=*), intent(in)                 :: process_id
     real, intent(out), optional                  :: stack
     real, intent(out), optional                  :: heap
     real, intent(out), optional                  :: total
+    integer, intent(out), optional               :: error
     ! Internal variables
     character(len=256)                           :: filename
     character(len=256)                           :: line
@@ -69,16 +70,21 @@ contains
     if ( present(stack) ) stack = 0.
     if ( present(heap) ) heap = 0.
     if ( present(total) ) total = 0.
+    if ( present(error) ) error = 0
     filename = '/proc/' // trim(process_id) // '/maps'
+    print *, 'filename: ', trim(filename)
     call get_nLines ( filename, n )
-    print *, 'n: ', n
-    if ( n < 1 ) return
+    ! print *, 'n: ', n
+    if ( n < 1 ) then
+      if ( present(error) ) error = n
+      stop ! return
+    endif
     allocate( lines(n), stat=status )
     call read_textfile ( FileName, lines )
     kHeap  = FindFirst( lines, '[heap]', 'p' )
     kStack = FindFirst( lines, '[stack]', 'p' )
-    print *, 'kHeap: ', kHeap
-    print *, 'kStack: ', kStack
+    ! print *, 'kHeap: ', kHeap
+    ! print *, 'kStack: ', kStack
     if ( kHeap > 0 ) then
       call getMemBounds ( lines(kHeap), mStart, mFinish )
       print *, 'heap'
@@ -117,8 +123,10 @@ contains
     character(len=*), intent(in)    :: inLine
     real, intent(out)               :: nstart, nfinish 
     ! Internal variables
+    integer                         :: i, k
     character(len=len(inLine))      :: line
-    character(len=10)               :: start, finish   
+    character(len=16)               :: start, finish
+    logical, dimension(16)          :: theSame
     ! Executable
     call GetStringElement ( inLine, start, 1, countEmpty, inseparator = '-' )
     call GetStringElement ( inLine, line, 2, countEmpty, inseparator = '-' )
@@ -126,8 +134,15 @@ contains
     print *, 'line: ', trim(line)
     call GetStringElement ( line, finish, 1, countEmpty, inseparator = ' ' )
     print *, 'finish: ', trim(finish)
-    call readNumFromBaseN ( start, nstart, 16, options='c' )
-    call readNumFromBaseN ( finish, nfinish, 16, options='c' )
+    ! Check if the 1st few characters are the same
+    theSame = .true.
+    do i=1, min( len_trim(start), len_trim(finish) )
+      theSame(i) = start(i:i) == finish(i:i)
+    enddo
+    k = FindFirst( .not. theSame )
+    print *, 'k: ', k
+    call readNumFromBaseN ( start(k:), nstart, 16, options='c' )
+    call readNumFromBaseN ( finish(k:), nfinish, 16, options='c' )
   end subroutine getMemBounds
 
 !--------------------------- end bloc --------------------------------------
@@ -143,6 +158,9 @@ contains
 end module memory_m
 
 !$Log$
+!Revision 2.2  2014/08/15 23:28:49  pwagner
+!Fixed some of the more obvious errors
+!
 !Revision 2.1  2014/08/05 00:19:02  pwagner
 !First commit
 !
