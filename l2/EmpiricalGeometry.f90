@@ -12,7 +12,7 @@
 module EmpiricalGeometry                ! For empirically obtaining orbit information
 
   use MLSKinds, only: R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
 
   implicit none
   private
@@ -33,7 +33,6 @@ module EmpiricalGeometry                ! For empirically obtaining orbit inform
     & EMPIRICALTERMS => NULL() ! Fourier terms
   real(r8), private, save :: LON0       ! Longitude of first equator crossing
   logical, private, save :: LON0VALID = .false.
-  integer, private, save :: NOITERATIONS ! When finding lon0 
   
 contains ! ========================= Public Procedures ====================
 
@@ -86,9 +85,6 @@ contains ! ========================= Public Procedures ====================
 
     integer, intent(in) :: ROOT         ! Root of tree
 
-    ! Local parameters
-    integer, parameter :: INITNOITERATIONS = 5
-
     ! Local variables
     real(r8), dimension(2) :: VALUE     ! From EXPR
     integer, dimension(2) :: TheUnits   ! From EXPR
@@ -98,8 +94,6 @@ contains ! ========================= Public Procedures ====================
     integer :: FIELDINDEX               ! From parser
 
     ! Executable code
-
-     noIterations = initNoIterations
 
     ! First get the information from the l2cf
     do i = 2, nsons(root)
@@ -115,8 +109,8 @@ contains ! ========================= Public Procedures ====================
           empiricalTerms(j-1) = value(1)
         end do
       case ( f_iterations )
-        call expr ( subtree(2,son), theUnits, value )
-        noIterations = nint(value(1))
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & "The Iterations field no longer does anything" )
       end select
     end do
 
@@ -132,7 +126,6 @@ contains ! ========================= Public Procedures ====================
      real(r8), dimension(:), intent(in) :: terms
 
      ! Executables
-     noIterations = numberIterations
      call Allocate_Test ( empiricalTerms, size(terms), 'empiricalTerms', &
           & ModuleName )
      empiricalTerms = terms
@@ -244,6 +237,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.21  2014/08/15 02:56:25  vsnyder
+! Remove noIterations, which was only used in code that was removed in 2001
+!
 ! Revision 2.20  2014/03/07 19:21:44  pwagner
 ! Name_Len changed to nameLen; got from MLSCommon
 !
