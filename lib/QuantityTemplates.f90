@@ -348,8 +348,10 @@ contains
     end if
     if ( qty%name == 0 ) then
       what = "qty"
-    elseif ( verbose ) then
+    else if ( verbose ) then
       call myGetString ( qty%name, what )
+    else
+      what = ''
     end if
 
     if ( .not. qty%sharedVGrid ) then
@@ -1641,6 +1643,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.85  2014/08/07 22:45:15  vsnyder
+! Default HorizontalCoordinate to L_Phi_Tan instead of undefined
+!
 ! Revision 2.84  2014/08/06 23:23:02  vsnyder
 ! Forgot to save from editor before commiting last time
 !
