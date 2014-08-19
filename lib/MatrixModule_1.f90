@@ -42,8 +42,9 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   implicit none
   private
-  public :: AddToMatrixDatabase, AddToMatrix, AssignMatrix
-  public :: Assignment(=), CheckIntegrity, CholeskyFactor, CholeskyFactor_1
+  public :: AddToMatrixDatabase, AddToMatrix, AllMatricesMemoryInUse
+  public :: AssignMatrix, Assignment(=)
+  public :: CheckIntegrity, CholeskyFactor, CholeskyFactor_1
   public :: ClearLower, ClearLower_1, ClearMatrix, ClearRows, ClearRows_1
   public :: ColumnScale, ColumnScale_1, CopyMatrix, CopyMatrixValue
   public :: CreateBlock, CreateBlock_1, CreateEmptyMatrix, CyclicJacobi
@@ -58,7 +59,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
-  public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MaxL1
+  public :: Matrix_SPD_T, MatricesMemoryInUse, MatrixMemoryInUse
+  public :: MatrixMemoryUse_t, MaxAbsVal, MaxAbsVal_1, MaxL1
   public :: MinDiag, MinDiag_Cholesky, MinDiag_SPD
   public :: Multiply, MultiplyMatrix_XTY_1, MultiplyMatrix_XTY
   public :: MultiplyMatrix_XY, MultiplyMatrix_XY_1
@@ -276,6 +278,11 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     type(Matrix_SPD_T), pointer :: SPD => NULL()
   end type Matrix_Database_T
 
+  type MatrixMemoryUse_t ! Number of real(rm) elements in each matrix
+    integer :: Name = 0  ! of the matrix
+    integer :: Size = 0  ! Number of real(rm) elements
+  end type MatrixMemoryUse_t
+
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
@@ -406,6 +413,37 @@ contains ! =====     Public Procedures     =============================
       end do ! j = 1, x%col%nb
     end if
   end subroutine AddToMatrix
+
+  ! -------------------------------------  AllMatricesMemoryInUse  -----
+  function AllMatricesMemoryInUse ( D ) result ( R )
+  ! Report the number of real(rm) elements in all matrices in the
+  ! database.
+    type(matrix_database_T), dimension(:), pointer :: D
+    type(matrixMemoryUse_t), allocatable :: R(:)
+    integer :: I
+
+    if ( .not. associated(d) ) return
+    allocate ( r(size(d)) )
+    do i = 1, size(d)
+      if ( associated(d(i)%matrix) ) then
+        r(i)%name = d(i)%matrix%name
+        r(i)%size = matrixMemoryInUse ( d(i)%matrix )
+      end if
+      if ( associated(d(i)%cholesky) ) then
+        r(i)%name = d(i)%cholesky%m%name
+        r(i)%size = matrixMemoryInUse ( d(i)%cholesky%m )
+      end if
+      if ( associated(d(i)%kronecker) ) then
+        r(i)%name = d(i)%kronecker%m%name
+        r(i)%size = matrixMemoryInUse ( d(i)%kronecker%m )
+      end if
+      if ( associated(d(i)%spd) ) then
+        r(i)%name = d(i)%spd%m%name
+        r(i)%size = matrixMemoryInUse ( d(i)%spd%m )
+      end if
+    end do
+
+  end function AllMatricesMemoryInUse
 
   ! -----------------------------------------------  AssignMatrix  -----
   subroutine AssignMatrix ( Z, X )
@@ -1110,6 +1148,46 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DefineRCInfo
 
+  ! ------------------------------------------ Describe Block -----
+  subroutine DescribeBlock ( matrix, row, col )
+    ! Print the row and column indices of a block and
+    ! identify which quantity/instance they are.
+    type(Matrix_T), intent(in) :: MATRIX
+    integer, intent(in), optional :: ROW         ! Row index
+    integer, intent(in), optional :: COL         ! Column index
+    ! Executable code
+    call output ( '[ ' )
+    if ( present(row) .and. present(col) ) then
+      call output ( row )
+      call output ( col, before=', ' )
+    else if ( present(row) ) then
+      call output ( row, before='row ' )
+    else if ( present(col) ) then
+      call output ( col, before ='col ' )
+    else
+      call output ( 'row and column not specified' )
+    end if
+    call output ( ' ] ( ' )
+    if ( present(row) .and. present(col) ) then
+      call display_string ( matrix%row%vec%quantities ( &
+        & matrix%row%quant(row) )%template%name )
+      call output ( matrix%row%inst(row), before='[' )
+      call display_string ( matrix%col%vec%quantities ( &
+        & matrix%col%quant(col) )%template%name, before='], ' )
+      call output ( matrix%col%inst(col), before='[' )
+    else if ( present(row) ) then
+      call display_string ( matrix%row%vec%quantities ( &
+        & matrix%row%quant(row) )%template%name, before='row ' )
+      call output ( matrix%row%inst(row), before='[' )
+      call output ( ']' )
+    else if ( present(col) ) then
+      call display_string ( matrix%col%vec%quantities ( &
+        & matrix%col%quant(col) )%template%name, before='col ' )
+      call output ( matrix%col%inst(col), before='[' )
+    end if
+    call output ( '] )', advance='yes' )
+  end subroutine DescribeBlock
+
   ! ---------------------------------------------  DestroyBlock_1  -----
   subroutine DestroyBlock_1 ( A )
   ! Destroy the "block" component of a matrix.  This leaves its structure
@@ -1568,46 +1646,6 @@ contains ! =====     Public Procedures     =============================
     end do ! row = 1, matrix%row%nb
   end subroutine GetVectorFromColumn_1_Q_I
 
-  ! ------------------------------------------ Describe Block -----
-  subroutine DescribeBlock ( matrix, row, col )
-    ! Print the row and column indices of a block and
-    ! identify which quantity/instance they are.
-    type(Matrix_T), intent(in) :: MATRIX
-    integer, intent(in), optional :: ROW         ! Row index
-    integer, intent(in), optional :: COL         ! Column index
-    ! Executable code
-    call output ( '[ ' )
-    if ( present(row) .and. present(col) ) then
-      call output ( row )
-      call output ( col, before=', ' )
-    else if ( present(row) ) then
-      call output ( row, before='row ' )
-    else if ( present(col) ) then
-      call output ( col, before ='col ' )
-    else
-      call output ( 'row and column not specified' )
-    end if
-    call output ( ' ] ( ' )
-    if ( present(row) .and. present(col) ) then
-      call display_string ( matrix%row%vec%quantities ( &
-        & matrix%row%quant(row) )%template%name )
-      call output ( matrix%row%inst(row), before='[' )
-      call display_string ( matrix%col%vec%quantities ( &
-        & matrix%col%quant(col) )%template%name, before='], ' )
-      call output ( matrix%col%inst(col), before='[' )
-    else if ( present(row) ) then
-      call display_string ( matrix%row%vec%quantities ( &
-        & matrix%row%quant(row) )%template%name, before='row ' )
-      call output ( matrix%row%inst(row), before='[' )
-      call output ( ']' )
-    else if ( present(col) ) then
-      call display_string ( matrix%col%vec%quantities ( &
-        & matrix%col%quant(col) )%template%name, before='col ' )
-      call output ( matrix%col%inst(col), before='[' )
-    end if
-    call output ( '] )', advance='yes' )
-  end subroutine DescribeBlock
-
   ! -------------------------------------------  InvertCholesky_1  -----
   subroutine InvertCholesky_1 ( U, B )
   !{Compute $B = U^{-1}$, where $U$ is the upper-triangular Cholesky factor of
@@ -1668,6 +1706,52 @@ contains ! =====     Public Procedures     =============================
 !   type(Matrix_T), intent(inout) :: Z
 !   real(rm), intent(in) :: LAMBDA
 ! end subroutine LevenbergUpdateCholesky
+
+  ! ----------------------------------------  MatricesMemoryInUse  -----
+  integer function MatricesMemoryInUse ( D )
+  ! Report the number of real(rm) elements in all matrices in the
+  ! database.
+    type(matrix_database_T), dimension(:), pointer :: D
+    integer :: I
+
+    matricesMemoryInUse = 0
+    if ( .not. associated(d) ) return
+    do i = 1, size(d)
+      if ( associated(d(i)%matrix) ) then
+        matricesMemoryInUse = matricesMemoryInUse + &
+          & matrixMemoryInUse ( d(i)%matrix )
+      end if
+      if ( associated(d(i)%cholesky) ) then
+        matricesMemoryInUse = matricesMemoryInUse + &
+          & matrixMemoryInUse ( d(i)%cholesky%m )
+      end if
+      if ( associated(d(i)%kronecker) ) then
+        matricesMemoryInUse = matricesMemoryInUse + &
+          & matrixMemoryInUse ( d(i)%kronecker%m )
+      end if
+      if ( associated(d(i)%spd) ) then
+        matricesMemoryInUse = matricesMemoryInUse + &
+          & matrixMemoryInUse ( d(i)%spd%m )
+      end if
+    end do
+
+  end function MatricesMemoryInUse
+
+  ! ------------------------------------------  MatrixMemoryInUse  -----
+  integer function MatrixMemoryInUse ( M )
+  ! Report the number of real(rm) elements in matrix M
+    type(Matrix_T), intent(in) :: M
+    integer :: I, J
+
+    matrixMemoryInUse = 0
+    do i = 1, m%row%nb
+      do j = 1, m%col%nb
+        if ( associated(m%block(i,j)%value1) ) &
+          & matrixMemoryInUse = matrixMemoryInUse + size(m%block(i,j)%value1)
+      end do
+    end do
+
+  end function MatrixMemoryInUse
 
   ! ------------------------------------------------  MaxAbsVal_1  -----
   real(rm) function MaxAbsVal_1 ( A )
@@ -2938,6 +3022,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.136  2014/08/19 00:29:26  vsnyder
+! Add AllMatricesMemoryInUse, MatricesMemoryInUse, MatrixMemoryInUse
+!
 ! Revision 2.135  2014/07/23 21:58:28  pwagner
 ! Attempted to match names passed to allocate/deallocate
 !
