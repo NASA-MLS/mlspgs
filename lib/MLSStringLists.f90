@@ -108,7 +108,7 @@ module MLSStringLists               ! Module to treat string lists
 !       & [char* how], [log no_trim])
 ! char* EvaluateFormula (char* formula, char* values(:), [char* values(:)])
 ! GetStringElement (strlist inList, char* outElement,
-!   nElement, log countEmpty, [char inseparator])
+!   nElement, log countEmpty, [char inseparator], [int SeparatorLocation] )
 ! GetHashElement (hash {keys = values}, char* key, 
 !   char* outElement, log countEmpty, [char inseparator], [log part_match])
 ! GetUniqueInts (int ints(:), int outs(:), int noUnique, 
@@ -1208,8 +1208,8 @@ contains
 
   ! ---------------------------------------------  GetStringElement  -----
 
-  ! This subroutine takes a (usually) comma-separated string list, interprets it
-  ! as a list of individual elements and returns the
+  ! This subroutine takes a (usually) comma-separated string list,
+  ! interprets it as a list of individual elements and returns the
   ! sub-string which is the n'th element
   ! if n is too large or small, it returns the separator
   ! This is useful because many of the hdfeos routines *inq*() return
@@ -1221,16 +1221,22 @@ contains
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
   ! if TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
-  ! As an optional arg the separator may supplied, in case it isn't comma
+  ! As an optional arg the separator may supplied, in case it isn't comma.
+  ! Its length can be more than one, in which case any element of it is
+  ! a separator.  For example, it could be ", " to find string elements
+  ! separated either by commas or spaces.
+
   ! See also SplitWords
 
-  subroutine GetStringElement(inList, outElement, nElement, countEmpty, inseparator)
+  subroutine GetStringElement ( inList, outElement, nElement, countEmpty, &
+    & inseparator, SeparatorLocation )
     ! Dummy arguments
     character (len=*), intent(in)   :: inList
     character (len=*), intent(out)  :: outElement
-    integer, intent(in)         :: nElement ! Entry number to return
-    logical, intent(in)   :: countEmpty
+    integer, intent(in)             :: nElement ! Entry number to return
+    logical, intent(in)             :: countEmpty
     character (len=*), optional, intent(in)       :: inseparator
+    integer, optional, intent(out)  :: SeparatorLocation ! -1 if no element
 
     ! Local variables
     integer :: i           ! Loop counters
@@ -1252,13 +1258,15 @@ contains
     endif
     i = 1
     elem = 1
+    if ( present(separatorLocation) ) separatorLocation = -1
     do
-      nextseparator = i - 1 + INDEX(inList(i:), separator)
+      nextseparator = i - 1 + SCAN(inList(i:), separator)
 
       ! No more separators
       if(nextseparator == i - 1) then
         if(elem >= nElement) then
           outElement = inList(i:)
+          if ( present(separatorLocation) ) separatorLocation = i
         else
           outElement = separator
         endif
@@ -1280,6 +1288,7 @@ contains
           if(elem >= nElement) then
             if(i < nextseparator) then
               outElement = inList(i:nextseparator-1)
+              if ( present(separatorLocation) ) separatorLocation = i
             else
               outElement = separator
             endif
@@ -4443,6 +4452,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.66  2014/08/19 23:15:16  vsnyder
+! Added SeparatorLocation argument to GetStringElement
+!
 ! Revision 2.65  2014/08/05 00:16:28  pwagner
 ! EvaluateFormula geberic: can work with Lists or Arrays
 !
