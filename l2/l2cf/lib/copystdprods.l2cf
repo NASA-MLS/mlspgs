@@ -44,11 +44,14 @@ Catenate
 
 !ifdef(flagCopyStandardProducts,{
 
-  ;; Don't copy anything if we skipped some phases
-  BrOEmpty: Boolean, formula="false"
-  isSwathEmpty, type=l2dgg, swath='BrO-StdProd', file='!DGGFileName', Boolean=BrOEmpty
-  Dump, Boolean=BrOEmpty
-  Skip, Boolean=BrOEmpty  ;; No need if we skipped the BrO phase
+   ;;  ----- This idea, despite good intentions, proved disastrous when
+   ;;      Band 11 was off starting Jan 10 2010
+   ;;      We'll have to come up with a better system for detecting skipped phases
+   ;;      ;; Don't copy anything if we skipped some phases
+   ;;      BrOEmpty: Boolean, formula="false"
+   ;;      isSwathEmpty, type=l2dgg, swath='BrO-StdProd', file='DGG', Boolean=BrOEmpty
+   ;;      Dump, Boolean=BrOEmpty
+   ;;      Skip, Boolean=BrOEmpty  ;; No need if we skipped the BrO phase
 ;; Here we carry out the idea of copying standard Products out of the
 ;; DGG file and into their "proper" l2gp files
 ;;
@@ -190,6 +193,9 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.3  2014/04/16 00:56:47  pwagner
+; May copy both HNO3 swaths to stdprod file
+;
 ; Revision 1.2  2014/03/13 20:34:11  pwagner
 ; Fixed error that caused toolkitless runs
 ;
