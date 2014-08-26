@@ -276,6 +276,7 @@ maxUpperOverlap
 maxValue
 measurements
 measurementSD
+memory
 message
 metaDataOnly
 metaName
@@ -521,6 +522,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.248  2014/08/26 23:23:09  pwagner
+# We may Dump memory, time; the /reset option may Dump changes in their use
+#
 # Revision 2.247  2014/05/31 00:20:41  pwagner
 # Ideas which may shrink memory footprint of griddedData
 #
