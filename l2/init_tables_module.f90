@@ -1522,6 +1522,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mark, boolean(), &
              begin, f+f_mask, vectorQuantity(), &
              begin, f+f_matrix, field_spec(s_matrix), &
+             begin, f+f_memory, boolean(), &
              begin, f+f_MieTables, boolean(), &
              begin, f+f_options, string(), &
              begin, f+f_pfaData, field_spec(s_makePFA,s_pfaData,s_readPFA), &
@@ -1532,6 +1533,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_pointingGrids, boolean() /), &
              continue=.true. )
     call make_tree ( (/ & ! Continuing for s_dump...
+             begin, f+f_reset, boolean(), &
              begin, f+f_quantity, vectorQuantity(), &
              begin, f+f_signals, field_spec(s_signal), &
              begin, f+f_spectroscopy, field_type(t_molecule), &
@@ -1542,6 +1544,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_stride, numeric(), &
              begin, f+f_template, field_spec(s_vectorTemplate,s_quantity), &
              begin, f+f_text, string(), &
+             begin, f+f_time, boolean(), &
              begin, f+f_tGrid, field_spec(s_tGrid), &
              begin, f+f_variable, n+n_variable_ref, &
              begin, f+f_vector, field_spec(s_vector), &
@@ -1971,6 +1974,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.603  2014/08/26 23:22:35  pwagner
+! We may Dump memory, time; the /reset option may Dump changes in their use
+!
 ! Revision 2.602  2014/08/12 23:09:53  pwagner
 ! /additional flag added to phase commands applies to options field
 !
