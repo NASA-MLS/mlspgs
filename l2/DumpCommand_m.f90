@@ -17,7 +17,10 @@ module DumpCommand_M
 
   use highOutput, only: banner, beVerbose, headLine, &
     & numToChars, outputNamedValue
+  use MLSCommon, only: MLSFile_t, defaultUndefinedValue, fileNameLen, processID
+  use MLSStrings, only: asciify
   use output_m, only: blanks, newLine, output
+  use time_m, only: finish, time_now
   implicit none
   private
 
@@ -108,12 +111,25 @@ module DumpCommand_M
   interface EVALUATOR
     module procedure EVALUATOR_SCA, EVALUATOR_ARRAY
   end interface
+  
+  interface outputLater
+    module procedure outputLater_chars, outputLater_real
+  end interface
 
+  logical :: asBanner
+  logical :: asHeadLine
   logical, parameter :: countEmpty = .true. ! Except where overriden locally
+  character(len=8) :: headLineChars
+  integer :: lineLength
   integer, parameter :: MAXRESULTLEN = 64
   logical, public, save             :: MLSSELECTING = .false.
   logical, save               :: MLSSelectedAlready = .false.
   character(len=MAXRESULTLEN), save :: selectLabel  = ' '
+  real, save :: T1 = 0.               ! For timing
+  real, save :: T2 = 0.               ! For timing
+  character(len=255) :: Text
+  real, save :: TotalMemory1 = 0.     ! For memory usage
+  real, save :: TotalMemory2 = 0.     ! For memory usage
 
   ! Error codes
   integer, parameter :: NoFile = + 1
@@ -140,7 +156,6 @@ contains
     use CONSTRUCTQUANTITYTEMPLATES, only: ANYGOODSIGNALDATA
     use CHUNKS_M, only: MLSCHUNK_T
     use INIT_TABLES_MODULE, only: F_SIGNAL, F_BOOLEAN
-    use MLSCOMMON, only: MLSFILE_T
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSSIGNALS_M, only: GETSIGNALNAME, &
       & SIGNALS
@@ -158,7 +173,6 @@ contains
     ! Internal variables
     integer :: field
     integer :: field_index
-    integer :: fieldValue
     integer :: keyNo
     character(len=32) :: nameString
     integer :: s
@@ -179,11 +193,6 @@ contains
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
       field_index = decoration(field)
 
       select case ( field_index )
@@ -258,7 +267,6 @@ contains
     ! Internal variables
     integer :: field
     integer :: field_index
-    integer :: fieldValue
     integer :: keyNo
     character(len=32) :: nameString
     type (vectorValue_T), pointer :: PRECISIONQUANTITY
@@ -281,11 +289,6 @@ contains
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
       field_index = decoration(field)
       source = subtree(2,son) ! required to be an n_dot vertex
 
@@ -352,7 +355,6 @@ contains
     ! Internal variables
     integer :: field
     integer :: field_index
-    integer :: fieldValue
     character(len=255) :: LastWarningMsg
     character(len=255) :: message
     integer :: keyNo
@@ -368,11 +370,6 @@ contains
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
       field_index = decoration(field)
 
       select case ( field_index )
@@ -417,7 +414,6 @@ contains
   function BOOLEANFROMCOMPARINGQTYS ( ROOT, VECTORS ) result( THESIZE )
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_BOOLEAN, F_FORMULA
-    use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE
     use MLSKINDS, only: R8, RV
     use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
@@ -454,7 +450,6 @@ contains
     real(rv) :: A, B, C                       ! constant "c" in formula
     integer :: field
     integer :: field_index
-    integer :: fieldValue
     character(len=8) :: flattening, arg(2), op
     character(len=255) :: formula
     character(len=255) :: formulaTemp
@@ -478,11 +473,6 @@ contains
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
       field_index = decoration(field)
       source = subtree(2,son) ! required to be an n_dot vertex
 
@@ -669,7 +659,6 @@ contains
     ! Internal variables
     integer :: field
     integer :: field_index
-    integer :: fieldValue
     type (GRIDDEDDATA_T), pointer :: grid
     integer :: keyNo
     character(len=32) :: nameString
@@ -684,11 +673,6 @@ contains
       son = subtree(keyNo,root)
       field = subtree(1,son)
       value = subtree(2,son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
       field_index = decoration(field)
 
       select case ( field_index )
@@ -731,7 +715,6 @@ contains
       & L_L2DGG, L_L2GP
     use L2GPDATA, only: L2GPDATA_T, RGP, L2GPNAMELEN, &
       & READL2GPDATA, DESTROYL2GPCONTENTS
-    use MLSCOMMON, only: FILENAMELEN
     use MLSFILES, only: HDFVERSION_5
     use MLSHDFEOS, only: MLS_SWATH_IN_FILE
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
@@ -748,7 +731,6 @@ contains
     ! Internal variables
     integer :: field
     integer :: field_index
-    integer :: fieldValue
     integer :: fileType
     character (len=FileNameLen) :: FILE_BASE    ! From the FILE= field
     character(len=FileNameLen) :: filename          ! filename
@@ -758,7 +740,6 @@ contains
     character(len=32) :: nameString
     integer :: son
     logical :: tvalue
-    integer :: value
     type (L2GPData_T) :: l2gp
     integer :: numGood
     logical, dimension(:), pointer  :: negativePrec => null() ! true if all prec < 0
@@ -770,12 +751,6 @@ contains
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
-      value = subtree(2,son)
-      if ( nsons(son) > 1 ) then
-        fieldValue = decoration(subtree(2,son)) ! The field's value
-      else
-        fieldValue = son
-      end if
       field_index = decoration(field)
 
       select case ( field_index )
@@ -1109,77 +1084,75 @@ contains
 
   ! Process a "dump" command
 
-    use ANTENNAPATTERNS_M, only: DUMP_ANTENNA_PATTERNS_DATABASE
-    use CALENDAR, only: DURATION_FORMATTED, TIME_T, TK
-    use CALL_STACK_M, only: DUMP_STACK
-    use CHUNKDIVIDECONFIG_M, only: CHUNKDIVIDECONFIG, DUMP
-    use DECLARATION_TABLE, only: Dump_A_Decl, Decls, Get_Decl, Variable
-    use DUMP_0, only: DIFF, DUMP, RMSFORMAT
-    use EXPR_M, only: EXPR
-    use FILTERSHAPES_M, only: DUMP_FILTER_SHAPES_DATABASE, &
-      & DUMP_DACS_FILTER_DATABASE
-    use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
-    use GRIDDEDDATA, only: DIFF, DUMP, GRIDDEDDATA_T
-    use HESSIANMODULE_1, only: HESSIAN_T, DIFF, DUMP
-    use HGRIDSDATABASE, only: DUMP, HGRID_T
-    use IGRF_INT, only: DUMP_GH
-    use INIT_TABLES_MODULE, only: F_ALLBOOLEANS, F_ALLFILES, &
-      & F_ALLFORWARDMODELS, F_ALLGRIDDEDDATA, F_ALLHESSIANS, F_ALLHGRIDS, &
-      & F_ALLL2PCS, F_ALLLINES, F_ALLMATRICES, F_ALLPFA, &
-      & F_ALLQUANTITYTEMPLATES, F_ALLRADIOMETERS, F_ALLSIGNALS, F_ALLSPECTRA, &
-      & F_ALLVECTORS, F_ALLVECTORTEMPLATES, F_ALLVGRIDS, F_ANTENNAPATTERNS, &
-      & F_BLOCK, F_BOOLEAN, &
-      & F_CALLSTACK, F_CHUNKDIVIDE, F_CHUNKNUMBER, F_CLEAN, &
-      & F_COMMANDLINE, F_COUNT, F_CRASHBURN, &
-      & F_DETAILS, F_DACSFILTERSHAPES, &
-      & F_FILE, F_FILTERSHAPES, F_FORWARDMODEL, F_GRID, F_HESSIAN, &
-      & F_HGRID, F_IGRF, F_L2PC, F_LINES, F_MARK, F_MASK, F_MATRIX, &
-      & F_MIETABLES, F_OPTIONS, F_PFADATA, F_PFAFILES, F_PFANUM, F_PFASTRU, &
-      & F_PHASENAME, F_POINTINGGRIDS, F_QUANTITY, &
-      & F_SIGNALS,  F_SPECTROSCOPY, F_STACK, F_START, F_STOP, F_STRIDE, &
-      & F_STOPWITHERROR, F_SURFACE, F_TEMPLATE, F_TEXT, F_TGRID, F_VARIABLE, &
-      & F_VECTOR, F_VECTORMASK, F_VGRID, &
-      & S_DIFF, S_DUMP, S_QUANTITY, S_VECTORTEMPLATE, &
-      & FIELD_FIRST, FIELD_LAST
-    use L2PARINFO, only: PARALLEL, CLOSEPARALLEL
-    use L2PC_M, only: L2PCDATABASE, DUMPL2PC => DUMP
-    use LEXER_CORE, only: GET_WHERE, WHERE_T
-    use MACHINE, only: NEVERCRASH
-    use MATRIXMODULE_1, only: MATRIX_T, MATRIX_DATABASE_T, &
-      & DIFF, DUMP, GETFROMMATRIXDATABASE
-    use MLSCOMMON, only: MLSFILE_T
-    use MLSFILES, only: DUMPMLSFILE => DUMP, GETMLSFILEBYNAME
-    use MLSKINDS, only: R8, RV
-    use MLSL2OPTIONS, only: COMMAND_LINE, CURRENTCHUNKNUMBER, CURRENTPHASENAME, &
-      & L2CFNODE, NORMAL_EXIT_STATUS, RUNTIMEVALUES, &
-      & DUMPMACROS, MLSMESSAGE
-    use MLSL2TIMINGS, only: DUMP_SECTION_TIMINGS
-    use MLSMESSAGEMODULE, only: MLSMSG_CRASH, MLSMSG_ERROR, MLSMessageCalls, &
-      & MLSMESSAGEEXIT
-    use MLSFINDS, only: FINDFIRST
-    use MLSSIGNALS_M, only: RADIOMETERS, SIGNALS, &
-      & DUMP, DUMP_ALL, GETRADIOMETERINDEX
+    use antennapatterns_m, only: dump_antenna_patterns_database
+    use calendar, only: duration_formatted, time_t, tk
+    use call_stack_m, only: dump_stack
+    use chunkdivideconfig_m, only: chunkdivideconfig, dump
+    use declaration_table, only: dump_a_decl, decls, get_decl, variable
+    use dump_0, only: diff, dump, rmsformat
+    use expr_m, only: expr
+    use filtershapes_m, only: dump_filter_shapes_database, &
+      & dump_dacs_filter_database
+    use forwardmodelconfig, only: dump, forwardmodelconfig_t
+    use griddeddata, only: diff, dump, griddeddata_t
+    use hessianmodule_1, only: hessian_t, diff, dump
+    use hgridsdatabase, only: dump, hgrid_t
+    use igrf_int, only: dump_gh
+    use init_tables_module, only: f_allbooleans, f_allfiles, &
+      & f_allforwardmodels, f_allgriddeddata, f_allhessians, f_allhgrids, &
+      & f_alll2pcs, f_alllines, f_allmatrices, f_allpfa, &
+      & f_allquantitytemplates, f_allradiometers, f_allsignals, f_allspectra, &
+      & f_allvectors, f_allvectortemplates, f_allvgrids, f_antennapatterns, &
+      & f_block, f_boolean, &
+      & f_callstack, f_chunkdivide, f_chunknumber, f_clean, &
+      & f_commandline, f_count, f_crashburn, &
+      & f_details, f_dacsfiltershapes, &
+      & f_file, f_filtershapes, f_forwardmodel, f_grid, f_hessian, &
+      & f_hgrid, f_igrf, f_l2pc, f_lines, f_mark, f_mask, f_matrix, f_memory, &
+      & f_mietables, f_options, f_pfadata, f_pfafiles, f_pfanum, f_pfastru, &
+      & f_phasename, f_pointinggrids, f_quantity, f_reset, &
+      & f_signals,  f_spectroscopy, f_stack, f_start, f_stop, f_stride, &
+      & f_stopwitherror, f_surface, f_template, f_text, f_tgrid, f_time, &
+      & f_variable, f_vector, f_vectormask, f_vgrid, &
+      & s_diff, s_dump, s_quantity, s_vectortemplate, &
+      & field_first, field_last
+    use l2parinfo, only: parallel, closeparallel
+    use l2pc_m, only: l2pcdatabase, dumpl2pc => dump
+    use lexer_core, only: get_where, where_t
+    use machine, only: nevercrash
+    use matrixmodule_1, only: matrix_t, matrix_database_t, &
+      & diff, dump, getfrommatrixdatabase
+    use MLSFiles, only: dumpMLSFile => dump, getMLSFilebyname
+    use MLSKinds, only: r8, rv
+    use MLSL2Options, only: command_line, currentchunknumber, currentphasename, &
+      & l2cfnode, normal_exit_status, runtimevalues, &
+      & dumpmacros, MLSmessage
+    use MLSL2Timings, only: dump_section_timings
+    use MLSmessagemodule, only: MLSmsg_crash, MLSmsg_error, MLSmessagecalls, &
+      & MLSmessageexit
+    use MLSfinds, only: findfirst
+    use MLSsignals_m, only: radiometers, signals, &
+      & dump, dump_all, getradiometerindex
     use MLSStrings, only: indexes, lowerCase, &
       & readIntsFromChars, stretch, writeIntsToChars
     use MLSStringLists, only: getHashElement, optionDetail, switchDetail
-    use MORETREE, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
-    use PFADATABASE_M, only: DUMP, DUMP_PFADATABASE, DUMP_PFAFILEDATABASE, &
-      & DUMP_PFASTRUCTURE, PFADATA
-    use POINTINGGRID_M, only: DUMP_POINTING_GRID_DATABASE
-    use QUANTITYTEMPLATES, only: DUMP, QUANTITYTEMPLATE_T
-    use READ_MIE_M, only: DUMP_MIE
-    use SPECTROSCOPYCATALOG_M, only: CATALOG, DUMP, DUMP_LINES_DATABASE, LINES
-    use STRING_TABLE, only: Display_String, GET_STRING
-    use TIME_M, only: FINISH
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, WHERE
-    use TREE_TYPES, only: N_SPEC_ARGS
-    use VECTORSMODULE, only: VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, &
-      & DIFF, DUMP, DESTROYVECTORQUANTITYVALUE, DUMPQUANTITYMASK, DUMPVECTORMASK, &
-      & GATHERVECTORQUANTITY, GETVECTORQUANTITY, GETVECTORQTYBYTEMPLATEINDEX, &
-      & GETVECTORQUANTITYINDEXBYNAME
-    use VGRIDSDATABASE, only: DUMP, VGRIDS
+    use moretree, only: get_boolean, get_field_id, get_spec_id
+    use pfadatabase_m, only: dump, dump_pfadatabase, dump_pfafiledatabase, &
+      & dump_pfastructure, pfadata
+    use pointinggrid_m, only: dump_pointing_grid_database
+    use quantitytemplates, only: dump, quantitytemplate_t
+    use read_mie_m, only: dump_mie
+    use spectroscopyCatalog_m, only: catalog, dump, dump_lines_database, lines
+    use string_table, only: display_string, get_string
+    use toggles, only: gen, switches, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decoration, node_id, nsons, sub_rosa, subtree, where
+    use tree_types, only: n_spec_args
+    use vectorsModule, only: vector_t, vectortemplate_t, vectorvalue_t, &
+      & diff, dump, destroyvectorquantityvalue, dumpquantitymask, dumpvectormask, &
+      & gathervectorquantity, getvectorquantity, getvectorqtybytemplateindex, &
+      & getvectorquantityindexbyname
+    use vgridsdatabase, only: dump, vgrids
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Databases:
@@ -1193,8 +1166,6 @@ contains
     type (Matrix_Database_T), dimension(:), pointer, optional    :: MatrixDataBase
     type (Hessian_T), dimension(:), pointer, optional            :: HessianDataBase
 
-    logical :: asBanner
-    logical :: asHeadLine
     character(len=80) :: BOOLEANSTRING  ! E.g., 'BAND13_OK'
     logical :: Clean
     real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
@@ -1224,7 +1195,6 @@ contains
     character(len=80) :: KEYSTRING  ! E.g., 'BAND13_OK'
     character(len=80) :: Label  ! E.g., 'BAND8'
     character(len=8) :: lineLenChars
-    integer :: lineLength
     type (Matrix_T), pointer :: matrix
     type (Matrix_T), pointer :: matrix2
     integer :: MatrixIndex
@@ -1240,10 +1210,11 @@ contains
     integer :: QuantityIndex2
     type (VectorValue_T), pointer :: QTY1, QTY2
     type (VectorValue_T) :: VectorValue
+    logical :: reset
     integer :: Son
     integer, dimension(3) :: START, COUNT, STRIDE, BLOCK
     integer :: STARTNODE
-    character :: TempText*20, Text*255
+    character :: TempText*20
     type(time_t) :: Time
     character(10) :: TimeOfDay
     type (vector_T), pointer  :: Vector
@@ -1298,6 +1269,7 @@ contains
     end if
 
     clean = .false.
+    reset = .false.
     start = 0
     count = 0
     stride = 0
@@ -1312,6 +1284,7 @@ contains
     doStretch = .false.
     doStretchier = .false.
     lineLength = 40
+    text = ' '
 
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -1329,9 +1302,9 @@ contains
         & f_allRadiometers, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
         & f_callStack, f_chunkDivide, f_chunkNumber, f_commandLine, f_crashBurn, &
-        & f_DACSfilterShapes, f_filterShapes, f_igrf, &
+        & f_DACSfilterShapes, f_filterShapes, f_igrf, f_memory, &
         & f_MieTables, f_pfaFiles, f_pfaStru, f_phaseName, f_pointingGrids, &
-        & f_stop, f_stopWithError )
+        & f_time, f_stop, f_stopWithError )
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allBooleans )
@@ -1510,6 +1483,12 @@ contains
               & before="Program stopped by /stopWithError field on DUMP statement at ", &
                 & after="." )
             call MLSMessageExit( 1, farewell=farewell )
+          case ( f_memory )
+            call SayMemory
+            if ( reset ) TotalMemory1 = TotalMemory2
+          case ( f_time )
+            call SayTime
+            if ( reset ) T1 = T2
           end select
         end if
       case ( f_Boolean )
@@ -1555,6 +1534,8 @@ contains
       case ( f_clean )
         clean = get_boolean(son)
         if ( clean ) optionsString = trim(optionsString) // 'c'
+      case ( f_reset )
+        reset = get_boolean(son)
       case ( f_details )
         call expr ( gson, units, values )
         details = nint(values(1)) - DetailReduction
@@ -1826,6 +1807,12 @@ contains
         call get_string ( sub_rosa(gson), optionsString, strip=.true. )
         ! optionsString = lowerCase(optionsString)
         ! call outputNamedValue( 'options', trim(optionsString) )
+        asBanner = optionDetail( optionsString, 'B', 'Banner' ) == 'yes'
+        headLineChars = optionDetail( optionsString, 'H', 'Headline' )
+        asHeadline =  headLineChars /= 'no'
+        lineLenChars = optionDetail( optionsString, 'L', 'Linelength' )
+        if ( lineLenChars /= 'no' ) &
+          & call readIntsFromChars ( lineLenChars, lineLength )
       case ( f_pfaData )
         do i = 2, nsons(son)
           look = decoration(decoration(subtree(i,son)))
@@ -1880,18 +1867,14 @@ contains
         ! ---------        -------
         !     B            print as a banner
         !     H            print as a headine
+        !     H[c]         print as a headine with character "c" instead of *
         !     s            s-t-r-e-t-c-h
         !     S            s t r e t c h
         !   L[nn]          use nn for line length
         if ( len_trim(optionsString) > 0 ) then
-          asBanner = optionDetail( optionsString, 'B', 'Banner' ) == 'yes'
-          asHeadline = optionDetail( optionsString, 'H', 'Headline' ) == 'yes'
           doStretch = optionDetail( optionsString, 's', 'stretch' ) == 'yes'
           doStretchier = optionDetail( optionsString, 'S', 'stretch' ) == 'yes'
-          lineLenChars = optionDetail( optionsString, 'L', 'Linelength' )
         endif
-        if ( lineLenChars /= 'no' ) &
-          & call readIntsFromChars ( lineLenChars, lineLength )
         do k = 2, nsons(son)
           call get_string ( sub_rosa(subtree(k,son)), text, strip=.true. )
           ! Special text causing intentional error (this is a dubious hack)
@@ -1974,17 +1957,7 @@ contains
           end do
           if ( doStretchier ) text = stretch( text, options='-a' )
           if ( doStretch ) text = stretch( text )
-          if ( asHeadLine ) then
-            call headLine( trim(text), Before='*', After='*', fillChar='-' )
-          elseif ( asBanner ) then
-            if ( lineLength > 0 ) then
-              call banner( trim(text), linelength=lineLength ) 
-            else
-              call banner( trim(text) ) 
-            endif
-          else
-            call output ( trim(text), advance='yes' )
-          endif
+          call outputNow ! the text
         end do ! k
       case ( f_tGrid )
         if ( details < -2 ) cycle
@@ -2103,12 +2076,12 @@ contains
     integer :: Me = -1          ! String index for trace cacheing
     character(len=16) :: optionsString
     integer :: Son
-    logical :: verbose, verboser
+    logical :: verbose !, verboser
 
     ! Executable
     call trace_begin ( me, 'MLSCase', root, cond=toggle(gen) )
     verbose = BeVerbose ( 'bool', -1 )
-    verboser = BeVerbose ( 'bool', 0 )
+    ! verboser = BeVerbose ( 'bool', 0 )
     MLSSelecting = .true. ! Defaults to skipping rest of case
     if ( MLSSelectedAlready ) then
       call trace_end ( 'MLSCase', cond=toggle(gen) )
@@ -2174,12 +2147,12 @@ contains
     character(len=80) :: Label          ! E.g., 'BAND8'
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: Son
-    logical :: verbose, verboser
+    logical :: verbose! , verboser
 
     ! Executable
     call trace_begin ( me, 'MLSSelect', root, cond=toggle(gen) )
     verbose = BeVerbose ( 'bool', -1 )
-    verboser = BeVerbose ( 'bool', 0 )
+    ! verboser = BeVerbose ( 'bool', 0 )
     label = ' '
     do j = 2, nsons(root)
       son = subtree(j,root) ! The argument
@@ -2659,6 +2632,81 @@ contains
     end if
   end subroutine returnFullFileName
 
+  subroutine SayMemory
+    use Memory_m, only: memory_used
+    text = ' '
+    call memory_used ( processID, total=TotalMemory2 )
+    call outputLater ( "Memory used since start = " )
+    call insertSpace
+    call outputLater ( TotalMemory2, advance = 'no' )
+    call insertSpace
+    if ( TotalMemory1 > 0. ) then
+      call outputLater ( "(recent = ", advance='no' )
+      call insertSpace
+      call outputLater ( TotalMemory2 - TotalMemory1, advance = 'no' )
+      call insertSpace
+      call outputLater ( ")", advance='no' )
+    endif
+    call outputNow
+  end subroutine SayMemory
+
+  subroutine SayTime
+    text = ' '
+    call time_now ( t2 )
+    call outputLater ( "Time since start = " )
+    call insertSpace
+    call outputLater ( t2, advance = 'no' )
+    call insertSpace
+    if ( T1 > 0. ) then
+      call outputLater ( "(lap = ", advance='no' )
+      call insertSpace
+      call outputLater ( t2 - t1, advance = 'no' )
+      call insertSpace
+      call outputLater ( ")", advance='no' )
+    endif
+    call outputNow
+  end subroutine SayTime
+
+  subroutine outputLater_chars ( chars, advance )
+    character(len=*), intent(in) :: chars
+    character(len=*), optional, intent(in) :: advance
+    text = trim(text) // chars
+  end subroutine outputLater_chars
+
+  subroutine outputLater_real ( arg, advance )
+    real, intent(in)             :: arg
+    character(len=*), optional, intent(in) :: advance
+    text = trim(text) // numToChars ( arg )
+  end subroutine outputLater_real
+
+  subroutine outputNow
+    ! Snip away the null chars before printing
+    text = asciify( text, how='snip' )
+    if ( asHeadLine ) then
+      if ( headLineChars == 'yes' ) then
+        call headLine( trim(text), Before='*', After='*', fillChar='-' )
+      else
+        call headLine( trim(text), &
+          & Before=headLineChars(1:1), After=headLineChars(1:1), &
+          & fillChar='-' )
+      endif
+    elseif ( asBanner ) then
+      if ( lineLength > 0 ) then
+        call banner( trim(asciify( text, how='snip' )), linelength=lineLength ) 
+      else
+        call banner( trim(asciify( text, how='snip' )) ) 
+      endif
+    else
+      call output ( trim(text), advance='yes' )
+    endif
+  end subroutine outputNow
+
+  subroutine insertSpace
+    ! We actually insert a space followed by a null; later the null will be removed
+    ! before printing
+    Text = trim(Text) // ' ' // achar(0)
+  end subroutine insertSpace
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
@@ -2672,6 +2720,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.117  2014/08/28 19:07:16  pwagner
+! May command Dump of /memory or /time; optionally to /reset
+!
 ! Revision 2.116  2014/06/11 20:06:33  pwagner
 ! details level to skip all Dumps lowered to -3
 !
