@@ -270,6 +270,7 @@ while [ "$more_opts" = "yes" ] ; do
        otheropts=`add_option "$otheropts" $1`
        echo "Skipping argument to run slave pge in background" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
+       runinbackground="yes"
        shift
        ;;
     --tk )
@@ -322,6 +323,12 @@ while [ "$more_opts" = "yes" ] ; do
        otheropts=`add_option "$otheropts" "$OPTSFILE"`
        echo "Adding arguments to read opts from file: $1 $OPTSFILE" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
+       # Are we setting to run in background?
+       a=`grep '^backg=true' $OPTSFILE`
+       if [ "$a" != "" ]
+       then
+         runinbackground="yes"
+       fi
        shift
        shift
        ;;
@@ -422,21 +429,39 @@ then
 fi
 
 # Run pge in background
+echo "Must run $PGE_BINARY in background" >> "$LOGFILE"
 NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
 notdone="true"
 
-$PGE_BINARY --tk -m --slave $masterTid --note "$NOTEFILE" $otheropts 2>&1 \
+$PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts 2>&1 \
   | tee -a "$LOGFILE" &
 sleep 20
 # Find the pge's pid; call it pgepid
-pgepid=`ps aux | grep "uid $pid" | awk '{print $2}' | grep -v grep`
+ps aux | grep "uid $pid " >> $LOGFILE
+pgepid=`ps aux | grep "uid $pid " | grep -v grep | awk '{print $2}'`
+
+# Did the launch fail immediately?
+if [ "$pgepid" = "" ]
+then
+  echo "Failed to launch $PGE_BINARY in background" 2>&1 | tee -a "$LOGFILE"
+  exit 1
+fi
+
 # Write this pid to a uniquely-named file
 echo "$pgepid" > "$NOTEFILE"
 while [ "$notdone" = "true" ]
 do
   sleep 120
+  # Either of two signs that we finished:
+  # the pge wrote Finished to the note file
   a=`grep Finished "$NOTEFILE"`
   if [ "$a" != "" ]
+  then
+    notdone=false
+  fi
+  # its pid disappears
+  a=`ps aux | grep "uid $pid " | grep -v grep | awk '{print $2}'`
+  if [ "$a" != "$pgepid" ]
   then
     notdone=false
   fi
@@ -464,6 +489,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.30  2014/08/14 00:49:58  pwagner
+# Should correctly run PGE_BINARY as backg task
+#
 # Revision 1.29  2014/06/25 23:08:27  pwagner
 # Handle --set, --setf, --versid
 #
