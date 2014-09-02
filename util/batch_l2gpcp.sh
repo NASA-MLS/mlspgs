@@ -278,6 +278,14 @@ do
     oldswaths="$oldswath1"
     newswaths="$newswath1"
     ;;
+  H2O )
+    oldswaths="$oldswath1"
+    newswaths="$newswath1"
+    if [ "$apriori" = "yes" ]
+    then
+      oldswaths=H2O_LR-APriori
+    fi
+    ;;
   * )
     oldswaths="$oldswath1"
     newswaths="$newswath1"
@@ -296,6 +304,9 @@ do
 done
 exit
 # $Log$
+# Revision 1.7  2013/05/30 20:37:03  pwagner
+# Corrected erroneous comments about default location of l2gpcat
+#
 # Revision 1.6  2009/12/10 18:52:58  pwagner
 # Attempts to find command first in PATH, then inder MLSTOOLS
 #
