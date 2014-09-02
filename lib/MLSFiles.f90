@@ -12,57 +12,57 @@
 !===============================================================================
 module MLSFiles               ! Utility file routines
   !=============================================================================
-  use HDF, only: DFACC_CREATE, DFACC_RDONLY, DFACC_READ, DFACC_RDWR, &
-    & SFSTART, SFEND
-  use HDFEOS, only: GDCLOSE, GDOPEN, SWCLOSE, SWOPEN, SWINQSWATH
-  use HDFEOS5, only: HE5_SWCLOSE, HE5_SWOPEN, HE5_SWINQSWATH, &
-    & HE5_GDOPEN, HE5_GDCLOSE, &
-    & HE5F_ACC_TRUNC, HE5F_ACC_RDonly, HE5F_ACC_RDWR
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INTRINSIC, only: L_ASCII, L_BINARY, L_HDFEOS, L_HDF, L_OPEN, &
-    & L_SWATH, L_TKGEN, L_ZONALAVG, LIT_INDICES
-  use IO_STUFF, only: GET_LUN
-  use MACHINE, only: IO_ERROR
-  use MLSCOMMON, only: BAREFNLEN, FILENAMELEN,  MLSFILE_T, RANGE_T, &
-    & INRANGE
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
-    & MLSMSG_DEALLOCATE, MLSMSG_CRASH, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGS, only: CAPITALIZE, LOWERCASE
-  use MLSSTRINGLISTS, only: EXTRACTSUBSTRING, &
-    & REPLACESUBSTRING, SORTARRAY
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use SDPTOOLKIT, only: &
-    & PGS_PC_GETREFERENCE, PGS_S_SUCCESS, &
-    & PGSD_IO_GEN_RSEQFRM, PGSD_IO_GEN_RSEQUNF, & 
-    & PGSD_IO_GEN_RDIRFRM, PGSD_IO_GEN_RDIRUNF, & 
-    & PGSD_IO_GEN_WSEQFRM, PGSD_IO_GEN_WSEQUNF, & 
-    & PGSD_IO_GEN_WDIRFRM, PGSD_IO_GEN_WDIRUNF, & 
-    & PGSD_IO_GEN_USEQFRM, PGSD_IO_GEN_USEQUNF, & 
-    & PGSD_IO_GEN_UDIRFRM, PGSD_IO_GEN_UDIRUNF, & 
-    & PGSD_IO_GEN_ASEQFRM, PGSD_IO_GEN_ASEQUNF, &
-    & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_PC_FILE_PATH_MAX, &
-    & USESDPTOOLKIT
-!   In the long run, we'll try putting interfaces to these in SDPToolkit.f90
-!   Until then, just declare them as external
-!    & PGS_MET_SFstart, PGS_MET_SFend, &
-  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
-  use HDF5, only: SIZE_T
+  use HDF, only: dfacc_create, dfacc_rdonly, dfacc_read, dfacc_rdwr, &
+    & sfstart, sfend
+  use HDFeos, only: gdclose, gdopen, swclose, swopen, swinqswath
+  use HDFeos5, only: HE5_swclose, HE5_swopen, HE5_swinqswath, &
+    & HE5_gdopen, HE5_gdclose, &
+    & HE5f_acc_trunc, HE5f_acc_rdonly, HE5f_acc_rdwr
+  use highoutput, only: outputnamedvalue
+  use intrinsic, only: l_ascii, l_binary, l_HDFeos, l_HDF, l_open, &
+    & l_swath, l_tkgen, l_zonalavg, lit_indices
+  use io_stuff, only: get_lun
+  use machine, only: io_error
+  use MLScommon, only: barefnlen, filenamelen,  MLSfile_t, range_t, &
+    & inrange
+  use MLSmessagemodule, only: MLSmessage, MLSmsg_allocate, &
+    & MLSmsg_deallocate, MLSmsg_crash, MLSmsg_error, MLSmsg_warning
+  use MLSfinds, only: findfirst
+  use MLSstrings, only: capitalize, lowercase
+  use MLSstringlists, only: extractsubstring, &
+    & replacesubstring, sortarray
+  use output_m, only: blanks, output
+  use SDPtoolkit, only: &
+    & PGS_pc_getreference, PGS_s_success, &
+    & PGSd_io_gen_rseqfrm, PGSd_io_gen_rsequnf, & 
+    & PGSd_io_gen_rdirfrm, PGSd_io_gen_rdirunf, & 
+    & PGSd_io_gen_wseqfrm, PGSd_io_gen_wsequnf, & 
+    & PGSd_io_gen_wdirfrm, PGSd_io_gen_wdirunf, & 
+    & PGSd_io_gen_useqfrm, PGSd_io_gen_usequnf, & 
+    & PGSd_io_gen_udirfrm, PGSd_io_gen_udirunf, & 
+    & PGSd_io_gen_aseqfrm, PGSd_io_gen_asequnf, &
+    & PGS_io_gen_closef, PGS_io_gen_openf, PGSd_pc_file_path_max, &
+    & useSDPtoolkit
+!   in the long run, we'll try putting interfaces to these in SDPtoolkit.f90
+!   until then, just declare them as external
+!    & PGS_met_sfstart, PGS_met_sfend, &
+  use string_table, only: display_string, get_string
+  use HDF5, only: size_t
   implicit none
 
   private 
 
-  public :: ACCESSTYPE, ADDFILETODATABASE, &
-  & ADDINITIALIZEMLSFILE, ARETHESAMEFILE, &
-  & DEALLOCATE_FILEDATABASE, DUMP, &
-  & GETMLSFILEBYNAME, GETMLSFILEBYTYPE, GETPCFROMREF, &
-  & INITIALIZEMLSFILE, &
-  & MASKNAME, &
-  & MLS_CLOSEFILE, MLS_EXISTS, MLS_HDF_VERSION, MLS_INQSWATH, &
-  & MLS_OPENFILE, MLS_SFSTART, MLS_SFEND, &
-  & READNCHARS, RELEASE_MLSFILE, RESERVE_MLSFILE, &
-  & RMFILEFROMDATABASE, SPLIT_PATH_NAME, &
-  & TRANSFER_MLSFILE, UNMASKNAME, UNSPLITNAME
+  public :: accesstype, addFiletodatabase, &
+  & addinitializeMLSFile, arethesameFile, &
+  & deallocate_Filedatabase, dump, &
+  & getMLSFilebyname, getMLSFilebytype, getpcfromref, &
+  & initializeMLSFile, &
+  & maskname, &
+  & MLS_closeFile, MLS_exists, MLS_hdf_version, MLS_inqswath, &
+  & MLS_openFile, MLS_sfstart, MLS_sfend, &
+  & readnchars, release_MLSFile, reserve_MLSFile, &
+  & rmFilefromdatabase, split_path_name, &
+  & transfer_MLSFile, unmaskname, unsplitname
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -107,6 +107,7 @@ module MLSFiles               ! Utility file routines
 ! GetPCFromRef       Turns a FileName into the corresponding PC
 ! InitializeMLSFile  Initializes an MLSFile
 ! maskname           Add stuff to file_name so parser can't recognize it
+! mls_exists         Returns 0 if the filename exists
 ! mls_closeFile      Closes a file opened by mls_openFile
 ! mls_hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
 ! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
@@ -133,7 +134,8 @@ module MLSFiles               ! Utility file routines
 ! GetPCFromRef (char* FileName, PCBottom, PCTop,
 !     log caseSensitive, ErrType, [int versionNum], [log debugOption],
 !     [char* path], [char* ExactName])
-! split_path_name (char* full_file_name, char* path, char* name, [char slash])
+! split_path_name ( char* full_file_name, char* path, char* name, [char slash] )
+! int mls_exists ( char* FileName )
 ! int mls_inqswath (char* FileName, char* swathList, int strBufSize,
 !     [int hdfVersion])
 ! int mls_sfstart (char* FileName, int FileAccess, [int hdfVersion])
@@ -248,6 +250,7 @@ module MLSFiles               ! Utility file routines
   logical, parameter :: HDF5_ACC_TYPES_TO_MET = .true.
   integer, parameter :: HDF5_ACC_DEFAULT = HE5F_ACC_RDWR ! HDF5_ACC_RDWR
   
+  ! ------------- Warning--trickery ahead -----------
   ! Character(s) added to file name so parser won't recognize it
   ! (Parser might change its case if it thinks it has seen the name before)
   character (len=*), parameter :: MASKINGTAPE = ')('
@@ -2471,6 +2474,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.101  2014/09/02 18:31:40  pwagner
+! Added mls_exists to toc and api
+!
 ! Revision 2.100  2014/04/02 23:02:10  pwagner
 ! Removed redundant open_ and close_MLSFile
 !
