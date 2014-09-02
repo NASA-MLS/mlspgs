@@ -790,7 +790,7 @@ cmds: do
           call myNextArgument( i, inLine, entireLine, line )
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%pgeName = trim(line)
-        else if ( line(3+n:5+n) == 'pid' ) then
+        else if ( line(3+n:6+n) == 'pid ' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, processId )
         else if ( line(3+n:6) == 'pidf' ) then
@@ -1265,6 +1265,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.95  2014/09/02 18:03:12  pwagner
+! Correctly distinguish --pid and --pidf (though former may disappear)
+!
 ! Revision 2.94  2014/08/12 23:31:35  pwagner
 ! commandline options --backg and --pidf noteFile added
 !
