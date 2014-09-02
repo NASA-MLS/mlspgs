@@ -17,6 +17,7 @@ program MLSL2
   use hdf, only: dfacc_rdonly
   use highoutput, only: dump, headline, outputnamedvalue
   use init_tables_module, only: init_tables
+  use io_stuff, only: read_textFile, write_textFile
   use intrinsic, only: get_type, l_ascii, l_tkgen, lit_indices
   use l2gpdata, only: avoidunlimiteddims
   use l2parinfo, only: parallel, initparallel, accumulateslavearguments, &
@@ -24,15 +25,16 @@ program MLSL2
   use leakcheck_m, only: leakcheck
   use lexer_core, only: init_lexer
   use machine, only: getarg, hp, io_error
-  use MLScommon, only: MLSfile_t, MLSnamesaredebug, MLSnamesareverbose
-  use MLSfiles, only: filestringtable, &
-    & addfiletodatabase, deallocate_filedatabase, dump, &
+  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSnamesAreVerbose, &
+    & processID
+  use MLSFiles, only: filestringtable, &
+    & addFileToDatabase, deallocate_filedatabase, dump, &
     & initializeMLSfile, MLS_openfile, MLS_closefile
   use MLShdf5, only: MLS_h5open, MLS_h5close
   use MLSl2options, only: allocFile, checkPaths, current_version_id, &
     & default_hdfversion_read, default_hdfversion_write, &
     & level1_hdfversion, aura_l1bfiles, need_l1bfiles, &
-    & normal_exit_status, output_print_unit, &
+    & normal_exit_status, noteFile, output_print_unit, &
     & patch, quit_error_threshold, restartWarnings, &
     & sectionTimes, sectionTimingUnits, sharedPCF, & ! sips_version, &
     & skipDirectWrites, skipDirectWritesOriginal, slavesCleanUpSelves, &
@@ -42,14 +44,14 @@ program MLSL2
     & toolkit, totaltimes, processoptions, &
     & checkl2cf, checkleak, countchunks, do_dump, dump_tree, l2cf_unit, &
     & numswitches, originalcmds, recl, &
-    & sectionstoskip, showdefaults, slavemaf, timing
+    & sectionstoskip, showdefaults, slavemaf, timing, uniqueID
   use MLSl2timings, only: run_start_time, section_times, total_times, &
     & add_to_section_timing, dump_section_timings
   use MLSmessagemodule, only: MLSmessage, MLSmsg_debug, &
     & MLSmessageconfig, MLSmsg_error, MLSmsg_severity_to_quit, &
     & MLSmsg_success, MLSmsg_warning, dumpconfig, MLSmessageexit
   use MLSpcf2 ! everything
-  use MLSstrings, only: trim_safe
+  use MLSstrings, only: asciify, trim_safe
   use MLSstringlists, only: expandstringrange, &
     & switchdetail
   use output_m, only: blanks, output, &
@@ -143,7 +145,9 @@ program MLSL2
   implicit none
 
   character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
+  logical, parameter          :: WAITFORSCRIPT     = .true.
 
+  character(len=24) :: arg
   integer :: ERROR                 ! Error flag from check_tree
   integer :: FIRST_SECTION         ! Index of son of root of first n_cf node
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
@@ -156,6 +160,7 @@ program MLSL2
   type(Parser_Table_t) :: Parser_Table
   ! integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
   integer :: ROOT                  ! of the abstract syntax tree
+  integer, parameter :: sleepSeconds = 1000000 ! 1 second in microseconds
   integer :: STATUS                ! From OPEN
   real :: T0, T1, T2               ! For timing
   integer :: inunit = -1
@@ -172,6 +177,7 @@ program MLSL2
   integer   :: numResolutions
   integer, dimension(2) :: layerList
   integer   :: numLayers
+  external :: USLEEP
   ! Executable
   nullify (filedatabase)
   !---------------- Task (1) ------------------
@@ -329,6 +335,14 @@ program MLSL2
     if ( parallel%myTid <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'slave Tid <= 0; probably pvm trouble' )
+    if ( len_trim(notefile) > 0 ) then
+      call USleep( 25*sleepSeconds )
+      call read_textFile ( notefile, arg )
+      processID = asciify ( arg, how='snip' )
+      call output( 'Read process ID from note file', advance='no' )
+      call output( '  ' // trim(processID), advance='no' )
+      call output( '  ' // trim(notefile), advance='yes' )
+    endif
   end if
   !---------------- Task (4) ------------------
   ! Open the L2CF
@@ -483,6 +497,14 @@ program MLSL2
     call output('(Now for the timings summary)', advance='yes')
     call dump_section_timings
   endif
+  
+  ! Tell wrapper script we Finished by way of noteFile
+  ! (Yes, this is the very same noteFile we read our processID
+  ! from earlier; we don't need it any more; hope no one else will, either)
+  if ( parallel%slave .and. len_trim(noteFile) > 0 ) then
+    call output('Telling wrapper script we Finished', advance='yes')
+    call write_textFile ( noteFile, 'Finished' )
+  endif
   !---------------- Task (8) ------------------
   if ( .not. parallel%slave .or. slavesCleanUpSelves ) then
     call destroy_char_table
@@ -536,10 +558,16 @@ program MLSL2
   call add_to_section_timing( 'main', t0 )
   if ( trackAllocates > 0 ) call ReportLeaks ( "At end of program execution..." )
   call finish ( 'ending mlsl2' )
+  if ( parallel%slave .and. len_trim(noteFile) > 0 .and. WAITFORSCRIPT ) then
+    ! cycle endlessly until wrapper script kills us
+    do
+      call usleep ( 10000*parallel%delay )
+    enddo
+  endif
   if( error /= 0 .or. STOPWITHERROR ) then
      call MLSMessageExit(1)
-  else if(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
-     call MLSMessageExit(NORMAL_EXIT_STATUS)
+  else if( NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave ) then
+     call MLSMessageExit( NORMAL_EXIT_STATUS )
   else
      call MLSMessageExit
   end if
@@ -653,15 +681,13 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Status on normal exit', normal_exit_status, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Default hdf version for l1b files', level1_hdfversion, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Default hdfeos version on reads', default_hdfversion_read, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Default hdfeos version on writes', default_hdfversion_write, advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'PCF shared with level 1?', SHAREDPCF, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Range of chunks', trim_safe(parallel%chunkRange), advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Process ID', processID, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'uniqueID ID', uniqueID, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Avoiding unlimited dimensions in directwrites?', &
         & avoidUnlimitedDims, advance='yes', &
@@ -693,6 +719,8 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       if ( parallel%slave ) then
         call outputNamedValue ( 'Master task number', parallel%masterTid, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+        call outputNamedValue ( 'Note file', noteFile, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
       call outputNamedValue ( 'Preflight check paths?', checkPaths, advance='yes', &
@@ -744,6 +772,12 @@ contains
       if ( specialDumpFile /= ' ' ) then
         call outputNamedValue ( 'Save special dumps to', trim(specialDumpFile), advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Default hdf version for l1b files', level1_hdfversion, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Default hdfeos version on reads', default_hdfversion_read, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Default hdfeos version on writes', default_hdfversion_write, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       end if
       if ( len_trim(AllocFile%Name) > 0 ) then
         call outputNamedValue ( 'Log Allocates to', trim(AllocFile%Name), advance='yes', &
@@ -794,6 +828,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.208  2014/09/02 18:18:23  pwagner
+! Uses noteFile mechanism for telling our wrapper script we finished
+!
 ! Revision 2.207  2014/06/30 23:26:58  pwagner
 ! Can log allocations/deallocations to separate file
 !
