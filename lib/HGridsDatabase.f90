@@ -62,9 +62,8 @@ contains ! =========== Public procedures ===================================
 
  ! -----------------------------------------  AddHGridToDatabase  -----
   integer function AddHGridToDatabase ( database, item )
-    
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
-      & MLSMSG_DEALLOCATE, MLSMSG_ERROR
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (HGrid_T), dimension(:), pointer :: database
@@ -109,7 +108,7 @@ contains ! =========== Public procedures ===================================
   ! -------------------------------------------------  TrimHGrid  ------
   subroutine TrimHGrid ( hGrid, side, NOTODELETE )
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
 
     type (HGrid_T), intent(inout) :: HGrid
@@ -117,8 +116,8 @@ contains ! =========== Public procedures ===================================
     integer, intent(in) :: NOTODELETE ! How many to delete, default all
     ! Local variables
     integer :: newNoProfs
-    integer, dimension(:), pointer  :: inttemp
-    real(r8), dimension(:), pointer :: temp
+    integer, dimension(hGrid%noProfs) :: inttemp
+    real(r8), dimension(hGrid%noProfs) :: temp
     integer :: first, last
 
     ! Executable code
@@ -140,9 +139,6 @@ contains ! =========== Public procedures ===================================
     if ( newNoProfs < 0 ) call MLSMessage ( &
         & MLSMSG_Error, ModuleName, 'Too many profiles to delete' )
 
-    nullify ( inttemp, temp )
-    call allocate_test ( inttemp, hGrid%noProfs, 'inttemp', ModuleName )
-    call allocate_test ( temp, hGrid%noProfs, 'temp', ModuleName )
     hGrid%noProfs = newNoProfs
 
     ! Now allocate each entry and trim it
@@ -171,7 +167,6 @@ contains ! =========== Public procedures ===================================
     call Allocate_Test ( hGrid%losAngle, 1, newNoProfs, 'hGrid%losAngle', ModuleName)
     hGrid%losAngle(1,:) = temp ( first : last )
 
-    call Deallocate_test ( temp, 'temp', ModuleName )
   end subroutine TrimHGrid
     
   ! ---------------------------------------  DestroyHGridContents  -----
@@ -200,7 +195,7 @@ contains ! =========== Public procedures ===================================
   ! ---------------------------------------  DestroyHGridDatabase  -----
   subroutine DestroyHGridDatabase ( database )
 
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_DEALLOCATE, MLSMSG_ERROR
+    use Allocate_Deallocate, only: Test_Deallocate
 
   ! This subroutine destroys a quantity template database
 
@@ -208,15 +203,16 @@ contains ! =========== Public procedures ===================================
     type (HGrid_T), dimension(:), pointer :: database
 
     ! Local variables
-    integer :: hGridIndex, status
+    integer :: hGridIndex, s, status
     if ( associated(database) ) then
       do hGridIndex=1,SIZE(database)
         call DestroyHGridContents ( database(hGridIndex) )
       end do
+      s = size(database) * storage_size(database) / 8
       deallocate ( database, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // "database" )
+      call test_deallocate ( status, ModuleName, "database", s )
     end if
+
   end subroutine DestroyHGridDatabase
 
   ! ------------------------------------------------  DUMP_A_HGRID  -----
@@ -317,9 +313,9 @@ contains ! =========== Public procedures ===================================
   end function FindClosestMatch
 
   ! ---------------------------------------- NullifyHGrid -----
-  subroutine NullifyHGrid ( H )
+  subroutine NullifyHGrid ( IntentionallyNotUsed )
     ! Given a hGrid, nullify all the pointers associated with it
-    type ( HGrid_T ), intent(out) :: H
+    type ( HGrid_T ), intent(out) :: IntentionallyNotUsed
 
     ! Executable code.  Nothing is needed since intent(out) causes
     ! default initialization, which nullifies the pointers because
@@ -340,6 +336,10 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.15  2014/09/04 23:40:28  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Convert some local pointer temps to automatic.
+!
 ! Revision 2.14  2014/08/07 22:44:28  vsnyder
 ! Set default initialization of MasterCoordinate to L_GeodAngle instead
 ! of zero.  Spiff up the dump a little bit.
