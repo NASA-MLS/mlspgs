@@ -17,16 +17,19 @@
 
     character(len=*), intent(in) :: ItsName, ModuleName
     integer :: STATUS
-    real :: S
+    integer :: S
     if ( associated(To_Deallocate) ) then
       if ( trackallocates > 0 ) call trackDeAllocate ( to_deAllocate, itsName, moduleName )
-      s = (byte_size(to_deallocate)) / MEMORY_UNITS
+      s = byte_size(to_deallocate)
       deallocate ( To_Deallocate, stat=status )
       call test_deallocate ( status, moduleName, itsName, s )
       nullify ( to_Deallocate ) ! in case of nonzero status
     end if
 
 ! $Log$
+! Revision 1.5  2013/06/12 02:16:51  vsnyder
+! Add and use BYTES and BYTE_SIZE
+!
 ! Revision 1.4  2007/07/27 00:24:34  vsnyder
 ! Work on memory tracking
 !
