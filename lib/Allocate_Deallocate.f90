@@ -125,6 +125,11 @@ module Allocate_Deallocate
     module procedure BYTES_REALR8_5D, BYTES_REALR8_6D
   end interface
 
+  interface ReportAllocateDeallocate
+    module procedure ReportAllocateDeallocate_ints
+    module procedure ReportAllocateDeallocate_real
+  end interface
+
   ! subroutine Same_Shape ( Ref, New, ItsName, ModuleName )
   ! If Ref is not associated, deallocate New.  Otherwise, if Ref and New
   ! have the same shape (but not necessarily the same bounds), do nothing.
@@ -165,6 +170,14 @@ module Allocate_Deallocate
     module procedure Same_Shape_REALR8_3D_A, Same_Shape_REALR8_4D_A
   end interface
 
+  interface Test_Allocate
+    module procedure Test_Allocate_nd, Test_Allocate_1d
+  end interface
+
+  interface Test_Deallocate
+    module procedure Test_Deallocate_int_s
+  end interface
+
   integer, save :: DEALLOC_STATUS = 0
 
   logical, public :: CLEARONALLOCATE = .false. ! If true, zero all allocated stuff
@@ -187,8 +200,8 @@ module Allocate_Deallocate
 
   ! The next two used for tracking allocated memory
   ! (The 1st is public to enable reporting finer or coarser grains)
-  real, save, public  :: MEMORY_UNITS = 1024. ! Report nothing smaller than KB
-  double precision, save, public :: NoBytesAllocated=0.0d0 ! Number of MEMORY_UNITS allocated.
+!  real, save, public  :: MEMORY_UNITS = 1024. ! Report nothing smaller than KB
+  double precision, save, protected, public :: NoBytesAllocated=0.0d0 ! Number of MEMORY_UNITS allocated.
   double precision, parameter  :: OUTPUT_UNITS = 1.d6 ! output in MB
   logical, parameter :: DEEBUG = .false.
 
@@ -197,16 +210,6 @@ module Allocate_Deallocate
     & "$RCSfile$"
   private :: not_used_here 
   !-----------------------------------------------------------------------------
-
-  interface ReportAllocateDeallocate
-    module procedure ReportAllocateDeallocate_ints
-    module procedure ReportAllocateDeallocate_real
-  end interface
-
-  interface Test_Deallocate
-    module procedure Test_Deallocate_int_s
-    module procedure Test_Deallocate_real_s
-  end interface
 
 contains
   ! =====     Public Procedures      ===================================
@@ -243,7 +246,7 @@ contains
       call output ( 'A' )
     end if
     call output ( 'llocated ' )
-    call DumpSize ( abs ( noBytes ), units=MEMORY_UNITS )
+    call DumpSize ( abs ( noBytes ) )
     call output ( ' for ' // trim ( name ) )
     if ( present(bounds) ) call output ( trim(bounds) )
     call output ( ' in ' )
@@ -254,7 +257,7 @@ contains
       call output ( moduleName )
     end if
     call output ( ' total ' )
-    call DumpSize ( noBytesAllocated, units=MEMORY_UNITS, advance='yes' )
+    call DumpSize ( noBytesAllocated, advance='yes' )
   end subroutine ReportAllocateDeallocate_real
 
   ! -------------------------------------  Set_garbage_collection  -----
@@ -263,27 +266,32 @@ contains
     collect_garbage_each_time = setting
   end subroutine Set_garbage_collection
 
-  ! ----------------------------------------------  Test_Allocate  -----
-  subroutine Test_Allocate ( Status, ModuleNameIn, ItsName, lBounds, uBounds, &
-    & ElementSize )
+  ! -------------------------------------------  Test_Allocate_nd  -----
+  subroutine Test_Allocate_nd ( Status, ModuleNameIn, ItsName, &
+    & lBounds, uBounds, ElementSize, ERMSG )
     use HIGHOUTPUT, only: outputNamedValue
   ! Test the status from an allocate.  If it's nonzero, issue a message.
   ! Track allocations if TrackAllocates is >= 2 and ElementSize is present
-  ! and > 0.  
+  ! and > 0.
     integer, intent(in) :: Status
     character(len=*), intent(in) :: ModuleNameIn, ItsName
     integer, intent(in), optional :: Lbounds(:), Ubounds(:)
     integer, intent(in), optional :: ElementSize ! Bytes, <= 0 for no tracking
+    character(*), intent(in), optional :: ERMSG  ! from Allocate statement
     real :: Amount
     character(127) :: Bounds
     integer :: I, L
 
-    if ( status /= 0 .or. present(lbounds) .and. present(ubounds) .and. &
+    if ( status /= 0 .or. present(ubounds) .and. &
       & present(elementSize) .and. trackAllocates >= 2 ) then
       ! print *, 'status ', status
-      if ( present(lbounds) .and. present(ubounds) ) then
-        write ( bounds, '("(",i0,":",i0, 6(:",",i0,":",i0))' ) &
-          & ( lBounds(i), uBounds(i), i = 1, size(lBounds) )
+      if ( present(ubounds) ) then
+        if ( present(lbounds) ) then
+          write ( bounds, '("(",i0,":",i0, 6(:",",i0,":",i0))' ) &
+            & ( lBounds(i), uBounds(i), i = 1, size(lBounds) )
+        else
+          write ( bounds, '("(",i0,6(:",",i0))' ) ubounds
+        end if
         l = len_trim(bounds)+1
         bounds(l:l)= ')'
         write ( bounds(l+1:), '(", status = ", i0)' ) status
@@ -291,18 +299,28 @@ contains
       else
         l = 0
       end if
-      if ( status /= 0 ) &
-        & call myMessage ( MLSMSG_Error, moduleNameIn, &
+      if ( status /= 0 ) then
+        if ( present(ermsg) ) then
+          bounds(l+2:) = ermsg
+          l = len_trim(bounds)
+        end if
+        call myMessage ( MLSMSG_Error, moduleNameIn, &
           & MLSMSG_Allocate // ItsName  // bounds(:l) )
+      end if
     end if
     if ( AllocateLogUnit > 0 ) call LogAllocate( ModuleNameIn, ItsName, &
       & lBounds, uBounds, ElementSize )
 
     if ( .not. present(elementSize) ) return
 
-    if ( present(lbounds) .and. present(ubounds) .and. present(elementSize) ) then
+    if ( present(ubounds) ) then
       if ( elementSize > 0 ) then
-        amount = memproduct(elementSize, ubounds-lbounds+1)
+        amount = 0
+        if ( present(lbounds) ) then
+          amount = memproduct(elementSize, ubounds-lbounds+1)
+        else
+          amount = memproduct(elementSize, ubounds)
+        end if
         if ( trackAllocates >= 2 ) then
           call ReportAllocateDeallocate ( itsName, moduleNameIn, amount, bounds )
         else
@@ -314,26 +332,40 @@ contains
       end if
     end if
 
-  end subroutine Test_Allocate
+  end subroutine Test_Allocate_nd
+
+  ! -------------------------------------------  Test_Allocate_1d  -----
+  subroutine Test_Allocate_1d ( Status, ModuleNameIn, ItsName, &
+    & lBounds, uBounds, ElementSize, ERMSG )
+  ! Test the status from an allocate.  If it's nonzero, issue a message.
+  ! Track allocations if TrackAllocates is >= 2 and ElementSize is present
+  ! and > 0.
+  ! This is just a handy wrapper so that you don't need to put brackets
+  ! around the bounds of a 1-d array just to make the bounds arrays.
+    integer, intent(in) :: Status
+    character(len=*), intent(in) :: ModuleNameIn, ItsName
+    integer, intent(in), optional :: Lbounds
+    integer, intent(in)           :: Ubounds
+    integer, intent(in), optional :: ElementSize ! Bytes, <= 0 for no tracking
+    character(*), intent(in), optional :: ERMSG  ! from Allocate statement
+    integer :: MyLBounds(1)
+    integer :: MyUBounds(1)
+    myLBounds = 1
+    if ( present(lBounds) ) myLBounds = lBounds
+    myUBounds = uBounds
+    call test_allocate ( status, moduleNameIn, itsName, &
+    & myLBounds, myUBounds, elementSize, ERMSG )
+  end subroutine Test_Allocate_1d
 
   ! --------------------------------------------  Test_DeAllocate_int_s  -----
   subroutine Test_DeAllocate_int_s ( Status, ModuleNameIn, ItsName, Size )
-  ! Test the status from a deallocate.  If it's nonzero, issue a message.
-    integer, intent(in) :: Status
-    character(len=*), intent(in) :: ModuleNameIn, ItsName
-    integer, intent(in) :: Size ! in MEMORY_UNITS, <= 0 for no tracking
-    call Test_Deallocate( Status, ModuleNameIn, ItsName, real(Size) )
-  end subroutine Test_DeAllocate_int_s
-
-  ! --------------------------------------------  Test_Deallocate_real_s  -----
-  subroutine Test_Deallocate_real_s ( Status, ModuleNameIn, ItsName, Size )
   ! Test the status from a deallocate.  If it's nonzero, issue a message.
   ! Do garbage collection if Collect_garbage_each_time is true.
   ! Track deallocations if TrackAllocates >= 2 and Size is present and > 0.
     use HIGHOUTPUT, only: outputNamedValue
     integer, intent(in) :: Status
     character(len=*), intent(in) :: ModuleNameIn, ItsName
-    real, intent(in), optional :: Size ! in MEMORY_UNITS, <= 0 for no tracking
+    integer, intent(in), optional :: Size ! in Bytes
 
     character(31) :: Line
 
@@ -359,7 +391,7 @@ contains
       end if
     end if
 
-  end subroutine Test_Deallocate_real_s
+  end subroutine Test_Deallocate_int_s
 
   ! =====     Private Procedures     ===================================
   ! ---------------------------------  Allocate_Test_Character_1d  -----
@@ -1554,9 +1586,9 @@ contains
 
   ! ------------------------------=--- LogDeallocate
   subroutine LogDeallocate ( ModuleNameIn, ItsName, Size )
-    character(len=*), intent(in) :: ModuleNameIn, ItsName
-    real, intent(in), optional   :: Size
-    real :: mySize
+    character(len=*), intent(in)  :: ModuleNameIn, ItsName
+    integer, intent(in), optional :: Size
+    integer :: mySize
     ! Executable
     mySize = 0.
     if ( present(Size) ) mySize = Size
@@ -1574,7 +1606,7 @@ contains
     integer, intent(in)               :: elementSize
     real                              :: p
     !
-    p = ( real(elementSize) / MEMORY_UNITS ) * product(real(dimensions))
+    p = real(elementSize) * product(real(dimensions))
     ! print *, 'p ', p
   end function memproduct
 
@@ -1592,6 +1624,11 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.48  2014/09/04 23:37:01  vsnyder
+! Change Test_Allocate to Test_Allocate_nd, Add Test_Allocate_1d, add
+! generic for them.  Keep track of memory in bytes instead of Memory_Units
+! (formerly 1024 bytes), delete Memory_Units.
+!
 ! Revision 2.47  2014/08/06 23:18:04  vsnyder
 ! Add option controlled by private parameter to fill REAL arrays with sNaN
 !
