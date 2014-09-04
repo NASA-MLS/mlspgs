@@ -28,8 +28,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSfillvalues, only: extractarray, gatherarray, &
     & isfillvalue, replacefillvalues
   use MLSHDFeos, only: hsize
-  use MLSmessagemodule, only: MLSmsg_allocate, MLSmsg_deallocate, MLSmsg_error, &
-    & MLSmsg_warning, MLSmessage
+  use MLSmessagemodule, only: MLSmsg_error, MLSmsg_warning, MLSmessage
   use MLSnumerics, only: findinrange
   use MLSfinds, only: findfirst, findlast, findunique
   use MLSsets, only: findintersection, intersection
@@ -3373,6 +3372,8 @@ contains ! =====     Public Procedures     =============================
     ! creating a new database if it doesn't exist.  The result value is
     ! the size -- where L2gp is put.
 
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (l2gpdata_t), dimension(:), pointer :: DATABASE
     type (l2gpdata_t), intent(in) :: ITEM
@@ -3392,20 +3393,27 @@ contains ! =====     Public Procedures     =============================
 
   subroutine DestroyL2GPDatabase ( DATABASE )
 
+    use Allocate_Deallocate, only: Test_Deallocate
+    use Toggles, only: Gen, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
     ! Dummy argument
     type (l2GPData_T), dimension(:), pointer :: DATABASE
 
     ! Local variables
-    integer :: l2gpIndex, status
+    integer :: l2gpIndex, s, status
+    integer :: Me = -1       ! String index for trace
+
+    call trace_begin ( me, "DestroyL2GPDatabase", cond=toggle(gen) )
 
     if ( associated(database) ) then
        do l2gpIndex = 1, SIZE(database)
           call DestroyL2GPContents ( database(l2gpIndex) )
        end do
+       s = size(database) * storage_size(database) / 8
        deallocate ( database, stat=status )
-       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & MLSMSG_deallocate // "database" )
+       call test_deallocate ( status, ModuleName, "database", s )
     end if
+    call trace_end ( "DestroyL2GPDatabase", cond=toggle(gen) )
   end subroutine DestroyL2GPDatabase
 
   ! ---------------------- ReadL2GPData_fileID  -----------------------------
@@ -5225,6 +5233,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.203  2014/07/23 21:59:53  pwagner
+! Fixed bugs in ExtractL2GPRecord
+!
 ! Revision 2.202  2014/07/21 21:59:27  pwagner
 ! Respect options when dumping AscDescMode
 !
