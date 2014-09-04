@@ -19,7 +19,7 @@
 
 ! $Id$
 
-    integer :: newSize, status
+    integer :: newSize, s, status
 
     ! Executable code
 
@@ -30,11 +30,13 @@
     end if
 
     allocate ( tempDatabase(newSize), stat=status )
-    call test_allocate ( status, moduleName, 'tempDatabase' )
+    call test_allocate ( status, moduleName, 'tempDatabase', ubounds=newSize, &
+      & elementSize = storage_size(tempDatabase) / 8 )
     if ( associated(database) ) then
+      s = size(database) * storage_size(database) / 8
       tempDatabase(:size(database)) = database
       deallocate ( database, stat=status )
-      call test_deallocate ( status, moduleName, 'tempDatabase' )
+      call test_deallocate ( status, moduleName, 'tempDatabase', s )
     end if
     database => tempDatabase
     if ( present(copy) ) then
@@ -44,6 +46,9 @@
     end if
 
 ! $Log$
+! Revision 1.2  2012/03/20 00:57:35  vsnyder
+! Remove a line that should have been removed before the initial commit
+!
 ! Revision 1.1  2012/03/15 02:51:30  vsnyder
 ! Initial commit
 !

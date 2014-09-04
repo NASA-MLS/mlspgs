@@ -13,7 +13,7 @@
 
     ! Dummy args
     real(rk), dimension(:), pointer :: slab
-    real(rk), dimension(:), pointer :: array ! The larger array
+    real(rk), dimension(:) :: array ! The larger array
     integer, dimension(:), intent(in)     :: start
     integer, dimension(:), intent(in)     :: count
     integer, dimension(:), intent(in)     :: stride
@@ -22,7 +22,6 @@
     ! Local variables
     integer :: i, ii, n1, m1
     character(len=4) :: myOptions
-    integer :: status
     ! Executable
     myOptions = ''
     if ( present(options) ) myOptions = options
@@ -34,15 +33,14 @@
           n1 = start(1) - 1 + (II-1)*stride(1) + i
           m1 = (II-1)*block(1) + i
           array(n1) = slab(m1)
-        enddo
+        end do
       enddo
     case('x') ! extracting
       ! Do we need to allocate bloc first?
       if ( index(myOptions, 'a') > 0 ) then
-        allocate(slab(block(1)*count(1)), stat=status)
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
-          & ModuleName, "unable to allocate 1-d bloc before extracting" )
-      endif
+        call allocate_test ( slab, block(1)*count(1), moduleName, &
+          & "1-d bloc before extracting" )
+      end if
       do II=1, count(1)
         do i=1, block(1)
           n1 = start(1) - 1 + (II-1)*stride(1) + i
@@ -55,6 +53,9 @@
       & ModuleName, "direction neither embedding nor extracting" )
     end select
 ! $Log$
+! Revision 1.2  2013/09/18 16:22:01  pwagner
+! Changed api for Embed, ExtractArray procedures--now select hyperslabs
+!
 ! Revision 1.1  2006/01/14 00:48:25  pwagner
 ! First commit
 !

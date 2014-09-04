@@ -27,17 +27,22 @@
     end if
 
     allocate(tempDatabase(newSize),STAT=status)
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "tempDatabase")
+    call test_allocate ( status, moduleName, "tempDatabase", &
+      & uBounds = newSize, elementSize = storage_size(tempDatabase) / 8 )
 
     if ( newSize>1 ) tempDatabase(1:newSize-1) = database
-    if ( ASSOCIATED(database) ) deallocate ( database, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "database" )
+    if ( associated(database) ) then   
+      deallocate ( database, stat=status )
+      call test_deallocate ( status, moduleName, "database", &
+        & (newSize-1) * storage_size(tempDatabase) / 8 )
+    end if
     database => tempDatabase
     database(newSize) = item
 
 ! $Log$
+! Revision 1.6  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.5  2002/10/02 16:00:09  bwknosp
 ! Added Id and RCS info
 !

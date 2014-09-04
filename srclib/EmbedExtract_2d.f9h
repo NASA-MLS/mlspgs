@@ -22,7 +22,6 @@
     ! Local variables
     integer :: i, j, ii, jj, n1, n2, m1, m2
     character(len=4) :: myOptions
-    integer :: status
     ! Executable
     myOptions = ''
     if ( present(options) ) myOptions = options
@@ -45,9 +44,8 @@
     case('x') ! extracting
       ! Do we need to allocate bloc first?
       if ( index(myOptions, 'a') > 0 ) then
-        allocate(slab(block(1)*count(1), block(2)*count(2)), stat=status)
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
-          & ModuleName, "unable to allocate 2-d bloc before extracting" )
+        call allocate_test ( slab, block(1)*count(1), block(2)*count(2), &
+          & moduleName, "2-d bloc before extracting" )
       endif
       do JJ=1, count(2)
         do II=1, count(1)
@@ -67,6 +65,9 @@
       & ModuleName, "direction neither embedding nor extracting" )
     end select
 ! $Log$
+! Revision 1.2  2013/09/18 16:22:01  pwagner
+! Changed api for Embed, ExtractArray procedures--now select hyperslabs
+!
 ! Revision 1.1  2006/01/14 00:48:25  pwagner
 ! First commit
 !

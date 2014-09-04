@@ -17,7 +17,7 @@
 
 ! $Id$
 
-    integer :: newSize, status, firstNewItem
+    integer :: newSize, s, status, firstNewItem
 
     ! Executable code
 
@@ -28,17 +28,22 @@
     end if
 
     allocate(tempDatabase(newSize),STAT=status)
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "tempDatabase")
+    call test_allocate ( status, ModuleName, "tempDatabase", ubounds=newSize, &
+      & elementSize = storage_size(tempDatabase) / 8 )
 
     if ( newSize > extra ) tempDatabase(1:newSize-extra) = database
-    if ( ASSOCIATED(database) ) deallocate ( database, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "database" )
+    if ( associated(database) ) then
+      s = size(database) * storage_size(database) / 8
+      deallocate ( database, stat=status )
+      call test_deallocate ( status, ModuleName, "database", s )
+    end if
     database => tempDatabase
     firstNewItem = newSize-extra+1
 
 ! $Log$
+! Revision 1.4  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
 ! Revision 1.3  2002/10/02 16:00:18  bwknosp
 ! Added Id and RCS info
 !
