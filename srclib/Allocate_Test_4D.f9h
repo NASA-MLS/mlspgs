@@ -16,6 +16,7 @@
 ! Probably only useful within Allocate_Deallocate.f90
 
     integer :: MyLow1, MyLow2, MyLow3, MyLow4, STATUS
+    character(127) :: ERMSG
     call deallocate_Test ( To_Allocate, ItsName, ModuleName )
     myLow1 = 1; myLow2 = 1; myLow3 = 1; myLow4 = 1
     if ( present(low1) ) myLow1 = low1
@@ -23,9 +24,10 @@
     if ( present(low3) ) myLow3 = low3
     if ( present(low4) ) myLow4 = low4
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2,myLow3:dim3,myLow4:dim4), &
-      & stat=status )
+      & stat=status, ERRMSG=ERMSG )
     call test_allocate ( status, moduleName, ItsName, &
-      & (/myLow1,myLow2,myLow3,myLow4/), (/dim1,dim2,dim3,dim4/), bytes(to_allocate) )
+      & (/myLow1,myLow2,myLow3,myLow4/), (/dim1,dim2,dim3,dim4/), &
+      & bytes(to_allocate), ERMSG )
     if ( status == 0 ) then
       if ( present(fill) ) then
         to_allocate = fill
@@ -36,6 +38,9 @@
     if ( trackallocates > 0 ) call trackAllocate ( to_allocate, itsName, moduleName )
 
 ! $Log$
+! Revision 1.2  2013/06/12 02:16:51  vsnyder
+! Add and use BYTES and BYTE_SIZE
+!
 ! Revision 1.1  2008/05/20 01:48:16  vsnyder
 ! Initial commit
 !

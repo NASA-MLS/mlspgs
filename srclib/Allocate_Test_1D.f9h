@@ -16,12 +16,13 @@
 ! Probably only useful within Allocate_Deallocate.f90
 
     integer :: MyLow, STATUS
+    character(127) :: ERMSG
     call deallocate_Test ( To_Allocate, ItsName, ModuleName )
     myLow = 1
     if ( present(lowBound) ) myLow = lowBound
-    allocate ( To_Allocate(myLow:dim1), stat=status )
+    allocate ( To_Allocate(myLow:dim1), stat=status, ERRMSG=ERMSG )
     call test_allocate ( status, moduleName, ItsName, &
-      & (/myLow/), (/dim1/), bytes(to_allocate) )
+      & (/myLow/), (/dim1/), bytes(to_allocate), ERMSG )
     if ( status == 0 ) then
       if ( present(fill) ) then
         to_allocate = fill
@@ -32,6 +33,9 @@
     if ( trackallocates > 0 ) call trackAllocate ( to_allocate, itsName, moduleName )
 
 ! $Log$
+! Revision 1.4  2013/06/12 02:16:51  vsnyder
+! Add and use BYTES and BYTE_SIZE
+!
 ! Revision 1.3  2006/07/31 20:02:03  vsnyder
 ! Tracking for leak checker
 !
