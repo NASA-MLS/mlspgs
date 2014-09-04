@@ -21,7 +21,7 @@
     ! integer, intent(in)                     ::   N ! the base
     ! character(len=*), optional, intent(in)  ::   options
     ! Internal variables
-    integer, dimension(:), pointer          :: C => null()
+    integer, dimension(:), allocatable      :: C
     logical                                 :: compressed
     integer                                 :: i
     integer                                 :: i1
@@ -45,8 +45,8 @@
       m = len_trim(str) - 1
     else
       m = ncopies( trim(str), ' ' )
-    endif
-    allocate( C(0:m), stat=status )
+    end if
+    allocate ( C(0:m), stat=status )
     i2 = 1
     do j=m, 0, -1
       i1 = i2
@@ -57,12 +57,12 @@
         i2 = FindNext( str, ' ', i1 )
         substr = str(i1:i2)
         i1 = i2
-      endif
+      end if
       ! Read each substr as an integer
       if ( index(myOptions, 'a') > 0 .or. index(myOptions, 'A') > 0 ) then
         ! We won't bother coding this case--it would be ridiculous anyway
         stop
-      elseif ( compressed .or. index(myOptions, 'x') > 0 ) then
+      else if ( compressed .or. index(myOptions, 'x') > 0 ) then
         ! 'Extended' hexadecimal
         subsub = adjustl(substr)
         C(j) = FindFirst( (/ (xtended(i:i), i=1, len(xtended)) /) == subsub )
@@ -70,13 +70,16 @@
       else
         ! Plain vanilla decimal integers
         call readIntsFromChars( substr, C(j) )
-      endif
-    enddo
+      end if
+    end do
     ! call dump(C, 'coefficients')
     k = 0
     do j=m, 0, -1
       k = N*k + C(j)
-    enddo
-    deallocate( C, stat=status )
+    end do
+    deallocate ( C, stat=status )
 !  end subroutine readIntFromBaseN
 ! $Log$
+! Revision 1.1  2014/07/25 21:43:30  pwagner
+! First commit
+!
