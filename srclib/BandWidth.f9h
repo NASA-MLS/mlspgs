@@ -12,7 +12,7 @@
 ! $Id$
 !  subroutine BandWidth_dr4( array, bwidth, pctnzero )
 !     ! Args
-!     real(r4), dimension(:,:), intent(in ) :: array
+!     real(rk), dimension(:), intent(in )   :: array
 !     integer, intent(out)                  :: bwidth
 !     real, optional, intent(out)           :: pctnzero
 !     ! Internal variables
@@ -39,3 +39,6 @@
 !  end subroutine BandWidth_1dr4
 
 ! $Log$
+! Revision 1.1  2011/12/07 01:10:23  pwagner
+! First commit
+!

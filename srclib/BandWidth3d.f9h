@@ -19,7 +19,6 @@
 !     ! Internal variables
 !     real(rk), dimension(:,:), pointer     :: ColpsedArray => null()
     integer, dimension(3) :: shp
-    integer :: i, i1, i2, k, n, nzero
     integer :: myColpsedIndx
     ! Executable
     myColpsedIndx = 3
@@ -52,3 +51,6 @@
 !  end subroutine BandWidth3d_1dr4
 
 ! $Log$
+! Revision 1.1  2011/12/07 01:10:16  pwagner
+! First commit
+!
