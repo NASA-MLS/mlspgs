@@ -18,7 +18,6 @@ module GetCF_M
   use LEXER_CORE, only: INIT_LEXER
   use MLSCF, only: MLSCF_T
   use OUTPUT_M, only: OUTPUT
-  use PARSER, only: CONFIGURATION
   use STRING_TABLE, only: DO_LISTING, ADDINUNIT
   use TABLE_DUMPER, only: DUMP_TABLE                 ! For debugging
   use TABLE_GENERATOR, only: GENERATE_TABLE
@@ -155,6 +154,9 @@ contains ! =====     Public Procedures     =============================
 end module GetCF_M
 
 ! $Log$
+! Revision 1.5  2014/05/20 23:55:30  vsnyder
+! New parser gets its tables from an argument instead of an include
+!
 ! Revision 1.4  2010/05/24 17:12:31  honghanh
 ! Change to use AddInUnit instead of inunit
 !
