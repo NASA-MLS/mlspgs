@@ -12,7 +12,7 @@
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
   use allocate_deallocate, only: allocate_test, byte_size, bytes, &
-    & deallocate_test, memory_units, NoBytesAllocated, &
+    & deallocate_test, NoBytesAllocated, &
     & test_allocate, test_deallocate
   use DATES_MODULE, only: TAI2CCSDS
   use DUMP_0, only: DUMP, DUMPDATES
@@ -23,7 +23,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   ! R4 CORRESPONDS TO SING. PREC. :: SAME AS STORED IN FILES
   ! (EXCEPT FOR DAO DIMENSIONS)
   use MLSKINDS, only: RGR=>R4, R8
-  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, &
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, &
     & MLSMSG_WARNING, MLSMESSAGECONFIG, MLSMESSAGE
   use MLSSTRINGLISTS, only: SNIPLIST, SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS
@@ -490,7 +490,7 @@ contains
     type (GriddedData_T), intent(INOUT) :: Qty
 
     ! Local variables
-    real :: S ! Size in bytes of a deallocated field
+    integer :: S ! Size in bytes of a deallocated field
     integer :: STATUS
     logical :: verbose
 
@@ -508,11 +508,11 @@ contains
 
     ! Now the data itself
     if ( associated(qty%field) ) then
-      s = byte_size(qty%field) / MEMORY_UNITS
+      s = byte_size(qty%field)
       if ( verbose ) call outputnamedValue ( 'Grid size to be destroyed', shape(qty%field) )
       deallocate(qty%field, STAT=status)
       call test_deallocate ( status, moduleName, "griddedQty%field", s )
-    elseif ( verbose ) then
+    else if ( verbose ) then
       call output( 'This grid not allocated', advance='true' )
     end if
     qty%empty = .true.
@@ -523,6 +523,8 @@ contains
   subroutine DestroyGriddedDataDatabase ( Database )
   ! This subroutine destroys a quantity template database
 
+    use Allocate_Deallocate, only: Test_Deallocate
+
     use Toggles, only: TOGGLE, GEN
     use Trace_M, only: TRACE_BEGIN, TRACE_END
 
@@ -531,18 +533,18 @@ contains
 
     ! Local variables
     integer :: Me = -1           ! String index for trace
-    integer :: qtyIndex, status
+    integer :: qtyIndex, s, status
 
     call trace_begin ( me, "DestroyGriddedDataDatabase", cond=toggle(gen) )
 
     if (associated(database)) then
       do qtyIndex=1,size(database)
         call DestroyGriddedData(database(qtyIndex))
-      enddo
+      end do
+      s = size(database) * storage_size(database) / 8
       deallocate(database, stat=status)
-      if (status /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate//"database")
-    endif
+      call test_deallocate ( status, ModuleName, "database", s )
+    end if
     call trace_end ( "DestroyGriddedDataDatabase", cond=toggle(gen) )
 
   end subroutine DestroyGriddedDataDatabase
@@ -760,8 +762,7 @@ contains
 
       call DumpGriddedData( GriddedData(i), Details, Options )
       if ( .not. associated(GriddedData(i)%field) ) cycle
-      total = total + &
-        & product(shape(GriddedData(i)%field))/MEMORY_UNITS
+      total = total + product(shape(GriddedData(i)%field))
     end do ! i
     call outputNamedValue( 'Database Total Memory Footprint', &
       & bytes(GriddedData(1)%field) * total )
@@ -887,10 +888,8 @@ contains
     endif
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
     if ( associated(GriddedData%field)) &
-      &  call outputnamedvalue( 'Grid Memory Footprint', &
-      &  bytes(GriddedData%field) * &
-      & (product(shape(GriddedData%field))/MEMORY_UNITS) &
-      & )
+      &  call outputnamedvalue ( 'Grid Memory Footprint', &
+      &  byte_size(GriddedData%field) )
     if ( myDetails < -1 ) return
     oldInfo = MLSMessageConfig%Info
     MLSMessageConfig%Info = GriddedData%quantityName
@@ -1182,7 +1181,7 @@ contains
       call outputNamedValue( 'qty%noSzas', qty%noSzas )
       call outputNamedValue( 'qty%noDates', qty%noDates )
       call outputNamedValue( 'Bytes before allocating vertical/horizontal coordinates', &
-        & NoBytesAllocated/MEMORY_UNITS )
+        & NoBytesAllocated )
     endif
     call Allocate_test ( qty%heights, qty%noHeights, "griddedQty%heights", ModuleName )
     call Allocate_test ( qty%lats, qty%noLats, "griddedQty%lats", ModuleName )
@@ -1195,16 +1194,16 @@ contains
     call Allocate_test ( qty%dateEnds, qty%noDates, "griddedQty%dateEnds", ModuleName )
 
     ! Now the data itself
-    if ( verbose ) call outputNamedValue( 'Bytes before allocating grid%field', NoBytesAllocated/memory_units )
+    if ( verbose ) call outputNamedValue( 'Bytes before allocating grid%field', NoBytesAllocated )
     allocate(qty%field(qty%noHeights, qty%noLats, qty%noLons,  &
       qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
     call test_allocate ( status, moduleName, "griddedQty%field", (/1,1,1,1,1,1/), &
       & (/ qty%noHeights, qty%noLats, qty%noLons, qty%noLsts, qty%noSzas, &
       &    qty%noDates /), bytes(qty%field) )
     if ( verbose ) then
-      call outputNamedValue( 'Bytes after allocating grid%field', NoBytesAllocated/memory_units )
+      call outputNamedValue( 'Bytes after allocating grid%field', NoBytesAllocated )
       call outputNamedValue( 'Size of field (elements)', product(shape(qty%field)) )
-      call outputNamedValue( 'Byte Size of field', byte_size(qty%field)/memory_units )
+      call outputNamedValue( 'Byte Size of field', byte_size(qty%field) )
     endif
   
   end subroutine SetupNewGriddedData
@@ -1637,7 +1636,7 @@ contains
     real (rgr), dimension(:), pointer :: NEWLONS
     real (rgr), dimension(:), pointer :: NEWLSTS
     real (rgr), dimension(:,:,:,:,:,:), pointer :: NEWFIELD
-    real :: S ! Size in bytes of a deallocated field
+    integer :: S ! Size in bytes of a deallocated field
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: LOWERLON
     integer :: UPPERLON
@@ -1729,7 +1728,7 @@ contains
     ! Tidy up
     call Deallocate_test ( grid%lons, 'grid%lons', ModuleName )
     call Deallocate_test ( grid%lsts, 'grid%lsts', ModuleName )
-    s = byte_size(grid%field) / MEMORY_UNITS
+    s = byte_size(grid%field)
     deallocate ( grid%field, stat=status )
     call test_deallocate ( status, moduleName, 'grid%field', s )
 
@@ -1792,6 +1791,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.77  2014/09/04 23:38:45  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.76  2014/07/18 22:00:24  pwagner
 ! Aimed for consistency in names passed to allocate_test
 !
