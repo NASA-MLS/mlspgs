@@ -905,32 +905,32 @@ contains ! =====     Public Procedures     =============================
     character(len=8) :: MYOPTIONS
 integer :: I, J
 character, pointer :: C1, C2, C3
-print '(a)', 'CloneVectorQuantity 1'
+! print '(a)', 'CloneVectorQuantity 1'
 
     ! Executable statements:
     myOptions = ' '
     if ( present(options) ) myOptions = options
     call NullifyVectorValue ( z )
-print '(a)', 'CloneVectorQuantity 2'
+! print '(a)', 'CloneVectorQuantity 2'
     if ( index( myOptions, 'd' ) > 0 ) then
       call CopyQuantityTemplate ( z%template, x%template )
-print '(a)', 'CloneVectorQuantity 3'
+! print '(a)', 'CloneVectorQuantity 3'
     else
       z%template = x%template
-print '(a)', 'CloneVectorQuantity 4'
+! print '(a)', 'CloneVectorQuantity 4'
     endif
     z%index = x%index
     if ( associated(x%values) ) then
       call createVectorValue ( z, 'z%values' )
-print '(a)', 'CloneVectorQuantity 5'
+! print '(a)', 'CloneVectorQuantity 5'
       z%values = x%values
-print '(a)', 'CloneVectorQuantity 6'
+! print '(a)', 'CloneVectorQuantity 6'
     end if
     if ( associated(x%mask) ) then
       call createMask ( z )
-print '(a)', 'CloneVectorQuantity 7'
-call dump ( x, details=2 )
-print '(a)', 'CloneVectorQuantity 7.1'
+! print '(a)', 'CloneVectorQuantity 7'
+! call dump ( x, details=2 )
+! print '(a)', 'CloneVectorQuantity 7.1'
 if ( .not. associated(z%mask) ) then
   print '(a)', 'Why is z%mask not associated?'
 else
@@ -943,31 +943,31 @@ else
     if ( .not. associated(c1,c2) ) print '(a)', 'Why are C1 and C2 not associated?'
     if ( .not. associated(c3,c2) ) print '(a)', 'Why are C3 and C2 not associated?'
   end if
-  print '(a)', 'CloneVectorQuantity 7.2'
-  call dump ( z, details=2, name='ZZZZ' )
-print '(a)', 'CloneVectorQuantity 7.3'
+  ! print '(a)', 'CloneVectorQuantity 7.2'
+  ! call dump ( z, details=2, name='ZZZZ' )
+! print '(a)', 'CloneVectorQuantity 7.3'
   if ( size(z%mask) /= size(x%mask) ) then
-  print '(a)', 'Why do x%mask and z%mask have different sizes?'
+    print '(a)', 'Why do x%mask and z%mask have different sizes?'
   end if
-print '(a)', 'CloneVectorQuantity 7.3.1'
+! print '(a)', 'CloneVectorQuantity 7.3.1'
   if ( any(shape(z%mask) /= shape(x%mask)) ) then
-  print '(a)', 'Why do x%mask and z%mask have different shapes?'
+    print '(a)', 'Why do x%mask and z%mask have different shapes?'
   end if
 end if
-print '(a)', 'CloneVectorQuantity 7.4'
-print '(a,i0)', 'Count(ichar(x%mask)/=0) = ', Count(ichar(x%mask)/=0)
-print '(a,i0)', 'Count(ichar(z%mask)/=0) = ', Count(ichar(z%mask)/=0)
-print '(2(a,2i5))', 'Shape(x%mask) = ', shape(x%mask), ' Shape(z%mask) = ', shape(z%mask)
+! print '(a)', 'CloneVectorQuantity 7.4'
+! print '(a,i0)', 'Count(ichar(x%mask)/=0) = ', Count(ichar(x%mask)/=0)
+! print '(a,i0)', 'Count(ichar(z%mask)/=0) = ', Count(ichar(z%mask)/=0)
+! print '(2(a,2i5))', 'Shape(x%mask) = ', shape(x%mask), ' Shape(z%mask) = ', shape(z%mask)
 do i = 1, size(x%mask,1)
 do j = 1, size(x%mask,2)
-print '(5(a,i0))', 'Doing z%mask(',i,',',j,') = x%mask(',i,',',j,')'
+! print '(5(a,i0))', 'Doing z%mask(',i,',',j,') = x%mask(',i,',',j,')'
 z%mask(i,j) = x%mask(i,j)
 end do; end do
       z%mask = x%mask
-print '(a)', 'CloneVectorQuantity 8'
+! print '(a)', 'CloneVectorQuantity 8'
     end if
     z%label = x%label
-print '(a)', 'CloneVectorQuantity 9'
+! print '(a)', 'CloneVectorQuantity 9'
   end subroutine CloneVectorQuantity
 
   ! --------------------------------------------  ConstantXVector  -----
@@ -2607,7 +2607,7 @@ print '(a)', 'CloneVectorQuantity 9'
         call GetSignalName ( signal, msg(len_trim(msg)+2:), sideband=sideband )
       end if
 
-      call dump( vector, details=0 ) ! It's not the values cuasing us to crash
+      call dump( vector, details=0 ) ! It's not the values causing us to crash
       call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
     end if
 
@@ -3359,6 +3359,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.191  2014/08/19 00:29:59  vsnyder
+! Add VectorMemoryInUse, VectorsMemoryInUse
+!
 ! Revision 2.190  2014/07/18 23:13:24  pwagner
 ! Aimed for consistency in names passed to allocate_test; added allocationName field to datatype
 !
