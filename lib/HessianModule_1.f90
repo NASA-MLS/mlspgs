@@ -16,15 +16,14 @@ module HessianModule_1          ! High-level Hessians in the MLS PGS suite
 ! This module provides the composite Block Hessian type.  Blocks of this
 ! type are used to compose the Hessians inside L2PC.
 
-  use ALLOCATE_DEALLOCATE, only: TEST_DEALLOCATE
+  use ALLOCATE_DEALLOCATE, only: Test_Allocate, TEST_DEALLOCATE
   use DUMP_0, only: DUMP
   use HESSIANMODULE_0, only: CLEARBLOCK, COPYBLOCK, CREATEBLOCK, &
     & DESTROYBLOCK, HESSIANELEMENT_T, RH, &
     & H_ABSENT, H_SPARSE, H_FULL, OPTIMIZEBLOCK
   use HIGHOUTPUT, only: BLANKSTOCOLUMN, OUTPUTNAMEDVALUE
   use LEXER_CORE, only: WHERE_T
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
-    & MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
   use MATRIXMODULE_1, only: DEFINERCINFO, DESTROYRCINFO, NULLIFYRCINFO, RC_INFO
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use OUTPUT_M, only: NEWLINE, OUTPUT
@@ -104,6 +103,8 @@ contains
   ! This routine adds a vector to a database of such vectors, 
   ! creating the database if necessary.
 
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (Hessian_T), dimension(:), pointer :: DATABASE
     type (Hessian_T), intent(in) ::            ITEM
@@ -177,10 +178,11 @@ contains
 
     if ( present(Potemkin) ) then
       if ( Potemkin ) return
-    endif
+    end if
     allocate ( h%block ( h%row%nb, h%col%nb, h%col%nb ), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "H%Block in CreateEmptyHessian" )
+    call test_allocate ( status, ModuleName, "H%Block", &
+      & ubounds=[h%row%nb, h%col%nb, h%col%nb], &
+      & elementSize = storage_size(h%block) / 8 )
 
     do i = 1, h%row%nb ! Now create absent blocks with the correct sizes
       do j = 1, h%col%nb
@@ -236,9 +238,9 @@ contains
     call destroyRCInfo ( hessian%row )
     call destroyRCInfo ( hessian%col )
     if ( associated(hessian%block) ) then
+      k = size(hessian%block) * storage_size(hessian%block) / 8
       deallocate ( hessian%block, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // "HESSIAN%H in DestroyHessian" )
+      call test_deallocate ( status, ModuleName, "Hessian%Block", k )
     end if
   end subroutine DestroyHessian
 
@@ -906,6 +908,9 @@ contains
 end module HessianModule_1
 
 ! $Log$
+! Revision 2.36  2014/09/04 23:42:47  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.35  2014/01/09 00:25:06  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
