@@ -38,13 +38,12 @@ module L2PC_m
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
   use MATRIXMODULE_1, only: MATRIX_T, MATRIX_DATABASE_T, &
     & COPYMATRIXVALUE, CREATEBLOCK, CREATEEMPTYMATRIX, &
-    & DESTROYMATRIX, DUMP, DUMP_LAYOUT, DUMP_STRUCT, &
+    & DESTROYMATRIX, DUMP, DUMP_STRUCT, &
     & FINDBLOCK, GETACTUALMATRIXFROMDATABASE
   use MLSCOMMON, only: MLSFILE_T
   use MLSFILES, only: DUMPMLSFILE => DUMP
   use MLSKINDS, only: R8, R4
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSFINDS, only: FINDFIRST
   use MLSSIGNALS_M, only: GETSIGNALNAME
   use MLSSTRINGLISTS, only: OPTIONDETAIL, SWITCHDETAIL
@@ -157,6 +156,8 @@ contains ! ============= Public Procedures ==========================
 
   ! ------------------------------------ AddBinSelectorToDatabase --
   integer function AddBinSelectorToDatabase ( database, item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     type (BinSelector_T), dimension(:), pointer :: DATABASE
     type (BinSelector_T) :: item
     ! Local variables
@@ -170,6 +171,8 @@ contains ! ============= Public Procedures ==========================
   integer function AddFileIDToDatabase ( Database, Item )
 
     ! This function simply adds a fileID  to a database of this type
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     integer, dimension(:), pointer :: Database
     integer :: Item
@@ -185,6 +188,8 @@ contains ! ============= Public Procedures ==========================
   integer function AddL2PCToDatabase ( Database, Item )
 
     ! This function simply adds an l2pc  to a database of said l2pc s.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     type(L2PC_T), dimension(:), pointer :: Database
     type(L2PC_T) :: Item
@@ -295,14 +300,15 @@ contains ! ============= Public Procedures ==========================
   end subroutine CreateDefaultBinSelectors
 
   ! -------------------------------------- DestroyBinSelectorDatabase
-  subroutine DestroyBinSelectorDatabase 
+  subroutine DestroyBinSelectorDatabase
+    use Allocate_Deallocate, only: Test_Deallocate
     ! Local variables
-    integer :: STATUS                   ! Flag from deallocate
+    integer :: S, STATUS                   ! Flag from deallocate
     ! Executable code
     if ( .not. associated ( binSelectors ) ) return
+    s = size(binSelectors) * storage_size(binSelectors) / 8
     deallocate ( binSelectors, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//"bin selectors binSelectors" )
+    call test_deallocate ( status, ModuleName, "binSelectors", s )
   end subroutine DestroyBinSelectorDatabase
 
   ! ----------------------------------------------- DestroyL2PC ----
@@ -372,8 +378,10 @@ contains ! ============= Public Procedures ==========================
   ! ------------------------------------------- DestroyL2PCDatabase ---
   subroutine DestroyL2PCDatabase
 
+    use Allocate_Deallocate, only: Test_Deallocate
+
     ! Local variables
-    integer :: I, Status
+    integer :: I, S, Status
 
     verbose = switchDetail( switches, 'l2pc') > -1
     if ( .not. associated(l2pcDatabase) ) then
@@ -385,9 +393,9 @@ contains ! ============= Public Procedures ==========================
           & call outputNamedValue( 'Destroying l2pc db entry number ', i )
         call DestroyL2PC ( l2pcDatabase(i) )
       end do
+      s = size(l2pcDatabase) * storage_size(l2pcDatabase) / 8
       deallocate ( l2pcDatabase, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_deallocate // "l2pcDatabase" )
+      call test_deallocate ( status, ModuleName, "l2pcDatabase", s )
     end if
 
     ! Also destroy the info database (i.e. close files)
@@ -594,6 +602,7 @@ contains ! ============= Public Procedures ==========================
     ! This subroutine dumps an l2pc to stdout
 
     use HESSIANMODULE_1, only: DUMP, DUMP_LAYOUT
+    use MatrixModule_1, only: DUMP_LAYOUT
 
     ! Dummy arguments
     type (l2pc_t), intent(in), target :: L2pc
@@ -1200,6 +1209,8 @@ contains ! ============= Public Procedures ==========================
 
   ! ------------------------------------ AddL2PCInfoToDatabase --
   integer function AddL2PCInfoToDatabase ( database, item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     type (L2PCInfo_T), dimension(:), pointer :: DATABASE
     type (L2PCInfo_T) :: item
     ! Local variables
@@ -1211,9 +1222,13 @@ contains ! ============= Public Procedures ==========================
 
   ! ------------------------------------ DestroyL2PCInfoDatabase ----
   subroutine DestroyL2PCInfoDatabase
-  use HDF5, only: H5FCLOSE_F, H5GCLOSE_F, H5ESET_AUTO_F
+
+    use Allocate_Deallocate, only: Test_Deallocate
+    use HDF5, only: H5FCLOSE_F, H5GCLOSE_F, H5ESET_AUTO_F
+
     ! Local variables
     integer :: I                ! Loop counter
+    integer :: S                ! Size in bytes of an object to deallocate
     integer :: STATUS           ! Flag from HDF
 
     ! Executable code
@@ -1254,9 +1269,10 @@ contains ! ============= Public Procedures ==========================
       l2pcInfo(i)%fileID = 0
     end do
     call h5eSet_auto_f ( 1, status )
+    s = size(l2pcInfo) * storage_size(l2pcInfo) / 8
     deallocate ( l2pcInfo, stat=i )
-    if ( i /= 0 .and. DIEIFDESTROYFAILS ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//'l2pcInfo' )
+    call test_deallocate ( i, ModuleName, 'l2pcInfo', s )
+
   end subroutine DestroyL2PCInfoDatabase
 
   ! ----------------------------------- MakeMatrixPackMap -----------
@@ -2357,6 +2373,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.128  2014/09/04 23:48:52  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.127  2014/01/09 18:15:42  pwagner
 ! Fixed bug in preventing crashes when qt%radiometer is 0
 !
