@@ -156,6 +156,7 @@ contains
     type(tuple_t), dimension(:), pointer :: oldTuple  ! Used to expand 'in place'
     integer :: extra                    ! How many to add
     integer :: Me = -1                  ! String index for trace cacheing
+    integer :: S                        ! Size in bytes of an object to deallocate
     integer :: stat                     ! Status from allocates etc
     integer :: space                    ! How many tuples are free
 
@@ -189,14 +190,17 @@ contains
       ! Create new tuple
       allocate ( H%tuples ( size ( oldTuple ) + extra ), stat=stat )
       call test_allocate ( stat, moduleName, "H%Tuple", &
-        & (/1/), (/ size ( oldTuple ) + extra /) )
+        & (/1/), (/ size ( oldTuple ) + extra /), storage_size(oldTuple) / 8 )
 
       ! Copy old contents
-      if ( associated ( oldTuple ) ) H%tuples ( 1:h%tuplesFilled ) = oldTuple ( 1:h%tuplesFilled )
+      if ( associated ( oldTuple ) ) then
+        H%tuples ( 1:h%tuplesFilled ) = oldTuple ( 1:h%tuplesFilled )
 
       ! Destroy old contents
-      deallocate ( oldTuple, stat=stat )
-      call test_deallocate ( stat, moduleName, "oldTuple" )
+        s = size(oldTuple) * storage_size(oldTuple) / 8
+        deallocate ( oldTuple, stat=stat )
+        call test_deallocate ( stat, moduleName, "oldTuple", s )
+      end if
     end if
     call trace_end ( 'AugmentHessian', cond=.false. )
   end subroutine AugmentHessian
@@ -226,6 +230,8 @@ contains
     case ( h_sparse )
       z%tuplesFilled = x%tuplesFilled
       allocate ( z%tuples ( x%tuplesFilled ), stat=stat )
+      call test_allocate ( stat, moduleName, 'Z%Tuples', ubounds=x%tuplesFilled, &
+        elementSize = storage_size(z%tuples) / 8 )
     case ( h_full )
       call Allocate_test ( z%values, x%nRows, x%nCols1, x%nCols2, &
         & 'values in loneBlock_0' // ForWhom, &
@@ -255,11 +261,13 @@ contains
   subroutine ClearHessianBlock_0 ( H )
     ! Clear a HessianElement_T structure
     type(HessianElement_T), intent(inout) :: H
-    integer :: Stat
+    integer :: S, Stat
 
     if ( associated(h%tuples) ) then
+      s = size(h%tuples) * storage_size(h%tuples) / 8
       deallocate ( h%tuples, stat=stat )
-      call test_deallocate ( stat, moduleName, "H%Tuples in DestroyHessianBlock" )
+      call test_deallocate ( stat, moduleName, &
+        & "H%Tuples in DestroyHessianBlock", s )
     end if
 
     call deallocate_test ( h%values, moduleName, "H%H in DestroyHessianBlock" )
@@ -308,9 +316,9 @@ contains
           call outputNamedValue( 'initTuples', initTuples )
         end if
         allocate ( h%tuples ( initTuples ), stat=stat )
-        h%tuplesFilled = initTuples
         call test_allocate ( stat, moduleName, "H%Tuples", &
           & (/1/), (/initTuples/) )
+        h%tuplesFilled = initTuples
       end if
     end if
     if ( h_kind == h_full ) then
@@ -327,9 +335,11 @@ contains
   subroutine Densify_Hessian ( H )
   ! Convert a Hessian represented by tuples to an explicit representation
 
+    use Allocate_Deallocate, only: Test_Deallocate
+
     type(HessianElement_T), intent(inout) :: H
 
-    integer :: n
+    integer :: n, status
 
     ! Skip if already done
     select case ( h%kind )
@@ -343,8 +353,10 @@ contains
           h%values(h%tuples(n)%i,h%tuples(n)%j,h%tuples(n)%k) = h%tuples(n)%h
         end do
       end if
-      
-      deallocate ( h%tuples, stat=n )
+
+      n = size(h%tuples) * storage_size(h%tuples) / 8
+      deallocate ( h%tuples, stat=status )
+      call test_deallocate ( status, moduleName, 'H%Tuples', n )
       h%kind = h_full
     case ( h_full )
     end select
@@ -857,6 +869,7 @@ contains
     integer :: I,J,K    ! Loop counters
     integer :: MaxRank  ! Used to place a tuple out of the running
     integer :: Me = -1  ! String index for trace cacheing
+    integer :: S        ! Size in bytes of an object to deallocate
     integer :: STATUS   ! Flag from allocate
     logical, parameter :: DEEBUG = .true.
     logical :: verbose
@@ -1005,8 +1018,9 @@ o:    do while ( i < n )
         exit ! The ones on the end are duplicates
       end do o
 
+      s = size(h%tuples) * storage_size(h%tuples) / 8
       deallocate ( h%tuples, stat=status )
-      call test_deallocate ( status, moduleName, "h%tuples" )
+      call test_deallocate ( status, moduleName, "h%tuples", s )
 
       h%tuples => newTuples
       h%tuplesFilled = k
@@ -1019,8 +1033,9 @@ o:    do while ( i < n )
         allocate ( newTuples ( k ), stat=status )
         call test_allocate ( status, moduleName, "newTuples", (/1/), (/k/) )
         newTuples(:k) = h%tuples(:k)
+        s = size(h%tuples) * storage_size(h%tuples) / 8
         deallocate ( h%tuples, stat=status )
-        call test_deallocate ( status, moduleName, "h%tuples" )
+        call test_deallocate ( status, moduleName, "h%tuples", s )
         h%tuples => newTuples
       end if
     end if
@@ -1056,6 +1071,7 @@ o:    do while ( i < n )
     type (HessianElement_T), intent(inout) :: H
     integer :: i, j, k, l, n
     integer :: Me = -1                  ! String index for trace cacheing
+    integer :: S                        ! Size in bytes of an object to deallocate
     integer :: status
     logical :: verbose
     ! Executable
@@ -1072,8 +1088,10 @@ o:    do while ( i < n )
 
     if ( associated(h%tuples) ) then
       call outputNamedValue ( 'Must deallocate old tuples array', h%tuplesFilled )
+      s = size(h%tuples) * storage_size(h%tuples) / 8
       deallocate ( h%tuples, stat=status )
-      call test_deallocate ( status, ModuleName // '%SparsifyFullHessian', "H%Tuples" )
+      call test_deallocate ( status, ModuleName // '%SparsifyFullHessian', &
+        & "H%Tuples", s )
     end if
     call outputNamedValue ( 'About to allocate Hessian tuples', n )
     allocate ( h%tuples(n), stat=status )
@@ -1107,8 +1125,9 @@ o:    do while ( i < n )
 
     type (HessianElement_T), intent(inout) :: H
     integer :: i
-    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: Me = -1               ! String index for trace cacheing
     integer :: newSize
+    integer :: S                     ! Size in bytes of an object to deallocate
     integer :: status
     type(tuple_t), pointer :: Tuples(:) => NULL()
     logical :: verbose
@@ -1144,8 +1163,9 @@ o:    do while ( i < n )
           tuples(newSize) = h%tuples(i)
         end do
       end if
+      s = size(h%tuples) * storage_size(h%tuples) / 8
       deallocate ( h%tuples, stat=status )
-      call test_deallocate ( status, moduleName, 'h%tuples' )
+      call test_deallocate ( status, moduleName, 'h%tuples', s )
       h%tuplesFilled = newSize
       h%tuples => tuples
     case default
@@ -1391,6 +1411,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.29  2014/09/04 23:42:20  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.28  2014/01/09 00:25:06  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
