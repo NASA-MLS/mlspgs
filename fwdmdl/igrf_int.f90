@@ -230,7 +230,7 @@ contains
   subroutine READ_GH ( ROOT )
     ! Read IGRF files of GH coefficients
 
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use Allocate_Deallocate, only: Test_Allocate
     use IO_Stuff, only: Get_Lun
     use Machine, only: IO_Error
     use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
@@ -327,6 +327,7 @@ contains
 
   contains
     subroutine AddGHToDatabase ( Database, Items, copy )
+      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
       type(gh_t), pointer :: Database(:)
       type(gh_t), intent(in) :: Items(:)
       logical, intent(in), optional :: Copy
@@ -975,6 +976,9 @@ o:  do n = 3, size(p,2)-1
 end module IGRF_INT
 
 ! $Log$
+! Revision 2.10  2014/09/05 21:12:56  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.9  2014/01/11 01:28:53  vsnyder
 ! Decruftification
 !
