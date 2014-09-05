@@ -5,12 +5,15 @@ E.g., mlsl2 -m -p --nmeta -S"glo,jac"
 Note: use "-T2" and not "--T2" because -T2 has one 'letter'
 (and yet, oddly, so do -S"mas,slv,.." and -T1h have only one 'letter')
 ========================= mlsl2 =========================
-  -A: Dump the un-decorated abstract syntax tree.
-  -a: Dump the decorated type-checked abstract syntax tree.
+  -A[#]: Dump the un-decorated abstract syntax tree, including
+         type-checking subtrees if #>0.
+  -a[#]: Dump the decorated type-checked abstract syntax tree, including
+         type-checking subtrees if #>0.
   -c: Trace expression evaluation and tree decoration.
   -Dmodule1,module12,.. : Set debugging on for modules 1, 2, ..
-  -d: Dump the declaration table after type checking
-  -f[digit]: Trace Forward model.  Bigger digit means 
+  -d[#]: Dump the declaration table after type checking if # /= 0
+  -E: Send output to standard error unit
+  -f[digit]: Trace Forward model.  Bigger digit means
                     more output.
   -g[digit]: Trace "generation".  Bigger digit means 
                     more output.
@@ -94,12 +97,11 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
     turning this option on will let you merely patch it instead
   --pge <commandname>: What to put on slaves' commandline instead of mlsl2
     when giving slaves their tasks (useful when using toolkit)
-  --pId id_string: Set the process id to id_string for the slave task
-  --pidf <filename>: slave reads its own processID from filename; 
+  --pidf <filename>: slave reads its own processID from filename;          
       writes "Finished" to the same file when done
   --recl[ ]<number>: set the max record length size for l2cf to <number>
-      (In case the default value, 20000, is too small for some l2cfs).
-      This has effect only if the l2cf is not coming from standard input.
+     (In case the default value, 20000, is too small for some l2cfs).
+     This has effect only if the l2cf is not coming from standard input.
   --set opt=val: Set command-line option opt to value val; may reuse
      E.g., --set submit=l2q --set verbose=true
   --setf opts_file: read opt=val pairs from file opts_file
@@ -122,6 +124,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --stdout log: Use Toolkit log file to handle output
   --stdout out: Use stdout to handle output
   --stdout both: Send output into both log and stdout
+  --stdout error: Send output to standard error unit
   --stdout unbuffered: Send output unbuffered to selected destination
   --stdout <filename>: Send unbuffered stdout to filename
   --stopAfter <section>: Stop run after <section>; e.g., 'chunk_divide'
@@ -163,6 +166,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.68  2014/08/12 23:32:06  pwagner
+ commandline options --backg and --pidf noteFile added
+
  Revision 1.67  2014/08/05 00:15:22  pwagner
  Add --pId and --uId to set id_strings for slave task
 
