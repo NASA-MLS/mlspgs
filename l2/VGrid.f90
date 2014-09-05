@@ -479,7 +479,7 @@ contains ! =====     Public Procedures     =============================
 
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: PHYQ_Dimensionless
-    use MLSCommon, only: R8       ! General constants etc.
+    use MLSKinds, only: R8              ! KIND for REAL
     use TREE, only: NSONS, SUBTREE
 
     integer, intent(in) :: ROOT         ! Root of the subtree
@@ -517,6 +517,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.30  2014/09/05 01:24:59  vsnyder
+! Get kinds from MLSKinds instead of from MLSCommon
+!
 ! Revision 2.29  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
 !
