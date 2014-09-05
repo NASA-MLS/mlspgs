@@ -2979,8 +2979,12 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.353  2014/09/05 01:20:03  vsnyder
+! Remove unused State argument from DumpStateQuantities.  Remove USE for
+! unreferenced USE name.
+!
 ! Revision 2.352  2014/09/05 00:49:07  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.351  2014/04/10 00:45:24  pwagner
 ! Moved currentChunkNumber, currentPhaseName from MLSL2Timings to MLSL2Options
