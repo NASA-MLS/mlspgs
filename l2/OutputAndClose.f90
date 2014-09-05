@@ -495,7 +495,6 @@ contains ! =====     Public Procedures     =============================
       & MLSPCF_MCF_L2GP_START
     use MLSSTRINGLISTS, only: LIST2ARRAY, NUMSTRINGELEMENTS
     use OUTPUT_M, only: OUTPUT
-    use PCFHDR, only: GLOBALATTRIBUTES, H5_WRITEGLOBALATTR
     use WRITEMETADATA, only: POPULATE_METADATA_STD, &
       & POPULATE_METADATA_OTH, GET_L2GP_MCF
   ! Deal with metadata--1st for direct write, but later for all cases
@@ -513,7 +512,6 @@ contains ! =====     Public Procedures     =============================
   logical, parameter :: countEmpty = .true.
   logical, parameter :: DEBUG = .false.
   character(len=*), parameter :: L2GPHEAD = 'L2GP-'
-  character (len=32) :: doiIdentier=' '
   integer :: field_no
   character (len=132) :: FILE_BASE
   integer :: fileHandle
@@ -1883,6 +1881,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.185  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.184  2014/04/14 17:39:48  pwagner
 ! Fixed bugs in writing DOIs for dgg, dgm files; still hard-wired, though
 !
