@@ -1181,12 +1181,11 @@ repeat_loop: do ! RepeatLoop
     end subroutine BoundMove
 
     ! --------------------------------------  DumpStateQuantities  -----
-    subroutine DumpStateQuantities ( State, DumpQuantitiesNode, Title )
+    subroutine DumpStateQuantities ( DumpQuantitiesNode, Title )
       use Tree, only: DECORATION, NSONS, SUBTREE
       use VectorsModule, only: DUMP, GETVECTORQTYBYTEMPLATEINDEX, &
-        & VECTOR_T, VECTORVALUE_T
+        & VECTORVALUE_T
 
-      type(vector_t), intent(in) :: State
       integer, intent(in) :: DumpQuantitiesNode ! in L2CF tree
       character(len=*), intent(in) :: Title
 
@@ -1675,7 +1674,7 @@ repeat_loop: do ! RepeatLoop
       end if
         if ( d_xvec ) call dump ( v(x), name='Original X' )
         if ( got(f_dumpQuantities) ) &
-          & call DumpStateQuantities ( v(x), dumpQuantitiesNode, 'Original X' )
+          & call DumpStateQuantities ( dumpQuantitiesNode, 'Original X' )
       numGrad = 0
       numJ = 0
       numNewt = 0
@@ -1816,7 +1815,7 @@ NEWT: do ! Newton iteration
           numJ = numJ + 1
             if ( d_xvec ) call dump ( v(x), details=2, name='State' )
             if ( got(f_dumpQuantities) ) &
-              & call DumpStateQuantities ( v(x), dumpQuantitiesNode, 'State' )
+              & call DumpStateQuantities ( dumpQuantitiesNode, 'State' )
           if ( numJ > maxJacobians .and. nwt_flag /= nf_getJ ) then
               if ( d_nwt ) then
                 call output ( numJ, before= &
@@ -2980,6 +2979,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.352  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.351  2014/04/10 00:45:24  pwagner
 ! Moved currentChunkNumber, currentPhaseName from MLSL2Timings to MLSL2Options
 !
