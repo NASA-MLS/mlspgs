@@ -17,7 +17,7 @@ module MatrixTools                      ! Various tools for matrices
   use MatrixModule_0, only: &
     & M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, MATRIXELEMENT_T
   use MatrixModule_1, only: FINDBLOCK, MATRIX_T, RC_INFO
-  use MLSCommon, only: R8, RM
+  use MLSKinds, only: R8, RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND
   use PVMIDL, only: PVMIDLPACK
@@ -805,13 +805,14 @@ contains ! =====  Public procedures  ===================================
 
   ! -----------------------------------------------  PVMSendBlock  -----
   subroutine PVMPackBlock ( BLOCK )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     ! Dummy arguments
     type (MatrixElement_T), intent(in) :: BLOCK ! The block of the matrix
 
     ! Local variables
     integer :: INFO                     ! Flag
-    real(r8), dimension(:,:), pointer :: values
-    integer :: n_rows, n_cols
+    real(r8), dimension(:,:), allocatable :: values
+    integer :: n_rows, n_cols, status
 
     ! Executable code
     call PVMIDLPack ( (/ block%kind, block%nRows, block%nCols /), info )
@@ -830,10 +831,12 @@ contains ! =====  Public procedures  ===================================
 !      call PVMIDLPack ( block%values, info )
         n_rows = size(block%values, 1)
         n_cols = size(block%values, 2)
-        allocate(values(n_rows, n_cols))
+        allocate ( values(n_rows, n_cols), stat=status )
+        call test_allocate ( status, moduleName, 'values' )
         values = block%values
         call PVMIDLPack ( values, info )
-        deallocate(values)
+        deallocate ( values, stat=status )
+        call test_deallocate ( status, moduleName, 'values' )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing block values" )
     end if
 
@@ -943,6 +946,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.42  2014/08/06 23:33:45  vsnyder
+! Remove USE for Num_Value, which is not referenced
+!
 ! Revision 1.41  2014/02/28 01:08:20  vsnyder
 ! Remove unused names
 !
