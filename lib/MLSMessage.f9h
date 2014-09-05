@@ -994,38 +994,21 @@ contains
   ! Private procedures
   ! ------------------------------------------  AddLogicalToDatabase  -----
   integer function AddLogicalToDatabase ( Database, Item )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     logical, dimension(:), pointer :: Database
     logical, intent(in) :: Item
 
     ! Local variables
     logical, dimension(:), pointer :: tempDatabase
 
-    integer :: newSize, status
-
-    ! Executable code
-
-    if ( associated(database) ) then ! tree_checker prevents duplicate names
-      newSize=SIZE(database)+1
-    else
-      newSize=1
-    end if
-
-    allocate(tempDatabase(newSize),STAT=status)
-    if ( status/=0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "tempDatabase")
-
-    if ( newSize>1 ) tempDatabase(1:newSize-1) = database
-    if ( ASSOCIATED(database) ) deallocate ( database, stat=status )
-    if ( status /= 0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "database" )
-    database => tempDatabase
-    database(newSize) = item
+    include "addItemToDatabase.f9h"
 
     AddLogicalToDatabase = newSize
   end function AddLogicalToDatabase
 
   ! ------------------------------------------  RmLogicalFromDatabase  -----
   integer function RmLogicalFromDatabase ( Database, itemIndex )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     logical, dimension(:), pointer :: Database
     integer, intent(in) :: itemIndex   ! Index of item
 
@@ -1033,7 +1016,7 @@ contains
     logical, dimension(:), pointer :: tempDatabase
     logical, parameter :: okToDeallocEmptyDB = .true.
 
-    integer :: newSize, status
+    integer :: newSize, s, status
     integer :: i
     ! Executable code
     newSize=0
@@ -1047,23 +1030,23 @@ contains
         & "Attempt to remove an item not found in database")
     elseif ( size(database) == 1) then
       if ( okToDeallocEmptyDB ) then
+        s = size(database) * storage_size(database) / 8
         deallocate ( database, stat=status )
-        if ( status /= 0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_DeAllocate // "database" )
-      endif
+        call test_deallocate ( status, ModuleName, "database", s )
+      end if
     else
       allocate(tempDatabase(SIZE(database)-1), STAT=status)
-      if ( status/=0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate // "tempDatabase")
+      call test_allocate ( status, ModuleName, "tempDatabase", &
+        & uBounds = SIZE(database)-1, elementSize = storage_size(tempDatabase) / 8 )
       do i=1, SIZE(database)
         if (i /= itemIndex) then
           newSize = newSize+1
           tempDatabase(newSize) = database(i)
         endif
       enddo
+      s = size(database) * storage_size(database) / 8
       deallocate ( database, stat=status )
-      if ( status /= 0 ) call MLSMessageStd ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // "database" )
+      call test_deallocate ( status, ModuleName, "database", s )
       database => tempDatabase
     end if
 
@@ -1214,6 +1197,10 @@ contains
 
 !
 ! $Log$
+! Revision 2.36  2014/09/05 00:06:39  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Include addItemToDatabase instead of duplicating it here.
+!
 ! Revision 2.35  2014/05/29 18:16:12  pwagner
 ! Fixed bug affecting call stack and another in StopWithErrorMsg
 !
