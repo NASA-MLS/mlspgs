@@ -996,25 +996,33 @@ contains
     nnz_d_delta_df = 0
     d2_delta_df2 = 0.0
 
-    ! Put zeros into eta_zp so that comp_eta_docalc_no_frq doesn't do it in
-    ! every call.  Most of its time is spent doing this.  Instead, when
-    ! eta_zp is computed, the nonzeros (encoded by nz_zp and nnz_zp) are
-    ! first replaced by zeros.
+    ! Put zeros into eta_zp so that comp_eta_docalc_no_frq doesn't need to
+    ! do it in every call.  Most of its time is spent doing this.  Instead,
+    ! when eta_zp is computed, the nonzeros (encoded by nz_zp and nnz_zp)
+    ! are first replaced by zeros.  Make Do_Calc_zp false because
+    ! Multiply_Eta_Column_Sparse (called from Comp_Eta_Docalc_No_Frq) is
+    ! only set where there are nonzeroes indicated by nz_zp, leaving
+    ! others undefined until nonzeroes land in the same place.
 
     eta_zp = 0.0
     nnz_zp = 0
+    do_calc_zp = .false.
 
-    ! Put zeros into eta_fzp so that comp_sps_path_frq_nz doesn't do it in
-    ! every call.  Instead, when eta_fzp is computed, the nonzeros (encoded
-    ! by nz_fzp and nnz_fzp) are first replaced by zeros.
+    ! Put zeros into eta_fzp so that comp_sps_path_frq_nz doesn't need to
+    ! do it in every call.  Instead, when eta_fzp is computed, the nonzeros
+    ! (encoded by nz_fzp and nnz_fzp) are first replaced by zeros.  Do_Calc_fzp
+    ! probably doesn't presently need to be preset to false, but if we ever
+    ! handle it sparsely as we do for Do_Calc_zp, it would only be set where
+    ! Eta_fzp is nonzero.
 
     eta_fzp = 0.0
 !     nnz_fzp = 0
+    do_calc_fzp = .false.
 
-    ! Put zeros into eta_zxp_t so that metrics doesn't do it in every call.
-    ! Instead, when eta_zp is computed, the nonzeros (encoded by nz_zp and
-    ! nnz_zp) are first replaced by zeros.  Metrics doesn't spend much time
-    ! doing this. We want this representation for dt_script_dt.
+    ! Put zeros into eta_zxp_t so that metrics doesn't need to do it in every
+    ! call. Instead, when eta_zp is computed, the nonzeros (encoded by nz_zp
+    ! and nnz_zp) are first replaced by zeros.  Metrics doesn't spend much
+    ! time doing this. We want this representation for dt_script_dt.
 
     eta_zxp_t = 0.0
     nnz_zxp_t = 0
@@ -4770,6 +4778,13 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.351  2014/08/01 01:06:05  vsnyder
+! Add code to fill real arrays with sNaN if the private parameter NaN_Fill
+! is true.  Set p_path to zero between the tangent points, so it's not
+! undefined.  It's not actually used for anything productive, but if the
+! compiler has an option to fill with sNaN, and those elements are referenced
+! (and the results subsequently not used), a pointless trap occurs.
+!
 ! Revision 2.350  2014/07/18 23:15:44  pwagner
 ! Aimed for consistency in names passed to allocate_test
 !
