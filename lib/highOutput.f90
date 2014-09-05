@@ -254,8 +254,8 @@ contains
     if ( present(skips) ) then
       if ( skips > 0 .and. len_trim(chars) > 0 ) then
         allChars = stretch(chars, skips)
-      endif
-    endif
+      end if
+    end if
     if ( columnRange(1) > 0 ) then
       spaces = columnRange(2) - max( columnRange(1), getOutputStatus( 'column' ) )
       if ( spaces < 1 ) return
@@ -263,7 +263,7 @@ contains
         & call blanks( columnRange(1) - getOutputStatus( 'column' ) )
     else
       spaces = columnRange(2) - columnRange(1)
-    endif
+    end if
     firstSpace = 0
     nc = max( len_trim(allchars), 1 )
     select case (lowercase(alignment))
@@ -294,7 +294,7 @@ contains
       call blanks( padLeft )
       call output_( allChars(char1:char2) )
       call blanks( padRight )
-    endif
+    end if
   end subroutine ALIGNTOFIT_CHARS
 
   subroutine ALIGNTOFIT_DOUBLE ( value, COLUMNRANGE, ALIGNMENT, FORMAT )
@@ -363,7 +363,7 @@ contains
     integer, dimension(2) :: myColumnRange
     integer :: lineLen, mySkips,  padding
     character(len=2*len(chars))      :: wrappedChars
-    character(len=160), dimension(:), pointer :: lines
+    character(len=160), dimension(:), allocatable :: lines
     logical, parameter :: DEBUG = .false.
     ! Executable
     myAlignment = 'C'
@@ -383,14 +383,14 @@ contains
       call banner( lines, alignment=alignment )
       deallocate(lines)
       return
-    elseif ( present(columnRange) ) then
+    else if ( present(columnRange) ) then
       myColumnRange = columnRange
     else
       lineLen = max( 80, 4 + len_trim(chars)*(1+mySkips) )
       padding = ( lineLen - len_trim(chars)*(1+mySkips) ) / 2
       myColumnRange(1) = 1 + padding
       myColumnRange(2) = lineLen - padding
-    endif
+    end if
     
     ! define padding as the larger of columnrange(1) and 1
     padding = max( 1, myColumnRange(1) )
@@ -399,7 +399,7 @@ contains
       call outputnamedValue( 'padding', padding )
       call outputnamedValue( 'LineLen', LineLen )
       call outputnamedValue( 'myColumnRange', myColumnRange )
-    endif
+    end if
     ! Top border
     call output( '*' )
     call blanks ( lineLen-2, FillChar='-' )
@@ -442,10 +442,10 @@ contains
         lineLen = max( lineLen, 4 + len_trim(chararray(i))*(1+mySkips) )
         padding = min( padding, &
           & ( lineLen - len_trim(chararray(i))*(1+mySkips) ) / 2 )
-      enddo
+      end do
       myColumnRange(1) = 1 + padding
       myColumnRange(2) = lineLen - padding
-    endif
+    end if
     
     ! define padding as the larger of columnrange(1) and 1
     padding = max( 1, myColumnRange(1) )
@@ -460,7 +460,7 @@ contains
       call alignToFit( chararray(i), myColumnRange, myAlignment, skips )
       call blanksToColumn( lineLen )
       call output( '*', advance = 'yes' )
-    enddo
+    end do
     ! Bottom border
     call output( '*' )
     call blanks ( lineLen-2, FillChar='-' )
@@ -507,7 +507,7 @@ contains
       nTab = findFirst( tabStops > getOutputStatus( 'column' ) )
       if ( nTab > 0 ) &
         & call blanksToColumn( tabStops(nTab), fillChar )
-    endif
+    end if
   end subroutine blanksToTab
 
   ! ---------------------------------------------- DumpOuputOptions -----
@@ -526,10 +526,10 @@ contains
     call outputNamedValue ( 'unit number', options%prUnit, advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     if ( options%prUnit < 0 ) then
-      call outputNamedValue ( 'meaning', prunitname(options%prUnit), &
+      call outputNamedValue ( 'meaning', prunitname(options), &
         & advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-    endif
+    end if
     call outputNamedValue ( 'file name', trim(options%name), advance='yes', &
       & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
     call outputNamedValue ( 'logging level', options%MLSMSG_Level, advance='yes', &
@@ -551,42 +551,46 @@ contains
     do i=1, MAXNUMTABSTOPS
       call tab( fillChar=fillChar )
       call output_( '^', advance='no' )
-    enddo
+    end do
     call newline
     if ( CHECKINGTABBING ) then
       do i=1, MAXNUMTABSTOPS
         call blanksToColumn( tabStops(i), fillChar=fillChar )
         call output_( '^', advance='no' )
-      enddo
+      end do
       call newline
-    endif
-    do
+    end if
+    do i = 1, 14
       call output_( decade, advance='no' )
       if ( getOutputStatus( 'column' ) > 132 ) exit
-    enddo
+    end do
     call newline
     call blanks(80, fillChar='-', advance='yes')
   contains
-    function PRUnitName( prUnit ) result( name )
+    function PRUnitName( options ) result( name )
       ! Return an appropriate name for the prUnit number
       ! Args
-      integer, intent(in) :: prUnit
+      type(outputOptions_T), intent(in) :: options
       character(len=12) :: name
       ! Executable
-      select case ( prUnit )
-      case ( STDOUTPRUNIT )
-        name = 'stdout'
-      case ( MSGLOGPRUNIT )
-        name = 'mls logfile'
-      case ( BOTHPRUNIT )
-        name = 'stdout+log'
-      case ( OUTPUTLINESPRUNIT )
-        name = 'outputLines'
-      case ( INVALIDPRUNIT )
-        name = 'invalid'
-      case default ! > 0
-        name = 'Fortran unit'
-      end select
+      if ( options%prUnitLiteral ) then
+        name = 'literal'
+      else
+        select case ( options%prUnit )
+        case ( STDOUTPRUNIT )
+          name = 'stdout'
+        case ( MSGLOGPRUNIT )
+          name = 'mls logfile'
+        case ( BOTHPRUNIT )
+          name = 'stdout+log'
+        case ( OUTPUTLINESPRUNIT )
+          name = 'outputLines'
+        case ( INVALIDPRUNIT )
+          name = 'invalid'
+        case default ! > 0
+          name = 'Fortran unit'
+        end select
+      end if
     end function PRUnitName
   end subroutine DumpOutputOptions
 
@@ -680,9 +684,9 @@ contains
     end if
     if ( amount < -99999 ) then     ! I6 format limits this
       call output_( '(-HUGE)' )
-    elseif ( amount > 999999 ) then ! I6 format limits this
+    else if ( amount > 999999 ) then ! I6 format limits this
       call output_( '(HUGE)' )
-    elseif ( amount == int(amount) ) then
+    else if ( amount == int(amount) ) then
       write ( howMuch, '(i6)' ) int(amount)
     else
       write ( howMuch, '(f8.1)' ) amount
@@ -733,7 +737,7 @@ contains
       n = min(size(tabs), MAXNUMTABSTOPS)
       tabs = 0
       tabs(1:n) = TABSTOPS(1:n)
-    endif
+    end if
   end subroutine dumpTabs
 
   ! ----------------------------------------------  getStamp  -----
@@ -780,7 +784,7 @@ contains
     else
       myFullColumnRange(1) = 1
       myFullColumnRange(2) = 80
-    endif
+    end if
     myColumnRange = myFullColumnRange
     mySkips = 0
     if ( present(skips) ) mySkips = skips
@@ -797,7 +801,7 @@ contains
     if ( present(after) ) then
       myColumnRange(2) = myFullColumnRange(2) - len(after)
       rightpadding = len(after) - 1
-    endif
+    end if
     call blanksToColumn( myFullColumnRange(1), advance='no' )
     if ( present(before) ) call output(before, advance='no' )
     if ( mySkips == 0 .and. myAlignment == 'C' .and. myFillChar /= ' ' ) then
@@ -815,7 +819,7 @@ contains
       call aligntofit( chars, myColumnRange, myAlignment, skips )
       call blanksToColumn(myFullColumnRange(2)-rightpadding, advance='no' )
       if ( present(after) ) call output(after, advance='no' )
-    endif
+    end if
     call newLine
   end subroutine HEADLINE
 
@@ -957,7 +961,7 @@ contains
     if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
     if ( present(Format)  ) then
       if ( format /= '*' ) FormatSpec = Format
-    endif
+    end if
     include 'numToChars.f9h'
   end function numToChars_double
 
@@ -971,7 +975,7 @@ contains
       write( line, Format ) value
     else
       write( line, * ) value
-    endif
+    end if
     line = adjustl(line)
   end function numToChars_integer
 
@@ -988,7 +992,7 @@ contains
     if ( any( value == DPREFERDEFAULTFORMAT ) ) FormatSpec = '*'
     if ( present(Format)  ) then
       if ( format /= '*' ) FormatSpec = Format
-    endif
+    end if
     include 'numToChars.f9h'
   end function numToChars_single
 
@@ -1048,7 +1052,7 @@ contains
     else
       dateString = '' ! Intel 12 and earlier doesn't fill with blanks
       call date_and_time ( date=dateString )
-    endif
+    end if
     col1 = index(lowercase(dateString), 't')
     if ( col1 > 0 ) then
       date2 = dateString(1:col1-1)
@@ -1056,10 +1060,10 @@ contains
         & date2 = reformatDate( dateString(1:col1-1), fromForm='yyyy-Doy', toForm=utcformat )
     else
       date2 = reformatDate( dateString, fromForm='*', toForm=utcformat )
-    endif
+    end if
     call utc_to_yyyymmdd( date2, ErrTyp, year, month, day )
     if ( month < 0 ) then
-    endif
+    end if
     call buildCalendar( year, month, days, daysOfYear )
     ! Temporary use of   w i d e  tabstops
     call settabs( '14-210+14' )
@@ -1071,7 +1075,7 @@ contains
       col1 = col2 + 1
       col2 = tabStops(wkdy)
       call alignToFit( trim(daysOfWeek(wkdy)), (/ col1, col2 /), 'c' )
-    enddo
+    end do
     call newline
     numWeeks = 4
     if ( any( days(5,:) /= 0 ) ) numWeeks = 5
@@ -1083,23 +1087,23 @@ contains
         wrappedNote = dateNote
       else
         call wrap( dateNote, wrappedNote, 10, '/' )
-      endif
+      end if
       numRows = max( numRows, &
         & NumStringElements( wrappedNote, countEmpty, inseparator ) + 2 &
         & )
-    endif
+    end if
     if ( present(notes) ) then
       do aday=1, min( size(notes), daysInMonth( month, year ) )
         if ( myDontWrap ) then
           wrappedNote = notes(aday)
         else
           call wrap( notes(aday), wrappedNote, 10, '/' )
-        endif
+        end if
         numRows = max( numRows, &
           & NumStringElements( wrappedNote, countEmpty, inseparator ) + 2 &
           & )
-      enddo
-    endif
+      end do
+    end if
     do iwk = 1, numWeeks
       ! Start with horizontal line
       call blanksToTab( 7, fillChar='-' )
@@ -1114,52 +1118,52 @@ contains
             call output_('||')
           else
             call output_('|')
-          endif
+          end if
           if ( days(iwk, wkdy) < 1 ) then
             ! Don't write notes or anything else in "empty" days
-          elseif ( row == 1 ) then
+          else if ( row == 1 ) then
             call writeIntsToChars( days(iwk, wkdy), dateString )
             dateString = adjustl(dateString)
             call alignToFit( trim(dateString), (/ col1, col2-1 /), 'r' )
-          elseif( row == numRows ) then
+          else if( row == numRows ) then
             call writeIntsToChars( daysOfYear(iwk, wkdy), dateString )
             dateString = adjustl(dateString)
             call alignToFit( 'd' // trim(dateString), (/ col1, col2-1 /), 'r' )
-          elseif( present(dateNote) .and. today ) then
+          else if( present(dateNote) .and. today ) then
             if ( myDontWrap ) then
               wrappedNote = dateNote
             else
               call wrap( dateNote, wrappedNote, 10, '/' )
-            endif
+            end if
             call GetStringElement ( wrappedNote, noteString, &
               & row-1, countEmpty, inseparator )
             if ( noteString == inseparator ) noteString = ' '
             call output_( noteString )
-          elseif( present(notes) ) then
+          else if( present(notes) ) then
             if ( days(iwk, wkdy) <= size(notes) ) then
               if ( myDontWrap ) then
                 wrappedNote = notes(days(iwk, wkdy))
               else
                 call wrap( notes(days(iwk, wkdy)), wrappedNote, 10, '/' )
-              endif
+              end if
               call GetStringElement ( wrappedNote, noteString, &
                 & row-1, countEmpty, inseparator )
               if ( noteString == inseparator ) noteString = ' '
               call output_( noteString )
-            endif
-          endif
+            end if
+          end if
           if ( today ) then
             call blanksToColumn(col2-1)
             call output_('|')
           else
             call blanksToTab
-          endif
-        enddo ! wkdy
+          end if
+        end do ! wkdy
         call output_('|')
         call newline
-      enddo ! row
+      end do ! row
       ! begin with 
-    enddo ! week
+    end do ! week
     call blanksToTab( 7, fillChar='-' )
     call newline
     ! Restore tabstops
@@ -1262,7 +1266,7 @@ contains
     do i=1, size(array)
       call output( trim_safe(array(i)) )
       if ( i < size(array) ) call output( comma )
-    enddo
+    end do
     call output( parens(2:2) )
   end subroutine OUTPUTLIST_CHARS
 
@@ -1285,7 +1289,7 @@ contains
     do i=1, size(array)
       call output( array(i) )
       if ( i < size(array) ) call output( comma )
-    enddo
+    end do
     call output( parens(2:2) )
   end subroutine OUTPUTLIST_INTS
 
@@ -1394,7 +1398,7 @@ contains
       n = min(size(tabs), MAXNUMTABSTOPS)
       tabs = 0
       tabs(1:n) = TABSTOPS(1:n)
-    endif
+    end if
   end subroutine resetTabs
 
   ! ----------------------------------------------  setStamp  -----
@@ -1431,12 +1435,12 @@ contains
     ! Executable
     if ( present(range) ) then
       call ExpandStringRange ( range, TABSTOPS )
-    elseif ( present(tabs) ) then
+    else if ( present(tabs) ) then
       n = min( MAXNUMTABSTOPS, size(tabs) )
       tabStops(1:n) = tabs(1:n) 
     else
       call ExpandStringRange ( '5-120+5', TABSTOPS )
-    endif
+    end if
   end subroutine setTabs
 
   ! ------------------------------------------------  timeStamp  -----
@@ -1558,7 +1562,7 @@ contains
       str = 'T'
     else
       str = 'F'
-    endif
+    end if
     call timeStamp_char(str, &
     & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, STYLE, DATE )
   end subroutine timeStamp_logical
@@ -1629,7 +1633,7 @@ contains
       val = arg(kFlag+flagLen:)
     else
       val = arg(kFlag+flagLen:kFlag+flagLen+kNext)
-    endif
+    end if
   end subroutine getOption_char
 
   subroutine getOption_log ( arg, flag, val )
@@ -1655,17 +1659,17 @@ contains
     if ( wrappastcolnum > 0 .and. getOutputStatus( 'column' ) >= wrappastcolnum ) then
       call newLine
       return
-    endif
+    end if
     if ( wrappastcolnum == 0 .and. &
       & mod(i, outputOptions%nArrayElmntsPerLine) == 0 ) then
       call output_ ( '', advance='yes', DONT_STAMP=.true. )
       return
-    endif
+    end if
     if ( len_trim(outputOptions%arrayElmntSeparator) > 0 ) then
       call output_( outputOptions%arrayElmntSeparator, advance='no' )
     else
       call blanks ( outputOptions%nBlanksBtwnElmnts, advance='no' )
-    endif
+    end if
   end subroutine SeparateElements
 
   ! ------------------------------------  myMessage  -----
@@ -1686,12 +1690,12 @@ contains
     if ( len_trim(name) > 0 ) then
       nChars = len(line) + len(name) + 3
       thus = '(' // trim(name) // ') ' // line
-    endif
+    end if
     if ( severity > MLSMSG_Warning ) then
       call PrintItOut( thus(1:nChars), SEVERITY, exitStatus = 1  )
     else
       call PrintItOut( thus(1:nChars), SEVERITY  )
-    endif
+    end if
   end subroutine myMessage_old
 
   subroutine myMessage ( Severity, ModuleNameIn, Message, &
@@ -1760,7 +1764,7 @@ contains
       if ( severity >= MLSMSG_Crash .or. MLSMessageConfig%CrashOnAnyError ) then
         NEVERCRASH = .false.
         call crash_burn
-      endif
+      end if
       call exit_with_status ( 1  )
     end if
   end subroutine myMessage
@@ -1778,7 +1782,7 @@ contains
     if ( .not. present(inFormat) ) then
       format = sdNeedsFormat
       dotm = '.6'
-    elseif ( index(inFormat, '.') < 1 ) then
+    else if ( index(inFormat, '.') < 1 ) then
       format = sdNeedsFormat
       dotm = '.6'
     else
@@ -1786,7 +1790,7 @@ contains
       dot = index( inFormat, '.' )
       dotm = inFormat(dot:dot+1)
       format = trim(sdNeedsFragment) // trim(dotm) // ')'
-    endif
+    end if
   end subroutine whatSDNeedsFormat
 
   ! ----------------------------------------------  stretch  -----
@@ -1806,7 +1810,7 @@ contains
       ! E.g., if skips==1, k ~ 1 3 5 7 ..
       k = 1 + (skips+1)*(i-1)
       chars(k:k) = arg(i:i)
-    enddo
+    end do
   end function stretch
 
   ! ----------------------------------------------  stamp  -----
@@ -1863,6 +1867,10 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.3  2014/09/05 00:23:57  vsnyder
+! Better handling of literal output unit.  Convert a local pointer temp to
+! allocatable.
+!
 ! Revision 2.2  2014/04/22 16:30:57  pwagner
 ! Banner accepts mode as optional arg
 !
