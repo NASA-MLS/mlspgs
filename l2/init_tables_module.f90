@@ -1546,6 +1546,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_text, string(), &
              begin, f+f_time, boolean(), &
              begin, f+f_tGrid, field_spec(s_tGrid), &
+             begin, f+f_totalMatrixSizes, boolean(), &
+             begin, f+f_totalVectorSizes, boolean(), &
              begin, f+f_variable, n+n_variable_ref, &
              begin, f+f_vector, field_spec(s_vector), &
              begin, f+f_vectorMask, field_spec(s_vector), &
@@ -1974,6 +1976,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.604  2014/09/05 01:25:47  vsnyder
+! Add TotalMatrixSizes, TotalVectorSizes to Dump command
+!
 ! Revision 2.603  2014/08/26 23:22:35  pwagner
 ! We may Dump memory, time; the /reset option may Dump changes in their use
 !
