@@ -10,15 +10,15 @@
 ! foreign countries or providing access to foreign persons.
 
 !=============================================================================
-MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
+module MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
   use dump_0, only: dump
   use HDF, only: dfacc_rdwr
   use HighOutput, only: Banner, OutputNamedValue
   use intrinsic, only: l_ascii, l_hours, l_minutes, l_seconds
-  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose, &
-    & processID
+  use, intrinsic :: ISO_Fortran_Env, only: Error_Unit
+  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSNamesAreVerbose
   use MLSFiles, only: WildCardHDFVersion, HDFVersion_4, HDFVersion_5, Dump
   use MLSMEssageModule, only: MLSMessageConfig, &
     & MLSMsg_error, MLSMsg_info, MLSMsg_testWarning, &
@@ -111,11 +111,10 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Whether to restart printing identical warnings at each new phase
   logical            :: RESTARTWARNINGS               = .true.
   ! Whether to run slave tasks in the background
-  ! (needed if they are to read their own processID
-  ! and allow the wrapper script to forcibly terminate hanging slave tasks)
+  ! (needed if they are to allow the wrapper script to forcibly terminate
+  ! hanging slave tasks)
   logical            :: RUNINBACKGROUND               = .false.
-  ! File name from which to read pge's own pid and to which to write
-  ! "Finished" after slave sends sig_finished
+  ! File name to which to write "Finished" after slave sends sig_finished
   character(len=255) :: NOTEFILE                      = ' '
   ! What units to use in summarizing timings at end of run
   integer            :: SECTIONTIMINGUNITS            = L_SECONDS
@@ -790,12 +789,8 @@ cmds: do
           call myNextArgument( i, inLine, entireLine, line )
           call SnipLastSlaveArgument ! Don't want slaves to see this
           parallel%pgeName = trim(line)
-        else if ( line(3+n:6+n) == 'pid ' ) then
-          i = i + 1
-          call myNextArgument( i, inLine, entireLine, processId )
         else if ( line(3+n:6) == 'pidf' ) then
           i = i + 1
-          ! print *, 'About to read chunk num'
           call myNextArgument( i, inLine, entireLine, noteFile )
         else if ( line(3+n:6+n) == 'recl' ) then
           if ( line(7+n:) /= ' ' ) then
@@ -915,6 +910,10 @@ cmds: do
           case ( 'both' )
             OUTPUT_PRINT_UNIT = BOTHPRUNIT
             ! MLSMessageConfig%logFileUnit = STDOUTLOGUNIT
+          case ( 'error' ) ! Output usually sent to stdout goes to stderr
+            outputOptions%prUnit = error_unit
+            outputOptions%prUnitLiteral = .true. ! In case Error_Unit <= 0
+            OutputOptions%buffered = .false.
           case ( 'unbuffered' )
             OutputOptions%buffered = .false.
           case default
@@ -1019,6 +1018,10 @@ jloop:do while ( j < len_trim(line) )
               do_dump = ichar(line(j+1:j+1)) - ichar('0')
               j = j + 1
             end if
+          case ( 'E' ) ! Output usually sent to stdout goes to stderr
+            outputOptions%prUnit = error_unit
+            outputOptions%prUnitLiteral = .true. ! In case Error_Unit <= 0
+            OutputOptions%buffered = .false.
           case ( 'h', 'H', '?' )     ! Describe command line usage
             ! call option_usage
             filename = 'help'
@@ -1260,11 +1263,14 @@ jloop:do while ( j < len_trim(line) )
   end function not_used_here
 !---------------------------------------------------------------------------
 
-END MODULE MLSL2Options
+end module MLSL2Options
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.96  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.95  2014/09/02 18:03:12  pwagner
 ! Correctly distinguish --pid and --pidf (though former may disappear)
 !
