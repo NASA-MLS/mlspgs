@@ -3099,8 +3099,12 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.444  2014/09/05 00:56:02  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Remove
+! declarations of unused variables.  Send HGrids database to DumpCommand.
+!
 ! Revision 2.443  2014/09/05 00:49:06  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.442  2014/06/03 22:42:54  pwagner
 ! Pass hGrids to Dump so we may Dump them
