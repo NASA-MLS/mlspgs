@@ -53,7 +53,7 @@ contains ! =====     Public Procedures     =============================
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
 
-    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE
+    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, Test_Deallocate
     use CHUNKS_M, only: MLSCHUNK_T
     use DESTROYCOMMAND_M, only: DESTROYCOMMAND
     use DUMPCOMMAND_M, only: BOOLEANFROMANYGOODRADIANCES, &
@@ -205,7 +205,7 @@ contains ! =====     Public Procedures     =============================
     use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, &
       & ADDPHASETOPHASENAMES, FILLTIMINGS, FINISHTIMINGS
     use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-      & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_L1BREAD, MLSMESSAGERESET
+      & MLSMSG_L1BREAD, MLSMESSAGERESET
     use MLSPCF2, only: MLSPCF_L2APRIORI_START, MLSPCF_L2APRIORI_END
     use MLSRANDOMNUMBER, only: MLS_RANDOM_SEED, MATH77_RAN_PACK
     use MLSSTRINGLISTS, only: CATLISTS, GETHASHELEMENT, &
@@ -396,7 +396,7 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: H2OPRECISIONQUANTITYINDEX         ! in the quantities database
     integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
-    integer :: I, J                     ! Loop indices for section, spec, expr
+    integer :: J                        ! Loop indices for section, spec, expr
     integer :: IBO
     logical :: IGNOREGEOLOCATION        ! Don't copy geolocation to vector qua
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
@@ -497,6 +497,7 @@ contains ! =====     Public Procedures     =============================
     integer :: RHIPRECISIONQUANTITYINDEX         ! in the quantities database
     integer :: RHIPRECISIONVECTORINDEX           ! In the vector database
     integer :: ROWVECTOR                ! Vector defining rows of Matrix
+    integer :: S                        ! Size in bytes of object to deallocate
     real(r8) :: SCALE                   ! Scale factor
     real(r8) :: SCALEINSTANCES          ! Scale factor for weighted LS fill
     real(r8) :: SCALERATIO              ! Scale factor for weighted LS fill
@@ -1142,8 +1143,9 @@ contains ! =====     Public Procedures     =============================
           end do
         end if
         allocate ( snoopMatrices ( noSnoopedMatrices ), STAT=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate//'snoopMatrices' )
+        call test_allocate ( status, moduleName, 'snoopMatrices', &
+          & uBounds = noSnoopedMatrices, &
+          & elementSize = storage_size(snoopMatrices) / 8 )
         if ( associated ( matrices ) ) then
           noSnoopedMatrices = 1
           do j = 1, size ( matrices )
@@ -1156,9 +1158,9 @@ contains ! =====     Public Procedures     =============================
         end if
         call Snoop ( key=key, vectorDatabase=vectors, &
           & matrixDatabase=snoopMatrices )
+        s = size(snoopMatrices) * storage_size(snoopMatrices) / 8
         deallocate ( snoopMatrices, STAT=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Deallocate//'snoopMatrices' )
+        call test_deallocate ( status, moduleName, 'snoopMatrices', s )
 
       case ( s_StreamlineHessian ) ! =============== StreamlineHessian =====
         call doStreamline
@@ -1335,14 +1337,14 @@ contains ! =====     Public Procedures     =============================
         vector => vectors(vectorIndex)
         call VectorFromFile ( key, vector, MLSFile, &
           & filetypestr, options, spread, interpolate )
-      endif
+      end if
     end subroutine directReadCommand
 
     ! ----------------------------------------------  FillCommand  -----
     subroutine FillCommand
     ! Now we're on actual Fill instructions.
       use Declaration_Table, only: BASE_UNIT
-      use DUMP_0, only: DUMP
+!     use DUMP_0, only: DUMP
       use INIT_TABLES_MODULE, only: L_NONE
       use INTRINSIC, only: LIT_INDICES, T_Boolean, T_Numeric
       use STRING_TABLE, only: DISPLAY_STRING
@@ -1770,7 +1772,6 @@ contains ! =====     Public Procedures     =============================
           width = valueAsArray(1)
         end select
       end do                  ! Loop over arguments to fill instruction
-
       ! Put various conditions under which you would want to skip this fill
       if ( got(f_ifMissingGMAO) .and. .not. MissingGMAO ) skipFill = .true.
       if ( skipFill ) fillMethod = -1 ! We'll assume no l_value can be this
@@ -3098,6 +3099,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.443  2014/09/05 00:49:06  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.442  2014/06/03 22:42:54  pwagner
 ! Pass hGrids to Dump so we may Dump them
 !
