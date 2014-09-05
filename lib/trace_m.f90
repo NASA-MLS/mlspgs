@@ -180,7 +180,7 @@ contains ! ====     Public Procedures     ==============================
       call output( 'Trace_End ', advance='no' )
       if ( present(name) ) call output( trim(Name), advance='no' )
       call newLine
-    endif
+    end if
 
     if ( check < -1 ) check = switchDetail ( switches, 'chktr' )
 
@@ -237,7 +237,7 @@ contains ! ====     Public Procedures     ==============================
     if ( len_trim(PreviousDate) > 0 ) then
       if ( PreviousDate /= CurrentDate .or. DEEBUG ) &
         & call DateLine ( PreviousDate, CurrentDate )
-    endif
+    end if
     PreviousDate = CurrentDate
   end subroutine CheckDate
   
@@ -268,6 +268,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.42  2014/09/05 00:30:59  vsnyder
+! Some cannonball polishing
+!
 ! Revision 2.41  2014/03/20 01:30:23  vsnyder
 ! Check String_Table_Size, not How_Many_Strings, some cannonball polishing
 !
