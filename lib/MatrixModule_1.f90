@@ -31,8 +31,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & reflectmatrix, rowscale, scaleblock, solvecholesky, &
     & sparsify, spill, transposematrix, updatediagonal
   use MLSkinds, only: rm, rv, r8, r4
-  use MLSmessagemodule, only: MLSmessage, MLSmsg_allocate, &
-    & MLSmsg_deallocate, MLSmsg_error, MLSmsg_warning
+  use MLSmessagemodule, only: MLSmessage, MLSmsg_error, MLSmsg_warning
   use output_m, only: blanks, newline, output
   use string_table, only: display_string, get_string
   use symbol_table, only: enter_terminal
@@ -294,6 +293,7 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------  AddCholeskyToDatabase  -----
   integer function AddCholeskyToDatabase ( Database, CholeskyItem )
   ! Add a Cholesky factor matrix to the matrix database.
+    use Allocate_Deallocate, only: Test_Allocate
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_cholesky_T), intent(in) :: CholeskyItem
 
@@ -301,8 +301,8 @@ contains ! =====     Public Procedures     =============================
     integer :: Status
 
     allocate ( item%cholesky, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "Matrix database element" )
+    call test_allocate ( status, ModuleName, "Matrix database element", &
+      & elementSize = storage_size(item%cholesky) / 8 )
     item%cholesky = choleskyItem
     addCholeskyToDatabase = addItemToMatrixDatabase ( database, item )
   end function AddCholeskyToDatabase
@@ -310,6 +310,7 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------  AddKroneckerToDatabase  -----
   integer function AddKroneckerToDatabase ( Database, KroneckerItem )
   ! Add a Kronecker product matrix to the matrix database.
+    use Allocate_Deallocate, only: Test_Allocate
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_kronecker_T), intent(in) :: KroneckerItem
 
@@ -317,8 +318,8 @@ contains ! =====     Public Procedures     =============================
     integer :: Status
 
     allocate ( item%kronecker, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "Matrix database element" )
+    call test_allocate ( status, ModuleName, "Matrix database element", &
+      & elementSize = storage_size(item%kronecker) / 8 )
     item%kronecker = kroneckerItem
     addKroneckerToDatabase = addItemToMatrixDatabase ( database, item )
   end function AddKroneckerToDatabase
@@ -355,6 +356,7 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------  AddMatrixToDatabase  -----
   integer function AddMatrixToDatabase ( Database, MatrixItem )
   ! Add a matrix of unspecified structure to the matrix database
+    use Allocate_Deallocate, only: Test_Allocate
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_T), intent(in) :: MatrixItem
 
@@ -362,8 +364,8 @@ contains ! =====     Public Procedures     =============================
     integer :: Status
 
     allocate ( item%matrix, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "Matrix database element" )
+    call test_allocate ( status, ModuleName, "Matrix database element", &
+      & elementSize = storage_size(item%matrix) / 8 )
     item%matrix = matrixItem
     addMatrixToDatabase = addItemToMatrixDatabase ( database, item )
   end function AddMatrixToDatabase
@@ -371,6 +373,7 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------------  AddSPDToDatabase  -----
   integer function AddSPDToDatabase ( Database, SPDItem )
   ! Add a symmetric-positive-definite matrix to the matrix database
+    use Allocate_Deallocate, only: Test_Allocate
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_spd_T), intent(in) :: SPDItem
 
@@ -378,8 +381,8 @@ contains ! =====     Public Procedures     =============================
     integer :: Status
 
     allocate ( item%spd, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "Matrix database element" )
+    call test_allocate ( status, ModuleName, "Matrix database element", &
+      & elementSize = storage_size(item%spd) / 8 )
     item%spd = spdItem
     addSPDToDatabase = addItemToMatrixDatabase ( database, item )
   end function AddSPDToDatabase
@@ -825,6 +828,7 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------------------  CopyMatrix  -----
   subroutine CopyMatrix ( Z, X )        ! Destroy Z, then deep Z = X except
   !                                       the name of Z isn't changed.
+    use Allocate_Deallocate, only: Test_Allocate
     type(matrix_T), intent(inout) :: Z
     type(matrix_T), intent(in) :: X
     integer :: I, J      ! Subscripts and loop inductors
@@ -833,8 +837,8 @@ contains ! =====     Public Procedures     =============================
     call copyRCInfo ( z%col, x%col )
     call copyRCInfo ( z%row, x%row )
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
+    call test_allocate ( status, ModuleName, "Z%Block in CreateEmptyMatrix", &
+      & uBounds = [z%row%nb,z%col%nb], elementSize = storage_size(z%block) / 8 )
     do j = 1, x%col%nb
       do i = 1, x%row%nb
         call createBlock ( z, i, j, m_absent, forWhom="CopyMatrix" ) ! Create block w/correct size
@@ -894,6 +898,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------  CreateEmptyMatrix  -----
   subroutine CreateEmptyMatrix ( Z, Name, Row, Col &
     &,                           Row_Quan_First, Col_Quan_First, Text, where )
+    use Allocate_Deallocate, only: Test_Allocate
     type(Matrix_T), intent(inout) :: Z  ! The matrix to create -- inout so
       !                                   destroyMatrix makes sense
     integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
@@ -921,8 +926,8 @@ contains ! =====     Public Procedures     =============================
     call defineRCInfo ( z%col, col, col_Quan_First )
     if ( present(where) ) z%where = where
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
+    call test_allocate ( status, ModuleName, "Z%Block in CreateEmptyMatrix", &
+      & uBounds = [z%row%nb,z%col%nb], elementSize = storage_size(z%block) / 8 )
     do i = 1, z%row%nb ! Now create absent blocks with the correct sizes
       do j = 1, z%col%nb
         call createBlock ( z, i, j, m_absent, forWhom="CreateEmptyMatrix" )
@@ -1193,15 +1198,17 @@ contains ! =====     Public Procedures     =============================
   ! Destroy the "block" component of a matrix.  This leaves its structure
   ! intact, but releases the space for its values.  This is useful when
   ! forming normal equations little-by-little.
+    use Allocate_Deallocate, only: Test_Deallocate
     type(matrix_T), intent(inout) :: A
 
+    integer :: S                   ! Size in bytes of object to deallocate
     integer :: STATUS              ! From deallocate
 
     call clearMatrix ( a )
     if ( associated(a%block) ) then
+      s = size(a%block) * storage_size(a%block) / 8
       deallocate ( a%block, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // "A%Block in DestroyMatrix" )
+      call test_deallocate ( status, ModuleName, "A%Block", s )
     end if
   end subroutine DestroyBlock_1
 
@@ -1221,38 +1228,40 @@ contains ! =====     Public Procedures     =============================
   subroutine DestroyMatrixInDatabase ( Database )
   ! Destroy a matrix in the database -- deallocate its pointer components,
   ! don't change the name
+    use Allocate_Deallocate, only: Test_Deallocate
     type(matrix_database_T), intent(inout) :: Database
     integer :: Status  ! from deallocate
 
     if ( associated(database%matrix) ) then
       call destroyMatrix ( database%matrix )
       deallocate ( database%matrix, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, moduleName, &
-        & MLSMSG_Deallocate // 'PlainMatrix' )
+      call test_deallocate ( status, moduleName, 'PlainMatrix', &
+        & storage_size(database%matrix) / 8 )
     else if ( associated(database%cholesky) ) then
       call destroyMatrix ( database%cholesky%m )
       deallocate ( database%cholesky, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, moduleName, &
-        & MLSMSG_Deallocate // 'CholeskyMatrix' )
+      call test_deallocate ( status, moduleName, 'CholeskyMatrix', &
+        & storage_size(database%cholesky%m) / 8 )
     else if ( associated(database%kronecker) ) then
       call destroyMatrix ( database%kronecker%m )
       deallocate ( database%kronecker, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, moduleName, &
-        & MLSMSG_Deallocate // 'KroneckerMatrix' )
+      call test_deallocate ( status, moduleName, 'KroneckerMatrix', &
+        & storage_size(database%kronecker%m) / 8 )
     else if ( associated(database%spd) ) then
       call destroyMatrix ( database%spd%m )
       deallocate ( database%spd, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, moduleName, &
-        & MLSMSG_Deallocate // 'SPDMatrix' )
+      call test_deallocate ( status, moduleName, 'SPDMatrix', &
+        & storage_size(database%spd%m) / 8 )
     end if
   end subroutine DestroyMatrixInDatabase
 
   ! --------------------------------------  DestroyMatrixDatabase  -----
   subroutine DestroyMatrixDatabase ( D )
   ! Destroy every matrix in the database D, then destroy the database.
+    use Allocate_Deallocate, only: Test_Deallocate
     type(matrix_database_T), dimension(:), pointer :: D
 
-    integer :: I, Status
+    integer :: I, S, Status
 
     if ( .not. associated(d) ) return
     do i = 1, size(d)
@@ -1273,15 +1282,15 @@ contains ! =====     Public Procedures     =============================
         call destroyMatrix ( d(i)%spd%m )
       end if
     end do
+    s = size(d) * storage_size(d) / 8
     deallocate ( d, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & MLSMSG_DeAllocate // "D in DestroyMatrixDatabase" )
+    call test_deallocate ( status, ModuleName, "D in DestroyMatrixDatabase", s )
   contains
     subroutine DeallocateMatrix ( M )
       type(matrix_t), pointer :: M
       deallocate ( m, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & MLSMSG_DeAllocate // "D%matrix in DestroyMatrixDatabase" )
+      call test_deallocate ( status, ModuleName, &
+        & "D%matrix in DestroyMatrixDatabase", storage_size(m) / 8 )
     end subroutine DeallocateMatrix
   end subroutine DestroyMatrixDatabase
 
@@ -2524,6 +2533,8 @@ contains ! =====     Public Procedures     =============================
   ! items are constructed by AddMatrixToDatabase, AddCholeskyToDatabase,
   ! AddKroneckerToDatabase or AddSPDToDatabase.
 
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     type(Matrix_Database_T), dimension(:), pointer :: Database
     type(Matrix_Database_T) :: Item
 
@@ -3022,6 +3033,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.137  2014/09/05 00:14:21  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.136  2014/08/19 00:29:26  vsnyder
 ! Add AllMatricesMemoryInUse, MatricesMemoryInUse, MatrixMemoryInUse
 !
