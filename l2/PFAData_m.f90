@@ -277,7 +277,7 @@ contains ! =====     Public Procedures     =============================
     ! Store data from Where in the L2CF into an nTemps X nPress
     ! array What
 
-      use MLSCommon, only: R4
+      use MLSKinds, only: R4
       integer, intent(in) :: Where
       real(r4), pointer :: What(:,:)
       integer :: I, J, K
@@ -300,16 +300,15 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------------  Make_PFAData  -----
   subroutine Make_PFAData ( Root, Error )
 
-    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
+    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test, &
+      & Test_Allocate, Test_Deallocate
     use Create_PFAData_m, only: Create_PFAData
     use Expr_m, only: Expr
     use FilterShapes_m, only: DACSFilterShapes, FilterShapes
     use Init_Tables_Module, only: F_AllLinesForRadiometer, F_AllLinesInCatalog, &
       & F_LOSVEL, F_Molecules, F_Oversample, F_Signals, F_Temperatures, &
       & F_VGrid, L_Zeta
-    use MLSCommon, only: RP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-      & MLSMSG_Error
+    use MLSKinds, only: RP
     use MLSSignals_m, only: Signal_T, Signals
     use MoreTree, only: Get_Boolean, Get_Field_ID
     use Parse_Signal_m, only: Parse_Signal
@@ -351,8 +350,8 @@ contains ! =====     Public Procedures     =============================
     oversample = 1
     nullify ( signalIndices )
     allocate ( mySignals(0), stat=stat )
-    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Allocate // 'Signals' )
+    call test_allocate ( stat, moduleName,  'MySignals', uBounds = 0, &
+      & elementSize = storage_size(mySignals) / 8 )
     do i = 2, nsons(root)
       son = subtree(i,root)
       field = get_field_id(son)
@@ -389,8 +388,9 @@ contains ! =====     Public Procedures     =============================
             & call announce_error ( subtree(j,son), noFolded, signal )
           signalsTemp => mySignals
           allocate ( mySignals(size(signalsTemp)+size(signalIndices)), stat=stat )
-          if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-            & MLSMSG_Allocate // 'Signals' )
+          call test_allocate ( stat, moduleName,  'MySignals', &
+            & uBounds = size(signalsTemp)+size(signalIndices), &
+            & elementSize = storage_size(mySignals) / 8 )
           mySignals(:size(signalsTemp)) = signalsTemp
           mySignals(size(signalsTemp)+1:) = signals(signalIndices)
           mySignals(size(signalsTemp)+1:)%sideband = sideband
@@ -413,9 +413,9 @@ contains ! =====     Public Procedures     =============================
           end do ! k
           call deallocate_test ( channels, 'Channels', moduleName )
           call deallocate_test ( signalIndices, 'signalIndices', moduleName )
+          k = size(signalsTemp) * storage_size(signalsTemp) / 8
           deallocate ( signalsTemp, stat=stat )
-          if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-            & MLSMSG_DeAllocate // 'SignalsTemp' )
+          call test_deallocate ( stat, moduleName, 'SignalsTemp', k )
         end do ! j
       case ( f_temperatures )
         tGrid = decoration(decoration(subtree(2,son)))
@@ -655,6 +655,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.31  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.30  2014/08/01 01:45:30  vsnyder
 ! Remove unreferenced USE names
 !
