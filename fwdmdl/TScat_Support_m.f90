@@ -458,6 +458,7 @@ contains
     real(r8) :: Frq                       ! The frequency
     integer, intent(in) :: MAF            ! MAF index
     type(vectorValue_T), intent(in) :: Phitan ! Limb tangent geodAngle
+    integer :: S                          ! Size in bytes of an object to deallocate
     type(L2PC_t), pointer :: L2PC         ! The selected L2PC
     integer, intent(out) :: RadInL2PC     ! Qty in L2PC for TScat_conf%signals(1)
     type(vector_T), intent(out) :: dX     ! Same form as L2PC%col%vec
@@ -480,7 +481,8 @@ contains
     TScat_conf%yStar = 0
 
     allocate ( TScat_conf%signals(1), stat=stat )
-    call test_allocate ( stat, moduleName, "TScat_Conf%signals", (/1/), (/1/), -1 )
+    call test_allocate ( stat, moduleName, "TScat_Conf%signals", (/1/), (/1/), &
+      & storage_size(TScat_conf%signals) / 8 )
 
     ! Use the same signals as FmConf%signals(1), but with all channels turned on
     TScat_conf%signals(1) = FmConf%signals(1)
@@ -524,8 +526,9 @@ contains
 
     call deallocate_test ( TScat_Conf%signals(1)%channels, &
       & "TScat_Conf%signals%channels", moduleName )
+    s = size(TScat_Conf%signals) * storage_size(TScat_Conf%signals) / 8
     deallocate ( TScat_Conf%signals, stat=stat )
-    call test_deallocate ( stat, moduleName, "TScat_Conf%signals", -1 )
+    call test_deallocate ( stat, moduleName, "TScat_Conf%signals", s )
 
   end subroutine Get_TScat_Setup
 
@@ -737,6 +740,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.9  2014/09/05 20:54:48  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.8  2013/06/12 02:24:01  vsnyder
 ! Cruft removal
 !
