@@ -113,10 +113,12 @@ contains
 
     slabs%catalog => catalog
     allocate ( slabs%s(nl), stat=stat )
-    call test_allocate ( stat, inName, "Slabs%S", (/ 1 /), (/ nl /) )
+    call test_allocate ( stat, inName, "Slabs%S", (/ 1 /), (/ nl /), &
+      & storage_size(slabs%s) / 8 )
     if ( myDer ) then
       allocate ( slabs%d(nl), stat=stat )
-      call test_allocate ( stat, inName, "Slabs%D", (/ 1 /), (/ nl /) )
+      call test_allocate ( stat, inName, "Slabs%D", (/ 1 /), (/ nl /), &
+      & storage_size(slabs%d) / 8 )
     end if
     if ( nl /= 0 ) then
       slabs%s%v0s = 0.0_r8
@@ -152,7 +154,8 @@ contains
     integer :: I, J
 
     allocate ( slabs(no_ele, size(catalog)), stat=i )
-    call test_allocate ( i, caller, 'Slabs', (/1,1/), (/no_ele,size(catalog)/) )
+    call test_allocate ( i, caller, 'Slabs', (/1,1/), (/no_ele,size(catalog)/), &
+      & storage_size(slabs) / 8 )
 
     do i = 1, size(catalog)
       do j = 1, no_ele
@@ -185,31 +188,33 @@ contains
     type (slabs_struct), intent(inout) :: slabs ! Slabs to deallocate
     character (len=*), intent(in) :: inName ! ModuleName of caller
 
-    integer :: Stat
+    integer :: S, Stat
 
     ! Executable code
     if ( allocated(slabs%s) ) then
+      s = size(slabs%s) * storage_size(slabs%s) / 8
       deallocate ( slabs%s, stat=stat )
-      call test_deallocate ( stat, inName, "Slabs%S" )
+      call test_deallocate ( stat, inName, "Slabs%S", s )
     end if
     if ( allocated(slabs%d) ) then
+      s = size(slabs%d) * storage_size(slabs%d) / 8
       deallocate ( slabs%d, stat=stat )
-      call test_deallocate ( stat, inName, "Slabs%S" )
+      call test_deallocate ( stat, inName, "Slabs%D", s )
     end if
   end subroutine DeallocateOneSlabs
 
   ! ------------------------------------------- DestroyCompleteSlabs -----
   subroutine DestroyCompleteSlabs ( Slabs )
     ! Destroys all the components of a slabs
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Deallocate
+    use Allocate_Deallocate, only: Test_Deallocate
     type (slabs_struct), dimension(:,:), pointer :: Slabs
 
-    integer :: I
+    integer :: I, S
     ! Executable code
     call deallocateAllSlabs ( slabs, moduleName )
+    s = size(slabs) * storage_size(slabs) / 8
     deallocate ( slabs, stat=i )
-    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//'slabs' )
+    call test_deallocate ( i, moduleName, 'slabs', s )
   end subroutine DestroyCompleteSlabs
 
   ! ------------------------------------------  Dump_Slabs_Struct  -----
@@ -2755,6 +2760,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.63  2013/05/09 01:02:48  vsnyder
+! Add useYi to dump
+!
 ! Revision 2.62  2011/11/11 00:42:06  vsnyder
 ! Use IsExtinction array from Molecules module
 !
