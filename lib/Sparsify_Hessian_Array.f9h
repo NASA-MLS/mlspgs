@@ -21,18 +21,20 @@
 !     However, if you actually examine the code to be invoked, the aim
 !     of minimiizing cache hits by steering toward locality has already
 !     been sacrificed for the sake of sparsity.
-    n = count(h_array /= 0)
     h%kind   = H_Sparse
     h%nRows  = size ( h_array, 1 )
     h%nCols1 = size ( h_array, 2 )
     h%nCols2 = size ( h_array, 3 )
 
     if ( associated(h%tuples) ) then
+      n = size(h%tuples) * storage_size(h%tuples) / 8
       deallocate ( h%tuples, stat=stat )
-      call test_deallocate ( stat, moduleName, "H%Tuples" )
+      call test_deallocate ( stat, moduleName, "H%Tuples", n )
     end if
+    n = count(h_array /= 0)
     allocate ( h%tuples(n), stat=stat )
-    call test_allocate ( stat, moduleName, "H%Tuple", (/ 1 /), (/ n /), -1 )
+    call test_allocate ( stat, moduleName, "H%Tuple", (/ 1 /), (/ n /), &
+      & storage_size(h%tuples) / 8 )
 
     l = 0
     do k = 1, size(h_array,3)
@@ -49,6 +51,9 @@
     call deallocate_test ( h%values, "H%Values in Sparsify_Hessian", moduleName )
 
 ! $Log$
+! Revision 2.5  2014/09/05 00:18:51  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.4  2010/11/19 23:51:49  pwagner
 ! Set tuplesFilled component
 !
