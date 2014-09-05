@@ -1959,8 +1959,11 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.95  2014/09/05 01:03:35  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.94  2014/09/05 00:49:06  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.93  2014/07/18 23:17:11  pwagner
 ! Aimed for consistency in names passed to allocate_test
