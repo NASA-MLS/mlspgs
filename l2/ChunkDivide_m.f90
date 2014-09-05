@@ -37,8 +37,7 @@ module ChunkDivide_m
   use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T
   use MLSFILES, only: DUMP, GETMLSFILEBYTYPE, MLS_OPENFILE
   use MLSKINDS, only: R8, RP
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_DEALLOCATE, MLSMSG_WARNING, &
-                              MLSMSG_ERROR, MLSMSG_ALLOCATE
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSNUMERICS, only: HUNT
   use MLSFINDS, only: FINDFIRST
   use MLSSIGNALS_M, only: MODULES
@@ -121,50 +120,64 @@ contains ! ===================================== Public Procedures =====
 
   !----------------------------------------  DestroyChunkDatabase  -----
   subroutine DestroyChunkDatabase ( chunks )
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
+    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, Test_Deallocate
+    use Toggles, only: Gen, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
 
     type( MLSChunk_T ), dimension(:), pointer  :: CHUNKS
-    integer :: STATUS                   ! From deallocate
-    integer :: CHUNK                    ! Index
+    integer :: CHUNK               ! Index
+    integer :: Me = -1             ! String index for trace
+    integer :: S                   ! Size in bytes of an object to deallocate
+    integer :: STATUS              ! From deallocate
 
     if ( .not. associated ( chunks ) ) return
+
+    call trace_begin ( me, "DestroyChunkDatabase", cond=toggle(gen) )
     do chunk = 1, size ( chunks )
       call Deallocate_test ( chunks(chunk)%hGridOffsets, &
         & 'chunks(?)%hGridOffsets', ModuleName )
       call Deallocate_test ( chunks(chunk)%hGridTotals, &
         & 'chunks(?)%hGridTotals', ModuleName )
     end do
+    s = size(chunks) * storage_size(chunks) / 8
     deallocate ( chunks, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & MLSMSG_DeAllocate // "Chunks" )
+    call test_deallocate ( status, moduleName, "chunks", s )
+    call trace_end ( "DestroyChunkDatabase", cond=toggle(gen) )
   end subroutine DestroyChunkDatabase
 
   !----------------------------------------  ReduceChunkDatabase  -----
   subroutine ReduceChunkDatabase ( chunks, firstChunk, lastChunk )
 
+    use Allocate_Deallocate, only: Test_Allocate
+    use Toggles, only: Gen, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
     type (MLSChunk_T), dimension(:), pointer :: chunks
     integer, intent(in) :: firstChunk, lastChunk
     ! Local variables
     type (MLSChunk_T), dimension(:), pointer :: TEMPDATABASE
+    integer :: Me = -1             ! String index for trace
     integer :: newSize, status
     ! Executable
     if ( .not. associated ( chunks ) ) return
+    call trace_begin ( me, "ReduceChunkDatabase", cond=toggle(gen) )
     newSize = lastChunk - firstChunk + 1
     if ( newSize < 1 ) return
     if ( lastChunk > size(chunks) ) return
     allocate(tempDatabase(newSize), STAT=status)
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "tempDatabase")
+    call test_allocate ( status, moduleName, "tempDatabase", &
+      uBounds = newSize, elementSize = storage_size(tempDatabase) / 8 )
 
     tempDatabase(1:newSize) = chunks(firstChunk:lastChunk)
     call DestroyChunkDatabase ( chunks )
     chunks => tempDatabase
+    call trace_end ( "ReduceChunkDatabase", cond=toggle(gen) )
 
   end subroutine ReduceChunkDatabase
 
   ! ------------------------------------------------  Chunk Divide -----
   subroutine ChunkDivide ( root, processingRange, filedatabase, chunks )
 
+    use Allocate_Deallocate, only: Test_Deallocate
     use DumpCommand_m, only: DumpCommand
     use EXPR_M, only: EXPR
     use LEXER_CORE, only: PRINT_SOURCE
@@ -189,6 +202,7 @@ contains ! ===================================== Public Procedures =====
     type (MLSFile_T), pointer :: DACSFile
     type (MAFRange_T) :: MAFRange
     integer :: Me = -1                  ! String index for trace
+    integer :: S                        ! Size in bytes of an object to deallocate
     integer :: Son                      ! of section root
     type(next_tree_node_state) :: State ! of tree traverser
     integer :: STATUS                   ! From deallocate
@@ -328,17 +342,19 @@ contains ! ===================================== Public Procedures =====
     if ( associated(obstructions) ) then
       if ( swLevel > -1 ) call Dump_Obstructions ( obstructions )
       if ( .not. ChunkDivideConfig%saveObstructions ) then
+        s = size(obstructions) * storage_size(obstructions) / 8
         deallocate ( obstructions, stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Deallocate//'obstructions' )
+        call test_deallocate ( status, moduleName, 'obstructions', s )
       end if
     end if
     if ( associated(ChunkDivideConfig%criticalSignals) ) then
       if ( swLevel > -1 ) &
         & call Dump_criticalSignals(ChunkDivideConfig%criticalSignals)
+      s = size(ChunkDivideConfig%criticalSignals) * &
+        & storage_size(ChunkDivideConfig%criticalSignals) / 8
       deallocate ( ChunkDivideConfig%criticalSignals, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate//'ChunkDivideConfig%criticalSignals' )
+      call test_deallocate ( status, moduleName, &
+        & 'ChunkDivideConfig%criticalSignals', s )
     end if
     ! Check that no 2 chunks share non-overlapped MAFs
     ! That mafrange(1) <= all_mafs <= mafrange(2)
@@ -409,6 +425,7 @@ contains ! ===================================== Public Procedures =====
     !------------------------------------------- ChunkDivide_Fixed -----
     subroutine ChunkDivide_Fixed ( chunks )
       ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
+      use Allocate_Deallocate, only: Test_Allocate
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
 
       ! Local variables
@@ -421,8 +438,8 @@ contains ! ===================================== Public Procedures =====
       ! Executable code
       swlevel = switchDetail(switches, 'chu' )
       allocate ( chunks(ChunkDivideConfig%noChunks), stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'chunks' )
+      call test_allocate ( status, moduleName, 'chunks', &
+        uBounds = ChunkDivideConfig%noChunks, elementSize = storage_size(chunks) / 8 )
 
       maxLength = nint ( ChunkDivideConfig%maxLength )
       lowerOverlap = nint ( ChunkDivideConfig%lowerOverlap )
@@ -443,6 +460,7 @@ contains ! ===================================== Public Procedures =====
     !---------------------------------------------- ChunkDivide_PE -----
     subroutine ChunkDivide_PE ( mafRange, filedatabase, chunks )
       ! type (ChunkDivideConfig_T), intent(in) :: CONFIG
+      use Allocate_Deallocate, only: Test_Allocate
       integer, dimension(2), intent(in) :: MAFRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
@@ -556,8 +574,8 @@ contains ! ===================================== Public Procedures =====
 
       ! Allocate the chunk
       allocate ( chunks(noChunks), stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'chunks (maxLength/MAFs)' )
+      call test_allocate ( status, ModuleName, 'chunks', uBounds = noChunks, &
+        & elementSize = storage_size(chunks) / 8 )
 
       ! Work out its position (in the file)
       chunks(1)%firstMAFIndex = homeMAF - maxLength/2 - 1
@@ -1257,26 +1275,28 @@ contains ! ===================================== Public Procedures =====
     ! ------------------------------------------ DeleteObstruction -----
     subroutine DeleteObstruction ( obstructions, index )
       ! Dummy arguments
+      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
       type (Obstruction_T), pointer, dimension(:) :: OBSTRUCTIONS
       integer, intent(in) :: INDEX
 
       ! Local variables
       type (Obstruction_T), pointer, dimension(:) :: TEMP
-      integer :: STATUS                   ! From allocate
+      integer :: S                   ! Size in bytes of object to deallocate
+      integer :: STATUS              ! From allocate
 
       ! Executable code
       swlevel = switchDetail(switches, 'chu' )
       allocate ( temp ( size(obstructions) - 1 ), stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'temp' )
+      call test_allocate ( status, ModuleName, 'temp', &
+        & uBounds = size(obstructions) - 1, elementSize = storage_size(temp) / 8 )
 
       if ( index > 1 ) temp(1:index-1) = obstructions(1:index-1)
       if ( index < size(obstructions) .and. size(obstructions) > 1 ) &
         & temp(index:) = obstructions(index+1:)
 
+      s = size(obstructions) * storage_size(obstructions) / 8
       deallocate ( obstructions, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate//'obstructions' )
+      call test_deallocate ( status, moduleName, 'obstructions', s )
 
       obstructions => temp
 
@@ -1932,6 +1952,7 @@ contains ! ===================================== Public Procedures =====
       ! This routine merges overlapping range obstructions and deletes
       ! wall obstructions inside ranges.  The job is made easier
       ! by sorting the obstructions into order
+      use Allocate_Deallocate, only: Test_Allocate
       type(Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
 
       ! Local variables
@@ -1945,8 +1966,8 @@ contains ! ===================================== Public Procedures =====
       ! If no obstructions make sure allocate to size zero, not just unassociated pointer
       if ( .not. associated(obstructions) ) then
         allocate ( obstructions(0), stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate//'obstructions(0)' )
+        call test_allocate ( status, ModuleName, 'obstructions', &
+          & uBounds = 0, elementSize = storage_size(obstructions) / 8 )
         return
       end if
 
@@ -2014,6 +2035,7 @@ contains ! ===================================== Public Procedures =====
     !----------------------------------------- ChunkDivide_Orbital -----
     subroutine ChunkDivide_Orbital ( mafRange, filedatabase, chunks )
       ! integer, dimension(2), intent(in) :: MAFRANGE
+      use Allocate_Deallocate, only: Test_Allocate
       type (MAFRange_T) :: MAFRange
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MLSChunk_T), dimension(:), pointer :: CHUNKS
@@ -2207,8 +2229,8 @@ contains ! ===================================== Public Procedures =====
 
         ! Allocate the chunks
         allocate ( chunks(noChunks), stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate//'chunks (maxLength/MAFs)' )
+        call test_allocate ( status, ModuleName, 'chunks', &
+          & uBounds = noChunks, elementSize = storage_size(chunks) / 8 )
 
         ! Work out their positions
         do chunk = 1, noChunks
@@ -2255,8 +2277,8 @@ contains ! ===================================== Public Procedures =====
 
         ! Allocate the chunks
         allocate ( chunks(noChunks), stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate//'chunks (maxLength/time/angle)' )
+        call test_allocate ( status, ModuleName, 'chunks', &
+          & uBounds = noChunks, elementSize = storage_size(chunks) / 8 )
 
         ! Work out their positions
         ! Boundaries are the angles/times at the end of the chunks
@@ -2472,27 +2494,29 @@ contains ! ===================================== Public Procedures =====
 
      ! ------------------------------------------------ DeleteChunk -----
      subroutine DeleteChunk ( chunks, index )
+       use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
        ! Dummy arguments
        type (MLSChunk_T), pointer, dimension(:) :: CHUNKS
        integer, intent(in) :: INDEX
 
        ! Local variables
        type (MLSChunk_T), pointer, dimension(:) :: TEMP
-       integer :: STATUS                   ! From allocate
+       integer :: S                ! Size in bytes of object to deallocate
+       integer :: STATUS           ! From allocate
 
        ! Executable code
        swlevel = switchDetail(switches, 'chu' )
        allocate ( temp ( size(chunks) - 1 ), stat=status )
-       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate//'temp' )
+       call test_allocate ( status, ModuleName, 'temp', &
+         & uBounds = size(chunks) - 1, elementSize = storage_size(temp) / 8 )
 
        if ( index > 1 ) temp(1:index-1) = chunks(1:index-1)
        if ( index < size(chunks) .and. size(chunks) > 1 ) &
           & temp(index:) = chunks(index+1:)
 
+       s = size(chunks) * storage_size(chunks) / 8
        deallocate ( chunks, stat=status )
-       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Deallocate//'chunks' )
+       call test_deallocate ( status, moduleName, 'chunks', s )
 
        chunks => temp
 
@@ -2500,6 +2524,8 @@ contains ! ===================================== Public Procedures =====
 
      !--------------------------------- Add obstruction to database -----
      subroutine AddObstructionToDatabase ( database, item )
+
+        use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
         ! Dummy arguments
         type (Obstruction_T), dimension(:), pointer :: DATABASE
@@ -2514,6 +2540,8 @@ contains ! ===================================== Public Procedures =====
 
     !--------------------------------------- Add chunk to database -----
     subroutine AddChunkToDatabase ( database, item )
+
+        use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
       ! Dummy arguments
       type (MLSChunk_T), dimension(:), pointer :: DATABASE
@@ -2586,6 +2614,10 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.115  2014/09/05 00:36:15  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Add some
+! tracing.
+!
 ! Revision 2.114  2014/08/07 22:47:12  vsnyder
 ! Delete local declaration of Obstructions from AddChunkToDatabase so that
 ! when it's nullified the one at module scope gets nullified.  It was
