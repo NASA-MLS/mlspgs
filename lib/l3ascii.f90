@@ -45,9 +45,9 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
 ! make_log_axis          Create log axis according to specified divisions
 ! L3ascii_get_multiplier How much was the mixing ratio multiplied by?
 
-  public::L3ascii_open, L3ascii_read_field, &
+  public :: L3ascii_open, L3ascii_read_field, &
     & L3ascii_interp_field, L3ascii_get_multiplier, Make_log_axis
-  !private::get_next_noncomment_line, 
+  !private :: get_next_noncomment_line, 
   private :: Make_linear_axis
   private :: Read_explicit_axis, Ilocate
   integer, private :: ERROR
@@ -68,11 +68,11 @@ contains
     use IO_Stuff, only: Get_Lun
     use Machine, only: IO_Error
     !--------- argument ----------!
-    character(len=*),intent(in)::filename
-    integer,intent(out)::unit
+    character(len=*),intent(in) :: filename
+    integer,intent(out) :: unit
     !-------locals------!
-    integer:: status
-    !character(len=LineLen)::headerline
+    integer :: status
+    !character(len=LineLen) :: headerline
     !----executables----!
     !----- Find first unattached unit -----!
     error = 0
@@ -95,7 +95,10 @@ contains
   end subroutine L3ascii_open
 
   subroutine L3ascii_read_field ( Unit, Field, End_of_file, ErrType )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use dates_module, only: ccsds2tai    ! Shoud use SDP Toolkit eventually. 
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
     ! ----Arguments ----!
     integer, intent(in) :: unit
     integer, intent(out), optional :: ErrType
@@ -107,17 +110,20 @@ contains
     character(len=LineLen) :: inline
     character(len=30) :: linetype, axistype, sdstring, edstring
     character(len=LineLen) :: filename
+    integer :: Me = -1             ! String index for trace
     character(len=80) :: unitstring
     real(kind=r8), pointer, dimension(:) :: tmpaxis
     real(kind=r8), pointer, dimension(:) :: dateStarts
     real(kind=r8), pointer, dimension(:) :: dateEnds
-    integer :: tmpaxis_len, idate, word_count
-    integer,parameter :: maxNoDates = 30
+    integer :: idate, s, status, tmpaxis_len, word_count
+    integer, parameter :: maxNoDates = 30
     real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
     logical :: noYearStart, noYearEnd
     ! real(rgr), parameter :: DefaultMissingValue = undefinedValue !-999.99
 
     !---- Executable statements ----! 
+    call trace_begin ( me, "L3ascii_read_field", &
+      & cond=toggle(gen) .and. levels(gen) > 6 )
 
     nullify ( tmpAxis, dateStarts, dateEnds )
     error = 0
@@ -137,7 +143,7 @@ contains
       call announce_error(0, &
         " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
         "is not connected to a file. Do call l3ascii_open(filename,unit) first")
-      return
+      go to 9
     end if
     inquire(unit=unit,name=filename) ! find the file name connected to this
     ! unit for use in error messages.
@@ -175,7 +181,9 @@ contains
     call allocate_test ( field%dateEnds, 1, 'field%dateEnds', moduleName )
     field%dateStarts(1)=30.0
     field%noDates=1
-    allocate ( field%field(1:1,1:1,1:1,1:1,1:1,1:1) )
+    allocate ( field%field(1:1,1:1,1:1,1:1,1:1,1:1), stat=status )
+    call test_allocate ( status, moduleName, "field%field", uBounds=1, &
+      & elementSize = storage_size(field%field) / 8 )
     field%dateStarts(1)=30.0
     field%noDates=1
     ! Dates are mandatory, so we don't have to give them a default value
@@ -191,14 +199,14 @@ contains
         & "in subroutine l3ascii_read_field, File "//trim(filename)// &
         &  "on unit"//trim(unitstring)//" contains no more Fields" )
       end_of_file=.true.
-      return
+      go to 9
     end if
 
     if ( end_of_file ) then
       call announce_error ( 0,&
         & "In subroutine l3ascii_read_field, End of File"//trim(filename)// &
         & " on unit"//trim(unitstring))
-      return
+      go to 9
     end if
 
     read ( unit=inline, fmt=* ) linetype, field%quantityName, &
@@ -233,7 +241,7 @@ contains
           " on unit"//trim(unitstring)//" contains coordinate"//&
           " of invalid type "//trim(axistype)//"for axis"//&
           trim(linetype))
-        return
+        go to 9
       end if
 
       ! I do not entirely grok what NJL intended verticalCoordinate to be.
@@ -285,7 +293,11 @@ contains
     ! right size 
     field%noDates=1
     allocate ( tmpfield(1:field%noHeights,1:field%noLats,1:field%noLons, &
-      1:field%noLsts,1:field%noSzas,1:maxNoDates) )
+      1:field%noLsts,1:field%noSzas,1:maxNoDates), stat=status )
+    call test_allocate ( status, moduleName, "tmpField", &
+      & uBounds = [ field%noHeights, field%noLats, field%noLons, &
+      &             field%noLsts, field%noSzas, maxNoDates ], &
+      & elementSize = storage_size(tmpfield) / 8 )
     call allocate_test ( dateStarts, maxNoDates, 'dateStarts', moduleName )
     call allocate_test ( dateEnds, maxNoDates, 'dateEnds', moduleName )
 
@@ -308,7 +320,7 @@ contains
           & "on unit"//trim(unitstring)//" contains a line beginning"//&
           & trim(linetype)//"Date with too few words " )
         end_of_file = .true.
-        return
+        go to 9
       end if
 
       ! Date strings can begin with - indicating the year is
@@ -364,16 +376,23 @@ contains
           & "on unit"//trim(unitstring)//" contains a line beginning"//&
           & trim(linetype)//"where I expected a line beginning Date " )
         end_of_file = .true.
-        return
+        go to 9
       end if
       field%noDates = field%noDates+1
 
     end do datesloop
 
-    deallocate ( field%field )
-!
-    allocate ( field%field(1:field%noHeights,1:field%noLats,&
-      & 1:field%noLons,1:field%noLsts,1:field%noSzas,1:field%noDates) )
+    s = size(field%field) * storage_size(field%field) / 8
+    deallocate ( field%field, stat=status )
+    call test_deallocate ( status, moduleName, "field%field", s )
+
+    allocate ( field%field(1:field%noHeights,1:field%noLats, &
+      & 1:field%noLons,1:field%noLsts,1:field%noSzas,1:field%noDates), &
+      & stat=status )
+    call test_allocate ( status, moduleName, "field%field", &
+        uBounds = [ field%noHeights,field%noLats,field%noLons,field%noLsts,&
+                  & field%noSzas,field%noDates ], &
+      & elementSize = storage_size(field%field) / 8 )
     call allocate_test ( field%dateStarts, field%noDates, 'field%dateStarts', &
       & moduleName )
     call allocate_test ( field%dateEnds, field%noDates, 'field%dateEnds', &
@@ -381,7 +400,9 @@ contains
     field%dateStarts = dateStarts(1:field%noDates)
     field%dateEnds = dateEnds(1:field%noDates)
     field%field = tmpfield(:,:,:,:,:,1:field%noDates)
-    deallocate ( tmpfield )
+    s = size(tmpField) * storage_size(tmpField) / 8
+    deallocate ( tmpfield, stat=status )
+    call test_deallocate ( status, moduleName, "TmpField", s )
     call deallocate_test ( dateStarts, 'tdateStarts', moduleName )
     call deallocate_test ( dateEnds, 'dateEnds', moduleName )
 
@@ -389,6 +410,9 @@ contains
     if ( present(ErrType) ) then
       ErrType = 0
     end if
+9   continue
+    call trace_end ( "L3ascii_read_field", &
+      & cond=toggle(gen) .and. levels(gen) > 6 )
   end subroutine L3ascii_read_field
 
   subroutine L3ascii_interp_field_r4 ( field, outval, pressure, lat, lon, lst, &
@@ -401,23 +425,23 @@ contains
     ! Midnite, 1 Jan 1993. 
     ! At the moment the height coord has to be pressure.
     !--------------Arguments------------!
-    type(GriddedData_T),intent(in)::field
-    real(kind=r4),intent(in),optional::pressure
-    real(kind=r4),intent(in),optional::lat
-    real(kind=r4),intent(in),optional::lon
-    real(kind=r4),intent(in),optional::lst
-    real(kind=r4),intent(in),optional::sza
-    real(kind=r8),intent(in),optional::date
-    logical, optional, intent(in)    :: debug
-    real(kind=r4),intent(out)::outval
+    type(GriddedData_T),intent(in) :: field
+    real(kind=r4),intent(in),optional :: pressure
+    real(kind=r4),intent(in),optional :: lat
+    real(kind=r4),intent(in),optional :: lon
+    real(kind=r4),intent(in),optional :: lst
+    real(kind=r4),intent(in),optional :: sza
+    real(kind=r8),intent(in),optional :: date
+    logical, optional, intent(in) :: debug
+    real(kind=r4),intent(out) :: outval
     !---- local vars: optional arg values ------!
-    real(kind=r8):: inlat,inlon,inlst,insza,indate,inpressure,inalt
+    real(kind=r8) :: inlat,inlon,inlst,insza,indate,inpressure,inalt
     !---- local vars: others--------!
-    integer:: ilat1,ilat2,ilon1,ilon2,isza1,isza2,ilst1,ilst2,idate1,idate2
-    integer:: ialt1,ialt2
-    integer,dimension(1:6)::hcshape 
-    real(kind=r8),pointer,dimension(:)::tmpalt,tmpdate
-    real(kind=r8),allocatable,dimension(:,:,:,:,:,:)::hcube
+    integer :: ilat1,ilat2,ilon1,ilon2,isza1,isza2,ilst1,ilst2,idate1,idate2
+    integer :: ialt1,ialt2
+    integer,dimension(1:6) :: hcshape 
+    real(kind=r8),pointer,dimension(:) :: tmpalt,tmpdate
+    real(kind=r8),allocatable,dimension(:,:,:,:,:,:) :: hcube
 
     !----Executable code ---- !
     include "l3ascii_interp_field.f9h" 
@@ -433,23 +457,23 @@ contains
     ! Midnite, 1 Jan 1993. 
     ! At the moment the height coord has to be pressure.
     !--------------Arguments------------!
-    type(GriddedData_T),intent(in)::field
-    real(kind=r8),intent(in),optional::pressure
-    real(kind=r8),intent(in),optional::lat
-    real(kind=r8),intent(in),optional::lon
-    real(kind=r8),intent(in),optional::lst
-    real(kind=r8),intent(in),optional::sza
-    real(kind=r8),intent(in),optional::date
-    logical, optional, intent(in)    :: debug
-    real(kind=r8),intent(out)::outval
+    type(GriddedData_T),intent(in) :: field
+    real(kind=r8),intent(in),optional :: pressure
+    real(kind=r8),intent(in),optional :: lat
+    real(kind=r8),intent(in),optional :: lon
+    real(kind=r8),intent(in),optional :: lst
+    real(kind=r8),intent(in),optional :: sza
+    real(kind=r8),intent(in),optional :: date
+    logical, optional, intent(in) :: debug
+    real(kind=r8),intent(out) :: outval
     !---- local vars: optional arg values ------!
-    real(kind=r8):: inlat,inlon,inlst,insza,indate,inpressure,inalt
+    real(kind=r8) :: inlat,inlon,inlst,insza,indate,inpressure,inalt
     !---- local vars: others--------!
-    integer:: ilat1,ilat2,ilon1,ilon2,isza1,isza2,ilst1,ilst2,idate1,idate2
-    integer:: ialt1,ialt2
-    integer,dimension(1:6)::hcshape 
-    real(kind=r8),pointer,dimension(:)::tmpalt,tmpdate
-    real(kind=r8),allocatable,dimension(:,:,:,:,:,:)::hcube
+    integer :: ilat1,ilat2,ilon1,ilon2,isza1,isza2,ilst1,ilst2,idate1,idate2
+    integer :: ialt1,ialt2
+    integer,dimension(1:6) :: hcshape 
+    real(kind=r8),pointer,dimension(:) :: tmpalt,tmpdate
+    real(kind=r8),allocatable,dimension(:,:,:,:,:,:) :: hcube
 
     !----Executable code ---- !
     include "l3ascii_interp_field.f9h" 
@@ -459,11 +483,11 @@ contains
     ! This finds which two elements of x lie on either side of xval
     ! x is assumed to be 1-based. 
     !     *** arguments *** 
-    real(kind=r8), dimension(:):: x
-    real(kind=r8),intent(in)::xval
-    integer, intent(out)::ix1,ix2
+    real(kind=r8), dimension(:) :: x
+    real(kind=r8),intent(in) :: xval
+    integer, intent(out) :: ix1,ix2
     !     *** other variables ***                                           
-    integer ::j,dj,n 
+    integer :: j,dj,n 
     !     *** executable statements ***                                     
     n=size(x)
     if ( n <= 1 ) then ! x has only one element: no interpolating to be done
@@ -503,10 +527,10 @@ binsearch: do
 
 !  subroutine get_next_noncomment_line(unit,line)
 !    !---Arguments----!
-!    integer,intent(in)::unit
-!    character(len=*),intent(out)::line
+!    integer,intent(in) :: unit
+!    character(len=*),intent(out) :: line
 !    !---------Local vars------!
-!    integer:: ioinfo
+!    integer :: ioinfo
 !    !---Executable bit -----!
 !    line(1:1)=" "
 !    ioinfo=0
@@ -531,15 +555,15 @@ binsearch: do
 
   subroutine make_log_axis ( inline, axis, axis_len )
     !--------args------------!
-    character(len=*),intent(in)::inline
-    real(kind=r8),pointer,dimension(:)::axis ! Warning: must be nullified or associated!
-    integer,intent(out)::axis_len
+    character(len=*),intent(in) :: inline
+    real(kind=r8),pointer,dimension(:) :: axis ! Warning: must be nullified or associated!
+    integer,intent(out) :: axis_len
     !-------locals--------------!
-    character(len=30)::linetype,axistype
-    real(kind=r8)::basepressure
-    integer,dimension(:),allocatable::n_levs_in_sec,n_levs_per_dec,axints
-    integer::nwords,j,nsections,stind,st,i
-    real(kind=r8)::gridstep
+    character(len=30) :: linetype,axistype
+    real(kind=r8) :: basepressure
+    integer,dimension(:),allocatable :: n_levs_in_sec, n_levs_per_dec, axints
+    integer :: i,j,nsections,nwords,st,stind
+    real(kind=r8) :: gridstep
 
     !-------Executable----------!
 
@@ -604,7 +628,6 @@ binsearch: do
 ! precision even though axis is double precision.
 
     axis = exp(-log(10.0_r8)*axis)
-!
 
     deallocate ( n_levs_in_sec, n_levs_per_dec, axints )
 
@@ -614,19 +637,19 @@ binsearch: do
 
   subroutine Make_linear_axis ( inline, axis, axis_len )
     !--------args------------!
-    character(len=*),intent(in)::inline
-    real(kind=r8),pointer,dimension(:)::axis ! Warning: must be nullified or associated!
-    integer,intent(out)::axis_len
+    character(len=*),intent(in) :: inline
+    real(kind=r8),pointer,dimension(:) :: axis ! Warning: must be nullified or associated!
+    integer,intent(out) :: axis_len
     !-------locals--------------!
-    character(len=30)::linetype,axistype
-    real(kind=r8)::baseval
-    integer,dimension(:),allocatable::n_levs_in_sec
-    real(kind=r8),dimension(:),allocatable::gridstep,axints
-    integer::nwords,j,nsections,stind,st,i
+    character(len=30) :: linetype,axistype
+    real(kind=r8) :: baseval
+    integer,dimension(:),allocatable :: n_levs_in_sec
+    real(kind=r8),dimension(:),allocatable :: gridstep, axints
+    integer :: nwords,j,nsections,stind,st,i
 
     !-------Executable----------!
 
-    !Count words in inline. 
+    ! Count words in inline. 
 
     nwords = 1
     do j = 2,len(inline)
@@ -665,16 +688,16 @@ binsearch: do
 
   subroutine Read_explicit_axis ( unit, axis, axis_len )
     !--------args------------!
-    integer,intent(in)::unit
-    real(kind=r8),pointer,dimension(:)::axis ! Warning: must be nullified or associated!
-    integer,intent(out)::axis_len
+    integer,intent(in) :: unit
+    real(kind=r8),pointer,dimension(:) :: axis ! Warning: must be nullified or associated!
+    integer,intent(out) :: axis_len
     !------- Local vars ---------!
-    integer,parameter::ri_len=30
-    character(len=ri_len)::readitem
-    character(len=1)::rdchar
-    real(kind=r8),dimension(1:200)::tmpaxis
-    integer::i,iotest
-    logical::foundcb
+    integer,parameter :: ri_len=30
+    character(len=ri_len) :: readitem
+    character(len=1) :: rdchar
+    real(kind=r8),dimension(1:200) :: tmpaxis
+    integer :: i,iotest
+    logical :: foundcb
 
     !Executables
    
@@ -794,10 +817,10 @@ itemsloop:do
    
    ! Arguments
 
-    integer, intent(in)    :: lcf_where
-    character(LEN=*), intent(in)    :: full_message
+    integer, intent(in) :: lcf_where
+    character(LEN=*), intent(in) :: full_message
     logical, intent(in), optional :: use_toolkit
-    integer, intent(in), optional    :: error_number
+    integer, intent(in), optional :: error_number
     ! Local
     logical :: just_print_it
     logical, parameter :: default_output_by_toolkit = .true.
@@ -866,6 +889,10 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.39  2014/09/05 00:25:14  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Add some tracing.
+!
 ! Revision 2.38  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
