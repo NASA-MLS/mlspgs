@@ -1268,8 +1268,12 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.97  2014/09/05 01:10:03  vsnyder
+! Get Error_Unit from intrinsic ISO_Fortran_Env module.  Delete PID stuff.
+! Add -E and --stdout error to send output to stderr.
+!
 ! Revision 2.96  2014/09/05 00:49:07  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.95  2014/09/02 18:03:12  pwagner
 ! Correctly distinguish --pid and --pidf (though former may disappear)
