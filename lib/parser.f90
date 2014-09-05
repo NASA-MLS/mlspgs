@@ -563,7 +563,7 @@ contains ! ====     Procedures     =====================================
         s = max(100,2*n)
         allocate ( tempStack(s), stat=stat )
         call test_allocate ( stat, moduleName, 'Stack', [1], [s], &
-                           & storage_size(stack) )
+                           & storage_size(stack) / 8 )
         if ( allocated(stack) ) tempStack(1:sp) = stack(1:sp)
         call move_alloc ( tempStack, stack )
       end if
@@ -618,6 +618,9 @@ contains ! ====     Procedures     =====================================
 end module PARSER
 
 ! $Log$
+! Revision 2.34  2014/09/05 00:28:52  vsnyder
+! Correct wrong units for allocation size tracking
+!
 ! Revision 2.33  2014/05/20 23:54:38  vsnyder
 ! New parser gets its tables from an argument instead of an include
 !
