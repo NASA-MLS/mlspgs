@@ -1026,8 +1026,12 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.49  2014/09/05 01:22:30  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Convert
+! some local pointer temps to allocatable.
+!
 ! Revision 2.48  2014/09/05 00:49:07  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.47  2014/04/10 00:43:58  pwagner
 ! Moved SNOOPINGACTIVE, SNOOPNAME to MLSL2Options
