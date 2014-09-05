@@ -25,7 +25,6 @@ module MLSCommon                ! Common definitions for the MLS software
 
 !     (data types and parameters)
 
-! processID     our own process id (used in discovering how much memory we use)
 ! i1, i2, i4    integer types
 ! r4, r8        floating point types
 ! ip, rp        integer, floating point types used in forward model
@@ -83,9 +82,6 @@ module MLSCommon                ! Common definitions for the MLS software
 
   public :: INRANGE
   public :: IS_WHAT_IEEE
-
-  ! Do we know our own process id?
-  character(len=32), public    :: processID                   = ' '
   
   ! User-defined datatypes
   public :: FILEIDS_T
@@ -486,6 +482,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.43  2014/09/05 00:00:27  vsnyder
+! Remove ProcessID
+!
 ! Revision 2.42  2014/08/05 00:17:07  pwagner
 ! Add --pId and --uId to set id_strings for slave task
 !
