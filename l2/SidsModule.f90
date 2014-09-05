@@ -41,7 +41,6 @@ contains
       & F_FWDMODELEXTRA, F_FWDMODELIN, F_FWDMODELOUT, &
       & F_HESSIAN, F_JACOBIAN, F_MIRRORHESSIAN, &
       & F_PERTURBATION, F_SINGLEMAF, F_SWITCHES, F_TSCAT
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSKINDS, only: R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
@@ -504,6 +503,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.73  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.72  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
 !
