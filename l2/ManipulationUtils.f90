@@ -1378,8 +1378,11 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.14  2014/09/05 01:11:15  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.13  2014/09/05 00:49:07  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.12  2014/07/18 23:17:32  pwagner
 ! Aimed for consistency in names passed to allocate_test
