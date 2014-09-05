@@ -19,8 +19,7 @@ module ManipulationUtils        ! operations to manipulate quantities
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use MLSKINDS, only: RV
   use MLSL2OPTIONS, only: MLSMESSAGE
-  use MLSMESSAGEMODULE, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING
   use MLSFINDS, only: FINDFIRST, FINDLAST, FINDNEXT
   use MLSSTATS1, only: MLSCOUNT, MLSMIN, MLSMAX, MLSMEAN, MLSMEDIAN, &
     & MLSRMS, MLSSTDDEV
@@ -583,6 +582,8 @@ contains ! =====     Public Procedures     =============================
     ! This function adds a primitive data type to a database of said types,
     ! creating a new database if it doesn't exist.  The result value is
     ! the size -- where it was put.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (arrayTemp_T), dimension(:), pointer :: DATABASE
@@ -1377,6 +1378,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.13  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.12  2014/07/18 23:17:32  pwagner
 ! Aimed for consistency in names passed to allocate_test
 !
