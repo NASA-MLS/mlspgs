@@ -14,8 +14,7 @@ module AntennaPatterns_m
   ! Read the antenna patterns file.
 
   use MLSKINDS, only: R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
   use MLSSIGNALS_M, only: MAXSIGLEN, SIGNALS, SIGNAL_T, DISPLAYSIGNALNAME
 
   implicit NONE
@@ -79,7 +78,8 @@ contains
 
   ! ------------------------------------  Read_Antenna_Patterns_File  -----
   subroutine Read_Antenna_Patterns_File ( Lun, Where )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & Test_Allocate
     use MACHINE, only: IO_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -170,13 +170,14 @@ outer1: do
 
     ! Now we know how big the database is, and each part of it.
     allocate ( antennaPatterns(dataBaseSize), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Allocate // "AntennaPatterns" )
+    call test_allocate ( status, moduleName, "AntennaPatterns", &
+      & uBounds = dataBaseSize, elementSize = storage_size(antennaPatterns) / 8 )
     rewind ( lun )
     do i = 1, dataBaseSize
       allocate  ( antennaPatterns(i)%signals(howManySignals(i)), stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Allocate // "antennaPatterns(?)%signals" )
+      call test_allocate ( status, moduleName, "AntennaPatterns%signals", &
+        & uBounds = howManySignals(i), &
+        & elementSize = storage_size(antennaPatterns(i)%signals) / 8 )
 
       log2 = log10( real(howManyPoints(i)) ) / log10(2.0)
       if ( log2 - nint(log2) /= 0.0 ) then
@@ -278,7 +279,7 @@ outer1: do
 
   ! ---------------------------------  Destroy_Ant_Patterns_Database  -----
   subroutine Destroy_Ant_Patterns_Database
-    use Allocate_Deallocate, only: Deallocate_Test
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
 
 !     interface
 !       subroutine RFFTW_f77_destroy_plan ( Plan )
@@ -287,7 +288,7 @@ outer1: do
 !       end subroutine RFFTW_f77_destroy_plan
 !     end interface
 
-    integer :: I, J, Status
+    integer :: I, J, S, Status
 
     if (.not. associated(AntennaPatterns) ) return
 
@@ -310,9 +311,10 @@ outer1: do
             & "AntennaPatterns(?)%signals(?)%channels", ModuleName )
         end if
       end do
+      s = size(AntennaPatterns(i)%signals) * &
+        & storage_size(AntennaPatterns(i)%signals) / 8
       deallocate ( AntennaPatterns(i)%signals, STAT=status )
-      if ( status /= 0 ) call MLSMessage( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate//'AntennaPatterns(?)%signals' )
+      call test_deallocate ( status, moduleName, 'AntennaPatterns(?)%signals', s )
       call deallocate_test ( AntennaPatterns(i)%aaap, &
         & "AntennaPatterns(?)%aaap", moduleName )
       call deallocate_test ( AntennaPatterns(i)%d1aap, &
@@ -320,9 +322,9 @@ outer1: do
       call deallocate_test ( AntennaPatterns(i)%d2aap, &
         & "AntennaPatterns(?)%D2aap", moduleName )
     end do ! i
+    s = size(AntennaPatterns) * storage_size(AntennaPatterns) / 8
     deallocate ( AntennaPatterns, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      MLSMSG_DeAllocate // "AntennaPatterns" )
+    call test_deallocate ( status, moduleName, 'AntennaPatterns', s )
 
   end subroutine Destroy_Ant_Patterns_Database
 
@@ -371,6 +373,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.16  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.15  2011/05/09 17:43:04  pwagner
 ! Converted to using switchDetail
 !
