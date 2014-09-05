@@ -53,7 +53,7 @@ contains ! ====     Public Procedures     ==============================
     use hessianmodule_1, only: destroyhessiandatabase, hessian_t
     use hgridsdatabase, only: hgrid_t
     use hgrid, only: computeallhgridoffsets
-    use highoutput, only: getstamp, outputnamedvalue, setstamp
+    use highoutput, only: getstamp, setstamp
     use init_tables_module, only: l_chisqchan, l_chisqmmaf, l_chisqmmif,  &
       & section_first, section_last, &
       & z_algebra, z_chunkdivide,  z_construct, z_fill, z_globalsettings, &
@@ -615,6 +615,7 @@ subtrees:   do
       call CloseParallel(numChunks, early)
       if ( parallel%slave .and. .not. slavesCleanUpSelves ) return
       if ( .not. (myEarly .or. skipRetrieval .or. checkPaths) ) then
+        call trace_begin ( 'Destroying databases', cond=toggle(gen) )
         if ( parallel%slave ) then
           call destroyChunkDatabase ( chunks )
           ! call destroy_Ant_Patterns_database
@@ -654,6 +655,7 @@ subtrees:   do
           call destroyVGridDatabase ( vGrids )
           call destroyFGridDatabase ( fGrids )
         end if
+        call trace_end ( 'Destroying databases', cond=toggle(gen) )
       end if
       error_flag = 0
       call trace_end ( 'WALK_TREE_TO_DO_MLS_L2', cond=toggle(gen) )
@@ -693,6 +695,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.194  2014/06/30 23:30:45  pwagner
+! Renamed global setting to slavesCleanUpSelves
+!
 ! Revision 2.193  2014/04/10 00:43:11  pwagner
 ! Moved currentChunkNumber, currentPhaseName from MLSL2Timings to MLSL2Options
 !
