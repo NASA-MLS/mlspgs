@@ -890,8 +890,11 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.64  2014/09/05 01:05:03  vsnyder
+! Add some tracing.  Move some USEs from module to procedure scope.
+!
 ! Revision 2.63  2014/09/05 00:49:06  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.62  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
