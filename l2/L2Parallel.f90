@@ -38,8 +38,7 @@ module L2Parallel
   use MACHINE, only: SHELL_COMMAND
   use MLSKINDS, only: R8
   use MLSL2Options, only: MLSMessage
-  use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_ALLOCATE, &
-    & MLSMSG_DEALLOCATE, MLSMSG_WARNING, PVMERRORMESSAGE
+  use MLSMessageModule, only: MLSMSG_ERROR, MLSMSG_WARNING, PVMERRORMESSAGE
   use MLSFINDS, only: FINDALL, FINDFIRST
   use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, REMOVENUMFROMLIST, &
     & REPLACESUBSTRING, SWITCHDETAIL
@@ -92,6 +91,7 @@ contains
 ! ================================ Public Procedures ======================
   ! ----------------------------------------------- GetChunkInfoFromMaster ------
   subroutine GetChunkInfoFromMaster ( chunks, chunkNo )
+    use Allocate_Deallocate, only: Test_Allocate
     ! This function gets a chunk sent by SendChunkToSlave
 
     ! Dummy arguments and result
@@ -129,9 +129,8 @@ contains
     chunkNo = header(2)
     
     allocate ( chunks ( noChunks ), STAT=status)
-    if ( status /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Failed to allocate chunks' )
+    call test_allocate ( status, moduleName, 'chunks', uBounds = noChunks, &
+      & elementSize = storage_size(chunks) / 8 )
 
     do chunk = 1, noChunks
       call PVMF90Unpack ( values, info )
@@ -1316,6 +1315,8 @@ contains
     ! Add a storedQuantity to a database, or create the database if it
     ! doesn't yet exist
 
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (StoredResult_T), dimension(:), pointer :: database
     type (StoredResult_T), intent(in) :: item
@@ -1360,10 +1361,13 @@ contains
   
   ! ----------------------------------------- DestroyStoredResultsDatabase ---
   subroutine DestroyStoredResultsDatabase ( database )
+
+    use Allocate_Deallocate, only: Test_Deallocate
+
     type (StoredResult_T), dimension(:), pointer :: database
 
     ! Local variabels
-    integer :: i, status
+    integer :: i, s, status
 
     ! Executable code
     if ( .not. associated ( database ) ) return
@@ -1373,9 +1377,10 @@ contains
         & call deallocate_test ( database(i)%precInds,&
         & 'database(?)%precInds', ModuleName)
     end do
+    s = size(database) * storage_size(database) / 8
     deallocate ( database, STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//'stored quantities database' )
+    call test_deallocate ( status, ModuleName, 'stored quantities database', s )
+
   end subroutine DestroyStoredResultsDatabase
 
   ! ----------------------------------------- DumpMastersStatus ---
@@ -1785,6 +1790,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.110  2014/09/05 00:49:06  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.109  2014/04/22 18:17:22  pwagner
 ! Uses MLSMessage from MLSL2Options module
 !
