@@ -476,8 +476,10 @@ tolerance
 toleranceA Atolerance
 toleranceF Ftolerance
 toleranceR Rtolerance
+totalMatrixSizes
 totalPowerVector
 totalPowerQuantity
+totalVectorSizes
 transformMIFextinction
 transformMIFRHI
 truthExtra
@@ -522,6 +524,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.249  2014/09/05 01:25:26  vsnyder
+# Add TotalMatrixSizes, TotalVectorSizes
+#
 # Revision 2.248  2014/08/26 23:23:09  pwagner
 # We may Dump memory, time; the /reset option may Dump changes in their use
 #
