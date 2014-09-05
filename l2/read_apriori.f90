@@ -199,7 +199,7 @@ contains ! =====     Public Procedures     =============================
       lastNCEPPCF = mlspcf_l2ncep_start - 1
       lastGEOS5PCF = mlspcf_l2geos5_start - 1
       LastHeightPCF = mlspcf_surfaceHeight_start - 1
-    endif
+    end if
     call outputNamedValue ( 'mlspcf_l2geos5_start', mlspcf_l2geos5_start )
     call outputNamedValue ( 'lastGEOS5PCF', lastGEOS5PCF )
 
@@ -249,7 +249,7 @@ contains ! =====     Public Procedures     =============================
       call dump( trim(APrioriFiles%dao), 'dao files' )
       call output ( 'geos5', advance='yes' )
       call dump( trim(APrioriFiles%geos5), 'geos5 files' )
-    endif
+    end if
     if ( ERROR/=0 ) then
       call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with read_apriori section')
@@ -282,6 +282,8 @@ contains ! =====     Public Procedures     =============================
     use NCEP_DAO, only: READ_CLIMATOLOGY, READGRIDDEDDATA, READGLORIAFILE
     use SURFACEHEIGHT_M, only: OPEN_SURFACE_HEIGHT_FILE, &
       & READ_SURFACE_HEIGHT_FILE, CLOSE_SURFACE_HEIGHT_FILE
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_m, only: TRACE_BEGIN, TRACE_END
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
@@ -312,7 +314,7 @@ contains ! =====     Public Procedures     =============================
     double precision :: EXPR_VALUE(2)   ! Output from Expr subroutine
     integer :: FIELD               ! Son of KEY, must be n_assign
     integer :: FIELDINDEX          ! Literal
-    integer :: FieldName        ! sub-rosa index of name in field='name'
+    integer :: FieldName           ! sub-rosa index of name in field='name'
     character(len=FileNameLen) :: FIELDNAMESTRING ! actual literal clim. field
     integer :: FileIndex
     integer :: FileName            ! Sub-rosa index of name in file='name'
@@ -328,7 +330,7 @@ contains ! =====     Public Procedures     =============================
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     character :: HMOT              ! 'H', 'M', 'O', or 'T'
     integer :: L2apriori_version
-    integer :: J                ! Loop indices for section, spec
+    integer :: J                   ! Loop indices for section, spec
     integer :: KEY                 ! Index of n_spec_args in the AST
     type (L2AUXData_T) :: L2AUX
     type (MLSFile_T) :: L2AUXFile
@@ -338,6 +340,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
     integer :: LISTSIZE                 ! Size of string from SWInqSwath
     character(len=16) :: litDescription
+    integer :: Me = -1             ! String index for trace
     real(rgr) ::    missingValue = 0.
     integer :: NOSWATHS                 ! In an input file
     character(len=FileNameLen) :: path   ! path of actual literal file name
@@ -359,6 +362,9 @@ contains ! =====     Public Procedures     =============================
     integer :: v_type                   ! E.g., v_is_eta
 
     ! Executable
+    call trace_begin ( me, "processOneAprioriFile", root, &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
+
     nullify(grid)
     allswathnames = ' '
     hdfVersion = DEFAULT_HDFVERSION_READ
@@ -375,7 +381,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( any( fileType == (/s_diff, s_dump/) ) ) then
       if ( .not. CHECKPATHS ) call dumpCommand ( key, griddedDataBase=griddedDataBase )
-      return
+      go to 9
     end if
 
     ! Now parse file and field names
@@ -446,7 +452,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( got(f_AuraInstrument) ) then
       call get_string ( AuraInst, HMOT, strip=.true. )
-    endif
+    end if
 
     if ( got(f_file) ) then
       call get_string ( FileName, fileNameString, strip=.true. )
@@ -466,8 +472,8 @@ contains ! =====     Public Procedures     =============================
         FileType = grid%fileType
       else
         FileType = s_gridded
-      endif
-    endif
+      end if
+    end if
 
     select case ( FileType )
     case ( s_l2gp )
@@ -485,7 +491,7 @@ contains ! =====     Public Procedures     =============================
         & mlspcf_l2apriori_end, &                                     
         & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
         & exactName=FileNameString)                             
-      endif
+      end if
       hdfVersion = mls_hdf_version(FilenameString)
 
       FileIndex = InitializeMLSFile(L2GPFile, content = 'l2gp', &
@@ -503,40 +509,40 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'File not found; make sure the name and path are correct' &
             & // trim(fileNameString), MLSFile=L2GPFile )
-        elseif ( listSize < 1 ) then
+        else if ( listSize < 1 ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Failed to determine swath names, perhaps none in file ' &
             & // trim(fileNameString), MLSFile=L2GPFile )
-        elseif ( listSize < len(allSwathNames) ) then
+        else if ( listSize < len(allSwathNames) ) then
           commaPos = index ( allSwathNames, ',' )
           if ( commaPos == 0 ) then
             commaPos = len_trim(allSwathNames)
-          elseif ( commaPos == 1 ) then
+          else if ( commaPos == 1 ) then
             call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Failed to determine swath name, allswathnames begin with , ' &
             & // trim(fileNameString), MLSFile=L2GPFile )
           else
             commaPos = commaPos - 1
-          endif
+          end if
           swathNameString = allSwathNames ( 1:commaPos )
         else
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Failed to determine swath names, string too long.' &
             & // trim(fileNameString), MLSFile=L2GPFile )
         end if
-      endif
+      end if
       if ( swathNameString == ' ' ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Failed to determine swath name, obscure error on ' &
           & // trim(fileNameString), MLSFile=L2GPFile )
-      endif
+      end if
 
       ! Read the swath
       if ( HMOT /= ' ' ) then
         call ReadL2GPData ( L2GPFile, swathNameString, l2gp, HMOT=HMOT )
       else
         call ReadL2GPData ( L2GPFile, swathNameString, l2gp )
-      endif
+      end if
 
       if( Details > -3 ) then
         if ( specialDumpFile /= ' ' ) &
@@ -544,7 +550,7 @@ contains ! =====     Public Procedures     =============================
         call dump( l2gp, details=details )
         if ( specialDumpFile /= ' ' ) &
           & call revertOutput
-      endif
+      end if
 
       if( switchDetail(switches, 'pro') > -1 ) then                            
          call announce_success(FilenameString, 'l2gp', &                    
@@ -572,7 +578,7 @@ contains ! =====     Public Procedures     =============================
         & mlspcf_l2apriori_end, &                                     
         & TOOLKIT, returnStatus, l2apriori_Version, DEBUG, &  
         & exactName=FileNameString)                             
-      endif
+      end if
       if ( .not. all(got((/f_sdName, f_file, f_quantityType /)))) &
         & call announce_error ( son, &
           & 'file/sd name must both be specified in read a priori' )
@@ -605,7 +611,7 @@ contains ! =====     Public Procedures     =============================
         call dump( L2AUXDatabase(l2Index), details )
         if ( specialDumpFile /= ' ' ) &
           & call revertOutput
-      endif
+      end if
 
       if( switchDetail(switches, 'pro') > -1 ) then                            
          call announce_success(FilenameString, 'l2aux', &                    
@@ -618,11 +624,11 @@ contains ! =====     Public Procedures     =============================
       ! So we can declare a gridded data name to be used later
       if ( griddedOrigin == l_none ) then
         fieldNameString = 'none'
-      elseif ( .not. all(got((/f_origin, f_field/))) ) then
+      else if ( .not. all(got((/f_origin, f_field/))) ) then
         call announce_error ( son, 'Incomplete gridded data information' )
       else
         call get_string ( fieldName, fieldNameString, strip=.true. )
-      endif
+      end if
 
       select case ( griddedOrigin )
       case ( l_none ) ! ----------- Just a declaration to use later
@@ -665,9 +671,9 @@ contains ! =====     Public Procedures     =============================
               & verbose=( Details > -3 ), deferReading=deferReading )
           else
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
-          endif
+          end if
           GriddedDatabase(gridIndex)%fileType = s_gridded
-        elseif ( returnStatus == PGS_S_SUCCESS) then
+        else if ( returnStatus == PGS_S_SUCCESS) then
           call readGriddedData ( GriddedFile, son, description, &
             & v_is_pressure, tempGrid, returnStatus, &
             & dimListString, TRIM(fieldNameString), missingValue, &
@@ -677,8 +683,8 @@ contains ! =====     Public Procedures     =============================
           if ( .not. tempGrid%empty .or. deferReading ) then
             call DestroyGriddedData( grid )
             call copyGrid( grid, tempGrid )
-          endif
-        endif
+          end if
+        end if
         if ( returnStatus == 0 ) then
           if( switchDetail(switches, 'pro') > -1 ) &                            
             & call announce_success(FilenameString, 'ncep', &                    
@@ -687,7 +693,7 @@ contains ! =====     Public Procedures     =============================
         else
           call announce_success(FilenameString, 'ncep not found--carry on', &                    
              & fieldNameString, MLSFile=GriddedFile)
-        endif
+        end if
       case ( l_dao ) ! ---------------------------- GMAO Data (GEOS4)
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2dao_start, mlspcf_l2dao_end, 'dao', got(f_file), &
@@ -727,9 +733,9 @@ contains ! =====     Public Procedures     =============================
               & verbose=( Details > -3 ), deferReading=deferReading )
           else
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
-          endif
+          end if
           GriddedDatabase(gridIndex)%fileType = s_gridded
-        elseif ( returnStatus == PGS_S_SUCCESS) then
+        else if ( returnStatus == PGS_S_SUCCESS) then
           call ReadGriddedData ( GriddedFile, son, description, v_type, &
             & tempGrid, returnStatus, &
             & dimListString, TRIM(fieldNameString), &
@@ -741,19 +747,19 @@ contains ! =====     Public Procedures     =============================
             tempGrid%description = litDescription
             call DestroyGriddedData( grid )
             call copyGrid( grid, tempGrid )
-          endif
-        endif
+          end if
+        end if
         if ( Griddeddatabase(gridIndex)%empty ) then
           call output( 'File was probably not ' // &
             & trim(litDescription), advance='yes' )
-        elseif ( description == 'dao' ) then
+        else if ( description == 'dao' ) then
           apriorifiles%dao = catlists(apriorifiles%dao, trim(FilenameString))
         else
           apriorifiles%geos5 = &
             & catlists(apriorifiles%geos5, trim(FilenameString))
           apriorifiles%geos5Description = &
             & catlists(apriorifiles%geos5Description, trim(litDescription))
-        endif
+        end if
         if ( returnStatus == 0 ) then
           if( switchDetail(switches, 'pro') > -1 ) &                            
             & call announce_success(FilenameString, 'dao', & 
@@ -761,7 +767,7 @@ contains ! =====     Public Procedures     =============================
         else
           call announce_success(FilenameString, 'dao not found--carry on', &
              & fieldNameString, MLSFile=GriddedFile)
-        endif
+        end if
       case ( l_geos5, l_geos5_7, l_merra ) ! ------------ GMAO Data (GEOS5*)
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2geos5_start, mlspcf_l2geos5_end, 'geos5', got(f_file), &
@@ -776,7 +782,7 @@ contains ! =====     Public Procedures     =============================
               & name=FilenameString, shortName=shortFileName, &
               & type=l_hdfeos, access=DFACC_RDONLY, hdfVersion=HDFVERSION_4, &
               & PCBottom=mlspcf_l2geos5_start, PCTop=mlspcf_l2geos5_end)
-        endif
+        end if
         GriddedFile%PCFId = LastGEOS5PCF
         FileIndex = AddFileToDataBase(filedatabase, GriddedFile)
 
@@ -806,7 +812,7 @@ contains ! =====     Public Procedures     =============================
           call outputNamedValue( 'fieldName', fieldNameString )
           call outputNamedValue( 'description', description )
           call outputNamedValue( 'associated(grid)', associated(grid) )
-        endif
+        end if
 
         if ( .not. associated(grid) ) then
           ! The gridded data needs to part of the database, even if the file
@@ -823,9 +829,9 @@ contains ! =====     Public Procedures     =============================
               & verbose=( Details > -3 ), deferReading=deferReading )
           else
             call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
-          endif
+          end if
           GriddedDatabase(gridIndex)%fileType = s_gridded
-        elseif ( returnStatus == PGS_S_SUCCESS) then
+        else if ( returnStatus == PGS_S_SUCCESS) then
           call ReadGriddedData ( GriddedFile, son, description, v_type, &
             & tempGrid, returnStatus, &
             & dimListString, TRIM(fieldNameString), &
@@ -837,8 +843,8 @@ contains ! =====     Public Procedures     =============================
             tempGrid%description = litDescription
             call DestroyGriddedData( grid )
             call copyGrid( grid, tempGrid )
-          endif
-        endif
+          end if
+        end if
         if ( Griddeddatabase(gridIndex)%empty ) then
           call output( 'File was probably not ' // &
             & trim(litDescription), advance='yes' )
@@ -847,7 +853,7 @@ contains ! =====     Public Procedures     =============================
             & catlists(apriorifiles%geos5, trim(FilenameString))
           apriorifiles%geos5Description = &
             & catlists(apriorifiles%geos5Description, trim(litDescription))
-        endif
+        end if
         if ( returnStatus == 0 ) then
           if( switchDetail(switches, 'pro') > -1 ) &                            
             & call announce_success(FilenameString, 'geos5', &                    
@@ -855,7 +861,7 @@ contains ! =====     Public Procedures     =============================
         else
           call announce_success(FilenameString, 'geos5 not found--carry on', &                    
              & fieldNameString, MLSFile=GriddedFile)
-        endif
+        end if
         ! If we were asked to downsample gridded data to a coarser mesh, do so
         if ( downsample .and. .not. Griddeddatabase(gridIndex)%empty ) then
           call output( 'Downsampling Gridded data', advance='yes' )
@@ -871,10 +877,10 @@ contains ! =====     Public Procedures     =============================
             call dump( grid, details )
             call output( 'Downsampled Gridded data', advance='yes' )
             call dump( tempgrid, details )
-          endif
+          end if
           call DestroyGriddedData( grid )
           call copyGrid( grid, tempGrid )
-        endif
+        end if
       case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
           & mlspcf_l2clim_start, mlspcf_l2clim_end, 'gloria', got(f_file), &
@@ -896,7 +902,7 @@ contains ! =====     Public Procedures     =============================
         if( switchDetail(switches, 'pro') > -1 ) then                            
           call announce_success(FilenameString, 'Gloria', &                    
            & '', MLSFile=GriddedFile)    
-        endif
+        end if
       case ( l_climatology ) ! -------------------- Climatology data
         ! Identify file (maybe from PCF if no name given)
         call get_pcf_id ( fileNameString, path, subString, l2apriori_version, &
@@ -929,7 +935,7 @@ contains ! =====     Public Procedures     =============================
             & call Announce_error ( field, &                               
             & 'read_climatology unsuccessful--check file name and path')  
         end if
-        if ( .not. associated(GriddedDatabase) ) return  ! Last chance
+        if ( .not. associated(GriddedDatabase) ) go to 9  ! Last chance
 
         ! Locate requested grid by name, store index in gridIndex
         ! Check that field name is among those added by the source field
@@ -988,10 +994,15 @@ contains ! =====     Public Procedures     =============================
           & call dump( GriddedDatabase(gridIndex), details )
         if ( specialDumpFile /= ' ' ) &
           & call revertOutput
-      endif
+      end if
 
     case default
     end select     ! types of apriori data
+
+9   continue
+    call trace_end ( "processOneAprioriFile", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
+
   contains
     subroutine Get_PCF_Id ( FileNameString, Path, SubString, L2Apriori_Version, &
       & FirstPCF, LastPCF, Description, GotFile, PCF_Id, ReturnStatus )
@@ -1009,13 +1020,16 @@ contains ! =====     Public Procedures     =============================
       integer, intent(inout) :: PCF_Id
       integer, intent(out) :: ReturnStatus
       ! Local variables
+      integer :: Me = -1       ! String index for trace
       integer :: PCFBottom
       ! Executable
+      call trace_begin ( me, "Get_PCF_Id", &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( gotFile ) then
         PCFBottom = FirstPCF
       else
         PCFBottom = PCF_Id + 1 ! This must be the last PCF id we found
-      endif
+      end if
 
       ! call outputNamedValue ( 'fileNameString', trim(fileNameString) )
       ! call outputNamedValue ( 'got file?', gotFile )
@@ -1038,6 +1052,8 @@ contains ! =====     Public Procedures     =============================
         returnStatus = 0
         PCF_Id = 0
       end if
+      call trace_end ( "Get_PCF_Id", &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine Get_PCF_Id
 
   end subroutine processOneAprioriFile
@@ -1056,7 +1072,7 @@ contains ! =====     Public Procedures     =============================
         & 'Wrong hdfVersion--can read apriori attributes for hdf5 only', &
         & MLSFile=MLSFile )
       return ! Can only do this for hdf5 files
-    elseif ( MLSFile%StillOpen ) then
+    else if ( MLSFile%StillOpen ) then
       if ( verbose ) call output( 'About to read file attributes for a priori', advance='yes' )
       call readAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
     else
@@ -1064,10 +1080,10 @@ contains ! =====     Public Procedures     =============================
       if ( verbose ) then
         call dump( MLSFile )
         call output( 'About to read file attributes for a priori', advance='yes' )
-      endif
+      end if
       call readAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
       call MLS_CloseFile( MLSFile )
-    endif
+    end if
   end subroutine readAPrioriAttributes_MF
 
   ! ------------------------------------------  readAPrioriAttributes_ID  -----
@@ -1089,12 +1105,12 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Warning, whereami, &
         & 'Wrong hdfVersion--can read apriori attributes for hdf5 only' )
       return ! Can only do this for hdf5 files
-    endif
+    end if
     if ( verbose ) then
       call outputNamedValue( 'FileID', FileID )
       call outputNamedValue( 'l2gp there?', mls_isglatt ( fileID, 'A Priori l2gp' ) )
       call outputNamedValue( 'geos5desc there?', mls_isglatt ( fileID, 'geos5 type' ) )
-    endif
+    end if
     status = HE5_EHRDGLATT(fileID, &
      & 'A Priori l2gp', APrioriFiles%l2gp)
     if ( status /= 0 ) &
@@ -1138,14 +1154,14 @@ contains ! =====     Public Procedures     =============================
         & 'Wrong hdfVersion--can write apriori attributes for hdf5 only', &
         & MLSFile=MLSFile )
       return ! Can only do this for hdf5 files
-    elseif ( MLSFile%StillOpen ) then
+    else if ( MLSFile%StillOpen ) then
       call writeAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
     else
       call MLS_OpenFile( MLSFile )
       ! call writeAPrioriAttributes_name(MLSFile%name, HDFVERSION_5)
       call writeAPrioriAttributes_ID(MLSFile%fileID%f_id, HDFVERSION_5)
       call MLS_CloseFile( MLSFile )
-    endif
+    end if
   end subroutine writeAPrioriAttributes_MF
 
   ! ------------------------------------------  writeAPrioriAttributes_ID  -----
@@ -1169,7 +1185,7 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Warning, whereami, &
         & 'Wrong hdfVersion--can write apriori attributes for hdf5 only' )
       return ! Can only do this for hdf5 files
-    endif
+    end if
     if ( verbose ) call outputNamedValue( 'attributes already written', &
       & mls_isglatt ( fileID, 'A Priori l2gp' ) )
     ! Have the attributes been written before? Must we avoid replacing them?
@@ -1177,8 +1193,8 @@ contains ! =====     Public Procedures     =============================
       if ( verbose ) call outputNamedValue( 'dontReplace?', dontReplace )
       if ( dontReplace ) then
         if ( mls_isglatt ( fileID, 'A Priori l2gp' ) ) return
-      endif
-    endif
+      end if
+    end if
     status = mls_EHwrglatt(fileID, &
      & 'A Priori l2gp', MLS_CHARTYPE, 1, &
      &  trim(APrioriFiles%l2gp))
@@ -1240,7 +1256,7 @@ contains ! =====     Public Procedures     =============================
         myhdfVersion = mls_hdf_version(trim(Name))
       else
         myhdfVersion = hdfVersion
-      endif
+      end if
       call output ( myhdfVersion, advance='no' )
     end if
     call output ( '', advance='yes' )
@@ -1333,6 +1349,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.107  2014/09/05 01:27:33  vsnyder
+! Add some tracing
+!
 ! Revision 2.106  2014/06/04 18:34:37  pwagner
 ! runtime carryover flag starts PCFids at value from last readApriori section; may deferReading
 !
