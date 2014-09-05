@@ -16,11 +16,10 @@ module MergeGridsModule
   ! Secondary operations may be performed directly on the gridded data--
   ! e.g., calculating wmo tropopause pressures from eta-level temperatures
   use allocate_deallocate, only: allocate_test, byte_size, bytes, &
-    & deallocate_test, memory_units, NoBytesAllocated, &
-    & test_allocate, test_deallocate
+    & deallocate_test, test_allocate, test_deallocate
   use highOutput, only: outputNamedValue
   use MLSL2Options, only: MLSMessage, l2cfNode
-  use MLSMessagemodule, only: MLSMsg_Allocate, MLSMsg_Error, MLSMsg_Warning
+  use MLSMessagemodule, only: MLSMsg_Error, MLSMsg_Warning
   use ncep_dao, only: readGriddedData
   use output_m, only: blanks, output
   implicit none
@@ -543,7 +542,7 @@ contains ! ===================================  Public procedures  =====
     integer :: LON                      ! Loop counter
     integer :: LST                      ! Loop counter
     integer :: Me = -1                  ! String index for trace
-    real    :: S                        ! Size in bytes of a deallocated field
+    integer :: S                        ! Size in bytes of a deallocated field
     integer :: SON                      ! Tree node
     integer :: STATUS                   ! Flag from allocate
     integer :: SURF                     ! Loop counter
@@ -784,10 +783,10 @@ contains ! ===================================  Public procedures  =====
     ! Oh, sure, you're careful to account for the memory eaten up by meanDates,
     ! but what about the two biggies???
     call Deallocate_test ( meanDates, 'meanDates', ModuleName )
-    s = byte_size(cliMapped) / MEMORY_UNITS
+    s = byte_size(cliMapped)
     deallocate ( cliMapped, stat=status )
     call test_deallocate ( status, moduleName, 'climapped', s )
-    s = byte_size(operMapped) / MEMORY_UNITS
+    s = byte_size(operMapped)
     deallocate ( operMapped, stat=status )
     call test_deallocate ( status, moduleName, 'opermapped', s )
     call finishUp ( done = .true. )
@@ -1174,6 +1173,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.58  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.57  2014/06/20 20:30:24  pwagner
 ! Less bebug-type printing
 !
