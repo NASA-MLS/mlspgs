@@ -1173,8 +1173,12 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.59  2014/09/05 01:15:02  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Track
+! allocate/deallocate size in bytes instead of Memory_Units.
+!
 ! Revision 2.58  2014/09/05 00:49:07  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.57  2014/06/20 20:30:24  pwagner
 ! Less bebug-type printing
