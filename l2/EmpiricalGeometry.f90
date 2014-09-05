@@ -18,6 +18,7 @@ module EmpiricalGeometry                ! For empirically obtaining orbit inform
   private
 
   public :: EmpiricalLongitude, InitEmpiricalGeometry, &
+            DestroyEmpiricalGeometry, &
             ForgetOptimumLon0, CFM_InitEmpiricalGeometry, &
             ChooseOptimumLon0, CFM_ResetEmpiricalGeometry
 
@@ -36,13 +37,13 @@ module EmpiricalGeometry                ! For empirically obtaining orbit inform
   
 contains ! ========================= Public Procedures ====================
 
-  ! ------------------------------------------------ EmpiricalLongitude ---
+  ! -----------------------------------------  EmpiricalLongitude  -----
   subroutine EmpiricalLongitude ( geodAngle, lon, tryLon0  ) 
     ! This function returns an empirical longitude for a given
     ! geodetic angle.
-    ! Argument
-
     use Constants, only: Deg2Rad
+
+    ! Arguments
     real(r8), dimension(:), intent(in) :: GEODANGLE
     real(r8), dimension(size(geodAngle)), intent(out) :: LON
     real(r8), optional, intent(in) :: TRYLON0
@@ -73,7 +74,7 @@ contains ! ========================= Public Procedures ====================
     lon = NormalizeLongitude ( lon )
   end subroutine EmpiricalLongitude
 
-  ! ----------------------------------------------- InitEmpiricalGeomtry --
+  ! ---------------------------------------  InitEmpiricalGeomtry  -----
   subroutine InitEmpiricalGeometry ( root )
     ! This subroutine sets up the empirical geometry from l2cf information
 
@@ -81,6 +82,8 @@ contains ! ========================= Public Procedures ====================
     use Expr_M, only: EXPR
     use Init_Tables_Module, only: F_ITERATIONS, F_TERMS
     use MoreTree, only: Get_Field_ID
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use Tree, only: NSONS, SUBTREE
 
     integer, intent(in) :: ROOT         ! Root of tree
@@ -89,11 +92,14 @@ contains ! ========================= Public Procedures ====================
     real(r8), dimension(2) :: VALUE     ! From EXPR
     integer, dimension(2) :: TheUnits   ! From EXPR
     integer :: I,J                      ! Loop inductors
+    integer :: Me = -1                  ! String index for trace
     integer :: SON                      ! Son of root
     integer :: NOTERMS                  ! Number of terms
     integer :: FIELDINDEX               ! From parser
 
     ! Executable code
+    call trace_begin ( me, "InitEmpiricalGeometry", root, &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
 
     ! First get the information from the l2cf
     do i = 2, nsons(root)
@@ -113,10 +119,22 @@ contains ! ========================= Public Procedures ====================
           & "The Iterations field no longer does anything" )
       end select
     end do
+    call trace_end ( "InitEmpiricalGeometry", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
 
   end subroutine InitEmpiricalGeometry
 
-  ! --------------------------- CFM_InitEmpiricalGeomtry ---------------------
+  ! -----------------------------------  DestroyEmpiricalGeometry  -----
+
+  subroutine DestroyEmpiricalGeometry
+
+    use Allocate_Deallocate, only: Deallocate_test
+
+    call deallocate_test ( empiricalTerms, 'empiricalTerms', ModuleName )
+
+  end subroutine DestroyEmpiricalGeometry
+
+  ! -----------------------------------  CFM_InitEmpiricalGeomtry  -----
   ! This module is for the callable forward model (CFM), in which no tree
   ! is available, to set up EmpiricalGeometry
   subroutine CFM_InitEmpiricalGeometry (numberIterations, terms)
@@ -132,19 +150,18 @@ contains ! ========================= Public Procedures ====================
 
   end subroutine
 
-  ! --------------------------- CFM_ResetEmpiricalGeomtry ---------------------
-  ! This module is for the callable forward model (CFM), in which EmpiricalGeometry
-  ! is expected to call multiple times.
+  ! ----------------------------------  CFM_ResetEmpiricalGeomtry  -----
+  ! This module is for the callable forward model (CFM), in which
+  ! EmpiricalGeometry is expected to be called multiple times.
   subroutine CFM_ResetEmpiricalGeometry
-     use Allocate_Deallocate, only: Deallocate_test
 
      ! Excutables
-     call Deallocate_test (empiricalTerms, 'empiricalTerms', ModuleName)
-     empiricalTerms => NULL()
+     call DestroyEmpiricalGeometry
      call ForgetOptimumLon0
+
   end subroutine
 
-  ! -------------------------------------------------- ChooseOptimumLon0 -----
+  ! ------------------------------------------  ChooseOptimumLon0  -----
   ! subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
   subroutine ChooseOptimumLon0 ( filedatabase, chunk )
 
@@ -208,14 +225,14 @@ contains ! ========================= Public Procedures ====================
 
   end subroutine ChooseOptimumLon0
 
-  ! ------------------------------------------------ ForgetOptimumLon0 -----
+  ! ------------------------------------------  ForgetOptimumLon0  -----
   subroutine ForgetOptimumLon0
     lon0Valid = .false.
   end subroutine ForgetOptimumLon0
 
   ! ========================================= PRIVATE PROCEUDRES ==========
 
-  ! ----------------------------------------------- NormalizeLongitude ----
+  ! -----------------------------------------  NormalizeLongitude  -----
   elemental function NormalizeLongitude ( lon )
     real(r8), intent(in) :: LON
     real(r8) :: NormalizeLongitude
@@ -237,6 +254,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.22  2014/09/05 00:49:06  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.21  2014/08/15 02:56:25  vsnyder
 ! Remove noIterations, which was only used in code that was removed in 2001
 !
