@@ -1790,8 +1790,11 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.111  2014/09/05 01:06:08  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.110  2014/09/05 00:49:06  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.109  2014/04/22 18:17:22  pwagner
 ! Uses MLSMessage from MLSL2Options module
