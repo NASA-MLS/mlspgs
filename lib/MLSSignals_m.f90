@@ -21,9 +21,8 @@ module MLSSignals_M
   use INIT_MLSSIGNALS_M ! EVERYTHING
   use INTRINSIC, only: FIELD_FIRST, FIELD_INDICES, LIT_INDICES, &
     & PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, PHYQ_INDICES, S_TIME, L_A, L_EMLS
-  use MLSCOMMON, only: R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, PVMERRORMESSAGE
+  use MLSKinds, only: R8
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, PVMERRORMESSAGE
   use MLSSTRINGS, only: LOWERCASE, CAPITALIZE
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
@@ -689,6 +688,9 @@ contains
 
   ! ------------------------------------------  AddBandToDatabase  -----
   integer function AddBandToDatabase ( Database, Item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     type(band_T), dimension(:), pointer :: Database
     type(band_T), intent(in) :: Item
 
@@ -702,6 +704,9 @@ contains
 
   ! ----------------------------------------  AddModuleToDatabase  -----
   integer function AddModuleToDatabase ( Database, Item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     type(module_T), dimension(:), pointer :: Database
     type(module_T), intent(in) :: Item
 
@@ -715,6 +720,9 @@ contains
 
   ! ------------------------------------  AddRadiometerToDatabase  -----
   integer function AddRadiometerToDatabase ( Database, Item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     type(radiometer_T), dimension(:), pointer :: Database
     type(radiometer_T), intent(in) :: Item
 
@@ -728,6 +736,9 @@ contains
 
   ! ----------------------------------------  AddSignalToDatabase  -----
   integer function AddSignalToDatabase ( Database, Item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     type(signal_T), dimension(:), pointer :: Database
     type(signal_T), intent(in) :: Item
 
@@ -741,6 +752,9 @@ contains
 
   ! ------------------------------  AddSpectrometerTypeToDatabase  -----
   integer function AddSpectrometerTypeToDatabase ( Database, Item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     type(spectrometerType_T), dimension(:), pointer :: Database
     type(spectrometerType_T), intent(in) :: Item
 
@@ -754,34 +768,41 @@ contains
 
   ! ----------------------------------------  DestroyBandDatabase  -----
   subroutine DestroyBandDatabase ( Bands )
+
+    use Allocate_Deallocate, only: Test_Deallocate
     type(band_T), dimension(:), pointer :: Bands
-    integer :: Status
+    integer :: S, Status
     if ( associated(bands) ) then
+      s = size(bands) * storage_size(bands) / 8
       deallocate ( bands, stat = status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_DeAllocate // 'Band database' )
+      call test_deallocate ( status, moduleName, 'Band database', s )
     end if
+
   end subroutine DestroyBandDatabase
 
   ! --------------------------------------  DestroyModuleDatabase  -----
   subroutine DestroyModuleDatabase ( Modules )
+
+    use Allocate_Deallocate, only: Test_Deallocate
     type(module_T), dimension(:), pointer :: Modules
-    integer :: Status
+    integer :: S, Status
     if ( associated(modules) ) then
+      s = size(modules) * storage_size(modules) / 8
       deallocate ( modules, stat = status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_DeAllocate // 'Module database' )
+      call test_deallocate ( status, moduleName, 'Modules database', s )
     end if
   end subroutine DestroyModuleDatabase
 
   ! ----------------------------------  DestroyRadiometerDatabase  -----
   subroutine DestroyRadiometerDatabase ( Radiometers )
+
+    use Allocate_Deallocate, only: Test_Deallocate
     type(radiometer_T), dimension(:), pointer :: Radiometers
-    integer :: Status
+    integer :: S, Status
     if ( associated(radiometers) ) then
+      s = size(radiometers) * storage_size(radiometers) / 8
       deallocate ( radiometers, stat = status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_DeAllocate // 'Radiometer database' )
+      call test_deallocate ( status, moduleName, 'Radiometer database', s )
     end if
   end subroutine DestroyRadiometerDatabase
 
@@ -810,18 +831,20 @@ contains
 
   ! --------------------------------------  DestroySignalDatabase  -----
   subroutine DestroySignalDatabase ( Signals, justChannels )
+
+    use Allocate_Deallocate, only: Test_Deallocate
     type(signal_T), dimension(:), pointer :: Signals
     logical, intent(in), optional :: JUSTCHANNELS
-    integer :: I, Status
+    integer :: I, S, Status
 
     ! Executable code
     if ( associated(signals) ) then
       do i = 1, size(signals)
         call destroySignal ( signals(i), justChannels )
       end do
+      s = size(signals) * storage_size(signals) / 8
       deallocate ( signals, stat = status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_DeAllocate // 'Signal database' )
+      call test_deallocate ( status, moduleName, 'Signal database', s )
     end if
   end subroutine DestroySignalDatabase
 
@@ -837,15 +860,17 @@ contains
 
   ! ----------------------------  DestroySpectrometerTypeDatabase  -----
   subroutine DestroySpectrometerTypeDatabase ( SpectrometerTypes )
+
+    use Allocate_Deallocate, only: Test_Deallocate
     type(spectrometerType_T), dimension(:), pointer :: spectrometerTypes
-    integer :: I, Status
+    integer :: I, S, Status
     if ( associated(spectrometerTypes) ) then
       do i = 1, size(spectrometerTypes)
         call destroySpectrometerType ( spectrometerTypes(i) )
       end do
+      s = size(spectrometerTypes) * storage_size(spectrometerTypes) / 8
       deallocate ( spectrometerTypes, stat = status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_DeAllocate // 'Spectrometer database' )
+      call test_deallocate ( status, moduleName, 'Spectrometer database', s )
     end if
   end subroutine DestroySpectrometerTypeDatabase
 
@@ -1972,6 +1997,10 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.107  2014/09/05 00:11:11  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Get
+! kinds from MLSKinds instead of MLSCommon.
+!
 ! Revision 2.106  2014/06/02 23:15:35  livesey
 ! Fix bug with radiometer%singleSideband not being initialized
 !
