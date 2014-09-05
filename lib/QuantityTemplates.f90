@@ -24,8 +24,7 @@ module QuantityTemplates         ! Quantities within vectors
     & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Time
   use MLSFILLVALUES, only: RERANK
   use MLSKINDS, only: RT => R8 ! RT is "kind of Real components of template"
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSFINDS, only: FINDFIRST
   use MLSSTRINGLISTS, only: SWITCHDETAIL
   use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
@@ -244,6 +243,8 @@ contains
   ! Add a quantity template to a database, or create the database if it
   ! doesn't yet exist
 
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (QuantityTemplate_T), dimension(:), pointer :: database
     type (QuantityTemplate_T), intent(in) :: item
@@ -397,10 +398,11 @@ contains
   ! ----------------------------  DestroyQuantityTemplateDatabase  -----
   subroutine DestroyQuantityTemplateDatabase ( database )
     ! Dummy argument
-    type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
 
+    use Allocate_Deallocate, only: Test_Deallocate
+    type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
     ! Local variables
-    integer :: qtyIndex, status
+    integer :: qtyIndex, s, status
     logical :: verbose
 
     ! Executable code
@@ -410,9 +412,9 @@ contains
       do qtyIndex = 1, size ( database )
         call DestroyQuantityTemplateContents ( database(qtyIndex) )
       end do
+      s = size(database) * storage_size(database) / 8
       deallocate ( database, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // "database" )
+      call test_deallocate ( status, ModuleName, "database", s )
     end if
   end subroutine DestroyQuantityTemplateDatabase
 
@@ -592,6 +594,8 @@ contains
   integer function InflateQuantityTemplateDatabase ( database, extra )
     ! Make a quantity template database bigger by extra
     ! Return index of first new element
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
@@ -1643,6 +1647,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.86  2014/08/19 00:28:33  vsnyder
+! Make sure 'what' is always defined in DestroyQuantityTemplate
+!
 ! Revision 2.85  2014/08/07 22:45:15  vsnyder
 ! Default HorizontalCoordinate to L_Phi_Tan instead of undefined
 !
