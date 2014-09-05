@@ -70,7 +70,7 @@ contains ! =====     Public Procedures     =============================
 
     use DATES_MODULE, only: UTC_TO_YYYYMMDD
     use HDF, only: DFACC_RDONLY
-    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+!   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
     use INTRINSIC, only: L_HDF
     use L1BDATA, only: FINDMAXMAF, READL1BATTRIBUTE
     use L2GPDATA, only: COL_SPECIES_KEYS, COL_SPECIES_HASH
@@ -109,7 +109,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Local Variables
     ! logical, parameter :: DEBUG = .FALSE.
-    logical, parameter :: CaseSensitive = .true.
 
     character(len=CCSDSlen)      :: CCSDSEndTime
     character(len=CCSDSlen)      :: CCSDSStartTime
@@ -703,6 +702,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.108  2014/09/05 01:26:25  vsnyder
+! Remove unused parameter; comment out unused USE name
+!
 ! Revision 2.107  2014/03/26 17:46:25  pwagner
 ! Added ProductionLocation, identifier_product_DOI to attributes
 !
