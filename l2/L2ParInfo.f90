@@ -17,8 +17,7 @@ module L2ParInfo
   use DUMP_0, only: DUMP
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use IO_STUFF, only: GET_LUN
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
-    & MLSMSG_DEALLOCATE, PVMERRORMESSAGE
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, PVMERRORMESSAGE
   use MLSFINDS, only: FINDFIRST
   use MLSSTATS1, only: ALLSTATS
   use MLSSTRINGS, only: LOWERCASE
@@ -188,6 +187,8 @@ contains ! ==================================================================
   integer function AddMachineNameToDataBase ( DATABASE, ITEM )
     ! Add a machine name to a databsse of machine names
     ! an array of machine names
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     character(len=MachineNameLen), dimension(:), pointer :: DATABASE
     character(len=MachineNameLen), intent(in) :: ITEM
     ! Local variables
@@ -202,6 +203,8 @@ contains ! ==================================================================
   ! ---------------------------------- AddMachineToDataBase ------------
   integer function AddMachineToDataBase ( DATABASE, ITEM )
     ! Add a machine to a database of machines
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     type(machine_t), dimension(:), pointer :: DATABASE
     type(machine_t), intent(in) :: ITEM
     ! Local variables
@@ -255,19 +258,26 @@ contains ! ==================================================================
   end subroutine InitParallel
 
   ! --------------------------------------------- CloseParallel -------------
-  subroutine CloseParallel(noSlaves, dontWait)
+  subroutine CloseParallel ( noSlaves, dontWait )
     ! This routine closes down any parallel stuff
+
+    use Toggles, only: Gen, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+
     integer, intent(in) :: noSlaves     ! How many slaves
     logical, intent(in), optional :: dontWait
     ! Local variables
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
+    integer :: Me = -1                  ! String index for trace
 
     integer :: SIGNAL                   ! From acknowledgement packet
     integer :: slave
     logical :: myDontWait
 
     ! Executable code
+
+    call trace_begin ( me, "CloseParallel", cond=toggle(gen) )
     myDontWait = .false.
     if ( present(dontWait) ) myDontWait = dontWait
     if ( parallel%slave ) then
@@ -287,7 +297,7 @@ contains ! ==================================================================
         & call PVMErrorMessage ( info, 'sending finish packet' )
       ! call MLSMessage ( MLSMSG_Info, ModuleName, &
       !  & 'Hey--we did it' )
-      if ( myDontWait ) return
+      if ( myDontWait ) go to 9
       ! Wait for an acknowledgement from the master
       call PVMFrecv ( parallel%masterTid, InfoTag, bufferID )
       if ( bufferID <= 0 ) &
@@ -298,13 +308,15 @@ contains ! ==================================================================
       & call PVMErrorMessage ( info, 'unpacking finish acknowledgement')
       if ( signal /= SIG_AckFinish ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Got unrecognised signal from master' )
-    elseif ( parallel%master ) then
+    else if ( parallel%master ) then
       call usleep(FIXDELAYFORSLAVESTDOUTBUFFER)
-      if ( noSlaves < 1 ) return
+      if ( noSlaves < 1 ) go to 9
       do slave=1, noSlaves+40
         call usleep(DELAYFOREACHSLAVESTDOUTBUFFER)
-      enddo
+      end do
     end if
+9   continue
+    call trace_end ( "CloseParallel", cond=toggle(gen) )
   end subroutine CloseParallel
 
   ! ----------------------------------- CompactDirectWriteRequestDB --------
@@ -502,6 +514,7 @@ contains ! ==================================================================
   subroutine GetMachineNames ( machineNames )
     ! This reads the parallel slave name file and returns
     ! an array of machine names
+    use Allocate_Deallocate, only: Test_Allocate
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
 
     ! Local variables
@@ -596,8 +609,8 @@ contains ! ==================================================================
       noMachines = last - first + 1
 
       allocate ( machineNames(noMachines), stat=stat )
-      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//' machineNames')
+      call test_allocate ( stat, ModuleName, 'machineNames', ubounds=noMachines, &
+        & elementSize = storage_size(machineNames) / 8 )
 
       ! Now rewind the file and read the names
       rewind ( lun )
@@ -622,6 +635,7 @@ contains ! ==================================================================
   subroutine GetMachines ( machines )
     ! This reads the parallel slave name file and returns
     ! an array of machine types
+    use Allocate_Deallocate, only: Test_Allocate
     type(machine_t), dimension(:), pointer :: MACHINES
 
     ! Local variables
@@ -633,8 +647,8 @@ contains ! ==================================================================
     noMachines = size(machineNames)
     if ( noMachines < 1 ) return
     allocate ( machines(noMachines), stat=stat )
-    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//' machines')
+    call test_allocate ( stat, ModuleName, 'machines', ubounds=noMachines, &
+      & elementSize = storage_size(machines) / 8 )
     machines%name = machineNames
   end subroutine GetMachines
 
@@ -642,6 +656,8 @@ contains ! ==================================================================
   integer function InflateDirectWriteRequestDB ( database, extra )
     ! Make the directWrite database bigger by extra
     ! return index of first new element
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type(DirectWriteRequest_T), dimension(:), pointer :: DATABASE
@@ -874,6 +890,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.63  2014/09/05 00:49:06  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.62  2014/01/09 00:30:24  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
