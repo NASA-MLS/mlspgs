@@ -26,8 +26,8 @@ module PCFHdr
    use MLSFILES, only: GETPCFROMREF, HDFVERSION_4, HDFVERSION_5, &
      & INITIALIZEMLSFILE, MLS_CLOSEFILE, MLS_OPENFILE, MLS_OpenFile, MLS_CloseFile
    use MLSKINDS, only: R8
-   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-     & MLSMSG_WARNING, MLSMSG_DEALLOCATE, MLSMSG_FILEOPEN
+   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_FILEOPEN, &
+     & MLSMSG_WARNING
    use MLSSTRINGS, only: LOWERCASE
    use OUTPUT_M, only: OUTPUT
    use SDPTOOLKIT, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
@@ -151,9 +151,11 @@ module PCFHdr
   
 contains
 
-!------------------------------------------------------------
-   SUBROUTINE CreatePCFAnnotation (mlspcfN_pcf_start, anText)
-!------------------------------------------------------------
+!--------------------------------------------------------------
+   SUBROUTINE CreatePCFAnnotation ( mlspcfN_pcf_start, anText )
+!--------------------------------------------------------------
+
+      use Allocate_Deallocate, only: Allocate_Test
 
 ! Brief description of subroutine
 ! This subroutine stores the PCF as an annotation for writing to file headers.
@@ -175,18 +177,14 @@ contains
       character (len=10) :: mnemonic
       character (len=480) :: msg, msr
 
-      integer :: err, ios, pcfHandle, returnStatus, size, version
+      integer :: ios, pcfHandle, returnStatus, size, version
 
 ! Get the size of the PCF
 
       version = 1
       returnStatus = Pgs_pc_getFileSize(mlspcfN_pcf_start, version, size)
 
-      ALLOCATE(anText(size), STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' anText PCF array.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+      call allocate_test ( anText, size, "anText", moduleName )
 
 ! Open the PCF for reading
 
@@ -197,7 +195,7 @@ contains
          call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
          msr = mnemonic // ':  ' // msg
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+      END IF
 
 ! Read the PCF text into the CHAR anText variable
 
@@ -490,8 +488,6 @@ contains
    SUBROUTINE h5_writeglobalattr_MLSFile ( MLSFile, skip_if_already_there, DOI )
 !------------------------------------------------------------
 
-      use HDF5, only:  H5GCLOSE_F, H5GOPEN_F
-      use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, MAKEHDF5ATTRIBUTE
       ! Brief description of subroutine
       ! This subroutine writes the global attributes for an hdf5-formatted file
       ! It does so at the root '/' group level
@@ -592,9 +588,6 @@ contains
    SUBROUTINE he5_writeglobalattr_MLSFile ( MLSFile, dayNum, DOI, skip_if_already_there )
 !------------------------------------------------------------
 
-    use HDFEOS5, only: HE5T_NATIVE_INT, &
-      & HE5T_NATIVE_DOUBLE, MLS_CHARTYPE
-    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdfeos5 file
 
@@ -626,7 +619,7 @@ contains
 
     use HDFEOS5, only: HE5T_NATIVE_INT, &
       & HE5T_NATIVE_DOUBLE, MLS_CHARTYPE
-    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT, mls_isglatt
+    use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT, MLS_Isglatt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdfeos5 file
 
@@ -734,8 +727,7 @@ contains
    SUBROUTINE he5_writeMLSFileAttr ( MLSFile )
 !------------------------------------------------------------
 
-    use HDFEOS5, only: HE5T_NATIVE_INT, &
-      & MLS_CHARTYPE
+    use HDFEOS5, only: HE5T_NATIVE_INT, MLS_CHARTYPE
     use MLSHDFEOS, only: HE5_EHWRGLATT, HSIZE, MLS_EHWRGLATT
 ! Brief description of subroutine
 ! This subroutine writes the components of an MLSFile_t 
@@ -1321,6 +1313,7 @@ contains
    SUBROUTINE WritePCF2Hdr_hdf5 (fileID, anText, name)
 !----------------------------------------
 
+      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
       use HDF5, only: H5GCLOSE_F, H5GOPEN_F
       use MLSHDF5, only: ISHDF5DSPRESENT, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
 ! Brief description of subroutine
@@ -1371,19 +1364,13 @@ contains
       else
         ! Find how big an40 must be to hold anText
         how_big = 1 + (size(anText)-1)/40
-        allocate(an40(how_big), stat=status)
-        if ( status /= 0 ) &
-          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate // 'an40 for annotating hdfeos5 PCF' )
+        call allocate_test ( an40, how_big, "an40", moduleName )
         an40 = ' '
         ! Do some nonsense here
         call MakeHDF5Attribute(grp_id, &
          & trim(myPCFPATHNAME), an40, .true.)
-        deallocate(an40, stat=status)
-        if ( status /= PGS_S_SUCCESS) &
-          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-          & MLSMSG_DeAllocate // 'an40 annotating hdf5 with PCF' )
-      endif
+        call deallocate_test ( an40, "an40", moduleName )
+      end if
       call h5gclose_f(grp_id, status)
       if ( status /= PGS_S_SUCCESS) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -1634,6 +1621,10 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.63  2014/09/05 00:15:47  vsnyder
+!# More complete and accurate allocate/deallocate size tracking.  Remove
+!# USE for unreferenced names.
+!#
 !# Revision 2.62  2014/04/14 16:59:02  pwagner
 !# he5_writeglobalattr may skip writing if already there
 !#
