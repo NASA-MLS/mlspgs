@@ -2469,8 +2469,13 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.118  2014/09/05 01:02:36  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Add some tracing.  Correct some names to be reported to Allocate_Test.
+! Plug a potential memory leak.
+!
 ! Revision 2.117  2014/09/05 00:49:06  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.116  2014/08/06 23:30:29  vsnyder
 ! Remove CoordIndex, which is set but not referenced
