@@ -59,7 +59,7 @@ contains ! ====     Procedures     =====================================
   !     process the subtree
   !   END DO
 
-    use Allocate_Deallocate, only: Memory_Units , Test_Allocate, Test_Deallocate
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use Declaration_Table, only: Enum_Value, Operator(==), Range, Redeclare, &
       & Str_Range, Value_T, Variable
     use Evaluate_Variable_m, only: Evaluate_Variable
@@ -99,7 +99,7 @@ contains ! ====     Procedures     =====================================
     if ( .not. allocated(state%ancestors) ) then
       allocate ( state%ancestors(1), stat=stat )
       call test_allocate ( stat, moduleName, 'state%ancestors', [1], [1], &
-        & storage_size(state%ancestors) )
+        & storage_size(state%ancestors) / 8 )
       state%ancestors(1)%root = root
       state%ancestors(1)%subtree = nsons(root) - 1 ! Assume not N_CF or N_Test
       if ( present(start) ) then
@@ -312,14 +312,14 @@ contains ! ====     Procedures     =====================================
       if ( size(state%ancestors) == 1 ) then
         deallocate ( state%ancestors, stat=stat )
         call test_deallocate ( stat, moduleName, 'state%ancestors', &
-          & real(storage_size(state%ancestors)) / memory_units )
+          & storage_size(state%ancestors) / 8 )
         next_tree_node = 0
         pop = .true.
       else
         ! Pop the ancestors stack; ascend in the syntax tree.
         allocate ( temp(size(state%ancestors)-1), stat=stat )
         call test_allocate ( stat, moduleName, 'temp', [1], [1], &
-          & storage_size(temp) )
+          & storage_size(temp) / 8 )
         temp = state%ancestors(2:)
         call move_alloc ( temp, state%ancestors )
       end if
@@ -333,7 +333,7 @@ contains ! ====     Procedures     =====================================
       n = size(state%ancestors)+1
       allocate ( temp(n), stat=stat )
       call test_allocate ( stat, moduleName, 'temp', [1], [n], &
-        & storage_size(temp) )
+        & storage_size(temp) / 8 )
       temp(2:) = state%ancestors
       call move_alloc ( temp, state%ancestors )
       state%ancestors(1)%root = root
@@ -524,6 +524,9 @@ contains ! ====     Procedures     =====================================
 end module Next_Tree_Node_m
 
 ! $Log$
+! Revision 2.6  2014/09/05 18:37:00  vsnyder
+! Measure memory usage in bytes instead of Memory_Units
+!
 ! Revision 2.5  2014/02/28 00:02:11  vsnyder
 ! Turn off type checking already done by type checker.  Check that expr
 ! in CASE is the same type as in SELECT (which the type checker can't do).
