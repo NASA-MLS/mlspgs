@@ -15,7 +15,7 @@ module PFADataBase_m
   ! Write PFA data.
 
   use allocate_deallocate, only: allocate_test, deallocate_test, &
-    & memory_units, test_allocate
+    & test_allocate
   use highOutput, only: outputNamedValue
   use MLSkinds, only: r4
   use MLScommon, only: fileNameLen
@@ -126,8 +126,8 @@ contains ! =====     Public Procedures     =============================
   ! This routine adds a PFA Datum to a database of PFA Data, creating the
   ! database if necessary.
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
-      & MLSMSG_Error
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (PFAData_T), dimension(:), pointer :: DATABASE
     type (PFAData_T), intent(in) :: ITEM
@@ -151,16 +151,16 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------  Destroy_PFADataBase  -----
   subroutine Destroy_PFADataBase
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+    use Allocate_Deallocate, only: Test_Deallocate
     integer :: I, M, S, SB
     if ( .not. associated(pfaData) ) return
     do i = 1, ubound(PFAData,1)
       call destroy_PFADatum ( pfaData(i) )
     end do
     call destroy_PFAFiles
+    s = size(PFAData) * storage_size(PFAData) / 8
     deallocate ( PFAData, stat=i )
-    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Deallocate // 'PDAData' )
+    call test_deallocate ( i, moduleName, 'PDAData', s )
     do m = first_molecule, last_molecule
       if ( associated(findPFA(m)%s) ) then
         do s = lbound(findPFA(m)%s,1), ubound(findPFA(m)%s,1)
@@ -169,9 +169,9 @@ contains ! =====     Public Procedures     =============================
               & 'FindPFA(m)%s(s)%sb(sb)%c', moduleName )
           end do
         end do
+        s = size(findPFA(m)%s) * storage_size(findPFA(m)%s) / 8
         deallocate ( findPFA(m)%s, stat=i )
-        if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & MLSMSG_Deallocate // 'findPFA(m)%s' )
+        call test_deallocate ( i , moduleName, 'findPFA(m)%s', s )
       end if
     end do
   end subroutine Destroy_PFADataBase
@@ -209,15 +209,15 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------------  Destroy_PFAFiles  -----
   subroutine Destroy_PFAFiles
   ! Destroy the elements of the PFAFiles array, then deallocate it.
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
-    integer :: I
+    use Allocate_Deallocate, only: Test_Deallocate
+    integer :: I, S
     if ( associated(PFAFiles) ) then
       do i = 1, ubound(PFAFiles,1)
         call destroy_PFAFile ( PFAFiles(i) )
       end do
+      s = size(PFAFiles) * storage_size(PFAFiles) / 8
       deallocate ( PFAFiles, stat=i )
-      if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Deallocate // 'PFAFiles' )
+      call test_deallocate ( i, moduleName, 'PFAFiles', s )
     end if
   end subroutine Destroy_PFAFiles
 
@@ -237,19 +237,19 @@ contains ! =====     Public Procedures     =============================
       call dump_PFADatum ( pfaData(i), details, i )
       if (   associated(pfaData(i)%absorption) ) &
         & total = total + &
-        & product(shape(pfaData(i)%absorption))/MEMORY_UNITS
+        & product(shape(pfaData(i)%absorption))
       if (   associated(pfaData(i)%dAbsDwc) ) &
         & total = total + &
-        & product(shape(pfaData(i)%dAbsDwc))/MEMORY_UNITS
+        & product(shape(pfaData(i)%dAbsDwc))
       if (   associated(pfaData(i)%dAbsDnc) ) &
         & total = total + &
-        & product(shape(pfaData(i)%dAbsDnc))/MEMORY_UNITS
+        & product(shape(pfaData(i)%dAbsDnc))
       if (   associated(pfaData(i)%dAbsDnu) ) &
         & total = total + &
-        & product(shape(pfaData(i)%dAbsDnu))/MEMORY_UNITS
+        & product(shape(pfaData(i)%dAbsDnu))
     end do
     call outputNamedValue( 'PFA Database Total Memory Footprint', &
-      & storage_size(PFAData(1)%Vel_Rel) * total )
+      & storage_size(PFAData(1)%Vel_Rel) / 8 * total )
   end subroutine Dump_PFADataBase
 
   ! ----------------------------------------------  Dump_PFADatum  -----
@@ -289,18 +289,18 @@ contains ! =====     Public Procedures     =============================
     total = 0.
     if (   associated(PFADatum%absorption) ) &
       & total = total + &
-      & product(shape(PFADatum%absorption))/MEMORY_UNITS
+      & product(shape(PFADatum%absorption))
     if (   associated(PFADatum%dAbsDwc) ) &
       & total = total + &
-      & product(shape(PFADatum%dAbsDwc))/MEMORY_UNITS
+      & product(shape(PFADatum%dAbsDwc))
     if (   associated(PFADatum%dAbsDnc) ) &
       & total = total + &
-      & product(shape(PFADatum%dAbsDnc))/MEMORY_UNITS
+      & product(shape(PFADatum%dAbsDnc))
     if (   associated(PFADatum%dAbsDnu) ) &
       & total = total + &
-      & product(shape(PFADatum%dAbsDnu))/MEMORY_UNITS
+      & product(shape(PFADatum%dAbsDnu))
     call outputNamedValue( 'PFA Datum Total Memory Footprint', &
-      & storage_size(PFADatum%Vel_Rel) * total )
+      & storage_size(PFADatum%Vel_Rel) / 8 * total )
 
     call output ( 'PFA Datum' )
     if ( present(index) ) call output ( index, before=' ' )
@@ -651,8 +651,9 @@ contains ! =====     Public Procedures     =============================
 
   integer function Process_PFA_File_datum ( PFAFileDatum, Where )
 
+    use Allocate_Deallocate, only: Allocate_Test
     use MLSHDF5, only: LOADPTRFROMHDF5DS
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, &
       & MLSMSG_SEVERITY_TO_QUIT, MLSMSG_WARNING
     use MLSSIGNALS_M, only: SIGNALS
     use MOREMESSAGE, only: MLSMESSAGE
@@ -700,9 +701,8 @@ contains ! =====     Public Procedures     =============================
       & 'Unable to close HDF5 PFA index group.' )
 
     ! Allocate the groups component
-    allocate ( PFAFileDatum%ix(size(myMolecules)), stat=stat )
-    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      MLSMSG_Allocate // 'PFAFileDatum%ix' )
+    call allocate_test ( PFAFileDatum%ix, size(myMolecules), 'PFAFileDatum%ix', &
+      & ModuleName )
 
     call create_or_expand_PFADatabase ( size(myMolecules), iPFA )
 
@@ -794,8 +794,8 @@ contains ! =====     Public Procedures     =============================
   ! This routine adds a PFA File Datum to a database of PFA File Data,
   ! creating the database if necessary.
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
-      & MLSMSG_Error
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (PFAFile_T), dimension(:), pointer :: DATABASE
     type (PFAFile_T), intent(in) :: ITEM
@@ -1169,11 +1169,10 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------  Create_or_Expand_PFADatabase  -----
   subroutine Create_or_Expand_PFADatabase ( ToAdd, PrevSize )
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, &
-      & MLSMSG_Error
+    use Allocate_Deallocate, only: Test_Deallocate
     integer, intent(in) :: ToAdd
     integer, intent(out) :: PrevSize
-    integer :: Stat
+    integer :: S, Stat
     type(PFAData_t), pointer :: TempPFAData(:) => NULL()
     if ( associated(PFAData) .and. toAdd > 0 ) then
       tempPFAData => PFAData
@@ -1181,9 +1180,9 @@ contains ! =====     Public Procedures     =============================
       allocate ( PFAData(0:prevSize+toAdd), stat=stat )
       call test_allocate ( stat, moduleName, 'PFAData' )
       pfaData(:prevSize) = tempPFAData
+      s = size(tempPFAData) * storage_size(tempPFAData) / 8
       deallocate ( tempPFAData, stat=stat )
-      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_DeAllocate // 'TempPFAData' )
+      call test_deallocate ( stat, moduleName, 'TempPFAData', s )
     else
       prevSize = 0
       if ( toAdd > 0 ) then
@@ -1384,6 +1383,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.51  2014/09/05 20:50:53  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.50  2014/08/06 23:25:48  vsnyder
 ! Remove USE for BYTES, which is not reference.  Comment out declaration of
 ! GRIDINDEX, which is only referenced in commented-out code.
