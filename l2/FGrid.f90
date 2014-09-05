@@ -17,9 +17,8 @@ module FGrid                    ! Frequency grid information
   use Intrinsic, only:  L_None, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
     & L_CHANNEL, LIT_INDICES
   use Init_tables_module, only: F_Coordinate, F_Values
-  use MLSCommon, only: r8
-  use MLSMessageModule, only: MLSMessage, &
-    & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMSG_Error, MLSMSG_Warning
+  use MLSKinds, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use Output_M, only: Output
   use STRING_TABLE, only: DISPLAY_STRING
   use Tree, only: DECORATION, NSONS, SUBTREE
@@ -64,6 +63,9 @@ contains ! ===================================== Public procedures =====
 
   ! ----------------------------------------------- AddFGridToDatabase
   integer function AddFGridToDatabase ( database, item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (FGrid_T), dimension(:), pointer :: database
     type (FGrid_T), intent(in) :: item
@@ -79,17 +81,22 @@ contains ! ===================================== Public procedures =====
   ! -------------------------------------------- CreateFGridFromMLSCFInfo
   type (FGrid_T) function CreateFGridFromMLSCFInfo ( name, root ) &
     & result ( fGrid )
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     ! Dummy arguments
     integer, intent(in) :: NAME         ! String index of name
     integer, intent(in) :: ROOT         ! Tree root
-    
+
     ! Local variables
     integer :: I,J                      ! Loop counter
+    integer :: Me = -1                  ! String index for trace
     integer :: SON                      ! Tree node
     integer :: UNITS(2)                 ! From expr
     real(r8) :: VALUES(2)               ! From expr
 
     ! Executable code
+    call trace_begin ( me, "CreateFGridFromMLSCFInfo", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
     call nullifyFGrid ( fGrid ) ! for Sun's still useless compiler
     fGrid%name = name
     do i = 2, nsons(root)
@@ -116,6 +123,8 @@ contains ! ===================================== Public procedures =====
       & 'Did you mean to use channel as fGrid coordinate?' )
 
     ! Because the parser does such a great job, that's all we need to do here!
+    call trace_end ( "CreateFGridFromMLSCFInfo", &
+      & cond=toggle(gen) .and. levels(gen) > 0 )
   end function CreateFGridFromMLSCFInfo
 
   ! -------------------------------------------- DestroyFGridContents
@@ -133,10 +142,13 @@ contains ! ===================================== Public procedures =====
   ! ----------------------------------------- Destroy FGridDatabase
   subroutine DestroyFGridDatabase ( database )
     ! Dummy arguments
+
+    use Allocate_Deallocate, only: Test_Deallocate
     type (FGrid_T), dimension(:), pointer :: database
 
     ! Local variables
     integer :: I                        ! Loop counter
+    integer :: S                        ! Size in bytes of object to deallocate
     integer :: STATUS                   ! From deallocate
 
     ! Executable code
@@ -145,9 +157,10 @@ contains ! ===================================== Public procedures =====
       call DestroyFGridContents ( database(i) )
     end do
 
+    s = size(database) * storage_size(database) / 8
     deallocate ( database, STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//'database' )
+    call test_deallocate ( status, ModuleName, 'database', s )
+
   end subroutine DestroyFGridDatabase
 
   ! -------------------------------------------- DumpFGrid
@@ -219,6 +232,9 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.14  2014/09/05 00:49:06  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.13  2011/08/20 01:04:33  vsnyder
 ! IERR needs a value before it can be referenced
 !
