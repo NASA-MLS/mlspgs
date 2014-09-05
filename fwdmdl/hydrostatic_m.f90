@@ -35,11 +35,13 @@ module Hydrostatic_m
 ! Compute a hydrostatic function per L2PC method and return
 ! geometric heights. Reference height is now an input
 
-    use MLSCommon, only: RP, IP
+    use MLSKinds, only: RP, IP
     use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
     use Get_eta_matrix_m, only: get_eta_sparse
     use Piq_int_m, only: piq_int
     use Physics, only: BoltzMeters => Boltz ! Avogadro * k * ln10 / mmm m^2/(K s^2)
+    use Toggles, only: Emit, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
 
 ! Inputs
 
@@ -67,6 +69,7 @@ module Hydrostatic_m
     real(rp), parameter :: ERadAsq = EarthRadA**2, ERadBsq = EarthRadB**2
     real(rp), parameter :: Boltz = boltzMeters/1.0e6_rp ! = kln10/m km^2/(K sec^2)
 
+    integer :: Me = -1          ! String index for trace
     integer(ip) :: n_coeffs,iter
 
 !   real(rp) :: cl, sl ! for derivatives of Legendre polynomials dp2 and dp4
@@ -79,9 +82,12 @@ module Hydrostatic_m
     real(rp), dimension(size(h_grid),size(t_basis)) :: Piq
     real(rp), dimension(1,size(t_coeffs)) :: Piqa, Piqb
     real(rp), dimension(size(z_grid)) :: Mass_corr
-!
+
 ! begin the code
-!
+
+    call trace_begin ( me, 'Hydrostatic_All', &
+      & cond=toggle(emit) .and. levels(emit) > 2 )
+
     n_coeffs = size(t_basis)
 
     where ( z_grid > 2.5_rp )
@@ -99,9 +105,9 @@ module Hydrostatic_m
 ! compute t_grid
     call get_eta_sparse ( t_basis, z_grid, eta )
     t_grid = matmul(eta,t_coeffs)
-!
+
 ! compute surface acceleration and effective earth radius
-!
+
     slsq = sin(lat) ** 2
     clsq = 1.0_rp - slsq
     p2 = (3.0_rp * slsq - 1.0_rp) * 0.5_rp
@@ -222,6 +228,9 @@ module Hydrostatic_m
 
     dhidzi = dhidzi * t_grid * mass_corr
 
+    call trace_end ( 'Hydrostatic_All', &
+      & cond=toggle(emit) .and. levels(emit) > 2 )
+
   end subroutine Hydrostatic_All
 
   ! -----------------------------------------  Hydrostatic_No_Der  -----
@@ -265,13 +274,13 @@ module Hydrostatic_m
     real(rp), dimension(size(z_grid),size(t_basis)) :: Piq
     real(rp), dimension(1,size(t_basis)) :: Piqa, Piqb
 !   real(rp), dimension(size(z_grid)) :: Mass_corr
-!
+
 ! begin the code
-!
+
 
 !     where ( z_grid > 2.5_rp )
 ! !     mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
-! 
+
 ! !{A series expansion about z\_grid = 5/2 of
 ! ! $\frac1{\frac78 + \frac1{10}z - \frac1{50}z^2}$ is
 ! ! $\sum_{k=0}^{\infty} \left( \frac{(z-\frac52)^2}{50}\right)^k$.  Use the
@@ -280,9 +289,9 @@ module Hydrostatic_m
 !     elsewhere
 !       mass_corr = 1.0_rp
 !     end where
-!
+
 ! compute surface acceleration and effective earth radius
-!
+
     slsq = sin(lat) ** 2
     clsq = 1.0_rp - slsq
     p2 = (3.0_rp * slsq - 1.0_rp) * 0.5_rp
@@ -406,6 +415,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.23  2013/06/12 02:26:27  vsnyder
+! Cruft removal
+!
 ! Revision 2.22  2013/05/02 19:45:33  vsnyder
 ! Simplify r_eisq calculation, add a lot of LaTeX
 !
