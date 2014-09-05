@@ -254,8 +254,11 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.23  2014/09/05 00:51:39  vsnyder
+! Add DestroyEmpiricalGeometry, some cannonball polishing
+!
 ! Revision 2.22  2014/09/05 00:49:06  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- wrong comment.
 !
 ! Revision 2.21  2014/08/15 02:56:25  vsnyder
 ! Remove noIterations, which was only used in code that was removed in 2001
