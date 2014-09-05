@@ -503,8 +503,11 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.74  2014/09/05 01:20:54  vsnyder
+! Remove USE for unreferenced name
+!
 ! Revision 2.73  2014/09/05 00:49:07  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.72  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
