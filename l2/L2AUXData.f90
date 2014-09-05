@@ -665,6 +665,8 @@ contains ! =====     Public Procedures     =============================
   ! creating a new database if it doesn't exist.  The result value is
   ! the length of the database -- where L2aux is put.
 
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (L2AUXData_T), dimension(:), pointer :: DATABASE
     type (L2AUXData_T), intent(in) :: ITEM
@@ -682,11 +684,17 @@ contains ! =====     Public Procedures     =============================
 
   ! This subroutine destroys the l2aux database
 
+    use Toggles, only: Gen, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+
     ! Dummy argument
     type (L2AUXData_T), dimension(:), pointer :: DATABASE
 
     ! Local variables
     integer :: l2auxIndex, status
+    integer :: Me = -1       ! String index for trace
+
+    call trace_begin ( me, "DestroyL2AUXDatabase", cond=toggle(gen) )
 
     if ( associated(database) ) then
       do l2auxIndex = 1, size(database)
@@ -696,6 +704,7 @@ contains ! =====     Public Procedures     =============================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning,ModuleName, &
         & MLSMSG_DeAllocate // "database")
     end if
+    call trace_end ( "DestroyL2AUXDatabase", cond=toggle(gen) )
   end subroutine DestroyL2AUXDatabase
 
   ! ----------------------------------------  Dump_L2AUX_DataBase  -----
@@ -1950,6 +1959,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.94  2014/09/05 00:49:06  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.93  2014/07/18 23:17:11  pwagner
 ! Aimed for consistency in names passed to allocate_test
 !
