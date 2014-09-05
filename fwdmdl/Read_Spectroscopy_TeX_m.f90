@@ -31,7 +31,7 @@ contains
     ! not filled.
     ! Signals, Sidebands, and Polarized fields of catalog%line are
     ! not filled.
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use Allocate_Deallocate, only: Bytes, Test_Allocate, Test_Deallocate
     use, intrinsic :: ISO_Fortran_env, only: IOSTAT_END
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MOLECULES, only: FIRST_MOLECULE, LAST_MOLECULE, GetMoleculeIndex
@@ -57,6 +57,7 @@ contains
     integer :: NLines    ! Total number of lines for all molecules
     integer :: NLinesMol ! Lines for one molecule
     integer :: N_Names
+    integer :: S         ! Size in bytes of an object to deallocate
     character(len=255) :: Text
     character(24), pointer :: TeX_name(:), XRef_name(:)
     integer :: U
@@ -95,7 +96,8 @@ contains
     ! Now read the names in the cross-reference file
     rewind ( u )
     allocate ( TeX_name(n_names), xref_name(n_names), stat=stat )
-    call test_allocate ( stat, moduleName, 'TeX_name or XRef_name' )
+    call test_allocate ( stat, moduleName, 'TeX_name or XRef_name', &
+      & ubounds=n_names, elementSize = bytes(TeX_name) + bytes(xref_name) )
     ! Skip heading lines
     do
       read ( u, '(a)' ) text ! A convenient unused variable
@@ -195,15 +197,17 @@ contains
       end do
       allocate ( catalog(mol)%lines(nLinesMol), stat=stat )
       call test_allocate ( stat, moduleName, 'catalog(mol)%lines', (/ 1 /), &
-        &  (/ nLinesMol /) )
+        &  (/ nLinesMol /), storage_size(catalog) / 8 )
       if ( stat == iostat_end ) exit
     end do
   6 rewind ( u )
     allocate ( lines(1:nLines), stat=stat )
-    call test_allocate ( stat, moduleName, 'Lines', (/ 1 /), (/ nLines /) )
+    call test_allocate ( stat, moduleName, 'Lines', (/ 1 /), (/ nLines /), &
+      & storage_size(lines) / 8 )
     if ( present(bands) ) then
       allocate ( bands(1:nLines), stat=stat )
-      call test_allocate ( stat, moduleName, 'Bands', (/ 1 /), (/ nLines /) )
+      call test_allocate ( stat, moduleName, 'Bands', (/ 1 /), (/ nLines /), &
+        & storage_size(bands) / 8 )
     end if
 
     ! Read the lines data and attach them to the appropriate molecules in
@@ -259,13 +263,16 @@ contains
       if ( .not. associated(catalog(mol)%lines) ) then
         allocate ( catalog(mol)%lines(0), stat=stat )
         call test_allocate ( stat, moduleName, 'catalog(mol)%lines', (/ 1 /), &
-          &  (/ 0 /) )
+          &  (/ 0 /), storage_size(catalog) / 8 )
       end if
     end do
 
     ! Destroy the cross-reference table
-  9 deallocate ( TeX_name, xref_name )
-    call test_deallocate ( stat, moduleName, 'TeX_name or XRef_name', 0 )
+  9 continue
+    s = size(TeX_name) * storage_size(TeX_name) / 8 + &
+      & size(xref_name) * storage_size(xref_name) / 8
+    deallocate ( TeX_name, xref_name )
+    call test_deallocate ( stat, moduleName, 'TeX_name or XRef_name', s )
 
   contains
 
@@ -310,6 +317,9 @@ contains
 end module Read_Spectroscopy_TeX_m
 
 ! $Log$
+! Revision 2.5  2014/09/05 20:53:10  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.4  2014/08/05 01:16:43  vsnyder
 ! Use NEWUNIT= in OPEN statements instead of get_lun.  Eliminate dependence
 ! upon io_stuff.  Check for iostat == iostat_end instead of iostat /= 0.

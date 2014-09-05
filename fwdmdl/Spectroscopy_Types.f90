@@ -84,8 +84,7 @@ contains
   ! Add a line to the Lines database, creating the database
   ! if necessary.
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-      & MLSMSG_Error
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type(line_T), pointer, dimension(:) :: Database
@@ -114,6 +113,9 @@ contains
 end module Spectroscopy_Types
 
 ! $Log$
+! Revision 2.5  2014/09/05 20:54:24  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.4  2014/04/04 19:22:33  vsnyder
 ! More comments about QN component of Lines_t
 !
