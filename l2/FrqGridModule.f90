@@ -50,7 +50,7 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Init_Tables_Module, only: F_Atmos, F_Frequencies
     use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Frequency
-    use MLSCommon, only: RK => R8
+    use MLSKinds, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MoreTree, only: Get_Field_Id
     use Tree, only: Decoration, Nsons, Subtree, Where
@@ -153,6 +153,9 @@ contains
 end module FrqGridModule
 
 ! $Log$
+! Revision 2.6  2014/09/05 00:49:06  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.5  2014/02/28 00:20:01  vsnyder
 ! Remove TYPE field from call to EXPR because value was never used
 !
