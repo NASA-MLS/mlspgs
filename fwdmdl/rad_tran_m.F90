@@ -1891,16 +1891,24 @@ contains
 
     integer, intent(in) :: N ! sizes on coarse grid
 
-#if (defined NAG) || defined (IFC)
-!     Assumed-shape arguments are slower than assumed size
+#if defined NAG
+!   Assumed-shape arguments are slower than assumed size
     logical, intent(in) :: Do_Calc_all(*) ! On the entire path
     integer, intent(in) :: F_Inds(*)      ! Indices in Do_Calc_All for find grid
     logical, intent(in) :: Do_GL(*)       ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(*)    ! Where on coarse grid to do calc.
     integer, intent(out) :: N_Inds        ! count(do_calc)
     integer, intent(out) :: Inds(*)       ! Indices where do_calc is true
+#elif defined IFC
+!   Contiguous assumed-shape arguments are no slower than assumed size
+    logical, contiguous, intent(in) :: Do_Calc_all(:) ! On the entire path
+    integer, contiguous, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for fine grid
+    logical, contiguous, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
+    logical, contiguous, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
+    integer,             intent(out) :: N_Inds        ! count(do_calc)
+    integer, contiguous, intent(out) :: Inds(:)       ! Indices where do_calc is true
 #elif defined LF95
-!     Assumed-shape arguments are faster than assumed size
+!   Assumed-shape arguments are faster than assumed size because of copying
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
     integer, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for find grid
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
@@ -1908,7 +1916,7 @@ contains
     integer, intent(out) :: N_Inds        ! count(do_calc)
     integer, intent(out) :: Inds(:)       ! Indices where do_calc is true
 #else
-!     Assumed-shape arguments are faster than assumed size
+!   We don't know whether ssumed-shape or assumed size arguments are faster
     logical, intent(in) :: Do_Calc_all(:) ! On the entire path
     integer, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for fine grid
     logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
@@ -2032,6 +2040,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.32  2014/09/05 21:26:38  vsnyder
+! Use the CONTIGUOUS attribute with ifort
+!
 ! Revision 2.31  2013/07/13 00:03:21  vsnyder
 ! Remove LD argument from get_all_d2_delta_df2
 !
