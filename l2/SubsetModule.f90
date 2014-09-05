@@ -31,8 +31,6 @@ module SubsetModule
   character(len=32), private, parameter :: WRONGUNITS = &
     &                           'The wrong units were supplied'
     
-  logical, parameter :: DEEBUG = .false.
-
 contains ! ========= Public Procedures ============================
 
   ! ---------------------------------------------- ApplyMaskToQuantity -----
@@ -595,12 +593,11 @@ contains ! ========= Public Procedures ============================
   ! This looks like it might be a nice operation. 
   ! However it comes without documentation, so who knows
   ! what it does or whether it works properly?
-  
+
   ! So be warned--
   ! d o c u m e n t   y o u r   c o d e
   subroutine RestrictRange ( key, vectors )
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use INTRINSIC, only: PHYQ_DIMENSIONLESS
     use MLSKINDS, only: R8
     use EXPR_M, only: EXPR
     use VECTORSMODULE, only: M_LINALG, VECTOR_T, VECTORVALUE_T, &
@@ -1527,6 +1524,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.33  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.32  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
 !
