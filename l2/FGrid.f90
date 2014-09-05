@@ -232,8 +232,12 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.15  2014/09/05 00:53:20  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Add some
+! tracing.
+!
 ! Revision 2.14  2014/09/05 00:49:06  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.13  2011/08/20 01:04:33  vsnyder
 ! IERR needs a value before it can be referenced
