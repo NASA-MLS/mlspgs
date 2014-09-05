@@ -1881,8 +1881,11 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.186  2014/09/05 01:16:18  vsnyder
+! Remove declarations of unused variables
+!
 ! Revision 2.185  2014/09/05 00:49:07  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.184  2014/04/14 17:39:48  pwagner
 ! Fixed bugs in writing DOIs for dgg, dgm files; still hard-wired, though
