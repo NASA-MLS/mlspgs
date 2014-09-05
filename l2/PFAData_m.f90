@@ -655,8 +655,12 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.32  2014/09/05 01:17:40  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Get kinds
+! from MLSKinds instead of from MLSCommon.
+!
 ! Revision 2.31  2014/09/05 00:49:07  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.30  2014/08/01 01:45:30  vsnyder
 ! Remove unreferenced USE names
