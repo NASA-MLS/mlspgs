@@ -14,6 +14,8 @@ program MLSL2
     & trackallocates
   use chunkdivide_m, only: chunkdivideconfig
   use declaration_table, only: allocate_decl, deallocate_decl, dump_decl
+  use EmpiricalGeometry, only: DestroyEmpiricalGeometry
+  use GetResourceUsage_m, only: GetPID
   use hdf, only: dfacc_rdonly
   use highoutput, only: dump, headline, outputnamedvalue
   use init_tables_module, only: init_tables
@@ -25,8 +27,7 @@ program MLSL2
   use leakcheck_m, only: leakcheck
   use lexer_core, only: init_lexer
   use machine, only: getarg, hp, io_error
-  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSnamesAreVerbose, &
-    & processID
+  use MLScommon, only: MLSFile_t, MLSNamesAreDebug, MLSnamesAreVerbose
   use MLSFiles, only: filestringtable, &
     & addFileToDatabase, deallocate_filedatabase, dump, &
     & initializeMLSfile, MLS_openfile, MLS_closefile
@@ -335,14 +336,6 @@ program MLSL2
     if ( parallel%myTid <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'slave Tid <= 0; probably pvm trouble' )
-    if ( len_trim(notefile) > 0 ) then
-      call USleep( 25*sleepSeconds )
-      call read_textFile ( notefile, arg )
-      processID = asciify ( arg, how='snip' )
-      call output( 'Read process ID from note file', advance='no' )
-      call output( '  ' // trim(processID), advance='no' )
-      call output( '  ' // trim(notefile), advance='yes' )
-    endif
   end if
   !---------------- Task (4) ------------------
   ! Open the L2CF
@@ -499,14 +492,13 @@ program MLSL2
   endif
   
   ! Tell wrapper script we Finished by way of noteFile
-  ! (Yes, this is the very same noteFile we read our processID
-  ! from earlier; we don't need it any more; hope no one else will, either)
   if ( parallel%slave .and. len_trim(noteFile) > 0 ) then
     call output('Telling wrapper script we Finished', advance='yes')
     call write_textFile ( noteFile, 'Finished' )
   endif
   !---------------- Task (8) ------------------
   if ( .not. parallel%slave .or. slavesCleanUpSelves ) then
+    call destroyEmpiricalGeometry
     call destroy_char_table
     call output('Destroyed char table', advance='yes')
     call destroy_hash_table
@@ -552,7 +544,7 @@ program MLSL2
     status = PGS_DEM_Close ( resolutionList, numResolutions, &
       & layerList, numLayers )
     call outputNamedValue( 'PGS_DEM_Close status', status )
-  endif
+  end if
   if ( AllocateLogUnit > 0 ) close( Unit=AllocateLogUnit )
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
@@ -684,8 +676,6 @@ contains
       call outputNamedValue ( 'PCF shared with level 1?', SHAREDPCF, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Range of chunks', trim_safe(parallel%chunkRange), advance='yes', &
-        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
-      call outputNamedValue ( 'Process ID', processID, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'uniqueID ID', uniqueID, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -828,6 +818,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.209  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.208  2014/09/02 18:18:23  pwagner
 ! Uses noteFile mechanism for telling our wrapper script we finished
 !
