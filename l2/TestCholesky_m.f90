@@ -15,7 +15,7 @@ module TestCholesky_M
   use MatrixModule_0, only: DenseCholesky, Densify
   use MatrixModule_1, only: GetMatrixElement, Matrix_T, Matrix_Cholesky_T, &
     & Matrix_SPD_T
-  use MLSCommon, only: R8, RM
+  use MLSKinds, only: R8, RM
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -84,6 +84,9 @@ contains
 end module TestCholesky_M
 
 ! $Log$
+! Revision 2.9  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.8  2009/06/23 18:46:19  pwagner
 ! Prevent Intel from optimizing ident string away
 !
