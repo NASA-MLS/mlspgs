@@ -1524,8 +1524,11 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.34  2014/09/05 01:23:40  vsnyder
+! Remove declaration of unused parameter and USE name
+!
 ! Revision 2.33  2014/09/05 00:49:07  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.32  2014/03/01 03:10:56  vsnyder
 ! Move units checking to init_tables_module
