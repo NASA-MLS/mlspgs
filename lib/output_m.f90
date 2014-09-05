@@ -436,6 +436,7 @@ contains
     logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
     !
     logical :: alreadyLogged
+    logical :: DoIt    ! TheUnit /= 0 .or. outputOptions%prUnitLiteral
     integer :: i1, i2
     integer :: IOBloc
     integer :: nIOBlocs
@@ -452,16 +453,17 @@ contains
     integer :: status
     integer :: TheUnit ! zero for PrUnit == MSGLOGPRUNIT, else unit number
     ! Executable
+    n_chars = len(chars)
     alreadyLogged = .false.
-    if ( SILENTRUNNING ) return
+    if ( SILENTRUNNING ) go to 9
     my_adv = Advance_is_yes_or_no(advance)
     ! print *, 'outputOptions%prUnit: ', outputOptions%prUnit
     ! print *, 'outputOptions%prUnitLiteral: ', outputOptions%prUnitLiteral
     if ( outputOptions%prUnitLiteral ) then
-      write( outputOptions%prUnit, '(a)', advance=my_adv ) trim_safe(chars)
+      write( outputOptions%prUnit, '(a)', advance=my_adv ) chars
       ! print *, chars
-      return
-    endif
+      go to 9
+    end if
     ! If we're not advancing and we've been a string of length 0 to print ..
     if ( my_adv == 'no' .and. len(chars) < 1 ) return
     my_dont_stamp = stampOptions%neverStamp ! .false.
@@ -477,11 +479,11 @@ contains
     else if ( useStdout(outputOptions%prUnit) ) then
       theUnit = output_unit
     end if
+    doIt = TheUnit /= 0 .or. outputOptions%prUnitLiteral
     ! Are we trying to avoid buffered output?
     ! The good part is that if we crash hard we won't lose that
     ! last line.
-    if ( (.not. outputOptions%buffered) .and. &
-      & theUnit /= 0 .and. &
+    if ( (.not. outputOptions%buffered) .and. doIt .and. &
       & ( atcolumnnumber == 1 ) ) then
       flush ( theUnit, iostat=status )
       if ( status /= 0 ) call PrintItOut ( &
@@ -502,7 +504,6 @@ contains
       stamped = .true.
     end if
 
-    n_chars = len(chars)
     if (LOGEXTRABLANKS) n_chars = max(len(chars), 1)
     my_dont_log = outputOptions%skipmlsmsglogging ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
@@ -514,7 +515,7 @@ contains
     ! print *, 'n_stamp: ', n_stamp
     ! print *, 'len(chars): ', len(chars)
     alreadyLogged = .true.
-    if ( theUnit /= 0 .and. n_stamp > RECLMAX ) then
+    if ( doIt .and. n_stamp > RECLMAX ) then
       nIOBlocs = 1 + (n_stamp-1)/RECLMAX
       i2 = 0
       do IOBloc=1, nIOBlocs
@@ -523,10 +524,10 @@ contains
         write ( theUnit, '(a)', advance='no' ) stamped_chars(i1:i2)
       enddo
       if ( my_adv == 'yes' ) write ( theUnit, '(a)' )
-    elseif ( theUnit /= 0 .and. len(chars) < 1 .and. my_adv == 'yes' ) then
+    elseif ( doIt .and. len(chars) < 1 .and. my_adv == 'yes' ) then
       write ( theUnit, '(a)', advance=my_adv )
       ! print *, 'wrote: ', stamped_chars(1:n_stamp), ' to ', theUnit
-    elseif ( theUnit /= 0 .and. n_stamp > 0 ) then
+    elseif ( doIt .and. n_stamp > 0 ) then
       write ( theUnit, '(a)', advance=my_adv ) stamped_chars(1:n_stamp)
       ! print *, 'wrote: ', stamped_chars(1:n_stamp), ' to ', theUnit
     else
@@ -602,7 +603,7 @@ contains
     atLineStart = (my_adv == 'yes')
     if ( atLineStart ) then
       ! Are we trying to avoid buffered output?
-      if ( (.not. outputOptions%buffered) .and. theUnit /= 0 ) then
+      if ( (.not. outputOptions%buffered) .and. doIt ) then
         flush ( theUnit, iostat=status )
         if ( status /= 0 ) call myMessage ( MLSMSG_Error, ModuleName, &
           & trim('Unable to flush prUnit ' // outputOptions%name) )
@@ -611,7 +612,7 @@ contains
         ! Time to add stamp as a page header on its own line
         stamped_chars = stamp(' ')
         stamped = .true.
-        if ( theUnit /= 0 ) then
+        if ( doIt ) then
           write ( theUnit, '(a)', advance='yes' ) trim(stamped_chars)
         end if
       end if
@@ -621,6 +622,7 @@ contains
         linesSinceLastStamp = linesSinceLastStamp + 1
       end if
     end if
+9   continue
     atColumnNumber = atColumnNumber + n_chars
     if ( atLineStart ) atColumnNumber = 1
   contains
@@ -1397,6 +1399,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.115  2014/09/05 00:28:05  vsnyder
+! Better handling of literal output unit
+!
 ! Revision 2.114  2014/08/06 19:26:49  pwagner
 ! Bugfixes plus one workaround for an ifort v13 bug
 !
