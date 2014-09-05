@@ -946,6 +946,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.43  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90 -- Wrong comment
+!
 ! Revision 1.42  2014/08/06 23:33:45  vsnyder
 ! Remove USE for Num_Value, which is not referenced
 !
