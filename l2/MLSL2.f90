@@ -818,8 +818,11 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.210  2014/09/05 01:07:49  vsnyder
+! Remove ProcessID stuff.  Destroy Empirical Geometry explicitly
+!
 ! Revision 2.209  2014/09/05 00:49:07  vsnyder
-! EmpiricalGeometry.f90
+! EmpiricalGeometry.f90 -- Wrong comment
 !
 ! Revision 2.208  2014/09/02 18:18:23  pwagner
 ! Uses noteFile mechanism for telling our wrapper script we finished
