@@ -19,14 +19,14 @@ module MLSFiles               ! Utility file routines
     & HE5_gdopen, HE5_gdclose, &
     & HE5f_acc_trunc, HE5f_acc_rdonly, HE5f_acc_rdwr
   use highoutput, only: outputnamedvalue
-  use intrinsic, only: l_ascii, l_binary, l_HDFeos, l_HDF, l_open, &
+  use intrinsic, only: l_ascii, l_hdfeos, l_hdf, l_open, &
     & l_swath, l_tkgen, l_zonalavg, lit_indices
   use io_stuff, only: get_lun
   use machine, only: io_error
   use MLScommon, only: barefnlen, filenamelen,  MLSfile_t, range_t, &
     & inrange
-  use MLSmessagemodule, only: MLSmessage, MLSmsg_allocate, &
-    & MLSmsg_deallocate, MLSmsg_crash, MLSmsg_error, MLSmsg_warning
+  use MLSmessagemodule, only: MLSmessage, MLSmsg_crash, MLSmsg_error, &
+    & MLSmsg_warning
   use MLSfinds, only: findfirst
   use MLSstrings, only: capitalize, lowercase
   use MLSstringlists, only: extractsubstring, &
@@ -43,11 +43,12 @@ module MLSFiles               ! Utility file routines
     & PGSd_io_gen_aseqfrm, PGSd_io_gen_asequnf, &
     & PGS_io_gen_closef, PGS_io_gen_openf, PGSd_pc_file_path_max, &
     & useSDPtoolkit
-!   in the long run, we'll try putting interfaces to these in SDPtoolkit.f90
-!   until then, just declare them as external
-!    & PGS_met_sfstart, PGS_met_sfend, &
+!   In the long run, we'll try putting interfaces to these in SDPToolkit.f90
+!   Until then, just declare them as external
+!    & PGS_MET_SFstart, PGS_MET_SFend, &
   use string_table, only: display_string, get_string
   use HDF5, only: size_t
+
   implicit none
 
   private 
@@ -134,7 +135,7 @@ module MLSFiles               ! Utility file routines
 ! GetPCFromRef (char* FileName, PCBottom, PCTop,
 !     log caseSensitive, ErrType, [int versionNum], [log debugOption],
 !     [char* path], [char* ExactName])
-! split_path_name ( char* full_file_name, char* path, char* name, [char slash] )
+! split_path_name (char* full_file_name, char* path, char* name, [char slash])
 ! int mls_exists ( char* FileName )
 ! int mls_inqswath (char* FileName, char* swathList, int strBufSize,
 !     [int hdfVersion])
@@ -249,7 +250,7 @@ module MLSFiles               ! Utility file routines
   ! not just what the docs say
   logical, parameter :: HDF5_ACC_TYPES_TO_MET = .true.
   integer, parameter :: HDF5_ACC_DEFAULT = HE5F_ACC_RDWR ! HDF5_ACC_RDWR
-  
+
   ! ------------- Warning--trickery ahead -----------
   ! Character(s) added to file name so parser won't recognize it
   ! (Parser might change its case if it thinks it has seen the name before)
@@ -336,6 +337,8 @@ contains
 
   ! This routine adds a vector to a database of such vectors, 
   ! creating the database if necessary.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer :: DATABASE
@@ -729,13 +732,14 @@ contains
   ! Alas, doesn't work--we need to know how to undecorate character tree
   ! first before we will be able to make it work; sorry (P. Wagner)
 
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer :: DATABASE
     type (MLSFile_T), intent(in) ::            ITEM
 
     ! Local variables
     type (MLSFile_T), dimension(:), pointer :: tempDatabase
-    logical, parameter                     :: okToDeallocEmptyDB = .FALSE.
+    logical, parameter                      :: okToDeallocEmptyDB = .FALSE.
     include "rmItemFromDatabase.f9h"
     call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot yet (ever?) rm File from database" ) 
@@ -750,19 +754,20 @@ contains
 
   subroutine Deallocate_filedatabase(database)
 
+    use Allocate_Deallocate, only: Test_Deallocate
     ! Arguments
     type (MLSFile_T), dimension(:), pointer :: DATABASE
     ! Local variables
-    integer :: i, error
+    integer :: error, i, s
     ! Executable
     if ( .not. associated(database) ) return
     do i=1, size(database)
       if ( database(i)%StillOpen ) call MLS_CloseFile(database(i))
-    enddo
+    end do
+    s = size(database) * storage_size(database) / 8
     Deallocate ( database, stat=error )
-    if ( error /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "Cannot deallocate file database" )
+    call test_deallocate ( error, ModuleName, 'database', s )
+
   end subroutine Deallocate_filedatabase
 
   ! ------------------------------------------  Dump_FileDataBase  -----
@@ -2474,8 +2479,8 @@ end module MLSFiles
 
 !
 ! $Log$
-! Revision 2.101  2014/09/02 18:31:40  pwagner
-! Added mls_exists to toc and api
+! Revision 2.102  2014/09/05 00:01:11  vsnyder
+! More complete and accurate allocate/deallocate size tracking
 !
 ! Revision 2.100  2014/04/02 23:02:10  pwagner
 ! Removed redundant open_ and close_MLSFile
