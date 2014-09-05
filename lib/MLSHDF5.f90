@@ -434,7 +434,7 @@ contains ! ======================= Public Procedures =========================
     integer :: i
     integer :: itemID
     integer, dimension(1024) :: iValue
-    integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
+    integer(kind=hSize_t), dimension(:), allocatable :: maxdims_ptr
     integer :: Me = -1                  ! String index for trace cacheing
     character(len=MAXNDSNAMES*MAXNAMELEN) :: myNames
     character(len=128) :: name
@@ -509,7 +509,7 @@ contains ! ======================= Public Procedures =========================
         call outputNamedValue ( 'spaceID', spaceID )
         call outputNamedValue ( 'rank', rank )
         call outputNamedValue ( 'hdims', int(hdims, kind(status)) )
-      endif
+      end if
       call h5aClose_f ( attrID, status )
       call GetHDF5AttrDims ( itemID, name, hdims )
       dims = hdims
@@ -518,7 +518,7 @@ contains ! ======================= Public Procedures =========================
       if ( DEEBUG ) then
         call outputNamedValue ( 'dims', dims )
         call outputNamedValue ( 'Qtype', Qtype )
-      endif
+      end if
       dims(1) = max(dims(1), 1)
       select case ( QType )
       case ( 'integer' )
@@ -2810,7 +2810,7 @@ contains ! ======================= Public Procedures =========================
     integer :: AttrID                   ! ID for Attr
     integer :: classID
     integer :: dspace_id                ! spaceID for Attr
-    integer(kind=hSize_t), dimension(:), pointer :: maxdims_ptr
+    integer(kind=hSize_t), dimension(:), allocatable :: maxdims_ptr
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: my_rank, rank
     integer :: STATUS                   ! Flag
@@ -5696,6 +5696,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.129  2014/09/05 00:05:14  vsnyder
+! Convert some local pointer temps to allocatable
+!
 ! Revision 2.128  2014/07/18 21:59:17  pwagner
 ! Pass item name to allocate_test
 !
