@@ -56,23 +56,23 @@ contains
   subroutine Destroy_Log_Mie
   ! Deallocate the Log Mie tables
 
-    use Allocate_Deallocate, only: Byte_Size, MEMORY_UNITS, Test_DeAllocate
+    use Allocate_Deallocate, only: Byte_Size, Test_DeAllocate
 
     integer :: Status
-    real :: S
+    integer :: S
 
     if ( associated(log_beta_c_a) ) then
-      s = byte_size(log_beta_c_a) / MEMORY_UNITS
+      s = byte_size(log_beta_c_a)
       deallocate ( log_beta_c_a, stat=status )
       call test_deallocate ( status, moduleName, 'log_beta_c_a', s )
     end if
     if ( associated(log_beta_c_e) ) then
-      s = byte_size(log_beta_c_e) / MEMORY_UNITS
+      s = byte_size(log_beta_c_e)
       deallocate ( log_beta_c_e, stat=status )
       call test_deallocate ( status, moduleName, 'log_beta_c_e', s )
     end if
     if ( associated(log_beta_c_s) ) then
-      s = byte_size(log_beta_c_s) / MEMORY_UNITS
+      s = byte_size(log_beta_c_s)
       deallocate ( log_beta_c_s, stat=status )
       call test_deallocate ( status, moduleName, 'log_beta_c_s', s )
     end if
@@ -82,59 +82,59 @@ contains
   subroutine Destroy_Mie
   ! Deallocate the Mie tables
 
-    use Allocate_Deallocate, only: Byte_Size, MEMORY_UNITS, Test_DeAllocate
+    use Allocate_Deallocate, only: Byte_Size, Test_DeAllocate
 
     integer :: Status
-    real :: S
+    integer :: S
 
     if ( associated(f_s) ) then
-      s = byte_size(f_s) / MEMORY_UNITS
+      s = byte_size(f_s)
       deallocate ( f_s, stat=status )
       call test_deallocate ( status, moduleName, 'F_s', s )
-      s = byte_size(iwc_s) / MEMORY_UNITS
+      s = byte_size(iwc_s)
       deallocate ( iwc_s, stat=status )
       call test_deallocate ( status, moduleName, 'iwc_s', s )
-      s = byte_size(t_s) / MEMORY_UNITS
+      s = byte_size(t_s)
       deallocate ( t_s, stat=status )
       call test_deallocate ( status, moduleName, 't_s', s )
-      s = byte_size(theta_s) / MEMORY_UNITS
+      s = byte_size(theta_s)
       deallocate ( theta_s, stat=status )
       call test_deallocate ( status, moduleName, 'theta_s', s )
-      s = byte_size(beta_c_a) / MEMORY_UNITS
+      s = byte_size(beta_c_a)
       deallocate ( beta_c_a, stat=status )
       call test_deallocate ( status, moduleName, 'beta_c_a', s )
-      s = byte_size(beta_c_e) / MEMORY_UNITS
+      s = byte_size(beta_c_e)
       deallocate ( beta_c_e, stat=status )
       call test_deallocate ( status, moduleName, 'beta_c_e', s )
-      s = byte_size(beta_c_s) / MEMORY_UNITS
+      s = byte_size(beta_c_s)
       deallocate ( beta_c_s, stat=status )
       call test_deallocate ( status, moduleName, 'beta_c_s', s )
-      s = byte_size(P) / MEMORY_UNITS
+      s = byte_size(P)
       deallocate ( P, stat=status )
       call test_deallocate ( status, moduleName, 'P', s )
       if ( associated(dP_dIWC) ) then
-        s = byte_size(dBeta_dIWC_c_a) / MEMORY_UNITS
+        s = byte_size(dBeta_dIWC_c_a)
         deallocate ( dBeta_dIWC_c_a, stat=status )
         call test_deallocate ( status, moduleName, 'dBeta_dIWC_c_a', s )
-        s = byte_size(dBeta_dT_c_a) / MEMORY_UNITS
+        s = byte_size(dBeta_dT_c_a)
         deallocate ( dBeta_dT_c_a, stat=status )
         call test_deallocate ( status, moduleName, 'dBeta_dT_c_a', s )
-        s = byte_size(dBeta_dIWC_c_e) / MEMORY_UNITS
+        s = byte_size(dBeta_dIWC_c_e)
         deallocate ( dBeta_dIWC_c_e, stat=status )
         call test_deallocate ( status, moduleName, 'dBeta_dIWC_c_e', s )
-        s = byte_size(dBeta_dT_c_e) / MEMORY_UNITS
+        s = byte_size(dBeta_dT_c_e)
         deallocate ( dBeta_dT_c_e, stat=status )
         call test_deallocate ( status, moduleName, 'dBeta_dT_c_e', s )
-        s = byte_size(dBeta_dIWC_c_s) / MEMORY_UNITS
+        s = byte_size(dBeta_dIWC_c_s)
         deallocate ( dBeta_dIWC_c_s, stat=status )
         call test_deallocate ( status, moduleName, 'dBeta_dIWC_c_s', s )
-        s = byte_size(dBeta_dT_c_s) / MEMORY_UNITS
+        s = byte_size(dBeta_dT_c_s)
         deallocate ( dBeta_dT_c_s, stat=status )
         call test_deallocate ( status, moduleName, 'dBeta_dT_c_s', s )
-        s = byte_size(dP_dIWC) / MEMORY_UNITS
+        s = byte_size(dP_dIWC)
         deallocate ( dP_dIWC, stat=status )
         call test_deallocate ( status, moduleName, 'dP_dIWC', s )
-        s = byte_size(dP_dT) / MEMORY_UNITS
+        s = byte_size(dP_dT)
         deallocate ( dP_dT, stat=status )
         call test_deallocate ( status, moduleName, 'dP_dT', s )
       end if
@@ -215,7 +215,7 @@ contains
   ! If any of Log_Beta_c_a, Log_Beta_c_e, Log_Beta_c_s are not associated,
   ! allocate them and compute them.  Read_Mie has to be called first.
 
-    use Allocate_Deallocate, only: Test_Allocate
+    use Allocate_Deallocate, only: Bytes, Test_Allocate
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     integer :: Status
 
@@ -227,7 +227,7 @@ contains
         & log_beta_c_a(ubound(beta_c_e,1),ubound(beta_c_e,2),ubound(beta_c_e,3)), &
         & stat=status )
       call test_allocate ( status, moduleName, 'log_beta_c_a', (/ 1,1,1 /), &
-          & ubound(beta_c_e) )
+          & ubound(beta_c_e), bytes(beta_c_e) )
       log_beta_c_a = log(beta_c_e)
     end if
     if ( .not. associated(log_beta_c_e) ) then
@@ -235,7 +235,7 @@ contains
         & log_beta_c_e(ubound(beta_c_e,1),ubound(beta_c_e,2),ubound(beta_c_e,3)), &
         & stat=status )
       call test_allocate ( status, moduleName, 'Log_Beta_c_e', (/ 1,1,1 /), &
-          & ubound(beta_c_e) )
+          & ubound(beta_c_e), bytes(log_beta_c_e) )
       log_beta_c_e = log(beta_c_e)
     end if
     if ( .not. associated(log_beta_c_s) ) then
@@ -243,7 +243,7 @@ contains
         & log_beta_c_s(ubound(beta_c_s,1),ubound(beta_c_s,2),ubound(beta_c_s,3)), &
         & stat=status )
       call test_allocate ( status, moduleName, 'Log_Beta_c_s', (/ 1,1,1 /), &
-          & ubound(beta_c_s) )
+          & ubound(beta_c_s), bytes(beta_c_s) )
       log_beta_c_s = log(beta_c_s)
     end if
   end subroutine Log_Mie
@@ -251,7 +251,7 @@ contains
   ! ---------------------------------------------------  Read_Mie  -----
   subroutine Read_Mie ( FileName )
 
-    use Allocate_Deallocate, only: Test_Allocate
+    use Allocate_Deallocate, only: Bytes, Test_Allocate
     use IO_stuff, only: Get_Lun
     use Machine, only: IO_Error
     use MLSHDF5, only: IsHDF5DSPresent, LoadPtrFromHDF5DS
@@ -321,26 +321,30 @@ contains
 
       ! Allocate and read the coordinate arrays
       allocate ( f_s(n_f), stat=status )
-      call test_allocate ( status, moduleName, 'F_s', (/ 1 /), (/ n_f /) )
+      call test_allocate ( status, moduleName, 'F_s', (/ 1 /), (/ n_f /), &
+        & bytes(f_s) )
       allocate ( iwc_s(n_iwc), stat=status )
-      call test_allocate ( status, moduleName, 'IWC_s', (/ 1 /), (/ n_iwc /) )
+      call test_allocate ( status, moduleName, 'IWC_s', (/ 1 /), (/ n_iwc /), &
+        & bytes(iwc_s) )
       allocate ( T_s(n_T), stat=status )
-      call test_allocate ( status, moduleName, 'T_s', (/ 1 /), (/ n_T /) )
+      call test_allocate ( status, moduleName, 'T_s', (/ 1 /), (/ n_T /), &
+        & bytes(T_s) )
       allocate ( theta_s(n_theta), stat=status )
-      call test_allocate ( status, moduleName, 'theta_s', (/ 1 /), (/ n_theta /) )
+      call test_allocate ( status, moduleName, 'theta_s', (/ 1 /), (/ n_theta /), &
+        & bytes(theta_s) )
       read ( lun ) iwc_s, t_s, theta_s, f_s
 
       ! Allocate the phase array and its derivatives
       allocate ( p(n_t, n_iwc, n_theta, n_f), stat=status )
       call test_allocate ( status, moduleName, 'P', (/ 1,1,1,1 /), &
-        & (/ n_t,n_iwc,n_theta,n_f /) )
+        & (/ n_t,n_iwc,n_theta,n_f /), bytes(p) )
       if ( derivs ) then
         allocate ( dP_dIWC(n_t, n_iwc, n_theta, n_f), stat=status )
         call test_allocate ( status, moduleName, 'dP_dIWC', (/ 1,1,1,1 /), &
-          & (/ n_t,n_iwc,n_theta,n_f /) )
+          & (/ n_t,n_iwc,n_theta,n_f /), bytes(dP_dIWC) )
         allocate ( dP_dT(n_t, n_iwc, n_theta, n_f), stat=status )
         call test_allocate ( status, moduleName, 'dP_dT', (/ 1,1,1,1 /), &
-          & (/ n_t,n_iwc,n_theta,n_f /) )
+          & (/ n_t,n_iwc,n_theta,n_f /), bytes(dP_dT) )
       end if
 
       ! Read everything
@@ -414,6 +418,9 @@ contains
 end module Read_Mie_m
 
 ! $Log$
+! Revision 2.12  2014/09/05 20:52:32  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.11  2013/06/12 02:21:57  vsnyder
 ! Use BYTE_SIZE from Allocate_Deallocate
 !
