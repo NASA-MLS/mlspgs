@@ -20,14 +20,14 @@ module VGridsDatabase
     & PHYQ_Length, PHYQ_Angle, PHYQ_Invalid
   use MLSKinds, only: RS => R8  ! Real kind for Surfs
   use MLSMessageModule, only: & ! Message logging
-    & MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error, &
+    & MLSMessage, MLSMSG_Error, &
     & PVMErrorMessage
 
   implicit NONE
   private
 
   ! Define the vGrid data type.  This is used to store all the vGrid
-  ! information. Note that this is only relevant for coherent quantities. 
+  ! information. Note that this is only relevant for coherent quantities.
   ! Incoherent ones deal with vGrids seperately.
 
   type, public :: VGrid_T
@@ -67,7 +67,7 @@ module VGridsDatabase
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
   !---------------------------------------------------------------------------
 
 contains
@@ -103,6 +103,8 @@ contains
 
   ! This routine adds a vGrid to a database of vGrids, creating the database
   ! if necessary.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (VGrid_T), dimension(:), pointer :: DATABASE
@@ -165,7 +167,7 @@ contains
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--not able to convert VGrids between vertical coordinates' )
-    end select      
+    end select
 
   end subroutine ConvertVGrid_inout
 
@@ -179,7 +181,7 @@ contains
     type (vGrid_T), intent(in) :: vGrid
     integer, intent(in)        :: newVerticalCoordinate
     real, dimension(:)         :: surfs
-    
+
 
     ! Executable code
     surfs = vGrid%surfs(:,1)
@@ -203,7 +205,7 @@ contains
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--not able to convert VGrids between vertical coordinates' )
-    end select      
+    end select
 
   end subroutine ConvertVGrid_sngl
 
@@ -217,7 +219,7 @@ contains
     type (vGrid_T), intent(in)     :: vGrid
     integer, intent(in)            :: newVerticalCoordinate
     double precision, dimension(:) :: surfs
-    
+
 
     ! Executable code
     surfs = vGrid%surfs(:,1)
@@ -241,7 +243,7 @@ contains
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--not able to convert VGrids between vertical coordinates' )
-    end select      
+    end select
 
   end subroutine ConvertVGrid_dbl
 
@@ -250,20 +252,23 @@ contains
 
   ! This subroutine destroys a vGrid database
 
+    use Allocate_Deallocate, only: Test_Deallocate
+
     ! Dummy argument
     type (VGrid_T), dimension(:), pointer :: DATABASE
 
     ! Local variables
-    integer :: vgridIndex, Status
+    integer :: S, Status, vgridIndex
 
     if ( associated(database) ) then
       do vgridIndex = 1, SIZE(database)
         call DestroyVGridContents ( database(vgridIndex) )
       end do
+      s = size(database) * storage_size(database) / 8
       deallocate ( database, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate // "database" )
+      call test_deallocate ( status, ModuleName, "database", s )
     end if
+
   end subroutine DestroyVGridDatabase
 
   ! -------------------------------------------  DoVGridsMatch_VG  -----
@@ -320,7 +325,7 @@ contains
     if ( myDetails > 0 ) then
       call dump ( vgrid%surfs(:,1), ' Surfs = ' )
       call newline
-    endif
+    end if
   end subroutine Dump_a_VGrid
 
 
@@ -362,9 +367,9 @@ contains
       GetUnitForVerticalCoordinate = PHYQ_Dimensionless
     case ( l_none )
       GetUnitForVerticalCoordinate = PHYQ_Invalid
-    case ( l_pressure ) 
+    case ( l_pressure )
       GetUnitForVerticalCoordinate = PHYQ_Pressure
-    case ( l_theta ) 
+    case ( l_theta )
       GetUnitForVerticalCoordinate = PHYQ_Temperature
     case ( l_zeta )
       GetUnitForVerticalCoordinate = PHYQ_Zeta
@@ -375,12 +380,13 @@ contains
   end function GetUnitForVerticalCoordinate
 
   ! ----------------------------------------NullifyVGrid -----
-  subroutine NullifyVGrid ( V )
+  subroutine NullifyVGrid ( IntentionallyNotUsed )
     ! Given a vGrid, nullify all the pointers associated with it
-    type ( VGrid_T ), intent(out) :: V
+    type ( VGrid_T ), intent(out) :: IntentionallyNotUsed
 
-    ! Executable code isn't necessary because V is intent(out) and v%surfs
-    ! has default initialization to NULL()
+    ! Executable code isn't necessary because IntentionallyNotUsed is
+    ! intent(out) and IntentionallyNotUsed%surfs has default initialization
+    ! to NULL()
   end subroutine NullifyVGrid
 
   ! ------------------------------------------------  PVMPackVGrid ----
@@ -410,7 +416,7 @@ contains
       if ( vGrid%noSurfs > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Asked to pack a strange vGrid' )
     end if
-    
+
   end subroutine PVMPackVgrid
 
   ! ------------------------------------------------  PVMUnpackVGrid ----
@@ -439,7 +445,7 @@ contains
       call PVMIDLUnpack ( vGrid%surfs, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid surfaces' )
     end if
-    
+
   end subroutine PVMUnpackVgrid
 
 !--------------------------- end bloc --------------------------------------
@@ -455,6 +461,10 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.27  2014/09/05 00:19:47  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Some
+! cannonball polishing.
+!
 ! Revision 2.26  2009/06/23 18:25:43  pwagner
 ! Prevent Intel from optimizing ident string away
 !
