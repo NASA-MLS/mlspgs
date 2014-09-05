@@ -14,8 +14,7 @@ module FilterShapes_m
   ! Read the filter shapes file.
 
   use MLSKinds, only: R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_m, only: GetNameOfSignal, MaxSigLen, Signals, Signal_T
   
   implicit none
@@ -97,7 +96,8 @@ contains
 
   ! ------------------------------------  Read_Filter_Shapes_File  -----
   subroutine Read_Filter_Shapes_File ( Lun, FileIndex, Where )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & Test_Allocate, Test_Deallocate
     use MACHINE, only: IO_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -116,6 +116,7 @@ contains
     integer :: Number_in_shape          ! How many points in each filter?
     integer :: NumFilterShapes          ! How many filter shapes in file?
     integer :: Offset                   ! From start of FilterShapes -- to extend it
+    integer :: S                        ! Size in bytes of object to deallocate
     integer :: Sideband                 ! From parse signal
                                         ! shape array -- all the same
                                         ! for each signal.
@@ -150,13 +151,13 @@ contains
     ! Create or expand the FilterShapes array
     tempFilterShapes => filterShapes
     allocate ( filterShapes(numFilterShapes), stat=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "FilterShapes")
+    call test_allocate ( status, moduleName, "FilterShapes", &
+      & uBounds = numFilterShapes, elementSize = storage_size(filterShapes) / 8 )
     if ( associated(tempFilterShapes) ) then
       filterShapes(:offset) = tempFilterShapes
+      s = size(tempFilterShapes) * storage_size(tempFilterShapes) / 8
       deallocate ( tempFilterShapes, stat=status )
-      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // "TempFilterShapes")
+      call test_deallocate ( status, moduleName, "TempFilterShapes", s )
     end if
 
     ! Read and store the filter shapes
@@ -212,7 +213,8 @@ contains
 
   ! -------------------------------  Read_DACS_Filter_Shapes_File  -----
   subroutine Read_DACS_Filter_Shapes_File ( Lun, FileIndex, Where )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+      & Test_Allocate, Test_Deallocate
     use MACHINE, only: IO_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -236,6 +238,7 @@ contains
     integer :: Number_shape             ! How many points in each filter?
     integer :: NumFilterShapes          ! How many filter shapes in file?
     integer :: Offset                   ! From start of FilterShapes -- to extend it
+    integer :: S                        ! Size in bytes of object to deallocate
     integer :: Sideband                 ! From parse signal
                                         ! shape array -- all the same
                                         ! for each signal.
@@ -287,13 +290,13 @@ contains
     ! Create or expand the DACSfilterShapes array
     tempFilterShapes => DACSfilterShapes
     allocate ( DACSfilterShapes(numFilterShapes), stat=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "DACSfilterShapes")
+    call test_allocate ( status, moduleName, "DACSfilterShapes", &
+      & uBounds = numFilterShapes, elementSize = storage_size(DACSfilterShapes) / 8 )
     if ( associated(tempFilterShapes) ) then
       DACSfilterShapes(:offset) = tempFilterShapes
+      s = size(tempFilterShapes) * storage_size(tempFilterShapes) / 8
       deallocate ( tempFilterShapes, stat=status )
-      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // "TempFilterShapes")
+      call test_deallocate ( status, moduleName, "TempFilterShapes", s )
     end if
 
     ! Read and store the filter shapes.  Don't need error checks since
@@ -376,7 +379,9 @@ contains
 
     ! Add a quantity template to a database, or create the database if it
     ! doesn't yet exist
-    
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (FilterShape_T), dimension(:), pointer :: database
     type (FilterShape_T), intent(in) :: item
@@ -394,7 +399,9 @@ contains
 
     ! Add a quantity template to a database, or create the database if it
     ! doesn't yet exist
-    
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (DACSFilterShape_T), dimension(:), pointer :: database
     type (DACSFilterShape_T), intent(in) :: item
@@ -409,8 +416,8 @@ contains
 
   ! -----------------------------  Destroy_Filter_Shapes_Database  -----
   subroutine Destroy_Filter_Shapes_Database
-    use Allocate_Deallocate, only: Deallocate_Test
-    integer :: I, Status
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    integer :: I, S, Status
     if ( .not. associated(filterShapes) ) return
     do i = 1, size(filterShapes)
       call deallocate_test ( filterShapes(i)%filterGrid, &
@@ -420,15 +427,15 @@ contains
       call deallocate_test ( filterShapes(i)%signal%channels, &
         & "FilterShapes(?)%signal%channels", moduleName )
     end do ! i
+    s = size(filterShapes) * storage_size(filterShapes) / 8
     deallocate ( filterShapes, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      MLSMSG_DeAllocate // "FilterShapes" )
+    call test_deallocate ( status, moduleName, "FilterShapes", s )
   end subroutine Destroy_Filter_Shapes_Database
 
   ! ------------------------  Destroy_DACS_Filter_Database  -----
   subroutine Destroy_DACS_Filter_Database
-    use Allocate_Deallocate, only: Deallocate_Test
-    integer :: I, Status
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    integer :: I, S, Status
     if ( .not. associated(DACSfilterShapes) ) return
     do i = 1, size(DACSfilterShapes)
       call deallocate_test ( DACSfilterShapes(i)%filter%filterGrid, &
@@ -442,9 +449,9 @@ contains
       call deallocate_test ( DACSfilterShapes(i)%ch_norm, &
         & "DACSFilterShapes(?)%ch_norm", moduleName )
     end do ! i
+    s = size(DACSfilterShapes) * storage_size(DACSfilterShapes) / 8
     deallocate ( DACSfilterShapes, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      MLSMSG_DeAllocate // "DACSFilterShapes" )
+    call test_deallocate ( status, moduleName, "DACSFilterShapes", s )
   end subroutine Destroy_DACS_Filter_Database
 
   ! --------------------------------  Dump_Filter_Shapes_Database  -----
@@ -554,6 +561,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.27  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.26  2011/05/09 17:44:59  pwagner
 ! Converted to using switchDetail
 !

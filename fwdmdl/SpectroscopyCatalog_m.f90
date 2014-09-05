@@ -118,6 +118,7 @@ contains ! =====  Public Procedures  ===================================
     integer :: NumLines                 ! Number of lines in catalog
     integer :: OffsetLines              ! Number of lines previously in catalog
     real(r8) :: QN                      ! for call to expr_check for QN field
+    integer :: S                        ! Size in bytes of an object to deallocate
     integer :: SIDEBAND                 ! A single sideband
     integer :: SignalsNode              ! Tree node for emls/umls bands
     integer :: SignalsNodePol           ! Tree node for emls/umls bands for
@@ -174,11 +175,13 @@ contains ! =====  Public Procedures  ===================================
     ! Create or expand the Lines database
     tempLines => Lines
     allocate ( lines(numLines), stat=status )
-    call test_allocate ( status, moduleName, "Lines" )
+    call test_allocate ( status, moduleName, "Lines", ubounds=numLines, &
+      & elementSize = storage_size(lines) / 8 )
     if ( associated(tempLines) ) then
       lines(:offsetLines) = tempLines
+      s = size(tempLines) * storage_size(tempLines) / 8
       deallocate ( tempLines, stat=status )
-      call test_deallocate ( status, moduleName, "TempLines" )
+      call test_deallocate ( status, moduleName, "TempLines", s )
     end if
 
     numLines = offsetLines
@@ -529,7 +532,7 @@ contains ! =====  Public Procedures  ===================================
 
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
 
-    integer :: I, Status                   ! From deallocate
+    integer :: I, S, Status                   ! From deallocate
     if ( .not. associated(lines) ) return
     do i = 1, size(lines)
       call deallocate_test ( lines(i)%qn, "Lines(i)%QN", moduleName )
@@ -537,8 +540,9 @@ contains ! =====  Public Procedures  ===================================
       call deallocate_test ( lines(i)%sidebands, "Lines(i)%Sidebands", moduleName )
       call deallocate_test ( lines(i)%polarized, "Lines(i)%Polarized", moduleName )
     end do
+    s = size(lines) * storage_size(lines) / 8
     deallocate ( lines, stat=status )
-    call test_deallocate ( status, moduleName, "Lines" )
+    call test_deallocate ( status, moduleName, "Lines", s )
   end subroutine Destroy_Line_Database
 
   ! ----------------------------------  Destroy_SpectCat_Database  -----
@@ -906,6 +910,7 @@ contains ! =====  Public Procedures  ===================================
     integer, pointer :: QNIndices(:) ! QNIndices(i) is index in
                                  ! QNList of last QN for line I.
     integer, pointer :: QNList(:) ! Concatenation from all lines
+    integer :: S                 ! Size in bytes of an object to deallocate
     integer(hsize_t) :: Shp(1), Shp2(2) ! To get the shapes of datasets HDF
     integer, pointer :: SidebandList(:) ! Concatenation from all lines
     integer, dimension(:), pointer :: SigInds ! From Parse_signal
@@ -953,11 +958,13 @@ contains ! =====  Public Procedures  ===================================
       if ( associated(lines) ) line1 = size(lines)
       lineN = line1 + nLines
       allocate ( myLines(lineN), stat=iostat )
-      call test_allocate ( iostat, moduleName, 'Lines' )
+      call test_allocate ( iostat, moduleName, 'Lines', ubounds=lineN, &
+        & elementSize = storage_size(myLines) / 8 )
       if ( associated(lines) ) then
         myLines(:line1) = lines
+        s = size(lines) * storage_size(lines) / 8
         deallocate ( lines, stat=iostat )
-        call test_deallocate ( iostat, moduleName, 'Lines' )
+        call test_deallocate ( iostat, moduleName, 'Lines', s )
       end if
       lines => myLines
       ! Fill in the expanded part
@@ -1059,7 +1066,8 @@ contains ! =====  Public Procedures  ===================================
       if ( shp2(2) /= maxContinuum ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Second dimension of continuum field of catalog has changed.' )
       allocate ( myCatalog(shp2(1)), stat=iostat )
-      call test_allocate ( iostat, moduleName, 'MyCatalog' )
+      call test_allocate ( iostat, moduleName, 'MyCatalog', &
+        & ubounds=int(shp2(1)), elementSize = storage_size(myCatalog) / 8 )
       nullify ( catNames, continuum, lineIndices, lineList, moleculeNames, qlog )
       call loadPtrFromHDF5DS ( fileID, 'CatNames', catNames )
       call loadPtrFromHDF5DS ( fileID, 'Continuum', continuum )
@@ -1092,8 +1100,9 @@ contains ! =====  Public Procedures  ===================================
           catalog(myCatalog(i)%molecule) = myCatalog(i)
         end if
       end do
+      s = size(myCatalog) * storage_size(myCatalog) / 8
       deallocate ( myCatalog, stat=iostat )
-      call test_deallocate ( iostat, moduleName, 'MyCatalog' )
+      call test_deallocate ( iostat, moduleName, 'MyCatalog', s )
       call deallocate_test ( catNames,      'CatNames', moduleName )
       call deallocate_test ( continuum,     'Continuum', moduleName )
       call deallocate_test ( lineList,      'LineList', moduleName )
@@ -1546,6 +1555,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.62  2014/07/18 23:15:26  pwagner
+! Aimed for consistency in names passed to allocate_test
+!
 ! Revision 2.61  2014/04/22 00:37:51  vsnyder
 ! Add Signals and SignalsPol fields, and sanity checks
 !

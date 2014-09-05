@@ -16,8 +16,7 @@ module PointingGrid_m
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use MLSKINDS, only: R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
   use MLSSIGNALS_M, only: DISPLAYSIGNALNAME, MAXSIGLEN, SIGNALS, SIGNAL_T
 
   ! More USEs below in each procedure, if they're only used therein.
@@ -75,6 +74,7 @@ contains
 
   ! ------------------------------------  Read_Pointing_Grid_File  -----
   subroutine Read_Pointing_Grid_File ( Lun, Where )
+    use Allocate_Deallocate, only: Test_Allocate
     use MACHINE, only: IO_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -160,8 +160,8 @@ outer1: do
     rewind ( lun )
     ! Now that we know how much is there, allocate the data structures.
     allocate ( pointingGrids(howManyRadiometers), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Allocate // "PointingGrids" )
+    call test_allocate ( status, moduleName, "PointingGrids", &
+      & uBounds = howManyRadiometers, elementSize = storage_size(pointingGrids) / 8 )
     read ( lun, '(A)', iostat=status ) line  ! Read the first radiometer spec
     if ( status > 0 ) go to 99
     howManyRadiometers = 0
@@ -169,8 +169,9 @@ outer2: do
       howManyRadiometers = howManyRadiometers + 1
       allocate ( pointingGrids(howManyRadiometers)%signals( &
         & howManySignals(howManyRadiometers) ), stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Allocate // "PointingGrids(?)%signals" )
+      call test_allocate ( status, moduleName, "PointingGrids(?)%signals", &
+        & uBounds = howManySignals(howManyRadiometers), &
+        & elementSize = storage_size(pointingGrids(howManyRadiometers)%signals) / 8 )
       n = 0 ! Counter in pointingGrids(howManyRadiometers)%signals
       nullify ( signal_indices )
       nullify ( channels )
@@ -196,8 +197,9 @@ outer2: do
         & pointingGrids(howManyRadiometers)%centerFrequency
       allocate ( pointingGrids(howManyRadiometers)% &
         & oneGrid(howManyGrids(howManyRadiometers)), stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Allocate // "PointingGrids(?)%OneGrid" )
+      call test_allocate ( status, moduleName, "PointingGrids(?)%OneGrid", &
+        & uBounds = howManyGrids(howManyRadiometers), &
+        & elementSize = storage_size(pointingGrids(howManyRadiometers)%oneGrid) / 8 )
       n = 0
       do
         read ( lun, '(A)', err=99, iostat=status ) line
@@ -242,7 +244,8 @@ outer2: do
 
   ! -----------------------------  Destroy_Pointing_Grid_Database  -----
   subroutine Destroy_Pointing_Grid_Database
-    integer :: I, J, Status
+    use Allocate_Deallocate, only: Test_Deallocate
+    integer :: I, J, S, Status
     if (.not. associated(pointingGrids) ) return
     do i = 1, size(pointingGrids)
       ! It used to do this.
@@ -257,13 +260,14 @@ outer2: do
         call deallocate_test ( pointingGrids(i)%oneGrid(j)%frequencies, &
           & "PointingGrids(?)%oneGrid(?)%frequencies", moduleName )
       end do ! j
+      s = size(pointingGrids(i)%oneGrid) * &
+        & storage_size(pointingGrids(i)%oneGrid) / 8
       deallocate ( pointingGrids(i)%oneGrid, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        MLSMSG_DeAllocate // "PointingGrids(?)%oneGrid(?)" )
+      call test_deallocate ( status, moduleName, "PointingGrids(?)%oneGrid(?)", s )
     end do ! i
+    s = size(pointingGrids) * storage_size(pointingGrids) / 8
     deallocate ( pointingGrids, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      MLSMSG_DeAllocate // "PointingGrids" )
+    call test_deallocate ( status, moduleName, "PointingGrids", s )
   end subroutine Destroy_Pointing_Grid_Database
 
   ! --------------------------------  Dump_Pointing_Grid_Database  -----
@@ -314,6 +318,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.13  2013/08/30 03:56:23  vsnyder
+! Revise use of trace_begin and trace_end
+!
 ! Revision 2.12  2011/05/09 17:52:15  pwagner
 ! Converted to using switchDetail
 !

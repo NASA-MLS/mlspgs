@@ -245,8 +245,7 @@ contains
     ! Add a quantity template to a database, or create the database if it
     ! doesn't yet exist
 
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, &
-      & MLSMSG_DEALLOCATE, MLSMSG_ERROR
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
@@ -341,7 +340,8 @@ contains
 
       allocate ( channels(fwdModelConf%noUsedChannels), stat=ier )
       call test_allocate ( ier, ModuleName, 'info%channels', &
-        & ubounds=(/ fwdModelConf%noUsedChannels /) )
+        & ubounds=(/ fwdModelConf%noUsedChannels /), &
+        & elementSize = storage_size(channels) / 8 )
 
       ! Collect channel information from signals database.
       channel = 0
@@ -528,7 +528,8 @@ contains
       ! Allocate the spectroscopy catalog extract
       c = maxval(fwdModelConf%cat_size)
       allocate ( fwdModelConf%catalog(s1:s2,c), stat=stat )
-      call test_allocate ( stat, moduleName, 'fwdModelConf%catalog', (/s1,1/), (/s2,c/) )
+      call test_allocate ( stat, moduleName, 'fwdModelConf%catalog', &
+        & (/s1,1/), (/s2,c/), storage_size(fwdModelConf%catalog) / 8 )
 
       ! Work out the spectroscopy we're going to need.
       fwdModelConf%catalog = empty_cat
@@ -678,6 +679,7 @@ contains
 
     ! Local variables
     integer :: Config                   ! Loop counter
+    integer :: S                        ! Size in bytes of object to deallocate
     integer :: Status                   ! Flag
 
     if ( associated(database) ) then
@@ -685,8 +687,9 @@ contains
         call DestroyOneForwardModelConfig ( database(config), deep=deep )
       end do
 
+      s = size(database) * storage_size(database) / 8
       deallocate ( database, stat=status )
-      call test_deallocate ( status, ModuleName, 'Database' )
+      call test_deallocate ( status, ModuleName, 'Database', s )
     end if
   end subroutine DestroyFWMConfigDatabase
 
@@ -701,8 +704,9 @@ contains
     integer :: C, B, Ier, S
 
     if ( associated(fwdModelConf%channels) ) then
+      s = size(fwdModelConf%channels) * storage_size(fwdModelConf%channels) / 8
       deallocate ( fwdModelConf%channels, stat = ier )
-      call test_deallocate ( ier, ModuleName, 'fwdModelConf%channels' )
+      call test_deallocate ( ier, ModuleName, 'fwdModelConf%channels', s )
   ! else
   !   It was already deallocated at the end of FullForwardModel
     end if
@@ -732,8 +736,9 @@ contains
         end do
       end do
 
+      s = size(fwdModelConf%catalog) * storage_size(fwdModelConf%catalog) / 8
       deallocate ( fwdModelConf%catalog, stat=ier )
-      call test_deallocate ( ier, ModuleName, 'fwdModelConf%catalog' )
+      call test_deallocate ( ier, ModuleName, 'fwdModelConf%catalog', s )
   ! else
   !   It was already deallocated at the end of FullForwardModel
     end if
@@ -983,7 +988,8 @@ contains
     call PVMIDLUnpack ( n, msg = "Unpacking number of signals" )
     if ( n > 0 ) then
       allocate ( config%signals(n), STAT=info )
-      call test_allocate ( info, ModuleName, 'config%signals' )
+      call test_allocate ( info, ModuleName, 'config%signals', ubounds = [n], &
+        & elementSize = storage_size(config%signals) / 8 )
       do i = 1, n
         call PVMUnpackSignal ( config%signals(i) )
       end do
@@ -993,12 +999,14 @@ contains
     call PVMIDLUnpack ( ls(1:2), msg = "Unpacking vGrid flags" )
     if ( ls(1) ) then
       allocate ( config%integrationGrid, STAT=info )
-      call test_allocate ( info, ModuleName, 'config%integrationGrid' )
+      call test_allocate ( info, ModuleName, 'config%integrationGrid', &
+        & uBounds = [1], elementSize = storage_size(config%integrationGrid) / 8 )
       call PVMUnpackVGrid ( config%integrationGrid )
     end if
     if ( ls(2) ) then
       allocate ( config%tangentGrid, STAT=info )
-      call test_allocate ( info, ModuleName, 'config%tangentGrid' )
+      call test_allocate ( info, ModuleName, 'config%tangentGrid', &
+        & uBounds = [1], elementSize = storage_size(config%tangentGrid) / 8)
       call PVMUnpackVGrid ( config%tangentGrid )
     end if
 
@@ -1015,6 +1023,7 @@ contains
     ! Local variables
     type (ForwardModelConfig_T), dimension(:), pointer :: TMPDATABASE
     integer :: CONFIG                   ! Loop counter
+    integer :: N
     integer :: STATUS
 
     ! Executable code
@@ -1026,13 +1035,16 @@ contains
     end do
 
     ! Create new database in tmp space, pack old one into
-    allocate ( tmpDatabase ( count ( database%globalConfig ) ), STAT=status )
-    call test_allocate ( status, ModuleName, 'tmpDatabase' )
+    n = count ( database%globalConfig )
+    allocate ( tmpDatabase ( n ), STAT=status )
+    call test_allocate ( status, ModuleName, 'tmpDatabase', &
+      & uBounds = [n], elementSize = storage_size(tmpDatabase) / 8 )
     tmpDatabase = pack ( database, database%globalConfig )
 
     ! Destroy old database, then point to new one
+    n = size(database) * storage_size(database) / 8
     deallocate ( database, STAT=status )
-    call test_deallocate ( status, ModuleName, 'database' )
+    call test_deallocate ( status, ModuleName, 'database', n )
 
     database => tmpDatabase
   end subroutine StripForwardModelConfigDatabase
@@ -1050,7 +1062,8 @@ contains
 
     ! Local variables
     integer :: B                        ! Subscript for Beta_Group
-    integer :: S                        ! 1 = LSB, 2 = USB
+    integer :: S                        ! 1 = LSB, 2 = USB, or
+                                        ! size in bytes of an object to deallocate
     integer :: STATUS                   ! Flag from allocate etc.
     logical :: MYDEEP                   ! Copy of deep
 
@@ -1070,20 +1083,26 @@ contains
     end do ! b = 1, size(config%beta_group)
 
     if ( associated(config%lineCenter) ) then
+      s = size(config%lineCenter) * storage_size(config%lineCenter) / 8
       deallocate ( config%lineCenter, stat=status )
-      call test_deallocate ( status, moduleName, 'LineCenter' )
+      call test_deallocate ( status, moduleName, 'LineCenter', s )
     end if
     if ( associated(config%lineWidth) ) then
+      s = size(config%lineWidth) * storage_size(config%lineWidth) / 8
       deallocate ( config%lineWidth, stat=status )
-      call test_deallocate ( status, moduleName, 'LineWidth' )
+      call test_deallocate ( status, moduleName, 'LineWidth', s )
     end if
     if ( associated(config%lineWidth_TDep) ) then
+      s = size(config%lineWidth_TDep) * storage_size(config%lineWidth_TDep) / 8
       deallocate ( config%lineWidth_TDep, stat=status )
-      call test_deallocate ( status, moduleName, 'LineWidth_TDep' )
+      call test_deallocate ( status, moduleName, 'LineWidth_TDep', s )
     end if
 
-    deallocate ( config%beta_group, stat=status )
-    call test_deallocate ( status, moduleName, 'config%Beta_group' )
+    if ( associated(config%beta_group) ) then
+      s = size(config%beta_group) * storage_size(config%beta_group) / 8
+      deallocate ( config%beta_group, stat=status )
+      call test_deallocate ( status, moduleName, 'config%Beta_group', s )
+    end if
 
     if ( associated(config%signals) ) &
       & call DestroySignalDatabase ( config%signals, justChannels=.not. myDeep )
@@ -1091,17 +1110,19 @@ contains
     if ( myDeep ) then
       if ( associated ( config%integrationGrid ) ) then
         call DestroyVGridContents ( config%integrationGrid )
+        s = storage_size(config%integrationGrid) / 8
         deallocate ( config%integrationGrid, stat=status )
-        call test_deallocate ( status, moduleName, 'Config%integrationGrid' )
+        call test_deallocate ( status, moduleName, 'Config%integrationGrid', s )
       end if
       if ( associated ( config%tangentGrid ) ) then
         call DestroyVGridContents ( config%tangentGrid )
+        s = storage_size(config%tangentGrid) / 8
         deallocate ( config%tangentGrid, stat=status )
-        call test_deallocate ( status, moduleName, 'Config%tangentGrid' )
+        call test_deallocate ( status, moduleName, 'Config%tangentGrid', s )
       end if
     end if
-    ! Otherwise don't destroy integrationGrid and tangentGrid.  Assume they will
-    ! be (or already are) destroyed by destroyVGridDatabase.
+    ! Otherwise don't destroy integrationGrid and tangentGrid.  Assume they
+    ! will be (or already are) destroyed by destroyVGridDatabase.
     ! Don't deallocate config%molecules because it's a pointer into beta_group
     call deallocate_test ( config%specificQuantities, &
       & "config%specificQuantities", ModuleName )
@@ -1464,6 +1485,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.131  2014/08/01 01:01:55  vsnyder
+! Change noLinesMsg level from 1 to zero
+!
 ! Revision 2.130  2014/01/09 00:26:39  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
