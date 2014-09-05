@@ -24,8 +24,7 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSFILES, only: DUMP, GETPCFROMREF, MLS_CLOSEFILE, MLS_OPENFILE, &
     &  MLS_SFSTART, MLS_SFEND, SPLIT_PATH_NAME
   use MLSL2OPTIONS, only: TOOLKIT, SHAREDPCF
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
   use MLSPCF2, only: MLSPCF_MCF_L2GP_END, MLSPCF_MCF_L2GP_START, &
     & MLSPCF_MCF_L2LOG_START
   use MLSSTRINGS, only: ISCOMMENT, LOWERCASE, STREQ
@@ -228,6 +227,8 @@ contains
   ! This routine adds a vector to a database of such vectors, 
   ! creating the database if necessary.
 
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (MCGroup_T), dimension(:), pointer :: DATABASE
     type (MCGroup_T), intent(in) ::            ITEM
@@ -245,6 +246,8 @@ contains
 
   ! This routine adds a vector to a database of such vectors, 
   ! creating the database if necessary.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (MCParam_T), dimension(:), pointer :: DATABASE
@@ -328,71 +331,74 @@ contains
   recursive subroutine DestroyMCGroup ( MCGROUP )
     ! Destroy a group of inventory metadata control parameters 
     ! If the group contains other groups, destroy them, too
+    use Allocate_Deallocate, only: Test_Deallocate
     type ( MCGROUP_T ), intent(inout)               :: MCGROUP
     ! Internal variables
-    integer :: i, error
+    integer :: error, i, s
 
     ! Executable code
     if ( associated(MCGroup%groups) ) then
       do i=1, size(MCGroup%groups)
         call DestroyMCGroup( MCGroup%groups(i) )
-      enddo
-      deallocate( MCGroup%groups, stat=error )
-      if ( error /= 0 ) call announce_error( 0, &
-        & 'Failed to deallocate MCGroup%groups' )
-    endif
+      end do
+      s = size(MCGroup%groups) * storage_size(MCGroup%groups) / 8
+      deallocate ( MCGroup%groups, stat=error )
+      call test_deallocate ( error, moduleName, 'MCGroup%groups', s )
+    end if
     if ( associated(MCGroup%params) ) then
       do i=1, size(MCGroup%params)
         call DestroyMCParam( MCGroup%params(i) )
-      enddo
-      deallocate( MCGroup%params, stat=error )
-      if ( error /= 0 ) call announce_error( 0, &
-        & 'Failed to deallocate MCGroup%params' )
-    endif
+      end do
+      s = size(MCGroup%params) * storage_size(MCGroup%params) / 8
+      deallocate ( MCGroup%params, stat=error )
+      call test_deallocate ( error, moduleName, 'MCGroup%params', s )
+    end if
   end subroutine DestroyMCGroup
 
   ! ----------------------------------------DestroyMCParam -----
   recursive subroutine DestroyMCParam ( MCParam )
     ! Destroy a metadata control parameter
     ! If it contains other params and groups, destroy them, too
+    use Allocate_Deallocate, only: Test_Deallocate
     type ( MCParam_T ), intent(inout)               :: MCParam
     ! Internal variables
-    integer :: i, error
+    integer :: error, i, s
 
     ! Executable code
     if ( associated(MCParam%groups) ) then
       do i=1, size(MCParam%groups)
         call DestroyMCGroup( MCParam%groups(i) )
-      enddo
-      deallocate( MCParam%groups, stat=error )
-      if ( error /= 0 ) call announce_error( 0, &
-        & 'Failed to deallocate MCParam%groups' )
-    endif
+      end do
+      s = size(MCParam%groups) * storage_size(MCParam%groups) / 8
+      deallocate ( MCParam%groups, stat=error )
+      call test_deallocate ( error, moduleName, 'MCParam%groups', s )
+    end if
     if ( associated(MCParam%params) ) then
       do i=1, size(MCParam%params)
         call DestroyMCParam( MCParam%params(i) )
-      enddo
-      deallocate( MCParam%params, stat=error )
-      if ( error /= 0 ) call announce_error( 0, &
-        & 'Failed to deallocate MCParam%params' )
+      end do
+      s = size(MCParam%params) * storage_size(MCParam%params) / 8
+      deallocate ( MCParam%params, stat=error )
+      call test_deallocate ( error, moduleName, 'MCParam%params', s )
     endif
   end subroutine DestroyMCParam
 
   ! ----------------------------------------DestroyMCGroupDB -----
   subroutine DestroyMCGroupDB ( MCGROUPDB )
     ! Destroy a database of metadata control groups
+    use Allocate_Deallocate, only: Test_Deallocate
     type ( MCGROUP_T ), dimension(:), pointer         :: MCGROUPDB
     ! Internal variables
-    integer :: i, error
+    integer :: error, i, s
 
     ! Executable code
     if ( .not. associated(MCGROUPDB) ) return
     do i=1, size(MCGroupDB)
       call DestroyMCGroup( MCGroupDB(i) )
-    enddo
-    deallocate( MCGroupDB, stat=error )
-    if ( error /= 0 ) call announce_error( 0, &
-      & 'Failed to deallocate MCGroupDB' )
+    end do
+    s = size(MCGroupDB) * storage_size(MCGroupDB) / 8
+    deallocate ( MCGroupDB, stat=error )
+    call test_deallocate ( error, moduleName, 'MCGroupDB', s )
   end subroutine DestroyMCGroupDB
 
   ! ----------------------------------------dumpMCGroup -----
@@ -2111,6 +2117,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.81  2014/09/05 01:28:53  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.80  2014/04/07 18:10:09  pwagner
 ! Added new metadata attribute: DataProducer
 !
