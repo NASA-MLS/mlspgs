@@ -10,7 +10,7 @@
 ! foreign countries or providing access to foreign persons.
 
 module MLS_DataProducts
-  use MLSCommon, only: r8
+  use MLSKinds, only: r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_deallocate
   implicit none
   public :: Deallocate_DataProducts, DataProducts_T
@@ -31,44 +31,40 @@ module MLS_DataProducts
 contains
 
  subroutine Deallocate_DataProducts( DataProducts )
+    use Allocate_Deallocate, only: Test_Deallocate
     type( DataProducts_T ), intent(inout) :: DataProducts
-    character(len=480) :: msr
-    integer :: status
+    integer :: s, status
 
     if (associated(DataProducts%FrequencyCoordinates)) then 
+        s = size(DataProducts%FrequencyCoordinates) * &
+          & storage_size(DataProducts%FrequencyCoordinates) / 8
         deallocate(DataProducts%FrequencyCoordinates, stat=status)
-     if ( status /= 0 ) then
-      msr = MLSMSG_deallocate // ' DataProducts%FrequencyCoordinates in ' // &
-           DataProducts%name
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-     endif
+        call test_deallocate ( status, ModuleName, &
+          & 'DataProducts%FrequencyCoordinates', s )
     endif
 
     if (associated(DataProducts%VerticalCoordinates)) then 
-        deallocate(DataProducts%VerticalCoordinates, stat=status)
-     if ( status /= 0 ) then
-      msr = MLSMSG_deallocate // ' DataProducts%VerticalCoordinates in ' // &
-           DataProducts%name
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-     endif
+        s = size(DataProducts%VerticalCoordinates) * &
+          & storage_size(DataProducts%VerticalCoordinates) / 8
+        deallocate(DataProducts%FrequencyCoordinates, stat=status)
+        call test_deallocate ( status, ModuleName, &
+          & 'DataProducts%VerticalCoordinates', s )
     endif
 
     if (associated(DataProducts%HorizontalCoordinates)) then 
-        deallocate(DataProducts%HorizontalCoordinates, stat=status)
-     if ( status /= 0 ) then
-      msr = MLSMSG_deallocate // ' DataProducts%HorizontalCoordinates in ' // &
-           DataProducts%name
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-     endif
+        s = size(DataProducts%HorizontalCoordinates) * &
+          & storage_size(DataProducts%HorizontalCoordinates) / 8
+        deallocate(DataProducts%FrequencyCoordinates, stat=status)
+        call test_deallocate ( status, ModuleName, &
+          & 'DataProducts%HorizontalCoordinates', s )
     endif
 
     if (associated(DataProducts%Dimensions)) then 
-        deallocate(DataProducts%Dimensions, stat=status)
-     if ( status /= 0 ) then
-      msr = MLSMSG_deallocate // ' DataProducts%Dimensions in ' // &
-           DataProducts%name
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-     endif
+        s = size(DataProducts%Dimensions) * &
+          & storage_size(DataProducts%Dimensions) / 8
+        deallocate(DataProducts%FrequencyCoordinates, stat=status)
+        call test_deallocate ( status, ModuleName, &
+          & 'DataProducts%Dimensions', s )
     endif
 
  end subroutine Deallocate_DataProducts
