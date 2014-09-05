@@ -2784,12 +2784,11 @@ contains
     character (len=*), intent(out)          ::   str
     character(len=*), optional, intent(in)  ::   options
     ! Internal variables
-    integer, dimension(:), pointer          :: C => null()
+    integer, dimension(0:128)               :: C ! One for each digit of K
     integer                                 :: j
     integer                                 :: m
     character(len=8)                        :: myOptions
     double precision                        :: S, SHigher
-    integer                                 :: status
     character(len=8)                        :: substr
     character(len=*), parameter             :: xtended = &
       & '0123456789abcdefghijklmnopqrstuvwxyz;''[]ABCDEFGHIJKLMNOPQRSTUVWXYZ:"{}'
@@ -2801,7 +2800,6 @@ contains
     ! What is the highest power needed of N?
     m = 0
     if ( k > 1 ) m = ( log (k*1.d0) / log (N*1.d0) ) + 1.d-3
-    allocate( C(0:m), stat=status )
     if ( k < N ) then
       C(0) = k
     else
@@ -2819,8 +2817,8 @@ contains
         S = N*( SHigher - c(m-j) )
         SHigher = S
         j = j + 1
-      enddo
-    endif
+      end do
+    end if
     ! print *, 'm ', m
     ! call dump( c, 'coeffs' )
     ! Now we turn the integers into a character string
@@ -2829,14 +2827,14 @@ contains
       do j = m, 0, -1
         if ( c(j) < 177 ) str = trim(str) // ' ' // achar(c(j))
         ! print *, 'str ', asciify(str)
-      enddo
+      end do
       str = adjustl(str)
       if ( index(myOptions, 'A') > 0 ) str = asciify(str, 'mnemonic')
-    elseif ( index(myOptions, 'x') > 0 ) then
+    else if ( index(myOptions, 'x') > 0 ) then
       do j = m, 0, -1
         if ( c(j) < 71 ) str = trim(str) // ' ' // xtended(c(j)+1:c(j)+1)
         ! print *, 'str ', str
-      enddo
+      end do
       str = adjustl(str)
     else
       ! default
@@ -2845,10 +2843,9 @@ contains
         str = trim(str) // ' ' // adjustl(substr)
         ! print *, 'substr ', substr
         ! print *, 'str ', str
-      enddo
+      end do
       str = adjustl(str)
-    endif
-    deallocate( C, stat=status )
+    end if
   end subroutine writeIntAsBaseN
 
   subroutine writeRomanNumerals ( num, str, options )
@@ -3194,6 +3191,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.100  2014/09/05 00:12:11  vsnyder
+! Convert pointer temp to explicit shape.
+!
 ! Revision 2.99  2014/07/25 21:42:37  pwagner
 ! Fixed bugs in readIntFromBaseN; now generic as readNumFromBaseN; added remap
 !
