@@ -32,7 +32,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use MLSL2Options, only: currentPhaseName
   use MLSKINDS, only: R8
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING, &
-    & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, PVMERRORMESSAGE
+    & PVMERRORMESSAGE
   use MLSFINDS, only: FINDFIRST
   use MLSL2Options, only: SNOOPINGACTIVE, SNOOPNAME
   use MORETREE, only: GET_FIELD_ID
@@ -321,12 +321,15 @@ contains ! ========  Public Procedures =========================================
 
   ! ---------------------------------------- AddSnooperToDatabase ------
   integer function AddSnooperToDatabase ( database, item )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     type (SnooperInfo_T), dimension(:), pointer :: DATABASE
     type (SnooperInfo_T), intent(in) :: ITEM
     ! Local variables
     type (SnooperInfo_T), dimension(:), pointer :: TEMPDATABASE
     include "addItemToDatabase.f9h"
     AddSnooperToDatabase=newSize
+
   end function AddSnooperToDatabase
 
   ! ------------------------------------------- RegisterNewSnooper -----
@@ -367,29 +370,29 @@ contains ! ========  Public Procedures =========================================
 
   ! ------------------------------------------------ ForgetSnooper -----
   subroutine ForgetSnooper ( snoopers, snooper )
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     type (SnooperInfo_T), dimension(:), pointer :: SNOOPERS
     integer, intent(in) :: SNOOPER
 
     ! Local variables
     type (SnooperInfo_T), dimension(:), pointer :: NEWSNOOPERS
-    integer :: STATUS
+    integer :: S, STATUS
 
     ! Executable code
     if ( switchDetail ( switches, 'snoop' ) > -1 ) &
       & call output ( 'Forgetting snooper', advance='yes' )
 
-    nullify ( newSnoopers )
     allocate ( newSnoopers(size(snoopers)-1), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'newSnoopers' )
+    call test_allocate ( status, moduleName, 'newSnoopers', &
+      & uBounds = size(snoopers)-1, elementSize = storage_size(newSnoopers) / 8 )
 
     if ( size(newSnoopers) > 0 ) then
       newSnoopers(1:snooper-1) = snoopers(1:snooper-1)
       newSnoopers(snooper:) = snoopers(snooper+1:)
-    endif
+    end if
+    s = size(snoopers) * storage_size(snoopers) / 8
     deallocate ( snoopers, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate//'snoopers' )
+    call test_deallocate ( status, moduleName, 'newSnoopers', s )
 
     snoopers => newSnoopers
 
@@ -447,6 +450,7 @@ contains ! ========  Public Procedures =========================================
     & r2aName, r2bName, r2cName, r2dName, &
     & r3aName, r3bName, r3cName, r3dName )
 
+    use Allocate_Deallocate, only: Test_Allocate
     use Lexer_Core, only: Get_Where
     ! Arguments
     integer, intent(in), optional :: KEY ! Tree node where snoop called
@@ -541,8 +545,8 @@ contains ! ========  Public Procedures =========================================
       if ( inum<0 ) call PVMErrorMessage ( inum, "Joining group " &
         & // Level2CodeGroupName//trim(snoopName) )
       allocate ( snoopers(0), stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
-        & MLSMSG_Allocate // "snoopers(0)" )
+      call test_allocate ( status, moduleName, 'snoopers', uBounds = 0, &
+        & elementSize = storage_size(status) / 8 )
     else
       keepWaiting = .false.
     end if
@@ -872,6 +876,7 @@ contains ! ========  Public Procedures =========================================
     ! This routine sends a matrix (including the vectors associated
     ! with it) to a snooping task.  It will probably take a while in many
     ! cases.
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
@@ -885,8 +890,8 @@ contains ! ========  Public Procedures =========================================
     integer,dimension(2) :: RC          ! Index of row/column requested
     integer :: INFO                     ! Flag from PVM
     type (MatrixElement_T), pointer :: BLOCK ! The block of interest
-    real(r8), dimension(:,:), pointer :: values
-    integer :: n_rows, n_cols
+    real(r8), dimension(:,:), allocatable :: values
+    integer :: n_rows, n_cols, status
 
     ! Executable code
 
@@ -928,10 +933,12 @@ contains ! ========  Public Procedures =========================================
 !      else
         n_rows = size(block%values, 1)
         n_cols = size(block%values, 2)
-        allocate(values(n_rows, n_cols))
+        allocate ( values(n_rows, n_cols), stat=status )
+        call test_allocate ( status, moduleName, 'values' )
         values = block%values
         call PVMIDLPack ( values, info )
-        deallocate(values)
+        deallocate ( values, stat=status )
+        call test_deallocate ( status, moduleName, 'values' )
 !      endif
       if ( info /= 0 ) call PVMErrorMessage ( info, 'packing block values' )
     endif
@@ -1019,6 +1026,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.48  2014/09/05 00:49:07  vsnyder
+! EmpiricalGeometry.f90
+!
 ! Revision 2.47  2014/04/10 00:43:58  pwagner
 ! Moved SNOOPINGACTIVE, SNOOPNAME to MLSL2Options
 !
