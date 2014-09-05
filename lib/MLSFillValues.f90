@@ -19,8 +19,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   use MLSCOMMON, only: FILL_SIGNAL, INF_SIGNAL, NAN_SIGNAL, UNDEFINEDVALUE, &
     & IS_WHAT_IEEE, MLSFill_T, MLSFILLS
   use MLSKINDS ! EVERYTHING
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, &
-    & MLSMSG_ERROR, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
   use MLSFINDS, only: FINDALL, FINDFIRST, FINDLAST
   use MLSSTRINGLISTS, only: EXTRACTSUBSTRING 
   use MLSSTRINGS, only: LOWERCASE
@@ -433,20 +432,14 @@ contains
     type (MLSFill_T), dimension(:), optional, pointer :: YOURDATABASE
     type (MLSFill_T), intent(in) :: ITEM
 
-    ! Local variables
-    type (MLSFill_T), dimension(:), pointer :: database
-    type (MLSFill_T), dimension(:), pointer :: tempDatabase
     ! Executable
     if ( present(yourDatabase) ) then
-      database => yourDatabase
       addMLSFillTypeToDatabase = AddMLSFillToDefinite( item, yourdatabase )
       ! call dump( yourdatabase )
     else
-      database => MLSFills
       addMLSFillTypeToDatabase = AddMLSFillToDefinite( item, MLSFills )
       ! call dump( MLSFills )
     endif
-!     call dump ( database )
   end function addMLSFillTypeToDatabase
 
   !-------------------------------------------  AddMLSFillToDefinite  -----
@@ -455,6 +448,8 @@ contains
     ! This function adds an MLSFill data type to a database of said types,
     ! creating a new database if it doesn't exist.  The result value is
     ! the size -- where MLSFill is put.
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (MLSFill_T), dimension(:), pointer :: DATABASE
@@ -767,6 +762,7 @@ contains
   ! This family of routines replace a bloc of elements in a larger
   ! array with corresponding elements from a smaller
   subroutine EmbedArray_1d_int ( ibloc, iarray, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     integer, dimension(:), pointer :: ibloc
     integer, dimension(:), pointer :: iarray ! The larger array
     integer, parameter :: RK = R4
@@ -776,40 +772,40 @@ contains
     integer, dimension(:), intent(in)     :: block
     character(len=*), intent(in), optional :: options
     ! Local variables
-    real(rk), dimension(:), pointer :: bloc => null()
-    real(rk), dimension(:), pointer :: array => null() ! The larger array
-    integer :: status
+    real(rk), dimension(:), pointer :: bloc
+    real(rk), dimension(:), pointer :: array ! The larger array
     ! Executable
-    allocate( bloc(size(ibloc)), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "unable to allocate 1-d bloc for int embedding" )
-    allocate( array(size(iarray)), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "unable to allocate 1-d array for int embedding" )
+    nullify ( array, bloc )
+    call allocate_test ( bloc, size(ibloc), ModuleName, &
+      & "1-d bloc for int embedding" )
+    call allocate_test ( array, size(iarray), ModuleName, &
+      & "1-d array for int embedding" )
     array = iarray
     bloc = ibloc
     call EmbedArray ( bloc, array, start, count, stride, block, options )
     iarray = array
-    deallocate( bloc, array, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "unable to deallocate 1-d bloc for int embedding" )
+    call deallocate_test ( array, ModuleName, "1-d array for int embedding" )
+    call deallocate_test ( bloc, ModuleName, "1-d bloc for int embedding" )
   end subroutine EmbedArray_1d_int
 
   subroutine EmbedArray_1d_r4 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_1d.f9h'
   end subroutine EmbedArray_1d_r4
 
   subroutine EmbedArray_1d_r8 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_1d.f9h'
   end subroutine EmbedArray_1d_r8
 
   subroutine ExtractArray_1d_int ( ibloc, iarray, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     integer, dimension(:), pointer :: ibloc
-    integer, dimension(:), pointer :: iarray ! The larger array
+    integer, dimension(:) :: iarray ! The larger array
     integer, parameter :: RK = R4
     integer, dimension(:), intent(in)     :: start
     integer, dimension(:), intent(in)     :: count
@@ -817,86 +813,92 @@ contains
     integer, dimension(:), intent(in)     :: block
     character(len=*), intent(in), optional :: options
     ! Local variables
-    real(rk), dimension(:), pointer :: bloc => null()
-    real(rk), dimension(:), pointer :: array => null() ! The larger array
-    integer :: status
+    real(rk), dimension(:), pointer :: bloc
+    real(rk), dimension(:), pointer :: array ! The larger array
     ! Executable
+    nullify ( array, bloc )
     if ( associated(ibloc) ) then
-      allocate( bloc(size(ibloc)), stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "unable to allocate 1-d bloc for int extracting" )
-    endif
-    allocate( array(size(iarray)), stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "unable to allocate 1-d array for int extracting" )
+      call allocate_test ( bloc, size(ibloc), ModuleName, &
+        & "1-d bloc for int extracting" )
+    end if
+    call allocate_test ( array, size(iarray), ModuleName, &
+        & "1-d array for int extracting" )
     array = iarray
     call ExtractArray ( bloc, array, start, count, stride, block, options )
     if ( .not. associated(ibloc) ) then
-      allocate( ibloc(size(bloc)), stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "unable to allocate 1-d bloc for int extracting" )
-    endif
+      call allocate_test ( ibloc, size(bloc), ModuleName, &
+        & "1-d bloc for int extracting" )
+    end if
     ibloc = bloc
-    deallocate( bloc, array, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "unable to deallocate 1-d bloc for int extracting" )
+    call deallocate_test ( array, ModuleName, "1-d array for int extracting" )
+    call deallocate_test ( bloc, ModuleName, "1-d bloc for int extracting" )
   end subroutine ExtractArray_1d_int
 
   subroutine ExtractArray_1d_r4 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_1d.f9h'
   end subroutine ExtractArray_1d_r4
 
   subroutine ExtractArray_1d_r8 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_1d.f9h'
   end subroutine ExtractArray_1d_r8
 
   subroutine EmbedArray_2d_r4 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_2d.f9h'
   end subroutine EmbedArray_2d_r4
 
   subroutine EmbedArray_2d_r8 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_2d.f9h'
   end subroutine EmbedArray_2d_r8
 
   subroutine ExtractArray_2d_r4 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_2d.f9h'
   end subroutine ExtractArray_2d_r4
 
   subroutine ExtractArray_2d_r8 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_2d.f9h'
   end subroutine ExtractArray_2d_r8
 
   subroutine EmbedArray_3d_r4 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_3d.f9h'
   end subroutine EmbedArray_3d_r4
 
   subroutine EmbedArray_3d_r8 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'm'
     include 'EmbedExtract_3d.f9h'
   end subroutine EmbedArray_3d_r8
 
   subroutine ExtractArray_3d_r4 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R4
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_3d.f9h'
   end subroutine ExtractArray_3d_r4
 
   subroutine ExtractArray_3d_r8 ( slab, array, start, count, stride, block, options )
+    use Allocate_Deallocate, only: Allocate_Test
     integer, parameter :: RK = R8
     character, parameter :: DIRECTION = 'x'
     include 'EmbedExtract_3d.f9h'
@@ -1765,7 +1767,6 @@ contains
     character(len=*), intent(in), optional :: options
     ! Local variables
     real(rk), dimension(size(iarray)) :: array ! The sparse array
-    real(rk) :: testvalue
     real(rk), dimension(size(ivalues)) :: values
     ! Executable
     values = ivalues
@@ -3204,6 +3205,11 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.33  2014/09/05 00:04:34  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Remove
+! unnecessary POINTER attribute from some arguments.  Remove declarations
+! of unused variables.
+!
 ! Revision 2.32  2013/09/17 22:35:13  pwagner
 ! Changed api of Embed, Extract arrays to match hyperslab
 !

@@ -28,8 +28,7 @@ module MLSAuxData
   use MLSCommon, only: NAMELEN
   use MLSKINDS, only: R4, R8
   use MLSStrings, only: LOWERCASE
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_DEALLOCATE, &
-       MLSMSG_ALLOCATE
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
   
   implicit NONE
 
@@ -227,6 +226,8 @@ contains ! ============================ MODULE PROCEDURES ====================
   integer function AddMLSAuxDataToDatabase ( database, item )
   ! Add a MLSAuxData to a database, and/or create the database.
   ! Returns the size of the array.
+    
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     type (MLSAuxData_T), dimension(:), pointer :: database
     type (MLSAuxData_T), intent(in) :: item
@@ -242,28 +243,29 @@ contains ! ============================ MODULE PROCEDURES ====================
 !-----------------------------------------------------DestroyMLSAuxDataDatabase
   subroutine DestroyMLSAuxDataDatabase ( database )
   ! Deallocates the elements of array of MLSAuxData_T and then the array.
+    use Allocate_Deallocate, only: Test_Deallocate
     type (MLSAuxData_T), dimension(:), pointer :: database
     ! Local variables
-    integer :: index, status
+    integer :: index, s, status
 
     if ( associated(database) ) then
        do index = 1, SIZE(database)
           call  Deallocate_MLSAuxData( database(index) )
        end do
+       s = size(database) * storage_size(database) / 8
        deallocate ( database, stat=status )
-       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & MLSMSG_DeAllocate // "database" )
+       call test_deallocate ( status, ModuleName, "database", s )
     end if
 
   end subroutine DestroyMLSAuxDataDatabase
 !---------------------------------------------------------- Allocate_MLSAuxData
  subroutine Allocate_MLSAuxData( name, data_type, dims, MLSData  )
     ! This should be called when allocating a MLSAuxData structure.
+    use Allocate_Deallocate, only: Test_Allocate
     type( MLSAuxData_T ), intent(inout) :: MLSData
     integer, dimension(3), intent(in) :: dims
     character (len=*), intent(in) :: name, data_type
     ! internal variables
-    character(len=480) :: msr
     integer :: status
 
     MLSData%name        = trim(name) 
@@ -271,115 +273,95 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     if ( data_type .eq. 'real') then
        allocate(MLSData%RealField(dims(1),dims(2),dims(3)), stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_allocate // ' MLSAuxData%RealField in ' // name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+       call test_allocate ( status, ModuleName, "MLSData%RealField", &
+         & uBounds = dims(1:3), elementSize = storage_size(MLSData%RealField) / 8 )
+    end if
 
     if ( data_type .eq. 'double') then
        allocate(MLSData%DpField(dims(1),dims(2),dims(3)), stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_allocate // ' MLSAuxData%DpField in ' // name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+       call test_allocate ( status, ModuleName, "MLSData%DpField", &
+         & uBounds = dims(1:3), elementSize = storage_size(MLSData%DpField) / 8 )
+    end if
 
     if ( data_type .eq. 'integer') then
        allocate(MLSData%IntField(dims(1),dims(2),dims(3)), stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_allocate // ' MLSAuxData%IntField in ' // name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+       call test_allocate ( status, ModuleName, "MLSData%IntField", &
+         & uBounds = dims(1:3), elementSize = storage_size(MLSData%IntField) / 8 )
+    end if
 
     if ( data_type .eq. 'character') then
        allocate(MLSData%CharField(dims(1),dims(2),dims(3)), stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_allocate // ' MLSAuxData%CharField in ' // name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+       call test_allocate ( status, ModuleName, "MLSData%CharField", &
+         & uBounds = dims(1:3), elementSize = storage_size(MLSData%CharField) / 8 )
+    end if
 
  end subroutine Allocate_MLSAuxData
 !---------------------------------------------------------Deallocate_MLSAuxData
  subroutine Deallocate_MLSAuxData( MLSAuxData )
     ! This should be called when deallocating a MLSAuxData structure.
+    use Allocate_Deallocate, only: Test_Deallocate
     type( MLSAuxData_T ), intent(inout) :: MLSAuxData
-    character(len=480) :: msr
-    integer :: status
+    integer :: s, status
 
     if (associated(MLSAuxData%RealField)) then
-       deallocate(MLSAuxData%RealField, stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate // ' MLSAuxData%RealField in ' // & 
-               MLSAuxData%name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+      s = size(MLSAuxData%RealField) * storage_size(MLSAuxData%RealField) / 8
+      deallocate(MLSAuxData%RealField, stat=status)
+      call test_deallocate ( status, ModuleName, &
+        & ' MLSAuxData%RealField in ' // trim(MLSAuxData%name), s )
+    end if
 
     if (associated(MLSAuxData%IntField)) then 
-       deallocate(MLSAuxData%IntField, stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate // ' MLSAuxData%IntField in ' // &
-               MLSAuxData%name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+      s = size(MLSAuxData%IntField) * storage_size(MLSAuxData%IntField) / 8
+      deallocate(MLSAuxData%IntField, stat=status)
+      call test_deallocate ( status, ModuleName, &
+        & ' MLSAuxData%IntField in ' // trim(MLSAuxData%name), s )
+    end if
 
     if (associated(MLSAuxData%CharField)) then 
-       deallocate(MLSAuxData%CharField, stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate // ' MLSAuxData%CharField in ' // &
-               MLSAuxData%name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+      s = size(MLSAuxData%CharField) * storage_size(MLSAuxData%CharField) / 8
+      deallocate(MLSAuxData%CharField, stat=status)
+      call test_deallocate ( status, ModuleName, &
+        & ' MLSAuxData%CharField in ' // trim(MLSAuxData%name), s )
+    end if
 
     if (associated(MLSAuxData%DpField)) then 
-       deallocate(MLSAuxData%DpField, stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate // ' MLSAuxData%DpField in ' // &
-               MLSAuxData%name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+      s = size(MLSAuxData%DpField) * storage_size(MLSAuxData%DpField) / 8
+      deallocate(MLSAuxData%CharField, stat=status)
+      call test_deallocate ( status, ModuleName, &
+        & ' MLSAuxData%DpField in ' // trim(MLSAuxData%name), s )
+    end if
 
     if (associated(MLSAuxData%FrequencyCoordinates)) then 
-       deallocate(MLSAuxData%FrequencyCoordinates, stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate // ' MLSAuxData%FrequencyCoordinates in ' // &
-               MLSAuxData%name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+      s = size(MLSAuxData%FrequencyCoordinates) * &
+        & storage_size(MLSAuxData%FrequencyCoordinates) / 8
+      deallocate(MLSAuxData%FrequencyCoordinates, stat=status)
+      call test_deallocate ( status, ModuleName, &
+        & ' MLSAuxData%FrequencyCoordinates in ' // trim(MLSAuxData%name), s )
+    end if
 
     if (associated(MLSAuxData%VerticalCoordinates)) then 
-       deallocate(MLSAuxData%VerticalCoordinates, stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate // ' MLSAuxData%VerticalCoordinates in ' // &
-               MLSAuxData%name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+      s = size(MLSAuxData%VerticalCoordinates) * &
+        & storage_size(MLSAuxData%VerticalCoordinates) / 8
+      deallocate(MLSAuxData%VerticalCoordinates, stat=status)
+      call test_deallocate ( status, ModuleName, &
+        & ' MLSAuxData%VerticalCoordinates in ' // trim(MLSAuxData%name), s )
+    end if
 
     if (associated(MLSAuxData%HorizontalCoordinates)) then 
-       deallocate(MLSAuxData%HorizontalCoordinates, stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate//' MLSAuxData%HorizontalCoordinates in '// &
-               MLSAuxData%name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+      s = size(MLSAuxData%HorizontalCoordinates) * &
+        & storage_size(MLSAuxData%HorizontalCoordinates) / 8
+      deallocate(MLSAuxData%HorizontalCoordinates, stat=status)
+      call test_deallocate ( status, ModuleName, &
+        & ' MLSAuxData%HorizontalCoordinates in ' // trim(MLSAuxData%name), s )
+    end if
 
     if (associated(MLSAuxData%Dimensions)) then 
-       deallocate(MLSAuxData%Dimensions, stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate // ' MLSAuxData%Dimensions in ' // &
-               MLSAuxData%name
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+      s = size(MLSAuxData%Dimensions) * &
+        & storage_size(MLSAuxData%Dimensions) / 8
+      deallocate(MLSAuxData%Dimensions, stat=status)
+      call test_deallocate ( status, ModuleName, &
+        & ' MLSAuxData%Dimensions in ' // trim(MLSAuxData%name), s )
+    end if
 
  end subroutine Deallocate_MLSAuxData
 !--------------------------------------------------------------Build_MLSAuxData
@@ -417,8 +399,8 @@ contains ! ============================ MODULE PROCEDURES ====================
              attribenabled = .false.
           else
              attribenabled = .true.
-          endif
-       endif
+          end if
+       end if
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=attribenabled, & 
             string_length=char_length, index=lastIndex)
@@ -426,7 +408,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=.true., & 
             string_length=char_length)
-    endif
+    end if
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
@@ -468,8 +450,8 @@ contains ! ============================ MODULE PROCEDURES ====================
              attribenabled = .false.
           else
              attribenabled = .true.
-          endif
-       endif
+          end if
+       end if
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=attribenabled, index=lastIndex, &
                fill_value_i=fill_value)
@@ -478,7 +460,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_i=fill_value)
 
-    endif
+    end if
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) )
@@ -520,14 +502,14 @@ contains ! ============================ MODULE PROCEDURES ====================
              attribenabled = .false.
           else
              attribenabled = .true.
-          endif
-       endif
+          end if
+       end if
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=attribenabled, index=lastIndex, &
                fill_value_r=fill_value)
     else
        call Write_MLSAuxData (file_id, MLSData, error, fill_value_r=fill_value)
-    endif
+    end if
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
@@ -567,15 +549,15 @@ contains ! ============================ MODULE PROCEDURES ====================
              attribenabled = .false.
           else
              attribenabled = .true.
-          endif
-       endif
+          end if
+       end if
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=attribenabled, index=lastIndex, &
                fill_value_d=fill_value)
      else
        call Write_MLSAuxData(file_id, MLSData, error,&           
             write_attributes=.true., fill_value_d=fill_value)
-    endif
+    end if
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
@@ -603,8 +585,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     else
        do i=1,size(shape(real_data))
           dim_array(i) = size(real_data,i)
-       enddo
-    endif
+       end do
+    end if
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -612,13 +594,13 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i = 1, dim_array(1)
        MLSData%RealField(i,1,1) = real_data(i) 
-    enddo
+    end do
 
     if ( present(lastIndex)) then 
        MLSData%rank = 2
     else
        MLSData%rank = 1
-    endif
+    end if
 
     call CopyFromDataProducts (dataset, MLSData)
 
@@ -629,15 +611,15 @@ contains ! ============================ MODULE PROCEDURES ====================
              attribenabled = .false.
           else
              attribenabled = .true.
-          endif
-       endif
+          end if
+       end if
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=attribenabled, index=lastIndex, &
                fill_value_r=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error,&           
             write_attributes=.true., fill_value_r=fill_value) 
-    endif
+    end if
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
@@ -666,8 +648,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     else
        do i=1,size(shape(double_data))
           dim_array(i) = size(double_data,i)
-       enddo
-    endif
+       end do
+    end if
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -675,13 +657,13 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i = 1, dim_array(1)
        MLSData%DpField(i,1,1) = double_data(i) 
-    enddo
+    end do
 
     if ( present (lastIndex) ) then 
        MLSData%rank = 2
     else
        MLSData%rank = 1
-    endif
+    end if
 
     call CopyFromDataProducts (dataset, MLSData)
 
@@ -692,15 +674,15 @@ contains ! ============================ MODULE PROCEDURES ====================
              attribenabled = .false.
           else
              attribenabled = .true.
-          endif
-       endif
+          end if
+       end if
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=attribenabled, index=lastIndex, &
                fill_value_d=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_d=fill_value)
-    endif
+    end if
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
@@ -728,8 +710,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     else
        do i=1,size(shape(integer_data))
           dim_array(i) = size(integer_data,i)
-       enddo
-    endif
+       end do
+    end if
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -737,13 +719,13 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i = 1, dim_array(1)
        MLSData%IntField(i,1,1) = integer_data(i) 
-    enddo
+    end do
 
     if (present (lastIndex) ) then
        MLSData%rank = 2 
     else
        MLSData%rank = 1
-    endif
+    end if
 
     call CopyFromDataProducts (dataset, MLSData)
 
@@ -754,15 +736,15 @@ contains ! ============================ MODULE PROCEDURES ====================
              attribenabled = .false.
           else
              attribenabled = .true.
-          endif
-       endif
+          end if
+       end if
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=attribenabled, index=lastIndex, &
                fill_value_i=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_i=fill_value)
-    endif
+    end if
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
@@ -790,8 +772,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     else
        do i=1,size(shape(real_data))
           dim_array(i) = size(real_data,i)
-       enddo
-    endif
+       end do
+    end if
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -800,20 +782,20 @@ contains ! ============================ MODULE PROCEDURES ====================
     do j = 1, dim_array(2)
        do i = 1, dim_array(1)
           MLSData%RealField(i,j,1) = real_data(i,j) 
-       enddo
-    enddo
+       end do
+    end do
 
     if (present (lastIndex) ) then 
        MLSData%rank = 3
     else
        MLSData%rank = 2
-    endif
+    end if
 
     call CopyFromDataProducts (dataset, MLSData)
 
     if ( MLSData%name == "R1A:118.B22D:PT.S0.DACS-4 precision" .and. DEBUG ) then
       print *, '2d real dim_array: ', dim_array
-    endif
+    end if
     attribenabled = .false.
     if (present (lastIndex) ) then 
        if (lastIndex .eq. 1) then 
@@ -821,15 +803,15 @@ contains ! ============================ MODULE PROCEDURES ====================
              attribenabled = .false.
           else
              attribenabled = .true.
-          endif
-       endif
+          end if
+       end if
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=attribenabled, index=lastIndex, &
                fill_value_r=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_r=fill_value)
-    endif
+    end if
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
@@ -857,8 +839,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     else
        do i=1,size(shape(double_data))
           dim_array(i) = size(double_data,i)
-       enddo
-    endif
+       end do
+    end if
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -867,20 +849,20 @@ contains ! ============================ MODULE PROCEDURES ====================
     do j = 1, dim_array(2)
        do i = 1, dim_array(1)
           MLSData%DpField(i,j,1) = double_data(i,j) 
-       enddo
-    enddo
+       end do
+    end do
 
     if (present (lastIndex) ) then 
        MLSData%rank = 3
     else
        MLSData%rank = 2
-    endif
+    end if
 
     call CopyFromDataProducts (dataset, MLSData)
 
     if ( MLSData%name == "R1A:118.B22D:PT.S0.DACS-4 precision"  .and. DEBUG ) then
       print *, '2d double dim_array: ', dim_array
-    endif
+    end if
     attribenabled = .false.
     if (present (lastIndex) ) then
        if (lastIndex .eq. 1) then 
@@ -888,15 +870,15 @@ contains ! ============================ MODULE PROCEDURES ====================
              attribenabled = .false.
           else
              attribenabled = .true.
-          endif
-       endif
+          end if
+       end if
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=attribenabled, index=lastIndex, &
                fill_value_d=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_d=fill_value)
-    endif
+    end if
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
@@ -924,8 +906,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     else
        do i=1,size(shape(integer_data))
           dim_array(i) = size(integer_data,i)
-       enddo
-    endif
+       end do
+    end if
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -934,14 +916,14 @@ contains ! ============================ MODULE PROCEDURES ====================
     do j = 1, dim_array(2)
        do i = 1, dim_array(1)
           MLSData%IntField(i,j,1) = integer_data(i,j) 
-       enddo
-    enddo
+       end do
+    end do
 
     if (present (lastIndex)) then 
        MLSData%rank = 3
     else
        MLSData%rank = 2
-    endif
+    end if
 
     call CopyFromDataProducts (dataset, MLSData)
 
@@ -952,15 +934,15 @@ contains ! ============================ MODULE PROCEDURES ====================
              attribenabled = .false.
           else
              attribenabled = .true.
-          endif
-       endif
+          end if
+       end if
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=attribenabled, index=lastIndex, &
                fill_value_i=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_i=fill_value)
-    endif
+    end if
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
@@ -985,8 +967,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     else
        do i=1,size(shape(real_data))
           dim_array(i) = size(real_data,i)
-       enddo
-    endif
+       end do
+    end if
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -998,15 +980,15 @@ contains ! ============================ MODULE PROCEDURES ====================
        do j = 1, dim_array(2)
           do i = 1, dim_array(1)
              MLSData%RealField(i,j,k) = real_data(i,j,k) 
-          enddo
-       enddo
-    enddo
+          end do
+       end do
+    end do
 
     call CopyFromDataProducts (dataset, MLSData)
 
     if ( MLSData%name == "R1A:118.B22D:PT.S0.DACS-4 precision"  .and. DEBUG ) then
       print *, '3d real dim_array: ', dim_array
-    endif
+    end if
 
     call Write_MLSAuxData(file_id, MLSData, error,write_attributes=.true., &
          fill_value_r=fill_value)
@@ -1034,8 +1016,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     else
        do i=1,size(shape(double_data))
           dim_array(i) = size(double_data,i)
-       enddo
-    endif
+       end do
+    end if
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1047,14 +1029,14 @@ contains ! ============================ MODULE PROCEDURES ====================
        do j = 1, dim_array(2)
           do i = 1, dim_array(1)
              MLSData%DpField(i,j,k) = double_data(i,j,k) 
-          enddo
-       enddo
-    enddo
+          end do
+       end do
+    end do
 
     call CopyFromDataProducts (dataset, MLSData)
     if ( MLSData%name == "R1A:118.B22D:PT.S0.DACS-4 precision"  .and. DEBUG ) then
       print *, '3d double dim_array: ', dim_array
-    endif
+    end if
 
     call Write_MLSAuxData(file_id, MLSData, error,write_attributes=.true., &
          fill_value_d=fill_value)
@@ -1081,8 +1063,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     else
        do i=1,size(shape(integer_data))
           dim_array(i) = size(integer_data,i)
-       enddo
-    endif
+       end do
+    end if
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1094,9 +1076,9 @@ contains ! ============================ MODULE PROCEDURES ====================
        do j = 1, dim_array(2)
           do i = 1, dim_array(1)
              MLSData%IntField(i,j,k) = integer_data(i,j,k) 
-          enddo
-       enddo
-    enddo
+          end do
+       end do
+    end do
 
     call CopyFromDataProducts (dataset, MLSData)
 
@@ -1109,6 +1091,7 @@ contains ! ============================ MODULE PROCEDURES ====================
   !------------------------------------------------------- Recall_MLSAuxData
  subroutine Recall_MLSAuxData_Character( file_id, dataset, char_data, &
       char_length)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     character (len=*), intent(inout) :: char_data
     integer, intent(in) :: char_length
@@ -1133,17 +1116,20 @@ contains ! ============================ MODULE PROCEDURES ====================
        char_data = MLSData%CharField(1,1,1) 
 
        allocate(dataset%Dimensions(1), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts (MLSData, dataset)
 
     else 
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) )
-    endif
+    end if
 
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Character
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Integer( file_id, dataset, int_data )
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     integer, intent(inout) :: int_data
     integer(hid_t), intent(in) :: file_id
@@ -1167,17 +1153,20 @@ contains ! ============================ MODULE PROCEDURES ====================
        int_data = MLSData%IntField(1,1,1)
 
        allocate(dataset%Dimensions(1), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
     else 
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) ) 
-    endif
+    end if
 
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Integer
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Real(file_id,dataset,real_data)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     real, intent(inout) :: real_data
     integer(hid_t), intent(in) :: file_id
@@ -1200,16 +1189,19 @@ contains ! ============================ MODULE PROCEDURES ====================
        real_data = MLSData%RealField(1,1,1)
 
        allocate(dataset%Dimensions(1), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) )
-    endif
+    end if
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Real
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Double( file_id, dataset, double_data)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     real(r8), intent(inout) :: double_data
     integer(hid_t), intent(in) :: file_id
@@ -1231,17 +1223,20 @@ contains ! ============================ MODULE PROCEDURES ====================
     if (error .eq. 0) then 
        double_data = MLSData%DpField(1,1,1)
        allocate(dataset%Dimensions(1), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = 1, elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) )
-    endif
+    end if
 
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Double
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Real_1d( file_id, dataset, real_data, & 
       firstIndex, lastIndex)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     real, dimension(:), intent(inout) :: real_data
     integer, intent(in), optional :: firstIndex, lastIndex
@@ -1253,11 +1248,11 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i=1,3
        dim_array(i) = 1
-    enddo
+    end do
 
     do i=1,size(shape(real_data))
        dim_array(i) = size(real_data,i)
-    enddo
+    end do
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1273,25 +1268,29 @@ contains ! ============================ MODULE PROCEDURES ====================
        else
           i_first = 1
           i_last  = dim_array(1)
-       endif
+       end if
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = MLSData%rank, &
+         & elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
        do i = i_first, i_last
           real_data(i) = MLSData%RealField(i,1,1)  
-       enddo
+       end do
 
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) )
-    endif
+    end if
 
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Real_1d
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Double_1d(file_id, dataset, double_data, & 
       firstIndex, lastIndex)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     real(r8), dimension(:), intent(inout) :: double_data
     integer, intent(in), optional :: firstIndex, lastIndex
@@ -1303,11 +1302,11 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i=1,3
        dim_array(i) = 1
-    enddo
+    end do
 
     do i=1,size(shape(double_data))
        dim_array(i) = size(double_data,i)
-    enddo
+    end do
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1324,26 +1323,30 @@ contains ! ============================ MODULE PROCEDURES ====================
        else
           i_first = 1
           i_last  = dim_array(1)
-       endif
+       end if
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = MLSData%rank, &
+         & elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
        do i = i_first, i_last
           double_data(i) = MLSData%DpField(i,1,1) 
-       enddo
+       end do
 
 
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) )
-    endif
+    end if
 
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Double_1d
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Integer_1d(file_id,dataset,integer_data, &
       firstIndex, lastIndex)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     integer, dimension(:), intent(inout) :: integer_data
     integer, intent(in), optional :: firstIndex, lastIndex
@@ -1355,11 +1358,11 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i=1,3
        dim_array(i) = 1
-    enddo
+    end do
 
     do i=1,size(shape(integer_data))
        dim_array(i) = size(integer_data,i)
-    enddo
+    end do
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1375,24 +1378,28 @@ contains ! ============================ MODULE PROCEDURES ====================
        else
           i_first = 1
           i_last  = dim_array(1)
-       endif
+       end if
        do i = i_first, i_last
           integer_data(i) = MLSData%IntField(i,1,1)  
-       enddo
+       end do
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = MLSData%rank, &
+         & elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) )
-    endif
+    end if
 
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Integer_1d
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Real_2d( file_id, dataset, real_data, & 
       firstIndex, lastIndex)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     real, dimension(:,:), intent(inout) :: real_data
     integer, intent(in), optional :: firstIndex, lastIndex
@@ -1404,10 +1411,10 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i=1,3
        dim_array(i) = 1
-    enddo
+    end do
     do i=1,size(shape(real_data))
        dim_array(i) = size(real_data,i)
-    enddo
+    end do
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1423,27 +1430,31 @@ contains ! ============================ MODULE PROCEDURES ====================
        else
           j_first = 1
           j_last  = dim_array(2)
-       endif
+       end if
 
        do j = j_first, j_last
           do i = 1, dim_array(1)
              real_data(i,j) = MLSData%RealField(i,j,1) 
-          enddo
-       enddo
+          end do
+       end do
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = MLSData%rank, &
+         & elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) )
-    endif
+    end if
 
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Real_2d
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Double_2d( file_id, dataset, double_data,& 
       firstIndex, lastIndex)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     real(r8), dimension(:,:), intent(inout) :: double_data
     integer, intent(in), optional :: firstIndex, lastIndex
@@ -1455,10 +1466,10 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i=1,3
        dim_array(i) = 1
-    enddo
+    end do
     do i=1,size(shape(double_data))
        dim_array(i) = size(double_data,i)
-    enddo
+    end do
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1474,26 +1485,30 @@ contains ! ============================ MODULE PROCEDURES ====================
        else
           j_first = 1
           j_last  = dim_array(2)
-       endif
+       end if
 
        do j = j_first, j_last
           do i = 1, dim_array(1)
              double_data(i,j) = MLSData%DpField(i,j,1) 
-          enddo
-       enddo
+          end do
+       end do
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = MLSData%rank, &
+         & elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) )
-    endif
+    end if
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Double_2d
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Integer_2d( file_id, dataset, integer_data, &
       firstIndex, lastIndex)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     integer, dimension(:,:), intent(inout) :: integer_data
     integer, intent(in), optional :: firstIndex, lastIndex
@@ -1505,10 +1520,10 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i=1,3
        dim_array(i) = 1
-    enddo
+    end do
     do i=1,size(shape(integer_data))
        dim_array(i) = size(integer_data,i)
-    enddo
+    end do
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1524,26 +1539,30 @@ contains ! ============================ MODULE PROCEDURES ====================
        else
           j_first = 1
           j_last  = dim_array(2)
-       endif
+       end if
 
        do j = j_first, j_last
           do i = 1, dim_array(1)
              integer_data(i,j) = MLSData%IntField(i,j,1)  
-          enddo
-       enddo
+          end do
+       end do
 
        allocate(dataset%Dimensions(MLSData%rank), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = MLSData%rank, &
+         & elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) )
-    endif
+    end if
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Integer_2d
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Real_3d( file_id, dataset, real_data, & 
       firstIndex, lastIndex)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     real, dimension(:,:,:), intent(inout) :: real_data
     integer(hid_t), intent(in) :: file_id
@@ -1555,10 +1574,10 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i=1,3
        dim_array(i) = 1
-    enddo
+    end do
     do i=1,size(shape(real_data))
        dim_array(i) = size(real_data,i)
-    enddo
+    end do
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1575,28 +1594,31 @@ contains ! ============================ MODULE PROCEDURES ====================
        else
           k_first = 1
           k_last  = dim_array(3)
-       endif
+       end if
 
        do k = k_first, k_last
           do j = 1, dim_array(2)
              do i = 1, dim_array(1)
                 real_data(i,j,k) = MLSData%RealField(i,j,k)  
-             enddo
-          enddo
-       enddo
+             end do
+          end do
+       end do
 
        allocate(dataset%Dimensions(3), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = 3, elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
     else
        call MLSMessage(MLSMSG_Error, ModuleName, & 
             'Error Writing MLSAuxData for '// trim(dataset%name) )
-    endif
+    end if
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Real_3d
 !------------------------------------------------------------------------------
  subroutine Recall_MLSAuxData_Double_3d( file_id, dataset, double_data, &
       firstIndex, lastIndex)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     real(r8), dimension(:,:,:), intent(inout) :: double_data
     integer(hid_t), intent(in) :: file_id
@@ -1608,10 +1630,10 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i=1,3
        dim_array(i) = 1
-    enddo
+    end do
     do i=1,size(shape(double_data))
        dim_array(i) = size(double_data,i)
-    enddo
+    end do
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1626,27 +1648,30 @@ contains ! ============================ MODULE PROCEDURES ====================
        else
           k_first = 1
           k_last  = dim_array(3)
-       endif
+       end if
 
        do k = k_first, k_last
           do j = 1, dim_array(2)
              do i = 1, dim_array(1)
                 double_data(i,j,k) = MLSData%DpField(i,j,k) 
-             enddo
-          enddo
-       enddo
+             end do
+          end do
+       end do
 
        allocate(dataset%Dimensions(3), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = 3, elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
     else
        call MLSMessage(MLSMSG_Error,ModuleName,'Error Writing MLSAuxData.')
-    endif
+    end if
     call deallocate_mlsauxdata(MLSData)
   end subroutine Recall_MLSAuxData_Double_3d
   !------------------------------------------------------------------------------
   subroutine Recall_MLSAuxData_Integer_3d(file_id,dataset,integer_data, &
        firstIndex, lastIndex)
+    use Allocate_Deallocate, only: Test_Allocate
     type( DataProducts_T ), intent(inout) :: dataset
     integer, dimension(:,:,:), intent(inout) :: integer_data
     integer(hid_t), intent(in) :: file_id
@@ -1658,10 +1683,10 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     do i=1,3
        dim_array(i) = 1
-    enddo
+    end do
     do i=1,size(shape(integer_data))
        dim_array(i) = size(integer_data,i)
-    enddo
+    end do
 
     call deallocate_mlsauxdata(MLSData)
     call Allocate_MLSAuxData(trim(dataset%name),& 
@@ -1677,7 +1702,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        else
           k_first = 1
           k_last  = dim_array(3)
-       endif
+       end if
 !
        ! dump the data into the array.
 !
@@ -1685,16 +1710,18 @@ contains ! ============================ MODULE PROCEDURES ====================
           do j = 1, dim_array(2)
              do i = 1, dim_array(1)
                 integer_data(i,j,k) = MLSData%IntField(i,j,k)  
-             enddo
-          enddo
-       enddo
+             end do
+          end do
+       end do
 
        allocate(dataset%Dimensions(3), stat=status)
+       call test_allocate ( status, ModuleName, "dataset%Dimensions", &
+         & ubounds = 3, elementSize = storage_size(dataset%Dimensions) / 8 )
        call CopyToDataProducts(MLSData, dataset)
 
     else
        call MLSMessage(MLSMSG_Error,ModuleName,'Error Writing MLSAuxData.')
-    endif
+    end if
     call deallocate_mlsauxdata(MLSData)
  end subroutine Recall_MLSAuxData_Integer_3d
 !------------------------------------------------------------------------------
@@ -1739,17 +1766,18 @@ contains ! ============================ MODULE PROCEDURES ====================
        if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
             H5_ERROR_GROUP_CLOSE // trim(group_name)) 
 
-    endif
+    end if
 
   end subroutine CreateGroup_MLSAuxData
 ! -------------------------------------------------  Create_MLSAuxData ----
   subroutine Create_MLSAuxData(file_id, MLSAuxData, string_length, & 
        write_attributes)
-!
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 ! This subroutine creates an entry in the HDF5 file.
 !----------------------------------------------------------------------
 ! External variables
-!
+
     type( MLSAuxData_T ), intent(in) :: MLSAuxData
     integer(hid_t), intent(in)       :: file_id ! From HDF
     integer, intent(in), optional    :: string_length
@@ -1757,9 +1785,8 @@ contains ! ============================ MODULE PROCEDURES ====================
 !-----------------------------------------------------------------------
 ! Internal variables
 !
-    character(len=480) :: msr
     character(len=namelen) :: aname
-    real, dimension(:), pointer :: attr_data => NULL()
+    real, dimension(:), allocatable :: attr_data
     integer(hsize_t), dimension(7) :: adims
     integer(hsize_t), dimension(3) :: chunk_dims, dims, maxdims
     integer(hsize_t), dimension(1) :: adims_create
@@ -1767,7 +1794,7 @@ contains ! ============================ MODULE PROCEDURES ====================
          attr_id, atype_id, aspace_id, s_type_id
     integer :: i, rank, arank, h5error, status
 !-----------------------------------------------------------------------
-    nullify(attr_data)
+
     test_type: select case (trim(MLSAuxData%type_name))
     case ('real')
        if (associated(MLSAuxData%RealField)) then 
@@ -1794,7 +1821,7 @@ contains ! ============================ MODULE PROCEDURES ====================
                 dims(rank) = 1
                 chunk_dims(rank) = 1
                 maxdims(rank) = H5S_UNLIMITED_F
-             endif
+             end if
           case ('integer')
              if (associated(MLSAuxData%IntField)) then 
                 rank = size(shape(MLSAuxData%IntField))
@@ -1807,7 +1834,7 @@ contains ! ============================ MODULE PROCEDURES ====================
                    dims(rank) = 1
                    chunk_dims(rank) = 1
                    maxdims(rank) = H5S_UNLIMITED_F
-                endif
+                end if
              case ('character')
                 if (associated(MLSAuxData%CharField)) then 
                    rank = size(shape(MLSAuxData%CharField))
@@ -1820,7 +1847,7 @@ contains ! ============================ MODULE PROCEDURES ====================
                       dims(rank) = 1
                       chunk_dims(rank) = 1
                       maxdims(rank) = H5S_UNLIMITED_F
-                   endif
+                   end if
                 end select test_type
 !--------------------------------------------------------------------
                 call h5screate_simple_f(rank, dims(1:rank),dspace_id,h5error,& 
@@ -1859,7 +1886,7 @@ contains ! ============================ MODULE PROCEDURES ====================
                         ModuleName, H5_ERROR_DSET_CREATE // &
                         trim(MLSAuxData%name))
 
-                endif
+                end if
 
 !---------------- write the attributes -----------------------------
 
@@ -1880,10 +1907,7 @@ contains ! ============================ MODULE PROCEDURES ====================
                          adims_create(1) = adims(1)
 
                          allocate(attr_data(adims(1)),STAT=status)
-                         if ( status /= 0 ) then
-                            msr = MLSMSG_Allocate// ' attr_data.'
-                            call MLSMessage(MLSMSG_Error, ModuleName, msr)
-                         endif
+                         call test_allocate ( status, ModuleName, 'attr_data' )
 
                          do i=1, adims(1)
                             attr_data(i) = MLSAuxData%HorizontalCoordinates(i)
@@ -1919,13 +1943,10 @@ contains ! ============================ MODULE PROCEDURES ====================
                               ModuleName, H5_ERROR_DSPACE_CLOSE // &
                               trim(MLSAuxData%name))
 
-                         deallocate (attr_data,STAT=status)
-                         if (status /= 0) then
-                            msr = MLSMSG_deallocate// ' attr_data.'
-                            call MLSMessage(MLSMSG_Error, ModuleName, msr)
-                         endif
+                         deallocate(attr_data,STAT=status)
+                         call test_deallocate ( status, ModuleName,'attr_data' )
 
-                      endif
+                      end if
 
                       if (associated(MLSAuxData%VerticalCoordinates) ) then 
                          arank = size(shape(MLSAuxData%VerticalCoordinates))
@@ -1934,10 +1955,7 @@ contains ! ============================ MODULE PROCEDURES ====================
                          adims_create(1) = adims(1)
 
                          allocate(attr_data(adims(1)),STAT=status)
-                         if ( status /= 0 ) then
-                            msr = MLSMSG_allocate// ' attr_data.'
-                            call MLSMessage(MLSMSG_Error, ModuleName, msr)
-                         endif
+                         call test_allocate ( status, ModuleName, 'attr_data' )
 
                          do i=1,adims(1)
                             attr_data(i) = MLSAuxData%VerticalCoordinates(i)
@@ -1972,13 +1990,10 @@ contains ! ============================ MODULE PROCEDURES ====================
                               ModuleName, H5_ERROR_DSPACE_CLOSE // &
                               trim(MLSAuxData%name))
 
-                         deallocate (attr_data,STAT=status)
-                         if (status /= 0) then
-                            msr = MLSMSG_deallocate// ' attr_data.'
-                            call MLSMessage (MLSMSG_Error, ModuleName, msr)
-                         endif
+                         deallocate(attr_data,STAT=status)
+                         call test_deallocate ( status, ModuleName,'attr_data' )
 
-                      endif
+                      end if
 
                       if (associated(MLSAuxData%FrequencyCoordinates)) then 
                          arank = size(shape(MLSAuxData%FrequencyCoordinates))
@@ -1987,10 +2002,7 @@ contains ! ============================ MODULE PROCEDURES ====================
                          adims_create(1) = adims(1)
 
                          allocate(attr_data(adims(1)),STAT=status)
-                         if ( status /= 0 ) then
-                            msr = MLSMSG_allocate// ' attr_data.'
-                            call MLSMessage(MLSMSG_Error, ModuleName, msr)
-                         endif
+                         call test_allocate ( status, ModuleName, 'attr_data' )
 
                          do i=1,adims(1)
                             attr_data(i) = MLSAuxData%FrequencyCoordinates(i)
@@ -2026,13 +2038,10 @@ contains ! ============================ MODULE PROCEDURES ====================
                               trim(MLSAuxData%name) )
 
                          deallocate(attr_data,STAT=status)
-                         if ( status /= 0 ) then
-                            msr = MLSMSG_deallocate// ' attr_data.'
-                            call MLSMessage(MLSMSG_Error, ModuleName, msr)
-                         endif
-                      endif
-                   endif
-                endif
+                         call test_deallocate ( status, ModuleName,'attr_data' )
+                      end if
+                   end if
+                end if
 
 !---------------- close all structures----------------------------------
 !
@@ -2058,6 +2067,7 @@ contains ! ============================ MODULE PROCEDURES ====================
   ! components of MLSAuxData (if supplied); or
   ! in the array AttributeData
   ! It is an error unless exactly one of the two is supplied
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     character(len=*), intent(in)                  :: QuantityName
     character(len=*), intent(in)                  :: AttributeName
     integer(hid_t), intent(in)                    :: dset_id ! From h5dopen_f
@@ -2065,9 +2075,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     type( MLSAuxData_T ), intent(inout), optional :: MLSAuxData
     real, dimension(:), intent(out), optional     :: AttributeData
   ! Private
-    character(len=480) :: msr
-    character, dimension(:), pointer :: char_data => NULL()
-    real, dimension(:), pointer :: attr_data => NULL()
+    character, dimension(:), allocatable :: char_data
+    real, dimension(:), allocatable :: attr_data
     integer(hsize_t), dimension(7) :: adims    
     integer(hid_t) :: attr_id, atype_id, aspace_id
     integer, parameter :: OPTARGISMAD = 1
@@ -2079,7 +2088,6 @@ contains ! ============================ MODULE PROCEDURES ====================
     error = 0
     is_char = .false.
     atype_id = H5T_IEEE_F32LE
-    nullify(char_data, attr_data)
     do i = 2, 7
        adims(i) = 0
     end do
@@ -2097,7 +2105,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           else
              error = 1
              return
-          endif
+          end if
        case ('HorizontalCoordinates')
           if ( associated ( MLSAuxData%HorizontalCoordinates ) ) then
              arank = 1
@@ -2105,7 +2113,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           else
              error = 1
              return
-          endif
+          end if
        case ('VerticalCoordinates')
           if ( associated ( MLSAuxData%VerticalCoordinates ) ) then
              arank = 1
@@ -2113,7 +2121,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           else
              error = 1
              return
-          endif
+          end if
        case ('Dimensions')
           if ( associated (MLSAuxData%Dimensions) ) then
              arank = 1
@@ -2121,11 +2129,11 @@ contains ! ============================ MODULE PROCEDURES ====================
              atype_id = H5T_NATIVE_CHARACTER
              do i = 1, arank
                 adims(i) = size(MLSAuxData%Dimensions)
-             enddo
+             end do
           else
              error = 1
              return
-          endif
+          end if
        case default
           error = 1
           return
@@ -2149,10 +2157,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     if (is_char) then 
 
        allocate(char_data(adims(1)),stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_allocate// ' char_data.'
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+       call test_allocate ( status, ModuleName, 'char_data' )
 
        call h5aread_f(attr_id, atype_id, char_data, adims, h5error)
        if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -2162,17 +2167,14 @@ contains ! ============================ MODULE PROCEDURES ====================
     else
 
        allocate(attr_data(adims(1)),stat=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_allocate// ' attr_data.'
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+       call test_allocate ( status, ModuleName, 'attr_data' )
 
        call h5aread_f(attr_id, atype_id, attr_data, adims, h5error)
        if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
             H5_ERROR_ATT_READ // trim(AttributeName) // ' in ' // &
             QuantityName )
 
-    endif
+    end if
 
     select case (which_opt_arg)
     case (OPTARGISMAD)
@@ -2201,27 +2203,22 @@ contains ! ============================ MODULE PROCEDURES ====================
          H5_ERROR_DSPACE_CLOSE // trim(AttributeName) // ' in ' // &
          QuantityName )
 
-    if (associated(attr_data)) then 
+    if (allocated(attr_data)) then 
        deallocate(attr_data,STAT=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate// ' attr_data.'
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+       call test_deallocate ( status, ModuleName, 'attr_data' )
+    end if
 
-    if (associated(char_data)) then      
+    if (allocated(char_data)) then      
        deallocate(char_data,STAT=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate// ' char_data.'
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+       call test_deallocate ( status, ModuleName, 'char_data' )
+    end if
 
   end subroutine Read_MLSAuxAttributes
   !-------------------------------------------------Write_MLSAuxAttributes ----
   subroutine Write_MLSAuxAttributes(dset_id, QuantityName, AttributeName, & 
        error, MLSAuxData, AttributeData)
-!
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     ! This subroutine writes attributes to the HDF5 file;
     ! e.g., FrequencyCoordinates
     ! They are supplied either as:
@@ -2235,9 +2232,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     type( MLSAuxData_T ), intent(in), optional :: MLSAuxData
     real, dimension(:), intent(in), optional      :: AttributeData
     ! Private
-    character(len=480) :: msr
-    character(len=20), dimension(:), pointer :: char_data => NULL()
-    real, dimension(:), pointer :: attr_data => NULL()
+    character(len=20), dimension(:), allocatable :: char_data
+    real, dimension(:), allocatable :: attr_data
     integer(hsize_t), dimension(7) :: adims
     integer(hsize_t), dimension(1) :: adims_create
     integer(hid_t) :: atype_id, aspace_id, attr_id
@@ -2250,7 +2246,6 @@ contains ! ============================ MODULE PROCEDURES ====================
     error = 0
     atype_id = H5T_IEEE_F32LE
     is_char = .false.
-    nullify(char_data, attr_data)
     adims = 1
     ! Check that exactly 1 of the optional args is supplied
     ! The following will produce 0 if neither, 3 if both; else 1 or 2
@@ -2264,10 +2259,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           arank = 1
           adims(1) = size(MLSAuxData%FrequencyCoordinates)
           allocate(attr_data(adims(1)),STAT=status)
-          if ( status /= 0 ) then
-             msr = MLSMSG_allocate// ' attr_data.'
-             call MLSMessage(MLSMSG_Error, ModuleName, msr)
-          endif
+          call test_allocate ( status, ModuleName, 'attr_data' )
 
           do i=1,adims(1)
              attr_data(i) = MLSAuxData%FrequencyCoordinates(i)
@@ -2276,10 +2268,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           arank = 1
           adims(1) = size(MLSAuxData%HorizontalCoordinates)
           allocate(attr_data(adims(1)),STAT=status)
-          if ( status /= 0 ) then
-             msr = MLSMSG_allocate// ' attr_data.'
-             call MLSMessage(MLSMSG_Error, ModuleName, msr)
-          endif
+          call test_allocate ( status, ModuleName, 'attr_data' )
 
           do i=1,adims(1)
              attr_data(i) = MLSAuxData%HorizontalCoordinates(i)
@@ -2288,10 +2277,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           arank = 1
           adims(1) = size(MLSAuxData%VerticalCoordinates)
           allocate(attr_data(adims(1)),STAT=status)
-          if ( status /= 0 ) then
-             msr = MLSMSG_allocate// ' attr_data.'
-             call MLSMessage(MLSMSG_Error, ModuleName, msr)
-          endif
+          call test_allocate ( status, ModuleName, 'attr_data' )
 
           do i=1,adims(1)
              attr_data(i) = MLSAuxData%VerticalCoordinates(i)
@@ -2302,10 +2288,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           is_char  = .true.
           adims(1) = size(MLSAuxData%Dimensions)
           allocate(char_data(adims(1)),STAT=status)
-          if ( status /= 0 ) then
-             msr = MLSMSG_allocate// ' char_data.'
-             call MLSMessage(MLSMSG_Error, ModuleName, msr)
-          endif
+          call test_allocate ( status, ModuleName, 'char_data' )
           do i=1,adims(1)
              char_data(i) = trim(MLSAuxData%Dimensions(i))
           end do
@@ -2317,10 +2300,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        arank = 1
        adims(1) = size(AttributeData)
        allocate(attr_data(adims(1)),STAT=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_allocate // ' attr_data.'
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+       call test_allocate ( status, ModuleName, 'attr_data' )
 
        do i=1,adims(1)
           attr_data(i) = AttributeData(i)
@@ -2374,7 +2354,7 @@ contains ! ============================ MODULE PROCEDURES ====================
             H5_ERROR_ATT_WRITE // trim(AttributeName) // ' in ' // &
             trim(MLSAuxData%name) )
 
-    endif
+    end if
 
     call h5aclose_f(attr_id, h5error)                                  
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -2386,29 +2366,24 @@ contains ! ============================ MODULE PROCEDURES ====================
          H5_ERROR_DSPACE_CLOSE // trim(AttributeName) // ' in ' // & 
          trim(MLSAuxData%name) )
 
-    if (associated(attr_data)) then 
+    if (allocated(attr_data)) then 
        deallocate(attr_data,STAT=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate// ' attr_data.'
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+       call test_deallocate ( status, moduleName, 'attr_data' )
+    end if
 
-    if (associated(char_data)) then 
+    if (allocated(char_data)) then 
        deallocate(char_data,STAT=status)
-       if ( status /= 0 ) then
-          msr = MLSMSG_deallocate// ' char_data.'
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-    endif
+       call test_deallocate ( status, moduleName, 'char_data' )
+    end if
 
   end subroutine Write_MLSAuxAttributes
   !-------------------------------------------------Read_MLSAuxData ----
   subroutine Read_MLSAuxData(file_id, QuantityName, QuantityType, & 
        MLSAuxData, error, read_attributes, FirstIndex, LastIndex)
-!
+
     ! This subroutine reads an entry from the HDF5 file.
-!
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     type( MLSAuxData_T ), intent(inout) :: MLSAuxData
     character(len=*), intent(in)   :: QuantityName
     character(len=*), intent(in)   :: QuantityType ! if 'unknown' will derive
@@ -2419,13 +2394,12 @@ contains ! ============================ MODULE PROCEDURES ====================
 !
     !-------------------------------------------------------------------------
 !
-    character, dimension(:,:,:), pointer :: character_buffer => NULL()
-    character(len=480) :: msr
+    character, dimension(:,:,:), allocatable :: character_buffer
     character(len=16) :: myQuantityType
 !
-    real, dimension(:,:,:), pointer :: real_buffer, double_buffer
+    real, dimension(:,:,:), allocatable :: real_buffer, double_buffer
 !
-    integer, dimension(:,:,:), pointer :: integer_buffer => NULL()
+    integer, dimension(:,:,:), allocatable :: integer_buffer
     integer(hsize_t), dimension(7) :: dims
     integer(hsize_t), dimension(3) :: chunk_dims, dims_create, maxdims, start
     integer(hid_t) :: cparms, dset_id, dspace_id, type_id, memspace
@@ -2436,7 +2410,6 @@ contains ! ============================ MODULE PROCEDURES ====================
 !
     error = 0
     myRead_attributes = .false.
-    nullify (character_buffer, real_buffer, double_buffer, integer_buffer)
     dims = 1
     if ( present(read_attributes) ) myRead_attributes=read_attributes
     !-- assign name and type for dataset
@@ -2506,25 +2479,25 @@ contains ! ============================ MODULE PROCEDURES ====================
 
        if ( is_integer .or. is_int32 ) then
           myQuantityType = 'integer'
-       elseif ( is_real .or. is_float32 ) then
+       else if ( is_real .or. is_float32 ) then
           myQuantityType = 'real'
-       elseif ( is_double .or. is_float64 ) then
+       else if ( is_double .or. is_float64 ) then
           myQuantityType = 'double'
-       elseif ( is_character ) then
+       else if ( is_character ) then
           myQuantityType = 'character'
        else
           error = 1
           return
-       endif
+       end if
 
-    endif
+    end if
 
     do i = 1, 7
        if (i .le. rank) then 
           dims(i) = dims_create(i) 
        else
           dims(i) = 0
-       endif
+       end if
     end do
 
     do i = 1, rank
@@ -2560,10 +2533,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        test_type_dims: select case (trim(myQuantityType))
        case ('real')
           allocate( real_buffer(dims(1),dims(2),dims(3)),stat=status)
-          if ( status /= 0 ) then
-             msr = MLSMSG_allocate // ' real_buffer.'
-             call MLSMessage(MLSMSG_Error, ModuleName, msr)
-          endif
+          call test_allocate ( status, ModuleName, 'real_buffer' )
 
           call h5dread_f(dset_id,type_id,& 
                real_buffer,dims,h5error, memspace, dspace_id)
@@ -2576,23 +2546,15 @@ contains ! ============================ MODULE PROCEDURES ====================
              end do
           end do
 
-          if (associated(real_buffer)) then 
+          if (allocated(real_buffer)) then 
              deallocate(real_buffer, stat=status)
-
-             if ( status /= 0 ) then
-                msr = MLSMSG_deallocate // ' real_buffer.'  
-                call MLSMessage(MLSMSG_Error, ModuleName, msr)
-             endif
-
-          endif
+             call test_deallocate ( status, ModuleName, 'real_buffer' )
+          end if
 
        case ('double')    
 
           allocate( double_buffer(dims(1),dims(2),dims(3)),stat=status)
-          if ( status /= 0 ) then
-             msr = MLSMSG_allocate // ' double_buffer'
-             call MLSMessage(MLSMSG_Error, ModuleName, msr)
-          endif
+          call test_allocate ( status, ModuleName, 'double_buffer' )
 
           call h5dread_f(dset_id,type_id,& 
                double_buffer,dims,h5error, memspace, dspace_id)
@@ -2604,22 +2566,14 @@ contains ! ============================ MODULE PROCEDURES ====================
              end do
           end do
 
-          if (associated(double_buffer)) then 
+          if (allocated(double_buffer)) then 
              deallocate(double_buffer, stat=status)
-
-             if ( status /= 0 ) then
-                msr = MLSMSG_deallocate // ' double_buffer.' 
-                call MLSMessage(MLSMSG_Error, ModuleName, msr)
-             endif
-
-          endif
+             call test_deallocate ( status, ModuleName, 'double_buffer' )
+          end if
 
        case ('integer')  
           allocate( integer_buffer(dims(1),dims(2),dims(3)),stat=status)
-          if ( status /= 0 ) then
-             msr = MLSMSG_deallocate // ' integer_buffer'  
-             call MLSMessage(MLSMSG_Error, ModuleName, msr)
-          endif
+          call test_allocate ( status, ModuleName, 'integer_buffer' )
 
           call h5dread_f(dset_id,type_id,& 
                integer_buffer,dims,h5error, memspace, dspace_id)
@@ -2631,21 +2585,14 @@ contains ! ============================ MODULE PROCEDURES ====================
              end do
           end do
 
-          if (associated(integer_buffer)) then 
+          if (allocated(integer_buffer)) then 
              deallocate(integer_buffer, stat=status)
-             if ( status /= 0 ) then
-                msr = MLSMSG_deallocate // ' integer_buffer.' 
-                call MLSMessage(MLSMSG_Error, ModuleName, msr)
-             endif
-          endif
+             call test_deallocate ( status, ModuleName, 'integer_buffer' )
+          end if
 
        case ('character') 
           allocate( character_buffer(dims(1),dims(2),dims(3)),stat=status)
-
-          if ( status /= 0 ) then
-             msr = MLSMSG_allocate // ' character_buffer.' 
-             call MLSMessage(MLSMSG_Error, ModuleName, msr)
-          endif
+          call test_allocate ( status, ModuleName, 'character_buffer' )
 
           call h5dread_f(dset_id,type_id,& 
                character_buffer,dims,h5error, memspace, dspace_id)
@@ -2657,19 +2604,14 @@ contains ! ============================ MODULE PROCEDURES ====================
              end do
           end do
 
-          if (associated(character_buffer)) then 
+          if (allocated(character_buffer)) then 
              deallocate(character_buffer, stat=status)
-
-             if ( status /= 0 ) then
-                msr = MLSMSG_deallocate // ' character_buffer.' 
-                call MLSMessage(MLSMSG_Error, ModuleName, msr)
-             endif
-
-          endif
+             call test_deallocate ( status, ModuleName, 'character_buffer' )
+          end if
 
        end select test_type_dims
 
-    endif
+    end if
 
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          H5_ERROR_DSET_READ // trim(MLSAuxData%name) )
@@ -2684,7 +2626,7 @@ contains ! ============================ MODULE PROCEDURES ====================
             & 'VerticalCoordinates', h5error, MLSAuxData)
        call Read_MLSAuxAttributes(dset_id, trim(MLSAuxData%name), & 
             & 'Dimensions', h5error, MLSAuxData)
-    endif
+    end if
 !
     ! Close all identifiers.
 !
@@ -2745,7 +2687,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       print *, 'Write_MLSAuxData: ', trim(MLSAuxData%type_name)
       write(*, '(a12, 8I8)') 'rank: ', MLSAuxData%rank
       if ( present(index) ) write(*, '(a12, 8I8)') 'index: ', index
-    endif
+    end if
     test_type: select case (trim(MLSAuxData%type_name))
 
     case ('real')
@@ -2770,8 +2712,8 @@ contains ! ============================ MODULE PROCEDURES ====================
                 dims_create(i) = dims(i)
                 maxdims(i) = dims(i)
              end do
-          endif
-       endif
+          end if
+       end if
 
     case ('double')
        if (associated(MLSAuxData%DpField)) then 
@@ -2795,8 +2737,8 @@ contains ! ============================ MODULE PROCEDURES ====================
                 dims_create(i) = dims(i)
                 maxdims(i) = dims(i)
              end do
-          endif
-       endif
+          end if
+       end if
     case ('integer')
 
        if (associated(MLSAuxData%IntField)) then 
@@ -2819,9 +2761,9 @@ contains ! ============================ MODULE PROCEDURES ====================
                 chunk_dims(i) = dims(i)
                 dims_create(i) = dims(i)
                 maxdims(i) = dims(i)
-             enddo
-          endif
-       endif
+             end do
+          end if
+       end if
 
     case ('character')
        if (associated(MLSAuxData%CharField)) then 
@@ -2844,9 +2786,9 @@ contains ! ============================ MODULE PROCEDURES ====================
                 chunk_dims(i) = dims(i)
                 dims_create(i) = dims(i)
                 maxdims(i) = dims(i)
-             enddo
-          endif
-       endif
+             end do
+          end if
+       end if
     end select test_type
 
     call h5eset_auto_f(0, h5error)
@@ -2856,7 +2798,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
        if ( MLSAuxData%name == 'R1A:118.B22D:PT.S0.DACS-4 precision'  .and. DEBUG ) then
          print *, 'The dataset doesnt exist yet--must create it', h5error, dset_id
-       endif
+       end if
        call h5eset_auto_f(1, h5error)
 !--------------------------------------------------------------------
        call h5screate_simple_f (rank, dims_create(1:rank), &
@@ -2876,19 +2818,19 @@ contains ! ============================ MODULE PROCEDURES ====================
           CALL H5pSet_Fill_Value_f (cparms, type_id, fill_value_r, h5error)
           IF (h5error /= 0) CALL MLSMessage (MLSMSG_Error, &
                ModuleName, "Fill value " // TRIM (MLSAuxData%name))
-       ENDIF
+       end if
 
        IF (PRESENT (fill_value_d)) THEN
           CALL H5pSet_Fill_Value_f (cparms, type_id, fill_value_d, h5error)
           IF (h5error /= 0) CALL MLSMessage (MLSMSG_Error, &
                ModuleName, "Fill value " // TRIM (MLSAuxData%name))
-       ENDIF
+       end if
 
        IF (PRESENT (fill_value_i)) THEN
           CALL H5pSet_Fill_Value_f (cparms, type_id, fill_value_i, h5error)
           IF (h5error /= 0) CALL MLSMessage (MLSMSG_Error, &
                ModuleName, "Fill value " // TRIM (MLSAuxData%name))
-       ENDIF
+       end if
 
        if (trim(MLSAuxData%type_name).ne.'character') then
 
@@ -2912,7 +2854,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           IF (h5error /= 0) CALL MLSMessage (MLSMSG_Error, &
                ModuleName, H5_ERROR_DSET_CREATE // trim(MLSAuxData%name))
 
-       endif
+       end if
 !---------------- close all structures----------------------------------
        call h5sclose_f (dspace_id, h5error )
        if (h5error /= 0) call MLSMessage (MLSMSG_Error, &
@@ -2922,7 +2864,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        if (h5error /= 0) call MLSMessage (MLSMSG_Error, &
             ModuleName, H5_ERROR_PROPERTY_CLOSE // trim(MLSAuxData%name))
 
-    endif
+    end if
 
     if (associated(MLSAuxData%RealField)) then
 
@@ -2933,7 +2875,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           dims(i) = dims_create(i)
           chunk_dims(i) = dims(i)
        end do
-    endif
+    end if
 
     if (associated(MLSAuxData%DpField)) then 
 
@@ -2944,7 +2886,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           dims(i) = dims_create(i)
           chunk_dims(i) = dims(i)
        end do
-    endif
+    end if
 
     if (associated(MLSAuxData%CharField)) then 
 
@@ -2956,7 +2898,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           chunk_dims(i) = 1
        end do
 
-    endif
+    end if
 
     if (associated(MLSAuxData%IntField)) then 
 
@@ -2967,7 +2909,7 @@ contains ! ============================ MODULE PROCEDURES ====================
           dims(i) = dims_create(i)
           chunk_dims(i) = dims(i)
        end do
-    endif
+    end if
 
     do i = 1, rank
        start(i) = 0
@@ -2978,7 +2920,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        dims_create(rank) = index
        dims(rank) = index
        chunk_dims(rank) = index
-    endif
+    end if
     call h5dget_space_f(dset_id, filespace, h5error)
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          H5_ERROR_DSET_GETSPACE // trim(MLSAuxData%name) )
@@ -2993,11 +2935,11 @@ contains ! ============================ MODULE PROCEDURES ====================
       write(*, '(a12, 8I8)') 'dims_create: ', dims_create(1:rank)
       write(*, '(a12, 8I8)') 'dims_file: ', dims_file(1:rank)
       write(*, '(a12, 8I8)') 'maxdims    : ', maxdims(1:rank)
-    endif
+    end if
     ! call h5dextend_f(dset_id, dims_create, h5error)
     do i=1, rank
       dims_file(i) = max( dims_file(i), dims_create(i) )
-    enddo
+    end do
     ! hdf5 1.8 introduced h5dset_extent_f to rplace h5dextend_f
     ! which has been deprecated
     ! Therefore swap comments between the following two statements
@@ -3018,7 +2960,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       print *, 'After dextend'
       write(*, '(a12, 8I8)') 'dims_file: ', dims_file(1:rank)
       write(*, '(a12, 8I8)') 'maxdims    : ', maxdims(1:rank)
-    endif
+    end if
 
     call h5dget_type_f(dset_id, type_id, h5error)
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -3037,7 +2979,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       print *, 'Before hyperslab'
       write(*, '(a12, 8I8)') 'dims_file: ', dims_file(1:rank)
       write(*, '(a12, 8I8)') 'maxdims    : ', maxdims(1:rank)
-    endif
+    end if
     call h5sselect_hyperslab_f (filespace, H5S_SELECT_SET_F, start(1:rank), &
          dims_create(1:rank), h5error)
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -3085,7 +3027,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        if (associated(MLSAuxData%Dimensions)) & 
             call Write_MLSAuxAttributes (dset_id, &
             trim(MLSAuxData%name), 'Dimensions', error, MLSAuxData)
-    endif
+    end if
 
 !
 ! Close all identifiers.
@@ -3117,7 +3059,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       write(*, '(a12, 8I8)') 'dims_create: ', dims_create(1:rank)
       write(*, '(a12, 8I8)') 'maxdims    : ', maxdims(1:rank)
       call h5dclose_f(dset_id, h5error)
-    endif
+    end if
   end subroutine Write_MLSAuxData
 
   subroutine CopyFromDataProducts( dataset, MLSAuxData )
@@ -3138,10 +3080,10 @@ contains ! ============================ MODULE PROCEDURES ====================
     ! the value of MLSAuxData%rank. I'm not aware of constraints regarding
     ! FrequencyCoordinates, VerticalCoordinates, or HorizontalCoordinates.
     ! -haley n-
+    use Allocate_Deallocate, only: Test_Allocate
     type( MLSAuxData_T ), intent(inout) :: MLSAuxData
     type( DataProducts_T ), intent(in) :: dataset
     integer :: i, status, length
-    character(len=20) :: routineName = "CopyFromDataProducts"
 
     if (associated(MLSAuxData%Dimensions)) &
       call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -3164,60 +3106,52 @@ contains ! ============================ MODULE PROCEDURES ====================
          // 'Quitting to avoid memory leak.')
 
     if (associated(dataset%Dimensions)) then 
-       allocate(MLSAuxData%Dimensions(MLSAuxData%rank), stat=status) 
+       allocate(MLSAuxData%Dimensions(MLSAuxData%rank), stat=status)
+       call test_allocate ( status, ModuleName, "MLSAuxData%Dimensions", &
+         & uBounds = MLSAuxData%rank, &
+         & elementSize = storage_size(MLSAuxData%Dimensions ) / 8 )
        !MLSAuxData%rank should be less than or equal to the size of dataset%Dimensions,
        !but just to be on the safe size, I'll get the min size of the 2. -haley n-
-       if (status == 0) then
-          do i = 1, min(size(dataset%Dimensions), size(MLSAuxData%Dimensions))
-             MLSAuxData%Dimensions(i) = trim(dataset%Dimensions(i))
-          end do
-       else
-          call MLSMessage(MLSMSG_Error, ModuleName, "In " // routineName &
-               // ": cannot allocate MLSAuxData%Dimensions.")
-       endif
-    endif
+        do i = 1, min(size(dataset%Dimensions), size(MLSAuxData%Dimensions))
+           MLSAuxData%Dimensions(i) = trim(dataset%Dimensions(i))
+        end do
+    end if
 
     if (associated(dataset%FrequencyCoordinates)) then
        length = size(dataset%FrequencyCoordinates)
        allocate(MLSAuxData%FrequencyCoordinates(length), stat=status)
-       if (status == 0) then
-          do i = 1, length
-             MLSAuxData%FrequencyCoordinates(i) = &
-                  dataset%FrequencyCoordinates(i)
-          enddo
-       else
-          call MLSMessage(MLSMSG_Error, ModuleName, "In " // routineName &
-               // ": cannot allocate MLSAuxData%FrequencyCoordinates.")
-       endif
-    endif
+       call test_allocate ( status, ModuleName, "MLSAuxData%FrequencyCoordinates", &
+         & uBounds = length, &
+         & elementSize = storage_size(MLSAuxData%FrequencyCoordinates) / 8 )
+       do i = 1, length
+         MLSAuxData%FrequencyCoordinates(i) = &
+           & dataset%FrequencyCoordinates(i)
+       end do
+    end if
 
     if (associated(dataset%VerticalCoordinates)) then
        length = size(dataset%VerticalCoordinates)
        allocate(MLSAuxData%VerticalCoordinates(length), stat=status)
-       if (status == 0) then 
-          do i = 1, length
-             MLSAuxData%VerticalCoordinates(i) = &
-                  dataset%VerticalCoordinates(i)
-          enddo
-       else
-          call MLSMessage(MLSMSG_Error, ModuleName, "In " // routineName &
-               // ": cannot allocate MLSAuxData%VerticalCoordinates.")
-       endif 
-    endif
+       call test_allocate ( status, ModuleName, "MLSAuxData%VerticalCoordinates", &
+         & uBounds = length, &
+         & elementSize = storage_size(MLSAuxData%VerticalCoordinates) / 8 )
+       do i = 1, length
+         MLSAuxData%VerticalCoordinates(i) = &
+           & dataset%VerticalCoordinates(i)
+       end do
+    end if
 
     if (associated(dataset%HorizontalCoordinates)) then
        length = size(dataset%HorizontalCoordinates)
        allocate(MLSAuxData%HorizontalCoordinates(length), stat=status) 
-       if (status == 0) then
-          do i = 1, length
-             MLSAuxData%HorizontalCoordinates(i) = &
-                  dataset%HorizontalCoordinates(i)
-          enddo
-       else
-          call MLSMessage(MLSMSG_Error, ModuleName, "In " // routineName &
-               // ": cannot allocate MLSAuxData%HorizontalCoordinates.")
-       endif
-    endif
+       call test_allocate ( status, ModuleName, "MLSAuxData%HorizontalCoordinates", &
+         & uBounds = length, &
+         & elementSize = storage_size(MLSAuxData%HorizontalCoordinates) / 8 )
+       do i = 1, length
+         MLSAuxData%HorizontalCoordinates(i) = &
+           & dataset%HorizontalCoordinates(i)
+       end do
+    end if
 
   end subroutine CopyFromDataProducts
 
@@ -3231,25 +3165,25 @@ contains ! ============================ MODULE PROCEDURES ====================
           dataset%Dimensions(i) = '                    '
           dataset%Dimensions(i) = trim(MLSAuxData%Dimensions(i))
        end do
-    endif
+    end if
 
     if (associated(MLSAuxData%FrequencyCoordinates) ) then 
        do i = 1, size(MLSAuxData%FrequencyCoordinates)
           dataset%FrequencyCoordinates(i) = MLSAuxData%FrequencyCoordinates(i)
-       enddo 
-    endif
+       end do 
+    end if
 
     if (associated(MLSAuxData%VerticalCoordinates) ) then 
        do i = 1, size(MLSAuxData%VerticalCoordinates)
           dataset%VerticalCoordinates(i) = MLSAuxData%VerticalCoordinates(i)
-       enddo 
-    endif
+       end do 
+    end if
 
     if (associated(MLSAuxData%HorizontalCoordinates) ) then 
        do i = 1, size(MLSAuxData%HorizontalCoordinates)
         dataset%HorizontalCoordinates(i) = MLSAuxData%HorizontalCoordinates(i)
-       enddo 
-    endif
+       end do 
+    end if
 
   end subroutine CopyToDataProducts
 
@@ -3266,6 +3200,10 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.33  2014/09/05 00:00:00  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Convert some local pointer temps to allocatable.
+!
 ! Revision 2.32  2014/03/07 19:19:24  pwagner
 ! Name_Len changed to nameLen; got from MLSCommon
 !
