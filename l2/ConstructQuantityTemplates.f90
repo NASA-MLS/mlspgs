@@ -91,6 +91,8 @@ contains ! ============= Public procedures ===================================
       & SETUPNEWQUANTITYTEMPLATE, &
       & NULLIFYQUANTITYTEMPLATE
     use STRING_TABLE, only: GET_STRING
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_SET_ONE
     use VGRIDSDATABASE, only: VGRIDS
@@ -125,6 +127,7 @@ contains ! ============= Public procedures ===================================
     integer :: I                        ! Loop counter
     integer :: INSTRUMENTMODULE         ! Database index
     integer :: KEY                      ! Field name, F_...
+    integer :: Me = -1                  ! String index for trace
     integer :: MOLECULE                 ! Literal
     integer :: NOCHANS                  ! Quantity dimension
     integer :: NOINSTANCES              ! Quantity dimension
@@ -153,6 +156,9 @@ contains ! ============= Public procedures ===================================
       call InitQuantityTemplates
       firstCall = .false.
     end if
+
+    call trace_begin ( me, "CreateQtyTemplate", root, &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
 
     ! Set appropriate defaults
     call NullifyQuantityTemplate ( qty ) ! for Sun's rubbish compiler
@@ -464,6 +470,9 @@ contains ! ============= Public procedures ===================================
     if ( got(f_badValue) ) qty%badValue = badValue
 
     call deallocate_test ( channels, 'Channels', moduleName )
+
+    call trace_end ( "CreateQtyTemplate", cond=toggle(gen) .and. levels(gen) > 1 )
+
   end function CreateQtyTemplateFromMLSCFInfo
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
@@ -1403,6 +1412,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.177  2014/09/05 00:39:49  vsnyder
+! Add some tracing
+!
 ! Revision 2.176  2014/04/24 23:58:21  pwagner
 ! If hGrid supplied, use it to set horizontalCoordinate
 !
