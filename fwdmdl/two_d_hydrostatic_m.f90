@@ -21,7 +21,7 @@ module Two_D_Hydrostatic_m
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
-  contains
+contains
 !---------------------------------------------------------------------------
 
   subroutine Two_D_Hydrostatic ( Grids_tmp, z_refs, h_refs, z_grid, beta, &
@@ -123,6 +123,9 @@ module Two_D_Hydrostatic_m
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.19  2013/06/12 02:33:37  vsnyder
+! Cruft removal
+!
 ! Revision 2.18  2009/06/23 18:26:11  pwagner
 ! Prevent Intel from optimizing ident string away
 !
