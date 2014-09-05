@@ -30,8 +30,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     & L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM
   use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE, MLSFILE_T
   use MLSKINDS, only: RV
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
-    & MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSFILES, only: HDFVERSION_4, HDFVERSION_5, DUMP, mls_exists, &
     & MLS_CLOSEFILE, MLS_OPENFILE
   use MLSFINDS, only: FINDFIRST
@@ -97,6 +96,8 @@ contains ! ======================= Public Procedures =========================
     ! creating a new database if it doesn't exist.  The result value is
     ! the size -- where it is put.
 
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
     ! Dummy arguments
     type (DirectData_T), dimension(:), pointer :: DATABASE
     type (DirectData_T), intent(in) :: ITEM
@@ -115,25 +116,30 @@ contains ! ======================= Public Procedures =========================
   ! This subroutine destroys a directly writeable database
 
   subroutine DestroyDirectDatabase ( DATABASE )
+    use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+
+    use Toggles, only: Gen, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
 
     ! Dummy argument
     type (DirectData_T), dimension(:), pointer :: DATABASE
 
     ! Local variables
-    integer :: directIndex, status
+    integer :: directIndex, s, status
+    integer :: Me = -1       ! String index for trace
+
+    call trace_begin ( me, "DestroyDirectDatabase", cond=toggle(gen) )
 
     if ( associated(database) ) then
       do directIndex=1, size(DATABASE)
-        status = 0
-        if ( associated(database(directIndex)%sdNames) ) &
-          & deallocate ( database(directIndex)%sdNames, stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_deallocate // "sdNames" )
-      enddo
-       deallocate ( database, stat=status )
-       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & MLSMSG_deallocate // "database" )
+        call deallocate_test ( database(directIndex)%sdNames, &
+          "database%sdNames", moduleName )
+      end do
+      s = size(database) * storage_size(database) / 8
+      deallocate ( database, stat=status )
+      call test_deallocate ( status, moduleName, "database", s )
     end if
+    call trace_end ( "DestroyDirectDatabase", cond=toggle(gen) )
   end subroutine DestroyDirectDatabase
 
   ! ------------------------------------------ DirectWriteVector_L2GP_MF --------
@@ -973,6 +979,7 @@ contains ! ======================= Public Procedures =========================
 
   !------------------------------------------  ExpandSDNames  -----
   subroutine ExpandSDNames ( directData, sdName )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
 
     ! This routine adds to the sdNames arrays for a DirectWrite if necessary
 
@@ -984,17 +991,18 @@ contains ! ======================= Public Procedures =========================
     logical :: alreadyThere
     integer :: i
     integer :: newsize
-    character(len=80), dimension(:), pointer :: sdNames => null()
+    character(len=80), dimension(:), pointer :: sdNames
     integer :: status
     ! Check if the sdName already there
     ! print *, 'Check if the sdName already there'
+    nullify ( sdNames )
     if ( associated(directData%sdNames) ) then
       newSize=SIZE(directData%sdNames)+1
       ! alreadyThere = any(sdName == directData%sdNames)
       alreadyThere = .false.
       do i=1, size(directData%sdNames)
         alreadyThere = alreadyThere .or. (sdName == directData%sdNames(i))
-      enddo
+      end do
       ! if ( alreadyThere ) print *, trim(sdName), ' already there'
       if ( alreadyThere ) return
     else
@@ -1003,14 +1011,11 @@ contains ! ======================= Public Procedures =========================
     end if
     directData%NsdNames = newsize
     ! print *, ' allocating ', newsize
-    allocate(sdNames(newSize),STAT=status)
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "temp sdnames")
+    call allocate_test ( sdNames, newSize, "sdNames", moduleName )
     if ( newSize>1 ) sdNames(1:newSize-1) = directData%sdNames
-    if ( ASSOCIATED(directData%sdNames) ) &
-      & deallocate ( directData%sdNames, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "sdNames" )
+    if ( associated(directData%sdNames) ) &
+      call deallocate_test ( directData%sdNames, "directData%sdNames", &
+        & moduleName )
     directData%sdNames => sdNames
     directData%sdNames(newSize) = sdName
   end subroutine ExpandSDNames
@@ -1268,6 +1273,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.62  2014/09/05 00:40:24  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.61  2014/04/10 00:47:18  pwagner
 ! More consistent in when to announce creating files, datasets
 !
