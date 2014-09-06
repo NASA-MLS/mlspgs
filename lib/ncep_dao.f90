@@ -550,6 +550,7 @@ contains
     call LoadFromHDF5DS (geos5file%fileid%f_id, 'lat', temp1d)
     call allocate_test ( the_g_data%lats, the_g_data%nolats, "the_g_data%lats", &
       & moduleName )
+    the_g_data%lats = temp1d
     call deallocate_test ( temp1d, "temp1d", moduleName )
 
     ! Get heights
@@ -2667,6 +2668,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.79  2014/09/06 00:05:02  pwagner
+! Stores geost_7 lats in the_g_data after reading them
+!
 ! Revision 2.78  2014/09/05 00:27:11  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Add some
 ! tracing.
