@@ -34,6 +34,7 @@ begin Fill
   ;; Now invoke it for all relevant species
   !forall(fillWithClimatology,!allClimatologicalSpecies)
   
+!ifdef(flagOverwriteWithWACCM,{
   ;; For the UARS instrument, we require non-zero apriori refGPH
   ;; which will be used later, incidentally
   !fillWithClimatology(refGPH)
@@ -41,7 +42,7 @@ begin Fill
     sourceGrid=gridrefGPH
   Fill, quantity=apriori.GPH_HR, method=gridded, $
     sourceGrid=gridrefGPH
-
+})
   !ifdef(flagSetTopOfHCl,{
 
   Dump, text='Before setting top of HCl to 3ppbv'
@@ -628,7 +629,15 @@ begin Fill
     /interpolate, /ignoreTemplate
 end Fill
 
+; For out-of-plane modeling
+begin Fill
+  Fill, quantity=apriori.azimuth, method=explicit, explicitValues= 90deg
+end Fill
+
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.1  2014/06/13 17:50:36  pwagner
+;First commit
+;
 !divert!dnl
