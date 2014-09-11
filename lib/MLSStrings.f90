@@ -54,6 +54,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! isAlphabet         Is the arg an alphabetical character?
 ! IsAscii            Is each array element ascii, i.e. non-binary
 ! IsComment          Does the string begin with a Comment character?
+! IsDigits           Is the string composed entirely of digits?
 ! IsRepeat           Is a string composed entirely of one substring repeated?
 ! lenTrimToAscii     len_trim of string ignoring all non-ascii chars
 ! LinearSearchStringArray     
@@ -111,6 +112,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! log isAlphabet( char arg )
 ! log(:) isAscii( char arg(:) )
 ! log(:) isComment( char* arg(:), [char Comment] )
+! log(:) isDigits( char* arg(:) )
 ! log IsRepeat ( char* str, [char* subtring] )
 ! int lenTrimToAscii (char* str)
 ! int LinearSearchStringArray (char* list(:), char* string, 
@@ -202,7 +204,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
   public :: asciify, &
     & capitalize, catStrings, charToInt, compressString, count_words, &
     & delete, depunctuate, flushArrayLeft, hhmmss_value, &
-    & indexes, ints2Strings, isAllAscii, isAlphabet, isComment, isRepeat, &
+    & indexes, ints2Strings, &
+    & isAllAscii, isAlphabet, isComment, isDigits, isRepeat, &
     & lenTrimToAscii, linearSearchStringArray, lowercase, &
     & nAppearances, nCopies, &
     & readCompleteLineWithoutComments, readIntFromBaseN, readIntsFromChars, &
@@ -3020,6 +3023,23 @@ contains
     itIs = ( index(list, arg) > 0 )
   end function isDigit
 
+  ! ---------------------------------------------------  isDigits  -----
+  elemental function isDigits(arg) result(itIs)
+    ! Returns TRUE if arg is made up of {'1', '2', ..} and trailing space(s)
+    ! Args
+    character(len=*), intent(in) :: arg
+    logical                      :: itIs
+    ! Internal variables
+    integer :: i
+    ! Executable
+    itIs = .false.
+    if ( len_trim(arg) < 1 ) return
+    do i=1, len_trim(arg)
+      if ( .not. isDigit(arg(i:i)) ) return
+    enddo
+    itIs = .true.
+  end function isDigits
+
   ! ---------------------------------------------------  lastChar  -----
   character function lastChar(str)
     character(len=*), intent(in) :: str
@@ -3191,6 +3211,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.101  2014/09/11 18:23:57  pwagner
+! Added isDigits
+!
 ! Revision 2.100  2014/09/05 00:12:11  vsnyder
 ! Convert pointer temp to explicit shape.
 !
