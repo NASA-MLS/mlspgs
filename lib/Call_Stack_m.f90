@@ -14,9 +14,9 @@ module Call_Stack_m
   implicit none
   private
 
-  public :: STACK_T
-  public :: DUMP_STACK, GET_FRAME, POP_STACK, PUSH_STACK, STACK_DEPTH, TOP_STACK
-  public :: SAY_WHEN, Show_Sys_Memory
+  public :: stack_t
+  public :: dump_stack, get_frame, pop_stack, push_stack, stack_depth, top_stack
+  public :: say_when, Show_Sys_Memory, sys_memory_ch, sys_memory_convert
 
   type :: Stack_t
     real :: Clock = 0.0                ! Whatever Time_Now returns (CPU or ?)
@@ -36,14 +36,16 @@ module Call_Stack_m
   end interface
 
   ! Display date and time during push and pop displays
-  logical, parameter :: Say_Date = .false.
-  logical, save      :: Say_When = .false.
+  logical, parameter :: Say_Date         = .false.
+  logical, save      :: Say_When         = .false.
 
   ! Display system memory changes during push and pop displays
-  logical, save :: Show_Sys_Memory = .false.
+  logical, save ::    Show_Sys_Memory    = .true.
+  character(len=2) :: sys_memory_ch      = 'kB'
+  real             :: sys_memory_convert = 1.0
   
   logical, save, private :: StaySilent = .false. ! E.g., in case it becomes corrupted
-  logical, save, private :: Verbose = .false. ! Print each push, pop
+  logical, save, private :: Verbose    = .false. ! Print each push, pop
 
   ! NoBytesAllocated at previous stack operation, so we can report memory
   ! size changes that occurred during untraced procedure exits.
@@ -166,8 +168,8 @@ contains ! ====     Public Procedures     ==============================
         call output ( stack(depth)%tree, before=', tree at ' )
         call print_source ( where_at(stack(depth)%tree), before=', ' )
       end if
-      if ( mySysSize ) call output ( stack(depth)%sys_memory, &
-        & before = ' Sys_Memory (kB): ' )
+      if ( mySysSize ) call output ( sys_memory_convert*stack(depth)%sys_memory, &
+        & before = ' Sys_Memory (' // sys_memory_ch // '): ' )
       if ( mySize ) call dumpSize ( stack(depth)%memory, &
         & before = ' Memory: ' )
       if ( myCPU ) call output ( stack(depth)%clock, format='(g10.3)', &
@@ -262,9 +264,10 @@ contains ! ====     Public Procedures     ==============================
           call memory_used ( total=total_used )
           iDelta = total_used - stack(stack_ptr)%sys_memory
           if ( iDelta /= 0 ) then
-            call output ( iDelta, before=', System memory changed by ' )
-            call output ( total_used, before = ' kB to ' )
-            call output ( ' kB' )
+            call output ( sys_memory_convert*iDelta, before=', System memory changed by ' )
+            call output ( sys_memory_convert*total_used, &
+              & before = ' ' // sys_memory_ch // ' to ' )
+            call output ( ' ' // sys_memory_ch )
           end if
         end if
         delta = noBytesAllocated - stack(stack_ptr)%memory
@@ -469,6 +472,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.25  2014/09/11 18:25:13  pwagner
+! May show sys memory in units other than kB
+!
 ! Revision 2.24  2014/09/04 23:32:54  vsnyder
 ! Add system memory tracking (default off).  Add untraced memory size changes.
 ! Some cannonball polishing.
