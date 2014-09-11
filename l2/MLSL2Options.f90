@@ -26,7 +26,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
     & Bummer, sayMessage => MLSMessage
   use MLSPCF2, only: MLSPCF_l1b_rad_end, MLSPCF_l1b_rad_start
   use MLSStringLists, only: EvaluateFormula
-  use MLSStrings, only: isComment, lowerCase, &
+  use MLSStrings, only: isComment, isDigits, lowerCase, &
     & readIntsFromChars, Replace, writeIntsToChars
   use PCFHdr, only: globalAttributes
   use output_m, only: outputOptions, &
@@ -436,7 +436,6 @@ contains
     end if
   ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
   ! So here's a good place to put any SIPS-specific settings overriding defaults
-  if ( .true.  ) then ! SIPS_VERSION
     ! SIPS_VERSION
     parallel%maxFailuresPerMachine = 2
     parallel%maxFailuresPerChunk = 1
@@ -445,11 +444,6 @@ contains
     DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
     MLSMessageConfig%limitWarnings = 4 ! 50 ! Why print all that stuff?
     time_config%use_wall_clock = .true. ! SIPS_VERSION
-  else
-    ! SCF_VERSION
-    switches='0sl'
-    time_config%use_wall_clock = .false. ! SIPS_VERSION
-  end if
     i = 1 + hp
     do ! Process Lahey/Fujitsu run-time options; they begin with "-Wl,"
       call getNextArg ( i, line )
@@ -1137,6 +1131,9 @@ jloop:do while ( j < len_trim(line) )
       elseif ( len_trim(name ) < 2 ) then
         ! single-character options
         name = '-' // name
+      elseif ( isDigits(name(2:) ) ) then
+        ! single-character options plus "degree"; e.g. -f4
+        name = '-' // name
       else
         ! multi-character options
         name = '--' // name
@@ -1268,6 +1265,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.98  2014/09/11 18:30:19  pwagner
+! Removed unused code; corrected parsing of, e.g., f1=true
+!
 ! Revision 2.97  2014/09/05 01:10:03  vsnyder
 ! Get Error_Unit from intrinsic ISO_Fortran_Env module.  Delete PID stuff.
 ! Add -E and --stdout error to send output to stderr.
