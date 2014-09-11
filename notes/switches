@@ -16,8 +16,8 @@ Switches (set by -S option in mlsl2's command line):
  cab     => Column Abundance-containing l2gp swaths dumped
  cgrid   => Check Fills done by grid method
  chi     => chi-related diagnostic quantities dumped; chi1 for 1st chunk only
- cho     => How good was the Cholesky decomposition?
- chu     => Enslaved chunk processing
+ chktr   => Diagnose tracing problems by extra internal checks
+ chu[n]  => How the data is divided into chunks
  clean   => Turn on the CLEAN option in some dumps in the forward model
  col     => Dump column scale vector for Newton iteration
  column  => Extra diagnostics while integrating column abundances
@@ -25,43 +25,50 @@ Switches (set by -S option in mlsl2's command line):
  dacsfil => Dump DACS filter shapes after reading them
  debug   => Turn on debugging in certain modules (so far only l2PC_m)
  destroy => Warn before each destroy
- dfrc[n] => Dump reason why refractive correction failed, stop if n > 0
  diag    => Dump diagonal of factored normal equations
  direct  => Show automatic assignments to split directwrite files
  dmiss   => Don't quit, just warn if derivative requested for qty missing
             from state
  dozm    => Do minimum zeta only if requested
+ dpri    => Dump rad pol if overflow
+ Dpri    => Dump rad pol always
+ DPRI    => Dump rad pol then stop
  dres    => Dump forward model - measurement residual with dres detail level
+ drfc[n] => Dump reason why refractive correction failed, stop if n > 0
  drmc    => Dump Retriever Matrices Clean
+ dsct    => Dump TScat
+ dtsct   => Dump TScat derivatives
  dvec    => Dump 'DX' vector during Newton iteration
- dwreq[n] => Dump directwrite requests processed by master
+ dwreq[n]=> Dump directwrite requests processed by master
               *Warning--may use more memory
  dwtime  => Show how long each directwrite takes
  dxfc    => Do dxfq dump clean
  dxfq    => Dump extinction transformation in ForwardModelWrappers
  dxn     => Residual norm if 0, separately for quantities if > 0
- erh     => Stop with error if dump,/stop
  fac     => L_infty norms of blocks of factors of normal equations
             during Newton iterations
  FAC     => Factors of normal equations during Newton iterations
+ ffrq    => Dump frequencies to be averaged in forward model
  fgrid   => Dump frequency grids after creating them
+ fill    => Dump intermediate details during certain Fill operations
  filt    => Dump filter shapes after reading them
  fiw[n]  => Dump instance windows for each forward model
+ fmconf  => Dump configuration used in forward model
  fmnan   => Check forward model output for NaN and print if level > 0,
               print values if level > 1, stop if level > 2
  fmt2    => Mean & standard deviation for timing FullForwardModel at each chunk
  fmt1    => Mean & standard deviation for timing FullForwardModel at last chunk
+ fnmin   => Dump the fnmin terms
  fnorm   => Dump the individual contributions to fnorm
- fvec    => 'F' vector during Newton iteration
  fwmd[n] => Dump Forward model config whenever 'derived' part is computed
             low-order digit of n is spectroscopy catalog dump level
             stop if n > 9
- fwmg[n] => Dump Forward model config after Get_Species_Data finishes
-            n is used as for fwmd
  geom    => Show geometry of chunks/hGrids
+ geos5   => Show geos5_7 meteorology fields as they are read
  glo[n]  => Global settings, info on l1b files 
  glob    => Show when Bright Object in FOV affects radiance precision
- gridd   => Dump gridded data quantities
+ grid    => Announce as mlsl2 Creates, Destroys, Merges gridded data
+ gridd   => Dump gridded database
  grids   => Dump Forward Model grids
  gvec    => Dump gradient vector during Newton iteration
  help    => Display this screen (or "?")
@@ -88,6 +95,7 @@ Switches (set by -S option in mlsl2's command line):
  mas     => Activities between the PVM master task and slave task
  mcf     => Dump lines read from MCF to create metadata control group db or
              show steps in creating group db
+ mem[units] => Show system memory usage [in units; default is kB]
  mess[n] => How to prefix log messages: with (0) none, (1) severity,
             (2) module names, (3) both (actually the default)
  metd[n] => Dump nonoptional outputs from metrics, stop if n > 0
@@ -163,9 +171,6 @@ and lower-case letters for strings. Switches are case-sensitive.
 
 The -S option sets the "switches" array in toggles_core.f90.
 `
-In only a few places, it's still tested by the older construct 
-"if ( index(switches,'foo') /= 0 ) then ..." 
-
 You can separate them either by preceding each with its own "-S" prefix or
 else by commas in a single string. Thus to turn on both 'abc' and 'def',
 either use -Sabc -Sdef or -S"abc,def". Among other good things, this
@@ -193,7 +198,15 @@ grep -i switchdetail */*.[fF]9* | grep -i 'switches' | sed 's/.*switches,//' \
  | awk '{print $1}' | sed 's/)//' | sort | uniq
 
 The same command, but replacing "switchdetail" with "index" will show all the 
-switches referred to by the "index(switches, .." method.
+switches referred to by the "index(switches, .." method. 
+
+An alternate command
+grep -i beverbose */*.[fF]9* | grep -v -i highoutput | sed 's/.*BeVerbose//' \
+ | sed 's/(/( /' | awk '{print $2}' | sed 's/,//' | sort | uniq
+can be used to handle the instances of BeVerbose.
+
+The resulting lists have grown too large to keep updating this list. We need
+a better tool to organize it.
 
 (Add any more that are relevant to mlsl2,
 or separate sections for mlsl1 or mlsl3)
@@ -204,6 +217,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.89  2013/07/26 22:41:22  vsnyder
+ Fiddling with some forward model and retriever switches
+
  Revision 1.88  2013/07/26 00:08:42  pwagner
  -Smcf switch makes reading or parsing MCFs verbose
 
