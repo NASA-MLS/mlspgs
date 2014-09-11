@@ -12,12 +12,13 @@
 program MLSL2
   use allocate_deallocate, only: allocatelogunit, set_garbage_collection, &
     & trackallocates
+  use Call_Stack_m, only: Show_Sys_Memory, sys_memory_ch, sys_memory_convert
   use chunkdivide_m, only: chunkdivideconfig
   use declaration_table, only: allocate_decl, deallocate_decl, dump_decl
   use EmpiricalGeometry, only: DestroyEmpiricalGeometry
   use GetResourceUsage_m, only: GetPID
   use hdf, only: dfacc_rdonly
-  use highoutput, only: dump, headline, outputnamedvalue
+  use highoutput, only: dump, headline, outputNamedValue
   use init_tables_module, only: init_tables
   use io_stuff, only: read_textFile, write_textFile
   use intrinsic, only: get_type, l_ascii, l_tkgen, lit_indices
@@ -386,6 +387,20 @@ program MLSL2
   if (inunit /= -1) call AddInUnit(inunit)
   numfiles = AddFileToDataBase(filedatabase, MLSL2CF)
 
+  Show_Sys_Memory = Show_Sys_Memory .or. switchDetail(switches, 'mem') > -1
+  if ( switchDetail(switches, 'memkb', options='-fc') > -1 ) then
+    Show_Sys_Memory = .true.
+    sys_memory_ch = 'kB'
+    sys_memory_convert = 1.0
+  elseif ( switchDetail(switches, 'memmb', options='-fc') > -1 ) then
+    Show_Sys_Memory = .true.
+    sys_memory_ch = 'MB'
+    sys_memory_convert = 1.0e-3
+  elseif ( switchDetail(switches, 'memgb', options='-fc') > -1 ) then
+    Show_Sys_Memory = .true.
+    sys_memory_ch = 'GB'
+    sys_memory_convert = 1.0e-6
+  endif
   call time_now ( t1 )
 
   if( switchDetail(switches, 'opt') > -1 .or. showDefaults ) then
@@ -679,6 +694,9 @@ contains
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'uniqueID ID', uniqueID, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
+      call outputNamedValue ( 'Show system memory usage?', &
+        & Show_Sys_Memory, advance='yes', &
+        & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
       call outputNamedValue ( 'Avoiding unlimited dimensions in directwrites?', &
         & avoidUnlimitedDims, advance='yes', &
         & fillChar=fillChar, before='* ', after='*', tabn=4, tabc=62, taba=80 )
@@ -818,6 +836,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.211  2014/09/11 18:28:35  pwagner
+! Added -Smem[units] switch to show sys memory
+!
 ! Revision 2.210  2014/09/05 01:07:49  vsnyder
 ! Remove ProcessID stuff.  Destroy Empirical Geometry explicitly
 !
