@@ -14,25 +14,22 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
 !=================================
 
    use dump_0, only: DUMP
-   use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
-   use HDF5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f   
-   use HDFEOS5, only: HE5T_NATIVE_CHAR
+   use Hdf, only: DFACC_CREATE
+   use HDF5, only: h5fis_hdf5_f   
    use Intrinsic, only: l_swath
    use L2GPData, only: L2GPData_T, L2GPNameLen, MAXSWATHNAMESBUFSIZE, RGP, &
      & AppendL2GPData, cpL2GPData, DestroyL2GPContents, ExtractL2GPRecord, &
      & ReadL2GPData, WriteL2GPData
-   use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
-   use MLSCommon, only: MLSFile_t, R8, L2Metadata_T
+   use MACHINE, only: HP, GETARG
+   use MLSCommon, only: MLSFile_t, L2Metadata_T
    use MLSFiles, only: mls_exists, &
      & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH, InitializeMLSFile
    use MLSHDF5, only: mls_h5open, mls_h5close
-   use MLSMessageModule, only: MLSMessageConfig
    use MLSFinds, only: FindFirst
-   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
+   use MLSStringLists, only: catLists, GetStringElement, &
      & Intersection, NumStringElements, RemoveElemFromList, &
      & StringElement, StringElementNum
    use output_m, only: output
-   use PCFHdr, only: GlobalAttributes
    use PrintIt_m, only: Set_Config
    use Time_M, only: Time_Now, time_config
    
@@ -60,6 +57,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   type options_T
     logical     :: verbose = .false.
     character(len=255) ::    outputFile= 'default.he5'  ! output filename       
+    logical ::               append   = .false.         ! append swaths with same name
     logical ::               catenate = .false.         ! catenate swaths with same name
     logical ::               columnsOnly = .false.
     logical ::               noDupSwaths = .false.      ! cp 1st, ignore rest   
@@ -87,6 +85,8 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   integer     ::  hdfversion1
   integer     ::  hdfversion2
   logical     :: is_hdf5
+  integer, parameter :: S2US  = 1000000 ! How many microseconds in a s
+  integer, parameter :: DELAY = 1*S2US  ! How long to sleep in microseconds
   real        :: t1
   real        :: t2
   real        :: tFile
@@ -95,6 +95,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList
   character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
   character(len=MAXSWATHNAMESBUFSIZE) :: swathListAll
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathListOut
   type (L2Metadata_T) :: l2metaData
   integer :: listSize
   integer :: NUMSWATHSPERFILE
@@ -157,12 +158,60 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
     numswathssofar = 0
     if ( options%catenate ) then
       call catenate_swaths
+    elseif ( options%append ) then
+      call append_swaths
     else
       call copy_swaths
     endif
   endif
   call mls_h5close(error)
 contains
+!------------------------- append_swaths ---------------------
+!  Add to or overwrite existing swaths
+  subroutine append_swaths
+    ! Internal variables
+    integer :: j
+    integer :: jj
+    integer :: k
+    type( MLSFile_T ) :: l2gpFile
+    integer, parameter :: MAXNUMPROFS = 3500
+    type(L2GPData_T) :: ol2gp
+    real(rgp), parameter :: eps = 0.01_rgp
+    ! Executable
+    status = InitializeMLSFile( l2gpFile, type=l_swath, access=DFACC_CREATE, &
+      & content='l2gp', name='unknown', hdfVersion=HDFVERSION_5 )
+    l2gpFile%name = options%outputFile
+    l2gpFile%stillOpen = .false.
+    if ( options%verbose ) print *, 'Append l2gp data to: ', &
+      & trim(options%outputFile)
+    numswathssofar = mls_InqSwath ( filenames(1), SwathList, listSize, &
+           & hdfVersion=HDFVERSION_5)
+    if ( len_trim(options%swathNames) < 1 ) swathList = options%swathNames
+    swathListOut = swathList
+    if ( len_trim(options%rename) < 1 ) swathList = options%rename
+    if ( DEEBUG ) then
+      print *, 'swaths in file'
+      print *, trim(swathList)
+    endif
+    call GetStringElement( swathList, swath, 1, countEmpty )
+    call GetStringElement( swathListOut, rename, 1, countEmpty )
+    do jj=1, NumStringElements( swathList, countEmpty )
+      call GetStringElement( swathList, swath, jj, countEmpty )
+      call GetStringElement( swathListOut, rename, jj, countEmpty )
+      call time_now ( tFile )
+      if ( options%verbose ) print *, 'Appending swath: ', trim(swath)
+      do i=1, n_filenames
+        if ( options%verbose ) print *, 'Reading from: ', trim(filenames(i))
+        call ReadL2GPData( trim(filenames(i)), swath, ol2gp )
+        ! if ( i == 1 ) then
+        ! What do we call the swath in the output file?
+        call AppendL2GPData ( ol2gp, options%outputFile, rename )
+      enddo
+
+    enddo
+
+  end subroutine append_swaths
+
 !------------------------- catenate_swaths ---------------------
 ! Identify and trim overlaps as follows:
 ! let {a1 a2 .. aN} be an array of geodetic angles in one
@@ -186,10 +235,8 @@ contains
     integer :: jj
     integer :: k
     integer :: kLopOff
-    integer :: p
     type(L2GPData_T) :: l2gp
     type( MLSFile_T ) :: l2gpFile
-    real(rgp) :: lastGeodAngle
     integer, parameter :: MAXNUMPROFS = 3500
     integer :: numProfs
     integer :: numTotProfs
@@ -291,6 +338,7 @@ contains
           ! print *, 'should be writing'
           if ( options%verbose ) call dump( l2gp%GeodAngle, 'appended Geod. angle' )
           if ( DEEBUG ) print *, 'About to append ', trim(swath)
+          ! call usleep ( delay ) ! Should we make this parallel%delay?
           call AppendL2GPData ( l2gp, options%outputFile, &
           & swath, offset=max(0,numTotProfs-kLopOff) )
           ! Could this be a bug in the HDFEOS library?
@@ -435,6 +483,9 @@ contains
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
         exit
+      elseif ( filename(1:4) == '-app' ) then
+        options%append = .true.
+        exit
       elseif ( filename(1:4) == '-cat' ) then
         options%catenate = .true.
         exit
@@ -512,6 +563,7 @@ contains
       write (*,*) '   -425          => convert from hdf4 to hdf5'
       write (*,*) '   -524          => convert from hdf5 to hdf4'
       write (*,*) '   -v            => switch on verbose mode'
+      write (*,*) '   -append       => append or overwrite swaths with same name'
       write (*,*) '   -cat          => catenate swaths with same name'
       write (*,*) '   -nodup        => if dup swath names, cp 1st only'
       write (*,*) '   -freqs m n    => keep only freqs in range m n'
@@ -554,6 +606,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.17  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 1.16  2013/08/23 02:51:47  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
