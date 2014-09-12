@@ -437,7 +437,7 @@ $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts 2>&1 \
   | tee -a "$LOGFILE" &
 sleep 20
 # Find the pge's pid; call it pgepid
-ps aux | grep "uid $pid " >> $LOGFILE
+ps aux | grep "uid $pid " | grep -v grep 2>&1 | tee -a "$LOGFILE"
 pgepid=`ps aux | grep "uid $pid " | grep -v grep | awk '{print $2}'`
 
 # Did the launch fail immediately?
@@ -449,6 +449,7 @@ fi
 
 # Write this pid to a uniquely-named file
 echo "$pgepid" > "$NOTEFILE"
+echo "$pgepid echoed to $NOTEFILE" | tee -a "$LOGFILE"
 while [ "$notdone" = "true" ]
 do
   sleep 120
@@ -457,17 +458,20 @@ do
   a=`grep Finished "$NOTEFILE"`
   if [ "$a" != "" ]
   then
-    notdone=false
+    notdone=finished
   fi
   # its pid disappears
-  a=`ps aux | grep "uid $pid " | grep -v grep | awk '{print $2}'`
-  if [ "$a" != "$pgepid" ]
+  a=`ps p $pgepid | grep "$pgepid"`
+  if [ "$a" = "" ]
   then
-    notdone=false
+    notdone=disappeared
   fi
 done
-echo "Returned from $PGE_BINARY with status $?" 2>&1 | tee -a "$LOGFILE"
+echo "$notdone; Returned from $PGE_BINARY with status $?" 2>&1 | tee -a "$LOGFILE"
+echo "cat $NOTEFILE" 2>&1 | tee -a "$LOGFILE"
+cat $NOTEFILE 2>&1 | tee -a "$LOGFILE"
 # For good measure, we alo kill the pge's own pid (n case it was left hanging)
+echo "killing $pgepid" 2>&1 | tee -a "$LOGFILE"
 kill -9 "$pgepid"
 
 }
@@ -489,6 +493,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.31  2014/09/02 17:54:48  pwagner
+# Corrected bugs related to running in background
+#
 # Revision 1.30  2014/08/14 00:49:58  pwagner
 # Should correctly run PGE_BINARY as backg task
 #
