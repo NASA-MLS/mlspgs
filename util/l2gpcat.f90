@@ -186,9 +186,9 @@ contains
       & trim(options%outputFile)
     numswathssofar = mls_InqSwath ( filenames(1), SwathList, listSize, &
            & hdfVersion=HDFVERSION_5)
-    if ( len_trim(options%swathNames) < 1 ) swathList = options%swathNames
+    if ( len_trim(options%swathNames) > 1 ) swathList = options%swathNames
     swathListOut = swathList
-    if ( len_trim(options%rename) < 1 ) swathList = options%rename
+    if ( len_trim(options%rename) > 1 ) swathListOut = options%rename
     if ( DEEBUG ) then
       print *, 'swaths in file'
       print *, trim(swathList)
@@ -606,6 +606,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.18  2014/09/12 00:04:08  pwagner
+! Added -append commandline option to overwrite swath values in target file
+!
 ! Revision 1.17  2014/01/09 00:31:26  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
