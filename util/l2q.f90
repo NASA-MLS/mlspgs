@@ -10,39 +10,40 @@
 ! foreign countries or providing access to foreign persons.
 
 program L2Q
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use dates_module, only: DATEFORM, REFORMATDATE
-  use HIGHOUTPUT, only: OUTPUT_DATE_AND_TIME, OUTPUTNAMEDVALUE, TIMESTAMP
-  use L2PARINFO, only: PARALLEL, INITPARALLEL
-  use L2ParInfo, only: MACHINE_T, PARALLEL, &
-    & PETITIONTAG, GIVEUPTAG, GRANTEDTAG, MASTERDUMPTAG, NOTIFYTAG, &
-    & SIG_FINISHED, SIG_REGISTER, SIG_SWEARALLEGIANCE, SIG_SWITCHALLEGIANCE, &
-    & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
-    & MACHINENAMELEN, GETMACHINENAMES, &
-    & DUMP, ADDMACHINETODATABASE
-  use MACHINE ! At least HP for command lines, and maybe GETARG, too
-  use MLSCOMMON, only: FILENAMELEN
-  use MLSL2Options, only: CURRENT_VERSION_ID
+  use Allocate_Deallocate, only: allocate_test, deallocate_test, &
+    & NoBytesAllocated, test_allocate, test_deallocate
+  use dates_module, only: dateform, reformatdate
+  use highOutput, only: output_date_and_time, outputNamedValue, timeStamp
+  use l2parinfo, only: parallel, initParallel
+  use l2parinfo, only: machine_t, parallel, &
+    & petitiontag, giveuptag, grantedtag, masterdumptag, notifytag, &
+    & sig_finished, sig_register, sig_swearallegiance, sig_switchallegiance, &
+    & sig_hostdied, sig_releasehost, sig_requesthost, sig_thankshost, &
+    & machinenamelen, getmachinenames, &
+    & dump, addmachinetodatabase
+  use machine ! at least hp for command lines, and maybe getarg, too
+  use mlscommon, only: filenamelen
+  use MLSL2Options, only: current_version_id
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
     & MLSMSG_Info, MLSMSG_Success, MLSMSG_Warning, PVMERRORMESSAGE
-  use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, NUMSTRINGELEMENTS, &
-    & STRINGELEMENTNUM
-  use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, STREQ
-  use OUTPUT_M, only: BLANKS, NEWLINE, &
-    & OUTPUT, OutputOptions
+  use MLSFinds, only: Findfirst
+  use MLSStringlists, only: catlists, getstringelement, numstringelements, &
+    & stringelementnum
+  use MLSStrings, only: lowercase, readintsfromchars, streq
+  use output_m, only: blanks, newline, &
+    & output, OutputOptions
   use PrintIt_m, only: Set_Config
   use PVM, only: PVMOK, &
-    & ClearPVMArgs, GETMACHINENAMEFROMTID, &
-    & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
-    & PVMF90UNPACK, PVMFPSTAT, &
-    & PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
-    & PVMFFREEBUF
+    & ClearPVMArgs, getmachinenamefromtid, &
+    & pvmdatadefault, pvmfinitsend, pvmf90pack, pvmfkill, pvmfmytid, &
+    & pvmf90unpack, pvmfpstat, &
+    & pvmfsend, pvmfnotify, pvmtaskexit, &
+    & pvmffreebuf
   use Sort_M, only: SORT
   use Time_M, only: Time_Now, time_config
-  use TOGGLES, only: GEN, LEVELS, &
-    & TOGGLE
+  use toggles, only: gen, levels, &
+    & toggle
 
   ! === (start of toc) ===
   !     c o n t e n t s
@@ -442,6 +443,7 @@ contains
     type (master_t), intent(in) :: ITEM
 
     ! Local variables
+    integer :: S
     type (Master_T), dimension(:), pointer :: tempDatabase
     !This include causes real trouble if you are compiling in a different 
     !directory.
@@ -2331,6 +2333,7 @@ contains
     type (master_t), intent(in)            :: ITEM
 
     ! Local variables
+    integer :: S
     type (Master_T), dimension(:), pointer :: tempDatabase
     logical, parameter                     :: okToDeallocEmptyDB = .false.
     !This include causes real trouble if you are compiling in a different 
@@ -2407,6 +2410,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.36  2014/01/09 00:31:26  pwagner
+! Some procedures formerly in output_m now got from highOutput
+!
 ! Revision 1.35  2013/08/23 02:51:48  vsnyder
 ! Move PrintItOut to PrintIt_m
 !
