@@ -14,9 +14,9 @@ module Call_Stack_m
   implicit none
   private
 
-  public :: stack_t
-  public :: dump_stack, get_frame, pop_stack, push_stack, stack_depth, top_stack
-  public :: say_when, Show_Sys_Memory, sys_memory_ch, sys_memory_convert
+  public :: Stack_T
+  public :: Dump_Stack, Get_Frame, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
+  public :: Say_When, Show_Sys_Memory
 
   type :: Stack_t
     real :: Clock = 0.0                ! Whatever Time_Now returns (CPU or ?)
@@ -74,11 +74,11 @@ contains ! ====     Public Procedures     ==============================
     ! is not zero, print the line and column number from the configuration
     ! file.
 
-    use LEXER_CORE, only: PRINT_SOURCE
-    use OUTPUT_M, only: OUTPUT
-    use HIGHOUTPUT, only: DUMPSIZE
-    use STRING_TABLE, only: DISPLAY_STRING
-    use TREE, only: WHERE_AT=>Where
+    use Lexer_Core, only: Print_Source
+    use Output_m, only: Output
+    use HighOutput, only: DumpSize
+    use String_Table, only: Display_String
+    use Tree, only: Where_At=>Where
 
     logical, intent(in), optional :: Top   ! Dump only the top frame
     character(len=*), intent(in), optional :: Before ! first thing output
@@ -117,18 +117,17 @@ contains ! ====     Public Procedures     ==============================
 
     myAdvance = 'yes'
     myCPU = .false.; myDoDepth = .true.; myRev = .false.
-    mySize = .true.; MySysSize = show_sys_memory
+    myShowTime = .false.; mySize = .true.; MySysSize = show_sys_memory
     myTop = .false.; myWhere = .false.
-    myShowTime = .false.
-    if ( present(showTime) ) myShowTime = showTime
 
-    if ( present(top) ) myTop = top
     if ( present(advance) ) myAdvance = advance
     if ( present(cpu) ) myCPU = cpu
     if ( present(doDepth) ) myDoDepth = doDepth
     if ( present(rev) ) myRev = rev
+    if ( present(showTime) ) myShowTime = showTime
     if ( present(size) ) mySize = size
     if ( present(sysSize) ) mySysSize = sysSize
+    if ( present(top) ) myTop = top
     if ( present(where) ) myWhere = Where
 
     if ( myRev ) then ! Dump stack bottop-up
@@ -203,12 +202,12 @@ contains ! ====     Public Procedures     ==============================
     & Silent, ShowTime, SysSize )
     ! Pop the stack.  If Before or Where are present, dump the top frame first.
 
-    use ALLOCATE_DEALLOCATE, only: NOBYTESALLOCATED
-    use OUTPUT_M, only: NEWLINE, OUTPUT
-    use HIGHOUTPUT, only: DUMPSIZE
+    use Allocate_Deallocate, only: NoBytesAllocated
+    use Output_m, only: Newline, Output
+    use HighOutput, only: DumpSize
     use Memory_m, only: Memory_Used
-    use STRING_TABLE, only: DISPLAY_STRING
-    use TIME_M, only: TIME_NOW
+    use String_Table, only: Display_String
+    use Time_m, only: Time_Now
 
     character(len=*), intent(in), optional :: Before
     logical, intent(in), optional :: Where
@@ -217,10 +216,10 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), optional, intent(in) :: String
     integer, optional, intent(in) :: StringIndex
     logical, intent(in), optional :: Silent
-    logical, intent(in), optional :: ShowTime   ! Show time when we dumped
-    logical, intent(in), optional :: SysSize ! Dump memory size, as the system
-                                           ! accounts for it, in kB (default
-                                           ! Show_Sys_Memory)
+    logical, intent(in), optional :: ShowTime ! Show time when we dumped
+    logical, intent(in), optional :: SysSize  ! Dump memory size, as the system
+                                              ! accounts for it, in kB (default
+                                              ! Show_Sys_Memory)
 
     double precision :: Delta ! Memory change, as accounted by Allocate_Deallocate
     logical :: HaveStack
@@ -271,12 +270,15 @@ contains ! ====     Public Procedures     ==============================
           end if
         end if
         delta = noBytesAllocated - stack(stack_ptr)%memory
-        if ( delta /= 0 ) call dumpSize ( delta, before=', Memory changed by ' )
         idelta = noBytesAllocated - prevBytes
-        if ( abs(idelta) > abs(delta) .and. idelta*delta > 0 ) &
-          & call dumpSize ( idelta, before=' (traced) ', &
-            & after= ' (untraced)' )
-        if ( delta /= 0 .or. idelta /= 0 ) &
+        if ( abs(delta) + abs(idelta) > 0 ) call output ( ', Memory changed by ' )
+        if ( delta /= 0 ) then
+          call dumpSize ( delta )
+          if ( abs(idelta) > abs(delta) ) call output ( ' (traced) ' )
+        end if
+        if ( abs(idelta) > abs(delta) ) &
+          & call dumpSize ( idelta, after= ' (untraced)' )
+        if ( abs(delta) + abs(idelta) > 0 ) &
           & call dumpSize ( noBytesAllocated, before = ' to ' )
       end if
       call newLine
@@ -297,7 +299,7 @@ contains ! ====     Public Procedures     ==============================
     ! If Name_I <= 0, use Create_String ( Name_C ) to give it a value.
     ! We assume the actual argument is a SAVE variable.
     ! Push the stack.  If Before or Where are present, dump the new top frame.
-    use STRING_TABLE, only: CREATE_STRING
+    use String_table, only: Create_String
 
     integer, intent(inout) :: Name_I
     character(len=*), intent(in) :: Name_C
@@ -316,7 +318,7 @@ contains ! ====     Public Procedures     ==============================
 ! -------------------------------------------------  Push_Stack_C  -----
   subroutine Push_Stack_C ( Name, Root, Index, String, Before, Where, Advance )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
-    use STRING_TABLE, only: CREATE_STRING
+    use String_Table, only: Create_String
 
     character(len=*), intent(in) :: Name
     integer, optional, intent(in) :: Root   ! Where in configuration tree
@@ -332,14 +334,13 @@ contains ! ====     Public Procedures     ==============================
   end subroutine Push_Stack_C
 
 ! -------------------------------------------------  Push_Stack_I  -----
-  subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where, Advance, &
-    & SysSize  )
+  subroutine Push_Stack_I ( Name, Root, Index, String, Before, Where, Advance )
     ! Push the stack.  If Before or Where are present, dump the new top frame.
-    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, NOBYTESALLOCATED
+    use Allocate_Deallocate, only: Test_Allocate, NoBytesAllocated
     use Memory_m, only: Memory_Used
-    use OUTPUT_M, only: OUTPUT
-    use STRING_TABLE, only: DISPLAY_STRING
-    use TIME_M, only: TIME_NOW
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    use Time_m, only: Time_Now
 
     integer, intent(in) :: Name
     integer, optional, intent(in) :: Root  ! Where in configuration tree
@@ -348,11 +349,7 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), optional, intent(in) :: Before  ! Dump top stack frame after push
     logical, intent(in), optional :: Where
     character(len=*), intent(in), optional :: Advance ! Default yes in Dump_Stack
-    logical, intent(in), optional :: SysSize ! Dump memory size, as the system
-                                           ! accounts for it, in kB (default
-                                           ! Show_Sys_Memory)
 
-    logical :: MySysSize
     integer :: Stat
     type(stack_t), allocatable :: Temp_Stack(:)
     integer :: Total_Used ! memory, in kB (1024), as accounted by the system
@@ -360,8 +357,6 @@ contains ! ====     Public Procedures     ==============================
     ! Executable
     if ( StaySilent ) return
 
-    mySysSize = Show_Sys_Memory
-    if ( present(sysSize) ) mySysSize = sysSize
     if ( .not. allocated(stack) ) then
       ! If you allocate with lbound < 0, other stuff won't work.
       allocate ( stack(startingStackSize), stat=stat )
@@ -399,14 +394,9 @@ contains ! ====     Public Procedures     ==============================
       call move_alloc ( temp_stack, stack )
     end if
     stack_ptr = stack_ptr + 1
-    if ( mySysSize ) then
-      call memory_used ( total=total_used )
-      stack(stack_ptr) = stack_t ( memory=noBytesAllocated, sys_memory=total_used, &
-                                 & text=name )
-    else
-      stack(stack_ptr) = stack_t ( memory=noBytesAllocated, sys_memory=0, &
-                                 & text=name )
-    end if
+    call memory_used ( total=total_used )
+    stack(stack_ptr) = stack_t ( memory=noBytesAllocated, sys_memory=total_used, &
+                               & text=name )
     if ( present(root) ) stack(stack_ptr)%tree = root
     if ( present(index) ) stack(stack_ptr)%index = index
     if ( present(string) ) stack(stack_ptr)%string = string
@@ -449,7 +439,7 @@ contains ! ====     Public Procedures     ==============================
 ! =====     Private Procedures     =====================================
 
   subroutine Show_When
-    use OUTPUT_M, only: OUTPUT
+    use Output_m, only: Output
     character(8) :: Date
     character(10) :: Time
     call date_and_time ( date=date, time=time )
@@ -472,6 +462,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.26  2014/09/29 20:23:35  vsnyder
+! Cannonball polishing, change memory usage printing
+!
 ! Revision 2.25  2014/09/11 18:25:13  pwagner
 ! May show sys memory in units other than kB
 !
