@@ -16,7 +16,7 @@ module Call_Stack_m
 
   public :: Stack_T
   public :: Dump_Stack, Get_Frame, Pop_Stack, Push_Stack, Stack_Depth, Top_Stack
-  public :: Say_When, Show_Sys_Memory
+  public :: Show_Sys_Memory, sys_memory_ch, sys_memory_convert, sys_memory_max
 
   type :: Stack_t
     real :: Clock = 0.0                ! Whatever Time_Now returns (CPU or ?)
@@ -43,6 +43,7 @@ module Call_Stack_m
   logical, save ::    Show_Sys_Memory    = .true.
   character(len=2) :: sys_memory_ch      = 'kB'
   real             :: sys_memory_convert = 1.0
+  real, save       :: sys_memory_max     = 0.0  ! max so far
   
   logical, save, private :: StaySilent = .false. ! E.g., in case it becomes corrupted
   logical, save, private :: Verbose    = .false. ! Print each push, pop
@@ -174,6 +175,7 @@ contains ! ====     Public Procedures     ==============================
       if ( myCPU ) call output ( stack(depth)%clock, format='(g10.3)', &
         & before=' CPU: ' )
       call output ( '', advance=doAdvance )
+      sys_memory_max = max( sys_memory_max, stack(depth)%sys_memory*1.0 )
     end do
 
   end subroutine Dump_Stack
@@ -261,6 +263,7 @@ contains ! ====     Public Procedures     ==============================
       if ( haveStack ) then
         if ( mySysSize ) then
           call memory_used ( total=total_used )
+          sys_memory_max = max( sys_memory_max, total_used*1.0 )
           iDelta = total_used - stack(stack_ptr)%sys_memory
           if ( iDelta /= 0 ) then
             call output ( sys_memory_convert*iDelta, before=', System memory changed by ' )
@@ -395,6 +398,7 @@ contains ! ====     Public Procedures     ==============================
     end if
     stack_ptr = stack_ptr + 1
     call memory_used ( total=total_used )
+    sys_memory_max = max( sys_memory_max, total_used*1.0 )
     stack(stack_ptr) = stack_t ( memory=noBytesAllocated, sys_memory=total_used, &
                                & text=name )
     if ( present(root) ) stack(stack_ptr)%tree = root
@@ -462,6 +466,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.27  2014/09/29 20:48:57  pwagner
+! sys_memory_max tracks max sys memory usage
+!
 ! Revision 2.26  2014/09/29 20:23:35  vsnyder
 ! Cannonball polishing, change memory usage printing
 !
