@@ -182,6 +182,7 @@ module ForwardModelConfig
     logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
     logical :: IsRadianceModel        ! The forward model is a radiance model
     logical :: LockBins               ! Use same l2pc bin for whole chunk
+    logical :: No_Magnetic_Field      ! Set magnetic field to zero for testing
     logical :: Polarized              ! Use polarized model for Zeeman-split lines
     logical :: Refract                ! Compute refractive correction for PhiTan
     logical :: ScanAverage            ! Average scan over MIF
@@ -791,9 +792,10 @@ contains
       & config%do_conv, config%do_freq_avg, config%forceFoldedOutput, &
       & config%forceSidebandFraction, config%generateTScat, config%globalConfig, &
       & config%ignoreHessian, config%incl_cld, config%isRadianceModel, &
-      & config%lockBins, config%polarized, config%refract, config%scanAverage, &
-      & config%skipOverlaps, config%spect_Der, config%switchingMirror, &
-      & config%temp_Der, config%transformMIFextinction, config%useTScat /), &
+      & config%lockBins, config%no_magnetic_field, config%polarized, &
+      & config%refract, config%scanAverage, config%skipOverlaps, config%spect_Der, &
+      & config%switchingMirror, config%temp_Der, config%transformMIFextinction, &
+      & config%useTScat /), &
       & msg ="Packing fwmConfig logicals" )
 
     ! Now pack the reals
@@ -865,12 +867,12 @@ contains
     ! Dummy arguments
     type ( ForwardModelConfig_T ), intent(out) :: CONFIG
     ! Local variables
-    integer, parameter     :: ISMAX = 11
-    integer, parameter     :: LSMAX = 31
+    integer, parameter     :: ISMAX = 11 ! Number of integers to unpack
+    integer, parameter     :: LSMAX = 32 ! Number of logicals to unpack
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(LSMAX) :: LS     ! Temporary array, for logical scalars
     integer, dimension(ISMAX) :: IS     ! Temporary array, for integer scalars
+    logical, dimension(LSMAX) :: LS     ! Temporary array, for logical scalars
     real(r8), dimension(2) :: RS        ! Temporary array, for real scalars
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
@@ -930,6 +932,7 @@ contains
     config%incl_cld               = ls(i) ; i = i + 1
     config%isRadianceModel        = ls(i) ; i = i + 1
     config%lockBins               = ls(i) ; i = i + 1
+    config%no_magnetic_field      = ls(i) ; i = i + 1
     config%polarized              = ls(i) ; i = i + 1
     config%refract                = ls(i) ; i = i + 1
     config%scanAverage            = ls(i) ; i = i + 1
@@ -1309,6 +1312,7 @@ contains
     call output ( config%globalConfig, before='  GlobalConfig: ', advance='yes' )
     call output ( config%incl_cld, before='  Incl_Cld: ', advance='yes' )
     call output ( config%lockBins, before='  LockBins: ', advance='yes' )
+    call output ( config%no_magnetic_field, before='  No_Magnetic_Field: ', advance='yes' )
     call output ( config%polarized, before='  Polarized: ', advance='yes' )
     call output ( config%refract, before='  Refract: ', advance='yes' )
     call output ( config%scanAverage, before='  ScanAverage: ', advance='yes' )
@@ -1485,6 +1489,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.132  2014/09/05 20:48:44  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.131  2014/08/01 01:01:55  vsnyder
 ! Change noLinesMsg level from 1 to zero
 !
