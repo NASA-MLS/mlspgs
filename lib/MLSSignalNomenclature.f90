@@ -13,14 +13,11 @@
 module MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
 !=============================================================================
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
-    & Test_Allocate, Test_Deallocate
-  use MLSCommon
+  use MLSCommon, only: NameLen
+  use MLSKinds, only: R8
   use MLSStrings, only: Capitalize, LinearSearchStringArray, &
     & ReadCompleteLineWithoutComments, splitWords
-  use MLSStringLists, only: GetUniqueStrings
-  use MLSMessageModule
-  use Intrinsic, only: L_None
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
   implicit none
   private
@@ -34,7 +31,7 @@ module MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
   ! The same as 2.1 before being removed (see log below)
@@ -122,7 +119,7 @@ module MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
      integer :: number                     ! e.g. 1
      character(len=1) :: modifier          ! e.g. A/B or H/V for R5 (emls)
      real(r8) :: lo                ! Local oscillator /MHz
-     integer :: instrumentModule ! Module in instrument GHz/THz 
+     integer :: instrumentModule ! Module in instrument GHz/THz
   end type SDBRadiometerInfo_T
 
   ! This datatype describes a band
@@ -337,9 +334,9 @@ contains
        end do ParseBandRequestParse
        if ( pos==1 ) CALL MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Bad band request: "//TRIM(request) )
-       
+
        ! Now read the band number from prefix
-       
+
        if (.NOT. bandStarRequested) read (UNIT=prefix(2:pos),FMT=*) &
             & bandNumberRequested
 
@@ -427,14 +424,16 @@ contains
     end do
 
   end subroutine ParseSpectrometerRequest
-  
+
   ! ----------------------------------------  ParseChannelRequest  -----
 
-  ! This function parses a channel request.  The form is 
+  ! This function parses a channel request.  The form is
   ! C[<spec>+<spec>+<spec>] etc. where <spec> is n or m:n
 
   subroutine ParseChannelRequest ( request,firstChannel,lastChannel, &
     & channelIncluded )
+
+    use Allocate_Deallocate, only: Allocate_Test
 
     ! Dummy arguments
     character (len=*), intent(in) :: request
@@ -476,7 +475,7 @@ contains
           ! It's a range
           call SplitWords ( field, firstStr, lastStr, delimiter=":" )
 
-          if ( firstStr == "" ) then 
+          if ( firstStr == "" ) then
              firstInRange = firstChannel
           else
              read (UNIT=firstStr,FMT=*) firstInRange
@@ -507,6 +506,8 @@ contains
   ! of the original, and doesn't merely point to it.
 
   subroutine TurnMLSChannelInfoIntoCopy(signals)
+
+    use Allocate_Deallocate, only: Allocate_Test
 
     ! Dummy argument
     type (MLSSignal_T), dimension(:), intent(inout) :: signals
@@ -551,6 +552,8 @@ contains
   ! upper/lower sideband if relevant.  Also returned is a list of channels.
 
   subroutine ParseMLSSignalRequest ( request, signals, noCopy )
+
+    use Allocate_Deallocate, only: Test_Allocate
 
     ! Dummy arguments
     character (len=*), intent(in) :: request
@@ -598,7 +601,7 @@ contains
     remainder = Capitalize(request)
 
     ! We go through and parse the string piece by piece
-    
+
     ParseMLSSignalRequestWordLoop: do
        call SplitWords ( remainder, field, newRemainder, delimiter='.' )
        if ( field == "" ) exit ParseMLSSignalRequestWordLoop
@@ -647,13 +650,13 @@ contains
             & switchMatches(database%validSignals(signal)%switchIndex) .AND. &
             & spectrometerMatches(database%validSignals(signal)%spectrometerIndex)
     end do
-       
+
     noMatches = COUNT(allMatch)
     if ( noMatches==0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          & "No matching signal:"//TRIM(request) )
 
     ! Now create the result, if it's alread allocated that's an error
-    
+
     if ( associated(signals) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          & "Signals already allocated" )
     allocate ( signals(noMatches),STAT=status )
@@ -743,7 +746,7 @@ contains
     end if
 
   end subroutine DestroyMLSSignalsInfo
- 
+
   ! ----------------------------------------  UnionMLSSignalsInfo  -----
 
   ! This subroutine combines two sets of signal lists in a set union type of
@@ -751,6 +754,8 @@ contains
   ! undefined on entry. Also note, we don't consider duplication within a or b
 
   subroutine UnionMLSSignalsInfo ( signalsA, signalsB, signalsUnion )
+
+    use Allocate_Deallocate, only: Test_Allocate
 
     ! Dummy arguments
     type (MLSSignal_T), dimension(:), intent(in) :: signalsA
@@ -819,12 +824,14 @@ contains
   end subroutine UnionMLSSignalsInfo
 
   ! ----------------------------------  ConcatenateMLSSignalsInfo  -----
-  
+
   ! This subroutine uses the one above to concatenate two lists of signals,
   ! adding signalsB into signalsA. Note that this also allows signalsA to be
   ! unallocated, in which case signalsB is just copied.
 
   subroutine ConcatenateMLSSignalsInfo(signalsA,signalsB)
+
+    use Allocate_Deallocate, only: Test_Allocate
 
     ! Dummy arguments
     type (MLSSignal_T), dimension(:), pointer    :: SignalsA
@@ -915,7 +922,7 @@ contains
   ! This subroutine gives the full name for an MLS signal
 
   subroutine GetFullMLSSignalName ( signal, fullName, rbOnly, showChannel )
-    
+
     ! Dummy arguments
     type (MLSSignal_T), intent(in) :: signal
     character (len=*), intent(out) :: fullName
@@ -1001,6 +1008,10 @@ contains
   ! to change very often.
 
   subroutine ReadSignalsDatabase ( unit )
+
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use Intrinsic, only: L_None
+    use MLSStringLists, only: GetUniqueStrings
 
     ! Arguments and result
 
@@ -1284,7 +1295,7 @@ contains
        read (UNIT=rest,FMT=*) &
             database%spectrometerInfo(spectrometer)%number
        database%spectrometerInfo(spectrometer)%family = &
-            spectrometerNames(spectrometer)(1:1)       
+            spectrometerNames(spectrometer)(1:1)
     end do
 
     ! Now as a final tidy up, we go through and fill in the family index
@@ -1454,7 +1465,7 @@ contains
           deallocate ( database%spectrometerFamilyInfo(index)%width, stat=status )
           call test_deallocate ( status, ModuleName, "width", s )
 
-       case default 
+       case default
           call MLSMessage ( MLSMSG_Error, ModuleName, &
                & "Unrecognized spectrometer family: "//first )
        end select
@@ -1494,7 +1505,7 @@ contains
        database%validSignals(signal)%radiometerModifier = &
             & database%radiometerInfo(radiometer)%modifier
        database%validSignals(signal)%lo = &
-            & database%radiometerInfo(radiometer)%lo      
+            & database%radiometerInfo(radiometer)%lo
 
        ! Now the band info
 
@@ -1539,11 +1550,11 @@ contains
             & spectrometerFamilyInfo(spectrometerFamily)%noChannels
 
        ! Now we compute the channel positions in IF space
-       
+
        database%validSignals(signal)%firstChannelInBand = firstChannel
        database%validSignals(signal)%lastChannelInBand = lastChannel
        database%validSignals(signal)%noChannelsInBand = noChannels
-       
+
        allocate ( database%validSignals(signal)%channelPosition &
             & (firstChannel:lastChannel),STAT=status )
        call test_allocate ( status, ModuleName, "channelPosition", &
@@ -1721,6 +1732,8 @@ contains
 
   subroutine GetMLSRadiometerNames ( names )
 
+    use Allocate_Deallocate, only: Test_Allocate
+
     ! Dummy arguments
     character (len=NameLen), dimension(:), pointer :: names
 
@@ -1741,6 +1754,8 @@ contains
   ! This routine returns an array of names of bands in MLS from the database.
 
   subroutine GetMLSBandNames ( names )
+
+    use Allocate_Deallocate, only: Test_Allocate
 
     ! Dummy arguments
     character (len=NameLen), dimension(:), pointer :: names
@@ -1773,6 +1788,9 @@ end module MLSSignalNomenclature
 
 !
 ! $Log$
+! Revision 2.12  2014/09/29 22:50:26  vsnyder
+! Add ONLY clause to USEs, move some down to subprogram scope
+!
 ! Revision 2.11  2014/09/05 21:58:20  pwagner
 ! Remove wrong call to allocate_test with signals array
 !
