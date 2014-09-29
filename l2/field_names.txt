@@ -307,6 +307,7 @@ no_dup_mol
 noFineGrid
 noiseBandwidth
 noise
+noMagneticField
 noMIFs
 normQty
 noSlaves
@@ -524,6 +525,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.250  2014/09/29 20:18:14  vsnyder
+# Add NoMagneticField switch to ForwardModel
+#
 # Revision 2.249  2014/09/05 01:25:26  vsnyder
 # Add TotalMatrixSizes, TotalVectorSizes
 #
