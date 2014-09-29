@@ -1393,6 +1393,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_ncloudspecies, numeric(phyq_dimensionless), &
              begin, f+f_nmodelsurfs, numeric(phyq_dimensionless), &
              begin, f+f_no_dup_mol, boolean(), &
+             begin, f+f_noMagneticField, boolean(), &
              begin, f+f_nscatteringangles, numeric(phyq_dimensionless), &
              begin, f+f_ncloudspecies, numeric(phyq_dimensionless), &
              begin, f+f_nsizebins, numeric(phyq_dimensionless) /) )
@@ -1976,6 +1977,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.605  2014/09/29 20:18:14  vsnyder
+! Add NoMagneticField switch to ForwardModel
+!
 ! Revision 2.604  2014/09/05 01:25:47  vsnyder
 ! Add TotalMatrixSizes, TotalVectorSizes to Dump command
 !
