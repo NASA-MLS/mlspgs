@@ -14,6 +14,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
   use allocate_deallocate, only: allocate_test, deallocate_test
+  use Call_Stack_m, only: sys_memory_ch, sys_memory_convert, sys_memory_max
+  use Dump_0, only: dump
   use highOutput, only: banner, outputNamedValue, setStamp
   use init_tables_module, only: f_additional, f_debug, f_options, f_silent, &
     & f_skipdirectwrites, f_skipdirectwritesif, &
@@ -21,9 +23,9 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
     & field_first, field_last
   use intrinsic, only: l_hours, l_minutes, l_seconds
   use L2Parinfo, only: parallel
-  use MLScommon, only: MLSdebug, MLSverbose, &
-    & MLSdebugsticky, MLSverbosesticky
-  use MLSl2options, only: command_line, currentphasename, &
+  use MLSCommon, only: MLSdebug, MLSverbose, &
+    & MLSDebugsticky, MLSverbosesticky
+  use MLSL2Options, only: command_line, currentphasename, &
     & dumpmacros, originalcmds, &
     & processoptions, restartwarnings, restoredefaults, runtimevalues, &
     & sectiontimingunits, skipdirectwrites, skipdirectwritesoriginal, &
@@ -35,7 +37,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   use MLSStringlists, only: booleanvalue, catlists, getstringelement, &
     & numstringelements, stringelementnum, switchdetail
   use moretree, only: get_boolean
-  use output_m, only: blanks, output, &
+  use output_m, only: blanks, newLine, output, &
     & resumeOutput, suspendOutput
   use string_table, only: get_string
   use time_m, only: time_now
@@ -138,6 +140,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
     & save                           :: section_timings = 0.
   character(len=PHASENAMESLEN), save :: phaseNames = ' '
   integer, save :: num_phases = 0
+  real, dimension(MAXNUMPHASES), save :: phase_memory = 0.
   real, dimension(MAXNUMPHASES), save :: phase_timings = 0.
   real, save :: run_start_time = 0.
   integer, parameter :: MAXNAMESLENGTH = PHASENAMESLEN+LEN(section_names)
@@ -223,6 +226,7 @@ contains ! =====     Public Procedures     =============================
       if ( myLastElem > 0 ) then
         phase_timings(myLastElem) = &
           & phase_timings(myLastElem) + t2 - myLastTime
+        phase_memory(myLastElem) = max( phase_memory(myLastElem), sys_memory_max )
       endif
       myLastTime = t2
       myLastElem = elem
@@ -410,8 +414,8 @@ contains ! =====     Public Procedures     =============================
     end do
     call get_string(name, phaseString)
     currentPhaseName = phaseString
-    ! Restore settings if last one overwrote them
-    if ( LASTPHASEOVERWROTEOPTS ) then
+    ! Restore settings if last one overwrote them (unless additional)
+    if ( LASTPHASEOVERWROTEOPTS .and. .not. additional ) then
       call restoredefaults
       booleanstring = processOptions( trim( ORIGINALCMDS ) )
       MLSDebugSticky = .false.
@@ -470,7 +474,7 @@ contains ! =====     Public Procedures     =============================
       interval = 1 ! stamp every line with time, phase name
     endif
     
-    if ( stamp ) then
+    if ( stamp .and. .false. ) then ! Not planning to use this idea any longer
       call setStamp( textcode=phaseString(1:24), showTime=.true., &
         & interval=interval )
     else
@@ -478,6 +482,8 @@ contains ! =====     Public Procedures     =============================
       call setStamp( textcode=' ', showTime=.false. )
     endif
     call add_to_phase_timing( trim(phaseString) )
+    call outputNamedValue( 'Resetting to 0 sys_memory which was', sys_memory_max )
+    sys_memory_max     = 0.0
     if ( switchDetail ( switches, 'bool' ) > 0 ) &
       & call dumpMacros
   end subroutine addPhaseToPhaseNames
@@ -501,10 +507,13 @@ contains ! =====     Public Procedures     =============================
     real                            :: retrTotal
     real                            :: dwFinal
     real                            :: dwTotal
+    real                            :: memoryTotal
     real                            :: phaseTotal
     real                            :: percent
+    real                            :: elem_memory
     real                            :: elem_time
-    character(LEN=LEN(TIMEFORMBIG)) :: TIMEFORM
+    character(len=len(timeformbig)) :: memoryForm
+    character(len=len(timeformbig)) :: timeForm
     integer                         :: timeDivisor
 
   ! Executable
@@ -544,6 +553,11 @@ contains ! =====     Public Procedures     =============================
       TIMEFORM = TIMEFORMBIG
     else
       TIMEFORM = TIMEFORMSMALL
+    endif
+    if ( sys_memory_convert*maxval(phase_memory) > 99999.99 ) then
+      memoryForm = timeFormBig
+    else
+      memoryForm = timeFormSmall
     endif
     do elem = 1, num_section_times
       elem_time = section_timings(elem)
@@ -689,6 +703,8 @@ contains ! =====     Public Procedures     =============================
       return
     endif
     call finishTimings('phases')
+    ! call dump( phase_timings, 'phase_timings' )
+    ! call dump ( sys_memory_convert*phase_memory, sys_memory_ch )
     call output ( '==========================================', advance='yes' )
     call blanks ( 8, advance='no' )
     call output ( 'Phase timings : ', advance='yes' )
@@ -697,23 +713,34 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 11, advance='no' )
     call output ( 'time ', advance='no' )
     call blanks ( 5, advance='no' )
-    call output ( 'percent of total time', advance='yes' )
+    call output ( 'pct of total', advance='no' )
+    if ( any(phase_memory > 0. ) ) call output ( '  sys_mem max', advance='no' )
+    call newLine
+    memoryTotal = 0.
     phaseTotal = 0.
     do elem = 1, num_phases
-      elem_time = phase_timings(elem)
+      elem_time   = phase_timings(elem)
+      elem_memory = sys_memory_convert*phase_memory(elem)
       call GetStringElement(trim(phaseNames), section_name, elem, countEmpty)
       percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
       call output ( elem_time/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
-      call blanks ( 2, advance='no' )
       call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='no' )
+      if ( elem_memory > 0. ) then
+        call blanks ( 4, advance='no' )
+        call output ( elem_memory, FORMAT=MEMORYFORM, LOGFORMAT=MEMORYFORM, advance='no' )
+        call blanks ( 1 )
+        call output ( sys_memory_ch, advance='no' )
+      endif
       if ( PRINTCHUNKNUMWITHPHASES ) then
+        call blanks ( 2, advance='no' )
         call printTaskType
       else
         call output ( ' ', advance='yes' )
       endif
       phaseTotal = phaseTotal + elem_time
+      memoryTotal = max ( memoryTotal, elem_memory )
     enddo
     call blanks ( 3, advance='no' )
     call output ( '(others)', advance='no' )
@@ -721,6 +748,12 @@ contains ! =====     Public Procedures     =============================
     call output ( (final-phaseTotal)/timeDivisor, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
     call output ( 100*(final-phaseTotal)/final, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
+    if ( memoryTotal > 0. ) then
+      call output ( 'Total memory used ', advance='no' )
+      call output ( memoryTotal, advance='no' )
+      call blanks ( 1 )
+      call output ( sys_memory_ch, advance='yes' )
+    endif
 
     contains
     ! Internal subprograms
@@ -983,6 +1016,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.59  2014/09/29 20:50:03  pwagner
+! Summarizes sys memory usagee by phase
+!
 ! Revision 2.58  2014/08/12 23:29:40  pwagner
 ! /additional flag added to phase commands applies to options field
 !
