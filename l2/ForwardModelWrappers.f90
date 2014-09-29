@@ -33,51 +33,52 @@ contains ! ============= Public Procedures ==========================
 
     ! Call the forward model selected by Config.
 
-    use BASELINEFORWARDMODEL_M, only: BASELINEFORWARDMODEL
+    use BaselineForwardModel_m, only: BaselineForwardModel
     use Compute_Model_Plane_m, only: Compute_Model_Plane
-    use FORWARDMODELCONFIG, only: DERIVEFROMFORWARDMODELCONFIG, &
-      & DESTROYFORWARDMODELDERIVED, FORWARDMODELCONFIG_T, QtyStuff_t
-    use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
-    use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL, &
+    use ForwardModelConfig, only: DeriveFromForwardModelConfig, &
+      & DestroyForwardModelDerived, ForwardModelConfig_T, QtyStuff_t
+    use ForwardModelIntermediate, only: ForwardModelStatus_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel, &
       & GetQtyStuffForForwardModel
-    use FULLCLOUDFORWARDMODEL, only: FULLCLOUDFORWARDMODELWRAPPER
-    use FULLFORWARDMODEL_M, only: FULLFORWARDMODEL
-    use HESSIANMODULE_1, only: HESSIAN_T
-    use HYBRIDFORWARDMODEL_M, only: HYBRIDFORWARDMODEL
-    use INIT_TABLES_MODULE, only: L_BASELINE, L_CLOUDFULL, &
-      & L_EXTINCTION, L_EXTINCTIONV2, L_FULL, L_HYBRID, L_LINEAR, &
-      & L_MIFEXTINCTION, L_MIFExtinctionExtrapolation, L_MIFExtinctionForm, &
-      & L_MIFEXTINCTIONV2, L_MIFRHI, L_POLARLINEAR, L_PTAN, L_SCAN, L_SCAN2D, &
-      & L_SWITCHINGMIRROR
+    use FullCloudForwardModel, only: FullCloudForwardModelWrapper
+    use FullForwardModel_m, only: FullForwardModel
+    use HessianModule_1, only: Hessian_t
+    use HybridForwardModel_m, only: HybridForwardModel
+    use Init_Tables_Module, only: L_Baseline, L_CloudFull, &
+      & L_Extinction, L_ExtinctionV2, L_Full, L_Hybrid, L_Linear, &
+      & L_MIFExtinction, L_MIFExtinctionExtrapolation, L_MIFExtinctionForm, &
+      & L_MIFExtinctionV2, L_MIFRHI, L_PolarLinear, L_PTan, L_Scan, L_Scan2d, &
+      & L_SwitchingMirror
     use Intrinsic, only: L_LowestRetrievedPressure, L_VMR, Lit_Indices
-    use LINEARIZEDFORWARDMODEL_M, only: LINEARIZEDFORWARDMODEL
-    use MATRIXMODULE_1, only: CHECKINTEGRITY, CreateEmptyMatrix, DestroyMatrix, &
-      & MATRIX_T
+    use LinearizedForwardModel_m, only: LinearizedForwardModel
+    use MatrixModule_1, only: CheckIntegrity, CreateEmptyMatrix, DestroyMatrix, &
+      & Matrix_t
+use MatrixModule_1, only: Dump_Struct
     use MLSKinds, only: RV
-    use MLSL2TIMINGS, only: ADD_TO_RETRIEVAL_TIMING
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use Molecules, only: L_EXTINCTION, L_EXTINCTIONV2, L_RHI
+    use MLSL2Timings, only: Add_To_Retrieval_Timing
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MLSStringLists, only: SwitchDetail
+    use Molecules, only: L_Extinction, L_ExtinctionV2, L_RHI
     use MoreMessage, only: MLSMessage
-    use POLARLINEARMODEL_M, only: POLARLINEARMODEL
-    use SCANMODELMODULE, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
-    use STRING_TABLE, only: Create_String, DISPLAY_STRING
-    use SWITCHINGMIRRORMODEL_M, only: SWITCHINGMIRRORMODEL
-    use TIME_M, only: TIME_NOW
-    use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use VECTORSMODULE, only: CHECKNAN, DUMP, VECTOR_T, VECTORVALUE_T
+    use PolarLinearModel_m, only: PolarLinearModel
+    use ScanModelModule, only: ScanForwardModel, TwoDScanForwardModel
+    use String_Table, only: Create_String, Display_String
+    use SwitchingMirrorModel_m, only: SwitchingMirrorModel
+    use Time_m, only: Time_Now
+    use Toggles, only: EMIT, Levels, Switches, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: CheckNaN, Dump, Vector_t, VectorValue_t
 
     ! Dummy arguments
-    type(forwardModelConfig_T), intent(inout) :: CONFIG
-    type(vector_t), intent(inout), target :: FWDMODELIN ! The state
+    type(forwardModelConfig_T), intent(inout) :: Config
+    type(vector_t), intent(inout), target :: FwdModelIn ! The state
     type(vector_t), intent(in) :: FwdModelExtra
-    type(vector_t), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
-    type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
-    type(matrix_t), intent(inout), optional, target :: JACOBIAN ! The
+    type(vector_t), intent(inout) :: FwdModelOut  ! Radiances, etc.
+    type(forwardModelStatus_t), intent(inout) :: FMStat ! Reverse comm. stuff
+    type(matrix_t), intent(inout), optional, target :: Jacobian ! The
       ! Jacobian, used for the Newton iteration.
-    type(hessian_t), intent(inout), optional :: HESSIAN ! No transformation
-    type(vector_t), dimension(:), target, optional :: VECTORS ! Vectors database
+    type(hessian_t), intent(inout), optional :: Hessian ! No transformation
+    type(vector_t), dimension(:), target, optional :: Vectors ! Vectors database
 
     ! Local variables
 
@@ -134,6 +135,8 @@ contains ! ============= Public Procedures ==========================
     call trace_begin ( me, 'ForwardModel', string=who, cond=toggle(emit) )
     ! Setup the timing
     call time_now (time_start)
+
+if ( present(Jacobian) ) call dump_struct ( Jacobian, name='From ForwardModelWrapper' )
 
     dumpTransform = switchDetail(switches,'dxfq')
     if ( dumpTransform(1) >= 0 ) then
@@ -278,10 +281,10 @@ contains ! ============= Public Procedures ==========================
     fmnan = switchDetail(switches,'fmnan')
     if ( fmnan > 0 ) then
       ! Check radiances
-      if ( checkNaN(fwdModelOut, k-1, 'ForwardModelOut') ) then
+      if ( checkNaN(fwdModelOut, fmnan-1, 'ForwardModelOut') ) then
         if ( fmnan > 1 ) then
-          call dump ( fwdModelIn, k-1, 'ForwardModelIn' )
-          call dump ( fwdModelExtra, k-1, 'ForwardModelExtra' )
+          call dump ( fwdModelIn, fmnan-1, 'ForwardModelIn' )
+          call dump ( fwdModelExtra, fmnan-1, 'ForwardModelExtra' )
         end if
         call display_string ( config%name, &
           & before='Forward model config name: ', advance='yes' )
@@ -292,7 +295,7 @@ contains ! ============= Public Procedures ==========================
       ! Check Jacobians if relevant
       if ( present ( Jacobian ) ) then 
         if ( .not. checkIntegrity ( Jacobian, noError=.true. ) ) then
-          if ( k > 2 ) then
+          if ( fmnan > 2 ) then
             k = MLSMSG_Error
           else
             k = MLSMSG_Warning
@@ -433,8 +436,8 @@ contains ! ============= Public Procedures ==========================
       use QuantityTemplates, only: RT
       use VectorsModule, only: CreateVectorValue, Dump, VectorValue_t
 
-      type(forwardModelConfig_T), intent(inout) :: CONFIG
-      type(vector_t), intent(inout), target :: FWDMODELIN ! The state
+      type(forwardModelConfig_T), intent(inout) :: Config
+      type(vector_t), intent(inout), target :: FwdModelIn ! The state
       type(vector_t), intent(in) :: FwdModelExtra
       integer, intent(in) :: MAF
 
@@ -495,9 +498,13 @@ contains ! ============= Public Procedures ==========================
       end do
       ! Compute the magnetic field at geolocations in magQty.
       call createVectorValue ( magQty, "MagQty", moduleName )
-      refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_refGPH, config=config )
-      call usingMagneticModel ( magQty, refGPH, config%where, MAF=MAF )
+      if ( config%no_magnetic_field ) then
+        magQty%values = 0.0
+      else
+        refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_refGPH, config=config )
+        call usingMagneticModel ( magQty, refGPH, config%where, MAF=MAF )
+      end if
       magDump = switchDetail(switches,'mag')
       if ( magDump > -1 ) &
         & call dump ( magQty, name='Magnetic field', details=magDump )
@@ -518,24 +525,24 @@ contains ! ============= Public Procedures ==========================
 
     ! See Equations (3) and (4) in wvs-107, and Equation (2) in wvs-114.
 
-    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
-    use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Init_Tables_Module, only: L_MIFExtinction, L_MIFExtinctionV2, L_MIFRHI
-    use INTRINSIC, only: L_RADIANCE
-    use MATRIXMODULE_0, only: DESTROYBLOCK, M_ABSENT, M_BANDED, M_FULL
-    use MATRIXMODULE_1, only: FINDBLOCK, CREATEBLOCK, DUMP, MATRIX_T
-    use MLSKINDS, only: RM, RV
-    use MLSL2OPTIONS, only: MLSMESSAGE
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR
-    use OUTPUT_M, only: OUTPUT
-    use TOGGLES, only: EMIT, LEVELS, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use VECTORSMODULE, only: DUMP, VECTOR_T, VECTORVALUE_T
-!     use VECTORSMODULE, only: M_LINALG
+    use Intrinsic, only: L_Radiance
+    use MatrixModule_0, only: DestroyBlock, M_Absent, M_Banded, M_Full
+    use MatrixModule_1, only: FindBlock, CreateBlock, Dump, Matrix_t
+    use MLSKinds, only: RM, RV
+    use MLSL2Options, only: MLSMessage
+    use MLSMessageModule, only: MLSMSG_Error
+    use Output_m, only: Output
+    use Toggles, only: EMIT, Levels, Toggle
+    use Trace_m, only: Trace_Begin, Trace_End
+    use VectorsModule, only: Dump, Vector_t, VectorValue_t
+!     use VectorsModule, only: M_Linalg
 
-    type(forwardModelConfig_T), intent(in) :: CONFIG
+    type(forwardModelConfig_T), intent(in) :: Config
     integer, intent(in) :: MAF               ! MAjor Frame number
-    type(vector_t), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+    type(vector_t), intent(inout) :: FwdModelOut  ! Radiances, etc.
     type(vectorValue_t), intent(in) :: F_Qty ! Profile quantity in fwmState
     type(vectorValue_t), intent(in) :: S_Qty ! MIF quantity in State
     type(vectorValue_t), intent(in) :: PTan  ! Tangent pressure, for S_Qty
@@ -876,6 +883,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.74  2014/09/29 20:18:14  vsnyder
+! Add NoMagneticField switch to ForwardModel
+!
 ! Revision 2.73  2014/08/06 23:29:19  vsnyder
 ! Remove USE for L_Azimuth and Get_String, which are not referenced.
 ! Remove declaration of Azimuth, MyJacobian, FWMJacobian, and ThisName,
