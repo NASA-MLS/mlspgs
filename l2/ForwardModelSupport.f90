@@ -394,9 +394,9 @@ contains ! =====     Public Procedures     =============================
       & F_MOLECULEDERIVATIVES, F_MOLECULES, F_MOLECULESECONDDERIVATIVES, &
       & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
       & F_NO_DUP_MOL, F_NSCATTERINGANGLES, F_NSIZEBINS, F_PATHNORM, &
-      & F_PHIWINDOW, F_POLARIZED, F_ReferenceMIF, F_REFRACT, F_SCANAVERAGE, &
-      & F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, F_SPECT_DER, &
-      & F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, F_TOLERANCE, &
+      & F_PHIWINDOW, F_NoMagneticField, F_POLARIZED, F_ReferenceMIF, F_REFRACT, &
+      & F_SCANAVERAGE, F_SIGNALS, F_SKIPOVERLAPS, F_SPECIFICQUANTITIES, &
+      & F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, F_TOLERANCE, &
       & F_TRANSFORMMIFEXTINCTION, F_TRANSFORMMIFRHI, F_TSCATMIF, F_TYPE, &
       & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, F_YSTAR
     use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_PROFILES
@@ -503,6 +503,7 @@ contains ! =====     Public Procedures     =============================
     info%num_scattering_angles = 16
     info%num_size_bins = 40
     info%phiwindow = 5
+    info%no_magnetic_field = .false.
     info%polarized = .false.
     info%refract = switchDetail(switches,'norf') < 0 ! Default .true.
     info%scanAverage = .false.
@@ -624,6 +625,8 @@ contains ! =====     Public Procedures     =============================
         if ( all ( expr_units(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
           & call AnnounceError ( WrongUnitsForWindow, son )
         info%windowUnits = expr_units(1)
+      case ( f_noMagneticField )
+        info%no_magnetic_field = get_boolean(son)
       case ( f_polarized )
         info%polarized = get_boolean(son)
       case ( f_referenceMIF )
@@ -1507,6 +1510,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.179  2014/09/29 20:18:14  vsnyder
+! Add NoMagneticField switch to ForwardModel
+!
 ! Revision 2.178  2014/04/22 00:49:03  vsnyder
 ! Remove unused sumbols
 !
