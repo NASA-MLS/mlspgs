@@ -37,93 +37,93 @@ contains
   ! The ``Retrieve'' section can have ForwardModel, Matrix, Sids, Subset or
   ! Retrieve specifications.
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, TRACKALLOCATES
-    use BITSTUFF, only: COUNTBITS
-    use CHUNKS_M, only: MLSCHUNK_T
-    use CLOUDRETRIEVALMODULE, only: CLOUDRETRIEVAL
-    use DUMPCOMMAND_M, only: &
-      & BOOLEANFROMANYGOODVALUES, &
-      & BOOLEANFROMCATCHWARNING, BOOLEANFROMCOMPARINGQTYS, BOOLEANFROMFORMULA, &
-      & DUMPCOMMAND, INITIALIZEREPEAT, NEXTREPEAT, &
-      & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, REPEAT=>SKIP, SKIP
-    use HESSIANMODULE_1, only: HESSIAN_T, CREATEEMPTYHESSIAN, DESTROYHESSIAN
-    use IEEE_ARITHMETIC, only: IEEE_IS_NAN
-    use EXPR_M, only: EXPR
-    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
-    use INIT_TABLES_MODULE, only: F_APRIORI, F_APRIORIFRACTION, F_APRIORISCALE, &
-      & F_AVERAGE, F_COLUMNSCALE, F_COMMENT, F_COVARIANCE, F_COVSANSREG, &
-      & F_DIAGNOSTICS, F_DIAGONAL, F_DUMPQUANTITIES, F_EXTENDEDAVERAGE, &
-      & F_FORWARDMODEL, F_FUZZ, F_FWDMODELEXTRA, F_FWDMODELOUT, &
-      & F_HESSIAN, F_HIGHBOUND, F_HREGORDERS, F_HREGQUANTS, F_HREGWEIGHTS, &
-      & F_HREGWEIGHTVEC, F_JACOBIAN, F_LAMBDA, F_LAMBDAMIN, F_LEVEL, &
-      & F_LOWBOUND, &
-      & F_MAXJ, F_MEASUREMENTS, F_MEASUREMENTSD, F_METHOD, F_MUMIN, &
-      & F_NEGATESD, &
-      & F_OUTPUTCOVARIANCE, F_OUTPUTSD, &
-      & F_PHASENAME, F_PRECISIONFACTOR, &
-      & F_REGAFTER, F_REGAPRIORI, F_SERIAL, F_SPARSEQUANTITIES, &
-      & F_STATE, F_STATEMAX, F_STATEMIN, F_SWITCHES, F_TOGGLES, &
-      & F_TOLERANCEA, F_TOLERANCEF, F_TOLERANCER, &
-      & F_VREGORDERS, F_VREGQUANTS, &
-      & F_VREGWEIGHTS, F_VREGWEIGHTVEC, FIELD_FIRST, FIELD_LAST, &
-      & L_APRIORI, L_COVARIANCE, &
-      & L_DNWT_ABANDONED,  L_DNWT_AJN,  L_DNWT_AXMAX, &
-      & L_DNWT_CAIT, L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_COUNT, &
-      & L_DNWT_DIAG,  L_DNWT_DXDX, L_DNWT_DXDXL, L_DNWT_DXN,  L_DNWT_DXNL, &
-      & L_DNWT_FLAG, L_DNWT_FNMIN, L_DNWT_FNORM,  L_DNWT_GDX,  L_DNWT_GFAC, &
-      & L_DNWT_GRADN,  L_DNWT_SQ, L_DNWT_SQ,  L_DNWT_SQT, &
-      & L_HIGHCLOUD, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, L_LOWCLOUD, &
-      & L_NEWTONIAN, L_NONE, L_NORM, L_NUMGRAD, L_NUMJ, L_NUMNEWT, L_SIMPLE, &
-      & S_ANYGOODVALUES, S_CATCHWARNING, S_CASE, S_COMPARE, &
-      & S_DIFF, S_DUMP, S_DUMPBLOCKS, S_FLAGCLOUD, S_FLUSHPFA, S_LEAKCHECK, &
-      & S_ENDSELECT, S_REEVALUATE, S_REPEAT, S_RESTRICTRANGE, S_RETRIEVE, &
-      & S_SELECT, S_SIDS, S_SKIP, S_SNOOP, S_SUBSET, S_TIME, S_UPDATEMASK
-    use L2PARINFO, only: PARALLEL
-    use MATRIXMODULE_1, only: ADDTOMATRIXDATABASE, COPYMATRIX, CREATEEMPTYMATRIX, &
-      & DESTROYMATRIX, GETFROMMATRIXDATABASE, MATRIX_T, MATRIX_DATABASE_T, &
-      & MATRIX_SPD_T, MULTIPLYMATRIXVECTORNOT, REFLECTMATRIX, &
-      & SPARSIFY, MULTIPLYMATRIX_XTY
-    use MATRIXTOOLS, only: DUMPBLOCKS
-    use MLSKINDS, only: R8, RV
-    use MLSCOMMON, only: MLSFILE_T
-    use MLSL2OPTIONS, only: L2CFNODE, SKIPRETRIEVAL, SPECIALDUMPFILE, &
-      & STATEFILLEDBYSKIPPEDRETRIEVALS, &
-      & MLSMESSAGE, &
-      & currentChunkNumber, CurrentPhaseName
-    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES, ADD_TO_RETRIEVAL_TIMING
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGERESET
-    use MORETREE, only: GET_BOOLEAN, Get_Label_And_Spec, GET_FIELD_ID, &
-      & GET_SPEC_ID
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MLSSTRINGS, only: WRITEINTSTOCHARS
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, TrackAllocates
+    use Bitstuff, only: CountBits
+    use Chunks_m, only: MLSChunk_t
+    use CloudRetrievalModule, only: CloudRetrieval
+    use DumpCommand_m, only: &
+      & BooleanFromAnyGoodvalues, &
+      & BooleanFromCatchWarning, BooleanFromComparingQtys, BooleanFromFormula, &
+      & DumpCommand, InitializeRepeat, NextRepeat, &
+      & MLSCase, MLSEndSelect, MLSSelect, MLSSelecting, Repeat=>Skip, Skip
+    use HessianModule_1, only: Hessian_t, CreateEmptyHessian, DestroyHessian
+    use IEEE_Arithmetic, only: iEEE_Is_NaN
+    use Expr_m, only: Expr
+    use ForwardModelConfig, only: ForwardModelConfig_t
+    use Init_TableS_Module, only: F_Apriori, F_AprioriFraction, F_AprioriScale, &
+      & F_Average, F_ColumnScale, F_Comment, F_Covariance, F_CovSansReg, &
+      & F_Diagnostics, F_Diagonal, F_DumpQuantities, F_ExtendedAverage, &
+      & F_ForwardModel, F_Fuzz, F_FwdModelExtra, F_FwdModelOut, &
+      & F_Hessian, F_HighBound, F_HregOrders, F_HregQuants, F_HregWeights, &
+      & F_HregWeightVec, F_Jacobian, F_Lambda, F_LambdaMin, F_Level, &
+      & F_LowBound, &
+      & F_MaxJ, F_Measurements, F_MeasurementSD, F_Method, F_MuMin, &
+      & F_NegateSD, &
+      & F_OutputCovariance, F_OutputSD, &
+      & F_PhaseName, F_PrecisionFactor, &
+      & F_RegAfter, F_RegApriori, F_Serial, F_SparseQuantities, &
+      & F_State, F_StateMax, F_StateMin, F_Switches, F_Toggles, &
+      & F_ToleranceA, F_ToleranceF, F_ToleranceR, &
+      & F_VregOrders, F_VregQuants, F_VregWeights, F_VregWeightVec, &
+      & Field_First, Field_Last, &
+      & L_Apriori, L_Covariance, &
+      & L_DNWT_Abandoned,  L_DNWT_Ajn,  L_DNWT_Axmax, &
+      & L_DNWT_Cait, L_DNWT_ChisqMinNorm, L_DNWT_ChisqNorm, L_DNWT_count, &
+      & L_DNWT_Diag,  L_DNWT_dxdx, L_DNWT_dxdxl, L_DNWT_dxn,  L_DNWT_dxnl, &
+      & L_DNWT_Flag, L_DNWT_Fnmin, L_DNWT_Fnorm,  L_DNWT_gdx,  L_DNWT_gfac, &
+      & L_DNWT_gradn,  L_DNWT_sq, L_DNWT_sq,  L_DNWT_sqt, &
+      & L_HighCloud, L_Jacobian_Cols, L_Jacobian_Rows, L_LowCloud, &
+      & L_Newtonian, L_None, L_Norm, L_NumGrad, L_NumJ, L_NumNewt, L_Simple, &
+      & S_AnyGoodValues, S_CatchWarning, S_Case, S_Compare, &
+      & S_Diff, S_Dump, S_DumpBlocks, S_FlagCloud, S_FlushPFA, S_LeakCheck, &
+      & S_EndSelect, S_Reevaluate, S_Repeat, S_RestrictRange, S_Retrieve, &
+      & S_Select, S_SIDS, S_Skip, S_Snoop, S_Subset, S_Time, S_UpdateMask
+    use L2parinfo, only: Parallel
+    use MatrixModule_1, only: AddToMatrixDatabase, CopyMatrix, CreateEmptyMatrix, &
+      & DestroyMatrix, GetFromMatrixDatabase, Matrix_t, Matrix_Database_t, &
+      & Matrix_SPD_t, MultiplyMatrixVectorNoT, ReflectMatrix, &
+      & Sparsify, MultiplyMatrix_XTY
+    use MatrixTools, only: DumpBlocks
+    use MLSKinds, only: R8, RV
+    use MLSCommon, only: MLSFile_t
+    use MLSL2options, only: L2CFNode, SkipRetrieval, SpecialDumpFile, &
+      & StateFilledBySkippedRetrievals, &
+      & MLSMessage, &
+      & CurrentChunkNumber, CurrentPhaseName
+    use MLSL2timings, only: Section_Times, Total_Times, Add_To_Retrieval_Timing
+    use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessageReset
+    use MoreTree, only: Get_Boolean, Get_Label_And_Spec, Get_Field_Id, &
+      & Get_Spec_Id
+    use MLSStringlists, only: SwitchDetail
+    use MLSStrings, only: WriteIntsToChars
     use Next_Tree_Node_m, only: Init_Next_Tree_Node, Next_Tree_Node, &
       & Next_Tree_Node_State
-    use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
-    use PFADATA_M, only: FLUSH_PFADATA
-    use SET_TOGGLES_M, only: SET_TOGGLES
-    use SIDSMODULE, only: SIDS
-    use SNOOPMLSL2, only: SNOOP
-    use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
-    use SUBSETMODULE, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE, UPDATEMASK
-    use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, SWITCHES, TOGGLE, LEVELS
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TRACK_M, only: REPORTLEAKS
-    use TREE, only: DECORATE, DECORATION, NSONS, Where, SUB_ROSA, SUBTREE
-    use VECTORSMODULE, only: CLEARMASK, CLEARUNDERMASK, &
-      & CLEARVECTOR, CLONEVECTOR, COPYVECTOR, COPYVECTORMASK, CREATEMASK, &
-      & DESTROYVECTORINFO, DUMPVECTORNORMS, GETVECTORQUANTITYBYTYPE, M_LINALG, &
-      & VECTOR_T, VECTORVALUE_T
+    use Output_m, only: Blanks, Output, RevertOutput, SwitchOutput
+    use PFAData_m, only: Flush_PFAData
+    use Set_Toggles_m, only: Set_Toggles
+    use SIDSModule, only: SIDS
+    use SnoopMLSL2, only: Snoop
+    use String_Table, only: Display_String, Get_String
+    use SubsetModule, only: SetupSubset, SetupFlagCloud, RestrictRange, UpdateMask
+    use Time_m, only: Time_Now
+    use Toggles, only: GEN, Switches, Toggle, Levels
+    use Trace_m, only: Trace_Begin, Trace_End
+    use Track_m, only: ReportLeaks
+    use Tree, only: Decorate, Decoration, NSons, Where, Sub_Rosa, Subtree
+    use Vectorsmodule, only: ClearMask, ClearUnderMask, &
+      & ClearVector, CloneVector, CopyVector, CopyVectorMask, CreateMask, &
+      & DestroyVectorInfo, DumpVectorNorms, GetVectorQuantityByType, M_Linalg, &
+      & Vector_t, VectorValue_t
 
     ! Dummy arguments:
-    integer, intent(in)                               :: ROOT ! Of the relevant subtree of the AST;
+    integer, intent(in)                               :: Root ! Of the relevant subtree of the AST;
                                                               ! It indexes an n_cf vertex
-    type(vector_T), dimension(:), target              :: VECTORDATABASE
-    type(matrix_Database_T), dimension(:), pointer    :: MATRIXDATABASE
-    type(Hessian_T), dimension(:), pointer            :: HESSIANDATABASE
-    type(forwardModelConfig_T), dimension(:), pointer :: CONFIGDATABASE
-    type(MLSChunk_T), intent(inout)                   :: CHUNK
-    type (MLSFile_T), dimension(:), pointer           :: FILEDATABASE
+    type(vector_T), dimension(:), target              :: VectorDatabase
+    type(matrix_Database_T), dimension(:), pointer    :: MatrixDatabase
+    type(Hessian_T), dimension(:), pointer            :: HessianDatabase
+    type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
+    type(MLSChunk_T), intent(inout)                   :: Chunk
+    type (MLSFile_T), dimension(:), pointer           :: FileDatabase
 
     ! Default values:
     real(r8), parameter :: DefaultInitLambda = 0.0_r8
@@ -561,7 +561,7 @@ repeat_loop: do ! RepeatLoop
             toggle = saveToggle
             call trace_end ( "Retrieve.retrieve", cond=toggle(gen) )
             cycle
-          endif
+          end if
 
           if ( got(f_apriori) .neqv. got(f_covariance) ) &
             & call announceError ( bothOrNeither, f_apriori, f_covariance )
@@ -709,8 +709,7 @@ repeat_loop: do ! RepeatLoop
               call createEmptyMatrix ( tikhonov, 0, state, state, text='_Tikhonov' )
               k = addToMatrixDatabase( matrixDatabase, tikhonov )
             end if
-          end if
-          if ( error == 0 ) then
+
             ! Do the retrieval
             jacobian_Cols = 0
             jacobian_Rows = 0
@@ -732,17 +731,17 @@ repeat_loop: do ! RepeatLoop
               call MLSMessage ( MLSMSG_Error, moduleName, &
               & "this retrieval method has not yet been implemented" )
             end select
-
-            !??? Make sure the jacobian and outputCovariance get destroyed
-            !??? after ?what? happens?  Can we destroy the entire matrix
-            !??? database at the end of each chunk?
-            if ( .not. got(f_jacobian) ) call destroyMatrix ( jacobian )
-            if ( .not. got(f_outputCovariance) ) &
-              & call destroyMatrix ( outputCovariance%m )
           else
             call MLSMessage ( MLSMSG_Error, moduleName, &
               & "No retrieval done -- error in configuration" )
           end if
+
+          !??? Make sure the jacobian and outputCovariance get destroyed
+          !??? after ?what? happens?  Can we destroy the entire matrix
+          !??? database at the end of each chunk?
+          if ( .not. got(f_jacobian) ) call destroyMatrix ( jacobian )
+          if ( .not. got(f_outputCovariance) ) &
+            & call destroyMatrix ( outputCovariance%m )
           if ( got(f_fwdModelOut) ) then
             call copyVector ( fwdModelOut, v(f) )
             call copyVectorMask ( fwdModelOut, measurements )
@@ -752,7 +751,7 @@ repeat_loop: do ! RepeatLoop
           toggle = saveToggle
           call trace_end ( "Retrieve.retrieve", cond=toggle(gen) )
         case ( s_sids )
-          if ( SKIPRETRIEVAL .and. switchDetail( switches, 'fiw' ) < 0 ) cycle
+          if ( skipRetrieval .and. switchDetail( switches, 'fiw' ) < 0 ) cycle
           call time_now ( t1 )
           call sids ( key, VectorDatabase, MatrixDatabase, HessianDatabase, configDatabase, chunk)
         case ( s_select ) ! ============ Start of select .. case ==========
@@ -829,9 +828,9 @@ repeat_loop: do ! RepeatLoop
     ! --------------------------------------------  AnnounceError  -----
     subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex, String )
 
-      use INTRINSIC, only: FIELD_INDICES
-      use LEXER_CORE, only: PRINT_SOURCE
-      use STRING_TABLE, only: DISPLAY_STRING
+      use Intrinsic, only: Field_Indices
+      use Lexer_Core, only: Print_Source
+      use String_Table, only: Display_String
 
       integer, intent(in) :: Code       ! Index of error message
       integer, intent(in), optional :: FieldIndex, AnotherFieldIndex ! f_...
@@ -895,10 +894,10 @@ repeat_loop: do ! RepeatLoop
       !  a flag to the FormNormalEquations routine to subtract instead of add.
 
       use DNWT_Module, only: NWT_T
-      use MatrixModule_1, only: CLEARMATRIX, COLUMNSCALE, DUMP, DUMP_STRUCT, &
-        & FORMNORMALEQUATIONS => NORMALEQUATIONS, GETDIAGONAL
-      use Regularization, only: REGULARIZE
-      use VectorsModule, only: OPERATOR(.DOT.), SCALEVECTOR
+      use MatrixModule_1, only: ClearMatrix, ColumnScale, Dump, Dump_Struct, &
+        & FormNormalEquations => NormalEquations, GetDiagonal
+      use Regularization, only: Regularize
+      use VectorsModule, only: OPERATOR(.DOT.), ScaleVector
 
       logical, intent(in) :: After     ! Allow column scaling
       type(matrix_SPD_T), intent(inout) :: NormalEquations  ! Jacobian**T * Jacobian
@@ -1182,9 +1181,9 @@ repeat_loop: do ! RepeatLoop
 
     ! --------------------------------------  DumpStateQuantities  -----
     subroutine DumpStateQuantities ( DumpQuantitiesNode, Title )
-      use Tree, only: DECORATION, NSONS, SUBTREE
-      use VectorsModule, only: DUMP, GETVECTORQTYBYTEMPLATEINDEX, &
-        & VECTORVALUE_T
+      use Tree, only: Decoration, NSons, Subtree
+      use VectorsModule, only: Dump, GetVectorQtyByTemplateIndex, &
+        & VectorValue_t
 
       integer, intent(in) :: DumpQuantitiesNode ! in L2CF tree
       character(len=*), intent(in) :: Title
@@ -1206,7 +1205,7 @@ repeat_loop: do ! RepeatLoop
     ! --------------------------------------  DumpRetrievalConfig  -----
     subroutine DumpRetrievalConfig
       use lexer_core, only: PRINT_SOURCE
-      use VectorsModule, only: DUMPNICEMASKSUMMARY, M_TIKHONOV, M_FULLDERIVATIVES
+      use VectorsModule, only: DumpNiceMaskSummary, M_Tikhonov, M_FullDerivatives
       ! Local variables
       integer :: Q                ! Loop counter
       ! Executable code
@@ -1329,17 +1328,17 @@ repeat_loop: do ! RepeatLoop
     end subroutine FillDiagQty
 
     ! ----------------------------------------------  FillDiagVec  -----
-    subroutine FillDiagVec ( diagnostics, aj, numGrad, numJ, numNewt, nwt_flag, &
-      & jacobian_rows, jacobian_cols )
+    subroutine FillDiagVec ( Diagnostics, AJ, NumGrad, NumJ, NumNewt, NWT_Flag, &
+      & Jacobian_Rows, Jacobian_Cols )
       use DNWT_Module, only: NWT_T
-      type(Vector_T), intent(inout) :: DIAGNOSTICS
+      type(Vector_T), intent(inout) :: Diagnostics
       type(Nwt_T), intent(in) :: AJ
-      integer, intent(in), optional :: NUMGrad
-      integer, intent(in), optional :: NUMJ
-      integer, intent(in), optional :: NUMNewt
-      integer, intent(in), optional :: NWT_FLAG
-      integer, intent(in), optional :: JACOBIAN_ROWS
-      integer, intent(in), optional :: JACOBIAN_COLS
+      integer, intent(in), optional :: NumGrad
+      integer, intent(in), optional :: NumJ
+      integer, intent(in), optional :: NumNewt
+      integer, intent(in), optional :: NWT_Flag
+      integer, intent(in), optional :: Jacobian_Rows
+      integer, intent(in), optional :: Jacobian_Cols
 
       integer :: Me = -1               ! String index for trace
 
@@ -1434,13 +1433,13 @@ repeat_loop: do ! RepeatLoop
     end subroutine GetInBounds
 
     ! -------------------------------------------------  My_NWTDB  -----
-    subroutine My_NWTDB ( AJ, WIDTH, LEVEL, WHY )
+    subroutine My_NWTDB ( AJ, Width, Level, Why )
       use DNWT_Module, only: NWT_T, NWTDB
       use DNWT_Clone, only: ALT_NWTDB
       type (NWT_T), intent(in), optional :: AJ
-      integer, intent(in), optional :: WIDTH
-      integer, intent(in), optional :: LEVEL
-      character(len=*), intent(in), optional :: WHY
+      integer, intent(in), optional :: Width
+      integer, intent(in), optional :: Level
+      character(len=*), intent(in), optional :: Why
       if ( method == l_newtonian ) then
         call nwtdb ( aj, width, level, why )
       else
@@ -1451,32 +1450,32 @@ repeat_loop: do ! RepeatLoop
     ! ---------------------------------------------  NewtonSolver  -----
     subroutine NewtonSolver
 
-      use DNWT_MODULE, only: FLAGNAME, NF_AITKEN, NF_BEST, NF_BIGGEST_FLAG, &
+      use DNWT_MODULE, only: FlagName, NF_AITKEN, NF_BEST, NF_BIGGEST_FLAG, &
       & NF_DX, NF_DX_AITKEN, NF_EVALF, NF_EVALJ, NF_FANDJ, NF_GMOVE, NF_LEV, &
       & NF_NEWX, NF_SMALLEST_FLAG, NF_SOLVE, NF_START, NF_TOLX, NF_TOLF, &
       & NF_TOLX_BEST, NF_TOO_SMALL, NWT_T, RK
-      use DNWT_MODULE, only: NWT, NWTA, NWTOP
-      use DNWT_CLONE, only: ALT_NWT, ALT_NWTA, ALT_NWTOP ! SIMPLE
-      use DUMP_0, only: DUMP
-      use FORWARDMODELWRAPPERS, only: FORWARDMODEL
-      use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
-      use L2FWMPARALLEL, only: SETUPFWMSLAVES, TRIGGERSLAVERUN, &
-        & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT
-      use MATRIXMODULE_0, only: DUMP ! THE ONE FROM MATRIXMODULE_1 OUGHT TO WORK ???
-      use MATRIXMODULE_1, only: ADDTOMATRIX, CHOLESKYFACTOR, CLEARMATRIX, &
-        & COLUMNSCALE, COPYMATRIXVALUE, CREATEEMPTYMATRIX, &
-        & DESTROYMATRIX, DUMP, DUMP_LINF, DUMP_STRUCT, &
-        & FORMNORMALEQUATIONS => NORMALEQUATIONS, &
-        & GETDIAGONAL, INVERTCHOLESKY, MATRIX_T, &
-        & MATRIX_CHOLESKY_T, MATRIX_SPD_T, MAXL1, MINDIAG, MULTIPLY, &
-        & MULTIPLYMATRIX_XY,  MULTIPLYMATRIX_XY_T,  &
-        & ROWSCALE, SCALEMATRIX, SOLVECHOLESKY, UPDATEDIAGONAL
-      use SCANMODELMODULE, only: DESTROYFORWARDMODELINTERMEDIATE
-      use SYMBOL_TABLE, only: ENTER_TERMINAL
-      use SYMBOL_TYPES, only: T_IDENTIFIER
-      use VECTORSMODULE, only: ADDTOVECTOR, DESTROYVECTORINFO, &
-        & DUMP, MULTIPLY, OPERATOR(.DOT.), OPERATOR(.MDOT.), OPERATOR(-), &
-        & SCALEVECTOR, SUBTRACTFROMVECTOR
+      use DNWT_Module, only: NWT, NWTA, NWTOP
+      use DNWT_Clone, only: ALT_NWT, ALT_NWTA, ALT_NWTOP ! SIMPLE
+      use Dump_0, only: dump
+      use ForwardModelWrappers, only: ForwardModel
+      use Forwardmodelintermediate, only: forwardmodelstatus_t
+      use L2FWMParallel, only: SetupFWMSlaves, TriggerSlaveRun, &
+        & RequestSlavesOutput, ReceiveSlavesOutput
+      use MatrixModule_0, only: Dump ! The one from MatrixModule_1 ought to work ???
+      use MatrixModule_1, only: AddToMatrix, CholeskyFactor, ClearMatrix, &
+        & ColumnScale, CopyMatrixValue, CreateEmptyMatrix, &
+        & DestroyMatrix, Dump, Dump_Linf, Dump_Struct, &
+        & FormNormalEquations => NormalEquations, &
+        & GetDiagonal, InvertCholesky, Matrix_t, &
+        & Matrix_Cholesky_t, Matrix_SPD_t, MaxL1, MinDiag, Multiply, &
+        & MultiplyMatrix_XY,  MultiplyMatrix_XY_T,  &
+        & RowScale, ScaleMatrix, SolveCholesky, UpdateDiagonal
+      use ScanModelModule, only: DestroyForwardModelIntermediate
+      use Symbol_Table, only: Enter_Terminal
+      use Symbol_Types, only: T_Identifier
+      use VectorsModule, only: AddToVector, DestroyVectorInfo, &
+        & Dump, Multiply, OPERATOR(.dot.), OPERATOR(.mdot.), OPERATOR(-), &
+        & ScaleVector, SubtractFromVector
 
       ! Local Variables
       ! logical :: Abandoned              ! Flag to indicate numerical problems
@@ -2928,12 +2927,12 @@ NEWT: do ! Newton iteration
     end subroutine NewtonSolver
 
     ! ---------------------------------------  NewtonSolverFailed  -----
-    subroutine NewtonSolverFailed ( WHY, NWT_FLAG, PREV_NWT_FLAG, &
+    subroutine NewtonSolverFailed ( WHY, NWT_Flag, Prev_NWT_Flag, &
       & D_NDB, AJ )
       use DNWT_Module, only: NF_START, NWT_T
       character(len=*), intent(in) :: WHY      ! What failed
-      integer, intent(inout) :: NWT_FLAG       ! Solver's state flag
-      integer, intent(inout) :: PREV_NWT_FLAG  ! Solver's previous state
+      integer, intent(inout) :: NWT_Flag       ! Solver's state flag
+      integer, intent(inout) :: Prev_NWT_Flag  ! Solver's previous state
       integer, intent(in) :: D_NDB             ! dump AJ if d_ndb >= 2
       type (NWT_T), intent(in) :: AJ           ! Solver's database
 
@@ -2958,7 +2957,7 @@ NEWT: do ! Newton iteration
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
         call blanks ( 4, advance = 'no' )
-      endif
+      end if
       call output ( "Timing for Retrieve = " )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -2979,6 +2978,9 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.354  2014/09/29 20:17:52  vsnyder
+! Fuse two IF constructs with identical conditions, some cannonball polishing
+!
 ! Revision 2.353  2014/09/05 01:20:03  vsnyder
 ! Remove unused State argument from DumpStateQuantities.  Remove USE for
 ! unreferenced USE name.
