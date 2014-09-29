@@ -175,6 +175,7 @@ then
 fi
 
 masterIdent="none"
+runinbackground="no"
 otheropts="-g"
 switches="-S'slv,opt1,log,pro,time,glob1'"
 OPTSFILE="${JOBDIR}/slave.opts"
@@ -260,6 +261,13 @@ while [ "$more_opts" = "yes" ] ; do
        shift
        shift
        ;;
+    --backg* )
+       otheropts=`add_option "$otheropts" $1`
+       echo "Skipping argument to run slave pge in background" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       runinbackground="yes"
+       shift
+       ;;
     --ntk )
        otheropts=`add_option "$otheropts" --ntk`
        shift
@@ -308,8 +316,12 @@ while [ "$more_opts" = "yes" ] ; do
        fi
        otheropts=`add_option "$otheropts" $1`
        otheropts=`add_option "$otheropts" "$OPTSFILE"`
-       echo "Adding arguments to read opts from file: $1 $OPTSFILE" >> $LOGFILE
-       echo "$otheropts" >> $LOGFILE
+       # Are we setting to run in background?
+       a=`grep '^backg=true' $OPTSFILE`
+       if [ "$a" != "" ]
+       then
+         runinbackground="yes"
+       fi
        shift
        shift
        ;;
@@ -398,9 +410,57 @@ fi
 ulimit -s unlimited
 #ulimit -a >> "$ENVSETTINGS"
 
-echo $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 | tee -a "$LOGFILE"
-$PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 | tee -a "$LOGFILE"
+echo $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
+if [ "$runinbackground" != "yes" ]
+then
+  # Run pge in foreground
+  $PGE_BINARY --ntk -m --slave $masterTid $otheropts $l2cf 2>&1 >> "$LOGFILE"
+  exit 0
+fi
 
+# Run pge in background
+echo "Must run $PGE_BINARY in background" >> "$LOGFILE"
+NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
+notdone="true"
+
+$PGE_BINARY --ntk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts $l2cf 2>&1 >> "$LOGFILE" &
+pgepid=$!
+echo "pge pid: $pgepid" 2>&1 >> "$LOGFILE"
+sleep 20
+
+# Did the launch fail immediately?
+if [ "$pgepid" = "" ]
+then
+  echo "Failed to launch $PGE_BINARY in background" 2>&1 >> "$LOGFILE"
+  exit 1
+fi
+
+# Write this pid to a uniquely-named file
+echo "$pgepid" > "$NOTEFILE"
+echo "$pgepid echoed to $NOTEFILE" >> "$LOGFILE"
+while [ "$notdone" = "true" ]
+do
+  sleep 120
+  # Either of two signs that we finished:
+  # the pge wrote Finished to the note file
+  a=`grep Finished "$NOTEFILE"`
+  if [ "$a" != "" ]
+  then
+    notdone=finished
+  fi
+  # its pid disappears
+  a=`ps p $pgepid | grep "$pgepid"`
+  if [ "$a" = "" ]
+  then
+    notdone=disappeared
+  fi
+done
+echo "$notdone; Returned from $PGE_BINARY with status $?" 2>&1 >> "$LOGFILE"
+echo "cat $NOTEFILE" 2>&1 >> "$LOGFILE"
+cat $NOTEFILE 2>&1 >> "$LOGFILE"
+# For good measure, we alo kill the pge's own pid (n case it was left hanging)
+echo "killing $pgepid" 2>&1 >> "$LOGFILE"
+kill -9 "$pgepid"
 }
       
 #------------------------------- Main Program ------------
@@ -420,6 +480,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.11  2014/06/25 23:08:27  pwagner
+# Handle --set, --setf, --versid
+#
 # Revision 1.10  2013/11/14 23:58:15  pwagner
 # Treats options -D, -V, -R, -S equally
 #
