@@ -125,7 +125,7 @@ Switches (set by -S option in mlsl2's command line):
  pfag    => Show PFA table generation progress
  pguess  => Iterations of the pressure guesser
  phase[n]=> Announce phases (e.g., Core) as they begin
-            n > 1 => add time stamps
+            n = 1 => make the announcement as a banner
  point   => Pointing grids
  pro[n]  => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
              and each file l2gp, l1brad, ncep, dao input; dump filedatabase
@@ -217,6 +217,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.90  2014/09/11 18:22:39  pwagner
+ Brought partly up tp date
+
  Revision 1.89  2013/07/26 22:41:22  vsnyder
  Fiddling with some forward model and retriever switches
 
