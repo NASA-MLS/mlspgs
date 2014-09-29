@@ -419,12 +419,12 @@ fi
 ulimit -s unlimited
 #ulimit -a >> "$ENVSETTINGS"
 
-echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
+echo $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
 if [ "$runinbackground" != "yes" ]
 then
   # Run pge in foreground
-  $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 | tee -a "$LOGFILE"
-  echo "Returned from $PGE_BINARY with status $?" 2>&1 | tee -a "$LOGFILE"
+  $PGE_BINARY --tk -m --slave $masterTid $otheropts 2>&1 >> "$LOGFILE"
+  echo "Returned from $PGE_BINARY with status $?" 2>&1 >> "$LOGFILE"
   exit 0
 fi
 
@@ -434,22 +434,33 @@ NOTEFILE=`echo "$LOGFILE" | sed 's/.log$/.note/'`
 notdone="true"
 
 $PGE_BINARY --tk -m --slave $masterTid --pidf "$NOTEFILE" $otheropts 2>&1 \
-  | tee -a "$LOGFILE" &
+  >> "$LOGFILE" &
+pgepid=$!
+echo "pge pid: $pgepid" 2>&1 >> "$LOGFILE"
 sleep 20
 # Find the pge's pid; call it pgepid
-ps aux | grep "uid $pid " | grep -v grep 2>&1 | tee -a "$LOGFILE"
-pgepid=`ps aux | grep "uid $pid " | grep -v grep | awk '{print $2}'`
+ps aux | grep "uid $pid " | grep -v grep 2>&1 >> "$LOGFILE"
+pgepid2=`ps aux | grep "uid $pid " | grep -v grep | awk '{print $2}'`
+if [ "$pgepid" != "$pgepid2" ]
+then
+  echo "Warning-- $pgepid and $pgepid2 differ" 2>&1 >> "$LOGFILE"
+  ps -l -p "$pgepid" 2>&1 >> "$LOGFILE"
+  ps -l -p "$pgepid2" 2>&1 >> "$LOGFILE"
+  kill -9 $pgepid
+  kill -9 $pgepid2
+  exit 1
+fi
 
 # Did the launch fail immediately?
 if [ "$pgepid" = "" ]
 then
-  echo "Failed to launch $PGE_BINARY in background" 2>&1 | tee -a "$LOGFILE"
+  echo "Failed to launch $PGE_BINARY in background" 2>&1 >> "$LOGFILE"
   exit 1
 fi
 
 # Write this pid to a uniquely-named file
 echo "$pgepid" > "$NOTEFILE"
-echo "$pgepid echoed to $NOTEFILE" | tee -a "$LOGFILE"
+echo "$pgepid echoed to $NOTEFILE" >> "$LOGFILE"
 while [ "$notdone" = "true" ]
 do
   sleep 120
@@ -467,11 +478,11 @@ do
     notdone=disappeared
   fi
 done
-echo "$notdone; Returned from $PGE_BINARY with status $?" 2>&1 | tee -a "$LOGFILE"
-echo "cat $NOTEFILE" 2>&1 | tee -a "$LOGFILE"
-cat $NOTEFILE 2>&1 | tee -a "$LOGFILE"
+echo "$notdone; Returned from $PGE_BINARY with status $?" 2>&1 >> "$LOGFILE"
+echo "cat $NOTEFILE" 2>&1 >> "$LOGFILE"
+cat $NOTEFILE 2>&1 >> "$LOGFILE"
 # For good measure, we alo kill the pge's own pid (n case it was left hanging)
-echo "killing $pgepid" 2>&1 | tee -a "$LOGFILE"
+echo "killing $pgepid" 2>&1 >> "$LOGFILE"
 kill -9 "$pgepid"
 
 }
@@ -493,6 +504,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.32  2014/09/12 22:24:48  pwagner
+# Enhanced diagnostic logging
+#
 # Revision 1.31  2014/09/02 17:54:48  pwagner
 # Corrected bugs related to running in background
 #
