@@ -53,7 +53,6 @@ contains ! ============= Public Procedures ==========================
     use LinearizedForwardModel_m, only: LinearizedForwardModel
     use MatrixModule_1, only: CheckIntegrity, CreateEmptyMatrix, DestroyMatrix, &
       & Matrix_t
-use MatrixModule_1, only: Dump_Struct
     use MLSKinds, only: RV
     use MLSL2Timings, only: Add_To_Retrieval_Timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -135,8 +134,6 @@ use MatrixModule_1, only: Dump_Struct
     call trace_begin ( me, 'ForwardModel', string=who, cond=toggle(emit) )
     ! Setup the timing
     call time_now (time_start)
-
-if ( present(Jacobian) ) call dump_struct ( Jacobian, name='From ForwardModelWrapper' )
 
     dumpTransform = switchDetail(switches,'dxfq')
     if ( dumpTransform(1) >= 0 ) then
@@ -883,6 +880,9 @@ if ( present(Jacobian) ) call dump_struct ( Jacobian, name='From ForwardModelWra
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.75  2014/09/30 02:17:15  vsnyder
+! Remove some debugging output that shouldn't have been checked in
+!
 ! Revision 2.74  2014/09/29 20:18:14  vsnyder
 ! Add NoMagneticField switch to ForwardModel
 !
