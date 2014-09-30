@@ -1151,6 +1151,7 @@ contains ! =====     Public Procedures     =============================
           do j = 1, size ( matrices )
             call GetActualMatrixFromDatabase ( matrices(j), oneMatrix )
             if ( associated ( oneMatrix ) ) then
+              ! This is a shallow copy
               snoopMatrices(noSnoopedMatrices) = oneMatrix
               noSnoopedMatrices = noSnoopedMatrices + 1
             end if
@@ -1158,6 +1159,16 @@ contains ! =====     Public Procedures     =============================
         end if
         call Snoop ( key=key, vectorDatabase=vectors, &
           & matrixDatabase=snoopMatrices )
+        do j = 1, size ( snoopMatrices )
+          ! The assignment from oneMatrix to snoopMatrices(.) is a shallow
+          ! copy.  We do this so that the matrix finalizer doesn't
+          ! deallocate out from under the real matrix database....
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!           call nullifyMatrix ( snoopMatrices(j) )
+        end do
         s = size(snoopMatrices) * storage_size(snoopMatrices) / 8
         deallocate ( snoopMatrices, STAT=status )
         call test_deallocate ( status, moduleName, 'snoopMatrices', s )
@@ -3099,6 +3110,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.445  2014/09/30 02:14:38  vsnyder
+! Some stuff that might be useful if we turn on matrix finalizers
+!
 ! Revision 2.444  2014/09/05 00:56:02  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Remove
 ! declarations of unused variables.  Send HGrids database to DumpCommand.
