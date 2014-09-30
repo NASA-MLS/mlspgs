@@ -80,9 +80,9 @@ contains
       & S_Select, S_SIDS, S_Skip, S_Snoop, S_Subset, S_Time, S_UpdateMask
     use L2parinfo, only: Parallel
     use MatrixModule_1, only: AddToMatrixDatabase, CopyMatrix, CreateEmptyMatrix, &
-      & DestroyMatrix, GetFromMatrixDatabase, Matrix_t, Matrix_Database_t, &
-      & Matrix_SPD_t, MultiplyMatrixVectorNoT, ReflectMatrix, &
-      & Sparsify, MultiplyMatrix_XTY
+      & DestroyMatrix, GetFromMatrixDatabase, NullifyMatrix, Matrix_t, &
+      & Matrix_Database_t, Matrix_SPD_t, MultiplyMatrixVectorNoT, &
+      & ReflectMatrix, Sparsify, MultiplyMatrix_XTY
     use MatrixTools, only: DumpBlocks
     use MLSKinds, only: R8, RV
     use MLSCommon, only: MLSFile_t
@@ -648,6 +648,12 @@ repeat_loop: do ! RepeatLoop
                   & sub_rosa(subtree(1,ixJacobian)), measurements, state )
                 k = addToMatrixDatabase( matrixDatabase, myJacobian )
                 call decorate ( ixJacobian, k )
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!                 call nullifyMatrix ( myJacobian ) ! so as not to clobber out
+                  ! from under matrixDatabase(k) when myJacobian is finalized
               end if
               call getFromMatrixDatabase ( matrixDatabase(k), jacobian )
               if ( jacobian%row%vec%template%name /= measurements%template%name ) &
@@ -667,6 +673,12 @@ repeat_loop: do ! RepeatLoop
                   & sub_rosa(subtree(1,ixCovariance)), state, state )
                 k = addToMatrixDatabase( matrixDatabase, myCovariance )
                 call decorate ( ixCovariance, k )
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!                 call nullifyMatrix ( myCovariance%m ) ! so as not to clobber out
+                  ! from under matrixDatabase(k) when myCovariance%m is finalized
               end if
               call getFromMatrixDatabase ( matrixDatabase(k), outputCovariance )
               if ( .not. associated(outputCovariance) ) then
@@ -690,6 +702,12 @@ repeat_loop: do ! RepeatLoop
                   & sub_rosa(subtree(1,ixAverage)), state, state )
                 k = addToMatrixDatabase( matrixDatabase, myAverage )
                 call decorate ( ixAverage, k )
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!                 call nullifyMatrix ( myAverage ) ! so as not to clobber out
+                  ! from under matrixDatabase(k) when myAverage is finalized
               end if
               call getFromMatrixDatabase ( matrixDatabase(k), outputAverage )
               call display_string ( outputAverage%name, advance='yes' )
@@ -707,7 +725,6 @@ repeat_loop: do ! RepeatLoop
             ! normal equations
             if ( tikhonovNeeded ) then
               call createEmptyMatrix ( tikhonov, 0, state, state, text='_Tikhonov' )
-              k = addToMatrixDatabase( matrixDatabase, tikhonov )
             end if
 
             ! Do the retrieval
@@ -2978,6 +2995,10 @@ NEWT: do ! Newton iteration
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.355  2014/09/30 02:15:19  vsnyder
+! Don't put the Tikhonov matrix in the matrix database.  Add some commented-
+! out stuff that might be useful if we turn on matrix finalizers.
+!
 ! Revision 2.354  2014/09/29 20:17:52  vsnyder
 ! Fuse two IF constructs with identical conditions, some cannonball polishing
 !
