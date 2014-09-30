@@ -13,6 +13,8 @@
 module MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
 !=============================================================================
 
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_test, &
+    & Test_Allocate, Test_Deallocate
   use MLSCommon, only: NameLen
   use MLSKinds, only: R8
   use MLSStrings, only: Capitalize, LinearSearchStringArray, &
@@ -433,8 +435,6 @@ contains
   subroutine ParseChannelRequest ( request,firstChannel,lastChannel, &
     & channelIncluded )
 
-    use Allocate_Deallocate, only: Allocate_Test
-
     ! Dummy arguments
     character (len=*), intent(in) :: request
     integer, intent(in) :: firstChannel, lastChannel
@@ -507,8 +507,6 @@ contains
 
   subroutine TurnMLSChannelInfoIntoCopy(signals)
 
-    use Allocate_Deallocate, only: Allocate_Test
-
     ! Dummy argument
     type (MLSSignal_T), dimension(:), intent(inout) :: signals
 
@@ -552,8 +550,6 @@ contains
   ! upper/lower sideband if relevant.  Also returned is a list of channels.
 
   subroutine ParseMLSSignalRequest ( request, signals, noCopy )
-
-    use Allocate_Deallocate, only: Test_Allocate
 
     ! Dummy arguments
     character (len=*), intent(in) :: request
@@ -755,8 +751,6 @@ contains
 
   subroutine UnionMLSSignalsInfo ( signalsA, signalsB, signalsUnion )
 
-    use Allocate_Deallocate, only: Test_Allocate
-
     ! Dummy arguments
     type (MLSSignal_T), dimension(:), intent(in) :: signalsA
     type (MLSSignal_T), dimension(:), intent(in) :: signalsB
@@ -830,8 +824,6 @@ contains
   ! unallocated, in which case signalsB is just copied.
 
   subroutine ConcatenateMLSSignalsInfo(signalsA,signalsB)
-
-    use Allocate_Deallocate, only: Test_Allocate
 
     ! Dummy arguments
     type (MLSSignal_T), dimension(:), pointer    :: SignalsA
@@ -1009,7 +1001,6 @@ contains
 
   subroutine ReadSignalsDatabase ( unit )
 
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use Intrinsic, only: L_None
     use MLSStringLists, only: GetUniqueStrings
 
@@ -1732,8 +1723,6 @@ contains
 
   subroutine GetMLSRadiometerNames ( names )
 
-    use Allocate_Deallocate, only: Test_Allocate
-
     ! Dummy arguments
     character (len=NameLen), dimension(:), pointer :: names
 
@@ -1754,8 +1743,6 @@ contains
   ! This routine returns an array of names of bands in MLS from the database.
 
   subroutine GetMLSBandNames ( names )
-
-    use Allocate_Deallocate, only: Test_Allocate
 
     ! Dummy arguments
     character (len=NameLen), dimension(:), pointer :: names
@@ -1788,6 +1775,9 @@ end module MLSSignalNomenclature
 
 !
 ! $Log$
+! Revision 2.13  2014/09/30 16:31:02  pwagner
+! Uses Allocate_test, etc. from Allocate_Deallocate, back to module-wise scope
+!
 ! Revision 2.12  2014/09/29 22:50:26  vsnyder
 ! Add ONLY clause to USEs, move some down to subprogram scope
 !
