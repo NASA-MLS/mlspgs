@@ -40,7 +40,7 @@ Catenate
 ;; We're planning on only O3 accompanying its column
 !ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
 ;; (OH, IWC and RHI will be treated separately below)
-!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,CH3Cl,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,SO2,Temperature,GPH})})!dnl
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,CH3Cl,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,SO2,Temperature,GPH})})!dnl
 
 !ifdef(flagCopyStandardProducts,{
 
@@ -180,6 +180,12 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
 !ifdef(flagAscendDescend,{
 !forall(copyAscDescToAttributei,!NonColumnStdProds,!ColumnStdProds,IWC)
 })
+end Output
+
+;; Separate OH into its own section
+;; so it may be skipped for days when Band15 is off
+begin Output
+
   ;; Copy OH swath out to l2gp file unless empty
   Band15OFFALLDAY: Boolean, formula="false"
   isSwathEmpty, type=l2dgg, swath='OH-StdProd', file='!DGGFileName', Boolean=Band15OFFALLDAY
@@ -193,6 +199,9 @@ Copy, type=l2gp, hdfVersion=!hdfVersion, $
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.4  2014/08/20 20:23:23  pwagner
+; Comment-out the BrOEmpty-dependent Skip; a better idea is needed
+;
 ; Revision 1.3  2014/04/16 00:56:47  pwagner
 ; May copy both HNO3 swaths to stdprod file
 ;
