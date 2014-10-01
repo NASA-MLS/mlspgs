@@ -2956,7 +2956,7 @@ contains ! =====     Public Procedures     =============================
       start(1) = 1
       count(1) = 1
     endif
-    call ExtractArray ( l2gp%pressures    , ol2gp%pressures    , start, count, stride, block )
+    call ExtractArray ( l2gp%pressures    , ol2gp%pressures    , start(2:2), count(2:2), stride(2:2), block(2:2) )
     call ExtractArray ( l2gp%frequency    , ol2gp%frequency    , start(1:1), count(1:1), stride(1:1), block(1:1) )
     call ExtractArray ( l2gp%latitude     , ol2gp%latitude     , start(3:3), count(3:3), stride(3:3), block(3:3) )
     call ExtractArray ( l2gp%longitude    , ol2gp%longitude    , start(3:3), count(3:3), stride(3:3), block(3:3) )
@@ -3867,11 +3867,9 @@ contains ! =====     Public Procedures     =============================
     ! Read the pressures vertical geolocation field, if it exists
 
     if (lev /= 0) then
-
        status = mls_SWrdfld(swid,'Pressure',start(2:2),stride(2:2), edge(2:2),&
          & realSurf, hdfVersion=hdfVersion, dontfail=dontfail)
        l2gp%pressures = realSurf
-
     endif
 
     ! Read the frequency geolocation field, if it exists
@@ -4316,7 +4314,7 @@ contains ! =====     Public Procedures     =============================
     swid = mls_SWattach (L2GPFile, name)
 
     ! Write data to the fields
-
+    edge = 0
     stride = 1
     start = myOffset ! Please do not set to zero
     edge(1) = l2gp%nTimes
@@ -4354,7 +4352,7 @@ contains ! =====     Public Procedures     =============================
     if ( l2gp%nLevels > 0 ) then
        edge(1) = l2gp%nLevels
        start(1)=0 ! needed because offset may have made this /=0
-       status = mls_SWwrfld(swid, 'Pressure', start, stride, edge, &
+       status = mls_SWwrfld(swid, 'Pressure', start(1:1), stride(1:1), edge(1:1), &
             real(l2gp%pressures), hdfVersion=hdfVersion)
     end if
 
@@ -5233,6 +5231,10 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.204  2014/09/04 23:47:44  vsnyder
+! More complete and accurate allocate/deallocate size tracking.
+! Add some tracing.
+!
 ! Revision 2.203  2014/07/23 21:59:53  pwagner
 ! Fixed bugs in ExtractL2GPRecord
 !
