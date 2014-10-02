@@ -470,8 +470,10 @@ contains
         call MakeHDF5Attribute(grp_id, &
          & 'LastMAF', GlobalAttributes%LastMAFCtr, .true.)
       endif
-      call MakeHDF5Attribute(grp_id, &
-       & 'MiscNotes', GlobalAttributes%MiscNotes, .true.)
+      ! We don't write these here (the master would insert an erroneous value)
+      ! Instead we write them during DirectWrite operations
+      ! call MakeHDF5Attribute(grp_id, &
+      !  & 'MiscNotes', GlobalAttributes%MiscNotes, .true.)
       if ( len_trim(GlobalAttributes%DOI) > 0 .and. myDOI ) &
         & call MakeHDF5Attribute(grp_id, &
         & 'identifier_product_DOI', GlobalAttributes%DOI, .false.)
@@ -715,10 +717,12 @@ contains
          & 'LastMAF', HE5T_NATIVE_INT, hsize(1), &
          &  (/ GlobalAttributes%LastMAFCtr /) )
       endif
-      if ( DEBUG ) call outputNamedValue( 'GlobalAttributes%MiscNotes: ', GlobalAttributes%MiscNotes )
-      status = mls_EHwrglatt(fileID, &
-       & 'MiscNotes', MLS_CHARTYPE, 1, &
-       &  GlobalAttributes%MiscNotes)
+      ! if ( DEBUG ) call outputNamedValue( 'GlobalAttributes%MiscNotes: ', GlobalAttributes%MiscNotes )
+      ! We don't write these here (the master would insert an erroneous value)
+      ! Instead we write them during DirectWrite operations
+      ! status = mls_EHwrglatt(fileID, &
+      ! & 'MiscNotes', MLS_CHARTYPE, 1, &
+      !  &  GlobalAttributes%MiscNotes)
 !------------------------------------------------------------
    END SUBROUTINE he5_writeglobalattr_FileID
 !------------------------------------------------------------
@@ -847,10 +851,10 @@ contains
       status = he5_EHrdglatt(fileID, &
        & 'PGEVersion', &
        &  gAttributes%PGEVersion)
-      status = he5_EHrdglatt(fileID, &
-       & 'MiscNotes', &
-       &  gAttributes%MiscNotes)
-      if ( DEBUG ) call outputNamedValue('Misc Notes (read) ', trim(gAttributes%MiscNotes) )
+      ! status = he5_EHrdglatt(fileID, &
+      ! & 'MiscNotes', &
+      ! &  gAttributes%MiscNotes)
+      ! if ( DEBUG ) call outputNamedValue('Misc Notes (read) ', trim(gAttributes%MiscNotes) )
       status = he5_EHrdglatt(fileID, &
        & 'StartUTC', &
        &  gAttributes%StartUTC)
@@ -1052,9 +1056,11 @@ contains
          & 'LastMAF', HE5T_NATIVE_INT, hsize(1), &
          &  (/ GlobalAttributes%LastMAFCtr/) )
       endif
-      status = he5_SWwrattr(swathID, &
-       & 'MiscNotes', MLS_CHARTYPE, hsize(1), &
-       &  GlobalAttributes%MiscNotes)
+      ! We don't write these here (the master would insert an erroneous value)
+      ! Instead we write them during DirectWrite operations
+      ! status = he5_SWwrattr(swathID, &
+      ! & 'MiscNotes', MLS_CHARTYPE, hsize(1), &
+      !  &  GlobalAttributes%MiscNotes)
 !------------------------------------------------------------
    END SUBROUTINE sw_writeglobalattr
 !------------------------------------------------------------
@@ -1621,6 +1627,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.64  2014/10/02 17:20:46  pwagner
+!# Avoid letting master write erroneous MiscNotes
+!#
 !# Revision 2.63  2014/09/05 00:15:47  vsnyder
 !# More complete and accurate allocate/deallocate size tracking.  Remove
 !# USE for unreferenced names.
