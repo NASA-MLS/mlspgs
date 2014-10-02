@@ -24,23 +24,24 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! or simply take too much time doing i/o
     ! so instead write them out chunk-by-chunk
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
-  use HIGHOUTPUT, only: BEVERBOSE, OUTPUTNAMEDVALUE
-  use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, &
-    & L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM
-  use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE, MLSFILE_T
-  use MLSKINDS, only: RV
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSFILES, only: HDFVERSION_4, HDFVERSION_5, DUMP, mls_exists, &
-    & MLS_CLOSEFILE, MLS_OPENFILE
-  use MLSFINDS, only: FINDFIRST
-  use MLSHDFEOS, only: MLS_SWATH_IN_FILE
-  use MLSL2OPTIONS, only: WRITEFILEATTRIBUTES
-  use MLSSTRINGLISTS, only: SWITCHDETAIL
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use STRING_TABLE, only: GET_STRING
-  use TOGGLES, only: SWITCHES
-  use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, DUMP
+  use allocate_deallocate, only: allocate_test
+  use highoutput, only: beverbose, outputnamedvalue
+  use init_tables_module, only: l_pressure, l_zeta, &
+    & l_l2gp, l_l2aux, l_l2dgg, l_l2fwm
+  use MLScommon, only: defaultundefinedvalue, MLSfile_t
+  use MLSkinds, only: rv
+  use MLSmessagemodule, only: MLSmessage, MLSmsg_error, MLSmsg_warning
+  use MLSfiles, only: hdfversion_4, hdfversion_5, dump, MLS_exists, &
+    & MLS_closefile, MLS_openfile
+  use MLSfinds, only: findfirst
+  use MLShdfeos, only: MLS_swath_in_file
+  use MLSl2options, only: writefileattributes
+  use MLSstringlists, only: switchdetail
+  use output_m, only: blanks, output
+  use PCFHdr, only: GlobalAttributes
+  use string_table, only: get_string
+  use toggles, only: switches
+  use vectorsmodule, only: vector_t, vectorvalue_t, dump
 
   implicit none
   private
@@ -820,6 +821,8 @@ contains ! ======================= Public Procedures =========================
       call MakeHDF5Attribute(grp_id, &
         & 'Phase Names', showTimingNames('phases', .true.), &
         & skip_if_already_there=.false., dont_trim=.true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'MiscNotes', GlobalAttributes%MiscNotes, .true.)
       call h5gclose_f(grp_id, returnstatus)
     endif
 
@@ -1273,6 +1276,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.63  2014/10/02 17:22:23  pwagner
+! DirectWrite now responsible for writing MiscNotes for l2gp files
+!
 ! Revision 2.62  2014/09/05 00:40:24  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
