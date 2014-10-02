@@ -27,8 +27,8 @@ module ReadAPriori
     & phyq_dimensionless
   use l2gpdata, only: maxswathnamesbufsize
   use lexer_core, only: print_source
-  use MLScommon, only: filenamelen, MLSfile_t
-  use MLSfiles, only: filenotfound, &
+  use MLSCommon, only: filenamelen, MLSfile_t
+  use MLSFiles, only: filenotfound, &
     & hdfversion_4, hdfversion_5, wildcardhdfversion, &
     & addfiletodatabase, MLS_closefile, dump, getpcfromref, initializeMLSfile, &
     & MLS_hdf_version, MLS_inqswath, MLS_openfile, split_path_name
@@ -47,6 +47,7 @@ module ReadAPriori
   use MLSStrings, only: lowercase
   use moreTree, only: get_boolean
   use output_m, only: blanks, output, revertOutput, switchOutput
+  use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: pgs_s_success
   use string_table, only: get_string
   use toggles, only: gen, switches, toggle
@@ -121,7 +122,7 @@ contains ! =====     Public Procedures     =============================
   subroutine dumpAPrioriAttributes
     ! dump info about what apriori files were used
     ! Storing them as hdfeos5 attributes
-    use DUMP_0, only: DUMP
+    use dump_0, only: dump
     ! Executable
     call output( 'Actual apriori files and file types used', advance='yes' )
     if ( len_trim(APrioriFiles%l2gp) > 0 )&
@@ -142,18 +143,18 @@ contains ! =====     Public Procedures     =============================
 
   subroutine Read_apriori ( Root, L2GPDatabase, L2auxDatabase, GriddedDatabase, &
     & fileDataBase )
-    use DUMPCOMMAND_M, only: BOOLEANFROMFORMULA, MLSCASE, MLSENDSELECT, &
-      & MLSSELECT, MLSSELECTING, SKIP
-    use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP
-    use INIT_TABLES_MODULE, only: S_BOOLEAN, S_CASE, S_ENDSELECT, &
-      & S_SELECT, S_SKIP
-    use L2AUXDATA, only: L2AUXDATA_T, DUMP
-    use L2GPDATA, only: L2GPDATA_T, DUMP
-    use MLSL2TIMINGS, only: SECTION_TIMES
-    use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID
-    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE
+    use dumpcommand_m, only: booleanfromformula, MLScase, MLSendselect, &
+      & MLSselect, MLSselecting, skip
+    use griddeddata, only: griddeddata_t, dump
+    use init_tables_module, only: s_boolean, s_case, s_endselect, &
+      & s_select, s_skip
+    use l2auxdata, only: l2auxdata_t, dump
+    use l2gpdata, only: l2gpdata_t, dump
+    use MLSl2timings, only: section_times
+    use moretree, only: get_label_and_spec, get_spec_id
+    use next_tree_node_m, only: next_tree_node, next_tree_node_state
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decorate
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
     type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
@@ -268,20 +269,20 @@ contains ! =====     Public Procedures     =============================
     & LastHeightPCF  , &
     & LastNCEPPCF     &
       )
-    use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG
-    use DUMPCOMMAND_M, only: DUMPCOMMAND
-    use GRIDDEDDATA, only: RGR, GRIDDEDDATA_T, V_IS_ETA, V_IS_PRESSURE, &
-      & ADDGRIDDEDDATATODATABASE, COPYGRID, &
-      & DESTROYGRIDDEDDATA, DOWNSAMPLEGRIDDEDDATA, DUMP, &
-      & SETUPNEWGRIDDEDDATA
-    use L2AUXDATA, only: L2AUXDATA_T, ADDL2AUXTODATABASE, &
-      &                  READL2AUXDATA, DUMP
-    use L2GPDATA, only: L2GPDATA_T, &
-      & ADDL2GPTODATABASE, READL2GPDATA, DUMP
-    use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID
-    use NCEP_DAO, only: READ_CLIMATOLOGY, READGRIDDEDDATA, READGLORIAFILE
-    use SURFACEHEIGHT_M, only: OPEN_SURFACE_HEIGHT_FILE, &
-      & READ_SURFACE_HEIGHT_FILE, CLOSE_SURFACE_HEIGHT_FILE
+    use chunkdivide_m, only: chunkdivideconfig
+    use dumpcommand_m, only: dumpcommand
+    use griddeddata, only: rgr, griddeddata_t, v_is_eta, v_is_pressure, &
+      & addgriddeddatatodatabase, copygrid, &
+      & destroygriddeddata, downsamplegriddeddata, dump, &
+      & setupnewgriddeddata
+    use l2auxdata, only: l2auxdata_t, addl2auxtodatabase, &
+      &                  readl2auxdata, dump
+    use l2gpdata, only: l2gpdata_t, &
+      & addl2gptodatabase, readl2gpdata, dump
+    use moretree, only: get_label_and_spec, get_spec_id
+    use ncep_dao, only: read_climatology, readgriddeddata, readgloriafile
+    use surfaceheight_m, only: open_surface_height_file, &
+      & read_surface_height_file, close_surface_height_file
     use Toggles, only: Gen, Levels, Toggle
     use Trace_m, only: TRACE_BEGIN, TRACE_END
 
@@ -1006,9 +1007,9 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine Get_PCF_Id ( FileNameString, Path, SubString, L2Apriori_Version, &
       & FirstPCF, LastPCF, Description, GotFile, PCF_Id, ReturnStatus )
-      use MLSFILES, only: GETPCFROMREF, SPLIT_PATH_NAME
-      use MLSL2OPTIONS, only: TOOLKIT
-      use SDPTOOLKIT, only: PGS_PC_GETREFERENCE, PGS_S_SUCCESS
+      use mlsfiles, only: getpcfromref, split_path_name
+      use mlsl2options, only: toolkit
+      use sdptoolkit, only: pgs_pc_getreference, pgs_s_success
 
       ! Args
       character(len=*), intent(inout) :: FileNameString
@@ -1090,7 +1091,8 @@ contains ! =====     Public Procedures     =============================
   subroutine readAPrioriAttributes_ID ( fileID, hdfVersion )
     ! read info about what apriori files were used
     ! Storing them as hdfeos5 attributes
-    use MLSHDFEOS, only: HE5_EHRDGLATT, MLS_ISGLATT
+    use MLSHDFEOS, only: HE5_EHRDGlatt, MLS_IsGlatt
+    use PCFHdr, only: GlobalAttributes
     ! Args
     integer, intent(in) :: fileID
     integer, intent(in) :: hdfVersion  ! Must be 5 to work properly
@@ -1142,6 +1144,12 @@ contains ! =====     Public Procedures     =============================
       &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem reading APrioriFiles%geos5description' // &
       &  trim(APrioriFiles%geos5description) )
+    status = HE5_EHRDGLATT(fileID, &
+     &  'MiscNotes', GlobalAttributes%MiscNotes)
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      & 'Problem reading GlobalAttributes%MiscNotes' // &
+      &  trim(GlobalAttributes%MiscNotes) )
   end subroutine readAPrioriAttributes_ID
 
   ! ------------------------------------------  writeAPrioriAttributes_MF  -----
@@ -1168,8 +1176,8 @@ contains ! =====     Public Procedures     =============================
   subroutine writeAPrioriAttributes_ID ( fileID, hdfVersion , DontReplace )
     ! Write info about what apriori files were used
     ! Storing them as hdfeos5 attributes
-    use HDFEOS5, only: MLS_CHARTYPE
-    use MLSHDFEOS, only: MLS_EHWRGLATT, MLS_ISGLATT
+    use HDFEOS5, only: MLS_Chartype
+    use MLSHDFEOS, only: MLS_EHWRGlatt, MLS_ISGlatt
     ! Args
     integer, intent(in) :: fileID
     integer, intent(in) :: hdfVersion  ! Must be 5 to work properly
@@ -1232,6 +1240,13 @@ contains ! =====     Public Procedures     =============================
       &  call MLSMessage ( MLSMSG_Warning, whereami, &
       & 'Problem writing APrioriFiles%geos5description' // &
       & trim(APrioriFiles%geos5description) )
+    status = mls_EHwrglatt(fileID, &
+      & 'MiscNotes', MLS_CHARTYPE, 1, &
+      &  GlobalAttributes%MiscNotes)
+    if ( status /= 0 ) &
+      &  call MLSMessage ( MLSMSG_Warning, whereami, &
+      & 'Problem writing MiscNotes' // &
+      & trim(GlobalAttributes%MiscNotes) )
   end subroutine writeAPrioriAttributes_ID
 
 ! =====     Private Procedures     =====================================
@@ -1349,6 +1364,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.108  2014/10/02 17:24:00  pwagner
+! Added MiscNotes to file attributes we read and write
+!
 ! Revision 2.107  2014/09/05 01:27:33  vsnyder
 ! Add some tracing
 !
