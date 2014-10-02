@@ -273,14 +273,14 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   type :: VectorTemplate_T
      
     ! Administrative stuff
-    integer :: Name = 0        ! Sub-rosa index of name, if any, else zero
-    type(where_t) :: Where     ! Source_ref for creation if by L2CF
+    integer :: Name = 0           ! Sub-rosa index of name, if any, else zero
+    type(where_t) :: Where        ! Source_ref for creation if by L2CF
 
     ! General information about the vector
 
-    integer :: NoQuantities    ! Number of quantities in the vector
-    integer :: TotalInstances  ! Number of horizontal instances in the vector
-    integer :: TotalElements   ! Total of numbers of elements in the vector
+    integer :: NoQuantities = 0   ! Number of quantities in the vector
+    integer :: TotalInstances = 0 ! Number of horizontal instances in the vector
+    integer :: TotalElements = 0  ! Total of numbers of elements in the vector
     integer, dimension(:), pointer :: QUANTITIES => NULL() ! Indices of the
     !                            quantity templates in the quantities database
   end type VectorTemplate_T
@@ -292,7 +292,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   type VectorValue_T
     type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
-    integer :: index            ! Index of this quantity in the vector database
+    integer :: Index = 0          ! Index of this quantity in the vector database
     real(rv), dimension(:), pointer :: VALUE1 => NULL() ! The dimension of
     ! VALUE1 is Frequencies (or 1) * Vertical Coordinates or MIF (or 1) *
     ! Horizontal Instances (scan or profile or 1).  These are taken from 
@@ -324,10 +324,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     character, dimension(:,:,:), pointer :: MASK3 => NULL() ! This is used
     ! for masking VALUE3, and has the same dimensions.  This is a rank
     ! remapping of MASK1.
-    integer :: label = 0        ! An optional label for this to be used as for
+    integer :: Label = 0        ! An optional label for this to be used as for
     ! example a swath name.  Often used in conjunction with the 'batch'
     ! approach to direct writes.
-    character(len=40)                   :: AllocationName = 'None'
+    character(len=40) :: AllocationName = 'None'
   end type VectorValue_T
 
   ! Bit of MASK field of VectorValue_T
@@ -340,7 +340,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   integer, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 
   character(len=16), dimension(7), parameter :: maskBitNames = (/ &
-    & 'linear algebra  ', 'full derivatives', 'fill            ', &
+    & 'linear algebra  ', 'full derivatives', 'fill            ' , &
     & 'Tikhonov        ', 'cloud           ', 'ignore          ' , &
     & 'spare           ' /)
 
@@ -3319,6 +3319,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.193  2014/09/05 00:20:54  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Remove some
+! debugging cruft that shouldn't have been checked in.
+!
 ! Revision 2.192  2014/09/04 20:23:41  pwagner
 ! Turn off all those debugging print statements
 !
