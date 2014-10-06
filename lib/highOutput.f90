@@ -643,11 +643,12 @@ contains
   end subroutine DUMPTIMESTAMPOPTIONS
 
   ! ---------------------------------------------- DumpSize_double -----
-  subroutine DumpSize_double ( n, advance, units, Before, After )
+  subroutine DumpSize_double ( n, advance, units, Before, After, Signed )
     double precision, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
     real, intent(in), optional :: units
     character(len=*), intent(in), optional :: Before, After
+    logical, intent(in), optional :: Signed ! Force "+" if positive
     ! Local parameters
     real, parameter :: KB = 1024.0
     real, parameter :: MB = KB * 1024.0
@@ -655,14 +656,19 @@ contains
     real, parameter :: TB = GB * 1024.0
     double precision :: Amount ! N * MyUnits
     character(len=8) :: HowMuch
+    character        :: mySigned ! blank or "+"
     real             :: myUnits
     character(len=6) :: Suffix
     ! Make a 'nice' output
     if ( present(before) ) call output_ ( before )
+    mySigned = ''
+    if ( present(signed) ) then
+      if ( signed ) mySigned = merge('+', ' ', n >= 0)
+    end if
     myUnits = 1.0
     if ( present(units) ) myUnits = units
     if ( myUnits == 0.0 ) then
-      call output ( n, format='(e12.1)' )
+      call output ( n, format='(e12.1)', before=trim(mySigned) )
       call output_ ( ' (illegal units)', advance=advance )
       return
     end if
@@ -691,6 +697,7 @@ contains
     else
       write ( howMuch, '(f8.1)' ) amount
     end if
+    call output_ ( trim(mySigned) )
     call output_ ( trim(adjustl(howMuch)) )
     call output_ ( trim(suffix) )
     if ( present(after) ) call output_ ( after )
@@ -698,28 +705,31 @@ contains
   end subroutine DumpSize_double
 
   ! --------------------------------------------- DumpSize_integer -----
-  subroutine DumpSize_integer ( n, advance, units, Before, After )
+  subroutine DumpSize_integer ( n, advance, units, Before, After, Signed )
     integer, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
     integer, intent(in), optional :: units ! E.g., 1024 for kB
     character(len=*), intent(in), optional :: Before, After
+    logical, intent(in), optional :: Signed ! Force "+" if positive
     ! Executable
     if ( present(units) ) then
       call dumpSize ( dble(n), advance=advance, units=real(units), &
-        & before=before, after=after )
+        & before=before, after=after, signed=signed )
     else
-      call dumpSize ( dble(n), advance=advance, before=before, after=after )
+      call dumpSize ( dble(n), advance=advance, before=before, after=after, &
+        & signed=signed )
     end if
   end subroutine DumpSize_integer
 
   ! ------------------------------------------------ DumpSize_real -----
-  subroutine DumpSize_real ( n, advance, units, Before, After )
+  subroutine DumpSize_real ( n, advance, units, Before, After, Signed )
     real, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
     real, intent(in), optional :: units
     character(len=*), intent(in), optional :: Before, After
+    logical, intent(in), optional :: Signed ! Force "+" if positive
     ! Make a 'nice' output
-    call dumpsize ( dble(n), advance, units, before, after )
+    call dumpsize ( dble(n), advance, units, before, after, signed )
   end subroutine DumpSize_real
 
   ! ----------------------------------------------  dumpTabs  -----
@@ -1867,6 +1877,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.4  2014/10/06 23:06:26  vsnyder
+! Add Signed argument to Dump_Size
+!
 ! Revision 2.3  2014/09/05 00:23:57  vsnyder
 ! Better handling of literal output unit.  Convert a local pointer temp to
 ! allocatable.
