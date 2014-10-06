@@ -220,7 +220,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: S_WMOTROP            = s_vGrid + 1
   integer, parameter :: S_WMOTROPFROMGRIDS   = s_wmoTrop + 1
-  integer, parameter :: S_WRITEPFA           = S_wmoTropFromGrids + 1
+  integer, parameter :: S_WRITEFILEATTRIBUTE = S_wmoTropFromGrids + 1
+  integer, parameter :: S_WRITEPFA           = S_writeFileAttribute + 1
   integer, parameter :: SPEC_LAST = s_writePFA 
 
 ! Parameter names:
@@ -436,6 +437,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_vgrid) =                  add_ident ( 'vGrid' )
     spec_indices(s_wmoTrop) =                add_ident ( 'wmoTrop' )
     spec_indices(s_wmoTropfromGrids) =       add_ident ( 'wmoTropFromGrids' )
+    spec_indices(s_writeFileAttribute) =     add_ident ( 'writeFileAttribute' )
     spec_indices(s_writePFA) =               add_ident ( 'writePFA' )
 
   ! Now initialize the units tables.  Init_Units depends on the lit tables
@@ -1152,6 +1154,14 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def /) )
 
     call make_tree( (/ &
+      begin, s+s_writeFileAttribute, &
+             begin, f+f_attrName, string(req), &
+             begin, f+f_file, string(req), &
+             begin, f+f_attrValue, string(req), &
+             begin, f+f_type, field_type(t_outputType,req=req), &
+             ndp+n_spec_def /) )
+
+    call make_tree( (/ &
       begin, s+s_label, &
              begin, f+f_quantity, vectorQuantity(), &
              begin, f+f_vector, field_spec(s_vector), &
@@ -1792,7 +1802,8 @@ contains ! =====     Public procedures     =============================
       begin, z+z_output, s+s_Boolean, s+s_case, s+s_catenate, s+s_copy, &
              s+s_destroy, s+s_diff, s+s_dump, s+s_dumpblocks, s+s_endSelect, &
              s+s_hgrid, s+s_isSwathEmpty, s+s_output, s+s_Reevaluate, &
-             s+s_select, s+s_Skip, s+s_Sleep, s+s_time, n+n_section /) )
+             s+s_select, s+s_Skip, s+s_Sleep, s+s_time, s+s_writeFileAttribute, &
+             n+n_section /) )
 
   contains
 
@@ -1977,6 +1988,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.606  2014/10/06 23:50:02  pwagner
+! May now write added file attributes
+!
 ! Revision 2.605  2014/09/29 20:18:14  vsnyder
 ! Add NoMagneticField switch to ForwardModel
 !
