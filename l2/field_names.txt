@@ -60,6 +60,8 @@ asPercentage
 atmos
 atmos_der
 atmos_second_der
+attrname
+attrvalue
 AuraInstrument
 autofill
 average
@@ -525,6 +527,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.251  2014/10/06 23:49:29  pwagner
+# May now write added file attributes
+#
 # Revision 2.250  2014/09/29 20:18:14  vsnyder
 # Add NoMagneticField switch to ForwardModel
 #
