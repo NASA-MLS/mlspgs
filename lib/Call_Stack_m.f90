@@ -266,17 +266,18 @@ contains ! ====     Public Procedures     ==============================
           sys_memory_max = max( sys_memory_max, total_used*1.0 )
           iDelta = total_used - stack(stack_ptr)%sys_memory
           if ( iDelta /= 0 ) then
-            call output ( sys_memory_convert*iDelta, before=', System memory changed by ' )
-            call output ( sys_memory_convert*total_used, &
-              & before = ' ' // sys_memory_ch // ' to ' )
-            call output ( ' ' // sys_memory_ch )
+            call output ( sys_memory_convert*iDelta, &
+              & before=', Sys_Memory (' // sys_memory_ch // ') ' // &
+                & trim(merge('+', ' ', iDelta > 0 )) )
+            call output ( sys_memory_convert*total_used, before =' to ' )
           end if
         end if
         delta = noBytesAllocated - stack(stack_ptr)%memory
         idelta = noBytesAllocated - prevBytes
-        if ( abs(delta) + abs(idelta) > 0 ) call output ( ', Memory changed by ' )
+        if ( abs(delta) + abs(idelta) > 0 ) &
+          & call output ( ', Memory ' )
         if ( delta /= 0 ) then
-          call dumpSize ( delta )
+          call dumpSize ( abs(delta), signed=.true. )
           if ( abs(idelta) > abs(delta) ) call output ( ' (traced) ' )
         end if
         if ( abs(idelta) > abs(delta) ) &
@@ -466,6 +467,9 @@ contains ! ====     Public Procedures     ==============================
 end module Call_Stack_m
 
 ! $Log$
+! Revision 2.28  2014/10/06 23:06:49  vsnyder
+! Shorten memory change trace line
+!
 ! Revision 2.27  2014/09/29 20:48:57  pwagner
 ! sys_memory_max tracks max sys memory usage
 !
