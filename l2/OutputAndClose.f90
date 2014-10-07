@@ -9,19 +9,25 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-!=======================================================================================
+!==============================================================================
 
 module OutputAndClose ! outputs all data from the Join module to the
                       ! appropriate L2 Files
 
-!=======================================================================================
+!==============================================================================
 
-  use HDF, only: DFACC_RDONLY, DFACC_RDWR
-  use MLSL2OPTIONS, only: CHECKPATHS, &
-    & DEFAULT_HDFVERSION_WRITE, L2CFNODE, &
-    & SPECIALDUMPFILE, SKIPDIRECTWRITES, TOOLKIT, MLSMESSAGE, WRITEFILEATTRIBUTES
-  use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_INFO, MLSMSG_WARNING
-  use STRING_TABLE, only: DISPLAY_STRING, GET_STRING
+  use hdf, only: dfacc_rdonly, dfacc_rdwr
+  use MLSFiles, only: hdfversion_5, addinitializemlsfile, dump, &
+    & getmlsfilebyname, getmlsfilebytype, getpcfromref, &
+    & mls_closefile, mls_exists, mls_inqswath, mls_openfile, &
+    & mls_sfstart, mls_sfend, &
+    & split_path_name, unsplitname
+  use MLSHDF5, only: MakeHDF5Attribute
+  use MLSL2Options, only: checkpaths, &
+    & default_hdfversion_write, l2cfnode, &
+    & specialdumpfile, skipdirectwrites, toolkit, MLSMessage, writefileattributes
+  use MLSMessagemodule, only: MLSMsg_error, MLSMsg_info, MLSMsg_warning
+  use string_table, only: display_string, get_string
 
   implicit none
   private
@@ -63,53 +69,51 @@ contains ! =====     Public Procedures     =============================
     ! the value of        MCFFORL2GPOPTION
     ! (see write_metadata module for fuller explanation)
 
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, ALLOCATE_TEST
-    use CHUNKS_M, only: MLSCHUNK_T, DUMP
-    use CHUNKDIVIDE_M, only: CHUNKDIVIDECONFIG, OBSTRUCTIONS
-    use DESTROYCOMMAND_M, only: DESTROYCOMMAND
-    use DIRECTWRITE_M, only: DIRECTDATA_T, DUMP
-    use DUMPCOMMAND_M, only: BOOLEANFROMEMPTYSWATH, BOOLEANFROMFORMULA, &
-      & DUMPCOMMAND, MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
-    use EXPR_M, only: EXPR
-    use GRIDDEDDATA, only: GRIDDEDDATA_T
-    use HESSIANMODULE_1, only: HESSIAN_T
-    use HGRID, only: CREATEHGRIDFROMMLSCFINFO, DEALWITHOBSTRUCTIONS
-    use HGRIDSDATABASE, only: HGRID_T, &
-      & ADDHGRIDTODATABASE, DUMP
-    use INIT_TABLES_MODULE, only: F_DESTROY, F_DONTPACK, F_FILE, &
-      & F_HDFVERSION, F_METADATAONLY, F_METANAME, &
-      & F_MOLECULESECONDDERIVATIVES, F_OVERLAPS, F_PACKED, &
-      & F_QUANTITIES, F_Time, F_TYPE, F_WRITECOUNTERMAF, &
-      & FIELD_FIRST, FIELD_LAST, &
-      & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP, L_L2PC, &
-      & S_BOOLEAN, S_CASE, S_CATENATE, S_COPY, &
-      & S_DESTROY, S_DIFF, S_DUMP, S_DUMPBLOCKS, &
-      & S_ENDSELECT, S_HGRID, S_ISSWATHEMPTY, &
-      & S_OUTPUT, S_REEVALUATE, S_SELECT, S_SKIP, S_SLEEP, S_TIME
-    use INTRINSIC, only: LIT_INDICES
-    use L2AUXDATA, only: L2AUXDATA_T
-    use L2GPDATA, only: L2GPDATA_T, WRITEMASTERSFILEATTRIBUTES
-    use L2PC_M, only: OUTPUTHDF5L2PC
-    use L2PARINFO, only: PARALLEL
-    use MATRIXMODULE_1, only: MATRIX_DATABASE_T
-    use MATRIXTOOLS, only: DUMPBLOCKS
-    use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T, FILENAMELEN
-    use MLSFILES, only: &
-      & DUMP
-    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSPCF2, only: MLSPCF_L2GP_END, &
-      & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use MLSSTRINGS, only: TRIM_SAFE
-    use MORETREE, only: Get_Label_And_Spec, GET_SPEC_ID, GET_BOOLEAN
-    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use OUTPUT_M, only: BLANKS, OUTPUT, REVERTOUTPUT, SWITCHOUTPUT
-    use TIME_M, only: TIME_NOW
-    use TOGGLES, only: GEN, TOGGLE, SWITCHES
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, DECORATION, NSONS, SUBTREE, SUB_ROSA
-    use VECTORSMODULE, only: VECTOR_T
-    use WRITEMETADATA, only: L2PCF, WRITEMETALOG
+    use allocate_deallocate, only: deallocate_test, allocate_test
+    use chunks_m, only: MLSchunk_t, dump
+    use chunkdivide_m, only: chunkdivideconfig, obstructions
+    use destroycommand_m, only: destroycommand
+    use directwrite_m, only: directdata_t, dump
+    use dumpcommand_m, only: booleanfromemptyswath, booleanfromformula, &
+      & dumpcommand, MLScase, MLSendselect, MLSselect, MLSselecting, skip
+    use expr_m, only: expr
+    use griddeddata, only: griddeddata_t
+    use hessianmodule_1, only: hessian_t
+    use hgrid, only: createhgridfromMLScfinfo, dealwithobstructions
+    use hgridsdatabase, only: hgrid_t, &
+      & addhgridtodatabase, dump
+    use init_tables_module, only: f_attrName, f_attrValue, &
+      & f_destroy, f_dontpack, f_file, f_hdfversion, &
+      & f_metadataonly, f_metaname, f_moleculesecondderivatives, f_overlaps, &
+      & f_packed, f_quantities, f_time, f_type, f_writecountermaf, &
+      & field_first, field_last, &
+      & l_l2aux, l_l2cf, l_l2dgg, l_l2gp, l_l2pc, &
+      & s_boolean, s_case, s_catenate, s_copy, &
+      & s_destroy, s_diff, s_dump, s_dumpblocks, &
+      & s_endselect, s_hgrid, s_isswathempty, s_output, &
+      & s_reevaluate, s_select, s_skip, s_sleep, s_time, s_writeFileAttribute
+    use intrinsic, only: lit_indices
+    use L2AuxData, only: l2auxdata_t
+    use L2GPData, only: l2gpdata_t, writemastersfileattributes
+    use L2PC_m, only: outputhdf5l2pc
+    use L2ParInfo, only: parallel
+    use matrixModule_1, only: matrix_database_t
+    use matrixTools, only: dumpblocks
+    use MLSCommon, only: MLSfile_t, tai93_range_t, filenamelen
+    use MLSL2timings, only: section_times, total_times
+    use MLSPcf2, only: MLSpcf_l2gp_end, &
+      & MLSPcf_l2gp_start, MLSpcf_l2dgg_start, MLSpcf_l2dgg_end
+    use MLSStringlists, only: switchdetail
+    use MLSStrings, only: trim_safe
+    use moretree, only: get_label_and_spec, get_spec_id, get_boolean
+    use next_tree_node_m, only: next_tree_node, next_tree_node_state
+    use output_m, only: blanks, output, revertoutput, switchoutput
+    use time_m, only: time_now
+    use toggles, only: gen, toggle, switches
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decorate, decoration, nsons, subtree, sub_rosa
+    use vectorsmodule, only: vector_t
+    use writemetadata, only: l2pcf, writemetalog
 
     ! Arguments
     integer, intent(in) :: ROOT   ! Of the output section's AST
@@ -157,6 +161,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SECONDDERIVNODE
     integer :: SON                      ! Of Root -- spec_args or named node
     type(next_tree_node_state) :: State ! of tree traverser
+    character (len=80) :: strValue
     real :: T1, T2     ! for timing
     integer :: Units(2)                 ! Units of value returned by EXPR
     logical :: USINGL2Q                 ! Set if using the l2q queue manager
@@ -419,6 +424,47 @@ contains ! =====     Public Procedures     =============================
           timing = .true.
         end if
 
+      case ( s_writeFileAttribute )
+        do field_no = 2, nsons(key)       ! Skip the command name
+          gson = subtree(field_no, key)   ! An assign node
+          if ( nsons(gson) > 1 ) then
+            fieldValue = decoration(subtree(2,gson)) ! The field's value
+          else
+            fieldValue = gson
+          end if
+          field_index = decoration(subtree(1,gson))
+          got(field_index) = .true.
+          select case ( field_index )   ! Field name
+          case ( f_file )
+            call get_string ( sub_rosa(subtree(2,gson)), file_base, strip=.true. )
+          case ( f_attrName )
+            call get_string ( sub_rosa(subtree(2,gson)), meta_name, strip=.true. )
+          case ( f_attrValue )
+            call get_string ( sub_rosa(subtree(2,gson)), strValue, strip=.true. )
+          case ( f_type )
+            output_type = decoration(subtree(2,gson))
+            call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
+          case default                  ! Everything else processed later
+          end select
+        end do
+        if ( checkPaths ) cycle
+        select case ( output_type )
+        case ( l_l2aux ) ! --------------------- Writing it to l2aux files -----
+          call writeAttributeToL2AUX ( file_base, meta_name, strValue, &
+            & filedatabase )       
+        case ( l_l2gp ) ! --------------------- Writing it to l2gp files -----
+          call writeAttributeToL2GP ( file_base, meta_name, strValue, &
+            & output_type, mlspcf_l2gp_start, mlspcf_l2gp_end, &
+            & filedatabase )       
+        case ( l_l2dgg ) ! --------------------- Writing it to l2dgg files -----
+          call writeAttributeToL2GP ( file_base, meta_name, strValue, &
+            & output_type, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
+            & filedatabase )       
+        case default
+          call MLSMessage( MLSMSG_Warning, ModuleName, &
+          & 'Not yet able to write file attributes to this file type' )
+        end select
+
       case default
         call announce_error ( son, &
           &  "Error--unknown son: parser should have caught this")
@@ -481,22 +527,21 @@ contains ! =====     Public Procedures     =============================
     & hdfVersion, filetype, metadata_error, &
     & numquantitiesperfileinput, quantityNamesInput )
     
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, ALLOCATE_TEST
-    use INIT_TABLES_MODULE, only: L_L2DGG
-    use INTRINSIC, only: L_SWATH, L_HDF
-    use MLSCOMMON, only: L2METADATA_T
-    use L2GPDATA, only: L2GPNAMELEN, MAXSWATHNAMESBUFSIZE
-    use MLSFILES, only: GETPCFROMREF, MLS_INQSWATH, SPLIT_PATH_NAME
-    use MLSHDF5, only: GETALLHDF5DSNAMES
-    use MLSHDFEOS, only: 
-    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
-      & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END, &
-      & MLSPCF_MCF_L2DGM_START, MLSPCF_MCF_L2DGG_START, &
-      & MLSPCF_MCF_L2GP_START
-    use MLSSTRINGLISTS, only: LIST2ARRAY, NUMSTRINGELEMENTS
-    use OUTPUT_M, only: OUTPUT
-    use WRITEMETADATA, only: POPULATE_METADATA_STD, &
-      & POPULATE_METADATA_OTH, GET_L2GP_MCF
+    use allocate_deallocate, only: deallocate_test, allocate_test
+    use init_tables_module, only: l_l2dgg
+    use intrinsic, only: l_swath, l_hdf
+    use mlscommon, only: l2metadata_t
+    use l2gpdata, only: l2gpnamelen, maxswathnamesbufsize
+    use MLSHDF5, only: getallhdf5dsnames
+    use MLSHDFeos, only: 
+    use MLSPCF2, only: MLSPCF_l2dgm_end, MLSPCF_l2dgm_start, MLSPCF_l2gp_end, &
+      & MLSPCF_l2gp_start, MLSPCF_l2dgg_start, MLSPCF_l2dgg_end, &
+      & MLSPCF_mcf_l2dgm_start, MLSPCF_mcf_l2dgg_start, &
+      & MLSPCF_mcf_l2gp_start
+    use MLSStringLists, only: list2array, numstringelements
+    use output_m, only: output
+    use writemetadata, only: populate_metadata_std, &
+      & populate_metadata_oth, get_l2gp_mcf
   ! Deal with metadata--1st for direct write, but later for all cases
   integer, intent(in) :: node
   character(len=*), intent(in) :: fileName
@@ -675,7 +720,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  announce_success  -----
   subroutine announce_success ( Name, l2_type, num_quants, quantities, hdfVersion )
-    use OUTPUT_M, only: BLANKS, OUTPUT
+    use output_m, only: blanks, output
     integer, intent(in) :: num_quants 
     character(LEN=*), intent(in)   :: Name
     character(LEN=*), intent(in)   :: l2_type
@@ -712,8 +757,8 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( Where, Full_message, Code, Penalty )
 
-    use LEXER_CORE, only: PRINT_SOURCE
-    use OUTPUT_M, only: OUTPUT
+    use lexer_core, only: print_source
+    use output_m, only: output
     use TREE, only: Where_At => Where
 
     integer, intent(in) :: Where   ! Tree node where error was noticed
@@ -747,36 +792,34 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  CopyQuantity  -----
   subroutine CopyQuantity ( key, fileDatabase )
     ! Do the work of copying named quantity data to a named file
-    use EXPR_M, only: EXPR
-    use HGRIDSDATABASE, only: HGRID_T, DUMP
-    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-    use INIT_TABLES_MODULE, only: F_CREATE, &
-      & F_EXCLUDE, F_FILE, F_HDFVERSION, F_HGRID, &
-      & F_IFANYCRASHEDCHUNKS, F_INPUTFILE, F_INPUTTYPE, &
-      & F_OPTIONS, &
-      & F_RENAME, F_REPAIRGEOLOCATIONS, &
-      & F_SWATH, F_TOATTRIBUTE, F_TYPE, &
-      & FIELD_FIRST, FIELD_LAST, &
-      & L_L2AUX, L_L2CF, L_L2DGG, L_L2GP
-    use INTRINSIC, only: L_ASCII, L_SWATH, L_HDF, LIT_INDICES
-    use L2AUXDATA, only: CPL2AUXDATA
-    use L2GPDATA, only: AVOIDUNLIMITEDDIMS, &
-      & MAXSWATHNAMESBUFSIZE, CPL2GPDATA, CPL2GPDATATOATTRIBUTE
-    use L2PARINFO, only: PARALLEL
-    use MLSCOMMON, only: MLSFILE_T, FILENAMELEN, L2METADATA_T
-    use MLSFILES, only: ADDINITIALIZEMLSFILE, DUMP, GETMLSFILEBYNAME, &
-      & MLS_INQSWATH
-    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
-      & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END, &
-      & MLSPCF_L2CLIM_START, MLSPCF_L2CLIM_END
-    use MLSSTRINGLISTS, only: INTERSECTION, SWITCHDETAIL
-    use MLSSTRINGS, only: LOWERCASE
-    use MORETREE, only: GET_BOOLEAN
-    use OUTPUT_M, only: OUTPUT
-    use PCFHDR, only: GLOBALATTRIBUTES, &
-      & H5_WRITEGLOBALATTR, HE5_WRITEMLSFILEATTR, HE5_WRITEGLOBALATTR
-    use TOGGLES, only: SWITCHES
-    use TREE, only: DECORATION, NSONS, SUBTREE, SUB_ROSA
+    use expr_m, only: expr
+    use HGridsdatabase, only: HGrid_t, dump
+    use highoutput, only: outputnamedvalue
+    use init_tables_module, only: f_create, &
+      & f_exclude, f_file, f_hdfversion, f_hgrid, &
+      & f_ifanycrashedchunks, f_inputfile, f_inputtype, &
+      & f_options, &
+      & f_rename, f_repairgeolocations, &
+      & f_swath, f_toattribute, f_type, &
+      & field_first, field_last, &
+      & l_l2aux, l_l2cf, l_l2dgg, l_l2gp
+    use intrinsic, only: l_ascii, l_swath, l_hdf, lit_indices
+    use l2auxdata, only: cpl2auxdata
+    use l2gpdata, only: avoidunlimiteddims, &
+      & maxswathnamesbufsize, cpl2gpdata, cpl2gpdatatoattribute
+    use l2parinfo, only: parallel
+    use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
+    use MLSPCF2, only: MLSPCF_l2dgm_end, MLSPCF_l2dgm_start, MLSPCF_l2gp_end, &
+      & MLSPCF_l2gp_start, MLSPCF_l2dgg_start, MLSPCF_l2dgg_end, &
+      & MLSPCF_l2clim_start, MLSPCF_l2clim_end
+    use MLSStringlists, only: intersection, switchdetail
+    use MLSStrings, only: lowercase
+    use moretree, only: get_boolean
+    use output_m, only: output
+    use PCFHdr, only: globalattributes, &
+      & h5_writeglobalattr, he5_writemlsfileattr, he5_writeglobalattr
+    use toggles, only: switches
+    use tree, only: decoration, nsons, subtree, sub_rosa
     ! Args
     integer, intent(in)                       :: KEY
     type (MLSFile_T), dimension(:), pointer   :: FILEDATABASE
@@ -1109,6 +1152,168 @@ contains ! =====     Public Procedures     =============================
     endif
   end subroutine CopyQuantity
 
+  ! ---------------------------------------------  writeAttributeToL2AUX  -----
+  subroutine writeAttributeToL2AUX ( fileName, attrName, attrValue, &
+    & filedatabase )
+    ! Do the work of outputting specified attribute to a named l2aux file
+    use HDF5, only: H5GClose_f, H5GOpen_f
+    use init_tables_module, only: f_overlaps, f_quantities
+    use intrinsic, only: l_hdf
+    use l2auxdata, only: l2auxdata_t, writel2auxdata
+    use l2gpdata, only: l2gpnamelen
+    use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
+    use MLSPcf2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    use MLSStringlists, only: switchdetail
+    use SDPToolkit, only: pgs_s_success
+    use toggles, only: switches
+    use tree, only: decoration, nsons, subtree
+    ! Args
+    character(len=*), intent(inout)         :: fileName ! according to l2cf
+    character(len=*), intent(in)            :: attrName ! according to l2cf
+    character(len=*), intent(in)            :: attrValue ! according to l2cf
+    type(MLSFile_T), dimension(:), pointer  :: filedatabase
+    ! Local variables
+    integer :: DB_index
+    logical, parameter :: DEBUG = .false.
+    integer :: FIELD_NO                 ! Index of assign vertex sons of Key
+    character (len=FileNameLen) :: FullFilename
+    integer :: FileHandle
+    integer :: GSON                     ! Son of Son -- an assign node
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: IN_FIELD_NO              ! Index of sons of assign vertex
+    integer :: Metadata_error
+    integer :: Numquantitiesperfile     ! < MAXQUANTITIESPERFILE
+    type(MLSFile_T), pointer :: outputFile
+    character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
+    character (len=132) :: path
+    character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: &
+      &                           QuantityNames  ! From "quantities" field
+    integer :: ReturnStatus
+    integer :: SON                      ! Of Root -- spec_args or named node
+    integer :: Version
+    type(L2Metadata_T) :: l2metaData
+
+    ! Executable
+    Version = 1
+    OUTPUTTYPESTR = 'l2aux'
+    ! Get the l2aux file name from the PCF
+
+    if ( TOOLKIT ) then
+      call split_path_name(fileName, path, fileName)
+
+      FileHandle = GetPCFromRef(fileName, mlspcf_l2dgm_start, &
+        & mlspcf_l2dgm_end, &
+        & TOOLKIT, returnStatus, Version, DEBUG, &
+        & exactName=FullFilename)
+    else
+      FullFilename = fileName
+      returnStatus = 0
+    end if
+
+    if ( returnStatus == 0 .and. .not. checkPaths ) then
+      ! Open the HDF file and write l2aux data
+      outputFile => GetMLSFileByName(filedatabase, FullFilename)
+      if ( .not. associated(outputFile) ) then
+        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(FullFilename) )
+        outputFile => AddInitializeMLSFile( filedatabase, &
+          & content=outputTypeStr, &
+          & name=FullFilename, shortName=fileName, &
+          & type=l_hdf, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+          & PCBottom=mlspcf_l2dgm_start, PCTop=mlspcf_l2dgm_end )
+      endif
+    endif
+    if ( .not. outputFile%stillOpen ) &
+      & call mls_openFile( outputFile, returnStatus )
+    call h5gopen_f( outputFile%FileID%f_id, '/', outputFile%FileID%grp_id, returnStatus )
+    call MakeHDF5Attribute( outputFile%FileID%grp_id, &
+      & attrName, attrValue, .true. )
+    call h5gclose_f( outputFile%FileID%grp_id, returnStatus )
+  end subroutine writeAttributeToL2AUX
+
+  ! ---------------------------------------------  writeAttributeToL2GP  -----
+  subroutine writeAttributeToL2GP ( fileName, attrName, attrValue, &
+    & output_type, pcf_start, pcf_end, &
+    & filedatabase )
+    ! Do the work of outputting specified attribute to a named l2gp file
+    use HDFEOS5, only: MLS_Chartype
+    use hgridsdatabase, only: hgrid_t
+    use init_tables_module, only: f_overlaps, f_quantities
+    use intrinsic, only: l_swath, lit_indices
+    use l2gpdata, only: l2gpdata_t, l2gpnamelen, writel2gpdata
+    use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
+    use MLSHDFEOS, only: MLS_EHWRGlatt
+    use MLSStringlists, only: switchdetail
+    use SDPToolkit, only: pgs_s_success
+    use toggles, only: switches
+    use tree, only: decoration, nsons, subtree
+    ! Args
+    character(len=*), intent(inout)         :: fileName ! according to l2cf
+    character(len=*), intent(in)            :: attrName ! according to l2cf
+    character(len=*), intent(in)            :: attrValue ! according to l2cf
+    integer, intent(in)                     :: output_type
+    integer, intent(in)                     :: pcf_start
+    integer, intent(in)                     :: pcf_end
+    type(MLSFile_T), dimension(:), pointer  :: filedatabase
+
+    ! Local variables
+    integer :: DB_index
+    logical, parameter :: DEBUG = .false.
+    integer :: FIELD_NO                 ! Index of assign vertex sons of Key
+    character (len=FileNameLen) :: FullFilename
+    integer :: FileHandle
+    integer :: GSON                     ! Son of Son -- an assign node
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: IN_FIELD_NO              ! Index of sons of assign vertex
+    integer :: Metadata_error
+    integer :: Numquantitiesperfile     ! < MAXQUANTITIESPERFILE
+    type(MLSFile_T), pointer :: outputFile
+    character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
+    character (len=132) :: path
+    character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: &
+      &                           QuantityNames  ! From "quantities" field
+    integer :: ReturnStatus
+    integer :: SON                      ! Of Root -- spec_args or named node
+    integer :: Version
+    type(L2Metadata_T) :: l2metaData
+
+    ! Executable
+    Version = 1
+    call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
+    ! Get the l2gp file name from the PCF
+
+    if ( TOOLKIT ) then
+      call split_path_name(fileName, path, fileName)
+
+      FileHandle = GetPCFromRef(fileName, pcf_start, &
+        & pcf_end, &
+        & TOOLKIT, returnStatus, Version, DEBUG, &
+        & exactName=FullFilename)
+    else
+      FullFilename = fileName
+      returnStatus = 0
+    end if
+
+    if ( returnStatus == 0 .and. .not. checkPaths ) then
+      ! Open the HDF-EOS file and write swath data
+      outputFile => GetMLSFileByName(filedatabase, FullFilename)
+      if ( .not. associated(outputFile) ) then
+        if(DEBUG) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'No entry in filedatabase for ' // trim(FullFilename) )
+        outputFile => AddInitializeMLSFile(filedatabase, &
+          & content=outputTypeStr, &
+          & name=FullFilename, shortName=fileName, &
+          & type=l_swath, access=DFACC_RDWR, HDFVersion=hdfVersion, &
+          & PCBottom=pcf_start, PCTop=pcf_end)
+      endif
+    endif
+    if ( .not. outputFile%stillOpen ) &
+      & call mls_openFile( outputFile, returnStatus )
+    returnStatus = mls_EHwrglatt( outputFile%FileID%f_id, &
+     & attrName, MLS_CHARTYPE, 1, &
+     &  attrValue )
+  end subroutine writeAttributeToL2GP
+
   ! ---------------------------------------------  OutputL2AUX  -----
   subroutine OutputL2AUX ( key, fileName, DEBUG, writeCounterMAF, &
     & filedatabase, l2auxDatabase )
@@ -1118,8 +1323,6 @@ contains ! =====     Public Procedures     =============================
     use L2AUXDATA, only: L2AUXDATA_T, WRITEL2AUXDATA
     use L2GPDATA, only: L2GPNAMELEN
     use MLSCOMMON, only: MLSFILE_T, FILENAMELEN, L2METADATA_T
-    use MLSFILES, only: ADDINITIALIZEMLSFILE, GETMLSFILEBYNAME, &
-      & GETPCFROMREF, SPLIT_PATH_NAME
     use MLSPCF2, only: MLSPCF_L2DGM_START, MLSPCF_L2DGM_END
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use SDPTOOLKIT, only: PGS_S_SUCCESS
@@ -1240,10 +1443,6 @@ contains ! =====     Public Procedures     =============================
     ! If inputFile omitted, copy the l2cf
     use INTRINSIC, only: L_HDF
     use MLSCOMMON, only: MLSFILE_T, FILENAMELEN
-    use MLSFILES, only: ADDINITIALIZEMLSFILE, DUMP, &
-      & GETMLSFILEBYNAME, GETMLSFILEBYTYPE, GETPCFROMREF, &
-      & MLS_CLOSEFILE, MLS_OPENFILE, &
-      & SPLIT_PATH_NAME
     use MLSHDF5, only: SAVEASHDF5DS
     use MLSPCF2, only: MLSPCF_L2DGM_START, MLSPCF_L2DGM_END
     use OUTPUT_M, only: OUTPUT
@@ -1328,17 +1527,15 @@ contains ! =====     Public Procedures     =============================
     & output_type, pcf_start, pcf_end, &
     & filedatabase, l2gpDatabase, HGrid )
     ! Do the work of outputting specified l2gp data to a named file
-    use HGRIDSDATABASE, only: HGRID_T
-    use INIT_TABLES_MODULE, only: F_OVERLAPS, F_QUANTITIES
-    use INTRINSIC, only: L_SWATH, LIT_INDICES
-    use L2GPDATA, only: L2GPDATA_T, L2GPNAMELEN, WRITEL2GPDATA
-    use MLSCOMMON, only: MLSFILE_T, FILENAMELEN, L2METADATA_T
-    use MLSFILES, only: ADDINITIALIZEMLSFILE, GETMLSFILEBYNAME, &
-      & GETPCFROMREF, SPLIT_PATH_NAME
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use SDPTOOLKIT, only: PGS_S_SUCCESS
-    use TOGGLES, only: SWITCHES
-    use TREE, only: DECORATION, NSONS, SUBTREE
+    use hgridsdatabase, only: hgrid_t
+    use init_tables_module, only: f_overlaps, f_quantities
+    use intrinsic, only: l_swath, lit_indices
+    use l2gpdata, only: l2gpdata_t, l2gpnamelen, writel2gpdata
+    use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
+    use MLSStringlists, only: switchdetail
+    use SDPToolkit, only: pgs_s_success
+    use toggles, only: switches
+    use tree, only: decoration, nsons, subtree
     ! Args
     integer, intent(in)                     :: key ! tree node
     character(len=*), intent(inout)         :: fileName ! according to l2cf
@@ -1490,7 +1687,6 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  returnFullFileName  -----
   subroutine returnFullFileName ( shortName, FullName, &
     & pcf_start, pcf_end )
-    use MLSFILES, only: GETPCFROMREF
     ! Given a possibly-abbreviated shortName, return the full name
     ! as found in the PCF
     ! (w/o toolkit panoply, simply return shortName)
@@ -1522,37 +1718,32 @@ contains ! =====     Public Procedures     =============================
     ! Catenate any split Direct Writes of dgg/dgm files
     ! Also write various types of metadata
     ! We assume hdfVersion is 5
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, ALLOCATE_TEST
-    use CHUNKDIVIDE_M, only: OBSTRUCTIONS
-    use DIRECTWRITE_M, only: DIRECTDATA_T, DUMP
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
-    use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-    use INIT_TABLES_MODULE, only: L_L2AUX, L_L2DGG
-    use INTRINSIC, only: L_SWATH, L_HDF
-    use L2AUXDATA, only: CPL2AUXDATA, PHASENAMEATTRIBUTES
-    use L2GPDATA, only: AVOIDUNLIMITEDDIMS, &
-      & MAXSWATHNAMESBUFSIZE, CPL2GPDATA
-    use L2PARINFO, only: PARALLEL
-    use MLSCOMMON, only: MLSFILE_T, FILENAMELEN, L2METADATA_T
-    use MLSFILES, only: HDFVERSION_5, &
-      & ADDINITIALIZEMLSFILE, MLS_CloseFile, DUMP, &
-      & GETMLSFILEBYNAME, GETPCFROMREF, &
-      & MLS_EXISTS, MLS_INQSWATH, MLS_SFSTART, MLS_SFEND, &
-      & MLS_OpenFile, UNSPLITNAME
-    use MLSHDF5, only: CPHDF5GLATTRIBUTE, MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
-    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, &
-      & MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
-    use MLSFINDS, only: FINDFIRST, FINDNEXT
-    use MLSSTRINGLISTS, only: ARRAY2LIST, SWITCHDETAIL
-    use MLSSTRINGS, only: TRIM_SAFE
-    use OUTPUT_M, only: BLANKS, OUTPUT
-    use PCFHDR, only: GLOBALATTRIBUTES, &
-      & H5_WRITEMLSFILEATTR, H5_WRITEGLOBALATTR, &
-      & HE5_WRITEGLOBALATTR, HE5_WRITEMLSFILEATTR, &
-      & WRITELEAPSECHDFEOSATTR, WRITELEAPSECHDF5DS, &
-      & WRITEUTCPOLEHDFEOSATTR, WRITEUTCPOLEHDF5DS
-    use READAPRIORI, only: READAPRIORIATTRIBUTES, WRITEAPRIORIATTRIBUTES
-    use TOGGLES, only: SWITCHES
+    use allocate_deallocate, only: deallocate_test, allocate_test
+    use chunkdivide_m, only: obstructions
+    use directwrite_m, only: directdata_t, dump
+    use hdf5, only: h5gclose_f, h5gopen_f
+    use highoutput, only: outputnamedvalue
+    use init_tables_module, only: l_l2aux, l_l2dgg
+    use intrinsic, only: l_swath, l_hdf
+    use l2auxdata, only: cpl2auxdata, phasenameattributes
+    use l2gpdata, only: avoidunlimiteddims, &
+      & maxswathnamesbufsize, cpl2gpdata
+    use l2parinfo, only: parallel
+    use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
+    use MLSHdf5, only: cphdf5glattribute, makehdf5attribute, saveashdf5ds
+    use MLSPcf2, only: mlspcf_l2dgm_end, mlspcf_l2dgm_start, &
+      & MLSPcf_l2dgg_start, mlspcf_l2dgg_end
+    use MLSFinds, only: findfirst, findnext
+    use MLSStringlists, only: array2list, switchdetail
+    use MLSStrings, only: trim_safe
+    use output_m, only: blanks, output
+    use pcfhdr, only: globalattributes, &
+      & h5_writemlsfileattr, h5_writeglobalattr, &
+      & he5_writeglobalattr, he5_writemlsfileattr, &
+      & writeleapsechdfeosattr, writeleapsechdf5ds, &
+      & writeutcpolehdfeosattr, writeutcpolehdf5ds
+    use readapriori, only: readaprioriattributes, writeaprioriattributes
+    use toggles, only: switches
     ! Arguments
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -1881,6 +2072,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.187  2014/10/07 00:06:47  pwagner
+! May now write added file attributes
+!
 ! Revision 2.186  2014/09/05 01:16:18  vsnyder
 ! Remove declarations of unused variables
 !
