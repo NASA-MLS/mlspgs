@@ -309,7 +309,6 @@ contains ! ====     Public Procedures     ==============================
             return
           end if
         end if
-        if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
         call add_to_section_timing ( 'chunk_divide', t1, now_stop )
         if ( now_stop ) then
           call finishUp(.true.)
@@ -695,6 +694,9 @@ subtrees:   do
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.195  2014/09/05 01:28:14  vsnyder
+! Add some tracing, remove unreferenced USSE name
+!
 ! Revision 2.194  2014/06/30 23:30:45  pwagner
 ! Renamed global setting to slavesCleanUpSelves
 !
