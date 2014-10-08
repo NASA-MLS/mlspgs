@@ -18,15 +18,15 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 ! This module provides the elementary matrix type.  Blocks of this
 ! type are used to compose block matrices.
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use DOT_M, only: DOT
-  use DUMP_0, only: DIFF, DUMP
-  use GEMM_M, only: GEMM
-  use GEMV_M, only: GEMV
-  use MLSKINDS, only: RM, R4, R8
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-  use OUTPUT_M, only: OUTPUT
-  use VECTORSMODULE, only: M_LINALG
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Dot_m, only: Dot
+  use Dump_0, only: Diff, Dump
+  use GEMM_m, only: GEMM
+  use GEMV_m, only: GEMV
+  use MLSKinds, only: RM, R4, R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use Output_m, only: Output
+  use VectorsModule, only: M_Linalg
 
   implicit NONE
   private
@@ -256,6 +256,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
       ! the first dimension is indexed by channel, the second by MIF, and
       ! the third by state vector element.  This is a rank remapping of VALUE1.
     character(len=40)                   :: AllocationName = 'None'
+  contains
+!     We don't want a final routine for MatrixElement_T because there are
+!     shallow copies associated with local matrices, which would get destroyed.
+!     final :: DestroyBlock_0
   end type MatrixElement_T
 
   ! - - -  Private data     - - - - - - - - - - - - - - - - - - - - - -
@@ -3716,6 +3720,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.20  2014/10/08 19:19:39  vsnyder
+! Add comments about not wanting a final subroutine for Matrix_T.  Also
+! some cannonball polishing.
+!
 ! Revision 2.19  2014/07/18 23:13:44  pwagner
 ! Aimed for consistency in names passed to allocate_test; added allocationName field to datatype
 !
