@@ -16,28 +16,28 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 ! This module provides a block matrix type including operations for matrix
 ! quantities in MLS Level 2 software, and related programs.
 
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use dump_0, only: dump
-  use highoutput, only: blankstocolumn, dumpsize, outputnamedvalue
-  use lexer_core, only: where_t
-  use matrixmodule_0, only: add_matrix_blocks, assignment(=), checkintegrity, &
-    & choleskyfactor, clearlower, clearrows, columnscale, col_l1, copyblock, &
-    & createblock, cyclicjacobi, densecyclicjacobi, densify, &
-    & destroyblock, diff, dump, frobeniusnorm, &
-    & getdiagonal, getmatrixelement, getmatrixkindstring, getvectorfromcolumn, &
-    & invertcholesky, m_absent, m_column_sparse, m_banded, m_full, m_unknown, &
-    & matrixelement_t, maxabsval, mindiag, multiply, multiplymatrix_xty, multiplymatrix_xy, &
-    & multiplymatrix_xy_t, multiplymatrixvectornot, nullifymatrix, operator(+), &
-    & reflectmatrix, rowscale, scaleblock, solvecholesky, &
-    & sparsify, spill, transposematrix, updatediagonal
-  use MLSkinds, only: rm, rv, r8, r4
-  use MLSmessagemodule, only: MLSmessage, MLSmsg_error, MLSmsg_warning
-  use output_m, only: blanks, newline, output
-  use string_table, only: display_string, get_string
-  use symbol_table, only: enter_terminal
-  use symbol_types, only: t_identifier
-  use vectorsmodule, only: clearundermask, clonevector, copyvector, vector_t, &
-    & checkintegrity, nullifyvector
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Dump_0, only: Dump
+  use HighOutput, only: BlanksToColumn, DumpSize, OutputNamedValue
+  use Lexer_Core, only: Where_t
+  use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, &
+    & CholeskyFactor, ClearLower, ClearRows, ColumnScale, Col_L1, CopyBlock, &
+    & CreateBlock, CyclicJacobi, DenseCyclicJacobi, Densify, &
+    & DestroyBlock, Diff, Dump, FrobeniusNorm, &
+    & GetDiagonal, GetMatrixElement, GetMatrixKindString, GetVectorFromColumn, &
+    & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, M_Unknown, &
+    & MatrixElement_t, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XTY, &
+    & MultiplyMatrix_XY, MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, &
+    & NullifyMatrix, Operator(+), ReflectMatrix, RowScale, ScaleBlock, &
+    & SolveCholesky, Sparsify, Spill, TransposeMatrix, UpdateDiagonal
+  use MLSKinds, only: RM, RV, R8, R4
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use Output_m, only: Blanks, Newline, Output
+  use String_Table, only: Display_String, Get_String
+  use Symbol_Table, only: Enter_Terminal
+  use Symbol_Types, only: T_Identifier
+  use VectorsModule, only: ClearUnderMask, CloneVector, CopyVector, Vector_t, &
+    & CheckIntegrity, NullifyVector
 
   implicit none
   private
@@ -69,7 +69,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: MultiplyMatrixVectorSPD_1
   public :: Negate, Negate_1
   public :: NewMultiplyMatrixVector, NormalEquations, NullifyRCInfo, NullifyMatrix, NullifyMatrix_1
-  public :: operator(+), ReflectMatrix, RC_Info, RowScale, RowScale_1, ScaleMatrix
+  public :: Operator(+), ReflectMatrix, RC_Info, RowScale, RowScale_1, ScaleMatrix
   public :: SolveCholesky, SolveCholesky_1, Spill, Spill_1
   public :: Sparsify_1, Sparsify, TransposeMatrix
   public :: UpdateDiagonal, UpdateDiagonal_1, UpdateDiagonalSPD_1, UpdateDiagonalVec_1
@@ -236,7 +236,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   type RC_Info
   ! Information about the row or column of a matrix
-    type(Vector_T) :: Vec               ! Vector used to define the row
+    type(Vector_T), pointer :: Vec => NULL() ! Vector used to define the row
       ! or column space of the matrix, if any.
     integer :: NB = 0              ! Number of blocks of rows or columns
     logical :: InstFirst = .true.  ! TRUE means horizontal instance is the
@@ -248,13 +248,23 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     integer, pointer :: Quant(:) => NULL()  ! The quantity indices for the
       ! rows or columns of blocks.  These are indices within Vec, not the
       ! quantity template database.
+  contains
+!     We don't want a final routine for RC_Info because there are shallow
+!     copies associated with local matrices, which would get destroyed.
+!     In any case, this results in a crash when deallocating the snoop
+!     matrix database in Fill.
+!     final :: DestroyRCInfo
   end type RC_Info
 
   type Matrix_T
     integer :: Name = 0  ! Sub-rosa index of matrix name, if any, else zero
-    type(where_t) :: Where     ! in input, if created if by L2CF
+    type(where_t) :: Where     ! in input, if created by L2CF
     type(RC_Info) :: Col, Row  ! Column and row info
     type(matrixElement_T), dimension(:,:), pointer :: BLOCK => NULL()
+   contains
+!     We don't want a final routine for Matrix_T because there are shallow
+!     copies associated with local matrices, which would get destroyed.
+!     final :: DestroyMatrix
   end type Matrix_T
 
   type Matrix_Cholesky_T ! Cholesky factored matrix.  Only the upper triangle
@@ -275,6 +285,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     type(Matrix_Cholesky_T), pointer :: Cholesky => NULL()
     type(Matrix_Kronecker_T), pointer :: Kronecker => NULL()
     type(Matrix_SPD_T), pointer :: SPD => NULL()
+  contains
+!     final :: DestroyMatrixDatabaseElement
   end type Matrix_Database_T
 
   type MatrixMemoryUse_t ! Number of real(rm) elements in each matrix
@@ -293,6 +305,10 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------  AddCholeskyToDatabase  -----
   integer function AddCholeskyToDatabase ( Database, CholeskyItem )
   ! Add a Cholesky factor matrix to the matrix database.
+  ! This is really "MoveCholeskyToDatabase" because it nullifies CholeskyItem.
+  ! This is done because the assignments are shallow copies.  If we didn't
+  ! nullify, the RC_Info, which is a shallow copy, would get clobbered by the
+  ! finalizer.
     use Allocate_Deallocate, only: Test_Allocate
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_cholesky_T), intent(in) :: CholeskyItem
@@ -303,13 +319,26 @@ contains ! =====     Public Procedures     =============================
     allocate ( item%cholesky, stat=status )
     call test_allocate ( status, ModuleName, "Matrix database element", &
       & elementSize = storage_size(item%cholesky) / 8 )
+!     call copyMatrix ( item%cholesky%m, choleskyItem%m ) ! Deep copy
+!     item%cholesky%m%name = choleskyItem%m%name ! Not done by copyMatrix
     item%cholesky = choleskyItem
     addCholeskyToDatabase = addItemToMatrixDatabase ( database, item )
+    ! addItemToMatrixDatabase is a shallow copy, so nullify the temp item
+    ! so stuff in the database item is not clobbered by the finalizer
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!     call nullifyMatrix ( item%cholesky%m )
   end function AddCholeskyToDatabase
 
   ! -------------------------------------  AddKroneckerToDatabase  -----
   integer function AddKroneckerToDatabase ( Database, KroneckerItem )
   ! Add a Kronecker product matrix to the matrix database.
+  ! This is really "MoveKroneckerToDatabase" because it nullifies KroneckerItem.
+  ! This is done because the assignments are shallow copies.  If we didn't
+  ! nullify, the RC_Info, which is a shallow copy, would get clobbered by the
+  ! finalizer.
     use Allocate_Deallocate, only: Test_Allocate
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_kronecker_T), intent(in) :: KroneckerItem
@@ -320,8 +349,17 @@ contains ! =====     Public Procedures     =============================
     allocate ( item%kronecker, stat=status )
     call test_allocate ( status, ModuleName, "Matrix database element", &
       & elementSize = storage_size(item%kronecker) / 8 )
+!     call copyMatrix ( item%kronecker%m, kroneckerItem%m ) ! Deep copy
+!     item%kronecker%m%name = kroneckerItem%m%name ! Not done by copyMatrix
     item%kronecker = kroneckerItem
     addKroneckerToDatabase = addItemToMatrixDatabase ( database, item )
+    ! addItemToMatrixDatabase is a shallow copy, so nullify the temp item
+    ! so stuff in the database item is not clobbered by the finalizer
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!     call nullifyMatrix ( item%kronecker%m )
   end function AddKroneckerToDatabase
 
   ! ------------------------------------------------  AddMatrices  -----
@@ -355,7 +393,11 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------  AddMatrixToDatabase  -----
   integer function AddMatrixToDatabase ( Database, MatrixItem )
-  ! Add a matrix of unspecified structure to the matrix database
+  ! Add a matrix of unspecified structure to the matrix database.
+  ! This is really "MoveMatrixToDatabase" because it nullifies MatrixItem.
+  ! This is done because the assignments are shallow copies.  If we didn't
+  ! nullify, the RC_Info, which is a shallow copy, would get clobbered by the
+  ! finalizer.
     use Allocate_Deallocate, only: Test_Allocate
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_T), intent(in) :: MatrixItem
@@ -366,13 +408,27 @@ contains ! =====     Public Procedures     =============================
     allocate ( item%matrix, stat=status )
     call test_allocate ( status, ModuleName, "Matrix database element", &
       & elementSize = storage_size(item%matrix) / 8 )
+!     call copyMatrix ( item%matrix, matrixItem ) ! Deep copy
+!     item%matrix%name = matrixItem%name ! Not done by copyMatrix
     item%matrix = matrixItem
     addMatrixToDatabase = addItemToMatrixDatabase ( database, item )
+    ! addItemToMatrixDatabase is a shallow copy, so nullify the temp item
+    ! so stuff in the database item is not clobbered by the finalizer
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash in Convolve_All.  I don't know why.
+!     call nullifyMatrix ( item%matrix )
+!     database(addMatrixToDatabase)%matrix%name = matrixItem%name ! Not done by copyMatrix
   end function AddMatrixToDatabase
 
   ! -------------------------------------------  AddSPDToDatabase  -----
   integer function AddSPDToDatabase ( Database, SPDItem )
   ! Add a symmetric-positive-definite matrix to the matrix database
+  ! This is really "MoveSPDToDatabase" because it nullifies SPDItem.
+  ! This is done because the assignments are shallow copies.  If we didn't
+  ! nullify, the RC_Info, which is a shallow copy, would get clobbered by the
+  ! finalizer.
     use Allocate_Deallocate, only: Test_Allocate
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_spd_T), intent(in) :: SPDItem
@@ -383,8 +439,17 @@ contains ! =====     Public Procedures     =============================
     allocate ( item%spd, stat=status )
     call test_allocate ( status, ModuleName, "Matrix database element", &
       & elementSize = storage_size(item%spd) / 8 )
+!     call copyMatrix ( item%spd%m, spdItem%m ) ! Deep copy
+!     item%spd%m%name = spdItem%m%name ! Not done by copyMatrix
     item%spd = spdItem
     addSPDToDatabase = addItemToMatrixDatabase ( database, item )
+    ! addItemToMatrixDatabase is a shallow copy, so nullify the temp item
+    ! so stuff in the database item is not clobbered by the finalizer
+!     The following is probably necessary to make final subroutines for
+!     RC_Info and Matrix_T work, else the finalizers deallocate targets
+!     out from under pointers in the matrix database... but it causes a
+!     crash.  I don't know why.
+!     call nullifyMatrix ( item%spd%m )
   end function AddSPDToDatabase
 
   ! ------------------------------------------------  AddToMatrix  -----
@@ -1105,13 +1170,13 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------------------- DefineRCInfo -----------------
   subroutine DefineRCInfo ( RC, Vec, QuanFirst )
     type(RC_Info), intent(out) :: RC
-    type(Vector_T), intent(in) :: Vec
+    type(Vector_T), intent(in), target :: Vec
     logical, intent(in), optional :: QuanFirst
 
     integer :: I, J, N      ! Subscripts or loop inductors
     logical :: NEW          ! Was an instance seen?
 
-    rc%vec = vec
+    rc%vec => vec
     rc%instFirst = .true.
     if ( present(quanFirst) ) rc%instFirst = .not. quanFirst
     rc%nb = vec%template%totalInstances
@@ -1265,34 +1330,42 @@ contains ! =====     Public Procedures     =============================
 
     if ( .not. associated(d) ) return
     do i = 1, size(d)
-      if ( associated(d(i)%matrix) ) then
-        call destroyMatrix ( d(i)%matrix )
-        call deallocateMatrix ( d(i)%matrix )
-      end if
-      if ( associated(d(i)%cholesky) ) then
-        call destroyMatrix ( d(i)%cholesky%m )
-        call destroyMatrix ( d(i)%cholesky%m )
-      end if
-      if ( associated(d(i)%kronecker) ) then
-        call destroyMatrix ( d(i)%kronecker%m )
-        call destroyMatrix ( d(i)%kronecker%m )
-      end if
-      if ( associated(d(i)%spd) ) then
-        call destroyMatrix ( d(i)%spd%m )
-        call destroyMatrix ( d(i)%spd%m )
-      end if
+      call destroyMatrixDatabaseElement ( d(i) )
     end do
     s = size(d) * storage_size(d) / 8
     deallocate ( d, stat=status )
     call test_deallocate ( status, ModuleName, "D in DestroyMatrixDatabase", s )
+  end subroutine DestroyMatrixDatabase
+
+  ! -------------------------------  DestroyMatrixDatabaseElement  -----
+  subroutine DestroyMatrixDatabaseElement ( D )
+    use Allocate_Deallocate, only: Test_Deallocate
+    type(matrix_database_T), intent(inout) :: D
+    if ( associated(d%matrix) ) then
+      call destroyMatrix ( d%matrix )
+      call deallocateMatrix ( d%matrix )
+    end if
+    if ( associated(d%cholesky) ) then
+      call destroyMatrix ( d%cholesky%m )
+      call destroyMatrix ( d%cholesky%m )
+    end if
+    if ( associated(d%kronecker) ) then
+      call destroyMatrix ( d%kronecker%m )
+      call destroyMatrix ( d%kronecker%m )
+    end if
+    if ( associated(d%spd) ) then
+      call destroyMatrix ( d%spd%m )
+      call destroyMatrix ( d%spd%m )
+    end if
   contains
     subroutine DeallocateMatrix ( M )
+      integer :: Status
       type(matrix_t), pointer :: M
       deallocate ( m, stat=status )
       call test_deallocate ( status, ModuleName, &
-        & "D%matrix in DestroyMatrixDatabase", storage_size(m) / 8 )
+        & "D%matrix in DestroyMatrixDatabaseElement", storage_size(m) / 8 )
     end subroutine DeallocateMatrix
-  end subroutine DestroyMatrixDatabase
+  end subroutine DestroyMatrixDatabaseElement
 
   ! ----------------------------------------------------  Dump_RC  -----
   subroutine Dump_RC ( RC, R_or_C, Details, Num )
@@ -2210,7 +2283,7 @@ contains ! =====     Public Procedures     =============================
     type ( RC_Info ), intent(out) :: R
 
     ! Executable code
-    call nullifyVector ( r%vec )
+    nullify ( r%vec )
     r%nb = 0
     r%instFirst = .true.
     nullify ( r%nelts )
@@ -2550,23 +2623,32 @@ contains ! =====     Public Procedures     =============================
     type(RC_info), intent(inout) :: A
     type(RC_info), intent(in) :: B
     call destroyRCInfo ( a )
-    a%vec = b%vec
+    a%vec => b%vec
     a%nb = b%nb
     a%instFirst = b%instFirst
-    call allocate_test ( a%nelts, size(b%nelts), "a%nelts", &
-      & ModuleName // '%CopyRCInfo' )
-    a%nelts = b%nelts
-    call allocate_test ( a%inst, size(b%inst), "a%inst", &
-      & ModuleName // '%CopyRCInfo' )
-    a%inst = b%inst
-    call allocate_test ( a%quant, size(b%quant), "a%quant", &
-      & ModuleName // '%CopyRCInfo' )
-    a%quant = b%quant
+    if ( associated(b%nelts) ) then
+      call allocate_test ( a%nelts, size(b%nelts), "a%nelts", &
+        & ModuleName // '%CopyRCInfo' )
+      a%nelts = b%nelts
+    end if
+    if ( associated(b%inst) ) then
+      call allocate_test ( a%inst, size(b%inst), "a%inst", &
+        & ModuleName // '%CopyRCInfo' )
+      a%inst = b%inst
+    end if
+    if ( associated(b%quant) ) then
+      call allocate_test ( a%quant, size(b%quant), "a%quant", &
+        & ModuleName // '%CopyRCInfo' )
+      a%quant = b%quant
+    end if
   end subroutine CopyRCInfo
 
   ! ----------------------------------------------  DestroyRCInfo  -----
   subroutine DestroyRCInfo ( RC )
     type(RC_Info), intent(inout) :: RC
+    nullify ( rc%vec )
+    rc%nb = 0
+    rc%instFirst = .true.
     call deallocate_test ( rc%nelts, "rc%nelts", ModuleName // '%DestroyRCInfo' )
     call deallocate_test ( rc%inst,  "rc%inst" , ModuleName // '%DestroyRCInfo' )
     call deallocate_test ( rc%quant, "rc%quant", ModuleName // '%DestroyRCInfo' )
@@ -2992,6 +3074,8 @@ contains ! =====     Public Procedures     =============================
       end do ! j
       call output ( matrix%row%nelts(i), places=6, advance='yes' )
     end do ! i
+    call output ( matrix%row%nb, before='Matrix size: ' )
+    call output ( matrix%col%nb, before=' rows, ', after=' columns, ' )
     call output ( sum(matrix%row%nelts), before='Total matrix size: ' )
     call output ( sum(matrix%col%nelts), before=' rows, ', after=' columns, ' )
     ! Convert size to bytes (is there a better way to do this to automatically
@@ -3033,6 +3117,14 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.138  2014/10/08 19:28:17  vsnyder
+! Add DestroyMatrixDatabaseElement and use it from DestroyMatrixDatabase.
+! Add commented-out code to Add...ToDatabase to try to make final subroutine
+! work.  Couldn't make it work, so added comments about why we don't want
+! final subroutines for RC_Info and Matrix_T.  Change RC_Info%Vec from copy
+! to a pointer, with NULL() initialization.  Add shape to Dump_Struct.  Some
+! cannonball polishing.
+!
 ! Revision 2.137  2014/09/05 00:14:21  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
