@@ -281,7 +281,7 @@ program COMPARE
 
   if ( rmaxg > 0.0 .or. zero .or. anyNan(3) ) then
     print '(a/1p,5g13.6,1x,a)', &
-      & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel", &
+      & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel RelMaxVal block", &
       & rmaxvg, rmaxg, absAtRmaxG, amaxG, relAtAmaxG, trim(rmaxb)
     if ( doStats ) &
       & print '(a/1p,8g13.6)', &
@@ -341,6 +341,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.20  2014/10/08 20:22:21  vsnyder
+! Add block label for RelMaxVal
+!
 ! Revision 1.19  2013/08/06 23:14:31  vsnyder
 ! Remove dependence on machine module
 !
