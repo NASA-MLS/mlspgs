@@ -64,6 +64,7 @@ program COMPARE
   real(rk), allocatable, dimension(:) :: RD      ! Relative difference of R1, R2
   real(rk) :: RelAtAmaxG
   real(rk) :: RMAX = -huge(0.0)   ! Maximum relative difference for one R1, R2 pair
+  character(127) :: RMAXB = ''    ! Label of block having largest value of RMAXV
   real(rk) :: RMAXG = -huge(0.0)  ! Global maximum of all values of RMAX
   real(rk) :: RMAXV = -huge(0.0)  ! Difference relative to VMAX
   real(rk) :: RMAXVG = -huge(0.0) ! Global maximum of all values of RMAXV
@@ -269,16 +270,19 @@ program COMPARE
         stdeva = stdev
       end if
     end if
-    rmaxvg = max(rmaxvg, rmaxv)
+    if ( rmaxv > rmaxvg ) then
+      rmaxvg = rmaxv
+      rmaxb = line1
+    end if
 
     deallocate ( ad, r1, r2, rd, m )
 
   end do
 
   if ( rmaxg > 0.0 .or. zero .or. anyNan(3) ) then
-    print '(a/1p,6g13.6)', &
+    print '(a/1p,5g13.6,1x,a)', &
       & " RelMaxVal    MaxRel       where MaxAbs MaxAbs       where MaxRel", &
-      & rmaxvg, rmaxg, absAtRmaxG, amaxG, relAtAmaxG
+      & rmaxvg, rmaxg, absAtRmaxG, amaxG, relAtAmaxG, trim(rmaxb)
     if ( doStats ) &
       & print '(a/1p,8g13.6)', &
       & " Avg Rel                   Std Dev Rel               Avg Abs                   Std Dev Abs", &
@@ -337,6 +341,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.19  2013/08/06 23:14:31  vsnyder
+! Remove dependence on machine module
+!
 ! Revision 1.18  2009/04/13 20:43:17  pwagner
 ! Fixed a bug preventing macros file from using its own macros properly
 !
