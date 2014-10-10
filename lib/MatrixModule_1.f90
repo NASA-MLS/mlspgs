@@ -236,7 +236,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   type RC_Info
   ! Information about the row or column of a matrix
-    type(Vector_T), pointer :: Vec => NULL() ! Vector used to define the row
+!     type(Vector_T), pointer :: Vec => NULL() ! Vector used to define the row
+    type(Vector_T) :: Vec          ! Vector used to define the row
       ! or column space of the matrix, if any.
     integer :: NB = 0              ! Number of blocks of rows or columns
     logical :: InstFirst = .true.  ! TRUE means horizontal instance is the
@@ -1170,13 +1171,15 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------------------- DefineRCInfo -----------------
   subroutine DefineRCInfo ( RC, Vec, QuanFirst )
     type(RC_Info), intent(out) :: RC
-    type(Vector_T), intent(in), target :: Vec
+!     type(Vector_T), intent(in), target :: Vec
+    type(Vector_T), intent(in) :: Vec
     logical, intent(in), optional :: QuanFirst
 
     integer :: I, J, N      ! Subscripts or loop inductors
     logical :: NEW          ! Was an instance seen?
 
-    rc%vec => vec
+!     rc%vec => vec
+    rc%vec = vec
     rc%instFirst = .true.
     if ( present(quanFirst) ) rc%instFirst = .not. quanFirst
     rc%nb = vec%template%totalInstances
@@ -2283,7 +2286,8 @@ contains ! =====     Public Procedures     =============================
     type ( RC_Info ), intent(out) :: R
 
     ! Executable code
-    nullify ( r%vec )
+!     nullify ( r%vec )
+    call nullifyVector ( r%vec )
     r%nb = 0
     r%instFirst = .true.
     nullify ( r%nelts )
@@ -2623,7 +2627,8 @@ contains ! =====     Public Procedures     =============================
     type(RC_info), intent(inout) :: A
     type(RC_info), intent(in) :: B
     call destroyRCInfo ( a )
-    a%vec => b%vec
+!     a%vec => b%vec
+    a%vec = b%vec
     a%nb = b%nb
     a%instFirst = b%instFirst
     if ( associated(b%nelts) ) then
@@ -2646,7 +2651,7 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------------  DestroyRCInfo  -----
   subroutine DestroyRCInfo ( RC )
     type(RC_Info), intent(inout) :: RC
-    nullify ( rc%vec )
+!     nullify ( rc%vec )
     rc%nb = 0
     rc%instFirst = .true.
     call deallocate_test ( rc%nelts, "rc%nelts", ModuleName // '%DestroyRCInfo' )
@@ -3117,6 +3122,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.139  2014/10/10 23:56:19  vsnyder
+! Undo making RC_Info%Vec a pointer.  It breaks L2PC_m
+!
 ! Revision 2.138  2014/10/08 19:28:17  vsnyder
 ! Add DestroyMatrixDatabaseElement and use it from DestroyMatrixDatabase.
 ! Add commented-out code to Add...ToDatabase to try to make final subroutine
