@@ -818,6 +818,7 @@ contains ! =====     Public Procedures     =============================
     use output_m, only: output
     use PCFHdr, only: globalattributes, &
       & h5_writeglobalattr, he5_writemlsfileattr, he5_writeglobalattr
+    use readapriori, only: readaprioriattributes, writeaprioriattributes
     use toggles, only: switches
     use tree, only: decoration, nsons, subtree, sub_rosa
     ! Args
@@ -1118,6 +1119,10 @@ contains ! =====     Public Procedures     =============================
           & andGlAttributes=COPYGLOBALATTRIBUTES, options=optionsString )
       endif
       if ( WRITEFILEATTRIBUTES ) call he5_writeMLSFileAttr( outputFile )
+      if ( create ) then
+        call readAPrioriAttributes( inputFile )
+        call writeAPrioriAttributes( outputFile )
+      endif
       if ( noGapsHGIndex > 0 ) &
         & call writeHGridComponents( trim(PhysicalFilename), &
         & HGrids(noGapsHGIndex) )
@@ -2072,6 +2077,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.188  2014/10/13 18:10:01  pwagner
+! Copying a swath also copies AprioriAttributes
+!
 ! Revision 2.187  2014/10/07 00:06:47  pwagner
 ! May now write added file attributes
 !
