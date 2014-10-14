@@ -59,6 +59,7 @@ contains ! ============= Public Procedures ==========================
     use MLSStringLists, only: SwitchDetail
     use Molecules, only: L_Extinction, L_ExtinctionV2, L_RHI
     use MoreMessage, only: MLSMessage
+    use output_m, only: output
     use PolarLinearModel_m, only: PolarLinearModel
     use ScanModelModule, only: ScanForwardModel, TwoDScanForwardModel
     use String_Table, only: Create_String, Display_String
@@ -429,7 +430,8 @@ contains ! ============= Public Procedures ==========================
       use ForwardModelVectorTools, only: GetQuantityForForwardModel
       use Geometry, only: To_Cart
       use Init_Tables_Module, only: L_PTan, L_ScVelECR
-      use Intrinsic, only: L_MagneticField, L_RefGPH
+      use Intrinsic, only: L_MagneticField, L_GPH
+      use output_m, only: output
       use QuantityTemplates, only: RT
       use VectorsModule, only: CreateVectorValue, Dump, VectorValue_t
 
@@ -445,7 +447,7 @@ contains ! ============= Public Procedures ==========================
       type(vectorValue_t), pointer :: MagQty   ! Magnetic field quantity
       integer :: Me = -1   ! String index for trace cacheing
       type(vectorValue_t), pointer :: PTan     ! Tangent pressure
-      type(vectorValue_t), pointer :: RefGPH   ! Geopotential height
+      type(vectorValue_t), pointer :: GPH      ! Geopotential height
       type(vectorValue_t), pointer :: SCVelECR ! Spacecraft Velocity
       real(rt) :: XYZ(3,2) ! of PTan and SC
 
@@ -497,10 +499,12 @@ contains ! ============= Public Procedures ==========================
       call createVectorValue ( magQty, "MagQty", moduleName )
       if ( config%no_magnetic_field ) then
         magQty%values = 0.0
+        call output( 'Magnetic field zero because config%no_magnetic_field', advance='yes' )
       else
-        refGPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_refGPH, config=config )
-        call usingMagneticModel ( magQty, refGPH, config%where, MAF=MAF )
+        GPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_GPH, config=config )
+        call usingMagneticModel ( magQty, GPH, config%where, MAF=MAF )
+        call output( 'Magnetic field computed', advance='yes' )
       end if
       magDump = switchDetail(switches,'mag')
       if ( magDump > -1 ) &
@@ -880,6 +884,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.76  2014/10/14 21:40:12  pwagner
+! uars magnetic field needs GPH qty
+!
 ! Revision 2.75  2014/09/30 02:17:15  vsnyder
 ! Remove some debugging output that shouldn't have been checked in
 !
