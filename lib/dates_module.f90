@@ -69,6 +69,7 @@ module dates_module
 ! ccsdsb2a           yyyy-DDD -> yyyy-mm-dd
 ! dai_to_yyyymmdd    Converts days after Jan 1, 2001 to yyyymmdd
 ! dateForm           Determines what format a date is in; e.g. 'yyyy-doy'
+! datesbetween2utcs  Return the dates between 2 date-times
 ! daysbetween2utcs   How many days between 2 date-times
 ! dayOfWeek          Determines what day of the week a date is; e.g. 'Monday'
 ! daysInMonth        Determines how many days in given month in given year
@@ -128,6 +129,7 @@ module dates_module
 ! dai_to_yyyymmdd (int dai, char* str, [char* startingDate])
 ! char* dateForm( char* date )
 ! char* dayOfWeek (char* date, [char* fromForm])
+! datesbetween2utcs ( char* utc1, char* utc2, char* dates(:) )
 ! int daysbetween2utcs (char* utc1, char* utc2)
 ! int daysInMonth (int month, int year)
 ! int hoursbetween2utcs (char* utc1, char* utc2)
@@ -265,8 +267,8 @@ module dates_module
   !Here are the provided functions 
   public :: ADDDAYSTOUTC, ADDHOURSTOUTC, ADDSECONDSTOUTC, BUILDCALENDAR, &
     & CAL2EUDTF, CCSDS2TAI, CCSDS2EUDTF, CCSDSA2B, CCSDSB2A, &
-    & DAI_TO_YYYYMMDD, DATEFORM, DAYOFWEEK, DAYSBETWEEN2UTCS, DAYSINMONTH, &
-    & DAYSINCE2EUDTF, DAYS_IN_YEAR, &
+    & DAI_TO_YYYYMMDD, DATEFORM, DATESBETWEEN2UTCS, DAYOFWEEK, &
+    & DAYSBETWEEN2UTCS, DAYSINMONTH, DAYSINCE2EUDTF, DAYS_IN_YEAR, &
     & EUDTF2CAL, EUDTF2DAYSINCE, HOURSBETWEEN2UTCS, HOURSINDAY, &
     & LASTDAY, NEXTMOON, PRECEDESUTC, REFORMATDATE, REFORMATTIME, &
     & RESETSTARTINGDATE, RESTORESTARTINGDATE, &
@@ -717,6 +719,28 @@ contains
     call writeIntsToChars( days, strdays, &
       & specialInts = (/ 0 /), specialChars = (/ ' ' /) )
   end subroutine buildCalendar_str
+
+  ! ---------------------------------------------  datesbetween2utcs  -----
+  subroutine datesbetween2utcs( utc1, utc2, dates )
+    ! Given two utcs return an array of dates between them
+    ! Args
+    character(len=*), intent(in)   :: utc1, utc2
+    character(len=*), dimension(:) :: dates
+    ! Internal
+    integer                      :: dai, inDates
+    type(MLSDate_time_T)         :: datetime1, datetime2
+    ! Executable
+    datetime1 = utc2datetime(utc1)
+    datetime2 = utc2datetime(utc2)
+    ! call dump(datetime1)
+    ! call dump(datetime2)
+    dates = ' '
+    do dai = datetime1%dai, datetime2%dai
+      inDates = dai - datetime1%dai + 1
+      if ( inDates > size(dates) ) return
+      call dai_to_yyyymmdd ( dai, dates( inDates ) )
+    enddo
+  end subroutine datesbetween2utcs
 
   ! ---------------------------------------------  dayOfWeek  -----
   function dayOfWeek_int(dai) result(day)
@@ -2793,6 +2817,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.33  2014/03/05 20:14:50  pwagner
+! Commented-out stray prints; improved some remarks
+!
 ! Revision 2.32  2014/02/21 01:26:54  pwagner
 ! Added leapseconds; corrected bugs
 !
