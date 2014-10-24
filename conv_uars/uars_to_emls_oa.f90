@@ -19,6 +19,7 @@ subroutine uars_to_emls_oa
   real, parameter :: mif_inc = 65.536 / 32   ! increment per MIF in seconds
   REAL*8 :: sectai93, eciV(6,nomifs), ecrV(6,nomifs), offsets(nomifs), &
        tngtvel(3), los_vec(3,nomifs), posecr(3), rv(3), orb_norm(3)
+  real*8 :: xi, cosxi, sinxi
   character*25 asciiutc, err, msg
   CHARACTER (LEN=*), PARAMETER :: earthellipstag = 'WGS84', nl = char(10)
   integer, external :: pgs_td_utctotai, pgs_csc_geotoecr, pgs_smf_getmsg, &
@@ -147,9 +148,15 @@ subroutine uars_to_emls_oa
      coseps = COS (emls_oa%scanAngle(m)*Deg2Rad)
      sineps = SIN (emls_oa%scanAngle(m)*Deg2Rad)
 
-     fcol1 = (/ cosalf*sineps, sinalf*sineps, -coseps /)
-     fcol2 = (/ -sinalf, cosalf, 0.0d0 /)
+     ! Changed to account for rotation of axes during ascan
+     xi = 113.6 + emls_oa%scanAngle(m) - 23.3 ! p.30 of UARS MLS cal.report, B1 is pointing reference
+     cosxi = COS (xi*Deg2Rad)
+     sinxi = SIN (xi*Deg2Rad)
+
+     fcol1 = (/ cosalf*sineps*sinxi+sinalf*cosxi, sinalf*sineps*sinxi-cosalf*cosxi, -coseps*sinxi /)
+     fcol2 = (/ cosalf*sineps*cosxi-sinalf*sinxi, sinalf*sineps*cosxi+cosalf*sinxi, -coseps*cosxi /)
      fcol3 = (/ cosalf*coseps, sinalf*coseps, sineps /)
+  
      fmaf = RESHAPE((/ fcol1, fcol2, fcol3 /), (/ 3, 3 /))
      ipf2eci(:,:,m) = TRANSPOSE (MATMUL (limb_oa%trans_inst2eci, fmaf))
      flosf =  TRANSPOSE (RESHAPE ((/ (/ 0.0d0, 0.0d0, -1.0d0 /), &
