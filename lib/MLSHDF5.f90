@@ -1157,7 +1157,7 @@ contains ! ======================= Public Procedures =========================
     logical :: my_dont_trim
     logical :: my_skip
     logical :: is_present
-    logical, parameter :: NEVERDELETE = .true.
+    logical, parameter :: NEVERDELETE = .false. ! .true.
 
     ! Executable code
     call trace_begin ( me, 'MakeHDF5Attribute_string', cond=.false. )
@@ -5696,6 +5696,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.130  2014/10/27 23:04:06  pwagner
+! needed to extend existing hdf attributes
+!
 ! Revision 2.129  2014/09/05 00:05:14  vsnyder
 ! Convert some local pointer temps to allocatable
 !
