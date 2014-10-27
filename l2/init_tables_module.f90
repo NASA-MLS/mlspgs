@@ -1155,6 +1155,7 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_writeFileAttribute, &
+             begin, f+f_additional, boolean(), &
              begin, f+f_attrName, string(req), &
              begin, f+f_file, string(req), &
              begin, f+f_attrValue, string(req), &
@@ -1988,6 +1989,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.607  2014/10/27 23:06:19  pwagner
+! /additional now a possible field for writeFileAttribute
+!
 ! Revision 2.606  2014/10/06 23:50:02  pwagner
 ! May now write added file attributes
 !
