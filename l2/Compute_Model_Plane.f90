@@ -43,6 +43,7 @@ contains ! ============= Public Procedures =============================
     use Init_Tables_Module, only: L_Azimuth, L_ScVelECR
     use MLSKinds, only: RV
     use MLSNumerics, only: Cross ! Cross product of two 3-vectors
+    use output_m, only: output
     use QuantityTemplates, only: RT
     use VectorsModule, only: Vector_t, VectorValue_t
 
@@ -73,7 +74,11 @@ contains ! ============= Public Procedures =============================
     inOrbitPlane = .true.
     azimuthQuantity => GetQuantityForForwardModel ( fwdModelExtra, &
                     & noError=.true., quantityType=l_azimuth, config=config )
-    if ( .not. associated(azimuthQuantity) ) return
+    if ( .not. associated(azimuthQuantity) ) then
+      call output( 'azimuth quantity not found; skipping Compute_Model_Plane', &
+        & advance='yes' )
+      return
+    endif
     azimuth = azimuthQuantity%values(1,1)
     saz = sin(azimuth*deg2rad)
     if ( abs(saz) < tol ) return
@@ -132,6 +137,9 @@ contains ! ============= Public Procedures =============================
 end module Compute_Model_Plane_m
 
 ! $Log$
+! Revision 2.6  2014/10/27 23:07:30  pwagner
+! Print warning when skipping Compute_Model_Plane
+!
 ! Revision 2.5  2014/01/11 02:23:28  vsnyder
 ! Get the MIF from Config everywhere instead of an undefined local variable
 !
