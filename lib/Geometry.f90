@@ -220,28 +220,59 @@ contains
 
   end function Get_R_Eq
 
+  !{ Converting geodetic Latitude (DEGREES!), Longitude (DEGREES!), and Height
+  !  (km) above the mean Earth ellipsoid (mean sea level), to Cartesian
+  !  coordinates in an Earth-Centered-Rotating frame:
+  !  %
+  !  \begin{equation*}\begin{split}
+  !  X =\,& (N(\theta)+h) \cos\theta \cos\phi \\
+  !  Y =\,& (N(\theta)+h) \cos\theta \sin\phi \\
+  !  Z =\,& (N(\theta)(1-e^2)+h) \sin\theta \\
+  !  \end{split}\end{equation*}
+  !  %
+  !  where $\theta$ is geodetic Latitude (DEGREES!), $\phi$ is Longitude
+  !  (DEGREES!), $h$ is height above mean sea level (km), $e^2 = 1 -
+  !  \frac{b^2}{f^2}$ is the eccentricity, $b$ is the semi-minor axis
+  !  (polar radius), $f = 1 - \frac{b}a$ is the inverse of flattening, $a$
+  !  is the semi-major exis (equatorial radius), and
+  !  %
+  !  \begin{equation*}
+  !  N(\theta) = \frac{a}{\sqrt{1-e^2 \sin^2 \theta}} =
+  !              \frac{a^2}{\sqrt{a^2 \cos^2 \theta + b^2 \sin^2 \theta}} =
+  !              \frac{a^2}d \,.
+  !  \end{equation*}
+  !  is the distance along the normal from the surface to the polar axis.
+  !
+  !  The units of the results here ($X$, $Y$, and $Z$) are average Earth
+  !  radii, not km; see the constant {\tt ERAD} above.
+
   ! --------------------------------------------------  To_Cart_D  -----
   subroutine To_Cart_D ( WHERE, CART, CT, ST, CP, SP )
-  ! Convert Geodetic latitude and longitude (degrees), and altitude, to Cartesian
+  ! Convert Geodetic latitude and longitude (degrees), and
+  ! altitude (km above sea level), to Cartesian
     use Constants, only: Deg2Rad
-    double precision, intent(in) :: WHERE(3) ! Latitude, Longitude, Altitude
-    double precision, intent(out) :: CART(3) ! X, Y, Z
-    double precision, intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine of Lat, Lon
+    double precision, intent(in) :: WHERE(3) ! Latitude (degrees north),
+                                             ! Longitude (degrees east),
+                                             ! Altitude (km above sea level)
+    double precision, intent(out) :: CART(3) ! X, Y, Z, in average Earth radii
+                                             ! (See the constant ERAD above)
+    double precision, intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine
+                                             ! of Lat, Lon
     double precision :: D, MyCt, MySt, MyCp, MySp, RHO, RLAT, RLON
 
     rlat = where(1)*deg2Rad
-    myct = sin(rlat)
-    myst = cos(rlat)
-    d = sqrt(aquad-(aquad-bquad)*myct*myct)
+    myst = sin(rlat)
+    myct = cos(rlat)
+    d = sqrt(aquad-(aquad-bquad)*myst*myst)
     rlon = where(2)*deg2Rad
     mycp = cos(rlon)
     mysp = sin(rlon)
-    cart(3) = (where(3)+bquad/d)*myct/erad
-    rho = (where(3)+aquad/d)*myst/erad
+    cart(3) = (where(3)+bquad/d)*myst/erad
+    rho = (where(3)+aquad/d)*myct/erad
     cart(1) = rho*mycp
     cart(2) = rho*mysp
-    if ( present(ct) ) ct = myct
-    if ( present(st) ) st = myst
+    if ( present(ct) ) ct = myst
+    if ( present(st) ) st = myct
     if ( present(cp) ) cp = mycp
     if ( present(sp) ) sp = mysp
 
@@ -249,26 +280,31 @@ contains
 
   ! --------------------------------------------------  To_Cart_S  -----
   subroutine To_Cart_S ( WHERE, CART, CT, ST, CP, SP )
-  ! Convert Geodetic latitude and longitude (degrees), and altitude, to Cartesian
+  ! Convert Geodetic latitude and longitude (degrees), and
+  ! altitude (km above sea level), to Cartesian
     use Constants, only: Deg2Rad
-    real, intent(in) :: WHERE(3)        ! Latitude, Longitude, Altitude
-    real, intent(out) :: CART(3)        ! X, Y, Z
-    real, intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine of Lat, Lon
+    real, intent(in) :: WHERE(3)        ! Latitude (degrees north),
+                                        ! Longitude (degrees east),
+                                        ! Altitude (km above sea level)
+    real, intent(out) :: CART(3)        ! X, Y, Z, in average Earth radii
+                                        ! (See the constant ERAD above)
+    real, intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine
+                                        ! of Lat, Lon
     real :: D, MyCt, MySt, MyCp, MySp, RHO, RLAT, RLON
 
     rlat = where(1)*deg2Rad
-    myct = sin(rlat)
-    myst = cos(rlat)
-    d = sqrt(aquad-(aquad-bquad)*myct*myct)
+    myst = sin(rlat)
+    myct = cos(rlat)
+    d = sqrt(aquad-(aquad-bquad)*myst*myst)
     rlon = where(2)*deg2Rad
     mycp = cos(rlon)
     mysp = sin(rlon)
-    cart(3) = (where(3)+bquad/d)*myct/erad
-    rho = (where(3)+aquad/d)*myst/erad
+    cart(3) = (where(3)+bquad/d)*myst/erad
+    rho = (where(3)+aquad/d)*myct/erad
     cart(1) = rho*mycp
     cart(2) = rho*mysp
-    if ( present(ct) ) ct = myct
-    if ( present(st) ) st = myst
+    if ( present(ct) ) ct = myst
+    if ( present(st) ) st = myct
     if ( present(cp) ) cp = mycp
     if ( present(sp) ) sp = mysp
 
@@ -287,6 +323,10 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.21  2014/10/29 21:03:11  vsnyder
+! Replaced confusing "myst=cos(rlat); myct=sin(rlat)" in To_Cart.  Described
+! units of arguments.  Added a LaTeX comment to describe the mathematics.
+!
 ! Revision 2.20  2013/08/16 02:27:56  vsnyder
 ! Add GeocToGeod, move To_Cart here from igrf_int
 !
