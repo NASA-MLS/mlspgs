@@ -1,4 +1,4 @@
-subroutine uars_to_emls_oa
+subroutine uars_to_emls_oa ( n_days )
 
   USE rad_file_contents, ONLY: limb_oa
   USE oa_file_contents, ONLY: emls_oa
@@ -7,7 +7,9 @@ subroutine uars_to_emls_oa
   USE Geometry, ONLY: Omega => W
 
   implicit none
-
+  ! Args
+  integer, intent(in) :: n_days
+  !
   integer, parameter :: nomifs = 32
   integer :: i, m, mif_range(2), ms, hrs, mins, yrdoy, stat, mif1_ms, year
   real*8 :: secs, cosalf, sinalf, coseps, sineps, cosphi, sinphi, costheta, &
@@ -65,7 +67,7 @@ subroutine uars_to_emls_oa
 ! Calculate TAI time at start of frame:
 
   mif1_ms = (limb_oa%ref_mmif - 1) * 2048   ! millisecs of MIF 1
-  yrdoy = limb_oa%ref_time(1)  ! year plus day of year
+  yrdoy = limb_oa%ref_time(1)  ! - n_days      ! year plus day of year
   ms = limb_oa%ref_time(2)     ! millisecs of day for ref_mmif
   ms = ms - mif1_ms            ! millisecs at start of MAF
   if (ms < 0) then             ! in previous day!
@@ -85,9 +87,17 @@ subroutine uars_to_emls_oa
   write (asciiutc, fmt= &
    '(i4, "-", i3.3, "T", i2.2, ":", i2.2, ":", f9.6, "Z", TL10, i2.2)') &
    year, mod(yrdoy, 1000), hrs, mins, secs, int(secs)  ! force leading 0's
+  print *, 'asciiutc: ', trim(asciiutc)
   stat = pgs_td_utctotai (asciiutc, sectai93)
 
   emls_oa%MAFStartTimeTAI= sectai93
+  ! Adjust for possible backdating
+  if ( n_days > 999 ) then
+    ! Account for our convention that a "year" has 1000 days
+    emls_oa%MAFStartTimeTAI = sectai93 - (n_days/1000) * 365 * 24 * 3600
+  elseif ( n_days > 0 ) then
+    emls_oa%MAFStartTimeTAI = sectai93 - n_days * 24 * 3600
+  endif
 
 ! spacecraft MIF TAI:
 

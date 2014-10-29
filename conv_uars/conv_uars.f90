@@ -30,6 +30,8 @@ REAL*8 :: tai_time, gird_time
 REAL*8, PARAMETER :: TAItoGIRD = 1104537627.0d00
 
 INTEGER*2, EXTERNAL :: SwapShort  ! should put into SwapEndian later!!!
+integer :: n_days = 0
+CHARACTER (len=8) :: n_str
 
 ! Source code:
 
@@ -50,15 +52,33 @@ ELSE
       CASE default
          !infile = data_dir // TRIM(arg)     ! input filename (with dir)
          infile = TRIM(arg)                 ! input filename
-         IF (noargs /= 3) THEN
-            PRINT *, 'Missing output directory argument!'
+         IF (noargs < 3) THEN
+            PRINT *, 'Missing output directory argument? Too few args!'
             CALL EXIT
          ENDIF
+      CASE ('-b', '--backdate')
+         i = i + 1
+         CALL GET_COMMAND_ARGUMENT (i, n_str)  ! how many days to backdate times in file
+         read( n_str, * ) n_days
+         ! Now we must take account for how mmaf_time actually encodes dates
+         ! It uses a convention that the year contains 1000 days
+         ! if the year y = 1900 + p
+         ! and the doy   = d
+         ! then mmaf_time = 1000*y + d (yes, I know this is ugh--
+         ! "It was like that when I got here!")
+         ! So we're assuming you either want to backdate by one day or so 
+         ! or else by a number of years
+         ! E.g., to backdate 10 years, set n_days to 3650 (we ignore leap years)
+         if ( n_days > 364 ) n_days = 1000 * (n_days/365)
       CASE ('-o', '--outdir')
          i = i + 1
          CALL GET_COMMAND_ARGUMENT (i, out_dir)  ! next argument for out dir
       CASE ('-h', '--help')
-         PRINT '(a)', 'usage: conv_uars [-h] input_file -o output_dir' 
+         PRINT '(a)', 'usage: conv_uars [options] input_file' 
+         PRINT '(a)', '      options' 
+         PRINT '(a)', '  -o output_dir     write converted files to output_dir' 
+         PRINT '(a)', '  -b n_days         backdate converted files in time by n_days' 
+         PRINT '(a)', '  -h                print help' 
          CALL EXIT
       END SELECT
       i = i + 1   ! Next argument
@@ -104,7 +124,7 @@ ENDIF
 
 recno = nummmaf / 2
 READ (unit=in_unit, rec=recno) limb_hdr
-yrdoy = SwapBig (limb_hdr%mmaf_time(1))
+yrdoy = SwapBig (limb_hdr%mmaf_time(1)) - n_days ! This lets us backdate the files; e.g., for sids
 
 IF (noargs > 0) THEN   ! use passed input for setting outputs
    year = yrdoy / 1000 + 1900
@@ -119,6 +139,7 @@ ENDIF
 PRINT *, 'infile: ', infile
 PRINT *, 'rad file: ', Rad_File
 PRINT *, 'OA file: ', OA_File
+PRINT *, 'n days backdated: ', n_days
 
 ! Open output RAD and OA HDF files:
 
@@ -156,7 +177,7 @@ DO recno = 4, nummmaf+3
    limb_hdr%recordno = SwapBig (limb_hdr%recordno)
    limb_hdr%mmafno = SwapBig (limb_hdr%mmafno)
    DO i = 1, 2
-      limb_hdr%mmaf_time(i) = SwapBig (limb_hdr%mmaf_time(i))
+      limb_hdr%mmaf_time(i) = SwapBig (limb_hdr%mmaf_time(i)) ! - n_days
    ENDDO
    DO i = 1, 16
       limb_stat%prd_temps(i) = SwapBig (limb_stat%prd_temps(i))
@@ -211,7 +232,7 @@ DO recno = 4, nummmaf+3
 
    ! convert to EMLS OA:
 
-   CALL uars_to_emls_oa
+   CALL uars_to_emls_oa ( n_days )
 
    ! write to OA file:
 
