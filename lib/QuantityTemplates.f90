@@ -131,7 +131,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! geolocation(*,i,j) for an unstacked one.  The "*" is taken from either
     ! the OrbitCoordinateIndex or LOSCoordinateIndex component.
 
-    real(rt), dimension(:,:), pointer :: phi => NULL()
+    real(rt), dimension(:,:), pointer :: phi => NULL() ! Degrees
 
     ! Phi is dimensioned (1, noInstances) for stacked quantities and
     ! (noSurfs, noInstances) for unstacked ones.  The PHI coordinate for the
@@ -139,8 +139,8 @@ module QuantityTemplates         ! Quantities within vectors
     ! unstacked one.  Phi is either taken from or derived from Geolocation.
 
     ! These other coordinates are dimensioned in the same manner as Phi:
-    real(rt), dimension(:,:), pointer :: geodLat => NULL()
-    real(rt), dimension(:,:), pointer :: lon => NULL()
+    real(rt), dimension(:,:), pointer :: geodLat => NULL() ! Degrees
+    real(rt), dimension(:,:), pointer :: lon => NULL()     ! Degrees
     real(rt), dimension(:,:), pointer :: time => NULL() ! Seconds since EPOCH
     real(rt), dimension(:,:), pointer :: solarTime => NULL()
     real(rt), dimension(:,:), pointer :: solarZenith => NULL()
@@ -1647,6 +1647,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.87  2014/09/05 00:17:16  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.86  2014/08/19 00:28:33  vsnyder
 ! Make sure 'what' is always defined in DestroyQuantityTemplate
 !
