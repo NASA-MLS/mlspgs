@@ -35,10 +35,11 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   private
 
-  public :: ANYGOODDATAINQTY, DOHGRIDSMATCH, DOVGRIDSMATCH, DOVGRIDSMATCH_VEC, &
-    & DOFGRIDSMATCH, DOQTYSDESCRIBESAMETHING, DOVECTORSMATCH, &
-    & FILLWITHCOMBINEDCHANNELS, FINDCLOSESTINSTANCES, FINDONECLOSESTINSTANCE, &
-    & FINDINSTANCEWINDOW
+  public :: AnyGoodDataInQty, DoHGridsMatch, DoQuantitiesMatch, &
+    & DoVGridsMatch, DoVGridsMatch_VEC, &
+    & DoFGridsMatch, DoQtysDescribeSameThing, DoVectorsMatch, &
+    & FillWithCombinedChannels, FindClosestInstances, FindOneClosestInstance, &
+    & FindInstanceWindow
 
   interface DoVGridsMatch
     module procedure DoVGridsMatch_Vec
@@ -660,6 +661,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.46  2014/10/30 01:42:46  vsnyder
+! Publish DoQuantitiesMatch
+!
 ! Revision 2.45  2014/04/24 23:51:59  pwagner
 ! Depending on horizontalCoordinate of reference quantity, may FindOneClosestInstance in time, not phi
 !
