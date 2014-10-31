@@ -1,17 +1,20 @@
 subroutine uars_to_emls_oa ( n_days )
 
-  USE rad_file_contents, ONLY: limb_oa
-  USE oa_file_contents, ONLY: emls_oa
-  USE SDPToolkit, ONLY: PGS_S_SUCCESS
-  USE Constants, ONLY: Deg2Rad, Rad2Deg, Pi
-  USE Geometry, ONLY: Omega => W
+  use Constants, ONLY: Deg2Rad, Rad2Deg, Pi
+  use dates_module, only: secondsBetween2UTCs
+  use Geometry, ONLY: Omega => W
+  use oa_file_contents, ONLY: emls_oa
+  use rad_file_contents, ONLY: limb_oa
+  use SDPToolkit, ONLY: PGS_S_SUCCESS
 
   implicit none
   ! Args
   integer, intent(in) :: n_days
   !
   integer, parameter :: nomifs = 32
+  integer :: n_years
   integer :: i, m, mif_range(2), ms, hrs, mins, yrdoy, stat, mif1_ms, year
+  real*8 :: forgedsecs
   real*8 :: secs, cosalf, sinalf, coseps, sineps, cosphi, sinphi, costheta, &
        sintheta
   real*8 :: fcol1(3), fcol2(3), fcol3(3), fmaf(3,3), flosf(3,3), fecr(3), &
@@ -22,7 +25,7 @@ subroutine uars_to_emls_oa ( n_days )
   REAL*8 :: sectai93, eciV(6,nomifs), ecrV(6,nomifs), offsets(nomifs), &
        tngtvel(3), los_vec(3,nomifs), posecr(3), rv(3), orb_norm(3)
   real*8 :: xi, cosxi, sinxi
-  character*25 asciiutc, err, msg
+  character*25 asciiutc, forgedasciiutc, err, msg
   CHARACTER (LEN=*), PARAMETER :: earthellipstag = 'WGS84', nl = char(10)
   integer, external :: pgs_td_utctotai, pgs_csc_geotoecr, pgs_smf_getmsg, &
        pgs_csc_ecrtoeci, pgs_csc_ecitoecr
@@ -54,6 +57,7 @@ subroutine uars_to_emls_oa ( n_days )
   emls_oa%solartime = limb_oa%ref_solar_time
   emls_oa%solarzenith = limb_oa%ref_solar_zen
   emls_oa%sc_lon = limb_oa%sat_long
+  ! Remap sc/Lon
   where (emls_oa%sc_lon > 180.0)
      emls_oa%sc_lon = emls_oa%sc_lon - 360.0
   end where
@@ -94,15 +98,23 @@ subroutine uars_to_emls_oa ( n_days )
   ! Adjust for possible backdating
   if ( n_days > 999 ) then
     ! Account for our convention that a "year" has 1000 days
-    emls_oa%MAFStartTimeTAI = sectai93 - (n_days/1000) * 365 * 24 * 3600
+    n_years = (n_days/1000)
+    write (forgedasciiutc, fmt= &
+     '(i4, "-", i3.3, "T", i2.2, ":", i2.2, ":", f9.6, "Z", TL10, i2.2)') &
+     year-n_years, mod(yrdoy, 1000), hrs, mins, secs, int(secs)  ! force leading 0's
+    forgedsecs = secondsbetween2utcs ( forgedasciiutc, asciiutc )
+    emls_oa%MAFStartTimeTAI = sectai93 - forgedsecs
   elseif ( n_days > 0 ) then
-    emls_oa%MAFStartTimeTAI = sectai93 - n_days * 24 * 3600
+    forgedsecs = n_days * 24 * 3600
+    emls_oa%MAFStartTimeTAI = sectai93 - forgedsecs
+  else
+    forgedsecs = 0.d0
   endif
 
 ! spacecraft MIF TAI:
 
   do m = 1, nomifs
-     emls_oa%sc_MIF_TAI(m) = sectai93 + (m-1) * mif_inc
+     emls_oa%sc_MIF_TAI(m) = sectai93 + (m-1) * mif_inc - forgedsecs
   enddo
 
 ! spacecraft ECR:
@@ -233,6 +245,11 @@ subroutine uars_to_emls_oa ( n_days )
      orb_norm = rv / sqrt (rv(1)*rv(1) + rv(2)*rv(2) + rv(3)*rv(3))
      emls_oa%OrbY(m) = DOT_PRODUCT (-emls_oa%ECI(:,m), orb_norm)
   ENDDO
+
+  ! Remap GHz/Lon
+  where (emls_oa%lon > 180.0)
+     emls_oa%lon = emls_oa%lon - 360.0
+  end where
 
 !!$write (30, *) limb_oa%ptg_fov_azim_offset
 !!$write (31, *) limb_oa%ptg_fov_elev_offset
