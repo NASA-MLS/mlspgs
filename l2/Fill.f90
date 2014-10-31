@@ -71,8 +71,8 @@ contains ! =====     Public Procedures     =============================
       & COLABUNDANCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
       & IWCFROMEXTINCTION, RHIFROMORTOH2O, NORADSPERMIF, &
       & RHIPRECISIONFROMORTOH2O, WITHESTNOISE, &
-      & HYDROSTATICALLY, FROMSPLITSIDEBAND, GPHPRECISION, &
-      & FROMISOTOPE, FROMASCIIFILE, ROTATEMAGNETICFIELD, &
+      & Hydrostatically_GPH, Hydrostatically_PTan, FROMSPLITSIDEBAND, &
+      & GPHPRECISION, FROMISOTOPE, FROMASCIIFILE, ROTATEMAGNETICFIELD, &
       & EXPLICIT, FROML1B, &
       & FROML2AUX, USINGMAGNETICMODEL, &
       & FROMINTERPOLATEDQTY, FROMLOSGRID, &
@@ -153,7 +153,7 @@ contains ! =====     Public Procedures     =============================
       & L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
       & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, &
       & L_GATHER, L_GEOCALTITUDE, L_GEODALTITUDE, L_GEOLOCATION, &
-      & L_GEOIDDATA, L_GPHPRECISION, L_GPHRESETTOGEOID, L_GRIDDED, &
+      & L_GEOIDDATA, L_GPH, L_GPHPRECISION, L_GPHRESETTOGEOID, L_GRIDDED, &
       & L_H2OFROMRHI, L_H2OPRECISIONFROMRHI, L_HYDROSTATIC, L_ISOTOPE, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
       & L_L1B, L_L2GP, L_L2AUX, &
@@ -2391,7 +2391,11 @@ contains ! =====     Public Procedures     =============================
         if ( refGPHQuantity%template%quantityType /= l_refGPH ) &
           & call Announce_Error ( key, badrefGPHQuantity )
 
-        if ( quantity%template%quantityType==l_ptan ) then
+        select case ( quantity%template%quantityType )
+        case ( l_gph )
+          call Hydrostatically_GPH ( key, quantity, temperatureQuantity, &
+            & refGPHQuantity )
+        case ( l_ptan )
           if ( .not. got(f_geocAltitudeQuantity) ) &
             & call Announce_Error ( key, needGeocAltitude )
           geocAltitudeQuantity => GetVectorQtyByTemplateIndex( &
@@ -2418,14 +2422,14 @@ contains ! =====     Public Procedures     =============================
             & call Announce_Error ( key, needOrbitInclination )
           orbitInclinationQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(orbitInclinationVectorIndex), orbitInclinationQuantityIndex)
-
-        else
-          nullify ( geocAltitudeQuantity, h2oQuantity )
-        end if
-        call Hydrostatically ( key, quantity, temperatureQuantity, &
-          & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
-          & phiTanQuantity, geocAltitudeQuantity, maxIterations, &
-          & phiWindow, phiWindowUnits, chunkNo )
+          call Hydrostatically_PTan ( key, quantity, temperatureQuantity, &
+            & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
+            & phiTanQuantity, geocAltitudeQuantity, maxIterations, &
+            & phiWindow, phiWindowUnits, chunkNo )
+        case default
+          call announce_error ( key, no_error_code, &
+            & 'Hydrostatic fill for quantity that is neither GPH nor PTan' )
+        end select
 
       case ( l_isotope ) ! --------------- Isotope based fills -------
         if ( .not. all(got( (/f_ratioQuantity, f_sourceQuantity/) ) ) ) &
@@ -3110,6 +3114,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.446  2014/10/31 17:43:45  vsnyder
+! Separate PTan and GPH hydrostatic fills
+!
 ! Revision 2.445  2014/09/30 02:14:38  vsnyder
 ! Some stuff that might be useful if we turn on matrix finalizers
 !
