@@ -182,8 +182,8 @@ module FillUtils_1                     ! Procedures used by Fill
       & COLABUNDANCE, DERIVATIVEOFSOURCE, FOLDEDRADIANCE, PHITANWITHREFRACTION, &
       & IWCFROMEXTINCTION, RHIFROMORTOH2O, NORADSPERMIF, &
       & RHIPRECISIONFROMORTOH2O, WITHESTNOISE, &
-      & HYDROSTATICALLY, FROMSPLITSIDEBAND, GPHPRECISION, &
-      & FROMISOTOPE, FROMASCIIFILE, ROTATEMAGNETICFIELD, &
+      & Hydrostatically_GPH, Hydrostatically_PTan, FROMSPLITSIDEBAND, &
+      & GPHPRECISION, FROMISOTOPE, FROMASCIIFILE, ROTATEMAGNETICFIELD, &
       & EXPLICIT, FROML1B, &
       & FROML2AUX, USINGMAGNETICMODEL, &
       & FROMINTERPOLATEDQTY, FROMLOSGRID, &
@@ -4472,13 +4472,50 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine UsingMagneticModel
 
-    ! ------------------------------------------  Hydrostatically  -----
-    subroutine Hydrostatically ( key, quantity, &
+    ! --------------------------------------  Hydrostatically_GPH  -----
+    subroutine Hydrostatically_GPH ( key, quantity, &
+      & temperatureQuantity, refGPHQuantity )
+      use MANIPULATEVECTORQUANTITIES, only: DoHGridsMatch, DoVGridsMatch
+      ! Fill GPH hydrostatically
+      integer, intent(in) :: key          ! For messages
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type (VectorValue_T), intent(in) :: TEMPERATUREQUANTITY
+      type (VectorValue_T), intent(in) :: REFGPHQUANTITY
+
+      ! Local variables
+      integer :: Me = -1                ! String index for trace
+
+      ! Executable code
+
+      call trace_begin ( me, 'FillUtils_1.Hydrostatically_GPH', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
+
+      select case ( quantity%template%quantityType )
+      case ( l_gph )
+        if ( doHGridsMatch ( quantity, temperatureQuantity ) .and. &
+           & doVGridsMatch ( quantity, temperatureQuantity ) ) then
+          call GetBasisGPH ( temperatureQuantity, refGPHQuantity, quantity%values )
+        else
+          call Announce_Error ( key, nonConformingHydrostatic )
+        end if
+      case default
+        call Announce_error ( 0, no_error_code, &
+          & 'Trying to use Hydrostatic_GPH for non-GPH quantity' )
+      end select
+
+      call trace_end ( 'FillUtils_1.Hydrostatically_GPH', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
+      
+    end subroutine Hydrostatically_GPH
+
+    ! -------------------------------------  Hydrostatically_PTan  -----
+    subroutine Hydrostatically_PTan ( key, quantity, &
       & temperatureQuantity, refGPHQuantity, h2oQuantity, &
       & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, &
       & maxIterations, phiWindow, phiWindowUnits, chunkNo )
-      use MANIPULATEVECTORQUANTITIES, only: FINDCLOSESTINSTANCES
-      ! Various hydrostatic fill operations
+      use MANIPULATEVECTORQUANTITIES, only: DoHGridsMatch, &
+        & FINDCLOSESTINSTANCES
+      ! Fill PTan quantity hydrostatically
       integer, intent(in) :: key          ! For messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type (VectorValue_T), intent(in) :: TEMPERATUREQUANTITY
@@ -4502,44 +4539,17 @@ contains ! =====     Public Procedures     =============================
       ! Executable code
       verbose = ( BeVerbose( 'fill', -1 ) )
 
-      call trace_begin ( me, 'FillUtils_1.Hydrostatically', key, &
+      call trace_begin ( me, 'FillUtils_1.Hydrostatically_PTan', key, &
         & cond=toggle(gen) .and. levels(gen) > 1 )
 
       select case ( quantity%template%quantityType )
-      case ( l_gph )
-        if ( (temperatureQuantity%template%noSurfs /= &
-          &   quantity%template%noSurfs) .or. &
-          &  (refGPHQuantity%template%noInstances /= &
-          &   quantity%template%noInstances) .or. &
-          &  (temperatureQuantity%template%noInstances /= &
-          &   quantity%template%noInstances) ) then
-          call Announce_Error ( key, nonConformingHydrostatic, &
-            & "case l_gph failed first test" )
-          go to 9
-        end if
-        if ( (any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
-          & (any(quantity%template%phi /= temperatureQuantity%template%phi)) .or. &
-          & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
-          call Announce_Error ( key, nonConformingHydrostatic, &
-            &  "case l_gph failed second test" )
-          go to 9
-        end if
-        call GetBasisGPH ( temperatureQuantity, refGPHQuantity, quantity%values )
       case ( l_ptan )
-        if ( (temperatureQuantity%template%noInstances /= &
-          &   refGPHquantity%template%noInstances) .or. &
-          &  (temperatureQuantity%template%noInstances /= &
-          &   h2oQuantity%template%noInstances) ) then
+        if ( .not. ( doHGridsMatch ( refGPHquantity, temperatureQuantity ) &
+           &   .and. doHGridsMatch ( h2oQuantity, temperatureQuantity ) ) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed first test" )
           go to 9
-        end if
-        if ( (any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
-          & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
-          call Announce_Error ( key, nonConformingHydrostatic, &
-            & "case l_ptan failed second test" )
-          go to 9
-        end if
+        end if  
         if ( (.not. ValidateVectorQuantity(quantity, minorFrame=.true.) ) .or. &
           &  (.not. ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ) .or. &
           &  (quantity%template%instrumentModule /= &
@@ -4576,20 +4586,24 @@ contains ! =====     Public Procedures     =============================
           & phiTanQuantity, geocAltitudeQuantity, maxIterations, &
           & phiWindow, phiWindowUnits, chunkNo )
       case default
-        call Announce_error ( 0, 0, 'No such fill yet' )
+        call Announce_error ( 0, no_error_code, &
+          & 'Trying to use Hydrostatic_PTan for non-PTan quantity' )
+        go to 9
       end select
 
-    9 call trace_end ( 'FillUtils_1.Hydrostatically', &
+      if ( verbose .and. associated(phitanquantity) ) then
+        nullify( closestTempProfiles )
+        call Allocate_Test ( closestTempProfiles, phitanquantity%template%noInstances, &
+          "closestTempProfiles", ModuleName )
+        call FindClosestInstances ( temperatureQuantity, phitanquantity, &
+          & closestTempProfiles )
+        call Deallocate_Test ( closestTempProfiles, "closestTempProfiles", ModuleName )
+      end if
+
+    9 call trace_end ( 'FillUtils_1.Hydrostatically_PTan', &
         & cond=toggle(gen) .and. levels(gen) > 1 )
-      if ( .not. verbose .or. .not. associated(phitanquantity) ) return
-      nullify( closestTempProfiles )
-      call Allocate_Test ( closestTempProfiles, phitanquantity%template%noInstances, &
-        "closestTempProfiles", ModuleName )
-      call FindClosestInstances ( temperatureQuantity, phitanquantity, &
-        & closestTempProfiles )
-      call Deallocate_Test ( closestTempProfiles, "closestTempProfiles", ModuleName )
-      
-    end subroutine Hydrostatically
+
+    end subroutine Hydrostatically_PTan
 
     ! ----------------------------------------------  FromIsotope  -----
     subroutine FromIsotope ( Quantity, SourceQuantity, RatioQuantity )
@@ -7401,6 +7415,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.101  2014/10/31 17:43:45  vsnyder
+! Separate PTan and GPH hydrostatic fills
+!
 ! Revision 2.100  2014/05/13 00:13:22  pwagner
 ! FromL2GP may inerpolate in time, instead of phi
 !
