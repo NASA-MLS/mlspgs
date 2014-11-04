@@ -144,12 +144,15 @@ contains ! ============= Public Procedures ==========================
     end if
     clean = switchDetail(switches,'dxfc') > -1
 
-    ! Compute a plane for the profile, if different from the orbit plane
-    call compute_model_plane ( fwdModelExtra, config, fmStat%MAF, &
-      & normal, inOrbitPlane )
-    if ( .not. inOrbitPlane .and. config%polarized ) &
-      & call fill_Magnetic_Field ( config, fwdModelIn, fwdModelExtra, &
-                                 & fmStat%MAF )
+    if ( config%polarized ) then
+      ! Compute a plane for the profile and the magnetic field,
+      ! if different from the orbit plane
+      call compute_model_plane ( fwdModelExtra, config, fmStat%MAF, &
+        & normal, inOrbitPlane )
+      if ( .not. inOrbitPlane ) &
+        & call fill_Magnetic_Field ( config, fwdModelIn, fwdModelExtra, &
+                                   & fmStat%MAF )
+    end if
 
     ! Do the actual forward models
 
@@ -424,15 +427,17 @@ contains ! ============= Public Procedures ==========================
       ! the geolocations of the reference MIF in the PTan and SCVelECR
       ! quantities.
       use Allocate_Deallocate, only: Same_Shape
-      use Constants, only: Rad2Deg
+      use Constants, only: Deg2Rad, Rad2Deg
       use FillUtils_1, only: UsingMagneticModel
       use ForwardModelConfig, only: ForwardModelConfig_T
       use ForwardModelVectorTools, only: GetQuantityForForwardModel
-      use Geometry, only: To_Cart
+      use Geometry, only: GeocToGeodLat, To_Cart
       use Init_Tables_Module, only: L_PTan, L_ScVelECR
       use Intrinsic, only: L_MagneticField, L_GPH
-      use output_m, only: output
+      use MLSNumerics, only: Cross
+      use Output_m, only: Output
       use QuantityTemplates, only: RT
+      use Rotation_m, only: Rotate_3d
       use VectorsModule, only: CreateVectorValue, Dump, VectorValue_t
 
       type(forwardModelConfig_T), intent(inout) :: Config
@@ -440,16 +445,17 @@ contains ! ============= Public Procedures ==========================
       type(vector_t), intent(in) :: FwdModelExtra
       integer, intent(in) :: MAF
 
-      real(rt) :: Angle    ! Between PTan and SC in degrees
-      real(rt) :: H        ! magQty%template%phi(.,.) / Angle
+      type(vectorValue_t), pointer :: GPH      ! Geopotential height
       integer :: I, J
       integer :: MagDump   ! Switch level for "mag" switch
       type(vectorValue_t), pointer :: MagQty   ! Magnetic field quantity
       integer :: Me = -1   ! String index for trace cacheing
+      real(rt) :: N(3)     ! Normal to PTan-SC plane (doesn't need to be unit)
       type(vectorValue_t), pointer :: PTan     ! Tangent pressure
-      type(vectorValue_t), pointer :: GPH      ! Geopotential height
+      real(rt) :: PTan_XYZ(3)
+      real(rt) :: R(3)     ! PTan rotated in the PTan-SC plane
       type(vectorValue_t), pointer :: SCVelECR ! Spacecraft Velocity
-      real(rt) :: XYZ(3,2) ! of PTan and SC
+      real(rt) :: SC_XYZ(3)
 
       ! For now, i.e., for UARS, not SMLS, assume the model plane includes
       ! the PTan quantity and the SCVelECR quantity, the latter from which
@@ -469,17 +475,14 @@ contains ! ============= Public Procedures ==========================
               & instrumentModule=config%signals(1)%instrumentModule )
       call to_cart ( (/ pTan%template%geodLat(config%referenceMIF,MAF), &
                      &  pTan%template%lon(config%referenceMIF,MAF), 0.0_rt /), &
-                     &  xyz(:,1) )
+                     &  pTan_xyz )
       scVelECR => GetQuantityForForwardModel ( fwdModelExtra, noError=.false., &
               & quantityType=l_scVelECR, config=config )
       call to_cart ( (/ scVelECR%template%geodLat(config%referenceMIF,MAF), &
                      &  scVelECR%template%lon(config%referenceMIF,MAF), 0.0_rt /), &
-                     &  xyz(:,2) )
-      ! Make XYZ vectors unit length.
-      forall ( i = 1:2 ) &
-        & xyz(:,i) = xyz(:,i) / sqrt ( dot_product ( xyz(:,i),xyz(:,i) ) )
-      ! Get the angle between pTan and spacecraft position.
-      angle = rad2deg * acos ( dot_product ( xyz(:,1),xyz(:,2) ) )
+                     &  sc_xyz )
+      ! Compute normal to PTan-SC plane (doesn't need to be unit normal)
+      n = cross(pTan_xyz, sc_xyz )
       ! Make sure geolocation fields are the same shapes.
       call same_shape ( magQty%template%phi, magQty%template%geodLat, &
         & "magQty%template%GeodLat", moduleName )
@@ -488,11 +491,10 @@ contains ! ============= Public Procedures ==========================
       ! Compute magQty geodLat and Lon.
       do i = 1, size(magQty%template%phi,1)
         do j = 1, size(magQty%template%phi,2)
-          h = magQty%template%phi(i,j) / angle
-          magQty%template%geodLat(i,j) = pTan%template%geodLat(i,j) + &
-            & h * ( scVelECR%template%geodLat(i,j) - pTan%template%geodLat(i,j) )
-          magQty%template%lon(i,j) = pTan%template%lon(i,j) + &
-            & h * ( scVelECR%template%lon(i,j) - pTan%template%lon(i,j) )
+          ! Rotate PTan_xyz by magQty%template%phi(i,j) degrees about N giving R
+          call rotate_3d ( pTan_xyz, magQty%template%phi(i,j) * deg2rad, n, r )
+          magQty%template%geodLat(i,j) = geocToGeodLat ( asin(r(3)) ) * rad2deg
+          magQty%template%lon(i,j) = atan2(r(2),r(1)) * rad2deg
         end do
       end do
       ! Compute the magnetic field at geolocations in magQty.
@@ -504,7 +506,7 @@ contains ! ============= Public Procedures ==========================
         GPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_GPH, config=config )
         call usingMagneticModel ( magQty, GPH, config%where, MAF=MAF )
-        call output( 'Magnetic field computed', advance='yes' )
+!        call output( 'Magnetic field computed', advance='yes' )
       end if
       magDump = switchDetail(switches,'mag')
       if ( magDump > -1 ) &
@@ -884,6 +886,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.77  2014/11/04 01:56:51  vsnyder
+! Revised computation of magnetic field geolocations
+!
 ! Revision 2.76  2014/10/14 21:40:12  pwagner
 ! uars magnetic field needs GPH qty
 !
