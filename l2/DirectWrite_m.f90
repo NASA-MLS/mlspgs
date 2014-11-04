@@ -25,18 +25,18 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! so instead write them out chunk-by-chunk
 
   use allocate_deallocate, only: allocate_test
-  use highoutput, only: beverbose, outputnamedvalue
+  use highoutput, only: beVerbose, LetsDebug, outputNamedValue
   use init_tables_module, only: l_pressure, l_zeta, &
     & l_l2gp, l_l2aux, l_l2dgg, l_l2fwm
-  use MLScommon, only: defaultundefinedvalue, MLSfile_t
-  use MLSkinds, only: rv
-  use MLSmessagemodule, only: MLSmessage, MLSmsg_error, MLSmsg_warning
-  use MLSfiles, only: hdfversion_4, hdfversion_5, dump, MLS_exists, &
+  use MLSCommon, only: defaultundefinedvalue, MLSfile_t
+  use MLSKinds, only: rv
+  use MLSMessagemodule, only: MLSmessage, MLSmsg_error, MLSmsg_warning
+  use MLSFiles, only: hdfversion_4, hdfversion_5, dump, MLS_exists, &
     & MLS_closefile, MLS_openfile
-  use MLSfinds, only: findfirst
-  use MLShdfeos, only: MLS_swath_in_file
-  use MLSl2options, only: writefileattributes
-  use MLSstringlists, only: switchdetail
+  use MLSFinds, only: findfirst
+  use MLSHDFEOS, only: MLS_swath_in_file
+  use MLSL2options, only: writefileattributes
+  use MLSStringlists, only: switchdetail
   use output_m, only: blanks, output
   use PCFHdr, only: GlobalAttributes
   use string_table, only: get_string
@@ -216,7 +216,7 @@ contains ! ======================= Public Procedures =========================
     logical, intent(in), optional :: lowerOverlap
     logical, intent(in), optional :: upperOverlap
     ! Local variables
-    ! logical :: DeeBug
+    logical :: DeeBug
     logical :: alreadyThere
     integer :: FIRSTINSTANCE
     integer :: GRANDTOTALINSTANCES
@@ -229,6 +229,7 @@ contains ! ======================= Public Procedures =========================
     logical :: verbose
     ! Executable
     verbose = BeVerbose ( 'direct', -1 )
+    deebug = LetsDebug ( 'direct', 0 )
     if ( present(createSwath) ) then
       alreadyThere = mls_exists( L2GPFile%name ) == 0
       if ( .not. alreadyThere ) &
@@ -306,6 +307,16 @@ contains ! ======================= Public Procedures =========================
       call output('  TotalProfs: ', advance='no')
       call output(TotalProfs, advance='yes')
       call dump(l2gp, Details=-1)
+      call output('instanceOffset: ', advance='no')
+      call output(quantity%template%instanceOffset, advance='yes')
+      call output('noInstances: ', advance='no')
+      call output(quantity%template%noInstances, advance='yes')
+      call output('noInstancesLowerOverlap: ', advance='no')
+      call output(quantity%template%noInstancesLowerOverlap, advance='yes')
+      call output('noInstancesUpperOverlap: ', advance='no')
+      call output(quantity%template%noInstancesUpperOverlap, advance='yes')
+      call output('grandTotalInstances: ', advance='no')
+      call output(quantity%template%grandTotalInstances, advance='yes')
     endif
     if ( verbose ) call outputNamedValue( 'DW L2GP qty name', trim(sdName) )
     call usleep ( delay ) ! Should we make this parallel%delay?
@@ -1090,16 +1101,21 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in), optional    :: offset
     integer, intent(in), optional    :: firstInstance
     integer, intent(in), optional    :: lastInstance
+
     ! Local variables
+    logical :: DEEBUG
+    integer :: firstProfile
+    real(rv) :: HUGERGP
+    integer :: lastProfile
     integer :: noSurfsInL2GP
     integer :: noFreqsInL2GP
+    integer :: nProfiles
     integer :: useFirstInstance
     integer :: useLastInstance
-    integer :: firstProfile
-    integer :: lastProfile
-    integer :: nProfiles
-
-    real(rv) :: HUGERGP
+    logical :: verbose
+    ! Executable
+    verbose = BeVerbose ( 'direct', -1 )
+    deebug = LetsDebug ( 'direct', 0 )
     
     hugeRgp = real ( huge(0.0_rgp), rv )
 
@@ -1225,9 +1241,13 @@ contains ! ======================= Public Procedures =========================
     else
       l2gp%AscDescMode(firstProfile:lastProfile) = 0
     endif
-    if ( DEEBUG ) print *, 'Vector converted to l2gp; name: ', trim(name)
-    if ( DEEBUG ) print *, 'firstProfile, lastProfile: ', firstProfile, lastProfile
-    if ( DEEBUG ) print *, 'useFirstInstance, useLastInstance: ', useFirstInstance, useLastInstance
+    if ( DEEBUG ) then
+      print *, 'Vector converted to l2gp; name: ', trim(name)
+      print *, 'firstProfile, lastProfile: ', firstProfile, lastProfile
+      print *, 'useFirstInstance, useLastInstance: ', useFirstInstance, useLastInstance
+      call outputNamedValue ( 'lons', l2gp%longitude(firstProfile:lastProfile) )
+      call outputNamedValue ( 'lats', l2gp%latitude(firstProfile:lastProfile) )
+    endif
   end subroutine vectorValue_to_l2gp
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -1276,6 +1296,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.64  2014/11/04 01:25:41  pwagner
+! May switch on verbose, deebug modes with -Sdirect[n]
+!
 ! Revision 2.63  2014/10/02 17:22:23  pwagner
 ! DirectWrite now responsible for writing MiscNotes for l2gp files
 !
