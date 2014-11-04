@@ -22,7 +22,7 @@ module OutputAndClose ! outputs all data from the Join module to the
     & mls_closefile, mls_exists, mls_inqswath, mls_openfile, &
     & mls_sfstart, mls_sfend, &
     & split_path_name, unsplitname
-  use MLSHDF5, only: MakeHDF5Attribute
+  use MLSHDF5, only: GetHDF5Attribute, MakeHDF5Attribute
   use MLSL2Options, only: checkpaths, &
     & default_hdfversion_write, l2cfnode, &
     & specialdumpfile, skipdirectwrites, toolkit, MLSMessage, writefileattributes
@@ -82,7 +82,7 @@ contains ! =====     Public Procedures     =============================
     use hgrid, only: createhgridfromMLScfinfo, dealwithobstructions
     use hgridsdatabase, only: hgrid_t, &
       & addhgridtodatabase, dump
-    use init_tables_module, only: f_attrName, f_attrValue, &
+    use init_tables_module, only: f_additional, f_attrName, f_attrValue, &
       & f_destroy, f_dontpack, f_file, f_hdfversion, &
       & f_metadataonly, f_metaname, f_moleculesecondderivatives, f_overlaps, &
       & f_packed, f_quantities, f_time, f_type, f_writecountermaf, &
@@ -134,6 +134,7 @@ contains ! =====     Public Procedures     =============================
 
     type (MLSChunk_T) ::  AllChunks     ! in one
     logical, parameter :: DEBUG = .false.
+    logical :: additional
     integer :: delay                    ! how many microseconds to sleep
     logical :: DESTROY
     integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
@@ -211,6 +212,7 @@ contains ! =====     Public Procedures     =============================
       meta_name = ''
       writeCounterMAF = .false.
       got = .false.
+      additional = .false.
 
       call get_label_and_spec ( son, name, key )
       L2CFNODE = key
@@ -437,6 +439,8 @@ contains ! =====     Public Procedures     =============================
           select case ( field_index )   ! Field name
           case ( f_file )
             call get_string ( sub_rosa(subtree(2,gson)), file_base, strip=.true. )
+          case ( f_additional )
+            additional = get_boolean( gson )
           case ( f_attrName )
             call get_string ( sub_rosa(subtree(2,gson)), meta_name, strip=.true. )
           case ( f_attrValue )
@@ -451,15 +455,15 @@ contains ! =====     Public Procedures     =============================
         select case ( output_type )
         case ( l_l2aux ) ! --------------------- Writing it to l2aux files -----
           call writeAttributeToL2AUX ( file_base, meta_name, strValue, &
-            & filedatabase )       
+            & filedatabase, additional )       
         case ( l_l2gp ) ! --------------------- Writing it to l2gp files -----
           call writeAttributeToL2GP ( file_base, meta_name, strValue, &
             & output_type, mlspcf_l2gp_start, mlspcf_l2gp_end, &
-            & filedatabase )       
+            & filedatabase, additional )       
         case ( l_l2dgg ) ! --------------------- Writing it to l2dgg files -----
           call writeAttributeToL2GP ( file_base, meta_name, strValue, &
             & output_type, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
-            & filedatabase )       
+            & filedatabase, additional )       
         case default
           call MLSMessage( MLSMSG_Warning, ModuleName, &
           & 'Not yet able to write file attributes to this file type' )
@@ -533,7 +537,6 @@ contains ! =====     Public Procedures     =============================
     use mlscommon, only: l2metadata_t
     use l2gpdata, only: l2gpnamelen, maxswathnamesbufsize
     use MLSHDF5, only: getallhdf5dsnames
-    use MLSHDFeos, only: 
     use MLSPCF2, only: MLSPCF_l2dgm_end, MLSPCF_l2dgm_start, MLSPCF_l2gp_end, &
       & MLSPCF_l2gp_start, MLSPCF_l2dgg_start, MLSPCF_l2dgg_end, &
       & MLSPCF_mcf_l2dgm_start, MLSPCF_mcf_l2dgg_start, &
@@ -1159,44 +1162,31 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  writeAttributeToL2AUX  -----
   subroutine writeAttributeToL2AUX ( fileName, attrName, attrValue, &
-    & filedatabase )
+    & filedatabase, additional )
     ! Do the work of outputting specified attribute to a named l2aux file
     use HDF5, only: H5GClose_f, H5GOpen_f
-    use init_tables_module, only: f_overlaps, f_quantities
     use intrinsic, only: l_hdf
-    use l2auxdata, only: l2auxdata_t, writel2auxdata
-    use l2gpdata, only: l2gpnamelen
-    use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
+    use MLSCommon, only: mlsfile_t, filenamelen
     use MLSPcf2, only: mlspcf_l2dgm_start, mlspcf_l2dgm_end
-    use MLSStringlists, only: switchdetail
-    use SDPToolkit, only: pgs_s_success
-    use toggles, only: switches
-    use tree, only: decoration, nsons, subtree
+    use output_m, only: output
     ! Args
     character(len=*), intent(inout)         :: fileName ! according to l2cf
     character(len=*), intent(in)            :: attrName ! according to l2cf
     character(len=*), intent(in)            :: attrValue ! according to l2cf
     type(MLSFile_T), dimension(:), pointer  :: filedatabase
+    logical, intent(in)                     :: additional
     ! Local variables
-    integer :: DB_index
     logical, parameter :: DEBUG = .false.
-    integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     character (len=FileNameLen) :: FullFilename
     integer :: FileHandle
-    integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
-    integer :: IN_FIELD_NO              ! Index of sons of assign vertex
-    integer :: Metadata_error
-    integer :: Numquantitiesperfile     ! < MAXQUANTITIESPERFILE
     type(MLSFile_T), pointer :: outputFile
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     character (len=132) :: path
-    character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: &
-      &                           QuantityNames  ! From "quantities" field
     integer :: ReturnStatus
-    integer :: SON                      ! Of Root -- spec_args or named node
+    logical :: skipIfAlreadyThere
+    character (len=132) :: str
     integer :: Version
-    type(L2Metadata_T) :: l2metaData
 
     ! Executable
     Version = 1
@@ -1230,28 +1220,34 @@ contains ! =====     Public Procedures     =============================
     endif
     if ( .not. outputFile%stillOpen ) &
       & call mls_openFile( outputFile, returnStatus )
-    call h5gopen_f( outputFile%FileID%f_id, '/', outputFile%FileID%grp_id, returnStatus )
+    call h5gopen_f( outputFile%FileID%f_id, '/', outputFile%FileID%grp_id, &
+      & returnStatus )
+    if ( .not. additional ) then
+      str = attrValue
+      skipIfAlreadyThere = .true.
+    else
+      call GetHDF5Attribute ( outputFile%FileID%grp_id, attrname, str )
+      str = trim(str) // attrValue
+      skipIfAlreadyThere = .false.
+      call output( 'Updated glob attr to ' // trim(str), advance='yes' )
+    endif
     call MakeHDF5Attribute( outputFile%FileID%grp_id, &
-      & attrName, attrValue, .true. )
+      & attrName, str, skip_if_already_there=skipIfAlreadyThere )
     call h5gclose_f( outputFile%FileID%grp_id, returnStatus )
   end subroutine writeAttributeToL2AUX
 
   ! ---------------------------------------------  writeAttributeToL2GP  -----
   subroutine writeAttributeToL2GP ( fileName, attrName, attrValue, &
     & output_type, pcf_start, pcf_end, &
-    & filedatabase )
+    & filedatabase, additional )
     ! Do the work of outputting specified attribute to a named l2gp file
     use HDFEOS5, only: MLS_Chartype
-    use hgridsdatabase, only: hgrid_t
-    use init_tables_module, only: f_overlaps, f_quantities
+    use HDF5, only: h5f_acc_rdwr_f, h5fclose_f, h5fopen_f, h5gclose_f, h5gopen_f
     use intrinsic, only: l_swath, lit_indices
-    use l2gpdata, only: l2gpdata_t, l2gpnamelen, writel2gpdata
-    use MLSCommon, only: mlsfile_t, filenamelen, l2metadata_t
-    use MLSHDFEOS, only: MLS_EHWRGlatt
-    use MLSStringlists, only: switchdetail
-    use SDPToolkit, only: pgs_s_success
-    use toggles, only: switches
-    use tree, only: decoration, nsons, subtree
+    use MLSCommon, only: MLSFile_t, fileNameLen
+    use MLSHDF5, only: MakeHDF5Attribute
+    use MLSHDFEOS, only: HE5_EHRDGlAtt, MLS_EHWRGlatt
+    use output_m, only: output
     ! Args
     character(len=*), intent(inout)         :: fileName ! according to l2cf
     character(len=*), intent(in)            :: attrName ! according to l2cf
@@ -1260,27 +1256,22 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in)                     :: pcf_start
     integer, intent(in)                     :: pcf_end
     type(MLSFile_T), dimension(:), pointer  :: filedatabase
+    logical, intent(in)                     :: additional
 
     ! Local variables
-    integer :: DB_index
     logical, parameter :: DEBUG = .false.
-    integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     character (len=FileNameLen) :: FullFilename
     integer :: FileHandle
-    integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
-    integer :: IN_FIELD_NO              ! Index of sons of assign vertex
-    integer :: Metadata_error
-    integer :: Numquantitiesperfile     ! < MAXQUANTITIESPERFILE
     type(MLSFile_T), pointer :: outputFile
     character(len=8) :: OUTPUTTYPESTR   ! 'l2gp', 'l2aux', etc.
     character (len=132) :: path
-    character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: &
-      &                           QuantityNames  ! From "quantities" field
     integer :: ReturnStatus
-    integer :: SON                      ! Of Root -- spec_args or named node
+    ! logical :: skipIfAlreadyThere
+    character (len=132) :: str
     integer :: Version
-    type(L2Metadata_T) :: l2metaData
+    ! Treat as plain hdf
+    logical, parameter :: plainHDF = .true.
 
     ! Executable
     Version = 1
@@ -1312,11 +1303,58 @@ contains ! =====     Public Procedures     =============================
           & PCBottom=pcf_start, PCTop=pcf_end)
       endif
     endif
+    if ( plainHDF .and. additional ) then
+      call dump ( outputFile, details=1 )
+      ! Due to problems extending the hdfeos implementation of file-level
+      ! attributes, we resort to the plain vanilla hdf5 api
+      ! We first close it as an hdfeos file and reopen it as plain hdf5
+      if ( outputFile%stillOpen ) then
+        call mls_closeFile( outputFile, returnStatus )
+        if ( returnStatus /= 0 ) call MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'Unable to hdfeos_close ' // trim(FullFilename) )
+      endif
+      call h5fopen_f ( trim(outputFile%name), H5F_ACC_RDWR_F, &
+        & outputFile%FileID%f_id, returnStatus )
+      if ( returnStatus /= 0 ) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'Unable to open ' // trim(FullFilename) )
+      call h5gopen_f( outputFile%FileID%f_id, &
+        & '/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES', outputFile%FileID%grp_id, &
+        & returnStatus )
+      if ( returnStatus /= 0 ) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'Unable to open group /HDFEOS/ADDITIONAL/FILE_ATTRIBUTES for ' // &
+          & trim(FullFilename) )
+      outputFile%FileID%sd_id = 0 ! To ensure we read from the grp_id
+      call dump ( outputFile, details=1 )
+      if ( additional ) then
+        call GetHDF5Attribute ( outputFile, attrname, str )
+        str = trim(str) // attrValue
+        call output( 'Updated glob attr to ' // trim(str), advance='yes' )
+      else
+        str = attrValue
+        call output( 'Set glob attr to ' // trim(str), advance='yes' )
+      endif
+      call MakeHDF5Attribute( outputFile%FileID%grp_id, &
+        & attrName, str, skip_if_already_there = .false. )
+      call h5gclose_f( outputFile%FileID%grp_id, returnStatus )
+      if ( returnStatus /= 0 ) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'Unable to close group ' // trim(FullFilename) )
+      call h5fclose_f ( outputFile%FileID%f_id, returnStatus )
+      if ( returnStatus /= 0 ) call MLSMessage(MLSMSG_Warning, ModuleName, &
+          & 'Unable to close  ' // trim(FullFilename) )
+      return
+    endif
     if ( .not. outputFile%stillOpen ) &
       & call mls_openFile( outputFile, returnStatus )
+    if ( .not. additional ) then
+      str = attrValue
+    else
+      returnStatus = HE5_EHRDGlAtt ( outputFile%FileID%f_id, attrName, str )
+      str = trim(str) // attrValue
+      call output( 'Updated l2gp glob attr to ' // trim(str), advance='yes' )
+    endif
     returnStatus = mls_EHwrglatt( outputFile%FileID%f_id, &
-     & attrName, MLS_CHARTYPE, 1, &
-     &  attrValue )
+     & attrName, MLS_CharType, 1, &
+     &  str )
   end subroutine writeAttributeToL2GP
 
   ! ---------------------------------------------  OutputL2AUX  -----
@@ -2077,6 +2115,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.189  2014/11/04 01:23:50  pwagner
+! Worked around hdfeos bug in implementing /additional for swath file attributes
+!
 ! Revision 2.188  2014/10/13 18:10:01  pwagner
 ! Copying a swath also copies AprioriAttributes
 !
