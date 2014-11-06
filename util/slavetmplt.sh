@@ -25,13 +25,19 @@
 # and then launch the regular mlsl2 binary
 
 #---------------------------- add_option
-# To prevent adding the same option if it's already part
+# Accumulate a list of commandline options one-by-one
+# Useful to prevent adding the same option if it's already present
 # usage:
 # instead of: otheropts="--skipRetrieval $otheropts"
-# try: otheropts=`add_option "$otheropts" --skipRetrieval`
+# e.g.: otheropts=`add_option "$otheropts" --skipRetrieval`
+
 # By default the new options get added on at the end, each separated by a space
-# To add them on at the front, supply a third arg
-# e.g.: otheropts=`add_option "$otheropts" --skipRetrieval to_front`
+# To add them on at the front, use prepend_option
+
+# Be especially careful if you plan to supply an auxiliary arg,
+# lest it duplicate an existing one
+# e.g.: otheropts=`add_option "--maxFailuresPerChunk 1" "$otheropts" `
+# e.g.: otheropts=`add_option "$otheropts"  "--maxFailuresPerChunk 1"`
 add_option()
 {
    # How many args?
@@ -45,11 +51,41 @@ add_option()
         elif [  "$mayday" != "" ]
         then
           echo $1
-        elif [ $# -gt 2 ]
-        then
-          echo "$2 $1"
         else
           echo "$1 $2"
+        fi
+      fi
+}
+
+#---------------------------- prepend_option
+# Accumulate a list of commandline options one-by-one
+# Useful to prevent adding the same option if it's already present
+# usage:
+# instead of: otheropts="--skipRetrieval $otheropts"
+# e.g.: otheropts=`prepend_option "$otheropts" --skipRetrieval`
+
+# By default the new options get added on at the beginning, each separated by a space
+# To add them on at the end, use add_option
+
+# Be especially careful if you plan to supply an auxiliary arg,
+# lest it duplicate an existing one
+# e.g.: otheropts=`prepend_option "--maxFailuresPerChunk 1" "$otheropts" `
+# e.g.: otheropts=`prepend_option "$otheropts"  "--maxFailuresPerChunk 1"`
+prepend_option()
+{
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+      # Does the option to be added duplicate one already present?
+        mayday=`echo "$1" | grep -e "$2"`
+        if [  "$1" = "" ]
+        then
+          echo $2
+        elif [  "$mayday" != "" ]
+        then
+          echo $1
+        else
+          echo "$2 $1"
         fi
       fi
 }
@@ -239,18 +275,16 @@ while [ "$more_opts" = "yes" ] ; do
 	   shift
        ;;
     --state* )
-       otheropts=`add_option "$otheropts" $1`
-       otheropts=`add_option "$otheropts" $2`
+       otheropts=`add_option "$otheropts" "$1 $2"`
        echo "Adding argument to fill skipped retrievals: $2" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        shift
        shift
        ;;
     --stdout )
-       otheropts=`add_option "$otheropts" $1`
+       otheropts=`add_option "$otheropts" "$1 $UNBUFFERED"`
        # Note that we can't have all the slaves and masters directing
        # unbuffered stdout to $2
-       otheropts=`add_option "$otheropts" $UNBUFFERED`
        echo "Adding argument to buffer stdout to $UNBUFFERED" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        shift
@@ -290,24 +324,21 @@ while [ "$more_opts" = "yes" ] ; do
        shift
        ;;
     --maxFailuresPerCh* )
-       otheropts=`add_option "$otheropts" $1`
-       echo "Adding argument to set max falures per chunk" >> $LOGFILE
+       otheropts=`add_option "$otheropts" "$1 $2"`
+       echo "Adding arguments to set max failures per chunk: $1 $2" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        shift
-       otheropts=`add_option "$otheropts" $1`
        shift
        ;;
     --maxFailuresPerM* )
-       otheropts=`add_option "$otheropts" $1`
-       echo "Adding argument to set max falures per machine" >> $LOGFILE
+       otheropts=`add_option "$otheropts" "$1 $2"`
+       echo "Adding arguments to set max failures per machine: $1 $2" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        shift
-       otheropts=`add_option "$otheropts" $1`
        shift
        ;;
     --lac* )
-       otheropts=`add_option "$otheropts" $1`
-       otheropts=`add_option "$otheropts" $2`
+       otheropts=`add_option "$otheropts" "$1 $2"`
        echo "Adding arguments to reduce output: $1 $2" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        shift
@@ -319,8 +350,7 @@ while [ "$more_opts" = "yes" ] ; do
        then
          sed 's/chunk=/#chunk=/; s/submit=/#submit=/' "$2" > "$OPTSFILE"
        fi
-       otheropts=`add_option "$otheropts" $1`
-       otheropts=`add_option "$otheropts" "$OPTSFILE"`
+       otheropts=`add_option "$otheropts" "$1 $OPTSFILE"`
        echo "Adding arguments to read opts from file: $1 $OPTSFILE" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        # Are we setting to run in background?
@@ -334,8 +364,7 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     --set* )
        # set one cmdline opt
-       otheropts=`add_option "$otheropts" $1`
-       otheropts=`add_option "$otheropts" $2`
+       otheropts=`add_option "$otheropts" "$1 $2"`
        echo "Setting one cmdline opt: $1 $2" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        shift
@@ -343,8 +372,7 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     --versid* )
        # set current version id
-       otheropts=`add_option "$otheropts" $1`
-       otheropts=`add_option "$otheropts" $2`
+       otheropts=`add_option "$otheropts" "$1 $2"`
        echo "Setting current version id: $1 $2" >> $LOGFILE
        echo "$otheropts" >> $LOGFILE
        shift
@@ -504,6 +532,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.33  2014/09/29 22:32:00  pwagner
+# pgepid obtained from $! mechanism
+#
 # Revision 1.32  2014/09/12 22:24:48  pwagner
 # Enhanced diagnostic logging
 #
