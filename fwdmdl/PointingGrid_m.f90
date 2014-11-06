@@ -58,6 +58,7 @@ contains
     integer, intent(out) :: Lun              ! Logical unit number to read it
 
     logical :: Exist, Opened
+    character(127) :: IOMSG
     integer :: Status
 
     do lun = 20, 99
@@ -67,9 +68,9 @@ contains
     if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & "No logical unit numbers available" )
     open ( unit=lun, file=filename, status='old', form='formatted', &
-      & access='sequential', iostat=status )
+      & access='sequential', iostat=status, iomsg=iomsg )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "Unable to open pointing grid file " // Filename )
+      & "Unable to open pointing grid file " // Filename // ": " // trim(iomsg) )
   end subroutine Open_Pointing_Grid_File
 
   ! ------------------------------------  Read_Pointing_Grid_File  -----
@@ -94,13 +95,16 @@ contains
     integer, pointer, dimension(:) :: HowManySignals ! per radiometer batch
     integer :: HowManyRadiometers            ! gotten by counting the file
     integer :: I, N                          ! Loop inductor, subscript, temp
+    character(127) :: IOMSG
     character(len=MaxSigLen) :: Line         ! From the input file
+    integer :: LineNo                        ! In the input file
     integer :: Me = -1                       ! String index for trace
     integer :: NumHeights                    ! Read from the input
     integer :: Sideband                      ! Specified in a signal
     integer :: SignalCount                   ! From Parse_Signal
     integer :: Status                        ! From read or allocate
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
+    character(3) :: Which                    ! Which I/O statement caused error
 
     call trace_begin ( me, "Read_Pointing_Grid_File", where, &
       & cond=toggle(gen) .and. levels(gen) > 0 )
@@ -114,7 +118,9 @@ contains
       & moduleName )
 
     ! First, read through the file and count how much stuff is there.
-    read ( lun, '(A)', end=98, err=99, iostat=status ) line
+    which = ' A ' ! in case of error
+    lineNo = 1
+    read ( lun, '(A)', end=98, err=99, iostat=status, iomsg=iomsg ) line
     howManyRadiometers = 0
 outer1: do
       howManyRadiometers = howManyRadiometers + 1
@@ -134,26 +140,35 @@ outer1: do
       end if
       howManySignals(howManyRadiometers) = 0
       nullify(signal_indices)
+      line = adjustl(line)
       do
-        line = adjustl(line)
         call parse_signal ( line, signal_indices, onlyCountEm = signalCount )
         if ( signalCount == 0 ) call MLSMessage ( MLSMSG_Error, &
           & moduleName, "Improper signal specification: " // trim(line) )
         howManySignals(howManyRadiometers) = &
           & howManySignals(howManyRadiometers) + signalCount
-        read ( lun, '(A)', end=98, err=99, iostat=status ) line
+        which = ' B ' ! in case of error
+        lineNo = lineNo + 1
+        read ( lun, '(A)', end=98, err=99, iostat=status, iomsg=iomsg ) line
+        line = adjustl(line)
         if ( verify(line(1:1), ' 0123456789.+-') == 0 ) EXIT ! a number
       end do
-      read ( line, *, err=99 ) Frequency
+      which = ' C ' ! in case of error
+      read ( line, *, err=99, iostat=status, iomsg=iomsg ) Frequency
       howManyGrids(howManyRadiometers) = 0
       do
-        read ( lun, '(A)', err=99, iostat=status ) line
+        which = ' D ' ! in case of error
+        lineNo = lineNo + 1
+        read ( lun, '(A)', err=99, iostat=status, iomsg=iomsg ) line
         if ( status < 0 ) EXIT outer1
         line = adjustl(line)
         if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) EXIT ! not a number
         howManyGrids(howManyRadiometers) = howManyGrids(howManyRadiometers) + 1
-        read ( line, *, err=99 ) height, numHeights
-        read ( lun, *, err=99, end=98 ) ( height, i = 1, numHeights )
+        which = ' E ' ! in case of error
+        read ( line, *, err=99, iostat=status, iomsg=iomsg ) height, numHeights
+        which = ' F ' ! in case of error
+        lineNo = lineNo + 1
+        read ( lun, *, err=99, end=98, iostat=status, iomsg=iomsg ) ( height, i = 1, numHeights )
       end do
     end do outer1
 
@@ -162,7 +177,9 @@ outer1: do
     allocate ( pointingGrids(howManyRadiometers), stat=status )
     call test_allocate ( status, moduleName, "PointingGrids", &
       & uBounds = howManyRadiometers, elementSize = storage_size(pointingGrids) / 8 )
-    read ( lun, '(A)', iostat=status ) line  ! Read the first radiometer spec
+    which = ' G ' ! in case of error
+    lineNo = 1
+    read ( lun, '(A)', iostat=status, iomsg=iomsg ) line  ! Read the first radiometer spec
     if ( status > 0 ) go to 99
     howManyRadiometers = 0
 outer2: do
@@ -175,6 +192,7 @@ outer2: do
       n = 0 ! Counter in pointingGrids(howManyRadiometers)%signals
       nullify ( signal_indices )
       nullify ( channels )
+      line = adjustl(line)
       do
         call parse_signal ( line, signal_indices, &
           & sideband=sideband, channels=channels )
@@ -187,13 +205,17 @@ outer2: do
           pointingGrids(howManyRadiometers)%signals(n)%channels => channels
         end do
         call deallocate_test ( signal_indices, 'Signal_Indices', moduleName )
-        read ( lun, '(A)', err=99, iostat=status ) line
+        which = ' H ' ! in case of error
+        lineNo = lineNo + 1
+        read ( lun, '(A)', err=99, iostat=status, iomsg=iomsg ) line
+        line = adjustl(line)
         if ( verify(line(1:1), ' 0123456789.+-') == 0 ) EXIT ! a number
       end do
       !??? Should the centerFrequency be gotten from the signals database?
       !??? Maybe not.  The one in the pointing grid file appears to have been
       !??? Doppler shifted.
-      read ( line, *, err=99, iostat=status ) &
+      which = ' I ' ! in case of error
+      read ( line, *, err=99, iostat=status, iomsg=iomsg ) &
         & pointingGrids(howManyRadiometers)%centerFrequency
       allocate ( pointingGrids(howManyRadiometers)% &
         & oneGrid(howManyGrids(howManyRadiometers)), stat=status )
@@ -202,18 +224,24 @@ outer2: do
         & elementSize = storage_size(pointingGrids(howManyRadiometers)%oneGrid) / 8 )
       n = 0
       do
-        read ( lun, '(A)', err=99, iostat=status ) line
+        which = ' J ' ! in case of error
+        lineNo = lineNo + 1
+        read ( lun, '(A)', err=99, iostat=status, iomsg=iomsg ) line
+        line = adjustl(line)
         if ( status < 0 ) EXIT outer2
         if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) EXIT ! not a number
         n = n + 1
-        read ( line, *, iostat=status, err=99 ) height, numHeights
+        which = ' K ' ! in case of error
+        read ( line, *, iostat=status, err=99, iomsg=iomsg ) height, numHeights
         if ( status < 0 ) EXIT outer2
         if ( status /= 0 ) goto 99
         pointingGrids(howManyRadiometers)%oneGrid(n)%height = height
         call allocate_test ( &
           & pointingGrids(howManyRadiometers)%oneGrid(n)%frequencies, &
           & numHeights, "PointingGrids(?)%oneGrid(?)%frequencies", moduleName )
-        read ( lun, *, iostat=status, err=99, end=98 ) &
+        which = ' L ' ! in case of error
+        lineNo = lineNo + 1
+        read ( lun, *, iostat=status, err=99, end=98, iomsg=iomsg ) &
           & pointingGrids(howManyRadiometers)%oneGrid(n)%frequencies
         ! The frequencies are relative to the band center.  Make them
         ! absolute
@@ -230,11 +258,14 @@ outer2: do
     call trace_end ( "Read_Pointing_Grid_File", &
       & cond=toggle(gen) .and. levels(gen) > 0 )
 
-    Return
+    return
 
   98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
-  99 call io_error ( "While reading the pointing grid file", status )
-     call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
+  99 write ( line, '(a,i0)' ) ' at line ', lineNo
+     call io_error ( "While reading the pointing grid file" // trim(line) // &
+                   & ": " // which // trim(iomsg), status )
+     call MLSMessage ( MLSMSG_Error, moduleName, "Input error" // trim(line) //&
+                     & which // trim(iomsg))
   end subroutine Read_Pointing_Grid_File
 
   ! -----------------------------------  Close_Pointing_Grid_File  -----
@@ -318,6 +349,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.14  2014/09/05 20:51:33  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.13  2013/08/30 03:56:23  vsnyder
 ! Revise use of trace_begin and trace_end
 !
