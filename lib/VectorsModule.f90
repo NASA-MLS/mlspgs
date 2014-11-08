@@ -1151,25 +1151,12 @@ contains ! =====     Public Procedures     =============================
     ! Executable
     ! In case it is already allocated, must deallocate Value
     ! before changing its allocation name
-    call deallocate_test ( value%value1, &
-      & trim(value%AllocationName), moduleName )
+    call DestroyVectorQuantityValue ( value, &
+      & forWhom=trim(moduleName) // '%CreateVectorValue' )
     valueSize = max( 1, value%template%noChans * &
         & value%template%noSurfs * &
         & value%template%noInstances )
     call destroyVectorQuantityMask ( value )
-    if ( associated(value%value1) .and. associated(value%values) .and. &
-         associated(value%value3) ) then
-      if ( size(value%value1) == &
-        & value%template%noChans * &
-          & value%template%noSurfs * &
-          & value%template%noInstances .and. &
-        & size(value%values,1) == value%template%noChans * &
-          & value%template%noSurfs .and. &
-        & size(value%values,2) == value%template%noInstances .and. &
-        & size(value%value3,1) == value%template%noChans .and. &
-          & size(value%value3,2) == value%template%noSurfs .and. &
-          & size(value%value3,3) == value%template%noInstances ) return
-    end if
     if ( present(where) ) then
       value%AllocationName = trim(what) // "%values"
     else
@@ -3319,6 +3306,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.194  2014/10/02 22:08:35  vsnyder
+! Default initialize all components of Vector*_T
+!
 ! Revision 2.193  2014/09/05 00:20:54  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Remove some
 ! debugging cruft that shouldn't have been checked in.
