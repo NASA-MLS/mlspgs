@@ -1,0 +1,226 @@
+\documentclass[11pt]{article}
+
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\newcommand{\docname}{wvs-121}
+\newcommand{\docdate}{30 Oct 2014}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\parindent 0pt
+\parskip 6pt
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Paul, Bill, Mike\\
+Subject: \>Three-dimensional rotation about a specified axis\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-120} \\
+\end{tabbing}
+
+\vspace*{-30pt}
+
+\section*{Application to computing magnetic field}
+
+In the case that the magnetic field is needed in a direction that is not
+in the orbit plane, the angular positions of the points in the magnetic
+field are specified on a great circle that includes PTan and the
+spacecraft position.  To calculate those positions, rotate the unit vector
+in the PTan direction about the normal to the plane containing PTan and
+the spacecraft position by the the angles $\phi$ specified in the HGrid
+for the magnetic field.
+
+There are (at least) two ways to calculate these positions.
+
+First, let $\hat{S}$ and $\hat{P}$ be unit vectors in the directions of
+the spacecraft and PTan, respectively.  Then the unit vector
+$\hat{\mathbf{n}}$ that is normal to the plane containing them, in the
+right-hand sense, is $\hat{\mathbf{n}} = \hat{S} \times \hat{P}$.  Given
+this vector, a positive rotation of PTan about $\hat{\mathbf{n}}$ rotates
+PTan away from or toward the spacecraft, by an amount given by a value of
+$\phi$ in the XGrid for the magnetic field, depending upon whether $\phi$
+is positive or negative, respectively.
+
+Second, let $\hat{\mathbf{n}}$ be an unit vector along the line of sight
+from the spacraft to PTan.
+\section*{Mathematical formalism for rotation}
+
+Define the completely unsymmetric Levi-Civita symbol in three dimensions
+as
+
+\begin{equation*}
+\epsilon_{ijk} = \left\{ \begin{array}{ll}
++1 & \text{ if } (i,j,k) \text{ is } (1,2,3),\, (2,3,1),\text{ or } (3,1,2) \\
+-1 & \text{ if } (i,j,k) \text{ is } (3,2,1),\, (1,3,2),\text{ or } (2,1,3) \\
+0  & \text{ if } i = j \text{ or } j = k \text{ or } i = k \\
+\end{array} \right. \,.
+\end{equation*}
+
+To rotate a three-dimensional vector $V$ by an angle $\phi$ in a
+right-handed sense about a unit vector $\hat{\mathbf{n}}$, multiply it on
+the left by the matrix
+
+\begin{equation*}
+R_{ij} = \cos\phi\, \delta_{ij} + (1-\cos\phi)\, n_i n_j -
+             \sum_k \sin\phi\, \epsilon_{ijk} n_k \,\,\,\text{or}
+\end{equation*}
+
+where $n_i$ are the coordinates of $\hat{\mathbf{n}}$, $\delta_{ij}$ is
+the Kronecker tensor, $\epsilon_{ijk}$ is the Levi-Civita symbol.  There
+is at most one nonzero in the summation, when $i$, $j$, and $k$ are
+distinct.  This is called the \emph{Rodrigues formula}.  In expanded form,
+$R$ is
+
+\begin{equation*}
+R = \left( \begin{array}{ccc}
+\cos\phi + n_1^2(1-\cos\phi) &
+  n_1 n_2 ( 1 - \cos\phi ) - n_3 \sin\phi &
+    n_1 n_3 ( 1 - \cos\phi ) + n_2 \sin\phi \\
+n_1 n_2 ( 1 - \cos\phi ) + n_3 \sin\phi &
+  \cos\phi + n_2^2(1-\cos\phi) &
+    n_2 n_3 ( 1 - \cos\phi ) - n_1 \sin\phi \\
+n_1 n_3 ( 1 - \cos\phi ) - n_2 \sin\phi &
+  n_2 n_3 ( 1 - \cos\phi ) + n_1 \sin\phi &
+    \cos\phi + n_3^2(1-\cos\phi) \\
+\end{array} \right)
+\end{equation*}
+
+This is derived in {\tt
+http://scipp.ucsc.edu/$\sim$haber/ph216/rotation_12.pdf}.
+
+\section*{Alternative method}
+
+Compute geocentric latitude of the tangent point from its geodetic
+latitude:
+
+\begin{equation*}\begin{split}
+\lambda_{tc} = \,& \sin^{-1} \left(
+ \frac{\sin \lambda_{tg}}
+      { \sqrt{\frac{a^4}{b^4} \cos^2 \lambda_{tg} + \sin^2 \lambda_{tg}} }
+      \right) \\
+\,&\\
+ = \,& \tan^{-1} \left(
+  \frac{\sin \lambda_{tg}}
+       {f^2 \cos \lambda_{tg}} \right) \text{ where } f = \frac{a}b
+      \\
+\,&\\
+ = \,& \sin^{-1} \left(
+  \frac{\tan \lambda_{tg}}
+       {\sqrt{f^2 + \tan^2 \lambda_{tg}}}
+      \right) \\
+\end{split}\end{equation*}
+
+The second method is used in the function {\tt GeodToGeocLat} in the {\tt
+Geometry} module.
+
+Let $\hat{\mathbf{n}}$ be the unit vector in ECR coordinates along the
+line of sight between the instrument and the tangent point, for the same
+MIF.
+
+Let $\phi$ be the increment along the line of sight at which the
+geocentric latitude and longitude are desired.  Compute the longitude of
+that point:
+
+\begin{equation*}\begin{split}
+\mu = \,& \tan^{-1} \left(
+  \frac{\sin \mu_t \cos \lambda_{tc} + n_y \tan \phi}
+       {\cos \mu_t \cos \lambda_{tc} + n_x \tan \phi}
+  \right ) \\
+\,& \\
+ = \,& \tan^{-1} \left(
+  \frac{\sin \mu_t \cos \lambda_{tc} \cos \phi + n_y \sin \phi}
+       {\cos \mu_t \cos \lambda_{tc} \cos \phi + n_x \sin \phi}
+  \right ) \,, \\
+\end{split}\end{equation*}
+
+the latter being better behaved for $\phi \approx \frac\pi2$.
+Compute the geocentric latitude of that point:
+
+\begin{equation*}\begin{split}
+\lambda_c = \,& \sin^{-1} \left(
+ \sin \lambda_{tc} + \frac{n_z \tan \phi}
+                          {\sqrt{1 + \tan^2 \phi}} \right) \\
+\,& \\
+ = \,& \sin^{-1} \left( \sin \lambda_{tc} +
+        n_z \sin \phi \text{ signum} \cos \phi \right)
+ \\
+\,& \\
+ = \,& \sin^{-1} \left( \sin \lambda_{tc} + n_z \sin \phi \right)
+ \text{ for } | \phi | \leq \frac\pi2
+ \\
+\end{split}\end{equation*}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
