@@ -173,9 +173,6 @@ begin Fill
   Fill, quantity = apriori.scGeocAlt, method = explicit, $
     explicitValues = 7070 km, /spread
 
-  ;; s/c velocity needed for out-of-plane modeling
-  Fill, quantity=apriori.scVelECR, method=l1b
-
   ;; Fake an identity matrix as the ECRtoFOV
   Subset, quantity = apriori.ecrtofov, mask=fill, channels=[2:4,6:8], /ignore
   Fill, quantity=apriori.ecrtofov, method=explicit, explicitValues=1.0, /spread
@@ -202,6 +199,8 @@ begin Fill
 
   ;; Now get the spacecraft velocity in ECI coordinates
   Fill, quantity=apriori.scVelECI, method=l1b
+  ;; s/c velocity needed for out-of-plane modeling
+  Fill, quantity=apriori.scVelECR, method=l1b
 
   ;; Now do a special vector computation to get the LOS velocities.
   ;; Note that this DOES take into account the earth's rotation, even
