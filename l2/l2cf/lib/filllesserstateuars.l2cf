@@ -188,6 +188,9 @@ begin Fill
   Fill, quantity=apriori.scGeocAlt, method=l1b
   Fill, quantity=apriori.tngtGeocAltGHz, method=l1b
 
+  ;; s/c velocity needed for out-of-plane modeling
+  Fill, quantity=apriori.scVelECR, method=l1b
+
   ;; Here we're after LOS velocities.  Newer L1BOA files have this
   ;; information in them. For older files we have to extract it ourselves
   !ifdef(flagOldStyleL1BOA, {
@@ -199,9 +202,6 @@ begin Fill
 
   ;; Now get the spacecraft velocity in ECI coordinates
   Fill, quantity=apriori.scVelECI, method=l1b
-  ;; s/c velocity needed for out-of-plane modeling
-  Fill, quantity=apriori.scVelECR, method=l1b
-
   ;; Now do a special vector computation to get the LOS velocities.
   ;; Note that this DOES take into account the earth's rotation, even
   ;; though it's been given ECI coordinates.
