@@ -1,5 +1,7 @@
 ! subroutine Rotate_3d_* ( Original_Vector, Phi, About_Vector, Rotated_Vector )
 
+    ! Rotate Original_Vector by Phi about About_Vector giving Rotated_Vector.
+
     real(rk), intent(in) :: Original_Vector(3) ! in XYZ coordinates
     real(rk), intent(in) :: Phi                ! to rotate, Radians
     real(rk), intent(in) :: About_Vector(3)    ! in XYZ coordinates
@@ -20,9 +22,27 @@
     !            \sin\phi\, \epsilon_{ijk}\, n_k$
     !  where $\phi$ is the rotation angle, $\hat{\mathbf{n}}$ is the unit
     !  vector about which the rotation occurs, $\delta_{ij}$ is the
-    !  Kronecker symbol, $\epsilon_{ijk}$ is the Levi_Civita completely
-    !  asymmetric symbol, and there is summation on $k$; the summand has
-    !  only one nonzero element.
+    !  Kronecker symbol, $\epsilon_{ijk}$ is the Levi-Civita completely
+    !  antisymmetric tensor, and there is summation on $k$; the summand has
+    !  only one nonzero element.  In
+    !  expanded form, $R$ is
+    !  %
+    !  \begin{equation*}
+    !  R = \left( \begin{array}{ccc}
+    !  \cos\phi + \hat{\eta}_1^2(1-\cos\phi) &
+    !    \hat{\eta}_1 \hat{\eta}_2 ( 1 - \cos\phi ) - \hat{\eta}_3 \sin\phi &
+    !      \hat{\eta}_1 \hat{\eta}_3 ( 1 - \cos\phi ) + \hat{\eta}_2 \sin\phi \\
+    !  \hat{\eta}_1 \hat{\eta}_2 ( 1 - \cos\phi ) + \hat{\eta}_3 \sin\phi &
+    !    \cos\phi + \hat{\eta}_2^2(1-\cos\phi) &
+    !      \hat{\eta}_2 \hat{\eta}_3 ( 1 - \cos\phi ) - \hat{\eta}_1 \sin\phi \\
+    !  \hat{\eta}_1 \hat{\eta}_3 ( 1 - \cos\phi ) - \hat{\eta}_2 \sin\phi &
+    !    \hat{\eta}_2 \hat{\eta}_3 ( 1 - \cos\phi ) + \hat{\eta}_1 \sin\phi &
+    !      \cos\phi + \hat{\eta}_3^2(1-\cos\phi) \\
+    !  \end{array} \right)
+    !  \end{equation*}
+    !  %
+    !  This is derived in, e.g., {\tt
+    !  http://scipp.ucsc.edu/$\sim$haber/ph216/rotation_12.pdf}.
 
     cp = cos(phi)
     one_m_cp = 1.0_rk - cos(phi)
@@ -42,6 +62,9 @@
 ! $Id$
 
 ! $Log$
+! Revision 2.3  2014/11/14 23:56:56  vsnyder
+! Add more LaTeX
+!
 ! Revision 2.2  2014/11/04 01:26:32  vsnyder
 ! Add the CVS comments
 !
