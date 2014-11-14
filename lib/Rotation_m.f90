@@ -9,7 +9,6 @@
 ! export authority as may be required before exporting such information to
 ! foreign countries or providing access to foreign persons.
 
-
 module Rotation_m
 
   ! Rotate a three-dimensional vector through a specified angle about
@@ -49,18 +48,34 @@ contains ! ============= Public Procedures ==========================
 
   subroutine Rotate_3d_D ( Original_Vector, Phi, About_Vector, Rotated_Vector )
 
-    ! Rotate Original_Vector by Angle about About_Vector giving Rotated_Vector.
+    ! Rotate Original_Vector by Phi about About_Vector giving Rotated_Vector.
 
     integer, parameter :: RK = kind(0.0d0)
+
+!   real(rk), intent(in) :: Original_Vector(3) ! in XYZ coordinates
+!   real(rk), intent(in) :: Phi                ! to rotate, Radians
+!   real(rk), intent(in) :: About_Vector(3)    ! in XYZ coordinates
+!                                              ! An unit vector parallel to it
+!                                              ! is constructed.
+!   real(rk), intent(out) :: Rotated_Vector(3) ! in XYZ coordinates
+
     include "Rotate_3d.f9h"
 
   end subroutine Rotate_3d_D
 
   subroutine Rotate_3d_S ( Original_Vector, Phi, About_Vector, Rotated_Vector )
 
-    ! Rotate Original_Vector by Angle about About_Vector giving Rotated_Vector.
+    ! Rotate Original_Vector by Phi about About_Vector giving Rotated_Vector.
 
     integer, parameter :: RK = kind(0.0e0)
+
+!   real(rk), intent(in) :: Original_Vector(3) ! in XYZ coordinates
+!   real(rk), intent(in) :: Phi                ! to rotate, Radians
+!   real(rk), intent(in) :: About_Vector(3)    ! in XYZ coordinates
+!                                              ! An unit vector parallel to it
+!                                              ! is constructed.
+!   real(rk), intent(out) :: Rotated_Vector(3) ! in XYZ coordinates
+
     include "Rotate_3d.f9h"
 
   end subroutine Rotate_3d_S
@@ -78,6 +93,9 @@ contains ! ============= Public Procedures ==========================
 end module Rotation_m
 
 ! $Log$
+! Revision 2.2  2014/11/14 23:57:56  vsnyder
+! Correct some comments, add comments about arguments
+!
 ! Revision 2.1  2014/11/04 01:25:45  vsnyder
 ! Initial commit
 !
