@@ -7,8 +7,8 @@
 \usepackage{longtable}
 \usepackage[strings]{underscore}
 
-\newcommand{\docname}{wvs-121}
-\newcommand{\docdate}{30 Oct 2014}
+\newcommand{\docname}{wvs-121r1}
+\newcommand{\docdate}{14 Nov 2014}
 
 \textwidth 6.5in
 \oddsidemargin -0.25in
@@ -80,7 +80,7 @@
 \vspace{-10pt}
 \begin{tabbing}
 \phantom{References: }\= \\
-To: \>Nathaniel, Paul, Bill, Mike\\
+To: \>Nathaniel, Bill, Mike\\
 Subject: \>Three-dimensional rotation about a specified axis\\
 From: \>Van Snyder\\
 Reference: \>\h{wvs-120} \\
@@ -90,32 +90,27 @@ Reference: \>\h{wvs-120} \\
 
 \section*{Application to computing magnetic field}
 
-In the case that the magnetic field is needed in a direction that is not
-in the orbit plane, the angular positions of the points in the magnetic
-field are specified on a great circle that includes PTan and the
-spacecraft position.  To calculate those positions, rotate the unit vector
-in the PTan direction about the normal to the plane containing PTan and
-the spacecraft position by the the angles $\phi$ specified in the HGrid
-for the magnetic field.
+The angular positions of the points in the magnetic field are specified on
+a great circle that includes the tangent point and spacecraft positions. 
+To calculate those positions, rotate the tangent point position vector
+about the normal to the plane containing the tangent point and spacecraft
+positions by the the angles $\phi$ specified in the HGrid for the magnetic
+field.
 
 There are (at least) two ways to calculate these positions.
 
-First, let $\hat{S}$ and $\hat{P}$ be unit vectors in the directions of
-the spacecraft and PTan, respectively.  Then the unit vector
-$\hat{\mathbf{n}}$ that is normal to the plane containing them, in the
-right-hand sense, is $\hat{\mathbf{n}} = \hat{S} \times \hat{P}$.  Given
-this vector, a positive rotation of PTan about $\hat{\mathbf{n}}$ rotates
-PTan away from or toward the spacecraft, by an amount given by a value of
-$\phi$ in the XGrid for the magnetic field, depending upon whether $\phi$
-is positive or negative, respectively.
+First, let $S$ and $P$ be position vectors for the spacecraft and tangent
+point, respectively.  Then the vector $\eta = S \times P$ is normal to the
+plane containing $S$ and $P$, in the right-hand sense, and $\hat{\eta}$ is
+an unit vector parallel to $\eta$.  A rotation of $P$ about $\hat{\eta}$
+by an angle $\phi$ rotates $P$ away from or toward $S$, depending upon
+whether $\phi$ is positive or negative, respectively.
 
-Second, let $\hat{\mathbf{n}}$ be an unit vector along the line of sight
-from the spacraft to PTan.
 \section*{Mathematical formalism for rotation}
 
-Define the completely unsymmetric Levi-Civita symbol in three dimensions
+Define the completely antisymmetric Levi-Civita tensor in three dimensions
 as
-
+%
 \begin{equation*}
 \epsilon_{ijk} = \left\{ \begin{array}{ll}
 +1 & \text{ if } (i,j,k) \text{ is } (1,2,3),\, (2,3,1),\text{ or } (3,1,2) \\
@@ -123,87 +118,80 @@ as
 0  & \text{ if } i = j \text{ or } j = k \text{ or } i = k \\
 \end{array} \right. \,.
 \end{equation*}
-
-To rotate a three-dimensional vector $V$ by an angle $\phi$ in a
-right-handed sense about a unit vector $\hat{\mathbf{n}}$, multiply it on
-the left by the matrix
-
+%
+To rotate a three-dimensional vector $V$ by an angle $\phi$ about a unit
+vector $\hat{\eta}$, multiply $V$ on the left by the matrix
+%
 \begin{equation*}
-R_{ij} = \cos\phi\, \delta_{ij} + (1-\cos\phi)\, n_i n_j -
-             \sum_k \sin\phi\, \epsilon_{ijk} n_k \,\,\,\text{or}
+R_{ij} = \cos\phi\, \delta_{ij} + (1-\cos\phi)\, \hat{\eta}_i \hat{\eta}_j
+          - \sum_{k=1}^3 \sin\phi\, \epsilon_{ijk} \hat{\eta}_k
 \end{equation*}
-
-where $n_i$ are the coordinates of $\hat{\mathbf{n}}$, $\delta_{ij}$ is
-the Kronecker tensor, $\epsilon_{ijk}$ is the Levi-Civita symbol.  There
-is at most one nonzero in the summation, when $i$, $j$, and $k$ are
-distinct.  This is called the \emph{Rodrigues formula}.  In expanded form,
-$R$ is
-
+%
+where $\hat{\eta}_i$ are the coordinates of $\hat{\eta}$, $\delta_{ij}$
+is the Kronecker delta, and $\epsilon_{ijk}$ is the Levi-Civita tensor. 
+This is called the \emph{Rodrigues formula}.  There is at most one nonzero
+in the summation, which occurs when $i$, $j$, and $k$ are distinct.  In
+expanded form, $R$ is
+%
 \begin{equation*}
 R = \left( \begin{array}{ccc}
-\cos\phi + n_1^2(1-\cos\phi) &
-  n_1 n_2 ( 1 - \cos\phi ) - n_3 \sin\phi &
-    n_1 n_3 ( 1 - \cos\phi ) + n_2 \sin\phi \\
-n_1 n_2 ( 1 - \cos\phi ) + n_3 \sin\phi &
-  \cos\phi + n_2^2(1-\cos\phi) &
-    n_2 n_3 ( 1 - \cos\phi ) - n_1 \sin\phi \\
-n_1 n_3 ( 1 - \cos\phi ) - n_2 \sin\phi &
-  n_2 n_3 ( 1 - \cos\phi ) + n_1 \sin\phi &
-    \cos\phi + n_3^2(1-\cos\phi) \\
+\cos\phi + \hat{\eta}_1^2(1-\cos\phi) &
+  \hat{\eta}_1 \hat{\eta}_2 ( 1 - \cos\phi ) - \hat{\eta}_3 \sin\phi &
+    \hat{\eta}_1 \hat{\eta}_3 ( 1 - \cos\phi ) + \hat{\eta}_2 \sin\phi \\
+\hat{\eta}_1 \hat{\eta}_2 ( 1 - \cos\phi ) + \hat{\eta}_3 \sin\phi &
+  \cos\phi + \hat{\eta}_2^2(1-\cos\phi) &
+    \hat{\eta}_2 \hat{\eta}_3 ( 1 - \cos\phi ) - \hat{\eta}_1 \sin\phi \\
+\hat{\eta}_1 \hat{\eta}_3 ( 1 - \cos\phi ) - \hat{\eta}_2 \sin\phi &
+  \hat{\eta}_2 \hat{\eta}_3 ( 1 - \cos\phi ) + \hat{\eta}_1 \sin\phi &
+    \cos\phi + \hat{\eta}_3^2(1-\cos\phi) \\
 \end{array} \right)
 \end{equation*}
-
-This is derived in {\tt
+%
+This is derived in, e.g., {\tt
 http://scipp.ucsc.edu/$\sim$haber/ph216/rotation_12.pdf}.
+
+(As a side note, the vector product $A \times B$ can be written using the
+Levi-Civita tensor as $(A \times B)_k = \sum_{i,j} \epsilon_{ijk} A_i
+B_j$.  This can be generalized to a product of $n-1$ $n$-dimensional
+vectors using the order $n$ Levi-Civita tensor.)
 
 \section*{Alternative method}
 
-Compute geocentric latitude of the tangent point from its geodetic
-latitude:
+% Compute geocentric latitude of the tangent point from its geodetic
+% latitude:
+% 
+% \begin{equation*}\begin{split}
+% \lambda_{tc} = \,& \sin^{-1} \left(
+%  \frac{\sin \lambda_{tg}}
+%       { \sqrt{\frac{a^4}{b^4} \cos^2 \lambda_{tg} + \sin^2 \lambda_{tg}} }
+%       \right) \\
+% \,&\\
+%  = \,& \tan^{-1} \left(
+%   \frac{\sin \lambda_{tg}}
+%        {f^2 \cos \lambda_{tg}} \right) \text{ where } f = \frac{a}b
+%       \\
+% \,&\\
+%  = \,& \sin^{-1} \left(
+%   \frac{\tan \lambda_{tg}}
+%        {\sqrt{f^2 + \tan^2 \lambda_{tg}}}
+%       \right) \\
+% \end{split}\end{equation*}
+% 
+% The second method is used in the function {\tt GeodToGeocLat} in the {\tt
+% Geometry} module.
 
-\begin{equation*}\begin{split}
-\lambda_{tc} = \,& \sin^{-1} \left(
- \frac{\sin \lambda_{tg}}
-      { \sqrt{\frac{a^4}{b^4} \cos^2 \lambda_{tg} + \sin^2 \lambda_{tg}} }
-      \right) \\
-\,&\\
- = \,& \tan^{-1} \left(
-  \frac{\sin \lambda_{tg}}
-       {f^2 \cos \lambda_{tg}} \right) \text{ where } f = \frac{a}b
-      \\
-\,&\\
- = \,& \sin^{-1} \left(
-  \frac{\tan \lambda_{tg}}
-       {\sqrt{f^2 + \tan^2 \lambda_{tg}}}
-      \right) \\
-\end{split}\end{equation*}
-
-The second method is used in the function {\tt GeodToGeocLat} in the {\tt
-Geometry} module.
-
-Let $\hat{\mathbf{n}}$ be the unit vector in ECR coordinates along the
-line of sight between the instrument and the tangent point, for the same
-MIF.
+Let $\hat{\mathbf{n}}$ be either the unit vector in ECR coordinates along
+the line of sight between the instrument and the tangent point, the unit
+tangent at the tangent point along the great circle containing the tangent
+point and spacecraft positions, in the direction of the spacecraft, for
+the same MIF, or the third row of the ECR-to-FOV matrix from the {\tt
+L1BOA} file.
 
 Let $\phi$ be the increment along the line of sight at which the
-geocentric latitude and longitude are desired.  Compute the longitude of
-that point:
-
-\begin{equation*}\begin{split}
-\mu = \,& \tan^{-1} \left(
-  \frac{\sin \mu_t \cos \lambda_{tc} + n_y \tan \phi}
-       {\cos \mu_t \cos \lambda_{tc} + n_x \tan \phi}
-  \right ) \\
-\,& \\
- = \,& \tan^{-1} \left(
-  \frac{\sin \mu_t \cos \lambda_{tc} \cos \phi + n_y \sin \phi}
-       {\cos \mu_t \cos \lambda_{tc} \cos \phi + n_x \sin \phi}
-  \right ) \,, \\
-\end{split}\end{equation*}
-
-the latter being better behaved for $\phi \approx \frac\pi2$.
-Compute the geocentric latitude of that point:
-
+geocentric latitude and longitude are desired, $\lambda_{tc}$ be the
+geocentric latitude of the tangent point, and $\mu_t$ be the longitude of
+the tangent point.  Compute the geocentric latitude of that point:
+%
 \begin{equation*}\begin{split}
 \lambda_c = \,& \sin^{-1} \left(
  \sin \lambda_{tc} + \frac{n_z \tan \phi}
@@ -217,6 +205,137 @@ Compute the geocentric latitude of that point:
  \text{ for } | \phi | \leq \frac\pi2
  \\
 \end{split}\end{equation*}
+%
+The latter two being better behaved for $|\phi| \approx \frac\pi2$.  Compute
+the longitude of that point:
+
+\begin{equation*}\begin{split}
+\mu = \,& \tan^{-1} \left(
+  \frac{\sin \mu_t \cos \lambda_{tc} + n_y \tan \phi}
+       {\cos \mu_t \cos \lambda_{tc} + n_x \tan \phi}
+  \right ) \\
+\,& \\
+ = \,& \tan^{-1} \left(
+  \frac{\sin \mu_t \cos \lambda_{tc} \cos \phi + n_y \sin \phi}
+       {\cos \mu_t \cos \lambda_{tc} \cos \phi + n_x \sin \phi}
+  \right ) \,, \\
+\end{split}\end{equation*}
+
+the latter being better behaved for $|\phi| \approx \frac\pi2$.
+
+\section*{Test results}
+
+I computed the result for rotation angles of -3.0, -1.5, 0.0, 1.5, and 3.0
+degrees, using all methods, in double precision, for spacecraft and
+tangent point positions taken from the first MIF of the first MAF in the
+UARS {\tt L1BOA} file:
+
+\begin{longtable}{lcccccc}
+Module & GeodLat & GeocLat & Lon      & X       & Y       & Z \\
+\hline
+SC     & 13.3604 & 13.2741 & -170.867 & -0.9609 & -0.1545 & 0.2296 \\
+GHz    & 26.2619 & 26.1095 & -152.039 & -0.7931 & -0.4210 & 0.4401 \\
+\hline
+\end{longtable}
+\vspace*{-10pt}
+
+As above, let $S$ be the spacecraft position vector and $P$ be the tangent
+point position vector, and let $R$ be the result of the rotation
+calculation.  In the test results table below, the {\tt Trig 1} method is
+computed with $\hat{\mathbf{n}}$ the unit vector parallel to $(P - S)$.
+The {\tt Trig 2} method is computed with $\hat{\mathbf{n}}$ the unit
+vector parallel to $(S \times P) \times P$, i.e., tangent to the great
+circle containing $S$ and $P$.  The {\tt Trig 3} method is computed with
+$\hat{\mathbf{n}}$ the last row of the ECR-to-FOV matrix from the UARS
+{\tt L1BOA} file.
+
+The values of $\hat{\mathbf{n}}$ for the three methods are
+
+\begin{longtable}{lccc}
+Method & X & Y & Z \\
+\hline
+Trig 1 & 0.4429829 & -0.7036025 & 0.5556153 \\
+Trig 2 & 0.6041459 & -0.6353586 & 0.4809648 \\
+Trig 3 & 0.5929608 & -0.6871292 & 0.4198217 \\
+\hline
+\end{longtable}
+
+\vspace*{-10pt}
+The {\tt Plane} and {\tt Angle} columns are diagnostics defined by
+%
+\begin{equation*}\begin{split}
+\text{\tt Plane} =\,&
+ \cos^{-1} \left( \hat{\eta} \cdot
+           \frac{R \times P}{|R \times P|} \right) \text{ and} \\
+\,&\\[-7pt]
+\text{\tt Angle} = \,&  \sin^{-1} | R \times P|
+ \text{ signum} ( | P - S | - | R - S | ) - \phi
+ \\
+\end{split}\end{equation*}
+%
+\vspace*{-20pt}
+\begin{itemize}
+
+\item [{\tt Plane}] is the angle between $\eta$ and the normal to the $R -
+      P$ plane.  This is zero if the rotation occurred in the $S - P$
+      plane.
+
+\item [{\tt Angle}] is the difference between the angle between $P$ and
+      $R$, and $\phi$.  It should zero.
+
+\end{itemize}
+\vspace*{-10pt}
+
+\newcommand{\C}[1]{\multicolumn{1}{c}{#1}}
+\begin{longtable}{lrccrrrrr}
+\multicolumn{9}{c}{\bfseries Test Results} \\
+\hline
+Method & \C{$\phi$} & GeocLat & Lon & \C{X} & \C{Y} & \C{Z} & \C{Plane} & \C{Angle} \\
+\hline
+Vector & -3.0 & 24.48 & -154.82 & -0.8237 & -0.3872 & 0.4143 &   0.00 &  0.0000 \\
+Trig 1 &      & 24.27 & -154.80 & -0.8249 & -0.3882 & 0.4110 & 176.59 & -0.1032 \\
+Trig 2 &      & 24.51 & -154.82 & -0.8234 & -0.3871 & 0.4149 & 179.39 &  0.0208 \\
+Trig 3 &      & 24.72 & -154.96 & -0.8230 & -0.3845 & 0.4181 & 174.82 &  0.0152 \\
+Vector & -1.5 & 25.30 & -153.44 & -0.8087 & -0.4042 & 0.4273 &   0.00 &  0.0000 \\
+Trig 1 &      & 25.19 & -153.42 & -0.8093 & -0.4049 & 0.4255 & 176.12 & -0.0518 \\
+Trig 2 &      & 25.31 & -153.44 & -0.8086 & -0.4042 & 0.4275 & 179.69 &  0.0052 \\
+Trig 3 &      & 25.41 & -153.51 & -0.8084 & -0.4029 & 0.4291 & 175.14 &  0.0031 \\
+All    &  0.0 & 26.11 & -152.04 & -0.7931 & -0.4210 & 0.4401 &   0.00 &  0.0000 \\
+Vector &  1.5 & 26.91 & -150.62 & -0.7770 & -0.4375 & 0.4525 &   0.00 &  0.0000 \\
+Trig 1 &      & 27.04 & -150.65 & -0.7764 & -0.4365 & 0.4546 &   4.82 &  0.0519 \\
+Trig 2 &      & 26.92 & -150.62 & -0.7770 & -0.4375 & 0.4527 &   0.31 &  0.0051 \\
+Trig 3 &      & 26.81 & -150.55 & -0.7772 & -0.4388 & 0.4511 &   4.21 &  0.0056 \\
+Vector &  3.0 & 27.69 & -149.18 & -0.7604 & -0.4537 & 0.4647 &   0.00 &  0.0000 \\
+Trig 1 &      & 27.98 & -149.26 & -0.7590 & -0.4514 & 0.4692 &   5.31 &  0.1034 \\
+Trig 2 &      & 27.73 & -149.18 & -0.7602 & -0.4535 & 0.4653 &   0.63 &  0.0203 \\
+Trig 3 &      & 27.52 & -149.05 & -0.7606 & -0.4561 & 0.4621 &   3.87 &  0.0196 \\
+\hline
+\end{longtable}
+\vspace*{-10pt}
+
+As a simple test, I put the spacecraft at (0.0 N, 0.0 E) and the tangent
+point at (30.0 N, 0.0 E) geocentric, and $\phi = 3.0$.  The rotated
+tangent point should be at (33.0 N, 0.0 E).
+
+\begin{longtable}{lrccrrrrr}
+\multicolumn{9}{c}{\bfseries Test Results} \\
+\hline
+Method & \C{$\phi$} & GeocLat & Lon & \C{X} & \C{Y} & \C{Z} & \C{Plane} & \C{Angle} \\
+\hline
+Vector &  3.0 & 33.00 &    0.00 & 0.8387 & 0.0000 & 0.5446 &   0.00 &  0.0000 \\
+Trig 1 &      & 33.40 &    0.00 & 0.8348 & 0.0000 & 0.5506 &   0.00 &  0.4049 \\
+Trig 2 &      & 33.05 &    0.00 & 0.8382 & 0.0000 & 0.5453 &   0.00 &  0.0468 \\
+\hline
+\end{longtable}
+
+% The vector rotation method always rotates $P$ by the correct amount, and
+% $R$ is always in the $S - P$ plane. The {\tt Trig 1} method rotates the
+% tangent point by approximately the correct amount (within about 3.4\%),
+% but it is out of the $S - P$ plane by as much as 5.3 degrees.  The {\tt
+% Trig 2} method is more accurate by both measures.  The {\tt Trig 3} method
+% rotates the tangent point by a slightly more accurate amount than either
+% the {\tt Trig 1} or {\tt Trig 2} method, but the vector is as far out of
+% the $S - P$ plane as the one the {\tt Trig 1} method computes.
 
 \label{lastpage}
 \end{document}
@@ -224,3 +343,6 @@ Compute the geocentric latitude of that point:
 % $Id$
 
 % $Log$
+% Revision 1.1  2014/11/10 20:27:39  vsnyder
+% Initial commit
+%
