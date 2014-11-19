@@ -535,9 +535,6 @@ begin Construct
   fieldElevation: quantity, type=fieldElevation, vGrid=vGridStandard, hGrid=hGridStandard
   fieldStrength: quantity, type=fieldStrength, vGrid=vGridStandard, hGrid=hGridStandard
 
-  ; The following is needed for out-of-plane magnetic field
-  azimuth: quantity, type=azimuth
-  
   earthReflectivity: quantity, type=earthRefl
   orbitInclination: Quantity, type=orbitInclination, module=SC
   spaceRadiance: quantity, type=spaceRadiance
@@ -554,7 +551,7 @@ begin Construct
   ECRtoFOV: quantity, type=ECRtoFOV, module=GHz
 
   !define(lesserState, 
-  {magneticField, fieldAzimuth, fieldElevation, fieldStrength, azimuth, $
+  {magneticField, fieldAzimuth, fieldElevation, fieldStrength, $
     earthReflectivity, orbitInclination, spaceRadiance, $
     scGeocAlt, tngtGeocAltGHz, scECI, tngtECIGHz, $
     scVelECR, scVelECI, losVelGHz, ECRtoFOV})
@@ -687,4 +684,7 @@ begin Fill
 end Fill
 !divert(-1)
 ;$Log$
+;Revision 1.1  2014/10/08 17:27:44  pwagner
+;First commit
+;
 !divert!dnl

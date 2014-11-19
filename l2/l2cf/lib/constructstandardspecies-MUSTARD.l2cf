@@ -450,8 +450,6 @@ begin Construct
   fieldElevation: quantity, type=fieldElevation, vGrid=vGridStandard, hGrid=hGridStandard
   fieldStrength: quantity, type=fieldStrength, vGrid=vGridStandard, hGrid=hGridStandard
 
-  azimuth: quantity, type=azimuth
-
   earthReflectivity: quantity, type=earthRefl
   orbitInclination: Quantity, type=orbitInclination, module=SC
   spaceRadiance: quantity, type=spaceRadiance
@@ -468,7 +466,7 @@ begin Construct
   ECRtoFOV: quantity, type=ECRtoFOV, module=GHz
 
   !define(lesserState, {magneticField, $
-    fieldAzimuth, fieldElevation, fieldStrength, azimuth, $
+    fieldAzimuth, fieldElevation, fieldStrength, $
     earthReflectivity, orbitInclination, spaceRadiance, $
     scGeocAlt, tngtGeocAltGHz, scECI, tngtECIGHz, $
     scVelECR, scVelECI, losVelGHz, ECRtoFOV})

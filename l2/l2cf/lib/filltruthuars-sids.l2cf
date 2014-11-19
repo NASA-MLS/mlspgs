@@ -100,12 +100,13 @@ begin Fill
     fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
   Fill, quantity=truth.fieldStrength, method=rotateField, $
     fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
-  Fill, quantity=truth.azimuth, method=explicit, $
-    explicitValues= 90deg, /spread
   
   })
 
 end Fill
 !divert(-1)
 ; $Log$
+; Revision 1.1  2014/10/08 19:03:38  pwagner
+; First commit
+;
 !divert!dnl

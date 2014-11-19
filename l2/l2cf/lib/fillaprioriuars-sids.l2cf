@@ -166,8 +166,6 @@ Fill, quantity=apriori.refGPH,$
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   Fill, quantity=apriori.fieldStrength, method=rotateField, $
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
-  Fill, quantity=apriori.azimuth, method=explicit, $
-    explicitValues= 90deg, /spread
     
   ;; -------------------------------- Apriori precisions for species
 
@@ -579,4 +577,7 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.1  2014/10/08 17:27:43  pwagner
+;First commit
+;
 !divert!dnl

@@ -629,14 +629,12 @@ begin Fill
     /interpolate, /ignoreTemplate
 end Fill
 
-; For out-of-plane modeling
-begin Fill
-  Fill, quantity=apriori.azimuth, method=explicit, explicitValues= 90deg
-end Fill
-
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.2  2014/09/09 16:52:31  pwagner
+;Prefill azimuth; flagOverwriteWithWACCM controls whether to overwrite gph with WACCM data
+;
 ;Revision 1.1  2014/06/13 17:50:36  pwagner
 ;First commit
 ;
