@@ -195,10 +195,24 @@ begin Output
   !ifdef(flagCopyAPiori,{
     !copyApriori(OH)
   })
+end Output
+
+;; Add ExtraNotes attribute if OH swath empty
+begin Output
+  SOMEGOODOH: Boolean, formula="not Band15OFFALLDAY"
+  Dump, Boolean=SOMEGOODOH
+  Skip, Boolean=SOMEGOODOH  ;; Don't write attribute if some OH good
+  WriteFileAttribute, attrName='ExtraNotes', attrValue='No good OH profiles', $
+    type=l2dgg, file='!DGGFileName'
+  WriteFileAttribute, attrName='ExtraNotes', attrValue='No good OH profiles', $
+    type=l2aux, file='!DGMFileName'
 })
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.5  2014/10/01 00:09:48  pwagner
+; Changes used in producing v4.13 l2cf
+;
 ; Revision 1.4  2014/08/20 20:23:23  pwagner
 ; Comment-out the BrOEmpty-dependent Skip; a better idea is needed
 ;
