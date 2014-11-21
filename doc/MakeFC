@@ -82,9 +82,10 @@ short_name=doc
 #SUBDIRS := $(shell ${REECHO} -d cfm)
 
 # Errors in the .tex sources require us to omit the following
-OMIT_SRCS := wvs-004.tex wvs-051-neural_body.tex wvs-111.tex \
-     iy-002.tex iy-003.tex iy-008.tex iy-009.tex \
-     iy-010.tex texmacros.tex
+# OMIT_SRCS := wvs-004.tex wvs-051-neural_body.tex wvs-111.tex wvs-118.tex \
+#     iy-002.tex iy-003.tex iy-008.tex iy-009.tex \
+#     iy-010.tex iy-011.tex texmacros.tex
+OMIT_SRCS := $(shell cat tex.omitted)
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 OMIT_SRCS_REV := 'wvs-004\*.tex' 'wvs-051\*.tex' 'wvs-063\*.tex'
 OMIT_SRCS_SUB := 'iy-001-\*.tex' \
@@ -135,6 +136,10 @@ vpath %.eps $(DOCDIR)
 	rm -f $*.dvi $*.temp
 
 all doc:
+
+debug:
+	echo "$(OMIT_SRCS)"
+	echo "$(OMIT_PREFXD)"
 
 -include Makefile.dep
 
@@ -214,6 +219,9 @@ update: internalupdate
 
 # ========================================================================
 # $Log$
+# Revision 1.19  2013/08/07 18:55:20  pwagner
+# omits wvs-004.tex
+#
 # Revision 1.18  2012/09/12 00:38:15  pwagner
 # Fixed ill-considered make updating subdirectories; added help; omoy wvs-111
 #
