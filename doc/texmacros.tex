@@ -1,5 +1,5 @@
-\usepackage[dvips]{graphics,color}
-\usepackage{times}
+\usepackage[dvips]{color}
+%\usepackage{times}
 \usepackage{epsfig}
 \usepackage{graphicx}
 \usepackage{verbatim}
@@ -10,6 +10,7 @@
 \usepackage{graphics}
 \usepackage{algorithm}
 \usepackage{algorithmic}
+\usepackage{enumitem}
 
 %\newcommand{\em}{\emph}
 
@@ -17,37 +18,61 @@
 
 \def\Var{\mbox{Var}}
 \def\Cov{\mbox{Cov}}
+\def\diag{\mbox{diag}}
 \def\trace{\mbox{trace}}
 \def\divergence{\mbox{div}}
+\def\kron{\mbox{kron}}
 
-\def\pdf{p}
-\def\vx{{\bf x}}
-\def\vy{{\bf y}}
-\def\vg{{\bf g}}
-\def\g{g}
-\def\vf{{\bf f}}
-\def\vF{{\bf F}}
-\def\vh{{\bf h}}
-\def\vu{{\bf u}}
-\def\vv{{\bf v}}
-\def\vnabla{{\bf \nabla}}
-\def\vid{{\bf id}}
 \def\va{{\bf a}}
-\def\vr{{\bf r}}
 \def\vb{{\bf b}}
+\def\vc{{\bf c}}
 \def\vd{{\bf d}}
-\def\vt{{\bf t}}
+\def\ve{{\bf e}}
+\def\vE{{\bf E}}
+\def\vf{{\bf f}}
+\def\vg{{\bf g}}
+\def\vh{{\bf h}}
 \def\vi{{\bf i}}
 \def\vj{{\bf j}}
 \def\vk{{\bf k}}
+\def\vr{{\bf r}}
+\def\vs{{\bf s}}
+\def\vS{{\bf S}}
+\def\vt{{\bf t}}
+\def\vT{{\bf T}}
+\def\vu{{\bf u}}
+\def\vv{{\bf v}}
+\def\vV{{\bf V}}
+\def\vw{{\bf w}}
+\def\vx{{\bf x}}
+\def\vy{{\bf y}}
+\def\vY{{\bf Y}}
+\def\vZ{{\bf Z}}
 
+\def\vid{{\bf id}}
+
+\def\vC{{\bf C}}
+\def\vF{{\bf F}}
+\def\vP{{\bf P}}
+\def\vR{{\bf R}}
+\def\vX{{\bf X}}
+
+\def\g{g}
+\def\pdf{p}
 
 \def\vn{{\textbf n}}
-\def\vtau{{\boldsymbol \tau}}
 
-\def\vsigma{\boldsymbol \sigma}
-\def\vxi{{\boldsymbol \xi}}
+\def\valpha{{\boldsymbol \alpha}}
+\def\vepsilon{{\boldsymbol \epsilon}}
 \def\veta{{\boldsymbol \eta}}
+\def\vgamma{{\boldsymbol \gamma}}
+\def\vnabla{{\bf \nabla}}
+\def\vnu{{\boldsymbol \nu}}
+\def\vomega{{\boldsymbol \omega}}
+\def\vsigma{\boldsymbol \sigma}
+\def\vSigma{\boldsymbol \Sigma}
+\def\vtau{{\boldsymbol \tau}}
+\def\vxi{{\boldsymbol \xi}}
 
 \def\I{\mathcal{I}}
 \def\D{\mathcal{D}}
@@ -102,3 +127,5 @@
 \hyphenation{thermodynamic}
 \hyphenation{variation}
 \hyphenation{vector}
+
+% $Id$
