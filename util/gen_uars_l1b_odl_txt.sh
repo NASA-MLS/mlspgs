@@ -26,15 +26,33 @@ l2auxdump -a PGEVersion  $filein | perl -pe 's/Dump of (.*)\n/$1=/'
 l2auxdump -a StartUTC    $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeBeginningDate=$1\nRangeBeginningTime=$2.00000\nEquatorCrossingLongitude=0.0\nEquatorCrossingDate=$1\nEquatorCrossingTime=$2\n/' 
 l2auxdump -a EndUTC      $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeEndingDate=$1\nRangeEndingTime=$2.00000\n/' 
 
+I=gen_uars_l1b_odl_txt
+split_path="`echo $0 | sed 's/'$I'/split_path/'`"
+
 # Guess from the filename 
-#LocalVersionID=`echo $filein | perl -nle 'print $1 if /-([a-z0-9]+)_/' `
+# Must split path/filename
+filename=`$split_path -f $filein`
+
+LocalVersionID=`echo $filename | perl -nle 'print $1 if /-([a-z0-9]+)_/' `
+echo $filename | perl -nle 'print $1 if /-([a-z0-9]+)_/' 
 # Hardcode because LocalVersionID can not guess from the filename
-LocalVersionID=c02
+#LocalVersionID=c02
+
+# L1BOA or L1BRAD?
+L1BOA=`echo $filename | grep L1BOA`
+if [ "$L1BOA" != "" ]
+then
+  Identifier_Product_DOI=10.5067/AURA/MLS/DATA1001
+else
+  Identifier_Product_DOI=10.5067/AURA/MLS/DATA1002
+fi
+PGEVersion=`echo $filename | awk -F_ '{print $3}' | awk -F"-" '{print $1"-"$2}'`
 ProductionDateTime=`date +"%C%y-%m%d %T"`
 cat << EOF
 StartOrbitNumber=-9999
 StopOrbitNumber=-9999
 LocalVersionID=$LocalVersionID
+PGEVersion=$PGEVersion
 ProductionDateTime=$ProductionDateTime
 EOF
 
@@ -61,6 +79,8 @@ NorthBoundingCoordinate=90.0
 EastBoundingCoordinate=180.0
 SouthBoundingCoordinate=-90.0
 LocalityValue=Limb
+DataProducer=MLS_SIPS
+Identifier_Product_DOI=$Identifier_Product_DOI
 title=TBD
 MI_Identifier=TBD
 edition=TBD
@@ -83,3 +103,6 @@ EOF
 
 
 # $Log$
+# Revision 1.1  2014/06/12 22:54:49  quyen
+# tool to extract attributes from UARS L1B file
+#
