@@ -2,6 +2,7 @@ PROGRAM conv_uars
 
 USE rad_file_contents
 USE swapendian
+USE MLSCommon, ONLY: FileNameLen
 USE MLSFiles, ONLY: MLS_openFile, MLS_closeFile
 USE MLSAuxData, ONLY: CreateGroup_MLSAuxData
 USE MLSHDF5, ONLY: MLS_h5open, MLS_h5close
@@ -11,7 +12,7 @@ USE oa_file_contents
 
 IMPLICIT NONE
 
-CHARACTER (len=80) :: arg, infile='uars.dat', Rad_File='RAD.h5', &
+CHARACTER (len=FileNameLen) :: arg, infile='uars.dat', Rad_File='RAD.h5', &
      OA_File='OA.h5', out_dir='/data/'
 INTEGER, PARAMETER :: in_unit=101, inlen=14336/4, HDFversion=5
 INTEGER :: i, j, k, mafno=0, nummmaf, recno, rad_sd_id, error, oa_sd_id, stat
@@ -34,6 +35,8 @@ integer :: n_days = 0
 CHARACTER (len=8) :: n_str
 
 ! Source code:
+! Don't warp stdout at 80 chars
+open(unit=6,recl=4096)
 
 ! Open UARS input file:
 
@@ -136,9 +139,9 @@ IF (noargs > 0) THEN   ! use passed input for setting outputs
    OA_File = TRIM(out_dir) // '/MLS-UARS_L1BOA_' // yrdoy_str // '.h5'
 ENDIF
 
-PRINT *, 'infile: ', infile
-PRINT *, 'rad file: ', Rad_File
-PRINT *, 'OA file: ', OA_File
+write( 6, '(a)' ) 'infile: ' // trim(infile)
+write( 6, '(a)' ) 'rad file: ' // trim(Rad_File)
+write( 6, '(a)' ) 'OA file: ' // trim(OA_File)
 PRINT *, 'n days backdated: ', n_days
 
 ! Open output RAD and OA HDF files:
