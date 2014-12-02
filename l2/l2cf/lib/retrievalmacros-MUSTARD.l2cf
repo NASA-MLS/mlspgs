@@ -1164,6 +1164,10 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 !define(HRQuantity,{!MFproduct})!dnl
 })!dnl
 !dnl
+!ifdef(flagSkipCloudyStatus,{!dnl
+!undefine(MFcloudmax)!dnl
+!undefine(MFcloudmin)!dnl
+})
 ;; Status - cloudy radiances - don't do a boxcar.
 !ifdef(MFcloudmax,{!dnl
 !forall(addInOneHighCloudContam,!flaggingRadiometers)
@@ -1173,6 +1177,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.1  2014/06/13 17:52:29  pwagner
+; First commit
+;
 ; Revision 1.152  2012/12/04 18:45:12  pwagner
 ; Added allspecFBs
 ;
