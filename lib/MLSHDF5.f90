@@ -1184,7 +1184,7 @@ contains ! ======================= Public Procedures =========================
     !if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
     !  & 'Unable to create dataspace for attribute ' // trim(name) )
     if ( is_present .and. .not. NEVERDELETE ) then
-      print *, 'Deleting ' // trim(name)
+      ! print *, 'Deleting ' // trim(name)
       call h5adelete_f(itemID, trim(name), status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to delete ' )
@@ -5696,6 +5696,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.131  2014/12/09 01:25:30  pwagner
+! Comment-out a debugging print
+!
 ! Revision 2.130  2014/10/27 23:04:06  pwagner
 ! needed to extend existing hdf attributes
 !
