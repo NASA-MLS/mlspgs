@@ -14,7 +14,7 @@ module TIME_M
 !=============================================================================
 
 ! Compute either CPU time, in arbitrary units, or wall-clock time, in
-! seconds since midnight.
+! seconds since midnight.  And some other time-related computations.
 
   use DATES_MODULE, only: YYYYMMDD_TO_DAI
   use PRINTIT_M, only: MLSMSG_WARNING, PRINTITOUT
@@ -73,7 +73,7 @@ module TIME_M
 ! float means either real or double precision types
 ! === (end of api) ===
   public :: BEGIN, FINISH, &
-   & INIT_RETRY, RETRY, RETRY_SUCCESS, SET_STARTTIME, &
+   & INIT_RETRY, MS_to_HMS, RETRY, RETRY_SUCCESS, SET_STARTTIME, &
    & TIME_NOW, TIME_NOW_D, TIME_NOW_S, &
    & TOO_MANY_RETRIES, TRY_AGAIN, &
    & WAIT
@@ -171,6 +171,19 @@ contains
     call time_now (retry_config%init_t0)
     retry_config%try_number = 0
   end subroutine INIT_RETRY
+
+  subroutine MS_to_HMS (ms, hrs, mins, secs)
+
+    ! convert millisecs to hours, minutes and seconds
+
+    integer, intent (in) :: ms
+    integer, intent (out) :: hrs, mins, secs
+
+    hrs = ms / 3600000
+    mins = mod (ms, 3600000) / 60000
+    secs = mod (mod (ms, 3600000), 60000) / 1000
+
+  end subroutine MS_to_HMS
 
   function RETRY ( TRIAL_VALUE, DELAY, MAX_RETRIES, MAX_RETRYING_TIME )
     integer, intent(in)           :: TRIAL_VALUE
@@ -296,6 +309,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.15  2014/12/09 00:26:01  vsnyder
+!Add MS_to_HMS
+!
 !Revision 2.14  2014/01/09 00:24:29  pwagner
 !Some procedures formerly in output_m now got from highOutput
 !
