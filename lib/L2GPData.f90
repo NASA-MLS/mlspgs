@@ -19,21 +19,22 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & dfnt_char8, dfnt_float32, dfnt_int32, dfnt_float64
   use highoutput, only: outputnamedvalue
   use intrinsic ! "units" type literals, beginning with l_
-  use MLScommon, only: defaultundefinedvalue, MLSfile_t, l2metadata_t
-  use MLSfiles, only: filenotfound, &
-    & HDFversion_4, HDFversion_5, wildcardHDFversion, &
+  use MLSCommon, only: defaultundefinedvalue, interval_T, &
+    & MLSFile_t, l2metadata_t
+  use MLSFiles, only: filenotfound, &
+    & HDFVersion_4, HDFversion_5, wildcardHDFversion, &
     & dump, initializeMLSfile, MLS_closefile, MLS_exists, MLS_openfile, &
     & MLS_HDF_version, MLS_inqswath, MLS_openfile, MLS_closefile
-  use MLSkinds, only: r4, r8
-  use MLSfillvalues, only: extractarray, gatherarray, &
+  use MLSKinds, only: r4, r8, rt
+  use MLSFillvalues, only: extractarray, gatherarray, &
     & isfillvalue, replacefillvalues
   use MLSHDFeos, only: hsize
-  use MLSmessagemodule, only: MLSmsg_error, MLSmsg_warning, MLSmessage
-  use MLSnumerics, only: findinrange
-  use MLSfinds, only: findfirst, findlast, findunique
-  use MLSsets, only: findintersection, intersection
-  use MLSstrings, only: capitalize, lowercase
-  use MLSstringlists, only: extractsubstring, &
+  use MLSMessagemodule, only: MLSmsg_error, MLSmsg_warning, MLSmessage
+  use MLSNumerics, only: findinrange
+  use MLSFinds, only: findfirst, findlast, findunique
+  use MLSSets, only: findintersection, intersection
+  use MLSStrings, only: capitalize, lowercase
+  use MLSStringlists, only: extractsubstring, &
     & gethashelement, getstringelement, getuniquelist, &
     & list2array, numstringelements, removelistfromlist, replacesubstring, &
     & stringelementnum, switchdetail
@@ -244,6 +245,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   
   ! Do you want to write file and swath attributes when you append values
   logical, parameter :: APPENDSWRITEATTRIBUTES = .true.  
+  
+  ! In what range of orbit angles do we set the mode to "descending"
+  type(interval_T), public :: DescendingRange = interval_T( 90._rt, 270._rt )
 
   ! Do you want to pre-fill arrays with MissingValue by default?
   logical, parameter :: ALWAYSFILLWITHMISSINGVALUE = .true.  
@@ -5231,6 +5235,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.205  2014/10/01 00:02:06  pwagner
+! Fixed another bug in ExtractL2GPRecord
+!
 ! Revision 2.204  2014/09/04 23:47:44  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.
 ! Add some tracing.
