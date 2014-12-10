@@ -2500,7 +2500,7 @@ contains ! =====     Public Procedures     =============================
     subroutine GPHPrecision ( key, quantity, &
       & tempPrecisionQuantity, refGPHPrecisionQuantity )
       ! Fill the GPH precision from the temperature and refGPH precision,
-      ! ignoring the of diagonal elements (not available outside
+      ! ignoring the off-diagonal elements (not available outside
       ! RetrievalModule anyway).
       integer, intent(in) :: key          ! For messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -4744,22 +4744,33 @@ contains ! =====     Public Procedures     =============================
     ! is in ascending or descending mode: +1 is ascending, -1 is descending
     ! method:
     ! We read the s/c velocity and look at the sign of its z component
-    subroutine WithAscOrDesc ( QUANTITY, CHUNK, FILEDATABASE, HGRIDS )
-    use HGRIDSDATABASE, only: HGRID_T
+    subroutine WithAscOrDesc ( key, quantity, chunk, fileDatabase, HGrids, PtanQuantity )
+    use HGridsDatabase, only: HGrid_T
+    use MLSNumerics, only: ClosestElement
 
       ! Dummy arguments
+      integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout)        :: QUANTITY ! Quantity to fill
       type (MLSChunk_T), INTENT(IN)              :: CHUNK
       type (MLSFile_T), dimension(:), pointer    :: FILEDATABASE
       type (HGrid_T), dimension(:), pointer      :: HGrids
+      type (VectorValue_T), pointer              :: PtanQuantity
       ! Local variables
-      integer                                    :: I, MAF
+      integer                                    :: heightMAF
+      real(r8), dimension(:,:), pointer :: HEIGHTS ! might be ptan.
+      integer                                    :: I
+      integer, dimension(1)                      :: indices
       integer                                    :: l1bError
+      integer                                    :: J
       type (l1bData_T)                           :: L1BDATA
       type (MLSFile_T), pointer                  :: L1BOAFile
+      integer                                    :: MAF
+      integer :: Me = -1                ! String index for trace
       integer                                    :: noMAFs
       integer                                    :: noSurfs
       ! Executable
+      call trace_begin ( me, 'FillUtils_1.WithAscOrDesc', key, &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
       if ( .not. ValidateVectorQuantity ( quantity, &
         & quantityType=(/l_surfaceType, l_AscDescMode/) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4770,14 +4781,33 @@ contains ! =====     Public Procedures     =============================
         & flag=l1bError, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
         & NeverFail= .true., &
         & dontPad=DONTPAD )
-      noSurfs = min(quantity%template%noSurfs, size(L1BData%dpField, 2))
+      noSurfs = quantity%template%noSurfs
+      ! Work out vertical coordinate if needed
+      if ( associated ( ptanQuantity ) .and. .not. Quantity%template%minorFrame ) then
+        nullify ( Heights )
+        call Allocate_test ( Heights, ptanQuantity%template%nosurfs, &
+          & ptanQuantity%template%noinstances, 'Heights', ModuleName )
+        Heights = ptanQuantity%values
+      else
+        Heights => Quantity%template%surfs
+      endif
       do i=1, quantity%template%noInstances
         maf = Hgrids(quantity%template%hGridIndex)%maf(i)
         if ( maf < 1 ) maf = i
-        quantity%values(1:noSurfs,i) = sign(1._rv, &
-          & L1BData%dpField(3,1:noSurfs,maf))
+        heightMAF = maf
+        if ( size(heights, 2) < heightMAF ) heightMAF = 1
+        do j=1, noSurfs
+          call ClosestElement ( Quantity%template%surfs(j,maf)*1._r8, &
+            & Heights(:, heightMAF), indices )
+          quantity%values(j,i) = sign(1._rv, &
+          & L1BData%dpField(3, indices(1), maf))
+        enddo
       enddo
+      if ( associated ( ptanQuantity ) .and. .not. Quantity%template%minorFrame ) &
+        & call Deallocate_test ( Heights, 'Heights', ModuleName )
       call deallocateL1BData ( L1BData ) ! Avoid memory leaks
+      call trace_end ( 'FillUtils_1.WithAscOrDesc', &
+        & cond=toggle(gen) .and. levels(gen) > 1 )
     end subroutine WithAscOrDesc
 
     ! --------------------------------------------  WithEstdNoise  -----
@@ -7415,6 +7445,9 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.102  2014/12/10 21:30:34  pwagner
+! WithAscOrDesc may use PtanQuantity
+!
 ! Revision 2.101  2014/10/31 17:43:45  vsnyder
 ! Separate PTan and GPH hydrostatic fills
 !
