@@ -16,7 +16,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use bitstuff, only: dumpbitnames
   use dump_0, only: diff, diff_fun, dump
   use HDF, only: dfacc_rdonly, dfacc_read, dfacc_create, dfacc_rdwr, &
-    & dfnt_char8, dfnt_float32, dfnt_int32, dfnt_float64
+    & dfnt_float32, dfnt_int32, dfnt_float64
   use highoutput, only: outputnamedvalue
   use intrinsic ! "units" type literals, beginning with l_
   use MLSCommon, only: defaultundefinedvalue, interval_T, &
@@ -34,7 +34,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSFinds, only: findfirst, findlast, findunique
   use MLSSets, only: findintersection, intersection
   use MLSStrings, only: capitalize, lowercase
-  use MLSStringlists, only: extractsubstring, &
+  use MLSStringLists, only: extractsubstring, &
     & gethashelement, getstringelement, getuniquelist, &
     & list2array, numstringelements, removelistfromlist, replacesubstring, &
     & stringelementnum, switchdetail
@@ -191,36 +191,37 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    ! The following are the current data fields
    character (len=*), parameter :: DATA_FIELD1 = 'L2gpValue'
    character (len=*), parameter :: DATA_FIELD2 = 'L2gpPrecision'
-   character (len=*), parameter :: DATA_FIELD3 = 'Status'
-   character (len=*), parameter :: DATA_FIELD4 = 'Quality'
-   character (len=*), parameter :: DATA_FIELD5 = 'Convergence'
+   ! character (len=*), parameter :: DATA_FIELD3 = 'Status'
+   ! character (len=*), parameter :: DATA_FIELD4 = 'Quality'
+   ! character (len=*), parameter :: DATA_FIELD5 = 'Convergence'
    character (len=*), parameter :: DATA_FIELDS = &
      & 'L2gpValue,L2gpPrecision,Quality,Status,Convergence'
 
    ! The following are the current geolocation fields
-   character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
-   character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
-   character (len=*), parameter :: GEO_FIELD3 = 'Time'
-   character (len=*), parameter :: GEO_FIELD4 = 'LocalSolarTime'
-   character (len=*), parameter :: GEO_FIELD5 = 'SolarZenithAngle'
-   character (len=*), parameter :: GEO_FIELD6 = 'LineOfSightAngle'
-   character (len=*), parameter :: GEO_FIELD7 = 'OrbitGeodeticAngle'
-   character (len=*), parameter :: GEO_FIELD8 = 'ChunkNumber'
-   character (len=*), parameter :: GEO_FIELD9 = 'Pressure'
-   character (len=*), parameter :: GEO_FIELD10= 'Frequency'
+   ! character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
+   ! character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
+   ! character (len=*), parameter :: GEO_FIELD3 = 'Time'
+   ! character (len=*), parameter :: GEO_FIELD4 = 'LocalSolarTime'
+   ! character (len=*), parameter :: GEO_FIELD5 = 'SolarZenithAngle'
+   ! character (len=*), parameter :: GEO_FIELD6 = 'LineOfSightAngle'
+   ! character (len=*), parameter :: GEO_FIELD7 = 'OrbitGeodeticAngle'
+   ! character (len=*), parameter :: GEO_FIELD8 = 'ChunkNumber'
+   ! character (len=*), parameter :: GEO_FIELD9 = 'Pressure'
+   ! character (len=*), parameter :: GEO_FIELD10= 'Frequency'
    character (len=*), parameter :: GEO_FIELDS = &
      & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
      & ',OrbitGeodeticAngle,Pressure,Time,Frequency,ChunkNumber'
-   character (len=*), parameter :: HGEO_FIELDS = &
-     & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
-     & ',OrbitGeodeticAngle,Time'
+   ! The following are HIRDLS geolocation fields
+   ! character (len=*), parameter :: HGEO_FIELDS = &
+   !  & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
+   !  & ',OrbitGeodeticAngle,Time'
 
    ! The following are the dimension names according to the mls spec
    character (len=*), parameter :: DIM_NAME1 = 'nTimes'
-   character (len=*), parameter :: DIM_NAME2 = 'nLevels'
-   character (len=*), parameter :: DIM_NAME3 = 'nFreqs'
+   ! character (len=*), parameter :: DIM_NAME2 = 'nLevels'
+   ! character (len=*), parameter :: DIM_NAME3 = 'nFreqs'
    ! An alternate name for DIM_NAME3 used by HIRDLS
-   character (len=*), parameter :: HRD_DIM_NAME3 = 'nChans'
+   ! character (len=*), parameter :: HRD_DIM_NAME3 = 'nChans'
    character (len=*), parameter :: DIM_NAME12 = 'nLevels,nTimes'
    character (len=*), parameter :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
    ! These are for the new max_dimlist parameter added to  SWdefgfld.
@@ -234,9 +235,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
 !   INTEGER,PARAMETER::CHUNKFREQS=13,CHUNKLEVELS=17,CHUNKTIMES=9,CHUNK4=1
    
-   character (len=*), parameter :: DEFAULTMAXDIM = UNLIM
-   integer, parameter :: DEFAULT_CHUNKRANK = 1
-   integer, dimension(7), parameter :: DEFAULT_CHUNKDIMS = (/ 1,1,1,1,1,1,1 /)
+   ! character (len=*), parameter :: DEFAULTMAXDIM = UNLIM
+   ! integer, parameter :: DEFAULT_CHUNKRANK = 1
+   ! integer, dimension(7), parameter :: DEFAULT_CHUNKDIMS = (/ 1,1,1,1,1,1,1 /)
    integer, parameter :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
    integer, parameter :: HDFE_NOMERGE = 0       ! don't merge
   
@@ -3605,11 +3606,7 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: ReadData
 
     ! Local Parameters
-    character (LEN=*), parameter :: SZ_ERR = 'Failed to get size of &
-         &dimension '
     character (LEN=*), parameter :: MLSMSG_INPUT = 'Error in input argument '
-    character (LEN=*), parameter :: MLSMSG_L2GPRead = 'Unable to read L2GP &
-                                                     &field:'
     ! Local Variables
     character (len=80) :: DF_Name
     character (len=80) :: DF_Precision
@@ -4009,19 +4006,12 @@ contains ! =====     Public Procedures     =============================
     ! This subroutine sets up the structural definitions in an empty L2GP file.
 
     ! Arguments
-
     type(MLSFile_T)                :: L2GPFile
     type( L2GPData_T ), intent(inout) :: l2gp
     character (LEN=*), optional, intent(IN) :: swathName ! Defaults to l2gp%swathName
     integer, optional, intent(in) :: nLevels
     logical, optional, intent(in) :: notUnlimited   !               as nTimes
     logical, optional, intent(in) :: compressTimes  ! don't store nTimesTotal
-    ! Parameters
-
-    character (len=*), parameter :: DIM_ERR = 'Failed to define dimension '
-    character (len=*), parameter :: GEO_ERR = &
-         & 'Failed to define geolocation field '
-    character (len=*), parameter :: DAT_ERR = 'Failed to define data field '
 
     ! Variables
 
@@ -4288,11 +4278,7 @@ contains ! =====     Public Procedures     =============================
     type(MLSFile_T)                :: L2GPFile
     character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
     integer,intent(IN),optional::offset
-    ! Parameters
 
-    character (len=*), parameter :: WR_ERR = &
-         & 'Failed to write geolocation field '
-    
     ! Variables
 
     character (len=132) :: name ! Either swathName or l2gp%name
@@ -4396,7 +4382,6 @@ contains ! =====     Public Procedures     =============================
     integer,intent(IN),optional::offset
     ! Parameters
     ! logical, parameter :: DEEBUG = .false.
-    character (len=*), parameter :: WR_ERR = 'Failed to write data field '
 
     ! Variables
 
@@ -4514,13 +4499,10 @@ contains ! =====     Public Procedures     =============================
     type( L2GPData_T ), intent(inout) :: l2gp
     type(MLSFile_T)                :: L2GPFile
     character (len=*), intent(IN), optional :: swathName ! Defaults->l2gp%name
+
     ! Parameters
-
-    character (len=*), parameter :: WR_ERR = 'Failed to write attribute field '
     character (len=*), parameter :: NOUNITS = 'NoUnits'
-    ! Variables
 
-    character (len=132) :: name     ! Either swathName or l2gp%name
     ! The following pair of string list encode the Units attribute
     ! corresponding to each Title attribute; e.g., the Units for Latitude is deg
     character (len=*), parameter :: GeolocationTitles = &
@@ -4544,9 +4526,11 @@ contains ! =====     Public Procedures     =============================
     character (len=*), parameter :: SpUniqueFieldDefinition = &
       & 'HMT,M,M,MT,M,M,M,M,HMT,M,' // &
       & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
-
-    character(len=CHARATTRLEN) :: abbr_uniq_fdef
     ! logical, parameter :: DEEBUG = .false.
+
+    ! Variables
+    character (len=132) :: name     ! Either swathName or l2gp%name
+    character(len=CHARATTRLEN) :: abbr_uniq_fdef
     character(len=CHARATTRLEN) :: expnd_uniq_fdef
     integer :: field
     character(len=CHARATTRLEN) :: field_name
@@ -5235,6 +5219,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.206  2014/12/09 01:26:52  pwagner
+! Define and initialize orbit angle range for Descending mode
+!
 ! Revision 2.205  2014/10/01 00:02:06  pwagner
 ! Fixed another bug in ExtractL2GPRecord
 !
