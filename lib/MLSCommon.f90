@@ -13,8 +13,8 @@
 module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
-  use IEEE_ARITHMETIC, only: IEEE_IS_FINITE, IEEE_IS_NAN
-  use MLSKINDS ! EVERYTHING
+  use ieee_arithmetic, only: ieee_is_finite, ieee_is_nan
+  use MLSKinds ! everything
 
   implicit none
   private
@@ -62,7 +62,7 @@ module MLSCommon                ! Common definitions for the MLS software
 !               Retain value of MLSDebug thoughout pahse
 
 !     (subroutines and functions)
-! inRange       does an argument lie with a specified range or interval
+! inRange       does an argument lie within a specified range or interval
 ! is_what_ieee  is an argument a specified ieee type
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
@@ -79,19 +79,22 @@ module MLSCommon                ! Common definitions for the MLS software
 
   ! This module contains simple definitions that are common to all the MLS PGS
   ! f90 software.
+  
+  ! We also put in these functions.
+  ! Should they be relocated to other modules? Where?
 
-  public :: INRANGE
-  public :: IS_WHAT_IEEE
+  public :: inRange
+  public :: is_what_ieee
   
   ! User-defined datatypes
-  public :: FILEIDS_T
-  public :: MLSFILE_T
-  public :: MLSFILL_T
-  public :: L1BINFO_T
-  public :: RANGE_T
-  public :: TAI93_RANGE_T
-  public :: L2METADATA_T
-  public :: INTERVAL_T
+  public :: FileIDs_T
+  public :: MLSFile_T
+  public :: MLSFill_T
+  public :: L1BInfo_T
+  public :: Range_T
+  public :: TAI93_Range_T
+  public :: L2Metadata_T
+  public :: Interval_T
 
   ! Make parameters gotten from MLSKinds public
 
@@ -117,7 +120,7 @@ module MLSCommon                ! Common definitions for the MLS software
   integer, public, parameter :: FILL_SIGNAL   = NAN_SIGNAL + 1
   integer, public, parameter :: OLDFILL_SIGNAL= FILL_SIGNAL + 1
 
-  ! Not just "is" but "=", because "is" may accept under broader conditions
+  ! Not just "is" but "=", because "is" may satisfy looser conditions
   interface equalsFillValue
     module procedure equalsFillValue_r4, equalsFillValue_r8, equalsFillValue_int
   end interface
@@ -152,7 +155,7 @@ module MLSCommon                ! Common definitions for the MLS software
   ! Now we have the lengths for various strings
 
   integer, public, parameter :: ShortNameLen = 32
-  integer, public, parameter :: namelen      = 64  ! Max len of SDS array name
+  integer, public, parameter :: NameLen      = 64  ! Max len of SDS array name
   integer, public, parameter :: LineLen      = 132
   integer, public, parameter :: FileNameLen  = max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
   integer, public, parameter :: BareFNLen    = 64  ! Bare file name length (w/o path)
@@ -178,8 +181,8 @@ module MLSCommon                ! Common definitions for the MLS software
   ! --------------------------------------------------------------------------
 
   ! A type to hold the hdf file ids
-  ! (Should make it recursive in case dataset path something like
-  ! "/grp_1/grp_2/../grp_n/sd")
+  ! (Should we make it recursive in case dataset path something like
+  ! "/grp_1/grp_2/../grp_n/sd"?)
 
   type FileIds_T
     integer :: f_id     = 0 ! File id, handle, or io unit
@@ -193,7 +196,7 @@ module MLSCommon                ! Common definitions for the MLS software
     integer :: Top      = 0
   end type Range_T
 
-  ! An open real interval
+  ! An open real interval (But see inRange below)
   type Interval_T
     real(rt) :: Bottom   = 0._rt
     real(rt) :: Top      = 0._rt
@@ -289,6 +292,11 @@ module MLSCommon                ! Common definitions for the MLS software
 
   contains
 
+  ! This family of functions returns TRUE for arg(s) within the given range
+  ! Like FindInRange, the range includes its endpoints;
+  ! e.g. if arg = range%Bottom = range%Top, returns TRUE
+  ! Note:
+  ! This runs counter to the spirit that the interval_t is an open interval
   elemental function inRange_int(arg, range) result(relation)
     ! Is arg in range?
     integer, intent(in)       :: arg
@@ -302,7 +310,7 @@ module MLSCommon                ! Common definitions for the MLS software
     real(r4), intent(in)       :: arg
     type(Interval_T), intent(in) :: range
     logical                   :: relation
-    relation = (arg < range%top) .and. (arg > range%bottom)
+    relation = (arg <= range%top) .and. (arg >= range%bottom)
   end function inRange_r4
 
   elemental function inRange_r8(arg, range) result(relation)
@@ -310,7 +318,7 @@ module MLSCommon                ! Common definitions for the MLS software
     real(r8), intent(in)       :: arg
     type(Interval_T), intent(in) :: range
     logical                   :: relation
-    relation = (arg < range%top) .and. (arg > range%bottom)
+    relation = (arg <= range%top) .and. (arg >= range%bottom)
   end function inRange_r8
 
   elemental function is_what_ieee_r8( what, arg ) result( itIs )
@@ -482,6 +490,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.44  2014/12/10 19:11:11  pwagner
+! f.p. inRange now includes its endpoints like integer interface
+!
 ! Revision 2.43  2014/09/05 00:00:27  vsnyder
 ! Remove ProcessID
 !
