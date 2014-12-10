@@ -313,7 +313,7 @@ Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 {!define(flushDGGDGMFiles,{!dnl
 ;; First do the DGGs
 !ifdef(flagGotDirectDGGs,{!dnl
-!DirectWriteDGGCommand, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+!DirectWriteDGGCommand, hdfVersion=!hdfVersion, $
   type=l2dgg, !undivert(!directDGGDivert)})
 ;; Now the DGMs
 !ifdef(flagGotDirectDGMs,{!dnl
@@ -625,7 +625,7 @@ End Fill
 begin Join
   Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'
   Label, quantity=tempVectorState.column_$1, label='$1-StdProd column-MLS'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity, $
@@ -636,7 +636,7 @@ End Join
 Begin Join
   Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
   Label, quantity=tempVectorState.column_$1, label='lowerOverlap-$1-StdProd column-MLS'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity, $
@@ -647,7 +647,7 @@ End Join
 Begin Join
   Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
   Label, quantity=tempVectorState.column_$1, label='upperOverlap-$1-StdProd column-MLS'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity, $
@@ -666,21 +666,21 @@ Begin Fill
 End Fill
 Begin Join
   Label, quantity=tempVectorState.column_$1, label='$1-StdProd column-GEOS5'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1
 End Join
 ;; Store chunk overlaps as diagnostics if flags are set
 !ifdef(flagDWLowerOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.column_$1, label='lowerOverlap-$1-StdProd column-GEOS5'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1, /lowerOverlap
 End Join
 })
 !ifdef(flagDWUpperOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.column_$1, label='upperOverlap-$1-StdProd column-GEOS5'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.column_$1, precision=tempVectorPrecision.column_$1, /upperOverlap
 End Join
 })
@@ -689,7 +689,7 @@ End Join
 begin Join
   Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'
   Label, quantity=tempVectorState.column_$1, label='$1-StdProd column'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity, $
@@ -700,7 +700,7 @@ End Join
 Begin Join
   Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
   Label, quantity=tempVectorState.column_$1, label='lowerOverlap-$1-StdProd column'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity, $
@@ -711,7 +711,7 @@ End Join
 Begin Join
   Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
   Label, quantity=tempVectorState.column_$1, label='upperOverlap-$1-StdProd column'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity, $
@@ -799,7 +799,7 @@ begin Join
   Label, quantity=tempVectorState.!theQuantity, label='$1-StdProd'!dnl
 })
 !ifelse($1,{Temperature}, {!dnl
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity
@@ -808,7 +808,7 @@ End Join
 !ifdef(flagDWLowerOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity, /lowerOverlap
@@ -817,7 +817,7 @@ End Join
 !ifdef(flagDWUpperOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity, /upperOverlap
@@ -834,21 +834,21 @@ End Fill
 {!dnl
 Begin Join
   Label, quantity=tempVectorState.tpPressure, label='WMOTPPressure-StdProd-MLS'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.tpPressure
 End Join
 ;; Store chunk overlaps as diagnostics if flags are set
 !ifdef(flagDWLowerOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.tpPressure, label='lowerOverlap-WMOTPPressure-StdProd-MLS'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.tpPressure, /lowerOverlap
 End Join
 })
 !ifdef(flagDWUpperOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.tpPressure, label='upperOverlap-WMOTPPressure-StdProd-MLS'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.tpPressure, /upperOverlap
 End Join
 })
@@ -860,14 +860,14 @@ Begin Fill
 End Fill
 Begin Join
   Label, quantity=tempVectorState.tpPressure, label='WMOTPPressure-StdProd-GEOS5'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.tpPressure
 End Join
 ;; Store chunk overlaps as diagnostics if flags are set
 !ifdef(flagDWLowerOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.tpPressure, label='lowerOverlap-WMOTPPressure-StdProd-GEOS5'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.tpPressure, /lowerOverlap
 End Join
 })
@@ -875,34 +875,34 @@ End Join
 Begin Join
 ;; Store chunk overlaps as diagnostics if flags are set
   Label, quantity=tempVectorState.tpPressure, label='upperOverlap-WMOTPPressure-StdProd-GEOS5'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.tpPressure, /upperOverlap
 End Join
 })
 },{!dnl
 Begin Join
   Label, quantity=tempVectorState.tpPressure, label='WMOTPPressure-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.tpPressure
 End Join
 ;; Store chunk overlaps as diagnostics if flags are set
 !ifdef(flagDWLowerOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.tpPressure, label='lowerOverlap-WMOTPPressure-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.tpPressure, /lowerOverlap
 End Join
 })
 !ifdef(flagDWUpperOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.tpPressure, label='upperOverlap-WMOTPPressure-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.tpPressure, /upperOverlap
 End Join
 })
 })
 }, $1,{Temperature_HR}, {
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.$1, precision=tempVectorPrecision.$1, $
     status=tempVectorDiagnostics.status$1, quality=tempVectorDiagnostics.quality$1,$
     convergence=tempVectorDiagnostics.convergence!theQuantity
@@ -912,7 +912,7 @@ End Join
 Begin Join
 ;; Store chunk overlaps as diagnostics if flags are set
   Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.$1, precision=tempVectorPrecision.$1, $
     status=tempVectorDiagnostics.status$1, quality=tempVectorDiagnostics.quality$1,$
     convergence=tempVectorDiagnostics.convergence!theQuantity, /lowerOverlap
@@ -922,7 +922,7 @@ End Join
 Begin Join
 ;; Store chunk overlaps as diagnostics if flags are set
   Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.$1, precision=tempVectorPrecision.$1, $
     status=tempVectorDiagnostics.status$1, quality=tempVectorDiagnostics.quality$1,$
     convergence=tempVectorDiagnostics.convergence!theQuantity, /upperOverlap
@@ -931,7 +931,7 @@ End Join
 }, $1,{IWC}, {
 ; IWC is somewhat special
   Label, quantity=tempVectorState.iwp, label='IWP-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
     status=tempVectorDiagnostics.statusiwc, quality=tempVectorDiagnostics.qualityiwc, $
     convergence=tempVectorDiagnostics.convergenceiwc, $
@@ -944,7 +944,7 @@ End Join
 Begin Join
   Label, quantity=tempVectorState.iwc, label='lowerOverlap-IWC-StdProd'
   Label, quantity=tempVectorState.iwp, label='lowerOverlap-IWP-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
     status=tempVectorDiagnostics.statusiwc, quality=tempVectorDiagnostics.qualityiwc, $
     convergence=tempVectorDiagnostics.convergenceiwc, $
@@ -958,7 +958,7 @@ Begin Join
 ;; Store chunk overlaps as diagnostics if flags are set
   Label, quantity=tempVectorState.iwc, label='upperOverlap-IWC-StdProd'
   Label, quantity=tempVectorState.iwp, label='upperOverlap-IWP-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.iwc, precision=tempVectorPrecision.iwc, $
     status=tempVectorDiagnostics.statusiwc, quality=tempVectorDiagnostics.qualityiwc, $
     convergence=tempVectorDiagnostics.convergenceiwc, $
@@ -969,7 +969,7 @@ End Join
 })
 },{
 ; RHI is the only normal stdProd without columns, which makes it special
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity
@@ -978,7 +978,7 @@ End Join
 !ifdef(flagDWLowerOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.!theQuantity, label='lowerOverlap-$1-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity, /lowerOverlap
@@ -987,7 +987,7 @@ End Join
 !ifdef(flagDWUpperOverlap, {!dnl
 Begin Join
   Label, quantity=tempVectorState.!theQuantity, label='upperOverlap-$1-StdProd'
-  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, type=l2dgg, hdfVersion=!hdfVersion, $
     source=tempVectorState.!theQuantity, precision=tempVectorPrecision.!theQuantity, $
     status=tempVectorDiagnostics.status!theQuantity, quality=tempVectorDiagnostics.quality!theQuantity, $
     convergence=tempVectorDiagnostics.convergence!theQuantity, /upperOverlap
@@ -1177,6 +1177,9 @@ Fill, quantity=otherDiagnostics.status!HRQuantity, method=status, $
 })})
 
 ; $Log$
+; Revision 1.2  2014/12/02 18:58:10  pwagner
+; May skip flagging for cloudy Status
+;
 ; Revision 1.1  2014/06/13 17:52:29  pwagner
 ; First commit
 ;

@@ -34,13 +34,14 @@ $1,{O3_HR}, {
 
 ;; Ascend/Descend Mode will be used in all l2gp and dgg DirectWrites
 begin Fill
-  Fill, quantity=ADModeVector.AscDescMode, method=ascenddescend
+  Fill, quantity=ADModeVector.AscDescMode, method=ascenddescend, $
+    ptanQuantity=apriori.ptanGHz
 end Fill
 
   !ifdef(flagWriteAPrioriToDGG,{
 begin Join
   !forall(LabelOneAPQuantity,!allStandardProducts)
-  DirectWrite, hdfVersion=!hdfVersion, AscDescMode=ADModeVector.AscDescMode, $
+  DirectWrite, hdfVersion=!hdfVersion, $
   type=l2dgg !forall(DirectWriteOneAPQuantity,!allStandardProducts)
   
 end Join
@@ -52,6 +53,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.3  2014/04/07 18:15:30  pwagner
+;Added stuff for writing Ascending/Descending Mode flags
+;
 ;Revision 1.2  2013/10/15 17:57:25  pwagner
 ;Spacecraft ascend/descend mode now written to dgg
 ;
