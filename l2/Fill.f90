@@ -1901,7 +1901,8 @@ contains ! =====     Public Procedures     =============================
           & quadrature, dontMask, ignoreTemplate )
 
       case ( l_ascenddescend )
-        call WithAscOrDesc ( quantity, chunks(chunkNo), fileDatabase, hgrids )
+        call WithAscOrDesc ( key, quantity, chunks(chunkNo), fileDatabase, &
+          & hgrids, ptanQuantity )
 
       case ( l_asciiFile )
         if ( .not. got ( f_file ) ) &
@@ -3114,6 +3115,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.447  2014/12/10 21:29:12  pwagner
+! Pass ptanQuantity for AscendDescend method
+!
 ! Revision 2.446  2014/10/31 17:43:45  vsnyder
 ! Separate PTan and GPH hydrostatic fills
 !
