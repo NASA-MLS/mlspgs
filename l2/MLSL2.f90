@@ -13,17 +13,16 @@ program MLSL2
   use allocate_deallocate, only: allocatelogunit, set_garbage_collection, &
     & trackallocates
   use Call_Stack_m, only: Show_Sys_Memory, sys_memory_ch, sys_memory_convert
-  use chunkdivide_m, only: chunkdivideconfig
+  use chunkDivide_m, only: chunkDivideConfig
   use declaration_table, only: allocate_decl, deallocate_decl, dump_decl
   use EmpiricalGeometry, only: DestroyEmpiricalGeometry
-  use GetResourceUsage_m, only: GetPID
-  use hdf, only: dfacc_rdonly
-  use highoutput, only: dump, headline, outputNamedValue
+  use HDF, only: dfacc_rdonly
+  use highoutput, only: dump, headLine, outputNamedValue
   use init_tables_module, only: init_tables
-  use io_stuff, only: read_textFile, write_textFile
+  use io_stuff, only: write_textFile
   use intrinsic, only: get_type, l_ascii, l_tkgen, lit_indices
-  use l2gpdata, only: avoidunlimiteddims
-  use l2parinfo, only: parallel, initparallel, accumulateslavearguments, &
+  use L2GPData, only: avoidUnlimitedDims
+  use L2ParInfo, only: parallel, initparallel, accumulateslavearguments, &
     & transmitslavearguments
   use leakcheck_m, only: leakcheck
   use lexer_core, only: init_lexer
@@ -32,8 +31,8 @@ program MLSL2
   use MLSFiles, only: filestringtable, &
     & addFileToDatabase, deallocate_filedatabase, dump, &
     & initializeMLSfile, MLS_openfile, MLS_closefile
-  use MLShdf5, only: MLS_h5open, MLS_h5close
-  use MLSl2options, only: allocFile, checkPaths, current_version_id, &
+  use MLSHDF5, only: MLS_h5open, MLS_h5close
+  use MLSL2Options, only: allocFile, checkPaths, current_version_id, &
     & default_hdfversion_read, default_hdfversion_write, &
     & level1_hdfversion, aura_l1bfiles, need_l1bfiles, &
     & normal_exit_status, noteFile, output_print_unit, &
@@ -47,14 +46,14 @@ program MLSL2
     & checkl2cf, checkleak, countchunks, do_dump, dump_tree, l2cf_unit, &
     & numswitches, originalcmds, recl, &
     & sectionstoskip, showdefaults, slavemaf, timing, uniqueID
-  use MLSl2timings, only: run_start_time, section_times, total_times, &
+  use MLSL2Timings, only: run_start_time, section_times, total_times, &
     & add_to_section_timing, dump_section_timings
-  use MLSmessagemodule, only: MLSmessage, MLSmsg_debug, &
-    & MLSmessageconfig, MLSmsg_error, MLSmsg_severity_to_quit, &
-    & MLSmsg_success, MLSmsg_warning, dumpconfig, MLSmessageexit
-  use MLSpcf2 ! everything
-  use MLSstrings, only: asciify, trim_safe
-  use MLSstringlists, only: expandstringrange, &
+  use MLSMessagemodule, only: MLSMessage, MLSMsg_debug, &
+    & MLSMessageconfig, MLSMsg_error, MLSMsg_severity_to_quit, &
+    & MLSMsg_success, MLSMsg_warning, dumpconfig, MLSMessageexit
+  use MLSPCF2 ! everything
+  use MLSStrings, only: trim_safe
+  use MLSStringlists, only: expandstringrange, &
     & switchdetail
   use output_m, only: blanks, output, &
     & invalidprunit, msglogprunit, outputoptions, stampoptions, stdoutprunit
@@ -63,8 +62,8 @@ program MLSL2
   use parser_tables_l2cf, only: init_parser_table
   use printit_m, only: set_config, stdoutlogunit
   use pvm, only: clearpvmargs, freepvmargs
-  use sdptoolkit, only: pgsd_dem_30arc, pgsd_dem_90arc, &
-    & pgsd_dem_elev, pgsd_dem_water_land, usesdptoolkit, pgs_dem_close
+  use SDPToolkit, only: PGSD_dem_30arc, PGSD_dem_90arc, &
+    & PGSD_dem_elev, PGSD_dem_water_land, usesdptoolkit, pgs_dem_close
   use string_table, only: destroy_char_table, destroy_hash_table, &
     & destroy_string_table, get_string, addinunit
   use symbol_table, only: destroy_symbol_table
@@ -552,10 +551,10 @@ program MLSL2
     ! Coda
     numResolutions = 2
     numLayers = 2
-    resolutionList(1) = PGSd_DEM_30ARC
-    resolutionList(2) = PGSd_DEM_90ARC
-    layerList(1) = PGSd_DEM_ELEV
-    layerList(2) = PGSd_DEM_WATER_LAND
+    resolutionList(1) = PGSD_DEM_30ARC
+    resolutionList(2) = PGSD_DEM_90ARC
+    layerList(1) = PGSD_DEM_ELEV
+    layerList(2) = PGSD_DEM_WATER_LAND
     status = PGS_DEM_Close ( resolutionList, numResolutions, &
       & layerList, numLayers )
     call outputNamedValue( 'PGS_DEM_Close status', status )
@@ -836,6 +835,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.212  2014/12/10 23:04:54  pwagner
+! Removed unused stuff
+!
 ! Revision 2.211  2014/09/11 18:28:35  pwagner
 ! Added -Smem[units] switch to show sys memory
 !
