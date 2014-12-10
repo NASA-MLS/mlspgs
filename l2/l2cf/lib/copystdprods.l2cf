@@ -10,7 +10,8 @@
 ;; We ought to have a different quantity type for ascend/descend instead of
 ;; resorting to this trickery
 begin Fill
-  Fill, quantity=aPriori.surfaceType, method=ascenddescend
+  Fill, quantity=aPriori.surfaceType, method=ascenddescend, $
+    ptanQuantity=apriori.ptanGHz
 end Fill
 begin Join
   Label, quantity=aPriori.surfaceType, label='Ascend(+1)Descend(-1)'
@@ -210,6 +211,9 @@ begin Output
 end Output
 !divert(-1)
 ; $Log$
+; Revision 1.6  2014/11/19 21:33:51  pwagner
+; Automatically write ExtraNotes attribute if no good OH profiles
+;
 ; Revision 1.5  2014/10/01 00:09:48  pwagner
 ; Changes used in producing v4.13 l2cf
 ;
