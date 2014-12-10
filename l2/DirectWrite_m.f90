@@ -28,7 +28,8 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use highoutput, only: beVerbose, LetsDebug, outputNamedValue
   use init_tables_module, only: l_pressure, l_zeta, &
     & l_l2gp, l_l2aux, l_l2dgg, l_l2fwm
-  use MLSCommon, only: defaultundefinedvalue, MLSfile_t
+  use MLSCommon, only: defaultUndefinedValue, Interval_T, MLSFile_T, &
+    & inRange
   use MLSKinds, only: rv
   use MLSMessagemodule, only: MLSmessage, MLSmsg_error, MLSmsg_warning
   use MLSFiles, only: hdfversion_4, hdfversion_5, dump, MLS_exists, &
@@ -1083,21 +1084,22 @@ contains ! ======================= Public Procedures =========================
     & precision, quality, status, convergence, AscDescMode, &
     & l2gp, &
     & name, chunkNo, HGrids, offset, firstInstance, lastInstance )
-    use HGRIDSDATABASE, only: HGRID_T
-    use INTRINSIC, only: L_NONE
-    use L2GPDATA, only: L2GPDATA_T, RGP, &
-      & SETUPNEWL2GPRECORD
+    use HGridsDatabase, only: HGrid_T
+    use intrinsic, only: l_none
+    use L2GPData, only: descendingRange, L2GPData_T, RGP, &
+      & setupNewL2GPRecord
     ! Args:
     type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), pointer :: precision
-    type (VectorValue_T), pointer :: quality
-    type (VectorValue_T), pointer :: status
-    type (VectorValue_T), pointer :: convergence
-    type (VectorValue_T), pointer :: AscDescMode
+    type (VectorValue_T), pointer    :: precision
+    type (VectorValue_T), pointer    :: quality
+    type (VectorValue_T), pointer    :: status
+    type (VectorValue_T), pointer    :: convergence
+    type (VectorValue_T), pointer    :: AscDescMode
     type (L2GPData_T)                :: l2gp
     character(len=*), intent(in)     :: name
     integer, intent(in)              :: chunkNo
     type (HGrid_T), dimension(:), pointer ::     HGrids
+    type (Interval_T)                :: myRange
     integer, intent(in), optional    :: offset
     integer, intent(in), optional    :: firstInstance
     integer, intent(in), optional    :: lastInstance
@@ -1238,6 +1240,21 @@ contains ! ======================= Public Procedures =========================
         & merge( 1, -1, &
         & (AscDescMode%values(1,useFirstInstance:useLastInstance) > 0._rv) &
         & )
+    elseif( DescendingRange%Bottom < DescendingRange%Top ) then
+      ! Turnaround points are assigned Mode values according to
+      ! 90 deg  -> descending
+      ! 270 deg -> ascending
+      myRange%Bottom = DescendingRange%Bottom
+      myRange%Top    = DescendingRange%Top / (1. + 1.e-6)
+      l2gp%AscDescMode(firstProfile:lastProfile) = &
+        & merge( -1, 1, &
+        & inRange( &
+        &  mod( l2gp%geodAngle(firstProfile:lastProfile), 360._rgp ) &
+        & , myRange ) &
+        & )
+      call Dump( (/myRange%Bottom, myRange%top/), 'myRange' )
+      call Dump( mod( l2gp%geodAngle(firstProfile:lastProfile), 360._rgp ), 'Orbit Angle' )
+      call Dump( l2gp%AscDescMode(firstProfile:lastProfile), 'Mode' )
     else
       l2gp%AscDescMode(firstProfile:lastProfile) = 0
     endif
@@ -1296,6 +1313,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.65  2014/12/10 23:02:59  pwagner
+! Correct erroneous calculation of AscDescMode; now based on geodAngle
+!
 ! Revision 2.64  2014/11/04 01:25:41  pwagner
 ! May switch on verbose, deebug modes with -Sdirect[n]
 !
