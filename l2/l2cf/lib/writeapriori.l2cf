@@ -32,12 +32,6 @@ $1,{O3_HR}, {
   
 !divert!dnl
 
-;; Ascend/Descend Mode will be used in all l2gp and dgg DirectWrites
-begin Fill
-  Fill, quantity=ADModeVector.AscDescMode, method=ascenddescend, $
-    ptanQuantity=apriori.ptanGHz
-end Fill
-
   !ifdef(flagWriteAPrioriToDGG,{
 begin Join
   !forall(LabelOneAPQuantity,!allStandardProducts)
@@ -53,6 +47,9 @@ end Join
   })
 !divert(-1)
 ;$Log$
+;Revision 1.4  2014/12/10 23:05:29  pwagner
+;Correct erroneous calculation of AscDescMode; now based on geodAngle
+;
 ;Revision 1.3  2014/04/07 18:15:30  pwagner
 ;Added stuff for writing Ascending/Descending Mode flags
 ;
