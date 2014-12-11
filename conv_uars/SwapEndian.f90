@@ -1,3 +1,14 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
 MODULE SwapEndian
 
 ! Contains functions to swap endianess of input data into the endianess of
@@ -17,78 +28,110 @@ MODULE SwapEndian
      MODULE PROCEDURE SwapLittleReal, SwapLittleInteger
   END INTERFACE
 
-  CONTAINS
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+  !---------------------------------------------------------------------------
 
-    REAL FUNCTION SwapReal (r4)
+CONTAINS ! ============= Public procedures ===================================
 
-      REAL :: r4
-      CHARACTER(len=1) :: cbuf(4)
+  REAL FUNCTION SwapReal (r4)
 
-      cbuf = TRANSFER (r4, cbuf)
-      SwapReal = TRANSFER (cbuf(4:1:-1), r4)
+    REAL :: r4
+    CHARACTER(len=1) :: cbuf(4)
 
-    END FUNCTION SwapReal
+    cbuf = TRANSFER (r4, cbuf)
+    SwapReal = TRANSFER (cbuf(4:1:-1), r4)
 
-    INTEGER FUNCTION SwapInteger (i4)
+  END FUNCTION SwapReal
 
-      INTEGER :: i4
-      CHARACTER(len=1) :: cbuf(4)
+  INTEGER FUNCTION SwapInteger (i4)
 
-      cbuf = TRANSFER (i4, cbuf)
-      SwapInteger = TRANSFER (cbuf(4:1:-1), i4)
+    INTEGER :: i4
+    CHARACTER(len=1) :: cbuf(4)
 
-    END FUNCTION SwapInteger
+    cbuf = TRANSFER (i4, cbuf)
+    SwapInteger = TRANSFER (cbuf(4:1:-1), i4)
 
-    REAL FUNCTION SwapBigReal (r4)
+  END FUNCTION SwapInteger
 
-      REAL :: r4
-      CHARACTER(LEN=1) :: cbuf
+  pure FUNCTION SwapShort (n2)
 
-      IF (ICHAR(TRANSFER (1, cbuf)) == 1) THEN   ! machine is little endian
-         SwapBigReal = SwapBytes (r4)
-      ELSE
-         SwapBigReal = r4
-      ENDIF
+    use MLSKinds, only: I2
 
-    END FUNCTION SwapBigReal
+    integer(i2), intent(in) :: n2
+    integer(i2) :: SwapShort
 
-    REAL FUNCTION SwapBigInteger (i4)
+    CHARACTER(len=1) :: cbuf(2)
 
-      integer :: i4
-      CHARACTER(LEN=1) :: cbuf
+    cbuf = TRANSFER (n2, cbuf)
+    SwapShort = TRANSFER (cbuf(2:1:-1), n2)
 
-      IF (ICHAR(TRANSFER (1, cbuf)) == 1) THEN   ! machine is little endian
-         SwapBigInteger = SwapBytes (i4)
-      ELSE
-         SwapBigInteger = i4
-      ENDIF
+  END FUNCTION SwapShort
 
-    END FUNCTION SwapBigInteger
+  REAL FUNCTION SwapBigReal (r4)
 
-    REAL FUNCTION SwapLittleReal (r4)
+    REAL :: r4
+    CHARACTER(LEN=1) :: cbuf
 
-      REAL :: r4
-      CHARACTER(LEN=1) :: cbuf
+    IF (ICHAR(TRANSFER (1, cbuf)) == 1) THEN   ! machine is little endian
+       SwapBigReal = SwapBytes (r4)
+    ELSE
+       SwapBigReal = r4
+    ENDIF
 
-      IF (ICHAR(TRANSFER (1, cbuf)) == 0) THEN   ! machine is big endian
-         SwapLittleReal = SwapBytes (r4)
-      ELSE
-         SwapLittleReal = r4
-      ENDIF
+  END FUNCTION SwapBigReal
 
-    END FUNCTION SwapLittleReal
+  REAL FUNCTION SwapBigInteger (i4)
 
-    REAL FUNCTION SwapLittleInteger (i4)
+    integer :: i4
+    CHARACTER(LEN=1) :: cbuf
 
-      integer :: i4
-      CHARACTER(LEN=1) :: cbuf
+    IF (ICHAR(TRANSFER (1, cbuf)) == 1) THEN   ! machine is little endian
+       SwapBigInteger = SwapBytes (i4)
+    ELSE
+       SwapBigInteger = i4
+    ENDIF
 
-      IF (ICHAR(TRANSFER (1, cbuf)) == 0) THEN   ! machine is big endian
-         SwapLittleInteger = SwapBytes (i4)
-      ELSE
-         SwapLittleInteger = i4
-      ENDIF
+  END FUNCTION SwapBigInteger
 
-    END FUNCTION SwapLittleInteger
+  REAL FUNCTION SwapLittleReal (r4)
+
+    REAL :: r4
+    CHARACTER(LEN=1) :: cbuf
+
+    IF (ICHAR(TRANSFER (1, cbuf)) == 0) THEN   ! machine is big endian
+       SwapLittleReal = SwapBytes (r4)
+    ELSE
+       SwapLittleReal = r4
+    ENDIF
+
+  END FUNCTION SwapLittleReal
+
+  REAL FUNCTION SwapLittleInteger (i4)
+
+    integer :: i4
+    CHARACTER(LEN=1) :: cbuf
+
+    IF (ICHAR(TRANSFER (1, cbuf)) == 0) THEN   ! machine is big endian
+       SwapLittleInteger = SwapBytes (i4)
+    ELSE
+       SwapLittleInteger = i4
+    ENDIF
+
+  END FUNCTION SwapLittleInteger
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
 
 END MODULE SwapEndian
+
+! $Log$

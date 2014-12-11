@@ -1,67 +1,89 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
 !=============================================================================
-MODULE Output_UARS_L1B
+module Output_UARS_L1B
 !=============================================================================
 
-  USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
-  USE MLSAuxData, ONLY: Build_MLSAuxData, CreateGroup_MLSAuxData
-  USE MLSSTRINGS, only: COMPRESSSTRING
+  use MLS_DataProducts, only: DataProducts_T, Deallocate_DataProducts
+  use MLSAuxData, only: Build_MLSAuxData, CreateGroup_MLSAuxData
+  use MLSSTRINGS, only: CompressString
 
-  IMPLICIT NONE
+  implicit NONE
 
-  PRIVATE
+  private
 
-  INTEGER, PARAMETER :: INT_FILL = -1
+  integer, parameter :: Int_Fill = -1
 
-  PUBLIC :: OutputL1B_rad, OutputL1B_OA
+  public :: OutputL1B_OA, OutputL1B_Rad
 
-CONTAINS
+  logical, parameter, private :: Deebug = .false.
 
-  SUBROUTINE OutputL1B_rad (sdId, noMAF, counterMAF, rad, prec, gird_time)
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+  !---------------------------------------------------------------------------
 
-    USE rad_file_contents, ONLY: limb_hdr
+contains
+
+  subroutine OutputL1B_rad ( sdId, noMAF, counterMAF, rad, prec, gird_time, &
+                           & Limb_Hdr )
+
+    use MLSKinds, only: R8
+    use Rad_File_Contents, only: Limb_Hdr_t
 
    ! This subroutine writes an MAF's worth of data to the L1BRad F file
 
-    INTEGER, INTENT(IN) :: sdId, noMAF, counterMAF
-    REAL, INTENT(IN) :: rad(15,6,32), prec(15,6,32)
-    REAL*8, INTENT(IN) :: gird_time
+    integer, intent(in) :: sdId, noMAF, counterMAF
+    real, intent(in) :: rad(15,6,32), prec(15,6,32)
+    real(r8), intent(in) :: gird_time
+    type(limb_hdr_t), intent(in) :: Limb_Hdr
 
     TYPE (DataProducts_T) :: dataset
     integer, dimension(3) :: dims = (/15, 32, 1/)
     integer :: bank, status, bits, spindx
 
-    REAL, PARAMETER :: RAD_FILL = -999.99, RAD_ERR_FILL = -1.0
+    real, parameter :: Rad_Fill = -999.99, Rad_Err_Fill = -1.0
 
     character(len=40) :: name
-    CHARACTER(len=4), PARAMETER :: species(6) = (/ &
-         "PT", "ClO" , "H2O2", "O3", "H2O", "O3" /)
-    CHARACTER(len=3), PARAMETER :: band(6) = (/ &
+    character(len=4), parameter :: species(6) = (/ &
+         "PT  ", "ClO " , "H2O2", "O3  ", "H2O ", "O3  " /)
+    character(len=3), parameter :: band(6) = (/ &
          'B1F', 'B2F', 'B3F', 'B4F', 'B5F', 'B6F' /)
-    CHARACTER(len=2), PARAMETER :: radiometer(3) = (/ 'R1', 'R2', 'R3' /)
-    CHARACTER(len=3), PARAMETER :: freq(6) = (/ &
-         '63', '205', '205', '205', '183', '183' /)
-    CHARACTER(len=2), PARAMETER :: switch(0:2) = (/ 'S0', 'S1', 'S2' /)
+    character(len=2), parameter :: radiometer(3) = (/ 'R1', 'R2', 'R3' /)
+    character(len=3), parameter :: freq(6) = (/ &
+         '63 ', '205', '205', '205', '183', '183' /)
+    character(len=2), parameter :: switch(0:2) = (/ 'S0', 'S1', 'S2' /)
     integer :: mask07, bank3, bank6, swpos
     data mask07 / z'07'/  ! lower 3 bits for Filter Bank 3
 
-    CALL Deallocate_DataProducts (dataset)
+    call Deallocate_DataProducts (dataset)
 
-    ALLOCATE (dataset%Dimensions(1), stat=status)
+    allocate (dataset%Dimensions(1), stat=status)
 
     dataset%name      = 'counterMAF'
     dataset%data_type = 'integer'
     dataset%Dimensions(1) = 'MAF'
-    CALL Build_MLSAuxData (sdId, dataset, counterMAF, fill_value=INT_FILL, &
+    call Build_MLSAuxData (sdId, dataset, counterMAF, fill_value=INT_FILL, &
          lastIndex=noMAF)
 
     dataset%name      = 'MAFStartTimeGIRD'
     dataset%data_type = 'double'
-    CALL Build_MLSAuxData (sdId, dataset, gird_time, fill_value=-1.0d0, &
+    call Build_MLSAuxData (sdId, dataset, gird_time, fill_value=-1.0d0, &
          lastIndex=noMAF)
 
-    DEALLOCATE (dataset%Dimensions, stat=status)
+    deallocate (dataset%Dimensions, stat=status)
 
-    ALLOCATE (dataset%Dimensions(3), stat=status)
+    allocate (dataset%Dimensions(3), stat=status)
     dataset%data_type = 'real'
     dataset%Dimensions(1) = 'chanFB'
     dataset%Dimensions(2) = 'MIF'
@@ -74,7 +96,7 @@ CONTAINS
        bank6 = 3
     else
        bank6 = 6
-    endif
+    end if
 
     do bank = 1, 6
        swpos = 0
@@ -86,14 +108,14 @@ CONTAINS
           if (bank6 /= 3) swpos = 2
        else
           spindx = bank
-       endif
+       end if
        if (bank == 1) then
           name = radiometer(1)
        else if (bank >= 2 .and. bank <= 4) then
           name = radiometer(2)
        else
           name = radiometer(3)
-       endif
+       end if
 
        name = name(1:len_trim(name)) // ':' // freq(bank) // '.' // &
             band(bank) // ':' // species(spindx) // '.' // switch(swpos)
@@ -101,133 +123,148 @@ CONTAINS
        name = CompressString (name) 
 
        dataset%name = TRIM(name)
-       CALL Build_MLSAuxData (sdId, dataset, rad(:,bank,:), &
+       call Build_MLSAuxData (sdId, dataset, rad(:,bank,:), &
             lastIndex=noMAF, dims=dims, fill_value=RAD_FILL)
        dataset%name = TRIM(name)//' precision'
-       CALL Build_MLSAuxData (sdId, dataset, prec(:,bank,:), &
+       call Build_MLSAuxData (sdId, dataset, prec(:,bank,:), &
             lastIndex=noMAF, dims=dims, fill_value=RAD_ERR_FILL)
-    enddo
+    end do
 
-  END SUBROUTINE OutputL1B_rad
+  end subroutine OutputL1B_rad
 
-  SUBROUTINE OutputL1B_OA (sdId, noMAF, counterMAF)
+  subroutine OutputL1B_OA (sdId, noMAF, counterMAF, Limb_OA, EMLS_OA )
 
     ! This subroutine writes an MAF's worth of data to the L1B OA file
 
-    USE rad_file_contents, ONLY: limb_oa
-    USE oa_file_contents, ONLY: emls_oa
+    use MLSKinds, only: R8
+    use oa_file_contents, only: emls_oa_t
+    use rad_file_contents, only: limb_oa_t
  
     ! Arguments:
-    INTEGER, INTENT(IN) :: sdId, noMAF, counterMAF
+    integer, intent(in) :: sdId, noMAF, counterMAF
+    type(limb_oa_t), intent(in) :: Limb_OA
+    type(emls_oa_t), intent(in) :: EMLS_OA
 
     integer :: status
 
-    TYPE (DataProducts_T) :: dataset
+    type (DataProducts_T) :: dataset
 
 !------------------------------------------------------------------------------
-    CALL Deallocate_DataProducts (dataset)
+    call Deallocate_DataProducts (dataset)
 
-    print *, 'MAF: ', noMAF, limb_oa%ref_lat, limb_oa%ref_time
+    if ( deebug ) print *, 'MAF: ', noMAF, limb_oa%ref_lat, limb_oa%ref_time
 
 ! 2-d first:
 
-    ALLOCATE (dataset%Dimensions(2), stat=status)
+    allocate (dataset%Dimensions(2), stat=status)
 
     dataset%data_type = 'real'
     dataset%Dimensions(1) = 'MIF'
     dataset%Dimensions(2) = 'MAF'
 
     dataset%name = 'sc/OrbIncl'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_orbincl, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_orbincl, lastIndex=noMAF)
     dataset%name = 'sc/Lon'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_lon, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_lon, lastIndex=noMAF)
     dataset%name = 'sc/GeocLat'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_geoclat, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_geoclat, lastIndex=noMAF)
     dataset%name = 'sc/GeodLat'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_geodlat, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_geodlat, lastIndex=noMAF)
     dataset%name = 'GHz/GeocLat'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%geoc_lat, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%geoc_lat, lastIndex=noMAF)
     dataset%name = 'GHz/GeodLat'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%geod_lat, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%geod_lat, lastIndex=noMAF)
     dataset%name = 'GHz/GeodAngle'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%geod_ang, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%geod_ang, lastIndex=noMAF)
     dataset%name = 'GHz/Lon'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%lon, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%lon, lastIndex=noMAF)
     dataset%name = 'GHz/SolarTime'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%solartime, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%solartime, lastIndex=noMAF)
     dataset%name = 'GHz/SolarZenith'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%solarzenith, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%solarzenith, lastIndex=noMAF)
     dataset%name = 'GHz/azimAngle'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%azimAngle, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%azimAngle, lastIndex=noMAF)
     dataset%name = 'GHz/scanAngle'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%scanAngle, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%scanAngle, lastIndex=noMAF)
 
     dataset%data_type = 'double'
     dataset%name = 'GHz/GeodAlt'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%geod_alt, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%geod_alt, lastIndex=noMAF)
     dataset%name = 'GHz/GeocAlt'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%geoc_alt, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%geoc_alt, lastIndex=noMAF)
     dataset%name = 'GHz/LosAngle'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%LosAngle, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%LosAngle, lastIndex=noMAF)
     dataset%name = 'GHz/LosVel'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%LosVel, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%LosVel, lastIndex=noMAF)
     dataset%name = 'GHz/OrbY'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%OrbY, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%OrbY, lastIndex=noMAF)
     dataset%name = 'GHz/ECRtoFOV'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%ECRtoFOV, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%ECRtoFOV, lastIndex=noMAF)
     dataset%name = 'sc/GeocAlt'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_geocalt, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_geocalt, lastIndex=noMAF)
     dataset%name = 'sc/GeodAlt'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_geodalt, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_geodalt, lastIndex=noMAF)
 
     dataset%data_type = 'integer'
     dataset%name = 'GHz/BO_stat'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%bo_stat, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%bo_stat, lastIndex=noMAF)
 
-    ALLOCATE (dataset%Dimensions(1), stat=status)
+    allocate (dataset%Dimensions(1), stat=status)
     dataset%data_type = 'double'
     dataset%Dimensions(1) = 'MAF'
     dataset%name = 'MAFStartTimeTAI'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%MAFStartTimeTAI, &
+    call Build_MLSAuxData (sdId, dataset, emls_oa%MAFStartTimeTAI, &
          lastIndex=noMAF)
     dataset%name = 'sc/MIF_TAI'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_MIF_TAI, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_MIF_TAI, lastIndex=noMAF)
 
     dataset%data_type = 'integer'
     dataset%name      = 'counterMAF'
-    CALL Build_MLSAuxData (sdId, dataset, counterMAF, fill_value=INT_FILL, &
+    call Build_MLSAuxData (sdId, dataset, counterMAF, fill_value=INT_FILL, &
          lastIndex=noMAF)
 
-    CALL Deallocate_DataProducts (dataset)
+    call Deallocate_DataProducts (dataset)
 
 ! 3-d next:
 
-    DEALLOCATE (dataset%Dimensions, stat=status)
-    ALLOCATE (dataset%Dimensions(3), stat=status)
+    deallocate (dataset%Dimensions, stat=status)
+    allocate (dataset%Dimensions(3), stat=status)
 
     dataset%data_type = 'double'
     dataset%Dimensions(1) = 'xyz'
     dataset%Dimensions(2) = 'MIF'
     dataset%Dimensions(3) = 'MAF'
     dataset%name      = 'GHz/ECI'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%ECI, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%ECI, lastIndex=noMAF)
     dataset%name      = 'GHz/ECR'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%ECR, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%ECR, lastIndex=noMAF)
     dataset%name      = 'sc/ECI'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_ECI, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_ECI, lastIndex=noMAF)
     dataset%name      = 'sc/ECR'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_ECR, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_ECR, lastIndex=noMAF)
     dataset%name      = 'sc/VelECI'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_VelECI, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_VelECI, lastIndex=noMAF)
     dataset%name      = 'sc/VelECR'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_VelECR, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_VelECR, lastIndex=noMAF)
     dataset%name      = 'sc/ypr'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_ypr, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_ypr, lastIndex=noMAF)
     dataset%name      = 'sc/yprRate'
-    CALL Build_MLSAuxData (sdId, dataset, emls_oa%sc_ypr_rate, lastIndex=noMAF)
+    call Build_MLSAuxData (sdId, dataset, emls_oa%sc_ypr_rate, lastIndex=noMAF)
 
-    CALL Deallocate_DataProducts (dataset)
+    call Deallocate_DataProducts (dataset)
 
-  END SUBROUTINE OutputL1B_OA
+  end subroutine OutputL1B_OA
 
-END MODULE Output_UARS_L1B
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Output_UARS_L1B
+
+! $Log$

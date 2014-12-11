@@ -1,60 +1,100 @@
-subroutine set_attributes (sdid, yrdoy, start_time, end_time)
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
 
-USE PCFHdr, ONLY: h5_writeglobalattr, GlobalAttributes, FillTAI93Attribute
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
 
-implicit none
+module Set_Attributes_m
 
-integer, intent (in) :: sdid, yrdoy, start_time(2), end_time(2)
+  implicit NONE
+  private
 
-integer :: day, doy, month, year, yr_range(2), doy_range(2)
-integer :: hrs, mins, secs
+  public :: Set_Attributes
 
-character (len=17) :: start_utc, end_utc
-CHARACTER (LEN=*), PARAMETER :: &
-     DateFmt = "(I4, '-', I3.3, 'T', I2.2, ':', I2.2, ':', I2.2)"
-CHARACTER (LEN=*), PARAMETER :: inst_name = 'MLS UARS'
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+  !---------------------------------------------------------------------------
 
-! year and doy of file:
+contains ! ============= Public procedures ===================================
 
-year = yrdoy / 1000 + 1900
-doy = mod (yrdoy, 1000)
+  subroutine Set_Attributes ( sdId, YrDoy, Start_Time, End_Time )
 
-! convert DOY to Month, Day:
+    use Calendar, only: Calend
+    use PCFHdr, ONLY: h5_writeglobalattr, GlobalAttributes, FillTAI93Attribute
+    use Time_m, only: MS_to_HMS
 
-call calend (year, doy, month, day)
-print *, 'year, doy, month, day: ', year, doy, month, day
+    integer, intent (in) :: sdId, YrDoy, Start_Time(2), End_Time(2)
 
-! convert start millisecs to HMS:
+    integer :: day, doy, month, year, yr_range(2), doy_range(2)
+    integer :: hrs, mins, secs
 
-call ms_to_hms (start_time(2), hrs, mins, secs)
+    character (len=17) :: start_utc, end_utc
+    character (len=*), parameter :: &
+         DateFmt = "(I4, '-', I3.3, 'T', I2.2, ':', I2.2, ':', I2.2)"
+    character (len=*), parameter :: inst_name = 'MLS UARS'
 
-yr_range(1) = start_time(1) / 1000 + 1900
-doy_range(1) = mod (start_time(1), 1000)
-write (start_utc, fmt=DateFmt) yr_range(1), doy_range(1), hrs, mins, secs
+    ! year and doy of file:
 
-! convert stop millisecs to HMS:
+    year = yrdoy / 1000 + 1900
+    doy = mod ( yrdoy, 1000 )
 
-call ms_to_hms (end_time(2), hrs, mins, secs)
+    ! convert DOY to Month, Day:
 
-yr_range(2) = end_time(1) / 1000 + 1900
-doy_range(2) = mod (end_time(1), 1000)
-write (end_utc, fmt=DateFmt) yr_range(2), doy_range(2), hrs, mins, secs
+    call calend ( year, doy, month, day )
+    print *, 'year, doy, month, day: ', year, doy, month, day
 
-! Store global attributes
+    ! convert start millisecs to HMS:
 
-GlobalAttributes%StartUTC = Start_UTC
-GlobalAttributes%EndUTC = End_UTC
-GlobalAttributes%ProcessLevel = '1'
-GlobalAttributes%InstrumentName = 'MLS UARS'
-GlobalAttributes%PGEVersion = 'Test'
-GlobalAttributes%GranuleYear =  year
-GlobalAttributes%GranuleMonth = month
-GlobalAttributes%GranuleDay = day
+    call ms_to_hms ( start_time(2), hrs, mins, secs )
 
-CALL FillTAI93Attribute
+    yr_range(1) = start_time(1) / 1000 + 1900
+    doy_range(1) = mod (start_time(1), 1000)
+    write ( start_utc, fmt=DateFmt ) yr_range(1), doy_range(1), hrs, mins, secs
 
-! Write global attributes:
+    ! convert stop millisecs to HMS:
 
-call h5_writeglobalattr (sdid, skip_if_already_there=.false.)
+    call ms_to_hms (end_time(2), hrs, mins, secs)
 
-end subroutine set_attributes
+    yr_range(2) = end_time(1) / 1000 + 1900
+    doy_range(2) = mod (end_time(1), 1000)
+    write ( end_utc, fmt=DateFmt ) yr_range(2), doy_range(2), hrs, mins, secs
+
+    ! Store global attributes
+
+    GlobalAttributes%StartUTC = Start_UTC
+    GlobalAttributes%EndUTC = End_UTC
+    GlobalAttributes%ProcessLevel = '1'
+    GlobalAttributes%InstrumentName = 'MLS UARS'
+    GlobalAttributes%PGEVersion = 'Test'
+    GlobalAttributes%GranuleYear =  year
+    GlobalAttributes%GranuleMonth = month
+    GlobalAttributes%GranuleDay = day
+
+    call FillTAI93Attribute
+
+    ! Write global attributes:
+
+    call h5_writeglobalattr ( sdId, skip_if_already_there=.false. )
+
+  end subroutine Set_Attributes
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Set_Attributes_m
+
+! $Log$
