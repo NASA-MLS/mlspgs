@@ -233,18 +233,21 @@ contains ! ======================= Public Procedures =========================
     deebug = LetsDebug ( 'direct', 0 )
     if ( present(createSwath) ) then
       alreadyThere = mls_exists( L2GPFile%name ) == 0
-      if ( .not. alreadyThere ) &
+      if ( .not. alreadyThere .and. verbose ) &
         & call outputNamedValue( '  creating file', trim(L2GPFile%name) )
       if ( alreadyThere ) &
         & alreadyThere = mls_swath_in_file ( L2GPFile%name, trim(sdname), &
         & L2GPFile%hdfVersion )
-      if ( createSwath .and. alreadyThere ) then
+      if ( .not. verbose ) then
+        ! Remain silent
+        overlaps = 'none'
+      elseif ( createSwath .and. alreadyThere ) then
         call outputNamedValue( '  recreating swath', trim(sdname) )
       elseif ( createSwath ) then
         call outputNamedValue( '  creating swath', trim(sdname) )
       elseif ( .not. alreadyThere ) then
         call outputNamedValue( '  How can we add to a nonexistent swath?', trim(sdname) )
-      elseif ( verbose ) then
+      else
         call outputNamedValue( '  adding to swath', trim(sdname) )
       endif
     endif
@@ -1252,9 +1255,12 @@ contains ! ======================= Public Procedures =========================
         &  mod( l2gp%geodAngle(firstProfile:lastProfile), 360._rgp ) &
         & , myRange ) &
         & )
-      call Dump( (/myRange%Bottom, myRange%top/), 'myRange' )
-      call Dump( mod( l2gp%geodAngle(firstProfile:lastProfile), 360._rgp ), 'Orbit Angle' )
-      call Dump( l2gp%AscDescMode(firstProfile:lastProfile), 'Mode' )
+      if ( DEEBUG ) then
+        call Dump( (/myRange%Bottom, myRange%top/), 'myRange' )
+        call Dump( mod( l2gp%geodAngle(firstProfile:lastProfile), 360._rgp ), &
+          & 'Orbit Angle' )
+        call Dump( l2gp%AscDescMode(firstProfile:lastProfile), 'Mode' )
+      endif
     else
       l2gp%AscDescMode(firstProfile:lastProfile) = 0
     endif
@@ -1313,6 +1319,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.66  2014/12/11 21:27:04  pwagner
+! Turn off more printing unless verbose or debug
+!
 ! Revision 2.65  2014/12/10 23:02:59  pwagner
 ! Correct erroneous calculation of AscDescMode; now based on geodAngle
 !
