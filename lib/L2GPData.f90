@@ -4247,7 +4247,7 @@ contains ! =====     Public Procedures     =============================
     status = mls_dfldsetup(swid, 'AscDescMode ', 'nTimes', &
     & MYDIM1, &
     & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-    & hdfVersion=hdfVersion )
+    & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue) )
 
     ! Detach from the HE5_SWath interface.This stores the swath info within the
     ! file and must be done before writing or reading data to or from the
@@ -5219,6 +5219,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.207  2014/12/10 21:27:49  pwagner
+! Commented-out unused stuff
+!
 ! Revision 2.206  2014/12/09 01:26:52  pwagner
 ! Define and initialize orbit angle range for Descending mode
 !
