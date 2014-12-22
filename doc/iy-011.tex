@@ -10,7 +10,8 @@
 \setlength{\evensidemargin}{0.5cm}
 \setlength{\textwidth}{14.5cm}
 
-\input {../../Math/texmacros}
+%\input {../../Math/texmacros}
+\input {texmacros}
 
 \usepackage[mediumspace,mediumqspace,Grey,squaren]{SIunits}
 
@@ -199,6 +200,8 @@ Multiply by $\chi$:
 \[\chi h_{n-2}(\chi)+\chi h_{n}(\chi)= \left( \frac{2n-1}{\chi} \right) \chi h_{n-1}(\chi).\]
 or
 \[W_{n-2}+W_{n} = \left( \frac{2n-1}{\chi} \right) W_{n-1}.\]
+
+
 \subsection{Phase function}
 
 
@@ -211,7 +214,7 @@ where
 \begin{eqnarray}
 p_0(\theta,r,T) &=& |S_1(\theta,r,T)|^2 + |S_2(\theta,r,T)|^2 \nonumber \\
 &=& \Re(S_1(\theta,r,T))^2 + \Im(S_1(\theta,r,T))^2 + \Re(S_2(\theta,r,T))^2 + \Im(S_2(\theta,r,T))^2,
-\label{eqn:p_0}
+\label{eqn:p_0} 
 \end{eqnarray}
 and the normalization function is
 \begin{equation}
@@ -219,10 +222,10 @@ C(r,T) = \frac{1}{2} \int_0^{\pi} p_0(\theta,r,T) \sin \theta \, d\theta.
 \label{eqn:C}
 \end{equation}
 The Mie solution for the two amplitude functions is given by \footnote{$a_j$ and $b_j$ are functions of $r$ through $\chi$ and are functions of $T$ through $\varepsilon$.}
-\begin{eqnarray*}
-S_1(\theta,r,T) &=& \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} + b_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} \right), \\
-S_2(\theta,r,T) &=& \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} + b_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} \right),
-\end{eqnarray*}
+\begin{eqnarray}
+S_1(\theta,r,T) &=& \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} + b_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} \right), \nonumber \\
+S_2(\theta,r,T) &=& \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} + b_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} \right), \label{eqn:S1_and_S2}
+\end{eqnarray}
 where $a_j$ and $b_j$ are the Mie coefficients defined by equations (\ref{eqn:an}) and (\ref{eqn:bn}). \footnote{Here, $P_j^1$ are presumed to be functions of $\cos \theta$.  It is true for expressions in wvs-068.  It is not true for what is here and in Cloud ATBD ($P_1^1$ is not a function of $\cos \theta$). } \\
 \ \\
 The quantities $P_j^1$ are the associated Legendre polynomials, which are derived from the recurrence relations.  Given the initial values $P_1^1 = \sin \theta$ and $P_2^1 = 3 \cos \theta \sin \theta$, the subsequent polynomials and the corresponding derivatives are given as\footnote{These are equations (4.42) and (4.43) from \cite{wujia04}.  In wvs-068, equations are different.}
@@ -231,27 +234,7 @@ P_j^1 &=& \left( \frac{2j-1}{j-1} \right) P_{j-1}^1 \cos \theta - \left( \frac{j
 \frac{dP_j^1}{d\theta} &=& \left( \frac{2j-1}{j-1} \right) \left( \cos \theta \frac{dP_{j-1}^1}{d\theta} -  P_{j-1}^1 \sin \theta \right) - \left(\frac{j}{j-1}\right)\frac{dP_{j-2}^1}{d\theta}.
 \end{eqnarray*}
 
-\subsubsection{Derivatives of Phase Function}
 
-From equation (\ref{eqn:p_0}) defining $p_0$, we have \cite{wvs-068}:
-\begin{eqnarray*}
-\frac{\partial p_0(\theta,r,T)}{\partial T} &=& \frac{\partial}{\partial T} \left( \Re(S_1(\theta,r,T))^2 + \Im(S_1(\theta,r,T))^2 + \Re(S_2(\theta,r,T))^2 + \Im(S_2(\theta,r,T))^2 \right) \\
-&=& 2 \bigg( \Re(S_1(\theta,r,T)) \frac{\partial \Re(S_1(\theta,r,T))}{\partial T} + \Im(S_1(\theta,r,T)) \frac{\partial \Im(S_1(\theta,r,T))}{\partial T} \\
-& & \ + \ \Re(S_2(\theta,r,T)) \frac{\partial \Re(S_2(\theta,r,T))}{\partial T}  + \Im(S_2(\theta,r,T))  \frac{\partial \Im(S_2(\theta,r,T))}{\partial T} \bigg).
-\end{eqnarray*}
-Taking the derivative of the phase function $p$ in equation (\ref{eqn:p}) with respect to temperature $T$ and using (\ref{eqn:C}), we have
-\begin{eqnarray*}
-\frac{\partial p(\theta,r,T)}{\partial T} &=& \frac{\partial}{\partial T} \left( \frac{p_0(\theta,r,T)}{C(r,T)} \right) \\
-&=& \frac{1}{C(r,T)^2} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} C(r,T) - p_0(\theta,r,T) \frac{\partial C(r,T)}{\partial T}  \right) \\
-&=& \frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - \frac{p_0(\theta,r,T)}{C(r,T)} \frac{\partial C(r,T)}{\partial T}  \right) \\
-&=& \frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - p(\theta,r,T) \frac{\partial C(r,T)}{\partial T} \right) \\
-&=& \frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - \frac{p(\theta,r,T)}{2} \int_0^{\pi} \frac{ \partial p_0(\theta,r,T)}{\partial T} \sin \theta \, d\theta \right).
-\end{eqnarray*}
-Since $a_j(r,T)$ and $b_j(r,T)$ are not functions of ice water content $\IWC$, the derivative of the phase function with respect to $\IWC$ is $0$:
-\begin{equation}
-\frac{\partial p(\theta,r,T)}{\partial \IWC} = 0.
-\label{eqn:dp_dIWC}
-\end{equation}
 
 \subsection{Volume Scattering and Extinction Coefficients}
 
@@ -333,24 +316,162 @@ P(\theta) = \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,
 \end{equation}
 where $\theta$ is the scattering angle.
 
-\subsubsection{Derivatives of the Integrated Phase Function}
+
+\subsection{Derivatives of Phase Function}
+
+From equation (\ref{eqn:p_0}) defining $p_0$, we have \cite{wvs-068}:
+\begin{eqnarray*}
+\frac{\partial p_0(\theta,r,T)}{\partial T} &=& \frac{\partial}{\partial T} \left( \Re(S_1(\theta,r,T))^2 + \Im(S_1(\theta,r,T))^2 + \Re(S_2(\theta,r,T))^2 + \Im(S_2(\theta,r,T))^2 \right) \\
+&=& 2 \bigg( \Re(S_1(\theta,r,T)) \frac{\partial \Re(S_1(\theta,r,T))}{\partial T} + \Im(S_1(\theta,r,T)) \frac{\partial \Im(S_1(\theta,r,T))}{\partial T} \\
+& & \ + \ \Re(S_2(\theta,r,T)) \frac{\partial \Re(S_2(\theta,r,T))}{\partial T}  + \Im(S_2(\theta,r,T))  \frac{\partial \Im(S_2(\theta,r,T))}{\partial T} \bigg).
+\end{eqnarray*}
+Taking the derivative of the phase function $p$ in equation (\ref{eqn:p}) with respect to temperature $T$ and using (\ref{eqn:C}), we have
+\begin{subequations}
+\begin{align}
+\frac{\partial p(\theta,r,T)}{\partial T} &=\frac{\partial}{\partial T} \left( \frac{p_0(\theta,r,T)}{C(r,T)} \right) \\
+&=\frac{1}{C(r,T)^2} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} C(r,T) - p_0(\theta,r,T) \frac{\partial C(r,T)}{\partial T}  \right) \\
+&=\frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - \frac{p_0(\theta,r,T)}{C(r,T)} \frac{\partial C(r,T)}{\partial T}  \right) \\
+&=\frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - p(\theta,r,T) \frac{\partial C(r,T)}{\partial T} \right) \label{eqn:dp_dT} \\
+&=\frac{1}{C(r,T)} \left( \frac{\partial p_0(\theta,r,T)}{\partial T} - \frac{p(\theta,r,T)}{2} \int_0^{\pi} \frac{ \partial p_0(\theta,r,T)}{\partial T} \sin \theta \, d\theta \right).
+\end{align}
+\end{subequations}
+Since $a_j(r,T)$ and $b_j(r,T)$ are not functions of ice water content $\IWC$, the derivative of the phase function with respect to $\IWC$ is $0$:
+\begin{equation}
+\frac{\partial p(\theta,r,T)}{\partial \IWC} = 0.
+\label{eqn:dp_dIWC}
+\end{equation}
+
+
+
+\subsection{Derivatives of the Integrated Phase Function}
 
 The derivative of the integrated phase function $P$ in (\ref{eqn:Integrated_Phase_Function}) with respect to temperature is \cite{wvs-068}:
 \begin{eqnarray*}
 \frac{\partial P(\theta)}{\partial T} &=& \frac{\partial}{\partial T} \left( \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) \\
 &=& \frac{\pi}{\beta_{c\_s}}  \frac{\partial}{\partial T} \left( \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) +\frac{\partial}{\partial T} \left( \frac{\pi}{\beta_{c\_s}} \right) \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \\
 &=&  \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 \left( \frac{\partial n(r)}{\partial T} \xi_s(r) p(\theta,r) + n(r) \frac{\partial \xi_s(r)}{\partial T} p(\theta,r) + n(r) \xi_s(r) \frac{\partial p(\theta,r)}{\partial T} \right) \, dr \\ 
-& & - \ \frac{\pi}{\beta_{c\_s}^2} \frac{\partial \beta_{c\_s}}{\partial T} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \\
-&=&  \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \left( \frac{1}{n(r)} \frac{\partial n(r)}{\partial T}  + \frac{1}{\xi_s(r)} \frac{\partial \xi_s(r)}{\partial T} + \frac{1}{p(\theta,r)} \frac{\partial p(\theta,r)}{\partial T} \right) \, dr \\ 
+& & - \ \frac{\pi}{\beta_{c\_s}^2} \frac{\partial \beta_{c\_s}}{\partial T} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr.
+\end{eqnarray*}
+\begin{eqnarray}
+\frac{\partial P(\theta)}{\partial T}  &=&  \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \left( \frac{1}{n(r)} \frac{\partial n(r)}{\partial T} + \frac{1}{\xi_s(r)} \frac{\partial \xi_s(r)}{\partial T} + \frac{1}{p(\theta,r)} \frac{\partial p(\theta,r)}{\partial T} \right) \, dr \nonumber \\ 
 & & - \ \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial T}.
-\end{eqnarray*}
+\label{eqn:dP_dT}
+\end{eqnarray}
 Considering equations (\ref{eqn:dp_dIWC}) and (\ref{eqn:dxi_dIWC}) the derivative of the integrated phase function $P$ in (\ref{eqn:Integrated_Phase_Function}) with respect to ice water content is \cite{wvs-068}:\footnote{The derivatives of $P$ in wvs-065 and wvs-067 are derived from a $P(\theta)$ written as a single integral version (unlike what was done here and in wvs-068).}
-\begin{eqnarray*}
-\frac{\partial P(\theta)}{\partial \IWC} &=& \frac{\partial}{\partial \IWC} \left( \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) \\
-&=& \frac{\pi}{\beta_{c\_s}}  \frac{\partial}{\partial \IWC} \left( \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) +\frac{\partial}{\partial \IWC} \left( \frac{\pi}{\beta_{c\_s}} \right) \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \\
-&=&  \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 \frac{\partial n(r)}{\partial \IWC} \xi_s(r) p(\theta,r) \, dr \ - \ \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial \IWC}.
-\end{eqnarray*}
+\begin{eqnarray}
+\frac{\partial P(\theta)}{\partial \IWC} &=& \frac{\partial}{\partial \IWC} \left( \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) \nonumber \\
+&=& \frac{\pi}{\beta_{c\_s}}  \frac{\partial}{\partial \IWC} \left( \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \right) +\frac{\partial}{\partial \IWC} \left( \frac{\pi}{\beta_{c\_s}} \right) \int_0^{\infty} r^2 n(r) \xi_s(r) p(\theta,r) \, dr \nonumber \\
+&=&  \frac{\pi}{\beta_{c\_s}} \int_0^{\infty} r^2 \frac{\partial n(r)}{\partial \IWC} \xi_s(r) p(\theta,r) \, dr \ - \ \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial \IWC}. \label{eqn:dP_dIWC}
+\end{eqnarray}
 The derivatives of $n(r)$ with respect to temperature $T$ and ice water content $\IWC$ are given in \cite{wvs-066}.
+
+
+
+\subsubsection{Reducing Mie phase function integrated scattering from double to single integrals}
+
+The phase function is given by (\ref{eqn:p}), (\ref{eqn:p_0}), (\ref{eqn:C}), and (\ref{eqn:S1_and_S2}).  The integrated phase function is given by (\ref{eqn:Integrated_Phase_Function}).
+Consider \cite{wvs-070}:
+\begin{eqnarray}
+p_0(\theta,r,T) &=& |S_1(\theta,r,T)|^2 + |S_2(\theta,r,T)|^2 \label{eqn:p_0_equals_S1sqrd_S2sqrd} \\
+&=& \Re(S_1(\theta,r,T))^2 + \Im(S_1(\theta,r,T))^2 + \Re(S_2(\theta,r,T))^2 + \Im(S_2(\theta,r,T))^2, \nonumber
+\end{eqnarray}
+where
+\begin{subequations}
+\begin{align}
+|S_1(\theta,r,T)|^2 
+&= \Re \left( \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} + b_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} \right) \right)^2 \nonumber \\
+&+ \Im \left( \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} + b_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} \right) \right)^2 \nonumber \\
+&= \left( \sum_{j=1}^{\infty} \Re a_j \frac{2j+1}{j(j+1)} \frac{dP_j^1}{d\theta} + \Re b_j \frac{2j+1}{j(j+1)} \frac{P_j^1}{\sin \theta} \right)^2 \nonumber \\
+&+ \left( \sum_{j=1}^{\infty} \Im a_j \frac{2j+1}{j(j+1)} \frac{dP_j^1}{d\theta} + \Im b_j \frac{2j+1}{j(j+1)} \frac{P_j^1}{\sin \theta} \right)^2, \\
+|S_2(\theta,r,T)|^2 &= \Re \left( \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} + b_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} \right) \right)^2 \nonumber \\
+&+ \Im \left( \sum_{j=1}^{\infty} \frac{2j+1}{j(j+1)} \left( a_j(r,T) \frac{P_j^1(\cos \theta)}{\sin \theta} + b_j(r,T) \frac{dP_j^1(\cos \theta)}{d\theta} \right) \right)^2 \nonumber \\
+&= \left( \sum_{j=1}^{\infty} \Re a_j \frac{2j+1}{j(j+1)} \frac{P_j^1}{\sin \theta} + \Re b_j \frac{2j+1}{j(j+1)} \frac{dP_j^1}{d\theta} \right)^2 \nonumber \\
+&+ \left( \sum_{j=1}^{\infty} \Im a_j \frac{2j+1}{j(j+1)} \frac{P_j^1}{\sin \theta} + \Im b_j \frac{2j+1}{j(j+1)} \frac{dP_j^1}{d\theta} \right)^2.
+\end{align}
+\label{eqn:terms_in_p_0}
+\end{subequations}
+Denote \footnote{Assumption: $\Re$ and $\Im$ in $u_j$ and $v_j$ result in the same expressions.}
+\begin{eqnarray*}
+u_j(r,T) &=& \Re a_j \ \ \mbox{or} \ \ \Im a_j, \\
+v_j(r,T) &=& \Re b_j \ \ \mbox{or} \ \ \Im b_j, \\
+x_j(\theta) &=& \frac{2j+1}{j(j+1)} \frac{dP_j^1}{d\theta}, \\
+y_j(\theta) &=& \frac{2j+1}{j(j+1)} \frac{P_j^1}{\sin \theta} .
+\end{eqnarray*}
+Thus, equations (\ref{eqn:terms_in_p_0}) can be written as
+\begin{eqnarray*}
+|S_1|^2 = \left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right)^2 + \left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right)^2, \\
+|S_2|^2 = \left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right)^2 + \left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right)^2,
+\end{eqnarray*}
+and could be expanded:
+\begin{eqnarray}
+|S_1|^2 &=& \left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right)\left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right) + \left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right) \left( \sum_{j=1}^{\infty} u_j x_j + v_j y_j \right) \nonumber \\
+&=& 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} (u_i x_i + v_i y_i) (u_j x_j + v_j y_j) \nonumber \\
+&=& 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} u_i u_j x_i  x_j + u_i v_j x_i y_j + u_j v_i x_j y_i + v_i v_j y_i y_j, \nonumber \\
+|S_2|^2 &=& \left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right)\left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right) + \left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right)\left( \sum_{j=1}^{\infty} u_j y_j + v_j x_j \right) \nonumber \\
+&=& 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} (u_i y_i + v_i x_i)(u_j y_j + v_j x_j) \nonumber \\
+&=& 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} u_i u_j y_i y_j +  u_i v_j x_j y_i  + u_j v_i x_i  y_j + v_i  v_j x_i x_j. \nonumber
+\end{eqnarray}
+Denote $f_{ijk}$ and $g_{ijk}$, for $k = 1, 2, 3$, as
+\begin{eqnarray}
+f_{ij1} = u_i u_j \ & & \ g_{ij1} = x_i x_j \nonumber \\ 
+f_{ij2} = u_i v_j \ & & \ g_{ij2} = x_i y_j \label{eqn:fijk_gijk} \\
+f_{ij3} = v_i v_j \ & & \ g_{ij3} = y_i y_j \nonumber
+\end{eqnarray}
+Using (\ref{eqn:fijk_gijk}), $|S_1|^2$ and $|S_2|^2$ can be written as \footnote{In wvs-070r5, factor of 2 is missing.}
+\begin{subequations}
+\begin{align}
+|S_1|^2 &= 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ij1} g_{ij1} + f_{ij2} g_{ij2} + f_{ji2} g_{ji2} + f_{ij3} g_{ij3}, \\
+|S_2|^2 &= 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ij1} g_{ij3} + f_{ij2} g_{ji2} + f_{ji2} g_{ij2} + f_{ij3} g_{ij1}.
+\end{align}
+\label{eqn:S1sqrd_S2sqrd_in_terms_of_fg}
+\end{subequations}
+Hence, $p_0$ in (\ref{eqn:p_0_equals_S1sqrd_S2sqrd}) can be written as
+\begin{eqnarray*}
+p_0(\theta,r,T) &=&  2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ij1} g_{ij1} + f_{ij2} g_{ij2} + f_{ji2} g_{ji2} + f_{ij3} g_{ij3}, \nonumber \\
+&+& 2 \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ij1} g_{ij3} + f_{ij2} g_{ji2} + f_{ji2} g_{ij2} + f_{ij3} g_{ij1}. \nonumber
+\end{eqnarray*}
+Thus, the normalization function $C(r,T)$ can be written as
+\begin{eqnarray}
+C(r,T) &=& \frac{1}{2} \int_0^{\pi} p_0(\theta,r,T) \sin \theta \, d\theta \nonumber \\
+&=& \int_0^{\pi} \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} \Big( f_{ij1} g_{ij1} + f_{ij2} g_{ij2} + f_{ji2} g_{ji2} + f_{ij3} g_{ij3} \label{eqn:C_prelim} \\
+&& + f_{ij1} g_{ij3} + f_{ij2} g_{ji2} + f_{ji2} g_{ij2} + f_{ij3} g_{ij1} \Big) \sin \theta \, d\theta. \nonumber
+\end{eqnarray}
+Denote \footnote{Factor of $\frac{1}{2}$ difference from wvs-070r5 equation (6) and same as equation on the line below (12).}
+\begin{equation}
+G_{ijm} = \int_0^{\pi} g_{ijm}(\theta) \sin \theta \, d\theta,
+\label{eqn:G_in_terms_of_g}
+\end{equation}
+and observe that
+\begin{eqnarray*}
+\int_0^{\pi} \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ijn}(r,T) g_{ijm}(\theta) \sin \theta \, d\theta &=& \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ijn}(r,T) \int_0^{\pi} g_{ijm}(\theta) \sin \theta \, d\theta \\
+&=& \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} f_{ijn}(r,T) G_{ijm}.
+\end{eqnarray*}
+Thus, $C(r,T)$ in (\ref{eqn:C_prelim}) can be written as
+\begin{eqnarray}
+C(r,T) &=& \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} \Big( f_{ij1} G_{ij1} + f_{ij2} G_{ij2} + f_{ji2} G_{ji2} + f_{ij3} G_{ij3} \nonumber \\
+&& \ \ \ \ \ \ \ \ \ + f_{ij1} G_{ij3} + f_{ij2} G_{ji2} + f_{ji2} G_{ij2} + f_{ij3} G_{ij1} \Big). \label{eqn:CrT}
+\end{eqnarray}
+Thus, using this expression for $C(r,T)$, the integrated phase function $P(\theta)$ in (\ref{eqn:Integrated_Phase_Function}) is no longer double integral.  Also, the derivative of the integrated phase function with respect to ice water content $\displaystyle \frac{\partial P(\theta)}{\partial \IWC}$ in (\ref{eqn:dP_dIWC}) is no longer double integral. \\
+The derivative of (\ref{eqn:CrT}) is
+\begin{eqnarray*}
+\frac{\partial C(r,T)}{\partial T} &=& \sum_{m,n} \sum_{i=1}^{\infty} \sum_{j=1}^{\infty} \frac{ \partial f_{ijn}(r,T)}{\partial T} G_{ijm},
+\end{eqnarray*}
+with the abuse of notation in regards to indexes $m$ and $n$.  Note that
+\begin{eqnarray*}
+\frac{ \partial f_{ij1}}{\partial T} &=& u_i \frac{\partial u_j}{\partial T} + \frac{\partial u_i}{\partial T} u_j, \\
+\frac{ \partial f_{ij2}}{\partial T} &=& u_i \frac{\partial v_j}{\partial T} + \frac{\partial u_i}{\partial T} v_j, \\ 
+\frac{ \partial f_{ij3}}{\partial T} &=& v_i \frac{\partial v_j}{\partial T} + \frac{\partial v_i}{\partial T} v_j.
+\end{eqnarray*}
+Thus, the derivative $\displaystyle \frac{\partial p}{\partial T}$ in (\ref{eqn:dp_dT}) can be written in terms of the $G_{ijm}$.  Thus $\displaystyle \frac{\partial P}{\partial T}$ in (\ref{eqn:dP_dT}) is also no longer a double integral. \\
+\ \\
+Consider Equation (\ref{eqn:CrT}) for $C(r,T)$.  In \cite{wvs-070}, it was shown that 
+\begin{eqnarray}
+C(r,T) = \sum_{i=1}^{\infty} (f_{ii1} + f_{ii3})(G_{ii1} + G_{ii3}) \ = \ \sum_{i=1}^{\infty} (4i+2)(f_{ii1} + f_{ii3}).
+\end{eqnarray}
+Thus, $C(r,T)$ can be written in the form
+\begin{eqnarray}
+C(r,T) = \sum_{i=1}^{\infty} (2i+1)(\Re a_i^2 + \Im a_i^2 + \Re b_i^2 + \Im b_i^2 ) \ = \ \sum_{i=1}^{\infty} (2i+1)(|a_i|^2 + |b_i|^2).
+\end{eqnarray}
 
 
 \begin{figure}[t]
@@ -638,7 +759,7 @@ Plugging (10.51.1) into (10.51.2):
 \frac{\partial j_n(x)}{\partial x} = \frac{n}{x}j_n(x) - \left( \frac{2n+1}{x} j_n(x) - j_{n-1}(x) \right) = j_{n-1}(x) - \frac{n+1}{x}j_n(x).
 \end{equation*}
 
-We plug this into the right hand side of (\ref{eqn:wvs-067r3_eqn4}):
+We plug this into the right hand side of wvs-067r3 - (4):
 \begin{eqnarray*}
 \frac{1}{2x} + \frac{1}{j_n(x)} \frac{\partial j_n(x)}{\partial x} &=& \frac{1}{2x} + \frac{1}{j_n(x)} \left( j_{n-1}(x) - \frac{n+1}{x}j_n(x) \right) \\
 &=& \frac{1}{2x} - \frac{n+1}{x} + \frac{j_{n-1}(x)}{j_n(x)} \\
