@@ -1327,7 +1327,7 @@ tools: chunktimes checkpvmup compare dateconverter \
 .PHONY: all configure clean clean_config conv_uars\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
   dateconverter depends distclean disttar distarz distarg disthelp \
-  doc--api doc--toc \
+  doc doc--api doc--toc \
   firsthelp  ghostbuster help--brief help--convert help--depends help--fopts\
   help help--ghostbuster help--mlsconfigure help--Makefile help--platform\
   help--pvm help--reecho help--scripts help--toolkit \
@@ -1348,6 +1348,9 @@ tools: chunktimes checkpvmup compare dateconverter \
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.148  2014/08/05 00:14:19  pwagner
+# Try to get Makefiles to build lib before lr
+#
 # Revision 1.147  2014/06/24 22:45:50  quyen
 # Add build command for genmet
 #
