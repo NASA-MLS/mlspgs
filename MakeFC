@@ -965,6 +965,23 @@ MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1--itm
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+# This gathers all the hackery-quackery required to build
+# a special version of level 1 for processing moonscan dates in one place
+# (1) preserve the standard, non-moonscan versions of level 1 pges and source files
+# (2) create a standalone installation directory for the moonscan versions of l1
+moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
+	/bin/rm -fr $(INSTALLDIR)-moonscan $(INSTALLDIR)-original
+	cp -r $(INSTALLDIR) $(INSTALLDIR)-original
+	cd l1; \
+	mv Calibration.f90 Calibration.f90-original; \
+	sed  's/WinMAFs = 6/WinMAFs = 10/' Calibration.f90-original > Calibration.f90
+	$(MAKE) -f $(MakeFName) install-l1
+	mv $(INSTALLDIR) $(INSTALLDIR)-moonscan
+	mv $(INSTALLDIR)-original $(INSTALLDIR)
+	cd l1; \
+	mv Calibration.f90-original Calibration.f90
+	
+
 #lib/$(MLSCONFG)/parser.o: lr
 #	$(MAKE) -C lib parser.o
 
@@ -1341,13 +1358,16 @@ tools: chunktimes checkpvmup compare dateconverter \
   heconvert h5subset h5cat hl init_gen killmaster \
   l1bdiff l1bdump l1h5subset \
   l2auxcat l2auxchi l2auxdump l2gpcat l2gpdiff l2gpdump l2pcdump lr \
-  machineok Mie_Tables Mie_Tables_nohdf MLS_h5ls UnwrapList utctotai \
+  machineok Mie_Tables Mie_Tables_nohdf MLS_h5ls moonscan UnwrapList utctotai \
   tellMasterToQuit \
   WordSplit wrapLines WrapList tools
   
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.149  2015/01/05 17:56:52  pwagner
+# Builds doc more reliably
+#
 # Revision 1.148  2014/08/05 00:14:19  pwagner
 # Try to get Makefiles to build lib before lr
 #
