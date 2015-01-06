@@ -20,7 +20,7 @@
 # Assume the 1st argument is the hdf filename
 filein=$1
 
-# Generate the known attributes from L1b
+# Generate all the known attributes from L1b
 echo "LocalGranuleID=$filein"
 l2auxdump -a PGEVersion  $filein | perl -pe 's/Dump of (.*)\n/$1=/'
 l2auxdump -a StartUTC    $filein | perl -ne 'print if $. == 2' | perl -pe 's/(.*)T(.*)\n/RangeBeginningDate=$1\nRangeBeginningTime=$2.00000\nEquatorCrossingLongitude=0.0\nEquatorCrossingDate=$1\nEquatorCrossingTime=$2\n/' 
@@ -32,22 +32,47 @@ split_path="`echo $0 | sed 's/'$I'/split_path/'`"
 # Guess from the filename 
 # Must split path/filename
 filename=`$split_path -f $filein`
+filepath=`$split_path -p $filein`
 
 LocalVersionID=`echo $filename | perl -nle 'print $1 if /-([a-z0-9]+)_/' `
 echo $filename | perl -nle 'print $1 if /-([a-z0-9]+)_/' 
-# Hardcode because LocalVersionID can not guess from the filename
-#LocalVersionID=c02
 
 # L1BOA or L1BRAD?
 L1BOA=`echo $filename | grep L1BOA`
 if [ "$L1BOA" != "" ]
 then
   Identifier_Product_DOI=10.5067/AURA/MLS/DATA1001
+  AAII=MUSUL1BOA_V1.html
 else
   Identifier_Product_DOI=10.5067/AURA/MLS/DATA1002
+  AAII=MUSUL1BRAD_V1.html
 fi
 PGEVersion=`echo $filename | awk -F_ '{print $3}' | awk -F"-" '{print $1"-"$2}'`
 ProductionDateTime=`date +"%C%y-%m%d %T"`
+
+# Give default values to the "stuttered" attributes
+TTIITTLLEE=$filename
+MMIIIIDD=$filename
+AABBSSTTRRAACCTT=$filename
+PPUURRPPOOSSEE=$filename
+FFIILLEEIIDD=$filename
+DDSS=$filename
+MMUUSSTTAARRDD=$filename
+DDQQDD=$filename
+EEXXTTEENNTT=$filename
+
+# May reset the stuttered values (or any others for that matter)
+if [ -f "$filepath/attributes.txt" ]
+then
+  . "$filepath/attributes.txt"
+fi
+
+if [ -f "$filepath/abstract.txt" ]
+then
+  AABBSSTTRRAACCTT=`cat $filepath/abstract.txt`
+  AABBSSTTRRAACCTT=`echo $AABBSSTTRRAACCTT`
+fi
+
 cat << EOF
 StartOrbitNumber=-9999
 StopOrbitNumber=-9999
@@ -67,7 +92,7 @@ AutomaticQualityFlagExplanation=Validated
 OperationalQualityFlag=Not Investigated
 OperationalQualityFlagExplanation=Not Investigated
 ScienceQualityFlag=Inferred Passed
-ScienceQualityFlagExplanation=Validated, see http://disc.gsfc.nasa.gov/Aura/MLS/ for quality document
+ScienceQualityFlagExplanation=Validated, see http://disc.gsfc.nasa.gov/UARS/MLS/ for quality document
 ParameterName=Orbit/attitude and tangent point
 ReprocessingPlanned=further update anticipated using enhanced PGE
 InputPointer=Found at /PCF
@@ -81,28 +106,31 @@ SouthBoundingCoordinate=-90.0
 LocalityValue=Limb
 DataProducer=MLS_SIPS
 Identifier_Product_DOI=$Identifier_Product_DOI
-title=TBD
-MI_Identifier=TBD
-edition=TBD
-abstract=TBD
-purpose=TBD
-MI_AcquisitionInformation=TBD
-MI_CoverageDescription=TBD
-MD_Keywords=TBD
-MI_Operation=TBD
-CI_ResponsibleParty=TBD
-MD_GridSpatialRepresentation=TBD
-fileIdentifier=TBD
-DS_Series=TBD
-LE_Lineage=TBD
-DQ_Element=TBD
-MD_BrowseGraphic=TBD
-EX_Extent=TBD
+title=$TTIITTLLEE
+MI_Identifier=$MMIIIIDD
+edition=v01-00
+abstract=$AABBSSTTRRAACCTT
+purpose=$PPUURRPPOOSSEE
+MI_AcquisitionInformation=http://disc.sci.gsfc.nasa.gov/datacollection/$AAII
+MI_CoverageDescription=+-180 degrees longitude, +-80 degrees latitude, day and night
+MD_Keywords=atmospheric chemistry, climate
+MI_Operation=Raytheon Corp.
+CI_ResponsibleParty=GES-DAAC; another DAAC?
+MD_GridSpatialRepresentation=grid
+fileIdentifier=$FFIILLEEIIDD
+DS_Series=$DDSS
+LE_Lineage=Algorithm Theoretical Basis Document : $MMUUSSTTAARRDD
+DQ_Element=MUSTARD Data Quality Document $DDQQDD
+MD_BrowseGraphic=none
+EX_Extent=$EEXXTTEENNTT
 EOF
 
 
 
 # $Log$
+# Revision 1.2  2014/11/25 01:06:28  pwagner
+# Correctly set missing or erroneous metadata values
+#
 # Revision 1.1  2014/06/12 22:54:49  quyen
 # tool to extract attributes from UARS L1B file
 #
