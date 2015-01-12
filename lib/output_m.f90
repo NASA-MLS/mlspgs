@@ -13,19 +13,20 @@ module OUTPUT_M
 
   ! Normal level printing and formatting
   
-  ! See also dump_0 and MLSMessageModule
+  ! See also dump_0 and printit_m
+  ! For higher-level procedures, see highOutput
   
-  use DATES_MODULE, only:REFORMATDATE, REFORMATTIME
-  use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCOMMON, only: FILENAMELEN, FINITE_SIGNAL, &
-    & IS_WHAT_IEEE
-  use MLSSTRINGLISTS, only: NCHARSINFORMAT
-  use MLSSTRINGS, only: REPLACENONASCII, LOWERCASE, &
-    & READINTSFROMCHARS, TRIM_SAFE
-  use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, &
-    & MLSMSG_CRASH, MLSMSG_DEBUG, MLSMSG_INFO, MLSMSG_ERROR, &
-    & MLSMSG_SEVERITY_TO_QUIT, MLSMSG_WARNING, PRINTITOUT, &
-    & MLSMESSAGECONFIG
+  use dates_module, only:reformatDate, reformatTime
+  use machine, only: crash_burn, exit_with_status, neverCrash
+  use MLSCommon, only: filenamelen, finite_signal, &
+    & is_what_ieee
+  use MLSStringLists, only: nCharsInFormat
+  use MLSStrings, only: replaceNonAscii, lowercase, &
+    & readintsfromchars, trim_safe
+  use printit_m, only: assemblefullline, get_config, &
+    & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_info, MLSMSG_Error, &
+    & MLSMSG_Severity_to_quit, MLSMSG_Warning, printItOut, &
+    & MLSMessageConfig
 
   implicit none
   private
@@ -61,7 +62,8 @@ module OUTPUT_M
 !                           if you will revert, keepOldUnitOpen when switching
 ! resumeOutput             resume output
 ! suspendOutput            suspend output
-! switchOutput             switch output to a new named file
+! switchOutput             switch output to a new named file, 
+!                            or else to 'stdout'
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -214,6 +216,7 @@ module OUTPUT_M
   type(timeStampOptions_T), public, save :: TIMESTAMPOPTIONS ! Could leave this private
 
   ! Private parameters
+  logical, save, private :: SWITCHTOSTDOUT = .false.! Temp'ly all to stdout
   logical, save, private :: SILENTRUNNING = .false. ! Suspend all further output
   integer, save, private :: ATCOLUMNNUMBER = 1  ! Where we'll print next
   logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
@@ -461,6 +464,11 @@ contains
     ! print *, 'outputOptions%prUnitLiteral: ', outputOptions%prUnitLiteral
     if ( outputOptions%prUnitLiteral ) then
       write( outputOptions%prUnit, '(a)', advance=my_adv ) chars
+      ! print *, chars
+      go to 9
+    end if
+    if ( SWITCHTOSTDOUT ) then
+      write( *, '(a)', advance=my_adv ) chars
       ! print *, chars
       go to 9
     end if
@@ -1034,9 +1042,14 @@ contains
   ! ----------------------------------------------  revertOutput  -----
   subroutine revertOutput
   ! revert to outputting to OLDUNIT. Close current PRUNIT (if > 0 and open)
+  ! Unless switchOutput was called with filename == 'stdout'
     ! Local variables
     logical :: itsOpen
     ! Executable
+    if ( SWITCHTOSTDOUT ) then
+      SWITCHTOSTDOUT = .false.
+      return
+    endif
     call resumeOutput
     if ( .not. OLDUNITSTILLOPEN ) then
       call output_( 'Unable to Revert output--old unit not open', advance='yes' )
@@ -1063,6 +1076,7 @@ contains
   ! ----------------------------------------------  switchOutput  -----
   subroutine switchOutput ( filename, unit, keepOldUnitOpen )
   ! stop outputting to PRUNIT. Switch to filename [using unit if supplied]
+  ! Special use: if filename == 'stdout', just temporarily print to stdout
     ! Args
     character(len=*), intent(in)    :: filename
     integer, optional, intent(in)   :: unit
@@ -1073,6 +1087,11 @@ contains
     logical, save :: NeedToAppend = .false. ! 1st time here overwrite; append later
     integer :: switchUnit
     ! Executable
+    ! Check for filename == 'stdout'
+    if ( lowercase(filename) == 'stdout' ) then
+      SWITCHTOSTDOUT = .true.
+      return
+    endif
     dontCloseOldUnit = .false.
     if ( present(keepOldUnitOpen) ) dontCloseOldUnit = keepOldUnitOpen
     oldUnit = outputOptions%prunit
@@ -1209,31 +1228,6 @@ contains
   end subroutine SeparateElements
 
   ! ------------------------------------  myMessage  -----
-  subroutine myMessage_old ( severity, name, line, advance )
-    ! Args
-    integer, intent(in)           :: severity
-    character(len=*), intent(in) :: name
-    character(len=*), intent(in) :: line
-    character (len=*), intent(in), optional :: Advance ! Do not advance
-    !                                 if present and the first character is 'N'
-    !                                 or 'n'
-    ! Local variables
-    integer :: nChars
-    character(len=len(line) + len(name) + 3) :: thus
-    ! Executable
-    nChars = len(line)
-    thus = line
-    if ( len_trim(name) > 0 ) then
-      nChars = len(line) + len(name) + 3
-      thus = '(' // trim(name) // ') ' // line
-    endif
-    if ( severity > MLSMSG_Warning ) then
-      call PrintItOut( thus(1:nChars), SEVERITY, exitStatus = 1  )
-    else
-      call PrintItOut( thus(1:nChars), SEVERITY  )
-    endif
-  end subroutine myMessage_old
-
   subroutine myMessage ( Severity, ModuleNameIn, Message, &
     & Advance )
 
@@ -1399,6 +1393,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.116  2015/01/12 22:20:55  pwagner
+! swichOutput can switch to 'stdout'
+!
 ! Revision 2.115  2014/09/05 00:28:05  vsnyder
 ! Better handling of literal output unit
 !
