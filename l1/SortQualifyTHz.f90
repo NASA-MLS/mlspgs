@@ -15,6 +15,7 @@ MODULE SortQualifyTHz ! Sort and qualify the L0 data for the THz module
 
   USE L0_sci_tbls, ONLY: THzSciMAF
   USE THzCalibration, ONLY: CalBuf, MAFdata_T
+  USE MLSFillValues, ONLY: isNaN
 
   IMPLICIT NONE
 
@@ -43,6 +44,7 @@ CONTAINS
     USE SciUtils, ONLY: NextSciMAF
     USE MLSL1Utils, ONLY : GetIndexedAvg
     USE BrightObjects_m, ONLY: THz_BO_stat
+    USE dates_module, ONLY: tai93s2hid
 
     LOGICAL :: more_data
 
@@ -89,7 +91,8 @@ CONTAINS
 
        ENDDO
 
-PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
+PRINT *, "SCI/ENG MAF, time: ", sci_MAFno, EngMAF%MAFno, &
+  & tai93s2hid( EngMAF%sectai, leapsec=.true. )
        CalMAFno = CalMAFno + 1
        CurMAFdata => CalBuf%MAFdata(CalMAFno)
        CurMAFdata%SciMIF = THzSciMAF
@@ -105,6 +108,21 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
        more_data =  THzSciMAF(0)%secTAI <= L1Config%Input_TAI%endTime .AND. &
             (CalMAFno < SIZE (OA_counterMAF))
+       if ( isNaN( CurMAFdata%CalTgtTemp) ) then
+         print *, 'CalTgtTemp is a NaN'
+         print *, 'absZero_C ', absZero_C
+         CurMAFdata%CalTgtTemp = &
+            GetIndexedAvg ( EngMAF%eng%value, CalTgtIndx%THzAmb, debug=.true.) - absZero_C
+       endif
+       if ( isNaN( CurMAFdata%LimbCalTgtTemp) ) then
+         print *, 'LimbCalTgtTemp is a NaN'
+         CurMAFdata%LimbCalTgtTemp = &
+            GetIndexedAvg ( EngMAF%eng%value, CalTgtIndx%THzLimb, debug=.true.) - absZero_C
+       endif
+       ! print *, minval(CalTgtIndx%THzAmb), maxval(CalTgtIndx%THzAmb)
+       ! print *, minval(CalTgtIndx%THzAmb), maxval(CalTgtIndx%THzLimb)
+       ! print *, size(EngMAF%eng%value)
+       ! if ( any(isNaN(EngMAF%eng%value)) ) print *, 'At least one value is a NaN'
        IF (.NOT. more_data) EXIT    !! Nothing more to do
 
     ENDDO
@@ -285,6 +303,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2015/01/13 18:45:19  pwagner
+! Prints time with MAF nums; warns if Cal Temps are NaNs
+!
 ! Revision 2.15  2009/05/13 20:33:05  vsnyder
 ! Get constants from Constants, kinds from MLSKinds
 !
