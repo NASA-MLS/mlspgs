@@ -210,7 +210,7 @@ PRINT *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
     ENDIF
 
     DO i = 1, CalWin%current
-       CalWin%MAFdata(i)%LimbAltFlag => CalWin%LimbAltFlag(:,i)
+       CalWin%MAFdata(i)%LimbAltFlag(0:) => CalWin%LimbAltFlag(0:,i)
     ENDDO
 
     CurMAFdata => CalWin%MAFdata(CalWin%current)
@@ -981,6 +981,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.32  2015/01/13 18:42:46  pwagner
+! Changed lower bounds on pointer to match LimbAltFlag
+!
 ! Revision 2.31  2013/07/12 15:14:45  perun
 ! Lowered MinCalDiff to 100 to handle tighter R4 to determine when OFF
 !
