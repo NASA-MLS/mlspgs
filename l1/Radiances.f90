@@ -561,7 +561,7 @@ CONTAINS
        DO chan = 1, FBchans
           Pavg = 0.0
           Pnum = 0
-          DO MIF_index = 0, (MaxMIFs-1)
+          DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
              IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%FB(chan,bank) &
                   .AND. FBrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
                 Pnum = Pnum + 1
@@ -581,7 +581,7 @@ CONTAINS
        DO chan = 1, MBchans
           Pavg = 0.0
           Pnum = 0
-          DO MIF_index = 0, (MaxMIFs-1)
+          DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
              IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%MB(chan,bank) &
                   .AND. MBrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
                 Pnum = Pnum + 1
@@ -601,7 +601,7 @@ CONTAINS
        DO chan = 1, WFchans
           Pavg = 0.0
           Pnum = 0
-          DO MIF_index = 0, (MaxMIFs-1)
+          DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
              IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%WF(chan,bank) &
                   .AND. WFrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
                 Pnum = Pnum + 1
@@ -621,7 +621,7 @@ CONTAINS
        DO chan = 1, DACSchans
           Pavg = 0.0
           Pnum = 0
-          DO MIF_index = 0, (MaxMIFs-1)
+          DO MIF_index = 0, min( (MaxMIFs-1), MIFsGHz-1 )
              IF (CalWin%MAFdata(windex)%LimbAltFlag(MIF_index)%DACS(chan,bank) &
                   .AND. DACSrad(bank)%precision(chan,MIF_index+1) > 0.0) THEN
                 Pnum = Pnum + 1
@@ -657,6 +657,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.22  2015/01/13 18:42:17  pwagner
+! Avoid blowing past upper bounds on precision arrays
+!
 ! Revision 2.21  2007/02/09 15:05:59  perun
 ! Always calculate P_offset
 !
