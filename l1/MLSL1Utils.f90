@@ -138,20 +138,24 @@ CONTAINS
 
   END FUNCTION Finite_D
 
-  FUNCTION GetIndexedAvg (value, indx) RESULT (avg)
+  FUNCTION GetIndexedAvg (value, indx, debug) RESULT (avg)
 
     !! Return average of indexed value array
 
     REAL, DIMENSION(:) :: value
     INTEGER, DIMENSION (:) :: indx  ! Indexes for "value"
+    logical, optional, intent(in) :: debug
 
     REAL :: avg
 
     INTEGER :: i, navg, low, high
     REAL :: sum
+    logical :: myDebug
 
     low = LBOUND (value, 1)
     high = UBOUND (value, 1)
+    myDebug = .false.
+    if ( present(debug) ) myDebug = debug
 
     navg = 0
     sum = 0.0
@@ -160,7 +164,14 @@ CONTAINS
           IF (Finite(value(indx(i)))) THEN
              navg = navg + 1
              sum = sum + value(indx(i))
+             if ( myDebug .and. isNaN(value(indx(i))) ) then
+               print *, 'i, indx(i), value(indx(i)) ', i, indx(i), value(indx(i))
+             endif
+          elseif ( myDebug ) then
+             print *, 'i, indx(i), value(indx(i)) ', i, indx(i), value(indx(i))
           ENDIF
+       elseif ( myDebug ) then
+           print *, 'i, indx(i), low, high ', i, indx(i), low, high
        ENDIF
     ENDDO
 
@@ -168,6 +179,7 @@ CONTAINS
        avg = sum / navg
     ELSE
        avg = Qnan()
+       if ( myDebug ) print *, 'navg = 0, so returning NaN'
     ENDIF
 
   END FUNCTION GetIndexedAvg
@@ -185,6 +197,9 @@ END MODULE MLSL1Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2015/01/13 18:40:43  pwagner
+! Can warn if producing a NaN
+!
 ! Revision 2.6  2005/06/23 18:41:36  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
