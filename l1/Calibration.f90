@@ -176,7 +176,7 @@ CONTAINS
     CalWin%current = 0        ! Indicates nothing in the window
     CalWin%central = window_MAFs / 2 + 1
     DO i = 1, window_MAFs
-       CalWin%MAFdata(i)%LimbAltFlag => CalWin%LimbAltFlag(0:,i)
+       CalWin%MAFdata(i)%LimbAltFlag(0:) => CalWin%LimbAltFlag(0:,i)
     ENDDO
 
     !! Initialize space and target weighting vectors:
@@ -981,6 +981,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.20  2015/01/13 18:37:37  pwagner
+! Changed lower bounds on pointer to match LimbAltFlag
+!
 ! Revision 2.19  2007/02/09 15:02:45  perun
 ! Do slimb calibration only if requested.
 !
