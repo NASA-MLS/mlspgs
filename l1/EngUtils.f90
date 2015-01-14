@@ -189,6 +189,8 @@ CONTAINS
 
           byte1 = byte1 + 2    ! next word
           Eng_tbl(n)%counts = BigEndianStr (EngPkt(pkt_no)(byte1:byte1+1))
+          if ( n == 3 .and. Eng_tbl(n)%counts < 1 ) &
+            & print *, 'Cal counts is 0 for Eng table at n ', n
 
 ! Save the calibration counts
 
@@ -289,7 +291,28 @@ CONTAINS
 
           END SELECT
 
+       elseif ( i < 307 .or. i > 321 ) then
+         PRINT *, 'Data not available to convert'
        ENDIF
+       ! Apparently values 307-320 are all NaNs
+       ! Who wooda guessed!
+       if ( isNaN(Eng_tbl(i)%value) .and. &
+         & ( i < 307 .or. i > 321 ) &
+         & ) then
+         print *, i, 'th engineering value is a NaN'
+         print *, 'type  ', Eng_tbl(i)%type
+         print *, 'riu number ', riu_no
+         print *, 'mnemonic ', trim(Eng_tbl(i)%mnemonic)
+         if ( riu_no > 0 .and. riu_no < 5 ) print *, 'GMriu on? ', GMAB_ON(riu_no)
+         if ( riu_no > 1 .and. riu_no < 6 .and. MOD (riu_no, 2) == 0 ) &
+           & print *, 'prev GMriu on? ', GMAB_ON(riu_no-1)
+         if ( riu_no > -1 .and. riu_no < 4 .and. MOD (riu_no, 2) /= 0 ) &
+           & print *, 'next GMriu on? ', GMAB_ON(riu_no+1)
+         print *, 'id_word ', Riu_tbl(riu_no)%id_word
+         print *, 'counts ', Eng_tbl(i)%counts
+       endif
+       ! So, it's because GMriu_no is NOT ON for these rius
+       ! Tell me, where is any of this documented? Does anyone here know anything?
 
     ENDDO
 
@@ -377,6 +400,9 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.13  2015/01/14 00:32:53  pwagner
+! Added debugging info for Calibration counts dropping to zero
+!
 ! Revision 2.12  2008/05/06 15:56:44  perun
 ! Read eng packets until data good.
 !
