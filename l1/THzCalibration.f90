@@ -18,6 +18,10 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
   USE L0_sci_tbls, ONLY: THz_Sci_pkt_T
   USE EngTbls, ONLY : Eng_MAF_T
   USE MLSL1Config, ONLY: MIFsTHz
+  USE MLSFillValues, ONLY: isNaN
+  ! USE dump_0, ONLY: dump
+  use output_m, only: switchOutput, revertOutput
+  use PrintIt_m, only: MLSMessageConfig
  
   IMPLICIT NONE
 
@@ -117,6 +121,10 @@ CONTAINS
     TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
     INTEGER, PARAMETER :: Cal_size = 240   ! Nominal orbit
     REAL, PARAMETER :: LO1R5 = LO1(5)  ! Radiometer 5 1st LO frequency
+    logical :: CalTgtTempIsNAN
+    logical :: LimbCalTgtTempIsNAN
+    logical :: FB15NotAllGood
+    logical :: FB20NotAllGood
 
     SpaceTemp = L1Config%Calib%THzSpaceTemp
     MaxBias = L1Config%Calib%THzMaxBias
@@ -173,12 +181,21 @@ CONTAINS
     VarCnts = -1.0
     VarGain = 1.0
 
+    if ( any(isNaN(Cnts)) ) then
+      print *, 'NaNs in Cnts at start of BuildCalVectors'
+      print *, 'SpaceTemp ', SpaceTemp
+      print *, 'Cal_start, Cal_end ', Cal_start, Cal_end
+    endif
 ! Fill the vectors:
 
     CalBuf%BankGood = .TRUE.
     Switch5 = CalBuf%MAFdata(Cal_start)%SciMIF(0)%BandSwitch(5) ! init compare
 
     MIF0 = 0   ! index for MIFs
+    CalTgtTempIsNAN = .false.
+    LimbCalTgtTempIsNAN = .false.
+    FB15NotAllGood = .false.
+    FB20NotAllGood = .false.
     DO i = Cal_start, Cal_end
 
        xMIF0(i-1) = MIF0                 ! Save MIF0 indexes
@@ -206,20 +223,25 @@ CONTAINS
                   RadPwr (LO1R5, REAL(CalTemp(mindx))) !for in orbit space = 0
              CalFlag(mindx) = 1
              CalInfo(mindx) = 2
+             CalTgtTempIsNAN = CalTgtTempIsNAN .or. isNaN(CurMAFdata%CalTgtTemp)
+             LimbCalTgtTempIsNAN = LimbCalTgtTempIsNAN .or. isNaN(CurMAFdata%LimbCalTgtTemp)
           ENDIF
        ENDDO
 
 ! Check if Band Switch 5 changes:
 
        CalBuf%BankGood(1) = .TRUE.
-       IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(5) /= Switch5)) &
-            CalBuf%BankGood(1) = .FALSE.  ! Filter Bank 15 not all good
+       IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(5) /= Switch5)) then
+          CalBuf%BankGood(1) = .FALSE.  ! Filter Bank 15 not all good
+          FB15NotAllGood = .true.
+       endif
 
 ! Check if Band 20 is connected:
 
        CalBuf%BankGood(6) = .TRUE.
        IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(4) /= 20)) THEN
           CalBuf%BankGood(6) = .FALSE. ! Filter Bank 12 (Band 20) not all good
+            FB20NotAllGood = .true.
           DO MIFno = 0, last_MIF
              CurMAFdata%SciMIF(MIFno)%FB(:,6) = 0.0   ! Clear counts
           ENDDO
@@ -228,6 +250,10 @@ CONTAINS
        MIF0 = MIF0 + last_MIF + 1
 
     ENDDO
+    if ( FB15NotAllGood ) print *, 'Filter Bank 15 not all good'
+    if ( FB20NotAllGood ) print *, 'Filter Bank 20 not all good'
+    if ( CalTgtTempIsNAN ) print *, 'CalTgtTemp Is NaN'
+    if ( LimbCalTgtTempIsNAN ) print *, 'LimbCalTgtTemp Is NaN'
 
 ! Adjust LLO Bias V if 2 or more consecutive errs:
 
@@ -241,8 +267,14 @@ CONTAINS
 ! Determine which filter bank counts are good to cal:
 
     DO nBank = 1, THzNum
+       IF (ALL (isNaN(Cnts(:,nBank,:) ))) &
+         & print *, 'Filter Bank ', nBank, ' are all NaN'
+    enddo
+
+    DO nBank = 1, THzNum
        IF (ALL (Cnts(:,nBank,:) == 0.0)) THEN
           CalBuf%BankGood(nBank) = .FALSE.
+         print *, 'Filter Bank ', nBank, ' not all good'
        ELSE IF (.NOT. CalBuf%BankGood(nBank)) THEN
           Cnts(:,nBank,:) = 0.0  ! clear bad data
        ENDIF
@@ -257,6 +289,8 @@ CONTAINS
     CalBuf%Cal_start = Cal_start
     CalBuf%Cal_end = Cal_end
 
+    if ( any(isNaN(CalTemp)) ) print *, 'NaNs in CalTemp at start of BuildCalVectors'
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at end of BuildCalVectors'
   END SUBROUTINE BuildCalVectors
 
 !=============================================================================
@@ -266,6 +300,7 @@ CONTAINS
     INTEGER :: i, MIF0, MIFno, last_MIF, mindx
     TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
 
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at start of RestoreCnts'
     MIF0 = 0   ! index for MIFs
     DO i = 1, CalBuf%MAFs
        CurMAFdata => CalBuf%MAFdata(i)
@@ -277,6 +312,7 @@ CONTAINS
        ENDDO
        MIF0 = MIF0 + last_MIF + 1
     ENDDO
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at end of RestoreCnts'
 
   END SUBROUTINE RestoreCnts
 
@@ -383,6 +419,9 @@ CONTAINS
 
     REAL, PARAMETER :: tmin = 10.0
 
+    call switchOutput( 'stdout' )
+    ! MLSMessageConfig%adHocPrintToStdout = .true.
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at start of THzDel'
     nMAFs = SIZE (xMIF0)
     nMIFs = SIZE (Bias)
 !    DEALLOCATE (dbias, stat=status)
@@ -412,7 +451,9 @@ CONTAINS
 
     AvgBias = SUM (Bias * CalFlag) / ntot
     AvgTemp = SUM (CalTemp * CalFlag) / ntot
-
+    ! print *, 'AvgBias ', AvgBias
+    ! print *, 'AvgTemp ', AvgTemp
+    ! call dump ( CalTemp, 'CalTemp' )
 !    DEALLOCATE (BiasBuf, stat=status)
     ALLOCATE (BiasBuf(0:nMIFs-1))
     BiasBuf = Bias * CalFlag
@@ -438,6 +479,9 @@ CONTAINS
        cFlag => CalFlag(ibgn:iend)
        ntotx = COUNT (cFlag == 1)
        IF (ntotx > 1) THEN
+          ! call dump( TempBuf(ibgn:iend), 'TempBuf' )
+          ! call dump( BiasBuf(ibgn:iend), 'BiasBuf' )
+          ! call dump( CalFlag(ibgn:iend), 'CalFlag' )
           biasx => BiasBuf(ibgn:iend)
           avgx = SUM (biasx) / ntotx
           biasx = (biasx - avgx) * cFlag
@@ -484,12 +528,16 @@ CONTAINS
 
     tt0 = tt
     rtt = tt
+    ! call dump( rtt, 'rtt' )
     CALL MatrixInversion (rtt)
     tt = rtt
 
+    ! call dump( yv, 'yv' )
+    ! call dump( tt, 'tt' )
     DO nBank = 1, THzNum
        tv(:,nBank,:) = MATMUL (yv(:,nBank,:), tt)
     ENDDO
+    ! call dump( tv, 'tv (1st time)' )
     DO nBank = 1, THzNum
        DO nChan = 1, THzChans
           amp(nChan,nBank) = SQRT (tv(nChan,nBank,2) * tv(nChan,nBank,2) + &
@@ -509,6 +557,7 @@ CONTAINS
           tv(:,nBank,0:1) = MATMUL (yv(:,nBank,0:1), tt(0:1,0:1))
        ENDDO
     ENDIF
+    ! call dump( tv, 'tv (2nd time)' )
 
     dLlo = tv(:,:,0)
     dCal = tv(:,:,1)
@@ -523,6 +572,8 @@ CONTAINS
     WHERE (BiasGood)
        Bias = Bias - AvgBias  ! Adjust bias for remainder of this routine
     ENDWHERE
+    ! call dump( Bias, 'Bias' )
+    ! call dump( dLlo, 'dLlo' )
     DO nBank = 1, THzNum
        DO nChan = 1, THzChans
           WHERE (BiasGood)
@@ -532,6 +583,7 @@ CONTAINS
           ENDWHERE
        ENDDO
     ENDDO
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts after 1st bias adjustment'
 
     IF (fitno == 2) THEN
        DO nBank = 1, THzNum
@@ -557,6 +609,7 @@ CONTAINS
           ENDDO
        ENDDO
     ENDIF
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts after 2nd bias adjustment'
 
     DO nBank = 1, THzNum
        DO nChan = 1, THzChans
@@ -585,6 +638,9 @@ CONTAINS
 
     DEALLOCATE (dbias, stat=status)
     DEALLOCATE (val, stat=status)
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at end of THzDel'
+    ! MLSMessageConfig%adHocPrintToStdout = .false.
+    call revertOutput
 
   END SUBROUTINE THzDel
 
@@ -821,6 +877,7 @@ CONTAINS
     REAL, PARAMETER :: lmax = lavg - limb_range(1)
 
     PRINT *, 'Reselecting...'
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at start of Reselecting'
 
     limb_type = (INDEX(Stype, "L") /= 0)
     cold_type = (INDEX(Stype, "C") /= 0)
@@ -879,6 +936,7 @@ CONTAINS
        PRINT *, 'Cals rejected (cold, hot, total): ', ncold, nhot, nbad
     ENDIF
 
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at end of Reselecting'
   END SUBROUTINE THzReselect
 
 !=============================================================================
@@ -984,6 +1042,7 @@ CONTAINS
     INTEGER, PARAMETER :: nlast = 148 * 11   ! number of MIFs to test at end
 
 ! Save Cnts for calibration:
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at start of THzCalDay'
 
     dCnts = Cnts
 
@@ -1053,6 +1112,7 @@ PRINT *, ibgn, iend, iref, iorg, (iend-ibgn+1)/148
 
     CALL THzBound (0, iend, 0, fillnvbounds=.TRUE.)  ! Bounds for entire dataset
 
+    if ( any(isNaN(Cnts)) ) print *, 'NaNs in Cnts at end of THzCalDay'
   END SUBROUTINE THzCalDay
 
 !=============================================================================
@@ -1079,6 +1139,7 @@ PRINT *, 'Start calibrating...'
     CALL THzStat
 
     CALL THzReselect ("C", nbad)        ! Only "C"old cals
+    print *, 'nbad ', nbad
 
     IF (nbad > 0) THEN
 
@@ -1117,6 +1178,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2015/01/14 00:29:44  pwagner
+! Warn of NaNs
+!
 ! Revision 2.16  2013/02/06 19:05:40  quyen
 ! fix hanging problem for misplaced deallocate
 !
