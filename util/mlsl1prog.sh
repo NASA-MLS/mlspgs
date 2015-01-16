@@ -61,6 +61,9 @@ MLSBIN=mlsbbiinn
 # If relative, it must be relative to the following absolute path
 MLSHOME=mlshhoommee
 
+ulimit -s unlimited
+ulimit -a
+
 # Does MLSBIN start with "/" or not?
 # (in other words is it absolute or relative?)
 
@@ -199,6 +202,9 @@ else
 fi
 
 # $Log$
+# Revision 1.11  2012/02/15 18:12:06  pwagner
+# Offer last chance to find h5repack in HDFTOOLS directory
+#
 # Revision 1.10  2009/02/13 17:37:05  pwagner
 # Running mlspgs automatically prints license text
 #
