@@ -806,6 +806,7 @@ CONTAINS
     USE MLSFiles, ONLY: MLS_openFile, MLS_closeFile
     USE MLSHDF5, ONLY: MLS_h5open, GetHDF5Attribute
     USE HDF5, ONLY: H5gOpen_f, H5gClose_f
+    USE io_stuff, ONLY: get_lun
     USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
     USE MLSL1Config, ONLY: MIFsTHz, L1Config
     USE BrightObjects_m, ONLY: THz_BO_stat
@@ -842,6 +843,7 @@ CONTAINS
     L1BFileInfo%DIAGID = 0
     L1BFileInfo%DIAGTID = 0
     L1BFileInfo%ENGID = -1    ! Non-HDF unit
+    call get_lun( L1BFileInfo%EngId )
 
     ! Open L1BRADT File
 
@@ -1138,6 +1140,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.31  2015/01/21 19:31:23  pwagner
+! Fortran unit must not be -1
+!
 ! Revision 2.30  2007/06/21 21:03:34  perun
 ! Only open RADD file if DACS calibration is enabled
 !
