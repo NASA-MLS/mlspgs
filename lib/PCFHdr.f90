@@ -155,7 +155,7 @@ contains
    SUBROUTINE CreatePCFAnnotation ( mlspcfN_pcf_start, anText )
 !--------------------------------------------------------------
 
-      use Allocate_Deallocate, only: Allocate_Test
+      use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
 
 ! Brief description of subroutine
 ! This subroutine stores the PCF as an annotation for writing to file headers.
@@ -183,7 +183,7 @@ contains
 
       version = 1
       returnStatus = Pgs_pc_getFileSize(mlspcfN_pcf_start, version, size)
-
+      nullify( anText )
       call allocate_test ( anText, size, "anText", moduleName )
 
 ! Open the PCF for reading
@@ -209,7 +209,6 @@ contains
          msr = mnemonic // ':  ' // msg
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-
 !------------------------------------
    END SUBROUTINE CreatePCFAnnotation
 !------------------------------------
@@ -1627,6 +1626,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.65  2015/01/21 19:28:17  pwagner
+!# Prevent unassociated anText error
+!#
 !# Revision 2.64  2014/10/02 17:20:46  pwagner
 !# Avoid letting master write erroneous MiscNotes
 !#
