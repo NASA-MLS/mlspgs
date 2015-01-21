@@ -379,6 +379,7 @@ PRINT *, 'doing baseline...'
     TYPE (DataProducts_T) :: baselineDS, dataset  
 
 PRINT *, 'Updating baselines...'
+    DC_avg = 0.
 
 ! Set up for HDF output:
 
@@ -440,7 +441,7 @@ PRINT *, 'Updating baselines...'
              nwin = w2 - w1 + 1
              avg_mask = .TRUE.      ! everything good
              WHERE (baselineDC(:,w1:w2) <= -999.0)
-                avg_mask = .FALSE.  ! bad data to skip
+                avg_mask(:,1:w2-w1+1) = .FALSE.  ! bad data to skip
              ENDWHERE
              ngood = COUNT (avg_mask(1,:))   ! using just one channel!
              if (ngood < 1) CYCLE
@@ -615,7 +616,7 @@ PRINT *, 'Updating baselines...'
 
              ENDIF
           ENDIF
-          DC_avg = SUM (baselineDC(1:noChans,avg_indx),2) * 0.5
+          DC_avg(1:noChans) = SUM (baselineDC(1:noChans,avg_indx),2) * 0.5
 
           IF (ANY (DC_avg(1:noChans) == FILLVALUE)) DC_avg = 0.0 ! Nothing there
 
@@ -754,6 +755,9 @@ PRINT *, 'Updating baselines...'
 END MODULE SpectralBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.13  2015/01/21 19:32:29  pwagner
+! Avoid array bound violations
+!
 ! Revision 2.12  2011/01/27 15:37:20  perun
 ! Mask bad DC baseline for calculating average DC baseline.
 !
