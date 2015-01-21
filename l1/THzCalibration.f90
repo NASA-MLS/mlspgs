@@ -431,6 +431,7 @@ CONTAINS
     ALLOCATE (val(0:nMIFs-1))
     tv = 0.0d0
     yv = 0.0d0
+    amp = 0.d0
     IF (nfit > 2) THEN
        nMAFs = nMAFs - 1
 !       DEALLOCATE (ang, stat=status)
@@ -540,7 +541,8 @@ CONTAINS
     ! call dump( tv, 'tv (1st time)' )
     DO nBank = 1, THzNum
        DO nChan = 1, THzChans
-          amp(nChan,nBank) = SQRT (tv(nChan,nBank,2) * tv(nChan,nBank,2) + &
+          if ( tv(nChan,nBank,1) /= 0.d0 ) &
+            & amp(nChan,nBank) = SQRT (tv(nChan,nBank,2) * tv(nChan,nBank,2) + &
               tv(nChan,nBank,3) * tv(nChan,nBank,3)) / ABS (tv(nChan,nBank,1))
        ENDDO
     ENDDO
@@ -1178,6 +1180,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.18  2015/01/21 19:32:51  pwagner
+! Avoid array bound violations
+!
 ! Revision 2.17  2015/01/14 00:29:44  pwagner
 ! Warn of NaNs
 !
