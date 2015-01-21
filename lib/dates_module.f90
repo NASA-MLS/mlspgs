@@ -18,12 +18,12 @@ module dates_module
   ! time representations (TAI93) while this module maintains
   ! its own internal database of leap seconds.
 
-  use MLSCOMMON,        only: NAMELEN
-  use MLSFINDS,         only: FINDFIRST
-  use MLSSTRINGLISTS,   only: GETSTRINGELEMENT, NUMSTRINGELEMENTS
-  use MLSSTRINGS,       only: CAPITALIZE, CHARTOINT, DEPUNCTUATE, &
-    & INDEXES, ISALPHABET, LOWERCASE, SPLITWORDS, WRITEINTSTOCHARS
-  use PRINTIT_M, only: MLSMSG_WARNING, PRINTITOUT
+  use MLSCommon,        only: nameLen
+  use MLSFinds,         only: findFirst
+  use MLSStringlists,   only: getStringelement, numStringelements
+  use MLSStrings,       only: capitalize, chartoint, depunctuate, &
+    & indexes, isalphabet, lowercase, splitWords, writeIntsToChars
+  use printit_m, only: MLSMSG_Warning, printItOut
 
   implicit none
   private
@@ -232,9 +232,9 @@ module dates_module
   ! There are two internal date formats:
   ! eudtf          -  yyyddd expressed as an integer, e.g. 1993001 is '1993-001'
   ! MLSDATE_TIME_T - a user-defined type containing 3 fields: 
-  ! dai and 
-  ! seconds
-  ! leapseconds
+  !   dai
+  !   seconds
+  !   leapseconds
   
   ! Further notes and Limitations:
   ! It would be useful for this module to supply functions converting among
@@ -254,6 +254,7 @@ module dates_module
   ! (a) Our database includes dates prior to 1972, contrary to the usual definition
   ! (b) Our implementation assumes that each leapsecond adds exactly 1 second
   !     the definition allows for possible negative leap seconds
+  !     early leap seconds were sometimes fractional
 ! === (end of api) ===
 
 ! Further notes:
@@ -323,7 +324,7 @@ module dates_module
 
   integer, private, parameter :: SECONDSINADAY = 24*60*60
   
-  character(len=*), dimension(39), parameter :: leapSecDates = (/ &
+  character(len=*), dimension(40), parameter :: leapSecDates = (/ &
     '1961 JAN 1', & 
     '1961 AUG 1', & 
     '1962 JAN 1', & 
@@ -362,7 +363,8 @@ module dates_module
     '1999 JAN 1', & 
     '2006 JAN 1', & 
     '2009 JAN 1', & 
-    '2012 JUL 1'  & 
+    '2012 JUL 1', & 
+    '2015 JUL 1'  & 
     /) 
 
   ! These somewhat similar parameters are used in the separately-coded
@@ -401,13 +403,10 @@ module dates_module
   double precision, parameter :: LUNARPERIOD = 60.d0*(44 + 60.d0*( &
     & 12 + 24.d0*29 ) ) ! 29d 12h 44m
 
-  ! character (len=1), parameter    :: COMMA = ','
-  ! character (len=1), parameter    :: BLANK = ' '   ! Returned for any element empty
-
   ! These are the starting dates for the two date formats we drag around:
   ! the first is for the tai format
   character(len=16)            :: TAIStartingDate   = '1993-01-01'
-  ! the second is for our MLSdate_Time format
+  ! the second is for our internal MLSdate_Time format
   character(len=*), parameter  :: MLSStartingDate   = '2001-01-01'
   
   ! This is a private type used only internally
@@ -418,7 +417,7 @@ module dates_module
   type MLSDATE_TIME_T
     integer :: dai = 0                  ! days after 1 Jan 2001
     double precision :: seconds = 0.00  ! seconds after midnight
-    integer :: LeapSeconds = 0        ! optional leap seconds to be added
+    integer :: LeapSeconds = 0          ! optional leap seconds to be added
   end type MLSDATE_TIME_T
   
   ! This accounts for the number of days between the dates
@@ -2817,6 +2816,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.34  2014/10/14 21:38:57  pwagner
+! Added datesbetween2utcs
+!
 ! Revision 2.33  2014/03/05 20:14:50  pwagner
 ! Commented-out stray prints; improved some remarks
 !
