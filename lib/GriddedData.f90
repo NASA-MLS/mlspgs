@@ -388,9 +388,12 @@ contains
     call trace_begin ( me, 'ConvertFromEtaLevelGrids' , cond=.false. )
 
     ! GriddedData must match
-    if ( .not. DoGriddeddataMatch( PGrid, TGrid ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( .not. DoGriddeddataMatch( PGrid, TGrid ) ) then
+      call DumpGriddedData( PGrid )
+      call DumpGriddedData( TGrid )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Gridded T,P data must match' )
+    endif
     call DestroyGriddedData ( OutGrid )
     call SetupNewGriddedData ( OutGrid, source=TGrid, noHeights=NGrid%noHeights )
     ! Copy the information over
@@ -1791,6 +1794,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.78  2015/01/21 19:29:15  pwagner
+! More debugging if PGrid, TGrid dont match
+!
 ! Revision 2.77  2014/09/04 23:38:45  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
