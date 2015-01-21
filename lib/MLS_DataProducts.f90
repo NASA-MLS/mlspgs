@@ -46,7 +46,7 @@ contains
     if (associated(DataProducts%VerticalCoordinates)) then 
         s = size(DataProducts%VerticalCoordinates) * &
           & storage_size(DataProducts%VerticalCoordinates) / 8
-        deallocate(DataProducts%FrequencyCoordinates, stat=status)
+        deallocate(DataProducts%VerticalCoordinates, stat=status)
         call test_deallocate ( status, ModuleName, &
           & 'DataProducts%VerticalCoordinates', s )
     endif
@@ -54,7 +54,7 @@ contains
     if (associated(DataProducts%HorizontalCoordinates)) then 
         s = size(DataProducts%HorizontalCoordinates) * &
           & storage_size(DataProducts%HorizontalCoordinates) / 8
-        deallocate(DataProducts%FrequencyCoordinates, stat=status)
+        deallocate(DataProducts%HorizontalCoordinates, stat=status)
         call test_deallocate ( status, ModuleName, &
           & 'DataProducts%HorizontalCoordinates', s )
     endif
@@ -62,7 +62,7 @@ contains
     if (associated(DataProducts%Dimensions)) then 
         s = size(DataProducts%Dimensions) * &
           & storage_size(DataProducts%Dimensions) / 8
-        deallocate(DataProducts%FrequencyCoordinates, stat=status)
+        deallocate(DataProducts%Dimensions, stat=status)
         call test_deallocate ( status, ModuleName, &
           & 'DataProducts%Dimensions', s )
     endif
