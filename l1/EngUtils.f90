@@ -15,6 +15,7 @@ MODULE EngUtils   ! Engineering utilities
 
   USE MLSCommon, ONLY: r8
   USE MLSL1Utils, ONLY: QNan, BigEndianStr, Finite
+  use MLSFillValues, only: isNaN
 
   IMPLICIT NONE
 
@@ -400,6 +401,9 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2015/01/21 19:30:19  pwagner
+! Gets isNaN from MLSFillValues
+!
 ! Revision 2.13  2015/01/14 00:32:53  pwagner
 ! Added debugging info for Calibration counts dropping to zero
 !
