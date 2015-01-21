@@ -29,6 +29,7 @@ module MLSAuxData
   use MLSKINDS, only: R4, R8
   use MLSStrings, only: LOWERCASE
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  use output_m, only: switchOutput, revertOutput
   
   implicit NONE
 
@@ -326,7 +327,8 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     if (associated(MLSAuxData%DpField)) then 
       s = size(MLSAuxData%DpField) * storage_size(MLSAuxData%DpField) / 8
-      deallocate(MLSAuxData%CharField, stat=status)
+      if ( s < 1 ) return
+      deallocate(MLSAuxData%DpField, stat=status)
       call test_deallocate ( status, ModuleName, &
         & ' MLSAuxData%DpField in ' // trim(MLSAuxData%name), s )
     end if
@@ -2677,17 +2679,13 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer :: i, rank, h5error
     logical :: myWrite_attributes
     !--------------------------------------------------------------------------
+      call switchOutput( 'stdout' )
     error = 0
     myWrite_attributes = .false.
     if ( present(write_attributes) ) myWrite_attributes=write_attributes
 
     nullify (char_data, attr_data)
     dims = 1
-    if ( MLSAuxData%name == 'R1A:118.B22D:PT.S0.DACS-4 precision'  .and. DEBUG ) then
-      print *, 'Write_MLSAuxData: ', trim(MLSAuxData%type_name)
-      write(*, '(a12, 8I8)') 'rank: ', MLSAuxData%rank
-      if ( present(index) ) write(*, '(a12, 8I8)') 'index: ', index
-    end if
     test_type: select case (trim(MLSAuxData%type_name))
 
     case ('real')
@@ -3060,6 +3058,7 @@ contains ! ============================ MODULE PROCEDURES ====================
       write(*, '(a12, 8I8)') 'maxdims    : ', maxdims(1:rank)
       call h5dclose_f(dset_id, h5error)
     end if
+    call revertOutput
   end subroutine Write_MLSAuxData
 
   subroutine CopyFromDataProducts( dataset, MLSAuxData )
@@ -3200,6 +3199,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.34  2015/01/21 19:27:07  pwagner
+! Repaired faulty deallocation
+!
 ! Revision 2.33  2014/09/05 00:00:00  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.
 ! Convert some local pointer temps to allocatable.
