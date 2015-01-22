@@ -46,6 +46,8 @@ CONTAINS
    SUBROUTINE Scan_guess (asciiUTC, viewECR)
 !===============================================================================
 
+  use Constants, only: Deg2Rad
+
 ! Brief description of subroutine
 ! This subroutine calculates the initial guess for the starting view vector
 ! of a scan.
@@ -101,6 +103,7 @@ CONTAINS
    SUBROUTINE Scan_start (initAlt, posECR, asciiUTC, initRay, startAngle)
 !===============================================================================
 
+  use Constants, only: Rad2Deg
 ! Brief description of subroutine
 ! This subroutine takes an initial-guess view vector and iteratively runs the
 ! toolkit GrazingRay routine to find the actual view vector for a given
@@ -200,6 +203,9 @@ END MODULE Scan
 !==============
 
 ! $Log$
+! Revision 2.5  2007/04/05 13:59:57  perun
+! Protect ACOS from crashes
+!
 ! Revision 2.4  2005/12/14 17:01:03  perun
 ! Incorporate ReportTKStatus call for reporting errors
 !
