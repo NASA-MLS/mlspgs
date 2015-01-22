@@ -93,14 +93,14 @@ TYPE limb_oa_t
    real :: ref_solar_zen
    real :: rollrate_uars(32)
    real :: roll_uars(32)
-   real :: sat_gcrad(32)
-   real :: sat_geod_alt
-   real :: sat_geod_lat
-   real :: sat_long
-   real :: sat_vel(3)
-   real :: tngt_geod_alt(32)
-   real :: tngt_geod_lat(32)
-   real :: tngt_long(32)
+   real :: sat_gcrad(32)             ! km      Satellite Geocentric Radius
+   real :: sat_geod_alt              ! km      Satellite Geodetic Altitude
+   real :: sat_geod_lat              ! degrees Satellite Geodetic Latitude
+   real :: sat_long                  ! degrees Satellite Longitude
+   real :: sat_vel(3)                ! km/s    Satellite Velocity ECI
+   real :: tngt_geod_alt(32)         ! km      Tangent Geodetic Altitude
+   real :: tngt_geod_lat(32)         ! degrees Tangent Geodetic Latitude
+   real :: tngt_long(32)             ! degrees Tangent Longitude
    real :: trans_inst2eci(3,3)
    real :: ypr(3)
    real :: ypr_rate(3)
@@ -110,3 +110,8 @@ END TYPE
 END MODULE rad_file_contents
 
 ! $Log$
+! Revision 1.2  2014/12/11 00:48:51  vsnyder
+! Move external procedures into modules.  Add copyright and CVS lines.
+! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
+! SC velocity.  Some cannonball polishing.
+!

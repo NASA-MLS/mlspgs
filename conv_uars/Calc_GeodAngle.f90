@@ -27,10 +27,11 @@ contains ! ============= Public procedures ===================================
 
   subroutine Calc_GeodAngle ( mif, fmaf, flosf, emls_oa )
 
-    use OA_File_contents, only: emls_oa_t
     use Constants, only: Deg2Rad, Rad2Deg, Pi
     use Cross_m, only: Cross
+    use Geometry, only: EarthRadA, EarthRadB ! Equatorial, polar radii
     use MLSKinds, only: R8
+    use OA_File_contents, only: emls_oa_t
 
     implicit none
 
@@ -39,7 +40,7 @@ contains ! ============= Public procedures ===================================
     real(r8), intent(in) :: FMAF(3,3), FLOSF(3,3)
     type(emls_oa_t), intent(inout) :: EMLS_OA
 
-    real(r8), parameter :: ellipse(0:1) = (/ 6378.137D0, 6356.7523141D0 /)
+    real(r8), parameter :: A = EarthRadA / 1000.0_r8, B = EarthRadB / 1000.0_r8
     real :: tngt_clat, clat_t, slat_t, clong_t, slong_t, clat, slat
     real(r8) :: r_e, n_e(3), n_s(3), ABCDEF(3,3), n_fovd(3), n_pp(3), beta_r, &
          del_phi_t, cbeta_r, sbeta_r, mu_r, los_ascdsc, cmu_r, phi, phi_t_inst, &
@@ -51,11 +52,11 @@ contains ! ============= Public procedures ===================================
     clat_t = COS (tngt_clat)
     slong_t = SIN (emls_oa%lon(mif) * Deg2Rad)
     clong_t = COS (emls_oa%lon(mif) * Deg2Rad)
-    r_e = SQRT ((ellipse(0)*clat_t)**2 + (ellipse(1)*slat_t)**2)
-    n_e = [ellipse(0)*clat_t*clong_t, ellipse(0)*clat_t*slong_t, &
-         ellipse(1)*slat_t] / r_e
-    n_s = emls_oa%sc_ECR(:,mif) / SQRT (SUM (emls_oa%sc_ECR(:,mif)**2))
-    del_phi_t = ACOS (SUM (n_s * n_e)) * Rad2Deg
+    r_e = SQRT ((a*clat_t)**2 + (b*slat_t)**2)
+    n_e = [ a*clat_t*clong_t, a*clat_t*slong_t, &
+          & b*slat_t ] / r_e
+    n_s = emls_oa%sc_ECR(:,mif) / norm2(emls_oa%sc_ECR(:,mif))
+    del_phi_t = ACOS (dot_product (n_s, n_e)) * Rad2Deg
     ABCDEF = RESHAPE (emls_oa%ECRtoFOV(:,mif), (/ 3, 3 /))
 
     n_fovd = ABCDEF(3,:)
@@ -70,7 +71,7 @@ contains ! ============= Public procedures ===================================
 
     los_mat = TRANSPOSE (MATMUL ((MATMUL (TRANSPOSE (ABCDEF), fmaf)), &
          TRANSPOSE (flosf)))   ! matches IDL output!!!
-    los_ascdsc = los_mat(3,3) !n_fovd(3)
+    los_ascdsc = los_mat(3,3)  ! n_fovd(3)
     if (los_ascdsc > 0.0) mu_r = 180.0d0 - mu_r
 
   if (mif == 9916) then
@@ -89,11 +90,11 @@ contains ! ============= Public procedures ===================================
        phi = 180.0d0 + phi
     end if
     gamma = phi + del_phi_t
-    c_e = SQRT ((ellipse(0)*ellipse(1))**2 / &
-         ((ellipse(0) * COS (Deg2Rad * (beta_r - 90.0d0)))**2 &
-         + (ellipse(1) * SIN (Deg2Rad * (beta_r - 90.0d0)))**2))
-    phi_t_inst = ATAN2 (ellipse(0)**2 * SIN (Deg2Rad * gamma), &
-         c_e**2 * COS (Deg2Rad*gamma)) * Rad2Deg
+    c_e = SQRT ( (a*b)**2 / &
+         ( (a * COS (Deg2Rad * (beta_r - 90.0d0)))**2 &
+         + (b * SIN (Deg2Rad * (beta_r - 90.0d0)))**2) )
+    phi_t_inst = ATAN2 ( a**2 * SIN (Deg2Rad * gamma), &
+                         c_e**2 * COS (Deg2Rad*gamma) ) * Rad2Deg
     if (phi_t_inst < 0.0d0) phi_t_inst = 360.0d0 + phi_t_inst
 
     ! Save the Geodetic Angle:
@@ -134,3 +135,8 @@ contains ! ============= Public procedures ===================================
 end module Calc_GeodAngle_m
 
 ! $Log$
+! Revision 1.2  2014/12/11 00:48:51  vsnyder
+! Move external procedures into modules.  Add copyright and CVS lines.
+! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
+! SC velocity.  Some cannonball polishing.
+!
