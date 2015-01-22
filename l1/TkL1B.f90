@@ -11,6 +11,7 @@
 
 MODULE TkL1B
 
+  use Constants, only: Deg2Rad, Pi, Rad2Deg
   USE Geometry, ONLY: Omega => W
   USE MLSCommon, ONLY: R8, DEFAULTUNDEFINEDVALUE
   USE MLSL1Common
@@ -1655,6 +1656,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.36  2015/01/22 23:34:04  vsnyder
+! Get constants from Constants module instead of SDPToolkit
+!
 ! Revision 2.35  2009/07/28 18:08:11  perun
 ! New calculation for geodangle
 !
