@@ -23,22 +23,28 @@
 #SSType.sh [options]
 #
 #    O p t i o n s
-# -a            show all SSE; e.g., "SSE2 SSE3 SSSE3"; 
-#                 by default shows only highest
-# -M dir        use dir to search for tool hasSSE2, etc.
+# -a            show all SSE enabled on your host; e.g., "SSE2 SSE3 SSSE3"; 
+#                 by default shows only the highest
+# -d dir        use dir to search for tool hasSSE2, etc.
+# -p "p1 p2 .." check on programs p1, p2, .. instead of default hasSSE2, ..
+# -v            turn on verbose mode
 # -h[elp]       print brief help message; exit
 #Notes:
 #(1) Proper operation assumes that the following programs
-#    are in one of: your path, where MLSTOOLS is defined, or dir using -d option
+#    are in one of: your path, where MLSTOOLS is defined, or set using -d option
 #    hasSSE2  hasSSE3  hasSSSE3
-#(2) We are assuming that these programs were built for the same bitness
+#(2) The pattern followed by the program names is the program to check on
+#    SSxxx is named "hasSSxxx"
+#(3) We are assuming that these programs were built for the same bitness
 #    as the host where the commands are executed; e.g. 64-bit OS
+#(4) To add a new SSE, build /users/pwagner/docs/fortran/helloworld.f90
+#    enabling the SSE option to be tested, and rename the a.out "hasSSxxx"
 # --------------- End SSType.sh help
 
 
 NORMAL_STATUS=0
 # The checking programs has*
-# were compiled using -x * with ifort v11.1.56
+# were compiled using -x * with ifort 15.0.0 20140723
 # program    compiler option
 # -------        -------
 # hasSSE2       -x -xSSe2
@@ -46,11 +52,14 @@ NORMAL_STATUS=0
 # hasSSE4.1     -x -xSSe4.1
 # hasSSE4.2     -x -xSSe4.2
 # hasSSSE3      -x -xSSSe3
+# hasAVX        -x -xAVX
+# hasAVX2       -x -xAVX2
 # Use the following line to add extra options to MLSPROG
-PROGS="hasSSE2  hasSSE3  hasSSSE3"
+PROGS="hasSSE2  hasSSE3  hasSSE4.1  hasSSE4.2  hasSSSE3  hasAVX  hasAVX2"
 me="$0"
 my_name=SSType.sh
 all="no"
+verbose="no"
 dir="$MLSTOOLS"
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
@@ -65,8 +74,17 @@ while [ "$more_opts" = "yes" ] ; do
        all="yes"
        shift
 	;;
+    -v )
+       verbose="yes"
+       shift
+	;;
     -d )
        dir="$2"
+       shift
+       shift
+	;;
+    -p )
+       PROGS="$2"
        shift
        shift
 	;;
@@ -76,6 +94,11 @@ while [ "$more_opts" = "yes" ] ; do
     esac
 done
 
+if [ "$verbose" = "yes" ]
+then
+  echo "tools directory $dir"
+  echo "programs to check $PROGS"
+fi
 #Is MLSTOOLS defined and is it a permissible directory?
 if [ -d "$dir" ]
 then
@@ -97,9 +120,16 @@ do
       response="$SSstring"
     fi
   fi
+  if [ "$verbose" = "yes" ]
+  then
+    echo "$PROG returns $return_status"
+  fi
 done
 echo $response
 # $Log$
+# Revision 1.3  2010/03/11 21:56:47  pwagner
+# May specify tools directory with -d option
+#
 # Revision 1.2  2010/03/06 01:15:50  pwagner
 # Was not hiding stderr properly
 #
