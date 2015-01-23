@@ -23,7 +23,8 @@ MODULE TkL1B
   USE OutputL1B, ONLY: OUTPUTL1B_THZ, OUTPUTL1B_SC, OUTPUTL1B_INDEX, &
        OUTPUTL1B_GHZ
   USE Scan, ONLY : Scan_guess, Scan_start
-  USE SDPToolkit
+  USE SDPToolkit, only: spacecraftid, earthModel, PGS_TRUE, PGS_S_SUCCESS, &
+    & PGSEPH_W_BAD_EPHEM_VALUE, PGSd_SUN, PGSd_MOON
   USE MLSL1Utils, ONLY: Finite
 
   IMPLICIT NONE
@@ -1656,6 +1657,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.37  2015/01/23 17:50:17  pwagner
+! SDPToolkit indispensible for level 1; why not use it instead of Constants?
+!
 ! Revision 2.36  2015/01/22 23:34:04  vsnyder
 ! Get constants from Constants module instead of SDPToolkit
 !
