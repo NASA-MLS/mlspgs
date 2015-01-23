@@ -15,7 +15,7 @@ MODULE Scan
 
    USE MLSCommon
    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Warning, ReportTKStatus
-   USE SDPToolkit
+   USE SDPToolkit, only: spacecraftid, earthModel
 
    IMPLICIT NONE
 
@@ -203,6 +203,9 @@ END MODULE Scan
 !==============
 
 ! $Log$
+! Revision 2.6  2015/01/22 23:34:04  vsnyder
+! Get constants from Constants module instead of SDPToolkit
+!
 ! Revision 2.5  2007/04/05 13:59:57  perun
 ! Protect ACOS from crashes
 !
