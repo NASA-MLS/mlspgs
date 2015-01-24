@@ -74,14 +74,6 @@ contains ! ============= Public procedures ===================================
     los_ascdsc = los_mat(3,3)  ! n_fovd(3)
     if (los_ascdsc > 0.0) mu_r = 180.0d0 - mu_r
 
-  if (mif == 9916) then
-     print *, 'matmuls:'
-     print *, 'los_ascdsc: ', los_ascdsc
-     !print *, 'los_mat:'
-     !print *, los_mat
-     !print *, 'mu_r: ', mu_r
-  end if
-
     cmu_r = COS (mu_r * Deg2Rad)
     phi = ACOS (cmu_r * clat ) * Rad2Deg
     if (emls_oa%sc_geoclat(mif) >= 0.0) then
@@ -101,25 +93,6 @@ contains ! ============= Public procedures ===================================
 
     emls_oa%geod_ang(mif) = phi_t_inst
 
-    ! Save the OrbIncl:
-
-    emls_oa%sc_orbincl = beta_r
-
-  if (mif == 9916) then
-     print *, 'c_e: ', c_e
-     print *, 'r_e: ', r_e
-     print *, 'n_e: ', n_e
-     print *, 'ECR: ', emls_oa%ECR(:,mif)
-     print *, 'ABCDEF: '
-     print *, ABCDEF
-     print *, 'phi_t_inst: ', phi_t_inst
-     print *, 'beta_r: ', beta_r
-     print *, 'del_phi_t: ', del_phi_t
-     print *, 'mu_r: ', mu_r
-     print *, 'phi: ', phi
-     print *, 'gamma: ', gamma
-  end if
-
   end subroutine Calc_GeodAngle
 
 !--------------------------- end bloc --------------------------------------
@@ -135,6 +108,9 @@ contains ! ============= Public procedures ===================================
 end module Calc_GeodAngle_m
 
 ! $Log$
+! Revision 1.3  2015/01/22 02:18:56  vsnyder
+! PGS_Interfaces.f90
+!
 ! Revision 1.2  2014/12/11 00:48:51  vsnyder
 ! Move external procedures into modules.  Add copyright and CVS lines.
 ! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
