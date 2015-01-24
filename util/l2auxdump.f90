@@ -13,30 +13,31 @@
 program l2auxdump ! dumps datasets, attributes from L2AUX files
 !=================================
 
-   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-   use DUMP_0, only: DEFAULTMAXLON, DUMP, DUMPDUMPOPTIONS, INTPLACES
-   use HDF, only: DFACC_READ
-   use HDF5, only: H5FIS_HDF5_F, H5GCLOSE_F, H5GOPEN_F
-   use HIGHOUTPUT, only: DUMP
-   use L1BDATA, only: L1BDATA_T, namelen, PRECISIONSUFFIX, &
-     & DEALLOCATEL1BDATA, READL1BDATA
-   use MACHINE, only: HP, GETARG
-   use MLSCOMMON, only: R8
-   use MLSFILES, only: FILENOTFOUND, &
-     & MLS_EXISTS, MLS_SFSTART, MLS_SFEND, &
-     & HDFVERSION_5, MLS_HDF_VERSION, WILDCARDHDFVERSION
-   use MLSHDF5, only: MAXNDSNAMES, DUMPHDF5ATTRIBUTES, DUMPHDF5DS, &
-     & GETALLHDF5ATTRNAMES, GETALLHDF5DSNAMES, &
-     & MLS_H5OPEN, MLS_H5CLOSE
-   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-     & MLSMESSAGE
-   use MLSSTATS1, only: FILLVALUERELATION, STAT_T, DUMP, STATISTICS
-   use MLSSTRINGLISTS, only: CATLISTS, GETSTRINGELEMENT, &
-     & NUMSTRINGELEMENTS, STRINGELEMENTNUM
-   use MLSSTRINGS, only: INDEXES, LOWERCASE, TRIM_SAFE
-   use OUTPUT_M, only: OUTPUT
-   use PrintIt_m, only: Set_Config
-   use TIME_M, only: TIME_NOW, TIME_CONFIG
+   use allocate_deallocate, only: allocate_test, deallocate_test
+   use dump_0, only: defaultmaxlon, dump, dumpdumpoptions, intplaces
+   use HDF, only: dfacc_read
+   use HDF5, only: h5fis_hdf5_f, h5gclose_f, h5gopen_f
+   use highoutput, only: dump
+   use l1bdata, only: l1bdata_t, namelen, precisionsuffix, &
+     & deallocatel1bdata, readl1bdata
+   use machine, only: hp, getarg
+   use MLSCommon, only: r8
+   use MLSFiles, only: filenotfound, &
+     & MLS_exists, mls_sfstart, mls_sfend, &
+     & HDFVersion_5, mls_hdf_version, wildcardhdfversion
+   use MLSFillvalues, only: isNaN
+   use MLSHdf5, only: maxndsnames, dumphdf5attributes, dumphdf5ds, &
+     & getallhdf5attrnames, getallhdf5dsnames, &
+     & MLS_h5open, mls_h5close
+   use MLSMessagemodule, only: mlsmsg_error, mlsmsg_warning, &
+     & MLSMessage
+   use MLSStats1, only: fillvaluerelation, stat_t, dump, statistics
+   use MLSStringlists, only: catlists, getstringelement, &
+     & numStringelements, stringelementnum
+   use MLSStrings, only: indexes, lowercase, streq, trim_safe
+   use output_m, only: output, switchOutput
+   use printit_m, only: set_config
+   use time_m, only: time_now, time_config
    
    implicit none
 
@@ -61,6 +62,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     logical             :: verbose            = .false. ! Print (lots) extra
     logical             :: la                 = .false.
     logical             :: ls                 = .false.
+    logical             :: anyNaNs            = .false. ! Just say if any NaNs
     logical             :: timereads          = .false. ! Just time how long to read
     logical             :: radiances          = .false.
     logical             :: useFillValue       = .false.
@@ -69,6 +71,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
     character(len=128)  :: root        = '/'
     character(len=1024) :: attributes = ''
     character(len=1024) :: datasets   = '*'
+    character(len=255)  :: skipList= ''  ! what SDs to skip
     character(len=1)    :: fillValueRelation = '='
     real                :: fillValue  = 0.e0
     integer             :: firstMAF = -1
@@ -78,7 +81,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   type ( options_T ) :: options
   integer, parameter ::          MAXDS = MAXNDSNAMES
   integer, parameter ::          MAXSDNAMESBUFSIZE = MAXDS*namelen
-  integer, parameter ::          MAXFILES = 100
+  integer, parameter ::          MAXFILES = 4000
   integer, parameter ::          hdfVersion = HDFVERSION_5
   character(len=255) ::          filename          ! input filename
   character(len=255), dimension(MAXFILES) :: filenames
@@ -94,6 +97,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
   real        ::                 tFile
   ! 
   call set_config ( useToolkit = .false., logFileUnit = -1 )
+  call switchOutput( 'stdout' )
   time_config%use_wall_clock = .true.
   INTPLACES = '8'
   DEFAULTMAXLON = 32
@@ -142,7 +146,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
       status = mls_sfend(sdfid1, hdfVersion=hdfVersion)
     endif
     if ( (options%attributes // options%datasets) == ' ' ) cycle
-    if ( options%verbose ) then
+    if ( options%verbose .or. n_filenames > 1 ) then
       print *, 'Reading from: ', trim(filenames(i))
     endif
     if ( .not. options%radiances ) then
@@ -153,7 +157,7 @@ program l2auxdump ! dumps datasets, attributes from L2AUX files
       end if
     end if
     if ( options%datasets /= ' ' ) then
-      if ( options%radiances .or. options%timereads ) then
+      if ( options%radiances .or. options%timereads .or. options%anyNaNs ) then
         call dumpradiances ( filenames(i), hdfVersion, options )
         sdfid1 = mls_sfstart( filenames(i), DFACC_READ, hdfVersion=hdfVersion )
       elseif ( options%useFillValue ) then
@@ -195,6 +199,7 @@ contains
      print *, 'verbose?            ', options%verbose
      print *, 'list attributes  ?  ', options%la   
      print *, 'list datasets  ?    ', options%ls
+     print *, 'say if any NaNs?    ', options%anyNaNs
      print *, 'just time reads?    ', options%timereads
      print *, 'radiances only    ? ', options%radiances
      print *, 'useFillValue  ?     ', options%useFillValue
@@ -307,6 +312,13 @@ contains
       else if ( filename(1:3) == '-t ' ) then
         options%timereads = .true.
         exit
+      else if ( lowercase(filename(1:4)) == '-nan' ) then
+        options%anyNaNs = .true.
+        exit
+      elseif ( filename(1:6) == '-skip ' ) then
+        call getarg ( i+1+hp, options%skipList )
+        i = i + 1
+        exit
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
         i = i + 1
@@ -340,6 +352,8 @@ contains
       write (*,*) '          -v              => switch on verbose mode'
       write (*,*) '          -la             => just list attribute names in files'
       write (*,*) '          -ls             => just list sd names in files'
+      write (*,*) '          -skip list      => skip dumping the SDs in list'
+      write (*,*) '          -NaN            => just say if there are any NaNs'
       write (*,*) '          -t              => just time reads'
       write (*,*) '          -radiances      => show radiances only'
       write (*,*) '          -o opts         => pass opts to dump routines'
@@ -436,8 +450,8 @@ contains
       if ( options%verbose ) call dump(mysdList, 'DS names')
     endif
 
-    isl1boa = (index(trim(mysdList), '/GHz') > 0)
-    if ( isl1boa ) then
+    isl1boa = (index(trim(mysdList), 'GHz/') > 0)
+    if ( isl1boa .and. .not. (options%timereads .or. options%anyNaNs) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'l1boa file contains no radiances ' // trim(File1) )
       return
@@ -463,7 +477,12 @@ contains
       if ( index( lowercase(trim(sdName)), PRECISIONSUFFIX ) > 0 ) cycle
       iPrec = StringElementNum( mysdList, trim(sdName) // PRECISIONSUFFIX, &
         & countEmpty )
-      if ( iPrec < 1 ) cycle
+      if ( iPrec < 1 .and. .not. isL1BOA ) cycle
+      if ( any( &
+        & streq( &
+        & (/ 'PCF ', 'meta', 'l2cf', 'utcp', 'leap', 'LCF ' /), &
+        & sdname, options='-Pw' ) ) .or. &
+        &  index(options%skipList, trim(sdName)) > 0 ) cycle
       ! Allocate and fill l2aux
       if ( options%verbose ) print *, 'About to read ', trim(sdName)
       if ( options%firstMAF > -1 ) then
@@ -480,7 +499,9 @@ contains
         cycle
       endif
       if ( options%verbose ) print *, 'About to read ', trim(sdName) // PRECISIONSUFFIX
-      if ( options%firstMAF > -1 ) then
+      if ( isL1BOA ) then
+        status = 0 ! No radiance precisions in l1boa
+      elseif ( options%firstMAF > -1 ) then
         call ReadL1BData ( sdfid1, trim(sdName)  // PRECISIONSUFFIX, L1bPrecision, &
           & NoMAFs, status, firstMAF=options%firstMAF, lastMAF=options%lastMAF, &
           & hdfVersion=the_hdfVersion, NEVERFAIL=.true., L2AUX=.true. )
@@ -496,6 +517,16 @@ contains
         cycle
       endif
       if ( options%timereads ) cycle
+      if ( options%anyNaNs ) then
+        if ( .not. associated(L1bRadiance%DpField) ) then
+          print *, trim(sdName), ' not d.p. and so not checked'
+        elseif ( any(isNan(L1bRadiance%DpField)) ) then
+          print *, 'NaNs found in ', trim(sdName)
+        elseif ( options%verbose ) then
+          print *, 'no NaNs found in ', trim(sdName)
+        endif
+        cycle
+      endif
       shp = shape(L1bRadiance%DpField)
       if ( any( indexes(options%dumpOptions, (/ 'r', 's' /) ) > 0 ) )  then
       elseif ( options%useFillValue ) then
@@ -556,6 +587,9 @@ end program l2auxdump
 !==================
 
 ! $Log$
+! Revision 1.17  2014/03/07 21:47:21  pwagner
+! Name_Len changed to nameLen; got from MLSCommon
+!
 ! Revision 1.16  2014/01/09 00:31:26  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
