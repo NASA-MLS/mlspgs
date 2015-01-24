@@ -11,6 +11,8 @@
 
 module uars_to_emls_oa_m
 
+  use MLSKinds, only: R8
+
   implicit NONE
   private
 
@@ -19,7 +21,10 @@ module uars_to_emls_oa_m
   character (len=*), parameter, public :: EarthEllipseTag = 'WGS84'
   integer, parameter, public :: noMIFs = 32
 
-  logical, parameter, private :: Deebug = .false.
+  ! Sine of the angle between the spacecraft velocity vector and the normal
+  ! to the scan plane.  This angle was measured to be 0 +/- 0.0042 degrees.
+
+  real(r8), parameter, private :: SinView = 0.0
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -29,53 +34,64 @@ module uars_to_emls_oa_m
 
 contains ! ============= Public procedures ===================================
 
-  subroutine uars_to_emls_oa ( n_days, limb_oa, emls_oa, dV, dVN, dVV, Sat_Vel, &
-    & In_posECR, Vel_ECI, dVI, dVIN, In_AsciiUTC )
+  subroutine uars_to_emls_oa ( N_Days, Limb_OA, EMLS_OA, dVI, dVIN )
 
     use Calc_GeodAngle_m, only: Calc_GeodAngle
-    use Constants, only: Deg2Rad, Rad2Deg, Pi
+    use Constants, only: Deg2Rad, Rad2Deg
     use Cross_m, only: Cross
-    use Geometry, only: GeocToGeodLat, Omega => W, XYZ_to_Geod
-    use MLSKinds, only: R8
-    use OA_File_Contents, only: emls_oa_t
-    use PGS_Interfaces, only: pgs_csc_ecitoecr, pgs_csc_ecrtoeci, pgs_csc_geotoecr
-    use Rad_File_Contents, only: limb_oa_t
+    use Geometry, only: Omega => W, XYZ_to_Geod
+    use OA_File_Contents, only: EMLS_OA_t
+    use Rad_File_Contents, only: Limb_OA_t
     use Rotation_m, only: Rotate_3d
-    use SDPToolkit, only: PGS_S_SUCCESS
+    use SDPToolkit, only: PGS_CSC_ECItoECR, PGS_CSC_ECRtoECI, PGS_CSC_GeoToECR
 
     ! Args
-    integer, intent(in) :: n_days
-    type(limb_oa_t), intent(in) :: limb_oa
-    type(emls_oa_t), intent(inout) :: emls_oa
-    real(r8), intent(in) :: dV     ! delta V angle per MIF, Radians, ECR
-    real(r8), intent(in) :: dVN    ! relative delta V length per MIF (tiny) km/s
-    real(r8), intent(in) :: dVV(3) ! delta V per MAF, in ECR, km/s
-    real(r8), intent(in) :: Sat_Vel(3,2)   ! Satellite velocities, in ECR, m/s
-    real(r8), intent(in) :: In_posECR(3,2) ! Satellite positions, ECR, meters
-    real(r8), intent(in) :: Vel_ECI(3,2)   ! Satellite velocities, ECI, km/s
+    integer, intent(in) :: N_Days
+    type(limb_oa_t), intent(in) :: Limb_OA
+    type(emls_oa_t), intent(inout) :: EMLS_OA
     real(r8), intent(in) :: dVI    ! delta V angle per MIF, ECI
     real(r8), intent(in) :: dVIN   ! relative delta V length per MIF, ECI
-    character(*), intent(in) :: In_AsciiUTC(2)
 
-    integer :: i, m, mif_range(2), stat
-    real(r8) :: forgedsecs
-    real(r8) :: cosalf, sinalf, coseps, sineps, cosphi, sinphi, costheta, &
-         sintheta
-    real(r8) :: fmaf(3,3), flosf(3,3), fecr(3), &
-         ft(3), ipf2eci(3,3), ecrtofov(3,3,noMIFs), phi, theta
-    integer, parameter :: moon_in_fov = int(z'04000400')  ! bits to set for EMLS
-    real, parameter :: orbincl = 57.0  ! orbit incline
-    real, parameter :: mif_inc = 65.536 / noMIFs   ! increment per MIF in seconds
+    character(len=25) :: AsciiUTC
+    integer :: I
+    integer :: M
+    integer :: MIF_Range(2)
+    integer :: Stat
+    real(r8) :: CosAlf
+    real(r8) :: CosEps
+    real(r8) :: CosPhi
+    real(r8) :: CosTheta
+    real(r8) :: CosXi
+    real(r8) :: Delta
+    real(r8) :: ECIV(6,noMIFs)
+    real(r8) :: ECRToFOV(3,3,noMIFs)
+    real(r8) :: ECRV(6,noMIFs)
+    real(r8) :: FECR(3)
+    real(r8) :: Flosf(3,3)
+    real(r8) :: FMAF(3,3)
+    real(r8) :: ForgedSecs
+    real(r8) :: Ft(3)
+    real(r8) :: Geod(3)
+    real(r8) :: Ipf2ECI(3,3)
+    real(r8) :: Los_Vec(3)
+    real(r8) :: Orb_Norm(3)
+    real(r8) :: Phi
+    real(r8) :: PosECR(3)
+    real(r8) :: SecTAI93
+    real(r8) :: SinAlf
+    real(r8) :: SinEps
+    real(r8) :: SinPhi
+    real(r8) :: SinTheta
+    real(r8) :: SinXi
+    real(r8) :: Theta
+    real(r8) :: TngtVel(3)
+    real(r8) :: Xi
+
+    integer, parameter :: Moon_In_FOV = int(z'04000400') ! bits to set for EMLS
+    real, parameter :: MIF_Inc = 65.536 / noMIFs   ! increment per MIF in seconds
     real(r8), parameter :: Offsets(noMIFs) = [ ( (m-1) * mif_inc, m = 1, noMIFs ) ]
-    real(r8) :: eciV(6,noMIFs), ecrV(6,noMIFs), Geod(3), los_vec(3), &
-         orb_norm(3), posecr(3), sectai93, tngtvel(3)
-    real(r8) :: Delta, xi, cosxi, sinxi
-    real(r8) :: dVVR(3) ! delta V, in ECR, per MIF
-    real(r8) :: PosECI(3,2)
-    character(len=25) :: asciiutc
 
     emls_oa%sc_geocalt = limb_oa%sat_gcrad * 1000.0   ! MIF resolved, meters
-   !emls_oa%sc_orbincl = orbincl                      ! MIF resolved
 
     emls_oa%geod_alt = limb_oa%tngt_geod_alt * 1000.0 ! MIF resolved, meters
     emls_oa%geod_lat = limb_oa%tngt_geod_lat          ! MIF resolved
@@ -123,30 +139,11 @@ contains ! ============= Public procedures ===================================
 
     ecrV(1:3,1) = posECR
     ecrV(4:6,1) = 0
-write ( 42, '(2x,2a)' ) '-------- In_PosECR -------- --------- PosECR ----------', &
-' --------- Vel ECI ---------'
-write ( 42, '(2x,5(3f9.2:","))' ) in_posECR(:,1)/1000, posECR/1000, limb_oa%sat_vel*1000
     stat = pgs_csc_ecrtoeci ( 1, asciiUTC, offsets, ecrV, eciV )
 
   ! Get SC velocity (in meters/sec) at the first MIF in ECI:
 
     eciV(4:6,1) = limb_oa%sat_vel * 1000.0
-
-  ! Convert position and velocity back to ECR (to get SC velocity in ECR):
-
-    stat = pgs_csc_ecitoecr ( 1, asciiUTC, offsets, eciV, ecrV )
-write ( 42,'(2x,2a)' ) ' ------------------------ ECIV ------------------------', &
-& ' ------------------------ ECRV ------------------------'
-write ( 42, '(2x,4(3f9.2:","))' ) eciV(1:3,1)/1000,eciV(4:6,1), ecrV(1:3,1)/1000,ecrV(4:6,1)
-write ( 42, '(2x,3a)' ) '------- Vel ECR here ------ --------- Vel ECR 1 -------', &
-& ' --------- Vel ECR 2 ------- --------- dVV ECR ---------', &
-& ' -------- Delta Vel -------- --------- Vel ECI ---------'
-write ( 42, '(2x,6(3f9.2:","))' ) ecrV(4:6,1), sat_vel, dVV, sat_vel(:,2)-sat_vel(:,1), limb_oa%sat_vel*1000
-    dVVR = dVV / noMIFs
-
-  ! Normal to the orbit plane in ECR, at the first MIF, is the cross
-  ! product of the spacecraft position and velocity vectors
-    orb_norm = cross ( ecrV(1:3,1), ecrV(4:6,1) )
 
   ! Normal to the orbit plane in ECI, at the first MIF, is the cross
   ! product of the spacecraft position and velocity vectors
@@ -158,38 +155,13 @@ write ( 42, '(2x,6(3f9.2:","))' ) ecrV(4:6,1), sat_vel, dVV, sat_vel(:,2)-sat_ve
   !  duration.
     delta = mif_inc * norm2 ( orb_norm ) / emls_oa%sc_geocalt(1)**2
 
-!   ! Rotate ECR positions and velocities after the first MIF about the normal
-!   ! to the orbit plane by Delta * ( MIF# - 1 ).  Adjust the velocity vector
-!   ! length at each MIF according to the total relative change during the MAF.
-! write ( 42, '(2x,2a,3x,a)' ) '------- Vel ECR here ------ --------- dVV ECR ---------', &
-! & ' --- |Vel|', asciiUTC
-! write ( 42, '(i2, 5(3f9.2:","))' ) 1, ecrV(4:6,1), dVVR*noMIFs, norm2(ecrV(4:6,1))
-!     do m = 2, noMIFs
-!       call rotate_3d ( ecrV(1:3,1), delta * ( m-1 ), orb_norm, ecrV(1:3,m) )
-!       call rotate_3d ( ecrV(4:6,1), dV * ( m-1 ), orb_norm, ecrV(4:6,m) )
-!       ecrV(4:6,m) = ecrV(4:6,m) * ( ( m-1) * dVN + 1.0 )
-! write ( 42, '(i2, 5(3f9.2:","))' ) m, ecrV(4:6,m), dVVR*(m-1), norm2(ecrV(4:6,m))
-!     end do
-!     ! Set the length of the SC ECR position vector to the SC Geocentric Altitude.
-!     ! The ECR length gotten using PGS_CSC_GeoToECR's computation of SC position
-!     ! from geodetic coordinates is different from the SC Geocentric Altitude by
-!     ! +/- 300 meters, with a period of about 120 MAFs.  We choose to believe the
-!     ! SC Geocentric Altitude.
-!     do m = 1, noMIFs
-!       ecrV(1:3,m) = ( ecrV(1:3,m) / norm2(ecrV(1:3,m)) ) * emls_oa%sc_geocalt(m)
-!     end do
-
   ! Rotate ECI positions and velocities after the first MIF about the normal
   ! to the orbit plane by Delta * ( MIF# - 1 ).  Adjust the velocity vector
   ! length at each MIF according to the total relative change during the MAF.
-write ( 42, '(2x,2a,3x,a)' ) '------- Vel ECI here ------ --------- dVV ECI ---------', &
-& ' --- |Vel|', asciiUTC
-write ( 42, '(i2, 5(3f9.2:","))' ) 1, eciV(4:6,1), dVV*noMIFs, norm2(eciV(4:6,1))
     do m = 2, noMIFs
       call rotate_3d ( eciV(1:3,1), delta * ( m-1 ), orb_norm, eciV(1:3,m) )
       call rotate_3d ( eciV(4:6,1), dVI * ( m-1 ), orb_norm, eciV(4:6,m) )
       eciV(4:6,m) = eciV(4:6,m) * ( ( m-1) * dVIN + 1.0 )
-write ( 42, '(i2, 5(3f9.2:","))' ) m, eciV(4:6,m), dVV*(m-1), norm2(eciV(4:6,m))
     end do
     ! Set the length of the SC ECR position vector to the SC Geocentric Altitude.
     ! The ECR length gotten using PGS_CSC_GeoToECR's computation of SC position
@@ -207,11 +179,6 @@ write ( 42, '(i2, 5(3f9.2:","))' ) m, eciV(4:6,m), dVV*(m-1), norm2(eciV(4:6,m))
 
     emls_oa%sc_ECR = ecrV(1:3,:)
     emls_oa%sc_VelECR = ecrV(4:6,:)
-
-!   ! Now convert rotated positions and velocities back to ECI.
-!     stat = pgs_csc_ecrtoeci ( noMIFs, asciiUTC, offsets, ecrV, eciV )
-!     emls_oa%sc_ECI = eciV(1:3,:)
-!     emls_oa%sc_VelECI = eciV(4:6,:)
 
   ! Spacecraft geocentric geolocation
     emls_oa%sc_lon = atan2 ( ecrV(2,:), ecrV(1,:) ) * rad2deg
@@ -346,19 +313,21 @@ write ( 42, '(i2, 5(3f9.2:","))' ) m, eciV(4:6,m), dVV*(m-1), norm2(eciV(4:6,m))
 
   !{ Calculate LosVel.  Let $T$ be the tangent position in ECI, and $\omega$
   !  the Earth's angular rotation velocity. Then the tangent velocity, in ECI,
-  !  $V_t = \omega [ -T_y, T_x, 0 ]^T$.
+  !  is $V_t = \omega [ -T_y, T_x, 0 ]^T$.
   !  Let $S$ be the spacecraft position in ECI.  Then the line-of-sight vector
-  !  in ECI,
-  !  $L = T - S$.  Let $V_s$ be the spacecraft velocity in ECI.  Then the
+  !  in ECI, is
+  !  $L = T - S$.  Let $V_s$ be the spacecraft velocity in ECI and $\alpha$
+  !  be the angle between $V_s$ and the normal to the scan plane.  Then the
   !  line-of-sight velocity,
-  !  $V = ( ( V_t  - V_s ) \cdot L ) / |L|$.
+  !  $V = ( ( V_t  - \sin(alpha) V_s ) \cdot L ) / |L|$.
 
     do m = 1, noMIFs
       tngtVel = omega * (/ -emls_oa%ECI(2,m), emls_oa%ECI(1,m), 0.0_r8 /)
       los_vec = emls_oa%ECI(:,m) - emls_oa%sc_ECI(:,m)
       ! Unlike limb_oa%sat_vel, emls_oa%sc_VelECI is now MIF resolved
-      emls_oa%LosVel(m) = DOT_PRODUCT ( tngtVel - emls_oa%sc_VelECI(:,m), &
-                                      & los_vec ) / norm2 ( los_vec )
+      emls_oa%LosVel(m) = &
+        & DOT_PRODUCT ( tngtVel - sinView * emls_oa%sc_VelECI(:,m), &
+                      & los_vec ) / norm2 ( los_vec )
     end do
 
   !{ Calculate OrbY.  Let $\hat{n} = S \times V_s\, /\, | S \times V_s |$ be
@@ -366,31 +335,28 @@ write ( 42, '(i2, 5(3f9.2:","))' ) m, eciV(4:6,m), dVV*(m-1), norm2(eciV(4:6,m))
   !  $Y_{\text{ORB}} = -T \cdot \hat{n}$.  Let $\gamma$ be the angle between
   !  the normal to the orbit plane and the tangent-point position vector, and
   !  $H_t = |T|$ be the tangent altitude in geocentric coordinates.  Then
-  !  $Y_{\text{ORB}} = H_t \cos\gamma$.
+  !  $Y_{\text{ORB}} = H_t \cos\gamma$.  This is the distance from the orbit
+  !  plane to the small circle on which tangent positions appear.
+  !
+  !  Calculate orbit inclination as the inverse cosine of the Z component of
+  !  the orbit normal vector.  We assume it's always near 57 degrees, so use
+  !  the absolute value of the Z component so we get the correct value when
+  !  the yaw maneuver has the velocity vector pointing such that the orbit
+  !  normal is in the southern hemisphere.
+  !
+  !  The orbit inclination is not actually MIF resolved, because the spacecraft
+  !  position and velocity vectors were MIF resolved by rotating in the ECI
+  !  orbit plane.  Thus, the normal to the plane is the same throughout the MAF.
 
     do m = 1, noMIFs
     ! Unit normal to the orbit plane, in ECI
       orb_norm = cross ( emls_oa%sc_ECI(:,m), emls_oa%sc_VelECI(:,m), norm=.true. )
       emls_oa%OrbY(m) = - DOT_PRODUCT ( emls_oa%ECI(:,m), orb_norm )
+      emls_oa%sc_orbIncl(m) = acos(orb_norm(3)) * rad2deg
     end do
 
     ! Remap GHz/Lon
     where (emls_oa%lon > 180.0) emls_oa%lon = emls_oa%lon - 360.0
-
-  !!$write (30, *) limb_oa%ptg_fov_azim_offset
-  !!$write (31, *) limb_oa%ptg_fov_elev_offset
-  !!$write (32, *) limb_oa%sat_geod_alt
-  !!$write (33, *) limb_oa%sat_geod_lat
-  !!$write (34, *) limb_oa%sat_long
-  !!$write (35, *) limb_oa%tngt_geod_alt
-  !!$write (36, *) limb_oa%tngt_geod_lat
-  !!$write (37, *) limb_oa%tngt_long
-  !!$write (40, *) emls_oa%ECR
-  !!$write (81, *) emls_oa%sc_ECI
-  !!$write (82, *) emls_oa%sc_VelECI
-  !!$write (83, *) emls_oa%ECI
-
-  !write (3x, *) limb_oa%
 
   end subroutine uars_to_emls_oa
 
@@ -443,7 +409,6 @@ write ( 42, '(i2, 5(3f9.2:","))' ) m, eciV(4:6,m), dVV*(m-1), norm2(eciV(4:6,m))
     write (myAsciiUTC, fmt= &
      '(i4, "-", i3.3, "T", i2.2, ":", i2.2, ":", f9.6, "Z", TL10, i2.2)') &
      year, mod(yrdoy, 1000), hrs, mins, secs, int(secs)  ! force leading 0's
-    if ( deebug ) print *, 'asciiutc: ', trim(myAsciiUTC)
     stat = pgs_td_utctotai (myAsciiUTC, sectai93)
 
     if ( present(n_days) ) then
@@ -479,6 +444,9 @@ write ( 42, '(i2, 5(3f9.2:","))' ) m, eciV(4:6,m), dVV*(m-1), norm2(eciV(4:6,m))
 end module uars_to_emls_oa_m
 
 ! $Log$
+! Revision 1.6  2015/01/22 02:18:56  vsnyder
+! PGS_Interfaces.f90
+!
 ! Revision 1.5  2014/12/11 00:48:51  vsnyder
 ! Move external procedures into modules.  Add copyright and CVS lines.
 ! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved

@@ -11,8 +11,6 @@
 
 program Conv_UARS
 
-  use Constants, only: Deg2Rad
-use Constants, only: Rad2Deg
   use HDF5, only:  H5GClose_f, H5GOpen_f
   use ISO_Fortran_Env, only: Output_Unit
   use MLSAuxData, ONLY: CreateGroup_MLSAuxData
@@ -58,9 +56,9 @@ use Constants, only: Rad2Deg
   integer :: Rad_SD_id
   integer :: Recno
   integer :: Stat
+  integer :: W ! zero or one, to select Limb_Hdr etc.
   integer :: Year
   integer :: YrDOY
-  integer :: W ! zero or one, to select Limb_Hdr etc.
 
   ! Inputs
   type(lvl1_hdr_t) :: Lvl1_Hdr
@@ -69,25 +67,19 @@ use Constants, only: Rad2Deg
   type(limb_rad_t) :: Limb_Rad(0:1)
   type(limb_oa_t) :: Limb_OA(0:1)
 
-  character (len=25) :: AsciiUTC(0:1)
-  character (len=8) :: n_str
   character (len=17) :: UTC_Time
+  character (len=25) :: AsciiUTC(0:1)
+  character (len=8) :: N_Str
   character (len=8) :: YrDoy_str = 'yyyydnnn'
-  real(r8) :: GIRD_Time
-  real(r8) :: SecTAI93
-  real(r8) :: Sat_Vel(3,0:1), vN(0:1)  ! SC Velocity in ECR, its length, km/s
-  real(r8) :: Vel_ECI(3,0:1), vNI(0:1) ! SC Velocity in ECR, its length, km/s
-  real(r8) :: PosECR(3,0:1)            ! SC Position, in ECR, meters
-  real(r8) :: dVV(3)                   ! delta V in ECR
-  real(r8) :: dV, dVN                  ! delta V angle, |delta V|, ECR, per MAF
   real(r8) :: dVI, dVIN                ! delta V angle, |delta V|, ECI, per MAF
   real(r8) :: ECI(6,1), ECR(6,1)       ! Position, velocity, for conversions
+  real(r8) :: GIRD_Time
+  real(r8), parameter :: TAItoGIRD = 1104537627.0_r8
+  real(r8) :: SecTAI93
   real(r8) :: TAI_Time
-  real(r8), parameter :: TAItoGIRD = 1104537627.0d00
+  real(r8) :: Vel_ECI(3,0:1), vNI(0:1) ! SC Velocity in ECR, its length, km/s
 
   ! Source code:
-  ! Don't wrap stdout at 80 chars
-  open ( unit=output_unit, recl=4096 )
 
   ! Open UARS input file:
 
@@ -260,18 +252,8 @@ use Constants, only: Rad2Deg
   vel_ECI(:,w) = limb_oa(w)%sat_vel
   vNI(w) = norm2(vel_ECI(:,w))
 
-  call sat_vel_in_ecr ( limb_oa(w), asciiUTC(w), sat_vel(:,w), posecr(:,w) )
-
-  vN(w) = norm2(sat_vel(:,w))
-  
-  dV = 0.0
   dVI = 0.0
-  dVN = 0.0
   dVIN = 0.0
-  dVV = 0.0
-write ( 42,'(a/2x,3f9.2,1p,4g15.6)' ) &
-& '     VelECI   VelECR      vNI ----- dV ----- ----- dVN ---- ----- dVI ---- ---- dVIN ----', &
-& vN(w), vNI(w), norm2(posecr(:,w))/1000, dV*rad2deg, dVN*1.0e6, dVI*rad2deg, dVIN*1.0e6
 
   do recno = MAF1+3, MAFn+3
 
@@ -288,27 +270,14 @@ write ( 42,'(a/2x,3f9.2,1p,4g15.6)' ) &
       vel_ECI(:,1-w) = limb_oa(1-w)%sat_vel
       vNI(1-w) = norm2(vel_ECI(:,1-w))
 
-      call sat_vel_in_ecr ( limb_oa(1-w), asciiUTC(1-w), sat_vel(:,1-w), posecr(:,1-w) )
-
-      vN(1-w) = norm2(sat_vel(:,1-w))
-      dV = acos(dot_product(sat_vel(:,w),sat_vel(:,1-w))/(vN(w)*vN(1-w))) / noMIFs
-      dVN = ( vN(1-w) / vN(w) - 1.0 ) / noMIFs
       dVI = acos(dot_product(vel_ECI(:,w),vel_ECI(:,1-w))/(vNI(w)*vNI(1-w))) / noMIFs
       dVIN = ( vNI(1-w) / vNI(w) - 1.0 ) / noMIFs
-write ( 42,'(a/2x,3f9.2,1p,4g15.6)' ) &
-& '     VelECI   VelECR      vNI ----- dV ----- ----- dVN ---- ----- dVI ---- ---- dVIN ----', &
-& vN(1-w), vNI(1-w), norm2(posecr(:,1-w))/1000, dV*rad2deg, dVN*1.0e6, dVI*rad2deg, dVIN*1.0e6
-      dVV = sat_vel(:,1-w) - sat_vel(:,w)
     end if
 
     MAFno = MAFno + 1
-write ( 42, '(1x,2(31x,a25),a)' ) AsciiUTC(w:1-w:1-2*w), &
-& ' ----------------------- PosECR -----------------------'
-write ( 42, '(2x,6(3f9.2:","))' ) ( limb_oa(i)%sat_vel*1000, sat_vel(:,i), i=w,1-w,1-2*w), posECR/1000
 
-    call process_one_MAF ( MAFno, rad_sd_id, oa_sd_id, dV, dVN, dVV, &
-                         & Sat_Vel(:,w:1-w:1-2*w), posECR(:,w:1-w:1-2*w), &
-                         & Vel_ECI(:,w:1-w:1-2*w), dVI, dVIN, AsciiUTC, &
+    call process_one_MAF ( MAFno, rad_sd_id, oa_sd_id, &
+                         & dVI, dVIN, &
                          & limb_hdr(w), limb_stat(w), limb_rad(w), limb_oa(w) )
 
     ! Swap buffers
@@ -328,8 +297,8 @@ write ( 42, '(2x,6(3f9.2:","))' ) ( limb_oa(i)%sat_vel*1000, sat_vel(:,i), i=w,1
 
 contains
 
-  subroutine Process_One_MAF ( MAFNo, Rad_SD_id, OA_SD_id, dV, dVN, dVV, &
-                             & Sat_Vel, PosECR, Vel_ECI, dVI, dVIN, AsciiUTC, &
+  subroutine Process_One_MAF ( MAFNo, Rad_SD_id, OA_SD_id, &
+                             & dVI, dVIN, &
                              & Limb_Hdr, Limb_Stat, Limb_Rad, Limb_OA )
 
     use OA_File_Contents, only: EMLS_OA_t
@@ -339,15 +308,8 @@ contains
     use UARS_to_EMLS_OA_m, only: UARS_to_EMLS_OA
 
     integer, intent(in) :: MAFNo, Rad_SD_id, OA_SD_id
-    real(r8), intent(in) :: dV     ! delta V angle per MIF, ECR
-    real(r8), intent(in) :: dVN    ! relative delta V length per MIF, ECR
-    real(r8), intent(in) :: dVV(3) ! delta V per MAF, ECR
-    real(r8), intent(in) :: Sat_Vel(3,0:1) ! Satellite velocities, ECR, km/s
-    real(r8), intent(in) :: Vel_ECI(3,0:1) ! Satellite velocities, ECI, km/s
     real(r8), intent(in) :: dVI    ! delta V angle per MIF, ECI
     real(r8), intent(in) :: dVIN   ! relative delta V length per MIF, ECI
-    real(r8), intent(in) :: PosECR(3,0:1)  ! Satellite positions, ECI, meters
-    character(*), intent(in) :: AsciiUTC(2)
     type(limb_hdr_t), intent(inout) :: Limb_Hdr
     type(limb_stat_t), intent(inout) :: Limb_Stat
     type(limb_rad_t), intent(inout) :: Limb_Rad
@@ -419,46 +381,14 @@ contains
 
     ! convert to EMLS OA:
 
-    call UARS_to_EMLS_OA ( n_days, limb_oa, emls_oa, dV, dVN, dVV, Sat_Vel, &
-      & posECR, Vel_ECI, dVI, dVIN, AsciiUTC )
+    call UARS_to_EMLS_OA ( n_days, limb_oa, emls_oa, &
+      & dVI, dVIN )
 
     ! write to OA file:
 
     call OutputL1B_OA ( oa_sd_id, mafno, limb_hdr%mmafno, limb_oa, emls_oa )
 
   end subroutine Process_One_MAF
-
-  subroutine Sat_Vel_In_ECR ( Limb_OA, AsciiUTC, Sat_vel, PosECR )
-    use PGS_Interfaces, only: pgs_csc_ecitoecr, pgs_csc_ecrtoeci, pgs_csc_geotoecr
-
-    type(limb_oa_t), intent(in) :: Limb_OA
-    character(*), intent(out) :: AsciiUTC
-    real(r8), intent(out) :: Sat_Vel(3)    ! ECR, m/s
-    real(r8), intent(out) :: PosECR(3)     ! Meters
-
-    real(r8) :: ECI(6,1), ECR(6,1)
-    integer :: Stat
-
-    stat = pgs_csc_geotoecr ( limb_oa%sat_long*Deg2Rad, &
-                              limb_oa%sat_geod_lat*Deg2Rad, &
-                              limb_oa%sat_geod_alt*1000.0d0, &
-                              earthEllipseTag, posecr )
-
-    call frame_TAI ( limb_oa, secTAI93, asciiUTC )
-
-    ecr(1:3,1) = posECR
-    ecr(4:6,1) = 0.0 ! Velocity
-    ! Compute position in ECI
-    stat = pgs_csc_ecrtoeci ( 1, asciiUTC, [0.0d0], ecr, eci )
-    ! Now convert position and velocity to ECR
-    eci(4:6,1) = limb_oa%sat_vel * 1000 ! ECI, m/s
-    stat = pgs_csc_ecitoecr ( 1, asciiUTC, [0.0d0], eci, ecr )
-    sat_vel = ecr(4:6,1)                ! Now in ECR, m/s
-
-write ( 42,'(2x,2a)' ) ' ------------------------ ECI -------------------------', &
-& ' ------------------------ ECR -------------------------'
-write ( 42, '(2x,4(3f9.2:","))' ) eci(1:3,1)/1000,eci(4:6,1), ecr(1:3,1)/1000,ecr(4:6,1)
-  end subroutine Sat_Vel_In_ECR
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -473,6 +403,9 @@ write ( 42, '(2x,4(3f9.2:","))' ) eci(1:3,1)/1000,eci(4:6,1), ecr(1:3,1)/1000,ec
 end program Conv_UARS
 
 ! $Log$
+! Revision 1.5  2015/01/22 02:18:56  vsnyder
+! PGS_Interfaces.f90
+!
 ! Revision 1.4  2014/12/11 00:48:51  vsnyder
 ! Move external procedures into modules.  Add copyright and CVS lines.
 ! Compute MIF geolocation (except height) for SC.  Compute MIF-resolved
