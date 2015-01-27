@@ -89,6 +89,7 @@ MODULE SciUtils ! L0 science utilities
     l0_sci1 = scipkt(1)
     l0_sci2 = scipkt(2)
 
+    IF (.NOT. OK) print *, 'Science packet was not OK'
     IF (.NOT. OK) RETURN
 
     sci_type = ICHAR(type_sci1)  ! science packet #1 type
@@ -186,6 +187,9 @@ MODULE SciUtils ! L0 science utilities
     Sci_pkt%APE_pos(:) = QNan()
     Sci_pkt%ASA_pos(:) = QNan()
     DN = sci_cptr(tindex)%GHz_ant_scan
+    if ( DN(1:1) == achar(0) ) then
+      print *, 'About to fail during Get_APE_ASA_pos at MAF ', Sci_pkt%MAFno
+    endif
     CALL Get_APE_ASA_pos (DN, Sci_pkt%APE_pos, Sci_pkt%ASA_pos)
 
 !! Filter bank switches
@@ -345,7 +349,9 @@ MODULE SciUtils ! L0 science utilities
     THzSciMAF%MAFno = no_data
     THzSciMAF%MIFno = no_data
     last_MIF = L1Config%Calib%MIFsPerMAF - 1
-    DO i = 0, (MaxMIFs - 1); DACS_MAF(i)%D = 0; ENDDO
+    DO i = 0, (MaxMIFs - 1)
+     DACS_MAF(i)%D = 0
+    ENDDO
     APE_pos = QNan(); ASA_pos = QNan(); GSM_pos = QNan(); TSSM_pos = QNan()
     SciMAF%secTAI = QNan()
 
@@ -658,6 +664,8 @@ MODULE SciUtils ! L0 science utilities
        ASA_pos(1)  = BigEndianStr (DN(iasa:iasa+2)) / aaa_frac
        ASA_pos(2)  = BigEndianStr (DN(iasa+3:iasa+5)) / aaa_frac
     ENDIF
+    
+    if ( iape < 1 .and. iasa < 1 ) print *, 'Get_APE_ASA_pos failed with DN:', DN
 
   END SUBROUTINE Get_APE_ASA_pos
 
@@ -920,6 +928,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.20  2015/01/27 18:58:51  pwagner
+! Print warning messages if NaNs will be left in OA products
+!
 ! Revision 2.19  2011/06/07 18:56:03  perun
 ! Select Side B switching mirror table based on data time starting at 2011 DOY 153 19:10:00.
 !
@@ -972,6 +983,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.20  2015/01/27 18:58:51  pwagner
+! Print warning messages if NaNs will be left in OA products
+!
 ! Revision 2.19  2011/06/07 18:56:03  perun
 ! Select Side B switching mirror table based on data time starting at 2011 DOY 153 19:10:00.
 !
