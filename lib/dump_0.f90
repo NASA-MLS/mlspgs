@@ -931,6 +931,8 @@ contains
     integer :: MyWidth
     integer :: NumZeroRows
     integer :: nUnique
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
     myFormat = sdFormatDefault
     include 'dump1d.f9h'
     include 'dump1db.f9h'
@@ -977,6 +979,8 @@ contains
     integer :: MyWidth
     integer :: NumZeroRows
     integer :: nUnique
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
     include 'dump1d.f9h'
     include 'dump1db.f9h'
@@ -1094,6 +1098,8 @@ contains
     integer :: MyWidth
     integer :: NumZeroRows
     integer :: nUnique
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
     myFormat = sdFormatDefault
     include 'dump1d.f9h'
     include 'dump1db.f9h'
@@ -1287,6 +1293,8 @@ contains
     double precision, dimension(MAXNUMELEMENTS) :: elements
 
     myFormat = sdFormatDefault
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
 
     base = 1
     if ( present(lbound) ) base = lbound
@@ -1317,6 +1325,8 @@ contains
     integer, dimension(MAXNUMELEMENTS) :: elements
 
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
 
     base = 1
     if ( present(lbound) ) base = lbound
@@ -1427,6 +1437,8 @@ contains
     real, dimension(MAXNUMELEMENTS) :: elements
 
     myFormat = sdFormatDefault
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
 
     base = 1
     if ( present(lbound) ) base = lbound
@@ -1678,6 +1690,8 @@ contains
     integer, dimension(MAXNUMELEMENTS) :: counts
     double precision, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
     include 'dump3d.f9h'
     include 'dump3db.f9h'
   end subroutine DUMP_3D_DOUBLE
@@ -1706,6 +1720,8 @@ contains
     integer, dimension(MAXNUMELEMENTS) :: counts
     integer, dimension(MAXNUMELEMENTS) :: elements
     myFormat = 'places=' // INTPLACES ! To sneak places arg into call to output
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
     include 'dump3d.f9h'
     include 'dump3db.f9h'
   end subroutine DUMP_3D_INTEGER
@@ -1731,6 +1747,8 @@ contains
     integer, dimension(MAXNUMELEMENTS) :: counts
     real, dimension(MAXNUMELEMENTS) :: elements
     myFormat = sdFormatDefault
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
     include 'dump3d.f9h'
     include 'dump3db.f9h'
   end subroutine DUMP_3D_REAL
@@ -3396,6 +3414,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.132  2015/01/29 01:23:29  vsnyder
+! Make sure MyFillValue has a value before references
+!
 ! Revision 2.131  2014/08/06 23:02:21  vsnyder
 ! Use kind C_Int16_t from ISO_C_Bindings instead of INTEGER*2
 !
