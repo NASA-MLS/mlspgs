@@ -327,14 +327,10 @@ contains
       ! missing and that the file belongs to no year in particular.
       ! To convert dates to SDP toolkit (TAI) times (Seconds since start of
       ! 1 Jan 1993) we need to stick on a dummy year
-      if ( sdstring(1:1) == "-" ) then
-        sdstring=dummyyear//sdstring
-        noYearStart = .true.
-      end if
-      if ( edstring(1:1) == "-" ) then
-        edstring=dummyyear//edstring
-        noYearEnd = .true.
-      end if
+      noYearStart = sdstring(1:1) == "-"
+      if ( noYearStart ) sdstring=dummyyear//sdstring
+      noYearEnd = edstring(1:1) == "-"
+      if ( noYearEnd ) edstring=dummyyear//edstring
       if ( noYearStart .neqv. noYearEnd ) call announce_error ( 0, &
         & "Start and end times irreconcilable, one is positive the other negative" )
       if ( idate == 1 ) then
@@ -889,6 +885,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.40  2015/01/29 00:59:20  vsnyder
+! Make sure NoYearStart and NoYearEnd have values before references
+!
 ! Revision 2.39  2014/09/05 00:25:14  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.
 ! Add some tracing.
