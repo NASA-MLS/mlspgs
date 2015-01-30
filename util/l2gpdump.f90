@@ -13,31 +13,32 @@
 PROGRAM L2GPDump ! dumps L2GPData files
 !=================================
 
-   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-   use BITSTUFF, only: ISBITSET
-   use DUMP_0, only: DUMP, DUMPDUMPOPTIONS, SDFORMATDEFAULT
-   use HDF, only: DFACC_READ
-   use HDF5, only: H5FCLOSE_F, H5GOPEN_F, H5GCLOSE_F, H5FIS_HDF5_F   
-   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-   use INTRINSIC, only: L_SWATH
-   use L2GPDATA, only: L2GPDATA_T, L2GPNAMELEN, MAXSWATHNAMESBUFSIZE, RGP, &
-     & CONTRACTL2GPRECORD, DUMP, DUMPRANGE, READL2GPDATA, DESTROYL2GPCONTENTS, &
-     & SETUPNEWL2GPRECORD
-   use MACHINE, only: HP, GETARG
-   use MLSCOMMON, only: MLSFILE_T
-   use MLSFILES, only: HDFVERSION_5, INITIALIZEMLSFILE, MLS_INQSWATH, &
-     & MLS_CloseFile, MLS_OpenFile, SPLIT_PATH_NAME
-   use MLSHDF5, only: MLS_H5OPEN, MLS_H5CLOSE
-   use MLSHDFEOS, only: MLS_ISGLATT, HE5_EHRDGLATT
-   use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMSG_WARNING, &
-     & MLSMESSAGE
-   use MLSSTRINGLISTS, only: CATLISTS, EXPANDSTRINGRANGE, &
-     & GETSTRINGELEMENT, NUMSTRINGELEMENTS, READINTSFROMLIST, &
-     & STRINGELEMENT, STRINGELEMENTNUM
-   use MLSSTRINGS, only: READNUMSFROMCHARS
-   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, &
-     & RESUMEOUTPUT, SUSPENDOUTPUT
-   use PRINTIT_M, only: SET_CONFIG
+   use allocate_deallocate, only: allocate_test, deallocate_test
+   use bitstuff, only: isbitset
+   use dump_0, only: dump, dumpdumpoptions, sdformatdefault
+   use HDF, only: dfacc_read
+   use HDF5, only: h5fclose_f, h5gopen_f, h5gclose_f, h5fis_hdf5_f   
+   use highoutput, only: outputnamedvalue
+   use intrinsic, only: l_swath
+   use l2gpdata, only: l2gpdata_t, l2gpnamelen, maxswathnamesbufsize, rgp, &
+     & contractl2gprecord, dump, dumprange, readl2gpdata, destroyl2gpcontents, &
+     & setupnewl2gprecord
+   use machine, only: hp, getarg
+   use MLSCommon, only: MLSfile_t
+   use MLSFiles, only: hdfversion_5, initializeMLSfile, MLS_inqswath, &
+     & MLS_closefile, MLS_openfile, split_path_name
+   use MLSFillvalues, only: isNaN
+   use MLSHdf5, only: MLS_h5open, MLS_h5close
+   use MLSHdfeos, only: MLS_isglatt, he5_ehrdglatt
+   use MLSMessagemodule, only: MLSmsg_error, MLSmsg_warning, &
+     & MLSMessage
+   use MLSStringlists, only: catlists, expandstringrange, &
+     & getstringelement, numstringelements, readintsfromlist, &
+     & stringelement, stringelementnum
+   use MLSStrings, only: lowercase, readnumsfromchars
+   use output_m, only: blanks, newline, output, &
+     & resumeoutput, suspendoutput
+   use printit_m, only: set_config
    
    implicit none
 
@@ -67,6 +68,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      logical ::             debug = .true.
      logical ::             verbose = .false.
      logical ::             senseInquiry = .true.
+     logical             :: anyNaNs = .false. ! Just say if any NaNs
      integer ::             details = 1
      integer ::             width = 5
      logical ::             columnsOnly = .false.
@@ -243,6 +245,9 @@ contains
         options%senseInquiry = .false.
         call getarg ( i+1+hp, options%dsInquiry )
         i = i + 1
+      else if ( lowercase(filename(1:4)) == '-nan' ) then
+        options%anyNaNs = .true.
+        i = i + 1
       else if ( filename(1:3) == '-l ' ) then
         call getarg ( i+1+hp, options%fields )
         i = i + 1
@@ -311,6 +316,7 @@ contains
       write (*,*) '                      => print only if attribute attr [not] present'
       write (*,*) '          -[n]inqds ds'
       write (*,*) '                      => print only if dataset ds [not] present'
+      write (*,*) '          -NaN        => just say if there are any NaNs'
       write (*,*) '          -l list     => dump only fields named in list'
       write (*,*) '          -s slist    => dump only swaths named in slist'
       write (*,*) '          -c          => dump only column abundances'
@@ -330,7 +336,7 @@ contains
       write (*,*) '          -m[erge]    => merge data from all files (dont)'
 
       write (*,*) '    (Notes)'
-      write (*,*) ' (1) by default, dumps all fields in allswaths, but not attributes'
+      write (*,*) ' (1) by default, dumps all fields in all swaths, but not attributes'
       write (*,*) ' (2) by default, detail level is -1'
       write (*,*) ' (3) details levels, -l options are all mutually exclusive'
       write (*,*) ' (4) the list of chunks may include the range operator "-"'
@@ -474,7 +480,10 @@ contains
         endif
         call MLS_CloseFile ( MLSFile )
       endif
-      if ( options%ConvergenceCutOff > -1. .or. options%QualityCutOff > -1. .or. &
+      if ( options%anyNaNs ) then
+        if ( any(isNan(l2gp%l2gpValue)) ) &
+          & print *, 'NaNs found in ', trim(swath)
+      elseif ( options%ConvergenceCutOff > -1. .or. options%QualityCutOff > -1. .or. &
         & options%PrecisionCutOff > -1. .or. options%statusBits ) then
         call myPcts( options, l2gp, swath )
       else
@@ -719,6 +728,9 @@ end program L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.18  2014/07/21 23:09:32  pwagner
+! Added option -d '?'
+!
 ! Revision 1.17  2014/04/02 23:05:57  pwagner
 ! Removed redundant open_ and close_MLSFile
 !
