@@ -16,42 +16,45 @@ begin Fill
   ;; ------------------------------------ O3-240
   !define(flaggingBands,{7,24})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeQualityForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
 
   ;; ------------------------------------- CO-240
   !define(flaggingBands,{9,25})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeQualityForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
 
   ;; ------------------------------------- HNO3-240
   !define(flaggingBands,{7,8,9})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -999K)
+  !makeQualityForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=HNO3,chisqScale=1.0,minRads=2000,cloudMax=30K,cloudMin= -20K)
 
   ;; ------------------------------------- SO2-240
   !define(flaggingBands,{8})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
 
   ;; ------------------------------------- Temperature-CorePlusR3
   !define(flaggingBands,{8})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
 
   ;; ------------------------------------- GPH-CorePlusR3
   !define(flaggingBands,{8})
   !define(flaggingRadiometers,{R3})!dnl
-  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
-  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
 
 end Fill
 
 ; $Log$
+; Revision 1.17  2009/07/28 20:03:21  pwagner
+; Removed Band 33
+;
 ; Revision 1.16  2009/01/28 01:15:17  pwagner
 ; Changed quantity name of hires ozone
 ;
