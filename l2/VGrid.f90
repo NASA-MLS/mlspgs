@@ -62,7 +62,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, &
       & F_RESOLUTION, F_SOURCEL2GP, F_START, F_STOP, F_TYPE, &
       & F_VALUES, FIELD_FIRST, FIELD_LAST, &
-      & L_ANGLE, L_DIMENSIONLESS, L_DIMLESS, L_EXPLICIT, &
+      & L_ANGLE, L_DIMENSIONLESS, L_DIMLESS, L_EXPLICIT, L_GeocAltitude, &
       & L_GEODALTITUDE, L_GPH, L_ICEDENSITY, L_INTEGER, L_L2GP, L_LINEAR, &
       & L_LOGARITHMIC, L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
       & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_ICEDENSITY, PHYQ_Length, &
@@ -174,7 +174,7 @@ contains ! =====     Public Procedures     =============================
       case (l_dimensionless,l_dimless,l_integer)
         if ( prev_units /= PHYQ_Dimensionless) &
           & call announce_error ( coordIndex, wrongUnits, f_type, phyq_dimensionless )
-      case (l_geodAltitude)
+      case (l_geocAltitude, l_geodAltitude)
         if ( prev_units /= PHYQ_Length) &
           & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
       case (l_gph)
@@ -517,6 +517,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.31  2015/02/05 21:54:45  vsnyder
+! Add geocentric altitude as possible coordinate
+!
 ! Revision 2.30  2014/09/05 01:24:59  vsnyder
 ! Get kinds from MLSKinds instead of from MLSCommon
 !
