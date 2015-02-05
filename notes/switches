@@ -115,6 +115,7 @@ Switches (set by -S option in mlsl2's command line):
  nl2cf   => Don't assume there was an l2cf; e.g.  when dumping quantity
             templates
  nodb    => Subvert the DumpBlocks command
+ node[n] => Trace Next_Tree_Node at level n
  norf    => Default for Phi refractive correction in forward model is .false.
  nwt     => Action flag at each return from Newton solver
  opt[n]  => Print command line options 
@@ -217,6 +218,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.91  2014/09/29 23:21:13  pwagner
+ Correct meaning of n in phase[n]
+
  Revision 1.90  2014/09/11 18:22:39  pwagner
  Brought partly up tp date
 
