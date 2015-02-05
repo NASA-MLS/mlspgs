@@ -1289,6 +1289,10 @@ contains ! ====     Public Procedures     ==============================
                             &  str_value,variable] )
       if ( decl%type == null_decl ) decl = declaration(string)
       type = decl%type
+      if ( type == null_decl ) then
+        type = empty
+        go to 9
+      end if
       select case ( type )
       case ( enum_value )
         value = decl%units ! Lit index
@@ -2045,7 +2049,7 @@ contains ! ====     Public Procedures     ==============================
     ! If the first son of Root has not previously appeared, declare it with
     ! the type of the right-hand side.
 
-    use Declaration_Table, only: Allocate_Test
+    use Declaration_Table, only: Allocate_Test, Empty
     integer, intent(in) :: Root ! Tree index of n_variable from := operator
     integer, intent(out), optional :: Type
     type(decls) :: Decl
@@ -2059,12 +2063,19 @@ contains ! ====     Public Procedures     ==============================
     integer :: What1            ! What is RHS of :=
 
     call trace_begin ( me, 'Variable_Def', root, cond=toggle(con) )
+    son1 = subtree(1,root)
+    string = sub_rosa(son1)
+    if ( nsons(root) < 2 ) then ! "variable :=" case
+      if ( present(type) ) type = empty
+                   ! String  Value         Type      Units  Tree
+      call declare ( string, string+0.0d0, variable, empty, son1, values )
+      call trace_end ( 'Variable_Def', stringIndex=string, cond=toggle(con) )
+      return
+    end if
     type1 = -1
     what1 = -1
     units1 = -1
     call check_type ( root, 2, what1, units1, type1, value )
-    son1 = subtree(1,root)
-    string = sub_rosa(son1)
     decl = get_decl ( string, [ enum_value, label, named_value, variable ] )
     select case ( decl%type )
     case ( enum_value, label, named_value )
@@ -2250,6 +2261,9 @@ contains ! ====     Public Procedures     ==============================
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.50  2014/04/09 00:41:26  vsnyder
+! Repair problem finding variables
+!
 ! Revision 1.49  2014/03/20 18:36:11  vsnyder
 ! Unified type system instead of one in Intrinsic and one in Declaration_Table
 !
