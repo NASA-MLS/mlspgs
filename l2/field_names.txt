@@ -443,6 +443,7 @@ spect_der  # spectroscopy derivatives
 spread
 stamp
 stack
+stacked  # All heights at a particular instance have same Lat and Lon
 state
 stateMax # for the state vector during retrieval
 stateMin # for the state vector during retrieval
@@ -522,11 +523,15 @@ whereFill
 whereNotFill
 writeCounterMAF
 
+xGrid
 xStar
 
 yStar
 
 # $Log$
+# Revision 2.252  2015/02/05 21:55:21  vsnyder
+# Add stacked and xGrid
+#
 # Revision 2.251  2014/10/06 23:49:29  pwagner
 # May now write added file attributes
 #
