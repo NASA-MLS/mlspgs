@@ -1197,8 +1197,13 @@ contains ! ======================= Public Procedures =========================
       & quantity%template%solarZenith(1,useFirstInstance:useLastInstance)
     l2gp%losAngle(firstProfile:lastProfile) = &
       & quantity%template%losAngle(1,useFirstInstance:useLastInstance)
-    l2gp%geodAngle(firstProfile:lastProfile) = &
-      & quantity%template%phi(1,useFirstInstance:useLastInstance)
+    ! If the quantity isn't stacked, Phi is meaningless, and has zero size.
+    if ( associated(quantity%template%phi) .and. quantity%template%stacked ) then
+      l2gp%geodAngle(firstProfile:lastProfile) = &
+        & quantity%template%phi(1,useFirstInstance:useLastInstance)
+    else
+      l2gp%geodAngle(firstProfile:lastProfile) = 0
+    end if
     l2gp%time(firstProfile:lastProfile) = &
       & quantity%template%time(1,useFirstInstance:useLastInstance)
     l2gp%chunkNumber(firstProfile:lastProfile)=chunkNo
@@ -1319,6 +1324,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.67  2015/02/05 21:42:23  vsnyder
+! Don't use Phi for unstacked quantities
+!
 ! Revision 2.66  2014/12/11 21:27:04  pwagner
 ! Turn off more printing unless verbose or debug
 !
