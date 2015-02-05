@@ -29,7 +29,7 @@
 !   double precision, dimension(MAXNUMELEMENTS) :: elements  
     ! Executable
     call theDumpBegins ( options )
-    myRank = 3
+    myRank = 4
     if ( myUnique ) then
       call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
         & elements, nUnique, counts )
@@ -47,7 +47,7 @@
         enddo
       endif
       if ( uniqueonly ( options ) ) return
-    endif
+    end if
     if ( all(shape(array) > 1 ) ) &
       & call output( '(Most optional features unavailable for 4d arrays)', &
       & advance='yes' )
@@ -60,6 +60,9 @@
 !    include 'dump4Db.f9h'
 ! end subroutine DUMP_4D_DOUBLE
 ! $Log$
+! Revision 2.5  2015/02/05 21:38:48  vsnyder
+! Correct MyRank=4 instead of MyRank=3
+!
 ! Revision 2.4  2013/06/19 23:13:44  pwagner
 ! Remove more unused stuff
 !
