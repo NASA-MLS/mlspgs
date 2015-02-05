@@ -26,13 +26,14 @@
                                    ! says one iteration gets within a few micro
                                    ! arcseconds for heights below 30,000 km.
 
-  real(rk) :: An, An3, Bn, Dn, Fn  ! Terms in the iteration
-  real(rk) :: Cc                   ! Ec * Cn
-  real(rk) :: Cn, Cp               ! Cosine-like iterate, previous value
+  real(rk) :: An, An3, Ap, Bn, Dn, Fn  ! Terms in the iteration
+  real(rk) :: Cc                       ! Ec * Cn
+  real(rk) :: Cn, Cp                   ! Cosine-like iterate, previous value
   integer :: I
-  real(rk) :: P                    ! S / a
-  real(rk) :: S                    ! sqrt ( x**2 + y**2 )
-  real(rk) :: Sn, Sp               ! Sine-like iterate, previous value
+  real(rk) :: P                        ! S / a
+  real(rk) :: S                        ! sqrt ( x**2 + y**2 )
+  real(rk) :: Sn, Sp                   ! Sine-like iterate, previous value
+  real(rk) :: Z                        ! Ec * |z| / a
 
   ! Compute longitude
   geod(2) = atan2 ( xyz(2), xyz(1) )
@@ -45,23 +46,25 @@
   end if
     
   ! Now the Fukushima iteration for latitude
-  p = s / a
-  Sp = xyz(3)
+  P = s / a
+  Z = abs(xyz(3)) * Ec / a
+  Sp = Z
   Cp = Ec * P
-  An = sqrt ( Sn**2 + Cn**2 )
-  Bn = 1.5_rk * E2**2 * P * Sn**2 * Cn**2 * ( An - Ec )
+  Ap = sqrt ( Sp**2 + Cp**2 )
+  Bn = 1.5_rk * E2**2 * P * Sp**2 * Cp**2 * ( Ap - Ec )
   i = 1
   do
-    An3 = An ** 3
-    Dn = xyz(3) * An3 + E2 * Sp**3
+    An3 = Ap ** 3
+    Dn = Z * An3 + E2 * Sp**3
     Fn = P * An3 - E2 * Cp**3
     Sn = Dn * Fn - Bn * Sp
     Cn = Fn**2 - Bn * Cp
-    An = sqrt ( Sp**2 + Cp**2 )
+    An = sqrt ( Sn**2 + Cn**2 )
     if ( i >= maxIt ) exit
     i = i + 1
-    if ( abs(Cn-Cp) < tol * abs(p) .or. abs(Sn-Sp) < tol * abs(xyz(3)) ) exit
-    Bn = 1.5_rk * E2 * Sn * Cn**2 * ( ( P * Sn - xyz(3) * Cn ) * An - &
+    if ( abs(Cn-Cp) < tol * abs(p) .or. abs(Sn-Sp) < tol * Z ) exit
+    Ap = An
+    Bn = 1.5_rk * E2 * Sn * Cn**2 * ( ( P * Sn - Z * Cn ) * Ap - &
        & E2 * Sn * Cn )
     Cp = Cn
     Sp = Sn
@@ -75,6 +78,9 @@
 ! $Id$
 
 ! $Log$
+! Revision 2.2  2015/02/05 21:46:58  vsnyder
+! Revise convergence test
+!
 ! Revision 2.1  2014/11/26 23:50:14  vsnyder
 ! Initial commit
 !
