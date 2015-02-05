@@ -366,10 +366,9 @@ contains
     integer, intent(out), optional :: ICODE
     real, intent(out), optional :: B0
 
-    real ::           COSPHI, CT
-    real ::           SINPHI, ST, XI(3)
+    real ::           XI(3) ! (X,Y,Z) in Earth radii (ERAD km)
 
-    call to_cart ( where, xi, ct, st, cosphi, sinphi )
+    call to_cart ( where, xi )
     call shellc ( xi, dimo, fl, icode, b0 )
   end subroutine SHELLG
 
@@ -581,7 +580,8 @@ o:  do n = 3, size(p,2)-1
     real, intent(in) :: WHERE(3)
     real, intent(out) :: BNORTH, BEAST, BDOWN, BABS
 
-    real ::           B(3), BRHO, CP, CT, SP, ST, V(3)
+    real ::           B(3), BRHO, CP, CT, SP, ST
+    real ::           V(3) ! (X,Y,Z) in Earth radii (ERAD km)
 
     call to_cart ( where, v, ct, st, cp, sp )
     call feldc ( v, b )
@@ -976,6 +976,9 @@ o:  do n = 3, size(p,2)-1
 end module IGRF_INT
 
 ! $Log$
+! Revision 2.11  2015/02/05 21:48:29  vsnyder
+! Remove unused computations
+!
 ! Revision 2.10  2014/09/05 21:12:56  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
