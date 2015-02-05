@@ -374,8 +374,12 @@ contains
 
     if ( .not. mySpacingOnly ) then
       if ( a%template%noInstances /= b%template%noInstances ) return
-      if ( any(abs(a%template%phi - &
-        &          b%template%phi) > PhiTol) ) return
+      if ( .not. ( associated(a%template%phi) .eqv. &
+                 & associated(b%template%phi) ) ) return
+      if ( associated(a%template%phi) ) then
+        if ( any(abs(a%template%phi - &
+          &          b%template%phi) > PhiTol) ) return
+      end if
       DoHGridsMatch = .true.
     else
       ! Here we default to true
@@ -661,6 +665,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.47  2015/02/05 21:43:08  vsnyder
+! Don't use Phi for unstacked quantities
+!
 ! Revision 2.46  2014/10/30 01:42:46  vsnyder
 ! Publish DoQuantitiesMatch
 !
