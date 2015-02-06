@@ -23,16 +23,17 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use HDF, only: dfacc_create, dfacc_rdonly, dfacc_rdwr, &
     & dfnt_float32, dfnt_float64
   use highoutput, only: outputnamedvalue
+  use intrinsic, only: l_hdfeos
   use l3ascii, only: l3ascii_read_field
   use lexer_core, only: print_source
   use MLScommon, only: linelen, namelen, filenamelen, &
     & undefinedvalue, MLSfile_t
-  use MLSfiles, only: filenotfound, HDFversion_5, &
-    & dump, getpcfromref, MLS_HDF_version, MLS_openfile, MLS_closefile, &
+  use MLSFiles, only: fileNotFound, HDFversion_5, dump, InitializeMLSFile, &
+    & getpcfromref, MLS_HDF_version, MLS_openfile, MLS_closefile, &
     & split_path_name, MLS_openfile, MLS_closefile
   use MLSkinds, only: r4, r8
-  use MLSmessagemodule, only: MLSmsg_error, MLSmsg_info, MLSmsg_warning, &
-    & MLSmessage
+  use MLSMessagemodule, only: MLSMsg_error, MLSMsg_info, MLSMsg_warning, &
+    & MLSMessage
   use MLSstrings, only: capitalize, hhmmss_value, lowercase
   use MLSstringlists, only: getstringelement, numstringelements, &
     & list2array, replacesubstring, stringelementnum
@@ -110,7 +111,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
 contains
 
-  ! ----------------------------------------------- ReadGriddedData
+  ! ----------------------------------------------- ReadGriddedData_MLSFile
   ! This family of routines reads a Gridded Data file, returning a filled data
   ! structure and the  appropriate for the description
   ! which may be one of 'geos5_7', 'geos5', 'gmao', 'dao', 'merra', 'ncep', 'strat'
@@ -228,9 +229,9 @@ contains
         call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
         call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
           & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
-        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'max val  ', MLSMax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', MLSMin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', MLSMean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
         call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
         call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       end if
@@ -248,9 +249,9 @@ contains
         call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
         call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
           & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
-        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'max val  ', MLSMax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', MLSMin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', MLSMean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
         call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
         call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       end if
@@ -268,9 +269,9 @@ contains
         call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
         call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
           & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
-        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'max val  ', MLSMax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', MLSMin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', MLSMean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
         call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
         call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       end if
@@ -292,9 +293,9 @@ contains
         call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
         call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
           & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
-        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'max val  ', MLSMax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', MLSMin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', MLSMean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
         call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
         call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       end if
@@ -314,9 +315,9 @@ contains
         call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
         call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
           & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
-        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'max val  ', MLSMax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', MLSMin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', MLSMean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
         call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
         call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       end if
@@ -336,9 +337,9 @@ contains
         call output( 'Units           ' // trim(the_g_data%units), advance='yes' )
         call outputNamedValue( 'Vertical Coord, type, type(P)  ', &
           & (/ the_g_data%verticalCoordinate, v_type, v_is_pressure /) )
-        call outputNamedValue( 'max val  ', mlsmax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'min val  ', mlsmin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
-        call outputNamedValue( 'meanval  ', mlsmean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'max val  ', MLSMax( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'min val  ', MLSMin( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
+        call outputNamedValue( 'meanval  ', MLSMean( the_g_data%field(:,:,:,1,1,1), the_g_data%missingValue ) )
         call outputNamedValue('associated(the_g_data%field)', associated(the_g_data%field))
         call outputNamedValue('NumStringElements', NumStringElements(fieldNames, COUNTEMPTY))
       end if
@@ -373,6 +374,16 @@ contains
     logical, optional, intent(IN)           :: deferReading ! don't read yet
     character(len=*), optional, intent(out) :: litDescription
     logical, optional, intent(IN)           :: verbose
+    ! Internal variables
+    type(MLSFile_T)                         :: GriddedFile
+    ! Executable
+    returnStatus = InitializeMLSFile( GriddedFile, content = 'gridded', &
+      & name=FileName, &
+      & type=l_hdfeos, access=DFACC_RDONLY )
+    call ReadGriddedData_MLSFile( GriddedFile, lcf_where, description, v_type, &
+      & the_g_data, returnStatus, &
+      & GeoDimList, fieldNames, missingValue, &
+      & date, sumDelp, deferReading, litDescription, verbose )
   end subroutine ReadGriddedData_Name
 
   ! ----------------------------------------------- Read_geos5_7
@@ -380,13 +391,13 @@ contains
     & the_g_data, GeoDimList, fieldName, date, sumDelp )
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use DATES_MODULE, only: UTC2TAI93S
-    use HDF5, only: HSIZE_T
-    use MLSHDF5, only: GETALLHDF5DSNAMES, &
-      & GETHDF5DSRANK, GETHDF5DSDIMS, LOADFROMHDF5DS, &
-      & READHDF5ATTRIBUTE
-    use MLSSTRINGLISTS, only: SWITCHDETAIL
-    use TOGGLES, only: SWITCHES
+    use dates_module, only: utc2tai93s
+    use hdf5, only: hsize_t
+    use mlshdf5, only: getallhdf5dsnames, &
+      & gethdf5dsrank, gethdf5dsdims, loadfromhdf5ds, &
+      & readhdf5attribute
+    use mlsstringlists, only: switchdetail
+    use toggles, only: switches
 
     ! This routine reads a gmao geos5_7 file, named something like
     ! DAS.ops.asm.avg3_3d_Nv.GEOS571.20110930_0300.V01.nc4 (pressure with
@@ -1652,11 +1663,11 @@ contains
   subroutine Read_ncep_strat(NCEPFile, lcf_where, v_type, &
     & the_g_data, GeoDimList, fieldName)
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use HDFEOS5, only: HE5_HDFE_NENTDIM, HE5F_ACC_RDONLY, &
-      & HE5_GDOPEN, HE5_GDATTACH, HE5_GDDETACH, HE5_GDCLOSE, &
-      & HE5_GDNENTRIES, HE5_GDINQGRID, HE5_GDINQDIMS, HE5_GDINQFLDS, &
-      & HE5_GDFLDINFO, HE5_GDGRIDINFO
-    use MLSHDFEOS, only: HSIZES
+    use hdfeos5, only: he5_hdfe_nentdim, he5f_acc_rdonly, &
+      & he5_gdopen, he5_gdattach, he5_gddetach, he5_gdclose, &
+      & he5_gdnentries, he5_gdinqgrid, he5_gdinqdims, he5_gdinqflds, &
+      & he5_gdfldinfo, he5_gdgridinfo
+    use mlshdfeos, only: hsizes
     use hdf5, only: SIZE_T
 
     ! This routine reads a ncep stratospheric combined product file,
@@ -2668,6 +2679,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.80  2015/02/06 01:10:36  pwagner
+! Added body missing from ReadGriddedData with filename api
+!
 ! Revision 2.79  2014/09/06 00:05:02  pwagner
 ! Stores geost_7 lats in the_g_data after reading them
 !
