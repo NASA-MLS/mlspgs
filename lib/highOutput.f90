@@ -477,16 +477,25 @@ contains
   end function BEVERBOSE
 
   ! -----------------------------------------------------  BLANKSTOCOLUMN  -----
-  subroutine BLANKSTOCOLUMN ( COLUMN, FILLCHAR, ADVANCE, DONT_STAMP )
+  subroutine BLANKSTOCOLUMN ( column, fillchar, advance, dont_stamp )
   ! Output N_BLANKS blanks to PRUNIT out to column COLUMN.
   ! (or optionally that many copies of fillChar)
     integer, intent(in) :: COLUMN
-    character(len=*), intent(in), optional :: ADVANCE
-    character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
-    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
+    character(len=*), intent(in), optional :: advance
+    character(len=*), intent(in), optional :: fillchar  ! default is ' '
+    logical, intent(in), optional          :: dont_stamp ! Prevent double-stamping
+    ! Internal variables
+    integer :: atColumn
+    integer :: nblanks
     ! Executable
-    if ( getOutputStatus( 'column' ) >= COLUMN ) return
-    call blanks( COLUMN-getOutputStatus( 'column' ), fillChar, advance, dont_stamp )
+    if ( getOutputStatus( 'physicalcolumn' ) == 1 ) then
+      ! Don't double indent the line's first field
+      nblanks = column - getOutputStatus( 'physicalcolumn' )
+    else
+      nblanks = column - getOutputStatus( 'column' )
+    endif
+    if ( nblanks < 1 ) return
+    call blanks( nblanks, fillChar, advance, dont_stamp )
   end subroutine BLANKSTOCOLUMN
 
   ! ------------------------------------------------  blanksToTab  -----
@@ -1877,6 +1886,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.5  2015/02/06 01:08:20  pwagner
+! Can now print to virtual page indented w.r.t. physical page
+!
 ! Revision 2.4  2014/10/06 23:06:26  vsnyder
 ! Add Signed argument to Dump_Size
 !
