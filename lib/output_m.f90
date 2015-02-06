@@ -51,12 +51,14 @@ module OUTPUT_M
 ! timeStampOptions         how to stamp when calling timeStamp
 
 !     (subroutines and functions)
+! addToIndent              add this number of blanks indented; subtract if < 0
 ! blanks                   print specified number of blanks [or fill chars]
 ! flushOutputLines         print the current outputLines; then reset to ''
 ! getOutputStatus          returns normally private data
 ! isOutputSuspended        returns TRUE if output is suspended
 ! newline                  print a newline
 ! output                   print argument
+! resetIndent              set indenting back to 0
 ! restoreSettings          restore default settings for output, stamps, tabs
 ! revertOutput             revert output to file used before switchOutput
 !                           if you will revert, keepOldUnitOpen when switching
@@ -114,17 +116,17 @@ module OUTPUT_M
   integer, save, private :: OLDUNIT = -1 ! Previous Unit for output.
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
-  public :: BLANKS, FLUSHOUTPUTLINES, GETOUTPUTSTATUS, NEWLINE, OUTPUT, &
-    & OUTPUT_CHAR_NOCR, RESTORESETTINGS, &
-    & RESUMEOUTPUT, REVERTOUTPUT, SUSPENDOUTPUT, SWITCHOUTPUT
+  public :: addToIndent, blanks, flushOutputLines, getOutputStatus, newline, &
+    & output, & output_char_nocr, resetIndent, restoreSettings, &
+    & resumeOutput, revertOutput, suspendOutput, switchOutput
 
   ! These types made public because the class instances are public
-  public :: OUTPUTOPTIONS_T
-  public :: STAMPOPTIONS_T
-  public :: TIMESTAMPOPTIONS_T
+  public :: outputOptions_t
+  public :: stampOptions_t
+  public :: timestampOptions_t
 
-  interface GETOPTION
-    module procedure GETOPTION_CHAR, GETOPTION_LOG
+  interface getOption
+    module procedure getOption_char, getOption_log
   end interface
 
   ! Embeddded <cr> print multiple lines
@@ -217,8 +219,10 @@ module OUTPUT_M
 
   ! Private parameters
   logical, save, private :: SWITCHTOSTDOUT = .false.! Temp'ly all to stdout
-  logical, save, private :: SILENTRUNNING = .false. ! Suspend all further output
+  logical, save, private :: SILENTRUNNING  = .false. ! Suspend all further output
   integer, save, private :: ATCOLUMNNUMBER = 1  ! Where we'll print next
+  ! See below for uses of indentBy
+  integer, save, private :: INDENTBY       = 0  ! How many spaces to indent
   logical, save, private :: ATLINESTART = .true.  ! Whether to stamp if notpost
   integer, save, private :: LINESSINCELASTSTAMP = 0
   logical, private, parameter :: LOGEXTRABLANKS = .false.
@@ -240,6 +244,24 @@ module OUTPUT_M
 !---------------------------------------------------------------------------
 
 contains
+
+  ! --------- Indenting procedures --------
+  ! The idea is to have a virtual printed page offset 
+  ! from the actual physical page by an amount, indentBy
+  ! So if we print something to column k, it shows up
+  ! printed in column (k+indentBy)
+  ! -----------------------------------------------------  addToIndent  -----
+  subroutine addToIndent ( n )
+  ! add n blanks To Indent
+    integer, intent(in) :: n
+    indentBy = max( indentBy + n, 0 )
+  end subroutine addToIndent
+
+  ! -----------------------------------------------------  resetIndent  -----
+  subroutine resetIndent
+  ! Reset Indent back to 0
+    indentBy = 0
+  end subroutine resetIndent
 
   ! -----------------------------------------------------  BLANKS  -----
   subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE, DONT_STAMP )
@@ -344,8 +366,12 @@ contains
     character(len=*), intent(in) :: name
     integer :: status
     ! Executable
-    if ( index(lowercase(name), 'column' ) > 0 ) then
-      status = atColumnNumber
+    if ( index(lowercase(name), 'physicalcolumn' ) > 0 ) then
+      status = atColumnNumber            ! This is the "physical" column
+    elseif ( index(lowercase(name), 'column' ) > 0 ) then
+      status = atColumnNumber - indentBy ! This is the "virtual" column
+    elseif( index(lowercase(name), 'indent' ) > 0 ) then
+      status = indentBy
     elseif( index(lowercase(name), 'start' ) > 0 ) then
       status = merge(1, 0, atLineStart)
     elseif( index(lowercase(name), 'lines' ) > 0 ) then
@@ -355,7 +381,6 @@ contains
     endif
   end function getOutputStatus
     
-
   ! ----------------------------------------------  isOutputSuspended  -----
   logical function isOutputSuspended ()
   ! Have we suspended outputting to PRUNIT?
@@ -428,6 +453,29 @@ contains
   end subroutine OUTPUT_CHAR
 
   subroutine OUTPUT_CHAR_NOCR ( CHARS, &
+    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+    character(len=*), intent(in) :: CHARS
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: FROM_WHERE
+    logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
+    character(len=*), intent(in), optional :: LOG_CHARS
+    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
+    logical, intent(in), optional          :: DONT_STAMP ! Prevent double-stamping
+    !
+    character(len=3) :: MY_ADV
+    ! Executable
+    my_adv = Advance_is_yes_or_no(advance)
+    atLineStart = (my_adv == 'yes')
+    if ( indentBy > 0 .and. atColumnNumber == 1 ) then
+      call output_char_nocr_indented ( repeat( ' ', indentby ) // chars, &
+        & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
+    else
+      call output_char_nocr_indented ( chars, &
+        & advance, from_where, dont_log, log_chars, insteadofblank, dont_stamp )
+    endif
+  end subroutine OUTPUT_CHAR_NOCR
+
+  subroutine OUTPUT_CHAR_NOCR_INDENTED ( CHARS, &
     & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
     use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
     character(len=*), intent(in) :: CHARS
@@ -654,7 +702,7 @@ contains
         str(kNull-1:) = chars // achar(0)
       endif
     end subroutine append_chars
-  end subroutine OUTPUT_CHAR_NOCR
+  end subroutine OUTPUT_CHAR_NOCR_INDENTED
 
   ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
   subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE, INSTEADOFBLANK, NEWLINEVAL )
@@ -1393,6 +1441,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.117  2015/02/06 00:45:54  pwagner
+! Can now print to virtual page indented w.r.t. physical page
+!
 ! Revision 2.116  2015/01/12 22:20:55  pwagner
 ! swichOutput can switch to 'stdout'
 !
