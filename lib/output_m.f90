@@ -25,7 +25,7 @@ module OUTPUT_M
     & readintsfromchars, trim_safe
   use printit_m, only: assemblefullline, get_config, &
     & MLSMSG_Crash, MLSMSG_Debug, MLSMSG_info, MLSMSG_Error, &
-    & MLSMSG_Severity_to_quit, MLSMSG_Warning, printItOut, &
+    & MLSMSG_Severity_to_quit, printItOut, &
     & MLSMessageConfig
 
   implicit none
@@ -51,7 +51,7 @@ module OUTPUT_M
 ! timeStampOptions         how to stamp when calling timeStamp
 
 !     (subroutines and functions)
-! addToIndent              add this number of blanks indented; subtract if < 0
+! addToIndent              add to the number of blanks indented; subtract if < 0
 ! blanks                   print specified number of blanks [or fill chars]
 ! flushOutputLines         print the current outputLines; then reset to ''
 ! getOutputStatus          returns normally private data
@@ -117,7 +117,7 @@ module OUTPUT_M
   logical, save, private :: OLDUNITSTILLOPEN = .TRUE.
 
   public :: addToIndent, blanks, flushOutputLines, getOutputStatus, newline, &
-    & output, & output_char_nocr, resetIndent, restoreSettings, &
+    & output, output_char_nocr, resetIndent, restoreSettings, &
     & resumeOutput, revertOutput, suspendOutput, switchOutput
 
   ! These types made public because the class instances are public
@@ -1441,6 +1441,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.118  2015/02/10 00:59:36  pwagner
+! Repaired error introduced by last change
+!
 ! Revision 2.117  2015/02/06 00:45:54  pwagner
 ! Can now print to virtual page indented w.r.t. physical page
 !
