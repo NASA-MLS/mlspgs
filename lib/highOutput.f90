@@ -15,27 +15,27 @@ module HIGHOUTPUT
   
   ! See also dump_0 and output_m
   
-  use DATES_MODULE, only:  BUILDCALENDAR, DAYSINMONTH, &
-    & REFORMATDATE, REFORMATTIME, UTC_TO_YYYYMMDD
-  use MACHINE, only: CRASH_BURN, EXIT_WITH_STATUS, NEVERCRASH
-  use MLSCOMMON, only: MLSDEBUG, MLSVERBOSE
-  use MLSFINDS, only: FINDFIRST
-  use MLSSTRINGLISTS, only: EXPANDSTRINGRANGE, GETSTRINGELEMENT, &
-    & LIST2ARRAY, NCHARSINFORMAT, NUMSTRINGELEMENTS, SWITCHDETAIL, WRAP
-  use MLSSTRINGS, only: LOWERCASE, NCOPIES, &
-    & TRIM_SAFE, WRITEINTSTOCHARS
-  use OUTPUT_M, only: BLANKS, GETOUTPUTSTATUS, NEWLINE, OUTPUT, &
-    & OUTPUT_ => OUTPUT_CHAR_NOCR, &
-    & RESTORESETTINGS, &
-    & OUTPUTOPTIONS, OUTPUTOPTIONS_T, STAMPOPTIONS, STAMPOPTIONS_T, &
-    & TIMESTAMPOPTIONS, TIMESTAMPOPTIONS_T, &
-    & BOTHPRUNIT, INVALIDPRUNIT, MSGLOGPRUNIT, OUTPUTLINESPRUNIT, STDOUTPRUNIT
-  use PRINTIT_M, only: ASSEMBLEFULLLINE, GET_CONFIG, &
-    & MLSMSG_CRASH, MLSMSG_DEBUG, &
-    & MLSMSG_SEVERITY_TO_QUIT, &
-    & MLSMSG_WARNING, &
-    & PRINTITOUT, MLSMESSAGECONFIG
-  use TOGGLES, only: SWITCHES
+  use dates_module, only:  buildCalendar, daysInMonth, &
+    & reformatdate, reformatTime, utc_to_yyyymmdd
+  use machine, only: crash_burn, exit_with_status, nevercrash
+  use MLSCommon, only: MLSDebug, MLSVerbose
+  use MLSFinds, only: findfirst
+  use MLSStringlists, only: expandStringRange, getStringElement, &
+    & List2array, nCharsInFormat, numStringElements, switchDetail, wrap
+  use MLSStrings, only: lowercase, ncopies, &
+    & trim_safe, writeIntsToChars
+  use output_m, only: blanks, getOutputStatus, newline, output, &
+    & output_ => output_char_nocr, &
+    & restoreSettings, &
+    & outputOptions, outputoptions_t, stampOptions, stampOptions_t, &
+    & timeStampOptions, timeStampOptions_t, &
+    & bothPrUnit, invalidPrUnit, msglogPrUnit, outputlinesPrUnit, stdoutPrUnit
+  use printit_m, only: assembleFullLine, get_config, &
+    & MLSMsg_crash, MLSMsg_debug, &
+    & MLSMsg_severity_to_quit, &
+    & MLSMsg_warning, &
+    & printitOut, MLSMessageConfig
+  use toggles, only: switches
   implicit none
   private
 
@@ -506,14 +506,21 @@ contains
     integer, optional, intent(in) :: TABN
     character(len=*), intent(in), optional :: FILLCHAR  ! default is ' '
     ! Internal variables
+    integer :: nColumn
     integer :: nTab
     ! Executable
+    if ( getOutputStatus( 'physicalcolumn' ) == 1 ) then
+      ! Don't double indent the line's first field
+      nColumn = getOutputStatus( 'physicalcolumn' )
+    else
+      nColumn = getOutputStatus( 'column' )
+    endif
     if ( present(tabn) ) then
       if ( tabn < 1 .or. tabn > MAXNUMTABSTOPS ) return
-      if ( getOutputStatus( 'column' ) < tabStops(tabn) ) &
+      if ( nColumn < tabStops(tabn) ) &
         & call blanksToColumn( tabStops(tabn), fillChar )
     else
-      nTab = findFirst( tabStops > getOutputStatus( 'column' ) )
+      nTab = findFirst( tabStops > nColumn )
       if ( nTab > 0 ) &
         & call blanksToColumn( tabStops(nTab), fillChar )
     end if
@@ -1886,6 +1893,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.6  2015/02/10 01:00:58  pwagner
+! Avoid another double-indent error
+!
 ! Revision 2.5  2015/02/06 01:08:20  pwagner
 ! Can now print to virtual page indented w.r.t. physical page
 !
