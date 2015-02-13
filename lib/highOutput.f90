@@ -64,6 +64,7 @@ module HIGHOUTPUT
 ! output_date_and_time     print nicely formatted date and time
 ! outputList               output array as comma-separated list; e.g. '(1,2,..)'
 ! outputNamedValue         print nicely formatted name and value
+! outputTable              output 2-darray as cells in table
 ! resettabs                restore tab stops to what was in effect at start
 ! restoreSettings          restore default settings for output, stamps, tabs
 ! setStamp                 set stamp to be added to every output automatically
@@ -101,6 +102,8 @@ module HIGHOUTPUT
 ! outputNamedValue ( char* name, value, [char* advance],
 !          [char colon], [char fillChar], [char* Before], [char* After], 
 !          [integer tabn], [integer tabc], [integer taba], log dont_stamp] )
+! outputTable ( array(:,:), [char sep], [char border], [int cellWidth],
+!          [char interior], [char headliner], [char alignment] )
 ! resetTabs ( [int tabs(:)] )
 ! restoreSettings ( [log useToolkit] )
 ! setStamp ( [char* textCode], [log post], [int interval],
@@ -128,14 +131,14 @@ module HIGHOUTPUT
 !
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
-  public :: ALIGNTOFIT, &
-    & BANNER, BEVERBOSE, BLANKSTOCOLUMN, BLANKSTOTAB, &
-    & DUMP, DUMPSIZE, DUMPTABS, GETSTAMP, HEADLINE, &
-    & LETSDEBUG, NEXTCOLUMN, NEXTTAB, NUMNEEDSFORMAT, NUMTOCHARS, &
-    & OUTPUT_DATE_AND_TIME, OUTPUTCALENDAR, OUTPUTLIST, &
-    & OUTPUTNAMEDVALUE, &
-    & RESETTABS, RESTORESETTINGS, &
-    & SETSTAMP, SETTABS, TAB, TIMESTAMP
+  public :: alignToFit, &
+    & banner, beVerbose, blanksToColumn, blanksToTab, &
+    & dump, dumpSize, dumpTabs, getStamp, headLine, &
+    & letsDebug, nextColumn, nextTab, numNeedsFormat, numToChars, &
+    & output_date_and_time, outputCalendar, outputList, outputTable, &
+    & outputNamedValue, &
+    & resetTabs, restoreSettings, &
+    & setStamp, setTabs, tab, timeStamp
 
   ! These types made public because the class instances are public
   public :: outputOptions_T
@@ -194,6 +197,7 @@ module HIGHOUTPUT
     module procedure timestamp_char, timestamp_integer, timestamp_logical
   end interface
   
+  integer, parameter :: MAXCELLSIZE = 128 ! How many chars can 1 cell hold
   ! We can use the OutputLines mechanism for user-controlled
   ! buffering, filtering, grep-ing, or whatever
   integer, parameter :: MAXOUTPUTLINESLEN = 2048 ! How many chars it can hold
@@ -1410,6 +1414,112 @@ contains
     include 'output_name_value_pair.f9h'
   end subroutine output_nvp_sngl_array
 
+  ! ----------------------------------------------  outputTable  -----
+  ! This family of routines outputs a 2d character array as a table
+  ! Optionally, 
+  ! (1)  the table can have a character separating cells, and another 
+  !      marking its outer borders
+  ! (2)  the minimum cell width can be set; otherwise
+  !      it is computed based on the trimmed lengths of each column
+  ! (3)  the alignment within each cell can be set; otherwise
+  !      it is flushed left, i.e. 'L'
+  ! (4)  each row can be separated by an interior wall of characters;
+  !      by default they are consecutive
+  !      a special value of interior, null (achar(0)) inserts an empty line
+  ! (5)  the first row can be treated as special, and separated from the second
+  !      by a wall of special headliner characters
+  subroutine outputTable ( array, sep, border, cellWidth, &
+    & interior, headliner, alignment )
+    ! Args
+    character(len=*), dimension(:,:), intent(in)   :: array
+    character(len=1), optional, intent(in)         :: sep       ! between cols
+    character(len=1), optional, intent(in)         :: border    ! outside
+    integer, optional, intent(in)                  :: cellWidth
+    character(len=1), optional, intent(in)         :: interior  ! between rows
+    character(len=1), optional, intent(in)         :: headliner ! 1st row are headers
+    character(len=1), optional, intent(in)         :: alignment ! L, R, or C
+    ! Local variables
+    character(len=MAXCELLSIZE)                     :: cell
+    integer                                        :: i
+    integer                                        :: j
+    integer                                        :: left
+    integer                                        :: minWidth
+    character(len=1)                               :: myAlignment
+    character(len=1)                               :: myBorder
+    character(len=1)                               :: mySep
+    character(len=1)                               :: myHeadliner
+    character(len=1)                               :: myInterior
+    integer                                        :: right
+    integer, dimension(size(array,2))              :: widths
+    integer, parameter                             :: leftPadding = 1
+    integer, parameter                             :: rightPadding = 1
+    integer                                        :: totalWidth
+    ! Executable
+    minWidth = 3 ! Don't know why, but this works
+    if ( present(cellWidth) ) minWidth = cellWidth
+
+    mySep = ' '
+    if ( present(sep) ) mySep = sep
+    myBorder = ' '
+    if ( present(border) ) myBorder = border
+    myInterior = ' '
+    if ( present(Interior) ) myInterior = Interior
+    
+    myHeadliner = myInterior
+    if ( present(headliner) ) myHeadliner = headliner
+    
+    myAlignment = 'L'
+    if ( present(alignment) ) myAlignment = alignment
+
+    ! 1st, compute total table width
+    widths = minWidth
+    totalWidth = 3
+    do j=1, size(array,2)
+      widths(j) = maxval( len_trim(array(:,j)) )
+      widths(j) = max( widths(j), minWidth )
+      totalWidth = totalWidth + widths(j) + leftPadding + rightPadding
+      if ( j > 1 .and. j < size(array,2) ) totalWidth = totalWidth + 1
+    enddo
+    if ( len_trim(myBorder) > 0 ) &
+      & call output( repeat( myBorder, totalWidth ), advance='yes' )
+    do i=1, size(array,1)
+      right = 0
+      if ( len_trim(myBorder) > 0 ) then
+        call output( myBorder, advance='no' )
+        right = right + 1
+      endif
+      do j=1, size(array,2)
+        left = right + 1 + leftPadding
+        right = left + widths(j) ! Don't know why, but this works
+        call alignToFit ( trim(array(i,j)), (/ left, right /), myAlignment )
+        call blanks ( rightPadding )
+        if ( len_trim(mySep) > 0 .and. j < size(array,2) ) then
+          call output( mySep, advance='no' )
+          right = right + 1
+        endif
+      enddo
+      if ( len_trim(myBorder) > 0 ) then
+        call blanksToColumn( totalWidth )
+        call output( myBorder, advance='yes' )
+      else
+        call newLine
+      endif
+      ! Interior cell walls or headliners
+      if ( len_trim(myheadliner) > 0 .and. i == 1 .and. &
+        & myheadliner /= achar(0) ) then
+        call output( repeat( myheadliner, totalWidth ), advance='yes' )
+      elseif ( myInterior == achar(0) .and. i < size(array,1) ) then
+        call output( myBorder, advance='no' )
+        call blanksToColumn( totalWidth )
+        call output( myBorder, advance='yes' )
+      elseif ( len_trim(myInterior) > 0 .and. i < size(array,1) ) then
+        call output( repeat( myInterior, totalWidth ), advance='yes' )
+      endif
+    enddo
+    if ( len_trim(myBorder) > 0 ) &
+      & call output( repeat( myBorder, totalWidth ), advance='yes' )
+  end subroutine outputTable
+
   ! ----------------------------------------------  resetTabs  -----
   ! Restore tab stops to what was in effect at start
   ! Optionally returning them as an integer array
@@ -1893,6 +2003,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.7  2015/02/13 00:17:49  pwagner
+! Added procedure to output 2d array as Table
+!
 ! Revision 2.6  2015/02/10 01:00:58  pwagner
 ! Avoid another double-indent error
 !
