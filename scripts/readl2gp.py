@@ -11,6 +11,7 @@
 ## Depends on:
 ## * Python 2.4+ http://www.python.org
 ## * PyTables http://www.pytables.org
+## * Numpy http://www.numpy.org
 ##
 ## Copyright 2010, by the California Institute of
 ## Technology. ALL RIGHTS RESERVED. United States Government
@@ -57,8 +58,12 @@ ARGUMENTS:
 * filename
     The full or relative path to the L2GP HDF-5 file to be read
 * swathName
-    The name of the HDF-EOS swath.  If blank, the first swath in the file
-    will be read by default.
+
+    The name of the HDF-EOS swath.  If blank, the first swath in the
+    file will be read by default. For files with multiple swaths (most
+    files for v4, some for v3) you'll have to pass the swath name to
+    get anything but the first swath
+
 * variableName
     The name of the regular HDF variable entry.  "L2gpValue" by default.
 * precisionName
@@ -66,6 +71,14 @@ ARGUMENTS:
 * noError
     If set, exceptions will not be raised on error and instead we will
     silently return a None.
+
+* returns: A numpy ND variable or None, if a failure occurred
+
+* Note: One of the variable attributes contains a variable of type
+  HE5_REFERENCE. PyTables doesn't like this, so it complains. But this
+  only happens on the first call and it is not fatal. The data is
+  still returned and valid. 
+
     """
 
     result = {}
@@ -173,28 +186,14 @@ ARGUMENTS:
     return result
 
 
-## Unnecessary tool function from some diagnostic work.
-## Left in just in case it might be useful later
 
-# def field_search(files):
-#     for fName in files:
-#         print fName
-# 
-#         fHandle = tables.openFile(fName,'r')
-#         swaths = sorted(fHandle.root.HDFEOS.SWATHS._v_children.keys())
-#         fHandle.close()
-# 
-#         for swath in swaths:
-#             f = readl2gp(fName, swathName=swath)
-#             if 'nFreqs' in f or 'nTheta' in f:
-#                 print swath
-#             if 'nFreqs' in f:
-#                 print "f['nFreqs']:", str(f['nFreqs'])
-#                 print "f['frequency']:", str(f['frequency'])
-#             if 'nTheta' in f:
-#                 print "f['nTheta']:", str(f['nTheta'])
-#                 print "f['theta']:", str(f['theta'])
-# 
-# if __name__ == '__main__':
-#     import sys
-#     field_search(sys.argv[1:])
+
+#
+# $Id$
+#
+# $Name$
+#
+# Modifications:
+# $Log$
+#                
+
