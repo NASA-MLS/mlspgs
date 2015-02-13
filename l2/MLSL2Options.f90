@@ -954,7 +954,7 @@ cmds: do
           call define_variable_as_string ( line, word )
         else if ( line(3+n:10+n) == 'verbose ' ) then
           switches = catLists( trim(switches), &
-            & 'l2q,glob,mas,bool,opt1,log,pro1,time,apr,phase' )
+            & 'l2q,glob,mas,bool1,opt1,log,pro1,time,apr,phase' )
         else if ( line(3+n:8+n) == 'versid' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, line )
@@ -1204,9 +1204,37 @@ jloop:do while ( j < len_trim(line) )
 
   ! -------------------------------------------------  DumpMacros  -----
   ! Dump the runtime macros
-  subroutine DUMPMACROS
-  call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
-      & 'Run-time macros', separator=runTimeValues%sep )
+  ! Either simply, or in a table
+  subroutine DumpMacros ( details )
+    use highOutput, only: outputTable
+    use MLSStringlists, only: List2Array, numStringElements, switchDetail
+    use toggles, only: switches
+    integer, optional, intent(in)         :: details
+    character(len=64), dimension(1024, 2) :: keysValues
+    integer                               :: myDetails
+    integer                               :: nValues
+    ! Executable
+    myDetails = SwitchDetail( switches, 'bool' )
+    if ( present(details) ) myDetails = details
+    
+    if ( myDetails < 1 ) then
+      call dump( countEmpty, runTimeValues%lkeys, runTimeValues%lvalues, &
+        & 'Run-time macros', separator=runTimeValues%sep )
+    else
+      call List2Array( runtimevalues%lkeys, keysValues(2:,1), countEmpty, &
+        & inseparator=runTimeValues%sep, &
+        & ignoreLeadingSpaces=.true. )
+      call List2Array( runtimevalues%lvalues, keysValues(2:,2), countEmpty, &
+        & inseparator=runTimeValues%sep, &
+        & ignoreLeadingSpaces=.true. )
+      nValues = NumStringElements( runtimevalues%lkeys, countEmpty, &
+        & runTimeValues%sep )
+      ! The first line will be the header
+      keysValues(1,1) = 'names'
+      keysValues(1,2) = 'values'
+      nValues = nValues + 1
+      call outputTable( keysValues(1:nValues, :), border='-', headliner='-' )
+    endif
   end subroutine DumpMacros
 
   ! ---------------------------------------  SubstituteRuntimeBoolean  -----
@@ -1265,6 +1293,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.99  2015/02/13 00:19:54  pwagner
+! Nay dump macros more nicely as a Table
+!
 ! Revision 2.98  2014/09/11 18:30:19  pwagner
 ! Removed unused code; corrected parsing of, e.g., f1=true
 !
