@@ -1,0 +1,25 @@
+* readl2gp.py - A module of one function, readl2gp, which mimics the
+                behavior of the IDL routine readl2gpfile.pro.
+
+		Requirements: Python version > 2.4 but less than
+                3.0. PyTables (which itself requires Numpy)
+
+
+		Inputs: filename[, swathname, variableName, PrecisionName]
+		filename: required. Fully qualified name of L2GP file.
+
+		swathName: optional: default=the first swath in the
+                file. For all files named for individual species, this
+                will be the data for that species, i.e. the 'standard
+                product'. As of version 4x, (and for some files in
+                3x), there are multiple swaths. To access these
+                swaths, you must specify the name
+
+		variableName: optional: default=L2gpValue for the
+                indicated (or defaulted) swathName
+
+		precisionName: optional: default=L2gpPrecision for the
+                indicated (or defaulted) swathName
+
+		
+
