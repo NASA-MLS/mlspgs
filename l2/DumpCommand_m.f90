@@ -21,14 +21,14 @@ module DumpCommand_M
   implicit none
   private
 
-  public :: BOOLEANFROMANYGOODRADIANCES
-  public :: BOOLEANFROMANYGOODVALUES
-  public :: BOOLEANFROMCATCHWARNING
-  public :: BOOLEANFROMCOMPARINGQTYS
-  public :: BOOLEANFROMEMPTYGRID, BOOLEANFROMEMPTYSWATH
-  public :: BOOLEANFROMFORMULA
-  public :: INITIALIZEREPEAT, NEXTREPEAT
-  public :: MLSCASE, DUMPCOMMAND, MLSENDSELECT, MLSSELECT, SKIP
+  public :: booleanFromAnyGoodRadiances
+  public :: booleanFromAnyGoodValues
+  public :: booleanFromCatchWarning
+  public :: booleanFromComparingQtys
+  public :: booleanFromEmptygrid, booleanFromEmptySwath
+  public :: booleanFromFormula
+  public :: initializeRepeat, nextRepeat
+  public :: MLSCase, dumpCommand, MLSEndSelect, MLSSelect, skip
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -148,21 +148,21 @@ module DumpCommand_M
 contains
 
   ! --------------------------------  BooleanFromAnyGoodRadiances  -----
-  function BOOLEANFROMANYGOODRADIANCES ( ROOT, CHUNK, FILEDATABASE ) &
-    & result( HASHSIZE )
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
-    use CONSTRUCTQUANTITYTEMPLATES, only: ANYGOODSIGNALDATA
-    use CHUNKS_M, only: MLSCHUNK_T
-    use INIT_TABLES_MODULE, only: F_SIGNAL, F_BOOLEAN
-    use MLSCOMMON, only: MLSFILE_T
-    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSSIGNALS_M, only: GETSIGNALNAME, &
-      & SIGNALS
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE
-    use PARSE_SIGNAL_M, only: PARSE_SIGNAL
-    use STRING_TABLE, only: GET_STRING
-    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+  function booleanFromAnyGoodRadiances ( root, chunk, filedatabase ) &
+    & result( hashsize )
+    use allocate_deallocate, only: deallocate_test
+    use constructQuantityTemplates, only: anyGoodSignalData
+    use chunks_m, only: mlschunk_t
+    use init_tables_module, only: f_signal, f_boolean
+    use MLSCommon, only: mlsfile_t
+    use MLSL2Options, only: runtimeValues
+    use MLSSignals_m, only: getSignalName, &
+      & signals
+    use MLSStringLists, only: numStringElements, putHashElement
+    use MLSStrings, only: lowercase
+    use parse_signal_m, only: parse_signal
+    use string_table, only: get_string
+    use tree, only: decoration, nsons, sub_rosa, subtree
     ! Dummy args
     ! integer, intent(in) :: name
     integer, intent(in) :: root
@@ -249,22 +249,22 @@ contains
     hashsize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
       & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dumpMacros
+      & call dumpBooleans
   end function BooleanFromAnyGoodRadiances
 
   ! -----------------------------------  BooleanFromAnyGoodValues  -----
-  function BOOLEANFROMANYGOODVALUES ( ROOT, VECTORS ) result( THESIZE )
-    use INIT_TABLES_MODULE, only: F_PRECISION, F_QUALITY, &
-      & F_QUANTITY, F_BOOLEAN, F_STATUS
-    use MANIPULATEVECTORQUANTITIES, only: ANYGOODDATAINQTY
-    use MLSKINDS, only: RV
-    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE
-    use STRING_TABLE, only: GET_STRING
-    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
-    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, &
-      & GETVECTORQTYBYTEMPLATEINDEX
+  function BooleanFromAnyGoodValues ( root, vectors ) result( thesize )
+    use init_tables_module, only: f_precision, f_quality, &
+      & f_quantity, f_boolean, f_status
+    use manipulateVectorQuantities, only: anyGoodDatainQty
+    use MLSKinds, only: rv
+    use MLSL2Options, only: runtimeValues
+    use MLSStringLists, only: numStringElements, putHashElement
+    use MLSStrings, only: lowercase
+    use string_table, only: get_string
+    use tree, only: decoration, nsons, sub_rosa, subtree
+    use vectorsModule, only: vector_t, vectorValue_t, &
+      & getVectorQtyByTemplateIndex
     ! Dummy args
     integer, intent(in) :: root
     type (vector_T), dimension(:) :: Vectors
@@ -343,23 +343,23 @@ contains
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
       & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dumpMacros
+      & call dumpBooleans
   end function BooleanFromAnyGoodValues
 
   ! ------------------------------------  BooleanFromCatchWarning  -----
-  function BOOLEANFROMCATCHWARNING ( ROOT ) result( SIZE )
+  function BooleanFromCatchWarning ( root ) result( size )
     ! Called to check if the last command resulted in a warning
     ! (either printed or suppressed)
     ! and optionally if the warning matches a supplied message string
     ! syntax:
     ! CatchWarning, [message='string'], Boolean="name"
-    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_MESSAGE
-    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSMESSAGEMODULE, only: MLSMESSAGEINQUIRE
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE
-    use STRING_TABLE, only: GET_STRING
-    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+    use init_tables_module, only: f_boolean, f_message
+    use MLSL2Options, only: runtimeValues
+    use MLSMessageModule, only: MLSMessageInquire
+    use MLSStringlists, only: numStringElements, putHashElement
+    use MLSStrings, only: lowercase
+    use string_table, only: get_string
+    use tree, only: decoration, nsons, sub_rosa, subtree
     ! Dummy args
     integer, intent(in) :: root
     integer             :: size
@@ -424,25 +424,25 @@ contains
     size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
       & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dumpMacros
+      & call dumpBooleans
   end function BooleanFromCatchWarning
 
   ! -----------------------------------  BooleanFromComparingQtys  -----
-  function BOOLEANFROMCOMPARINGQTYS ( ROOT, VECTORS ) result( THESIZE )
-    use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_A, F_B, F_C, F_BOOLEAN, F_FORMULA
-    use MLSKINDS, only: R8, RV
-    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use MLSSTATS1, only: MLSMAX, MLSMIN, MLSMEAN, MLSMEDIAN
-    use MLSSTRINGLISTS, only: GETSTRINGELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT, &
-      & REPLACESUBSTRING
-    use MLSSTRINGS, only: LOWERCASE
-    use STRING_TABLE, only: GET_STRING
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
-    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, M_FILL, &
-      & GETVECTORQTYBYTEMPLATEINDEX
+  function BooleanFromComparingQtys ( root, vectors ) result( thesize )
+    use expr_m, only: expr
+    use init_tables_module, only: f_a, f_b, f_c, f_boolean, f_formula
+    use MLSKinds, only: r8, rv
+    use MLSL2Options, only: runtimeValues
+    use MLSMessagemodule, only: MLSMessage, MLSMSG_Error
+    use MLSStats1, only: mlsmax, mlsmin, mlsmean, mlsmedian
+    use MLSStringLists, only: getStringElement, numStringElements, puthashelement, &
+      & replacesubstring
+    use MLSStrings, only: lowercase
+    use string_table, only: get_string
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decoration, nsons, sub_rosa, subtree
+    use vectorsModule, only: vector_t, vectorvalue_t, m_fill, &
+      & getVectorQtyByTemplateIndex
     ! Dummy args
     ! Called to endow Boolean with result from comparing
     ! (1) Two quantities (a and b), or
@@ -604,12 +604,12 @@ contains
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
       & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dumpMacros
+      & call dumpBooleans
     call trace_end ( "BooleanFromComparingQtys", cond=.false. )
 
   contains
 
-    elemental logical function ISRELATION( relation, a, b )
+    elemental logical function isRelation( relation, a, b )
       ! Do inputs a and b stand in relation ('>', '<', '=') ?
       ! Args
       character(len=*), intent(in) :: relation ! ('>', '<', '=')
@@ -632,7 +632,7 @@ contains
       ! Evaluate statistical function name of values
       ! masking if appropriate
       ! Args
-      use MLSCOMMON, only: DEFAULTUNDEFINEDVALUE
+      use MLSCommon, only: defaultUndefinedValue
       character(len=*), intent(in)         :: name ! 'min', etc.
       real(rv), dimension(:,:), intent(in) :: values
       character, dimension(:,:), pointer :: MASK
@@ -667,15 +667,15 @@ contains
   end function BooleanFromComparingQtys
 
   ! ------------------------------------- BooleanFromEmptyGrid --
-  function BOOLEANFROMEMPTYGRID ( ROOT, GRIDS ) result( THESIZE )
-    use DUMP_0, only: DUMP
-    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_GRID
-    use GRIDDEDDATA, only: GRIDDEDDATA_T, DUMP
-    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE
-    use STRING_TABLE, only: GET_STRING
-    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+  function BooleanFromEmptyGrid ( root, grids ) result( thesize )
+    use dump_0, only: dump
+    use init_tables_module, only: f_boolean, f_grid
+    use griddedData, only: griddedData_t, dump
+    use MLSL2Options, only: runtimeValues
+    use MLSStringLists, only: numStringElements, putHashElement
+    use MLSStrings, only: lowercase
+    use string_table, only: get_string
+    use tree, only: decoration, nsons, sub_rosa, subtree
     ! Dummy args
     integer, intent(in) :: root
     type (GRIDDEDDATA_T), dimension(:), pointer :: Grids
@@ -727,7 +727,7 @@ contains
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
       & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dumpMacros
+      & call dumpBooleans
   end function BooleanFromEmptyGrid
 
   ! ------------------------------------- BooleanFromEmptySwath --
@@ -738,24 +738,24 @@ contains
   ! (2) Status even
   ! If even one point is useable (a very low bar, admittedly) then
   ! return FALSE
-  function BOOLEANFROMEMPTYSWATH ( ROOT ) result( THESIZE )
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use DUMP_0, only: DUMP
-    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FILE, F_SWATH, F_TYPE, &
-      & L_L2DGG, L_L2GP
-    use L2GPDATA, only: L2GPDATA_T, RGP, L2GPNAMELEN, &
-      & READL2GPDATA, DESTROYL2GPCONTENTS
-    use MLSCOMMON, only: FILENAMELEN
-    use MLSFILES, only: HDFVERSION_5
-    use MLSHDFEOS, only: MLS_SWATH_IN_FILE
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_WARNING
-    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSPCF2, only: MLSPCF_L2GP_END, &
-      & MLSPCF_L2GP_START, MLSPCF_L2DGG_START, MLSPCF_L2DGG_END
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, PUTHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE
-    use STRING_TABLE, only: GET_STRING
-    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
+  function BooleanFromEmptySwath ( root ) result( thesize )
+    use allocate_deallocate, only: allocate_test, deallocate_test
+    use dump_0, only: dump
+    use init_tables_module, only: f_boolean, f_file, f_swath, f_type, &
+      & l_l2dgg, l_l2gp
+    use l2gpdata, only: l2gpdata_t, rgp, l2gpnamelen, &
+      & readl2gpdata, destroyl2gpcontents
+    use MLSCommon, only: filenamelen
+    use MLSFiles, only: hdfversion_5
+    use MLSHdfeos, only: mls_swath_in_file
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+    use MLSL2Options, only: runtimeValues
+    use MLSPcf2, only: mlspcf_l2gp_end, &
+      & MLSPcf_l2gp_start, mlspcf_l2dgg_start, mlspcf_l2dgg_end
+    use MLSStringLists, only: numStringElements, putHashElement
+    use MLSStrings, only: lowercase
+    use string_table, only: get_string
+    use tree, only: decoration, nsons, sub_rosa, subtree
     ! Dummy args
     integer, intent(in) :: root
     integer             :: thesize
@@ -849,11 +849,11 @@ contains
     thesize = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
       & inseparator=runTimeValues%sep )
     if ( verboser ) &
-      & call dumpMacros
+      & call dumpBooleans
   end function BooleanFromEmptySwath
 
   ! ------------------------------------- BooleanFromFormula --
-  function BOOLEANFROMFORMULA ( NAME, ROOT, VECTORS ) result( SIZE )
+  function BooleanFromFormula ( name, root, vectors ) result( size )
     ! Called either when a Boolean is first declared
     ! syntax:
     ! name: Boolean, formula="formula"
@@ -862,26 +862,26 @@ contains
     ! syntax:
     ! Reevaluate, formula="formula", Boolean="name",
     ! [a=a.qty], [b=b.qty], [c=value], [values=..], [/literal]
-    use DUMP_0, only: DUMP
-    use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_A, F_B, F_BOOLEAN, F_C, F_EVALUATE, F_EXPR, &
-      & F_FORMULA, F_INPUTBOOLEAN, F_LABEL, F_LITERAL, F_MANIPULATION, F_VALUES, &
-      & FIELD_FIRST, FIELD_LAST
-    use MANIPULATIONUTILS, only: MANIPULATE
-    use MLSKINDS, only: R8, RV
-    use MLSL2OPTIONS, only: DUMPMACROS, RUNTIMEVALUES
-    use MLSMESSAGEMODULE, only: MLSMSG_ERROR, MLSMESSAGE
-    use MLSSTRINGLISTS, only: EVALUATEFORMULA, GETHASHELEMENT, &
-      & INSERTHASHELEMENT, NUMSTRINGELEMENTS, PUTHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS, WRITEINTSTOCHARS
-    use MORETREE, only: GET_BOOLEAN
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
-    use STRING_TABLE, only: GET_STRING
-    use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
-    use VECTORSMODULE, only: VECTOR_T, VECTORVALUE_T, &
-      & CLONEVECTORQUANTITY, CREATEVECTORVALUE, &
-      & DESTROYVECTORQUANTITYVALUE, DUMP, &
-      & GETVECTORQTYBYTEMPLATEINDEX
+    use dump_0, only: dump
+    use expr_m, only: expr
+    use init_tables_module, only: f_a, f_b, f_boolean, f_c, f_evaluate, f_expr, &
+      & f_formula, f_inputboolean, f_label, f_literal, f_manipulation, f_values, &
+      & field_first, field_last
+    use manipulationutils, only: manipulate
+    use MLSKinds, only: r8, rv
+    use MLSL2Options, only: runtimeValues
+    use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+    use MLSStringLists, only: evaluateFormula, getHashElement, &
+      & insertHashElement, numStringElements, putHashElement
+    use MLSStrings, only: lowercase, readNumsFromChars, writeIntsToChars
+    use moretree, only: get_boolean
+    use quantitytemplates, only: quantityTemplate_t, setupNewQuantityTemplate
+    use string_table, only: get_string
+    use tree, only: decoration, nsons, sub_rosa, subtree
+    use vectorsModule, only: vector_t, vectorValue_t, &
+      & cloneVectorQuantity, createVectorValue, &
+      & destroyVectorQuantityValue, dump, &
+      & getVectorQtyByTemplateIndex
     ! Dummy args
     integer, intent(in) :: NAME
     integer, intent(in) :: ROOT
@@ -1113,29 +1113,29 @@ contains
     size = NumStringElements( runTimeValues%lkeys, countEmpty=countEmpty, &
       & inseparator=runTimeValues%sep )
     if ( verbose ) &
-      & call dumpMacros
+      & call dumpBooleans
   end function BOOLEANFROMFORMULA
 
   ! ------------------------------------------------  DumpCommand  -----
-  subroutine DUMPCOMMAND ( ROOT, QUANTITYTEMPLATESDB, &
-    & VECTORTEMPLATES, VECTORS, FORWARDMODELCONFIGS, HGRIDS, GRIDDEDDATABASE, &
-    & FILEDATABASE, MATRIXDATABASE, HESSIANDATABASE )
+  subroutine DumpCommand ( root, quantityTemplatesDB, &
+    & vectorTemplates, vectors, forwardModelConfigs, hgrids, griddedDatabase, &
+    & fileDatabase, matrixDatabase, hessianDatabase )
 
   ! Process a "dump" command
 
-    use antennapatterns_m, only: dump_antenna_patterns_database
+    use antennaPatterns_m, only: dump_antenna_patterns_database
     use calendar, only: duration_formatted, time_t, tk
     use call_stack_m, only: dump_stack
-    use chunkdivideconfig_m, only: chunkdivideconfig, dump
+    use chunkDivideConfig_m, only: chunkDivideConfig, dump
     use declaration_table, only: dump_a_decl, decls, get_decl, variable
     use dump_0, only: diff, dump, rmsformat
     use expr_m, only: expr
-    use filtershapes_m, only: dump_filter_shapes_database, &
+    use filterShapes_m, only: dump_filter_shapes_database, &
       & dump_dacs_filter_database
     use forwardmodelconfig, only: dump, forwardmodelconfig_t
     use griddeddata, only: diff, dump, griddeddata_t
-    use hessianmodule_1, only: hessian_t, diff, dump
-    use hgridsdatabase, only: dump, hgrid_t
+    use hessianModule_1, only: hessian_t, diff, dump
+    use hGridsDatabase, only: dump, hgrid_t
     use igrf_int, only: dump_gh
     use init_tables_module, only: f_allbooleans, f_allfiles, &
       & f_allforwardmodels, f_allgriddeddata, f_allhessians, f_allhgrids, &
@@ -1165,14 +1165,14 @@ contains
     use mlscommon, only: mlsfile_t
     use MLSFiles, only: dumpMLSFile => dump, getMLSFilebyname
     use MLSKinds, only: r8, rv
-    use MLSL2Options, only: command_line, currentchunknumber, currentphasename, &
-      & l2cfnode, normal_exit_status, runtimevalues, &
-      & dumpmacros, MLSmessage
+    use MLSL2Options, only: command_line, currentChunkNumber, currentPhaseName, &
+      & l2cfnode, normal_exit_status, runtimeValues, &
+      & MLSMessage
     use MLSL2Timings, only: dump_section_timings
-    use MLSmessagemodule, only: MLSmsg_crash, MLSmsg_error, MLSmessagecalls, &
-      & MLSmessageexit
-    use MLSfinds, only: findfirst
-    use MLSsignals_m, only: radiometers, signals, &
+    use MLSMessagemodule, only: MLSMSG_Crash, MLSMSG_Error, MLSmessageCalls, &
+      & MLSMessageExit
+    use MLSFinds, only: findfirst
+    use MLSSignals_m, only: radiometers, signals, &
       & dump, dump_all, getradiometerindex
     use MLSStrings, only: indexes, lowerCase, &
       & readIntsFromChars, stretch, writeIntsToChars
@@ -1180,8 +1180,8 @@ contains
     use moretree, only: get_boolean, get_field_id, get_spec_id
     use pfadatabase_m, only: dump, dump_pfadatabase, dump_pfafiledatabase, &
       & dump_pfastructure, pfadata
-    use pointinggrid_m, only: dump_pointing_grid_database
-    use quantitytemplates, only: dump, quantitytemplate_t
+    use pointingGrid_m, only: dump_pointing_grid_database
+    use quantityTemplates, only: dump, quantityTemplate_t
     use read_mie_m, only: dump_mie
     use spectroscopyCatalog_m, only: catalog, dump, dump_lines_database, lines
     use string_table, only: display_string, get_string
@@ -1190,11 +1190,11 @@ contains
     use trace_m, only: trace_begin, trace_end
     use tree, only: decoration, node_id, nsons, sub_rosa, subtree, where
     use tree_types, only: n_spec_args
-    use vectorsModule, only: vector_t, vectortemplate_t, vectorvalue_t, &
-      & diff, dump, destroyvectorquantityvalue, dumpquantitymask, dumpvectormask, &
-      & gathervectorquantity, getvectorquantity, getvectorqtybytemplateindex, &
-      & getvectorquantityindexbyname, VectorsMemoryInUse
-    use vgridsdatabase, only: dump, vgrids
+    use vectorsModule, only: vector_t, vectorTemplate_t, vectorValue_t, &
+      & diff, dump, destroyVectorQuantityValue, dumpQuantityMask, dumpVectorMask, &
+      & gatherVectorQuantity, getVectorQuantity, getVectorQtyByTemplateIndex, &
+      & getVectorQuantityIndexByName, VectorsMemoryInUse
+    use vGridsDatabase, only: dump, vGrids
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Databases:
@@ -1352,7 +1352,7 @@ contains
         if ( get_boolean(son) ) then
           select case ( fieldIndex )
           case ( f_allBooleans )
-            call dumpMacros
+            call dumpBooleans
           case ( f_allFiles )
             if ( present(fileDataBase) ) then
               call dumpMLSFile ( fileDataBase )
@@ -2066,8 +2066,8 @@ contains
   end subroutine DumpCommand
 
   subroutine  INITIALIZEREPEAT
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: PUTHASHELEMENT
+    use MLSL2Options, only: runtimeValues
+    use MLSStringlists, only: putHashElement
     call PutHashElement ( runTimeValues%lkeys, runTimeValues%lvalues, &
       & 'count', '0', countEmpty=countEmpty, &
       & inseparator=runTimeValues%sep )
@@ -2077,9 +2077,9 @@ contains
   end subroutine  InitializeRepeat
 
   subroutine  NEXTREPEAT
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: GETHASHELEMENT, PUTHASHELEMENT
-    use MLSSTRINGS, only: READINTSFROMCHARS, WRITEINTSTOCHARS
+    use MLSL2Options, only: runtimeValues
+    use MLSStringlists, only: getHashElement, putHashElement
+    use MLSStrings, only: readintsfromchars, writeintstochars
     ! Internal variables
     character(len=64) :: cvalue
     integer :: c
@@ -2118,15 +2118,15 @@ contains
   ! matches the label or Boolean field of the current Case command
   ! or if the current Case command is given the special label 'default',
   ! a wildcard matching anything
-    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL, F_OPTIONS
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: GETHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE, STREQ
-    use MORETREE, only: GET_FIELD_ID
-    use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: NSONS, SUB_ROSA, SUBTREE
+    use init_tables_module, only: f_boolean, f_label, f_options
+    use MLSL2Options, only: runtimeValues
+    use MLSStringlists, only: getHashElement
+    use MLSStrings, only: lowercase, streq
+    use moretree, only: get_field_id
+    use string_table, only: get_string
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: nsons, sub_rosa, subtree
     ! Args
     integer, intent(in) :: root
     ! Internal variables
@@ -2190,15 +2190,15 @@ contains
   subroutine  MLSSELECT ( ROOT )
   ! Fills the global variable selectLabel with
   ! the Label field or value of the Boolean field
-    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_LABEL
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: GETHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE
-    use MORETREE, only: GET_FIELD_ID
-    use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: NSONS, SUB_ROSA, SUBTREE
+    use init_tables_module, only: f_boolean, f_label
+    use MLSL2Options, only: runtimeValues
+    use MLSStringlists, only: getHashElement
+    use MLSStrings, only: lowercase
+    use moretree, only: get_field_id
+    use string_table, only: get_string
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: nsons, sub_rosa, subtree
     ! Args
     integer, intent(in) :: root
     ! Internal variables
@@ -2245,15 +2245,15 @@ contains
   subroutine  MLSENDSELECT ( ROOT )
   ! Resets the global variable MLSSelecting
   ! Optionally puts note about end of selecting in log file
-    use INIT_TABLES_MODULE, only: F_LABEL
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_Info
-    use MLSSTRINGS, only: LOWERCASE
-    use MORETREE, only: GET_FIELD_ID
-    use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: NSONS, SUB_ROSA, SUBTREE
-    ! Args
+    use init_tables_module, only: f_label
+    use MLSMessagemodule, only: MLSMEssage, MLSMSG_info
+    use MLSStrings, only: lowercase
+    use moretree, only: get_field_id
+    use string_table, only: get_string
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: nsons, sub_rosa, subtree
+    ! args
     integer, intent(in) :: root
     ! Internal variables
     character(len=80) :: Label  ! E.g., 'BAND8'
@@ -2300,17 +2300,17 @@ contains
   !   .    .    .
   ! counts(n)      strn
   ! countsn        n
-  logical function SKIP ( ROOT, NAME )
-    use INIT_TABLES_MODULE, only: F_BOOLEAN, F_FORMULA, F_VALUES
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETHASHELEMENT, PUTHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE, READINTSFROMCHARS, WRITEINTSTOCHARS
-    use MORETREE, only: GET_FIELD_ID
-    use STRING_TABLE, only: GET_STRING
-    use TOGGLES, only: GEN, TOGGLE
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: NSONS, SUB_ROSA, SUBTREE
-    ! Args
+  logical function skip ( root, name )
+    use init_tables_module, only: f_boolean, f_formula, f_values
+    use MLSL2Options, only: runtimevalues
+    use MLSStringlists, only: booleanvalue, getHashElement, putHashElement
+    use MLSStrings, only: lowercase, readintsFromChars, writeIntsToChars
+    use moretree, only: get_field_id
+    use string_table, only: get_string
+    use toggles, only: gen, toggle
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: nsons, sub_rosa, subtree
+    ! args
     integer, intent(in)                    :: ROOT ! Root of the parse tree
     character(len=*), intent(in), optional :: NAME
     ! Internal variables
@@ -2345,7 +2345,7 @@ contains
       case (f_Boolean)
         call get_string ( sub_rosa(gson), booleanString, strip=.true. )
         booleanString = lowerCase(booleanString)
-        if ( verbose ) then
+        if ( verboser ) then
           call output( 'Calling BooleanValue', advance='yes' )
           call output( runTimeValues%lkeys, advance='yes' )
           call output( runTimeValues%lvalues, advance='yes' )
@@ -2414,7 +2414,7 @@ contains
 
   ! ----------------------------------------------  AnnounceError  -----
   subroutine AnnounceError ( where, what, string )
-    use MORETREE, only: STARTERRORMESSAGE
+    use moretree, only: startErrorMessage
 
     integer, intent(in) :: What, Where
     character(len=*), intent(in), optional :: String
@@ -2459,9 +2459,9 @@ contains
 
   ! ---------------------------------------------  myBooleanValue  -----
   function myBooleanValue ( FORMULA ) result ( BVALUE )
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: BOOLEANVALUE, GETSTRINGELEMENT
-    use MLSSTRINGS, only: LOWERCASE, READNUMSFROMCHARS
+    use MLSL2Options, only: runtimevalues
+    use MLSStringlists, only: booleanValue, getStringElement
+    use MLSStrings, only: lowercase, readNumsFromChars
     ! Calculate the boolean value according to
     ! (1) The logical value of its formula, if the formula
     !     does not contain the special operators "==" or "/="
@@ -2561,11 +2561,19 @@ contains
     if ( reverse ) bvalue = .not. bvalue  ! If we meant not equal
   end function myBooleanValue
 
+  ! -----------------------------------------  DumpBooleans  -----
+  ! Dump runtime values as table of paired keys and values
+  subroutine DumpBooleans
+    use MLSL2Options, only: dumpMacros
+    call output ( 'Run-time "Booleans"', advance='yes' )
+    call dumpMacros( details=1 )
+  end subroutine DumpBooleans
+
   ! -----------------------------------------  EvaluateExplicitly  -----
   function EvaluateExplicitly ( FORMULA ) result( ITSVALUE )
     ! Evaluate all the terms in a formula
-    use MLSL2OPTIONS, only: RUNTIMEVALUES
-    use MLSSTRINGLISTS, only: LIST2ARRAY, EVALUATEFORMULA, NUMSTRINGELEMENTS
+    use MLSL2Options, only: runtimeValues
+    use MLSStringlists, only: list2Array, evaluateFormula, numStringElements
     ! Args
     character(len=*), intent(in) :: formula
     character(len=MAXRESULTLEN)  :: itsValue
@@ -2588,7 +2596,7 @@ contains
   ! -------------------------------------------  EvaluateTermwise  -----
   function EvaluateTermwise ( FORMULA ) result( ITSVALUE )
     ! Evaluate all the terms in a formula
-    use MLSSTRINGLISTS, only: ARRAY2LIST, LIST2ARRAY, NUMSTRINGELEMENTS
+    use MLSStringLists, only: array2List, list2Array, numStringElements
     ! Args
     character(len=*), intent(in) :: formula
     character(len=MAXRESULTLEN)  :: itsValue
@@ -2622,11 +2630,11 @@ contains
 
   ! ----------------------------------------------  Evaluator_sca  -----
   function Evaluator_sca ( ARG ) result( ITSVALUE )
-    use MLSL2OPTIONS, only: CHECKPATHS, NEED_L1BFILES, &
-      & RUNTIMEVALUES, SKIPRETRIEVAL
-    use MLSL2Options, only: CURRENTCHUNKNUMBER, CURRENTPHASENAME
-    use MLSSTRINGLISTS, only: GETHASHELEMENT
-    use MLSSTRINGS, only: LOWERCASE, WRITEINTSTOCHARS
+    use MLSL2Options, only: checkpaths, need_l1bfiles, &
+      & runtimevalues, skipretrieval
+    use MLSL2Options, only: currentChunkNumber, currentPhaseName
+    use MLSStringlists, only: getHashElement
+    use MLSStrings, only: lowercase, writeIntsToChars
     ! Args
     character(len=*), intent(in) :: arg
     character(len=MAXRESULTLEN)  :: itsValue
@@ -2722,10 +2730,10 @@ contains
   end subroutine outputNow
 
   ! -----------------------------------------  returnFullFileName  -----
-  subroutine RETURNFULLFILENAME ( SHORTNAME, FULLNAME, &
-    & PCF_START, PCF_END )
-    use MLSFILES, only: GETPCFROMREF
-    use MLSL2OPTIONS, only: TOOLKIT
+  subroutine returnfullfilename ( shortname, fullname, &
+    & pcf_start, pcf_end )
+    use MLSFiles, only: getPCFromRef
+    use MLSL2Options, only: toolkit
     ! Given a possibly-abbreviated shortName, return the full name
     ! as found in the PCF
     ! (w/o toolkit panoply, simply return shortName)
@@ -2803,6 +2811,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.119  2015/02/13 00:21:17  pwagner
+! Nay dump Booleans more nicely as a Table
+!
 ! Revision 2.118  2014/09/05 00:48:13  vsnyder
 ! Get field value correctly.  Remove USE for unreferenced names.  Add dumps
 ! for MatricesMemoryInUse, TotalMatrixSizes, TotalVectorSizes,

@@ -477,6 +477,19 @@ contains
 
   subroutine OUTPUT_CHAR_NOCR_INDENTED ( CHARS, &
     & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, DONT_STAMP )
+    ! -------------------------------------------------------------------
+    ! We have arrived
+    ! The workhorse
+    ! We have taken care of linefeeds, indents, and numeric conversions
+    ! so now we do one of
+    ! (1) go silent if we are skipping all output
+    ! (2) write to a file unit if PrUnit is to be taken literally
+    ! (3) append to our accumulated outputLines if we are deferring output
+    ! (4) print immediately if we have been switched to stdout
+    ! (5) wade through a thicket of sub-choices involving possibly
+    !     (a) time stamps, either individually or grouped
+    !     (b) logging, either instead of printing or in addition
+    ! -------------------------------------------------------------------
     use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
@@ -506,16 +519,22 @@ contains
     ! Executable
     n_chars = len(chars)
     alreadyLogged = .false.
-    if ( SILENTRUNNING ) go to 9
+    if ( SILENTRUNNING ) go to 9 ! When we skip all output
     my_adv = Advance_is_yes_or_no(advance)
     ! print *, 'outputOptions%prUnit: ', outputOptions%prUnit
     ! print *, 'outputOptions%prUnitLiteral: ', outputOptions%prUnitLiteral
+    ! Do any special orders apply to this output?
     if ( outputOptions%prUnitLiteral ) then
       write( outputOptions%prUnit, '(a)', advance=my_adv ) chars
       ! print *, chars
       go to 9
-    end if
-    if ( SWITCHTOSTDOUT ) then
+    elseif ( outputOptions%prunit ==  OUTPUTLINESPRUNIT ) then
+      ! Append to outputLines; maybe print later on
+      call append_chars( outputLines, chars )
+        if ( my_adv == 'yes' ) &
+          call append_chars( outputLines, achar(outputOptions%NewLineVal) )
+      go to 9
+    elseif ( SWITCHTOSTDOUT ) then
       write( *, '(a)', advance=my_adv ) chars
       ! print *, chars
       go to 9
@@ -625,19 +644,6 @@ contains
           & my_chars(1:n_chars), &
           & advance=my_adv )
       end if
-    elseif ( outputOptions%prunit ==  OUTPUTLINESPRUNIT ) then
-      ! Append to outputLines; maybe print later on
-      !   if ( len_trim(chars) > 0 ) then
-      !     if ( len_trim(outputLines) > 0 ) then
-      !       outputLines = trim(outputLines) // trim(chars)
-      !     else
-      !       outputLines = chars
-      !     endif
-      call append_chars( outputLines, chars )
-        if ( my_adv == 'yes' ) &
-          call append_chars( outputLines, achar(outputOptions%NewLineVal) )
-      !    & outputLines = trim(outputLines) // achar(outputOptions%NewLineVal) ! add <cr>
-      ! endif
     end if
     
     ! print *, 'alreadyLogged: ', alreadyLogged
@@ -1441,6 +1447,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.119  2015/02/13 00:16:24  pwagner
+! Reordered tests in OUTPUT_CHAR_NOCR_INDENTED more understandably, we hope
+!
 ! Revision 2.118  2015/02/10 00:59:36  pwagner
 ! Repaired error introduced by last change
 !
