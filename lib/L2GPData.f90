@@ -29,7 +29,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSFillvalues, only: extractarray, gatherarray, &
     & isfillvalue, replacefillvalues
   use MLSHDFeos, only: hsize
-  use MLSMessagemodule, only: MLSmsg_error, MLSmsg_warning, MLSmessage
+  use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
   use MLSNumerics, only: findinrange
   use MLSFinds, only: findfirst, findlast, findunique
   use MLSSets, only: findintersection, intersection
@@ -2285,8 +2285,12 @@ contains ! =====     Public Procedures     =============================
     call output('%  different', advance = 'yes')
   end subroutine DiffStatsInt
 
+  ! ------------------------------------------ DUMP_L2GP ------------
+  ! This family of routines Dumps l2gp datatype(s) according to
+  ! their number (singly or an array of them)
+  ! whole or subsetted
+  ! the data or its metadata (i.e., attributes)
   ! ------------------------------------------ DUMP_L2GP_DATABASE ------------
-
   subroutine DUMP_L2GP_DATABASE ( L2gp, &
     & Name, ColumnsOnly, Details, Fields, options )
 
@@ -2317,8 +2321,6 @@ contains ! =====     Public Procedures     =============================
   end subroutine DUMP_L2GP_DATABASE
 
   ! ------------------------------------------ DUMP_L2GP_CHUNKS ------------
-
-
   subroutine DUMP_L2GP_CHUNKS ( fullL2gp, Chunks, &
     & ColumnsOnly, Details, Fields, Width, options )
     ! Dump selected chunks of an l2gp
@@ -2358,7 +2360,6 @@ contains ! =====     Public Procedures     =============================
   end subroutine DUMP_L2GP_CHUNKS
 
   ! ------------------------------------------ DUMPL2GPData_RANGES ------------
-
   subroutine DUMPL2GPData_RANGES ( fullL2gp, &
     & geoBoxNames, geoBoxLowBound, geoBoxHiBound, &
     & Pressures, Latitudes, Longitudes, Times, Chunks, ColumnsOnly, &
@@ -2414,8 +2415,6 @@ contains ! =====     Public Procedures     =============================
   end subroutine DUMPL2GPData_RANGES
 
   ! ------------------------------------------ DUMP_L2GP ------------
-
-
   subroutine Dump_L2GP ( L2gp, ColumnsOnly, Details, Fields, Width, options )
     ! Dump an l2gp
     ! Either according to level of detail set by Details
@@ -2622,12 +2621,12 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_L2GP
     
   !----------------------------------------  DumpL2GP_attributes_hdf5  -----
-  subroutine DumpL2GP_attributes_hdf5(l2FileHandle, l2gp, swathName)
+  subroutine DumpL2GP_attributes_hdf5( l2FileHandle, l2gp, swathName )
 
-  use hdfeos5, only: he5t_native_real, he5t_native_double
-  use he5_swapi, only: he5_swrdattr, he5_swrdlattr
-  use mlshdfeos, only: mls_swattach, mls_swdetach
-  use pcfhdr, only:  globalattributes_t, he5_readglobalattr
+  use HDFEOS5, only: he5t_native_real, he5t_native_double
+  use HE5_SWAPI, only: he5_swrdattr, he5_swrdlattr
+  use MLSHDFEOS, only: mls_swattach, mls_swdetach, he5_ehrdglatt
+  use PCFHdr, only:  globalAttributes_t, he5_readGlobalAttr
     ! Brief description of subroutine
     ! This subroutine dumps the attributes for an l2gp
     ! These include
@@ -2637,8 +2636,8 @@ contains ! =====     Public Procedures     =============================
     ! Data field attributes
     ! Arguments
 
-    type( L2GPData_T ), intent(inout) :: l2gp
     integer, intent(in) :: l2FileHandle ! From swopen
+    type( L2GPData_T ), intent(inout) :: l2gp
     character (len=*), optional, intent(IN) :: swathName ! Defaults->l2gp%name
 
     ! Variables
@@ -2707,21 +2706,34 @@ contains ! =====     Public Procedures     =============================
     call List2Array(GeolocationUnits, theUnits, .true.)
 
     ! - -   G l o b a l   A t t r i b u t e s   - -
-    call output ( '(Global Attributes) ', advance='yes')
-    call he5_readglobalattr(l2FileHandle, gAttributes, &
-     & ProcessLevel, DayofYear, TAI93At0zOfGranule, status)
+    call output ( '(Global Attributes) ', advance='yes' )
+    call he5_readglobalattr( l2FileHandle, gAttributes, &
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule, status )
     if ( status /= 0 ) then
       call output ('No global attributes found in file', advance='yes')
     else
+      ! We stopped reading MiscNotes in the PCFHdr module to avoid
+      ! letting the master task step on the value each slave had carefully
+      ! written there
+      ! Therefore, we must read it here , now
+      ! (Sigh)
+      status = he5_EHrdglatt( l2FileHandle, &
+      & 'MiscNotes', &
+      &  gAttributes%MiscNotes )
       call dump(gAttributes%orbNum, 'Orbit numbers')
       call dump(gAttributes%orbPeriod, 'Orbit Periods')
-      call output ('InstrumentName: ' // trim( gAttributes%InstrumentName  ))
-      call output ('Process level: ' // trim(  gAttributes%ProcessLevel    ))
-      ! call output ('Input version: ' // trim(  gAttributes%inputVersion    ))
-      call output ('PGE version: ' // trim(    gAttributes%PGEVersion      ))
-      call output ('Misc Notes: ' // trim(     gAttributes%MiscNotes      ))
-      call output ('Start UTC: ' // trim(      gAttributes%StartUTC        ))
-      call output ('End UTC: ' // trim(        gAttributes%EndUTC          ))
+      call output ('InstrumentName: ' // trim( gAttributes%InstrumentName  ), &
+        & advance='yes' )
+      call output ('Process level: ' // trim(  gAttributes%ProcessLevel    ), &
+        & advance='yes' )
+      call output ('PGE version: ' // trim(    gAttributes%PGEVersion      ), &
+        & advance='yes' )
+      call output ('Misc Notes: ' // trim(     gAttributes%MiscNotes      ), &
+        & advance='yes' )
+      call output ('Start UTC: ' // trim(      gAttributes%StartUTC        ), &
+        & advance='yes' )
+      call output ('End UTC: ' // trim(        gAttributes%EndUTC          ), &
+        & advance='yes' )
       call dump_int ( gAttributes%GranuleMonth, 'Granule month:' )
       call dump_int ( gAttributes%GranuleDay, 'Granule day:' )
       call dump_int ( gAttributes%GranuleYear, 'Granule year:' )
@@ -5219,6 +5231,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.208  2014/12/11 21:25:57  pwagner
+! Make Asc/Desc Mode -999 for crashed chunks
+!
 ! Revision 2.207  2014/12/10 21:27:49  pwagner
 ! Commented-out unused stuff
 !
