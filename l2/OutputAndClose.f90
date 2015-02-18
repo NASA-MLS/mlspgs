@@ -17,6 +17,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 !==============================================================================
 
   use hdf, only: dfacc_rdonly, dfacc_rdwr
+  use highOutput, only: letsDebug, outputNamedValue
   use MLSFiles, only: hdfversion_5, addinitializemlsfile, dump, &
     & getmlsfilebyname, getmlsfilebytype, getpcfromref, &
     & mls_closefile, mls_exists, mls_inqswath, mls_openfile, &
@@ -133,7 +134,8 @@ contains ! =====     Public Procedures     =============================
     ! - - - Local declarations - - -
 
     type (MLSChunk_T) ::  AllChunks     ! in one
-    logical, parameter :: DEBUG = .false.
+    ! logical, parameter :: DEBUG = .false.
+    logical :: debug
     logical :: additional
     integer :: delay                    ! how many microseconds to sleep
     logical :: DESTROY
@@ -180,6 +182,7 @@ contains ! =====     Public Procedures     =============================
     if ( timing ) call time_now ( t1 )
     nullify ( dontPack )
 
+    debug = LetsDebug ( 'output', 0 )
     error = 0
 
     if (switchDetail( switches, 'pro') > -1 ) then
@@ -558,7 +561,8 @@ contains ! =====     Public Procedures     =============================
   ! Internal variables
   integer :: baseIndex
   logical, parameter :: countEmpty = .true.
-  logical, parameter :: DEBUG = .false.
+  ! logical, parameter :: DEBUG = .false.
+  logical :: debug
   character(len=*), parameter :: L2GPHEAD = 'L2GP-'
   integer :: field_no
   character (len=132) :: FILE_BASE
@@ -576,6 +580,7 @@ contains ! =====     Public Procedures     =============================
   character(len=MAXSWATHNAMESBUFSIZE) :: sdList
   integer :: Version
   ! Executable
+  debug = LetsDebug ( 'output', 0 )
   nullify(quantityNames)
   l2aux_mcf = mlspcf_mcf_l2dgm_start
   l2dgg_mcf = mlspcf_mcf_l2dgg_start
@@ -797,7 +802,6 @@ contains ! =====     Public Procedures     =============================
     ! Do the work of copying named quantity data to a named file
     use expr_m, only: expr
     use HGridsdatabase, only: HGrid_t, dump
-    use highoutput, only: outputnamedvalue
     use init_tables_module, only: f_create, &
       & f_exclude, f_file, f_hdfversion, f_hgrid, &
       & f_ifanycrashedchunks, f_inputfile, f_inputtype, &
@@ -829,7 +833,8 @@ contains ! =====     Public Procedures     =============================
     type (MLSFile_T), dimension(:), pointer   :: FILEDATABASE
     ! Local variables
     logical :: create
-    logical, parameter :: DEBUG = .false.
+    ! logical, parameter :: DEBUG = .false.
+    logical :: debug
     character (len=MAXSWATHNAMESBUFSIZE) :: EXCLUDE   ! From the exclude= field
     integer :: FIELD_INDEX              ! F_... field code
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
@@ -866,6 +871,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Units(2)                 ! Units of value returned by EXPR
     double precision :: Value(2)        ! Value returned by EXPR
     ! Executable
+    debug = LetsDebug ( 'output', 0 )
     hdfVersion = DEFAULT_HDFVERSION_WRITE
     exclude = ''
     sdList = '*' ! This is wildcard meaning 'every sd or swath'
@@ -1176,7 +1182,8 @@ contains ! =====     Public Procedures     =============================
     type(MLSFile_T), dimension(:), pointer  :: filedatabase
     logical, intent(in)                     :: additional
     ! Local variables
-    logical, parameter :: DEBUG = .false.
+    ! logical, parameter :: DEBUG = .false.
+    logical :: debug
     character (len=FileNameLen) :: FullFilename
     integer :: FileHandle
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
@@ -1189,6 +1196,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Version
 
     ! Executable
+    debug = LetsDebug ( 'output', 0 )
     Version = 1
     OUTPUTTYPESTR = 'l2aux'
     ! Get the l2aux file name from the PCF
@@ -1229,7 +1237,7 @@ contains ! =====     Public Procedures     =============================
       call GetHDF5Attribute ( outputFile%FileID%grp_id, attrname, str )
       str = trim(str) // attrValue
       skipIfAlreadyThere = .false.
-      call output( 'Updated glob attr to ' // trim(str), advance='yes' )
+      if ( debug ) call output( 'Updated glob attr to ' // trim(str), advance='yes' )
     endif
     call MakeHDF5Attribute( outputFile%FileID%grp_id, &
       & attrName, str, skip_if_already_there=skipIfAlreadyThere )
@@ -1259,7 +1267,8 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in)                     :: additional
 
     ! Local variables
-    logical, parameter :: DEBUG = .false.
+    ! logical, parameter :: DEBUG = .false.
+    logical :: debug
     character (len=FileNameLen) :: FullFilename
     integer :: FileHandle
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
@@ -1274,6 +1283,7 @@ contains ! =====     Public Procedures     =============================
     logical, parameter :: plainHDF = .true.
 
     ! Executable
+    debug = LetsDebug ( 'output', 0 )
     Version = 1
     call get_string ( lit_indices(output_Type), outputTypeStr, strip=.true. )
     ! Get the l2gp file name from the PCF
@@ -1328,10 +1338,10 @@ contains ! =====     Public Procedures     =============================
       if ( additional ) then
         call GetHDF5Attribute ( outputFile, attrname, str )
         str = trim(str) // attrValue
-        call output( 'Updated glob attr to ' // trim(str), advance='yes' )
+        if ( debug ) call output( 'Updated glob attr to ' // trim(str), advance='yes' )
       else
         str = attrValue
-        call output( 'Set glob attr to ' // trim(str), advance='yes' )
+        if ( debug ) call output( 'Set glob attr to ' // trim(str), advance='yes' )
       endif
       call MakeHDF5Attribute( outputFile%FileID%grp_id, &
         & attrName, str, skip_if_already_there = .false. )
@@ -1739,11 +1749,13 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in)           :: pcf_start
     integer, intent(in)           :: pcf_end
     ! Internal variables
-    logical, parameter :: DEBUG = .false.
+    ! logical, parameter :: DEBUG = .false.
+    logical :: debug
     integer :: FileHandle
     integer :: returnStatus
     integer :: Version
     ! Executable
+    debug = LetsDebug ( 'output', 0 )
     if ( TOOLKIT .and. pcf_end >= pcf_start ) then
       Version = 1
       FileHandle = GetPCFromRef(shortName, pcf_start, &
@@ -1765,7 +1777,6 @@ contains ! =====     Public Procedures     =============================
     use chunkdivide_m, only: obstructions
     use directwrite_m, only: directdata_t, dump
     use hdf5, only: h5gclose_f, h5gopen_f
-    use highoutput, only: outputnamedvalue
     use init_tables_module, only: l_l2aux, l_l2dgg
     use intrinsic, only: l_swath, l_hdf
     use l2auxdata, only: cpl2auxdata, phasenameattributes
@@ -2115,6 +2126,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.190  2015/02/18 00:29:03  pwagner
+! Debugging-type info shown only if debugging
+!
 ! Revision 2.189  2014/11/04 01:23:50  pwagner
 ! Worked around hdfeos bug in implementing /additional for swath file attributes
 !
