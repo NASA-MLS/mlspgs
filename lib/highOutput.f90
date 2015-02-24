@@ -809,6 +809,7 @@ contains
     integer :: mySkips,  rightpadding
     character(len=1) :: myFillChar
     ! Executable
+    rightpadding = 0
     if ( present(columnRange) ) then
       myFullColumnRange = columnRange
     else
@@ -2003,6 +2004,9 @@ contains
 end module HIGHOUTPUT
 
 ! $Log$
+! Revision 2.8  2015/02/24 23:32:22  pwagner
+! Make sure rightpadding defined in headLine
+!
 ! Revision 2.7  2015/02/13 00:17:49  pwagner
 ! Added procedure to output 2d array as Table
 !
