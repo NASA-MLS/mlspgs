@@ -185,6 +185,7 @@ geodAngle
 geodAlt
 geodLat
 geolocation
+globalAttributes
 gph
 gphQuantity
 grid
@@ -529,6 +530,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.253  2015/02/27 23:13:11  pwagner
+# May Dump global attributes
+#
 # Revision 2.252  2015/02/05 21:55:21  vsnyder
 # Add stacked and xGrid
 #
