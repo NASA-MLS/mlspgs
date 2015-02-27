@@ -1146,8 +1146,9 @@ contains
       & f_callstack, f_chunkdivide, f_chunknumber, f_clean, &
       & f_commandline, f_count, f_crashburn, &
       & f_details, f_dacsfiltershapes, &
-      & f_file, f_filtershapes, f_forwardmodel, f_grid, f_hessian, &
-      & f_hgrid, f_igrf, f_l2pc, f_lines, f_mark, f_mask, f_matrix, f_memory, &
+      & f_file, f_filtershapes, f_forwardmodel, f_globalAttributes, f_grid, &
+      & f_hessian, f_hgrid, f_igrf, &
+      & f_l2pc, f_lines, f_mark, f_mask, f_matrix, f_memory, &
       & f_mietables, f_options, f_pfadata, f_pfafiles, f_pfanum, f_pfastru, &
       & f_phasename, f_pointinggrids, f_quantity, f_reset, &
       & f_signals,  f_spectroscopy, f_stack, f_start, f_stop, f_stride, &
@@ -1178,6 +1179,7 @@ contains
       & readIntsFromChars, stretch, writeIntsToChars
     use MLSStringLists, only: getHashElement, optionDetail, switchDetail
     use moretree, only: get_boolean, get_field_id, get_spec_id
+    use PCFHdr, only: dumpGlobalAttributes
     use pfadatabase_m, only: dump, dump_pfadatabase, dump_pfafiledatabase, &
       & dump_pfastructure, pfadata
     use pointingGrid_m, only: dump_pointing_grid_database
@@ -1345,7 +1347,7 @@ contains
         & f_allRadiometers, f_allSignals, f_allSpectra, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
         & f_callStack, f_chunkDivide, f_chunkNumber, f_commandLine, f_crashBurn, &
-        & f_DACSfilterShapes, f_filterShapes, f_igrf, f_memory, &
+        & f_DACSfilterShapes, f_filterShapes, f_globalAttributes, f_igrf, f_memory, &
         & f_MieTables, f_pfaFiles, f_pfaStru, f_phaseName, f_pointingGrids, &
         & f_stop, f_stopWithError, f_time, f_totalMatrixSizes, &
         & f_totalVectorSizes )
@@ -1483,6 +1485,8 @@ contains
             call dump_dacs_filter_database ( son )
           case ( f_filterShapes )
             call dump_filter_shapes_database ( son )
+          case ( f_globalAttributes )
+            call dumpGlobalAttributes
           case ( f_igrf )
             call dump_gh ( details, optionsString )
           case ( f_memory )
@@ -2811,6 +2815,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.120  2015/02/27 23:13:52  pwagner
+! May Dump global attributes
+!
 ! Revision 2.119  2015/02/13 00:21:17  pwagner
 ! Nay dump Booleans more nicely as a Table
 !
