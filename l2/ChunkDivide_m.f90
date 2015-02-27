@@ -14,38 +14,38 @@ module ChunkDivide_m
   ! This module replaces the old ScanDivide, and is a new approach to dividing
   ! the data into chunks.
 
-  use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use allocate_deallocate, only: allocate_test, deallocate_test
   use ChunkDivideConfig_m, only: ChunkDivideConfig_t, ChunkDivideConfig, Dump, &
     & Dump_CriticalSignals
-  use CHUNKS_M, only: MLSCHUNK_T, DUMP
-  use DUMP_0, only: DUMP
-  use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INIT_TABLES_MODULE, only: F_CRASHIFPHINOTMONO, &
-      & F_CRITICALBANDS, F_CRITICALMODULES, F_CRITICALSIGNALS, &
-      & F_EXCLUDEPOSTOVERLAPS, F_EXCLUDEPRIOROVERLAPS, &
-      & F_HOMEMODULE, F_HOMEGEODANGLE, &
-      & F_MAXLENGTH, F_MAXORBY, F_METHOD, F_NOCHUNKS, F_NOSLAVES, &
-      & F_OVERLAP, F_LOWEROVERLAP, &
-      & F_SAVEOBSTRUCTIONS, F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, &
-      & F_SKIPL1BCHECK, F_UPPEROVERLAP, &
-      & FIELD_FIRST, FIELD_LAST, L_BOTH, L_EITHER, L_EVEN, &
-      & L_FIXED, F_MAXGAP, L_ORBITAL, L_PE, S_CHUNKDIVIDE, S_Dump
-  use INTRINSIC, only: L_NONE, FIELD_INDICES, LIT_INDICES, PHYQ_ANGLE, &
-      & PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
-  use L1BDATA, only: L1BDATA_T, READL1BDATA, GETL1BFILE, namelen, &
-      & ASSEMBLEL1BQTYNAME, PRECISIONSUFFIX, DEALLOCATEL1BDATA
-  use MLSCOMMON, only: MLSFILE_T, TAI93_RANGE_T
-  use MLSFILES, only: DUMP, GETMLSFILEBYTYPE, MLS_OPENFILE
-  use MLSKINDS, only: R8, RP
-  use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
-  use MLSNUMERICS, only: HUNT
-  use MLSFINDS, only: FINDFIRST
-  use MLSSIGNALS_M, only: MODULES
-  use MLSSTRINGLISTS, only: SWITCHDETAIL
-  use OUTPUT_M, only: BLANKS, OUTPUT, &
-      & REVERTOUTPUT, SWITCHOUTPUT
-  use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-  use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+  use chunks_m, only: mlschunk_t, dump
+  use dump_0, only: dump
+  use highoutput, only: outputnamedvalue
+  use init_tables_module, only: f_crashifphinotmono, &
+      & f_criticalbands, f_criticalmodules, f_criticalsignals, &
+      & f_excludepostoverlaps, f_excludeprioroverlaps, &
+      & f_homemodule, f_homegeodangle, &
+      & f_maxlength, f_maxorby, f_method, f_nochunks, f_noslaves, &
+      & f_overlap, f_loweroverlap, &
+      & f_saveobstructions, f_scanlowerlimit, f_scanupperlimit, &
+      & f_skipl1bcheck, f_upperoverlap, &
+      & field_first, field_last, l_both, l_either, l_even, &
+      & l_fixed, f_maxgap, l_orbital, l_pe, s_chunkdivide, s_dump
+  use intrinsic, only: l_none, field_indices, lit_indices, phyq_angle, &
+      & phyq_dimensionless, phyq_length, phyq_mafs, phyq_time
+  use l1bdata, only: l1bdata_t, readl1bdata, getl1bfile, namelen, &
+      & assemblel1bqtyname, precisionsuffix, deallocatel1bdata
+  use MLSCommon, only: mlsfile_t, tai93_range_t
+  use MLSFiles, only: dump, getmlsfilebytype, mls_openfile
+  use MLSKinds, only: r8, rp
+  use MLSMessageModule, only: MLSMessage, MLSMsg_error, MLSMsg_warning
+  use MLSNumerics, only: hunt
+  use MLSFinds, only: findfirst
+  use MLSSignals_m, only: modules
+  use MLSStringlists, only: switchDetail
+  use output_m, only: blanks, output, &
+      & revertOutput, switchOutput
+  use string_table, only: get_string, display_string
+  use toggles, only: gen, levels, switches, toggle
 
   implicit none
   private
@@ -120,7 +120,7 @@ contains ! ===================================== Public Procedures =====
 
   !----------------------------------------  DestroyChunkDatabase  -----
   subroutine DestroyChunkDatabase ( chunks )
-    use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, Test_Deallocate
+    use allocate_deallocate, only: deallocate_test, Test_Deallocate
     use Toggles, only: Gen, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
 
@@ -179,19 +179,19 @@ contains ! ===================================== Public Procedures =====
 
     use Allocate_Deallocate, only: Test_Deallocate
     use DumpCommand_m, only: DumpCommand
-    use EXPR_M, only: EXPR
-    use LEXER_CORE, only: PRINT_SOURCE
-    use MLSCOMMON, only: TAI93_RANGE_T
-    use MLSHDF5, only: GETHDF5ATTRIBUTE
-    use MLSL2OPTIONS, only: NEED_L1BFILES, SPECIALDUMPFILE
-    use MLSL2TIMINGS, only: SECTION_TIMES, TOTAL_TIMES
-    use MORETREE, only: GET_FIELD_ID, GET_SPEC_ID
-    use Next_Tree_Node_m, only: Next_Tree_Node, Next_Tree_Node_State
-    use TIME_M, only: TIME_NOW
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA, WHERE_AT=>WHERE
-    use Tree_Types, only: N_Named
-    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+    use expr_m, only: expr
+    use lexer_core, only: print_source
+    use MLSCommon, only: tai93_range_t
+    use MLSHdf5, only: gethdf5attribute
+    use MLSL2options, only: need_l1bfiles, specialdumpfile
+    use MLSL2timings, only: section_times, total_times
+    use moretree, only: get_field_id, get_spec_id
+    use next_tree_node_m, only: next_tree_node, next_tree_node_state
+    use time_m, only: time_now
+    use trace_m, only: trace_begin, trace_end
+    use tree, only: decoration, node_id, nsons, subtree, sub_rosa, where_at=>where
+    use tree_types, only: n_named
+    use hdf5, only: h5gclose_f, h5gopen_f
 
     integer, intent(in) :: ROOT    ! Root of the L2CF tree for ChunkDivide
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
@@ -374,7 +374,7 @@ contains ! ===================================== Public Procedures =====
       chunks(chunk)%chunkNumber = chunk
     end do
 
-    if ( swLevel > -1 ) call dump ( chunks )
+    if ( swLevel > 0 ) call dump ( chunks )
     if ( specialDumpFile /= ' ' ) call revertOutput
     call trace_end ( "ChunkDivide", cond=toggle(gen) )
 
@@ -967,8 +967,8 @@ contains ! ===================================== Public Procedures =====
   ! for each of the_mafs between maf and maf2
   ! Arguments
 
-    use MLSKINDS, only: RK => R8
-    use MLSSIGNALS_M, only: GETSIGNALNAME
+    use MLSKinds, only: rk => r8
+    use MLSSignals_m, only: getsignalname
 
     integer, intent(in)                            :: signal
     integer, intent(in)                            :: sideband
@@ -1044,8 +1044,8 @@ contains ! ===================================== Public Procedures =====
   end function ANY_GOOD_SIGNALDATA
 
   logical function isNotACriticalBand( band )
-    use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, STRINGELEMENT
-    use MLSSTRINGS, only: READINTSFROMCHARS
+    use MLSStringlists, only: numStringElements, stringElement
+    use MLSStrings, only: readintsfromchars
     ! Args
     integer, intent(in) :: band
     ! Internal variables
@@ -1065,7 +1065,7 @@ contains ! ===================================== Public Procedures =====
   subroutine smoothOutDroppedMAFs(field, wasSmoothed, monotonize)
     ! detect any fillValues--replace them with nearest neighbor values
     ! or, optionally, detect and correct any departures from monotone growth
-  use MLSFillValues, only: ISFILLVALUE
+  use MLSFillValues, only: isfillvalue
     ! Args
     real(r8), intent(inout)                      :: field(:,:,:)
     logical, dimension(:), optional, intent(out) :: wasSmoothed
@@ -1304,9 +1304,9 @@ contains ! ===================================== Public Procedures =====
 
     ! ----------------------------------------- ChooseCriticalSignals -----------
     subroutine ChooseCriticalSignals ( criticalSignals )
-      use MLSSIGNALS_M, only: GETSIGNALNAME, SIGNALS
-      use MLSSTRINGLISTS, only: CATLISTS, LIST2ARRAY
-      use MLSSTRINGS, only: LOWERCASE
+      use MLSSignals_m, only: getsignalname, signals
+      use MLSStringlists, only: catlists, list2array
+      use MLSStrings, only: lowercase
 
       ! Args
       character(len=160), dimension(:), pointer :: criticalSignals
@@ -1371,11 +1371,11 @@ contains ! ===================================== Public Procedures =====
 
     ! ----------------------------------------- NoteL1BRADChanges -----
     subroutine NoteL1BRADChanges ( obstructions, mafRange, filedatabase )
-      use MLSSIGNALS_M, only: DUMPSIGNALS=>DUMP, GETSIGNALINDEX, GETSIGNALNAME, &
-        & GETNAMEOFSIGNAL, SIGNALS
-      use MLSSTRINGLISTS, only: NUMSTRINGELEMENTS, GETSTRINGELEMENT
-      use MLSSTRINGS, only: LOWERCASE
-      use PARSE_SIGNAL_M, only: PARSE_SIGNAL
+      use MLSSignals_m, only: dumpsignals=>dump, getsignalindex, getsignalname, &
+        & GetNameofsignal, signals
+      use MLSStringlists, only: numstringelements, getstringelement
+      use MLSStrings, only: lowercase
+      use parse_signal_m, only: parse_signal
       ! This routine notes any lack of good data for one of the
       ! signals, and, depending on sensitivity,
       ! augments the database of obstructions
@@ -1744,8 +1744,8 @@ contains ! ===================================== Public Procedures =====
     subroutine SurveyL1BData ( processingRange, filedatabase, mafRange )
       ! This goes through the L1B data files and tries to spot possible
       ! obstructions.
-      use MLSFillValues, only: ISMONOTONIC
-      use MLSL2OPTIONS, only: SHAREDPCF
+      use MLSFillValues, only: isMonotonic
+      use MLSL2Options, only: sharedPCF
       type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
       type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
       type (MAFRange_T), intent(out) :: MAFRange
@@ -2584,7 +2584,7 @@ contains ! ===================================== Public Procedures =====
      end function
 
   function what_options( clean, transpose, trim ) result( options )
-    use MLSStrings, only: TRIM_SAFE
+    use MLSStrings, only: trim_safe
     logical, optional, intent(in) :: clean
     logical, optional, intent(in) :: transpose
     logical, optional, intent(in) :: trim
@@ -2614,6 +2614,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.116  2015/02/27 23:18:47  pwagner
+! Require -Schu1 or greater to dump chunks
+!
 ! Revision 2.115  2014/09/05 00:36:15  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Add some
 ! tracing.
