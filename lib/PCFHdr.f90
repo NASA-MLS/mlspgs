@@ -220,14 +220,15 @@ contains
       DayOfYear = GranuleDayOfYear_fun()
       call outputNamedValue('Orbit numbers', GlobalAttributes%orbNum)
       call outputNamedValue('Orbit Periods', GlobalAttributes%orbPeriod)
-      call output ('ProductionLocation: '  // trim( GlobalAttributes%productionLoc          ))
-      call output ('InstrumentName: ' // trim( GlobalAttributes%InstrumentName  ))
-      call output ('Process level: ' // trim(  GlobalAttributes%ProcessLevel    ))
-      call output ('PGE version: ' // trim(    GlobalAttributes%PGEVersion      ))
-      call output ('Misc Notes: ' // trim(     GlobalAttributes%MiscNotes      ))
-      call output ('Start UTC: ' // trim(      GlobalAttributes%StartUTC        ))
-      call output ('End UTC: ' // trim(        GlobalAttributes%EndUTC          ))
-      call output ('DOI: '    // trim(         GlobalAttributes%DOI          ))
+      call output ('ProductionLocation: '  // trim( GlobalAttributes%productionLoc ), advance='yes' )
+      call output ('HostName:       ' // trim( GlobalAttributes%HostName  ), advance='yes' )
+      call output ('InstrumentName: ' // trim( GlobalAttributes%InstrumentName  ), advance='yes' )
+      call output ('Process level: ' // trim(  GlobalAttributes%ProcessLevel    ), advance='yes' )
+      call output ('PGE version: ' // trim(    GlobalAttributes%PGEVersion      ), advance='yes' )
+      call output ('Misc Notes: ' // trim(     GlobalAttributes%MiscNotes      ), advance='yes' )
+      call output ('Start UTC: ' // trim(      GlobalAttributes%StartUTC        ), advance='yes' )
+      call output ('End UTC: ' // trim(        GlobalAttributes%EndUTC          ), advance='yes' )
+      call output ('DOI: '    // trim(         GlobalAttributes%DOI          ), advance='yes' )
       call outputNamedValue ( 'Granule month:', GlobalAttributes%GranuleMonth )
       call outputNamedValue ( 'Granule day:' , GlobalAttributes%GranuleDay  )
       call outputNamedValue ( 'Granule year:' ,GlobalAttributes%GranuleYear )
@@ -416,6 +417,7 @@ contains
       logical, intent(in), optional :: skip_if_already_there
       logical, intent(in), optional :: doi
       ! Local variables
+      logical, parameter :: DeeBug = .false.
       integer :: grp_id
       integer :: status
       logical :: my_skip
@@ -424,6 +426,10 @@ contains
       character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 
       ! Executable code
+      if ( deebug ) then
+        call output( 'Writing global attributes', advance='yes' )
+        call dumpGlobalAttributes
+      endif
       myDOI = .false.
       if ( present(DOI) ) myDOI=DOI
       my_skip = .false.
@@ -440,9 +446,14 @@ contains
              & 'OrbitPeriod', GlobalAttributes%OrbPeriod, .true.)
       end if
       call MakeHDF5Attribute(grp_id, &
-       & 'InstrumentName', GlobalAttributes%InstrumentName, .true.)
-      call MakeHDF5Attribute(grp_id, &
-       & 'HostName', GlobalAttributes%HostName, .true.)
+        & 'InstrumentName', GlobalAttributes%InstrumentName, .true.)
+      if ( len_trim(GlobalAttributes%HostName) > 0 ) then
+        call MakeHDF5Attribute(grp_id, &
+          & 'HostName', GlobalAttributes%HostName, .true.)
+      else
+        call MakeHDF5Attribute(grp_id, &
+          & 'HostName', GlobalAttributes%ProductionLoc, .true.)
+      endif
       ProcessLevel = ProcessLevelFun()
       call MakeHDF5Attribute(grp_id, &
        & 'ProcessLevel', ProcessLevel, .true.)
@@ -534,6 +545,7 @@ contains
       logical, intent(in), optional :: skip_if_already_there
       ! Local variables
       integer :: fileID
+      logical, parameter :: DeeBug = .false.
       integer :: grp_id
       integer :: status
       logical :: my_skip
@@ -542,6 +554,10 @@ contains
       ! Executable code
       if ( .not. MLSFile%stillOpen ) then
         call MLS_OpenFile( MLSFile )
+      endif
+      if ( deebug ) then
+        call output( 'Writing global attributes', advance='yes' )
+        call dumpGlobalAttributes
       endif
       my_skip = .false.
       if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
@@ -634,13 +650,14 @@ contains
       integer :: status
       character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
       logical :: myDOI
+      logical, parameter :: DeeBug = .false.
       logical :: my_skip
 ! Executable
       myDOI = .false.
       if ( present(DOI) ) myDOI=DOI
       my_skip = .false.
       if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
-      if ( DEBUG ) then
+      if ( deebug ) then
         call output( 'Writing global attributes', advance='yes' )
         call dumpGlobalAttributes
       endif
@@ -674,9 +691,15 @@ contains
       status = mls_EHwrglatt(fileID, &
        & 'InstrumentName', MLS_CHARTYPE, 1, &
        &  GlobalAttributes%InstrumentName)
-      status = mls_EHwrglatt(fileID, &
-       & 'HostName', MLS_CHARTYPE, 1, &
-       &  GlobalAttributes%HostName)
+      if ( len_trim(GlobalAttributes%HostName) > 0 ) then
+        status = mls_EHwrglatt(fileID, &
+         & 'HostName', MLS_CHARTYPE, 1, &
+         &  GlobalAttributes%HostName)
+      else
+        status = mls_EHwrglatt(fileID, &
+         & 'HostName', MLS_CHARTYPE, 1, &
+         &  GlobalAttributes%ProductionLoc)
+      endif
       ProcessLevel = ProcessLevelFun()
       status = mls_EHwrglatt(fileID, &
        & 'ProcessLevel', MLS_CHARTYPE, 1, &
@@ -840,9 +863,9 @@ contains
       status = he5_EHrdglatt(fileID, &
        & 'InstrumentName', &
        &  gAttributes%InstrumentName)
-      status = he5_EHrdglatt(fileID, &
-       & 'HostName', &
-       &  gAttributes%HostName)
+      ! status = he5_EHrdglatt(fileID, &
+      !  & 'HostName', &
+      !  &  gAttributes%HostName)
       status = he5_EHrdglatt(fileID, &
        & 'ProcessLevel', &
        &  gattributes%ProcessLevel)
@@ -1000,9 +1023,14 @@ contains
       integer, intent(in) :: swathID
 !     integer, external ::   he5_SWwrattr
 ! Internal variables
+      logical, parameter :: DeeBug = .false.
       integer :: status
       character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
 ! Executable
+      if ( deeBug ) then
+        call output( 'Writing global attributes', advance='yes' )
+        call dumpGlobalAttributes
+      endif
       status = he5_SWwrattr(swathID, &
        & 'OrbitNumber', HE5T_NATIVE_INT, hsize(max_orbits), &
        &  GlobalAttributes%OrbNum)
@@ -1012,9 +1040,15 @@ contains
       status = he5_SWwrattr(swathID, &
        & 'InstrumentName', MLS_CHARTYPE, hsize(1), &
        &  GlobalAttributes%InstrumentName)
-      status = he5_SWwrattr(swathID, &
-       & 'HostName', MLS_CHARTYPE, hsize(1), &
-       &  GlobalAttributes%HostName)
+      if ( len_trim(GlobalAttributes%HostName) > 0 ) then
+        status = he5_SWwrattr(swathID, &
+         & 'HostName', MLS_CHARTYPE, hsize(1), &
+         &  GlobalAttributes%HostName)
+      else
+        status = he5_SWwrattr(swathID, &
+         & 'HostName', MLS_CHARTYPE, hsize(1), &
+         &  GlobalAttributes%ProductionLoc)
+      endif
       ProcessLevel = ProcessLevelFun()
       status = mls_SWwrattr(swathID, &
        & 'ProcessLevel', MLS_CHARTYPE, 1, &
@@ -1626,6 +1660,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.66  2015/02/27 23:57:21  pwagner
+!# Take pains to ensure HostName is not blank
+!#
 !# Revision 2.65  2015/01/21 19:28:17  pwagner
 !# Prevent unassociated anText error
 !#
