@@ -1522,6 +1522,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, string(), &
              begin, f+f_filterShapes, boolean(), &
              begin, f+f_forwardModel, field_spec(s_forwardModel), &
+             begin, f+f_globalAttributes, boolean(), &
              begin, f+f_Grid, field_spec((/ s_gridded,s_merge,s_Concatenate, &
                                        &  s_ConvertEtaToP,s_wmoTrop /) ), &
              begin, f+f_hGrid, field_spec(s_hgrid)/) , &
@@ -1989,6 +1990,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.608  2015/02/27 23:13:32  pwagner
+! May Dump global attributes
+!
 ! Revision 2.607  2014/10/27 23:06:19  pwagner
 ! /additional now a possible field for writeFileAttribute
 !
