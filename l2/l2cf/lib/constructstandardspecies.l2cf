@@ -619,7 +619,13 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
 
   ;; ----------------------------------------- Other minor stuff
 
+  !ifdef(flagMagneticFieldOnHeightGrid,!dnl
+  {
+  magneticField: quantity, type=magneticField, vGrid=vGridMag, $
+    hGrid=hGridStandard, xGrid=crossGrid, stacked=false
+  },{
   magneticField: quantity, type=magneticField, vGrid=vGridStandard, hGrid=hGridStandard
+  })
   fieldAzimuth: quantity, type=fieldAzimuth, vGrid=vGridStandard, hGrid=hGridStandard
   fieldElevation: quantity, type=fieldElevation, vGrid=vGridStandard, hGrid=hGridStandard
   fieldStrength: quantity, type=fieldStrength, vGrid=vGridStandard, hGrid=hGridStandard

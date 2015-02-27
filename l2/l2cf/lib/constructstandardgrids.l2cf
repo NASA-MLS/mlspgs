@@ -76,6 +76,12 @@ vGridIterations: vGrid, type=Explicit, coordinate=Integer, $
 vGridPhases: vGrid, type=Explicit, coordinate=Integer, $
     values=[!allPhaseLevels]
 
+!ifdef(flagMagneticFieldOnHeightGrid,!dnl
+vGridMag: vGrid, type=Linear, coordinate=geodAltitude, $
+  start=-10 km, stop=150 km, number=17
+CrossGrid: hGrid, type=explicit, $
+  geodangle=[-3.0 degrees, -1.5 degrees, 0 degrees, 1.5 degrees, 3.0 degrees]
+})
 sGridStandard:  vGrid, type=Explicit,   $
        values=[20,40,60,80,100,120,140,160,180,200,$
                220,240,260,280,300,320,340,360,380,400,420,440,460,480,500,$
@@ -88,6 +94,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
 !divert(-1)
 
 ; $Log$
+; Revision 1.34  2009/07/28 20:02:53  pwagner
+; reduced num of levels in vGridrhiprfl
+;
 ; Revision 1.33  2009/06/23 17:29:34  pwagner
 ; Adjusted vGridrhiprfl
 ;
