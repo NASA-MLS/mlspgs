@@ -1139,19 +1139,21 @@ contains ! =====     Public Procedures     =============================
         call output( 'Before reading global attributes', advance='yes' )
         call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
       endif
-      call he5_readglobalattr (File1Handle, gAttributes, &
-        & ProcessLevel, DayofYear, TAI93At0zOfGranule, status)
+      call he5_readglobalattr ( File1Handle, gAttributes, &
+        & ProcessLevel, DayofYear, TAI93At0zOfGranule, status )
       if ( status == 0 ) then
         if ( DEEBUG ) then
           call output ( '(Global Attributes read) ', advance='yes')
           call dumpGlobalAttributes
         endif
-      if ( DEEBUG ) then
-        call output( 'After reading global attributes', advance='yes' )
-        call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
-      endif
+        if ( DEEBUG ) then
+          call output( 'After reading global attributes', advance='yes' )
+          call outputNamedValue( 'StartUTC', trim(GlobalAttributes%StartUTC) )
+        endif
         ! Unfortunately, he5_writeglobalattr writes class-level data
         ! so must save original version so can copy new data into it 
+        gAttributes%HostName = GlobalAttributes%HostName
+        gAttributes%ProductionLoc = GlobalAttributes%ProductionLoc
         gAttributesOriginal = GlobalAttributes
         GlobalAttributes = gAttributes
         ! Why must we do this? Why do things not simply work out properly?
@@ -5231,6 +5233,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.209  2015/02/18 00:28:01  pwagner
+! Corrected DumpL2GP_attributes_hdf5 to include linefeeds, MiscNotes
+!
 ! Revision 2.208  2014/12/11 21:25:57  pwagner
 ! Make Asc/Desc Mode -999 for crashed chunks
 !
