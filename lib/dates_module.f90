@@ -20,9 +20,9 @@ module dates_module
 
   use MLSCommon,        only: nameLen
   use MLSFinds,         only: findFirst
-  use MLSStringlists,   only: getStringelement, numStringelements
-  use MLSStrings,       only: capitalize, chartoint, depunctuate, &
-    & indexes, isalphabet, lowercase, splitWords, writeIntsToChars
+  use MLSStringlists,   only: getStringElement, numStringElements
+  use MLSStrings,       only: capitalize, charToInt, depunctuate, &
+    & indexes, isAlphabet, lowercase, splitWords, writeIntsToChars
   use printit_m, only: MLSMSG_Warning, printItOut
 
   implicit none
@@ -77,6 +77,7 @@ module dates_module
 ! days_in_year       how many days in (leap, normal) year
 ! eudtf2cal          yyyyddd -> cal date
 ! eudtf2daysince     eudtf -> days since starting date
+! gethid             like tai93s2hid but neither pure nor a function (what?)
 ! hoursbetween2utcs  How many hours between 2 date-times
 ! hoursinday         How many hours since the start of the day
 ! lastday            How many days in leap month
@@ -132,6 +133,7 @@ module dates_module
 ! datesbetween2utcs ( char* utc1, char* utc2, char* dates(:) )
 ! int daysbetween2utcs (char* utc1, char* utc2)
 ! int daysInMonth (int month, int year)
+! gethid( dble tai, [log leapsec] )
 ! int hoursbetween2utcs (char* utc1, char* utc2)
 ! dble hoursinday (char* utc1)
 ! char* nextMoon ([char* date], [phase])
@@ -266,17 +268,17 @@ module dates_module
 ! grouping procedures into a common module?
 
   !Here are the provided functions 
-  public :: ADDDAYSTOUTC, ADDHOURSTOUTC, ADDSECONDSTOUTC, BUILDCALENDAR, &
-    & CAL2EUDTF, CCSDS2TAI, CCSDS2EUDTF, CCSDSA2B, CCSDSB2A, &
-    & DAI_TO_YYYYMMDD, DATEFORM, DATESBETWEEN2UTCS, DAYOFWEEK, &
-    & DAYSBETWEEN2UTCS, DAYSINMONTH, DAYSINCE2EUDTF, DAYS_IN_YEAR, &
-    & EUDTF2CAL, EUDTF2DAYSINCE, HOURSBETWEEN2UTCS, HOURSINDAY, &
-    & LASTDAY, NEXTMOON, PRECEDESUTC, REFORMATDATE, REFORMATTIME, &
-    & RESETSTARTINGDATE, RESTORESTARTINGDATE, &
-    & SECONDSBETWEEN2UTCS, SECONDSINDAY, SPLITDATETIME, &
-    & TAI2CCSDS, TAI93S2HID, TAI93S2UTC, TIMEFORM, &
-    & UTCFORM, UTC_TO_DATE, UTC_TO_TIME, UTC_TO_YYYYMMDD, UTC2TAI93S, &
-    & YYYYDOY_TO_MMDD, YYYYMMDD_TO_DAI, YYYYMMDD_TO_DOY
+  public :: adddaystoutc, addhourstoutc, addsecondstoutc, buildcalendar, &
+    & cal2eudtf, ccsds2tai, ccsds2eudtf, ccsdsa2b, ccsdsb2a, &
+    & dai_to_yyyymmdd, dateform, datesbetween2utcs, dayofweek, &
+    & daysbetween2utcs, daysinmonth, daysince2eudtf, days_in_year, &
+    & eudtf2cal, eudtf2daysince, gethid, hoursbetween2utcs, hoursinday, &
+    & lastday, nextmoon, precedesutc, reformatdate, reformattime, &
+    & resetstartingdate, restorestartingdate, &
+    & secondsbetween2utcs, secondsinday, splitdatetime, &
+    & tai2ccsds, tai93s2hid, tai93s2utc, timeform, &
+    & utcform, utc_to_date, utc_to_time, utc_to_yyyymmdd, utc2tai93s, &
+    & yyyydoy_to_mmdd, yyyymmdd_to_dai, yyyymmdd_to_doy
 
  interface BUILDCALENDAR
     module procedure BUILDCALENDAR_INTS, BUILDCALENDAR_STR
@@ -562,6 +564,27 @@ contains
     ! hid = (tai93s - theDay*24*3600.d0) / 3600
   end function tai93s2hid
 
+  ! Converts TAI in seconds to hours-in-day.
+  ! Unless, option leapsec is present and TRUE, ignore leap seconds 
+  ! Here so we may dump if the mood strikes
+  subroutine gethid( tai93s, hid, leapsec )
+    double precision, intent(in)   :: tai93s
+    double precision, intent(out)  :: hid
+    logical, optional, intent(in)  :: leapsec
+    !----local -----!
+    type(MLSDATE_TIME_T)           :: datetime
+    ! integer :: THEDAY
+    ! Executable
+    dateTime = tai93s2datetime( tai93s, leapsec )
+    ! call dump ( dateTime )
+    hid = dateTime%seconds/3600
+    if ( .not. present(leapsec) ) return
+    if ( .not. leapsec ) return
+    hid = (dateTime%seconds - datetime%leapseconds)/3600
+    ! theDay = (tai93s+10.d0) / (24*3600.d0)
+    ! hid = (tai93s - theDay*24*3600.d0) / 3600
+  end subroutine gethid
+
   ! Converts TAI in seconds to utc Date.
   ! Unless, option leapsec is present and TRUE, ignore leap seconds 
   function tai93s2utc( tai93s, leapsec ) result (utc)
@@ -649,6 +672,7 @@ contains
     endif
     ! Now apply offset converting dai93 to dai (2001)
     datetime%dai = dai93 - DAI93TODAI01 ! daysbetween2utcs( '1993-01-01', '2001-01-01' )
+    call reducedatetime( datetime, leapsec )
   end function tai93s2datetime
 
   ! --------------------------------------------- buildCalendar ---
@@ -1453,18 +1477,18 @@ contains
   end function precedesutc
 
   ! ---------------------------------------------  reducedatetime  -----
-  subroutine reducedatetime( datetime, leapsec )
+  pure subroutine reducedatetime( datetime, leapsec )
     ! Reduces the seconds field of a datetime to a permissible value
     ! possibly adjusting the dai field in compensation
     ! If leapsec is present, and TRUE, account for leapseconds
     ! Args
-    type(MLSDate_time_t)          :: datetime
-    logical, optional, intent(in) :: leapsec
+    type(MLSDate_time_t), intent(inout) :: datetime
+    logical, optional, intent(in)       :: leapsec
     ! Internal
-    integer                      :: dai
-    integer                      :: extra  ! Extra days adjustment to dai
-    logical :: myLeapSeconds
-    real                         :: seconds
+    integer                             :: dai
+    integer                             :: extra  ! Extra days adjustment to dai
+    logical                             :: myLeapSeconds
+    real                                :: seconds
     ! Executable
     seconds = datetime%seconds
     dai = datetime%dai
@@ -2816,6 +2840,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.35  2015/01/21 00:49:47  pwagner
+! Added 2015 leap second
+!
 ! Revision 2.34  2014/10/14 21:38:57  pwagner
 ! Added datesbetween2utcs
 !
