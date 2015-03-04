@@ -66,7 +66,7 @@ module MLSL2Options              !  Options and Settings for the MLSL2 program
   ! id to print out in response to "--version" command-line option    
   integer, parameter                        :: versIDLen = 32
   character(LEN=versIDLen), dimension(2)    :: current_version_id = (/ &
-    & 'v4.11 swdev team               ' , & 
+    & 'v4.20 swdev team               ' , & 
     & 'See license terms for copyright'/)
   character(LEN=32)    :: uniqueID                    = ' '
      
@@ -683,6 +683,8 @@ cmds: do
           call myNextArgument( i, inLine, entireLine, line )
           call SnipLastSlaveArgument ! Don't want slaves to see this
           GlobalAttributes%productionLoc = trim(line)
+          if ( len_trim(GlobalAttributes%hostName) < 1 ) &
+            & GlobalAttributes%hostName = trim(line)
         else if ( line(3+n:10+n) ==  'logalloc' ) then
           i = i + 1
           call myNextArgument( i, inLine, entireLine, filename )
@@ -1207,7 +1209,7 @@ jloop:do while ( j < len_trim(line) )
   ! Either simply, or in a table
   subroutine DumpMacros ( details )
     use highOutput, only: outputTable
-    use MLSStringlists, only: List2Array, numStringElements, switchDetail
+    use MLSStringLists, only: List2Array, numStringElements, switchDetail
     use toggles, only: switches
     integer, optional, intent(in)         :: details
     character(len=64), dimension(1024, 2) :: keysValues
@@ -1250,7 +1252,7 @@ jloop:do while ( j < len_trim(line) )
 
   ! ---------------------------------------  RemoveRuntimeBoolean  -----
   ! Remove the named runtime macros
-  subroutine REMOVERUNTIMEBOOLEAN ( NAME )
+  subroutine RemoveRuntimeBoolean ( NAME )
   use MLSStringLists, only: getHashElement, &
     & removeHashArray, removeHashElement
     ! Dummy args
@@ -1293,6 +1295,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.100  2015/03/04 18:33:32  pwagner
+! Commandline option --loc also sets hostName
+!
 ! Revision 2.99  2015/02/13 00:19:54  pwagner
 ! Nay dump macros more nicely as a Table
 !
