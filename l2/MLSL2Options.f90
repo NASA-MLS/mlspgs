@@ -1111,22 +1111,24 @@ jloop:do while ( j < len_trim(line) )
       if ( len_trim(name) < 1 .or. name == eqls ) return
       if ( len_trim(valu) > 0 ) valu = Replace ( trim(valu), ' ', '%' )
       ! Special cases:
+      ! We prefer to store these in valu
+      ! because it is long enough to hold, e.g., mutiple switches
       ! print *, trim(name) // ' set = to ' // trim(valu)
       if ( lowercase(name) == 'switches' ) then
-        name = '-S' // valu
-        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+        valu = '-S' // valu
+        call ProcessLine( trim(valu), filename, exitLoop, entireLine=.true. )
         return
       elseif ( lowercase(name) == 'remove' ) then
-        name = '-R' // valu
-        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+        valu = '-R' // valu
+        call ProcessLine( trim(valu), filename, exitLoop, entireLine=.true. )
         return
       elseif ( lowercase(name) == 'debugging' ) then
-        name = '-D' // valu
-        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+        valu = '-D' // valu
+        call ProcessLine( trim(valu), filename, exitLoop, entireLine=.true. )
         return
       elseif ( lowercase(name) == 'verboseness' ) then
-        name = '-V' // valu
-        call ProcessLine( trim(name), filename, exitLoop, entireLine=.true. )
+        valu = '-V' // valu
+        call ProcessLine( trim(valu), filename, exitLoop, entireLine=.true. )
         return
 
       ! Standard cases: either single-character or multi-character
@@ -1295,6 +1297,9 @@ end module MLSL2Options
 
 !
 ! $Log$
+! Revision 2.101  2015/03/05 18:11:04  pwagner
+! Some commandline options were being truncated in parseNameValue; fixed
+!
 ! Revision 2.100  2015/03/04 18:33:32  pwagner
 ! Commandline option --loc also sets hostName
 !
