@@ -91,11 +91,12 @@ module OUTPUT_M
 !
 ! Note:
 ! By calling appropriate functions and procedures you can adjust aspects of
-! behavior of output, and others can be changed by setting various
+! how and where we output, and others can be changed by setting various
 ! public global parameters directly
 ! (in OO-speak they are class-level rather than instance-level)
 ! Sometimes there is more than one way to accomplish the same thing
 ! E.g., calling timeStamp or using setStamp before calling output
+! (Should we remove one of these?)
 !
 ! To understand the codes for dateformat and timeFormat, see the dates_module
 ! 
@@ -151,6 +152,7 @@ module OUTPUT_M
 
   ! This is the type for configuring how to automatically format
   ! lines and whether they should be sent to stdout or elsewhere
+  ! The default values are chosen well; override them at your own risk!
   type outputOptions_T
     integer :: prUnit = STDOUTPRUNIT    ! Unit for output (see comments above).  
     integer :: MLSMSG_Level        = MLSMSG_Info ! What level if logging
@@ -218,6 +220,7 @@ module OUTPUT_M
   type(timeStampOptions_T), public, save :: TIMESTAMPOPTIONS ! Could leave this private
 
   ! Private parameters
+  character(len=2), parameter :: defaultNewLineCode = achar(0) // 'n' ! not '%n'
   logical, save, private :: SWITCHTOSTDOUT = .false.! Temp'ly all to stdout
   logical, save, private :: SILENTRUNNING  = .false. ! Suspend all further output
   integer, save, private :: ATCOLUMNNUMBER = 1  ! Where we'll print next
@@ -1283,40 +1286,47 @@ contains
 
   ! ------------------------------------  myMessage  -----
   subroutine myMessage ( Severity, ModuleNameIn, Message, &
-    & Advance )
+    & Advance, newLineCode )
 
     ! Print a message (unless printing is suppressed).  If it has %[Nn]
     ! in it, replace that with newline.
+    
+    ! We use defaultNewLineCode instead of '%n' because there were some
+    ! circumstances where we actally printed '%n'; e.g., 
+    ! 'hGrid%noProfsUpperOverlap'
 
     ! Dummy arguments
     integer, intent(in) :: Severity ! e.g. MLSMSG_Error
     character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
     character (len=*), intent(in) :: Message ! Line of text
     character (len=*), intent(in), optional :: Advance ! Do not advance
+    character (len=*), intent(in), optional :: newLineCode ! Instead of %n
     !                                 if present and the first character is 'N'
     !                                 or 'n'
 
     ! Local variables
-    !                                     If nonzero, do not insert prefix.
     logical :: AllOfIt                  ! Print all of it (no %n or %N remains)
     integer :: L1, L2                   ! How far in the line have we printed?
     character (len=512), save :: Line   ! Line to output, should be long enough
     integer, save :: Line_len=0         ! Number of saved characters in line.
     integer :: LogFileUnit
     logical :: My_adv
+    character(len=2) :: myNewLineCode
 
     ! Executable code
     my_adv = .true.
     if ( present(advance) ) &
       & my_adv = advance(1:1) /= 'n' .and. advance(1:1) /= 'N'
+    myNewLineCode = defaultNewLineCode
+    if ( present(newLineCode) ) myNewLineCode = newLineCode
 
     my_adv = my_adv .and. ( severity >= MLSMessageConfig%skipMessageThr )
     if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
          & (severity /= MLSMSG_Debug) ) then
       l1 = 0
       do
-        l2 = index(Message(l1+1:),'%n' )
-        if ( l2 == 0 ) l2 = index(Message(l1+1:),'%N')
+        l2 = index( Message(l1+1:),myNewLineCode )
+        if ( l2 == 0 ) l2 = index( Message(l1+1:),myNewLineCode )
         allOfIt = l2 == 0
         l2 = l2 + l1 - 1 ! Last character before %n or %N, if any
         if ( allOfIt ) l2 = len(Message) ! no %n or %N
@@ -1447,6 +1457,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.120  2015/03/06 21:37:42  pwagner
+! "%n" in output string could trigger unintended new line; fixed
+!
 ! Revision 2.119  2015/02/13 00:16:24  pwagner
 ! Reordered tests in OUTPUT_CHAR_NOCR_INDENTED more understandably, we hope
 !
