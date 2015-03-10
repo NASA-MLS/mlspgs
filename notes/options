@@ -66,6 +66,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --fwmParallel: Run in forward model parallel mode.  Send each MAF of forward
     model calculations out to a slave.
   --host <name>: Fill HostName attribute with "name" in all product files
+      defaults to ProductionLocation
   --idents <filename>: idents of the master task in a PVM setup that may be
       compared with the slave's for verifying they run the same version
      (in the next 3, n may be one of {4, 5, b} where b means both 4 and 5)
@@ -166,6 +167,10 @@ by the equal-signs -- stuff outside that space, like these
 comments, will be ignored when responding to mlsl2 -?)
 
  $Log$
+ Revision 1.69  2014/09/05 00:34:35  vsnyder
+ Add [#] to -A, -a and -d options.  Add -E and --stdout error.  Delete
+ -pID.  Change description of --pidf (ought to be renamed).
+
  Revision 1.68  2014/08/12 23:32:06  pwagner
  commandline options --backg and --pidf noteFile added
 
