@@ -356,7 +356,8 @@ contains ! =====     Public Procedures     =============================
       call outputNamedValue ( 'nearest maf time', &
         & tai93s2hid(l1bField%dpField(1,1,hgrid%maf), leapsec=.true.) )
     endif
-    hgrid%maf = hgrid%maf + chunk%firstMAFIndex - 1
+    ! No--we already use hgrid%maf as a relativee maf numbr elsewhere in l2
+    ! hgrid%maf = hgrid%maf + chunk%firstMAFIndex - 1
     call deallocateL1BData ( l1bField )
     if ( switchDetail(switches, 'geom') >= 0 .and. .not. mySuppressGeometryDump ) &
       & call DumpChunkHGridGeometry ( hGrid, chunk, &
@@ -2203,7 +2204,7 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                      ! Tree node
     ! integer, parameter :: MAXNUMChunks = 400
     type(HGrid_T) :: dummyHGrid         ! A temporary hGrid
-    type(HGrid_T), dimension(:), pointer :: FirstHGrid     ! The "std" HGrid
+    type(HGrid_T), dimension(size(chunks)) :: FirstHGrid     ! The "std" HGrid
     type(next_tree_node_state) :: State1 ! while hunting for Construct sections
     type(next_tree_node_state) :: State2 ! within Construct sections
     integer, dimension(:), pointer :: LowerOverlaps => null()
@@ -2224,9 +2225,6 @@ contains ! =====     Public Procedures     =============================
     ! Finally we accumulate these to get offsets.
     noHGrids = 0
     ! call outputNamedValue ( 'size(chunks)', size(chunks) )
-    nullify ( FirstHGrid )
-    allocate( FirstHGrid(size(chunks)), stat=status )
-    call test_allocate ( status, moduleName, "FirstHGrid" )
     do chunk = 0, size(chunks)
       hGrid = 1
       ! Loop over all the setions in the l2cf, look for construct sections
@@ -2408,8 +2406,6 @@ contains ! =====     Public Procedures     =============================
     enddo
     call deAllocate_Test ( LowerOverlaps, 'LowerOverlaps', ModuleName )
     if ( specialDumpFile /= ' ' ) call revertOutput
-    deallocate( FirstHGrid, stat=status )
-    call test_deallocate ( status, moduleName, "FirstHGrid" )
     call trace_end ( "ComputeAllHGridOffsets", &
       & cond=toggle(gen) .and. levels(gen) > 0 )
   end subroutine ComputeAllHGridOffsets
@@ -2569,8 +2565,8 @@ contains ! =====     Public Procedures     =============================
       call output ( 'Uh-oh, last profile beyond hgrid upper bound', advance='yes' )
       lastProfIndx = size(hGrid%time, 2)
     endif
-    lowMAF = hgrid%maf(1)
-    highMAF = hgrid%maf(hGrid%noProfs)
+    lowMAF = hgrid%maf(1) + chunk%firstMAFIndex - 1
+    highMAF = hgrid%maf(hGrid%noProfs) + chunk%firstMAFIndex - 1
     call output( 'First, last MAFs matching grid (then times)', advance='no' )
     call blanks( 6 )
     call output ( (/lowMAF, highMAF/), advance='no' )
@@ -2746,6 +2742,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.120  2015/03/10 23:40:18  pwagner
+! Revert maf component of HGrid to being relative, not absolute
+!
 ! Revision 2.119  2015/03/10 00:20:53  pwagner
 ! Many diagnostics added; HGrid%maf now stores absolute maf
 !
