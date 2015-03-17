@@ -50,13 +50,12 @@ Unless the swath is specified, only the first one is read and returned--but this
 is usually the only swath in the file.  Either way, the name of the swath read
 is part of the return.
 
-TODO: Deeper error checking is forthcoming.
-
 PyTables and Numpy are both requirements to run this function.
 
 ARGUMENTS:
 * filename
-    The full or relative path to the L2GP HDF-5 file to be read
+    The full or relative path to the L2GP HDF-5 file to be read (required!)
+
 * swathName
 
     The name of the HDF-EOS swath.  If blank, the first swath in the
@@ -72,13 +71,74 @@ ARGUMENTS:
     If set, exceptions will not be raised on error and instead we will
     silently return a None.
 
-* returns: A numpy ND variable or None, if a failure occurred
+* returns: Failure: None. If `filename' doesn't exist, an exception
+                    will be thrown and a traceback printed
+ 
+           Success: A dictionary various tags, the most important of
+           which are...
 
-* Note: One of the variable attributes contains a variable of type
-  HE5_REFERENCE. PyTables doesn't like this, so it complains. But this
-  only happens on the first call and it is not fatal. The data is
-  still returned and valid. 
+          'nTimes': the number of profiles
+          'nLevels': the number of surfaces
 
+          'l2gpValue': the actual data, a (nTimes by nLevels) Numpy ND
+                       array
+
+          'l2gpPrecision': The precision for the data, a (nTimes by
+                            nLevels) Numpy ND Array
+
+          'pressure' : the pressure surfaces (the nLevels dimension)
+                        as Numpy array
+
+          'time' : time as TAI93 (nTimes ), as Numpy array
+          'longitude' : longitude (nTimes)
+          'latitude': latitude (nTimes)
+
+          'status' : a 'nTimes' byte array that gives status
+          information. In general. See the quality document for how to
+          interpret this field.
+          
+          'attrs': the attributes. Contains the keys 'Units', 'Title',
+                   '_FillValue' and 'MissingValue'. The last two are
+                   the value of data to avoid.
+
+
+
+* Note: One of the attributes for l2gpValue contains a variable of
+        type HE5_REFERENCE. PyTables doesn't like this, so it
+        complains. But this only happens on the first call and it is
+        not fatal. The data is still returned and is valid.
+
+* Example
+
+    % ipython # start interactive python interpreter
+    # Issue commands to it.
+
+    In [1]: from readl2gp import *
+    In [2]: data=readl2gp('/path/to/your/data/file.he5')
+
+    In [3]: value     = data['l2gpValue']
+    In [4]: precision = data['l2gpPrecision']
+    In [5]: time      = data['time']
+    In [6]: latitude  = data['latitude']
+    In [7]: longitude = data['longitude']
+    In [8]: pressure  = data['pressure']
+    In [9]: status    = data['status']
+
+    In [10]: baddata=data['attrs']['MissingData']
+
+    # use status and baddata to quality check your data and 
+    # proceed from there.
+
+    To read this documentation, do
+
+    In [11]: help(readl2gp)
+
+
+    Calling it from a python script is simply a matter of issuing the
+    import statement, followed by the read (statements 1 and 2 above)
+    in your script, and pulling out whatever data you wish from the
+    returned dictionary.
+  
     """
 
     result = {}
@@ -90,8 +150,10 @@ ARGUMENTS:
     elif precisionName is None:
         precisionName = variableName + 'Precision'
 
+
     #DESIGN_DECISION: We're assuming the file is HDF-5 only.
     fHandle = tables.openFile(filename, mode='r')
+      
 
     # Query swaths
     swathGroup = fHandle.root.HDFEOS.SWATHS
@@ -195,5 +257,8 @@ ARGUMENTS:
 #
 # Modifications:
 # $Log$
+# Revision 1.2  2015/02/13 18:17:15  whdaffer
+# Added comments, removed commented out code
+#
 #                
 
