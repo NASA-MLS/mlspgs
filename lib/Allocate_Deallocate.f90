@@ -30,6 +30,7 @@ module Allocate_Deallocate
 
   use, intrinsic :: IEEE_Arithmetic, only: IEEE_Signaling_NaN, IEEE_Value, &
     IEEE_Support_DataType
+  use ISO_C_Binding, only: C_intptr_t, C_Loc
   use MACHINE, only: MLS_GC_NOW
   use PRINTIT_M, only: MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING, PRINTITOUT, SnipRCSFrom
@@ -178,17 +179,18 @@ module Allocate_Deallocate
     module procedure Test_Deallocate_int_s
   end interface
 
-  integer, save :: DEALLOC_STATUS = 0
+  integer, save :: Dealloc_Status = 0
 
-  logical, public :: CLEARONALLOCATE = .false. ! If true, zero all allocated stuff
+  logical, public :: ClearOnAllocate = .false. ! If true, zero all allocated stuff
   logical, public :: InitRealNaN = .false.     ! If true, and FILL is not present,
                                                ! and IEEE_SupportDataType is true,
                                                ! fill real with signaling NaN.
-  integer, public :: TRACKALLOCATES = 0 ! <= 0 => No tracking
-                                        ! 1    => Track using the Track_m module
-                                        ! >= 2 => 1 + report all transactions
+  integer, public :: TrackAllocates = 0 ! <= 0 => No tracking
+                                        ! == 1 => Track using the Track_m module
+                                        ! == 2 => Report all transactions
+                                        ! == 3 => Both track and report
   integer, public :: AllocateLogUnit = -1 ! If > 0, log allocates to this unit
-  real, public ::    AllocateLogLimit = 1. ! Son't log amounts smaller than this
+  real, public ::    AllocateLogLimit = 1. ! Don't log amounts smaller than this
 
   ! Element sizes (bytes)
   integer, parameter, public :: E_Ch = ( storage_size(' ') + 7 ) / 8 ! Character
@@ -204,6 +206,8 @@ module Allocate_Deallocate
   double precision, save, protected, public :: NoBytesAllocated=0.0d0 ! Number of MEMORY_UNITS allocated.
   double precision, parameter  :: OUTPUT_UNITS = 1.d6 ! output in MB
   logical, parameter :: DEEBUG = .false.
+
+  integer(selected_int_kind(18)) :: Serial_No = 0 ! for logging
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter, private :: ModuleName = &
@@ -268,7 +272,7 @@ contains
 
   ! -------------------------------------------  Test_Allocate_nd  -----
   subroutine Test_Allocate_nd ( Status, ModuleNameIn, ItsName, &
-    & lBounds, uBounds, ElementSize, ERMSG )
+    & lBounds, uBounds, ElementSize, ERMSG, Address )
     use HIGHOUTPUT, only: outputNamedValue
   ! Test the status from an allocate.  If it's nonzero, issue a message.
   ! Track allocations if TrackAllocates is >= 2 and ElementSize is present
@@ -278,6 +282,8 @@ contains
     integer, intent(in), optional :: Lbounds(:), Ubounds(:)
     integer, intent(in), optional :: ElementSize ! Bytes, <= 0 for no tracking
     character(*), intent(in), optional :: ERMSG  ! from Allocate statement
+    integer(c_intptr_t), intent(in), optional :: Address ! of allocated object
+                                                         ! if status == 0
     real :: Amount
     character(127) :: Bounds
     integer :: I, L
@@ -309,7 +315,7 @@ contains
       end if
     end if
     if ( AllocateLogUnit > 0 ) call LogAllocate( ModuleNameIn, ItsName, &
-      & lBounds, uBounds, ElementSize )
+      & lBounds, uBounds, ElementSize, Address )
 
     if ( .not. present(elementSize) ) return
 
@@ -336,7 +342,7 @@ contains
 
   ! -------------------------------------------  Test_Allocate_1d  -----
   subroutine Test_Allocate_1d ( Status, ModuleNameIn, ItsName, &
-    & lBounds, uBounds, ElementSize, ERMSG )
+    & lBounds, uBounds, ElementSize, ERMSG, Address )
   ! Test the status from an allocate.  If it's nonzero, issue a message.
   ! Track allocations if TrackAllocates is >= 2 and ElementSize is present
   ! and > 0.
@@ -348,17 +354,20 @@ contains
     integer, intent(in)           :: Ubounds
     integer, intent(in), optional :: ElementSize ! Bytes, <= 0 for no tracking
     character(*), intent(in), optional :: ERMSG  ! from Allocate statement
+    integer(c_intptr_t), intent(in), optional :: Address ! of allocated object
+                                                         ! if status == 0
     integer :: MyLBounds(1)
     integer :: MyUBounds(1)
     myLBounds = 1
     if ( present(lBounds) ) myLBounds = lBounds
     myUBounds = uBounds
     call test_allocate ( status, moduleNameIn, itsName, &
-    & myLBounds, myUBounds, elementSize, ERMSG )
+    & myLBounds, myUBounds, elementSize, ERMSG, address )
   end subroutine Test_Allocate_1d
 
   ! --------------------------------------------  Test_DeAllocate_int_s  -----
-  subroutine Test_DeAllocate_int_s ( Status, ModuleNameIn, ItsName, Size )
+  subroutine Test_DeAllocate_int_s ( Status, ModuleNameIn, ItsName, Size, &
+    & ERMSG, Address )
   ! Test the status from a deallocate.  If it's nonzero, issue a message.
   ! Do garbage collection if Collect_garbage_each_time is true.
   ! Track deallocations if TrackAllocates >= 2 and Size is present and > 0.
@@ -366,18 +375,27 @@ contains
     integer, intent(in) :: Status
     character(len=*), intent(in) :: ModuleNameIn, ItsName
     integer, intent(in), optional :: Size ! in Bytes
+    character(*), intent(in), optional :: ERMSG ! From ERRMSG= specifier
+    integer(c_intptr_t), intent(in), optional :: Address ! of allocated object
+                                                         ! before deallocation
 
-    character(31) :: Line
+    integer :: L
+    character(255) :: Line
 
     if ( status /= 0 ) then
       write ( line, '(", status = ", i0)' ) status
+      if ( present(ermsg) ) then
+        l = len_trim(line)
+        line(l+2:) = ermsg
+      end if
       call myMessage ( MLSMSG_Warning, moduleNameIn, &
         & MLSMSG_DeAllocate // itsName // trim(line) )
       dealloc_status = max(dealloc_status, status)
     else if ( collect_garbage_each_time ) then
       call mls_gc_now
     end if
-    if ( AllocateLogUnit > 0 ) call LogDeallocate( ModuleNameIn, ItsName, Size )
+    if ( AllocateLogUnit > 0 ) &
+      & call LogDeallocate( ModuleNameIn, ItsName, Size, Address )
     if ( status == 0 .and. present(size) ) then
       if ( size > 0.0 ) then
         if ( trackAllocates >= 2 ) then
@@ -1570,31 +1588,47 @@ contains
 
   ! ------------------------------=--- LogAllocate
   subroutine LogAllocate ( ModuleNameIn, ItsName, lBounds, uBounds, &
-    & ElementSize )
+    & ElementSize, Address )
     character(len=*), intent(in)  :: ModuleNameIn, ItsName
     integer, intent(in), optional :: Lbounds(:), Ubounds(:)
     integer, intent(in), optional :: ElementSize
-    real :: Amount
+    integer(c_intptr_t), intent(in), optional :: Address ! of allocated object
+                                                         ! if status == 0
+    integer(c_intptr_t) :: Addr
+    integer(c_intptr_t) :: Amount
     amount = 0
+    addr = 0
+    if ( present(address) ) addr = address
     if ( present(lbounds) .and. present(ubounds) .and. present(elementSize) ) then
       amount = memproduct(elementSize, ubounds-lbounds+1)
-    endif
-    if ( amount >= AllocateLogLimit ) &
-      & write( AllocateLogUnit, * ) trim(ItsName), ' _a_ ', &
-      & amount, trim(snipRCSfrom(ModuleNameIn))
+    end if
+    serial_no = serial_no + 1
+    if ( amount >= AllocateLogLimit ) then
+      write( AllocateLogUnit, "(2(i0,1x),a,i0,2(1x,a))" ) addr, serial_no, 'A ', &
+      & amount, trim(snipRCSfrom(ModuleNameIn)), trim(ItsName)
+      flush ( AllocateLogUnit ) ! In case there's a crash soon after...
+    end if
   end subroutine LogAllocate
 
   ! ------------------------------=--- LogDeallocate
-  subroutine LogDeallocate ( ModuleNameIn, ItsName, Size )
+  subroutine LogDeallocate ( ModuleNameIn, ItsName, Size, Address )
     character(len=*), intent(in)  :: ModuleNameIn, ItsName
     integer, intent(in), optional :: Size
+    integer(c_intptr_t), intent(in), optional :: Address ! of deallocated object
+
+    integer(c_intptr_t) :: Addr
     integer :: mySize
     ! Executable
     mySize = 0.
+    addr = 0
+    if ( present(address) ) addr = address
     if ( present(Size) ) mySize = Size
-    if ( mySize >= AllocateLogLimit ) &
-      write( AllocateLogUnit, * ) trim(ItsName), ' _d_ ', &
-        & mySize, trim(snipRCSfrom(ModuleNameIn))
+    serial_no = serial_no + 1
+    if ( mySize >= AllocateLogLimit ) then
+      write( AllocateLogUnit, "(2(i0,1x),a,i0,2(1x,a))" ) addr, serial_no, 'D ', &
+        & mySize, trim(snipRCSfrom(ModuleNameIn)), trim(ItsName)
+      flush ( AllocateLogUnit ) ! In case there's a crash soon after...
+    end if
   end subroutine LogDeallocate
 
   ! ----------------------------------  memproduct  -----
@@ -1604,7 +1638,7 @@ contains
     ! Note: we go through all this to forestall integer overflows
     integer, dimension(:), intent(in) :: dimensions
     integer, intent(in)               :: elementSize
-    real                              :: p
+    integer(c_intptr_t)               :: p
     !
     p = real(elementSize) * product(real(dimensions))
     ! print *, 'p ', p
@@ -1624,6 +1658,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.49  2015/03/27 01:10:38  vsnyder
+! Log allocated/deallocated entity's address, if provided
+!
 ! Revision 2.48  2014/09/04 23:37:01  vsnyder
 ! Change Test_Allocate to Test_Allocate_nd, Add Test_Allocate_1d, add
 ! generic for them.  Keep track of memory in bytes instead of Memory_Units
