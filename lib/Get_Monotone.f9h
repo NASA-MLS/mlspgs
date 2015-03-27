@@ -94,8 +94,12 @@
     
     n = maxloc(abs(seqs(2,:)-seqs(1,:)))
     seq = seqs(:,n(1))
+    if ( seq(1) > seq(2) ) seq = seq(2:1:-1)
 
 ! $Log$
+! Revision 2.2  2015/03/27 02:07:05  vsnyder
+! Ensure StartStop(1) < StartStop(2)
+!
 ! Revision 2.1  2015/03/27 01:05:38  vsnyder
 ! Initial commit
 !

@@ -21,6 +21,8 @@ module Monotone
 
   ! This family of routines computes indices for the longest monotone sequence
   ! of values in an array.  Equal consecutive elements are treated as monotinic.
+  ! The result is an integer array of two elements.  The first element is never
+  ! greater than the second element, so you don't need to worry about the stride.
 
   interface Get_Monotone
     module procedure Get_Monotone_D, Get_Monotone_S
@@ -112,6 +114,9 @@ contains ! ============= Public Procedures ==========================
 end module Monotone
 
 ! $Log$
+! Revision 2.2  2015/03/27 02:07:05  vsnyder
+! Ensure StartStop(1) < StartStop(2)
+!
 ! Revision 2.1  2015/03/27 01:05:38  vsnyder
 ! Initial commit
 !
