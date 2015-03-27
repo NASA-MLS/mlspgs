@@ -137,7 +137,7 @@ begin Construct
 
   ;; ----------------------------------------- Cloud Input/Output
   hGridFine: hGrid, type=regular, spacing=0.5 degrees, origin=0 degrees, $
-  module=GHz, /forbidOverspill, /insetOverlaps
+  module=GHz !ifdef(flagforbidOverspill, {, /forbidOverspill, /insetOverlaps})
   
   PSD:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=sizeDistribution
   earthradius: Quantity, hGrid=hGridStandard, type=earthradius
@@ -621,22 +621,38 @@ dtR3B9: Quantity, type=singleChannelRadiance, signal='R3:240.B9F:CO'
 
   !ifdef(flagMagneticFieldOnHeightGrid,!dnl
   {
+  CrossGrid: hGrid, type=explicit, $
+    geodangle=[-3.0 degrees, -1.5 degrees, 0 degrees, 1.5 degrees, 3.0 degrees]
   magneticField: quantity, type=magneticField, vGrid=vGridMag, $
     hGrid=hGridStandard, xGrid=crossGrid, stacked=false
+  fieldAzimuth: quantity, type=fieldAzimuth, vGrid=vGridMag, $
+    hGrid=hGridStandard, xGrid=crossGrid, stacked=false
+  fieldElevation: quantity, type=fieldElevation, vGrid=vGridMag, $
+    hGrid=hGridStandard, xGrid=crossGrid, stacked=false
+  fieldStrength: quantity, type=fieldStrength, vGrid=vGridMag, $
+    hGrid=hGridStandard, xGrid=crossGrid, stacked=false
+
+  tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz, $
+   coordinate=geocAltitude
+  tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=THz, $
+   coordinate=geocAltitude
   },{
   magneticField: quantity, type=magneticField, vGrid=vGridStandard, hGrid=hGridStandard
-  })
   fieldAzimuth: quantity, type=fieldAzimuth, vGrid=vGridStandard, hGrid=hGridStandard
   fieldElevation: quantity, type=fieldElevation, vGrid=vGridStandard, hGrid=hGridStandard
   fieldStrength: quantity, type=fieldStrength, vGrid=vGridStandard, hGrid=hGridStandard
+
+  tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz, $
+   coordinate=geocAltitude
+  tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=THz, $
+   coordinate=geocAltitude
+  })
 
   earthReflectivity: quantity, type=earthRefl
   orbitInclination: Quantity, type=orbitInclination, module=SC
   spaceRadiance: quantity, type=spaceRadiance
 
   scGeocAlt: Quantity, type=scGeocAlt, module=SC
-  tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz
-  tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=THz
 
   scECI: quantity, type=scECI, module=SC
   tngtECIGHz: quantity, type=tngtECI, module=GHz
