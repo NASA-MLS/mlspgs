@@ -103,20 +103,34 @@ begin Fill
     !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=13 profiles})
 
   ;; Fill the magnetic field.
+!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
   Fill, quantity=truth.magneticField, method=magneticModel, $
-    GPHquantity=truth.gph
+    scVelECR=truth.scVelECR, geocAltitudeQuantity=truth.tngtGeocAltGHz
   Fill, quantity=truth.fieldAzimuth, method=rotateField, $
     fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
   Fill, quantity=truth.fieldElevation, method=rotateField, $
     fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
   Fill, quantity=truth.fieldStrength, method=rotateField, $
     fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
-  
+  },{
+  Fill, quantity=truth.magneticField, method=magneticModel, $
+    scVelECR=truth.scVelECR, geocAltitudeQuantity=truth.tngtGeocAltGHz
+  Fill, quantity=truth.fieldAzimuth, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  Fill, quantity=truth.fieldElevation, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+  Fill, quantity=truth.fieldStrength, method=rotateField, $
+    fieldECR=truth.magneticField, ecrToFOV=truth.ecrToFOV
+    })
+
   })
 
 end Fill
 !divert(-1)
 ; $Log$
+; Revision 1.27  2013/04/11 16:35:34  pwagner
+; Replaced 4 degree phiWindows with 5 profiles
+;
 ; Revision 1.26  2010/08/26 20:34:43  pwagner
 ; Now fills hi-res ozone by interpolation
 ;

@@ -193,14 +193,25 @@ Fill, quantity=apriori.refGPH,$
   }) ;; End if gotClimatology
 
   ;; Fill the magnetic field.
+!ifdef(flagMagneticFieldOnHeightGrid,{!dnl
   Fill, quantity=apriori.magneticField, method=magneticModel, $
-    GPHquantity=apriori.gph
+    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz
   Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   Fill, quantity=apriori.fieldElevation, method=rotateField, $
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   Fill, quantity=apriori.fieldStrength, method=rotateField, $
     fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  },{
+  Fill, quantity=apriori.magneticField, method=magneticModel, $
+    scVelECR=apriori.scVelECR, geocAltitudeQuantity=apriori.tngtGeocAltGHz
+  Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
+    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  Fill, quantity=apriori.fieldElevation, method=rotateField, $
+    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  Fill, quantity=apriori.fieldStrength, method=rotateField, $
+    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  })
     
   ;; Adjust tropospheric HCN per HCP message 2013 May 16
   Fill, quantity=apriori.hcn, method=explicit, explicitValues=0.22 ppbv, $
@@ -771,6 +782,9 @@ end Fill
 !include(writeapriori.l2cf)
 !divert(-1)
 ;$Log$
+;Revision 1.159  2014/06/03 22:17:10  pwagner
+;May destroy mergedTemperature after use to conservee memory
+;
 ;Revision 1.158  2014/02/19 19:22:38  pwagner
 ;Increase methanol precision to 5ppbv
 ;

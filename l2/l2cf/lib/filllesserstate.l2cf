@@ -192,6 +192,22 @@ begin Fill
 
   ;; Note, we're doing NOTHING here about tangent point altitudes.
   ;; The presumption is that we don't need them for an l2pc calculation.
+  !ifdef(flagMagneticFieldOnHeightGrid,!dnl
+  {
+  ;; Which is utterly wrong .. again
+  ;; Really must stop making assumptions that come back
+  ;; later to harm us
+  Fill, quantity = apriori.scECI, method = explicit, $
+    explicitValues = 7070 km, /spread
+  Fill, quantity = apriori.tngtECITHz, method = explicit, $
+    explicitValues = 7070 km, /spread
+  Fill, quantity = apriori.tngtECITHz, method = explicit, $
+    explicitValues = 7070 km, /spread
+  Fill, quantity = apriori.scVelECI, method = explicit, $
+    explicitValues = 7070 , /spread
+  Fill, quantity = apriori.scVelECR, method = explicit, $
+    explicitValues = 7070 , /spread
+  })
   },{
   ;; ----------------- Using l1boa
   Fill, quantity=apriori.orbitInclination, method=l1b
@@ -211,8 +227,9 @@ begin Fill
   Fill, quantity=apriori.tngtECIGHz, method=l1b
   Fill, quantity=apriori.tngtECITHz, method=l1b
 
-  ;; Now get the spacecraft velocity in ECI coordinates
+  ;; Now get the spacecraft velocity in both sets of coordinates
   Fill, quantity=apriori.scVelECI, method=l1b
+  Fill, quantity=apriori.scVelECR,, method=l1b
 
   ;; Now do a special vector computation to get the LOS velocities.
   ;; Note that this DOES take into account the earth's rotation, even
