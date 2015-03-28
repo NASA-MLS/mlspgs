@@ -14,10 +14,10 @@ module Magnetic_Field_Quantity
   implicit NONE
   private
   public :: Get_Magnetic_Field_Quantity
-  public :: Get_Magnetic_Field_Qty_GPH, Get_Magnetic_Field_Qty_XYZ
+  public :: Get_Magnetic_Field_Qty_Geoc, Get_Magnetic_Field_Qty_XYZ
 
   interface Get_Magnetic_Field_Quantity
-    module procedure Get_Magnetic_Field_Qty_GPH
+    module procedure Get_Magnetic_Field_Qty_Geoc
     module procedure Get_Magnetic_Field_Qty_XYZ
   end interface
 
@@ -29,64 +29,90 @@ module Magnetic_Field_Quantity
 
 contains
 
-  subroutine Get_Magnetic_Field_Qty_GPH ( Qty, GPHQty, MAF )
+  subroutine Get_Magnetic_Field_Qty_Geoc ( Qty, GeocAltitudeQuantity, &
+    & ScVelQuantity, MAF )
 
-  ! Compute the magnetic field at the geolocations given by Qty (lat,lon)
-  ! and GPHQty (altitude), and put the values in Qty%Value3.
+  ! Compute the magnetic field at the geolocations given by Qty (lat,lon,surfs).
+  ! Determine the viewing plane defined by GeocAltitudeQuantity and
+  ! ScVelQuantity. If that is not the same as the orbit plane, compute the
+  ! magnetic field at across-track positions given by
+  ! Qty%Template%CrossAngles. Put the values in Qty%Value4.
 
-    use Geometry, only: SecPerYear, To_Cart
+    use ForwardModelGeometry, only: Compute_Viewing_Plane
+    use Geometry, only: ERad, SecPerYear, To_Cart, To_XYZ
     use IGRF_INT, only: FELDC, FELDCOF
+    use Intrinsic, only: L_GeocAltitude, L_Gauss
     use MLSStringLists, only: SwitchDetail
-    use QuantityTemplates, only: Epoch
+    use QuantityTemplates, only: Epoch, RT
     use Toggles, only: Switches
     use VectorsModule, only: Dump, VectorValue_T
 
     type (vectorValue_t), intent(inout) :: Qty
-    type (vectorValue_t), intent(inout) :: GPHQty
+    type (vectorValue_t), intent(in) :: GeocAltitudeQuantity
+    type (vectorValue_t), intent(in) :: ScVelQuantity
     integer, intent(in), optional :: MAF ! to use for GPH quantity
 
     real :: B(3)                      ! Magnetic field
-    integer, save :: Details = -10    ! From switchDetails('mag')
-    integer :: GPHInstance
-    integer :: INSTANCE               ! Loop counter
+    integer :: Cross                  ! Index for cross-track angle
+    integer, save :: Details = -10    ! From switchDetails('gmag')
+    integer :: Instance               ! Loop counter
+    integer :: InstanceOr1            ! Index
+    integer :: MAF1, MAFn             ! MAFs to do
     character(len=8), save :: options = ''
-    integer :: SURF                   ! Loop counter
-    integer :: SURFOR1                ! Index
-    real    :: XYZ(3)                 ! lat, lon, height for to_cart
+    integer :: Surf                   ! Loop counter
+    integer :: SurfOr1                ! Index
+    real    :: XYZ(3)                 ! ECR equivalent of (lat,lon,height),
+                                      ! first an unit vector, then in units of
+                                      ! ERad.
 
     if ( details < -1 ) then ! only once
-      details = switchDetail(switches,'mag')
+      details = switchDetail(switches,'gmag')
       if ( switchDetail(switches,'clean') > -1 ) options = '-c'
     end if
+
+    MAF1 = 1; MAFn = qty%template%noInstances
+    if ( present(MAF) ) then
+      MAF1 = MAF; MAFn = MAF
+    end if
+    call compute_viewing_plane ( Qty, GeocAltitudeQuantity, ScVelQuantity, &
+      MAF1, MAFn )
 
     ! Assume the time is close enough to constant that one call to
     ! FELDCOF is accurate enough.
 
     call feldcof ( real(qty%template%time(1,1)/secPerYear + epoch) )
 
-    do instance = 1, qty%template%noInstances
-      gphInstance = instance
-      if ( present(MAF) ) gphInstance = MAF
+    do instance = MAF1, MAFn
+      instanceOr1 = merge ( 1, instance, qty%template%coherent )
       do surf = 1, qty%template%noSurfs
-        if ( qty%template%stacked ) then
-          surfOr1 = 1
-        else
-          surfOr1 = surf
-        end if
-        ! Convert (/ lat(deg), lon(deg), height(km) /) to cartesian (e-radius)
-        call to_cart ( real( (/ qty%template%geodLat(surfOr1,instance), &
-          &                     qty%template%lon(surfOr1,instance), &
-          &                     gphQty%values(surf,gphInstance)*1.0e-3 /) ), xyz )
-        ! Compute the field at and w.r.t. cartesian coordinates in XYZ.
-        call feldc ( xyz, b )
-        ! The first dimension of value3 is field components, not channels.
-        qty%value3 ( 1:3, surf, instance) = b
+        surfOr1 = merge ( 1, surf, qty%template%stacked )
+        do cross = 1, qty%template%noCrossTrack
+          if ( qty%template%verticalCoordinate == l_geocAltitude ) then
+            ! Convert lat(deg), lon(deg) to an unit vector in ECR.
+            xyz = to_xyz ( qty%template%geodLat3(surfOr1,instance,cross), &
+                         & qty%template%lon3(surfOr1,instance,cross) )
+            ! Make the length of XYZ the geocentric altitude in units of ERad.
+            xyz = xyz * qty%template%surfs(surf,instanceOr1) / ( 1.0e3 * ERad )
+          else ! Assume the vertical coordinate is geodetic altitude in meters.
+            ! To_Cart wants altitude in km above sea level.
+            ! Qty%Template%Surfs is in meters.
+            ! It produces a vector with a length in units of the Earth radius.
+            call to_cart ( real( [ qty%template%geodLat3(surfOr1,instance,cross), &
+                                 & qty%template%lon3(surfOr1,instance,cross), &
+                                 & qty%template%surfs(surfOr1,instanceOr1) / 1.0e3 ] ), &
+                                 & xyz )
+          end if
+          ! Compute the field at and w.r.t. cartesian coordinates in XYZ.
+          call feldc ( xyz, b )
+          ! The first dimension of value3 is field components, not channels.
+          qty%value4 ( 1:3, surf, instance, cross ) = b
+        end do
       end do
     end do
-
     if ( details > -1 ) call dump ( qty, details=details, options=options )
+    qty%template%unit = l_gauss
 
-  end subroutine Get_Magnetic_Field_Qty_GPH
+  end subroutine Get_Magnetic_Field_Qty_Geoc
 
   subroutine Get_Magnetic_Field_Qty_XYZ ( Qty, XYZ )
 
@@ -104,14 +130,14 @@ contains
     real, intent(in) :: XYZ(3,size(qty%value3,2),size(qty%value3,3))
 
     real :: B(3)                      ! Magnetic field
-    integer, save :: Details = -10    ! From switchDetails('mag')
+    integer, save :: Details = -10    ! From switchDetails('gmag')
     integer :: INSTANCE               ! Loop counter
     character(len=8), save :: options = ''
     integer :: SURF                   ! Loop counter
     integer :: SURFOR1                ! Index
 
     if ( details < -1 ) then ! only once
-      details = switchDetail(switches,'mag')
+      details = switchDetail(switches,'gmag')
       if ( switchDetail(switches,'clean') > -1 ) options = '-c'
     end if
 
@@ -152,6 +178,9 @@ contains
 end module Magnetic_Field_Quantity
 
 ! $Log$
+! Revision 2.4  2015/03/28 02:13:06  vsnyder
+! Add cross-track magnetic field grids
+!
 ! Revision 2.3  2014/01/11 01:28:53  vsnyder
 ! Decruftification
 !
