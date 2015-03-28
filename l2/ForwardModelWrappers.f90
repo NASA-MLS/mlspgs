@@ -34,7 +34,6 @@ contains ! ============= Public Procedures ==========================
     ! Call the forward model selected by Config.
 
     use BaselineForwardModel_m, only: BaselineForwardModel
-    use Compute_Model_Plane_m, only: Compute_Model_Plane
     use ForwardModelConfig, only: DeriveFromForwardModelConfig, &
       & DestroyForwardModelDerived, ForwardModelConfig_T, QtyStuff_t
     use ForwardModelIntermediate, only: ForwardModelStatus_T
@@ -46,9 +45,9 @@ contains ! ============= Public Procedures ==========================
     use HybridForwardModel_m, only: HybridForwardModel
     use Init_Tables_Module, only: L_Baseline, L_CloudFull, &
       & L_Extinction, L_ExtinctionV2, L_Full, L_Hybrid, L_Linear, &
-      & L_MIFExtinction, L_MIFExtinctionExtrapolation, L_MIFExtinctionForm, &
-      & L_MIFExtinctionV2, L_MIFRHI, L_PolarLinear, L_PTan, L_Scan, L_Scan2d, &
-      & L_SwitchingMirror
+      & L_MagneticField, L_MIFExtinction, L_MIFExtinctionExtrapolation, &
+      & L_MIFExtinctionForm, L_MIFExtinctionV2, L_MIFRHI, L_PolarLinear, &
+      & L_PTan, L_Scan, L_Scan2d, L_SwitchingMirror
     use Intrinsic, only: L_LowestRetrievedPressure, L_VMR, Lit_Indices
     use LinearizedForwardModel_m, only: LinearizedForwardModel
     use MatrixModule_1, only: CheckIntegrity, CreateEmptyMatrix, DestroyMatrix, &
@@ -59,13 +58,12 @@ contains ! ============= Public Procedures ==========================
     use MLSStringLists, only: SwitchDetail
     use Molecules, only: L_Extinction, L_ExtinctionV2, L_RHI
     use MoreMessage, only: MLSMessage
-    use output_m, only: output
     use PolarLinearModel_m, only: PolarLinearModel
     use ScanModelModule, only: ScanForwardModel, TwoDScanForwardModel
     use String_Table, only: Create_String, Display_String
     use SwitchingMirrorModel_m, only: SwitchingMirrorModel
     use Time_m, only: Time_Now
-    use Toggles, only: EMIT, Levels, Switches, Toggle
+    use Toggles, only: EMIT, Switches, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     use VectorsModule, only: CheckNaN, Dump, Vector_t, VectorValue_t
 
@@ -107,7 +105,6 @@ contains ! ============= Public Procedures ==========================
     real(rv) :: ExtrapForm                 ! -exponent for extinction derivative extrapolation
     integer :: FMNaN                       ! Level of fmnan switch
     integer :: I, K
-    logical :: InOrbitPlane                ! Model plane is orbit plane
     type(vectorValue_t), pointer :: LRP    ! Lowest Retrieved Pressure
     integer :: Me = -1                     ! String index for trace
     type(qtyStuff_t) :: MIFQty(nt)         ! MIF extinction quantity
@@ -115,7 +112,6 @@ contains ! ============= Public Procedures ==========================
     integer, parameter :: MTypes(nt) = &
       & (/ l_MIFExtinction, l_MIFExtinctionv2, l_MIFRHI /)
     integer :: Nobody = -1                 ! String index for trace
-    real(rv) :: Normal(3)                  ! to the profile plane, XYZ
     type(vectorValue_t), pointer :: Ptan   ! Tangent pressure
     ! Profile (molecule) types corresponding to mTypes:
     integer, parameter :: PTypes(nt) = &
@@ -144,14 +140,12 @@ contains ! ============= Public Procedures ==========================
     end if
     clean = switchDetail(switches,'dxfc') > -1
 
+    ! Make sure we have a magnetic field if a polarized model is selected
     if ( config%polarized ) then
-      ! Compute a plane for the profile and the magnetic field,
-      ! if different from the orbit plane
-      call compute_model_plane ( fwdModelExtra, config, fmStat%MAF, &
-        & normal, inOrbitPlane )
-      if ( .not. inOrbitPlane ) &
-        & call fill_Magnetic_Field ( config, fwdModelIn, fwdModelExtra, &
-                                   & fmStat%MAF )
+      ! LRP is just a handy temp here.  We don't need the magnetic field,
+      ! just to verify it exists.
+      lrp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+               & quantityType=l_magneticField, config=config )
     end if
 
     ! Do the actual forward models
@@ -421,100 +415,6 @@ contains ! ============= Public Procedures ==========================
       call trace_end ( cond=.false. ) ! for all the cases
 
     end subroutine DoForwardModels
-
-    subroutine Fill_Magnetic_Field ( Config, FwdModelIn, FwdModelExtra, MAF )
-      ! Fill the magnetic field quantity in the model plane defined by
-      ! the geolocations of the reference MIF in the PTan and SCVelECR
-      ! quantities.
-      use Allocate_Deallocate, only: Same_Shape
-      use Constants, only: Deg2Rad, Rad2Deg
-      use FillUtils_1, only: UsingMagneticModel
-      use ForwardModelConfig, only: ForwardModelConfig_T
-      use ForwardModelVectorTools, only: GetQuantityForForwardModel
-      use Geometry, only: GeocToGeodLat, To_Cart
-      use Init_Tables_Module, only: L_PTan, L_ScVelECR
-      use Intrinsic, only: L_MagneticField, L_GPH
-      use MLSNumerics, only: Cross
-      use Output_m, only: Output
-      use QuantityTemplates, only: RT
-      use Rotation_m, only: Rotate_3d
-      use VectorsModule, only: CreateVectorValue, Dump, VectorValue_t
-
-      type(forwardModelConfig_T), intent(inout) :: Config
-      type(vector_t), intent(inout), target :: FwdModelIn ! The state
-      type(vector_t), intent(in) :: FwdModelExtra
-      integer, intent(in) :: MAF
-
-      type(vectorValue_t), pointer :: GPH      ! Geopotential height
-      integer :: I, J
-      integer :: MagDump   ! Switch level for "mag" switch
-      type(vectorValue_t), pointer :: MagQty   ! Magnetic field quantity
-      integer :: Me = -1   ! String index for trace cacheing
-      real(rt) :: N(3)     ! Normal to PTan-SC plane (doesn't need to be unit)
-      type(vectorValue_t), pointer :: PTan     ! Tangent pressure
-      real(rt) :: PTan_XYZ(3)
-      real(rt) :: R(3)     ! PTan rotated in the PTan-SC plane
-      type(vectorValue_t), pointer :: SCVelECR ! Spacecraft Velocity
-      real(rt) :: SC_XYZ(3)
-
-      ! For now, i.e., for UARS, not SMLS, assume the model plane includes
-      ! the PTan quantity and the SCVelECR quantity, the latter from which
-      ! we get the spacecraft ECR position (lat,lon).
-      ! Use magQuantity%phi, which is assumed to be zero at PTan, to compute
-      ! the spacing along the viewing direction.  From that, replace
-      ! (lat,lon) in magQty, then compute the magnetic field.
-
-      call trace_begin ( me, 'Fill_Magnetic_Field', &
-        & cond=toggle(emit) .and. levels(emit) > 0 )
-      magQty => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_magneticField, config=config )
-
-      ! Get XYZ vectors for pTan and spacecraft position.
-      pTan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_ptan, config=config, &
-              & instrumentModule=config%signals(1)%instrumentModule )
-      call to_cart ( (/ pTan%template%geodLat(config%referenceMIF,MAF), &
-                     &  pTan%template%lon(config%referenceMIF,MAF), 0.0_rt /), &
-                     &  pTan_xyz )
-      scVelECR => GetQuantityForForwardModel ( fwdModelExtra, noError=.false., &
-              & quantityType=l_scVelECR, config=config )
-      call to_cart ( (/ scVelECR%template%geodLat(config%referenceMIF,MAF), &
-                     &  scVelECR%template%lon(config%referenceMIF,MAF), 0.0_rt /), &
-                     &  sc_xyz )
-      ! Compute normal to PTan-SC plane (doesn't need to be unit normal)
-      n = cross(pTan_xyz, sc_xyz )
-      ! Make sure geolocation fields are the same shapes.
-      call same_shape ( magQty%template%phi, magQty%template%geodLat, &
-        & "magQty%template%GeodLat", moduleName )
-      call same_shape ( magQty%template%phi, magQty%template%lon, &
-        & "magQty%template%Lon", moduleName )
-      ! Compute magQty geodLat and Lon.
-      do i = 1, size(magQty%template%phi,1)
-        do j = 1, size(magQty%template%phi,2)
-          ! Rotate PTan_xyz by magQty%template%phi(i,j) degrees about N giving R
-          call rotate_3d ( pTan_xyz, magQty%template%phi(i,j) * deg2rad, n, r )
-          magQty%template%geodLat(i,j) = geocToGeodLat ( asin(r(3)) ) * rad2deg
-          magQty%template%lon(i,j) = atan2(r(2),r(1)) * rad2deg
-        end do
-      end do
-      ! Compute the magnetic field at geolocations in magQty.
-      call createVectorValue ( magQty, "MagQty", moduleName )
-      if ( config%no_magnetic_field ) then
-        magQty%values = 0.0
-        call output( 'Magnetic field zero because config%no_magnetic_field', advance='yes' )
-      else
-        GPH => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_GPH, config=config )
-        call usingMagneticModel ( magQty, GPH, config%where, MAF=MAF )
-!        call output( 'Magnetic field computed', advance='yes' )
-      end if
-      magDump = switchDetail(switches,'mag')
-      if ( magDump > -1 ) &
-        & call dump ( magQty, name='Magnetic field', details=magDump )
-      call trace_end ( 'Fill_Magnetic_Field', &
-        & cond=toggle(emit) .and. levels(emit) > 1 )
-
-    end subroutine Fill_Magnetic_Field
 
   end subroutine ForwardModel
 
@@ -886,6 +786,10 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.78  2015/03/28 02:44:39  vsnyder
+! Delete Compute_Model_Plane.  Get the magnetic field from a vector
+! quantity instead of computing it.  Delete Fill_Magnetic_Field.
+!
 ! Revision 2.77  2014/11/04 01:56:51  vsnyder
 ! Revised computation of magnetic field geolocations
 !
