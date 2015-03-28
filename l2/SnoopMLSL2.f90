@@ -323,6 +323,7 @@ contains ! ========  Public Procedures =========================================
   integer function AddSnooperToDatabase ( database, item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type (SnooperInfo_T), dimension(:), pointer :: DATABASE
     type (SnooperInfo_T), intent(in) :: ITEM
     ! Local variables
@@ -371,11 +372,13 @@ contains ! ========  Public Procedures =========================================
   ! ------------------------------------------------ ForgetSnooper -----
   subroutine ForgetSnooper ( snoopers, snooper )
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type (SnooperInfo_T), dimension(:), pointer :: SNOOPERS
     integer, intent(in) :: SNOOPER
 
     ! Local variables
     type (SnooperInfo_T), dimension(:), pointer :: NEWSNOOPERS
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S, STATUS
 
     ! Executable code
@@ -383,16 +386,21 @@ contains ! ========  Public Procedures =========================================
       & call output ( 'Forgetting snooper', advance='yes' )
 
     allocate ( newSnoopers(size(snoopers)-1), stat=status )
+    addr = 0
+    if ( status == 0 .and. size(snoopers)>1 ) addr = transfer(c_loc(newSnoopers(1)), addr)
     call test_allocate ( status, moduleName, 'newSnoopers', &
-      & uBounds = size(snoopers)-1, elementSize = storage_size(newSnoopers) / 8 )
+      & uBounds = size(snoopers)-1, elementSize = storage_size(newSnoopers) / 8, &
+      & address=addr )
 
     if ( size(newSnoopers) > 0 ) then
       newSnoopers(1:snooper-1) = snoopers(1:snooper-1)
       newSnoopers(snooper:) = snoopers(snooper+1:)
     end if
     s = size(snoopers) * storage_size(snoopers) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(snoopers(1)), addr)
     deallocate ( snoopers, stat=status )
-    call test_deallocate ( status, moduleName, 'newSnoopers', s )
+    call test_deallocate ( status, moduleName, 'newSnoopers', s, address=addr )
 
     snoopers => newSnoopers
 
@@ -876,7 +884,6 @@ contains ! ========  Public Procedures =========================================
     ! This routine sends a matrix (including the vectors associated
     ! with it) to a snooping task.  It will probably take a while in many
     ! cases.
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
 
     ! Dummy arguments
     type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
@@ -928,18 +935,7 @@ contains ! ========  Public Procedures =========================================
     if ( info /= 0 ) call PVMErrorMessage ( info, 'packing kind, noRows, noCols' )
 
     if ( associated ( block%values ) ) then
-!      if ( rm == r8 ) then
-!        call PVMIDLPack ( block%values, info )
-!      else
-        n_rows = size(block%values, 1)
-        n_cols = size(block%values, 2)
-        allocate ( values(n_rows, n_cols), stat=status )
-        call test_allocate ( status, moduleName, 'values' )
-        values = block%values
-        call PVMIDLPack ( values, info )
-        deallocate ( values, stat=status )
-        call test_deallocate ( status, moduleName, 'values' )
-!      endif
+      call PVMIDLPack ( real(block%values,r8), info )
       if ( info /= 0 ) call PVMErrorMessage ( info, 'packing block values' )
     endif
 
@@ -1026,6 +1022,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.50  2015/03/28 02:51:42  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.49  2014/09/05 01:22:30  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Convert
 ! some local pointer temps to allocatable.
