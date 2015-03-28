@@ -311,15 +311,19 @@ contains ! =====     Public Procedures     =============================
   ! nullify, the RC_Info, which is a shallow copy, would get clobbered by the
   ! finalizer.
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_cholesky_T), intent(in) :: CholeskyItem
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     type(matrix_Database_T) :: Item
     integer :: Status
 
     allocate ( item%cholesky, stat=status )
+    addr = 0
+    if ( status == 0 ) addr = transfer(c_loc(item%cholesky), addr)
     call test_allocate ( status, ModuleName, "Matrix database element", &
-      & elementSize = storage_size(item%cholesky) / 8 )
+      & elementSize = storage_size(item%cholesky) / 8, address=addr )
 !     call copyMatrix ( item%cholesky%m, choleskyItem%m ) ! Deep copy
 !     item%cholesky%m%name = choleskyItem%m%name ! Not done by copyMatrix
     item%cholesky = choleskyItem
@@ -341,15 +345,19 @@ contains ! =====     Public Procedures     =============================
   ! nullify, the RC_Info, which is a shallow copy, would get clobbered by the
   ! finalizer.
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_kronecker_T), intent(in) :: KroneckerItem
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     type(matrix_Database_T) :: Item
     integer :: Status
 
     allocate ( item%kronecker, stat=status )
+    addr = 0
+    if ( status == 0 ) addr = transfer(c_loc(item%kronecker), addr)
     call test_allocate ( status, ModuleName, "Matrix database element", &
-      & elementSize = storage_size(item%kronecker) / 8 )
+      & elementSize = storage_size(item%kronecker) / 8, address=addr )
 !     call copyMatrix ( item%kronecker%m, kroneckerItem%m ) ! Deep copy
 !     item%kronecker%m%name = kroneckerItem%m%name ! Not done by copyMatrix
     item%kronecker = kroneckerItem
@@ -400,15 +408,19 @@ contains ! =====     Public Procedures     =============================
   ! nullify, the RC_Info, which is a shallow copy, would get clobbered by the
   ! finalizer.
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_T), intent(in) :: MatrixItem
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     type(matrix_Database_T) :: Item
     integer :: Status
 
     allocate ( item%matrix, stat=status )
+    addr = 0
+    if ( status == 0 ) addr = transfer(c_loc(item%matrix), addr)
     call test_allocate ( status, ModuleName, "Matrix database element", &
-      & elementSize = storage_size(item%matrix) / 8 )
+      & elementSize = storage_size(item%matrix) / 8, address=addr )
 !     call copyMatrix ( item%matrix, matrixItem ) ! Deep copy
 !     item%matrix%name = matrixItem%name ! Not done by copyMatrix
     item%matrix = matrixItem
@@ -431,15 +443,19 @@ contains ! =====     Public Procedures     =============================
   ! nullify, the RC_Info, which is a shallow copy, would get clobbered by the
   ! finalizer.
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(matrix_Database_T), dimension(:), pointer :: Database
     type(matrix_spd_T), intent(in) :: SPDItem
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     type(matrix_Database_T) :: Item
     integer :: Status
 
     allocate ( item%spd, stat=status )
+    addr = 0
+    if ( status == 0 ) addr = transfer(c_loc(item%spd), addr)
     call test_allocate ( status, ModuleName, "Matrix database element", &
-      & elementSize = storage_size(item%spd) / 8 )
+      & elementSize = storage_size(item%spd) / 8, address=addr )
 !     call copyMatrix ( item%spd%m, spdItem%m ) ! Deep copy
 !     item%spd%m%name = spdItem%m%name ! Not done by copyMatrix
     item%spd = spdItem
@@ -895,16 +911,23 @@ contains ! =====     Public Procedures     =============================
   subroutine CopyMatrix ( Z, X )        ! Destroy Z, then deep Z = X except
   !                                       the name of Z isn't changed.
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(matrix_T), intent(inout) :: Z
     type(matrix_T), intent(in) :: X
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, J      ! Subscripts and loop inductors
     integer :: Status    ! From allocate
     call destroyMatrix ( z )
     call copyRCInfo ( z%col, x%col )
     call copyRCInfo ( z%row, x%row )
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( size(z%block) > 0 ) addr = transfer(c_loc(z%block(1,1)), addr)
+    end if
     call test_allocate ( status, ModuleName, "Z%Block in CreateEmptyMatrix", &
-      & uBounds = [z%row%nb,z%col%nb], elementSize = storage_size(z%block) / 8 )
+      & uBounds = [z%row%nb,z%col%nb], elementSize = storage_size(z%block) / 8, &
+      & address=addr )
     do j = 1, x%col%nb
       do i = 1, x%row%nb
         call createBlock ( z, i, j, m_absent, forWhom="CopyMatrix" ) ! Create block w/correct size
@@ -965,6 +988,7 @@ contains ! =====     Public Procedures     =============================
   subroutine CreateEmptyMatrix ( Z, Name, Row, Col &
     &,                           Row_Quan_First, Col_Quan_First, Text, where )
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(Matrix_T), intent(inout) :: Z  ! The matrix to create -- inout so
       !                                   destroyMatrix makes sense
     integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
@@ -982,6 +1006,7 @@ contains ! =====     Public Procedures     =============================
       ! instead of "Name."
     type(where_t), intent(in), optional :: Where ! in input, if created if by L2CF
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, J      ! Subscripts, loop inductors
     integer :: STATUS    ! From ALLOCATE
 
@@ -992,8 +1017,13 @@ contains ! =====     Public Procedures     =============================
     call defineRCInfo ( z%col, col, col_Quan_First )
     if ( present(where) ) z%where = where
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( size(z%block) > 0 ) addr = transfer(c_loc(z%block(1,1)), addr)
+    end if
     call test_allocate ( status, ModuleName, "Z%Block in CreateEmptyMatrix", &
-      & uBounds = [z%row%nb,z%col%nb], elementSize = storage_size(z%block) / 8 )
+      & uBounds = [z%row%nb,z%col%nb], elementSize = storage_size(z%block) / 8, &
+      & address=addr )
     do i = 1, z%row%nb ! Now create absent blocks with the correct sizes
       do j = 1, z%col%nb
         call createBlock ( z, i, j, m_absent, forWhom="CreateEmptyMatrix" )
@@ -1267,16 +1297,20 @@ contains ! =====     Public Procedures     =============================
   ! intact, but releases the space for its values.  This is useful when
   ! forming normal equations little-by-little.
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(matrix_T), intent(inout) :: A
 
+    integer(c_intptr_t) :: Addr    ! For tracing
     integer :: S                   ! Size in bytes of object to deallocate
     integer :: STATUS              ! From deallocate
 
     call clearMatrix ( a )
     if ( associated(a%block) ) then
       s = size(a%block) * storage_size(a%block) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(a%block(1,1)), addr)
       deallocate ( a%block, stat=status )
-      call test_deallocate ( status, ModuleName, "A%Block", s )
+      call test_deallocate ( status, ModuleName, "A%Block", s, address=addr )
     end if
   end subroutine DestroyBlock_1
 
@@ -1297,29 +1331,39 @@ contains ! =====     Public Procedures     =============================
   ! Destroy a matrix in the database -- deallocate its pointer components,
   ! don't change the name
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(matrix_database_T), intent(inout) :: Database
-    integer :: Status  ! from deallocate
+    integer(c_intptr_t) :: Addr         ! For tracing
+    integer :: S, Status  ! from deallocate
 
     if ( associated(database%matrix) ) then
       call destroyMatrix ( database%matrix )
+      s = storage_size(database%matrix) / 8
+      addr = transfer(c_loc(database%matrix), addr)
       deallocate ( database%matrix, stat=status )
       call test_deallocate ( status, moduleName, 'PlainMatrix', &
-        & storage_size(database%matrix) / 8 )
+        & storage_size(database%matrix) / 8, address=addr )
     else if ( associated(database%cholesky) ) then
       call destroyMatrix ( database%cholesky%m )
+      s = storage_size(database%cholesky%m ) / 8
+      addr = transfer(c_loc(database%cholesky%m), addr)
       deallocate ( database%cholesky, stat=status )
       call test_deallocate ( status, moduleName, 'CholeskyMatrix', &
-        & storage_size(database%cholesky%m) / 8 )
+        & storage_size(database%cholesky%m) / 8, address=addr )
     else if ( associated(database%kronecker) ) then
       call destroyMatrix ( database%kronecker%m )
+      s = storage_size(database%kronecker%m ) / 8
+      addr = transfer(c_loc(database%kronecker%m), addr)
       deallocate ( database%kronecker, stat=status )
       call test_deallocate ( status, moduleName, 'KroneckerMatrix', &
-        & storage_size(database%kronecker%m) / 8 )
+        & storage_size(database%kronecker%m) / 8, address=addr )
     else if ( associated(database%spd) ) then
       call destroyMatrix ( database%spd%m )
+      s = storage_size(database%spd%m ) / 8
+      addr = transfer(c_loc(database%spd%m), addr)
       deallocate ( database%spd, stat=status )
       call test_deallocate ( status, moduleName, 'SPDMatrix', &
-        & storage_size(database%spd%m) / 8 )
+        & storage_size(database%spd%m) / 8, address=addr )
     end if
   end subroutine DestroyMatrixInDatabase
 
@@ -1327,8 +1371,10 @@ contains ! =====     Public Procedures     =============================
   subroutine DestroyMatrixDatabase ( D )
   ! Destroy every matrix in the database D, then destroy the database.
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(matrix_database_T), dimension(:), pointer :: D
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S, Status
 
     if ( .not. associated(d) ) return
@@ -1336,13 +1382,17 @@ contains ! =====     Public Procedures     =============================
       call destroyMatrixDatabaseElement ( d(i) )
     end do
     s = size(d) * storage_size(d) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(d(1)), addr)
     deallocate ( d, stat=status )
-    call test_deallocate ( status, ModuleName, "D in DestroyMatrixDatabase", s )
+    call test_deallocate ( status, ModuleName, "D in DestroyMatrixDatabase", s, &
+      & address=addr )
   end subroutine DestroyMatrixDatabase
 
   ! -------------------------------  DestroyMatrixDatabaseElement  -----
   subroutine DestroyMatrixDatabaseElement ( D )
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(matrix_database_T), intent(inout) :: D
     if ( associated(d%matrix) ) then
       call destroyMatrix ( d%matrix )
@@ -1362,11 +1412,14 @@ contains ! =====     Public Procedures     =============================
     end if
   contains
     subroutine DeallocateMatrix ( M )
-      integer :: Status
       type(matrix_t), pointer :: M
+      integer(c_intptr_t) :: Addr         ! For tracing
+      integer :: Status
+      addr = transfer(c_loc(m), addr)
       deallocate ( m, stat=status )
       call test_deallocate ( status, ModuleName, &
-        & "D%matrix in DestroyMatrixDatabaseElement", storage_size(m) / 8 )
+        & "D%matrix in DestroyMatrixDatabaseElement", storage_size(m) / 8, &
+        & address=addr )
     end subroutine DeallocateMatrix
   end subroutine DestroyMatrixDatabaseElement
 
@@ -2611,6 +2664,7 @@ contains ! =====     Public Procedures     =============================
   ! AddKroneckerToDatabase or AddSPDToDatabase.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(Matrix_Database_T), dimension(:), pointer :: Database
     type(Matrix_Database_T) :: Item
@@ -3122,6 +3176,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.140  2015/03/28 01:20:39  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.139  2014/10/10 23:56:19  vsnyder
 ! Undo making RC_Info%Vec a pointer.  It breaks L2PC_m
 !
