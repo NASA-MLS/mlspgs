@@ -92,6 +92,7 @@ contains
   ! ----------------------------------------------- GetChunkInfoFromMaster ------
   subroutine GetChunkInfoFromMaster ( chunks, chunkNo )
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     ! This function gets a chunk sent by SendChunkToSlave
 
     ! Dummy arguments and result
@@ -102,6 +103,7 @@ contains
     integer, parameter :: noChunkTerms = 5 ! Number of components in MLSChunk_T
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: BITS
     integer :: BUFFERID                 ! ID for buffer for receive
     integer :: CHUNK                    ! Loop counter
@@ -129,8 +131,10 @@ contains
     chunkNo = header(2)
     
     allocate ( chunks ( noChunks ), STAT=status)
+    addr = 0
+    if ( status == 0 .and. noChunks>0 ) addr = transfer(c_loc(chunks(1)), addr)
     call test_allocate ( status, moduleName, 'chunks', uBounds = noChunks, &
-      & elementSize = storage_size(chunks) / 8 )
+      & elementSize = storage_size(chunks) / 8, address=addr )
 
     do chunk = 1, noChunks
       call PVMF90Unpack ( values, info )
@@ -1316,6 +1320,7 @@ contains
     ! doesn't yet exist
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (StoredResult_T), dimension(:), pointer :: database
@@ -1363,10 +1368,12 @@ contains
   subroutine DestroyStoredResultsDatabase ( database )
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type (StoredResult_T), dimension(:), pointer :: database
 
     ! Local variabels
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: i, s, status
 
     ! Executable code
@@ -1378,8 +1385,11 @@ contains
         & 'database(?)%precInds', ModuleName)
     end do
     s = size(database) * storage_size(database) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
     deallocate ( database, STAT=status )
-    call test_deallocate ( status, ModuleName, 'stored quantities database', s )
+    call test_deallocate ( status, ModuleName, 'stored quantities database', s, &
+      & address=addr )
 
   end subroutine DestroyStoredResultsDatabase
 
@@ -1790,6 +1800,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.112  2015/03/28 02:48:22  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.111  2014/09/05 01:06:08  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
