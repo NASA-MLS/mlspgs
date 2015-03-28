@@ -29,7 +29,7 @@ contains
 
 ! Compute the 2 dimensional hydrostatic stuff
 
-  use Geometry, only: earthRadA, Earth_Axis_Ratio_Squared_m1
+  use Geometry, only: EarthRadA, Orbit_Plane_Minor_Axis_sq
   use Hydrostatic_m, only: hydrostatic
   use Load_sps_data_m, ONLY: Grids_T
   use MLSKinds, only: RP, IP
@@ -73,7 +73,7 @@ contains
 !         \frac{a^2}{\left(\frac{a^2}{b^2}-1\right) \sin^2 \beta + 1}$
 
   sinBeta = sin(beta)
-  csq = earthrada**2 / (Earth_Axis_Ratio_Squared_m1 * sinBeta**2 + 1)
+  csq = orbit_plane_minor_axis_sq ( beta )
 
 ! compute the 2 d hydrostatic
 
@@ -123,6 +123,9 @@ contains
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.20  2014/09/05 21:28:07  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.19  2013/06/12 02:33:37  vsnyder
 ! Cruft removal
 !
