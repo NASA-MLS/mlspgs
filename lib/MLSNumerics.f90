@@ -53,7 +53,6 @@ module MLSNumerics              ! Some low level numerical stuff
 !                             or floating root to within a given tolerance
 ! ClosestElement           Find index(es) in array closest to test value
 !                           (array may be multidimensional, non-monotonic)
-! Cross                    Cross product of two 3-vectors
 ! Destroy                  Deallocate y values in UnifDiscreteFn
 ! d2Fdx2Approximate        Compute 2nd derivative using UnifDiscreteFn
 ! dFdxApproximate          Compute derivative using UnifDiscreteFn
@@ -151,7 +150,7 @@ module MLSNumerics              ! Some low level numerical stuff
 ! === (end of api) ===
 
   public :: BATTLESHIP, BIVARIATELINEARINTERPOLATION
-  public :: CLOSESTELEMENT, CROSS
+  public :: CLOSESTELEMENT
   public :: DESTROY, DFDXAPPROXIMATE, D2FDX2APPROXIMATE, DUMP
   public :: FAPPROXIMATE, FILLLOOKUPTABLE, FINDINRANGE, FINVAPPROXIMATE
   public :: HUNT, HUNTBOX, HUNTRANGE, IFAPPROXIMATE
@@ -351,10 +350,6 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure ClosestElement_r4_1d, ClosestElement_r8_1d
     module procedure ClosestElement_r4_2d, ClosestElement_r8_2d
     module procedure ClosestElement_r4_3d, ClosestElement_r8_3d
-  end interface
-
-  interface Cross
-    module procedure Cross_r4, Cross_r8, Cross2_r4, Cross2_r8
   end interface
 
   interface CreateXArray
@@ -972,42 +967,6 @@ contains
       & indices_1d )
     call rerank( indices_1d(1), shape(array), indices )
   end subroutine ClosestElement_r8_3d
-
-! --------------------------------------------------------  Cross  -----
-
-  ! Cross product of two three-vectors
-  pure function Cross_r4 ( XYZ ) result ( Cross )
-    real, intent(in) :: XYZ(3,2)
-    real :: Cross(3)
-    cross = (/ xyz(2,1)*xyz(3,2) - xyz(3,1)*xyz(2,2), &
-               xyz(1,1)*xyz(3,2) - xyz(3,1)*xyz(1,2), &
-               xyz(1,1)*xyz(2,2) - xyz(2,1)*xyz(1,2) /)
-  end function Cross_r4
-
-  pure function Cross_r8 ( XYZ ) result ( Cross )
-    double precision, intent(in) :: XYZ(3,2)
-    double precision :: Cross(3)
-    cross = (/ xyz(2,1)*xyz(3,2) - xyz(3,1)*xyz(2,2), &
-               xyz(1,1)*xyz(3,2) - xyz(3,1)*xyz(1,2), &
-               xyz(1,1)*xyz(2,2) - xyz(2,1)*xyz(1,2) /)
-  end function Cross_r8
-
-  pure function Cross2_r4 ( A, B ) result ( Cross )
-    real, intent(in) :: A(3), B(3)
-    real :: Cross(3)
-    cross = (/ a(2)*b(3) - a(3)*b(2), &
-               a(1)*b(3) - a(3)*b(1), &
-               a(1)*b(2) - a(2)*b(1) /)
-  end function Cross2_r4
-
-
-  pure function Cross2_r8 ( A, B ) result ( Cross )
-    double precision, intent(in) :: A(3), B(3)
-    double precision :: Cross(3)
-    cross = (/ a(2)*b(3) - a(3)*b(2), &
-               a(1)*b(3) - a(3)*b(1), &
-               a(1)*b(2) - a(2)*b(1) /)
-  end function Cross2_r8
 
 ! ------------------------------------------------------  Destroy  -----
 
@@ -2619,6 +2578,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.83  2015/03/28 01:49:22  vsnyder
+! Moved Cross to Cross_m module
+!
 ! Revision 2.82  2014/01/09 00:24:29  pwagner
 ! Some procedures formerly in output_m now got from highOutput
 !
