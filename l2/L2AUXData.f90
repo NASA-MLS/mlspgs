@@ -634,7 +634,7 @@ contains ! =====     Public Procedures     =============================
       l2aux%dimensions(3)%values(1:oldSize) = temp1D
     else
       l2aux%dimensions(3)%values = temp1D(1:newSize)
-    endif
+    end if
     ! Now we can loose the old values
     call deallocate_test ( temp1D, "temp1D", ModuleName )
 
@@ -651,7 +651,7 @@ contains ! =====     Public Procedures     =============================
       l2aux%values(:,:,1:oldSize) = temp3d
     else
       l2aux%values = temp3d(:,:,1:newSize)
-    endif
+    end if
 
     ! Now we can set temp3d loose
     call deallocate_test ( temp3d, "temp3d", ModuleName )
@@ -666,6 +666,7 @@ contains ! =====     Public Procedures     =============================
   ! the length of the database -- where L2aux is put.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (L2AUXData_T), dimension(:), pointer :: DATABASE
@@ -866,13 +867,13 @@ contains ! =====     Public Procedures     =============================
     if ( L2AUXFile%access == DFACC_CREATE ) then
       call MLSMessage(MLSMSG_Error, trim(ModuleName) // ' ReadL2AUXData_MLSFile', &
         & 'Attempt to open l2aux file for reading with create access', MLSFile=L2AUXFile)
-    endif
+    end if
     if ( .not. alreadyOpen ) then
       call mls_openFile(L2AUXFile, returnStatus)
       if ( returnStatus /= 0 ) &
         call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unable to open l2aux file for reading', MLSFile=L2AUXFile)
-    endif
+    end if
     select case (L2AUXFile%hdfVersion)
     case (HDFVERSION_4)
       call ReadL2AUXData_MF_hdf4(L2AUXFile, quantityname, quantityType, l2aux, &
@@ -1172,7 +1173,7 @@ contains ! =====     Public Procedures     =============================
       if ( returnStatus /= 0 ) &
         call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Unable to open l2aux file for writing', MLSFile=L2AUXFile)
-    endif
+    end if
     if ( L2AUXFile%access == DFACC_RDONLY )  &
       & call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'l2aux file is rdonly', MLSFile=L2AUXFile)
@@ -1515,7 +1516,7 @@ contains ! =====     Public Procedures     =============================
       l2aux%DIM_Names  = 'chunk,' // name(1:5) // ',none'
       l2aux%DIM_Units  =  'none,none,none'
       l2aux%VALUE_Units=  's'
-    endif
+    end if
     if ( DEEBUG ) then
       call output('Writing attributes to: ', advance='no')
       call output(trim(Name), advance='yes')
@@ -1959,6 +1960,9 @@ end module L2AUXData
 
 
 ! $Log$
+! Revision 2.96  2015/03/28 02:47:33  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.95  2014/09/05 01:03:35  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
