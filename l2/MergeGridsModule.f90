@@ -15,9 +15,10 @@ module MergeGridsModule
   ! information.
   ! Secondary operations may be performed directly on the gridded data--
   ! e.g., calculating wmo tropopause pressures from eta-level temperatures
-  use allocate_deallocate, only: allocate_test, byte_size, bytes, &
-    & deallocate_test, test_allocate, test_deallocate
-  use highOutput, only: outputNamedValue
+  use Allocate_Deallocate, only: Allocate_Test, Byte_Size, Bytes, &
+    & Deallocate_Test, Test_Allocate, Test_Deallocate
+  use HighOutput, only: OutputNamedValue
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use MLSL2Options, only: MLSMessage, l2cfNode
   use MLSMessagemodule, only: MLSMsg_Error, MLSMsg_Warning
   use ncep_dao, only: readGriddedData
@@ -533,6 +534,7 @@ contains ! ===================================  Public procedures  =====
     real (r8), parameter :: SCALEHEIGHT = 16.0e3_r8 ! Approximate scale height / m
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: DAY                      ! Loop counter
     logical, parameter :: DEEBUG = .false.
     integer :: FIELD                    ! Another tree node
@@ -675,18 +677,25 @@ contains ! ===================================  Public procedures  =====
       !& newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
     ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
     !  & MLSMSG_Allocate//'operMapped' )
+    addr = 0
+    if ( status == 0 ) then
+      if ( size(operMapped) > 0 ) addr = transfer(c_loc(operMapped(1,1,1,1,1,1)), addr)
+    end if
     call test_allocate ( status, moduleName, 'operMapped', (/1,1,1,1,1,1/), &
       & (/ newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
-      & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(operMapped) )
+      & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(operMapped), address=addr )
     allocate ( cliMapped ( &
       & newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
       & newGrid%noLsts, newGrid%noSzas, 1 ), stat=status )
       !& newGrid%noLsts, newGrid%noSzas, newGrid%noDates ), stat=status )
     ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
     !   & MLSMSG_Allocate//'operMapped' )
+    if ( status == 0 ) then
+      if ( size(cliMapped) > 0 ) addr = transfer(c_loc(cliMapped(1,1,1,1,1,1)), addr)
+    end if
     call test_allocate ( status, moduleName, 'cliMapped', (/1,1,1,1,1,1/), &
       & (/ newGrid%noHeights, newGrid%noLats, newGrid%noLons, &
-      & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(cliMapped) )
+      & newGrid%noLsts, newGrid%noSzas, 1 /), bytes(cliMapped), address=addr )
     ! call outputNamedValue( 'Bytes after allocating 2 temp arrays', NoBytesAllocated )
 
     if ( DEEBUG ) then
@@ -784,11 +793,14 @@ contains ! ===================================  Public procedures  =====
     ! but what about the two biggies???
     call Deallocate_test ( meanDates, 'meanDates', ModuleName )
     s = byte_size(cliMapped)
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(cliMapped(1,1,1,1,1,1)), addr)
     deallocate ( cliMapped, stat=status )
-    call test_deallocate ( status, moduleName, 'climapped', s )
+    call test_deallocate ( status, moduleName, 'climapped', s, address=addr )
     s = byte_size(operMapped)
+    if ( s > 0 ) addr = transfer(c_loc(operMapped(1,1,1,1,1,1)), addr)
     deallocate ( operMapped, stat=status )
-    call test_deallocate ( status, moduleName, 'opermapped', s )
+    call test_deallocate ( status, moduleName, 'opermapped', s, address=addr )
     call finishUp ( done = .true. )
 
   contains
@@ -1173,6 +1185,9 @@ contains ! ===================================  Public procedures  =====
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.60  2015/03/28 02:49:58  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.59  2014/09/05 01:15:02  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Track
 ! allocate/deallocate size in bytes instead of Memory_Units.
