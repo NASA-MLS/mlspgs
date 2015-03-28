@@ -13,6 +13,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   use allocate_deallocate, only: allocate_test, deallocate_test, bytes, &
     & test_allocate
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use dump_0, only : dump
   use griddeddata, only: griddeddata_t, rgr, v_is_altitude, v_is_gph, &
     & v_is_pressure, v_is_theta, &
@@ -376,6 +377,7 @@ contains
     logical, optional, intent(IN)           :: verbose
     ! Internal variables
     type(MLSFile_T)                         :: GriddedFile
+
     ! Executable
     returnStatus = InitializeMLSFile( GriddedFile, content = 'gridded', &
       & name=FileName, &
@@ -384,6 +386,7 @@ contains
       & the_g_data, returnStatus, &
       & GeoDimList, fieldNames, missingValue, &
       & date, sumDelp, deferReading, litDescription, verbose )
+
   end subroutine ReadGriddedData_Name
 
   ! ----------------------------------------------- Read_geos5_7
@@ -419,6 +422,7 @@ contains
     logical, optional, intent(IN)           :: sumDelp ! sum the DELP to make PL
     ! Local variables
     character (len=NAMELEN) :: actual_field_name
+    integer(c_intptr_t) :: Addr         ! For tracing
     character(len=19) :: datestring ! will be in the form of yyyy-MM-ddTHH:MM:ss
     logical :: DEEBUG
     integer(kind=hsize_t) :: dim1(1), dim4(4)
@@ -619,8 +623,14 @@ contains
     ! call allocate_test ( the_g_data%field(:,:,:,1,1,1), idim4(1:3), &
     !     & 'the_g_data%field', ModuleName // 'Read_geos57' )
     allocate ( the_g_data%field(idim4(3), idim4(2), idim4(1), 1, 1, 1), STAT=error)
+    addr = 0
+    if ( error == 0 ) then
+      if ( size(the_g_data%field) > 0 ) addr = transfer(c_loc( &
+        & the_g_data%field(1,1,1,1,1,1)), addr)
+    end if
     call test_allocate ( error, moduleName, 'the_g_data%field', (/1,1,1,1,1,1/), &
-      & (/ idim4(3), idim4(2), idim4(1), 1, 1, 1 /), bytes(the_g_data%field) )
+      & (/ idim4(3), idim4(2), idim4(1), 1, 1, 1 /), bytes(the_g_data%field), &
+      & address=addr )
     the_g_data%field(:,:,:,1,1,1) = reshape(temp4d(:,:,:,1), order=(/3,2,1/), &
     shape=(/the_g_data%noheights, the_g_data%nolats, the_g_data%nolons/))
     !  do i1 = 1, idim4(1)
@@ -2679,6 +2689,10 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.81  2015/03/28 00:56:14  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 2.80  2015/02/06 01:10:36  pwagner
 ! Added body missing from ReadGriddedData with filename api
 !
