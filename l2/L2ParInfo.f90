@@ -189,6 +189,7 @@ contains ! ==================================================================
     ! an array of machine names
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     character(len=MachineNameLen), dimension(:), pointer :: DATABASE
     character(len=MachineNameLen), intent(in) :: ITEM
     ! Local variables
@@ -205,6 +206,7 @@ contains ! ==================================================================
     ! Add a machine to a database of machines
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(machine_t), dimension(:), pointer :: DATABASE
     type(machine_t), intent(in) :: ITEM
     ! Local variables
@@ -514,7 +516,6 @@ contains ! ==================================================================
   subroutine GetMachineNames ( machineNames )
     ! This reads the parallel slave name file and returns
     ! an array of machine names
-    use Allocate_Deallocate, only: Test_Allocate
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
 
     ! Local variables
@@ -608,10 +609,7 @@ contains ! ==================================================================
       end if
       noMachines = last - first + 1
 
-      allocate ( machineNames(noMachines), stat=stat )
-      call test_allocate ( stat, ModuleName, 'machineNames', ubounds=noMachines, &
-        & elementSize = storage_size(machineNames) / 8 )
-
+      call Allocate_test ( machineNames, noMachines, 'machineNames', moduleName )
       ! Now rewind the file and read the names
       rewind ( lun )
       machine = 1
@@ -622,7 +620,7 @@ contains ! ==================================================================
           if ( (machine >= first) .and. (machine <= last) ) &
             & machineNames(machine-first+1) = line
           machine = machine + 1
-        endif
+        end if
       end do
 
       close ( unit=lun )
@@ -636,9 +634,11 @@ contains ! ==================================================================
     ! This reads the parallel slave name file and returns
     ! an array of machine types
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(machine_t), dimension(:), pointer :: MACHINES
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: noMachines, stat
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
     ! Executable
@@ -647,8 +647,10 @@ contains ! ==================================================================
     noMachines = size(machineNames)
     if ( noMachines < 1 ) return
     allocate ( machines(noMachines), stat=stat )
+    addr = 0
+    if ( stat == 0 ) addr = transfer(c_loc(machines(1)), addr)
     call test_allocate ( stat, ModuleName, 'machines', ubounds=noMachines, &
-      & elementSize = storage_size(machines) / 8 )
+      & elementSize = storage_size(machines) / 8, address=addr )
     machines%name = machineNames
   end subroutine GetMachines
 
@@ -658,6 +660,7 @@ contains ! ==================================================================
     ! return index of first new element
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type(DirectWriteRequest_T), dimension(:), pointer :: DATABASE
@@ -890,6 +893,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.65  2015/03/28 02:48:02  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.64  2014/09/05 01:05:03  vsnyder
 ! Add some tracing.  Move some USEs from module to procedure scope.
 !
