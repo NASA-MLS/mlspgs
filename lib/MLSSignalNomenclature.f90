@@ -15,6 +15,7 @@ module MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_test, &
     & Test_Allocate, Test_Deallocate
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use MLSCommon, only: NameLen
   use MLSKinds, only: R8
   use MLSStrings, only: Capitalize, LinearSearchStringArray, &
@@ -561,6 +562,7 @@ contains
 
     ! Local variables
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: upperLower
     integer :: mostAdvancedField
     character (len=len(request)) :: remainder,newRemainder,field, &
@@ -656,8 +658,12 @@ contains
     if ( associated(signals) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          & "Signals already allocated" )
     allocate ( signals(noMatches),STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( noMatches > 0 ) addr = transfer(c_loc(signals(1)), addr)
+    end if
     call test_allocate ( status, ModuleName, "signals", uBounds = noMatches, &
-      & elementSize = storage_size(signals) / 8 )
+      & elementSize = storage_size(signals) / 8, address=addr )
 
     signals = pack(database%validSignals,allMatch)
     signals%upperLower = upperLower
@@ -711,6 +717,7 @@ contains
     logical, intent(in), optional :: NoError
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: s, signal, status
     logical :: useNoError
 
@@ -734,8 +741,10 @@ contains
           end if
        end do
        s = size(signals) * storage_size(signals) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc(signals(1)), addr)
        deallocate (signals, stat=status)
-       call test_deallocate ( status, ModuleName, "signals", s )
+       call test_deallocate ( status, ModuleName, "signals", s, address=addr )
     else
        if ( .NOT. useNoError ) call MLSMessage(MLSMSG_Error,ModuleName, &
             & "This signal not allocted" )
@@ -757,6 +766,7 @@ contains
     type (MLSSignal_T), dimension(:), pointer    :: signalsUnion
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: sizeA,sizeB,noSignalsInUnion
     logical :: presentInA(size(signalsB))
     integer :: status
@@ -785,8 +795,13 @@ contains
     if ( associated(signalsUnion) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          & "Result already allocated" )
     allocate ( signalsUnion(noSignalsInUnion), stat=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( noSignalsInUnion > 0 ) addr = transfer(c_loc(signalsUnion(1)), addr)
+    end if
     call test_allocate ( status, ModuleName, "signalsUnion", &
-      & uBounds = noSignalsInUnion, elementSize = storage_size(signalsUnion) / 8 )
+      & uBounds = noSignalsInUnion, elementSize = storage_size(signalsUnion) / 8, &
+      & address=addr )
 
     ! Now fill up the result
 
@@ -831,15 +846,20 @@ contains
 
     ! Local variables
     type (MLSSignal_T), dimension(:), pointer :: tempSignals
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: status
 
     ! Executable code
 
     if ( .NOT. associated(signalsA) ) then
        allocate ( signalsA(lbound(signalsB,1):ubound(signalsB,1)),stat=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(signalsA) > 0 ) addr = transfer(c_loc(signalsA(lbound(signalsB,1))), addr)
+       end if
        call test_allocate ( status, ModuleName, "signalsA", &
          & lBounds = lbound(signalsB,1), uBounds = ubound(signalsB,1), &
-         & elementSize = storage_size(signalsA) / 8 )
+         & elementSize = storage_size(signalsA) / 8, address=addr )
        call TurnMLSChannelInfoIntoCopy(signalsA)
     else
        nullify ( tempSignals )
@@ -1017,6 +1037,7 @@ contains
     ! Some low level variables ----------------------
 
     character (len=SDBLineLen) :: line, first, last, rest
+    integer(c_intptr_t) :: Addr         ! For tracing
     logical :: eof
     integer :: no               ! Temporary array index
     integer :: signal           ! Loop counters
@@ -1036,8 +1057,7 @@ contains
 
     ! These variables are intermediate arrays to allow our database to `grow'
 
-    type (SDBSpectrometerFamilyInfo_T), dimension(:), pointer :: &
-         & tempSpectrometerFamilyInfo
+    type (SDBSpectrometerFamilyInfo_T) :: tempSpectrometerFamilyInfo
     character (len=SDBLineLen), dimension(:), pointer :: &
          validSignalNames, tempValidSignalNames
 
@@ -1045,24 +1065,24 @@ contains
 
     character (len=NameLen), dimension(:), allocatable :: validRadiometer, &
          & validBand, validSwitch, validSpectrometer
-    character (len=NameLen), dimension(:), pointer :: radiometerNames, &
+    character (len=NameLen), dimension(:), allocatable :: radiometerNames, &
          & bandNames, switchNames, spectrometerNames
 
     character (len=1), dimension(:), allocatable :: &
          & spectrometerFamilyChars
 
+    integer, parameter :: MLSInstrumentNoModules=2
+
+    character (len=3),  dimension(MLSInstrumentNoModules) :: &
+       & MLSInstrumentModuleNames= (/ &
+       & "GHz", &
+       & "THz"/)
 
     ! Executable code ----------------------------------------------------
 
     ! The first section in the signals file describes the various types
     ! of spectrometer there can be.  First, we read a line and expect it to be
     ! `spectrometers'
-    integer, parameter :: MLSInstrumentNoModules=2
-    character (len=3),  dimension(MLSInstrumentNoModules) :: &
-       & MLSInstrumentModuleNames= (/ &
-       & "GHz", &
-       & "THz"/)
-
 
     MLSInstrumentModuleNames(1)='GHz'
     MLSInstrumentModuleNames(2)='THz'
@@ -1082,35 +1102,19 @@ contains
        if ( eof ) call MLSMessage ( MLSMSG_Error, ModuleName, EOFMessage )
        if ( Capitalize(line)=="END" ) exit SpectrometerFamilyLoop
 
-       database%noSpectrometerFamilies=database%noSpectrometerFamilies+1
-       no = database%noSpectrometerFamilies
-       if ( no==1 ) then
-          allocate(database%spectrometerFamilyInfo(no),STAT=status)
-          call test_allocate ( status, ModuleName, "database%spectrometerFamilyInfo", &
-            & uBounds = no, elementSize = storage_size(database%spectrometerFamilyInfo) / 8 )
-       else
-          allocate ( tempSpectrometerFamilyInfo(no), STAT=status )
-          call test_allocate ( status, ModuleName, "tempSpectrometerFamilyInfo", &
-            & uBounds = no, elementSize = storage_size(tempSpectrometerFamilyInfo) / 8 )
-          tempSpectrometerFamilyInfo(1:no-1) = database%spectrometerFamilyInfo
-          s = size(database%spectrometerFamilyInfo) * &
-            & storage_size(database%spectrometerFamilyInfo) / 8
-          deallocate ( database%spectrometerFamilyInfo, stat=status )
-          call test_deallocate ( status, ModuleName, &
-            & "database%spectrometerFamilyInfo", s )
-
-          database%spectrometerFamilyInfo => tempSpectrometerFamilyInfo
-       end if
-
        ! Now parse the line
 
        call SplitWords ( line, first, rest, last, threeWay=.TRUE., delimiter=" " )
-       database%spectrometerFamilyInfo(no)%name = first
-       read (UNIT=rest,FMT=*) database%spectrometerFamilyInfo(no)%firstChannel
-       read (UNIT=last,FMT=*) database%spectrometerFamilyInfo(no)%lastChannel
-       database%spectrometerFamilyInfo(no)%noChannels =  &
-            & database%spectrometerFamilyInfo(no)%lastChannel- &
-            & database%spectrometerFamilyInfo(no)%firstChannel+1
+       tempSpectrometerFamilyInfo%name = first
+       read (UNIT=rest,FMT=*) tempSpectrometerFamilyInfo%firstChannel
+       read (UNIT=last,FMT=*) tempSpectrometerFamilyInfo%lastChannel
+       tempSpectrometerFamilyInfo%noChannels =  &
+            & tempSpectrometerFamilyInfo%lastChannel - &
+            & tempSpectrometerFamilyInfo%firstChannel + 1
+
+       database%noSpectrometerFamilies = addSpectrometerInfoToDatabase ( &
+         & database%spectrometerFamilyInfo, tempSpectrometerFamilyInfo )
+
     end do SpectrometerFamilyLoop
 
     ! The next section in the file is the list of all the valid signals
@@ -1129,23 +1133,9 @@ contains
        if ( eof ) call MLSMessage ( MLSMSG_Error, ModuleName, EOFMessage )
        if ( Capitalize(line)=="END" ) exit ValidSignalsReadingLoop
 
-       database%noValidSignals = database%noValidSignals+1
-       no = database%noValidSignals
-       IF ( no==1 ) THEN
-          allocate ( validSignalNames(no), STAT=status )
-          call test_allocate ( status, ModuleName, "validSignalNames", &
-            & uBounds = no, elementSize = storage_size(validSignalNames) / 8 )
-       else
-          allocate ( tempValidSignalNames(no), STAT=status )
-          call test_allocate ( status, ModuleName, "tempValidSignalNames", &
-            & uBounds = no, elementSize = storage_size(tempValidSignalNames) / 8 )
-          tempValidSignalNames(1:no-1) = validSignalNames
-          s = size(validSignalNames) * storage_size(validSignalNames) / 8
-          deallocate ( validSignalNames, stat=status )
-          call test_deallocate ( status, ModuleName, "validSignalNames", s )
-          validSignalNames => tempValidSignalNames
-       end if
-       validSignalNames(no) = line
+       database%noValidSignals = AddValidSignalNamesToDatabase ( &
+         & validSignalNames, line )
+
     end do ValidSignalsReadingLoop
 
     ! The remainder of the file talks about lo frequencies etc.  We'll handle
@@ -1186,7 +1176,7 @@ contains
       & uBounds = database%noValidSignals, &
       & elementSize = storage_size(spectrometerNames) / 8 )
 
-    do signal=1,database%noValidSignals
+    do signal = 1, database%noValidSignals
        ! First split into radiometer,rest,spectrometer
        call SplitWords ( validSignalNames(signal), &
             & validRadiometer(signal), rest, validSpectrometer(signal), &
@@ -1211,9 +1201,13 @@ contains
     ! We'll go through the radiometers and fill up the radiometerInfo
 
     allocate ( database%radiometerInfo(database%noRadiometers), STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( database%noRadiometers > 0 ) addr = transfer(c_loc(database%radiometerInfo(1)), addr)
+    end if
     call test_allocate ( status, ModuleName, "database%radiometerInfo", &
       & uBounds = database%noRadiometers, &
-      & elementSize = storage_size(database%radiometerInfo) / 8 )
+      & elementSize = storage_size(database%radiometerInfo) / 8, address=addr )
 
     do radiometer = 1, database%noRadiometers
        database%radiometerInfo(radiometer)%name = radiometerNames(radiometer)
@@ -1242,9 +1236,13 @@ contains
     ! Now, we similarly go through the bands and fill up that info
 
     allocate ( database%bandInfo(database%noBands), STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( database%noBands > 0 ) addr = transfer(c_loc(database%bandInfo(1)), addr)
+    end if
     call test_allocate ( status, ModuleName, "database%bandInfo", &
       & uBounds = database%noBands, &
-      & elementSize = storage_size(database%bandInfo) / 8 )
+      & elementSize = storage_size(database%bandInfo) / 8, address=addr )
 
     do band = 1, database%noBands
        database%bandInfo(band)%name = bandNames(band)
@@ -1265,18 +1263,27 @@ contains
     ! Sorting out the switch settings is easy.
 
     allocate ( database%switches(database%noSwitches), STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+!       if ( database%noSwitches > 0 ) addr = transfer(c_loc(database%switches(1)), addr)
+    end if
     call test_allocate ( status, ModuleName, "database%switches", &
       & uBounds = database%noSwitches, &
-      & elementSize = storage_size(database%switches) / 8 )
+      & elementSize = storage_size(database%switches) / 8, address=addr )
     database%switches = switchNames(1:database%noSwitches)
 
     ! Finally we do the spectrometers
 
     allocate ( database%spectrometerInfo(database%noSpectrometers), &
          &  STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( database%noSpectrometers > 0 ) addr = &
+        & transfer(c_loc(database%spectrometerInfo(1)), addr)
+    end if
     call test_allocate ( status, ModuleName, "database%spectrometerInfo", &
       & uBounds = database%noSpectrometers, &
-      & elementSize = storage_size(database%spectrometerInfo) / 8 )
+      & elementSize = storage_size(database%spectrometerInfo) / 8, address=addr )
     do spectrometer = 1, database%noSpectrometers
        database%spectrometerInfo(spectrometer)%name = &
             & spectrometerNames(spectrometer)
@@ -1294,9 +1301,14 @@ contains
 
     allocate ( spectrometerFamilyChars(database%noSpectrometerFamilies), &
          &  STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+!       if ( database%noSpectrometerFamilies > 0 ) addr = &
+!         & transfer(c_loc(spectrometerFamilyChars(1)), addr)
+    end if
     call test_allocate ( status, ModuleName, "spectrometerFamilyChars", &
       & uBounds = database%noSpectrometerFamilies, &
-      & elementSize = storage_size(spectrometerFamilyChars) / 8 )
+      & elementSize = storage_size(spectrometerFamilyChars) / 8, address=addr )
 
     do spectrometerFamily = 1, database%noSpectrometerFamilies
        spectrometerFamilyChars(spectrometerFamily) = &
@@ -1409,23 +1421,37 @@ contains
             & database%spectrometerFamilyInfo(index)%firstChannel:&
             & database%spectrometerFamilyInfo(index)%lastChannel),&
             & STAT=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(database%spectrometerFamilyInfo(index)%position) > 0 ) addr = &
+           & transfer(c_loc(database%spectrometerFamilyInfo(index)%position( &
+             & database%spectrometerFamilyInfo(index)%firstChannel)), addr)
+       end if
        call test_allocate ( status, ModuleName, "position", &
          & lBounds = database%spectrometerFamilyInfo(index)%firstChannel, &
          & uBounds = database%spectrometerFamilyInfo(index)%lastChannel, &
-         & elementSize = storage_size(database%spectrometerFamilyInfo(index)%position) / 8 )
+         & elementSize = storage_size(database%spectrometerFamilyInfo(index)%position) / 8, &
+         & address=addr )
 
        allocate ( database%spectrometerFamilyInfo(index)%width(&
             & database%spectrometerFamilyInfo(index)%firstChannel:&
             & database%spectrometerFamilyInfo(index)%lastChannel),&
             & STAT=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(database%spectrometerFamilyInfo(index)%width) > 0 ) addr = &
+           & transfer(c_loc(database%spectrometerFamilyInfo(index)%width( &
+             & database%spectrometerFamilyInfo(index)%firstChannel)), addr)
+       end if
        call test_allocate ( status, ModuleName, "width", &
          & lBounds = database%spectrometerFamilyInfo(index)%firstChannel, &
          & uBounds = database%spectrometerFamilyInfo(index)%lastChannel, &
-         & elementSize = storage_size(database%spectrometerFamilyInfo(index)%width) / 8 )
+         & elementSize = storage_size(database%spectrometerFamilyInfo(index)%width) / 8, &
+         & address=addr )
 
        database%spectrometerFamilyInfo(index)%individual=.FALSE.
 
-       SELECT CASE (Capitalize(rest))
+       select case (Capitalize(rest))
        case ('LIST') ! Positions and widths given on next lines
           read (UNIT=unit, FMT=*) &
                & database%spectrometerFamilyInfo(index)%position
@@ -1449,12 +1475,19 @@ contains
           database%spectrometerFamilyInfo(index)%individual=.TRUE.
           s = size(database%spectrometerFamilyInfo(index)%position) * &
             & storage_size(database%spectrometerFamilyInfo(index)%position) / 8
+          addr = 0
+          if ( s > 0 ) addr = transfer(c_loc( &
+            & database%spectrometerFamilyInfo(index)%position(database%spectrometerFamilyInfo(index)%firstChannel)), addr)
           deallocate ( database%spectrometerFamilyInfo(index)%position, stat=status )
-          call test_deallocate ( status, ModuleName, "position", s )
+          call test_deallocate ( status, ModuleName, "position", s, address=addr )
           s = size(database%spectrometerFamilyInfo(index)%width) * &
             & storage_size(database%spectrometerFamilyInfo(index)%width) / 8
+          addr = 0
+          if ( s > 0 ) addr = transfer(c_loc( &
+            & database%spectrometerFamilyInfo(index)%position( &
+             & database%spectrometerFamilyInfo(index)%firstChannel)), addr)
           deallocate ( database%spectrometerFamilyInfo(index)%width, stat=status )
-          call test_deallocate ( status, ModuleName, "width", s )
+          call test_deallocate ( status, ModuleName, "width", s, address=addr )
 
        case default
           call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1470,9 +1503,14 @@ contains
     ! we need to fill up our valid signals database
 
     allocate ( database%validSignals(database%noValidSignals),STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( database%noValidSignals > 0 ) addr = &
+        & transfer(c_loc(database%validSignals(1)), addr)
+    end if
     call test_allocate ( status, ModuleName, "database%validSignals", &
       & uBounds = database%noValidSignals, &
-      & elementSize = storage_size(database%validSignals) / 8 )
+      & elementSize = storage_size(database%validSignals) / 8, address=addr )
 
     do signal=1,database%noValidSignals
 
@@ -1548,21 +1586,39 @@ contains
 
        allocate ( database%validSignals(signal)%channelPosition &
             & (firstChannel:lastChannel),STAT=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(database%validSignals(signal)%channelPosition) > 0 ) addr = &
+           & transfer(c_loc(database%validSignals(signal)%channelPosition(firstChannel)), addr)
+       end if
        call test_allocate ( status, ModuleName, "channelPosition", &
          & lBounds = firstChannel, uBounds = lastChannel, &
-         & elementSize = storage_size(database%validSignals(signal)%channelPosition) / 8 )
+         & elementSize = storage_size(database%validSignals(signal)%channelPosition) / 8, &
+         & address=addr )
 
        allocate ( database%validSignals(signal)%channelWidth &
             & (firstChannel:lastChannel),STAT=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(database%validSignals(signal)%channelWidth) > 0 ) addr = &
+           & transfer(c_loc(database%validSignals(signal)%channelWidth(firstChannel)), addr)
+       end if
        call test_allocate ( status, ModuleName, "channelWidth", &
          & lBounds = firstChannel, uBounds = lastChannel, &
-         & elementSize = storage_size(database%validSignals(signal)%channelWidth) / 8 )
+         & elementSize = storage_size(database%validSignals(signal)%channelWidth) / 8, &
+         & address=addr )
 
        allocate ( database%validSignals(signal)%channelIncluded &
             & (firstChannel:lastChannel),STAT=status )
+       addr = 0
+       if ( status == 0 ) then
+         if ( size(database%validSignals(signal)%channelIncluded) > 0 ) addr = &
+           & transfer(c_loc(database%validSignals(signal)%channelIncluded(firstChannel)), addr)
+       end if
        call test_allocate ( status, ModuleName, "channelIncluded", &
          & lBounds = firstChannel, uBounds = lastChannel, &
-         & elementSize = storage_size(database%validSignals(signal)%channelIncluded) / 8 )
+         & elementSize = storage_size(database%validSignals(signal)%channelIncluded) / 8, &
+         & address=addr )
 
        database%validSignals(signal)%channelIncluded = .TRUE.
 
@@ -1623,8 +1679,10 @@ contains
     ! Now we tidy up our arrays and exit
 
     s = size(validSignalNames) * storage_size(validSignalNames) / 8
+    addr = 0
+!     if ( s > 0 ) addr = transfer(c_loc(validSignalNames(1)), addr)
     deallocate( validSignalNames, stat=status )
-    call test_deallocate ( status, ModuleName, "validSignalNames", s )
+    call test_deallocate ( status, ModuleName, "validSignalNames", s, address=addr )
     s = size(radiometerNames) * storage_size(radiometerNames) / 8
     deallocate ( radiometerNames, stat=status )
     call test_deallocate ( status, ModuleName, "radiometerNames", s )
@@ -1641,6 +1699,40 @@ contains
     deallocate ( spectrometerFamilyChars, stat=status )
     call test_deallocate ( status, ModuleName, "spectrometerFamilyChars", s )
 
+  contains
+
+    integer function AddSpectrometerInfoToDatabase ( Database, Item )
+      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+      ! Dummy arguments
+      type (SDBSpectrometerFamilyInfo_T), dimension(:), pointer :: DATABASE
+      type (SDBSpectrometerFamilyInfo_T), intent(in) :: ITEM
+
+      ! Local variables
+      type (SDBSpectrometerFamilyInfo_T), dimension(:), pointer :: tempDatabase
+
+      include "addItemToDatabase.f9h" 
+
+      addSpectrometerInfoToDatabase = newSize
+
+    end function AddSpectrometerInfoToDatabase
+
+    integer function AddValidSignalNamesToDatabase ( Database, Item )
+      use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+
+      ! Dummy arguments
+      character (len=SDBLineLen), dimension(:), pointer :: DATABASE
+      character (len=SDBLineLen), intent(in) :: ITEM
+
+      ! Local variables
+      character (len=SDBLineLen), dimension(:), pointer :: tempDatabase
+
+      include "addItemToDatabase.f9h" 
+
+      addValidSignalNamesToDatabase = newSize
+
+    end function AddValidSignalNamesToDatabase
+
   end subroutine ReadSignalsDatabase
 
   ! -------------------------------------  DestroySignalsDatabase  -----
@@ -1650,8 +1742,9 @@ contains
 
   subroutine DestroySignalsDatabase
 
-    ! Local variable
+   ! Local variable
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: i, s, status
 
     ! Executable code
@@ -1664,56 +1757,87 @@ contains
     database%noValidSignals = 0
 
     s = size(database%radiometerInfo) * storage_size(database%radiometerInfo) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(database%radiometerInfo(1)), addr)
     deallocate ( database%radiometerInfo, stat=status )
-    call test_deallocate ( status, ModuleName, "database%radiometerInfo", s )
+    call test_deallocate ( status, ModuleName, "database%radiometerInfo", s, &
+      & address=addr )
     s = size(database%bandInfo) * storage_size(database%bandInfo) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(database%bandInfo(1)), addr)
     deallocate ( database%bandInfo, stat=status )
-    call test_deallocate ( status, ModuleName, "database%bandInfo", s )
+    call test_deallocate ( status, ModuleName, "database%bandInfo", s, &
+      & address=addr )
     s = size(database%switches) * storage_size(database%switches) / 8
+!     if ( s > 0 ) addr = transfer(c_loc(database%switches(1)), addr)
     deallocate ( database%switches, stat=status )
-    call test_deallocate ( status, ModuleName, "database%switches", s )
+    call test_deallocate ( status, ModuleName, "database%switches", s, &
+      & address=addr )
     s = size(database%spectrometerInfo) * storage_size(database%spectrometerInfo) / 8
+    if ( s > 0 ) addr = transfer(c_loc(database%spectrometerInfo(1)), addr)
     deallocate ( database%spectrometerInfo, stat=status )
-    call test_deallocate ( status, ModuleName, "database%spectrometerInfo", s )
+    call test_deallocate ( status, ModuleName, "database%spectrometerInfo", s, &
+      & address=addr )
 
     do i = 1, database%noSpectrometerFamilies
        s = size(database%spectrometerFamilyInfo(i)%position) * &
          & storage_size(database%spectrometerFamilyInfo(i)%position) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc( &
+         & database%spectrometerFamilyInfo(i)%position(database%spectrometerFamilyInfo(i)%firstChannel)), addr)
        deallocate ( database%spectrometerFamilyInfo(i)%position, stat=status )
        call test_deallocate ( status, ModuleName, &
-         & "database%spectrometerFamilyInfo(i)%position", s )
+         & "database%spectrometerFamilyInfo(i)%position", s, address=addr )
        s = size(database%spectrometerFamilyInfo(i)%width) * &
          & storage_size(database%spectrometerFamilyInfo(i)%width) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc( &
+         & database%spectrometerFamilyInfo(i)%width(database%spectrometerFamilyInfo(i)%firstChannel)), addr)
        deallocate ( database%spectrometerFamilyInfo(i)%width, stat=status )
        call test_deallocate ( status, ModuleName, &
-         & "database%spectrometerFamilyInfo(i)%width", s )
+         & "database%spectrometerFamilyInfo(i)%width", s, address=addr )
     end do
     s = size(database%spectrometerFamilyInfo) * &
       & storage_size(database%spectrometerFamilyInfo) / 8
-    deallocate (database%spectrometerFamilyInfo, stat=status)
-    call test_deallocate ( status, ModuleName, "database%spectrometerFamilyInfo", s )
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc( &
+      & database%spectrometerFamilyInfo(i)%width(database%spectrometerFamilyInfo(i)%firstChannel)), addr)
+    deallocate ( database%spectrometerFamilyInfo, stat=status)
+    call test_deallocate ( status, ModuleName, "database%spectrometerFamilyInfo", s, &
+      & address=addr )
 
     do i = 1, database%noValidSignals
        s = size(database%validSignals(i)%channelIncluded) * &
          & storage_size(database%validSignals(i)%channelIncluded) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc( &
+         & database%validSignals(i)%channelIncluded(lbound(database%validSignals(i)%channelIncluded,1))),addr)
        deallocate ( database%validSignals(i)%channelIncluded, stat=status )
        call test_deallocate ( status, ModuleName, &
-         & "database%validSignals(i)%channelIncluded", s )
+         & "database%validSignals(i)%channelIncluded", s, address=addr )
        s = size(database%validSignals(i)%channelPosition) * &
          & storage_size(database%validSignals(i)%channelPosition) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc( &
+         & database%validSignals(i)%channelPosition(lbound(database%validSignals(i)%channelPosition,1))),addr)
        deallocate ( database%validSignals(i)%channelPosition, stat=status )
        call test_deallocate ( status, ModuleName, &
-         & "database%validSignals(i)%channelPosition", s )
+         & "database%validSignals(i)%channelPosition", s, address=addr )
        s = size(database%validSignals(i)%channelWidth) * &
          & storage_size(database%validSignals(i)%channelWidth) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc( &
+         & database%validSignals(i)%channelWidth(lbound(database%validSignals(i)%channelWidth,1))),addr)
        deallocate ( database%validSignals(i)%channelWidth, stat=status )
        call test_deallocate ( status, ModuleName, &
-         & "database%validSignals(i)%channelWidth", s )
+         & "database%validSignals(i)%channelWidth", s, address=addr )
     end do
     s = size(database%validSignals) * &
       & storage_size(database%validSignals) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(database%validSignals(1)), addr)
     deallocate ( database%validSignals, stat=status )
-    call test_deallocate ( status, ModuleName, "database%validSignals", s )
+    call test_deallocate ( status, ModuleName, "database%validSignals", s, address=addr )
 
   end subroutine DestroySignalsDatabase
 
@@ -1731,9 +1855,8 @@ contains
 
     ! Executable code
 
-    allocate ( names(database%noRadiometers),STAT=status )
-    call test_allocate ( status, ModuleName, "names", &
-      & uBounds = database%noRadiometers, elementSize = storage_size(names) / 8 )
+    call allocate_test ( names, database%noRadiometers, "MLSRadiometerNames", &
+      & moduleName )
 
     names = database%radiometerInfo%name
   end subroutine GetMLSRadiometerNames
@@ -1752,9 +1875,7 @@ contains
 
     ! Executable code
 
-    allocate ( names(database%noBands),STAT=status )
-    call test_allocate ( status, ModuleName, "names", &
-      & uBounds = database%noBands, elementSize = storage_size(names) / 8 )
+    call allocate_test ( names, database%noBands, "MLSBandNames", moduleName )
 
     names = database%bandInfo%name
   end subroutine GetMLSBandNames
@@ -1775,6 +1896,11 @@ end module MLSSignalNomenclature
 
 !
 ! $Log$
+! Revision 2.14  2015/03/28 01:18:07  vsnyder
+! Some spiffing.  Some reorganization.
+! Added stuff to trace allocate/deallocate addresses -- some commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 2.13  2014/09/30 16:31:02  pwagner
 ! Uses Allocate_test, etc. from Allocate_Deallocate, back to module-wise scope
 !
