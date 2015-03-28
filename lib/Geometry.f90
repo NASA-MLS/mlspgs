@@ -14,26 +14,30 @@ module Geometry
   ! This module contains some geometry routines and constants common to the
   ! forward model and the scan model.
 
+  use Constants, only: Pi
   use MLSKinds, only: R8, RP
 
   implicit NONE
   private
 
   ! Constants
-  public :: Earth_Axis_Ratio_Squared, Earth_Axis_Ratio_Squared_m1 ! a^2/b^2, a^2/b^2-1
-  public :: EarthRadA, EarthRadB, EarthSurfaceGPH
+  public :: Earth_Axis_Ratio_Squared ! a^2/b^2
+  public :: EarthRadA, EarthRadB, EarthSurfaceGPH, Eccentricity_Sq, ERad
   public :: GM, G0, J2, J4, SecPerYear, W, MaxRefraction
 
   ! Procedures
-  public :: GeocToGeodLat, GeodToGeocLat, Get_R_Eq, To_Cart
+  public :: GeocToGeodLat, GeodToGeocLat, Get_R_Eq
+  public :: Orbit_Plane_Minor_Axis_sq, To_Cart, To_XYZ
+  public :: XYZ_to_Geod, XYZ_to_Geod_Bowring, XYZ_to_Geod_Fukushima
 
   ! Earth dimensions.
 
-  real(r8), parameter :: EarthRadA = 6378137.0_r8    ! Major axis radius in m 
-  real(r8), parameter :: EarthRadB = 6356752.3141_r8 ! Minor axis radius in m 
-  real(r8), parameter :: Earth_Axis_Ratio_Squared = EarthRadA**2 / EarthRadB**2
-  real(r8), parameter :: Earth_Axis_Ratio_Squared_m1 = &
-    & (EarthRadA / EarthRadB - 1) * (EarthRadA / EarthRadB + 1)
+  real(r8), parameter :: EarthRadA = 6378137.0_r8    ! Semi-Major axis in m
+  real(r8), parameter :: EarthRadB = 6356752.3141_r8 ! Semi-Minor axis in m
+  real(r8), parameter :: Earth_Axis_Ratio = EarthRadB / EarthRadA
+  real(r8), parameter :: Earth_Axis_Ratio_Squared = Earth_Axis_Ratio**2
+  real(r8), parameter :: Eccentricity_Sq = &
+    & 1.0_r8 - Earth_Axis_Ratio_Squared ! 1 - b**2 / a**2
 
   ! Gravity-related terms.
 
@@ -80,8 +84,28 @@ module Geometry
     module procedure GeodToGeocLat_D, GeodToGeocLat_S
   end interface
 
+  interface Orbit_Plane_Minor_Axis_sq
+    module procedure Orbit_Plane_Minor_Axis_sq_D, Orbit_Plane_Minor_Axis_sq_S
+  end interface
+
   interface To_Cart
     module procedure To_Cart_D, To_Cart_S
+  end interface
+
+  interface To_XYZ
+    module procedure To_XYZ_D, To_XYZ_S
+  end interface
+
+  interface XYZ_to_Geod_Fukushima
+    module procedure XYZ_to_Geod_Fukushima_D, XYZ_to_Geod_Fukushima_S
+  end interface
+
+  interface XYZ_to_Geod_Bowring
+    module procedure XYZ_to_Geod_Bowring_D, XYZ_to_Geod_Bowring_S
+  end interface
+
+  interface XYZ_to_Geod
+    module procedure XYZ_to_Geod_Fukushima_D, XYZ_to_Geod_Fukushima_S
   end interface
 
 ! *****     Private Constants     **************************************
@@ -119,10 +143,10 @@ contains
     double precision, intent(in) :: geocLat
 
     double precision :: Lat ! Geocentric latitude in radians
-    double precision, parameter :: F2 = Earth_Axis_Ratio_Squared
+    double precision, parameter :: F2 = Earth_Axis_Ratio_Squared ! b^2/a^2
 
     lat = deg2Rad * geocLat
-    geodLat = rad2Deg * atan2 ( f2 * sin(lat), cos(lat) )
+    geodLat = rad2Deg * atan2 ( sin(lat), f2 * cos(lat) )
 
   end function GeocToGeodLat_D
 
@@ -139,10 +163,10 @@ contains
     real, intent(in) :: geocLat
 
     real :: Lat ! Geocentric latitude in radians
-    real, parameter :: F2 = Earth_Axis_Ratio_Squared
+    real, parameter :: F2 = Earth_Axis_Ratio_Squared ! b^2/a^2
 
     lat = deg2Rad * geocLat
-    geodLat = rad2Deg * atan2 ( f2 * sin(lat), cos(lat) )
+    geodLat = rad2Deg * atan2 ( sin(lat), f2 * cos(lat) )
 
   end function GeocToGeodLat_S
 
@@ -160,10 +184,10 @@ contains
     double precision, intent(in) :: GeodLat
 
     double precision :: Lat ! Geodetic latitude in radians
-    double precision, parameter :: F2 = Earth_Axis_Ratio_Squared
+    double precision, parameter :: F2 = Earth_Axis_Ratio_Squared ! b^2/a^2
 
     lat = geodLat * deg2rad
-    geocLat = atan2 ( sin(lat), f2*cos(lat) )
+    geocLat = atan2 ( f2 * sin(lat), cos(lat) )
 
   end function GeodToGeocLat_D
 
@@ -181,10 +205,10 @@ contains
     real, intent(in) :: GeodLat
 
     real :: Lat ! Geodetic latitude in radians
-    real, parameter :: F2 = Earth_Axis_Ratio_Squared
+    real, parameter :: F2 = Earth_Axis_Ratio_Squared ! b^2/a^2
 
     lat = geodLat * deg2rad
-    geocLat = atan2 ( sin(lat), f2*cos(lat) )
+    geocLat = atan2 ( f2 * sin(lat), cos(lat) )
 
   end function GeodToGeocLat_S
 
@@ -220,6 +244,32 @@ contains
 
   end function Get_R_Eq
 
+  !{ Compute the square of the minor axis of orbit plane projected Earth
+  !  ellipse $c$, where
+  !  $c^2 = \frac{a^2\,b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta} =
+  !         \frac{a^2}{\left(\frac{a^2}{b^2}-1\right) \sin^2 \beta + 1} =
+  !         \frac{b^2}{1 - e^2 \cos^2 \beta}$ where $e^2$ is the square of
+  !         the eccentricity, given by $1 - \frac{b^2}{a^2}$.
+  !  This is Equation (5.3) in the 19 August 2004 ATBD JPL D-18130.
+
+! ----------------------------------  Orbit_Plane_Minor_Axis_sq_D  -----
+
+  pure function Orbit_Plane_Minor_Axis_sq_D ( Beta ) result ( Csq )
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: Beta  ! Orbit inclination, radians
+    real(rk) :: Csq               ! Square of the minor axis of the
+                                  ! orbit-plane projected ellipse.
+    csq = EarthRadB**2 / ( 1.0_rk - Eccentricity_sq * cos(beta)**2 )
+  end function Orbit_Plane_Minor_Axis_sq_D
+
+  pure function Orbit_Plane_Minor_Axis_sq_S ( Beta ) result ( Csq )
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: Beta  ! Orbit inclination, radians
+    real(rk) :: Csq               ! Square of the minor axis of the
+                                  ! orbit-plane projected ellipse.
+    csq = EarthRadB**2 / ( 1.0_rk - Eccentricity_sq * cos(beta)**2 )
+  end function Orbit_Plane_Minor_Axis_sq_S
+
   !{ Converting geodetic Latitude (DEGREES!), Longitude (DEGREES!), and Height
   !  (km) above the mean Earth ellipsoid (mean sea level), to Cartesian
   !  coordinates in an Earth-Centered-Rotating frame:
@@ -232,9 +282,9 @@ contains
   !  %
   !  where $\theta$ is geodetic Latitude (DEGREES!), $\phi$ is Longitude
   !  (DEGREES!), $h$ is height above mean sea level (km), $e^2 = 1 -
-  !  \frac{b^2}{f^2}$ is the eccentricity, $b$ is the semi-minor axis
-  !  (polar radius), $f = 1 - \frac{b}a$ is the inverse of flattening, $a$
-  !  is the semi-major exis (equatorial radius), and
+  !  \frac{b^2}{a^2} = 1 - ( 1 - f )^2$ is the eccentricity, $b$ is the
+  !  semi-minor axis (polar radius), $f = 1 - \frac{b}a$ is the inverse of
+  !  flattening, $a$ is the semi-major exis (equatorial radius), and
   !  %
   !  \begin{equation*}
   !  N(\theta) = \frac{a}{\sqrt{1-e^2 \sin^2 \theta}} =
@@ -244,71 +294,211 @@ contains
   !  is the distance along the normal from the surface to the polar axis.
   !
   !  The units of the results here ($X$, $Y$, and $Z$) are average Earth
-  !  radii, not km; see the constant {\tt ERAD} above.
+  !  radii (see the constant {\tt ERAD} above), or km.
 
   ! --------------------------------------------------  To_Cart_D  -----
-  subroutine To_Cart_D ( WHERE, CART, CT, ST, CP, SP )
-  ! Convert Geodetic latitude and longitude (degrees), and
-  ! altitude (km above sea level), to Cartesian
+  subroutine To_Cart_D ( WHERE, CART, CT, ST, CP, SP, KM )
+  ! Convert Geodetic latitude and longitude (degrees), and altitude (km
+  ! above sea level), to Cartesian coordinates.  The units are ERAD (see
+  ! above) unless KM is present and true, in which case the units are
+  ! kilometers.
     use Constants, only: Deg2Rad
-    double precision, intent(in) :: WHERE(3) ! Latitude (degrees north),
-                                             ! Longitude (degrees east),
-                                             ! Altitude (km above sea level)
-    double precision, intent(out) :: CART(3) ! X, Y, Z, in average Earth radii
-                                             ! (See the constant ERAD above)
-    double precision, intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine
-                                             ! of Lat, Lon
-    double precision :: D, MyCt, MySt, MyCp, MySp, RHO, RLAT, RLON
+    integer, parameter :: RK = kind(0.0d0)
+    real(rk), intent(in) :: WHERE(3) ! Latitude (degrees north),
+                                     ! Longitude (degrees east),
+                                     ! Altitude (km above sea level)
+    real(rk), intent(out) :: CART(3) ! X, Y, Z, in average Earth radii
+                                     ! (See the constant ERAD above)
+    real(rk), intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine
+                                     ! of Lat, Lon
+    logical, intent(in), optional :: KM ! Output units are kilometers
 
-    rlat = where(1)*deg2Rad
-    myst = sin(rlat)
-    myct = cos(rlat)
-    d = sqrt(aquad-(aquad-bquad)*myst*myst)
-    rlon = where(2)*deg2Rad
-    mycp = cos(rlon)
-    mysp = sin(rlon)
-    cart(3) = (where(3)+bquad/d)*myst/erad
-    rho = (where(3)+aquad/d)*myct/erad
-    cart(1) = rho*mycp
-    cart(2) = rho*mysp
-    if ( present(ct) ) ct = myst
-    if ( present(st) ) st = myct
-    if ( present(cp) ) cp = mycp
-    if ( present(sp) ) sp = mysp
+    include "To_Cart.f9h"
 
   end subroutine To_Cart_D
 
   ! --------------------------------------------------  To_Cart_S  -----
-  subroutine To_Cart_S ( WHERE, CART, CT, ST, CP, SP )
-  ! Convert Geodetic latitude and longitude (degrees), and
-  ! altitude (km above sea level), to Cartesian
+  subroutine To_Cart_S ( WHERE, CART, CT, ST, CP, SP, KM )
+  ! Convert Geodetic latitude and longitude (degrees), and altitude (km
+  ! above sea level), to Cartesian coordinates.  The units are ERAD (see
+  ! above) unless KM is present and true, in which case the units are
+  ! kilometers.
     use Constants, only: Deg2Rad
-    real, intent(in) :: WHERE(3)        ! Latitude (degrees north),
-                                        ! Longitude (degrees east),
-                                        ! Altitude (km above sea level)
-    real, intent(out) :: CART(3)        ! X, Y, Z, in average Earth radii
-                                        ! (See the constant ERAD above)
-    real, intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine
-                                        ! of Lat, Lon
-    real :: D, MyCt, MySt, MyCp, MySp, RHO, RLAT, RLON
+    integer, parameter :: RK = kind(0.0e0)
+    real(rk), intent(in) :: WHERE(3) ! Latitude (degrees north),
+                                     ! Longitude (degrees east),
+                                     ! Altitude (km above sea level)
+    real(rk), intent(out) :: CART(3) ! X, Y, Z, in average Earth radii
+                                     ! (See the constant ERAD above)
+    real(rk), intent(out), optional :: CT, ST, CP, SP ! Cosine, Sine
+                                     ! of Lat, Lon
+    logical, intent(in), optional :: KM ! Output units are kilometers
 
-    rlat = where(1)*deg2Rad
-    myst = sin(rlat)
-    myct = cos(rlat)
-    d = sqrt(aquad-(aquad-bquad)*myst*myst)
-    rlon = where(2)*deg2Rad
-    mycp = cos(rlon)
-    mysp = sin(rlon)
-    cart(3) = (where(3)+bquad/d)*myst/erad
-    rho = (where(3)+aquad/d)*myct/erad
-    cart(1) = rho*mycp
-    cart(2) = rho*mysp
-    if ( present(ct) ) ct = myst
-    if ( present(st) ) st = myct
-    if ( present(cp) ) cp = mycp
-    if ( present(sp) ) sp = mysp
+    include "To_Cart.f9h"
 
   end subroutine To_Cart_S
+
+  ! ---------------------------------------------------  To_XYZ_D  -----
+  pure function To_XYZ_D ( Lat, Lon, Radians ) result ( XYZ )
+    ! Convert north geocentric Lat (default degrees) and east Lon
+    ! (default degrees) to a unit vector in ECR.
+    use Constants, only: Deg2Rad
+    double precision, intent(in) :: Lat, Lon
+    logical, intent(in), optional :: Radians
+    double precision :: XYZ(3)
+    double precision :: MyLat, MyLon
+    logical :: MyRad
+    myRad = .false.
+    if ( present(radians) ) myRad = radians
+    if ( myRad ) then
+      myLat = lat
+      myLon = lon
+    else
+      myLat = lat * deg2rad
+      myLon = lon * deg2rad
+    end if
+    xyz(1) = cos(myLat) * cos(myLon)
+    xyz(2) = cos(myLat) * sin(myLon)
+    xyz(3) = sin(myLat)
+  end function To_XYZ_D
+
+  ! ---------------------------------------------------  To_XYZ_S  -----
+  pure function To_XYZ_S ( Lat, Lon, Radians ) result ( XYZ )
+    ! Convert north geocentric Lat (default degrees) and east Lon
+    ! (default degrees) to a unit vector in ECR.
+    use Constants, only: Deg2Rad
+    real, intent(in) :: Lat, Lon
+    logical, intent(in), optional :: Radians
+    real :: XYZ(3)
+    real :: MyLat, MyLon
+    logical :: MyRad
+    myRad = .false.
+    if ( present(radians) ) myRad = radians
+    if ( myRad ) then
+      myLat = lat
+      myLon = lon
+    else
+      myLat = lat * deg2rad
+      myLon = lon * deg2rad
+    end if
+    xyz(1) = cos(myLat) * cos(myLon)
+    xyz(2) = cos(myLat) * sin(myLon)
+    xyz(3) = sin(myLat)
+  end function To_XYZ_S
+
+! ------------------------------------------  XYZ_to_Geod_Bowring  -----
+
+!{ Convert Geocentric Cartesian coordinates to Longitude, Geodetic Latitude,
+!  and Geodetic Height using Bowring's method.
+!  Start by estimating the geodetic latitude
+!
+! \begin{equation*}
+! \beta = \tan^{-1} \left(\frac{az}{bs} \right)
+! \end{equation*}
+!
+! where $s = \sqrt{x^2+y^2}$.  Then iterate the following until $\beta$
+! converges:
+!
+! \begin{equation*}\begin{split}
+! t = \,& \frac{b z + ( a^2-b^2 ) \sin^3 \beta}
+!              {a s - ( a^2-b^2 ) \cos^3 \beta} \\
+! \,& \\
+! \beta = \,& \tan^{-1} \left( t \right) \\
+! \end{split}\end{equation*}
+!
+! The geodetic height is then
+!
+! \begin{equation*}\begin{split}
+! h = \,& s \cos \mu + ( z + e^2 N \sin \mu ) \sin \mu - N \\
+!   = \,& s \cos \mu + z \sin \mu - N ( 1 - e^2 \sin^2 \mu ) \\
+!   = \,& s \cos \mu + z \sin \mu - d \\
+! \end{split}\end{equation*}
+!
+! where $\mu = \tan^{-1} \left( \frac{a}b t \right)$,
+! $e^2 = 1 - \frac{b^2}{a^2}$ is the square of the first eccentricity,
+!
+! \begin{equation*}
+! N = \frac{a}{\sqrt{1-e^2 \sin^2 \mu}} = \frac{a^2}d
+! \end{equation*}
+!
+! is the radius of curvature in the meridian, and
+! $d = a \sqrt{1 - e^2 \sin^2 \mu} = \sqrt{a^2 cos^2 \mu + b^2 \sin^2 \mu}$.
+!
+! \vspace*{5pt}
+! The longitude is $\phi = \tan^{-1}\left( \frac{y}x \right)$.
+
+  pure function XYZ_to_Geod_Bowring_D ( XYZ ) result ( Geod )
+  ! Convert Geocentric Cartesian coordinates (XYZ) in meters to Longitude
+  ! (Geod(2)) in radians, Geodetic Latitude (Geod(1)) in radians, and
+  ! Geodetic Height (Geod(3)) in meters.
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), intent(in) :: XYZ(3)
+    real(rk) :: Geod(3) ! Geodetic latitude, longitude, geodetic height
+    include 'XYZ_to_Geod_Bowring.f9h'
+  end function XYZ_to_Geod_Bowring_D
+
+  pure function XYZ_to_Geod_Bowring_S ( XYZ ) result ( Geod )
+  ! Convert Geocentric Cartesian coordinates (XYZ) in meters to Longitude
+  ! (Geod(2)) in radians, Geodetic Latitude (Geod(1)) in radians, and
+  ! Geodetic Height (Geod(3)) in meters.
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: XYZ(3)
+    real(rk) :: Geod(3) ! Geodetic latitude, longitude, geodetic height
+    include 'XYZ_to_Geod_Bowring.f9h'
+  end function XYZ_to_Geod_Bowring_S
+
+! ----------------------------------------  XYZ_to_Geod_Fukushima  -----
+
+!{In the Journal of Geodesy (2006) 79: 689-693, Toshio Fukushima presented 
+! a method based on Halley's third-order iteration for the tangent of the
+! reduced latitude.  Rather than iterating on the tangent, which requires
+! divisions in each iteration, Fukushima iterates on denormalized quantities
+! related to the sine and cosine, thereby not requiring any divisions or
+! evaluations of trigonometric functions during the iteration.
+! 
+! \begin{equation*}\begin{split}
+! s = \,& \sqrt{x^2 + y^2} \\
+! e_c = \,& \frac{b}a \\
+! E = \,& e^2 = 1 - \frac{b^2}{a^2} = 1 - e_c^2\\
+! P = \,& \frac{s}a \\
+! S_0 = \,& z \\
+! C_0 = \,& e_c P \\
+! A_n = \,& \sqrt{S_n^2+C_n^2} \\
+! B_n = \,&  1.5 E S_n C_n^2 [ ( P S_n - z C_n ) A_n - E S_n C_n ] \\
+! B_0 = \,& 1.5 E^2 P S_0^2 C_0^2 ( A_0 - e_c ) \\
+! D_n = \,& z A_n^3 + E S_n^3 \\
+! F_n = \,& P A_n^3 - E C_n^3 \\
+! S_{n+1} = \,& D_n F_n - B_n S_n \\
+! C_{n+1} = \,& F_n^2 - B_n C_n \\
+! C_c = \,& e_c C_{n+1} \\
+! \lambda = \,& \text{signum}(z) \, \tan^{-1} \frac{S_{n+1}}{C_c} \\
+! h = \,& \frac{s C_c + |z| S_{n+1} - b A_{n+1}}
+!              {\sqrt{C_c^2 + S_{n+1}^2}} \\
+! \end{split}\end{equation*}
+! 
+! Fukushima's tests show that the method is accurate to within a few micro
+! arcseconds for heights $<$ 30,000 km, and faster than other methods, with
+! only one iteration.
+
+  pure function XYZ_to_Geod_Fukushima_D ( XYZ ) result ( Geod )
+  ! Convert Geocentric Cartesian coordinates (XYZ) in meters to Longitude
+  ! (Geod(2)) in radians, Geodetic Latitude (Geod(1)) in radians, and
+  ! Geodetic Height (Geod(3)) in meters.
+    integer, parameter :: RK = kind(1.0d0)
+    real(rk), intent(in) :: XYZ(3)
+    real(rk) :: Geod(3) ! Geodetic latitude, longitude, geodetic height
+    include 'XYZ_to_Geod_Fukushima.f9h'
+  end function XYZ_to_Geod_Fukushima_D
+
+  pure function XYZ_to_Geod_Fukushima_S ( XYZ ) result ( Geod )
+  ! Convert Geocentric Cartesian coordinates (XYZ) in meters to Longitude
+  ! (Geod(2)) in radians, Geodetic Latitude (Geod(1)) in radians, and
+  ! Geodetic Height (Geod(3)) in meters.
+    integer, parameter :: RK = kind(1.0e0)
+    real(rk), intent(in) :: XYZ(3)
+    real(rk) :: Geod(3) ! Geodetic latitude, longitude, geodetic height
+    include 'XYZ_to_Geod_Fukushima.f9h'
+  end function XYZ_to_Geod_Fukushima_S
 
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
@@ -323,6 +513,12 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.22  2015/03/28 01:55:20  vsnyder
+! Deleted Earth_Axis_Ratio_Squared_m1.  Added Eccentricity_Sq, ERad,
+! Orbit_Plane_Minor_Axis_sq, To_XYZ, XYZ_to_Geod, XYZ_to_Geod_Bowring,
+! XYZ_to_Geod_Fukushima, Earth_Axis_Ratio.  Corrected errors in
+! GeodToGeocLat and GeocToGeodLat.
+!
 ! Revision 2.21  2014/10/29 21:03:11  vsnyder
 ! Replaced confusing "myst=cos(rlat); myct=sin(rlat)" in To_Cart.  Described
 ! units of arguments.  Added a LaTeX comment to describe the mathematics.
