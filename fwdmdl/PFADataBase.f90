@@ -14,14 +14,14 @@ module PFADataBase_m
   ! Read PFA data.  Build a database.  Provide for access to it.
   ! Write PFA data.
 
-  use allocate_deallocate, only: allocate_test, deallocate_test, &
-    & test_allocate
-  use highOutput, only: outputNamedValue
-  use MLSkinds, only: r4
-  use MLScommon, only: fileNameLen
-  use MLSsignals_m, only: maxSigLen, signal_t
-  use molecules, only: first_molecule, last_molecule
-  use vgridsdatabase, only: vgrid_t
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
+    & Test_Allocate
+  use HighOutput, only: OutputNamedValue
+  use MLSkinds, only: R4
+  use MLScommon, only: FileNameLen
+  use MLSsignals_m, only: MaxSigLen, Signal_t
+  use Molecules, only: First_molecule, Last_molecule
+  use Vgridsdatabase, only: VGrid_t
   ! use FOR HDF5 INTENTIONALLY LAST TO AVOID LONG LF95 COMPILE TIMES
   use HDF5, only: hid_t
 
@@ -127,6 +127,7 @@ contains ! =====     Public Procedures     =============================
   ! database if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (PFAData_T), dimension(:), pointer :: DATABASE
@@ -152,6 +153,8 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------  Destroy_PFADataBase  -----
   subroutine Destroy_PFADataBase
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, M, S, SB
     if ( .not. associated(pfaData) ) return
     do i = 1, ubound(PFAData,1)
@@ -159,8 +162,10 @@ contains ! =====     Public Procedures     =============================
     end do
     call destroy_PFAFiles
     s = size(PFAData) * storage_size(PFAData) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(PFAData(1)), addr)
     deallocate ( PFAData, stat=i )
-    call test_deallocate ( i, moduleName, 'PDAData', s )
+    call test_deallocate ( i, moduleName, 'PDAData', s, address=addr )
     do m = first_molecule, last_molecule
       if ( associated(findPFA(m)%s) ) then
         do s = lbound(findPFA(m)%s,1), ubound(findPFA(m)%s,1)
@@ -170,8 +175,10 @@ contains ! =====     Public Procedures     =============================
           end do
         end do
         s = size(findPFA(m)%s) * storage_size(findPFA(m)%s) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(findPFA(m)%s(1)), addr)
         deallocate ( findPFA(m)%s, stat=i )
-        call test_deallocate ( i , moduleName, 'findPFA(m)%s', s )
+        call test_deallocate ( i , moduleName, 'findPFA(m)%s', s, address=addr )
       end if
     end do
   end subroutine Destroy_PFADataBase
@@ -210,14 +217,18 @@ contains ! =====     Public Procedures     =============================
   subroutine Destroy_PFAFiles
   ! Destroy the elements of the PFAFiles array, then deallocate it.
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S
     if ( associated(PFAFiles) ) then
       do i = 1, ubound(PFAFiles,1)
         call destroy_PFAFile ( PFAFiles(i) )
       end do
       s = size(PFAFiles) * storage_size(PFAFiles) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(PFAFiles(1)), addr)
       deallocate ( PFAFiles, stat=i )
-      call test_deallocate ( i, moduleName, 'PFAFiles', s )
+      call test_deallocate ( i, moduleName, 'PFAFiles', s, address=addr )
     end if
   end subroutine Destroy_PFAFiles
 
@@ -535,6 +546,8 @@ contains ! =====     Public Procedures     =============================
   ! quickly given its molecule index, signal index, sideband and channel.
   ! Return index of one found one in the table already (if replace is present
   ! and true).  See Test_And_Fetch_PFA.
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
       & MLSMSG_Warning
     use MLSSignals_m, only: Signals
@@ -549,6 +562,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: Ix ! Index of PFADatum in PFAData if not zero
     logical, intent(in), optional :: Replace ! Replace old one, default false
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: M, MyG, S, SB, C ! Molecule, MyG, Signal, Sideband, Channel
     logical :: MyReplace
     integer :: STAT
@@ -570,7 +584,12 @@ contains ! =====     Public Procedures     =============================
 
     if ( .not. associated(findPFA(m)%s) ) then
       allocate ( findPFA(m)%s(1:size(signals)), stat=stat )
-      call test_allocate ( stat, moduleName, 'FindPFA(m)%s).' )
+      addr = 0
+      if ( stat == 0 .and. size(signals) > 0 ) &
+        & addr = transfer(c_loc(findPFA(m)%s(1)), addr)
+      call test_allocate ( stat, moduleName, 'FindPFA(m)%s)', &
+        & uBounds=[size(signals)], elementSize=storage_size(findPFA(m)%s)/8, &
+        & address=addr )
     end if
     if ( .not. associated(findPFA(m)%s(s)%sb(sb)%c) ) &
       & call allocate_test ( findPFA(m)%s(s)%sb(sb)%c, &
@@ -795,6 +814,7 @@ contains ! =====     Public Procedures     =============================
   ! creating the database if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (PFAFile_T), dimension(:), pointer :: DATABASE
@@ -1169,25 +1189,37 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------  Create_or_Expand_PFADatabase  -----
   subroutine Create_or_Expand_PFADatabase ( ToAdd, PrevSize )
-    use Allocate_Deallocate, only: Test_Deallocate
+    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     integer, intent(in) :: ToAdd
     integer, intent(out) :: PrevSize
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S, Stat
     type(PFAData_t), pointer :: TempPFAData(:) => NULL()
     if ( associated(PFAData) .and. toAdd > 0 ) then
       tempPFAData => PFAData
       prevSize = ubound(tempPFAData,1)
       allocate ( PFAData(0:prevSize+toAdd), stat=stat )
-      call test_allocate ( stat, moduleName, 'PFAData' )
+      addr = 0
+      if ( stat == 0 ) then
+        if ( size(PFAData) > 0 ) addr = transfer(c_loc(PFAData(0)), addr)
+      end if
+      call test_allocate ( stat, moduleName, 'PFAData', lBounds=[0], &
+        & uBounds=[prevSize+toAdd], elementSize=storage_size(PFAData) / 8, &
+        & address=addr )
       pfaData(:prevSize) = tempPFAData
       s = size(tempPFAData) * storage_size(tempPFAData) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(tempPFAData(lbound(tempPFAData,1))), addr)
       deallocate ( tempPFAData, stat=stat )
-      call test_deallocate ( stat, moduleName, 'TempPFAData', s )
+      call test_deallocate ( stat, moduleName, 'TempPFAData', s, address=addr )
     else
       prevSize = 0
       if ( toAdd > 0 ) then
         allocate ( PFAData(0:toAdd), stat=stat )
-        call test_allocate ( stat, moduleName, 'PFAData' )
+        if ( stat == 0 .and. toAdd >= 0 ) addr = transfer(c_loc(PFAData(0)), addr)
+        call test_allocate ( stat, moduleName, 'PFAData', lBounds=[0], &
+          & uBounds=[toAdd], elementSize=storage_size(PFAData) / 8, address=addr )
       end if
     end if
   end subroutine Create_or_Expand_PFADatabase
@@ -1383,6 +1415,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.52  2015/03/28 02:00:00  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.51  2014/09/05 20:50:53  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
