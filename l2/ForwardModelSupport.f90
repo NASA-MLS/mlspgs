@@ -373,7 +373,7 @@ contains ! =====     Public Procedures     =============================
     ! Process the forwardModel specification to produce ForwardModelConfig to
     ! add to the database
 
-    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test, &
       & Test_Allocate
     use Declaration_Table, only: Value_t
     use EXPR_M, only: EXPR
@@ -400,6 +400,7 @@ contains ! =====     Public Procedures     =============================
       & F_TRANSFORMMIFEXTINCTION, F_TRANSFORMMIFRHI, F_TSCATMIF, F_TYPE, &
       & F_USBLBLMOLECULES, F_USBPFAMOLECULES, F_useTSCAT, F_XSTAR, F_YSTAR
     use INTRINSIC, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_PROFILES
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use L2PC_M, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
     use MLSKINDS, only: R8
     use MLSL2OPTIONS, only: L2CFNODE, MLSMESSAGE
@@ -423,6 +424,7 @@ contains ! =====     Public Procedures     =============================
     !                                     "spec_args" vertex. Local variables
     logical, intent(in) :: GLOBAL       ! Goes into info%globalConfig
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: B                        ! Index of a beta group
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: DerivTree                ! Tree index of f_MoleculeDerivatives
@@ -641,7 +643,12 @@ contains ! =====     Public Procedures     =============================
       case ( f_signals )
         info%noUsedChannels = 0
         allocate ( info%signals (nsons(son)-1), stat = status )
-        call test_allocate ( status, moduleName, 'info%signals' )
+        addr = 0
+        if ( status == 0 .and. nsons(son)-1 > 0 ) &
+          addr = transfer(c_loc(info%signals(1)), addr)
+        call test_allocate ( status, moduleName, 'info%signals', &
+          & uBounds = size(info%signals), &
+          & elementSize = storage_size(info%signals) / 8, address=addr )
         info%signals%index = -1 ! Indicate error, covered up if successful
         call allocate_test ( info%signalIndices, nsons(son)-1, &
           & 'Info%SignalIndices', moduleName )
@@ -759,7 +766,11 @@ contains ! =====     Public Procedures     =============================
         end if
       end do
       allocate ( info%beta_group(nGroup), stat = status )
-      call test_allocate ( status, moduleName, 'info%beta_group' )
+      addr = 0
+      if ( status == 0 .and. nGroup>0 ) addr = transfer(c_loc(info%beta_group(1)), addr)
+      call test_allocate ( status, moduleName, 'info%beta_group', &
+        & uBounds = nGroup, elementSize=storage_size(info%beta_group) / 8, &
+        & address=addr )
       do b = 1, nsons(moleculeTree) - 1
         son = subtree(b+1,moleculeTree)
         info%beta_group(b)%group = node_id(son) == n_array
@@ -945,7 +956,10 @@ op:     do j = 2, nsons(theTree)
         nelts = nelts + size(values)
       end do
       allocate ( lineStru(nelts), stat=status )
-      call test_allocate ( status, moduleName, 'LineStru' )
+      addr = 0
+      if ( status == 0 .and. nelts>0 ) addr = transfer(c_loc(lineStru(1)), addr)
+      call test_allocate ( status, moduleName, 'LineStru', uBounds=nelts, &
+        & elementSize=storage_size(lineStru)/8, address=addr )
       select case ( i )
       case ( lineCenter )
         info%lineCenter => lineStru
@@ -1510,6 +1524,9 @@ op:     do j = 2, nsons(theTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.180  2015/03/28 02:42:19  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.179  2014/09/29 20:18:14  vsnyder
 ! Add NoMagneticField switch to ForwardModel
 !
