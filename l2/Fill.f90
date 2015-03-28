@@ -53,7 +53,7 @@ contains ! =====     Public Procedures     =============================
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
 
-    use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, Test_Deallocate
+    use ALLOCATE_DEALLOCATE, only: Test_Allocate, Test_Deallocate
     use CHUNKS_M, only: MLSCHUNK_T
     use DESTROYCOMMAND_M, only: DESTROYCOMMAND
     use DUMPCOMMAND_M, only: BOOLEANFROMANYGOODRADIANCES, &
@@ -87,8 +87,8 @@ contains ! =====     Public Procedures     =============================
       ! codes for ANNOUNCE_ERROR:
       & BADESTNOISEFILL, BADGEOCALTITUDEQUANTITY, BADISOTOPEFILL, &
       & BADLOSGRIDFILL, BADLOSVELFILL, BADREFGPHQUANTITY, &
-      & BADREFRACTFILL, BADTEMPERATUREQUANTITY, BOTHFRACTIONANDLENGTH, &
-      & MISSINGFIELD, &
+      & BADREFRACTFILL, BadScVelECRQuantity, BADTEMPERATUREQUANTITY, &
+      & BOTHFRACTIONANDLENGTH, MISSINGFIELD, &
       & NEEDGEOCALTITUDE, NEEDH2O, NEEDORBITINCLINATION, &
       & NEEDTEMPREFGPH, NOCODEFOR, NO_ERROR_CODE, NOEXPLICITVALUESGIVEN, &
       & NOSOURCEGRIDGIVEN, NOSOURCEL2AUXGIVEN, NOSOURCEL2GPGIVEN, &
@@ -167,7 +167,7 @@ contains ! =====     Public Procedures     =============================
       & L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, &
       & L_REFLECTORTEMPMODEL, L_RESETUNUSEDRADIANCES, L_RHI, &
       & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, L_SCALEOVERLAPS, &
-      & L_SECTIONTIMING, L_SCATTER, L_SPD, L_SPREADCHANNEL, &
+      & L_SECTIONTIMING, L_SCATTER, L_ScVelECR, L_SPD, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_STATUS, L_SWAPVALUES, &
       & L_TEMPERATURE, L_TNGTGEODALT, &
       & L_TNGTGEOCALT, L_UNCOMPRESSRADIANCE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAuse, &
@@ -185,6 +185,7 @@ contains ! =====     Public Procedures     =============================
     use INTRINSIC, only: LIT_INDICES, &
       & PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_INVALID, PHYQ_LENGTH, &
       & PHYQ_PROFILES
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use L1BDATA, only: DEALLOCATEL1BDATA, L1BDATA_T, READL1BDATA
     use L2GPDATA, only: L2GPDATA_T, COL_SPECIES_HASH, COL_SPECIES_KEYS
     use L2AUXDATA, only: L2AUXDATA_T
@@ -321,6 +322,7 @@ contains ! =====     Public Procedures     =============================
     type(next_tree_node_state) :: State ! of tree traverser
 
     logical :: ADDITIONAL               ! Flag for binMax/binMin
+    integer(c_intptr_t) :: Addr         ! For tracing
     logical :: ALLOWMISSING             ! Flag from l2cf
     integer :: APRPRECQTYINDEX          ! Index of apriori precision quantity
     integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
@@ -1143,9 +1145,12 @@ contains ! =====     Public Procedures     =============================
           end do
         end if
         allocate ( snoopMatrices ( noSnoopedMatrices ), STAT=status )
+        addr = 0
+        if ( status == 0 .and. noSnoopedMatrices>0 ) &
+          addr = transfer(c_loc(snoopMatrices(1)), addr )
         call test_allocate ( status, moduleName, 'snoopMatrices', &
           & uBounds = noSnoopedMatrices, &
-          & elementSize = storage_size(snoopMatrices) / 8 )
+          & elementSize = storage_size(snoopMatrices) / 8, address=addr )
         if ( associated ( matrices ) ) then
           noSnoopedMatrices = 1
           do j = 1, size ( matrices )
@@ -1170,8 +1175,10 @@ contains ! =====     Public Procedures     =============================
 !           call nullifyMatrix ( snoopMatrices(j) )
         end do
         s = size(snoopMatrices) * storage_size(snoopMatrices) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(snoopMatrices(1)), addr)
         deallocate ( snoopMatrices, STAT=status )
-        call test_deallocate ( status, moduleName, 'snoopMatrices', s )
+        call test_deallocate ( status, moduleName, 'snoopMatrices', s, address=addr )
 
       case ( s_StreamlineHessian ) ! =============== StreamlineHessian =====
         call doStreamline
@@ -1490,12 +1497,12 @@ contains ! =====     Public Procedures     =============================
           shapeNode = subtree(j,key)
         case ( f_fromPrecision )
           fromPrecision = get_boolean ( gson )
-        case ( f_geocAltitudeQuantity ) ! For hydrostatic
+        case ( f_geocAltitudeQuantity ) ! For hydrostatic or magnetic field fill
           geocAltitudeVectorIndex = decoration(decoration(subtree(1,gson)))
           geocAltitudeQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_geolocation )
           geolocation = decoration(gson)
-        case ( f_gphQuantity ) ! For magnetic field fill
+        case ( f_gphQuantity ) ! For gphResetToGeoid fill
           gphVectorIndex = decoration(decoration(subtree(1,gson)))
           gphQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_height )
@@ -1694,10 +1701,10 @@ contains ! =====     Public Procedures     =============================
         case ( f_scVel )                ! For special fill of losVel
           scVelVectorIndex = decoration(decoration(subtree(1,gson)))
           scVelQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_scVelECI )                ! For special fill of losVel
+        case ( f_scVelECI )             ! For special fill of losVel
           scVelVectorIndex = decoration(decoration(subtree(1,gson)))
           scVelQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-        case ( f_scVelECR )                ! For special fill of losVel
+        case ( f_scVelECR )             ! For magnetic model and special fill of losVel
           scVelVectorIndex = decoration(decoration(subtree(1,gson)))
           scVelQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
         case ( f_seed ) ! For explicitly setting mls_random_seed
@@ -2550,13 +2557,33 @@ contains ! =====     Public Procedures     =============================
           & azEl=.true. )
 
       case ( l_magneticModel ) ! --------------------- Magnetic Model --
-        if ( .not. got ( f_gphQuantity ) ) then
-          call Announce_Error ( key, no_Error_Code, 'Need gphQuantity for magnetic model' )
+        nullify ( geocAltitudeQuantity, scVelQuantity )
+        if ( .not. got ( f_geocAltitudeQuantity ) ) then
+          call Announce_Error ( key, no_Error_Code, &
+            & 'Need geocentric altitude for magnetic model' )
         else
-          GPHQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(GPHVectorIndex), GPHQuantityIndex)
-          call UsingMagneticModel ( quantity, gphQuantity, key )
+          geocAltitudeQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(geocAltitudeVectorIndex), geocAltitudeQuantityIndex)
+          if ( geocAltitudeQuantity%template%quantityType /= l_tngtgeocAlt ) then
+            call Announce_Error ( key, badGeocAltitudeQuantity )
+            nullify ( geocAltitudeQuantity )
+          end if
         end if
+        if ( .not. got ( f_scVelECR ) ) then
+          call Announce_Error ( key, no_Error_Code, &
+            & 'Spacecraft Velocity ECR needed for magnetic model' )
+        else
+          scVelQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(scVelVectorIndex), scVelQuantityIndex)
+          if ( scVelQuantity%template%quantityType /= l_scVelECR ) then
+            call Announce_Error ( key, BadScVelECRQuantity )
+            nullify ( scVelQuantity )
+          end if
+        end if
+        if ( associated ( geocAltitudeQuantity ) .and. &
+           & associated ( scVelQuantity ) ) &
+             & call UsingMagneticModel ( quantity, geocAltitudeQuantity, &
+                                       & scVelQuantity, key )
 
       case ( l_modifyTemplate )
         shp = 0
@@ -3115,6 +3142,11 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.448  2015/03/28 02:34:16  vsnyder
+! Add requirement for ScVelECR and TngtGeocAlt fields for magnetic field
+! fill.  Remove GPHQuantity from magnetic field fill (because we use
+! geometric height now).  Added stuff to trace allocate/deallocate addresses.
+!
 ! Revision 2.447  2014/12/10 21:29:12  pwagner
 ! Pass ptanQuantity for AscendDescend method
 !
