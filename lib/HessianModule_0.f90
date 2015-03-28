@@ -18,8 +18,10 @@ module HessianModule_0          ! Low-level Hessians in the MLS PGS suite
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
     & TEST_ALLOCATE, TEST_DEALLOCATE
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use DUMP_0, only: DIFF, DUMP
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use MLSKINDS, only: RH=>RM ! Renamed here to make it easier to change later
   use OUTPUT_M, only: OUTPUT
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -154,6 +156,7 @@ contains
     ! Local variables
     real(rh) :: myFactor
     type(tuple_t), dimension(:), pointer :: oldTuple  ! Used to expand 'in place'
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: extra                    ! How many to add
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: S                        ! Size in bytes of an object to deallocate
@@ -170,8 +173,7 @@ contains
     if ( h%kind == h_absent .or. .not. associated(h%tuples) ) then
       h%kind = h_sparse
       allocate ( h%tuples ( 0 ), stat=stat )
-      call test_allocate ( stat, moduleName, "H%Tuples", &
-        & (/1/), (/0/) )
+      call test_allocate ( stat, moduleName, "H%Tuples", (/1/), (/0/) )
       h%tuplesFilled = 0
     end if
 
@@ -188,9 +190,12 @@ contains
       end if
 
       ! Create new tuple
-      allocate ( H%tuples ( size ( oldTuple ) + extra ), stat=stat )
+      s = size ( oldTuple ) + extra
+      allocate ( H%tuples ( s ), stat=stat )
+      addr = 0
+      if ( stat == 0 ) addr = transfer(c_loc(H%tuples(1)), addr)
       call test_allocate ( stat, moduleName, "H%Tuple", &
-        & (/1/), (/ size ( oldTuple ) + extra /), storage_size(oldTuple) / 8 )
+        & (/1/), (/s/), storage_size(oldTuple) / 8, address=addr )
 
       ! Copy old contents
       if ( associated ( oldTuple ) ) then
@@ -198,8 +203,10 @@ contains
 
       ! Destroy old contents
         s = size(oldTuple) * storage_size(oldTuple) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(oldTuple(1)), addr)
         deallocate ( oldTuple, stat=stat )
-        call test_deallocate ( stat, moduleName, "oldTuple", s )
+        call test_deallocate ( stat, moduleName, "oldTuple", s, address=addr )
       end if
     end if
     call trace_end ( 'AugmentHessian', cond=.false. )
@@ -215,6 +222,7 @@ contains
     character(len=*), intent(in) :: ForWhom
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: stat
 
     ! Executable
@@ -230,8 +238,11 @@ contains
     case ( h_sparse )
       z%tuplesFilled = x%tuplesFilled
       allocate ( z%tuples ( x%tuplesFilled ), stat=stat )
+      addr = 0
+      if ( stat==0 .and. x%tuplesFilled>0 ) &
+        & addr = transfer(c_loc(z%tuples(1)), addr)
       call test_allocate ( stat, moduleName, 'Z%Tuples', ubounds=x%tuplesFilled, &
-        elementSize = storage_size(z%tuples) / 8 )
+        elementSize = storage_size(z%tuples) / 8, address=addr )
     case ( h_full )
       call Allocate_test ( z%values, x%nRows, x%nCols1, x%nCols2, &
         & 'values in loneBlock_0' // ForWhom, &
@@ -261,13 +272,16 @@ contains
   subroutine ClearHessianBlock_0 ( H )
     ! Clear a HessianElement_T structure
     type(HessianElement_T), intent(inout) :: H
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S, Stat
 
     if ( associated(h%tuples) ) then
       s = size(h%tuples) * storage_size(h%tuples) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
       deallocate ( h%tuples, stat=stat )
       call test_deallocate ( stat, moduleName, &
-        & "H%Tuples in DestroyHessianBlock", s )
+        & "H%Tuples in DestroyHessianBlock", s, address=addr )
     end if
 
     call deallocate_test ( h%values, moduleName, "H%H in DestroyHessianBlock" )
@@ -290,6 +304,7 @@ contains
     integer, intent(in), optional :: initTuples
     real(rh), intent(in), optional :: Fill ! Fill value if H_kind==h_full
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: STAT                     ! Status from allocate
 
@@ -316,8 +331,11 @@ contains
           call outputNamedValue( 'initTuples', initTuples )
         end if
         allocate ( h%tuples ( initTuples ), stat=stat )
+        addr = 0
+        if ( stat==0 .and. initTuples>0 ) addr = transfer(c_loc(h%tuples(1)), addr)
         call test_allocate ( stat, moduleName, "H%Tuples", &
-          & (/1/), (/initTuples/) )
+          & (/1/), (/initTuples/), elementSize=storage_size(h%tuples)/8, &
+          & address=addr )
         h%tuplesFilled = initTuples
       end if
     end if
@@ -335,10 +353,9 @@ contains
   subroutine Densify_Hessian ( H )
   ! Convert a Hessian represented by tuples to an explicit representation
 
-    use Allocate_Deallocate, only: Test_Deallocate
-
     type(HessianElement_T), intent(inout) :: H
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: n, status
 
     ! Skip if already done
@@ -352,11 +369,13 @@ contains
         do n = 1, size(h%tuples)
           h%values(h%tuples(n)%i,h%tuples(n)%j,h%tuples(n)%k) = h%tuples(n)%h
         end do
-      end if
 
-      n = size(h%tuples) * storage_size(h%tuples) / 8
-      deallocate ( h%tuples, stat=status )
-      call test_deallocate ( status, moduleName, 'H%Tuples', n )
+        n = size(h%tuples) * storage_size(h%tuples) / 8
+        addr = 0
+        if ( n > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+        deallocate ( h%tuples, stat=status )
+        call test_deallocate ( status, moduleName, 'H%Tuples', n, address=addr )
+      end if
       h%kind = h_full
     case ( h_full )
     end select
@@ -865,6 +884,7 @@ contains
     type (Tuple_T), dimension(:), pointer :: NEWTUPLES ! Workspace
     integer, dimension(:), pointer :: ORDER ! The new order for the tuples
     integer, dimension(:), pointer :: RANK ! A 'cost' used to generate rank
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: N        ! Number to end up with
     integer :: I,J,K    ! Loop counters
     integer :: MaxRank  ! Used to place a tuple out of the running
@@ -1000,7 +1020,10 @@ contains
     else
 
       allocate ( newTuples ( n ), stat=status )
-      call test_allocate ( status, moduleName, "newTuples", (/1/), (/n/) )
+      addr = 0
+      if ( status == 0 .and. n > 0 ) addr = transfer(c_loc(newTuples(1)), addr)
+      call test_allocate ( status, moduleName, "newTuples", (/1/), (/n/), &
+        & elementSize=storage_size(newTuples)/8, address=addr )
 
       ! Store the sorted tuples while eliminating duplicates
       newTuples(1) = h%tuples(order(1))
@@ -1019,8 +1042,10 @@ o:    do while ( i < n )
       end do o
 
       s = size(h%tuples) * storage_size(h%tuples) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
       deallocate ( h%tuples, stat=status )
-      call test_deallocate ( status, moduleName, "h%tuples", s )
+      call test_deallocate ( status, moduleName, "h%tuples", s, address=addr )
 
       h%tuples => newTuples
       h%tuplesFilled = k
@@ -1031,11 +1056,16 @@ o:    do while ( i < n )
       else if ( n > 1.2 * k ) then
         ! We have an inordinately greater number of tuples than needed
         allocate ( newTuples ( k ), stat=status )
-        call test_allocate ( status, moduleName, "newTuples", (/1/), (/k/) )
+        addr = 0
+        if ( status == 0 .and. k > 0 ) addr = transfer(c_loc(newTuples(1)), addr)
+        call test_allocate ( status, moduleName, "newTuples", (/1/), (/k/), &
+          & elementSize=storage_size(newTuples)/8, address=addr )
         newTuples(:k) = h%tuples(:k)
         s = size(h%tuples) * storage_size(h%tuples) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
         deallocate ( h%tuples, stat=status )
-        call test_deallocate ( status, moduleName, "h%tuples", s )
+        call test_deallocate ( status, moduleName, "h%tuples", s, address=addr )
         h%tuples => newTuples
       end if
     end if
@@ -1069,6 +1099,7 @@ o:    do while ( i < n )
     use TOGGLES, only: SWITCHES
 
     type (HessianElement_T), intent(inout) :: H
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: i, j, k, l, n
     integer :: Me = -1                  ! String index for trace cacheing
     integer :: S                        ! Size in bytes of an object to deallocate
@@ -1089,13 +1120,18 @@ o:    do while ( i < n )
     if ( associated(h%tuples) ) then
       call outputNamedValue ( 'Must deallocate old tuples array', h%tuplesFilled )
       s = size(h%tuples) * storage_size(h%tuples) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
       deallocate ( h%tuples, stat=status )
       call test_deallocate ( status, ModuleName // '%SparsifyFullHessian', &
-        & "H%Tuples", s )
+        & "H%Tuples", s, address=addr )
     end if
     call outputNamedValue ( 'About to allocate Hessian tuples', n )
     allocate ( h%tuples(n), stat=status )
-    call test_allocate ( status, ModuleName // '%SparsifyFullHessian', "H%Tuple", (/ 1 /), (/ n /), -1 )
+    addr = 0
+    if ( status == 0 .and. n > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
+    call test_allocate ( status, ModuleName // '%SparsifyFullHessian', "H%Tuples", &
+      & (/ 1 /), (/ n /), elementSize=storage_size(h%tuples), address=addr )
 
     l = 0
     do k = 1, h%nCols2
@@ -1119,11 +1155,11 @@ o:    do while ( i < n )
     ! depending on whether its representation is currently Full
     ! or already Sparse
 
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use TOGGLES, only: SWITCHES
 
     type (HessianElement_T), intent(inout) :: H
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: i
     integer :: Me = -1               ! String index for trace cacheing
     integer :: newSize
@@ -1154,8 +1190,11 @@ o:    do while ( i < n )
         call trace_end ( 'Sparsify_Hessian', cond=.false. )
         return
       else if ( newSize > 0 ) then
-        allocate(tuples(newSize), stat=status)
-        call test_allocate ( status, moduleName, 'Tuples(NewSize)' )
+        allocate ( tuples(newSize), stat=status )
+        addr = 0
+        if ( status==0 ) addr = transfer(c_loc(tuples(1)), addr)
+        call test_allocate ( status, moduleName, 'Tuples(NewSize)', &
+          & uBounds=[newSize], elementSize=storage_size(tuples), address=addr )
         newSize = 0
         do i = 1, h%tuplesFilled
           if ( h%tuples(i)%h == 0.0 ) cycle
@@ -1164,8 +1203,10 @@ o:    do while ( i < n )
         end do
       end if
       s = size(h%tuples) * storage_size(h%tuples) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(h%tuples(1)), addr)
       deallocate ( h%tuples, stat=status )
-      call test_deallocate ( status, moduleName, 'h%tuples', s )
+      call test_deallocate ( status, moduleName, 'h%tuples', s, address=addr )
       h%tuplesFilled = newSize
       h%tuples => tuples
     case default
@@ -1411,6 +1452,9 @@ o:    do while ( i < n )
 end module HessianModule_0
 
 ! $Log$
+! Revision 2.30  2015/03/28 01:04:29  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.29  2014/09/04 23:42:20  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
