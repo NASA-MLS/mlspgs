@@ -83,6 +83,7 @@ contains ! =====  Public Procedures  ===================================
       & F_Signals, F_SignalsPol, F_STR, F_UMLSSIGNALS, F_V0, F_W
     use INTRINSIC, only: L_EMLS, L_UMLS, L_XPTL1, &
       & PHYQ_DIMLESS => PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, S_TIME
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use MORETREE, only: GET_FIELD_ID, GET_SPEC_ID
@@ -102,6 +103,7 @@ contains ! =====  Public Procedures  ===================================
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
     ! Local Variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: Error                    ! /= 0 => An error occured
     ! character(len=1023) :: FileName     ! For WriteSpectroscopy
     character(len=31) :: FileType
@@ -175,13 +177,17 @@ contains ! =====  Public Procedures  ===================================
     ! Create or expand the Lines database
     tempLines => Lines
     allocate ( lines(numLines), stat=status )
+    addr = 0
+    if ( status == 0 .and. numLines > 0 ) addr = transfer(c_loc(lines(1)), addr)
     call test_allocate ( status, moduleName, "Lines", ubounds=numLines, &
-      & elementSize = storage_size(lines) / 8 )
+      & elementSize = storage_size(lines) / 8, address=addr )
     if ( associated(tempLines) ) then
       lines(:offsetLines) = tempLines
       s = size(tempLines) * storage_size(tempLines) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(tempLines(1)), addr)
       deallocate ( tempLines, stat=status )
-      call test_deallocate ( status, moduleName, "TempLines", s )
+      call test_deallocate ( status, moduleName, "TempLines", s, address=addr )
     end if
 
     numLines = offsetLines
@@ -531,7 +537,9 @@ contains ! =====  Public Procedures  ===================================
   subroutine Destroy_Line_Database
 
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S, Status                   ! From deallocate
     if ( .not. associated(lines) ) return
     do i = 1, size(lines)
@@ -541,8 +549,10 @@ contains ! =====  Public Procedures  ===================================
       call deallocate_test ( lines(i)%polarized, "Lines(i)%Polarized", moduleName )
     end do
     s = size(lines) * storage_size(lines) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(lines(1)), addr)
     deallocate ( lines, stat=status )
-    call test_deallocate ( status, moduleName, "Lines", s )
+    call test_deallocate ( status, moduleName, "Lines", s, address=addr )
   end subroutine Destroy_Line_Database
 
   ! ----------------------------------  Destroy_SpectCat_Database  -----
@@ -864,6 +874,7 @@ contains ! =====  Public Procedures  ===================================
     use HDF, only: DFACC_RDONLY
     use INTRINSIC, only: LIT_INDICES ! , PHYQ_INVALID
     use IO_STUFF, only: GET_LUN
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use MACHINE, only: IO_ERROR
     use MLSHDF5, only: GETHDF5ATTRIBUTE, GETHDF5DSDIMS, &
       & ISHDF5ATTRIBUTEPRESENT, ISHDF5DSPRESENT, LOADFROMHDF5DS, LOADPTRFROMHDF5DS
@@ -879,6 +890,7 @@ contains ! =====  Public Procedures  ===================================
     integer, intent(in) :: Where ! in the parse tree
     character(len=*), intent(in) :: FileName, FileType
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     type(catalog_t) :: CatalogItem
     character(len=maxSigLen), pointer :: CatNames(:)
     real(r8), pointer :: Continuum(:,:)
@@ -958,13 +970,17 @@ contains ! =====  Public Procedures  ===================================
       if ( associated(lines) ) line1 = size(lines)
       lineN = line1 + nLines
       allocate ( myLines(lineN), stat=iostat )
+      addr = 0
+      if ( iostat == 0 .and. lineN > 0 ) addr = transfer(c_loc(myLines(1)), addr)
       call test_allocate ( iostat, moduleName, 'Lines', ubounds=lineN, &
-        & elementSize = storage_size(myLines) / 8 )
+        & elementSize = storage_size(myLines) / 8, address=addr )
       if ( associated(lines) ) then
         myLines(:line1) = lines
         s = size(lines) * storage_size(lines) / 8
+        addr = 0
+         if ( s > 0 ) addr = transfer(c_loc(lines(1)), addr)
         deallocate ( lines, stat=iostat )
-        call test_deallocate ( iostat, moduleName, 'Lines', s )
+        call test_deallocate ( iostat, moduleName, 'Lines', s, address=addr )
       end if
       lines => myLines
       ! Fill in the expanded part
@@ -1066,8 +1082,11 @@ contains ! =====  Public Procedures  ===================================
       if ( shp2(2) /= maxContinuum ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Second dimension of continuum field of catalog has changed.' )
       allocate ( myCatalog(shp2(1)), stat=iostat )
+      addr = 0
+      if ( iostat == 0 .and. shp2(1) > 0 ) addr = transfer(c_loc(myCatalog(1)), addr)
       call test_allocate ( iostat, moduleName, 'MyCatalog', &
-        & ubounds=int(shp2(1)), elementSize = storage_size(myCatalog) / 8 )
+        & ubounds=int(shp2(1)), elementSize = storage_size(myCatalog) / 8, &
+        & address=addr )
       nullify ( catNames, continuum, lineIndices, lineList, moleculeNames, qlog )
       call loadPtrFromHDF5DS ( fileID, 'CatNames', catNames )
       call loadPtrFromHDF5DS ( fileID, 'Continuum', continuum )
@@ -1101,8 +1120,10 @@ contains ! =====  Public Procedures  ===================================
         end if
       end do
       s = size(myCatalog) * storage_size(myCatalog) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(myCatalog(1)), addr)
       deallocate ( myCatalog, stat=iostat )
-      call test_deallocate ( iostat, moduleName, 'MyCatalog', s )
+      call test_deallocate ( iostat, moduleName, 'MyCatalog', s, address=addr )
       call deallocate_test ( catNames,      'CatNames', moduleName )
       call deallocate_test ( continuum,     'Continuum', moduleName )
       call deallocate_test ( lineList,      'LineList', moduleName )
@@ -1555,6 +1576,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.63  2014/09/05 20:53:50  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.62  2014/07/18 23:15:26  pwagner
 ! Aimed for consistency in names passed to allocate_test
 !
