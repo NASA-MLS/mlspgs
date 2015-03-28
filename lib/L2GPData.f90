@@ -12,22 +12,22 @@
 !=============================================================================
 module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !=============================================================================
-  use allocate_deallocate, only: allocate_test, deallocate_test
-  use bitstuff, only: dumpbitnames
-  use dump_0, only: diff, diff_fun, dump
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use BitStuff, only: DumpBitNames
+  use Dump_0, only: diff, diff_fun, dump
   use HDF, only: dfacc_rdonly, dfacc_read, dfacc_create, dfacc_rdwr, &
-    & dfnt_float32, dfnt_int32, dfnt_float64
-  use highoutput, only: outputnamedvalue
-  use intrinsic ! "units" type literals, beginning with l_
+    & Dfnt_float32, dfnt_int32, dfnt_float64
+  use Highoutput, only: outputnamedvalue
+  use Intrinsic ! "units" type literals, beginning with l_
   use MLSCommon, only: defaultundefinedvalue, interval_T, &
     & MLSFile_t, l2metadata_t
   use MLSFiles, only: filenotfound, &
     & HDFVersion_4, HDFversion_5, wildcardHDFversion, &
-    & dump, initializeMLSfile, MLS_closefile, MLS_exists, MLS_openfile, &
+    & Dump, initializeMLSfile, MLS_closefile, MLS_exists, MLS_openfile, &
     & MLS_HDF_version, MLS_inqswath, MLS_openfile, MLS_closefile
   use MLSKinds, only: r4, r8, rt
   use MLSFillvalues, only: extractarray, gatherarray, &
-    & isfillvalue, replacefillvalues
+    & Isfillvalue, replacefillvalues
   use MLSHDFeos, only: hsize
   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning, MLSMessage
   use MLSNumerics, only: findinrange
@@ -35,12 +35,12 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSSets, only: findintersection, intersection
   use MLSStrings, only: capitalize, lowercase
   use MLSStringLists, only: extractsubstring, &
-    & gethashelement, getstringelement, getuniquelist, &
-    & list2array, numstringelements, removelistfromlist, replacesubstring, &
-    & stringelementnum, switchdetail
-  use output_m, only: blanks, output, resumeoutput, suspendoutput
-  use string_table, only: display_string
-  use trace_m, only: trace_begin, trace_end
+    & Gethashelement, getstringelement, getuniquelist, &
+    & List2array, numstringelements, removelistfromlist, replacesubstring, &
+    & Stringelementnum, switchdetail
+  use Output_m, only: blanks, output, resumeoutput, suspendoutput
+  use String_table, only: display_string
+  use Trace_m, only: trace_begin, trace_end
 
   implicit none
 
@@ -248,7 +248,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   logical, parameter :: APPENDSWRITEATTRIBUTES = .true.  
   
   ! In what range of orbit angles do we set the mode to "descending"
-  type(interval_T), public :: DescendingRange = interval_T( 90._rt, 270._rt )
+  type(interval_T), public, parameter :: DescendingRange = interval_T( 90._rt, 270._rt )
 
   ! Do you want to pre-fill arrays with MissingValue by default?
   logical, parameter :: ALWAYSFILLWITHMISSINGVALUE = .true.  
@@ -3392,6 +3392,7 @@ contains ! =====     Public Procedures     =============================
     ! the size -- where L2gp is put.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (l2gpdata_t), dimension(:), pointer :: DATABASE
@@ -3413,12 +3414,14 @@ contains ! =====     Public Procedures     =============================
   subroutine DestroyL2GPDatabase ( DATABASE )
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use Toggles, only: Gen, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     ! Dummy argument
     type (l2GPData_T), dimension(:), pointer :: DATABASE
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: l2gpIndex, s, status
     integer :: Me = -1       ! String index for trace
 
@@ -3429,8 +3432,10 @@ contains ! =====     Public Procedures     =============================
           call DestroyL2GPContents ( database(l2gpIndex) )
        end do
        s = size(database) * storage_size(database) / 8
+       addr = 0
+       if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
        deallocate ( database, stat=status )
-       call test_deallocate ( status, ModuleName, "database", s )
+       call test_deallocate ( status, ModuleName, "database", s, Address=addr )
     end if
     call trace_end ( "DestroyL2GPDatabase", cond=toggle(gen) )
   end subroutine DestroyL2GPDatabase
@@ -5233,6 +5238,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.210  2015/02/27 23:57:55  pwagner
+! Take pains to ensure HostName is not blank
+!
 ! Revision 2.209  2015/02/18 00:28:01  pwagner
 ! Corrected DumpL2GP_attributes_hdf5 to include linefeeds, MiscNotes
 !
