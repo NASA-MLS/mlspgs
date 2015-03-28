@@ -262,6 +262,7 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
+    hGrid%type = hGridType
     select case (hGridType)
 
     case ( l_height, l_fractional, l_fixed ) ! --Fixed, Fractional or Height --
@@ -731,7 +732,7 @@ contains ! =====     Public Procedures     =============================
       
       ! Read it from the l1boa file
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-      call ReadL1BData ( L1BFile, l1bItemName, l1bField,noMAFs, &
+      call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
         & neverfail=(MissingOK .or. l1bItem == l1b_tplosangle), dontPad=.true. )
       if ( l1bFlag==-1 .and. .not. MissingOK) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -865,13 +866,14 @@ contains ! =====     Public Procedures     =============================
       & assembleL1BQtyName
     use MLSCommon, only: mlsfile_t, namelen, tai93_range_t
     use MLSFiles, only: hdfversion_5, dump, getmlsfilebytype
-    use MLSFillvalues, only: ismonotonic, monotonize
+    use MLSFillvalues, only: Monotonize
     use MLSHdf5, only: ishdf5attributeinfile
     use MLSKinds, only: rk => r8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: hunt, interpolatevalues, solvequadratic
     use MLSStringlists, only: switchdetail
     use MLSStrings, only: hhmmss_value
+    use Monotone, only: IsMonotonic
     use output_m, only: output
     use string_table, only: display_string
     use toggles, only: gen, levels, switches, toggle
@@ -2742,6 +2744,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.121  2015/03/28 02:45:56  vsnyder
+! Get IsMonotonic from Monotone instead of MLSFillValues.  Save HGrid type.
+!
 ! Revision 2.120  2015/03/10 23:40:18  pwagner
 ! Revert maf component of HGrid to being relative, not absolute
 !
