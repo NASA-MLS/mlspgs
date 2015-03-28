@@ -95,8 +95,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! NullifyVector
 ! PowVector                    X = X ** Power element-by-element
 ! ReciprocateVector            Y = A / X if Y is present, else X = A / X -- scalar A
-! RemapVectorMask              Remap MASK1 to MASK and MASK3
-! RemapVectorValue             Remap VALUE1 to VALUES and VALUE3
+! RemapVectorMask              Remap MASK1 to MASK, MASK3 and MASK4
+! RemapVectorValue             Remap VALUE1 to VALUES, VALUE3, and VALUE4
 ! ReshapeVectorValue           Reshape source values to fit destination loosely
 ! ReverseMask                  Reverse bits of MASK according to TO_CLEAR
 ! RmVectorFromDatabase         Removes a vector from a database of such vectors
@@ -113,6 +113,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, TEST_ALLOCATE, &
     & TEST_DEALLOCATE
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use BITSTUFF, only: DUMPBITNAMES, ISBITSET
   use DUMP_0, only: DIFF, DUMP
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
@@ -295,19 +296,25 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     integer :: Index = 0          ! Index of this quantity in the vector database
     real(rv), dimension(:), pointer :: VALUE1 => NULL() ! The dimension of
     ! VALUE1 is Frequencies (or 1) * Vertical Coordinates or MIF (or 1) *
-    ! Horizontal Instances (scan or profile or 1).  These are taken from 
-    ! (template%noChans * template%noSurfs * template%noInstances).  This is
-    ! the one that's allocated and deallocated.
+    ! Horizontal Instances (scan or profile or 1) * Cross-track instances. 
+    ! These are taken from (template%noChans * template%noSurfs *
+    ! template%noInstances).  This is the one that's allocated and
+    ! deallocated.
     real(rv), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
     ! VALUES are Frequencies (or 1) * Vertical Coordinates or MIF (or 1), and
-    ! Horizontal Instances (scan or profile or 1).  These are taken from
-    ! (template%noChans * template%noSurfs, template%noInstances).  This is a
-    ! rank remapping of VALUE1.
+    ! Horizontal Instances (scan or profile or 1) * Cross-track instances. 
+    ! These are taken from (template%noChans * template%noSurfs,
+    ! template%noInstances).  This is a rank remapping of VALUE1.
     real(rv), dimension(:,:,:), pointer :: VALUE3 => NULL() ! The dimensions
     ! of VALUE3 are Frequencies, Vertical Coordinates or MIF, and Horizontal
-    ! Instances (MAF or profile or 1).  These are taken from
-    ! template%noChans, template%noSurfs, and template%noInstances.  This is
-    ! a rank remapping of VALUE1.
+    ! Instances (MAF or profile or 1) * Cross-track instances.  These are
+    ! taken from template%noChans, template%noSurfs, and
+    ! template%noInstances.  This is a rank remapping of VALUE1.
+    real(rv), dimension(:,:,:,:), pointer :: VALUE4 => NULL() ! The dimensions
+    ! of VALUE3 are Frequencies, Vertical Coordinates or MIF, Horizontal
+    ! Instances (MAF or profile or 1), and Cross-track instances.  These are
+    ! taken from template%noChans, template%noSurfs, and
+    ! template%noInstances.  This is a rank remapping of VALUE1.
     character, dimension(:), pointer :: MASK1 => NULL() ! MASK1 is the
     ! array that is allocated and deallocated.  MASK and MASK3 are rank
     ! remappings of MASK1.
@@ -323,6 +330,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! by mask = char(int).  This is a rank remapping of MASK1.
     character, dimension(:,:,:), pointer :: MASK3 => NULL() ! This is used
     ! for masking VALUE3, and has the same dimensions.  This is a rank
+    ! remapping of MASK1.
+    character, dimension(:,:,:,:), pointer :: MASK4 => NULL() ! This is used
+    ! for masking VALUE4, and has the same dimensions.  This is a rank
     ! remapping of MASK1.
     integer :: Label = 0        ! An optional label for this to be used as for
     ! example a swath name.  Often used in conjunction with the 'batch'
@@ -473,15 +483,15 @@ contains ! =====     Public Procedures     =============================
         if ( .not. associated(aq) .or. .not. associated(bq) ) cycle
         Areequal = Areequal .and. all(aq%values == bq%values)
         if ( .not. Areequal ) exit
-      enddo
+      end do
     else
       do qIndex = 1, size ( a%quantities ) 
         aq => a%quantities(qIndex)
         if ( .not. associated(aq) ) cycle
         Areequal = Areequal .and. all(aq%values == c)
         if ( .not. Areequal ) exit
-      enddo
-    endif
+      end do
+    end if
   end function Areequal
 
   ! -----------------------------------------------  AssignVector  -----
@@ -779,7 +789,7 @@ contains ! =====     Public Procedures     =============================
     integer :: instance
     do instance=1, size(mask, 2)
       call ClearMask ( mask(:, instance), to_clear, what )
-    enddo
+    end do
   end subroutine ClearMask_2d
 
   ! ----------------------------------------------  ClearUnderMask -----
@@ -861,6 +871,7 @@ contains ! =====     Public Procedures     =============================
     character(len=*), intent(in), optional :: VectorNameText
     type(Vector_T), dimension(:), pointer, optional :: Database
     ! Local variables:
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, Status
     ! Executable statements:
     call destroyVectorInfo ( z )
@@ -869,8 +880,13 @@ contains ! =====     Public Procedures     =============================
     z%globalUnit = x%globalUnit
     z%template = x%template
     allocate ( z%quantities(size(x%quantities)), stat=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( size(z%quantities) > 0 ) addr = transfer(c_loc(z%quantities(1)), addr)
+    end if
     call test_allocate ( status, moduleName, "z%quantities", &
-      & uBounds=[size(x%quantities)], elementSize=storage_size(z%quantities) / 8 )
+      & uBounds=[size(x%quantities)], elementSize=storage_size(z%quantities) / 8, &
+      & address=addr )
     z%quantities%index = x%quantities%index
     do i = 1, size(x%quantities)
       z%quantities(i)%template = x%quantities(i)%template
@@ -1097,6 +1113,9 @@ contains ! =====     Public Procedures     =============================
     & highBound, lowBound, noValues, where ) &
     & result ( vector )
 
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+
   ! This routine creates an empty vector according to a given template
   ! Its mask is not allocated.  Use CreateMask if one is needed.
 
@@ -1112,11 +1131,16 @@ contains ! =====     Public Procedures     =============================
     type(where_t), intent(in), optional :: where    ! source_ref
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: QUANTITY                 ! Loop index
+    integer :: Me = -1                  ! String index for tracing
     integer :: STATUS                   ! From Allocate
     logical :: MYNOVALUES               ! Copy of novalues
 
     ! Executable code
+
+    call trace_begin ( me, "CreateVector", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
 
     vector%name = vectorName
     if ( present(globalUnit) ) vector%globalUnit = globalUnit
@@ -1124,9 +1148,14 @@ contains ! =====     Public Procedures     =============================
       & vector%name = enter_terminal ( vectorNameText, t_identifier )
     vector%template = vectorTemplate
     allocate ( vector%quantities(vectorTemplate%noQuantities), STAT=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( vectorTemplate%noQuantities > 0 ) addr = transfer(c_loc( &
+        & vector%quantities(1)), addr)
+    end if
     call test_allocate ( status, moduleName, "Vector quantities", &
       & uBounds=[vectorTemplate%noQuantities], &
-      & elementSize = storage_size(vector%quantities) / 8 )
+      & elementSize = storage_size(vector%quantities) / 8, address=addr )
     do quantity = 1, vectorTemplate%noQuantities
       vector%quantities(quantity)%index = quantity
       vector%quantities(quantity)%template = &
@@ -1137,6 +1166,9 @@ contains ! =====     Public Procedures     =============================
     if ( .not. myNoValues) &
       & call createValues ( vector, highBound, lowBound )
     if ( present(where) ) vector%where = where
+
+    call trace_end ( "CreateVector", cond=toggle(gen) .and. levels(gen) > 2 )
+
   end function CreateVector
 
   ! ------------------------------------------  CreateVectorValue  -----
@@ -1155,7 +1187,8 @@ contains ! =====     Public Procedures     =============================
       & forWhom=trim(moduleName) // '%CreateVectorValue' )
     valueSize = max( 1, value%template%noChans * &
         & value%template%noSurfs * &
-        & value%template%noInstances )
+        & value%template%noInstances * &
+        & value%template%noCrossTrack )
     call destroyVectorQuantityMask ( value )
     if ( present(where) ) then
       value%AllocationName = trim(what) // "%values"
@@ -1177,6 +1210,7 @@ contains ! =====     Public Procedures     =============================
     type (Vector_T),  dimension(:), pointer :: database
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: l2gpIndex, S, Status
 
     if ( associated(database) ) then
@@ -1184,8 +1218,10 @@ contains ! =====     Public Procedures     =============================
         call DestroyVectorInfo(database(l2gpIndex))
       end do
       s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
       deallocate ( database, stat=status )
-      call test_deallocate ( status, moduleName, 'database', s )
+      call test_deallocate ( status, moduleName, 'database', s, address=addr )
     end if
     allocate ( database(0), stat=status )
     call test_allocate ( status, moduleName, "database" )
@@ -1200,6 +1236,7 @@ contains ! =====     Public Procedures     =============================
     type (Vector_T), intent(inout) :: VECTOR
 
     ! Local Variables:
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S, STATUS
 
     ! Executable code
@@ -1211,8 +1248,10 @@ contains ! =====     Public Procedures     =============================
     call destroyVectorValue ( vector )
     call destroyVectorMask ( vector )
     s = size(vector%quantities) * storage_size(vector%quantities) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(vector%quantities(1)), addr)
     deallocate ( vector%quantities, stat=status )
-    call test_deallocate ( status, moduleName, 'vector%quantities', s )
+    call test_deallocate ( status, moduleName, 'vector%quantities', s, address=addr )
   end subroutine DestroyVectorInfo
 
   ! ------------------------------------------  DestroyVectorMask  -----
@@ -1277,15 +1316,18 @@ contains ! =====     Public Procedures     =============================
     type (VectorTemplate_T), dimension(:), pointer :: database
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: l2gpIndex, S, Status
 
     if ( associated(database) ) then
-       do l2gpIndex = 1, SIZE(database)
-          call DestroyVectorTemplateInfo ( database(l2gpIndex) )
-       end do
-       s = size(database) * storage_size(database) / 8
-       deallocate ( database, stat=status )
-       call test_deallocate ( status, moduleName, 'database', s )
+      do l2gpIndex = 1, SIZE(database)
+         call DestroyVectorTemplateInfo ( database(l2gpIndex) )
+      end do
+      s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
+      deallocate ( database, stat=status )
+      call test_deallocate ( status, moduleName, 'database', s, address=addr )
     end if
   end subroutine DestroyVectorTemplateDatabase
 
@@ -1667,12 +1709,12 @@ contains ! =====     Public Procedures     =============================
         call ExpandStringRange ( bitCh, bitNums, nBitNums )
       else
         call readNumsFromChars( bitCh, bitnum )
-      endif
-    endif
+      end if
+    end if
     if ( nBitNums < 0 ) then
       nBitNums = 1
       bitNums(1) = bitNum
-    endif
+    end if
     call output ( 'Quantity ' )
     call display_string ( vectorQuantity%template%name )
 
@@ -1683,7 +1725,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. associated ( vectorQuantity%mask ) ) then
       call output ( ' has no mask.', advance='yes' )
       return
-    elseif( myDetails == 0 ) then
+    else if( myDetails == 0 ) then
       call dump ( ichar(vectorQuantity%mask), name='  Mask =', &
         & format='(z3.2)', width = 20 )
       call FindUnique( &
@@ -1692,9 +1734,9 @@ contains ! =====     Public Procedures     =============================
       call outputNamedValue(' Number unique values', nUnique )
       do i=1, nUnique
         call DumpBitNames( uniqueVals(i), MaskBitNames )
-      enddo
+      end do
       return
-    elseif ( index(myOptions, 'l') < 1 .and. index(myOptions, 'L') < 1 ) then
+    else if ( index(myOptions, 'l') < 1 .and. index(myOptions, 'L') < 1 ) then
       call newLine
       do i = 1, vectorQuantity%template%noInstances
         call output ( 'Instance: ' )
@@ -1720,7 +1762,7 @@ contains ! =====     Public Procedures     =============================
         end do                        ! Surface loop
       end do                          ! Instance loop
       return
-    endif
+    end if
     ! These are the cases where we show results broken down by bit numbers
     do k=1, nBitNums
       nUnique = 0
@@ -1730,11 +1772,11 @@ contains ! =====     Public Procedures     =============================
         call newLine
         call outputnamedvalue( 'bit number', bitnum )
         call DumpBitNames( 2**bitnum, MaskBitNames, oneLine=.true. )
-      endif
+      end if
       if( myDetails < 0 ) then
         n = count( isBitSet( ichar(vectorQuantity%mask), bitNum ) )
         call outputNamedValue( 'Num mask bits set: ', n )
-      elseif ( index(myOptions, 'l') > 0 ) then
+      else if ( index(myOptions, 'l') > 0 ) then
         ! Collapse locations, showing where entirely masked channels and surfaces
         do i = 1, vectorQuantity%template%noInstances
           if ( any( &
@@ -1742,13 +1784,13 @@ contains ! =====     Public Procedures     =============================
             & ) ) cycle
           nUnique = nUnique + 1
           uniqueVals ( nUnique ) = i
-        enddo
+        end do
         if ( nUnique > 0 ) then
           call dump( uniqueVals(1:nUnique), ': Locations entirely masked' )
         else
           call output( ': No locations entirely masked', advance = 'yes' )
-        endif
-      elseif ( index(myOptions, 'L') > 0 ) then
+        end if
+      else if ( index(myOptions, 'L') > 0 ) then
         ! Collapse locations, showing where NOT masked
         do i = 1, vectorQuantity%template%noInstances
           if ( all( &
@@ -1756,14 +1798,14 @@ contains ! =====     Public Procedures     =============================
             & ) ) cycle
           nUnique = nUnique + 1
           uniqueVals ( nUnique ) = i
-        enddo
+        end do
         if ( nUnique > 0 ) then
           call dump( uniqueVals(1:nUnique), ': Locations not entirely masked' )
         else
           call output( ': All locations entirely masked', advance = 'yes' )
-        endif
-      endif
-    enddo
+        end if
+      end if
+    end do
   end subroutine DumpQuantityMask
 
   ! ---------------------------------------------  DumpVectorMask  -----
@@ -1882,7 +1924,7 @@ contains ! =====     Public Procedures     =============================
     myoptions = ' '
     if ( present(clean) ) then
       if ( clean ) myoptions = 'c'
-    endif
+    end if
     if ( present(options) ) myOptions = trim(myOptions) // options
     do j = 1, size(vector%quantities)
       dumpThisQty = myDetails > -2
@@ -2053,7 +2095,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(name) ) then
       MLSMessageConfig%Info = name
       call output ( name ); call output ( ', ' )
-    elseif ( qty%template%name /= 0 ) then
+    else if ( qty%template%name /= 0 ) then
       call get_string ( qty%template%name, MLSMessageConfig%Info )
     end if
     if ( .not. index(myOptions, '1') > 0 ) then
@@ -2088,21 +2130,22 @@ contains ! =====     Public Procedures     =============================
       if ( myDetails < -1 ) then
         MLSMessageConfig%Info = oldInfo
         return
-      endif
+      end if
       call newLine
       if ( myDetails < 0 ) then
         MLSMessageConfig%Info = oldInfo
         return
-      endif
-    elseif ( qty%template%name /= 0 ) then
+      end if
+    else if ( qty%template%name /= 0 ) then
       call display_string ( qty%template%name, before='.' )
-    endif
+    end if
     if ( .not. index(myOptions, '1') > 0 &
       & .and. .not. index(myOptions, '2') > 0 ) then
       call output ( qty%template%noChans, before='    noChans = ' )
       call output ( qty%template%noSurfs, before=' noSurfs = ' )
       call output ( qty%template%noInstances, before=' noInstances = ')
-      call output ( qty%template%instanceLen, before=' instanceLen = ', advance='yse' )
+      call output ( qty%template%noCrossTrack, before=' noCrossTrack = ' )
+      call output ( qty%template%instanceLen, before=' instanceLen = ', advance='yes')
       call output ( '    signal: ')
       if ( qty%template%signal < 1 ) then
         call output ( '    (no database entry for this quantity) ', advance='yes')
@@ -2118,7 +2161,7 @@ contains ! =====     Public Procedures     =============================
         else
           call display_string ( lit_indices(qty%template%molecule) )
         end if
-      elseif ( qty%template%quantityType > 0 ) then
+      else if ( qty%template%quantityType > 0 ) then
         call output( 'Quantity type: ', advance='no' )
         call display_string ( lit_indices(qty%template%quantityType), advance='yes' )
       end if
@@ -2134,17 +2177,24 @@ contains ! =====     Public Procedures     =============================
       call output ( ' Major Frame? (t/f): ')
       call output ( qty%template%majorframe, advance='yes' )
       if ( size(qty%values) > 0 ) then
-        call output ( size(qty%values(:,1)), before='    values array size is ' )
-        call output ( size(qty%values(1,:)), before='x' )
+        call output ( '    values array size is ' )
+        if ( size(qty%value3,1) > 1 ) then
+          call output ( size(qty%value4,1) )
+          call output ( 'x' )
+        end if
+        call output ( size(qty%value4,2) )
+        call output ( size(qty%value4,3), before='x' )
+        if ( size(qty%value4,4) > 1 ) call output ( size(qty%value4,4), before='x' )
+        call output ( size(qty%value3), before=' = ' )
       else
-        call output ( '    values array size is 0', advance='yes' )
-      endif
-    endif
+        call output ( '    values array size is 0' )
+      end if
+    end if
     if ( .not. associated(qty%values) ) then
       call output( 'values array is not associated', advance='yes' )
-    elseif ( myDetails > 0 ) then
+    else if ( myDetails > 0 ) then
       call newLine
-      call dump ( qty%values, '  Elements = ', options=options )
+      call dump ( qty%value4, '  Elements = ', options=options )
       if ( associated(qty%mask) ) then
         call dump ( ichar(qty%mask), name='  Mask(hex) =', &
           & format='(z3.2)', width = 20 )
@@ -2155,7 +2205,7 @@ contains ! =====     Public Procedures     =============================
         call outputNamedValue(' Number unique values', nUnique )
         do i=1, nUnique
           call DumpBitNames( uniqueVals(i), MaskBitNames )
-        enddo
+        end do
       else
         call output ( '      Without mask', advance='yes' )
       end if
@@ -2203,7 +2253,7 @@ contains ! =====     Public Procedures     =============================
           call dump ( quantities(vector_template%quantities(i)), details-1 )
         end do
       end if
-    elseif ( .not. associated(vector_template%quantities) ) then
+    else if ( .not. associated(vector_template%quantities) ) then
        call output ( 'vector quantities not associated', advance='yes' )
     else
        call outputNamedValue( 'size(vector_template%quantities)', size(vector_template%quantities) )
@@ -2674,6 +2724,7 @@ contains ! =====     Public Procedures     =============================
     nullify ( from%value1, from%mask1 ) ! Don't deallocate during destroy!
     nullify ( from%values, from%mask )  ! Don't deallocate during destroy!
     nullify ( from%value3, from%mask3 ) ! Don't deallocate during destroy!
+    nullify ( from%value4, from%mask4 ) ! Don't deallocate during destroy!
     call destroyVectorQuantityValue ( from, destroyMask=.true. )
   end subroutine MoveVectorQuantity
 
@@ -2794,13 +2845,20 @@ contains ! =====     Public Procedures     =============================
     use Pointer_Rank_Remapping, only: REMAP
     type ( vectorValue_t ) :: Value
     call remap ( value%mask1, value%mask, &
-      & (/ value%template%noChans * &
-      &    value%template%noSurfs,  &
-      &    value%template%noInstances /) )
+      & (/ value%template%noChans *     &
+      &    value%template%noSurfs,      &
+      &    value%template%noInstances * &
+      &    value%template%noCrossTrack /) )
     call remap ( value%mask1, value%mask3, &
-      & (/ value%template%noChans,  &
-      &    value%template%noSurfs,  &
-      &    value%template%noInstances /) )
+      & (/ value%template%noChans,      &
+      &    value%template%noSurfs,      &
+      &    value%template%noInstances * &
+      &    value%template%noCrossTrack /) )
+    call remap ( value%mask1, value%mask4, &
+      & (/ value%template%noChans,      &
+      &    value%template%noSurfs,      &
+      &    value%template%noInstances,  &
+      &    value%template%noCrossTrack /) )
   end subroutine RemapVectorMask
 
   ! -------------------------------------------  RemapVectorValue  -----
@@ -2808,13 +2866,20 @@ contains ! =====     Public Procedures     =============================
     use Pointer_Rank_Remapping, only: REMAP
     type ( vectorValue_t ) :: Value
     call remap ( value%value1, value%values, &
-      & (/ value%template%noChans * &
-      &    value%template%noSurfs,  &
-      &    value%template%noInstances /) )
+      & (/ value%template%noChans *     &
+      &    value%template%noSurfs,      &
+      &    value%template%noInstances * &
+      &    value%template%noCrossTrack /) )
     call remap ( value%value1, value%value3, &
-      & (/ value%template%noChans,  &
-      &    value%template%noSurfs,  &
-      &    value%template%noInstances /) )
+      & (/ value%template%noChans,      &
+      &    value%template%noSurfs,      &
+      &    value%template%noInstances * &
+      &    value%template%noCrossTrack /) )
+    call remap ( value%value1, value%value4, &
+      & (/ value%template%noChans,      &
+      &    value%template%noSurfs,      &
+      &    value%template%noInstances,  &
+      &    value%template%noCrossTrack /) )
   end subroutine RemapVectorValue
 
   ! -----------------------------------------  ReshapeVectorValue  -----
@@ -2876,7 +2941,7 @@ contains ! =====     Public Procedures     =============================
       test = 1
       call output (' effect on 1 is ')
       call output( ieor(test, myWhat ) )
-    endif
+    end if
     if ( present(to_Reverse) ) then
       mask(to_Reverse) = char(ieor(ichar(mask(to_Reverse)), myWhat))
     else
@@ -3306,6 +3371,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.195  2014/11/08 01:05:15  pwagner
+! CreateVectorValue relies on DestroyVectorQuantityValue to deallocate its values
+!
 ! Revision 2.194  2014/10/02 22:08:35  vsnyder
 ! Default initialize all components of Vector*_T
 !
