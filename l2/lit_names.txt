@@ -149,6 +149,8 @@ phaseTiming
 plain
 profile
 
+quantity
+
 rectanglefromlos
 reflectorTempModel
 refract
@@ -182,6 +184,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.76  2015/03/28 02:55:40  vsnyder
+# Paul added quantity for DirectWrite
+#
 # Revision 2.75  2013/10/02 00:47:45  pwagner
 # Added ascenddescend Fill Method
 #
