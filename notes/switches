@@ -67,6 +67,7 @@ Switches (set by -S option in mlsl2's command line):
  geos5   => Show geos5_7 meteorology fields as they are read
  glo[n]  => Global settings, info on l1b files 
  glob    => Show when Bright Object in FOV affects radiance precision
+ gmag[n] => Print generated magnetic field quantity with detail level n
  grid    => Announce as mlsl2 Creates, Destroys, Merges gridded data
  gridd   => Dump gridded database
  grids   => Dump Forward Model grids
@@ -91,6 +92,7 @@ Switches (set by -S option in mlsl2's command line):
  lblb[n] => Units digit >0 -> dump line-by-line Betas, >1 also T, tanh, P
             tens digit >0 dump zeta instead of P, n>99 stop after first dump 
  log[n]  => Print most Log file messages only to stdout, not toolkit log
+ mag     => Print magnetic field and its coordinates in full forward model
  mach    => Machine names (that can be enslaved by master task)
  mas     => Activities between the PVM master task and slave task
  mcf     => Dump lines read from MCF to create metadata control group db or
@@ -218,6 +220,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.92  2015/02/05 21:37:20  vsnyder
+ Add 'node'
+
  Revision 1.91  2014/09/29 23:21:13  pwagner
  Correct meaning of n in phase[n]
 
