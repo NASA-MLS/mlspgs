@@ -41,6 +41,7 @@ contains
       & F_FWDMODELEXTRA, F_FWDMODELIN, F_FWDMODELOUT, &
       & F_HESSIAN, F_JACOBIAN, F_MIRRORHESSIAN, &
       & F_PERTURBATION, F_SINGLEMAF, F_SWITCHES, F_TSCAT
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use LEXER_CORE, only: PRINT_SOURCE
     use MLSKINDS, only: R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
@@ -73,6 +74,7 @@ contains
     type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
     type(MLSChunk_T), intent(in) :: chunk
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: Error                    ! >= indicates an error occurred
     integer :: EXPRUNITS(2)             ! From expr
     real(r8) :: EXPRVALUE(2)            ! From expr
@@ -344,7 +346,14 @@ contains
             call DestroyBlock ( Jacobian )
             allocate ( Jacobian%block ( jacobian%row%nb, jacobian%col%nb ), &
               & STAT=status )
-            call test_allocate ( status, moduleName, 'jacobian%block' )
+            addr = 0
+            if ( status == 0 ) then
+              if ( size(Jacobian%block) > 0 ) &
+                & addr = transfer(c_loc(Jacobian%block(1,1)), addr)
+            end if
+            call test_allocate ( status, moduleName, 'jacobian%block', &
+              & uBounds=[jacobian%row%nb,jacobian%col%nb], &
+              & elementSize=storage_size(Jacobian%block)/8, address=addr )
           end if
         end do                          ! Forward model config loop
 
@@ -503,6 +512,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.75  2015/03/28 02:51:19  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.74  2014/09/05 01:20:54  vsnyder
 ! Remove USE for unreferenced name
 !
