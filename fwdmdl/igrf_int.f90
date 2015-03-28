@@ -328,6 +328,7 @@ contains
   contains
     subroutine AddGHToDatabase ( Database, Items, copy )
       use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
       type(gh_t), pointer :: Database(:)
       type(gh_t), intent(in) :: Items(:)
       logical, intent(in), optional :: Copy
@@ -976,6 +977,9 @@ o:  do n = 3, size(p,2)-1
 end module IGRF_INT
 
 ! $Log$
+! Revision 2.12  2015/03/28 02:07:25  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.11  2015/02/05 21:48:29  vsnyder
 ! Remove unused computations
 !
