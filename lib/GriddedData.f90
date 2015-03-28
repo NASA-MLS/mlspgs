@@ -11,14 +11,15 @@
 
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
-  use allocate_deallocate, only: allocate_test, byte_size, bytes, &
-    & deallocate_test, NoBytesAllocated, &
-    & test_allocate, test_deallocate
+  use Allocate_Deallocate, only: Allocate_Test, Byte_Size, Bytes, &
+    & Deallocate_Test, NoBytesAllocated, &
+    & Test_Allocate, Test_Deallocate
   use DATES_MODULE, only: TAI2CCSDS
   use DUMP_0, only: DUMP, DUMPDATES
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
   use INTRINSIC, only: L_GEODALTITUDE, L_GPH, L_ETA, L_PRESSURE, &
     & L_THETA
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use MLSCOMMON, only: LINELEN, NAMELEN, UNDEFINEDVALUE
   ! R4 CORRESPONDS TO SING. PREC. :: SAME AS STORED IN FILES
   ! (EXCEPT FOR DAO DIMENSIONS)
@@ -493,6 +494,7 @@ contains
     type (GriddedData_T), intent(INOUT) :: Qty
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S ! Size in bytes of a deallocated field
     integer :: STATUS
     logical :: verbose
@@ -513,8 +515,10 @@ contains
     if ( associated(qty%field) ) then
       s = byte_size(qty%field)
       if ( verbose ) call outputnamedValue ( 'Grid size to be destroyed', shape(qty%field) )
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(qty%field(1,1,1,1,1,1)), addr)
       deallocate(qty%field, STAT=status)
-      call test_deallocate ( status, moduleName, "griddedQty%field", s )
+      call test_deallocate ( status, moduleName, "griddedQty%field", s, address=addr )
     else if ( verbose ) then
       call output( 'This grid not allocated', advance='true' )
     end if
@@ -535,6 +539,7 @@ contains
     type (GriddedData_T), dimension(:), pointer :: Database
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: Me = -1           ! String index for trace
     integer :: qtyIndex, s, status
 
@@ -545,8 +550,10 @@ contains
         call DestroyGriddedData(database(qtyIndex))
       end do
       s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
       deallocate(database, stat=status)
-      call test_deallocate ( status, ModuleName, "database", s )
+      call test_deallocate ( status, ModuleName, "database", s, address=addr )
     end if
     call trace_end ( "DestroyGriddedDataDatabase", cond=toggle(gen) )
 
@@ -1104,6 +1111,7 @@ contains
     ! Local parameters
     ! real(rgr), parameter :: DefaultMissingValue = undefinedValue ! -999.99
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: status                   ! Status from allocates etc.
     logical :: myEmpty                  ! Copy of empty possibly
     logical :: verbose
@@ -1200,9 +1208,12 @@ contains
     if ( verbose ) call outputNamedValue( 'Bytes before allocating grid%field', NoBytesAllocated )
     allocate(qty%field(qty%noHeights, qty%noLats, qty%noLons,  &
       qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
+    if ( status == 0 ) then
+      if ( size(qty%field) > 0 ) addr = transfer(c_loc(qty%field(1,1,1,1,1,1)), addr)
+    end if
     call test_allocate ( status, moduleName, "griddedQty%field", (/1,1,1,1,1,1/), &
       & (/ qty%noHeights, qty%noLats, qty%noLons, qty%noLsts, qty%noSzas, &
-      &    qty%noDates /), bytes(qty%field) )
+      &    qty%noDates /), bytes(qty%field), address=addr )
     if ( verbose ) then
       call outputNamedValue( 'Bytes after allocating grid%field', NoBytesAllocated )
       call outputNamedValue( 'Size of field (elements)', product(shape(qty%field)) )
@@ -1639,13 +1650,14 @@ contains
     real (rgr), dimension(:), pointer :: NEWLONS
     real (rgr), dimension(:), pointer :: NEWLSTS
     real (rgr), dimension(:,:,:,:,:,:), pointer :: NEWFIELD
-    integer :: S ! Size in bytes of a deallocated field
-    integer :: Me = -1                  ! String index for trace cacheing
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: LOWERLON
-    integer :: UPPERLON
     integer :: LOWERLST
-    integer :: UPPERLST
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: S ! Size in bytes of a deallocated field
     integer :: STATUS
+    integer :: UPPERLON
+    integer :: UPPERLST
 
     ! Executable code
     call trace_begin ( me, 'WrapGriddedData' , cond=.false. )
@@ -1669,7 +1681,7 @@ contains
     if ( lowerLst > 1 .or. upperLst > 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Gridded data disobeys EOS convention of 0..24 local time' )
-    endif
+    end if
 
     ! From this point on the integers are the number of points
     ! we need to add (0 or 1)
@@ -1701,11 +1713,15 @@ contains
       & grid%noLons + lowerLon + upperLon, &
       & grid%noLsts + lowerLst + upperLst, &
       & grid%noSzas, grid%noDates ), STAT=status )
+    addr = 0
+    if ( status==0 ) then
+      if ( size(newField) > 0 ) addr = transfer(c_loc(newField(1,1,1,1,1,1)), addr)
+    end if
     call test_allocate ( status, moduleName, 'newField', (/1,1,1,1,1,1/), &
       & (/ grid%noHeights, grid%noLats, &
       &    grid%noLons + lowerLon + upperLon, &
       &    grid%noLsts + lowerLst + upperLst, &
-      &    grid%noSzas, grid%noDates /), bytes(newField) )
+      &    grid%noSzas, grid%noDates /), bytes(newField), address=addr )
 
     ! Fill the 'central' part of the fields
     newLons ( 1+lowerLon : lowerLon+grid%noLons ) = grid%lons
@@ -1732,8 +1748,10 @@ contains
     call Deallocate_test ( grid%lons, 'grid%lons', ModuleName )
     call Deallocate_test ( grid%lsts, 'grid%lsts', ModuleName )
     s = byte_size(grid%field)
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(grid%field(1,1,1,1,1,1)), addr)
     deallocate ( grid%field, stat=status )
-    call test_deallocate ( status, moduleName, 'grid%field', s )
+    call test_deallocate ( status, moduleName, 'grid%field', s, address=addr )
 
     ! Make grid use new values
     grid%noLons = grid%noLons + lowerLon + upperLon
@@ -1794,6 +1812,10 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.79  2015/03/28 01:01:03  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 2.78  2015/01/21 19:29:15  pwagner
 ! More debugging if PGrid, TGrid dont match
 !
