@@ -19,10 +19,9 @@ module heights_module
 
   use Constants, only: Deg2Rad, Rad2Deg
 
-  use Geometry, only: Earth_Axis_Ratio_Squared, &
-                    & Earth_Major_Axis => EarthRadA, &
+  use Geometry, only: Earth_Major_Axis => EarthRadA, &
                     & Earth_Minor_Axis => EarthRadB, EarthSurfaceGPH, GM, G0, &
-                    & J2, J4, Omega => W
+                    & GeodToGeocLat, J2, J4, Omega => W
 
   use MLSKinds, only: R8
 
@@ -30,7 +29,7 @@ module heights_module
 
   implicit NONE
   private
-  public:: Geom_to_GPH, Lat_geod_to_geoc, GPH_to_geom
+  public:: Geom_to_GPH, GPH_to_geom
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -65,7 +64,7 @@ contains
     else if ( present(lat_geoc) ) then
        lat = lat_geoc
     else if ( present(lat_geod) ) then
-       lat = lat_geod_to_geoc(lat_geod)
+       lat = rad2deg * geodToGeocLat(lat_geod)
     else
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             "in function geom_to_gph, Called with no latitude - assuming 45deg N" )
@@ -111,20 +110,6 @@ contains
 
   end function geom_to_gph
 
-  ! -------------------------------------------  lat_geod_to_geoc  -----
-  pure function lat_geod_to_geoc ( lat_geod ) result (lat_geoc)
-    ! Converts geodetic latitude to geometric (geocentric) latitude,
-    ! both in degrees, not radians
-    ! If I have got this right, the difference between the two latitudes 
-    ! is 0 at equator and pole with a maximum of 0.2 degrees at midlatitudes
-    real(kind=r8), intent(in) :: lat_geod
-    real(kind=r8) :: lat_geoc
-!   The obvious implementation fails at the poles (tan 90 is infinite):
-!   lat_geoc = rad2deg * atan( tan(lat_geod*deg2rad) / earth_axis_ratio_squared )
-    lat_geoc = rad2deg * atan2( sin(lat_geod*deg2rad) , &
-      &                         cos(lat_geod*deg2rad) * earth_axis_ratio_squared )
-  end function lat_geod_to_geoc
-
   ! ------------------------------------------------  gph_to_geom  -----
   function gph_to_geom ( gph, lat_geoc, lat_geod ) result (geom_height)
     ! This converts Geopotential height (GPH) back to geometric height
@@ -153,7 +138,7 @@ contains
     else if ( present(lat_geoc) ) then
        lat = lat_geoc
     else if ( present(lat_geod) ) then
-       lat = lat_geod_to_geoc(lat_geod)
+       lat = rad2deg * geodToGeocLat(lat_geod)
     else
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             "in function gph_to_geom, heights_module"// &
@@ -193,6 +178,9 @@ contains
 end module heights_module
 
 ! $Log$
+! Revision 2.9  2013/05/02 00:17:48  vsnyder
+! LaTeX corrections, but it doesn't matter because nobody uses this module
+!
 ! Revision 2.8  2013/05/01 23:18:52  vsnyder
 ! LaTeX cannonball polishing
 !
