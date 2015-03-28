@@ -339,6 +339,7 @@ contains
   ! creating the database if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer :: DATABASE
@@ -733,6 +734,7 @@ contains
   ! first before we will be able to make it work; sorry (P. Wagner)
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     ! Dummy arguments
     type (MLSFile_T), dimension(:), pointer :: DATABASE
     type (MLSFile_T), intent(in) ::            ITEM
@@ -755,9 +757,11 @@ contains
   subroutine Deallocate_filedatabase(database)
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     ! Arguments
     type (MLSFile_T), dimension(:), pointer :: DATABASE
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: error, i, s
     ! Executable
     if ( .not. associated(database) ) return
@@ -765,8 +769,9 @@ contains
       if ( database(i)%StillOpen ) call MLS_CloseFile(database(i))
     end do
     s = size(database) * storage_size(database) / 8
+    if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
     Deallocate ( database, stat=error )
-    call test_deallocate ( error, ModuleName, 'database', s )
+    call test_deallocate ( error, ModuleName, 'database', s, address=addr )
 
   end subroutine Deallocate_filedatabase
 
@@ -2479,6 +2484,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.103  2015/03/28 01:13:24  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.102  2014/09/05 00:01:11  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
