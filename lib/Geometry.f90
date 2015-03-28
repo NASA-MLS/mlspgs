@@ -21,7 +21,7 @@ module Geometry
   private
 
   ! Constants
-  public :: Earth_Axis_Ratio_Squared ! a^2/b^2
+  public :: Earth_Axis_Ratio, Earth_Axis_Ratio_Squared ! a^2/b^2
   public :: EarthRadA, EarthRadB, EarthSurfaceGPH, Eccentricity_Sq, ERad
   public :: GM, G0, J2, J4, SecPerYear, W, MaxRefraction
 
@@ -513,6 +513,9 @@ contains
 end module Geometry
 
 ! $Log$
+! Revision 2.23  2015/03/28 02:58:05  vsnyder
+! Added Earth_Axis_Ratio
+!
 ! Revision 2.22  2015/03/28 01:55:20  vsnyder
 ! Deleted Earth_Axis_Ratio_Squared_m1.  Added Eccentricity_Sq, ERad,
 ! Orbit_Plane_Minor_Axis_sq, To_XYZ, XYZ_to_Geod, XYZ_to_Geod_Bowring,
