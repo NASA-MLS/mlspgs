@@ -57,24 +57,32 @@ contains
   ! Deallocate the Log Mie tables
 
     use Allocate_Deallocate, only: Byte_Size, Test_DeAllocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: Status
     integer :: S
 
     if ( associated(log_beta_c_a) ) then
       s = byte_size(log_beta_c_a)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(log_beta_c_a(1,1,1)), addr)
       deallocate ( log_beta_c_a, stat=status )
-      call test_deallocate ( status, moduleName, 'log_beta_c_a', s )
+      call test_deallocate ( status, moduleName, 'log_beta_c_a', s, address=addr )
     end if
     if ( associated(log_beta_c_e) ) then
       s = byte_size(log_beta_c_e)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(log_beta_c_e(1,1,1)), addr)
       deallocate ( log_beta_c_e, stat=status )
-      call test_deallocate ( status, moduleName, 'log_beta_c_e', s )
+      call test_deallocate ( status, moduleName, 'log_beta_c_e', s, address=addr )
     end if
     if ( associated(log_beta_c_s) ) then
       s = byte_size(log_beta_c_s)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(log_beta_c_s(1,1,1)), addr)
       deallocate ( log_beta_c_s, stat=status )
-      call test_deallocate ( status, moduleName, 'log_beta_c_s', s )
+      call test_deallocate ( status, moduleName, 'log_beta_c_s', s, address=addr )
     end if
   end subroutine Destroy_Log_Mie
   
@@ -83,60 +91,94 @@ contains
   ! Deallocate the Mie tables
 
     use Allocate_Deallocate, only: Byte_Size, Test_DeAllocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: Status
     integer :: S
 
     if ( associated(f_s) ) then
       s = byte_size(f_s)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(f_s(1)), addr)
       deallocate ( f_s, stat=status )
-      call test_deallocate ( status, moduleName, 'F_s', s )
+      call test_deallocate ( status, moduleName, 'F_s', s, address=addr )
       s = byte_size(iwc_s)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(iwc_s(1)), addr)
       deallocate ( iwc_s, stat=status )
-      call test_deallocate ( status, moduleName, 'iwc_s', s )
+      call test_deallocate ( status, moduleName, 'iwc_s', s, address=addr )
       s = byte_size(t_s)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(t_s(1)), addr)
       deallocate ( t_s, stat=status )
-      call test_deallocate ( status, moduleName, 't_s', s )
+      call test_deallocate ( status, moduleName, 't_s', s, address=addr )
       s = byte_size(theta_s)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(theta_s(1)), addr)
       deallocate ( theta_s, stat=status )
-      call test_deallocate ( status, moduleName, 'theta_s', s )
+      call test_deallocate ( status, moduleName, 'theta_s', s, address=addr )
       s = byte_size(beta_c_a)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(beta_c_a(1,1,1)), addr)
       deallocate ( beta_c_a, stat=status )
-      call test_deallocate ( status, moduleName, 'beta_c_a', s )
+      call test_deallocate ( status, moduleName, 'beta_c_a', s, address=addr )
       s = byte_size(beta_c_e)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(beta_c_e(1,1,1)), addr)
       deallocate ( beta_c_e, stat=status )
-      call test_deallocate ( status, moduleName, 'beta_c_e', s )
+      call test_deallocate ( status, moduleName, 'beta_c_e', s, address=addr )
       s = byte_size(beta_c_s)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(beta_c_s(1,1,1)), addr)
       deallocate ( beta_c_s, stat=status )
-      call test_deallocate ( status, moduleName, 'beta_c_s', s )
+      call test_deallocate ( status, moduleName, 'beta_c_s', s, address=addr )
       s = byte_size(P)
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(P(1,1,1,1)), addr)
       deallocate ( P, stat=status )
-      call test_deallocate ( status, moduleName, 'P', s )
+      call test_deallocate ( status, moduleName, 'P', s, address=addr )
       if ( associated(dP_dIWC) ) then
         s = byte_size(dBeta_dIWC_c_a)
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(dBeta_dIWC_c_a(1,1,1)), addr)
         deallocate ( dBeta_dIWC_c_a, stat=status )
-        call test_deallocate ( status, moduleName, 'dBeta_dIWC_c_a', s )
+        call test_deallocate ( status, moduleName, 'dBeta_dIWC_c_a', s, address=addr )
         s = byte_size(dBeta_dT_c_a)
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(dBeta_dT_c_a(1,1,1)), addr)
         deallocate ( dBeta_dT_c_a, stat=status )
-        call test_deallocate ( status, moduleName, 'dBeta_dT_c_a', s )
+        call test_deallocate ( status, moduleName, 'dBeta_dT_c_a', s, address=addr )
         s = byte_size(dBeta_dIWC_c_e)
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(dBeta_dIWC_c_e(1,1,1)), addr)
         deallocate ( dBeta_dIWC_c_e, stat=status )
-        call test_deallocate ( status, moduleName, 'dBeta_dIWC_c_e', s )
+        call test_deallocate ( status, moduleName, 'dBeta_dIWC_c_e', s, address=addr )
         s = byte_size(dBeta_dT_c_e)
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(dBeta_dT_c_e(1,1,1)), addr)
         deallocate ( dBeta_dT_c_e, stat=status )
-        call test_deallocate ( status, moduleName, 'dBeta_dT_c_e', s )
+        call test_deallocate ( status, moduleName, 'dBeta_dT_c_e', s, address=addr )
         s = byte_size(dBeta_dIWC_c_s)
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(dBeta_dIWC_c_s(1,1,1)), addr)
         deallocate ( dBeta_dIWC_c_s, stat=status )
-        call test_deallocate ( status, moduleName, 'dBeta_dIWC_c_s', s )
+        call test_deallocate ( status, moduleName, 'dBeta_dIWC_c_s', s, address=addr )
         s = byte_size(dBeta_dT_c_s)
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(dBeta_dT_c_s(1,1,1)), addr)
         deallocate ( dBeta_dT_c_s, stat=status )
-        call test_deallocate ( status, moduleName, 'dBeta_dT_c_s', s )
+        call test_deallocate ( status, moduleName, 'dBeta_dT_c_s', s, address=addr )
         s = byte_size(dP_dIWC)
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(dP_dIWC(1,1,1,1)), addr)
         deallocate ( dP_dIWC, stat=status )
-        call test_deallocate ( status, moduleName, 'dP_dIWC', s )
+        call test_deallocate ( status, moduleName, 'dP_dIWC', s, address=addr )
         s = byte_size(dP_dT)
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(dP_dT(1,1,1,1)), addr)
         deallocate ( dP_dT, stat=status )
-        call test_deallocate ( status, moduleName, 'dP_dT', s )
+        call test_deallocate ( status, moduleName, 'dP_dT', s, address=addr )
       end if
     end if
 
@@ -216,7 +258,9 @@ contains
   ! allocate them and compute them.  Read_Mie has to be called first.
 
     use Allocate_Deallocate, only: Bytes, Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: Status
 
     if ( .not. associated(beta_c_e) ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -226,24 +270,36 @@ contains
       allocate ( &
         & log_beta_c_a(ubound(beta_c_e,1),ubound(beta_c_e,2),ubound(beta_c_e,3)), &
         & stat=status )
+      addr = 0
+      if ( status == 0 ) then
+        if ( size(log_beta_c_a) > 0 ) addr = transfer(c_loc(log_beta_c_a(1,1,1)), addr)
+      end if
       call test_allocate ( status, moduleName, 'log_beta_c_a', (/ 1,1,1 /), &
-          & ubound(beta_c_e), bytes(beta_c_e) )
+          & ubound(beta_c_e), bytes(beta_c_e), address=addr )
       log_beta_c_a = log(beta_c_e)
     end if
     if ( .not. associated(log_beta_c_e) ) then
       allocate ( &
         & log_beta_c_e(ubound(beta_c_e,1),ubound(beta_c_e,2),ubound(beta_c_e,3)), &
         & stat=status )
+      addr = 0
+      if ( status == 0 ) then
+        if ( size(log_beta_c_e) > 0 ) addr = transfer(c_loc(log_beta_c_e(1,1,1)), addr)
+      end if
       call test_allocate ( status, moduleName, 'Log_Beta_c_e', (/ 1,1,1 /), &
-          & ubound(beta_c_e), bytes(log_beta_c_e) )
+          & ubound(beta_c_e), bytes(log_beta_c_e), address=addr )
       log_beta_c_e = log(beta_c_e)
     end if
     if ( .not. associated(log_beta_c_s) ) then
       allocate ( &
         & log_beta_c_s(ubound(beta_c_s,1),ubound(beta_c_s,2),ubound(beta_c_s,3)), &
         & stat=status )
+      addr = 0
+      if ( status == 0 ) then
+        if ( size(log_beta_c_s) > 0 ) addr = transfer(c_loc(log_beta_c_s(1,1,1)), addr)
+      end if
       call test_allocate ( status, moduleName, 'Log_Beta_c_s', (/ 1,1,1 /), &
-          & ubound(beta_c_s), bytes(beta_c_s) )
+          & ubound(beta_c_s), bytes(beta_c_s), address=addr )
       log_beta_c_s = log(beta_c_s)
     end if
   end subroutine Log_Mie
@@ -252,7 +308,7 @@ contains
   subroutine Read_Mie ( FileName )
 
     use Allocate_Deallocate, only: Bytes, Test_Allocate
-    use IO_stuff, only: Get_Lun
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use Machine, only: IO_Error
     use MLSHDF5, only: IsHDF5DSPresent, LoadPtrFromHDF5DS
     use HDF5, only: H5FClose_f, H5FOpen_f, H5F_ACC_RDONLY_F
@@ -261,6 +317,7 @@ contains
 
     character(len=*), intent(in) :: FileName
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: FileID, Lun, Status
 
     integer :: N_f, N_IWC, N_T, N_theta, N_cut
@@ -305,10 +362,7 @@ contains
     else
       ! Read tables from Fortran unformatted file
       ! Open the file
-      call get_lun ( lun, msg=.false. )
-      if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "No logical unit numbers available to read " // trim(fileName) )
-      open ( unit=lun, file=filename, status='old', form='unformatted', &
+      open ( newunit=lun, file=filename, status='old', form='unformatted', &
         & access='sequential', iostat=status )
       if ( status /= 0 ) then
         call io_error ( "Unable to open Mie tables file ", status, filename )
@@ -321,30 +375,50 @@ contains
 
       ! Allocate and read the coordinate arrays
       allocate ( f_s(n_f), stat=status )
+      addr = 0
+      if ( status == 0 .and. n_f > 0 ) addr = transfer(c_loc(f_s(1)), addr)
       call test_allocate ( status, moduleName, 'F_s', (/ 1 /), (/ n_f /), &
-        & bytes(f_s) )
+        & bytes(f_s), address=addr )
       allocate ( iwc_s(n_iwc), stat=status )
+      addr = 0
+      if ( status == 0 .and. n_iwc > 0 ) addr = transfer(c_loc(iwc_s(1)), addr)
       call test_allocate ( status, moduleName, 'IWC_s', (/ 1 /), (/ n_iwc /), &
-        & bytes(iwc_s) )
+        & bytes(iwc_s), address=addr )
       allocate ( T_s(n_T), stat=status )
+      addr = 0
+      if ( status == 0 .and. n_T > 0 ) addr = transfer(c_loc(T_s(1)), addr)
       call test_allocate ( status, moduleName, 'T_s', (/ 1 /), (/ n_T /), &
-        & bytes(T_s) )
+        & bytes(T_s), address=addr )
       allocate ( theta_s(n_theta), stat=status )
+      addr = 0
+      if ( status == 0 .and. n_theta > 0 ) addr = transfer(c_loc(theta_s(1)), addr)
       call test_allocate ( status, moduleName, 'theta_s', (/ 1 /), (/ n_theta /), &
-        & bytes(theta_s) )
+        & bytes(theta_s), address=addr )
       read ( lun ) iwc_s, t_s, theta_s, f_s
 
       ! Allocate the phase array and its derivatives
       allocate ( p(n_t, n_iwc, n_theta, n_f), stat=status )
+      addr = 0
+      if ( status == 0 ) then
+        if ( size(p) > 0 ) addr = transfer(c_loc(p(1,1,1,1)), addr)
+      end if
       call test_allocate ( status, moduleName, 'P', (/ 1,1,1,1 /), &
-        & (/ n_t,n_iwc,n_theta,n_f /), bytes(p) )
+        & (/ n_t,n_iwc,n_theta,n_f /), bytes(p), address=addr )
       if ( derivs ) then
         allocate ( dP_dIWC(n_t, n_iwc, n_theta, n_f), stat=status )
+        addr = 0
+        if ( status == 0 ) then
+          if ( size(dP_dIWC) > 0 ) addr = transfer(c_loc(dP_dIWC(1,1,1,1)), addr)
+        end if
         call test_allocate ( status, moduleName, 'dP_dIWC', (/ 1,1,1,1 /), &
-          & (/ n_t,n_iwc,n_theta,n_f /), bytes(dP_dIWC) )
+          & (/ n_t,n_iwc,n_theta,n_f /), bytes(dP_dIWC), address=addr )
         allocate ( dP_dT(n_t, n_iwc, n_theta, n_f), stat=status )
+        addr = 0
+        if ( status == 0 ) then
+          if ( size(dP_dT) > 0 ) addr = transfer(c_loc(dP_dT(1,1,1,1)), addr)
+        end if
         call test_allocate ( status, moduleName, 'dP_dT', (/ 1,1,1,1 /), &
-          & (/ n_t,n_iwc,n_theta,n_f /), bytes(dP_dT) )
+          & (/ n_t,n_iwc,n_theta,n_f /), bytes(dP_dT), address=addr )
       end if
 
       ! Read everything
@@ -418,6 +492,10 @@ contains
 end module Read_Mie_m
 
 ! $Log$
+! Revision 2.13  2015/03/28 02:03:48  vsnyder
+! Added stuff to trace allocate/deallocate addresses.  Use NewUnit=
+! specifier in OPEN statement instead of Get_Lun.
+!
 ! Revision 2.12  2014/09/05 20:52:32  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
