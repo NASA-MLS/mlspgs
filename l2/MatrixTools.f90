@@ -805,14 +805,12 @@ contains ! =====  Public procedures  ===================================
 
   ! -----------------------------------------------  PVMSendBlock  -----
   subroutine PVMPackBlock ( BLOCK )
-    use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     ! Dummy arguments
     type (MatrixElement_T), intent(in) :: BLOCK ! The block of the matrix
 
     ! Local variables
     integer :: INFO                     ! Flag
-    real(r8), dimension(:,:), allocatable :: values
-    integer :: n_rows, n_cols, status
 
     ! Executable code
     call PVMIDLPack ( (/ block%kind, block%nRows, block%nCols /), info )
@@ -828,16 +826,7 @@ contains ! =====  Public procedures  ===================================
     end if
 
     if ( block%kind /= M_Absent ) then
-!      call PVMIDLPack ( block%values, info )
-        n_rows = size(block%values, 1)
-        n_cols = size(block%values, 2)
-        allocate ( values(n_rows, n_cols), stat=status )
-        call test_allocate ( status, moduleName, 'values' )
-        values = block%values
-        call PVMIDLPack ( values, info )
-        deallocate ( values, stat=status )
-        call test_deallocate ( status, moduleName, 'values' )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "packing block values" )
+      call PVMIDLPack ( real(block%values,kind=r8), info )
     end if
 
   end subroutine PVMPackBlock
@@ -946,6 +935,11 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.44  2014/09/05 01:13:10  vsnyder
+! More complete and accurate allocate/deallocate size tracking.  Convert
+! some local pointer temps to allocatable.  Get kinds from MLSKinds instead
+! of from MLSCommon.
+!
 ! Revision 1.43  2014/09/05 00:49:07  vsnyder
 ! EmpiricalGeometry.f90 -- Wrong comment
 !
