@@ -123,7 +123,7 @@ contains
         cycle
       end if
 
-      call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, phitan, maf, &
+      call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, maf, phitan, &
         &                 fwdModelConf )
 
     end do
@@ -168,12 +168,12 @@ contains
     call create_grids_1 ( Grids_x, size(vector%quantities) )
     do qty = 1, size(vector%quantities)
       if ( present(phitan) ) then
-        call fill_grids_1 ( grids_x, qty, vector%quantities(qty), phitan, maf, &
+        call fill_grids_1 ( grids_x, qty, vector%quantities(qty), maf, phitan, &
           &                 fwdModelConf )
       else
         ! Use the whole phi space for the window
         call fill_grids_1 ( grids_x, qty, vector%quantities(qty), &
-          & ws=1, wf=size(vector%quantities(qty)%template%phi,2) )
+          & maf, ws=1, wf=size(vector%quantities(qty)%template%phi,2) )
       end if
     end do
 
@@ -188,8 +188,8 @@ contains
   end subroutine Load_Grid_From_Vector
 
   ! -----------------------------------------  Load_One_Item_Grid  -----
-  subroutine Load_One_Item_Grid ( Grids_X, Qty, Phitan, Maf, FwdModelConf, &
-    & SetDerivFlags, SetTscatFlag )
+  subroutine Load_One_Item_Grid ( Grids_X, Qty, Maf, Phitan, FwdModelConf, &
+    & SetDerivFlags, SetTscatFlag, Across )
   ! A simplification of Load_Sps_Data to load a grid that has only one
   ! quantity in it.
 
@@ -198,11 +198,12 @@ contains
 
     type(grids_t), intent(out) :: Grids_X
     type(vectorValue_t), intent(in) :: Qty
+    integer, intent(in) :: Maf
     type(vectorValue_t), intent(in), optional :: Phitan
-    integer, intent(in), optional :: Maf
     type(forwardModelConfig_t), intent(in), optional :: FwdModelConf
     logical, intent(in), optional :: SetDerivFlags
     logical, intent(in), optional :: SetTscatFlag
+    logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
 
     type(vectorValue_t) :: QtyStuff
     logical :: MyFlag
@@ -222,7 +223,7 @@ contains
        grids_x%p_len = 0
 
        do ii = 1, no_ang
-         call fill_grids_1 ( grids_x, ii, qtyStuff, phitan, maf, fwdModelConf )
+         call fill_grids_1 ( grids_x, ii, qtyStuff, maf, phitan, fwdModelConf )
        end do
 
        call create_grids_2 ( grids_x )
@@ -244,14 +245,16 @@ contains
        call create_grids_1 ( grids_x, 1 )
 
        if ( present(phitan) ) then
-         call fill_grids_1 ( grids_x, 1, qty, phitan, maf, fwdModelConf )
+         call fill_grids_1 ( grids_x, 1, qty, maf, phitan, fwdModelConf, &
+           & across=across )
        else
          ! Use the whole phi space for the window
-         call fill_grids_1 ( grids_x, 1, qty, ws=1, wf=size(qty%template%phi,2) )
+         call fill_grids_1 ( grids_x, 1, qty, maf, &
+           & ws=1, wf=size(qty%template%phi,2), across=across )
        end if
 
        call create_grids_2 ( grids_x )
-       call fill_grids_2 ( grids_x, 1, qty, setDerivFlags )
+       call fill_grids_2 ( grids_x, 1, qty, setDerivFlags, across=across )
 
     end if
 
@@ -431,8 +434,8 @@ contains
   end subroutine Create_Grids_2
 
   ! -----------------------------------------------  Fill_Grids_1  -----
-  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Phitan, Maf, FwdModelConf, &
-                          & Ws, Wf )
+  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Maf, Phitan, FwdModelConf, &
+                          & Ws, Wf, Across )
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
@@ -443,22 +446,33 @@ contains
     type(grids_T), intent(inout) :: Grids_x
     integer, intent(in) :: II
     type (vectorValue_T), intent(in) :: QTY     ! An arbitrary vector quantity
+    integer, intent(in) :: MAF
     type (vectorValue_T), intent(in), optional :: PHITAN  ! Tangent geodAngle component of
-    integer, intent(in), optional :: MAF
     type(forwardModelConfig_T), intent(in), optional :: FwdModelConf
     integer, intent(in), optional :: Ws, Wf ! Explicit window start, finish
+    logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
 
     integer :: KF, KP, KZ
+    logical :: MyAcross
 
     grids_x%names(ii) = qty%template%name
 
-    if ( present(ws) ) then ! assume present(wf) as well
-      grids_x%windowStart(ii) = ws
-      grids_x%windowFinish(ii) = wf
+    myAcross = .false.
+    if ( present(across) ) myAcross = across
+
+    if ( myAcross ) then
+      grids_x%windowStart(ii) = 1
+      grids_x%windowFinish(ii) = qty%template%noCrossTrack
     else
-      call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
-        & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
+      if ( present(ws) ) then ! assume present(wf) as well
+        grids_x%windowStart(ii) = ws
+        grids_x%windowFinish(ii) = wf
+      else
+        call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
+          & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
+      end if
     end if
+
     kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
 
     if ( associated(qty%template%frequencies) ) then
@@ -487,7 +501,7 @@ contains
   end subroutine Fill_Grids_1
 
   ! -----------------------------------------------  Fill_Grids_2  -----
-  subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags, Phi_Offset )
+  subroutine Fill_Grids_2 ( Grids_x, II, Qty, SetDerivFlags, Phi_Offset, Across )
   ! Fill the zeta, phi, freq. basis and value components for the II'th
   ! "molecule" in Grids_x.
 
@@ -506,8 +520,10 @@ contains
     type(vectorValue_T), intent(in) :: QTY     ! An arbitrary vector quantity
     logical, intent(in), optional :: SetDerivFlags
     real(rp), intent(in), optional :: Phi_Offset ! Radians
+    logical, intent(in), optional :: Across ! Viewing angle is not in orbit plane
 
     integer :: I, KF, KZ, PF, PP, PV, PZ, QF, QP, QV, QZ, WF, WS
+    logical :: MyAcross
     logical :: PackFrq ! Need to pack the frequency "dimension"
 
     pf = Grids_x%l_f(ii-1)
@@ -525,12 +541,20 @@ contains
     ws = Grids_x%windowStart(ii)
     wf = Grids_x%windowFinish(ii)
 
+    myAcross = .false.
+    if ( present(across) ) myAcross = across
+
     Grids_x%zet_basis(pz+1:qz) = qty%template%surfs(1:kz,1)
-    if ( present(phi_offset) ) then
-      Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad + phi_offset
+    if ( myAcross ) then
+      Grids_x%phi_basis(pp+1:qp) = qty%template%crossAngles
     else
-      Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad
+      if ( present(phi_offset) ) then
+        Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad + phi_offset
+      else
+        Grids_x%phi_basis(pp+1:qp) = qty%template%phi(1,ws:wf)*Deg2Rad
+      end if
     end if
+
     if ( associated ( qty%template%frequencies ) ) then
       if ( qty%template%frequencyCoordinate /= l_intermediateFrequency .and. &
          & qty%template%frequencyCoordinate /= l_channel ) &
@@ -551,6 +575,9 @@ contains
           &                         (/ ( qty%template%channels, i = 1, kz ) /) ), &
           &                   ws:wf ), &
           &       (/qv-pv/) )
+    else if ( myAcross ) then
+      Grids_x%values(pv+1:qv) = reshape(qty%value4(1:kf,1:kz,1,ws:wf), &
+                                      & (/qv-pv/))
     else ! All the values
       ! qv - pv == (wf - ws + 1) * kf * kz here
       Grids_x%values(pv+1:qv) = reshape(qty%values(1:kf*kz,ws:wf), &
@@ -791,6 +818,9 @@ contains
 end module LOAD_SPS_DATA_M
 
 ! $Log$
+! Revision 2.92  2014/08/01 01:03:45  vsnyder
+! Eliminate unreferenced USE name
+!
 ! Revision 2.91  2014/07/18 23:16:28  pwagner
 ! Aimed for consistency in names passed to allocate_test
 !
