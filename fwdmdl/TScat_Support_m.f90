@@ -390,7 +390,7 @@ contains
           ! Use TScat vector for a temp, a column of the L2PC Jacobian.
           ! Here, it's dTScat(radInL2PC)(everywhere) / dSomething(qty,phi,zeta)
           call getVectorFromColumn ( l2pc%j, qty, instance, TScat, rowQty=radInL2PC )
-          call load_one_item_grid ( grids_col, TScat%quantities(radInL2PC) )
+          call load_one_item_grid ( grids_col, TScat%quantities(radInL2PC), MAF )
           f_inda = 0
           w_inda = 0
           f_indb = grids_col%l_f(1)
@@ -442,6 +442,7 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: L_Radiance, L_TScat
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use Load_Sps_Data_m, only: Grids_T, Load_One_Item_Grid
     use L2PC_m, only: L2PC_t, L2PCDatabase, PopulateL2PCbin
     use L2PCBins_m, only: SelectL2PCBins
@@ -469,6 +470,7 @@ contains
     type (VectorValue_T), pointer :: RADIANCE ! A radiance for the frequency
                                           ! for the TScat we need
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: Stat
 
     type(forwardModelConfig_T) :: TScat_Conf
@@ -481,8 +483,10 @@ contains
     TScat_conf%yStar = 0
 
     allocate ( TScat_conf%signals(1), stat=stat )
+    addr = 0
+    if ( stat == 0 ) addr = transfer(c_loc(TScat_conf%signals(1)), addr)
     call test_allocate ( stat, moduleName, "TScat_Conf%signals", (/1/), (/1/), &
-      & storage_size(TScat_conf%signals) / 8 )
+      & storage_size(TScat_conf%signals) / 8, address=addr )
 
     ! Use the same signals as FmConf%signals(1), but with all channels turned on
     TScat_conf%signals(1) = FmConf%signals(1)
@@ -522,13 +526,15 @@ contains
     ! Create and fill grids for TScat radiance
     TScat_Conf%phiWindow = size(TScat%quantities(radInl2pc)%template%phi,2)
     call load_one_item_grid ( grids_TScat, TScat%quantities(radInl2pc), &
-      & phitan, MAF, TScat_Conf, setDerivFlags = .true. )
+      & MAF, phitan, TScat_Conf, setDerivFlags = .true. )
 
     call deallocate_test ( TScat_Conf%signals(1)%channels, &
       & "TScat_Conf%signals%channels", moduleName )
     s = size(TScat_Conf%signals) * storage_size(TScat_Conf%signals) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(TScat_Conf%signals(1)), addr)
     deallocate ( TScat_Conf%signals, stat=stat )
-    call test_deallocate ( stat, moduleName, "TScat_Conf%signals", s )
+    call test_deallocate ( stat, moduleName, "TScat_Conf%signals", s, address=addr )
 
   end subroutine Get_TScat_Setup
 
@@ -740,6 +746,9 @@ contains
 end module TScat_Support_m
 
 ! $Log$
+! Revision 2.10  2015/03/28 02:07:09  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.9  2014/09/05 20:54:48  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
