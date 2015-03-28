@@ -524,10 +524,10 @@ contains ! =====     Public procedures     =============================
              l+l_simple, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_outputType, l+l_ascii, l+l_hdf, l+l_l2aux, l+l_l2cf, &
-             l+l_l2dgg, l+l_l2fwm, l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
+             l+l_l2dgg, l+l_l2fwm, l+l_l2gp, l+l_l2pc, l+l_quantity, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, &
-             l+l_adopted, l+l_azimuth, l+l_baseline, l+l_boundarypressure, &
+             l+l_adopted, l+l_baseline, l+l_boundarypressure, &
              l+l_calSidebandFraction, l+l_chisqbinned, l+l_chisqchan, &
              l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudExtinction, &
              l+l_cloudIce, l+l_cloudInducedRadiance, l+l_cloudMinMax, &
@@ -696,14 +696,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_Grid, field_spec(s_Gridded), &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_concatenate, &  ! Must be AFTER S_Gridded
+      begin, s+s_concatenate, &  ! Must be AFTER S_Gridded and S_ConvertEtaToP
              begin, f+f_a, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_b, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_sourceGrid, field_spec(s_gridded,s_convertetatop), &
              begin, f+f_deleteGrids, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_concatenateGrids, &  ! Must be AFTER S_Gridded and S_VGrid
+      begin, s+s_concatenateGrids, &  ! Must be AFTER S_Gridded, S_Concatenate,
+                                      ! and S_ConvertEtaToP
              begin, f+f_grid, field_spec(s_gridded,s_concatenate, &
                                s_convertetatop), &
              begin, f+f_a, field_spec(s_gridded,s_convertetatop), &
@@ -712,17 +713,18 @@ contains ! =====     Public procedures     =============================
              begin, f+f_deleteGrids, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded
+      begin, s+s_wmoTrop, &  ! Must be AFTER S_Gridded and S_Concatenate
              begin, f+f_a, field_spec(s_gridded,s_concatenate), &
              begin, f+f_b, field_spec(s_gridded,s_concatenate), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_wmoTropFromGrids, &  ! Must be AFTER S_Gridded
+      begin, s+s_wmoTropFromGrids, &  ! Must be AFTER S_Gridded and S_Concatenate
              begin, f+f_grid, field_spec(s_gridded,s_concatenate), &
              begin, f+f_a, field_spec(s_gridded,s_concatenate), &
              begin, f+f_b, field_spec(s_gridded,s_concatenate), &
              ndp+n_spec_def /) )
-    call make_tree ( (/ &
+    call make_tree ( (/ &  ! Must be AFTER S_Gridded, S_Concatenate, S_Merge,
+                           ! and S_ConvertEtaToP
       begin, s+s_delete, &
              begin, f+f_grid, field_spec((/ s_gridded,s_concatenate,s_merge, &
                                        &  s_ConvertEtaToP /) ), &
@@ -789,6 +791,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_geodAngle, numeric(), &
              begin, f+f_geodAlt, field_spec(s_vGrid), &
              begin, f+f_noMIFs, numeric(req=req), &
+             begin, f+f_truncate, boolean(), &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded and S_VGrid
@@ -857,6 +860,7 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER [F, H, IWC, T, V]grid
              begin, f+f_badValue, numeric(), &
+             begin, f+f_coordinate, field_type(t_vGridCoord), &
              begin, f+f_fGrid, field_spec(s_fgrid), &
              begin, f+f_hGrid, field_spec(s_hgrid), &
              begin, f+f_irregular, boolean(), &
@@ -869,9 +873,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_reflector, field_type(t_reflector), &
              begin, f+f_sGrid, field_spec(s_vgrid), &
              begin, f+f_signal, string(), &
+             begin, f+f_stacked, boolean(), &
              begin, f+f_type, field_type(t_quantityType), &
              begin, f+f_unit, field_type(t_units), &
              begin, f+f_vGrid, field_spec(s_vgrid), &
+             begin, f+f_xGrid, field_spec(s_hgrid), &
              np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
@@ -1990,6 +1996,11 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.609  2015/03/28 02:55:04  vsnyder
+! Paul added Quantity to t_OutputType.  Deleted Azimuth from t_QuantityType.
+! Added f_Truncate -- should have been save -- to s_Forge.  Added
+! f_Coordinate, f_Stacked, and f_xGrid to s_Quantity.
+!
 ! Revision 2.608  2015/02/27 23:13:32  pwagner
 ! May Dump global attributes
 !
