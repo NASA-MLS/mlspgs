@@ -10,10 +10,11 @@
 ! foreign countries or providing access to foreign persons.
 
 !===============================================================================
-MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
+module SDPToolkit               ! F90 interface to SDP Toolkit.
 !===============================================================================
-   IMPLICIT NONE
-   PUBLIC
+
+  implicit NONE
+  public
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -21,188 +22,227 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-! Contents:
-
-! PGS_CSC_4.f
-! PGS_EPH_5.f
-! PGS_IO.f
-! PGS_IO_1.f
-! PGS_MEM_7.f
-! PGS_PC.f
-! PGS_PC_9.f
-! PGS_SMF.f
-! PGS_TD.f
-! PGS_TD_3.f
+! This module contains include files required to use the toolkit. Note that
+! the include files with numbers in the names are generated  automagically
+! when you install the toolkit. They are *not* in the toolkit tarball. If
+! the toolkit has not installed properly on your system, those files will
+! not be present and hence you will find that this file will  not compile.
 
 ! Plus interfaces for toolkit routines.
 
-! Remarks:  This module contains include files required to use the toolkit.
-! Note that the include files with numbers in the names are generated 
-! automagically when you install the toolkit. They are *not* in the toolkit
-! tarball. If the toolkit has not installed properly on your system, those
-! files will not be present and hence you will find that this file will 
-! not compile
+  include 'PGS_CBP.f'
+  include 'PGS_CBP_6.f'
+  include 'PGS_CSC_4.f'
+  include 'PGS_EPH_5.f'
+  include 'PGS_GCT.f'
+  include 'PGS_IO.f'
+  include 'PGS_IO_1.f'
+  include 'PGS_MEM_7.f'
+  include 'PGS_PC.f'
+  include 'PGS_PC_9.f'
+  include 'PGS_SMF.f'
+  include 'PGS_TD.f'
+  include 'PGS_TD_3.f'
+  include 'PGS_MET_13.f'
+  include 'PGS_MET.f'
+  include 'PGS_DEM_14.f'
+  include 'PGS_DEM.f'
 
-   INCLUDE 'PGS_CBP.f'
-   INCLUDE 'PGS_CBP_6.f'
-   INCLUDE 'PGS_CSC_4.f'
-   INCLUDE 'PGS_EPH_5.f'
-   INCLUDE 'PGS_GCT.f'
-   INCLUDE 'PGS_IO.f'
-   INCLUDE 'PGS_IO_1.f'
-   INCLUDE 'PGS_MEM_7.f'
-   INCLUDE 'PGS_PC.f'
-   INCLUDE 'PGS_PC_9.f'
-   INCLUDE 'PGS_SMF.f'
-   INCLUDE 'PGS_TD.f'
-   INCLUDE 'PGS_TD_3.f'
-   INCLUDE 'PGS_MET_13.f'
-   INCLUDE 'PGS_MET.f'
-   INCLUDE 'PGS_DEM_14.f'
-   INCLUDE 'PGS_DEM.f'
+! Parameters used by multiple modules
 
+!  character (len=*), parameter :: earthModel = 'WGS84'
+  character (len=*), parameter :: earthModel = 'GRS-80'
 
-! Now define f90 interfaces for some toolkit routines.
+  integer, parameter :: max_orbits = 16
+  integer, parameter :: spacecraftId = 6666
 
-   INTERFACE
-      INTEGER FUNCTION PGS_IO_Gen_OpenF(file_logical,file_access, &
-           & record_length, file_handle, file_version)
-        INTEGER, INTENT(IN) :: file_logical
-        INTEGER, INTENT(IN) :: file_access
-        INTEGER, INTENT(IN) :: record_length
-        INTEGER, INTENT(OUT) :: file_handle
-        INTEGER, INTENT(IN) :: file_version
-      END FUNCTION PGS_IO_Gen_OpenF
+!    real, parameter :: Deg2Rad = 1.7453293E-02
+!    real, parameter :: PI = 3.141592654
+!    real, parameter :: Rad2Deg = 57.295780
+   
+! Warn if non-zero return from PGS_MET_Remove; toolkit currently (5.2.8.2)
+! implements this in C as a void fun
+! and Fortran as an int fun with 0 args
+! (see $PGSHOME/src/MET/tools/PGS_MET_Remove.c and 
+!  $PGSHOME/src/MET/tools/PGS_METbindFORTRAN.c)
+  logical, parameter :: WARNIfCantPGSMETRemove = .FALSE.  
+   
+! Use the SDP Toolkit for the above functions
+! (else must use a substitute or bypass calls)
+! (may be reset by main program)
+  logical :: UseSDPToolkit = .TRUE.
 
-      INTEGER FUNCTION PGS_IO_Gen_CloseF(file_handle)
-        INTEGER, INTENT(IN) :: file_handle
-      END FUNCTION PGS_IO_Gen_CloseF
+  interface
 
-      INTEGER FUNCTION Pgs_pc_getReference(file_handle, file_version, physicalfilename)
-        INTEGER, INTENT(IN) :: file_handle
-        INTEGER, INTENT(INOUT) :: file_version
-        character (LEN=*), INTENT(OUT) :: physicalfilename
-      END FUNCTION Pgs_pc_getReference
+    ! Coordinate conversion
+    integer function PGS_CSC_ECItoECR ( N, AsciiUTC, Offsets, &
+                                      & PosVelECI, PosVelECR )
+      ! Convert ECI coordinates to ECR
+      integer, intent(in) :: N
+      character(*), intent(in) :: AsciiUTC
+      double precision, intent(in) :: Offsets(n)      ! Seconds
+      double precision, intent(in) :: PosVelECI(6,n)  ! meters, meters/second
+      double precision, intent(out) :: PosVelECR(6,n) ! meters, meters/second
+    end function PGS_CSC_ECItoECR
 
-      INTEGER FUNCTION PGS_SMF_GenerateStatusReport(msg)
-        CHARACTER (LEN=*) :: msg
-      END FUNCTION PGS_SMF_GenerateStatusReport
+    integer function PGS_CSC_ECRtoECI ( N, AsciiUTC, Offsets, &
+                                      & PosVelECR, PosVelECI )
+      ! Convert ECR coordinates to ECI
+      integer, intent(in) :: N
+      character(*), intent(in) :: AsciiUTC
+      double precision, intent(in) :: Offsets(n)      ! Seconds
+      double precision, intent(in) :: PosVelECR(6,n)  ! meters, meters/second
+      double precision, intent(out) :: PosVelECI(6,n) ! meters, meters/second
+    end function PGS_CSC_ECRtoECI
 
-      subroutine Pgs_smf_getMsg ( CODE, MNEMONIC, MSG )
-        integer, intent(out) :: CODE              ! Previously stored code
-        character(len=*), intent(out) :: MNEMONIC ! Previously stored mnemonic
-        character(len=*), intent(out) :: MSG      ! Previously stored message
-      end subroutine Pgs_smf_getMsg
+    integer function PGS_CSC_GeoToECR ( Longitude, Latitude, Altitude, &
+                                      & EarthEllipseTag, POSECR )
+      ! Convert geodetic coordinates to ECR
+      double precision, intent(in) :: Longitude, Latitude ! Radians, geodetic
+      double precision, intent(in) :: Altitude            ! Meters, geodetic
+      character(*), intent(in) :: EarthEllipseTag
+      double precision, intent(out) :: POSECR(3)          ! Meters
+    end function PGS_CSC_GeoToECR
 
-      INTEGER FUNCTION PGS_SMF_TestStatusLevel(status)
-        integer, intent(in) :: status
-      END FUNCTION PGS_SMF_TestStatusLevel
+    ! I/O
+    integer function PGS_IO_Gen_OpenF ( file_logical,file_access, &
+         & record_length, file_handle, file_version )
+      integer, intent(in) :: file_logical
+      integer, intent(in) :: file_access
+      integer, intent(in) :: record_length
+      integer, intent(out) :: file_handle
+      integer, intent(in) :: file_version
+    end function PGS_IO_Gen_OpenF
 
-      INTEGER FUNCTION PGS_TD_TAItoUTC(sectai93,asciiutc)
-        DOUBLE PRECISION, INTENT(IN) :: sectai93
-        CHARACTER(LEN=27), INTENT(OUT) :: asciiutc
-      END FUNCTION PGS_TD_TAItoUTC
+    integer function PGS_IO_Gen_CloseF ( file_handle )
+      integer, intent(in) :: file_handle
+    end function PGS_IO_Gen_CloseF
 
-      INTEGER FUNCTION PGS_PC_GetConfigData(param_id, param_val)
-        INTEGER, INTENT(IN) :: param_id
-         character (len=*), intent(out) :: param_val
-      END FUNCTION PGS_PC_GetConfigData
+    integer function PGS_PC_GetReference ( file_handle, file_version, physicalfilename )
+      integer, intent(in) :: file_handle
+      integer, intent(inout) :: file_version
+      character (LEN=*), intent(out) :: physicalfilename
+    end function PGS_PC_GetReference
 
-      INTEGER FUNCTION PGS_PC_GetFileSize(pcf_id, file_version, size)
-        INTEGER, INTENT(IN) :: pcf_id
-        INTEGER, INTENT(INOUT) :: file_version
-        INTEGER, INTENT(INOUT) :: size
-      END FUNCTION PGS_PC_GetFileSize
+    integer function PGS_PC_GetConfigData ( param_id, param_val )
+      integer, intent(in) :: param_id
+       character (len=*), intent(out) :: param_val
+    end function PGS_PC_GetConfigData
 
-      INTEGER FUNCTION pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
-        character(len=*), INTENT(IN) :: asciiutc_a  ! Should be <= 27 chars
-        character(len=*), INTENT(out) :: asciiutc_b ! Should be <= 25 chars
-      END FUNCTION pgs_td_asciitime_atob
+    integer function PGS_PC_GetFileSize ( pcf_id, file_version, size )
+      integer, intent(in) :: pcf_id
+      integer, intent(inout) :: file_version
+      integer, intent(inout) :: size
+    end function PGS_PC_GetFileSize
 
-      INTEGER FUNCTION pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
-        character(len=*), INTENT(IN) :: asciiutc_b  ! Should be <= 25 chars
-        character(len=*), INTENT(out) :: asciiutc_a ! Should be <= 27 chars
-      END FUNCTION pgs_td_asciitime_btoa
+    integer function PGS_SMF_GenerateStatusReport ( msg )
+      character (LEN=*) :: msg
+    end function PGS_SMF_GenerateStatusReport
 
-      INTEGER FUNCTION pgs_td_utctotai(time, dtime)
-        character(len=*), INTENT(IN) :: time
-        DOUBLE PRECISION, INTENT(out) :: dtime
-      END FUNCTION pgs_td_utctotai
+    subroutine PGS_SMF_GetMsg ( CODE, MNEMONIC, MSG )
+      integer, intent(out) :: CODE              ! Previously stored code
+      character(len=*), intent(out) :: MNEMONIC ! Previously stored mnemonic
+      character(len=*), intent(out) :: MSG      ! Previously stored message
+    end subroutine PGS_SMF_GetMsg
 
-      ! Not a toolkit routine, but one that substitutes
-      ! for pgs_td_utctotai when run w/o the pcf
-      ! (Should we make a separate module to hold
-      ! miscellaneous f90 interfaces such as this?)
-      INTEGER FUNCTION mls_utctotai(leapsec_file, time, dtime)
-        character(len=*), INTENT(IN) :: leapsec_file
-        character(len=*), INTENT(IN) :: time
-        DOUBLE PRECISION, INTENT(out) :: dtime
-      END FUNCTION mls_utctotai
+    integer function PGS_SMF_TestStatusLevel ( status )
+      integer, intent(in) :: status
+    end function PGS_SMF_TestStatusLevel
+
+    integer function PGS_TD_TAItoUTC ( sectai93, asciiutc )
+      double precision, intent(in) :: sectai93
+      character(LEN=27), intent(out) :: asciiutc
+    end function PGS_TD_TAItoUTC
+
+    integer function PGS_TD_asciitime_atob ( asciiutc_a, asciiutc_b )
+      character(len=*), intent(in) :: asciiutc_a  ! Should be <= 27 chars
+      character(len=*), intent(out) :: asciiutc_b ! Should be <= 25 chars
+    end function PGS_TD_asciitime_atob
+
+    integer function PGS_TD_asciitime_btoa ( asciiutc_b, asciiutc_a )
+      character(len=*), intent(in) :: asciiutc_b  ! Should be <= 25 chars
+      character(len=*), intent(out) :: asciiutc_a ! Should be <= 27 chars
+    end function PGS_TD_asciitime_btoa
+
+    integer function PGS_TD_utctotai ( time, dtime )
+      character(len=*), intent(in) :: time
+      double precision, intent(out) :: dtime
+    end function PGS_TD_utctotai
+
+    ! Not a toolkit routine, but one that substitutes
+    ! for PGS_TD_utctotai when run w/o the pcf
+    ! (Should we make a separate module to hold
+    ! miscellaneous f90 interfaces such as this?)
+    integer function mls_utctotai ( leapsec_file, time, dtime )
+      character(len=*), intent(in) :: leapsec_file
+      character(len=*), intent(in) :: time
+      double precision, intent(out) :: dtime
+    end function mls_utctotai
 
 ! Digital Elevation Model (DEM) functions
-      integer function PGS_DEM_Open( resolutionList, numResolutions, &
-        & layerList, numLayers )
-        integer, dimension(2) :: resolutionList
-        integer, intent(in)   :: numResolutions
-        integer, dimension(2) :: layerList
-        integer, intent(in)   :: numLayers
-      end function PGS_DEM_Open
+    integer function PGS_DEM_Open ( resolutionList, numResolutions, &
+      & layerList, numLayers )
+      integer, dimension(2) :: resolutionList
+      integer, intent(in)   :: numResolutions
+      integer, dimension(2) :: layerList
+      integer, intent(in)   :: numLayers
+    end function PGS_DEM_Open
 
-      integer function PGS_DEM_Close( resolutionList, numResolutions, &
-        & layerList, numLayers )
-        integer, dimension(2) :: resolutionList
-        integer, intent(in)   :: numResolutions
-        integer, dimension(2) :: layerList
-        integer, intent(in)   :: numLayers
-      end function PGS_DEM_Close
+    integer function PGS_DEM_Close ( resolutionList, numResolutions, &
+      & layerList, numLayers )
+      integer, dimension(2) :: resolutionList
+      integer, intent(in)   :: numResolutions
+      integer, dimension(2) :: layerList
+      integer, intent(in)   :: numLayers
+    end function PGS_DEM_Close
 
-      integer function PGS_DEM_GetPoint( resolutionList, numResolutions, &
-        & layer, positionCode, &
-        & pntlatitude, pntLongitude, numPoints, interpolation, interpValue )
-        use ISO_C_BINDING, only: C_int16_t
-        integer, dimension(2) :: resolutionList
-        integer, intent(in)   :: numResolutions
-        integer, intent(in)   :: positionCode
-        double precision, dimension(*) :: pntlatitude
-        double precision, dimension(*) :: pntlongitude
-        integer, intent(in)   :: numPoints
-        integer, intent(in)   :: interpolation
-        integer(C_int16_t), dimension(*)   :: interpValue
-      end function PGS_DEM_GetPoint
+    integer function PGS_DEM_GetPoint ( resolutionList, numResolutions, &
+      & layer, positionCode, &
+      & pntlatitude, pntLongitude, numPoints, interpolation, interpValue )
+      use ISO_C_BINDING, only: C_int16_t
+      integer, dimension(2) :: resolutionList
+      integer, intent(in)   :: numResolutions
+      integer, intent(in)   :: positionCode
+      double precision, dimension(*) :: pntlatitude
+      double precision, dimension(*) :: pntlongitude
+      integer, intent(in)   :: numPoints
+      integer, intent(in)   :: interpolation
+      integer(C_int16_t), dimension(*)   :: interpValue
+    end function PGS_DEM_GetPoint
 
-      integer function PGS_DEM_GetSize( resolution, qualityField, &
-        & positionCode, latitude, longitude, numVertPix, numHorizPix, pixByte )
-        integer, intent(in)   :: resolution
-        integer, intent(in)   :: qualityField
-        integer, intent(in)   :: positionCode
-        double precision, dimension(2) :: latitude
-        double precision, dimension(2) :: longitude
-        integer, intent(out)  :: numVertPix
-        integer, intent(out)  :: numHorizPix
-        integer, intent(out)  :: pixByte
-      end function PGS_DEM_GetSize
+    integer function PGS_DEM_GetSize ( resolution, qualityField, &
+      & positionCode, latitude, longitude, numVertPix, numHorizPix, pixByte )
+      integer, intent(in)   :: resolution
+      integer, intent(in)   :: qualityField
+      integer, intent(in)   :: positionCode
+      double precision, dimension(2) :: latitude
+      double precision, dimension(2) :: longitude
+      integer, intent(out)  :: numVertPix
+      integer, intent(out)  :: numHorizPix
+      integer, intent(out)  :: pixByte
+    end function PGS_DEM_GetSize
 
-      integer function PGS_DEM_GetQualityData( resolution, qualityField, &
-        & positionCode, latitude, longitude, qualityData )
-        use ISO_C_BINDING, only: C_int16_t
-        integer, intent(in)   :: resolution
-        integer, intent(in)   :: qualityField
-        integer, intent(in)   :: positionCode
-        double precision, dimension(2) :: latitude
-        double precision, dimension(2) :: longitude
-        integer(C_int16_t), dimension(*)   :: qualityData
-      end function PGS_DEM_GetQualityData
+    integer function PGS_DEM_GetQualityData ( resolution, qualityField, &
+      & positionCode, latitude, longitude, qualityData )
+      use ISO_C_BINDING, only: C_int16_t
+      integer, intent(in)   :: resolution
+      integer, intent(in)   :: qualityField
+      integer, intent(in)   :: positionCode
+      double precision, dimension(2) :: latitude
+      double precision, dimension(2) :: longitude
+      integer(C_int16_t), dimension(*)   :: qualityData
+    end function PGS_DEM_GetQualityData
 
-      integer function PGS_DEM_SortModels( resolutionList, numResolutions, &
-        & layer, positionCode, latitude, longitude, completeData )
-        integer, dimension(2) :: resolutionList
-        integer, intent(in)   :: numResolutions
-        integer, intent(in)   :: layer
-        integer, intent(in)   :: positionCode
-        double precision, dimension(2) :: latitude
-        double precision, dimension(2) :: longitude
-        integer, intent(out)  :: completeData
-      end function PGS_DEM_SortModels
+    integer function PGS_DEM_SortModels ( resolutionList, numResolutions, &
+      & layer, positionCode, latitude, longitude, completeData )
+      integer, dimension(2) :: resolutionList
+      integer, intent(in)   :: numResolutions
+      integer, intent(in)   :: layer
+      integer, intent(in)   :: positionCode
+      double precision, dimension(2) :: latitude
+      double precision, dimension(2) :: longitude
+      integer, intent(out)  :: completeData
+    end function PGS_DEM_SortModels
 
 ! Metadata functions
 ! In the following, groups or imd_group will be
@@ -217,72 +257,45 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 ! Unfortunately, these don't work right--don't use SDPToolkit for them
 ! (Shouldn't you either fix them or remove them?)
 ! Better declare them as externals
-      INTEGER FUNCTION tk_PGS_MET_Init(file_id,groups)
-        INTEGER, INTENT(IN) :: file_id
-        character (len=*), dimension(*) :: Groups
-      END FUNCTION tk_PGS_MET_Init
+    integer function TK_PGS_MET_Init ( file_id, groups )
+      integer, intent(in) :: file_id
+      character (len=*), dimension(*) :: Groups
+    end function TK_PGS_MET_Init
 
-      INTEGER FUNCTION tk_PGS_MET_Setattr_d(imd_group, attr_name, dval)
-        character (len=*) :: imd_group
-        character (len=*), intent(in) :: attr_name
-        DOUBLE PRECISION, INTENT(IN) :: dval
-      END FUNCTION tk_PGS_MET_Setattr_d
+    integer function TK_PGS_MET_Setattr_d ( imd_group, attr_name, dval )
+      character (len=*) :: imd_group
+      character (len=*), intent(in) :: attr_name
+      double precision, intent(in) :: dval
+    end function TK_PGS_MET_Setattr_d
 
-      INTEGER FUNCTION tk_PGS_MET_Setattr_s(imd_group, attr_name, attr_value)
-        character (len=*) :: imd_group
-        character (len=*), intent(in) :: attr_name
-        character (len=*), intent(in) :: attr_value
-      END FUNCTION tk_PGS_MET_Setattr_s
+    integer function TK_PGS_MET_Setattr_s ( imd_group, attr_name, attr_value )
+      character (len=*) :: imd_group
+      character (len=*), intent(in) :: attr_name
+      character (len=*), intent(in) :: attr_value
+    end function TK_PGS_MET_Setattr_s
 
-      INTEGER FUNCTION tk_PGS_MET_Getsetattr_d(imd_group, attr_name, dval_array)
-        character (len=*) :: imd_group
-        character (len=*), intent(in) :: attr_name
-        DOUBLE PRECISION, INTENT(OUT), DIMENSION(*) :: dval_array
-      END FUNCTION tk_PGS_MET_Getsetattr_d
+    integer function TK_PGS_MET_Getsetattr_d ( imd_group, attr_name, dval_array )
+      character (len=*) :: imd_group
+      character (len=*), intent(in) :: attr_name
+      double precision, intent(out), DIMENSION(*) :: dval_array
+    end function TK_PGS_MET_Getsetattr_d
 
-      INTEGER FUNCTION tk_PGS_MET_Setattr_i(imd_group, attr_name, attr_value)
-        character (len=*) :: imd_group
-        character (len=*), intent(in) :: attr_name
-        integer, intent(in) :: attr_value
-      END FUNCTION tk_PGS_MET_Setattr_i
+    integer function TK_PGS_MET_Setattr_i ( imd_group, attr_name, attr_value )
+      character (len=*) :: imd_group
+      character (len=*), intent(in) :: attr_name
+      integer, intent(in) :: attr_value
+    end function TK_PGS_MET_Setattr_i
 
-      INTEGER FUNCTION tk_PGS_MET_Write(imd_group, hdf_attr_name, sd_id)
-        character (len=*) :: imd_group
-        character (len=*), intent(in) :: hdf_attr_name
-        integer, intent(in) :: sd_id
-      END FUNCTION tk_PGS_MET_Write
+    integer function TK_PGS_MET_Write ( imd_group, hdf_attr_name, sd_id )
+      character (len=*) :: imd_group
+      character (len=*), intent(in) :: hdf_attr_name
+      integer, intent(in) :: sd_id
+    end function TK_PGS_MET_Write
 
-      INTEGER FUNCTION tk_PGS_MET_Remove( )
-      END FUNCTION tk_PGS_MET_Remove
+    integer function TK_PGS_MET_Remove( )
+    end function TK_PGS_MET_Remove
 
-   END INTERFACE
-
-!   INTEGER, EXTERNAL :: PGS_SMF_GenerateStatusReport
-!   INTEGER, EXTERNAL :: PGS_IO_Gen_OpenF
-
-! Parameters used by multiple modules
-
-!  CHARACTER (LEN=*), PARAMETER :: earthModel = 'WGS84'
-   CHARACTER (LEN=*), PARAMETER :: earthModel = 'GRS-80'
-
-   INTEGER, PARAMETER :: max_orbits = 16
-   INTEGER, PARAMETER :: spacecraftId = 6666
-
-   REAL, PARAMETER :: Deg2Rad = 1.7453293E-02
-   REAL, PARAMETER :: PI = 3.141592654
-   REAL, PARAMETER :: Rad2Deg = 57.295780
-   
-! Warn if non-zero return from pgs_met_remove; toolkit currently (5.2.8.2)
-! implements this in c as a void fun
-! and fortran as an int fun with 0 args
-! (see $PGSHOME/src/MET/tools/PGS_MET_Remove.c and 
-!  $PGSHOME/src/MET/tools/PGS_METbindFORTRAN.c)
-   LOGICAL, PARAMETER :: WARNIFCANTPGSMETREMOVE = .FALSE.  
-   
-! Use the SDP Toolkit for the above functions
-! (else must use a substitute or bypass calls)
-! (may be reset by main program)
-   LOGICAL :: UseSDPToolkit = .TRUE.
+  end interface
 
 !====================
 contains 
@@ -301,6 +314,9 @@ end module SDPToolkit
 
 !
 ! $Log$
+! Revision 2.23  2015/03/28 01:42:40  vsnyder
+! Added some interfaces.  Deleted some uninteresting comments.  Spiffed.
+!
 ! Revision 2.22  2014/08/06 23:04:14  vsnyder
 ! Use kind C_Int16_t from ISO_C_Bindings instead of INTEGER*2.  Use
 ! dimension(*) instead of dimension(:), the latter not being interoperable.
