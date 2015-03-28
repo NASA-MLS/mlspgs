@@ -535,7 +535,7 @@ contains ! =====     Public Procedures     =============================
     & numquantitiesperfileinput, quantityNamesInput )
     
     use allocate_deallocate, only: deallocate_test, allocate_test
-    use init_tables_module, only: l_l2dgg
+    use init_tables_module, only: l_l2dgg, l_quantity
     use intrinsic, only: l_swath, l_hdf
     use mlscommon, only: l2metadata_t
     use l2gpdata, only: l2gpnamelen, maxswathnamesbufsize
@@ -713,12 +713,16 @@ contains ! =====     Public Procedures     =============================
        & hdfVersion=hdfVersion, metadata_error=metadata_error, &
        & filetype=filetype  )
        l2metaData%doiIdentifier = '10.5067/AURA/MLS/DATA2007'
+  case ( l_quantity )
+    call MLSMessage( MLSMSG_Warning, ModuleName, &
+      & "Unable to add metadata for the file type of "&
+      & // trim(filename) )
   case default
     call announce_error ( node, &
       &  "Error--filetype unrecognized", filetype)
-    call MLSMessage(MLSMSG_Error,ModuleName,&
+    call MLSMessage( MLSMSG_Error, ModuleName, &
       & "Unrecognized filetype in add_metadata (must be swath or hdf) "&
-      & // trim(filename))
+      & // trim(filename) )
   end select
 
   call deallocate_test( quantityNames, 'quantityNames', ModuleName )
@@ -2126,6 +2130,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.191  2015/03/28 02:50:35  vsnyder
+! Paul added checking for Quantity type in DirectWrite
+!
 ! Revision 2.190  2015/02/18 00:29:03  pwagner
 ! Debugging-type info shown only if debugging
 !
