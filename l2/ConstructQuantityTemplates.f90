@@ -20,31 +20,32 @@ module ConstructQuantityTemplates
   private 
 
   ! The various properties has/can have
-  integer, parameter ::         NEXT                 = -1
+  integer, parameter ::         Next                 = -1
   integer, public, parameter :: FirstProperty        = 1
-  integer, public, parameter :: P_CHUNKED            = FirstProperty
-  integer, public, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
-  integer, public, parameter :: P_MINORFRAME         = P_MAJORFRAME + 1
-  integer, public, parameter :: P_MUSTBEZETA         = P_MINORFRAME + 1
-  integer, public, parameter :: P_FGRID              = P_MUSTBEZETA + 1
-  integer, public, parameter :: P_FGRIDOPTIONAL      = P_FGRID + 1
-  integer, public, parameter :: P_FLEXIBLEVHGRID     = P_FGRIDOPTIONAL + 1
-  integer, public, parameter :: P_HGRID              = P_FLEXIBLEVHGRID + 1
-  integer, public, parameter :: P_MODULE             = P_HGRID + 1
-  integer, public, parameter :: P_MOLECULE           = P_MODULE + 1
-  integer, public, parameter :: P_SGRID              = P_MOLECULE + 1
-  integer, public, parameter :: P_VGRID              = P_SGRID + 1
-  integer, public, parameter :: P_RADIOMETER         = P_VGRID + 1
-  integer, public, parameter :: P_RADIOMETEROPTIONAL = P_RADIOMETER + 1
-  integer, public, parameter :: P_REFLECTOR          = P_RADIOMETEROPTIONAL + 1
-  integer, public, parameter :: P_SCMODULE           = P_REFLECTOR + 1
-  integer, public, parameter :: P_SIGNAL             = P_SCMODULE + 1
-  integer, public, parameter :: P_SIGNALOPTIONAL     = P_SIGNAL + 1
-  integer, public, parameter :: P_SUPPRESSCHANNELS   = P_SIGNALOPTIONAL + 1
-  integer, public, parameter :: P_XYZ                = P_SUPPRESSCHANNELS + 1
-  integer, public, parameter :: P_MATRIX3X3          = P_XYZ + 1
+  integer, public, parameter :: P_Chunked            = FirstProperty
+  integer, public, parameter :: P_MajorFrame         = P_Chunked + 1
+  integer, public, parameter :: P_MinorFrame         = P_MajorFrame + 1
+  integer, public, parameter :: P_MustBeZeta         = P_MinorFrame + 1
+  integer, public, parameter :: P_MustBeGeocalt      = P_MustBeZeta + 1
+  integer, public, parameter :: P_FGrid              = P_MustBeGeocAlt + 1
+  integer, public, parameter :: P_FGridOptional      = P_FGrid + 1
+  integer, public, parameter :: P_FlexibleVHGrid     = P_FGridOptional + 1
+  integer, public, parameter :: P_HGrid              = P_FlexibleVHGrid + 1
+  integer, public, parameter :: P_Module             = P_HGrid + 1
+  integer, public, parameter :: P_Molecule           = P_Module + 1
+  integer, public, parameter :: P_SGrid              = P_Molecule + 1
+  integer, public, parameter :: P_VGrid              = P_SGrid + 1
+  integer, public, parameter :: P_Radiometer         = P_VGrid + 1
+  integer, public, parameter :: P_RadiometerOptional = P_Radiometer + 1
+  integer, public, parameter :: P_Reflector          = P_RadiometerOptional + 1
+  integer, public, parameter :: P_SCmodule           = P_Reflector + 1
+  integer, public, parameter :: P_Signal             = P_SCmodule + 1
+  integer, public, parameter :: P_SignalOptional     = P_Signal + 1
+  integer, public, parameter :: P_SuppressChannels   = P_SignalOptional + 1
+  integer, public, parameter :: P_XYZ                = P_SuppressChannels + 1
+  integer, public, parameter :: P_Matrix3x3          = P_XYZ + 1
 
-  integer, public, parameter :: LastProperty         = P_MATRIX3X3
+  integer, public, parameter :: LastProperty         = P_Matrix3x3
 
   ! Local, saved variables (constant tables really)
   logical, public, save :: &
@@ -76,16 +77,18 @@ contains ! ============= Public procedures ===================================
     use EXPR_M, only: EXPR
     use FGRID, only: FGRID_T
     use HGRIDSDATABASE, only: HGRID_T
-    use init_tables_module, only:  f_badValue, f_fGrid, f_hGrid, f_irregular, &
-      & f_keepChannels, f_logBasis, f_minValue, f_module, f_molecule, &
-      & f_radiometer, f_sgrid, f_signal, f_type, f_vgrid, f_reflector, &
-      & field_first, field_last, l_true, l_zeta, l_xyz, l_matrix3x3, &
-      & l_channel, l_lostransfunc, l_none, l_phitan
+    use init_tables_module, only:  f_badValue, f_coordinate, f_fGrid, f_hGrid, &
+      & f_irregular, f_keepChannels, f_logBasis, f_minValue, f_module, &
+      & f_molecule, f_radiometer, f_reflector, f_sgrid, f_signal, f_stacked, &
+      & f_type, f_vgrid, f_xgrid, field_first, field_last, l_channel, &
+      & l_explicit, l_geocAltitude, l_lostransfunc, l_matrix3x3, l_none, &
+      & l_phitan, l_true, l_xyz, l_zeta
     use MLSCOMMON, only: MLSFILE_T
     use MLSKINDS, only: RK => R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
     use MLSSIGNALS_M, only:GETMODULEFROMRADIOMETER, GETMODULEFROMSIGNAL, &
       & GETRADIOMETERFROMSIGNAL, GETSIGNAL, SIGNAL_T, ISMODULESPACECRAFT
+    use MoreTree, only: Get_Boolean
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, &
       & SETUPNEWQUANTITYTEMPLATE, &
@@ -120,6 +123,9 @@ contains ! ============= Public procedures ===================================
     logical :: GOT(field_first:field_last) ! Fields
     character(len=127) :: SIGNALSTRING
 
+    integer :: Coordinate               ! For vertical coordinate, in case we
+                                        ! don't want L_None for MIF qty, e.g.
+                                        ! tngtGeocAlt
     integer :: FGRIDINDEX               ! Index of frequency grid
     integer :: FREQUENCYCOORDINATE      ! Literal
     integer :: HGRIDINDEX               ! Index of horizontal grid
@@ -130,6 +136,7 @@ contains ! ============= Public procedures ===================================
     integer :: Me = -1                  ! String index for trace
     integer :: MOLECULE                 ! Literal
     integer :: NOCHANS                  ! Quantity dimension
+    integer :: NoCrossTrack             ! Number of cross-track angles
     integer :: NOINSTANCES              ! Quantity dimension
     integer :: NOSURFS                  ! Quantity dimension
     integer :: QUANTITYTYPE             ! Literal
@@ -139,9 +146,12 @@ contains ! ============= Public procedures ===================================
     integer :: SIDEBAND                 ! -1, 0, 1
     integer :: SIGNAL                   ! Database index
     integer :: SON                      ! A Son of Root -- an n_assign node
+    logical :: Stacked                  ! All heights at a particular instance
+                                        ! have same Lat and Lon
     integer :: VGRIDINDEX               ! Index in database
     integer :: VALUE                    ! Node index of value of field of spec
     integer :: S_INDEX                  ! Loop counter
+    integer :: xGridIndex               ! Index in hGrid database
 
     integer, dimension(2) :: EXPR_UNITS
     integer, dimension(:), pointer :: SignalInds ! From parse signal
@@ -173,6 +183,7 @@ contains ! ============= Public procedures ===================================
     minValue = -huge ( 0.0_rk )
     molecule = 0
     noChans = 1
+    noCrossTrack = 1
     quantitytype = 0
     radiometer = 0
     reflector = 0
@@ -180,8 +191,10 @@ contains ! ============= Public procedures ===================================
     sGridIndex = 0
     sideband = 0
     signal = 0
-    vGridIndex = 0
     signalString = ''
+    stacked = .true.
+    vGridIndex = 0
+    xGridIndex = 0
 
     ! Go through the l2cf command line and parse it.
     got = .false.
@@ -199,16 +212,18 @@ contains ! ============= Public procedures ===================================
       case ( f_badValue )
         call expr ( subtree(2,son), expr_units, expr_value )
         badValue = expr_value(1)
+      case ( f_coordinate )
+        coordinate = value
       case ( f_fgrid )
         fGridIndex = decoration(value)
       case ( f_hgrid )
         hGridIndex = decoration(value)
       case ( f_keepChannels )
-        keepChannels = (value == l_true)
+        keepChannels = get_boolean(son)
       case ( f_logBasis )
-        logBasis = (value == l_true)
+        logBasis = get_boolean(son)
       case ( f_irregular )
-        regular = (value /= l_true)
+        regular = get_boolean(son)
       case ( f_minValue )
         call expr ( subtree(2,son), expr_units, expr_value )
         minValue = expr_value(1)
@@ -252,10 +267,17 @@ contains ! ============= Public procedures ===================================
         call deallocate_test ( signalInds, 'signalInds', ModuleName )
         instrumentModule = GetModuleFromSignal(signal)
         radiometer = GetRadiometerFromSignal(signal)
+      case ( f_stacked )
+        stacked = get_boolean(son)
       case ( f_type )
         quantityType = value
       case ( f_vgrid )
         vGridIndex = decoration(value) ! node_id(value) == n_spec_args
+      case ( f_xgrid ) ! an hGrid
+        xGridIndex = decoration(value) ! node_id(value) == n_spec_args
+        if ( hGrids(xGridIndex)%type /= l_explicit ) &
+          & call Announce_error ( root, 'XGrid is not explicit', quantityType )
+        noCrossTrack = size(hgrids(xGridIndex)%phi)
       end select
     end do
 
@@ -313,6 +335,11 @@ contains ! ============= Public procedures ===================================
         & call Announce_error ( root, 'Expecting log pressure coordinates for', &
         & quantityType )
     end if
+    if ( properties ( p_mustBeGeocAlt ) .and. got(f_vGrid) ) then
+      if ( vGrids(vGridIndex)%verticalCoordinate /= l_geocAltitude ) &
+        & call Announce_error ( root, 'Expecting geocentric altitude coordinates for ', &
+        & quantityType )
+    end if
     if ( properties ( p_scModule ) ) then
       if ( .not. IsModuleSpacecraft ( instrumentModule ) ) &
         & call Announce_error ( root, 'Module must be spacecraft' )
@@ -362,20 +389,26 @@ contains ! ============= Public procedures ===================================
     end if
     
     ! horizontalCoordinate?
-    if ( got(f_hGrid) .and. hGridIndex > 0 ) &
-      & horizontalCoordinate = HGrids(hGridIndex)%masterCoordinate
+    if ( got(f_hGrid) ) then
+      if (  hGridIndex > 0 ) &
+        & horizontalCoordinate = HGrids(hGridIndex)%masterCoordinate
+    else if ( got(f_xGrid) ) then
+      call Announce_error ( root, 'XGrid specified without HGrid', quantityType )
+    end if
 
     ! Now do the setup for the different families of quantities
     if ( isMinorFrame ) then
+      ! Setup a minor frame quantity
       call ConstructMinorFrameQuantity ( instrumentModule, qty, &
-        noChans=noChans, filedatabase=filedatabase, &
+        noChans=noChans, noCrossTrack=noCrossTrack, filedatabase=filedatabase, &
         chunk=chunk, mifGeolocation=mifGeolocation, &
         regular=regular )
-      ! Setup a minor frame quantity
+      if ( got(f_coordinate ) ) qty%verticalCoordinate = coordinate
+      qty%quantityType = quantityType
     else if ( properties(p_majorFrame) ) then
       ! Setup a major frame quantity
       call ConstructMajorFrameQuantity ( chunk, instrumentModule, &
-        & qty, noChans, mifGeolocation )
+        & qty, noChans, mifGeolocation, noCrossTrack )
     else
       ! Setup a non major/minor frame quantity
       noInstances = 1
@@ -385,13 +418,14 @@ contains ! ============= Public procedures ===================================
 
       ! Setup the quantity template
       call SetupNewQuantityTemplate ( qty, noInstances=noInstances, &
-        & noSurfs=noSurfs, coherent=.true., stacked=.true., regular=.true.,&
-        & noChans=noChans, &
+        & noSurfs=noSurfs, coherent=.true., stacked=stacked, regular=.true.,&
+        & noChans=noChans, noCrossTrack=noCrossTrack, &
         & sharedVGrid=.true., sharedHGrid=.true., sharedFGrid=.true. )
 
       ! Setup the horizontal coordinates
       if ( got(f_hGrid) ) then
         qty%hGridIndex = hGridIndex
+        qty%xGridIndex = xGridIndex
         call PointQuantityToHGrid ( hGrids(hGridIndex), chunk, qty )
       else
         call SetupEmptyHGridForQuantity ( qty )
@@ -423,6 +457,18 @@ contains ! ============= Public procedures ===================================
         qty%surfs => vGrids(vGridIndex)%surfs
       else
         call SetupEmptyVGridForQuantity ( qty )
+      end if
+    end if
+
+    ! Setup the cross-track coordinates
+    nullify ( qty%crossAngles )
+    if ( xGridIndex /= 0 ) then
+      if ( qty%sharedHGrid ) then
+        qty%crossAngles => hGrids(xGridIndex)%phi(1,:)
+      else
+        call allocate_test ( qty%crossAngles, size(hGrids(xGridIndex)%phi,2), &
+          & 'qty%crossAngles', moduleName )
+        qty%crossAngles = hGrids(xGridIndex)%phi(1,:)
       end if
     end if
 
@@ -479,8 +525,8 @@ contains ! ============= Public procedures ===================================
   ! I think we should make filedatabase and chunk optional as well
   ! because we don't need it when mifGeolocation is present -haley
   subroutine ConstructMinorFrameQuantity (instrumentModule, &
-    & qty, noChans, regular, instanceLen, &
-    filedatabase, chunk, mifGeolocation )
+    & qty, noChans, regular, instanceLen, NoCrossTrack, &
+    & filedatabase, chunk, mifGeolocation )
 
     use CHUNKS_M, only: MLSCHUNK_T
     use INIT_TABLES_MODULE, only: L_GEODALTITUDE, L_NONE
@@ -496,7 +542,8 @@ contains ! ============= Public procedures ===================================
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use OUTPUT_M, only: OUTPUT
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
-    use TOGGLES, only: SWITCHES
+    use TOGGLES, only: Gen, Levels, SWITCHES, Toggle
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
     ! This routine constructs a minor frame based quantity.
 
@@ -506,6 +553,7 @@ contains ! ============= Public procedures ===================================
     integer, intent(in), optional :: noChans
     logical, intent(in), optional :: regular
     integer, intent(in), optional :: instanceLen
+    integer, intent(in), optional :: NoCrossTrack ! Number of cross-track angles
     type (MLSFile_T), dimension(:), pointer, optional ::     FILEDATABASE
     type (MLSChunk_T), intent(in), optional :: chunk   ! The chunk under consideration
     type (QuantityTemplate_T), intent(in), dimension(:), optional :: &
@@ -521,20 +569,25 @@ contains ! ============= Public procedures ===================================
       logical :: Modular = .true.
     end type Item_T
     enum, bind(C)
-      enumerator :: MAFStartTimeTAI = 1, tpGeodLat, tpLon, tpGeodAngle, &
-        & tpSolarZenith, tpSolarTime, tpLosAngle, &
-        & LastL1BItem ! Just to get the size; keep this one after the others
+      enumerator :: FirstSCItem = 1, scGeodLat = 1, scLon, &
+        & MAFStartTimeTAI, tpGeodLat, tpLon, tpGeodAngle, &
+        & tpSolarZenith, tpSolarTime, tpLosAngle
     end enum
-    integer, parameter :: NoL1BItemsToRead = lastL1BItem - 1
-    type (item_t), parameter :: L1bItemsToRead(noL1BItemsToRead) = (/ &
+    integer, parameter :: LastSCItem = scLon
+    integer, parameter :: LastL1BItem = tpLosAngle
+    ! First, SC items, then instrument items
+    type (item_t), parameter :: L1bItemsToRead(firstSCItem:lastL1BItem) = (/ &
       !        Type              Name              Modular
-      & item_t(MAFStartTimeTAI, "MAFStartTimeTAI", .false.), &
+      & item_t(scGeodLat,       "scGeodLat      ", .false.), & ! Not tangent qty
+      & item_t(scLon,           "scLon          ", .false.), & ! Not tangent qty
+      & item_t(MAFStartTimeTAI, "MAFStartTimeTAI", .false.), & ! Not tangent qty
       & item_t(tpGeodLat,       "tpGeodLat      "), &
       & item_t(tpLon,           "tpLon          "), &
       & item_t(tpGeodAngle,     "tpGeodAngle    "), &
       & item_t(tpSolarZenith,   "tpSolarZenith  "), &
       & item_t(tpSolarTime,     "tpSolarTime    "), &
       & item_t(tpLosAngle,      "tpLosAngle     ") /)
+
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     ! Local variables
@@ -542,13 +595,20 @@ contains ! ============= Public procedures ===================================
     type (L1BData_T) :: l1bField
     type (MLSFile_T), pointer             :: L1BFile
     character (len=NameLen) :: l1bItemName
-    integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex, hdfVersion
+    integer :: hdfVersion, l1bFlag, l1bItem, noMAFs, mafIndex, mifIndex
+    integer :: Me = -1      ! For tracing
     logical :: MissingOK
+    integer :: Start, Stop  ! For reading L1B quantities, depending upon whether
+                            ! they're for the instrument or the tangent point
 
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
     ! quantity.  Otherwise, we have to read it all from the l1boa file
     ! ourselves.
+
+    call trace_begin ( me, "ConstructMinorFrameQuantity", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+
     MissingOK = .not. AURA_L1BFILES
 
     if ( present(mifGeolocation) ) then
@@ -563,7 +623,7 @@ contains ! ============= Public procedures ===================================
       if ( present ( regular ) ) qty%regular = regular
       qty%noChans = noChans
       if ( qty%regular ) then
-        qty%instanceLen = qty%noChans*qty%noSurfs
+        qty%instanceLen = qty%noChans * qty%noSurfs * qty%noCrossTrack
       else
         qty%instanceLen = 0
       end if
@@ -590,15 +650,16 @@ contains ! ============= Public procedures ===================================
       if ( l1bFlag /= 0 .and. .not. MissingOK ) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_L1BRead//l1bItemName )
-      elseif ( l1bFlag /= 0 ) then
+      else if ( l1bFlag /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & MLSMSG_L1BRead//l1bItemName )
         ! return
-      endif
+      end if
 
       qty%name = 0
       call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
-        & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.false., &
+        & noSurfs=l1bField%maxMIFs, noChans=noChans, &
+        & noCrossTrack=noCrossTrack, coherent=.false., &
         & stacked=.false., regular=regular, instanceLen=instanceLen, &
         & minorFrame=.true. )
       qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
@@ -615,10 +676,24 @@ contains ! ============= Public procedures ===================================
       ! In case we didn't find the proper item in the l1boa files
       if ( l1bFlag /= 0 ) return
 
-      if ( .not. IsModuleSpacecraft(instrumentModule) ) then
+      ! Work out which items to read
+      if ( IsModuleSpacecraft(instrumentModule) ) then
+        start = firstSCitem
+        stop = lastSCitem
+        ! Zero out stuff that we don't read.  See L1bItemsToRead above.
+        qty%surfs = 0.0
+        qty%phi = 0.0
+        qty%time = 0.0
+        qty%solarTime = 0.0
+        qty%solarZenith = 0.0
+        qty%losAngle = 0.0
+      else
+        start = lastSCitem + 1
+        stop = lastL1Bitem
+
         call GetModuleName ( instrumentModule, l1bItemName )
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
-        
+
         l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
         call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
           & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
@@ -631,87 +706,73 @@ contains ! ============= Public procedures ===================================
             & MLSMSG_L1BRead//l1bItemName )
           return
         endif
-        
+
         ! Now we're going to deal with a VGrid for this quantity
         qty%verticalCoordinate = l_geodAltitude
         qty%surfs = l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
 
         call DeallocateL1BData(l1bfield)
-
-        do l1bItem = 1, NoL1BItemsToRead
-          ! Get the name of the item to read
-          l1bItemName = L1bItemsToRead(l1bItem)%name
-          if ( L1bItemsToRead(l1bItem)%modular ) then
-            call GetModuleName ( instrumentModule, l1bItemName )
-            l1bItemName = trim(l1bItemName)//'.'//L1bItemsToRead(l1bItem)%name
-          else
-            l1bItemName = L1bItemsToRead(l1bItem)%name
-          end if
-
-          ! Read it from the l1boa file
-          l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
-          call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
-            & l1bFlag, firstMAF=chunk%firstMafIndex, &
-            & lastMAF=chunk%lastMafIndex, neverfail=MissingOK )
-          if ( l1bFlag /= 0 .and. .not. MissingOK ) then
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & MLSMSG_L1BRead//l1bItemName )
-          elseif ( l1bFlag /= 0 ) then
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & MLSMSG_L1BRead//l1bItemName )
-            cycle
-          endif
-          
-          ! Now we have to save this field in the quantity data.
-          ! This is rather a kludgy way of doing it but this worked out the
-          ! least boring way to write the code.  See the definition of
-          ! L1BItemsToRead above for reference.
-          
-          select case ( L1bItemsToRead(l1bItem)%type )
-          case ( MAFStartTimeTAI )
-            !??? For time we have to do something a little more complicated.
-            !??? This is a real kludge, and we have to find a way
-            !??? to do it better in 0.5. Probably simply have time as a minor
-            !??? frame quantity in L1, or MIF duration. !???????
-            !??? Also note that it fills in times even for non existant MIFs
-            do mafIndex = 1, noMAFs
-              do mifIndex = 1, qty%noSurfs 
-                qty%time(mifIndex,mafIndex) = &
-                  & l1bField%dpField(1,1,mafIndex) + &
-                  & (mifIndex-1) * sixth
-              end do
-            end do
-          case ( tpGeodLat )
-            qty%geodLat = l1bField%dpField(1,:,:)
-          case ( tpLon )
-            qty%lon = l1bField%dpField(1,:,:)
-          case ( tpGeodAngle )
-            qty%phi = l1bField%dpField(1,:,:)
-          case ( tpSolarZenith )
-            qty%solarZenith = l1bField%dpField(1,:,:)
-          case ( tpSolarTime )
-            qty%solarTime = l1bField%dpField(1,:,:)
-          case ( tpLosAngle )
-            qty%losAngle = l1bField%dpField(1,:,:)
-          case default
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "No code to read L1B item " // trim(L1bItemsToRead(l1bItem)%name) )
-          end select
-
-          call DeallocateL1BData ( l1bField )
-        end do                          ! Loop over l1b quantities
-      else                              ! Spacecraft module
-        ! just zero stuff out.
-        qty%surfs = 0.0
-        qty%phi = 0.0
-        qty%geodLat = 0.0
-        qty%lon = 0.0
-        qty%time = 0.0
-        qty%solarTime = 0.0
-        qty%solarZenith = 0.0
-        qty%losAngle = 0.0
-        call DeallocateL1BData(l1bfield)
       end if
+
+      do l1bItem = start, stop
+        ! Get the name of the item to read
+        l1bItemName = L1bItemsToRead(l1bItem)%name
+        if ( L1bItemsToRead(l1bItem)%modular ) then
+          call GetModuleName ( instrumentModule, l1bItemName )
+          l1bItemName = trim(l1bItemName)//'.'//L1bItemsToRead(l1bItem)%name
+        else
+          l1bItemName = L1bItemsToRead(l1bItem)%name
+        end if
+
+        ! Read it from the l1boa file
+        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
+        call ReadL1BData ( L1BFile, l1bItemName, l1bField, noMAFs, &
+          & l1bFlag, firstMAF=chunk%firstMafIndex, &
+          & lastMAF=chunk%lastMafIndex, neverfail=MissingOK )
+        if ( l1bFlag /= 0 ) then
+          call MLSMessage ( merge(MLSMSG_Warning,MLSMSG_Error,missingOK), &
+            & ModuleName, MLSMSG_L1BRead//l1bItemName )
+          cycle
+        end if
+
+        ! Now we have to save this field in the quantity data.
+        ! This is rather a kludgy way of doing it but this worked out the
+        ! least boring way to write the code.  See the definition of
+        ! L1BItemsToRead above for reference.
+        
+        select case ( L1bItemsToRead(l1bItem)%type )
+        case ( MAFStartTimeTAI )
+          !??? For time we have to do something a little more complicated.
+          !??? This is a real kludge, and we have to find a way
+          !??? to do it better in 0.5. Probably simply have time as a minor
+          !??? frame quantity in L1, or MIF duration. !???????
+          !??? Also note that it fills in times even for non existant MIFs
+          do mafIndex = 1, noMAFs
+            do mifIndex = 1, qty%noSurfs 
+              qty%time(mifIndex,mafIndex) = &
+                & l1bField%dpField(1,1,mafIndex) + &
+                & (mifIndex-1) * sixth
+            end do
+          end do
+        case ( tpGeodLat, scGeodLat )
+          qty%geodLat = l1bField%dpField(1,:,:)
+        case ( tpLon, scLon )
+          qty%lon = l1bField%dpField(1,:,:)
+        case ( tpGeodAngle )
+          qty%phi = l1bField%dpField(1,:,:)
+        case ( tpSolarZenith )
+          qty%solarZenith = l1bField%dpField(1,:,:)
+        case ( tpSolarTime )
+          qty%solarTime = l1bField%dpField(1,:,:)
+        case ( tpLosAngle )
+          qty%losAngle = l1bField%dpField(1,:,:)
+        case default
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "No code to read L1B item " // trim(L1bItemsToRead(l1bItem)%name) )
+        end select
+
+        call DeallocateL1BData ( l1bField )
+      end do                          ! Loop over l1b quantities
     else
        call MLSMessage ( MLSMSG_Error, ModuleName, &
                         "Must supply either mifGeolocation " &
@@ -723,7 +784,11 @@ contains ! ============= Public procedures ===================================
     ! In later versions we'll probably need to think about FILL_VALUEs and
     ! setting things to the badData flag.
     
-    ! We thought about about them, but not too hard apparently
+    ! We thought about about them, but not too hard apparently.
+
+    call trace_end ( "ConstructMinorFrameQuantity", &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
+
   end subroutine ConstructMinorFrameQuantity
 
   ! ------------------------------------ ForgeMinorFrames --------------
@@ -734,13 +799,16 @@ contains ! ============= Public procedures ===================================
 
     use CHUNKS_M, only: MLSCHUNK_T
     use EXPR_M, only: EXPR
-    use INIT_TABLES_MODULE, only: F_GEODANGLE, F_MODULE, F_NOMIFS, &
-      & F_SOLARTIME, F_SOLARZENITH, F_GEODALT
+    use INIT_TABLES_MODULE, only: F_GEODALT, F_GEODANGLE, F_MODULE, F_NOMIFS, &
+      & F_SOLARTIME, F_SOLARZENITH, F_Truncate
     use INIT_TABLES_MODULE, only: L_GEODALTITUDE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_TIME
     use MLSKINDS, only: RK => R8
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
+    use MoreTree, only: Get_Boolean
+    use QUANTITYTEMPLATES, only: CopyQuantityTemplate, &
+      & DestroyQuantityTemplateContents, QuantityTemplate_T, &
+      & SetupNewQuantityTemplate
     use TREE, only: DECORATION, NSONS, SUBTREE
     use VGRIDSDATABASE, only: VGRID_T, VGRIDS
 
@@ -756,17 +824,22 @@ contains ! ============= Public procedures ===================================
     integer :: KEY                      ! Tree vertex
     integer :: MAF                      ! Loop counter
     integer :: NODE                     ! A tree node
+    integer :: NoInstances              ! In a truncated MIF geolocation
     integer :: NOMAFS                   ! Dimension
     integer :: NOMIFS                   ! Dimension
+    integer :: NoSurfs                  ! In a truncated MIF geolocation
     integer :: PARAM                    ! Loop counter
     integer :: SOLARTIMENODE            ! Tree vertex
     integer :: SOLARZENITHNODE          ! Tree vertex
     integer :: SON                      ! Tree vertex
+    logical :: Truncate                 ! Truncate existing MIF Geolocation
+                                        ! instead of filling with zeros.
     integer :: UNITS                    ! Units for node
 
     real(rk), dimension(:,:), pointer :: VALUES ! An array to fill
     integer, dimension(2) :: EXPR_UNITS ! From tree
     real(rk), dimension(2) :: EXPR_VALUE ! From tree
+    type ( quantityTemplate_t ) :: NewMIFGeolocation
     type(VGrid_T), pointer :: GEODALT
 
     ! Executable code
@@ -774,6 +847,7 @@ contains ! ============= Public procedures ===================================
     solarTimeNode = 0
     solarZenithNode = 0
     geodAngleNode = 0
+    truncate = .false.
 
     do i = 2, nsons( root )
       son = subtree(i,root)
@@ -793,6 +867,8 @@ contains ! ============= Public procedures ===================================
       case ( f_noMIFs )
         call expr ( subtree(2,son), expr_units, expr_value )
         noMIFs = expr_value(1)
+      case ( f_truncate )
+        truncate = get_boolean ( son )
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
@@ -819,26 +895,59 @@ contains ! ============= Public procedures ===================================
     end if
 
     ! Setup the minor frame quantity template
-    ! Note this will destroy the old ones contents bit by bit.
-    mifGeolocation(instrumentModule)%name = 0
-    call SetupNewQuantityTemplate ( mifGeolocation(instrumentModule), &
-      & noInstances=noMAFs, noSurfs=noMIFs, noChans=1,&
-      & coherent=.false., stacked=.false., regular=.true.,&
-      & minorFrame=.true. )
+    ! Note this will destroy the old one's contents bit by bit.
+    if ( truncate ) then
+      noSurfs = min(noMIFS, mifGeolocation(instrumentModule)%noSurfs)
+      noInstances = min(noMAFS, mifGeolocation(instrumentModule)%noInstances)
+      call SetupNewQuantityTemplate ( NewMIFGeolocation, &
+        & noInstances=noInstances, noSurfs=noSurfs, noChans=1, &
+        & noCrossTrack=1, &
+        & coherent=.false., stacked=.false., regular=.true., &
+        & minorFrame=.true. )
+      ! First put zeros in the new  arrays, in case the old ones are shorter.
+      newMIFGeolocation%time = 0.0
+      newMIFGeolocation%phi = 0.0
+      newMIFGeolocation%geodLat = 0.0
+      newMIFGeolocation%solarTime = 0.0
+      newMIFGeolocation%solarZenith = 0.0
+      newMIFGeolocation%lon = 0.0
+      newMIFGeolocation%losAngle = 0.0
+      newMIFGeolocation%surfs = 0.0
+      newMIFGeolocation%instrumentModule = mifGeolocation(instrumentModule)%instrumentModule
+      newMIFGeolocation%noInstancesLowerOverlap = mifGeolocation(instrumentModule)%noInstancesLowerOverlap
+      newMIFGeolocation%noInstancesUpperOverlap = mifGeolocation(instrumentModule)%noInstancesUpperOverlap
+      newMIFGeolocation%verticalCoordinate = mifGeolocation(instrumentModule)%verticalCoordinate
+      newMIFGeolocation%time = mifGeolocation(instrumentModule)%time(:noSurfs,:noInstances)
+      newMIFGeolocation%geodLat = mifGeolocation(instrumentModule)%geodLat(:noSurfs,:noInstances)
+      newMIFGeolocation%solarTime = mifGeolocation(instrumentModule)%solarTime(:noSurfs,:noInstances)
+      newMIFGeolocation%solarZenith = mifGeolocation(instrumentModule)%solarZenith(:noSurfs,:noInstances)
+      newMIFGeolocation%lon = mifGeolocation(instrumentModule)%lon(:noSurfs,:noInstances)
+      newMIFGeolocation%losAngle = mifGeolocation(instrumentModule)%losAngle(:noSurfs,:noInstances)
+      newMIFGeolocation%surfs = mifGeolocation(instrumentModule)%surfs(:noSurfs,:noInstances)
+      call copyQuantityTemplate ( mifGeolocation(instrumentModule), newMIFGeolocation )
+      call destroyQuantityTemplateContents ( newMIFGeolocation )
+  else
+      mifGeolocation(instrumentModule)%name = 0
+      call SetupNewQuantityTemplate ( mifGeolocation(instrumentModule), &
+        & noInstances=noMAFs, noSurfs=noMIFs, noChans=1, &
+        & noCrossTrack=1, &
+        & coherent=.false., stacked=.false., regular=.true., &
+        & minorFrame=.true. )
 
-    ! Put zeros etc. in the appropriate places, may overwrite these later
-    mifGeolocation(instrumentModule)%instrumentModule = instrumentModule
-    mifGeolocation(instrumentModule)%noInstancesLowerOverlap = 0
-    mifGeolocation(instrumentModule)%noInstancesUpperOverlap = 0
-    mifGeolocation(instrumentModule)%verticalCoordinate = l_geodAltitude
-    mifGeolocation(instrumentModule)%time = 0.0
-    mifGeolocation(instrumentModule)%phi = 0.0
-    mifGeolocation(instrumentModule)%geodLat = 0.0
-    mifGeolocation(instrumentModule)%solarTime = 0.0
-    mifGeolocation(instrumentModule)%solarZenith = 0.0
-    mifGeolocation(instrumentModule)%lon = 0.0
-    mifGeolocation(instrumentModule)%losAngle = 0.0
-    mifGeolocation(instrumentModule)%surfs = 0.0
+      ! Put zeros etc. in the appropriate places, may overwrite these later
+      mifGeolocation(instrumentModule)%instrumentModule = instrumentModule
+      mifGeolocation(instrumentModule)%noInstancesLowerOverlap = 0
+      mifGeolocation(instrumentModule)%noInstancesUpperOverlap = 0
+      mifGeolocation(instrumentModule)%verticalCoordinate = l_geodAltitude
+      mifGeolocation(instrumentModule)%time = 0.0
+      mifGeolocation(instrumentModule)%phi = 0.0
+      mifGeolocation(instrumentModule)%geodLat = 0.0
+      mifGeolocation(instrumentModule)%solarTime = 0.0
+      mifGeolocation(instrumentModule)%solarZenith = 0.0
+      mifGeolocation(instrumentModule)%lon = 0.0
+      mifGeolocation(instrumentModule)%losAngle = 0.0
+      mifGeolocation(instrumentModule)%surfs = 0.0
+    end if
 
     ! Check the geodAlt information if supplied
     if ( associated ( geodAlt ) ) then 
@@ -990,62 +1099,36 @@ contains ! ============= Public procedures ===================================
     end if
   end function AnyGoodSignalData
 
-  ! ----------------------------------  PointQuantityToHGrid  -----
-  subroutine PointQuantityToHGrid ( hGrid, chunk, qty )
-
-  ! This routine copies HGrid information into an already defined quantity
-
-    use CHUNKS_M, only: MLSCHUNK_T
-    use HGRIDSDATABASE, only: HGRID_T
-    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
-    use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
-
-    ! Dummy arguments
-    type (hGrid_T), intent(in) :: HGRID
-    type (MLSChunk_T), intent(in) :: Chunk
-    type (QuantityTemplate_T), intent(inout) :: QTY
-
-    ! Executable code
-    if ( qty%noInstances/=hGrid%noProfs ) call MLSMessage ( MLSMSG_Error,&
-      & ModuleName, "Size of HGrid not compatible with size of quantity" )
-    if ( .not. qty%stacked ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Cannot copy hGrids into unstacked quantities")
-
-    qty%phi => hGrid%phi
-    qty%geodLat => hGrid%geodLat
-    qty%lon => hGrid%lon
-    qty%time => hGrid%time
-    qty%solarTime => hGrid%solarTime
-    qty%solarZenith => hGrid%solarZenith
-    qty%losAngle => hGrid%losAngle
-    qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
-    qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
-    ! if ( ChunkDivideConfig%allowPriorOverlaps .and. chunk%chunkNumber == 1 ) &
-    !  & qty%noInstancesLowerOverlap = 0
-
-  end subroutine PointQuantityToHGrid
-
   ! --------------------------------  ConstructMajorFrameQuantity  -----
   subroutine ConstructMajorFrameQuantity( chunk, instrumentModule, qty, noChans, &
-    & mifGeolocation )
+    & mifGeolocation, NoCrossTrack )
     ! Dummy arguments
     use CHUNKS_M, only: MLSCHUNK_T
     use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
     type (MLSChunk_T), intent(in) :: CHUNK
     integer, intent(in) :: INSTRUMENTMODULE
     type (QuantityTemplate_T), intent(out) :: QTY
     type (QuantityTemplate_T), dimension(:), intent(in), target :: MIFGEOLOCATION
     integer, intent(in) :: NOCHANS
+    integer, intent(in), optional :: NoCrossTrack
     ! Local variables
+
+    integer :: Me = -1     ! For tracing
     type (QuantityTemplate_T), pointer :: source
     
     ! Executable code
+    call trace_begin ( me, "ConstructMajorFrameQuantity", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+
     source => mifGeolocation(instrumentModule)
     qty%name = 0
     call SetupNewQuantityTemplate ( qty, noInstances=source%noInstances, &
       & noSurfs=1, coherent=.true., stacked=.true., regular=.true., &
-      & noChans=noChans, sharedHGrid=.true., sharedVGrid=.true. )
+      & noChans=noChans, noCrossTrack=noCrossTrack, &
+      & sharedHGrid=.true., sharedVGrid=.true. )
     call SetupEmptyVGridForQuantity ( qty )
     ! In some rare cases, e.g. non-Aura satellite data, source may be a dud
     if ( associated(source%phi) ) then
@@ -1056,7 +1139,7 @@ contains ! ============= Public procedures ===================================
       qty%solarTime => source%solarTime(1:1,:)
       qty%solarZenith => source%solarZenith(1:1,:)
       qty%losAngle => source%losAngle(1:1,:)
-    endif
+    end if
 
     qty%majorFrame = .true.
     qty%minorFrame = .false.
@@ -1064,8 +1147,12 @@ contains ! ============= Public procedures ===================================
     qty%instrumentModule = source%instrumentModule
     qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
     qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
+
+    call trace_end ( "ConstructMajorFrameQuantity", &
+      & cond=toggle(gen) .and. levels(gen) > 1 )
+
   end subroutine ConstructMajorFrameQuantity
-  
+
   ! ----------------------------------------------  GetQtyTypeIndex  -----
   subroutine GetQtyTypeIndex(string_text, QtyType)
     use Intrinsic, only: LIT_INDICES
@@ -1092,7 +1179,7 @@ contains ! ============= Public procedures ===================================
   subroutine InitQuantityTemplates
     ! This routine initializes the quantity template properties
     ! This is the routine one needs to update when one introduces a new quantity type.
-    use Init_Tables_Module, only:  L_ADOPTED, L_ADOPTED, L_AZIMUTH, L_BASELINE, &
+    use Init_Tables_Module, only:  L_ADOPTED, L_ADOPTED, L_BASELINE, &
       L_BOUNDARYPRESSURE, L_CALSIDEBANDFRACTION, &
       L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
       L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDMINMAX, L_CLOUDRADSENSITIVITY, &
@@ -1157,7 +1244,6 @@ contains ! ============= Public procedures ===================================
 
     call DefineQtyTypes ( (/ &
       l_adopted, phyq_dimensionless, none, next, &
-      l_azimuth, phyq_angle, none, next, &
       l_baseline, phyq_temperature, p_flexibleVHGrid, p_fGrid, p_radiometerOptional, &
                   p_signalOptional, p_suppressChannels, p_mustBeZeta, next, &
       l_boundaryPressure, phyq_pressure, p_hGrid, next, &
@@ -1233,7 +1319,7 @@ contains ! ============= Public procedures ===================================
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, & ! ??? Really phyq_dimensionless
       l_lowestRetrievedPressure, phyq_zeta, none, next, &
-      l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
+      l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, next, &
       l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, & ! ??? Really phyq_dimensionless
       l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, & ! ??? Really phyq_dimensionless
       l_mifDeadTime, phyq_time, next, &
@@ -1310,11 +1396,12 @@ contains ! ============= Public procedures ===================================
         valid = .false.
         message = "Badly defined major/minor frame quantity"
       end if
-      ! Check that mustBeZeta quantities have a vGrid
-      if ( propertyTable ( p_mustBeZeta, i ) .and. .not. &
+      ! Check that mustBeZeta or mustBeGeocAlt quantities have a vGrid
+      if ( ( propertyTable ( p_mustBeZeta, i ) .or. &
+           & propertyTable ( p_mustBeGeocAlt, i ) ).and. .not. &
         & ( propertyTable ( p_vGrid, i ) .or. propertyTable ( p_flexibleVHGrid, i ) ) ) then
         valid = .false.
-        message = "Quantity must have vGrid if it must be on log-pressure"
+        message = "Quantity must have vGrid if it must be on log-pressure or geocentric altitude"
       end if
       ! Print out any message
       if ( .not. valid ) then
@@ -1356,9 +1443,89 @@ contains ! ============= Public procedures ===================================
     
   end subroutine InitQuantityTemplates
 
+  ! ----------------------------------  PointQuantityToHGrid  -----
+  subroutine PointQuantityToHGrid ( hGrid, chunk, qty )
+
+  ! This routine associates HGrid information into an already defined quantity,
+  ! except that if Qty%NoCrossTrack > 1, it creates a copy.
+
+    use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST
+    use CHUNKS_M, only: MLSCHUNK_T
+    use HGRIDSDATABASE, only: HGRID_T
+    use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Warning
+    use QUANTITYTEMPLATES, only: CreateGeolocationFields, QUANTITYTEMPLATE_T
+    use String_Table, only: Get_String
+    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+
+    ! Dummy arguments
+    type (hGrid_T), intent(in) :: HGRID
+    type (MLSChunk_T), intent(in) :: Chunk
+    type (QuantityTemplate_T), intent(inout) :: QTY
+
+    ! Local variables
+    integer :: I
+    integer :: Me = -1                  ! String index for trace
+    character(127) :: QtyName
+
+    ! Executable code
+
+    call trace_begin ( me, "PointQuantityToHGrid", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+
+    if ( qty%noInstances/=hGrid%noProfs ) call MLSMessage ( MLSMSG_Error,&
+      & ModuleName, "Size of HGrid not compatible with size of quantity" )
+
+    if ( qty%stacked ) then
+      qty%phi => hGrid%phi
+      if ( qty%noCrossTrack > 1 ) then
+        call CreateGeolocationFields ( qty, size(hGrid%geodLat,1), 'Qty' )
+        do i = 1, qty%noCrossTrack
+          qty%geodLat3(:,:,i) = hGrid%geodLat
+          qty%lon3(:,:,i) = hGrid%lon
+        end do
+      else
+        qty%geodLat => hGrid%geodLat
+        qty%lon => hGrid%lon
+        qty%geodLat1(1:hGrid%noProfs) => hGrid%geodLat(1,1:hGrid%noProfs)
+        qty%geodLat3(1:1,1:hGrid%noProfs,1:1) => hGrid%geodLat(1,1:hGrid%noProfs)
+        qty%lon1(1:hGrid%noProfs) => hGrid%lon(1,1:hGrid%noProfs)
+        qty%lon3(1:1,1:hGrid%noProfs,1:1) => hGrid%lon(1,1:hGrid%noProfs)
+      end if
+    else
+      call CreateGeolocationFields ( qty, qty%noSurfs, 'Qty' )
+      nullify ( qty%phi )
+!       This results in a "double free or corruption" termination:
+!       call allocate_test ( qty%phi, 0, 0, 'qty%phi(1,1)', ModuleName )
+      if ( qty%name /= 0 ) then
+        call get_string ( qty%name, qtyName )
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & "Cannot copy hGrids into unstacked quantity " // &
+        & trim(qtyName) // &
+        & "; assume Lat, Lon computed somehow; hope nobody needs Phi")
+      else
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & "Cannot copy hGrids into unstacked quantities; assume Lat, Lon computed somehow; hope nobody needs Phi")
+      end if
+    end if
+    qty%time => hGrid%time
+    qty%solarTime => hGrid%solarTime
+    qty%solarZenith => hGrid%solarZenith
+    qty%losAngle => hGrid%losAngle
+    qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
+    qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
+    ! if ( ChunkDivideConfig%allowPriorOverlaps .and. chunk%chunkNumber == 1 ) &
+    !  & qty%noInstancesLowerOverlap = 0
+
+    call trace_end ( "PointQuantityToHGrid", &
+      & cond=toggle(gen) .and. levels(gen) > 2 )
+
+  end subroutine PointQuantityToHGrid
+
   ! ---------------------------------- SetupEmptyHGridForQuantity
   subroutine SetupEmptyHGridForQuantity ( qty ) 
     use Allocate_Deallocate, only: ALLOCATE_TEST
+    use Pointer_Rank_Remapping, only: REMAP
     use QuantityTemplates, only: QuantityTemplate_T
     ! Dummy arguments
     type ( QuantityTemplate_T ), intent(inout) :: QTY
@@ -1366,14 +1533,19 @@ contains ! ============= Public procedures ===================================
     qty%sharedHGrid = .false.
     qty%hGridIndex = 0
     nullify( qty%frequencies, qty%geodLat, qty%lon, qty%time, qty%solarTime, &
-      & qty%solarZenith, qty%losAngle ) ! Lest we deallocate a database entry
-    call Allocate_test ( qty%phi, 1, 1, 'qty%phi(1,1)', ModuleName )
-    call Allocate_test ( qty%geodLat, 1, 1, 'qty%geodLat(1,1)', ModuleName )
-    call Allocate_test ( qty%lon, 1, 1, 'qty%lon(1,1)', ModuleName )
-    call Allocate_test ( qty%time, 1, 1, 'qty%time(1,1)', ModuleName )
-    call Allocate_test ( qty%solarTime, 1, 1, 'qty%solarTime(1,1)', ModuleName )
-    call Allocate_test ( qty%solarZenith, 1, 1, 'qty%solarZenith(1,1)', ModuleName )
-    call Allocate_test ( qty%losAngle, 1, 1, 'qty%losAngle(1,1)', ModuleName )
+      & qty%solarZenith, qty%losAngle, qty%crossAngles ) ! Lest we deallocate a database entry
+    call allocate_test ( qty%phi, 1, 1, 'qty%phi(1,1)', ModuleName )
+    call allocate_test ( qty%geodLat1, 1, 'qty%geodLat1(1)', ModuleName )
+    call remap ( qty%geodLat1, qty%geodLat, [ 1, 1 ] )
+    call remap ( qty%geodLat1, qty%geodLat3, [ 1, 1, 1 ] )
+    call allocate_test ( qty%lon1, 1, 'qty%lon1(1)', ModuleName )
+    call remap ( qty%lon1, qty%lon, [ 1, 1 ] )
+    call remap ( qty%lon1, qty%lon3, [ 1, 1, 1 ] )
+    call allocate_test ( qty%time, 1, 1, 'qty%time(1,1)', ModuleName )
+    call allocate_test ( qty%solarTime, 1, 1, 'qty%solarTime(1,1)', ModuleName )
+    call allocate_test ( qty%solarZenith, 1, 1, 'qty%solarZenith(1,1)', ModuleName )
+    call allocate_test ( qty%losAngle, 1, 1, 'qty%losAngle(1,1)', ModuleName )
+    call allocate_test ( qty%crossAngles, 1, 'qty%crossAngles(1)', ModuleName )
     qty%phi = 0.0
     qty%geodLat = 0.0
     qty%lon = 0.0
@@ -1381,6 +1553,7 @@ contains ! ============= Public procedures ===================================
     qty%solarTime = 0.0
     qty%solarZenith = 0.0
     qty%losAngle = 0.0
+    qty%crossAngles = 0.0
   end subroutine SetupEmptyHGridForQuantity
 
   ! ---------------------------------- SetupEmptyVGridForQuantity
@@ -1412,6 +1585,15 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.178  2015/03/28 02:29:39  vsnyder
+! Added P_MustBeGeocalt, Coordinate, NoCrossTrack, Stacked, xGridIndex,
+! xGrid, noCrossTrack, tracing, scGeodLat, scLon.  Support cross-track grids.
+! Use Get_Boolean from More_Tree.  Added truncate field to Forge command --
+! maybe should have been called "save" -- to save any geolocations gotten
+! from L1BOA.  Deleted Azimuth.  Deleted mustBeZeta requirement of
+! magnetic field (because we now use height for the vertical coordinate).
+! Support for 3-d GeodLat and Lon.
+!
 ! Revision 2.177  2014/09/05 00:39:49  vsnyder
 ! Add some tracing
 !
