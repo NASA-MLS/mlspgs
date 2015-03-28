@@ -40,17 +40,18 @@ module HGridsDatabase                   ! Horizontal grid information
     integer :: noProfs                 ! Number of profiles in this grid  
     integer :: noProfsLowerOverlap = 0 ! Number of profiles in the lower overlap
     integer :: noProfsUpperOverlap = 0 ! Number of profiles in the upper overlap
+    integer :: Type                    ! L_Explicit, L_Fixed ...
 
     ! This is the maf number passing nearest to the grid point
     integer, dimension(:), pointer    :: maf         => NULL()
     ! Now the various coordinates in the HGrid, all dimensioned (1,noProfs)
-    real(r8), dimension(:,:), pointer :: phi         => NULL()
-    real(r8), dimension(:,:), pointer :: geodLat     => NULL()
-    real(r8), dimension(:,:), pointer :: lon         => NULL()
-    real(r8), dimension(:,:), pointer :: time        => NULL()
-    real(r8), dimension(:,:), pointer :: solarTime   => NULL()
-    real(r8), dimension(:,:), pointer :: solarZenith => NULL()
-    real(r8), dimension(:,:), pointer :: losAngle    => NULL()
+    real(r8), contiguous, pointer :: phi(:,:)         => NULL()
+    real(r8), contiguous, pointer :: geodLat(:,:)     => NULL()
+    real(r8), contiguous, pointer :: lon (:,:)        => NULL()
+    real(r8), contiguous, pointer :: time(:,:)        => NULL()
+    real(r8), contiguous, pointer :: solarTime(:,:)   => NULL()
+    real(r8), contiguous, pointer :: solarZenith(:,:) => NULL()
+    real(r8), contiguous, pointer :: losAngle(:,:)    => NULL()
   end type HGrid_T
 
   interface DUMP
@@ -64,6 +65,7 @@ contains ! =========== Public procedures ===================================
   integer function AddHGridToDatabase ( database, item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (HGrid_T), dimension(:), pointer :: database
@@ -196,6 +198,7 @@ contains ! =========== Public procedures ===================================
   subroutine DestroyHGridDatabase ( database )
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
   ! This subroutine destroys a quantity template database
 
@@ -203,14 +206,18 @@ contains ! =========== Public procedures ===================================
     type (HGrid_T), dimension(:), pointer :: database
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: hGridIndex, s, status
+
     if ( associated(database) ) then
       do hGridIndex=1,SIZE(database)
         call DestroyHGridContents ( database(hGridIndex) )
       end do
       s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
       deallocate ( database, stat=status )
-      call test_deallocate ( status, ModuleName, "database", s )
+      call test_deallocate ( status, ModuleName, "database", s, address=addr )
     end if
 
   end subroutine DestroyHGridDatabase
@@ -237,10 +244,11 @@ contains ! =========== Public procedures ===================================
       call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='no' )
       call output ( ' masterCoordinate = ' )
       if ( aHgrid%masterCoordinate == 0 ) then
-        call output ( '0', advance='yes' )
+        call output ( '0' )
       else
-        call display_string ( lit_indices(aHgrid%masterCoordinate), advance='yes' )
+        call display_string ( lit_indices(aHgrid%masterCoordinate) )
       end if
+      call display_string ( lit_indices(aHgrid%type), before=' type = ', advance='yes' )
       call output ( ' prof       phi       geodLat           lon', advance='no' )
       call output ( '          time     solarTime   solarZenith', advance='no' )
       call output ( '      losAngle  nearest maf', advance='yes' )
@@ -336,6 +344,12 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.16  2015/03/28 01:03:12  vsnyder
+! Added type component.  Made geolocation components contiguous so they can
+! be rank-remapping pointer targets.
+! Added stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 2.15  2014/09/04 23:40:28  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.
 ! Convert some local pointer temps to automatic.
