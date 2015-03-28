@@ -20,8 +20,8 @@ module QuantityTemplates         ! Quantities within vectors
   use DUMP_0, only: DUMP
   use EXPR_M, only: EXPR_CHECK
   use HIGHOUTPUT, only: OUTPUTNAMEDVALUE
-  use INTRINSIC, only: L_NONE, L_VMR, L_PhiTan, LIT_INDICES, PHYQ_Angle, &
-    & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Time
+  use INTRINSIC, only: L_DL, L_Geocentric, L_Geodetic, L_None, L_PhiTan, L_VMR, &
+    & LIT_INDICES, PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Time
   use MLSFILLVALUES, only: RERANK
   use MLSKINDS, only: RT => R8 ! RT is "kind of Real components of template"
   use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
@@ -34,6 +34,13 @@ module QuantityTemplates         ! Quantities within vectors
 
   implicit none
   private
+
+  public :: EPOCH, QuantityTemplate_T, RT
+  public :: AddQuantityTemplateToDatabase, InflateQuantityTemplateDatabase
+  public :: CheckIntegrity, CopyQuantityTemplate, CreateGeolocationFields, &
+    & DestroyQuantityTemplateContents, DestroyQuantityTemplateDatabase, &
+    & Dump, ModifyQuantityTemplate, NullifyQuantityTemplate, &
+    & QuantitiesAreCompatible, SetupNewQuantityTemplate, WriteAttributes
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
@@ -55,13 +62,16 @@ module QuantityTemplates         ! Quantities within vectors
     ! quantity this is -- one of the l_lits of type t_quantityType
     ! in Init_Tables_Module, e.g. l_Temperature.
 
-    integer :: quantityType
+    integer :: QuantityType
 
     ! The dimensions of this quantity
 
-    integer :: noInstances     ! Number of horizontal instances in this quantity
-    integer :: noSurfs         ! Number of surfaces per instance
-    integer :: noChans         ! Number of channels
+    integer :: NoInstances     ! Number of along-track horizontal instances in
+                               ! this quantity
+    integer :: NoSurfs         ! Number of surfaces per instance
+    integer :: NoChans         ! Number of channels
+    integer :: NoCrossTrack = 1! Number of cross-track horizontal instances in
+                               ! this quantity (from xGrid)
 
     ! Flags describing the quantity
 
@@ -89,8 +99,11 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! Misc. information
     real(rt) :: badValue      ! Value used to flag bad/missing data
-    integer :: unit           ! Unit quantity is in when scaled as below,
-                              ! an l_lit of the type t_units in Units.f90.
+    integer :: unit = l_dl    ! Unit quantity is in when scaled as below,
+                              ! an l_lit of the type t_units.  Units are
+                              ! defined in units.f90, but their names are
+                              ! declared in intrinsic.f90, and their membership
+                              ! in the type t_units is defined in init_tables_module.
 
     ! For regular quantities the number of elements of each instance
     ! is simply noSurfs*noChans.  For irregular ones it is less, but it is
@@ -111,27 +124,28 @@ module QuantityTemplates         ! Quantities within vectors
     ! for the (:,i,j) values is surfs(i,1) for a coherent quantity or
     ! surfs(i,j) for an incoherent one.
 
-    ! Horizontal coordinates
+    ! Horizontal coordinates in the orbit plane.
     integer :: horizontalCoordinate = l_phiTan ! The horizontal coordinate used.
                                         ! Either l_phiTan or l_time
-    logical :: sharedHGrid              ! Set if horiz coord is a pointer not a copy
-    integer :: hGridIndex               ! Index of any hGrid used
-    integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
     integer :: grandTotalInstances      ! Total number of instances in destination output file
     ! for example MAF index, or profile index.
+    integer :: hGridIndex               ! Index of any hGrid used
+    integer :: instanceOffset           ! Ind of 1st non overlapped instance in output
+    logical :: sharedHGrid              ! Set if horiz coord is a pointer not a copy
+    integer :: xGridIndex = 0           ! Index of any xGrid used
 
     ! First subscript values for GeoLocation component
     integer :: OrbitCoordinateIndex = 1 ! For spacecraft position
     integer :: LOSCoordinateIndex = 2   ! For line of sight
     real(rt), dimension(:,:,:), pointer :: Geolocation => NULL()
 
-    ! Geolocation is dimensioned (*,1, noInstances) for stacked quantities and
-    ! (*,noSurfs, noInstances) for unstacked ones.  The Geolocation coordinate
+    ! Geolocation is dimensioned (*, 1, noInstances) for stacked quantities and
+    ! (*, noSurfs, noInstances) for unstacked ones.  The Geolocation coordinate
     ! for the (*,i,j) value is geolocation(*,1,j) for a stacked quantity and
     ! geolocation(*,i,j) for an unstacked one.  The "*" is taken from either
     ! the OrbitCoordinateIndex or LOSCoordinateIndex component.
 
-    real(rt), dimension(:,:), pointer :: phi => NULL() ! Degrees
+    real(rt), dimension(:,:), pointer :: Phi => NULL() ! Degrees
 
     ! Phi is dimensioned (1, noInstances) for stacked quantities and
     ! (noSurfs, noInstances) for unstacked ones.  The PHI coordinate for the
@@ -139,12 +153,41 @@ module QuantityTemplates         ! Quantities within vectors
     ! unstacked one.  Phi is either taken from or derived from Geolocation.
 
     ! These other coordinates are dimensioned in the same manner as Phi:
-    real(rt), dimension(:,:), pointer :: geodLat => NULL() ! Degrees
-    real(rt), dimension(:,:), pointer :: lon => NULL()     ! Degrees
-    real(rt), dimension(:,:), pointer :: time => NULL() ! Seconds since EPOCH
-    real(rt), dimension(:,:), pointer :: solarTime => NULL()
-    real(rt), dimension(:,:), pointer :: solarZenith => NULL()
-    real(rt), dimension(:,:), pointer :: losAngle => NULL()
+    real(rt), contiguous, pointer :: GeodLat(:,:) => NULL()     ! Degrees
+    real(rt), contiguous, pointer :: Lon(:,:) => NULL()         ! Degrees
+    real(rt), contiguous, pointer :: Time(:,:) => NULL() ! Seconds since EPOCH
+    real(rt), contiguous, pointer :: SolarTime(:,:) => NULL()
+    real(rt), contiguous, pointer :: SolarZenith(:,:) => NULL() ! Degrees
+    real(rt), contiguous, pointer :: LosAngle(:,:) => NULL()    ! Degrees
+
+    ! GeodLat1 and Lon1 are the ones that are allocated.  The extents are the
+    ! number of surfaces (for unstacked quantities) or 1 (for stacked
+    ! quantities), times the number of instances, times the size of xGrid.
+    ! GeodLat, Lon, GeodLat3, and Lon3 are then rank remapped pointers
+    ! associated with GeodLat1 and Lon1.  The third extent of GeodLat3 and
+    ! Lon3 is 1, or the size of xGrid if there is one.  If there is an xGrid,
+    ! the second extent of GeodLat and Lon is the number of instances times
+    ! the size of xGrid, with subscript values in the second dimension
+    ! corresponding to positions in the xGrid separated by the number of
+    ! instances (using GeodLat3 and Lon3 would be much simpler).
+    real(rt), contiguous, pointer :: GeodLat1(:) => NULL()      ! Degrees
+    real(rt), contiguous, pointer :: Lon1(:) => NULL()          ! Degrees
+    real(rt), contiguous, pointer :: GeodLat3(:,:,:) => NULL()  ! Degrees
+    real(rt), contiguous, pointer :: Lon3(:,:,:) => NULL()      ! Degrees
+
+    ! Notwithstanding that the name of the latitude coordinate is GeodLat,
+    ! it is sometimes geocentric latitude.  LatitudeCoordinate is either
+    ! L_Geocentric or L_Geodetic.
+
+    integer :: LatitudeCoordinate = L_Geodetic
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! For quantities having cross-track extent other than one, CrossAngles
+    ! gives the angles from Phi, in the direction of the instrument.  Positive
+    ! values are away from the instrument, negative values are toward the
+    ! instrument.  The values come from the quantity's xGrid, which is
+    ! reqired to be an explicit hGrid.
+    real(rt), dimension(:), pointer :: CrossAngles => NULL()   ! Degrees
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! For quantities containing `channels' the following information may or
@@ -212,12 +255,6 @@ module QuantityTemplates         ! Quantities within vectors
     module procedure myValuesToField_2d_dble
   end interface
 
-  public :: EPOCH, QuantityTemplate_T, RT
-  public :: AddQuantityTemplateToDatabase, InflateQuantityTemplateDatabase
-  public :: CheckIntegrity, CopyQuantityTemplate, &
-    & DestroyQuantityTemplateContents, DestroyQuantityTemplateDatabase, &
-    & Dump, ModifyQuantityTemplate, NullifyQuantityTemplate, &
-    & QuantitiesAreCompatible, SetupNewQuantityTemplate, WriteAttributes
   integer, parameter :: NUMMODS = 9
   character(*), dimension(NUMMODS), parameter :: MODIFIABLEFIELDS = (/&
     & 'surfs      ', &
@@ -244,6 +281,7 @@ contains
   ! doesn't yet exist
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (QuantityTemplate_T), dimension(:), pointer :: database
@@ -261,8 +299,8 @@ contains
   subroutine CopyQuantityTemplate ( Z, A )
     ! This routine does a 'deep' copy of a quantity template.
     ! We don't need to do if often as typically only a shallow copy
-    ! is required.  Note that this also follows any 'links' to h/vGrids and expands
-    ! them too.
+    ! is required.  Note that this also follows any 'links' to h/v/xGrids
+    ! and expands them too.
     use DeepCopy_m, only: DeepCopy
     type (QuantityTemplate_T), intent(inout) :: Z
     type (QuantityTemplate_T), intent(in) :: A
@@ -272,9 +310,11 @@ contains
     call DestroyQuantityTemplateContents ( z )
     ! Setup result
     z%name = a%name
-    call SetupNewQuantityTemplate ( z, a%noInstances, a%noSurfs, a%noChans, &
-      & a%coherent, a%stacked, a%regular, a%instanceLen, a%minorFrame, &
-      & a%majorFrame )
+    call SetupNewQuantityTemplate ( z, noInstances=a%noInstances, &
+      & noSurfs=a%noSurfs, noChans=a%noChans, noCrossTrack=a%noCrossTrack, &
+      & coherent=a%coherent, stacked=a%stacked, regular=a%regular, &
+      & instanceLen=a%instanceLen, minorFrame=a%minorFrame, &
+      & majorFrame=a%majorFrame )
     ! Copy each other component -- tedious, but a shallow copy
     ! would lose newly allocated arrays
     ! 1st, scalars
@@ -298,6 +338,7 @@ contains
     z%verticalCoordinate           = a%verticalCoordinate     
     z%sharedVGrid                  = a%sharedVGrid            
     z%vGridIndex                   = a%vGridIndex             
+    z%xGridIndex                   = a%xGridIndex             
     z%sharedHGrid                  = a%sharedHGrid             
     z%horizontalCoordinate         = a%horizontalCoordinate             
     z%hGridIndex                   = a%hGridIndex              
@@ -315,16 +356,16 @@ contains
     z%molecule                     = a%molecule        
 
     ! Next, arrays
-    z%surfs       = a%surfs
-    z%phi         = a%phi
-    z%geodLat     = a%geodLat
-    z%lon         = a%lon
-    z%time        = a%time
-    z%solarTime   = a%solarTime
-    z%solarZenith = a%solarZenith
-    z%losAngle    = a%losAngle
-    z%ChanInds    = a%ChanInds
-    z%Channels    = a%Channels
+    if ( associated(z%surfs)       .and. associated(a%surfs) )       z%surfs =       a%surfs
+    if ( associated(z%phi)         .and. associated(a%phi) )         z%phi =         a%phi
+    if ( associated(z%geodLat)     .and. associated(a%geodLat) )     z%geodLat =     a%geodLat
+    if ( associated(z%lon)         .and. associated(a%lon) )         z%lon =         a%lon
+    if ( associated(z%time)        .and. associated(a%time) )        z%time =        a%time
+    if ( associated(z%solarTime)   .and. associated(a%solarTime) )   z%solarTime =   a%solarTime
+    if ( associated(z%solarZenith) .and. associated(a%solarZenith) ) z%solarZenith = a%solarZenith
+    if ( associated(z%losAngle)    .and. associated(a%losAngle) )    z%losAngle =    a%losAngle
+    if ( associated(z%chanInds)    .and. associated(a%chanInds) )    z%chanInds =    a%chanInds
+    if ( associated(z%channels)    .and. associated(a%channels) )    z%channels =    a%channels
     call deepCopy ( z%frequencies, a%frequencies )
     if ( .not. z%regular ) then
       z%surfIndex = a%surfIndex
@@ -332,6 +373,34 @@ contains
     end if
 
   end subroutine CopyQuantityTemplate
+
+  ! ------------------------------------  CreateGeolocationFields  -----
+  subroutine CreateGeolocationFields ( Qty, NoSurfsToAllocate, What )
+    ! Allocate Qty%GeodLat1 and Qty%Lon1.  Create rank-remapped pointers to
+    ! Qty%GeodLat, Qty%Lon, Qty%GeodLat3, and Qty%Lon3.
+    use Pointer_Rank_Remapping, only: REMAP
+
+    type (QuantityTemplate_T), intent(inout) :: QTY
+    integer, intent(in) :: NoSurfsToAllocate
+    character(len=*), intent(in) :: What
+
+    integer :: NumAlloc
+
+    numAlloc = noSurfsToAllocate * qty%noInstances * qty%noCrossTrack
+    call allocate_test ( qty%geodLat1, numAlloc, trim(what) // "%geodLat1", &
+      & moduleName )
+    call remap ( qty%geodLat1, qty%geodLat, &
+      & [ noSurfsToAllocate, qty%noInstances * qty%noCrossTrack ] )
+    call remap ( qty%geodLat1, qty%geodLat3, &
+      & [ noSurfsToAllocate, qty%noInstances, qty%noCrossTrack ] )
+    call allocate_test ( qty%lon1, numAlloc, trim(what) // "%lon1", &
+      & moduleName )
+    call remap ( qty%lon1, qty%lon, &
+      & [ noSurfsToAllocate, qty%noInstances * qty%noCrossTrack ] )
+    call remap ( qty%lon1, qty%lon3, &
+      & [ noSurfsToAllocate, qty%noInstances, qty%noCrossTrack ] )
+
+  end subroutine CreateGeolocationFields
 
   ! ----------------------------  DestroyQuantityTemplateContents  -----
   subroutine DestroyQuantityTemplateContents ( qty )
@@ -360,13 +429,38 @@ contains
       call deallocate_test ( qty%surfs, trim(what) // "%surfs", ModuleName )
     end if
 
-    if ( .not. qty%sharedHGrid ) then
-      if ( verbose ) call output( 'About to deallocate phi', advance='yes' )
-      call deallocate_test ( qty%phi, trim(what) // '%phi', ModuleName )
+    if ( qty%sharedHGrid ) then
+
+      if ( qty%noCrossTrack > 1 ) then
+        call deallocate_test ( qty%lon1, trim(what) // '%geodLat1', ModuleName )
+        call deallocate_test ( qty%geodLat1, trim(what) // '%geodLat1', ModuleName )
+        if ( verbose ) call output( 'About to deallocate lons', advance='yes' )
+        call deallocate_test ( qty%lon1, trim(what) // '%lon1', ModuleName )
+      end if
+
+      ! ------------ This ought to be true but apparently isn't ------------
+      ! If the quantity isn't stacked, an empty Phi array is allocated, even
+      ! if hGrids are shared.  Its size is zero, but it doesn't hurt to
+      ! deallocate it.
+      ! --------------------------------------------------------------------
+!       if ( .not. qty%stacked ) &
+!         & call deallocate_test ( qty%phi, trim(what) // '%phi', ModuleName )
+
+      nullify ( qty%geodLat1, qty%geodLat, qty%geodLat3, &
+              & qty%lon1, qty%lon, qty%lon3, qty%time, qty%solarTime, &
+              & qty%solarZenith, qty%losAngle, qty%crossAngles )
+
+    else
+
+      ! If not stacked, there is no Phi.
+      if ( qty%stacked ) then
+        if ( verbose ) call output( 'About to deallocate stacked phi', advance='yes' )
+        call deallocate_test ( qty%phi, trim(what) // '%phi', ModuleName )
+      end if
       if ( verbose ) call output( 'About to deallocate geosdlat', advance='yes' )
-      call deallocate_test ( qty%geodLat, trim(what) // '%geodLat', ModuleName )
+      call deallocate_test ( qty%geodLat1, trim(what) // '%geodLat', ModuleName )
       if ( verbose ) call output( 'About to deallocate lons', advance='yes' )
-      call deallocate_test ( qty%lon, trim(what) // '%lon', ModuleName )
+      call deallocate_test ( qty%lon1, trim(what) // '%lon', ModuleName )
       if ( verbose ) call output( 'About to deallocate times', advance='yes' )
       call deallocate_test ( qty%time, trim(what) // '%time', ModuleName )
       if ( verbose ) call output( 'About to deallocate solartime', advance='yes' )
@@ -375,6 +469,12 @@ contains
       call deallocate_test ( qty%solarZenith, trim(what) // '%solarZenith', ModuleName )
       if ( verbose ) call output( 'About to deallocate losangle', advance='yes' )
       call deallocate_test ( qty%losAngle, trim(what) // '%losAngle', ModuleName )
+      if ( verbose ) call output( 'About to deallocate crossAngles', advance='yes' )
+      call deallocate_test ( qty%crossAngles, trim(what) // '%crossAngles', ModuleName )
+
+      ! Nullify the remapped ones.
+      nullify ( qty%geodLat, qty%geodLat3, qty%lon, qty%lon3 )
+
     end if
 
     if ( .not. qty%sharedFGrid ) then
@@ -400,8 +500,11 @@ contains
     ! Dummy argument
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+
     type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: qtyIndex, s, status
     logical :: verbose
 
@@ -413,13 +516,15 @@ contains
         call DestroyQuantityTemplateContents ( database(qtyIndex) )
       end do
       s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
       deallocate ( database, stat=status )
-      call test_deallocate ( status, ModuleName, "database", s )
+      call test_deallocate ( status, ModuleName, "database", s, address=addr )
     end if
   end subroutine DestroyQuantityTemplateDatabase
 
   ! -------------------------------------  DUMP_QUANTITY_TEMPLATE  -----
-  subroutine DUMP_QUANTITY_TEMPLATE ( QUANTITY_TEMPLATE, DETAILS, NOL2CF )
+  subroutine DUMP_QUANTITY_TEMPLATE ( QUANTITY_TEMPLATE, DETAILS, NOL2CF, What )
 
     use MLSSIGNALS_M, only: SIGNALS, DUMP, GETRADIOMETERNAME, GETMODULENAME
     use OUTPUT_M, only: NEWLINE
@@ -433,23 +538,29 @@ contains
                                              ! Default 1
     logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump L2-specific
                                              !  stuff
+    character(*), intent(in), optional :: What ! In case you want to label it
     integer :: MyDetails
     character (len=80) :: Str
     logical :: myNoL2CF
+
     myDetails = 1
     if ( present(details) ) myDetails = details
     myNoL2CF = switchDetail(switches, 'nl2cf') > -1 ! .false.
     if ( present(NoL2CF) ) myNoL2CF = NoL2CF
     call output ( ' Name = ' )
     call myDisplayString ( quantity_template%name )
-    if ( .not. myNoL2CF ) then
+    if ( .not. myNoL2CF .and. quantity_template%quantityType > 0 ) then
       call output ( ' quantityType = ' )
-      call myDisplayString ( lit_indices(quantity_template%quantityType), &
-        & advance='yes' )
+      call myDisplayString ( lit_indices(quantity_template%quantityType) )
+    else
+      call output ( ' unknown quantityType' )
     end if
-    call output ( quantity_template%noInstances, before='      NoInstances = ' )
-    call output ( quantity_template%noChans,     before=' noChans = ' )
-    call output ( quantity_template%noSurfs,     before=' NoSurfs = ', advance='yes' )
+    if ( present(what) ) call output ( ' ' // trim(what) )
+    call newline
+    call output ( quantity_template%noInstances,  before='      NoInstances = ' )
+    call output ( quantity_template%noChans,      before=' noChans = ' )
+    call output ( quantity_template%noSurfs,      before=' NoSurfs = ' )
+    call output ( quantity_template%noCrossTrack, before=' NoCrossTrack = ', advance='yes' )
     call output ( '      ' )
     if ( .not. quantity_template%coherent ) call output ( 'in' )
     call output ( 'coherent ' )
@@ -463,38 +574,40 @@ contains
       call output ('linear-')
     end if
     call output ('basis ' )
-    if ( .not. quantity_template%minorFrame ) call output ( 'non' )
-    call output ( 'minorFrame', advance='yes' )
+    call output ( trim(merge('   ','non',quantity_template%minorFrame)) // &
+      & 'minorFrame' )
+    call output ( ' ' // trim(merge('   ','non',quantity_template%majorFrame)) // &
+      & 'majorFrame', advance='yes' )
     call output ( '      NoInstancesLowerOverlap = ' )
     call output ( quantity_template%noInstancesLowerOverlap )
     call output ( ' NoInstancesUpperOverlap = ' )
     call output ( quantity_template%noInstancesUpperOverlap, advance='yes' )
-    call output ( '      BadValue = ' )
-    call output ( quantity_template%badValue )
-    if ( .not. myNoL2CF ) then
-      call output ( ' Unit = ' )
-      call myDisplayString ( lit_indices(quantity_template%unit) )
+    if ( .not. myNoL2CF .and. quantity_template%unit > 0 ) then
+      call myDisplayString ( lit_indices(quantity_template%unit), &
+        & before='      Unit = ' )
     end if
+    call output ( quantity_template%badValue, before=' BadValue = ' )
     call output ( ' InstanceLen = ' )
     call output ( quantity_template%InstanceLen, advance='yes' )
-    if ( .not. myNoL2CF ) &
+    if ( .not. myNoL2CF .and. quantity_template%horizontalCoordinate > 0 ) &
       & call myDisplayString ( lit_indices(quantity_template%horizontalCoordinate), &
-      & before=   '      horizontal coordinate = ', advance='yes' )
+      & before=   '      horizontal coordinate = ' )
+    call myDisplayString ( lit_indices(quantity_template%latitudeCoordinate), &
+      & before=' latitude coordinate = ', advance='yes' )
     call output ( '      sharedHGrid = ' )
     call output ( quantity_template%sharedHGrid, advance='no' )
     if ( quantity_template%sharedHGrid ) then
-      call output ( ' hGridIndex = ' )
-      call output ( quantity_template%hGridIndex, advance='yes' )
-    else
-      call newline
+      call output ( quantity_template%hGridIndex, before=' hGridIndex = ' )
+      call output ( quantity_template%xGridIndex, before=' xGridIndex = ' )
     end if
+    call newline
     call output ( '      sharedVGrid = ' )
     call output ( quantity_template%sharedVGrid, advance='no' )
     if ( quantity_template%sharedVGrid ) then
       call output ( ' vGridIndex = ' )
       call output ( quantity_template%vGridIndex )
     end if
-    if ( .not. myNoL2CF ) &
+    if ( .not. myNoL2CF .and. quantity_template%verticalCoordinate > 0 ) &
       & call myDisplayString ( lit_indices(quantity_template%verticalCoordinate), &
       & before=' vertical coordinate = ', advance='yes' )
     call output ( '      sharedFGrid = ' )
@@ -502,9 +615,9 @@ contains
     if ( quantity_template%sharedFGrid ) then
       call output ( ' fGridIndex = ' )
       call output ( quantity_template%fGridIndex, advance='yes' )
-    else
-      call newline
     end if
+    call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
+      & before=   ' frequency coordinate = ', advance='yes' )
     if ( quantity_template%radiometer /= 0 .and. .not. myNoL2CF ) then
       call output ( '      Radiometer = ' )
       call GetRadiometerName ( quantity_template%radiometer, str )
@@ -544,10 +657,10 @@ contains
           & call dump ( quantity_template%surfIndex,   '      SurfIndex = ' )
         if ( associated(quantity_template%chanIndex) ) &
           & call dump ( quantity_template%chanIndex,   '      ChanIndex = ' )
-        if ( associated(quantity_template%geodLat) ) &
-          & call dump ( quantity_template%geodLat,     '      GeodLat = ' )
-        if ( associated(quantity_template%lon) ) &
-          & call dump ( quantity_template%lon,         '      Lon = ' )
+        if ( associated(quantity_template%geodLat3) ) &
+          & call dump ( quantity_template%geodLat3,    '      GeodLat = ' )
+        if ( associated(quantity_template%lon3) ) &
+          & call dump ( quantity_template%lon3,        '      Lon = ' )
         if ( associated(quantity_template%time) ) &
           & call dump ( quantity_template%time,        '      Time = ' )
         if ( associated(quantity_template%solarTime) ) &
@@ -556,6 +669,8 @@ contains
           & call dump ( quantity_template%solarZenith, '      SolarZenith = ' )
         if ( associated(quantity_template%losAngle) ) &
           & call dump ( quantity_template%losAngle,    '      LosAngle = ' )
+        if ( associated(quantity_template%crossAngles) ) &
+          call dump ( quantity_template%crossAngles, name='      CrossAngles' )
       end if
       if ( associated(quantity_template%frequencies)  .and. .not. myNoL2CF ) then
         call myDisplayString ( lit_indices(quantity_template%frequencyCoordinate), &
@@ -570,13 +685,14 @@ contains
   end subroutine DUMP_QUANTITY_TEMPLATE
 
   ! ------------------------------------  DUMP_QUANTITY_TEMPLATES  -----
-  subroutine DUMP_QUANTITY_TEMPLATES ( QUANTITY_TEMPLATES, DETAILS, NOL2CF )
+  subroutine DUMP_QUANTITY_TEMPLATES ( QUANTITY_TEMPLATES, DETAILS, NOL2CF, What )
 
     type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATES(:)
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
     !                                        ! >0   => Do dump arrays
     !                                        ! Default 1
     logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump l2-specific
+    character(*), intent(in), optional :: What ! In case you want to label it
 
     integer :: I
 
@@ -585,7 +701,7 @@ contains
     do i = 1, size(quantity_templates)
       call output ( i, 4 )
       call output ( ':' )
-      call dump_quantity_template ( quantity_templates(i), details, nol2cf )
+      call dump_quantity_template ( quantity_templates(i), details, nol2cf, What )
     end do
 
   end subroutine DUMP_QUANTITY_TEMPLATES
@@ -596,6 +712,7 @@ contains
     ! Return index of first new element
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
@@ -636,7 +753,7 @@ contains
       call MLSMessage ( MLSMSG_Error, ModuleName // &
         & 'ModifyQuantityTemplate_allocate', &
         & trim(field) // " not a modifiable field" )
-    endif
+    end if
     select case(lowercase(field))
     case ( 'surfs' )
       if ( any(shape(z%surfs) /= shp) ) then
@@ -645,7 +762,7 @@ contains
         call allocate_test ( z%surfs, shp(1), shp(2), &
           & "template surfs", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      endif
+      end if
       call myValuesToField( z%surfs, SHP, VALUESNODE, spread, PHYQ_Dimensionless )
     case ( 'phi' )
       if ( any(shape(z%phi) /= shp) ) then
@@ -654,7 +771,7 @@ contains
         call allocate_test ( z%phi, shp(1), shp(2), &
           & "template phi", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      endif
+      end if
       call myValuesToField( z%phi, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'geodlat' )
       if ( any(shape(z%geodlat) /= shp) ) then
@@ -663,7 +780,7 @@ contains
         call allocate_test ( z%geodLat, shp(1), shp(2), &
           & "template geodLat", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      endif
+      end if
       call myValuesToField( z%geodLat, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'lon' )
       if ( any(shape(z%lon) /= shp) ) then
@@ -672,7 +789,7 @@ contains
         call allocate_test ( z%lon, shp(1), shp(2), &
           & "template lon", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      endif
+      end if
       call myValuesToField( z%lon, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'time' )
       if ( any(shape(z%time) /= shp) ) then
@@ -681,7 +798,7 @@ contains
         call allocate_test ( z%time, shp(1), shp(2), &
           & "template time", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      endif
+      end if
       call myValuesToField( z%time, SHP, VALUESNODE, spread, phyq_time )
     case ( 'solartime' )
       if ( any(shape(z%solartime) /= shp) ) then
@@ -690,7 +807,7 @@ contains
         call allocate_test ( z%solartime, shp(1), shp(2), &
           & "template solartime", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      endif
+      end if
       call myValuesToField( z%solartime, SHP, VALUESNODE, spread, phyq_time )
     case ( 'solarzenith' )
       if ( any(shape(z%solarzenith) /= shp) ) then
@@ -699,7 +816,7 @@ contains
         call allocate_test ( z%solarzenith, shp(1), shp(2), &
           & "template solarzenith", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      endif
+      end if
       call myValuesToField( z%solarzenith, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'losangle' )
       if ( any(shape(z%losangle) /= shp) ) then
@@ -708,32 +825,32 @@ contains
         call allocate_test ( z%losangle, shp(1), shp(2), &
           & "template losangle", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      endif
+      end if
       call myValuesToField( z%losangle, SHP, VALUESNODE, spread, phyq_angle )
     case ( 'frequencies' )
       if ( .not. associated(z%frequencies) ) then
         call allocate_test ( z%frequencies, shp(1), &
           & "template frequencies", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      elseif ( size(z%frequencies) /= shp(1) ) then
+      else if ( size(z%frequencies) /= shp(1) ) then
         call deallocate_test( z%frequencies, 'template frequencies', &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
         call allocate_test ( z%frequencies, shp(1), &
           & "template frequencies", &
           & ModuleName // 'ModifyQuantityTemplate_allocate' )
-      endif
+      end if
       call myValuesToField( z%frequencies, VALUESNODE, spread, phyq_frequency )
     case default
     end select
     if ( lowercase(field) == 'surfs' ) then
       z%NoSurfs = shp(1)
       if ( .not. z%coherent ) z%noInstances = shp(2)
-    elseif ( lowercase(field) == 'frequencies' ) then
+    else if ( lowercase(field) == 'frequencies' ) then
       z%NoChans = shp(1)
     else
       z%noInstances = shp(2)
       if ( .not. z%stacked ) z%NoSurfs = shp(1)
-    endif
+    end if
   end subroutine ModifyQuantityTemplate_allocate
 
   subroutine ModifyQuantityTemplate_array  ( Z, FIELD, array, spread )
@@ -755,7 +872,7 @@ contains
       call MLSMessage ( MLSMSG_Error, ModuleName // &
         & 'ModifyQuantityTemplate_allocate', &
         & trim(field) // " not a modifiable field" )
-    endif
+    end if
     shp = shape(array)
     if ( spread .and. shp(1) == 1 ) then
       select case(lowercase(field))
@@ -779,7 +896,7 @@ contains
         z%frequencies(:) = array(1,1)
       case default
       end select
-    elseif ( spread .and. shp(2) == 1 ) then
+    else if ( spread .and. shp(2) == 1 ) then
       select case(lowercase(field))
       case ( 'surfs' )
         z%surfs(1:shp(1),:) = array
@@ -823,7 +940,7 @@ contains
         z%frequencies(1:shp(1)) = array(:,1)
       case default
       end select
-    endif
+    end if
   end subroutine ModifyQuantityTemplate_array
 
   subroutine ModifyQuantityTemplate_sca  ( Z, FIELD, NEWVALUE )
@@ -838,7 +955,7 @@ contains
       call MLSMessage ( MLSMSG_Error, ModuleName // &
         & 'ModifyQuantityTemplate_allocate', &
         & trim(field) // " not a modifiable field" )
-    endif
+    end if
     select case(lowercase(field))
     case ( 'surfs' )
       z%surfs = newvalue
@@ -878,13 +995,20 @@ contains
   end subroutine NullifyQuantityTemplate
 
   ! ------------------------------------  QuantitiesAreCompatible  -----
-  logical function QuantitiesAreCompatible ( Qty_1, Qty_2 )
+  logical function QuantitiesAreCompatible ( Qty_1, Qty_2, DifferentTypeOK )
     type(quantityTemplate_t), intent(in) :: Qty_1, Qty_2
+    logical, intent(in), optional :: DifferentTypeOK
+    logical :: TypeCheck
+    typeCheck = qty_1%quantityType == qty_2%quantityType
+    if ( present(differentTypeOK) ) then
+      if ( differentTypeOK ) typeCheck = .true.
+    end if
     QuantitiesAreCompatible = &
-      & qty_1%quantityType == qty_2%quantityType .and. &
+      & typeCheck .and. &
       & qty_1%noInstances == qty_2%noInstances .and. &
       & qty_1%noSurfs == qty_2%noSurfs .and. &
       & qty_1%noChans == qty_2%noChans .and. &
+      & qty_1%noCrossTrack == qty_2%noCrossTrack .and. &
       & qty_1%coherent .eqv. qty_2%coherent .and. &
       & qty_1%stacked .eqv. qty_2%stacked .and. &
       & qty_1%regular .eqv. qty_2%regular .and. &
@@ -947,8 +1071,11 @@ contains
 
   ! -----------------------------------  SetupNewQuantityTemplate  -----
   subroutine SetupNewQuantityTemplate ( qty, noInstances, noSurfs, &
-    & noChans, coherent, stacked, regular, instanceLen, minorFrame, majorFrame, &
+    & noChans, coherent, stacked, regular, instanceLen, noCrossTrack, &
+    & minorFrame, majorFrame, &
     & sharedVGrid, sharedHGrid, sharedFGrid, badValue )
+
+    use Intrinsic, only: L_Dimensionless
 
   ! Set up a new quantity template according to the user input.  This may
   ! be based on a previously supplied template (with possible
@@ -965,6 +1092,7 @@ contains
     logical, intent(in), optional :: stacked
     logical, intent(in), optional :: regular
     integer, intent(in), optional :: instanceLen
+    integer, intent(in), optional :: noCrossTrack
     logical, intent(in), optional :: minorFrame
     logical, intent(in), optional :: majorFrame
     logical, intent(in), optional :: sharedVGrid
@@ -989,6 +1117,7 @@ contains
     qty%noChans = 1
     qty%noInstances = 1
     qty%noSurfs = 1
+    qty%noCrossTrack = 1
     qty%coherent = .true.
     qty%stacked = .true.
     qty%regular = .true.
@@ -999,11 +1128,12 @@ contains
     qty%noInstancesLowerOverlap = 0
     qty%noInstancesUpperOverlap = 0
     qty%badValue = huge ( 0.0_rt )
-    qty%unit = 0
+    qty%unit = l_dimensionless
     qty%instanceLen = 1
     qty%verticalCoordinate = l_none
     qty%sharedVGrid = .false.
     qty%vGridIndex = 0
+    qty%xGridIndex = 0
     qty%sharedHGrid = .false.
     qty%horizontalCoordinate = l_phiTan
     qty%hGridIndex = 0
@@ -1023,6 +1153,7 @@ contains
     if ( present (noChans) )      qty%noChans = noChans
     if ( present (noInstances) )  qty%noInstances = noInstances
     if ( present (noSurfs) )      qty%noSurfs = noSurfs
+    if ( present (noCrossTrack) ) qty%noCrossTrack = noCrossTrack
     if ( present (regular) )      qty%regular = regular
     if ( present (minorFrame) )   qty%minorFrame = minorFrame
     if ( present (majorFrame) )   qty%majorFrame = majorFrame
@@ -1055,7 +1186,7 @@ contains
         qty%instanceLen = 0
       end if
     else
-      qty%instanceLen = qty%noSurfs * qty%noChans
+      qty%instanceLen = qty%noSurfs * qty%noChans * qty%noCrossTrack
     end if
 
     ! Now we allocate all the arrays we're going to need if necessary
@@ -1082,15 +1213,17 @@ contains
     ! Now the horizontal coordinates
 
     if ( qty%sharedHGrid ) then
-      nullify ( qty%phi, qty%geodLat, qty%lon, qty%time, qty%solarTime, &
-        & qty%solarZenith, qty%losAngle )
+      nullify ( qty%phi, qty%geodLat, qty%geodLat1, qty%geodLat3, &
+        & qty%lon, qty%lon1, qty%lon3, qty%crossAngles, qty%time, &
+        & qty%solarTime, qty%solarZenith, qty%losAngle )
     else
+      call allocate_test ( qty%crossAngles, qty%noCrossTrack, &
+        & trim(what) // "%crossAngles", ModuleName )
+      qty%crossAngles = 0.0 ! In case there actually is no xGrid
       call allocate_test ( qty%phi, noSurfsToAllocate, qty%noInstances, &
         & trim(what) // "%phi", ModuleName )
-      call allocate_test ( qty%geodLat, noSurfsToAllocate, qty%noInstances, &
-        & trim(what) // "%geodLat", ModuleName )
-      call allocate_test ( qty%lon, noSurfsToAllocate, qty%noInstances, &
-        & trim(what) // "%lon", ModuleName )
+      ! Create GeodLat and Lon fields.
+      call createGeolocationFields ( qty, noSurfsToAllocate, what )
       call allocate_test ( qty%time, noSurfsToAllocate, qty%noInstances, &
         & trim(what) // "%time", ModuleName )
       call allocate_test ( qty%solarTime, noSurfsToAllocate, qty%noInstances, &
@@ -1436,7 +1569,7 @@ contains
     call lookup ( strID, found, caseless=.true., debug=0 )
     do litID=first_lit, Last_auto_lit
       if ( lit_indices(litID) == strID ) return
-    enddo
+    end do
     litID = -1 ! Still not found
   end subroutine GetHDF5AttrAsLitID
 
@@ -1520,12 +1653,12 @@ contains
     if ( valuesNode < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'illegal valuesNode in template field modify' )
-    endif
+    end if
     noValues = nsons(valuesNode) - 1
     if ( noValues < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Too few values in template field modify' )
-    endif
+    end if
     do k = 1, noValues
       call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
         & (/testUnit, PHYQ_Dimensionless/), unitsError )
@@ -1537,8 +1670,8 @@ contains
       else
         if ( k < size(tField) ) &
           & tField( k ) = valueAsArray(1)
-      endif
-    enddo
+      end if
+    end do
   end subroutine myValuesToField_1d_dble
 
   subroutine myValuesToField_2d_real ( TFIELD, SHP, VALUESNODE, SPREAD, TESTUNIT )
@@ -1559,12 +1692,12 @@ contains
     if ( valuesNode < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'illegal valuesNode in template field modify' )
-    endif
+    end if
     noValues = nsons(valuesNode) - 1
     if ( noValues < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Too few values in template field modify' )
-    endif
+    end if
     ! call outputNamedValue( 'Number of values', NoValues )
     do k = 1, noValues
       call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
@@ -1582,8 +1715,8 @@ contains
           & 'Unable to rerank values in template field modify' )
         if ( all(indices < shp) ) &
           & tField( indices(1), indices(2) ) = valueAsArray(1)
-      endif
-    enddo
+      end if
+    end do
   end subroutine myValuesToField_2d_real
 
   subroutine myValuesToField_2d_dble ( TFIELD, SHP, VALUESNODE, SPREAD, TESTUNIT )
@@ -1604,12 +1737,12 @@ contains
     if ( valuesNode < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'illegal valuesNode in template field modify' )
-    endif
+    end if
     noValues = nsons(valuesNode) - 1
     if ( noValues < 1 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Too few values in template field modify' )
-    endif
+    end if
     ! call outputNamedValue( 'Number of values', NoValues )
     do k = 1, noValues
       call expr_check ( subtree(k+1,valuesNode) , unitAsArray, valueAsArray, &
@@ -1627,8 +1760,8 @@ contains
           & 'Unable to rerank values in template field modify' )
         if ( all(indices <= shp) ) &
           & tField( indices(1), indices(2) ) = valueAsArray(1)
-      endif
-    enddo
+      end if
+    end do
   end subroutine myValuesToField_2d_dble
 
 !=============================================================================
@@ -1647,6 +1780,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.88  2014/10/29 23:04:29  vsnyder
+! Specified units of several components
+!
 ! Revision 2.87  2014/09/05 00:17:16  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
