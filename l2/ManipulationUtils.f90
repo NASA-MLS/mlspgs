@@ -584,6 +584,7 @@ contains ! =====     Public Procedures     =============================
     ! the size -- where it was put.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (arrayTemp_T), dimension(:), pointer :: DATABASE
@@ -1378,6 +1379,9 @@ end module ManipulationUtils
 
 !
 ! $Log$
+! Revision 2.15  2015/03/28 02:48:36  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.14  2014/09/05 01:11:15  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
