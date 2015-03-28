@@ -96,7 +96,8 @@ contains
 
   subroutine L3ascii_read_field ( Unit, Field, End_of_file, ErrType )
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
-    use dates_module, only: ccsds2tai    ! Shoud use SDP Toolkit eventually. 
+    use Dates_module, only: ccsds2tai    ! Shoud use SDP Toolkit eventually. 
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use Toggles, only: Gen, Levels, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     ! ----Arguments ----!
@@ -105,6 +106,7 @@ contains
     type(GriddedData_T), intent(inout) :: field
     logical , intent(out) :: end_of_file
     !-------Local Variables --------!
+    integer(c_intptr_t) :: Addr         ! For tracing
     character(len=*),parameter :: DummyYear="1993"
     logical :: opened
     character(len=LineLen) :: inline
@@ -158,6 +160,7 @@ contains
 
     ! Automatically create a stub grid template with minimal size
     ! Each component will be deallocated && reallocated with correct sizes later
+
     call allocate_test ( field%heights, 1, 'field%heights', moduleName )
     field%heights(1)=1000.0
     field%noHeights=1
@@ -182,8 +185,10 @@ contains
     field%dateStarts(1)=30.0
     field%noDates=1
     allocate ( field%field(1:1,1:1,1:1,1:1,1:1,1:1), stat=status )
+    addr = 0
+    if ( status == 0 ) addr = transfer(c_loc(field%field(1,1,1,1,1,1)), addr)
     call test_allocate ( status, moduleName, "field%field", uBounds=1, &
-      & elementSize = storage_size(field%field) / 8 )
+      & elementSize = storage_size(field%field) / 8, address=addr )
     field%dateStarts(1)=30.0
     field%noDates=1
     ! Dates are mandatory, so we don't have to give them a default value
@@ -294,12 +299,16 @@ contains
     field%noDates=1
     allocate ( tmpfield(1:field%noHeights,1:field%noLats,1:field%noLons, &
       1:field%noLsts,1:field%noSzas,1:maxNoDates), stat=status )
+    addr = 0
+    if ( status == 0 ) then
+!       if ( size(tmpfield) > 0 ) addr = transfer(c_loc(tmpfield(1,1,1,1,1,1)), addr)
+    end if
     call test_allocate ( status, moduleName, "tmpField", &
       & uBounds = [ field%noHeights, field%noLats, field%noLons, &
       &             field%noLsts, field%noSzas, maxNoDates ], &
-      & elementSize = storage_size(tmpfield) / 8 )
+      & elementSize = storage_size(tmpfield) / 8, address=addr )
     call allocate_test ( dateStarts, maxNoDates, 'dateStarts', moduleName )
-    call allocate_test ( dateEnds, maxNoDates, 'dateEnds', moduleName )
+   call allocate_test ( dateEnds, maxNoDates, 'dateEnds', moduleName )
 
     ! Loop to read in the data for the current date and check to see if 
     ! there is another date
@@ -379,16 +388,22 @@ contains
     end do datesloop
 
     s = size(field%field) * storage_size(field%field) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(field%field(1,1,1,1,1,1)), addr)
     deallocate ( field%field, stat=status )
-    call test_deallocate ( status, moduleName, "field%field", s )
+    call test_deallocate ( status, moduleName, "field%field", s, address=addr )
 
     allocate ( field%field(1:field%noHeights,1:field%noLats, &
       & 1:field%noLons,1:field%noLsts,1:field%noSzas,1:field%noDates), &
       & stat=status )
+    addr = 0
+    if ( status == 0 ) then
+      if ( size(field%field) > 0 ) addr = transfer(c_loc(field%field(1,1,1,1,1,1)), addr)
+    end if
     call test_allocate ( status, moduleName, "field%field", &
         uBounds = [ field%noHeights,field%noLats,field%noLons,field%noLsts,&
                   & field%noSzas,field%noDates ], &
-      & elementSize = storage_size(field%field) / 8 )
+      & elementSize = storage_size(field%field) / 8, address=addr )
     call allocate_test ( field%dateStarts, field%noDates, 'field%dateStarts', &
       & moduleName )
     call allocate_test ( field%dateEnds, field%noDates, 'field%dateEnds', &
@@ -397,10 +412,12 @@ contains
     field%dateEnds = dateEnds(1:field%noDates)
     field%field = tmpfield(:,:,:,:,:,1:field%noDates)
     s = size(tmpField) * storage_size(tmpField) / 8
+    addr = 0
+!     if ( s > 0 ) addr = transfer(c_loc(tmpField(1,1,1,1,1,1)), addr)
     deallocate ( tmpfield, stat=status )
-    call test_deallocate ( status, moduleName, "TmpField", s )
+   call test_deallocate ( status, moduleName, "TmpField", s, address=addr )
     call deallocate_test ( dateStarts, 'tdateStarts', moduleName )
-    call deallocate_test ( dateEnds, 'dateEnds', moduleName )
+   call deallocate_test ( dateEnds, 'dateEnds', moduleName )
 
     ! Normal termination--assume field is valid maybe even correct
     if ( present(ErrType) ) then
@@ -885,6 +902,10 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.41  2015/03/28 00:57:46  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 2.40  2015/01/29 00:59:20  vsnyder
 ! Make sure NoYearStart and NoYearEnd have values before references
 !
