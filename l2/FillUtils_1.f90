@@ -32,7 +32,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & L_DOBSONUNITS, L_DU, &
     & L_ECRTOFOV, &
     & L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
-    & L_GPH, &
+    & L_GeocAltitude, L_GPH, &
     & L_HEIGHT, L_ISOTOPERATIO, &
     & L_L1BMAFBASELINE, L_L1BMIF_TAI, &
     & L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
@@ -67,7 +67,7 @@ module FillUtils_1                     ! Procedures used by Fill
   ! CAREFULLY CHECK OUT THE CODE AROUND THE CALL TO SNOOP.
   use MLSCOMMON, only: MLSFILE_T, DEFAULTUNDEFINEDVALUE
   use MLSFILES, only: HDFVERSION_5, DUMP, GETMLSFILEBYTYPE
-  use MLSFILLVALUES, only: ISFILLVALUE, ISFINITE, ISMONOTONIC, &
+  use MLSFILLVALUES, only: ISFILLVALUE, ISFINITE, &
     & MONOTONIZE, REMOVEFILLVALUES
   use MLSKINDS, only: R4, R8, RM, RP, RV
   use MLSL2OPTIONS, only: AURA_L1BFILES, L2CFNODE, MLSMESSAGE, TOOLKIT
@@ -81,6 +81,7 @@ module FillUtils_1                     ! Procedures used by Fill
     & STRINGELEMENT, SWITCHDETAIL
   use MLSSTRINGS, only: INDEXES, LOWERCASE, WRITEINTSTOCHARS
   use MOLECULES, only: L_H2O
+  use Monotone, only: IsMonotonic
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
   use QUANTITYTEMPLATES, only: QUANTITYTEMPLATE_T
   use RHIFROMH2O, only: H2OPRECFROMRHI, RHIFROMH2O_FACTOR, RHIPRECFROMH2O
@@ -155,7 +156,8 @@ module FillUtils_1                     ! Procedures used by Fill
   integer, parameter, public :: BadGeocAltitudeQuantity = NotSPD + 1
   integer, parameter, public :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
   integer, parameter, public :: BadREFGPHQuantity = badTemperatureQuantity + 1
-  integer, parameter, public :: Miscellaneous_err = badREFGPHQuantity + 1
+  integer, parameter, public :: BadScVelECRQuantity = badREFGPHQuantity + 1
+  integer, parameter, public :: Miscellaneous_err = BadScVelECRQuantity + 1
   integer, parameter, public :: ErrorReadingL1B = miscellaneous_err + 1
   integer, parameter, public :: NeedTempREFGPH = errorReadingL1B + 1
   integer, parameter, public :: NeedH2O = needTempRefGPH + 1
@@ -324,6 +326,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " refGPHQuantity is not refGPH", advance='yes' )
       case ( badRefractFill )
         call output ( " phiTan refract fill is missing information", advance='yes' )
+      case ( BadScVelECRQuantity )
+        call output ( " ScVelECR quantity is not ScVelECR", advance='yes' )
       case ( badTemperatureQuantity )
         call output ( " temperatureQuantity is not temperature", advance='yes' )
       case ( bothFractionAndLength )
@@ -708,15 +712,17 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
 
-      numChans = quantity%template%instanceLen / quantity%template%noSurfs
+      numChans = quantity%template%instanceLen / &
+        & ( quantity%template%noSurfs * quantity%template%noCrossTrack )
       if ( numChans /= quantity%template%noChans ) then
         call outputNamedValue( 'noSurfs', quantity%template%noSurfs )
         call outputNamedValue( 'noChans', quantity%template%noChans )
+        call outputNamedValue( 'noCrossTrack', quantity%template%noCrossTrack)
         call outputNamedValue( 'numChans', numChans )
         call outputNamedValue( 'instanceLen', quantity%template%instanceLen )
         call announce_error ( valuesNode, no_Error_Code, &
           & 'Inconsistent template instance length' )
-      endif
+      end if
       ! Now loop through the quantity
       k = 0
       do i = 1, quantity%template%noInstances
@@ -2690,7 +2696,7 @@ contains ! =====     Public Procedures     =============================
 
             ! Now compute the line of sight direction normal
             los = tngtECI%values(x:z,maf) - scECI%values(x:z,maf)
-            los = los / sqrt(sum(los**2))
+            los = los / norm2(los)
 
             ! Now compute the net velocity in this direction.  For the moment I'll
             ! assume +ve means the sc and tp are moving apart, and -ve that they're
@@ -3918,7 +3924,7 @@ contains ! =====     Public Procedures     =============================
 
           ! get phi along path for each mif ( phi is in degree)
           y_in = los%template%phi(mif,maf) &
-            & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*rad2deg
+            & - atan2(sLevel, (re%values(1,maf)*0.001_r8 + zt(mif)))*rad2deg
           ! interpolate phi onto standard vertical grids
           call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
             & method='Linear')
@@ -4262,20 +4268,20 @@ contains ! =====     Public Procedures     =============================
       if ( quantity%template%noInstances /= size ( l1bData%dpField, 3 ) .or. &
         &  quantity%template%instanceLen /= &
         &   size ( l1bData%dpField, 1 ) * size ( l1bData%dpField, 2 ) ) then
-        call output ( 'Quantity shape:' )
+        call output ( 'Quantity shape: ' )
         call output ( quantity%template%instanceLen )
-        call output ( ' ( ' )
-        call output ( quantity%template%noChans )
-        call output ( ', ' )
-        call output ( quantity%template%noSurfs )
-        call output ( ' ), ' )
-        call output ( quantity%template%noInstances, advance='yes' )
-        call output ( 'L1B shape:' )
+        call output ( quantity%template%noChans, before=' ( ' )
+        call output ( quantity%template%noSurfs, before=', ' )
+        call output ( quantity%template%noInstances, before=', ' )
+        call output ( quantity%template%noCrossTrack, before=', ', &
+          & after = ' )', advance='yes' )
+        call output ( 'L1B shape: ( ' )
         call output ( size ( l1bData%dpField, 1 ) )
-        call output ( ', ' )
-        call output ( size ( l1bData%dpField, 2 ) )
-        call output ( ', ' )
-        call output ( size ( l1bData%dpField, 3 ), advance='yes' )
+        call output ( size ( l1bData%dpField, 2 ), before=', ' )
+        call output ( size ( l1bData%dpField, 3 ), before=', ', &
+          & after = ' )', advance='yes' )
+        call output ( 'Most likely a FORGE command clobbered the MIF Geolocation', &
+          & advance='yes' )
         call Announce_Error ( root, no_error_code, 'L1B data is wrong shape' )
         go to 9
       end if
@@ -4354,6 +4360,7 @@ contains ! =====     Public Procedures     =============================
             & NeverFail=.false., dontPad=DONTPAD )
           quantity%template%geodLat = RESHAPE(l1bData%dpField, &
           & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+          quantity%template%latitudeCoordinate = l_geocentric
         case ( l_geodetic )
           call GetModuleName( quantity%template%instrumentModule,nameString )
           nameString = AssembleL1BQtyName('GeodLat', L1BOAFile%HDFVersion, .false., &
@@ -4363,6 +4370,7 @@ contains ! =====     Public Procedures     =============================
             & NeverFail=.false., dontPad=DONTPAD )
           quantity%template%geodLat = RESHAPE(l1bData%dpField, &
           & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+          quantity%template%latitudeCoordinate = l_geodetic
         end select
         call GetModuleName( quantity%template%instrumentModule,nameString )
         nameString = AssembleL1BQtyName('Lon', L1BOAFile%HDFVersion, .false., &
@@ -4425,13 +4433,14 @@ contains ! =====     Public Procedures     =============================
     end subroutine FromL2AUX
 
     ! ---------------------------------------  UsingMagneticModel  -----
-    subroutine UsingMagneticModel ( qty, gphQty, key, SpacingOnly, MAF )
+    subroutine UsingMagneticModel ( qty, GeocAltitudeQuantity, ScVelQuantity, &
+                                  & key, MAF )
       use Magnetic_Field_Quantity, only: Get_Magnetic_Field_Quantity
-      type (VectorValue_T), intent(inout) :: QTY
-      type (VectorValue_T), intent(inout) :: GPHQTY
+      type (VectorValue_T), intent(inout) :: Qty
+      type (VectorValue_T), intent(in) :: GeocAltitudeQuantity ! (MIF quantity)
+      type (VectorValue_T), intent(in) :: ScVelQuantity        ! (MIF quantity)
       integer, intent(in) :: KEY
-      logical, intent(in), optional :: SpacingOnly
-      integer, intent(in), optional :: MAF ! to use for GPH quantity
+      integer, intent(in), optional :: MAF ! to use for Qty quantity
 
       logical :: Error
       integer :: Me = -1                   ! String index for trace
@@ -4447,26 +4456,22 @@ contains ! =====     Public Procedures     =============================
           & 'Magnetic field quantity does not describe magnetic field' )
         error = .true.
       end if
-      if ( .not. ValidateVectorQuantity ( gphQty, quantityType=(/l_gph/), &
-        & frequencyCoordinate=(/ l_none /), verticalCoordinate=(/l_zeta/) ) ) then
+      if ( .not. ValidateVectorQuantity ( geocAltitudeQuantity, &
+           & quantityType=(/l_tngtgeocAlt/), frequencyCoordinate=(/ l_none /), &
+           & verticalCoordinate=(/l_geocAltitude/) ) ) then
         call Announce_Error ( key, no_error_code, &
-          & 'GPH quantity does not describe gph field' )
+          & 'GeocAltitude quantity does not describe geocentric altitude' )
         error = .true.
       end if
-      if ( .not. present(MAF) ) then
-        if ( .not. DoHGridsMatch ( qty, gphQty, spacingOnly ) ) then
-          call Announce_Error ( key, no_error_code, &
-            & 'Magnetic field quantity and GPHQuantity do not have compatible horizontal basis' )
-        error = .true.
-        end if
-      end if
-      if ( .not. DoVGridsMatch ( qty, gphQty ) ) then
+      if ( .not. ValidateVectorQuantity ( scVelQuantity, &
+           & quantityType=(/l_scVelECR/), frequencyCoordinate=(/ l_xyz /) ) ) then
         call Announce_Error ( key, no_error_code, &
-          & 'Magnetic field quantity and GPHQuantity do not share the same vertical basis' )
+          & 'ScVelECR quantity does not describe spacecraft velocity in ECR' )
         error = .true.
       end if
 
-      if ( .not. error ) call get_Magnetic_Field_Quantity ( qty, GPHQty, MAF )
+      if ( .not. error ) call get_Magnetic_Field_Quantity ( qty, &
+        & geocAltitudeQuantity, scVelQuantity, MAF )
 
       call trace_end ( cond=toggle(gen) .and. levels(gen) > 1 )
 
@@ -6484,6 +6489,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: FIELDECR ! The input field
       type (VectorValue_T), intent(in) :: ECRTOFOV ! The rotation matrix
       ! Local variables
+      integer :: CROSS                  ! Loop counter
       integer :: INSTANCE               ! Loop counter
       integer :: SURFACE                ! Loop counter
       integer :: MAF(1)                 ! Which MAF is the best match to this instance
@@ -6515,37 +6521,47 @@ contains ! =====     Public Procedures     =============================
       do instance = 1, qty%template%noInstances
         ! Identify the relevant MAF and pull out the first MIF's rotation matrix
         ! (first MIF is probably close enough to all the others to be useful).
-        maf = minloc ( abs ( qty%template%phi(1,instance) - &
-          & ecrToFOV%template%phi(1,:) ) )
-        rotation = reshape ( ecrToFOV%values( 1:9, maf), (/ 3, 3 /) )
+        maf = 1
+        ! If the template isn't stacked, Phi is meaningless, and has zero size.
+        if ( associated(qty%template%phi) .and. qty%template%stacked ) &
+          & maf = minloc ( abs ( qty%template%phi(1,instance) - &
+            & ecrToFOV%template%phi(1,:) ) )
+        ! Dimensions of ECRtoFOV%value3 are ( chans, surfs, instances*cross angles ).
+        ! Chans is actually 3x3, so we need to reform it.
+        rotation = reshape ( ecrToFOV%value3( 1:9, 1, maf), (/ 3, 3 /) )
         ! Now loop over the pressure levels in the input and output field information
+        ! qty%value3 isn't the right pointer to use, because its dimensions are
+        ! ( channels, surfaces, instances*cross angles ), not
+        ! ( channels*surfaces, instances, cross angles ).
         do surface = 1, qty%template%noSurfs
-          ! Get the field in ECR coordinates
-          thisField = fieldECR%values ( (surface-1) * 3 + 1 : surface*3, &
-            & instance )
-          ! Now rotate it into IFOVPP coordinates
-          thisField = matmul ( rotation, thisField )
-          ! Now work out the strength / angles as appropriate.
-          strength = sqrt ( sum ( thisField ** 2 ) )
-          select case ( qty%template%quantityType )
-          case ( l_fieldStrength )
-            qty%values(surface,instance) = strength
-          case ( l_fieldElevation )
-            if ( strength /= 0.0_r8 ) then
-              ! Elevation is constrained to 0--90 degrees instead of 0--180 degrees because
-              ! radiative transfer Physics is symmetric.  We save half of l2pc bins.
-              qty%values(surface,instance) = acos ( abs ( thisField(3) / strength ) ) * rad2deg
-            else
-              qty%values(surface,instance) = 0.0
-            end if
-          case ( l_fieldAzimuth )
-            if ( thisField(1) /= 0.0_r8 ) then
-              qty%values(surface,instance) = atan ( thisField(2) / thisField(1) ) * rad2deg
-            else
-              qty%values(surface,instance) = merge ( 90.0_r8, -90.0_r8, &
-                & thisField(1) > 0.0_r8 )
-            end if
-          end select
+          do cross = 1, qty%template%noCrossTrack
+            ! Now rotate the field from ECR into IFOVPP coordinates
+            thisField = matmul ( rotation, &
+                               & fieldECR%value4 ( 1:3, surface, instance, cross ) )
+            ! Now work out the strength / angles as appropriate.
+            strength = norm2 ( thisField )
+            select case ( qty%template%quantityType )
+            case ( l_fieldStrength )
+              qty%value4(1,surface,instance,cross) = strength
+            case ( l_fieldElevation )
+              if ( strength /= 0.0_r8 ) then
+                ! Elevation is constrained to 0--90 degrees instead of 0--180 degrees because
+                ! radiative transfer Physics is symmetric.  We save half of l2pc bins.
+                qty%value4(1,surface,instance,cross) = &
+                  & acos ( abs ( thisField(3) / strength ) ) * rad2deg
+              else
+                qty%value4(1,surface,instance,cross) = 0.0
+              end if
+            case ( l_fieldAzimuth )
+              if ( thisField(1) /= 0.0_r8 ) then
+                qty%value4(1,surface,instance,cross) = &
+                  & atan2 ( thisField(2), thisField(1) ) * rad2deg
+              else
+                qty%value4(1,surface,instance,cross) = &
+                  & merge ( 90.0_r8, -90.0_r8, thisField(1) > 0.0_r8 )
+              end if
+            end select
+          end do
         end do
       end do
     9 call trace_end ( 'FillUtils_1.RotateMagneticField', &
@@ -7445,6 +7461,16 @@ end module FillUtils_1
 
 !
 ! $Log$
+! Revision 2.103  2015/03/28 02:41:45  vsnyder
+! Got IsMonotonic from Monotone instead of MLSFillValues.  Added support
+! for cross-track grids.  Use Norm2 to normalize LOS.  Specify whether
+! latitude is geocentric or geodetic.  Change UsingMagneticModel fill to
+! use SC velocity quantity to get SC geolocation (we don't care about its
+! velocity) and a geocentric altitude quantity to get the tangent position
+! geolocation and geocentric altitude.  Use 3-d Values field for ECRtoFOV
+! quantity in RotateMagneticField.  Account for cross-track viewing in
+! RotateMagneticField.  Use ATAN2 instead of ATAN in two places.
+!
 ! Revision 2.102  2014/12/10 21:30:34  pwagner
 ! WithAscOrDesc may use PtanQuantity
 !
