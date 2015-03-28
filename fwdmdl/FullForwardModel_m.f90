@@ -45,6 +45,7 @@ contains
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST
     use COMPUTE_Z_PSIG_M, only: COMPUTE_Z_PSIG
     use FORWARDMODELCONFIG, only: DUMP, FORWARDMODELCONFIG_T
+    use ForwardModelGeometry, only: Azimuth_Tol, Viewing_Azimuth
     use FORWARDMODELINTERMEDIATE, only: FORWARDMODELSTATUS_T
     use FORWARDMODELVECTORTOOLS, only: GETQUANTITYFORFORWARDMODEL
     use GET_SPECIES_DATA_M, only:  GET_SPECIES_DATA
@@ -72,6 +73,11 @@ contains
     type(matrix_T), intent(inout), optional :: ExtraJacobian
     type(hessian_T), intent(inout), optional :: Hessian
 
+    real(rp) :: Azimuth               ! Angle (degrees) between the normal to
+                                      ! the plane defined by the spacecraft
+                                      ! position and velocity vectors, and the
+                                      ! plane defined by the spacecraft
+                                      ! position and PTan vectors.
     real(rp), allocatable :: Z_PSIG(:)   ! Surfs from Temperature, tangent grid
                                          ! and species grids, sans duplicates.
     real(rp), pointer :: TAN_PRESS(:)    ! Pressures corresponding to Z_PSIG
@@ -150,7 +156,7 @@ contains
     temp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_temperature, foundInFirst=temp_in_first, &
       & config=fwdModelConf )
-    call load_one_item_grid ( grids_tmp, temp, phitan, fmStat%maf, fwdModelConf, .true. )
+    call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, .true. )
     no_sv_p_t = grids_tmp%l_p(1) ! phi == windowFinish - windowStart + 1
     n_t_zeta = grids_tmp%l_z(1)  ! zeta
     sv_t_len = grids_tmp%p_len   ! zeta X phi == n_t_zeta * no_sv_p_t
@@ -237,10 +243,15 @@ contains
     end if
 
     if ( FwdModelConf%polarized ) then
+
+      ! Compute the viewing azimuth angle
+      azimuth = viewing_azimuth ( FwdModelIn, FwdModelExtra, FwdModelConf, &
+                                & MIF=1, MAF=fmstat%maf )
       call load_one_item_grid ( grids_mag, &
-        & GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,      &
-        & quantityType=l_magneticField, config=fwdModelConf ), phitan, &
-        & fmStat%maf, fwdModelConf, .false. )
+        & GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,          &
+        & quantityType=l_magneticField, config=fwdModelConf ), fmStat%maf, &
+        & phitan, fwdModelConf, .false.,                                   &
+        & across=abs(azimuth) > azimuth_tol )
     else
       call emptyGrids_t ( grids_mag ) ! Allocate components with zero size
     end if
@@ -252,7 +263,7 @@ contains
         & noError=.true. )
     end if
     if ( associated(cloudIce) ) then
-      call load_one_item_grid ( grids_IWC, cloudIce, phitan, fmStat%maf, &
+      call load_one_item_grid ( grids_IWC, cloudIce, fmStat%maf, phitan, &
         & fwdModelConf, .false., .false. )
     else
       call emptyGrids_t ( grids_IWC ) ! Allocate components with zero size
@@ -404,7 +415,6 @@ contains
     use PHYSICS, only: SPEEDOFLIGHT
     use POINTINGGRID_M, only: POINTINGGRIDS, POINTINGGRID_T
     use SLABS_SW_M, only: ALLOCATESLABS, DESTROYCOMPLETESLABS, SLABS_STRUCT
-! use TESTFIELD_M
     use TAU_M, only: DESTROY_TAU, DUMP, TAU_T
     use TOGGLES, only: EMIT, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -1263,7 +1273,7 @@ contains
     ! Setup stuff done for both sidebands, other than output angles
     ! for convolution and stuff for clouds.
 
-      use Geometry, only: Earth_Axis_Ratio_Squared_m1, EarthRadA
+      use Geometry, only: Orbit_Plane_Minor_Axis_sq
       use Intrinsic, only: L_EARTHREFL, L_ECRtoFOV, L_GPH, L_LOSVEL,  &
         & L_SurfaceHeight, L_ORBITINCLINATION, L_REFGPH, L_SCGEOCALT, &
         & L_SPACERADIANCE
@@ -1370,14 +1380,10 @@ contains
           & moduleName )
       end if
 
-  !{ Compute minor axis of orbit plane projected Earth ellipse $c$, where
-  !  $c^2 = \frac{a^2\,b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta} =
-  !         \frac{a^2}{\left(\frac{a^2}{b^2}-1\right) \sin^2 \beta + 1}$.
-  !  This is Equation (5.3) in the 19 August 2004 ATBD JPL D-18130.
+      ! Compute the square of the minor axis of the orbit plane projected Earth
+      ! ellipse.
 
-      earthradc_sq = earthRadA**2 / &
-                   &     ( Earth_Axis_Ratio_Squared_m1 * &
-                   &       SIN(orbIncline%values(1,maf)*Deg2Rad)**2 + 1 )
+      earthradc_sq = orbit_plane_minor_axis_sq ( orbIncline%values(1,maf) * deg2rad )
 
       call trace_end ( 'ForwardModel.Both_Sidebands_Setup', &
         & cond=toggle(emit) .and. levels(emit) > 0  )
@@ -3181,7 +3187,7 @@ contains
 
         end if
 
-        call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, &
+        call load_one_item_grid ( grids_tscat, scat_src, maf, phitan, &
           & fwdModelConf, SetDerivFlags=.false., SetTscatFlag=.true. )
 
         call comp_eta_docalc_no_frq ( grids_tscat, z_path, &
@@ -3206,8 +3212,8 @@ contains
           scat_alb%template = temp%template
           cld_ext%template  = temp%template
 
-          call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false.)
-          call load_one_item_grid ( grids_cext,  cld_ext,  phitan, maf, fwdModelConf, .false.)
+          call load_one_item_grid ( grids_salb,  scat_alb, maf, phitan, fwdModelConf, .false.)
+          call load_one_item_grid ( grids_cext,  cld_ext,  maf, phitan, fwdModelConf, .false.)
 
           where ( abs(grids_salb%values) < TOL ) grids_salb%values = 0.0
           where ( abs(grids_cext%values) < TOL ) grids_cext%values = 0.0
@@ -4273,7 +4279,7 @@ contains
       ! Special path quantities for cloud model
       if ( fwdModelConf%Incl_Cld .or. fwdModelConf%useTScat ) then ! s_i == 1 or s_ts == 1 here
 
-        call comp_eta_docalc_no_frq ( Grids_IWC, z_path(1:npf), &
+        call comp_eta_docalc_no_frq ( grids_IWC, z_path(1:npf), &
           &  phi_path(1:npf), eta_IWC_zp(1:npf,:), tan_pt=tan_pt_f )
 
         ! Compute IWC_PATH
@@ -4290,11 +4296,11 @@ contains
       ! Special path quantities for Polarized (magnetic) model
       if ( FwdModelConf%polarized ) then
 
-        call comp_eta_docalc_no_frq ( Grids_Mag, z_path(1:npf), &
+        call comp_eta_docalc_no_frq ( grids_mag, h_path(1:npf), &
           &  phi_path(1:npf), eta_mag_zp(1:npf,:), tan_pt=tan_pt_f )
 
         ! Compute the first three components of MAG_PATH
-        call comp_sps_path ( Grids_mag, 1, eta_mag_zp(1:npf,:), &
+        call comp_sps_path ( grids_mag, 1, eta_mag_zp(1:npf,:), &
           & mag_path(1:npf,1:3) )
 
         ! Get the rotation matrix for the magnetic field.  Use the
@@ -4302,7 +4308,9 @@ contains
         mif = minloc(abs(tan_press - &
         &                  ptan%values(:ptan%template%nosurfs,maf)),1)
 
-        rot = reshape(ECRtoFOV%values(9*mif-8:9*mif,maf), (/3,3/))
+        ! Dimensions of ECRtoFOV%value3 are ( chans, surfs, instances*cross angles ).
+        ! Chans is actually 3x3, so we need to reform it.
+        rot = reshape ( ECRtoFOV%value3(1:9,mif,maf), [ 3, 3 ] )
 
         do j = 1, npf
           ! Rotate mag_path from ECR to IFOVPP (R1A) coordinates.  Use
@@ -4311,7 +4319,7 @@ contains
           ! identical anyway.
           mag_path(j,1:3) = matmul ( rot, mag_path(j,1:3) )
           ! Put the magnitude of mag_path(j,1:3) in mag_path(j,4)
-          mag_path(j,4) = sqrt(sum(mag_path(j,1:3)**2))
+          mag_path(j,4) = norm2(mag_path(j,1:3))
           ! Normalize mag_path(j,1:3).
           if ( mag_path(j,4) /= 0.0_rp ) then
             mag_path(j,1:3) = mag_path(j,1:3) / mag_path(j,4)
@@ -4778,6 +4786,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.352  2014/09/05 20:49:32  vsnyder
+! Avoid reference to undefined array elements
+!
 ! Revision 2.351  2014/08/01 01:06:05  vsnyder
 ! Add code to fill real arrays with sNaN if the private parameter NaN_Fill
 ! is true.  Set p_path to zero between the tangent points, so it's not
