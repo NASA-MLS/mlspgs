@@ -92,6 +92,7 @@ contains
   subroutine AllocateOneSlabs ( Slabs, Catalog, InName, TempDer )
     ! Allocates the items in a slabs structure
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
     type (catalog_t), target, intent(in) :: Catalog
     character(len=*), intent(in) :: InName      ! Who wants it
@@ -99,6 +100,7 @@ contains
                                                 !  derivative fields"
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     logical :: MyDer
     integer :: NL, Stat
 
@@ -113,12 +115,15 @@ contains
 
     slabs%catalog => catalog
     allocate ( slabs%s(nl), stat=stat )
+    addr = 0
+!     if ( stat == 0 .and. nl > 0 ) addr = transfer(c_loc(slabs%s(1)), addr)
     call test_allocate ( stat, inName, "Slabs%S", (/ 1 /), (/ nl /), &
-      & storage_size(slabs%s) / 8 )
+      & storage_size(slabs%s) / 8, address=addr )
     if ( myDer ) then
       allocate ( slabs%d(nl), stat=stat )
+!       if ( stat == 0 .and. nl > 0 ) addr = transfer(c_loc(slabs%d(1)), addr)
       call test_allocate ( stat, inName, "Slabs%D", (/ 1 /), (/ nl /), &
-      & storage_size(slabs%d) / 8 )
+      & storage_size(slabs%d) / 8, address=addr )
     end if
     if ( nl /= 0 ) then
       slabs%s%v0s = 0.0_r8
@@ -143,6 +148,7 @@ contains
   ! Allocate an array of slabs structures, and then the items in each one
 
     use Allocate_Deallocate, only: Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type (slabs_struct), dimension(:,:), pointer :: Slabs
     integer, intent(in) :: No_Ele
@@ -151,11 +157,16 @@ contains
     logical, intent(in), optional :: TempDer    ! "Allocate temperature
                                                 !  derivative fields"
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, J
 
     allocate ( slabs(no_ele, size(catalog)), stat=i )
+    addr = 0
+    if ( i == 0 ) then
+      if ( size(slabs) > 0 ) addr = transfer(c_loc(slabs(1,1)), addr)
+    end if
     call test_allocate ( i, caller, 'Slabs', (/1,1/), (/no_ele,size(catalog)/), &
-      & storage_size(slabs) / 8 )
+      & storage_size(slabs) / 8, address=addr )
 
     do i = 1, size(catalog)
       do j = 1, no_ele
@@ -185,21 +196,27 @@ contains
   subroutine DeallocateOneSlabs ( slabs, inName )
     ! DeAllocates the items in a slabs structure
     use Allocate_Deallocate, only: Test_DeAllocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type (slabs_struct), intent(inout) :: slabs ! Slabs to deallocate
     character (len=*), intent(in) :: inName ! ModuleName of caller
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S, Stat
 
     ! Executable code
     if ( allocated(slabs%s) ) then
       s = size(slabs%s) * storage_size(slabs%s) / 8
+      addr = 0
+!       if ( s > 0 ) addr = transfer(c_loc(slabs%s(1)), addr)
       deallocate ( slabs%s, stat=stat )
-      call test_deallocate ( stat, inName, "Slabs%S", s )
+      call test_deallocate ( stat, inName, "Slabs%S", s, address=addr )
     end if
     if ( allocated(slabs%d) ) then
       s = size(slabs%d) * storage_size(slabs%d) / 8
+      addr = 0
+!       if ( s > 0 ) addr = transfer(c_loc(slabs%d(1)), addr)
       deallocate ( slabs%d, stat=stat )
-      call test_deallocate ( stat, inName, "Slabs%D", s )
+      call test_deallocate ( stat, inName, "Slabs%D", s, address=addr )
     end if
   end subroutine DeallocateOneSlabs
 
@@ -207,14 +224,18 @@ contains
   subroutine DestroyCompleteSlabs ( Slabs )
     ! Destroys all the components of a slabs
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type (slabs_struct), dimension(:,:), pointer :: Slabs
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S
     ! Executable code
     call deallocateAllSlabs ( slabs, moduleName )
     s = size(slabs) * storage_size(slabs) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(slabs(1,1)), addr)
     deallocate ( slabs, stat=i )
-    call test_deallocate ( i, moduleName, 'slabs', s )
+    call test_deallocate ( i, moduleName, 'slabs', s, address=addr )
   end subroutine DestroyCompleteSlabs
 
   ! ------------------------------------------  Dump_Slabs_Struct  -----
@@ -2760,6 +2781,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.64  2014/09/05 21:27:29  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.63  2013/05/09 01:02:48  vsnyder
 ! Add useYi to dump
 !
