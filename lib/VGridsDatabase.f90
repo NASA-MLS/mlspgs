@@ -105,6 +105,7 @@ contains
   ! if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (VGrid_T), dimension(:), pointer :: DATABASE
@@ -253,11 +254,13 @@ contains
   ! This subroutine destroys a vGrid database
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy argument
     type (VGrid_T), dimension(:), pointer :: DATABASE
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S, Status, vgridIndex
 
     if ( associated(database) ) then
@@ -265,8 +268,10 @@ contains
         call DestroyVGridContents ( database(vgridIndex) )
       end do
       s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
       deallocate ( database, stat=status )
-      call test_deallocate ( status, ModuleName, "database", s )
+      call test_deallocate ( status, ModuleName, "database", s, address=addr )
     end if
 
   end subroutine DestroyVGridDatabase
@@ -461,6 +466,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.28  2015/03/28 01:43:46  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.27  2014/09/05 00:19:47  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Some
 ! cannonball polishing.
