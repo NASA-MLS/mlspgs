@@ -487,6 +487,7 @@ totalPowerQuantity
 totalVectorSizes
 transformMIFextinction
 transformMIFRHI
+truncate # Keep prior MIFgeolocation in Forge
 truthExtra
 truthForwardModel
 truthIn
@@ -530,6 +531,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.254  2015/03/28 02:52:15  vsnyder
+# Added truncate field to Forge -- maybe should have been save
+#
 # Revision 2.253  2015/02/27 23:13:11  pwagner
 # May Dump global attributes
 #
