@@ -53,11 +53,11 @@ contains ! =====     Public Procedures     =============================
     use DIRECTWRITE_M, only: DIRECTDATA_T
     use DUMPCOMMAND_M, only: DUMPCOMMAND, &
       & MLSCASE, MLSENDSELECT, MLSSELECT, MLSSELECTING, SKIP
+    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
+    use HESSIANMODULE_1, only: HESSIAN_T
     use HGRIDSDATABASE, only: HGRID_T
     use INIT_TABLES_MODULE, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, &
       & S_ENDSELECT, S_CASE, S_DIFF, S_DUMP, S_LABEL, S_SELECT, S_SKIP
-    use FORWARDMODELCONFIG, only: FORWARDMODELCONFIG_T
-    use HESSIANMODULE_1, only: HESSIAN_T
     use L2GPDATA, only: L2GPDATA_T
     use L2AUXDATA, only: L2AUXDATA_T
     use L2PARINFO, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
@@ -395,7 +395,7 @@ contains ! =====     Public Procedures     =============================
       & F_SINGLE, F_SOURCE, F_STATUS, F_TYPE, F_UPPEROVERLAP, F_VECTOR, &
       & FIELD_FIRST, FIELD_LAST
     use INIT_TABLES_MODULE, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
-      & L_PRESSURE, L_ZETA
+      & L_PRESSURE, L_QUANTITY, L_ZETA
     use INTRINSIC, only: L_NONE, L_HDF, L_SWATH, LIT_INDICES, PHYQ_DIMENSIONLESS
     use L2PARINFO, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
     use MANIPULATEVECTORQUANTITIES, only: DOHGRIDSMATCH
@@ -758,6 +758,8 @@ contains ! =====     Public Procedures     =============================
       if ( outputType /= expectedType .and. .not. &
         & ( outputType == l_l2dgg .and. expectedType == l_l2gp ) &
         &                           .and. .not.  &
+        & ( outputType == l_quantity ) &
+        &                           .and. .not.  &
         & ( outputType == l_l2fwm .and. expectedType == l_l2aux ) ) then
         call output ( "Offending quantity " )
         call display_string ( qty%template%name, strip=.true., advance='yes' )
@@ -1005,7 +1007,7 @@ contains ! =====     Public Procedures     =============================
         PCBottom = mlspcf_l2fwm_full_start
         PCTop    = mlspcf_l2fwm_full_end
         fileType = l_hdf
-      case ( l_l2aux, l_hdf )
+      case ( l_l2aux, l_hdf, l_quantity )
         PCBottom = mlspcf_l2dgm_start
         PCTop    = mlspcf_l2dgm_end
         fileType = l_hdf
@@ -1070,7 +1072,7 @@ contains ! =====     Public Procedures     =============================
         else
           createThisSource = .false.
         end if
-      case ( l_l2aux, l_l2fwm, l_hdf )
+      case ( l_l2aux, l_l2fwm, l_hdf, l_quantity )
         ! Nothing special
         ! (Why don't we need to know which SDs are there and which aren't?)
       case default
@@ -1112,16 +1114,19 @@ contains ! =====     Public Procedures     =============================
           vector => vectors(sourceVectors(source))
           select case ( outputType )
           case ( l_l2gp, l_l2dgg )
-            call DirectWrite ( directFile, &
-              & vector, &
-              & chunkNo, HGrids, &
-              & createSwath=.true., &
-              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap )
+            call DirectWrite ( directFile, vector, &
+              & chunkNo, chunks, FWModelConfig, &
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+              & single=single, options=options )
           case ( l_l2aux, l_l2fwm, l_hdf )
             call DirectWrite ( directFile, vector, &
               & chunkNo, chunks, FWModelConfig, &
               & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
               & single=single, options=options )
+          case ( l_quantity )
+            call DirectWrite ( directFile, &
+              & vector, &
+              & chunkNo, options=options )
           case default
           end select
           cycle
@@ -1248,14 +1253,20 @@ contains ! =====     Public Procedures     =============================
           ! into the l2aux sd named 'hdfName' starting at profile 
           ! qty%template%instanceOffset ( + 1 ? )
           ! Note sure about the +1 in this case, probably depends whether it's a
-          ! minor frame quantity or not.  This mixed zero/one indexing is beomming
-          ! a real pain.  I wish I never want down that road!
+          ! minor frame quantity or not.  This mixed zero/one indexing is becoming
+          ! a real pain.  I wish I never went down that road!
           call DirectWrite ( directFile, qty, precQty, hdfName, &
             & chunkNo, chunks, FWModelConfig, &
             & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
             & single=single, options=options )
           NumOutput = NumOutput + 1
           filetype=l_hdf
+        case ( l_quantity )
+          ! Write the quantity with all its geolocations
+          call DirectWrite ( directFile, qty, hdfName, &
+            & chunkNo, options=options )
+          NumOutput = NumOutput + 1
+          filetype=l_quantity
         case default
           call output('outputType: ', advance='no')
           call output(outputType, advance='yes')
@@ -1350,10 +1361,11 @@ contains ! =====     Public Procedures     =============================
           print *, 'hdfVersion ', hdfVersion
           print *, 'errortype ', errortype
         end if
-      case ( l_l2aux, l_l2fwm, l_hdf )
+      case ( l_l2aux, l_l2fwm, l_hdf, l_quantity )
         ! Call the l2aux close routine
         if ( OPENHERE ) call mls_closeFile(directFile, errorType)
       case default
+        call DISPLAY_STRING(lit_indices(outputType), before='outputType: ', advance='yes')
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Tried to closeUnrecognized output type ' // trim(filename), &
         & MLSFile=directFile )
@@ -2251,6 +2263,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.162  2015/03/28 02:47:14  vsnyder
+! Paul added Quantity type to Direct write.
+!
 ! Revision 2.161  2014/04/07 18:03:28  pwagner
 ! May specify AscDescMode when DirectWrite-ing swaths
 !
