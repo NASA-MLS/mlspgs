@@ -38,7 +38,7 @@ module MLSFillValues              ! Some FillValue-related stuff
   public :: HalfWaves
   public :: IsFillValue
   public :: IsFinite, IsInfinite, IsNaN
-  public :: IsMonotonic, Monotonize
+  public :: Monotonize
   public :: RemoveFillValues, ReorderFillValues, ReplaceFillValues, ReRank
   public :: roundUpOrDown
   public :: WhereAreTheFills, WhereAreTheNaNs, WhereAreTheInfs
@@ -97,7 +97,6 @@ module MLSFillValues              ! Some FillValue-related stuff
 ! IsFinite          Returns true if argument is finite
 ! IsInfinite        Returns true if argument is infinite
 ! IsNaN             Returns true if argument is NaN
-! IsMonotonic       Returns true if array is monotonic
 ! Monotonize        Replace any non-monotonic elements
 ! RemoveFillValues  Removes FillValues from an array
 !                     returning a new array smaller in size
@@ -151,7 +150,6 @@ module MLSFillValues              ! Some FillValue-related stuff
 !   & [nprec values[:], [char* options] )
 ! Repopulate ( array[:,:,:], int i[:], int j[:],  int k[:], int n, &
 !   & [nprec values[:], [char* options] )
-! log IsMonotonic ( array, [char* direction] )
 ! Monotonize_1dint( values, [Period], [FillValue], [log strict] )
 ! nprec roundUpOrDown( nprec value )
 ! WhereAreTheFills ( array, [which(:)], [int howMany], [mode], [inds(:,:)] )
@@ -326,10 +324,6 @@ module MLSFillValues              ! Some FillValue-related stuff
   interface roundUpOrDown
     module procedure roundUpOrDown_r4, roundUpOrDown_r8, roundUpOrDown_int
   end interface
-  
-  interface IsMonotonic
-    module procedure IsMonotonic_r4, IsMonotonic_r8, IsMonotonic_int
-  end interface
 
   interface Monotonize
     module procedure Monotonize_1dr4, Monotonize_1dr8, Monotonize_1dint
@@ -450,6 +444,7 @@ contains
     ! the size -- where MLSFill is put.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (MLSFill_T), dimension(:), pointer :: DATABASE
@@ -1805,113 +1800,6 @@ contains
     include 'Repopulate_3d.f9h'
   end subroutine Repopulate_3d_r8
 
-! ------------------------------------------------- IsMonotonic ---
-
-  ! This family of routines checks to see if an array monotonically increases
-  ! By default it returns TRUE if either monotonic increasing or decreasing
-  ! If optional DIRECTION is supplied and '+', TRUE means increasing
-  ! if '-', TRUE means drecreasing
-  ! We are strict in the sense that any "stalling" produces FALSE
-  ! Thus {0, 1, 2, 2, 3} is not monotonic
-  !
-  ! If you would like to know instead whether an array is "never falling"
-  ! or "never rising" that's a different though related condition
-  logical function IsMonotonic_int ( ARRAY, DIRECTION ) result(sooDesu)
-    integer, dimension(:), intent(in) :: ARRAY
-    character(len=*), intent(in), optional :: DIRECTION
-    ! Internal variables
-    character(len=1) :: MYDIRECTION
-    integer :: i
-    integer, dimension(size(array)-1) :: increment
-    integer :: incMax
-    integer :: incMin
-    integer, parameter :: ZERO = 0
-    ! Executable
-    myDirection = '0' ! Either direction is OK, as long as monotonic
-    if ( present(direction) ) myDirection = direction
-    if ( size(array) < 2 ) then
-      sooDesu = .true.
-      return
-    endif
-    do i=2, size(array)
-      increment(i-1) = array(i) - array(i-1)
-    enddo
-    incMin = minval(increment)
-    incMax = maxval(increment)
-    select case (myDirection)
-    case ('+') ! Must be increasing monotonic
-      sooDesu = ( incMin > zero )
-    case ('-') ! Must be decreasing monotonic
-      sooDesu = ( incMax < zero )
-    case default ! either will do
-      sooDesu = ( incMin > zero ) .or. ( incMax < zero )
-    end select
-  end function IsMonotonic_int
-
-  logical function IsMonotonic_r4 ( ARRAY, DIRECTION ) result(sooDesu)
-    real(r4), dimension(:), intent(in) :: ARRAY
-    character(len=*), intent(in), optional :: DIRECTION
-    ! Internal variables
-    character(len=1) :: MYDIRECTION
-    integer :: i
-    real(r4), dimension(size(array)-1) :: increment
-    real(r4) :: incMax
-    real(r4) :: incMin
-    real(r4), parameter :: ZERO = 0._r4
-    ! Executable
-    myDirection = '0' ! Either direction is OK, as long as monotonic
-    if ( present(direction) ) myDirection = direction
-    if ( size(array) < 2 ) then
-      sooDesu = .true.
-      return
-    endif
-    do i=2, size(array)
-      increment(i-1) = array(i) - array(i-1)
-    enddo
-    incMin = minval(increment)
-    incMax = maxval(increment)
-    select case (myDirection)
-    case ('+') ! Must be increasing monotonic
-      sooDesu = ( incMin > zero )
-    case ('-') ! Must be decreasing monotonic
-      sooDesu = ( incMax < zero )
-    case default ! either will do
-      sooDesu = ( incMin > zero ) .or. ( incMax < zero )
-    end select
-  end function IsMonotonic_r4
-
-  logical function IsMonotonic_r8 ( ARRAY, DIRECTION ) result(sooDesu)
-    real(r8), dimension(:), intent(in) :: ARRAY
-    character(len=*), intent(in), optional :: DIRECTION
-    ! Internal variables
-    character(len=1) :: MYDIRECTION
-    integer :: i
-    real(r8), dimension(size(array)-1) :: increment
-    real(r8) :: incMax
-    real(r8) :: incMin
-    real(r8), parameter :: ZERO = 0._r8
-    ! Executable
-    myDirection = '0' ! Either direction is OK, as long as monotonic
-    if ( present(direction) ) myDirection = direction
-    if ( size(array) < 2 ) then
-      sooDesu = .true.
-      return
-    endif
-    do i=2, size(array)
-      increment(i-1) = array(i) - array(i-1)
-    enddo
-    incMin = minval(increment)
-    incMax = maxval(increment)
-    select case (myDirection)
-    case ('+') ! Must be increasing monotonic
-      sooDesu = ( incMin > zero )
-    case ('-') ! Must be decreasing monotonic
-      sooDesu = ( incMax < zero )
-    case default ! either will do
-      sooDesu = ( incMin > zero ) .or. ( incMax < zero )
-    end select
-  end function IsMonotonic_r8
-
 ! ============================================================================
   ! This family of subroutines bridges missing values by interpolation
   subroutine BridgeMissingValues_1dint(values, MissingValue)
@@ -3205,6 +3093,9 @@ end module MLSFillValues
 
 !
 ! $Log$
+! Revision 2.34  2015/03/28 01:49:59  vsnyder
+! Moved IsMonotonic to Monotone module
+!
 ! Revision 2.33  2014/09/05 00:04:34  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Remove
 ! unnecessary POINTER attribute from some arguments.  Remove declarations
