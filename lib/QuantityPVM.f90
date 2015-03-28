@@ -337,8 +337,12 @@ contains ! ================================== Module procedures ============
       if ( qt%minorFrame ) then
         qt%surfs => mifGeolocation(qt%instrumentModule)%surfs
         qt%phi => mifGeolocation(qt%instrumentModule)%phi
+        qt%geodLat1 => mifGeolocation(qt%instrumentModule)%geodLat1
         qt%geodLat => mifGeolocation(qt%instrumentModule)%geodLat
+        qt%geodLat3 => mifGeolocation(qt%instrumentModule)%geodLat3
+        qt%lon1 => mifGeolocation(qt%instrumentModule)%lon1
         qt%lon => mifGeolocation(qt%instrumentModule)%lon
+        qt%lon3 => mifGeolocation(qt%instrumentModule)%lon3
         qt%time => mifGeolocation(qt%instrumentModule)%time
         qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime
         qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith
@@ -346,8 +350,12 @@ contains ! ================================== Module procedures ============
       if ( qt%majorFrame ) then
         nullify ( qt%surfs )
         qt%phi => mifGeolocation(qt%instrumentModule)%phi(1:1,:)
+        qt%geodLat1 => mifGeolocation(qt%instrumentModule)%geodLat1
         qt%geodLat => mifGeolocation(qt%instrumentModule)%geodLat(1:1,:)
+        qt%geodLat3 => mifGeolocation(qt%instrumentModule)%geodLat3(1:1,:,:)
+        qt%lon1 => mifGeolocation(qt%instrumentModule)%lon1
         qt%lon => mifGeolocation(qt%instrumentModule)%lon(1:1,:)
+        qt%lon3 => mifGeolocation(qt%instrumentModule)%lon3(1:1,:,:)
         qt%time => mifGeolocation(qt%instrumentModule)%time(1:1,:)
         qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime(1:1,:)
         qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith(1:1,:)
@@ -424,6 +432,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.26  2015/03/28 01:48:23  vsnyder
+! Added support for 1-D and 3-D geolocation arrays
+!
 ! Revision 2.25  2013/06/12 02:13:25  vsnyder
 ! Cruft removal
 !
