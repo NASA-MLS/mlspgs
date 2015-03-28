@@ -228,6 +228,7 @@ contains
   ! creating the database if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (MCGroup_T), dimension(:), pointer :: DATABASE
@@ -248,6 +249,7 @@ contains
   ! creating the database if necessary.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (MCParam_T), dimension(:), pointer :: DATABASE
@@ -332,8 +334,10 @@ contains
     ! Destroy a group of inventory metadata control parameters 
     ! If the group contains other groups, destroy them, too
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type ( MCGROUP_T ), intent(inout)               :: MCGROUP
     ! Internal variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: error, i, s
 
     ! Executable code
@@ -342,16 +346,20 @@ contains
         call DestroyMCGroup( MCGroup%groups(i) )
       end do
       s = size(MCGroup%groups) * storage_size(MCGroup%groups) / 8
+      addr = 0
+      if ( s > 0 ) addr=transfer(c_loc(MCGroup%groups(1)), addr)
       deallocate ( MCGroup%groups, stat=error )
-      call test_deallocate ( error, moduleName, 'MCGroup%groups', s )
+      call test_deallocate ( error, moduleName, 'MCGroup%groups', s, address=addr )
     end if
     if ( associated(MCGroup%params) ) then
       do i=1, size(MCGroup%params)
         call DestroyMCParam( MCGroup%params(i) )
       end do
       s = size(MCGroup%params) * storage_size(MCGroup%params) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(MCGroup%params(1)), addr)
       deallocate ( MCGroup%params, stat=error )
-      call test_deallocate ( error, moduleName, 'MCGroup%params', s )
+      call test_deallocate ( error, moduleName, 'MCGroup%params', s, address=addr )
     end if
   end subroutine DestroyMCGroup
 
@@ -360,8 +368,10 @@ contains
     ! Destroy a metadata control parameter
     ! If it contains other params and groups, destroy them, too
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type ( MCParam_T ), intent(inout)               :: MCParam
     ! Internal variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: error, i, s
 
     ! Executable code
@@ -370,25 +380,31 @@ contains
         call DestroyMCGroup( MCParam%groups(i) )
       end do
       s = size(MCParam%groups) * storage_size(MCParam%groups) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(MCParam%groups(1)), addr)
       deallocate ( MCParam%groups, stat=error )
-      call test_deallocate ( error, moduleName, 'MCParam%groups', s )
+      call test_deallocate ( error, moduleName, 'MCParam%groups', s, address=addr )
     end if
     if ( associated(MCParam%params) ) then
       do i=1, size(MCParam%params)
         call DestroyMCParam( MCParam%params(i) )
       end do
       s = size(MCParam%params) * storage_size(MCParam%params) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(MCParam%params(1)), addr)
       deallocate ( MCParam%params, stat=error )
-      call test_deallocate ( error, moduleName, 'MCParam%params', s )
-    endif
+      call test_deallocate ( error, moduleName, 'MCParam%params', s, address=addr )
+    end if
   end subroutine DestroyMCParam
 
   ! ----------------------------------------DestroyMCGroupDB -----
   subroutine DestroyMCGroupDB ( MCGROUPDB )
     ! Destroy a database of metadata control groups
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type ( MCGROUP_T ), dimension(:), pointer         :: MCGROUPDB
     ! Internal variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: error, i, s
 
     ! Executable code
@@ -397,8 +413,10 @@ contains
       call DestroyMCGroup( MCGroupDB(i) )
     end do
     s = size(MCGroupDB) * storage_size(MCGroupDB) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(MCGroupDB(1)), addr)
     deallocate ( MCGroupDB, stat=error )
-    call test_deallocate ( error, moduleName, 'MCGroupDB', s )
+    call test_deallocate ( error, moduleName, 'MCGroupDB', s, address=addr )
   end subroutine DestroyMCGroupDB
 
   ! ----------------------------------------dumpMCGroup -----
@@ -2117,6 +2135,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.82  2015/03/28 02:56:12  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.81  2014/09/05 01:28:53  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
