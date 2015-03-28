@@ -16,17 +16,26 @@
 ! Probably only useful within Allocate_Deallocate.f90
 
     character(len=*), intent(in) :: ItsName, ModuleName
+    integer(c_intptr_t) :: Addr
     integer :: STATUS
     integer :: S
+    character(127) :: ERMSG
     if ( associated(To_Deallocate) ) then
-      if ( trackallocates > 0 ) call trackDeAllocate ( to_deAllocate, itsName, moduleName )
+!      addr = transfer ( c_loc(to_deallocate), addr )
+      if ( mod(trackallocates,2) > 0 ) &
+        & call trackDeAllocate ( to_deAllocate, itsName, moduleName )
       s = byte_size(to_deallocate)
-      deallocate ( To_Deallocate, stat=status )
-      call test_deallocate ( status, moduleName, itsName, s )
+      deallocate ( To_Deallocate, stat=status, errmsg=ermsg )
+      call test_deallocate ( status, moduleName, itsName, s, ermsg=ermsg &
+!        & , address=addr &
+        )
       nullify ( to_Deallocate ) ! in case of nonzero status
     end if
 
 ! $Log$
+! Revision 1.6  2014/09/04 23:51:27  vsnyder
+! Change size tracking from Memory_Units to bytes
+!
 ! Revision 1.5  2013/06/12 02:16:51  vsnyder
 ! Add and use BYTES and BYTE_SIZE
 !

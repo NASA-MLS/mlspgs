@@ -15,6 +15,7 @@
 
 ! Probably only useful within Allocate_Deallocate.f90
 
+    integer(c_intptr_t) :: Addr
     integer :: MyLow1, MyLow2, STATUS
     character(127) :: ERMSG
     call deallocate_Test ( To_Allocate, ItsName, ModuleName )
@@ -22,18 +23,25 @@
     if ( present(low1) ) myLow1 = low1
     if ( present(low2) ) myLow2 = low2
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status, ERRMSG=ERMSG )
-    call test_allocate ( status, moduleName, ItsName, &
-      & (/myLow1,myLow2/), (/dim1,dim2/), bytes(to_allocate), ERMSG )
+    addr = 0
     if ( status == 0 ) then
       if ( present(fill) ) then
         to_allocate = fill
       else if ( clearOnAllocate ) then
         to_allocate = default
       end if
+!       if ( size(to_allocate) > 0 ) &
+!         & addr = transfer ( c_loc(to_allocate(myLow1,myLow2)), addr )
     end if
-    if ( trackallocates > 0 ) call trackAllocate ( to_allocate, itsName, moduleName )
+    call test_allocate ( status, moduleName, ItsName, &
+      & (/myLow1,myLow2/), (/dim1,dim2/), bytes(to_allocate), ERMSG , addr)
+    if ( mod(trackallocates,2) > 0 ) &
+      & call trackAllocate ( to_allocate, itsName, moduleName )
 
 ! $Log$
+! Revision 1.5  2014/09/04 23:50:14  vsnyder
+! Add output of error message from allocation failure
+!
 ! Revision 1.4  2013/06/12 02:16:51  vsnyder
 ! Add and use BYTES and BYTE_SIZE
 !

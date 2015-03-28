@@ -17,6 +17,8 @@
 ! $Id$
 
     integer :: newSize, status
+    integer(selected_int_kind(18)) :: Addr
+    character(127) :: ERMSG
 
     ! Executable code
 
@@ -26,20 +28,36 @@
       newSize=1
     end if
 
-    allocate(tempDatabase(newSize),STAT=status)
-    call test_allocate ( status, moduleName, "tempDatabase", &
-      & uBounds = newSize, elementSize = storage_size(tempDatabase) / 8 )
+! Intel 14 doesn't allow the BLOCK construct
+!     block
+!       Intel ifort 15.0 doesn't allow USE inside BLOCK, so put it in
+!       every subprogram that includes this file, at least for now (2015/02/13).
+!       use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+!       integer(C_Intptr_t) :: Addr
+      allocate ( tempDatabase(newSize), STAT=status, ERRMSG=ERMSG )
+      addr = 0
+!       if ( status == 0 ) addr = transfer ( c_loc(tempDatabase(1)), addr )
+      call test_allocate ( status, moduleName, "tempDatabase", uBounds = newSize, &
+        & elementSize = storage_size(tempDatabase) / 8, &
+        & ERMSG=ERMSG, Address=addr )
 
-    if ( newSize>1 ) tempDatabase(1:newSize-1) = database
-    if ( associated(database) ) then   
-      deallocate ( database, stat=status )
-      call test_deallocate ( status, moduleName, "database", &
-        & (newSize-1) * storage_size(tempDatabase) / 8 )
-    end if
-    database => tempDatabase
-    database(newSize) = item
+      if ( newSize>1 ) tempDatabase(1:newSize-1) = database
+      if ( associated(database) ) then
+        addr = 0
+!         if ( size(database) > 0 ) &
+!           & addr = transfer ( c_loc(Database(lbound(database,1))), addr )
+        deallocate ( database, stat=status, ERRMSG=ERMSG )
+        call test_deallocate ( status, moduleName, "database", &
+          & (newSize-1) * storage_size(tempDatabase) / 8, ermsg, addr )
+      end if
+      database => tempDatabase
+      database(newSize) = item
+!     end block
 
 ! $Log$
+! Revision 1.7  2014/09/04 23:53:35  vsnyder
+! Add allocate/deallocate size tracking
+!
 ! Revision 1.6  2005/06/22 20:03:55  pwagner
 ! Reworded Copyright statement, moved rcs id
 !
