@@ -14,13 +14,14 @@ module L1BData
   ! Reading and interacting with Level 1B data (HDF4 or HDF5)
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test, Test_Allocate
-  use Dump_0, only: diff, diff_fun, dump
-  use HDF, only: dfacc_rdonly, sfginfo, sfn2index, sfselect, &
-    & sfrdata_f90, &
-    & sfrcdata, sfendacc, dfnt_char8, dfnt_int32, dfnt_float64, &
-    & dfnt_float32
-  use highoutput, only: outputnamedvalue
-  use ieee_arithmetic, only: ieee_is_finite
+  use Dump_0, only: Diff, Diff_fun, Dump
+  use HDF, only: DFACC_Rdonly, SFGInfo, SFN2Index, SFSelect, &
+    & SFRData_f90, &
+    & SFRCData, SFENDACC, DFNT_Char8, DFNT_Int32, DFNT_Float64, &
+    & DFNT_Float32
+  use HighOutput, only: OutputNamedValue
+  use IEEE_Arithmetic, only: IEEE_Is_Finite
+  use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
   use intrinsic, only: l_HDF
   use lexer_core, only: print_source
   use MLScommon, only: MLSfile_t, &
@@ -74,34 +75,34 @@ module L1BData
 ! L1BOASetup                      From l2cf, open, and save l1boa file info
 ! L1BRadSetup                     From l2cf, open, and save l1brad file info
 ! ReadL1BData                     Read all info concerning a l1brad quantity
-! ReadL1BAttribute                Read attributes 
+! ReadL1BAttribute                Read attributes
 ! === (end of toc) ===
 
 ! === (start of api) ===
 !     (user-defined types)
 ! L1BData_T (char L1BName, int FirstMAF, int NoMAFs, int MaxMIFs, int NoAuxInds,
-!             *int CounterMAF(:), 
+!             *int CounterMAF(:),
 !             *char CharField(:,:,:),
 !             *r8   DpField(:,:,:),
 !             *int  IntField(:,:,:),
-!             ) 
+!             )
 
 !     (subroutines and functions)
 ! char*32 AssembleL1BQtyName (char name, int hdfVersion, log isTngtQty,
-!                         [char InstrumentName] ) 
-! DeallocateL1BData (l1bData_T l1bData) 
+!                         [char InstrumentName] )
+! DeallocateL1BData (l1bData_T l1bData)
 ! Diff (l1bData_T l1bData1, l1bData_T l1bData2, int details, &
 !   [char options], [int numDiffs], [int mafStart], [int mafEnd])
 ! Dump (l1bData_T l1bData, int details)
-! int FindL1BData (int files(:), char fieldName, [int hdfVersion]) 
-! MLSFile_T GetL1BFile (MLSFile_t filedatabase(:), char fieldName, [char options]) 
+! int FindL1BData (int files(:), char fieldName, [int hdfVersion])
+! MLSFile_T GetL1BFile (MLSFile_t filedatabase(:), char fieldName, [char options])
 ! L1boaSetup (int root, MLSFile_t filedatabase(:), int f_file, [int hdfVersion])
 ! L1bradSetup (int root, MLSFile_t filedatabase(:), int f_file, [int hdfVersion])
 ! ReadL1BData (int L1FileHandle, char QuantityName, l1bData_T l1bData,
 !               int NoMAFs, int Flag, [int FirstMAF], [int LastMAF],
-!               [log NeverFail], [int hdfVersion]) 
-! ReadL1BAttribute (int L1FileHandle, value(:), nchar AttributeName, 
-!               int Flag, [int hdfVersion]) 
+!               [log NeverFail], [int hdfVersion])
+! ReadL1BAttribute (int L1FileHandle, value(:), nchar AttributeName,
+!               int Flag, [int hdfVersion])
 ! === (end of api) ===
 
   private
@@ -116,7 +117,7 @@ module L1BData
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
 !---------------------------------------------------------------------------
 
   interface DIFF
@@ -147,7 +148,7 @@ module L1BData
   logical, parameter            :: JUSTLIKEL2AUX = .true.
 
   ! Assume l1b files w/o explicit hdfVersion field are this
-  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
+  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
   integer, parameter :: L1BDEFAULT_HDFVERSION = HDFVERSION_5
 
   ! Unless the following is true, a subgroup named 'tp' will be
@@ -172,7 +173,7 @@ module L1BData
     integer :: MaxMIFs                  ! Max # of MIFs/MAF in SD array
     integer :: NoAuxInds                ! # of auxilliary indices
     integer :: TrueRank                 ! # necessary indices (e.g., 1 for MAFs)
-    character (len=16) :: NameInst = ' '     
+    character (len=16) :: NameInst = ' '
 
     integer, dimension(:), pointer :: CounterMAF => NULL() ! dimensioned (noMAFs)
     character(len=MaxCharFieldLen), &
@@ -184,10 +185,10 @@ module L1BData
   contains
     final :: DeallocateL1BData
   end type L1BData_T
-  
+
   integer :: Error            ! Error level -- 0 = OK
   logical, parameter           :: DEEBUG = .FALSE.
-  
+
   ! Error flags returned from ReadL1BData when NeverFail=TRUE
   integer, public, parameter :: NOERROR =            0
   integer, public, parameter :: NOCOUNTERMAFINDX =   NOERROR + 1
@@ -289,9 +290,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     l1bData%FirstMAF               = l1bDataSibling%firstMAF
     l1bData%FirstMAFCtr            = l1bDataSibling%firstMAFCtr
     l1bData%LastMAFCtr             = l1bDataSibling%LastMAFCtr
-    l1bData%MaxMIFs                = l1bDataSibling%MaxMIFs         
-    l1bData%NoAuxInds              = l1bDataSibling%NoAuxInds       
-    l1bData%TrueRank               = l1bDataSibling%TrueRank        
+    l1bData%MaxMIFs                = l1bDataSibling%MaxMIFs
+    l1bData%NoAuxInds              = l1bDataSibling%NoAuxInds
+    l1bData%TrueRank               = l1bDataSibling%TrueRank
     l1bData%NameInst               = l1bDataSibling%NameInst
   end subroutine AllocateL1BData
 
@@ -397,9 +398,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
     QtyName = trim(QtyName) // trim(name)
     if ( compress ) QtyName = CompressString(QtyName)
-    if ( DEEBUG ) then                            
-      print *, 'more converted name: ', trim(QtyName)  
-    end if                                         
+    if ( DEEBUG ) then
+      print *, 'more converted name: ', trim(QtyName)
+    end if
   end function AssembleL1BQtyName
 
   ! --------------------------------------------  ContractL1BData  -----
@@ -407,9 +408,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     & firstMAF, lastMAF, firstChannel, lastChannel, firstMIF, lastMIF )
     ! Contract full l1bdataIn to just those mafs
     ! beginning with firstMAF (if present) and ending with lastMAF
-    ! Remember 1st maf of full l1bData is numbered 0 
+    ! Remember 1st maf of full l1bData is numbered 0
     ! (I disapprove, but nobody ever asks my opinion)
-    
+
     ! Perhaps related to this source of confusion, is the following:
     ! What do we do when the lastMAF blows past the end of l1bDataIn?
     ! For now, we'll try to keep noMAFs correct, but scoot everything down
@@ -574,7 +575,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       mafEnd1 = L1bData1%NoMAFs
       mafEnd2 = L1bData1%NoMAFs
     end if
-    
+
     mySilent = .false.
     if ( present(options) ) mySilent = ( index( options, 'h' ) > 0 )
     myDirect = .false.
@@ -589,7 +590,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       call outputNamedValue( 'mySilent', mysilent )
     end if
     ! if ( mySilent ) call suspendOutput
-    
+
     myNumDiffs = 0
     if ( trim(L1bData1%NameInst) /= trim(L1bData2%NameInst) ) then
       call output(trim(L1bData1%NameInst), advance='yes')
@@ -685,24 +686,24 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( any(l1bData1%charField /= l1bData2%charField) ) then
         myNumDiffs = myNumDiffs + count(l1bData1%charField /= l1bData2%charField)
         ! where ( .not. isAllAscii(l1bData1%CharField) )
-        !  l1bData1%CharField = asciify( l1bData1%CharField, 'snip') 
+        !  l1bData1%CharField = asciify( l1bData1%CharField, 'snip')
         ! end where
         do k=1, size(l1bData1%CharField, 3)
           do j=1, size(l1bData1%CharField, 2)
             do i=1, size(l1bData1%CharField, 1)
               if ( .not. isAllAscii(l1bData1%CharField(i,j,k) ) ) &
-              l1bData1%CharField(i,j,k) = asciify( l1bData1%CharField(i,j,k), 'snip') 
+              l1bData1%CharField(i,j,k) = asciify( l1bData1%CharField(i,j,k), 'snip')
             end do
           end do
         end do
         ! where ( .not. isAllAscii(l1bData2%CharField) )
-        !  l1bData2%CharField = asciify( l1bData2%CharField, 'snip') 
+        !  l1bData2%CharField = asciify( l1bData2%CharField, 'snip')
         ! end where
         do k=1, size(l1bData1%CharField, 3)
           do j=1, size(l1bData1%CharField, 2)
             do i=1, size(l1bData1%CharField, 1)
               if ( .not. isAllAscii(l1bData2%CharField(i,j,k) ) ) &
-              l1bData2%CharField(i,j,k) = asciify( l1bData2%CharField(i,j,k), 'snip') 
+              l1bData2%CharField(i,j,k) = asciify( l1bData2%CharField(i,j,k), 'snip')
             end do
           end do
         end do
@@ -727,7 +728,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( prntAssocStatus ) &
         & call output('(intField arrays not associated)', advance='yes')
     end if
-    
+
     if ( present(l1bValues1) .and. present(l1bValues2) ) then
       l1b1NotFinite = .not. any(ieee_is_finite(l1bValues1))
       l1b2NotFinite = .not. any(ieee_is_finite(l1bValues2))
@@ -827,7 +828,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Executable code
     myDetails = 1
     if ( present(details) ) myDetails = details
-    
+
     if ( trim(L1bData%NameInst) /= ' ' ) &
       & call output(trim(L1bData%NameInst), advance='yes')
     call output('L1B rad/oa quantity Name = ', advance='no')
@@ -879,7 +880,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   function GetL1BFile ( filedatabase, fieldName, options, object ) &
     & result(item)
   ! Which MLSFile contains a given sd name or attribute name
-  !                                  
+  !
   ! options, if present, may influence how it works
   ! By convention, options is preceded by a "-"; it is ignored, however
   !
@@ -892,7 +893,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   !  s       search for attribute under FileID%sd_id
   !  w       Wildcard * which allows 'a*' to match 'abcd'
   !  c       case insensitive which allows 'ABCD' to match 'abcd'
-  
+
   ! Tries to adapt to where attributes are stored in file
   ! This means, e.g. if the attribute is attached to a ds, opening
   ! that ds.
@@ -967,7 +968,7 @@ contains ! ============================ MODULE PROCEDURES ======================
             openedCode = 's'
           end if
         end if
-        
+
         if ( myhdfVersion == HDFVERSION_4 ) then
           if ( index(myOptions, 'a') > 0 ) then
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -1276,7 +1277,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   ! ----------------------------------  ReadL1BAttribute_intarr1l  -----
   subroutine ReadL1BAttribute_intarr1 ( L1BFile, value, AttrName, Flag )
-    
+
     use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, GETHDF5ATTRIBUTE
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
 
@@ -1302,13 +1303,13 @@ contains ! ============================ MODULE PROCEDURES ======================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Not implemented in hdf4 l1boa file', MLSFile=L1bFile)
         Flag = -1
-    else 
+    else
       call h5gOpen_f (L1BFile%FileID%f_id,'/', aID, status)
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to open group attribute in l1boa file', MLSFile=L1BFile )
         Flag = -1
-      end if  
+      end if
       if ( .not. IsHDF5AttributePresent(aID, AttrName) ) then
         Flag = -1
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -1324,7 +1325,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to close group attribute in l1boa file', MLSFile=L1bFile )
-      end if 
+      end if
     end if
     if ( .not. alreadyOpen ) &
       & call mls_closeFile(L1BFile, status)
@@ -1332,7 +1333,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   ! -----------------------------------  ReadL1BAttribute_dblarr1  -----
   subroutine ReadL1BAttribute_dblarr1 ( L1BFile, value, AttrName, Flag )
-    
+
     use MLSHDF5, only: ISHDF5ATTRIBUTEPRESENT, GETHDF5ATTRIBUTE
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F
 
@@ -1358,18 +1359,18 @@ contains ! ============================ MODULE PROCEDURES ======================
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'Not implemented in hdf4 l1boa file', MLSFile=L1bFile)
       Flag = -1
-    else 
+    else
       call h5gOpen_f (L1BFile%FileID%f_id,'/', aID, status)
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to open group attribute in l1boa file', MLSFile=L1BFile )
         Flag = -1
-      end if  
+      end if
       if ( .not. IsHDF5AttributePresent(aID, AttrName) ) then
         Flag = -1
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Failed to find attribute in l1boa file'//AttrName, MLSFile=L1bFile)
-      else 
+      else
         call output ('get attribute', advance='no')
         call output (AttrName, advance='yes')
         call GetHDF5Attribute(aID, AttrName, value)
@@ -1378,7 +1379,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Unable to close group attribute in l1boa file', MLSFile=L1bFile )
-      end if 
+      end if
     end if
     if ( .not. alreadyOpen ) &
       & call mls_closeFile(L1BFile, status)
@@ -1390,8 +1391,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! beginning with 1st MAF number of day
     ! (May need to pad at start, at end, or at both ends)
     ! Return newly created padded object as l1bdataOut
-    ! If optionally supplied PrecisionIn it will return padded PrecisionOut  
-    ! where the padded values will all be cleverly set negative 
+    ! If optionally supplied PrecisionIn it will return padded PrecisionOut
+    ! where the padded values will all be cleverly set negative
     ! (meaning do not use)
     ! Just as important, fill any gaps
     ! where a gap is defined as a break in sequence in counterMAF array
@@ -1445,8 +1446,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! beginning with 1st MAF number of day
     ! (May need to pad at start, at end, or at both ends)
     ! Return newly created padded object as l1bdataOut
-    ! If optionally supplied PrecisionIn it will return padded PrecisionOut  
-    ! where the padded values will all be cleverly set negative 
+    ! If optionally supplied PrecisionIn it will return padded PrecisionOut
+    ! where the padded values will all be cleverly set negative
     ! (meaning do not use)
     ! Just as important, fill any gaps
     ! where a gap is defined as a break in sequence in counterMAF array
@@ -1459,17 +1460,17 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, intent(in)          :: NoMAFs
     type(L1BData_T), optional, intent(in)  :: PrecisionIn
     type(L1BData_T), optional, intent(out) :: PrecisionOut
-    logical, optional, intent(in) :: force   ! Relax assumption 
+    logical, optional, intent(in) :: force   ! Relax assumption
     ! Internal variables
-    logical :: myForce
-    integer, dimension(3) :: dims
-    integer :: gap
-    integer :: i
-    integer :: indexOut
-    integer :: cmindex
-    integer :: current
-    integer :: maf
-    integer :: rank
+    logical :: MyForce
+    integer :: Dims(3)
+    integer :: Gap
+    integer :: I
+    integer :: IndexOut
+    integer :: Cmindex
+    integer :: Current
+    integer :: Maf
+    integer :: Rank
     logical, parameter :: DEEBug = .false.
     ! Executable
     myForce = .false.
@@ -1597,7 +1598,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     else
       myhdfVersion = L1BDEFAULT_HDFVERSION
     end if
-    
+
     ! Set up an MLSFile instance
     status = InitializeMLSFile( f, content='l1b', &
       & shortname='l1b', type=l_hdf, access=DFACC_RDONLY )
@@ -1614,7 +1615,7 @@ contains ! ============================ MODULE PROCEDURES ======================
   ! ----------------------------------------  ReadL1BData_MLSFile  -----
   subroutine ReadL1BData_MLSFile ( L1BFile, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL, dontPad, L2AUX )
-    
+
     use PCFHdr, only: GLOBALATTRIBUTES
     use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -1754,6 +1755,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     character (len=128) :: DUMMY        ! Dummy quantity name
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: ALLOC_ERR
     integer :: DATA_TYPE
     integer :: DIM_SIZES(MAX_VAR_DIMS)
@@ -1924,9 +1926,12 @@ contains ! ============================ MODULE PROCEDURES ======================
         call test_allocate ( alloc_err, ModuleName, "l1bData%charField" )
       end if
       ! Account for the allocation size
+      addr = 0
+!       if ( size(l1bData%charField) > 0 ) &
+!         & addr = transfer(c_loc(l1bData%charField(1,1,1)), addr)
       call test_allocate ( alloc_err, ModuleName, "l1bData%charField", &
         & uBounds = [l1bData%noAuxInds,l1bData%maxMIFs], &
-        & elementSize = storage_size(l1bData%charField) / 8 )
+        & elementSize = storage_size(l1bData%charField) / 8, address=addr )
       nullify (l1bData%intField, l1bData%dpField)
       l1bdata%data_type = 'character'
       status = sfrcdata ( sds2_id, start, stride, edge, &
@@ -1963,7 +1968,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       status = sfrdata_f90 ( sds2_id, start, stride, edge, &
           tmpR4Field )
       l1bData%dpField = tmpR4Field
-      
+
       call deallocate_test ( tmpr4Field, 'tmpr4Field', ModuleName )
 
     case default
@@ -1983,7 +1988,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
 
     ! Terminate access to the data sets
-    
+
     if ( sds1_id /= SD_NO_COUNTERMAF ) then
       status = sfendacc(sds1_id)
       if ( status == -1 ) then
@@ -2021,7 +2026,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
 ! use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData, Deallocate_MLSAuxData
-    
+
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     type(MLSFile_T), pointer       :: L1BFile
@@ -2038,6 +2043,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     ! Local Variables
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     character (len=128) :: DUMMY        ! Dummy quantity name
 
     character(len=1) :: Char_rank
@@ -2053,7 +2059,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     character(len=16) :: QTYPE
     integer :: STATUS
 
-    integer(kind=hSize_t), dimension(:), allocatable :: DIMS
+    integer(kind=hSize_t), dimension(:), allocatable :: HDIMS
+    integer,               dimension(:), allocatable :: DIMS
     integer(kind=hSize_t), dimension(:), allocatable :: MAXDIMS
     integer(kind=hSize_t), dimension(:), allocatable :: CMDIMS
     integer(kind=hSize_t), dimension(:), allocatable :: CMMAXDIMS
@@ -2084,13 +2091,14 @@ contains ! ============================ MODULE PROCEDURES ======================
         & '" data set.'
       call MLSMessage ( MLSMSG_Error, ModuleName, dummy, MLSFile=L1BFile )
     end if
-    
+
     ! Find Qtype, rank and dimensions of QuantityName
     ! print*, ' Find Qtype, rank and dimensions of QuantityName ', trim(QuantityName)
     call GetHDF5DSRank(L1FileHandle, QuantityName, rank)
     l1bData%TrueRank = rank
-    allocate ( dims(rank), maxDims(rank) )
-    call GetHDF5DSDims(L1FileHandle, QuantityName, dims, maxDims)
+    allocate ( dims(rank), Hdims(rank), maxDims(rank) )
+    call GetHDF5DSDims(L1FileHandle, QuantityName, Hdims, maxDims)
+    dims = Hdims
     call GetHDF5DSQType ( L1FileHandle, QuantityName, Qtype )
     if ( DEEBug ) print *, 'L1FileHandle ', L1FileHandle
     if ( DEEBug ) print *, 'QuantityName ', trim(QuantityName)
@@ -2198,7 +2206,7 @@ contains ! ============================ MODULE PROCEDURES ======================
           & // trim(QuantityName), MLSFile=L1BFile )
       else
         if ( DEEBUG) print *, 'reading counterMAF '
-        ! This intermediate cm_array shouldn't be necessary 
+        ! This intermediate cm_array shouldn't be necessary
         ! unfortunately, w/o it sometimes hdf5 bombs
         ! allocate(cm_array(cmdims(1)), stat=status)
         ! allocate(cm_array(MAX_NOMAFS), stat=status)
@@ -2234,178 +2242,154 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     select case (trim(Qtype) // Char_rank)
     case ('real1')
-      allocate( l1bData%DpField(l1bData%noMAFs, 1, 1),stat=status)
-      call test_allocate ( status, moduleName, "l1bData%DpField", &
-        & uBounds = [l1bData%noMAFs, 1, 1], &
-        & elementSize = storage_size(l1bData%DpField) / 8 )
-      if ( present(FirstMAF) ) then                                          
+      call allocate_test ( l1bData%DpField, l1bData%noMAFs, 1, 1, "l1bData%DpField", &
+        & moduleName )
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1), &
-          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1))  
-      end if                                                                  
+          & (/MAFoffset/), (/l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1))
+      end if
       l1bdata%data_type = 'double'
     case ('real2')
-      allocate( l1bData%DpField(dims(1),l1bData%noMAFs, 1),stat=status)
-      call test_allocate ( status, moduleName, "l1bData%DpField", &
-        & uBounds = [l1bData%noMAFs, l1bData%noMAFs, 1], &
-        & elementSize = storage_size(l1bData%DpField) / 8 )
-      if ( present(FirstMAF) ) then                                          
+      call allocate_test ( l1bData%DpField, dims(1), l1bData%noMAFs, 1, "l1bData%DpField", &
+        & moduleName )
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1), &
-          & (/0,MAFoffset/), (/int(dims(1)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))  
-      end if                                                                  
+          & (/0,MAFoffset/), (/dims(1),l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))
+      end if
       l1bdata%data_type = 'double'
     case ('real3')
-      allocate( l1bData%DpField(dims(1),dims(2),l1bData%noMAFs),stat=status)
-      call test_allocate ( status, moduleName, "l1bData%DpField", &
-        & uBounds = [int(dims(1:2)),l1bData%noMAFs], &
-        & elementSize = storage_size(l1bData%DpField) / 8 )
-      if ( present(FirstMAF) ) then                                          
+      call allocate_test ( l1bData%DpField, dims(1), dims(2), l1bData%noMAFs, &
+        & "l1bData%DpField", moduleName )
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField, &
-          & (/0,0,MAFoffset/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
-      end if                                                                  
+          & (/0,0,MAFoffset/), (/dims(1),dims(2),l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)
+      end if
       l1bdata%data_type = 'double'
-    case ('real4')    
-      allocate( &
-        & l1bData%DpField(dims(1)*dims(2),dims(3),l1bData%noMAFs),stat=status &
-        & )
-      call test_allocate ( status, moduleName, "l1bData%DpField", &
-        & uBounds = [int(dims(1)*dims(2)),int(dims(3)),l1bData%noMAFs], &
-        & elementSize = storage_size(l1bData%DpField) / 8 )
-      call allocate_test( DP4Buf, &
-        & int(dims(1)), int(dims(2)), int(dims(3)), int(dims(4)), &
+    case ('real4')
+      call allocate_test ( l1bData%DpField, dims(1)*dims(2), dims(3), l1bData%noMAFs, &
+        & "l1bData%DpField", moduleName )
+      call allocate_test( DP4Buf, dims(1), dims(2), dims(3), l1bData%noMAFs, &
         & 'DP4Buf', ModuleName )
-      if ( present(FirstMAF) ) then                                          
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS( L1FileHandle, QuantityName, DP4Buf, &
           & (/0,0,0,MAFoffset/), &
-          & (/int(dims(1)),int(dims(2)),int(dims(3)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS( L1FileHandle, QuantityName, DP4Buf)   
+          & (/dims(1),dims(2),dims(3),l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS( L1FileHandle, QuantityName, DP4Buf)
       end if
       l1bData%DpField = reshape( DP4Buf, &
-        & (/ int(dims(1)*dims(2)), int(dims(3)), l1bData%noMAFs /) )
-      call deallocate_test( DP4Buf, &
-        & 'DP4Buf', ModuleName )
+        & (/dims(1)*dims(2), dims(3), l1bData%noMAFs /) )
+      call deallocate_test( DP4Buf, 'DP4Buf', ModuleName )
       l1bdata%data_type = 'double'
     case ('double1')
-      allocate( l1bData%DpField(l1bData%noMAFs, 1, 1),stat=status)
-      call test_allocate ( status, moduleName, "l1bData%DpField", &
-        & uBounds = [l1bData%noMAFs, 1, 1], &
-        & elementSize = storage_size(l1bData%DpField) / 8 )
-      if ( present(FirstMAF) ) then                                          
+      call allocate_test ( l1bData%DpField, l1bData%noMAFs, 1, 1, "l1bData%DpField", &
+        & moduleName )
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1), &
-          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1))  
-      end if                                                                  
+          & (/MAFoffset/), (/l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1))
+      end if
       l1bdata%data_type = 'double'
     case ('double2')
-      allocate( l1bData%DpField(dims(1),l1bData%noMAFs, 1),stat=status)
-      call test_allocate ( status, moduleName, "l1bData%DpField", &
-        & uBounds = [int(dims(1)),l1bData%noMAFs, 1], &
-        & elementSize = storage_size(l1bData%DpField) / 8 )
-      if ( present(FirstMAF) ) then                                          
+      call allocate_test ( l1bData%DpField, dims(1), l1bData%noMAFs, 1, "l1bData%DpField", &
+        & moduleName )
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1), &
-          & (/0,MAFoffset/), (/int(dims(1)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))  
-      end if                                                                  
+          & (/0,MAFoffset/), (/dims(1),l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))
+      end if
       l1bdata%data_type = 'double'
-    case ('double3')    
-      allocate( l1bData%DpField(dims(1),dims(2),l1bData%noMAFs),stat=status)
-      call test_allocate ( status, moduleName, "l1bData%DpField", &
-        & uBounds = [int(dims(1:2)),l1bData%noMAFs], &
-        & elementSize = storage_size(l1bData%DpField) / 8 )
-      if ( present(FirstMAF) ) then                                          
+    case ('double3')
+      call allocate_test ( l1bData%DpField, dims(1), dims(2), l1bData%noMAFs, &
+        & "l1bData%DpField", moduleName )
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField, &
-          & (/0,0,MAFoffset/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
-      end if                                                                  
+          & (/0,0,MAFoffset/), (/ dims(1),dims(2),l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)
+      end if
       l1bdata%data_type = 'double'
-    case ('double4')    
-      allocate( &
-        & l1bData%DpField(dims(1)*dims(2),dims(3),l1bData%noMAFs),stat=status &
-        & )
-      call test_allocate ( status, moduleName, "l1bData%DpField", &
-        & uBounds = [int(dims(1)*dims(2)),int(dims(3)),l1bData%noMAFs], &
-        & elementSize = storage_size(l1bData%DpField) / 8 )
-      call allocate_test( DP4Buf, &
-        & int(dims(1)), int(dims(2)), int(dims(3)), int(dims(4)), &
+    case ('double4')
+      call allocate_test ( l1bData%DpField, dims(1)*dims(2), dims(3), l1bData%noMAFs, &
+        & "l1bData%DpField", moduleName )
+      call allocate_test( DP4Buf, dims(1), dims(2), dims(3), l1bData%noMAFs, &
         & 'DP4Buf', ModuleName )
-      if ( present(FirstMAF) ) then                                          
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS( L1FileHandle, QuantityName, DP4Buf, &
           & (/0,0,0,MAFoffset/), &
-          & (/int(dims(1)),int(dims(2)),int(dims(3)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS( L1FileHandle, QuantityName, DP4Buf)   
+          & (/dims(1),dims(2),dims(3),l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS( L1FileHandle, QuantityName, DP4Buf)
       end if
       l1bData%DpField = reshape( DP4Buf, &
-        & (/ int(dims(1)*dims(2)), int(dims(3)), l1bData%noMAFs /) )
-      call deallocate_test( DP4Buf, &
-        & 'DP4Buf', ModuleName )
+        & (/ dims(1)*dims(2), dims(3), l1bData%noMAFs /) )
+      call deallocate_test( DP4Buf, 'DP4Buf', ModuleName )
       l1bdata%data_type = 'double'
-    case ('integer1')  
+    case ('integer1')
       allocate( l1bData%intField(l1bData%noMAFs, 1, 1),stat=status)
       call test_allocate ( status, moduleName, "l1bData%intField", &
         & uBounds = [l1bData%noMAFs, 1, 1], &
         & elementSize = storage_size(l1bData%intField) / 8 )
-      if ( present(FirstMAF) ) then                                          
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%intField(:,1,1), &
-          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%intField(:,1,1))  
-      end if                                                                  
+          & (/MAFoffset/), (/l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%intField(:,1,1))
+      end if
       l1bdata%data_type = 'integer'
     case ('integer2')
       allocate( l1bData%IntField(dims(1),l1bData%noMAFs, 1),stat=status)
       call test_allocate ( status, moduleName, "l1bData%intField", &
         & uBounds = [int(dims(1)),l1bData%noMAFs, 1], &
         & elementSize = storage_size(l1bData%intField) / 8 )
-      if ( present(FirstMAF) ) then                                          
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField(:,:,1), &
-          & (/0,MAFoffset/), (/int(dims(1)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField(:,:,1))  
-      end if                                                                  
+          & (/0,MAFoffset/), (/int(dims(1)),l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField(:,:,1))
+      end if
       l1bdata%data_type = 'integer'
-    case ('integer3')  
+    case ('integer3')
       allocate( l1bData%IntField(dims(1),dims(2),l1bData%noMAFs),stat=status)
       call test_allocate ( status, moduleName, "l1bData%intField", &
         & uBounds = [int(dims(1:2)),l1bData%noMAFs], &
         & elementSize = storage_size(l1bData%intField) / 8 )
-      if ( present(FirstMAF) ) then                                          
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField, &
-          & (/0,0,MAFoffset/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField)  
-      end if                                                                  
+          & (/0,0,MAFoffset/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%IntField)
+      end if
 !     call MLSMessage ( MLSMSG_Error, ModuleName, &
 !     & 'Sorry--LoadFromHDF5DS not yet written for type integer(:,:,:).', MLSFile=L1BFile)
       l1bdata%data_type = 'integer'
-    case ('character1')  
+    case ('character1')
       allocate( l1bData%charField(l1bData%noMAFs, 1, 1),stat=status)
       call test_allocate ( status, moduleName, "l1bData%charField", &
         & uBounds = [l1bData%noMAFs, 1, 1], &
         & elementSize = storage_size(l1bData%charField) / 8 )
-      if ( present(FirstMAF) ) then                                          
+      if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%charField(:,1,1), &
-          & (/MAFoffset/), (/l1bData%noMAFs/) )                                      
-      else                                                                   
-        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%charField(:,1,1))  
-      end if                                                                  
+          & (/MAFoffset/), (/l1bData%noMAFs/) )
+      else
+        call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%charField(:,1,1))
+      end if
       ! call MLSMessage ( MLSMSG_Error, ModuleName, &
       ! & 'Sorry--LoadFromHDF5DS not yet written for type character(:).')
       l1bdata%data_type = 'character'
-    case ('character3') 
+    case ('character3')
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--LoadFromHDF5DS not yet rewritten for type char(:,:,:).', MLSFile=L1BFile)
       l1bdata%data_type = 'integer'
-    case default 
+    case default
       l1bdata%data_type = 'unknown'
       flag = UNKNOWNDATATYPE
       deallocate(dims, maxDims)
@@ -2429,11 +2413,11 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Here's what we'll assume:
     ! If the true rank of l1bdata is 3 or 0, no need to reshape
     ! If it's 1 or 2 then one of the following apply
-    !  hdfVERSION         rank 1       rank 2(a)     rank 2(b)   
-    !      4               1 1 5         10 1 5       1 10 5   
-    !      5               5 1 1         10 5 1       10 5 1   
-    !   reorder            2 3 1         1  3 2       3  1 2   
-    ! (depending on whether it's (a) or (b) methods that apply; 
+    !  hdfVERSION         rank 1       rank 2(a)     rank 2(b)
+    !      4               1 1 5         10 1 5       1 10 5
+    !      5               5 1 1         10 5 1       10 5 1
+    !   reorder            2 3 1         1  3 2       3  1 2
+    ! (depending on whether it's (a) or (b) methods that apply;
     !   not sure which so we'll code for either; uh-oh, looking like it's (b))
     ! Arguments
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
@@ -2443,7 +2427,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       &        dimension(:,:,:), pointer :: CharField => NULL()
     real(r8),  dimension(:,:,:), pointer :: DpField => NULL()
     integer,   dimension(:,:,:), pointer :: IntField => NULL()
-    integer, dimension(3)                :: old_shape    
+    integer, dimension(3)                :: old_shape
     integer, dimension(3)                :: new_shape
     integer, dimension(3)                :: new_order
     integer, dimension(3, 3), parameter  :: reorder = &
@@ -2457,7 +2441,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     character(len=1), parameter  :: method = 'b'
     integer                      :: mord
     integer                      :: S ! Size in bytes of object to deallocate
-    
+
     ! Executable
     if ( DEEBUG ) then
       print *, 'l1b data_type: ', trim(l1bData%data_type)
@@ -2534,7 +2518,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       deallocate(l1bData%IntField, stat=status)
       call test_deallocate ( status, moduleName, trim(l1bData%data_type), s )
       l1bData%IntField => IntField
-    case default 
+    case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--reshape_for_hdf4 has encountered an unknown data type: ' &
         & // trim(l1bData%data_type))
@@ -2732,6 +2716,11 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.103  2015/03/28 01:07:53  vsnyder
+! Changed the kind of dims to allow using ALlocate_Test.  Some spiffing.
+! Added stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
 ! Revision 2.102  2014/09/04 23:46:21  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Plug a
 ! memory leak using a final subroutine for L1BData_T.  Add some tracing.
