@@ -23,7 +23,6 @@ adopted
 angle
 AscDescMode
 ascii
-azimuth
 
 b                # polarization
 baseline
@@ -242,6 +241,9 @@ zonalavg
 temperature
 
 # $Log$
+# Revision 2.67  2015/03/28 00:55:37  vsnyder
+# Remove azimuth
+#
 # Revision 2.66  2014/04/07 17:23:55  pwagner
 # Added new l2gp data field AscDescMode
 #
