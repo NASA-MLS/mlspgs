@@ -61,8 +61,9 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   interface DirectWrite
     module procedure DirectWrite_L2Aux_MF
     module procedure DirectWrite_L2GP_MF
+    module procedure DirectWrite_Quantity
     module procedure DirectWriteVector_L2Aux_MF
-    module procedure DirectWriteVector_L2GP_MF
+    module procedure DirectWriteVector_EveryQuantity
   end interface
 
   interface DUMP
@@ -99,6 +100,7 @@ contains ! ======================= Public Procedures =========================
     ! the size -- where it is put.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (DirectData_T), dimension(:), pointer :: DATABASE
@@ -119,7 +121,7 @@ contains ! ======================= Public Procedures =========================
 
   subroutine DestroyDirectDatabase ( DATABASE )
     use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
-
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use Toggles, only: Gen, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
 
@@ -127,6 +129,7 @@ contains ! ======================= Public Procedures =========================
     type (DirectData_T), dimension(:), pointer :: DATABASE
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: directIndex, s, status
     integer :: Me = -1       ! String index for trace
 
@@ -138,11 +141,62 @@ contains ! ======================= Public Procedures =========================
           "database%sdNames", moduleName )
       end do
       s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
       deallocate ( database, stat=status )
-      call test_deallocate ( status, moduleName, "database", s )
+      call test_deallocate ( status, moduleName, "database", s, address=addr )
     end if
     call trace_end ( "DestroyDirectDatabase", cond=toggle(gen) )
   end subroutine DestroyDirectDatabase
+
+  ! ------------------------------------------- DirectWriteVector_EveryQuantity --------
+  subroutine DirectWriteVector_EveryQuantity ( File, Vector, &
+    & chunkNo, options )
+
+    ! Purpose:
+    ! Write plain hdf-formatted files ala l2aux for datasets that
+    ! are too big to keep all chunks stored in memory
+    ! so instead write them out chunk-by-chunk
+    
+    ! Despite the name the routine takes vector quantities, not l2aux ones
+    ! It dooes so an entrire vector's worth of vector quantities
+    use MLSSTRINGS, only: WRITEINTSTOCHARS
+    ! Args:
+    type (Vector_T), intent(in)   :: VECTOR
+    type(MLSFile_T)               :: File
+    integer, intent(in)           :: CHUNKNO      ! Index into chunks
+    character(len=*), intent(in), optional :: options
+    ! Local parameters
+    integer                       :: j
+    logical                       :: nameQtyByTemplate
+    type (VectorValue_T), pointer :: QUANTITY
+    character(len=32)             :: SDNAME       ! Name of sd in output file
+    logical :: verbose
+    ! Executable
+    verbose = BeVerbose ( 'direct', -1 )
+    nameQtyByTemplate = .true.
+    if ( present(options) ) nameQtyByTemplate = &
+      & .not. ( index(options, 'num') > 0 )
+    if ( verbose ) then
+      if ( vector%name > 0 ) then
+        call get_string( vector%name, sdName )
+      else
+        sdname = '(unknown)'
+      endif
+      call outputNamedValue( 'DW L2AUX vector name', trim(sdName) )
+    endif
+    do j = 1, size(vector%quantities)
+      quantity => vector%quantities(j)
+      if ( nameQtyByTemplate ) then
+        call get_string( quantity%template%name, sdname )
+      else
+        call writeIntsToChars ( j, sdName )
+        sdName = 'Quantity ' // trim(sdName)
+      endif
+      call DirectWrite_Quantity ( File, quantity, sdName, &
+        & chunkNo, options )
+    enddo
+  end subroutine DirectWriteVector_EveryQuantity
 
   ! ------------------------------------------ DirectWriteVector_L2GP_MF --------
   subroutine DirectWriteVector_L2GP_MF ( L2gpFile, &
@@ -868,6 +922,110 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine DirectWrite_L2Aux_MF_hdf5
 
+  ! ------------------------------------------ DirectWrite_Quantity --------
+  ! We write the quantity to a file, chunk by chunk, overlaps and all
+  ! E.g., the qtyname is 'Q', and we have written chunks 1 and 2. Then the
+  ! file layout will be
+  ! /
+  !   Q/
+  !     1/
+  !       values
+  !       lons
+  !       lats
+  !         ...
+  !     2/
+  !       values
+  !       lons
+  !       lats
+  !         ...
+  
+  subroutine DirectWrite_Quantity ( File, quantity, qtyName, &
+    & chunkNo, options )
+
+    use HDF5, only: H5GCLOSE_F, H5GCreate_F, H5GOPEN_F
+    use INTRINSIC, only: L_NONE
+    use L2AUXDATA, only:  L2AUXDATA_T, PHASENAMEATTRIBUTES, &
+      & DESTROYL2AUXCONTENTS, &
+      & SETUPNEWL2AUXRECORD, WRITEL2AUXATTRIBUTES
+    use MLSHDF5, only: ISHDF5GroupPRESENT, ISHDF5DSPRESENT, &
+      & MAKEHDF5ATTRIBUTE, SAVEASHDF5DS
+    use MLSSTRINGS, only: WRITEINTSTOCHARS
+    ! Args:
+    type (VectorValue_T), intent(in) :: QUANTITY
+    character(len=*), intent(in) :: qtyName       ! Name of qty in output file
+    type(MLSFile_T)                :: File
+    integer, intent(in) :: CHUNKNO      ! Index into chunks
+    character(len=*), intent(in), optional :: options
+
+    ! Local variables
+    logical :: addQtyAttributes
+    logical :: already_there
+    ! logical :: attributes_there
+    integer :: first_maf
+    integer :: grp_id
+    type (L2AUXData_T) :: l2aux
+    integer :: last_maf
+    logical :: mySingle
+    integer :: NODIMS                   ! Also index of maf dimension
+    integer :: Num_qty_values
+    character(len=8) :: chunkStr        ! '1', '2', ..
+    integer :: returnStatus
+    integer :: SIZES(3)                 ! HDF array sizes
+    integer :: START(3)                 ! HDF array starting position
+    integer :: STRIDE(3)                ! HDF array stride
+    integer :: total_DS_size
+    logical, parameter :: MAYCOLLAPSEDIMS = .false.
+    ! logical, parameter :: DEEBUG = .true.
+    logical :: verbose
+
+    ! executable code
+    verbose = BeVerbose ( 'direct', -1 )
+    call writeIntsToChars ( chunkNo, chunkStr )
+    chunkStr = adjustl ( chunkStr )
+    ! Create or access the SD
+    already_There = mls_exists( File%name ) == 0
+    if ( .not. already_There ) then
+      call outputNamedValue( '  creating file', trim(File%name) )
+    endif
+    call mls_openFile ( File, returnStatus )
+    already_there = IsHDF5GroupPresent( File%fileID%f_id, trim(qtyName) )
+    if ( .not. already_There ) then
+      call outputNamedValue( '  creating file', trim(File%name) )
+      call h5GCreate_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
+    else
+      call h5GOpen_f ( File%fileID%f_id, qtyName, grp_id, returnStatus )
+    endif
+    File%fileID%grp_id = grp_id
+    call h5GCreate_f ( File%fileID%grp_id, chunkStr, grp_id, returnStatus )
+    ! Begin the writes
+    ! Values
+    call SaveAsHDF5DS( grp_id, 'values', quantity%values )
+    ! Geolocations
+    call SaveAsHDF5DS( grp_id, 'surfs', quantity%template%surfs )
+    if ( associated(quantity%template%Geolocation) ) &
+  & call SaveAsHDF5DS( grp_id, 'Geolocation', quantity%template%Geolocation )
+    if ( associated(quantity%template%Phi) ) &
+  & call SaveAsHDF5DS( grp_id, 'Phi        ', quantity%template%Phi         )
+    call SaveAsHDF5DS( grp_id, 'GeodLat    ', quantity%template%GeodLat     )
+    call SaveAsHDF5DS( grp_id, 'Lon        ', quantity%template%Lon         )
+    call SaveAsHDF5DS( grp_id, 'Time       ', quantity%template%Time        )
+    call SaveAsHDF5DS( grp_id, 'SolarTime  ', quantity%template%SolarTime   )
+    call SaveAsHDF5DS( grp_id, 'SolarZenith', quantity%template%SolarZenith )
+    call SaveAsHDF5DS( grp_id, 'LosAngle   ', quantity%template%LosAngle    )
+    if ( associated(quantity%template%CrossAngles) ) &
+  & call SaveAsHDF5DS( grp_id, 'CrossAngles', quantity%template%CrossAngles )
+    if ( associated(quantity%template%Frequencies) ) &
+  & call SaveAsHDF5DS( grp_id, 'Frequencies', quantity%template%Frequencies )
+    if ( associated(quantity%template%ChanInds) ) &
+  & call SaveAsHDF5DS( grp_id, 'ChanInds   ', quantity%template%ChanInds    )
+    
+    ! Close everything up
+    call h5GClose_f ( grp_id, returnStatus )
+    call h5GClose_f ( File%fileID%grp_id, returnStatus )
+
+    call mls_CloseFile( File )
+  end subroutine DirectWrite_Quantity
+
   !------------------------------------------  DumpDirectDB  -----
   subroutine DumpDirectDB ( directDB, Details )
 
@@ -1324,6 +1482,10 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.68  2015/03/28 02:30:58  vsnyder
+! Added stuff to trace allocate/deallocate addresses.  Paul added
+! DirectWriteQuantity stuff.
+!
 ! Revision 2.67  2015/02/05 21:42:23  vsnyder
 ! Don't use Phi for unstacked quantities
 !
