@@ -234,7 +234,7 @@ contains
       myConfig = config
     else
       myConfig = MLSMessageConfig
-    endif
+    end if
     call get_config ( logFileUnit=logFileUnit, prefix=prefix, useToolKit=toolkit )
     call dump ( 'dumping ', charValue='MLS Message Config' )
     call dump ( ':', charValue=': : : : : : : : : : : : :' )
@@ -315,10 +315,10 @@ contains
       & ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 1 ) ) then
       if ( present(status) ) status = myStatus
       return
-    elseif ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
+    else if ( MLSMSGWarnings%totalnumwarnings > TOTALNUMWARNINGSMAX - 2 ) then
       msgPlusNotice = '(Max Warnings reached)' // message
       msgLength = min(warningLength+len('(Max Warnings reached)'), MAXMESSLENGTH)
-    endif
+    end if
     if ( severity == MLSMSG_Warning ) MLSMSGWarnings%lastWarningMsg = message
     nosubsequentwarnings = .false.
     if ( any( severity == (/MLSMSG_Warning, MLSMSG_TestWarning/) ) &
@@ -336,14 +336,14 @@ contains
         if ( severity == MLSMSG_TestWarning ) then
           if ( present(status) ) status = myStatus
           return
-        endif
+        end if
       else if ( newwarning .or. &
         & MLSMSGWarnings%numwarnings < 1 ) then
         if ( severity == MLSMSG_TestWarning ) then
           if ( MLSMessageConfig%limitWarnings > 0 ) myStatus = 0
           if ( present(status) ) status = myStatus
           return
-        endif
+        end if
         MLSMSGWarnings%numwarnings = MLSMSGWarnings%numwarnings + 1
         MLSMSGWarnings%warningmessages(MLSMSGWarnings%numwarnings) = message
         MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) = &
@@ -352,7 +352,7 @@ contains
           & MLSMessageConfig%limitWarnings ) then
           if ( present(status) ) status = myStatus
           return
-        endif
+        end if
         MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) = &
           & min(MLSMSGWarnings%timeswarned(MLSMSGWarnings%numwarnings) + 1, &
           & MLSMessageConfig%limitWarnings + 1 )
@@ -367,12 +367,12 @@ contains
         if ( warning_index > MLSMSGWarnings%numwarnings ) then
           if ( present(status) ) status = myStatus
           return
-        elseif ( severity == MLSMSG_TestWarning ) then
+        else if ( severity == MLSMSG_TestWarning ) then
           if ( MLSMSGWarnings%timeswarned(warning_index) < &
             & MLSMessageConfig%limitWarnings  ) myStatus = 0
           if ( present(status) ) status = myStatus
           return
-        endif
+        end if
         ! Now we assure that the times warned array contains all
         ! the times we were called, not just the times we printed
         MLSMSGWarnings%timeswarned(warning_index) = &
@@ -382,7 +382,7 @@ contains
           & MLSMessageConfig%limitWarnings + 1 ) then
           if ( present(status) ) status = myStatus
           return
-        endif
+        end if
         nosubsequentwarnings = &
           & (MLSMSGWarnings%timeswarned(warning_index) > &
           & MLSMessageConfig%limitWarnings)
@@ -392,7 +392,7 @@ contains
     if ( nosubsequentwarnings ) then
       msgPlusNotice = WARNINGSSUPPRESSED // msgPlusNotice
       msgLength = min(msgLength+len(WARNINGSSUPPRESSED), MAXMESSLENGTH)
-    endif
+    end if
     if ( .not. any ( severity >= &
       & (/ MLSMSG_Severity_to_quit, MLSMSG_Severity_to_walkback /) ) ) then
       ! Unless special treatment, just pass args to MLSMessageStd
@@ -400,7 +400,7 @@ contains
         & Advance )
       if ( present(status) ) status = MLSMSGSTATUS_Normal
       return
-    endif
+    end if
     call MLSMessageCalls( 'push', constantName=ModuleNameIn )
     if ( severity >= MLSMSG_Severity_to_quit ) then
       call StopWithErrorMsg( Message, MLSFile, advance=advance, severity=severity )
@@ -410,7 +410,7 @@ contains
       call MLSMessageStd( severity, ModuleNameIn, msgPlusNotice(1:msgLength), &
         & Advance, MLSFile=MLSFile )
       myStatus = MLSMSGSTATUS_Dumped
-    endif
+    end if
     call MLSMessageCalls( 'pop' )
     if ( present(status) ) status = myStatus
   end subroutine MLSMessage_
@@ -498,14 +498,14 @@ contains
           write( myName, '(i2)' ) i
           call dump( trim(myName), logValue=MLSCallStack%debugDB(i) )
         enddo
-      endif
+      end if
       if ( associated(  MLSCallStack%verboseDB) ) then
         call dump( 'db', charValue='verbose' )
         do i=1, size(MLSCallStack%verboseDB)
           write( myName, '(i2)' ) i
           call dump( trim(myName), logValue=MLSCallStack%verboseDB(i) )
         enddo
-      endif
+      end if
     case ( 'print', 'rprint' )
       if ( MLSCallStack%top < 0 ) then
         call printItOut ( '.. Stack Underflow', MLSMSG_info )
@@ -513,15 +513,15 @@ contains
         call printItOut ( '.. Stack Empty', MLSMSG_info )
       else if ( MLSCallStack%top > ubound(MLSCallStack%ind,1) ) then
         call printItOut ( '.. Stack Overflow', MLSMSG_info )
-      elseif( command == 'print' ) then
+      else if ( command == 'print' ) then
         call printItOut ( MLSCallStack%txt(: &
           & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
-      elseif( command == 'rprint' ) then
+      else if ( command == 'rprint' ) then
         MLSCallStack = InvertStack( MLSCallStack )
         call printItOut ( MLSCallStack%txt(: &
           & MLSCallStack%ind(min(MLSCallStack%top,ubound(MLSCallStack%ind,1)))), MLSMSG_info )
         MLSCallStack = InvertStack( MLSCallStack )
-      endif
+      end if
     case ( 'depth' )
       write( myName, '(i8)' ) MLSCallStack%top
       if ( present(name) ) name = myName
@@ -585,19 +585,19 @@ contains
       newSize = RmLogicalFromDatabase( MLSCallStack%verboseDB, oldSize )
       if ( MLSVerboseSticky ) then
         ! nothing--keep existing MLSVerbose
-      elseif ( newSize > 0 ) then
+      else if ( newSize > 0 ) then
         MLSVerbose = MLSCallStack%VerboseDB(newSize)
       else
         MLSVerbose = .false.
-      endif
+      end if
       newSize = RmLogicalFromDatabase( MLSCallStack%debugDB, oldSize )
       if ( MLSDebugSticky ) then
         ! nothing--keep existing MLSDebug
-      elseif ( newSize > 0 ) then
+      else if ( newSize > 0 ) then
         MLSDebug   = MLSCallStack%debugDB(newSize)
       else
         MLSDebug   = .false.
-      endif
+      end if
      !  call PrintItOut ( 'After PopStack ', MLSMSG_Info )
      !  call dump ( 'newSize ', intValue=MLSCallStack%top - 1 )
      !  if ( associated(MLSCallStack%verboseDB) ) then
@@ -605,7 +605,7 @@ contains
      !    call dump ( 'size(MLSCallStack%debugDB) ', intValue=size(MLSCallStack%debugDB) )
      !  else
      !    call PrintItOut ( 'verbose and debug dbs not associated ', MLSMSG_Info )
-     !  endif
+     !  end if
     end subroutine PopStack
 
     subroutine PushStack ( myname )
@@ -719,7 +719,7 @@ contains
           & ) > 0 ) &
           & timesWarned = timesWarned + MLSMSGWarnings%timeswarned(warning_index)
       enddo
-    endif
+    end if
     if ( present(totalnumwarnings) ) &
       & totalnumwarnings = MLSMSGWarnings%totalNumWarnings
     if ( present(LastWarningMsg) ) &
@@ -802,9 +802,9 @@ contains
   CHARACTER(LEN=36) :: mesg
 
     ! Executable code
-    if(present(status)) then
-      if(present(farewell)) then
-        if(farewell == ' ') then
+    if (present(status)) then
+      if (present(farewell)) then
+        if (farewell == ' ') then
           write(mesg, '(A29, I2, A1)') 'Exiting with status (', &
           status, ')'
           call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
@@ -816,8 +816,8 @@ contains
       if ( status == 1 .and. MLSMessageConfig%CrashOnAnyError ) call crash_burn
       call exit_with_status ( status  )
     else
-      if(present(farewell)) then
-        if(farewell == ' ') then
+      if (present(farewell)) then
+        if (farewell == ' ') then
           mesg='exit with default status'
           call MLSMessage ( MLSMSG_Info, ModuleName, mesg, advance='y' )
         else
@@ -879,7 +879,7 @@ contains
       if ( MLSMSGWarnings%totalNumWarnings > 0 ) then
         call SummarizeWarnings
         call PrintItOut( 'Forgetting old Warnings', MLSMSG_Info )
-      endif
+      end if
       MLSMSGWarnings%numwarnings = 0
       MLSMSGWarnings%totalnumwarnings = 0
       MLSMSGWarnings%timeswarned = 0
@@ -987,7 +987,7 @@ contains
       else
         call PrintItOut( trim(number) // ' ## ' &
           &  // trim(MLSMSGWarnings%warningmessages(i)), MLSMSG_Info )
-      endif
+      end if
     enddo
   end subroutine SummarizeWarnings
 
@@ -995,6 +995,7 @@ contains
   ! ------------------------------------------  AddLogicalToDatabase  -----
   integer function AddLogicalToDatabase ( Database, Item )
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     logical, dimension(:), pointer :: Database
     logical, intent(in) :: Item
 
@@ -1009,6 +1010,7 @@ contains
   ! ------------------------------------------  RmLogicalFromDatabase  -----
   integer function RmLogicalFromDatabase ( Database, itemIndex )
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     logical, dimension(:), pointer :: Database
     integer, intent(in) :: itemIndex   ! Index of item
 
@@ -1016,6 +1018,7 @@ contains
     logical, dimension(:), pointer :: tempDatabase
     logical, parameter :: okToDeallocEmptyDB = .true.
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: newSize, s, status
     integer :: i
     ! Executable code
@@ -1023,30 +1026,38 @@ contains
     if ( .not. associated(database) ) then
       call MLSMessageStd ( MLSMSG_Error, ModuleName, &
         & "Attempt to remove item from an empty database")
-    elseif ( size(database) < itemIndex .or. itemIndex < 1) then
+    else if ( size(database) < itemIndex .or. itemIndex < 1) then
       call dump ( 'size(database) ', intValue=size(database) )
       call dump ( 'itemIndex ', intValue=itemIndex )
       call MLSMessageStd ( MLSMSG_Error, ModuleName, &
         & "Attempt to remove an item not found in database")
-    elseif ( size(database) == 1) then
+    else if ( size(database) == 1) then
       if ( okToDeallocEmptyDB ) then
-        s = size(database) * storage_size(database) / 8
+        s = storage_size(database) / 8
+        addr = transfer(c_loc(database(1)), addr)
         deallocate ( database, stat=status )
-        call test_deallocate ( status, ModuleName, "database", s )
+        call test_deallocate ( status, ModuleName, "database", s, address=addr )
       end if
     else
       allocate(tempDatabase(SIZE(database)-1), STAT=status)
+      addr = 0
+      if ( status == 0 ) then
+        if ( size(tempDatabase) > 0 ) addr = transfer(c_loc(tempDatabase(1)), addr)
+      end if
       call test_allocate ( status, ModuleName, "tempDatabase", &
-        & uBounds = SIZE(database)-1, elementSize = storage_size(tempDatabase) / 8 )
-      do i=1, SIZE(database)
-        if (i /= itemIndex) then
-          newSize = newSize+1
+        & uBounds = SIZE(database)-1, elementSize = storage_size(tempDatabase) / 8, &
+        & address=addr )
+      do i = 1, SIZE(database)
+        if ( i /= itemIndex ) then
+          newSize = newSize + 1
           tempDatabase(newSize) = database(i)
-        endif
-      enddo
+        end if
+      end do
       s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
       deallocate ( database, stat=status )
-      call test_deallocate ( status, ModuleName, "database", s )
+      call test_deallocate ( status, ModuleName, "database", s, address=addr )
       database => tempDatabase
     end if
 
@@ -1097,16 +1108,16 @@ contains
     value = ''
     if ( present(intValue) ) then
       write(value, '(i10)') intValue
-    elseif ( present(logValue) ) then
+    else if ( present(logValue) ) then
       write(value, '(l10)') logValue
-    endif
+    end if
     if ( present(charValue) ) then
       line = name // ' : ' // trim(charvalue)
       if ( myTrim ) line = trim(name) // ' : ' // trim(charvalue)
     else
       line = name // ' : ' // trim(value)
       if ( myTrim ) line = trim(name) // ' : ' // trim(value)
-    endif
+    end if
     call printitout( trim(line), MLSMSG_Info )
   end subroutine dump
 
@@ -1178,9 +1189,9 @@ contains
       ! Here's a chance to dump facts about last file we were reading/writing
       if ( present(MLSFile) ) then
         call dumpFile(MLSFile)
-      elseif( MLSMessageConfig%MLSFile%name /= ' ' ) then
+      else if ( MLSMessageConfig%MLSFile%name /= ' ' ) then
         call dumpFile( MLSMessageConfig%MLSFile )
-      endif
+      end if
       ! Here's a chance to use our (separate) call stack
       call dump_stack( where=.true., CPU=.true. )
       if ( MLSMessageConfig%SendErrMsgToMaster .and. &
@@ -1190,13 +1201,16 @@ contains
       if ( severity >= MLSMSG_Crash .or. MLSMessageConfig%CrashOnAnyError ) then
         NEVERCRASH = .false.
         call crash_burn
-      endif
+      end if
       call exit_with_status ( 1  )
     end if
   end subroutine MLSMessageStd
 
 !
 ! $Log$
+! Revision 2.37  2015/03/28 01:14:28  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.36  2014/09/05 00:06:39  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.
 ! Include addItemToDatabase instead of duplicating it here.
