@@ -690,6 +690,7 @@ contains
   integer function AddBandToDatabase ( Database, Item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(band_T), dimension(:), pointer :: Database
     type(band_T), intent(in) :: Item
@@ -706,6 +707,7 @@ contains
   integer function AddModuleToDatabase ( Database, Item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(module_T), dimension(:), pointer :: Database
     type(module_T), intent(in) :: Item
@@ -722,6 +724,7 @@ contains
   integer function AddRadiometerToDatabase ( Database, Item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(radiometer_T), dimension(:), pointer :: Database
     type(radiometer_T), intent(in) :: Item
@@ -738,6 +741,7 @@ contains
   integer function AddSignalToDatabase ( Database, Item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(signal_T), dimension(:), pointer :: Database
     type(signal_T), intent(in) :: Item
@@ -754,6 +758,7 @@ contains
   integer function AddSpectrometerTypeToDatabase ( Database, Item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(spectrometerType_T), dimension(:), pointer :: Database
     type(spectrometerType_T), intent(in) :: Item
@@ -770,12 +775,16 @@ contains
   subroutine DestroyBandDatabase ( Bands )
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(band_T), dimension(:), pointer :: Bands
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S, Status
     if ( associated(bands) ) then
       s = size(bands) * storage_size(bands) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(bands(1)), addr)
       deallocate ( bands, stat = status )
-      call test_deallocate ( status, moduleName, 'Band database', s )
+      call test_deallocate ( status, moduleName, 'Band database', s, address=addr )
     end if
 
   end subroutine DestroyBandDatabase
@@ -784,12 +793,16 @@ contains
   subroutine DestroyModuleDatabase ( Modules )
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(module_T), dimension(:), pointer :: Modules
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S, Status
     if ( associated(modules) ) then
       s = size(modules) * storage_size(modules) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(modules(1)), addr)
       deallocate ( modules, stat = status )
-      call test_deallocate ( status, moduleName, 'Modules database', s )
+      call test_deallocate ( status, moduleName, 'Modules database', s, address=addr )
     end if
   end subroutine DestroyModuleDatabase
 
@@ -797,12 +810,16 @@ contains
   subroutine DestroyRadiometerDatabase ( Radiometers )
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(radiometer_T), dimension(:), pointer :: Radiometers
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: S, Status
     if ( associated(radiometers) ) then
       s = size(radiometers) * storage_size(radiometers) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(radiometers(1)), addr)
       deallocate ( radiometers, stat = status )
-      call test_deallocate ( status, moduleName, 'Radiometer database', s )
+      call test_deallocate ( status, moduleName, 'Radiometer database', s, address=addr )
     end if
   end subroutine DestroyRadiometerDatabase
 
@@ -833,8 +850,10 @@ contains
   subroutine DestroySignalDatabase ( Signals, justChannels )
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(signal_T), dimension(:), pointer :: Signals
     logical, intent(in), optional :: JUSTCHANNELS
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S, Status
 
     ! Executable code
@@ -843,8 +862,10 @@ contains
         call destroySignal ( signals(i), justChannels )
       end do
       s = size(signals) * storage_size(signals) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(signals(1)), addr)
       deallocate ( signals, stat = status )
-      call test_deallocate ( status, moduleName, 'Signal database', s )
+      call test_deallocate ( status, moduleName, 'Signal database', s, address=addr )
     end if
   end subroutine DestroySignalDatabase
 
@@ -862,15 +883,20 @@ contains
   subroutine DestroySpectrometerTypeDatabase ( SpectrometerTypes )
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type(spectrometerType_T), dimension(:), pointer :: spectrometerTypes
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S, Status
     if ( associated(spectrometerTypes) ) then
       do i = 1, size(spectrometerTypes)
         call destroySpectrometerType ( spectrometerTypes(i) )
       end do
       s = size(spectrometerTypes) * storage_size(spectrometerTypes) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(spectrometerTypes(1)), addr)
       deallocate ( spectrometerTypes, stat = status )
-      call test_deallocate ( status, moduleName, 'Spectrometer database', s )
+      call test_deallocate ( status, moduleName, 'Spectrometer database', s, &
+        & address=addr )
     end if
   end subroutine DestroySpectrometerTypeDatabase
 
@@ -1997,6 +2023,9 @@ oc:       do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.108  2015/03/28 01:18:43  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.107  2014/09/05 00:11:11  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Get
 ! kinds from MLSKinds instead of MLSCommon.
