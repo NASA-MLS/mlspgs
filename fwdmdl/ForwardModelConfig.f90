@@ -247,6 +247,7 @@ contains
     ! doesn't yet exist
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
@@ -326,6 +327,7 @@ contains
       ! Work out which channels are used.
 
       use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
       use FILTERSHAPES_M, only: DACSFILTERSHAPES, FILTERSHAPES
       use MLSFINDS, only: FINDFIRST
       use MLSSIGNALS_M, only: MATCHSIGNAL
@@ -334,15 +336,18 @@ contains
       integer :: UsedDACSSignals(:)          ! Indices in FwdModelConf_T%Signals
                                              ! of signals for our dacs
 
+      integer(c_intptr_t) :: Addr         ! For tracing
       integer :: Channel
       integer :: I, Ier
       integer :: SigInd
       integer :: SX, ThisSideband ! Sideband indices
 
       allocate ( channels(fwdModelConf%noUsedChannels), stat=ier )
+      if ( ier == 0 .and. fwdModelConf%noUsedChannels > 0 ) &
+        & addr = transfer(c_loc(channels(1)), addr)
       call test_allocate ( ier, ModuleName, 'info%channels', &
         & ubounds=(/ fwdModelConf%noUsedChannels /), &
-        & elementSize = storage_size(channels) / 8 )
+        & elementSize = storage_size(channels) / 8, address=addr )
 
       ! Collect channel information from signals database.
       channel = 0
@@ -495,6 +500,7 @@ contains
     ! ...............................  SpectroscopyCatalogExtract  .....
     subroutine SpectroscopyCatalogExtract
       use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, TEST_ALLOCATE
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
       use INTRINSIC, only: LIT_INDICES, L_NONE
       use MLSSIGNALS_M, only: GETRADIOMETERFROMSIGNAL
       use MLSSTRINGLISTS, only: SWITCHDETAIL
@@ -504,6 +510,7 @@ contains
       use STRING_TABLE, only: DISPLAY_STRING ! , GET_STRING
       use TOGGLES, only: SWITCHES
 
+      integer(c_intptr_t) :: Addr         ! For tracing
       integer :: B         ! Beta_group index
       integer :: C         ! Spectroscopy catalog extract size/index
       logical :: DoThis    ! Flag for lines in catalog item
@@ -529,8 +536,13 @@ contains
       ! Allocate the spectroscopy catalog extract
       c = maxval(fwdModelConf%cat_size)
       allocate ( fwdModelConf%catalog(s1:s2,c), stat=stat )
+      addr = 0
+      if ( stat == 0 ) then
+        if ( size(fwdModelConf%catalog) > 0 ) &
+          & addr = transfer(c_loc(fwdModelConf%catalog(s1,1)), addr)
+      end if
       call test_allocate ( stat, moduleName, 'fwdModelConf%catalog', &
-        & (/s1,1/), (/s2,c/), storage_size(fwdModelConf%catalog) / 8 )
+        & (/s1,1/), (/s2,c/), storage_size(fwdModelConf%catalog) / 8, address=addr )
 
       ! Work out the spectroscopy we're going to need.
       fwdModelConf%catalog = empty_cat
@@ -673,12 +685,14 @@ contains
   subroutine DestroyFWMConfigDatabase ( Database, Deep )
 
     use ALLOCATE_DEALLOCATE, only: TEST_DEALLOCATE
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
     logical, optional, intent(in) :: DEEP
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: Config                   ! Loop counter
     integer :: S                        ! Size in bytes of object to deallocate
     integer :: Status                   ! Flag
@@ -689,8 +703,10 @@ contains
       end do
 
       s = size(database) * storage_size(database) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
       deallocate ( database, stat=status )
-      call test_deallocate ( status, ModuleName, 'Database', s )
+      call test_deallocate ( status, ModuleName, 'Database', s, address=addr )
     end if
   end subroutine DestroyFWMConfigDatabase
 
@@ -699,15 +715,19 @@ contains
     ! Destroy stuff in FwdModelConf derived for one forward model run
 
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type ( ForwardModelConfig_T ), intent(inout) :: FwdModelConf
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: C, B, Ier, S
 
     if ( associated(fwdModelConf%channels) ) then
       s = size(fwdModelConf%channels) * storage_size(fwdModelConf%channels) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(fwdModelConf%channels(1)), addr)
       deallocate ( fwdModelConf%channels, stat = ier )
-      call test_deallocate ( ier, ModuleName, 'fwdModelConf%channels', s )
+      call test_deallocate ( ier, ModuleName, 'fwdModelConf%channels', s, address=addr )
   ! else
   !   It was already deallocated at the end of FullForwardModel
     end if
@@ -738,8 +758,11 @@ contains
       end do
 
       s = size(fwdModelConf%catalog) * storage_size(fwdModelConf%catalog) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc( &
+        & fwdModelConf%catalog(lbound(fwdModelConf%catalog,1),1)), addr)
       deallocate ( fwdModelConf%catalog, stat=ier )
-      call test_deallocate ( ier, ModuleName, 'fwdModelConf%catalog', s )
+      call test_deallocate ( ier, ModuleName, 'fwdModelConf%catalog', s, address=addr )
   ! else
   !   It was already deallocated at the end of FullForwardModel
     end if
@@ -859,6 +882,7 @@ contains
   ! ----------------------------------------- PVMUnpackFWMConfig ---------
   subroutine PVMUnpackFWMConfig ( CONFIG )
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, TEST_ALLOCATE
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use MLSMESSAGEMODULE, only: MLSMESSAGE, MLSMSG_ERROR
     use MLSSIGNALS_M, only: PVMUNPACKSIGNAL
     use MOREPVM, only: PVMUNPACKLITINDEX, PVMUNPACKSTRINGINDEX
@@ -869,6 +893,7 @@ contains
     ! Local variables
     integer, parameter     :: ISMAX = 11 ! Number of integers to unpack
     integer, parameter     :: LSMAX = 32 ! Number of logicals to unpack
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
     integer, dimension(ISMAX) :: IS     ! Temporary array, for integer scalars
@@ -991,8 +1016,10 @@ contains
     call PVMIDLUnpack ( n, msg = "Unpacking number of signals" )
     if ( n > 0 ) then
       allocate ( config%signals(n), STAT=info )
+      addr = 0
+      if ( info == 0 ) addr = transfer(c_loc(config%signals(1)), addr)
       call test_allocate ( info, ModuleName, 'config%signals', ubounds = [n], &
-        & elementSize = storage_size(config%signals) / 8 )
+        & elementSize = storage_size(config%signals) / 8, address=addr )
       do i = 1, n
         call PVMUnpackSignal ( config%signals(i) )
       end do
@@ -1002,14 +1029,20 @@ contains
     call PVMIDLUnpack ( ls(1:2), msg = "Unpacking vGrid flags" )
     if ( ls(1) ) then
       allocate ( config%integrationGrid, STAT=info )
+      addr = 0
+      if ( info == 0 ) addr = transfer(c_loc(config%integrationGrid), addr)
       call test_allocate ( info, ModuleName, 'config%integrationGrid', &
-        & uBounds = [1], elementSize = storage_size(config%integrationGrid) / 8 )
+        & uBounds = [1], elementSize = storage_size(config%integrationGrid) / 8, &
+        & address=addr )
       call PVMUnpackVGrid ( config%integrationGrid )
     end if
     if ( ls(2) ) then
       allocate ( config%tangentGrid, STAT=info )
+      addr = 0
+      if ( info == 0 ) addr = transfer(c_loc(config%tangentGrid), addr)
       call test_allocate ( info, ModuleName, 'config%tangentGrid', &
-        & uBounds = [1], elementSize = storage_size(config%tangentGrid) / 8)
+        & uBounds = [1], elementSize = storage_size(config%tangentGrid) / 8, &
+        & address=addr )
       call PVMUnpackVGrid ( config%tangentGrid )
     end if
 
@@ -1019,12 +1052,14 @@ contains
   subroutine StripForwardModelConfigDatabase ( database )
     ! This routine removes the non-global forward model configs from the database
     use ALLOCATE_DEALLOCATE, only: TEST_ALLOCATE, TEST_DEALLOCATE
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: DATABASE
 
     ! Local variables
     type (ForwardModelConfig_T), dimension(:), pointer :: TMPDATABASE
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: CONFIG                   ! Loop counter
     integer :: N
     integer :: STATUS
@@ -1040,14 +1075,18 @@ contains
     ! Create new database in tmp space, pack old one into
     n = count ( database%globalConfig )
     allocate ( tmpDatabase ( n ), STAT=status )
+    addr = 0
+    if ( status == 0 .and. n > 0 ) addr = transfer(c_loc(tmpDatabase(1)), addr)
     call test_allocate ( status, ModuleName, 'tmpDatabase', &
-      & uBounds = [n], elementSize = storage_size(tmpDatabase) / 8 )
+      & uBounds = [n], elementSize = storage_size(tmpDatabase) / 8, address=addr )
     tmpDatabase = pack ( database, database%globalConfig )
 
     ! Destroy old database, then point to new one
     n = size(database) * storage_size(database) / 8
+    addr = 0
+    if ( n > 0 ) addr = transfer(c_loc(database(1)), addr)
     deallocate ( database, STAT=status )
-    call test_deallocate ( status, ModuleName, 'database', n )
+    call test_deallocate ( status, ModuleName, 'database', n, address=addr )
 
     database => tmpDatabase
   end subroutine StripForwardModelConfigDatabase
@@ -1057,6 +1096,7 @@ contains
   ! ------------------------------------ DestroyOneForwardModelConfig --
   subroutine DestroyOneForwardModelConfig ( Config, Deep )
     use ALLOCATE_DEALLOCATE, only: DEALLOCATE_TEST, TEST_DEALLOCATE
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use MLSSIGNALS_M, only: DESTROYSIGNALDATABASE
 
     ! Dummy arguments
@@ -1064,6 +1104,7 @@ contains
     logical, optional, intent(in) :: DEEP ! Do a really deep destroy
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: B                        ! Subscript for Beta_Group
     integer :: S                        ! 1 = LSB, 2 = USB, or
                                         ! size in bytes of an object to deallocate
@@ -1087,24 +1128,32 @@ contains
 
     if ( associated(config%lineCenter) ) then
       s = size(config%lineCenter) * storage_size(config%lineCenter) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(config%lineCenter(1)), addr)
       deallocate ( config%lineCenter, stat=status )
-      call test_deallocate ( status, moduleName, 'LineCenter', s )
+      call test_deallocate ( status, moduleName, 'LineCenter', s, address=addr )
     end if
     if ( associated(config%lineWidth) ) then
       s = size(config%lineWidth) * storage_size(config%lineWidth) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(config%lineWidth(1)), addr)
       deallocate ( config%lineWidth, stat=status )
-      call test_deallocate ( status, moduleName, 'LineWidth', s )
+      call test_deallocate ( status, moduleName, 'LineWidth', s, address=addr )
     end if
     if ( associated(config%lineWidth_TDep) ) then
       s = size(config%lineWidth_TDep) * storage_size(config%lineWidth_TDep) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(config%lineWidth_TDep(1)), addr)
       deallocate ( config%lineWidth_TDep, stat=status )
-      call test_deallocate ( status, moduleName, 'LineWidth_TDep', s )
+      call test_deallocate ( status, moduleName, 'LineWidth_TDep', s, address=addr )
     end if
 
     if ( associated(config%beta_group) ) then
       s = size(config%beta_group) * storage_size(config%beta_group) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(config%beta_group(1)), addr)
       deallocate ( config%beta_group, stat=status )
-      call test_deallocate ( status, moduleName, 'config%Beta_group', s )
+      call test_deallocate ( status, moduleName, 'config%Beta_group', s, address=addr )
     end if
 
     if ( associated(config%signals) ) &
@@ -1114,14 +1163,20 @@ contains
       if ( associated ( config%integrationGrid ) ) then
         call DestroyVGridContents ( config%integrationGrid )
         s = storage_size(config%integrationGrid) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(config%integrationGrid), addr)
         deallocate ( config%integrationGrid, stat=status )
-        call test_deallocate ( status, moduleName, 'Config%integrationGrid', s )
+        call test_deallocate ( status, moduleName, 'Config%integrationGrid', s, &
+          & address=addr )
       end if
       if ( associated ( config%tangentGrid ) ) then
         call DestroyVGridContents ( config%tangentGrid )
         s = storage_size(config%tangentGrid) / 8
+        addr = 0
+        if ( s > 0 ) addr = transfer(c_loc(config%tangentGrid), addr)
         deallocate ( config%tangentGrid, stat=status )
-        call test_deallocate ( status, moduleName, 'Config%tangentGrid', s )
+        call test_deallocate ( status, moduleName, 'Config%tangentGrid', s, &
+          & address=addr )
       end if
     end if
     ! Otherwise don't destroy integrationGrid and tangentGrid.  Assume they
@@ -1489,6 +1544,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.133  2014/09/29 20:25:58  vsnyder
+! Add No_Magnetic_Field to config
+!
 ! Revision 2.132  2014/09/05 20:48:44  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !

@@ -98,6 +98,7 @@ contains
   subroutine Read_Filter_Shapes_File ( Lun, FileIndex, Where )
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
       & Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use MACHINE, only: IO_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -108,6 +109,7 @@ contains
     integer, intent(in) :: FileIndex    ! In the string table
     integer, intent(in) :: Where        ! In the L2CF tree, for tracing
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     real(r8) :: DX                      ! To compute FilterGrid
     real(r8) :: LHS, RHS                ! For computing grid
     integer :: I, N                     ! Loop inductor, subscript
@@ -151,13 +153,19 @@ contains
     ! Create or expand the FilterShapes array
     tempFilterShapes => filterShapes
     allocate ( filterShapes(numFilterShapes), stat=status )
+    addr = 0
+    if ( status == 0 .and. numFilterShapes > 0 ) &
+      & addr = transfer(c_loc(filterShapes(1)), addr)
     call test_allocate ( status, moduleName, "FilterShapes", &
-      & uBounds = numFilterShapes, elementSize = storage_size(filterShapes) / 8 )
+      & uBounds = numFilterShapes, elementSize = storage_size(filterShapes) / 8, &
+      & address=addr )
     if ( associated(tempFilterShapes) ) then
       filterShapes(:offset) = tempFilterShapes
       s = size(tempFilterShapes) * storage_size(tempFilterShapes) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(tempFilterShapes(1)), addr)
       deallocate ( tempFilterShapes, stat=status )
-      call test_deallocate ( status, moduleName, "TempFilterShapes", s )
+      call test_deallocate ( status, moduleName, "TempFilterShapes", s, address=addr )
     end if
 
     ! Read and store the filter shapes
@@ -215,6 +223,7 @@ contains
   subroutine Read_DACS_Filter_Shapes_File ( Lun, FileIndex, Where )
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
       & Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use MACHINE, only: IO_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -225,6 +234,7 @@ contains
     integer, intent(in) :: FileIndex    ! In the string table
     integer, intent(in) :: Where        ! In the L2CF tree, for tracing
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     real(r8) :: DX                      ! To compute FilterGrid
     real(r8) :: LHS, RHS                ! For computing grid
     integer :: I, N                     ! Loop inductor, subscript
@@ -290,13 +300,19 @@ contains
     ! Create or expand the DACSfilterShapes array
     tempFilterShapes => DACSfilterShapes
     allocate ( DACSfilterShapes(numFilterShapes), stat=status )
+    addr = 0
+    if ( status == 0 .and. numFilterShapes > 0 ) &
+      & addr = transfer(c_loc(DACSfilterShapes(1)), addr)
     call test_allocate ( status, moduleName, "DACSfilterShapes", &
-      & uBounds = numFilterShapes, elementSize = storage_size(DACSfilterShapes) / 8 )
+      & uBounds = numFilterShapes, elementSize = storage_size(DACSfilterShapes) / 8, &
+      & address=addr )
     if ( associated(tempFilterShapes) ) then
       DACSfilterShapes(:offset) = tempFilterShapes
       s = size(tempFilterShapes) * storage_size(tempFilterShapes) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(tempFilterShapes(1)), addr)
       deallocate ( tempFilterShapes, stat=status )
-      call test_deallocate ( status, moduleName, "TempFilterShapes", s )
+      call test_deallocate ( status, moduleName, "TempFilterShapes", s, address=addr )
     end if
 
     ! Read and store the filter shapes.  Don't need error checks since
@@ -381,6 +397,7 @@ contains
     ! doesn't yet exist
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (FilterShape_T), dimension(:), pointer :: database
@@ -401,6 +418,7 @@ contains
     ! doesn't yet exist
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (DACSFilterShape_T), dimension(:), pointer :: database
@@ -417,6 +435,8 @@ contains
   ! -----------------------------  Destroy_Filter_Shapes_Database  -----
   subroutine Destroy_Filter_Shapes_Database
     use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S, Status
     if ( .not. associated(filterShapes) ) return
     do i = 1, size(filterShapes)
@@ -428,13 +448,17 @@ contains
         & "FilterShapes(?)%signal%channels", moduleName )
     end do ! i
     s = size(filterShapes) * storage_size(filterShapes) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(filterShapes(1)), addr)
     deallocate ( filterShapes, stat=status )
-    call test_deallocate ( status, moduleName, "FilterShapes", s )
+    call test_deallocate ( status, moduleName, "FilterShapes", s, address=addr )
   end subroutine Destroy_Filter_Shapes_Database
 
   ! ------------------------  Destroy_DACS_Filter_Database  -----
   subroutine Destroy_DACS_Filter_Database
     use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S, Status
     if ( .not. associated(DACSfilterShapes) ) return
     do i = 1, size(DACSfilterShapes)
@@ -450,8 +474,10 @@ contains
         & "DACSFilterShapes(?)%ch_norm", moduleName )
     end do ! i
     s = size(DACSfilterShapes) * storage_size(DACSfilterShapes) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(DACSfilterShapes(1)), addr)
     deallocate ( DACSfilterShapes, stat=status )
-    call test_deallocate ( status, moduleName, "DACSFilterShapes", s )
+    call test_deallocate ( status, moduleName, "DACSFilterShapes", s, address=addr )
   end subroutine Destroy_DACS_Filter_Database
 
   ! --------------------------------  Dump_Filter_Shapes_Database  -----
@@ -561,6 +587,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.28  2014/09/05 20:47:36  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.27  2013/08/30 03:56:23  vsnyder
 ! Revise use of trace_begin and trace_end
 !

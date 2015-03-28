@@ -80,6 +80,7 @@ contains
   subroutine Read_Antenna_Patterns_File ( Lun, Where )
     use ALLOCATE_DEALLOCATE, only: ALLOCATE_TEST, DEALLOCATE_TEST, &
       & Test_Allocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     use MACHINE, only: IO_ERROR
     use MLSSTRINGLISTS, only: SWITCHDETAIL
     use PARSE_SIGNAL_M, only: PARSE_SIGNAL
@@ -107,6 +108,7 @@ contains
 
     real(r8), parameter :: Pi2 = 2.0_r8 * Pi
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     logical, dimension(:), pointer :: CHANNELS ! From Parse Signal
     integer :: DataBaseSize                  ! How many antenna patterns?
     integer :: HowManyPoints(3*size(signals))  ! for each pattern
@@ -170,14 +172,21 @@ outer1: do
 
     ! Now we know how big the database is, and each part of it.
     allocate ( antennaPatterns(dataBaseSize), stat=status )
+    addr = 0
+    if ( status == 0 .and. dataBaseSize > 0 ) &
+      & addr = transfer(c_loc(antennaPatterns(1)), addr)
     call test_allocate ( status, moduleName, "AntennaPatterns", &
-      & uBounds = dataBaseSize, elementSize = storage_size(antennaPatterns) / 8 )
+      & uBounds = dataBaseSize, elementSize = storage_size(antennaPatterns) / 8, &
+      & address=addr )
     rewind ( lun )
     do i = 1, dataBaseSize
       allocate  ( antennaPatterns(i)%signals(howManySignals(i)), stat=status )
+      addr = 0
+      if ( status == 0 .and. howManySignals(i) > 0 ) &
+        & addr = transfer(c_loc(antennaPatterns(i)%signals(1)), addr)
       call test_allocate ( status, moduleName, "AntennaPatterns%signals", &
         & uBounds = howManySignals(i), &
-        & elementSize = storage_size(antennaPatterns(i)%signals) / 8 )
+        & elementSize = storage_size(antennaPatterns(i)%signals) / 8, address=addr )
 
       log2 = log10( real(howManyPoints(i)) ) / log10(2.0)
       if ( log2 - nint(log2) /= 0.0 ) then
@@ -280,6 +289,7 @@ outer1: do
   ! ---------------------------------  Destroy_Ant_Patterns_Database  -----
   subroutine Destroy_Ant_Patterns_Database
     use Allocate_Deallocate, only: Deallocate_Test, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
 !     interface
 !       subroutine RFFTW_f77_destroy_plan ( Plan )
@@ -288,6 +298,7 @@ outer1: do
 !       end subroutine RFFTW_f77_destroy_plan
 !     end interface
 
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, J, S, Status
 
     if (.not. associated(AntennaPatterns) ) return
@@ -313,8 +324,11 @@ outer1: do
       end do
       s = size(AntennaPatterns(i)%signals) * &
         & storage_size(AntennaPatterns(i)%signals) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(AntennaPatterns(i)%signals(1)), addr)
       deallocate ( AntennaPatterns(i)%signals, STAT=status )
-      call test_deallocate ( status, moduleName, 'AntennaPatterns(?)%signals', s )
+      call test_deallocate ( status, moduleName, 'AntennaPatterns(?)%signals', &
+        & s, address=addr )
       call deallocate_test ( AntennaPatterns(i)%aaap, &
         & "AntennaPatterns(?)%aaap", moduleName )
       call deallocate_test ( AntennaPatterns(i)%d1aap, &
@@ -323,8 +337,10 @@ outer1: do
         & "AntennaPatterns(?)%D2aap", moduleName )
     end do ! i
     s = size(AntennaPatterns) * storage_size(AntennaPatterns) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(AntennaPatterns(1)), addr)
     deallocate ( AntennaPatterns, stat=status )
-    call test_deallocate ( status, moduleName, 'AntennaPatterns', s )
+    call test_deallocate ( status, moduleName, 'AntennaPatterns', s, address=addr )
 
   end subroutine Destroy_Ant_Patterns_Database
 
@@ -373,6 +389,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.17  2014/09/05 18:38:01  vsnyder
+! More complete and accurate allocate/deallocate size tracking
+!
 ! Revision 2.16  2013/08/30 03:56:23  vsnyder
 ! Revise use of trace_begin and trace_end
 !
