@@ -158,6 +158,7 @@ contains ! ============= Public Procedures ==========================
   integer function AddBinSelectorToDatabase ( database, item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type (BinSelector_T), dimension(:), pointer :: DATABASE
     type (BinSelector_T) :: item
     ! Local variables
@@ -173,6 +174,7 @@ contains ! ============= Public Procedures ==========================
     ! This function simply adds a fileID  to a database of this type
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     integer, dimension(:), pointer :: Database
     integer :: Item
@@ -190,6 +192,7 @@ contains ! ============= Public Procedures ==========================
     ! This function simply adds an l2pc  to a database of said l2pc s.
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     type(L2PC_T), dimension(:), pointer :: Database
     type(L2PC_T) :: Item
@@ -302,13 +305,17 @@ contains ! ============= Public Procedures ==========================
   ! -------------------------------------- DestroyBinSelectorDatabase
   subroutine DestroyBinSelectorDatabase
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     ! Local variables
+    integer(c_intptr_t) :: Addr            ! For tracing
     integer :: S, STATUS                   ! Flag from deallocate
     ! Executable code
     if ( .not. associated ( binSelectors ) ) return
     s = size(binSelectors) * storage_size(binSelectors) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(binSelectors(1)), addr)
     deallocate ( binSelectors, stat=status )
-    call test_deallocate ( status, ModuleName, "binSelectors", s )
+    call test_deallocate ( status, ModuleName, "binSelectors", s, address=addr )
   end subroutine DestroyBinSelectorDatabase
 
   ! ----------------------------------------------- DestroyL2PC ----
@@ -379,8 +386,10 @@ contains ! ============= Public Procedures ==========================
   subroutine DestroyL2PCDatabase
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! For tracing
     integer :: I, S, Status
 
     verbose = switchDetail( switches, 'l2pc') > -1
@@ -394,8 +403,10 @@ contains ! ============= Public Procedures ==========================
         call DestroyL2PC ( l2pcDatabase(i) )
       end do
       s = size(l2pcDatabase) * storage_size(l2pcDatabase) / 8
+      addr = 0
+      if ( s > 0 ) addr = transfer(c_loc(l2pcDatabase(1)), addr)
       deallocate ( l2pcDatabase, stat=status )
-      call test_deallocate ( status, ModuleName, "l2pcDatabase", s )
+      call test_deallocate ( status, ModuleName, "l2pcDatabase", s, address=addr )
     end if
 
     ! Also destroy the info database (i.e. close files)
@@ -1211,6 +1222,7 @@ contains ! ============= Public Procedures ==========================
   integer function AddL2PCInfoToDatabase ( database, item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type (L2PCInfo_T), dimension(:), pointer :: DATABASE
     type (L2PCInfo_T) :: item
     ! Local variables
@@ -1225,8 +1237,10 @@ contains ! ============= Public Procedures ==========================
 
     use Allocate_Deallocate, only: Test_Deallocate
     use HDF5, only: H5FCLOSE_F, H5GCLOSE_F, H5ESET_AUTO_F
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Local variables
+    integer(c_intptr_t) :: Addr ! For tracing
     integer :: I                ! Loop counter
     integer :: S                ! Size in bytes of an object to deallocate
     integer :: STATUS           ! Flag from HDF
@@ -1270,8 +1284,10 @@ contains ! ============= Public Procedures ==========================
     end do
     call h5eSet_auto_f ( 1, status )
     s = size(l2pcInfo) * storage_size(l2pcInfo) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(l2pcInfo(1)), addr)
     deallocate ( l2pcInfo, stat=i )
-    call test_deallocate ( i, ModuleName, 'l2pcInfo', s )
+    call test_deallocate ( i, ModuleName, 'l2pcInfo', s, address=addr )
 
   end subroutine DestroyL2PCInfoDatabase
 
@@ -2373,6 +2389,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.129  2015/03/28 01:10:03  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.128  2014/09/04 23:48:52  vsnyder
 ! More complete and accurate allocate/deallocate size tracking
 !
