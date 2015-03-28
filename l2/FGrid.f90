@@ -65,6 +65,7 @@ contains ! ===================================== Public procedures =====
   integer function AddFGridToDatabase ( database, item )
 
     use Allocate_Deallocate, only: Test_Allocate, Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
 
     ! Dummy arguments
     type (FGrid_T), dimension(:), pointer :: database
@@ -144,9 +145,11 @@ contains ! ===================================== Public procedures =====
     ! Dummy arguments
 
     use Allocate_Deallocate, only: Test_Deallocate
+    use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
     type (FGrid_T), dimension(:), pointer :: database
 
     ! Local variables
+    integer(c_intptr_t) :: Addr         ! for tracing
     integer :: I                        ! Loop counter
     integer :: S                        ! Size in bytes of object to deallocate
     integer :: STATUS                   ! From deallocate
@@ -158,8 +161,10 @@ contains ! ===================================== Public procedures =====
     end do
 
     s = size(database) * storage_size(database) / 8
+    addr = 0
+    if ( s > 0 ) addr = transfer(c_loc(database(1)), addr)
     deallocate ( database, STAT=status )
-    call test_deallocate ( status, ModuleName, 'database', s )
+    call test_deallocate ( status, ModuleName, 'database', s, address=addr )
 
   end subroutine DestroyFGridDatabase
 
@@ -232,6 +237,9 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.16  2015/03/28 02:31:30  vsnyder
+! Added stuff to trace allocate/deallocate addresses
+!
 ! Revision 2.15  2014/09/05 00:53:20  vsnyder
 ! More complete and accurate allocate/deallocate size tracking.  Add some
 ! tracing.
